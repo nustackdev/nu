@@ -81,6 +81,11 @@ class MutableMappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, Value
     def set(self, key: KeyT, value: ValueT) -> NoneValue: ...
     def delete(self, key: KeyT) -> NoneValue: ...
     def update(self, other: Mapping[KeyT, ValueT]) -> NoneValue: ...
+    def pop(self, key: KeyT, default: ValueT | None = None) -> ValueResultT: ...
+    def popitem(self) -> ValueResultT: ...
+    def setdefault(self, key: KeyT, default: ValueT | None = None) -> ValueResultT: ...
+    def clear(self) -> NoneValue: ...
+    def copy(self) -> ValueResultT: ...
 
 
 # =============================================================================
@@ -187,3 +192,34 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
         from ..values import NoneValue
 
         return NoneValue(UpdateCmd(self, other))
+
+    def pop(self, key: KeyT, default: ValueT | None = None) -> ValueResultT:
+        """Remove key and return value, or default if missing."""
+        from ..morphisms.collections.mapping import DictPopCmd
+
+        return cast("ValueResultT", self._wrap_value_result(DictPopCmd(self, key, default)))
+
+    def popitem(self) -> ValueResultT:
+        """Remove and return arbitrary (key, value) pair."""
+        from ..morphisms.collections.mapping import PopItemCmd
+
+        return cast("ValueResultT", self._wrap_value_result(PopItemCmd(self)))
+
+    def setdefault(self, key: KeyT, default: ValueT | None = None) -> ValueResultT:
+        """Get value at key, setting it to default if missing."""
+        from ..morphisms.collections.mapping import SetDefaultCmd
+
+        return cast("ValueResultT", self._wrap_value_result(SetDefaultCmd(self, key, default)))
+
+    def clear(self) -> NoneValue:
+        """Remove all items."""
+        from ..morphisms.collections.shared import ClearCmd
+        from ..values import NoneValue
+
+        return NoneValue(ClearCmd(self))
+
+    def copy(self) -> ValueResultT:
+        """Shallow copy."""
+        from ..morphisms.collections.mapping import CopyOp
+
+        return cast("ValueResultT", self._wrap_value_result(CopyOp(self)))

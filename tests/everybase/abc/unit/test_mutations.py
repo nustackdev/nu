@@ -15,10 +15,13 @@ from everybase.abc import (
     AnyValue,
     AppendCmd,
     ClearCmd,
+    CopyOp,
     CountOp,
     DeleteItemCmd,
+    DictPopCmd,
     DictValue,
     DifferenceOp,
+    DifferenceUpdateCmd,
     DiscardCmd,
     ExtendCmd,
     FirstOp,
@@ -26,6 +29,7 @@ from everybase.abc import (
     IndexOfOp,
     InsertCmd,
     IntersectionOp,
+    IntersectionUpdateCmd,
     IsDisjointOp,
     IsSubsetOp,
     IsSupersetOp,
@@ -35,11 +39,16 @@ from everybase.abc import (
     ListValue,
     NoneValue,
     PopCmd,
+    PopItemCmd,
     RemoveCmd,
     RemoveValueCmd,
+    SetDefaultCmd,
     SetItemCmd,
+    SetPopCmd,
+    SetUpdateCmd,
     SetValue,
     SymmetricDifferenceOp,
+    SymmetricDifferenceUpdateCmd,
     UnionOp,
     UpdateCmd,
     ValuesOp,
@@ -390,6 +399,74 @@ class TestUpdateCmd:
         assert result is None
 
 
+class TestDictPopCmd:
+    """DictPopCmd morphism tests."""
+
+    async def test_pop_existing_key(self, ctx):
+        cmd = DictPopCmd[str, int](DictValue({"a": 1, "b": 2}), "a", None)
+        result = await cmd.execute(ctx)
+        assert result == 1
+
+    async def test_pop_missing_key_with_default(self, ctx):
+        cmd = DictPopCmd[str, int](DictValue({"a": 1}), "z", 99)
+        result = await cmd.execute(ctx)
+        assert result == 99
+
+    async def test_pop_missing_key_no_default(self, ctx):
+        cmd = DictPopCmd[str, int](DictValue({"a": 1}), "z", None)
+        result = await cmd.execute(ctx)
+        assert result is INVALID
+
+
+class TestPopItemCmd:
+    """PopItemCmd morphism tests."""
+
+    async def test_popitem_returns_tuple(self, ctx):
+        cmd = PopItemCmd[str, int](DictValue({"a": 1}))
+        result = await cmd.execute(ctx)
+        assert result == ("a", 1)
+
+    async def test_popitem_empty_returns_invalid(self, ctx):
+        cmd = PopItemCmd[str, int](DictValue({}))
+        result = await cmd.execute(ctx)
+        assert result is INVALID
+
+
+class TestSetDefaultCmd:
+    """SetDefaultCmd morphism tests."""
+
+    async def test_setdefault_existing_key(self, ctx):
+        cmd = SetDefaultCmd[str, int](DictValue({"a": 1}), "a", 99)
+        result = await cmd.execute(ctx)
+        assert result == 1
+
+    async def test_setdefault_missing_key(self, ctx):
+        cmd = SetDefaultCmd[str, int](DictValue({"a": 1}), "b", 99)
+        result = await cmd.execute(ctx)
+        assert result == 99
+
+
+class TestCopyOp:
+    """CopyOp morphism tests."""
+
+    async def test_copy_returns_dict(self, ctx):
+        cmd = CopyOp[str, int](DictValue({"a": 1, "b": 2}))
+        result = await cmd.execute(ctx)
+        assert result == {"a": 1, "b": 2}
+
+    async def test_copy_is_shallow(self, ctx):
+        original = {"a": [1, 2]}
+        cmd = CopyOp(DictValue(original))
+        result = await cmd.execute(ctx)
+        assert result == {"a": [1, 2]}
+        assert result["a"] is original["a"]
+
+    async def test_copy_empty(self, ctx):
+        cmd = CopyOp(DictValue({}))
+        result = await cmd.execute(ctx)
+        assert result == {}
+
+
 # =============================================================================
 # SET MUTATION COMMANDS
 # =============================================================================
@@ -430,6 +507,64 @@ class TestDiscardCmd:
         cmd = DiscardCmd[int](SetValue({1, 2}), 99)
         result = await cmd.execute(ctx)
         assert result is None
+
+
+class TestSetPopCmd:
+    """SetPopCmd morphism tests."""
+
+    async def test_pop_returns_element(self, ctx):
+        cmd = SetPopCmd[int](SetValue({42}))
+        result = await cmd.execute(ctx)
+        assert result == 42
+
+    async def test_pop_empty_returns_invalid(self, ctx):
+        cmd = SetPopCmd[int](SetValue(set()))
+        result = await cmd.execute(ctx)
+        assert result is INVALID
+
+
+class TestSetUpdateCmd:
+    """SetUpdateCmd morphism tests."""
+
+    async def test_update_adds_elements(self, ctx):
+        s = {1, 2}
+        cmd = SetUpdateCmd[int](SetValue(s), SetValue({3, 4}))
+        result = await cmd.execute(ctx)
+        assert result is None
+        assert s == {1, 2, 3, 4}
+
+
+class TestIntersectionUpdateCmd:
+    """IntersectionUpdateCmd morphism tests."""
+
+    async def test_intersection_update(self, ctx):
+        s = {1, 2, 3}
+        cmd = IntersectionUpdateCmd[int](SetValue(s), SetValue({2, 3, 4}))
+        result = await cmd.execute(ctx)
+        assert result is None
+        assert s == {2, 3}
+
+
+class TestDifferenceUpdateCmd:
+    """DifferenceUpdateCmd morphism tests."""
+
+    async def test_difference_update(self, ctx):
+        s = {1, 2, 3}
+        cmd = DifferenceUpdateCmd[int](SetValue(s), SetValue({2, 3}))
+        result = await cmd.execute(ctx)
+        assert result is None
+        assert s == {1}
+
+
+class TestSymmetricDifferenceUpdateCmd:
+    """SymmetricDifferenceUpdateCmd morphism tests."""
+
+    async def test_symmetric_difference_update(self, ctx):
+        s = {1, 2, 3}
+        cmd = SymmetricDifferenceUpdateCmd[int](SetValue(s), SetValue({2, 3, 4}))
+        result = await cmd.execute(ctx)
+        assert result is None
+        assert s == {1, 4}
 
 
 # =============================================================================
@@ -489,10 +624,10 @@ class TestListTypeMutations:
         result = lst.remove(2)
         assert isinstance(result, NoneValue)
 
-    def test_clear_returns_value(self):
+    def test_clear_returns_none_value(self):
         lst = ListValue([1, 2, 3])
         result = lst.clear()
-        assert isinstance(result, AnyValue)
+        assert isinstance(result, NoneValue)
 
 
 class TestDictTypeMutations:
@@ -513,9 +648,29 @@ class TestDictTypeMutations:
         result = d.update({"b": 2})
         assert isinstance(result, NoneValue)
 
-    def test_clear_returns_value(self):
+    def test_pop_returns_any_value(self):
+        d = DictValue({"a": 1})
+        result = d.pop("a")
+        assert isinstance(result, AnyValue)
+
+    def test_popitem_returns_any_value(self):
+        d = DictValue({"a": 1})
+        result = d.popitem()
+        assert isinstance(result, AnyValue)
+
+    def test_setdefault_returns_any_value(self):
+        d = DictValue({"a": 1})
+        result = d.setdefault("b", 99)
+        assert isinstance(result, AnyValue)
+
+    def test_clear_returns_none_value(self):
         d = DictValue({"a": 1})
         result = d.clear()
+        assert isinstance(result, NoneValue)
+
+    def test_copy_returns_any_value(self):
+        d = DictValue({"a": 1})
+        result = d.copy()
         assert isinstance(result, AnyValue)
 
 
@@ -537,10 +692,35 @@ class TestSetTypeMutations:
         result = s.discard(2)
         assert isinstance(result, NoneValue)
 
-    def test_clear_returns_value(self):
+    def test_pop_returns_any_value(self):
+        s = SetValue({1, 2, 3})
+        result = s.pop()
+        assert isinstance(result, AnyValue)
+
+    def test_clear_returns_none_value(self):
         s = SetValue({1, 2, 3})
         result = s.clear()
-        assert isinstance(result, AnyValue)
+        assert isinstance(result, NoneValue)
+
+    def test_update_returns_none_value(self):
+        s = SetValue({1, 2})
+        result = s.update({3, 4})
+        assert isinstance(result, NoneValue)
+
+    def test_intersection_update_returns_none_value(self):
+        s = SetValue({1, 2, 3})
+        result = s.intersection_update({2, 3})
+        assert isinstance(result, NoneValue)
+
+    def test_difference_update_returns_none_value(self):
+        s = SetValue({1, 2, 3})
+        result = s.difference_update({2})
+        assert isinstance(result, NoneValue)
+
+    def test_symmetric_difference_update_returns_none_value(self):
+        s = SetValue({1, 2, 3})
+        result = s.symmetric_difference_update({2, 4})
+        assert isinstance(result, NoneValue)
 
 
 # =============================================================================
@@ -620,3 +800,81 @@ class TestMutationExecution:
         s = SetValue({1, 2, 3})
         result = await s.clear().execute(ctx)
         assert result is None
+
+    # ── New dict methods ──────────────────────────────────────────────────
+
+    async def test_dict_pop_execute(self, ctx):
+        d = DictValue({"a": 1, "b": 2})
+        result = await d.pop("a").execute(ctx)
+        assert result == 1
+
+    async def test_dict_pop_missing_with_default(self, ctx):
+        d = DictValue({"a": 1})
+        result = await d.pop("z", 99).execute(ctx)
+        assert result == 99
+
+    async def test_dict_pop_missing_no_default(self, ctx):
+        d = DictValue({"a": 1})
+        result = await d.pop("z").execute(ctx)
+        assert result is INVALID
+
+    async def test_dict_popitem_execute(self, ctx):
+        d = DictValue({"x": 42})
+        result = await d.popitem().execute(ctx)
+        assert result == ("x", 42)
+
+    async def test_dict_popitem_empty(self, ctx):
+        d = DictValue({})
+        result = await d.popitem().execute(ctx)
+        assert result is INVALID
+
+    async def test_dict_setdefault_existing(self, ctx):
+        d = DictValue({"a": 1})
+        result = await d.setdefault("a", 99).execute(ctx)
+        assert result == 1
+
+    async def test_dict_setdefault_missing(self, ctx):
+        d = DictValue({"a": 1})
+        result = await d.setdefault("b", 42).execute(ctx)
+        assert result == 42
+
+    async def test_dict_copy_execute(self, ctx):
+        d = DictValue({"a": 1, "b": 2})
+        result = await d.copy().execute(ctx)
+        assert result == {"a": 1, "b": 2}
+
+    # ── New set methods ───────────────────────────────────────────────────
+
+    async def test_set_pop_execute(self, ctx):
+        s = SetValue({42})
+        result = await s.pop().execute(ctx)
+        assert result == 42
+
+    async def test_set_pop_empty(self, ctx):
+        s = SetValue(set())
+        result = await s.pop().execute(ctx)
+        assert result is INVALID
+
+    async def test_set_update_execute(self, ctx):
+        s = {1, 2}
+        result = await SetValue(s).update(SetValue({3, 4})).execute(ctx)
+        assert result is None
+        assert s == {1, 2, 3, 4}
+
+    async def test_set_intersection_update_execute(self, ctx):
+        s = {1, 2, 3}
+        result = await SetValue(s).intersection_update(SetValue({2, 3, 4})).execute(ctx)
+        assert result is None
+        assert s == {2, 3}
+
+    async def test_set_difference_update_execute(self, ctx):
+        s = {1, 2, 3}
+        result = await SetValue(s).difference_update(SetValue({2, 3})).execute(ctx)
+        assert result is None
+        assert s == {1}
+
+    async def test_set_symmetric_difference_update_execute(self, ctx):
+        s = {1, 2, 3}
+        result = await SetValue(s).symmetric_difference_update(SetValue({2, 3, 4})).execute(ctx)
+        assert result is None
+        assert s == {1, 4}

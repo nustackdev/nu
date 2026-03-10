@@ -101,24 +101,24 @@ class CountOp(BinaryOperation[int]):
 class AppendCmd[T](BinaryCommand[None]):
     """Append item to end: seq.append(value). Returns None (mutates in-place)."""
 
-    def apply(self, operand: object, value: object) -> None | Sentinel:
+    def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
-        if not isinstance(operand, MutableSequence):
-            raise TypeError(f"append() requires mutable sequence, got {type(operand).__name__}")
-        operand.append(value)
+        if not isinstance(left, MutableSequence):
+            raise TypeError(f"append() requires mutable sequence, got {type(left).__name__}")
+        left.append(right)
         return None
 
 
 class InsertCmd[T](TernaryCommand[None]):
     """Insert item at index: seq.insert(index, value). Returns None (mutates in-place)."""
 
-    def apply(self, operand: object, index: object, value: object) -> None | Sentinel:
+    def apply(self, first: object, second: object, third: object) -> None | Sentinel:
         """Apply."""
-        if not isinstance(operand, MutableSequence):
-            raise TypeError(f"insert() requires mutable sequence, got {type(operand).__name__}")
-        if not isinstance(index, int):
+        if not isinstance(first, MutableSequence):
+            raise TypeError(f"insert() requires mutable sequence, got {type(first).__name__}")
+        if not isinstance(second, int):
             return INVALID
-        operand.insert(index, value)
+        first.insert(second, third)
         return None
 
 
@@ -128,14 +128,14 @@ class PopCmd[T](BinaryCommand[T]):
     Default index is -1 (last item).
     """
 
-    def apply(self, operand: object, index: object) -> T | Sentinel:
+    def apply(self, left: object, right: object) -> T | Sentinel:
         """Apply."""
-        if not isinstance(operand, MutableSequence):
-            raise TypeError(f"pop() requires mutable sequence, got {type(operand).__name__}")
-        if not isinstance(index, int):
+        if not isinstance(left, MutableSequence):
+            raise TypeError(f"pop() requires mutable sequence, got {type(left).__name__}")
+        if not isinstance(right, int):
             return INVALID
         try:
-            return operand.pop(index)  # type: ignore[return-value]
+            return left.pop(right)  # type: ignore[return-value]
         except IndexError:
             return INVALID
 
@@ -143,25 +143,25 @@ class PopCmd[T](BinaryCommand[T]):
 class ExtendCmd[T](BinaryCommand[None]):
     """Extend sequence with iterable: seq.extend(other). Returns None (mutates in-place)."""
 
-    def apply(self, operand: object, other: object) -> None | Sentinel:
+    def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
-        if not isinstance(operand, MutableSequence):
-            raise TypeError(f"extend() requires mutable sequence, got {type(operand).__name__}")
-        if not isinstance(other, Iterable):
+        if not isinstance(left, MutableSequence):
+            raise TypeError(f"extend() requires mutable sequence, got {type(left).__name__}")
+        if not isinstance(right, Iterable):
             return INVALID
-        operand.extend(other)
+        left.extend(right)
         return None
 
 
 class RemoveValueCmd[T](BinaryCommand[None]):
     """Remove first occurrence of value: seq.remove(value). Returns None, or INVALID if not found."""
 
-    def apply(self, operand: object, value: object) -> None | Sentinel:
+    def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
-        if not isinstance(operand, MutableSequence):
-            raise TypeError(f"remove() requires mutable sequence, got {type(operand).__name__}")
+        if not isinstance(left, MutableSequence):
+            raise TypeError(f"remove() requires mutable sequence, got {type(left).__name__}")
         try:
-            operand.remove(value)
+            left.remove(right)
         except ValueError:
             return INVALID
         return None

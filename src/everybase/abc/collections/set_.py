@@ -85,6 +85,16 @@ class MutableSetProtocol[CollectionT, ElementT, CollectionResultT, ElementResult
     def add(self, value: ElementT) -> NoneValue: ...
     def remove(self, value: ElementT) -> NoneValue: ...
     def discard(self, value: ElementT) -> NoneValue: ...
+    def pop(self) -> ElementResultT: ...
+    def clear(self) -> NoneValue: ...
+    def update(self, other: set[ElementT] | frozenset[ElementT] | Term) -> NoneValue: ...
+    def intersection_update(
+        self, other: set[ElementT] | frozenset[ElementT] | Term
+    ) -> NoneValue: ...
+    def difference_update(self, other: set[ElementT] | frozenset[ElementT] | Term) -> NoneValue: ...
+    def symmetric_difference_update(
+        self, other: set[ElementT] | frozenset[ElementT] | Term
+    ) -> NoneValue: ...
 
 
 # =============================================================================
@@ -191,3 +201,46 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         from ..values import NoneValue
 
         return NoneValue(DiscardCmd(self, value))
+
+    def pop(self) -> ElementResultT:
+        """Remove and return arbitrary element."""
+        from ..morphisms.collections.set import SetPopCmd
+
+        return cast("ElementResultT", self._wrap_element_result(SetPopCmd(self)))
+
+    def clear(self) -> NoneValue:
+        """Remove all items."""
+        from ..morphisms.collections.shared import ClearCmd
+        from ..values import NoneValue
+
+        return NoneValue(ClearCmd(self))
+
+    def update(self, other: set[ElementT] | frozenset[ElementT] | Term) -> NoneValue:
+        """Add all elements from other."""
+        from ..morphisms.collections.set import SetUpdateCmd
+        from ..values import NoneValue
+
+        return NoneValue(SetUpdateCmd(self, other))
+
+    def intersection_update(self, other: set[ElementT] | frozenset[ElementT] | Term) -> NoneValue:
+        """Keep only elements found in both."""
+        from ..morphisms.collections.set import IntersectionUpdateCmd
+        from ..values import NoneValue
+
+        return NoneValue(IntersectionUpdateCmd(self, other))
+
+    def difference_update(self, other: set[ElementT] | frozenset[ElementT] | Term) -> NoneValue:
+        """Remove all elements found in other."""
+        from ..morphisms.collections.set import DifferenceUpdateCmd
+        from ..values import NoneValue
+
+        return NoneValue(DifferenceUpdateCmd(self, other))
+
+    def symmetric_difference_update(
+        self, other: set[ElementT] | frozenset[ElementT] | Term
+    ) -> NoneValue:
+        """Keep elements in either set but not both."""
+        from ..morphisms.collections.set import SymmetricDifferenceUpdateCmd
+        from ..values import NoneValue
+
+        return NoneValue(SymmetricDifferenceUpdateCmd(self, other))

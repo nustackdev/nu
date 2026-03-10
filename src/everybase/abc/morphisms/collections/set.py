@@ -14,19 +14,24 @@ from __future__ import annotations
 
 from collections.abc import MutableSet, Set
 
-from everybase.core import INVALID, BinaryCommand, BinaryOperation, Sentinel
+from everybase.core import INVALID, BinaryCommand, BinaryOperation, Sentinel, UnaryCommand
 
 
 __all__ = [
     "AddCmd",
     "DifferenceOp",
+    "DifferenceUpdateCmd",
     "DiscardCmd",
     "IntersectionOp",
+    "IntersectionUpdateCmd",
     "IsDisjointOp",
     "IsSubsetOp",
     "IsSupersetOp",
     "RemoveCmd",
+    "SetPopCmd",
+    "SetUpdateCmd",
     "SymmetricDifferenceOp",
+    "SymmetricDifferenceUpdateCmd",
     "UnionOp",
 ]
 
@@ -114,23 +119,23 @@ class IsDisjointOp(BinaryOperation[bool]):
 class AddCmd[T](BinaryCommand[None]):
     """Add element to set: s.add(value). Returns None (mutates in-place)."""
 
-    def apply(self, operand: object, value: object) -> None | Sentinel:
+    def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
-        if not isinstance(operand, MutableSet):
-            raise TypeError(f"add() requires mutable set, got {type(operand).__name__}")
-        operand.add(value)
+        if not isinstance(left, MutableSet):
+            raise TypeError(f"add() requires mutable set, got {type(left).__name__}")
+        left.add(right)
         return None
 
 
 class RemoveCmd[T](BinaryCommand[None]):
     """Remove element from set: s.remove(value). Returns None, or INVALID if not found."""
 
-    def apply(self, operand: object, value: object) -> None | Sentinel:
+    def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
-        if not isinstance(operand, MutableSet):
-            raise TypeError(f"remove() requires mutable set, got {type(operand).__name__}")
+        if not isinstance(left, MutableSet):
+            raise TypeError(f"remove() requires mutable set, got {type(left).__name__}")
         try:
-            operand.remove(value)
+            left.remove(right)
         except KeyError:
             return INVALID
         return None
@@ -139,9 +144,78 @@ class RemoveCmd[T](BinaryCommand[None]):
 class DiscardCmd[T](BinaryCommand[None]):
     """Discard element from set: s.discard(value). Returns None (mutates in-place)."""
 
-    def apply(self, operand: object, value: object) -> None | Sentinel:
+    def apply(self, left: object, right: object) -> None | Sentinel:
+        """Apply."""
+        if not isinstance(left, MutableSet):
+            raise TypeError(f"discard() requires mutable set, got {type(left).__name__}")
+        left.discard(right)
+        return None
+
+
+class SetPopCmd[T](UnaryCommand[T]):
+    """Pop arbitrary element: s.pop(). Returns element, or INVALID if empty."""
+
+    def apply(self, operand: object) -> T | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableSet):
-            raise TypeError(f"discard() requires mutable set, got {type(operand).__name__}")
-        operand.discard(value)
+            raise TypeError(f"pop() requires mutable set, got {type(operand).__name__}")
+        try:
+            return operand.pop()  # type: ignore[return-value]
+        except KeyError:
+            return INVALID
+
+
+class SetUpdateCmd[T](BinaryCommand[None]):
+    """Update set with elements from other: s.update(other). Returns None."""
+
+    def apply(self, left: object, right: object) -> None | Sentinel:
+        """Apply."""
+        if not isinstance(left, MutableSet):
+            raise TypeError(f"update() requires mutable set, got {type(left).__name__}")
+        if not isinstance(right, Set):
+            return INVALID
+        left |= right
+        return None
+
+
+class IntersectionUpdateCmd[T](BinaryCommand[None]):
+    """Keep only elements found in both: s.intersection_update(other). Returns None."""
+
+    def apply(self, left: object, right: object) -> None | Sentinel:
+        """Apply."""
+        if not isinstance(left, MutableSet):
+            raise TypeError(
+                f"intersection_update() requires mutable set, got {type(left).__name__}"
+            )
+        if not isinstance(right, Set):
+            return INVALID
+        left &= right
+        return None
+
+
+class DifferenceUpdateCmd[T](BinaryCommand[None]):
+    """Remove elements found in other: s.difference_update(other). Returns None."""
+
+    def apply(self, left: object, right: object) -> None | Sentinel:
+        """Apply."""
+        if not isinstance(left, MutableSet):
+            raise TypeError(f"difference_update() requires mutable set, got {type(left).__name__}")
+        if not isinstance(right, Set):
+            return INVALID
+        left -= right
+        return None
+
+
+class SymmetricDifferenceUpdateCmd[T](BinaryCommand[None]):
+    """Keep elements in either but not both: s.symmetric_difference_update(other). Returns None."""
+
+    def apply(self, left: object, right: object) -> None | Sentinel:
+        """Apply."""
+        if not isinstance(left, MutableSet):
+            raise TypeError(
+                f"symmetric_difference_update() requires mutable set, got {type(left).__name__}"
+            )
+        if not isinstance(right, Set):
+            return INVALID
+        left ^= right
         return None

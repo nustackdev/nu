@@ -24,16 +24,21 @@ from everybase.core import (
     Sentinel,
     TernaryCommand,
     TernaryOperation,
+    UnaryCommand,
     UnaryOperation,
 )
 
 
 __all__ = [
+    "CopyOp",
     "DeleteItemCmd",
+    "DictPopCmd",
     "GetOp",
     "ItemsOp",
     "KeyAtOp",
     "KeysOp",
+    "PopItemCmd",
+    "SetDefaultCmd",
     "SetItemCmd",
     "UpdateCmd",
     "ValuesOp",
@@ -95,17 +100,17 @@ class KeyAtOp(BinaryOperation):
     ``itertools.islice`` over keys.
     """
 
-    def apply(self, first: object, second: object) -> object | Sentinel:
+    def apply(self, left: object, right: object) -> object | Sentinel:
         """Apply."""
-        if not isinstance(first, Mapping):
-            raise TypeError(f"key_at() requires mapping, got {type(first).__name__}")
-        idx = int(second)  # type: ignore[arg-type]
-        if hasattr(first, "key_at"):
-            return first.key_at(idx)  # type: ignore[union-attr]
+        if not isinstance(left, Mapping):
+            raise TypeError(f"key_at() requires mapping, got {type(left).__name__}")
+        idx = int(right)  # type: ignore[arg-type]
+        if hasattr(left, "key_at"):
+            return left.key_at(idx)  # type: ignore[union-attr]
         # Fallback: iterate keys up to idx
         import itertools
 
-        keys = list(itertools.islice(first.keys(), idx, idx + 1))
+        keys = list(itertools.islice(left.keys(), idx, idx + 1))
         if not keys:
             return INVALID
         return keys[0]
@@ -119,23 +124,23 @@ class KeyAtOp(BinaryOperation):
 class SetItemCmd[K, V](TernaryCommand[None]):
     """Set value at key: mapping[key] = value. Returns None."""
 
-    def apply(self, operand: object, key: object, value: object) -> None | Sentinel:
+    def apply(self, first: object, second: object, third: object) -> None | Sentinel:
         """Apply."""
-        if not isinstance(operand, MutableMapping):
-            raise TypeError(f"set() requires mutable mapping, got {type(operand).__name__}")
-        operand[key] = value
+        if not isinstance(first, MutableMapping):
+            raise TypeError(f"set() requires mutable mapping, got {type(first).__name__}")
+        first[second] = third
         return None
 
 
 class DeleteItemCmd[K](BinaryCommand[None]):
     """Delete entry by key: del mapping[key]. Returns None."""
 
-    def apply(self, operand: object, key: object) -> None | Sentinel:
+    def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
-        if not isinstance(operand, MutableMapping):
-            raise TypeError(f"delete() requires mutable mapping, got {type(operand).__name__}")
+        if not isinstance(left, MutableMapping):
+            raise TypeError(f"delete() requires mutable mapping, got {type(left).__name__}")
         try:
-            del operand[key]
+            del left[right]
         except KeyError:
             return INVALID
         return None
@@ -144,11 +149,59 @@ class DeleteItemCmd[K](BinaryCommand[None]):
 class UpdateCmd[K, V](BinaryCommand[None]):
     """Update mapping with another: mapping.update(other). Returns None (mutates in-place)."""
 
-    def apply(self, operand: object, other: object) -> None | Sentinel:
+    def apply(self, left: object, right: object) -> None | Sentinel:
+        """Apply."""
+        if not isinstance(left, MutableMapping):
+            raise TypeError(f"update() requires mutable mapping, got {type(left).__name__}")
+        if not isinstance(right, Mapping):
+            return INVALID
+        left.update(right)
+        return None
+
+
+class DictPopCmd[K, V](TernaryCommand[V]):
+    """Pop value by key with optional default: mapping.pop(key, default). Returns value or default."""
+
+    def apply(self, first: object, second: object, third: object) -> V | Sentinel:
+        """Apply."""
+        if not isinstance(first, MutableMapping):
+            raise TypeError(f"pop() requires mutable mapping, got {type(first).__name__}")
+        if third is None:
+            try:
+                return first.pop(second)  # type: ignore[arg-type]
+            except KeyError:
+                return INVALID
+        return first.pop(second, third)  # type: ignore[arg-type]
+
+
+class PopItemCmd[K, V](UnaryCommand[tuple[K, V]]):
+    """Pop arbitrary item: mapping.popitem(). Returns (key, value) tuple."""
+
+    def apply(self, operand: object) -> tuple[K, V] | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableMapping):
-            raise TypeError(f"update() requires mutable mapping, got {type(operand).__name__}")
-        if not isinstance(other, Mapping):
+            raise TypeError(f"popitem() requires mutable mapping, got {type(operand).__name__}")
+        try:
+            return operand.popitem()  # type: ignore[union-attr]
+        except KeyError:
             return INVALID
-        operand.update(other)
-        return None
+
+
+class SetDefaultCmd[K, V](TernaryCommand[V]):
+    """Set default value if key missing: mapping.setdefault(key, default). Returns value at key."""
+
+    def apply(self, first: object, second: object, third: object) -> V | Sentinel:
+        """Apply."""
+        if not isinstance(first, MutableMapping):
+            raise TypeError(f"setdefault() requires mutable mapping, got {type(first).__name__}")
+        return first.setdefault(second, third)  # type: ignore[arg-type]
+
+
+class CopyOp[K, V](UnaryOperation[dict[K, V]]):
+    """Shallow copy: mapping.copy(). Returns new dict."""
+
+    def apply(self, operand: object) -> dict[K, V] | Sentinel:
+        """Apply."""
+        if not isinstance(operand, Mapping):
+            raise TypeError(f"copy() requires mapping, got {type(operand).__name__}")
+        return dict(operand)  # type: ignore[arg-type]

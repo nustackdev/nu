@@ -192,3 +192,10 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
         from ..values import NoneValue
 
         return NoneValue(RemoveValueCmd(self, value))
+
+    def clear(self) -> NoneValue:
+        """Remove all items."""
+        from ..morphisms.collections.shared import ClearCmd
+        from ..values import NoneValue
+
+        return NoneValue(ClearCmd(self))
