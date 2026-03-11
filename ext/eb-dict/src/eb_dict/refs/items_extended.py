@@ -20,7 +20,7 @@ Storage formats:
 
 from __future__ import annotations
 
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta, timezone
 from typing import TYPE_CHECKING
 
 from eb_datetime import (
@@ -115,6 +115,11 @@ class DecimalRef(RefBase[str], DecimalType):
     def slot(cls) -> DecimalRef:
         return Slot(cls)  # type: ignore[return-value]
 
+    def coerce(self, raw: object) -> Decimal:
+        from decimal import Decimal as DecimalCls
+
+        return DecimalCls(raw) if not isinstance(raw, DecimalCls) else raw
+
     def result(self, op: Term) -> object:
         return DecimalValue.from_str(op)
 
@@ -142,6 +147,11 @@ class FractionRef(RefBase[str], FractionType):
     def slot(cls) -> FractionRef:
         return Slot(cls)  # type: ignore[return-value]
 
+    def coerce(self, raw: object) -> Fraction:
+        from fractions import Fraction as FractionCls
+
+        return FractionCls(raw) if not isinstance(raw, FractionCls) else raw
+
     def result(self, op: Term) -> object:
         return FractionValue.from_str(op)
 
@@ -168,6 +178,12 @@ class ComplexRef(RefBase[str], ComplexType):
     @classmethod
     def slot(cls) -> ComplexRef:
         return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> complex:
+        if isinstance(raw, complex):
+            return raw
+        parts = str(raw).split(",")
+        return complex(float(parts[0]), float(parts[1]))
 
     def result(self, op: Term) -> object:
         def parse_complex(s: str) -> complex:
@@ -207,6 +223,9 @@ class BasisPointRef(RefBase[int], BasisPointType):
     def slot(cls) -> BasisPointRef:
         return Slot(cls)  # type: ignore[return-value]
 
+    def coerce(self, raw: object) -> BasisPoint:
+        return BasisPoint(int(raw)) if not isinstance(raw, BasisPoint) else raw
+
     def result(self, op: Term) -> object:
         return BasisPointValue.from_int(op)
 
@@ -233,6 +252,9 @@ class PercentageRef(RefBase[float], PercentageType):
     @classmethod
     def slot(cls) -> PercentageRef:
         return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> Percentage:
+        return Percentage(float(raw)) if not isinstance(raw, Percentage) else raw
 
     def result(self, op: Term) -> object:
         return PercentageValue.from_float(op)
@@ -266,6 +288,11 @@ class DateRef(RefBase[str], DateType):
     def slot(cls) -> DateRef:
         return Slot(cls)  # type: ignore[return-value]
 
+    def coerce(self, raw: object) -> date:
+        if isinstance(raw, date):
+            return raw
+        return date.fromisoformat(str(raw))
+
     def result(self, op: Term) -> object:
         return DateValue.from_iso(op)
 
@@ -293,6 +320,13 @@ class DatetimeRef(RefBase[str], DatetimeType):
     @classmethod
     def slot(cls) -> DatetimeRef:
         return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> datetime:
+        if isinstance(raw, datetime):
+            return raw
+        if isinstance(raw, (int, float)):
+            return datetime.fromtimestamp(raw, tz=UTC)
+        return datetime.fromisoformat(str(raw))
 
     def result(self, op: Term) -> object:
         return DatetimeValue.from_iso(op)
@@ -322,6 +356,11 @@ class TimeRef(RefBase[str], TimeType):
     def slot(cls) -> TimeRef:
         return Slot(cls)  # type: ignore[return-value]
 
+    def coerce(self, raw: object) -> time:
+        if isinstance(raw, time):
+            return raw
+        return time.fromisoformat(str(raw))
+
     def result(self, op: Term) -> object:
         return TimeValue.from_iso(op)
 
@@ -349,6 +388,11 @@ class TimedeltaRef(RefBase[float], TimedeltaType):
     @classmethod
     def slot(cls) -> TimedeltaRef:
         return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> timedelta:
+        if isinstance(raw, timedelta):
+            return raw
+        return timedelta(seconds=float(raw))
 
     def result(self, op: Term) -> object:
         return TimedeltaValue.from_seconds(op)
@@ -380,6 +424,20 @@ class TimezoneRef(RefBase[str], TimezoneType):
     @classmethod
     def slot(cls) -> TimezoneRef:
         return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> timezone:
+        if isinstance(raw, timezone):
+            return raw
+        s = str(raw)
+        if s == "UTC":
+            from datetime import UTC
+
+            return UTC  # type: ignore[return-value]
+        sign = 1 if s[0] == "+" else -1
+        parts = s[1:].split(":")
+        hours = int(parts[0])
+        minutes = int(parts[1]) if len(parts) > 1 else 0
+        return timezone(timedelta(hours=sign * hours, minutes=sign * minutes))
 
     def result(self, op: Term) -> object:
         def parse_timezone(s: str) -> timezone:
@@ -452,6 +510,11 @@ class PathRef(RefBase[str], PathType):
     def slot(cls) -> PathRef:
         return Slot(cls)  # type: ignore[return-value]
 
+    def coerce(self, raw: object) -> Path:
+        from pathlib import PurePath
+
+        return PurePath(raw) if not isinstance(raw, PurePath) else raw
+
     def result(self, op: Term) -> object:
         return PathValue.from_str(op)
 
@@ -478,6 +541,11 @@ class UUIDRef(RefBase[str], UUIDType):
     @classmethod
     def slot(cls) -> UUIDRef:
         return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> UUID:
+        import uuid
+
+        return uuid.UUID(raw) if not isinstance(raw, uuid.UUID) else raw
 
     def result(self, op: Term) -> object:
         return UUIDValue.from_str(op)
