@@ -1,6 +1,6 @@
 # Cheatsheet
 
-Quick reference for all Types, Flows, and Ref operations across everybase, everybase.shape, and eb_virtuals.
+Quick reference for all Types, Values, Flows, Refs, and functional operations across everybase, everybase.shape, and eb-virtuals.
 
 ## Value Types (everybase)
 
@@ -27,6 +27,15 @@ All values are lazy — they build term trees, not compute immediately.
 | `tuple[*Ts]` | `TupleValue[*Ts]` | Comparable |
 | `frozenset[T]` | `FrozenSetValue[T]` | Set + Comparable |
 
+### Collection Views
+
+| Type | Class | Purpose |
+|------|-------|---------|
+| `dict_keys` | `DictKeysValue[K]` | Lazy dict keys view (set-like), `.to_list()` to materialize |
+| `dict_values` | `DictValuesValue[V]` | Lazy dict values view, `.to_list()` to materialize |
+| `dict_items` | `DictItemsValue[K,V]` | Lazy dict items view (set-like), `.to_list()` to materialize |
+| `Iterator[T]` | `IteratorValue[T]` | Lazy iterator, `.to_list()` to materialize |
+
 ### Special
 
 | Type | Class | Purpose |
@@ -37,20 +46,16 @@ All values are lazy — they build term trees, not compute immediately.
 
 ---
 
-## TypeBase Methods (all refs/values)
+## Object[T] Methods (all refs/values)
+
+The universal base provides sentinel checks only:
 
 ```python
-ref.is_empty()       # → BoolValue
-ref.is_invalid()     # → BoolValue
-ref.is_sentinel()    # → BoolValue
-ref.not_empty()      # → BoolValue
-ref.not_invalid()    # → BoolValue
-ref.to_int()         # → IntValue
-ref.to_float()       # → FloatValue
-ref.to_bool()        # → BoolValue
-ref.to_str()         # → StrValue
-ref.to_bytes()       # → BytesValue
-ref.to_list()        # → ListValue
+ref.is_empty()       # -> BoolValue
+ref.is_invalid()     # -> BoolValue
+ref.is_sentinel()    # -> BoolValue
+ref.not_empty()      # -> BoolValue
+ref.not_invalid()    # -> BoolValue
 ```
 
 ---
@@ -63,8 +68,8 @@ ref.to_list()        # → ListValue
 a + b                # AddOp
 a - b                # SubOp
 a * b                # MulOp
-a / b                # TrueDivOp → FloatValue
-a // b               # FloorDivOp → IntValue
+a / b                # TrueDivOp -> FloatValue
+a // b               # FloorDivOp -> IntValue
 a % b                # ModOp
 a ** b               # PowOp
 -a                   # NegOp
@@ -74,20 +79,21 @@ abs(a)               # AbsOp (via __abs__)
 ### Comparison (ComparableBase)
 
 ```python
-a == b    a.eq(b)    # EqOp → BoolValue
-a != b    a.ne(b)    # NeOp → BoolValue
-a < b     a.lt(b)    # LtOp → BoolValue
-a > b     a.gt(b)    # GtOp → BoolValue
-a <= b    a.le(b)    # LeOp → BoolValue
-a >= b    a.ge(b)    # GeOp → BoolValue
+a == b    a.eq(b)    # EqOp -> BoolValue
+a != b    a.ne(b)    # NeOp -> BoolValue
+a < b                # LtOp -> BoolValue
+a > b                # GtOp -> BoolValue
+a <= b               # LeOp -> BoolValue
+a >= b               # GeOp -> BoolValue
 ```
 
 ### Logical (LogicalBase)
 
 ```python
-a.and_(b)            # AndOp → BoolValue
-a.or_(b)             # OrOp → BoolValue
-a.not_()             # NotOp → BoolValue
+a.and_(b)            # AndOp -> BoolValue
+a.or_(b)             # OrOp -> BoolValue
+a.not_()             # NotOp -> BoolValue
+a.bool_()            # BoolOp -> BoolValue
 ```
 
 ### Bitwise (BitwiseBase)
@@ -106,105 +112,182 @@ a >> b               # RightShiftOp
 ## String Methods (StrType)
 
 ```python
-s.upper()            # → StrValue
-s.lower()            # → StrValue
-s.title()            # → StrValue
-s.capitalize()       # → StrValue
-s.swapcase()         # → StrValue
-s.strip(chars?)      # → StrValue
-s.lstrip(chars?)     # → StrValue
-s.rstrip(chars?)     # → StrValue
-s.split(sep?, max?)  # → ListValue
-s.rsplit(sep?, max?) # → ListValue
-s.find(sub)          # → IntValue
-s.rfind(sub)         # → IntValue
-s.count_substring(s) # → IntValue
-s.startswith(pfx)    # → BoolValue
-s.endswith(sfx)      # → BoolValue
-s.isdigit()          # → BoolValue
-s.isalpha()          # → BoolValue
-s.isalnum()          # → BoolValue
-s.isspace()          # → BoolValue
-s.center(w, fill?)   # → StrValue
-s.ljust(w, fill?)    # → StrValue
-s.rjust(w, fill?)    # → StrValue
-s.zfill(w)           # → StrValue
-s.replace(old, new)  # → StrValue
-s.encode(enc?)       # → BytesValue
-s + other            # → StrValue (concatenation)
-s[i]                 # → StrValue (index)
-s[i:j]               # → StrValue (slice)
+s.upper()            # -> StrValue
+s.lower()            # -> StrValue
+s.title()            # -> StrValue
+s.capitalize()       # -> StrValue
+s.swapcase()         # -> StrValue
+s.strip(chars?)      # -> StrValue
+s.lstrip(chars?)     # -> StrValue
+s.rstrip(chars?)     # -> StrValue
+s.split(sep?, max?)  # -> ListValue
+s.rsplit(sep?, max?) # -> ListValue
+s.find(sub)          # -> IntValue
+s.rfind(sub)         # -> IntValue
+s.count_substring(s) # -> IntValue
+s.startswith(pfx)    # -> BoolValue
+s.endswith(sfx)      # -> BoolValue
+s.isdigit()          # -> BoolValue
+s.isalpha()          # -> BoolValue
+s.isalnum()          # -> BoolValue
+s.isspace()          # -> BoolValue
+s.center(w, fill?)   # -> StrValue
+s.ljust(w, fill?)    # -> StrValue
+s.rjust(w, fill?)    # -> StrValue
+s.zfill(w)           # -> StrValue
+s.replace(old, new)  # -> StrValue
+s.encode(enc?)       # -> BytesValue
+s + other            # -> StrValue (concatenation)
+s[i]                 # -> StrValue (index)
+s[i:j]               # -> StrValue (slice)
 ```
 
 ---
 
 ## Collection Methods
 
-### Iterable (shared by list, dict, set)
-
-```python
-c.len_()             # → IntValue
-c.contains(item)     # → BoolValue
-c.map_(fn)           # → CollectionValue (transform each element)
-c.filter_(pred)      # → CollectionValue (keep matching)
-c.filter_by_(fld, v) # → CollectionValue (keep where field == value)
-c.reduce_(fn, init)  # → Value (fold)
-c.pluck_(field)      # → CollectionValue (extract field from each element)
-c.to_dict_(k_fn, v)  # → DictValue (build dict from elements)
-c.sum_()             # → ElementValue
-c.min_(key?)         # → ElementValue
-c.max_(key?)         # → ElementValue
-c.any_()             # → BoolValue
-c.all_()             # → BoolValue
-```
-
 ### Sequence (list, tuple)
 
 ```python
-seq.first()              # → ElementValue
-seq.last()               # → ElementValue
-seq.reversed_()          # → CollectionValue
-seq.sorted_(reverse?)    # → CollectionValue
-seq.join(sep)            # → StrValue
-seq.index(value)         # → IntValue
-seq.find_index(pred)     # → IntValue
-seq.count(value)         # → IntValue
-seq[i]                   # → ElementValue (index)
-seq[i:j]                 # → CollectionValue (slice)
-seq + other              # → CollectionValue (concatenation)
+seq.first()              # -> ElementValue
+seq.last()               # -> ElementValue
+seq.join(sep)            # -> StrValue
+seq.index(value)         # -> IntValue
+seq.find_index(pred)     # -> IntValue
+seq.count(value)         # -> IntValue
+seq[i]                   # -> ElementValue (index)
+seq[i:j]                 # -> CollectionValue (slice)
 ```
 
 ### Mutable Sequence (list)
 
 ```python
-seq.append(item)         # → CollectionValue
-seq.extend(items)        # → CollectionValue
-seq.insert(idx, item)    # → CollectionValue
-seq.pop(idx?)            # → ElementValue
-seq.remove(value)        # → CollectionValue
+seq.append(item)         # -> NoneValue
+seq.extend(items)        # -> NoneValue
+seq.insert(idx, item)    # -> NoneValue
+seq.pop(idx?)            # -> ElementValue
+seq.remove(value)        # -> NoneValue
+seq.clear()              # -> NoneValue
 ```
 
 ### Mapping (dict)
 
 ```python
-d.keys_()                # → ListValue
-d.values_()              # → ListValue
-d.items_()               # → ListValue
-d.get_(key, default?)    # → Value
-d[key]                   # → AnyValue (subscript)
+d.keys()                 # -> DictKeysValue (set-like view)
+d.values()               # -> DictValuesValue
+d.items()                # -> DictItemsValue (set-like view)
+d.get(key, default?)     # -> ValueResult
+d.key_at(idx)            # -> ValueResult
+d[key]                   # -> ValueResult (subscript)
 ```
 
 ### Mutable Mapping (dict)
 
 ```python
-d.set_(key, value)       # → Value
-d.delete(key)            # → Value
-d.update_(other)         # → CollectionValue
+d.set(key, value)        # -> NoneValue
+d.delete(key)            # -> NoneValue
+d.update(other)          # -> NoneValue
+d.pop(key, default?)     # -> ValueResult
+d.popitem()              # -> ValueResult
+d.setdefault(key, def?)  # -> ValueResult
+d.clear()                # -> NoneValue
+d.copy()                 # -> ValueResult
+```
+
+### Set (set, frozenset)
+
+```python
+s.union(other)               # -> SetValue
+s.intersection(other)        # -> SetValue
+s.difference(other)          # -> SetValue
+s.symmetric_difference(other)# -> SetValue
+s.issubset(other)            # -> BoolValue
+s.issuperset(other)          # -> BoolValue
+s.isdisjoint(other)          # -> BoolValue
+```
+
+### Mutable Set (set)
+
+```python
+s.add(value)                 # -> NoneValue
+s.remove(value)              # -> NoneValue
+s.discard(value)             # -> NoneValue
+s.pop()                      # -> ElementValue
+s.clear()                    # -> NoneValue
+s.update(other)              # -> NoneValue
+s.intersection_update(other) # -> NoneValue
+s.difference_update(other)   # -> NoneValue
 ```
 
 ---
 
-## PV Ref Types (eb-virtuals)
+## Functional Operations (everybase.abc.fn)
+
+All higher-order operations are standalone functions, not methods on collections.
+
+```python
+from everybase.abc import fn
+```
+
+### Transformations (lazy -- return IteratorValue)
+
+```python
+fn.Map(iterable, func)              # transform each element
+fn.Filter(iterable, pred)           # keep matching elements
+fn.Reversed(iterable)               # reverse order
+fn.Flatten(iterable)                # flatten one level
+fn.Unique(iterable, key=None)       # deduplicate preserving order
+fn.Pluck(iterable, field)           # extract field from each element
+fn.FilterBy(iterable, field, value) # keep where field == value
+```
+
+### Combinators (lazy -- return IteratorValue)
+
+```python
+fn.Zip(*iterables)                  # zip multiple iterables
+fn.Chain(*iterables)                # concatenate iterables
+fn.Enumerate(iterable, start=0)     # add index to each element
+```
+
+### Slicing (lazy -- return IteratorValue)
+
+```python
+fn.Take(iterable, n)                # first N elements
+fn.Drop(iterable, n)                # skip first N elements
+```
+
+### Terminals (eager -- return concrete values)
+
+```python
+fn.Sorted(iterable, reverse=False)  # -> ListValue
+fn.GroupBy(iterable, key_fn)        # -> ListValue[tuple[K, list]]
+fn.Partition(iterable, pred)        # -> TupleValue[list, list]
+fn.Reduce(iterable, fn, initial)    # -> AnyValue
+fn.Sum(iterable)                    # -> AnyValue
+fn.Min(iterable, key=None)          # -> AnyValue
+fn.Max(iterable, key=None)          # -> AnyValue
+fn.Any(iterable)                    # -> BoolValue
+fn.All(iterable)                    # -> BoolValue
+```
+
+### Builtins
+
+```python
+fn.Len(obj)                         # -> IntValue
+fn.Contains(collection, item)       # -> BoolValue
+```
+
+### Materializers
+
+```python
+fn.ToList(iterable)                 # -> ListValue (consume iterator)
+fn.ToSet(iterable)                  # -> SetValue
+fn.ToDict(iterable, key_fn, val_fn) # -> DictValue
+```
+
+---
+
+## eb-virtuals Ref Types
 
 These are what you use in Shape slot definitions.
 
@@ -221,15 +304,16 @@ ebv.BytesRef.slot()       # bytes storage
 ### Extended Refs
 
 ```python
+ebv.DecimalRef.slot()     # decimal.Decimal
+ebv.FractionRef.slot()    # fractions.Fraction
+ebv.ComplexRef.slot()     # complex
+ebv.BasisPointRef.slot()  # basis points
+ebv.PercentageRef.slot()  # percentage
 ebv.DateRef.slot()        # datetime.date
 ebv.DatetimeRef.slot()    # datetime.datetime
 ebv.TimeRef.slot()        # datetime.time
 ebv.TimedeltaRef.slot()   # datetime.timedelta
-ebv.DecimalRef.slot()     # decimal.Decimal
-ebv.FractionRef.slot()    # fractions.Fraction
-ebv.ComplexRef.slot()     # complex
-ebv.PercentageRef.slot()  # percentage
-ebv.BasisPointRef.slot()  # basis points
+ebv.TimezoneRef.slot()    # datetime.timezone
 ebv.PathRef.slot()        # pathlib.Path
 ebv.UUIDRef.slot()        # uuid.UUID
 ```
@@ -237,60 +321,68 @@ ebv.UUIDRef.slot()        # uuid.UUID
 ### Collection Refs
 
 ```python
-ebv.ListRef.slot(T)                     # list of T
-ebv.DictRef.slot(K, V)                  # dict with K keys, V values
-ebv.SetRef.slot(T)                      # set of T
-ebv.ShapeRef.slot(MyShape)              # single nested shape
-ebv.ShapesListRef.slot(MyShape)         # list of shapes
-ebv.ShapesDictRef.slot(MyShape)         # dict of shapes (str keys)
-ebv.ShapesDictRef.slot(MyShape, key_type=int)  # dict of shapes (int keys)
+ebv.ListRef.slot(item_type=str)                      # list of str
+ebv.DictRef.slot(value_type=float)                    # dict with str keys, float values
+ebv.DictRef.slot(value_type=float, key_type=int)      # dict with int keys, float values
+ebv.SetRef.slot(item_type=str)                        # set of str
+ebv.ShapeRef.slot(MyShape)                            # single nested shape
+ebv.ShapesListRef.slot(MyShape)                       # list of shapes
+ebv.ShapesDictRef.slot(MyShape)                       # dict of shapes (str keys)
+ebv.ShapesDictRef.slot(MyShape, key_type=int)         # dict of shapes (int keys)
 ```
 
 ---
 
-## PV Ref Operations (everybase.shape capabilities)
+## Ref Operations (everybase.shape)
+
+Refs ARE terms -- executing a ref reads its value directly (no separate `.get()` needed).
 
 ### Item Refs (primitive slots)
 
 ```python
-ref.get()                # → typed Value (read from storage)
-ref.set(value)           # → typed Value (write to storage)
-ref.exists()             # → BoolValue (slot has been written)
-ref.missing()            # → BoolValue (slot not yet written)
-ref.remove()             # → NoneValue (delete from storage)
+ref.store(value)         # -> NoneValue (write to storage)
+ref.exists()             # -> BoolValue (slot has been written)
+ref.missing()            # -> BoolValue (slot not yet written)
+ref.erase()              # -> NoneValue (delete from storage)
+await ref.execute(ctx)   # read value from storage (ref is the term)
 ```
 
 ### Collection Refs (list, dict, set, shape refs)
 
 ```python
-ref.get()                # → typed Value (extract entire collection)
-ref.set(data)            # → typed Value (replace entire collection)
-ref.exists()             # → BoolValue
-ref.missing()            # → BoolValue
-ref.clear()              # → NoneValue (remove all entries)
+ref.store(data)          # -> NoneValue (replace entire collection)
+ref.exists()             # -> BoolValue
+ref.missing()            # -> BoolValue
+ref.erase()              # -> NoneValue (delete from parent)
 ```
 
-### Reactive (observation triggers)
+### Facets (eb-virtuals lazy/eager)
 
-Primitive refs:
 ```python
-ref.on_change()          # OnPrimitiveChangeOp — fires when this value changes
-```
-
-Collection/view refs:
-```python
-ref.on_change()              # OnChangeOp — any change in this view
-ref.on_child_change(addr)    # OnChildChangeOp — specific child changed
-ref.on_children_change()     # OnChildrenChangeOp — any immediate child changed
-ref.on_descendants_change()  # OnDescendantsChangeOp — any descendant changed
+ref.lazy                 # -> ref copy with lazy facet (default)
+ref.eager                # -> ref copy with eager facet
 ```
 
 ### Navigation (document model)
 
 ```python
-dict_ref[key]            # → child ref (navigates into dict)
-list_ref[idx]            # → child ref (navigates into list)
-shape_ref.field          # → child ref (navigates into shape slot)
+dict_ref[key]            # -> child ref (navigates into dict)
+list_ref[idx]            # -> child ref (navigates into list)
+shape_ref.field          # -> child ref (navigates into shape slot)
+```
+
+### Reactive (observation triggers -- everybase.shape)
+
+Primitive refs:
+```python
+ref.on_change()          # OnPrimitiveChangeOp -- fires when this value changes
+```
+
+Collection/view refs:
+```python
+ref.on_change()              # OnChangeOp -- any change in this view
+ref.on_child_change(addr)    # OnChildChangeOp -- specific child changed
+ref.on_children_change()     # OnChildrenChangeOp -- any immediate child changed
 ```
 
 ---
@@ -298,7 +390,9 @@ shape_ref.field          # → child ref (navigates into shape slot)
 ## Flows (everybase.abc.flows)
 
 ```python
-import everybase.abc.flows as f
+from everybase.abc.flows import Seq, If, Print  # etc.
+# or
+from everybase.abc import Print, Seq, fn
 ```
 
 ### Control
@@ -317,8 +411,8 @@ import everybase.abc.flows as f
 | Flow | Signature | Description |
 |------|-----------|-------------|
 | `ForRange` | `ForRange(start, stop, body, *, step=1, index=ref)` | Counted loop |
-| `ForEach` | `ForEach(items, body, *, index=ref)` | Iterate collection |
-| `ForEachParallel` | `ForEachParallel(items, body, max_parallel=N)` | Concurrent iteration |
+| `ForEach` | `ForEach(items, body, *, item=ref, index=ref)` | Iterate collection |
+| `Fold` | `Fold(items, *, acc=ref, initial=val, item=ref, body=...)` | Stateful reduction |
 
 ### Parallel
 
@@ -346,7 +440,11 @@ import everybase.abc.flows as f
 | `Throttle` | `Throttle(interval, body=None)` | Rate-limit calls |
 | `Debounce` | `Debounce(delay, body=None)` | Wait for quiet period |
 
-### Reactive (everybase.shape)
+### Reactive (everybase.shape.flows)
+
+```python
+from everybase.shape.flows.reactive import React, ReactForever, ReactWhile
+```
 
 | Flow | Signature | Description |
 |------|-----------|-------------|
@@ -365,18 +463,15 @@ import everybase.abc.flows as f
 ### Assertion Helpers
 
 ```python
-f.AssertExists(ref)              # raises if missing
-f.AssertMissing(ref)             # raises if exists
-f.AssertEmpty(ref)               # raises if not empty
-f.AssertNotEmpty(ref)            # raises if empty
-f.AssertEquals(ref, value)       # raises if not equal
-f.AssertNotEquals(ref, value)    # raises if equal
-f.AssertGreaterThan(ref, value)  # raises if not >
-f.AssertLessThan(ref, value)     # raises if not <
-f.SkipIfEmpty(ref, body)         # skip body if empty
-f.SkipIfNotEmpty(ref, body)      # skip body if not empty
-f.SkipIfMissing(ref, body)       # skip body if missing
-f.SkipIfExists(ref, body)        # skip body if exists
+from everybase.abc.flows import (
+    AssertExists, AssertMissing,
+    AssertEmpty, AssertNotEmpty,
+    AssertEquals, AssertNotEquals,
+    AssertGreaterThan, AssertGreaterOrEqual,
+    AssertLessThan, AssertLessOrEqual,
+    SkipIfEmpty, SkipIfNotEmpty,
+    SkipIfMissing, SkipIfExists,
+)
 ```
 
 ---
@@ -386,7 +481,7 @@ f.SkipIfExists(ref, body)        # skip body if exists
 ```python
 from everybase.abc import FuncCallOp, MethodCallOp, GetAttrOp
 
-# Call a Python function (escape hatch — prefer term algebra)
+# Call a Python function (escape hatch -- prefer term algebra)
 result = FuncCallOp(my_func, arg1, arg2)
 
 # Call a method on a resolved object
@@ -407,37 +502,60 @@ import eb_virtuals as ebv
 class MyState(Shape):
     counter = ebv.IntRef.slot()
     name = ebv.StrRef.slot()
-    items = ebv.ListRef.slot(str)
+    items = ebv.ListRef.slot(item_type=str)
     records = ebv.ShapesDictRef.slot(RecordShape)
     nested = ebv.ShapeRef.slot(NestedShape)
 
 # Access: MyState.counter, MyState.name, etc.
-# These are class-level refs — Shape is never instantiated.
+# These are class-level refs -- Shape is never instantiated.
 ```
 
 ---
 
 ## Common Patterns
 
+### Lazy term composition
+
+```python
+# Refs compose lazily -- nothing touches storage until execute()
+Seq(
+    MyState.counter.store(0),
+    MyState.name.store("hello"),
+    Print("counter", MyState.counter),
+    Print("upper name", MyState.name.upper()),
+)
+```
+
 ### Ref arithmetic in flows
 
 ```python
-# Refs support operators — results are lazy terms
-MyState.count.set(MyState.count + 1)
-MyState.total.set(MyState.a + MyState.b * 2)
-f.If(MyState.count > 10, handle_overflow)
+# Typed refs support operators -- results are lazy terms
+MyState.counter.store(MyState.counter + 1)
+If(MyState.counter > 10, handle_overflow)
 ```
 
 ### Dict navigation
 
 ```python
 # Navigate into nested shapes
-token = s.tokens[mint_key]        # → Token shape ref
-block = token.blocks[slot_num]    # → TokenBlock shape ref
-tx = block.txs[sig]               # → Transaction shape ref
+token = s.tokens[mint_key]        # -> Token shape ref
+block = token.blocks[slot_num]    # -> TokenBlock shape ref
+tx = block.txs[sig]               # -> Transaction shape ref
 
 # Then access fields
-token.tx_count.set(token.tx_count + 1)
+token.tx_count.store(token.tx_count + 1)
+```
+
+### Lazy collection queries with fn
+
+```python
+Seq(
+    Print("keys", my_dict.keys().to_list()),
+    Print("first 2", fn.Take(my_dict.keys(), 2).to_list()),
+    Print("sorted", fn.Sorted(my_dict.keys())),
+    Print("has X?", fn.Contains(my_dict.keys(), "X")),
+    Print("count", fn.Len(my_dict.keys())),
+)
 ```
 
 ### FuncCallOp for unavoidable Python
@@ -445,26 +563,24 @@ token.tx_count.set(token.tx_count + 1)
 ```python
 # When term algebra can't express it yet
 filtered = FuncCallOp(my_filter_fn, raw_data)
-s.buffer.set(filtered)
+s.buffer.store(filtered)
 
 # Wrap in typed value when needed
 count = IntValue(FuncCallOp(len, some_list))
 ```
 
-### Service terms
+### eb-virtuals execution
 
 ```python
-# Service methods return lazy terms
-slot = Services.solana.get_slot()           # not called yet
-block = Services.solana.get_block(slot)     # composed lazily
-s.current_slot.set(slot)                    # evaluated at execution
-```
+from eb_virtuals.presets import memory_storage
+from virtuals.tkv import StorageProtocol
 
-### Type methods via term algebra
-
-```python
-# Domain types wrap service results
-curve = BondingCurveValue(Services.pumpfun.get_bonding_curve(mint))
-s.market_cap.set(curve.market_cap())        # MethodCallOp under the hood
-s.price.set(curve.price())                  # resolved at execution
+with memory_storage() as storage:
+    ctx = Context().bind(storage, StorageProtocol)
+    await ebv.Atomic(
+        Seq(
+            MyState.counter.store(42),
+            Print("val", MyState.counter),
+        )
+    ).execute(ctx)
 ```
