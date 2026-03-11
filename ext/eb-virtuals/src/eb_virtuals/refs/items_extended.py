@@ -20,7 +20,7 @@ Storage formats:
 
 from __future__ import annotations
 
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta, timezone
 from typing import TYPE_CHECKING
 
 from eb_datetime import (
@@ -385,6 +385,8 @@ class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
     def coerce(self, raw: object) -> datetime:  # noqa: D102
         if isinstance(raw, datetime):
             return raw
+        if isinstance(raw, (int, float)):
+            return datetime.fromtimestamp(raw, tz=UTC)
         return datetime.fromisoformat(str(raw))
 
     def result(self, op: Term) -> object:  # noqa: D102

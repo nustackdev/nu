@@ -32,8 +32,8 @@ class ForRange(Flow):
     at each iteration.
 
     When ``index`` is provided, the body is meta-adjusted at construction
-    time: ``body = Seq(body, index.set(index + step))``, and an init node
-    ``index.set(start)`` is prepended as a child.  This makes the index
+    time: ``body = Seq(body, index.store(index + step))``, and an init node
+    ``index.store(start)`` is prepended as a child.  This makes the index
     setter a tree-visible child, so meta-transforms (auto_atomic, etc.)
     can see and wrap it.
 
@@ -76,8 +76,8 @@ class ForRange(Flow):
         self._has_index = index is not None
 
         if index is not None:
-            init = index.set(ensure_term(start))
-            body = Seq(body, index.set(index + ensure_term(step)))
+            init = index.store(ensure_term(start))
+            body = Seq(body, index.store(index + ensure_term(step)))
             super().__init__(start_t, stop_t, step_t, init, body)
         else:
             super().__init__(start_t, stop_t, step_t, body)
@@ -114,7 +114,7 @@ class ForEach(Flow):
     iteration — no more scratch shapes needed for simple iteration.
 
     When ``index`` is provided, the body is meta-adjusted:
-    ``body = Seq(body, index.set(index + 1))``, init ``index.set(0)``.
+    ``body = Seq(body, index.store(index + 1))``, init ``index.store(0)``.
 
     Args:
         items: Iterable (or Term resolving to one) to iterate over.
@@ -153,8 +153,8 @@ class ForEach(Flow):
         self._item_ref = item
 
         if index is not None:
-            init = index.set(0)
-            body = Seq(body, index.set(index + 1))
+            init = index.store(0)
+            body = Seq(body, index.store(index + 1))
             super().__init__(ensure_term(items), init, body)
         else:
             super().__init__(ensure_term(items), body)
@@ -171,7 +171,7 @@ class ForEach(Flow):
 
         for _i, elem in enumerate(items):
             if self._has_item:
-                await self._item_ref.set(elem).execute(ctx)
+                await self._item_ref.store(elem).execute(ctx)
             await body.execute(ctx)
 
 
@@ -200,7 +200,7 @@ class Fold(Flow):
             acc=acc,
             initial=0,
             item=item,
-            body=acc.set(acc.get() + item.get()),
+            body=acc.store(acc + item),
         )
     """
 
@@ -226,7 +226,7 @@ class Fold(Flow):
         self._item_ref = item
         self._has_item = item is not None
 
-        init = acc.set(ensure_term(initial))
+        init = acc.store(ensure_term(initial))
         super().__init__(ensure_term(items), init, body)
 
     async def execute(self, ctx: Context) -> None:
@@ -237,5 +237,5 @@ class Fold(Flow):
 
         for elem in items:
             if self._has_item:
-                await self._item_ref.set(elem).execute(ctx)
+                await self._item_ref.store(elem).execute(ctx)
             await body.execute(ctx)
