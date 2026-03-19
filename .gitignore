@@ -194,17 +194,12 @@ benchmark_results/
 .state*/
 .logs*/
 
-# AI-related
-.cursor/
-.agent.md/
-.claude/
-Claude.md
-repomix*.txt
-.agent
-
 # cython files
 *.c
 *.cpp
 *.dylib
 *.so
 lib*.so.*
+
+# syncthing
+.stfolder

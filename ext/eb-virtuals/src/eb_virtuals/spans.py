@@ -78,10 +78,27 @@ class Atomic(Span):
         self._snap = None
         storage = ctx[_tags(StorageProtocol, self.scope)]
 
-        # Check if subtree is pure (all terms are read-only)
-        has_impure = any(not t.is_self_pure for t in find(self, lambda n: isinstance(n, Term)))
+        # Check for PV writes only — other impure terms (ed stores) are irrelevant
+        from .morphisms.collection import ClearPrimitivesUnsafeCmd
+        from .morphisms.item import (
+            InitCmd,
+            ItemPrimitiveDeleteUnsafeCmd,
+            ItemPrimitiveSetUnsafeCmd,
+            ItemPrimitiveSetUnsafeParentSkipCmd,
+        )
 
-        if has_impure:
+        pv_write_types = (
+            InitCmd,
+            ItemPrimitiveSetUnsafeCmd,
+            ItemPrimitiveSetUnsafeParentSkipCmd,
+            ItemPrimitiveDeleteUnsafeCmd,
+            ClearPrimitivesUnsafeCmd,
+        )
+        has_pv_write = any(
+            isinstance(t, pv_write_types) for t in find(self, lambda n: isinstance(n, Term))
+        )
+
+        if has_pv_write:
             return self._enter_transaction(ctx, storage)
         return self._enter_snapshot(ctx, storage)
 

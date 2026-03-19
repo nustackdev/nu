@@ -30,9 +30,28 @@ def _has_scope(node: Node, scope: Hashable) -> bool:
     return False
 
 
-def _has_impure(node: Node) -> bool:
-    """Check if a node's subtree contains any impure terms."""
-    return any(not t.is_self_pure for t in find(node, lambda n: isinstance(n, Term)))
+def _has_pv_write(node: Node) -> bool:
+    """Check if a node's subtree contains impure PV (eb_virtuals) operations.
+
+    Only eb_virtuals write commands matter for Transaction vs Snapshot.
+    Other impure terms (e.g. ed dict stores) are irrelevant to PV atomicity.
+    """
+    from ..morphisms.collection import ClearPrimitivesUnsafeCmd
+    from ..morphisms.item import (
+        InitCmd,
+        ItemPrimitiveDeleteUnsafeCmd,
+        ItemPrimitiveSetUnsafeCmd,
+        ItemPrimitiveSetUnsafeParentSkipCmd,
+    )
+
+    pv_write_types = (
+        InitCmd,
+        ItemPrimitiveSetUnsafeCmd,
+        ItemPrimitiveSetUnsafeParentSkipCmd,
+        ItemPrimitiveDeleteUnsafeCmd,
+        ClearPrimitivesUnsafeCmd,
+    )
+    return any(isinstance(t, pv_write_types) for t in find(node, lambda n: isinstance(n, Term)))
 
 
 def _conditional_wrap_skip_spans[N: Node](
@@ -107,7 +126,7 @@ def auto_atomic[N: Node](
         return _has_scope(n, scope) if scope is not None else True
 
     def wrap(term: Node) -> Transaction | Snapshot:
-        if _has_impure(term):
+        if _has_pv_write(term):
             return Transaction(term, **kwargs)
         return Snapshot(term, **kwargs)
 
