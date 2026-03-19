@@ -31,27 +31,21 @@ def _has_scope(node: Node, scope: Hashable) -> bool:
 
 
 def _has_pv_write(node: Node) -> bool:
-    """Check if a node's subtree contains impure PV (eb_virtuals) operations.
+    """Check if a node's subtree contains impure operations on virtuals refs.
 
-    Only eb_virtuals write commands matter for Transaction vs Snapshot.
+    An impure term is a PV write only if it operates on a virtuals ref
+    (PrimitiveRef, ViewRef pre-inline, or FlatRef post-inline).
     Other impure terms (e.g. ed dict stores) are irrelevant to PV atomicity.
     """
-    from ..morphisms.collection import ClearPrimitivesUnsafeCmd
-    from ..morphisms.item import (
-        InitCmd,
-        ItemPrimitiveDeleteUnsafeCmd,
-        ItemPrimitiveSetUnsafeCmd,
-        ItemPrimitiveSetUnsafeParentSkipCmd,
-    )
+    from ..refs.base import PrimitiveRef, ViewRef
+    from .flat_ref import FlatRef
 
-    pv_write_types = (
-        InitCmd,
-        ItemPrimitiveSetUnsafeCmd,
-        ItemPrimitiveSetUnsafeParentSkipCmd,
-        ItemPrimitiveDeleteUnsafeCmd,
-        ClearPrimitivesUnsafeCmd,
-    )
-    return any(isinstance(t, pv_write_types) for t in find(node, lambda n: isinstance(n, Term)))
+    pv_ref_types = (FlatRef, PrimitiveRef, ViewRef)
+
+    for t in find(node, lambda n: isinstance(n, Term) and not n.is_self_pure):
+        if any(isinstance(c, pv_ref_types) for c in find(t, lambda n: isinstance(n, pv_ref_types))):
+            return True
+    return False
 
 
 def _conditional_wrap_skip_spans[N: Node](

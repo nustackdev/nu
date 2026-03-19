@@ -21,7 +21,7 @@ from virtuals.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionP
 from virtuals.view import View
 from virtuals.views import DictView
 
-from everybase import Context, Span, Term, find
+from everybase import Context, Span
 
 
 if TYPE_CHECKING:
@@ -79,26 +79,9 @@ class Atomic(Span):
         storage = ctx[_tags(StorageProtocol, self.scope)]
 
         # Check for PV writes only — other impure terms (ed stores) are irrelevant
-        from .morphisms.collection import ClearPrimitivesUnsafeCmd
-        from .morphisms.item import (
-            InitCmd,
-            ItemPrimitiveDeleteUnsafeCmd,
-            ItemPrimitiveSetUnsafeCmd,
-            ItemPrimitiveSetUnsafeParentSkipCmd,
-        )
+        from .meta.auto_atomic import _has_pv_write
 
-        pv_write_types = (
-            InitCmd,
-            ItemPrimitiveSetUnsafeCmd,
-            ItemPrimitiveSetUnsafeParentSkipCmd,
-            ItemPrimitiveDeleteUnsafeCmd,
-            ClearPrimitivesUnsafeCmd,
-        )
-        has_pv_write = any(
-            isinstance(t, pv_write_types) for t in find(self, lambda n: isinstance(n, Term))
-        )
-
-        if has_pv_write:
+        if _has_pv_write(self):
             return self._enter_transaction(ctx, storage)
         return self._enter_snapshot(ctx, storage)
 
