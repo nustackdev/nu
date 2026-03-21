@@ -12,8 +12,6 @@ from ..spans import Snapshot, Transaction
 if TYPE_CHECKING:
     from collections.abc import Hashable
 
-    from virtuals.view import View
-
     from everybase import Node
 
 
@@ -78,7 +76,6 @@ def _conditional_wrap_skip_spans[N: Node](
 def auto_atomic[N: Node](
     tree: N,
     scope: Hashable | None = None,
-    view_cls: type[View] | None = None,
 ) -> N:
     """Wrap each Term subtree in a ``Transaction`` or ``Snapshot`` span.
 
@@ -89,7 +86,7 @@ def auto_atomic[N: Node](
     pure subtrees get ``Snapshot``. No runtime purity check needed.
 
     Existing Transaction/Snapshot spans (placed explicitly by user code)
-    are respected — their contents won't be re-wrapped.
+    are respected - their contents won't be re-wrapped.
 
     When ``scope`` is given, only Terms whose refs belong to that scope
     are wrapped. This lets you call auto_atomic multiple times to handle
@@ -103,7 +100,6 @@ def auto_atomic[N: Node](
     Args:
         tree: Expression tree to rewrite.
         scope: Scope filter and span scope. None = wrap all Terms unscoped.
-        view_cls: View class to open. If None, uses default (DictView).
 
     Returns:
         New tree with Transaction/Snapshot spans injected.
@@ -111,8 +107,6 @@ def auto_atomic[N: Node](
     kwargs: dict = {}
     if scope is not None:
         kwargs["scope"] = scope
-    if view_cls is not None:
-        kwargs["view_cls"] = view_cls
 
     def pred(n: Node) -> bool:
         if not isinstance(n, Term):

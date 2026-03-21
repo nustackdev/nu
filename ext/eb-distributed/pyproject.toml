@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eb-distributed"
+version = "0.1.0"
+description = "Distributed execution adapters for everybase — invisibles RPC + process launchers"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
+requires-python = ">=3.12"
+dependencies = [
+    "composables>=0.1.0",
+    "invisibles>=0.1.0",
+]
+keywords = ["distributed", "rpc", "invisibles", "multiprocessing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Repository = "https://github.com/everyabc/everybase"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/eb_distributed"]
