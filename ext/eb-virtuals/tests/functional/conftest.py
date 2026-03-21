@@ -4,6 +4,7 @@ import pathlib
 from collections.abc import Generator
 
 import pytest
+from virtuals import Navigator
 from virtuals.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionProtocol
 from virtuals.view import View
 
@@ -130,22 +131,28 @@ def snapshot(storage: StorageProtocol) -> Generator[SnapshotProtocol, None, None
 
 
 # ============================================================================
+# Navigator Fixture
+# ============================================================================
+
+
+@pytest.fixture
+def nav(storage: StorageProtocol) -> Navigator:
+    """Navigator instance for tests."""
+    return Navigator(storage)
+
+
+# ============================================================================
 # Root View Fixture
 # ============================================================================
 
 
 @pytest.fixture
-def root_view(tx: TransactionProtocol) -> View:
+def root_view(tx: TransactionProtocol, nav: Navigator) -> View:
     """Root DictView for esstd tests.
 
-    Creates the root container at "/" with DictView, providing a mapping
-    interface to the entire tree. All other views should navigate from this root.
-
-    Dependency chain: codec → storage → tx → root_view
+    Dependency chain: codec -> storage -> nav -> tx -> root_view
     """
-    from virtuals.views import DictView
-
-    return DictView.open_root(ctx=tx)
+    return nav.root(ctx=tx)
 
 
 # ============================================================================
@@ -154,14 +161,12 @@ def root_view(tx: TransactionProtocol) -> View:
 
 
 @pytest.fixture
-def ctx(root_view: View, tx: TransactionProtocol) -> Context:
-    """Context bundling root view and transaction.
+def ctx(root_view: View, tx: TransactionProtocol, nav: Navigator) -> Context:
+    """Context bundling Navigator, root view, and transaction.
 
-    Used by shapes layer for executing operations and commands.
-
-    Dependency chain: codec → storage → tx → root_view → ctx
+    Dependency chain: codec -> storage -> nav -> tx -> root_view -> ctx
     """
-    return Context().bind(root_view, View).bind(tx, TransactionProtocol)
+    return Context().bind(nav, Navigator).bind(root_view, View).bind(tx, TransactionProtocol)
 
 
 # ============================================================================
