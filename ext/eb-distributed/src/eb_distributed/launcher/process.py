@@ -1,6 +1,8 @@
 """ProcessLauncher - spawns a subprocess running an InvisiblesServer.
 
-The subprocess creates a Resource from inner_spec, serves it via InvisiblesServer.
+The subprocess creates an InvisiblesServer via Runtime. The server's
+Attach chain resolves ResourceFactory automatically.
+Clients connect and request resources through the factory.
 """
 
 from __future__ import annotations
@@ -19,13 +21,11 @@ __all__ = [
 
 
 def _worker_main(
-    inner_spec: ResourceSpec,
-    transport: str,
-    address: str,
+    server_spec_data: object,
     ready_queue: mp.Queue,
     shutdown_event: mp.Event,
 ) -> None:
-    """Worker subprocess: create resource from inner_spec, serve via invisibles."""
+    """Worker subprocess: create InvisiblesServer from spec, serve."""
     import asyncio
     import os
     import signal
@@ -35,19 +35,17 @@ def _worker_main(
     try:
         from composables import Runtime
 
-        from eb_distributed.rpc.server import InvisiblesServer, InvisiblesServerSpec
-
         async def run() -> None:
             async with Runtime() as runtime:
-                # Create the resource from inner_spec
-                resource = await runtime.create(inner_spec)
+                await runtime.create(server_spec_data)
 
-                # Serve it via invisibles
-                server_spec = InvisiblesServerSpec(transport=transport, address=address)
-                server = InvisiblesServer(server_spec, root_service=resource)
-                await runtime.adopt(server)
-
-                ready_queue.put({"status": "ready", "pid": os.getpid(), "address": address})
+                ready_queue.put(
+                    {
+                        "status": "ready",
+                        "pid": os.getpid(),
+                        "address": server_spec_data.address,
+                    }
+                )
 
                 while not shutdown_event.is_set():
                     await asyncio.sleep(0.1)
@@ -62,12 +60,24 @@ def _worker_main(
 
 
 class ProcessLauncher(Resource):
-    """Spawns a subprocess with an InvisiblesServer serving a Resource."""
+    """Spawns a subprocess with an InvisiblesServer.
+
+    The subprocess creates an InvisiblesServer via Runtime.
+    The server hosts a ResourceFactory (via Attach) that clients
+    use to create resources on demand.
+    """
 
     spec: ProcessLauncherSpec
 
     async def setup(self) -> None:
         """Start the worker subprocess and wait for it to be ready."""
+        from eb_distributed.rpc.server import InvisiblesServerSpec
+
+        server_spec = InvisiblesServerSpec(
+            transport=self.spec.transport,
+            address=self.spec.address,
+        )
+
         ctx = mp.get_context("fork")
         self._ready_queue: mp.Queue = ctx.Queue()
         self._shutdown_event: mp.Event = ctx.Event()
@@ -75,9 +85,7 @@ class ProcessLauncher(Resource):
         self._process = ctx.Process(
             target=_worker_main,
             args=(
-                self.spec.inner_spec,
-                self.spec.transport,
-                self.spec.address,
+                server_spec,
                 self._ready_queue,
                 self._shutdown_event,
             ),
@@ -102,7 +110,7 @@ class ProcessLauncher(Resource):
         self._worker_address = result["address"]
 
     async def cleanup(self) -> None:
-        """Stop the worker subprocess and clean up resources."""
+        """Stop the worker subprocess."""
         if hasattr(self, "_shutdown_event"):
             self._shutdown_event.set()
 
@@ -121,12 +129,12 @@ class ProcessLauncher(Resource):
 
     @property
     def address(self) -> str:
-        """Return the address the worker is listening on."""
+        """Address the worker is listening on."""
         return self._worker_address
 
     @property
     def pid(self) -> int:
-        """Return the PID of the worker subprocess."""
+        """PID of the worker subprocess."""
         return self._worker_pid
 
     def _kill_process(self) -> None:
@@ -137,12 +145,11 @@ class ProcessLauncher(Resource):
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
 class ProcessLauncherSpec(ResourceSpec):
-    """Spec for ProcessLauncher - configures subprocess worker parameters."""
+    """Spec for ProcessLauncher."""
 
     factory: type = ProcessLauncher
     name: str = "process-launcher"
 
-    inner_spec: ResourceSpec = None  # what Resource to create and serve
     transport: str = "unix"
     address: str = "/tmp/eb_worker.sock"  # noqa: S108
     startup_timeout: float = 10.0

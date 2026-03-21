@@ -1,18 +1,19 @@
 """InvisiblesClient - composables Resource wrapping an Invisibles RPC client.
 
-Connects to an InvisiblesServer and provides a transparent proxy
-to the remote root service.
+Connects to an InvisiblesServer and provides transparent proxies
+to remote resources via the ResourceFactory.
 """
 
 from __future__ import annotations
 
+import pickle  # nosec: S301
 import time
 
 import attrs
 from composables import Resource, ResourceSpec
 from invisibles import InvisiblesConnection
 from invisibles.codec.pickle_codec import PickleCodec
-from invisibles.config import ConnectionConfig
+from invisibles.config import AttributeAccessConfig, ConnectionConfig
 from invisibles.core.consts import HANDLE_GET_ROOT
 from invisibles.core.protocol import Protocol
 from netkit import SyncConnector
@@ -29,31 +30,27 @@ __all__ = [
 class InvisiblesClient(Resource):
     """Composables Resource that connects to an Invisibles RPC server.
 
-    Provides transparent proxy access to the remote root service.
+    The remote server hosts a ResourceFactory. get_proxy(spec) calls
+    factory.get_resource(spec) to create or retrieve a remote resource.
     """
 
     spec: InvisiblesClientSpec
 
     async def setup(self) -> None:
         """Connect to the remote server with retry logic."""
-        config = ConnectionConfig()
+        config = ConnectionConfig(attrs=AttributeAccessConfig(allow_all_attrs=True))
         codec = PickleCodec()
 
         if self.spec.transport == "unix":
-
-            def transport_factory() -> UnixSocketTransport:
-                return UnixSocketTransport()
+            transport_factory = UnixSocketTransport
         else:
-
-            def transport_factory() -> TCPTransport:
-                return TCPTransport()
+            transport_factory = TCPTransport
 
         connector = SyncConnector(
             transport_factory=transport_factory,
             framing_factory=lambda t: LengthPrefixedFraming(t, max_frame_size=1024 * 1024),
         )
 
-        # Retry connection with backoff
         last_error = None
         for attempt in range(self.spec.max_retries):
             try:
@@ -74,21 +71,33 @@ class InvisiblesClient(Resource):
 
         protocol = Protocol(codec, config)
         self._connection = InvisiblesConnection(netkit_conn, protocol)
-        self._root = self._connection.sync_request(HANDLE_GET_ROOT)
+        self._factory = self._connection.sync_request(HANDLE_GET_ROOT)
 
     async def cleanup(self) -> None:
-        """Close the connection to the remote server."""
+        """Close the connection."""
         if hasattr(self, "_connection"):
             self._connection.close()
 
     @property
-    def root(self) -> object:
-        """Get the transparent proxy to the remote root service."""
-        return self._root
+    def factory(self) -> object:
+        """The remote ResourceFactory proxy."""
+        return self._factory
 
     def get_proxy(self, spec: object = None) -> object:
-        """TransportClientProtocol: return the remote proxy."""
-        return self._root
+        """Get a proxy to a remote resource by spec.
+
+        Serializes the spec to bytes and calls factory.get_resource(spec_data)
+        on the remote server. Specs are frozen data (no lifecycle), so sending
+        them by value avoids RPC round trips for attribute access.
+
+        Args:
+            spec: ResourceSpec for the resource to create/retrieve
+
+        Returns:
+            Transparent proxy to the remote resource
+        """
+        spec_data = pickle.dumps(spec, protocol=pickle.HIGHEST_PROTOCOL)
+        return self._factory.get_resource(spec_data)
 
     @staticmethod
     def _parse_tcp_address(address: str) -> tuple[str, int]:
@@ -100,7 +109,7 @@ class InvisiblesClient(Resource):
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
 class InvisiblesClientSpec(ResourceSpec):
-    """Spec for InvisiblesClient - configures connection parameters."""
+    """Spec for InvisiblesClient."""
 
     factory: type = InvisiblesClient
     name: str = "invisibles-client"

@@ -37,17 +37,10 @@ local_ctx_spec = ContextSpec(storage=nav_spec)
 # Distributed: navigator in subprocess via invisibles RPC
 socket_path = "/tmp/.sock-eb-distributed"  # noqa: S108
 distributed_nav_spec = (
-    SpecBuilder(
-        NavigatorSpec(
-            storage_resource=InMemoryStorageSpec(),
-        )
-    )
+    SpecBuilder(nav_spec)
     .as_proxy(InvisiblesClientSpec(transport="unix", address=socket_path))
     .with_launcher(
         ProcessLauncherSpec(
-            inner_spec=NavigatorSpec(
-                storage_resource=InMemoryStorageSpec(),
-            ),
             transport="unix",
             address=socket_path,
         )
@@ -84,9 +77,9 @@ flow = Seq(
 async def main():
     async with Runtime() as runtime:
         # --- Local ---
-        # print("=== Local ===")
-        # local_ctx = await runtime.create(local_ctx_spec)
-        # await ebv.auto_atomic(flow).execute(local_ctx.ctx)
+        print("=== Local ===")
+        local_ctx = await runtime.create(local_ctx_spec)
+        await ebv.auto_atomic(flow).execute(local_ctx.ctx)
 
         # --- Distributed: storage in subprocess ---
         print("\n=== Distributed ===")

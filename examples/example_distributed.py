@@ -55,7 +55,6 @@ distributed_spec = (
     )
     .with_launcher(
         ProcessLauncherSpec(
-            inner_spec=calc_spec,
             transport="unix",
             address="/tmp/.sock-eb-calc",  # noqa: S108
         ),

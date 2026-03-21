@@ -1,13 +1,14 @@
 """eb-distributed: distributed execution adapters for everybase.
 
 Provides composables Resources for:
-- Invisibles RPC (server + client)
-- Process launching (multiprocessing)
+- Invisibles RPC (server + client + factory)
+- Process launching (multiprocessing with ResourceFactory)
 """
 
 from .context import ContextResource, ContextSpec
 from .launcher.process import ProcessLauncher, ProcessLauncherSpec
 from .rpc.client import InvisiblesClient, InvisiblesClientSpec
+from .rpc.factory import ResourceFactory, ResourceFactorySpec
 from .rpc.server import InvisiblesServer, InvisiblesServerSpec
 from .storage import (
     CodecResource,
@@ -34,4 +35,6 @@ __all__ = [
     "NavigatorSpec",
     "ProcessLauncher",
     "ProcessLauncherSpec",
+    "ResourceFactory",
+    "ResourceFactorySpec",
 ]
