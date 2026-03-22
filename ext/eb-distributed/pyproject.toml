@@ -14,7 +14,11 @@ dependencies = [
     "composables>=0.1.0",
     "invisibles>=0.1.0",
 ]
-keywords = ["distributed", "rpc", "invisibles", "multiprocessing"]
+
+[project.optional-dependencies]
+ray = ["ray>=2.0"]
+
+keywords = ["distributed", "rpc", "invisibles", "ray", "multiprocessing"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",

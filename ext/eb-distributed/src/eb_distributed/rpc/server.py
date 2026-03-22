@@ -37,8 +37,6 @@ from netkit.executors.threaded import ThreadedExecutor
 from netkit.framing import LengthPrefixedFraming
 from netkit.transports import TCPListener, UnixSocketListener
 
-from .factory import ResourceFactorySpec
-
 
 __all__ = [
     "InvisiblesServer",
@@ -152,4 +150,4 @@ class InvisiblesServerSpec(ResourceSpec):
     executor: str = "simple"  # "simple" or "threaded"
     dispatcher: str = "inline"  # "inline", "async", "threaded", "shared"
 
-    root_service: ResourceSpec = attrs.Factory(ResourceFactorySpec)
+    root_service: ResourceSpec = attrs.field()

@@ -1,7 +1,7 @@
 """InvisiblesClient - composables Resource wrapping an Invisibles RPC client.
 
-Connects to an InvisiblesServer and provides transparent proxies
-to remote resources via the ResourceFactory.
+Connects to an InvisiblesServer and returns the root object as a
+transparent proxy. Used by workers to access remote Navigator.
 """
 
 from __future__ import annotations
@@ -27,10 +27,8 @@ __all__ = [
 class InvisiblesClient(Resource):
     """Composables Resource that connects to an Invisibles RPC server.
 
-    The remote server hosts a ResourceFactory. get_proxy(spec) calls
-    factory.get_resource(spec) to create or retrieve a remote resource.
-    Specs are registered as value types in invisibles so they fly through
-    RPC by value automatically.
+    Connects and returns the server's root object as a transparent proxy.
+    The root is whatever the server was configured to serve (Navigator, etc).
     """
 
     spec: InvisiblesClientSpec
@@ -69,7 +67,7 @@ class InvisiblesClient(Resource):
 
         protocol = Protocol(config)
         self._connection = InvisiblesConnection(netkit_conn, protocol)
-        self._factory = self._connection.sync_request(HANDLE_GET_ROOT)
+        self._root = self._connection.sync_request(HANDLE_GET_ROOT)
 
     async def cleanup(self) -> None:
         """Close the connection."""
@@ -77,24 +75,20 @@ class InvisiblesClient(Resource):
             self._connection.close()
 
     @property
-    def factory(self) -> object:
-        """The remote ResourceFactory proxy."""
-        return self._factory
+    def root(self) -> object:
+        """The remote root object (transparent proxy)."""
+        return self._root
 
     def get_proxy(self, spec: object = None) -> object:
-        """Get a proxy to a remote resource by spec.
-
-        Specs are registered as value types in invisibles, so they
-        serialize by value automatically during RPC. No manual
-        pickle.dumps needed.
+        """Get the root object proxy.
 
         Args:
-            spec: ResourceSpec for the resource to create/retrieve
+            spec: Ignored. Kept for composables ProxyCoordinator compatibility.
 
         Returns:
-            Transparent proxy to the remote resource
+            Transparent proxy to the server's root resource.
         """
-        return self._factory.get_resource(spec)
+        return self._root
 
     @staticmethod
     def _parse_tcp_address(address: str) -> tuple[str, int]:

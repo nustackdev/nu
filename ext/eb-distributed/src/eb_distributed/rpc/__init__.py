@@ -1,7 +1,6 @@
-"""RPC subpackage - Invisibles-based client, server, and factory."""
+"""RPC subpackage - Invisibles-based client and server."""
 
 from .client import InvisiblesClient, InvisiblesClientSpec
-from .factory import ResourceFactory, ResourceFactorySpec
 from .server import InvisiblesServer, InvisiblesServerSpec
 
 
@@ -10,6 +9,4 @@ __all__ = [
     "InvisiblesClientSpec",
     "InvisiblesServer",
     "InvisiblesServerSpec",
-    "ResourceFactory",
-    "ResourceFactorySpec",
 ]

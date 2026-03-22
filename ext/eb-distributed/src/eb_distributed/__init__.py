@@ -1,8 +1,8 @@
 """eb-distributed: distributed execution adapters for everybase.
 
 Provides composables Resources for:
-- Invisibles RPC (server + client + factory)
-- Process launching (multiprocessing with ResourceFactory)
+- Invisibles RPC (server + client for transparent proxying)
+- Ray actors (generic composables Resource host on Ray nodes)
 - Worker (executes trees against its own Context)
 - Teleport (Span that ships subtrees to Workers)
 
@@ -17,10 +17,10 @@ from invisibles import register_value_type
 from everybase.core.executable import Executable
 
 from .context import ContextResource, ContextSpec
-from .launcher.process import ProcessLauncher, ProcessLauncherSpec
-from .presets import local, outpost
+from .presets import local
+from .ray import RayActor, RayActorSpec, RayWorker, RayWorkerSpec
+from .ray.presets import distributed
 from .rpc.client import InvisiblesClient, InvisiblesClientSpec
-from .rpc.factory import ResourceFactory, ResourceFactorySpec
 from .rpc.server import InvisiblesServer, InvisiblesServerSpec
 from .storage import (
     CodecResource,
@@ -41,28 +41,33 @@ from .worker import Worker, WorkerSpec
 register_value_type(Executable, BaseSpec)
 
 
-__all__ = [
+__all__ = [  # noqa: RUF022
+    # Ray
+    "RayActor",
+    "RayActorSpec",
+    "RayWorker",
+    "RayWorkerSpec",
+    "distributed",
+    # Storage
     "CodecResource",
     "CodecSpec",
     "ContextResource",
     "ContextSpec",
     "InMemoryStorageResource",
     "InMemoryStorageSpec",
+    "NavigatorResource",
+    "NavigatorSpec",
+    "RocksDBStorageResource",
+    "RocksDBStorageSpec",
+    # RPC
     "InvisiblesClient",
     "InvisiblesClientSpec",
     "InvisiblesServer",
     "InvisiblesServerSpec",
-    "NavigatorResource",
-    "NavigatorSpec",
-    "ProcessLauncher",
-    "ProcessLauncherSpec",
-    "ResourceFactory",
-    "ResourceFactorySpec",
-    "RocksDBStorageResource",
-    "RocksDBStorageSpec",
+    # Core
     "Teleport",
     "Worker",
     "WorkerSpec",
+    # Presets
     "local",
-    "outpost",
 ]
