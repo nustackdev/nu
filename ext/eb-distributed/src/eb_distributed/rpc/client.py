@@ -6,16 +6,13 @@ to remote resources via the ResourceFactory.
 
 from __future__ import annotations
 
-import pickle  # nosec: S301
 import time
 
 import attrs
 from composables import Resource, ResourceSpec
-from invisibles import InvisiblesConnection
-from invisibles.codec.pickle_codec import PickleCodec
+from invisibles import InvisiblesConnection, Protocol
 from invisibles.config import AttributeAccessConfig, ConnectionConfig
 from invisibles.core.consts import HANDLE_GET_ROOT
-from invisibles.core.protocol import Protocol
 from netkit import SyncConnector
 from netkit.framing import LengthPrefixedFraming
 from netkit.transports import TCPTransport, UnixSocketTransport
@@ -32,6 +29,8 @@ class InvisiblesClient(Resource):
 
     The remote server hosts a ResourceFactory. get_proxy(spec) calls
     factory.get_resource(spec) to create or retrieve a remote resource.
+    Specs are registered as value types in invisibles so they fly through
+    RPC by value automatically.
     """
 
     spec: InvisiblesClientSpec
@@ -39,7 +38,6 @@ class InvisiblesClient(Resource):
     async def setup(self) -> None:
         """Connect to the remote server with retry logic."""
         config = ConnectionConfig(attrs=AttributeAccessConfig(allow_all_attrs=True))
-        codec = PickleCodec()
 
         if self.spec.transport == "unix":
             transport_factory = UnixSocketTransport
@@ -69,7 +67,7 @@ class InvisiblesClient(Resource):
                 f"Failed to connect to {self.spec.address} after {self.spec.max_retries} attempts"
             ) from last_error
 
-        protocol = Protocol(codec, config)
+        protocol = Protocol(config)
         self._connection = InvisiblesConnection(netkit_conn, protocol)
         self._factory = self._connection.sync_request(HANDLE_GET_ROOT)
 
@@ -86,9 +84,9 @@ class InvisiblesClient(Resource):
     def get_proxy(self, spec: object = None) -> object:
         """Get a proxy to a remote resource by spec.
 
-        Serializes the spec to bytes and calls factory.get_resource(spec_data)
-        on the remote server. Specs are frozen data (no lifecycle), so sending
-        them by value avoids RPC round trips for attribute access.
+        Specs are registered as value types in invisibles, so they
+        serialize by value automatically during RPC. No manual
+        pickle.dumps needed.
 
         Args:
             spec: ResourceSpec for the resource to create/retrieve
@@ -96,8 +94,7 @@ class InvisiblesClient(Resource):
         Returns:
             Transparent proxy to the remote resource
         """
-        spec_data = pickle.dumps(spec, protocol=pickle.HIGHEST_PROTOCOL)
-        return self._factory.get_resource(spec_data)
+        return self._factory.get_resource(spec)
 
     @staticmethod
     def _parse_tcp_address(address: str) -> tuple[str, int]:

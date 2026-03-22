@@ -13,7 +13,27 @@ from typing import TYPE_CHECKING
 from everybase.core import Arg, Sentinel, Term, Value
 
 
-_NO_LITERAL = object()  # sentinel: "this Value is Term-backed, no literal"
+class _NoLiteral:
+    """Sentinel: this Value is Term-backed, no literal.
+
+    Singleton that survives pickling across processes.
+    """
+
+    _instance = None
+
+    def __new__(cls) -> _NoLiteral:
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __reduce__(self) -> tuple:
+        return (_NoLiteral, ())
+
+    def __repr__(self) -> str:
+        return "_NO_LITERAL"
+
+
+_NO_LITERAL = _NoLiteral()
 
 if TYPE_CHECKING:
     from everybase.core import Context

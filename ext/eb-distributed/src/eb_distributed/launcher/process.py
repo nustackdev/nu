@@ -35,6 +35,8 @@ def _worker_main(
     try:
         from composables import Runtime
 
+        import eb_distributed  # noqa: F401 - registers value types
+
         async def run() -> None:
             async with Runtime() as runtime:
                 await runtime.create(server_spec_data)
@@ -76,9 +78,11 @@ class ProcessLauncher(Resource):
         server_spec = InvisiblesServerSpec(
             transport=self.spec.transport,
             address=self.spec.address,
+            executor=self.spec.executor,
+            dispatcher=self.spec.dispatcher,
         )
 
-        ctx = mp.get_context("fork")
+        ctx = mp.get_context("spawn")
         self._ready_queue: mp.Queue = ctx.Queue()
         self._shutdown_event: mp.Event = ctx.Event()
 
@@ -152,4 +156,6 @@ class ProcessLauncherSpec(ResourceSpec):
 
     transport: str = "unix"
     address: str = "/tmp/eb_worker.sock"  # noqa: S108
+    executor: str = "simple"  # "simple" or "threaded"
+    dispatcher: str = "inline"  # "inline", "async", "threaded", "shared"
     startup_timeout: float = 10.0

@@ -12,6 +12,7 @@ description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.10"
 dependencies = [
     "everybase",
+    "eb-distributed",
     "eb-virtuals",
     "eb-dict",
     "eb-datetime",
@@ -32,6 +33,7 @@ members = [
     "src",
 
     # Extensions — adapters
+    "ext/eb-distributed",
     "ext/eb-virtuals",
     "ext/eb-dict",
 
@@ -51,6 +53,7 @@ members = [
 # Core
 everybase = { workspace = true }
 # Extensions
+eb-distributed = { workspace = true }
 eb-virtuals = { workspace = true }
 eb-dict = { workspace = true }
 eb-datetime = { workspace = true }
@@ -226,7 +229,7 @@ convention = "google"
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["everybase", "eb_virtuals", "eb_dict", "eb_datetime", "eb_fin", "eb_math", "eb_path", "eb_uuid", "eb_shape_lens", "eb_tree_view"]
+known-first-party = ["everybase", "eb_distributed", "eb_virtuals", "eb_dict", "eb_datetime", "eb_fin", "eb_math", "eb_path", "eb_uuid", "eb_shape_lens", "eb_tree_view"]
 force-single-line = false
 lines-after-imports = 2
 

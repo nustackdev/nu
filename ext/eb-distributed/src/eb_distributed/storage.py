@@ -24,6 +24,7 @@ import attrs
 from composables import Attach, Resource, ResourceSpec
 from virtuals import Navigator
 from virtuals._backends.storages.mem import InMemoryStorage
+from virtuals._backends.storages.rocksdb import RocksDBStorage
 from virtuals.tkv.codec.codec import Codec
 from virtuals.views import DictView
 
@@ -35,6 +36,8 @@ __all__ = [
     "InMemoryStorageSpec",
     "NavigatorResource",
     "NavigatorSpec",
+    "RocksDBStorageResource",
+    "RocksDBStorageSpec",
 ]
 
 
@@ -111,6 +114,55 @@ class InMemoryStorageSpec(ResourceSpec):
     name: str = "storage"
 
     codec_resource: CodecSpec = attrs.Factory(CodecSpec)
+
+
+# ============================================================================
+# RocksDB Storage
+# ============================================================================
+
+
+class RocksDBStorageResource(Resource, RocksDBStorage):
+    """Resource that IS a RocksDBStorage."""
+
+    spec: RocksDBStorageSpec
+    codec_resource = Attach()
+
+    def __init__(self, spec: object = None, /) -> None:
+        Resource.__init__(self, spec)
+
+    async def setup(self) -> None:
+        """Init RocksDB storage with attached codec and open it."""
+        from pathlib import Path
+
+        RocksDBStorage.__init__(
+            self,
+            path=Path(self.spec.path),
+            codec=self.codec_resource,
+            create_if_missing=True,
+        )
+        self.open()
+
+    async def cleanup(self) -> None:
+        """Close storage."""
+        self.close()
+
+
+def _rocksdb_codec_spec() -> CodecSpec:
+    from virtuals.codecs.pickle import PickleCodec
+    from virtuals_binary_codec import BinaryKeyCodec
+
+    return CodecSpec(key_codec_cls=BinaryKeyCodec, value_codec_cls=PickleCodec)
+
+
+@attrs.define(frozen=True, slots=True, kw_only=True)
+class RocksDBStorageSpec(ResourceSpec):
+    """Spec for RocksDBStorageResource."""
+
+    factory: type = RocksDBStorageResource
+    name: str = "rocksdb-storage"
+
+    path: str = "/tmp/eb-rocksdb"  # noqa: S108
+    codec_resource: CodecSpec = attrs.Factory(_rocksdb_codec_spec)
 
 
 # ============================================================================

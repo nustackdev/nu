@@ -10,6 +10,8 @@ import asyncio
 
 from composables import Runtime
 from composables.spec import SpecBuilder
+
+import eb_virtuals as ebv
 from eb_distributed import (
     ContextSpec,
     InMemoryStorageSpec,
@@ -17,8 +19,6 @@ from eb_distributed import (
     NavigatorSpec,
     ProcessLauncherSpec,
 )
-
-import eb_virtuals as ebv
 from everybase.abc import Print, Seq
 from everybase.shape import Shape
 

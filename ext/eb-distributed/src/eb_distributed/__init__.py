@@ -3,10 +3,22 @@
 Provides composables Resources for:
 - Invisibles RPC (server + client + factory)
 - Process launching (multiprocessing with ResourceFactory)
+- Worker (executes trees against its own Context)
+- Teleport (Span that ships subtrees to Workers)
+
+On import, registers everybase Executable and composables Spec as
+value types in invisibles. This means trees and specs fly through
+RPC by value automatically (no manual serialization needed).
 """
+
+from composables.spec import BaseSpec
+from invisibles import register_value_type
+
+from everybase.core.executable import Executable
 
 from .context import ContextResource, ContextSpec
 from .launcher.process import ProcessLauncher, ProcessLauncherSpec
+from .presets import local, outpost
 from .rpc.client import InvisiblesClient, InvisiblesClientSpec
 from .rpc.factory import ResourceFactory, ResourceFactorySpec
 from .rpc.server import InvisiblesServer, InvisiblesServerSpec
@@ -17,7 +29,16 @@ from .storage import (
     InMemoryStorageSpec,
     NavigatorResource,
     NavigatorSpec,
+    RocksDBStorageResource,
+    RocksDBStorageSpec,
 )
+from .teleport import Teleport
+from .worker import Worker, WorkerSpec
+
+
+# Register value types: trees and specs serialize by value through RPC.
+# No lifecycle, immutable, safe to send as data.
+register_value_type(Executable, BaseSpec)
 
 
 __all__ = [
@@ -37,4 +58,11 @@ __all__ = [
     "ProcessLauncherSpec",
     "ResourceFactory",
     "ResourceFactorySpec",
+    "RocksDBStorageResource",
+    "RocksDBStorageSpec",
+    "Teleport",
+    "Worker",
+    "WorkerSpec",
+    "local",
+    "outpost",
 ]
