@@ -65,6 +65,8 @@ eb-shape-lens = { workspace = true }
 eb-tree-view = { workspace = true }
 # In-house libs (local editable)
 virtuals-py = { path = "../virtuals", editable = true }
+composables = { path = "../composables", editable = true }
+invisibles = { path = "../invisibles", editable = true }
 
 [dependency-groups]
 dev = [

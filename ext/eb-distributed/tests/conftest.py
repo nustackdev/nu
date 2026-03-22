@@ -1,29 +1,25 @@
-"""Shared fixtures for eb-distributed integration tests."""
+"""Shared fixtures for eb-distributed tests."""
 
-import uuid
-from pathlib import Path
+from __future__ import annotations
+
+import shutil
+import tempfile
 
 import pytest
-
-import eb_virtuals as ebv
-from everybase.shape import Shape
+import ray
 
 
-# Shape defined at module level (not __main__) so it survives pickling across processes
-class TestShape(Shape):
-    price = ebv.FloatRef.slot()
-    quantity = ebv.IntRef.slot()
+@pytest.fixture(scope="session", autouse=True)
+def ray_session():
+    """Start Ray once for the entire test session."""
+    ray.init(num_cpus=4, ignore_reinit_error=True)
+    yield
+    ray.shutdown()
 
 
 @pytest.fixture
-def sock(request):
-    """Generate short unique socket path under /tmp (AF_UNIX path limit)."""
-    uid = uuid.uuid4().hex[:8]
-    prefix = request.node.name[:10]
-    path = f"/tmp/.eb-test-{prefix}-{uid}"
+def db_path():
+    """Temporary RocksDB directory, cleaned up after test."""
+    path = tempfile.mkdtemp(prefix="eb-test-rocksdb-")
     yield path
-    # Cleanup
-    for suffix in ["", "0", "1", "-state", "-w0", "-w1"]:
-        p = path + suffix
-        if Path(p).exists():
-            Path(p).unlink()
+    shutil.rmtree(path, ignore_errors=True)

@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
-"""Distributed execution via Ray.
+"""Distributed execution on a single machine.
 
-Same tree as example_presets.py, but workers are Ray actors.
-Storage service runs as a Ray actor with InvisiblesServer.
-Workers connect to it via invisibles for storage access,
-receive trees via Ray dispatch.
+3 Ray actor workers, shared RocksDB, parallel execution.
+Everything runs locally - no cluster needed.
 
-All components are composables Resources managed by a single Runtime.
-
-    python examples/example_ray.py
+    python examples/distributed/local.py
 """
 
 from __future__ import annotations
@@ -31,7 +27,6 @@ class Market(Shape):
 
 
 FLOW = Seq(
-    # Initialize all refs on worker 0
     Teleport(
         ebv.Transaction(
             Market.btc.store(0),
@@ -40,12 +35,11 @@ FLOW = Seq(
         ),
         worker=0,
     ),
-    # Parallel writes across 3 workers
     Parallel(
         Teleport(
             ForRange(
                 0,
-                250,
+                100,
                 ebv.Transaction(
                     Market.btc.store(71000.21),
                     Print("[worker 0] btc", Market.btc),
@@ -56,7 +50,7 @@ FLOW = Seq(
         Teleport(
             ForRange(
                 0,
-                250,
+                100,
                 ebv.Transaction(
                     Market.eth.store(2700.3),
                     Print("[worker 1] eth", Market.eth),
@@ -67,7 +61,7 @@ FLOW = Seq(
         Teleport(
             ForRange(
                 0,
-                250,
+                100,
                 ebv.Transaction(
                     Market.sol.store(70.3),
                     Print("[worker 2] sol", Market.sol),
@@ -102,7 +96,7 @@ async def main() -> None:
         shutil.rmtree(db_path, ignore_errors=True)
         ray.shutdown()
 
-    print("\nSame tree. Ray actors. Distributed.")
+    print("\nDone. 3 workers, shared RocksDB, single machine.")
 
 
 if __name__ == "__main__":

@@ -23,6 +23,13 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 
+[project.optional-dependencies]
+virtuals = ["eb-virtuals"]
+rocksdb = ["rdbpython"]
+distributed = ["eb-distributed"]
+inmem = ["eb-dict"]
+x = ["eb-math", "eb-fin", "eb-datetime", "eb-path", "eb-uuid"]
+
 [project.urls]
 Repository = "https://github.com/everyabc/everybase"
 

@@ -8,15 +8,22 @@ Two Resources, one generic and one everybase-specialized:
     RayWorker(RayActor): wraps a WorkerProcess. Inherits lifecycle,
         adds execute(tree) for everybase tree dispatch.
 
+Specs support Ray actor options: naming, resource constraints,
+fault tolerance, and node placement.
+
 Usage:
-    # Service on a Ray node
+    # Named service with restart policy
     service = await runtime.create(RayActorSpec(
         inner_spec=InvisiblesServerSpec(...),
+        actor_name="storage",
+        max_restarts=-1,
     ))
 
-    # Worker on a Ray node
+    # Worker on a specific node with GPU
     worker = await runtime.create(RayWorkerSpec(
         inner_spec=WorkerSpec(context=ContextSpec(storage=nav_proxy)),
+        node="blue",
+        num_gpus=1,
     ))
     ctx = ctx.bind(worker, Worker, 0)
 """
@@ -47,7 +54,7 @@ class RayActor(Resource):
     """Composables Resource hosting a Resource on a Ray node via RayProcess.
 
     On setup: creates a RayProcess actor, sends inner_spec.
-    On cleanup: shuts down the remote actor.
+    On cleanup: shuts down the remote actor gracefully.
     """
 
     spec: RayActorSpec
@@ -72,20 +79,40 @@ class RayActor(Resource):
         return self._address
 
     async def cleanup(self) -> None:
-        """Shutdown the remote Ray actor."""
+        """Shutdown the remote Ray actor gracefully."""
         if hasattr(self, "_process"):
             try:
                 await self._process.shutdown.remote()
             except Exception:  # noqa: S110
                 pass
-            ray.kill(self._process)
+            try:
+                ray.kill(self._process)
+            except Exception:  # noqa: S110
+                pass
 
     def _create_process(self, process_cls: type) -> object:
-        """Create a Ray actor with optional node placement."""
+        """Create a Ray actor with configured options."""
+        options = self._build_ray_options()
+        return process_cls.options(**options).remote()
+
+    def _build_ray_options(self) -> dict:
+        """Build Ray actor options from spec."""
         options: dict = {}
+
         if self.spec.node is not None:
             options["resources"] = {f"node:{self.spec.node}": 1}
-        return process_cls.options(**options).remote()
+        if self.spec.actor_name is not None:
+            options["name"] = self.spec.actor_name
+        if self.spec.num_cpus is not None:
+            options["num_cpus"] = self.spec.num_cpus
+        if self.spec.num_gpus is not None:
+            options["num_gpus"] = self.spec.num_gpus
+        if self.spec.max_restarts != 0:
+            options["max_restarts"] = self.spec.max_restarts
+        if self.spec.lifetime is not None:
+            options["lifetime"] = self.spec.lifetime
+
+        return options
 
 
 class RayWorker(RayActor):
@@ -125,32 +152,45 @@ class RayWorker(RayActor):
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class RayActorSpec(ResourceSpec):
-    """Spec for RayActor (generic service on a Ray node).
+class _RaySpecBase(ResourceSpec):
+    """Shared Ray actor configuration.
 
     Attributes:
         inner_spec: The composables Spec to create inside the Ray actor.
-        node: Optional Ray node name for placement (e.g. "red", "blue").
+        node: Ray node name for placement (e.g. "red", "blue").
+        actor_name: Ray actor name for service discovery via ray.get_actor().
+        num_cpus: CPU cores to reserve for this actor.
+        num_gpus: GPU resources to reserve for this actor.
+        max_restarts: Max restarts on failure. 0=none, -1=infinite.
+        lifetime: "detached" for persistent actors, None for default.
+        tags: Extra context tags for worker resolution.
+            Workers are always bound by index. Tags add aliases so
+            Teleport can route by capability, node, or any custom key.
+            e.g. tags=("gpu",) → Teleport(worker="gpu")
+            e.g. tags=(("red", 0),) → Teleport(worker=("red", 0))
     """
+
+    inner_spec: ResourceSpec = attrs.field()
+    node: str | None = None
+    actor_name: str | None = None
+    num_cpus: float | None = None
+    num_gpus: float | None = None
+    max_restarts: int = 0
+    lifetime: str | None = None
+    tags: tuple = ()
+
+
+@attrs.define(frozen=True, slots=True, kw_only=True)
+class RayActorSpec(_RaySpecBase):
+    """Spec for RayActor (generic service on a Ray node)."""
 
     factory: type = RayActor
     name: str = "ray-actor"
 
-    inner_spec: ResourceSpec = attrs.field()
-    node: str | None = None
-
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
-class RayWorkerSpec(ResourceSpec):
-    """Spec for RayWorker (everybase worker on a Ray node).
-
-    Attributes:
-        inner_spec: A WorkerSpec with ContextSpec for storage setup.
-        node: Optional Ray node name for placement (e.g. "red", "blue").
-    """
+class RayWorkerSpec(_RaySpecBase):
+    """Spec for RayWorker (everybase worker on a Ray node)."""
 
     factory: type = RayWorker
     name: str = "ray-worker"
-
-    inner_spec: ResourceSpec = attrs.field()
-    node: str | None = None
