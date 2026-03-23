@@ -23,6 +23,7 @@ import attrs
 from composables import Attach, Resource, ResourceSpec
 from invisibles import (
     AsyncDispatcher,
+    BgServingThread,
     InlineDispatcher,
     InvisiblesConnection,
     Protocol,
@@ -202,8 +203,15 @@ class InvisiblesClient(Resource):
         self._connection = InvisiblesConnection(netkit_conn, protocol)
         self._root = self._connection.sync_request(HANDLE_GET_ROOT)
 
+        # Start background serve thread for bidirectional callbacks
+        self._bg_serve = None
+        if self.spec.bg_serve:
+            self._bg_serve = BgServingThread(self._connection)
+
     async def cleanup(self) -> None:
-        """Close the connection."""
+        """Stop background serve and close the connection."""
+        if hasattr(self, "_bg_serve") and self._bg_serve is not None:
+            self._bg_serve.stop()
         if hasattr(self, "_connection"):
             self._connection.close()
 
@@ -235,3 +243,4 @@ class InvisiblesClientSpec(ResourceSpec):
     address: str = "127.0.0.1:18812"
     timeout: float = 5.0
     max_retries: int = 3
+    bg_serve: bool = False

@@ -4,10 +4,8 @@
 Worker 0 writes counter values. Worker 1 reacts to changes and prints.
 Uses Race to run both concurrently - writer finishes, Race cancels reader.
 
-STATUS: NOT WORKING YET. Requires background serve thread on InvisiblesClient
-so the server can call back into the worker via NetRef callbacks. Currently
-the worker's connection only serves during sync_request waits (reentrant),
-not during asyncio Event waits. See RPyC's BgServingThread for the pattern.
+Uses bg_serve=True on InvisiblesClient so the server can call back into
+workers via NetRef callbacks (background serve thread).
 
     python examples/distributed/reactive.py
 """
@@ -53,18 +51,15 @@ class State(Shape):
 # -- Flow --------------------------------------------------------------------
 
 flow = Race(
-    # writer: increment counter 20 times with small delay
+    # writer: increment counter 20 times, commit each write so observer fires
     Teleport(
-        ebv.Transaction(
-            ForRange(
-                0,
-                20,
-                Seq(
-                    State.counter.store(State.counter + 1),
-                    Print("write | counter", State.counter),
-                    Delay(0.1),
-                ),
-                index=State.index,
+        ForRange(
+            0,
+            20,
+            Seq(
+                ebv.Transaction(State.counter.store(State.counter + 1)),
+                ebv.Snapshot(Print("write | counter", State.counter)),
+                Delay(0.1),
             ),
         ),
         worker=0,
@@ -118,7 +113,7 @@ async def main() -> None:
             # 2 workers: writer and reader
             proxy_nav = (
                 SpecBuilder(nav_spec)
-                .as_proxy(InvisiblesClientSpec(transport="tcp", address=address))
+                .as_proxy(InvisiblesClientSpec(transport="tcp", address=address, bg_serve=True))
                 .build()
             )
 
