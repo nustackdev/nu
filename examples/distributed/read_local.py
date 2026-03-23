@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-"""Cluster execution - Ray across machines, shared RocksDB on NFS.
+"""Cluster with local reads - writes through proxy, reads from local secondary.
 
-2 workers on red, 1 on blue. Shared RocksDB on NFS, Redis observer
-for cross-process notifications. Teleport routes by (node, index) tags.
+Same as cluster.py but each worker also opens a read-only secondary
+RocksDB pointing to the same NFS path. Eliminates network round-trips
+for reads while keeping writes consistent through the central service.
+
+    writes:  worker -> invisibles -> primary RocksDB (single writer)
+    reads:   worker -> local secondary RocksDB (follows primary, no RTT)
 
 Requires:
     - Ray cluster: red (head) + blue (worker)
@@ -11,7 +15,7 @@ Requires:
 
 Run from red:
     cd ~/Projects/everyabc/everybase
-    .venv/bin/python examples/distributed/cluster.py
+    .venv/bin/python examples/distributed/read_local.py
 """
 
 from __future__ import annotations
@@ -62,7 +66,7 @@ c = Counters.items["c"]
 # -- Flow --------------------------------------------------------------------
 
 flow = Seq(
-    # init on red
+    # init
     Teleport(
         ebv.Transaction(
             a.value.store(0),
@@ -71,7 +75,7 @@ flow = Seq(
         ),
         worker=("red", 0),
     ),
-    # each machine increments in parallel, print every 10 iterations
+    # write through proxy, print every 10 iterations
     Parallel(
         Teleport(
             ForRange(
@@ -110,7 +114,15 @@ flow = Seq(
             worker=("blue", 0),
         ),
     ),
-    # blue reads what red wrote - shared storage across machines
+    # read from each machine (once split-path is supported, reads hit local secondary)
+    Teleport(
+        ebv.Snapshot(
+            Print("red reads  | a", a.value),
+            Print("red reads  | b", b.value),
+            Print("red reads  | c", c.value),
+        ),
+        worker=("red", 0),
+    ),
     Teleport(
         ebv.Snapshot(
             Print("blue reads | a", a.value),
@@ -150,7 +162,8 @@ RUNTIME_PACKAGES = [
 # -- Config ------------------------------------------------------------------
 
 NODES = {"red": 2, "blue": 1}
-DB_PATH = "/home/gor/shared/eb-rocksdb-cluster"
+DB_PATH = "/home/gor/shared/eb-rocksdb-read-local"
+SECONDARY_PATH = "/tmp/eb-rocksdb-secondary"  # noqa: S108
 REDIS_URL = "redis://10.0.0.1:6379"
 
 
@@ -169,9 +182,21 @@ async def main() -> None:
     try:
         address = f"{ray.util.get_node_ip_address()}:{_free_port()}"
 
-        nav_spec = NavigatorSpec(
+        # primary: writable RocksDB + Redis observer
+        primary_nav = NavigatorSpec(
             storage_resource=RocksDBStorageSpec(
                 path=DB_PATH,
+                observer_resource=RedisObserverSpec(redis_url=REDIS_URL),
+            ),
+        )
+
+        # secondary: read-only RocksDB following primary via NFS
+        # (building block for split-path reads once Context supports dual navigators)
+        _secondary_nav = NavigatorSpec(
+            storage_resource=RocksDBStorageSpec(
+                path=DB_PATH,
+                read_only=True,
+                secondary_path=SECONDARY_PATH,
                 observer_resource=RedisObserverSpec(redis_url=REDIS_URL),
             ),
         )
@@ -185,7 +210,7 @@ async def main() -> None:
                         transport="tcp",
                         address=address,
                         executor="threaded",
-                        root_service=nav_spec,
+                        root_service=primary_nav,
                     ),
                     actor_name="eb-storage",
                     node="red",
@@ -193,9 +218,10 @@ async def main() -> None:
                 )
             )
 
-            # workers across nodes
+            # workers proxy all ops for now
+            # TODO: split-path - writes through proxy, reads from _secondary_nav
             proxy_nav = (
-                SpecBuilder(nav_spec)
+                SpecBuilder(primary_nav)
                 .as_proxy(InvisiblesClientSpec(transport="tcp", address=address))
                 .build()
             )
@@ -225,7 +251,7 @@ async def main() -> None:
     finally:
         ray.shutdown()
 
-    print("\ndone. 2 machines, 3 workers, shared rocksdb on nfs.")
+    print("\ndone. cluster with local read path (secondary rocksdb).")
 
 
 if __name__ == "__main__":

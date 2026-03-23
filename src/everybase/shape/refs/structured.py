@@ -109,6 +109,18 @@ class ShapeRef[T: ShapeBase](
 
         raise KeyError(f"{self._shape_type.__name__} has no slot '{key}'")
 
+    def __getstate__(self) -> dict:
+        """Pickle support — return instance state explicitly."""
+        return self.__dict__.copy()
+
+    def __setstate__(self, state: dict) -> None:
+        """Pickle support — restore instance state explicitly.
+
+        Setting __dict__ directly avoids __getattr__ being called
+        for internal attributes during unpickling.
+        """
+        self.__dict__.update(state)
+
     def __getattr__(self, name: str) -> object:
         """Fallback attribute access — navigate to shape slots.
 

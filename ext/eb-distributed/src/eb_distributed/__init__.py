@@ -7,7 +7,6 @@ Provides composables Resources for:
 - Invisibles (server + client for transparent proxying)
 - Ray (actors + workers on Ray nodes)
 - Teleport (span that ships subtrees to workers)
-- Presets (local, distributed)
 
 On import, registers everybase Executable and composables Spec as
 value types in invisibles. This means trees and specs fly through
@@ -19,7 +18,6 @@ from invisibles import register_value_type
 
 from everybase.core.executable import Executable
 
-from .presets import distributed, local
 from .resources import (
     CodecResource,
     CodecSpec,
@@ -89,8 +87,6 @@ __all__ = [
     "Worker",
     "WorkerSpec",
     "binary_codec_spec",
-    "distributed",
-    "local",
     "msgpack_codec_spec",
     "noop_codec_spec",
     "text_codec_spec",

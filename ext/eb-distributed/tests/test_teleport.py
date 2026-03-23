@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 from composables import Runtime
-from conftest import TestShape
+from conftest import TestShape, local
 
 import eb_virtuals as ebv
-from eb_distributed import NavigatorSpec, Teleport, local
+from eb_distributed import NavigatorSpec, Teleport
 
 
 @pytest.mark.asyncio

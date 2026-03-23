@@ -4,15 +4,10 @@ from __future__ import annotations
 
 import pytest
 from composables import Runtime
-from conftest import TestShape
+from conftest import TestShape, distributed
 
 import eb_virtuals as ebv
-from eb_distributed import (
-    NavigatorSpec,
-    RocksDBStorageSpec,
-    Teleport,
-    distributed,
-)
+from eb_distributed import NavigatorSpec, RocksDBStorageSpec, Teleport
 from everybase.abc import ForRange, Parallel, Print, Seq
 
 

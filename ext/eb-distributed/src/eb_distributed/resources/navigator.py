@@ -7,7 +7,7 @@ Attaches a storage resource and optional observer resource.
 from __future__ import annotations
 
 import attrs
-from composables import Attach, Resource, ResourceSpec
+from composables import Attach, Resource, ResourceSpec, Spec
 from virtuals import Navigator
 from virtuals.views import DictView
 
@@ -26,13 +26,17 @@ class NavigatorResource(Resource, Navigator):
     spec: NavigatorSpec
     storage_resource = Attach()
 
-    def __init__(self, spec: object = None, /) -> None:
+    def __init__(self, spec: Spec | None = None, /) -> None:
         Resource.__init__(self, spec)
 
     async def setup(self) -> None:
         """Init Navigator with attached storage (already opened by composables)."""
         Navigator.__init__(self, self.storage_resource, self.spec.root_view)
         self._opened = True
+
+    async def cleanup(self) -> None:
+        """Cleanup."""
+        self._opened = False
 
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
@@ -42,5 +46,5 @@ class NavigatorSpec(ResourceSpec):
     factory: type = NavigatorResource
     name: str = "navigator"
 
-    storage_resource: InMemoryStorageSpec = attrs.Factory(InMemoryStorageSpec)
+    storage_resource: Spec = attrs.Factory(InMemoryStorageSpec)
     root_view: type = DictView
