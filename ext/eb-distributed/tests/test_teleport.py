@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 from composables import Runtime
+from conftest import TestShape
 
 import eb_virtuals as ebv
 from eb_distributed import NavigatorSpec, Teleport, local
-from eb_distributed.testing import TestShape
 
 
 @pytest.mark.asyncio
@@ -38,7 +38,7 @@ async def test_teleport_multiple_children():
 @pytest.mark.asyncio
 async def test_teleport_string_tag():
     """String tag for capability-based routing."""
-    from eb_distributed.worker import Worker
+    from eb_distributed import Worker
 
     flow = Teleport(
         ebv.Transaction(TestShape.price.store(42.0)),
@@ -55,7 +55,7 @@ async def test_teleport_string_tag():
 @pytest.mark.asyncio
 async def test_teleport_tuple_tag():
     """Tuple tag for machine+index routing."""
-    from eb_distributed.worker import Worker
+    from eb_distributed import Worker
 
     flow = Teleport(
         ebv.Transaction(TestShape.price.store(42.0)),

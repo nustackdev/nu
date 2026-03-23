@@ -1,17 +1,6 @@
 """ContextResource - composables Resource that builds an everybase Context.
 
 Attaches a NavigatorResource and binds it as Navigator to the Context.
-
-Usage:
-    spec = ContextSpec(
-        storage=NavigatorSpec(
-            storage_resource=InMemoryStorageSpec()
-        )
-    )
-
-    async with Runtime() as runtime:
-        ctx_resource = await runtime.create(spec)
-        await some_flow.execute(ctx_resource.ctx)
 """
 
 from __future__ import annotations
@@ -21,7 +10,7 @@ from composables import Attach, Resource, ResourceSpec
 
 from everybase import Context
 
-from .storage import NavigatorSpec
+from .navigator import NavigatorSpec
 
 
 __all__ = [
@@ -41,7 +30,6 @@ class ContextResource(Resource):
         from virtuals import Navigator
 
         self._ctx = Context()
-        # Bind the navigator itself - spans look up Navigator from context
         self._ctx = self._ctx.bind(self.storage, Navigator)
 
     @property

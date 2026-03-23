@@ -1,31 +1,10 @@
-"""Ray composables Resources - lifecycle wrappers for Ray processes.
+"""Ray Resources - lifecycle wrappers for Ray processes.
 
-Two Resources, one generic and one everybase-specialized:
+RayActor: wraps a RayProcess. Manages lifecycle (setup/cleanup).
+    Used for services (Navigator + InvisiblesServer, etc).
 
-    RayActor: wraps a RayProcess. Manages lifecycle (setup/cleanup).
-        Used for services (Navigator + InvisiblesServer, etc).
-
-    RayWorker(RayActor): wraps a WorkerProcess. Inherits lifecycle,
-        adds execute(tree) for everybase tree dispatch.
-
-Specs support Ray actor options: naming, resource constraints,
-fault tolerance, and node placement.
-
-Usage:
-    # Named service with restart policy
-    service = await runtime.create(RayActorSpec(
-        inner_spec=InvisiblesServerSpec(...),
-        actor_name="storage",
-        max_restarts=-1,
-    ))
-
-    # Worker on a specific node with GPU
-    worker = await runtime.create(RayWorkerSpec(
-        inner_spec=WorkerSpec(context=ContextSpec(storage=nav_proxy)),
-        node="blue",
-        num_gpus=1,
-    ))
-    ctx = ctx.bind(worker, Worker, 0)
+RayWorker(RayActor): wraps a WorkerProcess. Inherits lifecycle,
+    adds execute(tree) for everybase tree dispatch.
 """
 
 from __future__ import annotations
@@ -51,7 +30,7 @@ __all__ = [
 
 
 class RayActor(Resource):
-    """Composables Resource hosting a Resource on a Ray node via RayProcess.
+    """Hosts a Resource on a Ray node via RayProcess.
 
     On setup: creates a RayProcess actor, sends inner_spec.
     On cleanup: shuts down the remote actor gracefully.
@@ -61,7 +40,7 @@ class RayActor(Resource):
 
     async def setup(self) -> None:
         """Start a Ray actor and create the inner Resource remotely."""
-        from .process import RayProcess
+        from ..launcher.process import RayProcess
 
         self._process = self._create_process(RayProcess)
         await self._process.start.remote(self.spec.inner_spec)
@@ -116,7 +95,7 @@ class RayActor(Resource):
 
 
 class RayWorker(RayActor):
-    """Composables Resource hosting a Worker on a Ray node via WorkerProcess.
+    """Hosts a Worker on a Ray node via WorkerProcess.
 
     Inherits lifecycle from RayActor, adds execute() for tree dispatch.
     Bound to Context for Teleport: ctx[Worker, idx].execute(tree).
@@ -126,23 +105,14 @@ class RayWorker(RayActor):
 
     async def setup(self) -> None:
         """Start a WorkerProcess and create the Worker remotely."""
-        from .process import WorkerProcess
+        from ..launcher.process import WorkerProcess
 
         self._process = self._create_process(WorkerProcess)
         await self._process.start.remote(self.spec.inner_spec)
         self._address = None
 
     async def execute(self, tree: object) -> object:
-        """Dispatch tree execution to the remote WorkerProcess.
-
-        Called by Teleport via ctx[Worker, idx].execute(tree).
-
-        Args:
-            tree: An everybase Executable (tree node).
-
-        Returns:
-            Result of tree execution on the remote worker.
-        """
+        """Dispatch tree execution to the remote WorkerProcess."""
         return await self._process.execute.remote(tree)
 
 
@@ -153,22 +123,7 @@ class RayWorker(RayActor):
 
 @attrs.define(frozen=True, slots=True, kw_only=True)
 class _RaySpecBase(ResourceSpec):
-    """Shared Ray actor configuration.
-
-    Attributes:
-        inner_spec: The composables Spec to create inside the Ray actor.
-        node: Ray node name for placement (e.g. "red", "blue").
-        actor_name: Ray actor name for service discovery via ray.get_actor().
-        num_cpus: CPU cores to reserve for this actor.
-        num_gpus: GPU resources to reserve for this actor.
-        max_restarts: Max restarts on failure. 0=none, -1=infinite.
-        lifetime: "detached" for persistent actors, None for default.
-        tags: Extra context tags for worker resolution.
-            Workers are always bound by index. Tags add aliases so
-            Teleport can route by capability, node, or any custom key.
-            e.g. tags=("gpu",) → Teleport(worker="gpu")
-            e.g. tags=(("red", 0),) → Teleport(worker=("red", 0))
-    """
+    """Shared Ray actor configuration."""
 
     inner_spec: ResourceSpec = attrs.field()
     node: str | None = None

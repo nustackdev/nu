@@ -34,24 +34,13 @@ __all__ = [
 
 
 class Worker(Resource):
-    """Executes everybase trees against its own Context.
-
-    A Worker is a composable Resource with an attached ContextResource.
-    It receives serialized or direct trees and executes them.
-    """
+    """Executes everybase trees against its own Context."""
 
     spec: WorkerSpec
     context = Attach()
 
     async def execute(self, tree: object) -> object:
-        """Execute an everybase tree against this worker's Context.
-
-        Args:
-            tree: An Executable (everybase tree node)
-
-        Returns:
-            Result of tree execution
-        """
+        """Execute an everybase tree against this worker's Context."""
         return await tree.execute(self.context.ctx)
 
     @property

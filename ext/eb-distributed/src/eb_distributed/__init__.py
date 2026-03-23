@@ -1,14 +1,17 @@
 """eb-distributed: distributed execution adapters for everybase.
 
 Provides composables Resources for:
-- Invisibles RPC (server + client for transparent proxying)
-- Ray actors (generic composables Resource host on Ray nodes)
-- Worker (executes trees against its own Context)
-- Teleport (Span that ships subtrees to Workers)
+- Storage (InMemory, RocksDB, Text) + Codec + Observer (InMemory, Redis)
+- Navigator (virtuals entrypoint)
+- Context + Worker (tree execution)
+- Invisibles (server + client for transparent proxying)
+- Ray (actors + workers on Ray nodes)
+- Teleport (span that ships subtrees to workers)
+- Presets (local, distributed)
 
 On import, registers everybase Executable and composables Spec as
 value types in invisibles. This means trees and specs fly through
-RPC by value automatically (no manual serialization needed).
+invisibles by value automatically (no manual serialization needed).
 """
 
 from composables.spec import BaseSpec
@@ -16,58 +19,79 @@ from invisibles import register_value_type
 
 from everybase.core.executable import Executable
 
-from .context import ContextResource, ContextSpec
-from .presets import local
-from .ray import RayActor, RayActorSpec, RayWorker, RayWorkerSpec
-from .ray.presets import distributed
-from .rpc.client import InvisiblesClient, InvisiblesClientSpec
-from .rpc.server import InvisiblesServer, InvisiblesServerSpec
-from .storage import (
+from .presets import distributed, local
+from .resources import (
     CodecResource,
     CodecSpec,
+    ContextResource,
+    ContextSpec,
+    InMemoryObserverResource,
+    InMemoryObserverSpec,
     InMemoryStorageResource,
     InMemoryStorageSpec,
+    InvisiblesClient,
+    InvisiblesClientSpec,
+    InvisiblesServer,
+    InvisiblesServerSpec,
     NavigatorResource,
     NavigatorSpec,
+    RayActor,
+    RayActorSpec,
+    RayWorker,
+    RayWorkerSpec,
+    RedisObserverResource,
+    RedisObserverSpec,
     RocksDBStorageResource,
     RocksDBStorageSpec,
+    TextStorageResource,
+    TextStorageSpec,
+    Worker,
+    WorkerSpec,
+    binary_codec_spec,
+    msgpack_codec_spec,
+    noop_codec_spec,
+    text_codec_spec,
 )
-from .teleport import Teleport
-from .worker import Worker, WorkerSpec
+from .spans import Teleport
 
 
-# Register value types: trees and specs serialize by value through RPC.
+# Register value types: trees and specs serialize by value through invisibles.
 # No lifecycle, immutable, safe to send as data.
 register_value_type(Executable, BaseSpec)
 
 
-__all__ = [  # noqa: RUF022
-    # Ray
-    "RayActor",
-    "RayActorSpec",
-    "RayWorker",
-    "RayWorkerSpec",
-    "distributed",
-    # Storage
+__all__ = [
     "CodecResource",
     "CodecSpec",
     "ContextResource",
     "ContextSpec",
+    "InMemoryObserverResource",
+    "InMemoryObserverSpec",
     "InMemoryStorageResource",
     "InMemoryStorageSpec",
-    "NavigatorResource",
-    "NavigatorSpec",
-    "RocksDBStorageResource",
-    "RocksDBStorageSpec",
-    # RPC
     "InvisiblesClient",
     "InvisiblesClientSpec",
     "InvisiblesServer",
     "InvisiblesServerSpec",
-    # Core
+    "NavigatorResource",
+    "NavigatorSpec",
+    "RayActor",
+    "RayActorSpec",
+    "RayWorker",
+    "RayWorkerSpec",
+    "RedisObserverResource",
+    "RedisObserverSpec",
+    "RocksDBStorageResource",
+    "RocksDBStorageSpec",
     "Teleport",
+    "TextStorageResource",
+    "TextStorageSpec",
     "Worker",
     "WorkerSpec",
-    # Presets
+    "binary_codec_spec",
+    "distributed",
     "local",
+    "msgpack_codec_spec",
+    "noop_codec_spec",
+    "text_codec_spec",
 ]

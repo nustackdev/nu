@@ -1,11 +1,4 @@
-"""Topology presets - ready-to-use setups. Same tree runs on any preset.
-
-# local - everything in one process
-ctx = await local(runtime, NavigatorSpec())
-
-# distributed - Ray actors across machines (see ray/presets.py)
-ctx = await distributed(runtime, NavigatorSpec(), workers={"red": 2, "blue": 2})
-"""
+"""Local preset - single process, no Ray."""
 
 from __future__ import annotations
 
@@ -13,14 +6,14 @@ from typing import TYPE_CHECKING
 
 from everybase import Context
 
-from .context import ContextSpec
-from .worker import Worker, WorkerSpec
+from ..resources.context import ContextSpec
+from ..resources.worker import Worker, WorkerSpec
 
 
 if TYPE_CHECKING:
     from composables import Runtime
 
-    from .storage import NavigatorSpec
+    from ..resources.navigator import NavigatorSpec
 
 
 __all__ = [
@@ -31,7 +24,7 @@ __all__ = [
 async def local(runtime: Runtime, nav_spec: NavigatorSpec, *, workers: int = 2) -> Context:
     """Single process, local storage. Simplest setup.
 
-    Everything runs in the caller's process. No RPC, no subprocesses.
+    Everything runs in the caller's process. No communication, no subprocesses.
     Each worker gets its own Navigator and storage instance.
 
     Args:

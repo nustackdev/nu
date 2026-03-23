@@ -1,4 +1,4 @@
-"""Ray topology presets - distributed setups via Ray actors.
+"""Distributed preset - Ray actors across machines.
 
 One function switches between single-node and multi-machine. Same tree.
 
@@ -7,9 +7,6 @@ One function switches between single-node and multi-machine. Same tree.
 
     # multi-machine: 2 workers on red, 2 on blue
     ctx = await distributed(runtime, NavigatorSpec(), workers={"red": 2, "blue": 2})
-
-    # with fault tolerance
-    ctx = await distributed(runtime, NavigatorSpec(), workers=4, max_restarts=-1)
 """
 
 from __future__ import annotations
@@ -17,7 +14,7 @@ from __future__ import annotations
 import socket
 from typing import TYPE_CHECKING
 
-from .resource import RayActorSpec, RayWorkerSpec
+from ..resources.ray import RayActorSpec, RayWorkerSpec
 
 
 if TYPE_CHECKING:
@@ -25,7 +22,7 @@ if TYPE_CHECKING:
 
     from everybase import Context
 
-    from ..storage import NavigatorSpec
+    from ..resources.navigator import NavigatorSpec
 
 
 __all__ = [
@@ -53,23 +50,16 @@ async def distributed(
 
     Architecture:
         Ray Cluster
-        ├── RayProcess "storage" (Navigator + InvisiblesServer)
-        ├── WorkerProcess "worker-0" (Worker + Navigator proxy → storage)
-        ├── WorkerProcess "worker-1" (Worker + Navigator proxy → storage)
-        └── ...
-
-    All components are composables Resources managed by the Runtime.
-    Workers connect to the storage service via invisibles (TCP) for
-    high-frequency storage access. Trees arrive via Ray dispatch.
+        +-- RayProcess "storage" (Navigator + InvisiblesServer)
+        +-- WorkerProcess "worker-0" (Worker + Navigator proxy -> storage)
+        +-- WorkerProcess "worker-1" (Worker + Navigator proxy -> storage)
+        +-- ...
 
     Args:
         runtime: Composables Runtime (caller manages lifecycle via async with).
         nav_spec: Navigator specification (storage backend, codec, etc.).
         workers: Number of workers (int) or per-node placement (dict).
-            int: N workers on any available node.
-            dict: {"red": 2, "blue": 2} → 2 workers on each node.
-        storage_address: TCP address for the storage service.
-            If None, auto-selects a free port.
+        storage_address: TCP address for the storage service. Auto if None.
         storage_node: Place storage service on a specific Ray node.
         max_restarts: Max restarts on actor failure. 0=none, -1=infinite.
 
@@ -81,10 +71,9 @@ async def distributed(
 
     from everybase import Context
 
-    from ..context import ContextSpec
-    from ..rpc.client import InvisiblesClientSpec
-    from ..rpc.server import InvisiblesServerSpec
-    from ..worker import WorkerSpec
+    from ..resources.context import ContextSpec
+    from ..resources.invisibles import InvisiblesClientSpec, InvisiblesServerSpec
+    from ..resources.worker import WorkerSpec
 
     # Resolve storage address
     if storage_address is None:
@@ -139,7 +128,6 @@ async def distributed(
         for node, count in workers.items():
             node_idx = 0
             for _ in range(count):
-                # Auto-tag: (node, local_idx) for node+index routing
                 tags: tuple = ((node, node_idx),)
 
                 worker = await runtime.create(
@@ -161,12 +149,10 @@ async def distributed(
 
 def _bind_worker(ctx: object, worker: object, idx: int) -> object:
     """Bind worker to context by index + any extra tags from spec."""
-    from ..worker import Worker
+    from ..resources.worker import Worker
 
-    # Always bind by flat index
     ctx = ctx.bind(worker, Worker, idx)
 
-    # Bind extra tag aliases from spec
     for tag in worker.spec.tags:
         ctx = ctx.bind(worker, Worker, tag)
 

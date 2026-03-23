@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 from composables import Runtime
+from conftest import TestShape
 
 import eb_virtuals as ebv
 from eb_distributed import (
@@ -12,7 +13,6 @@ from eb_distributed import (
     Teleport,
     distributed,
 )
-from eb_distributed.testing import TestShape
 from everybase.abc import ForRange, Parallel, Print, Seq
 
 

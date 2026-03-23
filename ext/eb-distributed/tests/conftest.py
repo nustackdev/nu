@@ -1,4 +1,4 @@
-"""Shared fixtures for eb-distributed tests."""
+"""Shared fixtures and test utilities for eb-distributed tests."""
 
 from __future__ import annotations
 
@@ -7,6 +7,16 @@ import tempfile
 
 import pytest
 import ray
+
+import eb_virtuals as ebv
+from everybase.shape import Shape
+
+
+class TestShape(Shape):
+    """Test shape with price and quantity fields."""
+
+    price = ebv.FloatRef.slot()
+    quantity = ebv.IntRef.slot()
 
 
 @pytest.fixture(scope="session", autouse=True)

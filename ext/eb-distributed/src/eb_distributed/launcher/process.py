@@ -18,25 +18,14 @@ import ray
 
 
 class _ProcessBase:
-    """Shared lifecycle logic for Ray processes.
-
-    Not a Ray actor itself - subclassed by @ray.remote actors.
-    Handles composables Runtime creation and teardown.
-    """
+    """Shared lifecycle logic for Ray processes."""
 
     def __init__(self) -> None:
         self._runtime = None
         self._resource = None
 
     async def start(self, spec: object) -> None:
-        """Create a composables Resource from the given Spec.
-
-        Starts a composables Runtime and creates the Resource.
-        The Resource lives for the lifetime of this actor.
-
-        Args:
-            spec: Any composables ResourceSpec.
-        """
+        """Create a composables Resource from the given Spec."""
         from composables import Runtime
 
         import eb_distributed  # noqa: F401 - registers value types
@@ -55,39 +44,13 @@ class _ProcessBase:
 
 @ray.remote
 class RayProcess(_ProcessBase):
-    """Generic Ray actor. Receives a Spec, creates a Resource.
-
-    Used for services (Navigator + InvisiblesServer, etc.)
-    that don't need tree execution.
-
-    Lifecycle:
-        process = RayProcess.remote()
-        await process.start.remote(spec)
-        await process.shutdown.remote()
-    """
+    """Generic Ray actor. Receives a Spec, creates a Resource."""
 
 
 @ray.remote
 class WorkerProcess(_ProcessBase):
-    """Everybase worker Ray actor. Inherits lifecycle, adds tree execution.
-
-    Receives a WorkerSpec via start(), creates a Worker with its own Context.
-    execute(tree) dispatches trees against the Worker's Context.
-
-    Lifecycle:
-        process = WorkerProcess.remote()
-        await process.start.remote(worker_spec)
-        result = await process.execute.remote(tree)
-        await process.shutdown.remote()
-    """
+    """Everybase worker Ray actor. Inherits lifecycle, adds tree execution."""
 
     async def execute(self, tree: object) -> object:
-        """Execute an everybase tree against this worker's Context.
-
-        Args:
-            tree: An everybase Executable (tree node).
-
-        Returns:
-            Result of tree execution.
-        """
+        """Execute an everybase tree against this worker's Context."""
         return await self._resource.execute(tree)
