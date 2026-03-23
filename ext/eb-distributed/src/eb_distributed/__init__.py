@@ -13,11 +13,6 @@ value types in invisibles. This means trees and specs fly through
 invisibles by value automatically (no manual serialization needed).
 """
 
-from composables.spec import BaseSpec
-from invisibles import register_value_type
-
-from everybase.core.executable import Executable
-
 from .resources import (
     CodecResource,
     CodecSpec,
@@ -51,11 +46,6 @@ from .resources import (
     text_codec_spec,
 )
 from .spans import Teleport
-
-
-# Register value types: trees and specs serialize by value through invisibles.
-# No lifecycle, immutable, safe to send as data.
-register_value_type(Executable, BaseSpec)
 
 
 __all__ = [
