@@ -78,38 +78,44 @@ flow = Seq(
     # write through proxy, print every 10 iterations
     Parallel(
         Teleport(
-            ForRange(
-                0,
-                100,
-                Seq(
-                    ebv.Transaction(a.value.store(a.value + 1)),
-                    If(a.index % 10 == 0, ebv.Snapshot(Print("red:0  | a", a.value))),
-                ),
-                index=a.index,
+            ebv.Transaction(
+                ForRange(
+                    0,
+                    100,
+                    Seq(
+                        a.value.store(a.value + 1),
+                        If((a.index % 10).eq(0), Print("red:0  | a", a.value)),
+                    ),
+                    index=a.index,
+                )
             ),
             worker=("red", 0),
         ),
         Teleport(
-            ForRange(
-                0,
-                100,
-                Seq(
-                    ebv.Transaction(b.value.store(b.value + 1)),
-                    If(b.index % 10 == 0, ebv.Snapshot(Print("red:1  | b", b.value))),
-                ),
-                index=b.index,
+            ebv.Transaction(
+                ForRange(
+                    0,
+                    100,
+                    Seq(
+                        b.value.store(b.value + 1),
+                        If((b.index % 10).eq(0), Print("red:1  | b", b.value)),
+                    ),
+                    index=b.index,
+                )
             ),
             worker=("red", 1),
         ),
         Teleport(
-            ForRange(
-                0,
-                100,
-                Seq(
-                    ebv.Transaction(c.value.store(c.value + 1)),
-                    If(c.index % 10 == 0, ebv.Snapshot(Print("blue:0 | c", c.value))),
-                ),
-                index=c.index,
+            ebv.Transaction(
+                ForRange(
+                    0,
+                    100,
+                    Seq(
+                        c.value.store(c.value + 1),
+                        If((c.index % 10).eq(0), Print("blue:0 | c", c.value)),
+                    ),
+                    index=c.index,
+                )
             ),
             worker=("blue", 0),
         ),
