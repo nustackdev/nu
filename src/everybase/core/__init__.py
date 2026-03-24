@@ -11,7 +11,7 @@ Packages:
 from __future__ import annotations
 
 from ..tree import Node
-from .context import Context
+from .context import Attributes, Context
 from .executable import Executable
 from .flow import Flow
 from .model import Model
@@ -115,5 +115,6 @@ __all__ = [  # noqa: RUF022
     "Flow",
     "Span",
     # Context
+    "Attributes",
     "Context",
 ]

@@ -163,6 +163,54 @@ Each type defines what data the caller passes. If you write predicates for that 
 | View (eb-virtuals) | `site`, `path` | ViewRef, PrimitiveRef |
 | dict (eb-dict) | `site` | RefBase |
 
+## Attributes
+
+`ctx.attrs` is a flat mutable key-value store for primitive data. Used by attribute refs (PrimRef) for simple name-keyed values like error messages, loop counters, config.
+
+```python
+# Write
+ctx.attrs["error"] = "timeout"
+ctx.attrs["attempt"] = 3
+
+# Read
+ctx.attrs["error"]          # -> "timeout"
+"error" in ctx.attrs        # -> True
+ctx.attrs.get("x", default) # -> default if missing
+
+# Delete
+del ctx.attrs["error"]
+```
+
+Attrs are mutable and scoped by context copies. When a Span creates a child context, the child gets its own copy of attrs - mutations don't leak to the parent.
+
+TryCatch and Retry write to attrs automatically:
+
+```python
+TryCatch(
+    risky_operation,
+    catch=Print("error", PrimRef("error")),  # attrs["error"] = str(exception)
+)
+
+Retry(
+    flaky_operation,
+    on_success=Print("took", PrimRef("attempt")),  # attrs["attempt"] = attempt_number
+)
+```
+
+### Carrying attrs across Teleport
+
+By default, Teleport replaces the parent context with the worker's context. Attrs are lost. Set `carry=True` to copy attrs to the worker:
+
+```python
+Teleport(
+    handle_with_context,
+    worker=0,
+    carry=True,  # worker gets parent's attrs
+)
+```
+
+This deep-copies all attrs from parent to worker context before execution.
+
 ## API
 
 ```python
@@ -184,4 +232,10 @@ ctx.has(TypeTag, AnotherTag)  # -> bool
 
 # Check if lazy was materialized
 ctx.was_opened(TypeTag)  # -> bool
+
+# Attributes (flat mutable key-value for primitive data)
+ctx.attrs["key"] = value
+ctx.attrs["key"]             # -> value
+"key" in ctx.attrs           # -> bool
+ctx.attrs.copy()             # -> independent deep copy
 ```

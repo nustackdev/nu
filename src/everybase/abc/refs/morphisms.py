@@ -28,7 +28,7 @@ class PrimGetOp[T](Operation, Morphism[T | Sentinel]):
 
     async def execute(self, ctx: Context) -> T | Sentinel:
         """Execute the get operation."""
-        return ctx[self._ref.name]
+        return ctx.attrs[self._ref.name]
 
 
 class PrimExistsOp(Operation, Morphism[bool]):
@@ -41,4 +41,4 @@ class PrimExistsOp(Operation, Morphism[bool]):
 
     async def execute(self, ctx: Context) -> bool:
         """Execute the exists check."""
-        return self._ref.name in ctx
+        return self._ref.name in ctx.attrs

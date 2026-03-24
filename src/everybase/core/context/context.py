@@ -27,6 +27,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
+    from .attributes import Attributes
+
 
 __all__ = [
     "Context",
@@ -59,19 +61,28 @@ class Context:
         ctx.get(View, Market, site=(5,), path=(...,))  # -> shard_a
     """
 
-    __slots__ = ("_bindings", "_factories", "_guarded", "_opened")
+    __slots__ = ("_attrs", "_bindings", "_factories", "_guarded", "_opened")
 
     def __init__(self) -> None:
         """Initialize empty context."""
+        from .attributes import Attributes
+
+        self._attrs = Attributes()
         self._bindings: dict[tuple, object] = {}
         self._factories: dict[tuple, Callable] = {}
         self._opened: set[tuple] = set()
         # service_type -> [(scope_tags, preds_dict, value, factory), ...]
         self._guarded: dict[object, list[tuple]] = {}
 
+    @property
+    def attrs(self) -> Attributes:
+        """Flat mutable key-value store for primitive/attribute data."""
+        return self._attrs
+
     def _copy(self) -> Context:
-        """Create a shallow copy."""
+        """Create a shallow copy. Attrs are copied so mutations don't leak."""
         ctx = Context.__new__(Context)
+        ctx._attrs = self._attrs.copy()
         ctx._bindings = dict(self._bindings)
         ctx._factories = dict(self._factories)
         ctx._opened = set(self._opened)

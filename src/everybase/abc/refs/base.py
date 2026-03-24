@@ -45,8 +45,8 @@ class PrimRef[T](Ref[T]):
         return self._name
 
     async def fetch(self, ctx: object) -> T | Sentinel:
-        """Fetch value from context by name."""
-        return ctx[self._name]  # type: ignore[index]
+        """Fetch value from context attrs by name."""
+        return ctx.attrs[self._name]  # type: ignore[attr-defined]
 
     def get(self) -> Value:
         """Read via PrimGetOp, returns typed Value."""

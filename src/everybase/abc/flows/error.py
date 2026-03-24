@@ -76,7 +76,8 @@ class TryCatch(Flow):
         except Exception as e:
             caught = e
             if catch is not None:
-                catch_ctx = ctx.bind(str(e), "error")
+                catch_ctx = ctx._copy()
+                catch_ctx.attrs["error"] = str(e)
                 await catch.execute(catch_ctx)
         finally:
             if finally_ is not None:
@@ -174,10 +175,14 @@ class Retry(Flow):
                 await body.execute(ctx)
                 hook = self.on_success
                 if hook is not None:
-                    await hook.execute(ctx.bind(attempt, "attempt"))
+                    hook_ctx = ctx._copy()
+                    hook_ctx.attrs["attempt"] = attempt
+                    await hook.execute(hook_ctx)
                 return
             except Exception as e:
-                hook_ctx = ctx.bind(str(e), "error").bind(attempt, "attempt")
+                hook_ctx = ctx._copy()
+                hook_ctx.attrs["error"] = str(e)
+                hook_ctx.attrs["attempt"] = attempt
                 if attempt >= max_attempts:
                     hook = self.on_fail
                     if hook is not None:

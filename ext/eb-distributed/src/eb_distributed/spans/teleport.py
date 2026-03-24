@@ -14,6 +14,13 @@ Usage:
         worker=0,
     )
 
+    # Carry parent's attrs to worker
+    Teleport(
+        handle_error,
+        worker=1,
+        carry=True,
+    )
+
 Workers are resolved from context by tag:
     ctx[Worker, 0]      # by index
     ctx[Worker, "gpu"]  # by capability
@@ -36,11 +43,25 @@ __all__ = [
 
 
 class Teleport(Span):
-    """Ships children to a Worker for remote execution."""
+    """Ships children to a Worker for remote execution.
 
-    def __init__(self, *children: Executable, worker: object = 0) -> None:
+    Args:
+        *children: Tree nodes to execute on the worker.
+        worker: Tag to resolve the target Worker from context.
+        carry: If True, copy parent's attrs to the worker context
+            before execution. Attrs are primitive key-value data
+            (error strings, loop counters, config) that PrimRefs read.
+    """
+
+    def __init__(
+        self,
+        *children: Executable,
+        worker: object = 0,
+        carry: bool = False,
+    ) -> None:
         super().__init__(*children)
         self._worker_tag = worker
+        self._carry = carry
 
     async def execute(self, ctx: Context) -> object:
         """Execute children on the target worker."""
@@ -55,7 +76,24 @@ class Teleport(Span):
 
             subtree = Seq(*self.children)
 
+        if self._carry:
+            return await self._execute_with_carry(ctx, worker, subtree)
         return await worker.execute(subtree)
 
+    async def _execute_with_carry(
+        self,
+        parent_ctx: Context,
+        worker: object,
+        subtree: object,
+    ) -> object:
+        """Execute with parent attrs copied to worker context."""
+        worker_ctx = worker.ctx._copy()
+        # Deep copy parent attrs into worker context
+        carried = parent_ctx.attrs.copy()
+        for key, value in carried.items():
+            worker_ctx.attrs[key] = value
+        return await subtree.execute(worker_ctx)
+
     def __repr__(self) -> str:
-        return f"Teleport(worker={self._worker_tag!r})"
+        carry = ", carry=True" if self._carry else ""
+        return f"Teleport(worker={self._worker_tag!r}{carry})"

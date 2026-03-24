@@ -473,6 +473,108 @@ class TestEdgeCases:
 
 
 # =============================================================================
+# Attributes
+# =============================================================================
+
+
+class TestAttributes:
+    """ctx.attrs -- flat mutable key-value store."""
+
+    def test_set_and_get(self):
+        ctx = Context()
+        ctx.attrs["error"] = "timeout"
+        assert ctx.attrs["error"] == "timeout"
+
+    def test_contains(self):
+        ctx = Context()
+        ctx.attrs["x"] = 1
+        assert "x" in ctx.attrs
+        assert "y" not in ctx.attrs
+
+    def test_delete(self):
+        ctx = Context()
+        ctx.attrs["x"] = 1
+        del ctx.attrs["x"]
+        assert "x" not in ctx.attrs
+
+    def test_get_with_default(self):
+        ctx = Context()
+        assert ctx.attrs.get("missing", 42) == 42
+        assert ctx.attrs.get("missing") is None
+
+    def test_len(self):
+        ctx = Context()
+        assert len(ctx.attrs) == 0
+        ctx.attrs["a"] = 1
+        ctx.attrs["b"] = 2
+        assert len(ctx.attrs) == 2
+
+    def test_keys_values_items(self):
+        ctx = Context()
+        ctx.attrs["a"] = 1
+        ctx.attrs["b"] = 2
+        assert set(ctx.attrs.keys()) == {"a", "b"}
+        assert set(ctx.attrs.values()) == {1, 2}
+        assert set(ctx.attrs.items()) == {("a", 1), ("b", 2)}
+
+    def test_copy_independent(self):
+        ctx = Context()
+        ctx.attrs["x"] = [1, 2, 3]
+        copied = ctx.attrs.copy()
+        copied["x"].append(4)
+        assert ctx.attrs["x"] == [1, 2, 3]  # deep copy, original unchanged
+        assert copied["x"] == [1, 2, 3, 4]
+
+    def test_context_copy_isolates_attrs(self):
+        """Context._copy() gives child its own attrs."""
+        ctx = Context()
+        ctx.attrs["x"] = 1
+        child = ctx._copy()
+        child.attrs["x"] = 999
+        child.attrs["y"] = 2
+        assert ctx.attrs["x"] == 1
+        assert "y" not in ctx.attrs
+
+    def test_repr(self):
+        ctx = Context()
+        assert repr(ctx.attrs) == "Attributes()"
+        ctx.attrs["error"] = "boom"
+        assert "error" in repr(ctx.attrs)
+
+    def test_missing_key_raises(self):
+        ctx = Context()
+        with pytest.raises(KeyError):
+            ctx.attrs["missing"]
+
+
+# =============================================================================
+# E2E: Attributes through PrimRef
+# =============================================================================
+
+
+class TestAttributesE2EPrimRef:
+    """PrimRef reads and writes through ctx.attrs."""
+
+    async def test_prim_ref_reads_from_attrs(self):
+        from everybase.abc import PrimRef
+
+        ctx = Context()
+        ctx.attrs["greeting"] = "hello"
+        ref = PrimRef("greeting")
+        result = await ref.fetch(ctx)
+        assert result == "hello"
+
+    async def test_prim_ref_exists(self):
+        from everybase.abc import PrimRef
+
+        ctx = Context()
+        ref = PrimRef("maybe")
+        assert await ref.exists().execute(ctx) is False
+        ctx.attrs["maybe"] = "yes"
+        assert await ref.exists().execute(ctx) is True
+
+
+# =============================================================================
 # E2E: Context through Refs
 # =============================================================================
 
@@ -615,7 +717,7 @@ class TestContextE2EErrors:
                 return False
 
             async def execute(self, ctx):
-                captured["error"] = ctx["error"]
+                captured["error"] = ctx.attrs["error"]
 
         tree = TryCatch(FailTerm(), catch=CaptureTerm())
         await tree.execute(Context())
@@ -652,7 +754,7 @@ class TestContextE2EErrors:
                 return False
 
             async def execute(self, ctx):
-                attempts.append(ctx["attempt"])
+                attempts.append(ctx.attrs["attempt"])
 
         tree = Retry(FlakeyTerm(), max_attempts=3, on_success=CaptureAttempt())
         await tree.execute(Context())
