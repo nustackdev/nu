@@ -74,17 +74,95 @@ class Atomic(Span):
         self._snap: SnapshotProtocol | None = None
 
     def enter(self, ctx: Context) -> Context:
-        """Scope context: register lazy transaction or snapshot factory."""
-        self._txn = None
-        self._snap = None
+        """Scope context: register lazy transaction or snapshot factory.
+
+        If Navigator has predicate bindings (sharding), opens a
+        transaction/view per shard with the same predicates.
+        """
+        self._txns = []
+        self._snaps = []
+
+        # Check for sharded navigators
+        nav_tags = (self.scope,) if self.scope is not None else ()
+        sharded = ctx.get_predicates(Navigator, *nav_tags)
+
+        if sharded:
+            return self._enter_sharded(ctx, sharded)
+
+        # Single navigator (common case)
         nav = ctx[_tags(Navigator, self.scope)]
 
-        # Check for PV writes only - other impure terms (ed stores) are irrelevant
         from .meta.auto_atomic import _has_pv_write
 
         if _has_pv_write(self):
             return self._enter_transaction(ctx, nav)
         return self._enter_snapshot(ctx, nav)
+
+    def _enter_sharded(self, ctx: Context, sharded: list) -> Context:
+        """Open transaction + view per sharded navigator."""
+        from .meta.auto_atomic import _has_pv_write
+
+        scope = self.scope
+        child_ctx = ctx
+        is_write = _has_pv_write(self)
+
+        for preds, nav in sharded:
+            if is_write:
+                child_ctx = self._enter_transaction_with_preds(child_ctx, nav, scope, preds)
+            else:
+                child_ctx = self._enter_snapshot_with_preds(child_ctx, nav, scope, preds)
+
+        return child_ctx
+
+    def _enter_transaction_with_preds(
+        self,
+        ctx: Context,
+        nav: Navigator,
+        scope: object,
+        preds: dict,
+    ) -> Context:
+        """Bind lazy txn + view for one sharded navigator."""
+        txn_holder: list = []
+
+        def open_txn() -> TransactionProtocol:
+            txn = nav.storage.begin_transaction()
+            txn_holder.append(txn)
+            self._txns.append(txn)
+            return txn
+
+        tags = (self.scope,) if self.scope is not None else ()
+        child_ctx = ctx.lazy(open_txn, TransactionProtocol, *tags, **preds)
+
+        def open_view() -> View:
+            txn = txn_holder[0] if txn_holder else open_txn()
+            return nav.root(txn)
+
+        return child_ctx.lazy(open_view, View, *tags, **preds)
+
+    def _enter_snapshot_with_preds(
+        self,
+        ctx: Context,
+        nav: Navigator,
+        scope: object,
+        preds: dict,
+    ) -> Context:
+        """Bind lazy snapshot + view for one sharded navigator."""
+        snap_holder: list = []
+
+        def open_snap() -> SnapshotProtocol:
+            snap = nav.storage.begin_snapshot()
+            snap_holder.append(snap)
+            self._snaps.append(snap)
+            return snap
+
+        tags = (self.scope,) if self.scope is not None else ()
+        child_ctx = ctx.lazy(open_snap, SnapshotProtocol, *tags, **preds)
+
+        def open_view() -> View:
+            snap = snap_holder[0] if snap_holder else open_snap()
+            return nav.root(snap)
+
+        return child_ctx.lazy(open_view, View, *tags, **preds)
 
     def _enter_transaction(self, ctx: Context, nav: Navigator) -> Context:
         scope = self.scope
@@ -92,8 +170,9 @@ class Atomic(Span):
         tags_view = _tags(View, scope)
 
         def open_txn() -> TransactionProtocol:
-            self._txn = nav.storage.begin_transaction()
-            return self._txn
+            txn = nav.storage.begin_transaction()
+            self._txns.append(txn)
+            return txn
 
         child_ctx = ctx.lazy(open_txn, *tags_txn)
 
@@ -109,8 +188,9 @@ class Atomic(Span):
         tags_view = _tags(View, scope)
 
         def open_snap() -> SnapshotProtocol:
-            self._snap = nav.storage.begin_snapshot()
-            return self._snap
+            snap = nav.storage.begin_snapshot()
+            self._snaps.append(snap)
+            return snap
 
         child_ctx = ctx.lazy(open_snap, *tags_snap)
 
@@ -121,18 +201,18 @@ class Atomic(Span):
         return child_ctx.lazy(open_view, *tags_view)
 
     def exit_success(self, ctx: Context) -> None:
-        """Commit transaction or close snapshot if opened."""
-        if self._txn is not None:
-            self._txn.commit()
-        elif self._snap is not None:
-            self._snap.close()
+        """Commit transactions or close snapshots."""
+        for txn in self._txns:
+            txn.commit()
+        for snap in self._snaps:
+            snap.close()
 
     def exit_failure(self, ctx: Context, error: BaseException) -> None:
-        """Abort transaction or close snapshot if opened."""
-        if self._txn is not None:
-            self._txn.abort()
-        elif self._snap is not None:
-            self._snap.close()
+        """Abort transactions or close snapshots."""
+        for txn in self._txns:
+            txn.abort()
+        for snap in self._snaps:
+            snap.close()
 
     def __repr__(self) -> str:
         scope_name = self.scope.__name__ if hasattr(self.scope, "__name__") else str(self.scope)
@@ -153,19 +233,59 @@ class Snapshot(Span):
     ) -> None:
         super().__init__(*children)
         self.scope = scope
-        self._snap: SnapshotProtocol | None = None
+        self._snaps: list[SnapshotProtocol] = []
 
     def enter(self, ctx: Context) -> Context:
         """Scope context: register lazy snapshot factory."""
-        self._snap = None
+        self._snaps = []
+
+        nav_tags = (self.scope,) if self.scope is not None else ()
+        sharded = ctx.get_predicates(Navigator, *nav_tags)
+
+        if sharded:
+            return self._enter_sharded(ctx, sharded)
+
         nav = ctx[_tags(Navigator, self.scope)]
-        scope = self.scope
-        tags_snap = _tags(SnapshotProtocol, scope)
-        tags_view = _tags(View, scope)
+        return self._enter_single(ctx, nav)
+
+    def _enter_sharded(self, ctx: Context, sharded: list) -> Context:
+        """Open snapshot + view per sharded navigator."""
+        child_ctx = ctx
+        for preds, nav in sharded:
+            child_ctx = self._enter_single_with_preds(child_ctx, nav, preds)
+        return child_ctx
+
+    def _enter_single_with_preds(
+        self,
+        ctx: Context,
+        nav: Navigator,
+        preds: dict,
+    ) -> Context:
+        snap_holder: list = []
 
         def open_snap() -> SnapshotProtocol:
-            self._snap = nav.storage.begin_snapshot()
-            return self._snap
+            snap = nav.storage.begin_snapshot()
+            snap_holder.append(snap)
+            self._snaps.append(snap)
+            return snap
+
+        tags = (self.scope,) if self.scope is not None else ()
+        child_ctx = ctx.lazy(open_snap, SnapshotProtocol, *tags, **preds)
+
+        def open_view() -> View:
+            snap = snap_holder[0] if snap_holder else open_snap()
+            return nav.root(snap)
+
+        return child_ctx.lazy(open_view, View, *tags, **preds)
+
+    def _enter_single(self, ctx: Context, nav: Navigator) -> Context:
+        tags_snap = _tags(SnapshotProtocol, self.scope)
+        tags_view = _tags(View, self.scope)
+
+        def open_snap() -> SnapshotProtocol:
+            snap = nav.storage.begin_snapshot()
+            self._snaps.append(snap)
+            return snap
 
         child_ctx = ctx.lazy(open_snap, *tags_snap)
 
@@ -176,14 +296,14 @@ class Snapshot(Span):
         return child_ctx.lazy(open_view, *tags_view)
 
     def exit_success(self, ctx: Context) -> None:
-        """Close snapshot if opened."""
-        if self._snap is not None:
-            self._snap.close()
+        """Close snapshots."""
+        for snap in self._snaps:
+            snap.close()
 
     def exit_failure(self, ctx: Context, error: BaseException) -> None:
-        """Close snapshot if opened."""
-        if self._snap is not None:
-            self._snap.close()
+        """Close snapshots."""
+        for snap in self._snaps:
+            snap.close()
 
     def __repr__(self) -> str:
         scope_name = self.scope.__name__ if hasattr(self.scope, "__name__") else str(self.scope)
@@ -204,19 +324,59 @@ class Transaction(Span):
     ) -> None:
         super().__init__(*children)
         self.scope = scope
-        self._txn: TransactionProtocol | None = None
+        self._txns: list[TransactionProtocol] = []
 
     def enter(self, ctx: Context) -> Context:
         """Scope context: register lazy transaction factory."""
-        self._txn = None
+        self._txns = []
+
+        nav_tags = (self.scope,) if self.scope is not None else ()
+        sharded = ctx.get_predicates(Navigator, *nav_tags)
+
+        if sharded:
+            return self._enter_sharded(ctx, sharded)
+
         nav = ctx[_tags(Navigator, self.scope)]
-        scope = self.scope
-        tags_txn = _tags(TransactionProtocol, scope)
-        tags_view = _tags(View, scope)
+        return self._enter_single(ctx, nav)
+
+    def _enter_sharded(self, ctx: Context, sharded: list) -> Context:
+        """Open transaction + view per sharded navigator."""
+        child_ctx = ctx
+        for preds, nav in sharded:
+            child_ctx = self._enter_single_with_preds(child_ctx, nav, preds)
+        return child_ctx
+
+    def _enter_single_with_preds(
+        self,
+        ctx: Context,
+        nav: Navigator,
+        preds: dict,
+    ) -> Context:
+        txn_holder: list = []
 
         def open_txn() -> TransactionProtocol:
-            self._txn = nav.storage.begin_transaction()
-            return self._txn
+            txn = nav.storage.begin_transaction()
+            txn_holder.append(txn)
+            self._txns.append(txn)
+            return txn
+
+        tags = (self.scope,) if self.scope is not None else ()
+        child_ctx = ctx.lazy(open_txn, TransactionProtocol, *tags, **preds)
+
+        def open_view() -> View:
+            txn = txn_holder[0] if txn_holder else open_txn()
+            return nav.root(txn)
+
+        return child_ctx.lazy(open_view, View, *tags, **preds)
+
+    def _enter_single(self, ctx: Context, nav: Navigator) -> Context:
+        tags_txn = _tags(TransactionProtocol, self.scope)
+        tags_view = _tags(View, self.scope)
+
+        def open_txn() -> TransactionProtocol:
+            txn = nav.storage.begin_transaction()
+            self._txns.append(txn)
+            return txn
 
         child_ctx = ctx.lazy(open_txn, *tags_txn)
 
@@ -227,14 +387,14 @@ class Transaction(Span):
         return child_ctx.lazy(open_view, *tags_view)
 
     def exit_success(self, ctx: Context) -> None:
-        """Commit transaction if opened."""
-        if self._txn is not None:
-            self._txn.commit()
+        """Commit transactions."""
+        for txn in self._txns:
+            txn.commit()
 
     def exit_failure(self, ctx: Context, error: BaseException) -> None:
-        """Abort transaction if opened."""
-        if self._txn is not None:
-            self._txn.abort()
+        """Abort transactions."""
+        for txn in self._txns:
+            txn.abort()
 
     def __repr__(self) -> str:
         scope_name = self.scope.__name__ if hasattr(self.scope, "__name__") else str(self.scope)

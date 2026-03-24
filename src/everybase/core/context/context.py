@@ -1,13 +1,22 @@
-"""Context — tagged value store for execution.
+"""Context -- tagged value store for execution.
 
 Context is the runtime environment passed to Executable.execute().
-It holds bindings keyed by tag sets with specificity-based resolution.
+It holds bindings keyed by service type + scope tags, with specificity-based
+resolution and optional named predicate guards.
 
 Design:
     - Immutable: bind() returns new Context
-    - Tag-keyed: values looked up by tag sets with subset fallback
+    - Service-type keyed: first argument after value is always the service type
+    - Scope tags: additional tags for specificity (Shape classes, strings, etc.)
+    - Named predicates: kwargs in bind() define guards, kwargs in get() pass data
     - Lazy factories: values can be created on-demand
-    - Any hashable can be a tag (type, string, Shape, etc.)
+    - Specificity fallback: more scope tags = more specific, subset fallback
+
+Resolution:
+    1. If guarded entries exist for (service_type, scope_tags), evaluate all
+       predicates with **data from get(). At least one entry must fully match.
+    2. If no guarded entries, fast dict lookup in _bindings/_factories.
+    3. Subset fallback: try smaller scope tag sets with same logic.
 """
 
 from __future__ import annotations
@@ -24,28 +33,41 @@ __all__ = [
 ]
 
 
+def _name(tag: object) -> str:
+    """Human-readable name for a tag."""
+    return tag.__name__ if hasattr(tag, "__name__") else repr(tag)
+
+
 class Context:
     """Tagged value store. The execution address space.
 
-    Bindings have tags. Resolution matches by tags.
-    More tags = more specific. Fallback = fewer tags.
+    Bindings have a service type (primary key) and optional scope tags.
+    Resolution matches by service type, then scope tags with specificity
+    fallback. Named predicate kwargs act as guards evaluated at lookup.
 
     Usage:
         ctx = Context()
-        ctx = ctx.bind(rocksdb, Storage)                  # 1 tag
-        ctx = ctx.bind(order_db, Storage, OrderShape)      # 2 tags
-        ctx = ctx.bind("timeout", "error")                 # name tag
+        ctx = ctx.bind(rocksdb, Storage)                          # type only
+        ctx = ctx.bind(order_db, Storage, OrderShape)              # type + scope
+        ctx = ctx.bind("timeout", "error")                         # string key
+        ctx = ctx.bind(shard_a, View, Market,                      # predicate
+                        sharding=lambda site, path: site[0] < 16)
 
-        ctx[Storage]                    # → rocksdb
-        ctx[Storage, OrderShape]        # → order_db
-        ctx["error"]                    # → "timeout"
+        ctx[Storage]                                   # -> rocksdb
+        ctx[Storage, OrderShape]                       # -> order_db
+        ctx["error"]                                   # -> "timeout"
+        ctx.get(View, Market, site=(5,), path=(...,))  # -> shard_a
     """
+
+    __slots__ = ("_bindings", "_factories", "_guarded", "_opened")
 
     def __init__(self) -> None:
         """Initialize empty context."""
-        self._bindings: dict[frozenset, object] = {}
-        self._factories: dict[frozenset, Callable] = {}
-        self._opened: set[frozenset] = set()
+        self._bindings: dict[tuple, object] = {}
+        self._factories: dict[tuple, Callable] = {}
+        self._opened: set[tuple] = set()
+        # service_type -> [(scope_tags, preds_dict, value, factory), ...]
+        self._guarded: dict[object, list[tuple]] = {}
 
     def _copy(self) -> Context:
         """Create a shallow copy."""
@@ -53,118 +75,226 @@ class Context:
         ctx._bindings = dict(self._bindings)
         ctx._factories = dict(self._factories)
         ctx._opened = set(self._opened)
+        ctx._guarded = {k: list(v) for k, v in self._guarded.items()}
         return ctx
 
-    @staticmethod
-    def _normalize(tags: tuple) -> frozenset:
-        """Normalize tags to frozenset."""
-        return frozenset(tags)
-
-    def bind(self, value: object, *tags: object) -> Context:
-        """Bind value to tag set. Returns new Context (immutable).
+    def bind(
+        self, value: object, service_type: object, *tags: object, **predicates: Callable
+    ) -> Context:
+        """Bind value to service type + tags. Returns new Context.
 
         Args:
             value: The value to bind.
-            *tags: One or more tags (types, strings, etc.).
+            service_type: Primary key (type, string, etc.).
+            *tags: Scope tags for specificity.
+            **predicates: Named guard callables. Each receives **data from get().
 
         Returns:
             New Context with the binding added.
         """
-        if not tags:
-            msg = "bind() requires at least one tag"
-            raise ValueError(msg)
-        key = self._normalize(tags)
+        scope_tags = frozenset(tags)
         ctx = self._copy()
-        ctx._bindings[key] = value
-        ctx._factories.pop(key, None)
+
+        if predicates:
+            ctx._guarded.setdefault(service_type, []).append(
+                (scope_tags, dict(predicates), value, None)
+            )
+        else:
+            key = (service_type, scope_tags)
+            ctx._bindings[key] = value
+            ctx._factories.pop(key, None)
+
         return ctx
 
-    def lazy(self, factory: Callable, *tags: object) -> Context:
-        """Bind lazy factory to tag set. Called on first access, cached.
+    def lazy(
+        self, factory: Callable, service_type: object, *tags: object, **predicates: Callable
+    ) -> Context:
+        """Bind lazy factory. Called on first access, cached.
 
         Args:
-            factory: Callable that creates the value.
-            *tags: One or more tags.
+            factory: Zero-arg callable that creates the value.
+            service_type: Primary key (type, string, etc.).
+            *tags: Scope tags for specificity.
+            **predicates: Named guard callables.
 
         Returns:
             New Context with the factory added.
         """
-        if not tags:
-            msg = "lazy() requires at least one tag"
-            raise ValueError(msg)
-        key = self._normalize(tags)
+        scope_tags = frozenset(tags)
         ctx = self._copy()
-        ctx._factories[key] = factory
+
+        if predicates:
+            ctx._guarded.setdefault(service_type, []).append(
+                (scope_tags, dict(predicates), None, factory)
+            )
+        else:
+            key = (service_type, scope_tags)
+            ctx._factories[key] = factory
+
         return ctx
 
-    def has(self, *tags: object) -> bool:
-        """Check if binding exists for exact tag set."""
-        key = self._normalize(tags)
-        return key in self._bindings or key in self._factories
+    def get(self, service_type: object, *tags: object, **data: object) -> object:
+        """Resolve with optional predicate data.
 
-    def was_opened(self, *tags: object) -> bool:
-        """Check if lazy binding was materialized."""
-        key = self._normalize(tags)
-        return key in self._opened
+        Args:
+            service_type: Primary key.
+            *tags: Scope tags to match against.
+            **data: Passed as **kwargs to all predicates.
 
-    def _resolve(self, key: frozenset) -> object:
-        """Resolve a frozenset key with specificity fallback.
-
-        Resolution order:
-        1. Exact match in bindings
-        2. Exact match in factories (create + cache)
-        3. Largest subset match, then smaller subsets
-        4. LookupError if nothing found
+        Returns:
+            The resolved value.
         """
-        # Exact match — bindings
+        return self._resolve(service_type, frozenset(tags), data)
+
+    def has(self, service_type: object, *tags: object) -> bool:
+        """Check if a binding exists for service type + tags."""
+        try:
+            self._resolve(service_type, frozenset(tags), {})
+        except LookupError:
+            return False
+        return True
+
+    def get_predicates(
+        self,
+        service_type: object,
+        *tags: object,
+    ) -> list[tuple[dict, object]]:
+        """Get all predicate entries for a service type + tags.
+
+        Returns list of (predicates_dict, value) for each guarded entry
+        matching the exact tag set. Used by spans that need to replicate
+        predicate bindings onto derived types (e.g. Atomic binding View
+        with same predicates as Navigator).
+
+        Returns empty list if no guarded entries exist.
+        """
+        guarded = self._guarded.get(service_type, [])
+        scope_tags = frozenset(tags)
+        result = []
+        for etags, preds, val, fac in guarded:
+            if etags == scope_tags:
+                v = val if fac is None else fac()
+                result.append((dict(preds), v))
+        return result
+
+    def was_opened(self, service_type: object, *tags: object) -> bool:
+        """Check if a lazy binding was materialized."""
+        return (service_type, frozenset(tags)) in self._opened
+
+    def _resolve(
+        self,
+        service_type: object,
+        scope_tags: frozenset,
+        data: dict,
+    ) -> object:
+        """Core resolution.
+
+        1. Check guarded entries for (service_type, scope_tags). If any exist,
+           evaluate predicates with **data. At least one must fully match.
+        2. If no guarded entries, fast dict lookup in _bindings/_factories.
+        3. Subset fallback: try smaller scope tag sets with same logic.
+        """
+        result = self._resolve_at(service_type, scope_tags, data)
+        if result is not _MISS:
+            return result
+
+        # Subset fallback on scope tags
+        if len(scope_tags) > 1:
+            tags_list = sorted(scope_tags, key=id)
+            for size in range(len(scope_tags) - 1, 0, -1):
+                for subset in _subsets_of_size(tags_list, size):
+                    result = self._resolve_at(service_type, frozenset(subset), data)
+                    if result is not _MISS:
+                        return result
+
+        # Empty scope fallback
+        if scope_tags:
+            result = self._resolve_at(service_type, frozenset(), data)
+            if result is not _MISS:
+                return result
+
+        # Nothing found
+        tag_names = ", ".join(_name(t) for t in scope_tags)
+        data_str = ", ".join(f"{k}={v!r}" for k, v in data.items())
+        parts = [_name(service_type)]
+        if tag_names:
+            parts.append(f"[{tag_names}]")
+        if data_str:
+            parts.append(f"({data_str})")
+        msg = f"No binding for: {''.join(parts)}"
+        raise LookupError(msg)
+
+    def _resolve_at(
+        self,
+        service_type: object,
+        scope_tags: frozenset,
+        data: dict,
+    ) -> object:
+        """Resolve at exact scope level. Returns _MISS if nothing found.
+
+        If guarded entries exist for this (service_type) with matching scope,
+        predicates are evaluated. At least one must match or _MISS is returned
+        (no fallback to non-predicate bindings at this scope level).
+        """
+        # Check guarded entries only when caller provides data
+        guarded = self._guarded.get(service_type) if data else None
+        if guarded:
+            candidates = [
+                (i, etags, preds, val, fac)
+                for i, (etags, preds, val, fac) in enumerate(guarded)
+                if etags == scope_tags
+            ]
+            if candidates:
+                # Guarded entries exist at this scope — predicates must decide
+                for i, etags, preds, val, fac in candidates:
+                    if all(pred(**data) for pred in preds.values()):
+                        if fac is not None:
+                            val = fac()
+                            guarded[i] = (etags, preds, val, None)
+                        return val
+                # Guarded entries exist but none matched — strict failure
+                return _MISS
+
+        # No guarded entries at this scope — fast path
+        key = (service_type, scope_tags)
+
         if key in self._bindings:
             return self._bindings[key]
 
-        # Exact match — factory
         if key in self._factories:
-            value = self._factories[key]()
+            value = self._factories.pop(key)()
             self._bindings[key] = value
             self._opened.add(key)
             return value
 
-        # Subset fallback: try subsets from largest to smallest
-        if len(key) > 1:
-            for size in range(len(key) - 1, 0, -1):
-                # Generate subsets of this size
-                tags_list = sorted(key, key=id)
-                for subset in _subsets_of_size(tags_list, size):
-                    fset = frozenset(subset)
-                    if fset in self._bindings:
-                        return self._bindings[fset]
-                    if fset in self._factories:
-                        value = self._factories[fset]()
-                        self._bindings[fset] = value
-                        self._opened.add(fset)
-                        return value
-
-        # Nothing found
-        tag_names = ", ".join(t.__name__ if hasattr(t, "__name__") else repr(t) for t in key)
-        msg = f"No binding for tags: {tag_names}"
-        raise LookupError(msg)
+        return _MISS
 
     def __getitem__(self, tags: object) -> object:
-        """Resolve by tags with specificity fallback.
+        """Resolve by service type + scope tags.
+
+        Sugar for get() with no predicate data.
 
         Usage:
-            ctx[StorageProtocol]              # single tag
-            ctx[StorageProtocol, OrderShape]   # multiple tags
-            ctx["error"]                       # string tag
+            ctx[Storage]                # service type only
+            ctx[Storage, OrderShape]    # service type + scope
+            ctx["error"]                # string service type
         """
-        if not isinstance(tags, tuple):
-            tags = (tags,)
-        return self._resolve(frozenset(tags))
+        if isinstance(tags, tuple):
+            if not tags:
+                msg = "Empty tag tuple"
+                raise ValueError(msg)
+            return self._resolve(tags[0], frozenset(tags[1:]), {})
+        return self._resolve(tags, frozenset(), {})
 
     def __contains__(self, tags: object) -> bool:
-        """Check if tags resolve (including subset fallback)."""
-        if not isinstance(tags, tuple):
-            tags = (tags,)
+        """Check if tags resolve."""
         try:
-            self._resolve(frozenset(tags))
+            if isinstance(tags, tuple):
+                if not tags:
+                    return False
+                self._resolve(tags[0], frozenset(tags[1:]), {})
+            else:
+                self._resolve(tags, frozenset(), {})
         except LookupError:
             return False
         return True
@@ -172,14 +302,24 @@ class Context:
     def __repr__(self) -> str:
         """String representation."""
         parts = []
-        for key in self._bindings:
-            labels = [t.__name__ if hasattr(t, "__name__") else repr(t) for t in key]
+        for (stype, stags), _val in self._bindings.items():
+            labels = [_name(stype), *(_name(t) for t in stags)]
             parts.append("+".join(labels))
-        for key in self._factories:
-            if key not in self._bindings:
-                labels = [t.__name__ if hasattr(t, "__name__") else repr(t) for t in key]
-                parts.append(f"{'+'.join(labels)}(lazy)")
+        for stype_stags in self._factories:
+            if stype_stags not in self._bindings:
+                stype, stags = stype_stags
+                labels = [_name(stype), *(_name(t) for t in stags), "lazy"]
+                parts.append("+".join(labels))
+        for stype, entries in self._guarded.items():
+            for etags, preds, _val, _fac in entries:
+                labels = [_name(stype), *(_name(t) for t in etags)]
+                labels.append("+".join(preds))
+                parts.append("+".join(labels))
         return f"Context({', '.join(parts)})"
+
+
+# Sentinel for "no match found" (distinct from None which is a valid value)
+_MISS = object()
 
 
 def _subsets_of_size(items: list, size: int) -> Generator[tuple, None, None]:

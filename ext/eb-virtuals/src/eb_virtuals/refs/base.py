@@ -49,6 +49,27 @@ ViewT = TypeVar("ViewT", bound="View")
 logger = getLogger(__name__)
 
 
+def _path_to_site(resolved_path: tuple) -> tuple:
+    """Extract site (address tuple) from a resolved path.
+
+    Path: ((addr, type), ...) -> Site: (addr, ...)
+    """
+    return tuple(addr for addr, _ in resolved_path)
+
+
+def _resolve_root_view(ctx: Context, scope: type, resolved_path: tuple) -> View:
+    """Resolve root view from context, passing site and path as predicate data.
+
+    When no predicate bindings exist for (View, scope), this is a fast
+    dict lookup. When sharding predicates are bound, site and path are
+    passed so predicates can route to the correct storage.
+    """
+    if not resolved_path:
+        return ctx.get(View, scope)
+    site = _path_to_site(resolved_path)
+    return ctx.get(View, scope, site=site, path=resolved_path)
+
+
 class Facet(Enum):
     """View facet — lazy (default) or eager."""
 
@@ -178,8 +199,8 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         Returns:
             The parent view, or root view if this is a top-level ref.
         """
-        scope = self._root_shape
-        root_view = ctx[View, scope]
+        view_path = await self.resolve(ctx)
+        root_view = _resolve_root_view(ctx, self._root_shape, view_path)
         parent = self.parent
         if parent is None:
             return root_view
@@ -198,8 +219,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
             The faceted view instance
         """
         view_path = await self.resolve(ctx)
-        scope = self._root_shape
-        root_view = ctx[View, scope]
+        root_view = _resolve_root_view(ctx, self._root_shape, view_path)
 
         if not view_path:
             return self._apply_facet(root_view)  # type: ignore
@@ -285,8 +305,7 @@ class PrimitiveRef[T](Ref[T]):
             The parent view object
         """
         value_path = await self.resolve(ctx)
-        scope = self._root_shape
-        root_view = ctx[View, scope]
+        root_view = _resolve_root_view(ctx, self._root_shape, value_path)
         parent_view, _key = path.navigate_value(root_view, value_path)
         return parent_view
 
@@ -303,8 +322,7 @@ class PrimitiveRef[T](Ref[T]):
             The value, or Empty if not found
         """
         value_path = await self.resolve(ctx)
-        scope = self._root_shape
-        root_view = ctx[View, scope]
+        root_view = _resolve_root_view(ctx, self._root_shape, value_path)
 
         try:
             parent_view, key = path.navigate_value(root_view, value_path)

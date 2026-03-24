@@ -72,8 +72,8 @@ class FlatRef(Term):
 
     async def fetch_parent(self, ctx: Context) -> object:
         """Navigate to parent container. O(path_length) dict lookups."""
-        data = self._get_root_data(ctx)
         path = await self._build_path(ctx) if self._dynamic_segments else self._static_path
+        data = self._get_root_data(ctx, path)
         current = data
         for key in path[:-1]:
             if isinstance(current, dict) and key not in current:
@@ -85,8 +85,8 @@ class FlatRef(Term):
 
     async def fetch(self, ctx: Context) -> object | Sentinel:
         """Fetch value at this path. O(path_length) dict lookups."""
-        data = self._get_root_data(ctx)
         path = await self._build_path(ctx) if self._dynamic_segments else self._static_path
+        data = self._get_root_data(ctx, path)
         try:
             current = data
             for key in path:
@@ -118,8 +118,10 @@ class FlatRef(Term):
     # Internal
     # =========================================================================
 
-    def _get_root_data(self, ctx: Context) -> object:
+    def _get_root_data(self, ctx: Context, path: tuple | None = None) -> object:
         """Get root data from context."""
+        if path is not None:
+            return ctx.get(dict, self._root_shape, site=path)
         return ctx[dict, self._root_shape]
 
     async def _build_path(self, ctx: Context) -> tuple:

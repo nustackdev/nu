@@ -71,10 +71,9 @@ class FlatRef(Term):
     async def fetch_parent(self, ctx: Context) -> object:
         """Navigate to parent view in virtuals hierarchy."""
         from virtuals.loc import path as path_mod
-        from virtuals.view import View
 
-        root_view = ctx[View, self._root_shape]
         resolved = await self._build_path(ctx) if self._dynamic_segments else self._static_path
+        root_view = self._resolve_root_view(ctx, resolved)
 
         if self._is_primitive:
             parent_view, _key = path_mod.navigate_value(root_view, resolved)
@@ -90,10 +89,9 @@ class FlatRef(Term):
         from virtuals import Empty as StorageEmpty
         from virtuals.collections import Subscriptable
         from virtuals.loc import path as path_mod
-        from virtuals.view import View
 
-        root_view = ctx[View, self._root_shape]
         resolved = await self._build_path(ctx) if self._dynamic_segments else self._static_path
+        root_view = self._resolve_root_view(ctx, resolved)
 
         if not self._is_primitive:
             if not resolved:
@@ -131,6 +129,15 @@ class FlatRef(Term):
     # =========================================================================
     # Internal
     # =========================================================================
+
+    def _resolve_root_view(self, ctx: Context, resolved_path: tuple) -> object:
+        """Resolve root view, passing site and path for predicate routing."""
+        from virtuals.view import View
+
+        if not resolved_path:
+            return ctx.get(View, self._root_shape)
+        site = tuple(addr for addr, _ in resolved_path)
+        return ctx.get(View, self._root_shape, site=site, path=resolved_path)
 
     async def _build_path(self, ctx: Context) -> tuple:
         """Build full path, resolving dynamic segments."""

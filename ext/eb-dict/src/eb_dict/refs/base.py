@@ -50,7 +50,7 @@ class RefBase[T](Ref[T]):
     async def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch value by navigating the dict."""
         key_path = await self.resolve(ctx)
-        data = self._get_root_data(ctx)
+        data = self._get_root_data(ctx, key_path)
         try:
             raw = _navigate(data, key_path)
             return self.coerce(raw)
@@ -60,15 +60,21 @@ class RefBase[T](Ref[T]):
     async def fetch_parent(self, ctx: Context) -> object:
         """Fetch the parent container, auto-creating intermediate dicts."""
         key_path = await self.resolve(ctx)
-        data = self._get_root_data(ctx)
+        data = self._get_root_data(ctx, key_path)
 
         if len(key_path) <= 1:
             return data
         return _navigate_vivify(data, key_path[:-1])
 
-    def _get_root_data(self, ctx: Context) -> dict:
-        """Get the root dict from context."""
+    def _get_root_data(self, ctx: Context, key_path: tuple | None = None) -> dict:
+        """Get the root dict from context.
+
+        Passes site= to ctx.get() so predicate bindings (sharding etc.)
+        can route to the correct storage based on the key path.
+        """
         scope = self.get_root_shape()
+        if key_path is not None:
+            return ctx.get(dict, scope, site=key_path)
         return ctx[dict, scope]
 
 
