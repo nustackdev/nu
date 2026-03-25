@@ -1,6 +1,7 @@
-"""Primitive refs — flat name-based Context lookup.
+"""Primitive and service refs -- direct Context lookup.
 
-Typed ref constructions that resolve by name directly from ctx.
+PrimRef: flat name-based lookup from ctx.attrs.
+ServiceRef: type-based lookup from ctx bindings.
 """
 
 from __future__ import annotations
@@ -15,6 +16,8 @@ from ..types import (
 )
 from .base import PrimRef
 from .morphisms import PrimExistsOp, PrimGetOp
+from .service import ServiceRef
+from .service_morphisms import ServiceExistsOp, ServiceGetOp
 
 
 __all__ = [
@@ -26,6 +29,9 @@ __all__ = [
     "PrimExistsOp",
     "PrimGetOp",
     "PrimRef",
+    "ServiceExistsOp",
+    "ServiceGetOp",
+    "ServiceRef",
     "StrRef",
 ]
 

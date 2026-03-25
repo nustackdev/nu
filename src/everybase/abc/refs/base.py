@@ -8,7 +8,7 @@ from everybase.core import Ref, Sentinel
 
 
 if TYPE_CHECKING:
-    from everybase.core import Value
+    from everybase.core import Context, Value
 
     from ..values import BoolValue
 
@@ -40,11 +40,11 @@ class PrimRef[T](Ref[T]):
         """The name tag for context lookup."""
         return self._name
 
-    async def resolve(self, ctx: object) -> str:
+    async def resolve(self, ctx: Context) -> str:
         """Resolve to the name string."""
         return self._name
 
-    async def fetch(self, ctx: object) -> T | Sentinel:
+    async def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch value from context attrs by name."""
         return ctx.attrs[self._name]  # type: ignore[attr-defined]
 

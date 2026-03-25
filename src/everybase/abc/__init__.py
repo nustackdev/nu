@@ -283,6 +283,9 @@ from .refs import (
     PrimExistsOp,
     PrimGetOp,
     PrimRef,
+    ServiceExistsOp,
+    ServiceGetOp,
+    ServiceRef,
     StrRef,
 )
 from .types import (
@@ -597,6 +600,9 @@ __all__ = [  # noqa: RUF022
     "PrimRef",
     "PrimGetOp",
     "PrimExistsOp",
+    "ServiceRef",
+    "ServiceGetOp",
+    "ServiceExistsOp",
     "IntRef",
     "FloatRef",
     "StrRef",
