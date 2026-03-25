@@ -48,9 +48,13 @@ class TryCatch(Flow):
         body: Executable,
         catch: Executable | None = None,
         finally_: Executable | None = None,
+        errors: tuple[type[Exception], ...] | type[Exception] | None = None,
     ) -> None:
         _none = NoneValue()
         super().__init__(body, catch or _none, finally_ or _none)
+        if errors is not None and not isinstance(errors, tuple):
+            errors = (errors,)
+        self._errors = errors
 
     @property
     def catch(self) -> Executable | None:
@@ -65,25 +69,31 @@ class TryCatch(Flow):
         return None if isinstance(c, NoneValue) else c
 
     async def execute(self, ctx: Context) -> None:
-        """Execute with try/catch/finally semantics."""
+        """Execute with try/catch/finally semantics.
+
+        If ``errors`` is set, only matching exception types are caught.
+        Non-matching exceptions propagate (after finally).
+        """
         body = self.children[0]
         catch = self.catch
         finally_ = self.finally_
 
         caught: Exception | None = None
+        handled = False
         try:
             await body.execute(ctx)
         except Exception as e:
             caught = e
-            if catch is not None:
+            if catch is not None and (self._errors is None or isinstance(e, self._errors)):
                 catch_ctx = ctx._copy()
                 catch_ctx.attrs["error"] = str(e)
                 await catch.execute(catch_ctx)
+                handled = True
         finally:
             if finally_ is not None:
                 await finally_.execute(ctx)
 
-        if caught is not None and catch is None:
+        if caught is not None and not handled:
             raise caught
 
 
