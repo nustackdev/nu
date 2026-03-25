@@ -95,6 +95,8 @@ class RocksDBStorageResource(Resource, RocksDBStorage):
             read_only=self.spec.read_only,
             secondary_path=secondary,
             create_if_missing=True,
+            disable_wal=self.spec.disable_wal,
+            options=self.spec.options,
         )
         self.open()
 
@@ -113,6 +115,8 @@ class RocksDBStorageSpec(ResourceSpec):
     path: str = "/tmp/eb-rocksdb"  # noqa: S108
     read_only: bool = False
     secondary_path: str | None = None
+    disable_wal: bool = False
+    options: dict | None = None
     codec_resource: CodecSpec = attrs.Factory(binary_codec_spec)
     observer_resource: Spec = attrs.Factory(InMemoryObserverSpec)
 
