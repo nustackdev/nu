@@ -92,6 +92,7 @@ class ListRef[
         view_type: type[MutableSequenceBase],
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
+        primitive: bool = False,
     ) -> None:
         """Initialize sequence reference."""
         super().__init__(
@@ -99,6 +100,7 @@ class ListRef[
         )
         self.item_type = item_type
         self.item_value_type = item_value_type
+        self.primitive = primitive
 
     def _create_item_ref(
         self, index: int | Sentinel | Term[int | Sentinel]
@@ -112,17 +114,29 @@ class ListRef[
             owner_shape=self._owner_shape,
         )
 
+    def store(self, value: object) -> object:
+        """Store collection. If primitive=True, stores as single blob."""
+        if self.primitive:
+            from eb_virtuals.morphisms.collection import CollectionPrimitiveStoreCmd
+            from everybase.abc import NoneValue, ensure_term
+
+            return NoneValue(CollectionPrimitiveStoreCmd(self, ensure_term(value)))
+        return super().store(value)
+
     @classmethod
     def slot[E](
         cls,
         item_type: type[E],
         view_type: type[MutableSequenceBase] | None = None,
+        *,
+        primitive: bool = False,
     ) -> ListRef[E, Value]:
         """Create a slot for this list ref type.
 
         Args:
             item_type: Python type of items (primitives)
             view_type: View class implementing MutableSequenceBase protocol
+            primitive: If True, store entire collection as single blob
 
         Returns:
             Slot configured to create ListRef instances
@@ -134,4 +148,5 @@ class ListRef[
             item_type=item_type,
             item_value_type=_value_type_for(item_type),
             view_type=view_type or ListView,
+            primitive=primitive,
         )  # type: ignore

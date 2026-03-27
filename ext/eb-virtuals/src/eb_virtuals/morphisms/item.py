@@ -24,12 +24,43 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "EnsureLayoutCmd",
     "InitCmd",
     "ItemPrimitiveDeleteUnsafeCmd",
     "ItemPrimitiveGetUnsafeOp",
     "ItemPrimitiveSetUnsafeCmd",
     "ItemPrimitiveSetUnsafeParentSkipCmd",
 ]
+
+
+class EnsureLayoutCmd(Command, Morphism[None]):
+    """Ensure view container and its internal layout exist in storage.
+
+    Navigates to the view via fetch(), then calls _ensure_layout() to
+    create internal containers (__keys__, __data__, etc.). For views
+    without _ensure_layout, falls back to ensure_created().
+
+    Use before distributed workers start to avoid concurrent layout
+    creation (lock contention on shared DB).
+
+    The ref must implement:
+        fetch(ctx) -> view object
+    """
+
+    def __init__(self, ref: object) -> None:
+        super().__init__(ref)
+        self.ref = ref
+
+    async def execute(self, ctx: Context) -> None:  # noqa: D102
+        view = await self.ref.fetch(ctx)
+        if hasattr(view, "_ensure_layout"):
+            view._ensure_layout()
+        elif hasattr(view, "ensure_created"):
+            view.ensure_created()
+        return None
+
+    def __repr__(self) -> str:
+        return f"EnsureLayoutCmd({self.ref!r})"
 
 
 class InitCmd(Command, Morphism[None]):

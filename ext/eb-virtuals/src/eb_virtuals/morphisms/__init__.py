@@ -24,6 +24,7 @@ from .collection import (
     ScanPrimitivesUnsafeOp,
 )
 from .item import (
+    EnsureLayoutCmd,
     InitCmd,
     ItemPrimitiveDeleteUnsafeCmd,
     ItemPrimitiveGetUnsafeOp,
@@ -34,6 +35,7 @@ from .item import (
 
 __all__ = [
     "ClearPrimitivesUnsafeCmd",
+    "EnsureLayoutCmd",
     "InitCmd",
     "ItemPrimitiveDeleteUnsafeCmd",
     "ItemPrimitiveGetUnsafeOp",

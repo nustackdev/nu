@@ -20,6 +20,7 @@ from eb_virtuals.meta import (
 )
 from eb_virtuals.morphisms import (
     ClearPrimitivesUnsafeCmd,
+    EnsureLayoutCmd,
     InitCmd,
     ItemPrimitiveDeleteUnsafeCmd,
     ItemPrimitiveGetUnsafeOp,
@@ -60,6 +61,7 @@ from eb_virtuals.spans import Atomic, Snapshot, Transaction
 
 __all__ = [  # noqa: RUF022
     # Morphisms — Item
+    "EnsureLayoutCmd",
     "InitCmd",
     "ItemPrimitiveGetUnsafeOp",
     "ItemPrimitiveSetUnsafeCmd",
