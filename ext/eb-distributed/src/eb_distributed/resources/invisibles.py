@@ -169,7 +169,10 @@ class InvisiblesClient(Resource):
 
     async def setup(self) -> None:
         """Connect to the remote server with retry logic."""
-        config = ConnectionConfig(attrs=AttributeAccessConfig(allow_all_attrs=True))
+        config = ConnectionConfig(
+            attrs=AttributeAccessConfig(allow_all_attrs=True),
+            buffered_iteration=self.spec.buffered_iteration,
+        )
 
         if self.spec.transport == "unix":
             transport_factory = UnixSocketTransport
@@ -244,3 +247,4 @@ class InvisiblesClientSpec(ResourceSpec):
     timeout: float = 5.0
     max_retries: int = 3
     bg_serve: bool = False
+    buffered_iteration: bool = True
