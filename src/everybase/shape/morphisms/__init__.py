@@ -11,6 +11,7 @@ from .collection import (
     CollectionMissingOp,
     CollectionStoreCmd,
 )
+from .cursor import AdvanceCursorOp
 from .item import (
     ItemEraseCmd,
     ItemExistsOp,
@@ -29,6 +30,7 @@ from .reactive import (
 
 
 __all__ = [
+    "AdvanceCursorOp",
     "ChangeOp",
     "CollectionEraseCmd",
     "CollectionExistsOp",

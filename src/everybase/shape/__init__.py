@@ -57,8 +57,9 @@ from everybase.shape.collections import (
     SequenceBase,
     SetLikeBase,
 )
-from everybase.shape.flows import React, ReactForever, ReactWhile
+from everybase.shape.flows import React, ReactForever, ReactWhile, Stream
 from everybase.shape.morphisms import (
+    AdvanceCursorOp,
     ChangeOp,
     CollectionEraseCmd,
     CollectionExistsOp,
@@ -196,6 +197,9 @@ __all__ = [  # noqa: RUF022
     "React",
     "ReactForever",
     "ReactWhile",
+    "Stream",
+    # Morphisms — Cursor
+    "AdvanceCursorOp",
     # Morphisms — Item
     "ItemLoadOp",
     "ItemStoreCmd",
