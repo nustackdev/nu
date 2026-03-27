@@ -19,8 +19,58 @@ __all__ = [
     "Debounce",
     "Delay",
     "Throttle",
+    "Timed",
     "Timeout",
 ]
+
+
+class Timed(Flow):
+    """Time each child and print results.
+
+    Runs children sequentially, measures wall time for each using perf_counter,
+    then prints a summary with per-child timings.
+
+    Children layout: ``[*children]``
+
+    Example::
+
+        Timed(
+            store_data,
+            read_back,
+            label="write cycle",
+        )
+        # Output:
+        # [Timed:write cycle]
+        #   1. store_data            12.3ms
+        #   2. read_back              4.1ms
+        #   total                    16.4ms
+    """
+
+    def __init__(self, *children: Executable, label: str = "Timed") -> None:
+        super().__init__(*children)
+        self._label = label
+
+    async def execute(self, ctx: Context) -> None:
+        """Run each child, measure time, print summary."""
+        timings: list[tuple[str, float]] = []
+        for child in self.children:
+            name = child.__class__.__name__
+            if hasattr(child, "_label"):
+                name = child._label
+            elif hasattr(child, "__repr__"):
+                r = repr(child)
+                if len(r) < 60:
+                    name = r
+            t0 = time.perf_counter()
+            await child.execute(ctx)
+            elapsed = time.perf_counter() - t0
+            timings.append((name, elapsed))
+
+        total = sum(t for _, t in timings)
+        print(f"[Timed:{self._label}]")  # noqa: T201
+        for i, (name, elapsed) in enumerate(timings, 1):
+            print(f"  {i}. {name:<40} {elapsed * 1000:>8.1f}ms")  # noqa: T201
+        print(f"  {'total':<42} {total * 1000:>8.1f}ms")  # noqa: T201
 
 
 class Delay(Flow):

@@ -22,7 +22,6 @@ from typing import TYPE_CHECKING
 
 from virtuals import Navigator
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
-from virtuals.view import View
 
 from everybase import Context, Span
 
@@ -121,23 +120,15 @@ class Atomic(Span):
         scope: object,
         preds: dict,
     ) -> Context:
-        """Bind lazy txn + view for one sharded navigator."""
-        txn_holder: list = []
+        """Bind lazy txn for one sharded navigator."""
 
         def open_txn() -> TransactionProtocol:
             txn = nav.storage.begin_transaction()
-            txn_holder.append(txn)
             self._txns.append(txn)
             return txn
 
         tags = (self.scope,) if self.scope is not None else ()
-        child_ctx = ctx.lazy(open_txn, TransactionProtocol, *tags, **preds)
-
-        def open_view() -> View:
-            txn = txn_holder[0] if txn_holder else open_txn()
-            return nav.root(txn)
-
-        return child_ctx.lazy(open_view, View, *tags, **preds)
+        return ctx.lazy(open_txn, TransactionProtocol, *tags, **preds)
 
     def _enter_snapshot_with_preds(
         self,
@@ -146,59 +137,37 @@ class Atomic(Span):
         scope: object,
         preds: dict,
     ) -> Context:
-        """Bind lazy snapshot + view for one sharded navigator."""
-        snap_holder: list = []
+        """Bind lazy snapshot for one sharded navigator."""
 
         def open_snap() -> SnapshotProtocol:
             snap = nav.storage.begin_snapshot()
-            snap_holder.append(snap)
             self._snaps.append(snap)
             return snap
 
         tags = (self.scope,) if self.scope is not None else ()
-        child_ctx = ctx.lazy(open_snap, SnapshotProtocol, *tags, **preds)
-
-        def open_view() -> View:
-            snap = snap_holder[0] if snap_holder else open_snap()
-            return nav.root(snap)
-
-        return child_ctx.lazy(open_view, View, *tags, **preds)
+        return ctx.lazy(open_snap, SnapshotProtocol, *tags, **preds)
 
     def _enter_transaction(self, ctx: Context, nav: Navigator) -> Context:
         scope = self.scope
         tags_txn = _tags(TransactionProtocol, scope)
-        tags_view = _tags(View, scope)
 
         def open_txn() -> TransactionProtocol:
             txn = nav.storage.begin_transaction()
             self._txns.append(txn)
             return txn
 
-        child_ctx = ctx.lazy(open_txn, *tags_txn)
-
-        def open_view() -> View:
-            txn = child_ctx[tags_txn]
-            return nav.root(txn)
-
-        return child_ctx.lazy(open_view, *tags_view)
+        return ctx.lazy(open_txn, *tags_txn)
 
     def _enter_snapshot(self, ctx: Context, nav: Navigator) -> Context:
         scope = self.scope
         tags_snap = _tags(SnapshotProtocol, scope)
-        tags_view = _tags(View, scope)
 
         def open_snap() -> SnapshotProtocol:
             snap = nav.storage.begin_snapshot()
             self._snaps.append(snap)
             return snap
 
-        child_ctx = ctx.lazy(open_snap, *tags_snap)
-
-        def open_view() -> View:
-            snap = child_ctx[tags_snap]
-            return nav.root(snap)
-
-        return child_ctx.lazy(open_view, *tags_view)
+        return ctx.lazy(open_snap, *tags_snap)
 
     def exit_success(self, ctx: Context) -> None:
         """Commit transactions or close snapshots."""
@@ -261,39 +230,23 @@ class Snapshot(Span):
         nav: Navigator,
         preds: dict,
     ) -> Context:
-        snap_holder: list = []
-
         def open_snap() -> SnapshotProtocol:
             snap = nav.storage.begin_snapshot()
-            snap_holder.append(snap)
             self._snaps.append(snap)
             return snap
 
         tags = (self.scope,) if self.scope is not None else ()
-        child_ctx = ctx.lazy(open_snap, SnapshotProtocol, *tags, **preds)
-
-        def open_view() -> View:
-            snap = snap_holder[0] if snap_holder else open_snap()
-            return nav.root(snap)
-
-        return child_ctx.lazy(open_view, View, *tags, **preds)
+        return ctx.lazy(open_snap, SnapshotProtocol, *tags, **preds)
 
     def _enter_single(self, ctx: Context, nav: Navigator) -> Context:
         tags_snap = _tags(SnapshotProtocol, self.scope)
-        tags_view = _tags(View, self.scope)
 
         def open_snap() -> SnapshotProtocol:
             snap = nav.storage.begin_snapshot()
             self._snaps.append(snap)
             return snap
 
-        child_ctx = ctx.lazy(open_snap, *tags_snap)
-
-        def open_view() -> View:
-            snap = child_ctx[tags_snap]
-            return nav.root(snap)
-
-        return child_ctx.lazy(open_view, *tags_view)
+        return ctx.lazy(open_snap, *tags_snap)
 
     def exit_success(self, ctx: Context) -> None:
         """Close snapshots."""
@@ -352,39 +305,23 @@ class Transaction(Span):
         nav: Navigator,
         preds: dict,
     ) -> Context:
-        txn_holder: list = []
-
         def open_txn() -> TransactionProtocol:
             txn = nav.storage.begin_transaction()
-            txn_holder.append(txn)
             self._txns.append(txn)
             return txn
 
         tags = (self.scope,) if self.scope is not None else ()
-        child_ctx = ctx.lazy(open_txn, TransactionProtocol, *tags, **preds)
-
-        def open_view() -> View:
-            txn = txn_holder[0] if txn_holder else open_txn()
-            return nav.root(txn)
-
-        return child_ctx.lazy(open_view, View, *tags, **preds)
+        return ctx.lazy(open_txn, TransactionProtocol, *tags, **preds)
 
     def _enter_single(self, ctx: Context, nav: Navigator) -> Context:
         tags_txn = _tags(TransactionProtocol, self.scope)
-        tags_view = _tags(View, self.scope)
 
         def open_txn() -> TransactionProtocol:
             txn = nav.storage.begin_transaction()
             self._txns.append(txn)
             return txn
 
-        child_ctx = ctx.lazy(open_txn, *tags_txn)
-
-        def open_view() -> View:
-            txn = child_ctx[tags_txn]
-            return nav.root(txn)
-
-        return child_ctx.lazy(open_view, *tags_view)
+        return ctx.lazy(open_txn, *tags_txn)
 
     def exit_success(self, ctx: Context) -> None:
         """Commit transactions."""

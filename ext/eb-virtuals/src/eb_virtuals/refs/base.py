@@ -26,15 +26,21 @@ from __future__ import annotations
 import copy
 from enum import Enum
 from logging import getLogger
-from typing import Generic, Self, TypeVar
+from typing import TYPE_CHECKING, Generic, Self, TypeVar
 
 from virtuals import Empty as StorageEmpty
+from virtuals import Navigator
 from virtuals.collections import Subscriptable
-from virtuals.loc import path
-from virtuals.view import View
+from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
 
+from eb_virtuals.paths import ViewPathSer
 from everybase import EMPTY, Context, Sentinel
 from everybase.shape import Ref
+
+
+if TYPE_CHECKING:
+    from virtuals.loc import path
+    from virtuals.view import View
 
 
 __all__ = [
@@ -57,17 +63,26 @@ def _path_to_site(resolved_path: tuple) -> tuple:
     return tuple(addr for addr, _ in resolved_path)
 
 
-def _resolve_root_view(ctx: Context, scope: type, resolved_path: tuple) -> View:
-    """Resolve root view from context, passing site and path as predicate data.
-
-    When no predicate bindings exist for (View, scope), this is a fast
-    dict lookup. When sharding predicates are bound, site and path are
-    passed so predicates can route to the correct storage.
-    """
+def _resolve_navigator(ctx: Context, scope: type, resolved_path: tuple) -> Navigator:
+    """Resolve Navigator from context, passing site and path for predicate routing."""
     if not resolved_path:
-        return ctx.get(View, scope)
+        return ctx.get(Navigator, scope)
     site = _path_to_site(resolved_path)
-    return ctx.get(View, scope, site=site, path=resolved_path)
+    return ctx.get(Navigator, scope, site=site, path=resolved_path)
+
+
+def _resolve_ctx(ctx: Context, scope: type, resolved_path: tuple) -> object:
+    """Resolve storage context (transaction/snapshot) from context."""
+    if not resolved_path:
+        try:
+            return ctx.get(TransactionProtocol, scope)
+        except (KeyError, LookupError):
+            return ctx.get(SnapshotProtocol, scope)
+    site = _path_to_site(resolved_path)
+    try:
+        return ctx.get(TransactionProtocol, scope, site=site, path=resolved_path)
+    except (KeyError, LookupError):
+        return ctx.get(SnapshotProtocol, scope, site=site, path=resolved_path)
 
 
 class Facet(Enum):
@@ -200,31 +215,35 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
             The parent view, or root view if this is a top-level ref.
         """
         view_path = await self.resolve(ctx)
-        root_view = _resolve_root_view(ctx, self._root_shape, view_path)
-        parent = self.parent
-        if parent is None:
-            return root_view
-        return await parent.fetch(ctx)
+        nav = _resolve_navigator(ctx, self._root_shape, view_path)
+        storage_ctx = _resolve_ctx(ctx, self._root_shape, view_path)
+
+        if not view_path or len(view_path) <= 1:
+            return nav.root(storage_ctx)
+
+        parent_path = view_path[:-1]
+        return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
 
     async def fetch(self, ctx: Context) -> ViewT | Sentinel:
         """Fetch the view from virtuals storage.
 
-        Navigates through the view hierarchy to get this view.
+        Navigates through Navigator for proxy-transparent resolution.
         Applies lazy/eager facet to the returned view.
 
         Args:
-            ctx: Execution context with root_view access
+            ctx: Execution context
 
         Returns:
             The faceted view instance
         """
         view_path = await self.resolve(ctx)
-        root_view = _resolve_root_view(ctx, self._root_shape, view_path)
+        nav = _resolve_navigator(ctx, self._root_shape, view_path)
+        storage_ctx = _resolve_ctx(ctx, self._root_shape, view_path)
 
         if not view_path:
-            return self._apply_facet(root_view)  # type: ignore
+            return self._apply_facet(nav.root(storage_ctx))  # type: ignore
 
-        view = path.navigate_view(root_view, view_path)
+        view = nav.open_at_path(ViewPathSer(view_path), storage_ctx)
         return self._apply_facet(view)  # type: ignore
 
 
@@ -295,37 +314,48 @@ class PrimitiveRef[T](Ref[T]):
     async def fetch_parent(self, ctx: Context) -> object:
         """Fetch the parent collection (view) for item access.
 
-        Navigates through the view hierarchy and returns the parent view
+        Navigates through Navigator and returns the parent view
         that contains this primitive value.
 
         Args:
-            ctx: Execution context with root_view access
+            ctx: Execution context
 
         Returns:
             The parent view object
         """
         value_path = await self.resolve(ctx)
-        root_view = _resolve_root_view(ctx, self._root_shape, value_path)
-        parent_view, _key = path.navigate_value(root_view, value_path)
-        return parent_view
+        nav = _resolve_navigator(ctx, self._root_shape, value_path)
+        storage_ctx = _resolve_ctx(ctx, self._root_shape, value_path)
+
+        parent_path = value_path[:-1]
+        if not parent_path:
+            return nav.root(storage_ctx)
+        return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
 
     async def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch the value from virtuals storage.
 
-        Navigates through the view hierarchy and reads the value.
+        Navigates through Navigator and reads the value.
         Returns Empty if the value doesn't exist.
 
         Args:
-            ctx: Execution context with root_view access
+            ctx: Execution context
 
         Returns:
             The value, or Empty if not found
         """
         value_path = await self.resolve(ctx)
-        root_view = _resolve_root_view(ctx, self._root_shape, value_path)
+        nav = _resolve_navigator(ctx, self._root_shape, value_path)
+        storage_ctx = _resolve_ctx(ctx, self._root_shape, value_path)
+
+        parent_path = value_path[:-1]
+        key = value_path[-1][0]
 
         try:
-            parent_view, key = path.navigate_value(root_view, value_path)
+            if not parent_path:
+                parent_view = nav.root(storage_ctx)
+            else:
+                parent_view = nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
             if isinstance(parent_view, Subscriptable):
                 val = parent_view[key]
                 if isinstance(val, StorageEmpty):

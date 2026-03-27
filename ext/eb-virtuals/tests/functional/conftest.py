@@ -6,7 +6,6 @@ from collections.abc import Generator
 import pytest
 from virtuals import Navigator
 from virtuals.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionProtocol
-from virtuals.view import View
 
 from eb_virtuals import (
     ComplexRef,
@@ -142,31 +141,17 @@ def nav(storage: StorageProtocol) -> Navigator:
 
 
 # ============================================================================
-# Root View Fixture
-# ============================================================================
-
-
-@pytest.fixture
-def root_view(tx: TransactionProtocol, nav: Navigator) -> View:
-    """Root DictView for esstd tests.
-
-    Dependency chain: codec -> storage -> nav -> tx -> root_view
-    """
-    return nav.root(ctx=tx)
-
-
-# ============================================================================
 # Context Fixture
 # ============================================================================
 
 
 @pytest.fixture
-def ctx(root_view: View, tx: TransactionProtocol, nav: Navigator) -> Context:
-    """Context bundling Navigator, root view, and transaction.
+def ctx(tx: TransactionProtocol, nav: Navigator) -> Context:
+    """Context bundling Navigator and transaction.
 
-    Dependency chain: codec -> storage -> nav -> tx -> root_view -> ctx
+    Dependency chain: codec -> storage -> nav -> tx -> ctx
     """
-    return Context().bind(nav, Navigator).bind(root_view, View).bind(tx, TransactionProtocol)
+    return Context().bind(nav, Navigator).bind(tx, TransactionProtocol)
 
 
 # ============================================================================

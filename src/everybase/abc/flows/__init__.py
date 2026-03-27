@@ -23,7 +23,7 @@ from .error import Assert, Retry, TryCatch
 from .io import Debug, Log, Print
 from .iteration import Fold, ForEach, ForRange
 from .parallel import All, Any, Parallel, Race
-from .timing import Debounce, Delay, Throttle, Timeout
+from .timing import Debounce, Delay, Throttle, Timed, Timeout
 
 
 __all__ = [  # noqa: RUF022
@@ -51,6 +51,7 @@ __all__ = [  # noqa: RUF022
     "Debounce",
     "Delay",
     "Throttle",
+    "Timed",
     "Timeout",
     # I/O
     "Debug",

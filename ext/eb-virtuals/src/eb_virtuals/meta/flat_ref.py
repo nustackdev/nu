@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from eb_virtuals.paths import ViewPathSer
 from everybase import EMPTY, Sentinel, Term
 
 
@@ -69,37 +70,44 @@ class FlatRef(Term):
         return resolved[-1][0]
 
     async def fetch_parent(self, ctx: Context) -> object:
-        """Navigate to parent view in virtuals hierarchy."""
-        from virtuals.loc import path as path_mod
-
+        """Navigate to parent view via Navigator."""
         resolved = await self._build_path(ctx) if self._dynamic_segments else self._static_path
-        root_view = self._resolve_root_view(ctx, resolved)
+        nav = self._resolve_navigator(ctx, resolved)
+        storage_ctx = self._resolve_storage_ctx(ctx, resolved)
 
         if self._is_primitive:
-            parent_view, _key = path_mod.navigate_value(root_view, resolved)
-            return parent_view
+            parent_path = resolved[:-1]
+            if not parent_path:
+                return nav.root(storage_ctx)
+            return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
         else:
             if len(resolved) <= 1:
-                return root_view
+                return nav.root(storage_ctx)
             parent_path = resolved[:-1]
-            return path_mod.navigate_view(root_view, parent_path)
+            return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
 
     async def fetch(self, ctx: Context) -> object | Sentinel:
-        """Fetch value/view from virtuals storage."""
+        """Fetch value/view via Navigator."""
         from virtuals import Empty as StorageEmpty
         from virtuals.collections import Subscriptable
-        from virtuals.loc import path as path_mod
 
         resolved = await self._build_path(ctx) if self._dynamic_segments else self._static_path
-        root_view = self._resolve_root_view(ctx, resolved)
+        nav = self._resolve_navigator(ctx, resolved)
+        storage_ctx = self._resolve_storage_ctx(ctx, resolved)
 
         if not self._is_primitive:
             if not resolved:
-                return root_view
-            return path_mod.navigate_view(root_view, resolved)
+                return nav.root(storage_ctx)
+            return nav.open_at_path(ViewPathSer(resolved), storage_ctx)
+
+        parent_path = resolved[:-1]
+        key = resolved[-1][0]
 
         try:
-            parent_view, key = path_mod.navigate_value(root_view, resolved)
+            if not parent_path:
+                parent_view = nav.root(storage_ctx)
+            else:
+                parent_view = nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
             if isinstance(parent_view, Subscriptable):
                 val = parent_view[key]
                 return val if not isinstance(val, StorageEmpty) else EMPTY
@@ -130,14 +138,29 @@ class FlatRef(Term):
     # Internal
     # =========================================================================
 
-    def _resolve_root_view(self, ctx: Context, resolved_path: tuple) -> object:
-        """Resolve root view, passing site and path for predicate routing."""
-        from virtuals.view import View
+    def _resolve_navigator(self, ctx: Context, resolved_path: tuple) -> object:
+        """Resolve Navigator, passing site and path for predicate routing."""
+        from virtuals import Navigator
 
         if not resolved_path:
-            return ctx.get(View, self._root_shape)
+            return ctx.get(Navigator, self._root_shape)
         site = tuple(addr for addr, _ in resolved_path)
-        return ctx.get(View, self._root_shape, site=site, path=resolved_path)
+        return ctx.get(Navigator, self._root_shape, site=site, path=resolved_path)
+
+    def _resolve_storage_ctx(self, ctx: Context, resolved_path: tuple) -> object:
+        """Resolve storage context (transaction/snapshot) for predicate routing."""
+        from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
+
+        if not resolved_path:
+            try:
+                return ctx.get(TransactionProtocol, self._root_shape)
+            except (KeyError, LookupError):
+                return ctx.get(SnapshotProtocol, self._root_shape)
+        site = tuple(addr for addr, _ in resolved_path)
+        try:
+            return ctx.get(TransactionProtocol, self._root_shape, site=site, path=resolved_path)
+        except (KeyError, LookupError):
+            return ctx.get(SnapshotProtocol, self._root_shape, site=site, path=resolved_path)
 
     async def _build_path(self, ctx: Context) -> tuple:
         """Build full path, resolving dynamic segments."""

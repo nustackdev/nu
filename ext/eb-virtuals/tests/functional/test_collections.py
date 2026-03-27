@@ -13,8 +13,8 @@ from __future__ import annotations
 from collections.abc import ItemsView, KeysView, ValuesView
 
 import pytest
+from virtuals import Navigator
 from virtuals.tkv.storage import TransactionProtocol
-from virtuals.view import View
 
 from eb_virtuals import (
     DictRef,
@@ -67,12 +67,12 @@ class Portfolio(Shape):
 
 
 @pytest.fixture
-def portfolio_ctx(root_view, tx):
+def portfolio_ctx(nav, tx):
     """Context with Portfolio shape bindings."""
     return (
         Context()
-        .bind(root_view, View)
-        .bind(root_view, View, Portfolio)
+        .bind(nav, Navigator)
+        .bind(nav, Navigator, Portfolio)
         .bind(tx, TransactionProtocol)
         .bind(tx, TransactionProtocol, Portfolio)
     )
