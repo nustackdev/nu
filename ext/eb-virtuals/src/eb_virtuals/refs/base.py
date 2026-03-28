@@ -86,8 +86,9 @@ def _resolve_ctx(ctx: Context, scope: type, resolved_path: tuple) -> object:
 
 
 class Facet(Enum):
-    """View facet — lazy (default) or eager."""
+    """View facet — none (default), lazy, or eager."""
 
+    NONE = "none"
     LAZY = "lazy"
     EAGER = "eager"
 
@@ -123,7 +124,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
     Use .lazy / .eager to switch facet before calling iteration methods.
     """
 
-    _facet: Facet = Facet.LAZY
+    _facet: Facet = Facet.NONE
 
     def __init__(
         self,
