@@ -12,6 +12,19 @@ Usage:
 """
 
 import eb_virtuals._compat  # noqa: F401  — register virtuals ABCs
+
+
+# Register path types as invisibles value types so they serialize by value
+# (pickled whole) rather than being proxied element-by-element.
+try:
+    from invisibles.core.boxing import register_value_type
+
+    from eb_virtuals.paths import ValuePathSer, ViewPathSer
+
+    register_value_type(ViewPathSer, ValuePathSer)
+except ImportError:
+    pass
+
 from eb_virtuals.meta import (
     auto_atomic,
     inline_refs,
