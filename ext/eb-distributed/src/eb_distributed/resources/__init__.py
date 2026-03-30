@@ -19,6 +19,12 @@ from .invisibles import (
     InvisiblesServer,
     InvisiblesServerSpec,
 )
+from .invisibles_worker import (
+    InvisiblesWorker,
+    InvisiblesWorkerServer,
+    InvisiblesWorkerServerSpec,
+    InvisiblesWorkerSpec,
+)
 from .navigator import NavigatorResource, NavigatorSpec
 from .observer import (
     InMemoryObserverResource,
@@ -51,6 +57,10 @@ __all__ = [
     "InvisiblesClientSpec",
     "InvisiblesServer",
     "InvisiblesServerSpec",
+    "InvisiblesWorker",
+    "InvisiblesWorkerServer",
+    "InvisiblesWorkerServerSpec",
+    "InvisiblesWorkerSpec",
     "NavigatorResource",
     "NavigatorSpec",
     "RayActor",
