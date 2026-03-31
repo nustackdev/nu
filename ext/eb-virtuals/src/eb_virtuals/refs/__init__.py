@@ -7,6 +7,7 @@ Base:
 Items:
     ItemRef                                        document-model item ref
     IntRef, StrRef, FloatRef, BoolRef, BytesRef    typed primitive refs
+    PrimitiveDictRef, PrimitiveListRef, PrimitiveSetRef    compound primitive refs (blob storage)
 
 Collections:
     ShapeRef        structured container with named slots
@@ -26,6 +27,9 @@ from .items import (
     FloatRef,
     IntRef,
     ItemRef,
+    PrimitiveDictRef,
+    PrimitiveListRef,
+    PrimitiveSetRef,
     StrRef,
 )
 from .items_extended import (
@@ -64,7 +68,10 @@ __all__ = [
     "ListRef",
     "PathRef",
     "PercentageRef",
+    "PrimitiveDictRef",
+    "PrimitiveListRef",
     "PrimitiveRef",
+    "PrimitiveSetRef",
     "SetRef",
     "ShapeRef",
     "ShapesDictRef",

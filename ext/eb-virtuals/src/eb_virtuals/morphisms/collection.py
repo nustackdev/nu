@@ -20,39 +20,8 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ClearPrimitivesUnsafeCmd",
-    "CollectionPrimitiveStoreCmd",
     "ScanPrimitivesUnsafeOp",
 ]
-
-
-class CollectionPrimitiveStoreCmd[T](Command, Morphism[None]):
-    """Store a collection as a single primitive blob, bypassing decomposition.
-
-    Used when a collection ref has primitive=True. Instead of creating sub-keys
-    for each element, stores the entire value as a single primitive.
-
-    The ref must implement:
-        fetch_parent(ctx) -> view with PrimitiveOpsBase._primitive_write()
-        resolve_address(ctx) -> key/index
-    """
-
-    def __init__(self, ref: object, data: object) -> None:
-        super().__init__(ref, data)
-        self.ref = ref
-        self.data_expr = data
-
-    async def execute(self, ctx: Context) -> None:  # noqa: D102
-        data = await self.data_expr.execute(ctx)
-        if isinstance(data, Sentinel):
-            raise ValueError(f"Cannot store sentinel value: {data}")
-
-        parent = await self.ref.fetch_parent(ctx)
-        address = await self.ref.resolve_address(ctx)
-        parent._primitive_write(address, data)
-        return None
-
-    def __repr__(self) -> str:
-        return f"CollectionPrimitiveStoreCmd({self.ref!r}, {self.data_expr!r})"
 
 
 class ScanPrimitivesUnsafeOp[T](Operation, Morphism[Iterator[T] | Sentinel]):

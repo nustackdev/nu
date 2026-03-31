@@ -23,10 +23,16 @@ from everybase.abc import (
     BoolValue,
     BytesType,
     BytesValue,
+    DictType,
+    DictValue,
     FloatType,
     FloatValue,
     IntType,
     IntValue,
+    ListType,
+    ListValue,
+    SetType,
+    SetValue,
     StrType,
     StrValue,
 )
@@ -48,6 +54,9 @@ __all__ = [
     "FloatRef",
     "IntRef",
     "ItemRef",
+    "PrimitiveDictRef",
+    "PrimitiveListRef",
+    "PrimitiveSetRef",
     "StrRef",
 ]
 
@@ -65,6 +74,9 @@ class ItemRef[T, ValueT: Value](
 
     Combines everyshape document model (CRUD + observation) with
     PV substrate (path resolution, view navigation).
+
+    Overrides store() to use _primitive_write() directly, skipping
+    the container type check that __setitem__ would trigger.
     """
 
     def __init__(
@@ -76,6 +88,12 @@ class ItemRef[T, ValueT: Value](
         """Initialize item reference."""
         super().__init__(**kwargs)
         self._value_value_type = value_value_type
+
+    def store(self, value: object) -> object:  # noqa: D102
+        from eb_virtuals.morphisms.item import PrimitiveStoreCmd
+        from everybase.abc import NoneValue, ensure_term
+
+        return NoneValue(PrimitiveStoreCmd(self, ensure_term(value)))
 
     @classmethod
     def slot(
@@ -247,4 +265,117 @@ class BytesRef(ItemRef[bytes, BytesValue], BytesType):
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
         """Create a slot for bytes values."""
+        return Slot(cls)  # type: ignore[return-value]
+
+
+# =============================================================================
+# COMPOUND PRIMITIVE REFS (stored as single blob, not decomposed)
+# =============================================================================
+
+
+class PrimitiveDictRef[K, V](
+    ItemRef[dict[K, V], DictValue[K, V]],
+    DictType[K, V],
+):
+    """PV dict reference stored as a single primitive blob.
+
+    Unlike DictRef which decomposes into per-key storage, this stores the
+    entire dict as one value. Operations work on the fetched Python dict.
+
+    Inherits:
+        - ItemRef: PV storage access + CRUD + observation
+        - DictType: Dict methods (keys, values, items, get, set, etc.)
+    """
+
+    def __init__(
+        self,
+        *,
+        address: path.PathAddress | Term,
+        parent: PrimitiveRef | None = None,
+        owner_shape: type[Shape] | None = None,
+    ) -> None:
+        """Initialize PV primitive dict ref."""
+        super().__init__(
+            address=address,
+            value_type=dict,
+            value_value_type=DictValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Create a slot for primitive dict values."""
+        return Slot(cls)  # type: ignore[return-value]
+
+
+class PrimitiveListRef[T](
+    ItemRef[list[T], ListValue[T]],
+    ListType[T],
+):
+    """PV list reference stored as a single primitive blob.
+
+    Unlike ListRef which decomposes into per-index storage, this stores the
+    entire list as one value. Operations work on the fetched Python list.
+
+    Inherits:
+        - ItemRef: PV storage access + CRUD + observation
+        - ListType: List methods (append, extend, insert, etc.)
+    """
+
+    def __init__(
+        self,
+        *,
+        address: path.PathAddress | Term,
+        parent: PrimitiveRef | None = None,
+        owner_shape: type[Shape] | None = None,
+    ) -> None:
+        """Initialize PV primitive list ref."""
+        super().__init__(
+            address=address,
+            value_type=list,
+            value_value_type=ListValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Create a slot for primitive list values."""
+        return Slot(cls)  # type: ignore[return-value]
+
+
+class PrimitiveSetRef[T](
+    ItemRef[set[T], SetValue[T]],
+    SetType[T],
+):
+    """PV set reference stored as a single primitive blob.
+
+    Unlike SetRef which decomposes into per-element storage, this stores the
+    entire set as one value. Operations work on the fetched Python set.
+
+    Inherits:
+        - ItemRef: PV storage access + CRUD + observation
+        - SetType: Set methods (add, remove, union, intersection, etc.)
+    """
+
+    def __init__(
+        self,
+        *,
+        address: path.PathAddress | Term,
+        parent: PrimitiveRef | None = None,
+        owner_shape: type[Shape] | None = None,
+    ) -> None:
+        """Initialize PV primitive set ref."""
+        super().__init__(
+            address=address,
+            value_type=set,
+            value_value_type=SetValue,
+            parent=parent,
+            owner_shape=owner_shape,
+        )
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Create a slot for primitive set values."""
         return Slot(cls)  # type: ignore[return-value]

@@ -109,7 +109,6 @@ class DictRef[
         value_value_type: type,
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
-        primitive: bool = False,
     ) -> None:
         """Initialize mapping reference."""
         super().__init__(
@@ -119,7 +118,6 @@ class DictRef[
         self.key_type = key_type
         self.key_value_type = key_value_type
         self.value_value_type = value_value_type
-        self.primitive = primitive
 
     def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> ItemRef:
         """Create a reference to a child at the given key."""
@@ -131,23 +129,12 @@ class DictRef[
             owner_shape=self._owner_shape,
         )
 
-    def store(self, value: object) -> object:
-        """Store collection. If primitive=True, stores as single blob."""
-        if self.primitive:
-            from eb_virtuals.morphisms.collection import CollectionPrimitiveStoreCmd
-            from everybase.abc import NoneValue, ensure_term
-
-            return NoneValue(CollectionPrimitiveStoreCmd(self, ensure_term(value)))
-        return super().store(value)
-
     @classmethod
     def slot[DK: (int, str), DV: StorageValue](
         cls,
         value_type: type[DV],
         view_type: type[MutableMappingBase] | None = None,
         key_type: type[DK] = str,  # type: ignore[assignment]
-        *,
-        primitive: bool = False,
     ) -> DictRef[DK, DV]:
         """Create a slot for this dict ref type.
 
@@ -155,7 +142,6 @@ class DictRef[
             value_type: Python type of values (primitives)
             view_type: View class implementing MutableMappingBase protocol
             key_type: Python type of keys (default: str)
-            primitive: If True, store entire collection as single blob
 
         Returns:
             Slot configured to create DictRef instances
@@ -169,5 +155,4 @@ class DictRef[
             view_type=view_type or DictView,
             key_value_type=_value_type_for(key_type),
             value_value_type=_value_type_for(value_type),
-            primitive=primitive,
         )  # type: ignore

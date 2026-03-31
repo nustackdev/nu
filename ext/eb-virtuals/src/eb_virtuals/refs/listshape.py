@@ -54,7 +54,6 @@ class ShapesListRef[T: Shape](
         view_type: type[MutableSequenceBase],
         parent: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
-        primitive: bool = False,
     ) -> None:
         """Initialize sequence shape reference."""
         super().__init__(
@@ -62,7 +61,6 @@ class ShapesListRef[T: Shape](
         )
         self._shape_type = shape_type
         self.item_type = dict
-        self.primitive = primitive
 
     def _create_item_ref(self, index: int | Sentinel | Term[int | Sentinel]) -> ShapeRef[T]:
         """Create a reference to a shape at the given index."""
@@ -76,29 +74,17 @@ class ShapesListRef[T: Shape](
             owner_shape=self._owner_shape,
         )
 
-    def store(self, value: object) -> object:
-        """Store collection. If primitive=True, stores as single blob."""
-        if self.primitive:
-            from eb_virtuals.morphisms.collection import CollectionPrimitiveStoreCmd
-            from everybase.abc import NoneValue, ensure_term
-
-            return NoneValue(CollectionPrimitiveStoreCmd(self, ensure_term(value)))
-        return super().store(value)
-
     @classmethod
     def slot[S: Shape](
         cls,
         shape_type: type[S],
         view_type: type[MutableSequenceBase] | None = None,
-        *,
-        primitive: bool = False,
     ) -> ShapesListRef[S]:
         """Create a slot for this shapes list ref type.
 
         Args:
             shape_type: Shape class for items
             view_type: View class implementing MutableSequenceBase protocol
-            primitive: If True, store entire collection as single blob
 
         Returns:
             Slot configured to create ShapesListRef instances
@@ -109,5 +95,4 @@ class ShapesListRef[T: Shape](
             cls,
             shape_type=shape_type,
             view_type=view_type or ListView,
-            primitive=primitive,
         )  # type: ignore

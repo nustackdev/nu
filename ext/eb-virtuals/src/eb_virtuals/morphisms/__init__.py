@@ -15,6 +15,7 @@ Item morphisms:
     ItemPrimitiveDeleteUnsafeCmd         — _unsafe_primitive_delete()
 
 Collection morphisms:
+    PrimitiveStoreCmd                    — _primitive_write() (blob store for compound primitives)
     ScanPrimitivesUnsafeOp               — _unsafe_primitive_scan_values()
     ClearPrimitivesUnsafeCmd             — _unsafe_primitive_clear()
 """
@@ -30,6 +31,7 @@ from .item import (
     ItemPrimitiveGetUnsafeOp,
     ItemPrimitiveSetUnsafeCmd,
     ItemPrimitiveSetUnsafeParentSkipCmd,
+    PrimitiveStoreCmd,
 )
 
 
@@ -41,5 +43,6 @@ __all__ = [
     "ItemPrimitiveGetUnsafeOp",
     "ItemPrimitiveSetUnsafeCmd",
     "ItemPrimitiveSetUnsafeParentSkipCmd",
+    "PrimitiveStoreCmd",
     "ScanPrimitivesUnsafeOp",
 ]

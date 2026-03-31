@@ -30,6 +30,7 @@ __all__ = [
     "ItemPrimitiveGetUnsafeOp",
     "ItemPrimitiveSetUnsafeCmd",
     "ItemPrimitiveSetUnsafeParentSkipCmd",
+    "PrimitiveStoreCmd",
 ]
 
 
@@ -199,3 +200,35 @@ class ItemPrimitiveDeleteUnsafeCmd(Command, Morphism[None]):
 
     def __repr__(self) -> str:
         return f"ItemPrimitiveDeleteUnsafeCmd({self.ref!r})"
+
+
+class PrimitiveStoreCmd[T](Command, Morphism[None]):
+    """Store a value via _primitive_write(), bypassing container type checks.
+
+    Uses PrimitiveOpsBase._primitive_write() which does ensure_created() +
+    direct ctx.put(). Skips the is_container_type check that __setitem__
+    would trigger, avoiding unnecessary overhead for primitives and preventing
+    decomposition for compound values stored as blobs.
+
+    The ref must implement:
+        fetch_parent(ctx) -> view with PrimitiveOpsBase._primitive_write()
+        resolve_address(ctx) -> key/index
+    """
+
+    def __init__(self, ref: object, data: object) -> None:
+        super().__init__(ref, data)
+        self.ref = ref
+        self.data_expr = data
+
+    async def execute(self, ctx: Context) -> None:  # noqa: D102
+        data = await self.data_expr.execute(ctx)
+        if isinstance(data, Sentinel):
+            raise ValueError(f"Cannot store sentinel value: {data}")
+
+        parent = await self.ref.fetch_parent(ctx)
+        address = await self.ref.resolve_address(ctx)
+        parent._primitive_write(address, data)
+        return None
+
+    def __repr__(self) -> str:
+        return f"PrimitiveStoreCmd({self.ref!r}, {self.data_expr!r})"
