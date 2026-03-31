@@ -28,11 +28,11 @@ from utils import (
 )
 from virtuals.tkv.storage import StorageProtocol
 
-import eb_virtuals as ebv
-from eb_virtuals import Atomic
-from everybase import Context
-from everybase.abc import Seq
-from everybase.shape import Shape
+import nu_virtuals as ebv
+from nu_virtuals import Atomic
+from nu import Context
+from nu.abc import Seq
+from nu.shape import Shape
 
 
 # ── Shapes ────────────────────────────────────────────────────────────
@@ -131,7 +131,7 @@ async def _bench(label: str, term, seed_term, seed_key: str | None = None) -> Ti
     """Benchmark with fresh db per measurement."""
     tmpdir = tempfile.mkdtemp(prefix="bench_nested_")
     try:
-        from eb_virtuals.presets import rocksdb_storage_inmemory
+        from nu_virtuals.presets import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().bind(storage, StorageProtocol)

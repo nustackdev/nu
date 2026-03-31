@@ -12,7 +12,7 @@ from virtuals.tkv.storage import StorageProtocol, TransactionProtocol
 from virtuals.view import View
 from virtuals.views import DictView
 
-from eb_virtuals import (
+from nu_virtuals import (
     DictRef,
     FloatRef,
     IntRef,
@@ -20,11 +20,11 @@ from eb_virtuals import (
     ShapesListRef,
     StrRef,
 )
-from eb_virtuals.presets import memory_storage
-from eb_virtuals.refs.base import Facet
-from everybase import Context
-from everybase.abc import Print, Seq
-from everybase.shape import Shape
+from nu_virtuals.presets import memory_storage
+from nu_virtuals.refs.base import Facet
+from nu import Context
+from nu.abc import Print, Seq
+from nu.shape import Shape
 
 
 class Order(Shape):

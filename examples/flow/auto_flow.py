@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from datetime import datetime
 
-import eb_virtuals as ebv
-import everybase.abc as f
-from everybase.shape import Shape
+import nu_virtuals as ebv
+import nu.abc as f
+from nu.shape import Shape
 
 
 class AppState(Shape):
@@ -34,8 +34,8 @@ demos = [
 async def main():
     from virtuals.tkv.storage import StorageProtocol
 
-    from eb_virtuals.presets import text_storage
-    from everybase import Context
+    from nu_virtuals.presets import text_storage
+    from nu import Context
 
     with text_storage(".db") as storage:
         ctx = Context().bind(storage, StorageProtocol)

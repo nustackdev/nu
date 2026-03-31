@@ -9,14 +9,14 @@ YELLOW := \033[1;33m
 NC := \033[0m
 
 CORE := src
-EXT_DIRS := ext/eb-virtuals ext/eb-dict ext/eb-datetime ext/eb-fin ext/eb-math ext/eb-path ext/eb-uuid ext/eb-shape-lens ext/eb-tree-view
+EXT_DIRS := ext/nu-virtuals ext/nu-dict ext/nu-datetime ext/nu-fin ext/nu-math ext/nu-path ext/nu-uuid ext/nu-shape-lens ext/nu-tree-view
 ALL_SRC := $(CORE) $(addsuffix /src,$(EXT_DIRS))
 
 # =============================================================================
 # Help
 # =============================================================================
 help:
-	@echo "$(BLUE)everybase monorepo$(NC)"
+	@echo "$(BLUE)nu monorepo$(NC)"
 	@echo ""
 	@echo "$(GREEN)Setup:$(NC)"
 	@echo "  make install         Install uv if needed"
@@ -126,8 +126,8 @@ check: format-check lint
 list:
 	@echo "$(BLUE)Workspace packages:$(NC)"
 	@echo ""
-	@echo "$(GREEN)Core (src/everybase/):$(NC)"
-	@ls -d src/everybase/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo "$(GREEN)Core (src/nu/):$(NC)"
+	@ls -d src/nu/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
 	@echo ""
 	@echo "$(GREEN)Extensions (ext/):$(NC)"
 	@ls -d ext/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"

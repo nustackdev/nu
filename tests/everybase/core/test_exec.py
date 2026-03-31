@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from everybase import Executable, Node, depth, find, map_nodes, preorder, size
+from nu import Executable, Node, depth, find, map_nodes, preorder, size
 
 
 class ConcreteExecutable(Executable):

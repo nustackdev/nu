@@ -16,12 +16,12 @@ import asyncio
 
 import httpx
 
-import eb_virtuals as ebv
-from everybase import Context
-from everybase.abc import DictValue, IntValue, TypeBase, ValueBase, method
-from everybase.abc.flows import Delay, ForRange, Print, Race, Seq
-from everybase.shape import Shape
-from everybase.shape.flows import ReactWhile
+import nu_virtuals as ebv
+from nu import Context
+from nu.abc import DictValue, IntValue, TypeBase, ValueBase, method
+from nu.abc.flows import Delay, ForRange, Print, Race, Seq
+from nu.shape import Shape
+from nu.shape.flows import ReactWhile
 
 
 # ---- Solana RPC ----
@@ -75,12 +75,12 @@ class SolanaRef(ebv.ItemRef[SolanaClient, SolanaValue], SolanaType):
 
     @classmethod
     def slot(cls) -> SolanaRef:
-        from everybase.shape import Slot
+        from nu.shape import Slot
 
         return Slot(cls)  # type: ignore[return-value]
 
     def store(self, value: object) -> SolanaValue:
-        from everybase.shape import ItemStoreCmd
+        from nu.shape import ItemStoreCmd
 
         if isinstance(value, SolanaClient):
             val = SolanaValue(value)
@@ -158,7 +158,7 @@ tracker = Seq(
 async def main():
     from virtuals.tkv.storage import StorageProtocol
 
-    from eb_virtuals.presets import memory_storage, text_storage
+    from nu_virtuals.presets import memory_storage, text_storage
 
     with text_storage(".db-trader") as data_store:
         with memory_storage() as service_store:

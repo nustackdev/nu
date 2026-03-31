@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import eb_virtuals as ebv
-from everybase import Context
-from everybase.abc import Print, Seq
-from everybase.shape import Shape
+import nu_virtuals as ebv
+from nu import Context
+from nu.abc import Print, Seq
+from nu.shape import Shape
 
 
 # --- Shape ---
@@ -22,7 +22,7 @@ class AppState(Shape):
 async def main():
     from virtuals.tkv import StorageProtocol
 
-    from eb_virtuals.presets import text_storage
+    from nu_virtuals.presets import text_storage
 
     with text_storage(".db") as storage:
         ctx = Context().bind(storage, StorageProtocol)

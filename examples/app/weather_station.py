@@ -7,16 +7,16 @@ Two subtrees race in parallel:
   feed   -> writes sensor data in a loop
   react  -> prints on every change, cancelled when feed completes
 
-Flows: Seq, ForRange, If, Race, Delay, Print (from everybase.abc)
-Reactive: ReactWhile (from everybase.shape)
+Flows: Seq, ForRange, If, Race, Delay, Print (from nu.abc)
+Reactive: ReactWhile (from nu.shape)
 """
 
 from __future__ import annotations
 
-import eb_virtuals as ebv
-from everybase.abc.flows import Delay, ForRange, If, Print, Race, Seq
-from everybase.shape import Shape
-from everybase.shape.flows import ReactWhile
+import nu_virtuals as ebv
+from nu.abc.flows import Delay, ForRange, If, Print, Race, Seq
+from nu.shape import Shape
+from nu.shape.flows import ReactWhile
 
 
 # ---- Shapes ----
@@ -102,8 +102,8 @@ station = Seq(
 async def main():
     from virtuals.tkv.storage import StorageProtocol
 
-    from eb_virtuals.presets import text_storage
-    from everybase import Context
+    from nu_virtuals.presets import text_storage
+    from nu import Context
 
     with text_storage(".db-weather") as storage:
         ctx = Context().bind(storage, StorageProtocol)

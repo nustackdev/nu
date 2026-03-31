@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from everybase import (
+from nu import (
     EMPTY,
     INVALID,
     Empty,
@@ -15,12 +15,12 @@ from everybase import (
 
 class TestSingletons:
     def test_empty_is_singleton_identity(self):
-        from everybase import EMPTY as EMPTY_2
+        from nu import EMPTY as EMPTY_2
 
         assert EMPTY is EMPTY_2
 
     def test_invalid_is_singleton_identity(self):
-        from everybase import INVALID as INVALID_2
+        from nu import INVALID as INVALID_2
 
         assert INVALID is INVALID_2
 

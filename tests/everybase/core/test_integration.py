@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from everybase import (
+from nu import (
     Executable,
     Flow,
     Span,

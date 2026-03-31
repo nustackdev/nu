@@ -5,7 +5,7 @@ Tests PathRef and PathSlot execution with real storage context.
 
 from pathlib import Path
 
-from eb_path import PathValue as PathRef
+from nu_path import PathValue as PathRef
 
 
 # ============================================================================

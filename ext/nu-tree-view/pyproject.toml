@@ -1,0 +1,35 @@
+# =============================================================================
+# packages/eb-tree-view - Interactive HTML Tree Explorer
+# =============================================================================
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nu-tree-view"
+version = "0.1.0"
+description = "Interactive HTML tree explorer for everybase"
+license = "MIT"
+authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = [
+    "nu>=0.1.0",
+]
+keywords = ["every", "tree", "explorer", "visualization", "devtools"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Repository = "https://github.com/nustackdev/nu"
+
+[tool.hatch.build]
+artifacts = ["src/nu_tree_view/explorer.html.tmpl"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nu_tree_view"]

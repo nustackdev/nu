@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from everybase import Executable, Term, find, map_nodes, preorder, size
+from nu import Executable, Term, find, map_nodes, preorder, size
 
 
 class PureTerm(Term):

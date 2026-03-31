@@ -7,8 +7,8 @@ the term system works correctly for real-world use cases.
 
 import pytest
 
-from everybase import Context
-from everybase.abc import (
+from nu import Context
+from nu.abc import (
     BoolValue,
     DictValue,
     FloatValue,

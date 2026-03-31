@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import eb_virtuals as ebv
-from eb_virtuals import Snapshot, Transaction, optimize_primitive_reads, optimize_primitive_writes
-from everybase.abc import Seq
-from everybase.shape import Shape
+import nu_virtuals as ebv
+from nu_virtuals import Snapshot, Transaction, optimize_primitive_reads, optimize_primitive_writes
+from nu.abc import Seq
+from nu.shape import Shape
 
 
 class Record(Shape):
@@ -39,8 +39,8 @@ async def main() -> None:
 
     from virtuals.tkv.storage import StorageProtocol
 
-    from eb_virtuals.presets import rocksdb_storage_inmemory
-    from everybase import Context
+    from nu_virtuals.presets import rocksdb_storage_inmemory
+    from nu import Context
 
     total = N * len(FIELDS)
     variants = [

@@ -18,8 +18,8 @@ import ray
 from composables import Runtime
 from composables.spec import SpecBuilder
 
-import eb_virtuals as ebv
-from eb_distributed import (
+import nu_virtuals as ebv
+from nu_distributed import (
     ContextSpec,
     InvisiblesClientSpec,
     InvisiblesServerSpec,
@@ -31,9 +31,9 @@ from eb_distributed import (
     Worker,
     WorkerSpec,
 )
-from everybase import Context
-from everybase.abc import ForRange, If, Parallel, Print, Seq
-from everybase.shape import Shape
+from nu import Context
+from nu.abc import ForRange, If, Parallel, Print, Seq
+from nu.shape import Shape
 
 
 # -- Shape -------------------------------------------------------------------

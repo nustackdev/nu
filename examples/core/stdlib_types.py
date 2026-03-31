@@ -11,9 +11,9 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
-import eb_virtuals as ebv
-from everybase import Context
-from everybase.shape import Shape
+import nu_virtuals as ebv
+from nu import Context
+from nu.shape import Shape
 
 
 # =============================================
@@ -41,7 +41,7 @@ async def main():
     from virtuals.codecs import TextCodec as Codec
     from virtuals.views import DictView
 
-    from eb_virtuals.presetss.textdb import TextStorage as Storage
+    from nu_virtuals.presetss.textdb import TextStorage as Storage
 
     with Storage(".db-stdtypes", codec=Codec()) as storage:
         with storage.transaction() as tx:

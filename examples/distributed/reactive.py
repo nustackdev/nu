@@ -21,8 +21,8 @@ import ray
 from composables import Runtime
 from composables.spec import SpecBuilder
 
-import eb_virtuals as ebv
-from eb_distributed import (
+import nu_virtuals as ebv
+from nu_distributed import (
     ContextSpec,
     InvisiblesClientSpec,
     InvisiblesServerSpec,
@@ -34,10 +34,10 @@ from eb_distributed import (
     Worker,
     WorkerSpec,
 )
-from everybase import Context
-from everybase.abc import Delay, ForRange, Print, Race, Seq
-from everybase.shape import Shape
-from everybase.shape.flows.reactive import ReactWhile
+from nu import Context
+from nu.abc import Delay, ForRange, Print, Race, Seq
+from nu.shape import Shape
+from nu.shape.flows.reactive import ReactWhile
 
 
 # -- Shape -------------------------------------------------------------------

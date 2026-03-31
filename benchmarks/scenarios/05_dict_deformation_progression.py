@@ -27,11 +27,11 @@ from utils import (
     print_results,
 )
 
-import eb_dict as ed
-from eb_dict.meta import inline_refs
-from everybase import Context
-from everybase.abc import Seq
-from everybase.shape import Shape
+import nu_dict as ed
+from nu_dict.meta import inline_refs
+from nu import Context
+from nu.abc import Seq
+from nu.shape import Shape
 
 
 # ── Shape ─────────────────────────────────────────────────────────────────────

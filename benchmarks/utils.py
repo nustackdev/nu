@@ -15,8 +15,8 @@ from virtuals.tkv.storage import StorageProtocol
 from virtuals.view import View
 from virtuals.views import DictView
 
-from eb_virtuals.presets import memory_storage, rocksdb_storage_inmemory
-from everybase import Context
+from nu_virtuals.presets import memory_storage, rocksdb_storage_inmemory
+from nu import Context
 
 
 if TYPE_CHECKING:

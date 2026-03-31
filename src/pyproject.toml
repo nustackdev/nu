@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "everybase"
+name = "nu"
 version = "0.1.0"
 description = "Term Programming platform — kernel, toolbox, and topologies"
 readme = "../README.md"
@@ -24,14 +24,30 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-virtuals = ["eb-virtuals"]
-rocksdb = ["rdbpython"]
-distributed = ["eb-distributed"]
-inmem = ["eb-dict"]
-x = ["eb-math", "eb-fin", "eb-datetime", "eb-path", "eb-uuid"]
+minimal = [
+    "nu-datetime",
+    "nu-fin",
+    "nu-math",
+    "nu-path",
+    "nu-uuid",
+]
+default = [
+    "nu[minimal]",
+    "nu-virtuals",
+    "nu-dict",
+    "nu-shape-lens",
+    "nu-tree-view",
+]
+distributed = [
+    "nu[default]",
+    "nu-distributed",
+]
+all = [
+    "nu[distributed]",
+]
 
 [project.urls]
-Repository = "https://github.com/everyabc/everybase"
+Repository = "https://github.com/nustackdev/nu"
 
 [tool.hatch.build.targets.wheel]
-packages = ["everybase"]
+packages = ["nu"]

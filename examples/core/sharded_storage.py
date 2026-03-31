@@ -15,13 +15,13 @@ from __future__ import annotations
 
 import asyncio
 
-import eb_virtuals as ebv
-from eb_dict import DictRef
-from everybase import Context
-from everybase.abc import Print, Seq
-from everybase.abc.flows import Delay, Race
-from everybase.shape import Shape
-from everybase.shape.flows import ReactForever
+import nu_virtuals as ebv
+from nu_dict import DictRef
+from nu import Context
+from nu.abc import Print, Seq
+from nu.abc.flows import Delay, Race
+from nu.shape import Shape
+from nu.shape.flows import ReactForever
 
 
 # =============================================================================

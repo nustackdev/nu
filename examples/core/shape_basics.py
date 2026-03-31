@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import eb_virtuals as ebv
-from everybase import Context
-from everybase.abc import fn
-from everybase.shape import Shape
+import nu_virtuals as ebv
+from nu import Context
+from nu.abc import fn
+from nu.shape import Shape
 
 
 # =============================================================================
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     from virtuals import View
     from virtuals.views import DictView
 
-    from eb_virtuals.presets import text_storage
+    from nu_virtuals.presets import text_storage
 
     async def main() -> None:
         with text_storage(path=".db-shape") as storage, storage.transaction() as tx:

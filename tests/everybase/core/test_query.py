@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from everybase import count, depth, find, find_first, size
+from nu import count, depth, find, find_first, size
 
 from .conftest import SimpleNode
 

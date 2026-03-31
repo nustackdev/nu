@@ -10,12 +10,12 @@ import asyncio
 
 import httpx
 
-from everybase import Context, print_tree
-from everybase.abc import DictValue, IntValue, StrValue, method
-from everybase.abc.morphisms import AtOp
-from everybase.abc.types import TypeBase
-from everybase.abc.values import ValueBase
-from everybase.core import Ref
+from nu import Context, print_tree
+from nu.abc import DictValue, IntValue, StrValue, method
+from nu.abc.morphisms import AtOp
+from nu.abc.types import TypeBase
+from nu.abc.values import ValueBase
+from nu.core import Ref
 
 
 # =============================================================================

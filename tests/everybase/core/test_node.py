@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from everybase import Node
+from nu import Node
 
 from .conftest import SimpleNode
 

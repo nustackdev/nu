@@ -7,7 +7,7 @@ import pytest
 from virtuals import Navigator
 from virtuals.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionProtocol
 
-from eb_virtuals import (
+from nu_virtuals import (
     ComplexRef,
     DateRef,
     DatetimeRef,
@@ -20,8 +20,8 @@ from eb_virtuals import (
     TimezoneRef,
     UUIDRef,
 )
-from everybase import Context
-from everybase.shape import Shape
+from nu import Context
+from nu.shape import Shape
 
 
 # ============================================================================

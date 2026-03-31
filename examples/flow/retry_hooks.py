@@ -5,9 +5,9 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from everybase import Context, annotate_retries
-from everybase.abc import Print, Retry
-from everybase.abc.refs import IntRef, StrRef
+from nu import Context, annotate_retries
+from nu.abc import Print, Retry
+from nu.abc.refs import IntRef, StrRef
 
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")

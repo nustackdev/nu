@@ -38,14 +38,14 @@ from utils import (
 )
 from virtuals.tkv.storage import StorageProtocol
 
-import eb_dict as ed
-import eb_virtuals as ebv
-from eb_dict.meta import inline_refs as dict_inline_refs
-from eb_virtuals import Atomic, auto_atomic
-from eb_virtuals.meta import inline_refs as v_inline_refs
-from everybase import Context
-from everybase.abc import Seq
-from everybase.shape import Shape
+import nu_dict as ed
+import nu_virtuals as ebv
+from nu_dict.meta import inline_refs as dict_inline_refs
+from nu_virtuals import Atomic, auto_atomic
+from nu_virtuals.meta import inline_refs as v_inline_refs
+from nu import Context
+from nu.abc import Seq
+from nu.shape import Shape
 
 
 # ── Shapes (PV substrate) ────────────────────────────────────────────────────
@@ -233,7 +233,7 @@ N = 500  # iterations
 async def _bench_v(label: str, tree, seed_tree, field_ops: int) -> TimingResult:
     tmpdir = tempfile.mkdtemp(prefix="bench_user_db_")
     try:
-        from eb_virtuals.presets import rocksdb_storage_inmemory
+        from nu_virtuals.presets import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().bind(storage, StorageProtocol)

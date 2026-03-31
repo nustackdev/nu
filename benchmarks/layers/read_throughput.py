@@ -28,12 +28,12 @@ from virtuals.codecs import BinaryCodec
 from virtuals.storages.rocksdb import RocksDBStorage
 from virtuals.tkv.storage import StorageProtocol
 
-import eb_virtuals as ebv
-from eb_virtuals import Atomic, Snapshot
-from eb_virtuals.presets import rocksdb_storage_inmemory
-from everybase import Context
-from everybase.abc import Seq
-from everybase.shape import Shape
+import nu_virtuals as ebv
+from nu_virtuals import Atomic, Snapshot
+from nu_virtuals.presets import rocksdb_storage_inmemory
+from nu import Context
+from nu.abc import Seq
+from nu.shape import Shape
 
 
 # ── Shape ─────────────────────────────────────────────────────────────

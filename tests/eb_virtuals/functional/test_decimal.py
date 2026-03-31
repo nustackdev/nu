@@ -5,7 +5,7 @@ Tests DecimalRef and DecimalSlot execution with real storage context.
 
 from decimal import Decimal
 
-from eb_math import DecimalValue as DecimalRef
+from nu_math import DecimalValue as DecimalRef
 
 
 # ============================================================================

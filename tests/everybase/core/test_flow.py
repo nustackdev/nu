@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 
-from everybase import Executable, Flow, Span, Term, depth, find, map_nodes, preorder, size
+from nu import Executable, Flow, Span, Term, depth, find, map_nodes, preorder, size
 
 
 # --- Test helpers ---

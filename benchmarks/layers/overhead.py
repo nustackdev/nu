@@ -43,11 +43,11 @@ from utils import (
 )
 from virtuals.tkv.storage import StorageProtocol
 
-import eb_virtuals as ebv
-from eb_virtuals import Atomic
-from everybase import Context
-from everybase.abc import Seq
-from everybase.shape import Shape
+import nu_virtuals as ebv
+from nu_virtuals import Atomic
+from nu import Context
+from nu.abc import Seq
+from nu.shape import Shape
 
 
 # ============================================================================
@@ -199,7 +199,7 @@ def bench_l2_put_a(n: int) -> TimingResult:
     from virtuals.container.container_ops import create_container
     from virtuals.container.types import ContainerProtocol, ContainerStructure
 
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l2a_")
     try:
@@ -229,7 +229,7 @@ def bench_l2_get_a(n: int) -> TimingResult:
     from virtuals.container.container_ops import create_container
     from virtuals.container.types import ContainerProtocol, ContainerStructure
 
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l2a_")
     try:
@@ -261,7 +261,7 @@ def bench_l3_put_a(n: int) -> TimingResult:
     """L3 Mode A: DictView -- 1 txn, N puts."""
     from virtuals.views import DictView
 
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l3a_")
     try:
@@ -285,7 +285,7 @@ def bench_l3_get_a(n: int) -> TimingResult:
     """L3 Mode A: DictView -- 1 snapshot, N gets."""
     from virtuals.views import DictView
 
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l3a_")
     try:
@@ -309,7 +309,7 @@ def bench_l3_get_a(n: int) -> TimingResult:
 
 async def bench_l4_put_a(n: int) -> TimingResult:
     """L4 Mode A: Atomic(Seq(*N writes)) -- single txn, N ops."""
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     l4_put_batched, _ = _build_l4_batched(n)
     tmpdir = tempfile.mkdtemp(prefix="bench_l4a_")
@@ -328,7 +328,7 @@ async def bench_l4_put_a(n: int) -> TimingResult:
 
 async def bench_l4_get_a(n: int) -> TimingResult:
     """L4 Mode A: Atomic(Seq(*N reads)) -- single snapshot, N ops."""
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     _, l4_get_batched = _build_l4_batched(n)
     tmpdir = tempfile.mkdtemp(prefix="bench_l4a_")
@@ -450,7 +450,7 @@ def bench_l2_put_b(n: int) -> TimingResult:
     from virtuals.container.container_ops import create_container
     from virtuals.container.types import ContainerProtocol, ContainerStructure
 
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l2b_")
     try:
@@ -480,7 +480,7 @@ def bench_l2_get_b(n: int) -> TimingResult:
     from virtuals.container.container_ops import create_container
     from virtuals.container.types import ContainerProtocol, ContainerStructure
 
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l2b_")
     try:
@@ -512,7 +512,7 @@ def bench_l3_put_b(n: int) -> TimingResult:
     """L3 Mode B: DictView -- 1 txn per put (includes open_root)."""
     from virtuals.views import DictView
 
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l3b_")
     try:
@@ -536,7 +536,7 @@ def bench_l3_get_b(n: int) -> TimingResult:
     """L3 Mode B: DictView -- 1 snapshot per get (includes open_root)."""
     from virtuals.views import DictView
 
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l3b_")
     try:
@@ -560,7 +560,7 @@ def bench_l3_get_b(n: int) -> TimingResult:
 
 async def bench_l4_put_b(n: int) -> TimingResult:
     """L4 Mode B: Atomic(Shape.field.store(v)).execute() -- 1 txn per op."""
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l4b_")
     try:
@@ -579,7 +579,7 @@ async def bench_l4_put_b(n: int) -> TimingResult:
 
 async def bench_l4_get_b(n: int) -> TimingResult:
     """L4 Mode B: Atomic(Shape.field).execute() -- 1 snapshot per op."""
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     tmpdir = tempfile.mkdtemp(prefix="bench_l4b_")
     try:

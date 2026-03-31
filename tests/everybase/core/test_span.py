@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 
-from everybase import (
+from nu import (
     Executable,
     Flow,
     Span,

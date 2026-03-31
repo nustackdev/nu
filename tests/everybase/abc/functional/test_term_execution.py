@@ -7,8 +7,8 @@ don't require storage access.
 
 import pytest
 
-from everybase import INVALID, Context
-from everybase.abc import BoolValue, FloatValue, IntValue, ListValue, StrValue, all_, any_
+from nu import INVALID, Context
+from nu.abc import BoolValue, FloatValue, IntValue, ListValue, StrValue, all_, any_
 
 
 @pytest.fixture

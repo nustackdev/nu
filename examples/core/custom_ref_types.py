@@ -16,9 +16,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Self
 
-import eb_virtuals as ebv
-from everybase import Arg, FloatArg, Sentinel, StrArg
-from everybase.abc import (
+import nu_virtuals as ebv
+from nu import Arg, FloatArg, Sentinel, StrArg
+from nu.abc import (
     AddOp,
     FloatType,
     FloatValue,
@@ -32,7 +32,7 @@ from everybase.abc import (
     ValueBase,
     ensure_term,
 )
-from everybase.shape import ItemRef, ItemStoreCmd, Shape, Slot
+from nu.shape import ItemRef, ItemStoreCmd, Shape, Slot
 
 
 # =============================================
@@ -148,8 +148,8 @@ async def main():
     from virtuals import View
     from virtuals.views import DictView
 
-    from eb_virtuals.presets import text_storage
-    from everybase import Context
+    from nu_virtuals.presets import text_storage
+    from nu import Context
 
     with text_storage(".db") as storage:
         ctx = Context()

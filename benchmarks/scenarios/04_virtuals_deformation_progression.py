@@ -37,8 +37,8 @@ from utils import (
 )
 from virtuals.tkv.storage import StorageProtocol
 
-import eb_virtuals as ebv
-from eb_virtuals import (
+import nu_virtuals as ebv
+from nu_virtuals import (
     Atomic,
     InitCmd,
     ItemPrimitiveSetUnsafeParentSkipCmd,
@@ -47,11 +47,11 @@ from eb_virtuals import (
     optimize_primitive_reads,
     optimize_primitive_writes,
 )
-from eb_virtuals.meta import inline_refs
-from eb_virtuals.morphisms.item import ItemPrimitiveSetUnsafeCmd
-from everybase import Context, replace
-from everybase.abc import Seq
-from everybase.shape import Shape
+from nu_virtuals.meta import inline_refs
+from nu_virtuals.morphisms.item import ItemPrimitiveSetUnsafeCmd
+from nu import Context, replace
+from nu.abc import Seq
+from nu.shape import Shape
 
 
 # ── Shape ─────────────────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ def _bench_pure_dict(label: str, fn, setup_fn) -> TimingResult:
 async def _bench_v(label: str, tree, seed_tree) -> TimingResult:
     tmpdir = tempfile.mkdtemp(prefix="bench_deform_")
     try:
-        from eb_virtuals.presets import rocksdb_storage_inmemory
+        from nu_virtuals.presets import rocksdb_storage_inmemory
 
         with rocksdb_storage_inmemory(tmpdir) as storage:
             ctx = Context().bind(storage, StorageProtocol)

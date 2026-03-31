@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from everybase import ancestors, bfs, leaves, postorder, preorder
+from nu import ancestors, bfs, leaves, postorder, preorder
 
 from .conftest import SimpleNode
 

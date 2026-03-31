@@ -24,10 +24,10 @@ from utils import (
 )
 from virtuals.tkv.storage import StorageProtocol
 
-import eb_virtuals as ebv
-from eb_virtuals import Atomic
-from everybase import Context
-from everybase.shape import Shape
+import nu_virtuals as ebv
+from nu_virtuals import Atomic
+from nu import Context
+from nu.shape import Shape
 
 
 # ── Shapes ────────────────────────────────────────────────────────────
@@ -120,7 +120,7 @@ async def run_all() -> list[TimingResult]:
         terms = _build_terms(n)
         tmpdir = tempfile.mkdtemp(prefix="bench_list_")
         try:
-            from eb_virtuals.presets import rocksdb_storage_inmemory
+            from nu_virtuals.presets import rocksdb_storage_inmemory
 
             with rocksdb_storage_inmemory(tmpdir) as storage:
                 ctx = Context().bind(storage, StorageProtocol)

@@ -9,7 +9,7 @@ Tests type construction, operations, and method availability for:
 
 import pytest
 
-from everybase.abc import (
+from nu.abc import (
     AnyValue,
     BoolValue,
     BytesValue,

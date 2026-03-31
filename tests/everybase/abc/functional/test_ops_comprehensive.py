@@ -10,8 +10,8 @@ Organized by operation category:
 
 import pytest
 
-from everybase import INVALID, Context
-from everybase.abc import (
+from nu import INVALID, Context
+from nu.abc import (
     BoolValue,
     BytesValue,
     DictValue,

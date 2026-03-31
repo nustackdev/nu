@@ -6,8 +6,8 @@ import logging
 
 from virtuals.views import DictView
 
-import eb_virtuals as ebv
-from everybase.shape import Shape
+import nu_virtuals as ebv
+from nu.shape import Shape
 
 
 logging.basicConfig(level=logging.INFO)

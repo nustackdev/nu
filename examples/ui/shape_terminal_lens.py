@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import asyncio
 
-import eb_virtuals as ebv
-from eb_shape_lens import print_shape
-from everybase import Context
-from everybase.shape import Shape
+import nu_virtuals as ebv
+from nu_shape_lens import print_shape
+from nu import Context
+from nu.shape import Shape
 
 
 # ── Shapes ────────────────────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ async def run() -> None:
     from virtuals import View
     from virtuals.views import DictView
 
-    from eb_virtuals.presets import rocksdb_storage_inmemory
+    from nu_virtuals.presets import rocksdb_storage_inmemory
 
     db_path = ".db_shape_lens"
 
