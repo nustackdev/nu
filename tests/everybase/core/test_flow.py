@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 
-from nu import Executable, Flow, Span, Term, depth, find, map_nodes, preorder, size
+from nu import Nu, Flow, Span, Nu, depth, find, map_nodes, preorder, size
 
 
 # --- Test helpers ---
@@ -15,7 +15,7 @@ class ConcreteFlow(Flow):
         super().__init__(*children)
 
 
-class SimpleTerm(Term):
+class SimpleTerm(Nu):
     """Minimal term for testing."""
 
     def __init__(self, *children):
@@ -44,7 +44,7 @@ class TestFlowIsAbstract:
         assert issubclass(Flow, ABC)
 
     def test_flow_is_exec(self):
-        assert issubclass(Flow, Executable)
+        assert issubclass(Flow, Nu)
 
 
 class TestFlowChildren:
@@ -70,7 +70,7 @@ class TestFlowChildren:
         s = SimpleSpan()
         f = ConcreteFlow(t, inner_f, s)
         assert f.child_count == 3
-        assert isinstance(f.children[0], Term)
+        assert isinstance(f.children[0], Nu)
         assert isinstance(f.children[1], Flow)
         assert isinstance(f.children[2], Span)
 
@@ -102,8 +102,9 @@ class TestFlowWithAstOperations:
         t1 = SimpleTerm()
         t2 = SimpleTerm()
         f = ConcreteFlow(t1, t2)
-        terms = find(f, lambda n: isinstance(n, Term))
-        assert len(terms) == 2
+        terms = find(f, lambda n: isinstance(n, Nu))
+        # Flow is now a Nu/Nu too, so all 3 nodes match
+        assert len(terms) == 3
 
     def test_size(self):
         t1 = SimpleTerm()

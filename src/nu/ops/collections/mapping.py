@@ -1,4 +1,4 @@
-"""Mapping morphisms — operations (pure) + commands (impure).
+"""Mapping ops — operations (pure) + commands (impure).
 
 Operations:
     KeysOp: Get all keys
@@ -19,13 +19,13 @@ from collections.abc import ItemsView, KeysView, Mapping, MutableMapping, Values
 
 from nu.terms import (
     INVALID,
-    BinaryCommand,
-    BinaryOperation,
+    BinaryCmd,
+    BinaryCalc,
     Sentinel,
-    TernaryCommand,
-    TernaryOperation,
-    UnaryCommand,
-    UnaryOperation,
+    TernaryCmd,
+    TernaryCalc,
+    UnaryCmd,
+    UnaryCalc,
 )
 
 
@@ -50,7 +50,7 @@ __all__ = [
 # =============================================================================
 
 
-class KeysOp[K](UnaryOperation[KeysView[K]]):
+class KeysOp[K](UnaryCalc[KeysView[K]]):
     """Get keys view from mapping: mapping.keys()."""
 
     def apply(self, operand: object) -> KeysView[K]:
@@ -60,7 +60,7 @@ class KeysOp[K](UnaryOperation[KeysView[K]]):
         return operand.keys()  # type: ignore
 
 
-class ValuesOp[V](UnaryOperation[ValuesView[V]]):
+class ValuesOp[V](UnaryCalc[ValuesView[V]]):
     """Get values view from mapping: mapping.values()."""
 
     def apply(self, operand: object) -> ValuesView[V]:
@@ -70,7 +70,7 @@ class ValuesOp[V](UnaryOperation[ValuesView[V]]):
         return operand.values()  # type: ignore
 
 
-class ItemsOp[K, V](UnaryOperation[ItemsView[K, V]]):
+class ItemsOp[K, V](UnaryCalc[ItemsView[K, V]]):
     """Get items view from mapping: mapping.items()."""
 
     def apply(self, operand: object) -> ItemsView[K, V]:
@@ -80,7 +80,7 @@ class ItemsOp[K, V](UnaryOperation[ItemsView[K, V]]):
         return operand.items()  # type: ignore
 
 
-class GetOp[V](TernaryOperation[V]):
+class GetOp[V](TernaryCalc[V]):
     """Get value from mapping with optional default: mapping.get(key, default) or mapping[key]."""
 
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
@@ -92,7 +92,7 @@ class GetOp[V](TernaryOperation[V]):
         return first.get(second, third)  # type: ignore
 
 
-class KeyAtOp(BinaryOperation):
+class KeyAtOp(BinaryCalc):
     """Get key at index position: mapping.key_at(idx).
 
     If the mapping has a ``key_at`` method (e.g. IndexedDictView), calls it
@@ -121,7 +121,7 @@ class KeyAtOp(BinaryOperation):
 # =============================================================================
 
 
-class SetItemCmd[K, V](TernaryCommand[None]):
+class SetItemCmd[K, V](TernaryCmd[None]):
     """Set value at key: mapping[key] = value. Returns None."""
 
     def apply(self, first: object, second: object, third: object) -> None | Sentinel:
@@ -132,7 +132,7 @@ class SetItemCmd[K, V](TernaryCommand[None]):
         return None
 
 
-class DeleteItemCmd[K](BinaryCommand[None]):
+class DeleteItemCmd[K](BinaryCmd[None]):
     """Delete entry by key: del mapping[key]. Returns None."""
 
     def apply(self, left: object, right: object) -> None | Sentinel:
@@ -146,7 +146,7 @@ class DeleteItemCmd[K](BinaryCommand[None]):
         return None
 
 
-class UpdateCmd[K, V](BinaryCommand[None]):
+class UpdateCmd[K, V](BinaryCmd[None]):
     """Update mapping with another: mapping.update(other). Returns None (mutates in-place)."""
 
     def apply(self, left: object, right: object) -> None | Sentinel:
@@ -159,7 +159,7 @@ class UpdateCmd[K, V](BinaryCommand[None]):
         return None
 
 
-class DictPopCmd[K, V](TernaryCommand[V]):
+class DictPopCmd[K, V](TernaryCmd[V]):
     """Pop value by key with optional default: mapping.pop(key, default). Returns value or default."""
 
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
@@ -174,7 +174,7 @@ class DictPopCmd[K, V](TernaryCommand[V]):
         return first.pop(second, third)  # type: ignore[arg-type]
 
 
-class PopItemCmd[K, V](UnaryCommand[tuple[K, V]]):
+class PopItemCmd[K, V](UnaryCmd[tuple[K, V]]):
     """Pop arbitrary item: mapping.popitem(). Returns (key, value) tuple."""
 
     def apply(self, operand: object) -> tuple[K, V] | Sentinel:
@@ -187,7 +187,7 @@ class PopItemCmd[K, V](UnaryCommand[tuple[K, V]]):
             return INVALID
 
 
-class SetDefaultCmd[K, V](TernaryCommand[V]):
+class SetDefaultCmd[K, V](TernaryCmd[V]):
     """Set default value if key missing: mapping.setdefault(key, default). Returns value at key."""
 
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
@@ -197,7 +197,7 @@ class SetDefaultCmd[K, V](TernaryCommand[V]):
         return first.setdefault(second, third)  # type: ignore[arg-type]
 
 
-class CopyOp[K, V](UnaryOperation[dict[K, V]]):
+class CopyOp[K, V](UnaryCalc[dict[K, V]]):
     """Shallow copy: mapping.copy(). Returns new dict."""
 
     def apply(self, operand: object) -> dict[K, V] | Sentinel:

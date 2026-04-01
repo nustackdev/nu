@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.abc import (
+from nu import (
     AnyValue,
     BoolValue,
     BytesValue,
@@ -19,16 +19,16 @@ from nu.abc import (
     ListValue,
     SetValue,
     StrValue,
-    ensure_term,
+    ensure_nu,
 )
-from nu.shape import MutableMappingRefBase, Slot
+from nu.shapes import MutableMappingRefBase, Slot
 
 from .base import RefBase
 from .items import ItemRef
 
 
 if TYPE_CHECKING:
-    from nu import Sentinel, Term, Value
+    from nu import Sentinel, Nu, Value
 
 
 def _value_type_for(python_type: type) -> type[Value]:
@@ -57,25 +57,25 @@ class DictRef[K, V](
 ):
     """Dict mapping reference — key-value container backed by nested dict."""
 
-    def result(self, op: Term) -> DictValue[K, V]:
+    def result(self, op: Nu) -> DictValue[K, V]:
         return DictValue(op)
 
-    def _wrap_keys_result(self, operand: Term) -> DictKeysValue:
+    def _wrap_keys_result(self, operand: Nu) -> DictKeysValue:
         return DictKeysValue(operand)
 
-    def _wrap_values_result(self, operand: Term) -> DictValuesValue:
+    def _wrap_values_result(self, operand: Nu) -> DictValuesValue:
         return DictValuesValue(operand)
 
-    def _wrap_items_result(self, operand: Term) -> DictItemsValue:
+    def _wrap_items_result(self, operand: Nu) -> DictItemsValue:
         return DictItemsValue(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorValue:
         return IteratorValue(operand)
 
-    def _wrap_value_result(self, operand: Term) -> AnyValue:
+    def _wrap_value_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
     def __init__(
@@ -93,9 +93,9 @@ class DictRef[K, V](
         self.key_value_type = key_value_type
         self.value_value_type = value_value_type
 
-    def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> ItemRef[V, ...]:
+    def _create_child_ref(self, key: K | Sentinel | Nu[K | Sentinel]) -> ItemRef[V, ...]:
         return ItemRef(
-            address=ensure_term(key),
+            address=ensure_nu(key),
             value_type=self.value_type,
             value_value_type=self.value_value_type,
             parent=self,

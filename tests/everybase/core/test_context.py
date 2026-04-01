@@ -556,7 +556,7 @@ class TestAttributesE2EPrimRef:
     """PrimRef reads and writes through ctx.attrs."""
 
     async def test_prim_ref_reads_from_attrs(self):
-        from nu.abc import PrimRef
+        from nu import PrimRef
 
         ctx = Context()
         ctx.attrs["greeting"] = "hello"
@@ -565,7 +565,7 @@ class TestAttributesE2EPrimRef:
         assert result == "hello"
 
     async def test_prim_ref_exists(self):
-        from nu.abc import PrimRef
+        from nu import PrimRef
 
         ctx = Context()
         ref = PrimRef("maybe")
@@ -585,7 +585,7 @@ class TestContextE2EDict:
     @pytest.fixture
     def shapes(self):
         from nu_dict import IntRef, StrRef
-        from nu.shape import Shape
+        from nu.shapes import Shape
 
         class User(Shape):
             name = StrRef.slot()
@@ -606,7 +606,7 @@ class TestContextE2EDict:
     async def test_ref_scoped_isolation(self, shapes):
         """Different shapes get different dicts via context scoping."""
         from nu_dict import StrRef
-        from nu.shape import Shape
+        from nu.shapes import Shape
 
         User = shapes
 
@@ -644,8 +644,8 @@ class TestContextE2EFlows:
     async def test_seq_shares_context(self):
         """Seq children share the same context."""
         from nu_dict import IntRef
-        from nu.abc import Seq
-        from nu.shape import Shape
+        from nu import Seq
+        from nu.shapes import Shape
 
         class Counter(Shape):
             val = IntRef.slot()
@@ -664,8 +664,8 @@ class TestContextE2EFlows:
     async def test_for_range_with_context(self):
         """ForRange iterates within context-bound storage."""
         from nu_dict import IntRef
-        from nu.abc import ForRange, Seq
-        from nu.shape import Shape
+        from nu import ForRange, Seq
+        from nu.shapes import Shape
 
         class Acc(Shape):
             total = IntRef.slot()
@@ -692,10 +692,10 @@ class TestContextE2EErrors:
 
     async def test_try_catch_binds_error(self):
         """TryCatch handler receives ctx with 'error' bound."""
-        from nu import Term
-        from nu.abc import TryCatch
+        from nu import Nu
+        from nu import TryCatch
 
-        class FailTerm(Term):
+        class FailTerm(Nu):
             def __init__(self):
                 super().__init__()
 
@@ -708,7 +708,7 @@ class TestContextE2EErrors:
 
         captured = {}
 
-        class CaptureTerm(Term):
+        class CaptureTerm(Nu):
             def __init__(self):
                 super().__init__()
 
@@ -725,13 +725,13 @@ class TestContextE2EErrors:
 
     async def test_retry_binds_attempt(self):
         """Retry hooks receive ctx with 'attempt' bound."""
-        from nu import Term
-        from nu.abc import Retry
+        from nu import Nu
+        from nu import Retry
 
         attempts = []
         call_count = 0
 
-        class FlakeyTerm(Term):
+        class FlakeyTerm(Nu):
             def __init__(self):
                 super().__init__()
 
@@ -745,7 +745,7 @@ class TestContextE2EErrors:
                 if call_count < 3:
                     raise RuntimeError("fail")
 
-        class CaptureAttempt(Term):
+        class CaptureAttempt(Nu):
             def __init__(self):
                 super().__init__()
 
@@ -771,7 +771,7 @@ class TestContextE2ESpans:
 
     async def test_span_enter_binds_to_child_context(self):
         """A custom span can bind values into child context."""
-        from nu import Context, Span, Term
+        from nu import Context, Span, Nu
 
         class InjectSpan(Span):
             def __init__(self, *children, key, value):
@@ -784,7 +784,7 @@ class TestContextE2ESpans:
 
         captured = {}
 
-        class ReadTerm(Term):
+        class ReadTerm(Nu):
             def __init__(self, key):
                 super().__init__()
                 self._key = key
@@ -802,7 +802,7 @@ class TestContextE2ESpans:
 
     async def test_span_lazy_binding_deferred(self):
         """Lazy bindings in span are not materialized until accessed."""
-        from nu import Context, Span, Term
+        from nu import Context, Span, Nu
 
         calls = []
 
@@ -813,7 +813,7 @@ class TestContextE2ESpans:
             def enter(self, ctx):
                 return ctx.lazy(lambda: (calls.append(1), "expensive")[1], "resource")
 
-        class NoOpTerm(Term):
+        class NoOpTerm(Nu):
             def __init__(self):
                 super().__init__()
 
@@ -830,7 +830,7 @@ class TestContextE2ESpans:
 
     async def test_span_child_context_isolated(self):
         """Parent context not affected by span's child context."""
-        from nu import Context, Span, Term
+        from nu import Context, Span, Nu
 
         class OverrideSpan(Span):
             def __init__(self, *children):
@@ -841,7 +841,7 @@ class TestContextE2ESpans:
 
         parent_ctx = Context().bind("original", "val")
 
-        class CheckTerm(Term):
+        class CheckTerm(Nu):
             def __init__(self):
                 super().__init__()
 

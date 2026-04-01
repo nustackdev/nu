@@ -1,11 +1,8 @@
-"""Typed value holder (RValue).
+"""Typed value holder.
 
-Term                        - executable node
+Nu                          - the primitive
 └── RValue                  - evaluable expression
-    └── Value               - typed value holder
-
-Value is the base for typed values — literal data or computed results.
-Substrate bases (ValueBase, etc.) implement execute().
+    └── Value               - literal or computed data (leaf Nu)
 """
 
 from __future__ import annotations
@@ -13,7 +10,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from .term import RValue
+from .nu import RValue
 from .type_vars import T_co
 
 
@@ -27,9 +24,9 @@ __all__ = [
 
 
 class Value(RValue[T_co], ABC):
-    """Typed value holder — literal or computed.
+    """Typed value holder - literal or computed.
 
-    Values are RValues that hold data directly or wrap a source Term.
+    Values are leaf Nus that hold data directly or wrap a source Nu.
     They have no address and cannot be written to.
 
     Substrate-specific bases (ValueBase, etc.) implement execute().
@@ -37,14 +34,6 @@ class Value(RValue[T_co], ABC):
 
     @abstractmethod
     async def execute(self, ctx: Context) -> T_co:
-        """Execute this value within a context.
-
-        Args:
-            ctx: Execution context.
-
-        Returns:
-            The value.
-        """
         ...
 
     @property

@@ -2,9 +2,9 @@
 """Reactive view protocols — structural contracts for observable views.
 
 These protocols formalize what storage views must implement for
-reactive morphisms (change observation) to operate on them.
+reactive ops (change observation) to operate on them.
 
-Used by morphisms via isinstance() checks instead of hasattr().
+Used by ops via isinstance() checks instead of hasattr().
 """
 
 from __future__ import annotations

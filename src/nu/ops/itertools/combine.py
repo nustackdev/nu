@@ -1,12 +1,12 @@
-"""Iterable combination morphisms — Zip, Chain, Enumerate. Lazy iterators."""
+"""Iterable combination ops — Zip, Chain, Enumerate. Lazy iterators."""
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from itertools import chain
 
-from nu.terms import INVALID, BinaryOperation, Sentinel
-from nu.terms.op import NAryMorphism, Operation
+from nu.terms import INVALID, BinaryCalc, Sentinel
+from nu.terms.op import NAryOp, Calculation
 
 
 __all__ = [
@@ -16,12 +16,12 @@ __all__ = [
 ]
 
 
-class ZipOp(Operation, NAryMorphism[Iterator[tuple]]):
+class ZipOp(Calculation, NAryOp[Iterator[tuple]]):
     """Zip multiple iterables: zip(*iterables) -> lazy iterator."""
 
     def __init__(self, *operands: object) -> None:
         """Initialize with 2+ iterables."""
-        NAryMorphism.__init__(self, *operands)
+        NAryOp.__init__(self, *operands)
 
     async def execute(self, ctx: object) -> Iterator[tuple] | Sentinel:
         """Execute — resolve all operands and zip lazily."""
@@ -38,12 +38,12 @@ class ZipOp(Operation, NAryMorphism[Iterator[tuple]]):
         return f"ZipOp({args})"
 
 
-class ChainOp(Operation, NAryMorphism[Iterator]):
+class ChainOp(Calculation, NAryOp[Iterator]):
     """Chain multiple iterables: chain(*iterables) -> lazy iterator."""
 
     def __init__(self, *operands: object) -> None:
         """Initialize with 2+ iterables."""
-        NAryMorphism.__init__(self, *operands)
+        NAryOp.__init__(self, *operands)
 
     async def execute(self, ctx: object) -> Iterator | Sentinel:
         """Execute — resolve all operands and chain lazily."""
@@ -60,7 +60,7 @@ class ChainOp(Operation, NAryMorphism[Iterator]):
         return f"ChainOp({args})"
 
 
-class EnumerateOp(BinaryOperation[Iterator[tuple[int, object]]]):
+class EnumerateOp(BinaryCalc[Iterator[tuple[int, object]]]):
     """Enumerate iterable: enumerate(iterable, start) -> lazy iterator."""
 
     def apply(self, left: object, right: object) -> Iterator[tuple[int, object]] | Sentinel:

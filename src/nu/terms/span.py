@@ -1,11 +1,15 @@
-"""Span — grouping (context boundary)."""
+"""Span - scoping Nu.
+
+Wraps children with resource lifecycle (enter/exit).
+Returns the last child's result (value-transparent).
+"""
 
 from __future__ import annotations
 
 from abc import ABC
 from typing import TYPE_CHECKING
 
-from .executable import Executable
+from .nu import Nu
 
 
 if TYPE_CHECKING:
@@ -17,25 +21,16 @@ __all__ = [
 ]
 
 
-class Span(Executable[Executable], ABC):
-    """Grouping node. Scopes context for children.
+class Span(Nu[object], ABC):
+    """Scoping Nu. Resource lifecycle for children.
 
     Spans group children under a shared context boundary
-    via an enter/exit lifecycle. They are transparent —
-    removing a Span doesn't change what is computed, only
-    what is shared during computation.
-
-    Returns the last child's result (value-transparent).
-
-    Children can be Terms, Flows, or Spans.
-    Subclasses override enter/exit to shape context.
+    via enter/exit. They are transparent - removing a Span
+    doesn't change what is computed, only what is shared.
     """
 
     async def execute(self, ctx: Context) -> object:
-        """Execute span: enter → run children → exit.
-
-        Returns the last child's result for value transparency.
-        """
+        """Execute span: enter -> run children -> exit."""
         child_ctx = self.enter(ctx)
         result = None
         try:
@@ -56,3 +51,8 @@ class Span(Executable[Executable], ABC):
 
     def exit_failure(self, ctx: Context, error: BaseException) -> None:
         """Cleanup after failed execution. Override for abort/close."""
+
+    @property
+    def is_self_pure(self) -> bool:
+        """Spans are pure - they scope resources but don't mutate."""
+        return True

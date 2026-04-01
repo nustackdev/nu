@@ -7,9 +7,9 @@ Tests for:
 import cmath
 
 from nu_math import ComplexValue as ComplexRef
-from nu.abc import AddOp, DivOp, FuncCallOp, MulOp, PowOp, SubOp
-from nu.abc import FloatValue as FloatRef
-from nu.abc import TupleValue as TupleRef
+from nu import AddOp, DivOp, FuncCallOp, MulOp, PowOp, SubOp
+from nu import FloatValue as FloatRef
+from nu import TupleValue as TupleRef
 
 
 # =============================================================================

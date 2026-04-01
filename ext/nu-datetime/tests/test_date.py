@@ -8,9 +8,9 @@ from datetime import date, timedelta
 
 from nu_datetime import DateValue as DateRef
 from nu_datetime import TimedeltaValue as TimedeltaRef
-from nu.abc import AddOp, FuncCallOp, MethodCallOp, SubOp
-from nu.abc import IntValue as IntRef
-from nu.abc import StrValue as StrRef
+from nu import AddOp, FuncCallOp, MethodCallOp, SubOp
+from nu import IntValue as IntRef
+from nu import StrValue as StrRef
 
 
 # =============================================================================

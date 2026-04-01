@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from nu import (
-    Executable,
+    Nu,
     Flow,
     Span,
-    Term,
+    Nu,
     bfs,
     depth,
     find,
@@ -19,7 +19,7 @@ from nu import (
 # --- Test helpers ---
 
 
-class Add(Term):
+class Add(Nu):
     """Compound pure term."""
 
     def __init__(self, *children):
@@ -33,7 +33,7 @@ class Add(Term):
         return None
 
 
-class Lit(Term):
+class Lit(Nu):
     """Leaf pure term with value."""
 
     def __init__(self, value):
@@ -134,9 +134,9 @@ class TestTopologyTree:
 
     def test_find_terms(self):
         tree = self._make_tree()
-        terms = find(tree, lambda n: isinstance(n, Term))
-        # Add + 5 Lits = 6 terms
-        assert len(terms) == 6
+        terms = find(tree, lambda n: isinstance(n, Nu))
+        # Everything is a Nu/Nu now - all 9 nodes match
+        assert len(terms) == 9
 
     def test_find_flows(self):
         tree = self._make_tree()
@@ -152,7 +152,7 @@ class TestTopologyTree:
 
     def test_find_execs(self):
         tree = self._make_tree()
-        execs = find(tree, lambda n: isinstance(n, Executable))
+        execs = find(tree, lambda n: isinstance(n, Nu))
         # All nodes are Executables
         assert len(execs) == 9
 
@@ -212,8 +212,9 @@ class TestSpanTransparency:
         boundary = Boundary(lit1, lit2)
         tree = Seq(boundary, lit3)
 
-        terms = find(tree, lambda n: isinstance(n, Term))
-        assert len(terms) == 3
+        terms = find(tree, lambda n: isinstance(n, Nu))
+        # Everything is a Nu/Nu now: Seq, Boundary, lit1, lit2, lit3
+        assert len(terms) == 5
 
     def test_structure_equivalence(self):
         """Tree with and without spans has same leaf count."""

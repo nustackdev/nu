@@ -1,4 +1,4 @@
-"""Cursor morphisms -- advance cursor over ordered collections.
+"""Cursor ops -- advance cursor over ordered collections.
 
 AdvanceCursorOp: resolve source view + cursor, return next (log_key, key) or None.
 Pure operation -- resolves children, calls view method, returns result.
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Morphism, Operation, Sentinel
+from nu import Op, Calculation, Sentinel
 
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-class AdvanceCursorOp(Operation, Morphism[tuple | None]):
+class AdvanceCursorOp(Calculation, Op[tuple | None]):
     """Read next key after cursor from an ordered view.
 
     Children: [source, cursor]

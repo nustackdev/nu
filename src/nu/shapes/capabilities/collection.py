@@ -17,7 +17,7 @@ from nu.interfaces.values import BoolValue, NoneValue
 
 
 if TYPE_CHECKING:
-    from nu import Sentinel, Term
+    from nu import Sentinel, Nu
 
 
 __all__ = [
@@ -50,11 +50,11 @@ class CollectionSettableBase[CollectionT]:
     Provides store(data) using CollectionStoreCmd, returning NoneValue.
     """
 
-    def store(self, value: CollectionT | Sentinel | Term[CollectionT | Sentinel]) -> NoneValue:
-        from nu.utils import ensure_term
+    def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> NoneValue:
+        from nu.utils import ensure_nu
         from nu.shapes.ops.collection import CollectionStoreCmd
 
-        return NoneValue(CollectionStoreCmd(self, ensure_term(value)))
+        return NoneValue(CollectionStoreCmd(self, ensure_nu(value)))
 
 
 class CollectionDeletableBase:

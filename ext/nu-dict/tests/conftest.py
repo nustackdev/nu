@@ -16,7 +16,7 @@ from nu_dict import (
     StrRef,
 )
 from nu import Context
-from nu.shape import Shape
+from nu.shapes import Shape
 
 
 @pytest.fixture

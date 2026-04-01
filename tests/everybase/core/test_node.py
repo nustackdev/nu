@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import pytest
 
-from nu import Node
+from nu import Nu
 
 from .conftest import SimpleNode
 
 
 class TestChildren:
     def test_base_node_children_is_empty_tuple(self):
-        node = Node()
+        node = Nu()
         assert node.children == ()
         assert isinstance(node.children, tuple)
 
@@ -36,7 +36,7 @@ class TestIsLeaf:
         assert parent.is_leaf is False
 
     def test_base_node_is_leaf(self):
-        node = Node()
+        node = Nu()
         assert node.is_leaf is True
 
 
@@ -57,16 +57,16 @@ class TestWithChildren:
         assert result is leaf
 
     def test_base_node_leaf_with_no_args_returns_self(self):
-        node = Node()
+        node = Nu()
         result = node.with_children()
         assert result is node
 
     def test_base_node_with_children_works(self):
-        node = Node()
-        child = Node()
+        node = Nu()
+        child = Nu()
         result = node.with_children(child)
         assert result.children == (child,)
-        assert isinstance(result, Node)
+        assert isinstance(result, Nu)
 
     def test_with_children_rebuilds_node(self):
         parent = SimpleNode("p", SimpleNode("a"))
@@ -252,13 +252,13 @@ class TestBool:
         assert bool(SimpleNode("p", SimpleNode("a"))) is True
 
     def test_base_node_is_truthy(self):
-        assert bool(Node()) is True
+        assert bool(Nu()) is True
 
 
 class TestRepr:
     def test_repr_base_node_leaf(self):
-        node = Node()
-        assert repr(node) == "Node()"
+        node = Nu()
+        assert repr(node) == "Nu()"
 
     def test_repr_simple_node_leaf(self):
         node = SimpleNode("x")

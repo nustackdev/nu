@@ -28,7 +28,7 @@ from nu_virtuals import (
 )
 from nu_virtuals.refs.base import Facet
 from nu import Context
-from nu.abc import (
+from nu import (
     DictItemsValue,
     DictKeysValue,
     DictValue,
@@ -38,7 +38,7 @@ from nu.abc import (
     SetValue,
     fn,
 )
-from nu.shape import Shape
+from nu.shapes import Shape
 
 
 # ============================================================================
@@ -152,9 +152,9 @@ class TestDictRefWrapTypes:
         assert isinstance(items, DictItemsValue)
 
     def test_result_returns_dict_value(self):
-        from nu.abc import ensure_term
+        from nu import ensure_nu
 
-        result = Portfolio.metadata.result(ensure_term("x"))
+        result = Portfolio.metadata.result(ensure_nu("x"))
         assert isinstance(result, DictValue)
 
 
@@ -205,15 +205,15 @@ class TestListRefWrapTypes:
     """ListRef wrapping types."""
 
     def test_iterable_is_iterator_value(self):
-        from nu.abc import ensure_term
+        from nu import ensure_nu
 
-        wrapped = Portfolio.tags._wrap_iterable_result(ensure_term("x"))
+        wrapped = Portfolio.tags._wrap_iterable_result(ensure_nu("x"))
         assert isinstance(wrapped, IteratorValue)
 
     def test_sliceable_is_list_value(self):
-        from nu.abc import ensure_term
+        from nu import ensure_nu
 
-        wrapped = Portfolio.tags._wrap_sliceable_result(ensure_term("x"))
+        wrapped = Portfolio.tags._wrap_sliceable_result(ensure_nu("x"))
         assert isinstance(wrapped, ListValue)
 
 
@@ -255,9 +255,9 @@ class TestSetRefWrapTypes:
     """SetRef wrapping types."""
 
     def test_set_result_is_set_value(self):
-        from nu.abc import ensure_term
+        from nu import ensure_nu
 
-        wrapped = Portfolio.members._wrap_set_result(ensure_term("x"))
+        wrapped = Portfolio.members._wrap_set_result(ensure_nu("x"))
         assert isinstance(wrapped, SetValue)
 
 
@@ -369,7 +369,7 @@ class TestShapesDictRefExecution:
 
 
 class TestTermComposition:
-    """Term arithmetic across refs."""
+    """Nu arithmetic across refs."""
 
     @pytest.mark.asyncio
     async def test_multiply(self, portfolio_ctx):

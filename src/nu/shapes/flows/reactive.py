@@ -1,7 +1,7 @@
 """Reactive flows -- React, ReactForever, ReactWhile.
 
 Subscribe to change events and execute children in response.
-Uses ``ChangeOp`` morphisms from nu.shape to obtain subscription
+Uses ``ChangeOp`` ops from nu.shape to obtain subscription
 handles, then bridges callback-based notifications into async via
 ``asyncio.Event``.
 
@@ -16,13 +16,13 @@ import asyncio
 from typing import TYPE_CHECKING, Any
 
 from nu import Flow
-from nu.utils import ensure_term
+from nu.utils import ensure_nu
 
 from ..ops import ChangeOp  # noqa: TC001 - runtime dependency
 
 
 if TYPE_CHECKING:
-    from nu import Context, Executable, Ref
+    from nu import Context, Nu, Ref
 
 
 __all__ = [
@@ -56,14 +56,14 @@ class React(Flow):
     def __init__(
         self,
         change: ChangeOp,
-        body: Executable | None = None,
+        body: Nu | None = None,
         *,
         changed_key: Ref | None = None,
     ) -> None:
         """Initialize single-shot reactive flow.
 
         Args:
-            change: ChangeOp morphism that produces a subscription handle.
+            change: ChangeOp op that produces a subscription handle.
             body: Optional executable run after the first change event.
             changed_key: Optional Ref written with the key that changed.
                 Not a child -- stored as metadata only.
@@ -125,15 +125,15 @@ class ReactForever(Flow):
     def __init__(
         self,
         change: ChangeOp,
-        body: Executable,
+        body: Nu,
         *,
         changed_key: Ref | None = None,
     ) -> None:
         """Initialize forever-reactive flow.
 
         Args:
-            change: ChangeOp morphism that produces a subscription handle.
-            body: Executable run after every change event.
+            change: ChangeOp op that produces a subscription handle.
+            body: Nu run after every change event.
             changed_key: Optional Ref written with the key that changed.
                 Not a child -- stored as metadata only.
         """
@@ -177,7 +177,7 @@ class ReactWhile(Flow):
     torn down. Otherwise the changed key is optionally stored and
     the body child is executed.
 
-    Condition is auto-wrapped via ``ensure_term`` if a literal is passed.
+    Condition is auto-wrapped via ``ensure_nu`` if a literal is passed.
 
     Example::
 
@@ -198,21 +198,21 @@ class ReactWhile(Flow):
         self,
         change: ChangeOp,
         condition: Any,
-        body: Executable,
+        body: Nu,
         *,
         changed_key: Ref | None = None,
     ) -> None:
         """Initialize conditional-reactive flow.
 
         Args:
-            change: ChangeOp morphism that produces a subscription handle.
-            condition: Term or literal evaluated after each event. Loop
-                continues while truthy. Literals are wrapped via ``ensure_term``.
-            body: Executable run after each change while condition holds.
+            change: ChangeOp op that produces a subscription handle.
+            condition: Nu or literal evaluated after each event. Loop
+                continues while truthy. Literals are wrapped via ``ensure_nu``.
+            body: Nu run after each change while condition holds.
             changed_key: Optional Ref written with the key that changed.
                 Not a child -- stored as metadata only.
         """
-        super().__init__(change, ensure_term(condition), body)
+        super().__init__(change, ensure_nu(condition), body)
         self._changed_key = changed_key
 
     async def execute(self, ctx: Context) -> None:

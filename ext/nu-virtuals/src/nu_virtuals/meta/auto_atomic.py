@@ -1,10 +1,10 @@
-"""auto_atomic — Wrap Term subtrees in resolved Transaction/Snapshot spans."""
+"""auto_atomic — Wrap Nu subtrees in resolved Transaction/Snapshot spans."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Term, find
+from nu import Nu, find
 
 from ..spans import Snapshot, Transaction
 
@@ -12,7 +12,7 @@ from ..spans import Snapshot, Transaction
 if TYPE_CHECKING:
     from collections.abc import Hashable
 
-    from nu import Node
+    from nu import Nu
 
 
 __all__ = [
@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-def _has_scope(node: Node, scope: Hashable) -> bool:
+def _has_scope(node: Nu, scope: Hashable) -> bool:
     """Check if a node's subtree contains refs belonging to the given scope."""
     for ref in find(node, lambda n: hasattr(n, "get_root_shape")):
         if ref.get_root_shape() == scope:
@@ -28,7 +28,7 @@ def _has_scope(node: Node, scope: Hashable) -> bool:
     return False
 
 
-def _has_pv_write(node: Node) -> bool:
+def _has_pv_write(node: Nu) -> bool:
     """Check if a node's subtree contains impure operations on virtuals refs.
 
     An impure term is a PV write only if it operates on a virtuals ref
@@ -40,13 +40,13 @@ def _has_pv_write(node: Node) -> bool:
 
     pv_ref_types = (FlatRef, PrimitiveRef, ViewRef)
 
-    for t in find(node, lambda n: isinstance(n, Term) and not n.is_self_pure):
+    for t in find(node, lambda n: isinstance(n, Nu) and not n.is_self_pure):
         if any(isinstance(c, pv_ref_types) for c in find(t, lambda n: isinstance(n, pv_ref_types))):
             return True
     return False
 
 
-def _conditional_wrap_skip_spans[N: Node](
+def _conditional_wrap_skip_spans[N: Nu](
     root: N,
     pred: object,
     wrapper: object,
@@ -63,7 +63,7 @@ def _conditional_wrap_skip_spans[N: Node](
     if isinstance(root, (Transaction, Snapshot)):
         return root
 
-    new_children: list[Node] = []
+    new_children: list[Nu] = []
     for child in root.children:
         if pred(child):
             new_children.append(wrapper(child))
@@ -73,13 +73,13 @@ def _conditional_wrap_skip_spans[N: Node](
     return root.with_children(*new_children)  # type: ignore[arg-type]
 
 
-def auto_atomic[N: Node](
+def auto_atomic[N: Nu](
     tree: N,
     scope: Hashable | None = None,
 ) -> N:
-    """Wrap each Term subtree in a ``Transaction`` or ``Snapshot`` span.
+    """Wrap each Nu subtree in a ``Transaction`` or ``Snapshot`` span.
 
-    Walks *tree* bottom-up. Non-Term children are recursed into so
+    Walks *tree* bottom-up. Non-Nu children are recursed into so
     their inner Terms get wrapped at their level.
 
     Purity is resolved at wrap time: impure subtrees get ``Transaction``,
@@ -108,17 +108,17 @@ def auto_atomic[N: Node](
     if scope is not None:
         kwargs["scope"] = scope
 
-    def pred(n: Node) -> bool:
-        if not isinstance(n, Term):
+    def pred(n: Nu) -> bool:
+        if not isinstance(n, Nu):
             return False
         return _has_scope(n, scope) if scope is not None else True
 
-    def wrap(term: Node) -> Transaction | Snapshot:
+    def wrap(term: Nu) -> Transaction | Snapshot:
         if _has_pv_write(term):
             return Transaction(term, **kwargs)
         return Snapshot(term, **kwargs)
 
-    # If root itself is a matching Term, wrap it directly
+    # If root itself is a matching Nu, wrap it directly
     # (conditional_wrap only wraps children, not the root)
     if pred(tree):
         return wrap(tree)  # type: ignore[return-value]

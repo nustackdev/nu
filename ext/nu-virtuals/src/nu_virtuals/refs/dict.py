@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from virtuals.collections import MutableMappingBase
 
-from nu.abc import (
+from nu import (
     AnyValue,
     BoolValue,
     BytesValue,
@@ -21,9 +21,9 @@ from nu.abc import (
     ListValue,
     SetValue,
     StrValue,
-    ensure_term,
+    ensure_nu,
 )
-from nu.shape import ReactiveMappingRefBase, Shape, Slot
+from nu.shapes import ReactiveMappingRefBase, Shape, Slot
 
 from .base import ViewRef
 from .items import ItemRef
@@ -32,7 +32,7 @@ from .items import ItemRef
 if TYPE_CHECKING:
     from virtuals.loc import path
 
-    from nu import Sentinel, Term, Value
+    from nu import Sentinel, Nu, Value
 
 
 def _value_type_for(python_type: type) -> type[Value]:
@@ -77,31 +77,31 @@ class DictRef[
     Operations work lazily on PV views without loading into memory.
     """
 
-    def result(self, op: Term) -> DictValue[K, V]:
+    def result(self, op: Nu) -> DictValue[K, V]:
         return DictValue(op)
 
-    def _wrap_keys_result(self, operand: Term) -> DictKeysValue:
+    def _wrap_keys_result(self, operand: Nu) -> DictKeysValue:
         return DictKeysValue(operand)
 
-    def _wrap_values_result(self, operand: Term) -> DictValuesValue:
+    def _wrap_values_result(self, operand: Nu) -> DictValuesValue:
         return DictValuesValue(operand)
 
-    def _wrap_items_result(self, operand: Term) -> DictItemsValue:
+    def _wrap_items_result(self, operand: Nu) -> DictItemsValue:
         return DictItemsValue(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorValue:
         return IteratorValue(operand)
 
-    def _wrap_value_result(self, operand: Term) -> AnyValue:
+    def _wrap_value_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         value_type: type[V],
         key_type: type[K],
         view_type: type[MutableMappingBase],
@@ -119,10 +119,10 @@ class DictRef[
         self.key_value_type = key_value_type
         self.value_value_type = value_value_type
 
-    def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> ItemRef:
+    def _create_child_ref(self, key: K | Sentinel | Nu[K | Sentinel]) -> ItemRef:
         """Create a reference to a child at the given key."""
         return ItemRef(
-            address=ensure_term(key),
+            address=ensure_nu(key),
             value_type=self.value_type,
             value_value_type=self.value_value_type,
             parent=self,

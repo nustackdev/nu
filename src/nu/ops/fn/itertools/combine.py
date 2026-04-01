@@ -1,4 +1,4 @@
-"""Iterable combinators — Value-returning factories over morphism Ops.
+"""Iterable combinators — Value-returning factories over op Ops.
 
 Zip, Chain, Enumerate (lazy -> IteratorValue)
 """

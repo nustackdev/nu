@@ -12,7 +12,7 @@ from ..object import Object
 
 
 if TYPE_CHECKING:
-    from nu.terms import BoolArg, FloatArg, IntArg, Term  # noqa: F401
+    from nu.terms import BoolArg, FloatArg, IntArg, Nu  # noqa: F401
 
     from ...values import BoolValue, FloatValue
 
@@ -38,17 +38,17 @@ class FloatType(
     Concrete implementations must add get() for their storage substrate.
     """
 
-    def _wrap_arithmetic_result(self, operand: Term) -> FloatValue:
+    def _wrap_arithmetic_result(self, operand: Nu) -> FloatValue:
         from ...values import FloatValue
 
         return FloatValue(operand)
 
-    def _wrap_logical_result(self, operand: Term) -> BoolValue:
+    def _wrap_logical_result(self, operand: Nu) -> BoolValue:
         from ...values import BoolValue
 
         return BoolValue(operand)
 
-    def _wrap_comparison_result(self, operand: Term) -> BoolValue:
+    def _wrap_comparison_result(self, operand: Nu) -> BoolValue:
         from ...values import BoolValue
 
         return BoolValue(operand)

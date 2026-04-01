@@ -1,6 +1,6 @@
-"""Arg type aliases — accept both literals and Term expressions.
+"""Arg type aliases - accept both literals and Nu expressions.
 
-Pattern: ``T | Term[T] | Term[T | Sentinel]``
+Pattern: ``T | Nu[T] | Nu[T | Sentinel]``
 
 Usage::
 
@@ -18,8 +18,8 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from .nu import Nu
     from .sentinel import Sentinel
-    from .term import Term
 
 
 __all__ = [
@@ -39,19 +39,19 @@ __all__ = [
 
 
 # Generic
-type Arg[T] = T | Term[T] | Term[T | Sentinel]
+type Arg[T] = T | Nu[T] | Nu[T | Sentinel]
 
 # Primitives
-type IntArg = int | Term[int] | Term[int | Sentinel]
-type FloatArg = float | Term[float] | Term[float | Sentinel]
-type StrArg = str | Term[str] | Term[str | Sentinel]
-type BoolArg = bool | Term[bool] | Term[bool | Sentinel]
-type BytesArg = bytes | Term[bytes] | Term[bytes | Sentinel]
-type NoneArg = None | Term[None] | Term[None | Sentinel]
+type IntArg = int | Nu[int] | Nu[int | Sentinel]
+type FloatArg = float | Nu[float] | Nu[float | Sentinel]
+type StrArg = str | Nu[str] | Nu[str | Sentinel]
+type BoolArg = bool | Nu[bool] | Nu[bool | Sentinel]
+type BytesArg = bytes | Nu[bytes] | Nu[bytes | Sentinel]
+type NoneArg = None | Nu[None] | Nu[None | Sentinel]
 
 # Collections
-type ListArg[V] = list[V] | Term[list[V]] | Term[list[V] | Sentinel]
-type DictArg[K, V] = dict[K, V] | Term[dict[K, V]] | Term[dict[K, V] | Sentinel]
-type SetArg[T] = set[T] | Term[set[T]] | Term[set[T] | Sentinel]
-type FrozenSetArg[T] = frozenset[T] | Term[frozenset[T]] | Term[frozenset[T] | Sentinel]
-type TupleArg[*Ts] = tuple[*Ts] | Term[tuple[*Ts]] | Term[tuple[*Ts] | Sentinel]
+type ListArg[V] = list[V] | Nu[list[V]] | Nu[list[V] | Sentinel]
+type DictArg[K, V] = dict[K, V] | Nu[dict[K, V]] | Nu[dict[K, V] | Sentinel]
+type SetArg[T] = set[T] | Nu[set[T]] | Nu[set[T] | Sentinel]
+type FrozenSetArg[T] = frozenset[T] | Nu[frozenset[T]] | Nu[frozenset[T] | Sentinel]
+type TupleArg[*Ts] = tuple[*Ts] | Nu[tuple[*Ts]] | Nu[tuple[*Ts] | Sentinel]

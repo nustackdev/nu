@@ -1,4 +1,4 @@
-"""Collection access morphisms.
+"""Collection access ops.
 
 AtOp: Subscript access (seq[key], dict[key])
 SliceOp: Slice access (seq[start:stop:step])
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Container, Mapping, Sequence, Sized
 
-from nu.terms import BinaryOperation, NAryOperation, Sentinel, UnaryOperation
+from nu.terms import BinaryCalc, NAryCalc, Sentinel, UnaryCalc
 
 
 __all__ = [
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class LenOp(UnaryOperation[int]):
+class LenOp(UnaryCalc[int]):
     """Length of sequence, mapping, or string: len(obj)."""
 
     def apply(self, operand: object) -> int:
@@ -31,7 +31,7 @@ class LenOp(UnaryOperation[int]):
         return len(operand)
 
 
-class AtOp[ResultT](BinaryOperation[ResultT]):
+class AtOp[ResultT](BinaryCalc[ResultT]):
     """Subscript access: seq[key] or dict[key].
 
     Returns Invalid for out-of-bounds indices or missing keys.
@@ -54,7 +54,7 @@ class AtOp[ResultT](BinaryOperation[ResultT]):
                 ) from None
 
 
-class SliceOp[ResultT](NAryOperation[ResultT]):
+class SliceOp[ResultT](NAryCalc[ResultT]):
     """Slice access: seq[start:stop:step]."""
 
     def apply(self, *args: object) -> ResultT:
@@ -68,7 +68,7 @@ class SliceOp[ResultT](NAryOperation[ResultT]):
             ) from None
 
 
-class ContainsOp(BinaryOperation[bool]):
+class ContainsOp(BinaryCalc[bool]):
     """Containment check: item in container.
 
     Works for:

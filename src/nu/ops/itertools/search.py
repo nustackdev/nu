@@ -1,4 +1,4 @@
-"""Higher-order search morphisms.
+"""Higher-order search ops.
 
 FindOp: Find first element matching predicate
 FindIndexOp: Find index of first element matching predicate
@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from nu.terms import INVALID, Sentinel, UnaryOperation
+from nu.terms import INVALID, Sentinel, UnaryCalc
 
 
 if TYPE_CHECKING:
@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 
-class FindOp[T](UnaryOperation[T]):
+class FindOp[T](UnaryCalc[T]):
     """Find first element matching predicate. Returns Invalid if not found.
 
     Example:
@@ -33,7 +33,7 @@ class FindOp[T](UnaryOperation[T]):
         """Initialize find operation.
 
         Args:
-            operand: Term that produces a sequence
+            operand: Nu that produces a sequence
             fn: Predicate function
         """
         super().__init__(operand)
@@ -52,7 +52,7 @@ class FindOp[T](UnaryOperation[T]):
         return f"FindOp({self._children[0]!r}, {self._fn!r})"
 
 
-class FindIndexOp[T](UnaryOperation[int]):
+class FindIndexOp[T](UnaryCalc[int]):
     """Find index of first element matching predicate. Returns Invalid if not found.
 
     Example:
@@ -63,7 +63,7 @@ class FindIndexOp[T](UnaryOperation[int]):
         """Initialize find index operation.
 
         Args:
-            operand: Term that produces a sequence
+            operand: Nu that produces a sequence
             fn: Predicate function
         """
         super().__init__(operand)

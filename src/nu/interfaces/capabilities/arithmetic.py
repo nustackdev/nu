@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from nu.terms import Term
+    from nu.terms import Nu
 
 
 __all__ = [
@@ -148,7 +148,7 @@ class NumericProtocol[OperandT, ResultT](
 class AddableBase[OperandT, ResultT]:
     """Base for values that support addition."""
 
-    def _wrap_arithmetic_result(self, operand: Term) -> Term:
+    def _wrap_arithmetic_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -168,7 +168,7 @@ class AddableBase[OperandT, ResultT]:
 class SubtractableBase[OperandT, ResultT]:
     """Base for values that support subtraction."""
 
-    def _wrap_arithmetic_result(self, operand: Term) -> Term:
+    def _wrap_arithmetic_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -188,7 +188,7 @@ class SubtractableBase[OperandT, ResultT]:
 class NegatableBase[ResultT]:
     """Base for values that support unary negation, positive, and abs."""
 
-    def _wrap_arithmetic_result(self, operand: Term) -> Term:
+    def _wrap_arithmetic_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -214,7 +214,7 @@ class NegatableBase[ResultT]:
 class MultiplyableBase[OperandT, ResultT]:
     """Base for values that support multiplication."""
 
-    def _wrap_arithmetic_result(self, operand: Term) -> Term:
+    def _wrap_arithmetic_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -234,7 +234,7 @@ class MultiplyableBase[OperandT, ResultT]:
 class DivisibleBase[OperandT, ResultT]:
     """Base for values that support division (true and floor)."""
 
-    def _wrap_arithmetic_result(self, operand: Term) -> Term:
+    def _wrap_arithmetic_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -266,7 +266,7 @@ class DivisibleBase[OperandT, ResultT]:
 class ModuloableBase[OperandT, ResultT]:
     """Base for values that support modulo operation."""
 
-    def _wrap_arithmetic_result(self, operand: Term) -> Term:
+    def _wrap_arithmetic_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -286,7 +286,7 @@ class ModuloableBase[OperandT, ResultT]:
 class PowerableBase[OperandT, ResultT]:
     """Base for values that support exponentiation."""
 
-    def _wrap_arithmetic_result(self, operand: Term) -> Term:
+    def _wrap_arithmetic_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 

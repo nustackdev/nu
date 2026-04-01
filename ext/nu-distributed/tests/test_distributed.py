@@ -8,7 +8,7 @@ from conftest import TestShape, distributed
 
 import nu_virtuals as ebv
 from nu_distributed import NavigatorSpec, RocksDBStorageSpec, Teleport
-from nu.abc import ForRange, Parallel, Print, Seq
+from nu import ForRange, Parallel, Print, Seq
 
 
 def _store_and_read_flow() -> object:

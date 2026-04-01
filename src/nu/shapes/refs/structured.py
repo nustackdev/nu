@@ -57,7 +57,7 @@ class ShapeRef[T: ShapeBase](
         __init__: set shape (and optionally key_type, value_type)
         resolve(ctx): build location identity
         fetch(ctx): extract value
-        result(op): wrap morphism in typed Value
+        result(op): wrap op in typed Value
         _wrap_*: wrap operations in substrate Value types
 
     Slot navigation uses __getattr__ (fallback). Methods inherited from

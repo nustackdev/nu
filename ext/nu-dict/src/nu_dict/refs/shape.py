@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.abc import (
+from nu import (
     AnyValue,
     DictItemsValue,
     DictKeysValue,
@@ -13,14 +13,14 @@ from nu.abc import (
     DictValuesValue,
     IteratorValue,
 )
-from nu.shape import MutableShapeRef, Slot
+from nu.shapes import MutableShapeRef, Slot
 
 from .base import RefBase
 
 
 if TYPE_CHECKING:
-    from nu import Term
-    from nu.shape import Shape
+    from nu import Nu
+    from nu.shapes import Shape
 
 
 __all__ = [
@@ -34,31 +34,31 @@ class ShapeRef[T: Shape](
 ):
     """Dict shape reference — structured container backed by nested dict."""
 
-    def result(self, op: Term) -> DictValue[str, object]:
+    def result(self, op: Nu) -> DictValue[str, object]:
         return DictValue(op)
 
-    def _wrap_keys_result(self, operand: Term) -> DictKeysValue:
+    def _wrap_keys_result(self, operand: Nu) -> DictKeysValue:
         return DictKeysValue(operand)
 
-    def _wrap_values_result(self, operand: Term) -> DictValuesValue:
+    def _wrap_values_result(self, operand: Nu) -> DictValuesValue:
         return DictValuesValue(operand)
 
-    def _wrap_items_result(self, operand: Term) -> DictItemsValue:
+    def _wrap_items_result(self, operand: Nu) -> DictItemsValue:
         return DictItemsValue(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorValue:
         return IteratorValue(operand)
 
-    def _wrap_value_result(self, operand: Term) -> AnyValue:
+    def _wrap_value_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
     def __init__(
         self,
         *,
-        address: str | int | Term,
+        address: str | int | Nu,
         shape_type: type[T],
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,

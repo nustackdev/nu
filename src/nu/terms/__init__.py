@@ -1,4 +1,4 @@
-"""Nu terms — building blocks of the algebra."""
+"""Nu terms - building blocks of the algebra."""
 
 from .arg import (
     Arg,
@@ -14,24 +14,23 @@ from .arg import (
     StrArg,
     TupleArg,
 )
-from .executable import Executable
-from .node import Node
+from .nu import LValue, Nu, RValue
 from .op import (
-    BinaryCommand,
-    BinaryMorphism,
-    BinaryOperation,
+    BinaryCalc,
+    BinaryCmd,
+    BinaryOp,
+    Calculation,
     Command,
-    Morphism,
-    NAryCommand,
-    NAryMorphism,
-    NAryOperation,
-    Operation,
-    TernaryCommand,
-    TernaryMorphism,
-    TernaryOperation,
-    UnaryCommand,
-    UnaryMorphism,
-    UnaryOperation,
+    NAryCalc,
+    NAryCmd,
+    NAryOp,
+    Op,
+    TernaryCalc,
+    TernaryCmd,
+    TernaryOp,
+    UnaryCalc,
+    UnaryCmd,
+    UnaryOp,
 )
 from .ref import Ref
 from .sentinel import (
@@ -46,33 +45,36 @@ from .sentinel import (
     propagate_special,
 )
 from .span import Span
-from .term import LValue, RValue, Term
 from .value import Value
 
 
 __all__ = [
-    "Node",
-    "Executable",
-    "Term",
+    # Core
+    "Nu",
     "LValue",
     "RValue",
+    # Terms
     "Value",
     "Ref",
-    "Morphism",
-    "NAryMorphism",
-    "UnaryMorphism",
-    "BinaryMorphism",
-    "TernaryMorphism",
-    "Operation",
+    "Op",
+    "NAryOp",
+    "UnaryOp",
+    "BinaryOp",
+    "TernaryOp",
+    "Span",
+    # Purity
+    "Calculation",
     "Command",
-    "NAryOperation",
-    "NAryCommand",
-    "UnaryOperation",
-    "UnaryCommand",
-    "BinaryOperation",
-    "BinaryCommand",
-    "TernaryOperation",
-    "TernaryCommand",
+    # Convenience: purity + arity
+    "NAryCalc",
+    "NAryCmd",
+    "UnaryCalc",
+    "UnaryCmd",
+    "BinaryCalc",
+    "BinaryCmd",
+    "TernaryCalc",
+    "TernaryCmd",
+    # Sentinels
     "Sentinel",
     "Empty",
     "Invalid",
@@ -82,6 +84,7 @@ __all__ = [
     "is_invalid",
     "is_sentinel",
     "propagate_special",
+    # Args
     "Arg",
     "IntArg",
     "FloatArg",
@@ -94,5 +97,4 @@ __all__ = [
     "SetArg",
     "FrozenSetArg",
     "TupleArg",
-    "Span",
 ]

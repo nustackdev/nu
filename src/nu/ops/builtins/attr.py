@@ -1,4 +1,4 @@
-"""Attribute access morphisms.
+"""Attribute access ops.
 
 GetAttrOp: Get an attribute from an instance
 SetAttrOp: Set an attribute on an instance
@@ -7,7 +7,7 @@ DelAttrOp: Delete an attribute from an instance
 
 from __future__ import annotations
 
-from nu.terms import BinaryCommand, BinaryOperation, TernaryCommand
+from nu.terms import BinaryCmd, BinaryCalc, TernaryCmd
 
 
 __all__ = [
@@ -22,7 +22,7 @@ __all__ = [
 # =============================================================================
 
 
-class GetAttrOp[ResultT](BinaryOperation[ResultT]):
+class GetAttrOp[ResultT](BinaryCalc[ResultT]):
     """Get an attribute from an instance.
 
     Both instance and attr_name can be Terms for dynamic attribute access.
@@ -37,7 +37,7 @@ class GetAttrOp[ResultT](BinaryOperation[ResultT]):
         return getattr(left, str(right))
 
 
-class SetAttrOp(TernaryCommand[None]):
+class SetAttrOp(TernaryCmd[None]):
     """Set an attribute on an instance.
 
     All arguments can be Terms for dynamic attribute setting.
@@ -52,7 +52,7 @@ class SetAttrOp(TernaryCommand[None]):
         setattr(first, str(second), third)
 
 
-class DelAttrOp(BinaryCommand[None]):
+class DelAttrOp(BinaryCmd[None]):
     """Delete an attribute from an instance.
 
     Both instance and attr_name can be Terms for dynamic attribute deletion.

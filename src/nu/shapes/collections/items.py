@@ -40,7 +40,7 @@ class ItemBase[T, ValueT: Value](
     at an addressable location (e.g., a field in a shape, an element in
     a list, a value in a mapping).
 
-    The ref itself IS the readable term — executing it reads the value
+    The ref itself IS the readable Nu — executing it reads the value
     via fetch()/coerce(). No separate load() needed.
 
     Provides:

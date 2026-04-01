@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from nu.terms import Term
+    from nu.terms import Nu
 
 
 __all__ = [
@@ -100,7 +100,7 @@ class BitwiseProtocol[OperandT, ResultT](
 class BitwiseAndableBase[OperandT, ResultT]:
     """Base for values that support bitwise AND."""
 
-    def _wrap_bitwise_result(self, operand: Term) -> Term:
+    def _wrap_bitwise_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -114,7 +114,7 @@ class BitwiseAndableBase[OperandT, ResultT]:
 class BitwiseOrableBase[OperandT, ResultT]:
     """Base for values that support bitwise OR."""
 
-    def _wrap_bitwise_result(self, operand: Term) -> Term:
+    def _wrap_bitwise_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -128,7 +128,7 @@ class BitwiseOrableBase[OperandT, ResultT]:
 class BitwiseXorableBase[OperandT, ResultT]:
     """Base for values that support bitwise XOR."""
 
-    def _wrap_bitwise_result(self, operand: Term) -> Term:
+    def _wrap_bitwise_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -148,7 +148,7 @@ class BitwiseXorableBase[OperandT, ResultT]:
 class BitwiseInvertableBase[ResultT]:
     """Base for values that support bitwise NOT."""
 
-    def _wrap_bitwise_result(self, operand: Term) -> Term:
+    def _wrap_bitwise_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -162,7 +162,7 @@ class BitwiseInvertableBase[ResultT]:
 class ShiftableBase[OperandT, ResultT]:
     """Base for values that support bit shifting."""
 
-    def _wrap_bitwise_result(self, operand: Term) -> Term:
+    def _wrap_bitwise_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 

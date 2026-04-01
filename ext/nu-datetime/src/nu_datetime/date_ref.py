@@ -11,7 +11,7 @@ from datetime import date
 from typing import TYPE_CHECKING
 
 from nu import Sentinel
-from nu.abc import (
+from nu import (
     ComparableBase,
     IntValue,
     Object,
@@ -21,7 +21,7 @@ from nu.abc import (
 
 
 if TYPE_CHECKING:
-    from nu import Term
+    from nu import Nu
 
     from .args import DateArg, TimedeltaArg
 
@@ -49,14 +49,14 @@ class DateType(
     @classmethod
     def today(cls) -> DateValue:
         """Create a DateValue for today."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return DateValue(FuncCallOp(date.today))
 
     @classmethod
-    def from_iso(cls, iso_str: str | Term[str]) -> DateValue:
+    def from_iso(cls, iso_str: str | Nu[str]) -> DateValue:
         """Create a DateValue from an ISO format string (YYYY-MM-DD)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         def _safe_fromisoformat(s: object) -> date | Sentinel:
             if not isinstance(s, str):
@@ -68,16 +68,16 @@ class DateType(
         return DateValue(FuncCallOp(_safe_fromisoformat, iso_str))
 
     @classmethod
-    def from_ordinal(cls, ordinal: int | Term[int]) -> DateValue:
+    def from_ordinal(cls, ordinal: int | Nu[int]) -> DateValue:
         """Create a DateValue from a Gregorian ordinal."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return DateValue(FuncCallOp(date.fromordinal, ordinal))
 
     @classmethod
-    def from_timestamp(cls, timestamp: float | Term[float]) -> DateValue:
+    def from_timestamp(cls, timestamp: float | Nu[float]) -> DateValue:
         """Create a DateValue from a POSIX timestamp."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return DateValue(FuncCallOp(date.fromtimestamp, timestamp))
 
@@ -87,37 +87,37 @@ class DateType(
 
     def year(self) -> IntValue:
         """Get the year component."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "year"))
 
     def month(self) -> IntValue:
         """Get the month component (1-12)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "month"))
 
     def day(self) -> IntValue:
         """Get the day component (1-31)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "day"))
 
     def weekday(self) -> IntValue:
         """Get the day of week (Monday=0, Sunday=6)."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return IntValue(MethodCallOp(self, "weekday"))
 
     def isoweekday(self) -> IntValue:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return IntValue(MethodCallOp(self, "isoweekday"))
 
     def toordinal(self) -> IntValue:
         """Get the Gregorian ordinal."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return IntValue(MethodCallOp(self, "toordinal"))
 
@@ -127,19 +127,19 @@ class DateType(
 
     def isoformat(self) -> StrValue:
         """Convert to ISO 8601 format string (YYYY-MM-DD)."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return StrValue(MethodCallOp(self, "isoformat"))
 
-    def strftime(self, fmt: str | Term[str]) -> StrValue:
+    def strftime(self, fmt: str | Nu[str]) -> StrValue:
         """Format date as string."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return StrValue(MethodCallOp(self, "strftime", fmt))
 
     def ctime(self) -> StrValue:
         """Return ctime-style string."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return StrValue(MethodCallOp(self, "ctime"))
 
@@ -149,12 +149,12 @@ class DateType(
 
     def replace(
         self,
-        year: int | Term[int] | None = None,
-        month: int | Term[int] | None = None,
-        day: int | Term[int] | None = None,
+        year: int | Nu[int] | None = None,
+        month: int | Nu[int] | None = None,
+        day: int | Nu[int] | None = None,
     ) -> DateValue:
         """Create a new date with some components replaced."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         kwargs = {}
         if year is not None:
@@ -173,7 +173,7 @@ class DateType(
         """Add a timedelta to this date."""
         from datetime import timedelta
 
-        from nu.abc import AddOp
+        from nu import AddOp
 
         from .timedelta_ref import TimedeltaValue
 
@@ -185,7 +185,7 @@ class DateType(
         """Subtract a date or timedelta."""
         from datetime import timedelta
 
-        from nu.abc import SubOp
+        from nu import SubOp
 
         from .timedelta_ref import TimedeltaValue
 

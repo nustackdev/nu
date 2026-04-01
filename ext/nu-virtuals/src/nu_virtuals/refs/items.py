@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from nu.abc import (
+from nu import (
     BoolType,
     BoolValue,
     BytesType,
@@ -36,7 +36,7 @@ from nu.abc import (
     StrType,
     StrValue,
 )
-from nu.shape import ReactiveItemRef, Slot
+from nu.shapes import ReactiveItemRef, Slot
 
 from .base import PrimitiveRef
 
@@ -44,8 +44,8 @@ from .base import PrimitiveRef
 if TYPE_CHECKING:
     from virtuals.loc import path
 
-    from nu import Term, Value
-    from nu.shape import Shape
+    from nu import Nu, Value
+    from nu.shapes import Shape
 
 
 __all__ = [
@@ -91,9 +91,9 @@ class ItemRef[T, ValueT: Value](
 
     def store(self, value: object) -> object:  # noqa: D102
         from nu_virtuals.morphisms.item import PrimitiveStoreCmd
-        from nu.abc import NoneValue, ensure_term
+        from nu import NoneValue, ensure_nu
 
-        return NoneValue(PrimitiveStoreCmd(self, ensure_term(value)))
+        return NoneValue(PrimitiveStoreCmd(self, ensure_nu(value)))
 
     @classmethod
     def slot(
@@ -129,7 +129,7 @@ class IntRef(ItemRef[int, IntValue], IntType):
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -159,7 +159,7 @@ class StrRef(ItemRef[str, StrValue], StrType):
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -189,7 +189,7 @@ class FloatRef(ItemRef[float, FloatValue], FloatType):
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -219,7 +219,7 @@ class BoolRef(ItemRef[bool, BoolValue], BoolType):
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -249,7 +249,7 @@ class BytesRef(ItemRef[bytes, BytesValue], BytesType):
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -290,7 +290,7 @@ class PrimitiveDictRef[K, V](
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -326,7 +326,7 @@ class PrimitiveListRef[T](
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -362,7 +362,7 @@ class PrimitiveSetRef[T](
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:

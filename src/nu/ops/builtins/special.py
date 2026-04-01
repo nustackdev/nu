@@ -1,4 +1,4 @@
-"""Special value check morphisms.
+"""Special value check ops.
 
 IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
 
@@ -7,7 +7,7 @@ Operations for checking special sentinel values (Empty, Invalid).
 
 from __future__ import annotations
 
-from nu.terms import UnaryOperation, is_empty, is_invalid
+from nu.terms import UnaryCalc, is_empty, is_invalid
 
 
 __all__ = [
@@ -18,7 +18,7 @@ __all__ = [
 ]
 
 
-class IsEmptyOp(UnaryOperation[bool]):
+class IsEmptyOp(UnaryCalc[bool]):
     """Check if operand is Empty sentinel."""
 
     def apply(self, operand: object) -> bool:
@@ -26,7 +26,7 @@ class IsEmptyOp(UnaryOperation[bool]):
         return is_empty(operand)
 
 
-class NotEmptyOp(UnaryOperation[bool]):
+class NotEmptyOp(UnaryCalc[bool]):
     """Check if operand is NOT Empty sentinel."""
 
     def apply(self, operand: object) -> bool:
@@ -34,7 +34,7 @@ class NotEmptyOp(UnaryOperation[bool]):
         return not is_empty(operand)
 
 
-class IsNaNOp(UnaryOperation[bool]):
+class IsNaNOp(UnaryCalc[bool]):
     """Check if operand is Invalid sentinel."""
 
     def apply(self, operand: object) -> bool:
@@ -42,7 +42,7 @@ class IsNaNOp(UnaryOperation[bool]):
         return is_invalid(operand)
 
 
-class NotNaNOp(UnaryOperation[bool]):
+class NotNaNOp(UnaryCalc[bool]):
     """Check if operand is NOT Invalid sentinel."""
 
     def apply(self, operand: object) -> bool:

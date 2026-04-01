@@ -8,12 +8,12 @@ Color scheme:
     Values (literals)   : cyan
     Values (computed)   : dim cyan
     Refs                : yellow
-    Pure ops (Operation): green
+    Pure ops (Calculation): green
     Impure ops (Command): red
     Flows               : blue
     Spans               : magenta/bold
     Connectors          : dim
-    Node names          : bold (within their color)
+    Nu names          : bold (within their color)
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu.terms import Node
+    from nu.terms import Nu
 
 
 __all__ = [
@@ -60,38 +60,38 @@ IMPURE_DOT = f"{RED}\u25c6{RESET}"  # filled diamond, red
 # =============================================================================
 
 
-def _is_span(node: Node) -> bool:
+def _is_span(node: Nu) -> bool:
     """Span nodes have enter/exit lifecycle methods."""
     return (
         hasattr(node, "enter") and hasattr(node, "exit_success") and hasattr(node, "exit_failure")
     )
 
 
-def _is_flow(node: Node) -> bool:
+def _is_flow(node: Nu) -> bool:
     """Flow nodes have execute but NOT enter/exit (that's Span)."""
-    # Flow is an Executable that is neither Term nor Span.
-    # Flows don't have is_self_pure (that's Term) and don't have enter (that's Span).
+    # Flow is an Nu that is neither Nu nor Span.
+    # Flows don't have is_self_pure (that's Nu) and don't have enter (that's Span).
     return hasattr(node, "execute") and not hasattr(node, "is_self_pure") and not _is_span(node)
 
 
-def _is_ref(node: Node) -> bool:
+def _is_ref(node: Nu) -> bool:
     """Refs have resolve and fetch methods."""
     return hasattr(node, "resolve") and hasattr(node, "fetch")
 
 
-def _is_value(node: Node) -> bool:
-    """Values have source OR are Value subclass (is_self_pure True, not morphism)."""
-    # Values have is_self_pure = True and no apply method (morphisms have apply).
+def _is_value(node: Nu) -> bool:
+    """Values have source OR are Value subclass (is_self_pure True, not op)."""
+    # Values have is_self_pure = True and no apply method (ops have apply).
     return hasattr(node, "is_self_pure") and not hasattr(node, "apply") and not _is_ref(node)
 
 
-def _is_morphism(node: Node) -> bool:
-    """Morphisms have an apply method."""
+def _is_op(node: Nu) -> bool:
+    """Ops have an apply method."""
     return hasattr(node, "apply") or hasattr(node, "_func") or hasattr(node, "_method_name")
 
 
-def _is_pure(node: Node) -> bool:
-    """Check if a node is pure (Operation mixin)."""
+def _is_pure(node: Nu) -> bool:
+    """Check if a node is pure (Calculation mixin)."""
     if hasattr(node, "is_self_pure"):
         return node.is_self_pure
     return True
@@ -102,7 +102,7 @@ def _is_pure(node: Node) -> bool:
 # =============================================================================
 
 
-def _get_category_color(node: Node) -> str:
+def _get_category_color(node: Nu) -> str:
     """Determine the ANSI color for a node based on its category."""
     if _is_span(node):
         return MAGENTA_BOLD
@@ -110,7 +110,7 @@ def _get_category_color(node: Node) -> str:
         return BLUE
     if _is_ref(node):
         return YELLOW
-    if _is_morphism(node):
+    if _is_op(node):
         return GREEN if _is_pure(node) else RED
     if _is_value(node):
         # Literal values (leaf with source) get bright cyan;
@@ -122,7 +122,7 @@ def _get_category_color(node: Node) -> str:
     return ""
 
 
-def _format_span_label(node: Node) -> str:
+def _format_span_label(node: Nu) -> str:
     """Format label for Span nodes: Atomic[ScopeName]."""
     cls = type(node).__name__
     if hasattr(node, "scope") and node.scope is not None:
@@ -132,7 +132,7 @@ def _format_span_label(node: Node) -> str:
     return cls
 
 
-def _format_ref_label(node: Node) -> str:
+def _format_ref_label(node: Nu) -> str:
     """Format label for Ref nodes: IntRef@'address'."""
     cls = type(node).__name__
 
@@ -163,7 +163,7 @@ def _format_ref_label(node: Node) -> str:
     return f"{cls}{shape_str}"
 
 
-def _format_value_label(node: Node) -> str:
+def _format_value_label(node: Nu) -> str:
     """Format label for Value nodes: IntValue(42) or IntValue."""
     cls = type(node).__name__
     if hasattr(node, "source") and node.is_leaf:
@@ -172,8 +172,8 @@ def _format_value_label(node: Node) -> str:
     return cls
 
 
-def _format_morphism_label(node: Node) -> str:
-    """Format label for morphism nodes: .method_name or func_name."""
+def _format_op_label(node: Nu) -> str:
+    """Format label for op nodes: .method_name or func_name."""
     cls = type(node).__name__
 
     # MethodCall nodes
@@ -189,7 +189,7 @@ def _format_morphism_label(node: Node) -> str:
     return cls
 
 
-def _default_label(node: Node, *, color: bool = True) -> str:
+def _default_label(node: Nu, *, color: bool = True) -> str:
     """Build a color-coded label for a node.
 
     Args:
@@ -206,16 +206,16 @@ def _default_label(node: Node, *, color: bool = True) -> str:
         text = type(node).__name__
     elif _is_ref(node):
         text = _format_ref_label(node)
-    elif _is_morphism(node):
-        text = _format_morphism_label(node)
+    elif _is_op(node):
+        text = _format_op_label(node)
     elif _is_value(node):
         text = _format_value_label(node)
     else:
         text = type(node).__name__
 
     if not color:
-        # Plain text -- add purity indicator for morphisms only
-        if _is_morphism(node):
+        # Plain text -- add purity indicator for ops only
+        if _is_op(node):
             indicator = "\u25cf" if _is_pure(node) else "\u25c6"
             return f"{indicator} {text}"
         return text
@@ -229,8 +229,8 @@ def _default_label(node: Node, *, color: bool = True) -> str:
     else:
         colored_text = f"{BOLD}{text}{RESET}"
 
-    # Add purity indicator for morphism nodes
-    if _is_morphism(node):
+    # Add purity indicator for op nodes
+    if _is_op(node):
         if _is_pure(node):
             colored_text = f"{PURE_DOT} {colored_text}"
         else:
@@ -263,9 +263,9 @@ def _dim(text: str, *, color: bool = True) -> str:
 
 
 def format_tree(
-    root: Node,
+    root: Nu,
     *,
-    label: Callable[[Node], str] | None = None,
+    label: Callable[[Nu], str] | None = None,
     indent: str = "  ",
     color: bool = True,
 ) -> str:
@@ -283,12 +283,12 @@ def format_tree(
     """
     lines: list[str] = []
 
-    def _get_label(node: Node) -> str:
+    def _get_label(node: Nu) -> str:
         if label is not None:
             return label(node)
         return _default_label(node, color=color)
 
-    def _walk(node: Node, prefix: str, connector: str, is_root: bool = False) -> None:
+    def _walk(node: Nu, prefix: str, connector: str, is_root: bool = False) -> None:
         node_label = _get_label(node)
 
         if is_root:
@@ -322,9 +322,9 @@ def format_tree(
 
 
 def print_tree(
-    root: Node,
+    root: Nu,
     *,
-    label: Callable[[Node], str] | None = None,
+    label: Callable[[Nu], str] | None = None,
     indent: str = "  ",
     color: bool = True,
 ) -> None:

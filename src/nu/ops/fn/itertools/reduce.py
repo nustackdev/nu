@@ -1,4 +1,4 @@
-"""Iterable reductions — Value-returning factories over morphism Ops.
+"""Iterable reductions — Value-returning factories over op Ops.
 
 Reduce, Sum, Min, Max (eager -> AnyValue)
 Any, All (eager -> BoolValue)

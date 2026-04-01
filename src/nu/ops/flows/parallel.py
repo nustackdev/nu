@@ -10,7 +10,7 @@ from .base import Flow
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import Executable
+    from nu.terms import Nu
 
 
 __all__ = [
@@ -32,7 +32,7 @@ class Parallel(Flow):
         Parallel(fetch_users, fetch_posts, fetch_comments)
     """
 
-    def __init__(self, *children: Executable) -> None:
+    def __init__(self, *children: Nu) -> None:
         """Initialize parallel flow.
 
         Args:
@@ -59,7 +59,7 @@ class Race(Flow):
         Race(fetch_from_primary, fetch_from_replica)
     """
 
-    def __init__(self, *children: Executable) -> None:
+    def __init__(self, *children: Nu) -> None:
         """Initialize race flow.
 
         Args:
@@ -100,7 +100,7 @@ class All(Flow):
         All(validate_input, check_permissions, load_config)
     """
 
-    def __init__(self, *children: Executable) -> None:
+    def __init__(self, *children: Nu) -> None:
         """Initialize all flow.
 
         Args:
@@ -136,7 +136,7 @@ class Any(Flow):
         Any(try_cache, try_database, try_remote_api)
     """
 
-    def __init__(self, *children: Executable) -> None:
+    def __init__(self, *children: Nu) -> None:
         """Initialize any flow.
 
         Args:

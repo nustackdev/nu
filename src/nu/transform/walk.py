@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from nu.terms import Node
+    from nu.terms import Nu
 
 
 __all__ = [
@@ -24,30 +24,30 @@ __all__ = [
 ]
 
 
-def preorder(root: Node) -> Iterator[Node]:
+def preorder(root: Nu) -> Iterator[Nu]:
     """Depth-first pre-order. Yields root before children."""
     yield root
     for child in root.children:
         yield from preorder(child)
 
 
-def postorder(root: Node) -> Iterator[Node]:
+def postorder(root: Nu) -> Iterator[Nu]:
     """Depth-first post-order. Yields children before root."""
     for child in root.children:
         yield from postorder(child)
     yield root
 
 
-def bfs(root: Node) -> Iterator[Node]:
+def bfs(root: Nu) -> Iterator[Nu]:
     """Breadth-first traversal."""
-    queue: deque[Node] = deque([root])
+    queue: deque[Nu] = deque([root])
     while queue:
         node = queue.popleft()
         yield node
         queue.extend(node.children)
 
 
-def leaves(root: Node) -> Iterator[Node]:
+def leaves(root: Nu) -> Iterator[Nu]:
     """Yield only leaf nodes (no children)."""
     if root.is_leaf:
         yield root
@@ -56,7 +56,7 @@ def leaves(root: Node) -> Iterator[Node]:
             yield from leaves(child)
 
 
-def ancestors(target: Node, root: Node) -> list[Node] | None:
+def ancestors(target: Nu, root: Nu) -> list[Nu] | None:
     """Path from root to target (exclusive of target), or None if not found.
 
     Uses identity comparison (is).

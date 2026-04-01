@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from virtuals.collections import MutableMappingBase
 
-from nu.abc import (
+from nu import (
     AnyValue,
     BoolValue,
     BytesValue,
@@ -21,9 +21,9 @@ from nu.abc import (
     ListValue,
     SetValue,
     StrValue,
-    ensure_term,
+    ensure_nu,
 )
-from nu.shape import ReactiveShapesMappingRefBase, Shape, Slot
+from nu.shapes import ReactiveShapesMappingRefBase, Shape, Slot
 
 from .base import ViewRef
 from .shape import ShapeRef
@@ -32,7 +32,7 @@ from .shape import ShapeRef
 if TYPE_CHECKING:
     from virtuals.loc import path
 
-    from nu import Sentinel, Term, Value
+    from nu import Sentinel, Nu, Value
 
 
 def _value_type_for(python_type: type) -> type[Value]:
@@ -71,31 +71,31 @@ class ShapesDictRef[
 ):
     """PV shapes dict reference — document model + PV substrate."""
 
-    def result(self, op: Term) -> DictValue:
+    def result(self, op: Nu) -> DictValue:
         return DictValue(op)
 
-    def _wrap_keys_result(self, operand: Term) -> DictKeysValue:
+    def _wrap_keys_result(self, operand: Nu) -> DictKeysValue:
         return DictKeysValue(operand)
 
-    def _wrap_values_result(self, operand: Term) -> DictValuesValue:
+    def _wrap_values_result(self, operand: Nu) -> DictValuesValue:
         return DictValuesValue(operand)
 
-    def _wrap_items_result(self, operand: Term) -> DictItemsValue:
+    def _wrap_items_result(self, operand: Nu) -> DictItemsValue:
         return DictItemsValue(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorValue:
         return IteratorValue(operand)
 
-    def _wrap_value_result(self, operand: Term) -> AnyValue:
+    def _wrap_value_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         key_type: type[K],
         key_value_type: type[KeyValueT],
         shape_type: type[T],
@@ -112,12 +112,12 @@ class ShapesDictRef[
         self.key_value_type = key_value_type
         self._shape_type = shape_type
 
-    def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> ShapeRef[T]:
+    def _create_child_ref(self, key: K | Sentinel | Nu[K | Sentinel]) -> ShapeRef[T]:
         """Create a reference to a shape at the given key."""
         from virtuals.views import DictView
 
         return ShapeRef(
-            address=ensure_term(key),
+            address=ensure_nu(key),
             shape_type=self._shape_type,
             view_type=DictView,
             parent=self,

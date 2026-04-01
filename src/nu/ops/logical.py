@@ -1,4 +1,4 @@
-"""Logical morphisms.
+"""Logical ops.
 
 Unary: NotOp, BoolOp
 Binary: AndOp, OrOp (with short-circuit evaluation)
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import BinaryOperation, Sentinel, UnaryOperation, propagate_special
+from nu.terms import BinaryCalc, Sentinel, UnaryCalc, propagate_special
 
 
 if TYPE_CHECKING:
@@ -30,7 +30,7 @@ __all__ = [
 # =============================================================================
 
 
-class NotOp[ResultT](UnaryOperation[ResultT]):
+class NotOp[ResultT](UnaryCalc[ResultT]):
     """Logical NOT: not operand.
 
     Python's 'not' keyword cannot be overloaded.
@@ -42,7 +42,7 @@ class NotOp[ResultT](UnaryOperation[ResultT]):
         return not operand  # type: ignore
 
 
-class BoolOp(UnaryOperation[bool]):
+class BoolOp(UnaryCalc[bool]):
     """Boolean conversion: bool(operand)."""
 
     def apply(self, operand: object) -> bool:
@@ -55,7 +55,7 @@ class BoolOp(UnaryOperation[bool]):
 # =============================================================================
 
 
-class AndOp[ResultT](BinaryOperation[ResultT]):
+class AndOp[ResultT](BinaryCalc[ResultT]):
     """Logical AND: left and right.
 
     Overrides execute() for short-circuit evaluation:
@@ -91,7 +91,7 @@ class AndOp[ResultT](BinaryOperation[ResultT]):
         raise NotImplementedError
 
 
-class OrOp[ResultT](BinaryOperation[ResultT]):
+class OrOp[ResultT](BinaryCalc[ResultT]):
     """Logical OR: left or right.
 
     Overrides execute() for short-circuit evaluation:

@@ -14,7 +14,7 @@ from ..object import Object
 
 
 if TYPE_CHECKING:
-    from nu.terms import BoolArg, FloatArg, IntArg, Term  # noqa: F401
+    from nu.terms import BoolArg, FloatArg, IntArg, Nu  # noqa: F401
 
     from ...values import BoolValue, FloatValue, IntValue
 
@@ -35,12 +35,12 @@ class IntType(
     Combines traits and returns concrete py types.
     """
 
-    def _wrap_bitwise_result(self, operand: Term) -> IntValue:
+    def _wrap_bitwise_result(self, operand: Nu) -> IntValue:
         from ...values import IntValue
 
         return IntValue(operand)
 
-    def _wrap_logical_result(self, operand: Term) -> BoolValue:
+    def _wrap_logical_result(self, operand: Nu) -> BoolValue:
         from ...values import BoolValue
 
         return BoolValue(operand)

@@ -1,7 +1,7 @@
 """Shared TypeVars for the everyabc type system.
 
 Covariant:
-    T_co — Result/value type for Term, Ref, Morphism hierarchies.
+    T_co — Result/value type for Nu, Ref, Op hierarchies.
            These types only appear in return positions (execute, fetch, apply).
 """
 

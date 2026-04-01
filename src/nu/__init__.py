@@ -1,7 +1,7 @@
-"""Nu — core library for the Nu ecosystem.
+"""Nu - core library for the Nu ecosystem.
 
 Subpackages:
-    terms/       -- algebra terms (Value, Ref, Op, Span, Sentinel, Arg)
+    terms/       -- algebra terms (Nu, Value, Ref, Op, Span, Sentinel, Arg)
     context/     -- runtime resource container
     ops/         -- all concrete operations
     interfaces/  -- type interfaces + capability mixins
@@ -14,48 +14,55 @@ Subpackages:
 from __future__ import annotations
 
 from .context import Attributes, Context
+from .interfaces.capabilities import *  # noqa: F403
+from .interfaces.collections_abc import *  # noqa: F403
+from .interfaces.types import *  # noqa: F403
+from .interfaces.values import *  # noqa: F403
+from .method import AutoInterface, method, prop
 from .model import Model
-from .ops.flows import Flow
+from .ops import fn
+from .utils import ensure_nu, typed_value
+from .ops import *  # noqa: F403
+from .ops.combiners import all_, and_, any_, none_, or_
+from .ops.flows import *  # noqa: F403
 from .terms import (
     EMPTY,
     INVALID,
     Arg,
-    BinaryCommand,
-    BinaryMorphism,
-    BinaryOperation,
+    BinaryCalc,
+    BinaryCmd,
+    BinaryOp,
     BoolArg,
     BytesArg,
+    Calculation,
     Command,
     DictArg,
     Empty,
-    Executable,
     FloatArg,
     FrozenSetArg,
     IntArg,
     Invalid,
     ListArg,
     LValue,
-    Morphism,
-    NAryCommand,
-    NAryMorphism,
-    NAryOperation,
-    Node,
+    NAryCalc,
+    NAryCmd,
+    NAryOp,
     NoneArg,
-    Operation,
+    Nu,
+    Op,
     Ref,
     RValue,
     Sentinel,
     SetArg,
     Span,
     StrArg,
-    Term,
-    TernaryCommand,
-    TernaryMorphism,
-    TernaryOperation,
+    TernaryCalc,
+    TernaryCmd,
+    TernaryOp,
     TupleArg,
-    UnaryCommand,
-    UnaryMorphism,
-    UnaryOperation,
+    UnaryCalc,
+    UnaryCmd,
+    UnaryOp,
     Value,
     is_empty,
     is_invalid,
@@ -88,7 +95,7 @@ from .transform import (
 )
 
 
-# Primitive refs — lazy to avoid circular import
+# Primitive refs - lazy to avoid circular import
 _PRIM_REF_NAMES = {
     "PrimRef": "PrimRef",
     "PrimIntRef": "IntRef",
@@ -110,30 +117,27 @@ def __getattr__(name: str) -> object:
 
 
 __all__ = [
-    # Tree
-    "Node",
-    "Executable",
-    # Term
-    "Term",
+    # Nu
+    "Nu",
     "LValue",
     "RValue",
     "Value",
     "Ref",
-    "Morphism",
-    "NAryMorphism",
-    "UnaryMorphism",
-    "BinaryMorphism",
-    "TernaryMorphism",
-    "Operation",
+    "Op",
+    "NAryOp",
+    "UnaryOp",
+    "BinaryOp",
+    "TernaryOp",
+    "Calculation",
     "Command",
-    "NAryOperation",
-    "NAryCommand",
-    "UnaryOperation",
-    "UnaryCommand",
-    "BinaryOperation",
-    "BinaryCommand",
-    "TernaryOperation",
-    "TernaryCommand",
+    "NAryCalc",
+    "NAryCmd",
+    "UnaryCalc",
+    "UnaryCmd",
+    "BinaryCalc",
+    "BinaryCmd",
+    "TernaryCalc",
+    "TernaryCmd",
     # Sentinel
     "Sentinel",
     "Empty",

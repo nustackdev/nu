@@ -1,4 +1,4 @@
-"""Iterable grouping — Value-returning factories over morphism Ops.
+"""Iterable grouping — Value-returning factories over op Ops.
 
 GroupBy (eager -> ListValue)
 Partition (eager -> TupleValue)

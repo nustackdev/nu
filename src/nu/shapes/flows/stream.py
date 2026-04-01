@@ -42,14 +42,14 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from nu import Flow, Sentinel
-from nu.utils import ensure_term
+from nu.utils import ensure_nu
 
 from ..ops.cursor import AdvanceCursorOp
 from ..ops.reactive import OnChildrenChangeOp
 
 
 if TYPE_CHECKING:
-    from nu import Context, Executable
+    from nu import Context, Nu
 
 
 __all__ = [
@@ -70,20 +70,20 @@ class Stream(Flow):
     execute children, set attrs, loop.
 
     Args:
-        source: Ref/Term resolving to an ordered collection with
+        source: Ref/Nu resolving to an ordered collection with
                 next_key_after() and on_children_change().
         body: Flow executed for each item. Reads current key from
               ctx.attrs via PrimRef.
         key: Attr name for current data key (default: "stream_key").
         log_key: Attr name for current log key (default: "stream_log_key").
-        cursor: Ref/Term resolving to initial cursor value for resume.
+        cursor: Ref/Nu resolving to initial cursor value for resume.
                 If not provided, starts from the beginning.
     """
 
     def __init__(
         self,
         source: object,
-        body: Executable,
+        body: Nu,
         *,
         key: str = "stream_key",
         log_key: str = "stream_log_key",
@@ -92,7 +92,7 @@ class Stream(Flow):
         self._key_attr = key
         self._log_key_attr = log_key
 
-        source_term = ensure_term(source)
+        source_term = ensure_nu(source)
 
         # Cursor ref: PrimRef that reads from ctx.attrs (set by this flow each iteration)
         from nu.context.attr_refs import PrimRef as StrPrimRef

@@ -1,5 +1,5 @@
 # ruff: noqa: D102
-"""Reactive morphisms — change observation at various granularities.
+"""Reactive ops — change observation at various granularities.
 
 OnChangeOp: Subscribe to all changes on a view
 OnPrimitiveChangeOp: Subscribe to changes on a primitive value (via parent)
@@ -17,7 +17,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu import Morphism, Operation, Term
+from nu import Op, Calculation, Nu
 from nu.shapes.protocols import (
     ChildObservableProtocol,
     ChildrenObservableProtocol,
@@ -40,7 +40,7 @@ __all__ = [
 ]
 
 
-class ChangeOp(Operation, Morphism[object]):
+class ChangeOp(Calculation, Op[object]):
     """Base class for all change subscription operations.
 
     All change operations return a subscription handle that can be used
@@ -109,13 +109,13 @@ class OnChildChangeOp[A](ChangeOp):
         fetch(ctx) -> storage object with on_child_change() method
     """
 
-    def __init__(self, ref: object, address: A | Term[A]) -> None:
+    def __init__(self, ref: object, address: A | Nu[A]) -> None:
         super().__init__(ref)
         self.ref = ref
         self.address = address
 
     async def execute(self, ctx: Context) -> object:
-        if isinstance(self.address, Term):
+        if isinstance(self.address, Nu):
             address = await self.address.execute(ctx)
         else:
             address = self.address

@@ -1,4 +1,4 @@
-"""Iterable slicing — Value-returning factories over morphism Ops.
+"""Iterable slicing — Value-returning factories over op Ops.
 
 Take, Drop (lazy -> IteratorValue)
 """

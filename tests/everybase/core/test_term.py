@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from nu import Executable, Term, find, map_nodes, preorder, size
+from nu import Nu, Nu, find, map_nodes, preorder, size
 
 
-class PureTerm(Term):
+class PureTerm(Nu):
     """Pure term for testing."""
 
     def __init__(self, *children):
@@ -19,7 +19,7 @@ class PureTerm(Term):
         return None
 
 
-class ImpureTerm(Term):
+class ImpureTerm(Nu):
     """Impure term for testing."""
 
     def __init__(self, *children):
@@ -33,8 +33,8 @@ class ImpureTerm(Term):
         return None
 
 
-class CompoundTerm(Term):
-    """Term with children and extra state for testing."""
+class CompoundTerm(Nu):
+    """Nu with children and extra state for testing."""
 
     def __init__(self, label, *children, pure=True):
         super().__init__(*children)
@@ -52,10 +52,10 @@ class CompoundTerm(Term):
 class TestTermIsAbstract:
     def test_cannot_instantiate_term(self):
         with pytest.raises(TypeError):
-            Term()
+            Nu()
 
     def test_term_is_exec(self):
-        assert issubclass(Term, Executable)
+        assert issubclass(Nu, Nu)
 
 
 class TestTermPurity:
@@ -122,7 +122,7 @@ class TestTermWithAstOperations:
         a = CompoundTerm("a")
         b = CompoundTerm("b")
         root = CompoundTerm("add", a, b)
-        found = find(root, lambda n: isinstance(n, Term))
+        found = find(root, lambda n: isinstance(n, Nu))
         assert len(found) == 3
 
     def test_size(self):

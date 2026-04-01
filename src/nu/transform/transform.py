@@ -1,6 +1,6 @@
 """Tree transforms -- structural tree-to-tree operations.
 
-Transforms are Node -> Node functions. They modify tree shape.
+Transforms are Nu -> Nu functions. They modify tree shape.
 All operations are non-mutating (return new trees).
 
 Key design: map_children uses with_children() -- no type dispatch.
@@ -10,13 +10,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, TypeAlias
 
-from nu.terms import Node
+from nu.terms import Nu
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-Transform: TypeAlias = "Callable[[Node], Node]"  # noqa: UP040
+Transform: TypeAlias = "Callable[[Nu], Nu]"  # noqa: UP040
 """A tree transform: takes a node tree and returns a new node tree."""
 
 __all__ = [
@@ -39,7 +39,7 @@ def compose(*transforms: Transform) -> Transform:
     compose(f, g)(x) == g(f(x)).
     """
 
-    def composed(root: Node) -> Node:
+    def composed(root: Nu) -> Nu:
         for t in transforms:
             root = t(root)
         return root
@@ -47,14 +47,14 @@ def compose(*transforms: Transform) -> Transform:
     return composed
 
 
-def apply[N: Node](root: N, *transforms: Transform) -> N:
+def apply[N: Nu](root: N, *transforms: Transform) -> N:
     """Apply transforms in order to root."""
     for t in transforms:
         root = t(root)  # type: ignore[assignment]
     return root
 
 
-def map_children[N: Node](node: N, fn: Callable[[Node], Node]) -> N:
+def map_children[N: Nu](node: N, fn: Callable[[Nu], Nu]) -> N:
     """Apply fn to each direct child, reconstruct via with_children.
 
     Shallow (one level). For deep transforms, use map_nodes.
@@ -64,9 +64,9 @@ def map_children[N: Node](node: N, fn: Callable[[Node], Node]) -> N:
     return node.with_children(*(fn(c) for c in node.children))  # type: ignore[arg-type]
 
 
-def map_nodes[N: Node](
+def map_nodes[N: Nu](
     root: N,
-    fn: Callable[[Node], Node],
+    fn: Callable[[Nu], Nu],
     order: Literal["bottom_up", "top_down"] = "bottom_up",
 ) -> N:
     """Apply fn to every node in the tree.
@@ -88,42 +88,42 @@ def map_nodes[N: Node](
     return fn(root)  # type: ignore[return-value]
 
 
-def replace[N: Node](
+def replace[N: Nu](
     root: N,
-    pred: Callable[[Node], bool],
-    replacement: Callable[[Node], Node],
+    pred: Callable[[Nu], bool],
+    replacement: Callable[[Nu], Nu],
 ) -> N:
     """Replace nodes matching pred with replacement(node). Bottom-up."""
 
-    def _replace(node: Node) -> Node:
+    def _replace(node: Nu) -> Nu:
         return replacement(node) if pred(node) else node
 
     return map_nodes(root, _replace, order="bottom_up")
 
 
-def wrap[N: Node](
+def wrap[N: Nu](
     root: N,
-    pred: Callable[[Node], bool],
-    wrapper: Callable[[Node], Node],
+    pred: Callable[[Nu], bool],
+    wrapper: Callable[[Nu], Nu],
 ) -> N:
     """Wrap nodes matching pred: node -> wrapper(node). Bottom-up."""
 
-    def _wrap(node: Node) -> Node:
+    def _wrap(node: Nu) -> Nu:
         return wrapper(node) if pred(node) else node
 
     return map_nodes(root, _wrap, order="bottom_up")
 
 
-def unwrap[N: Node](
+def unwrap[N: Nu](
     root: N,
-    pred: Callable[[Node], bool],
+    pred: Callable[[Nu], bool],
 ) -> N:
     """Remove single-child wrapper nodes matching pred, splicing child up."""
 
-    def _process(node: Node) -> Node:
+    def _process(node: Nu) -> Nu:
         if node.is_leaf:
             return node
-        new_children: list[Node] = []
+        new_children: list[Nu] = []
         for child in node.children:
             processed = _process(child)
             if pred(processed) and processed.child_count == 1:
@@ -135,12 +135,12 @@ def unwrap[N: Node](
     return _process(root)  # type: ignore[return-value]
 
 
-def graft[N: Node](root: N, target: Node, subtree: Node) -> N:
+def graft[N: Nu](root: N, target: Nu, subtree: Nu) -> N:
     """Replace target node with subtree (identity comparison)."""
     return replace(root, lambda n: n is target, lambda _: subtree)
 
 
-def prune[N: Node](root: N, pred: Callable[[Node], bool]) -> N | None:
+def prune[N: Nu](root: N, pred: Callable[[Nu], bool]) -> N | None:
     """Remove subtrees matching pred. Returns None if root matches.
 
     Preserves unchanged subtrees by identity.
@@ -151,7 +151,7 @@ def prune[N: Node](root: N, pred: Callable[[Node], bool]) -> N | None:
     if root.is_leaf:
         return root
 
-    new_children: list[Node] = []
+    new_children: list[Nu] = []
     for child in root.children:
         pruned = prune(child, pred)
         if pruned is not None:

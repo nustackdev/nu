@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Term
+from nu import Nu
 
 
 if TYPE_CHECKING:
@@ -32,35 +32,35 @@ def extract_static_address(ref: Ref) -> object | None:
     """Try to extract a static (literal) address from a Ref.
 
     Returns the literal value if the address is static, or None if dynamic.
-    Handles both _raw_address (set for non-Term addresses) and literal Values
-    (where ensure_term wrapped a literal into AnyValue/StrValue/etc.).
+    Handles both _raw_address (set for non-Nu addresses) and literal Values
+    (where ensure_nu wrapped a literal into AnyValue/StrValue/etc.).
     """
-    # Fast path: _raw_address was set for non-Term addresses
+    # Fast path: _raw_address was set for non-Nu addresses
     raw = ref._raw_address
     if raw is not None:
         return raw
 
     # Slow path: address is a Value wrapping a literal (e.g. AnyValue("cat_0"))
-    # This happens when _create_child_ref calls ensure_term(key) on a literal.
-    addr = ref.address  # children[0], a Term
+    # This happens when _create_child_ref calls ensure_nu(key) on a literal.
+    addr = ref.address  # children[0], a Nu
     source = getattr(addr, "source", None)
-    if source is not None and not isinstance(source, Term):
+    if source is not None and not isinstance(source, Nu):
         return source  # literal value inside the Value wrapper
 
     return None  # truly dynamic
 
 
-def walk_ref_chain(ref: Ref) -> tuple[list[object | None], list[Term | None]]:
+def walk_ref_chain(ref: Ref) -> tuple[list[object | None], list[Nu | None]]:
     """Walk the parent chain of a Ref at deformation time.
 
     Returns (addresses, address_terms) in root-to-leaf order.
     Each slot in addresses is the static address or None (dynamic).
-    Each slot in address_terms is the address Term for dynamic slots, or None.
+    Each slot in address_terms is the address Nu for dynamic slots, or None.
 
     This is pure everyshape.Ref logic — no substrate knowledge.
     """
     addresses: list[object | None] = []
-    address_terms: list[Term | None] = []
+    address_terms: list[Nu | None] = []
     current: Ref | None = ref
     while current is not None:
         static_addr = extract_static_address(current)
@@ -78,8 +78,8 @@ def walk_ref_chain(ref: Ref) -> tuple[list[object | None], list[Term | None]]:
     return addresses, address_terms
 
 
-def reconstruct_with_flat_ref(node: object, flat_ref: Term) -> object:
-    """Rebuild morphism node with FlatRef replacing the original Ref.
+def reconstruct_with_flat_ref(node: object, flat_ref: Nu) -> object:
+    """Rebuild op node with FlatRef replacing the original Ref.
 
     Uses copy + attribute replacement to preserve the node type and state,
     swapping the ref child for the FlatRef.

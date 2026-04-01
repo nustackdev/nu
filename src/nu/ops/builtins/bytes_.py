@@ -1,4 +1,4 @@
-"""Bytes-specific morphisms.
+"""Bytes-specific ops.
 
 Decoding: DecodeOp, HexOp
 Case transformation: BytesUpperOp, BytesLowerOp
@@ -8,18 +8,18 @@ Searching: BytesFindOp, BytesCountOp
 Testing: BytesStartsWithOp, BytesEndsWithOp
 Replacing: BytesReplaceOp
 
-All ops use every.Morphism base classes with Operation mixin (pure).
+All ops use every.Op base classes with Calculation mixin (pure).
 """
 
 from __future__ import annotations
 
 from nu.terms import (
     INVALID,
-    BinaryOperation,
-    NAryOperation,
+    BinaryCalc,
+    NAryCalc,
     Sentinel,
-    TernaryOperation,
-    UnaryOperation,
+    TernaryCalc,
+    UnaryCalc,
 )
 
 
@@ -45,7 +45,7 @@ __all__ = [
 # =============================================================================
 
 
-class DecodeOp(BinaryOperation[str]):
+class DecodeOp(BinaryCalc[str]):
     """Decode bytes to string: bytes.decode(encoding)."""
 
     def apply(self, left: object, right: object) -> str | Sentinel:
@@ -58,7 +58,7 @@ class DecodeOp(BinaryOperation[str]):
             return INVALID
 
 
-class HexOp(UnaryOperation[str]):
+class HexOp(UnaryCalc[str]):
     """Convert to hex string: bytes.hex()."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -73,7 +73,7 @@ class HexOp(UnaryOperation[str]):
 # =============================================================================
 
 
-class BytesUpperOp(UnaryOperation[bytes]):
+class BytesUpperOp(UnaryCalc[bytes]):
     """Convert to uppercase: bytes.upper()."""
 
     def apply(self, operand: object) -> bytes | Sentinel:
@@ -83,7 +83,7 @@ class BytesUpperOp(UnaryOperation[bytes]):
         return operand.upper()
 
 
-class BytesLowerOp(UnaryOperation[bytes]):
+class BytesLowerOp(UnaryCalc[bytes]):
     """Convert to lowercase: bytes.lower()."""
 
     def apply(self, operand: object) -> bytes | Sentinel:
@@ -98,7 +98,7 @@ class BytesLowerOp(UnaryOperation[bytes]):
 # =============================================================================
 
 
-class BytesStripOp(BinaryOperation[bytes]):
+class BytesStripOp(BinaryCalc[bytes]):
     """Strip bytes: bytes.strip(chars)."""
 
     def apply(self, left: object, right: object) -> bytes | Sentinel:
@@ -110,7 +110,7 @@ class BytesStripOp(BinaryOperation[bytes]):
         return left.strip(right)
 
 
-class BytesLStripOp(BinaryOperation[bytes]):
+class BytesLStripOp(BinaryCalc[bytes]):
     """Strip leading bytes: bytes.lstrip(chars)."""
 
     def apply(self, left: object, right: object) -> bytes | Sentinel:
@@ -122,7 +122,7 @@ class BytesLStripOp(BinaryOperation[bytes]):
         return left.lstrip(right)
 
 
-class BytesRStripOp(BinaryOperation[bytes]):
+class BytesRStripOp(BinaryCalc[bytes]):
     """Strip trailing bytes: bytes.rstrip(chars)."""
 
     def apply(self, left: object, right: object) -> bytes | Sentinel:
@@ -139,7 +139,7 @@ class BytesRStripOp(BinaryOperation[bytes]):
 # =============================================================================
 
 
-class BytesSplitOp(TernaryOperation[list[bytes]]):
+class BytesSplitOp(TernaryCalc[list[bytes]]):
     """Split bytes: bytes.split(sep, maxsplit)."""
 
     def apply(self, first: object, second: object, third: object) -> list[bytes] | Sentinel:
@@ -156,7 +156,7 @@ class BytesSplitOp(TernaryOperation[list[bytes]]):
 # =============================================================================
 
 
-class BytesFindOp(NAryOperation[int]):
+class BytesFindOp(NAryCalc[int]):
     """Find sub-bytes: bytes.find(sub, start, end)."""
 
     def apply(self, *args: object) -> int | Sentinel:
@@ -169,7 +169,7 @@ class BytesFindOp(NAryOperation[int]):
         return operand.find(sub, int(start), int(end))  # type: ignore[arg-type]
 
 
-class BytesCountOp(BinaryOperation[int]):
+class BytesCountOp(BinaryCalc[int]):
     """Count sub-bytes occurrences: bytes.count(sub)."""
 
     def apply(self, left: object, right: object) -> int | Sentinel:
@@ -184,7 +184,7 @@ class BytesCountOp(BinaryOperation[int]):
 # =============================================================================
 
 
-class BytesStartsWithOp(BinaryOperation[bool]):
+class BytesStartsWithOp(BinaryCalc[bool]):
     """Check if starts with prefix: bytes.startswith(prefix)."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -194,7 +194,7 @@ class BytesStartsWithOp(BinaryOperation[bool]):
         return left.startswith(right)
 
 
-class BytesEndsWithOp(BinaryOperation[bool]):
+class BytesEndsWithOp(BinaryCalc[bool]):
     """Check if ends with suffix: bytes.endswith(suffix)."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -209,7 +209,7 @@ class BytesEndsWithOp(BinaryOperation[bool]):
 # =============================================================================
 
 
-class BytesReplaceOp(NAryOperation[bytes]):
+class BytesReplaceOp(NAryCalc[bytes]):
     """Replace sub-bytes: bytes.replace(old, new, count)."""
 
     def apply(self, *args: object) -> bytes | Sentinel:

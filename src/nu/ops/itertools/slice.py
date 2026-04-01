@@ -1,11 +1,11 @@
-"""Iterable slicing morphisms — Take, Drop. Lazy iterators."""
+"""Iterable slicing ops — Take, Drop. Lazy iterators."""
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from itertools import islice
 
-from nu.terms import INVALID, BinaryOperation, Sentinel
+from nu.terms import INVALID, BinaryCalc, Sentinel
 
 
 __all__ = [
@@ -14,7 +14,7 @@ __all__ = [
 ]
 
 
-class TakeOp(BinaryOperation[Iterator]):
+class TakeOp(BinaryCalc[Iterator]):
     """Take first N elements: islice(iterable, n) -> lazy iterator."""
 
     def apply(self, left: object, right: object) -> Iterator | Sentinel:
@@ -27,7 +27,7 @@ class TakeOp(BinaryOperation[Iterator]):
             return INVALID
 
 
-class DropOp(BinaryOperation[Iterator]):
+class DropOp(BinaryCalc[Iterator]):
     """Drop first N elements: islice(iterable, n, None) -> lazy iterator."""
 
     def apply(self, left: object, right: object) -> Iterator | Sentinel:

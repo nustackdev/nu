@@ -23,7 +23,7 @@ from .collection import CollectionBase, CollectionProtocol
 
 
 if TYPE_CHECKING:
-    from nu.terms import Arg, Term
+    from nu.terms import Arg, Nu
 
     from ..values import BoolValue, NoneValue
 
@@ -113,7 +113,7 @@ class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         ElementResultT: Result for element-level ops (sum_, min_, max_)
     """
 
-    def _wrap_set_result(self, operand: Term) -> CollectionResultT:
+    def _wrap_set_result(self, operand: Nu) -> CollectionResultT:
         """Override in subclass to wrap result in appropriate set type."""
         raise NotImplementedError()
 

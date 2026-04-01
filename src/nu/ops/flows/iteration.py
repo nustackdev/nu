@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING, Any
 
 from .base import Flow
 
-from nu.utils import ensure_term
+from nu.utils import ensure_nu
 from .control import Seq
 
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import Executable, IntArg, Ref
+    from nu.terms import Nu, IntArg, Ref
 
 
 __all__ = [
@@ -28,7 +28,7 @@ class ForRange(Flow):
     Children layout (no index): ``[start, stop, step, body]``
     Children layout (with index): ``[start, stop, step, init, body]``
 
-    Start, stop and step are auto-wrapped via ``ensure_term`` if literals are
+    Start, stop and step are auto-wrapped via ``ensure_nu`` if literals are
     passed.  Optional ``index`` Ref is set with the current loop value
     at each iteration.
 
@@ -39,10 +39,10 @@ class ForRange(Flow):
     can see and wrap it.
 
     Args:
-        start: Start of range (inclusive), int or Term.
-        stop: End of range (exclusive), int or Term.
-        body: Executable run each iteration.
-        step: Step increment, int or Term. Default ``1``.
+        start: Start of range (inclusive), int or Nu.
+        stop: End of range (exclusive), int or Nu.
+        body: Nu run each iteration.
+        step: Step increment, int or Nu. Default ``1``.
         index: Optional Ref[int] set with current value each iteration.
 
     Example::
@@ -56,7 +56,7 @@ class ForRange(Flow):
         self,
         start: IntArg,
         stop: IntArg,
-        body: Executable,
+        body: Nu,
         *,
         step: IntArg = 1,
         index: Ref[int] | None = None,
@@ -64,21 +64,21 @@ class ForRange(Flow):
         """Initialize for-range loop.
 
         Args:
-            start: Start of range (inclusive), int or Term.
-            stop: End of range (exclusive), int or Term.
-            body: Executable run each iteration.
-            step: Step increment, int or Term. Default ``1``.
+            start: Start of range (inclusive), int or Nu.
+            stop: End of range (exclusive), int or Nu.
+            body: Nu run each iteration.
+            step: Step increment, int or Nu. Default ``1``.
             index: Optional Ref[int] set with current value each iteration.
         """
-        start_t = ensure_term(start)
-        stop_t = ensure_term(stop)
-        step_t = ensure_term(step)
+        start_t = ensure_nu(start)
+        stop_t = ensure_nu(stop)
+        step_t = ensure_nu(step)
 
         self._has_index = index is not None
 
         if index is not None:
-            init = index.store(ensure_term(start))
-            body = Seq(body, index.store(index + ensure_term(step)))
+            init = index.store(ensure_nu(start))
+            body = Seq(body, index.store(index + ensure_nu(step)))
             super().__init__(start_t, stop_t, step_t, init, body)
         else:
             super().__init__(start_t, stop_t, step_t, body)
@@ -107,8 +107,8 @@ class ForEach(Flow):
     Children layout (with index, no item): ``[items, init, body]``
     Children layout (with item and index): ``[items, init, body]``
 
-    The ``items`` parameter is auto-wrapped via ``ensure_term`` if a literal is
-    passed -- it can be a plain list, a ``Ref.get()``, or any Term that
+    The ``items`` parameter is auto-wrapped via ``ensure_nu`` if a literal is
+    passed -- it can be a plain list, a ``Ref.get()``, or any Nu that
     resolves to an iterable.
 
     When ``item`` ref is provided, the current element is set on it each
@@ -118,8 +118,8 @@ class ForEach(Flow):
     ``body = Seq(body, index.store(index + 1))``, init ``index.store(0)``.
 
     Args:
-        items: Iterable (or Term resolving to one) to iterate over.
-        body: Executable run for each item.
+        items: Iterable (or Nu resolving to one) to iterate over.
+        body: Nu run for each item.
         item: Optional Ref set with current element each iteration.
         index: Optional Ref[int] set with current iteration index.
 
@@ -136,7 +136,7 @@ class ForEach(Flow):
     def __init__(
         self,
         items: Any,
-        body: Executable,
+        body: Nu,
         *,
         item: Ref | None = None,
         index: Ref[int] | None = None,
@@ -144,8 +144,8 @@ class ForEach(Flow):
         """Initialize for-each loop.
 
         Args:
-            items: Iterable or Term resolving to an iterable.
-            body: Executable run for each item.
+            items: Iterable or Nu resolving to an iterable.
+            body: Nu run for each item.
             item: Optional Ref set with current element each iteration.
             index: Optional Ref[int] set with current iteration index.
         """
@@ -156,9 +156,9 @@ class ForEach(Flow):
         if index is not None:
             init = index.store(0)
             body = Seq(body, index.store(index + 1))
-            super().__init__(ensure_term(items), init, body)
+            super().__init__(ensure_nu(items), init, body)
         else:
-            super().__init__(ensure_term(items), body)
+            super().__init__(ensure_nu(items), body)
 
     async def execute(self, ctx: Context) -> None:
         """Execute body for each item in the resolved sequence."""
@@ -186,11 +186,11 @@ class Fold(Flow):
     Children layout: ``[items, init, body]``
 
     Args:
-        items: Iterable (or Term resolving to one) to fold over.
+        items: Iterable (or Nu resolving to one) to fold over.
         acc: Ref holding the accumulator state.
         initial: Initial value for the accumulator.
         item: Ref set with current element each iteration.
-        body: Executable that updates acc each iteration.
+        body: Nu that updates acc each iteration.
 
     Example::
 
@@ -212,23 +212,23 @@ class Fold(Flow):
         acc: Ref,
         initial: Any,
         item: Ref | None = None,
-        body: Executable,
+        body: Nu,
     ) -> None:
         """Initialize fold.
 
         Args:
-            items: Iterable or Term resolving to an iterable.
+            items: Iterable or Nu resolving to an iterable.
             acc: Ref holding the accumulator.
             initial: Initial accumulator value.
             item: Optional Ref set with current element each iteration.
-            body: Executable updating acc each iteration.
+            body: Nu updating acc each iteration.
         """
         self._acc_ref = acc
         self._item_ref = item
         self._has_item = item is not None
 
-        init = acc.store(ensure_term(initial))
-        super().__init__(ensure_term(items), init, body)
+        init = acc.store(ensure_nu(initial))
+        super().__init__(ensure_nu(items), init, body)
 
     async def execute(self, ctx: Context) -> None:
         """Execute fold over items."""

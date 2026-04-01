@@ -7,9 +7,9 @@ Tests for:
 from datetime import timedelta
 
 from nu_datetime import TimedeltaValue as TimedeltaRef
-from nu.abc import AddOp, DivOp, FloorDivOp, FuncCallOp, ModOp, MulOp, SubOp
-from nu.abc import FloatValue as FloatRef
-from nu.abc import IntValue as IntRef
+from nu import AddOp, DivOp, FloorDivOp, FuncCallOp, ModOp, MulOp, SubOp
+from nu import FloatValue as FloatRef
+from nu import IntValue as IntRef
 
 
 # =============================================================================

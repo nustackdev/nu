@@ -1,26 +1,33 @@
 from __future__ import annotations
 
-from nu import Executable, Node, depth, find, map_nodes, preorder, size
+from nu import Nu, depth, find, map_nodes, preorder, size
 
 
-class ConcreteExecutable(Executable):
-    """Minimal Executable for testing."""
+class ConcreteExecutable(Nu):
+    """Minimal Nu for testing."""
 
     def __init__(self, *children):
         super().__init__(*children)
 
+    async def execute(self, ctx):
+        return None
+
+    @property
+    def is_self_pure(self):
+        return True
+
 
 class TestExecutableIsNode:
     def test_exec_subclass_of_node(self):
-        assert issubclass(Executable, Node)
+        assert issubclass(Nu, Nu)
 
     def test_concrete_exec_is_node(self):
         e = ConcreteExecutable()
-        assert isinstance(e, Node)
+        assert isinstance(e, Nu)
 
     def test_concrete_exec_is_exec(self):
         e = ConcreteExecutable()
-        assert isinstance(e, Executable)
+        assert isinstance(e, Nu)
 
 
 class TestExecutableInheritsNodeBehavior:

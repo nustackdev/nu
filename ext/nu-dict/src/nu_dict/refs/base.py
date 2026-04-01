@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import EMPTY, Sentinel
-from nu.shape import Ref
+from nu.shapes import Ref
 
 
 if TYPE_CHECKING:

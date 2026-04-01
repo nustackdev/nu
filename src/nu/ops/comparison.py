@@ -1,13 +1,13 @@
-"""Comparison morphisms.
+"""Comparison ops.
 
 Binary: EqOp, NeOp, GtOp, LtOp, GeOp, LeOp, IdCompOp
 
-All ops use every.BinaryMorphism with Operation mixin (pure).
+All ops use every.BinaryOp with Calculation mixin (pure).
 """
 
 from __future__ import annotations
 
-from nu.terms import INVALID, BinaryOperation, Sentinel
+from nu.terms import INVALID, BinaryCalc, Sentinel
 
 
 __all__ = [
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class GtOp(BinaryOperation[bool]):
+class GtOp(BinaryCalc[bool]):
     """Greater than: left > right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -32,7 +32,7 @@ class GtOp(BinaryOperation[bool]):
             return INVALID
 
 
-class LtOp(BinaryOperation[bool]):
+class LtOp(BinaryCalc[bool]):
     """Less than: left < right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -43,7 +43,7 @@ class LtOp(BinaryOperation[bool]):
             return INVALID
 
 
-class EqOp(BinaryOperation[bool]):
+class EqOp(BinaryCalc[bool]):
     """Equality: left == right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -54,7 +54,7 @@ class EqOp(BinaryOperation[bool]):
             return INVALID
 
 
-class NeOp(BinaryOperation[bool]):
+class NeOp(BinaryCalc[bool]):
     """Not equal: left != right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -65,7 +65,7 @@ class NeOp(BinaryOperation[bool]):
             return INVALID
 
 
-class GeOp(BinaryOperation[bool]):
+class GeOp(BinaryCalc[bool]):
     """Greater than or equal: left >= right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -76,7 +76,7 @@ class GeOp(BinaryOperation[bool]):
             return INVALID
 
 
-class LeOp(BinaryOperation[bool]):
+class LeOp(BinaryCalc[bool]):
     """Less than or equal: left <= right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -87,7 +87,7 @@ class LeOp(BinaryOperation[bool]):
             return INVALID
 
 
-class IdCompOp(BinaryOperation[bool]):
+class IdCompOp(BinaryCalc[bool]):
     """Identity comparison: left is right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:

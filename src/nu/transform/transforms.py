@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Node
+from nu.terms import Nu
 
 
 if TYPE_CHECKING:
@@ -21,10 +21,10 @@ __all__ = [
 ]
 
 
-def conditional_wrap[N: Node](
+def conditional_wrap[N: Nu](
     root: N,
-    pred: Callable[[Node], bool],
-    wrapper: Callable[[Node], Node],
+    pred: Callable[[Nu], bool],
+    wrapper: Callable[[Nu], Nu],
 ) -> N:
     """Wrap each matching child, bottom-up.
 
@@ -47,14 +47,14 @@ def conditional_wrap[N: Node](
 
         conditional_wrap(
             tree,
-            lambda n: isinstance(n, Term),
-            lambda term: Atomic(shape, view_cls, term),
+            lambda n: isinstance(n, Nu),
+            lambda nu: Atomic(shape, view_cls, nu),
         )
     """
     if pred(root) or root.is_leaf:
         return root
 
-    new_children: list[Node] = []
+    new_children: list[Nu] = []
     for child in root.children:
         if pred(child):
             new_children.append(wrapper(child))

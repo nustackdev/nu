@@ -198,13 +198,13 @@ class InvisiblesWorkerServer(Resource):
 
     @staticmethod
     def _register_value_types() -> None:
-        """Register everybase Executable as value type if not already."""
+        """Register everybase Nu as value type if not already."""
         try:
             from invisibles.core.boxing import register_value_type
 
-            from nu.core.executable import Executable
+            from nu.terms import Nu
 
-            register_value_type(Executable)
+            register_value_type(Nu)
         except ImportError:
             pass
 
@@ -316,9 +316,9 @@ class InvisiblesWorker(Resource):
         try:
             from invisibles.core.boxing import register_value_type
 
-            from nu.core.executable import Executable
+            from nu.terms import Nu
 
-            register_value_type(Executable)
+            register_value_type(Nu)
         except ImportError:
             pass
 

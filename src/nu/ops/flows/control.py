@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, Any
 
 from .base import Flow
 
-from nu.utils import ensure_term
+from nu.utils import ensure_nu
 
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import Executable
+    from nu.terms import Nu
 
 
 __all__ = [
@@ -37,7 +37,7 @@ class Seq(Flow):
         Seq(step_a, step_b, step_c)
     """
 
-    def __init__(self, *children: Executable) -> None:
+    def __init__(self, *children: Nu) -> None:
         """Initialize sequential flow.
 
         Args:
@@ -51,7 +51,7 @@ class If(Flow):
 
     Children layout: [condition, then_branch, else_branch?]
 
-    Condition is auto-wrapped via ``ensure_term`` if a literal is passed.
+    Condition is auto-wrapped via ``ensure_nu`` if a literal is passed.
     All computation parameters are children -- fully transparent
     to tree transforms.
 
@@ -64,17 +64,17 @@ class If(Flow):
     def __init__(
         self,
         condition: Any,
-        then_branch: Executable,
-        else_branch: Executable | None = None,
+        then_branch: Nu,
+        else_branch: Nu | None = None,
     ) -> None:
         """Initialize conditional flow.
 
         Args:
-            condition: Term or literal evaluated as boolean.
+            condition: Nu or literal evaluated as boolean.
             then_branch: Executed when condition is truthy.
             else_branch: Executed when condition is falsy (optional).
         """
-        condition = ensure_term(condition)
+        condition = ensure_nu(condition)
         if else_branch is not None:
             super().__init__(condition, then_branch, else_branch)
         else:
@@ -93,7 +93,7 @@ class While(Flow):
 
     Children layout: [condition, body]
 
-    Condition is auto-wrapped via ``ensure_term`` if a literal is passed.
+    Condition is auto-wrapped via ``ensure_nu`` if a literal is passed.
 
     Example::
 
@@ -101,14 +101,14 @@ class While(Flow):
         While(counter < 10, increment_body)
     """
 
-    def __init__(self, condition: Any, body: Executable) -> None:
+    def __init__(self, condition: Any, body: Nu) -> None:
         """Initialize while loop.
 
         Args:
-            condition: Term or literal evaluated as boolean each iteration.
+            condition: Nu or literal evaluated as boolean each iteration.
             body: Executed while condition is truthy.
         """
-        super().__init__(ensure_term(condition), body)
+        super().__init__(ensure_nu(condition), body)
 
     async def execute(self, ctx: Context) -> None:
         """Execute body while condition is truthy."""
@@ -123,7 +123,7 @@ class DoWhile(Flow):
 
     Body is always executed at least once. Condition is evaluated
     after each iteration; loop continues while condition is truthy.
-    Condition is auto-wrapped via ``ensure_term`` if a literal is passed.
+    Condition is auto-wrapped via ``ensure_nu`` if a literal is passed.
 
     Example::
 
@@ -131,14 +131,14 @@ class DoWhile(Flow):
         DoWhile(counter < 10, process_and_increment)
     """
 
-    def __init__(self, condition: Any, body: Executable) -> None:
+    def __init__(self, condition: Any, body: Nu) -> None:
         """Initialize do-while loop.
 
         Args:
-            condition: Term or literal evaluated as boolean after each iteration.
+            condition: Nu or literal evaluated as boolean after each iteration.
             body: Executed at least once, then repeated while condition is truthy.
         """
-        super().__init__(ensure_term(condition), body)
+        super().__init__(ensure_nu(condition), body)
 
     async def execute(self, ctx: Context) -> None:
         """Execute body, then repeat while condition is truthy."""
@@ -160,7 +160,7 @@ class Forever(Flow):
         Forever(poll_and_process)
     """
 
-    def __init__(self, body: Executable) -> None:
+    def __init__(self, body: Nu) -> None:
         """Initialize infinite loop.
 
         Args:
@@ -179,7 +179,7 @@ class Switch(Flow):
 
     Children layout: [selector, *case_values, default?]
 
-    Selector is auto-wrapped via ``ensure_term`` if a literal is passed.
+    Selector is auto-wrapped via ``ensure_nu`` if a literal is passed.
     Case values are children, making them visible to tree transforms.
     The internal ``_case_keys`` list maps child index offsets (after
     the selector at index 0) to their corresponding case keys.
@@ -200,13 +200,13 @@ class Switch(Flow):
     def __init__(
         self,
         selector: Any,
-        cases: dict[Any, Executable],
-        default: Executable | None = None,
+        cases: dict[Any, Nu],
+        default: Nu | None = None,
     ) -> None:
         """Initialize switch flow.
 
         Args:
-            selector: Term or literal whose value selects a branch.
+            selector: Nu or literal whose value selects a branch.
             cases: Mapping from case keys to executables. Each value
                 becomes a child node in the tree.
             default: Executed when no case key matches (optional).
@@ -214,7 +214,7 @@ class Switch(Flow):
         self._case_keys: list[Any] = list(cases.keys())
         self._has_default = default is not None
 
-        children: list[Executable] = [ensure_term(selector)]
+        children: list[Nu] = [ensure_nu(selector)]
         children.extend(cases.values())
         if default is not None:
             children.append(default)

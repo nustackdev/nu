@@ -19,7 +19,7 @@ from ..object import Object
 
 
 if TYPE_CHECKING:
-    from nu.terms import IntArg, StrArg, Term
+    from nu.terms import IntArg, StrArg, Nu
 
     from ...values import BoolValue, BytesValue, IntValue, ListValue, StrValue
 
@@ -57,22 +57,22 @@ class StrType(
     - Encode: encode()
     """
 
-    def _wrap_arithmetic_result(self, operand: Term) -> StrValue:
+    def _wrap_arithmetic_result(self, operand: Nu) -> StrValue:
         from ...values import StrValue
 
         return StrValue(operand)
 
-    def _wrap_sliceable_result(self, operand: Term) -> StrValue:
+    def _wrap_sliceable_result(self, operand: Nu) -> StrValue:
         from ...values import StrValue
 
         return StrValue(operand)
 
-    def _wrap_logical_result(self, operand: Term) -> BoolValue:
+    def _wrap_logical_result(self, operand: Nu) -> BoolValue:
         from ...values import BoolValue
 
         return BoolValue(operand)
 
-    def _wrap_comparison_result(self, operand: Term) -> BoolValue:
+    def _wrap_comparison_result(self, operand: Nu) -> BoolValue:
         from ...values import BoolValue
 
         return BoolValue(operand)

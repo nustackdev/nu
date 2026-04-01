@@ -29,7 +29,7 @@ from nu import Context, Span
 if TYPE_CHECKING:
     from collections.abc import Hashable
 
-    from nu import Executable
+    from nu import Nu
 
 
 __all__ = [
@@ -64,7 +64,7 @@ class Atomic(Span):
 
     def __init__(
         self,
-        *children: Executable,
+        *children: Nu,
         scope: Hashable | None = None,
     ) -> None:
         super().__init__(*children)
@@ -197,7 +197,7 @@ class Snapshot(Span):
 
     def __init__(
         self,
-        *children: Executable,
+        *children: Nu,
         scope: Hashable | None = None,
     ) -> None:
         super().__init__(*children)
@@ -272,7 +272,7 @@ class Transaction(Span):
 
     def __init__(
         self,
-        *children: Executable,
+        *children: Nu,
         scope: Hashable | None = None,
     ) -> None:
         super().__init__(*children)

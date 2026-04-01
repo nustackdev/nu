@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from nu import Sentinel, Term
+    from nu import Sentinel, Nu
     from nu.shapes.ops.reactive import (
         OnChangeOp,
         OnChildChangeOp,
@@ -60,7 +60,7 @@ class ViewObservableBase:
 
         return OnChangeOp(self)
 
-    def on_child_change(self, address: str | Sentinel | Term[str | Sentinel]) -> OnChildChangeOp:
+    def on_child_change(self, address: str | Sentinel | Nu[str | Sentinel]) -> OnChildChangeOp:
         from nu.shapes.ops.reactive import OnChildChangeOp
 
         return OnChildChangeOp(self, address)

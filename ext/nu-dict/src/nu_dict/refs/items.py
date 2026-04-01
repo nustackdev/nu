@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self
 
 from nu import Value
-from nu.abc import (
+from nu import (
     BoolType,
     BoolValue,
     BytesType,
@@ -25,14 +25,14 @@ from nu.abc import (
     StrType,
     StrValue,
 )
-from nu.shape import MutableItemRef, Slot
+from nu.shapes import MutableItemRef, Slot
 
 from .base import RefBase
 
 
 if TYPE_CHECKING:
-    from nu import Term
-    from nu.shape import Shape
+    from nu import Nu
+    from nu.shapes import Shape
 
 
 __all__ = [
@@ -78,7 +78,7 @@ class IntRef(ItemRef[int, IntValue], IntType):
     def __init__(
         self,
         *,
-        address: str | int | Term,
+        address: str | int | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -101,7 +101,7 @@ class StrRef(ItemRef[str, StrValue], StrType):
     def __init__(
         self,
         *,
-        address: str | int | Term,
+        address: str | int | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -124,7 +124,7 @@ class FloatRef(ItemRef[float, FloatValue], FloatType):
     def __init__(
         self,
         *,
-        address: str | int | Term,
+        address: str | int | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -147,7 +147,7 @@ class BoolRef(ItemRef[bool, BoolValue], BoolType):
     def __init__(
         self,
         *,
-        address: str | int | Term,
+        address: str | int | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -170,7 +170,7 @@ class BytesRef(ItemRef[bytes, BytesValue], BytesType):
     def __init__(
         self,
         *,
-        address: str | int | Term,
+        address: str | int | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:

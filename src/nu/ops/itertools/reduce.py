@@ -1,4 +1,4 @@
-"""Iterable reduction morphisms — terminal operations that consume iterables.
+"""Iterable reduction ops — terminal operations that consume iterables.
 
 ReduceOp: Reduce to single value (functools.reduce(fn, seq, initial))
 SumOp: Sum of elements (sum(seq))
@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from functools import reduce as functools_reduce
 
-from nu.terms import INVALID, BinaryOperation, Sentinel, UnaryOperation
+from nu.terms import INVALID, BinaryCalc, Sentinel, UnaryCalc
 
 
 __all__ = [
@@ -26,7 +26,7 @@ __all__ = [
 ]
 
 
-class ReduceOp[T, T2](BinaryOperation[T2]):
+class ReduceOp[T, T2](BinaryCalc[T2]):
     """Reduce sequence to single value: functools.reduce(fn, seq, initial).
 
     Example:
@@ -38,7 +38,7 @@ class ReduceOp[T, T2](BinaryOperation[T2]):
         """Initialize reduce operation.
 
         Args:
-            operand: Term that produces a sequence
+            operand: Nu that produces a sequence
             fn: Reducer function (accumulator, element) -> new_accumulator
             initial: Initial accumulator value
         """
@@ -58,7 +58,7 @@ class ReduceOp[T, T2](BinaryOperation[T2]):
         return f"ReduceOp({self._children[0]!r}, {self._fn!r}, {self._children[1]!r})"
 
 
-class SumOp[ResultT](UnaryOperation[ResultT]):
+class SumOp[ResultT](UnaryCalc[ResultT]):
     """Sum of sequence elements: sum(seq)."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -71,7 +71,7 @@ class SumOp[ResultT](UnaryOperation[ResultT]):
             return INVALID
 
 
-class MinOp[ResultT](UnaryOperation[ResultT]):
+class MinOp[ResultT](UnaryCalc[ResultT]):
     """Minimum element: min(seq) or min(seq, key=fn)."""
 
     def __init__(self, operand: object, key: Callable | None = None) -> None:
@@ -94,7 +94,7 @@ class MinOp[ResultT](UnaryOperation[ResultT]):
         return f"MinOp({self._children[0]!r})"
 
 
-class MaxOp[ResultT](UnaryOperation[ResultT]):
+class MaxOp[ResultT](UnaryCalc[ResultT]):
     """Maximum element: max(seq) or max(seq, key=fn)."""
 
     def __init__(self, operand: object, key: Callable | None = None) -> None:
@@ -117,7 +117,7 @@ class MaxOp[ResultT](UnaryOperation[ResultT]):
         return f"MaxOp({self._children[0]!r})"
 
 
-class AnyOp(UnaryOperation[bool]):
+class AnyOp(UnaryCalc[bool]):
     """Any truthy element: any(seq)."""
 
     def apply(self, operand: object) -> bool:
@@ -127,7 +127,7 @@ class AnyOp(UnaryOperation[bool]):
         return any(operand)
 
 
-class AllOp(UnaryOperation[bool]):
+class AllOp(UnaryCalc[bool]):
     """All truthy elements: all(seq)."""
 
     def apply(self, operand: object) -> bool:

@@ -18,7 +18,7 @@ from ..object import Object
 
 
 if TYPE_CHECKING:
-    from nu.terms import BytesArg, IntArg, StrArg, Term
+    from nu.terms import BytesArg, IntArg, StrArg, Nu
 
     from ...values import BoolValue, BytesValue, IntValue, ListValue, StrValue
 
@@ -39,22 +39,22 @@ class BytesType(
     Combines sequence and comparison traits, returns concrete py types.
     """
 
-    def _wrap_logical_result(self, operand: Term) -> BoolValue:
+    def _wrap_logical_result(self, operand: Nu) -> BoolValue:
         from ...values import BoolValue
 
         return BoolValue(operand)
 
-    def _wrap_comparison_result(self, operand: Term) -> BoolValue:
+    def _wrap_comparison_result(self, operand: Nu) -> BoolValue:
         from ...values import BoolValue
 
         return BoolValue(operand)
 
-    def _wrap_bytes_result(self, operand: Term) -> BytesValue:
+    def _wrap_bytes_result(self, operand: Nu) -> BytesValue:
         from ...values import BytesValue
 
         return BytesValue(operand)
 
-    def _wrap_sliceable_result(self, operand: Term) -> BytesValue:
+    def _wrap_sliceable_result(self, operand: Nu) -> BytesValue:
         from ...values import BytesValue
 
         return BytesValue(operand)

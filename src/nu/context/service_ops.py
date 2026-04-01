@@ -1,10 +1,10 @@
-"""Service ref morphisms -- direct Context binding ops."""
+"""Service ref ops -- direct Context binding ops."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Morphism, Operation, Sentinel
+from nu.terms import Op, Calculation, Sentinel
 
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ __all__ = [
 ]
 
 
-class ServiceGetOp[T](Operation, Morphism[T | Sentinel]):
+class ServiceGetOp[T](Calculation, Op[T | Sentinel]):
     """Read service from context: ctx[service_type]."""
 
     def __init__(self, ref: ServiceRef[T]) -> None:
@@ -31,7 +31,7 @@ class ServiceGetOp[T](Operation, Morphism[T | Sentinel]):
         return ctx[self._ref.service_type]
 
 
-class ServiceExistsOp(Operation, Morphism[bool]):
+class ServiceExistsOp(Calculation, Op[bool]):
     """Check if service type exists in context."""
 
     def __init__(self, ref: ServiceRef) -> None:

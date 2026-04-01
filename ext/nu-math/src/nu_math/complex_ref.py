@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import Sentinel
-from nu.abc import (
+from nu import (
     EqualableBase,
     FloatValue,
     Object,
@@ -22,7 +22,7 @@ from nu.abc import (
 
 
 if TYPE_CHECKING:
-    from nu import Term
+    from nu import Nu
 
     from .args import ComplexArg
 
@@ -52,27 +52,27 @@ class ComplexType(
     @classmethod
     def from_components(
         cls,
-        real: float | Term[float] = 0,
-        imag: float | Term[float] = 0,
+        real: float | Nu[float] = 0,
+        imag: float | Nu[float] = 0,
     ) -> ComplexValue:
         """Create a ComplexValue from real and imaginary parts."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return ComplexValue(FuncCallOp(complex, real, imag))
 
     @classmethod
-    def from_str(cls, value: str | Term[str]) -> ComplexValue:
+    def from_str(cls, value: str | Nu[str]) -> ComplexValue:
         """Create a ComplexValue from a string."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return ComplexValue(FuncCallOp(complex, value))
 
     @classmethod
-    def from_polar(cls, r: float | Term[float], phi: float | Term[float]) -> ComplexValue:
+    def from_polar(cls, r: float | Nu[float], phi: float | Nu[float]) -> ComplexValue:
         """Create a ComplexValue from polar coordinates."""
         import cmath
 
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return ComplexValue(FuncCallOp(cmath.rect, r, phi))
 
@@ -82,13 +82,13 @@ class ComplexType(
 
     def real(self) -> FloatValue:
         """Get the real part."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return FloatValue(FuncCallOp(getattr, self, "real"))
 
     def imag(self) -> FloatValue:
         """Get the imaginary part."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return FloatValue(FuncCallOp(getattr, self, "imag"))
 
@@ -98,7 +98,7 @@ class ComplexType(
 
     def __add__(self, other: ComplexArg) -> ComplexValue:
         """Add complex numbers."""
-        from nu.abc import AddOp
+        from nu import AddOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -106,7 +106,7 @@ class ComplexType(
 
     def __radd__(self, other: complex | int | float) -> ComplexValue:
         """Right add."""
-        from nu.abc import AddOp
+        from nu import AddOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -114,7 +114,7 @@ class ComplexType(
 
     def __sub__(self, other: ComplexArg) -> ComplexValue:
         """Subtract complex numbers."""
-        from nu.abc import SubOp
+        from nu import SubOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -122,7 +122,7 @@ class ComplexType(
 
     def __rsub__(self, other: complex | int | float) -> ComplexValue:
         """Right subtract."""
-        from nu.abc import SubOp
+        from nu import SubOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -130,7 +130,7 @@ class ComplexType(
 
     def __mul__(self, other: ComplexArg) -> ComplexValue:
         """Multiply complex numbers."""
-        from nu.abc import MulOp
+        from nu import MulOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -138,7 +138,7 @@ class ComplexType(
 
     def __rmul__(self, other: complex | int | float) -> ComplexValue:
         """Right multiply."""
-        from nu.abc import MulOp
+        from nu import MulOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -146,7 +146,7 @@ class ComplexType(
 
     def __truediv__(self, other: ComplexArg) -> ComplexValue:
         """Divide complex numbers."""
-        from nu.abc import DivOp
+        from nu import DivOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -154,7 +154,7 @@ class ComplexType(
 
     def __rtruediv__(self, other: complex | int | float) -> ComplexValue:
         """Right divide."""
-        from nu.abc import DivOp
+        from nu import DivOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -162,7 +162,7 @@ class ComplexType(
 
     def __pow__(self, other: ComplexArg) -> ComplexValue:
         """Raise to power."""
-        from nu.abc import PowOp
+        from nu import PowOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -170,7 +170,7 @@ class ComplexType(
 
     def __rpow__(self, other: complex | int | float) -> ComplexValue:
         """Right power."""
-        from nu.abc import PowOp
+        from nu import PowOp
 
         if isinstance(other, complex):
             other = ComplexValue(other)
@@ -178,13 +178,13 @@ class ComplexType(
 
     def __neg__(self) -> ComplexValue:
         """Negate."""
-        from nu.abc import NegOp
+        from nu import NegOp
 
         return ComplexValue(NegOp(self))
 
     def __abs__(self) -> FloatValue:
         """Get magnitude (absolute value)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return FloatValue(FuncCallOp(abs, self))
 
@@ -194,7 +194,7 @@ class ComplexType(
 
     def conjugate(self) -> ComplexValue:
         """Get the complex conjugate."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return ComplexValue(MethodCallOp(self, "conjugate"))
 
@@ -202,7 +202,7 @@ class ComplexType(
         """Get the phase angle in radians."""
         import cmath
 
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return FloatValue(FuncCallOp(cmath.phase, self))
 
@@ -210,7 +210,7 @@ class ComplexType(
         """Get polar coordinates (r, phi)."""
         import cmath
 
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return TupleValue(FuncCallOp(cmath.polar, self))
 
@@ -222,7 +222,7 @@ class ComplexType(
         """Square root."""
         import cmath
 
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return ComplexValue(FuncCallOp(cmath.sqrt, self))
 
@@ -230,7 +230,7 @@ class ComplexType(
         """Exponential (e^self)."""
         import cmath
 
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return ComplexValue(FuncCallOp(cmath.exp, self))
 
@@ -238,7 +238,7 @@ class ComplexType(
         """Logarithm."""
         import cmath
 
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         if base is not None:
             return ComplexValue(FuncCallOp(cmath.log, self, base))
@@ -248,7 +248,7 @@ class ComplexType(
         """Sine."""
         import cmath
 
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return ComplexValue(FuncCallOp(cmath.sin, self))
 
@@ -256,7 +256,7 @@ class ComplexType(
         """Cosine."""
         import cmath
 
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return ComplexValue(FuncCallOp(cmath.cos, self))
 
@@ -264,7 +264,7 @@ class ComplexType(
         """Tangent."""
         import cmath
 
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return ComplexValue(FuncCallOp(cmath.tan, self))
 

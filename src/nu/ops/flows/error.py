@@ -7,13 +7,13 @@ from typing import TYPE_CHECKING, Any
 
 from .base import Flow
 
-from nu.utils import ensure_term
+from nu.utils import ensure_nu
 from nu.interfaces.values import NoneValue
 
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import Executable, FloatArg, IntArg
+    from nu.terms import Nu, FloatArg, IntArg
 
 
 __all__ = [
@@ -46,9 +46,9 @@ class TryCatch(Flow):
 
     def __init__(
         self,
-        body: Executable,
-        catch: Executable | None = None,
-        finally_: Executable | None = None,
+        body: Nu,
+        catch: Nu | None = None,
+        finally_: Nu | None = None,
         errors: tuple[type[Exception], ...] | type[Exception] | None = None,
     ) -> None:
         _none = NoneValue()
@@ -58,13 +58,13 @@ class TryCatch(Flow):
         self._errors = errors
 
     @property
-    def catch(self) -> Executable | None:
+    def catch(self) -> Nu | None:
         """Catch handler, or None if absent."""
         c = self.children[1]
         return None if isinstance(c, NoneValue) else c
 
     @property
-    def finally_(self) -> Executable | None:
+    def finally_(self) -> Nu | None:
         """Finally handler, or None if absent."""
         c = self.children[2]
         return None if isinstance(c, NoneValue) else c
@@ -127,40 +127,40 @@ class Retry(Flow):
 
     def __init__(
         self,
-        body: Executable,
+        body: Nu,
         *,
         max_attempts: IntArg = 3,
         delay: FloatArg = 0.0,
         backoff: FloatArg = 1.0,
-        on_attempt_fail: Executable | None = None,
-        on_success: Executable | None = None,
-        on_fail: Executable | None = None,
+        on_attempt_fail: Nu | None = None,
+        on_success: Nu | None = None,
+        on_fail: Nu | None = None,
     ) -> None:
         _none = NoneValue()
         super().__init__(
             body,
-            ensure_term(max_attempts),
-            ensure_term(delay),
-            ensure_term(backoff),
+            ensure_nu(max_attempts),
+            ensure_nu(delay),
+            ensure_nu(backoff),
             on_attempt_fail or _none,
             on_success or _none,
             on_fail or _none,
         )
 
     @property
-    def on_attempt_fail(self) -> Executable | None:
+    def on_attempt_fail(self) -> Nu | None:
         """On-attempt-fail hook, or None if absent."""
         c = self.children[4]
         return None if isinstance(c, NoneValue) else c
 
     @property
-    def on_success(self) -> Executable | None:
+    def on_success(self) -> Nu | None:
         """On-success hook, or None if absent."""
         c = self.children[5]
         return None if isinstance(c, NoneValue) else c
 
     @property
-    def on_fail(self) -> Executable | None:
+    def on_fail(self) -> Nu | None:
         """On-fail hook, or None if absent."""
         c = self.children[6]
         return None if isinstance(c, NoneValue) else c
@@ -221,7 +221,7 @@ class Assert(Flow):
     """
 
     def __init__(self, condition: Any, message: str = "Assertion failed") -> None:
-        super().__init__(ensure_term(condition))
+        super().__init__(ensure_nu(condition))
         self._message = message
 
     async def execute(self, ctx: Context) -> None:

@@ -1,10 +1,10 @@
-"""Node — immutable generic tree node.
+"""_Node — immutable generic tree node (internal).
 
 All operations return new nodes. Originals are never mutated.
 This is the structural foundation — no semantics attached.
 
 Generic over ``ChildT`` so subclasses can narrow the children type:
-``Exec(Node["Exec"])`` makes all Exec methods return ``Exec``, not ``Node``.
+``Nu(_Node["Nu"])`` makes all Nu methods return ``Nu``, not ``_Node``.
 """
 
 from __future__ import annotations
@@ -19,12 +19,12 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Node",
+    "_Node",
 ]
 
 
-class Node[ChildT]:
-    """Immutable tree node, generic over child type.
+class _Node[ChildT]:
+    """Immutable tree node, generic over child type. Internal.
 
     Args:
         *children: Child nodes.

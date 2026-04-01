@@ -1,4 +1,4 @@
-"""String morphisms for everybase.
+"""String ops for everybase.
 
 Case transformation: UpperOp, LowerOp, TitleOp, CapitalizeOp, SwapCaseOp
 Stripping: StripOp, LStripOp, RStripOp
@@ -15,11 +15,11 @@ from __future__ import annotations
 
 from nu.terms import (
     INVALID,
-    BinaryOperation,
-    NAryOperation,
+    BinaryCalc,
+    NAryCalc,
     Sentinel,
-    TernaryOperation,
-    UnaryOperation,
+    TernaryCalc,
+    UnaryCalc,
 )
 
 
@@ -58,7 +58,7 @@ __all__ = [
 # =============================================================================
 
 
-class UpperOp(UnaryOperation[str]):
+class UpperOp(UnaryCalc[str]):
     """Convert to uppercase: str.upper()."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -68,7 +68,7 @@ class UpperOp(UnaryOperation[str]):
         return operand.upper()
 
 
-class LowerOp(UnaryOperation[str]):
+class LowerOp(UnaryCalc[str]):
     """Convert to lowercase: str.lower()."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -78,7 +78,7 @@ class LowerOp(UnaryOperation[str]):
         return operand.lower()
 
 
-class TitleOp(UnaryOperation[str]):
+class TitleOp(UnaryCalc[str]):
     """Convert to title case: str.title()."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -88,7 +88,7 @@ class TitleOp(UnaryOperation[str]):
         return operand.title()
 
 
-class CapitalizeOp(UnaryOperation[str]):
+class CapitalizeOp(UnaryCalc[str]):
     """Capitalize first character: str.capitalize()."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -98,7 +98,7 @@ class CapitalizeOp(UnaryOperation[str]):
         return operand.capitalize()
 
 
-class SwapCaseOp(UnaryOperation[str]):
+class SwapCaseOp(UnaryCalc[str]):
     """Swap case: str.swapcase()."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -113,7 +113,7 @@ class SwapCaseOp(UnaryOperation[str]):
 # =============================================================================
 
 
-class IsDigitOp(UnaryOperation[bool]):
+class IsDigitOp(UnaryCalc[bool]):
     """Check if all digits: str.isdigit()."""
 
     def apply(self, operand: object) -> bool | Sentinel:
@@ -123,7 +123,7 @@ class IsDigitOp(UnaryOperation[bool]):
         return operand.isdigit()
 
 
-class IsAlphaOp(UnaryOperation[bool]):
+class IsAlphaOp(UnaryCalc[bool]):
     """Check if all alphabetic: str.isalpha()."""
 
     def apply(self, operand: object) -> bool | Sentinel:
@@ -133,7 +133,7 @@ class IsAlphaOp(UnaryOperation[bool]):
         return operand.isalpha()
 
 
-class IsAlnumOp(UnaryOperation[bool]):
+class IsAlnumOp(UnaryCalc[bool]):
     """Check if alphanumeric: str.isalnum()."""
 
     def apply(self, operand: object) -> bool | Sentinel:
@@ -143,7 +143,7 @@ class IsAlnumOp(UnaryOperation[bool]):
         return operand.isalnum()
 
 
-class IsSpaceOp(UnaryOperation[bool]):
+class IsSpaceOp(UnaryCalc[bool]):
     """Check if all whitespace: str.isspace()."""
 
     def apply(self, operand: object) -> bool | Sentinel:
@@ -158,7 +158,7 @@ class IsSpaceOp(UnaryOperation[bool]):
 # =============================================================================
 
 
-class StripOp(BinaryOperation[str]):
+class StripOp(BinaryCalc[str]):
     """Strip whitespace or chars: str.strip(chars)."""
 
     def apply(self, left: object, right: object) -> str | Sentinel:
@@ -170,7 +170,7 @@ class StripOp(BinaryOperation[str]):
         return left.strip(right)  # type: ignore
 
 
-class LStripOp(BinaryOperation[str]):
+class LStripOp(BinaryCalc[str]):
     """Strip leading whitespace or chars: str.lstrip(chars)."""
 
     def apply(self, left: object, right: object) -> str | Sentinel:
@@ -182,7 +182,7 @@ class LStripOp(BinaryOperation[str]):
         return left.lstrip(right)  # type: ignore
 
 
-class RStripOp(BinaryOperation[str]):
+class RStripOp(BinaryCalc[str]):
     """Strip trailing whitespace or chars: str.rstrip(chars)."""
 
     def apply(self, left: object, right: object) -> str | Sentinel:
@@ -199,7 +199,7 @@ class RStripOp(BinaryOperation[str]):
 # =============================================================================
 
 
-class SplitOp(TernaryOperation[list[str]]):
+class SplitOp(TernaryCalc[list[str]]):
     """Split string: str.split(sep, maxsplit)."""
 
     def apply(self, first: object, second: object, third: object) -> list[str] | Sentinel:
@@ -211,7 +211,7 @@ class SplitOp(TernaryOperation[list[str]]):
         return first.split(second, int(third))  # type: ignore
 
 
-class RSplitOp(TernaryOperation[list[str]]):
+class RSplitOp(TernaryCalc[list[str]]):
     """Right split string: str.rsplit(sep, maxsplit)."""
 
     def apply(self, first: object, second: object, third: object) -> list[str] | Sentinel:
@@ -228,7 +228,7 @@ class RSplitOp(TernaryOperation[list[str]]):
 # =============================================================================
 
 
-class FindOp(NAryOperation[int]):
+class FindOp(NAryCalc[int]):
     """Find substring: str.find(sub, start, end)."""
 
     def apply(self, *args: object) -> int | Sentinel:
@@ -241,7 +241,7 @@ class FindOp(NAryOperation[int]):
         return operand.find(sub, int(start), int(end))  # type: ignore
 
 
-class RFindOp(NAryOperation[int]):
+class RFindOp(NAryCalc[int]):
     """Find substring from right: str.rfind(sub, start, end)."""
 
     def apply(self, *args: object) -> int | Sentinel:
@@ -254,7 +254,7 @@ class RFindOp(NAryOperation[int]):
         return operand.rfind(sub, int(start), int(end))  # type: ignore
 
 
-class CountSubstringOp(BinaryOperation[int]):
+class CountSubstringOp(BinaryCalc[int]):
     """Count substring occurrences: str.count(sub)."""
 
     def apply(self, left: object, right: object) -> int | Sentinel:
@@ -269,7 +269,7 @@ class CountSubstringOp(BinaryOperation[int]):
 # =============================================================================
 
 
-class StartsWithOp(BinaryOperation[bool]):
+class StartsWithOp(BinaryCalc[bool]):
     """Check if starts with prefix: str.startswith(prefix)."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -279,7 +279,7 @@ class StartsWithOp(BinaryOperation[bool]):
         return left.startswith(right)
 
 
-class EndsWithOp(BinaryOperation[bool]):
+class EndsWithOp(BinaryCalc[bool]):
     """Check if ends with suffix: str.endswith(suffix)."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -294,7 +294,7 @@ class EndsWithOp(BinaryOperation[bool]):
 # =============================================================================
 
 
-class CenterOp(TernaryOperation[str]):
+class CenterOp(TernaryCalc[str]):
     """Center in width: str.center(width, fillchar)."""
 
     def apply(self, first: object, second: object, third: object) -> str | Sentinel:
@@ -305,7 +305,7 @@ class CenterOp(TernaryOperation[str]):
         return first.center(second, fill[0] if fill else " ")
 
 
-class LJustOp(TernaryOperation[str]):
+class LJustOp(TernaryCalc[str]):
     """Left justify: str.ljust(width, fillchar)."""
 
     def apply(self, first: object, second: object, third: object) -> str | Sentinel:
@@ -316,7 +316,7 @@ class LJustOp(TernaryOperation[str]):
         return first.ljust(second, fill[0] if fill else " ")
 
 
-class RJustOp(TernaryOperation[str]):
+class RJustOp(TernaryCalc[str]):
     """Right justify: str.rjust(width, fillchar)."""
 
     def apply(self, first: object, second: object, third: object) -> str | Sentinel:
@@ -327,7 +327,7 @@ class RJustOp(TernaryOperation[str]):
         return first.rjust(second, fill[0] if fill else " ")
 
 
-class ZFillOp(BinaryOperation[str]):
+class ZFillOp(BinaryCalc[str]):
     """Zero-fill: str.zfill(width)."""
 
     def apply(self, left: object, right: object) -> str | Sentinel:
@@ -342,7 +342,7 @@ class ZFillOp(BinaryOperation[str]):
 # =============================================================================
 
 
-class ReplaceOp(NAryOperation[str]):
+class ReplaceOp(NAryCalc[str]):
     """Replace substring: str.replace(old, new, count)."""
 
     def apply(self, *args: object) -> str | Sentinel:
@@ -361,7 +361,7 @@ class ReplaceOp(NAryOperation[str]):
 # =============================================================================
 
 
-class EncodeOp(BinaryOperation[bytes]):
+class EncodeOp(BinaryCalc[bytes]):
     """Encode string to bytes: str.encode(encoding)."""
 
     def apply(self, left: object, right: object) -> bytes | Sentinel:
@@ -379,7 +379,7 @@ class EncodeOp(BinaryOperation[bytes]):
 # =============================================================================
 
 
-class JoinOp(BinaryOperation[str]):
+class JoinOp(BinaryCalc[str]):
     """Join strings: sep.join(seq)."""
 
     def apply(self, left: object, right: object) -> str | Sentinel:

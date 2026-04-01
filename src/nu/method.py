@@ -28,7 +28,7 @@ class _BoundMethod[V: ValueBase]:
     """Method descriptor bound to a specific instance.
 
     Calling this creates a MethodCallOp (pure) or MethodCallCmd (impure)
-    morphism wrapping the call, then wraps it in value_type.
+    op wrapping the call, then wraps it in value_type.
     """
 
     __slots__ = ("_method_name", "_owner", "_pure", "_value_type")
@@ -51,7 +51,7 @@ class _ClassBoundMethod[V: ValueBase]:
     """Method descriptor bound to a Ref subclass.
 
     The Ref subclass itself acts as the factory — calling it creates a
-    ref term that resolves the target object from context at execution time.
+    ref Nu that resolves the target object from context at execution time.
 
     Example::
 

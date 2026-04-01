@@ -1,4 +1,4 @@
-"""Function and method invocation morphisms.
+"""Function and method invocation ops.
 
 FuncCall / FuncCallOp / FuncCallCmd:
     Call a callable with arguments.
@@ -18,7 +18,7 @@ from __future__ import annotations
 from inspect import isawaitable
 from typing import TYPE_CHECKING, Any
 
-from nu.terms import INVALID, Command, Morphism, Operation, Sentinel, is_sentinel
+from nu.terms import INVALID, Command, Op, Calculation, Sentinel, is_sentinel
 
 
 if TYPE_CHECKING:
@@ -42,7 +42,7 @@ __all__ = [
 # =============================================================================
 
 
-class FuncCall[T](Morphism[T | Sentinel]):
+class FuncCall[T](Op[T | Sentinel]):
     """Call a function with arguments.
 
     Arguments can be Terms or literals — Terms are resolved before
@@ -91,7 +91,7 @@ class FuncCall[T](Morphism[T | Sentinel]):
         return f"{cls}({func_name}, {args})" if args else f"{cls}({func_name})"
 
 
-class FuncCallOp[T](Operation, FuncCall[T]):
+class FuncCallOp[T](Calculation, FuncCall[T]):
     """Pure function call. No side effects."""
 
 
@@ -104,10 +104,10 @@ class FuncCallCmd[T](Command, FuncCall[T]):
 # =============================================================================
 
 
-class MethodCall[T](Morphism[T | Sentinel]):
+class MethodCall[T](Op[T | Sentinel]):
     """Call a named method on a target with arguments.
 
-    Target is the first child Term. Args/kwargs are remaining children.
+    Target is the first child Nu. Args/kwargs are remaining children.
     Method name is a static string. Auto-awaits async results.
     Sentinel propagation: returns INVALID if any child is a sentinel.
 
@@ -166,7 +166,7 @@ class MethodCall[T](Morphism[T | Sentinel]):
         return f"{cls}(.{self._method_name})"
 
 
-class MethodCallOp[T](Operation, MethodCall[T]):
+class MethodCallOp[T](Calculation, MethodCall[T]):
     """Pure method call. No side effects."""
 
 

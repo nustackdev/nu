@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.abc import (
+from nu import (
     AnyValue,
     BoolValue,
     BytesValue,
@@ -16,16 +16,16 @@ from nu.abc import (
     ListValue,
     SetValue,
     StrValue,
-    ensure_term,
+    ensure_nu,
 )
-from nu.shape import MutableSequenceRefBase, Slot
+from nu.shapes import MutableSequenceRefBase, Slot
 
 from .base import RefBase
 from .items import ItemRef
 
 
 if TYPE_CHECKING:
-    from nu import Sentinel, Term, Value
+    from nu import Sentinel, Nu, Value
 
 
 def _value_type_for(python_type: type) -> type[Value]:
@@ -54,16 +54,16 @@ class ListRef[T](
 ):
     """Dict sequence reference — ordered container backed by nested list."""
 
-    def result(self, op: Term) -> ListValue[T]:
+    def result(self, op: Nu) -> ListValue[T]:
         return ListValue(op)
 
-    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorValue:
         return IteratorValue(operand)
 
-    def _wrap_sliceable_result(self, operand: Term) -> ListValue[T]:
+    def _wrap_sliceable_result(self, operand: Nu) -> ListValue[T]:
         return ListValue(operand)  # slices stay materialized
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
     def __init__(
@@ -77,9 +77,9 @@ class ListRef[T](
         self.item_type = item_type
         self.item_value_type = item_value_type
 
-    def _create_item_ref(self, index: int | Sentinel | Term[int | Sentinel]) -> ItemRef[T, ...]:
+    def _create_item_ref(self, index: int | Sentinel | Nu[int | Sentinel]) -> ItemRef[T, ...]:
         return ItemRef(
-            address=ensure_term(index),
+            address=ensure_nu(index),
             value_type=self.item_type,
             value_value_type=self.item_value_type,
             parent=self,

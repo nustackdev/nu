@@ -13,7 +13,7 @@ from .serialize import serialize
 
 
 if TYPE_CHECKING:
-    from nu.tree import Node
+    from nu.terms import Nu
 
 
 __all__ = [
@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 
-def render_html(root: Node, *, title: str = "everybase tree explorer") -> str:
+def render_html(root: Nu, *, title: str = "everybase tree explorer") -> str:
     """Serialize tree and embed in HTML template. Returns complete HTML string."""
     data = serialize(root)
     template = files("eb_tree_view").joinpath("explorer.html.tmpl").read_text(encoding="utf-8")
@@ -32,7 +32,7 @@ def render_html(root: Node, *, title: str = "everybase tree explorer") -> str:
     return html
 
 
-def open_in_browser(root: Node, *, title: str = "everybase tree explorer") -> Path:
+def open_in_browser(root: Nu, *, title: str = "everybase tree explorer") -> Path:
     """Write HTML to temp file, open in default browser. Returns path."""
     html = render_html(root, title=title)
     tmp = tempfile.NamedTemporaryFile(

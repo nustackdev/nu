@@ -5,14 +5,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.abc import AnyValue, SetValue
-from nu.shape import MutableSetRefBase, Slot
+from nu import AnyValue, SetValue
+from nu.shapes import MutableSetRefBase, Slot
 
 from .base import RefBase
 
 
 if TYPE_CHECKING:
-    from nu import Term
+    from nu import Nu
 
 
 __all__ = [
@@ -26,13 +26,13 @@ class SetRef[T](
 ):
     """Dict set reference — unordered unique-element container."""
 
-    def result(self, op: Term) -> SetValue[T]:
+    def result(self, op: Nu) -> SetValue[T]:
         return SetValue(op)
 
-    def _wrap_set_result(self, operand: Term) -> SetValue[T]:
+    def _wrap_set_result(self, operand: Nu) -> SetValue[T]:
         return SetValue(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
     def __init__(

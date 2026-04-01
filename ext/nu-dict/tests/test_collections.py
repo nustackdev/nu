@@ -16,7 +16,7 @@ from collections.abc import ItemsView, KeysView, ValuesView
 
 import pytest
 
-from nu.abc import (
+from nu import (
     AnyValue,
     DictItemsValue,
     DictKeysValue,
@@ -52,9 +52,9 @@ class TestDictRefViewTypes:
         assert isinstance(items, DictItemsValue)
 
     def test_result_returns_dict_value(self):
-        from nu.abc import ensure_term
+        from nu import ensure_nu
 
-        result = PortfolioShape.metadata.result(ensure_term("dummy"))
+        result = PortfolioShape.metadata.result(ensure_nu("dummy"))
         assert isinstance(result, DictValue)
 
 
@@ -160,24 +160,24 @@ class TestListRefTypes:
     """ListRef wrapping types are correct."""
 
     def test_iterable_result_is_iterator_value(self):
-        from nu.abc import ensure_term
+        from nu import ensure_nu
 
         ref = PortfolioShape.tags
-        wrapped = ref._wrap_iterable_result(ensure_term("dummy"))
+        wrapped = ref._wrap_iterable_result(ensure_nu("dummy"))
         assert isinstance(wrapped, IteratorValue)
 
     def test_sliceable_result_is_list_value(self):
-        from nu.abc import ensure_term
+        from nu import ensure_nu
 
         ref = PortfolioShape.tags
-        wrapped = ref._wrap_sliceable_result(ensure_term("dummy"))
+        wrapped = ref._wrap_sliceable_result(ensure_nu("dummy"))
         assert isinstance(wrapped, ListValue)
 
     def test_element_result_is_any_value(self):
-        from nu.abc import ensure_term
+        from nu import ensure_nu
 
         ref = PortfolioShape.tags
-        wrapped = ref._wrap_element_result(ensure_term("dummy"))
+        wrapped = ref._wrap_element_result(ensure_nu("dummy"))
         assert isinstance(wrapped, AnyValue)
 
 
@@ -218,17 +218,17 @@ class TestSetRefTypes:
     """SetRef wrapping types are correct."""
 
     def test_set_result_is_set_value(self):
-        from nu.abc import ensure_term
+        from nu import ensure_nu
 
         ref = PortfolioShape.members
-        wrapped = ref._wrap_set_result(ensure_term("dummy"))
+        wrapped = ref._wrap_set_result(ensure_nu("dummy"))
         assert isinstance(wrapped, SetValue)
 
     def test_element_result_is_any_value(self):
-        from nu.abc import ensure_term
+        from nu import ensure_nu
 
         ref = PortfolioShape.members
-        wrapped = ref._wrap_element_result(ensure_term("dummy"))
+        wrapped = ref._wrap_element_result(ensure_nu("dummy"))
         assert isinstance(wrapped, AnyValue)
 
 
@@ -582,7 +582,7 @@ class TestEndToEndShapeNavigation:
         price2 = await TeamShape.roster[2].price.execute(nav_ctx)
         assert price2 == 245.0
 
-        # --- Term composition across shapes list ---
+        # --- Nu composition across shapes list ---
         total_0 = TeamShape.roster[0].price * TeamShape.roster[0].qty
         assert await total_0.execute(nav_ctx) == 1855.0
 

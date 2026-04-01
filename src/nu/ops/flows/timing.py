@@ -8,12 +8,12 @@ from typing import TYPE_CHECKING
 
 from .base import Flow
 
-from nu.utils import ensure_term
+from nu.utils import ensure_nu
 
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import Executable, FloatArg
+    from nu.terms import Nu, FloatArg
 
 
 __all__ = [
@@ -47,7 +47,7 @@ class Timed(Flow):
         #   total                    16.4ms
     """
 
-    def __init__(self, *children: Executable, label: str = "Timed") -> None:
+    def __init__(self, *children: Nu, label: str = "Timed") -> None:
         super().__init__(*children)
         self._label = label
 
@@ -79,7 +79,7 @@ class Delay(Flow):
 
     Children layout: [delay, body?]
 
-    The delay parameter is auto-wrapped via ``ensure_term`` if a literal is passed,
+    The delay parameter is auto-wrapped via ``ensure_nu`` if a literal is passed,
     making it a child node visible to tree transforms.
 
     Example::
@@ -91,18 +91,18 @@ class Delay(Flow):
     def __init__(
         self,
         delay: FloatArg,
-        body: Executable | None = None,
+        body: Nu | None = None,
     ) -> None:
         """Initialize delay flow.
 
         Args:
-            delay: Duration to sleep in seconds. Term or literal.
+            delay: Duration to sleep in seconds. Nu or literal.
             body: Optional executable to run after the delay.
         """
         if body is not None:
-            super().__init__(ensure_term(delay), body)
+            super().__init__(ensure_nu(delay), body)
         else:
-            super().__init__(ensure_term(delay))
+            super().__init__(ensure_nu(delay))
 
     async def execute(self, ctx: Context) -> None:
         """Sleep for the resolved delay, then execute body if present."""
@@ -130,18 +130,18 @@ class Timeout(Flow):
     def __init__(
         self,
         timeout: FloatArg,
-        body: Executable,
-        on_timeout: Executable | None = None,
+        body: Nu,
+        on_timeout: Nu | None = None,
     ) -> None:
         """Initialize timeout flow.
 
         Args:
-            timeout: Maximum duration in seconds. Term or literal.
-            body: Executable to run under the time limit.
+            timeout: Maximum duration in seconds. Nu or literal.
+            body: Nu to run under the time limit.
             on_timeout: Optional executable invoked when the timeout fires.
         """
         self._has_on_timeout = on_timeout is not None
-        children: list[Executable] = [ensure_term(timeout), body]
+        children: list[Nu] = [ensure_nu(timeout), body]
         if on_timeout is not None:
             children.append(on_timeout)
         super().__init__(*children)
@@ -175,19 +175,19 @@ class Throttle(Flow):
     def __init__(
         self,
         interval: FloatArg,
-        body: Executable | None = None,
+        body: Nu | None = None,
     ) -> None:
         """Initialize throttle flow.
 
         Args:
-            interval: Minimum interval between executions in seconds. Term or literal.
+            interval: Minimum interval between executions in seconds. Nu or literal.
             body: Optional executable to run after the throttle gate.
         """
         self._last_time: float = 0.0
         if body is not None:
-            super().__init__(ensure_term(interval), body)
+            super().__init__(ensure_nu(interval), body)
         else:
-            super().__init__(ensure_term(interval))
+            super().__init__(ensure_nu(interval))
 
     async def execute(self, ctx: Context) -> None:
         """Wait until the interval has passed, then execute body if present."""
@@ -218,18 +218,18 @@ class Debounce(Flow):
     def __init__(
         self,
         delay: FloatArg,
-        body: Executable | None = None,
+        body: Nu | None = None,
     ) -> None:
         """Initialize debounce flow.
 
         Args:
-            delay: Quiet period to wait in seconds. Term or literal.
+            delay: Quiet period to wait in seconds. Nu or literal.
             body: Optional executable to run after the quiet period.
         """
         if body is not None:
-            super().__init__(ensure_term(delay), body)
+            super().__init__(ensure_nu(delay), body)
         else:
-            super().__init__(ensure_term(delay))
+            super().__init__(ensure_nu(delay))
 
     async def execute(self, ctx: Context) -> None:
         """Sleep for the resolved delay, then execute body if present."""

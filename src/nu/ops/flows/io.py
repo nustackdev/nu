@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING, Any
 
 from .base import Flow
 
-from nu.utils import ensure_term
+from nu.utils import ensure_nu
 
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import Executable, StrArg
+    from nu.terms import Nu, StrArg
 
 
 __all__ = [
@@ -27,7 +27,7 @@ class Print(Flow):
 
     Children layout: ``[message, *values]``
 
-    The *message* parameter is auto-wrapped via ``ensure_term`` if a literal is
+    The *message* parameter is auto-wrapped via ``ensure_nu`` if a literal is
     passed.  All *values* are likewise auto-wrapped so the full parameter
     list lives in the children tree.
 
@@ -44,12 +44,12 @@ class Print(Flow):
         """Initialize print flow.
 
         Args:
-            message: Label or Term shown in the output prefix.
+            message: Label or Nu shown in the output prefix.
             values: Additional Terms or literals whose results are printed.
         """
-        children: list[Executable] = [ensure_term(message)]
+        children: list[Nu] = [ensure_nu(message)]
         for v in values:
-            children.append(ensure_term(v))
+            children.append(ensure_nu(v))
         super().__init__(*children)
 
     async def execute(self, ctx: Context) -> None:
@@ -67,7 +67,7 @@ class Log(Flow):
 
     Children layout: ``[message, *values]``
 
-    The *message* parameter is auto-wrapped via ``ensure_term`` if a literal is
+    The *message* parameter is auto-wrapped via ``ensure_nu`` if a literal is
     passed.  All *values* are likewise auto-wrapped so the full parameter
     list lives in the children tree.  The *level* and *logger_name* are plain
     strings used at construction time only and are not children.
@@ -89,15 +89,15 @@ class Log(Flow):
         """Initialize log flow.
 
         Args:
-            message: Term or literal string to log.
+            message: Nu or literal string to log.
             values: Additional Terms or literals whose results are logged.
             level: Logging level name -- ``"debug"``, ``"info"``,
                 ``"warning"``, ``"error"``, or ``"critical"``.
             logger_name: Logger name passed to ``logging.getLogger``.
         """
-        children: list[Executable] = [ensure_term(message)]
+        children: list[Nu] = [ensure_nu(message)]
         for v in values:
-            children.append(ensure_term(v))
+            children.append(ensure_nu(v))
         super().__init__(*children)
         self._level = level
         self._logger_name = logger_name
@@ -120,7 +120,7 @@ class Debug(Flow):
 
     Children layout: ``[*values]``
 
-    All *values* are auto-wrapped via ``ensure_term`` if literals are passed.
+    All *values* are auto-wrapped via ``ensure_nu`` if literals are passed.
     Optional *labels* pair with positional values; unlabelled values are
     printed as ``repr``.
 
@@ -147,7 +147,7 @@ class Debug(Flow):
                 When provided, output uses ``label=repr(value)`` format.
             prefix: String prefix prepended to the output line.
         """
-        super().__init__(*(ensure_term(v) for v in values))
+        super().__init__(*(ensure_nu(v) for v in values))
         self._labels = labels
         self._prefix = prefix
 

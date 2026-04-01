@@ -3,10 +3,10 @@ from __future__ import annotations
 from abc import ABC
 
 from nu import (
-    Executable,
+    Nu,
     Flow,
     Span,
-    Term,
+    Nu,
     depth,
     find,
     map_nodes,
@@ -27,7 +27,7 @@ class ConcreteSpan(Span):
         super().__init__(*children)
 
 
-class SimpleTerm(Term):
+class SimpleTerm(Nu):
     """Minimal term for testing."""
 
     def __init__(self, *children):
@@ -56,7 +56,7 @@ class TestSpanIsAbstract:
         assert issubclass(Span, ABC)
 
     def test_span_is_exec(self):
-        assert issubclass(Span, Executable)
+        assert issubclass(Span, Nu)
 
 
 class TestSpanChildren:
@@ -82,7 +82,7 @@ class TestSpanChildren:
         inner_s = ConcreteSpan()
         s = ConcreteSpan(t, f, inner_s)
         assert s.child_count == 3
-        assert isinstance(s.children[0], Term)
+        assert isinstance(s.children[0], Nu)
         assert isinstance(s.children[1], Flow)
         assert isinstance(s.children[2], Span)
 
@@ -114,8 +114,9 @@ class TestSpanWithAstOperations:
         t1 = SimpleTerm()
         t2 = SimpleTerm()
         s = ConcreteSpan(t1, t2)
-        terms = find(s, lambda n: isinstance(n, Term))
-        assert len(terms) == 2
+        terms = find(s, lambda n: isinstance(n, Nu))
+        # Span is now a Nu/Nu too, so all 3 nodes match
+        assert len(terms) == 3
 
     def test_size(self):
         t1 = SimpleTerm()
@@ -168,4 +169,4 @@ class TestSpanTransparency:
 
         result = unwrap(flow, lambda n: isinstance(n, Span))
         assert result.child_count == 1
-        assert isinstance(result.children[0], Term)
+        assert isinstance(result.children[0], Nu)

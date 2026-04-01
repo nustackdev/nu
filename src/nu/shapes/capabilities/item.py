@@ -2,7 +2,7 @@
 """Item-level capability bases — store, erase, exists for items in collections.
 
 Refs ARE terms — executing a ref reads its value (via fetch/coerce).
-No separate load() needed. The ref itself is the readable term.
+No separate load() needed. The ref itself is the readable Nu.
 
 ItemSettableBase: .store(value) wrapping ItemStoreCmd
 ItemDeletableBase: .erase() wrapping ItemEraseCmd
@@ -20,7 +20,7 @@ from nu.interfaces.values import BoolValue, NoneValue
 
 
 if TYPE_CHECKING:
-    from nu import Sentinel, Term
+    from nu import Sentinel, Nu
 
 
 __all__ = [
@@ -53,11 +53,11 @@ class ItemSettableBase[ValueT]:
     Provides store(value) using ItemStoreCmd, returning NoneValue.
     """
 
-    def store(self, value: ValueT | Sentinel | Term[ValueT | Sentinel]) -> NoneValue:
-        from nu.utils import ensure_term
+    def store(self, value: ValueT | Sentinel | Nu[ValueT | Sentinel]) -> NoneValue:
+        from nu.utils import ensure_nu
         from nu.shapes.ops.item import ItemStoreCmd
 
-        return NoneValue(ItemStoreCmd(self, ensure_term(value)))
+        return NoneValue(ItemStoreCmd(self, ensure_nu(value)))
 
 
 class ItemDeletableBase:

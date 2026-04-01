@@ -7,7 +7,7 @@ import logging
 from nu import Flow, Span, map_nodes
 from nu.ops.builtins.conversion import ToStrOp
 from nu.interfaces.values import StrValue
-from nu.terms import Node
+from nu.terms import Nu
 
 
 __all__ = [
@@ -22,7 +22,7 @@ _step_logger = logging.getLogger("everybase.steps")
 class _StepSpan(Span):
     """Wraps a Seq child to log step progress. Path is baked at construction."""
 
-    def __init__(self, child: Node, step: int, total: int, path: str) -> None:
+    def __init__(self, child: Nu, step: int, total: int, path: str) -> None:
         super().__init__(child)
         self._step = step
         self._total = total
@@ -50,7 +50,7 @@ class _StepSpan(Span):
         )
 
 
-def annotate_retries[N: Node](tree: N) -> N:
+def annotate_retries[N: Nu](tree: N) -> N:
     """Add logging hooks to all Retry nodes.
 
     Wraps every Retry with Log-based hooks for ``on_attempt_fail`` and
@@ -68,7 +68,7 @@ def annotate_retries[N: Node](tree: N) -> N:
     from ..flows.io import Log
     from ..refs import IntRef, StrRef
 
-    def _annotate(node: Node) -> Node:
+    def _annotate(node: Nu) -> Nu:
         if not isinstance(node, Retry):
             return node
 
@@ -103,7 +103,7 @@ def annotate_retries[N: Node](tree: N) -> N:
     return map_nodes(tree, _annotate, order="bottom_up")
 
 
-def annotate_steps[N: Node](tree: N) -> N:
+def annotate_steps[N: Nu](tree: N) -> N:
     """Wrap Seq children in step-tracking spans with baked tree paths.
 
     Walks the tree recursively, tracking the structural path from root.
@@ -120,7 +120,7 @@ def annotate_steps[N: Node](tree: N) -> N:
     from ..flows.control import Seq
     from ..flows.io import Log
 
-    def _walk(node: Node, path: str) -> Node:
+    def _walk(node: Nu, path: str) -> Nu:
         # Seq with meaningful children: wrap Flow/Span children in _StepSpan
         if isinstance(node, Seq):
             meaningful = [c for c in node.children if isinstance(c, (Flow, Span))]
@@ -158,7 +158,7 @@ def annotate_steps[N: Node](tree: N) -> N:
     return _walk(tree, "")
 
 
-def set_logger_name[N: Node](tree: N, name: str) -> N:
+def set_logger_name[N: Nu](tree: N, name: str) -> N:
     """Rename the logger on all Log nodes in the tree.
 
     Args:
@@ -170,7 +170,7 @@ def set_logger_name[N: Node](tree: N, name: str) -> N:
     """
     from ..flows.io import Log
 
-    def _rename(node: Node) -> Node:
+    def _rename(node: Nu) -> Nu:
         if not isinstance(node, (Log, _StepSpan)):
             return node
         clone = node.with_children(*node.children)

@@ -7,7 +7,7 @@ Ref captures invariants shared by all Shape-aware refs:
 - Slot factory protocol
 
 Tree structure:
-    children[0] = address term (always present)
+    children[0] = address Nu (always present)
     children[1] = parent ref (present when parent is not None)
 
 The parent ref is a tree child so that tree traversal (find, preorder)
@@ -30,9 +30,9 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, Self
 
 from nu import Ref as RefABC
-from nu import Term
+from nu import Nu
 from nu.interfaces.values import AnyValue
-from nu.utils import ensure_term
+from nu.utils import ensure_nu
 
 
 if TYPE_CHECKING:
@@ -58,7 +58,7 @@ class Ref[T](RefABC[T]):
     - Slot factory protocol
 
     Tree children:
-        children[0]: address term — location within parent
+        children[0]: address Nu — location within parent
         children[1]: parent ref — parent in navigation chain (if any)
 
     Substrates extend this with storage-specific mechanics:
@@ -87,11 +87,11 @@ class Ref[T](RefABC[T]):
             **kwargs: Passed to super for cooperative MRO
         """
         # Store raw address before wrapping — lets substrates detect static
-        # (literal str/int) vs dynamic (Term) addresses for fast-path optimisation.
-        self._raw_address = address if not isinstance(address, Term) else None
+        # (literal str/int) vs dynamic (Nu) addresses for fast-path optimisation.
+        self._raw_address = address if not isinstance(address, Nu) else None
 
         try:
-            address_term = ensure_term(address)
+            address_term = ensure_nu(address)
         except TypeError:
             address_term = AnyValue(address)
 
@@ -111,13 +111,13 @@ class Ref[T](RefABC[T]):
     # =========================================================================
 
     @property
-    def address(self) -> Term[object]:
+    def address(self) -> Nu[object]:
         """Location identifier within parent.
 
         Can be:
         - str: named field in a shape/dict
         - int: index in a sequence
-        - Term: computed address (resolved at execution time)
+        - Nu: computed address (resolved at execution time)
         - None: root ref with no address
         """
         return self.children[0]
@@ -127,7 +127,7 @@ class Ref[T](RefABC[T]):
         """Parent ref in the navigation hierarchy.
 
         None for root refs (entry points from Storage).
-        Stored as children[1] in the Node tree.
+        Stored as children[1] in the tree.
         """
         if len(self.children) > 1:
             return self.children[1]
@@ -156,7 +156,7 @@ class Ref[T](RefABC[T]):
     async def resolve_address(self, ctx: Context) -> object:
         """Resolve this segment's address to concrete value.
 
-        Handles dynamic (Term) addresses by executing them.
+        Handles dynamic (Nu) addresses by executing them.
 
         Args:
             ctx: Execution context
@@ -165,7 +165,7 @@ class Ref[T](RefABC[T]):
             Resolved address (str for keys, int for indices)
         """
         addr = self.address
-        if isinstance(addr, Term):
+        if isinstance(addr, Nu):
             return await addr.execute(ctx)
         return addr
 

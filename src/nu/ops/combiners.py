@@ -73,13 +73,13 @@ def and_(left: object, right: object) -> BoolType:
     Example:
         >>> and_(price > 0, price < 100)
     """
-    from nu.utils import ensure_term
+    from nu.utils import ensure_nu
 
-    left_op = ensure_term(left)
+    left_op = ensure_nu(left)
     if not isinstance(left_op, AndableProtocol):
         raise TypeError(f"Operand {type(left).__name__} does not support AND logical operation")
 
-    return left_op.and_(ensure_term(right))
+    return left_op.and_(ensure_nu(right))
 
 
 def or_(left: object, right: object) -> BoolType:
@@ -97,13 +97,13 @@ def or_(left: object, right: object) -> BoolType:
     Example:
         >>> or_(status.eq("ready"), status.eq("pending"))
     """
-    from nu.utils import ensure_term
+    from nu.utils import ensure_nu
 
-    left_op = ensure_term(left)
+    left_op = ensure_nu(left)
     if not isinstance(left_op, OrableProtocol):
         raise TypeError(f"Operand {type(left).__name__} does not support OR logical operation")
 
-    return left_op.or_(ensure_term(right))
+    return left_op.or_(ensure_nu(right))
 
 
 def all_(*conditions: object) -> BoolType:
@@ -126,10 +126,10 @@ def all_(*conditions: object) -> BoolType:
     if not conditions:
         raise ValueError("all_() requires at least one condition")
 
-    from nu.utils import ensure_term
+    from nu.utils import ensure_nu
 
     # Convert all to RValues
-    rvalues = [ensure_term(c) for c in conditions]
+    rvalues = [ensure_nu(c) for c in conditions]
 
     # Reduce with and_()
     return reduce(lambda a, b: a.and_(b), rvalues)  # type: ignore
@@ -155,10 +155,10 @@ def any_(*conditions: object) -> BoolType:
     if not conditions:
         raise ValueError("any_() requires at least one condition")
 
-    from nu.utils import ensure_term
+    from nu.utils import ensure_nu
 
     # Convert all to RValues
-    rvalues = [ensure_term(c) for c in conditions]
+    rvalues = [ensure_nu(c) for c in conditions]
 
     # Reduce with or_()
     return reduce(lambda a, b: a.or_(b), rvalues)  # type: ignore

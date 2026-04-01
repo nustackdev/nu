@@ -8,7 +8,7 @@ from conftest import TestShape, local
 
 import nu_virtuals as ebv
 from nu_distributed import NavigatorSpec, Teleport
-from nu.abc import Parallel, Seq
+from nu import Parallel, Seq
 
 
 def _make_flow() -> object:

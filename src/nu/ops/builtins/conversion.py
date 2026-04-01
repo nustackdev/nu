@@ -1,4 +1,4 @@
-"""Type conversion morphisms.
+"""Type conversion ops.
 
 ToIntOp, ToFloatOp, ToBoolOp, ToStrOp, ToBytesOp, ToListOp, ToSetOp, ToTupleOp
 
@@ -7,7 +7,7 @@ All conversions return Invalid on conversion failure.
 
 from __future__ import annotations
 
-from nu.terms import INVALID, Sentinel, UnaryOperation
+from nu.terms import INVALID, Sentinel, UnaryCalc
 
 
 __all__ = [
@@ -27,7 +27,7 @@ __all__ = [
 # =============================================================================
 
 
-class ToIntOp(UnaryOperation[int]):
+class ToIntOp(UnaryCalc[int]):
     """Convert value to integer."""
 
     def apply(self, operand: object) -> int | Sentinel:
@@ -38,7 +38,7 @@ class ToIntOp(UnaryOperation[int]):
             return INVALID
 
 
-class ToFloatOp(UnaryOperation[float]):
+class ToFloatOp(UnaryCalc[float]):
     """Convert value to float."""
 
     def apply(self, operand: object) -> float | Sentinel:
@@ -49,7 +49,7 @@ class ToFloatOp(UnaryOperation[float]):
             return INVALID
 
 
-class ToBoolOp(UnaryOperation[bool]):
+class ToBoolOp(UnaryCalc[bool]):
     """Convert value to boolean."""
 
     def apply(self, operand: object) -> bool | Sentinel:
@@ -60,7 +60,7 @@ class ToBoolOp(UnaryOperation[bool]):
             return INVALID
 
 
-class ToStrOp(UnaryOperation[str]):
+class ToStrOp(UnaryCalc[str]):
     """Convert value to string."""
 
     def apply(self, operand: object) -> str | Sentinel:
@@ -71,7 +71,7 @@ class ToStrOp(UnaryOperation[str]):
             return INVALID
 
 
-class ToBytesOp(UnaryOperation[bytes]):
+class ToBytesOp(UnaryCalc[bytes]):
     """Convert value to bytes.
 
     Supports:
@@ -110,7 +110,7 @@ class ToBytesOp(UnaryOperation[bytes]):
 # =============================================================================
 
 
-class ToListOp[T](UnaryOperation[list[T]]):
+class ToListOp[T](UnaryCalc[list[T]]):
     """Convert value to list."""
 
     def apply(self, operand: object) -> list[T] | Sentinel:
@@ -121,7 +121,7 @@ class ToListOp[T](UnaryOperation[list[T]]):
             return INVALID
 
 
-class ToSetOp[T](UnaryOperation[set[T]]):
+class ToSetOp[T](UnaryCalc[set[T]]):
     """Convert value to set."""
 
     def apply(self, operand: object) -> set[T] | Sentinel:
@@ -132,7 +132,7 @@ class ToSetOp[T](UnaryOperation[set[T]]):
             return INVALID
 
 
-class ToTupleOp[*Ts](UnaryOperation[tuple[*Ts]]):
+class ToTupleOp[*Ts](UnaryCalc[tuple[*Ts]]):
     """Convert value to tuple."""
 
     def apply(self, operand: object) -> tuple[*Ts] | Sentinel:

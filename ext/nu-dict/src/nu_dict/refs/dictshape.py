@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.abc import (
+from nu import (
     AnyValue,
     BoolValue,
     BytesValue,
@@ -19,17 +19,17 @@ from nu.abc import (
     ListValue,
     SetValue,
     StrValue,
-    ensure_term,
+    ensure_nu,
 )
-from nu.shape import MutableShapesMappingRefBase, Slot
+from nu.shapes import MutableShapesMappingRefBase, Slot
 
 from .base import RefBase
 from .shape import ShapeRef
 
 
 if TYPE_CHECKING:
-    from nu import Sentinel, Term, Value
-    from nu.shape import Shape
+    from nu import Sentinel, Nu, Value
+    from nu.shapes import Shape
 
 
 def _value_type_for(python_type: type) -> type[Value]:
@@ -58,25 +58,25 @@ class ShapesDictRef[K, T: Shape](
 ):
     """Dict shapes dict reference — mapping of homogeneous shapes."""
 
-    def result(self, op: Term) -> DictValue:
+    def result(self, op: Nu) -> DictValue:
         return DictValue(op)
 
-    def _wrap_keys_result(self, operand: Term) -> DictKeysValue:
+    def _wrap_keys_result(self, operand: Nu) -> DictKeysValue:
         return DictKeysValue(operand)
 
-    def _wrap_values_result(self, operand: Term) -> DictValuesValue:
+    def _wrap_values_result(self, operand: Nu) -> DictValuesValue:
         return DictValuesValue(operand)
 
-    def _wrap_items_result(self, operand: Term) -> DictItemsValue:
+    def _wrap_items_result(self, operand: Nu) -> DictItemsValue:
         return DictItemsValue(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorValue:
         return IteratorValue(operand)
 
-    def _wrap_value_result(self, operand: Term) -> AnyValue:
+    def _wrap_value_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
     def __init__(
@@ -93,9 +93,9 @@ class ShapesDictRef[K, T: Shape](
         self.key_value_type = key_value_type
         self._shape_type = shape_type
 
-    def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> ShapeRef[T]:
+    def _create_child_ref(self, key: K | Sentinel | Nu[K | Sentinel]) -> ShapeRef[T]:
         return ShapeRef(
-            address=ensure_term(key),
+            address=ensure_nu(key),
             shape_type=self._shape_type,
             parent=self,
             owner_shape=self._owner_shape,

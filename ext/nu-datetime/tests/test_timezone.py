@@ -8,10 +8,10 @@ from datetime import UTC, timedelta, timezone
 
 from nu_datetime import TimedeltaValue as TimedeltaRef
 from nu_datetime import TimezoneValue as TimezoneRef
-from nu.abc import BoolValue as BoolRef
-from nu.abc import FuncCallOp
-from nu.abc import NoneValue as NoneRef
-from nu.abc import StrValue as StrRef
+from nu import BoolValue as BoolRef
+from nu import FuncCallOp
+from nu import NoneValue as NoneRef
+from nu import StrValue as StrRef
 
 
 # =============================================================================

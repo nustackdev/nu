@@ -15,7 +15,7 @@ from ..object import Object
 
 
 if TYPE_CHECKING:
-    from nu.terms import IntArg, ListArg, Term
+    from nu.terms import IntArg, ListArg, Nu
 
     from ...values import AnyValue, BoolValue, ListValue
 
@@ -36,22 +36,22 @@ class ListType[T](
     Combines sequence traits and returns concrete py types.
     """
 
-    def _wrap_comparison_result(self, operand: Term) -> BoolValue:
+    def _wrap_comparison_result(self, operand: Nu) -> BoolValue:
         from ...values import BoolValue
 
         return BoolValue(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> ListValue:
+    def _wrap_iterable_result(self, operand: Nu) -> ListValue:
         from ...values import ListValue
 
         return ListValue(operand)
 
-    def _wrap_sliceable_result(self, operand: Term) -> ListValue:
+    def _wrap_sliceable_result(self, operand: Nu) -> ListValue:
         from ...values import ListValue
 
         return ListValue(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         from ...values import AnyValue
 
         return AnyValue(operand)

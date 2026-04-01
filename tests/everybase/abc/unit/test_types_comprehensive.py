@@ -1,4 +1,4 @@
-"""Comprehensive unit tests for all Term types.
+"""Comprehensive unit tests for all Nu types.
 
 Tests type construction, operations, and method availability for:
 - IntValue, FloatValue, BoolValue (numeric/boolean)
@@ -9,7 +9,7 @@ Tests type construction, operations, and method availability for:
 
 import pytest
 
-from nu.abc import (
+from nu import (
     AnyValue,
     BoolValue,
     BytesValue,
@@ -30,7 +30,7 @@ from nu.abc import (
     ToIntOp,
     ToStrOp,
     TupleValue,
-    ensure_term,
+    ensure_nu,
     fn,
 )
 
@@ -1132,78 +1132,78 @@ class TestAnyRef:
 
 
 class TestEnsureTermFunction:
-    """ensure_term() function comprehensive tests."""
+    """ensure_nu() function comprehensive tests."""
 
     def test_int(self):
-        """ensure_term(int) returns IntValue."""
-        result = ensure_term(42)
+        """ensure_nu(int) returns IntValue."""
+        result = ensure_nu(42)
         assert isinstance(result, IntValue)
 
     def test_float(self):
-        """ensure_term(float) returns FloatValue."""
-        result = ensure_term(3.14)
+        """ensure_nu(float) returns FloatValue."""
+        result = ensure_nu(3.14)
         assert isinstance(result, FloatValue)
 
     def test_bool_true(self):
-        """ensure_term(True) returns BoolValue (not IntValue)."""
-        result = ensure_term(True)
+        """ensure_nu(True) returns BoolValue (not IntValue)."""
+        result = ensure_nu(True)
         assert isinstance(result, BoolValue)
 
     def test_bool_false(self):
-        """ensure_term(False) returns BoolValue."""
-        result = ensure_term(False)
+        """ensure_nu(False) returns BoolValue."""
+        result = ensure_nu(False)
         assert isinstance(result, BoolValue)
 
     def test_str(self):
-        """ensure_term(str) returns StrValue."""
-        result = ensure_term("hello")
+        """ensure_nu(str) returns StrValue."""
+        result = ensure_nu("hello")
         assert isinstance(result, StrValue)
 
     def test_bytes(self):
-        """ensure_term(bytes) returns BytesValue."""
-        result = ensure_term(b"hello")
+        """ensure_nu(bytes) returns BytesValue."""
+        result = ensure_nu(b"hello")
         assert isinstance(result, BytesValue)
 
     def test_none(self):
-        """ensure_term(None) returns NoneValue."""
-        result = ensure_term(None)
+        """ensure_nu(None) returns NoneValue."""
+        result = ensure_nu(None)
         assert isinstance(result, NoneValue)
 
     def test_list(self):
-        """ensure_term(list) returns ListValue."""
-        result = ensure_term([1, 2, 3])
+        """ensure_nu(list) returns ListValue."""
+        result = ensure_nu([1, 2, 3])
         assert isinstance(result, ListValue)
 
     def test_tuple(self):
-        """ensure_term(tuple) returns TupleValue."""
-        result = ensure_term((1, 2, 3))
+        """ensure_nu(tuple) returns TupleValue."""
+        result = ensure_nu((1, 2, 3))
         assert isinstance(result, TupleValue)
 
     def test_dict(self):
-        """ensure_term(dict) returns DictValue."""
-        result = ensure_term({"a": 1})
+        """ensure_nu(dict) returns DictValue."""
+        result = ensure_nu({"a": 1})
         assert isinstance(result, DictValue)
 
     def test_set(self):
-        """ensure_term(set) returns SetValue."""
-        result = ensure_term({1, 2, 3})
+        """ensure_nu(set) returns SetValue."""
+        result = ensure_nu({1, 2, 3})
         assert isinstance(result, SetValue)
 
     def test_frozenset(self):
-        """ensure_term(frozenset) returns FrozenSetValue."""
-        result = ensure_term(frozenset({1, 2, 3}))
+        """ensure_nu(frozenset) returns FrozenSetValue."""
+        result = ensure_nu(frozenset({1, 2, 3}))
         assert isinstance(result, FrozenSetValue)
 
     def test_passthrough_term(self):
-        """ensure_term(Term) returns Term unchanged."""
+        """ensure_nu(Nu) returns Nu unchanged."""
         original = IntValue(42)
-        result = ensure_term(original)
+        result = ensure_nu(original)
         assert result is original
 
     def test_unsupported_type(self):
-        """ensure_term(unsupported) raises TypeError."""
+        """ensure_nu(unsupported) raises TypeError."""
         with pytest.raises(TypeError, match="Not supported type"):
-            ensure_term(object())
+            ensure_nu(object())
 
 
 # =============================================================================

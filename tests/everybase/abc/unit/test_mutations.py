@@ -1,7 +1,7 @@
 """Tests for ABC-level morphisms — operations (pure) and commands (impure).
 
 Tests that:
-1. Operation morphisms (abc_*) apply correctly
+1. Calculation morphisms (abc_*) apply correctly
 2. Command morphisms (abc_*, cmd_*) apply correctly
 3. Mutable collection capabilities wire through to types
 4. Type bases (ListType, DictType, SetType) expose mutation methods
@@ -10,7 +10,7 @@ Tests that:
 import pytest
 
 from nu import INVALID, Context
-from nu.abc import (
+from nu import (
     AddCmd,
     AnyValue,
     AppendCmd,

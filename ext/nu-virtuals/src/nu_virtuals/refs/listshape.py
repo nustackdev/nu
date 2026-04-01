@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 
 from virtuals.collections import MutableSequenceBase
 
-from nu.abc import AnyValue, IteratorValue, ListValue, ensure_term
-from nu.shape import ReactiveShapesSequenceRefBase, Shape, Slot
+from nu import AnyValue, IteratorValue, ListValue, ensure_nu
+from nu.shapes import ReactiveShapesSequenceRefBase, Shape, Slot
 
 from .base import ViewRef
 from .shape import ShapeRef
@@ -17,7 +17,7 @@ from .shape import ShapeRef
 if TYPE_CHECKING:
     from virtuals.loc import path
 
-    from nu import Sentinel, Term
+    from nu import Sentinel, Nu
 
 
 __all__ = [
@@ -34,22 +34,22 @@ class ShapesListRef[T: Shape](
 ):
     """PV shapes list reference — document model + PV substrate."""
 
-    def result(self, op: Term) -> ListValue:
+    def result(self, op: Nu) -> ListValue:
         return ListValue(op)
 
-    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorValue:
         return IteratorValue(operand)
 
-    def _wrap_sliceable_result(self, operand: Term) -> ListValue:
+    def _wrap_sliceable_result(self, operand: Nu) -> ListValue:
         return ListValue(operand)  # slices stay materialized
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         shape_type: type[T],
         view_type: type[MutableSequenceBase],
         parent: ViewRef | None = None,
@@ -62,12 +62,12 @@ class ShapesListRef[T: Shape](
         self._shape_type = shape_type
         self.item_type = dict
 
-    def _create_item_ref(self, index: int | Sentinel | Term[int | Sentinel]) -> ShapeRef[T]:
+    def _create_item_ref(self, index: int | Sentinel | Nu[int | Sentinel]) -> ShapeRef[T]:
         """Create a reference to a shape at the given index."""
         from virtuals.views import DictView
 
         return ShapeRef(
-            address=ensure_term(index),
+            address=ensure_nu(index),
             shape_type=self._shape_type,
             view_type=DictView,
             parent=self,

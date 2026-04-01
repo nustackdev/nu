@@ -21,7 +21,7 @@ from nu_virtuals import (
     UUIDRef,
 )
 from nu import Context
-from nu.shape import Shape
+from nu.shapes import Shape
 
 
 # ============================================================================

@@ -1,14 +1,14 @@
-"""Arithmetic morphisms.
+"""Arithmetic ops.
 
 Unary: NegOp, AbsOp, PosOp
 Binary: AddOp, SubOp, MulOp, DivOp, FloorDivOp, ModOp, PowOp
 
-All ops use every.Morphism base classes with Operation mixin (pure).
+All ops use every.Op base classes with Calculation mixin (pure).
 """
 
 from __future__ import annotations
 
-from nu.terms import INVALID, BinaryOperation, Sentinel, UnaryOperation
+from nu.terms import INVALID, BinaryCalc, Sentinel, UnaryCalc
 
 
 __all__ = [
@@ -30,7 +30,7 @@ __all__ = [
 # =============================================================================
 
 
-class NegOp[ResultT](UnaryOperation[ResultT]):
+class NegOp[ResultT](UnaryCalc[ResultT]):
     """Negation: -operand."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -41,7 +41,7 @@ class NegOp[ResultT](UnaryOperation[ResultT]):
             return INVALID
 
 
-class AbsOp[ResultT](UnaryOperation[ResultT]):
+class AbsOp[ResultT](UnaryCalc[ResultT]):
     """Absolute value: abs(operand)."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -52,7 +52,7 @@ class AbsOp[ResultT](UnaryOperation[ResultT]):
             return INVALID
 
 
-class PosOp[ResultT](UnaryOperation[ResultT]):
+class PosOp[ResultT](UnaryCalc[ResultT]):
     """Unary plus: +operand."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -68,7 +68,7 @@ class PosOp[ResultT](UnaryOperation[ResultT]):
 # =============================================================================
 
 
-class AddOp[ResultT](BinaryOperation[ResultT]):
+class AddOp[ResultT](BinaryCalc[ResultT]):
     """Addition: left + right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -79,7 +79,7 @@ class AddOp[ResultT](BinaryOperation[ResultT]):
             return INVALID
 
 
-class SubOp[ResultT](BinaryOperation[ResultT]):
+class SubOp[ResultT](BinaryCalc[ResultT]):
     """Subtraction: left - right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -90,7 +90,7 @@ class SubOp[ResultT](BinaryOperation[ResultT]):
             return INVALID
 
 
-class MulOp[ResultT](BinaryOperation[ResultT]):
+class MulOp[ResultT](BinaryCalc[ResultT]):
     """Multiplication: left * right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -101,7 +101,7 @@ class MulOp[ResultT](BinaryOperation[ResultT]):
             return INVALID
 
 
-class DivOp[ResultT](BinaryOperation[ResultT]):
+class DivOp[ResultT](BinaryCalc[ResultT]):
     """Division: left / right. Returns Invalid on division by zero."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -112,7 +112,7 @@ class DivOp[ResultT](BinaryOperation[ResultT]):
             return INVALID
 
 
-class FloorDivOp[ResultT](BinaryOperation[ResultT]):
+class FloorDivOp[ResultT](BinaryCalc[ResultT]):
     """Floor division: left // right. Returns Invalid on division by zero."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -123,7 +123,7 @@ class FloorDivOp[ResultT](BinaryOperation[ResultT]):
             return INVALID
 
 
-class ModOp[ResultT](BinaryOperation[ResultT]):
+class ModOp[ResultT](BinaryCalc[ResultT]):
     """Modulo: left % right. Returns Invalid on division by zero."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -134,7 +134,7 @@ class ModOp[ResultT](BinaryOperation[ResultT]):
             return INVALID
 
 
-class PowOp[ResultT](BinaryOperation[ResultT]):
+class PowOp[ResultT](BinaryCalc[ResultT]):
     """Power: left ** right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:

@@ -14,7 +14,7 @@ from ..object import Object
 
 
 if TYPE_CHECKING:
-    from nu.terms import NoneArg, Term  # noqa: F401
+    from nu.terms import NoneArg, Nu  # noqa: F401
 
     from ...values import BoolValue, NoneValue  # noqa: F401
 
@@ -33,7 +33,7 @@ class NoneType(
     Represents absence of a value (distinct from Empty sentinel).
     """
 
-    def _wrap_logical_result(self, operand: Term) -> BoolValue:
+    def _wrap_logical_result(self, operand: Nu) -> BoolValue:
         from ...values import BoolValue
 
         return BoolValue(operand)

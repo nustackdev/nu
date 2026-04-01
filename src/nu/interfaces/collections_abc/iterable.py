@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from nu.terms import Term
+    from nu.terms import Nu
 
 
 __all__ = [
@@ -56,7 +56,7 @@ class IterableBase[ElementT, CollectionResultT, ElementResultT]:
     """Base for values that support iteration.
 
     Provides wrapping infrastructure used by subclass traits
-    (SequenceBase, MappingBase, etc.) to wrap morphism results
+    (SequenceBase, MappingBase, etc.) to wrap op results
     in appropriate Value types.
 
     Higher-order operations (Map, Filter, Reduce, etc.) are standalone
@@ -64,9 +64,9 @@ class IterableBase[ElementT, CollectionResultT, ElementResultT]:
 
     Subclasses must override:
         _wrap_iterable_result(operand) -> CollectionResultT
-            Wrap a morphism result in the appropriate collection type.
+            Wrap a op result in the appropriate collection type.
         _wrap_element_result(operand) -> ElementResultT
-            Wrap a morphism result in the appropriate element type.
+            Wrap a op result in the appropriate element type.
 
     Type Parameters:
         ElementT: Native Python element type (int, str, dict, etc.)
@@ -74,10 +74,10 @@ class IterableBase[ElementT, CollectionResultT, ElementResultT]:
         ElementResultT: Result type for ops that extract single elements
     """
 
-    def _wrap_iterable_result(self, operand: Term) -> CollectionResultT:
+    def _wrap_iterable_result(self, operand: Nu) -> CollectionResultT:
         """Override in subclass to wrap result in appropriate collection type."""
         raise NotImplementedError()
 
-    def _wrap_element_result(self, operand: Term) -> ElementResultT:
+    def _wrap_element_result(self, operand: Nu) -> ElementResultT:
         """Override in subclass to wrap result in appropriate element type."""
         raise NotImplementedError()

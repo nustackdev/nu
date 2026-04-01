@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
-    from nu.terms import Executable
+    from nu.terms import Nu
 
 from .control import If
 from .error import Assert
@@ -49,7 +49,7 @@ def AssertEmpty(  # noqa: N802
     """Assert that a collection ref is empty.
 
     Args:
-        ref: A ref whose ``.length()`` returns a Term evaluating to int.
+        ref: A ref whose ``.length()`` returns a Nu evaluating to int.
         message: Error message raised when the assertion fails.
 
     Returns:
@@ -70,7 +70,7 @@ def AssertNotEmpty(  # noqa: N802
     """Assert that a collection ref is not empty.
 
     Args:
-        ref: A ref whose ``.length()`` returns a Term evaluating to int.
+        ref: A ref whose ``.length()`` returns a Nu evaluating to int.
         message: Error message raised when the assertion fails.
 
     Returns:
@@ -96,7 +96,7 @@ def AssertExists(  # noqa: N802
     """Assert that a ref's value exists (is not empty/missing).
 
     Args:
-        ref: A ref whose ``.exists()`` returns a Term evaluating to bool.
+        ref: A ref whose ``.exists()`` returns a Nu evaluating to bool.
         message: Error message raised when the assertion fails.
 
     Returns:
@@ -117,7 +117,7 @@ def AssertMissing(  # noqa: N802
     """Assert that a ref's value is missing.
 
     Args:
-        ref: A ref whose ``.missing()`` returns a Term evaluating to bool.
+        ref: A ref whose ``.missing()`` returns a Nu evaluating to bool.
         message: Error message raised when the assertion fails.
 
     Returns:
@@ -143,7 +143,7 @@ def AssertEquals(  # noqa: N802
     """Assert that a ref's value equals *value*.
 
     Args:
-        ref: A ref whose ``.get()`` returns a Term evaluating to the stored value.
+        ref: A ref whose ``.get()`` returns a Nu evaluating to the stored value.
         value: The expected value to compare against.
         message: Error message raised when the assertion fails.
 
@@ -165,7 +165,7 @@ def AssertNotEquals(  # noqa: N802
     """Assert that a ref's value does not equal *value*.
 
     Args:
-        ref: A ref whose ``.get()`` returns a Term evaluating to the stored value.
+        ref: A ref whose ``.get()`` returns a Nu evaluating to the stored value.
         value: The value that the ref must not equal.
         message: Error message raised when the assertion fails.
 
@@ -187,7 +187,7 @@ def AssertGreaterThan(  # noqa: N802
     """Assert that a ref's value is strictly greater than *value*.
 
     Args:
-        ref: A ref whose ``.get()`` returns a Term evaluating to a comparable value.
+        ref: A ref whose ``.get()`` returns a Nu evaluating to a comparable value.
         value: The lower bound (exclusive).
         message: Error message raised when the assertion fails.
 
@@ -209,7 +209,7 @@ def AssertGreaterOrEqual(  # noqa: N802
     """Assert that a ref's value is greater than or equal to *value*.
 
     Args:
-        ref: A ref whose ``.get()`` returns a Term evaluating to a comparable value.
+        ref: A ref whose ``.get()`` returns a Nu evaluating to a comparable value.
         value: The lower bound (inclusive).
         message: Error message raised when the assertion fails.
 
@@ -231,7 +231,7 @@ def AssertLessThan(  # noqa: N802
     """Assert that a ref's value is strictly less than *value*.
 
     Args:
-        ref: A ref whose ``.get()`` returns a Term evaluating to a comparable value.
+        ref: A ref whose ``.get()`` returns a Nu evaluating to a comparable value.
         value: The upper bound (exclusive).
         message: Error message raised when the assertion fails.
 
@@ -253,7 +253,7 @@ def AssertLessOrEqual(  # noqa: N802
     """Assert that a ref's value is less than or equal to *value*.
 
     Args:
-        ref: A ref whose ``.get()`` returns a Term evaluating to a comparable value.
+        ref: A ref whose ``.get()`` returns a Nu evaluating to a comparable value.
         value: The upper bound (inclusive).
         message: Error message raised when the assertion fails.
 
@@ -275,14 +275,14 @@ def AssertLessOrEqual(  # noqa: N802
 
 
 def SkipIfEmpty(  # noqa: N802
-    ref: Any, child: Executable, else_: Executable | None = None
+    ref: Any, child: Nu, else_: Nu | None = None
 ) -> If:
     """Execute *child* only if collection is NOT empty.
 
     Optionally run *else_* when the collection is empty.
 
     Args:
-        ref: A ref whose ``.length()`` returns a Term evaluating to int.
+        ref: A ref whose ``.length()`` returns a Nu evaluating to int.
         child: Executed when ``ref.length() > 0``.
         else_: Executed when ``ref.length() == 0`` (optional).
 
@@ -301,14 +301,14 @@ def SkipIfEmpty(  # noqa: N802
 
 
 def SkipIfNotEmpty(  # noqa: N802
-    ref: Any, child: Executable, else_: Executable | None = None
+    ref: Any, child: Nu, else_: Nu | None = None
 ) -> If:
     """Execute *child* only if collection IS empty.
 
     Optionally run *else_* when the collection is not empty.
 
     Args:
-        ref: A ref whose ``.length()`` returns a Term evaluating to int.
+        ref: A ref whose ``.length()`` returns a Nu evaluating to int.
         child: Executed when ``ref.length() == 0``.
         else_: Executed when ``ref.length() > 0`` (optional).
 
@@ -327,14 +327,14 @@ def SkipIfNotEmpty(  # noqa: N802
 
 
 def SkipIfMissing(  # noqa: N802
-    ref: Any, child: Executable, else_: Executable | None = None
+    ref: Any, child: Nu, else_: Nu | None = None
 ) -> If:
     """Execute *child* only if ref's value exists.
 
     Optionally run *else_* when the value is missing.
 
     Args:
-        ref: A ref whose ``.exists()`` returns a Term evaluating to bool.
+        ref: A ref whose ``.exists()`` returns a Nu evaluating to bool.
         child: Executed when ``ref.exists()`` is truthy.
         else_: Executed when ``ref.exists()`` is falsy (optional).
 
@@ -353,14 +353,14 @@ def SkipIfMissing(  # noqa: N802
 
 
 def SkipIfExists(  # noqa: N802
-    ref: Any, child: Executable, else_: Executable | None = None
+    ref: Any, child: Nu, else_: Nu | None = None
 ) -> If:
     """Execute *child* only if ref's value is missing.
 
     Optionally run *else_* when the value exists.
 
     Args:
-        ref: A ref whose ``.missing()`` returns a Term evaluating to bool.
+        ref: A ref whose ``.missing()`` returns a Nu evaluating to bool.
         child: Executed when ``ref.missing()`` is truthy.
         else_: Executed when ``ref.missing()`` is falsy (optional).
 

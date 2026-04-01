@@ -7,7 +7,7 @@ Usage::
 
     from nu_dict import IntRef, StrRef
     from nu import Context
-    from nu.shape import Shape
+    from nu.shapes import Shape
 
     class User(Shape):
         name = StrRef.slot()

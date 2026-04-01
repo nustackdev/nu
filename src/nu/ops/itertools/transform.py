@@ -1,6 +1,6 @@
-"""Iterable transformation morphisms — lazy iterators.
+"""Iterable transformation ops — lazy iterators.
 
-Transform morphisms return lazy iterators instead of materialized lists.
+Transform ops return lazy iterators instead of materialized lists.
 Use ToList/ToSet/ToDict to explicitly materialize.
 
 MapOp: map(fn, seq) -> Iterator
@@ -20,7 +20,7 @@ from collections.abc import Iterable, Iterator, Sequence
 from itertools import chain as itertools_chain
 from typing import TYPE_CHECKING
 
-from nu.terms import INVALID, BinaryOperation, Sentinel, TernaryOperation, UnaryOperation
+from nu.terms import INVALID, BinaryCalc, Sentinel, TernaryCalc, UnaryCalc
 
 
 if TYPE_CHECKING:
@@ -40,7 +40,7 @@ __all__ = [
 ]
 
 
-class SortedOp[ResultT](BinaryOperation[list[ResultT]]):
+class SortedOp[ResultT](BinaryCalc[list[ResultT]]):
     """Sorted list: sorted(seq, reverse=reverse). Terminal — inherently eager."""
 
     def apply(self, left: object, right: object) -> list[ResultT] | Sentinel:
@@ -56,7 +56,7 @@ class SortedOp[ResultT](BinaryOperation[list[ResultT]]):
         return f"SortedOp({self._children[0]!r}, reverse={self._children[1]!r})"
 
 
-class ReversedOp[ResultT](UnaryOperation[Iterator[ResultT]]):
+class ReversedOp[ResultT](UnaryCalc[Iterator[ResultT]]):
     """Reversed sequence: reversed(seq) -> lazy iterator."""
 
     def apply(self, operand: object) -> Iterator[ResultT]:
@@ -66,7 +66,7 @@ class ReversedOp[ResultT](UnaryOperation[Iterator[ResultT]]):
         return reversed(operand)  # type: ignore
 
 
-class MapOp[T, T2](UnaryOperation[Iterator[T2]]):
+class MapOp[T, T2](UnaryCalc[Iterator[T2]]):
     """Map function over iterable: map(fn, seq) -> lazy iterator.
 
     Example:
@@ -78,7 +78,7 @@ class MapOp[T, T2](UnaryOperation[Iterator[T2]]):
         """Initialize map operation.
 
         Args:
-            operand: Term that produces an iterable
+            operand: Nu that produces an iterable
             fn: Function to apply to each element
         """
         super().__init__(operand)
@@ -94,7 +94,7 @@ class MapOp[T, T2](UnaryOperation[Iterator[T2]]):
         return f"MapOp({self._children[0]!r}, {self._fn!r})"
 
 
-class FilterOp[T](UnaryOperation[Iterator[T]]):
+class FilterOp[T](UnaryCalc[Iterator[T]]):
     """Filter iterable by predicate: filter(fn, seq) -> lazy iterator.
 
     Example:
@@ -106,7 +106,7 @@ class FilterOp[T](UnaryOperation[Iterator[T]]):
         """Initialize filter operation.
 
         Args:
-            operand: Term that produces an iterable
+            operand: Nu that produces an iterable
             fn: Predicate function - keep element if returns truthy
         """
         super().__init__(operand)
@@ -122,7 +122,7 @@ class FilterOp[T](UnaryOperation[Iterator[T]]):
         return f"FilterOp({self._children[0]!r}, {self._fn!r})"
 
 
-class PluckOp[T](BinaryOperation[Iterator[T]]):
+class PluckOp[T](BinaryCalc[Iterator[T]]):
     """Extract field from each element: (x[key] for x in seq) -> lazy iterator.
 
     Both operand and key are resolved as terms at execution time.
@@ -146,7 +146,7 @@ class PluckOp[T](BinaryOperation[Iterator[T]]):
             return INVALID
 
 
-class ToDictOp[K, V](UnaryOperation[dict[K, V]]):
+class ToDictOp[K, V](UnaryCalc[dict[K, V]]):
     """Build dict from iterable: {key_fn(x): val_fn(x) for x in seq}. Terminal.
 
     Example:
@@ -162,7 +162,7 @@ class ToDictOp[K, V](UnaryOperation[dict[K, V]]):
         """Initialize.
 
         Args:
-            operand: Term that produces an iterable
+            operand: Nu that produces an iterable
             key_fn: Function to extract dict key from each element
             val_fn: Function to extract dict value from each element
         """
@@ -183,7 +183,7 @@ class ToDictOp[K, V](UnaryOperation[dict[K, V]]):
         return f"ToDictOp({self._children[0]!r}, {self._key_fn!r}, {self._val_fn!r})"
 
 
-class FilterByOp[T](TernaryOperation[Iterator[T]]):
+class FilterByOp[T](TernaryCalc[Iterator[T]]):
     """Filter by field value: (x for x in seq if x[key] == value) -> lazy iterator.
 
     All three operands (collection, field, value) are resolved as terms
@@ -209,7 +209,7 @@ class FilterByOp[T](TernaryOperation[Iterator[T]]):
             return INVALID
 
 
-class FlattenOp(UnaryOperation[Iterator]):
+class FlattenOp(UnaryCalc[Iterator]):
     """Flatten one level: chain.from_iterable(seq) -> lazy iterator."""
 
     def apply(self, operand: object) -> Iterator | Sentinel:
@@ -222,7 +222,7 @@ class FlattenOp(UnaryOperation[Iterator]):
             return INVALID
 
 
-class UniqueOp(UnaryOperation[Iterator]):
+class UniqueOp(UnaryCalc[Iterator]):
     """Unique elements preserving order -> lazy iterator."""
 
     def __init__(self, operand: object, key_fn: Callable | None = None) -> None:

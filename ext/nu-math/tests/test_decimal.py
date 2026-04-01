@@ -7,7 +7,7 @@ Tests for:
 from decimal import Decimal
 
 from nu_math import DecimalValue as DecimalRef
-from nu.abc import (
+from nu import (
     AddOp,
     DivOp,
     FloorDivOp,
@@ -18,8 +18,8 @@ from nu.abc import (
     PowOp,
     SubOp,
 )
-from nu.abc import BoolValue as BoolRef
-from nu.abc import IntValue as IntRef
+from nu import BoolValue as BoolRef
+from nu import IntValue as IntRef
 
 
 # =============================================================================

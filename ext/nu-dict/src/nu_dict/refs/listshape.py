@@ -5,16 +5,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.abc import ensure_term
-from nu.shape import MutableShapesSequenceRefBase, Slot
+from nu import ensure_nu
+from nu.shapes import MutableShapesSequenceRefBase, Slot
 
 from .base import RefBase
 from .shape import ShapeRef
 
 
 if TYPE_CHECKING:
-    from nu import Sentinel, Term
-    from nu.shape import Shape
+    from nu import Sentinel, Nu
+    from nu.shapes import Shape
 
 
 __all__ = [
@@ -38,9 +38,9 @@ class ShapesListRef[T: Shape](
         self._shape_type = shape_type
         self.item_type = dict
 
-    def _create_item_ref(self, index: int | Sentinel | Term[int | Sentinel]) -> ShapeRef[T]:
+    def _create_item_ref(self, index: int | Sentinel | Nu[int | Sentinel]) -> ShapeRef[T]:
         return ShapeRef(
-            address=ensure_term(index),
+            address=ensure_nu(index),
             shape_type=self._shape_type,
             parent=self,
             owner_shape=self._owner_shape,

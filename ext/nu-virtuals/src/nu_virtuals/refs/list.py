@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from virtuals.collections import MutableSequenceBase
 
-from nu.abc import (
+from nu import (
     AnyValue,
     BoolValue,
     BytesValue,
@@ -18,9 +18,9 @@ from nu.abc import (
     ListValue,
     SetValue,
     StrValue,
-    ensure_term,
+    ensure_nu,
 )
-from nu.shape import ReactiveSequenceRefBase, Shape, Slot
+from nu.shapes import ReactiveSequenceRefBase, Shape, Slot
 
 from .base import ViewRef
 from .items import ItemRef
@@ -29,7 +29,7 @@ from .items import ItemRef
 if TYPE_CHECKING:
     from virtuals.loc import path
 
-    from nu import Sentinel, Term, Value
+    from nu import Sentinel, Nu, Value
 
 
 def _value_type_for(python_type: type) -> type[Value]:
@@ -71,22 +71,22 @@ class ListRef[
     Operations work lazily on PV views without loading into memory.
     """
 
-    def result(self, op: Term) -> ListValue[T]:
+    def result(self, op: Nu) -> ListValue[T]:
         return ListValue(op)
 
-    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorValue:
         return IteratorValue(operand)
 
-    def _wrap_sliceable_result(self, operand: Term) -> ListValue[T]:
+    def _wrap_sliceable_result(self, operand: Nu) -> ListValue[T]:
         return ListValue(operand)  # slices stay materialized
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         return AnyValue(operand)
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         item_type: type[T],
         item_value_type: type[ItemValueT],
         view_type: type[MutableSequenceBase],
@@ -101,11 +101,11 @@ class ListRef[
         self.item_value_type = item_value_type
 
     def _create_item_ref(
-        self, index: int | Sentinel | Term[int | Sentinel]
+        self, index: int | Sentinel | Nu[int | Sentinel]
     ) -> ItemRef[T, ItemValueT]:
         """Create a reference to an item at the given index."""
         return ItemRef(
-            address=ensure_term(index),
+            address=ensure_nu(index),
             value_type=self.item_type,
             value_value_type=self.item_value_type,
             parent=self,

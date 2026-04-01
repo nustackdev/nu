@@ -1,4 +1,4 @@
-"""Type conversions — Value-returning factories over morphism Ops.
+"""Type conversions — Value-returning factories over op Ops.
 
 ToInt, ToFloat, ToBool, ToStr, ToBytes (primitives)
 ToList, ToSet (collections)

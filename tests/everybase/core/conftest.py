@@ -2,15 +2,22 @@ from __future__ import annotations
 
 import pytest
 
-from nu import Node
+from nu import Nu
 
 
-class SimpleNode(Node):
-    """Concrete node for testing with extra state (label)."""
+class SimpleNode(Nu):
+    """Concrete Nu for testing with extra state (label)."""
 
     def __init__(self, label, *children):
         super().__init__(*children)
         self._label = label
+
+    async def execute(self, ctx):
+        return self._label
+
+    @property
+    def is_self_pure(self):
+        return True
 
     @property
     def label(self):

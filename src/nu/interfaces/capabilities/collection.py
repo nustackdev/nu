@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from nu.terms import IntArg, Term
+    from nu.terms import IntArg, Nu
 
 
 __all__ = [
@@ -51,7 +51,7 @@ class SliceableProtocol[ResultT](Protocol):
 class IndexableBase[KeyT, ResultValue]:
     """Base for values that support index/key access."""
 
-    def _wrap_indexable_result(self, operand: Term) -> Term:
+    def _wrap_indexable_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -65,7 +65,7 @@ class IndexableBase[KeyT, ResultValue]:
 class SliceableBase[ResultT]:
     """Base for values that support slicing."""
 
-    def _wrap_sliceable_result(self, operand: Term) -> Term:
+    def _wrap_sliceable_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 

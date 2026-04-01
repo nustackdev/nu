@@ -1,10 +1,10 @@
-"""Primitive ref morphisms — flat name-based Context ops."""
+"""Primitive ref ops — flat name-based Context ops."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Morphism, Operation, Sentinel
+from nu.terms import Op, Calculation, Sentinel
 
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ __all__ = [
 ]
 
 
-class PrimGetOp[T](Operation, Morphism[T | Sentinel]):
+class PrimGetOp[T](Calculation, Op[T | Sentinel]):
     """Read value by name from context: ctx[name]."""
 
     def __init__(self, ref: PrimRef[T]) -> None:
@@ -31,7 +31,7 @@ class PrimGetOp[T](Operation, Morphism[T | Sentinel]):
         return ctx.attrs[self._ref.name]
 
 
-class PrimExistsOp(Operation, Morphism[bool]):
+class PrimExistsOp(Calculation, Op[bool]):
     """Check if name exists in context."""
 
     def __init__(self, ref: PrimRef) -> None:

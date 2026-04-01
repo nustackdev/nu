@@ -1,4 +1,4 @@
-"""Iterable transformations — Value-returning factories over morphism Ops.
+"""Iterable transformations — Value-returning factories over op Ops.
 
 Map, Filter, Reversed, Flatten, Unique, Pluck, FilterBy (lazy -> IteratorValue)
 Sorted (eager -> ListValue)

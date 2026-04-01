@@ -1,22 +1,22 @@
 # ruff: noqa: D102
-"""Collection-level morphisms — get, set, delete, exists, missing.
+"""Collection-level ops — get, set, delete, exists, missing.
 
-Same logic as item morphisms but distinct tree node types, so substrates
+Same logic as item ops but distinct tree node types, so substrates
 can match on CollectionLoadOp vs ItemLoadOp for type-specific deformations
 (e.g. PV primitive optimizations only target Item* variants).
 
-All ops use the same parent[address] primitives as item morphisms.
+All ops use the same parent[address] primitives as item ops.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import EMPTY, Command, Morphism, Operation, Sentinel
+from nu import EMPTY, Command, Op, Calculation, Sentinel
 
 
 if TYPE_CHECKING:
-    from nu import Context, Term
+    from nu import Context, Nu
 
 
 __all__ = [
@@ -28,7 +28,7 @@ __all__ = [
 ]
 
 
-class CollectionLoadOp[T](Operation, Morphism[T | Sentinel]):
+class CollectionLoadOp[T](Calculation, Op[T | Sentinel]):
     """Read collection from parent: parent[address]."""
 
     def __init__(self, ref: object) -> None:
@@ -47,10 +47,10 @@ class CollectionLoadOp[T](Operation, Morphism[T | Sentinel]):
         return f"CollectionLoadOp({self.ref!r})"
 
 
-class CollectionStoreCmd[T](Command, Morphism[None]):
+class CollectionStoreCmd[T](Command, Op[None]):
     """Write collection to parent: parent[address] = data. Returns None."""
 
-    def __init__(self, ref: object, data: Term[T | Sentinel]) -> None:
+    def __init__(self, ref: object, data: Nu[T | Sentinel]) -> None:
         super().__init__(ref, data)
         self.ref = ref
         self.data_expr = data
@@ -69,7 +69,7 @@ class CollectionStoreCmd[T](Command, Morphism[None]):
         return f"CollectionStoreCmd({self.ref!r}, {self.data_expr!r})"
 
 
-class CollectionEraseCmd(Command, Morphism[None]):
+class CollectionEraseCmd(Command, Op[None]):
     """Delete collection from parent: del parent[address]."""
 
     def __init__(self, ref: object) -> None:
@@ -86,7 +86,7 @@ class CollectionEraseCmd(Command, Morphism[None]):
         return f"CollectionEraseCmd({self.ref!r})"
 
 
-class CollectionExistsOp(Operation, Morphism[bool]):
+class CollectionExistsOp(Calculation, Op[bool]):
     """Check if collection exists in parent: address in parent."""
 
     def __init__(self, ref: object) -> None:
@@ -102,7 +102,7 @@ class CollectionExistsOp(Operation, Morphism[bool]):
         return f"CollectionExistsOp({self.ref!r})"
 
 
-class CollectionMissingOp(Operation, Morphism[bool]):
+class CollectionMissingOp(Calculation, Op[bool]):
     """Check if collection is missing from parent: address not in parent."""
 
     def __init__(self, ref: object) -> None:

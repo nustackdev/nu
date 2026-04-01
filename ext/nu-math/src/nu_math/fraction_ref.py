@@ -11,7 +11,7 @@ from fractions import Fraction
 from typing import TYPE_CHECKING
 
 from nu import Sentinel
-from nu.abc import (
+from nu import (
     ComparableBase,
     FloatValue,
     IntValue,
@@ -22,7 +22,7 @@ from nu.abc import (
 
 
 if TYPE_CHECKING:
-    from nu import Term
+    from nu import Nu
 
     from .args import DecimalArg, FractionArg
 
@@ -50,32 +50,32 @@ class FractionType(
     @classmethod
     def from_components(
         cls,
-        numerator: int | Term[int],
-        denominator: int | Term[int] = 1,
+        numerator: int | Nu[int],
+        denominator: int | Nu[int] = 1,
     ) -> FractionValue:
         """Create a FractionValue from numerator and denominator."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return FractionValue(FuncCallOp(Fraction, numerator, denominator))
 
     @classmethod
-    def from_str(cls, value: str | Term[str]) -> FractionValue:
+    def from_str(cls, value: str | Nu[str]) -> FractionValue:
         """Create a FractionValue from a string."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return FractionValue(FuncCallOp(Fraction, value))
 
     @classmethod
-    def from_float(cls, value: float | Term[float]) -> FractionValue:
+    def from_float(cls, value: float | Nu[float]) -> FractionValue:
         """Create a FractionValue from a float."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return FractionValue(FuncCallOp(Fraction, value))
 
     @classmethod
     def from_decimal(cls, value: DecimalArg) -> FractionValue:
         """Create a FractionValue from a Decimal."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return FractionValue(FuncCallOp(Fraction, value))
 
@@ -85,13 +85,13 @@ class FractionType(
 
     def numerator(self) -> IntValue:
         """Get the numerator."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "numerator"))
 
     def denominator(self) -> IntValue:
         """Get the denominator."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return IntValue(FuncCallOp(getattr, self, "denominator"))
 
@@ -101,7 +101,7 @@ class FractionType(
 
     def __add__(self, other: FractionArg | int | float) -> FractionValue:
         """Add fractions."""
-        from nu.abc import AddOp
+        from nu import AddOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -109,7 +109,7 @@ class FractionType(
 
     def __radd__(self, other: Fraction | int | float) -> FractionValue:
         """Right add."""
-        from nu.abc import AddOp
+        from nu import AddOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -117,7 +117,7 @@ class FractionType(
 
     def __sub__(self, other: FractionArg | int | float) -> FractionValue:
         """Subtract fractions."""
-        from nu.abc import SubOp
+        from nu import SubOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -125,7 +125,7 @@ class FractionType(
 
     def __rsub__(self, other: Fraction | int | float) -> FractionValue:
         """Right subtract."""
-        from nu.abc import SubOp
+        from nu import SubOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -133,7 +133,7 @@ class FractionType(
 
     def __mul__(self, other: FractionArg | int | float) -> FractionValue:
         """Multiply fractions."""
-        from nu.abc import MulOp
+        from nu import MulOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -141,7 +141,7 @@ class FractionType(
 
     def __rmul__(self, other: Fraction | int | float) -> FractionValue:
         """Right multiply."""
-        from nu.abc import MulOp
+        from nu import MulOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -149,7 +149,7 @@ class FractionType(
 
     def __truediv__(self, other: FractionArg | int | float) -> FractionValue:
         """Divide fractions."""
-        from nu.abc import DivOp
+        from nu import DivOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -157,7 +157,7 @@ class FractionType(
 
     def __rtruediv__(self, other: Fraction | int | float) -> FractionValue:
         """Right divide."""
-        from nu.abc import DivOp
+        from nu import DivOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -165,7 +165,7 @@ class FractionType(
 
     def __floordiv__(self, other: FractionArg | int | float) -> IntValue:
         """Floor divide fractions."""
-        from nu.abc import FloorDivOp
+        from nu import FloorDivOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -173,7 +173,7 @@ class FractionType(
 
     def __mod__(self, other: FractionArg | int | float) -> FractionValue:
         """Modulo operation."""
-        from nu.abc import ModOp
+        from nu import ModOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -181,7 +181,7 @@ class FractionType(
 
     def __rfloordiv__(self, other: Fraction | int | float) -> IntValue:
         """Right floor divide."""
-        from nu.abc import FloorDivOp
+        from nu import FloorDivOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -189,7 +189,7 @@ class FractionType(
 
     def __rmod__(self, other: Fraction | int | float) -> FractionValue:
         """Right modulo."""
-        from nu.abc import ModOp
+        from nu import ModOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
@@ -197,19 +197,19 @@ class FractionType(
 
     def __pow__(self, other: int) -> FractionValue:
         """Raise to power."""
-        from nu.abc import PowOp
+        from nu import PowOp
 
         return FractionValue(PowOp(self, other))
 
     def __neg__(self) -> FractionValue:
         """Negate."""
-        from nu.abc import NegOp
+        from nu import NegOp
 
         return FractionValue(NegOp(self))
 
     def __abs__(self) -> FractionValue:
         """Absolute value."""
-        from nu.abc import AbsOp
+        from nu import AbsOp
 
         return FractionValue(AbsOp(self))
 
@@ -219,19 +219,19 @@ class FractionType(
 
     def limit_denominator(self, max_denominator: int = 10**6) -> FractionValue:
         """Find closest fraction with denominator at most max_denominator."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return FractionValue(MethodCallOp(self, "limit_denominator", max_denominator))
 
     def as_float(self) -> FloatValue:
         """Convert to float."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return FloatValue(FuncCallOp(float, self))
 
     def as_integer_ratio(self) -> TupleValue:
         """Return (numerator, denominator) tuple."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return TupleValue(MethodCallOp(self, "as_integer_ratio"))
 

@@ -14,7 +14,7 @@ from ..object import Object
 
 
 if TYPE_CHECKING:
-    from nu.terms import Term
+    from nu.terms import Nu
 
     from ...values import AnyValue, BoolValue
 
@@ -37,22 +37,22 @@ class AnyType(
     Results remain as AnyValue until type is known.
     """
 
-    def _wrap_arithmetic_result(self, operand: Term) -> AnyValue:
+    def _wrap_arithmetic_result(self, operand: Nu) -> AnyValue:
         from ...values import AnyValue
 
         return AnyValue(operand)
 
-    def _wrap_bitwise_result(self, operand: Term) -> AnyValue:
+    def _wrap_bitwise_result(self, operand: Nu) -> AnyValue:
         from ...values import AnyValue
 
         return AnyValue(operand)
 
-    def _wrap_comparison_result(self, operand: Term) -> BoolValue:
+    def _wrap_comparison_result(self, operand: Nu) -> BoolValue:
         from ...values import BoolValue
 
         return BoolValue(operand)
 
-    def _wrap_logical_result(self, operand: Term) -> BoolValue:
+    def _wrap_logical_result(self, operand: Nu) -> BoolValue:
         from ...values import BoolValue
 
         return BoolValue(operand)

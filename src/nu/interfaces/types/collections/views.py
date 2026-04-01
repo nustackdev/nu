@@ -27,7 +27,7 @@ from ..object import Object
 
 
 if TYPE_CHECKING:
-    from nu.terms import Term
+    from nu.terms import Nu
 
     from ...values import AnyValue, ListValue, SetValue
 
@@ -49,17 +49,17 @@ class DictKeysType[K](
     plus standard collection ops (contains, len_).
     """
 
-    def _wrap_set_result(self, operand: Term) -> SetValue[K]:
+    def _wrap_set_result(self, operand: Nu) -> SetValue[K]:
         from ...values import SetValue
 
         return SetValue(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> ListValue[K]:
+    def _wrap_iterable_result(self, operand: Nu) -> ListValue[K]:
         from ...values import ListValue
 
         return ListValue(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         from ...values import AnyValue
 
         return AnyValue(operand)
@@ -88,12 +88,12 @@ class DictValuesType[V](
     dict_values does not support set operations because values may not be hashable.
     """
 
-    def _wrap_iterable_result(self, operand: Term) -> ListValue[V]:
+    def _wrap_iterable_result(self, operand: Nu) -> ListValue[V]:
         from ...values import ListValue
 
         return ListValue(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         from ...values import AnyValue
 
         return AnyValue(operand)
@@ -123,17 +123,17 @@ class DictItemsType[K, V](
     plus standard collection ops (contains, len_).
     """
 
-    def _wrap_set_result(self, operand: Term) -> SetValue[tuple[K, V]]:
+    def _wrap_set_result(self, operand: Nu) -> SetValue[tuple[K, V]]:
         from ...values import SetValue
 
         return SetValue(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> ListValue[tuple[K, V]]:
+    def _wrap_iterable_result(self, operand: Nu) -> ListValue[tuple[K, V]]:
         from ...values import ListValue
 
         return ListValue(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
+    def _wrap_element_result(self, operand: Nu) -> AnyValue:
         from ...values import AnyValue
 
         return AnyValue(operand)

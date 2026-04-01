@@ -26,7 +26,7 @@ from .collection import CollectionBase, CollectionProtocol
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from nu.terms import Arg, IntArg, Term
+    from nu.terms import Arg, IntArg, Nu
 
     from ..values import NoneValue
 
@@ -112,19 +112,19 @@ class MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
         ValueResultT: Result for value-level ops (get)
     """
 
-    def _wrap_keys_result(self, operand: Term) -> CollectionResultT:
+    def _wrap_keys_result(self, operand: Nu) -> CollectionResultT:
         """Override in subclass to wrap keys sequence result."""
         raise NotImplementedError()
 
-    def _wrap_values_result(self, operand: Term) -> CollectionResultT:
+    def _wrap_values_result(self, operand: Nu) -> CollectionResultT:
         """Override in subclass to wrap values sequence result."""
         raise NotImplementedError()
 
-    def _wrap_items_result(self, operand: Term) -> CollectionResultT:
+    def _wrap_items_result(self, operand: Nu) -> CollectionResultT:
         """Override in subclass to wrap items sequence result."""
         raise NotImplementedError()
 
-    def _wrap_value_result(self, operand: Term) -> ValueResultT:
+    def _wrap_value_result(self, operand: Nu) -> ValueResultT:
         """Override in subclass to wrap single value result."""
         raise NotImplementedError()
 

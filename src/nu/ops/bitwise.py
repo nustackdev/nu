@@ -1,4 +1,4 @@
-"""Bitwise morphisms.
+"""Bitwise ops.
 
 Unary: BitwiseNotOp
 Binary: BitwiseAndOp, BitwiseOrOp, XorOp, LShiftOp, RShiftOp
@@ -9,7 +9,7 @@ Use .bitand(), .bitor(), .bitnot() methods instead.
 
 from __future__ import annotations
 
-from nu.terms import INVALID, BinaryOperation, Sentinel, UnaryOperation
+from nu.terms import INVALID, BinaryCalc, Sentinel, UnaryCalc
 
 
 __all__ = [
@@ -27,7 +27,7 @@ __all__ = [
 # =============================================================================
 
 
-class BitwiseNotOp[ResultT](UnaryOperation[ResultT]):
+class BitwiseNotOp[ResultT](UnaryCalc[ResultT]):
     """Bitwise NOT: ~operand (two's complement).
 
     Note: Python's ~ operator is blocked in traits.
@@ -47,7 +47,7 @@ class BitwiseNotOp[ResultT](UnaryOperation[ResultT]):
 # =============================================================================
 
 
-class BitwiseAndOp[ResultT](BinaryOperation[ResultT]):
+class BitwiseAndOp[ResultT](BinaryCalc[ResultT]):
     """Bitwise AND: left & right.
 
     Note: Distinct from AndOp (logical AND).
@@ -62,7 +62,7 @@ class BitwiseAndOp[ResultT](BinaryOperation[ResultT]):
             return INVALID
 
 
-class BitwiseOrOp[ResultT](BinaryOperation[ResultT]):
+class BitwiseOrOp[ResultT](BinaryCalc[ResultT]):
     """Bitwise OR: left | right.
 
     Note: Distinct from OrOp (logical OR).
@@ -77,7 +77,7 @@ class BitwiseOrOp[ResultT](BinaryOperation[ResultT]):
             return INVALID
 
 
-class XorOp[ResultT](BinaryOperation[ResultT]):
+class XorOp[ResultT](BinaryCalc[ResultT]):
     """Bitwise XOR: left ^ right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -88,7 +88,7 @@ class XorOp[ResultT](BinaryOperation[ResultT]):
             return INVALID
 
 
-class LShiftOp[ResultT](BinaryOperation[ResultT]):
+class LShiftOp[ResultT](BinaryCalc[ResultT]):
     """Left shift: left << right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
@@ -99,7 +99,7 @@ class LShiftOp[ResultT](BinaryOperation[ResultT]):
             return INVALID
 
 
-class RShiftOp[ResultT](BinaryOperation[ResultT]):
+class RShiftOp[ResultT](BinaryCalc[ResultT]):
     """Right shift: left >> right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:

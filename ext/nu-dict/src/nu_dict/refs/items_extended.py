@@ -53,18 +53,18 @@ from nu_math import (
 )
 from nu_path import PathType, PathValue
 from nu_uuid import UUIDType, UUIDValue
-from nu import Arg, Term
-from nu.abc import (
+from nu import Arg, Nu
+from nu import (
     FuncCallOp,
     MethodCallOp,
     NoneValue,
     ToFloatOp,
     ToIntOp,
     ToStrOp,
-    ensure_term,
+    ensure_nu,
 )
-from nu.shape import Slot
-from nu.shape.morphisms.item import ItemStoreCmd
+from nu.shapes import Slot
+from nu.shapes.ops.item import ItemStoreCmd
 
 from .base import RefBase
 
@@ -75,7 +75,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from uuid import UUID
 
-    from nu.shape import Shape
+    from nu.shapes import Shape
 
 
 __all__ = [
@@ -105,7 +105,7 @@ class DecimalRef(RefBase[str], DecimalType):
     def __init__(
         self,
         *,
-        address: str | Term,
+        address: str | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -120,15 +120,15 @@ class DecimalRef(RefBase[str], DecimalType):
 
         return DecimalCls(raw) if not isinstance(raw, DecimalCls) else raw
 
-    def result(self, op: Term) -> object:
+    def result(self, op: Nu) -> object:
         return DecimalValue.from_str(op)
 
     def store(self, value: Arg[Decimal | str]) -> NoneValue:
-        if isinstance(value, Term):
+        if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class FractionRef(RefBase[str], FractionType):
@@ -137,7 +137,7 @@ class FractionRef(RefBase[str], FractionType):
     def __init__(
         self,
         *,
-        address: str | Term,
+        address: str | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -152,15 +152,15 @@ class FractionRef(RefBase[str], FractionType):
 
         return FractionCls(raw) if not isinstance(raw, FractionCls) else raw
 
-    def result(self, op: Term) -> object:
+    def result(self, op: Nu) -> object:
         return FractionValue.from_str(op)
 
     def store(self, value: Arg[Fraction | str]) -> NoneValue:
-        if isinstance(value, Term):
+        if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class ComplexRef(RefBase[str], ComplexType):
@@ -169,7 +169,7 @@ class ComplexRef(RefBase[str], ComplexType):
     def __init__(
         self,
         *,
-        address: str | Term,
+        address: str | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -185,7 +185,7 @@ class ComplexRef(RefBase[str], ComplexType):
         parts = str(raw).split(",")
         return complex(float(parts[0]), float(parts[1]))
 
-    def result(self, op: Term) -> object:
+    def result(self, op: Nu) -> object:
         def parse_complex(s: str) -> complex:
             parts = s.split(",")
             return complex(float(parts[0]), float(parts[1]))
@@ -194,7 +194,7 @@ class ComplexRef(RefBase[str], ComplexType):
 
     def store(self, value: Arg[complex | str]) -> NoneValue:
         # complex uses custom "real,imag" format — str(complex) gives "(1+2j)"
-        if isinstance(value, Term):
+        if isinstance(value, Nu):
 
             def format_complex(c: complex) -> str:
                 return f"{c.real},{c.imag}"
@@ -204,7 +204,7 @@ class ComplexRef(RefBase[str], ComplexType):
             val = f"{value.real},{value.imag}"
         else:
             val = str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class BasisPointRef(RefBase[int], BasisPointType):
@@ -213,7 +213,7 @@ class BasisPointRef(RefBase[int], BasisPointType):
     def __init__(
         self,
         *,
-        address: str | Term,
+        address: str | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -226,15 +226,15 @@ class BasisPointRef(RefBase[int], BasisPointType):
     def coerce(self, raw: object) -> BasisPoint:
         return BasisPoint(int(raw)) if not isinstance(raw, BasisPoint) else raw
 
-    def result(self, op: Term) -> object:
+    def result(self, op: Nu) -> object:
         return BasisPointValue.from_int(op)
 
     def store(self, value: Arg[BasisPoint | int]) -> NoneValue:
-        if isinstance(value, Term):
+        if isinstance(value, Nu):
             val = ToIntOp(value)
         else:
             val = int(value)
-        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class PercentageRef(RefBase[float], PercentageType):
@@ -243,7 +243,7 @@ class PercentageRef(RefBase[float], PercentageType):
     def __init__(
         self,
         *,
-        address: str | Term,
+        address: str | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -256,15 +256,15 @@ class PercentageRef(RefBase[float], PercentageType):
     def coerce(self, raw: object) -> Percentage:
         return Percentage(float(raw)) if not isinstance(raw, Percentage) else raw
 
-    def result(self, op: Term) -> object:
+    def result(self, op: Nu) -> object:
         return PercentageValue.from_float(op)
 
     def store(self, value: Arg[Percentage | float]) -> NoneValue:
-        if isinstance(value, Term):
+        if isinstance(value, Nu):
             val = ToFloatOp(value)
         else:
             val = float(value)
-        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
 
 
 # =============================================================================
@@ -278,7 +278,7 @@ class DateRef(RefBase[str], DateType):
     def __init__(
         self,
         *,
-        address: str | Term,
+        address: str | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -293,16 +293,16 @@ class DateRef(RefBase[str], DateType):
             return raw
         return date.fromisoformat(str(raw))
 
-    def result(self, op: Term) -> object:
+    def result(self, op: Nu) -> object:
         return DateValue.from_iso(op)
 
     def store(self, value: Arg[date | str]) -> NoneValue:
         """Stores as ISO string."""
-        if isinstance(value, Term):
+        if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_term(val)))
+        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class DatetimeRef(RefBase[str], DatetimeType):
@@ -311,7 +311,7 @@ class DatetimeRef(RefBase[str], DatetimeType):
     def __init__(
         self,
         *,
-        address: str | Term,
+        address: str | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -328,16 +328,16 @@ class DatetimeRef(RefBase[str], DatetimeType):
             return datetime.fromtimestamp(raw, tz=UTC)
         return datetime.fromisoformat(str(raw))
 
-    def result(self, op: Term) -> object:
+    def result(self, op: Nu) -> object:
         return DatetimeValue.from_iso(op)
 
     def store(self, value: Arg[datetime | str]) -> DatetimeValue:
         """Stores as ISO string."""
-        if isinstance(value, Term):
+        if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, datetime) else str(value)
-        return DatetimeValue(ItemStoreCmd(self, ensure_term(val)))
+        return DatetimeValue(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class TimeRef(RefBase[str], TimeType):
@@ -346,7 +346,7 @@ class TimeRef(RefBase[str], TimeType):
     def __init__(
         self,
         *,
-        address: str | Term,
+        address: str | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -361,16 +361,16 @@ class TimeRef(RefBase[str], TimeType):
             return raw
         return time.fromisoformat(str(raw))
 
-    def result(self, op: Term) -> object:
+    def result(self, op: Nu) -> object:
         return TimeValue.from_iso(op)
 
     def store(self, value: Arg[time | str]) -> TimeValue:
         """Stores as ISO string."""
-        if isinstance(value, Term):
+        if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, time) else str(value)
-        return TimeValue(ItemStoreCmd(self, ensure_term(val)))
+        return TimeValue(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class TimedeltaRef(RefBase[float], TimedeltaType):
@@ -379,7 +379,7 @@ class TimedeltaRef(RefBase[float], TimedeltaType):
     def __init__(
         self,
         *,
-        address: str | Term,
+        address: str | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -394,19 +394,19 @@ class TimedeltaRef(RefBase[float], TimedeltaType):
             return raw
         return timedelta(seconds=float(raw))
 
-    def result(self, op: Term) -> object:
+    def result(self, op: Nu) -> object:
         return TimedeltaValue.from_seconds(op)
 
     def store(self, value: Arg[timedelta | float]) -> TimedeltaValue:
         """Stores as float (total seconds)."""
-        if isinstance(value, Term):
+        if isinstance(value, Nu):
             # timedelta is stdlib — no __float__, so use .total_seconds()
             val = MethodCallOp(value, "total_seconds")
         elif isinstance(value, timedelta):
             val = value.total_seconds()
         else:
             val = float(value)
-        return TimedeltaValue(ItemStoreCmd(self, ensure_term(val)))
+        return TimedeltaValue(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class TimezoneRef(RefBase[str], TimezoneType):
@@ -415,7 +415,7 @@ class TimezoneRef(RefBase[str], TimezoneType):
     def __init__(
         self,
         *,
-        address: str | Term,
+        address: str | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -439,7 +439,7 @@ class TimezoneRef(RefBase[str], TimezoneType):
         minutes = int(parts[1]) if len(parts) > 1 else 0
         return timezone(timedelta(hours=sign * hours, minutes=sign * minutes))
 
-    def result(self, op: Term) -> object:
+    def result(self, op: Nu) -> object:
         def parse_timezone(s: str) -> timezone:
             if s == "UTC":
                 from datetime import UTC
@@ -455,7 +455,7 @@ class TimezoneRef(RefBase[str], TimezoneType):
 
     def store(self, value: Arg[timezone | str]) -> TimezoneValue:
         # timezone uses custom offset format — no standard dunder
-        if isinstance(value, Term):
+        if isinstance(value, Nu):
 
             def format_timezone(tz: timezone) -> str:
                 from datetime import UTC
@@ -486,7 +486,7 @@ class TimezoneRef(RefBase[str], TimezoneType):
                 val = f"{sign}{hours:02d}:{minutes:02d}"
         else:
             val = str(value)
-        return TimezoneValue(ItemStoreCmd(self, ensure_term(val)))
+        return TimezoneValue(ItemStoreCmd(self, ensure_nu(val)))
 
 
 # =============================================================================
@@ -500,7 +500,7 @@ class PathRef(RefBase[str], PathType):
     def __init__(
         self,
         *,
-        address: str | Term,
+        address: str | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -515,15 +515,15 @@ class PathRef(RefBase[str], PathType):
 
         return PurePath(raw) if not isinstance(raw, PurePath) else raw
 
-    def result(self, op: Term) -> object:
+    def result(self, op: Nu) -> object:
         return PathValue.from_str(op)
 
     def store(self, value: Arg[Path | str]) -> PathValue:
-        if isinstance(value, Term):
+        if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return PathValue(ItemStoreCmd(self, ensure_term(val)))
+        return PathValue(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class UUIDRef(RefBase[str], UUIDType):
@@ -532,7 +532,7 @@ class UUIDRef(RefBase[str], UUIDType):
     def __init__(
         self,
         *,
-        address: str | Term,
+        address: str | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -547,12 +547,12 @@ class UUIDRef(RefBase[str], UUIDType):
 
         return uuid.UUID(raw) if not isinstance(raw, uuid.UUID) else raw
 
-    def result(self, op: Term) -> object:
+    def result(self, op: Nu) -> object:
         return UUIDValue.from_str(op)
 
     def store(self, value: Arg[UUID | str]) -> UUIDValue:
-        if isinstance(value, Term):
+        if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return UUIDValue(ItemStoreCmd(self, ensure_term(val)))
+        return UUIDValue(ItemStoreCmd(self, ensure_nu(val)))

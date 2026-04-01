@@ -35,7 +35,7 @@ from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
 
 from nu_virtuals.paths import ViewPathSer
 from nu import EMPTY, Context, Sentinel
-from nu.shape import Ref
+from nu.shapes import Ref
 
 
 if TYPE_CHECKING:
@@ -97,7 +97,7 @@ def _try_build_static_path(ref: Ref) -> tuple | None:
     """Build full path tuple at construction time if all addresses are static.
 
     Walks the parent chain collecting (raw_address, type_marker) segments.
-    Returns None if any address in the chain is dynamic (i.e. a Term)
+    Returns None if any address in the chain is dynamic (i.e. a Nu)
     or if any ref lacks a type marker (non-virtuals ref in the chain).
     """
     segments: list[tuple] = []

@@ -1,7 +1,7 @@
 """Convert Python objects to Ref expressions.
 
 This module provides conversion utilities for the unified Ref system:
-- ensure_term(): Wrap Python values in appropriate Ref classes
+- ensure_nu(): Wrap Python values in appropriate Ref classes
 - typed_value(): Wrap operations in typed Ref classes
 """
 
@@ -12,34 +12,34 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from nu.terms import Term, Value
+    from nu.terms import Nu, Value
 
 __all__ = [
-    "ensure_term",
+    "ensure_nu",
     "typed_value",
 ]
 
 logger = logging.getLogger(__name__)
 
 
-def ensure_term(value: object) -> Term:
-    """Ensure value is a Term, wrapping in appropriate Ref if needed.
+def ensure_nu(value: object) -> Nu:
+    """Ensure value is a Nu, wrapping in appropriate Ref if needed.
 
     Converts Python literals to Ref expressions automatically.
-    If already a Term, returns unchanged.
+    If already a Nu, returns unchanged.
 
     Args:
-        value: Value to ensure is a Term (can be Term or literal)
+        value: Value to ensure is a Nu (can be Nu or literal)
 
     Returns:
-        Term (unchanged if already Term, wrapped in Ref otherwise)
+        Nu (unchanged if already Nu, wrapped in Ref otherwise)
 
     Example:
-        >>> ensure_term(42)  # → IntValue(42)
-        >>> ensure_term("hello")  # → StrValue("hello")
-        >>> ensure_term(price.get())  # → price.get() (unchanged)
+        >>> ensure_nu(42)  # → IntValue(42)
+        >>> ensure_nu("hello")  # → StrValue("hello")
+        >>> ensure_nu(price.get())  # → price.get() (unchanged)
     """
-    from nu.terms import Term
+    from nu.terms import Nu
 
     from nu.interfaces.values import (
         BoolValue,
@@ -55,7 +55,7 @@ def ensure_term(value: object) -> Term:
         TupleValue,
     )
 
-    if isinstance(value, Term):
+    if isinstance(value, Nu):
         return value
     elif isinstance(value, bool):  # Must check bool before int (bool is subclass)
         return BoolValue(value)
@@ -84,12 +84,12 @@ def ensure_term(value: object) -> Term:
         raise TypeError(f"Not supported type {value.__class__.__name__}")
 
 
-def typed_value(result_type: object, op: Term) -> Value:
+def typed_value(result_type: object, op: Nu) -> Value:
     """Wrap an operation in a typed Value.
 
     Args:
         result_type: Expected result type (e.g., int, str, float)
-        op: Operation to wrap
+        op: Calculation to wrap
 
     Returns:
         Typed Value wrapping the operation
@@ -136,5 +136,5 @@ def typed_value(result_type: object, op: Term) -> Value:
     elif result_type is frozenset:
         return FrozenSetValue(op)
     else:
-        logger.debug(f"Unknown type `{result_type}` for term `{op}`")
+        logger.debug(f"Unknown type `{result_type}` for Nu `{op}`")
         return AnyValue(op)

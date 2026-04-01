@@ -1,8 +1,8 @@
 """ValueBase — Python memory storage substrate for values.
 
 Provides:
-- source: Public property — the source (Term child or literal)
-- _literal: Stores non-Term sources (_NO_LITERAL when Term-backed)
+- source: Public property — the source (Nu child or literal)
+- _literal: Stores non-Nu sources (_NO_LITERAL when Nu-backed)
 - execute(): Evaluates source and returns value
 """
 
@@ -10,11 +10,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Arg, Sentinel, Term, Value
+from nu.terms import Arg, Sentinel, Nu, Value
 
 
 class _NoLiteral:
-    """Sentinel: this Value is Term-backed, no literal.
+    """Sentinel: this Value is Nu-backed, no literal.
 
     Singleton that survives pickling across processes.
     """
@@ -48,15 +48,15 @@ class ValueBase[T](Value[T | Sentinel]):
     """Value substrate base for Python runtime memory.
 
     Provides:
-    - source: Public property — the source (Term child or literal)
-    - _literal: Stores non-Term sources (_NO_LITERAL when Term-backed)
+    - source: Public property — the source (Nu child or literal)
+    - _literal: Stores non-Nu sources (_NO_LITERAL when Nu-backed)
     - execute(): Evaluates source and returns value
 
     Usage:
         class IntValue(ValueBase[int], IntType):
             pass
 
-    For Term sources, the Term is stored as children[0]. with_children()
+    For Nu sources, the Nu is stored as children[0]. with_children()
     automatically updates it — no manual sync needed.
     For literal sources, the value is stored in _literal.
     """
@@ -67,9 +67,9 @@ class ValueBase[T](Value[T | Sentinel]):
         """Initialize with source.
 
         Args:
-            source: Either a Term (computation) or literal value
+            source: Either a Nu (computation) or literal value
         """
-        if isinstance(source, Term):
+        if isinstance(source, Nu):
             super().__init__(source)
             self._literal = _NO_LITERAL
         else:
@@ -78,7 +78,7 @@ class ValueBase[T](Value[T | Sentinel]):
 
     @property
     def source(self) -> Arg[T]:
-        """The source of this value — either a Term child or a literal."""
+        """The source of this value — either a Nu child or a literal."""
         if self._literal is not _NO_LITERAL:
             return self._literal  # type: ignore[return-value]
         return self.children[0] if self.children else _NO_LITERAL  # type: ignore[return-value]
@@ -86,7 +86,7 @@ class ValueBase[T](Value[T | Sentinel]):
     async def execute(self, ctx: Context) -> T | Sentinel:
         """Get the value by evaluating the source.
 
-        - Term source: execute children[0]
+        - Nu source: execute children[0]
         - Literal source: return directly
 
         Args:

@@ -5,9 +5,9 @@ Tests for:
 """
 
 from nu_datetime import TimeValue as TimeRef
-from nu.abc import FuncCallOp, MethodCallOp
-from nu.abc import IntValue as IntRef
-from nu.abc import StrValue as StrRef
+from nu import FuncCallOp, MethodCallOp
+from nu import IntValue as IntRef
+from nu import StrValue as StrRef
 
 
 # =============================================================================

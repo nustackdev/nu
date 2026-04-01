@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from nu.terms import Term
+    from nu.terms import Nu
 
 
 __all__ = [
@@ -77,7 +77,7 @@ class LogicalProtocol[OperandT, ResultT](
 class AndableBase[OperandT, ResultT]:
     """Base for values that support logical AND."""
 
-    def _wrap_logical_result(self, operand: Term) -> Term:
+    def _wrap_logical_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -91,7 +91,7 @@ class AndableBase[OperandT, ResultT]:
 class OrableBase[OperandT, ResultT]:
     """Base for values that support logical OR."""
 
-    def _wrap_logical_result(self, operand: Term) -> Term:
+    def _wrap_logical_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 
@@ -106,11 +106,11 @@ class NotableBase[ResultT]:
     """Base for values that support logical NOT and bool conversion.
 
     Python ``bool()`` / ``if node:`` use default truthiness (always True,
-    inherited from ``Node.__bool__``).
+    inherited from ``Nu.__bool__``).
     Use ``.bool_()`` for DSL-level bool that builds expression trees.
     """
 
-    def _wrap_logical_result(self, operand: Term) -> Term:
+    def _wrap_logical_result(self, operand: Nu) -> Nu:
         """Override in subclass to wrap result in appropriate type."""
         raise NotImplementedError()
 

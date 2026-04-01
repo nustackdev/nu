@@ -1,4 +1,4 @@
-"""Set morphisms — operations (pure) + commands (impure).
+"""Set ops — operations (pure) + commands (impure).
 
 Operations:
     UnionOp, IntersectionOp, DifferenceOp, SymmetricDifferenceOp
@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSet, Set
 
-from nu.terms import INVALID, BinaryCommand, BinaryOperation, Sentinel, UnaryCommand
+from nu.terms import INVALID, BinaryCmd, BinaryCalc, Sentinel, UnaryCmd
 
 
 __all__ = [
@@ -41,7 +41,7 @@ __all__ = [
 # =============================================================================
 
 
-class UnionOp[T](BinaryOperation[set[T] | frozenset[T]]):
+class UnionOp[T](BinaryCalc[set[T] | frozenset[T]]):
     """Set union: left | right."""
 
     def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
@@ -51,7 +51,7 @@ class UnionOp[T](BinaryOperation[set[T] | frozenset[T]]):
         return left | right  # type: ignore
 
 
-class IntersectionOp[T](BinaryOperation[set[T] | frozenset[T]]):
+class IntersectionOp[T](BinaryCalc[set[T] | frozenset[T]]):
     """Set intersection: left & right."""
 
     def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
@@ -61,7 +61,7 @@ class IntersectionOp[T](BinaryOperation[set[T] | frozenset[T]]):
         return left & right  # type: ignore
 
 
-class DifferenceOp[T](BinaryOperation[set[T] | frozenset[T]]):
+class DifferenceOp[T](BinaryCalc[set[T] | frozenset[T]]):
     """Set difference: left - right."""
 
     def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
@@ -71,7 +71,7 @@ class DifferenceOp[T](BinaryOperation[set[T] | frozenset[T]]):
         return left - right  # type: ignore
 
 
-class SymmetricDifferenceOp[T](BinaryOperation[set[T] | frozenset[T]]):
+class SymmetricDifferenceOp[T](BinaryCalc[set[T] | frozenset[T]]):
     """Set symmetric difference: left ^ right."""
 
     def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
@@ -81,7 +81,7 @@ class SymmetricDifferenceOp[T](BinaryOperation[set[T] | frozenset[T]]):
         return left ^ right  # type: ignore
 
 
-class IsSubsetOp(BinaryOperation[bool]):
+class IsSubsetOp(BinaryCalc[bool]):
     """Test if subset: left <= right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -91,7 +91,7 @@ class IsSubsetOp(BinaryOperation[bool]):
         return left <= right
 
 
-class IsSupersetOp(BinaryOperation[bool]):
+class IsSupersetOp(BinaryCalc[bool]):
     """Test if superset: left >= right."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -101,7 +101,7 @@ class IsSupersetOp(BinaryOperation[bool]):
         return left >= right
 
 
-class IsDisjointOp(BinaryOperation[bool]):
+class IsDisjointOp(BinaryCalc[bool]):
     """Test if disjoint: left.isdisjoint(right)."""
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
@@ -116,7 +116,7 @@ class IsDisjointOp(BinaryOperation[bool]):
 # =============================================================================
 
 
-class AddCmd[T](BinaryCommand[None]):
+class AddCmd[T](BinaryCmd[None]):
     """Add element to set: s.add(value). Returns None (mutates in-place)."""
 
     def apply(self, left: object, right: object) -> None | Sentinel:
@@ -127,7 +127,7 @@ class AddCmd[T](BinaryCommand[None]):
         return None
 
 
-class RemoveCmd[T](BinaryCommand[None]):
+class RemoveCmd[T](BinaryCmd[None]):
     """Remove element from set: s.remove(value). Returns None, or INVALID if not found."""
 
     def apply(self, left: object, right: object) -> None | Sentinel:
@@ -141,7 +141,7 @@ class RemoveCmd[T](BinaryCommand[None]):
         return None
 
 
-class DiscardCmd[T](BinaryCommand[None]):
+class DiscardCmd[T](BinaryCmd[None]):
     """Discard element from set: s.discard(value). Returns None (mutates in-place)."""
 
     def apply(self, left: object, right: object) -> None | Sentinel:
@@ -152,7 +152,7 @@ class DiscardCmd[T](BinaryCommand[None]):
         return None
 
 
-class SetPopCmd[T](UnaryCommand[T]):
+class SetPopCmd[T](UnaryCmd[T]):
     """Pop arbitrary element: s.pop(). Returns element, or INVALID if empty."""
 
     def apply(self, operand: object) -> T | Sentinel:
@@ -165,7 +165,7 @@ class SetPopCmd[T](UnaryCommand[T]):
             return INVALID
 
 
-class SetUpdateCmd[T](BinaryCommand[None]):
+class SetUpdateCmd[T](BinaryCmd[None]):
     """Update set with elements from other: s.update(other). Returns None."""
 
     def apply(self, left: object, right: object) -> None | Sentinel:
@@ -178,7 +178,7 @@ class SetUpdateCmd[T](BinaryCommand[None]):
         return None
 
 
-class IntersectionUpdateCmd[T](BinaryCommand[None]):
+class IntersectionUpdateCmd[T](BinaryCmd[None]):
     """Keep only elements found in both: s.intersection_update(other). Returns None."""
 
     def apply(self, left: object, right: object) -> None | Sentinel:
@@ -193,7 +193,7 @@ class IntersectionUpdateCmd[T](BinaryCommand[None]):
         return None
 
 
-class DifferenceUpdateCmd[T](BinaryCommand[None]):
+class DifferenceUpdateCmd[T](BinaryCmd[None]):
     """Remove elements found in other: s.difference_update(other). Returns None."""
 
     def apply(self, left: object, right: object) -> None | Sentinel:
@@ -206,7 +206,7 @@ class DifferenceUpdateCmd[T](BinaryCommand[None]):
         return None
 
 
-class SymmetricDifferenceUpdateCmd[T](BinaryCommand[None]):
+class SymmetricDifferenceUpdateCmd[T](BinaryCmd[None]):
     """Keep elements in either but not both: s.symmetric_difference_update(other). Returns None."""
 
     def apply(self, left: object, right: object) -> None | Sentinel:

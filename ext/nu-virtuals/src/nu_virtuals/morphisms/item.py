@@ -16,11 +16,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import EMPTY, Command, Morphism, Operation, Sentinel
+from nu import EMPTY, Command, Op, Calculation, Sentinel
 
 
 if TYPE_CHECKING:
-    from nu import Context, Term
+    from nu import Context, Nu
 
 
 __all__ = [
@@ -34,7 +34,7 @@ __all__ = [
 ]
 
 
-class EnsureLayoutCmd(Command, Morphism[None]):
+class EnsureLayoutCmd(Command, Op[None]):
     """Ensure view container and its internal layout exist in storage.
 
     Navigates to the view via fetch(), then calls _ensure_layout() to
@@ -64,7 +64,7 @@ class EnsureLayoutCmd(Command, Morphism[None]):
         return f"EnsureLayoutCmd({self.ref!r})"
 
 
-class InitCmd(Command, Morphism[None]):
+class InitCmd(Command, Op[None]):
     """Materialize container chain for a ViewRef.
 
     Navigates the view hierarchy via fetch(), triggering ensure_created()
@@ -88,7 +88,7 @@ class InitCmd(Command, Morphism[None]):
         return f"InitCmd({self.ref!r})"
 
 
-class ItemPrimitiveGetUnsafeOp[T](Operation, Morphism[T | Sentinel]):
+class ItemPrimitiveGetUnsafeOp[T](Calculation, Op[T | Sentinel]):
     """Read primitive value via _unsafe_primitive_read().
 
     Single ctx[] call — no marker parsing, no type checks.
@@ -116,7 +116,7 @@ class ItemPrimitiveGetUnsafeOp[T](Operation, Morphism[T | Sentinel]):
         return f"ItemPrimitiveGetUnsafeOp({self.ref!r})"
 
 
-class ItemPrimitiveSetUnsafeCmd[T](Command, Morphism[T]):
+class ItemPrimitiveSetUnsafeCmd[T](Command, Op[T]):
     """Write primitive via _unsafe_primitive_write(ensure_exists=True).
 
     Ensures the container chain exists before writing (calls ensure_created),
@@ -127,7 +127,7 @@ class ItemPrimitiveSetUnsafeCmd[T](Command, Morphism[T]):
         resolve_address(ctx) -> key/index
     """
 
-    def __init__(self, ref: object, value: Term[T | Sentinel]) -> None:
+    def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
         self.ref = ref
         self.value_expr = value
@@ -146,7 +146,7 @@ class ItemPrimitiveSetUnsafeCmd[T](Command, Morphism[T]):
         return f"ItemPrimitiveSetUnsafeCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command, Morphism[T]):
+class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command, Op[T]):
     """Write primitive via _unsafe_primitive_write() — full skip.
 
     Single ctx.put() call — no ensure_created, no validation reads.
@@ -157,7 +157,7 @@ class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command, Morphism[T]):
         resolve_address(ctx) -> key/index
     """
 
-    def __init__(self, ref: object, value: Term[T | Sentinel]) -> None:
+    def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
         self.ref = ref
         self.value_expr = value
@@ -176,7 +176,7 @@ class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command, Morphism[T]):
         return f"ItemPrimitiveSetUnsafeParentSkipCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class ItemPrimitiveDeleteUnsafeCmd(Command, Morphism[None]):
+class ItemPrimitiveDeleteUnsafeCmd(Command, Op[None]):
     """Delete primitive via _unsafe_primitive_delete().
 
     Single ctx.delete() call — no validation, no descendant cleanup.
@@ -202,7 +202,7 @@ class ItemPrimitiveDeleteUnsafeCmd(Command, Morphism[None]):
         return f"ItemPrimitiveDeleteUnsafeCmd({self.ref!r})"
 
 
-class PrimitiveStoreCmd[T](Command, Morphism[None]):
+class PrimitiveStoreCmd[T](Command, Op[None]):
     """Store a value via _primitive_write(), bypassing container type checks.
 
     Uses PrimitiveOpsBase._primitive_write() which does ensure_created() +

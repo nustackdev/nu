@@ -1,11 +1,11 @@
-"""Iterable grouping morphisms — GroupBy, Partition."""
+"""Iterable grouping ops — GroupBy, Partition."""
 
 from __future__ import annotations
 
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from nu.terms import INVALID, Sentinel, UnaryOperation
+from nu.terms import INVALID, Sentinel, UnaryCalc
 
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ __all__ = [
 ]
 
 
-class GroupByOp[K](UnaryOperation[list[tuple[K, list]]]):
+class GroupByOp[K](UnaryCalc[list[tuple[K, list]]]):
     """Group by key function: [(k, [items]) for k in unique keys].
 
     Groups elements by key function. Elements with same key are grouped together
@@ -47,7 +47,7 @@ class GroupByOp[K](UnaryOperation[list[tuple[K, list]]]):
         return f"GroupByOp({self._children[0]!r}, {self._key_fn!r})"
 
 
-class PartitionOp(UnaryOperation[tuple[list, list]]):
+class PartitionOp(UnaryCalc[tuple[list, list]]):
     """Partition by predicate: (matches, non_matches)."""
 
     def __init__(self, operand: object, predicate: Callable[[object], bool]) -> None:

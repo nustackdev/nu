@@ -8,7 +8,8 @@ don't require storage access.
 import pytest
 
 from nu import INVALID, Context
-from nu.abc import BoolValue, FloatValue, IntValue, ListValue, StrValue, all_, any_
+from nu.interfaces.values import BoolValue, FloatValue, IntValue, ListValue, StrValue
+from nu.ops.combiners import all_, any_
 
 
 @pytest.fixture

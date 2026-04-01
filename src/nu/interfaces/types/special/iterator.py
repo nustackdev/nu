@@ -1,7 +1,7 @@
 """Iterator type — lazy stream over elements.
 
 IteratorType[T] wraps an Iterator[T] and provides materialization methods.
-Transform morphisms (Map, Filter, Take, etc.) produce IteratorType values
+Transform ops (Map, Filter, Take, etc.) produce IteratorType values
 that stream element-by-element without intermediate lists.
 
 Materialization boundaries:
@@ -32,8 +32,8 @@ class IteratorType[T](
 ):
     """Type for lazy iterator streams.
 
-    Produced by transform morphisms (Map, Filter, Take, Drop, etc.).
-    Consumed by terminal morphisms (Reduce, Sum, Min, Max, etc.)
+    Produced by transform ops (Map, Filter, Take, Drop, etc.).
+    Consumed by terminal ops (Reduce, Sum, Min, Max, etc.)
     or materialized explicitly via to_list/to_set/to_tuple.
     """
 

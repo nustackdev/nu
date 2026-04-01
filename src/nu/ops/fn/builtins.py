@@ -1,4 +1,4 @@
-"""Builtin equivalents — Value-returning factories over morphism Ops.
+"""Builtin equivalents — Value-returning factories over op Ops.
 
 Len -> IntValue
 Contains -> BoolValue

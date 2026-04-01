@@ -1,5 +1,5 @@
 # ruff: noqa: D102
-"""Item access morphisms — CRUD for items within collections.
+"""Item access ops — CRUD for items within collections.
 
 ItemLoadOp: Read item value — parent[address]
 ItemStoreCmd: Write item value — parent[address] = value
@@ -12,21 +12,21 @@ __delitem__, __contains__). The ref provides fetch_parent(ctx) to get
 the collection and resolve_address(ctx) to get the key/index.
 
 Any substrate ref that implements fetch_parent(ctx) and resolve_address(ctx)
-can use these morphisms directly.
+can use these ops directly.
 
-PV-specific item morphisms (InitCmd, ItemPrimitiveGetOp, ItemPrimitiveSetCmd,
-ItemPrimitiveSetUnsafeCmd, ItemPrimitiveDeleteCmd) live in eb_virtuals.morphisms.item.
+PV-specific item ops (InitCmd, ItemPrimitiveGetOp, ItemPrimitiveSetCmd,
+ItemPrimitiveSetUnsafeCmd, ItemPrimitiveDeleteCmd) live in eb_virtuals.ops.item.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import EMPTY, Command, Morphism, Operation, Sentinel
+from nu import EMPTY, Command, Op, Calculation, Sentinel
 
 
 if TYPE_CHECKING:
-    from nu import Context, Term
+    from nu import Context, Nu
 
 
 __all__ = [
@@ -38,7 +38,7 @@ __all__ = [
 ]
 
 
-class ItemLoadOp[T](Operation, Morphism[T | Sentinel]):
+class ItemLoadOp[T](Calculation, Op[T | Sentinel]):
     """Read item from collection: parent[address].
 
     Uses __getitem__ on the parent collection. Returns EMPTY
@@ -65,7 +65,7 @@ class ItemLoadOp[T](Operation, Morphism[T | Sentinel]):
         return f"ItemLoadOp({self.ref!r})"
 
 
-class ItemStoreCmd[T](Command, Morphism[None]):
+class ItemStoreCmd[T](Command, Op[None]):
     """Write item to collection: parent[address] = value. Returns None.
 
     Uses __setitem__ on the parent collection.
@@ -75,7 +75,7 @@ class ItemStoreCmd[T](Command, Morphism[None]):
         resolve_address(ctx) -> key/index
     """
 
-    def __init__(self, ref: object, value: Term[T | Sentinel]) -> None:
+    def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
         self.ref = ref
         self.value_expr = value
@@ -93,7 +93,7 @@ class ItemStoreCmd[T](Command, Morphism[None]):
         return f"ItemStoreCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class ItemEraseCmd(Command, Morphism[None]):
+class ItemEraseCmd(Command, Op[None]):
     """Delete item from collection: del parent[address].
 
     Uses __delitem__ on the parent collection.
@@ -117,7 +117,7 @@ class ItemEraseCmd(Command, Morphism[None]):
         return f"ItemEraseCmd({self.ref!r})"
 
 
-class ItemExistsOp(Operation, Morphism[bool]):
+class ItemExistsOp(Calculation, Op[bool]):
     """Check if item exists in collection: address in parent.
 
     Uses __contains__ on the parent collection.
@@ -140,7 +140,7 @@ class ItemExistsOp(Operation, Morphism[bool]):
         return f"ItemExistsOp({self.ref!r})"
 
 
-class ItemMissingOp(Operation, Morphism[bool]):
+class ItemMissingOp(Calculation, Op[bool]):
     """Check if item is missing from collection: address not in parent.
 
     Inverse of ItemExistsOp.
