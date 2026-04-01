@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 from .base import Flow
 
 from nu.utils import ensure_nu
-from nu.interfaces.values import NoneValue
+from nu.interfaces import NoneI
 
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ class TryCatch(Flow):
 
     Children layout: ``[body, catch, finally_]``
 
-    Always 3 children. Missing handlers are ``NoneValue()`` sentinels.
+    Always 3 children. Missing handlers are ``NoneI()`` sentinels.
 
     Executes *body*. If an exception occurs and a *catch* handler is
     provided, the handler runs with ctx extended with ``"error"`` tag
@@ -51,7 +51,7 @@ class TryCatch(Flow):
         finally_: Nu | None = None,
         errors: tuple[type[Exception], ...] | type[Exception] | None = None,
     ) -> None:
-        _none = NoneValue()
+        _none = NoneI()
         super().__init__(body, catch or _none, finally_ or _none)
         if errors is not None and not isinstance(errors, tuple):
             errors = (errors,)
@@ -61,13 +61,13 @@ class TryCatch(Flow):
     def catch(self) -> Nu | None:
         """Catch handler, or None if absent."""
         c = self.children[1]
-        return None if isinstance(c, NoneValue) else c
+        return None if isinstance(c, NoneI) else c
 
     @property
     def finally_(self) -> Nu | None:
         """Finally handler, or None if absent."""
         c = self.children[2]
-        return None if isinstance(c, NoneValue) else c
+        return None if isinstance(c, NoneI) else c
 
     async def execute(self, ctx: Context) -> None:
         """Execute with try/catch/finally semantics.
@@ -104,7 +104,7 @@ class Retry(Flow):
     Children layout: ``[body, max_attempts, delay, backoff,
                         on_attempt_fail, on_success, on_fail]``
 
-    Always 7 children. Missing hooks are ``NoneValue()`` sentinels.
+    Always 7 children. Missing hooks are ``NoneI()`` sentinels.
 
     Executes *body* up to *max_attempts* times.
 
@@ -136,7 +136,7 @@ class Retry(Flow):
         on_success: Nu | None = None,
         on_fail: Nu | None = None,
     ) -> None:
-        _none = NoneValue()
+        _none = NoneI()
         super().__init__(
             body,
             ensure_nu(max_attempts),
@@ -151,19 +151,19 @@ class Retry(Flow):
     def on_attempt_fail(self) -> Nu | None:
         """On-attempt-fail hook, or None if absent."""
         c = self.children[4]
-        return None if isinstance(c, NoneValue) else c
+        return None if isinstance(c, NoneI) else c
 
     @property
     def on_success(self) -> Nu | None:
         """On-success hook, or None if absent."""
         c = self.children[5]
-        return None if isinstance(c, NoneValue) else c
+        return None if isinstance(c, NoneI) else c
 
     @property
     def on_fail(self) -> Nu | None:
         """On-fail hook, or None if absent."""
         c = self.children[6]
-        return None if isinstance(c, NoneValue) else c
+        return None if isinstance(c, NoneI) else c
 
     @property
     def has_hooks(self) -> bool:

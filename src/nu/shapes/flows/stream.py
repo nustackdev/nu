@@ -18,8 +18,8 @@ Runtime values flow through ctx.attrs, read by body via PrimRefs:
 
 Example::
 
-    from nu.context.attr_refs import PrimRef as Var
-from nu.context.attr_refs import PrimRef as StrVar
+    from nu.context.attr_refs import AttrRef as Var
+from nu.context.attr_refs import AttrRef as StrVar
 
     tx_id = Var("tx_id")
 
@@ -73,7 +73,7 @@ class Stream(Flow):
         source: Ref/Nu resolving to an ordered collection with
                 next_key_after() and on_children_change().
         body: Flow executed for each item. Reads current key from
-              ctx.attrs via PrimRef.
+              ctx.attrs via AttrRef.
         key: Attr name for current data key (default: "stream_key").
         log_key: Attr name for current log key (default: "stream_log_key").
         cursor: Ref/Nu resolving to initial cursor value for resume.
@@ -94,8 +94,8 @@ class Stream(Flow):
 
         source_term = ensure_nu(source)
 
-        # Cursor ref: PrimRef that reads from ctx.attrs (set by this flow each iteration)
-        from nu.context.attr_refs import PrimRef as StrPrimRef
+        # Cursor ref: AttrRef that reads from ctx.attrs (set by this flow each iteration)
+        from nu.context.attr_refs import AttrRef as StrPrimRef
 
         cursor_ref = StrPrimRef(log_key)
 

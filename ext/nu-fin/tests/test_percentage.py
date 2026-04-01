@@ -10,9 +10,9 @@ import pytest
 from nu_fin import Percentage
 from nu_fin import PercentageValue as PercentageRef
 from nu import AddOp, DivOp, FuncCallOp, MulOp, SubOp
-from nu import BoolValue as BoolRef
-from nu import FloatValue as FloatRef
-from nu import IntValue as IntRef
+from nu import BoolI as BoolRef
+from nu import FloatI as FloatRef
+from nu import IntI as IntRef
 
 
 # =============================================================================

@@ -25,7 +25,7 @@ class Slot[RefT: Ref]:
     Used internally by Ref.slot() implementations.
 
     Example:
-        class IntRef(PrimitiveRef[int], IntType):
+        class IntRef(PrimitiveRef[int], IntI):
             @classmethod
             def slot(cls) -> Self:
                 return Slot(cls)

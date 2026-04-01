@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interfaces.values import BoolValue, NoneValue
+from nu.interfaces import BoolI, NoneI
 
 
 if TYPE_CHECKING:
@@ -36,28 +36,28 @@ class ItemExistableBase:
     Provides exists() and missing() using ItemExistsOp/ItemMissingOp.
     """
 
-    def exists(self) -> BoolValue:
+    def exists(self) -> BoolI:
         from nu.shapes.ops.item import ItemExistsOp
 
-        return BoolValue(ItemExistsOp(self))
+        return BoolI(ItemExistsOp(self))
 
-    def missing(self) -> BoolValue:
+    def missing(self) -> BoolI:
         from nu.shapes.ops.item import ItemMissingOp
 
-        return BoolValue(ItemMissingOp(self))
+        return BoolI(ItemMissingOp(self))
 
 
 class ItemSettableBase[ValueT]:
     """Base for item refs that can write a value.
 
-    Provides store(value) using ItemStoreCmd, returning NoneValue.
+    Provides store(value) using ItemStoreCmd, returning NoneI.
     """
 
-    def store(self, value: ValueT | Sentinel | Nu[ValueT | Sentinel]) -> NoneValue:
+    def store(self, value: ValueT | Sentinel | Nu[ValueT | Sentinel]) -> NoneI:
         from nu.utils import ensure_nu
         from nu.shapes.ops.item import ItemStoreCmd
 
-        return NoneValue(ItemStoreCmd(self, ensure_nu(value)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(value)))
 
 
 class ItemDeletableBase:
@@ -66,7 +66,7 @@ class ItemDeletableBase:
     Provides erase() using ItemEraseCmd.
     """
 
-    def erase(self) -> NoneValue:
+    def erase(self) -> NoneI:
         from nu.shapes.ops.item import ItemEraseCmd
 
-        return NoneValue(ItemEraseCmd(self))
+        return NoneI(ItemEraseCmd(self))

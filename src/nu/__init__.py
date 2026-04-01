@@ -13,11 +13,18 @@ Subpackages:
 
 from __future__ import annotations
 
-from .context import Attributes, Context
-from .interfaces.capabilities import *  # noqa: F403
-from .interfaces.collections_abc import *  # noqa: F403
-from .interfaces.types import *  # noqa: F403
-from .interfaces.values import *  # noqa: F403
+from .context import (
+    AnyAttrRef,
+    AttrRef,
+    Attributes,
+    BoolAttrRef,
+    BytesAttrRef,
+    Context,
+    FloatAttrRef,
+    IntAttrRef,
+    StrAttrRef,
+)
+from .interfaces import *  # noqa: F403
 from .method import AutoInterface, method, prop
 from .model import Model
 from .ops import fn
@@ -95,26 +102,6 @@ from .transform import (
 )
 
 
-# Primitive refs - lazy to avoid circular import
-_PRIM_REF_NAMES = {
-    "PrimRef": "PrimRef",
-    "PrimIntRef": "IntRef",
-    "PrimFloatRef": "FloatRef",
-    "PrimStrRef": "StrRef",
-    "PrimBoolRef": "BoolRef",
-    "PrimBytesRef": "BytesRef",
-    "PrimAnyRef": "AnyRef",
-}
-
-
-def __getattr__(name: str) -> object:
-    if name in _PRIM_REF_NAMES:
-        from .context import attr_refs as _refs
-
-        return getattr(_refs, _PRIM_REF_NAMES[name])
-    msg = f"module {__name__!r} has no attribute {name!r}"
-    raise AttributeError(msg)
-
 
 __all__ = [
     # Nu
@@ -169,14 +156,14 @@ __all__ = [
     # Context
     "Attributes",
     "Context",
-    # Primitive refs
-    "PrimRef",
-    "PrimIntRef",
-    "PrimFloatRef",
-    "PrimStrRef",
-    "PrimBoolRef",
-    "PrimBytesRef",
-    "PrimAnyRef",
+    # Attr refs
+    "AttrRef",
+    "IntAttrRef",
+    "FloatAttrRef",
+    "StrAttrRef",
+    "BoolAttrRef",
+    "BytesAttrRef",
+    "AnyAttrRef",
     # Walk
     "preorder",
     "postorder",

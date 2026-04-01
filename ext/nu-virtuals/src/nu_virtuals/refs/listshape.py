@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from virtuals.collections import MutableSequenceBase
 
-from nu import AnyValue, IteratorValue, ListValue, ensure_nu
+from nu import AnyI, IteratorI, ListI, ensure_nu
 from nu.shapes import ReactiveShapesSequenceRefBase, Shape, Slot
 
 from .base import ViewRef
@@ -34,17 +34,17 @@ class ShapesListRef[T: Shape](
 ):
     """PV shapes list reference — document model + PV substrate."""
 
-    def result(self, op: Nu) -> ListValue:
-        return ListValue(op)
+    def result(self, op: Nu) -> ListI:
+        return ListI(op)
 
-    def _wrap_iterable_result(self, operand: Nu) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorI:
+        return IteratorI(operand)
 
-    def _wrap_sliceable_result(self, operand: Nu) -> ListValue:
-        return ListValue(operand)  # slices stay materialized
+    def _wrap_sliceable_result(self, operand: Nu) -> ListI:
+        return ListI(operand)  # slices stay materialized
 
-    def _wrap_element_result(self, operand: Nu) -> AnyValue:
-        return AnyValue(operand)
+    def _wrap_element_result(self, operand: Nu) -> AnyI:
+        return AnyI(operand)
 
     def __init__(
         self,

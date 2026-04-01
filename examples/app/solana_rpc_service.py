@@ -11,10 +11,10 @@ import asyncio
 import httpx
 
 from nu import Context, print_tree
-from nu.abc import DictValue, IntValue, StrValue, method
+from nu.abc import DictI, IntI, StrI, method
 from nu.abc.morphisms import AtOp
 from nu.abc.types import TypeBase
-from nu.abc.values import ValueBase
+from nu.abc.values import Interface
 from nu.core import Ref
 
 
@@ -55,26 +55,26 @@ class TransactionType(TypeBase[dict]):
     """Typed access to Solana getTransaction response fields."""
 
     @property
-    def slot(self) -> IntValue:
-        return IntValue(AtOp(self, "slot"))
+    def slot(self) -> IntI:
+        return IntI(AtOp(self, "slot"))
 
     @property
-    def block_time(self) -> IntValue:
-        return IntValue(AtOp(self, "blockTime"))
+    def block_time(self) -> IntI:
+        return IntI(AtOp(self, "blockTime"))
 
     @property
-    def fee(self) -> IntValue:
-        meta = DictValue(AtOp(self, "meta"))
-        return IntValue(AtOp(meta, "fee"))
+    def fee(self) -> IntI:
+        meta = DictI(AtOp(self, "meta"))
+        return IntI(AtOp(meta, "fee"))
 
     @property
-    def first_signature(self) -> StrValue:
-        tx = DictValue(AtOp(self, "transaction"))
-        sigs = DictValue(AtOp(tx, "signatures"))
-        return StrValue(AtOp(sigs, 0))
+    def first_signature(self) -> StrI:
+        tx = DictI(AtOp(self, "transaction"))
+        sigs = DictI(AtOp(tx, "signatures"))
+        return StrI(AtOp(sigs, 0))
 
 
-class TransactionValue(ValueBase[dict], TransactionType):
+class TransactionValue(Interface[dict], TransactionType):
     pass
 
 
@@ -96,11 +96,11 @@ class SolanaRef(Ref[SolanaClient]):
 class Solana(SolanaRef):
     """Solana service with typed method descriptors."""
 
-    get_slot = method(IntValue, "getSlot")
-    get_block = method(DictValue, "getBlock")
+    get_slot = method(IntI, "getSlot")
+    get_block = method(DictI, "getBlock")
     get_transaction = method(TransactionValue, "getTransaction")
-    get_latest_blockhash = method(DictValue, "getLatestBlockhash")
-    get_balance = method(DictValue, "getBalance")
+    get_latest_blockhash = method(DictI, "getLatestBlockhash")
+    get_balance = method(DictI, "getBalance")
 
 
 # =============================================================================

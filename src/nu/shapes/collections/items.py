@@ -44,8 +44,8 @@ class ItemBase[T, ValueT: Value](
     via fetch()/coerce(). No separate load() needed.
 
     Provides:
-        exists() -> BoolValue
-        missing() -> BoolValue
+        exists() -> BoolI
+        missing() -> BoolI
 
     Substrates must provide:
         __init__: set _value_type and _value_value_type
@@ -76,7 +76,7 @@ class MutableItemBase[T, ValueT: Value](
     Provides:
         immutable capabilities +
         store(value) -> typed Value
-        erase() -> NoneValue
+        erase() -> NoneI
     """
 
 

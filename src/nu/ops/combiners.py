@@ -37,11 +37,11 @@ from __future__ import annotations
 from functools import reduce
 from typing import TYPE_CHECKING
 
-from nu.interfaces.capabilities import AndableProtocol, OrableProtocol
+
 
 
 if TYPE_CHECKING:
-    from .values import BoolValue as BoolType
+    from nu.interfaces import BoolI as BoolI
 
 
 __all__ = [
@@ -58,7 +58,7 @@ __all__ = [
 # =============================================================================
 
 
-def and_(left: object, right: object) -> BoolType:
+def and_(left: object, right: object) -> BoolI:
     """Combine exactly two conditions with AND.
 
     Both conditions must be true for the result to be true.
@@ -82,7 +82,7 @@ def and_(left: object, right: object) -> BoolType:
     return left_op.and_(ensure_nu(right))
 
 
-def or_(left: object, right: object) -> BoolType:
+def or_(left: object, right: object) -> BoolI:
     """Combine exactly two conditions with OR.
 
     At least one condition must be true for the result to be true.
@@ -106,7 +106,7 @@ def or_(left: object, right: object) -> BoolType:
     return left_op.or_(ensure_nu(right))
 
 
-def all_(*conditions: object) -> BoolType:
+def all_(*conditions: object) -> BoolI:
     """Combine multiple conditions with AND.
 
     All conditions must be true for the result to be true.
@@ -135,7 +135,7 @@ def all_(*conditions: object) -> BoolType:
     return reduce(lambda a, b: a.and_(b), rvalues)  # type: ignore
 
 
-def any_(*conditions: object) -> BoolType:
+def any_(*conditions: object) -> BoolI:
     """Combine multiple conditions with OR.
 
     At least one condition must be true for the result to be true.
@@ -164,7 +164,7 @@ def any_(*conditions: object) -> BoolType:
     return reduce(lambda a, b: a.or_(b), rvalues)  # type: ignore
 
 
-def none_(*conditions: object) -> BoolType:
+def none_(*conditions: object) -> BoolI:
     """None of the conditions should be true.
 
     This is equivalent to NOT(any_(...)).

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interfaces.values import BoolValue, NoneValue
+from nu.interfaces import BoolI, NoneI
 
 
 if TYPE_CHECKING:
@@ -33,28 +33,28 @@ class CollectionExistableBase:
     Provides exists() and missing() using CollectionExistsOp/CollectionMissingOp.
     """
 
-    def exists(self) -> BoolValue:
+    def exists(self) -> BoolI:
         from nu.shapes.ops.collection import CollectionExistsOp
 
-        return BoolValue(CollectionExistsOp(self))
+        return BoolI(CollectionExistsOp(self))
 
-    def missing(self) -> BoolValue:
+    def missing(self) -> BoolI:
         from nu.shapes.ops.collection import CollectionMissingOp
 
-        return BoolValue(CollectionMissingOp(self))
+        return BoolI(CollectionMissingOp(self))
 
 
 class CollectionSettableBase[CollectionT]:
     """Base for collection refs that can replace their contents.
 
-    Provides store(data) using CollectionStoreCmd, returning NoneValue.
+    Provides store(data) using CollectionStoreCmd, returning NoneI.
     """
 
-    def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> NoneValue:
+    def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> NoneI:
         from nu.utils import ensure_nu
         from nu.shapes.ops.collection import CollectionStoreCmd
 
-        return NoneValue(CollectionStoreCmd(self, ensure_nu(value)))
+        return NoneI(CollectionStoreCmd(self, ensure_nu(value)))
 
 
 class CollectionDeletableBase:
@@ -63,7 +63,7 @@ class CollectionDeletableBase:
     Provides erase() using CollectionEraseCmd: del parent[address].
     """
 
-    def erase(self) -> NoneValue:
+    def erase(self) -> NoneI:
         from nu.shapes.ops.collection import CollectionEraseCmd
 
-        return NoneValue(CollectionEraseCmd(self))
+        return NoneI(CollectionEraseCmd(self))

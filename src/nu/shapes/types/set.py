@@ -1,12 +1,12 @@
 """Set type — mutable set.
 
-SetType         = MutableSetBase (set IS mutable)
-ReactiveSetType = SetType + ViewObservable
+SetI         = MutableSetBase (set IS mutable)
+ReactiveSetType = SetI + ViewObservable
 """
 
 from __future__ import annotations
 
-from nu.interfaces.types import Object
+from nu.interfaces import Interface
 from nu.shapes.collections.set import MutableSetBase as _MutableSetBase
 from nu.shapes.collections.set import ReactiveSetBase as _ReactiveSetBase
 
@@ -19,7 +19,7 @@ __all__ = [
 
 class SetType[T](
     _MutableSetBase[T, object, object],
-    Object[set],
+    Interface[set],
 ):
     """Set — mutable set."""
 
@@ -27,6 +27,6 @@ class SetType[T](
 class ReactiveSetType[T](
     SetType[T],
     _ReactiveSetBase[T, object, object],
-    Object[set],
+    Interface[set],
 ):
     """Reactive set — mutable + observable."""

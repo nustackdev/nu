@@ -1,12 +1,12 @@
 """Dict type — mutable mapping.
 
-DictType         = MutableMappingBase (dict IS mutable)
-ReactiveDictType = DictType + ViewObservable
+DictI         = MutableMappingBase (dict IS mutable)
+ReactiveDictType = DictI + ViewObservable
 """
 
 from __future__ import annotations
 
-from nu.interfaces.types import Object
+from nu.interfaces import Interface
 from nu.shapes.collections import MutableMappingBase, ReactiveMappingBase
 
 
@@ -18,7 +18,7 @@ __all__ = [
 
 class DictType[K, V](
     MutableMappingBase[K, V, object, object],
-    Object[dict],
+    Interface[dict],
 ):
     """Dict — mutable mapping."""
 
@@ -26,6 +26,6 @@ class DictType[K, V](
 class ReactiveDictType[K, V](
     DictType[K, V],
     ReactiveMappingBase[K, V, object, object],
-    Object[dict],
+    Interface[dict],
 ):
     """Reactive dict — mutable + observable."""

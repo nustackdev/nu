@@ -1,12 +1,12 @@
 """Iterable slicing — Value-returning factories over op Ops.
 
-Take, Drop (lazy -> IteratorValue)
+Take, Drop (lazy -> IteratorI)
 """
 
 from __future__ import annotations
 
 from nu.ops.itertools.slice import DropOp, TakeOp
-from nu.interfaces.values import IteratorValue
+from nu.interfaces import IteratorI
 
 
 __all__ = [
@@ -15,11 +15,11 @@ __all__ = [
 ]
 
 
-def Take(iterable: object, n: object) -> IteratorValue:  # noqa: N802
+def Take(iterable: object, n: object) -> IteratorI:  # noqa: N802
     """Take first N elements. Lazy."""
-    return IteratorValue(TakeOp(iterable, n))
+    return IteratorI(TakeOp(iterable, n))
 
 
-def Drop(iterable: object, n: object) -> IteratorValue:  # noqa: N802
+def Drop(iterable: object, n: object) -> IteratorI:  # noqa: N802
     """Drop first N elements. Lazy."""
-    return IteratorValue(DropOp(iterable, n))
+    return IteratorI(DropOp(iterable, n))

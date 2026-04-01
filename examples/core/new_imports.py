@@ -22,8 +22,8 @@ from nu.ops.flows import Seq, If, ForEach, ForRange, Parallel, While, Print
 from nu.ops import fn  # functional wrappers
 
 # interfaces — type system
-from nu.interfaces import IntType, StrType, FloatType
-from nu.interfaces import IntValue, StrValue, FloatValue, ListValue, BoolValue
+from nu.interfaces import IntI, StrI, FloatI
+from nu.interfaces import IntI, StrI, FloatI, ListI, BoolI
 
 # model
 from nu.model import Model
@@ -39,10 +39,10 @@ async def main() -> None:
     ctx = Context()
 
     # compose lazy expression trees
-    price = FloatValue(42.50)
-    qty = IntValue(3)
+    price = FloatI(42.50)
+    qty = IntI(3)
     subtotal = price * qty
-    tax = subtotal * FloatValue(0.08)
+    tax = subtotal * FloatI(0.08)
     total = subtotal + tax
 
     # evaluate
@@ -62,7 +62,7 @@ async def main() -> None:
     print_tree(total)
 
     # functional wrappers
-    nums = ListValue([3, 1, 4, 1, 5])
+    nums = ListI([3, 1, 4, 1, 5])
     sorted_nums = fn.Sorted(nums)
     print(f"\nsorted: {await sorted_nums.execute(ctx)}")
 

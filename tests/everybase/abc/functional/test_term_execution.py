@@ -8,7 +8,7 @@ don't require storage access.
 import pytest
 
 from nu import INVALID, Context
-from nu.interfaces.values import BoolValue, FloatValue, IntValue, ListValue, StrValue
+from nu.interfaces import BoolI, FloatI, IntI, ListI, StrI
 from nu.ops.combiners import all_, any_
 
 
@@ -26,66 +26,66 @@ class TestArithmeticExecution:
     """Tests for arithmetic expression execution."""
 
     async def test_int_addition(self, ctx):
-        """IntValue addition executes correctly: 5 + 3 = 8."""
-        x = IntValue(5)
-        y = IntValue(3)
+        """IntI addition executes correctly: 5 + 3 = 8."""
+        x = IntI(5)
+        y = IntI(3)
         result = await (x + y).execute(ctx)
         assert result == 8
 
     async def test_int_subtraction(self, ctx):
-        """IntValue subtraction executes correctly: 10 - 4 = 6."""
-        x = IntValue(10)
-        y = IntValue(4)
+        """IntI subtraction executes correctly: 10 - 4 = 6."""
+        x = IntI(10)
+        y = IntI(4)
         result = await (x - y).execute(ctx)
         assert result == 6
 
     async def test_int_multiplication(self, ctx):
-        """IntValue multiplication executes correctly: 6 * 7 = 42."""
-        x = IntValue(6)
+        """IntI multiplication executes correctly: 6 * 7 = 42."""
+        x = IntI(6)
         result = await (x * 7).execute(ctx)
         assert result == 42
 
     async def test_int_division(self, ctx):
-        """IntValue division executes correctly: 10 / 4 = 2.5."""
-        x = IntValue(10)
+        """IntI division executes correctly: 10 / 4 = 2.5."""
+        x = IntI(10)
         result = await (x / 4).execute(ctx)
         assert result == 2.5
 
     async def test_int_floor_division(self, ctx):
-        """IntValue floor division executes correctly: 10 // 3 = 3."""
-        x = IntValue(10)
+        """IntI floor division executes correctly: 10 // 3 = 3."""
+        x = IntI(10)
         result = await (x // 3).execute(ctx)
         assert result == 3
 
     async def test_int_modulo(self, ctx):
-        """IntValue modulo executes correctly: 10 % 3 = 1."""
-        x = IntValue(10)
+        """IntI modulo executes correctly: 10 % 3 = 1."""
+        x = IntI(10)
         result = await (x % 3).execute(ctx)
         assert result == 1
 
     async def test_int_power(self, ctx):
-        """IntValue power executes correctly: 2 ** 10 = 1024."""
-        x = IntValue(2)
+        """IntI power executes correctly: 2 ** 10 = 1024."""
+        x = IntI(2)
         result = await (x**10).execute(ctx)
         assert result == 1024
 
     async def test_negation(self, ctx):
-        """IntValue negation executes correctly: -42 = -42."""
-        x = IntValue(42)
+        """IntI negation executes correctly: -42 = -42."""
+        x = IntI(42)
         result = await (-x).execute(ctx)
         assert result == -42
 
     async def test_chained_arithmetic(self, ctx):
         """Chained arithmetic executes correctly: (5 + 3) * 2 = 16."""
-        x = IntValue(5)
-        y = IntValue(3)
-        z = IntValue(2)
+        x = IntI(5)
+        y = IntI(3)
+        z = IntI(2)
         result = await ((x + y) * z).execute(ctx)
         assert result == 16
 
     async def test_complex_expression(self, ctx):
         """Complex expression executes: ((10 - 2) * 3) + 4 = 28."""
-        result = await (((IntValue(10) - 2) * 3) + 4).execute(ctx)
+        result = await (((IntI(10) - 2) * 3) + 4).execute(ctx)
         assert result == 28
 
 
@@ -94,50 +94,50 @@ class TestComparisonExecution:
 
     async def test_greater_than_true(self, ctx):
         """Greater than comparison: 10 > 5 = True."""
-        x = IntValue(10)
+        x = IntI(10)
         result = await (x > 5).execute(ctx)
         assert result is True
 
     async def test_greater_than_false(self, ctx):
         """Greater than comparison: 3 > 5 = False."""
-        x = IntValue(3)
+        x = IntI(3)
         result = await (x > 5).execute(ctx)
         assert result is False
 
     async def test_less_than(self, ctx):
         """Less than comparison: 3 < 10 = True."""
-        x = IntValue(3)
+        x = IntI(3)
         result = await (x < 10).execute(ctx)
         assert result is True
 
     async def test_greater_or_equal(self, ctx):
         """Greater or equal comparison: 5 >= 5 = True."""
-        x = IntValue(5)
+        x = IntI(5)
         result = await (x >= 5).execute(ctx)
         assert result is True
 
     async def test_less_or_equal(self, ctx):
         """Less or equal comparison: 5 <= 10 = True."""
-        x = IntValue(5)
+        x = IntI(5)
         result = await (x <= 10).execute(ctx)
         assert result is True
 
     async def test_equality(self, ctx):
         """Equality comparison: 42 == 42 = True."""
-        x = IntValue(42)
+        x = IntI(42)
         result = await x.eq(42).execute(ctx)
         assert result is True
 
     async def test_inequality(self, ctx):
         """Inequality comparison: 42 != 10 = True."""
-        x = IntValue(42)
+        x = IntI(42)
         result = await x.ne(10).execute(ctx)
         assert result is True
 
     async def test_arithmetic_then_compare(self, ctx):
         """Arithmetic result can be compared: (5 + 3) < 10 = True."""
-        x = IntValue(5)
-        y = IntValue(3)
+        x = IntI(5)
+        y = IntI(3)
         result = await ((x + y) < 10).execute(ctx)
         assert result is True
 
@@ -147,56 +147,56 @@ class TestLogicalExecution:
 
     async def test_and_true(self, ctx):
         """Logical AND with both true: True AND True = True."""
-        a = BoolValue(True)
-        b = BoolValue(True)
+        a = BoolI(True)
+        b = BoolI(True)
         result = await a.and_(b).execute(ctx)
         assert result is True
 
     async def test_and_false(self, ctx):
         """Logical AND with one false: True AND False = False."""
-        a = BoolValue(True)
-        b = BoolValue(False)
+        a = BoolI(True)
+        b = BoolI(False)
         result = await a.and_(b).execute(ctx)
         assert result is False
 
     async def test_or_true(self, ctx):
         """Logical OR with one true: False OR True = True."""
-        a = BoolValue(False)
-        b = BoolValue(True)
+        a = BoolI(False)
+        b = BoolI(True)
         result = await a.or_(b).execute(ctx)
         assert result is True
 
     async def test_or_false(self, ctx):
         """Logical OR with both false: False OR False = False."""
-        a = BoolValue(False)
-        b = BoolValue(False)
+        a = BoolI(False)
+        b = BoolI(False)
         result = await a.or_(b).execute(ctx)
         assert result is False
 
     async def test_not_true(self, ctx):
         """Logical NOT: NOT True = False."""
-        a = BoolValue(True)
+        a = BoolI(True)
         result = await a.not_().execute(ctx)
         assert result is False
 
     async def test_not_false(self, ctx):
         """Logical NOT: NOT False = True."""
-        a = BoolValue(False)
+        a = BoolI(False)
         result = await a.not_().execute(ctx)
         assert result is True
 
     async def test_combined_logical(self, ctx):
         """Combined logical: (True AND False) OR True = True."""
-        a = BoolValue(True)
-        b = BoolValue(False)
-        c = BoolValue(True)
+        a = BoolI(True)
+        b = BoolI(False)
+        c = BoolI(True)
         result = await a.and_(b).or_(c).execute(ctx)
         assert result is True
 
     async def test_comparison_to_logical(self, ctx):
         """Comparisons can be combined with logical ops: (5 > 3) AND (10 < 20)."""
-        x = IntValue(5)
-        y = IntValue(10)
+        x = IntI(5)
+        y = IntI(10)
         cond1 = x > 3
         cond2 = y < 20
         result = await cond1.and_(cond2).execute(ctx)
@@ -208,31 +208,31 @@ class TestStringExecution:
 
     async def test_string_concatenation(self, ctx):
         """String concatenation: 'hello' + ' world' = 'hello world'."""
-        s = StrValue("hello")
+        s = StrI("hello")
         result = await (s + " world").execute(ctx)
         assert result == "hello world"
 
     async def test_string_upper(self, ctx):
         """String upper: 'hello'.upper() = 'HELLO'."""
-        s = StrValue("hello")
+        s = StrI("hello")
         result = await s.upper().execute(ctx)
         assert result == "HELLO"
 
     async def test_string_lower(self, ctx):
         """String lower: 'HELLO'.lower() = 'hello'."""
-        s = StrValue("HELLO")
+        s = StrI("HELLO")
         result = await s.lower().execute(ctx)
         assert result == "hello"
 
     async def test_string_comparison(self, ctx):
         """String comparison: 'abc' < 'abd' = True."""
-        s = StrValue("abc")
+        s = StrI("abc")
         result = await (s < "abd").execute(ctx)
         assert result is True
 
     async def test_string_equality(self, ctx):
         """String equality: 'hello' == 'hello' = True."""
-        s = StrValue("hello")
+        s = StrI("hello")
         result = await s.eq("hello").execute(ctx)
         assert result is True
 
@@ -242,19 +242,19 @@ class TestFloatExecution:
 
     async def test_float_ensure_term(self, ctx):
         """Float literal executes to value."""
-        f = FloatValue(3.14)
+        f = FloatI(3.14)
         result = await f.execute(ctx)
         assert result == 3.14
 
     async def test_float_arithmetic(self, ctx):
         """Float arithmetic: 1.5 + 2.5 = 4.0."""
-        f = FloatValue(1.5)
+        f = FloatI(1.5)
         result = await (f + 2.5).execute(ctx)
         assert result == 4.0
 
     async def test_int_plus_float_returns_float(self, ctx):
         """Int + float returns float: 5 + 2.5 = 7.5."""
-        i = IntValue(5)
+        i = IntI(5)
         result = await (i + 2.5).execute(ctx)
         assert result == 7.5
 
@@ -264,13 +264,13 @@ class TestListExecution:
 
     async def test_list_ensure_term(self, ctx):
         """List literal executes to value."""
-        lst = ListValue([1, 2, 3])
+        lst = ListI([1, 2, 3])
         result = await lst.execute(ctx)
         assert result == [1, 2, 3]
 
     async def test_list_concatenation(self, ctx):
         """List concatenation: [1,2] + [3,4] = [1,2,3,4]."""
-        lst = ListValue([1, 2])
+        lst = ListI([1, 2])
         result = await (lst + [3, 4]).execute(ctx)  # noqa: RUF005
         assert result == [1, 2, 3, 4]
 
@@ -281,36 +281,36 @@ class TestCombinerExecution:
     async def test_all_true(self, ctx):
         """all_() with all true conditions returns True."""
         result = await all_(
-            IntValue(5) > 3,
-            IntValue(10) < 20,
-            BoolValue(True),
+            IntI(5) > 3,
+            IntI(10) < 20,
+            BoolI(True),
         ).execute(ctx)
         assert result is True
 
     async def test_all_false(self, ctx):
         """all_() with one false condition returns False."""
         result = await all_(
-            IntValue(5) > 3,
-            IntValue(10) > 20,  # False
-            BoolValue(True),
+            IntI(5) > 3,
+            IntI(10) > 20,  # False
+            BoolI(True),
         ).execute(ctx)
         assert result is False
 
     async def test_any_true(self, ctx):
         """any_() with at least one true returns True."""
         result = await any_(
-            IntValue(5) > 100,  # False
-            IntValue(10) < 20,  # True
-            BoolValue(False),
+            IntI(5) > 100,  # False
+            IntI(10) < 20,  # True
+            BoolI(False),
         ).execute(ctx)
         assert result is True
 
     async def test_any_false(self, ctx):
         """any_() with all false returns False."""
         result = await any_(
-            IntValue(5) > 100,
-            IntValue(10) > 20,
-            BoolValue(False),
+            IntI(5) > 100,
+            IntI(10) > 20,
+            BoolI(False),
         ).execute(ctx)
         assert result is False
 
@@ -320,18 +320,18 @@ class TestSpecialValues:
 
     async def test_division_by_zero_returns_nan(self, ctx):
         """Division by zero returns INVALID."""
-        x = IntValue(10)
+        x = IntI(10)
         result = await (x / 0).execute(ctx)
         assert result is INVALID
 
     async def test_floor_division_by_zero_returns_nan(self, ctx):
         """Floor division by zero returns INVALID."""
-        x = IntValue(10)
+        x = IntI(10)
         result = await (x // 0).execute(ctx)
         assert result is INVALID
 
     async def test_modulo_by_zero_returns_nan(self, ctx):
         """Modulo by zero returns INVALID."""
-        x = IntValue(10)
+        x = IntI(10)
         result = await (x % 0).execute(ctx)
         assert result is INVALID

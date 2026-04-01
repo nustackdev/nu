@@ -5,11 +5,11 @@ Tests for:
 """
 
 from nu_path import PathValue as PathRef
-from nu import BoolValue as BoolRef
+from nu import BoolI as BoolRef
 from nu import DivOp, FuncCallOp
-from nu import ListValue as ListRef
-from nu import StrValue as StrRef
-from nu import TupleValue as TupleRef
+from nu import ListI as ListRef
+from nu import StrI as StrRef
+from nu import TupleI as TupleRef
 
 
 # =============================================================================

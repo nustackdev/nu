@@ -164,7 +164,7 @@ def _format_ref_label(node: Nu) -> str:
 
 
 def _format_value_label(node: Nu) -> str:
-    """Format label for Value nodes: IntValue(42) or IntValue."""
+    """Format label for Value nodes: IntI(42) or IntI."""
     cls = type(node).__name__
     if hasattr(node, "source") and node.is_leaf:
         src = node.source

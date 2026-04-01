@@ -20,16 +20,16 @@ import nu_virtuals as ebv
 from nu import Arg, FloatArg, Sentinel, StrArg
 from nu.abc import (
     AddOp,
-    FloatType,
-    FloatValue,
+    FloatI,
+    FloatI,
     FuncCallOp,
     MethodCallOp,
-    StrType,
-    StrValue,
+    StrI,
+    StrI,
     ToFloatOp,
     ToStrOp,
     TypeBase,
-    ValueBase,
+    Interface,
     ensure_term,
 )
 from nu.shape import ItemRef, ItemStoreCmd, Shape, Slot
@@ -43,40 +43,40 @@ from nu.shape import ItemRef, ItemStoreCmd, Shape, Slot
 class DatetimeType(TypeBase[datetime | Sentinel]):
     @classmethod
     def from_timestamp(cls, ts: FloatArg | StrArg) -> DatetimeValue:
-        if isinstance(ts, (float, FloatType)):
+        if isinstance(ts, (float, FloatI)):
             val = ts
         elif isinstance(ts, str):
             val = float(ts)
-        elif isinstance(ts, StrType):
-            val = FloatValue(ToFloatOp(ts))
+        elif isinstance(ts, StrI):
+            val = FloatI(ToFloatOp(ts))
         else:
             raise TypeError(f"Unsupported type for datetime: {type(ts)}")
         return DatetimeValue(FuncCallOp(datetime.fromtimestamp, val))
 
     @classmethod
     def from_iso(cls, ts: StrArg) -> DatetimeValue:
-        if not isinstance(ts, (str, StrType)):
+        if not isinstance(ts, (str, StrI)):
             raise TypeError(f"from_iso requires str type, got {type(ts)}")
         return DatetimeValue(FuncCallOp(datetime.fromisoformat, ts))
 
-    def to_timestamp(self) -> FloatValue:
-        return FloatValue(MethodCallOp(self, "timestamp"))
+    def to_timestamp(self) -> FloatI:
+        return FloatI(MethodCallOp(self, "timestamp"))
 
-    def to_iso(self) -> StrValue:
-        return StrValue(ToStrOp(self))
+    def to_iso(self) -> StrI:
+        return StrI(ToStrOp(self))
 
     def __add__(self, obj: Arg[DatetimeType]) -> DatetimeValue:
-        if isinstance(obj, (float, FloatType)):
+        if isinstance(obj, (float, FloatI)):
             val = obj
         elif isinstance(obj, str):
             val = float(obj)
-        elif isinstance(obj, StrType):
-            val = FloatValue(ToFloatOp(obj))
+        elif isinstance(obj, StrI):
+            val = FloatI(ToFloatOp(obj))
         elif isinstance(obj, DatetimeType):
             val = obj.to_timestamp()
         else:
             raise TypeError(f"Unsupported type for datetime addition: {type(obj)}")
-        return DatetimeValue.from_timestamp(FloatValue(AddOp(self.to_timestamp(), val)))
+        return DatetimeValue.from_timestamp(FloatI(AddOp(self.to_timestamp(), val)))
 
 
 # =============================================
@@ -84,7 +84,7 @@ class DatetimeType(TypeBase[datetime | Sentinel]):
 # =============================================
 
 
-class DatetimeValue(ValueBase, DatetimeType):
+class DatetimeValue(Interface, DatetimeType):
     pass
 
 
@@ -101,9 +101,9 @@ class DatetimeRefBase(ItemRef[datetime, DatetimeValue], DatetimeType):
             val = value.to_iso()
         elif isinstance(value, float):
             val = str(value)
-        elif isinstance(value, FloatType):
-            val = StrValue(ToStrOp(value))
-        elif isinstance(value, StrType):
+        elif isinstance(value, FloatI):
+            val = StrI(ToStrOp(value))
+        elif isinstance(value, StrI):
             val = value
         else:
             raise TypeError(f"Unsupported type for datetime: {type(value)}")

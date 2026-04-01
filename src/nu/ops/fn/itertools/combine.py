@@ -1,12 +1,12 @@
 """Iterable combinators — Value-returning factories over op Ops.
 
-Zip, Chain, Enumerate (lazy -> IteratorValue)
+Zip, Chain, Enumerate (lazy -> IteratorI)
 """
 
 from __future__ import annotations
 
 from nu.ops.itertools.combine import ChainOp, EnumerateOp, ZipOp
-from nu.interfaces.values import IteratorValue
+from nu.interfaces import IteratorI
 
 
 __all__ = [
@@ -16,16 +16,16 @@ __all__ = [
 ]
 
 
-def Zip(*iterables: object) -> IteratorValue:  # noqa: N802
+def Zip(*iterables: object) -> IteratorI:  # noqa: N802
     """Zip multiple iterables together. Lazy."""
-    return IteratorValue(ZipOp(*iterables))
+    return IteratorI(ZipOp(*iterables))
 
 
-def Chain(*iterables: object) -> IteratorValue:  # noqa: N802
+def Chain(*iterables: object) -> IteratorI:  # noqa: N802
     """Chain multiple iterables into one. Lazy."""
-    return IteratorValue(ChainOp(*iterables))
+    return IteratorI(ChainOp(*iterables))
 
 
-def Enumerate(iterable: object, start: object = 0) -> IteratorValue:  # noqa: N802
+def Enumerate(iterable: object, start: object = 0) -> IteratorI:  # noqa: N802
     """Enumerate iterable with index. Lazy."""
-    return IteratorValue(EnumerateOp(iterable, start))
+    return IteratorI(EnumerateOp(iterable, start))

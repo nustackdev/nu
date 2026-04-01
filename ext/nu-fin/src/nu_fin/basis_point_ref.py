@@ -2,7 +2,7 @@
 
 Pattern:
     BasisPointType = Object[BasisPoint] + ComparableBase + arithmetic operations
-    BasisPointValue = ValueBase + BasisPointType (computed results)
+    BasisPointValue = Interface + BasisPointType (computed results)
 
 Basis point = 1/100th of a percent (500 bps = 5%).
 """
@@ -14,10 +14,10 @@ from typing import TYPE_CHECKING
 from nu import Sentinel
 from nu import (
     ComparableBase,
-    FloatValue,
-    IntValue,
+    FloatI,
+    IntI,
     Object,
-    ValueBase,
+    Interface,
 )
 
 from .basis_point_cls import BasisPoint
@@ -74,45 +74,45 @@ class BasisPointType(
     # CONVERSIONS
     # =========================================================================
 
-    def to_pct(self) -> FloatValue:
+    def to_pct(self) -> FloatI:
         """Convert to percentage."""
         from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "to_pct"))
+        return FloatI(MethodCallOp(self, "to_pct"))
 
-    def to_dec(self) -> FloatValue:
+    def to_dec(self) -> FloatI:
         """Convert to decimal."""
         from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "to_dec"))
+        return FloatI(MethodCallOp(self, "to_dec"))
 
-    def to_int(self) -> IntValue:
+    def to_int(self) -> IntI:
         """Get raw basis points."""
         from nu import MethodCallOp
 
-        return IntValue(MethodCallOp(self, "to_int"))
+        return IntI(MethodCallOp(self, "to_int"))
 
     # =========================================================================
     # APPLICATION
     # =========================================================================
 
-    def apply(self, amount: int | float | Nu) -> FloatValue:
+    def apply(self, amount: int | float | Nu) -> FloatI:
         """Apply basis points to amount."""
         from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "apply", amount))
+        return FloatI(MethodCallOp(self, "apply", amount))
 
-    def add_to(self, amount: int | float | Nu) -> FloatValue:
+    def add_to(self, amount: int | float | Nu) -> FloatI:
         """Add basis points to amount."""
         from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "add_to", amount))
+        return FloatI(MethodCallOp(self, "add_to", amount))
 
-    def sub_from(self, amount: int | float | Nu) -> FloatValue:
+    def sub_from(self, amount: int | float | Nu) -> FloatI:
         """Subtract basis points from amount."""
         from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "sub_from", amount))
+        return FloatI(MethodCallOp(self, "sub_from", amount))
 
     # =========================================================================
     # ARITHMETIC
@@ -174,7 +174,7 @@ class BasisPointType(
 # =============================================================================
 
 
-class BasisPointValue(ValueBase, BasisPointType):
+class BasisPointValue(Interface, BasisPointType):
     """Computed BasisPoint value (Python memory substrate)."""
 
     pass

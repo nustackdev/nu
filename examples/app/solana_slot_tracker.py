@@ -18,7 +18,7 @@ import httpx
 
 import nu_virtuals as ebv
 from nu import Context
-from nu.abc import DictValue, IntValue, TypeBase, ValueBase, method
+from nu.abc import DictI, IntI, TypeBase, Interface, method
 from nu.abc.flows import Delay, ForRange, Print, Race, Seq
 from nu.shape import Shape
 from nu.shape.flows import ReactWhile
@@ -54,11 +54,11 @@ class SolanaClient:
 class SolanaType(TypeBase):
     """Solana RPC typed interface."""
 
-    get_slot = method(IntValue, "getSlot")
-    get_latest_blockhash = method(DictValue, "getLatestBlockhash")
+    get_slot = method(IntI, "getSlot")
+    get_latest_blockhash = method(DictI, "getLatestBlockhash")
 
 
-class SolanaValue(SolanaType, ValueBase):
+class SolanaValue(SolanaType, Interface):
     """Computed Value."""
 
 

@@ -29,13 +29,13 @@ from nu_virtuals import (
 from nu_virtuals.refs.base import Facet
 from nu import Context
 from nu import (
-    DictItemsValue,
-    DictKeysValue,
-    DictValue,
-    DictValuesValue,
-    IteratorValue,
-    ListValue,
-    SetValue,
+    DictItemsI,
+    DictKeysI,
+    DictI,
+    DictValuesI,
+    IteratorI,
+    ListI,
+    SetI,
     fn,
 )
 from nu.shapes import Shape
@@ -137,25 +137,25 @@ class TestFacets:
 
 
 class TestDictRefWrapTypes:
-    """DictRef returns DictKeysValue/DictValuesValue/DictItemsValue."""
+    """DictRef returns DictKeysI/DictValuesI/DictItemsI."""
 
     def test_keys_returns_dict_keys_value(self):
         keys = Portfolio.metadata.keys()
-        assert isinstance(keys, DictKeysValue)
+        assert isinstance(keys, DictKeysI)
 
     def test_values_returns_dict_values_value(self):
         vals = Portfolio.metadata.values()
-        assert isinstance(vals, DictValuesValue)
+        assert isinstance(vals, DictValuesI)
 
     def test_items_returns_dict_items_value(self):
         items = Portfolio.metadata.items()
-        assert isinstance(items, DictItemsValue)
+        assert isinstance(items, DictItemsI)
 
     def test_result_returns_dict_value(self):
         from nu import ensure_nu
 
         result = Portfolio.metadata.result(ensure_nu("x"))
-        assert isinstance(result, DictValue)
+        assert isinstance(result, DictI)
 
 
 class TestDictRefExecution:
@@ -208,13 +208,13 @@ class TestListRefWrapTypes:
         from nu import ensure_nu
 
         wrapped = Portfolio.tags._wrap_iterable_result(ensure_nu("x"))
-        assert isinstance(wrapped, IteratorValue)
+        assert isinstance(wrapped, IteratorI)
 
     def test_sliceable_is_list_value(self):
         from nu import ensure_nu
 
         wrapped = Portfolio.tags._wrap_sliceable_result(ensure_nu("x"))
-        assert isinstance(wrapped, ListValue)
+        assert isinstance(wrapped, ListI)
 
 
 class TestListRefExecution:
@@ -258,7 +258,7 @@ class TestSetRefWrapTypes:
         from nu import ensure_nu
 
         wrapped = Portfolio.members._wrap_set_result(ensure_nu("x"))
-        assert isinstance(wrapped, SetValue)
+        assert isinstance(wrapped, SetI)
 
 
 class TestSetRefExecution:
@@ -319,19 +319,19 @@ class TestShapesListRefExecution:
 
 
 class TestShapesDictRefWrapTypes:
-    """ShapesDictRef returns DictKeysValue/DictValuesValue/DictItemsValue."""
+    """ShapesDictRef returns DictKeysI/DictValuesI/DictItemsI."""
 
     def test_keys_returns_dict_keys_value(self):
         keys = Portfolio.team.keys()
-        assert isinstance(keys, DictKeysValue)
+        assert isinstance(keys, DictKeysI)
 
     def test_values_returns_dict_values_value(self):
         vals = Portfolio.team.values()
-        assert isinstance(vals, DictValuesValue)
+        assert isinstance(vals, DictValuesI)
 
     def test_items_returns_dict_items_value(self):
         items = Portfolio.team.items()
-        assert isinstance(items, DictItemsValue)
+        assert isinstance(items, DictItemsI)
 
 
 class TestShapesDictRefExecution:
@@ -437,7 +437,7 @@ class TestLazyTake:
 
     def test_take_returns_iterator_value(self):
         term = fn.Take(Portfolio.metadata.keys(), 10)
-        assert isinstance(term, IteratorValue)
+        assert isinstance(term, IteratorI)
 
 
 # ============================================================================

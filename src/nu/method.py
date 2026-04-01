@@ -10,7 +10,7 @@ from __future__ import annotations
 import typing
 from typing import overload
 
-from nu.interfaces.values import ValueBase
+from nu.interfaces import Interface
 from nu.terms import Ref
 
 from nu.ops.builtins.attr import GetAttrOp
@@ -24,7 +24,7 @@ __all__ = [
 ]
 
 
-class _BoundMethod[V: ValueBase]:
+class _BoundMethod[V: Interface]:
     """Method descriptor bound to a specific instance.
 
     Calling this creates a MethodCallOp (pure) or MethodCallCmd (impure)
@@ -47,7 +47,7 @@ class _BoundMethod[V: ValueBase]:
         return f"{self._owner!r}.{self._method_name}"
 
 
-class _ClassBoundMethod[V: ValueBase]:
+class _ClassBoundMethod[V: Interface]:
     """Method descriptor bound to a Ref subclass.
 
     The Ref subclass itself acts as the factory — calling it creates a
@@ -56,9 +56,9 @@ class _ClassBoundMethod[V: ValueBase]:
     Example::
 
         class Solana(Ref):
-            get_slot = method(IntValue, "getSlot")
+            get_slot = method(IntI, "getSlot")
 
-        Solana.get_slot()  # → IntValue(MethodCallCmd(Solana(), "getSlot"))
+        Solana.get_slot()  # → IntI(MethodCallCmd(Solana(), "getSlot"))
     """
 
     __slots__ = ("_method_name", "_pure", "_ref_cls", "_value_type")
@@ -85,10 +85,10 @@ class _ClassBoundMethod[V: ValueBase]:
         return f"{self._ref_cls.__name__}.{self._method_name}"
 
 
-class method[V: ValueBase]:  # noqa: N801
+class method[V: Interface]:  # noqa: N801
     """Descriptor that proxies method calls to a Type's underlying object.
 
-    Generic in V (a ValueBase subclass). Pyright infers the return type.
+    Generic in V (a Interface subclass). Pyright infers the return type.
 
     Two access modes:
 
@@ -104,14 +104,14 @@ class method[V: ValueBase]:  # noqa: N801
 
     Half-code usage::
 
-        class SolanaType(Object[SolanaClient]):
-            get_slot = method(IntValue, "getSlot")
+        class SolanaType(Interface[SolanaClient]):
+            get_slot = method(IntI, "getSlot")
 
     Zero-code usage (via AutoInterface)::
 
-        class StrOps(AutoInterface, Object[str], pure=True):
-            upper: StrValue
-            lower: StrValue
+        class StrOps(AutoInterface, Interface[str], pure=True):
+            upper: StrI
+            lower: StrI
     """
 
     def __init__(self, value_type: type[V], name: str | None = None, *, pure: bool = False) -> None:
@@ -147,10 +147,10 @@ class method[V: ValueBase]:  # noqa: N801
         return f"method({self._value_type.__name__}, {name!r}, {purity})"
 
 
-class prop[V: ValueBase]:  # noqa: N801
+class prop[V: Interface]:  # noqa: N801
     """Descriptor that proxies property/attribute access on a Type's underlying object.
 
-    Generic in V (a ValueBase subclass). Pyright infers the return type.
+    Generic in V (a Interface subclass). Pyright infers the return type.
 
     Two access modes:
 
@@ -162,7 +162,7 @@ class prop[V: ValueBase]:  # noqa: N801
 
     Uses ``__set_name__`` to auto-infer the property name from the Python
     attribute name. An explicit name can be provided for properties with
-    different naming conventions (e.g., ``url = prop(StrValue, "_url")``).
+    different naming conventions (e.g., ``url = prop(StrI, "_url")``).
     """
 
     def __init__(self, value_type: type[V], name: str | None = None) -> None:
@@ -195,15 +195,15 @@ class prop[V: ValueBase]:  # noqa: N801
 class AutoInterface:
     """Base class that auto-creates method descriptors from annotations.
 
-    Inherit alongside Object. Annotations of ValueBase subclasses
+    Inherit alongside Interface. Annotations of Interface subclasses
     become ``method()`` descriptors automatically.
 
     Usage::
 
-        class StrHelpers(AutoInterface, Object[str], pure=True):
-            upper: StrValue
-            lower: StrValue
-            strip: StrValue
+        class StrHelpers(AutoInterface, Interface[str], pure=True):
+            upper: StrI
+            lower: StrI
+            strip: StrI
 
     Each annotation becomes ``method(AnnotationType, "attr_name", pure=<default>)``.
     Explicit ``method()`` assignments in the class body are preserved.
@@ -230,5 +230,5 @@ class AutoInterface:
                 if not isinstance(existing, type):
                     continue
             hint = hints.get(name)
-            if hint is not None and isinstance(hint, type) and issubclass(hint, ValueBase):
+            if hint is not None and isinstance(hint, type) and issubclass(hint, Interface):
                 setattr(cls, name, method(hint, name, pure=pure))

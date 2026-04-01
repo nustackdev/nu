@@ -2,7 +2,7 @@
 
 Pattern:
     FractionType = Object[Fraction] + ComparableBase + arithmetic operations
-    FractionValue = ValueBase + FractionType (computed results)
+    FractionValue = Interface + FractionType (computed results)
 """
 
 from __future__ import annotations
@@ -13,11 +13,11 @@ from typing import TYPE_CHECKING
 from nu import Sentinel
 from nu import (
     ComparableBase,
-    FloatValue,
-    IntValue,
+    FloatI,
+    IntI,
     Object,
-    TupleValue,
-    ValueBase,
+    TupleI,
+    Interface,
 )
 
 
@@ -83,17 +83,17 @@ class FractionType(
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def numerator(self) -> IntValue:
+    def numerator(self) -> IntI:
         """Get the numerator."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "numerator"))
+        return IntI(FuncCallOp(getattr, self, "numerator"))
 
-    def denominator(self) -> IntValue:
+    def denominator(self) -> IntI:
         """Get the denominator."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "denominator"))
+        return IntI(FuncCallOp(getattr, self, "denominator"))
 
     # =========================================================================
     # ARITHMETIC
@@ -163,13 +163,13 @@ class FractionType(
             other = FractionValue(other)
         return FractionValue(DivOp(other, self))
 
-    def __floordiv__(self, other: FractionArg | int | float) -> IntValue:
+    def __floordiv__(self, other: FractionArg | int | float) -> IntI:
         """Floor divide fractions."""
         from nu import FloorDivOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
-        return IntValue(FloorDivOp(self, other))
+        return IntI(FloorDivOp(self, other))
 
     def __mod__(self, other: FractionArg | int | float) -> FractionValue:
         """Modulo operation."""
@@ -179,13 +179,13 @@ class FractionType(
             other = FractionValue(other)
         return FractionValue(ModOp(self, other))
 
-    def __rfloordiv__(self, other: Fraction | int | float) -> IntValue:
+    def __rfloordiv__(self, other: Fraction | int | float) -> IntI:
         """Right floor divide."""
         from nu import FloorDivOp
 
         if isinstance(other, Fraction):
             other = FractionValue(other)
-        return IntValue(FloorDivOp(other, self))
+        return IntI(FloorDivOp(other, self))
 
     def __rmod__(self, other: Fraction | int | float) -> FractionValue:
         """Right modulo."""
@@ -223,17 +223,17 @@ class FractionType(
 
         return FractionValue(MethodCallOp(self, "limit_denominator", max_denominator))
 
-    def as_float(self) -> FloatValue:
+    def as_float(self) -> FloatI:
         """Convert to float."""
         from nu import FuncCallOp
 
-        return FloatValue(FuncCallOp(float, self))
+        return FloatI(FuncCallOp(float, self))
 
-    def as_integer_ratio(self) -> TupleValue:
+    def as_integer_ratio(self) -> TupleI:
         """Return (numerator, denominator) tuple."""
         from nu import MethodCallOp
 
-        return TupleValue(MethodCallOp(self, "as_integer_ratio"))
+        return TupleI(MethodCallOp(self, "as_integer_ratio"))
 
 
 # =============================================================================
@@ -241,7 +241,7 @@ class FractionType(
 # =============================================================================
 
 
-class FractionValue(ValueBase, FractionType):
+class FractionValue(Interface, FractionType):
     """Computed Fraction value (Python memory substrate)."""
 
     pass

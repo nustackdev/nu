@@ -25,7 +25,7 @@ from .slot import Slot
 
 if TYPE_CHECKING:
     from nu import Context, Ref, Sentinel
-    from nu.interfaces.values import NoneValue
+    from nu.interfaces import NoneI
 
 
 __all__ = [
@@ -167,7 +167,7 @@ class Shape(Model, metaclass=ShapeMeta):
 
         def store(  # noqa: D102
             self, value: object
-        ) -> NoneValue: ...
+        ) -> NoneI: ...
 
-        def erase(self) -> NoneValue:  # noqa: D102
+        def erase(self) -> NoneI:  # noqa: D102
             ...

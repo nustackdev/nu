@@ -6,7 +6,7 @@ ReactiveItemRef = ReactiveItemBase + MutableItemRef
 
 Type Parameters:
     T:      Native Python type of the value (int, str, etc.)
-    ValueT: Wrapped Value class for this item's type (IntValue, StrValue, etc.) — Value subclass
+    ValueT: Wrapped Value class for this item's type (IntI, StrI, etc.) — Value subclass
 """
 
 from __future__ import annotations

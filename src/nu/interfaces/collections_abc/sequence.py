@@ -21,8 +21,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, cast
 
-from ..capabilities.collection import SliceableBase, SliceableProtocol
 from .collection import CollectionBase, CollectionProtocol
+from .sliceable import SliceableBase, SliceableProtocol
 
 
 if TYPE_CHECKING:
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
     from nu.terms import Arg, IntArg, StrArg
 
-    from ..values import IntValue, NoneValue, StrValue
+    from nu.interfaces.primitives import IntI, NoneI, StrI
 
 
 __all__ = [
@@ -62,10 +62,10 @@ class SequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT]
 
     def first(self) -> ElementResultT: ...
     def last(self) -> ElementResultT: ...
-    def join(self, separator: StrArg) -> StrValue: ...
-    def index(self, value: Arg[ElementT]) -> IntValue: ...
-    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntValue: ...
-    def count(self, value: Arg[ElementT]) -> IntValue: ...
+    def join(self, separator: StrArg) -> StrI: ...
+    def index(self, value: Arg[ElementT]) -> IntI: ...
+    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntI: ...
+    def count(self, value: Arg[ElementT]) -> IntI: ...
 
 
 class MutableSequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
@@ -81,11 +81,11 @@ class MutableSequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementR
         ElementResultT: Result for element-level ops (pop)
     """
 
-    def append(self, value: Arg[ElementT]) -> NoneValue: ...
-    def extend(self, other: Arg[Iterable[ElementT]]) -> NoneValue: ...
-    def insert(self, index: IntArg, value: Arg[ElementT]) -> NoneValue: ...
+    def append(self, value: Arg[ElementT]) -> NoneI: ...
+    def extend(self, other: Arg[Iterable[ElementT]]) -> NoneI: ...
+    def insert(self, index: IntArg, value: Arg[ElementT]) -> NoneI: ...
     def pop(self, index: IntArg = -1) -> ElementResultT: ...
-    def remove(self, value: Arg[ElementT]) -> NoneValue: ...
+    def remove(self, value: Arg[ElementT]) -> NoneI: ...
 
 
 # =============================================================================
@@ -118,33 +118,33 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return cast("ElementResultT", self._wrap_element_result(LastOp(self)))
 
-    def join(self, separator: StrArg) -> StrValue:
+    def join(self, separator: StrArg) -> StrI:
         """Join string elements."""
         from nu.ops import JoinOp
-        from ..values import StrValue
+        from nu.interfaces.primitives import StrI
 
-        return StrValue(JoinOp(self, separator))
+        return StrI(JoinOp(self, separator))
 
-    def index(self, value: Arg[ElementT]) -> IntValue:
+    def index(self, value: Arg[ElementT]) -> IntI:
         """Find index of value."""
         from nu.ops import IndexOfOp
-        from ..values import IntValue
+        from nu.interfaces.primitives import IntI
 
-        return IntValue(IndexOfOp(self, value))
+        return IntI(IndexOfOp(self, value))
 
-    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntValue:
+    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntI:
         """Find index of first match."""
         from nu.ops import FindIndexOp
-        from ..values import IntValue
+        from nu.interfaces.primitives import IntI
 
-        return IntValue(FindIndexOp(self, predicate))
+        return IntI(FindIndexOp(self, predicate))
 
-    def count(self, value: Arg[ElementT]) -> IntValue:
+    def count(self, value: Arg[ElementT]) -> IntI:
         """Count occurrences."""
         from nu.ops import CountOp
-        from ..values import IntValue
+        from nu.interfaces.primitives import IntI
 
-        return IntValue(CountOp(self, value))
+        return IntI(CountOp(self, value))
 
 
 class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
@@ -159,26 +159,26 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
         ElementResultT: Result for element-level ops (pop)
     """
 
-    def append(self, value: Arg[ElementT]) -> NoneValue:
+    def append(self, value: Arg[ElementT]) -> NoneI:
         """Append item to end of sequence."""
         from nu.ops.collections.sequence import AppendCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(AppendCmd(self, value))
+        return NoneI(AppendCmd(self, value))
 
-    def extend(self, other: Arg[Iterable[ElementT]]) -> NoneValue:
+    def extend(self, other: Arg[Iterable[ElementT]]) -> NoneI:
         """Extend sequence with elements from iterable."""
         from nu.ops.collections.sequence import ExtendCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(ExtendCmd(self, other))
+        return NoneI(ExtendCmd(self, other))
 
-    def insert(self, index: IntArg, value: Arg[ElementT]) -> NoneValue:
+    def insert(self, index: IntArg, value: Arg[ElementT]) -> NoneI:
         """Insert item at index."""
         from nu.ops.collections.sequence import InsertCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(InsertCmd(self, index, value))
+        return NoneI(InsertCmd(self, index, value))
 
     def pop(self, index: IntArg = -1) -> ElementResultT:
         """Remove and return item at index (default: last)."""
@@ -186,16 +186,16 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
 
         return cast("ElementResultT", self._wrap_element_result(PopCmd(self, index)))
 
-    def remove(self, value: Arg[ElementT]) -> NoneValue:
+    def remove(self, value: Arg[ElementT]) -> NoneI:
         """Remove first occurrence of value."""
         from nu.ops.collections.sequence import RemoveValueCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(RemoveValueCmd(self, value))
+        return NoneI(RemoveValueCmd(self, value))
 
-    def clear(self) -> NoneValue:
+    def clear(self) -> NoneI:
         """Remove all items."""
         from nu.ops.collections.shared import ClearCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(ClearCmd(self))
+        return NoneI(ClearCmd(self))

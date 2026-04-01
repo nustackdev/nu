@@ -14,16 +14,16 @@ from typing import TYPE_CHECKING, Self
 
 from nu import Value
 from nu import (
-    BoolType,
-    BoolValue,
-    BytesType,
-    BytesValue,
-    FloatType,
-    FloatValue,
-    IntType,
-    IntValue,
-    StrType,
-    StrValue,
+    BoolI,
+    BoolI,
+    BytesI,
+    BytesI,
+    FloatI,
+    FloatI,
+    IntI,
+    IntI,
+    StrI,
+    StrI,
 )
 from nu.shapes import MutableItemRef, Slot
 
@@ -72,7 +72,7 @@ class ItemRef[T, ValueT: Value](
 # =============================================================================
 
 
-class IntRef(ItemRef[int, IntValue], IntType):
+class IntRef(ItemRef[int, IntI], IntI):
     """Dict integer reference with full numeric interface."""
 
     def __init__(
@@ -85,7 +85,7 @@ class IntRef(ItemRef[int, IntValue], IntType):
         super().__init__(
             address=address,
             value_type=int,
-            value_value_type=IntValue,
+            value_value_type=IntI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -95,7 +95,7 @@ class IntRef(ItemRef[int, IntValue], IntType):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class StrRef(ItemRef[str, StrValue], StrType):
+class StrRef(ItemRef[str, StrI], StrI):
     """Dict string reference with full string interface."""
 
     def __init__(
@@ -108,7 +108,7 @@ class StrRef(ItemRef[str, StrValue], StrType):
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrValue,
+            value_value_type=StrI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -118,7 +118,7 @@ class StrRef(ItemRef[str, StrValue], StrType):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class FloatRef(ItemRef[float, FloatValue], FloatType):
+class FloatRef(ItemRef[float, FloatI], FloatI):
     """Dict float reference with full numeric interface."""
 
     def __init__(
@@ -131,7 +131,7 @@ class FloatRef(ItemRef[float, FloatValue], FloatType):
         super().__init__(
             address=address,
             value_type=float,
-            value_value_type=FloatValue,
+            value_value_type=FloatI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -141,7 +141,7 @@ class FloatRef(ItemRef[float, FloatValue], FloatType):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class BoolRef(ItemRef[bool, BoolValue], BoolType):
+class BoolRef(ItemRef[bool, BoolI], BoolI):
     """Dict boolean reference with full logical interface."""
 
     def __init__(
@@ -154,7 +154,7 @@ class BoolRef(ItemRef[bool, BoolValue], BoolType):
         super().__init__(
             address=address,
             value_type=bool,
-            value_value_type=BoolValue,
+            value_value_type=BoolI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -164,7 +164,7 @@ class BoolRef(ItemRef[bool, BoolValue], BoolType):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class BytesRef(ItemRef[bytes, BytesValue], BytesType):
+class BytesRef(ItemRef[bytes, BytesI], BytesI):
     """Dict bytes reference with full bytes interface."""
 
     def __init__(
@@ -177,7 +177,7 @@ class BytesRef(ItemRef[bytes, BytesValue], BytesType):
         super().__init__(
             address=address,
             value_type=bytes,
-            value_value_type=BytesValue,
+            value_value_type=BytesI,
             parent=parent,
             owner_shape=owner_shape,
         )

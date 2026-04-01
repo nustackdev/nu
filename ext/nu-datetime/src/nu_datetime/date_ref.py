@@ -2,7 +2,7 @@
 
 Pattern:
     DateType = Object[date] + ComparableBase + date operations
-    DateValue = ValueBase + DateType (computed results)
+    DateValue = Interface + DateType (computed results)
 """
 
 from __future__ import annotations
@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING
 from nu import Sentinel
 from nu import (
     ComparableBase,
-    IntValue,
+    IntI,
     Object,
-    StrValue,
-    ValueBase,
+    StrI,
+    Interface,
 )
 
 
@@ -85,63 +85,63 @@ class DateType(
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def year(self) -> IntValue:
+    def year(self) -> IntI:
         """Get the year component."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "year"))
+        return IntI(FuncCallOp(getattr, self, "year"))
 
-    def month(self) -> IntValue:
+    def month(self) -> IntI:
         """Get the month component (1-12)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "month"))
+        return IntI(FuncCallOp(getattr, self, "month"))
 
-    def day(self) -> IntValue:
+    def day(self) -> IntI:
         """Get the day component (1-31)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "day"))
+        return IntI(FuncCallOp(getattr, self, "day"))
 
-    def weekday(self) -> IntValue:
+    def weekday(self) -> IntI:
         """Get the day of week (Monday=0, Sunday=6)."""
         from nu import MethodCallOp
 
-        return IntValue(MethodCallOp(self, "weekday"))
+        return IntI(MethodCallOp(self, "weekday"))
 
-    def isoweekday(self) -> IntValue:
+    def isoweekday(self) -> IntI:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
         from nu import MethodCallOp
 
-        return IntValue(MethodCallOp(self, "isoweekday"))
+        return IntI(MethodCallOp(self, "isoweekday"))
 
-    def toordinal(self) -> IntValue:
+    def toordinal(self) -> IntI:
         """Get the Gregorian ordinal."""
         from nu import MethodCallOp
 
-        return IntValue(MethodCallOp(self, "toordinal"))
+        return IntI(MethodCallOp(self, "toordinal"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def isoformat(self) -> StrValue:
+    def isoformat(self) -> StrI:
         """Convert to ISO 8601 format string (YYYY-MM-DD)."""
         from nu import MethodCallOp
 
-        return StrValue(MethodCallOp(self, "isoformat"))
+        return StrI(MethodCallOp(self, "isoformat"))
 
-    def strftime(self, fmt: str | Nu[str]) -> StrValue:
+    def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format date as string."""
         from nu import MethodCallOp
 
-        return StrValue(MethodCallOp(self, "strftime", fmt))
+        return StrI(MethodCallOp(self, "strftime", fmt))
 
-    def ctime(self) -> StrValue:
+    def ctime(self) -> StrI:
         """Return ctime-style string."""
         from nu import MethodCallOp
 
-        return StrValue(MethodCallOp(self, "ctime"))
+        return StrI(MethodCallOp(self, "ctime"))
 
     # =========================================================================
     # MANIPULATION
@@ -203,7 +203,7 @@ class DateType(
 # =============================================================================
 
 
-class DateValue(ValueBase, DateType):
+class DateValue(Interface, DateType):
     """Computed date value (Python memory substrate)."""
 
     pass

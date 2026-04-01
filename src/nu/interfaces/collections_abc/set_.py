@@ -25,7 +25,7 @@ from .collection import CollectionBase, CollectionProtocol
 if TYPE_CHECKING:
     from nu.terms import Arg, Nu
 
-    from ..values import BoolValue, NoneValue
+    from nu.interfaces.primitives import BoolI, NoneI
 
 
 __all__ = [
@@ -62,9 +62,9 @@ class SetLikeProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
     def symmetric_difference(
         self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> CollectionResultT: ...
-    def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolValue: ...
-    def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolValue: ...
-    def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolValue: ...
+    def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI: ...
+    def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI: ...
+    def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI: ...
 
 
 class MutableSetProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
@@ -80,17 +80,17 @@ class MutableSetProtocol[CollectionT, ElementT, CollectionResultT, ElementResult
         ElementResultT: Result for element-level ops (sum_, min_, max_)
     """
 
-    def add(self, value: Arg[ElementT]) -> NoneValue: ...
-    def remove(self, value: Arg[ElementT]) -> NoneValue: ...
-    def discard(self, value: Arg[ElementT]) -> NoneValue: ...
+    def add(self, value: Arg[ElementT]) -> NoneI: ...
+    def remove(self, value: Arg[ElementT]) -> NoneI: ...
+    def discard(self, value: Arg[ElementT]) -> NoneI: ...
     def pop(self) -> ElementResultT: ...
-    def clear(self) -> NoneValue: ...
-    def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneValue: ...
-    def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneValue: ...
-    def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneValue: ...
+    def clear(self) -> NoneI: ...
+    def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI: ...
+    def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI: ...
+    def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI: ...
     def symmetric_difference_update(
         self, other: Arg[set[ElementT] | frozenset[ElementT]]
-    ) -> NoneValue: ...
+    ) -> NoneI: ...
 
 
 # =============================================================================
@@ -143,26 +143,26 @@ class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return cast("CollectionResultT", self._wrap_set_result(SymmetricDifferenceOp(self, other)))
 
-    def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolValue:
+    def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
         """Check if subset."""
         from nu.ops.collections.set import IsSubsetOp
-        from ..values import BoolValue
+        from nu.interfaces.primitives import BoolI
 
-        return BoolValue(IsSubsetOp(self, other))
+        return BoolI(IsSubsetOp(self, other))
 
-    def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolValue:
+    def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
         """Check if superset."""
         from nu.ops.collections.set import IsSupersetOp
-        from ..values import BoolValue
+        from nu.interfaces.primitives import BoolI
 
-        return BoolValue(IsSupersetOp(self, other))
+        return BoolI(IsSupersetOp(self, other))
 
-    def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolValue:
+    def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
         """Check if disjoint."""
         from nu.ops.collections.set import IsDisjointOp
-        from ..values import BoolValue
+        from nu.interfaces.primitives import BoolI
 
-        return BoolValue(IsDisjointOp(self, other))
+        return BoolI(IsDisjointOp(self, other))
 
 
 class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
@@ -177,26 +177,26 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         ElementResultT: Result for element-level ops (sum_, min_, max_)
     """
 
-    def add(self, value: Arg[ElementT]) -> NoneValue:
+    def add(self, value: Arg[ElementT]) -> NoneI:
         """Add element to set."""
         from nu.ops.collections.set import AddCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(AddCmd(self, value))
+        return NoneI(AddCmd(self, value))
 
-    def remove(self, value: Arg[ElementT]) -> NoneValue:
+    def remove(self, value: Arg[ElementT]) -> NoneI:
         """Remove element from set. Returns INVALID if not found."""
         from nu.ops.collections.set import RemoveCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(RemoveCmd(self, value))
+        return NoneI(RemoveCmd(self, value))
 
-    def discard(self, value: Arg[ElementT]) -> NoneValue:
+    def discard(self, value: Arg[ElementT]) -> NoneI:
         """Remove element if present (no error if absent)."""
         from nu.ops.collections.set import DiscardCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(DiscardCmd(self, value))
+        return NoneI(DiscardCmd(self, value))
 
     def pop(self) -> ElementResultT:
         """Remove and return arbitrary element."""
@@ -204,39 +204,39 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return cast("ElementResultT", self._wrap_element_result(SetPopCmd(self)))
 
-    def clear(self) -> NoneValue:
+    def clear(self) -> NoneI:
         """Remove all items."""
         from nu.ops.collections.shared import ClearCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(ClearCmd(self))
+        return NoneI(ClearCmd(self))
 
-    def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneValue:
+    def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Add all elements from other."""
         from nu.ops.collections.set import SetUpdateCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(SetUpdateCmd(self, other))
+        return NoneI(SetUpdateCmd(self, other))
 
-    def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneValue:
+    def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Keep only elements found in both."""
         from nu.ops.collections.set import IntersectionUpdateCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(IntersectionUpdateCmd(self, other))
+        return NoneI(IntersectionUpdateCmd(self, other))
 
-    def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneValue:
+    def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Remove all elements found in other."""
         from nu.ops.collections.set import DifferenceUpdateCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(DifferenceUpdateCmd(self, other))
+        return NoneI(DifferenceUpdateCmd(self, other))
 
     def symmetric_difference_update(
         self, other: Arg[set[ElementT] | frozenset[ElementT]]
-    ) -> NoneValue:
+    ) -> NoneI:
         """Keep elements in either set but not both."""
         from nu.ops.collections.set import SymmetricDifferenceUpdateCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(SymmetricDifferenceUpdateCmd(self, other))
+        return NoneI(SymmetricDifferenceUpdateCmd(self, other))

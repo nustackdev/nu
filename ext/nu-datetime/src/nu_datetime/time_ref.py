@@ -2,7 +2,7 @@
 
 Pattern:
     TimeType = Object[time] + ComparableBase + time operations
-    TimeValue = ValueBase + TimeType (computed results)
+    TimeValue = Interface + TimeType (computed results)
 """
 
 from __future__ import annotations
@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING
 from nu import Sentinel
 from nu import (
     ComparableBase,
-    IntValue,
+    IntI,
     Object,
-    StrValue,
-    ValueBase,
+    StrI,
+    Interface,
 )
 
 
@@ -85,45 +85,45 @@ class TimeType(
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def hour(self) -> IntValue:
+    def hour(self) -> IntI:
         """Get the hour component (0-23)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "hour"))
+        return IntI(FuncCallOp(getattr, self, "hour"))
 
-    def minute(self) -> IntValue:
+    def minute(self) -> IntI:
         """Get the minute component (0-59)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "minute"))
+        return IntI(FuncCallOp(getattr, self, "minute"))
 
-    def second(self) -> IntValue:
+    def second(self) -> IntI:
         """Get the second component (0-59)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "second"))
+        return IntI(FuncCallOp(getattr, self, "second"))
 
-    def microsecond(self) -> IntValue:
+    def microsecond(self) -> IntI:
         """Get the microsecond component (0-999999)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "microsecond"))
+        return IntI(FuncCallOp(getattr, self, "microsecond"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def isoformat(self, timespec: str | Nu[str] = "auto") -> StrValue:
+    def isoformat(self, timespec: str | Nu[str] = "auto") -> StrI:
         """Convert to ISO 8601 format string."""
         from nu import MethodCallOp
 
-        return StrValue(MethodCallOp(self, "isoformat", timespec))
+        return StrI(MethodCallOp(self, "isoformat", timespec))
 
-    def strftime(self, fmt: str | Nu[str]) -> StrValue:
+    def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format time as string."""
         from nu import MethodCallOp
 
-        return StrValue(MethodCallOp(self, "strftime", fmt))
+        return StrI(MethodCallOp(self, "strftime", fmt))
 
     # =========================================================================
     # MANIPULATION
@@ -156,7 +156,7 @@ class TimeType(
 # =============================================================================
 
 
-class TimeValue(ValueBase, TimeType):
+class TimeValue(Interface, TimeType):
     """Computed time value (Python memory substrate)."""
 
     pass

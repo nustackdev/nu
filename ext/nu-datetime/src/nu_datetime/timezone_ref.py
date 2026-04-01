@@ -2,7 +2,7 @@
 
 Pattern:
     TimezoneType = Object[timezone] + EqualableBase + timezone operations
-    TimezoneValue = ValueBase + TimezoneType (computed results)
+    TimezoneValue = Interface + TimezoneType (computed results)
 
 Note: Timezones are not orderable (no <, >, <=, >=).
 """
@@ -15,10 +15,10 @@ from typing import TYPE_CHECKING
 from nu import Sentinel
 from nu import (
     EqualableBase,
-    NoneValue,
+    NoneI,
     Object,
-    StrValue,
-    ValueBase,
+    StrI,
+    Interface,
 )
 
 
@@ -93,7 +93,7 @@ class TimezoneType(
     # METHODS
     # =========================================================================
 
-    def tzname(self, dt: DatetimeArg | None = None) -> StrValue:
+    def tzname(self, dt: DatetimeArg | None = None) -> StrI:
         """Get the timezone name."""
         from nu import MethodCallOp
 
@@ -105,7 +105,7 @@ class TimezoneType(
             dt_arg = DatetimeValue(dt)
         else:
             dt_arg = dt
-        return StrValue(MethodCallOp(self, "tzname", dt_arg))
+        return StrI(MethodCallOp(self, "tzname", dt_arg))
 
     def utcoffset(self, dt: DatetimeArg | None = None) -> TimedeltaValue:
         """Get the UTC offset as timedelta."""
@@ -122,9 +122,9 @@ class TimezoneType(
             dt_arg = dt
         return TimedeltaValue(MethodCallOp(self, "utcoffset", dt_arg))
 
-    def dst(self, dt: DatetimeArg | None = None) -> NoneValue:
+    def dst(self, dt: DatetimeArg | None = None) -> NoneI:
         """Get the daylight saving time offset (returns None for fixed-offset timezones)."""
-        return NoneValue()
+        return NoneI()
 
 
 # =============================================================================
@@ -132,7 +132,7 @@ class TimezoneType(
 # =============================================================================
 
 
-class TimezoneValue(ValueBase, TimezoneType):
+class TimezoneValue(Interface, TimezoneType):
     """Computed timezone value (Python memory substrate)."""
 
     pass

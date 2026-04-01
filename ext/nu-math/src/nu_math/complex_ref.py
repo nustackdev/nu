@@ -2,7 +2,7 @@
 
 Pattern:
     ComplexType = Object[complex] + EqualableBase + arithmetic operations
-    ComplexValue = ValueBase + ComplexType (computed results)
+    ComplexValue = Interface + ComplexType (computed results)
 
 Note: Complex numbers are not orderable (no <, >, <=, >=).
 """
@@ -14,10 +14,10 @@ from typing import TYPE_CHECKING
 from nu import Sentinel
 from nu import (
     EqualableBase,
-    FloatValue,
+    FloatI,
     Object,
-    TupleValue,
-    ValueBase,
+    TupleI,
+    Interface,
 )
 
 
@@ -80,17 +80,17 @@ class ComplexType(
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def real(self) -> FloatValue:
+    def real(self) -> FloatI:
         """Get the real part."""
         from nu import FuncCallOp
 
-        return FloatValue(FuncCallOp(getattr, self, "real"))
+        return FloatI(FuncCallOp(getattr, self, "real"))
 
-    def imag(self) -> FloatValue:
+    def imag(self) -> FloatI:
         """Get the imaginary part."""
         from nu import FuncCallOp
 
-        return FloatValue(FuncCallOp(getattr, self, "imag"))
+        return FloatI(FuncCallOp(getattr, self, "imag"))
 
     # =========================================================================
     # ARITHMETIC
@@ -182,11 +182,11 @@ class ComplexType(
 
         return ComplexValue(NegOp(self))
 
-    def __abs__(self) -> FloatValue:
+    def __abs__(self) -> FloatI:
         """Get magnitude (absolute value)."""
         from nu import FuncCallOp
 
-        return FloatValue(FuncCallOp(abs, self))
+        return FloatI(FuncCallOp(abs, self))
 
     # =========================================================================
     # COMPLEX OPERATIONS
@@ -198,21 +198,21 @@ class ComplexType(
 
         return ComplexValue(MethodCallOp(self, "conjugate"))
 
-    def phase(self) -> FloatValue:
+    def phase(self) -> FloatI:
         """Get the phase angle in radians."""
         import cmath
 
         from nu import FuncCallOp
 
-        return FloatValue(FuncCallOp(cmath.phase, self))
+        return FloatI(FuncCallOp(cmath.phase, self))
 
-    def polar(self) -> TupleValue:
+    def polar(self) -> TupleI:
         """Get polar coordinates (r, phi)."""
         import cmath
 
         from nu import FuncCallOp
 
-        return TupleValue(FuncCallOp(cmath.polar, self))
+        return TupleI(FuncCallOp(cmath.polar, self))
 
     # =========================================================================
     # MATHEMATICAL FUNCTIONS
@@ -274,7 +274,7 @@ class ComplexType(
 # =============================================================================
 
 
-class ComplexValue(ValueBase, ComplexType):
+class ComplexValue(Interface, ComplexType):
     """Computed complex value (Python memory substrate)."""
 
     pass

@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING, Self
 
 from nu import Ref as RefABC
 from nu import Nu
-from nu.interfaces.values import AnyValue
+from nu.interfaces import AnyI
 from nu.utils import ensure_nu
 
 
@@ -93,7 +93,7 @@ class Ref[T](RefABC[T]):
         try:
             address_term = ensure_nu(address)
         except TypeError:
-            address_term = AnyValue(address)
+            address_term = AnyI(address)
 
         if parent is not None:
             super().__init__(address_term, parent)

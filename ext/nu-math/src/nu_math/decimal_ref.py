@@ -2,7 +2,7 @@
 
 Pattern:
     DecimalType = Object[Decimal] + ComparableBase + arithmetic operations
-    DecimalValue = ValueBase + DecimalType (computed results)
+    DecimalValue = Interface + DecimalType (computed results)
 """
 
 from __future__ import annotations
@@ -12,11 +12,11 @@ from typing import TYPE_CHECKING
 
 from nu import Sentinel
 from nu import (
-    BoolValue,
+    BoolI,
     ComparableBase,
-    IntValue,
+    IntI,
     Object,
-    ValueBase,
+    Interface,
 )
 
 
@@ -225,39 +225,39 @@ class DecimalType(
     # INSPECTION
     # =========================================================================
 
-    def is_finite(self) -> BoolValue:
+    def is_finite(self) -> BoolI:
         """Check if value is finite."""
         from nu import MethodCallOp
 
-        return BoolValue(MethodCallOp(self, "is_finite"))
+        return BoolI(MethodCallOp(self, "is_finite"))
 
-    def is_infinite(self) -> BoolValue:
+    def is_infinite(self) -> BoolI:
         """Check if value is infinite."""
         from nu import MethodCallOp
 
-        return BoolValue(MethodCallOp(self, "is_infinite"))
+        return BoolI(MethodCallOp(self, "is_infinite"))
 
-    def is_signed(self) -> BoolValue:
+    def is_signed(self) -> BoolI:
         """Check if value is negative."""
         from nu import MethodCallOp
 
-        return BoolValue(MethodCallOp(self, "is_signed"))
+        return BoolI(MethodCallOp(self, "is_signed"))
 
-    def is_zero(self) -> BoolValue:
+    def is_zero(self) -> BoolI:
         """Check if value is zero."""
         from nu import MethodCallOp
 
-        return BoolValue(MethodCallOp(self, "is_zero"))
+        return BoolI(MethodCallOp(self, "is_zero"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def to_int(self) -> IntValue:
+    def to_int(self) -> IntI:
         """Convert to integer (truncating decimal)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(int, self))
+        return IntI(FuncCallOp(int, self))
 
 
 # =============================================================================
@@ -265,7 +265,7 @@ class DecimalType(
 # =============================================================================
 
 
-class DecimalValue(ValueBase, DecimalType):
+class DecimalValue(Interface, DecimalType):
     """Computed Decimal value (Python memory substrate)."""
 
     pass

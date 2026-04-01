@@ -57,7 +57,7 @@ from nu import Arg, Nu
 from nu import (
     FuncCallOp,
     MethodCallOp,
-    NoneValue,
+    NoneI,
     ToFloatOp,
     ToIntOp,
     ToStrOp,
@@ -123,12 +123,12 @@ class DecimalRef(RefBase[str], DecimalType):
     def result(self, op: Nu) -> object:
         return DecimalValue.from_str(op)
 
-    def store(self, value: Arg[Decimal | str]) -> NoneValue:
+    def store(self, value: Arg[Decimal | str]) -> NoneI:
         if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class FractionRef(RefBase[str], FractionType):
@@ -155,12 +155,12 @@ class FractionRef(RefBase[str], FractionType):
     def result(self, op: Nu) -> object:
         return FractionValue.from_str(op)
 
-    def store(self, value: Arg[Fraction | str]) -> NoneValue:
+    def store(self, value: Arg[Fraction | str]) -> NoneI:
         if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class ComplexRef(RefBase[str], ComplexType):
@@ -192,7 +192,7 @@ class ComplexRef(RefBase[str], ComplexType):
 
         return ComplexValue(FuncCallOp(parse_complex, op))
 
-    def store(self, value: Arg[complex | str]) -> NoneValue:
+    def store(self, value: Arg[complex | str]) -> NoneI:
         # complex uses custom "real,imag" format — str(complex) gives "(1+2j)"
         if isinstance(value, Nu):
 
@@ -204,7 +204,7 @@ class ComplexRef(RefBase[str], ComplexType):
             val = f"{value.real},{value.imag}"
         else:
             val = str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class BasisPointRef(RefBase[int], BasisPointType):
@@ -229,12 +229,12 @@ class BasisPointRef(RefBase[int], BasisPointType):
     def result(self, op: Nu) -> object:
         return BasisPointValue.from_int(op)
 
-    def store(self, value: Arg[BasisPoint | int]) -> NoneValue:
+    def store(self, value: Arg[BasisPoint | int]) -> NoneI:
         if isinstance(value, Nu):
             val = ToIntOp(value)
         else:
             val = int(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class PercentageRef(RefBase[float], PercentageType):
@@ -259,12 +259,12 @@ class PercentageRef(RefBase[float], PercentageType):
     def result(self, op: Nu) -> object:
         return PercentageValue.from_float(op)
 
-    def store(self, value: Arg[Percentage | float]) -> NoneValue:
+    def store(self, value: Arg[Percentage | float]) -> NoneI:
         if isinstance(value, Nu):
             val = ToFloatOp(value)
         else:
             val = float(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
 # =============================================================================
@@ -296,13 +296,13 @@ class DateRef(RefBase[str], DateType):
     def result(self, op: Nu) -> object:
         return DateValue.from_iso(op)
 
-    def store(self, value: Arg[date | str]) -> NoneValue:
+    def store(self, value: Arg[date | str]) -> NoneI:
         """Stores as ISO string."""
         if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
 class DatetimeRef(RefBase[str], DatetimeType):

@@ -10,7 +10,7 @@ from nu.terms import Ref, Sentinel
 if TYPE_CHECKING:
     from nu.context import Context
 
-    from nu.interfaces.values import BoolValue
+    from nu.interfaces import BoolI
 
 
 __all__ = [
@@ -21,7 +21,7 @@ __all__ = [
 class ServiceRef[T](Ref[T]):
     """Service ref -- resolves an object directly from Context by type tag.
 
-    Like PrimRef but for service bindings instead of attrs.
+    Like AttrRef but for service bindings instead of attrs.
     The service type is used as the Context key.
 
     Usage:
@@ -53,9 +53,9 @@ class ServiceRef[T](Ref[T]):
         """Fetch service directly from context bindings."""
         return ctx[self._service_type]  # type: ignore[index]
 
-    def exists(self) -> BoolValue:
+    def exists(self) -> BoolI:
         """Check if service exists in context."""
-        from nu.interfaces.values import BoolValue
+        from nu.interfaces import BoolI
         from .service_ops import ServiceExistsOp
 
-        return BoolValue(ServiceExistsOp(self))
+        return BoolI(ServiceExistsOp(self))

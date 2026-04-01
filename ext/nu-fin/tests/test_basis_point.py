@@ -10,8 +10,8 @@ import pytest
 from nu_fin import BasisPoint
 from nu_fin import BasisPointValue as BasisPointRef
 from nu import AddOp, DivOp, FuncCallOp, MulOp, SubOp
-from nu import FloatValue as FloatRef
-from nu import IntValue as IntRef
+from nu import FloatI as FloatRef
+from nu import IntI as IntRef
 
 
 # =============================================================================

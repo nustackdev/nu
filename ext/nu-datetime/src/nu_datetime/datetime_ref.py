@@ -2,7 +2,7 @@
 
 Pattern:
     DatetimeType = Object[datetime] + ComparableBase + datetime operations
-    DatetimeValue = ValueBase + DatetimeType (computed results)
+    DatetimeValue = Interface + DatetimeType (computed results)
 """
 
 from __future__ import annotations
@@ -13,11 +13,11 @@ from typing import TYPE_CHECKING
 from nu import Sentinel
 from nu import (
     ComparableBase,
-    FloatValue,
-    IntValue,
+    FloatI,
+    IntI,
     Object,
-    StrValue,
-    ValueBase,
+    StrI,
+    Interface,
 )
 
 
@@ -102,75 +102,75 @@ class DatetimeType(
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def year(self) -> IntValue:
+    def year(self) -> IntI:
         """Get the year component."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "year"))
+        return IntI(FuncCallOp(getattr, self, "year"))
 
-    def month(self) -> IntValue:
+    def month(self) -> IntI:
         """Get the month component (1-12)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "month"))
+        return IntI(FuncCallOp(getattr, self, "month"))
 
-    def day(self) -> IntValue:
+    def day(self) -> IntI:
         """Get the day component (1-31)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "day"))
+        return IntI(FuncCallOp(getattr, self, "day"))
 
-    def hour(self) -> IntValue:
+    def hour(self) -> IntI:
         """Get the hour component (0-23)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "hour"))
+        return IntI(FuncCallOp(getattr, self, "hour"))
 
-    def minute(self) -> IntValue:
+    def minute(self) -> IntI:
         """Get the minute component (0-59)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "minute"))
+        return IntI(FuncCallOp(getattr, self, "minute"))
 
-    def second(self) -> IntValue:
+    def second(self) -> IntI:
         """Get the second component (0-59)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "second"))
+        return IntI(FuncCallOp(getattr, self, "second"))
 
-    def microsecond(self) -> IntValue:
+    def microsecond(self) -> IntI:
         """Get the microsecond component (0-999999)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "microsecond"))
+        return IntI(FuncCallOp(getattr, self, "microsecond"))
 
-    def weekday(self) -> IntValue:
+    def weekday(self) -> IntI:
         """Get the day of week (Monday=0, Sunday=6)."""
         from nu import MethodCallOp
 
-        return IntValue(MethodCallOp(self, "weekday"))
+        return IntI(MethodCallOp(self, "weekday"))
 
-    def isoweekday(self) -> IntValue:
+    def isoweekday(self) -> IntI:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
         from nu import MethodCallOp
 
-        return IntValue(MethodCallOp(self, "isoweekday"))
+        return IntI(MethodCallOp(self, "isoweekday"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def timestamp(self) -> FloatValue:
+    def timestamp(self) -> FloatI:
         """Convert to POSIX timestamp."""
         from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "timestamp"))
+        return FloatI(MethodCallOp(self, "timestamp"))
 
-    def isoformat(self, sep: str | Nu[str] = "T", timespec: str | Nu[str] = "auto") -> StrValue:
+    def isoformat(self, sep: str | Nu[str] = "T", timespec: str | Nu[str] = "auto") -> StrI:
         """Convert to ISO 8601 format string."""
         from nu import MethodCallOp
 
-        return StrValue(MethodCallOp(self, "isoformat", sep, timespec))
+        return StrI(MethodCallOp(self, "isoformat", sep, timespec))
 
     def date(self) -> DateValue:
         """Extract the date component."""
@@ -188,11 +188,11 @@ class DatetimeType(
 
         return TimeValue(MethodCallOp(self, "time"))
 
-    def strftime(self, fmt: str | Nu[str]) -> StrValue:
+    def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format datetime as string."""
         from nu import MethodCallOp
 
-        return StrValue(MethodCallOp(self, "strftime", fmt))
+        return StrI(MethodCallOp(self, "strftime", fmt))
 
     # =========================================================================
     # MANIPULATION
@@ -266,7 +266,7 @@ class DatetimeType(
 # =============================================================================
 
 
-class DatetimeValue(ValueBase, DatetimeType):
+class DatetimeValue(Interface, DatetimeType):
     """Computed datetime value (Python memory substrate)."""
 
     pass

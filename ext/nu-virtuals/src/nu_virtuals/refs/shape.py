@@ -8,12 +8,12 @@ from virtuals.collections import MutableMappingBase
 from virtuals.types import Value as StorageValue
 
 from nu import (
-    AnyValue,
-    DictItemsValue,
-    DictKeysValue,
-    DictValue,
-    DictValuesValue,
-    IteratorValue,
+    AnyI,
+    DictItemsI,
+    DictKeysI,
+    DictI,
+    DictValuesI,
+    IteratorI,
 )
 from nu.shapes import ReactiveShapeRef, Shape, Slot
 
@@ -44,27 +44,27 @@ class ShapeRef[T: Shape](
     Inherits PV path resolution and view fetching from ViewRef.
     """
 
-    def result(self, op: Nu) -> DictValue[str, object]:
-        """Wrap morphism in DictValue for shape extract/store."""
-        return DictValue(op)
+    def result(self, op: Nu) -> DictI[str, object]:
+        """Wrap morphism in DictI for shape extract/store."""
+        return DictI(op)
 
-    def _wrap_keys_result(self, operand: Nu) -> DictKeysValue:
-        return DictKeysValue(operand)
+    def _wrap_keys_result(self, operand: Nu) -> DictKeysI:
+        return DictKeysI(operand)
 
-    def _wrap_values_result(self, operand: Nu) -> DictValuesValue:
-        return DictValuesValue(operand)
+    def _wrap_values_result(self, operand: Nu) -> DictValuesI:
+        return DictValuesI(operand)
 
-    def _wrap_items_result(self, operand: Nu) -> DictItemsValue:
-        return DictItemsValue(operand)
+    def _wrap_items_result(self, operand: Nu) -> DictItemsI:
+        return DictItemsI(operand)
 
-    def _wrap_iterable_result(self, operand: Nu) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorI:
+        return IteratorI(operand)
 
-    def _wrap_value_result(self, operand: Nu) -> AnyValue:
-        return AnyValue(operand)
+    def _wrap_value_result(self, operand: Nu) -> AnyI:
+        return AnyI(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> AnyValue:
-        return AnyValue(operand)
+    def _wrap_element_result(self, operand: Nu) -> AnyI:
+        return AnyI(operand)
 
     def __init__(
         self,

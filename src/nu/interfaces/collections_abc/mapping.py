@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
     from nu.terms import Arg, IntArg, Nu
 
-    from ..values import NoneValue
+    from nu.interfaces.primitives import NoneI
 
 
 __all__ = [
@@ -78,13 +78,13 @@ class MutableMappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, Value
         ValueResultT: Result for value-level ops (set, delete)
     """
 
-    def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> NoneValue: ...
-    def delete(self, key: Arg[KeyT]) -> NoneValue: ...
-    def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> NoneValue: ...
+    def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> NoneI: ...
+    def delete(self, key: Arg[KeyT]) -> NoneI: ...
+    def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> NoneI: ...
     def pop(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT: ...
     def popitem(self) -> ValueResultT: ...
     def setdefault(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT: ...
-    def clear(self) -> NoneValue: ...
+    def clear(self) -> NoneI: ...
     def copy(self) -> ValueResultT: ...
 
 
@@ -172,26 +172,26 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
         ValueResultT: Result for value-level ops (get, key_at)
     """
 
-    def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> NoneValue:
+    def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> NoneI:
         """Set value at key."""
         from nu.ops.collections.mapping import SetItemCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(SetItemCmd(self, key, value))
+        return NoneI(SetItemCmd(self, key, value))
 
-    def delete(self, key: Arg[KeyT]) -> NoneValue:
+    def delete(self, key: Arg[KeyT]) -> NoneI:
         """Delete entry by key."""
         from nu.ops.collections.mapping import DeleteItemCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(DeleteItemCmd(self, key))
+        return NoneI(DeleteItemCmd(self, key))
 
-    def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> NoneValue:
+    def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> NoneI:
         """Update mapping with another mapping."""
         from nu.ops.collections.mapping import UpdateCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(UpdateCmd(self, other))
+        return NoneI(UpdateCmd(self, other))
 
     def pop(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Remove key and return value, or default if missing."""
@@ -211,12 +211,12 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
 
         return cast("ValueResultT", self._wrap_value_result(SetDefaultCmd(self, key, default)))
 
-    def clear(self) -> NoneValue:
+    def clear(self) -> NoneI:
         """Remove all items."""
         from nu.ops.collections.shared import ClearCmd
-        from ..values import NoneValue
+        from nu.interfaces.primitives import NoneI
 
-        return NoneValue(ClearCmd(self))
+        return NoneI(ClearCmd(self))
 
     def copy(self) -> ValueResultT:
         """Shallow copy."""

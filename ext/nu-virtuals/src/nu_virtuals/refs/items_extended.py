@@ -1,7 +1,7 @@
 """PV storage refs for standard library types.
 
 These refs store values in PV storage with serialization/deserialization.
-Pattern: PV*Ref = ItemRef[StorageType, StrValue] + *Type + load/store methods
+Pattern: PV*Ref = ItemRef[StorageType, StrI] + *Type + load/store methods
 
 Storage formats:
 - Decimal: str (exact representation)
@@ -55,12 +55,12 @@ from nu_path import PathType, PathValue
 from nu_uuid import UUIDType, UUIDValue
 from nu import Arg, Nu
 from nu import (
-    FloatValue,
+    FloatI,
     FuncCallOp,
-    IntValue,
+    IntI,
     MethodCallOp,
-    NoneValue,
-    StrValue,
+    NoneI,
+    StrI,
     ToFloatOp,
     ToIntOp,
     ToStrOp,
@@ -107,7 +107,7 @@ __all__ = [
 # =============================================================================
 
 
-class DecimalRef(ItemRef[str, StrValue], DecimalType):
+class DecimalRef(ItemRef[str, StrI], DecimalType):
     """PV storage ref for Decimal values. Stores as str."""
 
     def __init__(
@@ -120,7 +120,7 @@ class DecimalRef(ItemRef[str, StrValue], DecimalType):
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrValue,
+            value_value_type=StrI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -138,16 +138,16 @@ class DecimalRef(ItemRef[str, StrValue], DecimalType):
     def result(self, op: Nu) -> object:  # noqa: D102
         return DecimalValue.from_str(op)
 
-    def store(self, value: Arg[Decimal | str]) -> NoneValue:
+    def store(self, value: Arg[Decimal | str]) -> NoneI:
         """Store the Decimal value."""
         if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
-class FractionRef(ItemRef[str, StrValue], FractionType):
+class FractionRef(ItemRef[str, StrI], FractionType):
     """PV storage ref for Fraction values. Stores as str."""
 
     def __init__(
@@ -160,7 +160,7 @@ class FractionRef(ItemRef[str, StrValue], FractionType):
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrValue,
+            value_value_type=StrI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -178,16 +178,16 @@ class FractionRef(ItemRef[str, StrValue], FractionType):
     def result(self, op: Nu) -> object:  # noqa: D102
         return FractionValue.from_str(op)
 
-    def store(self, value: Arg[Fraction | str]) -> NoneValue:
+    def store(self, value: Arg[Fraction | str]) -> NoneI:
         """Store the Fraction value."""
         if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
-class ComplexRef(ItemRef[str, StrValue], ComplexType):
+class ComplexRef(ItemRef[str, StrI], ComplexType):
     """PV storage ref for complex values. Stores as str ("real,imag")."""
 
     def __init__(
@@ -200,7 +200,7 @@ class ComplexRef(ItemRef[str, StrValue], ComplexType):
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrValue,
+            value_value_type=StrI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -223,7 +223,7 @@ class ComplexRef(ItemRef[str, StrValue], ComplexType):
 
         return ComplexValue(FuncCallOp(parse_complex, op))
 
-    def store(self, value: Arg[complex | str]) -> NoneValue:
+    def store(self, value: Arg[complex | str]) -> NoneI:
         """Store the complex value."""
         if isinstance(value, complex):
             val = f"{value.real},{value.imag}"
@@ -235,10 +235,10 @@ class ComplexRef(ItemRef[str, StrValue], ComplexType):
                 return f"{c.real},{c.imag}"
 
             val = FuncCallOp(format_complex, value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
-class BasisPointRef(ItemRef[int, IntValue], BasisPointType):
+class BasisPointRef(ItemRef[int, IntI], BasisPointType):
     """PV storage ref for BasisPoint values. Stores as int."""
 
     def __init__(
@@ -251,7 +251,7 @@ class BasisPointRef(ItemRef[int, IntValue], BasisPointType):
         super().__init__(
             address=address,
             value_type=int,
-            value_value_type=IntValue,
+            value_value_type=IntI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -267,16 +267,16 @@ class BasisPointRef(ItemRef[int, IntValue], BasisPointType):
     def result(self, op: Nu) -> object:  # noqa: D102
         return BasisPointValue.from_int(op)
 
-    def store(self, value: Arg[BasisPoint | int]) -> NoneValue:
+    def store(self, value: Arg[BasisPoint | int]) -> NoneI:
         """Store the BasisPoint value."""
         if isinstance(value, Nu):
             val = ToIntOp(value)
         else:
             val = int(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
-class PercentageRef(ItemRef[float, FloatValue], PercentageType):
+class PercentageRef(ItemRef[float, FloatI], PercentageType):
     """PV storage ref for Percentage values. Stores as float."""
 
     def __init__(
@@ -289,7 +289,7 @@ class PercentageRef(ItemRef[float, FloatValue], PercentageType):
         super().__init__(
             address=address,
             value_type=float,
-            value_value_type=FloatValue,
+            value_value_type=FloatI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -305,13 +305,13 @@ class PercentageRef(ItemRef[float, FloatValue], PercentageType):
     def result(self, op: Nu) -> object:  # noqa: D102
         return PercentageValue.from_float(op)
 
-    def store(self, value: Arg[Percentage | float]) -> NoneValue:
+    def store(self, value: Arg[Percentage | float]) -> NoneI:
         """Store the Percentage value."""
         if isinstance(value, Nu):
             val = ToFloatOp(value)
         else:
             val = float(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
 # =============================================================================
@@ -319,7 +319,7 @@ class PercentageRef(ItemRef[float, FloatValue], PercentageType):
 # =============================================================================
 
 
-class DateRef(ItemRef[str, StrValue], DateType):
+class DateRef(ItemRef[str, StrI], DateType):
     """PV storage ref for date values. Stores as str (ISO format)."""
 
     def __init__(
@@ -332,7 +332,7 @@ class DateRef(ItemRef[str, StrValue], DateType):
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrValue,
+            value_value_type=StrI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -350,16 +350,16 @@ class DateRef(ItemRef[str, StrValue], DateType):
     def result(self, op: Nu) -> object:  # noqa: D102
         return DateValue.from_iso(op)
 
-    def store(self, value: Arg[date | str]) -> NoneValue:
+    def store(self, value: Arg[date | str]) -> NoneI:
         """Store the date value. Stores as ISO string."""
         if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
-class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
+class DatetimeRef(ItemRef[str, StrI], DatetimeType):
     """PV storage ref for datetime values. Stores as str (ISO format)."""
 
     def __init__(
@@ -372,7 +372,7 @@ class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrValue,
+            value_value_type=StrI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -392,16 +392,16 @@ class DatetimeRef(ItemRef[str, StrValue], DatetimeType):
     def result(self, op: Nu) -> object:  # noqa: D102
         return DatetimeValue.from_iso(op)
 
-    def store(self, value: Arg[datetime | str]) -> NoneValue:
+    def store(self, value: Arg[datetime | str]) -> NoneI:
         """Store the datetime value. Stores as ISO string."""
         if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, datetime) else str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
-class TimeRef(ItemRef[str, StrValue], TimeType):
+class TimeRef(ItemRef[str, StrI], TimeType):
     """PV storage ref for time values. Stores as str (ISO format)."""
 
     def __init__(
@@ -414,7 +414,7 @@ class TimeRef(ItemRef[str, StrValue], TimeType):
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrValue,
+            value_value_type=StrI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -432,16 +432,16 @@ class TimeRef(ItemRef[str, StrValue], TimeType):
     def result(self, op: Nu) -> object:  # noqa: D102
         return TimeValue.from_iso(op)
 
-    def store(self, value: Arg[time | str]) -> NoneValue:
+    def store(self, value: Arg[time | str]) -> NoneI:
         """Store the time value. Stores as ISO string."""
         if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = value.isoformat() if isinstance(value, time) else str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
-class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
+class TimedeltaRef(ItemRef[float, FloatI], TimedeltaType):
     """PV storage ref for timedelta values. Stores as float (seconds)."""
 
     def __init__(
@@ -454,7 +454,7 @@ class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
         super().__init__(
             address=address,
             value_type=float,
-            value_value_type=FloatValue,
+            value_value_type=FloatI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -472,7 +472,7 @@ class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
     def result(self, op: Nu) -> object:  # noqa: D102
         return TimedeltaValue.from_seconds(op)
 
-    def store(self, value: Arg[timedelta | float]) -> NoneValue:
+    def store(self, value: Arg[timedelta | float]) -> NoneI:
         """Store the timedelta value. Stores as float (seconds)."""
         if isinstance(value, Nu):
             # timedelta is stdlib — no __float__, so use .total_seconds()
@@ -481,10 +481,10 @@ class TimedeltaRef(ItemRef[float, FloatValue], TimedeltaType):
             val = value.total_seconds()
         else:
             val = float(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
-class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
+class TimezoneRef(ItemRef[str, StrI], TimezoneType):
     """PV storage ref for timezone values. Stores as str (offset)."""
 
     def __init__(
@@ -497,7 +497,7 @@ class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrValue,
+            value_value_type=StrI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -535,7 +535,7 @@ class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
 
         return TimezoneValue(FuncCallOp(parse_timezone, op))
 
-    def store(self, value: Arg[timezone | str]) -> NoneValue:
+    def store(self, value: Arg[timezone | str]) -> NoneI:
         """Store the timezone value."""
         if isinstance(value, timezone):
             from datetime import UTC
@@ -568,7 +568,7 @@ class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
                 return f"{sign}{hours:02d}:{minutes:02d}"
 
             val = FuncCallOp(format_timezone, value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
 # =============================================================================
@@ -576,7 +576,7 @@ class TimezoneRef(ItemRef[str, StrValue], TimezoneType):
 # =============================================================================
 
 
-class PathRef(ItemRef[str, StrValue], PathType):
+class PathRef(ItemRef[str, StrI], PathType):
     """PV storage ref for Path values. Stores as str."""
 
     def __init__(
@@ -589,7 +589,7 @@ class PathRef(ItemRef[str, StrValue], PathType):
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrValue,
+            value_value_type=StrI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -607,16 +607,16 @@ class PathRef(ItemRef[str, StrValue], PathType):
     def result(self, op: Nu) -> object:  # noqa: D102
         return PathValue.from_str(op)
 
-    def store(self, value: Arg[Path | str]) -> NoneValue:
+    def store(self, value: Arg[Path | str]) -> NoneI:
         """Store the Path value."""
         if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
-class UUIDRef(ItemRef[str, StrValue], UUIDType):
+class UUIDRef(ItemRef[str, StrI], UUIDType):
     """PV storage ref for UUID values. Stores as str."""
 
     def __init__(
@@ -629,7 +629,7 @@ class UUIDRef(ItemRef[str, StrValue], UUIDType):
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrValue,
+            value_value_type=StrI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -647,10 +647,10 @@ class UUIDRef(ItemRef[str, StrValue], UUIDType):
     def result(self, op: Nu) -> object:  # noqa: D102
         return UUIDValue.from_str(op)
 
-    def store(self, value: Arg[UUID | str]) -> NoneValue:
+    def store(self, value: Arg[UUID | str]) -> NoneI:
         """Store the UUID value."""
         if isinstance(value, Nu):
             val = ToStrOp(value)
         else:
             val = str(value)
-        return NoneValue(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, ensure_nu(val)))

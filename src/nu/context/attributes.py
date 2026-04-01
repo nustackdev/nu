@@ -1,7 +1,7 @@
 """Attributes -- flat mutable key-value store for primitive data.
 
 Attached to Context as ctx.attrs. Carried across Teleport boundaries
-via copy(). Used by PrimRef (attribute refs) for simple name-based storage.
+via copy(). Used by AttrRef (attribute refs) for simple name-based storage.
 """
 
 from __future__ import annotations

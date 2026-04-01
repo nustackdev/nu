@@ -6,7 +6,7 @@ ReactiveListBase = ListBase + ViewObservable
 
 from __future__ import annotations
 
-from nu.interfaces.types import Object
+from nu.interfaces import Interface
 from nu.shapes.collections import MutableSequenceBase, ReactiveSequenceBase
 
 
@@ -18,7 +18,7 @@ __all__ = [
 
 class ListType[T](
     MutableSequenceBase[T, object, object],
-    Object[list],
+    Interface[list],
 ):
     """List — mutable sequence."""
 
@@ -26,6 +26,6 @@ class ListType[T](
 class ReactiveListType[T](
     ListType[T],
     ReactiveSequenceBase[T, object, object],
-    Object[list],
+    Interface[list],
 ):
     """Reactive list — mutable + observable."""

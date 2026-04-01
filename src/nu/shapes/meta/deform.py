@@ -33,14 +33,14 @@ def extract_static_address(ref: Ref) -> object | None:
 
     Returns the literal value if the address is static, or None if dynamic.
     Handles both _raw_address (set for non-Nu addresses) and literal Values
-    (where ensure_nu wrapped a literal into AnyValue/StrValue/etc.).
+    (where ensure_nu wrapped a literal into AnyI/StrI/etc.).
     """
     # Fast path: _raw_address was set for non-Nu addresses
     raw = ref._raw_address
     if raw is not None:
         return raw
 
-    # Slow path: address is a Value wrapping a literal (e.g. AnyValue("cat_0"))
+    # Slow path: address is a Value wrapping a literal (e.g. AnyI("cat_0"))
     # This happens when _create_child_ref calls ensure_nu(key) on a literal.
     addr = ref.address  # children[0], a Nu
     source = getattr(addr, "source", None)

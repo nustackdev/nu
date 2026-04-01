@@ -18,8 +18,8 @@ from nu import (
     PowOp,
     SubOp,
 )
-from nu import BoolValue as BoolRef
-from nu import IntValue as IntRef
+from nu import BoolI as BoolRef
+from nu import IntI as IntRef
 
 
 # =============================================================================

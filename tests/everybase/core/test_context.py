@@ -548,27 +548,27 @@ class TestAttributes:
 
 
 # =============================================================================
-# E2E: Attributes through PrimRef
+# E2E: Attributes through AttrRef
 # =============================================================================
 
 
 class TestAttributesE2EPrimRef:
-    """PrimRef reads and writes through ctx.attrs."""
+    """AttrRef reads and writes through ctx.attrs."""
 
     async def test_prim_ref_reads_from_attrs(self):
-        from nu import PrimRef
+        from nu import AttrRef
 
         ctx = Context()
         ctx.attrs["greeting"] = "hello"
-        ref = PrimRef("greeting")
+        ref = AttrRef("greeting")
         result = await ref.fetch(ctx)
         assert result == "hello"
 
     async def test_prim_ref_exists(self):
-        from nu import PrimRef
+        from nu import AttrRef
 
         ctx = Context()
-        ref = PrimRef("maybe")
+        ref = AttrRef("maybe")
         assert await ref.exists().execute(ctx) is False
         ctx.attrs["maybe"] = "yes"
         assert await ref.exists().execute(ctx) is True

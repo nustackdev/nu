@@ -2,7 +2,7 @@
 
 Pattern:
     UUIDType = Object[UUID] + ComparableBase + UUID operations
-    UUIDValue = ValueBase + UUIDType (computed results)
+    UUIDValue = Interface + UUIDType (computed results)
 """
 
 from __future__ import annotations
@@ -12,12 +12,12 @@ from uuid import UUID, uuid1, uuid3, uuid4, uuid5
 
 from nu import Sentinel
 from nu import (
-    BytesValue,
+    BytesI,
     ComparableBase,
-    IntValue,
+    IntI,
     Object,
-    StrValue,
-    ValueBase,
+    StrI,
+    Interface,
 )
 
 
@@ -112,69 +112,69 @@ class UUIDType(
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def version(self) -> IntValue:
+    def version(self) -> IntI:
         """Get the UUID version number (1, 3, 4, or 5)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "version"))
+        return IntI(FuncCallOp(getattr, self, "version"))
 
-    def variant(self) -> StrValue:
+    def variant(self) -> StrI:
         """Get the UUID variant."""
         from nu import FuncCallOp
 
-        return StrValue(FuncCallOp(getattr, self, "variant"))
+        return StrI(FuncCallOp(getattr, self, "variant"))
 
-    def time(self) -> IntValue:
+    def time(self) -> IntI:
         """Get the 60-bit timestamp (for UUID version 1)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "time"))
+        return IntI(FuncCallOp(getattr, self, "time"))
 
-    def clock_seq(self) -> IntValue:
+    def clock_seq(self) -> IntI:
         """Get the 14-bit clock sequence (for UUID version 1)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "clock_seq"))
+        return IntI(FuncCallOp(getattr, self, "clock_seq"))
 
-    def node(self) -> IntValue:
+    def node(self) -> IntI:
         """Get the 48-bit node (for UUID version 1)."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "node"))
+        return IntI(FuncCallOp(getattr, self, "node"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def hex(self) -> StrValue:
+    def hex(self) -> StrI:
         """Get the UUID as a 32-character hexadecimal string."""
         from nu import FuncCallOp
 
-        return StrValue(FuncCallOp(getattr, self, "hex"))
+        return StrI(FuncCallOp(getattr, self, "hex"))
 
-    def urn(self) -> StrValue:
+    def urn(self) -> StrI:
         """Get the UUID as a URN (urn:uuid:...)."""
         from nu import FuncCallOp
 
-        return StrValue(FuncCallOp(getattr, self, "urn"))
+        return StrI(FuncCallOp(getattr, self, "urn"))
 
-    def bytes(self) -> BytesValue:
+    def bytes(self) -> BytesI:
         """Get the UUID as a 16-byte string."""
         from nu import FuncCallOp
 
-        return BytesValue(FuncCallOp(getattr, self, "bytes"))
+        return BytesI(FuncCallOp(getattr, self, "bytes"))
 
-    def bytes_le(self) -> BytesValue:
+    def bytes_le(self) -> BytesI:
         """Get the UUID as a 16-byte string in little-endian order."""
         from nu import FuncCallOp
 
-        return BytesValue(FuncCallOp(getattr, self, "bytes_le"))
+        return BytesI(FuncCallOp(getattr, self, "bytes_le"))
 
-    def int_(self) -> IntValue:
+    def int_(self) -> IntI:
         """Get the UUID as a 128-bit integer."""
         from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "int"))
+        return IntI(FuncCallOp(getattr, self, "int"))
 
 
 # =============================================================================
@@ -182,7 +182,7 @@ class UUIDType(
 # =============================================================================
 
 
-class UUIDValue(ValueBase, UUIDType):
+class UUIDValue(Interface, UUIDType):
     """Computed UUID value (Python memory substrate)."""
 
     pass

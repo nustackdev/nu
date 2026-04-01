@@ -8,8 +8,8 @@ import cmath
 
 from nu_math import ComplexValue as ComplexRef
 from nu import AddOp, DivOp, FuncCallOp, MulOp, PowOp, SubOp
-from nu import FloatValue as FloatRef
-from nu import TupleValue as TupleRef
+from nu import FloatI as FloatRef
+from nu import TupleI as TupleRef
 
 
 # =============================================================================

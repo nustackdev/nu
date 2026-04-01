@@ -6,8 +6,8 @@ Tests for:
 
 from nu_datetime import TimeValue as TimeRef
 from nu import FuncCallOp, MethodCallOp
-from nu import IntValue as IntRef
-from nu import StrValue as StrRef
+from nu import IntI as IntRef
+from nu import StrI as StrRef
 
 
 # =============================================================================

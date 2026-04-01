@@ -8,8 +8,8 @@ from datetime import timedelta
 
 from nu_datetime import TimedeltaValue as TimedeltaRef
 from nu import AddOp, DivOp, FloorDivOp, FuncCallOp, ModOp, MulOp, SubOp
-from nu import FloatValue as FloatRef
-from nu import IntValue as IntRef
+from nu import FloatI as FloatRef
+from nu import IntI as IntRef
 
 
 # =============================================================================

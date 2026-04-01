@@ -7,10 +7,10 @@ Tests for:
 from uuid import NAMESPACE_DNS
 
 from nu_uuid import UUIDValue as UUIDRef
-from nu import BytesValue as BytesRef
+from nu import BytesI as BytesRef
 from nu import FuncCallOp
-from nu import IntValue as IntRef
-from nu import StrValue as StrRef
+from nu import IntI as IntRef
+from nu import StrI as StrRef
 
 
 # =============================================================================

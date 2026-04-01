@@ -6,16 +6,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import (
-    AnyValue,
-    BoolValue,
-    BytesValue,
-    DictValue,
-    FloatValue,
-    IntValue,
-    IteratorValue,
-    ListValue,
-    SetValue,
-    StrValue,
+    AnyI,
+    BoolI,
+    BytesI,
+    DictI,
+    FloatI,
+    IntI,
+    IteratorI,
+    ListI,
+    SetI,
+    StrI,
     ensure_nu,
 )
 from nu.shapes import MutableSequenceRefBase, Slot
@@ -31,16 +31,16 @@ if TYPE_CHECKING:
 def _value_type_for(python_type: type) -> type[Value]:
     """Map Python type to its corresponding Value type."""
     mapping: dict[type, type[Value]] = {
-        int: IntValue,
-        str: StrValue,
-        float: FloatValue,
-        bool: BoolValue,
-        bytes: BytesValue,
-        list: ListValue,
-        dict: DictValue,
-        set: SetValue,
+        int: IntI,
+        str: StrI,
+        float: FloatI,
+        bool: BoolI,
+        bytes: BytesI,
+        list: ListI,
+        dict: DictI,
+        set: SetI,
     }
-    return mapping.get(python_type, AnyValue)
+    return mapping.get(python_type, AnyI)
 
 
 __all__ = [
@@ -49,22 +49,22 @@ __all__ = [
 
 
 class ListRef[T](
-    MutableSequenceRefBase[T, ListValue[T], AnyValue],
+    MutableSequenceRefBase[T, ListI[T], AnyI],
     RefBase[list[T]],
 ):
     """Dict sequence reference — ordered container backed by nested list."""
 
-    def result(self, op: Nu) -> ListValue[T]:
-        return ListValue(op)
+    def result(self, op: Nu) -> ListI[T]:
+        return ListI(op)
 
-    def _wrap_iterable_result(self, operand: Nu) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorI:
+        return IteratorI(operand)
 
-    def _wrap_sliceable_result(self, operand: Nu) -> ListValue[T]:
-        return ListValue(operand)  # slices stay materialized
+    def _wrap_sliceable_result(self, operand: Nu) -> ListI[T]:
+        return ListI(operand)  # slices stay materialized
 
-    def _wrap_element_result(self, operand: Nu) -> AnyValue:
-        return AnyValue(operand)
+    def _wrap_element_result(self, operand: Nu) -> AnyI:
+        return AnyI(operand)
 
     def __init__(
         self,

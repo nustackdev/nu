@@ -15,7 +15,7 @@ from nu.ops.builtins.conversion import (
     ToSetOp,
     ToStrOp,
 )
-from nu.interfaces.values import BoolValue, BytesValue, FloatValue, IntValue, ListValue, SetValue, StrValue
+from nu.interfaces import BoolI, BytesI, FloatI, IntI, ListI, SetI, StrI
 
 
 __all__ = [
@@ -29,36 +29,36 @@ __all__ = [
 ]
 
 
-def ToInt(obj: object) -> IntValue:  # noqa: N802
+def ToInt(obj: object) -> IntI:  # noqa: N802
     """Convert to integer."""
-    return IntValue(ToIntOp(obj))
+    return IntI(ToIntOp(obj))
 
 
-def ToFloat(obj: object) -> FloatValue:  # noqa: N802
+def ToFloat(obj: object) -> FloatI:  # noqa: N802
     """Convert to float."""
-    return FloatValue(ToFloatOp(obj))
+    return FloatI(ToFloatOp(obj))
 
 
-def ToBool(obj: object) -> BoolValue:  # noqa: N802
+def ToBool(obj: object) -> BoolI:  # noqa: N802
     """Convert to boolean."""
-    return BoolValue(ToBoolOp(obj))
+    return BoolI(ToBoolOp(obj))
 
 
-def ToStr(obj: object) -> StrValue:  # noqa: N802
+def ToStr(obj: object) -> StrI:  # noqa: N802
     """Convert to string."""
-    return StrValue(ToStrOp(obj))
+    return StrI(ToStrOp(obj))
 
 
-def ToBytes(obj: object, encoding: str = "utf-8") -> BytesValue:  # noqa: N802
+def ToBytes(obj: object, encoding: str = "utf-8") -> BytesI:  # noqa: N802
     """Convert to bytes."""
-    return BytesValue(ToBytesOp(obj, encoding))
+    return BytesI(ToBytesOp(obj, encoding))
 
 
-def ToList(iterable: object) -> ListValue:  # noqa: N802
+def ToList(iterable: object) -> ListI:  # noqa: N802
     """Materialize iterable to list."""
-    return ListValue(ToListOp(iterable))
+    return ListI(ToListOp(iterable))
 
 
-def ToSet(iterable: object) -> SetValue:  # noqa: N802
+def ToSet(iterable: object) -> SetI:  # noqa: N802
     """Materialize iterable to set."""
-    return SetValue(ToSetOp(iterable))
+    return SetI(ToSetOp(iterable))

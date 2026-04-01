@@ -2,7 +2,7 @@
 
 Verifies:
 - Correct Value types returned from _wrap_* methods
-- keys/values/items produce DictKeysValue/DictValuesValue/DictItemsValue
+- keys/values/items produce DictKeysI/DictValuesI/DictItemsI
 - Execution produces correct Python results
 - View operations (to_list, set operations on keys/items) work
 - Lazy Take over keys (islice semantics)
@@ -17,14 +17,14 @@ from collections.abc import ItemsView, KeysView, ValuesView
 import pytest
 
 from nu import (
-    AnyValue,
-    DictItemsValue,
-    DictKeysValue,
-    DictValue,
-    DictValuesValue,
-    IteratorValue,
-    ListValue,
-    SetValue,
+    AnyI,
+    DictItemsI,
+    DictKeysI,
+    DictI,
+    DictValuesI,
+    IteratorI,
+    ListI,
+    SetI,
     fn,
 )
 
@@ -37,25 +37,25 @@ from .conftest import PortfolioShape, TeamShape, UserShape
 
 
 class TestDictRefViewTypes:
-    """DictRef.keys/values/items return DictKeysValue/DictValuesValue/DictItemsValue."""
+    """DictRef.keys/values/items return DictKeysI/DictValuesI/DictItemsI."""
 
     def test_keys_returns_dict_keys_value(self):
         keys = PortfolioShape.metadata.keys()
-        assert isinstance(keys, DictKeysValue)
+        assert isinstance(keys, DictKeysI)
 
     def test_values_returns_dict_values_value(self):
         vals = PortfolioShape.metadata.values()
-        assert isinstance(vals, DictValuesValue)
+        assert isinstance(vals, DictValuesI)
 
     def test_items_returns_dict_items_value(self):
         items = PortfolioShape.metadata.items()
-        assert isinstance(items, DictItemsValue)
+        assert isinstance(items, DictItemsI)
 
     def test_result_returns_dict_value(self):
         from nu import ensure_nu
 
         result = PortfolioShape.metadata.result(ensure_nu("dummy"))
-        assert isinstance(result, DictValue)
+        assert isinstance(result, DictI)
 
 
 class TestDictRefExecution:
@@ -96,7 +96,7 @@ class TestDictRefExecution:
 
 
 class TestDictRefViewOperations:
-    """DictKeysValue supports set-like operations, DictValuesValue supports materialization."""
+    """DictKeysI supports set-like operations, DictValuesI supports materialization."""
 
     @pytest.mark.asyncio
     async def test_keys_to_list(self, data, portfolio_ctx):
@@ -164,21 +164,21 @@ class TestListRefTypes:
 
         ref = PortfolioShape.tags
         wrapped = ref._wrap_iterable_result(ensure_nu("dummy"))
-        assert isinstance(wrapped, IteratorValue)
+        assert isinstance(wrapped, IteratorI)
 
     def test_sliceable_result_is_list_value(self):
         from nu import ensure_nu
 
         ref = PortfolioShape.tags
         wrapped = ref._wrap_sliceable_result(ensure_nu("dummy"))
-        assert isinstance(wrapped, ListValue)
+        assert isinstance(wrapped, ListI)
 
     def test_element_result_is_any_value(self):
         from nu import ensure_nu
 
         ref = PortfolioShape.tags
         wrapped = ref._wrap_element_result(ensure_nu("dummy"))
-        assert isinstance(wrapped, AnyValue)
+        assert isinstance(wrapped, AnyI)
 
 
 class TestListRefExecution:
@@ -222,14 +222,14 @@ class TestSetRefTypes:
 
         ref = PortfolioShape.members
         wrapped = ref._wrap_set_result(ensure_nu("dummy"))
-        assert isinstance(wrapped, SetValue)
+        assert isinstance(wrapped, SetI)
 
     def test_element_result_is_any_value(self):
         from nu import ensure_nu
 
         ref = PortfolioShape.members
         wrapped = ref._wrap_element_result(ensure_nu("dummy"))
-        assert isinstance(wrapped, AnyValue)
+        assert isinstance(wrapped, AnyI)
 
 
 class TestSetRefExecution:
@@ -259,17 +259,17 @@ class TestShapeRefViewTypes:
     def test_keys_returns_dict_keys_value(self):
         info_ref = TeamShape.info
         keys = info_ref.keys()
-        assert isinstance(keys, DictKeysValue)
+        assert isinstance(keys, DictKeysI)
 
     def test_values_returns_dict_values_value(self):
         info_ref = TeamShape.info
         vals = info_ref.values()
-        assert isinstance(vals, DictValuesValue)
+        assert isinstance(vals, DictValuesI)
 
     def test_items_returns_dict_items_value(self):
         info_ref = TeamShape.info
         items = info_ref.items()
-        assert isinstance(items, DictItemsValue)
+        assert isinstance(items, DictItemsI)
 
 
 class TestShapeRefExecution:
@@ -310,15 +310,15 @@ class TestShapesDictRefViewTypes:
 
     def test_keys_returns_dict_keys_value(self):
         keys = TeamShape.members.keys()
-        assert isinstance(keys, DictKeysValue)
+        assert isinstance(keys, DictKeysI)
 
     def test_values_returns_dict_values_value(self):
         vals = TeamShape.members.values()
-        assert isinstance(vals, DictValuesValue)
+        assert isinstance(vals, DictValuesI)
 
     def test_items_returns_dict_items_value(self):
         items = TeamShape.members.items()
-        assert isinstance(items, DictItemsValue)
+        assert isinstance(items, DictItemsI)
 
 
 class TestShapesDictRefExecution:
@@ -412,7 +412,7 @@ class TestLazyTake:
     @pytest.mark.asyncio
     async def test_take_returns_iterator_value(self):
         term = fn.Take(PortfolioShape.metadata.keys(), 10)
-        assert isinstance(term, IteratorValue)
+        assert isinstance(term, IteratorI)
 
 
 # ============================================================================
@@ -447,7 +447,7 @@ class TestEndToEnd:
         title = await PortfolioShape.title.execute(e2e_ctx)
         assert title == "Main Portfolio"
 
-        # --- dict keys view (DictKeysValue) ---
+        # --- dict keys view (DictKeysI) ---
         keys = await PortfolioShape.metadata.keys().execute(e2e_ctx)
         assert isinstance(keys, KeysView)
         assert set(keys) == {"strategy", "risk", "horizon"}

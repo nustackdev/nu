@@ -6,7 +6,7 @@ import logging
 
 from nu import Flow, Span, map_nodes
 from nu.ops.builtins.conversion import ToStrOp
-from nu.interfaces.values import StrValue
+from nu.interfaces import StrI
 from nu.terms import Nu
 
 
@@ -76,12 +76,12 @@ def annotate_retries[N: Nu](tree: N) -> N:
         attempt = IntRef("attempt")
 
         log_af = Log(
-            "retry attempt " + StrValue(ToStrOp(attempt.get())) + " failed: " + error.get(),
+            "retry attempt " + StrI(ToStrOp(attempt.get())) + " failed: " + error.get(),
             level="warning",
         )
         log_fail = Log(
             "retry exhausted after "
-            + StrValue(ToStrOp(attempt.get()))
+            + StrI(ToStrOp(attempt.get()))
             + " attempts: "
             + error.get(),
             level="error",

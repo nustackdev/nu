@@ -6,19 +6,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import (
-    AnyValue,
-    BoolValue,
-    BytesValue,
-    DictItemsValue,
-    DictKeysValue,
-    DictValue,
-    DictValuesValue,
-    FloatValue,
-    IntValue,
-    IteratorValue,
-    ListValue,
-    SetValue,
-    StrValue,
+    AnyI,
+    BoolI,
+    BytesI,
+    DictItemsI,
+    DictKeysI,
+    DictI,
+    DictValuesI,
+    FloatI,
+    IntI,
+    IteratorI,
+    ListI,
+    SetI,
+    StrI,
     ensure_nu,
 )
 from nu.shapes import MutableShapesMappingRefBase, Slot
@@ -35,16 +35,16 @@ if TYPE_CHECKING:
 def _value_type_for(python_type: type) -> type[Value]:
     """Map Python type to its corresponding Value type."""
     mapping: dict[type, type[Value]] = {
-        int: IntValue,
-        str: StrValue,
-        float: FloatValue,
-        bool: BoolValue,
-        bytes: BytesValue,
-        list: ListValue,
-        dict: DictValue,
-        set: SetValue,
+        int: IntI,
+        str: StrI,
+        float: FloatI,
+        bool: BoolI,
+        bytes: BytesI,
+        list: ListI,
+        dict: DictI,
+        set: SetI,
     }
-    return mapping.get(python_type, AnyValue)
+    return mapping.get(python_type, AnyI)
 
 
 __all__ = [
@@ -58,26 +58,26 @@ class ShapesDictRef[K, T: Shape](
 ):
     """Dict shapes dict reference — mapping of homogeneous shapes."""
 
-    def result(self, op: Nu) -> DictValue:
-        return DictValue(op)
+    def result(self, op: Nu) -> DictI:
+        return DictI(op)
 
-    def _wrap_keys_result(self, operand: Nu) -> DictKeysValue:
-        return DictKeysValue(operand)
+    def _wrap_keys_result(self, operand: Nu) -> DictKeysI:
+        return DictKeysI(operand)
 
-    def _wrap_values_result(self, operand: Nu) -> DictValuesValue:
-        return DictValuesValue(operand)
+    def _wrap_values_result(self, operand: Nu) -> DictValuesI:
+        return DictValuesI(operand)
 
-    def _wrap_items_result(self, operand: Nu) -> DictItemsValue:
-        return DictItemsValue(operand)
+    def _wrap_items_result(self, operand: Nu) -> DictItemsI:
+        return DictItemsI(operand)
 
-    def _wrap_iterable_result(self, operand: Nu) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorI:
+        return IteratorI(operand)
 
-    def _wrap_value_result(self, operand: Nu) -> AnyValue:
-        return AnyValue(operand)
+    def _wrap_value_result(self, operand: Nu) -> AnyI:
+        return AnyI(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> AnyValue:
-        return AnyValue(operand)
+    def _wrap_element_result(self, operand: Nu) -> AnyI:
+        return AnyI(operand)
 
     def __init__(
         self,
