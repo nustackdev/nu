@@ -1,13 +1,5 @@
-"""Tree — immutable generic tree nodes.
+"""Shim — use nu.terms instead."""
 
-Structural foundation. No domain semantics.
-"""
+from nu.terms import Node
 
-from __future__ import annotations
-
-from .node import Node
-
-
-__all__ = [
-    "Node",
-]
+__all__ = ["Node"]

@@ -1,14 +1,5 @@
-"""Span — grouping (context boundary).
+"""Shim — use nu.terms instead."""
 
-Spans scope context for children and return the last child's result.
-Concrete spans (Atomic, etc.) defined downstream.
-"""
+from nu.terms import Span
 
-from __future__ import annotations
-
-from .base import Span
-
-
-__all__ = [
-    "Span",
-]
+__all__ = ["Span"]

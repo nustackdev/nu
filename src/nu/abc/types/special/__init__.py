@@ -1,14 +1,3 @@
-"""Special types — any, iterator, sentinel, empty, invalid."""
+"""Shim."""
 
-from .any_ import AnyType
-from .iterator import IteratorType
-from .sentinel_ import EmptyType, InvalidType, SentinelType
-
-
-__all__ = [
-    "AnyType",
-    "EmptyType",
-    "InvalidType",
-    "IteratorType",
-    "SentinelType",
-]
+from nu.interfaces.types.special import *  # noqa: F403

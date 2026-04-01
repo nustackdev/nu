@@ -1,15 +1,22 @@
-"""everybase — Core library for the every ecosystem.
+"""Nu — core library for the Nu ecosystem.
 
 Subpackages:
-    tree/  -- immutable tree nodes
-    core/  -- computation layer (term/flow/span/context/exec)
-    meta/  -- tree meta-tools (walk, query, transform, rewrites)
-    abc/   -- base implementations: types, values, morphisms, capabilities
+    terms/       -- algebra terms (Value, Ref, Op, Span, Sentinel, Arg)
+    context/     -- runtime resource container
+    ops/         -- all concrete operations
+    interfaces/  -- type interfaces + capability mixins
+    shapes/      -- document data model
+    transform/   -- tree transformations
+    graphs/      -- graph data model (stub)
+    tables/      -- table data model (stub)
 """
 
 from __future__ import annotations
 
-from .core import (
+from .context import Attributes, Context
+from .model import Model
+from .ops.flows import Flow
+from .terms import (
     EMPTY,
     INVALID,
     Arg,
@@ -19,22 +26,20 @@ from .core import (
     BoolArg,
     BytesArg,
     Command,
-    Context,
     DictArg,
     Empty,
     Executable,
     FloatArg,
-    Flow,
     FrozenSetArg,
     IntArg,
     Invalid,
     ListArg,
     LValue,
-    Model,
     Morphism,
     NAryCommand,
     NAryMorphism,
     NAryOperation,
+    Node,
     NoneArg,
     Operation,
     Ref,
@@ -57,7 +62,7 @@ from .core import (
     is_sentinel,
     propagate_special,
 )
-from .meta import (
+from .transform import (
     Transform,
     ancestors,
     apply,
@@ -81,11 +86,9 @@ from .meta import (
     unwrap,
     wrap,
 )
-from .tree import Node
 
 
 # Primitive refs — lazy to avoid circular import
-# (abc.refs → abc → abc.flows → everybase.Flow)
 _PRIM_REF_NAMES = {
     "PrimRef": "PrimRef",
     "PrimIntRef": "IntRef",
@@ -99,14 +102,14 @@ _PRIM_REF_NAMES = {
 
 def __getattr__(name: str) -> object:
     if name in _PRIM_REF_NAMES:
-        from .abc import refs as _refs
+        from .context import attr_refs as _refs
 
         return getattr(_refs, _PRIM_REF_NAMES[name])
     msg = f"module {__name__!r} has no attribute {name!r}"
     raise AttributeError(msg)
 
 
-__all__ = [  # noqa: RUF022
+__all__ = [
     # Tree
     "Node",
     "Executable",
@@ -160,6 +163,7 @@ __all__ = [  # noqa: RUF022
     "Flow",
     "Span",
     # Context
+    "Attributes",
     "Context",
     # Primitive refs
     "PrimRef",

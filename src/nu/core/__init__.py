@@ -1,22 +1,9 @@
-"""everybase.core — Computation layer.
+"""Shim — use nu.terms, nu.context, nu.ops.flows, nu.model instead."""
 
-Packages:
-    term/     -- computation (Term, Ref, Morphism, Sentinel)
-    flow/     -- ordering (Flow)
-    span/     -- grouping (Span)
-    context/  -- runtime (Context, Handle)
-    exec      -- Executable base
-"""
-
-from __future__ import annotations
-
-from ..tree import Node
-from .context import Attributes, Context
-from .executable import Executable
-from .flow import Flow
-from .model import Model
-from .span import Span
-from .term import (
+from nu.context import Attributes, Context
+from nu.model import Model
+from nu.ops.flows import Flow
+from nu.terms import (
     EMPTY,
     INVALID,
     Arg,
@@ -28,6 +15,7 @@ from .term import (
     Command,
     DictArg,
     Empty,
+    Executable,
     FloatArg,
     FrozenSetArg,
     IntArg,
@@ -38,12 +26,14 @@ from .term import (
     NAryCommand,
     NAryMorphism,
     NAryOperation,
+    Node,
     NoneArg,
     Operation,
     Ref,
     RValue,
     Sentinel,
     SetArg,
+    Span,
     StrArg,
     Term,
     TernaryCommand,
@@ -59,62 +49,3 @@ from .term import (
     is_sentinel,
     propagate_special,
 )
-
-
-__all__ = [  # noqa: RUF022
-    # Tree
-    "Node",
-    "Executable",
-    # Term
-    "Term",
-    "LValue",
-    "RValue",
-    "Value",
-    "Ref",
-    "Morphism",
-    "NAryMorphism",
-    "UnaryMorphism",
-    "BinaryMorphism",
-    "TernaryMorphism",
-    "Operation",
-    "Command",
-    "NAryOperation",
-    "NAryCommand",
-    "UnaryOperation",
-    "UnaryCommand",
-    "BinaryOperation",
-    "BinaryCommand",
-    "TernaryOperation",
-    "TernaryCommand",
-    # Sentinel
-    "Sentinel",
-    "Empty",
-    "Invalid",
-    "EMPTY",
-    "INVALID",
-    "is_empty",
-    "is_invalid",
-    "is_sentinel",
-    "propagate_special",
-    # Arg types
-    "Arg",
-    "IntArg",
-    "FloatArg",
-    "StrArg",
-    "BoolArg",
-    "BytesArg",
-    "NoneArg",
-    "ListArg",
-    "DictArg",
-    "SetArg",
-    "FrozenSetArg",
-    "TupleArg",
-    # Model
-    "Model",
-    # Flow & Span
-    "Flow",
-    "Span",
-    # Context
-    "Attributes",
-    "Context",
-]

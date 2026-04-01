@@ -1,12 +1,3 @@
-"""Reactive and streaming flows -- subscribe to shape change events."""
+"""Shim — use nu.shapes.flows instead."""
 
-from .reactive import React, ReactForever, ReactWhile
-from .stream import Stream
-
-
-__all__ = [
-    "React",
-    "ReactForever",
-    "ReactWhile",
-    "Stream",
-]
+from nu.shapes.flows import *  # noqa: F403

@@ -1,16 +1,5 @@
-"""Model system -- abstract bases for declarative structure definitions.
+"""Shim — use nu.model instead."""
 
-Model:
-    Abstract base for all data models. Substrate packages extend this:
-    - everyshape.Shape: document model (hierarchical key-value)
-    - everytable.Table: relational model (future)
-"""
+from nu.model import Model
 
-from __future__ import annotations
-
-from .model import Model
-
-
-__all__ = [
-    "Model",
-]
+__all__ = ["Model"]
