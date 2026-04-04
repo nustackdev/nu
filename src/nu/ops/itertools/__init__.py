@@ -1,8 +1,46 @@
 """Itertools operations — combine, group, reduce, search, slice, transform."""
 
-from .combine import *  # noqa: F403
-from .group import *  # noqa: F403
-from .reduce import *  # noqa: F403
-from .search import *  # noqa: F403
-from .slice import *  # noqa: F403
-from .transform import *  # noqa: F403
+from .combine import ChainOp, EnumerateOp, ZipOp
+from .group import GroupByOp, PartitionOp
+from .reduce import AllOp, AnyOp, MaxOp, MinOp, ReduceOp, SumOp
+from .search import FindIndexOp, FindOp
+from .slice import DropOp, TakeOp
+from .transform import (
+    FilterByOp,
+    FilterOp,
+    FlattenOp,
+    MapOp,
+    PluckOp,
+    ReversedOp,
+    SortedOp,
+    ToDictOp,
+    UniqueOp,
+)
+
+
+__all__ = [
+    "AllOp",
+    "AnyOp",
+    "ChainOp",
+    "DropOp",
+    "EnumerateOp",
+    "FilterByOp",
+    "FilterOp",
+    "FindIndexOp",
+    "FindOp",
+    "FlattenOp",
+    "GroupByOp",
+    "MapOp",
+    "MaxOp",
+    "MinOp",
+    "PartitionOp",
+    "PluckOp",
+    "ReduceOp",
+    "ReversedOp",
+    "SortedOp",
+    "SumOp",
+    "TakeOp",
+    "ToDictOp",
+    "UniqueOp",
+    "ZipOp",
+]

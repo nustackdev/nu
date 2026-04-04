@@ -5,6 +5,7 @@ Subpackages:
     context/     -- runtime resource container
     ops/         -- all concrete operations
     interfaces/  -- type interfaces + capability mixins
+    fn/          -- functional API (typed factories over ops)
     shapes/      -- document data model
     flows/       -- flow operations (control, iteration, parallel, error, timing, io, asserts)
     transform/   -- tree transformations
@@ -28,7 +29,7 @@ from .context import (
 from .interfaces import *  # noqa: F403
 from .method import AutoInterface, method, prop
 from .model import Model
-from .ops import fn
+from . import fn
 from .utils import ensure_nu, typed_value
 from .ops import *  # noqa: F403
 from .ops.combiners import all_, and_, any_, none_, or_
