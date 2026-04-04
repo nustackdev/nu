@@ -1,9 +1,11 @@
-"""Iterable capability — protocol + base.
+"""Iterable capability - protocol + base.
 
 IterableProtocol/Base: wrapping infrastructure for collection results.
 
-Higher-order operations (map_, filter_, reduce_, etc.) have been moved to
-standalone functions in ``abc.fn``.
+Follows Python's collections.abc.Iterable pattern. In Nu's tree model,
+iteration is controlled by Flows (ForEach, ForRange), not Python's
+iterator protocol. This protocol marks types as iterable and provides
+the wrapping infrastructure for typed results.
 
 Type Parameters:
     ElementT: Native Python element type (int, str, dict, etc.)
