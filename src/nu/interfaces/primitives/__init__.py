@@ -32,6 +32,7 @@ from .str_ops import (
     IsAlphaOp,
     IsDigitOp,
     IsSpaceOp,
+    JoinOp,
     LJustOp,
     LStripOp,
     LowerOp,

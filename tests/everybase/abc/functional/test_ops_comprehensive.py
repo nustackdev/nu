@@ -710,8 +710,10 @@ class TestCollectionTransformOps:
         assert await fn.Reversed(ListI([1, 2, 3])).to_list().execute(ctx) == [3, 2, 1]
 
     async def test_join(self, ctx):
-        """['a','b','c'].join(',') = 'a,b,c'."""
-        assert await ListI(["a", "b", "c"]).join(",").execute(ctx) == "a,b,c"
+        """StrI(',').join(['a','b','c']) = 'a,b,c'."""
+        from nu.interfaces.primitives import StrI
+
+        assert await StrI(",").join(ListI(["a", "b", "c"])).execute(ctx) == "a,b,c"
 
 
 # =============================================================================

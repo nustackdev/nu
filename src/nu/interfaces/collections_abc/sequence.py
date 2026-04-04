@@ -1,8 +1,8 @@
 # ruff: noqa: D102
 """Sequence collection — protocols + bases + mutations.
 
-SequenceProtocol/Base = Collection + Sliceable + first/last/join/index/find_index/count
-MutableSequenceProtocol/Base = Sequence + append/insert/pop/extend/remove
+SequenceProtocol/Base = Collection + Sliceable + first/last/index/count/reversed
+MutableSequenceProtocol/Base = Sequence + append/insert/pop/extend/remove/reverse
 
 Sorted/Reversed are standalone functions in ``abc.fn``.
 
@@ -26,11 +26,11 @@ from .sliceable import SliceableBase, SliceableProtocol
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Iterable
 
-    from nu.terms import Arg, IntArg, StrArg
+    from nu.terms import Arg, IntArg
 
-    from nu.interfaces.primitives import IntI, NoneI, StrI
+    from nu.interfaces.primitives import IntI, NoneI
 
 
 __all__ = [
@@ -62,10 +62,9 @@ class SequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT]
 
     def first(self) -> ElementResultT: ...
     def last(self) -> ElementResultT: ...
-    def join(self, separator: StrArg) -> StrI: ...
     def index(self, value: Arg[ElementT]) -> IntI: ...
-    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntI: ...
     def count(self, value: Arg[ElementT]) -> IntI: ...
+    def reversed(self) -> CollectionResultT: ...
 
 
 class MutableSequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
@@ -86,6 +85,7 @@ class MutableSequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementR
     def insert(self, index: IntArg, value: Arg[ElementT]) -> NoneI: ...
     def pop(self, index: IntArg = -1) -> ElementResultT: ...
     def remove(self, value: Arg[ElementT]) -> NoneI: ...
+    def reverse(self) -> NoneI: ...
 
 
 # =============================================================================
@@ -118,13 +118,6 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return cast("ElementResultT", self._wrap_element_result(LastOp(self)))
 
-    def join(self, separator: StrArg) -> StrI:
-        """Join string elements."""
-        from .sequence_ops import JoinOp
-        from nu.interfaces.primitives import StrI
-
-        return StrI(JoinOp(self, separator))
-
     def index(self, value: Arg[ElementT]) -> IntI:
         """Find index of value."""
         from .sequence_ops import IndexOfOp
@@ -132,19 +125,18 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return IntI(IndexOfOp(self, value))
 
-    def find_index(self, predicate: Callable[[ElementT], bool]) -> IntI:
-        """Find index of first match."""
-        from nu.ops import FindIndexOp
-        from nu.interfaces.primitives import IntI
-
-        return IntI(FindIndexOp(self, predicate))
-
     def count(self, value: Arg[ElementT]) -> IntI:
         """Count occurrences."""
         from .sequence_ops import CountOp
         from nu.interfaces.primitives import IntI
 
         return IntI(CountOp(self, value))
+
+    def reversed(self) -> CollectionResultT:
+        """Reversed copy of this sequence."""
+        from nu.ops.itertools.transform import ReversedOp
+
+        return cast("CollectionResultT", self._wrap_iterable_result(ReversedOp(self)))
 
 
 class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
@@ -192,6 +184,13 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
         from nu.interfaces.primitives import NoneI
 
         return NoneI(RemoveValueCmd(self, value))
+
+    def reverse(self) -> NoneI:
+        """Reverse sequence in-place."""
+        from .sequence_ops import ReverseCmd
+        from nu.interfaces.primitives import NoneI
+
+        return NoneI(ReverseCmd(self))
 
     def clear(self) -> NoneI:
         """Remove all items."""

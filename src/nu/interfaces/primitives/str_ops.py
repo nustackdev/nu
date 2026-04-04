@@ -8,6 +8,7 @@ Padding: CenterOp, LJustOp, RJustOp, ZFillOp
 Testing: StartsWithOp, EndsWithOp, IsDigitOp, IsAlphaOp, IsAlnumOp, IsSpaceOp
 Replacing: ReplaceOp
 Encoding: EncodeOp
+Joining: JoinOp
 """
 
 from __future__ import annotations
@@ -33,6 +34,7 @@ __all__ = [
     "IsAlphaOp",
     "IsDigitOp",
     "IsSpaceOp",
+    "JoinOp",
     "LJustOp",
     "LStripOp",
     "LowerOp",
@@ -369,4 +371,22 @@ class EncodeOp(BinaryCalc[bytes]):
         try:
             return left.encode(str(right) if right else "utf-8")
         except (UnicodeEncodeError, LookupError):
+            return INVALID
+
+
+# =============================================================================
+# JOINING
+# =============================================================================
+
+
+class JoinOp(BinaryCalc[str]):
+    """Join iterable elements into string: sep.join(seq)."""
+
+    def apply(self, left: object, right: object) -> str | Sentinel:
+        """Apply."""
+        if not isinstance(left, str):
+            return INVALID
+        try:
+            return left.join(str(x) for x in right)  # type: ignore
+        except TypeError:
             return INVALID

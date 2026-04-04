@@ -1,11 +1,10 @@
-"""Sequence ops — operations (pure) + commands (impure).
+"""Sequence ops - operations (pure) + commands (impure).
 
 Operations:
     FirstOp: First element (seq[0])
     LastOp: Last element (seq[-1])
     IndexOfOp: Find index of value (seq.index(value))
     CountOp: Count occurrences (seq.count(value))
-    JoinOp: Join elements into string (sep.join(seq))
 
 Commands:
     AppendCmd: Append item to end of sequence
@@ -13,6 +12,7 @@ Commands:
     InsertCmd: Insert item at index
     PopCmd: Remove and return item at index
     RemoveValueCmd: Remove first occurrence of value
+    ReverseCmd: Reverse sequence in-place
 """
 
 from __future__ import annotations
@@ -26,6 +26,7 @@ from nu.terms import (
     Sentinel,
     TernaryCmd,
     UnaryCalc,
+    UnaryCmd,
 )
 
 
@@ -36,10 +37,10 @@ __all__ = [
     "FirstOp",
     "IndexOfOp",
     "InsertCmd",
-    "JoinOp",
     "LastOp",
     "PopCmd",
     "RemoveValueCmd",
+    "ReverseCmd",
 ]
 
 
@@ -169,19 +170,12 @@ class RemoveValueCmd[T](BinaryCmd[None]):
         return None
 
 
-# =============================================================================
-# JOINING
-# =============================================================================
+class ReverseCmd(UnaryCmd[None]):
+    """Reverse sequence in-place: seq.reverse(). Returns None (mutates in-place)."""
 
-
-class JoinOp(BinaryCalc[str]):
-    """Join elements into string: sep.join(seq)."""
-
-    def apply(self, left: object, right: object) -> str | Sentinel:
+    def apply(self, operand: object) -> None | Sentinel:
         """Apply."""
-        if not isinstance(right, str):
-            return INVALID
-        try:
-            return right.join(str(x) for x in left)  # type: ignore
-        except TypeError:
-            return INVALID
+        if not isinstance(operand, MutableSequence):
+            raise TypeError(f"reverse() requires mutable sequence, got {type(operand).__name__}")
+        operand.reverse()
+        return None

@@ -316,3 +316,13 @@ class StrI(Interface[str]):
         from .bytes_ import BytesI
 
         return BytesI(EncodeOp(self, encoding))
+
+    # =========================================================================
+    # JOINING
+    # =========================================================================
+
+    def join(self, iterable: object) -> StrI:
+        """Join iterable elements with this string as separator."""
+        from .str_ops import JoinOp
+
+        return StrI(JoinOp(self, iterable))

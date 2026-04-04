@@ -26,10 +26,10 @@ from .sequence_ops import (
     FirstOp,
     IndexOfOp,
     InsertCmd,
-    JoinOp,
     LastOp,
     PopCmd,
     RemoveValueCmd,
+    ReverseCmd,
 )
 from .set_ import MutableSetBase, MutableSetProtocol, SetLikeBase, SetLikeProtocol
 from .set_ops import (
