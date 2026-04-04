@@ -42,7 +42,8 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from nu import Flow, Sentinel
+from nu import Sentinel
+from nu.terms.op import Calculation
 from nu.utils import ensure_nu
 
 from ..ops.cursor import AdvanceCursorOp
@@ -59,7 +60,7 @@ __all__ = [
 ]
 
 
-class Stream(Flow):
+class Stream(Calculation):
     """Drain-then-follow over an ordered collection.
 
     Iterates existing items (drain), then subscribes and follows new

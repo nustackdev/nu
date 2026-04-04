@@ -18,7 +18,7 @@ from nu.context import Context, Attributes
 
 # ops — all concrete operations
 from nu.ops import AddOp, MulOp, EqOp, LtOp, GtOp, LenOp
-from nu.flows import Seq, If, ForEach, ForRange, Parallel, While, Print
+from nu.ops import Seq, If, ForEach, ForRange, Parallel, While, Print
 from nu import fn  # functional wrappers
 
 # interfaces — type system

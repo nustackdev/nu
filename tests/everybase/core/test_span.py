@@ -4,7 +4,7 @@ from abc import ABC
 
 from nu import (
     Nu,
-    Flow,
+    Calculation,
     Span,
     Nu,
     depth,
@@ -41,11 +41,15 @@ class SimpleTerm(Nu):
         return None
 
 
-class SimpleFlow(Flow):
+class SimpleCalculation(Calculation):
     """Minimal flow for testing."""
 
     def __init__(self, *children):
         super().__init__(*children)
+
+    async def execute(self, ctx):
+        for child in self.children:
+            await child.execute(ctx)
 
 
 # --- Tests ---
@@ -67,7 +71,7 @@ class TestSpanChildren:
         assert s.children == (t1, t2)
 
     def test_span_with_flow_children(self):
-        f = SimpleFlow()
+        f = SimpleCalculation()
         s = ConcreteSpan(f)
         assert s.children == (f,)
 
@@ -78,12 +82,12 @@ class TestSpanChildren:
 
     def test_span_with_mixed_children(self):
         t = SimpleTerm()
-        f = SimpleFlow()
+        f = SimpleCalculation()
         inner_s = ConcreteSpan()
         s = ConcreteSpan(t, f, inner_s)
         assert s.child_count == 3
         assert isinstance(s.children[0], Nu)
-        assert isinstance(s.children[1], Flow)
+        assert isinstance(s.children[1], Calculation)
         assert isinstance(s.children[2], Span)
 
     def test_empty_span_is_leaf(self):
@@ -139,10 +143,10 @@ class TestSpanTransparency:
 
         # With span
         span = ConcreteSpan(t1, t2)
-        flow_with_span = SimpleFlow(span)
+        flow_with_span = SimpleCalculation(span)
 
         # Without span -- terms directly in flow
-        flow_without_span = SimpleFlow(t1, t2)
+        flow_without_span = SimpleCalculation(t1, t2)
 
         # Both have the same leaf terms
         with_leaves = find(flow_with_span, lambda n: n.is_leaf)
@@ -154,7 +158,7 @@ class TestSpanTransparency:
         t1 = SimpleTerm()
         t2 = SimpleTerm()
         span = ConcreteSpan(t1, t2)
-        flow = SimpleFlow(span)
+        flow = SimpleCalculation(span)
 
         pruned = prune(flow, lambda n: isinstance(n, Span))
         # After pruning spans, the flow has no children
@@ -165,7 +169,7 @@ class TestSpanTransparency:
         """Unwrapping a single-child span splices child up."""
         t = SimpleTerm()
         span = ConcreteSpan(t)
-        flow = SimpleFlow(span)
+        flow = SimpleCalculation(span)
 
         result = unwrap(flow, lambda n: isinstance(n, Span))
         assert result.child_count == 1

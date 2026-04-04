@@ -1,6 +1,7 @@
-"""Collection operations — combine, reduce, slice, transform."""
+"""Collection operations — combine, reduce, slice, transform, iteration."""
 
 from .combine import ChainOp, EnumerateOp, ZipOp
+from .iteration import Filter, Map, TakeWhile, Unique
 from .reduce import AllOp, AnyOp, MaxOp, MinOp, SumOp
 from .slice import DropOp, TakeOp
 from .transform import (
@@ -19,8 +20,10 @@ __all__ = [
     "ChainOp",
     "DropOp",
     "EnumerateOp",
+    "Filter",
     "FilterByOp",
     "FlattenOp",
+    "Map",
     "MaxOp",
     "MinOp",
     "PluckOp",
@@ -28,6 +31,8 @@ __all__ = [
     "SortedOp",
     "SumOp",
     "TakeOp",
+    "TakeWhile",
+    "Unique",
     "UniqueOp",
     "ZipOp",
 ]

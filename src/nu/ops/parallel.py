@@ -1,11 +1,11 @@
-"""Parallel flows -- concurrent execution via asyncio."""
+"""Parallel ops -- concurrent execution via asyncio."""
 
 from __future__ import annotations
 
 import asyncio
 from typing import TYPE_CHECKING
 
-from .base import Flow
+from nu.terms.op import Calculation
 
 
 if TYPE_CHECKING:
@@ -21,57 +21,33 @@ __all__ = [
 ]
 
 
-class Parallel(Flow):
+class Parallel(Calculation):
     """Execute children concurrently via asyncio.gather.
 
-    All children are launched as async tasks and gathered.
-    First exception encountered is propagated.
-
-    Example::
-
-        Parallel(fetch_users, fetch_posts, fetch_comments)
+    Children: ``[*children]``
     """
 
     def __init__(self, *children: Nu) -> None:
-        """Initialize parallel flow.
-
-        Args:
-            *children: Children to execute concurrently.
-        """
         super().__init__(*children)
 
     async def execute(self, ctx: Context) -> None:
-        """Execute children concurrently via asyncio.gather."""
         if not self.children:
             return
-
         await asyncio.gather(*(child.execute(ctx) for child in self.children))
 
 
-class Race(Flow):
+class Race(Calculation):
     """Execute children concurrently, complete on first finish.
 
-    The first child to complete (success or failure) wins.
-    All remaining tasks are cancelled.
-
-    Example::
-
-        Race(fetch_from_primary, fetch_from_replica)
+    Children: ``[*children]``
     """
 
     def __init__(self, *children: Nu) -> None:
-        """Initialize race flow.
-
-        Args:
-            *children: Children to race concurrently.
-        """
         super().__init__(*children)
 
     async def execute(self, ctx: Context) -> None:
-        """Execute children concurrently, return on first completion."""
         if not self.children:
             return
-
         tasks = [asyncio.create_task(child.execute(ctx)) for child in self.children]
         try:
             done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
@@ -89,30 +65,18 @@ class Race(Flow):
             raise
 
 
-class All(Flow):
+class All(Calculation):
     """Execute children concurrently, fail fast on first exception.
 
-    All children run as concurrent tasks. If any child raises,
-    remaining tasks are cancelled and the exception propagates.
-
-    Example::
-
-        All(validate_input, check_permissions, load_config)
+    Children: ``[*children]``
     """
 
     def __init__(self, *children: Nu) -> None:
-        """Initialize all flow.
-
-        Args:
-            *children: Children to execute concurrently.
-        """
         super().__init__(*children)
 
     async def execute(self, ctx: Context) -> None:
-        """Execute all children concurrently, cancel on first failure."""
         if not self.children:
             return
-
         tasks = [asyncio.create_task(child.execute(ctx)) for child in self.children]
         try:
             await asyncio.gather(*tasks)
@@ -124,31 +88,18 @@ class All(Flow):
             raise
 
 
-class Any(Flow):
+class Any(Calculation):
     """Execute children concurrently, succeed if any one succeeds.
 
-    Children run as concurrent tasks. The first child to succeed
-    cancels the rest. If all children fail, the last exception
-    is raised.
-
-    Example::
-
-        Any(try_cache, try_database, try_remote_api)
+    Children: ``[*children]``
     """
 
     def __init__(self, *children: Nu) -> None:
-        """Initialize any flow.
-
-        Args:
-            *children: Children to execute concurrently.
-        """
         super().__init__(*children)
 
     async def execute(self, ctx: Context) -> None:
-        """Execute children concurrently, succeed on first success."""
         if not self.children:
             return
-
         tasks = {asyncio.create_task(child.execute(ctx)) for child in self.children}
         last_error: Exception | None = None
         try:

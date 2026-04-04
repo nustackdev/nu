@@ -31,7 +31,7 @@ from virtuals.tkv.storage import StorageProtocol
 import nu_dict as ed
 import nu_virtuals as ebv
 from nu import Context, IntArg, IntAttrRef, Nu, Ref, fn
-from nu.flows import ForRange, If, Log, Retry, Seq, TryCatch
+from nu.ops import ForRange, If, Log, Retry, Seq, TryCatch
 from nu.interfaces import IntI, ListI
 from nu.method import method
 from nu.shapes import Shape

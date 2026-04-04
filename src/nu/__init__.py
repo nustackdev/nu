@@ -27,7 +27,6 @@ from .context import (
     IntAttrRef,
     StrAttrRef,
 )
-from .flows import *  # noqa: F403
 from .interfaces import *  # noqa: F403
 from .method import AutoInterface, method, prop
 from .model import Model
@@ -154,9 +153,7 @@ __all__ = [
     "Empty",
     "FloatArg",
     "FloatAttrRef",
-    # Flow & Span
-    "Flow",
-    # Flows — iteration
+    # iteration
     "Fold",
     "ForEach",
     "ForRange",

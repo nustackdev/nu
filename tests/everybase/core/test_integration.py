@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from nu import (
     Nu,
-    Flow,
+    Calculation,
     Span,
     Nu,
     bfs,
@@ -48,18 +48,26 @@ class Lit(Nu):
         return self._value
 
 
-class Seq(Flow):
+class Seq(Calculation):
     """Sequential flow."""
 
     def __init__(self, *children):
         super().__init__(*children)
 
+    async def execute(self, ctx):
+        for child in self.children:
+            await child.execute(ctx)
 
-class Par(Flow):
+
+class Par(Calculation):
     """Parallel flow."""
 
     def __init__(self, *children):
         super().__init__(*children)
+
+    async def execute(self, ctx):
+        for child in self.children:
+            await child.execute(ctx)
 
 
 class Boundary(Span):
@@ -73,7 +81,7 @@ class Boundary(Span):
 
 
 class TestTopologyTree:
-    """Build a topology tree mixing Terms, Flows, Spans."""
+    """Build a topology tree mixing Terms, Calculations, Spans."""
 
     def _make_tree(self):
         """Build:
@@ -140,7 +148,7 @@ class TestTopologyTree:
 
     def test_find_flows(self):
         tree = self._make_tree()
-        flows = find(tree, lambda n: isinstance(n, Flow))
+        flows = find(tree, lambda n: isinstance(n, Calculation))
         # Seq + Par = 2 flows
         assert len(flows) == 2
 

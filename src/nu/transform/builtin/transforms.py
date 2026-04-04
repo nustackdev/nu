@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import logging
 
-from nu import Flow, Span, map_nodes
+from nu import Span, map_nodes
+from nu.terms.op import Op
 from nu.interfaces import StrI
 from nu.ops.conversion import ToStrOp
 from nu.terms import Nu
@@ -63,9 +64,9 @@ def annotate_retries[N: Nu](tree: N) -> N:
     Returns:
         New tree with annotated Retry nodes.
     """
-    from nu.flows.control import Seq
-    from nu.flows.error import Retry
-    from nu.flows.io import Log
+    from nu.ops.control import Seq
+    from nu.ops.error import Retry
+    from nu.ops.io import Log
 
     from ..refs import IntRef, StrRef
 
@@ -118,20 +119,20 @@ def annotate_steps[N: Nu](tree: N) -> N:
     Returns:
         New tree with step-annotated Seq nodes and path-aware Log nodes.
     """
-    from nu.flows.control import Seq
-    from nu.flows.io import Log
+    from nu.ops.control import Seq
+    from nu.ops.io import Log
 
     def _walk(node: Nu, path: str) -> Nu:
         # Seq with meaningful children: wrap Flow/Span children in _StepSpan
         if isinstance(node, Seq):
-            meaningful = [c for c in node.children if isinstance(c, (Flow, Span))]
+            meaningful = [c for c in node.children if isinstance(c, (Op, Span))]
             if len(meaningful) >= 2:
                 seq_path = f"{path}{type(node).__name__}"
                 total = len(meaningful)
                 step = 0
                 new_children: list = []
                 for child in node.children:
-                    if isinstance(child, (Flow, Span)) and not isinstance(child, _StepSpan):
+                    if isinstance(child, (Op, Span)) and not isinstance(child, _StepSpan):
                         step += 1
                         name = type(child).__name__
                         walked = _walk(child, f"{seq_path}.{name}.")
@@ -169,7 +170,7 @@ def set_logger_name[N: Nu](tree: N, name: str) -> N:
     Returns:
         New tree with renamed Log nodes.
     """
-    from nu.flows.io import Log
+    from nu.ops.io import Log
 
     def _rename(node: Nu) -> Nu:
         if not isinstance(node, (Log, _StepSpan)):

@@ -13,6 +13,22 @@ from .arithmetic import (
     PowOp,
     SubOp,
 )
+from .asserts import (
+    AssertEmpty,
+    AssertEquals,
+    AssertExists,
+    AssertGreaterOrEqual,
+    AssertGreaterThan,
+    AssertLessOrEqual,
+    AssertLessThan,
+    AssertMissing,
+    AssertNotEmpty,
+    AssertNotEquals,
+    SkipIfEmpty,
+    SkipIfExists,
+    SkipIfMissing,
+    SkipIfNotEmpty,
+)
 from .attr import DelAttrOp, GetAttrOp, SetAttrOp
 from .bitwise import (
     BitwiseAndOp,
@@ -41,6 +57,7 @@ from .collection import (
     UniqueOp,
     ZipOp,
 )
+from .collection.iteration import Filter, Map, TakeWhile, Unique
 from .comparison import (
     EqOp,
     GeOp,
@@ -50,6 +67,7 @@ from .comparison import (
     LtOp,
     NeOp,
 )
+from .control import DoWhile, Forever, If, Seq, Switch, While
 from .conversion import (
     ToBoolOp,
     ToBytesOp,
@@ -60,21 +78,39 @@ from .conversion import (
     ToStrOp,
     ToTupleOp,
 )
+from .error import Assert, Retry, TryCatch
+from .io import Debug, Log, Print
+from .iteration import Fold, ForEach, ForRange
 from .logical import (
     AndOp,
     BoolOp,
     NotOp,
     OrOp,
 )
+from .parallel import All, Any, Parallel, Race
 from .sentinel import IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
+from .timing import Debounce, Delay, Throttle, Timed, Timeout
 
 
 __all__ = [
     "AbsOp",
     "AddOp",
+    "All",
     "AllOp",
     "AndOp",
+    "Any",
     "AnyOp",
+    "Assert",
+    "AssertEmpty",
+    "AssertEquals",
+    "AssertExists",
+    "AssertGreaterOrEqual",
+    "AssertGreaterThan",
+    "AssertLessOrEqual",
+    "AssertLessThan",
+    "AssertMissing",
+    "AssertNotEmpty",
+    "AssertNotEquals",
     "AtOp",
     "BitwiseAndOp",
     "BitwiseNotOp",
@@ -82,14 +118,23 @@ __all__ = [
     "BoolOp",
     "ChainOp",
     "ContainsOp",
+    "Debounce",
+    "Debug",
     "DelAttrOp",
+    "Delay",
     "DivOp",
+    "DoWhile",
     "DropOp",
     "EnumerateOp",
     "EqOp",
+    "Filter",
     "FilterByOp",
     "FlattenOp",
     "FloorDivOp",
+    "Fold",
+    "ForEach",
+    "ForRange",
+    "Forever",
     "FuncCall",
     "FuncCallCmd",
     "FuncCallOp",
@@ -97,12 +142,15 @@ __all__ = [
     "GetAttrOp",
     "GtOp",
     "IdCompOp",
+    "If",
     "IsEmptyOp",
     "IsNaNOp",
     "LShiftOp",
     "LeOp",
     "LenOp",
+    "Log",
     "LtOp",
+    "Map",
     "MaxOp",
     "MethodCall",
     "MethodCallCmd",
@@ -116,17 +164,31 @@ __all__ = [
     "NotNaNOp",
     "NotOp",
     "OrOp",
+    "Parallel",
     "PluckOp",
     "PosOp",
     "PowOp",
+    "Print",
     "RShiftOp",
+    "Race",
+    "Retry",
     "ReversedOp",
+    "Seq",
     "SetAttrOp",
+    "SkipIfEmpty",
+    "SkipIfExists",
+    "SkipIfMissing",
+    "SkipIfNotEmpty",
     "SliceOp",
     "SortedOp",
     "SubOp",
     "SumOp",
+    "Switch",
     "TakeOp",
+    "TakeWhile",
+    "Throttle",
+    "Timed",
+    "Timeout",
     "ToBoolOp",
     "ToBytesOp",
     "ToFloatOp",
@@ -135,7 +197,10 @@ __all__ = [
     "ToSetOp",
     "ToStrOp",
     "ToTupleOp",
+    "TryCatch",
+    "Unique",
     "UniqueOp",
+    "While",
     "XorOp",
     "ZipOp",
 ]

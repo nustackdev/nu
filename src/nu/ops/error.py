@@ -1,4 +1,4 @@
-"""Error handling flows -- TryCatch, Retry, Assert."""
+"""Error handling ops -- TryCatch, Retry, Assert."""
 
 from __future__ import annotations
 
@@ -6,9 +6,7 @@ import asyncio
 from typing import TYPE_CHECKING, Any
 
 from nu.interfaces import NoneI
-from nu.utils import ensure_nu
-
-from .base import Flow
+from nu.terms.op import Calculation, Command
 
 
 if TYPE_CHECKING:
@@ -23,25 +21,12 @@ __all__ = [
 ]
 
 
-class TryCatch(Flow):
+class TryCatch(Calculation):
     """Try/catch/finally error handling.
 
-    Children layout: ``[body, catch, finally_]``
+    Children: ``[body, catch, finally_]``
 
     Always 3 children. Missing handlers are ``NoneI()`` sentinels.
-
-    Executes *body*. If an exception occurs and a *catch* handler is
-    provided, the handler runs with ctx extended with ``"error"`` tag
-    containing ``str(exception)``. If no *catch* is provided the exception
-    propagates after the *finally_* block (if any) completes.
-
-    Example::
-
-        TryCatch(
-            risky_operation,
-            catch=error_handler,
-            finally_=cleanup,
-        )
     """
 
     def __init__(
@@ -59,22 +44,15 @@ class TryCatch(Flow):
 
     @property
     def catch(self) -> Nu | None:
-        """Catch handler, or None if absent."""
         c = self.children[1]
         return None if isinstance(c, NoneI) else c
 
     @property
     def finally_(self) -> Nu | None:
-        """Finally handler, or None if absent."""
         c = self.children[2]
         return None if isinstance(c, NoneI) else c
 
     async def execute(self, ctx: Context) -> None:
-        """Execute with try/catch/finally semantics.
-
-        If ``errors`` is set, only matching exception types are caught.
-        Non-matching exceptions propagate (after finally).
-        """
         body = self.children[0]
         catch = self.catch
         finally_ = self.finally_
@@ -98,31 +76,13 @@ class TryCatch(Flow):
             raise caught
 
 
-class Retry(Flow):
+class Retry(Command):
     """Retry child on failure with exponential backoff.
 
-    Children layout: ``[body, max_attempts, delay, backoff,
-                        on_attempt_fail, on_success, on_fail]``
+    Children: ``[body, max_attempts, delay, backoff,
+                on_attempt_fail, on_success, on_fail]``
 
     Always 7 children. Missing hooks are ``NoneI()`` sentinels.
-
-    Executes *body* up to *max_attempts* times.
-
-    Hooks receive ctx extended with ``"error"`` (str) and ``"attempt"`` (int) tags:
-    - ``on_attempt_fail``: fires on every non-final failure (before sleep + retry)
-    - ``on_success``: fires after successful execution
-    - ``on_fail``: fires on final failure (before re-raise)
-
-    Example::
-
-        Retry(
-            fetch_data,
-            max_attempts=5,
-            delay=1.0,
-            backoff=2.0,
-            on_attempt_fail=log_retry,
-            on_fail=alert_failure,
-        )
     """
 
     def __init__(
@@ -138,10 +98,7 @@ class Retry(Flow):
     ) -> None:
         _none = NoneI()
         super().__init__(
-            body,
-            ensure_nu(max_attempts),
-            ensure_nu(delay),
-            ensure_nu(backoff),
+            body, max_attempts, delay, backoff,
             on_attempt_fail or _none,
             on_success or _none,
             on_fail or _none,
@@ -149,33 +106,20 @@ class Retry(Flow):
 
     @property
     def on_attempt_fail(self) -> Nu | None:
-        """On-attempt-fail hook, or None if absent."""
         c = self.children[4]
         return None if isinstance(c, NoneI) else c
 
     @property
     def on_success(self) -> Nu | None:
-        """On-success hook, or None if absent."""
         c = self.children[5]
         return None if isinstance(c, NoneI) else c
 
     @property
     def on_fail(self) -> Nu | None:
-        """On-fail hook, or None if absent."""
         c = self.children[6]
         return None if isinstance(c, NoneI) else c
 
-    @property
-    def has_hooks(self) -> bool:
-        """True if any hook is set."""
-        return (
-            self.on_attempt_fail is not None
-            or self.on_success is not None
-            or self.on_fail is not None
-        )
-
     async def execute(self, ctx: Context) -> None:
-        """Execute body with retry logic and exponential backoff."""
         body = self.children[0]
         max_attempts = await self.children[1].execute(ctx)
         delay = await self.children[2].execute(ctx)
@@ -206,31 +150,18 @@ class Retry(Flow):
                 delay *= backoff
 
 
-class Assert(Flow):
+class Assert(Command):
     """Validate a condition during execution.
 
-    Children layout: ``[condition, message]``
+    Children: ``[condition, message]``
 
-    Evaluates *condition* and raises ``AssertionError`` with the resolved
-    *message* when the result is falsy.
-
-    Example::
-
-        Assert(count > 0, message="count must be positive")
-        Assert(user_exists, message="user not found")
+    Raises ``AssertionError`` when condition is falsy.
     """
 
     def __init__(self, condition: Any, message: StrArg = "Assertion failed") -> None:
-        """Initialize assertion.
-
-        Args:
-            condition: Nu or literal evaluated for truthiness.
-            message: Error message. Plain string or Nu resolving to string.
-        """
-        super().__init__(ensure_nu(condition), ensure_nu(message))
+        super().__init__(condition, message)
 
     async def execute(self, ctx: Context) -> None:
-        """Evaluate condition and raise AssertionError if falsy."""
         result = await self.children[0].execute(ctx)
         if not result:
             message = await self.children[1].execute(ctx)

@@ -235,19 +235,32 @@ class TernaryOp(NAryOp[T_co], ABC):
 # =============================================================================
 
 
-class Calculation:
-    """Mixin marking an op as pure (no side effects).
+class Calculation(Op[T_co], ABC):
+    """Pure Op. No side effects.
 
-    Pure operations are:
+    Calculations are:
     - Deterministic: same inputs -> same output
     - Side-effect free: don't modify state
     - Cacheable: results can be memoized
     - Reorderable: execution order doesn't matter
 
-    Usage:
+    Inherit directly for complex ops that override execute().
+    Combine with arity mixins (UnaryCalc, BinaryCalc) for
+    simple ops that use the apply() pattern.
+
+    Usage::
+
+        # Simple: arity mixin provides execute -> apply
         class AddCalc(BinaryCalc[float]):
             def apply(self, left: float, right: float) -> float:
                 return left + right
+
+        # Complex: override execute directly
+        class Filter(Calculation):
+            def __init__(self, items, *, condition, body, item="item"):
+                super().__init__(items, condition, body, item)
+            async def execute(self, ctx):
+                ...
     """
 
     @property
@@ -256,23 +269,29 @@ class Calculation:
         return True
 
 
-class Command:
-    """Mixin marking an op as impure (has side effects).
+class Command(Op[T_co], ABC):
+    """Impure Op. Has side effects.
 
     Commands modify state and must be executed carefully:
     - Order-dependent: sequence of execution matters
     - Transactional: should run within a Span
     - Not cacheable: results may differ each execution
 
-    Usage:
-        class SetCmd(UnaryCmd[T]):
-            def __init__(self, ref: Ref[T], value: T | Nu[T]):
-                super().__init__(value)
-                self._ref = ref
+    Inherit directly for complex impure ops that override execute().
+    Combine with arity mixins (UnaryCmd, BinaryCmd) for simple ops
+    that use the apply() pattern.
 
+    Usage::
+
+        # Simple: arity mixin provides execute -> apply
+        class SetCmd(UnaryCmd[T]):
             def apply(self, value: T) -> T:
-                # Side effect here
                 return value
+
+        # Complex: override execute directly
+        class Print(Command):
+            async def execute(self, ctx):
+                print(await self.children[0].execute(ctx))
     """
 
     @property
