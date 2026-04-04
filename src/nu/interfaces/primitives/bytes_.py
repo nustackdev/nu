@@ -145,14 +145,12 @@ class BytesI(Interface[bytes]):
 
     def decode(self, encoding: StrArg = "utf-8") -> StrI:
         from .bytes_ops import DecodeOp
-
         from .str_ import StrI
 
         return StrI(DecodeOp(self, encoding))
 
     def hex_(self) -> StrI:
         from .bytes_ops import HexOp
-
         from .str_ import StrI
 
         return StrI(HexOp(self))
@@ -183,9 +181,9 @@ class BytesI(Interface[bytes]):
         return BytesI(BytesRStripOp(self, chars))
 
     def split_bytes(self, sep: BytesArg | None = None, maxsplit: IntArg = -1) -> ListI:
-        from .bytes_ops import BytesSplitOp
-
         from nu.interfaces.collections.list_ import ListI
+
+        from .bytes_ops import BytesSplitOp
 
         if sep is not None:
             return ListI(BytesSplitOp(self, sep, maxsplit))
@@ -193,29 +191,25 @@ class BytesI(Interface[bytes]):
 
     def find_bytes(self, sub: BytesArg, start: IntArg = 0, end: IntArg | None = None) -> IntI:
         from .bytes_ops import BytesFindOp
-
         from .int_ import IntI
 
         return IntI(BytesFindOp(self, sub, start, end))
 
     def count_bytes(self, sub: BytesArg) -> IntI:
         from .bytes_ops import BytesCountOp
-
         from .int_ import IntI
 
         return IntI(BytesCountOp(self, sub))
 
     def startswith(self, prefix: BytesArg) -> BoolI:
-        from .bytes_ops import BytesStartsWithOp
-
         from .bool_ import BoolI
+        from .bytes_ops import BytesStartsWithOp
 
         return BoolI(BytesStartsWithOp(self, prefix))
 
     def endswith(self, suffix: BytesArg) -> BoolI:
-        from .bytes_ops import BytesEndsWithOp
-
         from .bool_ import BoolI
+        from .bytes_ops import BytesEndsWithOp
 
         return BoolI(BytesEndsWithOp(self, suffix))
 

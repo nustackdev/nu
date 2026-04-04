@@ -7,7 +7,7 @@ DelAttrOp: Delete an attribute from an instance
 
 from __future__ import annotations
 
-from nu.terms import BinaryCmd, BinaryCalc, TernaryCmd
+from nu.terms import BinaryCalc, BinaryCmd, TernaryCmd
 
 
 __all__ = [

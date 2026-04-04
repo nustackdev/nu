@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.terms import Nu
+
 from .walk import preorder
 
 

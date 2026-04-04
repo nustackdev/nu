@@ -28,9 +28,8 @@ from .sliceable import SliceableBase, SliceableProtocol
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from nu.terms import Arg, IntArg
-
     from nu.interfaces.primitives import IntI, NoneI
+    from nu.terms import Arg, IntArg
 
 
 __all__ = [
@@ -120,15 +119,17 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def index(self, value: Arg[ElementT]) -> IntI:
         """Find index of value."""
-        from .sequence_ops import IndexOfOp
         from nu.interfaces.primitives import IntI
+
+        from .sequence_ops import IndexOfOp
 
         return IntI(IndexOfOp(self, value))
 
     def count(self, value: Arg[ElementT]) -> IntI:
         """Count occurrences."""
-        from .sequence_ops import CountOp
         from nu.interfaces.primitives import IntI
+
+        from .sequence_ops import CountOp
 
         return IntI(CountOp(self, value))
 
@@ -153,22 +154,25 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
 
     def append(self, value: Arg[ElementT]) -> NoneI:
         """Append item to end of sequence."""
-        from .sequence_ops import AppendCmd
         from nu.interfaces.primitives import NoneI
+
+        from .sequence_ops import AppendCmd
 
         return NoneI(AppendCmd(self, value))
 
     def extend(self, other: Arg[Iterable[ElementT]]) -> NoneI:
         """Extend sequence with elements from iterable."""
-        from .sequence_ops import ExtendCmd
         from nu.interfaces.primitives import NoneI
+
+        from .sequence_ops import ExtendCmd
 
         return NoneI(ExtendCmd(self, other))
 
     def insert(self, index: IntArg, value: Arg[ElementT]) -> NoneI:
         """Insert item at index."""
-        from .sequence_ops import InsertCmd
         from nu.interfaces.primitives import NoneI
+
+        from .sequence_ops import InsertCmd
 
         return NoneI(InsertCmd(self, index, value))
 
@@ -180,21 +184,24 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
 
     def remove(self, value: Arg[ElementT]) -> NoneI:
         """Remove first occurrence of value."""
-        from .sequence_ops import RemoveValueCmd
         from nu.interfaces.primitives import NoneI
+
+        from .sequence_ops import RemoveValueCmd
 
         return NoneI(RemoveValueCmd(self, value))
 
     def reverse(self) -> NoneI:
         """Reverse sequence in-place."""
-        from .sequence_ops import ReverseCmd
         from nu.interfaces.primitives import NoneI
+
+        from .sequence_ops import ReverseCmd
 
         return NoneI(ReverseCmd(self))
 
     def clear(self) -> NoneI:
         """Remove all items."""
-        from .shared_ops import ClearCmd
         from nu.interfaces.primitives import NoneI
+
+        from .shared_ops import ClearCmd
 
         return NoneI(ClearCmd(self))

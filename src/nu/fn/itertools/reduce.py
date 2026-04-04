@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.ops.itertools.reduce import AllOp, AnyOp, MaxOp, MinOp, ReduceOp, SumOp
 from nu.interfaces import AnyI, BoolI
+from nu.ops.itertools.reduce import AllOp, AnyOp, MaxOp, MinOp, ReduceOp, SumOp
 
 
 if TYPE_CHECKING:

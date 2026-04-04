@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.ops.itertools.group import GroupByOp, PartitionOp
 from nu.interfaces import ListI, TupleI
+from nu.ops.itertools.group import GroupByOp, PartitionOp
 
 
 if TYPE_CHECKING:

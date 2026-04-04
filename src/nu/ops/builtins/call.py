@@ -18,7 +18,7 @@ from __future__ import annotations
 from inspect import isawaitable
 from typing import TYPE_CHECKING, Any
 
-from nu.terms import INVALID, Command, Op, Calculation, Sentinel, is_sentinel
+from nu.terms import INVALID, Calculation, Command, Op, Sentinel, is_sentinel
 
 
 if TYPE_CHECKING:

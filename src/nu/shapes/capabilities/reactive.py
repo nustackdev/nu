@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from nu import Sentinel, Nu
+    from nu import Nu, Sentinel
     from nu.shapes.ops.reactive import (
         OnChangeOp,
         OnChildChangeOp,

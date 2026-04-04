@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 
 from nu import Flow, Span, map_nodes
-from nu.ops.builtins.conversion import ToStrOp
 from nu.interfaces import StrI
+from nu.ops.builtins.conversion import ToStrOp
 from nu.terms import Nu
 
 
@@ -66,6 +66,7 @@ def annotate_retries[N: Nu](tree: N) -> N:
     from nu.flows.control import Seq
     from nu.flows.error import Retry
     from nu.flows.io import Log
+
     from ..refs import IntRef, StrRef
 
     def _annotate(node: Nu) -> Nu:

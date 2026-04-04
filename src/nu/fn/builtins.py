@@ -6,8 +6,8 @@ Contains -> BoolI
 
 from __future__ import annotations
 
-from nu.ops import ContainsOp, LenOp
 from nu.interfaces import BoolI, IntI
+from nu.ops import ContainsOp, LenOp
 
 
 __all__ = [

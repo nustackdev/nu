@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Op, Calculation, Sentinel
+from nu.terms import Calculation, Op, Sentinel
 
 
 if TYPE_CHECKING:

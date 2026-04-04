@@ -1,3 +1,2 @@
-from .shape import Shape, ShapeMeta
-from .shape import SlotDescriptor
+from .shape import Shape, ShapeMeta, SlotDescriptor
 from .slot import Slot

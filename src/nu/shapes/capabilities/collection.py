@@ -17,7 +17,7 @@ from nu.interfaces import BoolI, NoneI
 
 
 if TYPE_CHECKING:
-    from nu import Sentinel, Nu
+    from nu import Nu, Sentinel
 
 
 __all__ = [
@@ -51,8 +51,8 @@ class CollectionSettableBase[CollectionT]:
     """
 
     def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> NoneI:
-        from nu.utils import ensure_nu
         from nu.shapes.ops.collection import CollectionStoreCmd
+        from nu.utils import ensure_nu
 
         return NoneI(CollectionStoreCmd(self, ensure_nu(value)))
 

@@ -17,7 +17,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu import Op, Calculation, Nu
+from nu import Calculation, Nu, Op
 from nu.shapes.protocols import (
     ChildObservableProtocol,
     ChildrenObservableProtocol,

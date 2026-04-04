@@ -106,6 +106,8 @@ class SolanaRpc:
         await self._ensure_connected()
         self._id += 1
         body = {"jsonrpc": "2.0", "id": self._id, "method": method, "params": params or []}
+        if self._session is None:
+            raise ValueError("Session not attached")
         async with self._session.post(
             self._endpoint, json=body, headers={"Content-Type": "application/json"}
         ) as resp:
@@ -276,7 +278,7 @@ class SolanaRef(Ref[SolanaRpc]):
         return "solana_rpc"
 
     async def fetch(self, ctx: Context) -> SolanaRpc:
-        return ctx[SolanaRpc]
+        return ctx.get(SolanaRpc)
 
     get_slot = method(IntI, "get_slot")
     get_blocks = method(ListI, "get_blocks")
@@ -380,7 +382,7 @@ def sync_slot(ledger: type[Ledger], slot: IntArg) -> Nu:
                             0,
                             fn.Len(sc.block_txs),
                             Seq(
-                                sc.tx_id.store(slot * TX_ID_MULTIPLIER + tx_idx),
+                                sc.tx_id.store(IntI(slot) * TX_ID_MULTIPLIER + tx_idx),
                                 ledger.txs[sc.tx_id].store(sc.block_txs[tx_idx]),
                             ),
                             index="tx_idx",
@@ -450,7 +452,7 @@ async def main() -> None:
 
     try:
         with rocksdb_storage_inmemory(args.db_path) as store:
-            ctx = Context().bind(store, StorageProtocol).bind(rpc, SolanaRpc)
+            ctx = Context().bind(StorageProtocol, store).bind(SolanaRpc, rpc)
 
             slot_to = args.slot_from + args.slots
 

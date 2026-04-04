@@ -9,10 +9,9 @@ from nu.interfaces.interface import Interface
 
 
 if TYPE_CHECKING:
-    from nu.terms import IntArg, Nu, TupleArg
-
     from nu.interfaces.primitives.bool_ import BoolI
     from nu.interfaces.special.any_ import AnyI
+    from nu.terms import IntArg, Nu, TupleArg
 
 
 __all__ = [
@@ -44,9 +43,8 @@ class TupleI[*Ts](
     @overload
     def __getitem__(self, key: slice) -> TupleI: ...
     def __getitem__(self, key: IntArg | slice) -> AnyI | TupleI:
-        from nu.ops import AtOp, SliceOp
-
         from nu.interfaces.special.any_ import AnyI
+        from nu.ops import AtOp, SliceOp
 
         if isinstance(key, slice):
             return TupleI(SliceOp(self, key.start, key.stop, key.step))
@@ -57,50 +55,43 @@ class TupleI[*Ts](
     # =========================================================================
 
     def __gt__(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.ops import GtOp
-
         from nu.interfaces.primitives.bool_ import BoolI
+        from nu.ops import GtOp
 
         return BoolI(GtOp(self, other))
 
     def __lt__(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.ops import LtOp
-
         from nu.interfaces.primitives.bool_ import BoolI
+        from nu.ops import LtOp
 
         return BoolI(LtOp(self, other))
 
     def __ge__(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.ops import GeOp
-
         from nu.interfaces.primitives.bool_ import BoolI
+        from nu.ops import GeOp
 
         return BoolI(GeOp(self, other))
 
     def __le__(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.ops import LeOp
-
         from nu.interfaces.primitives.bool_ import BoolI
+        from nu.ops import LeOp
 
         return BoolI(LeOp(self, other))
 
     def eq(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.ops import EqOp
-
         from nu.interfaces.primitives.bool_ import BoolI
+        from nu.ops import EqOp
 
         return BoolI(EqOp(self, other))
 
     def ne(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.ops import NeOp
-
         from nu.interfaces.primitives.bool_ import BoolI
+        from nu.ops import NeOp
 
         return BoolI(NeOp(self, other))
 
     def is_(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.ops import IdCompOp
-
         from nu.interfaces.primitives.bool_ import BoolI
+        from nu.ops import IdCompOp
 
         return BoolI(IdCompOp(self, other))

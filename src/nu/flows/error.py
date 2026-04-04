@@ -5,15 +5,15 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any
 
-from .base import Flow
-
-from nu.utils import ensure_nu
 from nu.interfaces import NoneI
+from nu.utils import ensure_nu
+
+from .base import Flow
 
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import Nu, FloatArg, IntArg, StrArg
+    from nu.terms import FloatArg, IntArg, Nu, StrArg
 
 
 __all__ = [

@@ -189,16 +189,16 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def split(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListI:
-        from .str_ops import SplitOp
-
         from nu.interfaces.collections.list_ import ListI
+
+        from .str_ops import SplitOp
 
         return ListI(SplitOp(self, sep, maxsplit))
 
     def rsplit(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListI:
-        from .str_ops import RSplitOp
-
         from nu.interfaces.collections.list_ import ListI
+
+        from .str_ops import RSplitOp
 
         return ListI(RSplitOp(self, sep, maxsplit))
 
@@ -207,23 +207,20 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def find(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntI:
-        from .str_ops import FindOp
-
         from .int_ import IntI
+        from .str_ops import FindOp
 
         return IntI(FindOp(self, sub, start, end))
 
     def rfind(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntI:
-        from .str_ops import RFindOp
-
         from .int_ import IntI
+        from .str_ops import RFindOp
 
         return IntI(RFindOp(self, sub, start, end))
 
     def count_substring(self, sub: StrArg) -> IntI:
-        from .str_ops import CountSubstringOp
-
         from .int_ import IntI
+        from .str_ops import CountSubstringOp
 
         return IntI(CountSubstringOp(self, sub))
 
@@ -232,44 +229,38 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def startswith(self, prefix: StrArg) -> BoolI:
-        from .str_ops import StartsWithOp
-
         from .bool_ import BoolI
+        from .str_ops import StartsWithOp
 
         return BoolI(StartsWithOp(self, prefix))
 
     def endswith(self, suffix: StrArg) -> BoolI:
-        from .str_ops import EndsWithOp
-
         from .bool_ import BoolI
+        from .str_ops import EndsWithOp
 
         return BoolI(EndsWithOp(self, suffix))
 
     def isdigit(self) -> BoolI:
-        from .str_ops import IsDigitOp
-
         from .bool_ import BoolI
+        from .str_ops import IsDigitOp
 
         return BoolI(IsDigitOp(self))
 
     def isalpha(self) -> BoolI:
-        from .str_ops import IsAlphaOp
-
         from .bool_ import BoolI
+        from .str_ops import IsAlphaOp
 
         return BoolI(IsAlphaOp(self))
 
     def isalnum(self) -> BoolI:
-        from .str_ops import IsAlnumOp
-
         from .bool_ import BoolI
+        from .str_ops import IsAlnumOp
 
         return BoolI(IsAlnumOp(self))
 
     def isspace(self) -> BoolI:
-        from .str_ops import IsSpaceOp
-
         from .bool_ import BoolI
+        from .str_ops import IsSpaceOp
 
         return BoolI(IsSpaceOp(self))
 
@@ -311,9 +302,8 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def encode(self, encoding: StrArg = "utf-8") -> BytesI:
-        from .str_ops import EncodeOp
-
         from .bytes_ import BytesI
+        from .str_ops import EncodeOp
 
         return BytesI(EncodeOp(self, encoding))
 

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from .base import Flow
-
 from nu.utils import ensure_nu
+
+from .base import Flow
 
 
 if TYPE_CHECKING:

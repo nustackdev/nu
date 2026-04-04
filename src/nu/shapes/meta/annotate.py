@@ -15,8 +15,8 @@ Usage::
 
 from __future__ import annotations
 
-from nu.transform.transform import map_nodes
 from nu.terms import Nu
+from nu.transform.transform import map_nodes
 
 
 __all__ = [

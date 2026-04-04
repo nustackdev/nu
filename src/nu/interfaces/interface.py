@@ -77,15 +77,15 @@ class Interface(RValue[T_co]):
 
     def is_empty(self) -> BoolI:
         """Check if this value is Empty."""
-        from nu.ops import IsEmptyOp
         from nu.interfaces.primitives.bool_ import BoolI
+        from nu.ops import IsEmptyOp
 
         return BoolI(IsEmptyOp(self))
 
     def is_invalid(self) -> BoolI:
         """Check if this value is Invalid."""
-        from nu.ops import IsNaNOp
         from nu.interfaces.primitives.bool_ import BoolI
+        from nu.ops import IsNaNOp
 
         return BoolI(IsNaNOp(self))
 

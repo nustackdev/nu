@@ -11,10 +11,9 @@ import typing
 from typing import overload
 
 from nu.interfaces import Interface
-from nu.terms import Ref
-
 from nu.ops.builtins.attr import GetAttrOp
 from nu.ops.builtins.call import MethodCallCmd, MethodCallOp
+from nu.terms import Ref
 
 
 __all__ = [

@@ -9,7 +9,7 @@ Name can be a plain string or a Nu that resolves to a string.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from nu.terms import Nu, Ref, Sentinel
 from nu.utils import ensure_nu
@@ -17,9 +17,8 @@ from nu.utils import ensure_nu
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import StrArg, Value
-
     from nu.interfaces import BoolI
+    from nu.terms import StrArg, Value
 
 __all__ = [
     "AnyAttrRef",
@@ -92,6 +91,7 @@ class AttrRef[T](Ref[T]):
     def exists(self) -> BoolI:
         """Check if name exists in context."""
         from nu.interfaces import BoolI
+
         from .attr_ops import AttrExistsOp
 
         return BoolI(AttrExistsOp(self))
@@ -109,6 +109,7 @@ class IntAttrRef(AttrRef[int]):
 
     def get(self) -> IntI:  # noqa: F821
         from nu.interfaces import IntI
+
         from .attr_ops import AttrGetOp
 
         return IntI(AttrGetOp(self))
@@ -121,6 +122,7 @@ class FloatAttrRef(AttrRef[float]):
 
     def get(self) -> FloatI:  # noqa: F821
         from nu.interfaces import FloatI
+
         from .attr_ops import AttrGetOp
 
         return FloatI(AttrGetOp(self))
@@ -133,6 +135,7 @@ class StrAttrRef(AttrRef[str]):
 
     def get(self) -> StrI:  # noqa: F821
         from nu.interfaces import StrI
+
         from .attr_ops import AttrGetOp
 
         return StrI(AttrGetOp(self))
@@ -143,8 +146,9 @@ class BoolAttrRef(AttrRef[bool]):
 
     value_type = bool
 
-    def get(self) -> BoolI:  # noqa: F821
+    def get(self) -> BoolI:
         from nu.interfaces import BoolI
+
         from .attr_ops import AttrGetOp
 
         return BoolI(AttrGetOp(self))
@@ -157,6 +161,7 @@ class BytesAttrRef(AttrRef[bytes]):
 
     def get(self) -> BytesI:  # noqa: F821
         from nu.interfaces import BytesI
+
         from .attr_ops import AttrGetOp
 
         return BytesI(AttrGetOp(self))
@@ -169,6 +174,7 @@ class AnyAttrRef(AttrRef[object]):
 
     def get(self) -> AnyI:  # noqa: F821
         from nu.interfaces import AnyI
+
         from .attr_ops import AttrGetOp
 
         return AnyI(AttrGetOp(self))

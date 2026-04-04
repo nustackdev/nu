@@ -24,39 +24,13 @@ from .iteration import Fold, ForEach, ForRange
 from .parallel import All, Any, Parallel, Race
 from .timing import Debounce, Delay, Throttle, Timed, Timeout
 
+
 __all__ = [
-    # base
-    "Flow",
-    # control
-    "DoWhile",
-    "Forever",
-    "If",
-    "Seq",
-    "Switch",
-    "While",
-    # iteration
-    "Fold",
-    "ForEach",
-    "ForRange",
     # parallel
     "All",
     "Any",
-    "Parallel",
-    "Race",
     # error
     "Assert",
-    "Retry",
-    "TryCatch",
-    # io
-    "Debug",
-    "Log",
-    "Print",
-    # timing
-    "Debounce",
-    "Delay",
-    "Throttle",
-    "Timed",
-    "Timeout",
     # asserts
     "AssertEmpty",
     "AssertEquals",
@@ -68,8 +42,35 @@ __all__ = [
     "AssertMissing",
     "AssertNotEmpty",
     "AssertNotEquals",
+    # timing
+    "Debounce",
+    # io
+    "Debug",
+    "Delay",
+    # control
+    "DoWhile",
+    # base
+    "Flow",
+    # iteration
+    "Fold",
+    "ForEach",
+    "ForRange",
+    "Forever",
+    "If",
+    "Log",
+    "Parallel",
+    "Print",
+    "Race",
+    "Retry",
+    "Seq",
     "SkipIfEmpty",
     "SkipIfExists",
     "SkipIfMissing",
     "SkipIfNotEmpty",
+    "Switch",
+    "Throttle",
+    "Timed",
+    "Timeout",
+    "TryCatch",
+    "While",
 ]

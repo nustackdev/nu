@@ -237,7 +237,7 @@ class Context:
             *tags: Scope tags to match against.
             **data: Passed as **kwargs to all predicates.
         """
-        return cast(_T, self._resolve(service_type, frozenset(tags), data))
+        return cast("_T", self._resolve(service_type, frozenset(tags), data))
 
     def has(self, service_type: type, *tags: object) -> bool:
         """Check if a binding exists for service type + optional scope tags."""

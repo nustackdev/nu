@@ -15,10 +15,11 @@ Subpackages:
 
 from __future__ import annotations
 
+from . import fn
 from .context import (
     AnyAttrRef,
-    AttrRef,
     Attributes,
+    AttrRef,
     BoolAttrRef,
     BytesAttrRef,
     Context,
@@ -26,14 +27,12 @@ from .context import (
     IntAttrRef,
     StrAttrRef,
 )
+from .flows import *  # noqa: F403
 from .interfaces import *  # noqa: F403
 from .method import AutoInterface, method, prop
 from .model import Model
-from . import fn
-from .utils import ensure_nu, typed_value
 from .ops import *  # noqa: F403
 from .ops.combiners import all_, and_, any_, none_, or_
-from .flows import *  # noqa: F403
 from .terms import (
     EMPTY,
     INVALID,
@@ -102,89 +101,20 @@ from .transform import (
     unwrap,
     wrap,
 )
-
+from .utils import ensure_nu, typed_value
 
 
 __all__ = [
-    # Nu
-    "Nu",
-    "LValue",
-    "RValue",
-    "Value",
-    "Ref",
-    "Op",
-    "NAryOp",
-    "UnaryOp",
-    "BinaryOp",
-    "TernaryOp",
-    "Calculation",
-    "Command",
-    "NAryCalc",
-    "NAryCmd",
-    "UnaryCalc",
-    "UnaryCmd",
-    "BinaryCalc",
-    "BinaryCmd",
-    "TernaryCalc",
-    "TernaryCmd",
-    # Sentinel
-    "Sentinel",
-    "Empty",
-    "Invalid",
     "EMPTY",
     "INVALID",
-    "is_empty",
-    "is_invalid",
-    "is_sentinel",
-    "propagate_special",
-    # Arg types
-    "Arg",
-    "IntArg",
-    "FloatArg",
-    "StrArg",
-    "BoolArg",
-    "BytesArg",
-    "NoneArg",
-    "ListArg",
-    "DictArg",
-    "SetArg",
-    "FrozenSetArg",
-    "TupleArg",
-    # Model
-    "Model",
-    # Flow & Span
-    "Flow",
-    "Span",
-    # Flows — control
-    "DoWhile",
-    "Forever",
-    "If",
-    "Seq",
-    "Switch",
-    "While",
-    # Flows — iteration
-    "Fold",
-    "ForEach",
-    "ForRange",
     # Flows — parallel
     "All",
     "Any",
-    "Parallel",
-    "Race",
+    "AnyAttrRef",
+    # Arg types
+    "Arg",
     # Flows — error
     "Assert",
-    "Retry",
-    "TryCatch",
-    # Flows — io
-    "Debug",
-    "Log",
-    "Print",
-    # Flows — timing
-    "Debounce",
-    "Delay",
-    "Throttle",
-    "Timed",
-    "Timeout",
     # Flows — asserts
     "AssertEmpty",
     "AssertEquals",
@@ -196,45 +126,114 @@ __all__ = [
     "AssertMissing",
     "AssertNotEmpty",
     "AssertNotEquals",
+    # Attr refs
+    "AttrRef",
+    # Context
+    "Attributes",
+    "BinaryCalc",
+    "BinaryCmd",
+    "BinaryOp",
+    "BoolArg",
+    "BoolAttrRef",
+    "BytesArg",
+    "BytesAttrRef",
+    "Calculation",
+    "Command",
+    "Context",
+    # Flows — timing
+    "Debounce",
+    # Flows — io
+    "Debug",
+    "Delay",
+    "DictArg",
+    # Flows — control
+    "DoWhile",
+    "Empty",
+    "FloatArg",
+    "FloatAttrRef",
+    # Flow & Span
+    "Flow",
+    # Flows — iteration
+    "Fold",
+    "ForEach",
+    "ForRange",
+    "Forever",
+    "FrozenSetArg",
+    "If",
+    "IntArg",
+    "IntAttrRef",
+    "Invalid",
+    "LValue",
+    "ListArg",
+    "Log",
+    # Model
+    "Model",
+    "NAryCalc",
+    "NAryCmd",
+    "NAryOp",
+    "NoneArg",
+    # Nu
+    "Nu",
+    "Op",
+    "Parallel",
+    "Print",
+    "RValue",
+    "Race",
+    "Ref",
+    "Retry",
+    # Sentinel
+    "Sentinel",
+    "Seq",
+    "SetArg",
     "SkipIfEmpty",
     "SkipIfExists",
     "SkipIfMissing",
     "SkipIfNotEmpty",
-    # Context
-    "Attributes",
-    "Context",
-    # Attr refs
-    "AttrRef",
-    "IntAttrRef",
-    "FloatAttrRef",
+    "Span",
+    "StrArg",
     "StrAttrRef",
-    "BoolAttrRef",
-    "BytesAttrRef",
-    "AnyAttrRef",
-    # Walk
-    "preorder",
-    "postorder",
-    "bfs",
-    "leaves",
-    "ancestors",
+    "Switch",
+    "TernaryCalc",
+    "TernaryCmd",
+    "TernaryOp",
+    "Throttle",
+    "Timed",
+    "Timeout",
     # Transform
     "Transform",
-    "compose",
+    "TryCatch",
+    "TupleArg",
+    "UnaryCalc",
+    "UnaryCmd",
+    "UnaryOp",
+    "Value",
+    "While",
+    "ancestors",
     "apply",
-    "map_children",
-    "map_nodes",
-    "replace",
-    "wrap",
-    "unwrap",
-    "graft",
-    "prune",
+    "bfs",
+    "compose",
+    "count",
+    "depth",
     # Query
     "find",
     "find_first",
-    "count",
-    "size",
-    "depth",
     # Display
     "format_tree",
+    "graft",
+    "is_empty",
+    "is_invalid",
+    "is_sentinel",
+    "leaves",
+    "map_children",
+    "map_nodes",
+    "postorder",
+    # Walk
+    "preorder",
     "print_tree",
+    "propagate_special",
+    "prune",
+    "replace",
+    "size",
+    "unwrap",
+    "wrap",
 ]

@@ -23,9 +23,8 @@ from .collection import CollectionBase, CollectionProtocol
 
 
 if TYPE_CHECKING:
-    from nu.terms import Arg, Nu
-
     from nu.interfaces.primitives import BoolI, NoneI
+    from nu.terms import Arg, Nu
 
 
 __all__ = [
@@ -145,22 +144,25 @@ class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
         """Check if subset."""
-        from .set_ops import IsSubsetOp
         from nu.interfaces.primitives import BoolI
+
+        from .set_ops import IsSubsetOp
 
         return BoolI(IsSubsetOp(self, other))
 
     def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
         """Check if superset."""
-        from .set_ops import IsSupersetOp
         from nu.interfaces.primitives import BoolI
+
+        from .set_ops import IsSupersetOp
 
         return BoolI(IsSupersetOp(self, other))
 
     def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
         """Check if disjoint."""
-        from .set_ops import IsDisjointOp
         from nu.interfaces.primitives import BoolI
+
+        from .set_ops import IsDisjointOp
 
         return BoolI(IsDisjointOp(self, other))
 
@@ -179,22 +181,25 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def add(self, value: Arg[ElementT]) -> NoneI:
         """Add element to set."""
-        from .set_ops import AddCmd
         from nu.interfaces.primitives import NoneI
+
+        from .set_ops import AddCmd
 
         return NoneI(AddCmd(self, value))
 
     def remove(self, value: Arg[ElementT]) -> NoneI:
         """Remove element from set. Returns INVALID if not found."""
-        from .set_ops import RemoveCmd
         from nu.interfaces.primitives import NoneI
+
+        from .set_ops import RemoveCmd
 
         return NoneI(RemoveCmd(self, value))
 
     def discard(self, value: Arg[ElementT]) -> NoneI:
         """Remove element if present (no error if absent)."""
-        from .set_ops import DiscardCmd
         from nu.interfaces.primitives import NoneI
+
+        from .set_ops import DiscardCmd
 
         return NoneI(DiscardCmd(self, value))
 
@@ -206,29 +211,33 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def clear(self) -> NoneI:
         """Remove all items."""
-        from .shared_ops import ClearCmd
         from nu.interfaces.primitives import NoneI
+
+        from .shared_ops import ClearCmd
 
         return NoneI(ClearCmd(self))
 
     def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Add all elements from other."""
-        from .set_ops import SetUpdateCmd
         from nu.interfaces.primitives import NoneI
+
+        from .set_ops import SetUpdateCmd
 
         return NoneI(SetUpdateCmd(self, other))
 
     def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Keep only elements found in both."""
-        from .set_ops import IntersectionUpdateCmd
         from nu.interfaces.primitives import NoneI
+
+        from .set_ops import IntersectionUpdateCmd
 
         return NoneI(IntersectionUpdateCmd(self, other))
 
     def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Remove all elements found in other."""
-        from .set_ops import DifferenceUpdateCmd
         from nu.interfaces.primitives import NoneI
+
+        from .set_ops import DifferenceUpdateCmd
 
         return NoneI(DifferenceUpdateCmd(self, other))
 
@@ -236,7 +245,8 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> NoneI:
         """Keep elements in either set but not both."""
-        from .set_ops import SymmetricDifferenceUpdateCmd
         from nu.interfaces.primitives import NoneI
+
+        from .set_ops import SymmetricDifferenceUpdateCmd
 
         return NoneI(SymmetricDifferenceUpdateCmd(self, other))

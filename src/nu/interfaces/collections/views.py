@@ -11,9 +11,8 @@ from nu.interfaces.interface import Interface
 
 
 if TYPE_CHECKING:
-    from nu.terms import Nu
-
     from nu.interfaces.special.any_ import AnyI
+    from nu.terms import Nu
 
     from .list_ import ListI
     from .set_ import SetI

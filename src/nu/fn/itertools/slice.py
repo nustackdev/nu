@@ -5,8 +5,8 @@ Take, Drop (lazy -> IteratorI)
 
 from __future__ import annotations
 
-from nu.ops.itertools.slice import DropOp, TakeOp
 from nu.interfaces import IteratorI
+from nu.ops.itertools.slice import DropOp, TakeOp
 
 
 __all__ = [

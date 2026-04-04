@@ -37,8 +37,8 @@ if TYPE_CHECKING:
     from virtuals.loc import path
 
     from nu import Nu, Value
+    from nu.interfaces import NoneI
     from nu.shapes import Shape
-
 
 __all__ = [
     "BoolRef",
@@ -81,9 +81,9 @@ class ItemRef[T, ValueT: Value](
         super().__init__(**kwargs)
         self._value_value_type = value_value_type
 
-    def store(self, value: object) -> object:  # noqa: D102
-        from nu_virtuals.morphisms.item import PrimitiveStoreCmd
+    def store(self, value: object) -> NoneI:
         from nu import NoneI, ensure_nu
+        from nu_virtuals.morphisms.item import PrimitiveStoreCmd
 
         return NoneI(PrimitiveStoreCmd(self, ensure_nu(value)))
 

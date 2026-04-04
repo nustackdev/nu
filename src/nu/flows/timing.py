@@ -6,14 +6,14 @@ import asyncio
 import time
 from typing import TYPE_CHECKING
 
-from .base import Flow
-
 from nu.utils import ensure_nu
+
+from .base import Flow
 
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import Nu, FloatArg, StrArg
+    from nu.terms import FloatArg, Nu, StrArg
 
 
 __all__ = [

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSet, Set
 
-from nu.terms import INVALID, BinaryCmd, BinaryCalc, Sentinel, UnaryCmd
+from nu.terms import INVALID, BinaryCalc, BinaryCmd, Sentinel, UnaryCmd
 
 
 __all__ = [

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.interfaces import DictI, IteratorI, ListI
 from nu.ops.itertools.transform import (
     FilterByOp,
     FilterOp,
@@ -20,7 +21,6 @@ from nu.ops.itertools.transform import (
     ToDictOp,
     UniqueOp,
 )
-from nu.interfaces import DictI, IteratorI, ListI
 
 
 if TYPE_CHECKING:
