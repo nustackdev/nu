@@ -6,6 +6,7 @@ Subpackages:
     ops/         -- all concrete operations
     interfaces/  -- type interfaces + capability mixins
     shapes/      -- document data model
+    flows/       -- flow operations (control, iteration, parallel, error, timing, io, asserts)
     transform/   -- tree transformations
     graphs/      -- graph data model (stub)
     tables/      -- table data model (stub)
@@ -31,7 +32,7 @@ from .ops import fn
 from .utils import ensure_nu, typed_value
 from .ops import *  # noqa: F403
 from .ops.combiners import all_, and_, any_, none_, or_
-from .ops.flows import *  # noqa: F403
+from .flows import *  # noqa: F403
 from .terms import (
     EMPTY,
     INVALID,
@@ -153,6 +154,51 @@ __all__ = [
     # Flow & Span
     "Flow",
     "Span",
+    # Flows — control
+    "DoWhile",
+    "Forever",
+    "If",
+    "Seq",
+    "Switch",
+    "While",
+    # Flows — iteration
+    "Fold",
+    "ForEach",
+    "ForRange",
+    # Flows — parallel
+    "All",
+    "Any",
+    "Parallel",
+    "Race",
+    # Flows — error
+    "Assert",
+    "Retry",
+    "TryCatch",
+    # Flows — io
+    "Debug",
+    "Log",
+    "Print",
+    # Flows — timing
+    "Debounce",
+    "Delay",
+    "Throttle",
+    "Timed",
+    "Timeout",
+    # Flows — asserts
+    "AssertEmpty",
+    "AssertEquals",
+    "AssertExists",
+    "AssertGreaterOrEqual",
+    "AssertGreaterThan",
+    "AssertLessOrEqual",
+    "AssertLessThan",
+    "AssertMissing",
+    "AssertNotEmpty",
+    "AssertNotEquals",
+    "SkipIfEmpty",
+    "SkipIfExists",
+    "SkipIfMissing",
+    "SkipIfNotEmpty",
     # Context
     "Attributes",
     "Context",

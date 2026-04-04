@@ -63,9 +63,9 @@ def annotate_retries[N: Nu](tree: N) -> N:
     Returns:
         New tree with annotated Retry nodes.
     """
-    from ..flows.control import Seq
-    from ..flows.error import Retry
-    from ..flows.io import Log
+    from nu.flows.control import Seq
+    from nu.flows.error import Retry
+    from nu.flows.io import Log
     from ..refs import IntRef, StrRef
 
     def _annotate(node: Nu) -> Nu:
@@ -117,8 +117,8 @@ def annotate_steps[N: Nu](tree: N) -> N:
     Returns:
         New tree with step-annotated Seq nodes and path-aware Log nodes.
     """
-    from ..flows.control import Seq
-    from ..flows.io import Log
+    from nu.flows.control import Seq
+    from nu.flows.io import Log
 
     def _walk(node: Nu, path: str) -> Nu:
         # Seq with meaningful children: wrap Flow/Span children in _StepSpan
@@ -168,7 +168,7 @@ def set_logger_name[N: Nu](tree: N, name: str) -> N:
     Returns:
         New tree with renamed Log nodes.
     """
-    from ..flows.io import Log
+    from nu.flows.io import Log
 
     def _rename(node: Nu) -> Nu:
         if not isinstance(node, (Log, _StepSpan)):
