@@ -44,43 +44,46 @@ class Worker:
 
 
 class TestBind:
-    """Basic bind and __getitem__ retrieval."""
+    """Basic bind and get() retrieval."""
 
     def test_bind_single_tag(self):
-        ctx = Context().bind("rocksdb", Storage)
-        assert ctx[Storage] == "rocksdb"
+        ctx = Context().bind(Storage, "rocksdb")
+        assert ctx.get(Storage) == "rocksdb"
 
     def test_bind_two_tags(self):
-        ctx = Context().bind("order_db", Storage, OrderShape)
-        assert ctx[Storage, OrderShape] == "order_db"
+        ctx = Context().bind(Storage, "order_db", OrderShape)
+        assert ctx.get(Storage, OrderShape) == "order_db"
 
     def test_bind_string_tag(self):
-        ctx = Context().bind("timeout", "error")
-        assert ctx["error"] == "timeout"
+        ctx = Context().bind("error", "timeout")
+        assert ctx.get("error") == "timeout"
 
     def test_bind_int_tag(self):
-        ctx = Context().bind("worker_0", Worker, 0)
-        assert ctx[Worker, 0] == "worker_0"
+        ctx = Context().bind(Worker, "worker_0", 0)
+        assert ctx.get(Worker, 0) == "worker_0"
 
     def test_bind_none_value(self):
-        ctx = Context().bind(None, "flag")
-        assert ctx["flag"] is None
+        ctx = Context().bind("flag", None)
+        assert ctx.get("flag") is None
 
     def test_bind_override(self):
-        ctx = Context().bind("old", Storage).bind("new", Storage)
-        assert ctx[Storage] == "new"
+        ctx = Context().bind(Storage, "old").bind(Storage, "new")
+        assert ctx.get(Storage) == "new"
 
     def test_bind_scoped_override(self):
-        ctx = Context().bind("old", Storage, MarketShape).bind("new", Storage, MarketShape)
-        assert ctx[Storage, MarketShape] == "new"
+        ctx = Context().bind(Storage, "old", MarketShape).bind(Storage, "new", MarketShape)
+        assert ctx.get(Storage, MarketShape) == "new"
 
     def test_bind_chain(self):
         ctx = (
-            Context().bind("nav", Navigator).bind("view", View).bind("store", Storage, MarketShape)
+            Context()
+            .bind(Navigator, "nav")
+            .bind(View, "view")
+            .bind(Storage, "store", MarketShape)
         )
-        assert ctx[Navigator] == "nav"
-        assert ctx[View] == "view"
-        assert ctx[Storage, MarketShape] == "store"
+        assert ctx.get(Navigator) == "nav"
+        assert ctx.get(View) == "view"
+        assert ctx.get(Storage, MarketShape) == "store"
 
 
 # =============================================================================
@@ -92,16 +95,16 @@ class TestImmutability:
     """bind() and lazy() return new Context, original unchanged."""
 
     def test_bind_immutable(self):
-        ctx_a = Context().bind("x", Storage)
-        ctx_b = ctx_a.bind("y", Storage)
-        assert ctx_a[Storage] == "x"
-        assert ctx_b[Storage] == "y"
+        ctx_a = Context().bind(Storage, "x")
+        ctx_b = ctx_a.bind(Storage, "y")
+        assert ctx_a.get(Storage) == "x"
+        assert ctx_b.get(Storage) == "y"
 
     def test_lazy_immutable(self):
-        ctx_a = Context().lazy(lambda: "x", Storage)
-        ctx_b = ctx_a.lazy(lambda: "y", Storage)
-        assert ctx_a[Storage] == "x"
-        assert ctx_b[Storage] == "y"
+        ctx_a = Context().lazy(Storage, lambda: "x")
+        ctx_b = ctx_a.lazy(Storage, lambda: "y")
+        assert ctx_a.get(Storage) == "x"
+        assert ctx_b.get(Storage) == "y"
 
 
 # =============================================================================
@@ -113,34 +116,34 @@ class TestSpecificity:
     """Scope tag subset fallback."""
 
     def test_fallback_to_unscoped(self):
-        ctx = Context().bind("default", Storage)
-        assert ctx[Storage, MarketShape] == "default"
+        ctx = Context().bind(Storage, "default")
+        assert ctx.get(Storage, MarketShape) == "default"
 
     def test_exact_over_fallback(self):
-        ctx = Context().bind("default", Storage).bind("market", Storage, MarketShape)
-        assert ctx[Storage, MarketShape] == "market"
-        assert ctx[Storage, OrderShape] == "default"
+        ctx = Context().bind(Storage, "default").bind(Storage, "market", MarketShape)
+        assert ctx.get(Storage, MarketShape) == "market"
+        assert ctx.get(Storage, OrderShape) == "default"
 
     def test_larger_subset_preferred(self):
-        ctx = Context().bind("broad", Storage).bind("narrow", Storage, MarketShape, OrderShape)
-        assert ctx[Storage, MarketShape, OrderShape] == "narrow"
-        assert ctx[Storage, MarketShape] == "broad"
+        ctx = Context().bind(Storage, "broad").bind(Storage, "narrow", MarketShape, OrderShape)
+        assert ctx.get(Storage, MarketShape, OrderShape) == "narrow"
+        assert ctx.get(Storage, MarketShape) == "broad"
 
     def test_no_match_raises(self):
         ctx = Context()
         with pytest.raises(LookupError):
-            ctx[Storage]
+            ctx.get(Storage)
 
     def test_wrong_service_type_raises(self):
-        ctx = Context().bind("nav", Navigator)
+        ctx = Context().bind(Navigator, "nav")
         with pytest.raises(LookupError):
-            ctx[Storage]
+            ctx.get(Storage)
 
     def test_scope_alone_does_not_resolve(self):
         """MarketShape alone shouldn't match a Storage+MarketShape binding."""
-        ctx = Context().bind("x", Storage, MarketShape)
+        ctx = Context().bind(Storage, "x", MarketShape)
         with pytest.raises(LookupError):
-            ctx[MarketShape]
+            ctx.get(MarketShape)
 
 
 # =============================================================================
@@ -153,29 +156,29 @@ class TestLazy:
 
     def test_lazy_creates_on_access(self):
         calls = []
-        ctx = Context().lazy(lambda: (calls.append(1), "val")[1], Storage)
+        ctx = Context().lazy(Storage, lambda: (calls.append(1), "val")[1])
         assert len(calls) == 0
-        assert ctx[Storage] == "val"
+        assert ctx.get(Storage) == "val"
         assert len(calls) == 1
 
     def test_lazy_caches(self):
         calls = []
-        ctx = Context().lazy(lambda: (calls.append(1), "val")[1], Storage)
-        ctx[Storage]
-        ctx[Storage]
+        ctx = Context().lazy(Storage, lambda: (calls.append(1), "val")[1])
+        ctx.get(Storage)
+        ctx.get(Storage)
         assert len(calls) == 1
 
     def test_lazy_scoped(self):
-        ctx = Context().lazy(lambda: "market_db", Storage, MarketShape)
-        assert ctx[Storage, MarketShape] == "market_db"
+        ctx = Context().lazy(Storage, lambda: "market_db", MarketShape)
+        assert ctx.get(Storage, MarketShape) == "market_db"
 
     def test_lazy_fallback(self):
-        ctx = Context().lazy(lambda: "default", Storage)
-        assert ctx[Storage, MarketShape] == "default"
+        ctx = Context().lazy(Storage, lambda: "default")
+        assert ctx.get(Storage, MarketShape) == "default"
 
     def test_lazy_override_by_bind(self):
-        ctx = Context().lazy(lambda: "lazy", Storage).bind("eager", Storage)
-        assert ctx[Storage] == "eager"
+        ctx = Context().lazy(Storage, lambda: "lazy").bind(Storage, "eager")
+        assert ctx.get(Storage) == "eager"
 
 
 # =============================================================================
@@ -189,8 +192,8 @@ class TestPredicates:
     def test_single_predicate(self):
         ctx = (
             Context()
-            .bind("low", View, MarketShape, sharding=lambda site: site[0] < 16)
-            .bind("high", View, MarketShape, sharding=lambda site: site[0] >= 16)
+            .bind(View, "low", MarketShape, sharding=lambda site: site[0] < 16)
+            .bind(View, "high", MarketShape, sharding=lambda site: site[0] >= 16)
         )
         assert ctx.get(View, MarketShape, site=(5,)) == "low"
         assert ctx.get(View, MarketShape, site=(20,)) == "high"
@@ -198,8 +201,8 @@ class TestPredicates:
     def test_predicate_boundary(self):
         ctx = (
             Context()
-            .bind("low", View, MarketShape, sharding=lambda site: site[0] < 16)
-            .bind("high", View, MarketShape, sharding=lambda site: site[0] >= 16)
+            .bind(View, "low", MarketShape, sharding=lambda site: site[0] < 16)
+            .bind(View, "high", MarketShape, sharding=lambda site: site[0] >= 16)
         )
         assert ctx.get(View, MarketShape, site=(0,)) == "low"
         assert ctx.get(View, MarketShape, site=(15,)) == "low"
@@ -207,8 +210,8 @@ class TestPredicates:
 
     def test_multiple_predicates(self):
         ctx = Context().bind(
-            "hot_low",
             View,
+            "hot_low",
             MarketShape,
             sharding=lambda site: site[0] < 16,
             tier=lambda site: site[1] == "hot",
@@ -218,8 +221,8 @@ class TestPredicates:
     def test_predicate_all_must_match(self):
         """Multiple predicates on one entry are AND."""
         ctx = Context().bind(
-            "hot_low",
             View,
+            "hot_low",
             MarketShape,
             sharding=lambda site: site[0] < 16,
             tier=lambda site: site[1] == "hot",
@@ -228,7 +231,7 @@ class TestPredicates:
             ctx.get(View, MarketShape, site=(5, "cold"))
 
     def test_predicate_scope_mismatch_raises(self):
-        ctx = Context().bind("low", View, MarketShape, sharding=lambda site: site[0] < 16)
+        ctx = Context().bind(View, "low", MarketShape, sharding=lambda site: site[0] < 16)
         with pytest.raises(LookupError):
             ctx.get(View, OrderShape, site=(5,))
 
@@ -236,8 +239,8 @@ class TestPredicates:
         """If guarded entries exist at a scope, non-predicate at same scope is not tried."""
         ctx = (
             Context()
-            .bind("default", View, MarketShape)  # non-predicate
-            .bind("low", View, MarketShape, sharding=lambda site: site[0] < 16)  # guarded
+            .bind(View, "default", MarketShape)  # non-predicate
+            .bind(View, "low", MarketShape, sharding=lambda site: site[0] < 16)  # guarded
         )
         # Guarded entries exist for (View, {MarketShape}), so predicate must match
         assert ctx.get(View, MarketShape, site=(5,)) == "low"
@@ -247,34 +250,31 @@ class TestPredicates:
 
     def test_no_guarded_ignores_data(self):
         """When no guarded entries, data kwargs are ignored, fast path returns."""
-        ctx = Context().bind("default", View, MarketShape)
+        ctx = Context().bind(View, "default", MarketShape)
         assert ctx.get(View, MarketShape, site=(999,)) == "default"
 
     def test_fallback_scope_with_predicates(self):
         """Guarded at Market scope, non-predicate unscoped as fallback for other scopes."""
         ctx = (
             Context()
-            .bind("default", View)
-            .bind("low", View, MarketShape, sharding=lambda site: site[0] < 16)
-            .bind("high", View, MarketShape, sharding=lambda site: site[0] >= 16)
+            .bind(View, "default")
+            .bind(View, "low", MarketShape, sharding=lambda site: site[0] < 16)
+            .bind(View, "high", MarketShape, sharding=lambda site: site[0] >= 16)
         )
         assert ctx.get(View, MarketShape, site=(5,)) == "low"
         assert ctx.get(View, MarketShape, site=(20,)) == "high"
         # OrderShape has no guarded entries, falls back to unscoped
         assert ctx.get(View, OrderShape, site=(999,)) == "default"
 
-    def test_getitem_ignores_guarded(self):
-        """__getitem__ doesn't pass data, so guarded entries are checked but
-        with no data the predicates should still be evaluated (with empty kwargs)."""
+    def test_get_without_data_ignores_guarded(self):
+        """get() without data kwargs doesn't check guarded entries."""
         ctx = (
             Context()
-            .bind("default", View)
-            .bind("low", View, MarketShape, sharding=lambda site: site[0] < 16)
+            .bind(View, "default")
+            .bind(View, "low", MarketShape, sharding=lambda site: site[0] < 16)
         )
-        # __getitem__ at MarketShape scope: guarded exists, predicates called
-        # with no kwargs -> TypeError (missing 'site') -> no match -> fallback
-        # Actually this should fall back to unscoped
-        assert ctx[View] == "default"
+        # No data -> guarded skipped -> fallback to unscoped
+        assert ctx.get(View) == "default"
 
     def test_lazy_predicate(self):
         calls = []
@@ -283,7 +283,7 @@ class TestPredicates:
             calls.append(1)
             return "lazy_shard"
 
-        ctx = Context().lazy(factory, View, MarketShape, sharding=lambda site: site[0] < 16)
+        ctx = Context().lazy(View, factory, MarketShape, sharding=lambda site: site[0] < 16)
         assert len(calls) == 0
         assert ctx.get(View, MarketShape, site=(5,)) == "lazy_shard"
         assert len(calls) == 1
@@ -296,29 +296,29 @@ class TestPredicates:
         ctx = (
             Context()
             .bind(
-                "hot_low",
                 View,
+                "hot_low",
                 MarketShape,
                 shard=lambda site: site[0] < 16,
                 tier=lambda site: site[1] == "hot",
             )
             .bind(
-                "cold_low",
                 View,
+                "cold_low",
                 MarketShape,
                 shard=lambda site: site[0] < 16,
                 tier=lambda site: site[1] == "cold",
             )
             .bind(
-                "hot_high",
                 View,
+                "hot_high",
                 MarketShape,
                 shard=lambda site: site[0] >= 16,
                 tier=lambda site: site[1] == "hot",
             )
             .bind(
-                "cold_high",
                 View,
+                "cold_high",
                 MarketShape,
                 shard=lambda site: site[0] >= 16,
                 tier=lambda site: site[1] == "cold",
@@ -337,7 +337,7 @@ class TestPredicates:
             received.update(kwargs)
             return True
 
-        ctx = Context().bind("val", View, MarketShape, pred=capture)
+        ctx = Context().bind(View, "val", MarketShape, pred=capture)
         ctx.get(View, MarketShape, site=(1, 2), path="abc")
         assert received == {"site": (1, 2), "path": "abc"}
 
@@ -348,14 +348,14 @@ class TestPredicates:
 
 
 class TestGet:
-    """Explicit get() for non-predicate lookups."""
+    """Explicit get() for lookups."""
 
     def test_get_basic(self):
-        ctx = Context().bind("val", Storage)
+        ctx = Context().bind(Storage, "val")
         assert ctx.get(Storage) == "val"
 
     def test_get_scoped(self):
-        ctx = Context().bind("val", Storage, MarketShape)
+        ctx = Context().bind(Storage, "val", MarketShape)
         assert ctx.get(Storage, MarketShape) == "val"
 
     def test_get_raises(self):
@@ -371,52 +371,29 @@ class TestGet:
 
 class TestHasAndWasOpened:
     def test_has_true(self):
-        ctx = Context().bind("val", Storage, MarketShape)
+        ctx = Context().bind(Storage, "val", MarketShape)
         assert ctx.has(Storage, MarketShape)
 
     def test_has_false(self):
-        ctx = Context().bind("val", Storage)
+        ctx = Context().bind(Storage, "val")
         assert not ctx.has(Navigator)
 
     def test_has_fallback(self):
-        ctx = Context().bind("val", Storage)
+        ctx = Context().bind(Storage, "val")
         assert ctx.has(Storage, MarketShape)  # fallback resolves
 
     def test_was_opened_false_before_access(self):
-        ctx = Context().lazy(lambda: "v", Storage)
+        ctx = Context().lazy(Storage, lambda: "v")
         assert not ctx.was_opened(Storage)
 
     def test_was_opened_true_after_access(self):
-        ctx = Context().lazy(lambda: "v", Storage)
-        ctx[Storage]
+        ctx = Context().lazy(Storage, lambda: "v")
+        ctx.get(Storage)
         assert ctx.was_opened(Storage)
 
     def test_was_opened_false_for_eager(self):
-        ctx = Context().bind("v", Storage)
+        ctx = Context().bind(Storage, "v")
         assert not ctx.was_opened(Storage)
-
-
-# =============================================================================
-# __contains__
-# =============================================================================
-
-
-class TestContains:
-    def test_contains_true(self):
-        ctx = Context().bind("v", Storage)
-        assert Storage in ctx
-
-    def test_contains_tuple(self):
-        ctx = Context().bind("v", Storage, MarketShape)
-        assert (Storage, MarketShape) in ctx
-
-    def test_contains_false(self):
-        ctx = Context()
-        assert Storage not in ctx
-
-    def test_contains_fallback(self):
-        ctx = Context().bind("v", Storage)
-        assert (Storage, MarketShape) in ctx
 
 
 # =============================================================================
@@ -429,13 +406,13 @@ class TestRepr:
         assert repr(Context()) == "Context()"
 
     def test_repr_binding(self):
-        ctx = Context().bind("v", Storage)
+        ctx = Context().bind(Storage, "v")
         r = repr(ctx)
         assert "Context(" in r
         assert "Storage" in r
 
     def test_repr_lazy(self):
-        ctx = Context().lazy(lambda: "v", Storage)
+        ctx = Context().lazy(Storage, lambda: "v")
         r = repr(ctx)
         assert "lazy" in r
 
@@ -446,27 +423,18 @@ class TestRepr:
 
 
 class TestEdgeCases:
-    def test_empty_getitem_raises(self):
-        ctx = Context()
-        with pytest.raises(ValueError):
-            ctx[()]
-
-    def test_empty_contains(self):
-        ctx = Context()
-        assert () not in ctx
-
     def test_multiple_service_types(self):
-        ctx = Context().bind("nav", Navigator).bind("view", View).bind("store", Storage)
-        assert ctx[Navigator] == "nav"
-        assert ctx[View] == "view"
-        assert ctx[Storage] == "store"
+        ctx = Context().bind(Navigator, "nav").bind(View, "view").bind(Storage, "store")
+        assert ctx.get(Navigator) == "nav"
+        assert ctx.get(View) == "view"
+        assert ctx.get(Storage) == "store"
 
     def test_predicate_entries_independent(self):
         """Two different service types with predicates don't interfere."""
         ctx = (
             Context()
-            .bind("view_low", View, MarketShape, sharding=lambda site: site[0] < 16)
-            .bind("store_low", Storage, MarketShape, sharding=lambda site: site[0] < 100)
+            .bind(View, "view_low", MarketShape, sharding=lambda site: site[0] < 16)
+            .bind(Storage, "store_low", MarketShape, sharding=lambda site: site[0] < 100)
         )
         assert ctx.get(View, MarketShape, site=(5,)) == "view_low"
         assert ctx.get(Storage, MarketShape, site=(50,)) == "store_low"
@@ -580,7 +548,7 @@ class TestAttributesE2EPrimRef:
 
 
 class TestContextE2EDict:
-    """Context flowing through eb-dict refs (store/execute via ctx[dict, scope])."""
+    """Context flowing through eb-dict refs (store/execute via ctx.get(dict, scope))."""
 
     @pytest.fixture
     def shapes(self):
@@ -597,7 +565,7 @@ class TestContextE2EDict:
         """Ref.store() writes to ctx-bound dict, ref.execute() reads back."""
         User = shapes
         data = {}
-        ctx = Context().bind(data, dict, User)
+        ctx = Context().bind(dict, data, User)
 
         await User.name.store("alice").execute(ctx)
         result = await User.name.execute(ctx)
@@ -614,7 +582,7 @@ class TestContextE2EDict:
             name = StrRef.slot()
 
         user_data, product_data = {}, {}
-        ctx = Context().bind(user_data, dict, User).bind(product_data, dict, Product)
+        ctx = Context().bind(dict, user_data, User).bind(dict, product_data, Product)
 
         await User.name.store("alice").execute(ctx)
         await Product.name.store("widget").execute(ctx)
@@ -627,7 +595,7 @@ class TestContextE2EDict:
         """Ref resolves unscoped dict binding when no shape-specific one exists."""
         User = shapes
         data = {}
-        ctx = Context().bind(data, dict)  # no scope
+        ctx = Context().bind(dict, data)  # no scope
 
         await User.name.store("bob").execute(ctx)
         assert await User.name.execute(ctx) == "bob"
@@ -651,7 +619,7 @@ class TestContextE2EFlows:
             val = IntRef.slot()
 
         data = {}
-        ctx = Context().bind(data, dict, Counter)
+        ctx = Context().bind(dict, data, Counter)
 
         tree = Seq(
             Counter.val.store(0),
@@ -671,7 +639,7 @@ class TestContextE2EFlows:
             total = IntRef.slot()
 
         data = {}
-        ctx = Context().bind(data, dict, Acc)
+        ctx = Context().bind(dict, data, Acc)
 
         tree = Seq(
             Acc.total.store(0),
@@ -779,7 +747,7 @@ class TestContextE2ESpans:
                 self._value = value
 
             def enter(self, ctx):
-                return ctx.bind(self._value, self._key)
+                return ctx.bind(self._key, self._value)
 
         captured = {}
 
@@ -793,7 +761,7 @@ class TestContextE2ESpans:
                 return True
 
             async def execute(self, ctx):
-                captured["val"] = ctx[self._key]
+                captured["val"] = ctx.get(self._key)
 
         tree = InjectSpan(ReadTerm("config"), key="config", value="production")
         await tree.execute(Context())
@@ -810,7 +778,7 @@ class TestContextE2ESpans:
                 super().__init__(*children)
 
             def enter(self, ctx):
-                return ctx.lazy(lambda: (calls.append(1), "expensive")[1], "resource")
+                return ctx.lazy("resource", lambda: (calls.append(1), "expensive")[1])
 
         class NoOpTerm(Nu):
             def __init__(self):
@@ -836,9 +804,9 @@ class TestContextE2ESpans:
                 super().__init__(*children)
 
             def enter(self, ctx):
-                return ctx.bind("overridden", "val")
+                return ctx.bind("val", "overridden")
 
-        parent_ctx = Context().bind("original", "val")
+        parent_ctx = Context().bind("val", "original")
 
         class CheckTerm(Nu):
             def __init__(self):
@@ -849,8 +817,8 @@ class TestContextE2ESpans:
                 return True
 
             async def execute(self, ctx):
-                assert ctx["val"] == "overridden"
+                assert ctx.get("val") == "overridden"
 
         tree = OverrideSpan(CheckTerm())
         await tree.execute(parent_ctx)
-        assert parent_ctx["val"] == "original"
+        assert parent_ctx.get("val") == "original"
