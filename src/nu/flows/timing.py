@@ -13,7 +13,7 @@ from nu.utils import ensure_nu
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import Nu, FloatArg
+    from nu.terms import Nu, FloatArg, StrArg
 
 
 __all__ = [
@@ -31,7 +31,7 @@ class Timed(Flow):
     Runs children sequentially, measures wall time for each using perf_counter,
     then prints a summary with per-child timings.
 
-    Children layout: ``[*children]``
+    Children layout: ``[label, *children]``
 
     Example::
 
@@ -47,14 +47,20 @@ class Timed(Flow):
         #   total                    16.4ms
     """
 
-    def __init__(self, *children: Nu, label: str = "Timed") -> None:
-        super().__init__(*children)
-        self._label = label
+    def __init__(self, *children: Nu, label: StrArg = "Timed") -> None:
+        """Initialize timed flow.
+
+        Args:
+            children: Nus to time sequentially.
+            label: Display label for the timing summary.
+        """
+        super().__init__(ensure_nu(label), *children)
 
     async def execute(self, ctx: Context) -> None:
         """Run each child, measure time, print summary."""
+        label = await self.children[0].execute(ctx)
         timings: list[tuple[str, float]] = []
-        for child in self.children:
+        for child in self.children[1:]:
             name = child.__class__.__name__
             if hasattr(child, "_label"):
                 name = child._label
@@ -68,7 +74,7 @@ class Timed(Flow):
             timings.append((name, elapsed))
 
         total = sum(t for _, t in timings)
-        print(f"[Timed:{self._label}]")  # noqa: T201
+        print(f"[Timed:{label}]")  # noqa: T201
         for i, (name, elapsed) in enumerate(timings, 1):
             print(f"  {i}. {name:<40} {elapsed * 1000:>8.1f}ms")  # noqa: T201
         print(f"  {'total':<42} {total * 1000:>8.1f}ms")  # noqa: T201

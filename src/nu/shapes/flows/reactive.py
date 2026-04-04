@@ -23,6 +23,7 @@ from ..ops import ChangeOp  # noqa: TC001 - runtime dependency
 
 if TYPE_CHECKING:
     from nu import Context, Nu
+    from nu.terms import StrArg
 
 
 __all__ = [
@@ -35,7 +36,7 @@ __all__ = [
 class React(Flow):
     """Wait for a single change, then execute body once.
 
-    Children layout: ``[change, body?]``
+    Children layout: ``[change, body?, changed_key?]``
 
     Subscribes via the ``ChangeOp`` child to obtain a subscription
     handle. Waits for the first change event, optionally stores the
@@ -58,7 +59,7 @@ class React(Flow):
         change: ChangeOp,
         body: Nu | None = None,
         *,
-        changed_key: str | None = None,
+        changed_key: StrArg | None = None,
     ) -> None:
         """Initialize single-shot reactive flow.
 
@@ -67,11 +68,17 @@ class React(Flow):
             body: Optional Nu run after the first change event.
             changed_key: ctx.attrs key written with the key that changed.
         """
+        self._has_changed_key = changed_key is not None
+        children: list = [change]
         if body is not None:
-            super().__init__(change, body)
+            children.append(body)
+        self._body_idx = 1 if body is not None else None
+        if changed_key is not None:
+            self._changed_key_idx = len(children)
+            children.append(ensure_nu(changed_key))
         else:
-            super().__init__(change)
-        self._changed_key_attr = changed_key
+            self._changed_key_idx = None
+        super().__init__(*children)
 
     async def execute(self, ctx: Context) -> None:
         """Subscribe, wait for one change, run body, unsubscribe."""
@@ -83,16 +90,20 @@ class React(Flow):
             changed_key_holder[0] = changed_key
             loop.call_soon_threadsafe(event.set)
 
+        changed_key_name: str | None = None
+        if self._changed_key_idx is not None:
+            changed_key_name = await self.children[self._changed_key_idx].execute(ctx)
+
         sub = await self.children[0].execute(ctx)
         sub.bind(on_change)
         try:
             await event.wait()
 
-            if self._changed_key_attr is not None:
-                ctx.attrs[self._changed_key_attr] = changed_key_holder[0]
+            if changed_key_name is not None:
+                ctx.attrs[changed_key_name] = changed_key_holder[0]
 
-            if self.child_count > 1:
-                await self.children[1].execute(ctx)
+            if self._body_idx is not None:
+                await self.children[self._body_idx].execute(ctx)
         finally:
             sub.unbind(on_change)
             sub.close()
@@ -101,7 +112,7 @@ class React(Flow):
 class ReactForever(Flow):
     """Execute body on every change (runs forever).
 
-    Children layout: ``[change, body]``
+    Children layout: ``[change, body, changed_key?]``
 
     Subscribes via the ``ChangeOp`` child and loops indefinitely,
     waiting for each change event. On every event, optionally stores
@@ -126,7 +137,7 @@ class ReactForever(Flow):
         change: ChangeOp,
         body: Nu,
         *,
-        changed_key: str | None = None,
+        changed_key: StrArg | None = None,
     ) -> None:
         """Initialize forever-reactive flow.
 
@@ -135,8 +146,11 @@ class ReactForever(Flow):
             body: Nu run after every change event.
             changed_key: ctx.attrs key written with the key that changed.
         """
-        super().__init__(change, body)
-        self._changed_key_attr = changed_key
+        self._has_changed_key = changed_key is not None
+        if changed_key is not None:
+            super().__init__(change, body, ensure_nu(changed_key))
+        else:
+            super().__init__(change, body)
 
     async def execute(self, ctx: Context) -> None:
         """Subscribe, loop forever reacting to changes, unsubscribe on exit."""
@@ -148,6 +162,10 @@ class ReactForever(Flow):
             changed_key_holder[0] = changed_key
             loop.call_soon_threadsafe(event.set)
 
+        changed_key_name: str | None = None
+        if self._has_changed_key:
+            changed_key_name = await self.children[2].execute(ctx)
+
         sub = await self.children[0].execute(ctx)
         sub.bind(on_change)
         try:
@@ -155,8 +173,8 @@ class ReactForever(Flow):
                 await event.wait()
                 event.clear()
 
-                if self._changed_key_attr is not None:
-                    ctx.attrs[self._changed_key_attr] = changed_key_holder[0]
+                if changed_key_name is not None:
+                    ctx.attrs[changed_key_name] = changed_key_holder[0]
 
                 await self.children[1].execute(ctx)
         finally:
@@ -167,7 +185,7 @@ class ReactForever(Flow):
 class ReactWhile(Flow):
     """Execute body on each change while condition is truthy.
 
-    Children layout: ``[change, condition, body]``
+    Children layout: ``[change, condition, body, changed_key?]``
 
     Subscribes via the ``ChangeOp`` child and loops, waiting for
     each change event. After every event the condition child is
@@ -198,7 +216,7 @@ class ReactWhile(Flow):
         condition: Any,
         body: Nu,
         *,
-        changed_key: str | None = None,
+        changed_key: StrArg | None = None,
     ) -> None:
         """Initialize conditional-reactive flow.
 
@@ -209,8 +227,11 @@ class ReactWhile(Flow):
             body: Nu run after each change while condition holds.
             changed_key: ctx.attrs key written with the key that changed.
         """
-        super().__init__(change, ensure_nu(condition), body)
-        self._changed_key_attr = changed_key
+        self._has_changed_key = changed_key is not None
+        if changed_key is not None:
+            super().__init__(change, ensure_nu(condition), body, ensure_nu(changed_key))
+        else:
+            super().__init__(change, ensure_nu(condition), body)
 
     async def execute(self, ctx: Context) -> None:
         """Subscribe, react while condition holds, unsubscribe on exit."""
@@ -222,6 +243,10 @@ class ReactWhile(Flow):
             changed_key_holder[0] = changed_key
             loop.call_soon_threadsafe(event.set)
 
+        changed_key_name: str | None = None
+        if self._has_changed_key:
+            changed_key_name = await self.children[3].execute(ctx)
+
         sub = await self.children[0].execute(ctx)
         sub.bind(on_change)
         try:
@@ -232,8 +257,8 @@ class ReactWhile(Flow):
                 if not await self.children[1].execute(ctx):
                     break
 
-                if self._changed_key_attr is not None:
-                    ctx.attrs[self._changed_key_attr] = changed_key_holder[0]
+                if changed_key_name is not None:
+                    ctx.attrs[changed_key_name] = changed_key_holder[0]
 
                 await self.children[2].execute(ctx)
         finally:

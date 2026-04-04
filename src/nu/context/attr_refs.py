@@ -3,18 +3,21 @@
 AttrRef is the simplest substrate: resolves a name directly from ctx.attrs.
 Typed variants (IntAttrRef, StrAttrRef, etc.) inherit Interface mixins
 so you can chain operations directly on the ref.
+
+Name can be a plain string or a Nu that resolves to a string.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from nu.terms import Ref, Sentinel
+from nu.terms import Nu, Ref, Sentinel
+from nu.utils import ensure_nu
 
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import Value
+    from nu.terms import StrArg, Value
 
     from nu.interfaces import BoolI
 
@@ -35,30 +38,49 @@ class AttrRef[T](Ref[T]):
     The simplest substrate: resolves a name directly from ctx.attrs.
     No parent chain, no shape, no hierarchical addressing.
 
-    Usage:
-        ref = AttrRef("error")
-        val = await ref.fetch(ctx)  # → ctx["error"]
+    Name can be a plain string (static) or a Nu (dynamic, resolved at
+    execution time).
+
+    Args:
+        name: ctx.attrs key. Plain string or Nu resolving to string.
+
+    Example::
+
+        AttrRef("error")                    # static key
+        AttrRef(some_computed_key)           # dynamic key
     """
 
     value_type: type = object
 
-    def __init__(self, name: str) -> None:
-        """Initialize with name tag."""
+    def __init__(self, name: StrArg) -> None:
+        """Initialize with name tag.
+
+        Args:
+            name: ctx.attrs key. Plain string or Nu resolving to string.
+        """
         super().__init__()
-        self._name = name
+        self._raw_name: str | None = name if isinstance(name, str) else None
+        self._name_nu: Nu = ensure_nu(name)
 
     @property
-    def name(self) -> str:
-        """The name tag for context lookup."""
-        return self._name
+    def name(self) -> str | None:
+        """Static name tag, or None if dynamic."""
+        return self._raw_name
+
+    async def _resolve_name(self, ctx: Context) -> str:
+        """Resolve the name — fast path for static, execute for dynamic."""
+        if self._raw_name is not None:
+            return self._raw_name
+        return await self._name_nu.execute(ctx)
 
     async def resolve(self, ctx: Context) -> str:
         """Resolve to the name string."""
-        return self._name
+        return await self._resolve_name(ctx)
 
     async def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch value from context attrs by name."""
-        return ctx.attrs[self._name]  # type: ignore[attr-defined]
+        key = await self._resolve_name(ctx)
+        return ctx.attrs[key]  # type: ignore[attr-defined]
 
     def get(self) -> Value:
         """Read via AttrGetOp, returns typed Interface."""

@@ -13,7 +13,7 @@ from nu.interfaces import NoneI
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import Nu, FloatArg, IntArg
+    from nu.terms import Nu, FloatArg, IntArg, StrArg
 
 
 __all__ = [
@@ -209,9 +209,9 @@ class Retry(Flow):
 class Assert(Flow):
     """Validate a condition during execution.
 
-    Children layout: ``[condition]``
+    Children layout: ``[condition, message]``
 
-    Evaluates *condition* and raises ``AssertionError`` with the given
+    Evaluates *condition* and raises ``AssertionError`` with the resolved
     *message* when the result is falsy.
 
     Example::
@@ -220,12 +220,18 @@ class Assert(Flow):
         Assert(user_exists, message="user not found")
     """
 
-    def __init__(self, condition: Any, message: str = "Assertion failed") -> None:
-        super().__init__(ensure_nu(condition))
-        self._message = message
+    def __init__(self, condition: Any, message: StrArg = "Assertion failed") -> None:
+        """Initialize assertion.
+
+        Args:
+            condition: Nu or literal evaluated for truthiness.
+            message: Error message. Plain string or Nu resolving to string.
+        """
+        super().__init__(ensure_nu(condition), ensure_nu(message))
 
     async def execute(self, ctx: Context) -> None:
         """Evaluate condition and raise AssertionError if falsy."""
         result = await self.children[0].execute(ctx)
         if not result:
-            raise AssertionError(self._message)
+            message = await self.children[1].execute(ctx)
+            raise AssertionError(message)

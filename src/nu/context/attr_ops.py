@@ -19,7 +19,7 @@ __all__ = [
 
 
 class AttrGetOp[T](Calculation, Op[T | Sentinel]):
-    """Read value by name from context: ctx[name]."""
+    """Read value by name from context: ctx.attrs[name]."""
 
     def __init__(self, ref: AttrRef[T]) -> None:
         """Initialize with ref."""
@@ -28,7 +28,8 @@ class AttrGetOp[T](Calculation, Op[T | Sentinel]):
 
     async def execute(self, ctx: Context) -> T | Sentinel:
         """Execute the get operation."""
-        return ctx.attrs[self._ref.name]
+        key = await self._ref._resolve_name(ctx)
+        return ctx.attrs[key]
 
 
 class AttrExistsOp(Calculation, Op[bool]):
@@ -41,4 +42,5 @@ class AttrExistsOp(Calculation, Op[bool]):
 
     async def execute(self, ctx: Context) -> bool:
         """Execute the exists check."""
-        return self._ref.name in ctx.attrs
+        key = await self._ref._resolve_name(ctx)
+        return key in ctx.attrs

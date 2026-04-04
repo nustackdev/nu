@@ -28,10 +28,9 @@ from typing import Any
 import aiohttp
 from virtuals.tkv.storage import StorageProtocol
 
-import nu.ops as ops
 import nu_dict as ed
 import nu_virtuals as ebv
-from nu import Context, IntAttrRef, Nu, Ref
+from nu import Context, IntArg, IntAttrRef, Nu, Ref, fn
 from nu.flows import ForRange, If, Log, Retry, Seq, TryCatch
 from nu.interfaces import IntI, ListI
 from nu.method import method
@@ -361,7 +360,7 @@ class _RangeScratch(Shape):
 # =============================================================================
 
 
-def sync_slot(ledger: type[Ledger], slot: int) -> Nu:
+def sync_slot(ledger: type[Ledger], slot: IntArg) -> Nu:
     """Fetch one block, parse txs, persist atomically. Skip if already synced.
 
     Handles dropped slots (skipped on-chain) gracefully.
@@ -370,16 +369,16 @@ def sync_slot(ledger: type[Ledger], slot: int) -> Nu:
     tx_idx = IntAttrRef("tx_idx").get()
 
     return If(
-        ops.Contains(ledger.slots_synced, slot).not_(),
+        fn.Contains(ledger.slots_synced, slot).not_(),
         Retry(
             TryCatch(
                 Seq(
                     sc.block_txs.store(SolanaRef.get_block(slot)),
-                    Log("slot", slot, ":", ops.Len(sc.block_txs), "txs"),
+                    Log("slot", slot, ":", fn.Len(sc.block_txs), "txs"),
                     ebv.Transaction(
                         ForRange(
                             0,
-                            ops.Len(sc.block_txs),
+                            fn.Len(sc.block_txs),
                             Seq(
                                 sc.tx_id.store(slot * TX_ID_MULTIPLIER + tx_idx),
                                 ledger.txs[sc.tx_id].store(sc.block_txs[tx_idx]),

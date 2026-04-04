@@ -65,12 +65,10 @@ class Print(Flow):
 class Log(Flow):
     """Structured logging with configurable level.
 
-    Children layout: ``[message, *values]``
+    Children layout: ``[level, logger_name, message, *values]``
 
-    The *message* parameter is auto-wrapped via ``ensure_nu`` if a literal is
-    passed.  All *values* are likewise auto-wrapped so the full parameter
-    list lives in the children tree.  The *level* and *logger_name* are plain
-    strings used at construction time only and are not children.
+    All parameters are auto-wrapped via ``ensure_nu`` so the full
+    parameter list lives in the children tree.
 
     Example::
 
@@ -83,46 +81,46 @@ class Log(Flow):
         self,
         message: StrArg,
         *values: Any,
-        level: str = "info",
-        logger_name: str = "everybase.flows",
+        level: StrArg = "info",
+        logger_name: StrArg = "everybase.flows",
     ) -> None:
         """Initialize log flow.
 
         Args:
             message: Nu or literal string to log.
             values: Additional Terms or literals whose results are logged.
-            level: Logging level name -- ``"debug"``, ``"info"``,
+            level: Logging level name. ``"debug"``, ``"info"``,
                 ``"warning"``, ``"error"``, or ``"critical"``.
             logger_name: Logger name passed to ``logging.getLogger``.
         """
-        children: list[Nu] = [ensure_nu(message)]
+        children: list[Nu] = [ensure_nu(level), ensure_nu(logger_name), ensure_nu(message)]
         for v in values:
             children.append(ensure_nu(v))
         super().__init__(*children)
-        self._level = level
-        self._logger_name = logger_name
         self._path = ""
 
     async def execute(self, ctx: Context) -> None:
         """Evaluate message and values, then emit a log record."""
+        level = await self.children[0].execute(ctx)
+        logger_name = await self.children[1].execute(ctx)
         parts: list[str] = []
-        for child in self.children:
+        for child in self.children[2:]:
             parts.append(str(await child.execute(ctx)))
         message = " ".join(parts)
         if self._path:
             message = f"[{self._path}] {message}"
-        logger = logging.getLogger(self._logger_name)
-        getattr(logger, self._level)(message)
+        logger = logging.getLogger(logger_name)
+        getattr(logger, level)(message)
 
 
 class Debug(Flow):
     """Quick debug output for development.
 
-    Children layout: ``[*values]``
+    Children layout: ``[prefix, labels, *values]``
 
-    All *values* are auto-wrapped via ``ensure_nu`` if literals are passed.
-    Optional *labels* pair with positional values; unlabelled values are
-    printed as ``repr``.
+    All parameters are auto-wrapped via ``ensure_nu``.
+    *labels* resolves to a list of strings (or None); unlabelled values
+    are printed as ``repr``.
 
     Example::
 
@@ -136,28 +134,31 @@ class Debug(Flow):
     def __init__(
         self,
         *values: Any,
-        labels: list[str] | None = None,
-        prefix: str = "[DEBUG]",
+        labels: Any = None,
+        prefix: StrArg = "[DEBUG]",
     ) -> None:
         """Initialize debug flow.
 
         Args:
             values: Terms or literals whose results are printed.
-            labels: Optional list of labels corresponding to each value.
+            labels: List of label strings (or Nu resolving to one).
                 When provided, output uses ``label=repr(value)`` format.
             prefix: String prefix prepended to the output line.
         """
-        super().__init__(*(ensure_nu(v) for v in values))
-        self._labels = labels
-        self._prefix = prefix
+        children: list[Nu] = [ensure_nu(prefix), ensure_nu(labels)]
+        for v in values:
+            children.append(ensure_nu(v))
+        super().__init__(*children)
 
     async def execute(self, ctx: Context) -> None:
         """Evaluate all values and print debug output."""
-        parts = [self._prefix]
-        for i, child in enumerate(self.children):
+        prefix = await self.children[0].execute(ctx)
+        labels = await self.children[1].execute(ctx)
+        parts = [str(prefix)]
+        for i, child in enumerate(self.children[2:]):
             val = await child.execute(ctx)
-            if self._labels and i < len(self._labels):
-                parts.append(f"{self._labels[i]}={val!r}")
+            if labels and i < len(labels):
+                parts.append(f"{labels[i]}={val!r}")
             else:
                 parts.append(repr(val))
         print(" ".join(parts))  # noqa: T201

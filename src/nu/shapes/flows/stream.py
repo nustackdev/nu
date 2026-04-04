@@ -3,25 +3,26 @@
 The ``cat file; tail -f`` of everybase. One declaration that handles
 batch catch-up, live follow, and the seamless transition between them.
 
-Children: ``[advance_op, change_op, body]``
+Children: ``[advance_op, change_op, body, key, log_key]``
     advance_op: AdvanceCursorOp (implicitly constructed at init)
     change_op: OnChildrenChangeOp (implicitly constructed at init)
     body: user-provided Flow
+    key: StrArg for the data key attr name
+    log_key: StrArg for the log key attr name
 
 All children are static tree nodes. auto_atomic wraps advance_op in a
 Snapshot automatically. Stream just orchestrates: execute children,
 set context attrs, loop.
 
-Runtime values flow through ctx.attrs, read by body via PrimRefs:
+Runtime values flow through ctx.attrs, read by body via AttrRefs:
     ``key``: the actual data key (e.g. tx_id)
     ``log_key``: the log index key (for cursor tracking)
 
 Example::
 
-    from nu.context.attr_refs import AttrRef as Var
-from nu.context.attr_refs import AttrRef as StrVar
+    from nu.context.attr_refs import IntAttrRef, StrAttrRef
 
-    tx_id = Var("tx_id")
+    tx_id = IntAttrRef("tx_id").get()
 
     Stream(
         ledger.txs,
@@ -29,7 +30,7 @@ from nu.context.attr_refs import AttrRef as StrVar
             If(s.synced_txs[tx_id].missing(),
                 process_tx(tx_id),
             ),
-            s.cursor.store(StrVar("tx_log_key")),  # persistent cursor
+            s.cursor.store(StrAttrRef("tx_log_key").get()),
         ),
         key="tx_id",
         log_key="tx_log_key",
@@ -50,6 +51,7 @@ from ..ops.reactive import OnChildrenChangeOp
 
 if TYPE_CHECKING:
     from nu import Context, Nu
+    from nu.terms import StrArg
 
 
 __all__ = [
@@ -63,7 +65,7 @@ class Stream(Flow):
     Iterates existing items (drain), then subscribes and follows new
     items (react). Transition is seamless -- cursor tracks position.
 
-    Children layout: ``[advance_op, change_op, body]``
+    Children layout: ``[advance_op, change_op, body, key, log_key]``
 
     All substrate work is in the children (AdvanceCursorOp for reads,
     OnChildrenChangeOp for subscriptions). Stream is pure orchestration:
@@ -85,52 +87,61 @@ class Stream(Flow):
         source: object,
         body: Nu,
         *,
-        key: str = "stream_key",
-        log_key: str = "stream_log_key",
+        key: StrArg = "stream_key",
+        log_key: StrArg = "stream_log_key",
         cursor: object | None = None,
     ) -> None:
-        self._key_attr = key
-        self._log_key_attr = log_key
+        """Initialize stream flow.
 
+        Args:
+            source: Ordered collection to drain and follow.
+            body: Nu run for each item.
+            key: ctx.attrs key for the current data key.
+            log_key: ctx.attrs key for the current log key.
+            cursor: Optional initial cursor value for resume.
+        """
         source_term = ensure_nu(source)
 
-        # Cursor ref: AttrRef that reads from ctx.attrs (set by this flow each iteration)
-        from nu.context.attr_refs import AttrRef as StrPrimRef
+        # Cursor ref: AttrRef that reads log_key from ctx.attrs
+        from nu.context.attr_refs import AttrRef
 
-        cursor_ref = StrPrimRef(log_key)
+        cursor_ref = AttrRef(log_key)
 
         # Implicit children -- static tree nodes, visible to deformations
         advance = AdvanceCursorOp(source_term, cursor_ref)
         change = OnChildrenChangeOp(source_term)
 
-        # children: [advance, change, body]
-        super().__init__(advance, change, body)
+        # children: [advance, change, body, key, log_key]
+        super().__init__(advance, change, body, ensure_nu(key), ensure_nu(log_key))
 
     async def execute(self, ctx: Context) -> None:  # noqa: D102
+        key = await self.children[3].execute(ctx)
+        log_key = await self.children[4].execute(ctx)
+
         # Initialize cursor attrs if not already set (first run, no resume)
-        if self._log_key_attr not in ctx.attrs:
-            ctx.attrs[self._log_key_attr] = Sentinel()
-        if self._key_attr not in ctx.attrs:
-            ctx.attrs[self._key_attr] = Sentinel()
+        if log_key not in ctx.attrs:
+            ctx.attrs[log_key] = Sentinel()
+        if key not in ctx.attrs:
+            ctx.attrs[key] = Sentinel()
 
         # -- DRAIN PHASE --
-        await self._drain(ctx)
+        await self._drain(ctx, key, log_key)
 
         # -- REACT PHASE --
-        await self._react(ctx)
+        await self._react(ctx, key, log_key)
 
-    async def _drain(self, ctx: Context) -> None:
+    async def _drain(self, ctx: Context, key: str, log_key: str) -> None:
         """Drain existing items from source."""
         while True:
             result = await self.children[0].execute(ctx)  # advance_op
             if result is None:
                 break
-            log_key, actual_key = result
-            ctx.attrs[self._key_attr] = actual_key
-            ctx.attrs[self._log_key_attr] = log_key
+            log_k, actual_key = result
+            ctx.attrs[key] = actual_key
+            ctx.attrs[log_key] = log_k
             await self.children[2].execute(ctx)  # body
 
-    async def _react(self, ctx: Context) -> None:
+    async def _react(self, ctx: Context, key: str, log_key: str) -> None:
         """Follow new items via reactive subscription."""
         loop = asyncio.get_running_loop()
         event = asyncio.Event()
@@ -144,7 +155,7 @@ class Stream(Flow):
             while True:
                 await event.wait()
                 event.clear()
-                await self._drain(ctx)  # drain new items since last cursor
+                await self._drain(ctx, key, log_key)
         finally:
             sub.unbind(on_change)
             sub.close()
