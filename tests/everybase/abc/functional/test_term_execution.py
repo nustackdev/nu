@@ -9,7 +9,7 @@ import pytest
 
 from nu import INVALID, Context
 from nu.interfaces import BoolI, FloatI, IntI, ListI, StrI
-from nu.ops.combiners import all_, any_
+from nu.fn.combiners import all_, any_
 
 
 @pytest.fixture

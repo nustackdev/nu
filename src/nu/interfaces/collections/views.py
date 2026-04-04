@@ -47,14 +47,14 @@ class DictKeysI[K](
         return AnyI(operand)
 
     def to_list(self) -> ListI[K]:
-        from nu.ops.builtins.conversion import ToListOp
+        from nu.ops.conversion import ToListOp
 
         from .list_ import ListI
 
         return ListI(ToListOp(self))
 
     def to_set(self) -> SetI[K]:
-        from nu.ops.builtins.conversion import ToSetOp
+        from nu.ops.conversion import ToSetOp
 
         from .set_ import SetI
 
@@ -78,14 +78,14 @@ class DictValuesI[V](
         return AnyI(operand)
 
     def to_list(self) -> ListI[V]:
-        from nu.ops.builtins.conversion import ToListOp
+        from nu.ops.conversion import ToListOp
 
         from .list_ import ListI
 
         return ListI(ToListOp(self))
 
     def to_set(self) -> SetI[V]:
-        from nu.ops.builtins.conversion import ToSetOp
+        from nu.ops.conversion import ToSetOp
 
         from .set_ import SetI
 
@@ -114,14 +114,14 @@ class DictItemsI[K, V](
         return AnyI(operand)
 
     def to_list(self) -> ListI[tuple[K, V]]:
-        from nu.ops.builtins.conversion import ToListOp
+        from nu.ops.conversion import ToListOp
 
         from .list_ import ListI
 
         return ListI(ToListOp(self))
 
     def to_set(self) -> SetI[tuple[K, V]]:
-        from nu.ops.builtins.conversion import ToSetOp
+        from nu.ops.conversion import ToSetOp
 
         from .set_ import SetI
 

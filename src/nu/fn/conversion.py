@@ -7,7 +7,7 @@ ToList, ToSet (collections)
 from __future__ import annotations
 
 from nu.interfaces import BoolI, BytesI, FloatI, IntI, ListI, SetI, StrI
-from nu.ops.builtins.conversion import (
+from nu.ops.conversion import (
     ToBoolOp,
     ToBytesOp,
     ToFloatOp,

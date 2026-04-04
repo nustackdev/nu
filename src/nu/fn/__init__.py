@@ -2,37 +2,33 @@
 
 Builtins: Len, Contains
 Conversion: ToInt, ToFloat, ToBool, ToStr, ToBytes, ToList, ToSet
-Itertools: Map, Filter, Sorted, Reversed, Flatten, Unique, Pluck, FilterBy,
-           Zip, Chain, Enumerate, Take, Drop, GroupBy, Partition,
-           Reduce, Sum, Min, Max, Any, All, ToDict
+Collection: Sorted, Reversed, Flatten, Unique, Pluck, FilterBy,
+            Zip, Chain, Enumerate, Take, Drop,
+            Sum, Min, Max, Any, All
+Combiners: all_(), any_(), none_(), and_(), or_()
 """
 
 from .builtins import Contains, Len
-from .conversion import ToBool, ToBytes, ToFloat, ToInt, ToList, ToSet, ToStr
-from .itertools import (
+from .collection import (
     All,
     Any,
     Chain,
     Drop,
     Enumerate,
-    Filter,
     FilterBy,
     Flatten,
-    GroupBy,
-    Map,
     Max,
     Min,
-    Partition,
     Pluck,
-    Reduce,
     Reversed,
     Sorted,
     Sum,
     Take,
-    ToDict,
     Unique,
     Zip,
 )
+from .combiners import all_, and_, any_, none_, or_
+from .conversion import ToBool, ToBytes, ToFloat, ToInt, ToList, ToSet, ToStr
 
 
 __all__ = [
@@ -42,24 +38,18 @@ __all__ = [
     "Contains",
     "Drop",
     "Enumerate",
-    "Filter",
     "FilterBy",
     "Flatten",
-    "GroupBy",
     "Len",
-    "Map",
     "Max",
     "Min",
-    "Partition",
     "Pluck",
-    "Reduce",
     "Reversed",
     "Sorted",
     "Sum",
     "Take",
     "ToBool",
     "ToBytes",
-    "ToDict",
     "ToFloat",
     "ToInt",
     "ToList",
@@ -67,4 +57,9 @@ __all__ = [
     "ToStr",
     "Unique",
     "Zip",
+    "all_",
+    "and_",
+    "any_",
+    "none_",
+    "or_",
 ]

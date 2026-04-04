@@ -6,7 +6,7 @@ import logging
 
 from nu import Flow, Span, map_nodes
 from nu.interfaces import StrI
-from nu.ops.builtins.conversion import ToStrOp
+from nu.ops.conversion import ToStrOp
 from nu.terms import Nu
 
 

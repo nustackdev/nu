@@ -1,5 +1,6 @@
 """Nu ops — all concrete operations."""
 
+from .access import AtOp, ContainsOp, LenOp, SliceOp
 from .arithmetic import (
     AbsOp,
     AddOp,
@@ -12,6 +13,7 @@ from .arithmetic import (
     PowOp,
     SubOp,
 )
+from .attr import DelAttrOp, GetAttrOp, SetAttrOp
 from .bitwise import (
     BitwiseAndOp,
     BitwiseNotOp,
@@ -20,34 +22,25 @@ from .bitwise import (
     RShiftOp,
     XorOp,
 )
-from .builtins import (
-    AtOp,
-    ContainsOp,
-    DelAttrOp,
-    FuncCall,
-    FuncCallCmd,
-    FuncCallOp,
-    GetAttrOp,
-    IsEmptyOp,
-    IsNaNOp,
-    LenOp,
-    MethodCall,
-    MethodCallCmd,
-    MethodCallOp,
-    NotEmptyOp,
-    NotNaNOp,
-    SetAttrOp,
-    SliceOp,
-    ToBoolOp,
-    ToBytesOp,
-    ToFloatOp,
-    ToIntOp,
-    ToListOp,
-    ToSetOp,
-    ToStrOp,
-    ToTupleOp,
+from .call import FuncCall, FuncCallCmd, FuncCallOp, MethodCall, MethodCallCmd, MethodCallOp
+from .collection import (
+    AllOp,
+    AnyOp,
+    ChainOp,
+    DropOp,
+    EnumerateOp,
+    FilterByOp,
+    FlattenOp,
+    MaxOp,
+    MinOp,
+    PluckOp,
+    ReversedOp,
+    SortedOp,
+    SumOp,
+    TakeOp,
+    UniqueOp,
+    ZipOp,
 )
-from .combiners import all_, and_, any_, none_, or_
 from .comparison import (
     EqOp,
     GeOp,
@@ -57,31 +50,15 @@ from .comparison import (
     LtOp,
     NeOp,
 )
-from .itertools import (
-    AllOp,
-    AnyOp,
-    ChainOp,
-    DropOp,
-    EnumerateOp,
-    FilterByOp,
-    FilterOp,
-    FindIndexOp,
-    FindOp,
-    FlattenOp,
-    GroupByOp,
-    MapOp,
-    MaxOp,
-    MinOp,
-    PartitionOp,
-    PluckOp,
-    ReduceOp,
-    ReversedOp,
-    SortedOp,
-    SumOp,
-    TakeOp,
-    ToDictOp,
-    UniqueOp,
-    ZipOp,
+from .conversion import (
+    ToBoolOp,
+    ToBytesOp,
+    ToFloatOp,
+    ToIntOp,
+    ToListOp,
+    ToSetOp,
+    ToStrOp,
+    ToTupleOp,
 )
 from .logical import (
     AndOp,
@@ -89,6 +66,7 @@ from .logical import (
     NotOp,
     OrOp,
 )
+from .sentinel import IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
 
 
 __all__ = [
@@ -110,9 +88,6 @@ __all__ = [
     "EnumerateOp",
     "EqOp",
     "FilterByOp",
-    "FilterOp",
-    "FindIndexOp",
-    "FindOp",
     "FlattenOp",
     "FloorDivOp",
     "FuncCall",
@@ -120,7 +95,6 @@ __all__ = [
     "FuncCallOp",
     "GeOp",
     "GetAttrOp",
-    "GroupByOp",
     "GtOp",
     "IdCompOp",
     "IsEmptyOp",
@@ -129,7 +103,6 @@ __all__ = [
     "LeOp",
     "LenOp",
     "LtOp",
-    "MapOp",
     "MaxOp",
     "MethodCall",
     "MethodCallCmd",
@@ -143,12 +116,10 @@ __all__ = [
     "NotNaNOp",
     "NotOp",
     "OrOp",
-    "PartitionOp",
     "PluckOp",
     "PosOp",
     "PowOp",
     "RShiftOp",
-    "ReduceOp",
     "ReversedOp",
     "SetAttrOp",
     "SliceOp",
@@ -158,7 +129,6 @@ __all__ = [
     "TakeOp",
     "ToBoolOp",
     "ToBytesOp",
-    "ToDictOp",
     "ToFloatOp",
     "ToIntOp",
     "ToListOp",
@@ -168,9 +138,4 @@ __all__ = [
     "UniqueOp",
     "XorOp",
     "ZipOp",
-    "all_",
-    "and_",
-    "any_",
-    "none_",
-    "or_",
 ]

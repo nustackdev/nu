@@ -135,7 +135,7 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def reversed(self) -> CollectionResultT:
         """Reversed copy of this sequence."""
-        from nu.ops.itertools.transform import ReversedOp
+        from nu.ops.collection.transform import ReversedOp
 
         return cast("CollectionResultT", self._wrap_iterable_result(ReversedOp(self)))
 

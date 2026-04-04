@@ -1,18 +1,14 @@
-"""Functional itertools — typed factories returning Interface types."""
+"""Functional collection ops — typed factories returning Interface types."""
 
 from .combine import Chain, Enumerate, Zip
-from .group import GroupBy, Partition
-from .reduce import All, Any, Max, Min, Reduce, Sum
+from .reduce import All, Any, Max, Min, Sum
 from .slice import Drop, Take
 from .transform import (
-    Filter,
     FilterBy,
     Flatten,
-    Map,
     Pluck,
     Reversed,
     Sorted,
-    ToDict,
     Unique,
 )
 
@@ -23,21 +19,15 @@ __all__ = [
     "Chain",
     "Drop",
     "Enumerate",
-    "Filter",
     "FilterBy",
     "Flatten",
-    "GroupBy",
-    "Map",
     "Max",
     "Min",
-    "Partition",
     "Pluck",
-    "Reduce",
     "Reversed",
     "Sorted",
     "Sum",
     "Take",
-    "ToDict",
     "Unique",
     "Zip",
 ]

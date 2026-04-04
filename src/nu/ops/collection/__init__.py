@@ -1,19 +1,14 @@
-"""Itertools operations — combine, group, reduce, search, slice, transform."""
+"""Collection operations — combine, reduce, slice, transform."""
 
 from .combine import ChainOp, EnumerateOp, ZipOp
-from .group import GroupByOp, PartitionOp
-from .reduce import AllOp, AnyOp, MaxOp, MinOp, ReduceOp, SumOp
-from .search import FindIndexOp, FindOp
+from .reduce import AllOp, AnyOp, MaxOp, MinOp, SumOp
 from .slice import DropOp, TakeOp
 from .transform import (
     FilterByOp,
-    FilterOp,
     FlattenOp,
-    MapOp,
     PluckOp,
     ReversedOp,
     SortedOp,
-    ToDictOp,
     UniqueOp,
 )
 
@@ -25,22 +20,14 @@ __all__ = [
     "DropOp",
     "EnumerateOp",
     "FilterByOp",
-    "FilterOp",
-    "FindIndexOp",
-    "FindOp",
     "FlattenOp",
-    "GroupByOp",
-    "MapOp",
     "MaxOp",
     "MinOp",
-    "PartitionOp",
     "PluckOp",
-    "ReduceOp",
     "ReversedOp",
     "SortedOp",
     "SumOp",
     "TakeOp",
-    "ToDictOp",
     "UniqueOp",
     "ZipOp",
 ]

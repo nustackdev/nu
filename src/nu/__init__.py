@@ -15,7 +15,7 @@ Subpackages:
 
 from __future__ import annotations
 
-from . import fn
+from . import fn  # noqa: F401
 from .context import (
     AnyAttrRef,
     Attributes,
@@ -32,7 +32,6 @@ from .interfaces import *  # noqa: F403
 from .method import AutoInterface, method, prop
 from .model import Model
 from .ops import *  # noqa: F403
-from .ops.combiners import all_, and_, any_, none_, or_
 from .terms import (
     EMPTY,
     INVALID,
@@ -103,6 +102,9 @@ from .transform import (
 )
 from .utils import ensure_nu, typed_value
 
+# combiners must come after star imports to avoid shadowing by interfaces.primitives.none_ module
+from .fn.combiners import all_, and_, any_, none_, or_  # noqa: E402
+
 
 __all__ = [
     "EMPTY",
@@ -113,6 +115,7 @@ __all__ = [
     "AnyAttrRef",
     # Arg types
     "Arg",
+    "AutoInterface",
     # Flows — error
     "Assert",
     # Flows — asserts
@@ -208,12 +211,16 @@ __all__ = [
     "UnaryOp",
     "Value",
     "While",
+    "all_",
     "ancestors",
+    "and_",
+    "any_",
     "apply",
     "bfs",
     "compose",
     "count",
     "depth",
+    "ensure_nu",
     # Query
     "find",
     "find_first",
@@ -226,14 +233,19 @@ __all__ = [
     "leaves",
     "map_children",
     "map_nodes",
+    "method",
+    "none_",
+    "or_",
     "postorder",
     # Walk
     "preorder",
     "print_tree",
     "propagate_special",
+    "prop",
     "prune",
     "replace",
     "size",
+    "typed_value",
     "unwrap",
     "wrap",
 ]

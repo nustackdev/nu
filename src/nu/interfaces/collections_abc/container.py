@@ -33,6 +33,6 @@ class ContainerBase:
     def __contains__(self, item: object) -> BoolI:
         """Check if item is in this collection."""
         from nu.interfaces.primitives import BoolI
-        from nu.ops.builtins.access import ContainsOp
+        from nu.ops.access import ContainsOp
 
         return BoolI(ContainsOp(self, item))

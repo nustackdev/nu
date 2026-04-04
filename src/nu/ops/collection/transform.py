@@ -3,12 +3,9 @@
 Transform ops return lazy iterators instead of materialized lists.
 Use ToList/ToSet/ToDict to explicitly materialize.
 
-MapOp: map(fn, seq) -> Iterator
-FilterOp: filter(fn, seq) -> Iterator
 SortedOp: sorted(seq) -> list (terminal — inherently eager)
 ReversedOp: reversed(seq) -> Iterator
 PluckOp: (x[key] for x in seq) -> Iterator
-ToDictOp: {key_fn(x): val_fn(x) for x in seq} -> dict (terminal)
 FilterByOp: (x for x in seq if x[key] == value) -> Iterator
 FlattenOp: chain.from_iterable(seq) -> Iterator
 UniqueOp: unique elements preserving order -> Iterator
@@ -18,24 +15,16 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator, Sequence
 from itertools import chain as itertools_chain
-from typing import TYPE_CHECKING
 
 from nu.terms import INVALID, BinaryCalc, Sentinel, TernaryCalc, UnaryCalc
 
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-
 __all__ = [
     "FilterByOp",
-    "FilterOp",
     "FlattenOp",
-    "MapOp",
     "PluckOp",
     "ReversedOp",
     "SortedOp",
-    "ToDictOp",
     "UniqueOp",
 ]
 
@@ -66,62 +55,6 @@ class ReversedOp[ResultT](UnaryCalc[Iterator[ResultT]]):
         return reversed(operand)  # type: ignore
 
 
-class MapOp[T, T2](UnaryCalc[Iterator[T2]]):
-    """Map function over iterable: map(fn, seq) -> lazy iterator.
-
-    Example:
-        >>> MapOp(prices, lambda x: x * 2)
-        >>> MapOp(items, str)
-    """
-
-    def __init__(self, operand: object, fn: Callable[[T], T2]) -> None:
-        """Initialize map operation.
-
-        Args:
-            operand: Nu that produces an iterable
-            fn: Function to apply to each element
-        """
-        super().__init__(operand)
-        self._fn = fn
-
-    def apply(self, operand: object) -> Iterator[T2]:
-        """Apply."""
-        if not isinstance(operand, Iterable):
-            raise TypeError(f"map_() requires iterable, got {type(operand).__name__}")
-        return map(self._fn, operand)
-
-    def __repr__(self) -> str:
-        return f"MapOp({self._children[0]!r}, {self._fn!r})"
-
-
-class FilterOp[T](UnaryCalc[Iterator[T]]):
-    """Filter iterable by predicate: filter(fn, seq) -> lazy iterator.
-
-    Example:
-        >>> FilterOp(prices, lambda x: x > 100)
-        >>> FilterOp(items, bool)  # remove falsy values
-    """
-
-    def __init__(self, operand: object, fn: Callable[[T], bool]) -> None:
-        """Initialize filter operation.
-
-        Args:
-            operand: Nu that produces an iterable
-            fn: Predicate function - keep element if returns truthy
-        """
-        super().__init__(operand)
-        self._fn = fn
-
-    def apply(self, operand: object) -> Iterator[T]:
-        """Apply."""
-        if not isinstance(operand, Iterable):
-            raise TypeError(f"filter_() requires iterable, got {type(operand).__name__}")
-        return filter(self._fn, operand)  # type: ignore
-
-    def __repr__(self) -> str:
-        return f"FilterOp({self._children[0]!r}, {self._fn!r})"
-
-
 class PluckOp[T](BinaryCalc[Iterator[T]]):
     """Extract field from each element: (x[key] for x in seq) -> lazy iterator.
 
@@ -144,43 +77,6 @@ class PluckOp[T](BinaryCalc[Iterator[T]]):
             return _gen()
         except (KeyError, TypeError):
             return INVALID
-
-
-class ToDictOp[K, V](UnaryCalc[dict[K, V]]):
-    """Build dict from iterable: {key_fn(x): val_fn(x) for x in seq}. Terminal.
-
-    Example:
-        >>> ToDictOp(balances, lambda b: b["owner"], lambda b: int(b["amount"]))
-    """
-
-    def __init__(
-        self,
-        operand: object,
-        key_fn: Callable[[object], K],
-        val_fn: Callable[[object], V],
-    ) -> None:
-        """Initialize.
-
-        Args:
-            operand: Nu that produces an iterable
-            key_fn: Function to extract dict key from each element
-            val_fn: Function to extract dict value from each element
-        """
-        super().__init__(operand)
-        self._key_fn = key_fn
-        self._val_fn = val_fn
-
-    def apply(self, operand: object) -> dict[K, V] | Sentinel:
-        """Apply."""
-        if not isinstance(operand, Iterable):
-            raise TypeError(f"to_dict_() requires iterable, got {type(operand).__name__}")
-        try:
-            return {self._key_fn(item): self._val_fn(item) for item in operand}
-        except Exception:
-            return INVALID
-
-    def __repr__(self) -> str:
-        return f"ToDictOp({self._children[0]!r}, {self._key_fn!r}, {self._val_fn!r})"
 
 
 class FilterByOp[T](TernaryCalc[Iterator[T]]):
@@ -225,32 +121,19 @@ class FlattenOp(UnaryCalc[Iterator]):
 class UniqueOp(UnaryCalc[Iterator]):
     """Unique elements preserving order -> lazy iterator."""
 
-    def __init__(self, operand: object, key_fn: Callable | None = None) -> None:
-        """Initialize."""
-        super().__init__(operand)
-        self._key_fn = key_fn
-
     def apply(self, operand: object) -> Iterator | Sentinel:
         """Apply."""
         if not isinstance(operand, Iterable):
             raise TypeError(f"Unique requires iterable, got {type(operand).__name__}")
 
-        key_fn = self._key_fn
-
         def _gen() -> Iterator:
             seen: set = set()
             for item in operand:
-                k = key_fn(item) if key_fn is not None else item
-                if k not in seen:
-                    seen.add(k)
+                if item not in seen:
+                    seen.add(item)
                     yield item
 
         try:
             return _gen()
         except Exception:
             return INVALID
-
-    def __repr__(self) -> str:
-        if self._key_fn is not None:
-            return f"UniqueOp({self._children[0]!r}, key={self._key_fn!r})"
-        return f"UniqueOp({self._children[0]!r})"

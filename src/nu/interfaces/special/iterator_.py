@@ -24,18 +24,18 @@ class IteratorI[T](Interface[Iterator[T]]):
 
     def to_list(self) -> ListI[T]:
         from nu.interfaces.collections.list_ import ListI
-        from nu.ops.builtins.conversion import ToListOp
+        from nu.ops.conversion import ToListOp
 
         return ListI(ToListOp(self))
 
     def to_set(self) -> SetI[T]:
         from nu.interfaces.collections.set_ import SetI
-        from nu.ops.builtins.conversion import ToSetOp
+        from nu.ops.conversion import ToSetOp
 
         return SetI(ToSetOp(self))
 
     def to_tuple(self) -> TupleI:
         from nu.interfaces.collections.tuple_ import TupleI
-        from nu.ops.builtins.conversion import ToTupleOp
+        from nu.ops.conversion import ToTupleOp
 
         return TupleI(ToTupleOp(self))

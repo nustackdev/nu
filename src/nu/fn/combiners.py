@@ -74,7 +74,7 @@ def and_(left: object, right: object) -> BoolI:
     from nu.utils import ensure_nu
 
     left_op = ensure_nu(left)
-    if not isinstance(left_op, AndableProtocol):
+    if not hasattr(left_op, "and_"):
         raise TypeError(f"Operand {type(left).__name__} does not support AND logical operation")
 
     return left_op.and_(ensure_nu(right))
@@ -98,7 +98,7 @@ def or_(left: object, right: object) -> BoolI:
     from nu.utils import ensure_nu
 
     left_op = ensure_nu(left)
-    if not isinstance(left_op, OrableProtocol):
+    if not hasattr(left_op, "or_"):
         raise TypeError(f"Operand {type(left).__name__} does not support OR logical operation")
 
     return left_op.or_(ensure_nu(right))

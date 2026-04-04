@@ -35,6 +35,6 @@ class SizedBase:
     def len(self) -> IntI:
         """Length of this collection."""
         from nu.interfaces.primitives import IntI
-        from nu.ops.builtins.access import LenOp
+        from nu.ops.access import LenOp
 
         return IntI(LenOp(self))
