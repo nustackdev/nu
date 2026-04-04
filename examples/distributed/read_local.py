@@ -41,7 +41,7 @@ from nu_distributed import (
     Worker,
     WorkerSpec,
 )
-from nu import Context
+from nu import Context, IntAttrRef
 from nu.abc import ForRange, If, Parallel, Print, Seq
 from nu.shape import Shape
 
@@ -51,7 +51,6 @@ from nu.shape import Shape
 
 class Counter(Shape):
     value = ebv.IntRef.slot()
-    index = ebv.IntRef.slot()
 
 
 class Counters(Shape):
@@ -61,6 +60,8 @@ class Counters(Shape):
 a = Counters.items["a"]
 b = Counters.items["b"]
 c = Counters.items["c"]
+
+idx = IntAttrRef("i").get()
 
 
 # -- Flow --------------------------------------------------------------------
@@ -84,9 +85,9 @@ flow = Seq(
                     100,
                     Seq(
                         a.value.store(a.value + 1),
-                        If((a.index % 10).eq(0), Print("red:0  | a", a.value)),
+                        If((idx % 10).eq(0), Print("red:0  | a", a.value)),
                     ),
-                    index=a.index,
+                    index="i",
                 )
             ),
             worker=("red", 0),
@@ -98,9 +99,9 @@ flow = Seq(
                     100,
                     Seq(
                         b.value.store(b.value + 1),
-                        If((b.index % 10).eq(0), Print("red:1  | b", b.value)),
+                        If((idx % 10).eq(0), Print("red:1  | b", b.value)),
                     ),
-                    index=b.index,
+                    index="i",
                 )
             ),
             worker=("red", 1),
@@ -112,9 +113,9 @@ flow = Seq(
                     100,
                     Seq(
                         c.value.store(c.value + 1),
-                        If((c.index % 10).eq(0), Print("blue:0 | c", c.value)),
+                        If((idx % 10).eq(0), Print("blue:0 | c", c.value)),
                     ),
-                    index=c.index,
+                    index="i",
                 )
             ),
             worker=("blue", 0),

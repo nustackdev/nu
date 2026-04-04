@@ -22,7 +22,7 @@ from ..ops import ChangeOp  # noqa: TC001 - runtime dependency
 
 
 if TYPE_CHECKING:
-    from nu import Context, Nu, Ref
+    from nu import Context, Nu
 
 
 __all__ = [
@@ -39,7 +39,7 @@ class React(Flow):
 
     Subscribes via the ``ChangeOp`` child to obtain a subscription
     handle. Waits for the first change event, optionally stores the
-    changed key into the ``changed_key`` Ref, then executes the
+    changed key into ``ctx.attrs[changed_key]``, then executes the
     optional body child and unsubscribes.
 
     Example::
@@ -49,7 +49,7 @@ class React(Flow):
         React(
             items.on_children_change(),
             process_item,
-            changed_key=key_ref,
+            changed_key="changed_key",
         )
     """
 
@@ -58,21 +58,20 @@ class React(Flow):
         change: ChangeOp,
         body: Nu | None = None,
         *,
-        changed_key: Ref | None = None,
+        changed_key: str | None = None,
     ) -> None:
         """Initialize single-shot reactive flow.
 
         Args:
-            change: ChangeOp op that produces a subscription handle.
-            body: Optional executable run after the first change event.
-            changed_key: Optional Ref written with the key that changed.
-                Not a child -- stored as metadata only.
+            change: ChangeOp that produces a subscription handle.
+            body: Optional Nu run after the first change event.
+            changed_key: ctx.attrs key written with the key that changed.
         """
         if body is not None:
             super().__init__(change, body)
         else:
             super().__init__(change)
-        self._changed_key = changed_key
+        self._changed_key_attr = changed_key
 
     async def execute(self, ctx: Context) -> None:
         """Subscribe, wait for one change, run body, unsubscribe."""
@@ -89,8 +88,8 @@ class React(Flow):
         try:
             await event.wait()
 
-            if self._changed_key is not None:
-                await self._changed_key.store(changed_key_holder[0]).execute(ctx)  # type: ignore[union-attr]
+            if self._changed_key_attr is not None:
+                ctx.attrs[self._changed_key_attr] = changed_key_holder[0]
 
             if self.child_count > 1:
                 await self.children[1].execute(ctx)
@@ -106,7 +105,7 @@ class ReactForever(Flow):
 
     Subscribes via the ``ChangeOp`` child and loops indefinitely,
     waiting for each change event. On every event, optionally stores
-    the changed key into the ``changed_key`` Ref, then executes the
+    the changed key into ``ctx.attrs[changed_key]``, then executes the
     body child. Only terminates via exception or task cancellation.
 
     Example::
@@ -118,7 +117,7 @@ class ReactForever(Flow):
         ReactForever(
             events.on_descendants_change("*", "status"),
             process_status,
-            changed_key=key_ref,
+            changed_key="changed_key",
         )
     """
 
@@ -127,18 +126,17 @@ class ReactForever(Flow):
         change: ChangeOp,
         body: Nu,
         *,
-        changed_key: Ref | None = None,
+        changed_key: str | None = None,
     ) -> None:
         """Initialize forever-reactive flow.
 
         Args:
-            change: ChangeOp op that produces a subscription handle.
+            change: ChangeOp that produces a subscription handle.
             body: Nu run after every change event.
-            changed_key: Optional Ref written with the key that changed.
-                Not a child -- stored as metadata only.
+            changed_key: ctx.attrs key written with the key that changed.
         """
         super().__init__(change, body)
-        self._changed_key = changed_key
+        self._changed_key_attr = changed_key
 
     async def execute(self, ctx: Context) -> None:
         """Subscribe, loop forever reacting to changes, unsubscribe on exit."""
@@ -157,8 +155,8 @@ class ReactForever(Flow):
                 await event.wait()
                 event.clear()
 
-                if self._changed_key is not None:
-                    await self._changed_key.store(changed_key_holder[0]).execute(ctx)  # type: ignore[union-attr]
+                if self._changed_key_attr is not None:
+                    ctx.attrs[self._changed_key_attr] = changed_key_holder[0]
 
                 await self.children[1].execute(ctx)
         finally:
@@ -190,7 +188,7 @@ class ReactWhile(Flow):
             sensor.on_change(),
             True,
             log_reading,
-            changed_key=sensor_key,
+            changed_key="sensor_key",
         )
     """
 
@@ -200,20 +198,19 @@ class ReactWhile(Flow):
         condition: Any,
         body: Nu,
         *,
-        changed_key: Ref | None = None,
+        changed_key: str | None = None,
     ) -> None:
         """Initialize conditional-reactive flow.
 
         Args:
-            change: ChangeOp op that produces a subscription handle.
+            change: ChangeOp that produces a subscription handle.
             condition: Nu or literal evaluated after each event. Loop
                 continues while truthy. Literals are wrapped via ``ensure_nu``.
             body: Nu run after each change while condition holds.
-            changed_key: Optional Ref written with the key that changed.
-                Not a child -- stored as metadata only.
+            changed_key: ctx.attrs key written with the key that changed.
         """
         super().__init__(change, ensure_nu(condition), body)
-        self._changed_key = changed_key
+        self._changed_key_attr = changed_key
 
     async def execute(self, ctx: Context) -> None:
         """Subscribe, react while condition holds, unsubscribe on exit."""
@@ -235,8 +232,8 @@ class ReactWhile(Flow):
                 if not await self.children[1].execute(ctx):
                     break
 
-                if self._changed_key is not None:
-                    await self._changed_key.store(changed_key_holder[0]).execute(ctx)  # type: ignore[union-attr]
+                if self._changed_key_attr is not None:
+                    ctx.attrs[self._changed_key_attr] = changed_key_holder[0]
 
                 await self.children[2].execute(ctx)
         finally:

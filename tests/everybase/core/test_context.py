@@ -669,14 +669,13 @@ class TestContextE2EFlows:
 
         class Acc(Shape):
             total = IntRef.slot()
-            i = IntRef.slot()
 
         data = {}
         ctx = Context().bind(data, dict, Acc)
 
         tree = Seq(
             Acc.total.store(0),
-            ForRange(0, 5, Acc.total.store(Acc.total + 1), index=Acc.i),
+            ForRange(0, 5, Acc.total.store(Acc.total + 1), index="i"),
         )
         await tree.execute(ctx)
         assert await Acc.total.execute(ctx) == 5

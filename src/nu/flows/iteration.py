@@ -7,12 +7,11 @@ from typing import TYPE_CHECKING, Any
 from .base import Flow
 
 from nu.utils import ensure_nu
-from .control import Seq
 
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import Nu, IntArg, Ref
+    from nu.terms import Nu, IntArg
 
 
 __all__ = [
@@ -25,31 +24,28 @@ __all__ = [
 class ForRange(Flow):
     """Counted loop over ``range(start, stop, step)``.
 
-    Children layout (no index): ``[start, stop, step, body]``
-    Children layout (with index): ``[start, stop, step, init, body]``
+    Children layout: ``[start, stop, step, body]``
 
     Start, stop and step are auto-wrapped via ``ensure_nu`` if literals are
-    passed.  Optional ``index`` Ref is set with the current loop value
-    at each iteration.
+    passed.  Optional ``index`` names a ``ctx.attrs`` key set with the
+    current loop value at each iteration.  Read it in the body via an
+    AttrRef (e.g. ``IntRef("i")``).
 
-    When ``index`` is provided, the body is meta-adjusted at construction
-    time: ``body = Seq(body, index.store(index + step))``, and an init node
-    ``index.store(start)`` is prepended as a child.  This makes the index
-    setter a tree-visible child, so meta-transforms (auto_atomic, etc.)
-    can see and wrap it.
+    If you need the index persisted to a Shape, write it in the body::
+
+        s.my_index.store(IntRef("i"))
 
     Args:
         start: Start of range (inclusive), int or Nu.
         stop: End of range (exclusive), int or Nu.
         body: Nu run each iteration.
         step: Step increment, int or Nu. Default ``1``.
-        index: Optional Ref[int] set with current value each iteration.
+        index: Optional ctx.attrs key set with current value each iteration.
 
     Example::
 
-        i = Var(0)
-        ForRange(0, 10, body, index=i)
-        # after execution i holds the last iterated value (9)
+        idx = IntRef("i")
+        ForRange(0, 10, Print("at", idx), index="i")
     """
 
     def __init__(
@@ -59,7 +55,7 @@ class ForRange(Flow):
         body: Nu,
         *,
         step: IntArg = 1,
-        index: Ref[int] | None = None,
+        index: str | None = None,
     ) -> None:
         """Initialize for-range loop.
 
@@ -68,69 +64,47 @@ class ForRange(Flow):
             stop: End of range (exclusive), int or Nu.
             body: Nu run each iteration.
             step: Step increment, int or Nu. Default ``1``.
-            index: Optional Ref[int] set with current value each iteration.
+            index: ctx.attrs key set with current value each iteration.
         """
-        start_t = ensure_nu(start)
-        stop_t = ensure_nu(stop)
-        step_t = ensure_nu(step)
-
-        self._has_index = index is not None
-
-        if index is not None:
-            init = index.store(ensure_nu(start))
-            body = Seq(body, index.store(index + ensure_nu(step)))
-            super().__init__(start_t, stop_t, step_t, init, body)
-        else:
-            super().__init__(start_t, stop_t, step_t, body)
+        self._index_attr = index
+        super().__init__(ensure_nu(start), ensure_nu(stop), ensure_nu(step), body)
 
     async def execute(self, ctx: Context) -> None:
         """Execute body for each value in range."""
         start = await self.children[0].execute(ctx)
         stop = await self.children[1].execute(ctx)
         step = await self.children[2].execute(ctx)
+        body = self.children[3]
 
-        if self._has_index:
-            await self.children[3].execute(ctx)  # init index
-            body = self.children[4]
-        else:
-            body = self.children[3]
-
-        for _i in range(start, stop, step):
+        for i in range(start, stop, step):
+            if self._index_attr is not None:
+                ctx.attrs[self._index_attr] = i
             await body.execute(ctx)
 
 
 class ForEach(Flow):
-    """Iterate over a sequence, executing body for each item.
+    """Iterate over a sequence, executing body for each element.
 
-    Children layout (no item, no index): ``[items, body]``
-    Children layout (with item, no index): ``[items, body]``
-    Children layout (with index, no item): ``[items, init, body]``
-    Children layout (with item and index): ``[items, init, body]``
+    Children layout: ``[items, body]``
 
     The ``items`` parameter is auto-wrapped via ``ensure_nu`` if a literal is
     passed -- it can be a plain list, a ``Ref.get()``, or any Nu that
     resolves to an iterable.
 
-    When ``item`` ref is provided, the current element is set on it each
-    iteration — no more scratch shapes needed for simple iteration.
+    Optional ``index`` names a ``ctx.attrs`` key set with the current
+    iteration count.  Read it in the body via ``IntRef("i")``.
 
-    When ``index`` is provided, the body is meta-adjusted:
-    ``body = Seq(body, index.store(index + 1))``, init ``index.store(0)``.
+    Items are not stored by default to preserve laziness.
 
     Args:
         items: Iterable (or Nu resolving to one) to iterate over.
-        body: Nu run for each item.
-        item: Optional Ref set with current element each iteration.
-        index: Optional Ref[int] set with current iteration index.
+        body: Nu run for each element.
+        index: Optional ctx.attrs key set with current iteration index.
 
     Example::
 
-        item = AnyRef("item")
-        ForEach(tokens, body, item=item)
-        # item ref holds current element each iteration
-
-        idx = IntRef("idx")
-        ForEach([1, 2, 3], process_item, item=item, index=idx)
+        idx = IntRef("i")
+        ForEach(tokens, process, index="i")
     """
 
     def __init__(
@@ -138,58 +112,44 @@ class ForEach(Flow):
         items: Any,
         body: Nu,
         *,
-        item: Ref | None = None,
-        index: Ref[int] | None = None,
+        index: str | None = None,
     ) -> None:
         """Initialize for-each loop.
 
         Args:
             items: Iterable or Nu resolving to an iterable.
-            body: Nu run for each item.
-            item: Optional Ref set with current element each iteration.
-            index: Optional Ref[int] set with current iteration index.
+            body: Nu run for each element.
+            index: ctx.attrs key set with current iteration index.
         """
-        self._has_index = index is not None
-        self._has_item = item is not None
-        self._item_ref = item
-
-        if index is not None:
-            init = index.store(0)
-            body = Seq(body, index.store(index + 1))
-            super().__init__(ensure_nu(items), init, body)
-        else:
-            super().__init__(ensure_nu(items), body)
+        self._index_attr = index
+        super().__init__(ensure_nu(items), body)
 
     async def execute(self, ctx: Context) -> None:
-        """Execute body for each item in the resolved sequence."""
+        """Execute body for each element in the resolved sequence."""
         items = await self.children[0].execute(ctx)
+        body = self.children[1]
 
-        if self._has_index:
-            await self.children[1].execute(ctx)  # init index
-            body = self.children[2]
-        else:
-            body = self.children[1]
-
-        for _i, elem in enumerate(items):
-            if self._has_item:
-                await self._item_ref.store(elem).execute(ctx)
+        for i, _elem in enumerate(items):
+            if self._index_attr is not None:
+                ctx.attrs[self._index_attr] = i
             await body.execute(ctx)
 
 
 class Fold(Flow):
     """Stateful sequential reduction over an iterable.
 
-    Iterates over items, setting the current element on ``item`` ref
-    and executing ``body`` each iteration. The accumulator ``acc`` ref
-    holds the running state.
+    Children layout: ``[items, initial, body]``
 
-    Children layout: ``[items, init, body]``
+    Iterates over items, setting the current element on the ``item``
+    ctx.attrs key and executing ``body`` each iteration.  The ``acc``
+    ctx.attrs key holds the running accumulator.  Read both in the body
+    via AttrRefs.
 
     Args:
         items: Iterable (or Nu resolving to one) to fold over.
-        acc: Ref holding the accumulator state.
-        initial: Initial value for the accumulator.
-        item: Ref set with current element each iteration.
+        acc: ctx.attrs key for the accumulator.
+        initial: Initial value for the accumulator (literal or Nu).
+        item: ctx.attrs key for the current element.
         body: Nu that updates acc each iteration.
 
     Example::
@@ -198,9 +158,9 @@ class Fold(Flow):
         item = AnyRef("item")
         Fold(
             trades,
-            acc=acc,
+            acc="acc",
             initial=0,
-            item=item,
+            item="item",
             body=acc.store(acc + item),
         )
     """
@@ -209,34 +169,30 @@ class Fold(Flow):
         self,
         items: Any,
         *,
-        acc: Ref,
+        acc: str = "acc",
         initial: Any,
-        item: Ref | None = None,
+        item: str = "item",
         body: Nu,
     ) -> None:
         """Initialize fold.
 
         Args:
             items: Iterable or Nu resolving to an iterable.
-            acc: Ref holding the accumulator.
-            initial: Initial accumulator value.
-            item: Optional Ref set with current element each iteration.
+            acc: ctx.attrs key for the accumulator.
+            initial: Initial accumulator value (literal or Nu).
+            item: ctx.attrs key for the current element.
             body: Nu updating acc each iteration.
         """
-        self._acc_ref = acc
-        self._item_ref = item
-        self._has_item = item is not None
-
-        init = acc.store(ensure_nu(initial))
-        super().__init__(ensure_nu(items), init, body)
+        self._acc_attr = acc
+        self._item_attr = item
+        super().__init__(ensure_nu(items), ensure_nu(initial), body)
 
     async def execute(self, ctx: Context) -> None:
         """Execute fold over items."""
         items = await self.children[0].execute(ctx)
-        await self.children[1].execute(ctx)  # init acc
+        ctx.attrs[self._acc_attr] = await self.children[1].execute(ctx)
         body = self.children[2]
 
         for elem in items:
-            if self._has_item:
-                await self._item_ref.store(elem).execute(ctx)
+            ctx.attrs[self._item_attr] = elem
             await body.execute(ctx)

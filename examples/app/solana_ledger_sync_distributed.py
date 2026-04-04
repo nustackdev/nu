@@ -27,7 +27,7 @@ from composables.spec import SpecBuilder
 
 import nu_dict as ed
 import nu_virtuals as ebv
-from nu import Context
+from nu import Context, IntAttrRef
 from nu.abc import IntI, fn, method
 from nu.abc.flows import ForRange, If, Log, Parallel, Retry, Seq, TryCatch, While
 from nu.core import Ref
@@ -276,7 +276,6 @@ class _SlotScratch(Shape):
     """Per-slot scratch for a single slot sync."""
 
     block_txs = ed.ListRef.slot(object)
-    tx_idx = ed.IntRef.slot()
     tx_id = ed.IntRef.slot()
 
 
@@ -294,6 +293,7 @@ class _WorkerScratch(Shape):
 def _sync_single_slot(ledger: type[Ledger], slot: object, worker_id: int) -> object:
     """Sync one slot with retry and dropped-slot handling."""
     sc = _SlotScratch
+    tx_idx = IntAttrRef("tx_idx").get()
 
     return Retry(
         TryCatch(
@@ -306,10 +306,10 @@ def _sync_single_slot(ledger: type[Ledger], slot: object, worker_id: int) -> obj
                             0,
                             fn.Len(sc.block_txs),
                             Seq(
-                                sc.tx_id.store(slot * TX_ID_MULTIPLIER + sc.tx_idx),
-                                ledger.txs[sc.tx_id].store(sc.block_txs[sc.tx_idx]),
+                                sc.tx_id.store(slot * TX_ID_MULTIPLIER + tx_idx),
+                                ledger.txs[sc.tx_id].store(sc.block_txs[tx_idx]),
                             ),
-                            index=sc.tx_idx,
+                            index="tx_idx",
                         ),
                         ledger.slots_synced.add(slot),
                     ),

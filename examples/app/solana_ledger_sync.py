@@ -31,7 +31,7 @@ from virtuals.tkv.storage import StorageProtocol
 import nu.ops as ops
 import nu_dict as ed
 import nu_virtuals as ebv
-from nu import Context, Nu, Ref
+from nu import Context, IntAttrRef, Nu, Ref
 from nu.flows import ForRange, If, Log, Retry, Seq, TryCatch
 from nu.interfaces import IntI, ListI
 from nu.method import method
@@ -346,7 +346,6 @@ class _SlotScratch(Shape):
     """Per-slot scratch for sync_slot."""
 
     block_txs = ed.ListRef.slot(object)
-    tx_idx = ed.IntRef.slot()
     tx_id = ed.IntRef.slot()
 
 
@@ -354,7 +353,6 @@ class _RangeScratch(Shape):
     """Scratch for sync_range iteration."""
 
     slots = ed.ListRef.slot(int)
-    slot_idx = ed.IntRef.slot()
     slot_number = ed.IntRef.slot()
 
 
@@ -369,9 +367,7 @@ def sync_slot(ledger: type[Ledger], slot: int) -> Nu:
     Handles dropped slots (skipped on-chain) gracefully.
     """
     sc = _SlotScratch
-
-    a = ledger.slots_synced.add(slot)
-    a
+    tx_idx = IntAttrRef("tx_idx").get()
 
     return If(
         ops.Contains(ledger.slots_synced, slot).not_(),
@@ -385,10 +381,10 @@ def sync_slot(ledger: type[Ledger], slot: int) -> Nu:
                             0,
                             ops.Len(sc.block_txs),
                             Seq(
-                                sc.tx_id.store(slot * TX_ID_MULTIPLIER + sc.tx_idx),
-                                ledger.txs[sc.tx_id].store(sc.block_txs[sc.tx_idx]),
+                                sc.tx_id.store(slot * TX_ID_MULTIPLIER + tx_idx),
+                                ledger.txs[sc.tx_id].store(sc.block_txs[tx_idx]),
                             ),
-                            index=sc.tx_idx,
+                            index="tx_idx",
                         ),
                         ledger.slots_synced.add(slot),
                     ),
@@ -415,6 +411,7 @@ def sync_range(ledger: type[Ledger], slot_from: int, slot_to: int) -> Nu:
     delegating to sync_slot for fetch + parse + persist.
     """
     sc = _RangeScratch
+    slot_idx = IntAttrRef("slot_idx").get()
 
     return Seq(
         sc.slots.store(SolanaRef.get_blocks(slot_from, slot_to)),
@@ -423,10 +420,10 @@ def sync_range(ledger: type[Ledger], slot_from: int, slot_to: int) -> Nu:
             0,
             fn.Len(sc.slots),
             Seq(
-                sc.slot_number.store(sc.slots[sc.slot_idx]),
+                sc.slot_number.store(sc.slots[slot_idx]),
                 sync_slot(ledger, sc.slot_number),
             ),
-            index=sc.slot_idx,
+            index="slot_idx",
         ),
         Log("sync complete"),
     )
