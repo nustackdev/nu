@@ -9,27 +9,19 @@ from nu import BinaryCalc, Context, Value, print_tree
 
 
 # A leaf Nu that holds a number
-class Num(Value[float]):
-    def __init__(self, n: float):
-        super().__init__()
-        self._n = n
-
-    async def execute(self, ctx: Context) -> float:
-        return self._n
-
-    def __repr__(self) -> str:
-        return f"Num({self._n})"
+class Num(Value[float | int]):
+    pass
 
 
 # A pure binary op: addition
-class Add(BinaryCalc[float]):
-    def apply(self, left: float, right: float) -> float:
+class Add(BinaryCalc[float | int]):
+    def apply(self, left: float | int, right: float | int) -> float | int:
         return left + right
 
 
 # A pure binary op: multiplication
-class Mul(BinaryCalc[float]):
-    def apply(self, left: float, right: float) -> float:
+class Mul(BinaryCalc[float | int]):
+    def apply(self, left: float | int, right: float | int) -> float | int:
         return left * right
 
 
