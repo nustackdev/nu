@@ -57,7 +57,7 @@ from .collection import (
     UniqueOp,
     ZipOp,
 )
-from .collection.iteration import Filter, Map, TakeWhile, Unique
+from .collection.iteration import Filter, Find, FindIndex, GroupBy, Map, Partition, TakeWhile, ToDict, Unique
 from .comparison import (
     EqOp,
     GeOp,
@@ -129,6 +129,8 @@ __all__ = [
     "EqOp",
     "Filter",
     "FilterByOp",
+    "Find",
+    "FindIndex",
     "FlattenOp",
     "FloorDivOp",
     "Fold",
@@ -140,6 +142,7 @@ __all__ = [
     "FuncCallOp",
     "GeOp",
     "GetAttrOp",
+    "GroupBy",
     "GtOp",
     "IdCompOp",
     "If",
@@ -165,6 +168,7 @@ __all__ = [
     "NotOp",
     "OrOp",
     "Parallel",
+    "Partition",
     "PluckOp",
     "PosOp",
     "PowOp",
@@ -187,6 +191,7 @@ __all__ = [
     "TakeOp",
     "TakeWhile",
     "Throttle",
+    "ToDict",
     "Timed",
     "Timeout",
     "ToBoolOp",
