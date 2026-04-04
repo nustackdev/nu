@@ -5,12 +5,10 @@ from .container import ContainerBase, ContainerProtocol
 from .iterable import IterableBase, IterableProtocol
 from .mapping import MappingBase, MappingProtocol, MutableMappingBase, MutableMappingProtocol
 from .mapping_ops import (
-    CopyOp,
     DeleteItemCmd,
     DictPopCmd,
     GetOp,
     ItemsOp,
-    KeyAtOp,
     KeysOp,
     PopItemCmd,
     SetDefaultCmd,

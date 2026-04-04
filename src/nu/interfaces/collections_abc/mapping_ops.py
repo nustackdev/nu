@@ -1,16 +1,18 @@
-"""Mapping ops — operations (pure) + commands (impure).
+"""Mapping ops - operations (pure) + commands (impure).
 
 Operations:
     KeysOp: Get all keys
     ValuesOp: Get all values
     ItemsOp: Get all key-value pairs
     GetOp: Get value by key with default
-    KeyAtOp: Get key at index position
 
 Commands:
     SetItemCmd: Set value at key
     DeleteItemCmd: Delete entry by key
     UpdateCmd: Update mapping with another mapping
+    DictPopCmd: Pop value by key with optional default
+    PopItemCmd: Pop arbitrary item
+    SetDefaultCmd: Set default value if key missing
 """
 
 from __future__ import annotations
@@ -20,22 +22,19 @@ from collections.abc import ItemsView, KeysView, Mapping, MutableMapping, Values
 from nu.terms import (
     INVALID,
     BinaryCmd,
-    BinaryCalc,
     Sentinel,
-    TernaryCmd,
     TernaryCalc,
-    UnaryCmd,
+    TernaryCmd,
     UnaryCalc,
+    UnaryCmd,
 )
 
 
 __all__ = [
-    "CopyOp",
     "DeleteItemCmd",
     "DictPopCmd",
     "GetOp",
     "ItemsOp",
-    "KeyAtOp",
     "KeysOp",
     "PopItemCmd",
     "SetDefaultCmd",
@@ -90,30 +89,6 @@ class GetOp[V](TernaryCalc[V]):
         if third is None:
             return first[second]  # type: ignore
         return first.get(second, third)  # type: ignore
-
-
-class KeyAtOp(BinaryCalc):
-    """Get key at index position: mapping.key_at(idx).
-
-    If the mapping has a ``key_at`` method (e.g. IndexedDictView), calls it
-    directly for O(1) single-key read.  Otherwise falls back to
-    ``itertools.islice`` over keys.
-    """
-
-    def apply(self, left: object, right: object) -> object | Sentinel:
-        """Apply."""
-        if not isinstance(left, Mapping):
-            raise TypeError(f"key_at() requires mapping, got {type(left).__name__}")
-        idx = int(right)  # type: ignore[arg-type]
-        if hasattr(left, "key_at"):
-            return left.key_at(idx)  # type: ignore[union-attr]
-        # Fallback: iterate keys up to idx
-        import itertools
-
-        keys = list(itertools.islice(left.keys(), idx, idx + 1))
-        if not keys:
-            return INVALID
-        return keys[0]
 
 
 # =============================================================================
@@ -197,11 +172,3 @@ class SetDefaultCmd[K, V](TernaryCmd[V]):
         return first.setdefault(second, third)  # type: ignore[arg-type]
 
 
-class CopyOp[K, V](UnaryCalc[dict[K, V]]):
-    """Shallow copy: mapping.copy(). Returns new dict."""
-
-    def apply(self, operand: object) -> dict[K, V] | Sentinel:
-        """Apply."""
-        if not isinstance(operand, Mapping):
-            raise TypeError(f"copy() requires mapping, got {type(operand).__name__}")
-        return dict(operand)  # type: ignore[arg-type]

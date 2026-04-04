@@ -15,7 +15,6 @@ from nu import (
     AnyI,
     AppendCmd,
     ClearCmd,
-    CopyOp,
     CountOp,
     DeleteItemCmd,
     DictPopCmd,
@@ -446,27 +445,6 @@ class TestSetDefaultCmd:
         assert result == 99
 
 
-class TestCopyOp:
-    """CopyOp morphism tests."""
-
-    async def test_copy_returns_dict(self, ctx):
-        cmd = CopyOp[str, int](DictI({"a": 1, "b": 2}))
-        result = await cmd.execute(ctx)
-        assert result == {"a": 1, "b": 2}
-
-    async def test_copy_is_shallow(self, ctx):
-        original = {"a": [1, 2]}
-        cmd = CopyOp(DictI(original))
-        result = await cmd.execute(ctx)
-        assert result == {"a": [1, 2]}
-        assert result["a"] is original["a"]
-
-    async def test_copy_empty(self, ctx):
-        cmd = CopyOp(DictI({}))
-        result = await cmd.execute(ctx)
-        assert result == {}
-
-
 # =============================================================================
 # SET MUTATION COMMANDS
 # =============================================================================
@@ -668,10 +646,6 @@ class TestDictTypeMutations:
         result = d.clear()
         assert isinstance(result, NoneI)
 
-    def test_copy_returns_any_value(self):
-        d = DictI({"a": 1})
-        result = d.copy()
-        assert isinstance(result, AnyI)
 
 
 class TestSetTypeMutations:
@@ -837,11 +811,6 @@ class TestMutationExecution:
         d = DictI({"a": 1})
         result = await d.setdefault("b", 42).execute(ctx)
         assert result == 42
-
-    async def test_dict_copy_execute(self, ctx):
-        d = DictI({"a": 1, "b": 2})
-        result = await d.copy().execute(ctx)
-        assert result == {"a": 1, "b": 2}
 
     # ── New set methods ───────────────────────────────────────────────────
 

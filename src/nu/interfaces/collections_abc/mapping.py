@@ -2,7 +2,7 @@
 """Mapping collection — protocols + bases + mutations.
 
 MappingProtocol/Base = Collection + keys/values/items/get
-MutableMappingProtocol/Base = Mapping + set/delete/update
+MutableMappingProtocol/Base = Mapping + set/delete/update/pop/popitem/setdefault/clear
 
 Follows Python's collections.abc.Mapping / MutableMapping pattern.
 
@@ -26,7 +26,7 @@ from .collection import CollectionBase, CollectionProtocol
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from nu.terms import Arg, IntArg, Nu
+    from nu.terms import Arg, Nu
 
     from nu.interfaces.primitives import NoneI
 
@@ -85,7 +85,6 @@ class MutableMappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, Value
     def popitem(self) -> ValueResultT: ...
     def setdefault(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT: ...
     def clear(self) -> NoneI: ...
-    def copy(self) -> ValueResultT: ...
 
 
 # =============================================================================
@@ -152,12 +151,6 @@ class MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
         return cast("ValueResultT", self._wrap_value_result(GetOp(self, key, default)))
 
-    def key_at(self, idx: IntArg) -> ValueResultT:
-        """Get key at index position."""
-        from .mapping_ops import KeyAtOp
-
-        return cast("ValueResultT", self._wrap_value_result(KeyAtOp(self, idx)))
-
 
 class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
     MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
@@ -169,7 +162,7 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
         KeyT: Native Python key type
         ValueT: Native Python value type
         CollectionResultT: Result for collection-level ops (update)
-        ValueResultT: Result for value-level ops (get, key_at)
+        ValueResultT: Result for value-level ops (get, pop, setdefault)
     """
 
     def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> NoneI:
@@ -218,8 +211,3 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
 
         return NoneI(ClearCmd(self))
 
-    def copy(self) -> ValueResultT:
-        """Shallow copy."""
-        from .mapping_ops import CopyOp
-
-        return cast("ValueResultT", self._wrap_value_result(CopyOp(self)))
