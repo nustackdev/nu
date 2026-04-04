@@ -144,46 +144,46 @@ class BytesI(Interface[bytes]):
     # =========================================================================
 
     def decode(self, encoding: StrArg = "utf-8") -> StrI:
-        from nu.ops.builtins.bytes_ import DecodeOp
+        from .bytes_ops import DecodeOp
 
         from .str_ import StrI
 
         return StrI(DecodeOp(self, encoding))
 
     def hex_(self) -> StrI:
-        from nu.ops.builtins.bytes_ import HexOp
+        from .bytes_ops import HexOp
 
         from .str_ import StrI
 
         return StrI(HexOp(self))
 
     def upper(self) -> BytesI:
-        from nu.ops.builtins.bytes_ import BytesUpperOp
+        from .bytes_ops import BytesUpperOp
 
         return BytesI(BytesUpperOp(self))
 
     def lower(self) -> BytesI:
-        from nu.ops.builtins.bytes_ import BytesLowerOp
+        from .bytes_ops import BytesLowerOp
 
         return BytesI(BytesLowerOp(self))
 
     def strip(self, chars: BytesArg | None = None) -> BytesI:
-        from nu.ops.builtins.bytes_ import BytesStripOp
+        from .bytes_ops import BytesStripOp
 
         return BytesI(BytesStripOp(self, chars))
 
     def lstrip(self, chars: BytesArg | None = None) -> BytesI:
-        from nu.ops.builtins.bytes_ import BytesLStripOp
+        from .bytes_ops import BytesLStripOp
 
         return BytesI(BytesLStripOp(self, chars))
 
     def rstrip(self, chars: BytesArg | None = None) -> BytesI:
-        from nu.ops.builtins.bytes_ import BytesRStripOp
+        from .bytes_ops import BytesRStripOp
 
         return BytesI(BytesRStripOp(self, chars))
 
     def split_bytes(self, sep: BytesArg | None = None, maxsplit: IntArg = -1) -> ListI:
-        from nu.ops.builtins.bytes_ import BytesSplitOp
+        from .bytes_ops import BytesSplitOp
 
         from nu.interfaces.collections.list_ import ListI
 
@@ -192,34 +192,34 @@ class BytesI(Interface[bytes]):
         return ListI(BytesSplitOp(self, None, maxsplit))
 
     def find_bytes(self, sub: BytesArg, start: IntArg = 0, end: IntArg | None = None) -> IntI:
-        from nu.ops.builtins.bytes_ import BytesFindOp
+        from .bytes_ops import BytesFindOp
 
         from .int_ import IntI
 
         return IntI(BytesFindOp(self, sub, start, end))
 
     def count_bytes(self, sub: BytesArg) -> IntI:
-        from nu.ops.builtins.bytes_ import BytesCountOp
+        from .bytes_ops import BytesCountOp
 
         from .int_ import IntI
 
         return IntI(BytesCountOp(self, sub))
 
     def startswith(self, prefix: BytesArg) -> BoolI:
-        from nu.ops.builtins.bytes_ import BytesStartsWithOp
+        from .bytes_ops import BytesStartsWithOp
 
         from .bool_ import BoolI
 
         return BoolI(BytesStartsWithOp(self, prefix))
 
     def endswith(self, suffix: BytesArg) -> BoolI:
-        from nu.ops.builtins.bytes_ import BytesEndsWithOp
+        from .bytes_ops import BytesEndsWithOp
 
         from .bool_ import BoolI
 
         return BoolI(BytesEndsWithOp(self, suffix))
 
     def replace(self, old: BytesArg, new: BytesArg, count: IntArg = -1) -> BytesI:
-        from nu.ops.builtins.bytes_ import BytesReplaceOp
+        from .bytes_ops import BytesReplaceOp
 
         return BytesI(BytesReplaceOp(self, old, new, count))

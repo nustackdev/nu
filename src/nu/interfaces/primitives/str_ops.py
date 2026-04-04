@@ -1,4 +1,4 @@
-"""String ops for everybase.
+"""String-specific ops.
 
 Case transformation: UpperOp, LowerOp, TitleOp, CapitalizeOp, SwapCaseOp
 Stripping: StripOp, LStripOp, RStripOp
@@ -8,7 +8,6 @@ Padding: CenterOp, LJustOp, RJustOp, ZFillOp
 Testing: StartsWithOp, EndsWithOp, IsDigitOp, IsAlphaOp, IsAlnumOp, IsSpaceOp
 Replacing: ReplaceOp
 Encoding: EncodeOp
-Joining: JoinOp
 """
 
 from __future__ import annotations
@@ -34,7 +33,6 @@ __all__ = [
     "IsAlphaOp",
     "IsDigitOp",
     "IsSpaceOp",
-    "JoinOp",
     "LJustOp",
     "LStripOp",
     "LowerOp",
@@ -371,22 +369,4 @@ class EncodeOp(BinaryCalc[bytes]):
         try:
             return left.encode(str(right) if right else "utf-8")
         except (UnicodeEncodeError, LookupError):
-            return INVALID
-
-
-# =============================================================================
-# JOINING (Binary)
-# =============================================================================
-
-
-class JoinOp(BinaryCalc[str]):
-    """Join strings: sep.join(seq)."""
-
-    def apply(self, left: object, right: object) -> str | Sentinel:
-        """Apply."""
-        if not isinstance(right, str):
-            return INVALID
-        try:
-            return right.join(str(x) for x in left)  # type: ignore
-        except TypeError:
             return INVALID

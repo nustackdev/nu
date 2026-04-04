@@ -141,27 +141,27 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def upper(self) -> StrI:
-        from nu.ops.builtins.str_ import UpperOp
+        from .str_ops import UpperOp
 
         return StrI(UpperOp(self))
 
     def lower(self) -> StrI:
-        from nu.ops.builtins.str_ import LowerOp
+        from .str_ops import LowerOp
 
         return StrI(LowerOp(self))
 
     def title(self) -> StrI:
-        from nu.ops.builtins.str_ import TitleOp
+        from .str_ops import TitleOp
 
         return StrI(TitleOp(self))
 
     def capitalize(self) -> StrI:
-        from nu.ops.builtins.str_ import CapitalizeOp
+        from .str_ops import CapitalizeOp
 
         return StrI(CapitalizeOp(self))
 
     def swapcase(self) -> StrI:
-        from nu.ops.builtins.str_ import SwapCaseOp
+        from .str_ops import SwapCaseOp
 
         return StrI(SwapCaseOp(self))
 
@@ -170,17 +170,17 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def strip(self, chars: StrArg | None = None) -> StrI:
-        from nu.ops.builtins.str_ import StripOp
+        from .str_ops import StripOp
 
         return StrI(StripOp(self, chars))
 
     def lstrip(self, chars: StrArg | None = None) -> StrI:
-        from nu.ops.builtins.str_ import LStripOp
+        from .str_ops import LStripOp
 
         return StrI(LStripOp(self, chars))
 
     def rstrip(self, chars: StrArg | None = None) -> StrI:
-        from nu.ops.builtins.str_ import RStripOp
+        from .str_ops import RStripOp
 
         return StrI(RStripOp(self, chars))
 
@@ -189,14 +189,14 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def split(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListI:
-        from nu.ops.builtins.str_ import SplitOp
+        from .str_ops import SplitOp
 
         from nu.interfaces.collections.list_ import ListI
 
         return ListI(SplitOp(self, sep, maxsplit))
 
     def rsplit(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListI:
-        from nu.ops.builtins.str_ import RSplitOp
+        from .str_ops import RSplitOp
 
         from nu.interfaces.collections.list_ import ListI
 
@@ -207,21 +207,21 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def find(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntI:
-        from nu.ops.builtins.str_ import FindOp
+        from .str_ops import FindOp
 
         from .int_ import IntI
 
         return IntI(FindOp(self, sub, start, end))
 
     def rfind(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntI:
-        from nu.ops.builtins.str_ import RFindOp
+        from .str_ops import RFindOp
 
         from .int_ import IntI
 
         return IntI(RFindOp(self, sub, start, end))
 
     def count_substring(self, sub: StrArg) -> IntI:
-        from nu.ops.builtins.str_ import CountSubstringOp
+        from .str_ops import CountSubstringOp
 
         from .int_ import IntI
 
@@ -232,42 +232,42 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def startswith(self, prefix: StrArg) -> BoolI:
-        from nu.ops.builtins.str_ import StartsWithOp
+        from .str_ops import StartsWithOp
 
         from .bool_ import BoolI
 
         return BoolI(StartsWithOp(self, prefix))
 
     def endswith(self, suffix: StrArg) -> BoolI:
-        from nu.ops.builtins.str_ import EndsWithOp
+        from .str_ops import EndsWithOp
 
         from .bool_ import BoolI
 
         return BoolI(EndsWithOp(self, suffix))
 
     def isdigit(self) -> BoolI:
-        from nu.ops.builtins.str_ import IsDigitOp
+        from .str_ops import IsDigitOp
 
         from .bool_ import BoolI
 
         return BoolI(IsDigitOp(self))
 
     def isalpha(self) -> BoolI:
-        from nu.ops.builtins.str_ import IsAlphaOp
+        from .str_ops import IsAlphaOp
 
         from .bool_ import BoolI
 
         return BoolI(IsAlphaOp(self))
 
     def isalnum(self) -> BoolI:
-        from nu.ops.builtins.str_ import IsAlnumOp
+        from .str_ops import IsAlnumOp
 
         from .bool_ import BoolI
 
         return BoolI(IsAlnumOp(self))
 
     def isspace(self) -> BoolI:
-        from nu.ops.builtins.str_ import IsSpaceOp
+        from .str_ops import IsSpaceOp
 
         from .bool_ import BoolI
 
@@ -278,22 +278,22 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def center(self, width: IntArg, fillchar: StrArg = " ") -> StrI:
-        from nu.ops.builtins.str_ import CenterOp
+        from .str_ops import CenterOp
 
         return StrI(CenterOp(self, width, fillchar))
 
     def ljust(self, width: IntArg, fillchar: StrArg = " ") -> StrI:
-        from nu.ops.builtins.str_ import LJustOp
+        from .str_ops import LJustOp
 
         return StrI(LJustOp(self, width, fillchar))
 
     def rjust(self, width: IntArg, fillchar: StrArg = " ") -> StrI:
-        from nu.ops.builtins.str_ import RJustOp
+        from .str_ops import RJustOp
 
         return StrI(RJustOp(self, width, fillchar))
 
     def zfill(self, width: IntArg) -> StrI:
-        from nu.ops.builtins.str_ import ZFillOp
+        from .str_ops import ZFillOp
 
         return StrI(ZFillOp(self, width))
 
@@ -302,7 +302,7 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def replace(self, old: StrArg, new: StrArg, count: IntArg = -1) -> StrI:
-        from nu.ops.builtins.str_ import ReplaceOp
+        from .str_ops import ReplaceOp
 
         return StrI(ReplaceOp(self, old, new, count))
 
@@ -311,7 +311,7 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def encode(self, encoding: StrArg = "utf-8") -> BytesI:
-        from nu.ops.builtins.str_ import EncodeOp
+        from .str_ops import EncodeOp
 
         from .bytes_ import BytesI
 

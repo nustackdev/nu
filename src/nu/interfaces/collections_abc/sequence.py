@@ -108,26 +108,26 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def first(self) -> ElementResultT:
         """Get first element."""
-        from nu.ops import FirstOp
+        from .sequence_ops import FirstOp
 
         return cast("ElementResultT", self._wrap_element_result(FirstOp(self)))
 
     def last(self) -> ElementResultT:
         """Get last element."""
-        from nu.ops import LastOp
+        from .sequence_ops import LastOp
 
         return cast("ElementResultT", self._wrap_element_result(LastOp(self)))
 
     def join(self, separator: StrArg) -> StrI:
         """Join string elements."""
-        from nu.ops import JoinOp
+        from .sequence_ops import JoinOp
         from nu.interfaces.primitives import StrI
 
         return StrI(JoinOp(self, separator))
 
     def index(self, value: Arg[ElementT]) -> IntI:
         """Find index of value."""
-        from nu.ops import IndexOfOp
+        from .sequence_ops import IndexOfOp
         from nu.interfaces.primitives import IntI
 
         return IntI(IndexOfOp(self, value))
@@ -141,7 +141,7 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def count(self, value: Arg[ElementT]) -> IntI:
         """Count occurrences."""
-        from nu.ops import CountOp
+        from .sequence_ops import CountOp
         from nu.interfaces.primitives import IntI
 
         return IntI(CountOp(self, value))
@@ -161,41 +161,41 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
 
     def append(self, value: Arg[ElementT]) -> NoneI:
         """Append item to end of sequence."""
-        from nu.ops.collections.sequence import AppendCmd
+        from .sequence_ops import AppendCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(AppendCmd(self, value))
 
     def extend(self, other: Arg[Iterable[ElementT]]) -> NoneI:
         """Extend sequence with elements from iterable."""
-        from nu.ops.collections.sequence import ExtendCmd
+        from .sequence_ops import ExtendCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(ExtendCmd(self, other))
 
     def insert(self, index: IntArg, value: Arg[ElementT]) -> NoneI:
         """Insert item at index."""
-        from nu.ops.collections.sequence import InsertCmd
+        from .sequence_ops import InsertCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(InsertCmd(self, index, value))
 
     def pop(self, index: IntArg = -1) -> ElementResultT:
         """Remove and return item at index (default: last)."""
-        from nu.ops.collections.sequence import PopCmd
+        from .sequence_ops import PopCmd
 
         return cast("ElementResultT", self._wrap_element_result(PopCmd(self, index)))
 
     def remove(self, value: Arg[ElementT]) -> NoneI:
         """Remove first occurrence of value."""
-        from nu.ops.collections.sequence import RemoveValueCmd
+        from .sequence_ops import RemoveValueCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(RemoveValueCmd(self, value))
 
     def clear(self) -> NoneI:
         """Remove all items."""
-        from nu.ops.collections.shared import ClearCmd
+        from .shared_ops import ClearCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(ClearCmd(self))

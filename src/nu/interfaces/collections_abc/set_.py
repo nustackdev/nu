@@ -119,19 +119,19 @@ class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def union(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
         """Set union."""
-        from nu.ops.collections.set import UnionOp
+        from .set_ops import UnionOp
 
         return cast("CollectionResultT", self._wrap_set_result(UnionOp(self, other)))
 
     def intersection(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
         """Set intersection."""
-        from nu.ops.collections.set import IntersectionOp
+        from .set_ops import IntersectionOp
 
         return cast("CollectionResultT", self._wrap_set_result(IntersectionOp(self, other)))
 
     def difference(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
         """Set difference."""
-        from nu.ops.collections.set import DifferenceOp
+        from .set_ops import DifferenceOp
 
         return cast("CollectionResultT", self._wrap_set_result(DifferenceOp(self, other)))
 
@@ -139,27 +139,27 @@ class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> CollectionResultT:
         """Set symmetric difference."""
-        from nu.ops.collections.set import SymmetricDifferenceOp
+        from .set_ops import SymmetricDifferenceOp
 
         return cast("CollectionResultT", self._wrap_set_result(SymmetricDifferenceOp(self, other)))
 
     def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
         """Check if subset."""
-        from nu.ops.collections.set import IsSubsetOp
+        from .set_ops import IsSubsetOp
         from nu.interfaces.primitives import BoolI
 
         return BoolI(IsSubsetOp(self, other))
 
     def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
         """Check if superset."""
-        from nu.ops.collections.set import IsSupersetOp
+        from .set_ops import IsSupersetOp
         from nu.interfaces.primitives import BoolI
 
         return BoolI(IsSupersetOp(self, other))
 
     def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
         """Check if disjoint."""
-        from nu.ops.collections.set import IsDisjointOp
+        from .set_ops import IsDisjointOp
         from nu.interfaces.primitives import BoolI
 
         return BoolI(IsDisjointOp(self, other))
@@ -179,55 +179,55 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def add(self, value: Arg[ElementT]) -> NoneI:
         """Add element to set."""
-        from nu.ops.collections.set import AddCmd
+        from .set_ops import AddCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(AddCmd(self, value))
 
     def remove(self, value: Arg[ElementT]) -> NoneI:
         """Remove element from set. Returns INVALID if not found."""
-        from nu.ops.collections.set import RemoveCmd
+        from .set_ops import RemoveCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(RemoveCmd(self, value))
 
     def discard(self, value: Arg[ElementT]) -> NoneI:
         """Remove element if present (no error if absent)."""
-        from nu.ops.collections.set import DiscardCmd
+        from .set_ops import DiscardCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(DiscardCmd(self, value))
 
     def pop(self) -> ElementResultT:
         """Remove and return arbitrary element."""
-        from nu.ops.collections.set import SetPopCmd
+        from .set_ops import SetPopCmd
 
         return cast("ElementResultT", self._wrap_element_result(SetPopCmd(self)))
 
     def clear(self) -> NoneI:
         """Remove all items."""
-        from nu.ops.collections.shared import ClearCmd
+        from .shared_ops import ClearCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(ClearCmd(self))
 
     def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Add all elements from other."""
-        from nu.ops.collections.set import SetUpdateCmd
+        from .set_ops import SetUpdateCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(SetUpdateCmd(self, other))
 
     def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Keep only elements found in both."""
-        from nu.ops.collections.set import IntersectionUpdateCmd
+        from .set_ops import IntersectionUpdateCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(IntersectionUpdateCmd(self, other))
 
     def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Remove all elements found in other."""
-        from nu.ops.collections.set import DifferenceUpdateCmd
+        from .set_ops import DifferenceUpdateCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(DifferenceUpdateCmd(self, other))
@@ -236,7 +236,7 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> NoneI:
         """Keep elements in either set but not both."""
-        from nu.ops.collections.set import SymmetricDifferenceUpdateCmd
+        from .set_ops import SymmetricDifferenceUpdateCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(SymmetricDifferenceUpdateCmd(self, other))

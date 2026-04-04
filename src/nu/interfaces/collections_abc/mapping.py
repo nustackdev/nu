@@ -130,31 +130,31 @@ class MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
     def keys(self) -> CollectionResultT:
         """Get all keys."""
-        from nu.ops.collections.mapping import KeysOp
+        from .mapping_ops import KeysOp
 
         return cast("CollectionResultT", self._wrap_keys_result(KeysOp(self)))
 
     def values(self) -> CollectionResultT:
         """Get all values."""
-        from nu.ops.collections.mapping import ValuesOp
+        from .mapping_ops import ValuesOp
 
         return cast("CollectionResultT", self._wrap_values_result(ValuesOp(self)))
 
     def items(self) -> CollectionResultT:
         """Get all key-value pairs."""
-        from nu.ops.collections.mapping import ItemsOp
+        from .mapping_ops import ItemsOp
 
         return cast("CollectionResultT", self._wrap_items_result(ItemsOp(self)))
 
     def get(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Get value with default."""
-        from nu.ops.collections.mapping import GetOp
+        from .mapping_ops import GetOp
 
         return cast("ValueResultT", self._wrap_value_result(GetOp(self, key, default)))
 
     def key_at(self, idx: IntArg) -> ValueResultT:
         """Get key at index position."""
-        from nu.ops.collections.mapping import KeyAtOp
+        from .mapping_ops import KeyAtOp
 
         return cast("ValueResultT", self._wrap_value_result(KeyAtOp(self, idx)))
 
@@ -174,52 +174,52 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
 
     def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> NoneI:
         """Set value at key."""
-        from nu.ops.collections.mapping import SetItemCmd
+        from .mapping_ops import SetItemCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(SetItemCmd(self, key, value))
 
     def delete(self, key: Arg[KeyT]) -> NoneI:
         """Delete entry by key."""
-        from nu.ops.collections.mapping import DeleteItemCmd
+        from .mapping_ops import DeleteItemCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(DeleteItemCmd(self, key))
 
     def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> NoneI:
         """Update mapping with another mapping."""
-        from nu.ops.collections.mapping import UpdateCmd
+        from .mapping_ops import UpdateCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(UpdateCmd(self, other))
 
     def pop(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Remove key and return value, or default if missing."""
-        from nu.ops.collections.mapping import DictPopCmd
+        from .mapping_ops import DictPopCmd
 
         return cast("ValueResultT", self._wrap_value_result(DictPopCmd(self, key, default)))
 
     def popitem(self) -> ValueResultT:
         """Remove and return arbitrary (key, value) pair."""
-        from nu.ops.collections.mapping import PopItemCmd
+        from .mapping_ops import PopItemCmd
 
         return cast("ValueResultT", self._wrap_value_result(PopItemCmd(self)))
 
     def setdefault(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Get value at key, setting it to default if missing."""
-        from nu.ops.collections.mapping import SetDefaultCmd
+        from .mapping_ops import SetDefaultCmd
 
         return cast("ValueResultT", self._wrap_value_result(SetDefaultCmd(self, key, default)))
 
     def clear(self) -> NoneI:
         """Remove all items."""
-        from nu.ops.collections.shared import ClearCmd
+        from .shared_ops import ClearCmd
         from nu.interfaces.primitives import NoneI
 
         return NoneI(ClearCmd(self))
 
     def copy(self) -> ValueResultT:
         """Shallow copy."""
-        from nu.ops.collections.mapping import CopyOp
+        from .mapping_ops import CopyOp
 
         return cast("ValueResultT", self._wrap_value_result(CopyOp(self)))

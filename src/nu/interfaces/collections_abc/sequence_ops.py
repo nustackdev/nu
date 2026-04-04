@@ -5,6 +5,7 @@ Operations:
     LastOp: Last element (seq[-1])
     IndexOfOp: Find index of value (seq.index(value))
     CountOp: Count occurrences (seq.count(value))
+    JoinOp: Join elements into string (sep.join(seq))
 
 Commands:
     AppendCmd: Append item to end of sequence
@@ -20,8 +21,8 @@ from collections.abc import Iterable, MutableSequence, Sequence
 
 from nu.terms import (
     INVALID,
-    BinaryCmd,
     BinaryCalc,
+    BinaryCmd,
     Sentinel,
     TernaryCmd,
     UnaryCalc,
@@ -35,6 +36,7 @@ __all__ = [
     "FirstOp",
     "IndexOfOp",
     "InsertCmd",
+    "JoinOp",
     "LastOp",
     "PopCmd",
     "RemoveValueCmd",
@@ -165,3 +167,21 @@ class RemoveValueCmd[T](BinaryCmd[None]):
         except ValueError:
             return INVALID
         return None
+
+
+# =============================================================================
+# JOINING
+# =============================================================================
+
+
+class JoinOp(BinaryCalc[str]):
+    """Join elements into string: sep.join(seq)."""
+
+    def apply(self, left: object, right: object) -> str | Sentinel:
+        """Apply."""
+        if not isinstance(right, str):
+            return INVALID
+        try:
+            return right.join(str(x) for x in left)  # type: ignore
+        except TypeError:
+            return INVALID
