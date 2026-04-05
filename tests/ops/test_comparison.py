@@ -12,7 +12,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from nu import Context, Value
-from nu.ops.comparison import EqOp, GeOp, GtOp, IdCompOp, LeOp, LtOp, NeOp
+from nu.ops import EqOp, GeOp, GtOp, IdCompOp, LeOp, LtOp, NeOp
 
 
 ints = st.integers(min_value=-10000, max_value=10000)

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu.ops.conversion import (
+from nu.ops import (
     ToBoolOp,
     ToBytesOp,
     ToFloatOp,

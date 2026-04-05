@@ -13,7 +13,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from nu import Context
-from nu.ops.bitwise import BitwiseAndOp, BitwiseNotOp, BitwiseOrOp, LShiftOp, RShiftOp, XorOp
+from nu.ops import BitwiseAndOp, BitwiseNotOp, BitwiseOrOp, LShiftOp, RShiftOp, XorOp
 
 
 ints = st.integers(min_value=-10000, max_value=10000)

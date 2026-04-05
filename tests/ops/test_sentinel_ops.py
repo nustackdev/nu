@@ -9,7 +9,7 @@ propagation - they need to see the sentinel to answer the question.
 from __future__ import annotations
 
 from nu import EMPTY, INVALID, Value
-from nu.ops.sentinel import IsEmptyOp, IsInvalidOp, NotEmptyOp, NotInvalidOp
+from nu.ops import IsEmptyOp, IsInvalidOp, NotEmptyOp, NotInvalidOp
 
 
 # ---------------------------------------------------------------------------

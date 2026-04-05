@@ -14,7 +14,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from nu import Context
-from nu.ops.arithmetic import (
+from nu.ops import (
     AbsOp,
     AddOp,
     DivOp,

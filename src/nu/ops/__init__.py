@@ -1,18 +1,5 @@
 """Nu ops — all concrete operations."""
 
-from .access import AtOp, ContainsOp, LenOp, SliceOp
-from .arithmetic import (
-    AbsOp,
-    AddOp,
-    DivOp,
-    FloorDivOp,
-    ModOp,
-    MulOp,
-    NegOp,
-    PosOp,
-    PowOp,
-    SubOp,
-)
 from .asserts import (
     AssertEmpty,
     AssertEquals,
@@ -29,16 +16,6 @@ from .asserts import (
     SkipIfMissing,
     SkipIfNotEmpty,
 )
-from .attr import DelAttrOp, GetAttrOp, SetAttrOp
-from .bitwise import (
-    BitwiseAndOp,
-    BitwiseNotOp,
-    BitwiseOrOp,
-    LShiftOp,
-    RShiftOp,
-    XorOp,
-)
-from .call import FuncCall, FuncCallCmd, FuncCallOp, MethodCall, MethodCallCmd, MethodCallOp
 from .collection import (
     AllOp,
     AnyOp,
@@ -57,8 +34,53 @@ from .collection import (
     UniqueOp,
     ZipOp,
 )
-from .collection.iteration import Filter, Find, FindIndex, GroupBy, Map, Partition, TakeWhile, ToDict, Unique
-from .comparison import (
+from .collection.iteration import (
+    Filter,
+    Find,
+    FindIndex,
+    GroupBy,
+    Map,
+    Partition,
+    TakeWhile,
+    ToDict,
+    Unique,
+)
+from .control import DoWhile, Forever, If, Seq, Switch, While
+from .error import Assert, Retry, TryCatch
+from .io import Debug, Log, Print
+from .iteration import Fold, ForEach, ForRange
+from .parallel import All, Any, Parallel, Race
+from .primitive.access import AtOp, ContainsOp, LenOp, SliceOp
+from .primitive.arithmetic import (
+    AbsOp,
+    AddOp,
+    DivOp,
+    FloorDivOp,
+    ModOp,
+    MulOp,
+    NegOp,
+    PosOp,
+    PowOp,
+    SubOp,
+)
+from .primitive.attr import DelAttrOp, GetAttrOp, SetAttrOp
+from .primitive.bitwise import (
+    BitwiseAndOp,
+    BitwiseNotOp,
+    BitwiseOrOp,
+    LShiftOp,
+    RShiftOp,
+    XorOp,
+)
+from .primitive.call import (
+    FuncCall,
+    FuncCallCmd,
+    FuncCallOp,
+    MethodCall,
+    MethodCallCmd,
+    MethodCallOp,
+)
+from .primitive.comparison import (
     EqOp,
     GeOp,
     GtOp,
@@ -67,8 +89,7 @@ from .comparison import (
     LtOp,
     NeOp,
 )
-from .control import DoWhile, Forever, If, Seq, Switch, While
-from .conversion import (
+from .primitive.conversion import (
     ToBoolOp,
     ToBytesOp,
     ToFloatOp,
@@ -78,17 +99,13 @@ from .conversion import (
     ToStrOp,
     ToTupleOp,
 )
-from .error import Assert, Retry, TryCatch
-from .io import Debug, Log, Print
-from .iteration import Fold, ForEach, ForRange
-from .logical import (
+from .primitive.logical import (
     AndOp,
     BoolOp,
     NotOp,
     OrOp,
 )
-from .parallel import All, Any, Parallel, Race
-from .sentinel import IsEmptyOp, IsInvalidOp, NotEmptyOp, NotInvalidOp
+from .primitive.sentinel import IsEmptyOp, IsInvalidOp, NotEmptyOp, NotInvalidOp
 from .timing import Debounce, Delay, Throttle, Timed, Timeout
 
 
@@ -191,11 +208,11 @@ __all__ = [
     "TakeOp",
     "TakeWhile",
     "Throttle",
-    "ToDict",
     "Timed",
     "Timeout",
     "ToBoolOp",
     "ToBytesOp",
+    "ToDict",
     "ToFloatOp",
     "ToIntOp",
     "ToListOp",

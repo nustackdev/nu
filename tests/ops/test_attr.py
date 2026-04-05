@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 
 from nu import Value
-from nu.ops.attr import DelAttrOp, GetAttrOp, SetAttrOp
+from nu.ops import DelAttrOp, GetAttrOp, SetAttrOp
 
 
 # ---------------------------------------------------------------------------

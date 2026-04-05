@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu import Value
-from nu.ops.access import AtOp, ContainsOp, LenOp, SliceOp
+from nu.ops import AtOp, ContainsOp, LenOp, SliceOp
 
 
 # ---------------------------------------------------------------------------
