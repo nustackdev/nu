@@ -9,16 +9,9 @@ from __future__ import annotations
 
 from typing import Any
 
-import pytest
-
-from nu import EMPTY, INVALID, Context, Value
+from nu import EMPTY, INVALID, Value
 from nu.terms.op import BinaryCalc
 from nu.terms.sentinel import Empty, Invalid, is_empty, is_invalid, is_sentinel, propagate_special
-
-
-@pytest.fixture
-def ctx() -> Context:
-    return Context()
 
 
 # ---------------------------------------------------------------------------

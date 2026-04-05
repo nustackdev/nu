@@ -6,14 +6,7 @@ literal and returns it on execute. No children, always pure.
 
 from __future__ import annotations
 
-import pytest
-
-from nu import EMPTY, INVALID, Context, Value
-
-
-@pytest.fixture
-def ctx() -> Context:
-    return Context()
+from nu import EMPTY, INVALID, Value
 
 
 # ---------------------------------------------------------------------------

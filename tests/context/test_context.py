@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import pytest
 
-from nu import Context
-
 
 # ---------------------------------------------------------------------------
 # Dummy service types for binding
@@ -31,11 +29,6 @@ class ScopeX:
 
 class ScopeY:
     pass
-
-
-@pytest.fixture
-def ctx() -> Context:
-    return Context()
 
 
 # ---------------------------------------------------------------------------

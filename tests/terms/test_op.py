@@ -8,23 +8,20 @@ from __future__ import annotations
 
 from typing import Any
 
-import pytest
-
-from nu import Context, Nu, Value
+from nu import Nu, Value
 from nu.terms.op import (
     BinaryCalc,
     BinaryCmd,
     Calculation,
     Command,
     NAryCalc,
+    NAryCmd,
+    Op,
     TernaryCalc,
+    TernaryCmd,
     UnaryCalc,
+    UnaryCmd,
 )
-
-
-@pytest.fixture
-def ctx() -> Context:
-    return Context()
 
 
 # ---------------------------------------------------------------------------
@@ -55,6 +52,21 @@ class _SumCalc(NAryCalc[int]):
 class _WriteCmd(BinaryCmd[None]):
     def apply(self, left: Any, right: Any) -> None:
         pass
+
+
+class _NegCmd(UnaryCmd[int]):
+    def apply(self, operand: Any) -> int:
+        return -operand
+
+
+class _ClampCmd(TernaryCmd[int]):
+    def apply(self, first: Any, second: Any, third: Any) -> int:
+        return max(second, min(third, first))
+
+
+class _SumCmd(NAryCmd[int]):
+    def apply(self, *values: Any) -> int:
+        return sum(values)
 
 
 # ---------------------------------------------------------------------------
@@ -167,6 +179,67 @@ def test_calculation_isinstance():
 
 def test_command_isinstance():
     assert isinstance(_WriteCmd(1, 2), Command)
+
+
+# ---------------------------------------------------------------------------
+# All 8 convenience classes: purity + arity wired correctly
+# ---------------------------------------------------------------------------
+
+
+def test_unary_calc_pure():
+    op = _NegCalc(1)
+    assert isinstance(op, Calculation)
+    assert isinstance(op, Op)
+    assert op.is_self_pure is True
+    assert op.child_count == 1
+
+
+def test_unary_cmd_impure():
+    op = _NegCmd(1)
+    assert isinstance(op, Command)
+    assert isinstance(op, Op)
+    assert op.is_self_pure is False
+    assert op.child_count == 1
+
+
+def test_binary_calc_pure():
+    op = _AddCalc(1, 2)
+    assert isinstance(op, Calculation)
+    assert op.is_self_pure is True
+    assert op.child_count == 2
+
+
+def test_binary_cmd_impure():
+    op = _WriteCmd(1, 2)
+    assert isinstance(op, Command)
+    assert op.is_self_pure is False
+    assert op.child_count == 2
+
+
+def test_ternary_calc_pure():
+    op = _ClampCalc(10, 0, 5)
+    assert isinstance(op, Calculation)
+    assert op.is_self_pure is True
+    assert op.child_count == 3
+
+
+def test_ternary_cmd_impure():
+    op = _ClampCmd(10, 0, 5)
+    assert isinstance(op, Command)
+    assert op.is_self_pure is False
+    assert op.child_count == 3
+
+
+def test_nary_calc_pure():
+    op = _SumCalc(1, 2, 3)
+    assert isinstance(op, Calculation)
+    assert op.is_self_pure is True
+
+
+def test_nary_cmd_impure():
+    op = _SumCmd(1, 2, 3)
+    assert isinstance(op, Command)
+    assert op.is_self_pure is False
 
 
 # ---------------------------------------------------------------------------
