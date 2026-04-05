@@ -78,8 +78,6 @@ class ContainsOp(BinaryCalc[bool]):
     - str/bytes: checks if substring is in string
     """
 
-    def apply(self, left: object, right: object) -> bool | Sentinel:
+    def apply(self, left: object, right: object) -> bool | Sentinel:  # type: ignore[override]
         """Apply."""
-        if not isinstance(left, Container):
-            raise TypeError(f"contains() requires a container, got {type(left).__name__}")
-        return right in left  # type: ignore
+        return right in left  # type: ignore[operator]

@@ -62,10 +62,10 @@ class ForRange(Calculation):
 class ForEach(Calculation):
     """Iterate over a sequence, executing body for each element.
 
-    Children: ``[items, body]``
-    Children (with index): ``[items, body, index]``
+    Children: ``[items, body, item?, index?]``
 
-    Sets ``ctx.attrs[index]`` to the current iteration count.
+    Sets ``ctx.attrs[item]`` to the current element and optionally
+    ``ctx.attrs[index]`` to the current iteration count.
     """
 
     def __init__(
@@ -73,10 +73,14 @@ class ForEach(Calculation):
         items: Any,
         body: Nu,
         *,
+        item: StrArg | None = None,
         index: StrArg | None = None,
     ) -> None:
+        self._has_item = item is not None
         self._has_index = index is not None
         children: list = [items, body]
+        if item is not None:
+            children.append(item)
         if index is not None:
             children.append(index)
         super().__init__(*children)
@@ -85,11 +89,18 @@ class ForEach(Calculation):
         items = await self.children[0].execute(ctx)
         body = self.children[1]
 
+        child_idx = 2
+        item_key: str | None = None
         index_key: str | None = None
+        if self._has_item:
+            item_key = await self.children[child_idx].execute(ctx)
+            child_idx += 1
         if self._has_index:
-            index_key = await self.children[2].execute(ctx)
+            index_key = await self.children[child_idx].execute(ctx)
 
-        for i, _elem in enumerate(items):
+        for i, elem in enumerate(items):
+            if item_key is not None:
+                ctx.attrs[item_key] = elem
             if index_key is not None:
                 ctx.attrs[index_key] = i
             await body.execute(ctx)

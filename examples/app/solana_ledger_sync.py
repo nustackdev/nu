@@ -8,7 +8,7 @@ RocksDB. Resumable: skips already-synced slots on restart.
 Demonstrates:
   Shapes        -- Transaction, Ledger (persistent data topology)
   Ref + method  -- typed, lazy RPC access via method descriptors
-  Compositions  -- Seq, If, ForRange, Retry, TryCatch, Log
+  Compositions  -- Seq, If, ForEach, Filter, Retry, TryCatch, Log
   Spans         -- ebv.Transaction (atomic writes)
   Deformations  -- inline_refs (tree rewrites before execution)
   Context       -- storage + service binding
@@ -23,19 +23,23 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import aiohttp
+import aiohttp  # type: ignore
 from virtuals.tkv.storage import StorageProtocol
 
 import nu_dict as ed
 import nu_virtuals as ebv
-from nu import Context, IntArg, IntAttrRef, Nu, Ref, fn
-from nu.ops import ForRange, If, Log, Retry, Seq, TryCatch
-from nu.interfaces import IntI, ListI
+from nu import AnyAttrRef, Context, IntArg, IntAttrRef, Nu, Ref, fn
+from nu.interfaces import AnyI, IntI, ListI
 from nu.method import method
+from nu.ops import AtOp, Filter, ForEach, If, Log, Retry, Seq, TryCatch
 from nu.shapes import Shape
 from nu_virtuals.presets import rocksdb_storage_inmemory
+
+
+if TYPE_CHECKING:
+    from nu.terms.arg import StrArg
 
 
 # =============================================================================
@@ -78,11 +82,9 @@ class SolanaRpc:
         self,
         endpoint: str = MAINNET,
         timeout: float = 30.0,
-        program_filter: str | None = None,
     ) -> None:
         self._endpoint = endpoint
         self._timeout = timeout
-        self._program_filter = program_filter
         self._session: aiohttp.ClientSession | None = None
         self._id = 0
 
@@ -133,7 +135,7 @@ class SolanaRpc:
     async def get_block(self, slot: int) -> list[dict]:
         """Fetch block, parse transactions into dicts matching Transaction shape.
 
-        If program_filter is set, only includes txs touching that program.
+        Returns all transactions. Program filtering is done in the composition.
         Raises DroppedSlotError for skipped/unavailable slots.
         """
         try:
@@ -157,10 +159,7 @@ class SolanaRpc:
         if result is None:
             raise DroppedSlotError(slot)
 
-        txs = _parse_block(slot, result)
-        if self._program_filter:
-            txs = [t for t in txs if _involves_program(t, self._program_filter)]
-        return txs
+        return _parse_block(slot, result)
 
 
 # =============================================================================
@@ -244,18 +243,6 @@ def _parse_token_balances(raw: list[dict] | None) -> list[dict]:
         }
         for tb in raw
     ]
-
-
-def _involves_program(tx: dict, program_id: str) -> bool:
-    """Check if any instruction in the transaction targets the given program."""
-    for ix in tx.get("instructions", []):
-        if ix.get("program_id") == program_id:
-            return True
-    for inner in tx.get("inner_instructions", []):
-        for ix in inner.get("instructions", []):
-            if ix.get("program_id") == program_id:
-                return True
-    return False
 
 
 # =============================================================================
@@ -354,7 +341,6 @@ class _RangeScratch(Shape):
     """Scratch for sync_range iteration."""
 
     slots = ed.ListRef.slot(int)
-    slot_number = ed.IntRef.slot()
 
 
 # =============================================================================
@@ -362,13 +348,53 @@ class _RangeScratch(Shape):
 # =============================================================================
 
 
-def sync_slot(ledger: type[Ledger], slot: IntArg) -> Nu:
+def _involves_program(program_id: StrArg) -> Nu:
+    """Nu condition: does ctx.attrs["tx"] involve the given program?
+
+    All tree nodes, all lazy, short-circuits on first match.
+    Equivalent to nested for loops checking program_id across
+    top-level and inner instructions.
+    """
+    tx = AnyAttrRef("tx")
+    ixs = AnyI(AtOp(tx, "instructions"))
+    inner = AnyI(AtOp(tx, "inner_instructions"))
+
+    # top-level: program_id in [ix["program_id"] for ix in instructions]
+    top_match = fn.Contains(fn.Pluck(ixs, "program_id"), program_id)
+
+    # inner: flatten inner_instructions[*].instructions, same check
+    inner_programs = fn.Pluck(fn.Flatten(fn.Pluck(inner, "instructions")), "program_id")
+    inner_match = fn.Contains(inner_programs, program_id)
+
+    return top_match.or_(inner_match)
+
+
+def _persist_tx(ledger: type[Ledger], slot: IntArg) -> Nu:
+    """Persist one tx from ctx.attrs["tx"] to ledger."""
+    sc = _SlotScratch
+    tx = AnyAttrRef("tx")
+    block_index = IntI(AtOp(tx, "block_index"))
+
+    return Seq(
+        sc.tx_id.store(IntI(slot) * TX_ID_MULTIPLIER + block_index),
+        ledger.txs[sc.tx_id].store(tx),
+    )
+
+
+def sync_slot(ledger: type[Ledger], slot: IntArg, *, program_id: StrArg = "") -> Nu:
     """Fetch one block, parse txs, persist atomically. Skip if already synced.
 
-    Handles dropped slots (skipped on-chain) gracefully.
+    When program_id is truthy, only persists txs involving that program.
+    The filter decision is in the tree -- fully dynamic via If(ToBool(...)).
     """
     sc = _SlotScratch
-    tx_idx = IntAttrRef("tx_idx").get()
+    persist = _persist_tx(ledger, slot)
+
+    iterate_txs = If(
+        fn.ToBool(program_id),
+        Filter(sc.block_txs, condition=_involves_program(program_id), body=persist, item="tx"),
+        ForEach(sc.block_txs, persist, item="tx"),
+    )
 
     return If(
         fn.Contains(ledger.slots_synced, slot).not_(),
@@ -378,15 +404,7 @@ def sync_slot(ledger: type[Ledger], slot: IntArg) -> Nu:
                     sc.block_txs.store(SolanaRef.get_block(slot)),
                     Log("slot", slot, ":", fn.Len(sc.block_txs), "txs"),
                     ebv.Transaction(
-                        ForRange(
-                            0,
-                            fn.Len(sc.block_txs),
-                            Seq(
-                                sc.tx_id.store(IntI(slot) * TX_ID_MULTIPLIER + tx_idx),
-                                ledger.txs[sc.tx_id].store(sc.block_txs[tx_idx]),
-                            ),
-                            index="tx_idx",
-                        ),
+                        iterate_txs,
                         ledger.slots_synced.add(slot),
                     ),
                 ),
@@ -405,26 +423,24 @@ def sync_slot(ledger: type[Ledger], slot: IntArg) -> Nu:
     )
 
 
-def sync_range(ledger: type[Ledger], slot_from: int, slot_to: int) -> Nu:
+def sync_range(
+    ledger: type[Ledger], slot_from: int, slot_to: int, *, program_id: StrArg = ""
+) -> Nu:
     """Sync all confirmed slots in [slot_from, slot_to].
 
     Fetches the confirmed slot list via get_blocks(), then iterates each,
     delegating to sync_slot for fetch + parse + persist.
     """
     sc = _RangeScratch
-    slot_idx = IntAttrRef("slot_idx").get()
+    slot = IntAttrRef("slot")
 
     return Seq(
         sc.slots.store(SolanaRef.get_blocks(slot_from, slot_to)),
         Log("sync:", slot_from, "->", slot_to, "(", fn.Len(sc.slots), "confirmed)"),
-        ForRange(
-            0,
-            fn.Len(sc.slots),
-            Seq(
-                sc.slot_number.store(sc.slots[slot_idx]),
-                sync_slot(ledger, sc.slot_number),
-            ),
-            index="slot_idx",
+        ForEach(
+            sc.slots,
+            sync_slot(ledger, slot, program_id=program_id),
+            item="slot",
         ),
         Log("sync complete"),
     )
@@ -448,7 +464,7 @@ def parse_args() -> argparse.Namespace:
 async def main() -> None:
     args = parse_args()
 
-    rpc = SolanaRpc(endpoint=args.endpoint, program_filter=args.program)
+    rpc = SolanaRpc(endpoint=args.endpoint)
 
     try:
         with rocksdb_storage_inmemory(args.db_path) as store:
@@ -463,7 +479,10 @@ async def main() -> None:
                     If(Ledger.slots_dropped.missing(), Ledger.slots_dropped.store(set())),
                 ),
             )
-            tree = Seq(init, sync_range(Ledger, args.slot_from, slot_to))
+            tree = Seq(
+                init,
+                sync_range(Ledger, args.slot_from, slot_to, program_id=args.program or ""),
+            )
 
             # Deformations: optimize before execution
             tree = ed.inline_refs(tree)
