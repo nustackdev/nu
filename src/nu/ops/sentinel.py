@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.terms import is_empty, is_invalid
-from nu.terms.op import Calculation
+from nu.terms import Calculation
 
 
 if TYPE_CHECKING:

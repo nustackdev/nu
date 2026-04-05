@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from nu.terms.op import Command
+from nu.terms import Command
 
 
 if TYPE_CHECKING:

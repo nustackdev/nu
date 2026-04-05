@@ -18,7 +18,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from nu import Calculation, Nu, Op
-from nu.shapes.protocols import (
+from ..protocols import (
     ChildObservableProtocol,
     ChildrenObservableProtocol,
     DescendantsObservableProtocol,

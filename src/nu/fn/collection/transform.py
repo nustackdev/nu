@@ -7,14 +7,7 @@ Sorted (eager -> ListI)
 from __future__ import annotations
 
 from nu.interfaces import IteratorI, ListI
-from nu.ops.collection.transform import (
-    FilterByOp,
-    FlattenOp,
-    PluckOp,
-    ReversedOp,
-    SortedOp,
-    UniqueOp,
-)
+from nu.ops import FilterByOp, FlattenOp, PluckOp, ReversedOp, SortedOp, UniqueOp
 
 
 __all__ = [

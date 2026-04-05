@@ -37,12 +37,12 @@ class ItemExistableBase:
     """
 
     def exists(self) -> BoolI:
-        from nu.shapes.ops.item import ItemExistsOp
+        from ..ops.item import ItemExistsOp
 
         return BoolI(ItemExistsOp(self))
 
     def missing(self) -> BoolI:
-        from nu.shapes.ops.item import ItemMissingOp
+        from ..ops.item import ItemMissingOp
 
         return BoolI(ItemMissingOp(self))
 
@@ -54,7 +54,7 @@ class ItemSettableBase[ValueT]:
     """
 
     def store(self, value: ValueT | Sentinel | Nu[ValueT | Sentinel]) -> NoneI:
-        from nu.shapes.ops.item import ItemStoreCmd
+        from ..ops.item import ItemStoreCmd
         from nu.utils import ensure_nu
 
         return NoneI(ItemStoreCmd(self, ensure_nu(value)))
@@ -67,6 +67,6 @@ class ItemDeletableBase:
     """
 
     def erase(self) -> NoneI:
-        from nu.shapes.ops.item import ItemEraseCmd
+        from ..ops.item import ItemEraseCmd
 
         return NoneI(ItemEraseCmd(self))

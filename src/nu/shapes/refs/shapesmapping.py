@@ -17,7 +17,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu.shapes.collections import MappingBase, MutableMappingBase, ReactiveMappingBase
+from ..collections import MappingBase, MutableMappingBase, ReactiveMappingBase
 
 from .base import Ref
 

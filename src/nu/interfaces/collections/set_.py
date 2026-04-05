@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interfaces.collections_abc import MutableSetBase, SetLikeBase
-from nu.interfaces.interface import Interface
+from ..collections_abc import MutableSetBase, SetLikeBase
+from ..interface import Interface
 
 
 if TYPE_CHECKING:
-    from nu.interfaces.primitives.bool_ import BoolI
-    from nu.interfaces.special.any_ import AnyI
+    from ..primitives.bool_ import BoolI
+    from ..special.any_ import AnyI
     from nu.terms import FrozenSetArg, Nu, SetArg
 
 
@@ -35,7 +35,7 @@ class SetI[T](
         return ListI(operand)
 
     def _wrap_element_result(self, operand: Nu) -> AnyI:
-        from nu.interfaces.special.any_ import AnyI
+        from ..special.any_ import AnyI
 
         return AnyI(operand)
 
@@ -44,43 +44,43 @@ class SetI[T](
     # =========================================================================
 
     def __gt__(self, other: SetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import GtOp
 
         return BoolI(GtOp(self, other))
 
     def __lt__(self, other: SetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import LtOp
 
         return BoolI(LtOp(self, other))
 
     def __ge__(self, other: SetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import GeOp
 
         return BoolI(GeOp(self, other))
 
     def __le__(self, other: SetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import LeOp
 
         return BoolI(LeOp(self, other))
 
     def eq(self, other: SetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import EqOp
 
         return BoolI(EqOp(self, other))
 
     def ne(self, other: SetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import NeOp
 
         return BoolI(NeOp(self, other))
 
     def is_(self, other: SetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import IdCompOp
 
         return BoolI(IdCompOp(self, other))
@@ -101,7 +101,7 @@ class FrozenSetI[T](
         return ListI(operand)
 
     def _wrap_element_result(self, operand: Nu) -> AnyI:
-        from nu.interfaces.special.any_ import AnyI
+        from ..special.any_ import AnyI
 
         return AnyI(operand)
 
@@ -110,43 +110,43 @@ class FrozenSetI[T](
     # =========================================================================
 
     def __gt__(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import GtOp
 
         return BoolI(GtOp(self, other))
 
     def __lt__(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import LtOp
 
         return BoolI(LtOp(self, other))
 
     def __ge__(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import GeOp
 
         return BoolI(GeOp(self, other))
 
     def __le__(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import LeOp
 
         return BoolI(LeOp(self, other))
 
     def eq(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import EqOp
 
         return BoolI(EqOp(self, other))
 
     def ne(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import NeOp
 
         return BoolI(NeOp(self, other))
 
     def is_(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import IdCompOp
 
         return BoolI(IdCompOp(self, other))

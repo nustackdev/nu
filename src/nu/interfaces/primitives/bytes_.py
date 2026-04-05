@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.interfaces.interface import Interface
+from ..interface import Interface
 
 
 if TYPE_CHECKING:
@@ -181,7 +181,7 @@ class BytesI(Interface[bytes]):
         return BytesI(BytesRStripOp(self, chars))
 
     def split_bytes(self, sep: BytesArg | None = None, maxsplit: IntArg = -1) -> ListI:
-        from nu.interfaces.collections.list_ import ListI
+        from ..collections.list_ import ListI
 
         from .bytes_ops import BytesSplitOp
 

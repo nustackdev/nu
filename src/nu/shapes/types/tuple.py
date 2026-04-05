@@ -8,8 +8,8 @@ Goes directly to everybase since everyshape's SequenceBase is list-specific.
 from __future__ import annotations
 
 from nu.interfaces import Interface
-from nu.interfaces.collections_abc import SequenceBase as _EB_SequenceBase
-from nu.shapes.capabilities import (
+from nu.interfaces import SequenceBase as _EB_SequenceBase
+from ..capabilities import (
     CollectionExistableBase,
 )
 

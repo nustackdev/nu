@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.interfaces.interface import Interface
+from ..interface import Interface
 
 
 if TYPE_CHECKING:

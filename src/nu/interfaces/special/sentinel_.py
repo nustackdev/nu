@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interfaces.interface import Interface
+from ..interface import Interface
 from nu.terms import EMPTY, INVALID, Empty, Invalid, Sentinel
 
 

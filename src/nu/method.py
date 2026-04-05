@@ -11,8 +11,7 @@ import typing
 from typing import overload
 
 from nu.interfaces import Interface
-from nu.ops.attr import GetAttrOp
-from nu.ops.call import MethodCallCmd, MethodCallOp
+from nu.ops import GetAttrOp, MethodCallCmd, MethodCallOp
 from nu.terms import Ref
 
 

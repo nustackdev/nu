@@ -5,13 +5,13 @@ from __future__ import annotations
 from collections.abc import ItemsView, KeysView, ValuesView
 from typing import TYPE_CHECKING
 
-from nu.interfaces.collections_abc import CollectionBase
-from nu.interfaces.collections_abc.set_ import SetLikeBase
-from nu.interfaces.interface import Interface
+from ..collections_abc import CollectionBase
+from ..collections_abc.set_ import SetLikeBase
+from ..interface import Interface
 
 
 if TYPE_CHECKING:
-    from nu.interfaces.special.any_ import AnyI
+    from ..special.any_ import AnyI
     from nu.terms import Nu
 
     from .list_ import ListI
@@ -42,19 +42,19 @@ class DictKeysI[K](
         return ListI(operand)
 
     def _wrap_element_result(self, operand: Nu) -> AnyI:
-        from nu.interfaces.special.any_ import AnyI
+        from ..special.any_ import AnyI
 
         return AnyI(operand)
 
     def to_list(self) -> ListI[K]:
-        from nu.ops.conversion import ToListOp
+        from nu.ops import ToListOp
 
         from .list_ import ListI
 
         return ListI(ToListOp(self))
 
     def to_set(self) -> SetI[K]:
-        from nu.ops.conversion import ToSetOp
+        from nu.ops import ToSetOp
 
         from .set_ import SetI
 
@@ -73,19 +73,19 @@ class DictValuesI[V](
         return ListI(operand)
 
     def _wrap_element_result(self, operand: Nu) -> AnyI:
-        from nu.interfaces.special.any_ import AnyI
+        from ..special.any_ import AnyI
 
         return AnyI(operand)
 
     def to_list(self) -> ListI[V]:
-        from nu.ops.conversion import ToListOp
+        from nu.ops import ToListOp
 
         from .list_ import ListI
 
         return ListI(ToListOp(self))
 
     def to_set(self) -> SetI[V]:
-        from nu.ops.conversion import ToSetOp
+        from nu.ops import ToSetOp
 
         from .set_ import SetI
 
@@ -109,19 +109,19 @@ class DictItemsI[K, V](
         return ListI(operand)
 
     def _wrap_element_result(self, operand: Nu) -> AnyI:
-        from nu.interfaces.special.any_ import AnyI
+        from ..special.any_ import AnyI
 
         return AnyI(operand)
 
     def to_list(self) -> ListI[tuple[K, V]]:
-        from nu.ops.conversion import ToListOp
+        from nu.ops import ToListOp
 
         from .list_ import ListI
 
         return ListI(ToListOp(self))
 
     def to_set(self) -> SetI[tuple[K, V]]:
-        from nu.ops.conversion import ToSetOp
+        from nu.ops import ToSetOp
 
         from .set_ import SetI
 

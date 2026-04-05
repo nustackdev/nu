@@ -6,7 +6,7 @@ import asyncio
 import time
 from typing import TYPE_CHECKING
 
-from nu.terms.op import Calculation, Command
+from nu.terms import Calculation, Command
 
 
 if TYPE_CHECKING:

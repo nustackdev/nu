@@ -18,7 +18,7 @@ from nu import Nu
 
 
 if TYPE_CHECKING:
-    from nu.shapes.refs.base import Ref
+    from ..refs.base import Ref
 
 
 __all__ = [

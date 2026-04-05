@@ -19,12 +19,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.terms import Nu, RValue, Value
-from nu.terms.type_vars import T_co
+from nu.terms import T_co
 
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.interfaces.primitives.bool_ import BoolI
+    from .primitives.bool_ import BoolI
 
 
 __all__ = [
@@ -77,14 +77,14 @@ class Interface(RValue[T_co]):
 
     def is_empty(self) -> BoolI:
         """Check if this value is Empty."""
-        from nu.interfaces.primitives.bool_ import BoolI
+        from .primitives.bool_ import BoolI
         from nu.ops import IsEmptyOp
 
         return BoolI(IsEmptyOp(self))
 
     def is_invalid(self) -> BoolI:
         """Check if this value is Invalid."""
-        from nu.interfaces.primitives.bool_ import BoolI
+        from .primitives.bool_ import BoolI
         from nu.ops import IsInvalidOp
 
         return BoolI(IsInvalidOp(self))

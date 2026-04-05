@@ -7,7 +7,7 @@ ReactiveDictType = DictI + ViewObservable
 from __future__ import annotations
 
 from nu.interfaces import Interface
-from nu.shapes.collections import MutableMappingBase, ReactiveMappingBase
+from ..collections import MutableMappingBase, ReactiveMappingBase
 
 
 __all__ = [

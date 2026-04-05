@@ -7,7 +7,7 @@ ReactiveListBase = ListBase + ViewObservable
 from __future__ import annotations
 
 from nu.interfaces import Interface
-from nu.shapes.collections import MutableSequenceBase, ReactiveSequenceBase
+from ..collections import MutableSequenceBase, ReactiveSequenceBase
 
 
 __all__ = [

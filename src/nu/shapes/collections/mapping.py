@@ -9,9 +9,9 @@ Substrates implement _wrap_* methods and result() directly on their concrete ref
 
 from __future__ import annotations
 
-from nu.interfaces.collections_abc import MappingBase as _EB_MappingBase
-from nu.interfaces.collections_abc import MutableMappingBase as _EB_MutableMappingBase
-from nu.shapes.capabilities import (
+from nu.interfaces import MappingBase as _EB_MappingBase
+from nu.interfaces import MutableMappingBase as _EB_MutableMappingBase
+from ..capabilities import (
     CollectionDeletableBase,
     CollectionExistableBase,
     CollectionSettableBase,

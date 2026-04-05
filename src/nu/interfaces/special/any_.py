@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interfaces.interface import Interface
+from ..interface import Interface
 
 
 if TYPE_CHECKING:
 
-    from nu.interfaces.primitives.bool_ import BoolI
+    from ..primitives.bool_ import BoolI
 
 
 __all__ = [
@@ -114,43 +114,43 @@ class AnyI(Interface[object]):
     # =========================================================================
 
     def __gt__(self, other: object) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import GtOp
 
         return BoolI(GtOp(self, other))
 
     def __lt__(self, other: object) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import LtOp
 
         return BoolI(LtOp(self, other))
 
     def __ge__(self, other: object) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import GeOp
 
         return BoolI(GeOp(self, other))
 
     def __le__(self, other: object) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import LeOp
 
         return BoolI(LeOp(self, other))
 
     def eq(self, other: object) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import EqOp
 
         return BoolI(EqOp(self, other))
 
     def ne(self, other: object) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import NeOp
 
         return BoolI(NeOp(self, other))
 
     def is_(self, other: object) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import IdCompOp
 
         return BoolI(IdCompOp(self, other))
@@ -160,25 +160,25 @@ class AnyI(Interface[object]):
     # =========================================================================
 
     def and_(self, other: object) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import AndOp
 
         return BoolI(AndOp(self, other))
 
     def or_(self, other: object) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import OrOp
 
         return BoolI(OrOp(self, other))
 
     def not_(self) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import NotOp
 
         return BoolI(NotOp(self))
 
     def bool_(self) -> BoolI:
-        from nu.interfaces.primitives.bool_ import BoolI
+        from ..primitives.bool_ import BoolI
         from nu.ops import BoolOp
 
         return BoolI(BoolOp(self))

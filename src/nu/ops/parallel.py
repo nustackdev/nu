@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from nu.terms.op import Calculation
+from nu.terms import Calculation
 
 
 if TYPE_CHECKING:

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from nu.interfaces.primitives import BoolI
+    from ..primitives import BoolI
 
 
 __all__ = [
@@ -32,7 +32,7 @@ class ContainerBase:
 
     def __contains__(self, item: object) -> BoolI:
         """Check if item is in this collection."""
-        from nu.interfaces.primitives import BoolI
-        from nu.ops.access import ContainsOp
+        from ..primitives import BoolI
+        from nu.ops import ContainsOp
 
         return BoolI(ContainsOp(self, item))

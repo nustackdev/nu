@@ -6,7 +6,7 @@ from collections.abc import Iterable, Iterator
 from itertools import chain
 
 from nu.terms import INVALID, BinaryCalc, Sentinel
-from nu.terms.op import Calculation, NAryOp
+from nu.terms import Calculation, NAryOp
 
 
 __all__ = [

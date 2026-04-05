@@ -28,7 +28,7 @@ from .sliceable import SliceableBase, SliceableProtocol
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from nu.interfaces.primitives import IntI, NoneI
+    from ..primitives import IntI, NoneI
     from nu.terms import Arg, IntArg
 
 
@@ -119,7 +119,7 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def index(self, value: Arg[ElementT]) -> IntI:
         """Find index of value."""
-        from nu.interfaces.primitives import IntI
+        from ..primitives import IntI
 
         from .sequence_ops import IndexOfOp
 
@@ -127,7 +127,7 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def count(self, value: Arg[ElementT]) -> IntI:
         """Count occurrences."""
-        from nu.interfaces.primitives import IntI
+        from ..primitives import IntI
 
         from .sequence_ops import CountOp
 
@@ -135,7 +135,7 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def reversed(self) -> CollectionResultT:
         """Reversed copy of this sequence."""
-        from nu.ops.collection.transform import ReversedOp
+        from nu.ops import ReversedOp
 
         return cast("CollectionResultT", self._wrap_iterable_result(ReversedOp(self)))
 
@@ -154,7 +154,7 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
 
     def append(self, value: Arg[ElementT]) -> NoneI:
         """Append item to end of sequence."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .sequence_ops import AppendCmd
 
@@ -162,7 +162,7 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
 
     def extend(self, other: Arg[Iterable[ElementT]]) -> NoneI:
         """Extend sequence with elements from iterable."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .sequence_ops import ExtendCmd
 
@@ -170,7 +170,7 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
 
     def insert(self, index: IntArg, value: Arg[ElementT]) -> NoneI:
         """Insert item at index."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .sequence_ops import InsertCmd
 
@@ -184,7 +184,7 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
 
     def remove(self, value: Arg[ElementT]) -> NoneI:
         """Remove first occurrence of value."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .sequence_ops import RemoveValueCmd
 
@@ -192,7 +192,7 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
 
     def reverse(self) -> NoneI:
         """Reverse sequence in-place."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .sequence_ops import ReverseCmd
 
@@ -200,7 +200,7 @@ class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResul
 
     def clear(self) -> NoneI:
         """Remove all items."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .shared_ops import ClearCmd
 

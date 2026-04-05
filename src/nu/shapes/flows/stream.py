@@ -43,7 +43,7 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from nu import Sentinel
-from nu.terms.op import Calculation
+from nu.terms import Calculation
 from nu.utils import ensure_nu
 
 from ..ops.cursor import AdvanceCursorOp
@@ -104,7 +104,7 @@ class Stream(Calculation):
         source_term = ensure_nu(source)
 
         # Cursor ref: AttrRef that reads log_key from ctx.attrs
-        from nu.context.attr_refs import AttrRef
+        from nu.context import AttrRef
 
         cursor_ref = AttrRef(log_key)
 

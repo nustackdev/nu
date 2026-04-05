@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu.shapes.collections import MutableSequenceBase, ReactiveSequenceBase, SequenceBase
+from ..collections import MutableSequenceBase, ReactiveSequenceBase, SequenceBase
 
 from .base import Ref
 

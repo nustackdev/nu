@@ -7,8 +7,8 @@ ReactiveSetType = SetI + ViewObservable
 from __future__ import annotations
 
 from nu.interfaces import Interface
-from nu.shapes.collections.set import MutableSetBase as _MutableSetBase
-from nu.shapes.collections.set import ReactiveSetBase as _ReactiveSetBase
+from ..collections.set import MutableSetBase as _MutableSetBase
+from ..collections.set import ReactiveSetBase as _ReactiveSetBase
 
 
 __all__ = [

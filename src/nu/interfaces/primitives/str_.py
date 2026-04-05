@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.interfaces.interface import Interface
+from ..interface import Interface
 
 
 if TYPE_CHECKING:
@@ -189,14 +189,14 @@ class StrI(Interface[str]):
     # =========================================================================
 
     def split(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListI:
-        from nu.interfaces.collections.list_ import ListI
+        from ..collections.list_ import ListI
 
         from .str_ops import SplitOp
 
         return ListI(SplitOp(self, sep, maxsplit))
 
     def rsplit(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListI:
-        from nu.interfaces.collections.list_ import ListI
+        from ..collections.list_ import ListI
 
         from .str_ops import RSplitOp
 

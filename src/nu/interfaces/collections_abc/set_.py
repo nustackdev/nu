@@ -23,7 +23,7 @@ from .collection import CollectionBase, CollectionProtocol
 
 
 if TYPE_CHECKING:
-    from nu.interfaces.primitives import BoolI, NoneI
+    from ..primitives import BoolI, NoneI
     from nu.terms import Arg, Nu
 
 
@@ -144,7 +144,7 @@ class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
         """Check if subset."""
-        from nu.interfaces.primitives import BoolI
+        from ..primitives import BoolI
 
         from .set_ops import IsSubsetOp
 
@@ -152,7 +152,7 @@ class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
         """Check if superset."""
-        from nu.interfaces.primitives import BoolI
+        from ..primitives import BoolI
 
         from .set_ops import IsSupersetOp
 
@@ -160,7 +160,7 @@ class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
         """Check if disjoint."""
-        from nu.interfaces.primitives import BoolI
+        from ..primitives import BoolI
 
         from .set_ops import IsDisjointOp
 
@@ -181,7 +181,7 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def add(self, value: Arg[ElementT]) -> NoneI:
         """Add element to set."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .set_ops import AddCmd
 
@@ -189,7 +189,7 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def remove(self, value: Arg[ElementT]) -> NoneI:
         """Remove element from set. Returns INVALID if not found."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .set_ops import RemoveCmd
 
@@ -197,7 +197,7 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def discard(self, value: Arg[ElementT]) -> NoneI:
         """Remove element if present (no error if absent)."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .set_ops import DiscardCmd
 
@@ -211,7 +211,7 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def clear(self) -> NoneI:
         """Remove all items."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .shared_ops import ClearCmd
 
@@ -219,7 +219,7 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Add all elements from other."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .set_ops import SetUpdateCmd
 
@@ -227,7 +227,7 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Keep only elements found in both."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .set_ops import IntersectionUpdateCmd
 
@@ -235,7 +235,7 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Remove all elements found in other."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .set_ops import DifferenceUpdateCmd
 
@@ -245,7 +245,7 @@ class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> NoneI:
         """Keep elements in either set but not both."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .set_ops import SymmetricDifferenceUpdateCmd
 

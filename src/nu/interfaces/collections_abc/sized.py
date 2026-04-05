@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 
 if TYPE_CHECKING:
-    from nu.interfaces.primitives import IntI
+    from ..primitives import IntI
 
 
 __all__ = [
@@ -34,7 +34,7 @@ class SizedBase:
 
     def len(self) -> IntI:
         """Length of this collection."""
-        from nu.interfaces.primitives import IntI
-        from nu.ops.access import LenOp
+        from ..primitives import IntI
+        from nu.ops import LenOp
 
         return IntI(LenOp(self))

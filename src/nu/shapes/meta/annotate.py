@@ -16,7 +16,7 @@ Usage::
 from __future__ import annotations
 
 from nu.terms import Nu
-from nu.transform.transform import map_nodes
+from nu.transform import map_nodes
 
 
 __all__ = [
@@ -34,10 +34,10 @@ def annotate_ref_loads[N: Nu](root: N) -> N:
 
     This is idempotent — already-wrapped refs are not double-wrapped.
     """
-    from nu.shapes.collections.items import ItemBase
-    from nu.shapes.ops.collection import CollectionLoadOp
-    from nu.shapes.ops.item import ItemLoadOp
-    from nu.shapes.refs.base import Ref as ShapeRef
+    from ..collections.items import ItemBase
+    from ..ops.collection import CollectionLoadOp
+    from ..ops.item import ItemLoadOp
+    from ..refs.base import Ref as ShapeRef
 
     load_op_types = (ItemLoadOp, CollectionLoadOp)
 

@@ -6,7 +6,7 @@ import asyncio
 from typing import TYPE_CHECKING, Any
 
 from nu.interfaces import NoneI
-from nu.terms.op import Calculation, Command
+from nu.terms import Calculation, Command
 
 
 if TYPE_CHECKING:

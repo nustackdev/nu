@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from nu import Nu, Sentinel
-    from nu.shapes.ops.reactive import (
+    from ..ops.reactive import (
         OnChangeOp,
         OnChildChangeOp,
         OnChildrenChangeOp,
@@ -40,7 +40,7 @@ class PrimitiveObservableBase:
     """
 
     def on_change(self) -> OnPrimitiveChangeOp:
-        from nu.shapes.ops.reactive import OnPrimitiveChangeOp
+        from ..ops.reactive import OnPrimitiveChangeOp
 
         return OnPrimitiveChangeOp(self)
 
@@ -56,21 +56,21 @@ class ViewObservableBase:
     """
 
     def on_change(self) -> OnChangeOp:
-        from nu.shapes.ops.reactive import OnChangeOp
+        from ..ops.reactive import OnChangeOp
 
         return OnChangeOp(self)
 
     def on_child_change(self, address: str | Sentinel | Nu[str | Sentinel]) -> OnChildChangeOp:
-        from nu.shapes.ops.reactive import OnChildChangeOp
+        from ..ops.reactive import OnChildChangeOp
 
         return OnChildChangeOp(self, address)
 
     def on_children_change(self) -> OnChildrenChangeOp:
-        from nu.shapes.ops.reactive import OnChildrenChangeOp
+        from ..ops.reactive import OnChildrenChangeOp
 
         return OnChildrenChangeOp(self)
 
     def on_descendants_change(self, *pattern: object) -> OnDescendantsChangeOp:
-        from nu.shapes.ops.reactive import OnDescendantsChangeOp
+        from ..ops.reactive import OnDescendantsChangeOp
 
         return OnDescendantsChangeOp(self, *pattern)

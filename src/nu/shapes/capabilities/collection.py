@@ -34,12 +34,12 @@ class CollectionExistableBase:
     """
 
     def exists(self) -> BoolI:
-        from nu.shapes.ops.collection import CollectionExistsOp
+        from ..ops.collection import CollectionExistsOp
 
         return BoolI(CollectionExistsOp(self))
 
     def missing(self) -> BoolI:
-        from nu.shapes.ops.collection import CollectionMissingOp
+        from ..ops.collection import CollectionMissingOp
 
         return BoolI(CollectionMissingOp(self))
 
@@ -51,7 +51,7 @@ class CollectionSettableBase[CollectionT]:
     """
 
     def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> NoneI:
-        from nu.shapes.ops.collection import CollectionStoreCmd
+        from ..ops.collection import CollectionStoreCmd
         from nu.utils import ensure_nu
 
         return NoneI(CollectionStoreCmd(self, ensure_nu(value)))
@@ -64,6 +64,6 @@ class CollectionDeletableBase:
     """
 
     def erase(self) -> NoneI:
-        from nu.shapes.ops.collection import CollectionEraseCmd
+        from ..ops.collection import CollectionEraseCmd
 
         return NoneI(CollectionEraseCmd(self))

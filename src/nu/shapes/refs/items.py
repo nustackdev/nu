@@ -12,7 +12,7 @@ Type Parameters:
 from __future__ import annotations
 
 from nu import Value
-from nu.shapes.collections import ItemBase, MutableItemBase, ReactiveItemBase
+from ..collections import ItemBase, MutableItemBase, ReactiveItemBase
 
 from .base import Ref
 

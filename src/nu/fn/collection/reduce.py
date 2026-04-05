@@ -7,7 +7,7 @@ Any, All (eager -> BoolI)
 from __future__ import annotations
 
 from nu.interfaces import AnyI, BoolI
-from nu.ops.collection.reduce import AllOp, AnyOp, MaxOp, MinOp, SumOp
+from nu.ops import AllOp, AnyOp, MaxOp, MinOp, SumOp
 
 
 __all__ = [

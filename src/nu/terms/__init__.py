@@ -33,6 +33,7 @@ from .op import (
     UnaryOp,
 )
 from .ref import Ref
+from .type_vars import T_co
 from .sentinel import (
     EMPTY,
     INVALID,
@@ -87,6 +88,7 @@ __all__ = [
     "TernaryCalc",
     "TernaryCmd",
     "TernaryOp",
+    "T_co",
     "TupleArg",
     "UnaryCalc",
     "UnaryCmd",

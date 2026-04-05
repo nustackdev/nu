@@ -15,7 +15,7 @@ Type Parameters:
 
 from __future__ import annotations
 
-from nu.shapes.collections import MutableSetBase, ReactiveSetBase, SetLikeBase
+from ..collections import MutableSetBase, ReactiveSetBase, SetLikeBase
 
 from .base import Ref
 

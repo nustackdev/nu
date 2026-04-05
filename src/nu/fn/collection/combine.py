@@ -6,7 +6,7 @@ Zip, Chain, Enumerate (lazy -> IteratorI)
 from __future__ import annotations
 
 from nu.interfaces import IteratorI
-from nu.ops.collection.combine import ChainOp, EnumerateOp, ZipOp
+from nu.ops import ChainOp, EnumerateOp, ZipOp
 
 
 __all__ = [

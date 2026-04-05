@@ -39,8 +39,8 @@ def ensure_nu(value: object) -> Nu:
         >>> ensure_nu("hello")  # → StrI("hello")
         >>> ensure_nu(price.get())  # → price.get() (unchanged)
     """
-    from nu.interfaces.collections import DictI, FrozenSetI, ListI, SetI, TupleI
-    from nu.interfaces.primitives import BoolI, BytesI, FloatI, IntI, NoneI, StrI
+    from nu.interfaces import DictI, FrozenSetI, ListI, SetI, TupleI
+    from nu.interfaces import BoolI, BytesI, FloatI, IntI, NoneI, StrI
     from nu.terms import Nu
 
     if isinstance(value, Nu):
@@ -86,9 +86,9 @@ def typed_value(result_type: object, op: Nu) -> Nu:
         >>> typed_value(int, GetOp(ref))  # → IntI(GetOp(ref))
         >>> typed_value(str, some_op)  # → StrI(some_op)
     """
-    from nu.interfaces.collections import DictI, FrozenSetI, ListI, SetI, TupleI
-    from nu.interfaces.primitives import BoolI, BytesI, FloatI, IntI, NoneI, StrI
-    from nu.interfaces.special import AnyI
+    from nu.interfaces import DictI, FrozenSetI, ListI, SetI, TupleI
+    from nu.interfaces import BoolI, BytesI, FloatI, IntI, NoneI, StrI
+    from nu.interfaces import AnyI
 
     if result_type is int:
         return IntI(op)

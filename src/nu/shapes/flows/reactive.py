@@ -15,7 +15,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any
 
-from nu.terms.op import Calculation
+from nu.terms import Calculation
 from nu.utils import ensure_nu
 
 from ..ops import ChangeOp  # noqa: TC001 - runtime dependency

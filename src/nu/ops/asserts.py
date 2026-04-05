@@ -16,8 +16,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from nu.terms import Nu
 
-from nu.ops.control import If
-from nu.ops.error import Assert
+from .control import If
+from .error import Assert
 
 
 __all__ = [

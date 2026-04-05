@@ -26,7 +26,7 @@ from .collection import CollectionBase, CollectionProtocol
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from nu.interfaces.primitives import NoneI
+    from ..primitives import NoneI
     from nu.terms import Arg, Nu
 
 
@@ -166,7 +166,7 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
 
     def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> NoneI:
         """Set value at key."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .mapping_ops import SetItemCmd
 
@@ -174,7 +174,7 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
 
     def delete(self, key: Arg[KeyT]) -> NoneI:
         """Delete entry by key."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .mapping_ops import DeleteItemCmd
 
@@ -182,7 +182,7 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
 
     def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> NoneI:
         """Update mapping with another mapping."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .mapping_ops import UpdateCmd
 
@@ -208,7 +208,7 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
 
     def clear(self) -> NoneI:
         """Remove all items."""
-        from nu.interfaces.primitives import NoneI
+        from ..primitives import NoneI
 
         from .shared_ops import ClearCmd
 
