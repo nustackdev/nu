@@ -88,7 +88,7 @@ from .logical import (
     OrOp,
 )
 from .parallel import All, Any, Parallel, Race
-from .sentinel import IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
+from .sentinel import IsEmptyOp, IsInvalidOp, NotEmptyOp, NotInvalidOp
 from .timing import Debounce, Delay, Throttle, Timed, Timeout
 
 
@@ -147,7 +147,7 @@ __all__ = [
     "IdCompOp",
     "If",
     "IsEmptyOp",
-    "IsNaNOp",
+    "IsInvalidOp",
     "LShiftOp",
     "LeOp",
     "LenOp",
@@ -164,7 +164,7 @@ __all__ = [
     "NeOp",
     "NegOp",
     "NotEmptyOp",
-    "NotNaNOp",
+    "NotInvalidOp",
     "NotOp",
     "OrOp",
     "Parallel",

@@ -85,9 +85,9 @@ class Interface(RValue[T_co]):
     def is_invalid(self) -> BoolI:
         """Check if this value is Invalid."""
         from nu.interfaces.primitives.bool_ import BoolI
-        from nu.ops import IsNaNOp
+        from nu.ops import IsInvalidOp
 
-        return BoolI(IsNaNOp(self))
+        return BoolI(IsInvalidOp(self))
 
     def is_sentinel(self) -> BoolI:
         """Check if this value is a special value."""

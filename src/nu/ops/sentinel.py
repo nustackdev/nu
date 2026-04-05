@@ -1,50 +1,72 @@
-"""Special value check ops.
+"""Sentinel check ops.
 
-IsEmptyOp, IsNaNOp, NotEmptyOp, NotNaNOp
+IsEmptyOp, IsInvalidOp, NotEmptyOp, NotInvalidOp
 
-Operations for checking special sentinel values (Empty, Invalid).
+These are inspections, not computations. They need to see sentinels
+to answer the question, so they bypass NAryOp's sentinel propagation
+by overriding execute() directly.
 """
 
 from __future__ import annotations
 
-from nu.terms import UnaryCalc, is_empty, is_invalid
+from typing import TYPE_CHECKING
+
+from nu.terms import is_empty, is_invalid
+from nu.terms.op import Calculation
+
+
+if TYPE_CHECKING:
+    from nu.context import Context
+    from nu.terms import Nu
 
 
 __all__ = [
     "IsEmptyOp",
-    "IsNaNOp",
+    "IsInvalidOp",
     "NotEmptyOp",
-    "NotNaNOp",
+    "NotInvalidOp",
 ]
 
 
-class IsEmptyOp(UnaryCalc[bool]):
+class IsEmptyOp(Calculation[bool]):
     """Check if operand is Empty sentinel."""
 
-    def apply(self, operand: object) -> bool:
-        """Apply."""
-        return is_empty(operand)
+    def __init__(self, operand: Nu) -> None:
+        super().__init__(operand)
+
+    async def execute(self, ctx: Context) -> bool:
+        value = await self.children[0].execute(ctx)
+        return is_empty(value)
 
 
-class NotEmptyOp(UnaryCalc[bool]):
+class NotEmptyOp(Calculation[bool]):
     """Check if operand is NOT Empty sentinel."""
 
-    def apply(self, operand: object) -> bool:
-        """Apply."""
-        return not is_empty(operand)
+    def __init__(self, operand: Nu) -> None:
+        super().__init__(operand)
+
+    async def execute(self, ctx: Context) -> bool:
+        value = await self.children[0].execute(ctx)
+        return not is_empty(value)
 
 
-class IsNaNOp(UnaryCalc[bool]):
+class IsInvalidOp(Calculation[bool]):
     """Check if operand is Invalid sentinel."""
 
-    def apply(self, operand: object) -> bool:
-        """Apply."""
-        return is_invalid(operand)
+    def __init__(self, operand: Nu) -> None:
+        super().__init__(operand)
+
+    async def execute(self, ctx: Context) -> bool:
+        value = await self.children[0].execute(ctx)
+        return is_invalid(value)
 
 
-class NotNaNOp(UnaryCalc[bool]):
+class NotInvalidOp(Calculation[bool]):
     """Check if operand is NOT Invalid sentinel."""
 
-    def apply(self, operand: object) -> bool:
-        """Apply."""
-        return not is_invalid(operand)
+    def __init__(self, operand: Nu) -> None:
+        super().__init__(operand)
+
+    async def execute(self, ctx: Context) -> bool:
+        value = await self.children[0].execute(ctx)
+        return not is_invalid(value)
