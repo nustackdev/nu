@@ -13,7 +13,6 @@ from hypothesis import strategies as st
 
 from nu import Context, Value
 from nu.ops.comparison import EqOp, GeOp, GtOp, IdCompOp, LeOp, LtOp, NeOp
-from nu.terms.sentinel import is_invalid
 
 
 ints = st.integers(min_value=-10000, max_value=10000)
@@ -115,11 +114,11 @@ async def test_id_comp_equal_but_different(ctx):
 
 
 # ---------------------------------------------------------------------------
-# TypeError -> INVALID
+# TypeError raises
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("op_cls", [GtOp, LtOp, GeOp, LeOp])
-async def test_type_error_returns_invalid(ctx, op_cls):
-    result = await op_cls("hello", 3).execute(ctx)
-    assert is_invalid(result)
+async def test_type_error_raises(ctx, op_cls):
+    with pytest.raises(TypeError):
+        await op_cls("hello", 3).execute(ctx)

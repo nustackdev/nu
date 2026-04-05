@@ -8,7 +8,7 @@ All ops use every.Op base classes with Calculation mixin (pure).
 
 from __future__ import annotations
 
-from nu.terms import INVALID, BinaryCalc, Sentinel, UnaryCalc
+from nu.terms import BinaryCalc, UnaryCalc
 
 
 __all__ = [
@@ -33,34 +33,25 @@ __all__ = [
 class NegOp[ResultT](UnaryCalc[ResultT]):
     """Negation: -operand."""
 
-    def apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT:
         """Apply."""
-        try:
-            return -operand  # type: ignore
-        except TypeError:
-            return INVALID
+        return -operand  # type: ignore
 
 
 class AbsOp[ResultT](UnaryCalc[ResultT]):
     """Absolute value: abs(operand)."""
 
-    def apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT:
         """Apply."""
-        try:
-            return abs(operand)  # type: ignore
-        except TypeError:
-            return INVALID
+        return abs(operand)  # type: ignore
 
 
 class PosOp[ResultT](UnaryCalc[ResultT]):
     """Unary plus: +operand."""
 
-    def apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT:
         """Apply."""
-        try:
-            return +operand  # type: ignore
-        except TypeError:
-            return INVALID
+        return +operand  # type: ignore
 
 
 # =============================================================================
@@ -71,75 +62,54 @@ class PosOp[ResultT](UnaryCalc[ResultT]):
 class AddOp[ResultT](BinaryCalc[ResultT]):
     """Addition: left + right."""
 
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        try:
-            return left + right  # type: ignore
-        except TypeError:
-            return INVALID
+        return left + right  # type: ignore
 
 
 class SubOp[ResultT](BinaryCalc[ResultT]):
     """Subtraction: left - right."""
 
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        try:
-            return left - right  # type: ignore
-        except TypeError:
-            return INVALID
+        return left - right  # type: ignore
 
 
 class MulOp[ResultT](BinaryCalc[ResultT]):
     """Multiplication: left * right."""
 
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        try:
-            return left * right  # type: ignore
-        except TypeError:
-            return INVALID
+        return left * right  # type: ignore
 
 
 class DivOp[ResultT](BinaryCalc[ResultT]):
     """Division: left / right."""
 
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        try:
-            return left / right  # type: ignore
-        except TypeError:
-            return INVALID
+        return left / right  # type: ignore
 
 
 class FloorDivOp[ResultT](BinaryCalc[ResultT]):
     """Floor division: left // right."""
 
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        try:
-            return left // right  # type: ignore
-        except TypeError:
-            return INVALID
+        return left // right  # type: ignore
 
 
 class ModOp[ResultT](BinaryCalc[ResultT]):
     """Modulo: left % right."""
 
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        try:
-            return left % right  # type: ignore
-        except TypeError:
-            return INVALID
+        return left % right  # type: ignore
 
 
 class PowOp[ResultT](BinaryCalc[ResultT]):
     """Power: left ** right."""
 
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        try:
-            return left**right  # type: ignore
-        except TypeError:
-            return INVALID
+        return left**right  # type: ignore

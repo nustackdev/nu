@@ -14,7 +14,6 @@ from hypothesis import strategies as st
 
 from nu import Context
 from nu.ops.bitwise import BitwiseAndOp, BitwiseNotOp, BitwiseOrOp, LShiftOp, RShiftOp, XorOp
-from nu.terms.sentinel import is_invalid
 
 
 ints = st.integers(min_value=-10000, max_value=10000)
@@ -103,7 +102,7 @@ async def test_rshift_basic(ctx):
 
 
 # ---------------------------------------------------------------------------
-# TypeError -> INVALID
+# TypeError raises
 # ---------------------------------------------------------------------------
 
 
@@ -111,11 +110,11 @@ async def test_rshift_basic(ctx):
     "op_cls",
     [BitwiseAndOp, BitwiseOrOp, XorOp, LShiftOp, RShiftOp],
 )
-async def test_binary_type_error_returns_invalid(ctx, op_cls):
-    result = await op_cls("hello", 3).execute(ctx)
-    assert is_invalid(result)
+async def test_binary_type_error_raises(ctx, op_cls):
+    with pytest.raises(TypeError):
+        await op_cls("hello", 3).execute(ctx)
 
 
-async def test_unary_type_error_returns_invalid(ctx):
-    result = await BitwiseNotOp("hello").execute(ctx)
-    assert is_invalid(result)
+async def test_unary_type_error_raises(ctx):
+    with pytest.raises(TypeError):
+        await BitwiseNotOp("hello").execute(ctx)

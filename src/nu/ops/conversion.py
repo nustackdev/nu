@@ -1,13 +1,11 @@
 """Type conversion ops.
 
 ToIntOp, ToFloatOp, ToBoolOp, ToStrOp, ToBytesOp, ToListOp, ToSetOp, ToTupleOp
-
-All conversions return Invalid on conversion failure.
 """
 
 from __future__ import annotations
 
-from nu.terms import INVALID, Sentinel, UnaryCalc
+from nu.terms import UnaryCalc
 
 
 __all__ = [
@@ -30,45 +28,33 @@ __all__ = [
 class ToIntOp(UnaryCalc[int]):
     """Convert value to integer."""
 
-    def apply(self, operand: object) -> int | Sentinel:
+    def apply(self, operand: object) -> int:
         """Apply."""
-        try:
-            return int(operand)  # type: ignore
-        except (TypeError, ValueError):
-            return INVALID
+        return int(operand)  # type: ignore
 
 
 class ToFloatOp(UnaryCalc[float]):
     """Convert value to float."""
 
-    def apply(self, operand: object) -> float | Sentinel:
+    def apply(self, operand: object) -> float:
         """Apply."""
-        try:
-            return float(operand)  # type: ignore
-        except (TypeError, ValueError):
-            return INVALID
+        return float(operand)  # type: ignore
 
 
 class ToBoolOp(UnaryCalc[bool]):
     """Convert value to boolean."""
 
-    def apply(self, operand: object) -> bool | Sentinel:
+    def apply(self, operand: object) -> bool:
         """Apply."""
-        try:
-            return bool(operand)
-        except (TypeError, ValueError):
-            return INVALID
+        return bool(operand)
 
 
 class ToStrOp(UnaryCalc[str]):
     """Convert value to string."""
 
-    def apply(self, operand: object) -> str | Sentinel:
+    def apply(self, operand: object) -> str:
         """Apply."""
-        try:
-            return str(operand)
-        except (TypeError, ValueError):
-            return INVALID
+        return str(operand)
 
 
 class ToBytesOp(UnaryCalc[bytes]):
@@ -91,18 +77,15 @@ class ToBytesOp(UnaryCalc[bytes]):
         super().__init__(operand)
         self._encoding = encoding
 
-    def apply(self, operand: object) -> bytes | Sentinel:
+    def apply(self, operand: object) -> bytes:
         """Apply."""
-        try:
-            if isinstance(operand, bytes):
-                return operand
-            if isinstance(operand, str):
-                return operand.encode(self._encoding)
-            if isinstance(operand, bytearray):
-                return bytes(operand)
-            return bytes(operand)  # type: ignore
-        except (TypeError, ValueError, UnicodeEncodeError):
-            return INVALID
+        if isinstance(operand, bytes):
+            return operand
+        if isinstance(operand, str):
+            return operand.encode(self._encoding)
+        if isinstance(operand, bytearray):
+            return bytes(operand)
+        return bytes(operand)  # type: ignore
 
 
 # =============================================================================
@@ -113,31 +96,22 @@ class ToBytesOp(UnaryCalc[bytes]):
 class ToListOp[T](UnaryCalc[list[T]]):
     """Convert value to list."""
 
-    def apply(self, operand: object) -> list[T] | Sentinel:
+    def apply(self, operand: object) -> list[T]:
         """Apply."""
-        try:
-            return list(operand)  # type: ignore
-        except TypeError:
-            return INVALID
+        return list(operand)  # type: ignore
 
 
 class ToSetOp[T](UnaryCalc[set[T]]):
     """Convert value to set."""
 
-    def apply(self, operand: object) -> set[T] | Sentinel:
+    def apply(self, operand: object) -> set[T]:
         """Apply."""
-        try:
-            return set(operand)  # type: ignore
-        except TypeError:
-            return INVALID
+        return set(operand)  # type: ignore
 
 
 class ToTupleOp[*Ts](UnaryCalc[tuple[*Ts]]):
     """Convert value to tuple."""
 
-    def apply(self, operand: object) -> tuple[*Ts] | Sentinel:
+    def apply(self, operand: object) -> tuple[*Ts]:
         """Apply."""
-        try:
-            return tuple(operand)  # type: ignore
-        except TypeError:
-            return INVALID
+        return tuple(operand)  # type: ignore

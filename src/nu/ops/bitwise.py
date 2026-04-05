@@ -9,7 +9,7 @@ Use .bitand(), .bitor(), .bitnot() methods instead.
 
 from __future__ import annotations
 
-from nu.terms import INVALID, BinaryCalc, Sentinel, UnaryCalc
+from nu.terms import BinaryCalc, UnaryCalc
 
 
 __all__ = [
@@ -34,12 +34,9 @@ class BitwiseNotOp[ResultT](UnaryCalc[ResultT]):
     Use .bitnot() method instead.
     """
 
-    def apply(self, operand: object) -> ResultT | Sentinel:
+    def apply(self, operand: object) -> ResultT:
         """Apply."""
-        try:
-            return ~operand  # type: ignore
-        except TypeError:
-            return INVALID
+        return ~operand  # type: ignore
 
 
 # =============================================================================
@@ -54,12 +51,9 @@ class BitwiseAndOp[ResultT](BinaryCalc[ResultT]):
     Use .bitand() method to create this operation.
     """
 
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        try:
-            return left & right  # type: ignore
-        except TypeError:
-            return INVALID
+        return left & right  # type: ignore
 
 
 class BitwiseOrOp[ResultT](BinaryCalc[ResultT]):
@@ -69,42 +63,30 @@ class BitwiseOrOp[ResultT](BinaryCalc[ResultT]):
     Use .bitor() method to create this operation.
     """
 
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        try:
-            return left | right  # type: ignore
-        except TypeError:
-            return INVALID
+        return left | right  # type: ignore
 
 
 class XorOp[ResultT](BinaryCalc[ResultT]):
     """Bitwise XOR: left ^ right."""
 
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        try:
-            return left ^ right  # type: ignore
-        except TypeError:
-            return INVALID
+        return left ^ right  # type: ignore
 
 
 class LShiftOp[ResultT](BinaryCalc[ResultT]):
     """Left shift: left << right."""
 
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        try:
-            return left << right  # type: ignore
-        except TypeError:
-            return INVALID
+        return left << right  # type: ignore
 
 
 class RShiftOp[ResultT](BinaryCalc[ResultT]):
     """Right shift: left >> right."""
 
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        try:
-            return left >> right  # type: ignore
-        except TypeError:
-            return INVALID
+        return left >> right  # type: ignore

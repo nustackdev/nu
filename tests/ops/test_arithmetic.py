@@ -26,9 +26,6 @@ from nu.ops.arithmetic import (
     PowOp,
     SubOp,
 )
-from nu.terms.sentinel import is_invalid
-
-
 # ---------------------------------------------------------------------------
 # Strategies
 # ---------------------------------------------------------------------------
@@ -142,14 +139,14 @@ async def test_floor_div_negative(ctx):
 
 
 # ---------------------------------------------------------------------------
-# TypeError -> INVALID
+# Exceptions raise (Ops don't catch, per empty propagation guide)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("op_cls", [NegOp, AbsOp, PosOp])
-async def test_unary_type_error_returns_invalid(ctx, op_cls):
-    result = await op_cls("not_a_number").execute(ctx)
-    assert is_invalid(result)
+async def test_unary_type_error_raises(ctx, op_cls):
+    with pytest.raises(TypeError):
+        await op_cls("not_a_number").execute(ctx)
 
 
 @pytest.mark.parametrize(
@@ -164,14 +161,9 @@ async def test_unary_type_error_returns_invalid(ctx, op_cls):
         (PowOp, "hello", 3),
     ],
 )
-async def test_binary_type_error_returns_invalid(ctx, op_cls, left, right):
-    result = await op_cls(left, right).execute(ctx)
-    assert is_invalid(result)
-
-
-# ---------------------------------------------------------------------------
-# ZeroDivisionError -> raises (not caught, per error propagation guide)
-# ---------------------------------------------------------------------------
+async def test_binary_type_error_raises(ctx, op_cls, left, right):
+    with pytest.raises(TypeError):
+        await op_cls(left, right).execute(ctx)
 
 
 @pytest.mark.parametrize("op_cls", [DivOp, FloorDivOp, ModOp])
