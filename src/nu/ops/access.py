@@ -8,9 +8,7 @@ ContainsOp: Containment check (item in container)
 
 from __future__ import annotations
 
-from collections.abc import Container, Mapping, Sequence, Sized
-
-from nu.terms import BinaryCalc, NAryCalc, Sentinel, UnaryCalc
+from nu.terms import BinaryCalc, NAryCalc, UnaryCalc
 
 
 __all__ = [
@@ -22,62 +20,33 @@ __all__ = [
 
 
 class LenOp(UnaryCalc[int]):
-    """Length of sequence, mapping, or string: len(obj)."""
+    """Length: len(operand)."""
 
     def apply(self, operand: object) -> int:
         """Apply."""
-        if not isinstance(operand, Sized):
-            raise TypeError(f"len_() requires sized object, got {type(operand).__name__}")
-        return len(operand)
+        return len(operand)  # type: ignore
 
 
 class AtOp[ResultT](BinaryCalc[ResultT]):
-    """Subscript access: seq[key] or dict[key].
+    """Subscript access: left[right]."""
 
-    Returns Invalid for out-of-bounds indices or missing keys.
-    """
-
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
+    def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
-        if isinstance(left, Sequence):
-            if not isinstance(right, int):
-                raise TypeError(f"at() index must be int for sequence, got {type(right).__name__}")
-            return left[right]  # type: ignore
-        elif isinstance(left, Mapping):
-            return left[right]  # type: ignore
-        else:
-            try:
-                return left[right]  # type: ignore
-            except TypeError:
-                raise TypeError(
-                    f"at() requires subscriptable object, got {type(left).__name__}"
-                ) from None
+        return left[right]  # type: ignore
 
 
 class SliceOp[ResultT](NAryCalc[ResultT]):
-    """Slice access: seq[start:stop:step]."""
+    """Slice access: operand[start:stop:step]."""
 
     def apply(self, *args: object) -> ResultT:
         """Apply."""
         operand, start, stop, step = args
-        try:
-            return operand[slice(start, stop, step)]  # type: ignore
-        except TypeError:
-            raise TypeError(
-                f"slice() requires sliceable object, got {type(operand).__name__}"
-            ) from None
+        return operand[slice(start, stop, step)]  # type: ignore
 
 
 class ContainsOp(BinaryCalc[bool]):
-    """Containment check: item in container.
+    """Containment check: right in left."""
 
-    Works for:
-    - list/tuple: checks if item is in sequence
-    - dict: checks if key is in dict
-    - set: checks if item is in set
-    - str/bytes: checks if substring is in string
-    """
-
-    def apply(self, left: object, right: object) -> bool | Sentinel:  # type: ignore[override]
+    def apply(self, left: object, right: object) -> bool:
         """Apply."""
-        return right in left  # type: ignore[operator]
+        return right in left  # type: ignore
