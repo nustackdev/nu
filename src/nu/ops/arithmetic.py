@@ -102,35 +102,35 @@ class MulOp[ResultT](BinaryCalc[ResultT]):
 
 
 class DivOp[ResultT](BinaryCalc[ResultT]):
-    """Division: left / right. Returns Invalid on division by zero."""
+    """Division: left / right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
         """Apply."""
         try:
             return left / right  # type: ignore
-        except (TypeError, ZeroDivisionError):
+        except TypeError:
             return INVALID
 
 
 class FloorDivOp[ResultT](BinaryCalc[ResultT]):
-    """Floor division: left // right. Returns Invalid on division by zero."""
+    """Floor division: left // right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
         """Apply."""
         try:
             return left // right  # type: ignore
-        except (TypeError, ZeroDivisionError):
+        except TypeError:
             return INVALID
 
 
 class ModOp[ResultT](BinaryCalc[ResultT]):
-    """Modulo: left % right. Returns Invalid on division by zero."""
+    """Modulo: left % right."""
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
         """Apply."""
         try:
             return left % right  # type: ignore
-        except (TypeError, ZeroDivisionError):
+        except TypeError:
             return INVALID
 
 
