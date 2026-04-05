@@ -13,26 +13,26 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self
 
 from nu import Value
-from nu.abc import (
-    BoolType,
-    BoolValue,
-    BytesType,
-    BytesValue,
-    FloatType,
-    FloatValue,
-    IntType,
-    IntValue,
-    StrType,
-    StrValue,
+from nu import (
+    BoolI,
+    BoolI,
+    BytesI,
+    BytesI,
+    FloatI,
+    FloatI,
+    IntI,
+    IntI,
+    StrI,
+    StrI,
 )
-from nu.shape import MutableItemRef, Slot
+from nu.shapes import MutableItemRef, Slot
 
 from .base import RefBase
 
 
 if TYPE_CHECKING:
-    from nu import Term
-    from nu.shape import Shape
+    from nu import Nu
+    from nu.shapes import Shape
 
 
 __all__ = [
@@ -72,20 +72,20 @@ class ItemRef[T, ValueT: Value](
 # =============================================================================
 
 
-class IntRef(ItemRef[int, IntValue], IntType):
+class IntRef(ItemRef[int, IntI], IntI):
     """Dict integer reference with full numeric interface."""
 
     def __init__(
         self,
         *,
-        address: str | int | Term,
+        address: str | int | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
             address=address,
             value_type=int,
-            value_value_type=IntValue,
+            value_value_type=IntI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -95,20 +95,20 @@ class IntRef(ItemRef[int, IntValue], IntType):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class StrRef(ItemRef[str, StrValue], StrType):
+class StrRef(ItemRef[str, StrI], StrI):
     """Dict string reference with full string interface."""
 
     def __init__(
         self,
         *,
-        address: str | int | Term,
+        address: str | int | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrValue,
+            value_value_type=StrI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -118,20 +118,20 @@ class StrRef(ItemRef[str, StrValue], StrType):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class FloatRef(ItemRef[float, FloatValue], FloatType):
+class FloatRef(ItemRef[float, FloatI], FloatI):
     """Dict float reference with full numeric interface."""
 
     def __init__(
         self,
         *,
-        address: str | int | Term,
+        address: str | int | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
             address=address,
             value_type=float,
-            value_value_type=FloatValue,
+            value_value_type=FloatI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -141,20 +141,20 @@ class FloatRef(ItemRef[float, FloatValue], FloatType):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class BoolRef(ItemRef[bool, BoolValue], BoolType):
+class BoolRef(ItemRef[bool, BoolI], BoolI):
     """Dict boolean reference with full logical interface."""
 
     def __init__(
         self,
         *,
-        address: str | int | Term,
+        address: str | int | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
             address=address,
             value_type=bool,
-            value_value_type=BoolValue,
+            value_value_type=BoolI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -164,20 +164,20 @@ class BoolRef(ItemRef[bool, BoolValue], BoolType):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class BytesRef(ItemRef[bytes, BytesValue], BytesType):
+class BytesRef(ItemRef[bytes, BytesI], BytesI):
     """Dict bytes reference with full bytes interface."""
 
     def __init__(
         self,
         *,
-        address: str | int | Term,
+        address: str | int | Nu,
         parent: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
             address=address,
             value_type=bytes,
-            value_value_type=BytesValue,
+            value_value_type=BytesI,
             parent=parent,
             owner_shape=owner_shape,
         )

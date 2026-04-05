@@ -14,14 +14,14 @@ import asyncio
 from nu_virtuals import ItemRef, auto_atomic
 from nu import Arg, Context, Term
 from nu.abc import (
-    FloatValue,
+    FloatI,
     ForRange,
     If,
-    IntValue,
+    IntI,
     Print,
     Seq,
     TypeBase,
-    ValueBase,
+    Interface,
     method,
     prop,
 )
@@ -57,12 +57,12 @@ class CalculatorType(TypeBase):
     expressions that resolve the Calculator at execution time.
     """
 
-    add = method(FloatValue, "add")
-    multiply = method(FloatValue, "multiply")
-    precision = prop(IntValue, "precision")
+    add = method(FloatI, "add")
+    multiply = method(FloatI, "multiply")
+    precision = prop(IntI, "precision")
 
 
-class CalculatorValue(CalculatorType, ValueBase):
+class CalculatorValue(CalculatorType, Interface):
     """Computed Value"""
 
 
@@ -106,11 +106,11 @@ class Services(Shape):
 # =============================================================================
 # Values compose into expression trees. Nothing executes until .execute(ctx).
 
-price = FloatValue(99.95)
-quantity = IntValue(3)
-tax_rate = FloatValue(0.08)
+price = FloatI(99.95)
+quantity = IntI(3)
+tax_rate = FloatI(0.08)
 
-subtotal = price * quantity  # FloatValue(MulOp(...))
+subtotal = price * quantity  # FloatI(MulOp(...))
 tax = subtotal * tax_rate
 total = subtotal + tax
 
@@ -129,7 +129,7 @@ checkout_flow = Seq(
     If(is_expensive, Print(">> expensive order!"), Print(">> regular order")),
 )
 
-tick_flow = ForRange(IntValue(0), IntValue(3), Print("tick!"))
+tick_flow = ForRange(IntI(0), IntI(3), Print("tick!"))
 
 
 # =============================================================================
@@ -153,10 +153,10 @@ async def main() -> None:
             print("=== Ref Methods in Flows ===")
             calc_flow = Seq(
                 Services.calc.store(Calculator(4)),
-                Print("add", Services.calc.add(FloatValue(1.0), FloatValue(2.0))),
-                Print("mul", Services.calc.multiply(FloatValue(3.0), FloatValue(4.0))),
+                Print("add", Services.calc.add(FloatI(1.0), FloatI(2.0))),
+                Print("mul", Services.calc.multiply(FloatI(3.0), FloatI(4.0))),
                 If(
-                    Services.calc.add(FloatValue(100.0), FloatValue(200.0)) > 250,
+                    Services.calc.add(FloatI(100.0), FloatI(200.0)) > 250,
                     Print(">> big sum!"),
                     Print(">> small sum"),
                 ),
@@ -189,12 +189,12 @@ if __name__ == "__main__":
 # ctx_with_calc = ctx.bind(Calculator(precision=2), Calculator)
 
 # # Class-level access creates context-resolved expressions
-# result = await CalculatorRef.add(FloatValue(10.5), FloatValue(20.3)).execute(
+# result = await CalculatorRef.add(FloatI(10.5), FloatI(20.3)).execute(
 #     ctx_with_calc
 # )
 # print(f"CalculatorRef.add(10.5, 20.3) = {result}")
 
-# result = await CalculatorRef.multiply(FloatValue(7.0), FloatValue(6.0)).execute(
+# result = await CalculatorRef.multiply(FloatI(7.0), FloatI(6.0)).execute(
 #     ctx_with_calc
 # )
 # print(f"CalculatorRef.multiply(7.0, 6.0) = {result}")

@@ -5,45 +5,45 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.abc import (
-    AnyValue,
-    BoolValue,
-    BytesValue,
-    DictItemsValue,
-    DictKeysValue,
-    DictValue,
-    DictValuesValue,
-    FloatValue,
-    IntValue,
-    IteratorValue,
-    ListValue,
-    SetValue,
-    StrValue,
-    ensure_term,
+from nu import (
+    AnyI,
+    BoolI,
+    BytesI,
+    DictItemsI,
+    DictKeysI,
+    DictI,
+    DictValuesI,
+    FloatI,
+    IntI,
+    IteratorI,
+    ListI,
+    SetI,
+    StrI,
+    ensure_nu,
 )
-from nu.shape import MutableMappingRefBase, Slot
+from nu.shapes import MutableMappingRefBase, Slot
 
 from .base import RefBase
 from .items import ItemRef
 
 
 if TYPE_CHECKING:
-    from nu import Sentinel, Term, Value
+    from nu import Sentinel, Nu, Value
 
 
 def _value_type_for(python_type: type) -> type[Value]:
     """Map Python type to its corresponding Value type."""
     mapping: dict[type, type[Value]] = {
-        int: IntValue,
-        str: StrValue,
-        float: FloatValue,
-        bool: BoolValue,
-        bytes: BytesValue,
-        list: ListValue,
-        dict: DictValue,
-        set: SetValue,
+        int: IntI,
+        str: StrI,
+        float: FloatI,
+        bool: BoolI,
+        bytes: BytesI,
+        list: ListI,
+        dict: DictI,
+        set: SetI,
     }
-    return mapping.get(python_type, AnyValue)
+    return mapping.get(python_type, AnyI)
 
 
 __all__ = [
@@ -52,31 +52,31 @@ __all__ = [
 
 
 class DictRef[K, V](
-    MutableMappingRefBase[K, V, DictValue[K, V], AnyValue],
+    MutableMappingRefBase[K, V, DictI[K, V], AnyI],
     RefBase[dict[K, V]],
 ):
     """Dict mapping reference — key-value container backed by nested dict."""
 
-    def result(self, op: Term) -> DictValue[K, V]:
-        return DictValue(op)
+    def result(self, op: Nu) -> DictI[K, V]:
+        return DictI(op)
 
-    def _wrap_keys_result(self, operand: Term) -> DictKeysValue:
-        return DictKeysValue(operand)
+    def _wrap_keys_result(self, operand: Nu) -> DictKeysI:
+        return DictKeysI(operand)
 
-    def _wrap_values_result(self, operand: Term) -> DictValuesValue:
-        return DictValuesValue(operand)
+    def _wrap_values_result(self, operand: Nu) -> DictValuesI:
+        return DictValuesI(operand)
 
-    def _wrap_items_result(self, operand: Term) -> DictItemsValue:
-        return DictItemsValue(operand)
+    def _wrap_items_result(self, operand: Nu) -> DictItemsI:
+        return DictItemsI(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorI:
+        return IteratorI(operand)
 
-    def _wrap_value_result(self, operand: Term) -> AnyValue:
-        return AnyValue(operand)
+    def _wrap_value_result(self, operand: Nu) -> AnyI:
+        return AnyI(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
-        return AnyValue(operand)
+    def _wrap_element_result(self, operand: Nu) -> AnyI:
+        return AnyI(operand)
 
     def __init__(
         self,
@@ -93,9 +93,9 @@ class DictRef[K, V](
         self.key_value_type = key_value_type
         self.value_value_type = value_value_type
 
-    def _create_child_ref(self, key: K | Sentinel | Term[K | Sentinel]) -> ItemRef[V, ...]:
+    def _create_child_ref(self, key: K | Sentinel | Nu[K | Sentinel]) -> ItemRef[V, ...]:
         return ItemRef(
-            address=ensure_term(key),
+            address=ensure_nu(key),
             value_type=self.value_type,
             value_value_type=self.value_value_type,
             parent=self,

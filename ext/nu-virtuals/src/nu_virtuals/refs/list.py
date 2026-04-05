@@ -7,20 +7,20 @@ from typing import TYPE_CHECKING
 
 from virtuals.collections import MutableSequenceBase
 
-from nu.abc import (
-    AnyValue,
-    BoolValue,
-    BytesValue,
-    DictValue,
-    FloatValue,
-    IntValue,
-    IteratorValue,
-    ListValue,
-    SetValue,
-    StrValue,
-    ensure_term,
+from nu import (
+    AnyI,
+    BoolI,
+    BytesI,
+    DictI,
+    FloatI,
+    IntI,
+    IteratorI,
+    ListI,
+    SetI,
+    StrI,
+    ensure_nu,
 )
-from nu.shape import ReactiveSequenceRefBase, Shape, Slot
+from nu.shapes import ReactiveSequenceRefBase, Shape, Slot
 
 from .base import ViewRef
 from .items import ItemRef
@@ -29,22 +29,22 @@ from .items import ItemRef
 if TYPE_CHECKING:
     from virtuals.loc import path
 
-    from nu import Sentinel, Term, Value
+    from nu import Sentinel, Nu, Value
 
 
 def _value_type_for(python_type: type) -> type[Value]:
     """Map Python type to its corresponding Value type."""
     mapping: dict[type, type] = {
-        int: IntValue,
-        str: StrValue,
-        float: FloatValue,
-        bool: BoolValue,
-        bytes: BytesValue,
-        list: ListValue,
-        dict: DictValue,
-        set: SetValue,
+        int: IntI,
+        str: StrI,
+        float: FloatI,
+        bool: BoolI,
+        bytes: BytesI,
+        list: ListI,
+        dict: DictI,
+        set: SetI,
     }
-    return mapping.get(python_type, AnyValue)
+    return mapping.get(python_type, AnyI)
 
 
 __all__ = [
@@ -58,7 +58,7 @@ class ListRef[
 ](
     ReactiveSequenceRefBase[
         T,
-        ListValue[T],
+        ListI[T],
         ItemValueT,
     ],
     ViewRef[
@@ -71,22 +71,22 @@ class ListRef[
     Operations work lazily on PV views without loading into memory.
     """
 
-    def result(self, op: Term) -> ListValue[T]:
-        return ListValue(op)
+    def result(self, op: Nu) -> ListI[T]:
+        return ListI(op)
 
-    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorI:
+        return IteratorI(operand)
 
-    def _wrap_sliceable_result(self, operand: Term) -> ListValue[T]:
-        return ListValue(operand)  # slices stay materialized
+    def _wrap_sliceable_result(self, operand: Nu) -> ListI[T]:
+        return ListI(operand)  # slices stay materialized
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
-        return AnyValue(operand)
+    def _wrap_element_result(self, operand: Nu) -> AnyI:
+        return AnyI(operand)
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         item_type: type[T],
         item_value_type: type[ItemValueT],
         view_type: type[MutableSequenceBase],
@@ -101,11 +101,11 @@ class ListRef[
         self.item_value_type = item_value_type
 
     def _create_item_ref(
-        self, index: int | Sentinel | Term[int | Sentinel]
+        self, index: int | Sentinel | Nu[int | Sentinel]
     ) -> ItemRef[T, ItemValueT]:
         """Create a reference to an item at the given index."""
         return ItemRef(
-            address=ensure_term(index),
+            address=ensure_nu(index),
             value_type=self.item_type,
             value_value_type=self.item_value_type,
             parent=self,

@@ -8,7 +8,7 @@ Provides composables Resources for:
 - Ray (actors + workers on Ray nodes)
 - Teleport (span that ships subtrees to workers)
 
-On import, registers everybase Executable and composables Spec as
+On import, registers everybase Nu and composables Spec as
 value types in invisibles. This means trees and specs fly through
 invisibles by value automatically (no manual serialization needed).
 """

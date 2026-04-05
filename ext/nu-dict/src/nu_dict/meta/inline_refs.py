@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from nu_dict.meta.flat_ref import FlatRef
 from nu_dict.refs.base import RefBase
-from nu.meta.transform import map_nodes
-from nu.shape.meta.deform import reconstruct_with_flat_ref, walk_ref_chain
-from nu.shape.refs.base import Ref
+from nu.transform import map_nodes
+from nu.shapes.meta.deform import reconstruct_with_flat_ref, walk_ref_chain
+from nu.shapes.refs.base import Ref
 
 
 __all__ = [
@@ -24,7 +24,7 @@ def inline_refs[N](tree: N) -> N:
     """Replace dict Ref parent-chains with flat FlatRefs.
 
     Args:
-        tree: Term tree root.
+        tree: Nu tree root.
 
     Returns:
         New tree with dict Ref chains replaced by FlatRefs.

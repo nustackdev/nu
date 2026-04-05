@@ -10,7 +10,7 @@ Pattern:
     class ItemRef(ReactiveItemRef[T, ValueT], PrimitiveRef[T]):
         # Document model (CRUD + observe) + PV substrate
 
-    class IntRef(ItemRef[int, IntValue], IntType):
+    class IntRef(ItemRef[int, IntI], IntI):
         # PV item + int operators
 """
 
@@ -18,25 +18,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from nu.abc import (
-    BoolType,
-    BoolValue,
-    BytesType,
-    BytesValue,
-    DictType,
-    DictValue,
-    FloatType,
-    FloatValue,
-    IntType,
-    IntValue,
-    ListType,
-    ListValue,
-    SetType,
-    SetValue,
-    StrType,
-    StrValue,
+from nu import (
+    BoolI,
+    BytesI,
+    DictI,
+    FloatI,
+    IntI,
+    ListI,
+    SetI,
+    StrI,
 )
-from nu.shape import ReactiveItemRef, Slot
+from nu.shapes import ReactiveItemRef, Slot
 
 from .base import PrimitiveRef
 
@@ -44,9 +36,9 @@ from .base import PrimitiveRef
 if TYPE_CHECKING:
     from virtuals.loc import path
 
-    from nu import Term, Value
-    from nu.shape import Shape
-
+    from nu import Nu, Value
+    from nu.interfaces import NoneI
+    from nu.shapes import Shape
 
 __all__ = [
     "BoolRef",
@@ -89,11 +81,11 @@ class ItemRef[T, ValueT: Value](
         super().__init__(**kwargs)
         self._value_value_type = value_value_type
 
-    def store(self, value: object) -> object:  # noqa: D102
+    def store(self, value: object) -> NoneI:
+        from nu import NoneI, ensure_nu
         from nu_virtuals.morphisms.item import PrimitiveStoreCmd
-        from nu.abc import NoneValue, ensure_term
 
-        return NoneValue(PrimitiveStoreCmd(self, ensure_term(value)))
+        return NoneI(PrimitiveStoreCmd(self, ensure_nu(value)))
 
     @classmethod
     def slot(
@@ -118,18 +110,18 @@ class ItemRef[T, ValueT: Value](
 # =============================================================================
 
 
-class IntRef(ItemRef[int, IntValue], IntType):
+class IntRef(ItemRef[int, IntI], IntI):
     """PV integer reference with full numeric interface.
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - IntType: Arithmetic, comparison, bitwise, logical operators
+        - IntI: Arithmetic, comparison, bitwise, logical operators
     """
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -137,7 +129,7 @@ class IntRef(ItemRef[int, IntValue], IntType):
         super().__init__(
             address=address,
             value_type=int,
-            value_value_type=IntValue,
+            value_value_type=IntI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -148,18 +140,18 @@ class IntRef(ItemRef[int, IntValue], IntType):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class StrRef(ItemRef[str, StrValue], StrType):
+class StrRef(ItemRef[str, StrI], StrI):
     """PV string reference with full string interface.
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - StrType: String methods (upper, lower, split, etc.), concatenation
+        - StrI: String methods (upper, lower, split, etc.), concatenation
     """
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -167,7 +159,7 @@ class StrRef(ItemRef[str, StrValue], StrType):
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrValue,
+            value_value_type=StrI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -178,18 +170,18 @@ class StrRef(ItemRef[str, StrValue], StrType):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class FloatRef(ItemRef[float, FloatValue], FloatType):
+class FloatRef(ItemRef[float, FloatI], FloatI):
     """PV float reference with full numeric interface.
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - FloatType: Arithmetic, comparison, logical operators
+        - FloatI: Arithmetic, comparison, logical operators
     """
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -197,7 +189,7 @@ class FloatRef(ItemRef[float, FloatValue], FloatType):
         super().__init__(
             address=address,
             value_type=float,
-            value_value_type=FloatValue,
+            value_value_type=FloatI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -208,18 +200,18 @@ class FloatRef(ItemRef[float, FloatValue], FloatType):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class BoolRef(ItemRef[bool, BoolValue], BoolType):
+class BoolRef(ItemRef[bool, BoolI], BoolI):
     """PV boolean reference with full logical interface.
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - BoolType: Logical operators (and_, or_, not_)
+        - BoolI: Logical operators (and_, or_, not_)
     """
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -227,7 +219,7 @@ class BoolRef(ItemRef[bool, BoolValue], BoolType):
         super().__init__(
             address=address,
             value_type=bool,
-            value_value_type=BoolValue,
+            value_value_type=BoolI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -238,18 +230,18 @@ class BoolRef(ItemRef[bool, BoolValue], BoolType):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class BytesRef(ItemRef[bytes, BytesValue], BytesType):
+class BytesRef(ItemRef[bytes, BytesI], BytesI):
     """PV bytes reference with full bytes interface.
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - BytesType: Bytes methods (decode, hex, etc.)
+        - BytesI: Bytes methods (decode, hex, etc.)
     """
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -257,7 +249,7 @@ class BytesRef(ItemRef[bytes, BytesValue], BytesType):
         super().__init__(
             address=address,
             value_type=bytes,
-            value_value_type=BytesValue,
+            value_value_type=BytesI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -274,8 +266,8 @@ class BytesRef(ItemRef[bytes, BytesValue], BytesType):
 
 
 class PrimitiveDictRef[K, V](
-    ItemRef[dict[K, V], DictValue[K, V]],
-    DictType[K, V],
+    ItemRef[dict[K, V], DictI[K, V]],
+    DictI[K, V],
 ):
     """PV dict reference stored as a single primitive blob.
 
@@ -284,13 +276,13 @@ class PrimitiveDictRef[K, V](
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - DictType: Dict methods (keys, values, items, get, set, etc.)
+        - DictI: Dict methods (keys, values, items, get, set, etc.)
     """
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -298,7 +290,7 @@ class PrimitiveDictRef[K, V](
         super().__init__(
             address=address,
             value_type=dict,
-            value_value_type=DictValue,
+            value_value_type=DictI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -310,8 +302,8 @@ class PrimitiveDictRef[K, V](
 
 
 class PrimitiveListRef[T](
-    ItemRef[list[T], ListValue[T]],
-    ListType[T],
+    ItemRef[list[T], ListI[T]],
+    ListI[T],
 ):
     """PV list reference stored as a single primitive blob.
 
@@ -320,13 +312,13 @@ class PrimitiveListRef[T](
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - ListType: List methods (append, extend, insert, etc.)
+        - ListI: List methods (append, extend, insert, etc.)
     """
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -334,7 +326,7 @@ class PrimitiveListRef[T](
         super().__init__(
             address=address,
             value_type=list,
-            value_value_type=ListValue,
+            value_value_type=ListI,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -346,8 +338,8 @@ class PrimitiveListRef[T](
 
 
 class PrimitiveSetRef[T](
-    ItemRef[set[T], SetValue[T]],
-    SetType[T],
+    ItemRef[set[T], SetI[T]],
+    SetI[T],
 ):
     """PV set reference stored as a single primitive blob.
 
@@ -356,13 +348,13 @@ class PrimitiveSetRef[T](
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - SetType: Set methods (add, remove, union, intersection, etc.)
+        - SetI: Set methods (add, remove, union, intersection, etc.)
     """
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         parent: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
@@ -370,7 +362,7 @@ class PrimitiveSetRef[T](
         super().__init__(
             address=address,
             value_type=set,
-            value_value_type=SetValue,
+            value_value_type=SetI,
             parent=parent,
             owner_shape=owner_shape,
         )

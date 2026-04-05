@@ -10,10 +10,10 @@ from nu_datetime import DatetimeValue as DatetimeRef
 from nu_datetime import DateValue as DateRef
 from nu_datetime import TimedeltaValue as TimedeltaRef
 from nu_datetime import TimeValue as TimeRef
-from nu.abc import AddOp, FuncCallOp, SubOp
-from nu.abc import FloatValue as FloatRef
-from nu.abc import IntValue as IntRef
-from nu.abc import StrValue as StrRef
+from nu import AddOp, FuncCallOp, SubOp
+from nu import FloatI as FloatRef
+from nu import IntI as IntRef
+from nu import StrI as StrRef
 
 
 # =============================================================================

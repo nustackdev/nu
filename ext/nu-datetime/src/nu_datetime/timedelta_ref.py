@@ -2,7 +2,7 @@
 
 Pattern:
     TimedeltaType = Object[timedelta] + ComparableBase + arithmetic operations
-    TimedeltaValue = ValueBase + TimedeltaType (computed results)
+    TimedeltaValue = Interface + TimedeltaType (computed results)
 """
 
 from __future__ import annotations
@@ -11,17 +11,17 @@ from datetime import timedelta
 from typing import TYPE_CHECKING
 
 from nu import Sentinel
-from nu.abc import (
+from nu import (
     ComparableBase,
-    FloatValue,
-    IntValue,
+    FloatI,
+    IntI,
     Object,
-    ValueBase,
+    Interface,
 )
 
 
 if TYPE_CHECKING:
-    from nu import Term
+    from nu import Nu
 
     from .args import TimedeltaArg
 
@@ -47,25 +47,25 @@ class TimedeltaType(
     # =========================================================================
 
     @classmethod
-    def from_seconds(cls, seconds: float | Term[float]) -> TimedeltaValue:
+    def from_seconds(cls, seconds: float | Nu[float]) -> TimedeltaValue:
         """Create a TimedeltaValue from seconds."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return TimedeltaValue(FuncCallOp(timedelta, seconds=seconds))
 
     @classmethod
     def from_components(
         cls,
-        days: float | Term[float] = 0,
-        seconds: float | Term[float] = 0,
-        microseconds: float | Term[float] = 0,
-        milliseconds: float | Term[float] = 0,
-        minutes: float | Term[float] = 0,
-        hours: float | Term[float] = 0,
-        weeks: float | Term[float] = 0,
+        days: float | Nu[float] = 0,
+        seconds: float | Nu[float] = 0,
+        microseconds: float | Nu[float] = 0,
+        milliseconds: float | Nu[float] = 0,
+        minutes: float | Nu[float] = 0,
+        hours: float | Nu[float] = 0,
+        weeks: float | Nu[float] = 0,
     ) -> TimedeltaValue:
         """Create a TimedeltaValue from time components."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return TimedeltaValue(
             FuncCallOp(
@@ -84,43 +84,43 @@ class TimedeltaType(
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def days(self) -> IntValue:
+    def days(self) -> IntI:
         """Get the days component (normalized)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "days"))
+        return IntI(FuncCallOp(getattr, self, "days"))
 
-    def seconds(self) -> IntValue:
+    def seconds(self) -> IntI:
         """Get the seconds component (0-86399)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "seconds"))
+        return IntI(FuncCallOp(getattr, self, "seconds"))
 
-    def microseconds(self) -> IntValue:
+    def microseconds(self) -> IntI:
         """Get the microseconds component (0-999999)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "microseconds"))
+        return IntI(FuncCallOp(getattr, self, "microseconds"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def total_seconds(self) -> FloatValue:
+    def total_seconds(self) -> FloatI:
         """Get total duration in seconds."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "total_seconds"))
+        return FloatI(MethodCallOp(self, "total_seconds"))
 
-    def total_minutes(self) -> FloatValue:
+    def total_minutes(self) -> FloatI:
         """Get total duration in minutes."""
         return self.total_seconds() / 60.0
 
-    def total_hours(self) -> FloatValue:
+    def total_hours(self) -> FloatI:
         """Get total duration in hours."""
         return self.total_seconds() / 3600.0
 
-    def total_days(self) -> FloatValue:
+    def total_days(self) -> FloatI:
         """Get total duration in days."""
         return self.total_seconds() / 86400.0
 
@@ -130,7 +130,7 @@ class TimedeltaType(
 
     def __add__(self, other: TimedeltaArg) -> TimedeltaValue:
         """Add two timedeltas."""
-        from nu.abc import AddOp
+        from nu import AddOp
 
         if isinstance(other, timedelta):
             other = TimedeltaValue(other)
@@ -138,7 +138,7 @@ class TimedeltaType(
 
     def __radd__(self, other: timedelta) -> TimedeltaValue:
         """Right add."""
-        from nu.abc import AddOp
+        from nu import AddOp
 
         if isinstance(other, timedelta):
             other = TimedeltaValue(other)
@@ -146,7 +146,7 @@ class TimedeltaType(
 
     def __sub__(self, other: TimedeltaArg) -> TimedeltaValue:
         """Subtract timedeltas."""
-        from nu.abc import SubOp
+        from nu import SubOp
 
         if isinstance(other, timedelta):
             other = TimedeltaValue(other)
@@ -154,43 +154,43 @@ class TimedeltaType(
 
     def __rsub__(self, other: timedelta) -> TimedeltaValue:
         """Right subtract."""
-        from nu.abc import SubOp
+        from nu import SubOp
 
         if isinstance(other, timedelta):
             other = TimedeltaValue(other)
         return TimedeltaValue(SubOp(other, self))
 
-    def __mul__(self, factor: int | float | Term) -> TimedeltaValue:
+    def __mul__(self, factor: int | float | Nu) -> TimedeltaValue:
         """Multiply timedelta by a scalar."""
-        from nu.abc import MulOp
+        from nu import MulOp
 
         return TimedeltaValue(MulOp(self, factor))
 
     def __rmul__(self, factor: int | float) -> TimedeltaValue:
         """Right multiply."""
-        from nu.abc import MulOp
+        from nu import MulOp
 
         return TimedeltaValue(MulOp(factor, self))
 
-    def __truediv__(self, divisor: int | float | TimedeltaArg) -> TimedeltaValue | FloatValue:
+    def __truediv__(self, divisor: int | float | TimedeltaArg) -> TimedeltaValue | FloatI:
         """Divide timedelta."""
-        from nu.abc import DivOp
+        from nu import DivOp
 
         if isinstance(divisor, timedelta):
             divisor = TimedeltaValue(divisor)
         if isinstance(divisor, TimedeltaType):
-            return FloatValue(DivOp(self, divisor))
+            return FloatI(DivOp(self, divisor))
         return TimedeltaValue(DivOp(self, divisor))
 
-    def __floordiv__(self, divisor: int | Term[int]) -> TimedeltaValue:
+    def __floordiv__(self, divisor: int | Nu[int]) -> TimedeltaValue:
         """Floor divide timedelta by scalar."""
-        from nu.abc import FloorDivOp
+        from nu import FloorDivOp
 
         return TimedeltaValue(FloorDivOp(self, divisor))
 
     def __mod__(self, other: TimedeltaArg) -> TimedeltaValue:
         """Modulo operation."""
-        from nu.abc import ModOp
+        from nu import ModOp
 
         if isinstance(other, timedelta):
             other = TimedeltaValue(other)
@@ -198,13 +198,13 @@ class TimedeltaType(
 
     def __neg__(self) -> TimedeltaValue:
         """Negate."""
-        from nu.abc import NegOp
+        from nu import NegOp
 
         return TimedeltaValue(NegOp(self))
 
     def __abs__(self) -> TimedeltaValue:
         """Absolute value."""
-        from nu.abc import AbsOp
+        from nu import AbsOp
 
         return TimedeltaValue(AbsOp(self))
 
@@ -218,7 +218,7 @@ class TimedeltaType(
 # =============================================================================
 
 
-class TimedeltaValue(ValueBase, TimedeltaType):
+class TimedeltaValue(Interface, TimedeltaType):
     """Computed timedelta value (Python memory substrate)."""
 
     pass

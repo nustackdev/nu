@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Self
 
 from virtuals.collections import MutableSetBase
 
-from nu.abc import AnyValue, SetValue
-from nu.shape import ReactiveSetRefBase, Shape, Slot
+from nu import AnyI, SetI
+from nu.shapes import ReactiveSetRefBase, Shape, Slot
 
 from .base import ViewRef
 
@@ -16,7 +16,7 @@ from .base import ViewRef
 if TYPE_CHECKING:
     from virtuals.loc import path
 
-    from nu import Term
+    from nu import Nu
 
 
 __all__ = [
@@ -25,7 +25,7 @@ __all__ = [
 
 
 class SetRef[T](
-    ReactiveSetRefBase[T, SetValue[T], AnyValue],
+    ReactiveSetRefBase[T, SetI[T], AnyI],
     ViewRef[set[T], MutableSetBase],
 ):
     """PV set reference — document model + PV substrate.
@@ -33,19 +33,19 @@ class SetRef[T](
     Operations work lazily on PV views without loading into memory.
     """
 
-    def result(self, op: Term) -> SetValue[T]:
-        return SetValue(op)
+    def result(self, op: Nu) -> SetI[T]:
+        return SetI(op)
 
-    def _wrap_set_result(self, operand: Term) -> SetValue[T]:
-        return SetValue(operand)
+    def _wrap_set_result(self, operand: Nu) -> SetI[T]:
+        return SetI(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
-        return AnyValue(operand)
+    def _wrap_element_result(self, operand: Nu) -> AnyI:
+        return AnyI(operand)
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         item_type: type[T],
         view_type: type[MutableSetBase],
         parent: ViewRef | None = None,

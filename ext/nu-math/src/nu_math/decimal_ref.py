@@ -2,7 +2,7 @@
 
 Pattern:
     DecimalType = Object[Decimal] + ComparableBase + arithmetic operations
-    DecimalValue = ValueBase + DecimalType (computed results)
+    DecimalValue = Interface + DecimalType (computed results)
 """
 
 from __future__ import annotations
@@ -11,17 +11,17 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from nu import Sentinel
-from nu.abc import (
-    BoolValue,
+from nu import (
+    BoolI,
     ComparableBase,
-    IntValue,
+    IntI,
     Object,
-    ValueBase,
+    Interface,
 )
 
 
 if TYPE_CHECKING:
-    from nu import Term
+    from nu import Nu
 
     from .args import DecimalArg
 
@@ -49,27 +49,27 @@ class DecimalType(
     # =========================================================================
 
     @classmethod
-    def from_str(cls, value: str | Term[str]) -> DecimalValue:
+    def from_str(cls, value: str | Nu[str]) -> DecimalValue:
         """Create a DecimalValue from a string."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return DecimalValue(FuncCallOp(Decimal, value))
 
     @classmethod
-    def from_int(cls, value: int | Term[int]) -> DecimalValue:
+    def from_int(cls, value: int | Nu[int]) -> DecimalValue:
         """Create a DecimalValue from an integer."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return DecimalValue(FuncCallOp(Decimal, value))
 
     @classmethod
-    def from_float(cls, value: float | Term[float]) -> DecimalValue:
+    def from_float(cls, value: float | Nu[float]) -> DecimalValue:
         """Create a DecimalValue from a float.
 
         Note: Converting from float may introduce precision issues.
         Prefer from_str() for exact values.
         """
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return DecimalValue(FuncCallOp(Decimal, value))
 
@@ -79,7 +79,7 @@ class DecimalType(
 
     def __add__(self, other: DecimalArg) -> DecimalValue:
         """Add two decimals."""
-        from nu.abc import AddOp
+        from nu import AddOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -87,7 +87,7 @@ class DecimalType(
 
     def __radd__(self, other: Decimal | int | float | str) -> DecimalValue:
         """Right add."""
-        from nu.abc import AddOp
+        from nu import AddOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -95,7 +95,7 @@ class DecimalType(
 
     def __sub__(self, other: DecimalArg) -> DecimalValue:
         """Subtract decimals."""
-        from nu.abc import SubOp
+        from nu import SubOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -103,7 +103,7 @@ class DecimalType(
 
     def __rsub__(self, other: Decimal | int | float | str) -> DecimalValue:
         """Right subtract."""
-        from nu.abc import SubOp
+        from nu import SubOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -111,7 +111,7 @@ class DecimalType(
 
     def __mul__(self, other: DecimalArg) -> DecimalValue:
         """Multiply decimals."""
-        from nu.abc import MulOp
+        from nu import MulOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -119,7 +119,7 @@ class DecimalType(
 
     def __rmul__(self, other: Decimal | int | float | str) -> DecimalValue:
         """Right multiply."""
-        from nu.abc import MulOp
+        from nu import MulOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -127,7 +127,7 @@ class DecimalType(
 
     def __truediv__(self, other: DecimalArg) -> DecimalValue:
         """Divide decimals."""
-        from nu.abc import DivOp
+        from nu import DivOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -135,7 +135,7 @@ class DecimalType(
 
     def __rtruediv__(self, other: Decimal | int | float | str) -> DecimalValue:
         """Right divide."""
-        from nu.abc import DivOp
+        from nu import DivOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -143,7 +143,7 @@ class DecimalType(
 
     def __floordiv__(self, other: DecimalArg) -> DecimalValue:
         """Floor divide decimals."""
-        from nu.abc import FloorDivOp
+        from nu import FloorDivOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -151,7 +151,7 @@ class DecimalType(
 
     def __mod__(self, other: DecimalArg) -> DecimalValue:
         """Modulo operation."""
-        from nu.abc import ModOp
+        from nu import ModOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -159,7 +159,7 @@ class DecimalType(
 
     def __pow__(self, other: int | DecimalArg) -> DecimalValue:
         """Raise to power."""
-        from nu.abc import PowOp
+        from nu import PowOp
 
         if isinstance(other, Decimal):
             other = DecimalValue(other)
@@ -167,13 +167,13 @@ class DecimalType(
 
     def __neg__(self) -> DecimalValue:
         """Negate."""
-        from nu.abc import NegOp
+        from nu import NegOp
 
         return DecimalValue(NegOp(self))
 
     def __abs__(self) -> DecimalValue:
         """Absolute value."""
-        from nu.abc import AbsOp
+        from nu import AbsOp
 
         return DecimalValue(AbsOp(self))
 
@@ -183,7 +183,7 @@ class DecimalType(
 
     def quantize(self, exp: str | DecimalArg, rounding: str | None = None) -> DecimalValue:
         """Quantize to a given exponent (e.g., "0.01" for 2 decimal places)."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         if isinstance(exp, Decimal):
             exp = DecimalValue(exp)
@@ -193,31 +193,31 @@ class DecimalType(
 
     def normalize(self) -> DecimalValue:
         """Remove trailing zeros."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return DecimalValue(MethodCallOp(self, "normalize"))
 
     def sqrt(self) -> DecimalValue:
         """Square root."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return DecimalValue(MethodCallOp(self, "sqrt"))
 
     def exp(self) -> DecimalValue:
         """Exponential (e^self)."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return DecimalValue(MethodCallOp(self, "exp"))
 
     def ln(self) -> DecimalValue:
         """Natural logarithm."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return DecimalValue(MethodCallOp(self, "ln"))
 
     def log10(self) -> DecimalValue:
         """Base-10 logarithm."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return DecimalValue(MethodCallOp(self, "log10"))
 
@@ -225,39 +225,39 @@ class DecimalType(
     # INSPECTION
     # =========================================================================
 
-    def is_finite(self) -> BoolValue:
+    def is_finite(self) -> BoolI:
         """Check if value is finite."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return BoolValue(MethodCallOp(self, "is_finite"))
+        return BoolI(MethodCallOp(self, "is_finite"))
 
-    def is_infinite(self) -> BoolValue:
+    def is_infinite(self) -> BoolI:
         """Check if value is infinite."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return BoolValue(MethodCallOp(self, "is_infinite"))
+        return BoolI(MethodCallOp(self, "is_infinite"))
 
-    def is_signed(self) -> BoolValue:
+    def is_signed(self) -> BoolI:
         """Check if value is negative."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return BoolValue(MethodCallOp(self, "is_signed"))
+        return BoolI(MethodCallOp(self, "is_signed"))
 
-    def is_zero(self) -> BoolValue:
+    def is_zero(self) -> BoolI:
         """Check if value is zero."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return BoolValue(MethodCallOp(self, "is_zero"))
+        return BoolI(MethodCallOp(self, "is_zero"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def to_int(self) -> IntValue:
+    def to_int(self) -> IntI:
         """Convert to integer (truncating decimal)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(int, self))
+        return IntI(FuncCallOp(int, self))
 
 
 # =============================================================================
@@ -265,7 +265,7 @@ class DecimalType(
 # =============================================================================
 
 
-class DecimalValue(ValueBase, DecimalType):
+class DecimalValue(Interface, DecimalType):
     """Computed Decimal value (Python memory substrate)."""
 
     pass

@@ -2,7 +2,7 @@
 
 Pattern:
     DatetimeType = Object[datetime] + ComparableBase + datetime operations
-    DatetimeValue = ValueBase + DatetimeType (computed results)
+    DatetimeValue = Interface + DatetimeType (computed results)
 """
 
 from __future__ import annotations
@@ -11,18 +11,18 @@ from datetime import UTC, datetime, timezone
 from typing import TYPE_CHECKING
 
 from nu import Sentinel
-from nu.abc import (
+from nu import (
     ComparableBase,
-    FloatValue,
-    IntValue,
+    FloatI,
+    IntI,
     Object,
-    StrValue,
-    ValueBase,
+    StrI,
+    Interface,
 )
 
 
 if TYPE_CHECKING:
-    from nu import Term
+    from nu import Nu
 
     from .args import DatetimeArg, TimedeltaArg, TimezoneArg
 
@@ -50,7 +50,7 @@ class DatetimeType(
     @classmethod
     def now(cls, tz: TimezoneArg | None = None) -> DatetimeValue:
         """Create a DatetimeValue for the current time."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         from .timezone_ref import TimezoneValue
 
@@ -63,7 +63,7 @@ class DatetimeType(
     @classmethod
     def utcnow(cls) -> DatetimeValue:
         """Create a DatetimeValue for current UTC time."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         from .timezone_ref import TimezoneValue
 
@@ -71,10 +71,10 @@ class DatetimeType(
 
     @classmethod
     def from_timestamp(
-        cls, ts: float | Term[float], tz: TimezoneArg | None = None
+        cls, ts: float | Nu[float], tz: TimezoneArg | None = None
     ) -> DatetimeValue:
         """Create a DatetimeValue from a POSIX timestamp."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         from .timezone_ref import TimezoneValue
 
@@ -85,9 +85,9 @@ class DatetimeType(
         return DatetimeValue(FuncCallOp(datetime.fromtimestamp, ts))
 
     @classmethod
-    def from_iso(cls, iso_str: str | Term[str]) -> DatetimeValue:
+    def from_iso(cls, iso_str: str | Nu[str]) -> DatetimeValue:
         """Create a DatetimeValue from an ISO format string."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         def _safe_fromisoformat(s: object) -> datetime | Sentinel:
             if not isinstance(s, str):
@@ -102,79 +102,79 @@ class DatetimeType(
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def year(self) -> IntValue:
+    def year(self) -> IntI:
         """Get the year component."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "year"))
+        return IntI(FuncCallOp(getattr, self, "year"))
 
-    def month(self) -> IntValue:
+    def month(self) -> IntI:
         """Get the month component (1-12)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "month"))
+        return IntI(FuncCallOp(getattr, self, "month"))
 
-    def day(self) -> IntValue:
+    def day(self) -> IntI:
         """Get the day component (1-31)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "day"))
+        return IntI(FuncCallOp(getattr, self, "day"))
 
-    def hour(self) -> IntValue:
+    def hour(self) -> IntI:
         """Get the hour component (0-23)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "hour"))
+        return IntI(FuncCallOp(getattr, self, "hour"))
 
-    def minute(self) -> IntValue:
+    def minute(self) -> IntI:
         """Get the minute component (0-59)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "minute"))
+        return IntI(FuncCallOp(getattr, self, "minute"))
 
-    def second(self) -> IntValue:
+    def second(self) -> IntI:
         """Get the second component (0-59)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "second"))
+        return IntI(FuncCallOp(getattr, self, "second"))
 
-    def microsecond(self) -> IntValue:
+    def microsecond(self) -> IntI:
         """Get the microsecond component (0-999999)."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
-        return IntValue(FuncCallOp(getattr, self, "microsecond"))
+        return IntI(FuncCallOp(getattr, self, "microsecond"))
 
-    def weekday(self) -> IntValue:
+    def weekday(self) -> IntI:
         """Get the day of week (Monday=0, Sunday=6)."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return IntValue(MethodCallOp(self, "weekday"))
+        return IntI(MethodCallOp(self, "weekday"))
 
-    def isoweekday(self) -> IntValue:
+    def isoweekday(self) -> IntI:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return IntValue(MethodCallOp(self, "isoweekday"))
+        return IntI(MethodCallOp(self, "isoweekday"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def timestamp(self) -> FloatValue:
+    def timestamp(self) -> FloatI:
         """Convert to POSIX timestamp."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "timestamp"))
+        return FloatI(MethodCallOp(self, "timestamp"))
 
-    def isoformat(self, sep: str | Term[str] = "T", timespec: str | Term[str] = "auto") -> StrValue:
+    def isoformat(self, sep: str | Nu[str] = "T", timespec: str | Nu[str] = "auto") -> StrI:
         """Convert to ISO 8601 format string."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return StrValue(MethodCallOp(self, "isoformat", sep, timespec))
+        return StrI(MethodCallOp(self, "isoformat", sep, timespec))
 
     def date(self) -> DateValue:
         """Extract the date component."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         from .date_ref import DateValue
 
@@ -182,17 +182,17 @@ class DatetimeType(
 
     def time(self) -> TimeValue:
         """Extract the time component."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         from .time_ref import TimeValue
 
         return TimeValue(MethodCallOp(self, "time"))
 
-    def strftime(self, fmt: str | Term[str]) -> StrValue:
+    def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format datetime as string."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return StrValue(MethodCallOp(self, "strftime", fmt))
+        return StrI(MethodCallOp(self, "strftime", fmt))
 
     # =========================================================================
     # MANIPULATION
@@ -200,16 +200,16 @@ class DatetimeType(
 
     def replace(
         self,
-        year: int | Term[int] | None = None,
-        month: int | Term[int] | None = None,
-        day: int | Term[int] | None = None,
-        hour: int | Term[int] | None = None,
-        minute: int | Term[int] | None = None,
-        second: int | Term[int] | None = None,
-        microsecond: int | Term[int] | None = None,
+        year: int | Nu[int] | None = None,
+        month: int | Nu[int] | None = None,
+        day: int | Nu[int] | None = None,
+        hour: int | Nu[int] | None = None,
+        minute: int | Nu[int] | None = None,
+        second: int | Nu[int] | None = None,
+        microsecond: int | Nu[int] | None = None,
     ) -> DatetimeValue:
         """Create a new datetime with some components replaced."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         kwargs = {}
         if year is not None:
@@ -236,7 +236,7 @@ class DatetimeType(
         """Add a timedelta to this datetime."""
         from datetime import timedelta
 
-        from nu.abc import AddOp
+        from nu import AddOp
 
         from .timedelta_ref import TimedeltaValue
 
@@ -248,7 +248,7 @@ class DatetimeType(
         """Subtract a datetime or timedelta."""
         from datetime import timedelta
 
-        from nu.abc import SubOp
+        from nu import SubOp
 
         from .timedelta_ref import TimedeltaValue
 
@@ -266,7 +266,7 @@ class DatetimeType(
 # =============================================================================
 
 
-class DatetimeValue(ValueBase, DatetimeType):
+class DatetimeValue(Interface, DatetimeType):
     """Computed datetime value (Python memory substrate)."""
 
     pass

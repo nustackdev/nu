@@ -1,63 +1,81 @@
-"""everybase — Core library for the every ecosystem.
+"""Nu - core library for the Nu ecosystem.
 
 Subpackages:
-    tree/  -- immutable tree nodes
-    core/  -- computation layer (term/flow/span/context/exec)
-    meta/  -- tree meta-tools (walk, query, transform, rewrites)
-    abc/   -- base implementations: types, values, morphisms, capabilities
+    terms/       -- algebra terms (Nu, Value, Ref, Op, Span, Sentinel, Arg)
+    context/     -- runtime resource container
+    ops/         -- all concrete operations
+    interfaces/  -- type interfaces + capability mixins
+    fn/          -- functional API (typed factories over ops)
+    shapes/      -- document data model
+    flows/       -- flow operations (control, iteration, parallel, error, timing, io, asserts)
+    transform/   -- tree transformations
+    graphs/      -- graph data model (stub)
+    tables/      -- table data model (stub)
 """
 
 from __future__ import annotations
 
-from .core import (
+from . import fn  # noqa: F401
+from .context import (
+    AnyAttrRef,
+    Attributes,
+    AttrRef,
+    BoolAttrRef,
+    BytesAttrRef,
+    Context,
+    FloatAttrRef,
+    IntAttrRef,
+    StrAttrRef,
+)
+from .interfaces import *  # noqa: F403
+from .method import AutoInterface, method, prop
+from .model import Model
+from .ops import *  # noqa: F403
+from .terms import (
     EMPTY,
     INVALID,
     Arg,
-    BinaryCommand,
-    BinaryMorphism,
-    BinaryOperation,
+    BinaryCalc,
+    BinaryCmd,
+    BinaryOp,
     BoolArg,
     BytesArg,
+    Calculation,
     Command,
-    Context,
     DictArg,
     Empty,
-    Executable,
     FloatArg,
-    Flow,
     FrozenSetArg,
     IntArg,
     Invalid,
     ListArg,
     LValue,
-    Model,
-    Morphism,
-    NAryCommand,
-    NAryMorphism,
-    NAryOperation,
+    NAryCalc,
+    NAryCmd,
+    NAryOp,
     NoneArg,
-    Operation,
+    Nu,
+    Op,
     Ref,
     RValue,
     Sentinel,
     SetArg,
     Span,
     StrArg,
-    Term,
-    TernaryCommand,
-    TernaryMorphism,
-    TernaryOperation,
+    TernaryCalc,
+    TernaryCmd,
+    TernaryOp,
     TupleArg,
-    UnaryCommand,
-    UnaryMorphism,
-    UnaryOperation,
+    UnaryCalc,
+    UnaryCmd,
+    UnaryOp,
     Value,
     is_empty,
     is_invalid,
     is_sentinel,
     propagate_special,
 )
-from .meta import (
+from .transform import (
     Transform,
     ancestors,
     apply,
@@ -81,118 +99,150 @@ from .meta import (
     unwrap,
     wrap,
 )
-from .tree import Node
+from .utils import ensure_nu, typed_value
+
+# combiners must come after star imports to avoid shadowing by interfaces.primitives.none_ module
+from .fn.combiners import all_, and_, any_, none_, or_  # noqa: E402
 
 
-# Primitive refs — lazy to avoid circular import
-# (abc.refs → abc → abc.flows → everybase.Flow)
-_PRIM_REF_NAMES = {
-    "PrimRef": "PrimRef",
-    "PrimIntRef": "IntRef",
-    "PrimFloatRef": "FloatRef",
-    "PrimStrRef": "StrRef",
-    "PrimBoolRef": "BoolRef",
-    "PrimBytesRef": "BytesRef",
-    "PrimAnyRef": "AnyRef",
-}
-
-
-def __getattr__(name: str) -> object:
-    if name in _PRIM_REF_NAMES:
-        from .abc import refs as _refs
-
-        return getattr(_refs, _PRIM_REF_NAMES[name])
-    msg = f"module {__name__!r} has no attribute {name!r}"
-    raise AttributeError(msg)
-
-
-__all__ = [  # noqa: RUF022
-    # Tree
-    "Node",
-    "Executable",
-    # Term
-    "Term",
-    "LValue",
-    "RValue",
-    "Value",
-    "Ref",
-    "Morphism",
-    "NAryMorphism",
-    "UnaryMorphism",
-    "BinaryMorphism",
-    "TernaryMorphism",
-    "Operation",
-    "Command",
-    "NAryOperation",
-    "NAryCommand",
-    "UnaryOperation",
-    "UnaryCommand",
-    "BinaryOperation",
-    "BinaryCommand",
-    "TernaryOperation",
-    "TernaryCommand",
-    # Sentinel
-    "Sentinel",
-    "Empty",
-    "Invalid",
+__all__ = [
     "EMPTY",
     "INVALID",
-    "is_empty",
-    "is_invalid",
-    "is_sentinel",
-    "propagate_special",
+    # Flows — parallel
+    "All",
+    "Any",
+    "AnyAttrRef",
     # Arg types
     "Arg",
-    "IntArg",
-    "FloatArg",
-    "StrArg",
+    "AutoInterface",
+    # Flows — error
+    "Assert",
+    # Flows — asserts
+    "AssertEmpty",
+    "AssertEquals",
+    "AssertExists",
+    "AssertGreaterOrEqual",
+    "AssertGreaterThan",
+    "AssertLessOrEqual",
+    "AssertLessThan",
+    "AssertMissing",
+    "AssertNotEmpty",
+    "AssertNotEquals",
+    # Attr refs
+    "AttrRef",
+    # Context
+    "Attributes",
+    "BinaryCalc",
+    "BinaryCmd",
+    "BinaryOp",
     "BoolArg",
+    "BoolAttrRef",
     "BytesArg",
-    "NoneArg",
-    "ListArg",
+    "BytesAttrRef",
+    "Calculation",
+    "Command",
+    "Context",
+    # Flows — timing
+    "Debounce",
+    # Flows — io
+    "Debug",
+    "Delay",
     "DictArg",
-    "SetArg",
+    # Flows — control
+    "DoWhile",
+    "Empty",
+    "FloatArg",
+    "FloatAttrRef",
+    # iteration
+    "Fold",
+    "ForEach",
+    "ForRange",
+    "Forever",
     "FrozenSetArg",
-    "TupleArg",
+    "If",
+    "IntArg",
+    "IntAttrRef",
+    "Invalid",
+    "LValue",
+    "ListArg",
+    "Log",
     # Model
     "Model",
-    # Flow & Span
-    "Flow",
+    "NAryCalc",
+    "NAryCmd",
+    "NAryOp",
+    "NoneArg",
+    # Nu
+    "Nu",
+    "Op",
+    "Parallel",
+    "Print",
+    "RValue",
+    "Race",
+    "Ref",
+    "Retry",
+    # Sentinel
+    "Sentinel",
+    "Seq",
+    "SetArg",
+    "SkipIfEmpty",
+    "SkipIfExists",
+    "SkipIfMissing",
+    "SkipIfNotEmpty",
     "Span",
-    # Context
-    "Context",
-    # Primitive refs
-    "PrimRef",
-    "PrimIntRef",
-    "PrimFloatRef",
-    "PrimStrRef",
-    "PrimBoolRef",
-    "PrimBytesRef",
-    "PrimAnyRef",
-    # Walk
-    "preorder",
-    "postorder",
-    "bfs",
-    "leaves",
-    "ancestors",
+    "StrArg",
+    "StrAttrRef",
+    "Switch",
+    "TernaryCalc",
+    "TernaryCmd",
+    "TernaryOp",
+    "Throttle",
+    "Timed",
+    "Timeout",
     # Transform
     "Transform",
-    "compose",
+    "TryCatch",
+    "TupleArg",
+    "UnaryCalc",
+    "UnaryCmd",
+    "UnaryOp",
+    "Value",
+    "While",
+    "all_",
+    "ancestors",
+    "and_",
+    "any_",
     "apply",
-    "map_children",
-    "map_nodes",
-    "replace",
-    "wrap",
-    "unwrap",
-    "graft",
-    "prune",
+    "bfs",
+    "compose",
+    "count",
+    "depth",
+    "ensure_nu",
     # Query
     "find",
     "find_first",
-    "count",
-    "size",
-    "depth",
     # Display
     "format_tree",
+    "graft",
+    "is_empty",
+    "is_invalid",
+    "is_sentinel",
+    "leaves",
+    "map_children",
+    "map_nodes",
+    "method",
+    "none_",
+    "or_",
+    "postorder",
+    # Walk
+    "preorder",
     "print_tree",
+    "propagate_special",
+    "prop",
+    "prune",
+    "replace",
+    "size",
+    "typed_value",
+    "unwrap",
+    "wrap",
 ]

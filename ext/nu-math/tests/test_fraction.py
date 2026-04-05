@@ -7,10 +7,10 @@ Tests for:
 from fractions import Fraction
 
 from nu_math import FractionValue as FractionRef
-from nu.abc import AddOp, DivOp, FloorDivOp, FuncCallOp, ModOp, MulOp, PowOp, SubOp
-from nu.abc import FloatValue as FloatRef
-from nu.abc import IntValue as IntRef
-from nu.abc import TupleValue as TupleRef
+from nu import AddOp, DivOp, FloorDivOp, FuncCallOp, ModOp, MulOp, PowOp, SubOp
+from nu import FloatI as FloatRef
+from nu import IntI as IntRef
+from nu import TupleI as TupleRef
 
 
 # =============================================================================

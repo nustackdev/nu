@@ -7,15 +7,15 @@ from typing import TYPE_CHECKING
 from virtuals.collections import MutableMappingBase
 from virtuals.types import Value as StorageValue
 
-from nu.abc import (
-    AnyValue,
-    DictItemsValue,
-    DictKeysValue,
-    DictValue,
-    DictValuesValue,
-    IteratorValue,
+from nu import (
+    AnyI,
+    DictItemsI,
+    DictKeysI,
+    DictI,
+    DictValuesI,
+    IteratorI,
 )
-from nu.shape import ReactiveShapeRef, Shape, Slot
+from nu.shapes import ReactiveShapeRef, Shape, Slot
 
 from .base import ViewRef
 
@@ -23,7 +23,7 @@ from .base import ViewRef
 if TYPE_CHECKING:
     from virtuals.loc import path
 
-    from nu import Term
+    from nu import Nu
 
 
 __all__ = [
@@ -44,32 +44,32 @@ class ShapeRef[T: Shape](
     Inherits PV path resolution and view fetching from ViewRef.
     """
 
-    def result(self, op: Term) -> DictValue[str, object]:
-        """Wrap morphism in DictValue for shape extract/store."""
-        return DictValue(op)
+    def result(self, op: Nu) -> DictI[str, object]:
+        """Wrap morphism in DictI for shape extract/store."""
+        return DictI(op)
 
-    def _wrap_keys_result(self, operand: Term) -> DictKeysValue:
-        return DictKeysValue(operand)
+    def _wrap_keys_result(self, operand: Nu) -> DictKeysI:
+        return DictKeysI(operand)
 
-    def _wrap_values_result(self, operand: Term) -> DictValuesValue:
-        return DictValuesValue(operand)
+    def _wrap_values_result(self, operand: Nu) -> DictValuesI:
+        return DictValuesI(operand)
 
-    def _wrap_items_result(self, operand: Term) -> DictItemsValue:
-        return DictItemsValue(operand)
+    def _wrap_items_result(self, operand: Nu) -> DictItemsI:
+        return DictItemsI(operand)
 
-    def _wrap_iterable_result(self, operand: Term) -> IteratorValue:
-        return IteratorValue(operand)
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorI:
+        return IteratorI(operand)
 
-    def _wrap_value_result(self, operand: Term) -> AnyValue:
-        return AnyValue(operand)
+    def _wrap_value_result(self, operand: Nu) -> AnyI:
+        return AnyI(operand)
 
-    def _wrap_element_result(self, operand: Term) -> AnyValue:
-        return AnyValue(operand)
+    def _wrap_element_result(self, operand: Nu) -> AnyI:
+        return AnyI(operand)
 
     def __init__(
         self,
         *,
-        address: path.PathAddress | Term,
+        address: path.PathAddress | Nu,
         shape_type: type[T],
         view_type: type[MutableMappingBase],
         parent: ViewRef | None = None,

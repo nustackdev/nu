@@ -2,7 +2,7 @@
 
 Pattern:
     PercentageType = Object[Percentage] + ComparableBase + arithmetic operations
-    PercentageValue = ValueBase + PercentageType (computed results)
+    PercentageValue = Interface + PercentageType (computed results)
 """
 
 from __future__ import annotations
@@ -10,20 +10,20 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import Sentinel
-from nu.abc import (
-    BoolValue,
+from nu import (
+    BoolI,
     ComparableBase,
-    FloatValue,
-    IntValue,
+    FloatI,
+    IntI,
     Object,
-    ValueBase,
+    Interface,
 )
 
 from .percentage_cls import Percentage
 
 
 if TYPE_CHECKING:
-    from nu import Term
+    from nu import Nu
 
     from .args import PercentageArg
 
@@ -49,23 +49,23 @@ class PercentageType(
     # =========================================================================
 
     @classmethod
-    def from_float(cls, value: float | Term[float]) -> PercentageValue:
+    def from_float(cls, value: float | Nu[float]) -> PercentageValue:
         """Create from percentage float."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return PercentageValue(FuncCallOp(Percentage, value))
 
     @classmethod
-    def from_dec(cls, dec: float | Term[float]) -> PercentageValue:
+    def from_dec(cls, dec: float | Nu[float]) -> PercentageValue:
         """Create from decimal."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return PercentageValue(FuncCallOp(Percentage.from_dec, dec))
 
     @classmethod
-    def from_bps(cls, bps: int | Term[int]) -> PercentageValue:
+    def from_bps(cls, bps: int | Nu[int]) -> PercentageValue:
         """Create from basis points."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return PercentageValue(FuncCallOp(Percentage.from_bps, bps))
 
@@ -73,65 +73,65 @@ class PercentageType(
     # CONVERSIONS
     # =========================================================================
 
-    def to_dec(self) -> FloatValue:
+    def to_dec(self) -> FloatI:
         """Convert to decimal."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "to_dec"))
+        return FloatI(MethodCallOp(self, "to_dec"))
 
-    def to_bps(self) -> IntValue:
+    def to_bps(self) -> IntI:
         """Convert to basis points."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return IntValue(MethodCallOp(self, "to_bps"))
+        return IntI(MethodCallOp(self, "to_bps"))
 
-    def to_float(self) -> FloatValue:
+    def to_float(self) -> FloatI:
         """Get raw percentage."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "to_float"))
+        return FloatI(MethodCallOp(self, "to_float"))
 
     # =========================================================================
     # APPLICATION
     # =========================================================================
 
-    def apply(self, amount: int | float | Term) -> FloatValue:
+    def apply(self, amount: int | float | Nu) -> FloatI:
         """Apply percentage to amount."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "apply", amount))
+        return FloatI(MethodCallOp(self, "apply", amount))
 
-    def of(self, amount: int | float | Term) -> FloatValue:
+    def of(self, amount: int | float | Nu) -> FloatI:
         """Alias for apply."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "of", amount))
+        return FloatI(MethodCallOp(self, "of", amount))
 
-    def add_to(self, amount: int | float | Term) -> FloatValue:
+    def add_to(self, amount: int | float | Nu) -> FloatI:
         """Add percentage to amount."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "add_to", amount))
+        return FloatI(MethodCallOp(self, "add_to", amount))
 
-    def sub_from(self, amount: int | float | Term) -> FloatValue:
+    def sub_from(self, amount: int | float | Nu) -> FloatI:
         """Subtract percentage from amount."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "sub_from", amount))
+        return FloatI(MethodCallOp(self, "sub_from", amount))
 
     # =========================================================================
     # VALIDATION
     # =========================================================================
 
-    def is_valid(self, min_val: float = 0.0, max_val: float = 100.0) -> BoolValue:
+    def is_valid(self, min_val: float = 0.0, max_val: float = 100.0) -> BoolI:
         """Check if within range."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return BoolValue(MethodCallOp(self, "is_valid", min_val, max_val))
+        return BoolI(MethodCallOp(self, "is_valid", min_val, max_val))
 
     def clamp(self, min_val: float = 0.0, max_val: float = 100.0) -> PercentageValue:
         """Clamp to range."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         return PercentageValue(MethodCallOp(self, "clamp", min_val, max_val))
 
@@ -141,7 +141,7 @@ class PercentageType(
 
     def __add__(self, other: PercentageArg | float) -> PercentageValue:
         """Add percentages."""
-        from nu.abc import AddOp
+        from nu import AddOp
 
         if isinstance(other, Percentage):
             other = PercentageValue(other)
@@ -149,7 +149,7 @@ class PercentageType(
 
     def __radd__(self, other: Percentage | float) -> PercentageValue:
         """Right add."""
-        from nu.abc import AddOp
+        from nu import AddOp
 
         if isinstance(other, Percentage):
             other = PercentageValue(other)
@@ -157,7 +157,7 @@ class PercentageType(
 
     def __sub__(self, other: PercentageArg | float) -> PercentageValue:
         """Subtract percentages."""
-        from nu.abc import SubOp
+        from nu import SubOp
 
         if isinstance(other, Percentage):
             other = PercentageValue(other)
@@ -165,33 +165,33 @@ class PercentageType(
 
     def __rsub__(self, other: Percentage | float) -> PercentageValue:
         """Right subtract."""
-        from nu.abc import SubOp
+        from nu import SubOp
 
         if isinstance(other, Percentage):
             other = PercentageValue(other)
         return PercentageValue(SubOp(other, self))
 
-    def __mul__(self, factor: int | float | Term) -> PercentageValue:
+    def __mul__(self, factor: int | float | Nu) -> PercentageValue:
         """Multiply by factor."""
-        from nu.abc import MulOp
+        from nu import MulOp
 
         return PercentageValue(MulOp(self, factor))
 
     def __rmul__(self, factor: int | float) -> PercentageValue:
         """Right multiply."""
-        from nu.abc import MulOp
+        from nu import MulOp
 
         return PercentageValue(MulOp(factor, self))
 
-    def __truediv__(self, divisor: int | float | Term) -> PercentageValue:
+    def __truediv__(self, divisor: int | float | Nu) -> PercentageValue:
         """Divide by factor."""
-        from nu.abc import DivOp
+        from nu import DivOp
 
         return PercentageValue(DivOp(self, divisor))
 
     def __neg__(self) -> PercentageValue:
         """Negate."""
-        from nu.abc import NegOp
+        from nu import NegOp
 
         return PercentageValue(NegOp(self))
 
@@ -201,7 +201,7 @@ class PercentageType(
 # =============================================================================
 
 
-class PercentageValue(ValueBase, PercentageType):
+class PercentageValue(Interface, PercentageType):
     """Computed Percentage value (Python memory substrate)."""
 
     pass

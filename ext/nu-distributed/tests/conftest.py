@@ -22,7 +22,7 @@ from nu_distributed import (
     WorkerSpec,
 )
 from nu import Context
-from nu.shape import Shape
+from nu.shapes import Shape
 
 
 class TestShape(Shape):

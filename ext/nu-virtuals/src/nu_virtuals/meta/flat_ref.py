@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu_virtuals.paths import ViewPathSer
-from nu import EMPTY, Sentinel, Term
+from nu import EMPTY, Sentinel, Nu
 
 
 if TYPE_CHECKING:
@@ -25,14 +25,14 @@ __all__ = [
 ]
 
 
-class FlatRef(Term):
+class FlatRef(Nu):
     """Flat, pre-resolved ref for virtuals substrate.
 
     Attributes:
         _static_path: Path tuple ((addr, marker), ...). Dynamic positions
             hold (None, marker) placeholders.
         _root_shape: Shape class for context lookup.
-        _dynamic_segments: tuple of (index, Term) for dynamic positions, or None.
+        _dynamic_segments: tuple of (index, Nu) for dynamic positions, or None.
         _last_address: Pre-extracted last address for resolve_address fast path.
         _is_primitive: True if leaf ref is a PrimitiveRef (not a ViewRef).
     """
@@ -43,7 +43,7 @@ class FlatRef(Term):
         static_path: tuple[tuple[object, type], ...],
         root_shape: type,
         is_primitive: bool,
-        dynamic_segments: tuple[tuple[int, Term], ...] | None = None,
+        dynamic_segments: tuple[tuple[int, Nu], ...] | None = None,
     ) -> None:
         if dynamic_segments:
             super().__init__(*(seg[1] for seg in dynamic_segments))
@@ -122,7 +122,7 @@ class FlatRef(Term):
         return await self._build_path(ctx)
 
     async def execute(self, ctx: Context) -> object | Sentinel:
-        """Term interface — delegates to fetch."""
+        """Nu interface — delegates to fetch."""
         return await self.fetch(ctx)
 
     def get_root_shape(self) -> type:

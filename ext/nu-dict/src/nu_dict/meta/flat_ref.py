@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import EMPTY, Sentinel, Term
+from nu import EMPTY, Sentinel, Nu
 
 
 if TYPE_CHECKING:
@@ -24,16 +24,16 @@ __all__ = [
 ]
 
 
-class FlatRef(Term):
+class FlatRef(Nu):
     """Flat, pre-resolved ref for dict substrate.
 
     For all-static paths (the common case), this is just a tuple lookup.
-    For mixed static/dynamic paths, only the dynamic Term segments are executed.
+    For mixed static/dynamic paths, only the dynamic Nu segments are executed.
 
     Attributes:
         _static_path: Full path tuple. Dynamic positions hold None placeholders.
         _root_shape: Shape class for context lookup.
-        _dynamic_segments: tuple of (index, Term) for dynamic positions, or None.
+        _dynamic_segments: tuple of (index, Nu) for dynamic positions, or None.
         _last_address: Pre-extracted last path segment (for resolve_address fast path).
     """
 
@@ -42,9 +42,9 @@ class FlatRef(Term):
         *,
         static_path: tuple[str | int | None, ...],
         root_shape: type,
-        dynamic_segments: tuple[tuple[int, Term], ...] | None = None,
+        dynamic_segments: tuple[tuple[int, Nu], ...] | None = None,
     ) -> None:
-        # Tree children: only dynamic Term segments (for traversal / further deformations)
+        # Tree children: only dynamic Nu segments (for traversal / further deformations)
         if dynamic_segments:
             super().__init__(*(seg[1] for seg in dynamic_segments))
         else:
@@ -102,7 +102,7 @@ class FlatRef(Term):
         return await self._build_path(ctx)
 
     async def execute(self, ctx: Context) -> object | Sentinel:
-        """Term interface — delegates to fetch."""
+        """Nu interface — delegates to fetch."""
         return await self.fetch(ctx)
 
     def get_root_shape(self) -> type:

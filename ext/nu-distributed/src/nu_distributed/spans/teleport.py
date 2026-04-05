@@ -34,7 +34,7 @@ from nu import Span
 
 
 if TYPE_CHECKING:
-    from nu import Context, Executable
+    from nu import Context, Nu
 
 
 __all__ = [
@@ -55,7 +55,7 @@ class Teleport(Span):
 
     def __init__(
         self,
-        *children: Executable,
+        *children: Nu,
         worker: object = 0,
         carry: bool = False,
     ) -> None:
@@ -72,7 +72,7 @@ class Teleport(Span):
         if len(self.children) == 1:
             subtree = self.children[0]
         else:
-            from nu.abc import Seq
+            from nu import Seq
 
             subtree = Seq(*self.children)
 

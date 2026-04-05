@@ -2,7 +2,7 @@
 
 Pattern:
     TimezoneType = Object[timezone] + EqualableBase + timezone operations
-    TimezoneValue = ValueBase + TimezoneType (computed results)
+    TimezoneValue = Interface + TimezoneType (computed results)
 
 Note: Timezones are not orderable (no <, >, <=, >=).
 """
@@ -13,17 +13,17 @@ from datetime import UTC, datetime, timedelta, timezone
 from typing import TYPE_CHECKING
 
 from nu import Sentinel
-from nu.abc import (
+from nu import (
     EqualableBase,
-    NoneValue,
+    NoneI,
     Object,
-    StrValue,
-    ValueBase,
+    StrI,
+    Interface,
 )
 
 
 if TYPE_CHECKING:
-    from nu import Term
+    from nu import Nu
 
     from .args import DatetimeArg, TimedeltaArg
 
@@ -58,12 +58,12 @@ class TimezoneType(
     @classmethod
     def from_offset(
         cls,
-        hours: int | Term[int] = 0,
-        minutes: int | Term[int] = 0,
-        name: str | Term[str] | None = None,
+        hours: int | Nu[int] = 0,
+        minutes: int | Nu[int] = 0,
+        name: str | Nu[str] | None = None,
     ) -> TimezoneValue:
         """Create a TimezoneValue from hour/minute offset."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         from .timedelta_ref import TimedeltaValue
 
@@ -76,10 +76,10 @@ class TimezoneType(
     def from_timedelta(
         cls,
         offset: TimedeltaArg,
-        name: str | Term[str] | None = None,
+        name: str | Nu[str] | None = None,
     ) -> TimezoneValue:
         """Create a TimezoneValue from a timedelta offset."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         from .timedelta_ref import TimedeltaValue
 
@@ -93,9 +93,9 @@ class TimezoneType(
     # METHODS
     # =========================================================================
 
-    def tzname(self, dt: DatetimeArg | None = None) -> StrValue:
+    def tzname(self, dt: DatetimeArg | None = None) -> StrI:
         """Get the timezone name."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         from .datetime_ref import DatetimeValue
 
@@ -105,11 +105,11 @@ class TimezoneType(
             dt_arg = DatetimeValue(dt)
         else:
             dt_arg = dt
-        return StrValue(MethodCallOp(self, "tzname", dt_arg))
+        return StrI(MethodCallOp(self, "tzname", dt_arg))
 
     def utcoffset(self, dt: DatetimeArg | None = None) -> TimedeltaValue:
         """Get the UTC offset as timedelta."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
         from .datetime_ref import DatetimeValue
         from .timedelta_ref import TimedeltaValue
@@ -122,9 +122,9 @@ class TimezoneType(
             dt_arg = dt
         return TimedeltaValue(MethodCallOp(self, "utcoffset", dt_arg))
 
-    def dst(self, dt: DatetimeArg | None = None) -> NoneValue:
+    def dst(self, dt: DatetimeArg | None = None) -> NoneI:
         """Get the daylight saving time offset (returns None for fixed-offset timezones)."""
-        return NoneValue()
+        return NoneI()
 
 
 # =============================================================================
@@ -132,7 +132,7 @@ class TimezoneType(
 # =============================================================================
 
 
-class TimezoneValue(ValueBase, TimezoneType):
+class TimezoneValue(Interface, TimezoneType):
     """Computed timezone value (Python memory substrate)."""
 
     pass

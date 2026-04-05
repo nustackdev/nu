@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
-from nu import EMPTY, Command, Morphism, Operation, Sentinel
+from nu import EMPTY, Command, Op, Calculation, Sentinel
 
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ __all__ = [
 ]
 
 
-class ScanPrimitivesUnsafeOp[T](Operation, Morphism[Iterator[T] | Sentinel]):
+class ScanPrimitivesUnsafeOp[T](Calculation, Op[Iterator[T] | Sentinel]):
     """Scan all direct primitive child values via _unsafe_primitive_scan_values().
 
     Single ctx.scan() call — no marker parsing, no type checks.
@@ -50,7 +50,7 @@ class ScanPrimitivesUnsafeOp[T](Operation, Morphism[Iterator[T] | Sentinel]):
         return f"ScanPrimitivesUnsafeOp({self.ref!r})"
 
 
-class ClearPrimitivesUnsafeCmd(Command, Morphism[None]):
+class ClearPrimitivesUnsafeCmd(Command, Op[None]):
     """Clear all primitive children via _unsafe_primitive_clear().
 
     Scan + ctx.delete() each — no validation, no descendant cleanup.

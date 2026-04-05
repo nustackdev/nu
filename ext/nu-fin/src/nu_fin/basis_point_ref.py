@@ -2,7 +2,7 @@
 
 Pattern:
     BasisPointType = Object[BasisPoint] + ComparableBase + arithmetic operations
-    BasisPointValue = ValueBase + BasisPointType (computed results)
+    BasisPointValue = Interface + BasisPointType (computed results)
 
 Basis point = 1/100th of a percent (500 bps = 5%).
 """
@@ -12,19 +12,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import Sentinel
-from nu.abc import (
+from nu import (
     ComparableBase,
-    FloatValue,
-    IntValue,
+    FloatI,
+    IntI,
     Object,
-    ValueBase,
+    Interface,
 )
 
 from .basis_point_cls import BasisPoint
 
 
 if TYPE_CHECKING:
-    from nu import Term
+    from nu import Nu
 
     from .args import BasisPointArg
 
@@ -50,23 +50,23 @@ class BasisPointType(
     # =========================================================================
 
     @classmethod
-    def from_int(cls, value: int | Term[int]) -> BasisPointValue:
+    def from_int(cls, value: int | Nu[int]) -> BasisPointValue:
         """Create from raw basis points."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return BasisPointValue(FuncCallOp(BasisPoint, value))
 
     @classmethod
-    def from_pct(cls, pct: float | Term[float]) -> BasisPointValue:
+    def from_pct(cls, pct: float | Nu[float]) -> BasisPointValue:
         """Create from percentage."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return BasisPointValue(FuncCallOp(BasisPoint.from_pct, pct))
 
     @classmethod
-    def from_dec(cls, dec: float | Term[float]) -> BasisPointValue:
+    def from_dec(cls, dec: float | Nu[float]) -> BasisPointValue:
         """Create from decimal."""
-        from nu.abc import FuncCallOp
+        from nu import FuncCallOp
 
         return BasisPointValue(FuncCallOp(BasisPoint.from_dec, dec))
 
@@ -74,45 +74,45 @@ class BasisPointType(
     # CONVERSIONS
     # =========================================================================
 
-    def to_pct(self) -> FloatValue:
+    def to_pct(self) -> FloatI:
         """Convert to percentage."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "to_pct"))
+        return FloatI(MethodCallOp(self, "to_pct"))
 
-    def to_dec(self) -> FloatValue:
+    def to_dec(self) -> FloatI:
         """Convert to decimal."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "to_dec"))
+        return FloatI(MethodCallOp(self, "to_dec"))
 
-    def to_int(self) -> IntValue:
+    def to_int(self) -> IntI:
         """Get raw basis points."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return IntValue(MethodCallOp(self, "to_int"))
+        return IntI(MethodCallOp(self, "to_int"))
 
     # =========================================================================
     # APPLICATION
     # =========================================================================
 
-    def apply(self, amount: int | float | Term) -> FloatValue:
+    def apply(self, amount: int | float | Nu) -> FloatI:
         """Apply basis points to amount."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "apply", amount))
+        return FloatI(MethodCallOp(self, "apply", amount))
 
-    def add_to(self, amount: int | float | Term) -> FloatValue:
+    def add_to(self, amount: int | float | Nu) -> FloatI:
         """Add basis points to amount."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "add_to", amount))
+        return FloatI(MethodCallOp(self, "add_to", amount))
 
-    def sub_from(self, amount: int | float | Term) -> FloatValue:
+    def sub_from(self, amount: int | float | Nu) -> FloatI:
         """Subtract basis points from amount."""
-        from nu.abc import MethodCallOp
+        from nu import MethodCallOp
 
-        return FloatValue(MethodCallOp(self, "sub_from", amount))
+        return FloatI(MethodCallOp(self, "sub_from", amount))
 
     # =========================================================================
     # ARITHMETIC
@@ -120,7 +120,7 @@ class BasisPointType(
 
     def __add__(self, other: BasisPointArg) -> BasisPointValue:
         """Add basis points."""
-        from nu.abc import AddOp
+        from nu import AddOp
 
         if isinstance(other, BasisPoint):
             other = BasisPointValue(other)
@@ -128,7 +128,7 @@ class BasisPointType(
 
     def __radd__(self, other: BasisPoint | int) -> BasisPointValue:
         """Right add."""
-        from nu.abc import AddOp
+        from nu import AddOp
 
         if isinstance(other, BasisPoint):
             other = BasisPointValue(other)
@@ -136,7 +136,7 @@ class BasisPointType(
 
     def __sub__(self, other: BasisPointArg) -> BasisPointValue:
         """Subtract basis points."""
-        from nu.abc import SubOp
+        from nu import SubOp
 
         if isinstance(other, BasisPoint):
             other = BasisPointValue(other)
@@ -144,27 +144,27 @@ class BasisPointType(
 
     def __rsub__(self, other: BasisPoint | int) -> BasisPointValue:
         """Right subtract."""
-        from nu.abc import SubOp
+        from nu import SubOp
 
         if isinstance(other, BasisPoint):
             other = BasisPointValue(other)
         return BasisPointValue(SubOp(other, self))
 
-    def __mul__(self, factor: int | float | Term) -> BasisPointValue:
+    def __mul__(self, factor: int | float | Nu) -> BasisPointValue:
         """Multiply by factor."""
-        from nu.abc import MulOp
+        from nu import MulOp
 
         return BasisPointValue(MulOp(self, factor))
 
     def __rmul__(self, factor: int | float) -> BasisPointValue:
         """Right multiply."""
-        from nu.abc import MulOp
+        from nu import MulOp
 
         return BasisPointValue(MulOp(factor, self))
 
-    def __truediv__(self, divisor: int | float | Term) -> BasisPointValue:
+    def __truediv__(self, divisor: int | float | Nu) -> BasisPointValue:
         """Divide by factor."""
-        from nu.abc import DivOp
+        from nu import DivOp
 
         return BasisPointValue(DivOp(self, divisor))
 
@@ -174,7 +174,7 @@ class BasisPointType(
 # =============================================================================
 
 
-class BasisPointValue(ValueBase, BasisPointType):
+class BasisPointValue(Interface, BasisPointType):
     """Computed BasisPoint value (Python memory substrate)."""
 
     pass

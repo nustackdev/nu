@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from nu_virtuals.meta.flat_ref import FlatRef
 from nu_virtuals.morphisms.item import ItemPrimitiveGetUnsafeOp, ItemPrimitiveSetUnsafeCmd
-from nu import Node, replace
-from nu.shape.morphisms.item import ItemLoadOp, ItemStoreCmd
+from nu import Nu, replace
+from nu.shapes.ops.item import ItemLoadOp, ItemStoreCmd
 
 
 __all__ = [
@@ -24,7 +24,7 @@ def _is_substrate_ref(node: object) -> bool:
     return isinstance(ref, FlatRef)
 
 
-def optimize_primitive_reads[N: Node](tree: N) -> N:
+def optimize_primitive_reads[N: Nu](tree: N) -> N:
     """ItemLoadOp → ItemPrimitiveGetUnsafeOp (virtuals refs only)."""
     return replace(
         tree,
@@ -33,7 +33,7 @@ def optimize_primitive_reads[N: Node](tree: N) -> N:
     )
 
 
-def optimize_primitive_writes[N: Node](tree: N) -> N:
+def optimize_primitive_writes[N: Nu](tree: N) -> N:
     """ItemStoreCmd → ItemPrimitiveSetUnsafeCmd (virtuals refs only)."""
     return replace(
         tree,
