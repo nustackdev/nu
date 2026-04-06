@@ -1,10 +1,14 @@
-"""ABC meta-transforms — tree rewrites using abc-specific constructs."""
+"""Annotation transforms -- logging and step-tracking tree rewrites."""
 
 from __future__ import annotations
 
 import logging
 
-import nu
+from nu.context import Context, IntAttrRef, StrAttrRef
+from nu.ops import Log, Retry, Seq, ToStr
+from nu.terms import Nu, ScopedCmd
+
+from nu.tree import map_nodes
 
 
 __all__ = [
@@ -13,30 +17,30 @@ __all__ = [
     "set_logger_name",
 ]
 
-_step_logger = logging.getLogger("everybase.steps")
+_step_logger = logging.getLogger("nu.steps")
 
 
-class _StepSpan(nu.Span):
+class _StepSpan(ScopedCmd):
     """Wraps a Seq child to log step progress. Path is baked at construction."""
 
-    def __init__(self, child: nu.Nu, step: int, total: int, path: str) -> None:
+    def __init__(self, child: Nu, step: int, total: int, path: str) -> None:
         super().__init__(child)
         self._step = step
         self._total = total
         self._path = path
-        self._logger_name = "everybase.steps"
+        self._logger_name = "nu.steps"
 
     def _log(self, level: str, msg: str, *args: object) -> None:
         logging.getLogger(self._logger_name).log(logging.getLevelName(level), msg, *args)
 
-    def enter(self, ctx: object) -> object:
+    def before(self, ctx: Context) -> Context:
         self._log("INFO", "[%s] step %d/%d start", self._path, self._step, self._total)
         return ctx
 
-    def exit_success(self, ctx: object) -> None:
+    def after_success(self, ctx: Context) -> None:
         self._log("INFO", "[%s] step %d/%d done", self._path, self._step, self._total)
 
-    def exit_failure(self, ctx: object, error: BaseException) -> None:
+    def after_failure(self, ctx: Context, error: BaseException) -> None:
         self._log(
             "WARNING",
             "[%s] step %d/%d failed: %s",
@@ -47,7 +51,7 @@ class _StepSpan(nu.Span):
         )
 
 
-def annotate_retries[N: nu.Nu](tree: N) -> N:
+def annotate_retries[N: Nu](tree: N) -> N:
     """Add logging hooks to all Retry nodes.
 
     Wraps every Retry with Log-based hooks for ``on_attempt_fail`` and
@@ -60,32 +64,28 @@ def annotate_retries[N: nu.Nu](tree: N) -> N:
     Returns:
         New tree with annotated Retry nodes.
     """
-    from ..refs import IntRef, StrRef
 
-    def _annotate(node: nu.Nu) -> nu.Nu:
-        if not isinstance(node, nu.Retry):
+    def _annotate(node: Nu) -> Nu:
+        if not isinstance(node, Retry):
             return node
 
-        error = StrRef("error")
-        attempt = IntRef("attempt")
+        error = StrAttrRef("error")
+        attempt = IntAttrRef("attempt")
 
-        log_af = nu.Log(
-            "retry attempt " + nu.primitives.StrI(nu.ToStrOp(attempt.get())) + " failed: " + error.get(),
+        log_af = Log(
+            "retry attempt " + ToStr(attempt.get()) + " failed: " + error.get(),
             level="warning",
         )
-        log_fail = nu.Log(
-            "retry exhausted after "
-            + nu.primitives.StrI(nu.ToStrOp(attempt.get()))
-            + " attempts: "
-            + error.get(),
+        log_fail = Log(
+            "retry exhausted after " + ToStr(attempt.get()) + " attempts: " + error.get(),
             level="error",
         )
 
         existing_af = node.on_attempt_fail
         existing_fail = node.on_fail
 
-        on_af = nu.Seq(log_af, existing_af) if existing_af else log_af
-        on_fail = nu.Seq(log_fail, existing_fail) if existing_fail else log_fail
+        on_af = Seq(log_af, existing_af) if existing_af else log_af
+        on_fail = Seq(log_fail, existing_fail) if existing_fail else log_fail
 
         return node.with_children(
             *node.children[:4],
@@ -94,14 +94,14 @@ def annotate_retries[N: nu.Nu](tree: N) -> N:
             on_fail,
         )
 
-    return nu.map_nodes(tree, _annotate, order="bottom_up")
+    return map_nodes(tree, _annotate, order="bottom_up")
 
 
-def annotate_steps[N: nu.Nu](tree: N) -> N:
+def annotate_steps(tree: Nu) -> Nu:
     """Wrap Seq children in step-tracking spans with baked tree paths.
 
     Walks the tree recursively, tracking the structural path from root.
-    Each Flow/Span child of a Seq gets wrapped in a ``_StepSpan`` with
+    Each child of a Seq gets wrapped in a ``_StepSpan`` with
     the path baked in.  All ``Log`` nodes encountered get their ``_path``
     set so log messages show their tree position.
 
@@ -111,17 +111,17 @@ def annotate_steps[N: nu.Nu](tree: N) -> N:
     Returns:
         New tree with step-annotated Seq nodes and path-aware Log nodes.
     """
-    def _walk(node: nu.Nu, path: str) -> nu.Nu:
-        # Seq with meaningful children: wrap Flow/Span children in _StepSpan
-        if isinstance(node, nu.Seq):
-            meaningful = [c for c in node.children if isinstance(c, (nu.Op, nu.Span))]
-            if len(meaningful) >= 2:
+
+    def _walk(node: Nu, path: str) -> Nu:
+        # Seq with meaningful children: wrap children in _StepSpan
+        if isinstance(node, Seq):
+            if len(node.children) >= 2:
                 seq_path = f"{path}{type(node).__name__}"
-                total = len(meaningful)
+                total = len(node.children)
                 step = 0
                 new_children: list = []
                 for child in node.children:
-                    if isinstance(child, (nu.Op, nu.Span)) and not isinstance(child, _StepSpan):
+                    if not isinstance(child, _StepSpan):
                         step += 1
                         name = type(child).__name__
                         walked = _walk(child, f"{seq_path}.{name}.")
@@ -133,7 +133,7 @@ def annotate_steps[N: nu.Nu](tree: N) -> N:
                 return node.with_children(*new_children)
 
         # Log nodes: bake the current path
-        if isinstance(node, nu.Log) and path:
+        if isinstance(node, Log) and path:
             clone = node.with_children(*node.children)
             clone._path = path.rstrip(".")
             return clone
@@ -149,7 +149,7 @@ def annotate_steps[N: nu.Nu](tree: N) -> N:
     return _walk(tree, "")
 
 
-def set_logger_name[N: nu.Nu](tree: N, name: str) -> N:
+def set_logger_name[N: Nu](tree: N, name: str) -> N:
     """Rename the logger on all Log nodes in the tree.
 
     Args:
@@ -159,11 +159,12 @@ def set_logger_name[N: nu.Nu](tree: N, name: str) -> N:
     Returns:
         New tree with renamed Log nodes.
     """
-    def _rename(node: nu.Nu) -> nu.Nu:
-        if not isinstance(node, (nu.Log, _StepSpan)):
+
+    def _rename(node: Nu) -> Nu:
+        if not isinstance(node, (Log, _StepSpan)):
             return node
         clone = node.with_children(*node.children)
         clone._logger_name = name
         return clone
 
-    return nu.map_nodes(tree, _rename, order="bottom_up")
+    return map_nodes(tree, _rename, order="bottom_up")

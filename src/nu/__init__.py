@@ -8,7 +8,7 @@ Subpackages:
     collections/  -- collection type interfaces (ListI, DictI, etc.)
     ops/          -- all concrete operations
     shapes/       -- document data model
-    transform/    -- tree transformations
+    tree/         -- node structure, traversal, queries, and rewrites
 """
 
 from __future__ import annotations
@@ -273,7 +273,7 @@ from .terms import (
     is_sentinel,
     propagate_special,
 )
-from .transform import (
+from .tree import (
     Transform,
     ancestors,
     apply,
@@ -283,14 +283,12 @@ from .transform import (
     depth,
     find,
     find_first,
-    format_tree,
     graft,
     leaves,
     map_children,
     map_nodes,
     postorder,
     preorder,
-    print_tree,
     prune,
     replace,
     size,
@@ -556,7 +554,6 @@ __all__ = [
     "ensure_nu",
     "find",
     "find_first",
-    "format_tree",
     "graft",
     "is_empty",
     "is_invalid",
@@ -569,7 +566,6 @@ __all__ = [
     "or_",
     "postorder",
     "preorder",
-    "print_tree",
     "prop",
     "propagate_special",
     "prune",

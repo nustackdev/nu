@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nu-debugger"
+version = "0.1.0"
+description = "Debugging and DX tools for Nu trees -- display, annotation, step tracking"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
+requires-python = ">=3.12"
+dependencies = [
+    "nu>=0.1.0",
+]
+
+[project.urls]
+Repository = "https://github.com/nustackdev/nu"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nu_debugger"]

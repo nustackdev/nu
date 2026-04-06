@@ -1,11 +1,11 @@
-"""Nu transform — tree transformations."""
+"""Nu tree -- node structure, traversal, queries, and rewrites."""
 
-from .display import format_tree, print_tree
 from .query import count, depth, find, find_first, size
-from .transform import (
+from .rewrite import (
     Transform,
     apply,
     compose,
+    conditional_wrap,
     graft,
     map_children,
     map_nodes,
@@ -14,5 +14,4 @@ from .transform import (
     unwrap,
     wrap,
 )
-from .transforms import conditional_wrap
 from .walk import ancestors, bfs, leaves, postorder, preorder

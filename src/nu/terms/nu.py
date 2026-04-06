@@ -17,7 +17,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Generic
 
-from .node import _Node
+from nu.tree.node import _Node
 from .type_vars import T_co
 
 

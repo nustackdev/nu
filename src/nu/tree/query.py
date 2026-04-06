@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Nu
-
 from .walk import preorder
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from nu.terms import Nu
 
 
 __all__ = [
@@ -22,12 +22,12 @@ __all__ = [
 ]
 
 
-def find[N: Nu](root: N, pred: Callable[[Nu], bool]) -> list[N]:
+def find(root: Nu, pred: Callable[[Nu], bool]) -> list[Nu]:
     """Find all nodes matching predicate (pre-order)."""
     return [node for node in preorder(root) if pred(node)]  # type: ignore[misc]
 
 
-def find_first[N: Nu](root: N, pred: Callable[[Nu], bool]) -> N | None:
+def find_first(root: Nu, pred: Callable[[Nu], bool]) -> Nu | None:
     """Find first matching node (pre-order), or None."""
     for node in preorder(root):
         if pred(node):
