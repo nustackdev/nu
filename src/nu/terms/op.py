@@ -10,15 +10,28 @@ Operations transform inputs to outputs:
                 ├── BinaryOp    - two operands
                 └── TernaryOp   - three operands
 
-Purity mixins (orthogonal to arity):
-    - Calculation (Calc): pure (no side effects)
-    - Command (Cmd): impure (has side effects)
+Three orthogonal dimensions:
 
-Convenience classes (purity + arity):
+    Purity (how it behaves):
+        - Calculation (Calc): pure (no side effects)
+        - Command (Cmd): impure (has side effects)
+
+    Arity (how many operands):
+        - NAryOp, UnaryOp, BinaryOp, TernaryOp
+        - execute = resolve children -> propagate sentinels -> apply()
+
+    Lifecycle (resource scoping):
+        - ScopedOp: before/after/after_failure hooks
+        - execute = before(ctx) -> run children sequentially -> after/after_failure
+
+Convenience classes (purity x arity):
     - NAryCalc / NAryCmd
     - UnaryCalc / UnaryCmd
     - BinaryCalc / BinaryCmd
     - TernaryCalc / TernaryCmd
+
+Convenience classes (purity x lifecycle):
+    - ScopedCalc / ScopedCmd
 
 Composition pattern:
     class AddCalc(BinaryCalc[float]):
@@ -47,10 +60,12 @@ __all__ = [  # noqa: RUF022
     "UnaryOp",
     "BinaryOp",
     "TernaryOp",
-    # Purity mixins
+    # Purity
     "Calculation",
     "Command",
-    # Purity + arity combinations
+    # Lifecycle
+    "ScopedOp",
+    # Purity + arity
     "NAryCalc",
     "NAryCmd",
     "UnaryCalc",
@@ -59,6 +74,9 @@ __all__ = [  # noqa: RUF022
     "BinaryCmd",
     "TernaryCalc",
     "TernaryCmd",
+    # Purity + lifecycle
+    "ScopedCalc",
+    "ScopedCmd",
 ]
 
 
@@ -76,7 +94,8 @@ class Op(RValue[T_co], ABC):
     - TernaryOp: three operands (if a then b else c)
 
     Extend NAryOp for operand-based ops with sentinel propagation.
-    Extend Op directly for custom execution (Span, Flow).
+    Extend ScopedOp for resource lifecycle (before/after hooks).
+    Extend Op directly for custom execution.
     """
 
     def __init__(self, *children: object) -> None:
@@ -274,7 +293,7 @@ class Command(Op[T_co], ABC):
 
     Commands modify state and must be executed carefully:
     - Order-dependent: sequence of execution matters
-    - Transactional: should run within a Span
+    - Transactional: should run within a ScopedCmd
     - Not cacheable: results may differ each execution
 
     Inherit directly for complex impure ops that override execute().
@@ -298,6 +317,63 @@ class Command(Op[T_co], ABC):
     def is_self_pure(self) -> bool:
         """Commands are always impure by definition."""
         return False
+
+
+# =============================================================================
+# LIFECYCLE
+# =============================================================================
+
+
+class ScopedOp(Op[T_co], ABC):
+    """Op with resource lifecycle hooks.
+
+    Scoped ops run children sequentially within a before/after boundary.
+    Override hooks to scope context, manage resources, or add instrumentation.
+
+    Hooks:
+        before(ctx) -> ctx:          Set up resources, return scoped context.
+        after(ctx):                  Clean up after successful execution.
+        after_failure(ctx, error):   Clean up after failed execution.
+
+    Default execute runs all children sequentially and returns the last
+    child's result. Override execute for custom execution logic while
+    still using hooks.
+
+    Usage::
+
+        class Atomic(ScopedCmd):
+            def __init__(self, *children, scope=None):
+                super().__init__(*children, scope)
+            def before(self, ctx):
+                return ctx.bind(Transaction, factory=open_tx)
+            def after(self, ctx):
+                ctx.get(Transaction).commit()
+            def after_failure(self, ctx, error):
+                ctx.get(Transaction).abort()
+    """
+
+    async def execute(self, ctx: Context) -> T_co:
+        """Execute with lifecycle: before -> run children -> after/after_failure."""
+        scoped_ctx = self.before(ctx)
+        try:
+            result = None
+            for child in self.children:
+                result = await child.execute(scoped_ctx)
+            self.after(scoped_ctx)
+        except BaseException as e:
+            self.after_failure(scoped_ctx, e)
+            raise
+        return result
+
+    def before(self, ctx: Context) -> Context:
+        """Set up resources, return scoped context for children."""
+        return ctx
+
+    def after(self, ctx: Context) -> None:
+        """Clean up after successful execution."""
+
+    def after_failure(self, ctx: Context, error: BaseException) -> None:
+        """Clean up after failed execution."""
 
 
 # =============================================================================
@@ -349,5 +425,22 @@ class TernaryCalc(Calculation, TernaryOp[T_co]):
 
 class TernaryCmd(Command, TernaryOp[T_co]):
     """Impure ternary op."""
+
+    pass
+
+
+# =============================================================================
+# CONVENIENCE: PURITY + LIFECYCLE COMBINATIONS
+# =============================================================================
+
+
+class ScopedCalc(Calculation, ScopedOp[T_co]):
+    """Pure scoped op. Resource lifecycle without side effects."""
+
+    pass
+
+
+class ScopedCmd(Command, ScopedOp[T_co]):
+    """Impure scoped op. Resource lifecycle with side effects."""
 
     pass

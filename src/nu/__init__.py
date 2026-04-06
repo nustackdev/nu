@@ -1,7 +1,7 @@
 """Nu - core library for the Nu ecosystem.
 
 Subpackages:
-    terms/        -- algebra terms (Nu, Value, Ref, Op, Span, Sentinel, Arg)
+    terms/        -- algebra terms (Nu, Value, Ref, Op, Sentinel, Arg)
     context/      -- runtime resource container
     interface/    -- base Interface class and descriptors
     primitives/   -- primitive type interfaces (IntI, StrI, etc.)
@@ -254,9 +254,11 @@ from .terms import (
     Op,
     Ref,
     RValue,
+    ScopedCalc,
+    ScopedCmd,
+    ScopedOp,
     Sentinel,
     SetArg,
-    Span,
     StrArg,
     TernaryCalc,
     TernaryCmd,
@@ -476,6 +478,9 @@ __all__ = [
     "Retry",
     "ReverseCmd",
     "ReversedOp",
+    "ScopedCalc",
+    "ScopedCmd",
+    "ScopedOp",
     "Sentinel",
     "SentinelI",
     "Seq",
@@ -498,7 +503,6 @@ __all__ = [
     "SkipIfNotEmpty",
     "SliceOp",
     "SortedOp",
-    "Span",
     "StrArg",
     "StrAttrRef",
     "StrI",
@@ -576,4 +580,4 @@ __all__ = [
     "wrap",
 ]
 
-from . import shapes  # noqa: E402, F401
+from . import shapes  # noqa: F401

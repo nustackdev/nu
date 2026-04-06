@@ -25,6 +25,9 @@ from .op import (
     NAryCmd,
     NAryOp,
     Op,
+    ScopedCalc,
+    ScopedCmd,
+    ScopedOp,
     TernaryCalc,
     TernaryCmd,
     TernaryOp,
@@ -44,7 +47,6 @@ from .sentinel import (
     is_sentinel,
     propagate_special,
 )
-from .span import Span
 from .type_vars import T_co
 from .value import Value
 
@@ -80,15 +82,17 @@ __all__ = [
     "Op",
     "RValue",
     "Ref",
+    "ScopedCalc",
+    "ScopedCmd",
+    "ScopedOp",
     # Sentinels
     "Sentinel",
     "SetArg",
-    "Span",
     "StrArg",
+    "T_co",
     "TernaryCalc",
     "TernaryCmd",
     "TernaryOp",
-    "T_co",
     "TupleArg",
     "UnaryCalc",
     "UnaryCmd",

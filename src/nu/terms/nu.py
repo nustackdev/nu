@@ -39,7 +39,6 @@ class Nu(_Node["Nu"], Generic[T_co], ABC):  # noqa: UP046
     - Values (literal data)
     - Refs (pointers to locations)
     - Operations (transformations)
-    - Spans (resource scoping)
 
     Nus compose into trees. Trees evaluate within a Context.
     """

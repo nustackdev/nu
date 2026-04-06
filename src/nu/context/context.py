@@ -32,8 +32,8 @@ Usage:
 Note on shared entries: _copy() shallow-copies the _entries dict, so _Entry
 objects are shared between parent and child contexts. If a lazy entry is
 resolved in one copy, the cached value is visible to all copies sharing that
-entry. In practice this is fine -- lazy entries are typically span-specific
-(each span registers its own via ctx.lazy()), so copies rarely share lazy
+entry. In practice this is fine -- lazy entries are typically scope-specific
+(each scoped op registers its own via ctx.lazy()), so copies rarely share lazy
 entries. If a factory must produce distinct instances per context fork,
 deep-copy entries in _copy() instead.
 """
@@ -260,7 +260,7 @@ class Context:
         """Get all predicate entries for a service type + tags.
 
         Returns list of (predicates_dict, value) for each guarded entry
-        matching the exact tag set. Used by spans that need to replicate
+        matching the exact tag set. Used by scoped ops that need to replicate
         predicate bindings (e.g. Atomic binding View with same predicates
         as Navigator).
         """

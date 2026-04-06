@@ -53,7 +53,7 @@ class StubNu(Nu):
 class FailingNu(Nu):
     """Raises a specified exception on execute.
 
-    For testing error propagation, Span exit_failure, TryCatch, Retry.
+    For testing error propagation, TryCatch, Retry.
     """
 
     def __init__(self, exc: type[BaseException] = RuntimeError, msg: str = "fail") -> None:
