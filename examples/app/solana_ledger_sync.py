@@ -23,23 +23,15 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import aiohttp  # type: ignore
 from virtuals.tkv.storage import StorageProtocol
 
+import nu
 import nu_dict as ed
 import nu_virtuals as ebv
-from nu import AnyAttrRef, Context, IntArg, IntAttrRef, Nu, Ref, fn
-from nu.interfaces import AnyI, IntI, ListI
-from nu.method import method
-from nu.ops import AtOp, Filter, ForEach, If, Log, Retry, Seq, TryCatch
-from nu.shapes import Shape
 from nu_virtuals.presets import rocksdb_storage_inmemory
-
-
-if TYPE_CHECKING:
-    from nu.terms.arg import StrArg
 
 
 # =============================================================================
@@ -250,7 +242,7 @@ def _parse_token_balances(raw: list[dict] | None) -> list[dict]:
 # =============================================================================
 
 
-class SolanaRef(Ref[SolanaRpc]):
+class SolanaRef(nu.Ref[SolanaRpc]):
     """Ref that resolves a SolanaRpc from Context.
 
     method() descriptors create lazy terms that resolve the actual
@@ -261,15 +253,15 @@ class SolanaRef(Ref[SolanaRpc]):
             SolanaRef.get_block(slot_ref)   -- slot_ref can be a Ref or literal
     """
 
-    async def resolve(self, ctx: Context) -> str:
+    async def resolve(self, ctx: nu.Context) -> str:
         return "solana_rpc"
 
-    async def fetch(self, ctx: Context) -> SolanaRpc:
+    async def fetch(self, ctx: nu.Context) -> SolanaRpc:
         return ctx.get(SolanaRpc)
 
-    get_slot = method(IntI, "get_slot")
-    get_blocks = method(ListI, "get_blocks")
-    get_block = method(ListI, "get_block")
+    get_slot = nu.method(nu.primitives.IntI, "get_slot")
+    get_blocks = nu.method(nu.collections.ListI, "get_blocks")
+    get_block = nu.method(nu.collections.ListI, "get_block")
 
 
 # =============================================================================
@@ -277,7 +269,7 @@ class SolanaRef(Ref[SolanaRpc]):
 # =============================================================================
 
 
-class Transaction(Shape):
+class Transaction(nu.shapes.Shape):
     """Single Solana transaction. All standard fields, stored as-is.
 
     Scalar fields are individually addressable. Lists (accounts, instructions,
@@ -312,7 +304,7 @@ TX_ID_MULTIPLIER = 10_000
 """Numeric tx ID = slot * 10_000 + block_index. Preserves block ordering."""
 
 
-class Ledger(Shape):
+class Ledger(nu.shapes.Shape):
     """Persistent transaction archive.
 
     tx_id = slot * 10_000 + block_index.
@@ -330,14 +322,14 @@ class Ledger(Shape):
 # =============================================================================
 
 
-class _SlotScratch(Shape):
+class _SlotScratch(nu.shapes.Shape):
     """Per-slot scratch for sync_slot."""
 
     block_txs = ed.ListRef.slot(object)
     tx_id = ed.IntRef.slot()
 
 
-class _RangeScratch(Shape):
+class _RangeScratch(nu.shapes.Shape):
     """Scratch for sync_range iteration."""
 
     slots = ed.ListRef.slot(int)
@@ -348,40 +340,40 @@ class _RangeScratch(Shape):
 # =============================================================================
 
 
-def _involves_program(program_id: StrArg) -> Nu:
+def _involves_program(program_id: nu.StrArg) -> nu.Nu:
     """Nu condition: does ctx.attrs["tx"] involve the given program?
 
     All tree nodes, all lazy, short-circuits on first match.
     Equivalent to nested for loops checking program_id across
     top-level and inner instructions.
     """
-    tx = AnyAttrRef("tx")
-    ixs = AnyI(AtOp(tx, "instructions"))
-    inner = AnyI(AtOp(tx, "inner_instructions"))
+    tx = nu.AnyAttrRef("tx")
+    ixs = nu.primitives.AnyI(nu.AtOp(tx, "instructions"))
+    inner = nu.primitives.AnyI(nu.AtOp(tx, "inner_instructions"))
 
     # top-level: program_id in [ix["program_id"] for ix in instructions]
-    top_match = fn.Contains(fn.Pluck(ixs, "program_id"), program_id)
+    top_match = nu.ops.Contains(nu.ops.Pluck(ixs, "program_id"), program_id)
 
     # inner: flatten inner_instructions[*].instructions, same check
-    inner_programs = fn.Pluck(fn.Flatten(fn.Pluck(inner, "instructions")), "program_id")
-    inner_match = fn.Contains(inner_programs, program_id)
+    inner_programs = nu.ops.Pluck(nu.ops.Flatten(nu.ops.Pluck(inner, "instructions")), "program_id")
+    inner_match = nu.ops.Contains(inner_programs, program_id)
 
     return top_match.or_(inner_match)
 
 
-def _persist_tx(ledger: type[Ledger], slot: IntArg) -> Nu:
+def _persist_tx(ledger: type[Ledger], slot: nu.IntArg) -> nu.Nu:
     """Persist one tx from ctx.attrs["tx"] to ledger."""
     sc = _SlotScratch
-    tx = AnyAttrRef("tx")
-    block_index = IntI(AtOp(tx, "block_index"))
+    tx = nu.AnyAttrRef("tx")
+    block_index = nu.primitives.IntI(nu.AtOp(tx, "block_index"))
 
-    return Seq(
-        sc.tx_id.store(IntI(slot) * TX_ID_MULTIPLIER + block_index),
+    return nu.Seq(
+        sc.tx_id.store(nu.primitives.IntI(slot) * TX_ID_MULTIPLIER + block_index),
         ledger.txs[sc.tx_id].store(tx),
     )
 
 
-def sync_slot(ledger: type[Ledger], slot: IntArg, *, program_id: StrArg = "") -> Nu:
+def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = "") -> nu.Nu:
     """Fetch one block, parse txs, persist atomically. Skip if already synced.
 
     When program_id is truthy, only persists txs involving that program.
@@ -390,59 +382,59 @@ def sync_slot(ledger: type[Ledger], slot: IntArg, *, program_id: StrArg = "") ->
     sc = _SlotScratch
     persist = _persist_tx(ledger, slot)
 
-    iterate_txs = If(
-        fn.ToBool(program_id),
-        Filter(sc.block_txs, condition=_involves_program(program_id), body=persist, item="tx"),
-        ForEach(sc.block_txs, persist, item="tx"),
+    iterate_txs = nu.If(
+        nu.ops.ToBool(program_id),
+        nu.Filter(sc.block_txs, condition=_involves_program(program_id), body=persist, item="tx"),
+        nu.ForEach(sc.block_txs, persist, item="tx"),
     )
 
-    return If(
-        fn.Contains(ledger.slots_synced, slot).not_(),
-        Retry(
-            TryCatch(
-                Seq(
+    return nu.If(
+        nu.ops.Contains(ledger.slots_synced, slot).not_(),
+        nu.Retry(
+            nu.TryCatch(
+                nu.Seq(
                     sc.block_txs.store(SolanaRef.get_block(slot)),
-                    Log("slot", slot, ":", fn.Len(sc.block_txs), "txs"),
+                    nu.Log("slot", slot, ":", nu.ops.Len(sc.block_txs), "txs"),
                     ebv.Transaction(
                         iterate_txs,
                         ledger.slots_synced.add(slot),
                     ),
                 ),
-                catch=Seq(
+                catch=nu.Seq(
                     ebv.Transaction(ledger.slots_dropped.add(slot)),
-                    Log("dropped slot", slot),
+                    nu.Log("dropped slot", slot),
                 ),
                 errors=DroppedSlotError,
             ),
             max_attempts=5,
             delay=1,
             backoff=1.5,
-            on_attempt_fail=Log("retry slot", slot),
-            on_fail=Log("giving up on slot", slot),
+            on_attempt_fail=nu.Log("retry slot", slot),
+            on_fail=nu.Log("giving up on slot", slot),
         ),
     )
 
 
 def sync_range(
-    ledger: type[Ledger], slot_from: int, slot_to: int, *, program_id: StrArg = ""
-) -> Nu:
+    ledger: type[Ledger], slot_from: int, slot_to: int, *, program_id: nu.StrArg = ""
+) -> nu.Nu:
     """Sync all confirmed slots in [slot_from, slot_to].
 
     Fetches the confirmed slot list via get_blocks(), then iterates each,
     delegating to sync_slot for fetch + parse + persist.
     """
     sc = _RangeScratch
-    slot = IntAttrRef("slot")
+    slot = nu.IntAttrRef("slot")
 
-    return Seq(
+    return nu.Seq(
         sc.slots.store(SolanaRef.get_blocks(slot_from, slot_to)),
-        Log("sync:", slot_from, "->", slot_to, "(", fn.Len(sc.slots), "confirmed)"),
-        ForEach(
+        nu.Log("sync:", slot_from, "->", slot_to, "(", nu.ops.Len(sc.slots), "confirmed)"),
+        nu.ForEach(
             sc.slots,
             sync_slot(ledger, slot, program_id=program_id),
             item="slot",
         ),
-        Log("sync complete"),
+        nu.Log("sync complete"),
     )
 
 
@@ -468,18 +460,18 @@ async def main() -> None:
 
     try:
         with rocksdb_storage_inmemory(args.db_path) as store:
-            ctx = Context().bind(StorageProtocol, store).bind(SolanaRpc, rpc)
+            ctx = nu.Context().bind(StorageProtocol, store).bind(SolanaRpc, rpc)
 
             slot_to = args.slot_from + args.slots
 
             # Build composition: init ledger state, then sync range
             init = ebv.Transaction(
-                Seq(
-                    If(Ledger.slots_synced.missing(), Ledger.slots_synced.store(set())),
-                    If(Ledger.slots_dropped.missing(), Ledger.slots_dropped.store(set())),
+                nu.Seq(
+                    nu.If(Ledger.slots_synced.missing(), Ledger.slots_synced.store(set())),
+                    nu.If(Ledger.slots_dropped.missing(), Ledger.slots_dropped.store(set())),
                 ),
             )
-            tree = Seq(
+            tree = nu.Seq(
                 init,
                 sync_range(Ledger, args.slot_from, slot_to, program_id=args.program or ""),
             )

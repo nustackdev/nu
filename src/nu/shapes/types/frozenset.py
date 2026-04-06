@@ -7,8 +7,9 @@ Goes directly to everybase since everyshape's SetLikeBase is set-specific.
 
 from __future__ import annotations
 
-from nu.interfaces import Interface
-from nu.interfaces import SetLikeBase as _EB_SetLikeBase
+from nu.collections.abc import SetLikeBase as _EB_SetLikeBase
+from nu.interface import Interface
+
 from ..capabilities import (
     CollectionExistableBase,
 )

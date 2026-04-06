@@ -17,7 +17,6 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from ..collections import MutableSequenceBase, ReactiveSequenceBase, SequenceBase
-
 from .base import Ref
 
 

@@ -25,7 +25,7 @@ from .slot import Slot
 
 if TYPE_CHECKING:
     from nu import Context, Ref, Sentinel
-    from nu.interfaces import NoneI
+    from nu.primitives import NoneI
 
 
 __all__ = [

@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING, Self
 
 from nu import Nu
 from nu import Ref as RefABC
-from nu.interfaces import AnyI
+from nu.primitives import AnyI
 from nu.utils import ensure_nu
 
 

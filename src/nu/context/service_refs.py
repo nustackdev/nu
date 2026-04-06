@@ -9,7 +9,7 @@ from nu.terms import Ref, Sentinel
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.interfaces import BoolI
+    from nu.primitives import BoolI
 
 
 __all__ = [
@@ -54,7 +54,7 @@ class ServiceRef[T](Ref[T]):
 
     def exists(self) -> BoolI:
         """Check if service exists in context."""
-        from nu.interfaces import BoolI
+        from nu.primitives import BoolI
 
         from .service_ops import ServiceExistsOp
 

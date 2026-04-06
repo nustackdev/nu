@@ -4,11 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from nu import Span, map_nodes
-from nu.terms import Op
-from nu.interfaces import StrI
-from nu.ops import ToStrOp
-from nu.terms import Nu
+import nu
 
 
 __all__ = [
@@ -20,10 +16,10 @@ __all__ = [
 _step_logger = logging.getLogger("everybase.steps")
 
 
-class _StepSpan(Span):
+class _StepSpan(nu.Span):
     """Wraps a Seq child to log step progress. Path is baked at construction."""
 
-    def __init__(self, child: Nu, step: int, total: int, path: str) -> None:
+    def __init__(self, child: nu.Nu, step: int, total: int, path: str) -> None:
         super().__init__(child)
         self._step = step
         self._total = total
@@ -51,7 +47,7 @@ class _StepSpan(Span):
         )
 
 
-def annotate_retries[N: Nu](tree: N) -> N:
+def annotate_retries[N: nu.Nu](tree: N) -> N:
     """Add logging hooks to all Retry nodes.
 
     Wraps every Retry with Log-based hooks for ``on_attempt_fail`` and
@@ -64,24 +60,22 @@ def annotate_retries[N: Nu](tree: N) -> N:
     Returns:
         New tree with annotated Retry nodes.
     """
-    from nu.ops import Log, Retry, Seq
-
     from ..refs import IntRef, StrRef
 
-    def _annotate(node: Nu) -> Nu:
-        if not isinstance(node, Retry):
+    def _annotate(node: nu.Nu) -> nu.Nu:
+        if not isinstance(node, nu.Retry):
             return node
 
         error = StrRef("error")
         attempt = IntRef("attempt")
 
-        log_af = Log(
-            "retry attempt " + StrI(ToStrOp(attempt.get())) + " failed: " + error.get(),
+        log_af = nu.Log(
+            "retry attempt " + nu.primitives.StrI(nu.ToStrOp(attempt.get())) + " failed: " + error.get(),
             level="warning",
         )
-        log_fail = Log(
+        log_fail = nu.Log(
             "retry exhausted after "
-            + StrI(ToStrOp(attempt.get()))
+            + nu.primitives.StrI(nu.ToStrOp(attempt.get()))
             + " attempts: "
             + error.get(),
             level="error",
@@ -90,8 +84,8 @@ def annotate_retries[N: Nu](tree: N) -> N:
         existing_af = node.on_attempt_fail
         existing_fail = node.on_fail
 
-        on_af = Seq(log_af, existing_af) if existing_af else log_af
-        on_fail = Seq(log_fail, existing_fail) if existing_fail else log_fail
+        on_af = nu.Seq(log_af, existing_af) if existing_af else log_af
+        on_fail = nu.Seq(log_fail, existing_fail) if existing_fail else log_fail
 
         return node.with_children(
             *node.children[:4],
@@ -100,10 +94,10 @@ def annotate_retries[N: Nu](tree: N) -> N:
             on_fail,
         )
 
-    return map_nodes(tree, _annotate, order="bottom_up")
+    return nu.map_nodes(tree, _annotate, order="bottom_up")
 
 
-def annotate_steps[N: Nu](tree: N) -> N:
+def annotate_steps[N: nu.Nu](tree: N) -> N:
     """Wrap Seq children in step-tracking spans with baked tree paths.
 
     Walks the tree recursively, tracking the structural path from root.
@@ -117,19 +111,17 @@ def annotate_steps[N: Nu](tree: N) -> N:
     Returns:
         New tree with step-annotated Seq nodes and path-aware Log nodes.
     """
-    from nu.ops import Log, Seq
-
-    def _walk(node: Nu, path: str) -> Nu:
+    def _walk(node: nu.Nu, path: str) -> nu.Nu:
         # Seq with meaningful children: wrap Flow/Span children in _StepSpan
-        if isinstance(node, Seq):
-            meaningful = [c for c in node.children if isinstance(c, (Op, Span))]
+        if isinstance(node, nu.Seq):
+            meaningful = [c for c in node.children if isinstance(c, (nu.Op, nu.Span))]
             if len(meaningful) >= 2:
                 seq_path = f"{path}{type(node).__name__}"
                 total = len(meaningful)
                 step = 0
                 new_children: list = []
                 for child in node.children:
-                    if isinstance(child, (Op, Span)) and not isinstance(child, _StepSpan):
+                    if isinstance(child, (nu.Op, nu.Span)) and not isinstance(child, _StepSpan):
                         step += 1
                         name = type(child).__name__
                         walked = _walk(child, f"{seq_path}.{name}.")
@@ -141,7 +133,7 @@ def annotate_steps[N: Nu](tree: N) -> N:
                 return node.with_children(*new_children)
 
         # Log nodes: bake the current path
-        if isinstance(node, Log) and path:
+        if isinstance(node, nu.Log) and path:
             clone = node.with_children(*node.children)
             clone._path = path.rstrip(".")
             return clone
@@ -157,7 +149,7 @@ def annotate_steps[N: Nu](tree: N) -> N:
     return _walk(tree, "")
 
 
-def set_logger_name[N: Nu](tree: N, name: str) -> N:
+def set_logger_name[N: nu.Nu](tree: N, name: str) -> N:
     """Rename the logger on all Log nodes in the tree.
 
     Args:
@@ -167,13 +159,11 @@ def set_logger_name[N: Nu](tree: N, name: str) -> N:
     Returns:
         New tree with renamed Log nodes.
     """
-    from nu.ops import Log
-
-    def _rename(node: Nu) -> Nu:
-        if not isinstance(node, (Log, _StepSpan)):
+    def _rename(node: nu.Nu) -> nu.Nu:
+        if not isinstance(node, (nu.Log, _StepSpan)):
             return node
         clone = node.with_children(*node.children)
         clone._logger_name = name
         return clone
 
-    return map_nodes(tree, _rename, order="bottom_up")
+    return nu.map_nodes(tree, _rename, order="bottom_up")

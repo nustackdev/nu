@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interfaces import BoolI, NoneI
+from nu.primitives import BoolI, NoneI
 
 
 if TYPE_CHECKING:
@@ -51,8 +51,9 @@ class CollectionSettableBase[CollectionT]:
     """
 
     def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> NoneI:
-        from ..ops.collection import CollectionStoreCmd
         from nu.utils import ensure_nu
+
+        from ..ops.collection import CollectionStoreCmd
 
         return NoneI(CollectionStoreCmd(self, ensure_nu(value)))
 

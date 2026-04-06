@@ -33,7 +33,6 @@ from .op import (
     UnaryOp,
 )
 from .ref import Ref
-from .type_vars import T_co
 from .sentinel import (
     EMPTY,
     INVALID,
@@ -46,6 +45,7 @@ from .sentinel import (
     propagate_special,
 )
 from .span import Span
+from .type_vars import T_co
 from .value import Value
 
 

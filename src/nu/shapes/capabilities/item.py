@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interfaces import BoolI, NoneI
+from nu.primitives import BoolI, NoneI
 
 
 if TYPE_CHECKING:
@@ -54,8 +54,9 @@ class ItemSettableBase[ValueT]:
     """
 
     def store(self, value: ValueT | Sentinel | Nu[ValueT | Sentinel]) -> NoneI:
-        from ..ops.item import ItemStoreCmd
         from nu.utils import ensure_nu
+
+        from ..ops.item import ItemStoreCmd
 
         return NoneI(ItemStoreCmd(self, ensure_nu(value)))
 

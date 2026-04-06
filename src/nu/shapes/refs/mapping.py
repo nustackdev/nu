@@ -17,8 +17,8 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from nu import Value
-from ..collections import MappingBase, MutableMappingBase, ReactiveMappingBase
 
+from ..collections import MappingBase, MutableMappingBase, ReactiveMappingBase
 from .base import Ref
 
 

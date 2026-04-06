@@ -17,7 +17,7 @@ from nu.utils import ensure_nu
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.interfaces import BoolI
+    from nu.primitives import BoolI
     from nu.terms import StrArg, Value
 
 __all__ = [
@@ -90,7 +90,7 @@ class AttrRef[T](Ref[T]):
 
     def exists(self) -> BoolI:
         """Check if name exists in context."""
-        from nu.interfaces import BoolI
+        from nu.primitives import BoolI
 
         from .attr_ops import AttrExistsOp
 
@@ -108,7 +108,7 @@ class IntAttrRef(AttrRef[int]):
     value_type = int
 
     def get(self) -> IntI:  # noqa: F821
-        from nu.interfaces import IntI
+        from nu.primitives import IntI
 
         from .attr_ops import AttrGetOp
 
@@ -121,7 +121,7 @@ class FloatAttrRef(AttrRef[float]):
     value_type = float
 
     def get(self) -> FloatI:  # noqa: F821
-        from nu.interfaces import FloatI
+        from nu.primitives import FloatI
 
         from .attr_ops import AttrGetOp
 
@@ -134,7 +134,7 @@ class StrAttrRef(AttrRef[str]):
     value_type = str
 
     def get(self) -> StrI:  # noqa: F821
-        from nu.interfaces import StrI
+        from nu.primitives import StrI
 
         from .attr_ops import AttrGetOp
 
@@ -147,7 +147,7 @@ class BoolAttrRef(AttrRef[bool]):
     value_type = bool
 
     def get(self) -> BoolI:
-        from nu.interfaces import BoolI
+        from nu.primitives import BoolI
 
         from .attr_ops import AttrGetOp
 
@@ -160,7 +160,7 @@ class BytesAttrRef(AttrRef[bytes]):
     value_type = bytes
 
     def get(self) -> BytesI:  # noqa: F821
-        from nu.interfaces import BytesI
+        from nu.primitives import BytesI
 
         from .attr_ops import AttrGetOp
 
@@ -173,7 +173,7 @@ class AnyAttrRef(AttrRef[object]):
     value_type = object
 
     def get(self) -> AnyI:  # noqa: F821
-        from nu.interfaces import AnyI
+        from nu.primitives import AnyI
 
         from .attr_ops import AttrGetOp
 
