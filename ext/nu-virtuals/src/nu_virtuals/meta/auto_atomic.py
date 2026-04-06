@@ -1,4 +1,4 @@
-"""auto_atomic — Wrap Nu subtrees in resolved Transaction/Snapshot spans."""
+"""auto_atomic — Wrap Nu subtrees in Transaction/Snapshot scoped ops."""
 
 from __future__ import annotations
 
@@ -51,15 +51,15 @@ def _conditional_wrap_skip_spans[N: Nu](
     pred: object,
     wrapper: object,
 ) -> N:
-    """Like conditional_wrap but skips Transaction/Snapshot spans.
+    """Like conditional_wrap but skips existing Transaction/Snapshot ops.
 
-    Explicit Transaction/Snapshot spans placed by user code are respected —
+    Explicit Transaction/Snapshot ops placed by user code are respected -
     their contents won't be re-wrapped.
     """
     if pred(root) or root.is_leaf:
         return root
 
-    # Don't recurse into existing Transaction/Snapshot spans
+    # Don't recurse into existing Transaction/Snapshot ops
     if isinstance(root, (Transaction, Snapshot)):
         return root
 
@@ -77,7 +77,7 @@ def auto_atomic[N: Nu](
     tree: N,
     scope: Hashable | None = None,
 ) -> N:
-    """Wrap each Nu subtree in a ``Transaction`` or ``Snapshot`` span.
+    """Wrap each Nu subtree in a ``Transaction`` or ``Snapshot``.
 
     Walks *tree* bottom-up. Non-Nu children are recursed into so
     their inner Terms get wrapped at their level.
@@ -85,7 +85,7 @@ def auto_atomic[N: Nu](
     Purity is resolved at wrap time: impure subtrees get ``Transaction``,
     pure subtrees get ``Snapshot``. No runtime purity check needed.
 
-    Existing Transaction/Snapshot spans (placed explicitly by user code)
+    Existing Transaction/Snapshot ops (placed explicitly by user code)
     are respected - their contents won't be re-wrapped.
 
     When ``scope`` is given, only Terms whose refs belong to that scope
@@ -99,10 +99,10 @@ def auto_atomic[N: Nu](
 
     Args:
         tree: Expression tree to rewrite.
-        scope: Scope filter and span scope. None = wrap all Terms unscoped.
+        scope: Scope filter. None = wrap all Terms unscoped.
 
     Returns:
-        New tree with Transaction/Snapshot spans injected.
+        New tree with Transaction/Snapshot ops injected.
     """
     kwargs: dict = {}
     if scope is not None:

@@ -1,7 +1,7 @@
-"""Teleport - distributed execution span.
+"""Teleport - distributed execution op.
 
-Teleport is a Span that ships its children to a Worker for execution.
-The tree inside doesn't know it moved - it executes against the
+Teleport ships its children to a Worker for execution.
+The subtree doesn't know it moved - it executes against the
 Worker's Context instead of the parent Context.
 
 Transparent: removing Teleport doesn't change what is computed,
@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Span
+from nu import Calculation
 
 
 if TYPE_CHECKING:
@@ -42,11 +42,11 @@ __all__ = [
 ]
 
 
-class Teleport(Span):
+class Teleport(Calculation):
     """Ships children to a Worker for remote execution.
 
     Args:
-        *children: Tree nodes to execute on the worker.
+        *children: Nus to execute on the worker.
         worker: Tag to resolve the target Worker from context.
         carry: If True, copy parent's attrs to the worker context
             before execution. Attrs are primitive key-value data
@@ -67,7 +67,7 @@ class Teleport(Span):
         """Execute children on the target worker."""
         from ..resources.worker import Worker
 
-        worker = ctx[Worker, self._worker_tag]
+        worker = ctx.get(Worker, self._worker_tag)
 
         if len(self.children) == 1:
             subtree = self.children[0]

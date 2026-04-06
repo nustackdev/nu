@@ -187,6 +187,7 @@ class UnaryOp(NAryOp[T_co], ABC):
 
     @abstractmethod
     def apply(self, operand: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
+        """Apply."""
         ...
 
 
@@ -214,6 +215,7 @@ class BinaryOp(NAryOp[T_co], ABC):
 
     @abstractmethod
     def apply(self, left: Any, right: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
+        """Apply."""
         ...
 
 
@@ -246,6 +248,7 @@ class TernaryOp(NAryOp[T_co], ABC):
 
     @abstractmethod
     def apply(self, first: Any, second: Any, third: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
+        """Apply."""
         ...
 
 
@@ -324,7 +327,7 @@ class Command(Op[T_co], ABC):
 # =============================================================================
 
 
-class ScopedOp(Op[T_co], ABC):
+class ScopedOp(Op[None], ABC):
     """Op with resource lifecycle hooks.
 
     Scoped ops run children sequentially within a before/after boundary.
@@ -335,9 +338,8 @@ class ScopedOp(Op[T_co], ABC):
         after(ctx):                  Clean up after successful execution.
         after_failure(ctx, error):   Clean up after failed execution.
 
-    Default execute runs all children sequentially and returns the last
-    child's result. Override execute for custom execution logic while
-    still using hooks.
+    Default execute runs all children sequentially, returns None.
+    Override execute for custom execution logic while still using hooks.
 
     Usage::
 
@@ -352,18 +354,16 @@ class ScopedOp(Op[T_co], ABC):
                 ctx.get(Transaction).abort()
     """
 
-    async def execute(self, ctx: Context) -> T_co:
+    async def execute(self, ctx: Context) -> None:
         """Execute with lifecycle: before -> run children -> after/after_failure."""
         scoped_ctx = self.before(ctx)
         try:
-            result = None
             for child in self.children:
-                result = await child.execute(scoped_ctx)
+                await child.execute(scoped_ctx)
             self.after(scoped_ctx)
         except BaseException as e:
             self.after_failure(scoped_ctx, e)
             raise
-        return result
 
     def before(self, ctx: Context) -> Context:
         """Set up resources, return scoped context for children."""
@@ -434,13 +434,13 @@ class TernaryCmd(Command, TernaryOp[T_co]):
 # =============================================================================
 
 
-class ScopedCalc(Calculation, ScopedOp[T_co]):
+class ScopedCalc(Calculation, ScopedOp):
     """Pure scoped op. Resource lifecycle without side effects."""
 
     pass
 
 
-class ScopedCmd(Command, ScopedOp[T_co]):
+class ScopedCmd(Command, ScopedOp):
     """Impure scoped op. Resource lifecycle with side effects."""
 
     pass

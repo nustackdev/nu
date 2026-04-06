@@ -1,9 +1,9 @@
-"""Spans - context-shaping boundaries for virtuals storage operations.
+"""Scoped ops for virtuals storage operations.
 
 Atomic: Opens a transaction lazily, provides View on top of it.
 Snapshot: Opens a read-only snapshot lazily, provides View on top of it.
 
-Spans look up Navigator from context, get storage from it, and create
+Looks up Navigator from context, gets storage from it, and creates
 root views via nav.root(). No view_cls parameter needed.
 
 Usage:
@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 from virtuals import Navigator
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
 
-from nu import Context, Span
+from nu import Context, ScopedCmd
 
 
 if TYPE_CHECKING:
@@ -39,20 +39,20 @@ __all__ = [
 ]
 
 
-def _tags(typ: type, scope: Hashable | None) -> tuple:
-    """Build tag tuple from type and optional scope."""
-    return (typ, scope) if scope is not None else (typ,)
+def _scope_tags(scope: Hashable | None) -> tuple:
+    """Build scope tags for ctx.get / ctx.lazy."""
+    return (scope,) if scope is not None else ()
 
 
-class Atomic(Span):
+class Atomic(ScopedCmd):
     """Atomic transaction boundary for virtuals operations.
 
-    On enter:
+    Before:
       1. Gets Navigator from context (by scope)
       2. Registers lazy factory for TransactionProtocol
       3. Registers lazy factory for View (opened via nav.root())
 
-    On exit:
+    After:
       - Success: commit transaction (if it was opened)
       - Failure: abort transaction (if it was opened)
 
@@ -72,7 +72,7 @@ class Atomic(Span):
         self._txn: TransactionProtocol | None = None
         self._snap: SnapshotProtocol | None = None
 
-    def enter(self, ctx: Context) -> Context:
+    def before(self, ctx: Context) -> Context:
         """Scope context: register lazy transaction or snapshot factory.
 
         If Navigator has predicate bindings (sharding), opens a
@@ -89,7 +89,7 @@ class Atomic(Span):
             return self._enter_sharded(ctx, sharded)
 
         # Single navigator (common case)
-        nav = ctx[_tags(Navigator, self.scope)]
+        nav = ctx.get(Navigator, *_scope_tags(self.scope))
 
         from .meta.auto_atomic import _has_pv_write
 
@@ -127,8 +127,7 @@ class Atomic(Span):
             self._txns.append(txn)
             return txn
 
-        tags = (self.scope,) if self.scope is not None else ()
-        return ctx.lazy(open_txn, TransactionProtocol, *tags, **preds)
+        return ctx.lazy(TransactionProtocol, open_txn, *_scope_tags(self.scope), **preds)
 
     def _enter_snapshot_with_preds(
         self,
@@ -144,39 +143,32 @@ class Atomic(Span):
             self._snaps.append(snap)
             return snap
 
-        tags = (self.scope,) if self.scope is not None else ()
-        return ctx.lazy(open_snap, SnapshotProtocol, *tags, **preds)
+        return ctx.lazy(SnapshotProtocol, open_snap, *_scope_tags(self.scope), **preds)
 
     def _enter_transaction(self, ctx: Context, nav: Navigator) -> Context:
-        scope = self.scope
-        tags_txn = _tags(TransactionProtocol, scope)
-
         def open_txn() -> TransactionProtocol:
             txn = nav.storage.begin_transaction()
             self._txns.append(txn)
             return txn
 
-        return ctx.lazy(open_txn, *tags_txn)
+        return ctx.lazy(TransactionProtocol, open_txn, *_scope_tags(self.scope))
 
     def _enter_snapshot(self, ctx: Context, nav: Navigator) -> Context:
-        scope = self.scope
-        tags_snap = _tags(SnapshotProtocol, scope)
-
         def open_snap() -> SnapshotProtocol:
             snap = nav.storage.begin_snapshot()
             self._snaps.append(snap)
             return snap
 
-        return ctx.lazy(open_snap, *tags_snap)
+        return ctx.lazy(SnapshotProtocol, open_snap, *_scope_tags(self.scope))
 
-    def exit_success(self, ctx: Context) -> None:
+    def after(self, ctx: Context) -> None:
         """Commit transactions or close snapshots."""
         for txn in self._txns:
             txn.commit()
         for snap in self._snaps:
             snap.close()
 
-    def exit_failure(self, ctx: Context, error: BaseException) -> None:
+    def after_failure(self, ctx: Context, error: BaseException) -> None:
         """Abort transactions or close snapshots."""
         for txn in self._txns:
             txn.abort()
@@ -188,7 +180,7 @@ class Atomic(Span):
         return f"Atomic({scope_name})"
 
 
-class Snapshot(Span):
+class Snapshot(ScopedCmd):
     """Read-only snapshot boundary for virtuals operations.
 
     Like Atomic but always opens a snapshot, never a transaction.
@@ -204,7 +196,7 @@ class Snapshot(Span):
         self.scope = scope
         self._snaps: list[SnapshotProtocol] = []
 
-    def enter(self, ctx: Context) -> Context:
+    def before(self, ctx: Context) -> Context:
         """Scope context: register lazy snapshot factory."""
         self._snaps = []
 
@@ -214,7 +206,7 @@ class Snapshot(Span):
         if sharded:
             return self._enter_sharded(ctx, sharded)
 
-        nav = ctx[_tags(Navigator, self.scope)]
+        nav = ctx.get(Navigator, *_scope_tags(self.scope))
         return self._enter_single(ctx, nav)
 
     def _enter_sharded(self, ctx: Context, sharded: list) -> Context:
@@ -235,25 +227,22 @@ class Snapshot(Span):
             self._snaps.append(snap)
             return snap
 
-        tags = (self.scope,) if self.scope is not None else ()
-        return ctx.lazy(open_snap, SnapshotProtocol, *tags, **preds)
+        return ctx.lazy(SnapshotProtocol, open_snap, *_scope_tags(self.scope), **preds)
 
     def _enter_single(self, ctx: Context, nav: Navigator) -> Context:
-        tags_snap = _tags(SnapshotProtocol, self.scope)
-
         def open_snap() -> SnapshotProtocol:
             snap = nav.storage.begin_snapshot()
             self._snaps.append(snap)
             return snap
 
-        return ctx.lazy(open_snap, *tags_snap)
+        return ctx.lazy(SnapshotProtocol, open_snap, *_scope_tags(self.scope))
 
-    def exit_success(self, ctx: Context) -> None:
+    def after(self, ctx: Context) -> None:
         """Close snapshots."""
         for snap in self._snaps:
             snap.close()
 
-    def exit_failure(self, ctx: Context, error: BaseException) -> None:
+    def after_failure(self, ctx: Context, error: BaseException) -> None:
         """Close snapshots."""
         for snap in self._snaps:
             snap.close()
@@ -263,7 +252,7 @@ class Snapshot(Span):
         return f"Snapshot({scope_name})"
 
 
-class Transaction(Span):
+class Transaction(ScopedCmd):
     """Write transaction boundary for virtuals operations.
 
     Like Atomic but always opens a transaction, never a snapshot.
@@ -279,7 +268,7 @@ class Transaction(Span):
         self.scope = scope
         self._txns: list[TransactionProtocol] = []
 
-    def enter(self, ctx: Context) -> Context:
+    def before(self, ctx: Context) -> Context:
         """Scope context: register lazy transaction factory."""
         self._txns = []
 
@@ -289,7 +278,7 @@ class Transaction(Span):
         if sharded:
             return self._enter_sharded(ctx, sharded)
 
-        nav = ctx[_tags(Navigator, self.scope)]
+        nav = ctx.get(Navigator, *_scope_tags(self.scope))
         return self._enter_single(ctx, nav)
 
     def _enter_sharded(self, ctx: Context, sharded: list) -> Context:
@@ -310,25 +299,22 @@ class Transaction(Span):
             self._txns.append(txn)
             return txn
 
-        tags = (self.scope,) if self.scope is not None else ()
-        return ctx.lazy(open_txn, TransactionProtocol, *tags, **preds)
+        return ctx.lazy(TransactionProtocol, open_txn, *_scope_tags(self.scope), **preds)
 
     def _enter_single(self, ctx: Context, nav: Navigator) -> Context:
-        tags_txn = _tags(TransactionProtocol, self.scope)
-
         def open_txn() -> TransactionProtocol:
             txn = nav.storage.begin_transaction()
             self._txns.append(txn)
             return txn
 
-        return ctx.lazy(open_txn, *tags_txn)
+        return ctx.lazy(TransactionProtocol, open_txn, *_scope_tags(self.scope))
 
-    def exit_success(self, ctx: Context) -> None:
+    def after(self, ctx: Context) -> None:
         """Commit transactions."""
         for txn in self._txns:
             txn.commit()
 
-    def exit_failure(self, ctx: Context, error: BaseException) -> None:
+    def after_failure(self, ctx: Context, error: BaseException) -> None:
         """Abort transactions."""
         for txn in self._txns:
             txn.abort()

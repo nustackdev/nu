@@ -1,4 +1,4 @@
-"""Spans - execution spans for distributed tree dispatch."""
+"""Distributed execution ops."""
 
 from .teleport import Teleport
 
