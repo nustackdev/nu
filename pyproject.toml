@@ -33,6 +33,9 @@ distributed = [
     "nu-workspace[default]",
     "nu-distributed",
 ]
+examples = [
+    "aiohttp",
+]
 all = [
     "nu-workspace[distributed]",
 ]

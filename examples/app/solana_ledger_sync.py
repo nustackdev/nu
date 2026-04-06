@@ -9,7 +9,7 @@ Demonstrates:
   Shapes        -- Transaction, Ledger (persistent data topology)
   Ref + method  -- typed, lazy RPC access via method descriptors
   Compositions  -- Seq, If, ForEach, Filter, Retry, TryCatch, Log
-  Spans         -- ebv.Transaction (atomic writes)
+  Spans         -- nu_virtuals.Transaction (atomic writes)
   Deformations  -- inline_refs (tree rewrites before execution)
   Context       -- storage + service binding
 
@@ -22,16 +22,12 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import asyncio
-from typing import Any
 
-import aiohttp  # type: ignore
-from virtuals.tkv.storage import StorageProtocol
+import aiohttp
 
 import nu
-import nu_dict as ed
-import nu_virtuals as ebv
-from nu_virtuals.presets import rocksdb_storage_inmemory
+import nu_dict
+import nu_virtuals
 
 
 # =============================================================================
@@ -96,7 +92,7 @@ class SolanaRpc:
         if self._session is None or self._session.closed:
             await self.connect()
 
-    async def _call(self, method: str, params: list | None = None) -> Any:
+    async def _call(self, method: str, params: list | None = None) -> object:
         await self._ensure_connected()
         self._id += 1
         body = {"jsonrpc": "2.0", "id": self._id, "method": method, "params": params or []}
@@ -118,11 +114,11 @@ class SolanaRpc:
 
     async def get_slot(self) -> int:
         result = await self._call("getSlot", [{"commitment": "confirmed"}])
-        return int(result)
+        return int(result)  # type: ignore
 
     async def get_blocks(self, start: int, end: int) -> list[int]:
         result = await self._call("getBlocks", [start, end, {"commitment": "confirmed"}])
-        return [int(s) for s in result]
+        return [int(s) for s in result]  # type: ignore
 
     async def get_block(self, slot: int) -> list[dict]:
         """Fetch block, parse transactions into dicts matching Transaction shape.
@@ -151,7 +147,7 @@ class SolanaRpc:
         if result is None:
             raise DroppedSlotError(slot)
 
-        return _parse_block(slot, result)
+        return _parse_block(slot, result)  # type: ignore
 
 
 # =============================================================================
@@ -259,9 +255,9 @@ class SolanaRef(nu.Ref[SolanaRpc]):
     async def fetch(self, ctx: nu.Context) -> SolanaRpc:
         return ctx.get(SolanaRpc)
 
-    get_slot = nu.method(nu.primitives.IntI, "get_slot")
-    get_blocks = nu.method(nu.collections.ListI, "get_blocks")
-    get_block = nu.method(nu.collections.ListI, "get_block")
+    get_slot = nu.method(nu.IntI, "get_slot")
+    get_blocks = nu.method(nu.ListI, "get_blocks")
+    get_block = nu.method(nu.ListI, "get_block")
 
 
 # =============================================================================
@@ -277,27 +273,27 @@ class Transaction(nu.shapes.Shape):
     """
 
     # Metadata
-    signature = ebv.StrRef.slot()
-    slot_number = ebv.IntRef.slot()
-    block_time = ebv.IntRef.slot()
-    block_index = ebv.IntRef.slot()
-    fee = ebv.IntRef.slot()
-    err = ebv.StrRef.slot()  # empty = success
+    signature = nu_virtuals.StrRef.slot()
+    slot_number = nu_virtuals.IntRef.slot()
+    block_time = nu_virtuals.IntRef.slot()
+    block_index = nu_virtuals.IntRef.slot()
+    fee = nu_virtuals.IntRef.slot()
+    err = nu_virtuals.StrRef.slot()  # empty = success
 
     # Structure (primitive blobs)
-    accounts = ebv.PrimitiveListRef.slot()
-    instructions = ebv.PrimitiveListRef.slot()
-    inner_instructions = ebv.PrimitiveListRef.slot()
+    accounts = nu_virtuals.PrimitiveListRef.slot()
+    instructions = nu_virtuals.PrimitiveListRef.slot()
+    inner_instructions = nu_virtuals.PrimitiveListRef.slot()
 
     # Balances (primitive blobs)
-    pre_balances = ebv.PrimitiveListRef.slot()
-    post_balances = ebv.PrimitiveListRef.slot()
-    pre_token_balances = ebv.PrimitiveListRef.slot()
-    post_token_balances = ebv.PrimitiveListRef.slot()
+    pre_balances = nu_virtuals.PrimitiveListRef.slot()
+    post_balances = nu_virtuals.PrimitiveListRef.slot()
+    pre_token_balances = nu_virtuals.PrimitiveListRef.slot()
+    post_token_balances = nu_virtuals.PrimitiveListRef.slot()
 
     # Extra
-    logs = ebv.PrimitiveListRef.slot()
-    compute_units = ebv.IntRef.slot()
+    logs = nu_virtuals.PrimitiveListRef.slot()
+    compute_units = nu_virtuals.IntRef.slot()
 
 
 TX_ID_MULTIPLIER = 10_000
@@ -311,10 +307,10 @@ class Ledger(nu.shapes.Shape):
     Resumable via slots_synced.
     """
 
-    txs = ebv.ShapesDictRef.slot(Transaction, key_type=int)
-    slots_synced = ebv.PrimitiveSetRef.slot()
-    slots_dropped = ebv.PrimitiveSetRef.slot()
-    current_slot = ebv.IntRef.slot()
+    txs = nu_virtuals.ShapesDictRef.slot(Transaction, key_type=int)
+    slots_synced = nu_virtuals.PrimitiveSetRef.slot()
+    slots_dropped = nu_virtuals.PrimitiveSetRef.slot()
+    current_slot = nu_virtuals.IntRef.slot()
 
 
 # =============================================================================
@@ -325,14 +321,14 @@ class Ledger(nu.shapes.Shape):
 class _SlotScratch(nu.shapes.Shape):
     """Per-slot scratch for sync_slot."""
 
-    block_txs = ed.ListRef.slot(object)
-    tx_id = ed.IntRef.slot()
+    block_txs = nu_dict.ListRef.slot(object)
+    tx_id = nu_dict.IntRef.slot()
 
 
 class _RangeScratch(nu.shapes.Shape):
     """Scratch for sync_range iteration."""
 
-    slots = ed.ListRef.slot(int)
+    slots = nu_dict.ListRef.slot(int)
 
 
 # =============================================================================
@@ -347,9 +343,8 @@ def _involves_program(program_id: nu.StrArg) -> nu.Nu:
     Equivalent to nested for loops checking program_id across
     top-level and inner instructions.
     """
-    tx = nu.AnyAttrRef("tx")
-    ixs = nu.primitives.AnyI(nu.AtOp(tx, "instructions"))
-    inner = nu.primitives.AnyI(nu.AtOp(tx, "inner_instructions"))
+    ixs = nu.AnyI(nu.AtOp(nu.AnyAttrRef("tx"), "instructions"))
+    inner = nu.AnyI(nu.AtOp(nu.AnyAttrRef("tx"), "inner_instructions"))
 
     # top-level: program_id in [ix["program_id"] for ix in instructions]
     top_match = nu.ops.Contains(nu.ops.Pluck(ixs, "program_id"), program_id)
@@ -364,12 +359,10 @@ def _involves_program(program_id: nu.StrArg) -> nu.Nu:
 def _persist_tx(ledger: type[Ledger], slot: nu.IntArg) -> nu.Nu:
     """Persist one tx from ctx.attrs["tx"] to ledger."""
     sc = _SlotScratch
-    tx = nu.AnyAttrRef("tx")
-    block_index = nu.primitives.IntI(nu.AtOp(tx, "block_index"))
 
     return nu.Seq(
-        sc.tx_id.store(nu.primitives.IntI(slot) * TX_ID_MULTIPLIER + block_index),
-        ledger.txs[sc.tx_id].store(tx),
+        sc.tx_id.store(nu.IntI(slot) * TX_ID_MULTIPLIER + nu.AtOp(nu.AttrRef("tx"), "block_index")),
+        ledger.txs[sc.tx_id].store(nu.AnyAttrRef("tx")),
     )
 
 
@@ -395,13 +388,13 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
                 nu.Seq(
                     sc.block_txs.store(SolanaRef.get_block(slot)),
                     nu.Log("slot", slot, ":", nu.ops.Len(sc.block_txs), "txs"),
-                    ebv.Transaction(
+                    nu_virtuals.Transaction(
                         iterate_txs,
                         ledger.slots_synced.add(slot),
                     ),
                 ),
                 catch=nu.Seq(
-                    ebv.Transaction(ledger.slots_dropped.add(slot)),
+                    nu_virtuals.Transaction(ledger.slots_dropped.add(slot)),
                     nu.Log("dropped slot", slot),
                 ),
                 errors=DroppedSlotError,
@@ -454,6 +447,11 @@ def parse_args() -> argparse.Namespace:
 
 
 async def main() -> None:
+
+    from virtuals.tkv.storage import StorageProtocol
+
+    from nu_virtuals.presets import rocksdb_storage_inmemory
+
     args = parse_args()
 
     rpc = SolanaRpc(endpoint=args.endpoint)
@@ -465,7 +463,7 @@ async def main() -> None:
             slot_to = args.slot_from + args.slots
 
             # Build composition: init ledger state, then sync range
-            init = ebv.Transaction(
+            init = nu_virtuals.Transaction(
                 nu.Seq(
                     nu.If(Ledger.slots_synced.missing(), Ledger.slots_synced.store(set())),
                     nu.If(Ledger.slots_dropped.missing(), Ledger.slots_dropped.store(set())),
@@ -477,8 +475,8 @@ async def main() -> None:
             )
 
             # Deformations: optimize before execution
-            tree = ed.inline_refs(tree)
-            tree = ebv.inline_refs(tree)
+            tree = nu_dict.inline_refs(tree)
+            tree = nu_virtuals.inline_refs(tree)
 
             print(f"syncing slots {args.slot_from} -> {slot_to}")
             print(f"endpoint: {args.endpoint}")
@@ -492,4 +490,6 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
+    import asyncio
+
     asyncio.run(main())
