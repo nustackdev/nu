@@ -6,7 +6,8 @@ Interfaces are construction-time sugar that produce Nu trees.
 
 import asyncio
 
-from nu import BoolI, Context, FloatI, IntI, StrI, print_tree
+from nu import BoolI, Context, IntI, StrI
+from nu_debugger import print_tree
 
 
 async def main():
