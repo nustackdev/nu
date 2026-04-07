@@ -9,7 +9,7 @@ description = "Dict adapter for everybase — shapes backed by plain Python dict
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "nu>=0.1.0",
 ]
@@ -24,9 +24,6 @@ classifiers = [
 
 [project.urls]
 Repository = "https://github.com/nustackdev/nu"
-
-[project.optional-dependencies]
-extended = ["nu-math", "nu-datetime", "nu-fin", "nu-path", "nu-uuid"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nu_dict"]

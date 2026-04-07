@@ -9,7 +9,7 @@ description = "Term Programming platform — kernel, toolbox, and topologies"
 readme = "../README.md"
 license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "attrs>=23.0.0",
 ]
@@ -18,32 +18,28 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 [project.optional-dependencies]
-minimal = [
-    "nu-datetime",
-    "nu-fin",
-    "nu-math",
-    "nu-path",
-    "nu-uuid",
-]
 default = [
-    "nu[minimal]",
     "nu-virtuals",
     "nu-dict",
-    "nu-shape-lens",
-    "nu-tree-view",
+]
+infra = [
+    "nu[default]",
+    "nu-virtuals[infra]",
 ]
 distributed = [
-    "nu[default]",
+    "nu[infra]",
     "nu-distributed",
 ]
 all = [
     "nu[distributed]",
+    "nu-shape-lens",
+    "nu-tree-view",
+    "nu-debugger",
 ]
 
 [project.urls]

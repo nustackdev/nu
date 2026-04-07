@@ -1,8 +1,7 @@
-"""Path type for filesystem paths.
+"""Path interface - typed wrapper for pathlib.Path.
 
-Pattern:
-    PathType = Object[Path] + ComparableBase + path operations
-    PathValue = Interface + PathType (computed results)
+_PathI provides path operations (constructors, components, manipulation, tests, conversions, comparison).
+PathI is the leaf: _PathI + TypedNu[Path].
 """
 
 from __future__ import annotations
@@ -10,64 +9,49 @@ from __future__ import annotations
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
 
-from nu import Sentinel
-from nu import (
-    BoolI,
-    ComparableBase,
-    ListI,
-    Object,
-    StrI,
-    TupleI,
-    Interface,
-)
+from nu.interface import Interface, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu import Nu
+    from nu import Arg, Nu
 
-    from .args import PathArg
-
-
-__all__ = [
-    "PathType",
-    "PathValue",
-]
+    from nu.collections import ListI, TupleI
+    from nu.primitives import BoolI, StrI
 
 
-class PathType(
-    ComparableBase["Path | PurePath | str | PathType"],
-    Object[Path | Sentinel],
-):
-    """Abstract type for Path operations.
+__all__ = ["PathArg", "PathI"]
 
-    Provides path manipulation operations.
-    Uses *Type in arguments (loose variance), returns *Value (specific).
-    """
+
+type PathArg = Arg[Path | PurePath | str]
+
+
+class _PathI(Interface):
+    """Path operations mixin - constructors, components, manipulation, tests, conversions, comparison."""
 
     # =========================================================================
     # CONSTRUCTORS
     # =========================================================================
 
     @classmethod
-    def from_str(cls, value: str | Nu[str]) -> PathValue:
-        """Create a PathValue from a string."""
+    def from_str(cls, value: str | Nu[str]) -> PathI:
+        """Create a PathI from a string."""
         from nu import FuncCallOp
 
-        return PathValue(FuncCallOp(Path, value))
+        return PathI(FuncCallOp(Path, value))
 
     @classmethod
-    def cwd(cls) -> PathValue:
+    def cwd(cls) -> PathI:
         """Get current working directory."""
         from nu import FuncCallOp
 
-        return PathValue(FuncCallOp(Path.cwd))
+        return PathI(FuncCallOp(Path.cwd))
 
     @classmethod
-    def home(cls) -> PathValue:
+    def home(cls) -> PathI:
         """Get user home directory."""
         from nu import FuncCallOp
 
-        return PathValue(FuncCallOp(Path.home))
+        return PathI(FuncCallOp(Path.home))
 
     # =========================================================================
     # PATH COMPONENTS
@@ -76,54 +60,62 @@ class PathType(
     def name(self) -> StrI:
         """Get the final component (filename)."""
         from nu import FuncCallOp
+        from nu import StrI
 
         return StrI(FuncCallOp(getattr, self, "name"))
 
     def stem(self) -> StrI:
         """Get the filename without the final extension."""
         from nu import FuncCallOp
+        from nu import StrI
 
         return StrI(FuncCallOp(getattr, self, "stem"))
 
     def suffix(self) -> StrI:
         """Get the file extension (including dot)."""
         from nu import FuncCallOp
+        from nu import StrI
 
         return StrI(FuncCallOp(getattr, self, "suffix"))
 
     def suffixes(self) -> ListI:
         """Get all file extensions."""
         from nu import FuncCallOp
+        from nu import ListI
 
         return ListI(FuncCallOp(getattr, self, "suffixes"))
 
-    def parent(self) -> PathValue:
+    def parent(self) -> PathI:
         """Get the parent directory."""
         from nu import FuncCallOp
 
-        return PathValue(FuncCallOp(getattr, self, "parent"))
+        return PathI(FuncCallOp(getattr, self, "parent"))
 
     def root(self) -> StrI:
         """Get the root (e.g., '/' on Unix)."""
         from nu import FuncCallOp
+        from nu import StrI
 
         return StrI(FuncCallOp(getattr, self, "root"))
 
     def anchor(self) -> StrI:
         """Get the anchor (drive + root)."""
         from nu import FuncCallOp
+        from nu import StrI
 
         return StrI(FuncCallOp(getattr, self, "anchor"))
 
     def parts(self) -> TupleI:
         """Get path parts as a tuple."""
         from nu import FuncCallOp
+        from nu import TupleI
 
         return TupleI(FuncCallOp(getattr, self, "parts"))
 
     def parents(self) -> TupleI:
         """Get an immutable sequence of parent paths."""
         from nu import FuncCallOp
+        from nu import TupleI
 
         return TupleI(FuncCallOp(tuple, FuncCallOp(getattr, self, "parents")))
 
@@ -131,61 +123,61 @@ class PathType(
     # PATH MANIPULATION
     # =========================================================================
 
-    def __truediv__(self, other: PathArg | str | Nu[str]) -> PathValue:
+    def __truediv__(self, other: PathArg | str | Nu[str]) -> PathI:
         """Join paths using / operator."""
         from nu import DivOp
 
         if isinstance(other, (Path, PurePath)):
-            other = PathValue(other)
-        return PathValue(DivOp(self, other))
+            other = PathI(other)
+        return PathI(DivOp(self, other))
 
-    def joinpath(self, *others: PathArg | str) -> PathValue:
+    def joinpath(self, *others: PathArg | str) -> PathI:
         """Join with multiple path components."""
         from nu import MethodCallOp
 
-        wrapped = tuple(PathValue(o) if isinstance(o, (Path, PurePath)) else o for o in others)
-        return PathValue(MethodCallOp(self, "joinpath", *wrapped))
+        wrapped = tuple(PathI(o) if isinstance(o, (Path, PurePath)) else o for o in others)
+        return PathI(MethodCallOp(self, "joinpath", *wrapped))
 
-    def with_name(self, name: str | Nu[str]) -> PathValue:
+    def with_name(self, name: str | Nu[str]) -> PathI:
         """Return a new path with the name changed."""
         from nu import MethodCallOp
 
-        return PathValue(MethodCallOp(self, "with_name", name))
+        return PathI(MethodCallOp(self, "with_name", name))
 
-    def with_stem(self, stem: str | Nu[str]) -> PathValue:
+    def with_stem(self, stem: str | Nu[str]) -> PathI:
         """Return a new path with the stem changed."""
         from nu import MethodCallOp
 
-        return PathValue(MethodCallOp(self, "with_stem", stem))
+        return PathI(MethodCallOp(self, "with_stem", stem))
 
-    def with_suffix(self, suffix: str | Nu[str]) -> PathValue:
+    def with_suffix(self, suffix: str | Nu[str]) -> PathI:
         """Return a new path with the suffix changed."""
         from nu import MethodCallOp
 
-        return PathValue(MethodCallOp(self, "with_suffix", suffix))
+        return PathI(MethodCallOp(self, "with_suffix", suffix))
 
-    def resolve_path(self, strict: bool | Nu[bool] = False) -> PathValue:
+    def resolve_path(self, strict: bool | Nu[bool] = False) -> PathI:
         """Make the path absolute, resolving symlinks.
 
         Named resolve_path() to avoid collision with RefBase.resolve().
         """
         from nu import MethodCallOp
 
-        return PathValue(MethodCallOp(self, "resolve", strict))
+        return PathI(MethodCallOp(self, "resolve", strict))
 
-    def absolute(self) -> PathValue:
+    def absolute(self) -> PathI:
         """Make the path absolute (without resolving symlinks)."""
         from nu import MethodCallOp
 
-        return PathValue(MethodCallOp(self, "absolute"))
+        return PathI(MethodCallOp(self, "absolute"))
 
-    def relative_to(self, other: PathArg | str | Nu[str]) -> PathValue:
+    def relative_to(self, other: PathArg | str | Nu[str]) -> PathI:
         """Compute relative path from other."""
         from nu import MethodCallOp
 
         if isinstance(other, (Path, PurePath)):
-            other = PathValue(other)
-        return PathValue(MethodCallOp(self, "relative_to", other))
+            other = PathI(other)
+        return PathI(MethodCallOp(self, "relative_to", other))
 
     # =========================================================================
     # PATH TESTS
@@ -194,20 +186,23 @@ class PathType(
     def is_absolute(self) -> BoolI:
         """Check if path is absolute."""
         from nu import MethodCallOp
+        from nu import BoolI
 
         return BoolI(MethodCallOp(self, "is_absolute"))
 
     def is_relative_to(self, other: PathArg | str | Nu[str]) -> BoolI:
         """Check if path is relative to other."""
         from nu import MethodCallOp
+        from nu import BoolI
 
         if isinstance(other, (Path, PurePath)):
-            other = PathValue(other)
+            other = PathI(other)
         return BoolI(MethodCallOp(self, "is_relative_to", other))
 
     def match(self, pattern: str | Nu[str]) -> BoolI:
         """Match path against a glob pattern."""
         from nu import MethodCallOp
+        from nu import BoolI
 
         return BoolI(MethodCallOp(self, "match", pattern))
 
@@ -218,30 +213,35 @@ class PathType(
     def exists(self) -> BoolI:
         """Check if path exists."""
         from nu import MethodCallOp
+        from nu import BoolI
 
         return BoolI(MethodCallOp(self, "exists"))
 
     def is_file(self) -> BoolI:
         """Check if path is a file."""
         from nu import MethodCallOp
+        from nu import BoolI
 
         return BoolI(MethodCallOp(self, "is_file"))
 
     def is_dir(self) -> BoolI:
         """Check if path is a directory."""
         from nu import MethodCallOp
+        from nu import BoolI
 
         return BoolI(MethodCallOp(self, "is_dir"))
 
     def is_symlink(self) -> BoolI:
         """Check if path is a symlink."""
         from nu import MethodCallOp
+        from nu import BoolI
 
         return BoolI(MethodCallOp(self, "is_symlink"))
 
     def is_mount(self) -> BoolI:
         """Check if path is a mount point."""
         from nu import MethodCallOp
+        from nu import BoolI
 
         return BoolI(MethodCallOp(self, "is_mount"))
 
@@ -252,22 +252,64 @@ class PathType(
     def as_posix(self) -> StrI:
         """Return path with forward slashes."""
         from nu import MethodCallOp
+        from nu import StrI
 
         return StrI(MethodCallOp(self, "as_posix"))
 
     def as_uri(self) -> StrI:
         """Return path as file:// URI."""
         from nu import MethodCallOp
+        from nu import StrI
 
         return StrI(MethodCallOp(self, "as_uri"))
 
+    # =========================================================================
+    # COMPARISON
+    # =========================================================================
+
+    def __gt__(self, other: PathArg) -> BoolI:
+        from nu import GtOp
+        from nu import BoolI
+
+        return BoolI(GtOp(self, other))
+
+    def __lt__(self, other: PathArg) -> BoolI:
+        from nu import LtOp
+        from nu import BoolI
+
+        return BoolI(LtOp(self, other))
+
+    def __ge__(self, other: PathArg) -> BoolI:
+        from nu import GeOp
+        from nu import BoolI
+
+        return BoolI(GeOp(self, other))
+
+    def __le__(self, other: PathArg) -> BoolI:
+        from nu import LeOp
+        from nu import BoolI
+
+        return BoolI(LeOp(self, other))
+
+    def eq(self, other: PathArg) -> BoolI:
+        from nu import EqOp
+        from nu import BoolI
+
+        return BoolI(EqOp(self, other))
+
+    def ne(self, other: PathArg) -> BoolI:
+        from nu import NeOp
+        from nu import BoolI
+
+        return BoolI(NeOp(self, other))
+
 
 # =============================================================================
-# VALUE (computed results)
+# LEAF
 # =============================================================================
 
 
-class PathValue(Interface, PathType):
-    """Computed Path value (Python memory substrate)."""
+class PathI(_PathI, TypedNu[Path]):
+    """Path leaf - _PathI + TypedNu[Path]."""
 
     pass

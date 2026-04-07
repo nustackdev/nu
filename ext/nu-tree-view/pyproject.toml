@@ -12,7 +12,7 @@ version = "0.1.0"
 description = "Interactive HTML tree explorer for everybase"
 license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "nu>=0.1.0",
 ]

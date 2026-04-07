@@ -9,35 +9,15 @@
 name = "nu-workspace"
 version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "nu",
-]
-
-[project.optional-dependencies]
-minimal = [
-    "nu-datetime",
-    "nu-fin",
-    "nu-math",
-    "nu-path",
-    "nu-uuid",
-]
-default = [
-    "nu-workspace[minimal]",
-    "nu-virtuals",
+    "nu-virtuals[infra]",
     "nu-dict",
+    "nu-distributed",
     "nu-shape-lens",
     "nu-tree-view",
-]
-distributed = [
-    "nu-workspace[default]",
-    "nu-distributed",
-]
-examples = [
-    "aiohttp",
-]
-all = [
-    "nu-workspace[distributed]",
+    "nu-debugger",
 ]
 
 # =============================================================================
@@ -45,7 +25,7 @@ all = [
 # =============================================================================
 [tool.uv.workspace]
 members = [
-    # Core (unified package)
+    # Core (unified package, includes stdlib)
     "src",
 
     # Extensions — adapters
@@ -53,16 +33,10 @@ members = [
     "ext/nu-virtuals",
     "ext/nu-dict",
 
-    # Extensions — types
-    "ext/nu-datetime",
-    "ext/nu-fin",
-    "ext/nu-math",
-    "ext/nu-path",
-    "ext/nu-uuid",
-
     # Extensions — tools
     "ext/nu-shape-lens",
     "ext/nu-tree-view",
+    "ext/nu-debugger",
 ]
 
 [tool.uv.sources]
@@ -72,13 +46,9 @@ nu = { workspace = true }
 nu-distributed = { workspace = true }
 nu-virtuals = { workspace = true }
 nu-dict = { workspace = true }
-nu-datetime = { workspace = true }
-nu-fin = { workspace = true }
-nu-math = { workspace = true }
-nu-path = { workspace = true }
-nu-uuid = { workspace = true }
 nu-shape-lens = { workspace = true }
 nu-tree-view = { workspace = true }
+nu-debugger = { workspace = true }
 # In-house libs (local editable)
 virtuals-py = { path = "../virtuals", editable = true }
 composables = { path = "../composables", editable = true }
@@ -103,11 +73,6 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
-    "ext/nu-datetime",
-    "ext/nu-fin",
-    "ext/nu-math",
-    "ext/nu-path",
-    "ext/nu-uuid",
 ]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
@@ -127,11 +92,6 @@ source = [
     "src/nu",
     "ext/nu-virtuals",
     "ext/nu-dict",
-    "ext/nu-datetime",
-    "ext/nu-fin",
-    "ext/nu-math",
-    "ext/nu-path",
-    "ext/nu-uuid",
 ]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
@@ -167,11 +127,6 @@ src = [
     "src",
     "ext/nu-virtuals/src",
     "ext/nu-dict/src",
-    "ext/nu-datetime/src",
-    "ext/nu-fin/src",
-    "ext/nu-math/src",
-    "ext/nu-path/src",
-    "ext/nu-uuid/src",
     "ext/nu-shape-lens/src",
     "ext/nu-tree-view/src",
 ]
@@ -239,15 +194,12 @@ convention = "google"
     "ANN",
     "B007",
 ]
-"**/abc/flows/**/*.py" = [
-    "ANN401",  # Any type needed for polymorphic flow parameters
-]
-"**/flows/reactive.py" = [
-    "ANN401",  # Any type needed for polymorphic flow parameters
+"**/ops/control/**/*.py" = [
+    "ANN401",  # Any type needed for polymorphic control op parameters
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["nu", "nu_distributed", "nu_virtuals", "nu_dict", "nu_datetime", "nu_fin", "nu_math", "nu_path", "nu_uuid", "nu_shape_lens", "nu_tree_view"]
+known-first-party = ["nu", "nu_distributed", "nu_virtuals", "nu_dict", "nu_shape_lens", "nu_tree_view"]
 force-single-line = false
 lines-after-imports = 2
 

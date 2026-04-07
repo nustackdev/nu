@@ -87,7 +87,6 @@ from .context import (
 )
 from .interface import Interface, TypedNu
 from .interface.auto_interface import AutoInterface, method, prop
-from .model import Model
 from .ops import (
     AbsOp,
     AddOp,
@@ -425,7 +424,6 @@ __all__ = [
     "MethodCallOp",
     "MinOp",
     "ModOp",
-    "Model",
     "MulOp",
     "MutableMappingI",
     "MutableSequenceI",

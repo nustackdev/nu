@@ -9,7 +9,7 @@ description = "Virtuals adapter for everybase — refs over KV storages"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "nu>=0.1.0",
     "virtuals-py",
@@ -27,9 +27,9 @@ classifiers = [
 Repository = "https://github.com/nustackdev/nu"
 
 [project.optional-dependencies]
-rocksdb = ["rdbpython"]
+rocksdb = ["virtuals-py[rocksdb]"]
 redis = ["redis"]
-msgpack = ["msgpack"]
+infra = ["nu-virtuals[rocksdb,redis]"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nu_virtuals"]
