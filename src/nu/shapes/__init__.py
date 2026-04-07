@@ -2,10 +2,7 @@
 
 from .collections import (
     CollectionI,
-    DictI,
-    FrozenSetI,
     ItemI,
-    ListI,
     MappingI,
     MutableCollectionI,
     MutableItemI,
@@ -18,9 +15,7 @@ from .collections import (
     ReactiveSequenceI,
     ReactiveSetI,
     SequenceI,
-    SetI,
     SetLikeI,
-    TupleI,
 )
 from .ops import (
     AdvanceCursorOp,

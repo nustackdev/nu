@@ -1,4 +1,4 @@
-"""Shapes collections - ABCs and concrete type interfaces."""
+"""Shapes collections - interface hierarchies for the document model."""
 
 from .abc import (
     CollectionI,
@@ -17,8 +17,3 @@ from .abc import (
     SequenceI,
     SetLikeI,
 )
-from .dict import DictI
-from .frozenset import FrozenSetI
-from .list import ListI
-from .set import SetI
-from .tuple import TupleI
