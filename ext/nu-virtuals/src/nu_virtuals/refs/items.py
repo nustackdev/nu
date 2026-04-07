@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from virtuals.loc import path
 
     from nu import Nu, Value
-    from nu.interfaces import NoneI
+    from nu import NoneI
     from nu.shapes import Shape
 
 __all__ = [

@@ -18,8 +18,6 @@ from __future__ import annotations
 from abc import ABCMeta
 from typing import TYPE_CHECKING, ClassVar
 
-from nu import Model
-
 from .slot import Slot
 
 
@@ -133,7 +131,7 @@ class ShapeMeta(ABCMeta):
         return cls
 
 
-class Shape(Model, metaclass=ShapeMeta):
+class Shape(metaclass=ShapeMeta):
     """Declarative structure definitions using Slots.
 
     Shape classes are never instantiated. All access is at class level.

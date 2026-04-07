@@ -11,7 +11,7 @@ from __future__ import annotations
 from nu_dict.meta.flat_ref import FlatRef
 from nu_dict.refs.base import RefBase
 from nu.tree import map_nodes
-from nu.shapes.meta.deform import reconstruct_with_flat_ref, walk_ref_chain
+from nu.shapes.tree.deform import reconstruct_with_flat_ref, walk_ref_chain
 from nu.shapes.refs.base import Ref
 
 

@@ -16,8 +16,6 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu import Value
-
 from ..collections import MappingBase, MutableMappingBase, ReactiveMappingBase
 from .base import Ref
 
@@ -25,7 +23,7 @@ from .base import Ref
 if TYPE_CHECKING:
     from nu import Arg, Sentinel
 
-    from .items import ItemRef, MutableItemRef, ReactiveItemRef
+    from .item import ItemRef, MutableItemRef, ReactiveItemRef
 
 
 __all__ = [
@@ -35,7 +33,7 @@ __all__ = [
 ]
 
 
-class MappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
+class MappingRefBase[K, V, CollectionValueT, ValueValueT](
     MappingBase[K, V, CollectionValueT, ValueValueT],
     Ref[dict[K, V]],
 ):
@@ -51,7 +49,7 @@ class MappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
         return self._create_child_ref(key)
 
 
-class MutableMappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
+class MutableMappingRefBase[K, V, CollectionValueT, ValueValueT](
     MutableMappingBase[K, V, CollectionValueT, ValueValueT],
     MappingRefBase[K, V, CollectionValueT, ValueValueT],
 ):
@@ -67,7 +65,7 @@ class MutableMappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
         return self._create_child_ref(key)
 
 
-class ReactiveMappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
+class ReactiveMappingRefBase[K, V, CollectionValueT, ValueValueT](
     ReactiveMappingBase[K, V, CollectionValueT, ValueValueT],
     MutableMappingRefBase[K, V, CollectionValueT, ValueValueT],
 ):

@@ -1,8 +1,11 @@
+"""Shape refs - document model navigation."""
+
 from .base import Ref
-from .items import ItemRef, MutableItemRef, ReactiveItemRef
+from .item import ItemRef, MutableItemRef, ReactiveItemRef
 from .mapping import MappingRefBase, MutableMappingRefBase, ReactiveMappingRefBase
 from .sequence import MutableSequenceRefBase, ReactiveSequenceRefBase, SequenceRefBase
 from .set import MutableSetRefBase, ReactiveSetRefBase, SetLikeRefBase
+from .shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
 from .shapesmapping import (
     MutableShapesMappingRefBase,
     ReactiveShapesMappingRefBase,
@@ -13,4 +16,3 @@ from .shapessequence import (
     ReactiveShapesSequenceRefBase,
     ShapesSequenceRefBase,
 )
-from .structured import MutableShapeRef, ReactiveShapeRef, ShapeRef

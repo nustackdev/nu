@@ -15,8 +15,6 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu import Value
-
 from ..collections import MutableSequenceBase, ReactiveSequenceBase, SequenceBase
 from .base import Ref
 
@@ -24,7 +22,7 @@ from .base import Ref
 if TYPE_CHECKING:
     from nu import IntArg, Sentinel
 
-    from .items import ItemRef, MutableItemRef, ReactiveItemRef
+    from .item import ItemRef, MutableItemRef, ReactiveItemRef
 
 
 __all__ = [
@@ -34,7 +32,7 @@ __all__ = [
 ]
 
 
-class SequenceRefBase[T, CollectionValueT, ItemValueT: Value](
+class SequenceRefBase[T, CollectionValueT, ItemValueT](
     SequenceBase[T, CollectionValueT, ItemValueT],
     Ref[list[T]],
 ):
@@ -50,7 +48,7 @@ class SequenceRefBase[T, CollectionValueT, ItemValueT: Value](
         return self._create_item_ref(index)
 
 
-class MutableSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
+class MutableSequenceRefBase[T, CollectionValueT, ItemValueT](
     MutableSequenceBase[T, CollectionValueT, ItemValueT],
     SequenceRefBase[T, CollectionValueT, ItemValueT],
 ):
@@ -66,7 +64,7 @@ class MutableSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
         return self._create_item_ref(index)
 
 
-class ReactiveSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
+class ReactiveSequenceRefBase[T, CollectionValueT, ItemValueT](
     ReactiveSequenceBase[T, CollectionValueT, ItemValueT],
     MutableSequenceRefBase[T, CollectionValueT, ItemValueT],
 ):

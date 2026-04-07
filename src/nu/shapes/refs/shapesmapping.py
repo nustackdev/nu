@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from nu import Arg, Sentinel
 
     from ..shape import Shape as ShapeBase
-    from .structured import MutableShapeRef, ReactiveShapeRef, ShapeRef
+    from .shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
 
 
 __all__ = [

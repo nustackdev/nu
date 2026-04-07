@@ -1,14 +1,14 @@
-"""List type — mutable sequence.
+"""List type - mutable sequence.
 
-ListBase         = MutableSequenceBase (list IS mutable)
-ReactiveListBase = ListBase + ViewObservable
+ListType         = MutableSequenceBase (list IS mutable)
+ReactiveListType = ListType + ReactiveCollectionBase
 """
 
 from __future__ import annotations
 
 from nu.interface import Interface
 
-from ..collections import MutableSequenceBase, ReactiveSequenceBase
+from .abc import MutableSequenceBase, ReactiveSequenceBase
 
 
 __all__ = [
@@ -21,7 +21,7 @@ class ListType[T](
     MutableSequenceBase[T, object, object],
     Interface[list],
 ):
-    """List — mutable sequence."""
+    """List - mutable sequence."""
 
 
 class ReactiveListType[T](
@@ -29,4 +29,4 @@ class ReactiveListType[T](
     ReactiveSequenceBase[T, object, object],
     Interface[list],
 ):
-    """Reactive list — mutable + observable."""
+    """Reactive list - mutable + observable."""

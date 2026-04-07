@@ -1,21 +1,15 @@
 # ruff: noqa: D102
-"""Item access ops — CRUD for items within collections.
+"""Item access ops - CRUD for items within collections.
 
-ItemLoadOp: Read item value — parent[address]
-ItemStoreCmd: Write item value — parent[address] = value
-ItemEraseCmd: Delete item — del parent[address]
-ItemExistsOp: Check if item exists — address in parent
-ItemMissingOp: Check if item is missing — address not in parent
+ItemLoadOp: Read item value - parent[address]
+ItemStoreCmd: Write item value - parent[address] = value
+ItemEraseCmd: Delete item - del parent[address]
+ItemExistsOp: Check if item exists - address in parent
+ItemMissingOp: Check if item is missing - address not in parent
 
 These operate via standard Python protocols (__getitem__, __setitem__,
 __delitem__, __contains__). The ref provides fetch_parent(ctx) to get
 the collection and resolve_address(ctx) to get the key/index.
-
-Any substrate ref that implements fetch_parent(ctx) and resolve_address(ctx)
-can use these ops directly.
-
-PV-specific item ops (InitCmd, ItemPrimitiveGetOp, ItemPrimitiveSetCmd,
-ItemPrimitiveSetUnsafeCmd, ItemPrimitiveDeleteCmd) live in eb_virtuals.ops.item.
 """
 
 from __future__ import annotations
@@ -27,6 +21,8 @@ from nu import EMPTY, Calculation, Command, Op, Sentinel
 
 if TYPE_CHECKING:
     from nu import Context, Nu
+
+    from ..refs.base import Ref
 
 
 __all__ = [
@@ -41,15 +37,10 @@ __all__ = [
 class ItemLoadOp[T](Calculation, Op[T | Sentinel]):
     """Read item from collection: parent[address].
 
-    Uses __getitem__ on the parent collection. Returns EMPTY
-    if the key/index doesn't exist.
-
-    The ref must implement:
-        fetch_parent(ctx) -> collection object
-        resolve_address(ctx) -> key/index
+    Returns EMPTY if the key/index doesn't exist.
     """
 
-    def __init__(self, ref: object) -> None:
+    def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
 
@@ -66,16 +57,9 @@ class ItemLoadOp[T](Calculation, Op[T | Sentinel]):
 
 
 class ItemStoreCmd[T](Command, Op[None]):
-    """Write item to collection: parent[address] = value. Returns None.
+    """Write item to collection: parent[address] = value. Returns None."""
 
-    Uses __setitem__ on the parent collection.
-
-    The ref must implement:
-        fetch_parent(ctx) -> collection object
-        resolve_address(ctx) -> key/index
-    """
-
-    def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
+    def __init__(self, ref: Ref, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
         self.ref = ref
         self.value_expr = value
@@ -94,16 +78,9 @@ class ItemStoreCmd[T](Command, Op[None]):
 
 
 class ItemEraseCmd(Command, Op[None]):
-    """Delete item from collection: del parent[address].
+    """Delete item from collection: del parent[address]."""
 
-    Uses __delitem__ on the parent collection.
-
-    The ref must implement:
-        fetch_parent(ctx) -> collection object
-        resolve_address(ctx) -> key/index
-    """
-
-    def __init__(self, ref: object) -> None:
+    def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
 
@@ -118,16 +95,9 @@ class ItemEraseCmd(Command, Op[None]):
 
 
 class ItemExistsOp(Calculation, Op[bool]):
-    """Check if item exists in collection: address in parent.
+    """Check if item exists in collection: address in parent."""
 
-    Uses __contains__ on the parent collection.
-
-    The ref must implement:
-        fetch_parent(ctx) -> collection object
-        resolve_address(ctx) -> key/index
-    """
-
-    def __init__(self, ref: object) -> None:
+    def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
 
@@ -141,16 +111,9 @@ class ItemExistsOp(Calculation, Op[bool]):
 
 
 class ItemMissingOp(Calculation, Op[bool]):
-    """Check if item is missing from collection: address not in parent.
+    """Check if item is missing from collection: address not in parent."""
 
-    Inverse of ItemExistsOp.
-
-    The ref must implement:
-        fetch_parent(ctx) -> collection object
-        resolve_address(ctx) -> key/index
-    """
-
-    def __init__(self, ref: object) -> None:
+    def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
 

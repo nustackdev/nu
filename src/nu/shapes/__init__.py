@@ -1,29 +1,30 @@
-"""Nu shapes — document data model."""
+"""Nu shapes - document data model."""
 
-from .capabilities import (
-    CollectionDeletableBase,
-    CollectionExistableBase,
-    CollectionSettableBase,
-    ItemDeletableBase,
-    ItemExistableBase,
-    ItemSettableBase,
-    PrimitiveObservableBase,
-    ViewObservableBase,
-)
 from .collections import (
+    CollectionBase,
+    DictType,
+    FrozenSetType,
     ItemBase,
+    ListType,
     MappingBase,
+    MutableCollectionBase,
     MutableItemBase,
     MutableMappingBase,
     MutableSequenceBase,
     MutableSetBase,
+    ReactiveCollectionBase,
+    ReactiveDictType,
     ReactiveItemBase,
     ReactiveMappingBase,
+    ReactiveListType,
     ReactiveSequenceBase,
+    ReactiveSetBase,
+    ReactiveSetType,
     SequenceBase,
     SetLikeBase,
+    SetType,
+    TupleType,
 )
-from .flows import React, ReactForever, ReactWhile, Stream
 from .ops import (
     AdvanceCursorOp,
     ChangeOp,
@@ -42,12 +43,10 @@ from .ops import (
     OnChildrenChangeOp,
     OnDescendantsChangeOp,
     OnPrimitiveChangeOp,
-)
-from .protocols import (
-    ChildObservableProtocol,
-    ChildrenObservableProtocol,
-    DescendantsObservableProtocol,
-    ObservableProtocol,
+    React,
+    ReactForever,
+    ReactWhile,
+    Stream,
 )
 from .refs import (
     ItemRef,
@@ -74,13 +73,3 @@ from .refs import (
     ShapesSequenceRefBase,
 )
 from .shape import Shape, ShapeMeta, Slot, SlotDescriptor
-from .types import (
-    DictType,
-    FrozenSetType,
-    ListType,
-    ReactiveDictType,
-    ReactiveListType,
-    ReactiveSetType,
-    SetType,
-    TupleType,
-)
