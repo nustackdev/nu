@@ -6,8 +6,7 @@ import logging
 
 from nu.context import Context, IntAttrRef, StrAttrRef
 from nu.ops import Log, Retry, Seq, ToStr
-from nu.terms import Nu, ScopedCmd
-
+from nu.terms import Nu, ScopedCmd, Value
 from nu.tree import map_nodes
 
 
@@ -51,7 +50,7 @@ class _StepSpan(ScopedCmd):
         )
 
 
-def annotate_retries[N: Nu](tree: N) -> N:
+def annotate_retries(tree: Nu) -> Nu:
     """Add logging hooks to all Retry nodes.
 
     Wraps every Retry with Log-based hooks for ``on_attempt_fail`` and
@@ -149,7 +148,7 @@ def annotate_steps(tree: Nu) -> Nu:
     return _walk(tree, "")
 
 
-def set_logger_name[N: Nu](tree: N, name: str) -> N:
+def set_logger_name(tree: Nu, name: str) -> Nu:
     """Rename the logger on all Log nodes in the tree.
 
     Args:
@@ -163,8 +162,7 @@ def set_logger_name[N: Nu](tree: N, name: str) -> N:
     def _rename(node: Nu) -> Nu:
         if not isinstance(node, (Log, _StepSpan)):
             return node
-        clone = node.with_children(*node.children)
-        clone._logger_name = name
+        clone = node.with_children(node.children[0], Value(name), *node.children[2:])
         return clone
 
     return map_nodes(tree, _rename, order="bottom_up")

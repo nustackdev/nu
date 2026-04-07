@@ -92,17 +92,19 @@ class TypedNu(RValue[T_co]):
         IntI(AddOp(a, b)) + 1  →  AddOp(IntI(AddOp(a, b)), Value(1))
     """
 
-    def __init__(self, source: object = None) -> None:
+    def __init__(self, source: object = None, *args: object) -> None:
         """Initialize with a literal or Nu source.
 
         Args:
             source: Python literal (auto-wrapped in Value) or a Nu.
                     None is valid as a literal for NoneI.
+            *args: Extra positional args forwarded through cooperative MRO
+                   (e.g. parent ref passed by shapes.Ref.__init__).
         """
         if isinstance(source, Nu):
-            super().__init__(source)
+            super().__init__(source, *args)
         else:
-            super().__init__(Value(source))
+            super().__init__(Value(source), *args)
 
     @property
     def source(self) -> object:

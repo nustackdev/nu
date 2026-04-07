@@ -51,7 +51,7 @@ class Log(Command):
         message: StrArg,
         *values: Any,
         level: StrArg = "info",
-        logger_name: StrArg = "everybase.flows",
+        logger_name: StrArg = "nu",
     ) -> None:
         super().__init__(level, logger_name, message, *values)
         self._path = ""
