@@ -1,24 +1,24 @@
-"""Shapes collections - ABCs and concrete type wrappers."""
+"""Shapes collections - ABCs and concrete type interfaces."""
 
 from .abc import (
-    CollectionBase,
-    ItemBase,
-    MappingBase,
-    MutableCollectionBase,
-    MutableItemBase,
-    MutableMappingBase,
-    MutableSequenceBase,
-    MutableSetBase,
-    ReactiveCollectionBase,
-    ReactiveItemBase,
-    ReactiveMappingBase,
-    ReactiveSequenceBase,
-    ReactiveSetBase,
-    SequenceBase,
-    SetLikeBase,
+    CollectionI,
+    ItemI,
+    MappingI,
+    MutableCollectionI,
+    MutableItemI,
+    MutableMappingI,
+    MutableSequenceI,
+    MutableSetI,
+    ReactiveCollectionI,
+    ReactiveItemI,
+    ReactiveMappingI,
+    ReactiveSequenceI,
+    ReactiveSetI,
+    SequenceI,
+    SetLikeI,
 )
-from .dict import DictType, ReactiveDictType
-from .frozenset import FrozenSetType
-from .list import ListType, ReactiveListType
-from .set import ReactiveSetType, SetType
-from .tuple import TupleType
+from .dict import DictI
+from .frozenset import FrozenSetI
+from .list import ListI
+from .set import SetI
+from .tuple import TupleI

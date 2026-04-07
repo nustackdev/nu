@@ -2,9 +2,9 @@
 """Item base hierarchy - typed values in a document model.
 
 Three tiers:
-    ItemBase          exists(), missing()
-    MutableItemBase   + store(), erase()
-    ReactiveItemBase  + on_change()
+    ItemI          exists(), missing()
+    MutableItemI   + store(), erase()
+    ReactiveItemI  + on_change()
 
 Type Parameters:
     T:           Native Python type of the value (int, str, etc.)
@@ -27,13 +27,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "ItemBase",
-    "MutableItemBase",
-    "ReactiveItemBase",
+    "ItemI",
+    "MutableItemI",
+    "ReactiveItemI",
 ]
 
 
-class ItemBase[T, InterfaceT]:
+class ItemI[T, InterfaceT]:
     """Item in a document - holds a typed value.
 
     An item is the leaf node of the document model: a single typed value
@@ -44,7 +44,7 @@ class ItemBase[T, InterfaceT]:
     via fetch()/coerce(). No separate load() needed.
 
     Substrates must provide:
-        __init__: set _value_type and _interface_cls
+        __init__: set _value_type and _value_value_type
         resolve(ctx): build location identity
         fetch(ctx): extract value (calls coerce() for type conversion)
         fetch_parent(ctx): get parent collection
@@ -72,7 +72,7 @@ class ItemBase[T, InterfaceT]:
         return BoolI(ItemMissingOp(self))
 
 
-class MutableItemBase[T, InterfaceT](ItemBase[T, InterfaceT]):
+class MutableItemI[T, InterfaceT](ItemI[T, InterfaceT]):
     """Item with mutable capabilities.
 
     Provides:
@@ -94,12 +94,8 @@ class MutableItemBase[T, InterfaceT](ItemBase[T, InterfaceT]):
         return NoneI(ItemEraseCmd(self))
 
 
-class ReactiveItemBase[T, InterfaceT](MutableItemBase[T, InterfaceT]):
-    """Item with CRUD + change observation.
-
-    Provides everything from MutableItemBase plus:
-        on_change() -> OnPrimitiveChangeOp
-    """
+class ReactiveItemI[T, InterfaceT](MutableItemI[T, InterfaceT]):
+    """Reactive item - CRUD + change observation."""
 
     def on_change(self) -> OnPrimitiveChangeOp:
         from nu.shapes.ops.reactive import OnPrimitiveChangeOp

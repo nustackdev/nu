@@ -1,32 +1,24 @@
-"""Dict type - mutable mapping.
+"""Shaped DictI - the complete document-model dict.
 
-DictType         = MutableMappingBase (dict IS mutable)
-ReactiveDictType = DictType + ReactiveCollectionBase
+Mutable, reactive, collection-aware. Just like Python says dict is a
+MutableMapping, we say shaped DictI is a reactive mutable mapping with
+collection ops.
 """
 
 from __future__ import annotations
 
 from nu.interface import Interface
 
-from .abc import MutableMappingBase, ReactiveMappingBase
+from .abc import ReactiveMappingI
 
 
 __all__ = [
-    "DictType",
-    "ReactiveDictType",
+    "DictI",
 ]
 
 
-class DictType[K, V](
-    MutableMappingBase[K, V, object, object],
+class DictI[K, V](
+    ReactiveMappingI[K, V, object, object],
     Interface[dict],
 ):
-    """Dict - mutable mapping."""
-
-
-class ReactiveDictType[K, V](
-    DictType[K, V],
-    ReactiveMappingBase[K, V, object, object],
-    Interface[dict],
-):
-    """Reactive dict - mutable + observable."""
+    """Shaped dict - reactive mutable mapping with collection ops."""

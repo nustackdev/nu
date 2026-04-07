@@ -1,8 +1,6 @@
-"""Tuple type - immutable sequence.
+"""Shaped TupleI - immutable sequence in the document model.
 
-TupleType = nu.collections.abc.SequenceBase + CollectionBase (tuple IS immutable).
-
-Goes directly to nu.collections.abc since shapes' SequenceBase is list-specific.
+Goes directly to nu.collections.abc since shapes' SequenceI is list-specific.
 """
 
 from __future__ import annotations
@@ -10,17 +8,17 @@ from __future__ import annotations
 from nu.collections.abc import SequenceBase as _SequenceBase
 from nu.interface import Interface
 
-from .abc import CollectionBase
+from .abc import CollectionI
 
 
 __all__ = [
-    "TupleType",
+    "TupleI",
 ]
 
 
-class TupleType[T](
+class TupleI[T](
     _SequenceBase[tuple[T, ...], T, object, object],
-    CollectionBase,
+    CollectionI,
     Interface[tuple],
 ):
-    """Tuple - immutable sequence."""
+    """Shaped tuple - immutable sequence with collection ops."""

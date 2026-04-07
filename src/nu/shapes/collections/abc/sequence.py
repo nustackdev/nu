@@ -1,8 +1,8 @@
-"""Sequence collection bases - three tiers for the document model.
+"""Sequence collection interfaces - three tiers for the document model.
 
-SequenceBase         = nu.collections.abc.SequenceBase + CollectionBase
-MutableSequenceBase  = nu.collections.abc.MutableSequenceBase + MutableCollectionBase
-ReactiveSequenceBase = MutableSequenceBase + ReactiveCollectionBase
+SequenceI         = nu.collections.abc.SequenceBase + CollectionI
+MutableSequenceI  = nu.collections.abc.MutableSequenceBase + MutableCollectionI
+ReactiveSequenceI = MutableSequenceI + ReactiveCollectionI
 
 Substrates implement _wrap_* methods and result() directly on their concrete refs.
 """
@@ -12,32 +12,32 @@ from __future__ import annotations
 from nu.collections.abc import MutableSequenceBase as _MutableSequenceBase
 from nu.collections.abc import SequenceBase as _SequenceBase
 
-from .collection import CollectionBase, MutableCollectionBase, ReactiveCollectionBase
+from .collection import CollectionI, MutableCollectionI, ReactiveCollectionI
 
 
 __all__ = [
-    "MutableSequenceBase",
-    "ReactiveSequenceBase",
-    "SequenceBase",
+    "MutableSequenceI",
+    "ReactiveSequenceI",
+    "SequenceI",
 ]
 
 
-class SequenceBase[T, CollectionValueT, ItemValueT](
+class SequenceI[T, CollectionValueT, ItemValueT](
     _SequenceBase[list[T], T, CollectionValueT, ItemValueT],
-    CollectionBase,
+    CollectionI,
 ):
-    """Base for sequences - ordered containers in the document model."""
+    """Sequence - ordered container in the document model."""
 
 
-class MutableSequenceBase[T, CollectionValueT, ItemValueT](
+class MutableSequenceI[T, CollectionValueT, ItemValueT](
     _MutableSequenceBase[list[T], T, CollectionValueT, ItemValueT],
-    MutableCollectionBase[list[T]],
+    MutableCollectionI[list[T]],
 ):
     """Mutable sequence - adds append, extend, insert, pop, remove, store, erase."""
 
 
-class ReactiveSequenceBase[T, CollectionValueT, ItemValueT](
-    MutableSequenceBase[T, CollectionValueT, ItemValueT],
-    ReactiveCollectionBase[list[T]],
+class ReactiveSequenceI[T, CollectionValueT, ItemValueT](
+    MutableSequenceI[T, CollectionValueT, ItemValueT],
+    ReactiveCollectionI[list[T]],
 ):
     """Reactive sequence - adds on_change, on_child_change, etc."""

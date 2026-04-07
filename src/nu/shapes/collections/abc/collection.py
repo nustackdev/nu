@@ -2,12 +2,11 @@
 """Collection base hierarchy - lifecycle ops for collections in the document model.
 
 Three tiers:
-    CollectionBase          exists(), missing()
-    MutableCollectionBase   + store(), erase()
-    ReactiveCollectionBase  + on_change(), on_child_change(), on_children_change(),
-                              on_descendants_change()
+    CollectionI          exists(), missing()
+    MutableCollectionI   + store(), erase()
+    ReactiveCollectionI  + on_change(), on_child_change(), ...
 
-Mirrors nu.collections.abc pattern (CollectionBase -> MutableMapping -> ...).
+Mirrors nu.collections.abc pattern.
 """
 
 from __future__ import annotations
@@ -29,13 +28,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "CollectionBase",
-    "MutableCollectionBase",
-    "ReactiveCollectionBase",
+    "CollectionI",
+    "MutableCollectionI",
+    "ReactiveCollectionI",
 ]
 
 
-class CollectionBase:
+class CollectionI:
     """Collection in a document - can check existence."""
 
     def exists(self) -> BoolI:
@@ -49,7 +48,7 @@ class CollectionBase:
         return BoolI(CollectionMissingOp(self))
 
 
-class MutableCollectionBase[CollectionT](CollectionBase):
+class MutableCollectionI[CollectionT](CollectionI):
     """Mutable collection - can store and erase."""
 
     def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> NoneI:
@@ -65,7 +64,7 @@ class MutableCollectionBase[CollectionT](CollectionBase):
         return NoneI(CollectionEraseCmd(self))
 
 
-class ReactiveCollectionBase[CollectionT](MutableCollectionBase[CollectionT]):
+class ReactiveCollectionI[CollectionT](MutableCollectionI[CollectionT]):
     """Reactive collection - can observe changes."""
 
     def on_change(self) -> OnChangeOp:

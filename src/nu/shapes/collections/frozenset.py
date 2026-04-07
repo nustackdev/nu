@@ -1,8 +1,6 @@
-"""FrozenSet type - immutable set.
+"""Shaped FrozenSetI - immutable set in the document model.
 
-FrozenSetType = nu.collections.abc.SetLikeBase + CollectionBase (frozenset IS immutable).
-
-Goes directly to nu.collections.abc since shapes' SetLikeBase is set-specific.
+Goes directly to nu.collections.abc since shapes' SetLikeI is set-specific.
 """
 
 from __future__ import annotations
@@ -10,17 +8,17 @@ from __future__ import annotations
 from nu.collections.abc import SetLikeBase as _SetLikeBase
 from nu.interface import Interface
 
-from .abc import CollectionBase
+from .abc import CollectionI
 
 
 __all__ = [
-    "FrozenSetType",
+    "FrozenSetI",
 ]
 
 
-class FrozenSetType[T](
+class FrozenSetI[T](
     _SetLikeBase[frozenset[T], T, object, object],
-    CollectionBase,
+    CollectionI,
     Interface[frozenset],
 ):
-    """FrozenSet - immutable set."""
+    """Shaped frozenset - immutable set with collection ops."""

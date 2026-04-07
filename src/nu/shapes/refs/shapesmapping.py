@@ -1,8 +1,8 @@
 """ShapesMapping ref hierarchy — mapping of shapes + Ref navigation.
 
-ShapesMappingRefBase         = MappingBase[K, dict[str, object], ...] + Ref
-MutableShapesMappingRefBase  = MutableMappingBase[K, dict[str, object], ...] + Ref
-ReactiveShapesMappingRefBase = ReactiveMappingBase[K, dict[str, object], ...] + Ref
+ShapesMappingRefBase         = MappingI[K, dict[str, object], ...] + Ref
+MutableShapesMappingRefBase  = MutableMappingI[K, dict[str, object], ...] + Ref
+ReactiveShapesMappingRefBase = ReactiveMappingI[K, dict[str, object], ...] + Ref
 
 Specialized mapping refs where each value is a shape (dict[str, object]).
 Child navigation returns ShapeRef variants instead of ItemRef.
@@ -17,7 +17,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from ..collections import MappingBase, MutableMappingBase, ReactiveMappingBase
+from ..collections import MappingI, MutableMappingI, ReactiveMappingI
 from .base import Ref
 
 
@@ -36,7 +36,7 @@ __all__ = [
 
 
 class ShapesMappingRefBase[K, T: ShapeBase](
-    MappingBase[K, dict[str, object], object, object],
+    MappingI[K, dict[str, object], object, object],
     Ref[dict[K, dict[str, object]]],
 ):
     """Shapes mapping ref — read-only mapping of shapes with navigation."""
@@ -56,7 +56,7 @@ class ShapesMappingRefBase[K, T: ShapeBase](
 
 
 class MutableShapesMappingRefBase[K, T: ShapeBase](
-    MutableMappingBase[K, dict[str, object], object, object],
+    MutableMappingI[K, dict[str, object], object, object],
     ShapesMappingRefBase[K, T],
 ):
     """Mutable shapes mapping ref — mutations + navigation."""
@@ -72,7 +72,7 @@ class MutableShapesMappingRefBase[K, T: ShapeBase](
 
 
 class ReactiveShapesMappingRefBase[K, T: ShapeBase](
-    ReactiveMappingBase[K, dict[str, object], object, object],
+    ReactiveMappingI[K, dict[str, object], object, object],
     MutableShapesMappingRefBase[K, T],
 ):
     """Reactive shapes mapping ref — observation + mutations + navigation."""

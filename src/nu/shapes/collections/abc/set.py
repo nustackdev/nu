@@ -1,8 +1,8 @@
-"""Set collection bases - three tiers for the document model.
+"""Set collection interfaces - three tiers for the document model.
 
-SetLikeBase     = nu.collections.abc.SetLikeBase + CollectionBase
-MutableSetBase  = nu.collections.abc.MutableSetBase + MutableCollectionBase
-ReactiveSetBase = MutableSetBase + ReactiveCollectionBase
+SetLikeI     = nu.collections.abc.SetLikeBase + CollectionI
+MutableSetI  = nu.collections.abc.MutableSetBase + MutableCollectionI
+ReactiveSetI = MutableSetI + ReactiveCollectionI
 
 Substrates implement _wrap_* methods and result() directly on their concrete refs.
 """
@@ -12,32 +12,32 @@ from __future__ import annotations
 from nu.collections.abc import MutableSetBase as _MutableSetBase
 from nu.collections.abc import SetLikeBase as _SetLikeBase
 
-from .collection import CollectionBase, MutableCollectionBase, ReactiveCollectionBase
+from .collection import CollectionI, MutableCollectionI, ReactiveCollectionI
 
 
 __all__ = [
-    "MutableSetBase",
-    "ReactiveSetBase",
-    "SetLikeBase",
+    "MutableSetI",
+    "ReactiveSetI",
+    "SetLikeI",
 ]
 
 
-class SetLikeBase[T, CollectionValueT, ElementValueT](
+class SetLikeI[T, CollectionValueT, ElementValueT](
     _SetLikeBase[set[T], T, CollectionValueT, ElementValueT],
-    CollectionBase,
+    CollectionI,
 ):
-    """Base for sets - unordered unique-element containers in the document model."""
+    """Set - unordered unique-element container in the document model."""
 
 
-class MutableSetBase[T, CollectionValueT, ElementValueT](
+class MutableSetI[T, CollectionValueT, ElementValueT](
     _MutableSetBase[set[T], T, CollectionValueT, ElementValueT],
-    MutableCollectionBase[set[T]],
+    MutableCollectionI[set[T]],
 ):
     """Mutable set - adds add, remove, discard, store, erase."""
 
 
-class ReactiveSetBase[T, CollectionValueT, ElementValueT](
-    MutableSetBase[T, CollectionValueT, ElementValueT],
-    ReactiveCollectionBase[set[T]],
+class ReactiveSetI[T, CollectionValueT, ElementValueT](
+    MutableSetI[T, CollectionValueT, ElementValueT],
+    ReactiveCollectionI[set[T]],
 ):
     """Reactive set - adds on_change, on_child_change, etc."""

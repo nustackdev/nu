@@ -1,32 +1,22 @@
-"""Set type - mutable set.
+"""Shaped SetI - the complete document-model set.
 
-SetType         = MutableSetBase (set IS mutable)
-ReactiveSetType = SetType + ReactiveCollectionBase
+Mutable, reactive, collection-aware.
 """
 
 from __future__ import annotations
 
 from nu.interface import Interface
 
-from .abc import MutableSetBase, ReactiveSetBase
+from .abc import ReactiveSetI
 
 
 __all__ = [
-    "ReactiveSetType",
-    "SetType",
+    "SetI",
 ]
 
 
-class SetType[T](
-    MutableSetBase[T, object, object],
+class SetI[T](
+    ReactiveSetI[T, object, object],
     Interface[set],
 ):
-    """Set - mutable set."""
-
-
-class ReactiveSetType[T](
-    SetType[T],
-    ReactiveSetBase[T, object, object],
-    Interface[set],
-):
-    """Reactive set - mutable + observable."""
+    """Shaped set - reactive mutable set with collection ops."""

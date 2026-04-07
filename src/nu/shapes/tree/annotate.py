@@ -29,7 +29,7 @@ def annotate_ref_loads[N: Nu](root: N) -> N:
 
     This is idempotent - already-wrapped refs are not double-wrapped.
     """
-    from ..collections.abc.item import ItemBase
+    from ..collections.abc.item import ItemI
     from ..ops.collection import CollectionLoadOp
     from ..ops.item import ItemLoadOp
     from ..refs.base import Ref as ShapeRef
@@ -53,7 +53,7 @@ def annotate_ref_loads[N: Nu](root: N) -> N:
                 continue
 
             if isinstance(child, ShapeRef) and not isinstance(child, load_op_types):
-                if isinstance(child, ItemBase):
+                if isinstance(child, ItemI):
                     new_children.append(ItemLoadOp(child))
                 else:
                     new_children.append(CollectionLoadOp(child))

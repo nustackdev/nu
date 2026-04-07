@@ -1,8 +1,8 @@
 """Sequence ref hierarchy — sequence bases + Ref navigation.
 
-SequenceRefBase         = SequenceBase + Ref
-MutableSequenceRefBase  = MutableSequenceBase + Ref
-ReactiveSequenceRefBase = ReactiveSequenceBase + Ref
+SequenceRefBase         = SequenceI + Ref
+MutableSequenceRefBase  = MutableSequenceI + Ref
+ReactiveSequenceRefBase = ReactiveSequenceI + Ref
 
 Type Parameters:
     T:               Native element type (int, str, etc.)
@@ -15,7 +15,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from ..collections import MutableSequenceBase, ReactiveSequenceBase, SequenceBase
+from ..collections import MutableSequenceI, ReactiveSequenceI, SequenceI
 from .base import Ref
 
 
@@ -33,7 +33,7 @@ __all__ = [
 
 
 class SequenceRefBase[T, CollectionValueT, ItemValueT](
-    SequenceBase[T, CollectionValueT, ItemValueT],
+    SequenceI[T, CollectionValueT, ItemValueT],
     Ref[list[T]],
 ):
     """Sequence ref — ordered container with document-model navigation."""
@@ -49,7 +49,7 @@ class SequenceRefBase[T, CollectionValueT, ItemValueT](
 
 
 class MutableSequenceRefBase[T, CollectionValueT, ItemValueT](
-    MutableSequenceBase[T, CollectionValueT, ItemValueT],
+    MutableSequenceI[T, CollectionValueT, ItemValueT],
     SequenceRefBase[T, CollectionValueT, ItemValueT],
 ):
     """Mutable sequence ref — mutations + navigation."""
@@ -65,7 +65,7 @@ class MutableSequenceRefBase[T, CollectionValueT, ItemValueT](
 
 
 class ReactiveSequenceRefBase[T, CollectionValueT, ItemValueT](
-    ReactiveSequenceBase[T, CollectionValueT, ItemValueT],
+    ReactiveSequenceI[T, CollectionValueT, ItemValueT],
     MutableSequenceRefBase[T, CollectionValueT, ItemValueT],
 ):
     """Reactive sequence ref — observation + mutations + navigation."""

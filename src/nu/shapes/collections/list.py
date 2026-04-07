@@ -1,32 +1,22 @@
-"""List type - mutable sequence.
+"""Shaped ListI - the complete document-model list.
 
-ListType         = MutableSequenceBase (list IS mutable)
-ReactiveListType = ListType + ReactiveCollectionBase
+Mutable, reactive, collection-aware.
 """
 
 from __future__ import annotations
 
 from nu.interface import Interface
 
-from .abc import MutableSequenceBase, ReactiveSequenceBase
+from .abc import ReactiveSequenceI
 
 
 __all__ = [
-    "ListType",
-    "ReactiveListType",
+    "ListI",
 ]
 
 
-class ListType[T](
-    MutableSequenceBase[T, object, object],
+class ListI[T](
+    ReactiveSequenceI[T, object, object],
     Interface[list],
 ):
-    """List - mutable sequence."""
-
-
-class ReactiveListType[T](
-    ListType[T],
-    ReactiveSequenceBase[T, object, object],
-    Interface[list],
-):
-    """Reactive list - mutable + observable."""
+    """Shaped list - reactive mutable sequence with collection ops."""
