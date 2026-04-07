@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from nu import Nu, find
 
-from ..spans import Snapshot, Transaction
+from ..ops.control import Snapshot, Transaction
 
 
 if TYPE_CHECKING:
@@ -46,7 +46,7 @@ def _has_pv_write(node: Nu) -> bool:
     return False
 
 
-def _conditional_wrap_skip_spans[N: Nu](
+def _conditional_wrap_skip_scoped[N: Nu](
     root: N,
     pred: object,
     wrapper: object,
@@ -68,7 +68,7 @@ def _conditional_wrap_skip_spans[N: Nu](
         if pred(child):
             new_children.append(wrapper(child))
         else:
-            new_children.append(_conditional_wrap_skip_spans(child, pred, wrapper))
+            new_children.append(_conditional_wrap_skip_scoped(child, pred, wrapper))
 
     return root.with_children(*new_children)  # type: ignore[arg-type]
 
@@ -123,4 +123,4 @@ def auto_atomic[N: Nu](
     if pred(tree):
         return wrap(tree)  # type: ignore[return-value]
 
-    return _conditional_wrap_skip_spans(tree, pred, wrap)
+    return _conditional_wrap_skip_scoped(tree, pred, wrap)

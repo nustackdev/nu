@@ -1,4 +1,4 @@
-"""PV collection morphisms — unsafe scan and clear primitives.
+"""PV collection ops — unsafe scan and clear primitives.
 
 ScanPrimitivesUnsafeOp: Scan all primitive children — _unsafe_primitive_scan_values()
 ClearPrimitivesUnsafeCmd: Clear all primitive children — _unsafe_primitive_clear()

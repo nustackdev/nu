@@ -83,7 +83,7 @@ class ItemRef[T, ValueT: Value](
 
     def store(self, value: object) -> NoneI:
         from nu import NoneI, ensure_nu
-        from nu_virtuals.morphisms.item import PrimitiveStoreCmd
+        from nu_virtuals.ops.item import PrimitiveStoreCmd
 
         return NoneI(PrimitiveStoreCmd(self, ensure_nu(value)))
 

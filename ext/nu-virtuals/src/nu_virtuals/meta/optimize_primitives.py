@@ -1,4 +1,4 @@
-"""optimize_primitives — replace standard morphisms with unsafe virtuals-native ops.
+"""optimize_primitives — replace standard ops with unsafe virtuals-native ops.
 
 optimize_primitive_reads:  ItemLoadOp → ItemPrimitiveGetUnsafeOp
 optimize_primitive_writes: ItemStoreCmd → ItemPrimitiveSetUnsafeCmd
@@ -7,7 +7,7 @@ optimize_primitive_writes: ItemStoreCmd → ItemPrimitiveSetUnsafeCmd
 from __future__ import annotations
 
 from nu_virtuals.meta.flat_ref import FlatRef
-from nu_virtuals.morphisms.item import ItemPrimitiveGetUnsafeOp, ItemPrimitiveSetUnsafeCmd
+from nu_virtuals.ops.item import ItemPrimitiveGetUnsafeOp, ItemPrimitiveSetUnsafeCmd
 from nu import Nu, replace
 from nu.shapes.ops.item import ItemLoadOp, ItemStoreCmd
 
@@ -19,7 +19,7 @@ __all__ = [
 
 
 def _is_substrate_ref(node: object) -> bool:
-    """Check if a morphism node holds a virtuals substrate ref."""
+    """Check if an op node holds a virtuals substrate ref."""
     ref = getattr(node, "ref", None)
     return isinstance(ref, FlatRef)
 

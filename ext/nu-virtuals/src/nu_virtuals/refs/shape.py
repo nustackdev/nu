@@ -45,7 +45,7 @@ class ShapeRef[T: Shape](
     """
 
     def result(self, op: Nu) -> DictI[str, object]:
-        """Wrap morphism in DictI for shape extract/store."""
+        """Wrap op in DictI for shape extract/store."""
         return DictI(op)
 
     def _wrap_keys_result(self, operand: Nu) -> DictKeysI:

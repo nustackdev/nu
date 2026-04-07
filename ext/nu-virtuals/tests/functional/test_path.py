@@ -5,7 +5,7 @@ Tests PathRef and PathSlot execution with real storage context.
 
 from pathlib import Path
 
-from nu_path import PathValue as PathRef
+from nu.stdlib.pathlib import PathI as PathRef
 
 
 # ============================================================================
@@ -80,7 +80,7 @@ class TestPathComponentAccess:
         Note: .parent() collides with Ref.parent property, so we compose
         via PathValue term wrapping instead of calling directly on the ref.
         """
-        from nu_path import PathValue
+        from nu.stdlib.pathlib import PathI as PathValue
 
         p = Path("/home/user/file.txt")
         await path_shape.config_path.store(p).execute(ctx)

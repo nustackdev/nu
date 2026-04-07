@@ -5,7 +5,7 @@ Tests DecimalRef and DecimalSlot execution with real storage context.
 
 from decimal import Decimal
 
-from nu_math import DecimalValue as DecimalRef
+from nu.stdlib.decimal import DecimalI as DecimalRef
 
 
 # ============================================================================

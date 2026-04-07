@@ -1,4 +1,4 @@
-"""Scoped ops for virtuals storage operations.
+"""Control ops for virtuals storage operations.
 
 Atomic: Opens a transaction lazily, provides View on top of it.
 Snapshot: Opens a read-only snapshot lazily, provides View on top of it.
@@ -91,7 +91,7 @@ class Atomic(ScopedCmd):
         # Single navigator (common case)
         nav = ctx.get(Navigator, *_scope_tags(self.scope))
 
-        from .meta.auto_atomic import _has_pv_write
+        from ..meta.auto_atomic import _has_pv_write
 
         if _has_pv_write(self):
             return self._enter_transaction(ctx, nav)
@@ -99,7 +99,7 @@ class Atomic(ScopedCmd):
 
     def _enter_sharded(self, ctx: Context, sharded: list) -> Context:
         """Open transaction + view per sharded navigator."""
-        from .meta.auto_atomic import _has_pv_write
+        from ..meta.auto_atomic import _has_pv_write
 
         scope = self.scope
         child_ctx = ctx

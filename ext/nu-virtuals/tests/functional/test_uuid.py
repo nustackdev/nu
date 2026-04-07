@@ -5,7 +5,7 @@ Tests UUIDRef and UUIDSlot execution with real storage context.
 
 from uuid import NAMESPACE_DNS, UUID, uuid4
 
-from nu_uuid import UUIDValue as UUIDRef
+from nu.stdlib.uuid import UUIDI as UUIDRef
 
 
 # ============================================================================

@@ -59,7 +59,7 @@ class FlatRef(Nu):
         )
 
     # =========================================================================
-    # Ref interface — what morphisms call
+    # Ref interface — what ops call
     # =========================================================================
 
     async def resolve_address(self, ctx: Context) -> object:

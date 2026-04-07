@@ -31,7 +31,8 @@ from nu_virtuals.meta import (
     optimize_primitive_reads,
     optimize_primitive_writes,
 )
-from nu_virtuals.morphisms import (
+from nu_virtuals.ops import (
+    Atomic,
     ClearPrimitivesUnsafeCmd,
     EnsureLayoutCmd,
     InitCmd,
@@ -41,6 +42,8 @@ from nu_virtuals.morphisms import (
     ItemPrimitiveSetUnsafeParentSkipCmd,
     PrimitiveStoreCmd,
     ScanPrimitivesUnsafeOp,
+    Snapshot,
+    Transaction,
 )
 from nu_virtuals.refs import (
     BasisPointRef,
@@ -73,18 +76,17 @@ from nu_virtuals.refs import (
     UUIDRef,
     ViewRef,
 )
-from nu_virtuals.spans import Atomic, Snapshot, Transaction
 
 
 __all__ = [  # noqa: RUF022
-    # Morphisms — Item
+    # Ops — Item
     "EnsureLayoutCmd",
     "InitCmd",
     "ItemPrimitiveGetUnsafeOp",
     "ItemPrimitiveSetUnsafeCmd",
     "ItemPrimitiveSetUnsafeParentSkipCmd",
     "ItemPrimitiveDeleteUnsafeCmd",
-    # Morphisms — Collection
+    # Ops — Collection
     "ScanPrimitivesUnsafeOp",
     "ClearPrimitivesUnsafeCmd",
     # Meta

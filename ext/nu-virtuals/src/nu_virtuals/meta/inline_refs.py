@@ -1,6 +1,6 @@
 """inline_refs — PV substrate ref inlining deformation.
 
-Walks the term tree bottom-up. For each morphism node that holds a PV
+Walks the term tree bottom-up. For each op node that holds a PV
 substrate Ref (ViewRef/PrimitiveRef), walks the Ref's parent chain at
 deformation time, collects static/dynamic address segments and type markers,
 and creates a FlatRef with a pre-resolved path tuple.

@@ -1,4 +1,4 @@
-"""PV item morphisms — unsafe primitive CRUD via UnsafePrimitiveOpsBase.
+"""PV item ops — unsafe primitive CRUD via UnsafePrimitiveOpsBase.
 
 InitCmd: Materialize container chain — ref.fetch(ctx) triggers ensure_created()
 ItemPrimitiveGetUnsafeOp: Read — _unsafe_primitive_read() (single ctx.get)
