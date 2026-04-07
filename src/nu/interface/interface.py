@@ -71,7 +71,7 @@ class Interface(RValue[T_co]):
         return True
 
     # =========================================================================
-    # SENTINEL CHECKS (from old Object base)
+    # SENTINEL CHECKS
     # =========================================================================
 
     def is_empty(self) -> BoolI:

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, overload
 
 from nu.interface import Interface
 
-from .abc import SequenceBase
+from .abc import SequenceI
 
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ __all__ = [
 
 
 class TupleI[*Ts](
-    SequenceBase[tuple[*Ts], object, "ListI[object]", "AnyI"],
+    SequenceI[tuple[*Ts], object, "ListI[object]", "AnyI"],
     Interface[tuple[*Ts]],
 ):
     """Tuple interface. Immutable sequence + comparable."""

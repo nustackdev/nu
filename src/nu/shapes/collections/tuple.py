@@ -5,7 +5,7 @@ Goes directly to nu.collections.abc since shapes' SequenceI is list-specific.
 
 from __future__ import annotations
 
-from nu.collections.abc import SequenceBase as _SequenceBase
+from nu.collections.abc import SequenceI as _SequenceI
 from nu.interface import Interface
 
 from .abc import CollectionI
@@ -17,7 +17,7 @@ __all__ = [
 
 
 class TupleI[T](
-    _SequenceBase[tuple[T, ...], T, object, object],
+    _SequenceI[tuple[T, ...], T, object, object],
     CollectionI,
     Interface[tuple],
 ):

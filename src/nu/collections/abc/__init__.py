@@ -1,9 +1,9 @@
-"""Generic collection protocols and ops."""
+"""Generic collection interfaces and ops."""
 
-from .collection import CollectionBase, CollectionProtocol
-from .container import ContainerBase, ContainerProtocol
-from .iterable import IterableBase, IterableProtocol
-from .mapping import MappingBase, MappingProtocol, MutableMappingBase, MutableMappingProtocol
+from .collection import CollectionI
+from .container import ContainerI
+from .iterable import IterableI
+from .mapping import MappingI, MutableMappingI
 from .mapping_ops import (
     DeleteItemCmd,
     DictPopCmd,
@@ -16,7 +16,7 @@ from .mapping_ops import (
     UpdateCmd,
     ValuesOp,
 )
-from .sequence import MutableSequenceBase, MutableSequenceProtocol, SequenceBase, SequenceProtocol
+from .sequence import MutableSequenceI, SequenceI
 from .sequence_ops import (
     AppendCmd,
     CountOp,
@@ -29,7 +29,7 @@ from .sequence_ops import (
     RemoveValueCmd,
     ReverseCmd,
 )
-from .set_ import MutableSetBase, MutableSetProtocol, SetLikeBase, SetLikeProtocol
+from .set_ import MutableSetI, SetLikeI
 from .set_ops import (
     AddCmd,
     DifferenceOp,
@@ -48,17 +48,16 @@ from .set_ops import (
     UnionOp,
 )
 from .shared_ops import ClearCmd
-from .sized import SizedBase, SizedProtocol
+from .sized import SizedI
+from .sliceable import SliceableI
 
 
 __all__ = [
     "AddCmd",
     "AppendCmd",
     "ClearCmd",
-    "CollectionBase",
-    "CollectionProtocol",
-    "ContainerBase",
-    "ContainerProtocol",
+    "CollectionI",
+    "ContainerI",
     "CountOp",
     "DeleteItemCmd",
     "DictPopCmd",
@@ -76,33 +75,26 @@ __all__ = [
     "IsSubsetOp",
     "IsSupersetOp",
     "ItemsOp",
-    "IterableBase",
-    "IterableProtocol",
+    "IterableI",
     "KeysOp",
     "LastOp",
-    "MappingBase",
-    "MappingProtocol",
-    "MutableMappingBase",
-    "MutableMappingProtocol",
-    "MutableSequenceBase",
-    "MutableSequenceProtocol",
-    "MutableSetBase",
-    "MutableSetProtocol",
+    "MappingI",
+    "MutableMappingI",
+    "MutableSequenceI",
+    "MutableSetI",
     "PopCmd",
     "PopItemCmd",
     "RemoveCmd",
     "RemoveValueCmd",
     "ReverseCmd",
-    "SequenceBase",
-    "SequenceProtocol",
+    "SequenceI",
     "SetDefaultCmd",
     "SetItemCmd",
-    "SetLikeBase",
-    "SetLikeProtocol",
+    "SetLikeI",
     "SetPopCmd",
     "SetUpdateCmd",
-    "SizedBase",
-    "SizedProtocol",
+    "SizedI",
+    "SliceableI",
     "SymmetricDifferenceOp",
     "SymmetricDifferenceUpdateCmd",
     "UnionOp",

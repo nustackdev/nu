@@ -1,9 +1,9 @@
 # ruff: noqa: D102
-"""Sliceable capability - moved from capabilities.collection."""
+"""Sliceable capability."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
+from typing import TYPE_CHECKING, cast
 
 
 if TYPE_CHECKING:
@@ -11,21 +11,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "SliceableBase",
-    "SliceableProtocol",
+    "SliceableI",
 ]
 
 
-@runtime_checkable
-class SliceableProtocol[ResultT](Protocol):
-    """Protocol for values that support slicing."""
-
-    def slice(
-        self, start: IntArg | None, stop: IntArg | None, step: IntArg | None = None
-    ) -> ResultT: ...
-
-
-class SliceableBase[ResultT]:
+class SliceableI[ResultT]:
     """Base for values that support slicing."""
 
     def _wrap_sliceable_result(self, operand: Nu) -> Nu:

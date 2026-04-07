@@ -1,8 +1,8 @@
 # ruff: noqa: D102
-"""Mapping collection — protocols + bases + mutations.
+"""Mapping collection — bases + mutations.
 
-MappingProtocol/Base = Collection + keys/values/items/get
-MutableMappingProtocol/Base = Mapping + set/delete/update/pop/popitem/setdefault/clear
+MappingI = Collection + keys/values/items/get
+MutableMappingI = Mapping + set/delete/update/pop/popitem/setdefault/clear
 
 Follows Python's collections.abc.Mapping / MutableMapping pattern.
 
@@ -18,9 +18,9 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, cast
 
-from .collection import CollectionBase, CollectionProtocol
+from .collection import CollectionI
 
 
 if TYPE_CHECKING:
@@ -31,68 +31,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "MappingBase",
-    "MappingProtocol",
-    "MutableMappingBase",
-    "MutableMappingProtocol",
+    "MappingI",
+    "MutableMappingI",
 ]
 
 
-# =============================================================================
-# PROTOCOLS
-# =============================================================================
-
-
-class MappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
-    CollectionProtocol[KeyT, CollectionResultT, ValueResultT],
-    Protocol,
-):
-    """Protocol for mapping values — like collections.abc.Mapping.
-
-    Type Parameters:
-        CollectionT: Native Python collection type (dict[str, int])
-        KeyT: Native Python key type
-        ValueT: Native Python value type
-        CollectionResultT: Result for collection-level ops (keys, values, items)
-        ValueResultT: Result for value-level ops (get)
-    """
-
-    def keys(self) -> CollectionResultT: ...
-    def values(self) -> CollectionResultT: ...
-    def items(self) -> CollectionResultT: ...
-    def get(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT: ...
-
-
-class MutableMappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
-    MappingProtocol[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
-    Protocol,
-):
-    """Protocol for mutable mapping values — like collections.abc.MutableMapping.
-
-    Type Parameters:
-        CollectionT: Native Python collection type
-        KeyT: Native Python key type
-        ValueT: Native Python value type
-        CollectionResultT: Result for collection-level ops (update)
-        ValueResultT: Result for value-level ops (set, delete)
-    """
-
-    def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> NoneI: ...
-    def delete(self, key: Arg[KeyT]) -> NoneI: ...
-    def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> NoneI: ...
-    def pop(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT: ...
-    def popitem(self) -> ValueResultT: ...
-    def setdefault(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT: ...
-    def clear(self) -> NoneI: ...
-
-
-# =============================================================================
-# BASES
-# =============================================================================
-
-
-class MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
-    CollectionBase[KeyT, CollectionResultT, ValueResultT],
+class MappingI[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
+    CollectionI[KeyT, CollectionResultT, ValueResultT],
 ):
     """Base for mapping values — like collections.abc.Mapping.
 
@@ -151,8 +96,8 @@ class MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
         return cast("ValueResultT", self._wrap_value_result(GetOp(self, key, default)))
 
 
-class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
-    MappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+class MutableMappingI[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
+    MappingI[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
     """Base for mutable mapping values — like collections.abc.MutableMapping.
 
@@ -213,4 +158,3 @@ class MutableMappingBase[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
         from .shared_ops import ClearCmd
 
         return NoneI(ClearCmd(self))
-

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from nu.interface import Interface
 
-from .abc import MutableSetBase, SetLikeBase
+from .abc import MutableSetI, SetLikeI
 
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ __all__ = [
 
 
 class SetI[T](
-    MutableSetBase[set[T], T, "SetI[T]", "AnyI"],
+    MutableSetI[set[T], T, "SetI[T]", "AnyI"],
     Interface[set[T]],
 ):
     """Set interface. Mutable set + comparable."""
@@ -87,7 +87,7 @@ class SetI[T](
 
 
 class FrozenSetI[T](
-    SetLikeBase[frozenset[T], T, "FrozenSetI[T]", "AnyI"],
+    SetLikeI[frozenset[T], T, "FrozenSetI[T]", "AnyI"],
     Interface[frozenset[T]],
 ):
     """FrozenSet interface. Immutable set + comparable."""

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, overload
 
 from nu.interface import Interface
 
-from .abc import MutableSequenceBase
+from .abc import MutableSequenceI
 
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ __all__ = [
 
 
 class ListI[T](
-    MutableSequenceBase[list[T], T, "ListI[T]", "AnyI"],
+    MutableSequenceI[list[T], T, "ListI[T]", "AnyI"],
     Interface[list[T]],
 ):
     """List interface. Mutable sequence + comparable."""

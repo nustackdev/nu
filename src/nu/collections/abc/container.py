@@ -1,13 +1,13 @@
-"""Container capability - protocol + base.
+"""Container capability.
 
-ContainerProtocol/Base: values that support containment checks.
+ContainerI: values that support containment checks.
 
 Follows Python's collections.abc.Container pattern.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
@@ -15,19 +15,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "ContainerBase",
-    "ContainerProtocol",
+    "ContainerI",
 ]
 
 
-@runtime_checkable
-class ContainerProtocol(Protocol):
-    """Protocol for values that support containment checks - like collections.abc.Container."""
-
-    def __contains__(self, item: object) -> BoolI: ...
-
-
-class ContainerBase:
+class ContainerI:
     """Base for values that support containment checks - like collections.abc.Container."""
 
     def __contains__(self, item: object) -> BoolI:

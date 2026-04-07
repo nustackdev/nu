@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from nu.interface import Interface
 
-from .abc import MutableMappingBase
+from .abc import MutableMappingI
 
 
 if TYPE_CHECKING:
@@ -22,7 +22,7 @@ __all__ = [
 
 
 class DictI[K, V](
-    MutableMappingBase[dict[K, V], K, V, "DictI[K, V]", "AnyI"],
+    MutableMappingI[dict[K, V], K, V, "DictI[K, V]", "AnyI"],
     Interface[dict[K, V]],
 ):
     """Dict interface. Mutable mapping + comparable."""

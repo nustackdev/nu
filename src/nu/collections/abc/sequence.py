@@ -1,7 +1,7 @@
-"""Sequence collection — protocols + bases + mutations.
+"""Sequence collection — bases + mutations.
 
-SequenceProtocol/Base = Collection + Sliceable + first/last/index/count/reversed
-MutableSequenceProtocol/Base = Sequence + append/insert/pop/extend/remove/reverse
+SequenceI = Collection + Sliceable + first/last/index/count/reversed
+MutableSequenceI = Sequence + append/insert/pop/extend/remove/reverse
 
 Sorted/Reversed are standalone functions in ``abc.fn``.
 
@@ -18,10 +18,10 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, cast
 
-from .collection import CollectionBase, CollectionProtocol
-from .sliceable import SliceableBase, SliceableProtocol
+from .collection import CollectionI
+from .sliceable import SliceableI
 
 
 if TYPE_CHECKING:
@@ -32,68 +32,14 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "MutableSequenceBase",
-    "MutableSequenceProtocol",
-    "SequenceBase",
-    "SequenceProtocol",
+    "MutableSequenceI",
+    "SequenceI",
 ]
 
 
-# =============================================================================
-# PROTOCOLS
-# =============================================================================
-
-
-class SequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
-    CollectionProtocol[ElementT, CollectionResultT, ElementResultT],
-    SliceableProtocol[CollectionResultT],
-    Protocol,
-):
-    """Protocol for sequence values — like collections.abc.Sequence.
-
-    Type Parameters:
-        CollectionT: Native Python collection type (list[int], tuple[str, ...])
-        ElementT: Native Python element type
-        CollectionResultT: Result for collection-level ops (map_, filter_, reversed_, sorted_)
-        ElementResultT: Result for element-level ops (first, last, sum_, min_, max_)
-    """
-
-    def first(self) -> ElementResultT: ...
-    def last(self) -> ElementResultT: ...
-    def index(self, value: Arg[ElementT]) -> IntI: ...
-    def count(self, value: Arg[ElementT]) -> IntI: ...
-    def reversed(self) -> CollectionResultT: ...
-
-
-class MutableSequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
-    SequenceProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT],
-    Protocol,
-):
-    """Protocol for mutable sequence values — like collections.abc.MutableSequence.
-
-    Type Parameters:
-        CollectionT: Native Python collection type
-        ElementT: Native Python element type
-        CollectionResultT: Result for collection-level ops (append, extend, insert, remove)
-        ElementResultT: Result for element-level ops (pop)
-    """
-
-    def append(self, value: Arg[ElementT]) -> NoneI: ...
-    def extend(self, other: Arg[Iterable[ElementT]]) -> NoneI: ...
-    def insert(self, index: IntArg, value: Arg[ElementT]) -> NoneI: ...
-    def pop(self, index: IntArg = -1) -> ElementResultT: ...
-    def remove(self, value: Arg[ElementT]) -> NoneI: ...
-    def reverse(self) -> NoneI: ...
-
-
-# =============================================================================
-# BASES
-# =============================================================================
-
-
-class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
-    CollectionBase[ElementT, CollectionResultT, ElementResultT],
-    SliceableBase[CollectionResultT],
+class SequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    CollectionI[ElementT, CollectionResultT, ElementResultT],
+    SliceableI[CollectionResultT],
 ):
     """Base for sequence values — like collections.abc.Sequence.
 
@@ -139,8 +85,8 @@ class SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return cast("CollectionResultT", self._wrap_iterable_result(ReversedOp(self)))
 
 
-class MutableSequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
-    SequenceBase[CollectionT, ElementT, CollectionResultT, ElementResultT],
+class MutableSequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    SequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for mutable sequence values — like collections.abc.MutableSequence.
 
