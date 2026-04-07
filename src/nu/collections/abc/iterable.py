@@ -17,6 +17,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.interface import Interface
+
 
 if TYPE_CHECKING:
     from nu.terms import Nu
@@ -27,7 +29,7 @@ __all__ = [
 ]
 
 
-class IterableI[ElementT, CollectionResultT, ElementResultT]:
+class IterableI[ElementT, CollectionResultT, ElementResultT](Interface):
     """Base for values that support iteration.
 
     Provides wrapping infrastructure used by subclass traits

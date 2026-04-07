@@ -85,7 +85,7 @@ from .context import (
     IntAttrRef,
     StrAttrRef,
 )
-from .interface import Interface
+from .interface import Interface, TypedNu
 from .interface.auto_interface import AutoInterface, method, prop
 from .model import Model
 from .ops import (
@@ -512,6 +512,7 @@ __all__ = [
     "TryCatch",
     "TupleArg",
     "TupleI",
+    "TypedNu",
     "UnaryCalc",
     "UnaryCmd",
     "UnaryOp",

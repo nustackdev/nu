@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interface import Interface
+from nu.interface import Interface, TypedNu
 
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-class AnyI(Interface[object]):
+class AnyI(Interface, TypedNu[object]):
     """Any/dynamic interface. Supports all operations, results stay AnyI."""
 
     # =========================================================================

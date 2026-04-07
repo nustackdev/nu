@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import ItemsView, KeysView, ValuesView
 from typing import TYPE_CHECKING
 
-from nu.interface import Interface
+from nu.interface import TypedNu
 
 from .abc import CollectionI
 from .abc.set_ import SetLikeI
@@ -28,7 +28,7 @@ __all__ = [
 
 class DictKeysI[K](
     SetLikeI[KeysView[K], K, "SetI[K]", "AnyI"],
-    Interface[KeysView[K]],
+    TypedNu[KeysView[K]],
 ):
     """Dict key view interface - set-like, lazy, live."""
 
@@ -64,7 +64,7 @@ class DictKeysI[K](
 
 class DictValuesI[V](
     CollectionI[V, "ListI[V]", "AnyI"],
-    Interface[ValuesView[V]],
+    TypedNu[ValuesView[V]],
 ):
     """Dict value view interface - iterable, sized, containment."""
 
@@ -95,7 +95,7 @@ class DictValuesI[V](
 
 class DictItemsI[K, V](
     SetLikeI[ItemsView[K, V], tuple[K, V], "SetI[tuple[K, V]]", "AnyI"],
-    Interface[ItemsView[K, V]],
+    TypedNu[ItemsView[K, V]],
 ):
     """Dict item view interface - set-like, lazy, live."""
 

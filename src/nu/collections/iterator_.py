@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
-from nu.interface import Interface
+from nu.interface import Interface, TypedNu
 
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class IteratorI[T](Interface[Iterator[T]]):
+class IteratorI[T](Interface, TypedNu[Iterator[T]]):
     """Lazy iterator interface. Materializes via to_list/to_set/to_tuple."""
 
     def to_list(self) -> ListI[T]:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interface import Interface
+from nu.interface import TypedNu
 
 from .abc import MutableMappingI
 
@@ -23,7 +23,7 @@ __all__ = [
 
 class DictI[K, V](
     MutableMappingI[dict[K, V], K, V, "DictI[K, V]", "AnyI"],
-    Interface[dict[K, V]],
+    TypedNu[dict[K, V]],
 ):
     """Dict interface. Mutable mapping + comparable."""
 

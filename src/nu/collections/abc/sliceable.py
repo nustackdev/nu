@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+from nu.interface import Interface
+
 
 if TYPE_CHECKING:
     from nu.terms import IntArg, Nu
@@ -15,7 +17,7 @@ __all__ = [
 ]
 
 
-class SliceableI[ResultT]:
+class SliceableI[ResultT](Interface):
     """Base for values that support slicing."""
 
     def _wrap_sliceable_result(self, operand: Nu) -> Nu:

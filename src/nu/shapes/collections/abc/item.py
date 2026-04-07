@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.interface import Interface
 from nu.primitives import BoolI, NoneI
 
 
@@ -33,7 +34,7 @@ __all__ = [
 ]
 
 
-class ItemI[T, InterfaceT]:
+class ItemI[T, InterfaceT](Interface):
     """Item in a document - holds a typed value.
 
     An item is the leaf node of the document model: a single typed value

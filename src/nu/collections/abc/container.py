@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.interface import Interface
+
 
 if TYPE_CHECKING:
     from nu.primitives import BoolI
@@ -19,7 +21,7 @@ __all__ = [
 ]
 
 
-class ContainerI:
+class ContainerI(Interface):
     """Base for values that support containment checks - like collections.abc.Container."""
 
     def __contains__(self, item: object) -> BoolI:

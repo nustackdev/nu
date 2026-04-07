@@ -1,8 +1,9 @@
-"""Nu interface - base Interface class."""
+"""Nu interface - Interface base and TypedNu wrapper."""
 
-from .interface import Interface
+from .interface import Interface, TypedNu
 
 
 __all__ = [
     "Interface",
+    "TypedNu",
 ]

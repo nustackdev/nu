@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interface import Interface
+from nu.interface import TypedNu
 
 from .abc import MutableSetI, SetLikeI
 
@@ -22,7 +22,7 @@ __all__ = [
 
 class SetI[T](
     MutableSetI[set[T], T, "SetI[T]", "AnyI"],
-    Interface[set[T]],
+    TypedNu[set[T]],
 ):
     """Set interface. Mutable set + comparable."""
 
@@ -88,7 +88,7 @@ class SetI[T](
 
 class FrozenSetI[T](
     SetLikeI[frozenset[T], T, "FrozenSetI[T]", "AnyI"],
-    Interface[frozenset[T]],
+    TypedNu[frozenset[T]],
 ):
     """FrozenSet interface. Immutable set + comparable."""
 

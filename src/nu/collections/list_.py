@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.interface import Interface
+from nu.interface import TypedNu
 
 from .abc import MutableSequenceI
 
@@ -21,7 +21,7 @@ __all__ = [
 
 class ListI[T](
     MutableSequenceI[list[T], T, "ListI[T]", "AnyI"],
-    Interface[list[T]],
+    TypedNu[list[T]],
 ):
     """List interface. Mutable sequence + comparable."""
 

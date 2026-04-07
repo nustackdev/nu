@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.interface import Interface
+from nu.interface import Interface, TypedNu
 
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-class BytesI(Interface[bytes]):
+class BytesI(Interface, TypedNu[bytes]):
     """Bytes interface. Sliceable + comparable + logical + bytes methods."""
 
     # =========================================================================

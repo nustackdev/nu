@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.interface import Interface
 from nu.primitives import BoolI, NoneI
 
 
@@ -29,7 +30,7 @@ __all__ = [
 ]
 
 
-class CollectionI:
+class CollectionI(Interface):
     """Collection in a document - can check existence."""
 
     def exists(self) -> BoolI:

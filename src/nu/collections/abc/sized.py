@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.interface import Interface
+
 
 if TYPE_CHECKING:
     from nu.primitives import IntI
@@ -19,7 +21,7 @@ __all__ = [
 ]
 
 
-class SizedI:
+class SizedI(Interface):
     """Base for values that have a length - like collections.abc.Sized."""
 
     def len(self) -> IntI:

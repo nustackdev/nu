@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interface import Interface
+from nu.interface import Interface, TypedNu
 
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ __all__ = [
 ]
 
 
-class FloatI(Interface[float]):
+class FloatI(Interface, TypedNu[float]):
     """Float interface. Numeric + comparable + logical."""
 
     # =========================================================================

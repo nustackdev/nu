@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.interface import Interface
+from nu.interface import TypedNu
 
 from .abc import SequenceI
 
@@ -21,7 +21,7 @@ __all__ = [
 
 class TupleI[*Ts](
     SequenceI[tuple[*Ts], object, "ListI[object]", "AnyI"],
-    Interface[tuple[*Ts]],
+    TypedNu[tuple[*Ts]],
 ):
     """Tuple interface. Immutable sequence + comparable."""
 
