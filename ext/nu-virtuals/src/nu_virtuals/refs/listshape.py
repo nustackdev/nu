@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from virtuals.collections import MutableSequenceBase
 
 from nu import AnyI, IteratorI, ListI, ensure_nu
-from nu.shapes import ReactiveShapesSequenceRefBase, Shape, Slot
+from nu.shapes import ReactiveShapesSequenceRef, Shape, Slot
 
 from .base import ViewRef
 from .shape import ShapeRef
@@ -26,7 +26,7 @@ __all__ = [
 
 
 class ShapesListRef[T: Shape](
-    ReactiveShapesSequenceRefBase[T],
+    ReactiveShapesSequenceRef[T],
     ViewRef[
         list[dict],
         MutableSequenceBase,

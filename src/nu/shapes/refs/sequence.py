@@ -1,8 +1,8 @@
 """Sequence ref hierarchy — sequence bases + Ref navigation.
 
-SequenceRefBase         = SequenceI + Ref
-MutableSequenceRefBase  = MutableSequenceI + Ref
-ReactiveSequenceRefBase = ReactiveSequenceI + Ref
+SequenceRef         = SequenceI + Ref
+MutableSequenceRef  = MutableSequenceI + Ref
+ReactiveSequenceRef = ReactiveSequenceI + Ref
 
 Type Parameters:
     T:               Native element type (int, str, etc.)
@@ -26,13 +26,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "MutableSequenceRefBase",
-    "ReactiveSequenceRefBase",
-    "SequenceRefBase",
+    "MutableSequenceRef",
+    "ReactiveSequenceRef",
+    "SequenceRef",
 ]
 
 
-class SequenceRefBase[T, CollectionValueT, ItemValueT](
+class SequenceRef[T, CollectionValueT, ItemValueT](
     SequenceI[T, CollectionValueT, ItemValueT],
     Ref[list[T]],
 ):
@@ -48,9 +48,9 @@ class SequenceRefBase[T, CollectionValueT, ItemValueT](
         return self._create_item_ref(index)
 
 
-class MutableSequenceRefBase[T, CollectionValueT, ItemValueT](
+class MutableSequenceRef[T, CollectionValueT, ItemValueT](
     MutableSequenceI[T, CollectionValueT, ItemValueT],
-    SequenceRefBase[T, CollectionValueT, ItemValueT],
+    SequenceRef[T, CollectionValueT, ItemValueT],
 ):
     """Mutable sequence ref — mutations + navigation."""
 
@@ -64,9 +64,9 @@ class MutableSequenceRefBase[T, CollectionValueT, ItemValueT](
         return self._create_item_ref(index)
 
 
-class ReactiveSequenceRefBase[T, CollectionValueT, ItemValueT](
+class ReactiveSequenceRef[T, CollectionValueT, ItemValueT](
     ReactiveSequenceI[T, CollectionValueT, ItemValueT],
-    MutableSequenceRefBase[T, CollectionValueT, ItemValueT],
+    MutableSequenceRef[T, CollectionValueT, ItemValueT],
 ):
     """Reactive sequence ref — observation + mutations + navigation."""
 

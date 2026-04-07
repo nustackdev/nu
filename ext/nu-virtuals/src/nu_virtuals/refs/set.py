@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Self
 from virtuals.collections import MutableSetBase
 
 from nu import AnyI, SetI
-from nu.shapes import ReactiveSetRefBase, Shape, Slot
+from nu.shapes import ReactiveSetRef, Shape, Slot
 
 from .base import ViewRef
 
@@ -25,7 +25,7 @@ __all__ = [
 
 
 class SetRef[T](
-    ReactiveSetRefBase[T, SetI[T], AnyI],
+    ReactiveSetRef[T, SetI[T], AnyI],
     ViewRef[set[T], MutableSetBase],
 ):
     """PV set reference — document model + PV substrate.

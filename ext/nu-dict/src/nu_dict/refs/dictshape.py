@@ -21,7 +21,7 @@ from nu import (
     StrI,
     ensure_nu,
 )
-from nu.shapes import MutableShapesMappingRefBase, Slot
+from nu.shapes import MutableShapesMappingRef, Slot
 
 from .base import RefBase
 from .shape import ShapeRef
@@ -53,7 +53,7 @@ __all__ = [
 
 
 class ShapesDictRef[K, T: Shape](
-    MutableShapesMappingRefBase[K, T],
+    MutableShapesMappingRef[K, T],
     RefBase[dict[K, dict]],
 ):
     """Dict shapes dict reference — mapping of homogeneous shapes."""

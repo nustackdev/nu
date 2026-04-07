@@ -1,8 +1,8 @@
 """Set ref hierarchy — set bases + Ref navigation.
 
-SetLikeRefBase     = SetLikeI + Ref
-MutableSetRefBase  = MutableSetI + Ref
-ReactiveSetRefBase = ReactiveSetI + Ref
+SetLikeRef     = SetLikeI + Ref
+MutableSetRef  = MutableSetI + Ref
+ReactiveSetRef = ReactiveSetI + Ref
 
 Sets have no child ref navigation (no subscript access) — only
 collection-level operations (union, intersection, add, remove, etc.).
@@ -20,28 +20,28 @@ from .base import Ref
 
 
 __all__ = [
-    "MutableSetRefBase",
-    "ReactiveSetRefBase",
-    "SetLikeRefBase",
+    "MutableSetRef",
+    "ReactiveSetRef",
+    "SetLikeRef",
 ]
 
 
-class SetLikeRefBase[T, CollectionValueT, ElementValueT](
+class SetLikeRef[T, CollectionValueT, ElementValueT](
     SetLikeI[T, CollectionValueT, ElementValueT],
     Ref[set[T]],
 ):
     """Set ref — unordered unique-element container with document-model navigation."""
 
 
-class MutableSetRefBase[T, CollectionValueT, ElementValueT](
+class MutableSetRef[T, CollectionValueT, ElementValueT](
     MutableSetI[T, CollectionValueT, ElementValueT],
-    SetLikeRefBase[T, CollectionValueT, ElementValueT],
+    SetLikeRef[T, CollectionValueT, ElementValueT],
 ):
     """Mutable set ref — add/remove/discard + navigation."""
 
 
-class ReactiveSetRefBase[T, CollectionValueT, ElementValueT](
+class ReactiveSetRef[T, CollectionValueT, ElementValueT](
     ReactiveSetI[T, CollectionValueT, ElementValueT],
-    MutableSetRefBase[T, CollectionValueT, ElementValueT],
+    MutableSetRef[T, CollectionValueT, ElementValueT],
 ):
     """Reactive set ref — observation + mutations + navigation."""

@@ -23,7 +23,7 @@ from nu import (
     StrI,
     ensure_nu,
 )
-from nu.shapes import ReactiveShapesMappingRefBase, Shape, Slot
+from nu.shapes import ReactiveShapesMappingRef, Shape, Slot
 
 from .base import ViewRef
 from .shape import ShapeRef
@@ -60,7 +60,7 @@ class ShapesDictRef[
     T: Shape,
     KeyValueT,
 ](
-    ReactiveShapesMappingRefBase[
+    ReactiveShapesMappingRef[
         K,
         T,
     ],

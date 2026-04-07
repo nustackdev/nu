@@ -2,42 +2,42 @@
 
 from .base import Ref
 from .item import ItemRef, MutableItemRef, ReactiveItemRef
-from .mapping import MappingRefBase, MutableMappingRefBase, ReactiveMappingRefBase
-from .sequence import MutableSequenceRefBase, ReactiveSequenceRefBase, SequenceRefBase
-from .set import MutableSetRefBase, ReactiveSetRefBase, SetLikeRefBase
+from .mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
+from .sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
+from .set import MutableSetRef, ReactiveSetRef, SetLikeRef
 from .shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
 from .shapesmapping import (
-    MutableShapesMappingRefBase,
-    ReactiveShapesMappingRefBase,
-    ShapesMappingRefBase,
+    MutableShapesMappingRef,
+    ReactiveShapesMappingRef,
+    ShapesMappingRef,
 )
 from .shapessequence import (
-    MutableShapesSequenceRefBase,
-    ReactiveShapesSequenceRefBase,
-    ShapesSequenceRefBase,
+    MutableShapesSequenceRef,
+    ReactiveShapesSequenceRef,
+    ShapesSequenceRef,
 )
 
 __all__ = [
     "ItemRef",
-    "MappingRefBase",
+    "MappingRef",
     "MutableItemRef",
-    "MutableMappingRefBase",
-    "MutableSequenceRefBase",
-    "MutableSetRefBase",
+    "MutableMappingRef",
+    "MutableSequenceRef",
+    "MutableSetRef",
     "MutableShapeRef",
-    "MutableShapesMappingRefBase",
-    "MutableShapesSequenceRefBase",
+    "MutableShapesMappingRef",
+    "MutableShapesSequenceRef",
     "ReactiveItemRef",
-    "ReactiveMappingRefBase",
-    "ReactiveSequenceRefBase",
-    "ReactiveSetRefBase",
+    "ReactiveMappingRef",
+    "ReactiveSequenceRef",
+    "ReactiveSetRef",
     "ReactiveShapeRef",
-    "ReactiveShapesMappingRefBase",
-    "ReactiveShapesSequenceRefBase",
+    "ReactiveShapesMappingRef",
+    "ReactiveShapesSequenceRef",
     "Ref",
-    "SequenceRefBase",
-    "SetLikeRefBase",
+    "SequenceRef",
+    "SetLikeRef",
     "ShapeRef",
-    "ShapesMappingRefBase",
-    "ShapesSequenceRefBase",
+    "ShapesMappingRef",
+    "ShapesSequenceRef",
 ]

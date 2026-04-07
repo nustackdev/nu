@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import ensure_nu
-from nu.shapes import MutableShapesSequenceRefBase, Slot
+from nu.shapes import MutableShapesSequenceRef, Slot
 
 from .base import RefBase
 from .shape import ShapeRef
@@ -23,7 +23,7 @@ __all__ = [
 
 
 class ShapesListRef[T: Shape](
-    MutableShapesSequenceRefBase[T],
+    MutableShapesSequenceRef[T],
     RefBase[list[dict]],
 ):
     """Dict shapes list reference — sequence of homogeneous shapes."""

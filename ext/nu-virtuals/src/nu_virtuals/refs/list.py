@@ -20,7 +20,7 @@ from nu import (
     StrI,
     ensure_nu,
 )
-from nu.shapes import ReactiveSequenceRefBase, Shape, Slot
+from nu.shapes import ReactiveSequenceRef, Shape, Slot
 
 from .base import ViewRef
 from .items import ItemRef
@@ -56,7 +56,7 @@ class ListRef[
     T,
     ItemValueT,
 ](
-    ReactiveSequenceRefBase[
+    ReactiveSequenceRef[
         T,
         ListI[T],
         ItemValueT,

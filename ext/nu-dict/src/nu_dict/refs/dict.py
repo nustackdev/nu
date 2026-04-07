@@ -21,7 +21,7 @@ from nu import (
     StrI,
     ensure_nu,
 )
-from nu.shapes import MutableMappingRefBase, Slot
+from nu.shapes import MutableMappingRef, Slot
 
 from .base import RefBase
 from .items import ItemRef
@@ -52,7 +52,7 @@ __all__ = [
 
 
 class DictRef[K, V](
-    MutableMappingRefBase[K, V, DictI[K, V], AnyI],
+    MutableMappingRef[K, V, DictI[K, V], AnyI],
     RefBase[dict[K, V]],
 ):
     """Dict mapping reference — key-value container backed by nested dict."""

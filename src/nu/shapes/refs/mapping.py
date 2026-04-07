@@ -1,8 +1,8 @@
 """Mapping ref hierarchy — mapping bases + Ref navigation.
 
-MappingRefBase         = MappingI + Ref
-MutableMappingRefBase  = MutableMappingI + MappingRefBase
-ReactiveMappingRefBase = ReactiveMappingI + MutableMappingRefBase
+MappingRef         = MappingI + Ref
+MutableMappingRef  = MutableMappingI + MappingRef
+ReactiveMappingRef = ReactiveMappingI + MutableMappingRef
 
 Type Parameters:
     K:              Native key type (str, int, etc.)
@@ -27,13 +27,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "MappingRefBase",
-    "MutableMappingRefBase",
-    "ReactiveMappingRefBase",
+    "MappingRef",
+    "MutableMappingRef",
+    "ReactiveMappingRef",
 ]
 
 
-class MappingRefBase[K, V, CollectionValueT, ValueValueT](
+class MappingRef[K, V, CollectionValueT, ValueValueT](
     MappingI[K, V, CollectionValueT, ValueValueT],
     Ref[dict[K, V]],
 ):
@@ -49,9 +49,9 @@ class MappingRefBase[K, V, CollectionValueT, ValueValueT](
         return self._create_child_ref(key)
 
 
-class MutableMappingRefBase[K, V, CollectionValueT, ValueValueT](
+class MutableMappingRef[K, V, CollectionValueT, ValueValueT](
     MutableMappingI[K, V, CollectionValueT, ValueValueT],
-    MappingRefBase[K, V, CollectionValueT, ValueValueT],
+    MappingRef[K, V, CollectionValueT, ValueValueT],
 ):
     """Mutable mapping ref — mutations + navigation."""
 
@@ -65,9 +65,9 @@ class MutableMappingRefBase[K, V, CollectionValueT, ValueValueT](
         return self._create_child_ref(key)
 
 
-class ReactiveMappingRefBase[K, V, CollectionValueT, ValueValueT](
+class ReactiveMappingRef[K, V, CollectionValueT, ValueValueT](
     ReactiveMappingI[K, V, CollectionValueT, ValueValueT],
-    MutableMappingRefBase[K, V, CollectionValueT, ValueValueT],
+    MutableMappingRef[K, V, CollectionValueT, ValueValueT],
 ):
     """Reactive mapping ref — observation + mutations + navigation."""
 
