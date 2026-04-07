@@ -22,7 +22,7 @@ from nu import Calculation, Nu, Op
 if TYPE_CHECKING:
     from nu import Context
 
-    from ..refs.base import Ref
+    from nu.shapes.refs import Ref
 
 
 __all__ = [

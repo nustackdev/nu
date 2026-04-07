@@ -11,7 +11,7 @@ Type Parameters:
 
 from __future__ import annotations
 
-from ..collections.abc import ItemI, MutableItemI, ReactiveItemI
+from nu.shapes.collections import ItemI, MutableItemI, ReactiveItemI
 from .base import Ref
 
 

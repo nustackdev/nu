@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
     from nu import Context
 
-    from ..shape import Shape
+    from nu.shapes.shape import Shape
 
 
 __all__ = [

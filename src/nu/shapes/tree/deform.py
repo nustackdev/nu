@@ -18,7 +18,7 @@ from nu import Nu
 
 
 if TYPE_CHECKING:
-    from ..refs.base import Ref
+    from nu.shapes.refs import Ref
 
 
 __all__ = [
@@ -78,7 +78,7 @@ def walk_ref_chain(ref: Ref) -> tuple[list[object | None], list[Nu | None]]:
     return addresses, address_terms
 
 
-def reconstruct_with_flat_ref(node: object, flat_ref: Nu) -> object:
+def reconstruct_with_flat_ref(node: Nu, flat_ref: Nu) -> Nu:
     """Rebuild op node with FlatRef replacing the original Ref.
 
     Uses copy + attribute replacement to preserve the node type and state,

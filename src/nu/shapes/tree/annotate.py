@@ -10,8 +10,13 @@ with the appropriate load op, giving optimizers something to match on.
 
 from __future__ import annotations
 
-from nu.terms import Nu
+from typing import TYPE_CHECKING
+
 from nu.tree import map_nodes
+
+
+if TYPE_CHECKING:
+    from nu.terms import Nu
 
 
 __all__ = [
@@ -19,7 +24,7 @@ __all__ = [
 ]
 
 
-def annotate_ref_loads[N: Nu](root: N) -> N:
+def annotate_ref_loads(root: Nu) -> Nu:
     """Wrap bare Refs with load ops for optimizer matching.
 
     Walks the tree bottom-up. For each non-leaf node, wraps any child
@@ -29,10 +34,10 @@ def annotate_ref_loads[N: Nu](root: N) -> N:
 
     This is idempotent - already-wrapped refs are not double-wrapped.
     """
-    from ..collections.abc.item import ItemI
-    from ..ops.collection import CollectionLoadOp
-    from ..ops.item import ItemLoadOp
-    from ..refs.base import Ref as ShapeRef
+    from nu.shapes.collections import ItemI
+    from nu.shapes.ops import CollectionLoadOp
+    from nu.shapes.ops import ItemLoadOp
+    from nu.shapes.refs import Ref as ShapeRef
 
     load_op_types = (ItemLoadOp, CollectionLoadOp)
 

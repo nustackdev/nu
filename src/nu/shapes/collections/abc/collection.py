@@ -19,12 +19,7 @@ from nu.primitives import BoolI, NoneI
 if TYPE_CHECKING:
     from nu import Nu, Sentinel
 
-    from ...ops.reactive import (
-        OnChangeOp,
-        OnChildChangeOp,
-        OnChildrenChangeOp,
-        OnDescendantsChangeOp,
-    )
+    from nu.shapes.ops import OnChangeOp, OnChildChangeOp, OnChildrenChangeOp, OnDescendantsChangeOp
 
 
 __all__ = [
@@ -38,12 +33,12 @@ class CollectionI:
     """Collection in a document - can check existence."""
 
     def exists(self) -> BoolI:
-        from nu.shapes.ops.collection import CollectionExistsOp
+        from nu.shapes.ops import CollectionExistsOp
 
         return BoolI(CollectionExistsOp(self))
 
     def missing(self) -> BoolI:
-        from nu.shapes.ops.collection import CollectionMissingOp
+        from nu.shapes.ops import CollectionMissingOp
 
         return BoolI(CollectionMissingOp(self))
 
@@ -54,12 +49,12 @@ class MutableCollectionI[CollectionT](CollectionI):
     def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> NoneI:
         from nu.utils import ensure_nu
 
-        from nu.shapes.ops.collection import CollectionStoreCmd
+        from nu.shapes.ops import CollectionStoreCmd
 
         return NoneI(CollectionStoreCmd(self, ensure_nu(value)))
 
     def erase(self) -> NoneI:
-        from nu.shapes.ops.collection import CollectionEraseCmd
+        from nu.shapes.ops import CollectionEraseCmd
 
         return NoneI(CollectionEraseCmd(self))
 
@@ -68,23 +63,23 @@ class ReactiveCollectionI[CollectionT](MutableCollectionI[CollectionT]):
     """Reactive collection - can observe changes."""
 
     def on_change(self) -> OnChangeOp:
-        from nu.shapes.ops.reactive import OnChangeOp
+        from nu.shapes.ops import OnChangeOp
 
         return OnChangeOp(self)
 
     def on_child_change(
         self, address: str | Sentinel | Nu[str | Sentinel]
     ) -> OnChildChangeOp:
-        from nu.shapes.ops.reactive import OnChildChangeOp
+        from nu.shapes.ops import OnChildChangeOp
 
         return OnChildChangeOp(self, address)
 
     def on_children_change(self) -> OnChildrenChangeOp:
-        from nu.shapes.ops.reactive import OnChildrenChangeOp
+        from nu.shapes.ops import OnChildrenChangeOp
 
         return OnChildrenChangeOp(self)
 
     def on_descendants_change(self, *pattern: object) -> OnDescendantsChangeOp:
-        from nu.shapes.ops.reactive import OnDescendantsChangeOp
+        from nu.shapes.ops import OnDescendantsChangeOp
 
         return OnDescendantsChangeOp(self, *pattern)

@@ -16,7 +16,7 @@ from nu import EMPTY, Calculation, Command, Op, Sentinel
 if TYPE_CHECKING:
     from nu import Context, Nu
 
-    from ..refs.base import Ref
+    from nu.shapes.refs import Ref
 
 
 __all__ = [

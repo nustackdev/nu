@@ -23,7 +23,7 @@ from nu.primitives import BoolI, NoneI
 if TYPE_CHECKING:
     from nu import Nu, Sentinel
 
-    from ...ops.reactive import OnPrimitiveChangeOp
+    from nu.shapes.ops import OnPrimitiveChangeOp
 
 
 __all__ = [
@@ -62,12 +62,12 @@ class ItemI[T, InterfaceT]:
         return self._value_value_type
 
     def exists(self) -> BoolI:
-        from nu.shapes.ops.item import ItemExistsOp
+        from nu.shapes.ops import ItemExistsOp
 
         return BoolI(ItemExistsOp(self))
 
     def missing(self) -> BoolI:
-        from nu.shapes.ops.item import ItemMissingOp
+        from nu.shapes.ops import ItemMissingOp
 
         return BoolI(ItemMissingOp(self))
 
@@ -84,12 +84,12 @@ class MutableItemI[T, InterfaceT](ItemI[T, InterfaceT]):
     def store(self, value: T | Sentinel | Nu[T | Sentinel]) -> NoneI:
         from nu.utils import ensure_nu
 
-        from nu.shapes.ops.item import ItemStoreCmd
+        from nu.shapes.ops import ItemStoreCmd
 
         return NoneI(ItemStoreCmd(self, ensure_nu(value)))
 
     def erase(self) -> NoneI:
-        from nu.shapes.ops.item import ItemEraseCmd
+        from nu.shapes.ops import ItemEraseCmd
 
         return NoneI(ItemEraseCmd(self))
 
@@ -98,6 +98,6 @@ class ReactiveItemI[T, InterfaceT](MutableItemI[T, InterfaceT]):
     """Reactive item - CRUD + change observation."""
 
     def on_change(self) -> OnPrimitiveChangeOp:
-        from nu.shapes.ops.reactive import OnPrimitiveChangeOp
+        from nu.shapes.ops import OnPrimitiveChangeOp
 
         return OnPrimitiveChangeOp(self)

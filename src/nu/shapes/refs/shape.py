@@ -15,15 +15,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..collections import MappingI, MutableMappingI, ReactiveMappingI
+from nu.shapes.collections import MappingI, MutableMappingI, ReactiveMappingI
 from .base import Ref
 
 
 if TYPE_CHECKING:
     from nu import Sentinel
 
-    from ..shape import Shape as ShapeBase
-    from ..shape import Slot
+    from nu.shapes.shape import Shape as ShapeBase
+    from nu.shapes.shape import Slot
 
 
 __all__ = [
