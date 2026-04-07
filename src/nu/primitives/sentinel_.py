@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interface import Interface
+from nu.interface import Interface, TypedNu
 from nu.terms import EMPTY, INVALID, Empty, Invalid, Sentinel
 
 
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class SentinelI[T: Sentinel](Interface[T]):
+class SentinelI[T: Sentinel](Interface, TypedNu[T]):
     """Base for sentinel interfaces (Empty, Invalid)."""
 
     pass

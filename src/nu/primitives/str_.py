@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.interface import Interface
+from nu.interface import Interface, TypedNu
 
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class StrI(Interface[str]):
+class StrI(Interface, TypedNu[str]):
     """String interface. Addable + sliceable + comparable + logical + string methods."""
 
     # =========================================================================

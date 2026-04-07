@@ -18,7 +18,7 @@ from nu import (
     StrI,
     ensure_nu,
 )
-from nu.shapes import MutableSequenceRefBase, Slot
+from nu.shapes import MutableSequenceRef, Slot
 
 from .base import RefBase
 from .items import ItemRef
@@ -49,7 +49,7 @@ __all__ = [
 
 
 class ListRef[T](
-    MutableSequenceRefBase[T, ListI[T], AnyI],
+    MutableSequenceRef[T, ListI[T], AnyI],
     RefBase[list[T]],
 ):
     """Dict sequence reference — ordered container backed by nested list."""

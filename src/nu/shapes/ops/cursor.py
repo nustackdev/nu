@@ -1,7 +1,7 @@
-"""Cursor ops -- advance cursor over ordered collections.
+"""Cursor ops - advance cursor over ordered collections.
 
 AdvanceCursorOp: resolve source view + cursor, return next (log_key, key) or None.
-Pure operation -- resolves children, calls view method, returns result.
+Pure operation - resolves children, calls view method, returns result.
 """
 
 from __future__ import annotations

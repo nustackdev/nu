@@ -1,8 +1,8 @@
 """ShapesSequence ref hierarchy — sequence of shapes + Ref navigation.
 
-ShapesSequenceRefBase         = SequenceBase[dict[str, object], ...] + Ref
-MutableShapesSequenceRefBase  = MutableSequenceBase[dict[str, object], ...] + Ref
-ReactiveShapesSequenceRefBase = ReactiveSequenceBase[dict[str, object], ...] + Ref
+ShapesSequenceRef         = SequenceI[dict[str, object], ...] + Ref
+MutableShapesSequenceRef  = MutableSequenceI[dict[str, object], ...] + Ref
+ReactiveShapesSequenceRef = ReactiveSequenceI[dict[str, object], ...] + Ref
 
 Specialized sequence refs where each element is a shape (dict[str, object]).
 Child navigation returns ShapeRef variants instead of ItemRef.
@@ -16,26 +16,26 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from ..collections import MutableSequenceBase, ReactiveSequenceBase, SequenceBase
+from nu.shapes.collections import MutableSequenceI, ReactiveSequenceI, SequenceI
 from .base import Ref
 
 
 if TYPE_CHECKING:
     from nu import IntArg, Sentinel
 
-    from ..shape import Shape as ShapeBase
-    from .structured import MutableShapeRef, ReactiveShapeRef, ShapeRef
+    from nu.shapes.shape import Shape as ShapeBase
+    from .shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
 
 
 __all__ = [
-    "MutableShapesSequenceRefBase",
-    "ReactiveShapesSequenceRefBase",
-    "ShapesSequenceRefBase",
+    "MutableShapesSequenceRef",
+    "ReactiveShapesSequenceRef",
+    "ShapesSequenceRef",
 ]
 
 
-class ShapesSequenceRefBase[T: ShapeBase](
-    SequenceBase[dict[str, object], object, object],
+class ShapesSequenceRef[T: ShapeBase](
+    SequenceI[dict[str, object], object, object],
     Ref[list[dict[str, object]]],
 ):
     """Shapes sequence ref — read-only sequence of shapes with navigation."""
@@ -54,9 +54,9 @@ class ShapesSequenceRefBase[T: ShapeBase](
         return self._create_item_ref(index)  # type: ignore[return-value]
 
 
-class MutableShapesSequenceRefBase[T: ShapeBase](
-    MutableSequenceBase[dict[str, object], object, object],
-    ShapesSequenceRefBase[T],
+class MutableShapesSequenceRef[T: ShapeBase](
+    MutableSequenceI[dict[str, object], object, object],
+    ShapesSequenceRef[T],
 ):
     """Mutable shapes sequence ref — mutations + navigation."""
 
@@ -70,9 +70,9 @@ class MutableShapesSequenceRefBase[T: ShapeBase](
         return self._create_item_ref(index)  # type: ignore[return-value]
 
 
-class ReactiveShapesSequenceRefBase[T: ShapeBase](
-    ReactiveSequenceBase[dict[str, object], object, object],
-    MutableShapesSequenceRefBase[T],
+class ReactiveShapesSequenceRef[T: ShapeBase](
+    ReactiveSequenceI[dict[str, object], object, object],
+    MutableShapesSequenceRef[T],
 ):
     """Reactive shapes sequence ref — observation + mutations + navigation."""
 

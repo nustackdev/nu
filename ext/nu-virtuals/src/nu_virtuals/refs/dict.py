@@ -23,7 +23,7 @@ from nu import (
     StrI,
     ensure_nu,
 )
-from nu.shapes import ReactiveMappingRefBase, Shape, Slot
+from nu.shapes import ReactiveMappingRef, Shape, Slot
 
 from .base import ViewRef
 from .items import ItemRef
@@ -61,7 +61,7 @@ class DictRef[
     K: int | str,
     V: StorageValue,
 ](
-    ReactiveMappingRefBase[
+    ReactiveMappingRef[
         K,
         V,
         DictI[K, V],

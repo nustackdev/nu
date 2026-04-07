@@ -1,11 +1,9 @@
 # ruff: noqa: D102
-"""Collection-level ops — get, set, delete, exists, missing.
+"""Collection-level ops - get, set, delete, exists, missing.
 
 Same logic as item ops but distinct tree node types, so substrates
 can match on CollectionLoadOp vs ItemLoadOp for type-specific deformations
 (e.g. PV primitive optimizations only target Item* variants).
-
-All ops use the same parent[address] primitives as item ops.
 """
 
 from __future__ import annotations
@@ -17,6 +15,8 @@ from nu import EMPTY, Calculation, Command, Op, Sentinel
 
 if TYPE_CHECKING:
     from nu import Context, Nu
+
+    from nu.shapes.refs import Ref
 
 
 __all__ = [
@@ -31,7 +31,7 @@ __all__ = [
 class CollectionLoadOp[T](Calculation, Op[T | Sentinel]):
     """Read collection from parent: parent[address]."""
 
-    def __init__(self, ref: object) -> None:
+    def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
 
@@ -50,7 +50,7 @@ class CollectionLoadOp[T](Calculation, Op[T | Sentinel]):
 class CollectionStoreCmd[T](Command, Op[None]):
     """Write collection to parent: parent[address] = data. Returns None."""
 
-    def __init__(self, ref: object, data: Nu[T | Sentinel]) -> None:
+    def __init__(self, ref: Ref, data: Nu[T | Sentinel]) -> None:
         super().__init__(ref, data)
         self.ref = ref
         self.data_expr = data
@@ -72,7 +72,7 @@ class CollectionStoreCmd[T](Command, Op[None]):
 class CollectionEraseCmd(Command, Op[None]):
     """Delete collection from parent: del parent[address]."""
 
-    def __init__(self, ref: object) -> None:
+    def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
 
@@ -89,7 +89,7 @@ class CollectionEraseCmd(Command, Op[None]):
 class CollectionExistsOp(Calculation, Op[bool]):
     """Check if collection exists in parent: address in parent."""
 
-    def __init__(self, ref: object) -> None:
+    def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
 
@@ -105,7 +105,7 @@ class CollectionExistsOp(Calculation, Op[bool]):
 class CollectionMissingOp(Calculation, Op[bool]):
     """Check if collection is missing from parent: address not in parent."""
 
-    def __init__(self, ref: object) -> None:
+    def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
 

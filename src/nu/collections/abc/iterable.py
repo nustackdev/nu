@@ -1,10 +1,10 @@
-"""Iterable capability - protocol + base.
+"""Iterable capability.
 
-IterableProtocol/Base: wrapping infrastructure for collection results.
+IterableI: wrapping infrastructure for collection results.
 
 Follows Python's collections.abc.Iterable pattern. In Nu's tree model,
 iteration is controlled by Flows (ForEach, ForRange), not Python's
-iterator protocol. This protocol marks types as iterable and provides
+iterator protocol. This marks types as iterable and provides
 the wrapping infrastructure for typed results.
 
 Type Parameters:
@@ -15,7 +15,9 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING
+
+from nu.interface import Interface
 
 
 if TYPE_CHECKING:
@@ -23,42 +25,15 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "IterableBase",
-    "IterableProtocol",
+    "IterableI",
 ]
 
 
-# =============================================================================
-# PROTOCOL
-# =============================================================================
-
-
-@runtime_checkable
-class IterableProtocol[ElementT, CollectionResultT, ElementResultT](Protocol):
-    """Protocol for values that support iteration.
-
-    This is a marker protocol. Higher-order operations (Map, Filter, etc.)
-    are standalone functions in ``abc.fn``.
-
-    Type Parameters:
-        ElementT: Native Python element type (int, str, dict, etc.)
-        CollectionResultT: Result type for ops that return collections
-        ElementResultT: Result type for ops that extract single elements
-    """
-
-    ...
-
-
-# =============================================================================
-# BASE
-# =============================================================================
-
-
-class IterableBase[ElementT, CollectionResultT, ElementResultT]:
+class IterableI[ElementT, CollectionResultT, ElementResultT](Interface):
     """Base for values that support iteration.
 
     Provides wrapping infrastructure used by subclass traits
-    (SequenceBase, MappingBase, etc.) to wrap op results
+    (SequenceI, MappingI, etc.) to wrap op results
     in appropriate Value types.
 
     Higher-order operations (Map, Filter, Reduce, etc.) are standalone

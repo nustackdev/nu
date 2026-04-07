@@ -1,13 +1,15 @@
-"""Sized capability - protocol + base.
+"""Sized capability.
 
-SizedProtocol/Base: values that have a length.
+SizedI: values that have a length.
 
 Follows Python's collections.abc.Sized pattern.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING
+
+from nu.interface import Interface
 
 
 if TYPE_CHECKING:
@@ -15,21 +17,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "SizedBase",
-    "SizedProtocol",
+    "SizedI",
 ]
 
 
-@runtime_checkable
-class SizedProtocol(Protocol):
-    """Protocol for values that have a length - like collections.abc.Sized."""
-
-    def len(self) -> IntI:
-        """Length of this collection."""
-        ...
-
-
-class SizedBase:
+class SizedI(Interface):
     """Base for values that have a length - like collections.abc.Sized."""
 
     def len(self) -> IntI:

@@ -1,16 +1,43 @@
+"""Shape refs - document model navigation."""
+
 from .base import Ref
-from .items import ItemRef, MutableItemRef, ReactiveItemRef
-from .mapping import MappingRefBase, MutableMappingRefBase, ReactiveMappingRefBase
-from .sequence import MutableSequenceRefBase, ReactiveSequenceRefBase, SequenceRefBase
-from .set import MutableSetRefBase, ReactiveSetRefBase, SetLikeRefBase
+from .item import ItemRef, MutableItemRef, ReactiveItemRef
+from .mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
+from .sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
+from .set import MutableSetRef, ReactiveSetRef, SetLikeRef
+from .shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
 from .shapesmapping import (
-    MutableShapesMappingRefBase,
-    ReactiveShapesMappingRefBase,
-    ShapesMappingRefBase,
+    MutableShapesMappingRef,
+    ReactiveShapesMappingRef,
+    ShapesMappingRef,
 )
 from .shapessequence import (
-    MutableShapesSequenceRefBase,
-    ReactiveShapesSequenceRefBase,
-    ShapesSequenceRefBase,
+    MutableShapesSequenceRef,
+    ReactiveShapesSequenceRef,
+    ShapesSequenceRef,
 )
-from .structured import MutableShapeRef, ReactiveShapeRef, ShapeRef
+
+__all__ = [
+    "ItemRef",
+    "MappingRef",
+    "MutableItemRef",
+    "MutableMappingRef",
+    "MutableSequenceRef",
+    "MutableSetRef",
+    "MutableShapeRef",
+    "MutableShapesMappingRef",
+    "MutableShapesSequenceRef",
+    "ReactiveItemRef",
+    "ReactiveMappingRef",
+    "ReactiveSequenceRef",
+    "ReactiveSetRef",
+    "ReactiveShapeRef",
+    "ReactiveShapesMappingRef",
+    "ReactiveShapesSequenceRef",
+    "Ref",
+    "SequenceRef",
+    "SetLikeRef",
+    "ShapeRef",
+    "ShapesMappingRef",
+    "ShapesSequenceRef",
+]

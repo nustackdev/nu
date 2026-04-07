@@ -7,6 +7,7 @@ from .collection import (
     CollectionMissingOp,
     CollectionStoreCmd,
 )
+from .control import React, ReactForever, ReactWhile, Stream
 from .cursor import AdvanceCursorOp
 from .item import ItemEraseCmd, ItemExistsOp, ItemLoadOp, ItemMissingOp, ItemStoreCmd
 from .reactive import (
@@ -17,3 +18,27 @@ from .reactive import (
     OnDescendantsChangeOp,
     OnPrimitiveChangeOp,
 )
+
+__all__ = [
+    "AdvanceCursorOp",
+    "ChangeOp",
+    "CollectionEraseCmd",
+    "CollectionExistsOp",
+    "CollectionLoadOp",
+    "CollectionMissingOp",
+    "CollectionStoreCmd",
+    "ItemEraseCmd",
+    "ItemExistsOp",
+    "ItemLoadOp",
+    "ItemMissingOp",
+    "ItemStoreCmd",
+    "OnChangeOp",
+    "OnChildChangeOp",
+    "OnChildrenChangeOp",
+    "OnDescendantsChangeOp",
+    "OnPrimitiveChangeOp",
+    "React",
+    "ReactForever",
+    "ReactWhile",
+    "Stream",
+]

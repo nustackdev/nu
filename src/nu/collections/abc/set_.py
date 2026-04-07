@@ -1,8 +1,8 @@
 # ruff: noqa: D102
-"""Set collection — protocols + bases + mutations.
+"""Set collection — bases + mutations.
 
-SetLikeProtocol/Base = Collection + union/intersection/difference/symmetric_difference/issubset/issuperset/isdisjoint
-MutableSetProtocol/Base = SetLike + add/remove/discard
+SetLikeI = Collection + union/intersection/difference/symmetric_difference/issubset/issuperset/isdisjoint
+MutableSetI = SetLike + add/remove/discard
 
 Follows Python's collections.abc.Set / MutableSet pattern.
 
@@ -17,9 +17,9 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, cast
 
-from .collection import CollectionBase, CollectionProtocol
+from .collection import CollectionI
 
 
 if TYPE_CHECKING:
@@ -28,77 +28,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "MutableSetBase",
-    "MutableSetProtocol",
-    "SetLikeBase",
-    "SetLikeProtocol",
+    "MutableSetI",
+    "SetLikeI",
 ]
 
 
-# =============================================================================
-# PROTOCOLS
-# =============================================================================
-
-
-class SetLikeProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
-    CollectionProtocol[ElementT, CollectionResultT, ElementResultT],
-    Protocol,
-):
-    """Protocol for set values — like collections.abc.Set.
-
-    Type Parameters:
-        CollectionT: Native Python collection type (set[int], frozenset[str])
-        ElementT: Native Python element type
-        CollectionResultT: Result for collection-level ops (union, intersection, ...)
-        ElementResultT: Result for element-level ops (sum_, min_, max_)
-    """
-
-    def union(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT: ...
-    def intersection(
-        self, other: Arg[set[ElementT] | frozenset[ElementT]]
-    ) -> CollectionResultT: ...
-    def difference(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT: ...
-    def symmetric_difference(
-        self, other: Arg[set[ElementT] | frozenset[ElementT]]
-    ) -> CollectionResultT: ...
-    def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI: ...
-    def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI: ...
-    def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI: ...
-
-
-class MutableSetProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT](
-    SetLikeProtocol[CollectionT, ElementT, CollectionResultT, ElementResultT],
-    Protocol,
-):
-    """Protocol for mutable set values — like collections.abc.MutableSet.
-
-    Type Parameters:
-        CollectionT: Native Python collection type
-        ElementT: Native Python element type
-        CollectionResultT: Result for collection-level ops (add, remove, discard)
-        ElementResultT: Result for element-level ops (sum_, min_, max_)
-    """
-
-    def add(self, value: Arg[ElementT]) -> NoneI: ...
-    def remove(self, value: Arg[ElementT]) -> NoneI: ...
-    def discard(self, value: Arg[ElementT]) -> NoneI: ...
-    def pop(self) -> ElementResultT: ...
-    def clear(self) -> NoneI: ...
-    def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI: ...
-    def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI: ...
-    def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI: ...
-    def symmetric_difference_update(
-        self, other: Arg[set[ElementT] | frozenset[ElementT]]
-    ) -> NoneI: ...
-
-
-# =============================================================================
-# BASES
-# =============================================================================
-
-
-class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
-    CollectionBase[ElementT, CollectionResultT, ElementResultT],
+class SetLikeI[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    CollectionI[ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for set values — like collections.abc.Set.
 
@@ -167,8 +103,8 @@ class SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return BoolI(IsDisjointOp(self, other))
 
 
-class MutableSetBase[CollectionT, ElementT, CollectionResultT, ElementResultT](
-    SetLikeBase[CollectionT, ElementT, CollectionResultT, ElementResultT],
+class MutableSetI[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    SetLikeI[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for mutable set values — like collections.abc.MutableSet.
 

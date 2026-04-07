@@ -1,8 +1,8 @@
 """Mapping ref hierarchy — mapping bases + Ref navigation.
 
-MappingRefBase         = MappingBase + Ref
-MutableMappingRefBase  = MutableMappingBase + MappingRefBase
-ReactiveMappingRefBase = ReactiveMappingBase + MutableMappingRefBase
+MappingRef         = MappingI + Ref
+MutableMappingRef  = MutableMappingI + MappingRef
+ReactiveMappingRef = ReactiveMappingI + MutableMappingRef
 
 Type Parameters:
     K:              Native key type (str, int, etc.)
@@ -16,27 +16,25 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu import Value
-
-from ..collections import MappingBase, MutableMappingBase, ReactiveMappingBase
+from nu.shapes.collections import MappingI, MutableMappingI, ReactiveMappingI
 from .base import Ref
 
 
 if TYPE_CHECKING:
     from nu import Arg, Sentinel
 
-    from .items import ItemRef, MutableItemRef, ReactiveItemRef
+    from .item import ItemRef, MutableItemRef, ReactiveItemRef
 
 
 __all__ = [
-    "MappingRefBase",
-    "MutableMappingRefBase",
-    "ReactiveMappingRefBase",
+    "MappingRef",
+    "MutableMappingRef",
+    "ReactiveMappingRef",
 ]
 
 
-class MappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
-    MappingBase[K, V, CollectionValueT, ValueValueT],
+class MappingRef[K, V, CollectionValueT, ValueValueT](
+    MappingI[K, V, CollectionValueT, ValueValueT],
     Ref[dict[K, V]],
 ):
     """Mapping ref — key-value container with document-model navigation."""
@@ -51,9 +49,9 @@ class MappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
         return self._create_child_ref(key)
 
 
-class MutableMappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
-    MutableMappingBase[K, V, CollectionValueT, ValueValueT],
-    MappingRefBase[K, V, CollectionValueT, ValueValueT],
+class MutableMappingRef[K, V, CollectionValueT, ValueValueT](
+    MutableMappingI[K, V, CollectionValueT, ValueValueT],
+    MappingRef[K, V, CollectionValueT, ValueValueT],
 ):
     """Mutable mapping ref — mutations + navigation."""
 
@@ -67,9 +65,9 @@ class MutableMappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
         return self._create_child_ref(key)
 
 
-class ReactiveMappingRefBase[K, V, CollectionValueT, ValueValueT: Value](
-    ReactiveMappingBase[K, V, CollectionValueT, ValueValueT],
-    MutableMappingRefBase[K, V, CollectionValueT, ValueValueT],
+class ReactiveMappingRef[K, V, CollectionValueT, ValueValueT](
+    ReactiveMappingI[K, V, CollectionValueT, ValueValueT],
+    MutableMappingRef[K, V, CollectionValueT, ValueValueT],
 ):
     """Reactive mapping ref — observation + mutations + navigation."""
 

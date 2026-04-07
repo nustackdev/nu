@@ -1,8 +1,8 @@
 """Sequence ref hierarchy — sequence bases + Ref navigation.
 
-SequenceRefBase         = SequenceBase + Ref
-MutableSequenceRefBase  = MutableSequenceBase + Ref
-ReactiveSequenceRefBase = ReactiveSequenceBase + Ref
+SequenceRef         = SequenceI + Ref
+MutableSequenceRef  = MutableSequenceI + Ref
+ReactiveSequenceRef = ReactiveSequenceI + Ref
 
 Type Parameters:
     T:               Native element type (int, str, etc.)
@@ -15,27 +15,25 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu import Value
-
-from ..collections import MutableSequenceBase, ReactiveSequenceBase, SequenceBase
+from nu.shapes.collections import MutableSequenceI, ReactiveSequenceI, SequenceI
 from .base import Ref
 
 
 if TYPE_CHECKING:
     from nu import IntArg, Sentinel
 
-    from .items import ItemRef, MutableItemRef, ReactiveItemRef
+    from .item import ItemRef, MutableItemRef, ReactiveItemRef
 
 
 __all__ = [
-    "MutableSequenceRefBase",
-    "ReactiveSequenceRefBase",
-    "SequenceRefBase",
+    "MutableSequenceRef",
+    "ReactiveSequenceRef",
+    "SequenceRef",
 ]
 
 
-class SequenceRefBase[T, CollectionValueT, ItemValueT: Value](
-    SequenceBase[T, CollectionValueT, ItemValueT],
+class SequenceRef[T, CollectionValueT, ItemValueT](
+    SequenceI[T, CollectionValueT, ItemValueT],
     Ref[list[T]],
 ):
     """Sequence ref — ordered container with document-model navigation."""
@@ -50,9 +48,9 @@ class SequenceRefBase[T, CollectionValueT, ItemValueT: Value](
         return self._create_item_ref(index)
 
 
-class MutableSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
-    MutableSequenceBase[T, CollectionValueT, ItemValueT],
-    SequenceRefBase[T, CollectionValueT, ItemValueT],
+class MutableSequenceRef[T, CollectionValueT, ItemValueT](
+    MutableSequenceI[T, CollectionValueT, ItemValueT],
+    SequenceRef[T, CollectionValueT, ItemValueT],
 ):
     """Mutable sequence ref — mutations + navigation."""
 
@@ -66,9 +64,9 @@ class MutableSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
         return self._create_item_ref(index)
 
 
-class ReactiveSequenceRefBase[T, CollectionValueT, ItemValueT: Value](
-    ReactiveSequenceBase[T, CollectionValueT, ItemValueT],
-    MutableSequenceRefBase[T, CollectionValueT, ItemValueT],
+class ReactiveSequenceRef[T, CollectionValueT, ItemValueT](
+    ReactiveSequenceI[T, CollectionValueT, ItemValueT],
+    MutableSequenceRef[T, CollectionValueT, ItemValueT],
 ):
     """Reactive sequence ref — observation + mutations + navigation."""
 
