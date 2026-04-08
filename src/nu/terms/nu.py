@@ -14,7 +14,7 @@ Hierarchy:
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import TYPE_CHECKING, Generic
 
 from nu.tree.node import _Node
@@ -32,7 +32,7 @@ __all__ = [
 ]
 
 
-class Nu(_Node["Nu"], Generic[T_co], ABC):  # noqa: UP046
+class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
     """The primitive. Recursive unit of computation.
 
     Everything is a Nu:
@@ -41,25 +41,23 @@ class Nu(_Node["Nu"], Generic[T_co], ABC):  # noqa: UP046
     - Operations (transformations)
 
     Nus compose into trees. Trees evaluate within a Context.
+
+    A bare Nu executes its children sequentially.
+    Use ``|`` to compose horizontally: ``a | b | c``.
     """
 
-    @abstractmethod
     async def execute(self, ctx: Context) -> T_co:
         """Execute this Nu within a context.
 
-        Args:
-            ctx: Runtime context with handles and resources.
-
-        Returns:
-            Nu-specific result.
+        Default: execute children sequentially.
         """
-        ...
+        for child in self._children:
+            await child.execute(ctx)
 
     @property
-    @abstractmethod
     def is_self_pure(self) -> bool:
         """Whether this Nu is pure (no side effects)."""
-        ...
+        return True
 
     @property
     def is_subtree_pure(self) -> bool:
@@ -67,6 +65,17 @@ class Nu(_Node["Nu"], Generic[T_co], ABC):  # noqa: UP046
         if not self.is_self_pure:
             return False
         return all(child.is_subtree_pure for child in self._children if isinstance(child, Nu))
+
+    def __or__(self, other: object) -> Nu:
+        """Compose sequentially: ``a | b`` executes a then b.
+
+        Flattens when chained: ``a | b | c`` produces ``Nu(a, b, c)``.
+        """
+        if not isinstance(other, Nu):
+            return NotImplemented  # type: ignore[return-value]
+        if type(self) is Nu:
+            return Nu(*self._children, other)
+        return Nu(self, other)
 
 
 class LValue(Nu[T_co], ABC):

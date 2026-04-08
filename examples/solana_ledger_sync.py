@@ -8,7 +8,7 @@ RocksDB. Resumable: skips already-synced slots on restart.
 Demonstrates:
   Shapes        -- Transaction, Ledger (persistent data topology)
   Ref + method  -- typed, lazy RPC access via method descriptors
-  Compositions  -- Seq, If, ForEach, Retry, TryCatch, Log
+  Compositions  -- | (sequential), If, ForEach, Retry, TryCatch, Log
   Spans         -- nu_virtuals.Transaction (atomic writes)
   Deformations  -- inline_refs (app rewrites before execution)
   Context       -- storage + service binding
@@ -57,10 +57,13 @@ class DroppedSlotError(Exception):
 # RPC client
 # =============================================================================
 
+
 class SolanaRpc:
     """Minimal async Solana JSON-RPC client."""
 
-    def __init__(self, endpoint: str = "https://api.mainnet-beta.solana.com", timeout: float = 30.0) -> None:
+    def __init__(
+        self, endpoint: str = "https://api.mainnet-beta.solana.com", timeout: float = 30.0
+    ) -> None:
         self._endpoint = endpoint
         self._timeout = timeout
         self._session: aiohttp.ClientSession | None = None
@@ -281,73 +284,53 @@ def _involves_program(program_id: nu.StrArg) -> nu.Nu:
 
 def _persist_tx(ledger: type[Ledger], slot: nu.IntArg) -> nu.Nu:
     """Persist one tx from ctx.attrs["tx"] to ledger."""
-
-    return nu.Seq(
-        _SlotScratch.tx_id.store(
-            nu.IntI(slot) * TX_ID_MULTIPLIER + nu.AtOp(nu.AttrRef("tx"), "block_index")
-        ),
-        ledger.txs[_SlotScratch.tx_id].store(nu.AnyAttrRef("tx")),
-    )
+    return _SlotScratch.tx_id.store(
+        nu.IntI(slot) * TX_ID_MULTIPLIER + nu.AtOp(nu.AttrRef("tx"), "block_index")
+    ) | ledger.txs[_SlotScratch.tx_id].store(nu.AnyAttrRef("tx"))
 
 
 def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = "") -> nu.Nu:
-    """Fetch one block, iterate txs, persist per-tx. Skip if already synced.
-
-    ForEach over get_block() directly -- no intermediate storage.
-    Each iteration checks the program filter and persists conditionally.
-    """
+    """Fetch one block, iterate txs, persist per-tx. Skip if already synced."""
     return nu.If(
         nu.ops.Contains(ledger.slots_synced, slot).not_(),
         nu.Retry(
             nu.TryCatch(
-                nu.Seq(
-                    nu_virtuals.Transaction(
-                        ledger.blocks_meta[slot].skipped.init(0),
-                        ledger.blocks_meta[slot].synced.init(0),
-                    ),
-                    nu_virtuals.Transaction(
-                        nu.ForEach(
-                            SolanaRef.get_block(slot),
-                            nu.Seq(
-                                nu.If(
-                                    nu.ops.ToBool(program_id),
-                                    nu.If(
-                                        _involves_program(program_id),
-                                        nu.Seq(
-                                            ledger.blocks_meta[slot].synced.inc(),
-                                            _persist_tx(ledger, slot),
-                                            nu.If(
-                                                (ledger.blocks_meta[slot].synced % 10).eq(0),
-                                                nu.Log("synced:", ledger.blocks_meta[slot].synced),
-                                            ),
-                                        ),
-                                        nu.Seq(
-                                            ledger.blocks_meta[slot].skipped.inc(),
-                                            nu.If(
-                                                (ledger.blocks_meta[slot].skipped % 50).eq(0),
-                                                nu.Log(
-                                                    "skipped:", ledger.blocks_meta[slot].skipped
-                                                ),
-                                            ),
-                                        ),
-                                    ),
-                                    nu.Seq(
-                                        _persist_tx(ledger, slot),
-                                        ledger.blocks_meta[slot].synced.inc(),
-                                        nu.If(
-                                            (ledger.blocks_meta[slot].synced % 10).eq(0),
-                                            nu.Log("synced:", ledger.blocks_meta[slot].synced),
-                                        ),
-                                    ),
+                nu_virtuals.Transaction(
+                    ledger.blocks_meta[slot].skipped.init(0),
+                    ledger.blocks_meta[slot].synced.init(0),
+                )
+                | nu_virtuals.Transaction(
+                    nu.ForEach(
+                        SolanaRef.get_block(slot),
+                        nu.If(
+                            nu.ops.ToBool(program_id),
+                            nu.If(
+                                _involves_program(program_id),
+                                ledger.blocks_meta[slot].synced.inc()
+                                | _persist_tx(ledger, slot)
+                                | nu.If(
+                                    (ledger.blocks_meta[slot].synced % 10).eq(0),
+                                    nu.Log("synced:", ledger.blocks_meta[slot].synced),
+                                ),
+                                ledger.blocks_meta[slot].skipped.inc()
+                                | nu.If(
+                                    (ledger.blocks_meta[slot].skipped % 50).eq(0),
+                                    nu.Log("skipped:", ledger.blocks_meta[slot].skipped),
                                 ),
                             ),
-                            item="tx",
+                            _persist_tx(ledger, slot)
+                            | ledger.blocks_meta[slot].synced.inc()
+                            | nu.If(
+                                (ledger.blocks_meta[slot].synced % 10).eq(0),
+                                nu.Log("synced:", ledger.blocks_meta[slot].synced),
+                            ),
                         ),
+                        item="tx",
                     ),
                 ),
-                catch=nu.Seq(
-                    nu_virtuals.Transaction(ledger.slots_dropped.add(slot)),
-                    nu.Log("dropped slot", slot),
+                catch=(
+                    nu_virtuals.Transaction(ledger.slots_dropped.add(slot))
+                    | nu.Log("dropped slot", slot)
                 ),
                 errors=DroppedSlotError,
             ),
@@ -370,19 +353,19 @@ def sync_range(
     delegating to sync_slot for fetch + persist.
     """
 
-    return nu.Seq(
-        _RangeScratch.slots.store(SolanaRef.get_blocks(slot_from, slot_to)),
-        nu.Log(
+    return (
+        _RangeScratch.slots.store(SolanaRef.get_blocks(slot_from, slot_to))
+        | nu.Log(
             "sync:", slot_from, "->", slot_to, "(", nu.ops.Len(_RangeScratch.slots), "confirmed)"
-        ),
-        nu.ForEach(
+        )
+        | nu.ForEach(
             _RangeScratch.slots,
             sync_slot(ledger, nu.IntAttrRef("slot"), program_id=program_id),
             item="slot",
-        ),
-        nu.Log("sync complete"),
-        nu.Log("synced:", ledger.blocks_meta[AttrRef("slot")].synced),
-        nu.Log("skipped:", ledger.blocks_meta[AttrRef("slot")].skipped),
+        )
+        | nu.Log("sync complete")
+        | nu.Log("synced:", ledger.blocks_meta[AttrRef("slot")].synced)
+        | nu.Log("skipped:", ledger.blocks_meta[AttrRef("slot")].skipped)
     )
 
 
@@ -395,8 +378,14 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Solana ledger sync")
     p.add_argument("--slot-from", type=int, required=True, help="Start slot (inclusive)")
     p.add_argument("--slots", type=int, default=100, help="Number of slots to sync")
-    p.add_argument("--endpoint", default="https://api.mainnet-beta.solana.com", help="Solana RPC endpoint")
-    p.add_argument("--program", default="6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P", help="Filter: only txs involving this program")
+    p.add_argument(
+        "--endpoint", default="https://api.mainnet-beta.solana.com", help="Solana RPC endpoint"
+    )
+    p.add_argument(
+        "--program",
+        default="6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P",
+        help="Filter: only txs involving this program",
+    )
     p.add_argument("--db-path", default=".db-ledger", help="RocksDB storage path")
     return p.parse_args()
 
@@ -419,13 +408,10 @@ async def main() -> None:
 
             slot_to = args.slot_from + args.slots
 
-            app = nu.Seq(
-                nu_virtuals.Transaction(
-                    Ledger.slots_synced.init(set()),
-                    Ledger.slots_dropped.init(set()),
-                ),
-                sync_range(Ledger, args.slot_from, slot_to, program_id=args.program or ""),
-            )
+            app = nu_virtuals.Transaction(
+                Ledger.slots_synced.init(set()),
+                Ledger.slots_dropped.init(set()),
+            ) | sync_range(Ledger, args.slot_from, slot_to, program_id=args.program or "")
 
             # Deformations: optimize before execution
             app = nu_dict.inline_refs(app)
