@@ -1,8 +1,7 @@
 """AttrRef — flat name-based lookup from Context.
 
 AttrRef is the simplest substrate: resolves a name directly from ctx.attrs.
-Typed variants (IntAttrRef, StrAttrRef, etc.) inherit Interface mixins
-so you can chain operations directly on the ref.
+Typed variants mix in Interface so you can chain operations directly on the ref.
 
 Name can be a plain string or a Nu that resolves to a string.
 """
@@ -11,14 +10,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.collections import DictI, FrozenSetI, ListI, SetI, TupleI
+from nu.primitives import AnyI, BoolI, BytesI, FloatI, IntI, StrI
 from nu.terms import Nu, Ref, Sentinel
 from nu.utils import ensure_nu
 
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.primitives import BoolI
-    from nu.terms import StrArg, Value
+    from nu.terms import StrArg
 
 __all__ = [
     "AnyAttrRef",
@@ -54,14 +54,7 @@ class AttrRef[T](Ref[T]):
         AttrRef(some_computed_key)           # dynamic key
     """
 
-    value_type: type = object
-
     def __init__(self, name: StrArg) -> None:
-        """Initialize with name tag.
-
-        Args:
-            name: ctx.attrs key. Plain string or Nu resolving to string.
-        """
         super().__init__()
         self._raw_name: str | None = name if isinstance(name, str) else None
         self._name_nu: Nu = ensure_nu(name)
@@ -86,103 +79,40 @@ class AttrRef[T](Ref[T]):
         key = await self._resolve_name(ctx)
         return ctx.attrs[key]  # type: ignore[attr-defined]
 
-    def get(self) -> Value:
-        """Read via AttrGetOp, returns typed Interface."""
-        from ..utils import typed_value
-        from .attr_ops import AttrGetOp
-
-        return typed_value(self.value_type, AttrGetOp(self))
-
     def exists(self) -> BoolI:
         """Check if name exists in context."""
-        from nu.primitives import BoolI
-
         from .attr_ops import AttrExistsOp
 
         return BoolI(AttrExistsOp(self))
 
 
 # =========================================================================
-# TYPED ATTR REFS
+# PRIMITIVE TYPED ATTR REFS
 # =========================================================================
 
 
-class IntAttrRef(AttrRef[int]):
-    """Int attr ref. Inherits IntI methods via get()."""
-
-    value_type = int
-
-    def get(self) -> IntI:  # noqa: F821
-        from nu.primitives import IntI
-
-        from .attr_ops import AttrGetOp
-
-        return IntI(AttrGetOp(self))
+class IntAttrRef(AttrRef[int], IntI):
+    """Int attr ref with full numeric interface."""
 
 
-class FloatAttrRef(AttrRef[float]):
-    """Float attr ref."""
-
-    value_type = float
-
-    def get(self) -> FloatI:  # noqa: F821
-        from nu.primitives import FloatI
-
-        from .attr_ops import AttrGetOp
-
-        return FloatI(AttrGetOp(self))
+class FloatAttrRef(AttrRef[float], FloatI):
+    """Float attr ref with full numeric interface."""
 
 
-class StrAttrRef(AttrRef[str]):
-    """Str attr ref."""
-
-    value_type = str
-
-    def get(self) -> StrI:  # noqa: F821
-        from nu.primitives import StrI
-
-        from .attr_ops import AttrGetOp
-
-        return StrI(AttrGetOp(self))
+class StrAttrRef(AttrRef[str], StrI):
+    """Str attr ref with full string interface."""
 
 
-class BoolAttrRef(AttrRef[bool]):
-    """Bool attr ref."""
-
-    value_type = bool
-
-    def get(self) -> BoolI:
-        from nu.primitives import BoolI
-
-        from .attr_ops import AttrGetOp
-
-        return BoolI(AttrGetOp(self))
+class BoolAttrRef(AttrRef[bool], BoolI):
+    """Bool attr ref with full logical interface."""
 
 
-class BytesAttrRef(AttrRef[bytes]):
-    """Bytes attr ref."""
-
-    value_type = bytes
-
-    def get(self) -> BytesI:  # noqa: F821
-        from nu.primitives import BytesI
-
-        from .attr_ops import AttrGetOp
-
-        return BytesI(AttrGetOp(self))
+class BytesAttrRef(AttrRef[bytes], BytesI):
+    """Bytes attr ref with full bytes interface."""
 
 
-class AnyAttrRef(AttrRef[object]):
-    """Any attr ref. Dynamic type."""
-
-    value_type = object
-
-    def get(self) -> AnyI:  # noqa: F821
-        from nu.primitives import AnyI
-
-        from .attr_ops import AttrGetOp
-
-        return AnyI(AttrGetOp(self))
+class AnyAttrRef(AttrRef[object], AnyI):
+    """Any attr ref with dynamic interface."""
 
 
 # =========================================================================
@@ -190,66 +120,21 @@ class AnyAttrRef(AttrRef[object]):
 # =========================================================================
 
 
-class ListAttrRef(AttrRef[list]):
-    """List attr ref."""
-
-    value_type = list
-
-    def get(self) -> ListI:  # noqa: F821
-        from nu.collections import ListI
-
-        from .attr_ops import AttrGetOp
-
-        return ListI(AttrGetOp(self))
+class ListAttrRef(AttrRef[list], ListI):
+    """List attr ref with full list interface."""
 
 
-class DictAttrRef(AttrRef[dict]):
-    """Dict attr ref."""
-
-    value_type = dict
-
-    def get(self) -> DictI:  # noqa: F821
-        from nu.collections import DictI
-
-        from .attr_ops import AttrGetOp
-
-        return DictI(AttrGetOp(self))
+class DictAttrRef(AttrRef[dict], DictI):
+    """Dict attr ref with full dict interface."""
 
 
-class SetAttrRef(AttrRef[set]):
-    """Set attr ref."""
-
-    value_type = set
-
-    def get(self) -> SetI:  # noqa: F821
-        from nu.collections import SetI
-
-        from .attr_ops import AttrGetOp
-
-        return SetI(AttrGetOp(self))
+class SetAttrRef(AttrRef[set], SetI):
+    """Set attr ref with full set interface."""
 
 
-class FrozenSetAttrRef(AttrRef[frozenset]):
-    """FrozenSet attr ref."""
-
-    value_type = frozenset
-
-    def get(self) -> FrozenSetI:  # noqa: F821
-        from nu.collections import FrozenSetI
-
-        from .attr_ops import AttrGetOp
-
-        return FrozenSetI(AttrGetOp(self))
+class FrozenSetAttrRef(AttrRef[frozenset], FrozenSetI):
+    """FrozenSet attr ref with full frozenset interface."""
 
 
-class TupleAttrRef(AttrRef[tuple]):
-    """Tuple attr ref."""
-
-    value_type = tuple
-
-    def get(self) -> TupleI:  # noqa: F821
-        from nu.collections import TupleI
-
-        from .attr_ops import AttrGetOp
-
-        return TupleI(AttrGetOp(self))
+class TupleAttrRef(AttrRef[tuple], TupleI):
+    """Tuple attr ref with full tuple interface."""

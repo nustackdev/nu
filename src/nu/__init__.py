@@ -480,10 +480,12 @@ __all__ = [
     "SetI",
     "SetItemCmd",
     "SetLikeI",
+    "Shape",
     "SetPopCmd",
     "SetUpdateCmd",
     "SizedI",
     "SliceableI",
+    "Slot",
     "SkipIfEmpty",
     "SkipIfExists",
     "SkipIfMissing",
@@ -568,3 +570,4 @@ __all__ = [
 ]
 
 from . import shapes  # noqa: F401
+from .shapes import Shape, Slot
