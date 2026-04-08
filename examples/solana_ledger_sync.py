@@ -14,8 +14,8 @@ Demonstrates:
   Context       -- storage + service binding
 
 Usage:
-    python examples/app/solana_ledger_sync.py --slot-from 335000000 --slots 100
-    python examples/app/solana_ledger_sync.py --slot-from 335000000 --slots 500 \\
+    python examples/solana_ledger_sync.py --slot-from 335000000 --slots 100
+    python examples/solana_ledger_sync.py --slot-from 335000000 --slots 500 \\
         --program 6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P
 """
 
@@ -43,78 +43,38 @@ logger.addHandler(handler)
 logger.propagate = False
 
 
-# =============================================================================
-# Exceptions
-# =============================================================================
-
-
 class RpcError(Exception):
-    """JSON-RPC error."""
-
-    def __init__(self, code: int, message: str) -> None:
+    def __init__(self, code, msg):
         self.code = code
-        self.message = message
-        super().__init__(f"RPC error {code}: {message}")
+        super().__init__(msg)
 
 
 class DroppedSlotError(Exception):
-    """Slot was skipped or not available on chain."""
-
-    def __init__(self, slot: int) -> None:
-        self.slot = slot
-        super().__init__(f"dropped slot {slot}")
+    pass
 
 
 # =============================================================================
-# RPC client (minimal, correct)
+# RPC client
 # =============================================================================
-
-MAINNET = "https://api.mainnet-beta.solana.com"
-PUMPFUN = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
-
 
 class SolanaRpc:
-    """Minimal async Solana JSON-RPC client.
+    """Minimal async Solana JSON-RPC client."""
 
-    No batching, no rate limiting, no retry logic.
-    For production use a provider endpoint (Helius, Triton, etc).
-    """
-
-    def __init__(
-        self,
-        endpoint: str = MAINNET,
-        timeout: float = 30.0,
-    ) -> None:
+    def __init__(self, endpoint: str = "https://api.mainnet-beta.solana.com", timeout: float = 30.0) -> None:
         self._endpoint = endpoint
         self._timeout = timeout
         self._session: aiohttp.ClientSession | None = None
         self._id = 0
 
-    async def connect(self) -> None:
-        if self._session is None or self._session.closed:
+    async def _call(self, method: str, params: list | None = None) -> object:
+        if not self._session or self._session.closed:
             self._session = aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=self._timeout),
                 connector=aiohttp.TCPConnector(ssl=False),
             )
-
-    async def close(self) -> None:
-        if self._session and not self._session.closed:
-            await self._session.close()
-            self._session = None
-
-    async def _ensure_connected(self) -> None:
-        if self._session is None or self._session.closed:
-            await self.connect()
-
-    async def _call(self, method: str, params: list | None = None) -> object:
-        await self._ensure_connected()
         self._id += 1
         body = {"jsonrpc": "2.0", "id": self._id, "method": method, "params": params or []}
-        if self._session is None:
-            raise ValueError("Session not attached")
-        async with self._session.post(
-            self._endpoint, json=body, headers={"Content-Type": "application/json"}
-        ) as resp:
+        async with self._session.post(self._endpoint, json=body) as resp:
             if resp.status == 429:
                 raise RpcError(-429, "rate limited")
             resp.raise_for_status()
@@ -124,18 +84,16 @@ class SolanaRpc:
             raise RpcError(err.get("code", -1), err.get("message", ""))
         return data.get("result")
 
-    # -- public API (resolved via ServiceRef method descriptors) ---------------
-
     async def get_slot(self) -> int:
-        result = await self._call("getSlot", [{"commitment": "confirmed"}])
-        return int(result)  # type: ignore
+        return int(await self._call("getSlot", [{"commitment": "confirmed"}]))
 
     async def get_blocks(self, start: int, end: int) -> list[int]:
-        result = await self._call("getBlocks", [start, end, {"commitment": "confirmed"}])
-        return [int(s) for s in result]  # type: ignore
+        return [
+            int(s) for s in await self._call("getBlocks", [start, end, {"commitment": "confirmed"}])
+        ]
 
     async def get_block(self, slot: int) -> list[dict]:
-        """Fetch block, parse transactions into dicts matching Transaction shape."""
+        """Fetch block, return tx dicts matching Transaction shape."""
         try:
             result = await self._call(
                 "getBlock",
@@ -157,97 +115,61 @@ class SolanaRpc:
         if result is None:
             raise DroppedSlotError(slot)
 
-        return _parse_block(slot, result)  # type: ignore
+        block_time = result.get("blockTime", 0) or 0
+        txs = []
+        for i, raw in enumerate(result.get("transactions", [])):
+            tx, meta = raw.get("transaction", {}), raw.get("meta", {})
+            if not tx:
+                continue
+            msg = tx.get("message", {})
+
+            # Resolve all program IDs (top-level + inner) for filtering
+            accounts = list(msg.get("accountKeys", []))
+            for t in ("writable", "readonly"):
+                accounts.extend(meta.get("loadedAddresses", {}).get(t, []))
+            programs = set()
+            for ix in msg.get("instructions", []):
+                idx = ix.get("programIdIndex", 0)
+                if idx < len(accounts):
+                    programs.add(accounts[idx])
+            for inner in meta.get("innerInstructions", []):
+                for ix in inner.get("instructions", []):
+                    idx = ix.get("programIdIndex", 0)
+                    if idx < len(accounts):
+                        programs.add(accounts[idx])
+
+            txs.append(
+                {
+                    "slot_number": slot,
+                    "block_time": block_time,
+                    "block_index": i,
+                    "signatures": tx.get("signatures", []),
+                    "account_keys": msg.get("accountKeys", []),
+                    "instructions": msg.get("instructions", []),
+                    "fee": meta.get("fee", 0),
+                    "err": str(meta.get("err") or ""),
+                    "compute_units": meta.get("computeUnitsConsumed", 0),
+                    "programs": list(programs),
+                    "pre_balances": meta.get("preBalances", []),
+                    "post_balances": meta.get("postBalances", []),
+                    "pre_token_balances": meta.get("preTokenBalances", []),
+                    "post_token_balances": meta.get("postTokenBalances", []),
+                    "loaded_addresses": meta.get("loadedAddresses", {}),
+                    "inner_instructions": meta.get("innerInstructions", []),
+                    "log_messages": meta.get("logMessages", []),
+                }
+            )
+        return txs
+
+    async def close(self) -> None:
+        if self._session and not self._session.closed:
+            await self._session.close()
 
     async def __aenter__(self):
-        await self._ensure_connected()
         return self
 
-    async def __aexit__(self, *args, **kwrags):
+    async def __aexit__(self, *a):
         await self.close()
-
-
-# =============================================================================
-# Block parsing
-# =============================================================================
-
-
-def _parse_block(slot: int, data: dict) -> list[dict]:
-    """Parse raw block response into list of tx dicts matching Transaction shape."""
-    block_time = data.get("blockTime", 0) or 0
-    txs = []
-    for i, raw in enumerate(data.get("transactions", [])):
-        tx_data, meta = raw.get("transaction", {}), raw.get("meta", {})
-        if not tx_data:
-            continue
-        msg = tx_data.get("message", {})
-
-        # All account keys: static + loaded addresses (versioned txs)
-        accounts = list(msg.get("accountKeys", []))
-        for addr_type in ("writable", "readonly"):
-            accounts.extend(meta.get("loadedAddresses", {}).get(addr_type, []))
-
-        sigs = tx_data.get("signatures", [])
-        err = meta.get("err")
-
-        txs.append(
-            {
-                "signature": sigs[0] if sigs else "",
-                "slot_number": slot,
-                "block_time": block_time,
-                "block_index": i,
-                "fee": meta.get("fee", 0),
-                "err": str(err) if err else "",
-                "accounts": accounts,
-                "instructions": _parse_ixs(msg.get("instructions", []), accounts),
-                "inner_instructions": [
-                    {
-                        "index": s.get("index", 0),
-                        "instructions": _parse_ixs(s.get("instructions", []), accounts),
-                    }
-                    for s in meta.get("innerInstructions", [])
-                ],
-                "pre_balances": meta.get("preBalances", []),
-                "post_balances": meta.get("postBalances", []),
-                "pre_token_balances": _parse_token_balances(meta.get("preTokenBalances")),
-                "post_token_balances": _parse_token_balances(meta.get("postTokenBalances")),
-                "logs": meta.get("logMessages", []),
-                "compute_units": meta.get("computeUnitsConsumed", 0),
-            }
-        )
-    return txs
-
-
-def _parse_ixs(raw: list[dict], accounts: list[str]) -> list[dict]:
-    """Parse instruction list, resolving account indices to addresses."""
-    return [
-        {
-            "program_id": (
-                accounts[ix.get("programIdIndex", 0)]
-                if ix.get("programIdIndex", 0) < len(accounts)
-                else ""
-            ),
-            "accounts": [accounts[j] for j in ix.get("accounts", []) if j < len(accounts)],
-            "data": ix.get("data", ""),
-        }
-        for ix in raw
-    ]
-
-
-def _parse_token_balances(raw: list[dict] | None) -> list[dict]:
-    """Parse token balance list from RPC response."""
-    if not raw:
-        return []
-    return [
-        {
-            "account_index": tb.get("accountIndex", 0),
-            "mint": tb.get("mint", ""),
-            "owner": tb.get("owner", ""),
-            "amount": tb.get("uiTokenAmount", {}).get("amount", "0"),
-            "decimals": tb.get("uiTokenAmount", {}).get("decimals", 0),
-        }
-        for tb in raw
-    ]
 
 
 # =============================================================================
@@ -283,34 +205,26 @@ class SolanaRef(nu.Ref[SolanaRpc]):
 
 
 class Transaction(nu.shapes.Shape):
-    """Single Solana transaction. All standard fields, stored as-is.
+    """Solana transaction. Mirrors RPC structure, no parsing."""
 
-    Scalar fields are individually addressable. Lists (accounts, instructions,
-    balances, logs) are primitive blobs -- stored and read whole.
-    """
-
-    # Metadata
-    signature = nu_virtuals.StrRef.slot()
     slot_number = nu_virtuals.IntRef.slot()
     block_time = nu_virtuals.IntRef.slot()
     block_index = nu_virtuals.IntRef.slot()
-    fee = nu_virtuals.IntRef.slot()
-    err = nu_virtuals.StrRef.slot()  # empty = success
-
-    # Structure (primitive blobs)
-    accounts = nu_virtuals.PrimitiveListRef.slot()
+    signatures = nu_virtuals.PrimitiveListRef.slot()
+    account_keys = nu_virtuals.PrimitiveListRef.slot()
     instructions = nu_virtuals.PrimitiveListRef.slot()
-    inner_instructions = nu_virtuals.PrimitiveListRef.slot()
-
-    # Balances (primitive blobs)
+    fee = nu_virtuals.IntRef.slot()
+    err = nu_virtuals.StrRef.slot()
+    compute_units = nu_virtuals.IntRef.slot()
+    programs = nu_virtuals.PrimitiveListRef.slot()
     pre_balances = nu_virtuals.PrimitiveListRef.slot()
     post_balances = nu_virtuals.PrimitiveListRef.slot()
     pre_token_balances = nu_virtuals.PrimitiveListRef.slot()
     post_token_balances = nu_virtuals.PrimitiveListRef.slot()
-
-    # Extra
-    logs = nu_virtuals.PrimitiveListRef.slot()
-    compute_units = nu_virtuals.IntRef.slot()
+    loaded_addresses = nu_virtuals.PrimitiveDictRef.slot()
+    # Primitive blobs - verbose, read in bulk
+    inner_instructions = nu_virtuals.PrimitiveListRef.slot()
+    log_messages = nu_virtuals.PrimitiveListRef.slot()
 
 
 TX_ID_MULTIPLIER = 10_000
@@ -361,23 +275,8 @@ class _RangeScratch(nu.shapes.Shape):
 
 
 def _involves_program(program_id: nu.StrArg) -> nu.Nu:
-    """Nu condition: does ctx.attrs["tx"] involve the given program?
-
-    All app nodes, all lazy, short-circuits on first match.
-    Equivalent to nested for loops checking program_id across
-    top-level and inner instructions.
-    """
-    ixs = nu.AnyI(nu.AtOp(nu.AnyAttrRef("tx"), "instructions"))
-    inner = nu.AnyI(nu.AtOp(nu.AnyAttrRef("tx"), "inner_instructions"))
-
-    # top-level: program_id in [ix["program_id"] for ix in instructions]
-    top_match = nu.ops.Contains(nu.ops.Pluck(ixs, "program_id"), program_id)
-
-    # inner: flatten inner_instructions[*].instructions, same check
-    inner_programs = nu.ops.Pluck(nu.ops.Flatten(nu.ops.Pluck(inner, "instructions")), "program_id")
-    inner_match = nu.ops.Contains(inner_programs, program_id)
-
-    return top_match.or_(inner_match)
+    """Does ctx.attrs["tx"] involve the given program?"""
+    return nu.ops.Contains(nu.AnyI(nu.AtOp(nu.AnyAttrRef("tx"), "programs")), program_id)
 
 
 def _persist_tx(ledger: type[Ledger], slot: nu.IntArg) -> nu.Nu:
@@ -395,7 +294,7 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
     """Fetch one block, iterate txs, persist per-tx. Skip if already synced.
 
     ForEach over get_block() directly -- no intermediate storage.
-    Each iteration checks the program tree and persists conditionally.
+    Each iteration checks the program filter and persists conditionally.
     """
     return nu.If(
         nu.ops.Contains(ledger.slots_synced, slot).not_(),
@@ -480,7 +379,7 @@ def sync_range(
     """Sync all confirmed slots in [slot_from, slot_to].
 
     Fetches the confirmed slot list via get_blocks(), then iterates each,
-    delegating to sync_slot for fetch + parse + persist.
+    delegating to sync_slot for fetch + persist.
     """
 
     return nu.Seq(
@@ -508,8 +407,8 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Solana ledger sync")
     p.add_argument("--slot-from", type=int, required=True, help="Start slot (inclusive)")
     p.add_argument("--slots", type=int, default=100, help="Number of slots to sync")
-    p.add_argument("--endpoint", default=MAINNET, help="Solana RPC endpoint")
-    p.add_argument("--program", default=PUMPFUN, help="Filter: only txs involving this program")
+    p.add_argument("--endpoint", default="https://api.mainnet-beta.solana.com", help="Solana RPC endpoint")
+    p.add_argument("--program", default="6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P", help="Filter: only txs involving this program")
     p.add_argument("--db-path", default=".db-ledger", help="RocksDB storage path")
     return p.parse_args()
 
