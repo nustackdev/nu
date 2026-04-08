@@ -6,9 +6,14 @@ from .attr_refs import (
     AttrRef,
     BoolAttrRef,
     BytesAttrRef,
+    DictAttrRef,
     FloatAttrRef,
+    FrozenSetAttrRef,
     IntAttrRef,
+    ListAttrRef,
+    SetAttrRef,
     StrAttrRef,
+    TupleAttrRef,
 )
 from .attributes import Attributes
 from .context import Context
@@ -23,7 +28,12 @@ __all__ = [
     "BoolAttrRef",
     "BytesAttrRef",
     "Context",
+    "DictAttrRef",
     "FloatAttrRef",
+    "FrozenSetAttrRef",
     "IntAttrRef",
+    "ListAttrRef",
+    "SetAttrRef",
     "StrAttrRef",
+    "TupleAttrRef",
 ]

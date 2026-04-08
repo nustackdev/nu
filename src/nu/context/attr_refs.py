@@ -25,9 +25,14 @@ __all__ = [
     "AttrRef",
     "BoolAttrRef",
     "BytesAttrRef",
+    "DictAttrRef",
     "FloatAttrRef",
+    "FrozenSetAttrRef",
     "IntAttrRef",
+    "ListAttrRef",
+    "SetAttrRef",
     "StrAttrRef",
+    "TupleAttrRef",
 ]
 
 
@@ -178,3 +183,73 @@ class AnyAttrRef(AttrRef[object]):
         from .attr_ops import AttrGetOp
 
         return AnyI(AttrGetOp(self))
+
+
+# =========================================================================
+# COMPOSITE TYPED ATTR REFS
+# =========================================================================
+
+
+class ListAttrRef(AttrRef[list]):
+    """List attr ref."""
+
+    value_type = list
+
+    def get(self) -> ListI:  # noqa: F821
+        from nu.collections import ListI
+
+        from .attr_ops import AttrGetOp
+
+        return ListI(AttrGetOp(self))
+
+
+class DictAttrRef(AttrRef[dict]):
+    """Dict attr ref."""
+
+    value_type = dict
+
+    def get(self) -> DictI:  # noqa: F821
+        from nu.collections import DictI
+
+        from .attr_ops import AttrGetOp
+
+        return DictI(AttrGetOp(self))
+
+
+class SetAttrRef(AttrRef[set]):
+    """Set attr ref."""
+
+    value_type = set
+
+    def get(self) -> SetI:  # noqa: F821
+        from nu.collections import SetI
+
+        from .attr_ops import AttrGetOp
+
+        return SetI(AttrGetOp(self))
+
+
+class FrozenSetAttrRef(AttrRef[frozenset]):
+    """FrozenSet attr ref."""
+
+    value_type = frozenset
+
+    def get(self) -> FrozenSetI:  # noqa: F821
+        from nu.collections import FrozenSetI
+
+        from .attr_ops import AttrGetOp
+
+        return FrozenSetI(AttrGetOp(self))
+
+
+class TupleAttrRef(AttrRef[tuple]):
+    """Tuple attr ref."""
+
+    value_type = tuple
+
+    def get(self) -> TupleI:  # noqa: F821
+        from nu.collections import TupleI
+
+        from .attr_ops import AttrGetOp
+
+        return TupleI(AttrGetOp(self))
