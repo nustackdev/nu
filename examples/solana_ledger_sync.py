@@ -171,8 +171,8 @@ class Transaction(nu.Shape):
 
 
 class BlockMeta(nu.Shape):
-    skipped = nu_virtuals.IntRef.slot()
     synced = nu_virtuals.IntRef.slot()
+    skipped = nu_virtuals.IntRef.slot()
 
 
 class Ledger(nu.Shape):
@@ -211,25 +211,20 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
         nu.Retry(
             nu.TryCatch(
                 nu_virtuals.Transaction(bm.skipped.init(0), bm.synced.init(0))
-                | nu_virtuals.Transaction(
-                    nu.ForEach(
-                        SolanaRef.get_block(slot),
+                | nu.ForEach(
+                    SolanaRef.get_block(slot),
+                    nu_virtuals.Transaction(
                         nu.If(
                             nu.ops.ToBool(program_id),
                             nu.If(
                                 nu.ops.Contains(nu.DictAttrRef("tx").get("programs"), program_id),
-                                bm.synced.inc()
-                                | _persist_tx(ledger, slot)
-                                | nu.If((bm.synced % 10).eq(0), nu.Log("synced:", bm.synced)),
-                                bm.skipped.inc()
-                                | nu.If((bm.skipped % 50).eq(0), nu.Log("skipped:", bm.skipped)),
+                                bm.synced.inc() | _persist_tx(ledger, slot),
+                                bm.skipped.inc(),
                             ),
-                            _persist_tx(ledger, slot)
-                            | bm.synced.inc()
-                            | nu.If((bm.synced % 10).eq(0), nu.Log("synced:", bm.synced)),
+                            bm.synced.inc() | _persist_tx(ledger, slot),
                         ),
-                        item="tx",
-                    )
+                    ),
+                    item="tx",
                 ),
                 catch=nu_virtuals.Transaction(ledger.slots_dropped.add(slot))
                 | nu.Log("dropped slot", slot),
@@ -241,7 +236,6 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
             on_attempt_fail=nu.Log("retry slot", slot),
             on_fail=nu.Log("giving up on slot", slot),
         ),
-        nu.Log("txs: ", ledger.current_slot),
     )
 
 
@@ -250,7 +244,8 @@ def sync_range(
 ) -> nu.Nu:
     """Sync all confirmed slots in [slot_from, slot_to]."""
     return (
-        _RangeScratch.slots.store(SolanaRef.get_blocks(slot_from, slot_to))
+        nu_virtuals.Transaction(Ledger.slots_synced.init(set()) | Ledger.slots_dropped.init(set()))
+        | _RangeScratch.slots.store(SolanaRef.get_blocks(slot_from, slot_to))
         | nu.Log(
             "sync:", slot_from, "->", slot_to, "(", nu.ops.Len(_RangeScratch.slots), "confirmed)"
         )
@@ -259,9 +254,41 @@ def sync_range(
             sync_slot(ledger, nu.IntAttrRef("slot"), program_id=program_id),
             item="slot",
         )
-        | nu.Log("sync complete")
-        | nu.Log("synced:", ledger.blocks_meta[nu.IntAttrRef("slot")].synced)
-        | nu.Log("skipped:", ledger.blocks_meta[nu.IntAttrRef("slot")].skipped)
+    )
+
+
+def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
+    """Reactive observers: log block arrivals and per-block synced/skipped counters."""
+    return (
+        nu.shapes.ReactForever(
+            ledger.blocks_meta.on_children_change(),
+            nu.Log("new block:", nu.AtOp(nu.TupleAttrRef("slot_change"), -1)),
+            changed_key="slot_change",
+        )
+        | nu.shapes.ReactForever(
+            ledger.blocks_meta.on_descendants_change("*", "skipped"),
+            nu_virtuals.Snapshot(
+                nu.Log(
+                    "block",
+                    nu.AtOp(nu.TupleAttrRef("skipped_change"), -2),
+                    "txs skipped:",
+                    ledger.blocks_meta[nu.AtOp(nu.TupleAttrRef("skipped_change"), -2)].skipped,
+                ),
+            ),
+            changed_key="skipped_change",
+        )
+        | nu.shapes.ReactForever(
+            ledger.blocks_meta.on_descendants_change("*", "synced"),
+            nu_virtuals.Snapshot(
+                nu.Log(
+                    "block",
+                    nu.AtOp(nu.TupleAttrRef("synced_change"), -2),
+                    "txs synced:",
+                    ledger.blocks_meta[nu.AtOp(nu.TupleAttrRef("synced_change"), -2)].synced,
+                ),
+            ),
+            changed_key="synced_change",
+        )
     )
 
 
@@ -301,26 +328,31 @@ async def main() -> None:
             ctx = ctx.bind(SolanaRpc, rpc)
             ctx = ctx.bind(dict, {})
 
-            # Contruct the app
+            # Construct the app
+            slot_to = args.slot_from + args.slots
             app = (
-                nu.Log("syncing slots", args.slot_from, "->", args.slot_from + args.slots)
-                | nu.Log("endpoint:", args.endpoint)
-                | nu.Log("filter: program", args.program or "(none)")
-                | nu.Log("db:", args.db_path)
-                | nu_virtuals.Transaction(
-                    Ledger.slots_synced.init(set()),
-                    Ledger.slots_dropped.init(set()),
+                (
+                    nu.Log("--- sync ---")
+                    | nu.Log("syncing slots", args.slot_from, "->", slot_to)
+                    | nu.Log("endpoint:", args.endpoint)
+                    | nu.Log("filter: program", args.program or "(none)")
+                    | nu.Log("db:", args.db_path)
                 )
-                | sync_range(
-                    Ledger,
-                    args.slot_from,
-                    args.slot_from + args.slots,
-                    program_id=args.program or "",
+                | nu.Race(
+                    sync_range(Ledger, args.slot_from, slot_to, program_id=args.program or ""),
+                    reactive_stats(Ledger),
                 )
-                | nu.Log("--- sync report ---")
-                | nu.Log("slots synced:", nu.ops.Len(Ledger.slots_synced))
-                | nu.Log("slots dropped:", nu.ops.Len(Ledger.slots_dropped))
-                | nu.Log("txs stored:", nu.ops.Len(Ledger.txs))
+                | (
+                    nu.Log("--- sync report ---")
+                    | nu.Log(
+                        "txs synced",
+                        nu.ops.Sum(nu.ops.Pluck(Ledger.blocks_meta.values(), "synced")),
+                    )
+                    | nu.Log(
+                        "txs skipped",
+                        nu.ops.Sum(nu.ops.Pluck(Ledger.blocks_meta.values(), "skipped")),
+                    )
+                )
             )
 
             # Apply app meta-transformations

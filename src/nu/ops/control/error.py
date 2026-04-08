@@ -98,7 +98,10 @@ class Retry(Command):
     ) -> None:
         _none = NoneI()
         super().__init__(
-            body, max_attempts, delay, backoff,
+            body,
+            max_attempts,
+            delay,
+            backoff,
             on_attempt_fail or _none,
             on_success or _none,
             on_fail or _none,
@@ -142,7 +145,8 @@ class Retry(Command):
                     hook = self.on_fail
                     if hook is not None:
                         await hook.execute(hook_ctx)
-                    raise
+                    else:
+                        raise
                 hook = self.on_attempt_fail
                 if hook is not None:
                     await hook.execute(hook_ctx)
