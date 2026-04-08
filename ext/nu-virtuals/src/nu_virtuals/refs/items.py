@@ -25,6 +25,7 @@ from nu import (
     FloatI,
     IntI,
     ListI,
+    NoneI,
     SetI,
     StrI,
 )
@@ -37,7 +38,6 @@ if TYPE_CHECKING:
     from virtuals.loc import path
 
     from nu import Nu, Value
-    from nu import NoneI
     from nu.shapes import Shape
 
 __all__ = [
@@ -133,6 +133,14 @@ class IntRef(ItemRef[int, IntI], IntI):
             parent=parent,
             owner_shape=owner_shape,
         )
+
+    def inc(self, step: int | Nu = 1) -> NoneI:
+        """Increment in place."""
+        return self.store(self + step)
+
+    def dec(self, step: int | Nu = 1) -> NoneI:
+        """Decrement in place."""
+        return self.store(self - step)
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]

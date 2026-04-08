@@ -302,14 +302,8 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
             nu.TryCatch(
                 nu.Seq(
                     nu_virtuals.Transaction(
-                        nu.If(
-                            ledger.blocks_meta[slot].skipped.missing(),
-                            ledger.blocks_meta[slot].skipped.store(0),
-                        ),
-                        nu.If(
-                            ledger.blocks_meta[slot].synced.missing(),
-                            ledger.blocks_meta[slot].synced.store(0),
-                        ),
+                        ledger.blocks_meta[slot].skipped.init(0),
+                        ledger.blocks_meta[slot].synced.init(0),
                     ),
                     nu_virtuals.Transaction(
                         nu.ForEach(
@@ -320,9 +314,7 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
                                     nu.If(
                                         _involves_program(program_id),
                                         nu.Seq(
-                                            ledger.blocks_meta[slot].synced.store(
-                                                ledger.blocks_meta[slot].synced + 1
-                                            ),
+                                            ledger.blocks_meta[slot].synced.inc(),
                                             _persist_tx(ledger, slot),
                                             nu.If(
                                                 (ledger.blocks_meta[slot].synced % 10).eq(0),
@@ -330,9 +322,7 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
                                             ),
                                         ),
                                         nu.Seq(
-                                            ledger.blocks_meta[slot].skipped.store(
-                                                ledger.blocks_meta[slot].skipped + 1
-                                            ),
+                                            ledger.blocks_meta[slot].skipped.inc(),
                                             nu.If(
                                                 (ledger.blocks_meta[slot].skipped % 50).eq(0),
                                                 nu.Log(
@@ -343,9 +333,7 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
                                     ),
                                     nu.Seq(
                                         _persist_tx(ledger, slot),
-                                        ledger.blocks_meta[slot].synced.store(
-                                            ledger.blocks_meta[slot].synced + 1
-                                        ),
+                                        ledger.blocks_meta[slot].synced.inc(),
                                         nu.If(
                                             (ledger.blocks_meta[slot].synced % 10).eq(0),
                                             nu.Log("synced:", ledger.blocks_meta[slot].synced),
@@ -433,10 +421,8 @@ async def main() -> None:
 
             app = nu.Seq(
                 nu_virtuals.Transaction(
-                    nu.Seq(
-                        nu.If(Ledger.slots_synced.missing(), Ledger.slots_synced.store(set())),
-                        nu.If(Ledger.slots_dropped.missing(), Ledger.slots_dropped.store(set())),
-                    ),
+                    Ledger.slots_synced.init(set()),
+                    Ledger.slots_dropped.init(set()),
                 ),
                 sync_range(Ledger, args.slot_from, slot_to, program_id=args.program or ""),
             )

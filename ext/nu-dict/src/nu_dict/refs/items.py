@@ -15,14 +15,10 @@ from typing import TYPE_CHECKING, Self
 from nu import Value
 from nu import (
     BoolI,
-    BoolI,
-    BytesI,
     BytesI,
     FloatI,
-    FloatI,
     IntI,
-    IntI,
-    StrI,
+    NoneI,
     StrI,
 )
 from nu.shapes import MutableItemRef, Slot
@@ -89,6 +85,14 @@ class IntRef(ItemRef[int, IntI], IntI):
             parent=parent,
             owner_shape=owner_shape,
         )
+
+    def inc(self, step: int | Nu = 1) -> NoneI:
+        """Increment in place."""
+        return self.store(self + step)
+
+    def dec(self, step: int | Nu = 1) -> NoneI:
+        """Decrement in place."""
+        return self.store(self - step)
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]

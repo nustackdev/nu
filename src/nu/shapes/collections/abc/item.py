@@ -80,6 +80,7 @@ class MutableItemI[T, InterfaceT](ItemI[T, InterfaceT]):
         immutable capabilities +
         store(value) -> NoneI
         erase() -> NoneI
+        init(default) -> Nu  (store if missing)
     """
 
     def store(self, value: T | Sentinel | Nu[T | Sentinel]) -> NoneI:
@@ -93,6 +94,12 @@ class MutableItemI[T, InterfaceT](ItemI[T, InterfaceT]):
         from nu.shapes.ops import ItemEraseCmd
 
         return NoneI(ItemEraseCmd(self))
+
+    def init(self, default: T | Sentinel | Nu[T | Sentinel]) -> Nu:
+        """Store default if value is missing. No-op if already set."""
+        from nu.ops.control import If
+
+        return If(self.missing(), self.store(default))
 
 
 class ReactiveItemI[T, InterfaceT](MutableItemI[T, InterfaceT]):
