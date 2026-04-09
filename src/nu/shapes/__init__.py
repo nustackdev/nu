@@ -1,5 +1,7 @@
 """Shape - declarative structure definitions."""
 
+from . import collections, ops, refs, shape, tree
+
 from .collections import (
     CollectionI,
     ItemI,
@@ -77,6 +79,7 @@ __all__ = [
     "CollectionStoreCmd",
     "ItemEraseCmd",
     "ItemExistsOp",
+    "ItemI",
     "ItemLoadOp",
     "ItemMissingOp",
     "ItemRef",

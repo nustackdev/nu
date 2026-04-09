@@ -1,5 +1,6 @@
 """Collection interfaces."""
 
+from . import abc
 from .dict_ import DictI
 from .iterator_ import IteratorI
 from .list_ import ListI

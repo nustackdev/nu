@@ -14,7 +14,6 @@ from typing import Any
 import aiohttp
 
 import nu
-import nu_debugger
 import nu_dict
 import nu_virtuals
 
@@ -207,7 +206,7 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
     """Fetch one block, iterate txs, persist per-tx. Skip if already synced."""
     bm = ledger.blocks_meta[slot]
     return nu.If(
-        nu.ops.Contains(ledger.slots_synced, slot).not_(),
+        nu.Contains(ledger.slots_synced, slot).not_(),
         nu.Retry(
             nu.TryCatch(
                 nu_virtuals.Transaction(bm.skipped.init(0), bm.synced.init(0))
@@ -215,9 +214,9 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
                     SolanaRef.get_block(slot),
                     nu_virtuals.Transaction(
                         nu.If(
-                            nu.ops.ToBool(program_id),
+                            nu.ToBool(program_id),
                             nu.If(
-                                nu.ops.Contains(nu.DictAttrRef("tx").get("programs"), program_id),
+                                nu.Contains(nu.DictAttrRef("tx").get("programs"), program_id),
                                 bm.synced.inc() | _persist_tx(ledger, slot),
                                 bm.skipped.inc(),
                             ),
@@ -247,7 +246,7 @@ def sync_range(
         nu_virtuals.Transaction(Ledger.slots_synced.init(set()) | Ledger.slots_dropped.init(set()))
         | _RangeScratch.slots.store(SolanaRef.get_blocks(slot_from, slot_to))
         | nu.Log(
-            "sync:", slot_from, "->", slot_to, "(", nu.ops.Len(_RangeScratch.slots), "confirmed)"
+            "sync:", slot_from, "->", slot_to, "(", nu.Len(_RangeScratch.slots), "confirmed)"
         )
         | nu.ForEach(
             _RangeScratch.slots,
@@ -299,9 +298,9 @@ async def main() -> None:
     import argparse
     import logging
 
-    from virtuals import Navigator
-
+    import nu_debugger
     from nu_virtuals.presets import rocksdb_storage_inmemory
+    from virtuals import Navigator
 
     # Set up logging
     logging.basicConfig(level=logging.WARNING)
@@ -346,11 +345,11 @@ async def main() -> None:
                     nu.Log("--- sync report ---")
                     | nu.Log(
                         "txs synced",
-                        nu.ops.Sum(nu.ops.Pluck(Ledger.blocks_meta.values(), "synced")),
+                        nu.Sum(nu.Pluck(Ledger.blocks_meta.values(), "synced")),
                     )
                     | nu.Log(
                         "txs skipped",
-                        nu.ops.Sum(nu.ops.Pluck(Ledger.blocks_meta.values(), "skipped")),
+                        nu.Sum(nu.Pluck(Ledger.blocks_meta.values(), "skipped")),
                     )
                 )
             )
@@ -360,6 +359,9 @@ async def main() -> None:
             app = nu_virtuals.inline_refs(app)
             app = nu_virtuals.auto_atomic(app)
             app = nu_debugger.set_logger_name(app, "sol")
+
+            # Print the app
+            nu_debugger.print_tree(app)
 
             # Execute the app
             await app.execute(ctx)
