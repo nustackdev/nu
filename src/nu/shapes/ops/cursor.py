@@ -6,9 +6,10 @@ Pure operation - resolves children, calls view method, returns result.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu.terms import Op, Sentinel
+from nu.terms.effect import Direction
 
 
 if TYPE_CHECKING:
@@ -30,6 +31,8 @@ class AdvanceCursorOp(Op[tuple | None]):
     Returns:
         (log_key, actual_key) tuple if next item exists, None if exhausted.
     """
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
 
     def __init__(self, source: object, cursor: object) -> None:
         super().__init__(source, cursor)

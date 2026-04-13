@@ -1,10 +1,11 @@
-"""Primitive ref ops — flat name-based Context ops."""
+"""Primitive ref ops - flat name-based Context ops."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu.terms import Op, Sentinel
+from nu.terms.effect import Direction
 
 
 if TYPE_CHECKING:
@@ -21,26 +22,28 @@ __all__ = [
 class AttrGetOp[T](Op[T | Sentinel]):
     """Read value by name from context: ctx.attrs[name]."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
+
     def __init__(self, ref: AttrRef[T]) -> None:
         """Initialize with ref."""
-        super().__init__()
-        self._ref = ref
+        super().__init__(ref)
 
     async def execute(self, ctx: Context) -> T | Sentinel:
         """Execute the get operation."""
-        key = await self._ref._resolve_name(ctx)
+        key = await self.children[0]._resolve_name(ctx)
         return ctx.attrs[key]
 
 
 class AttrExistsOp(Op[bool]):
     """Check if name exists in context."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
+
     def __init__(self, ref: AttrRef) -> None:
         """Initialize with ref."""
-        super().__init__()
-        self._ref = ref
+        super().__init__(ref)
 
     async def execute(self, ctx: Context) -> bool:
         """Execute the exists check."""
-        key = await self._ref._resolve_name(ctx)
+        key = await self.children[0]._resolve_name(ctx)
         return key in ctx.attrs

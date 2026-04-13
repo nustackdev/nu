@@ -1,10 +1,11 @@
-"""Service ref ops -- direct Context binding ops."""
+"""Service ref ops - direct Context binding ops."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu.terms import Op, Sentinel
+from nu.terms.effect import Direction
 
 
 if TYPE_CHECKING:
@@ -21,24 +22,26 @@ __all__ = [
 class ServiceGetOp[T](Op[T | Sentinel]):
     """Read service from context: ctx[service_type]."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
+
     def __init__(self, ref: ServiceRef[T]) -> None:
         """Initialize with ref."""
-        super().__init__()
-        self._ref = ref
+        super().__init__(ref)
 
     async def execute(self, ctx: Context) -> T | Sentinel:
         """Execute the get operation."""
-        return ctx[self._ref.service_type]
+        return ctx[self.children[0].service_type]
 
 
 class ServiceExistsOp(Op[bool]):
     """Check if service type exists in context."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
+
     def __init__(self, ref: ServiceRef) -> None:
         """Initialize with ref."""
-        super().__init__()
-        self._ref = ref
+        super().__init__(ref)
 
     async def execute(self, ctx: Context) -> bool:
         """Execute the exists check."""
-        return self._ref.service_type in ctx
+        return self.children[0].service_type in ctx

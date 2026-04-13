@@ -14,9 +14,10 @@ These require PV views with UnsafePrimitiveOpsBase in MRO.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import EMPTY, Op, Sentinel
+from nu.terms.effect import Direction
 
 
 if TYPE_CHECKING:
@@ -48,6 +49,8 @@ class EnsureLayoutCmd(Op[None]):
         fetch(ctx) -> view object
     """
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
@@ -75,6 +78,8 @@ class InitCmd(Op[None]):
         fetch(ctx) -> view object
     """
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
@@ -98,6 +103,8 @@ class ItemPrimitiveGetUnsafeOp[T](Op[T | Sentinel]):
         fetch_parent(ctx) -> view with _unsafe_primitive_read()
         resolve_address(ctx) -> key/index
     """
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -127,6 +134,8 @@ class ItemPrimitiveSetUnsafeCmd[T](Op[T]):
         resolve_address(ctx) -> key/index
     """
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+
     def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
         self.ref = ref
@@ -147,15 +156,17 @@ class ItemPrimitiveSetUnsafeCmd[T](Op[T]):
 
 
 class ItemPrimitiveSetUnsafeParentSkipCmd[T](Op[T]):
-    """Write primitive via _unsafe_primitive_write() — full skip.
+    """Write primitive via _unsafe_primitive_write() -- full skip.
 
-    Single ctx.put() call — no ensure_created, no validation reads.
+    Single ctx.put() call -- no ensure_created, no validation reads.
     The caller must guarantee the container chain exists (e.g. via InitCmd).
 
     The ref must implement:
         fetch_parent(ctx) -> view with _unsafe_primitive_write()
         resolve_address(ctx) -> key/index
     """
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
@@ -179,13 +190,15 @@ class ItemPrimitiveSetUnsafeParentSkipCmd[T](Op[T]):
 class ItemPrimitiveDeleteUnsafeCmd(Op[None]):
     """Delete primitive via _unsafe_primitive_delete().
 
-    Single ctx.delete() call — no validation, no descendant cleanup.
+    Single ctx.delete() call -- no validation, no descendant cleanup.
     The caller must know the child is a primitive.
 
     The ref must implement:
         fetch_parent(ctx) -> view with _unsafe_primitive_delete()
         resolve_address(ctx) -> key/index
     """
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -214,6 +227,8 @@ class PrimitiveStoreCmd[T](Op[None]):
         fetch_parent(ctx) -> view with PrimitiveOpsBase._primitive_write()
         resolve_address(ctx) -> key/index
     """
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def __init__(self, ref: object, data: object) -> None:
         super().__init__(ref, data)

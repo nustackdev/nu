@@ -8,9 +8,10 @@ can match on CollectionLoadOp vs ItemLoadOp for type-specific deformations
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu.terms import EMPTY, Op, Sentinel
+from nu.terms.effect import Direction
 
 
 if TYPE_CHECKING:
@@ -31,6 +32,8 @@ __all__ = [
 class CollectionLoadOp[T](Op[T | Sentinel]):
     """Read collection from parent: parent[address]."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
+
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
@@ -49,6 +52,8 @@ class CollectionLoadOp[T](Op[T | Sentinel]):
 
 class CollectionStoreCmd[T](Op[None]):
     """Write collection to parent: parent[address] = data. Returns None."""
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def __init__(self, ref: Ref, data: Nu[T | Sentinel]) -> None:
         super().__init__(ref, data)
@@ -72,6 +77,8 @@ class CollectionStoreCmd[T](Op[None]):
 class CollectionEraseCmd(Op[None]):
     """Delete collection from parent: del parent[address]."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
@@ -89,6 +96,8 @@ class CollectionEraseCmd(Op[None]):
 class CollectionExistsOp(Op[bool]):
     """Check if collection exists in parent: address in parent."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
+
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
@@ -104,6 +113,8 @@ class CollectionExistsOp(Op[bool]):
 
 class CollectionMissingOp(Op[bool]):
     """Check if collection is missing from parent: address not in parent."""
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)

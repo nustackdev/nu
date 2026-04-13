@@ -14,9 +14,10 @@ the collection and resolve_address(ctx) to get the key/index.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu.terms import EMPTY, Op, Sentinel
+from nu.terms.effect import Direction
 
 
 if TYPE_CHECKING:
@@ -40,6 +41,8 @@ class ItemLoadOp[T](Op[T | Sentinel]):
     Returns EMPTY if the key/index doesn't exist.
     """
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
+
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
@@ -58,6 +61,8 @@ class ItemLoadOp[T](Op[T | Sentinel]):
 
 class ItemStoreCmd[T](Op[None]):
     """Write item to collection: parent[address] = value. Returns None."""
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def __init__(self, ref: Ref, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
@@ -80,6 +85,8 @@ class ItemStoreCmd[T](Op[None]):
 class ItemEraseCmd(Op[None]):
     """Delete item from collection: del parent[address]."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
@@ -97,6 +104,8 @@ class ItemEraseCmd(Op[None]):
 class ItemExistsOp(Op[bool]):
     """Check if item exists in collection: address in parent."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
+
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
         self.ref = ref
@@ -112,6 +121,8 @@ class ItemExistsOp(Op[bool]):
 
 class ItemMissingOp(Op[bool]):
     """Check if item is missing from collection: address not in parent."""
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)

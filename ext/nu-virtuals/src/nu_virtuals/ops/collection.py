@@ -9,9 +9,10 @@ These require PV views with UnsafePrimitiveOpsBase in MRO.
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import EMPTY, Op, Sentinel
+from nu.terms.effect import Direction
 
 
 if TYPE_CHECKING:
@@ -27,12 +28,14 @@ __all__ = [
 class ScanPrimitivesUnsafeOp[T](Op[Iterator[T] | Sentinel]):
     """Scan all direct primitive child values via _unsafe_primitive_scan_values().
 
-    Single ctx.scan() call — no marker parsing, no type checks.
+    Single ctx.scan() call -- no marker parsing, no type checks.
     Returns lazy iterator of raw values.
 
     The ref must implement:
         fetch(ctx) -> view with _unsafe_primitive_scan_values() method
     """
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -53,12 +56,14 @@ class ScanPrimitivesUnsafeOp[T](Op[Iterator[T] | Sentinel]):
 class ClearPrimitivesUnsafeCmd(Op[None]):
     """Clear all primitive children via _unsafe_primitive_clear().
 
-    Scan + ctx.delete() each — no validation, no descendant cleanup.
+    Scan + ctx.delete() each -- no validation, no descendant cleanup.
     The caller must know all children are primitives.
 
     The ref must implement:
         fetch(ctx) -> view with _unsafe_primitive_clear() method
     """
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
