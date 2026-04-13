@@ -23,6 +23,19 @@ from __future__ import annotations
 from datetime import UTC, date, datetime, time, timedelta, timezone
 from typing import TYPE_CHECKING
 
+from nu import (
+    Arg,
+    FuncCallOp,
+    MethodCallOp,
+    NoneI,
+    Nu,
+    ToFloatOp,
+    ToIntOp,
+    ToStrOp,
+    ensure_nu,
+)
+from nu.shapes import Slot
+from nu.shapes.ops.item import ItemStoreCmd
 from nu.stdlib import BasisPoint, Percentage
 from nu.stdlib.cmath import ComplexI, _ComplexI
 from nu.stdlib.datetime import (
@@ -41,19 +54,7 @@ from nu.stdlib.decimal import DecimalI, _DecimalI
 from nu.stdlib.fin import BasisPointI, PercentageI, _BasisPointI, _PercentageI
 from nu.stdlib.fractions import FractionI, _FractionI
 from nu.stdlib.pathlib import PathI, _PathI
-from nu.stdlib.uuid import UUIDI, _UUIDI
-from nu import Arg, Nu
-from nu import (
-    FuncCallOp,
-    MethodCallOp,
-    NoneI,
-    ToFloatOp,
-    ToIntOp,
-    ToStrOp,
-    ensure_nu,
-)
-from nu.shapes import Slot
-from nu.shapes.ops.item import ItemStoreCmd
+from nu.stdlib.uuid import _UUIDI, UUIDI
 
 from .base import RefBase
 

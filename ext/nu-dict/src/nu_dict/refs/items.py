@@ -12,11 +12,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from nu import Value
 from nu import (
     BoolI,
     BytesI,
     FloatI,
+    Interface,
     IntI,
     NoneI,
     StrI,
@@ -41,7 +41,7 @@ __all__ = [
 ]
 
 
-class ItemRef[T, ValueT: Value](
+class ItemRef[T, ValueT: Interface](
     MutableItemRef[T, ValueT],
     RefBase[T],
 ):

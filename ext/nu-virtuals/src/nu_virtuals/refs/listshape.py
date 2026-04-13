@@ -5,19 +5,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from virtuals.collections import MutableSequenceBase
-
 from nu import AnyI, IteratorI, ListI, ensure_nu
 from nu.shapes import ReactiveShapesSequenceRef, Shape, Slot
+from virtuals.collections import MutableSequenceBase
 
 from .base import ViewRef
 from .shape import ShapeRef
 
 
 if TYPE_CHECKING:
+    from nu import Nu, Sentinel
     from virtuals.loc import path
-
-    from nu import Sentinel, Nu
 
 
 __all__ = [

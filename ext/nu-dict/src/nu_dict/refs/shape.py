@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 
 from nu import (
     AnyI,
+    DictI,
     DictItemsI,
     DictKeysI,
-    DictI,
     DictValuesI,
     IteratorI,
 )
@@ -19,8 +19,7 @@ from .base import RefBase
 
 
 if TYPE_CHECKING:
-    from nu import Nu
-    from nu.shapes import Shape
+    from nu import Nu, Shape
 
 
 __all__ = [

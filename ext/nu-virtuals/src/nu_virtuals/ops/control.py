@@ -20,10 +20,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu import Context, ScopedOp
 from virtuals import Navigator
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
-
-from nu import Context, ScopedOp
 
 
 if TYPE_CHECKING:

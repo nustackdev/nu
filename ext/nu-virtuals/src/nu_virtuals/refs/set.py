@@ -5,18 +5,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from virtuals.collections import MutableSetBase
-
 from nu import AnyI, SetI
 from nu.shapes import ReactiveSetRef, Shape, Slot
+from virtuals.collections import MutableSetBase
 
 from .base import ViewRef
 
 
 if TYPE_CHECKING:
-    from virtuals.loc import path
-
     from nu import Nu
+    from virtuals.loc import path
 
 
 __all__ = [

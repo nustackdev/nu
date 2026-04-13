@@ -29,11 +29,11 @@ from .items import ItemRef
 if TYPE_CHECKING:
     from virtuals.loc import path
 
-    from nu import Sentinel, Nu, Value
+    from nu import Interface, Nu, Sentinel
 
 
-def _value_type_for(python_type: type) -> type[Value]:
-    """Map Python type to its corresponding Value type."""
+def _value_type_for(python_type: type) -> type[Interface]:
+    """Map Python type to its corresponding Interface."""
     mapping: dict[type, type] = {
         int: IntI,
         str: StrI,

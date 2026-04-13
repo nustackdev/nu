@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import EMPTY, Sentinel, Nu
+from nu import EMPTY, Nu, Sentinel
 
 
 if TYPE_CHECKING:

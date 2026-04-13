@@ -23,6 +23,22 @@ from __future__ import annotations
 from datetime import UTC, date, datetime, time, timedelta, timezone
 from typing import TYPE_CHECKING
 
+from nu import (
+    Arg,
+    FloatI,
+    FuncCallOp,
+    IntI,
+    MethodCallOp,
+    NoneI,
+    Nu,
+    StrI,
+    ToFloatOp,
+    ToIntOp,
+    ToStrOp,
+    ensure_nu,
+)
+from nu.shapes import Slot
+from nu.shapes.ops import ItemStoreCmd
 from nu.stdlib import BasisPoint, Percentage
 from nu.stdlib.cmath import ComplexI, _ComplexI
 from nu.stdlib.datetime import (
@@ -41,22 +57,7 @@ from nu.stdlib.decimal import DecimalI, _DecimalI
 from nu.stdlib.fin import BasisPointI, PercentageI, _BasisPointI, _PercentageI
 from nu.stdlib.fractions import FractionI, _FractionI
 from nu.stdlib.pathlib import PathI, _PathI
-from nu.stdlib.uuid import UUIDI, _UUIDI
-from nu import Arg, Nu
-from nu import (
-    FloatI,
-    FuncCallOp,
-    IntI,
-    MethodCallOp,
-    NoneI,
-    StrI,
-    ToFloatOp,
-    ToIntOp,
-    ToStrOp,
-    ensure_nu,
-)
-from nu.shapes import Slot
-from nu.shapes.ops import ItemStoreCmd
+from nu.stdlib.uuid import _UUIDI, UUIDI
 
 from .items import ItemRef
 
@@ -68,9 +69,8 @@ if TYPE_CHECKING:
     from typing import Self
     from uuid import UUID
 
-    from virtuals.loc import path
-
     from nu.shapes import Shape
+    from virtuals.loc import path
 
     from .base import ViewRef
 

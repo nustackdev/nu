@@ -28,14 +28,13 @@ from enum import Enum
 from logging import getLogger
 from typing import TYPE_CHECKING, Generic, Self, TypeVar
 
+from nu import EMPTY, Context, Sentinel
+from nu.shapes import Ref
+from nu_virtuals.paths import ViewPathSer
 from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
 from virtuals.collections import Subscriptable
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
-
-from nu_virtuals.paths import ViewPathSer
-from nu import EMPTY, Context, Sentinel
-from nu.shapes import Ref
 
 
 if TYPE_CHECKING:

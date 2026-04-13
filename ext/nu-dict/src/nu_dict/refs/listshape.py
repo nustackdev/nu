@@ -13,8 +13,7 @@ from .shape import ShapeRef
 
 
 if TYPE_CHECKING:
-    from nu import Sentinel, Nu
-    from nu.shapes import Shape
+    from nu import Nu, Sentinel, Shape
 
 
 __all__ = [

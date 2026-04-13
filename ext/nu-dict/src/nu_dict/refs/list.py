@@ -25,12 +25,12 @@ from .items import ItemRef
 
 
 if TYPE_CHECKING:
-    from nu import Sentinel, Nu, Value
+    from nu import Interface, Nu, Sentinel
 
 
-def _value_type_for(python_type: type) -> type[Value]:
-    """Map Python type to its corresponding Value type."""
-    mapping: dict[type, type[Value]] = {
+def _value_type_for(python_type: type) -> type[Interface]:
+    """Map Python type to its corresponding Interface."""
+    mapping: dict[type, type[Interface]] = {
         int: IntI,
         str: StrI,
         float: FloatI,

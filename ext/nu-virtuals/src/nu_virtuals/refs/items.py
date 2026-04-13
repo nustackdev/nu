@@ -35,10 +35,9 @@ from .base import PrimitiveRef
 
 
 if TYPE_CHECKING:
-    from virtuals.loc import path
-
-    from nu import Nu, Value
+    from nu import Interface, Nu
     from nu.shapes import Shape
+    from virtuals.loc import path
 
 __all__ = [
     "BoolRef",
@@ -58,7 +57,7 @@ __all__ = [
 # =============================================================================
 
 
-class ItemRef[T, ValueT: Value](
+class ItemRef[T, ValueT: Interface](
     ReactiveItemRef[T, ValueT],
     PrimitiveRef[T],
 ):
