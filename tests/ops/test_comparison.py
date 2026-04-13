@@ -11,7 +11,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from nu import Context, Value
+from nu import Context, Literal
 from nu.ops import EqOp, GeOp, GtOp, IdCompOp, LeOp, LtOp, NeOp
 
 
@@ -103,14 +103,14 @@ async def test_eq_different(ctx):
 
 async def test_id_comp_same_object(ctx):
     obj = object()
-    assert await IdCompOp(Value(obj), Value(obj)).execute(ctx) is True
+    assert await IdCompOp(Literal(obj), Literal(obj)).execute(ctx) is True
 
 
 async def test_id_comp_equal_but_different(ctx):
     """Equal values but different objects."""
     a = [1, 2, 3]
     b = [1, 2, 3]
-    assert await IdCompOp(Value(a), Value(b)).execute(ctx) is False
+    assert await IdCompOp(Literal(a), Literal(b)).execute(ctx) is False
 
 
 # ---------------------------------------------------------------------------

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from nu import EMPTY, INVALID, Value
+from nu import EMPTY, INVALID, Literal
 from nu.terms.op import BinaryOp
 from nu.terms.sentinel import Empty, Invalid, is_empty, is_invalid, is_sentinel, propagate_special
 
@@ -152,30 +152,30 @@ class TestNAryOpSentinelPropagation:
         _TestAddOp.apply_called = False
 
     async def test_clean_operands_calls_apply(self, ctx):
-        result = await _TestAddOp(Value(3), Value(4)).execute(ctx)
+        result = await _TestAddOp(Literal(3), Literal(4)).execute(ctx)
         assert result == 7
         assert _TestAddOp.apply_called is True
 
     async def test_empty_operand_returns_invalid(self, ctx):
         """EMPTY child -> INVALID result, apply never called."""
-        result = await _TestAddOp(Value(EMPTY), Value(4)).execute(ctx)
+        result = await _TestAddOp(Literal(EMPTY), Literal(4)).execute(ctx)
         assert is_invalid(result)
         assert _TestAddOp.apply_called is False
 
     async def test_invalid_operand_returns_invalid(self, ctx):
         """INVALID child -> INVALID result, apply never called."""
-        result = await _TestAddOp(Value(3), Value(INVALID)).execute(ctx)
+        result = await _TestAddOp(Literal(3), Literal(INVALID)).execute(ctx)
         assert is_invalid(result)
         assert _TestAddOp.apply_called is False
 
     async def test_both_sentinels_returns_invalid(self, ctx):
-        result = await _TestAddOp(Value(EMPTY), Value(INVALID)).execute(ctx)
+        result = await _TestAddOp(Literal(EMPTY), Literal(INVALID)).execute(ctx)
         assert is_invalid(result)
         assert _TestAddOp.apply_called is False
 
     async def test_nested_sentinel_propagation(self, ctx):
         """Sentinel propagates through nested ops."""
-        inner = _TestAddOp(Value(EMPTY), Value(1))
-        outer = _TestAddOp(inner, Value(2))
+        inner = _TestAddOp(Literal(EMPTY), Literal(1))
+        outer = _TestAddOp(inner, Literal(2))
         result = await outer.execute(ctx)
         assert is_invalid(result)

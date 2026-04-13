@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from nu import Nu, Value
+from nu import Literal, Nu
 from nu.terms.op import (
     BinaryOp,
     NAryOp,
@@ -63,7 +63,7 @@ def test_op_wraps_str_literals():
 
 def test_op_preserves_nu_children():
     """Already-Nu children are not double-wrapped."""
-    v = Value(42)
+    v = Literal(42)
     op = _NegOp(v)
     # The child should be a Nu wrapping v, but v itself is preserved
     assert isinstance(op.operand, Nu)
@@ -88,20 +88,20 @@ def test_op_wraps_bool_before_int():
 
 
 def test_unary_operand():
-    op = _NegOp(Value(5))
+    op = _NegOp(Literal(5))
     assert op.operand is op.children[0]
     assert op.child_count == 1
 
 
 def test_binary_left_right():
-    op = _AddOp(Value(3), Value(4))
+    op = _AddOp(Literal(3), Literal(4))
     assert op.left is op.children[0]
     assert op.right is op.children[1]
     assert op.child_count == 2
 
 
 def test_ternary_first_second_third():
-    op = _ClampOp(Value(10), Value(0), Value(5))
+    op = _ClampOp(Literal(10), Literal(0), Literal(5))
     assert op.first is op.children[0]
     assert op.second is op.children[1]
     assert op.third is op.children[2]
@@ -109,7 +109,7 @@ def test_ternary_first_second_third():
 
 
 def test_nary_variable_children():
-    op = _SumOp(Value(1), Value(2), Value(3), Value(4))
+    op = _SumOp(Literal(1), Literal(2), Literal(3), Literal(4))
     assert op.child_count == 4
 
 
@@ -163,10 +163,10 @@ def test_ternary_is_op():
 
 
 def test_unary_repr():
-    r = repr(_NegOp(Value(5)))
+    r = repr(_NegOp(Literal(5)))
     assert "_NegOp" in r
 
 
 def test_binary_repr():
-    r = repr(_AddOp(Value(3), Value(4)))
+    r = repr(_AddOp(Literal(3), Literal(4)))
     assert "_AddOp" in r

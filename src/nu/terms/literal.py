@@ -1,8 +1,8 @@
-"""Value - irreducible atom.
+"""Literal - irreducible atom.
 
 Nu                          - the primitive
 └── RValue                  - evaluable expression
-    └── Value               - literal data (leaf Nu)
+    └── Literal             - literal data (leaf Nu)
 """
 
 from __future__ import annotations
@@ -18,18 +18,18 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Value",
+    "Literal",
 ]
 
 
-class Value(Interaction[T_co]):
+class Literal(Interaction[T_co]):
     """Irreducible atom. Holds a literal value.
 
-    Value is a leaf Nu with no children. It stores a Python object
+    Literal is a leaf Nu with no children. It stores a Python object
     directly and returns it on execute().
 
     Usage:
-        v = Value(42)
+        v = Literal(42)
         result = await v.execute(ctx)  # → 42
     """
 
@@ -46,8 +46,8 @@ class Value(Interaction[T_co]):
 
     @property
     def is_self_pure(self) -> bool:
-        """Values never have side effects."""
+        """Literals never have side effects."""
         return True
 
     def __repr__(self) -> str:
-        return f"Value({self._value!r})"
+        return f"Literal({self._value!r})"

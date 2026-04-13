@@ -1,7 +1,7 @@
 """Nu - core library for the Nu ecosystem.
 
 Subpackages:
-    terms/        -- algebra terms (Nu, Value, Ref, Op, Sentinel, Arg)
+    terms/        -- algebra terms (Nu, Literal, Ref, Op, Sentinel, Arg)
     context/      -- runtime resource container
     interface/    -- base Interface class and descriptors
     primitives/   -- primitive type interfaces (IntI, StrI, etc.)
@@ -228,7 +228,7 @@ from .terms import (
     TernaryOp,
     TupleArg,
     UnaryOp,
-    Value,
+    Literal,
     is_empty,
     is_invalid,
     is_sentinel,
@@ -464,7 +464,7 @@ __all__ = [
     "UnaryOp",
     "Unique",
     "UniqueOp",
-    "Value",
+    "Literal",
     "While",
     "XorOp",
     "Zip",

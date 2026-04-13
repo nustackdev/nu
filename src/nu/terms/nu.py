@@ -1,14 +1,14 @@
 """Nu - the primitive.
 
 Nu is the recursive unit of computation. A Nu is made of Nus.
-Both a leaf (Value(5)) and a full app are Nus.
+Both a leaf (Literal(5)) and a full app are Nus.
 
 Hierarchy:
     Nu[T_co]                - base: execute(context) -> T_co
     ├── LValue[T_co]        - addressable location (internal)
     │   └── Ref[T_co]       - typed pointer (see ref.py)
     └── RValue[T_co]        - evaluable expression (internal)
-        ├── Value[T_co]     - literal/computed data (see value.py)
+        ├── Literal[T_co]   - literal data (see literal.py)
         └── Op[T_co]        - operation (see op.py)
 """
 
@@ -36,7 +36,7 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
     """The primitive. Recursive unit of computation.
 
     Everything is a Nu:
-    - Values (literal data)
+    - Literals (literal data)
     - Refs (pointers to locations)
     - Operations (transformations)
 
@@ -83,4 +83,4 @@ class LValue(Nu[T_co], ABC):
 
 
 class RValue(Nu[T_co], ABC):
-    """Evaluable expression. Internal base for Value and Op."""
+    """Evaluable expression. Internal base for Literal and Op."""

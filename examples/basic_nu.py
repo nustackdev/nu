@@ -5,12 +5,12 @@ Shows the core pattern: build a tree, then evaluate it.
 
 import asyncio
 
-from nu import BinaryCalc, Context, Value
+from nu import BinaryCalc, Context, Literal
 from nu_debugger import print_tree
 
 
 # A leaf Nu that holds a number
-class Num(Value[float | int]):
+class Num(Literal[float | int]):
     pass
 
 

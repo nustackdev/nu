@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu import Value
+from nu import Literal
 from nu.ops import DelAttrOp, GetAttrOp, SetAttrOp
 
 
@@ -29,13 +29,13 @@ class Obj:
 
 async def test_get_attr(ctx):
     obj = Obj(name="alice")
-    assert await GetAttrOp(Value(obj), "name").execute(ctx) == "alice"
+    assert await GetAttrOp(Literal(obj), "name").execute(ctx) == "alice"
 
 
 async def test_get_attr_missing_raises(ctx):
     obj = Obj()
     with pytest.raises(AttributeError):
-        await GetAttrOp(Value(obj), "missing").execute(ctx)
+        await GetAttrOp(Literal(obj), "missing").execute(ctx)
 
 
 # ---------------------------------------------------------------------------
@@ -45,13 +45,13 @@ async def test_get_attr_missing_raises(ctx):
 
 async def test_set_attr(ctx):
     obj = Obj()
-    await SetAttrOp(Value(obj), "x", 42).execute(ctx)
+    await SetAttrOp(Literal(obj), "x", 42).execute(ctx)
     assert obj.x == 42  # type: ignore
 
 
 async def test_set_attr_overwrite(ctx):
     obj = Obj(x=1)
-    await SetAttrOp(Value(obj), "x", 2).execute(ctx)
+    await SetAttrOp(Literal(obj), "x", 2).execute(ctx)
     assert obj.x == 2  # type: ignore
 
 
@@ -62,13 +62,13 @@ async def test_set_attr_overwrite(ctx):
 
 async def test_del_attr(ctx):
     obj = Obj(x=1)
-    await DelAttrOp(Value(obj), "x").execute(ctx)
+    await DelAttrOp(Literal(obj), "x").execute(ctx)
     assert not hasattr(obj, "x")
 
 
 async def test_del_attr_missing_raises(ctx):
     obj = Obj()
     with pytest.raises(AttributeError):
-        await DelAttrOp(Value(obj), "missing").execute(ctx)
+        await DelAttrOp(Literal(obj), "missing").execute(ctx)
 
 

@@ -13,7 +13,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 from tests.conftest import FailingNu
 
-from nu import EMPTY, INVALID, Context, Value
+from nu import EMPTY, INVALID, Context, Literal
 from nu.ops import AndOp, BoolOp, NotOp, OrOp
 from nu.terms.sentinel import is_invalid, is_sentinel
 
@@ -68,7 +68,7 @@ async def test_bool_empty_string(ctx):
 
 
 async def test_bool_nonempty_list(ctx):
-    assert await BoolOp(Value([1, 2])).execute(ctx) is True
+    assert await BoolOp(Literal([1, 2])).execute(ctx) is True
 
 
 # ---------------------------------------------------------------------------
@@ -93,19 +93,19 @@ async def test_and_right_falsy(ctx):
 
 async def test_and_short_circuit_skips_right(ctx):
     """Left is falsy -> right is never evaluated."""
-    result = await AndOp(Value(0), FailingNu()).execute(ctx)
+    result = await AndOp(Literal(0), FailingNu()).execute(ctx)
     assert result == 0
 
 
 async def test_and_sentinel_left(ctx):
     """EMPTY left -> INVALID, right not evaluated."""
-    result = await AndOp(Value(EMPTY), FailingNu()).execute(ctx)
+    result = await AndOp(Literal(EMPTY), FailingNu()).execute(ctx)
     assert is_sentinel(result)
 
 
 async def test_and_sentinel_right(ctx):
     """Clean left, INVALID right -> INVALID."""
-    result = await AndOp(Value(3), Value(INVALID)).execute(ctx)
+    result = await AndOp(Literal(3), Literal(INVALID)).execute(ctx)
     assert is_invalid(result)
 
 
@@ -131,17 +131,17 @@ async def test_or_both_falsy(ctx):
 
 async def test_or_short_circuit_skips_right(ctx):
     """Left is truthy -> right is never evaluated."""
-    result = await OrOp(Value(3), FailingNu()).execute(ctx)
+    result = await OrOp(Literal(3), FailingNu()).execute(ctx)
     assert result == 3
 
 
 async def test_or_sentinel_left(ctx):
     """EMPTY left -> INVALID, right not evaluated."""
-    result = await OrOp(Value(EMPTY), FailingNu()).execute(ctx)
+    result = await OrOp(Literal(EMPTY), FailingNu()).execute(ctx)
     assert is_sentinel(result)
 
 
 async def test_or_sentinel_right(ctx):
     """Falsy left, INVALID right -> INVALID."""
-    result = await OrOp(Value(0), Value(INVALID)).execute(ctx)
+    result = await OrOp(Literal(0), Literal(INVALID)).execute(ctx)
     assert is_invalid(result)

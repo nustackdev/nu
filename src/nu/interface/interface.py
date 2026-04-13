@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Nu, RValue, Value
+from nu.terms import Literal, Nu, RValue
 from nu.terms.type_vars import T_co
 
 
@@ -89,14 +89,14 @@ class TypedNu(RValue[T_co]):
 
     Leaf interfaces (IntI, DictI, etc) inherit this alongside Interface
     so they can participate in Nu tree construction:
-        IntI(AddOp(a, b)) + 1  →  AddOp(IntI(AddOp(a, b)), Value(1))
+        IntI(AddOp(a, b)) + 1  →  AddOp(IntI(AddOp(a, b)), Literal(1))
     """
 
     def __init__(self, source: object = None, *args: object) -> None:
         """Initialize with a literal or Nu source.
 
         Args:
-            source: Python literal (auto-wrapped in Value) or a Nu.
+            source: Python literal (auto-wrapped in Literal) or a Nu.
                     None is valid as a literal for NoneI.
             *args: Extra positional args forwarded through cooperative MRO
                    (e.g. parent ref passed by shapes.Ref.__init__).
@@ -104,11 +104,11 @@ class TypedNu(RValue[T_co]):
         if isinstance(source, Nu):
             super().__init__(source, *args)
         else:
-            super().__init__(Value(source), *args)
+            super().__init__(Literal(source), *args)
 
     @property
     def source(self) -> object:
-        """The wrapped source - either a Value or another Nu."""
+        """The wrapped source - either a Literal or another Nu."""
         return self.children[0] if self.children else None
 
     async def execute(self, ctx: Context) -> T_co:

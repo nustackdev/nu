@@ -37,7 +37,7 @@ from .sentinel import (
     propagate_special,
 )
 from .type_vars import T_co
-from .value import Value
+from .literal import Literal
 
 
 __all__ = [
@@ -74,7 +74,7 @@ __all__ = [
     "TupleArg",
     "UnaryOp",
     # Terms
-    "Value",
+    "Literal",
     "is_empty",
     "is_invalid",
     "is_sentinel",
