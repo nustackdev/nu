@@ -1,5 +1,6 @@
 """Nu terms - building blocks of the algebra."""
 
+from .effect import Direction, TrackedEffect, is_pure, tracked_effects
 from .interaction import Interaction
 from .arg import (
     Arg,
@@ -41,6 +42,7 @@ from .literal import Literal
 
 
 __all__ = [
+    "Direction",
     "EMPTY",
     "INVALID",
     # Args
@@ -73,10 +75,13 @@ __all__ = [
     "TernaryOp",
     "TupleArg",
     "UnaryOp",
+    "TrackedEffect",
     # Terms
     "Literal",
     "is_empty",
     "is_invalid",
+    "is_pure",
     "is_sentinel",
     "propagate_special",
+    "tracked_effects",
 ]

@@ -30,7 +30,7 @@ Composition pattern:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from .interaction import Interaction
 from .nu import Nu
@@ -40,6 +40,7 @@ from .type_vars import T_co
 
 if TYPE_CHECKING:
     from ..context import Context
+    from .effect import Direction
 
 
 __all__ = [  # noqa: RUF022
@@ -70,7 +71,13 @@ class Op(Interaction[T_co], ABC):
     Extend NAryOp for operand-based ops with sentinel propagation.
     Extend ScopedOp for resource lifecycle (before/after hooks).
     Extend Op directly for custom execution.
+
+    Effect tracking:
+        overrides maps child position to Direction for effect analysis.
+        Default empty = all children use default rules (Ref -> READ).
     """
+
+    overrides: ClassVar[dict[int, Direction]] = {}
 
     def __init__(self, *children: object) -> None:
         """Initialize with operands. Python literals are wrapped into Values."""
