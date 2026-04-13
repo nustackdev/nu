@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from nu.terms import Calculation
+from nu.terms import Op
 
 
 if TYPE_CHECKING:
@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 
-class Seq(Calculation):
+class Seq(Op):
     """Execute children sequentially.
 
     Children: ``[*children]``
@@ -36,7 +36,7 @@ class Seq(Calculation):
             await child.execute(ctx)
 
 
-class If(Calculation):
+class If(Op):
     """Conditional execution.
 
     Children: ``[condition, then_branch, else_branch?]``
@@ -60,7 +60,7 @@ class If(Calculation):
             await self.children[2].execute(ctx)
 
 
-class While(Calculation):
+class While(Op):
     """Loop while condition is truthy.
 
     Children: ``[condition, body]``
@@ -74,7 +74,7 @@ class While(Calculation):
             await self.children[1].execute(ctx)
 
 
-class DoWhile(Calculation):
+class DoWhile(Op):
     """Execute body first, then loop while condition is truthy.
 
     Children: ``[condition, body]``
@@ -89,7 +89,7 @@ class DoWhile(Calculation):
             await self.children[1].execute(ctx)
 
 
-class Forever(Calculation):
+class Forever(Op):
     """Execute body indefinitely.
 
     Children: ``[body]``
@@ -103,7 +103,7 @@ class Forever(Calculation):
             await self.children[0].execute(ctx)
 
 
-class Switch(Calculation):
+class Switch(Op):
     """Multi-way branching based on a selector value.
 
     Children: ``[selector, *case_values, default?]``

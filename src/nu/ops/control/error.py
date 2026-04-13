@@ -6,7 +6,7 @@ import asyncio
 from typing import TYPE_CHECKING, Any
 
 from nu.primitives import NoneI
-from nu.terms import Calculation, Command
+from nu.terms import Op
 
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class TryCatch(Calculation):
+class TryCatch(Op):
     """Try/catch/finally error handling.
 
     Children: ``[body, catch, finally_]``
@@ -76,7 +76,7 @@ class TryCatch(Calculation):
             raise caught
 
 
-class Retry(Command):
+class Retry(Op):
     """Retry child on failure with exponential backoff.
 
     Children: ``[body, max_attempts, delay, backoff,
@@ -154,7 +154,7 @@ class Retry(Command):
                 delay *= backoff
 
 
-class Assert(Command):
+class Assert(Op):
     """Validate a condition during execution.
 
     Children: ``[condition, message]``

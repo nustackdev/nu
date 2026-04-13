@@ -5,7 +5,7 @@ ToIntOp, ToFloatOp, ToBoolOp, ToStrOp, ToBytesOp, ToListOp, ToSetOp, ToTupleOp
 
 from __future__ import annotations
 
-from nu.terms import UnaryCalc
+from nu.terms import UnaryOp
 
 
 __all__ = [
@@ -25,7 +25,7 @@ __all__ = [
 # =============================================================================
 
 
-class ToIntOp(UnaryCalc[int]):
+class ToIntOp(UnaryOp[int]):
     """Convert value to integer."""
 
     def apply(self, operand: object) -> int:
@@ -33,7 +33,7 @@ class ToIntOp(UnaryCalc[int]):
         return int(operand)  # type: ignore
 
 
-class ToFloatOp(UnaryCalc[float]):
+class ToFloatOp(UnaryOp[float]):
     """Convert value to float."""
 
     def apply(self, operand: object) -> float:
@@ -41,7 +41,7 @@ class ToFloatOp(UnaryCalc[float]):
         return float(operand)  # type: ignore
 
 
-class ToBoolOp(UnaryCalc[bool]):
+class ToBoolOp(UnaryOp[bool]):
     """Convert value to boolean."""
 
     def apply(self, operand: object) -> bool:
@@ -49,7 +49,7 @@ class ToBoolOp(UnaryCalc[bool]):
         return bool(operand)
 
 
-class ToStrOp(UnaryCalc[str]):
+class ToStrOp(UnaryOp[str]):
     """Convert value to string."""
 
     def apply(self, operand: object) -> str:
@@ -57,7 +57,7 @@ class ToStrOp(UnaryCalc[str]):
         return str(operand)
 
 
-class ToBytesOp(UnaryCalc[bytes]):
+class ToBytesOp(UnaryOp[bytes]):
     """Convert value to bytes.
 
     Supports:
@@ -93,7 +93,7 @@ class ToBytesOp(UnaryCalc[bytes]):
 # =============================================================================
 
 
-class ToListOp[T](UnaryCalc[list[T]]):
+class ToListOp[T](UnaryOp[list[T]]):
     """Convert value to list."""
 
     def apply(self, operand: object) -> list[T]:
@@ -101,7 +101,7 @@ class ToListOp[T](UnaryCalc[list[T]]):
         return list(operand)  # type: ignore
 
 
-class ToSetOp[T](UnaryCalc[set[T]]):
+class ToSetOp[T](UnaryOp[set[T]]):
     """Convert value to set."""
 
     def apply(self, operand: object) -> set[T]:
@@ -109,7 +109,7 @@ class ToSetOp[T](UnaryCalc[set[T]]):
         return set(operand)  # type: ignore
 
 
-class ToTupleOp[*Ts](UnaryCalc[tuple[*Ts]]):
+class ToTupleOp[*Ts](UnaryOp[tuple[*Ts]]):
     """Convert value to tuple."""
 
     def apply(self, operand: object) -> tuple[*Ts]:

@@ -15,7 +15,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any
 
-from nu.terms import Calculation
+from nu.terms import Op
 from nu.utils import ensure_nu
 
 from ..reactive import ChangeOp  # noqa: TC001 - runtime dependency
@@ -33,7 +33,7 @@ __all__ = [
 ]
 
 
-class React(Calculation):
+class React(Op):
     """Wait for a single change, then execute body once.
 
     Children layout: [change, body?, changed_key?]
@@ -86,7 +86,7 @@ class React(Calculation):
             sub.close()
 
 
-class ReactForever(Calculation):
+class ReactForever(Op):
     """Execute body on every change (runs forever).
 
     Children layout: [change, body, changed_key?]
@@ -134,7 +134,7 @@ class ReactForever(Calculation):
             sub.close()
 
 
-class ReactWhile(Calculation):
+class ReactWhile(Op):
     """Execute body on each change while condition is truthy.
 
     Children layout: [change, condition, body, changed_key?]

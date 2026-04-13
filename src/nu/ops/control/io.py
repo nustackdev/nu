@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from nu.terms import Command
+from nu.terms import Op
 
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-class Print(Command):
+class Print(Op):
     """Print messages to stdout.
 
     Children: ``[message, *values]``
@@ -40,7 +40,7 @@ class Print(Command):
         print(" ".join(parts))  # noqa: T201
 
 
-class Log(Command):
+class Log(Op):
     """Structured logging with configurable level.
 
     Children: ``[level, logger_name, message, *values]``
@@ -69,7 +69,7 @@ class Log(Command):
         getattr(logger, level)(message)
 
 
-class Debug(Command):
+class Debug(Op):
     """Quick debug output for development.
 
     Children: ``[prefix, labels, *values]``

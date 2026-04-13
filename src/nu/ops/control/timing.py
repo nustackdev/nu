@@ -6,7 +6,7 @@ import asyncio
 import time
 from typing import TYPE_CHECKING
 
-from nu.terms import Calculation, Command
+from nu.terms import Op
 
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 
-class Timed(Command):
+class Timed(Op):
     """Time each child and print results.
 
     Children: ``[label, *children]``
@@ -55,7 +55,7 @@ class Timed(Command):
         print(f"  {'total':<42} {total * 1000:>8.1f}ms")  # noqa: T201
 
 
-class Delay(Command):
+class Delay(Op):
     """Pause execution, then optionally run a child.
 
     Children: ``[delay, body?]``
@@ -74,7 +74,7 @@ class Delay(Command):
             await self.children[1].execute(ctx)
 
 
-class Timeout(Calculation):
+class Timeout(Op):
     """Execute a child with a time limit.
 
     Children: ``[timeout, body, on_timeout?]``
@@ -102,7 +102,7 @@ class Timeout(Calculation):
                 await self.children[2].execute(ctx)
 
 
-class Throttle(Command):
+class Throttle(Op):
     """Rate-limit execution to at most once per interval.
 
     Children: ``[interval, body?]``
@@ -126,7 +126,7 @@ class Throttle(Command):
             await self.children[1].execute(ctx)
 
 
-class Debounce(Command):
+class Debounce(Op):
     """Wait for a quiet period before executing.
 
     Children: ``[delay, body?]``

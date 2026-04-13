@@ -72,18 +72,3 @@ async def test_del_attr_missing_raises(ctx):
         await DelAttrOp(Value(obj), "missing").execute(ctx)
 
 
-# ---------------------------------------------------------------------------
-# Purity
-# ---------------------------------------------------------------------------
-
-
-def test_get_attr_is_pure():
-    assert GetAttrOp(Value(None), "x").is_self_pure is True
-
-
-def test_set_attr_is_impure():
-    assert SetAttrOp(Value(None), "x", 1).is_self_pure is False
-
-
-def test_del_attr_is_impure():
-    assert DelAttrOp(Value(None), "x").is_self_pure is False

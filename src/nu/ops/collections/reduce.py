@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from nu.terms import INVALID, Sentinel, UnaryCalc
+from nu.terms import INVALID, Sentinel, UnaryOp
 
 
 __all__ = [
@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 
-class SumOp[ResultT](UnaryCalc[ResultT]):
+class SumOp[ResultT](UnaryOp[ResultT]):
     """Sum of sequence elements: sum(seq)."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -36,7 +36,7 @@ class SumOp[ResultT](UnaryCalc[ResultT]):
             return INVALID
 
 
-class MinOp[ResultT](UnaryCalc[ResultT]):
+class MinOp[ResultT](UnaryOp[ResultT]):
     """Minimum element: min(seq)."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -49,7 +49,7 @@ class MinOp[ResultT](UnaryCalc[ResultT]):
             return INVALID
 
 
-class MaxOp[ResultT](UnaryCalc[ResultT]):
+class MaxOp[ResultT](UnaryOp[ResultT]):
     """Maximum element: max(seq)."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -62,7 +62,7 @@ class MaxOp[ResultT](UnaryCalc[ResultT]):
             return INVALID
 
 
-class AnyOp(UnaryCalc[bool]):
+class AnyOp(UnaryOp[bool]):
     """Any truthy element: any(seq)."""
 
     def apply(self, operand: object) -> bool:
@@ -72,7 +72,7 @@ class AnyOp(UnaryCalc[bool]):
         return any(operand)
 
 
-class AllOp(UnaryCalc[bool]):
+class AllOp(UnaryOp[bool]):
     """All truthy elements: all(seq)."""
 
     def apply(self, operand: object) -> bool:

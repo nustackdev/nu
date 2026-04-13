@@ -1,5 +1,6 @@
 """Nu terms - building blocks of the algebra."""
 
+from .interaction import Interaction
 from .arg import (
     Arg,
     BoolArg,
@@ -16,23 +17,11 @@ from .arg import (
 )
 from .nu import LValue, Nu, RValue
 from .op import (
-    BinaryCalc,
-    BinaryCmd,
     BinaryOp,
-    Calculation,
-    Command,
-    NAryCalc,
-    NAryCmd,
     NAryOp,
     Op,
-    ScopedCalc,
-    ScopedCmd,
     ScopedOp,
-    TernaryCalc,
-    TernaryCmd,
     TernaryOp,
-    UnaryCalc,
-    UnaryCmd,
     UnaryOp,
 )
 from .ref import Ref
@@ -56,25 +45,18 @@ __all__ = [
     "INVALID",
     # Args
     "Arg",
-    "BinaryCalc",
-    "BinaryCmd",
     "BinaryOp",
     "BoolArg",
     "BytesArg",
-    # Purity
-    "Calculation",
-    "Command",
     "DictArg",
     "Empty",
     "FloatArg",
     "FrozenSetArg",
     "IntArg",
+    "Interaction",
     "Invalid",
     "LValue",
     "ListArg",
-    # Convenience: purity + arity
-    "NAryCalc",
-    "NAryCmd",
     "NAryOp",
     "NoneArg",
     # Core
@@ -82,20 +64,14 @@ __all__ = [
     "Op",
     "RValue",
     "Ref",
-    "ScopedCalc",
-    "ScopedCmd",
     "ScopedOp",
     # Sentinels
     "Sentinel",
     "SetArg",
     "StrArg",
     "T_co",
-    "TernaryCalc",
-    "TernaryCmd",
     "TernaryOp",
     "TupleArg",
-    "UnaryCalc",
-    "UnaryCmd",
     "UnaryOp",
     # Terms
     "Value",

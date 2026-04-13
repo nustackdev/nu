@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .nu import RValue
+from .interaction import Interaction
 from .type_vars import T_co
 
 
@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 
-class Value(RValue[T_co]):
+class Value(Interaction[T_co]):
     """Irreducible atom. Holds a literal value.
 
     Value is a leaf Nu with no children. It stores a Python object

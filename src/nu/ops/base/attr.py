@@ -7,7 +7,7 @@ DelAttrOp: Delete an attribute from an instance
 
 from __future__ import annotations
 
-from nu.terms import BinaryCalc, BinaryCmd, TernaryCmd
+from nu.terms import BinaryOp, TernaryOp
 
 
 __all__ = [
@@ -22,7 +22,7 @@ __all__ = [
 # =============================================================================
 
 
-class GetAttrOp[ResultT](BinaryCalc[ResultT]):
+class GetAttrOp[ResultT](BinaryOp[ResultT]):
     """Get an attribute from an instance.
 
     Both instance and attr_name can be Terms for dynamic attribute access.
@@ -37,11 +37,11 @@ class GetAttrOp[ResultT](BinaryCalc[ResultT]):
         return getattr(left, str(right))
 
 
-class SetAttrOp(TernaryCmd[None]):
+class SetAttrOp(TernaryOp[None]):
     """Set an attribute on an instance.
 
     All arguments can be Terms for dynamic attribute setting.
-    This is a Command (impure) since it mutates state.
+    Mutates state.
 
     Example:
         >>> SetAttrOp(obj, "name", "value")
@@ -52,11 +52,11 @@ class SetAttrOp(TernaryCmd[None]):
         setattr(first, str(second), third)
 
 
-class DelAttrOp(BinaryCmd[None]):
+class DelAttrOp(BinaryOp[None]):
     """Delete an attribute from an instance.
 
     Both instance and attr_name can be Terms for dynamic attribute deletion.
-    This is a Command (impure) since it mutates state.
+    Mutates state.
 
     Example:
         >>> DelAttrOp(obj, "cached_value")

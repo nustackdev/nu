@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator
 from itertools import islice
 
-from nu.terms import INVALID, BinaryCalc, Sentinel
+from nu.terms import INVALID, BinaryOp, Sentinel
 
 
 __all__ = [
@@ -14,7 +14,7 @@ __all__ = [
 ]
 
 
-class TakeOp(BinaryCalc[Iterator]):
+class TakeOp(BinaryOp[Iterator]):
     """Take first N elements: islice(iterable, n) -> lazy iterator."""
 
     def apply(self, left: object, right: object) -> Iterator | Sentinel:
@@ -27,7 +27,7 @@ class TakeOp(BinaryCalc[Iterator]):
             return INVALID
 
 
-class DropOp(BinaryCalc[Iterator]):
+class DropOp(BinaryOp[Iterator]):
     """Drop first N elements: islice(iterable, n, None) -> lazy iterator."""
 
     def apply(self, left: object, right: object) -> Iterator | Sentinel:

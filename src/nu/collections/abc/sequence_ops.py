@@ -1,18 +1,8 @@
-"""Sequence ops - operations (pure) + commands (impure).
+"""Sequence ops.
 
-Operations:
-    FirstOp: First element (seq[0])
-    LastOp: Last element (seq[-1])
-    IndexOfOp: Find index of value (seq.index(value))
-    CountOp: Count occurrences (seq.count(value))
-
-Commands:
-    AppendCmd: Append item to end of sequence
-    ExtendCmd: Extend sequence with iterable
-    InsertCmd: Insert item at index
-    PopCmd: Remove and return item at index
-    RemoveValueCmd: Remove first occurrence of value
-    ReverseCmd: Reverse sequence in-place
+FirstOp, LastOp, IndexOfOp, CountOp
+AppendCmd, ExtendCmd, InsertCmd
+PopCmd, RemoveValueCmd, ReverseCmd
 """
 
 from __future__ import annotations
@@ -21,12 +11,10 @@ from collections.abc import Iterable, MutableSequence, Sequence
 
 from nu.terms import (
     INVALID,
-    BinaryCalc,
-    BinaryCmd,
+    BinaryOp,
     Sentinel,
-    TernaryCmd,
-    UnaryCalc,
-    UnaryCmd,
+    TernaryOp,
+    UnaryOp,
 )
 
 
@@ -45,11 +33,11 @@ __all__ = [
 
 
 # =============================================================================
-# OPERATIONS (pure)
+# SEQUENCE READS
 # =============================================================================
 
 
-class FirstOp[ResultT](UnaryCalc[ResultT]):
+class FirstOp[ResultT](UnaryOp[ResultT]):
     """First element: seq[0]. Returns Invalid if empty."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -61,7 +49,7 @@ class FirstOp[ResultT](UnaryCalc[ResultT]):
         return operand[0]  # type: ignore
 
 
-class LastOp[ResultT](UnaryCalc[ResultT]):
+class LastOp[ResultT](UnaryOp[ResultT]):
     """Last element: seq[-1]. Returns Invalid if empty."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -73,7 +61,7 @@ class LastOp[ResultT](UnaryCalc[ResultT]):
         return operand[-1]  # type: ignore
 
 
-class IndexOfOp(BinaryCalc[int]):
+class IndexOfOp(BinaryOp[int]):
     """Find index of value: seq.index(value). Returns Invalid if not found."""
 
     def apply(self, left: object, right: object) -> int | Sentinel:
@@ -86,7 +74,7 @@ class IndexOfOp(BinaryCalc[int]):
             return INVALID
 
 
-class CountOp(BinaryCalc[int]):
+class CountOp(BinaryOp[int]):
     """Count occurrences: seq.count(value)."""
 
     def apply(self, left: object, right: object) -> int | Sentinel:
@@ -97,11 +85,11 @@ class CountOp(BinaryCalc[int]):
 
 
 # =============================================================================
-# COMMANDS (impure)
+# SEQUENCE MUTATIONS
 # =============================================================================
 
 
-class AppendCmd[T](BinaryCmd[None]):
+class AppendCmd[T](BinaryOp[None]):
     """Append item to end: seq.append(value). Returns None (mutates in-place)."""
 
     def apply(self, left: object, right: object) -> None | Sentinel:
@@ -112,7 +100,7 @@ class AppendCmd[T](BinaryCmd[None]):
         return None
 
 
-class InsertCmd[T](TernaryCmd[None]):
+class InsertCmd[T](TernaryOp[None]):
     """Insert item at index: seq.insert(index, value). Returns None (mutates in-place)."""
 
     def apply(self, first: object, second: object, third: object) -> None | Sentinel:
@@ -125,7 +113,7 @@ class InsertCmd[T](TernaryCmd[None]):
         return None
 
 
-class PopCmd[T](BinaryCmd[T]):
+class PopCmd[T](BinaryOp[T]):
     """Pop item at index: seq.pop(index). Returns popped value.
 
     Default index is -1 (last item).
@@ -143,7 +131,7 @@ class PopCmd[T](BinaryCmd[T]):
             return INVALID
 
 
-class ExtendCmd[T](BinaryCmd[None]):
+class ExtendCmd[T](BinaryOp[None]):
     """Extend sequence with iterable: seq.extend(other). Returns None (mutates in-place)."""
 
     def apply(self, left: object, right: object) -> None | Sentinel:
@@ -156,7 +144,7 @@ class ExtendCmd[T](BinaryCmd[None]):
         return None
 
 
-class RemoveValueCmd[T](BinaryCmd[None]):
+class RemoveValueCmd[T](BinaryOp[None]):
     """Remove first occurrence of value: seq.remove(value). Returns None, or INVALID if not found."""
 
     def apply(self, left: object, right: object) -> None | Sentinel:
@@ -170,7 +158,7 @@ class RemoveValueCmd[T](BinaryCmd[None]):
         return None
 
 
-class ReverseCmd(UnaryCmd[None]):
+class ReverseCmd(UnaryOp[None]):
     """Reverse sequence in-place: seq.reverse(). Returns None (mutates in-place)."""
 
     def apply(self, operand: object) -> None | Sentinel:

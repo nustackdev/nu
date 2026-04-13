@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from nu.terms import Calculation
+from nu.terms import Op
 
 
 if TYPE_CHECKING:
@@ -34,7 +34,7 @@ __all__ = [
 ]
 
 
-class Filter(Calculation):
+class Filter(Op):
     """Execute body for each item where condition is truthy.
 
     Children: ``[items, condition, body, item_key]``
@@ -62,7 +62,7 @@ class Filter(Calculation):
                 await body.execute(ctx)
 
 
-class Map(Calculation):
+class Map(Op):
     """Transform each item via a Nu expression, collect results.
 
     Children: ``[items, transform, item_key, output_key]``
@@ -93,7 +93,7 @@ class Map(Calculation):
         ctx.attrs[output_key] = results
 
 
-class TakeWhile(Calculation):
+class TakeWhile(Op):
     """Execute body while condition holds. Stop on first false.
 
     Children: ``[items, condition, body, item_key]``
@@ -122,7 +122,7 @@ class TakeWhile(Calculation):
             await body.execute(ctx)
 
 
-class Unique(Calculation):
+class Unique(Op):
     """Execute body for each item with a unique key.
 
     Children: ``[items, key, body, item_key]``
@@ -153,7 +153,7 @@ class Unique(Calculation):
                 await body.execute(ctx)
 
 
-class Find(Calculation):
+class Find(Op):
     """Find first item where condition is truthy.
 
     Children: ``[items, condition, item_key, output_key]``
@@ -185,7 +185,7 @@ class Find(Calculation):
                 return
 
 
-class FindIndex(Calculation):
+class FindIndex(Op):
     """Find index of first item where condition is truthy.
 
     Children: ``[items, condition, item_key, output_key]``
@@ -217,7 +217,7 @@ class FindIndex(Calculation):
                 return
 
 
-class GroupBy(Calculation):
+class GroupBy(Op):
     """Group items by a Nu key, execute body per group.
 
     Children: ``[items, key, body, item_key, group_key]``
@@ -256,7 +256,7 @@ class GroupBy(Calculation):
             await body.execute(ctx)
 
 
-class Partition(Calculation):
+class Partition(Op):
     """Split items into matches and rest by a Nu condition.
 
     Children: ``[items, condition, item_key, matches_key, rest_key]``
@@ -295,7 +295,7 @@ class Partition(Calculation):
         ctx.attrs[rest_key] = rest_list
 
 
-class ToDict(Calculation):
+class ToDict(Op):
     """Build a dict from items using Nu key and value expressions.
 
     Children: ``[items, key, value, item_key, output_key]``

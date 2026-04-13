@@ -16,7 +16,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator, Sequence
 from itertools import chain as itertools_chain
 
-from nu.terms import INVALID, BinaryCalc, Sentinel, TernaryCalc, UnaryCalc
+from nu.terms import INVALID, BinaryOp, Sentinel, TernaryOp, UnaryOp
 
 
 __all__ = [
@@ -29,7 +29,7 @@ __all__ = [
 ]
 
 
-class SortedOp[ResultT](BinaryCalc[list[ResultT]]):
+class SortedOp[ResultT](BinaryOp[list[ResultT]]):
     """Sorted list: sorted(seq, reverse=reverse). Terminal — inherently eager."""
 
     def apply(self, left: object, right: object) -> list[ResultT] | Sentinel:
@@ -45,7 +45,7 @@ class SortedOp[ResultT](BinaryCalc[list[ResultT]]):
         return f"SortedOp({self._children[0]!r}, reverse={self._children[1]!r})"
 
 
-class ReversedOp[ResultT](UnaryCalc[Iterator[ResultT]]):
+class ReversedOp[ResultT](UnaryOp[Iterator[ResultT]]):
     """Reversed sequence: reversed(seq) -> lazy iterator."""
 
     def apply(self, operand: object) -> Iterator[ResultT]:
@@ -55,7 +55,7 @@ class ReversedOp[ResultT](UnaryCalc[Iterator[ResultT]]):
         return reversed(operand)  # type: ignore
 
 
-class PluckOp[T](BinaryCalc[Iterator[T]]):
+class PluckOp[T](BinaryOp[Iterator[T]]):
     """Extract field from each element: (x[key] for x in seq) -> lazy iterator.
 
     Both operand and key are resolved as terms at execution time.
@@ -79,7 +79,7 @@ class PluckOp[T](BinaryCalc[Iterator[T]]):
             return INVALID
 
 
-class FilterByOp[T](TernaryCalc[Iterator[T]]):
+class FilterByOp[T](TernaryOp[Iterator[T]]):
     """Filter by field value: (x for x in seq if x[key] == value) -> lazy iterator.
 
     All three operands (collection, field, value) are resolved as terms
@@ -105,7 +105,7 @@ class FilterByOp[T](TernaryCalc[Iterator[T]]):
             return INVALID
 
 
-class FlattenOp(UnaryCalc[Iterator]):
+class FlattenOp(UnaryOp[Iterator]):
     """Flatten one level: chain.from_iterable(seq) -> lazy iterator."""
 
     def apply(self, operand: object) -> Iterator | Sentinel:
@@ -118,7 +118,7 @@ class FlattenOp(UnaryCalc[Iterator]):
             return INVALID
 
 
-class UniqueOp(UnaryCalc[Iterator]):
+class UniqueOp(UnaryOp[Iterator]):
     """Unique elements preserving order -> lazy iterator."""
 
     def apply(self, operand: object) -> Iterator | Sentinel:

@@ -8,7 +8,7 @@ ContainsOp: Containment check (item in container)
 
 from __future__ import annotations
 
-from nu.terms import BinaryCalc, NAryCalc, UnaryCalc
+from nu.terms import BinaryOp, NAryOp, UnaryOp
 
 
 __all__ = [
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class LenOp(UnaryCalc[int]):
+class LenOp(UnaryOp[int]):
     """Length: len(operand)."""
 
     def apply(self, operand: object) -> int:
@@ -27,7 +27,7 @@ class LenOp(UnaryCalc[int]):
         return len(operand)  # type: ignore
 
 
-class AtOp[ResultT](BinaryCalc[ResultT]):
+class AtOp[ResultT](BinaryOp[ResultT]):
     """Subscript access: left[right]."""
 
     def apply(self, left: object, right: object) -> ResultT:
@@ -35,7 +35,7 @@ class AtOp[ResultT](BinaryCalc[ResultT]):
         return left[right]  # type: ignore
 
 
-class SliceOp[ResultT](NAryCalc[ResultT]):
+class SliceOp[ResultT](NAryOp[ResultT]):
     """Slice access: operand[start:stop:step]."""
 
     def apply(self, *args: object) -> ResultT:
@@ -44,7 +44,7 @@ class SliceOp[ResultT](NAryCalc[ResultT]):
         return operand[slice(start, stop, step)]  # type: ignore
 
 
-class ContainsOp(BinaryCalc[bool]):
+class ContainsOp(BinaryOp[bool]):
     """Containment check: right in left."""
 
     def apply(self, left: object, right: object) -> bool:

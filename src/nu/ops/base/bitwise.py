@@ -9,7 +9,7 @@ Use .bitand(), .bitor(), .bitnot() methods instead.
 
 from __future__ import annotations
 
-from nu.terms import BinaryCalc, UnaryCalc
+from nu.terms import BinaryOp, UnaryOp
 
 
 __all__ = [
@@ -27,7 +27,7 @@ __all__ = [
 # =============================================================================
 
 
-class BitwiseNotOp[ResultT](UnaryCalc[ResultT]):
+class BitwiseNotOp[ResultT](UnaryOp[ResultT]):
     """Bitwise NOT: ~operand (two's complement).
 
     Note: Python's ~ operator is blocked in traits.
@@ -44,7 +44,7 @@ class BitwiseNotOp[ResultT](UnaryCalc[ResultT]):
 # =============================================================================
 
 
-class BitwiseAndOp[ResultT](BinaryCalc[ResultT]):
+class BitwiseAndOp[ResultT](BinaryOp[ResultT]):
     """Bitwise AND: left & right.
 
     Note: Distinct from AndOp (logical AND).
@@ -56,7 +56,7 @@ class BitwiseAndOp[ResultT](BinaryCalc[ResultT]):
         return left & right  # type: ignore
 
 
-class BitwiseOrOp[ResultT](BinaryCalc[ResultT]):
+class BitwiseOrOp[ResultT](BinaryOp[ResultT]):
     """Bitwise OR: left | right.
 
     Note: Distinct from OrOp (logical OR).
@@ -68,7 +68,7 @@ class BitwiseOrOp[ResultT](BinaryCalc[ResultT]):
         return left | right  # type: ignore
 
 
-class XorOp[ResultT](BinaryCalc[ResultT]):
+class XorOp[ResultT](BinaryOp[ResultT]):
     """Bitwise XOR: left ^ right."""
 
     def apply(self, left: object, right: object) -> ResultT:
@@ -76,7 +76,7 @@ class XorOp[ResultT](BinaryCalc[ResultT]):
         return left ^ right  # type: ignore
 
 
-class LShiftOp[ResultT](BinaryCalc[ResultT]):
+class LShiftOp[ResultT](BinaryOp[ResultT]):
     """Left shift: left << right."""
 
     def apply(self, left: object, right: object) -> ResultT:
@@ -84,7 +84,7 @@ class LShiftOp[ResultT](BinaryCalc[ResultT]):
         return left << right  # type: ignore
 
 
-class RShiftOp[ResultT](BinaryCalc[ResultT]):
+class RShiftOp[ResultT](BinaryOp[ResultT]):
     """Right shift: left >> right."""
 
     def apply(self, left: object, right: object) -> ResultT:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Calculation, Op, Sentinel
+from nu.terms import Op, Sentinel
 
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ __all__ = [
 ]
 
 
-class ServiceGetOp[T](Calculation, Op[T | Sentinel]):
+class ServiceGetOp[T](Op[T | Sentinel]):
     """Read service from context: ctx[service_type]."""
 
     def __init__(self, ref: ServiceRef[T]) -> None:
@@ -31,7 +31,7 @@ class ServiceGetOp[T](Calculation, Op[T | Sentinel]):
         return ctx[self._ref.service_type]
 
 
-class ServiceExistsOp(Calculation, Op[bool]):
+class ServiceExistsOp(Op[bool]):
     """Check if service type exists in context."""
 
     def __init__(self, ref: ServiceRef) -> None:

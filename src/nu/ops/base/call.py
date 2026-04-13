@@ -10,7 +10,6 @@ All variants support:
 - Args/kwargs as Terms or literals
 - Sentinel propagation (INVALID on sentinel operands)
 - Auto-await for async callables/methods
-- Purity: Op = pure, Cmd = impure
 """
 
 from __future__ import annotations
@@ -18,7 +17,7 @@ from __future__ import annotations
 from inspect import isawaitable
 from typing import TYPE_CHECKING, Any
 
-from nu.terms import INVALID, Calculation, Command, Op, Sentinel, is_sentinel
+from nu.terms import INVALID, Op, Sentinel, is_sentinel
 
 
 if TYPE_CHECKING:
@@ -91,11 +90,11 @@ class FuncCall[T](Op[T | Sentinel]):
         return f"{cls}({func_name}, {args})" if args else f"{cls}({func_name})"
 
 
-class FuncCallOp[T](Calculation, FuncCall[T]):
+class FuncCallOp[T](FuncCall[T]):
     """Pure function call. No side effects."""
 
 
-class FuncCallCmd[T](Command, FuncCall[T]):
+class FuncCallCmd[T](FuncCall[T]):
     """Impure function call. May have side effects."""
 
 
@@ -166,9 +165,9 @@ class MethodCall[T](Op[T | Sentinel]):
         return f"{cls}(.{self._method_name})"
 
 
-class MethodCallOp[T](Calculation, MethodCall[T]):
+class MethodCallOp[T](MethodCall[T]):
     """Pure method call. No side effects."""
 
 
-class MethodCallCmd[T](Command, MethodCall[T]):
+class MethodCallCmd[T](MethodCall[T]):
     """Impure method call. May have side effects."""

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from nu.terms import Calculation
+from nu.terms import Op
 
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class ForRange(Calculation):
+class ForRange(Op):
     """Counted loop over ``range(start, stop, step)``.
 
     Children: ``[start, stop, step, body]``
@@ -59,7 +59,7 @@ class ForRange(Calculation):
             await body.execute(ctx)
 
 
-class ForEach(Calculation):
+class ForEach(Op):
     """Iterate over a sequence, executing body for each element.
 
     Children: ``[items, body, item?, index?]``
@@ -106,7 +106,7 @@ class ForEach(Calculation):
             await body.execute(ctx)
 
 
-class Fold(Calculation):
+class Fold(Op):
     """Stateful sequential reduction over an iterable.
 
     Children: ``[items, initial, body, acc, item]``

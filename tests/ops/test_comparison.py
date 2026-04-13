@@ -2,7 +2,7 @@
 
 Binary: EqOp, NeOp, GtOp, GeOp, LtOp, LeOp, IdCompOp
 
-All Calculations (pure). TypeError -> INVALID.
+All pure ops. TypeError -> INVALID.
 """
 
 from __future__ import annotations

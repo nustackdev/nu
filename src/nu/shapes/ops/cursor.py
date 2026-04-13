@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Calculation, Op, Sentinel
+from nu.terms import Op, Sentinel
 
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-class AdvanceCursorOp(Calculation, Op[tuple | None]):
+class AdvanceCursorOp(Op[tuple | None]):
     """Read next key after cursor from an ordered view.
 
     Children: [source, cursor]

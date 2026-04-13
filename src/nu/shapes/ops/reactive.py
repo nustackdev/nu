@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu import Calculation, Nu, Op
+from nu.terms import Nu, Op
 
 
 if TYPE_CHECKING:
@@ -35,7 +35,7 @@ __all__ = [
 ]
 
 
-class ChangeOp(Calculation, Op[object]):
+class ChangeOp(Op[object]):
     """Base class for all change subscription operations.
 
     All change operations return a subscription handle that can be used

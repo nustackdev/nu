@@ -4,17 +4,14 @@ Operations transform inputs to outputs:
 
     Nu                          - the primitive
     └── RValue                  - evaluable expression
-        └── Op                  - operation (maps inputs to outputs)
-            └── NAryOp          - op with operands and sentinel handling
-                ├── UnaryOp     - single operand
-                ├── BinaryOp    - two operands
-                └── TernaryOp   - three operands
+        └── Interaction         - evaluable computation
+            └── Op              - operation (maps inputs to outputs)
+                └── NAryOp      - op with operands and sentinel handling
+                    ├── UnaryOp     - single operand
+                    ├── BinaryOp    - two operands
+                    └── TernaryOp   - three operands
 
-Three orthogonal dimensions:
-
-    Purity (how it behaves):
-        - Calculation (Calc): pure (no side effects)
-        - Command (Cmd): impure (has side effects)
+Two dimensions:
 
     Arity (how many operands):
         - NAryOp, UnaryOp, BinaryOp, TernaryOp
@@ -24,17 +21,8 @@ Three orthogonal dimensions:
         - ScopedOp: before/after/after_failure hooks
         - execute = before(ctx) -> run children sequentially -> after/after_failure
 
-Convenience classes (purity x arity):
-    - NAryCalc / NAryCmd
-    - UnaryCalc / UnaryCmd
-    - BinaryCalc / BinaryCmd
-    - TernaryCalc / TernaryCmd
-
-Convenience classes (purity x lifecycle):
-    - ScopedCalc / ScopedCmd
-
 Composition pattern:
-    class AddCalc(BinaryCalc[float]):
+    class AddOp(BinaryOp[float]):
         def apply(self, left: float, right: float) -> float:
             return left + right
 """
@@ -44,7 +32,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-from .nu import Nu, RValue
+from .interaction import Interaction
+from .nu import Nu
 from .sentinel import INVALID, Sentinel, is_sentinel
 from .type_vars import T_co
 
@@ -60,23 +49,8 @@ __all__ = [  # noqa: RUF022
     "UnaryOp",
     "BinaryOp",
     "TernaryOp",
-    # Purity
-    "Calculation",
-    "Command",
     # Lifecycle
     "ScopedOp",
-    # Purity + arity
-    "NAryCalc",
-    "NAryCmd",
-    "UnaryCalc",
-    "UnaryCmd",
-    "BinaryCalc",
-    "BinaryCmd",
-    "TernaryCalc",
-    "TernaryCmd",
-    # Purity + lifecycle
-    "ScopedCalc",
-    "ScopedCmd",
 ]
 
 
@@ -85,7 +59,7 @@ __all__ = [  # noqa: RUF022
 # =============================================================================
 
 
-class Op(RValue[T_co], ABC):
+class Op(Interaction[T_co], ABC):
     """Operation. Maps inputs to outputs.
 
     Ops are the fundamental unit of computation:
@@ -253,76 +227,6 @@ class TernaryOp(NAryOp[T_co], ABC):
 
 
 # =============================================================================
-# PURITY MIXINS
-# =============================================================================
-
-
-class Calculation(Op[T_co], ABC):
-    """Pure Op. No side effects.
-
-    Calculations are:
-    - Deterministic: same inputs -> same output
-    - Side-effect free: don't modify state
-    - Cacheable: results can be memoized
-    - Reorderable: execution order doesn't matter
-
-    Inherit directly for complex ops that override execute().
-    Combine with arity mixins (UnaryCalc, BinaryCalc) for
-    simple ops that use the apply() pattern.
-
-    Usage::
-
-        # Simple: arity mixin provides execute -> apply
-        class AddCalc(BinaryCalc[float]):
-            def apply(self, left: float, right: float) -> float:
-                return left + right
-
-        # Complex: override execute directly
-        class Filter(Calculation):
-            def __init__(self, items, *, condition, body, item="item"):
-                super().__init__(items, condition, body, item)
-            async def execute(self, ctx):
-                ...
-    """
-
-    @property
-    def is_self_pure(self) -> bool:
-        """Calculations are pure by definition."""
-        return True
-
-
-class Command(Op[T_co], ABC):
-    """Impure Op. Has side effects.
-
-    Commands modify state and must be executed carefully:
-    - Order-dependent: sequence of execution matters
-    - Transactional: should run within a ScopedCmd
-    - Not cacheable: results may differ each execution
-
-    Inherit directly for complex impure ops that override execute().
-    Combine with arity mixins (UnaryCmd, BinaryCmd) for simple ops
-    that use the apply() pattern.
-
-    Usage::
-
-        # Simple: arity mixin provides execute -> apply
-        class SetCmd(UnaryCmd[T]):
-            def apply(self, value: T) -> T:
-                return value
-
-        # Complex: override execute directly
-        class Print(Command):
-            async def execute(self, ctx):
-                print(await self.children[0].execute(ctx))
-    """
-
-    @property
-    def is_self_pure(self) -> bool:
-        """Commands are always impure by definition."""
-        return False
-
-
-# =============================================================================
 # LIFECYCLE
 # =============================================================================
 
@@ -343,7 +247,7 @@ class ScopedOp(Op[None], ABC):
 
     Usage::
 
-        class Atomic(ScopedCmd):
+        class Atomic(ScopedOp):
             def __init__(self, *children, scope=None):
                 super().__init__(*children, scope)
             def before(self, ctx):
@@ -374,73 +278,3 @@ class ScopedOp(Op[None], ABC):
 
     def after_failure(self, ctx: Context, error: BaseException) -> None:
         """Clean up after failed execution."""
-
-
-# =============================================================================
-# CONVENIENCE: PURITY + ARITY COMBINATIONS
-# =============================================================================
-
-
-class NAryCalc(Calculation, NAryOp[T_co]):
-    """Pure NAry op."""
-
-    pass
-
-
-class NAryCmd(Command, NAryOp[T_co]):
-    """Impure NAry op."""
-
-    pass
-
-
-class UnaryCalc(Calculation, UnaryOp[T_co]):
-    """Pure unary op."""
-
-    pass
-
-
-class UnaryCmd(Command, UnaryOp[T_co]):
-    """Impure unary op."""
-
-    pass
-
-
-class BinaryCalc(Calculation, BinaryOp[T_co]):
-    """Pure binary op."""
-
-    pass
-
-
-class BinaryCmd(Command, BinaryOp[T_co]):
-    """Impure binary op."""
-
-    pass
-
-
-class TernaryCalc(Calculation, TernaryOp[T_co]):
-    """Pure ternary op."""
-
-    pass
-
-
-class TernaryCmd(Command, TernaryOp[T_co]):
-    """Impure ternary op."""
-
-    pass
-
-
-# =============================================================================
-# CONVENIENCE: PURITY + LIFECYCLE COMBINATIONS
-# =============================================================================
-
-
-class ScopedCalc(Calculation, ScopedOp):
-    """Pure scoped op. Resource lifecycle without side effects."""
-
-    pass
-
-
-class ScopedCmd(Command, ScopedOp):
-    """Impure scoped op. Resource lifecycle with side effects."""
-
-    pass

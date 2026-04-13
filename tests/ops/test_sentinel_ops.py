@@ -88,13 +88,3 @@ async def test_not_invalid_on_empty(ctx):
     assert await NotInvalidOp(Value(EMPTY)).execute(ctx) is True
 
 
-# ---------------------------------------------------------------------------
-# Purity
-# ---------------------------------------------------------------------------
-
-
-def test_sentinel_ops_are_pure():
-    assert IsEmptyOp(Value(42)).is_self_pure is True
-    assert IsInvalidOp(Value(42)).is_self_pure is True
-    assert NotEmptyOp(Value(42)).is_self_pure is True
-    assert NotInvalidOp(Value(42)).is_self_pure is True

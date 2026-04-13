@@ -3,7 +3,7 @@
 Unary: BitwiseNotOp
 Binary: BitwiseAndOp, BitwiseOrOp, XorOp, LShiftOp, RShiftOp
 
-All Calculations (pure). TypeError -> INVALID.
+All pure ops. TypeError -> INVALID.
 """
 
 from __future__ import annotations

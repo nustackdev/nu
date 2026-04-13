@@ -1,4 +1,4 @@
-"""Tests for Op hierarchy - ensure_nu wrapping, arity, purity classification.
+"""Tests for Op hierarchy - ensure_nu wrapping and arity.
 
 Op.__init__ auto-wraps Python literals into Nus via ensure_nu.
 This is the parasitic embedding - Python values become tree nodes.
@@ -10,17 +10,11 @@ from typing import Any
 
 from nu import Nu, Value
 from nu.terms.op import (
-    BinaryCalc,
-    BinaryCmd,
-    Calculation,
-    Command,
-    NAryCalc,
-    NAryCmd,
+    BinaryOp,
+    NAryOp,
     Op,
-    TernaryCalc,
-    TernaryCmd,
-    UnaryCalc,
-    UnaryCmd,
+    TernaryOp,
+    UnaryOp,
 )
 
 
@@ -29,42 +23,22 @@ from nu.terms.op import (
 # ---------------------------------------------------------------------------
 
 
-class _AddCalc(BinaryCalc[int]):
+class _AddOp(BinaryOp[int]):
     def apply(self, left: Any, right: Any) -> int:
         return left + right
 
 
-class _NegCalc(UnaryCalc[int]):
+class _NegOp(UnaryOp[int]):
     def apply(self, operand: Any) -> int:
         return -operand
 
 
-class _ClampCalc(TernaryCalc[int]):
+class _ClampOp(TernaryOp[int]):
     def apply(self, first: Any, second: Any, third: Any) -> int:
         return max(second, min(third, first))
 
 
-class _SumCalc(NAryCalc[int]):
-    def apply(self, *values: Any) -> int:
-        return sum(values)
-
-
-class _WriteCmd(BinaryCmd[None]):
-    def apply(self, left: Any, right: Any) -> None:
-        pass
-
-
-class _NegCmd(UnaryCmd[int]):
-    def apply(self, operand: Any) -> int:
-        return -operand
-
-
-class _ClampCmd(TernaryCmd[int]):
-    def apply(self, first: Any, second: Any, third: Any) -> int:
-        return max(second, min(third, first))
-
-
-class _SumCmd(NAryCmd[int]):
+class _SumOp(NAryOp[int]):
     def apply(self, *values: Any) -> int:
         return sum(values)
 
@@ -76,13 +50,13 @@ class _SumCmd(NAryCmd[int]):
 
 def test_op_wraps_int_literals():
     """Python int becomes a Nu in the tree."""
-    op = _AddCalc(5, 3)
+    op = _AddOp(5, 3)
     assert isinstance(op.left, Nu)
     assert isinstance(op.right, Nu)
 
 
 def test_op_wraps_str_literals():
-    op = _AddCalc("hello", "world")
+    op = _AddOp("hello", "world")
     assert isinstance(op.left, Nu)
     assert isinstance(op.right, Nu)
 
@@ -90,19 +64,19 @@ def test_op_wraps_str_literals():
 def test_op_preserves_nu_children():
     """Already-Nu children are not double-wrapped."""
     v = Value(42)
-    op = _NegCalc(v)
+    op = _NegOp(v)
     # The child should be a Nu wrapping v, but v itself is preserved
     assert isinstance(op.operand, Nu)
 
 
 def test_op_wraps_none():
-    op = _AddCalc(None, 1)
+    op = _AddOp(None, 1)
     assert isinstance(op.left, Nu)
 
 
 def test_op_wraps_bool_before_int():
     """Bool is subclass of int - ensure_nu must check bool first."""
-    op = _AddCalc(True, False)
+    op = _AddOp(True, False)
     # Both should be wrapped as BoolI, not IntI
     assert isinstance(op.left, Nu)
     assert isinstance(op.right, Nu)
@@ -114,20 +88,20 @@ def test_op_wraps_bool_before_int():
 
 
 def test_unary_operand():
-    op = _NegCalc(Value(5))
+    op = _NegOp(Value(5))
     assert op.operand is op.children[0]
     assert op.child_count == 1
 
 
 def test_binary_left_right():
-    op = _AddCalc(Value(3), Value(4))
+    op = _AddOp(Value(3), Value(4))
     assert op.left is op.children[0]
     assert op.right is op.children[1]
     assert op.child_count == 2
 
 
 def test_ternary_first_second_third():
-    op = _ClampCalc(Value(10), Value(0), Value(5))
+    op = _ClampOp(Value(10), Value(0), Value(5))
     assert op.first is op.children[0]
     assert op.second is op.children[1]
     assert op.third is op.children[2]
@@ -135,7 +109,7 @@ def test_ternary_first_second_third():
 
 
 def test_nary_variable_children():
-    op = _SumCalc(Value(1), Value(2), Value(3), Value(4))
+    op = _SumOp(Value(1), Value(2), Value(3), Value(4))
     assert op.child_count == 4
 
 
@@ -145,101 +119,42 @@ def test_nary_variable_children():
 
 
 async def test_unary_execute(ctx):
-    assert await _NegCalc(5).execute(ctx) == -5
+    assert await _NegOp(5).execute(ctx) == -5
 
 
 async def test_binary_execute(ctx):
-    assert await _AddCalc(3, 4).execute(ctx) == 7
+    assert await _AddOp(3, 4).execute(ctx) == 7
 
 
 async def test_ternary_execute(ctx):
-    assert await _ClampCalc(10, 0, 5).execute(ctx) == 5
+    assert await _ClampOp(10, 0, 5).execute(ctx) == 5
 
 
 async def test_nary_execute(ctx):
-    assert await _SumCalc(1, 2, 3, 4).execute(ctx) == 10
+    assert await _SumOp(1, 2, 3, 4).execute(ctx) == 10
 
 
 # ---------------------------------------------------------------------------
-# Purity classification
+# Arity + isinstance
 # ---------------------------------------------------------------------------
 
 
-def test_calculation_is_pure():
-    assert _AddCalc(1, 2).is_self_pure is True
-
-
-def test_command_is_impure():
-    assert _WriteCmd(1, 2).is_self_pure is False
-
-
-def test_calculation_isinstance():
-    assert isinstance(_AddCalc(1, 2), Calculation)
-
-
-def test_command_isinstance():
-    assert isinstance(_WriteCmd(1, 2), Command)
-
-
-# ---------------------------------------------------------------------------
-# All 8 convenience classes: purity + arity wired correctly
-# ---------------------------------------------------------------------------
-
-
-def test_unary_calc_pure():
-    op = _NegCalc(1)
-    assert isinstance(op, Calculation)
+def test_unary_is_op():
+    op = _NegOp(1)
     assert isinstance(op, Op)
-    assert op.is_self_pure is True
     assert op.child_count == 1
 
 
-def test_unary_cmd_impure():
-    op = _NegCmd(1)
-    assert isinstance(op, Command)
+def test_binary_is_op():
+    op = _AddOp(1, 2)
     assert isinstance(op, Op)
-    assert op.is_self_pure is False
-    assert op.child_count == 1
-
-
-def test_binary_calc_pure():
-    op = _AddCalc(1, 2)
-    assert isinstance(op, Calculation)
-    assert op.is_self_pure is True
     assert op.child_count == 2
 
 
-def test_binary_cmd_impure():
-    op = _WriteCmd(1, 2)
-    assert isinstance(op, Command)
-    assert op.is_self_pure is False
-    assert op.child_count == 2
-
-
-def test_ternary_calc_pure():
-    op = _ClampCalc(10, 0, 5)
-    assert isinstance(op, Calculation)
-    assert op.is_self_pure is True
+def test_ternary_is_op():
+    op = _ClampOp(10, 0, 5)
+    assert isinstance(op, Op)
     assert op.child_count == 3
-
-
-def test_ternary_cmd_impure():
-    op = _ClampCmd(10, 0, 5)
-    assert isinstance(op, Command)
-    assert op.is_self_pure is False
-    assert op.child_count == 3
-
-
-def test_nary_calc_pure():
-    op = _SumCalc(1, 2, 3)
-    assert isinstance(op, Calculation)
-    assert op.is_self_pure is True
-
-
-def test_nary_cmd_impure():
-    op = _SumCmd(1, 2, 3)
-    assert isinstance(op, Command)
-    assert op.is_self_pure is False
 
 
 # ---------------------------------------------------------------------------
@@ -248,10 +163,10 @@ def test_nary_cmd_impure():
 
 
 def test_unary_repr():
-    r = repr(_NegCalc(Value(5)))
-    assert "_NegCalc" in r
+    r = repr(_NegOp(Value(5)))
+    assert "_NegOp" in r
 
 
 def test_binary_repr():
-    r = repr(_AddCalc(Value(3), Value(4)))
-    assert "_AddCalc" in r
+    r = repr(_AddOp(Value(3), Value(4)))
+    assert "_AddOp" in r

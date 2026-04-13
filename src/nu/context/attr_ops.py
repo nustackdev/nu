@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Calculation, Op, Sentinel
+from nu.terms import Op, Sentinel
 
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ __all__ = [
 ]
 
 
-class AttrGetOp[T](Calculation, Op[T | Sentinel]):
+class AttrGetOp[T](Op[T | Sentinel]):
     """Read value by name from context: ctx.attrs[name]."""
 
     def __init__(self, ref: AttrRef[T]) -> None:
@@ -32,7 +32,7 @@ class AttrGetOp[T](Calculation, Op[T | Sentinel]):
         return ctx.attrs[key]
 
 
-class AttrExistsOp(Calculation, Op[bool]):
+class AttrExistsOp(Op[bool]):
     """Check if name exists in context."""
 
     def __init__(self, ref: AttrRef) -> None:

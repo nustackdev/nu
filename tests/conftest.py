@@ -32,10 +32,6 @@ class StubNu(Nu):
     async def execute(self, ctx: Context) -> object:
         return self._label
 
-    @property
-    def is_self_pure(self) -> bool:
-        return True
-
     def __repr__(self) -> str:
         if self._children:
             return f"StubNu({self._label!r}, children={len(self._children)})"
@@ -63,10 +59,6 @@ class FailingNu(Nu):
 
     async def execute(self, ctx: Context) -> object:
         raise self._exc(self._msg)
-
-    @property
-    def is_self_pure(self) -> bool:
-        return False
 
 
 # ---------------------------------------------------------------------------

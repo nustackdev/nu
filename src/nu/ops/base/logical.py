@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import BinaryCalc, Sentinel, UnaryCalc, propagate_special
+from nu.terms import BinaryOp, Sentinel, UnaryOp, propagate_special
 
 
 if TYPE_CHECKING:
@@ -30,7 +30,7 @@ __all__ = [
 # =============================================================================
 
 
-class NotOp[ResultT](UnaryCalc[ResultT]):
+class NotOp[ResultT](UnaryOp[ResultT]):
     """Logical NOT: not operand.
 
     Python's 'not' keyword cannot be overloaded.
@@ -42,7 +42,7 @@ class NotOp[ResultT](UnaryCalc[ResultT]):
         return not operand  # type: ignore
 
 
-class BoolOp(UnaryCalc[bool]):
+class BoolOp(UnaryOp[bool]):
     """Boolean conversion: bool(operand)."""
 
     def apply(self, operand: object) -> bool:
@@ -55,7 +55,7 @@ class BoolOp(UnaryCalc[bool]):
 # =============================================================================
 
 
-class AndOp[ResultT](BinaryCalc[ResultT]):
+class AndOp[ResultT](BinaryOp[ResultT]):
     """Logical AND: left and right.
 
     Overrides execute() for short-circuit evaluation:
@@ -91,7 +91,7 @@ class AndOp[ResultT](BinaryCalc[ResultT]):
         raise NotImplementedError
 
 
-class OrOp[ResultT](BinaryCalc[ResultT]):
+class OrOp[ResultT](BinaryOp[ResultT]):
     """Logical OR: left or right.
 
     Overrides execute() for short-circuit evaluation:

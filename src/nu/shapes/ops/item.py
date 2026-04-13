@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import EMPTY, Calculation, Command, Op, Sentinel
+from nu.terms import EMPTY, Op, Sentinel
 
 
 if TYPE_CHECKING:
@@ -34,7 +34,7 @@ __all__ = [
 ]
 
 
-class ItemLoadOp[T](Calculation, Op[T | Sentinel]):
+class ItemLoadOp[T](Op[T | Sentinel]):
     """Read item from collection: parent[address].
 
     Returns EMPTY if the key/index doesn't exist.
@@ -56,7 +56,7 @@ class ItemLoadOp[T](Calculation, Op[T | Sentinel]):
         return f"ItemLoadOp({self.ref!r})"
 
 
-class ItemStoreCmd[T](Command, Op[None]):
+class ItemStoreCmd[T](Op[None]):
     """Write item to collection: parent[address] = value. Returns None."""
 
     def __init__(self, ref: Ref, value: Nu[T | Sentinel]) -> None:
@@ -77,7 +77,7 @@ class ItemStoreCmd[T](Command, Op[None]):
         return f"ItemStoreCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class ItemEraseCmd(Command, Op[None]):
+class ItemEraseCmd(Op[None]):
     """Delete item from collection: del parent[address]."""
 
     def __init__(self, ref: Ref) -> None:
@@ -94,7 +94,7 @@ class ItemEraseCmd(Command, Op[None]):
         return f"ItemEraseCmd({self.ref!r})"
 
 
-class ItemExistsOp(Calculation, Op[bool]):
+class ItemExistsOp(Op[bool]):
     """Check if item exists in collection: address in parent."""
 
     def __init__(self, ref: Ref) -> None:
@@ -110,7 +110,7 @@ class ItemExistsOp(Calculation, Op[bool]):
         return f"ItemExistsOp({self.ref!r})"
 
 
-class ItemMissingOp(Calculation, Op[bool]):
+class ItemMissingOp(Op[bool]):
     """Check if item is missing from collection: address not in parent."""
 
     def __init__(self, ref: Ref) -> None:

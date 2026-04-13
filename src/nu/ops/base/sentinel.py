@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Calculation, is_empty, is_invalid
+from nu.terms import Op, is_empty, is_invalid
 
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ __all__ = [
 ]
 
 
-class IsEmptyOp(Calculation[bool]):
+class IsEmptyOp(Op[bool]):
     """Check if operand is Empty sentinel."""
 
     def __init__(self, operand: Nu) -> None:
@@ -38,7 +38,7 @@ class IsEmptyOp(Calculation[bool]):
         return is_empty(value)
 
 
-class NotEmptyOp(Calculation[bool]):
+class NotEmptyOp(Op[bool]):
     """Check if operand is NOT Empty sentinel."""
 
     def __init__(self, operand: Nu) -> None:
@@ -49,7 +49,7 @@ class NotEmptyOp(Calculation[bool]):
         return not is_empty(value)
 
 
-class IsInvalidOp(Calculation[bool]):
+class IsInvalidOp(Op[bool]):
     """Check if operand is Invalid sentinel."""
 
     def __init__(self, operand: Nu) -> None:
@@ -60,7 +60,7 @@ class IsInvalidOp(Calculation[bool]):
         return is_invalid(value)
 
 
-class NotInvalidOp(Calculation[bool]):
+class NotInvalidOp(Op[bool]):
     """Check if operand is NOT Invalid sentinel."""
 
     def __init__(self, operand: Nu) -> None:

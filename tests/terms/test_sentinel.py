@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from nu import EMPTY, INVALID, Value
-from nu.terms.op import BinaryCalc
+from nu.terms.op import BinaryOp
 from nu.terms.sentinel import Empty, Invalid, is_empty, is_invalid, is_sentinel, propagate_special
 
 
@@ -135,13 +135,13 @@ def test_propagate_special_no_args():
 # Local test Op - verifies apply() is/isn't called.
 
 
-class _TestAddCalc(BinaryCalc[int]):
-    """BinaryCalc that tracks whether apply was called."""
+class _TestAddOp(BinaryOp[int]):
+    """BinaryOp that tracks whether apply was called."""
 
     apply_called: bool = False
 
     def apply(self, left: Any, right: Any) -> int:
-        _TestAddCalc.apply_called = True
+        _TestAddOp.apply_called = True
         return left + right
 
 
@@ -149,33 +149,33 @@ class TestNAryOpSentinelPropagation:
     """NAryOp.execute intercepts sentinels before apply."""
 
     def setup_method(self):
-        _TestAddCalc.apply_called = False
+        _TestAddOp.apply_called = False
 
     async def test_clean_operands_calls_apply(self, ctx):
-        result = await _TestAddCalc(Value(3), Value(4)).execute(ctx)
+        result = await _TestAddOp(Value(3), Value(4)).execute(ctx)
         assert result == 7
-        assert _TestAddCalc.apply_called is True
+        assert _TestAddOp.apply_called is True
 
     async def test_empty_operand_returns_invalid(self, ctx):
         """EMPTY child -> INVALID result, apply never called."""
-        result = await _TestAddCalc(Value(EMPTY), Value(4)).execute(ctx)
+        result = await _TestAddOp(Value(EMPTY), Value(4)).execute(ctx)
         assert is_invalid(result)
-        assert _TestAddCalc.apply_called is False
+        assert _TestAddOp.apply_called is False
 
     async def test_invalid_operand_returns_invalid(self, ctx):
         """INVALID child -> INVALID result, apply never called."""
-        result = await _TestAddCalc(Value(3), Value(INVALID)).execute(ctx)
+        result = await _TestAddOp(Value(3), Value(INVALID)).execute(ctx)
         assert is_invalid(result)
-        assert _TestAddCalc.apply_called is False
+        assert _TestAddOp.apply_called is False
 
     async def test_both_sentinels_returns_invalid(self, ctx):
-        result = await _TestAddCalc(Value(EMPTY), Value(INVALID)).execute(ctx)
+        result = await _TestAddOp(Value(EMPTY), Value(INVALID)).execute(ctx)
         assert is_invalid(result)
-        assert _TestAddCalc.apply_called is False
+        assert _TestAddOp.apply_called is False
 
     async def test_nested_sentinel_propagation(self, ctx):
         """Sentinel propagates through nested ops."""
-        inner = _TestAddCalc(Value(EMPTY), Value(1))
-        outer = _TestAddCalc(inner, Value(2))
+        inner = _TestAddOp(Value(EMPTY), Value(1))
+        outer = _TestAddOp(inner, Value(2))
         result = await outer.execute(ctx)
         assert is_invalid(result)

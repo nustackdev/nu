@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import EMPTY, Calculation, Command, Op, Sentinel
+from nu.terms import EMPTY, Op, Sentinel
 
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ __all__ = [
 ]
 
 
-class CollectionLoadOp[T](Calculation, Op[T | Sentinel]):
+class CollectionLoadOp[T](Op[T | Sentinel]):
     """Read collection from parent: parent[address]."""
 
     def __init__(self, ref: Ref) -> None:
@@ -47,7 +47,7 @@ class CollectionLoadOp[T](Calculation, Op[T | Sentinel]):
         return f"CollectionLoadOp({self.ref!r})"
 
 
-class CollectionStoreCmd[T](Command, Op[None]):
+class CollectionStoreCmd[T](Op[None]):
     """Write collection to parent: parent[address] = data. Returns None."""
 
     def __init__(self, ref: Ref, data: Nu[T | Sentinel]) -> None:
@@ -69,7 +69,7 @@ class CollectionStoreCmd[T](Command, Op[None]):
         return f"CollectionStoreCmd({self.ref!r}, {self.data_expr!r})"
 
 
-class CollectionEraseCmd(Command, Op[None]):
+class CollectionEraseCmd(Op[None]):
     """Delete collection from parent: del parent[address]."""
 
     def __init__(self, ref: Ref) -> None:
@@ -86,7 +86,7 @@ class CollectionEraseCmd(Command, Op[None]):
         return f"CollectionEraseCmd({self.ref!r})"
 
 
-class CollectionExistsOp(Calculation, Op[bool]):
+class CollectionExistsOp(Op[bool]):
     """Check if collection exists in parent: address in parent."""
 
     def __init__(self, ref: Ref) -> None:
@@ -102,7 +102,7 @@ class CollectionExistsOp(Calculation, Op[bool]):
         return f"CollectionExistsOp({self.ref!r})"
 
 
-class CollectionMissingOp(Calculation, Op[bool]):
+class CollectionMissingOp(Op[bool]):
     """Check if collection is missing from parent: address not in parent."""
 
     def __init__(self, ref: Ref) -> None:

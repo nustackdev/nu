@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from nu.terms import Calculation
+from nu.terms import Op
 
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class Parallel(Calculation):
+class Parallel(Op):
     """Execute children concurrently via asyncio.gather.
 
     Children: ``[*children]``
@@ -36,7 +36,7 @@ class Parallel(Calculation):
         await asyncio.gather(*(child.execute(ctx) for child in self.children))
 
 
-class Race(Calculation):
+class Race(Op):
     """Execute children concurrently, complete on first finish.
 
     Children: ``[*children]``
@@ -65,7 +65,7 @@ class Race(Calculation):
             raise
 
 
-class All(Calculation):
+class All(Op):
     """Execute children concurrently, fail fast on first exception.
 
     Children: ``[*children]``
@@ -88,7 +88,7 @@ class All(Calculation):
             raise
 
 
-class Any(Calculation):
+class Any(Op):
     """Execute children concurrently, succeed if any one succeeds.
 
     Children: ``[*children]``

@@ -1,13 +1,11 @@
 """Comparison ops.
 
 Binary: EqOp, NeOp, GtOp, LtOp, GeOp, LeOp, IdCompOp
-
-All ops use every.BinaryOp with Calculation mixin (pure).
 """
 
 from __future__ import annotations
 
-from nu.terms import BinaryCalc
+from nu.terms import BinaryOp
 
 
 __all__ = [
@@ -21,7 +19,7 @@ __all__ = [
 ]
 
 
-class GtOp(BinaryCalc[bool]):
+class GtOp(BinaryOp[bool]):
     """Greater than: left > right."""
 
     def apply(self, left: object, right: object) -> bool:
@@ -29,7 +27,7 @@ class GtOp(BinaryCalc[bool]):
         return left > right  # type: ignore
 
 
-class LtOp(BinaryCalc[bool]):
+class LtOp(BinaryOp[bool]):
     """Less than: left < right."""
 
     def apply(self, left: object, right: object) -> bool:
@@ -37,7 +35,7 @@ class LtOp(BinaryCalc[bool]):
         return left < right  # type: ignore
 
 
-class EqOp(BinaryCalc[bool]):
+class EqOp(BinaryOp[bool]):
     """Equality: left == right."""
 
     def apply(self, left: object, right: object) -> bool:
@@ -45,7 +43,7 @@ class EqOp(BinaryCalc[bool]):
         return left == right  # type: ignore
 
 
-class NeOp(BinaryCalc[bool]):
+class NeOp(BinaryOp[bool]):
     """Not equal: left != right."""
 
     def apply(self, left: object, right: object) -> bool:
@@ -53,7 +51,7 @@ class NeOp(BinaryCalc[bool]):
         return left != right  # type: ignore
 
 
-class GeOp(BinaryCalc[bool]):
+class GeOp(BinaryOp[bool]):
     """Greater than or equal: left >= right."""
 
     def apply(self, left: object, right: object) -> bool:
@@ -61,7 +59,7 @@ class GeOp(BinaryCalc[bool]):
         return left >= right  # type: ignore
 
 
-class LeOp(BinaryCalc[bool]):
+class LeOp(BinaryOp[bool]):
     """Less than or equal: left <= right."""
 
     def apply(self, left: object, right: object) -> bool:
@@ -69,7 +67,7 @@ class LeOp(BinaryCalc[bool]):
         return left <= right  # type: ignore
 
 
-class IdCompOp(BinaryCalc[bool]):
+class IdCompOp(BinaryOp[bool]):
     """Identity comparison: left is right."""
 
     def apply(self, left: object, right: object) -> bool:

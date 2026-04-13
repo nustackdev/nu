@@ -3,7 +3,7 @@
 Unary: NegOp, AbsOp, PosOp
 Binary: AddOp, SubOp, MulOp, DivOp, FloorDivOp, ModOp, PowOp
 
-All are Calculations (pure). TypeError -> INVALID per error propagation guide.
+All pure ops. TypeError -> INVALID per error propagation guide.
 ZeroDivisionError raises (not caught - logic bug, not composition problem).
 """
 

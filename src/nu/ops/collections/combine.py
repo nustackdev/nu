@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator
 from itertools import chain
 
-from nu.terms import INVALID, BinaryCalc, Calculation, NAryOp, Sentinel
+from nu.terms import INVALID, BinaryOp, NAryOp, Sentinel
 
 
 __all__ = [
@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-class ZipOp(Calculation, NAryOp[Iterator[tuple]]):
+class ZipOp(NAryOp[Iterator[tuple]]):
     """Zip multiple iterables: zip(*iterables) -> lazy iterator."""
 
     def __init__(self, *operands: object) -> None:
@@ -37,7 +37,7 @@ class ZipOp(Calculation, NAryOp[Iterator[tuple]]):
         return f"ZipOp({args})"
 
 
-class ChainOp(Calculation, NAryOp[Iterator]):
+class ChainOp(NAryOp[Iterator]):
     """Chain multiple iterables: chain(*iterables) -> lazy iterator."""
 
     def __init__(self, *operands: object) -> None:
@@ -59,7 +59,7 @@ class ChainOp(Calculation, NAryOp[Iterator]):
         return f"ChainOp({args})"
 
 
-class EnumerateOp(BinaryCalc[Iterator[tuple[int, object]]]):
+class EnumerateOp(BinaryOp[Iterator[tuple[int, object]]]):
     """Enumerate iterable: enumerate(iterable, start) -> lazy iterator."""
 
     def apply(self, left: object, right: object) -> Iterator[tuple[int, object]] | Sentinel:
