@@ -57,7 +57,6 @@ async def main():
     print("Tree: (2 ** 10) > 1000")
     print_tree(tree)
     print(f"= {await tree.execute(ctx)}")
-    print(f"Pure: {tree.is_subtree_pure}")
 
 
 asyncio.run(main())

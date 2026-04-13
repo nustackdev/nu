@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Calculation
+from nu import Op
 
 
 if TYPE_CHECKING:
@@ -42,7 +42,7 @@ __all__ = [
 ]
 
 
-class Teleport(Calculation):
+class Teleport(Op):
     """Ships children to a Worker for remote execution.
 
     Args:

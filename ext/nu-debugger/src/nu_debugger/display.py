@@ -5,11 +5,10 @@ Uses duck-typing (hasattr checks) to detect node categories
 without importing from other Nu modules.
 
 Color scheme:
-    Values (literals)    : cyan
-    Values (computed)    : dim cyan
+    Literals             : cyan
+    Literals (computed)  : dim cyan
     Refs                 : yellow
-    Calculations (pure)  : green
-    Commands (impure)    : red
+    Ops                  : green
     Connectors           : dim
     Nu names             : bold (within their color)
 """
@@ -40,11 +39,10 @@ BOLD = "\033[1m"
 DIM = "\033[2m"
 
 # Category colors
-CYAN = "\033[36m"  # Values (literal)
-DIM_CYAN = "\033[2;36m"  # Values (computed / wrapping children)
+CYAN = "\033[36m"  # Literals
+DIM_CYAN = "\033[2;36m"  # Literals (computed / wrapping children)
 YELLOW = "\033[33m"  # Refs
-GREEN = "\033[32m"  # Calculations (pure)
-RED = "\033[31m"  # Commands (impure)
+GREEN = "\033[32m"  # Ops
 
 # Purity indicators
 PURE_DOT = f"{GREEN}\u25cf{RESET}"  # filled circle, green
@@ -61,21 +59,14 @@ def _is_ref(node: Nu) -> bool:
     return hasattr(node, "resolve") and hasattr(node, "fetch")
 
 
-def _is_value(node: Nu) -> bool:
-    """Values have is_self_pure = True, no apply method, not a Ref."""
-    return hasattr(node, "is_self_pure") and not hasattr(node, "apply") and not _is_ref(node)
+def _is_literal(node: Nu) -> bool:
+    """Literals have a source attribute, no apply method, not a Ref."""
+    return hasattr(node, "source") and not hasattr(node, "apply") and not _is_ref(node)
 
 
 def _is_op(node: Nu) -> bool:
     """Ops have an apply method."""
     return hasattr(node, "apply") or hasattr(node, "_func") or hasattr(node, "_method_name")
-
-
-def _is_pure(node: Nu) -> bool:
-    """Check if a node is pure (Calculation)."""
-    if hasattr(node, "is_self_pure"):
-        return node.is_self_pure
-    return True
 
 
 # =============================================================================
@@ -88,8 +79,8 @@ def _get_category_color(node: Nu) -> str:
     if _is_ref(node):
         return YELLOW
     if _is_op(node):
-        return GREEN if _is_pure(node) else RED
-    if _is_value(node):
+        return GREEN
+    if _is_literal(node):
         if hasattr(node, "source") and node.is_leaf:
             return CYAN
         return DIM_CYAN
@@ -124,8 +115,8 @@ def _format_ref_label(node: Nu) -> str:
     return f"{cls}{shape_str}"
 
 
-def _format_value_label(node: Nu) -> str:
-    """Format label for Value nodes: IntI(42) or IntI."""
+def _format_literal_label(node: Nu) -> str:
+    """Format label for Literal nodes: IntI(42) or IntI."""
     cls = type(node).__name__
     if hasattr(node, "source") and node.is_leaf:
         src = node.source
@@ -154,15 +145,14 @@ def _default_label(node: Nu, *, color: bool = True) -> str:
         text = _format_ref_label(node)
     elif _is_op(node):
         text = _format_op_label(node)
-    elif _is_value(node):
-        text = _format_value_label(node)
+    elif _is_literal(node):
+        text = _format_literal_label(node)
     else:
         text = type(node).__name__
 
     if not color:
         if _is_op(node):
-            indicator = "\u25cf" if _is_pure(node) else "\u25c6"
-            return f"{indicator} {text}"
+            return f"\u25cf {text}"
         return text
 
     cat_color = _get_category_color(node)
@@ -173,10 +163,7 @@ def _default_label(node: Nu, *, color: bool = True) -> str:
         colored_text = f"{BOLD}{text}{RESET}"
 
     if _is_op(node):
-        if _is_pure(node):
-            colored_text = f"{PURE_DOT} {colored_text}"
-        else:
-            colored_text = f"{IMPURE_DOT} {colored_text}"
+        colored_text = f"{PURE_DOT} {colored_text}"
 
     return colored_text
 

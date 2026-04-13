@@ -6,7 +6,7 @@ import logging
 
 from nu.context import Context, IntAttrRef, StrAttrRef
 from nu.ops import Log, Retry, Seq, ToStr
-from nu.terms import Nu, ScopedCmd, Value
+from nu.terms import Literal, Nu, ScopedOp
 from nu.tree import map_nodes
 
 
@@ -19,7 +19,7 @@ __all__ = [
 _step_logger = logging.getLogger("nu.steps")
 
 
-class _StepSpan(ScopedCmd):
+class _StepSpan(ScopedOp):
     """Wraps a Seq child to log step progress. Path is baked at construction."""
 
     def __init__(self, child: Nu, step: int, total: int, path: str) -> None:
@@ -162,7 +162,7 @@ def set_logger_name(tree: Nu, name: str) -> Nu:
     def _rename(node: Nu) -> Nu:
         if not isinstance(node, (Log, _StepSpan)):
             return node
-        clone = node.with_children(node.children[0], Value(name), *node.children[2:])
+        clone = node.with_children(node.children[0], Literal(name), *node.children[2:])
         return clone
 
     return map_nodes(tree, _rename, order="bottom_up")

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import EMPTY, Command, Op, Calculation, Sentinel
+from nu import EMPTY, Op, Sentinel
 
 
 if TYPE_CHECKING:
@@ -34,7 +34,7 @@ __all__ = [
 ]
 
 
-class EnsureLayoutCmd(Command, Op[None]):
+class EnsureLayoutCmd(Op[None]):
     """Ensure view container and its internal layout exist in storage.
 
     Navigates to the view via fetch(), then calls _ensure_layout() to
@@ -64,7 +64,7 @@ class EnsureLayoutCmd(Command, Op[None]):
         return f"EnsureLayoutCmd({self.ref!r})"
 
 
-class InitCmd(Command, Op[None]):
+class InitCmd(Op[None]):
     """Materialize container chain for a ViewRef.
 
     Navigates the view hierarchy via fetch(), triggering ensure_created()
@@ -88,7 +88,7 @@ class InitCmd(Command, Op[None]):
         return f"InitCmd({self.ref!r})"
 
 
-class ItemPrimitiveGetUnsafeOp[T](Calculation, Op[T | Sentinel]):
+class ItemPrimitiveGetUnsafeOp[T](Op[T | Sentinel]):
     """Read primitive value via _unsafe_primitive_read().
 
     Single ctx[] call — no marker parsing, no type checks.
@@ -116,7 +116,7 @@ class ItemPrimitiveGetUnsafeOp[T](Calculation, Op[T | Sentinel]):
         return f"ItemPrimitiveGetUnsafeOp({self.ref!r})"
 
 
-class ItemPrimitiveSetUnsafeCmd[T](Command, Op[T]):
+class ItemPrimitiveSetUnsafeCmd[T](Op[T]):
     """Write primitive via _unsafe_primitive_write(ensure_exists=True).
 
     Ensures the container chain exists before writing (calls ensure_created),
@@ -146,7 +146,7 @@ class ItemPrimitiveSetUnsafeCmd[T](Command, Op[T]):
         return f"ItemPrimitiveSetUnsafeCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command, Op[T]):
+class ItemPrimitiveSetUnsafeParentSkipCmd[T](Op[T]):
     """Write primitive via _unsafe_primitive_write() — full skip.
 
     Single ctx.put() call — no ensure_created, no validation reads.
@@ -176,7 +176,7 @@ class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command, Op[T]):
         return f"ItemPrimitiveSetUnsafeParentSkipCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class ItemPrimitiveDeleteUnsafeCmd(Command, Op[None]):
+class ItemPrimitiveDeleteUnsafeCmd(Op[None]):
     """Delete primitive via _unsafe_primitive_delete().
 
     Single ctx.delete() call — no validation, no descendant cleanup.
@@ -202,7 +202,7 @@ class ItemPrimitiveDeleteUnsafeCmd(Command, Op[None]):
         return f"ItemPrimitiveDeleteUnsafeCmd({self.ref!r})"
 
 
-class PrimitiveStoreCmd[T](Command, Op[None]):
+class PrimitiveStoreCmd[T](Op[None]):
     """Store a value via _primitive_write(), bypassing container type checks.
 
     Uses PrimitiveOpsBase._primitive_write() which does ensure_created() +
