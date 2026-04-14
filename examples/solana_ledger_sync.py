@@ -264,7 +264,7 @@ def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
         nu.shapes.ReactForever(
             ledger.blocks_meta.on_descendants_change("*", "skipped"),
             nu.Throttle(
-                1,
+                0.2,
                 nu.Log(
                     "block",
                     nu.AtOp(nu.TupleAttrRef("skipped_change"), -2),
@@ -277,7 +277,7 @@ def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
         nu.shapes.ReactForever(
             ledger.blocks_meta.on_descendants_change("*", "synced"),
             nu.Throttle(
-                1,
+                0.2,
                 nu.Log(
                     "block",
                     nu.AtOp(nu.TupleAttrRef("synced_change"), -2),
