@@ -49,6 +49,7 @@ from .resources import (
     noop_codec_spec,
     text_codec_spec,
 )
+from .meta import auto_distribute
 from .spans import Teleport
 
 
@@ -81,6 +82,7 @@ __all__ = [
     "RocksDBStorageSpec",
     "Teleport",
     "TextStorageResource",
+    "auto_distribute",
     "TextStorageSpec",
     "Worker",
     "WorkerSpec",
