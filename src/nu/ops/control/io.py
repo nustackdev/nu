@@ -1,11 +1,17 @@
-"""I/O ops -- Print, Log, Debug."""
+"""I/O ops -- Print, Log, Debug.
+
+These are convenience constructors over StdioWrite.
+All declare WRITE override at position 0 (StdioRef).
+"""
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Op
+from nu.stdio.refs import STDERR, STDOUT
+from nu.terms.effect import Direction
+from nu.terms.op import Op
 
 
 if TYPE_CHECKING:
@@ -23,28 +29,35 @@ __all__ = [
 class Print(Op):
     """Print messages to stdout.
 
-    Children: ``[message, *values]``
+    Children: ``[StdioRef.STDOUT, message, *values]``
 
     Output format: ``[Print:message] value1 value2 ...``
     """
 
-    def __init__(self, message: StrArg = "Print", *values: Any) -> None:
-        super().__init__(message, *values)
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
-    async def execute(self, ctx: Context) -> None:
-        message = await self.children[0].execute(ctx)
+    def __init__(self, message: StrArg = "Print", *values: Any) -> None:
+        super().__init__(STDOUT, message, *values)
+
+    async def execute(self, ctx: Context) -> None:  # noqa: D102
+        from nu.stdio.ops import _get_stream
+
+        stream = _get_stream(ctx, self.children[0])
+        message = await self.children[1].execute(ctx)
         parts = [f"[Print:{message}]"]
-        for child in self.children[1:]:
+        for child in self.children[2:]:
             val = await child.execute(ctx)
             parts.append(str(val))
-        print(" ".join(parts))  # noqa: T201
+        stream.write(" ".join(parts) + "\n")
 
 
 class Log(Op):
     """Structured logging with configurable level.
 
-    Children: ``[level, logger_name, message, *values]``
+    Children: ``[StdioRef.STDERR, level, logger_name, message, *values]``
     """
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def __init__(
         self,
@@ -53,14 +66,14 @@ class Log(Op):
         level: StrArg = "info",
         logger_name: StrArg = "nu",
     ) -> None:
-        super().__init__(level, logger_name, message, *values)
+        super().__init__(STDERR, level, logger_name, message, *values)
         self._path = ""
 
-    async def execute(self, ctx: Context) -> None:
-        level = await self.children[0].execute(ctx)
-        logger_name = await self.children[1].execute(ctx)
+    async def execute(self, ctx: Context) -> None:  # noqa: D102
+        level = await self.children[1].execute(ctx)
+        logger_name = await self.children[2].execute(ctx)
         parts: list[str] = []
-        for child in self.children[2:]:
+        for child in self.children[3:]:
             parts.append(str(await child.execute(ctx)))
         message = " ".join(parts)
         if self._path:
@@ -72,8 +85,10 @@ class Log(Op):
 class Debug(Op):
     """Quick debug output for development.
 
-    Children: ``[prefix, labels, *values]``
+    Children: ``[StdioRef.STDOUT, prefix, labels, *values]``
     """
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def __init__(
         self,
@@ -81,16 +96,19 @@ class Debug(Op):
         labels: Any = None,
         prefix: StrArg = "[DEBUG]",
     ) -> None:
-        super().__init__(prefix, labels, *values)
+        super().__init__(STDOUT, prefix, labels, *values)
 
-    async def execute(self, ctx: Context) -> None:
-        prefix = await self.children[0].execute(ctx)
-        labels = await self.children[1].execute(ctx)
+    async def execute(self, ctx: Context) -> None:  # noqa: D102
+        from nu.stdio.ops import _get_stream
+
+        stream = _get_stream(ctx, self.children[0])
+        prefix = await self.children[1].execute(ctx)
+        labels = await self.children[2].execute(ctx)
         parts = [str(prefix)]
-        for i, child in enumerate(self.children[2:]):
+        for i, child in enumerate(self.children[3:]):
             val = await child.execute(ctx)
             if labels and i < len(labels):
                 parts.append(f"{labels[i]}={val!r}")
             else:
                 parts.append(repr(val))
-        print(" ".join(parts))  # noqa: T201
+        stream.write(" ".join(parts) + "\n")

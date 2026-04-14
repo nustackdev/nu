@@ -8,6 +8,7 @@ Subpackages:
     collections/  -- collection type interfaces (ListI, DictI, etc.)
     ops/          -- all concrete operations
     shapes/       -- document data model
+    stdio/        -- stdio fabric (StdioRef, StdioWrite, StdioBackend)
     tree/         -- node structure, traversal, queries, and rewrites
 """
 
@@ -262,14 +263,28 @@ from .tree import (
 )
 from .utils import ensure_nu, typed_value
 from .shapes import Shape, Slot
+from .stdio import (
+    STDERR,
+    STDIN,
+    STDOUT,
+    BufferedStdio,
+    StdioBackend,
+    StdioFlush,
+    StdioRead,
+    StdioRef,
+    StdioWrite,
+)
 
 # explicit submodule re-exports for nu.collections, nu.ops, etc.
-from . import collections, context, interface, ops, primitives, shapes, terms, tree  # noqa: E402, F401
+from . import collections, context, interface, ops, primitives, shapes, stdio, terms, tree  # noqa: E402, F401
 
 
 __all__ = [
     "EMPTY",
     "INVALID",
+    "STDERR",
+    "STDIN",
+    "STDOUT",
     "AbsOp",
     "AddOp",
     "All",
@@ -297,6 +312,7 @@ __all__ = [
     "AutoInterface",
     "BinaryOp",
     "BitwiseAndOp",
+    "BufferedStdio",
     "BitwiseNotOp",
     "BitwiseOrOp",
     "BoolArg",
@@ -430,6 +446,11 @@ __all__ = [
     "Slot",
     "Sorted",
     "SortedOp",
+    "StdioBackend",
+    "StdioFlush",
+    "StdioRead",
+    "StdioRef",
+    "StdioWrite",
     "StrArg",
     "StrAttrRef",
     "StrI",

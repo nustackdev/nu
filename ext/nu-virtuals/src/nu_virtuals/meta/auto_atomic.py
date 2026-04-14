@@ -1,8 +1,11 @@
-"""auto_atomic - wrap unwrapped fabric interactions.
+"""auto_atomic - wrap unwrapped virtuals fabric interactions.
 
-Two rules:
-1. Op with WRITE override + Ref at that position -> Transaction(Op)
-2. Bare Ref -> Snapshot(Ref)
+Two rules (applied only to shapes Refs, i.e. document-model refs):
+1. Op with WRITE override + shapes Ref at that position -> Transaction(Op)
+2. Bare shapes Ref -> Snapshot(Ref)
+
+Non-shapes Refs (StdioRef, AttrRef, ServiceRef) are left unwrapped.
+They belong to different fabrics with their own boundary mechanisms.
 
 Recurses top-down. Skips existing Transaction/Snapshot/Atomic.
 Rule 1 doesn't recurse inside (the boundary covers the subtree).
@@ -12,16 +15,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Nu
+from nu.shapes.refs.base import Ref as ShapesRef
 from nu.terms.effect import Direction, tracked_effects
 from nu.terms.op import Op
-from nu.terms.ref import Ref
 
 from ..ops.control import Atomic, Snapshot, Transaction
 
 
 if TYPE_CHECKING:
     from collections.abc import Hashable
+
+    from nu import Nu
 
 
 __all__ = [
@@ -38,9 +42,9 @@ def _has_pv_write(node: Nu) -> bool:
 
 
 def _has_write_ref(op: Op) -> bool:
-    """Check if Op has a WRITE override with a Ref at that position."""
+    """Check if Op has a WRITE override with a shapes Ref at that position."""
     for i, direction in op.overrides.items():
-        if Direction.WRITE in direction and i < len(op.children) and isinstance(op.children[i], Ref):
+        if Direction.WRITE in direction and i < len(op.children) and isinstance(op.children[i], ShapesRef):
             return True
     return False
 
@@ -55,12 +59,12 @@ def _walk(tree: Nu, scope: Hashable | None = None) -> Nu:
     if scope is not None:
         kwargs["scope"] = scope
 
-    # Rule 1: Op with WRITE override + Ref -> Transaction(Op)
+    # Rule 1: Op with WRITE override + shapes Ref -> Transaction(Op)
     if isinstance(tree, Op) and tree.overrides and _has_write_ref(tree):
         return Transaction(tree, **kwargs)
 
-    # Rule 2: bare Ref -> Snapshot(Ref)
-    if isinstance(tree, Ref):
+    # Rule 2: bare shapes Ref -> Snapshot(Ref)
+    if isinstance(tree, ShapesRef):
         return Snapshot(tree, **kwargs)
 
     # Recurse
@@ -81,10 +85,11 @@ def _walk(tree: Nu, scope: Hashable | None = None) -> Nu:
 
 
 def auto_atomic(tree: Nu, scope: Hashable | None = None) -> Nu:
-    """Wrap unwrapped fabric interactions.
+    """Wrap unwrapped virtuals fabric interactions.
 
-    WRITE override Ops get Transaction. Bare Refs get Snapshot.
-    Everything else is recursed. Existing boundaries are respected.
+    WRITE override Ops with shapes Refs get Transaction.
+    Bare shapes Refs get Snapshot. Non-shapes Refs (StdioRef, etc.)
+    are left unwrapped. Existing boundaries are respected.
 
     Args:
         tree: Tree to rewrite.
