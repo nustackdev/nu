@@ -16,7 +16,6 @@ from .reactive import (
     OnChildChangeOp,
     OnChildrenChangeOp,
     OnDescendantsChangeOp,
-    OnPrimitiveChangeOp,
 )
 
 __all__ = [
@@ -36,7 +35,6 @@ __all__ = [
     "OnChildChangeOp",
     "OnChildrenChangeOp",
     "OnDescendantsChangeOp",
-    "OnPrimitiveChangeOp",
     "React",
     "ReactForever",
     "ReactWhile",

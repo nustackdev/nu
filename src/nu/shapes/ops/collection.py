@@ -36,8 +36,6 @@ __all__ = [
 class CollectionLoadOp[T](Op[T | Sentinel]):
     """Read collection from parent. Returns EMPTY if missing."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
-
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
@@ -90,8 +88,6 @@ class CollectionEraseCmd(Op[None]):
 class CollectionExistsOp(Op[bool]):
     """Check if collection exists: not is_sentinel(ref.execute())."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
-
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
@@ -105,8 +101,6 @@ class CollectionExistsOp(Op[bool]):
 
 class CollectionMissingOp(Op[bool]):
     """Check if collection is missing: is_sentinel(ref.execute())."""
-
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)

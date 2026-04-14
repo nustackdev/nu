@@ -35,8 +35,6 @@ class ScanPrimitivesUnsafeOp[T](Op[Iterator[T] | Sentinel]):
         fetch(ctx) -> view with _unsafe_primitive_scan_values() method
     """
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
-
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref

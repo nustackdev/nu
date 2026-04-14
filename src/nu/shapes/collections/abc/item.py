@@ -24,7 +24,7 @@ from nu.primitives import BoolI, NoneI
 if TYPE_CHECKING:
     from nu import Nu, Sentinel
 
-    from nu.shapes.ops import OnPrimitiveChangeOp
+    from nu.shapes.ops import OnChildChangeOp
 
 
 __all__ = [
@@ -105,7 +105,7 @@ class MutableItemI[T, InterfaceT](ItemI[T, InterfaceT]):
 class ReactiveItemI[T, InterfaceT](MutableItemI[T, InterfaceT]):
     """Reactive item - CRUD + change observation."""
 
-    def on_change(self) -> OnPrimitiveChangeOp:
-        from nu.shapes.ops import OnPrimitiveChangeOp
+    def on_change(self) -> OnChildChangeOp:
+        from nu.shapes.ops import OnChildChangeOp
 
-        return OnPrimitiveChangeOp(self)
+        return OnChildChangeOp(self.parent, self._raw_address)

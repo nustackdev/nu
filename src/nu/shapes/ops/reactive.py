@@ -2,7 +2,6 @@
 """Reactive ops - change observation at various granularities.
 
 OnChangeOp: Subscribe to all changes on a view
-OnPrimitiveChangeOp: Subscribe to changes on a primitive value (via parent)
 OnChildChangeOp: Subscribe to changes on a specific child
 OnChildrenChangeOp: Subscribe to changes on all immediate children
 OnDescendantsChangeOp: Subscribe to descendants matching a pattern
@@ -16,7 +15,6 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from nu.terms import Nu, Op
-from nu.terms.effect import Direction
 
 
 if TYPE_CHECKING:
@@ -31,7 +29,6 @@ __all__ = [
     "OnChildChangeOp",
     "OnChildrenChangeOp",
     "OnDescendantsChangeOp",
-    "OnPrimitiveChangeOp",
 ]
 
 
@@ -54,30 +51,6 @@ class OnChangeOp(ChangeOp):
 
     def __repr__(self) -> str:
         return f"OnChangeOp({self.children[0]!r})"
-
-
-class OnPrimitiveChangeOp(ChangeOp):
-    """Subscribe to changes on a primitive value.
-
-    Uses the parent ref's view to subscribe on_child_change.
-    Navigates through children[0] (the PrimitiveRef) to get parent + address.
-    Has READ override so auto_atomic doesn't Snapshot-wrap the Ref child
-    (the Op needs raw Ref access for fetch_parent/resolve_address).
-    """
-
-    overrides = {0: Direction.READ}
-
-    def __init__(self, ref: Ref) -> None:
-        super().__init__(ref)
-
-    async def execute(self, ctx: Context) -> object:
-        ref = self.children[0]
-        parent = await ref.fetch_parent(ctx)
-        address = await ref.resolve_address(ctx)
-        return parent.on_child_change(address)  # type: ignore[union-attr]
-
-    def __repr__(self) -> str:
-        return f"OnPrimitiveChangeOp({self.children[0]!r})"
 
 
 class OnChildChangeOp[A](ChangeOp):

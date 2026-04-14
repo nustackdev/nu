@@ -38,8 +38,6 @@ __all__ = [
 class ItemLoadOp[T](Op[T | Sentinel]):
     """Read item from collection. Returns EMPTY if missing."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
-
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
@@ -92,8 +90,6 @@ class ItemEraseCmd(Op[None]):
 class ItemExistsOp(Op[bool]):
     """Check if item exists: not is_sentinel(ref.execute())."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
-
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
@@ -107,8 +103,6 @@ class ItemExistsOp(Op[bool]):
 
 class ItemMissingOp(Op[bool]):
     """Check if item is missing: is_sentinel(ref.execute())."""
-
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)

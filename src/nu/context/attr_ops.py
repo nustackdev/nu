@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from nu.terms import Op, Sentinel
-from nu.terms.effect import Direction
 
 
 if TYPE_CHECKING:
@@ -22,8 +21,6 @@ __all__ = [
 class AttrGetOp[T](Op[T | Sentinel]):
     """Read value by name from context: ctx.attrs[name]."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
-
     def __init__(self, ref: AttrRef[T]) -> None:
         """Initialize with ref."""
         super().__init__(ref)
@@ -36,8 +33,6 @@ class AttrGetOp[T](Op[T | Sentinel]):
 
 class AttrExistsOp(Op[bool]):
     """Check if name exists in context."""
-
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
 
     def __init__(self, ref: AttrRef) -> None:
         """Initialize with ref."""

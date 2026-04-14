@@ -104,8 +104,6 @@ class ItemPrimitiveGetUnsafeOp[T](Op[T | Sentinel]):
         resolve_address(ctx) -> key/index
     """
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.READ}
-
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
