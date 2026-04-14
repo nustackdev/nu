@@ -22,6 +22,7 @@ Hierarchy:
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 from nu.terms import Literal, Nu, RValue
@@ -29,6 +30,8 @@ from nu.terms.type_vars import T_co
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
     from nu.context import Context
     from nu.primitives import BoolI
 
@@ -111,9 +114,16 @@ class TypedNu(RValue[T_co]):
         """The wrapped source - either a Literal or another Nu."""
         return self.children[0] if self.children else None
 
+    @asynccontextmanager
+    async def open(self, ctx: Context) -> AsyncIterator[T_co]:
+        """Chain open() to the wrapped child."""
+        async with self.children[0].open(ctx) as result:
+            yield result
+
     async def execute(self, ctx: Context) -> T_co:
-        """Delegate to wrapped child."""
-        return await self.children[0].execute(ctx)
+        """Delegate to wrapped child, keeping boundaries alive."""
+        async with self.children[0].open(ctx) as result:
+            return result
 
     @property
     def is_self_pure(self) -> bool:

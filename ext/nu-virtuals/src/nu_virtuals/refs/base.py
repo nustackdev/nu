@@ -246,7 +246,6 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         view = nav.open_at_path(ViewPathSer(view_path), storage_ctx)
         return self._apply_facet(view)  # type: ignore
 
-
 class PrimitiveRef[T](Ref[T]):
     """Virtuals ref to a primitive/leaf value.
 

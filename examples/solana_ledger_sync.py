@@ -255,15 +255,16 @@ def sync_range(
 
 def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
     """Reactive observers: log block arrivals and per-block synced/skipped counters."""
-    return (
+    return nu.Parallel(
         nu.shapes.ReactForever(
-            ledger.blocks_meta.on_children_change(),
+            ledger.blocks_meta.on_descendants_change("*"),
             nu.Log("new block:", nu.AtOp(nu.TupleAttrRef("slot_change"), -1)),
             changed_key="slot_change",
-        )
-        | nu.shapes.ReactForever(
+        ),
+        nu.shapes.ReactForever(
             ledger.blocks_meta.on_descendants_change("*", "skipped"),
-            nu.Nu(
+            nu.Throttle(
+                1,
                 nu.Log(
                     "block",
                     nu.AtOp(nu.TupleAttrRef("skipped_change"), -2),
@@ -272,10 +273,11 @@ def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
                 ),
             ),
             changed_key="skipped_change",
-        )
-        | nu.shapes.ReactForever(
+        ),
+        nu.shapes.ReactForever(
             ledger.blocks_meta.on_descendants_change("*", "synced"),
-            nu.Nu(
+            nu.Throttle(
+                1,
                 nu.Log(
                     "block",
                     nu.AtOp(nu.TupleAttrRef("synced_change"), -2),
@@ -284,7 +286,7 @@ def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
                 ),
             ),
             changed_key="synced_change",
-        )
+        ),
     )
 
 
@@ -354,7 +356,7 @@ async def main() -> None:
             # Apply app meta-transformations
             # app = nu_dict.inline_refs(app)
             # app = nu_virtuals.inline_refs(app)
-            app = nu_virtuals.auto_atomic(tree=app, granularity="op")
+            app = nu_virtuals.auto_atomic(app)
             app = nu_debugger.set_logger_name(app, "sol")
 
             # Print the app

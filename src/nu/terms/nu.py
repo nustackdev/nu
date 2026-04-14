@@ -15,6 +15,7 @@ Hierarchy:
 from __future__ import annotations
 
 from abc import ABC
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Generic
 
 from nu.tree.node import _Node
@@ -22,6 +23,8 @@ from .type_vars import T_co
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
     from ..context import Context
 
 
@@ -53,6 +56,16 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
         """
         for child in self._children:
             await child.execute(ctx)
+
+    @asynccontextmanager
+    async def open(self, ctx: Context) -> AsyncIterator[T_co]:
+        """Open this Nu as a live resource within a boundary.
+
+        Default: execute and yield the result.
+        Fabric Refs override to keep the boundary open for the lifetime
+        of the context (e.g. Snapshot stays open while iterating a view).
+        """
+        yield await self.execute(ctx)
 
     @property
     def is_self_pure(self) -> bool:

@@ -47,10 +47,7 @@ class ChangeOp(Op[object]):
 
 
 class OnChangeOp(ChangeOp):
-    """Subscribe to all changes on a view/collection.
-
-    The ref must implement fetch(ctx) returning an object with on_change().
-    """
+    """Subscribe to all changes on a view/collection."""
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
@@ -65,13 +62,7 @@ class OnChangeOp(ChangeOp):
 
 
 class OnPrimitiveChangeOp(ChangeOp):
-    """Subscribe to changes on a primitive value.
-
-    Uses the parent collection's on_child_change(address) to watch
-    a specific item.
-
-    The ref must implement fetch_parent(ctx) and resolve_address(ctx).
-    """
+    """Subscribe to changes on a primitive value."""
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
@@ -87,10 +78,7 @@ class OnPrimitiveChangeOp(ChangeOp):
 
 
 class OnChildChangeOp[A](ChangeOp):
-    """Subscribe to changes on a specific child of a view.
-
-    The ref must implement fetch(ctx) returning an object with on_child_change().
-    """
+    """Subscribe to changes on a specific child of a view."""
 
     def __init__(self, ref: Ref, address: A | Nu[A]) -> None:
         super().__init__(ref)
@@ -111,10 +99,7 @@ class OnChildChangeOp[A](ChangeOp):
 
 
 class OnChildrenChangeOp(ChangeOp):
-    """Subscribe to changes on all immediate children of a view.
-
-    The ref must implement fetch(ctx) returning an object with on_children_change().
-    """
+    """Subscribe to changes on all immediate children of a view."""
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
@@ -129,10 +114,7 @@ class OnChildrenChangeOp(ChangeOp):
 
 
 class OnDescendantsChangeOp(ChangeOp):
-    """Subscribe to changes on descendants matching a pattern.
-
-    The ref must implement fetch(ctx) returning an object with on_descendents_change().
-    """
+    """Subscribe to changes on descendants matching a pattern."""
 
     def __init__(self, ref: Ref, *pattern: object) -> None:
         super().__init__(ref)

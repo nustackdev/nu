@@ -13,6 +13,7 @@ Core vocabulary:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 from .nu import LValue
@@ -21,6 +22,8 @@ from .type_vars import T_co
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
     from ..context import Context
 
 
@@ -74,6 +77,11 @@ class Ref(LValue[T_co | Sentinel], ABC):
     async def execute(self, ctx: Context) -> T_co | Sentinel:
         """Execute this ref by fetching its value."""
         return await self.fetch(ctx)
+
+    @asynccontextmanager
+    async def open(self, ctx: Context) -> AsyncIterator[T_co | Sentinel]:
+        """Open this ref: yield fetched value. Overrides TypedNu.open() in MRO."""
+        yield await self.fetch(ctx)
 
     @property
     def is_self_pure(self) -> bool:

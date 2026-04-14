@@ -86,7 +86,6 @@ class ForEach(Op):
         super().__init__(*children)
 
     async def execute(self, ctx: Context) -> None:
-        items = await self.children[0].execute(ctx)
         body = self.children[1]
 
         child_idx = 2
@@ -98,12 +97,13 @@ class ForEach(Op):
         if self._has_index:
             index_key = await self.children[child_idx].execute(ctx)
 
-        for i, elem in enumerate(items):
-            if item_key is not None:
-                ctx.attrs[item_key] = elem
-            if index_key is not None:
-                ctx.attrs[index_key] = i
-            await body.execute(ctx)
+        async with self.children[0].open(ctx) as items:
+            for i, elem in enumerate(items):
+                if item_key is not None:
+                    ctx.attrs[item_key] = elem
+                if index_key is not None:
+                    ctx.attrs[index_key] = i
+                await body.execute(ctx)
 
 
 class Fold(Op):
@@ -127,7 +127,6 @@ class Fold(Op):
         super().__init__(items, initial, body, acc, item)
 
     async def execute(self, ctx: Context) -> None:
-        items = await self.children[0].execute(ctx)
         initial = await self.children[1].execute(ctx)
         body = self.children[2]
         acc_key: str = await self.children[3].execute(ctx)
@@ -135,6 +134,7 @@ class Fold(Op):
 
         ctx.attrs[acc_key] = initial
 
-        for elem in items:
-            ctx.attrs[item_key] = elem
-            await body.execute(ctx)
+        async with self.children[0].open(ctx) as items:
+            for elem in items:
+                ctx.attrs[item_key] = elem
+                await body.execute(ctx)

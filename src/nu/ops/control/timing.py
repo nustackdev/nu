@@ -103,9 +103,11 @@ class Timeout(Op):
 
 
 class Throttle(Op):
-    """Rate-limit execution to at most once per interval.
+    """Drop executions within interval. Execute at most once per interval.
 
     Children: ``[interval, body?]``
+
+    First call always executes. Subsequent calls within the interval are skipped.
     """
 
     def __init__(self, interval: FloatArg, body: Nu | None = None) -> None:
@@ -118,21 +120,24 @@ class Throttle(Op):
     async def execute(self, ctx: Context) -> None:
         interval = await self.children[0].execute(ctx)
         now = time.monotonic()
-        elapsed = now - self._last_time
-        if elapsed < interval:
-            await asyncio.sleep(interval - elapsed)
-        self._last_time = time.monotonic()
+        if now - self._last_time < interval:
+            return  # drop
+        self._last_time = now
         if self.child_count > 1:
             await self.children[1].execute(ctx)
 
 
 class Debounce(Op):
-    """Wait for a quiet period before executing.
+    """Cancel pending, restart timer. Execute only after quiet period.
 
     Children: ``[delay, body?]``
+
+    Each call cancels any pending execution and starts a new timer.
+    Body executes only when the timer expires without being reset.
     """
 
     def __init__(self, delay: FloatArg, body: Nu | None = None) -> None:
+        self._pending: asyncio.Task | None = None
         if body is not None:
             super().__init__(delay, body)
         else:
@@ -140,6 +145,11 @@ class Debounce(Op):
 
     async def execute(self, ctx: Context) -> None:
         delay = await self.children[0].execute(ctx)
-        await asyncio.sleep(delay)
+        if self._pending is not None and not self._pending.done():
+            self._pending.cancel()
         if self.child_count > 1:
-            await self.children[1].execute(ctx)
+            self._pending = asyncio.create_task(self._run_after(delay, ctx))
+
+    async def _run_after(self, delay: float, ctx: Context) -> None:
+        await asyncio.sleep(delay)
+        await self.children[1].execute(ctx)

@@ -30,6 +30,7 @@ Composition pattern:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from .interaction import Interaction
@@ -39,6 +40,8 @@ from .type_vars import T_co
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
     from ..context import Context
     from .effect import Direction
 
@@ -120,14 +123,33 @@ class NAryOp(Op[T_co | Sentinel], ABC):
     # =========================================================================
 
     async def execute(self, ctx: Context) -> T_co | Sentinel:
-        """Resolve operands, propagate sentinels, apply transformation."""
-        values = []
-        for child in self.children:
-            val = await child.execute(ctx)
-            if is_sentinel(val):
-                return INVALID
-            values.append(val)
-        return self.apply(*values)
+        """Resolve operands via open() to keep boundaries alive, then apply."""
+        from contextlib import AsyncExitStack
+
+        async with AsyncExitStack() as stack:
+            values = []
+            for child in self.children:
+                val = await stack.enter_async_context(child.open(ctx))
+                if is_sentinel(val):
+                    return INVALID
+                values.append(val)
+            return self.apply(*values)
+
+    @asynccontextmanager
+    async def open(self, ctx: Context) -> AsyncIterator[T_co | Sentinel]:
+        """Like execute but keeps child boundaries alive via open() chain."""
+        # Use contextlib.AsyncExitStack to nest all children's open() contexts
+        from contextlib import AsyncExitStack
+
+        async with AsyncExitStack() as stack:
+            values = []
+            for child in self.children:
+                val = await stack.enter_async_context(child.open(ctx))
+                if is_sentinel(val):
+                    yield INVALID
+                    return
+                values.append(val)
+            yield self.apply(*values)
 
     @abstractmethod
     def apply(self, *values: Any) -> T_co | Sentinel:  # noqa: ANN401
@@ -238,7 +260,7 @@ class TernaryOp(NAryOp[T_co], ABC):
 # =============================================================================
 
 
-class ScopedOp(Op[None], ABC):
+class ScopedOp(Op, ABC):
     """Op with resource lifecycle hooks.
 
     Scoped ops run children sequentially within a before/after boundary.
@@ -249,28 +271,35 @@ class ScopedOp(Op[None], ABC):
         after(ctx):                  Clean up after successful execution.
         after_failure(ctx, error):   Clean up after failed execution.
 
-    Default execute runs all children sequentially, returns None.
-    Override execute for custom execution logic while still using hooks.
-
-    Usage::
-
-        class Atomic(ScopedOp):
-            def __init__(self, *children, scope=None):
-                super().__init__(*children, scope)
-            def before(self, ctx):
-                return ctx.bind(Transaction, factory=open_tx)
-            def after(self, ctx):
-                ctx.get(Transaction).commit()
-            def after_failure(self, ctx, error):
-                ctx.get(Transaction).abort()
+    execute() returns the last child's value.
+    open() yields the scoped context, keeping the boundary alive.
     """
 
-    async def execute(self, ctx: Context) -> None:
-        """Execute with lifecycle: before -> run children -> after/after_failure."""
+    async def execute(self, ctx: Context) -> object:
+        """Execute with lifecycle: before -> run children -> after/after_failure.
+
+        Returns the last child's value.
+        """
         scoped_ctx = self.before(ctx)
+        result = None
         try:
             for child in self.children:
-                await child.execute(scoped_ctx)
+                result = await child.execute(scoped_ctx)
+            self.after(scoped_ctx)
+            return result
+        except BaseException as e:
+            self.after_failure(scoped_ctx, e)
+            raise
+
+    @asynccontextmanager
+    async def open(self, ctx: Context) -> AsyncIterator:
+        """Open boundary, run children, yield last child's value, close on exit."""
+        scoped_ctx = self.before(ctx)
+        result = None
+        try:
+            for child in self.children:
+                result = await child.execute(scoped_ctx)
+            yield result
             self.after(scoped_ctx)
         except BaseException as e:
             self.after_failure(scoped_ctx, e)

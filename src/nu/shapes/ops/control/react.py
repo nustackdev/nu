@@ -3,7 +3,7 @@
 Subscribe to change events and execute children in response.
 Uses ChangeOp ops from shapes.ops to obtain subscription
 handles, then bridges callback-based notifications into async via
-asyncio.Event.
+asyncio.Queue (one wake per notification, no collapsing).
 
 React:         Wait for a single change, optionally execute body once.
 ReactForever:  Execute body on every change (runs forever).
@@ -60,12 +60,10 @@ class React(Op):
 
     async def execute(self, ctx: Context) -> None:  # noqa: D102
         loop = asyncio.get_running_loop()
-        event = asyncio.Event()
-        changed_key_holder: list[object] = [None]
+        queue: asyncio.Queue[object] = asyncio.Queue()
 
         def on_change(changed_key: object) -> None:
-            changed_key_holder[0] = changed_key
-            loop.call_soon_threadsafe(event.set)
+            loop.call_soon_threadsafe(queue.put_nowait, changed_key)
 
         changed_key_name: str | None = None
         if self._changed_key_idx is not None:
@@ -74,10 +72,10 @@ class React(Op):
         sub = await self.children[0].execute(ctx)
         sub.bind(on_change)
         try:
-            await event.wait()
+            key = await queue.get()
 
             if changed_key_name is not None:
-                ctx.attrs[changed_key_name] = changed_key_holder[0]
+                ctx.attrs[changed_key_name] = key
 
             if self._body_idx is not None:
                 await self.children[self._body_idx].execute(ctx)
@@ -107,12 +105,10 @@ class ReactForever(Op):
 
     async def execute(self, ctx: Context) -> None:  # noqa: D102
         loop = asyncio.get_running_loop()
-        event = asyncio.Event()
-        changed_key_holder: list[object] = [None]
+        queue: asyncio.Queue[object] = asyncio.Queue()
 
         def on_change(changed_key: object) -> None:
-            changed_key_holder[0] = changed_key
-            loop.call_soon_threadsafe(event.set)
+            loop.call_soon_threadsafe(queue.put_nowait, changed_key)
 
         changed_key_name: str | None = None
         if self._has_changed_key:
@@ -122,11 +118,10 @@ class ReactForever(Op):
         sub.bind(on_change)
         try:
             while True:
-                await event.wait()
-                event.clear()
+                key = await queue.get()
 
                 if changed_key_name is not None:
-                    ctx.attrs[changed_key_name] = changed_key_holder[0]
+                    ctx.attrs[changed_key_name] = key
 
                 await self.children[1].execute(ctx)
         finally:
@@ -156,12 +151,10 @@ class ReactWhile(Op):
 
     async def execute(self, ctx: Context) -> None:  # noqa: D102
         loop = asyncio.get_running_loop()
-        event = asyncio.Event()
-        changed_key_holder: list[object] = [None]
+        queue: asyncio.Queue[object] = asyncio.Queue()
 
         def on_change(changed_key: object) -> None:
-            changed_key_holder[0] = changed_key
-            loop.call_soon_threadsafe(event.set)
+            loop.call_soon_threadsafe(queue.put_nowait, changed_key)
 
         changed_key_name: str | None = None
         if self._has_changed_key:
@@ -171,14 +164,13 @@ class ReactWhile(Op):
         sub.bind(on_change)
         try:
             while True:
-                await event.wait()
-                event.clear()
+                key = await queue.get()
 
                 if not await self.children[1].execute(ctx):
                     break
 
                 if changed_key_name is not None:
-                    ctx.attrs[changed_key_name] = changed_key_holder[0]
+                    ctx.attrs[changed_key_name] = key
 
                 await self.children[2].execute(ctx)
         finally:
