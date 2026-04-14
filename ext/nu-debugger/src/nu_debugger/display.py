@@ -44,9 +44,8 @@ DIM_CYAN = "\033[2;36m"  # Literals (computed / wrapping children)
 YELLOW = "\033[33m"  # Refs
 GREEN = "\033[32m"  # Ops
 
-# Purity indicators
+# Op indicator
 PURE_DOT = f"{GREEN}\u25cf{RESET}"  # filled circle, green
-IMPURE_DOT = f"{RED}\u25c6{RESET}"  # filled diamond, red
 
 
 # =============================================================================

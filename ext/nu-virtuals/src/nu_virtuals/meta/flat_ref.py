@@ -13,7 +13,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu_virtuals.paths import ViewPathSer
-from nu import EMPTY, Sentinel, Nu
+from nu import EMPTY, Sentinel
+from nu.terms.ref import Ref
 
 
 if TYPE_CHECKING:
@@ -25,7 +26,7 @@ __all__ = [
 ]
 
 
-class FlatRef(Nu):
+class FlatRef(Ref):
     """Flat, pre-resolved ref for virtuals substrate.
 
     Attributes:
@@ -61,6 +62,12 @@ class FlatRef(Nu):
     # =========================================================================
     # Ref interface — what ops call
     # =========================================================================
+
+    async def resolve(self, ctx: Context) -> object:
+        """Build identity for this ref (path tuple)."""
+        if self._dynamic_segments:
+            return await self._build_path(ctx)
+        return self._static_path
 
     async def resolve_address(self, ctx: Context) -> object:
         """Return this ref's address (last path segment). O(1) for static."""

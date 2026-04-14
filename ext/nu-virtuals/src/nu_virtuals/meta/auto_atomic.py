@@ -1,10 +1,26 @@
-"""auto_atomic — Wrap Nu subtrees in Transaction/Snapshot scoped ops."""
+"""auto_atomic - Wrap Nu subtrees in Transaction/Snapshot using effect analysis.
+
+Walks the tree, computes tracked effects per subtree, wraps with the
+minimum boundary needed:
+    READ + WRITE on same fabric -> Transaction
+    WRITE only -> Transaction (virtuals has no WriteBatch yet)
+    READ only -> Snapshot
+
+Two granularity levels:
+    "nu" (default): at each bare Nu node, analyze and wrap each child independently.
+    "op": recurse into all branches, wrap at the finest fabric-touching Op level.
+
+Existing Transaction/Snapshot ops (placed by user) are respected and not re-wrapped.
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections import defaultdict
+from typing import TYPE_CHECKING, Literal
 
-from nu import Nu, find
+from nu import Nu
+from nu.terms.effect import Direction, TrackedEffect, tracked_effects
+from nu.terms.ref import Ref
 
 from ..ops.control import Snapshot, Transaction
 
@@ -12,115 +28,142 @@ from ..ops.control import Snapshot, Transaction
 if TYPE_CHECKING:
     from collections.abc import Hashable
 
-    from nu import Nu
-
 
 __all__ = [
     "auto_atomic",
 ]
 
 
-def _has_scope(node: Nu, scope: Hashable) -> bool:
-    """Check if a node's subtree contains refs belonging to the given scope."""
-    for ref in find(node, lambda n: hasattr(n, "get_root_shape")):
-        if ref.get_root_shape() == scope:
-            return True
+def _effects_by_fabric(
+    effects: frozenset[TrackedEffect],
+) -> dict[type, Direction]:
+    """Group tracked effects by fabric, union directions."""
+    by_fabric: dict[type, Direction] = defaultdict(lambda: Direction(0))
+    for e in effects:
+        by_fabric[e.fabric] |= e.direction
+    return dict(by_fabric)
+
+
+def _needs_wrapping(node: Nu) -> bool:
+    """Check if a node's subtree has any fabric effects."""
+    return len(tracked_effects(node)) > 0
+
+
+def _has_write(node: Nu, fabric: type | None = None) -> bool:
+    """Check if subtree has WRITE effects, optionally filtered by fabric."""
+    for e in tracked_effects(node):
+        if Direction.WRITE in e.direction:
+            if fabric is None or e.fabric is fabric:
+                return True
     return False
 
 
-def _has_pv_write(node: Nu) -> bool:
-    """Check if a node's subtree contains impure operations on virtuals refs.
-
-    An impure term is a PV write only if it operates on a virtuals ref
-    (PrimitiveRef, ViewRef pre-inline, or FlatRef post-inline).
-    Other impure terms (e.g. ed dict stores) are irrelevant to PV atomicity.
-    """
-    from ..refs.base import PrimitiveRef, ViewRef
-    from .flat_ref import FlatRef
-
-    pv_ref_types = (FlatRef, PrimitiveRef, ViewRef)
-
-    for t in find(node, lambda n: isinstance(n, Nu) and not n.is_self_pure):
-        if any(isinstance(c, pv_ref_types) for c in find(t, lambda n: isinstance(n, pv_ref_types))):
-            return True
-    return False
-
-
-def _conditional_wrap_skip_scoped[N: Nu](
-    root: N,
-    pred: object,
-    wrapper: object,
-) -> N:
-    """Like conditional_wrap but skips existing Transaction/Snapshot ops.
-
-    Explicit Transaction/Snapshot ops placed by user code are respected -
-    their contents won't be re-wrapped.
-    """
-    if pred(root) or root.is_leaf:
-        return root
-
-    # Don't recurse into existing Transaction/Snapshot ops
-    if isinstance(root, (Transaction, Snapshot)):
-        return root
-
-    new_children: list[Nu] = []
-    for child in root.children:
-        if pred(child):
-            new_children.append(wrapper(child))
-        else:
-            new_children.append(_conditional_wrap_skip_scoped(child, pred, wrapper))
-
-    return root.with_children(*new_children)  # type: ignore[arg-type]
-
-
-def auto_atomic[N: Nu](
-    tree: N,
-    scope: Hashable | None = None,
-) -> N:
-    """Wrap each Nu subtree in a ``Transaction`` or ``Snapshot``.
-
-    Walks *tree* bottom-up. Non-Nu children are recursed into so
-    their inner Terms get wrapped at their level.
-
-    Purity is resolved at wrap time: impure subtrees get ``Transaction``,
-    pure subtrees get ``Snapshot``. No runtime purity check needed.
-
-    Existing Transaction/Snapshot ops (placed explicitly by user code)
-    are respected - their contents won't be re-wrapped.
-
-    When ``scope`` is given, only Terms whose refs belong to that scope
-    are wrapped. This lets you call auto_atomic multiple times to handle
-    different scopes::
-
-        tree = auto_atomic(tree, scope=Services)  # Services Terms only
-        tree = auto_atomic(tree)                   # remaining Terms
-
-    When ``scope`` is None, all unwrapped Terms are matched.
-
-    Args:
-        tree: Expression tree to rewrite.
-        scope: Scope filter. None = wrap all Terms unscoped.
-
-    Returns:
-        New tree with Transaction/Snapshot ops injected.
-    """
+def _wrap(node: Nu, scope: Hashable | None = None) -> Nu:
+    """Wrap a node in Transaction or Snapshot based on its effects."""
     kwargs: dict = {}
     if scope is not None:
         kwargs["scope"] = scope
 
-    def pred(n: Nu) -> bool:
-        if not isinstance(n, Nu):
-            return False
-        return _has_scope(n, scope) if scope is not None else True
+    if _has_write(node):
+        return Transaction(node, **kwargs)
+    return Snapshot(node, **kwargs)
 
-    def wrap(term: Nu) -> Transaction | Snapshot:
-        if _has_pv_write(term):
-            return Transaction(term, **kwargs)
-        return Snapshot(term, **kwargs)
 
-    # If root itself is a matching Nu, wrap it directly
-    # (conditional_wrap only wraps children, not the root)
-    if pred(tree):
-        return wrap(tree)  # type: ignore[return-value]
+def _auto_atomic_nu(tree: Nu, scope: Hashable | None = None) -> Nu:
+    """Per-Nu granularity: at each bare Nu, wrap children independently."""
+    # Skip existing Transaction/Snapshot
+    if isinstance(tree, (Transaction, Snapshot)):
+        return tree
 
-    return _conditional_wrap_skip_scoped(tree, pred, wrap)
+    # Bare Nu (sequencing node from a | b) - wrap each child independently
+    if type(tree) is Nu:
+        new_children = []
+        for child in tree.children:
+            if isinstance(child, (Transaction, Snapshot)):
+                new_children.append(child)
+            elif _needs_wrapping(child):
+                new_children.append(_wrap(child, scope))
+            else:
+                # Recurse into non-fabric children to find bare Nus deeper
+                new_children.append(_auto_atomic_nu(child, scope))
+        return tree.with_children(*new_children)
+
+    # Other nodes: recurse into children
+    if tree.is_leaf:
+        return tree
+
+    new_children = []
+    changed = False
+    for child in tree.children:
+        new_child = _auto_atomic_nu(child, scope)
+        new_children.append(new_child)
+        if new_child is not child:
+            changed = True
+
+    if not changed:
+        return tree
+    return tree.with_children(*new_children)
+
+
+def _auto_atomic_op(tree: Nu, scope: Hashable | None = None) -> Nu:
+    """Per-Op granularity: recurse deep, wrap at the leaf-most fabric Ops.
+
+    Bottom-up: recurse all the way down first, then wrap Ops that directly
+    touch fabric (have overrides with Ref children). Parent nodes are left
+    unwrapped because their children are already covered.
+    """
+    # Skip existing Transaction/Snapshot
+    if isinstance(tree, (Transaction, Snapshot)):
+        return tree
+
+    if tree.is_leaf:
+        return tree
+
+    # First: recurse into all children (go deep)
+    new_children = []
+    changed = False
+    for child in tree.children:
+        if isinstance(child, (Transaction, Snapshot)):
+            new_children.append(child)
+            continue
+        new_child = _auto_atomic_op(child, scope)
+        # After recursion, if this child is a fabric Op (has overrides with Refs),
+        # wrap it. This is the leaf-most wrapping point.
+        overrides = getattr(new_child, "overrides", {})
+        if overrides and any(
+            isinstance(new_child.children[i], Ref)
+            for i in overrides
+            if i < len(new_child.children)
+        ):
+            new_child = _wrap(new_child, scope)
+        new_children.append(new_child)
+        if new_child is not child:
+            changed = True
+
+    if not changed:
+        return tree
+    return tree.with_children(*new_children)
+
+
+def auto_atomic(
+    tree: Nu,
+    scope: Hashable | None = None,
+    granularity: Literal["nu", "op"] = "nu",
+) -> Nu:
+    """Wrap subtrees in Transaction/Snapshot based on effect analysis.
+
+    Walks the tree, computes effects, inserts minimum boundaries.
+    Existing Transaction/Snapshot ops are respected.
+
+    Args:
+        tree: Tree to rewrite.
+        scope: Optional scope tag for Transaction/Snapshot.
+        granularity: "nu" (default) wraps at bare Nu children level.
+                     "op" wraps at individual fabric Op level.
+
+    Returns:
+        New tree with Transaction/Snapshot injected.
+    """
+    if granularity == "op":
+        return _auto_atomic_op(tree, scope)
+    return _auto_atomic_nu(tree, scope)
