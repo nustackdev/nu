@@ -162,7 +162,7 @@ def set_logger_name(tree: Nu, name: str) -> Nu:
     def _rename(node: Nu) -> Nu:
         if not isinstance(node, (Log, _StepSpan)):
             return node
-        clone = node.with_children(node.children[0], Literal(name), *node.children[2:])
+        clone = node.with_children(*node.children[:2], Literal(name), *node.children[3:])
         return clone
 
     return map_nodes(tree, _rename, order="bottom_up")

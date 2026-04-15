@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 from nu.terms import Ref, Sentinel
 
-
 if TYPE_CHECKING:
     from nu.context import Context
     from nu.primitives import BoolI
@@ -50,7 +49,7 @@ class ServiceRef[T](Ref[T]):
 
     async def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch service directly from context bindings."""
-        return ctx[self._service_type]  # type: ignore[index]
+        return ctx.get(self._service_type)
 
     def exists(self) -> BoolI:
         """Check if service exists in context."""
