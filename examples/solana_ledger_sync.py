@@ -354,8 +354,8 @@ async def main() -> None:
             )
 
             # Apply app meta-transformations
-            # app = nu_dict.inline_refs(app)
-            # app = nu_virtuals.inline_refs(app)
+            app = nu_dict.inline_refs(app)
+            app = nu_virtuals.inline_refs(app)
             app = nu_virtuals.auto_atomic(app)
             app = nu_debugger.set_logger_name(app, "sol")
 
