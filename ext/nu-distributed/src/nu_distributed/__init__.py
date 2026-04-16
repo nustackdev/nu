@@ -13,6 +13,11 @@ value types in invisibles. This means trees and specs fly through
 invisibles by value automatically (no manual serialization needed).
 """
 
+from composables.spec import BaseSpec
+from invisibles import register_value_type
+from nu.terms import Nu
+
+from .meta import auto_distribute
 from .resources import (
     CodecResource,
     CodecSpec,
@@ -49,8 +54,12 @@ from .resources import (
     noop_codec_spec,
     text_codec_spec,
 )
-from .meta import auto_distribute
 from .spans import Teleport
+
+
+# Register value types: trees and specs serialize by value through invisibles.
+# No lifecycle, immutable, safe to send as data.
+register_value_type(Nu, BaseSpec)
 
 
 __all__ = [
@@ -82,10 +91,10 @@ __all__ = [
     "RocksDBStorageSpec",
     "Teleport",
     "TextStorageResource",
-    "auto_distribute",
     "TextStorageSpec",
     "Worker",
     "WorkerSpec",
+    "auto_distribute",
     "binary_codec_spec",
     "msgpack_codec_spec",
     "noop_codec_spec",

@@ -47,8 +47,8 @@ async def test_teleport_string_tag():
     async with Runtime() as rt:
         ctx = await local(rt, NavigatorSpec(), workers=1)
         # Rebind worker with string tag
-        worker = ctx[Worker, 0]
-        ctx = ctx.bind(worker, Worker, "gpu")
+        worker = ctx.get(Worker, 0)
+        ctx = ctx.bind(Worker, worker, "gpu")
         await flow.execute(ctx)
 
 
@@ -64,8 +64,8 @@ async def test_teleport_tuple_tag():
     async with Runtime() as rt:
         ctx = await local(rt, NavigatorSpec(), workers=1)
         # Rebind worker with tuple tag
-        worker = ctx[Worker, 0]
-        ctx = ctx.bind(worker, Worker, ("red", 0))
+        worker = ctx.get(Worker, 0)
+        ctx = ctx.bind(Worker, worker, ("red", 0))
         await flow.execute(ctx)
 
 

@@ -7,8 +7,9 @@ Two rules (applied to shapes Refs and FlatRefs, i.e. virtuals fabric refs):
 Non-virtuals Refs (StdioRef, AttrRef, ServiceRef) are left unwrapped.
 They belong to different fabrics with their own boundary mechanisms.
 
-Recurses top-down. Skips existing Transaction/Snapshot/Atomic.
-Rule 1 doesn't recurse inside (the boundary covers the subtree).
+Recurses top-down. Skips existing Transaction/Snapshot/Atomic only when their
+scope matches the current scope. Boundaries with a different scope are recursed
+into - they don't cover refs belonging to our scope.
 """
 
 from __future__ import annotations
@@ -22,7 +23,10 @@ from nu.terms.op import Op
 from ..meta.flat_ref import FlatRef
 from ..ops.control import Atomic, Snapshot, Transaction
 
+
 # Refs that belong to the virtuals fabric and need atomic wrapping.
+# After inline_refs: virtuals refs are FlatRef, nu_dict refs are gone.
+# ShapesRef catches non-inlined virtuals refs (e.g. cross-fabric dynamic keys).
 _VirtualsRef = (ShapesRef, FlatRef)
 
 
@@ -39,37 +43,72 @@ __all__ = [
 
 def _has_pv_write(node: Nu) -> bool:
     """Check if subtree has any WRITE effects. Used by Atomic."""
-    return any(
-        Direction.WRITE in e.direction
-        for e in tracked_effects(node)
-    )
+    return any(Direction.WRITE in e.direction for e in tracked_effects(node))
 
 
 def _has_write_ref(op: Op) -> bool:
     """Check if Op has a WRITE override with a virtuals Ref at that position."""
     for i, direction in op.overrides.items():
-        if Direction.WRITE in direction and i < len(op.children) and isinstance(op.children[i], _VirtualsRef):
+        if (
+            Direction.WRITE in direction
+            and i < len(op.children)
+            and isinstance(op.children[i], _VirtualsRef)
+        ):
             return True
     return False
 
 
+def _find_write_ref(op: Op) -> ShapesRef | FlatRef | None:
+    """Find the first WRITE-position virtuals Ref in an Op."""
+    for i, direction in op.overrides.items():
+        if (
+            Direction.WRITE in direction
+            and i < len(op.children)
+            and isinstance(op.children[i], _VirtualsRef)
+        ):
+            return op.children[i]
+    return None
+
+
+def _ref_matches_scope(ref: ShapesRef | FlatRef, scope: Hashable) -> bool:
+    """Check if a virtuals ref belongs to the given root shape."""
+    return ref.get_root_shape() is scope
+
+
 def _walk(tree: Nu, scope: Hashable | None = None) -> Nu:
-    """Walk the tree, apply the rules."""
-    # Skip existing boundaries
+    """Walk the tree, apply the rules.
+
+    When scope is None: wrap all unwrapped virtuals refs (no scope tag).
+    When scope is set: only wrap refs whose root_shape matches scope,
+    tagging the boundary with that scope. Other refs are left unwrapped.
+    """
+    # Skip existing boundaries whose scope matches ours.
+    # A boundary with a different scope doesn't cover our refs - recurse in.
     if isinstance(tree, (Transaction, Snapshot, Atomic)):
-        return tree
+        if tree.scope is scope:
+            return tree
 
     kwargs: dict = {}
     if scope is not None:
         kwargs["scope"] = scope
 
     # Rule 1: Op with WRITE override + virtuals Ref -> Transaction(Op)
-    if isinstance(tree, Op) and tree.overrides and _has_write_ref(tree):
-        return Transaction(tree, **kwargs)
+    if isinstance(tree, Op) and tree.overrides:
+        if scope is not None:
+            # Scoped: only wrap if the write ref matches this scope
+            write_ref = _find_write_ref(tree)
+            if write_ref is not None and _ref_matches_scope(write_ref, scope):
+                return Transaction(tree, **kwargs)
+        elif _has_write_ref(tree):
+            return Transaction(tree, **kwargs)
 
     # Rule 2: bare virtuals Ref -> Snapshot(Ref)
     if isinstance(tree, _VirtualsRef):
-        return Snapshot(tree, **kwargs)
+        if scope is not None:
+            if _ref_matches_scope(tree, scope):
+                return Snapshot(tree, **kwargs)
+        else:
+            return Snapshot(tree, **kwargs)
 
     # Recurse
     if tree.is_leaf:
@@ -95,9 +134,20 @@ def auto_atomic(tree: Nu, scope: Hashable | None = None) -> Nu:
     Bare virtuals Refs get Snapshot. Non-virtuals Refs (StdioRef, etc.)
     are left unwrapped. Existing boundaries are respected.
 
+    When scope is None (default): wraps all unwrapped virtuals refs
+    without a scope tag (uses default navigator).
+
+    When scope is set: only wraps refs whose root_shape matches scope,
+    tagging the boundary with that scope. Use this to target a specific
+    shape root for a separate navigator binding. Call multiple times
+    with different scopes for multi-navigator setups::
+
+        tree = auto_atomic(tree, scope=LedgerShard)  # shard refs first
+        tree = auto_atomic(tree)                       # remaining refs
+
     Args:
         tree: Tree to rewrite.
-        scope: Optional scope tag for Transaction/Snapshot.
+        scope: Shape root to filter and tag. None = wrap all.
 
     Returns:
         New tree with Transaction/Snapshot injected.

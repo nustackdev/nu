@@ -11,8 +11,9 @@ Subpackages:
     stdio/        -- stdio fabric (StdioRef, StdioWrite, StdioBackend)
     tree/         -- node structure, traversal, queries, and rewrites
 """
+# isort: skip
 
-from __future__ import annotations
+from __future__ import annotations  
 
 from .collections import (
     DictI,
@@ -261,7 +262,7 @@ from .tree import (
     unwrap,
     wrap,
 )
-from .utils import ensure_nu, typed_value
+from .utils import ensure_nu
 from .shapes import Shape, Slot
 from .stdio import (
     STDERR,
@@ -527,7 +528,6 @@ __all__ = [
     "replace",
     "size",
     "tracked_effects",
-    "typed_value",
     "unwrap",
     "wrap",
 ]

@@ -27,7 +27,7 @@ Usage:
     worker = await runtime.create(
         InvisiblesWorkerSpec(address="10.0.0.1:19000")
     )
-    ctx = ctx.bind(worker, Worker, 0)
+    ctx = ctx.bind(Worker, worker, 0)
 
     # Teleport sends whole tree in 1 RPC
     await Teleport(ebv.Transaction(...), worker=0).execute(ctx)
@@ -40,6 +40,7 @@ import threading
 from typing import TYPE_CHECKING
 
 import attrs
+
 from composables import Resource, ResourceSpec
 
 
@@ -86,9 +87,8 @@ class _ExecutionService:
         future.result(timeout=30.0)
 
     async def _setup(self, worker_spec: WorkerSpec) -> None:
-        from composables import Runtime
-
         import nu_distributed  # noqa: F401 - ensure value types registered
+        from composables import Runtime
 
         self._runtime = Runtime()
         await self._runtime.__aenter__()
@@ -125,13 +125,14 @@ class InvisiblesWorkerServer(Resource):
 
     async def setup(self) -> None:
         """Start the execution service and invisibles server."""
-        from invisibles import InvisiblesConnection, Protocol
-        from invisibles.config import AttributeAccessConfig, ConnectionConfig
         from netkit import SyncConnection, SyncServer
         from netkit.executors import SimpleExecutor
         from netkit.executors.threaded import ThreadedExecutor
         from netkit.framing import LengthPrefixedFraming
         from netkit.transports import TCPListener, UnixSocketListener
+
+        from invisibles import InvisiblesConnection, Protocol
+        from invisibles.config import AttributeAccessConfig, ConnectionConfig
 
         # Create the execution service with a Worker
         self._service = _ExecutionService()
@@ -201,7 +202,6 @@ class InvisiblesWorkerServer(Resource):
         """Register everybase Nu as value type if not already."""
         try:
             from invisibles.core.boxing import register_value_type
-
             from nu.terms import Nu
 
             register_value_type(Nu)
@@ -239,7 +239,7 @@ class InvisiblesWorker(Resource):
     """Connects to InvisiblesWorkerServer, forwards execute(tree).
 
     Bindable as Worker in Context for Teleport resolution:
-        ctx.bind(worker, Worker, 0)
+        ctx.bind(Worker, worker, 0)
         Teleport(..., worker=0)  # resolves to this, calls execute()
     """
 
@@ -247,12 +247,13 @@ class InvisiblesWorker(Resource):
 
     async def setup(self) -> None:
         """Connect to the remote worker server."""
-        from invisibles import BgServingThread, InvisiblesConnection, Protocol
-        from invisibles.config import AttributeAccessConfig, ConnectionConfig
-        from invisibles.core.consts import HANDLE_GET_ROOT
         from netkit import SyncConnector
         from netkit.framing import LengthPrefixedFraming
         from netkit.transports import TCPTransport, UnixSocketTransport
+
+        from invisibles import BgServingThread, InvisiblesConnection, Protocol
+        from invisibles.config import AttributeAccessConfig, ConnectionConfig
+        from invisibles.core.consts import HANDLE_GET_ROOT
 
         # Register value types on client side too
         self._register_value_types()
@@ -315,7 +316,6 @@ class InvisiblesWorker(Resource):
     def _register_value_types() -> None:
         try:
             from invisibles.core.boxing import register_value_type
-
             from nu.terms import Nu
 
             register_value_type(Nu)

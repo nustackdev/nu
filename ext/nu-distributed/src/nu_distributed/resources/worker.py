@@ -6,8 +6,8 @@ it can have its own storage, proxy to a remote one, or share
 with other workers.
 
 Workers are bound to the root Context by index tags:
-    ctx.bind(worker, Worker, 0)
-    ctx.bind(worker, Worker, 1)
+    ctx.bind(Worker, worker, 0)
+    ctx.bind(Worker, worker, 1)
 
 Teleport resolves workers from context:
     ctx[Worker, idx]
@@ -18,6 +18,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import attrs
+
 from composables import Attach, Resource, ResourceSpec
 
 from .context import ContextSpec

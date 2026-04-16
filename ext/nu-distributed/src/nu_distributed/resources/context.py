@@ -30,7 +30,7 @@ class ContextResource(Resource):
         from virtuals import Navigator
 
         self._ctx = Context()
-        self._ctx = self._ctx.bind(self.storage, Navigator)
+        self._ctx = self._ctx.bind(Navigator, self.storage)
 
     @property
     def ctx(self) -> Context:

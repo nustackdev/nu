@@ -39,7 +39,7 @@ async def local(runtime, nav_spec: NavigatorSpec, *, workers: int = 2) -> Contex
         worker = await runtime.create(
             WorkerSpec(name=f"worker-{i}", context=ContextSpec(storage=nav_spec))
         )
-        ctx = ctx.bind(worker, Worker, i)
+        ctx = ctx.bind(Worker, worker, i)
     return ctx
 
 
@@ -77,7 +77,7 @@ async def distributed(runtime, nav_spec: NavigatorSpec, *, workers: int = 2) -> 
                 actor_name=f"eb-worker-{i}",
             )
         )
-        ctx = ctx.bind(worker, Worker, i)
+        ctx = ctx.bind(Worker, worker, i)
     return ctx
 
 
