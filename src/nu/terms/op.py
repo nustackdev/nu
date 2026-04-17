@@ -34,7 +34,6 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from .interaction import Interaction
-from .nu import Nu
 from .sentinel import INVALID, Sentinel, is_sentinel
 from .type_vars import T_co
 
@@ -44,6 +43,7 @@ if TYPE_CHECKING:
 
     from ..context import Context
     from .effect import Direction
+    from .nu import Nu
 
 
 __all__ = [  # noqa: RUF022
@@ -137,7 +137,7 @@ class NAryOp(Op[T_co | Sentinel], ABC):
 
     @asynccontextmanager
     async def open(self, ctx: Context) -> AsyncIterator[T_co | Sentinel]:
-        """Like execute but keeps child boundaries alive via open() chain."""
+        """Like execute but keeps child boundaries alive via open chain."""
         # Use contextlib.AsyncExitStack to nest all children's open() contexts
         from contextlib import AsyncExitStack
 

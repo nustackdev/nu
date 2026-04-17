@@ -67,18 +67,6 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
         """
         yield await self.execute(ctx)
 
-    @property
-    def is_self_pure(self) -> bool:
-        """Whether this Nu is pure (no side effects)."""
-        return True
-
-    @property
-    def is_subtree_pure(self) -> bool:
-        """Whether this Nu and its entire subtree are pure."""
-        if not self.is_self_pure:
-            return False
-        return all(child.is_subtree_pure for child in self._children if isinstance(child, Nu))
-
     def __or__(self, other: object) -> Nu:
         """Compose sequentially: ``a | b`` executes a then b.
 
