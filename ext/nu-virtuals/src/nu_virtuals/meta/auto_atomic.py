@@ -75,18 +75,52 @@ def _ref_matches_scope(ref: ShapesRef | FlatRef, scope: Hashable) -> bool:
     return ref.get_root_shape() is scope
 
 
-def _walk(tree: Nu, scope: Hashable | None = None) -> Nu:
+def _covers(enclosing_scopes: tuple, ref_scope: Hashable) -> bool:
+    """Check if any enclosing boundary already covers a ref with root_shape=ref_scope.
+
+    A boundary covers a ref when:
+    - boundary scope is None (unscoped boundary covers everything), OR
+    - boundary scope is the ref's root shape (scoped boundary covers matching refs).
+
+    ``enclosing_scopes`` is a tuple of scope values from Transaction/Atomic/Snapshot
+    ancestors already seen on the walk path. Sentinel ``_UNSET`` means "no ancestor".
+    """
+    for s in enclosing_scopes:
+        if s is None or s is ref_scope:
+            return True
+    return False
+
+
+def _walk(tree: Nu, scope: Hashable | None, enclosing: tuple) -> Nu:
     """Walk the tree, apply the rules.
 
     When scope is None: wrap all unwrapped virtuals refs (no scope tag).
     When scope is set: only wrap refs whose root_shape matches scope,
     tagging the boundary with that scope. Other refs are left unwrapped.
+
+    ``enclosing`` is a tuple of scope values of Transaction/Atomic/Snapshot
+    ancestors already passed through. Used to skip redundant wrapping when
+    an ancestor boundary already covers the ref(s) we'd wrap.
     """
-    # Skip existing boundaries whose scope matches ours.
-    # A boundary with a different scope doesn't cover our refs - recurse in.
+    # Skip existing boundaries whose scope matches ours (identical wrap).
+    # For non-matching scope, still recurse but register this boundary as
+    # enclosing so nested rules can see it already covers compatible refs.
     if isinstance(tree, (Transaction, Snapshot, Atomic)):
         if tree.scope is scope:
             return tree
+        child_enclosing = enclosing + (tree.scope,)
+        if tree.is_leaf:
+            return tree
+        new_children = []
+        changed = False
+        for child in tree.children:
+            new_child = _walk(child, scope, child_enclosing)
+            new_children.append(new_child)
+            if new_child is not child:
+                changed = True
+        if not changed:
+            return tree
+        return tree.with_children(*new_children)
 
     kwargs: dict = {}
     if scope is not None:
@@ -98,17 +132,28 @@ def _walk(tree: Nu, scope: Hashable | None = None) -> Nu:
             # Scoped: only wrap if the write ref matches this scope
             write_ref = _find_write_ref(tree)
             if write_ref is not None and _ref_matches_scope(write_ref, scope):
-                return Transaction(tree, **kwargs)
+                # Skip if an enclosing boundary already covers this scope.
+                if _covers(enclosing, scope):
+                    pass  # fall through to recurse
+                else:
+                    return Transaction(tree, **kwargs)
         elif _has_write_ref(tree):
-            return Transaction(tree, **kwargs)
+            write_ref = _find_write_ref(tree)
+            ref_root = write_ref.get_root_shape() if write_ref is not None else None
+            if _covers(enclosing, ref_root):
+                pass  # already covered, fall through to recurse
+            else:
+                return Transaction(tree, **kwargs)
 
     # Rule 2: bare virtuals Ref -> Snapshot(Ref)
     if isinstance(tree, _VirtualsRef):
         if scope is not None:
-            if _ref_matches_scope(tree, scope):
+            if _ref_matches_scope(tree, scope) and not _covers(enclosing, scope):
                 return Snapshot(tree, **kwargs)
         else:
-            return Snapshot(tree, **kwargs)
+            ref_root = tree.get_root_shape()
+            if not _covers(enclosing, ref_root):
+                return Snapshot(tree, **kwargs)
 
     # Recurse
     if tree.is_leaf:
@@ -117,7 +162,7 @@ def _walk(tree: Nu, scope: Hashable | None = None) -> Nu:
     new_children = []
     changed = False
     for child in tree.children:
-        new_child = _walk(child, scope)
+        new_child = _walk(child, scope, enclosing)
         new_children.append(new_child)
         if new_child is not child:
             changed = True
@@ -152,4 +197,4 @@ def auto_atomic(tree: Nu, scope: Hashable | None = None) -> Nu:
     Returns:
         New tree with Transaction/Snapshot injected.
     """
-    return _walk(tree, scope)
+    return _walk(tree, scope, ())
