@@ -12,10 +12,11 @@ All storages default to InMemoryObserver for change notifications.
 from __future__ import annotations
 
 import attrs
+
 from composables import Attach, Resource, ResourceSpec, Spec
-from virtuals._backends.storages.mem import InMemoryStorage
-from virtuals._backends.storages.rocksdb import RocksDBStorage
-from virtuals._backends.storages.textdb import TextStorage
+from virtuals.storages.mem import InMemoryStorage
+from virtuals.storages.rocksdb import RocksDBStorage
+from virtuals.storages.textdb import TextStorage
 
 from .codec import CodecSpec, binary_codec_spec, noop_codec_spec, text_codec_spec
 from .observer import InMemoryObserverSpec
@@ -43,7 +44,7 @@ class InMemoryStorageResource(Resource, InMemoryStorage):
     codec_resource = Attach()
     observer_resource = Attach()
 
-    def __init__(self, spec: object = None, /) -> None:
+    def __init__(self, spec: Spec, /) -> None:
         Resource.__init__(self, spec)
 
     async def setup(self) -> None:
@@ -79,7 +80,7 @@ class RocksDBStorageResource(Resource, RocksDBStorage):
     codec_resource = Attach()
     observer_resource = Attach()
 
-    def __init__(self, spec: object = None, /) -> None:
+    def __init__(self, spec: Spec, /) -> None:
         Resource.__init__(self, spec)
 
     async def setup(self) -> None:
@@ -133,7 +134,7 @@ class TextStorageResource(Resource, TextStorage):
     codec_resource = Attach()
     observer_resource = Attach()
 
-    def __init__(self, spec: object = None, /) -> None:
+    def __init__(self, spec: Spec, /) -> None:
         Resource.__init__(self, spec)
 
     async def setup(self) -> None:

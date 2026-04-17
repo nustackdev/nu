@@ -11,6 +11,7 @@ RedisObserver is lazy-loaded to avoid hard dependency on redis package.
 from __future__ import annotations
 
 import attrs
+
 from composables import Attach, Resource, ResourceSpec
 from virtuals._backends.observers.mem import InMemoryObserver
 
