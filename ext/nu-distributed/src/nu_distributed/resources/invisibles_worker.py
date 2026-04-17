@@ -302,8 +302,15 @@ class InvisiblesWorker(Resource):
             self._bg_serve = BgServingThread(self._connection)
 
     async def execute(self, tree: object) -> object:
-        """Send tree to remote worker for execution. 1 RPC."""
-        return self._remote.execute(tree)
+        """Send tree to remote worker for execution. 1 RPC.
+
+        The underlying invisibles call is synchronous; run it in a thread so
+        concurrent `Parallel(Teleport, Teleport, ...)` calls don't serialize
+        on the event loop.
+        """
+        import asyncio
+
+        return await asyncio.to_thread(self._remote.execute, tree)
 
     async def cleanup(self) -> None:
         """Close connection."""
