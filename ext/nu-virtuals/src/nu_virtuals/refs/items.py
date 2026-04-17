@@ -16,6 +16,7 @@ Pattern:
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Self
 
 from nu import (
@@ -32,6 +33,12 @@ from nu import (
 from nu.shapes import ReactiveItemRef, Slot
 
 from .base import PrimitiveRef
+
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from nu.context import Context
 
 
 if TYPE_CHECKING:
@@ -307,6 +314,23 @@ class PrimitiveDictRef[K, V](
         """Create a slot for primitive dict values."""
         return Slot(cls)  # type: ignore[return-value]
 
+    @asynccontextmanager
+    async def open(self, ctx: Context) -> AsyncIterator[object]:
+        """Yield a write-back dict view; flush on context exit if dirty."""
+        from nu_virtuals.views import PrimitiveDictView
+
+        parent = await self.fetch_parent(ctx)
+        address = await self.resolve_address(ctx)
+        try:
+            current = parent[address]
+        except (KeyError, IndexError):
+            current = {}
+        view = PrimitiveDictView(current, parent=parent, address=address)
+        try:
+            yield view
+        finally:
+            view._flush()
+
 
 class PrimitiveListRef[T](
     ItemRef[list[T], ListI[T]],
@@ -343,6 +367,23 @@ class PrimitiveListRef[T](
         """Create a slot for primitive list values."""
         return Slot(cls)  # type: ignore[return-value]
 
+    @asynccontextmanager
+    async def open(self, ctx: Context) -> AsyncIterator[object]:
+        """Yield a write-back list view; flush on context exit if dirty."""
+        from nu_virtuals.views import PrimitiveListView
+
+        parent = await self.fetch_parent(ctx)
+        address = await self.resolve_address(ctx)
+        try:
+            current = parent[address]
+        except (KeyError, IndexError):
+            current = []
+        view = PrimitiveListView(current, parent=parent, address=address)
+        try:
+            yield view
+        finally:
+            view._flush()
+
 
 class PrimitiveSetRef[T](
     ItemRef[set[T], SetI[T]],
@@ -378,3 +419,20 @@ class PrimitiveSetRef[T](
     def slot(cls) -> Self:  # type: ignore[override]
         """Create a slot for primitive set values."""
         return Slot(cls)  # type: ignore[return-value]
+
+    @asynccontextmanager
+    async def open(self, ctx: Context) -> AsyncIterator[object]:
+        """Yield a write-back set view; flush on context exit if dirty."""
+        from nu_virtuals.views import PrimitiveSetView
+
+        parent = await self.fetch_parent(ctx)
+        address = await self.resolve_address(ctx)
+        try:
+            current = parent[address]
+        except (KeyError, IndexError):
+            current = set()
+        view = PrimitiveSetView(current, parent=parent, address=address)
+        try:
+            yield view
+        finally:
+            view._flush()
