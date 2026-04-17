@@ -73,8 +73,9 @@ class ItemRef[T, ValueT: Interface](
     Combines everyshape document model (CRUD + observation) with
     PV substrate (path resolution, view navigation).
 
-    Overrides store() to use _primitive_write() directly, skipping
-    the container type check that __setitem__ would trigger.
+    Uses the base ReactiveItemRef.store(), which emits ItemStoreCmd and
+    routes through the parent view's __setitem__. This respects view-specific
+    semantics (e.g. LogIndexedDictView's __data__ + __keys__ layout).
     """
 
     def __init__(
@@ -86,12 +87,6 @@ class ItemRef[T, ValueT: Interface](
         """Initialize item reference."""
         super().__init__(**kwargs)
         self._value_value_type = value_value_type
-
-    def store(self, value: object) -> NoneI:
-        from nu import NoneI, ensure_nu
-        from nu_virtuals.ops.item import PrimitiveStoreCmd
-
-        return NoneI(PrimitiveStoreCmd(self, ensure_nu(value)))
 
     @classmethod
     def slot(
