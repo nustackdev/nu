@@ -8,6 +8,7 @@ PopCmd, RemoveValueCmd, ReverseCmd
 from __future__ import annotations
 
 from collections.abc import Iterable, MutableSequence, Sequence
+from typing import ClassVar
 
 from nu.terms import (
     INVALID,
@@ -16,6 +17,7 @@ from nu.terms import (
     TernaryOp,
     UnaryOp,
 )
+from nu.terms.effect import Direction
 
 
 __all__ = [
@@ -92,6 +94,8 @@ class CountOp(BinaryOp[int]):
 class AppendCmd[T](BinaryOp[None]):
     """Append item to end: seq.append(value). Returns None (mutates in-place)."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(left, MutableSequence):
@@ -102,6 +106,8 @@ class AppendCmd[T](BinaryOp[None]):
 
 class InsertCmd[T](TernaryOp[None]):
     """Insert item at index: seq.insert(index, value). Returns None (mutates in-place)."""
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def apply(self, first: object, second: object, third: object) -> None | Sentinel:
         """Apply."""
@@ -119,6 +125,8 @@ class PopCmd[T](BinaryOp[T]):
     Default index is -1 (last item).
     """
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+
     def apply(self, left: object, right: object) -> T | Sentinel:
         """Apply."""
         if not isinstance(left, MutableSequence):
@@ -134,6 +142,8 @@ class PopCmd[T](BinaryOp[T]):
 class ExtendCmd[T](BinaryOp[None]):
     """Extend sequence with iterable: seq.extend(other). Returns None (mutates in-place)."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(left, MutableSequence):
@@ -146,6 +156,8 @@ class ExtendCmd[T](BinaryOp[None]):
 
 class RemoveValueCmd[T](BinaryOp[None]):
     """Remove first occurrence of value: seq.remove(value). Returns None, or INVALID if not found."""
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -160,6 +172,8 @@ class RemoveValueCmd[T](BinaryOp[None]):
 
 class ReverseCmd(UnaryOp[None]):
     """Reverse sequence in-place: seq.reverse(). Returns None (mutates in-place)."""
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def apply(self, operand: object) -> None | Sentinel:
         """Apply."""

@@ -8,6 +8,7 @@ DictPopCmd, PopItemCmd, SetDefaultCmd
 from __future__ import annotations
 
 from collections.abc import ItemsView, KeysView, Mapping, MutableMapping, ValuesView
+from typing import ClassVar
 
 from nu.terms import (
     INVALID,
@@ -16,6 +17,7 @@ from nu.terms import (
     TernaryOp,
     UnaryOp,
 )
+from nu.terms.effect import Direction
 
 
 __all__ = [
@@ -87,6 +89,8 @@ class GetOp[V](TernaryOp[V]):
 class SetItemCmd[K, V](TernaryOp[None]):
     """Set value at key: mapping[key] = value. Returns None."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+
     def apply(self, first: object, second: object, third: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(first, MutableMapping):
@@ -97,6 +101,8 @@ class SetItemCmd[K, V](TernaryOp[None]):
 
 class DeleteItemCmd[K](BinaryOp[None]):
     """Delete entry by key: del mapping[key]. Returns None."""
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -112,6 +118,8 @@ class DeleteItemCmd[K](BinaryOp[None]):
 class UpdateCmd[K, V](BinaryOp[None]):
     """Update mapping with another: mapping.update(other). Returns None (mutates in-place)."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
         if not isinstance(left, MutableMapping):
@@ -124,6 +132,8 @@ class UpdateCmd[K, V](BinaryOp[None]):
 
 class DictPopCmd[K, V](TernaryOp[V]):
     """Pop value by key with optional default: mapping.pop(key, default). Returns value or default."""
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
         """Apply."""
@@ -140,6 +150,8 @@ class DictPopCmd[K, V](TernaryOp[V]):
 class PopItemCmd[K, V](UnaryOp[tuple[K, V]]):
     """Pop arbitrary item: mapping.popitem(). Returns (key, value) tuple."""
 
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+
     def apply(self, operand: object) -> tuple[K, V] | Sentinel:
         """Apply."""
         if not isinstance(operand, MutableMapping):
@@ -152,6 +164,8 @@ class PopItemCmd[K, V](UnaryOp[tuple[K, V]]):
 
 class SetDefaultCmd[K, V](TernaryOp[V]):
     """Set default value if key missing: mapping.setdefault(key, default). Returns value at key."""
+
+    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
 
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
         """Apply."""
