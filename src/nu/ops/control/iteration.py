@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+from contextlib import aclosing
 from typing import TYPE_CHECKING, Any
 
+from nu.eval import first
 from nu.terms import Op
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from nu.context import Context
     from nu.terms import IntArg, Nu, StrArg
 
@@ -43,20 +47,22 @@ class ForRange(Op):
             children.append(index)
         super().__init__(*children)
 
-    async def execute(self, ctx: Context) -> None:
-        start = await self.children[0].execute(ctx)
-        stop = await self.children[1].execute(ctx)
-        step = await self.children[2].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        start = await first(self.children[0], ctx)
+        stop = await first(self.children[1], ctx)
+        step = await first(self.children[2], ctx)
         body = self.children[3]
 
         index_key: str | None = None
         if self._has_index:
-            index_key = await self.children[4].execute(ctx)
+            index_key = await first(self.children[4], ctx)
 
         for i in range(start, stop, step):
             if index_key is not None:
                 ctx.attrs[index_key] = i
-            await body.execute(ctx)
+            async with aclosing(body.open(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
 
 class ForEach(Op):
@@ -85,25 +91,29 @@ class ForEach(Op):
             children.append(index)
         super().__init__(*children)
 
-    async def execute(self, ctx: Context) -> None:
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
         body = self.children[1]
 
         child_idx = 2
         item_key: str | None = None
         index_key: str | None = None
         if self._has_item:
-            item_key = await self.children[child_idx].execute(ctx)
+            item_key = await first(self.children[child_idx], ctx)
             child_idx += 1
         if self._has_index:
-            index_key = await self.children[child_idx].execute(ctx)
+            index_key = await first(self.children[child_idx], ctx)
 
-        async with self.children[0].open(ctx) as items:
-            for i, elem in enumerate(items):
-                if item_key is not None:
-                    ctx.attrs[item_key] = elem
-                if index_key is not None:
-                    ctx.attrs[index_key] = i
-                await body.execute(ctx)
+        # TODO `items` treated as single-yield collection. Revisit
+        # when stream-Op rewrite lands (Tier 5) to support multi-yield sources.
+        items = await first(self.children[0], ctx)
+        for i, elem in enumerate(items):
+            if item_key is not None:
+                ctx.attrs[item_key] = elem
+            if index_key is not None:
+                ctx.attrs[index_key] = i
+            async with aclosing(body.open(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
 
 class Fold(Op):
@@ -126,15 +136,18 @@ class Fold(Op):
     ) -> None:
         super().__init__(items, initial, body, acc, item)
 
-    async def execute(self, ctx: Context) -> None:
-        initial = await self.children[1].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        initial = await first(self.children[1], ctx)
         body = self.children[2]
-        acc_key: str = await self.children[3].execute(ctx)
-        item_key: str = await self.children[4].execute(ctx)
+        acc_key: str = await first(self.children[3], ctx)
+        item_key: str = await first(self.children[4], ctx)
 
         ctx.attrs[acc_key] = initial
 
-        async with self.children[0].open(ctx) as items:
-            for elem in items:
-                ctx.attrs[item_key] = elem
-                await body.execute(ctx)
+        # TODO single-yield items source; revisit with Tier 5.
+        items = await first(self.children[0], ctx)
+        for elem in items:
+            ctx.attrs[item_key] = elem
+            async with aclosing(body.open(ctx)) as gen:
+                async for v in gen:
+                    yield v

@@ -1,22 +1,23 @@
 # ruff: noqa: D102
 """Item access ops - CRUD for items within collections.
 
-ItemLoadOp: Read item value - ref.execute() -> value
-ItemStoreCmd: Write item value - parent[address] = value
-ItemEraseCmd: Delete item - del parent[address]
-ItemExistsOp: Check if item exists - not is_sentinel(ref.execute())
-ItemMissingOp: Check if item is missing - is_sentinel(ref.execute())
+ItemLoadOp:    Read item value - yields ref's value
+ItemStoreCmd:  Write item value - parent[address] = value
+ItemEraseCmd:  Delete item - del parent[address]
+ItemExistsOp:  Check if item exists
+ItemMissingOp: Check if item is missing
 
-READ ops delegate to children[0].execute() (goes through Snapshot wrapper).
+READ ops go through ref.open (Snapshot wrapper).
 WRITE ops use children[0] as Ref directly (inside Transaction wrapper).
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from nu.terms import EMPTY, Op, Sentinel
-from nu.terms.effect import Direction
+from nu.eval import first
+from nu.terms import Sentinel
+from nu.terms.op import Command, Query
 from nu.terms.sentinel import is_sentinel
 
 
@@ -35,32 +36,32 @@ __all__ = [
 ]
 
 
-class ItemLoadOp[T](Op[T | Sentinel]):
+class ItemLoadOp[T](Query[T | Sentinel]):
     """Read item from collection. Returns EMPTY if missing."""
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def execute(self, ctx: Context) -> T | Sentinel:
-        return await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> T | Sentinel:
+        return await first(self.children[0], ctx)
 
     def __repr__(self) -> str:
         return f"ItemLoadOp({self.children[0]!r})"
 
 
-class ItemStoreCmd[T](Op[None]):
+class ItemStoreCmd[T](Command):
     """Write item to collection: parent[address] = value."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: Ref, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
 
-    async def execute(self, ctx: Context) -> None:
+    async def run(self, ctx: Context) -> None:
         ref = self.children[0]
         parent = await ref.fetch_parent(ctx)
         address = await ref.resolve_address(ctx)
-        value = await self.children[1].execute(ctx)
+        value = await first(self.children[1], ctx)
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent[address] = value
@@ -69,15 +70,15 @@ class ItemStoreCmd[T](Op[None]):
         return f"ItemStoreCmd({self.children[0]!r}, {self.children[1]!r})"
 
 
-class ItemEraseCmd(Op[None]):
+class ItemEraseCmd(Command):
     """Delete item from collection: del parent[address]."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def execute(self, ctx: Context) -> None:
+    async def run(self, ctx: Context) -> None:
         ref = self.children[0]
         parent = await ref.fetch_parent(ctx)
         address = await ref.resolve_address(ctx)
@@ -87,28 +88,28 @@ class ItemEraseCmd(Op[None]):
         return f"ItemEraseCmd({self.children[0]!r})"
 
 
-class ItemExistsOp(Op[bool]):
-    """Check if item exists: not is_sentinel(ref.execute())."""
+class ItemExistsOp(Query[bool]):
+    """Check if item exists."""
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def execute(self, ctx: Context) -> bool:
-        val = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> bool:
+        val = await first(self.children[0], ctx)
         return not is_sentinel(val)
 
     def __repr__(self) -> str:
         return f"ItemExistsOp({self.children[0]!r})"
 
 
-class ItemMissingOp(Op[bool]):
-    """Check if item is missing: is_sentinel(ref.execute())."""
+class ItemMissingOp(Query[bool]):
+    """Check if item is missing."""
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def execute(self, ctx: Context) -> bool:
-        val = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> bool:
+        val = await first(self.children[0], ctx)
         return is_sentinel(val)
 
     def __repr__(self) -> str:

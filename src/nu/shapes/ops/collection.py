@@ -5,16 +5,17 @@ Same logic as item ops but distinct tree node types, so substrates
 can match on CollectionLoadOp vs ItemLoadOp for type-specific deformations
 (e.g. PV primitive optimizations only target Item* variants).
 
-READ ops delegate to children[0].execute() (goes through Snapshot wrapper).
+READ ops go through ref.open (Snapshot wrapper).
 WRITE ops use children[0] as Ref directly (inside Transaction wrapper).
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from nu.terms import EMPTY, Op, Sentinel
-from nu.terms.effect import Direction
+from nu.eval import first
+from nu.terms import Sentinel
+from nu.terms.op import Command, Query
 from nu.terms.sentinel import is_sentinel
 
 
@@ -33,29 +34,29 @@ __all__ = [
 ]
 
 
-class CollectionLoadOp[T](Op[T | Sentinel]):
+class CollectionLoadOp[T](Query[T | Sentinel]):
     """Read collection from parent. Returns EMPTY if missing."""
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def execute(self, ctx: Context) -> T | Sentinel:
-        return await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> T | Sentinel:
+        return await first(self.children[0], ctx)
 
     def __repr__(self) -> str:
         return f"CollectionLoadOp({self.children[0]!r})"
 
 
-class CollectionStoreCmd[T](Op[None]):
+class CollectionStoreCmd[T](Command):
     """Write collection to parent: parent[address] = data."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: Ref, data: Nu[T | Sentinel]) -> None:
         super().__init__(ref, data)
 
-    async def execute(self, ctx: Context) -> None:
-        data = await self.children[1].execute(ctx)
+    async def run(self, ctx: Context) -> None:
+        data = await first(self.children[1], ctx)
         if isinstance(data, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {data}")
         ref = self.children[0]
@@ -67,15 +68,15 @@ class CollectionStoreCmd[T](Op[None]):
         return f"CollectionStoreCmd({self.children[0]!r}, {self.children[1]!r})"
 
 
-class CollectionEraseCmd(Op[None]):
+class CollectionEraseCmd(Command):
     """Delete collection from parent: del parent[address]."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def execute(self, ctx: Context) -> None:
+    async def run(self, ctx: Context) -> None:
         ref = self.children[0]
         parent = await ref.fetch_parent(ctx)
         address = await ref.resolve_address(ctx)
@@ -85,28 +86,28 @@ class CollectionEraseCmd(Op[None]):
         return f"CollectionEraseCmd({self.children[0]!r})"
 
 
-class CollectionExistsOp(Op[bool]):
-    """Check if collection exists: not is_sentinel(ref.execute())."""
+class CollectionExistsOp(Query[bool]):
+    """Check if collection exists: not is_sentinel(ref value)."""
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def execute(self, ctx: Context) -> bool:
-        val = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> bool:
+        val = await first(self.children[0], ctx)
         return not is_sentinel(val)
 
     def __repr__(self) -> str:
         return f"CollectionExistsOp({self.children[0]!r})"
 
 
-class CollectionMissingOp(Op[bool]):
-    """Check if collection is missing: is_sentinel(ref.execute())."""
+class CollectionMissingOp(Query[bool]):
+    """Check if collection is missing: is_sentinel(ref value)."""
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def execute(self, ctx: Context) -> bool:
-        val = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> bool:
+        val = await first(self.children[0], ctx)
         return is_sentinel(val)
 
     def __repr__(self) -> str:

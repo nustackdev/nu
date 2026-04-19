@@ -6,7 +6,7 @@ OnChildChangeOp: Subscribe to changes on a specific child
 OnChildrenChangeOp: Subscribe to changes on all immediate children
 OnDescendantsChangeOp: Subscribe to descendants matching a pattern
 
-All ops use children[0].execute() to get the view (goes through Snapshot wrapper).
+All ops read the view via children[0] (goes through Snapshot wrapper).
 """
 
 from __future__ import annotations
@@ -14,7 +14,9 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu.terms import Nu, Op
+from nu.eval import first
+from nu.terms import Nu
+from nu.terms.op import Query
 
 
 if TYPE_CHECKING:
@@ -32,11 +34,11 @@ __all__ = [
 ]
 
 
-class ChangeOp(Op[object]):
+class ChangeOp(Query[object]):
     """Base class for all change subscription operations."""
 
     @abstractmethod
-    async def execute(self, ctx: Context) -> object: ...
+    async def run(self, ctx: Context) -> object: ...
 
 
 class OnChangeOp(ChangeOp):
@@ -45,8 +47,8 @@ class OnChangeOp(ChangeOp):
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def execute(self, ctx: Context) -> object:
-        view = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> object:
+        view = await first(self.children[0], ctx)
         return view.on_change()  # type: ignore[union-attr]
 
     def __repr__(self) -> str:
@@ -60,13 +62,13 @@ class OnChildChangeOp[A](ChangeOp):
         super().__init__(ref)
         self.address = address
 
-    async def execute(self, ctx: Context) -> object:
+    async def run(self, ctx: Context) -> object:
         if isinstance(self.address, Nu):
-            address = await self.address.execute(ctx)
+            address = await first(self.address, ctx)
         else:
             address = self.address
 
-        view = await self.children[0].execute(ctx)
+        view = await first(self.children[0], ctx)
         return view.on_child_change(address)  # type: ignore[union-attr]
 
     def __repr__(self) -> str:
@@ -79,8 +81,8 @@ class OnChildrenChangeOp(ChangeOp):
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def execute(self, ctx: Context) -> object:
-        view = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> object:
+        view = await first(self.children[0], ctx)
         return view.on_children_change()  # type: ignore[union-attr]
 
     def __repr__(self) -> str:
@@ -94,11 +96,11 @@ class OnDescendantsChangeOp(ChangeOp):
         super().__init__(ref)
         self.pattern = pattern
 
-    async def execute(self, ctx: Context) -> object:
+    async def run(self, ctx: Context) -> object:
         if not self.pattern:
             raise ValueError("Pattern cannot be empty for on_descendants_change")
 
-        view = await self.children[0].execute(ctx)
+        view = await first(self.children[0], ctx)
         return view.on_descendents_change(self.pattern[0], *self.pattern[1:])  # type: ignore[union-attr]
 
     def __repr__(self) -> str:

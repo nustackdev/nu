@@ -67,9 +67,12 @@ class While(Op):
     def __init__(self, condition: Any, body: Nu) -> None:
         super().__init__(condition, body)
 
-    async def execute(self, ctx: Context) -> None:
-        while await self.children[0].execute(ctx):
-            await self.children[1].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        cond, body = self.children
+        while await first(cond, ctx):
+            async with aclosing(body.open(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
 
 class DoWhile(Op):
@@ -81,10 +84,15 @@ class DoWhile(Op):
     def __init__(self, condition: Any, body: Nu) -> None:
         super().__init__(condition, body)
 
-    async def execute(self, ctx: Context) -> None:
-        await self.children[1].execute(ctx)
-        while await self.children[0].execute(ctx):
-            await self.children[1].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        cond, body = self.children
+        async with aclosing(body.open(ctx)) as gen:
+            async for v in gen:
+                yield v
+        while await first(cond, ctx):
+            async with aclosing(body.open(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
 
 class Forever(Op):
@@ -96,9 +104,12 @@ class Forever(Op):
     def __init__(self, body: Nu) -> None:
         super().__init__(body)
 
-    async def execute(self, ctx: Context) -> None:
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        body = self.children[0]
         while True:
-            await self.children[0].execute(ctx)
+            async with aclosing(body.open(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
 
 class Switch(Op):
@@ -121,11 +132,17 @@ class Switch(Op):
             children.append(default)
         super().__init__(*children)
 
-    async def execute(self, ctx: Context) -> None:
-        value = await self.children[0].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        value = await first(self.children[0], ctx)
         for i, key in enumerate(self._case_keys):
             if key == value:
-                await self.children[i + 1].execute(ctx)
+                branch = self.children[i + 1]
+                async with aclosing(branch.open(ctx)) as gen:
+                    async for v in gen:
+                        yield v
                 return
         if self._has_default:
-            await self.children[-1].execute(ctx)
+            branch = self.children[-1]
+            async with aclosing(branch.open(ctx)) as gen:
+                async for v in gen:
+                    yield v

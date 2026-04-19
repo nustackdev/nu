@@ -3,18 +3,22 @@
 Unary: NotOp, BoolOp
 Binary: AndOp, OrOp (with short-circuit evaluation)
 
-AndOp and OrOp override execute() for short-circuit semantics.
+AndOp and OrOp override open() for short-circuit semantics.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from contextlib import aclosing
+from typing import TYPE_CHECKING, Any
 
 from nu.terms import BinaryOp, Sentinel, UnaryOp, propagate_special
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from nu.context import Context
+    from nu.terms import Nu
 
 
 __all__ = [
@@ -55,73 +59,77 @@ class BoolOp(UnaryOp[bool]):
 # =============================================================================
 
 
+async def _drain_last(child: Nu, ctx: Context) -> Any:
+    val: Any = None
+    async with aclosing(child.open(ctx)) as gen:
+        async for v in gen:
+            val = v
+    return val
+
+
 class AndOp[ResultT](BinaryOp[ResultT]):
     """Logical AND: left and right.
 
-    Overrides execute() for short-circuit evaluation:
-    if left is falsy, returns left without evaluating right.
+    Overrides open() for short-circuit evaluation:
+    if left is falsy, yields left without evaluating right.
     """
 
-    async def execute(self, ctx: Context) -> ResultT | Sentinel:
-        """Execute AND with short-circuit evaluation."""
-        left_val = await self._children[0].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:  # type: ignore[override]
+        left_val = await _drain_last(self._children[0], ctx)
 
-        # Handle special values for left
         sp = propagate_special(left_val)
         if sp is not None:
-            return sp
+            yield sp
+            return
 
-        # Short-circuit: if left is falsy, return left
         if not left_val:
-            return left_val
+            yield left_val
+            return
 
-        # Evaluate right
-        right_val = await self._children[1].execute(ctx)
+        right_val = await _drain_last(self._children[1], ctx)
 
-        # Handle special values for right
         special = propagate_special(right_val)
         if special is not None:
-            return special
+            yield special
+            return
 
-        return left_val and right_val
+        yield left_val and right_val
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
         """Apply."""
-        # Not used - execute() handles everything
+        # Not used - open() handles everything
         raise NotImplementedError
 
 
 class OrOp[ResultT](BinaryOp[ResultT]):
     """Logical OR: left or right.
 
-    Overrides execute() for short-circuit evaluation:
-    if left is truthy, returns left without evaluating right.
+    Overrides open() for short-circuit evaluation:
+    if left is truthy, yields left without evaluating right.
     """
 
-    async def execute(self, ctx: Context) -> ResultT | Sentinel:
-        """Execute OR with short-circuit evaluation."""
-        left_val = await self._children[0].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:  # type: ignore[override]
+        left_val = await _drain_last(self._children[0], ctx)
 
-        # Handle special values for left
         sp = propagate_special(left_val)
         if sp is not None:
-            return sp
+            yield sp
+            return
 
-        # Short-circuit: if left is truthy, return left
         if left_val:
-            return left_val
+            yield left_val
+            return
 
-        # Evaluate right
-        right_val = await self._children[1].execute(ctx)
+        right_val = await _drain_last(self._children[1], ctx)
 
-        # Handle special values for right
         special = propagate_special(right_val)
         if special is not None:
-            return special
+            yield special
+            return
 
-        return left_val or right_val
+        yield left_val or right_val
 
     def apply(self, left: object, right: object) -> ResultT | Sentinel:
         """Apply."""
-        # Not used - execute() handles everything
+        # Not used - open() handles everything
         raise NotImplementedError
