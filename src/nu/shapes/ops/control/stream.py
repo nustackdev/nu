@@ -12,7 +12,6 @@ import asyncio
 from contextlib import aclosing
 from typing import TYPE_CHECKING, Any
 
-from nu.eval import first
 from nu.terms import Op, Sentinel
 from nu.utils import ensure_nu
 
@@ -62,8 +61,8 @@ class Stream(Op):
         super().__init__(advance, change, body, ensure_nu(key), ensure_nu(log_key))
 
     async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        key = await first(self.children[3], ctx)
-        log_key = await first(self.children[4], ctx)
+        key = await self.children[3].first(ctx)
+        log_key = await self.children[4].first(ctx)
 
         if log_key not in ctx.attrs:
             ctx.attrs[log_key] = Sentinel()
@@ -80,7 +79,7 @@ class Stream(Op):
     ) -> AsyncGenerator[Any, None]:
         """Drain existing items from source."""
         while True:
-            result = await first(self.children[0], ctx)
+            result = await self.children[0].first(ctx)
             if result is None:
                 break
             log_k, actual_key = result
@@ -100,7 +99,7 @@ class Stream(Op):
         def on_change(_changed_key: object) -> None:
             loop.call_soon_threadsafe(event.set)
 
-        sub = await first(self.children[1], ctx)
+        sub = await self.children[1].first(ctx)
         sub.bind(on_change)
         try:
             while True:

@@ -126,6 +126,58 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
                 except (asyncio.CancelledError, Exception):
                     pass
 
+    # --- consumption helpers (sugar over open) ---
+
+    async def execute(self, ctx: Context | None = None) -> None:
+        """Drain. Yields are discarded. Empty Context if none passed."""
+        ctx = self._default_ctx(ctx)
+        async with aclosing(self.open(ctx)) as gen:
+            async for _ in gen:
+                pass
+
+    async def drain(self, ctx: Context | None = None) -> None:
+        """Alias for execute."""
+        await self.execute(ctx)
+
+    async def first(self, ctx: Context | None = None) -> Any:
+        """Take the first yield, close the rest."""
+        ctx = self._default_ctx(ctx)
+        async with aclosing(self.open(ctx)) as gen:
+            async for v in gen:
+                return v
+        msg = "nu yielded no values"
+        raise RuntimeError(msg)
+
+    async def last(self, ctx: Context | None = None) -> Any:
+        """Drain, return last yield."""
+        ctx = self._default_ctx(ctx)
+        found = False
+        val: Any = None
+        async with aclosing(self.open(ctx)) as gen:
+            async for v in gen:
+                val = v
+                found = True
+        if not found:
+            msg = "nu yielded no values"
+            raise RuntimeError(msg)
+        return val
+
+    async def collect(self, ctx: Context | None = None) -> list[Any]:
+        """Drain into a list."""
+        ctx = self._default_ctx(ctx)
+        out: list[Any] = []
+        async with aclosing(self.open(ctx)) as gen:
+            async for v in gen:
+                out.append(v)
+        return out
+
+    @staticmethod
+    def _default_ctx(ctx: Context | None) -> Context:
+        if ctx is not None:
+            return ctx
+        from ..context import Context as _Ctx
+        return _Ctx()
+
     # --- composition operators ---
 
     def __or__(self, other: object) -> Nu:

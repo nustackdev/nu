@@ -101,11 +101,8 @@ def test_binary_left_right():
     assert op._child_count == 2
 
 
-def test_ternary_first_second_third():
+def test_ternary_children():
     op = _ClampOp(Literal(10), Literal(0), Literal(5))
-    assert op.first is op.children[0]
-    assert op.second is op.children[1]
-    assert op.third is op.children[2]
     assert op._child_count == 3
 
 
@@ -120,19 +117,19 @@ def test_nary_variable_children():
 
 
 async def test_unary_execute(ctx):
-    assert await nu.first(_NegOp(5), ctx) == -5
+    assert await _NegOp(5).first(ctx) == -5
 
 
 async def test_binary_execute(ctx):
-    assert await nu.first(_AddOp(3, 4), ctx) == 7
+    assert await _AddOp(3, 4).first(ctx) == 7
 
 
 async def test_ternary_execute(ctx):
-    assert await nu.first(_ClampOp(10, 0, 5), ctx) == 5
+    assert await _ClampOp(10, 0, 5).first(ctx) == 5
 
 
 async def test_nary_execute(ctx):
-    assert await nu.first(_SumOp(1, 2, 3, 4), ctx) == 10
+    assert await _SumOp(1, 2, 3, 4).first(ctx) == 10
 
 
 # ---------------------------------------------------------------------------

@@ -153,24 +153,24 @@ class TestNAryOpSentinelPropagation:
         _TestAddOp.apply_called = False
 
     async def test_clean_operands_calls_apply(self, ctx):
-        result = await nu.first(_TestAddOp(Literal(3), Literal(4)), ctx)
+        result = await _TestAddOp(Literal(3), Literal(4)).first(ctx)
         assert result == 7
         assert _TestAddOp.apply_called is True
 
     async def test_empty_operand_returns_invalid(self, ctx):
         """EMPTY child -> INVALID result, apply never called."""
-        result = await nu.first(_TestAddOp(Literal(EMPTY), Literal(4)), ctx)
+        result = await _TestAddOp(Literal(EMPTY), Literal(4)).first(ctx)
         assert is_invalid(result)
         assert _TestAddOp.apply_called is False
 
     async def test_invalid_operand_returns_invalid(self, ctx):
         """INVALID child -> INVALID result, apply never called."""
-        result = await nu.first(_TestAddOp(Literal(3), Literal(INVALID)), ctx)
+        result = await _TestAddOp(Literal(3), Literal(INVALID)).first(ctx)
         assert is_invalid(result)
         assert _TestAddOp.apply_called is False
 
     async def test_both_sentinels_returns_invalid(self, ctx):
-        result = await nu.first(_TestAddOp(Literal(EMPTY), Literal(INVALID)), ctx)
+        result = await _TestAddOp(Literal(EMPTY), Literal(INVALID)).first(ctx)
         assert is_invalid(result)
         assert _TestAddOp.apply_called is False
 
@@ -178,5 +178,5 @@ class TestNAryOpSentinelPropagation:
         """Sentinel propagates through nested ops."""
         inner = _TestAddOp(Literal(EMPTY), Literal(1))
         outer = _TestAddOp(inner, Literal(2))
-        result = await nu.first(outer, ctx)
+        result = await outer.first(ctx)
         assert is_invalid(result)

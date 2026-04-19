@@ -14,7 +14,6 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu.eval import first
 from nu.terms import Nu
 from nu.terms.op import Query
 
@@ -48,7 +47,7 @@ class OnChangeOp(ChangeOp):
         super().__init__(ref)
 
     async def run(self, ctx: Context) -> object:
-        view = await first(self.children[0], ctx)
+        view = await self.children[0].first(ctx)
         return view.on_change()  # type: ignore[union-attr]
 
     def __repr__(self) -> str:
@@ -64,11 +63,11 @@ class OnChildChangeOp[A](ChangeOp):
 
     async def run(self, ctx: Context) -> object:
         if isinstance(self.address, Nu):
-            address = await first(self.address, ctx)
+            address = await self.address.first(ctx)
         else:
             address = self.address
 
-        view = await first(self.children[0], ctx)
+        view = await self.children[0].first(ctx)
         return view.on_child_change(address)  # type: ignore[union-attr]
 
     def __repr__(self) -> str:
@@ -82,7 +81,7 @@ class OnChildrenChangeOp(ChangeOp):
         super().__init__(ref)
 
     async def run(self, ctx: Context) -> object:
-        view = await first(self.children[0], ctx)
+        view = await self.children[0].first(ctx)
         return view.on_children_change()  # type: ignore[union-attr]
 
     def __repr__(self) -> str:
@@ -100,7 +99,7 @@ class OnDescendantsChangeOp(ChangeOp):
         if not self.pattern:
             raise ValueError("Pattern cannot be empty for on_descendants_change")
 
-        view = await first(self.children[0], ctx)
+        view = await self.children[0].first(ctx)
         return view.on_descendents_change(self.pattern[0], *self.pattern[1:])  # type: ignore[union-attr]
 
     def __repr__(self) -> str:

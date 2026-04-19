@@ -48,12 +48,12 @@ async def test_fetch(ctx):
 
 async def test_open_yields_fetched_value(ctx):
     ref = StubRef("loc", 42)
-    assert await nu.first(ref, ctx) == 42
+    assert await ref.first(ctx) == 42
 
 
-async def test_fetch_via_helper(ctx):
+async def test_fetch_method(ctx):
     ref = StubRef("loc", 42)
-    assert await nu.fetch(ref, ctx) == 42
+    assert await ref.fetch(ctx) == 42
 
 
 # ---------------------------------------------------------------------------

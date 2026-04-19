@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.eval import first
 from nu.terms import Sentinel
 from nu.terms.op import Query
 
@@ -39,8 +38,8 @@ class AdvanceCursorOp(Query[tuple | None]):
         super().__init__(source, cursor)
 
     async def run(self, ctx: Context) -> tuple | None:
-        view = await first(self.children[0], ctx)
-        cursor = await first(self.children[1], ctx)
+        view = await self.children[0].first(ctx)
+        cursor = await self.children[1].first(ctx)
 
         # Sentinel means no cursor yet (fresh start)
         if isinstance(cursor, Sentinel):

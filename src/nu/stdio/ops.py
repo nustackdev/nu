@@ -10,7 +10,6 @@ from __future__ import annotations
 import sys
 from typing import IO, TYPE_CHECKING
 
-from nu.eval import first
 from nu.terms.op import Command, Query
 
 
@@ -52,7 +51,7 @@ class StdioWrite(Command):
         stream = _get_stream(ctx, self.children[0])
         parts = []
         for child in self.children[1:]:
-            parts.append(str(await first(child, ctx)))
+            parts.append(str(await child.first(ctx)))
         stream.write(" ".join(parts) + "\n")
 
     def __repr__(self) -> str:

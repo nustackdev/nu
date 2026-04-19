@@ -10,7 +10,6 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any
 
-from nu.eval import execute
 from nu.terms import Op
 
 
@@ -42,7 +41,7 @@ class Race(Op):
             yield
         if not self.children:
             return
-        tasks = [asyncio.create_task(execute(child, ctx)) for child in self.children]
+        tasks = [asyncio.create_task(child.execute(ctx)) for child in self.children]
         try:
             done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
             for task in pending:
@@ -73,7 +72,7 @@ class All(Op):
             yield
         if not self.children:
             return
-        tasks = [asyncio.create_task(execute(child, ctx)) for child in self.children]
+        tasks = [asyncio.create_task(child.execute(ctx)) for child in self.children]
         try:
             await asyncio.gather(*tasks)
         except Exception:
@@ -98,7 +97,7 @@ class Any(Op):
             yield
         if not self.children:
             return
-        tasks = {asyncio.create_task(execute(child, ctx)) for child in self.children}
+        tasks = {asyncio.create_task(child.execute(ctx)) for child in self.children}
         last_error: Exception | None = None
         try:
             while tasks:

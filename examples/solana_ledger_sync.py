@@ -363,7 +363,7 @@ async def main() -> None:
             nu_debugger.print_tree(app)
 
             # Execute the app
-            await nu.execute(app, ctx)
+            await app.execute(ctx)
 
 
 if __name__ == "__main__":

@@ -53,7 +53,7 @@ async def main() -> None:
         nav = Navigator(storage)
         ctx = nu.Context().bind(Navigator, nav)
 
-        await nu.execute(app, ctx)
+        await app.execute(ctx)
 
 
 asyncio.run(main())

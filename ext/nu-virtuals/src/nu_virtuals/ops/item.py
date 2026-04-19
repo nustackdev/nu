@@ -17,7 +17,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import EMPTY, Sentinel
-from nu.eval import first
 from nu.terms.op import Command, Query
 
 
@@ -142,7 +141,7 @@ class ItemPrimitiveSetUnsafeCmd[T](Command):
         """Write primitive via ctx.put() with ensure_exists."""
         parent = await self.ref.fetch_parent(ctx)
         address = await self.ref.resolve_address(ctx)
-        value = await first(self.value_expr, ctx)
+        value = await self.value_expr.first(ctx)
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent._unsafe_primitive_write(address, value, ensure_exists=True)
@@ -173,7 +172,7 @@ class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command):
         """Write primitive via single ctx.put(), skipping all validation."""
         parent = await self.ref.fetch_parent(ctx)
         address = await self.ref.resolve_address(ctx)
-        value = await first(self.value_expr, ctx)
+        value = await self.value_expr.first(ctx)
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent._unsafe_primitive_write(address, value)
@@ -230,7 +229,7 @@ class PrimitiveStoreCmd[T](Command):
         self.data_expr = data
 
     async def run(self, ctx: Context) -> None:
-        data = await first(self.data_expr, ctx)
+        data = await self.data_expr.first(ctx)
         if isinstance(data, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {data}")
 

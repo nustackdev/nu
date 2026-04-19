@@ -13,7 +13,6 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from nu.eval import first
 from nu.terms.op import Command
 
 
@@ -52,14 +51,14 @@ class Filter(Command):
         super().__init__(items, condition, body, item)
 
     async def run(self, ctx: Context) -> None:
-        items = await first(self.children[0], ctx)
+        items = await self.children[0].first(ctx)
         condition = self.children[1]
         body = self.children[2]
-        item_key: str = await first(self.children[3], ctx)
+        item_key: str = await self.children[3].first(ctx)
 
         for elem in items:
             ctx.attrs[item_key] = elem
-            if await first(condition, ctx):
+            if await condition.first(ctx):
                 from nu.eval import execute
 
                 await execute(body, ctx)
@@ -84,15 +83,15 @@ class Map(Command):
         super().__init__(items, transform, item, output)
 
     async def run(self, ctx: Context) -> None:
-        items = await first(self.children[0], ctx)
+        items = await self.children[0].first(ctx)
         transform = self.children[1]
-        item_key: str = await first(self.children[2], ctx)
-        output_key: str = await first(self.children[3], ctx)
+        item_key: str = await self.children[2].first(ctx)
+        output_key: str = await self.children[3].first(ctx)
 
         results = []
         for elem in items:
             ctx.attrs[item_key] = elem
-            results.append(await first(transform, ctx))
+            results.append(await transform.first(ctx))
         ctx.attrs[output_key] = results
 
 
@@ -115,14 +114,14 @@ class TakeWhile(Command):
     async def run(self, ctx: Context) -> None:
         from nu.eval import execute
 
-        items = await first(self.children[0], ctx)
+        items = await self.children[0].first(ctx)
         condition = self.children[1]
         body = self.children[2]
-        item_key: str = await first(self.children[3], ctx)
+        item_key: str = await self.children[3].first(ctx)
 
         for elem in items:
             ctx.attrs[item_key] = elem
-            if not await first(condition, ctx):
+            if not await condition.first(ctx):
                 break
             await execute(body, ctx)
 
@@ -146,15 +145,15 @@ class Unique(Command):
     async def run(self, ctx: Context) -> None:
         from nu.eval import execute
 
-        items = await first(self.children[0], ctx)
+        items = await self.children[0].first(ctx)
         key_expr = self.children[1]
         body = self.children[2]
-        item_key: str = await first(self.children[3], ctx)
+        item_key: str = await self.children[3].first(ctx)
 
         seen: set = set()
         for elem in items:
             ctx.attrs[item_key] = elem
-            k = await first(key_expr, ctx)
+            k = await key_expr.first(ctx)
             if k not in seen:
                 seen.add(k)
                 await execute(body, ctx)
@@ -180,14 +179,14 @@ class Find(Command):
         super().__init__(items, condition, item, output)
 
     async def run(self, ctx: Context) -> None:
-        items = await first(self.children[0], ctx)
+        items = await self.children[0].first(ctx)
         condition = self.children[1]
-        item_key: str = await first(self.children[2], ctx)
-        output_key: str = await first(self.children[3], ctx)
+        item_key: str = await self.children[2].first(ctx)
+        output_key: str = await self.children[3].first(ctx)
 
         for elem in items:
             ctx.attrs[item_key] = elem
-            if await first(condition, ctx):
+            if await condition.first(ctx):
                 ctx.attrs[output_key] = elem
                 return
 
@@ -212,14 +211,14 @@ class FindIndex(Command):
         super().__init__(items, condition, item, output)
 
     async def run(self, ctx: Context) -> None:
-        items = await first(self.children[0], ctx)
+        items = await self.children[0].first(ctx)
         condition = self.children[1]
-        item_key: str = await first(self.children[2], ctx)
-        output_key: str = await first(self.children[3], ctx)
+        item_key: str = await self.children[2].first(ctx)
+        output_key: str = await self.children[3].first(ctx)
 
         for i, elem in enumerate(items):
             ctx.attrs[item_key] = elem
-            if await first(condition, ctx):
+            if await condition.first(ctx):
                 ctx.attrs[output_key] = i
                 return
 
@@ -247,16 +246,16 @@ class GroupBy(Command):
     async def run(self, ctx: Context) -> None:
         from nu.eval import execute
 
-        items = await first(self.children[0], ctx)
+        items = await self.children[0].first(ctx)
         key_expr = self.children[1]
         body = self.children[2]
-        item_key: str = await first(self.children[3], ctx)
-        group_key: str = await first(self.children[4], ctx)
+        item_key: str = await self.children[3].first(ctx)
+        group_key: str = await self.children[4].first(ctx)
 
         groups: dict = {}
         for elem in items:
             ctx.attrs[item_key] = elem
-            k = await first(key_expr, ctx)
+            k = await key_expr.first(ctx)
             groups.setdefault(k, []).append(elem)
 
         for k, group_items in groups.items():
@@ -286,17 +285,17 @@ class Partition(Command):
         super().__init__(items, condition, item, matches, rest)
 
     async def run(self, ctx: Context) -> None:
-        items = await first(self.children[0], ctx)
+        items = await self.children[0].first(ctx)
         condition = self.children[1]
-        item_key: str = await first(self.children[2], ctx)
-        matches_key: str = await first(self.children[3], ctx)
-        rest_key: str = await first(self.children[4], ctx)
+        item_key: str = await self.children[2].first(ctx)
+        matches_key: str = await self.children[3].first(ctx)
+        rest_key: str = await self.children[4].first(ctx)
 
         matches_list: list = []
         rest_list: list = []
         for elem in items:
             ctx.attrs[item_key] = elem
-            if await first(condition, ctx):
+            if await condition.first(ctx):
                 matches_list.append(elem)
             else:
                 rest_list.append(elem)
@@ -324,16 +323,16 @@ class ToDict(Command):
         super().__init__(items, key, value, item, output)
 
     async def run(self, ctx: Context) -> None:
-        items = await first(self.children[0], ctx)
+        items = await self.children[0].first(ctx)
         key_expr = self.children[1]
         value_expr = self.children[2]
-        item_key: str = await first(self.children[3], ctx)
-        output_key: str = await first(self.children[4], ctx)
+        item_key: str = await self.children[3].first(ctx)
+        output_key: str = await self.children[4].first(ctx)
 
         result: dict = {}
         for elem in items:
             ctx.attrs[item_key] = elem
-            k = await first(key_expr, ctx)
-            v = await first(value_expr, ctx)
+            k = await key_expr.first(ctx)
+            v = await value_expr.first(ctx)
             result[k] = v
         ctx.attrs[output_key] = result

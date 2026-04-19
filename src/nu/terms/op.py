@@ -199,31 +199,26 @@ class BinaryOp(NAryOp[T_co], ABC):
 
 
 class TernaryOp(NAryOp[T_co], ABC):
-    """Three operand op. For: if a then b else c, slice(a, b, c), etc."""
+    """Three operand op. For: if a then b else c, slice(a, b, c), etc.
 
-    def __init__(self, first: object, second: object, third: object) -> None:
-        super().__init__(first, second, third)
+    Children accessed via `self.children[0..2]`. Named per-position
+    properties (first/second/third) were removed because they shadowed
+    `Nu.first()` / `.last()` consumption helpers.
+    """
+
+    def __init__(self, a: object, b: object, c: object) -> None:
+        super().__init__(a, b, c)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.first!r}, {self.second!r}, {self.third!r})"
+        c0, c1, c2 = self._children
+        return f"{self.__class__.__name__}({c0!r}, {c1!r}, {c2!r})"
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}({self.first}, {self.second}, {self.third})"
-
-    @property
-    def first(self) -> Nu:
-        return self._children[0]
-
-    @property
-    def second(self) -> Nu:
-        return self._children[1]
-
-    @property
-    def third(self) -> Nu:
-        return self._children[2]
+        c0, c1, c2 = self._children
+        return f"{self.__class__.__name__}({c0}, {c1}, {c2})"
 
     @abstractmethod
-    def apply(self, first: Any, second: Any, third: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
+    def apply(self, a: Any, b: Any, c: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
         ...
 
 

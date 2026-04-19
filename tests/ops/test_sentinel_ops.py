@@ -20,23 +20,23 @@ from nu.ops import IsEmptyOp, IsInvalidOp, NotEmptyOp, NotInvalidOp
 
 
 async def test_is_empty_on_empty(ctx):
-    assert await nu.first(IsEmptyOp(Literal(EMPTY)), ctx) is True
+    assert await IsEmptyOp(Literal(EMPTY)).first(ctx) is True
 
 
 async def test_is_empty_on_invalid(ctx):
-    assert await nu.first(IsEmptyOp(Literal(INVALID)), ctx) is False
+    assert await IsEmptyOp(Literal(INVALID)).first(ctx) is False
 
 
 async def test_is_empty_on_normal(ctx):
-    assert await nu.first(IsEmptyOp(Literal(42)), ctx) is False
+    assert await IsEmptyOp(Literal(42)).first(ctx) is False
 
 
 async def test_is_empty_on_none(ctx):
-    assert await nu.first(IsEmptyOp(Literal(None)), ctx) is False
+    assert await IsEmptyOp(Literal(None)).first(ctx) is False
 
 
 async def test_is_empty_on_zero(ctx):
-    assert await nu.first(IsEmptyOp(Literal(0)), ctx) is False
+    assert await IsEmptyOp(Literal(0)).first(ctx) is False
 
 
 # ---------------------------------------------------------------------------
@@ -45,15 +45,15 @@ async def test_is_empty_on_zero(ctx):
 
 
 async def test_is_invalid_on_invalid(ctx):
-    assert await nu.first(IsInvalidOp(Literal(INVALID)), ctx) is True
+    assert await IsInvalidOp(Literal(INVALID)).first(ctx) is True
 
 
 async def test_is_invalid_on_empty(ctx):
-    assert await nu.first(IsInvalidOp(Literal(EMPTY)), ctx) is False
+    assert await IsInvalidOp(Literal(EMPTY)).first(ctx) is False
 
 
 async def test_is_invalid_on_normal(ctx):
-    assert await nu.first(IsInvalidOp(Literal(42)), ctx) is False
+    assert await IsInvalidOp(Literal(42)).first(ctx) is False
 
 
 # ---------------------------------------------------------------------------
@@ -62,15 +62,15 @@ async def test_is_invalid_on_normal(ctx):
 
 
 async def test_not_empty_on_empty(ctx):
-    assert await nu.first(NotEmptyOp(Literal(EMPTY)), ctx) is False
+    assert await NotEmptyOp(Literal(EMPTY)).first(ctx) is False
 
 
 async def test_not_empty_on_normal(ctx):
-    assert await nu.first(NotEmptyOp(Literal(42)), ctx) is True
+    assert await NotEmptyOp(Literal(42)).first(ctx) is True
 
 
 async def test_not_empty_on_invalid(ctx):
-    assert await nu.first(NotEmptyOp(Literal(INVALID)), ctx) is True
+    assert await NotEmptyOp(Literal(INVALID)).first(ctx) is True
 
 
 # ---------------------------------------------------------------------------
@@ -79,14 +79,14 @@ async def test_not_empty_on_invalid(ctx):
 
 
 async def test_not_invalid_on_invalid(ctx):
-    assert await nu.first(NotInvalidOp(Literal(INVALID)), ctx) is False
+    assert await NotInvalidOp(Literal(INVALID)).first(ctx) is False
 
 
 async def test_not_invalid_on_normal(ctx):
-    assert await nu.first(NotInvalidOp(Literal(42)), ctx) is True
+    assert await NotInvalidOp(Literal(42)).first(ctx) is True
 
 
 async def test_not_invalid_on_empty(ctx):
-    assert await nu.first(NotInvalidOp(Literal(EMPTY)), ctx) is True
+    assert await NotInvalidOp(Literal(EMPTY)).first(ctx) is True
 
 

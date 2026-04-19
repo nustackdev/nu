@@ -32,24 +32,24 @@ ints = st.integers(min_value=-1000, max_value=1000)
 async def test_not_involution(a):
     """Double negation restores truthiness."""
     ctx = Context()
-    result = await nu.first(NotOp(NotOp(a)), ctx)
+    result = await NotOp(NotOp(a)).first(ctx)
     assert result == (not not a)
 
 
 async def test_not_true(ctx):
-    assert await nu.first(NotOp(True), ctx) is False
+    assert await NotOp(True).first(ctx) is False
 
 
 async def test_not_false(ctx):
-    assert await nu.first(NotOp(False), ctx) is True
+    assert await NotOp(False).first(ctx) is True
 
 
 async def test_not_zero(ctx):
-    assert await nu.first(NotOp(0), ctx) is True
+    assert await NotOp(0).first(ctx) is True
 
 
 async def test_not_nonempty_string(ctx):
-    assert await nu.first(NotOp("hello"), ctx) is False
+    assert await NotOp("hello").first(ctx) is False
 
 
 # ---------------------------------------------------------------------------
@@ -58,19 +58,19 @@ async def test_not_nonempty_string(ctx):
 
 
 async def test_bool_truthy(ctx):
-    assert await nu.first(BoolOp(1), ctx) is True
+    assert await BoolOp(1).first(ctx) is True
 
 
 async def test_bool_falsy(ctx):
-    assert await nu.first(BoolOp(0), ctx) is False
+    assert await BoolOp(0).first(ctx) is False
 
 
 async def test_bool_empty_string(ctx):
-    assert await nu.first(BoolOp(""), ctx) is False
+    assert await BoolOp("").first(ctx) is False
 
 
 async def test_bool_nonempty_list(ctx):
-    assert await nu.first(BoolOp(Literal([1, 2])), ctx) is True
+    assert await BoolOp(Literal([1, 2])).first(ctx) is True
 
 
 # ---------------------------------------------------------------------------
@@ -79,35 +79,35 @@ async def test_bool_nonempty_list(ctx):
 
 
 async def test_and_both_truthy(ctx):
-    result = await nu.first(AndOp(3, 5), ctx)
+    result = await AndOp(3, 5).first(ctx)
     assert result == 5
 
 
 async def test_and_left_falsy(ctx):
-    result = await nu.first(AndOp(0, 5), ctx)
+    result = await AndOp(0, 5).first(ctx)
     assert result == 0
 
 
 async def test_and_right_falsy(ctx):
-    result = await nu.first(AndOp(3, 0), ctx)
+    result = await AndOp(3, 0).first(ctx)
     assert result == 0
 
 
 async def test_and_short_circuit_skips_right(ctx):
     """Left is falsy -> right is never evaluated."""
-    result = await nu.first(AndOp(Literal(0), FailingNu()), ctx)
+    result = await AndOp(Literal(0), FailingNu()).first(ctx)
     assert result == 0
 
 
 async def test_and_sentinel_left(ctx):
     """EMPTY left -> INVALID, right not evaluated."""
-    result = await nu.first(AndOp(Literal(EMPTY), FailingNu()), ctx)
+    result = await AndOp(Literal(EMPTY), FailingNu()).first(ctx)
     assert is_sentinel(result)
 
 
 async def test_and_sentinel_right(ctx):
     """Clean left, INVALID right -> INVALID."""
-    result = await nu.first(AndOp(Literal(3), Literal(INVALID)), ctx)
+    result = await AndOp(Literal(3), Literal(INVALID)).first(ctx)
     assert is_invalid(result)
 
 
@@ -117,33 +117,33 @@ async def test_and_sentinel_right(ctx):
 
 
 async def test_or_both_truthy(ctx):
-    result = await nu.first(OrOp(3, 5), ctx)
+    result = await OrOp(3, 5).first(ctx)
     assert result == 3
 
 
 async def test_or_left_falsy(ctx):
-    result = await nu.first(OrOp(0, 5), ctx)
+    result = await OrOp(0, 5).first(ctx)
     assert result == 5
 
 
 async def test_or_both_falsy(ctx):
-    result = await nu.first(OrOp(0, ""), ctx)
+    result = await OrOp(0, "").first(ctx)
     assert result == ""
 
 
 async def test_or_short_circuit_skips_right(ctx):
     """Left is truthy -> right is never evaluated."""
-    result = await nu.first(OrOp(Literal(3), FailingNu()), ctx)
+    result = await OrOp(Literal(3), FailingNu()).first(ctx)
     assert result == 3
 
 
 async def test_or_sentinel_left(ctx):
     """EMPTY left -> INVALID, right not evaluated."""
-    result = await nu.first(OrOp(Literal(EMPTY), FailingNu()), ctx)
+    result = await OrOp(Literal(EMPTY), FailingNu()).first(ctx)
     assert is_sentinel(result)
 
 
 async def test_or_sentinel_right(ctx):
     """Falsy left, INVALID right -> INVALID."""
-    result = await nu.first(OrOp(Literal(0), Literal(INVALID)), ctx)
+    result = await OrOp(Literal(0), Literal(INVALID)).first(ctx)
     assert is_invalid(result)

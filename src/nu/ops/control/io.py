@@ -8,7 +8,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from nu.eval import first
 from nu.stdio.refs import STDERR, STDOUT
 from nu.terms.op import Command
 
@@ -34,17 +33,16 @@ class Print(Command):
 
     writes = 0  # StdioRef at child 0 is a WRITE target
 
-    def __init__(self, message: Arg = "Print", *values: Any) -> None:
-        super().__init__(STDOUT, message, *values)
+    def __init__(self, *values: Arg) -> None:
+        super().__init__(STDOUT, *values)
 
     async def run(self, ctx: Context) -> None:
         from nu.stdio.ops import _get_stream
 
         stream = _get_stream(ctx, self.children[0])
-        message = await first(self.children[1], ctx)
-        parts = [f"[Print:{message}]"]
-        for child in self.children[2:]:
-            parts.append(str(await first(child, ctx)))
+        parts = []
+        for child in self.children[1:]:
+            parts.append(str(await child.collect(ctx)))
         stream.write(" ".join(parts) + "\n")
 
 
@@ -67,9 +65,9 @@ class Log(Command):
         self._path = ""
 
     async def run(self, ctx: Context) -> None:
-        level = await first(self.children[1], ctx)
-        logger_name = await first(self.children[2], ctx)
-        parts = [str(await first(c, ctx)) for c in self.children[3:]]
+        level = await self.children[1].first(ctx)
+        logger_name = await self.children[2].first(ctx)
+        parts = [str(await c.collect(ctx)) for c in self.children[3:]]
         message = " ".join(parts)
         if self._path:
             message = f"[{self._path}] {message}"
@@ -96,11 +94,11 @@ class Debug(Command):
         from nu.stdio.ops import _get_stream
 
         stream = _get_stream(ctx, self.children[0])
-        prefix = await first(self.children[1], ctx)
-        labels = await first(self.children[2], ctx)
+        prefix = await self.children[1].first(ctx)
+        labels = await self.children[2].first(ctx)
         parts = [str(prefix)]
         for i, child in enumerate(self.children[3:]):
-            val = await first(child, ctx)
+            val = await child.collect(ctx)
             if labels and i < len(labels):
                 parts.append(f"{labels[i]}={val!r}")
             else:

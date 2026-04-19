@@ -31,46 +31,46 @@ small_shifts = st.integers(min_value=0, max_value=16)
 @given(a=ints, b=ints)
 async def test_and_commutative(a, b):
     ctx = Context()
-    r1 = await nu.first(BitwiseAndOp(a, b), ctx)
-    r2 = await nu.first(BitwiseAndOp(b, a), ctx)
+    r1 = await BitwiseAndOp(a, b).first(ctx)
+    r2 = await BitwiseAndOp(b, a).first(ctx)
     assert r1 == r2
 
 
 @given(a=ints, b=ints)
 async def test_or_commutative(a, b):
     ctx = Context()
-    r1 = await nu.first(BitwiseOrOp(a, b), ctx)
-    r2 = await nu.first(BitwiseOrOp(b, a), ctx)
+    r1 = await BitwiseOrOp(a, b).first(ctx)
+    r2 = await BitwiseOrOp(b, a).first(ctx)
     assert r1 == r2
 
 
 @given(a=ints, b=ints)
 async def test_xor_commutative(a, b):
     ctx = Context()
-    r1 = await nu.first(XorOp(a, b), ctx)
-    r2 = await nu.first(XorOp(b, a), ctx)
+    r1 = await XorOp(a, b).first(ctx)
+    r2 = await XorOp(b, a).first(ctx)
     assert r1 == r2
 
 
 @given(a=ints)
 async def test_xor_self_is_zero(a):
     ctx = Context()
-    assert await nu.first(XorOp(a, a), ctx) == 0
+    assert await XorOp(a, a).first(ctx) == 0
 
 
 @given(a=ints)
 async def test_not_involution(a):
     """~~a == a."""
     ctx = Context()
-    assert await nu.first(BitwiseNotOp(BitwiseNotOp(a)), ctx) == a
+    assert await BitwiseNotOp(BitwiseNotOp(a)).first(ctx) == a
 
 
 @given(a=pos_ints, n=small_shifts)
 async def test_lshift_rshift_inverse(a, n):
     """(a << n) >> n == a for non-negative a."""
     ctx = Context()
-    shifted = await nu.first(LShiftOp(a, n), ctx)
-    back = await nu.first(RShiftOp(shifted, n), ctx)
+    shifted = await LShiftOp(a, n).first(ctx)
+    back = await RShiftOp(shifted, n).first(ctx)
     assert back == a
 
 
@@ -80,27 +80,27 @@ async def test_lshift_rshift_inverse(a, n):
 
 
 async def test_and_basic(ctx):
-    assert await nu.first(BitwiseAndOp(0b1100, 0b1010), ctx) == 0b1000
+    assert await BitwiseAndOp(0b1100, 0b1010).first(ctx) == 0b1000
 
 
 async def test_or_basic(ctx):
-    assert await nu.first(BitwiseOrOp(0b1100, 0b1010), ctx) == 0b1110
+    assert await BitwiseOrOp(0b1100, 0b1010).first(ctx) == 0b1110
 
 
 async def test_xor_basic(ctx):
-    assert await nu.first(XorOp(0b1100, 0b1010), ctx) == 0b0110
+    assert await XorOp(0b1100, 0b1010).first(ctx) == 0b0110
 
 
 async def test_not_basic(ctx):
-    assert await nu.first(BitwiseNotOp(0), ctx) == -1
+    assert await BitwiseNotOp(0).first(ctx) == -1
 
 
 async def test_lshift_basic(ctx):
-    assert await nu.first(LShiftOp(1, 4), ctx) == 16
+    assert await LShiftOp(1, 4).first(ctx) == 16
 
 
 async def test_rshift_basic(ctx):
-    assert await nu.first(RShiftOp(16, 4), ctx) == 1
+    assert await RShiftOp(16, 4).first(ctx) == 1
 
 
 # ---------------------------------------------------------------------------
@@ -114,9 +114,9 @@ async def test_rshift_basic(ctx):
 )
 async def test_binary_type_error_raises(ctx, op_cls):
     with pytest.raises(TypeError):
-        await nu.first(op_cls("hello", 3), ctx)
+        await op_cls("hello", 3).first(ctx)
 
 
 async def test_unary_type_error_raises(ctx):
     with pytest.raises(TypeError):
-        await nu.first(BitwiseNotOp("hello"), ctx)
+        await BitwiseNotOp("hello").first(ctx)

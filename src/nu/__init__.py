@@ -263,7 +263,6 @@ from .tree import (
     unwrap,
     wrap,
 )
-from .eval import collect, drain, execute, fetch, first, last
 from .utils import ensure_nu
 from .shapes import Shape, Slot
 from .stdio import (

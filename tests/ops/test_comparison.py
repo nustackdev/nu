@@ -28,22 +28,22 @@ ints = st.integers(min_value=-10000, max_value=10000)
 @given(a=ints)
 async def test_eq_reflexive(a):
     ctx = Context()
-    assert await nu.first(EqOp(a, a), ctx) is True
+    assert await EqOp(a, a).first(ctx) is True
 
 
 @given(a=ints, b=ints)
 async def test_eq_symmetric(a, b):
     ctx = Context()
-    r1 = await nu.first(EqOp(a, b), ctx)
-    r2 = await nu.first(EqOp(b, a), ctx)
+    r1 = await EqOp(a, b).first(ctx)
+    r2 = await EqOp(b, a).first(ctx)
     assert r1 == r2
 
 
 @given(a=ints, b=ints)
 async def test_ne_is_not_eq(a, b):
     ctx = Context()
-    eq = await nu.first(EqOp(a, b), ctx)
-    ne = await nu.first(NeOp(a, b), ctx)
+    eq = await EqOp(a, b).first(ctx)
+    ne = await NeOp(a, b).first(ctx)
     assert eq != ne
 
 
@@ -51,8 +51,8 @@ async def test_ne_is_not_eq(a, b):
 async def test_gt_lt_inverse(a, b):
     """a > b iff b < a."""
     ctx = Context()
-    gt = await nu.first(GtOp(a, b), ctx)
-    lt = await nu.first(LtOp(b, a), ctx)
+    gt = await GtOp(a, b).first(ctx)
+    lt = await LtOp(b, a).first(ctx)
     assert gt == lt
 
 
@@ -60,21 +60,21 @@ async def test_gt_lt_inverse(a, b):
 async def test_ge_le_inverse(a, b):
     """a >= b iff b <= a."""
     ctx = Context()
-    ge = await nu.first(GeOp(a, b), ctx)
-    le = await nu.first(LeOp(b, a), ctx)
+    ge = await GeOp(a, b).first(ctx)
+    le = await LeOp(b, a).first(ctx)
     assert ge == le
 
 
 @given(a=ints)
 async def test_ge_reflexive(a):
     ctx = Context()
-    assert await nu.first(GeOp(a, a), ctx) is True
+    assert await GeOp(a, a).first(ctx) is True
 
 
 @given(a=ints)
 async def test_le_reflexive(a):
     ctx = Context()
-    assert await nu.first(LeOp(a, a), ctx) is True
+    assert await LeOp(a, a).first(ctx) is True
 
 
 # ---------------------------------------------------------------------------
@@ -83,19 +83,19 @@ async def test_le_reflexive(a):
 
 
 async def test_gt_true(ctx):
-    assert await nu.first(GtOp(5, 3), ctx) is True
+    assert await GtOp(5, 3).first(ctx) is True
 
 
 async def test_gt_false(ctx):
-    assert await nu.first(GtOp(3, 5), ctx) is False
+    assert await GtOp(3, 5).first(ctx) is False
 
 
 async def test_lt_true(ctx):
-    assert await nu.first(LtOp(3, 5), ctx) is True
+    assert await LtOp(3, 5).first(ctx) is True
 
 
 async def test_eq_different(ctx):
-    assert await nu.first(EqOp(3, 5), ctx) is False
+    assert await EqOp(3, 5).first(ctx) is False
 
 
 # ---------------------------------------------------------------------------
@@ -105,14 +105,14 @@ async def test_eq_different(ctx):
 
 async def test_id_comp_same_object(ctx):
     obj = object()
-    assert await nu.first(IdCompOp(Literal(obj), Literal(obj)), ctx) is True
+    assert await IdCompOp(Literal(obj), Literal(obj)).first(ctx) is True
 
 
 async def test_id_comp_equal_but_different(ctx):
     """Equal values but different objects."""
     a = [1, 2, 3]
     b = [1, 2, 3]
-    assert await nu.first(IdCompOp(Literal(a), Literal(b)), ctx) is False
+    assert await IdCompOp(Literal(a), Literal(b)).first(ctx) is False
 
 
 # ---------------------------------------------------------------------------
@@ -123,4 +123,4 @@ async def test_id_comp_equal_but_different(ctx):
 @pytest.mark.parametrize("op_cls", [GtOp, LtOp, GeOp, LeOp])
 async def test_type_error_raises(ctx, op_cls):
     with pytest.raises(TypeError):
-        await nu.first(op_cls("hello", 3), ctx)
+        await op_cls("hello", 3).first(ctx)

@@ -30,24 +30,24 @@ from nu.ops import (
 
 
 async def test_int_from_int(ctx):
-    assert await nu.first(ToIntOp(42), ctx) == 42
+    assert await ToIntOp(42).first(ctx) == 42
 
 
 async def test_int_from_float(ctx):
-    assert await nu.first(ToIntOp(3.7), ctx) == 3
+    assert await ToIntOp(3.7).first(ctx) == 3
 
 
 async def test_int_from_str(ctx):
-    assert await nu.first(ToIntOp("123"), ctx) == 123
+    assert await ToIntOp("123").first(ctx) == 123
 
 
 async def test_int_from_bool(ctx):
-    assert await nu.first(ToIntOp(True), ctx) == 1
+    assert await ToIntOp(True).first(ctx) == 1
 
 
 async def test_int_from_bad_str_raises(ctx):
     with pytest.raises(ValueError):
-        await nu.first(ToIntOp("hello"), ctx)
+        await ToIntOp("hello").first(ctx)
 
 
 # ---------------------------------------------------------------------------
@@ -56,16 +56,16 @@ async def test_int_from_bad_str_raises(ctx):
 
 
 async def test_float_from_int(ctx):
-    assert await nu.first(ToFloatOp(5), ctx) == 5.0
+    assert await ToFloatOp(5).first(ctx) == 5.0
 
 
 async def test_float_from_str(ctx):
-    assert await nu.first(ToFloatOp("3.14"), ctx) == 3.14
+    assert await ToFloatOp("3.14").first(ctx) == 3.14
 
 
 async def test_float_from_bad_str_raises(ctx):
     with pytest.raises(ValueError):
-        await nu.first(ToFloatOp("hello"), ctx)
+        await ToFloatOp("hello").first(ctx)
 
 
 # ---------------------------------------------------------------------------
@@ -74,19 +74,19 @@ async def test_float_from_bad_str_raises(ctx):
 
 
 async def test_bool_truthy(ctx):
-    assert await nu.first(ToBoolOp(1), ctx) is True
+    assert await ToBoolOp(1).first(ctx) is True
 
 
 async def test_bool_falsy(ctx):
-    assert await nu.first(ToBoolOp(0), ctx) is False
+    assert await ToBoolOp(0).first(ctx) is False
 
 
 async def test_bool_empty_str(ctx):
-    assert await nu.first(ToBoolOp(""), ctx) is False
+    assert await ToBoolOp("").first(ctx) is False
 
 
 async def test_bool_nonempty_str(ctx):
-    assert await nu.first(ToBoolOp("x"), ctx) is True
+    assert await ToBoolOp("x").first(ctx) is True
 
 
 # ---------------------------------------------------------------------------
@@ -95,15 +95,15 @@ async def test_bool_nonempty_str(ctx):
 
 
 async def test_str_from_int(ctx):
-    assert await nu.first(ToStrOp(42), ctx) == "42"
+    assert await ToStrOp(42).first(ctx) == "42"
 
 
 async def test_str_from_float(ctx):
-    assert await nu.first(ToStrOp(3.14), ctx) == "3.14"
+    assert await ToStrOp(3.14).first(ctx) == "3.14"
 
 
 async def test_str_from_none(ctx):
-    assert await nu.first(ToStrOp(None), ctx) == "None"
+    assert await ToStrOp(None).first(ctx) == "None"
 
 
 # ---------------------------------------------------------------------------
@@ -112,15 +112,15 @@ async def test_str_from_none(ctx):
 
 
 async def test_bytes_from_str(ctx):
-    assert await nu.first(ToBytesOp("hello"), ctx) == b"hello"
+    assert await ToBytesOp("hello").first(ctx) == b"hello"
 
 
 async def test_bytes_passthrough(ctx):
-    assert await nu.first(ToBytesOp(b"raw"), ctx) == b"raw"
+    assert await ToBytesOp(b"raw").first(ctx) == b"raw"
 
 
 async def test_bytes_from_int_iterable(ctx):
-    assert await nu.first(ToBytesOp([72, 105]), ctx) == b"Hi"
+    assert await ToBytesOp([72, 105]).first(ctx) == b"Hi"
 
 
 # ---------------------------------------------------------------------------
@@ -129,19 +129,19 @@ async def test_bytes_from_int_iterable(ctx):
 
 
 async def test_list_from_tuple(ctx):
-    assert await nu.first(ToListOp((1, 2, 3)), ctx) == [1, 2, 3]
+    assert await ToListOp((1, 2, 3)).first(ctx) == [1, 2, 3]
 
 
 async def test_list_from_str(ctx):
-    assert await nu.first(ToListOp("abc"), ctx) == ["a", "b", "c"]
+    assert await ToListOp("abc").first(ctx) == ["a", "b", "c"]
 
 
 async def test_set_from_list(ctx):
-    assert await nu.first(ToSetOp([1, 2, 2, 3]), ctx) == {1, 2, 3}
+    assert await ToSetOp([1, 2, 2, 3]).first(ctx) == {1, 2, 3}
 
 
 async def test_tuple_from_list(ctx):
-    assert await nu.first(ToTupleOp([1, 2, 3]), ctx) == (1, 2, 3)
+    assert await ToTupleOp([1, 2, 3]).first(ctx) == (1, 2, 3)
 
 
 # ---------------------------------------------------------------------------
@@ -152,4 +152,4 @@ async def test_tuple_from_list(ctx):
 @pytest.mark.parametrize("op_cls", [ToListOp, ToSetOp, ToTupleOp])
 async def test_collection_from_non_iterable_raises(ctx, op_cls):
     with pytest.raises(TypeError):
-        await nu.first(op_cls(42), ctx)
+        await op_cls(42).first(ctx)

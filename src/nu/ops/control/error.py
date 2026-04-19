@@ -6,7 +6,6 @@ import asyncio
 from contextlib import aclosing
 from typing import TYPE_CHECKING, Any
 
-from nu.eval import execute, first
 from nu.primitives import NoneI
 from nu.terms import Op
 from nu.terms.op import Command
@@ -135,9 +134,9 @@ class Retry(Op):
 
     async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
         body = self.children[0]
-        max_attempts = await first(self.children[1], ctx)
-        delay = await first(self.children[2], ctx)
-        backoff = await first(self.children[3], ctx)
+        max_attempts = await self.children[1].first(ctx)
+        delay = await self.children[2].first(ctx)
+        backoff = await self.children[3].first(ctx)
 
         for attempt in range(1, max_attempts + 1):
             try:
@@ -148,7 +147,7 @@ class Retry(Op):
                 if hook is not None:
                     hook_ctx = ctx._copy()
                     hook_ctx.attrs["attempt"] = attempt
-                    await execute(hook, hook_ctx)
+                    await hook.execute(hook_ctx)
                 return
             except Exception as e:
                 hook_ctx = ctx._copy()
@@ -157,12 +156,12 @@ class Retry(Op):
                 if attempt >= max_attempts:
                     hook = self.on_fail
                     if hook is not None:
-                        await execute(hook, hook_ctx)
+                        await hook.execute(hook_ctx)
                     else:
                         raise
                 hook = self.on_attempt_fail
                 if hook is not None:
-                    await execute(hook, hook_ctx)
+                    await hook.execute(hook_ctx)
                 await asyncio.sleep(delay)
                 delay *= backoff
 
@@ -179,7 +178,7 @@ class Assert(Command):
         super().__init__(condition, message)
 
     async def run(self, ctx: Context) -> None:
-        result = await first(self.children[0], ctx)
+        result = await self.children[0].first(ctx)
         if not result:
-            message = await first(self.children[1], ctx)
+            message = await self.children[1].first(ctx)
             raise AssertionError(message)

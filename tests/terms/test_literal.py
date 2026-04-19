@@ -16,33 +16,33 @@ from nu import EMPTY, INVALID, Literal
 
 
 async def test_first_returns_int(ctx):
-    assert await nu.first(Literal(42), ctx) == 42
+    assert await Literal(42).first(ctx) == 42
 
 
 async def test_first_returns_str(ctx):
-    assert await nu.first(Literal("hello"), ctx) == "hello"
+    assert await Literal("hello").first(ctx) == "hello"
 
 
 async def test_first_returns_none(ctx):
-    assert await nu.first(Literal(None), ctx) is None
+    assert await Literal(None).first(ctx) is None
 
 
 async def test_first_returns_list(ctx):
-    assert await nu.first(Literal([1, 2, 3]), ctx) == [1, 2, 3]
+    assert await Literal([1, 2, 3]).first(ctx) == [1, 2, 3]
 
 
 async def test_first_returns_dict(ctx):
-    assert await nu.first(Literal({"a": 1}), ctx) == {"a": 1}
+    assert await Literal({"a": 1}).first(ctx) == {"a": 1}
 
 
 async def test_first_holds_sentinel(ctx):
     """Literal stores sentinels as literals - it does not propagate them."""
-    result = await nu.first(Literal(EMPTY), ctx)
+    result = await Literal(EMPTY).first(ctx)
     assert result is EMPTY
 
 
 async def test_first_holds_invalid(ctx):
-    result = await nu.first(Literal(INVALID), ctx)
+    result = await Literal(INVALID).first(ctx)
     assert result is INVALID
 
 

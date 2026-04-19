@@ -5,7 +5,6 @@ from __future__ import annotations
 from contextlib import aclosing
 from typing import TYPE_CHECKING, Any
 
-from nu.eval import first
 from nu.terms import Op
 
 
@@ -48,14 +47,14 @@ class ForRange(Op):
         super().__init__(*children)
 
     async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        start = await first(self.children[0], ctx)
-        stop = await first(self.children[1], ctx)
-        step = await first(self.children[2], ctx)
+        start = await self.children[0].first(ctx)
+        stop = await self.children[1].first(ctx)
+        step = await self.children[2].first(ctx)
         body = self.children[3]
 
         index_key: str | None = None
         if self._has_index:
-            index_key = await first(self.children[4], ctx)
+            index_key = await self.children[4].first(ctx)
 
         for i in range(start, stop, step):
             if index_key is not None:
@@ -98,14 +97,14 @@ class ForEach(Op):
         item_key: str | None = None
         index_key: str | None = None
         if self._has_item:
-            item_key = await first(self.children[child_idx], ctx)
+            item_key = await self.children[child_idx].first(ctx)
             child_idx += 1
         if self._has_index:
-            index_key = await first(self.children[child_idx], ctx)
+            index_key = await self.children[child_idx].first(ctx)
 
         # TODO `items` treated as single-yield collection. Revisit
         # when stream-Op rewrite lands (Tier 5) to support multi-yield sources.
-        items = await first(self.children[0], ctx)
+        items = await self.children[0].first(ctx)
         for i, elem in enumerate(items):
             if item_key is not None:
                 ctx.attrs[item_key] = elem
@@ -137,15 +136,15 @@ class Fold(Op):
         super().__init__(items, initial, body, acc, item)
 
     async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        initial = await first(self.children[1], ctx)
+        initial = await self.children[1].first(ctx)
         body = self.children[2]
-        acc_key: str = await first(self.children[3], ctx)
-        item_key: str = await first(self.children[4], ctx)
+        acc_key: str = await self.children[3].first(ctx)
+        item_key: str = await self.children[4].first(ctx)
 
         ctx.attrs[acc_key] = initial
 
         # TODO single-yield items source; revisit with Tier 5.
-        items = await first(self.children[0], ctx)
+        items = await self.children[0].first(ctx)
         for elem in items:
             ctx.attrs[item_key] = elem
             async with aclosing(body.open(ctx)) as gen:

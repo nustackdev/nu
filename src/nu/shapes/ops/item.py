@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.eval import first
 from nu.terms import Sentinel
 from nu.terms.op import Command, Query
 from nu.terms.sentinel import is_sentinel
@@ -43,7 +42,7 @@ class ItemLoadOp[T](Query[T | Sentinel]):
         super().__init__(ref)
 
     async def run(self, ctx: Context) -> T | Sentinel:
-        return await first(self.children[0], ctx)
+        return await self.children[0].first(ctx)
 
     def __repr__(self) -> str:
         return f"ItemLoadOp({self.children[0]!r})"
@@ -61,7 +60,7 @@ class ItemStoreCmd[T](Command):
         ref = self.children[0]
         parent = await ref.fetch_parent(ctx)
         address = await ref.resolve_address(ctx)
-        value = await first(self.children[1], ctx)
+        value = await self.children[1].first(ctx)
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent[address] = value
@@ -95,7 +94,7 @@ class ItemExistsOp(Query[bool]):
         super().__init__(ref)
 
     async def run(self, ctx: Context) -> bool:
-        val = await first(self.children[0], ctx)
+        val = await self.children[0].first(ctx)
         return not is_sentinel(val)
 
     def __repr__(self) -> str:
@@ -109,7 +108,7 @@ class ItemMissingOp(Query[bool]):
         super().__init__(ref)
 
     async def run(self, ctx: Context) -> bool:
-        val = await first(self.children[0], ctx)
+        val = await self.children[0].first(ctx)
         return is_sentinel(val)
 
     def __repr__(self) -> str:

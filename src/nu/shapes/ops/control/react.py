@@ -16,7 +16,6 @@ import asyncio
 from contextlib import aclosing
 from typing import TYPE_CHECKING, Any
 
-from nu.eval import execute, first
 from nu.terms import Op
 from nu.utils import ensure_nu
 
@@ -71,9 +70,9 @@ class React(Op):
 
         changed_key_name: str | None = None
         if self._changed_key_idx is not None:
-            changed_key_name = await first(self.children[self._changed_key_idx], ctx)
+            changed_key_name = await self.children[self._changed_key_idx].first(ctx)
 
-        sub = await first(self.children[0], ctx)
+        sub = await self.children[0].first(ctx)
         sub.bind(on_change)
         try:
             key = await queue.get()
@@ -118,9 +117,9 @@ class ReactForever(Op):
 
         changed_key_name: str | None = None
         if self._has_changed_key:
-            changed_key_name = await first(self.children[2], ctx)
+            changed_key_name = await self.children[2].first(ctx)
 
-        sub = await first(self.children[0], ctx)
+        sub = await self.children[0].first(ctx)
         sub.bind(on_change)
         try:
             while True:
@@ -132,7 +131,7 @@ class ReactForever(Op):
                 # TODO task-079: redesign changed_key smuggling. For now,
                 # body is executed (drained), not streamed, to preserve
                 # legolas ledger app semantics.
-                await execute(self.children[1], ctx)
+                await self.children[1].execute(ctx)
                 if False:
                     yield  # mark as async generator
         finally:
@@ -169,15 +168,15 @@ class ReactWhile(Op):
 
         changed_key_name: str | None = None
         if self._has_changed_key:
-            changed_key_name = await first(self.children[3], ctx)
+            changed_key_name = await self.children[3].first(ctx)
 
-        sub = await first(self.children[0], ctx)
+        sub = await self.children[0].first(ctx)
         sub.bind(on_change)
         try:
             while True:
                 key = await queue.get()
 
-                if not await first(self.children[1], ctx):
+                if not await self.children[1].first(ctx):
                     break
 
                 if changed_key_name is not None:

@@ -68,7 +68,7 @@ class AttrRef[T](Ref[T]):
         """Resolve the name — fast path for static, execute for dynamic."""
         if self._raw_name is not None:
             return self._raw_name
-        return await self._name_nu.execute(ctx)
+        return await self._name_ctx.execute()
 
     async def resolve(self, ctx: Context) -> str:
         """Resolve to the name string."""

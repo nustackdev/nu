@@ -30,8 +30,8 @@ class StoreAttr(Command):
         super().__init__(key, value)
 
     async def run(self, ctx: Ctx) -> None:
-        key = await nu.first(self.children[0], ctx)
-        val = await nu.first(self.children[1], ctx)
+        key = await self.children[0].first(ctx)
+        val = await self.children[1].first(ctx)
         if key is not None:
             ctx.attrs[key] = val
 
@@ -62,4 +62,4 @@ if __name__ == "__main__":
     tree = build_tree()
     print(f"effects: {tracked_effects(tree)}")
     print()
-    asyncio.run(nu.execute(tree, Context()))
+    asyncio.run(tree.execute(Context()))

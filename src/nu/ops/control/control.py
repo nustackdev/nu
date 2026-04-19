@@ -8,7 +8,6 @@ from __future__ import annotations
 from contextlib import aclosing
 from typing import TYPE_CHECKING, Any
 
-from nu.eval import first
 from nu.terms import Op
 
 
@@ -47,7 +46,7 @@ class If(Op):
 
     async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
         cond, *branches = self.children
-        if await first(cond, ctx):
+        if await cond.first(ctx):
             branch = branches[0]
         elif len(branches) > 1:
             branch = branches[1]
@@ -69,7 +68,7 @@ class While(Op):
 
     async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
         cond, body = self.children
-        while await first(cond, ctx):
+        while await cond.first(ctx):
             async with aclosing(body.open(ctx)) as gen:
                 async for v in gen:
                     yield v
@@ -89,7 +88,7 @@ class DoWhile(Op):
         async with aclosing(body.open(ctx)) as gen:
             async for v in gen:
                 yield v
-        while await first(cond, ctx):
+        while await cond.first(ctx):
             async with aclosing(body.open(ctx)) as gen:
                 async for v in gen:
                     yield v
@@ -133,7 +132,7 @@ class Switch(Op):
         super().__init__(*children)
 
     async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        value = await first(self.children[0], ctx)
+        value = await self.children[0].first(ctx)
         for i, key in enumerate(self._case_keys):
             if key == value:
                 branch = self.children[i + 1]

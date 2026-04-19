@@ -127,14 +127,14 @@ class TestStdioWrite:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = StdioWrite(STDOUT, "hello", "world")
-        _run(nu.execute(op, ctx))
+        _run(op.execute(ctx))
         assert out.getvalue() == "hello world\n"
 
     def test_write_to_stderr(self):
         err = StringIO()
         ctx = _make_ctx(stderr=err)
         op = StdioWrite(STDERR, "error message")
-        _run(nu.execute(op, ctx))
+        _run(op.execute(ctx))
         assert err.getvalue() == "error message\n"
 
     def test_write_overrides(self):
@@ -156,7 +156,7 @@ class TestStdioRead:
         inp = StringIO("hello world\n")
         ctx = _make_ctx(stdin=inp)
         op = StdioRead()
-        result = _run(nu.first(op, ctx))
+        result = _run(op.first(ctx))
         assert result == "hello world"
 
     def test_no_override(self):
@@ -180,7 +180,7 @@ class TestStdioFlush:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = StdioFlush(STDOUT)
-        _run(nu.execute(op, ctx))
+        _run(op.execute(ctx))
         # StringIO.flush() is a no-op but shouldn't error
 
     def test_overrides(self):
@@ -197,7 +197,7 @@ class TestPrintStdio:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = Print("test", 42)
-        _run(nu.execute(op, ctx))
+        _run(op.execute(ctx))
         assert "[Print:test] 42" in out.getvalue()
 
     def test_print_has_write_override(self):
@@ -229,7 +229,7 @@ class TestDebugStdio:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = Debug(42, prefix="[DBG]")
-        _run(nu.execute(op, ctx))
+        _run(op.execute(ctx))
         assert "[DBG]" in out.getvalue()
 
     def test_debug_has_write_override(self):
@@ -249,7 +249,7 @@ class TestBufferedStdio:
             StdioWrite(STDOUT, "line 1"),
             StdioWrite(STDOUT, "line 2"),
         )
-        _run(nu.execute(op, ctx))
+        _run(op.execute(ctx))
         content = out.getvalue()
         assert "line 1" in content
         assert "line 2" in content
@@ -270,7 +270,7 @@ class TestBufferedStdio:
             FailOp(STDOUT, "after"),
         )
         with pytest.raises(RuntimeError, match="boom"):
-            _run(nu.execute(op, ctx))
+            _run(op.execute(ctx))
         # Nothing should have been written to real stdout
         assert out.getvalue() == ""
 
@@ -278,7 +278,7 @@ class TestBufferedStdio:
         inp = StringIO("hello\n")
         ctx = _make_ctx(stdin=inp)
         op = BufferedStdio(StdioRead())
-        result = _run(nu.first(op, ctx))
+        result = _run(op.first(ctx))
         assert result == "hello"
 
 
