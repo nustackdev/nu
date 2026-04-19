@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import nu
 from nu import Literal, Nu
 from nu.terms.op import (
     BinaryOp,
@@ -119,19 +120,19 @@ def test_nary_variable_children():
 
 
 async def test_unary_execute(ctx):
-    assert await _NegOp(5).execute(ctx) == -5
+    assert await nu.first(_NegOp(5), ctx) == -5
 
 
 async def test_binary_execute(ctx):
-    assert await _AddOp(3, 4).execute(ctx) == 7
+    assert await nu.first(_AddOp(3, 4), ctx) == 7
 
 
 async def test_ternary_execute(ctx):
-    assert await _ClampOp(10, 0, 5).execute(ctx) == 5
+    assert await nu.first(_ClampOp(10, 0, 5), ctx) == 5
 
 
 async def test_nary_execute(ctx):
-    assert await _SumOp(1, 2, 3, 4).execute(ctx) == 10
+    assert await nu.first(_SumOp(1, 2, 3, 4), ctx) == 10
 
 
 # ---------------------------------------------------------------------------

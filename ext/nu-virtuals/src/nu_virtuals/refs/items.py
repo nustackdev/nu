@@ -16,7 +16,6 @@ Pattern:
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Self
 
 from nu import (
@@ -36,7 +35,7 @@ from .base import PrimitiveRef
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncGenerator
 
     from nu.context import Context
 
@@ -309,9 +308,10 @@ class PrimitiveDictRef[K, V](
         """Create a slot for primitive dict values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    @asynccontextmanager
-    async def open(self, ctx: Context) -> AsyncIterator[object]:
-        """Yield a write-back dict view; flush on context exit if dirty."""
+    # TODO task-079: write-back view (Stream D). Yields mutable view, flushes
+    # on generator close. Override `open` directly so finally runs on aclose.
+    async def open(self, ctx: Context) -> AsyncGenerator[object, None]:
+        """Yield a write-back dict view; flush on generator close if dirty."""
         from nu_virtuals.views import PrimitiveDictView
 
         parent = await self.fetch_parent(ctx)
@@ -362,9 +362,10 @@ class PrimitiveListRef[T](
         """Create a slot for primitive list values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    @asynccontextmanager
-    async def open(self, ctx: Context) -> AsyncIterator[object]:
-        """Yield a write-back list view; flush on context exit if dirty."""
+    # TODO task-079: write-back view (Stream D). Yields mutable view, flushes
+    # on generator close. Override `open` directly so finally runs on aclose.
+    async def open(self, ctx: Context) -> AsyncGenerator[object, None]:
+        """Yield a write-back list view; flush on generator close if dirty."""
         from nu_virtuals.views import PrimitiveListView
 
         parent = await self.fetch_parent(ctx)
@@ -415,9 +416,10 @@ class PrimitiveSetRef[T](
         """Create a slot for primitive set values."""
         return Slot(cls)  # type: ignore[return-value]
 
-    @asynccontextmanager
-    async def open(self, ctx: Context) -> AsyncIterator[object]:
-        """Yield a write-back set view; flush on context exit if dirty."""
+    # TODO task-079: write-back view (Stream D). Yields mutable view, flushes
+    # on generator close. Override `open` directly so finally runs on aclose.
+    async def open(self, ctx: Context) -> AsyncGenerator[object, None]:
+        """Yield a write-back set view; flush on generator close if dirty."""
         from nu_virtuals.views import PrimitiveSetView
 
         parent = await self.fetch_parent(ctx)

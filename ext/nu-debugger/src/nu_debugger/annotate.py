@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 
 from nu.context import Context, IntAttrRef, StrAttrRef
-from nu.ops import Log, Retry, Seq, ToStr
+from nu.ops import Log, Retry, ToStr
 from nu.terms import Literal, Nu, ScopedOp
 from nu.tree import map_nodes
 
@@ -20,7 +20,7 @@ _step_logger = logging.getLogger("nu.steps")
 
 
 class _StepSpan(ScopedOp):
-    """Wraps a Seq child to log step progress. Path is baked at construction."""
+    """Wraps a sequential child to log step progress. Path is baked at construction."""
 
     def __init__(self, child: Nu, step: int, total: int, path: str) -> None:
         super().__init__(child)
@@ -36,7 +36,7 @@ class _StepSpan(ScopedOp):
         self._log("INFO", "[%s] step %d/%d start", self._path, self._step, self._total)
         return ctx
 
-    def after_success(self, ctx: Context) -> None:
+    def after(self, ctx: Context) -> None:
         self._log("INFO", "[%s] step %d/%d done", self._path, self._step, self._total)
 
     def after_failure(self, ctx: Context, error: BaseException) -> None:
@@ -55,7 +55,7 @@ def annotate_retries(tree: Nu) -> Nu:
 
     Wraps every Retry with Log-based hooks for ``on_attempt_fail`` and
     ``on_fail``.  If the Retry already has hooks, they are preserved —
-    a ``Seq(Log(...), existing_hook)`` wraps the original.
+    a ``Log(...) >> existing_hook`` wraps the original.
 
     Args:
         tree: Tree root.
@@ -83,8 +83,8 @@ def annotate_retries(tree: Nu) -> Nu:
         existing_af = node.on_attempt_fail
         existing_fail = node.on_fail
 
-        on_af = Seq(log_af, existing_af) if existing_af else log_af
-        on_fail = Seq(log_fail, existing_fail) if existing_fail else log_fail
+        on_af = (log_af >> existing_af) if existing_af else log_af
+        on_fail = (log_fail >> existing_fail) if existing_fail else log_fail
 
         return node._with_children(
             *node.children[:4],
@@ -97,23 +97,24 @@ def annotate_retries(tree: Nu) -> Nu:
 
 
 def annotate_steps(tree: Nu) -> Nu:
-    """Wrap Seq children in step-tracking spans with baked tree paths.
+    """Wrap sequential composition children in step-tracking spans with baked tree paths.
 
     Walks the tree recursively, tracking the structural path from root.
-    Each child of a Seq gets wrapped in a ``_StepSpan`` with
-    the path baked in.  All ``Log`` nodes encountered get their ``_path``
-    set so log messages show their tree position.
+    Each child of a plain sequential ``Nu`` (the kind built by ``a >> b``) gets
+    wrapped in a ``_StepSpan`` with the path baked in.  All ``Log`` nodes
+    encountered get their ``_path`` set so log messages show their tree position.
 
     Args:
         tree: Tree root.
 
     Returns:
-        New tree with step-annotated Seq nodes and path-aware Log nodes.
+        New tree with step-annotated nodes and path-aware Log nodes.
     """
 
     def _walk(node: Nu, path: str) -> Nu:
-        # Seq with meaningful children: wrap children in _StepSpan
-        if isinstance(node, Seq):
+        # Plain sequential composite (Seq replacement): wrap children in _StepSpan.
+        # Identify by exact type Nu — domain Ops subclass Nu and shouldn't be split.
+        if type(node) is Nu:
             if len(node.children) >= 2:
                 seq_path = f"{path}{type(node).__name__}"
                 total = len(node.children)

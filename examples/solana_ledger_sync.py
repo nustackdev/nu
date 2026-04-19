@@ -199,7 +199,7 @@ def _persist_tx(ledger: type[Ledger], slot: nu.IntArg) -> nu.Nu:
     # tx_id = slot * 10_000 + block_index
     return _SlotScratch.tx_id.store(
         nu.IntI(slot) * 10_000 + nu.AtOp(nu.AttrRef("tx"), "block_index")
-    ) | ledger.txs[_SlotScratch.tx_id].store(nu.DictAttrRef("tx"))
+    ) >> ledger.txs[_SlotScratch.tx_id].store(nu.DictAttrRef("tx"))
 
 
 def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = "") -> nu.Nu:
@@ -210,21 +210,21 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
         nu.Retry(
             nu.TryCatch(
                 bm.skipped.init(0)
-                | bm.synced.init(0)
-                | nu.ForEach(
+                >> bm.synced.init(0)
+                >> nu.ForEach(
                     SolanaRef.get_block(slot),
                     nu.If(
                         nu.ToBool(program_id),
                         nu.If(
                             nu.Contains(nu.DictAttrRef("tx").get("programs"), program_id),
-                            bm.synced.inc() | _persist_tx(ledger, slot),
+                            bm.synced.inc() >> _persist_tx(ledger, slot),
                             bm.skipped.inc(),
                         ),
-                        bm.synced.inc() | _persist_tx(ledger, slot),
+                        bm.synced.inc() >> _persist_tx(ledger, slot),
                     ),
                     item="tx",
                 ),
-                ledger.slots_dropped.add(slot) | nu.Log("dropped slot", slot),
+                ledger.slots_dropped.add(slot) >> nu.Log("dropped slot", slot),
                 errors=DroppedSlotError,
             ),
             max_attempts=5,
@@ -242,10 +242,10 @@ def sync_range(
     """Sync all confirmed slots in [slot_from, slot_to]."""
     return (
         Ledger.slots_synced.init(set())
-        | Ledger.slots_dropped.init(set())
-        | _RangeScratch.slots.store(SolanaRef.get_blocks(slot_from, slot_to))
-        | nu.Log("sync:", slot_from, "->", slot_to, "(", nu.Len(_RangeScratch.slots), "confirmed)")
-        | nu.ForEach(
+        >> Ledger.slots_dropped.init(set())
+        >> _RangeScratch.slots.store(SolanaRef.get_blocks(slot_from, slot_to))
+        >> nu.Log("sync:", slot_from, "->", slot_to, "(", nu.Len(_RangeScratch.slots), "confirmed)")
+        >> nu.ForEach(
             _RangeScratch.slots,
             sync_slot(ledger, nu.IntAttrRef("slot"), program_id=program_id),
             item="slot",
@@ -255,13 +255,13 @@ def sync_range(
 
 def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
     """Reactive observers: log block arrivals and per-block synced/skipped counters."""
-    return nu.Parallel(
+    return (
         nu.shapes.ReactForever(
             ledger.blocks_meta.on_descendants_change("*"),
             nu.Log("new block:", nu.AtOp(nu.TupleAttrRef("slot_change"), -1)),
             changed_key="slot_change",
-        ),
-        nu.shapes.ReactForever(
+        )
+        | nu.shapes.ReactForever(
             ledger.blocks_meta.on_descendants_change("*", "skipped"),
             nu.Throttle(
                 0.2,
@@ -273,8 +273,8 @@ def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
                 ),
             ),
             changed_key="skipped_change",
-        ),
-        nu.shapes.ReactForever(
+        )
+        | nu.shapes.ReactForever(
             ledger.blocks_meta.on_descendants_change("*", "synced"),
             nu.Throttle(
                 0.2,
@@ -286,7 +286,7 @@ def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
                 ),
             ),
             changed_key="synced_change",
-        ),
+        )
     )
 
 
@@ -331,22 +331,22 @@ async def main() -> None:
             app = (
                 (
                     nu.Log("--- sync ---")
-                    | nu.Log("syncing slots", args.slot_from, "->", slot_to)
-                    | nu.Log("endpoint:", args.endpoint)
-                    | nu.Log("filter: program", args.program or "(none)")
-                    | nu.Log("db:", args.db_path)
+                    >> nu.Log("syncing slots", args.slot_from, "->", slot_to)
+                    >> nu.Log("endpoint:", args.endpoint)
+                    >> nu.Log("filter: program", args.program or "(none)")
+                    >> nu.Log("db:", args.db_path)
                 )
-                | nu.Race(
+                >> nu.Race(
                     sync_range(Ledger, args.slot_from, slot_to, program_id=args.program or ""),
                     reactive_stats(Ledger),
                 )
-                | (
+                >> (
                     nu.Log("--- sync report ---")
-                    | nu.Log(
+                    >> nu.Log(
                         "txs synced",
                         nu.Sum(nu.Pluck(Ledger.blocks_meta.values(), "synced")),
                     )
-                    | nu.Log(
+                    >> nu.Log(
                         "txs skipped",
                         nu.Sum(nu.Pluck(Ledger.blocks_meta.values(), "skipped")),
                     )
@@ -363,7 +363,7 @@ async def main() -> None:
             nu_debugger.print_tree(app)
 
             # Execute the app
-            await app.execute(ctx)
+            await nu.execute(app, ctx)
 
 
 if __name__ == "__main__":

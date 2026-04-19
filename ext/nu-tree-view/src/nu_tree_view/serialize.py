@@ -28,8 +28,15 @@ def _is_span(node: _Node) -> bool:
     )
 
 
+# TODO task-079: revisit duck-typing — `execute` is gone from Nu. Heuristic now
+# treats Commands/Queries (which override `run` instead of `apply`) as flows.
 def _is_flow(node: _Node) -> bool:
-    return hasattr(node, "execute") and not hasattr(node, "is_self_pure") and not _is_span(node)
+    return (
+        hasattr(node, "run")
+        and not hasattr(node, "apply")
+        and not hasattr(node, "is_self_pure")
+        and not _is_span(node)
+    )
 
 
 def _is_ref(node: _Node) -> bool:

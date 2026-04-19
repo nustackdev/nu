@@ -41,8 +41,14 @@ class Worker(Resource):
     context = Attach()
 
     async def execute(self, tree: object) -> object:
-        """Execute an everybase tree against this worker's Context."""
-        return await tree.execute(self.context.ctx)
+        """Execute a Nu tree against this worker's Context.
+
+        Returns the last yielded value, or None if the tree yielded nothing.
+        """
+        from nu.eval import collect
+
+        values = await collect(tree, self.context.ctx)
+        return values[-1] if values else None
 
     @property
     def ctx(self) -> Context:

@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 from nu_virtuals.paths import ViewPathSer
 from nu import EMPTY, Sentinel
+from nu.eval import first
 from nu.terms.ref import Ref
 
 
@@ -175,7 +176,7 @@ class FlatRef(Ref):
             return self._static_path
         path_list = list(self._static_path)
         for idx, term in self._dynamic_segments:
-            addr = await term.execute(ctx)
+            addr = await first(term, ctx)
             _old_addr, marker = path_list[idx]
             path_list[idx] = (addr, marker)
         return tuple(path_list)

@@ -1,7 +1,7 @@
 """auto_distribute - wrap concurrent op children in Teleport.
 
-Finds Parallel, All, Race, Any nodes and wraps their children
-in Teleport for distributed execution.
+Finds parallel-capable nodes (NuIndepComm via `|`, plus All/Race/Any) and
+wraps their children in Teleport for distributed execution.
 
 Children already wrapped in Teleport are skipped.
 Follows the same deformation pattern as auto_atomic in nu-virtuals.
@@ -11,7 +11,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.ops.control.parallel import All, Any, Parallel, Race
+from nu.ops.control.parallel import All, Any, Race
+from nu.terms.nu import NuIndepComm
 from nu.tree.rewrite import map_nodes
 
 from ..spans.teleport import Teleport
@@ -31,7 +32,7 @@ __all__ = [
     "round_robin",
 ]
 
-_CONCURRENT_OPS = (Parallel, All, Race, Any)
+_CONCURRENT_OPS = (NuIndepComm, All, Race, Any)
 
 
 def round_robin(index: int, count: int) -> int:
@@ -45,8 +46,8 @@ def auto_distribute(
 ) -> Nu:
     """Wrap concurrent op children in Teleport.
 
-    Finds Parallel, All, Race, Any nodes and wraps each child
-    in Teleport with a worker tag assigned by strategy.
+    Finds parallel-capable nodes (NuIndepComm via `|`, plus All, Race, Any)
+    and wraps each child in Teleport with a worker tag assigned by strategy.
 
     Children already wrapped in Teleport are left as-is.
 

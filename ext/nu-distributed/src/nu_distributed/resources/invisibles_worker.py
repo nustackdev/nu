@@ -30,7 +30,7 @@ Usage:
     ctx = ctx.bind(Worker, worker, 0)
 
     # Teleport sends whole tree in 1 RPC
-    await Teleport(ebv.Transaction(...), worker=0).execute(ctx)
+    await first(Teleport(ebv.Transaction(...), worker=0), ctx)
 """
 
 from __future__ import annotations
@@ -305,7 +305,7 @@ class InvisiblesWorker(Resource):
         """Send tree to remote worker for execution. 1 RPC.
 
         The underlying invisibles call is synchronous; run it in a thread so
-        concurrent `Parallel(Teleport, Teleport, ...)` calls don't serialize
+        concurrent `Teleport | Teleport | ...` calls don't serialize
         on the event loop.
         """
         import asyncio

@@ -6,9 +6,15 @@ particular test areas (ops, iteration, etc.) live closer to their tests.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from nu import Context, Nu
+
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 
 # ---------------------------------------------------------------------------
@@ -17,20 +23,20 @@ from nu import Context, Nu
 
 
 class StubNu(Nu):
-    """Pure leaf. Returns a fixed label on execute.
+    """Pure leaf. Yields a fixed label.
 
     Accepts children for tree structure tests (_Node methods,
-    with_children, is_leaf, purity propagation).
+    _with_children, _is_leaf, purity propagation).
 
-    Does NOT execute children - structural carrier only.
+    Does NOT open children - structural carrier only.
     """
 
     def __init__(self, label: object = None, *children: Nu) -> None:
         super().__init__(*children)
         self._label = label
 
-    async def execute(self, ctx: Context) -> object:
-        return self._label
+    async def open(self, ctx: Context) -> AsyncGenerator[object, None]:
+        yield self._label
 
     def __repr__(self) -> str:
         if self._children:
@@ -47,7 +53,7 @@ class StubNu(Nu):
 
 
 class FailingNu(Nu):
-    """Raises a specified exception on execute.
+    """Raises a specified exception when opened.
 
     For testing error propagation, TryCatch, Retry.
     """
@@ -57,8 +63,9 @@ class FailingNu(Nu):
         self._exc = exc
         self._msg = msg
 
-    async def execute(self, ctx: Context) -> object:
+    async def open(self, ctx: Context) -> AsyncGenerator[object, None]:
         raise self._exc(self._msg)
+        yield  # unreachable; marks this as a generator
 
 
 # ---------------------------------------------------------------------------
