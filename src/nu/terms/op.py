@@ -42,6 +42,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from contextlib import aclosing
+from inspect import isawaitable
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from .interaction import Interaction
@@ -63,6 +64,8 @@ __all__ = [  # noqa: RUF022
     "BinaryOp",
     "TernaryOp",
     "ScopedOp",
+    "Command",
+    "Query",
 ]
 
 
@@ -120,8 +123,8 @@ class NAryOp(Op[T_co | Sentinel], ABC):
         """Resolve each operand's stream (taking its last yield), apply, yield once.
 
         Opens each child as a generator, drains to the last value, propagates
-        sentinels. Child exits run before `apply` in reverse order via
-        aclosing.
+        sentinels. `apply` may be sync or async; async results are awaited.
+        Child exits run before `apply` in reverse order via aclosing.
         """
         values: list[Any] = []
         for child in self._children:
@@ -133,11 +136,14 @@ class NAryOp(Op[T_co | Sentinel], ABC):
                 yield INVALID
                 return
             values.append(v)
-        yield self.apply(*values)
+        result = self.apply(*values)
+        if isawaitable(result):
+            result = await result
+        yield result
 
     @abstractmethod
     def apply(self, *values: Any) -> T_co | Sentinel:  # noqa: ANN401
-        """Apply the transformation to resolved values."""
+        """Apply the transformation to resolved values. Sync or async."""
         ...
 
 
@@ -263,3 +269,52 @@ class ScopedOp(Op, ABC):
 
     def after_failure(self, ctx: Context, error: BaseException) -> None:
         """Clean up after failed execution."""
+
+
+# =============================================================================
+# COMMAND / QUERY MIXINS
+# =============================================================================
+
+
+class Command(Op, ABC):
+    """Op that yields nothing (a Command in the Command/Query sense).
+
+    Subclasses override `run(ctx)` and return None. The generator wrapping
+    is handled here so authors don't deal with `if False: yield` tricks.
+
+    Use for any Op whose semantics is pure side-effect on Γ:
+    Store, Print, Log, StdioWrite, Assert (side-effect only), etc.
+    """
+
+    @abstractmethod
+    async def run(self, ctx: Context) -> None:
+        """Perform the side effect. No return value."""
+        ...
+
+    async def open(self, ctx: Context) -> AsyncGenerator[None, None]:
+        await self.run(ctx)
+        return
+        yield  # unreachable; marks this as a generator
+
+
+class Query(Op[T_co], ABC):
+    """Op that yields exactly one value (a Query in the Command/Query sense).
+
+    Subclasses override `run(ctx) -> T` and return a value. The generator
+    wrapping is handled here; one `yield` of the computed value.
+
+    Use when the Op needs raw `ctx` access and produces one value -
+    e.g. reading `ctx.attrs[key]`, calling a method on `ctx.get(Service)`,
+    or any custom-fetch pattern that isn't operand-apply.
+
+    For pure compute from operands with sentinel propagation, use `NAryOp`
+    (its `apply` now accepts async too).
+    """
+
+    @abstractmethod
+    async def run(self, ctx: Context) -> T_co:
+        """Compute the value. Called once; its return is the single yield."""
+        ...
+
+    async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+        yield await self.run(ctx)

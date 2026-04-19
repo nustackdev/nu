@@ -19,8 +19,10 @@ from .arg import (
 from .nu import LValue, Nu, NuIndepComm, RValue
 from .op import (
     BinaryOp,
+    Command,
     NAryOp,
     Op,
+    Query,
     ScopedOp,
     TernaryOp,
     UnaryOp,
@@ -50,6 +52,7 @@ __all__ = [
     "BinaryOp",
     "BoolArg",
     "BytesArg",
+    "Command",
     "DictArg",
     "Empty",
     "FloatArg",
@@ -65,6 +68,7 @@ __all__ = [
     "Nu",
     "NuIndepComm",
     "Op",
+    "Query",
     "RValue",
     "Ref",
     "ScopedOp",
