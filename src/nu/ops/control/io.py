@@ -15,7 +15,7 @@ from nu.terms.op import Command
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.terms import StrArg
+    from nu.terms import Arg, StrArg
 
 
 __all__ = [
@@ -34,7 +34,7 @@ class Print(Command):
 
     writes = 0  # StdioRef at child 0 is a WRITE target
 
-    def __init__(self, message: StrArg = "Print", *values: Any) -> None:
+    def __init__(self, message: Arg = "Print", *values: Any) -> None:
         super().__init__(STDOUT, message, *values)
 
     async def run(self, ctx: Context) -> None:
