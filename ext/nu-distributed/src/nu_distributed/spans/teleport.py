@@ -88,14 +88,12 @@ class Teleport(Query[object]):
         subtree: object,
     ) -> object:
         """Execute with parent attrs copied to worker context."""
-        from nu.eval import collect
-
         worker_ctx = worker.ctx._copy()
         # Deep copy parent attrs into worker context
         carried = parent_ctx.attrs.copy()
         for key, value in carried.items():
             worker_ctx.attrs[key] = value
-        values = await collect(subtree, worker_ctx)
+        values = await subtree.collect(worker_ctx)
         return values[-1] if values else None
 
     def __repr__(self) -> str:

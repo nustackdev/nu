@@ -166,8 +166,7 @@ class Ref[T](RefABC[T]):
         """
         addr = self.address
         if isinstance(addr, Nu):
-            from nu.eval import first
-            return await first(addr, ctx)
+            return await addr.first(ctx)
         return addr
 
     def get_path_segments(self) -> list[Ref]:

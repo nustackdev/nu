@@ -45,9 +45,7 @@ class Worker(Resource):
 
         Returns the last yielded value, or None if the tree yielded nothing.
         """
-        from nu.eval import collect
-
-        values = await collect(tree, self.context.ctx)
+        values = await tree.collect(self.context.ctx)
         return values[-1] if values else None
 
     @property

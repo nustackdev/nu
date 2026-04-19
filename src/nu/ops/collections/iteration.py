@@ -59,9 +59,7 @@ class Filter(Command):
         for elem in items:
             ctx.attrs[item_key] = elem
             if await condition.first(ctx):
-                from nu.eval import execute
-
-                await execute(body, ctx)
+                await body.execute(ctx)
 
 
 class Map(Command):
@@ -112,8 +110,6 @@ class TakeWhile(Command):
         super().__init__(items, condition, body, item)
 
     async def run(self, ctx: Context) -> None:
-        from nu.eval import execute
-
         items = await self.children[0].first(ctx)
         condition = self.children[1]
         body = self.children[2]
@@ -123,7 +119,7 @@ class TakeWhile(Command):
             ctx.attrs[item_key] = elem
             if not await condition.first(ctx):
                 break
-            await execute(body, ctx)
+            await body.execute(ctx)
 
 
 class Unique(Command):
@@ -143,8 +139,6 @@ class Unique(Command):
         super().__init__(items, key, body, item)
 
     async def run(self, ctx: Context) -> None:
-        from nu.eval import execute
-
         items = await self.children[0].first(ctx)
         key_expr = self.children[1]
         body = self.children[2]
@@ -156,7 +150,7 @@ class Unique(Command):
             k = await key_expr.first(ctx)
             if k not in seen:
                 seen.add(k)
-                await execute(body, ctx)
+                await body.execute(ctx)
 
 
 class Find(Command):
@@ -244,8 +238,6 @@ class GroupBy(Command):
         super().__init__(items, key, body, item, group)
 
     async def run(self, ctx: Context) -> None:
-        from nu.eval import execute
-
         items = await self.children[0].first(ctx)
         key_expr = self.children[1]
         body = self.children[2]
@@ -261,7 +253,7 @@ class GroupBy(Command):
         for k, group_items in groups.items():
             ctx.attrs[item_key] = k
             ctx.attrs[group_key] = group_items
-            await execute(body, ctx)
+            await body.execute(ctx)
 
 
 class Partition(Command):
