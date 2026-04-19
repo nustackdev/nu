@@ -28,8 +28,15 @@ def _is_span(node: _Node) -> bool:
     )
 
 
+# TODO task-079: revisit duck-typing — `execute` is gone from Nu. Heuristic now
+# treats Commands/Queries (which override `run` instead of `apply`) as flows.
 def _is_flow(node: _Node) -> bool:
-    return hasattr(node, "execute") and not hasattr(node, "is_self_pure") and not _is_span(node)
+    return (
+        hasattr(node, "run")
+        and not hasattr(node, "apply")
+        and not hasattr(node, "is_self_pure")
+        and not _is_span(node)
+    )
 
 
 def _is_ref(node: _Node) -> bool:
@@ -109,7 +116,7 @@ def _label(node: _Node) -> str:
         return cls
 
     if _is_value(node):
-        if hasattr(node, "source") and node.is_leaf:
+        if hasattr(node, "source") and node._is_leaf:
             return f"{cls}({node.source!r})"
         return cls
 
@@ -143,7 +150,7 @@ def _attrs(node: _Node) -> dict[str, Any]:
         func = node._func
         attrs["func"] = getattr(func, "__name__", repr(func))
 
-    if hasattr(node, "source") and node.is_leaf:
+    if hasattr(node, "source") and node._is_leaf:
         attrs["source"] = repr(node.source)
 
     if hasattr(node, "is_self_pure"):
@@ -194,7 +201,7 @@ def _serialize_node(node: _Node) -> dict[str, Any]:
         "category": category,
         "label": _label(node),
         "pure": pure,
-        "leaf": node.is_leaf,
+        "leaf": node._is_leaf,
         "attrs": _attrs(node),
         "children": children,
     }

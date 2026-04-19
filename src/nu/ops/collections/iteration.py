@@ -13,7 +13,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from nu.terms import Op
+from nu.eval import first
+from nu.terms.op import Command
 
 
 if TYPE_CHECKING:
@@ -34,7 +35,7 @@ __all__ = [
 ]
 
 
-class Filter(Op):
+class Filter(Command):
     """Execute body for each item where condition is truthy.
 
     Children: ``[items, condition, body, item_key]``
@@ -50,19 +51,21 @@ class Filter(Op):
     ) -> None:
         super().__init__(items, condition, body, item)
 
-    async def execute(self, ctx: Context) -> None:
-        items = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> None:
+        items = await first(self.children[0], ctx)
         condition = self.children[1]
         body = self.children[2]
-        item_key: str = await self.children[3].execute(ctx)
+        item_key: str = await first(self.children[3], ctx)
 
         for elem in items:
             ctx.attrs[item_key] = elem
-            if await condition.execute(ctx):
-                await body.execute(ctx)
+            if await first(condition, ctx):
+                from nu.eval import execute
+
+                await execute(body, ctx)
 
 
-class Map(Op):
+class Map(Command):
     """Transform each item via a Nu expression, collect results.
 
     Children: ``[items, transform, item_key, output_key]``
@@ -80,20 +83,20 @@ class Map(Op):
     ) -> None:
         super().__init__(items, transform, item, output)
 
-    async def execute(self, ctx: Context) -> None:
-        items = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> None:
+        items = await first(self.children[0], ctx)
         transform = self.children[1]
-        item_key: str = await self.children[2].execute(ctx)
-        output_key: str = await self.children[3].execute(ctx)
+        item_key: str = await first(self.children[2], ctx)
+        output_key: str = await first(self.children[3], ctx)
 
         results = []
         for elem in items:
             ctx.attrs[item_key] = elem
-            results.append(await transform.execute(ctx))
+            results.append(await first(transform, ctx))
         ctx.attrs[output_key] = results
 
 
-class TakeWhile(Op):
+class TakeWhile(Command):
     """Execute body while condition holds. Stop on first false.
 
     Children: ``[items, condition, body, item_key]``
@@ -109,20 +112,22 @@ class TakeWhile(Op):
     ) -> None:
         super().__init__(items, condition, body, item)
 
-    async def execute(self, ctx: Context) -> None:
-        items = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> None:
+        from nu.eval import execute
+
+        items = await first(self.children[0], ctx)
         condition = self.children[1]
         body = self.children[2]
-        item_key: str = await self.children[3].execute(ctx)
+        item_key: str = await first(self.children[3], ctx)
 
         for elem in items:
             ctx.attrs[item_key] = elem
-            if not await condition.execute(ctx):
+            if not await first(condition, ctx):
                 break
-            await body.execute(ctx)
+            await execute(body, ctx)
 
 
-class Unique(Op):
+class Unique(Command):
     """Execute body for each item with a unique key.
 
     Children: ``[items, key, body, item_key]``
@@ -138,22 +143,24 @@ class Unique(Op):
     ) -> None:
         super().__init__(items, key, body, item)
 
-    async def execute(self, ctx: Context) -> None:
-        items = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> None:
+        from nu.eval import execute
+
+        items = await first(self.children[0], ctx)
         key_expr = self.children[1]
         body = self.children[2]
-        item_key: str = await self.children[3].execute(ctx)
+        item_key: str = await first(self.children[3], ctx)
 
         seen: set = set()
         for elem in items:
             ctx.attrs[item_key] = elem
-            k = await key_expr.execute(ctx)
+            k = await first(key_expr, ctx)
             if k not in seen:
                 seen.add(k)
-                await body.execute(ctx)
+                await execute(body, ctx)
 
 
-class Find(Op):
+class Find(Command):
     """Find first item where condition is truthy.
 
     Children: ``[items, condition, item_key, output_key]``
@@ -172,20 +179,20 @@ class Find(Op):
     ) -> None:
         super().__init__(items, condition, item, output)
 
-    async def execute(self, ctx: Context) -> None:
-        items = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> None:
+        items = await first(self.children[0], ctx)
         condition = self.children[1]
-        item_key: str = await self.children[2].execute(ctx)
-        output_key: str = await self.children[3].execute(ctx)
+        item_key: str = await first(self.children[2], ctx)
+        output_key: str = await first(self.children[3], ctx)
 
         for elem in items:
             ctx.attrs[item_key] = elem
-            if await condition.execute(ctx):
+            if await first(condition, ctx):
                 ctx.attrs[output_key] = elem
                 return
 
 
-class FindIndex(Op):
+class FindIndex(Command):
     """Find index of first item where condition is truthy.
 
     Children: ``[items, condition, item_key, output_key]``
@@ -204,20 +211,20 @@ class FindIndex(Op):
     ) -> None:
         super().__init__(items, condition, item, output)
 
-    async def execute(self, ctx: Context) -> None:
-        items = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> None:
+        items = await first(self.children[0], ctx)
         condition = self.children[1]
-        item_key: str = await self.children[2].execute(ctx)
-        output_key: str = await self.children[3].execute(ctx)
+        item_key: str = await first(self.children[2], ctx)
+        output_key: str = await first(self.children[3], ctx)
 
         for i, elem in enumerate(items):
             ctx.attrs[item_key] = elem
-            if await condition.execute(ctx):
+            if await first(condition, ctx):
                 ctx.attrs[output_key] = i
                 return
 
 
-class GroupBy(Op):
+class GroupBy(Command):
     """Group items by a Nu key, execute body per group.
 
     Children: ``[items, key, body, item_key, group_key]``
@@ -237,26 +244,28 @@ class GroupBy(Op):
     ) -> None:
         super().__init__(items, key, body, item, group)
 
-    async def execute(self, ctx: Context) -> None:
-        items = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> None:
+        from nu.eval import execute
+
+        items = await first(self.children[0], ctx)
         key_expr = self.children[1]
         body = self.children[2]
-        item_key: str = await self.children[3].execute(ctx)
-        group_key: str = await self.children[4].execute(ctx)
+        item_key: str = await first(self.children[3], ctx)
+        group_key: str = await first(self.children[4], ctx)
 
         groups: dict = {}
         for elem in items:
             ctx.attrs[item_key] = elem
-            k = await key_expr.execute(ctx)
+            k = await first(key_expr, ctx)
             groups.setdefault(k, []).append(elem)
 
         for k, group_items in groups.items():
             ctx.attrs[item_key] = k
             ctx.attrs[group_key] = group_items
-            await body.execute(ctx)
+            await execute(body, ctx)
 
 
-class Partition(Op):
+class Partition(Command):
     """Split items into matches and rest by a Nu condition.
 
     Children: ``[items, condition, item_key, matches_key, rest_key]``
@@ -276,18 +285,18 @@ class Partition(Op):
     ) -> None:
         super().__init__(items, condition, item, matches, rest)
 
-    async def execute(self, ctx: Context) -> None:
-        items = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> None:
+        items = await first(self.children[0], ctx)
         condition = self.children[1]
-        item_key: str = await self.children[2].execute(ctx)
-        matches_key: str = await self.children[3].execute(ctx)
-        rest_key: str = await self.children[4].execute(ctx)
+        item_key: str = await first(self.children[2], ctx)
+        matches_key: str = await first(self.children[3], ctx)
+        rest_key: str = await first(self.children[4], ctx)
 
         matches_list: list = []
         rest_list: list = []
         for elem in items:
             ctx.attrs[item_key] = elem
-            if await condition.execute(ctx):
+            if await first(condition, ctx):
                 matches_list.append(elem)
             else:
                 rest_list.append(elem)
@@ -295,7 +304,7 @@ class Partition(Op):
         ctx.attrs[rest_key] = rest_list
 
 
-class ToDict(Op):
+class ToDict(Command):
     """Build a dict from items using Nu key and value expressions.
 
     Children: ``[items, key, value, item_key, output_key]``
@@ -314,17 +323,17 @@ class ToDict(Op):
     ) -> None:
         super().__init__(items, key, value, item, output)
 
-    async def execute(self, ctx: Context) -> None:
-        items = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> None:
+        items = await first(self.children[0], ctx)
         key_expr = self.children[1]
         value_expr = self.children[2]
-        item_key: str = await self.children[3].execute(ctx)
-        output_key: str = await self.children[4].execute(ctx)
+        item_key: str = await first(self.children[3], ctx)
+        output_key: str = await first(self.children[4], ctx)
 
         result: dict = {}
         for elem in items:
             ctx.attrs[item_key] = elem
-            k = await key_expr.execute(ctx)
-            v = await value_expr.execute(ctx)
+            k = await first(key_expr, ctx)
+            v = await first(value_expr, ctx)
             result[k] = v
         ctx.attrs[output_key] = result

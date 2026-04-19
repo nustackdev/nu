@@ -80,7 +80,7 @@ def _get_category_color(node: Nu) -> str:
     if _is_op(node):
         return GREEN
     if _is_literal(node):
-        if hasattr(node, "source") and node.is_leaf:
+        if hasattr(node, "source") and node._is_leaf:
             return CYAN
         return DIM_CYAN
     return ""
@@ -93,7 +93,7 @@ def _format_ref_label(node: Nu) -> str:
     addr_repr = None
     if hasattr(node, "address"):
         addr = node.address
-        if hasattr(addr, "source") and hasattr(addr, "is_leaf") and addr.is_leaf:
+        if hasattr(addr, "source") and hasattr(addr, "is_leaf") and addr._is_leaf:
             addr_repr = repr(addr.source)
         elif hasattr(addr, "source"):
             addr_repr = repr(addr.source)
@@ -117,7 +117,7 @@ def _format_ref_label(node: Nu) -> str:
 def _format_literal_label(node: Nu) -> str:
     """Format label for Literal nodes: IntI(42) or IntI."""
     cls = type(node).__name__
-    if hasattr(node, "source") and node.is_leaf:
+    if hasattr(node, "source") and node._is_leaf:
         src = node.source
         return f"{cls}({src!r})"
     return cls

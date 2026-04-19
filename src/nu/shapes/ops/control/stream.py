@@ -9,10 +9,11 @@ Children: [advance_op, change_op, body, key, log_key]
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+from contextlib import aclosing
+from typing import TYPE_CHECKING, Any
 
-from nu.terms import Sentinel
-from nu.terms import Op
+from nu.eval import first
+from nu.terms import Op, Sentinel
 from nu.utils import ensure_nu
 
 from ..cursor import AdvanceCursorOp
@@ -20,6 +21,8 @@ from ..reactive import OnChildrenChangeOp
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from nu import Context, Nu
     from nu.terms import StrArg
 
@@ -58,30 +61,38 @@ class Stream(Op):
 
         super().__init__(advance, change, body, ensure_nu(key), ensure_nu(log_key))
 
-    async def execute(self, ctx: Context) -> None:  # noqa: D102
-        key = await self.children[3].execute(ctx)
-        log_key = await self.children[4].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        key = await first(self.children[3], ctx)
+        log_key = await first(self.children[4], ctx)
 
         if log_key not in ctx.attrs:
             ctx.attrs[log_key] = Sentinel()
         if key not in ctx.attrs:
             ctx.attrs[key] = Sentinel()
 
-        await self._drain(ctx, key, log_key)
-        await self._react(ctx, key, log_key)
+        async for v in self._drain(ctx, key, log_key):
+            yield v
+        async for v in self._react(ctx, key, log_key):
+            yield v
 
-    async def _drain(self, ctx: Context, key: str, log_key: str) -> None:
+    async def _drain(
+        self, ctx: Context, key: str, log_key: str
+    ) -> AsyncGenerator[Any, None]:
         """Drain existing items from source."""
         while True:
-            result = await self.children[0].execute(ctx)
+            result = await first(self.children[0], ctx)
             if result is None:
                 break
             log_k, actual_key = result
             ctx.attrs[key] = actual_key
             ctx.attrs[log_key] = log_k
-            await self.children[2].execute(ctx)
+            async with aclosing(self.children[2].open(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
-    async def _react(self, ctx: Context, key: str, log_key: str) -> None:
+    async def _react(
+        self, ctx: Context, key: str, log_key: str
+    ) -> AsyncGenerator[Any, None]:
         """Follow new items via reactive subscription."""
         loop = asyncio.get_running_loop()
         event = asyncio.Event()
@@ -89,13 +100,14 @@ class Stream(Op):
         def on_change(_changed_key: object) -> None:
             loop.call_soon_threadsafe(event.set)
 
-        sub = await self.children[1].execute(ctx)
+        sub = await first(self.children[1], ctx)
         sub.bind(on_change)
         try:
             while True:
                 await event.wait()
                 event.clear()
-                await self._drain(ctx, key, log_key)
+                async for v in self._drain(ctx, key, log_key):
+                    yield v
         finally:
             sub.unbind(on_change)
             sub.close()

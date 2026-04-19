@@ -9,10 +9,10 @@ These require PV views with UnsafePrimitiveOpsBase in MRO.
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from nu import EMPTY, Op, Sentinel
-from nu.terms.effect import Direction
+from nu import EMPTY, Sentinel
+from nu.terms.op import Command, Query
 
 
 if TYPE_CHECKING:
@@ -25,7 +25,7 @@ __all__ = [
 ]
 
 
-class ScanPrimitivesUnsafeOp[T](Op[Iterator[T] | Sentinel]):
+class ScanPrimitivesUnsafeOp[T](Query[Iterator[T] | Sentinel]):
     """Scan all direct primitive child values via _unsafe_primitive_scan_values().
 
     Single ctx.scan() call -- no marker parsing, no type checks.
@@ -39,7 +39,7 @@ class ScanPrimitivesUnsafeOp[T](Op[Iterator[T] | Sentinel]):
         super().__init__(ref)
         self.ref = ref
 
-    async def execute(self, ctx: Context) -> Iterator[T] | Sentinel:
+    async def run(self, ctx: Context) -> Iterator[T] | Sentinel:
         """Scan all primitive children via raw storage scan."""
         try:
             view = await self.ref.fetch(ctx)
@@ -51,7 +51,7 @@ class ScanPrimitivesUnsafeOp[T](Op[Iterator[T] | Sentinel]):
         return f"ScanPrimitivesUnsafeOp({self.ref!r})"
 
 
-class ClearPrimitivesUnsafeCmd(Op[None]):
+class ClearPrimitivesUnsafeCmd(Command):
     """Clear all primitive children via _unsafe_primitive_clear().
 
     Scan + ctx.delete() each -- no validation, no descendant cleanup.
@@ -61,17 +61,16 @@ class ClearPrimitivesUnsafeCmd(Op[None]):
         fetch(ctx) -> view with _unsafe_primitive_clear() method
     """
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
 
-    async def execute(self, ctx: Context) -> None:
+    async def run(self, ctx: Context) -> None:
         """Clear all primitive children via scan + delete."""
         view = await self.ref.fetch(ctx)
         view._unsafe_primitive_clear()
-        return None
 
     def __repr__(self) -> str:
         return f"ClearPrimitivesUnsafeCmd({self.ref!r})"

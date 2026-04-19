@@ -1,14 +1,22 @@
-"""Parallel ops -- concurrent execution via asyncio."""
+"""Parallel ops -- Race, All, Any.
+
+(Parallel removed: parallel composition is `a | b` on the Nu base,
+building a NuIndepComm. Race/All/Any stay: they are distinct semantics
+over concurrent children - first-completed, fail-fast, succeed-if-any.)
+"""
 
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+from nu.eval import execute
 from nu.terms import Op
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from nu.context import Context
     from nu.terms import Nu
 
@@ -16,24 +24,8 @@ if TYPE_CHECKING:
 __all__ = [
     "All",
     "Any",
-    "Parallel",
     "Race",
 ]
-
-
-class Parallel(Op):
-    """Execute children concurrently via asyncio.gather.
-
-    Children: ``[*children]``
-    """
-
-    def __init__(self, *children: Nu) -> None:
-        super().__init__(*children)
-
-    async def execute(self, ctx: Context) -> None:
-        if not self.children:
-            return
-        await asyncio.gather(*(child.execute(ctx) for child in self.children))
 
 
 class Race(Op):
@@ -45,10 +37,12 @@ class Race(Op):
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
 
-    async def execute(self, ctx: Context) -> None:
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        if False:  # pragma: no cover - marks this as an async generator
+            yield
         if not self.children:
             return
-        tasks = [asyncio.create_task(child.execute(ctx)) for child in self.children]
+        tasks = [asyncio.create_task(execute(child, ctx)) for child in self.children]
         try:
             done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
             for task in pending:
@@ -57,8 +51,8 @@ class Race(Op):
                 await asyncio.gather(*pending, return_exceptions=True)
             for task in done:
                 if task.exception() is not None:
-                    raise task.exception()
-        except:
+                    raise task.exception()  # type: ignore[misc]
+        except BaseException:
             for task in tasks:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
@@ -74,10 +68,12 @@ class All(Op):
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
 
-    async def execute(self, ctx: Context) -> None:
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        if False:  # pragma: no cover
+            yield
         if not self.children:
             return
-        tasks = [asyncio.create_task(child.execute(ctx)) for child in self.children]
+        tasks = [asyncio.create_task(execute(child, ctx)) for child in self.children]
         try:
             await asyncio.gather(*tasks)
         except Exception:
@@ -97,10 +93,12 @@ class Any(Op):
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
 
-    async def execute(self, ctx: Context) -> None:
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        if False:  # pragma: no cover
+            yield
         if not self.children:
             return
-        tasks = {asyncio.create_task(child.execute(ctx)) for child in self.children}
+        tasks = {asyncio.create_task(execute(child, ctx)) for child in self.children}
         last_error: Exception | None = None
         try:
             while tasks:
@@ -113,10 +111,10 @@ class Any(Op):
                         if tasks:
                             await asyncio.gather(*tasks, return_exceptions=True)
                         return
-                    last_error = exc
+                    last_error = exc  # type: ignore[assignment]
             if last_error is not None:
                 raise last_error
-        except:
+        except BaseException:
             for task in tasks:
                 task.cancel()
             if tasks:

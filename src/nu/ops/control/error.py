@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import aclosing
 from typing import TYPE_CHECKING, Any
 
+from nu.eval import execute, first
 from nu.primitives import NoneI
 from nu.terms import Op
+from nu.terms.op import Command
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from nu.context import Context
     from nu.terms import FloatArg, IntArg, Nu, StrArg
 
@@ -52,7 +57,7 @@ class TryCatch(Op):
         c = self.children[2]
         return None if isinstance(c, NoneI) else c
 
-    async def execute(self, ctx: Context) -> None:
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
         body = self.children[0]
         catch = self.catch
         finally_ = self.finally_
@@ -60,17 +65,23 @@ class TryCatch(Op):
         caught: Exception | None = None
         handled = False
         try:
-            await body.execute(ctx)
+            async with aclosing(body.open(ctx)) as gen:
+                async for v in gen:
+                    yield v
         except Exception as e:
             caught = e
             if catch is not None and (self._errors is None or isinstance(e, self._errors)):
                 catch_ctx = ctx._copy()
                 catch_ctx.attrs["error"] = str(e)
-                await catch.execute(catch_ctx)
+                async with aclosing(catch.open(catch_ctx)) as gen:
+                    async for v in gen:
+                        yield v
                 handled = True
         finally:
             if finally_ is not None:
-                await finally_.execute(ctx)
+                async with aclosing(finally_.open(ctx)) as gen:
+                    async for v in gen:
+                        yield v
 
         if caught is not None and not handled:
             raise caught
@@ -122,20 +133,22 @@ class Retry(Op):
         c = self.children[6]
         return None if isinstance(c, NoneI) else c
 
-    async def execute(self, ctx: Context) -> None:
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
         body = self.children[0]
-        max_attempts = await self.children[1].execute(ctx)
-        delay = await self.children[2].execute(ctx)
-        backoff = await self.children[3].execute(ctx)
+        max_attempts = await first(self.children[1], ctx)
+        delay = await first(self.children[2], ctx)
+        backoff = await first(self.children[3], ctx)
 
         for attempt in range(1, max_attempts + 1):
             try:
-                await body.execute(ctx)
+                async with aclosing(body.open(ctx)) as gen:
+                    async for v in gen:
+                        yield v
                 hook = self.on_success
                 if hook is not None:
                     hook_ctx = ctx._copy()
                     hook_ctx.attrs["attempt"] = attempt
-                    await hook.execute(hook_ctx)
+                    await execute(hook, hook_ctx)
                 return
             except Exception as e:
                 hook_ctx = ctx._copy()
@@ -144,17 +157,17 @@ class Retry(Op):
                 if attempt >= max_attempts:
                     hook = self.on_fail
                     if hook is not None:
-                        await hook.execute(hook_ctx)
+                        await execute(hook, hook_ctx)
                     else:
                         raise
                 hook = self.on_attempt_fail
                 if hook is not None:
-                    await hook.execute(hook_ctx)
+                    await execute(hook, hook_ctx)
                 await asyncio.sleep(delay)
                 delay *= backoff
 
 
-class Assert(Op):
+class Assert(Command):
     """Validate a condition during execution.
 
     Children: ``[condition, message]``
@@ -165,8 +178,8 @@ class Assert(Op):
     def __init__(self, condition: Any, message: StrArg = "Assertion failed") -> None:
         super().__init__(condition, message)
 
-    async def execute(self, ctx: Context) -> None:
-        result = await self.children[0].execute(ctx)
+    async def run(self, ctx: Context) -> None:
+        result = await first(self.children[0], ctx)
         if not result:
-            message = await self.children[1].execute(ctx)
+            message = await first(self.children[1], ctx)
             raise AssertionError(message)

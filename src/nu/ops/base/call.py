@@ -8,22 +8,19 @@ MethodCall / MethodCallOp / MethodCallCmd:
 
 All variants support:
 - Args/kwargs as Terms or literals
-- Sentinel propagation (INVALID on sentinel operands)
-- Auto-await for async callables/methods
+- Sentinel propagation via NAryOp (INVALID on sentinel operands)
+- Auto-await for async callables/methods (NAryOp awaits async apply)
 """
 
 from __future__ import annotations
 
-from inspect import isawaitable
 from typing import TYPE_CHECKING, Any
 
-from nu.terms import INVALID, Op, Sentinel, is_sentinel
+from nu.terms import NAryOp, Sentinel
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from nu.context import Context
 
 
 __all__ = [
@@ -41,12 +38,13 @@ __all__ = [
 # =============================================================================
 
 
-class FuncCall[T](Op[T | Sentinel]):
+class FuncCall[T](NAryOp[T | Sentinel]):
     """Call a function with arguments.
 
     Arguments can be Terms or literals — Terms are resolved before
-    the function is called. Auto-awaits async results.
-    Sentinel propagation: returns INVALID if any arg is a sentinel.
+    the function is called. Auto-awaits async results (NAryOp awaits
+    async apply). Sentinel propagation via NAryOp: yields INVALID if
+    any arg is a sentinel.
 
     Use ``FuncCallOp`` for pure calls, ``FuncCallCmd`` for impure.
 
@@ -61,15 +59,7 @@ class FuncCall[T](Op[T | Sentinel]):
         self._func = func
         self._kwarg_keys = tuple(kwargs.keys())
 
-    async def execute(self, ctx: Context) -> T | Sentinel:
-        """Resolve args, propagate sentinels, call function, auto-await."""
-        values: list[Any] = []
-        for child in self.children:
-            val = await child.execute(ctx)
-            if is_sentinel(val):
-                return INVALID
-            values.append(val)
-
+    async def apply(self, *values: Any) -> T | Sentinel:  # type: ignore[override]
         num_kwargs = len(self._kwarg_keys)
         if num_kwargs:
             pos_args = values[:-num_kwargs]
@@ -79,9 +69,8 @@ class FuncCall[T](Op[T | Sentinel]):
             kw_args = {}
 
         result = self._func(*pos_args, **kw_args)
-        if isawaitable(result):
-            result = await result
-        return result
+        # NAryOp.open awaits results if awaitable; returning an awaitable is fine.
+        return await result if hasattr(result, "__await__") else result
 
     def __repr__(self) -> str:
         func_name = getattr(self._func, "__name__", repr(self._func))
@@ -103,12 +92,12 @@ class FuncCallCmd[T](FuncCall[T]):
 # =============================================================================
 
 
-class MethodCall[T](Op[T | Sentinel]):
+class MethodCall[T](NAryOp[T | Sentinel]):
     """Call a named method on a target with arguments.
 
     Target is the first child Nu. Args/kwargs are remaining children.
-    Method name is a static string. Auto-awaits async results.
-    Sentinel propagation: returns INVALID if any child is a sentinel.
+    Method name is a static string. Auto-awaits async results via NAryOp.
+    Sentinel propagation via NAryOp: yields INVALID if any child is a sentinel.
 
     Use ``MethodCallOp`` for pure calls, ``MethodCallCmd`` for impure.
 
@@ -123,15 +112,7 @@ class MethodCall[T](Op[T | Sentinel]):
         self._method_name = method_name
         self._kwarg_keys = tuple(kwargs.keys())
 
-    async def execute(self, ctx: Context) -> T | Sentinel:
-        """Resolve children, propagate sentinels, call method, auto-await."""
-        values: list[Any] = []
-        for child in self.children:
-            val = await child.execute(ctx)
-            if is_sentinel(val):
-                return INVALID
-            values.append(val)
-
+    async def apply(self, *values: Any) -> T | Sentinel:  # type: ignore[override]
         target = values[0]
         remaining = values[1:]
 
@@ -144,9 +125,7 @@ class MethodCall[T](Op[T | Sentinel]):
             kw_args = {}
 
         result = getattr(target, self._method_name)(*pos_args, **kw_args)
-        if isawaitable(result):
-            result = await result
-        return result
+        return await result if hasattr(result, "__await__") else result
 
     def __repr__(self) -> str:
         parts = [repr(c) for c in self._children]

@@ -1,13 +1,20 @@
-"""Control ops -- Seq, If, While, DoWhile, Forever, Switch."""
+"""Control ops -- If, While, DoWhile, Forever, Switch.
+
+(Seq removed: sequential composition is `a >> b` on the Nu base.)
+"""
 
 from __future__ import annotations
 
+from contextlib import aclosing
 from typing import TYPE_CHECKING, Any
 
+from nu.eval import first
 from nu.terms import Op
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from nu.context import Context
     from nu.terms import Nu
 
@@ -16,30 +23,15 @@ __all__ = [
     "DoWhile",
     "Forever",
     "If",
-    "Seq",
     "Switch",
     "While",
 ]
 
 
-class Seq(Op):
-    """Execute children sequentially.
-
-    Children: ``[*children]``
-    """
-
-    def __init__(self, *children: Nu) -> None:
-        super().__init__(*children)
-
-    async def execute(self, ctx: Context) -> None:
-        for child in self.children:
-            await child.execute(ctx)
-
-
 class If(Op):
-    """Conditional execution.
+    """Conditional branch. Evaluates cond, forwards chosen branch's stream.
 
-    Children: ``[condition, then_branch, else_branch?]``
+    Children: [condition, then_branch, else_branch?]
     """
 
     def __init__(
@@ -48,16 +40,22 @@ class If(Op):
         then_branch: Nu,
         else_branch: Nu | None = None,
     ) -> None:
-        if else_branch is not None:
-            super().__init__(condition, then_branch, else_branch)
-        else:
+        if else_branch is None:
             super().__init__(condition, then_branch)
+        else:
+            super().__init__(condition, then_branch, else_branch)
 
-    async def execute(self, ctx: Context) -> None:
-        if await self.children[0].execute(ctx):
-            await self.children[1].execute(ctx)
-        elif self.child_count > 2:
-            await self.children[2].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        cond, *branches = self.children
+        if await first(cond, ctx):
+            branch = branches[0]
+        elif len(branches) > 1:
+            branch = branches[1]
+        else:
+            return
+        async with aclosing(branch.open(ctx)) as gen:
+            async for v in gen:
+                yield v
 
 
 class While(Op):
@@ -69,9 +67,12 @@ class While(Op):
     def __init__(self, condition: Any, body: Nu) -> None:
         super().__init__(condition, body)
 
-    async def execute(self, ctx: Context) -> None:
-        while await self.children[0].execute(ctx):
-            await self.children[1].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        cond, body = self.children
+        while await first(cond, ctx):
+            async with aclosing(body.open(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
 
 class DoWhile(Op):
@@ -83,10 +84,15 @@ class DoWhile(Op):
     def __init__(self, condition: Any, body: Nu) -> None:
         super().__init__(condition, body)
 
-    async def execute(self, ctx: Context) -> None:
-        await self.children[1].execute(ctx)
-        while await self.children[0].execute(ctx):
-            await self.children[1].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        cond, body = self.children
+        async with aclosing(body.open(ctx)) as gen:
+            async for v in gen:
+                yield v
+        while await first(cond, ctx):
+            async with aclosing(body.open(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
 
 class Forever(Op):
@@ -98,9 +104,12 @@ class Forever(Op):
     def __init__(self, body: Nu) -> None:
         super().__init__(body)
 
-    async def execute(self, ctx: Context) -> None:
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        body = self.children[0]
         while True:
-            await self.children[0].execute(ctx)
+            async with aclosing(body.open(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
 
 class Switch(Op):
@@ -123,11 +132,17 @@ class Switch(Op):
             children.append(default)
         super().__init__(*children)
 
-    async def execute(self, ctx: Context) -> None:
-        value = await self.children[0].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        value = await first(self.children[0], ctx)
         for i, key in enumerate(self._case_keys):
             if key == value:
-                await self.children[i + 1].execute(ctx)
+                branch = self.children[i + 1]
+                async with aclosing(branch.open(ctx)) as gen:
+                    async for v in gen:
+                        yield v
                 return
         if self._has_default:
-            await self.children[-1].execute(ctx)
+            branch = self.children[-1]
+            async with aclosing(branch.open(ctx)) as gen:
+                async for v in gen:
+                    yield v

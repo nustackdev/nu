@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from itertools import chain
+from typing import Any
 
 from nu.terms import INVALID, BinaryOp, NAryOp, Sentinel
 
@@ -22,14 +23,11 @@ class ZipOp(NAryOp[Iterator[tuple]]):
         """Initialize with 2+ iterables."""
         NAryOp.__init__(self, *operands)
 
-    async def execute(self, ctx: object) -> Iterator[tuple] | Sentinel:
-        """Execute — resolve all operands and zip lazily."""
-        values = []
-        for child in self._children:
-            val = await child.execute(ctx)
-            if isinstance(val, Sentinel):
+    def apply(self, *values: Any) -> Iterator[tuple] | Sentinel:
+        """Apply: zip resolved iterables lazily."""
+        for v in values:
+            if isinstance(v, Sentinel):
                 return INVALID
-            values.append(val)
         return zip(*values, strict=False)
 
     def __repr__(self) -> str:
@@ -44,14 +42,11 @@ class ChainOp(NAryOp[Iterator]):
         """Initialize with 2+ iterables."""
         NAryOp.__init__(self, *operands)
 
-    async def execute(self, ctx: object) -> Iterator | Sentinel:
-        """Execute — resolve all operands and chain lazily."""
-        values = []
-        for child in self._children:
-            val = await child.execute(ctx)
-            if isinstance(val, Sentinel):
+    def apply(self, *values: Any) -> Iterator | Sentinel:
+        """Apply: chain resolved iterables lazily."""
+        for v in values:
+            if isinstance(v, Sentinel):
                 return INVALID
-            values.append(val)
         return chain(*values)
 
     def __repr__(self) -> str:

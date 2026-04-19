@@ -1,14 +1,15 @@
 """Cursor ops - advance cursor over ordered collections.
 
 AdvanceCursorOp: resolve source view + cursor, return next (log_key, key) or None.
-Pure operation - resolves children, calls view method, returns result.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Op, Sentinel
+from nu.eval import first
+from nu.terms import Sentinel
+from nu.terms.op import Query
 
 
 if TYPE_CHECKING:
@@ -20,7 +21,7 @@ __all__ = [
 ]
 
 
-class AdvanceCursorOp(Op[tuple | None]):
+class AdvanceCursorOp(Query[tuple | None]):
     """Read next key after cursor from an ordered view.
 
     Children: [source, cursor]
@@ -29,14 +30,17 @@ class AdvanceCursorOp(Op[tuple | None]):
 
     Returns:
         (log_key, actual_key) tuple if next item exists, None if exhausted.
+
+    Uses Query (not NAryOp) because a Sentinel cursor is a valid input signalling
+    "fresh start" - NAryOp's sentinel propagation would short-circuit it.
     """
 
     def __init__(self, source: object, cursor: object) -> None:
         super().__init__(source, cursor)
 
-    async def execute(self, ctx: Context) -> tuple | None:  # noqa: D102
-        view = await self.children[0].execute(ctx)
-        cursor = await self.children[1].execute(ctx)
+    async def run(self, ctx: Context) -> tuple | None:
+        view = await first(self.children[0], ctx)
+        cursor = await first(self.children[1], ctx)
 
         # Sentinel means no cursor yet (fresh start)
         if isinstance(cursor, Sentinel):

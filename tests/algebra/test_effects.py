@@ -8,7 +8,7 @@ Covers all three computation rules plus edge cases:
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 
 from nu import Context, Literal, Nu
 from nu.terms.effect import Direction, TrackedEffect, is_pure, tracked_effects
@@ -52,14 +52,14 @@ class FabricB(Ref[int]):
 
 
 class StoreOp(BinaryOp[None]):
-    overrides: ClassVar[dict[int, Direction]] = {0: WRITE}
+    writes = 0
 
     def apply(self, ref_val: Any, value: Any) -> None:
         return None
 
 
 class LoadOp(UnaryOp[object]):
-    overrides: ClassVar[dict[int, Direction]] = {0: READ}
+    reads = 0
 
     def apply(self, value: Any) -> object:
         return value
@@ -173,22 +173,22 @@ def test_add_same_ref_type():
 
 
 # ---------------------------------------------------------------------------
-# Bare Nu (Seq via |)
+# Composed Nu (parallel via |, sequential via >>)
 # ---------------------------------------------------------------------------
 
 
-def test_bare_nu_seq_mixed():
-    """Bare Nu with mixed children unions effects."""
+def test_composed_nu_mixed():
+    """Composed Nu with mixed children unions effects."""
     ref = FabricA()
-    tree = Literal(1) | StoreOp(ref, Literal(2)) | LoadOp(ref)
+    tree = Literal(1) >> StoreOp(ref, Literal(2)) >> LoadOp(ref)
     effects = tracked_effects(tree)
     assert TrackedEffect(FabricA, WRITE) in effects
     assert TrackedEffect(FabricA, READ) in effects
 
 
-def test_bare_nu_pure_children():
-    """Bare Nu with only literals is pure."""
-    tree = Literal(1) | Literal(2) | Literal(3)
+def test_composed_nu_pure_children():
+    """Composed Nu with only literals is pure."""
+    tree = Literal(1) >> Literal(2) >> Literal(3)
     assert is_pure(tree) is True
 
 

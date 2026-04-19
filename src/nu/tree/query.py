@@ -49,6 +49,6 @@ def size(root: Nu) -> int:
 
 def depth(root: Nu) -> int:
     """Maximum depth. A leaf has depth 0."""
-    if root.is_leaf:
+    if root._is_leaf:
         return 0
     return 1 + max(depth(c) for c in root.children)

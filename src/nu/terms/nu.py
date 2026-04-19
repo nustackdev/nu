@@ -1,10 +1,27 @@
 """Nu - the primitive.
 
 Nu is the recursive unit of computation. A Nu is made of Nus.
-Both a leaf (Literal(5)) and a full app are Nus.
+Both a leaf (`Literal(5)`) and a full app are Nus.
+
+The single evaluator primitive is `open(ctx)` - a raw async generator
+over Γ. Body = scope. Pre-first-yield = enter, each `yield` = a value
+crossing the bracket, `finally` = exit. Yields 0..N times.
+
+Composition:
+    a >> b  = sequential - forward each child's stream in order
+    a | b   = parallel   - interleave children's streams
+
+Algebraic annotations on Nu (class-level):
+    comm    = children commute (⟦⟧ invariant under reorder)
+    indep   = children footprint-disjoint on writes
+    assoc   = safe to re-associate nested Nus of the same kind
+
+`can_parallelize()` returns `self.comm and self.indep`. Evaluator uses
+this and only this to choose the pump (interleave vs sequential).
 
 Hierarchy:
-    Nu[T_co]                - base: execute(context) -> T_co
+    Nu[T_co]                - base: runs children sequentially by default
+    ├── NuIndepComm[T_co]   - parallel-capable composite (what `|` builds)
     ├── LValue[T_co]        - addressable location (internal)
     │   └── Ref[T_co]       - typed pointer (see ref.py)
     └── RValue[T_co]        - evaluable expression (internal)
@@ -14,16 +31,18 @@ Hierarchy:
 
 from __future__ import annotations
 
+import asyncio
 from abc import ABC
-from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Generic
+from contextlib import aclosing
+from typing import TYPE_CHECKING, Any, ClassVar, Generic
 
 from nu.tree.node import _Node
+
 from .type_vars import T_co
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncGenerator
 
     from ..context import Context
 
@@ -31,52 +50,119 @@ if TYPE_CHECKING:
 __all__ = [
     "LValue",
     "Nu",
+    "NuIndepComm",
     "RValue",
 ]
+
+
+_DONE = object()
 
 
 class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
     """The primitive. Recursive unit of computation.
 
-    Everything is a Nu:
-    - Literals (literal data)
-    - Refs (pointers to locations)
-    - Operations (transformations)
-
-    Nus compose into trees. Trees evaluate within a Context.
-
-    A bare Nu executes its children sequentially.
-    Use ``|`` to compose horizontally: ``a | b | c``.
+    Default `open`: runs children sequentially, forwards their yields.
+    Subclasses override `open` for domain semantics.
+    `Nu()` with no children is the identity (algebra's `0`).
     """
 
-    async def execute(self, ctx: Context) -> T_co:
-        """Execute this Nu within a context.
+    # Algebraic annotations. Base defaults: assoc holds (re-grouping is safe
+    # for the default sequential pump); comm and indep require declaration.
+    comm: ClassVar[bool] = False
+    indep: ClassVar[bool] = False
+    assoc: ClassVar[bool] = True
 
-        Default: execute children sequentially.
+    def can_parallelize(self) -> bool:
+        """Licenses the interleaving pump. comm ∧ indep."""
+        return self.comm and self.indep
+
+    async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+        """Run this Nu as a scope. Yields 0..N values.
+
+        Default: dispatch by `can_parallelize()`.
+        - True  -> interleave children's streams.
+        - False -> forward each child's stream in order.
         """
+        if self.can_parallelize():
+            async for v in self._pump_parallel(ctx):
+                yield v
+        else:
+            async for v in self._pump_sequential(ctx):
+                yield v
+
+    async def _pump_sequential(self, ctx: Context) -> AsyncGenerator[T_co, None]:
         for child in self._children:
-            await child.execute(ctx)
+            async with aclosing(child.open(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
-    @asynccontextmanager
-    async def open(self, ctx: Context) -> AsyncIterator[T_co]:
-        """Open this Nu as a live resource within a boundary.
+    async def _pump_parallel(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+        queue: asyncio.Queue[Any] = asyncio.Queue()
 
-        Default: execute and yield the result.
-        Fabric Refs override to keep the boundary open for the lifetime
-        of the context (e.g. Snapshot stays open while iterating a view).
-        """
-        yield await self.execute(ctx)
+        async def pump(child: Nu) -> None:
+            try:
+                async with aclosing(child.open(ctx)) as gen:
+                    async for v in gen:
+                        await queue.put(v)
+            finally:
+                await queue.put(_DONE)
+
+        tasks = [asyncio.create_task(pump(c)) for c in self._children]
+        remaining = len(tasks)
+        try:
+            while remaining > 0:
+                v = await queue.get()
+                if v is _DONE:
+                    remaining -= 1
+                else:
+                    yield v
+        finally:
+            for t in tasks:
+                if not t.done():
+                    t.cancel()
+            for t in tasks:
+                try:
+                    await t
+                except (asyncio.CancelledError, Exception):
+                    pass
+
+    # --- composition operators ---
 
     def __or__(self, other: object) -> Nu:
-        """Compose sequentially: ``a | b`` executes a then b.
+        """`a | b` -> parallel composition (NuIndepComm).
 
-        Flattens when chained: ``a | b | c`` produces ``Nu(a, b, c)``.
+        Flattens when chained: `a | b | c` produces one NuIndepComm
+        with three children.
+        """
+        if not isinstance(other, Nu):
+            return NotImplemented  # type: ignore[return-value]
+        if type(self) is NuIndepComm:
+            return NuIndepComm(*self._children, other)
+        return NuIndepComm(self, other)
+
+    def __rshift__(self, other: object) -> Nu:
+        """`a >> b` -> sequential composition (plain Nu).
+
+        Flattens when chained: `a >> b >> c` produces one Nu with three
+        children.
         """
         if not isinstance(other, Nu):
             return NotImplemented  # type: ignore[return-value]
         if type(self) is Nu:
             return Nu(*self._children, other)
         return Nu(self, other)
+
+
+class NuIndepComm(Nu[T_co]):  # noqa: UP046
+    """Parallel-capable composite. Instantiated by `|`.
+
+    Children run concurrently under the interleaving pump. Algebra
+    annotations flipped to license it.
+    """
+
+    comm: ClassVar[bool] = True
+    indep: ClassVar[bool] = True
+    assoc: ClassVar[bool] = True
 
 
 class LValue(Nu[T_co], ABC):

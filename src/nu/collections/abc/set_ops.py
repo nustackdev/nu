@@ -10,10 +10,8 @@ IntersectionUpdateCmd, DifferenceUpdateCmd, SymmetricDifferenceUpdateCmd
 from __future__ import annotations
 
 from collections.abc import MutableSet, Set
-from typing import ClassVar
 
 from nu.terms import INVALID, BinaryOp, Sentinel, UnaryOp
-from nu.terms.effect import Direction
 
 
 __all__ = [
@@ -118,7 +116,7 @@ class IsDisjointOp(BinaryOp[bool]):
 class AddCmd[T](BinaryOp[None]):
     """Add element to set: s.add(value). Returns None (mutates in-place)."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -131,7 +129,7 @@ class AddCmd[T](BinaryOp[None]):
 class RemoveCmd[T](BinaryOp[None]):
     """Remove element from set: s.remove(value). Returns None, or INVALID if not found."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -147,7 +145,7 @@ class RemoveCmd[T](BinaryOp[None]):
 class DiscardCmd[T](BinaryOp[None]):
     """Discard element from set: s.discard(value). Returns None (mutates in-place)."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -160,7 +158,7 @@ class DiscardCmd[T](BinaryOp[None]):
 class SetPopCmd[T](UnaryOp[T]):
     """Pop arbitrary element: s.pop(). Returns element, or INVALID if empty."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def apply(self, operand: object) -> T | Sentinel:
         """Apply."""
@@ -175,7 +173,7 @@ class SetPopCmd[T](UnaryOp[T]):
 class SetUpdateCmd[T](BinaryOp[None]):
     """Update set with elements from other: s.update(other). Returns None."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -190,7 +188,7 @@ class SetUpdateCmd[T](BinaryOp[None]):
 class IntersectionUpdateCmd[T](BinaryOp[None]):
     """Keep only elements found in both: s.intersection_update(other). Returns None."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -207,7 +205,7 @@ class IntersectionUpdateCmd[T](BinaryOp[None]):
 class DifferenceUpdateCmd[T](BinaryOp[None]):
     """Remove elements found in other: s.difference_update(other). Returns None."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -222,7 +220,7 @@ class DifferenceUpdateCmd[T](BinaryOp[None]):
 class SymmetricDifferenceUpdateCmd[T](BinaryOp[None]):
     """Keep elements in either but not both: s.symmetric_difference_update(other). Returns None."""
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""

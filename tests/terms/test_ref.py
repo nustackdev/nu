@@ -6,6 +6,7 @@ resolve, fetch, execute delegation, and purity.
 
 from __future__ import annotations
 
+import nu
 from nu import Context, Nu
 from nu.terms.ref import Ref
 
@@ -45,9 +46,14 @@ async def test_fetch(ctx):
     assert await ref.fetch(ctx) == 42
 
 
-async def test_execute_delegates_to_fetch(ctx):
+async def test_open_yields_fetched_value(ctx):
     ref = StubRef("loc", 42)
-    assert await ref.execute(ctx) == 42
+    assert await nu.first(ref, ctx) == 42
+
+
+async def test_fetch_via_helper(ctx):
+    ref = StubRef("loc", 42)
+    assert await nu.fetch(ref, ctx) == 42
 
 
 # ---------------------------------------------------------------------------
@@ -57,8 +63,8 @@ async def test_execute_delegates_to_fetch(ctx):
 
 def test_ref_is_leaf():
     ref = StubRef("loc", 42)
-    assert ref.is_leaf is True
-    assert ref.child_count == 0
+    assert ref._is_leaf is True
+    assert ref._child_count == 0
 
 
 def test_ref_is_nu():

@@ -1,17 +1,17 @@
 """Stdio Ops - write, read, flush.
 
-StdioWrite: write to stdout/stderr (WRITE override)
-StdioRead: read line from stdin
-StdioFlush: flush a stream (WRITE override)
+StdioWrite: write to stdout/stderr (Command, writes=0)
+StdioRead:  read line from stdin (Query)
+StdioFlush: flush a stream (Command, writes=0)
 """
 
 from __future__ import annotations
 
 import sys
-from typing import IO, TYPE_CHECKING, ClassVar
+from typing import IO, TYPE_CHECKING
 
-from nu.terms.effect import Direction
-from nu.terms.op import Op
+from nu.eval import first
+from nu.terms.op import Command, Query
 
 
 if TYPE_CHECKING:
@@ -36,25 +36,23 @@ def _get_stream(ctx: Context, ref: object) -> IO:
     return getattr(sys, ref.name)
 
 
-class StdioWrite(Op[None]):
+class StdioWrite(Command):
     """Write values to a stdio stream.
 
     Children: [StdioRef, *values]
     Joins string-converted values with spaces, appends newline.
     """
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: StdioRef, *values: object) -> None:
         super().__init__(ref, *values)
 
-    async def execute(self, ctx: Context) -> None:
-        """Write formatted values to the stream."""
+    async def run(self, ctx: Context) -> None:
         stream = _get_stream(ctx, self.children[0])
         parts = []
         for child in self.children[1:]:
-            val = await child.execute(ctx)
-            parts.append(str(val))
+            parts.append(str(await first(child, ctx)))
         stream.write(" ".join(parts) + "\n")
 
     def __repr__(self) -> str:
@@ -62,7 +60,7 @@ class StdioWrite(Op[None]):
         return f"StdioWrite({args})"
 
 
-class StdioRead(Op[str]):
+class StdioRead(Query[str]):
     """Read a line from stdin.
 
     Children: [StdioRef]
@@ -74,8 +72,7 @@ class StdioRead(Op[str]):
 
         super().__init__(ref or STDIN)
 
-    async def execute(self, ctx: Context) -> str:
-        """Read one line from the stream."""
+    async def run(self, ctx: Context) -> str:
         stream = _get_stream(ctx, self.children[0])
         line = stream.readline()
         return line.rstrip("\n")
@@ -84,19 +81,18 @@ class StdioRead(Op[str]):
         return f"StdioRead({self.children[0]!r})"
 
 
-class StdioFlush(Op[None]):
+class StdioFlush(Command):
     """Flush a stdio stream's buffer.
 
     Children: [StdioRef]
     """
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: StdioRef) -> None:
         super().__init__(ref)
 
-    async def execute(self, ctx: Context) -> None:
-        """Flush the stream."""
+    async def run(self, ctx: Context) -> None:
         stream = _get_stream(ctx, self.children[0])
         stream.flush()
 

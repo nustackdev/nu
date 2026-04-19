@@ -46,26 +46,26 @@ def _has_pv_write(node: Nu) -> bool:
     return any(Direction.WRITE in e.direction for e in tracked_effects(node))
 
 
+def _write_positions(op: Op) -> tuple[int, ...]:
+    """Return WRITE child positions declared on the Op."""
+    spec = op.writes
+    if isinstance(spec, int):
+        return (spec,)
+    return tuple(spec)
+
+
 def _has_write_ref(op: Op) -> bool:
-    """Check if Op has a WRITE override with a virtuals Ref at that position."""
-    for i, direction in op.overrides.items():
-        if (
-            Direction.WRITE in direction
-            and i < len(op.children)
-            and isinstance(op.children[i], _VirtualsRef)
-        ):
+    """Check if Op has a WRITE position with a virtuals Ref at that position."""
+    for i in _write_positions(op):
+        if i < len(op.children) and isinstance(op.children[i], _VirtualsRef):
             return True
     return False
 
 
 def _find_write_ref(op: Op) -> ShapesRef | FlatRef | None:
     """Find the first WRITE-position virtuals Ref in an Op."""
-    for i, direction in op.overrides.items():
-        if (
-            Direction.WRITE in direction
-            and i < len(op.children)
-            and isinstance(op.children[i], _VirtualsRef)
-        ):
+    for i in _write_positions(op):
+        if i < len(op.children) and isinstance(op.children[i], _VirtualsRef):
             return op.children[i]
     return None
 
@@ -109,7 +109,7 @@ def _walk(tree: Nu, scope: Hashable | None, enclosing: tuple) -> Nu:
         if tree.scope is scope:
             return tree
         child_enclosing = enclosing + (tree.scope,)
-        if tree.is_leaf:
+        if tree._is_leaf:
             return tree
         new_children = []
         changed = False
@@ -120,14 +120,14 @@ def _walk(tree: Nu, scope: Hashable | None, enclosing: tuple) -> Nu:
                 changed = True
         if not changed:
             return tree
-        return tree.with_children(*new_children)
+        return tree._with_children(*new_children)
 
     kwargs: dict = {}
     if scope is not None:
         kwargs["scope"] = scope
 
-    # Rule 1: Op with WRITE override + virtuals Ref -> Transaction(Op)
-    if isinstance(tree, Op) and tree.overrides:
+    # Rule 1: Op with WRITE position + virtuals Ref -> Transaction(Op)
+    if isinstance(tree, Op) and _write_positions(tree):
         if scope is not None:
             # Scoped: only wrap if the write ref matches this scope
             write_ref = _find_write_ref(tree)
@@ -156,7 +156,7 @@ def _walk(tree: Nu, scope: Hashable | None, enclosing: tuple) -> Nu:
                 return Snapshot(tree, **kwargs)
 
     # Recurse
-    if tree.is_leaf:
+    if tree._is_leaf:
         return tree
 
     new_children = []
@@ -169,7 +169,7 @@ def _walk(tree: Nu, scope: Hashable | None, enclosing: tuple) -> Nu:
 
     if not changed:
         return tree
-    return tree.with_children(*new_children)
+    return tree._with_children(*new_children)
 
 
 def auto_atomic(tree: Nu, scope: Hashable | None = None) -> Nu:

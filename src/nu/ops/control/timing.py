@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import TYPE_CHECKING
+from contextlib import aclosing
+from typing import TYPE_CHECKING, Any
 
+from nu.eval import execute, first
 from nu.terms import Op
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from nu.context import Context
     from nu.terms import FloatArg, Nu, StrArg
 
@@ -32,8 +36,10 @@ class Timed(Op):
     def __init__(self, *children: Nu, label: StrArg = "Timed") -> None:
         super().__init__(label, *children)
 
-    async def execute(self, ctx: Context) -> None:
-        label = await self.children[0].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        if False:  # pragma: no cover
+            yield
+        label = await first(self.children[0], ctx)
         timings: list[tuple[str, float]] = []
         for child in self.children[1:]:
             name = child.__class__.__name__
@@ -44,7 +50,7 @@ class Timed(Op):
                 if len(r) < 60:
                     name = r
             t0 = time.perf_counter()
-            await child.execute(ctx)
+            await execute(child, ctx)
             elapsed = time.perf_counter() - t0
             timings.append((name, elapsed))
 
@@ -67,11 +73,13 @@ class Delay(Op):
         else:
             super().__init__(delay)
 
-    async def execute(self, ctx: Context) -> None:
-        delay = await self.children[0].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        delay = await first(self.children[0], ctx)
         await asyncio.sleep(delay)
-        if self.child_count > 1:
-            await self.children[1].execute(ctx)
+        if self._child_count > 1:
+            async with aclosing(self.children[1].open(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
 
 class Timeout(Op):
@@ -92,14 +100,16 @@ class Timeout(Op):
             children.append(on_timeout)
         super().__init__(*children)
 
-    async def execute(self, ctx: Context) -> None:
-        timeout = await self.children[0].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        if False:  # pragma: no cover
+            yield
+        timeout = await first(self.children[0], ctx)
         body = self.children[1]
         try:
-            await asyncio.wait_for(body.execute(ctx), timeout=timeout)
+            await asyncio.wait_for(execute(body, ctx), timeout=timeout)
         except TimeoutError:
             if self._has_on_timeout:
-                await self.children[2].execute(ctx)
+                await execute(self.children[2], ctx)
 
 
 class Throttle(Op):
@@ -117,14 +127,16 @@ class Throttle(Op):
         else:
             super().__init__(interval)
 
-    async def execute(self, ctx: Context) -> None:
-        interval = await self.children[0].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        interval = await first(self.children[0], ctx)
         now = time.monotonic()
         if now - self._last_time < interval:
             return  # drop
         self._last_time = now
-        if self.child_count > 1:
-            await self.children[1].execute(ctx)
+        if self._child_count > 1:
+            async with aclosing(self.children[1].open(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
 
 class Debounce(Op):
@@ -143,13 +155,15 @@ class Debounce(Op):
         else:
             super().__init__(delay)
 
-    async def execute(self, ctx: Context) -> None:
-        delay = await self.children[0].execute(ctx)
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        if False:  # pragma: no cover
+            yield
+        delay = await first(self.children[0], ctx)
         if self._pending is not None and not self._pending.done():
             self._pending.cancel()
-        if self.child_count > 1:
+        if self._child_count > 1:
             self._pending = asyncio.create_task(self._run_after(delay, ctx))
 
     async def _run_after(self, delay: float, ctx: Context) -> None:
         await asyncio.sleep(delay)
-        await self.children[1].execute(ctx)
+        await execute(self.children[1], ctx)

@@ -8,10 +8,7 @@ root views via nav.root(). No view_cls parameter needed.
 
 Usage:
     tree = Atomic(
-        Seq(
-            SetCmd(ref, Lit(42)),
-            GetOp(ref),
-        ),
+        SetCmd(ref, Lit(42)) >> GetOp(ref),
         scope=UserShape,
     )
 """

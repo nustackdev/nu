@@ -4,17 +4,20 @@ IsEmptyOp, IsInvalidOp, NotEmptyOp, NotInvalidOp
 
 These are inspections, not computations. They need to see sentinels
 to answer the question, so they bypass NAryOp's sentinel propagation
-by overriding execute() directly.
+by overriding open() directly.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from contextlib import aclosing
+from typing import TYPE_CHECKING, Any
 
 from nu.terms import Op, is_empty, is_invalid
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from nu.context import Context
     from nu.terms import Nu
 
@@ -27,15 +30,23 @@ __all__ = [
 ]
 
 
+async def _drain_last(child: Nu, ctx: Context) -> Any:
+    """Drain a child's stream and return its last yielded value."""
+    val: Any = None
+    async with aclosing(child.open(ctx)) as gen:
+        async for v in gen:
+            val = v
+    return val
+
+
 class IsEmptyOp(Op[bool]):
     """Check if operand is Empty sentinel."""
 
     def __init__(self, operand: Nu) -> None:
         super().__init__(operand)
 
-    async def execute(self, ctx: Context) -> bool:
-        value = await self.children[0].execute(ctx)
-        return is_empty(value)
+    async def open(self, ctx: Context) -> AsyncGenerator[bool, None]:
+        yield is_empty(await _drain_last(self.children[0], ctx))
 
 
 class NotEmptyOp(Op[bool]):
@@ -44,9 +55,8 @@ class NotEmptyOp(Op[bool]):
     def __init__(self, operand: Nu) -> None:
         super().__init__(operand)
 
-    async def execute(self, ctx: Context) -> bool:
-        value = await self.children[0].execute(ctx)
-        return not is_empty(value)
+    async def open(self, ctx: Context) -> AsyncGenerator[bool, None]:
+        yield not is_empty(await _drain_last(self.children[0], ctx))
 
 
 class IsInvalidOp(Op[bool]):
@@ -55,9 +65,8 @@ class IsInvalidOp(Op[bool]):
     def __init__(self, operand: Nu) -> None:
         super().__init__(operand)
 
-    async def execute(self, ctx: Context) -> bool:
-        value = await self.children[0].execute(ctx)
-        return is_invalid(value)
+    async def open(self, ctx: Context) -> AsyncGenerator[bool, None]:
+        yield is_invalid(await _drain_last(self.children[0], ctx))
 
 
 class NotInvalidOp(Op[bool]):
@@ -66,6 +75,5 @@ class NotInvalidOp(Op[bool]):
     def __init__(self, operand: Nu) -> None:
         super().__init__(operand)
 
-    async def execute(self, ctx: Context) -> bool:
-        value = await self.children[0].execute(ctx)
-        return not is_invalid(value)
+    async def open(self, ctx: Context) -> AsyncGenerator[bool, None]:
+        yield not is_invalid(await _drain_last(self.children[0], ctx))

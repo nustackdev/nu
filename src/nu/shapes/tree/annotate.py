@@ -42,7 +42,7 @@ def annotate_ref_loads(root: Nu) -> Nu:
     load_op_types = (ItemLoadOp, CollectionLoadOp)
 
     def _process(node: Nu) -> Nu:
-        if node.is_leaf:
+        if node._is_leaf:
             return node
 
         if isinstance(node, load_op_types):
@@ -67,7 +67,7 @@ def annotate_ref_loads(root: Nu) -> Nu:
                 new_children.append(child)
 
         if changed:
-            return node.with_children(*new_children)
+            return node._with_children(*new_children)
         return node
 
     return map_nodes(root, _process, order="bottom_up")

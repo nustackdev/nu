@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Op
+from nu.terms.op import Query
 
 
 if TYPE_CHECKING:
@@ -42,7 +42,7 @@ __all__ = [
 ]
 
 
-class Teleport(Op):
+class Teleport(Query[object]):
     """Ships children to a Worker for remote execution.
 
     Args:
@@ -63,8 +63,10 @@ class Teleport(Op):
         self._worker_tag = worker
         self._carry = carry
 
-    async def execute(self, ctx: Context) -> object:
+    async def run(self, ctx: Context) -> object:
         """Execute children on the target worker."""
+        from nu import Nu
+
         from ..resources.worker import Worker
 
         worker = ctx.get(Worker, self._worker_tag)
@@ -72,9 +74,8 @@ class Teleport(Op):
         if len(self.children) == 1:
             subtree = self.children[0]
         else:
-            from nu import Seq
-
-            subtree = Seq(*self.children)
+            # Sequential composition of multiple children.
+            subtree = Nu(*self.children)
 
         if self._carry:
             return await self._execute_with_carry(ctx, worker, subtree)
@@ -87,12 +88,15 @@ class Teleport(Op):
         subtree: object,
     ) -> object:
         """Execute with parent attrs copied to worker context."""
+        from nu.eval import collect
+
         worker_ctx = worker.ctx._copy()
         # Deep copy parent attrs into worker context
         carried = parent_ctx.attrs.copy()
         for key, value in carried.items():
             worker_ctx.attrs[key] = value
-        return await subtree.execute(worker_ctx)
+        values = await collect(subtree, worker_ctx)
+        return values[-1] if values else None
 
     def __repr__(self) -> str:
         carry = ", carry=True" if self._carry else ""

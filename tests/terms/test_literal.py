@@ -1,47 +1,48 @@
 """Tests for Literal - the irreducible atom.
 
 Literal is the leaf that bottoms out recursion. It stores a Python
-literal and returns it on execute. No children, always pure.
+literal and yields it once on open. No children, always pure.
 """
 
 from __future__ import annotations
 
+import nu
 from nu import EMPTY, INVALID, Literal
 
 
 # ---------------------------------------------------------------------------
-# Execute
+# Open / first
 # ---------------------------------------------------------------------------
 
 
-async def test_execute_returns_int(ctx):
-    assert await Literal(42).execute(ctx) == 42
+async def test_first_returns_int(ctx):
+    assert await nu.first(Literal(42), ctx) == 42
 
 
-async def test_execute_returns_str(ctx):
-    assert await Literal("hello").execute(ctx) == "hello"
+async def test_first_returns_str(ctx):
+    assert await nu.first(Literal("hello"), ctx) == "hello"
 
 
-async def test_execute_returns_none(ctx):
-    assert await Literal(None).execute(ctx) is None
+async def test_first_returns_none(ctx):
+    assert await nu.first(Literal(None), ctx) is None
 
 
-async def test_execute_returns_list(ctx):
-    assert await Literal([1, 2, 3]).execute(ctx) == [1, 2, 3]
+async def test_first_returns_list(ctx):
+    assert await nu.first(Literal([1, 2, 3]), ctx) == [1, 2, 3]
 
 
-async def test_execute_returns_dict(ctx):
-    assert await Literal({"a": 1}).execute(ctx) == {"a": 1}
+async def test_first_returns_dict(ctx):
+    assert await nu.first(Literal({"a": 1}), ctx) == {"a": 1}
 
 
-async def test_execute_holds_sentinel(ctx):
+async def test_first_holds_sentinel(ctx):
     """Literal stores sentinels as literals - it does not propagate them."""
-    result = await Literal(EMPTY).execute(ctx)
+    result = await nu.first(Literal(EMPTY), ctx)
     assert result is EMPTY
 
 
-async def test_execute_holds_invalid(ctx):
-    result = await Literal(INVALID).execute(ctx)
+async def test_first_holds_invalid(ctx):
+    result = await nu.first(Literal(INVALID), ctx)
     assert result is INVALID
 
 
@@ -51,8 +52,8 @@ async def test_execute_holds_invalid(ctx):
 
 
 def test_is_leaf():
-    assert Literal(42).is_leaf is True
-    assert Literal(42).child_count == 0
+    assert Literal(42)._is_leaf is True
+    assert Literal(42)._child_count == 0
     assert Literal(42).children == ()
 
 

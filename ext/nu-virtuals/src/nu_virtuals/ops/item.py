@@ -14,10 +14,11 @@ These require PV views with UnsafePrimitiveOpsBase in MRO.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from nu import EMPTY, Op, Sentinel
-from nu.terms.effect import Direction
+from nu import EMPTY, Sentinel
+from nu.eval import first
+from nu.terms.op import Command, Query
 
 
 if TYPE_CHECKING:
@@ -35,7 +36,7 @@ __all__ = [
 ]
 
 
-class EnsureLayoutCmd(Op[None]):
+class EnsureLayoutCmd(Command):
     """Ensure view container and its internal layout exist in storage.
 
     Navigates to the view via fetch(), then calls _ensure_layout() to
@@ -49,25 +50,24 @@ class EnsureLayoutCmd(Op[None]):
         fetch(ctx) -> view object
     """
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
 
-    async def execute(self, ctx: Context) -> None:  # noqa: D102
+    async def run(self, ctx: Context) -> None:
         view = await self.ref.fetch(ctx)
         if hasattr(view, "_ensure_layout"):
             view._ensure_layout()
         elif hasattr(view, "ensure_created"):
             view.ensure_created()
-        return None
 
     def __repr__(self) -> str:
         return f"EnsureLayoutCmd({self.ref!r})"
 
 
-class InitCmd(Op[None]):
+class InitCmd(Command):
     """Materialize container chain for a ViewRef.
 
     Navigates the view hierarchy via fetch(), triggering ensure_created()
@@ -78,22 +78,21 @@ class InitCmd(Op[None]):
         fetch(ctx) -> view object
     """
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
 
-    async def execute(self, ctx: Context) -> None:
+    async def run(self, ctx: Context) -> None:
         """Fetch view hierarchy, materializing containers along the way."""
         await self.ref.fetch(ctx)
-        return None
 
     def __repr__(self) -> str:
         return f"InitCmd({self.ref!r})"
 
 
-class ItemPrimitiveGetUnsafeOp[T](Op[T | Sentinel]):
+class ItemPrimitiveGetUnsafeOp[T](Query[T | Sentinel]):
     """Read primitive value via _unsafe_primitive_read().
 
     Single ctx[] call — no marker parsing, no type checks.
@@ -108,7 +107,7 @@ class ItemPrimitiveGetUnsafeOp[T](Op[T | Sentinel]):
         super().__init__(ref)
         self.ref = ref
 
-    async def execute(self, ctx: Context) -> T | Sentinel:
+    async def run(self, ctx: Context) -> T | Sentinel:
         """Read primitive via single ctx[] lookup."""
         parent = await self.ref.fetch_parent(ctx)
         address = await self.ref.resolve_address(ctx)
@@ -121,7 +120,7 @@ class ItemPrimitiveGetUnsafeOp[T](Op[T | Sentinel]):
         return f"ItemPrimitiveGetUnsafeOp({self.ref!r})"
 
 
-class ItemPrimitiveSetUnsafeCmd[T](Op[T]):
+class ItemPrimitiveSetUnsafeCmd[T](Command):
     """Write primitive via _unsafe_primitive_write(ensure_exists=True).
 
     Ensures the container chain exists before writing (calls ensure_created),
@@ -132,28 +131,27 @@ class ItemPrimitiveSetUnsafeCmd[T](Op[T]):
         resolve_address(ctx) -> key/index
     """
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
         self.ref = ref
         self.value_expr = value
 
-    async def execute(self, ctx: Context) -> T:
+    async def run(self, ctx: Context) -> None:
         """Write primitive via ctx.put() with ensure_exists."""
         parent = await self.ref.fetch_parent(ctx)
         address = await self.ref.resolve_address(ctx)
-        value = await self.value_expr.execute(ctx)
+        value = await first(self.value_expr, ctx)
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent._unsafe_primitive_write(address, value, ensure_exists=True)
-        return value
 
     def __repr__(self) -> str:
         return f"ItemPrimitiveSetUnsafeCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class ItemPrimitiveSetUnsafeParentSkipCmd[T](Op[T]):
+class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command):
     """Write primitive via _unsafe_primitive_write() -- full skip.
 
     Single ctx.put() call -- no ensure_created, no validation reads.
@@ -164,28 +162,27 @@ class ItemPrimitiveSetUnsafeParentSkipCmd[T](Op[T]):
         resolve_address(ctx) -> key/index
     """
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
         self.ref = ref
         self.value_expr = value
 
-    async def execute(self, ctx: Context) -> T:
+    async def run(self, ctx: Context) -> None:
         """Write primitive via single ctx.put(), skipping all validation."""
         parent = await self.ref.fetch_parent(ctx)
         address = await self.ref.resolve_address(ctx)
-        value = await self.value_expr.execute(ctx)
+        value = await first(self.value_expr, ctx)
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent._unsafe_primitive_write(address, value)
-        return value
 
     def __repr__(self) -> str:
         return f"ItemPrimitiveSetUnsafeParentSkipCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class ItemPrimitiveDeleteUnsafeCmd(Op[None]):
+class ItemPrimitiveDeleteUnsafeCmd(Command):
     """Delete primitive via _unsafe_primitive_delete().
 
     Single ctx.delete() call -- no validation, no descendant cleanup.
@@ -196,24 +193,23 @@ class ItemPrimitiveDeleteUnsafeCmd(Op[None]):
         resolve_address(ctx) -> key/index
     """
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
 
-    async def execute(self, ctx: Context) -> None:
+    async def run(self, ctx: Context) -> None:
         """Delete primitive via single ctx.delete()."""
         parent = await self.ref.fetch_parent(ctx)
         address = await self.ref.resolve_address(ctx)
         parent._unsafe_primitive_delete(address)
-        return None
 
     def __repr__(self) -> str:
         return f"ItemPrimitiveDeleteUnsafeCmd({self.ref!r})"
 
 
-class PrimitiveStoreCmd[T](Op[None]):
+class PrimitiveStoreCmd[T](Command):
     """Store a value via _primitive_write(), bypassing container type checks.
 
     Uses PrimitiveOpsBase._primitive_write() which does ensure_created() +
@@ -226,22 +222,21 @@ class PrimitiveStoreCmd[T](Op[None]):
         resolve_address(ctx) -> key/index
     """
 
-    overrides: ClassVar[dict[int, Direction]] = {0: Direction.WRITE}
+    writes = 0
 
     def __init__(self, ref: object, data: object) -> None:
         super().__init__(ref, data)
         self.ref = ref
         self.data_expr = data
 
-    async def execute(self, ctx: Context) -> None:  # noqa: D102
-        data = await self.data_expr.execute(ctx)
+    async def run(self, ctx: Context) -> None:
+        data = await first(self.data_expr, ctx)
         if isinstance(data, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {data}")
 
         parent = await self.ref.fetch_parent(ctx)
         address = await self.ref.resolve_address(ctx)
         parent._primitive_write(address, data)
-        return None
 
     def __repr__(self) -> str:
         return f"PrimitiveStoreCmd({self.ref!r}, {self.data_expr!r})"

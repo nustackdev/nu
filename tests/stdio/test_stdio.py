@@ -7,6 +7,7 @@ from io import StringIO
 
 import pytest
 
+import nu
 from nu import Context
 from nu.stdio import (
     STDERR,
@@ -19,7 +20,7 @@ from nu.stdio import (
     StdioRef,
     StdioWrite,
 )
-from nu.ops import Debug, Log, Print, Seq
+from nu.ops import Debug, Log, Print
 from nu.terms.effect import Direction, TrackedEffect, tracked_effects
 
 
@@ -74,7 +75,7 @@ class TestStdioRef:
         assert len(s) == 3
 
     def test_is_leaf(self):
-        assert STDOUT.is_leaf
+        assert STDOUT._is_leaf
 
     def test_resolve(self):
         ctx = _make_ctx()
@@ -126,18 +127,18 @@ class TestStdioWrite:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = StdioWrite(STDOUT, "hello", "world")
-        _run(op.execute(ctx))
+        _run(nu.execute(op, ctx))
         assert out.getvalue() == "hello world\n"
 
     def test_write_to_stderr(self):
         err = StringIO()
         ctx = _make_ctx(stderr=err)
         op = StdioWrite(STDERR, "error message")
-        _run(op.execute(ctx))
+        _run(nu.execute(op, ctx))
         assert err.getvalue() == "error message\n"
 
     def test_write_overrides(self):
-        assert StdioWrite.overrides == {0: Direction.WRITE}
+        assert StdioWrite.writes == 0
 
     def test_effect_tracking(self):
         op = StdioWrite(STDOUT, "hello")
@@ -155,12 +156,12 @@ class TestStdioRead:
         inp = StringIO("hello world\n")
         ctx = _make_ctx(stdin=inp)
         op = StdioRead()
-        result = _run(op.execute(ctx))
+        result = _run(nu.first(op, ctx))
         assert result == "hello world"
 
     def test_no_override(self):
-        """StdioRead has no overrides (READ is default for bare Ref)."""
-        assert StdioRead.overrides == {}
+        """StdioRead has no writes (READ is default for bare Ref)."""
+        assert StdioRead.writes == ()
 
     def test_effect_tracking(self):
         """StdioRef child produces READ effect via default rule."""
@@ -179,11 +180,11 @@ class TestStdioFlush:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = StdioFlush(STDOUT)
-        _run(op.execute(ctx))
+        _run(nu.execute(op, ctx))
         # StringIO.flush() is a no-op but shouldn't error
 
     def test_overrides(self):
-        assert StdioFlush.overrides == {0: Direction.WRITE}
+        assert StdioFlush.writes == 0
 
 
 # ---------------------------------------------------------------------------
@@ -196,11 +197,11 @@ class TestPrintStdio:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = Print("test", 42)
-        _run(op.execute(ctx))
+        _run(nu.execute(op, ctx))
         assert "[Print:test] 42" in out.getvalue()
 
     def test_print_has_write_override(self):
-        assert Print.overrides == {0: Direction.WRITE}
+        assert Print.writes == 0
 
     def test_print_first_child_is_stdio_ref(self):
         op = Print("msg")
@@ -215,7 +216,7 @@ class TestPrintStdio:
 
 class TestLogStdio:
     def test_log_has_write_override(self):
-        assert Log.overrides == {0: Direction.WRITE}
+        assert Log.writes == 0
 
     def test_log_first_child_is_stderr(self):
         op = Log("msg")
@@ -228,11 +229,11 @@ class TestDebugStdio:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = Debug(42, prefix="[DBG]")
-        _run(op.execute(ctx))
+        _run(nu.execute(op, ctx))
         assert "[DBG]" in out.getvalue()
 
     def test_debug_has_write_override(self):
-        assert Debug.overrides == {0: Direction.WRITE}
+        assert Debug.writes == 0
 
 
 # ---------------------------------------------------------------------------
@@ -248,7 +249,7 @@ class TestBufferedStdio:
             StdioWrite(STDOUT, "line 1"),
             StdioWrite(STDOUT, "line 2"),
         )
-        _run(op.execute(ctx))
+        _run(nu.execute(op, ctx))
         content = out.getvalue()
         assert "line 1" in content
         assert "line 2" in content
@@ -258,16 +259,18 @@ class TestBufferedStdio:
         ctx = _make_ctx(stdout=out)
 
         class FailOp(StdioWrite):
-            async def execute(self, ctx):
-                await super().execute(ctx)
+            async def open(self, ctx):
+                async for _ in super().open(ctx):
+                    pass
                 raise RuntimeError("boom")
+                yield  # unreachable; marks generator
 
         op = BufferedStdio(
             StdioWrite(STDOUT, "before"),
             FailOp(STDOUT, "after"),
         )
         with pytest.raises(RuntimeError, match="boom"):
-            _run(op.execute(ctx))
+            _run(nu.execute(op, ctx))
         # Nothing should have been written to real stdout
         assert out.getvalue() == ""
 
@@ -275,7 +278,7 @@ class TestBufferedStdio:
         inp = StringIO("hello\n")
         ctx = _make_ctx(stdin=inp)
         op = BufferedStdio(StdioRead())
-        result = _run(op.execute(ctx))
+        result = _run(nu.first(op, ctx))
         assert result == "hello"
 
 
@@ -296,13 +299,13 @@ class TestEffectIsolation:
         assert len(tracked_effects(impure)) == 1
 
     def test_mixed_tree_effects(self):
-        """A Seq with both stdio and pure ops tracks only stdio effects."""
+        """A composed tree with both stdio and pure ops tracks only stdio effects."""
         from nu.ops import AddOp
 
-        tree = Seq(
-            StdioWrite(STDOUT, "start"),
-            AddOp(1, 2),
-            StdioWrite(STDERR, "end"),
+        tree = (
+            StdioWrite(STDOUT, "start")
+            >> AddOp(1, 2)
+            >> StdioWrite(STDERR, "end")
         )
         effects = tracked_effects(tree)
         assert TrackedEffect(StdioRef, Direction.WRITE) in effects

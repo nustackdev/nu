@@ -5,7 +5,7 @@ shared methods (sentinel checks) that work on any Nu. ABCs like MappingI,
 ContainerI, SizedI inherit Interface to get these methods.
 
 TypedNu[T] is the concrete wrapper that makes a class a Nu node. It takes
-a Nu or literal, wraps it as a child, and delegates execute() to it.
+a Nu or literal, wraps it as a child, and forwards the child's stream.
 Leaf interfaces (IntI, DictI, StrI, etc) inherit both Interface and TypedNu
 so they can be used as Nu tree nodes: DictI(some_op).keys().
 
@@ -22,7 +22,7 @@ Hierarchy:
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
+from contextlib import aclosing
 from typing import TYPE_CHECKING
 
 from nu.terms import Literal, Nu, RValue
@@ -30,7 +30,7 @@ from nu.terms.type_vars import T_co
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncGenerator
 
     from nu.context import Context
     from nu.primitives import BoolI
@@ -87,7 +87,7 @@ class Interface:
 class TypedNu(RValue[T_co]):
     """Concrete Nu wrapper - makes a class a node in the Nu tree.
 
-    Takes a Nu or literal, wraps it as a child, delegates execute() to it.
+    Takes a Nu or literal, wraps it as a child, forwards the child's stream.
     Transparent: can be shaken from the tree before execution.
 
     Leaf interfaces (IntI, DictI, etc) inherit this alongside Interface
@@ -114,16 +114,11 @@ class TypedNu(RValue[T_co]):
         """The wrapped source - either a Literal or another Nu."""
         return self.children[0] if self.children else None
 
-    @asynccontextmanager
-    async def open(self, ctx: Context) -> AsyncIterator[T_co]:
-        """Chain open() to the wrapped child."""
-        async with self.children[0].open(ctx) as result:
-            yield result
-
-    async def execute(self, ctx: Context) -> T_co:
-        """Delegate to wrapped child, keeping boundaries alive."""
-        async with self.children[0].open(ctx) as result:
-            return result
+    async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+        """Forward the wrapped child's stream."""
+        async with aclosing(self.children[0].open(ctx)) as gen:
+            async for v in gen:
+                yield v
 
     @property
     def is_self_pure(self) -> bool:
