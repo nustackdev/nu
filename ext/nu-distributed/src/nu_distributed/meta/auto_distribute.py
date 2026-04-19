@@ -76,6 +76,6 @@ def auto_distribute(
 
         if not changed:
             return node
-        return node.with_children(*new_children)
+        return node._with_children(*new_children)
 
     return map_nodes(tree, _rewrite, order="bottom_up")

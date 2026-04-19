@@ -51,8 +51,8 @@ async def test_execute_holds_invalid(ctx):
 
 
 def test_is_leaf():
-    assert Literal(42).is_leaf is True
-    assert Literal(42).child_count == 0
+    assert Literal(42)._is_leaf is True
+    assert Literal(42)._child_count == 0
     assert Literal(42).children == ()
 
 

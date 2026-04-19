@@ -14,6 +14,8 @@ from .type_vars import T_co
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from ..context import Context
 
 
@@ -26,11 +28,11 @@ class Literal(Interaction[T_co]):
     """Irreducible atom. Holds a literal value.
 
     Literal is a leaf Nu with no children. It stores a Python object
-    directly and returns it on execute().
+    directly and yields it on open().
 
     Usage:
         v = Literal(42)
-        result = await v.execute(ctx)  # → 42
+        # open yields 42 once
     """
 
     _value: object  # T
@@ -40,9 +42,9 @@ class Literal(Interaction[T_co]):
         super().__init__()  # no children
         self._value = value
 
-    async def execute(self, ctx: Context) -> T_co:
-        """Return the literal value."""
-        return self._value  # type: ignore[return-value]
+    async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+        """Yield the literal value once."""
+        yield self._value  # type: ignore[misc]
 
     @property
     def is_self_pure(self) -> bool:

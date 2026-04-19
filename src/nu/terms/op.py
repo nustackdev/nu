@@ -15,22 +15,33 @@ Two dimensions:
 
     Arity (how many operands):
         - NAryOp, UnaryOp, BinaryOp, TernaryOp
-        - execute = resolve children -> propagate sentinels -> apply()
+        - open = resolve children via their `open` -> propagate sentinels -> apply()
 
     Lifecycle (resource scoping):
         - ScopedOp: before/after/after_failure hooks
-        - execute = before(ctx) -> run children sequentially -> after/after_failure
+        - open = before -> run children -> yield last value -> after/after_failure
 
 Composition pattern:
     class AddOp(BinaryOp[float]):
         def apply(self, left: float, right: float) -> float:
             return left + right
+
+Effect declarations (class-level):
+    writes: int | tuple[int, ...] = ()
+    reads:  int | tuple[int, ...] = ()
+
+    class StoreOp(Op):
+        writes = 0            # child 0 is a WRITE target
+
+    class CopyOp(Op):
+        reads  = 0
+        writes = 1
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from contextlib import asynccontextmanager
+from contextlib import aclosing
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from .interaction import Interaction
@@ -39,21 +50,18 @@ from .type_vars import T_co
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncGenerator
 
     from ..context import Context
-    from .effect import Direction
     from .nu import Nu
 
 
 __all__ = [  # noqa: RUF022
-    # Base
     "Op",
     "NAryOp",
     "UnaryOp",
     "BinaryOp",
     "TernaryOp",
-    # Lifecycle
     "ScopedOp",
 ]
 
@@ -66,25 +74,19 @@ __all__ = [  # noqa: RUF022
 class Op(Interaction[T_co], ABC):
     """Operation. Maps inputs to outputs.
 
-    Ops are the fundamental unit of computation:
-    - UnaryOp: single operand (-x, abs(x), not x)
-    - BinaryOp: two operands (x + y, x > y)
-    - TernaryOp: three operands (if a then b else c)
+    Effect tracking via class-level `writes` / `reads`:
+    - `writes`: child positions that are WRITE targets.
+    - `reads` : child positions that are READ targets.
 
-    Extend NAryOp for operand-based ops with sentinel propagation.
-    Extend ScopedOp for resource lifecycle (before/after hooks).
-    Extend Op directly for custom execution.
-
-    Effect tracking:
-        overrides maps child position to Direction for effect analysis.
-        Default empty = all children use default rules (Ref -> READ).
+    Accepts `int` (single position) or `tuple[int, ...]` (multiple).
+    Un-listed Ref children default to READ in effect analysis.
     """
 
-    overrides: ClassVar[dict[int, Direction]] = {}
+    writes: ClassVar[int | tuple[int, ...]] = ()
+    reads: ClassVar[int | tuple[int, ...]] = ()
 
     def __init__(self, *children: object) -> None:
-        """Initialize with operands. Python literals are wrapped into Values."""
-        # FIXME: This is a core circular dependency!!
+        """Initialize with operands. Python literals are wrapped into Literals."""
         from nu.utils import ensure_nu
 
         super().__init__(*[ensure_nu(c) for c in children])
@@ -98,16 +100,12 @@ class Op(Interaction[T_co], ABC):
 class NAryOp(Op[T_co | Sentinel], ABC):
     """Op with operands. Handles resolution and sentinels.
 
-    Subclasses with fixed arity should use UnaryOp, BinaryOp, or
-    TernaryOp. Subclasses with variable arity can override __init__.
-
     Sentinel propagation:
         If any operand resolves to a sentinel (EMPTY, INVALID),
-        the op returns INVALID without calling apply().
+        the op yields INVALID without calling apply().
     """
 
     def __init__(self, *children: object) -> None:
-        """Initialize with operands."""
         super().__init__(*children)
 
     def __repr__(self) -> str:
@@ -118,51 +116,28 @@ class NAryOp(Op[T_co | Sentinel], ABC):
         args = ", ".join(str(c) for c in self._children)
         return f"{self.__class__.__name__}({args})"
 
-    # =========================================================================
-    # EXECUTION
-    # =========================================================================
+    async def open(self, ctx: Context) -> AsyncGenerator[T_co | Sentinel, None]:
+        """Resolve each operand's stream (taking its last yield), apply, yield once.
 
-    async def execute(self, ctx: Context) -> T_co | Sentinel:
-        """Resolve operands via open() to keep boundaries alive, then apply."""
-        from contextlib import AsyncExitStack
-
-        async with AsyncExitStack() as stack:
-            values = []
-            for child in self.children:
-                val = await stack.enter_async_context(child.open(ctx))
-                if is_sentinel(val):
-                    return INVALID
-                values.append(val)
-            return self.apply(*values)
-
-    @asynccontextmanager
-    async def open(self, ctx: Context) -> AsyncIterator[T_co | Sentinel]:
-        """Like execute but keeps child boundaries alive via open chain."""
-        # Use contextlib.AsyncExitStack to nest all children's open() contexts
-        from contextlib import AsyncExitStack
-
-        async with AsyncExitStack() as stack:
-            values = []
-            for child in self.children:
-                val = await stack.enter_async_context(child.open(ctx))
-                if is_sentinel(val):
-                    yield INVALID
-                    return
-                values.append(val)
-            yield self.apply(*values)
+        Opens each child as a generator, drains to the last value, propagates
+        sentinels. Child exits run before `apply` in reverse order via
+        aclosing.
+        """
+        values: list[Any] = []
+        for child in self._children:
+            v: Any = None
+            async with aclosing(child.open(ctx)) as gen:
+                async for x in gen:
+                    v = x
+            if is_sentinel(v):
+                yield INVALID
+                return
+            values.append(v)
+        yield self.apply(*values)
 
     @abstractmethod
     def apply(self, *values: Any) -> T_co | Sentinel:  # noqa: ANN401
-        """Apply the transformation to resolved values.
-
-        Called after all operands are resolved and verified non-sentinel.
-
-        Args:
-            *values: Resolved operand values (never sentinels)
-
-        Returns:
-            Result of the transformation
-        """
+        """Apply the transformation to resolved values."""
         ...
 
 
@@ -185,12 +160,10 @@ class UnaryOp(NAryOp[T_co], ABC):
 
     @property
     def operand(self) -> Nu:
-        """The single operand."""
         return self._children[0]
 
     @abstractmethod
     def apply(self, operand: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
-        """Apply."""
         ...
 
 
@@ -208,17 +181,14 @@ class BinaryOp(NAryOp[T_co], ABC):
 
     @property
     def left(self) -> Nu:
-        """Left operand."""
         return self._children[0]
 
     @property
     def right(self) -> Nu:
-        """Right operand."""
         return self._children[1]
 
     @abstractmethod
     def apply(self, left: Any, right: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
-        """Apply."""
         ...
 
 
@@ -236,22 +206,18 @@ class TernaryOp(NAryOp[T_co], ABC):
 
     @property
     def first(self) -> Nu:
-        """First operand."""
         return self._children[0]
 
     @property
     def second(self) -> Nu:
-        """Second operand."""
         return self._children[1]
 
     @property
     def third(self) -> Nu:
-        """Third operand."""
         return self._children[2]
 
     @abstractmethod
     def apply(self, first: Any, second: Any, third: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
-        """Apply."""
         ...
 
 
@@ -271,35 +237,18 @@ class ScopedOp(Op, ABC):
         after(ctx):                  Clean up after successful execution.
         after_failure(ctx, error):   Clean up after failed execution.
 
-    execute() returns the last child's value.
-    open() yields the scoped context, keeping the boundary alive.
+    open(): forwards children's streams under the boundary; on exit, runs
+    `after` or `after_failure` via generator finally.
     """
 
-    async def execute(self, ctx: Context) -> object:
-        """Execute with lifecycle: before -> run children -> after/after_failure.
-
-        Returns the last child's value.
-        """
+    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        """Enter boundary, stream children, commit/rollback on exit."""
         scoped_ctx = self.before(ctx)
-        result = None
         try:
-            for child in self.children:
-                result = await child.execute(scoped_ctx)
-            self.after(scoped_ctx)
-            return result
-        except BaseException as e:
-            self.after_failure(scoped_ctx, e)
-            raise
-
-    @asynccontextmanager
-    async def open(self, ctx: Context) -> AsyncIterator:
-        """Open boundary, run children, yield last child's value, close on exit."""
-        scoped_ctx = self.before(ctx)
-        result = None
-        try:
-            for child in self.children:
-                result = await child.execute(scoped_ctx)
-            yield result
+            for child in self._children:
+                async with aclosing(child.open(scoped_ctx)) as gen:
+                    async for v in gen:
+                        yield v
             self.after(scoped_ctx)
         except BaseException as e:
             self.after_failure(scoped_ctx, e)

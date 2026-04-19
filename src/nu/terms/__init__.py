@@ -16,7 +16,7 @@ from .arg import (
     StrArg,
     TupleArg,
 )
-from .nu import LValue, Nu, RValue
+from .nu import LValue, Nu, NuIndepComm, RValue
 from .op import (
     BinaryOp,
     NAryOp,
@@ -63,6 +63,7 @@ __all__ = [
     "NoneArg",
     # Core
     "Nu",
+    "NuIndepComm",
     "Op",
     "RValue",
     "Ref",

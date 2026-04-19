@@ -49,7 +49,7 @@ def bfs(root: Nu) -> Iterator[Nu]:
 
 def leaves(root: Nu) -> Iterator[Nu]:
     """Yield only leaf nodes (no children)."""
-    if root.is_leaf:
+    if root._is_leaf:
         yield root
     else:
         for child in root.children:

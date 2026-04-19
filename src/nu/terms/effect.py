@@ -1,7 +1,7 @@
 """Effect tracking - static analysis of fabric interactions.
 
-Computes tracked effects by walking a Nu tree. This is a tree analysis
-utility, not stored on nodes.
+Computes tracked effects by walking a Nu tree. Tree analysis utility,
+not stored on nodes.
 
 Two directions:
     READ  - data pulled from fabric into compute space
@@ -9,10 +9,14 @@ Two directions:
 
 A TrackedEffect = (fabric Ref class, direction) pair.
 
+Effect declaration on Op subclasses:
+    writes: int | tuple[int, ...] = ()
+    reads:  int | tuple[int, ...] = ()
+
 Three computation rules:
     1. Literal -> no effects (empty set)
-    2. Ref (not at override position) -> {(type(ref), READ)} + children
-    3. Op -> check overrides per child position, recurse, union all
+    2. Ref (not at a declared position) -> {(type(ref), READ)} + children
+    3. Op -> check writes/reads per child position, recurse, union all
 """
 
 from __future__ import annotations
@@ -52,13 +56,26 @@ class TrackedEffect:
         return f"TrackedEffect({self.fabric.__name__}, {self.direction.name})"
 
 
+def _as_positions(spec: int | tuple[int, ...]) -> frozenset[int]:
+    """Normalize `int | tuple[int, ...]` to a frozenset."""
+    if isinstance(spec, int):
+        return frozenset({spec})
+    return frozenset(spec)
+
+
+def _position_map(op: Op) -> dict[int, Direction]:
+    """Build {position: Direction} from an Op's `writes` / `reads` attrs."""
+    result: dict[int, Direction] = {}
+    for i in _as_positions(op.reads):
+        result[i] = Direction.READ
+    for i in _as_positions(op.writes):
+        # WRITE wins if both are declared (use of READ|WRITE on same pos is unusual)
+        result[i] = Direction.WRITE
+    return result
+
+
 def tracked_effects(nu: Nu) -> frozenset[TrackedEffect]:
     """Compute the set of tracked effects for a Nu tree.
-
-    Walks the tree applying the three rules:
-    1. Literal -> empty set
-    2. Ref (not at an override position) -> READ + recurse children
-    3. Op -> apply overrides for override positions, recurse rest, union
 
     Args:
         nu: Root of the Nu tree to analyze.
@@ -70,14 +87,13 @@ def tracked_effects(nu: Nu) -> frozenset[TrackedEffect]:
     if isinstance(nu, Literal):
         return frozenset()
 
-    # Rule 3: Op -> check overrides, recurse children
+    # Rule 3: Op -> check declared positions, recurse children
     if isinstance(nu, Op):
         effects: set[TrackedEffect] = set()
-        overrides = getattr(nu, "overrides", {})
+        positions = _position_map(nu)
         for i, child in enumerate(nu.children):
-            if i in overrides and isinstance(child, Ref):
-                # Override position: use declared direction instead of default READ
-                effects.add(TrackedEffect(type(child), overrides[i]))
+            if i in positions and isinstance(child, Ref):
+                effects.add(TrackedEffect(type(child), positions[i]))
                 # Still recurse into ref's children (dynamic address parts)
                 for grandchild in child.children:
                     if isinstance(grandchild, Nu):
@@ -86,7 +102,7 @@ def tracked_effects(nu: Nu) -> frozenset[TrackedEffect]:
                 effects |= tracked_effects(child)
         return frozenset(effects)
 
-    # Rule 2: Ref (not at override position - handled above) -> READ + children
+    # Rule 2: Ref (not at declared position - handled above) -> READ + children
     if isinstance(nu, Ref):
         effects = {TrackedEffect(type(nu), Direction.READ)}
         for child in nu.children:
@@ -94,7 +110,7 @@ def tracked_effects(nu: Nu) -> frozenset[TrackedEffect]:
                 effects |= tracked_effects(child)
         return frozenset(effects)
 
-    # Bare Nu (Seq via |) or other nodes: recurse children, union
+    # Bare Nu (plain composition, NuIndepComm) or other nodes: recurse, union
     result: set[TrackedEffect] = set()
     for child in nu.children:
         if isinstance(child, Nu):

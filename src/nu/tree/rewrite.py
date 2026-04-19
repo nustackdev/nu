@@ -60,9 +60,9 @@ def map_children(node: Nu, fn: Callable[[Nu], Nu]) -> Nu:
 
     Shallow (one level). For deep transforms, use map_nodes.
     """
-    if node.is_leaf:
+    if node._is_leaf:
         return node
-    return node.with_children(*(fn(c) for c in node.children))  # type: ignore[arg-type]
+    return node._with_children(*(fn(c) for c in node.children))  # type: ignore[arg-type]
 
 
 def map_nodes(
@@ -80,12 +80,12 @@ def map_nodes(
     """
     if order == "top_down":
         node = fn(root)
-        if node.is_leaf:
+        if node._is_leaf:
             return node  # type: ignore[return-value]
-        return node.with_children(*(map_nodes(c, fn, order) for c in node.children))  # type: ignore[return-value]
+        return node._with_children(*(map_nodes(c, fn, order) for c in node.children))  # type: ignore[return-value]
     # bottom_up
-    if not root.is_leaf:
-        root = root.with_children(*(map_nodes(c, fn, order) for c in root.children))  # type: ignore[arg-type]
+    if not root._is_leaf:
+        root = root._with_children(*(map_nodes(c, fn, order) for c in root.children))  # type: ignore[arg-type]
     return fn(root)  # type: ignore[return-value]
 
 
@@ -122,16 +122,16 @@ def unwrap(
     """Remove single-child wrapper nodes matching pred, splicing child up."""
 
     def _process(node: Nu) -> Nu:
-        if node.is_leaf:
+        if node._is_leaf:
             return node
         new_children: list[Nu] = []
         for child in node.children:
             processed = _process(child)
-            if pred(processed) and processed.child_count == 1:
+            if pred(processed) and processed._child_count == 1:
                 new_children.append(processed.children[0])
             else:
                 new_children.append(processed)
-        return node.with_children(*new_children)
+        return node._with_children(*new_children)
 
     return _process(root)  # type: ignore[return-value]
 
@@ -149,7 +149,7 @@ def prune(root: Nu, pred: Callable[[Nu], bool]) -> Nu | None:
     if pred(root):
         return None
 
-    if root.is_leaf:
+    if root._is_leaf:
         return root
 
     new_children: list[Nu] = []
@@ -161,7 +161,7 @@ def prune(root: Nu, pred: Callable[[Nu], bool]) -> Nu | None:
     if len(new_children) == len(root.children):
         if all(n is o for n, o in zip(new_children, root.children, strict=True)):
             return root
-    return root.with_children(*new_children)  # type: ignore[arg-type]
+    return root._with_children(*new_children)  # type: ignore[arg-type]
 
 
 def conditional_wrap(
@@ -178,7 +178,7 @@ def conditional_wrap(
     whole by the nearest non-matching ancestor, giving the biggest
     matching subtree at each level.
     """
-    if pred(root) or root.is_leaf:
+    if pred(root) or root._is_leaf:
         return root
 
     new_children: list[Nu] = []
@@ -188,4 +188,4 @@ def conditional_wrap(
         else:
             new_children.append(conditional_wrap(child, pred, wrapper))
 
-    return root.with_children(*new_children)  # type: ignore[arg-type]
+    return root._with_children(*new_children)  # type: ignore[arg-type]

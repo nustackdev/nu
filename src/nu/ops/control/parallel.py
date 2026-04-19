@@ -1,4 +1,9 @@
-"""Parallel ops -- concurrent execution via asyncio."""
+"""Parallel ops -- Race, All, Any.
+
+(Parallel removed: parallel composition is `a | b` on the Nu base,
+building a NuIndepComm. Race/All/Any stay: they are distinct semantics
+over concurrent children - first-completed, fail-fast, succeed-if-any.)
+"""
 
 from __future__ import annotations
 
@@ -16,24 +21,8 @@ if TYPE_CHECKING:
 __all__ = [
     "All",
     "Any",
-    "Parallel",
     "Race",
 ]
-
-
-class Parallel(Op):
-    """Execute children concurrently via asyncio.gather.
-
-    Children: ``[*children]``
-    """
-
-    def __init__(self, *children: Nu) -> None:
-        super().__init__(*children)
-
-    async def execute(self, ctx: Context) -> None:
-        if not self.children:
-            return
-        await asyncio.gather(*(child.execute(ctx) for child in self.children))
 
 
 class Race(Op):

@@ -109,7 +109,7 @@ def _label(node: _Node) -> str:
         return cls
 
     if _is_value(node):
-        if hasattr(node, "source") and node.is_leaf:
+        if hasattr(node, "source") and node._is_leaf:
             return f"{cls}({node.source!r})"
         return cls
 
@@ -143,7 +143,7 @@ def _attrs(node: _Node) -> dict[str, Any]:
         func = node._func
         attrs["func"] = getattr(func, "__name__", repr(func))
 
-    if hasattr(node, "source") and node.is_leaf:
+    if hasattr(node, "source") and node._is_leaf:
         attrs["source"] = repr(node.source)
 
     if hasattr(node, "is_self_pure"):
@@ -194,7 +194,7 @@ def _serialize_node(node: _Node) -> dict[str, Any]:
         "category": category,
         "label": _label(node),
         "pure": pure,
-        "leaf": node.is_leaf,
+        "leaf": node._is_leaf,
         "attrs": _attrs(node),
         "children": children,
     }

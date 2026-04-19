@@ -1,52 +1,39 @@
-"""Basic Nu example - addition of numbers.
+"""Basic Nu example - pure arithmetic under the new evaluator.
 
-Shows the core pattern: build a tree, then evaluate it.
+Shows the core pattern: build a tree, open it, take the value.
 """
 
 import asyncio
 
-from nu import BinaryCalc, Context, Literal
-from nu_debugger import print_tree
+import nu
 
 
-# A leaf Nu that holds a number
-class Num(Literal[float | int]):
-    pass
+async def main() -> None:
+    ctx = nu.Context()
 
+    # Build (3 + 4) * 2
+    expr = nu.MulOp(nu.AddOp(nu.Literal(3), nu.Literal(4)), nu.Literal(2))
 
-# A pure binary op: addition
-class Add(BinaryCalc[float | int]):
-    def apply(self, left: float | int, right: float | int) -> float | int:
-        return left + right
+    # single-yield value via `first`
+    print(f"(3 + 4) * 2 = {await nu.first(expr, ctx)}")
 
+    # `collect` gives a list (one element for a yield-once tree)
+    print(f"collect: {await nu.collect(expr, ctx)}")
 
-# A pure binary op: multiplication
-class Mul(BinaryCalc[float | int]):
-    def apply(self, left: float | int, right: float | int) -> float | int:
-        return left * right
+    # `execute` drains and returns None (algebra-faithful)
+    result = await nu.execute(expr, ctx)
+    print(f"execute returns: {result}")
 
+    # Sequential composition with `>>`
+    seq = nu.Literal(1) >> nu.Literal(2) >> nu.Literal(3)
+    print(f"1 >> 2 >> 3 collect: {await nu.collect(seq, ctx)}")
 
-async def main():
-    # Build the tree: (3 + 4) * 2
-    tree = Mul(
-        Add(
-            Num(3),
-            Num(4),
-        ),
-        Num(2),
-    )
+    # Parallel composition with `|` (interleaves)
+    par = nu.Literal("a") | nu.Literal("b") | nu.Literal("c")
+    print(f"a | b | c collect: {sorted(await nu.collect(par, ctx))}")
 
-    # Inspect it
-    print("Tree:")
-    print_tree(tree)
-
-    # Evaluate it
-    ctx = Context()
-    result = await tree.execute(ctx)
-    print(f"\nResult: {result}")
-
-    # Purity check
-    print(f"Pure: {tree.is_subtree_pure}")
+    # Purity
+    print(f"Pure: {nu.is_pure(expr)}")
 
 
 asyncio.run(main())

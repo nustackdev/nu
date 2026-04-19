@@ -109,7 +109,7 @@ def _walk(tree: Nu, scope: Hashable | None, enclosing: tuple) -> Nu:
         if tree.scope is scope:
             return tree
         child_enclosing = enclosing + (tree.scope,)
-        if tree.is_leaf:
+        if tree._is_leaf:
             return tree
         new_children = []
         changed = False
@@ -120,7 +120,7 @@ def _walk(tree: Nu, scope: Hashable | None, enclosing: tuple) -> Nu:
                 changed = True
         if not changed:
             return tree
-        return tree.with_children(*new_children)
+        return tree._with_children(*new_children)
 
     kwargs: dict = {}
     if scope is not None:
@@ -156,7 +156,7 @@ def _walk(tree: Nu, scope: Hashable | None, enclosing: tuple) -> Nu:
                 return Snapshot(tree, **kwargs)
 
     # Recurse
-    if tree.is_leaf:
+    if tree._is_leaf:
         return tree
 
     new_children = []
@@ -169,7 +169,7 @@ def _walk(tree: Nu, scope: Hashable | None, enclosing: tuple) -> Nu:
 
     if not changed:
         return tree
-    return tree.with_children(*new_children)
+    return tree._with_children(*new_children)
 
 
 def auto_atomic(tree: Nu, scope: Hashable | None = None) -> Nu:

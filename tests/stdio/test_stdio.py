@@ -74,7 +74,7 @@ class TestStdioRef:
         assert len(s) == 3
 
     def test_is_leaf(self):
-        assert STDOUT.is_leaf
+        assert STDOUT._is_leaf
 
     def test_resolve(self):
         ctx = _make_ctx()

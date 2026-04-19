@@ -1,4 +1,7 @@
-"""Control ops -- Seq, If, While, DoWhile, Forever, Switch."""
+"""Control ops -- If, While, DoWhile, Forever, Switch.
+
+(Seq removed: sequential composition is `a > b` on the Nu base.)
+"""
 
 from __future__ import annotations
 
@@ -16,24 +19,9 @@ __all__ = [
     "DoWhile",
     "Forever",
     "If",
-    "Seq",
     "Switch",
     "While",
 ]
-
-
-class Seq(Op):
-    """Execute children sequentially.
-
-    Children: ``[*children]``
-    """
-
-    def __init__(self, *children: Nu) -> None:
-        super().__init__(*children)
-
-    async def execute(self, ctx: Context) -> None:
-        for child in self.children:
-            await child.execute(ctx)
 
 
 class If(Op):
@@ -56,7 +44,7 @@ class If(Op):
     async def execute(self, ctx: Context) -> None:
         if await self.children[0].execute(ctx):
             await self.children[1].execute(ctx)
-        elif self.child_count > 2:
+        elif self._child_count > 2:
             await self.children[2].execute(ctx)
 
 

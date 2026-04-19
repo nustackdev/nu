@@ -68,7 +68,7 @@ def _count(tree, cls, scope_sentinel=object()) -> int:
                 n += 1
             elif node.scope is scope_sentinel:
                 n += 1
-        if not node.is_leaf:
+        if not node._is_leaf:
             stack.extend(node.children)
     return n
 
@@ -81,7 +81,7 @@ def _collect(tree, cls):
         node = stack.pop()
         if isinstance(node, cls):
             out.append(node)
-        if not node.is_leaf:
+        if not node._is_leaf:
             # reverse to keep pre-order-ish
             stack.extend(reversed(node.children))
     return out
@@ -98,7 +98,7 @@ def _structure(tree) -> str:
         cls_name = type(tree).__name__
         inner = ",".join(_structure(c) for c in tree.children if not isinstance(c, type(None)))
         return f"{cls_name}({scope_name}){{{inner}}}"
-    if tree.is_leaf:
+    if tree._is_leaf:
         return ""
     parts = [_structure(c) for c in tree.children]
     parts = [p for p in parts if p]

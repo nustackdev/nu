@@ -70,7 +70,7 @@ class Delay(Op):
     async def execute(self, ctx: Context) -> None:
         delay = await self.children[0].execute(ctx)
         await asyncio.sleep(delay)
-        if self.child_count > 1:
+        if self._child_count > 1:
             await self.children[1].execute(ctx)
 
 
@@ -123,7 +123,7 @@ class Throttle(Op):
         if now - self._last_time < interval:
             return  # drop
         self._last_time = now
-        if self.child_count > 1:
+        if self._child_count > 1:
             await self.children[1].execute(ctx)
 
 
@@ -147,7 +147,7 @@ class Debounce(Op):
         delay = await self.children[0].execute(ctx)
         if self._pending is not None and not self._pending.done():
             self._pending.cancel()
-        if self.child_count > 1:
+        if self._child_count > 1:
             self._pending = asyncio.create_task(self._run_after(delay, ctx))
 
     async def _run_after(self, delay: float, ctx: Context) -> None:

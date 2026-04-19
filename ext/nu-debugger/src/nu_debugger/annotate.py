@@ -86,7 +86,7 @@ def annotate_retries(tree: Nu) -> Nu:
         on_af = Seq(log_af, existing_af) if existing_af else log_af
         on_fail = Seq(log_fail, existing_fail) if existing_fail else log_fail
 
-        return node.with_children(
+        return node._with_children(
             *node.children[:4],
             on_af,
             node.children[5],  # on_success — unchanged
@@ -129,11 +129,11 @@ def annotate_steps(tree: Nu) -> Nu:
                         )
                     else:
                         new_children.append(_walk(child, f"{seq_path}."))
-                return node.with_children(*new_children)
+                return node._with_children(*new_children)
 
         # Log nodes: bake the current path
         if isinstance(node, Log) and path:
-            clone = node.with_children(*node.children)
+            clone = node._with_children(*node.children)
             clone._path = path.rstrip(".")
             return clone
 
@@ -143,7 +143,7 @@ def annotate_steps(tree: Nu) -> Nu:
         new_children = [_walk(child, path) for child in node.children]
         if all(new is old for new, old in zip(new_children, node.children, strict=False)):
             return node
-        return node.with_children(*new_children)
+        return node._with_children(*new_children)
 
     return _walk(tree, "")
 
@@ -162,7 +162,7 @@ def set_logger_name(tree: Nu, name: str) -> Nu:
     def _rename(node: Nu) -> Nu:
         if not isinstance(node, (Log, _StepSpan)):
             return node
-        clone = node.with_children(*node.children[:2], Literal(name), *node.children[3:])
+        clone = node._with_children(*node.children[:2], Literal(name), *node.children[3:])
         return clone
 
     return map_nodes(tree, _rename, order="bottom_up")

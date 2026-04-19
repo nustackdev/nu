@@ -90,14 +90,14 @@ def test_op_wraps_bool_before_int():
 def test_unary_operand():
     op = _NegOp(Literal(5))
     assert op.operand is op.children[0]
-    assert op.child_count == 1
+    assert op._child_count == 1
 
 
 def test_binary_left_right():
     op = _AddOp(Literal(3), Literal(4))
     assert op.left is op.children[0]
     assert op.right is op.children[1]
-    assert op.child_count == 2
+    assert op._child_count == 2
 
 
 def test_ternary_first_second_third():
@@ -105,12 +105,12 @@ def test_ternary_first_second_third():
     assert op.first is op.children[0]
     assert op.second is op.children[1]
     assert op.third is op.children[2]
-    assert op.child_count == 3
+    assert op._child_count == 3
 
 
 def test_nary_variable_children():
     op = _SumOp(Literal(1), Literal(2), Literal(3), Literal(4))
-    assert op.child_count == 4
+    assert op._child_count == 4
 
 
 # ---------------------------------------------------------------------------
@@ -142,19 +142,19 @@ async def test_nary_execute(ctx):
 def test_unary_is_op():
     op = _NegOp(1)
     assert isinstance(op, Op)
-    assert op.child_count == 1
+    assert op._child_count == 1
 
 
 def test_binary_is_op():
     op = _AddOp(1, 2)
     assert isinstance(op, Op)
-    assert op.child_count == 2
+    assert op._child_count == 2
 
 
 def test_ternary_is_op():
     op = _ClampOp(10, 0, 5)
     assert isinstance(op, Op)
-    assert op.child_count == 3
+    assert op._child_count == 3
 
 
 # ---------------------------------------------------------------------------
