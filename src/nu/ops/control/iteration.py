@@ -47,6 +47,7 @@ class ForRange(Op):
         super().__init__(*children)
 
     async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        """Execute body for each i in range(start, stop, step)."""
         start = await self.children[0].first(ctx)
         stop = await self.children[1].first(ctx)
         step = await self.children[2].first(ctx)
@@ -91,6 +92,7 @@ class ForEach(Op):
         super().__init__(*children)
 
     async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        """Execute body for each element of items."""
         body = self.children[1]
 
         child_idx = 2
@@ -102,17 +104,19 @@ class ForEach(Op):
         if self._has_index:
             index_key = await self.children[child_idx].first(ctx)
 
-        # TODO `items` treated as single-yield collection. Revisit
-        # when stream-Op rewrite lands (Tier 5) to support multi-yield sources.
-        items = await self.children[0].first(ctx)
-        for i, elem in enumerate(items):
-            if item_key is not None:
-                ctx.attrs[item_key] = elem
-            if index_key is not None:
-                ctx.attrs[index_key] = i
-            async with aclosing(body.open(ctx)) as gen:
-                async for v in gen:
-                    yield v
+        # Keep items generator open across body iterations so any scope
+        # opened by the items subtree (e.g. Snapshot) stays alive while
+        # the body reads from its view.
+        async with aclosing(self.children[0].open(ctx)) as items_gen:
+            async for items in items_gen:
+                for i, elem in enumerate(items):
+                    if item_key is not None:
+                        ctx.attrs[item_key] = elem
+                    if index_key is not None:
+                        ctx.attrs[index_key] = i
+                    async with aclosing(body.open(ctx)) as gen:
+                        async for v in gen:
+                            yield v
 
 
 class Fold(Op):
@@ -136,6 +140,7 @@ class Fold(Op):
         super().__init__(items, initial, body, acc, item)
 
     async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        """Execute body for each element, threading acc through ctx.attrs."""
         initial = await self.children[1].first(ctx)
         body = self.children[2]
         acc_key: str = await self.children[3].first(ctx)
@@ -143,10 +148,12 @@ class Fold(Op):
 
         ctx.attrs[acc_key] = initial
 
-        # TODO single-yield items source; revisit with Tier 5.
-        items = await self.children[0].first(ctx)
-        for elem in items:
-            ctx.attrs[item_key] = elem
-            async with aclosing(body.open(ctx)) as gen:
-                async for v in gen:
-                    yield v
+        # Keep items generator open so any scope opened by the items
+        # subtree (e.g. Snapshot) stays alive while the body reads from it.
+        async with aclosing(self.children[0].open(ctx)) as items_gen:
+            async for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    async with aclosing(body.open(ctx)) as gen:
+                        async for v in gen:
+                            yield v

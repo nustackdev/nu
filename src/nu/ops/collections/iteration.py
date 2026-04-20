@@ -10,13 +10,15 @@ condition/transform Nus can read them via AttrRef.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from contextlib import aclosing
 from typing import TYPE_CHECKING
 
 from nu.terms.op import Command
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from nu.context import Context
     from nu.terms import Arg, Nu, StrArg
 
@@ -51,15 +53,17 @@ class Filter(Command):
         super().__init__(items, condition, body, item)
 
     async def run(self, ctx: Context) -> None:
-        items = await self.children[0].first(ctx)
+        """Execute body for each item where condition holds."""
         condition = self.children[1]
         body = self.children[2]
         item_key: str = await self.children[3].first(ctx)
 
-        for elem in items:
-            ctx.attrs[item_key] = elem
-            if await condition.first(ctx):
-                await body.execute(ctx)
+        async with aclosing(self.children[0].open(ctx)) as items_gen:
+            async for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    if await condition.first(ctx):
+                        await body.execute(ctx)
 
 
 class Map(Command):
@@ -81,15 +85,17 @@ class Map(Command):
         super().__init__(items, transform, item, output)
 
     async def run(self, ctx: Context) -> None:
-        items = await self.children[0].first(ctx)
+        """Collect transform(item) for each item into output_key."""
         transform = self.children[1]
         item_key: str = await self.children[2].first(ctx)
         output_key: str = await self.children[3].first(ctx)
 
         results = []
-        for elem in items:
-            ctx.attrs[item_key] = elem
-            results.append(await transform.first(ctx))
+        async with aclosing(self.children[0].open(ctx)) as items_gen:
+            async for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    results.append(await transform.first(ctx))
         ctx.attrs[output_key] = results
 
 
@@ -110,16 +116,18 @@ class TakeWhile(Command):
         super().__init__(items, condition, body, item)
 
     async def run(self, ctx: Context) -> None:
-        items = await self.children[0].first(ctx)
+        """Execute body while condition holds; stop on first false."""
         condition = self.children[1]
         body = self.children[2]
         item_key: str = await self.children[3].first(ctx)
 
-        for elem in items:
-            ctx.attrs[item_key] = elem
-            if not await condition.first(ctx):
-                break
-            await body.execute(ctx)
+        async with aclosing(self.children[0].open(ctx)) as items_gen:
+            async for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    if not await condition.first(ctx):
+                        return
+                    await body.execute(ctx)
 
 
 class Unique(Command):
@@ -139,18 +147,20 @@ class Unique(Command):
         super().__init__(items, key, body, item)
 
     async def run(self, ctx: Context) -> None:
-        items = await self.children[0].first(ctx)
+        """Execute body for each item whose key has not been seen."""
         key_expr = self.children[1]
         body = self.children[2]
         item_key: str = await self.children[3].first(ctx)
 
         seen: set = set()
-        for elem in items:
-            ctx.attrs[item_key] = elem
-            k = await key_expr.first(ctx)
-            if k not in seen:
-                seen.add(k)
-                await body.execute(ctx)
+        async with aclosing(self.children[0].open(ctx)) as items_gen:
+            async for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    k = await key_expr.first(ctx)
+                    if k not in seen:
+                        seen.add(k)
+                        await body.execute(ctx)
 
 
 class Find(Command):
@@ -173,16 +183,18 @@ class Find(Command):
         super().__init__(items, condition, item, output)
 
     async def run(self, ctx: Context) -> None:
-        items = await self.children[0].first(ctx)
+        """Store the first matching element in output_key."""
         condition = self.children[1]
         item_key: str = await self.children[2].first(ctx)
         output_key: str = await self.children[3].first(ctx)
 
-        for elem in items:
-            ctx.attrs[item_key] = elem
-            if await condition.first(ctx):
-                ctx.attrs[output_key] = elem
-                return
+        async with aclosing(self.children[0].open(ctx)) as items_gen:
+            async for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    if await condition.first(ctx):
+                        ctx.attrs[output_key] = elem
+                        return
 
 
 class FindIndex(Command):
@@ -205,16 +217,18 @@ class FindIndex(Command):
         super().__init__(items, condition, item, output)
 
     async def run(self, ctx: Context) -> None:
-        items = await self.children[0].first(ctx)
+        """Store the index of the first matching element in output_key."""
         condition = self.children[1]
         item_key: str = await self.children[2].first(ctx)
         output_key: str = await self.children[3].first(ctx)
 
-        for i, elem in enumerate(items):
-            ctx.attrs[item_key] = elem
-            if await condition.first(ctx):
-                ctx.attrs[output_key] = i
-                return
+        async with aclosing(self.children[0].open(ctx)) as items_gen:
+            async for items in items_gen:
+                for i, elem in enumerate(items):
+                    ctx.attrs[item_key] = elem
+                    if await condition.first(ctx):
+                        ctx.attrs[output_key] = i
+                        return
 
 
 class GroupBy(Command):
@@ -238,17 +252,19 @@ class GroupBy(Command):
         super().__init__(items, key, body, item, group)
 
     async def run(self, ctx: Context) -> None:
-        items = await self.children[0].first(ctx)
+        """Group items by key, execute body once per group."""
         key_expr = self.children[1]
         body = self.children[2]
         item_key: str = await self.children[3].first(ctx)
         group_key: str = await self.children[4].first(ctx)
 
         groups: dict = {}
-        for elem in items:
-            ctx.attrs[item_key] = elem
-            k = await key_expr.first(ctx)
-            groups.setdefault(k, []).append(elem)
+        async with aclosing(self.children[0].open(ctx)) as items_gen:
+            async for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    k = await key_expr.first(ctx)
+                    groups.setdefault(k, []).append(elem)
 
         for k, group_items in groups.items():
             ctx.attrs[item_key] = k
@@ -277,7 +293,7 @@ class Partition(Command):
         super().__init__(items, condition, item, matches, rest)
 
     async def run(self, ctx: Context) -> None:
-        items = await self.children[0].first(ctx)
+        """Split items into matches/rest by condition."""
         condition = self.children[1]
         item_key: str = await self.children[2].first(ctx)
         matches_key: str = await self.children[3].first(ctx)
@@ -285,12 +301,14 @@ class Partition(Command):
 
         matches_list: list = []
         rest_list: list = []
-        for elem in items:
-            ctx.attrs[item_key] = elem
-            if await condition.first(ctx):
-                matches_list.append(elem)
-            else:
-                rest_list.append(elem)
+        async with aclosing(self.children[0].open(ctx)) as items_gen:
+            async for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    if await condition.first(ctx):
+                        matches_list.append(elem)
+                    else:
+                        rest_list.append(elem)
         ctx.attrs[matches_key] = matches_list
         ctx.attrs[rest_key] = rest_list
 
@@ -315,16 +333,18 @@ class ToDict(Command):
         super().__init__(items, key, value, item, output)
 
     async def run(self, ctx: Context) -> None:
-        items = await self.children[0].first(ctx)
+        """Build a dict from items via key and value expressions."""
         key_expr = self.children[1]
         value_expr = self.children[2]
         item_key: str = await self.children[3].first(ctx)
         output_key: str = await self.children[4].first(ctx)
 
         result: dict = {}
-        for elem in items:
-            ctx.attrs[item_key] = elem
-            k = await key_expr.first(ctx)
-            v = await value_expr.first(ctx)
-            result[k] = v
+        async with aclosing(self.children[0].open(ctx)) as items_gen:
+            async for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    k = await key_expr.first(ctx)
+                    v = await value_expr.first(ctx)
+                    result[k] = v
         ctx.attrs[output_key] = result
