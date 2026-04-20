@@ -1,4 +1,4 @@
-"""Shape data -> ANSI tree rendering.
+"""Shape + storage -> tree rendering.
 
 Walks Shape._slots to discover field names and ref types,
 then renders the corresponding data from the backing storage.
@@ -6,8 +6,7 @@ then renders the corresponding data from the backing storage.
 Accepts both plain dicts (dict substrate) and PV views (lazy iteration).
 
 Classification is duck-typed via slot.ref_cls name and slot.kwargs,
-so no substrate imports are needed. Slot type annotations are shown
-inline so you always know the declared type next to the actual value.
+so no substrate imports are needed.
 """
 
 from __future__ import annotations
@@ -15,7 +14,10 @@ from __future__ import annotations
 import sys
 from collections.abc import Mapping, Sequence
 from itertools import islice
-from typing import Any
+from typing import Any, Literal
+
+
+__all__ = ["render_shape"]
 
 
 # ── ANSI codes ────────────────────────────────────────────────────────────────
@@ -33,18 +35,11 @@ BLUE = "\033[34m"
 
 # ── Box-drawing ───────────────────────────────────────────────────────────────
 
-_BRANCH = "\u251c\u2500\u2500"  # ├──
-_LAST = "\u2514\u2500\u2500"  # └──
-_PIPE = "\u2502  "  # │
+_BRANCH = "\u251c\u2500\u2500"
+_LAST = "\u2514\u2500\u2500"
+_PIPE = "\u2502  "
 _SPACE = "   "
 
-# ── Defaults ──────────────────────────────────────────────────────────────────
-
-MAX_ITEMS = 20
-MAX_DEPTH = 10
-MAX_STR = 80
-
-# Duck-typed alias
 _Any = Any
 
 
@@ -90,14 +85,11 @@ def _type_tag(slot: _Any, c: bool) -> str:
     ref_name = slot.ref_cls.__name__
     kw = slot.kwargs
 
-    # Strip substrate prefix and "Ref" suffix to get a human-friendly type name.
-    # e.g. "IntRef" -> "int", "FloatRef" -> "float", "MappingRef" -> "dict"
     short = ref_name
     for prefix in ("Mutable", "Reactive"):
         if short.startswith(prefix):
             short = short[len(prefix) :]
 
-    # Map common ref names to Python type names
     _type_map: dict[str, str] = {
         "IntRef": "int",
         "FloatRef": "float",
@@ -117,7 +109,6 @@ def _type_tag(slot: _Any, c: bool) -> str:
     fallback = short.removesuffix("Ref").lower() if short.endswith("Ref") else short
     base = _type_map.get(short) or fallback
 
-    # Enrich with kwargs
     shape_type = kw.get("shape_type")
     value_type = kw.get("value_type")
     item_type = kw.get("item_type")
@@ -152,7 +143,6 @@ def _type_tag(slot: _Any, c: bool) -> str:
 
 
 def _classify(slot: _Any) -> str:
-    """Classify slot -> 'scalar'|'dict'|'list'|'set'|'shape'|'shapes_dict'|'shapes_list'."""
     name = slot.ref_cls.__name__
     has_shape = "shape_type" in slot.kwargs
 
@@ -176,12 +166,10 @@ def _classify(slot: _Any) -> str:
 
 
 def _is_view(data: object) -> bool:
-    """Check if data is a PV view (has container + open_child)."""
     return hasattr(data, "container") and hasattr(data, "open_child")
 
 
 def _find_list_view(view: object) -> type | None:
-    """Discover ListView class from a view's module package."""
     mod_name = type(view).__module__
     pkg_name = mod_name.rsplit(".", 1)[0] if "." in mod_name else mod_name
     pkg = sys.modules.get(pkg_name)
@@ -189,24 +177,17 @@ def _find_list_view(view: object) -> type | None:
 
 
 def _view_child(data: object, name: str, kind: str) -> object:
-    """Get a field value from a PV view, lazily when possible.
-
-    - Scalar fields: reads primitive directly from container (instant).
-    - Container fields: opens a child view (lazy, no full extraction).
-    """
     try:
         ct = data.container.get_child_type(name)  # type: ignore[union-attr]
     except Exception:
         return None
 
-    # Primitive child → instant read
     if ct.name == "PRIMITIVE":
         try:
             return data.container.get_child_primitive(name)  # type: ignore[union-attr]
         except Exception:
             return None
 
-    # Container child → open as lazy view
     try:
         if kind in ("list", "shapes_list"):
             list_cls = _find_list_view(data)
@@ -218,14 +199,12 @@ def _view_child(data: object, name: str, kind: str) -> object:
 
 
 def _get_field(data: object, name: str, kind: str) -> object:
-    """Get a field value from data (dict or view), lazily for views."""
     if data is None:
         return None
     if isinstance(data, dict):
         return data.get(name)
     if _is_view(data):
         return _view_child(data, name, kind)
-    # Generic Mapping fallback
     if isinstance(data, Mapping):
         try:
             return data[name]
@@ -234,27 +213,15 @@ def _get_field(data: object, name: str, kind: str) -> object:
     return None
 
 
-# ── Type checks (dict + views) ──────────────────────────────────────────────
-
-
 def _is_mapping(data: object) -> bool:
-    """Check if data is a dict-like mapping (dict or Mapping view)."""
     return isinstance(data, Mapping)
 
 
 def _is_sequence(data: object) -> bool:
-    """Check if data is a list-like sequence (list or Sequence view, not str/bytes)."""
     return isinstance(data, Sequence) and not isinstance(data, (str, bytes))
 
 
 def _safe_len(data: object, batch_count: int) -> int | None:
-    """Get collection length, or ``None`` if the true size is unknown.
-
-    Returns the real length when ``len(data)`` is trustworthy (≥ *batch_count*).
-    When metadata is stale (PV views populated via child ops) or ``len()`` is
-    unavailable, returns ``None`` so callers can show "N+ items" instead of a
-    wrong number.
-    """
     try:
         n = len(data)  # type: ignore[arg-type]
         if n >= batch_count:
@@ -264,13 +231,9 @@ def _safe_len(data: object, batch_count: int) -> int | None:
     return None
 
 
-# ── Value formatting ─────────────────────────────────────────────────────────
-
-
 def _fval(value: object, c: bool, ms: int) -> str:
-    """Format a scalar value with optional ANSI."""
     if value is None:
-        return _dim("\u2205", c)  # ∅
+        return _dim("\u2205", c)
 
     if isinstance(value, bool):
         t = str(value).lower()
@@ -291,21 +254,51 @@ def _fval(value: object, c: bool, ms: int) -> str:
     return t
 
 
+# ── Storage normalization ─────────────────────────────────────────────────────
+
+
+def _normalize(storage: object) -> object:
+    if storage is None:
+        return None
+    if isinstance(storage, dict):
+        return storage
+    if hasattr(storage, "container") and hasattr(storage, "open_child"):
+        return storage
+    if hasattr(storage, "extract"):
+        data = storage.extract()  # type: ignore[union-attr]
+        return data if isinstance(data, dict) else None
+    return None
+
+
 # ── Public entry ──────────────────────────────────────────────────────────────
 
 
-def render(
+def render_shape(
     shape_cls: _Any,
-    data: object,
+    storage: object = None,
     *,
-    color: bool = True,
-    max_items: int = MAX_ITEMS,
-    max_depth: int = MAX_DEPTH,
-    max_str: int = MAX_STR,
+    as_: Literal["ansi", "plain"] = "ansi",
+    max_items: int = 20,
+    max_depth: int = 10,
+    max_str: int = 80,
 ) -> str:
-    """Render shape data as a tree string."""
-    lines: list[str] = []
-    lines.append(_shape_hdr(shape_cls, color))
+    """Render a Shape + backing storage as a tree string.
+
+    Args:
+        shape_cls: Shape class (has ``_slots`` with typed slot definitions).
+        storage: Backing storage -- a plain dict, or a PV view (lazy access).
+        as_: Output format. ``"ansi"`` (default) emits ANSI color codes,
+            ``"plain"`` emits plain text.
+        max_items: Max collection items before truncation.
+        max_depth: Max nesting depth.
+        max_str: Max string value length before truncation.
+
+    Returns:
+        Multi-line string.
+    """
+    color = as_ == "ansi"
+    data = _normalize(storage)
+    lines: list[str] = [_shape_hdr(shape_cls, color)]
     _slots(shape_cls, data, lines, "", 0, color, max_items, max_depth, max_str)
     return "\n".join(lines)
 
@@ -324,7 +317,6 @@ def _slots(
     md: int,
     ms: int,
 ) -> None:
-    """Render all slots of a shape."""
     if depth >= md:
         lines.append(f"{prefix}{_conn(True, c)} {_dim('... (max depth)', c)}")
         return
@@ -337,9 +329,6 @@ def _slots(
         kind = _classify(slot)
         fd = _get_field(data, name, kind)
         _field(name, kind, slot, fd, lines, prefix, il, depth, c, mi, md, ms)
-
-
-# ── Field rendering ──────────────────────────────────────────────────────────
 
 
 def _field(
@@ -356,7 +345,6 @@ def _field(
     md: int,
     ms: int,
 ) -> None:
-    """Render a single field."""
     cn = _conn(il, c)
     fn = _fname(name, c)
     co = _colon(c)
@@ -392,9 +380,6 @@ def _field(
         _sh_list(fn, tt, st, data, lines, prefix, cn, co, cp, depth, c, mi, md, ms)
 
 
-# ── Primitive collections ─────────────────────────────────────────────────────
-
-
 def _prim_dict(
     fn: str,
     tt: str,
@@ -412,7 +397,6 @@ def _prim_dict(
         lines.append(f"{prefix}{cn} {fn} {tt}{co} {_dim('{}', c)}")
         return
 
-    # Materialize bounded batch (lazy — touches at most mi+1 items)
     batch = list(islice(data.items(), mi + 1))  # type: ignore[union-attr]
     if not batch:
         lines.append(f"{prefix}{cn} {fn} {tt}{co} {_dim('{}', c)}")
@@ -498,9 +482,6 @@ def _prim_set(
         lines.append(
             f"{prefix}{cn} {fn} {tt}{co} {_dim('{', c)}{head}, {_dim(f'... +{len(vals) - 5}', c)}{_dim('}', c)}"
         )
-
-
-# ── Shape collections ─────────────────────────────────────────────────────────
 
 
 def _sh_dict(

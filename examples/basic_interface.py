@@ -7,7 +7,7 @@ Interfaces are construction-time sugar that produce Nu trees.
 import asyncio
 
 from nu import BoolI, Context, IntI, StrI
-from nu_debugger import print_tree
+from nu_inspect import render_nu
 
 
 async def main():
@@ -18,7 +18,7 @@ async def main():
     y = IntI(3)
     expr = (x + y) * 2
     print("Tree: (5 + 3) * 2")
-    print_tree(expr)
+    print(render_nu(expr))
     print(f"= {await expr.execute(ctx)}\n")
 
     # --- Int/float promotion ---
@@ -55,7 +55,7 @@ async def main():
     # --- Tree inspection ---
     tree = (IntI(2) ** 10) > 1000
     print("Tree: (2 ** 10) > 1000")
-    print_tree(tree)
+    print(render_nu(tree))
     print(f"= {await tree.execute(ctx)}")
 
 

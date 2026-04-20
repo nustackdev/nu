@@ -297,7 +297,7 @@ async def main() -> None:
     import argparse
     import logging
 
-    import nu_debugger
+    import nu_inspect
     from nu_virtuals.presets import rocksdb_storage_inmemory
     from virtuals import Navigator
 
@@ -357,10 +357,10 @@ async def main() -> None:
             app = nu_dict.inline_refs(app)
             app = nu_virtuals.inline_refs(app)
             app = nu_virtuals.auto_atomic(app)
-            app = nu_debugger.set_logger_name(app, "sol")
+            app = nu_inspect.set_logger_name(app, "sol")
 
             # Print the app
-            nu_debugger.print_tree(app)
+            print(nu_inspect.render_nu(app))
 
             # Execute the app
             await app.execute(ctx)

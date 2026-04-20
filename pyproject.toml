@@ -15,9 +15,7 @@ dependencies = [
     "nu-virtuals[infra]",
     "nu-dict",
     "nu-distributed",
-    "nu-shape-lens",
-    "nu-tree-view",
-    "nu-debugger",
+    "nu-inspect",
 ]
 
 # =============================================================================
@@ -34,9 +32,7 @@ members = [
     "ext/nu-dict",
 
     # Extensions — tools
-    "ext/nu-shape-lens",
-    "ext/nu-tree-view",
-    "ext/nu-debugger",
+    "ext/nu-inspect",
 ]
 
 [tool.uv.sources]
@@ -46,9 +42,7 @@ nu = { workspace = true }
 nu-distributed = { workspace = true }
 nu-virtuals = { workspace = true }
 nu-dict = { workspace = true }
-nu-shape-lens = { workspace = true }
-nu-tree-view = { workspace = true }
-nu-debugger = { workspace = true }
+nu-inspect = { workspace = true }
 # In-house libs (local editable)
 virtuals-py = { path = "../virtuals", editable = true }
 composables = { path = "../composables", editable = true }
@@ -130,8 +124,7 @@ src = [
     "src",
     "ext/nu-virtuals/src",
     "ext/nu-dict/src",
-    "ext/nu-shape-lens/src",
-    "ext/nu-tree-view/src",
+    "ext/nu-inspect/src",
 ]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
 
@@ -203,7 +196,7 @@ convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = [
-    "nu", "nu_distributed", "nu_virtuals", "nu_dict", "nu_shape_lens", "nu_tree_view", "nu_debugger",
+    "nu", "nu_distributed", "nu_virtuals", "nu_dict", "nu_inspect",
     "virtuals", "composables", "invisibles",
     ]
 force-single-line = false

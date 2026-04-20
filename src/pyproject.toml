@@ -37,9 +37,7 @@ distributed = [
 ]
 all = [
     "nu[distributed]",
-    "nu-shape-lens",
-    "nu-tree-view",
-    "nu-debugger",
+    "nu-inspect",
 ]
 
 [project.urls]

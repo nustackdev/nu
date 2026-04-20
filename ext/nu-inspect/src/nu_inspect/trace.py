@@ -54,14 +54,8 @@ def annotate_retries(tree: Nu) -> Nu:
     """Add logging hooks to all Retry nodes.
 
     Wraps every Retry with Log-based hooks for ``on_attempt_fail`` and
-    ``on_fail``.  If the Retry already has hooks, they are preserved —
+    ``on_fail``. If the Retry already has hooks, they are preserved --
     a ``Log(...) >> existing_hook`` wraps the original.
-
-    Args:
-        tree: Tree root.
-
-    Returns:
-        New tree with annotated Retry nodes.
     """
 
     def _annotate(node: Nu) -> Nu:
@@ -89,7 +83,7 @@ def annotate_retries(tree: Nu) -> Nu:
         return node._with_children(
             *node.children[:4],
             on_af,
-            node.children[5],  # on_success — unchanged
+            node.children[5],
             on_fail,
         )
 
@@ -97,23 +91,9 @@ def annotate_retries(tree: Nu) -> Nu:
 
 
 def annotate_steps(tree: Nu) -> Nu:
-    """Wrap sequential composition children in step-tracking spans with baked tree paths.
-
-    Walks the tree recursively, tracking the structural path from root.
-    Each child of a plain sequential ``Nu`` (the kind built by ``a >> b``) gets
-    wrapped in a ``_StepSpan`` with the path baked in.  All ``Log`` nodes
-    encountered get their ``_path`` set so log messages show their tree position.
-
-    Args:
-        tree: Tree root.
-
-    Returns:
-        New tree with step-annotated nodes and path-aware Log nodes.
-    """
+    """Wrap sequential composition children in step-tracking spans with baked tree paths."""
 
     def _walk(node: Nu, path: str) -> Nu:
-        # Plain sequential composite (Seq replacement): wrap children in _StepSpan.
-        # Identify by exact type Nu — domain Ops subclass Nu and shouldn't be split.
         if type(node) is Nu:
             if len(node.children) >= 2:
                 seq_path = f"{path}{type(node).__name__}"
@@ -132,13 +112,11 @@ def annotate_steps(tree: Nu) -> Nu:
                         new_children.append(_walk(child, f"{seq_path}."))
                 return node._with_children(*new_children)
 
-        # Log nodes: bake the current path
         if isinstance(node, Log) and path:
             clone = node._with_children(*node.children)
             clone._path = path.rstrip(".")
             return clone
 
-        # Recurse into children
         if not node.children:
             return node
         new_children = [_walk(child, path) for child in node.children]
@@ -150,15 +128,7 @@ def annotate_steps(tree: Nu) -> Nu:
 
 
 def set_logger_name(tree: Nu, name: str) -> Nu:
-    """Rename the logger on all Log nodes in the tree.
-
-    Args:
-        tree: Tree root.
-        name: Logger name to set (e.g. ``"mytool.myapp"``).
-
-    Returns:
-        New tree with renamed Log nodes.
-    """
+    """Rename the logger on all Log nodes in the tree."""
 
     def _rename(node: Nu) -> Nu:
         if not isinstance(node, (Log, _StepSpan)):
