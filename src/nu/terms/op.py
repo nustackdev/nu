@@ -41,7 +41,7 @@ Effect declarations (class-level):
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from contextlib import aclosing
+from contextlib import AsyncExitStack, aclosing
 from inspect import isawaitable
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -120,26 +120,31 @@ class NAryOp(Op[T_co | Sentinel], ABC):
         return f"{self.__class__.__name__}({args})"
 
     async def open(self, ctx: Context) -> AsyncGenerator[T_co | Sentinel, None]:
-        """Resolve each operand's stream (taking its last yield), apply, yield once.
+        """Take each operand's first yield, apply, yield once.
 
-        Opens each child as a generator, drains to the last value, propagates
-        sentinels. `apply` may be sync or async; async results are awaited.
-        Child exits run before `apply` in reverse order via aclosing.
+        Each child's generator is left suspended at its yield point and
+        held open by the exit stack — this keeps any scope the child
+        opened (Snapshot, Atomic) alive through ``apply`` so live views
+        passed to ``apply`` can still read from their backing context.
+        Generators close in reverse order on exit.
         """
-        values: list[Any] = []
-        for child in self._children:
-            v: Any = None
-            async with aclosing(child.open(ctx)) as gen:
-                async for x in gen:
-                    v = x
-            if is_sentinel(v):
-                yield INVALID
-                return
-            values.append(v)
-        result = self.apply(*values)
-        if isawaitable(result):
-            result = await result
-        yield result
+        async with AsyncExitStack() as stack:
+            values: list[Any] = []
+            for child in self._children:
+                gen = await stack.enter_async_context(aclosing(child.open(ctx)))
+                try:
+                    v = await gen.__anext__()
+                except StopAsyncIteration:
+                    yield INVALID
+                    return
+                if is_sentinel(v):
+                    yield INVALID
+                    return
+                values.append(v)
+            result = self.apply(*values)
+            if isawaitable(result):
+                result = await result
+            yield result
 
     @abstractmethod
     def apply(self, *values: Any) -> T_co | Sentinel:  # noqa: ANN401
@@ -166,10 +171,12 @@ class UnaryOp(NAryOp[T_co], ABC):
 
     @property
     def operand(self) -> Nu:
+        """The single operand."""
         return self._children[0]
 
     @abstractmethod
     def apply(self, operand: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
+        """Apply the unary transformation."""
         ...
 
 
@@ -187,14 +194,17 @@ class BinaryOp(NAryOp[T_co], ABC):
 
     @property
     def left(self) -> Nu:
+        """Left operand."""
         return self._children[0]
 
     @property
     def right(self) -> Nu:
+        """Right operand."""
         return self._children[1]
 
     @abstractmethod
     def apply(self, left: Any, right: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
+        """Apply the binary transformation."""
         ...
 
 
@@ -219,6 +229,7 @@ class TernaryOp(NAryOp[T_co], ABC):
 
     @abstractmethod
     def apply(self, a: Any, b: Any, c: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
+        """Apply the ternary transformation."""
         ...
 
 
@@ -243,17 +254,28 @@ class ScopedOp(Op, ABC):
     """
 
     async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        """Enter boundary, stream children, commit/rollback on exit."""
+        """Enter boundary, stream children, commit/rollback on exit.
+
+        ``GeneratorExit`` (raised when the consumer closes the generator)
+        is treated as a clean unwind and routes to ``after`` — consumers
+        that take a single yield from a scope-producing child (e.g.
+        ``NAryOp`` holding a Snapshot's view) shouldn't trigger abort.
+        Real exceptions still route to ``after_failure``.
+        """
         scoped_ctx = self.before(ctx)
         try:
             for child in self._children:
                 async with aclosing(child.open(scoped_ctx)) as gen:
                     async for v in gen:
                         yield v
-            self.after(scoped_ctx)
         except BaseException as e:
-            self.after_failure(scoped_ctx, e)
+            if isinstance(e, GeneratorExit):
+                self.after(scoped_ctx)
+            else:
+                self.after_failure(scoped_ctx, e)
             raise
+        else:
+            self.after(scoped_ctx)
 
     def before(self, ctx: Context) -> Context:
         """Set up resources, return scoped context for children."""
@@ -287,6 +309,7 @@ class Command(Op, ABC):
         ...
 
     async def open(self, ctx: Context) -> AsyncGenerator[None, None]:
+        """Run the side effect; yield nothing."""
         await self.run(ctx)
         return
         yield  # unreachable; marks this as a generator
@@ -312,4 +335,5 @@ class Query(Op[T_co], ABC):
         ...
 
     async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+        """Compute the value; yield it once."""
         yield await self.run(ctx)
