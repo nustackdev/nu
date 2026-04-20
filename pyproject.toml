@@ -16,6 +16,7 @@ dependencies = [
     "nu-dict",
     "nu-distributed",
     "nu-inspect",
+    "nudle",
 ]
 
 # =============================================================================
@@ -47,6 +48,7 @@ nu-inspect = { workspace = true }
 virtuals-py = { path = "../virtuals", editable = true }
 composables = { path = "../composables", editable = true }
 invisibles = { path = "../invisibles", editable = true }
+nudle = { path = "../../nustackdev/nudle/api/dist/nudle-0.1.0-py3-none-any.whl" }
 
 [dependency-groups]
 dev = [
