@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import nu
 from nu import EMPTY, INVALID, Literal
 from nu.terms.op import BinaryOp
 from nu.terms.sentinel import Empty, Invalid, is_empty, is_invalid, is_sentinel, propagate_special

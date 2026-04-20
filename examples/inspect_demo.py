@@ -7,16 +7,15 @@ import asyncio
 
 import nu
 import nu_dict as nd
-from nu.shapes import Shape
 from nu_inspect import render_nu, render_shape
 
 
-class Meta(Shape):
+class Meta(nu.Shape):
     label = nd.StrRef.slot()
     version = nd.IntRef.slot()
 
 
-class Counter(Shape):
+class Counter(nu.Shape):
     value = nd.IntRef.slot()
     step = nd.IntRef.slot()
     tags = nd.ListRef.slot(str)

@@ -16,6 +16,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from nu.shapes.collections import MutableSequenceI, ReactiveSequenceI, SequenceI
+
 from .base import Ref
 
 

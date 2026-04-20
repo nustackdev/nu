@@ -176,6 +176,7 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
         if ctx is not None:
             return ctx
         from ..context import Context as _Ctx
+
         return _Ctx()
 
     # --- composition operators ---
@@ -205,7 +206,7 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
         return Nu(self, other)
 
 
-class NuIndepComm(Nu[T_co]):  # noqa: UP046
+class NuIndepComm(Nu[T_co]):
     """Parallel-capable composite. Instantiated by `|`.
 
     Children run concurrently under the interleaving pump. Algebra

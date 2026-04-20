@@ -9,11 +9,10 @@ import asyncio
 
 import nu
 import nu_dict as nd
-from nu.shapes import Shape
 
 
 # --- define a shape: slots are typed refs ---
-class Counter(Shape):
+class Counter(nu.Shape):
     value = nd.IntRef.slot()
 
 
@@ -43,7 +42,7 @@ print(data2["value"])  # 1
 
 
 # --- a richer shape: multiple typed slots + a nested list ---
-class User(Shape):
+class User(nu.Shape):
     name = nd.StrRef.slot()
     age = nd.IntRef.slot()
     tags = nd.ListRef.slot(str)
@@ -52,10 +51,7 @@ class User(Shape):
 udata: dict = {}
 uctx = nu.Context().bind(dict, udata, User)
 setup = (
-    User.name.store("mir")
-    >> User.age.store(0)
-    >> User.age.inc(30)
-    >> User.tags.store(["ai", "nu"])
+    User.name.store("mir") >> User.age.store(0) >> User.age.inc(30) >> User.tags.store(["ai", "nu"])
 )
 asyncio.run(setup.execute(uctx))
 print(udata)  # {'name': 'mir', 'age': 30, 'tags': ['ai', 'nu']}
@@ -67,7 +63,7 @@ print(udata["age"])  # 60
 
 
 # --- compose a full app; `ctx` carries the substrate, ops do the rest ---
-class Score(Shape):
+class Score(nu.Shape):
     total = nd.IntRef.slot()
     hits = nd.IntRef.slot()
 

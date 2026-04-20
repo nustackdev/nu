@@ -35,8 +35,7 @@ def annotate_ref_loads(root: Nu) -> Nu:
     This is idempotent - already-wrapped refs are not double-wrapped.
     """
     from nu.shapes.collections import ItemI
-    from nu.shapes.ops import CollectionLoadOp
-    from nu.shapes.ops import ItemLoadOp
+    from nu.shapes.ops import CollectionLoadOp, ItemLoadOp
     from nu.shapes.refs import Ref as ShapeRef
 
     load_op_types = (ItemLoadOp, CollectionLoadOp)

@@ -9,8 +9,6 @@ ZeroDivisionError raises (not caught - logic bug, not composition problem).
 
 from __future__ import annotations
 
-import nu
-
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
@@ -28,6 +26,8 @@ from nu.ops import (
     PowOp,
     SubOp,
 )
+
+
 # ---------------------------------------------------------------------------
 # Strategies
 # ---------------------------------------------------------------------------
@@ -104,7 +104,7 @@ async def test_div_mul_inverse(a, b):
 async def test_abs_non_negative(a):
     ctx = Context()
     result = await AbsOp(a).first(ctx)
-    assert result >= 0 # type: ignore
+    assert result >= 0  # type: ignore
 
 
 @given(a=small_ints, b=small_pos)

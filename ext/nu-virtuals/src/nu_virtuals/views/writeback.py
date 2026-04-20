@@ -34,7 +34,7 @@ __all__ = [
 class PrimitiveSetView(set):
     """Set subclass that buffers mutations and flushes back to storage."""
 
-    __slots__ = ("_parent", "_address", "_dirty")
+    __slots__ = ("_address", "_dirty", "_parent")
 
     def __init__(self, initial: Any = (), parent: Any = None, address: Any = None) -> None:
         super().__init__(initial)
@@ -83,22 +83,22 @@ class PrimitiveSetView(set):
         super().symmetric_difference_update(other)
         self._dirty = True
 
-    def __ior__(self, other: Any) -> "PrimitiveSetView":
+    def __ior__(self, other: Any) -> PrimitiveSetView:
         super().__ior__(other)
         self._dirty = True
         return self
 
-    def __iand__(self, other: Any) -> "PrimitiveSetView":
+    def __iand__(self, other: Any) -> PrimitiveSetView:
         super().__iand__(other)
         self._dirty = True
         return self
 
-    def __isub__(self, other: Any) -> "PrimitiveSetView":
+    def __isub__(self, other: Any) -> PrimitiveSetView:
         super().__isub__(other)
         self._dirty = True
         return self
 
-    def __ixor__(self, other: Any) -> "PrimitiveSetView":
+    def __ixor__(self, other: Any) -> PrimitiveSetView:
         super().__ixor__(other)
         self._dirty = True
         return self
@@ -116,7 +116,7 @@ class PrimitiveSetView(set):
 class PrimitiveDictView(dict):
     """Dict subclass that buffers mutations and flushes back to storage."""
 
-    __slots__ = ("_parent", "_address", "_dirty")
+    __slots__ = ("_address", "_dirty", "_parent")
 
     def __init__(self, initial: Any = (), parent: Any = None, address: Any = None) -> None:
         super().__init__(initial)
@@ -170,7 +170,7 @@ class PrimitiveDictView(dict):
 class PrimitiveListView(list):
     """List subclass that buffers mutations and flushes back to storage."""
 
-    __slots__ = ("_parent", "_address", "_dirty")
+    __slots__ = ("_address", "_dirty", "_parent")
 
     def __init__(self, initial: Any = (), parent: Any = None, address: Any = None) -> None:
         super().__init__(initial)
@@ -221,12 +221,12 @@ class PrimitiveListView(list):
         super().__delitem__(index)
         self._dirty = True
 
-    def __iadd__(self, other: Any) -> "PrimitiveListView":
+    def __iadd__(self, other: Any) -> PrimitiveListView:
         super().__iadd__(other)
         self._dirty = True
         return self
 
-    def __imul__(self, count: int) -> "PrimitiveListView":
+    def __imul__(self, count: int) -> PrimitiveListView:
         super().__imul__(count)
         self._dirty = True
         return self

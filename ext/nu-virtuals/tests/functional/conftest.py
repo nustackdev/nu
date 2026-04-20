@@ -4,9 +4,9 @@ import pathlib
 from collections.abc import Generator
 
 import pytest
-from virtuals import Navigator
-from virtuals.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionProtocol
 
+from nu import Context
+from nu.shapes import Shape
 from nu_virtuals import (
     ComplexRef,
     DateRef,
@@ -20,8 +20,8 @@ from nu_virtuals import (
     TimezoneRef,
     UUIDRef,
 )
-from nu import Context
-from nu.shapes import Shape
+from virtuals import Navigator
+from virtuals.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionProtocol
 
 
 # ============================================================================

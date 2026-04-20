@@ -9,8 +9,6 @@ Key property: the right operand is NOT evaluated when short-circuit fires.
 
 from __future__ import annotations
 
-import nu
-
 from hypothesis import given
 from hypothesis import strategies as st
 from tests.conftest import FailingNu

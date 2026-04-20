@@ -17,13 +17,14 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 from nu.shapes.collections import MutableSequenceI, ReactiveSequenceI, SequenceI
+
 from .base import Ref
 
 
 if TYPE_CHECKING:
     from nu import IntArg, Sentinel
-
     from nu.shapes.shape import Shape as ShapeBase
+
     from .shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
 
 

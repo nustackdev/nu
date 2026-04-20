@@ -7,8 +7,6 @@ All pure ops. TypeError -> INVALID.
 
 from __future__ import annotations
 
-import nu
-
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st

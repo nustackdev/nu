@@ -18,7 +18,6 @@ import nu_virtuals._compat  # noqa: F401  — register virtuals ABCs
 # (pickled whole) rather than being proxied element-by-element.
 try:
     from invisibles.core.boxing import register_value_type
-
     from nu_virtuals.paths import ValuePathSer, ViewPathSer
 
     register_value_type(ViewPathSer, ValuePathSer)

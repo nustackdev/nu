@@ -7,6 +7,7 @@ Attaches a storage resource and optional observer resource.
 from __future__ import annotations
 
 import attrs
+
 from composables import Attach, Resource, ResourceSpec, Spec
 from virtuals import Navigator
 from virtuals.views import DictView

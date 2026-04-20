@@ -1,4 +1,3 @@
-# ruff: noqa: D102
 """Set collection — bases + mutations.
 
 SetLikeI = Collection + union/intersection/difference/symmetric_difference/issubset/issuperset/isdisjoint
@@ -177,9 +176,7 @@ class MutableSetI[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return NoneI(DifferenceUpdateCmd(self, other))
 
-    def symmetric_difference_update(
-        self, other: Arg[set[ElementT] | frozenset[ElementT]]
-    ) -> NoneI:
+    def symmetric_difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
         """Keep elements in either set but not both."""
         from nu.primitives import NoneI
 

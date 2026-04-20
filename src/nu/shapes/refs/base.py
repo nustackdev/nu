@@ -39,7 +39,6 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from nu import Context
-
     from nu.shapes.shape import Shape
 
 

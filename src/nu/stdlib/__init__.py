@@ -19,9 +19,9 @@ from .datetime import (
     DatetimeArg,
     DatetimeI,
     TimeArg,
-    TimeI,
     TimedeltaArg,
     TimedeltaI,
+    TimeI,
     TimezoneArg,
     TimezoneI,
 )
@@ -36,10 +36,11 @@ from .fin import (
 )
 from .fractions import FractionArg, FractionI
 from .pathlib import PathArg, PathI
-from .uuid import UUIDArg, UUIDI
+from .uuid import UUIDI, UUIDArg
 
 
 __all__ = [
+    "UUIDI",
     "BasisPoint",
     "BasisPointArg",
     "BasisPointI",
@@ -65,5 +66,4 @@ __all__ = [
     "TimezoneArg",
     "TimezoneI",
     "UUIDArg",
-    "UUIDI",
 ]

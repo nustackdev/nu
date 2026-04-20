@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+
 from virtuals.codecs import NoOpCodec
 from virtuals.storages.mem import InMemoryStorage
 from virtuals.views import DictView

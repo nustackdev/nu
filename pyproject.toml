@@ -199,7 +199,7 @@ convention = "google"
 [tool.ruff.lint.isort]
 known-first-party = [
     "nu", "nu_distributed", "nu_virtuals", "nu_dict", "nu_inspect",
-    "virtuals", "composables", "invisibles",
+    "virtuals", "composables", "invisibles", "nudle",
     ]
 force-single-line = false
 lines-after-imports = 2

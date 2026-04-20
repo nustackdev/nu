@@ -18,6 +18,7 @@ from .abc import (
     SetLikeI,
 )
 
+
 __all__ = [
     "CollectionI",
     "ItemI",

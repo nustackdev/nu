@@ -6,10 +6,10 @@ optimize_primitive_writes: ItemStoreCmd → ItemPrimitiveSetUnsafeCmd
 
 from __future__ import annotations
 
-from nu_virtuals.meta.flat_ref import FlatRef
-from nu_virtuals.ops.item import ItemPrimitiveGetUnsafeOp, ItemPrimitiveSetUnsafeCmd
 from nu import Nu, replace
 from nu.shapes.ops.item import ItemLoadOp, ItemStoreCmd
+from nu_virtuals.meta.flat_ref import FlatRef
+from nu_virtuals.ops.item import ItemPrimitiveGetUnsafeOp, ItemPrimitiveSetUnsafeCmd
 
 
 __all__ = [

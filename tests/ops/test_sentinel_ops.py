@@ -8,8 +8,6 @@ propagation - they need to see the sentinel to answer the question.
 
 from __future__ import annotations
 
-import nu
-
 from nu import EMPTY, INVALID, Literal
 from nu.ops import IsEmptyOp, IsInvalidOp, NotEmptyOp, NotInvalidOp
 
@@ -88,5 +86,3 @@ async def test_not_invalid_on_normal(ctx):
 
 async def test_not_invalid_on_empty(ctx):
     assert await NotInvalidOp(Literal(EMPTY)).first(ctx) is True
-
-

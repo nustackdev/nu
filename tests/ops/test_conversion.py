@@ -8,8 +8,6 @@ Ops don't catch exceptions. Bad conversions raise (ValueError, TypeError).
 
 from __future__ import annotations
 
-import nu
-
 import pytest
 
 from nu.ops import (

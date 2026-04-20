@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+from nu import Context
+from nu.shapes import Shape
 from nu_dict import (
     DictRef,
     FloatRef,
@@ -15,8 +17,6 @@ from nu_dict import (
     ShapesListRef,
     StrRef,
 )
-from nu import Context
-from nu.shapes import Shape
 
 
 @pytest.fixture

@@ -81,31 +81,7 @@ from .collections import (
     UniqueOp,
     ZipOp,
 )
-from .wrapped import (
-    Contains,
-    Chain,
-    Drop,
-    Enumerate,
-    FilterBy,
-    Flatten,
-    Len,
-    Max,
-    Min,
-    Pluck,
-    Reversed,
-    Sorted,
-    Sum,
-    Take,
-    ToBool,
-    ToBytes,
-    ToFloat,
-    ToInt,
-    ToList,
-    ToSet,
-    ToStr,
-    Unique,
-    Zip,
-)
+from .combiners import all_, and_, any_, none_, or_
 from .control import (
     All,
     Any,
@@ -144,7 +120,31 @@ from .control import (
     TryCatch,
     While,
 )
-from .combiners import all_, and_, any_, none_, or_
+from .wrapped import (
+    Chain,
+    Contains,
+    Drop,
+    Enumerate,
+    FilterBy,
+    Flatten,
+    Len,
+    Max,
+    Min,
+    Pluck,
+    Reversed,
+    Sorted,
+    Sum,
+    Take,
+    ToBool,
+    ToBytes,
+    ToFloat,
+    ToInt,
+    ToList,
+    ToSet,
+    ToStr,
+    Unique,
+    Zip,
+)
 
 
 __all__ = [

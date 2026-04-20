@@ -2,19 +2,18 @@
 
 import asyncio
 
-from nudle import arun_ui
-
 import nu
 import nu_virtuals as nv
-from nu.shapes import Shape
+import nudle
+import virtuals as v
 
 
-class Meta(Shape):
+class Meta(nu.Shape):
     label = nv.StrRef.slot()
     version = nv.IntRef.slot()
 
 
-class Counter(Shape):
+class Counter(nu.Shape):
     value = nv.IntRef.slot()
     step = nv.IntRef.slot()
     tags = nv.ListRef.slot(str)
@@ -22,13 +21,11 @@ class Counter(Shape):
 
 
 async def main() -> None:
-    from nu_virtuals import auto_atomic
     from nu_virtuals.presets import rocksdb_storage_inmemory
-    from virtuals import Navigator
 
     with rocksdb_storage_inmemory(".db") as storage:
-        nav = Navigator(storage)
-        ctx = nu.Context().bind(Navigator, nav)
+        nav = v.Navigator(storage)
+        ctx = nu.Context().bind(v.Navigator, nav)
 
         app = (
             nu.If(Counter.value.missing(), Counter.value.store(0))
@@ -46,9 +43,9 @@ async def main() -> None:
             >> nu.Print("value:", Counter.value, "step:", Counter.step)
         )
 
-        await auto_atomic(app).execute(ctx)
+        await nv.auto_atomic(app).execute(ctx)
 
-        await arun_ui(Counter, nav.storage, port=8001)
+        await nudle.arun_ui(Counter, nav.storage, port=8001)
 
 
 if __name__ == "__main__":

@@ -16,12 +16,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.shapes.collections import MappingI, MutableMappingI, ReactiveMappingI
+
 from .base import Ref
 
 
 if TYPE_CHECKING:
     from nu import Sentinel
-
     from nu.shapes.shape import Shape as ShapeBase
     from nu.shapes.shape import Slot
 

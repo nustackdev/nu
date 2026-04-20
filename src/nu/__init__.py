@@ -12,8 +12,9 @@ Subpackages:
     tree/         -- node structure, traversal, queries, and rewrites
 """
 # isort: skip
+# ruff: noqa
 
-from __future__ import annotations  
+from __future__ import annotations
 
 from .collections import (
     DictI,

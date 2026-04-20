@@ -23,7 +23,6 @@ from nu.primitives import BoolI, NoneI
 
 if TYPE_CHECKING:
     from nu import Nu, Sentinel
-
     from nu.shapes.ops import OnChildChangeOp
 
 
@@ -84,9 +83,8 @@ class MutableItemI[T, InterfaceT](ItemI[T, InterfaceT]):
     """
 
     def store(self, value: T | Sentinel | Nu[T | Sentinel]) -> NoneI:
-        from nu.utils import ensure_nu
-
         from nu.shapes.ops import ItemStoreCmd
+        from nu.utils import ensure_nu
 
         return NoneI(ItemStoreCmd(self, ensure_nu(value)))
 

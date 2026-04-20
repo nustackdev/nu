@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from nu.terms import Ref, Sentinel
 
+
 if TYPE_CHECKING:
     from nu.context import Context
     from nu.primitives import BoolI

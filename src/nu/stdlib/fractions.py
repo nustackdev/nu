@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from nu.interface import Interface, TypedNu
 
+
 if TYPE_CHECKING:
     from nu import Arg, Nu
     from nu.collections import TupleI

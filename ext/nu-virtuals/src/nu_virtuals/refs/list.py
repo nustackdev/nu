@@ -5,8 +5,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from virtuals.collections import MutableSequenceBase
-
 from nu import (
     AnyI,
     BoolI,
@@ -21,15 +19,15 @@ from nu import (
     ensure_nu,
 )
 from nu.shapes import ReactiveSequenceRef, Shape, Slot
+from virtuals.collections import MutableSequenceBase
 
 from .base import ViewRef
 from .items import ItemRef
 
 
 if TYPE_CHECKING:
-    from virtuals.loc import path
-
     from nu import Interface, Nu, Sentinel
+    from virtuals.loc import path
 
 
 def _value_type_for(python_type: type) -> type[Interface]:

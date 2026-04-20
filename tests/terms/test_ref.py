@@ -6,7 +6,6 @@ resolve, fetch, execute delegation, and purity.
 
 from __future__ import annotations
 
-import nu
 from nu import Context, Nu
 from nu.terms.ref import Ref
 

@@ -1,7 +1,6 @@
 """Shape - declarative structure definitions."""
 
 from . import collections, ops, refs, shape, tree
-
 from .collections import (
     CollectionI,
     ItemI,
@@ -66,6 +65,7 @@ from .refs import (
     ShapesSequenceRef,
 )
 from .shape import Shape, ShapeMeta, Slot, SlotDescriptor
+
 
 __all__ = [
     "AdvanceCursorOp",

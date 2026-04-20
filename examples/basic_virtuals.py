@@ -8,19 +8,19 @@ then read and printed inside a Snapshot.
 import asyncio
 
 import nu
-import nu_virtuals as nuv
+import nu_virtuals as nv
 
 
-class Counter(nu.shapes.Shape):
+class Counter(nu.Shape):
     """A shape with a single integer counter."""
 
-    value = nuv.IntRef.slot()
+    value = nv.IntRef.slot()
 
 
 # A simple Nu app
 app = (
     # Write: initialize and increment counter 3 times
-    nuv.Transaction(
+    nv.Transaction(
         nu.If(
             Counter.value.missing(),
             Counter.value.store(0),
@@ -30,15 +30,15 @@ app = (
         Counter.value.store(Counter.value + 1),
     )
     # Read: print current value
-    >> nuv.Snapshot(
+    >> nv.Snapshot(
         nu.Print("counter", Counter.value),
     )
     # Write: increment more
-    >> nuv.Transaction(
+    >> nv.Transaction(
         Counter.value.store(Counter.value + 10),
     )
     # Read: print again
-    >> nuv.Snapshot(
+    >> nv.Snapshot(
         nu.Print("counter", Counter.value),
     )
 )

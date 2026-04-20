@@ -17,6 +17,7 @@ from .shapessequence import (
     ShapesSequenceRef,
 )
 
+
 __all__ = [
     "ItemRef",
     "MappingRef",

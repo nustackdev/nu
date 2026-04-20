@@ -26,9 +26,8 @@ class _ProcessBase:
 
     async def start(self, spec: object) -> None:
         """Create a composables Resource from the given Spec."""
-        from composables import Runtime
-
         import nu_distributed  # noqa: F401 - registers value types
+        from composables import Runtime
 
         self._runtime = Runtime()
         await self._runtime.__aenter__()

@@ -18,9 +18,9 @@ import pytest
 
 from nu import (
     AnyI,
+    DictI,
     DictItemsI,
     DictKeysI,
-    DictI,
     DictValuesI,
     IteratorI,
     ListI,

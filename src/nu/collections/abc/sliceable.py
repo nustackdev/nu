@@ -1,4 +1,3 @@
-# ruff: noqa: D102
 """Sliceable capability."""
 
 from __future__ import annotations

@@ -12,9 +12,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu_virtuals.paths import ViewPathSer
 from nu import EMPTY, Sentinel
 from nu.terms.ref import Ref
+from nu_virtuals.paths import ViewPathSer
 
 
 if TYPE_CHECKING:

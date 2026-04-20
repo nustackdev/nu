@@ -5,8 +5,6 @@ AtOp, SliceOp, LenOp, ContainsOp.
 
 from __future__ import annotations
 
-import nu
-
 import pytest
 
 from nu.ops import AtOp, ContainsOp, LenOp, SliceOp

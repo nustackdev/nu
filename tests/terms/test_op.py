@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import nu
 from nu import Literal, Nu
 from nu.terms.op import (
     BinaryOp,

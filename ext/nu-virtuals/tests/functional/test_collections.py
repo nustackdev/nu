@@ -13,9 +13,19 @@ from __future__ import annotations
 from collections.abc import ItemsView, KeysView, ValuesView
 
 import pytest
-from virtuals import Navigator
-from virtuals.tkv.storage import TransactionProtocol
 
+from nu import (
+    Context,
+    DictI,
+    DictItemsI,
+    DictKeysI,
+    DictValuesI,
+    IteratorI,
+    ListI,
+    SetI,
+    fn,
+)
+from nu.shapes import Shape
 from nu_virtuals import (
     DictRef,
     FloatRef,
@@ -27,18 +37,8 @@ from nu_virtuals import (
     StrRef,
 )
 from nu_virtuals.refs.base import Facet
-from nu import Context
-from nu import (
-    DictItemsI,
-    DictKeysI,
-    DictI,
-    DictValuesI,
-    IteratorI,
-    ListI,
-    SetI,
-    fn,
-)
-from nu.shapes import Shape
+from virtuals import Navigator
+from virtuals.tkv.storage import TransactionProtocol
 
 
 # ============================================================================

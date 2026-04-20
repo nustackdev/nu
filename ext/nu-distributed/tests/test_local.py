@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import pytest
-from composables import Runtime
 from conftest import TestShape, local
 
 import nu_virtuals as ebv
-from nu_distributed import NavigatorSpec, Teleport
+from composables import Runtime
 from nu import Parallel, Seq
+from nu_distributed import NavigatorSpec, Teleport
 
 
 def _make_flow() -> object:

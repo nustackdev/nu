@@ -7,8 +7,8 @@ from io import StringIO
 
 import pytest
 
-import nu
 from nu import Context
+from nu.ops import Debug, Log, Print
 from nu.stdio import (
     STDERR,
     STDIN,
@@ -20,7 +20,6 @@ from nu.stdio import (
     StdioRef,
     StdioWrite,
 )
-from nu.ops import Debug, Log, Print
 from nu.terms.effect import Direction, TrackedEffect, tracked_effects
 
 
@@ -302,11 +301,7 @@ class TestEffectIsolation:
         """A composed tree with both stdio and pure ops tracks only stdio effects."""
         from nu.ops import AddOp
 
-        tree = (
-            StdioWrite(STDOUT, "start")
-            >> AddOp(1, 2)
-            >> StdioWrite(STDERR, "end")
-        )
+        tree = StdioWrite(STDOUT, "start") >> AddOp(1, 2) >> StdioWrite(STDERR, "end")
         effects = tracked_effects(tree)
         assert TrackedEffect(StdioRef, Direction.WRITE) in effects
         assert len(effects) == 1  # Both writes are same fabric+direction

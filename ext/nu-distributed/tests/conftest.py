@@ -8,9 +8,11 @@ import tempfile
 
 import pytest
 import ray
-from composables.spec import SpecBuilder
 
 import nu_virtuals as ebv
+from composables.spec import SpecBuilder
+from nu import Context
+from nu.shapes import Shape
 from nu_distributed import (
     ContextSpec,
     InvisiblesClientSpec,
@@ -21,8 +23,6 @@ from nu_distributed import (
     Worker,
     WorkerSpec,
 )
-from nu import Context
-from nu.shapes import Shape
 
 
 class TestShape(Shape):

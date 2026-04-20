@@ -20,7 +20,6 @@ from nu.terms.sentinel import is_sentinel
 
 if TYPE_CHECKING:
     from nu import Context, Nu
-
     from nu.shapes.refs import Ref
 
 

@@ -1,4 +1,3 @@
-# ruff: noqa: D102
 """Mapping collection — bases + mutations.
 
 MappingI = Collection + keys/values/items/get

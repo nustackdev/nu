@@ -6,8 +6,8 @@ Attaches a NavigatorResource and binds it as Navigator to the Context.
 from __future__ import annotations
 
 import attrs
-from composables import Attach, Resource, ResourceSpec
 
+from composables import Attach, Resource, ResourceSpec
 from nu import Context
 
 from .navigator import NavigatorSpec

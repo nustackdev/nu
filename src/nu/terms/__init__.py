@@ -1,7 +1,5 @@
 """Nu terms - building blocks of the algebra."""
 
-from .effect import Direction, TrackedEffect, is_pure, tracked_effects
-from .interaction import Interaction
 from .arg import (
     Arg,
     BoolArg,
@@ -16,6 +14,9 @@ from .arg import (
     StrArg,
     TupleArg,
 )
+from .effect import Direction, TrackedEffect, is_pure, tracked_effects
+from .interaction import Interaction
+from .literal import Literal
 from .nu import LValue, Nu, NuIndepComm, RValue
 from .op import (
     BinaryOp,
@@ -40,7 +41,6 @@ from .sentinel import (
     propagate_special,
 )
 from .type_vars import T_co
-from .literal import Literal
 
 
 __all__ = [

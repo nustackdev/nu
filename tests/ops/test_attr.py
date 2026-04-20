@@ -5,8 +5,6 @@ GetAttrOp (Calc, pure), SetAttrOp (Cmd, impure), DelAttrOp (Cmd, impure).
 
 from __future__ import annotations
 
-import nu
-
 import pytest
 
 from nu import Literal
@@ -72,5 +70,3 @@ async def test_del_attr_missing_raises(ctx):
     obj = Obj()
     with pytest.raises(AttributeError):
         await DelAttrOp(Literal(obj), "missing").first(ctx)
-
-

@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from nu.interface import Interface, TypedNu
 from nu.terms import Arg
 
+
 if TYPE_CHECKING:
     from nu.primitives import BoolI, FloatI, IntI, NoneI, StrI
     from nu.terms import Nu
@@ -402,7 +403,6 @@ class _DateI(Interface):
     def from_iso(cls, iso_str: str | Nu[str]) -> DateI:
         """Create a DateI from an ISO format string (YYYY-MM-DD)."""
         from nu.ops import FuncCallOp
-
         from nu.terms import Sentinel
 
         def _safe_fromisoformat(s: object) -> date | Sentinel:
@@ -608,7 +608,6 @@ class _TimeI(Interface):
     def from_iso(cls, iso_str: str | Nu[str]) -> TimeI:
         """Create a TimeI from an ISO format string (HH:MM:SS[.ffffff])."""
         from nu.ops import FuncCallOp
-
         from nu.terms import Sentinel
 
         def _safe_fromisoformat(s: object) -> time | Sentinel:
@@ -796,9 +795,7 @@ class _DatetimeI(Interface):
         return DatetimeI(FuncCallOp(datetime.now, TimezoneI(UTC)))
 
     @classmethod
-    def from_timestamp(
-        cls, ts: float | Nu[float], tz: TimezoneArg | None = None
-    ) -> DatetimeI:
+    def from_timestamp(cls, ts: float | Nu[float], tz: TimezoneArg | None = None) -> DatetimeI:
         """Create a DatetimeI from a POSIX timestamp."""
         from nu.ops import FuncCallOp
 
@@ -812,7 +809,6 @@ class _DatetimeI(Interface):
     def from_iso(cls, iso_str: str | Nu[str]) -> DatetimeI:
         """Create a DatetimeI from an ISO format string."""
         from nu.ops import FuncCallOp
-
         from nu.terms import Sentinel
 
         def _safe_fromisoformat(s: object) -> datetime | Sentinel:

@@ -19,7 +19,6 @@ from nu.primitives import BoolI, NoneI
 
 if TYPE_CHECKING:
     from nu import Nu, Sentinel
-
     from nu.shapes.ops import OnChangeOp, OnChildChangeOp, OnChildrenChangeOp, OnDescendantsChangeOp
 
 
@@ -48,9 +47,8 @@ class MutableCollectionI[CollectionT](CollectionI):
     """Mutable collection - can store and erase."""
 
     def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> NoneI:
-        from nu.utils import ensure_nu
-
         from nu.shapes.ops import CollectionStoreCmd
+        from nu.utils import ensure_nu
 
         return NoneI(CollectionStoreCmd(self, ensure_nu(value)))
 
@@ -68,9 +66,7 @@ class ReactiveCollectionI[CollectionT](MutableCollectionI[CollectionT]):
 
         return OnChangeOp(self)
 
-    def on_child_change(
-        self, address: str | Sentinel | Nu[str | Sentinel]
-    ) -> OnChildChangeOp:
+    def on_child_change(self, address: str | Sentinel | Nu[str | Sentinel]) -> OnChildChangeOp:
         from nu.shapes.ops import OnChildChangeOp
 
         return OnChildChangeOp(self, address)

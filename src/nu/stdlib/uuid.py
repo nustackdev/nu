@@ -14,11 +14,10 @@ from nu.interface import Interface, TypedNu
 
 if TYPE_CHECKING:
     from nu import Arg, Nu
-
     from nu.primitives import BoolI, BytesI, IntI, StrI
 
 
-__all__ = ["UUIDArg", "UUIDI"]
+__all__ = ["UUIDI", "UUIDArg"]
 
 
 type UUIDArg = Arg[UUID]
@@ -98,36 +97,31 @@ class _UUIDI(Interface):
 
     def version(self) -> IntI:
         """Get the UUID version number (1, 3, 4, or 5)."""
-        from nu import FuncCallOp
-        from nu import IntI
+        from nu import FuncCallOp, IntI
 
         return IntI(FuncCallOp(getattr, self, "version"))
 
     def variant(self) -> StrI:
         """Get the UUID variant."""
-        from nu import FuncCallOp
-        from nu import StrI
+        from nu import FuncCallOp, StrI
 
         return StrI(FuncCallOp(getattr, self, "variant"))
 
     def time(self) -> IntI:
         """Get the 60-bit timestamp (for UUID version 1)."""
-        from nu import FuncCallOp
-        from nu import IntI
+        from nu import FuncCallOp, IntI
 
         return IntI(FuncCallOp(getattr, self, "time"))
 
     def clock_seq(self) -> IntI:
         """Get the 14-bit clock sequence (for UUID version 1)."""
-        from nu import FuncCallOp
-        from nu import IntI
+        from nu import FuncCallOp, IntI
 
         return IntI(FuncCallOp(getattr, self, "clock_seq"))
 
     def node(self) -> IntI:
         """Get the 48-bit node (for UUID version 1)."""
-        from nu import FuncCallOp
-        from nu import IntI
+        from nu import FuncCallOp, IntI
 
         return IntI(FuncCallOp(getattr, self, "node"))
 
@@ -137,36 +131,31 @@ class _UUIDI(Interface):
 
     def hex(self) -> StrI:
         """Get the UUID as a 32-character hexadecimal string."""
-        from nu import FuncCallOp
-        from nu import StrI
+        from nu import FuncCallOp, StrI
 
         return StrI(FuncCallOp(getattr, self, "hex"))
 
     def urn(self) -> StrI:
         """Get the UUID as a URN (urn:uuid:...)."""
-        from nu import FuncCallOp
-        from nu import StrI
+        from nu import FuncCallOp, StrI
 
         return StrI(FuncCallOp(getattr, self, "urn"))
 
     def bytes(self) -> BytesI:
         """Get the UUID as a 16-byte string."""
-        from nu import FuncCallOp
-        from nu import BytesI
+        from nu import BytesI, FuncCallOp
 
         return BytesI(FuncCallOp(getattr, self, "bytes"))
 
     def bytes_le(self) -> BytesI:
         """Get the UUID as a 16-byte string in little-endian order."""
-        from nu import FuncCallOp
-        from nu import BytesI
+        from nu import BytesI, FuncCallOp
 
         return BytesI(FuncCallOp(getattr, self, "bytes_le"))
 
     def int_(self) -> IntI:
         """Get the UUID as a 128-bit integer."""
-        from nu import FuncCallOp
-        from nu import IntI
+        from nu import FuncCallOp, IntI
 
         return IntI(FuncCallOp(getattr, self, "int"))
 
@@ -175,38 +164,32 @@ class _UUIDI(Interface):
     # =========================================================================
 
     def __gt__(self, other: UUIDArg) -> BoolI:
-        from nu import GtOp
-        from nu import BoolI
+        from nu import BoolI, GtOp
 
         return BoolI(GtOp(self, other))
 
     def __lt__(self, other: UUIDArg) -> BoolI:
-        from nu import LtOp
-        from nu import BoolI
+        from nu import BoolI, LtOp
 
         return BoolI(LtOp(self, other))
 
     def __ge__(self, other: UUIDArg) -> BoolI:
-        from nu import GeOp
-        from nu import BoolI
+        from nu import BoolI, GeOp
 
         return BoolI(GeOp(self, other))
 
     def __le__(self, other: UUIDArg) -> BoolI:
-        from nu import LeOp
-        from nu import BoolI
+        from nu import BoolI, LeOp
 
         return BoolI(LeOp(self, other))
 
     def eq(self, other: UUIDArg) -> BoolI:
-        from nu import EqOp
-        from nu import BoolI
+        from nu import BoolI, EqOp
 
         return BoolI(EqOp(self, other))
 
     def ne(self, other: UUIDArg) -> BoolI:
-        from nu import NeOp
-        from nu import BoolI
+        from nu import BoolI, NeOp
 
         return BoolI(NeOp(self, other))
 

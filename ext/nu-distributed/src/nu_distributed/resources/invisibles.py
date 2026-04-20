@@ -20,6 +20,12 @@ import threading
 import time
 
 import attrs
+from netkit import SyncConnection, SyncConnector, SyncServer
+from netkit.executors import SimpleExecutor
+from netkit.executors.threaded import ThreadedExecutor
+from netkit.framing import LengthPrefixedFraming
+from netkit.transports import TCPListener, TCPTransport, UnixSocketListener, UnixSocketTransport
+
 from composables import Attach, Resource, ResourceSpec
 from invisibles import (
     AsyncDispatcher,
@@ -32,11 +38,6 @@ from invisibles import (
 )
 from invisibles.config import AttributeAccessConfig, ConnectionConfig
 from invisibles.core.consts import HANDLE_GET_ROOT
-from netkit import SyncConnection, SyncConnector, SyncServer
-from netkit.executors import SimpleExecutor
-from netkit.executors.threaded import ThreadedExecutor
-from netkit.framing import LengthPrefixedFraming
-from netkit.transports import TCPListener, TCPTransport, UnixSocketListener, UnixSocketTransport
 
 
 __all__ = [

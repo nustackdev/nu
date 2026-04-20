@@ -12,7 +12,6 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-import nu
 from nu import Context, DoWhile, If, NeOp, StrAttrRef, TryCatch
 from nu.stdio import STDERR, STDIN, STDOUT, StdioFlush, StdioRead, StdioWrite
 from nu.terms.effect import tracked_effects

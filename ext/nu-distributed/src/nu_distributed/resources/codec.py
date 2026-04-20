@@ -10,6 +10,7 @@ Value codecs: JSONCodec, MessagePackCodec, PickleCodec, PassthroughCodec
 from __future__ import annotations
 
 import attrs
+
 from composables import Resource, ResourceSpec
 from virtuals.tkv.codec.codec import Codec
 
@@ -67,16 +68,18 @@ class CodecSpec(ResourceSpec):
 
 def noop_codec_spec() -> CodecSpec:
     """BinaryKeyCodec + PassthroughCodec. No value serialization."""
-    from virtuals.codecs.passthrough import PassthroughCodec
     from virtuals_binary_codec import BinaryKeyCodec
+
+    from virtuals.codecs.passthrough import PassthroughCodec
 
     return CodecSpec(key_codec_cls=BinaryKeyCodec, value_codec_cls=PassthroughCodec)
 
 
 def binary_codec_spec() -> CodecSpec:
     """BinaryKeyCodec + PickleCodec. Binary keys, pickled values."""
-    from virtuals.codecs.pickle import PickleCodec
     from virtuals_binary_codec import BinaryKeyCodec
+
+    from virtuals.codecs.pickle import PickleCodec
 
     return CodecSpec(key_codec_cls=BinaryKeyCodec, value_codec_cls=PickleCodec)
 
@@ -91,7 +94,8 @@ def text_codec_spec() -> CodecSpec:
 
 def msgpack_codec_spec() -> CodecSpec:
     """BinaryKeyCodec + MessagePackCodec. Compact binary serialization."""
-    from virtuals.codecs.msgpack import MessagePackCodec
     from virtuals_binary_codec import BinaryKeyCodec
+
+    from virtuals.codecs.msgpack import MessagePackCodec
 
     return CodecSpec(key_codec_cls=BinaryKeyCodec, value_codec_cls=MessagePackCodec)

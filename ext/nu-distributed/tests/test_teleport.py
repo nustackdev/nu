@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from composables import Runtime
 from conftest import TestShape, local
 
 import nu_virtuals as ebv
+from composables import Runtime
 from nu_distributed import NavigatorSpec, Teleport
 
 

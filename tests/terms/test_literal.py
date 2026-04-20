@@ -6,7 +6,6 @@ literal and yields it once on open. No children, always pure.
 
 from __future__ import annotations
 
-import nu
 from nu import EMPTY, INVALID, Literal
 
 

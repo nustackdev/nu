@@ -20,7 +20,6 @@ from nu.terms.op import Query
 
 if TYPE_CHECKING:
     from nu import Context
-
     from nu.shapes.refs import Ref
 
 
