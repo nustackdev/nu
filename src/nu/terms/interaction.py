@@ -1,18 +1,23 @@
-"""Interaction - base for evaluable computations.
+"""Interaction - the non-Ref Nu.
 
-Nu                              - the primitive
-└── RValue                      - evaluable expression
-    └── Interaction             - evaluable computation (structural marker)
-        ├── Literal             - literal data (leaf Nu)
-        └── Op                  - operation (maps inputs to outputs)
+Nu                          - the primitive
+├── Ref                     - addressable location in a fabric
+├── Interaction             - compute or mutate Γ (this module)
+├── Form                    - typed descriptor (interface.py)
+└── ContextManager          - bracket (context_manager.py)
+
+Interactions split by role:
+    Query   - functional construction. No WRITE. Yields value(s).
+    Command - imperative mutation. WRITE in subtree. Yields nothing.
 """
 
 from __future__ import annotations
 
 from abc import ABC
+from typing import ClassVar
 
 from .nu import RValue
-from .type_vars import T_co
+from .types import T_co
 
 
 __all__ = [
@@ -21,9 +26,20 @@ __all__ = [
 
 
 class Interaction(RValue[T_co], ABC):
-    """Base for evaluable computations. Structural marker.
+    """Non-Ref Nu. Structural anchor for Query and Command.
 
-    Interaction partitions into:
-    - Literal: irreducible data (leaf)
-    - Op: transformation (maps inputs to outputs)
+    Effect declarations (class-level):
+        writes: int | tuple[int, ...] = ()   Ref-target child positions for WRITE
+        reads:  int | tuple[int, ...] = ()   Ref-target child positions for READ
+
+    Un-listed Ref children default to READ in effect analysis.
     """
+
+    writes: ClassVar[int | tuple[int, ...]] = ()
+    reads: ClassVar[int | tuple[int, ...]] = ()
+
+    def __init__(self, *children: object) -> None:
+        """Wrap raw Python values as Literals."""
+        from nu.utils import ensure_nu
+
+        super().__init__(*[ensure_nu(c) for c in children])

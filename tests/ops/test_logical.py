@@ -15,7 +15,7 @@ from tests.conftest import FailingNu
 
 from nu import EMPTY, INVALID, Context, Literal
 from nu.ops import AndOp, BoolOp, NotOp, OrOp
-from nu.terms.sentinel import is_invalid, is_sentinel
+from nu.terms import is_invalid, is_sentinel
 
 
 ints = st.integers(min_value=-1000, max_value=1000)

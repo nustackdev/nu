@@ -10,10 +10,10 @@ condition/transform Nus can read them via AttrRef.
 
 from __future__ import annotations
 
-from contextlib import aclosing
+from contextlib import aclosing, closing
 from typing import TYPE_CHECKING
 
-from nu.terms.op import Command
+from nu.terms import Command
 
 
 if TYPE_CHECKING:
@@ -65,6 +65,18 @@ class Filter(Command):
                     if await condition.first(ctx):
                         await body.execute(ctx)
 
+    def run_sync(self, ctx: Context) -> None:
+        condition = self.children[1]
+        body = self.children[2]
+        item_key: str = self.children[3].first_sync(ctx)
+
+        with closing(self.children[0].open_sync(ctx)) as items_gen:
+            for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    if condition.first_sync(ctx):
+                        body.execute_sync(ctx)
+
 
 class Map(Command):
     """Transform each item via a Nu expression, collect results.
@@ -98,6 +110,19 @@ class Map(Command):
                     results.append(await transform.first(ctx))
         ctx.attrs[output_key] = results
 
+    def run_sync(self, ctx: Context) -> None:
+        transform = self.children[1]
+        item_key: str = self.children[2].first_sync(ctx)
+        output_key: str = self.children[3].first_sync(ctx)
+
+        results = []
+        with closing(self.children[0].open_sync(ctx)) as items_gen:
+            for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    results.append(transform.first_sync(ctx))
+        ctx.attrs[output_key] = results
+
 
 class TakeWhile(Command):
     """Execute body while condition holds. Stop on first false.
@@ -128,6 +153,19 @@ class TakeWhile(Command):
                     if not await condition.first(ctx):
                         return
                     await body.execute(ctx)
+
+    def run_sync(self, ctx: Context) -> None:
+        condition = self.children[1]
+        body = self.children[2]
+        item_key: str = self.children[3].first_sync(ctx)
+
+        with closing(self.children[0].open_sync(ctx)) as items_gen:
+            for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    if not condition.first_sync(ctx):
+                        return
+                    body.execute_sync(ctx)
 
 
 class Unique(Command):
@@ -161,6 +199,21 @@ class Unique(Command):
                     if k not in seen:
                         seen.add(k)
                         await body.execute(ctx)
+
+    def run_sync(self, ctx: Context) -> None:
+        key_expr = self.children[1]
+        body = self.children[2]
+        item_key: str = self.children[3].first_sync(ctx)
+
+        seen: set = set()
+        with closing(self.children[0].open_sync(ctx)) as items_gen:
+            for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    k = key_expr.first_sync(ctx)
+                    if k not in seen:
+                        seen.add(k)
+                        body.execute_sync(ctx)
 
 
 class Find(Command):
@@ -196,6 +249,19 @@ class Find(Command):
                         ctx.attrs[output_key] = elem
                         return
 
+    def run_sync(self, ctx: Context) -> None:
+        condition = self.children[1]
+        item_key: str = self.children[2].first_sync(ctx)
+        output_key: str = self.children[3].first_sync(ctx)
+
+        with closing(self.children[0].open_sync(ctx)) as items_gen:
+            for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    if condition.first_sync(ctx):
+                        ctx.attrs[output_key] = elem
+                        return
+
 
 class FindIndex(Command):
     """Find index of first item where condition is truthy.
@@ -227,6 +293,19 @@ class FindIndex(Command):
                 for i, elem in enumerate(items):
                     ctx.attrs[item_key] = elem
                     if await condition.first(ctx):
+                        ctx.attrs[output_key] = i
+                        return
+
+    def run_sync(self, ctx: Context) -> None:
+        condition = self.children[1]
+        item_key: str = self.children[2].first_sync(ctx)
+        output_key: str = self.children[3].first_sync(ctx)
+
+        with closing(self.children[0].open_sync(ctx)) as items_gen:
+            for items in items_gen:
+                for i, elem in enumerate(items):
+                    ctx.attrs[item_key] = elem
+                    if condition.first_sync(ctx):
                         ctx.attrs[output_key] = i
                         return
 
@@ -271,6 +350,25 @@ class GroupBy(Command):
             ctx.attrs[group_key] = group_items
             await body.execute(ctx)
 
+    def run_sync(self, ctx: Context) -> None:
+        key_expr = self.children[1]
+        body = self.children[2]
+        item_key: str = self.children[3].first_sync(ctx)
+        group_key: str = self.children[4].first_sync(ctx)
+
+        groups: dict = {}
+        with closing(self.children[0].open_sync(ctx)) as items_gen:
+            for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    k = key_expr.first_sync(ctx)
+                    groups.setdefault(k, []).append(elem)
+
+        for k, group_items in groups.items():
+            ctx.attrs[item_key] = k
+            ctx.attrs[group_key] = group_items
+            body.execute_sync(ctx)
+
 
 class Partition(Command):
     """Split items into matches and rest by a Nu condition.
@@ -312,6 +410,25 @@ class Partition(Command):
         ctx.attrs[matches_key] = matches_list
         ctx.attrs[rest_key] = rest_list
 
+    def run_sync(self, ctx: Context) -> None:
+        condition = self.children[1]
+        item_key: str = self.children[2].first_sync(ctx)
+        matches_key: str = self.children[3].first_sync(ctx)
+        rest_key: str = self.children[4].first_sync(ctx)
+
+        matches_list: list = []
+        rest_list: list = []
+        with closing(self.children[0].open_sync(ctx)) as items_gen:
+            for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    if condition.first_sync(ctx):
+                        matches_list.append(elem)
+                    else:
+                        rest_list.append(elem)
+        ctx.attrs[matches_key] = matches_list
+        ctx.attrs[rest_key] = rest_list
+
 
 class ToDict(Command):
     """Build a dict from items using Nu key and value expressions.
@@ -346,5 +463,21 @@ class ToDict(Command):
                     ctx.attrs[item_key] = elem
                     k = await key_expr.first(ctx)
                     v = await value_expr.first(ctx)
+                    result[k] = v
+        ctx.attrs[output_key] = result
+
+    def run_sync(self, ctx: Context) -> None:
+        key_expr = self.children[1]
+        value_expr = self.children[2]
+        item_key: str = self.children[3].first_sync(ctx)
+        output_key: str = self.children[4].first_sync(ctx)
+
+        result: dict = {}
+        with closing(self.children[0].open_sync(ctx)) as items_gen:
+            for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    k = key_expr.first_sync(ctx)
+                    v = value_expr.first_sync(ctx)
                     result[k] = v
         ctx.attrs[output_key] = result

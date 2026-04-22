@@ -9,7 +9,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from nu.stdio.refs import STDERR, STDOUT
-from nu.terms.op import Command
+from nu.terms import Command
 
 
 if TYPE_CHECKING:
@@ -45,6 +45,13 @@ class Print(Command):
             parts.append(str(await child.collect(ctx)))
         stream.write(" ".join(parts) + "\n")
 
+    def run_sync(self, ctx: Context) -> None:
+        from nu.stdio.ops import _get_stream
+
+        stream = _get_stream(ctx, self.children[0])
+        parts = [str(c.collect_sync(ctx)) for c in self.children[1:]]
+        stream.write(" ".join(parts) + "\n")
+
 
 class Log(Command):
     """Structured logging with configurable level.
@@ -68,6 +75,15 @@ class Log(Command):
         level = await self.children[1].first(ctx)
         logger_name = await self.children[2].first(ctx)
         parts = [str(await c.collect(ctx)) for c in self.children[3:]]
+        message = " ".join(parts)
+        if self._path:
+            message = f"[{self._path}] {message}"
+        getattr(logging.getLogger(logger_name), level)(message)
+
+    def run_sync(self, ctx: Context) -> None:
+        level = self.children[1].first_sync(ctx)
+        logger_name = self.children[2].first_sync(ctx)
+        parts = [str(c.collect_sync(ctx)) for c in self.children[3:]]
         message = " ".join(parts)
         if self._path:
             message = f"[{self._path}] {message}"
@@ -99,6 +115,21 @@ class Debug(Command):
         parts = [str(prefix)]
         for i, child in enumerate(self.children[3:]):
             val = await child.collect(ctx)
+            if labels and i < len(labels):
+                parts.append(f"{labels[i]}={val!r}")
+            else:
+                parts.append(repr(val))
+        stream.write(" ".join(parts) + "\n")
+
+    def run_sync(self, ctx: Context) -> None:
+        from nu.stdio.ops import _get_stream
+
+        stream = _get_stream(ctx, self.children[0])
+        prefix = self.children[1].first_sync(ctx)
+        labels = self.children[2].first_sync(ctx)
+        parts = [str(prefix)]
+        for i, child in enumerate(self.children[3:]):
+            val = child.collect_sync(ctx)
             if labels and i < len(labels):
                 parts.append(f"{labels[i]}={val!r}")
             else:

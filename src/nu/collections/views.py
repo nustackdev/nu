@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import ItemsView, KeysView, ValuesView
 from typing import TYPE_CHECKING
 
-from nu.interface import TypedNu
+from nu.terms import TypedNu
 
 from .abc import CollectionI
 from .abc.set_ import SetLikeI

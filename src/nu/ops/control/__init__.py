@@ -21,7 +21,7 @@ from .error import Assert, Retry, TryCatch
 from .io import Debug, Log, Print
 from .iteration import Fold, ForEach, ForRange
 from .parallel import All, Any, Race
-from .timing import Debounce, Delay, Throttle, Timed, Timeout
+from .timing import Debounce, Throttle, Timed, Timeout
 
 
 __all__ = [
@@ -40,7 +40,6 @@ __all__ = [
     "AssertNotEquals",
     "Debounce",
     "Debug",
-    "Delay",
     "DoWhile",
     "Fold",
     "ForEach",

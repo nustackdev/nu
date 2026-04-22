@@ -6,7 +6,7 @@ import logging
 
 from nu.context import Context, IntAttrRef, StrAttrRef
 from nu.ops import Log, Retry, ToStr
-from nu.terms import Literal, Nu, ScopedOp
+from nu.terms import ContextManager, Literal, Nu
 from nu.tree import map_nodes
 
 
@@ -19,7 +19,7 @@ __all__ = [
 _step_logger = logging.getLogger("nu.steps")
 
 
-class _StepSpan(ScopedOp):
+class _StepSpan(ContextManager):
     """Wraps a sequential child to log step progress. Path is baked at construction."""
 
     def __init__(self, child: Nu, step: int, total: int, path: str) -> None:

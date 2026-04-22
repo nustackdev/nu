@@ -1,6 +1,6 @@
-"""Tests for Op hierarchy - ensure_nu wrapping and arity.
+"""Tests for Interaction hierarchy - ensure_nu wrapping and arity.
 
-Op.__init__ auto-wraps Python literals into Nus via ensure_nu.
+Interaction.__init__ auto-wraps Python literals into Nus via ensure_nu.
 This is the parasitic embedding - Python values become tree nodes.
 """
 
@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import Any
 
 from nu import Literal, Nu
-from nu.terms.op import (
+from nu.terms import (
     BinaryOp,
+    Interaction,
     NAryOp,
-    Op,
     TernaryOp,
     UnaryOp,
 )
@@ -44,7 +44,7 @@ class _SumOp(NAryOp[int]):
 
 
 # ---------------------------------------------------------------------------
-# ensure_nu wrapping - Op.__init__ wraps literals
+# ensure_nu wrapping - Interaction.__init__ wraps literals
 # ---------------------------------------------------------------------------
 
 
@@ -138,19 +138,19 @@ async def test_nary_execute(ctx):
 
 def test_unary_is_op():
     op = _NegOp(1)
-    assert isinstance(op, Op)
+    assert isinstance(op, Interaction)
     assert op._child_count == 1
 
 
 def test_binary_is_op():
     op = _AddOp(1, 2)
-    assert isinstance(op, Op)
+    assert isinstance(op, Interaction)
     assert op._child_count == 2
 
 
 def test_ternary_is_op():
     op = _ClampOp(10, 0, 5)
-    assert isinstance(op, Op)
+    assert isinstance(op, Interaction)
     assert op._child_count == 3
 
 

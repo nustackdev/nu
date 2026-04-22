@@ -8,14 +8,14 @@ AndOp and OrOp override open() for short-circuit semantics.
 
 from __future__ import annotations
 
-from contextlib import aclosing
+from contextlib import aclosing, closing
 from typing import TYPE_CHECKING, Any
 
 from nu.terms import BinaryOp, Sentinel, UnaryOp, propagate_special
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
+    from collections.abc import AsyncGenerator, Generator
 
     from nu.context import Context
     from nu.terms import Nu
@@ -67,6 +67,14 @@ async def _drain_last(child: Nu, ctx: Context) -> Any:
     return val
 
 
+def _drain_last_sync(child: Nu, ctx: Context) -> Any:
+    val: Any = None
+    with closing(child.open_sync(ctx)) as gen:
+        for v in gen:
+            val = v
+    return val
+
+
 class AndOp[ResultT](BinaryOp[ResultT]):
     """Logical AND: left and right.
 
@@ -87,6 +95,27 @@ class AndOp[ResultT](BinaryOp[ResultT]):
             return
 
         right_val = await _drain_last(self._children[1], ctx)
+
+        special = propagate_special(right_val)
+        if special is not None:
+            yield special
+            return
+
+        yield left_val and right_val
+
+    def open_sync(self, ctx: Context) -> Generator[Any, None, None]:  # type: ignore[override]
+        left_val = _drain_last_sync(self._children[0], ctx)
+
+        sp = propagate_special(left_val)
+        if sp is not None:
+            yield sp
+            return
+
+        if not left_val:
+            yield left_val
+            return
+
+        right_val = _drain_last_sync(self._children[1], ctx)
 
         special = propagate_special(right_val)
         if special is not None:
@@ -121,6 +150,27 @@ class OrOp[ResultT](BinaryOp[ResultT]):
             return
 
         right_val = await _drain_last(self._children[1], ctx)
+
+        special = propagate_special(right_val)
+        if special is not None:
+            yield special
+            return
+
+        yield left_val or right_val
+
+    def open_sync(self, ctx: Context) -> Generator[Any, None, None]:  # type: ignore[override]
+        left_val = _drain_last_sync(self._children[0], ctx)
+
+        sp = propagate_special(left_val)
+        if sp is not None:
+            yield sp
+            return
+
+        if left_val:
+            yield left_val
+            return
+
+        right_val = _drain_last_sync(self._children[1], ctx)
 
         special = propagate_special(right_val)
         if special is not None:

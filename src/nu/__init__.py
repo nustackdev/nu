@@ -1,7 +1,7 @@
 """Nu - core library for the Nu ecosystem.
 
 Subpackages:
-    terms/        -- algebra terms (Nu, Literal, Ref, Op, Sentinel, Arg)
+    terms/        -- algebra terms (Nu, Literal, Ref, Interaction, Sentinel, Arg)
     context/      -- runtime resource container
     interface/    -- base Interface class and descriptors
     primitives/   -- primitive type interfaces (IntI, StrI, etc.)
@@ -43,8 +43,19 @@ from .context import (
     StrAttrRef,
     TupleAttrRef,
 )
-from .interface import Interface, TypedNu
-from .interface.auto_interface import AutoInterface, method, prop
+from .terms import (
+    AutoInterface,
+    Atomic,
+    Flow,
+    Interface,
+    Mode,
+    Stream,
+    T_co,
+    TypedNu,
+    method,
+    prop,
+    sup,
+)
 from .ops import (
     AbsOp,
     AddOp,
@@ -77,7 +88,6 @@ from .ops import (
     Debounce,
     Debug,
     DelAttrOp,
-    Delay,
     DivOp,
     DoWhile,
     Drop,
@@ -222,11 +232,10 @@ from .terms import (
     NoneArg,
     Nu,
     NuIndepComm,
-    Op,
     Query,
     Ref,
     RValue,
-    ScopedOp,
+    ContextManager,
     Sentinel,
     SetArg,
     StrArg,
@@ -279,7 +288,7 @@ from .stdio import (
 )
 
 # explicit submodule re-exports for nu.collections, nu.ops, etc.
-from . import collections, context, interface, ops, primitives, shapes, stdio, terms, tree  # noqa: E402, F401
+from . import collections, context, ops, primitives, shapes, stdio, terms, tree  # noqa: E402, F401
 
 
 __all__ = [
@@ -310,6 +319,7 @@ __all__ = [
     "AssertNotEmpty",
     "AssertNotEquals",
     "AtOp",
+    "Atomic",
     "AttrRef",
     "Attributes",
     "AutoInterface",
@@ -335,7 +345,6 @@ __all__ = [
     "Debug",
     "DelAttrOp",
     "Direction",
-    "Delay",
     "DictArg",
     "DictAttrRef",
     "DictI",
@@ -362,6 +371,7 @@ __all__ = [
     "FloatAttrRef",
     "FloatI",
     "FloorDivOp",
+    "Flow",
     "Fold",
     "ForEach",
     "ForRange",
@@ -406,6 +416,7 @@ __all__ = [
     "MethodCallOp",
     "Min",
     "MinOp",
+    "Mode",
     "ModOp",
     "MulOp",
     "NAryOp",
@@ -418,7 +429,6 @@ __all__ = [
     "NotOp",
     "Nu",
     "NuIndepComm",
-    "Op",
     "OrOp",
     "Partition",
     "Pluck",
@@ -434,7 +444,7 @@ __all__ = [
     "Retry",
     "Reversed",
     "ReversedOp",
-    "ScopedOp",
+    "ContextManager",
     "Sentinel",
     "SentinelI",
     "SetArg",
@@ -457,11 +467,13 @@ __all__ = [
     "StdioWrite",
     "StrArg",
     "StrAttrRef",
+    "Stream",
     "StrI",
     "SubOp",
     "Sum",
     "SumOp",
     "Switch",
+    "T_co",
     "Take",
     "TakeOp",
     "TakeWhile",
@@ -536,6 +548,7 @@ __all__ = [
     "prune",
     "replace",
     "size",
+    "sup",
     "tracked_effects",
     "unwrap",
     "wrap",

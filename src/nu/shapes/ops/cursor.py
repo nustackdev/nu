@@ -7,8 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Sentinel
-from nu.terms.op import Query
+from nu.terms import Query, Sentinel
 
 
 if TYPE_CHECKING:
@@ -42,6 +41,15 @@ class AdvanceCursorOp(Query[tuple | None]):
         cursor = await self.children[1].first(ctx)
 
         # Sentinel means no cursor yet (fresh start)
+        if isinstance(cursor, Sentinel):
+            cursor = None
+
+        return view.next_key_after(cursor)
+
+    def run_sync(self, ctx: Context) -> tuple | None:
+        view = self.children[0].first_sync(ctx)
+        cursor = self.children[1].first_sync(ctx)
+
         if isinstance(cursor, Sentinel):
             cursor = None
 

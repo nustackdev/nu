@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interface import Interface
+from nu.terms import Interface
 
 
 if TYPE_CHECKING:

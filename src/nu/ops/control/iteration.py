@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from contextlib import aclosing
+from contextlib import aclosing, closing
 from typing import TYPE_CHECKING, Any
 
-from nu.terms import Op
+from nu.terms import Interaction
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
+    from collections.abc import AsyncGenerator, Generator
 
     from nu.context import Context
     from nu.terms import IntArg, Nu, StrArg
@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 
-class ForRange(Op):
+class ForRange(Interaction):
     """Counted loop over ``range(start, stop, step)``.
 
     Children: ``[start, stop, step, body]``
@@ -64,8 +64,24 @@ class ForRange(Op):
                 async for v in gen:
                     yield v
 
+    def open_sync(self, ctx: Context) -> Generator[Any, None, None]:
+        start = self.children[0].first_sync(ctx)
+        stop = self.children[1].first_sync(ctx)
+        step = self.children[2].first_sync(ctx)
+        body = self.children[3]
 
-class ForEach(Op):
+        index_key: str | None = None
+        if self._has_index:
+            index_key = self.children[4].first_sync(ctx)
+
+        for i in range(start, stop, step):
+            if index_key is not None:
+                ctx.attrs[index_key] = i
+            with closing(body.open_sync(ctx)) as gen:
+                yield from gen
+
+
+class ForEach(Interaction):
     """Iterate over a sequence, executing body for each element.
 
     Children: ``[items, body, item?, index?]``
@@ -118,8 +134,30 @@ class ForEach(Op):
                         async for v in gen:
                             yield v
 
+    def open_sync(self, ctx: Context) -> Generator[Any, None, None]:
+        body = self.children[1]
 
-class Fold(Op):
+        child_idx = 2
+        item_key: str | None = None
+        index_key: str | None = None
+        if self._has_item:
+            item_key = self.children[child_idx].first_sync(ctx)
+            child_idx += 1
+        if self._has_index:
+            index_key = self.children[child_idx].first_sync(ctx)
+
+        with closing(self.children[0].open_sync(ctx)) as items_gen:
+            for items in items_gen:
+                for i, elem in enumerate(items):
+                    if item_key is not None:
+                        ctx.attrs[item_key] = elem
+                    if index_key is not None:
+                        ctx.attrs[index_key] = i
+                    with closing(body.open_sync(ctx)) as gen:
+                        yield from gen
+
+
+class Fold(Interaction):
     """Stateful sequential reduction over an iterable.
 
     Children: ``[items, initial, body, acc, item]``
@@ -157,3 +195,18 @@ class Fold(Op):
                     async with aclosing(body.open(ctx)) as gen:
                         async for v in gen:
                             yield v
+
+    def open_sync(self, ctx: Context) -> Generator[Any, None, None]:
+        initial = self.children[1].first_sync(ctx)
+        body = self.children[2]
+        acc_key: str = self.children[3].first_sync(ctx)
+        item_key: str = self.children[4].first_sync(ctx)
+
+        ctx.attrs[acc_key] = initial
+
+        with closing(self.children[0].open_sync(ctx)) as items_gen:
+            for items in items_gen:
+                for elem in items:
+                    ctx.attrs[item_key] = elem
+                    with closing(body.open_sync(ctx)) as gen:
+                        yield from gen

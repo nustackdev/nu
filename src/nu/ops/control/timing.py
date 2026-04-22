@@ -1,13 +1,19 @@
-"""Timing ops -- Timed, Delay, Timeout, Throttle, Debounce."""
+"""Timing ops -- Timed, Timeout, Throttle, Debounce.
+
+For sleep primitives, see ``nu.stdlib.asyncio.AsyncSleep`` (ASYNC) and
+``nu.stdlib.time.TimeSleep`` (SYNC). Core ships no ``Delay``: asyncio.sleep
+and time.sleep are different primitives under different modes, and the
+wrapper belongs in stdlib.
+"""
 
 from __future__ import annotations
 
 import asyncio
 import time
 from contextlib import aclosing
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Op
+from nu.terms import Interaction, Mode
 
 
 if TYPE_CHECKING:
@@ -19,18 +25,19 @@ if TYPE_CHECKING:
 
 __all__ = [
     "Debounce",
-    "Delay",
     "Throttle",
     "Timed",
     "Timeout",
 ]
 
 
-class Timed(Op):
+class Timed(Interaction):
     """Time each child and print results.
 
     Children: ``[label, *children]``
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, *children: Nu, label: StrArg = "Timed") -> None:
         super().__init__(label, *children)
@@ -60,32 +67,13 @@ class Timed(Op):
         print(f"  {'total':<42} {total * 1000:>8.1f}ms")  # noqa: T201
 
 
-class Delay(Op):
-    """Pause execution, then optionally run a child.
-
-    Children: ``[delay, body?]``
-    """
-
-    def __init__(self, delay: FloatArg, body: Nu | None = None) -> None:
-        if body is not None:
-            super().__init__(delay, body)
-        else:
-            super().__init__(delay)
-
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        delay = await self.children[0].first(ctx)
-        await asyncio.sleep(delay)
-        if self._child_count > 1:
-            async with aclosing(self.children[1].open(ctx)) as gen:
-                async for v in gen:
-                    yield v
-
-
-class Timeout(Op):
+class Timeout(Interaction):
     """Execute a child with a time limit.
 
     Children: ``[timeout, body, on_timeout?]``
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(
         self,
@@ -111,13 +99,15 @@ class Timeout(Op):
                 await self.children[2].execute(ctx)
 
 
-class Throttle(Op):
+class Throttle(Interaction):
     """Drop executions within interval. Execute at most once per interval.
 
     Children: ``[interval, body?]``
 
     First call always executes. Subsequent calls within the interval are skipped.
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, interval: FloatArg, body: Nu | None = None) -> None:
         self._last_time: float = 0.0
@@ -138,7 +128,7 @@ class Throttle(Op):
                     yield v
 
 
-class Debounce(Op):
+class Debounce(Interaction):
     """Cancel pending, restart timer. Execute only after quiet period.
 
     Children: ``[delay, body?]``
@@ -146,6 +136,8 @@ class Debounce(Op):
     Each call cancels any pending execution and starts a new timer.
     Body executes only when the timer expires without being reset.
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, delay: FloatArg, body: Nu | None = None) -> None:
         self._pending: asyncio.Task | None = None

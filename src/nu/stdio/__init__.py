@@ -3,7 +3,7 @@
 Refs: StdioRef (STDOUT, STDERR, STDIN singletons)
 Ops: StdioWrite (WRITE), StdioRead, StdioFlush (WRITE)
 Backend: StdioBackend (bound in Context for redirection/buffering)
-Buffered: BufferedStdio (ScopedOp transaction pattern)
+Buffered: BufferedStdio (ContextManager transaction pattern)
 """
 
 from .backend import StdioBackend

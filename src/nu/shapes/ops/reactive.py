@@ -12,10 +12,9 @@ All ops read the view via children[0] (goes through Snapshot wrapper).
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Nu
-from nu.terms.op import Query
+from nu.terms import Mode, Nu, Query
 
 
 if TYPE_CHECKING:
@@ -34,6 +33,8 @@ __all__ = [
 
 class ChangeOp(Query[object]):
     """Base class for all change subscription operations."""
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     @abstractmethod
     async def run(self, ctx: Context) -> object: ...

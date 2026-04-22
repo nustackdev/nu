@@ -9,8 +9,7 @@ from __future__ import annotations
 from datetime import UTC, date, datetime, time, timedelta, timezone
 from typing import TYPE_CHECKING
 
-from nu.interface import Interface, TypedNu
-from nu.terms import Arg
+from nu.terms import Arg, Interface, TypedNu
 
 
 if TYPE_CHECKING:

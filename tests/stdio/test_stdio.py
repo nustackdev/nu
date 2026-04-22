@@ -20,7 +20,7 @@ from nu.stdio import (
     StdioRef,
     StdioWrite,
 )
-from nu.terms.effect import Direction, TrackedEffect, tracked_effects
+from nu.terms import Direction, TrackedEffect, tracked_effects
 
 
 # ---------------------------------------------------------------------------

@@ -55,7 +55,7 @@ class Account(Shape):
 
 
 def _count(tree, cls, scope_sentinel=object()) -> int:
-    """Count ScopedOp boundaries of ``cls`` in the tree.
+    """Count ContextManager boundaries of ``cls`` in the tree.
 
     If scope_sentinel is given, only count ones with ``.scope is scope_sentinel``.
     """

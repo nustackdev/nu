@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Sentinel
-from nu.terms.op import Query
+from nu.terms import Query, Sentinel
 
 
 if TYPE_CHECKING:
@@ -30,6 +29,10 @@ class ServiceGetOp[T](Query[T | Sentinel]):
         """Return service bound in ctx for the ref's service_type."""
         return ctx[self.children[0].service_type]
 
+    def run_sync(self, ctx: Context) -> T | Sentinel:
+        """Sync counterpart of `run`."""
+        return ctx[self.children[0].service_type]
+
 
 class ServiceExistsOp(Query[bool]):
     """Check if service type exists in context."""
@@ -40,4 +43,8 @@ class ServiceExistsOp(Query[bool]):
 
     async def run(self, ctx: Context) -> bool:
         """Return True if the ref's service_type is bound in ctx."""
+        return self.children[0].service_type in ctx
+
+    def run_sync(self, ctx: Context) -> bool:
+        """Sync counterpart of `run`."""
         return self.children[0].service_type in ctx

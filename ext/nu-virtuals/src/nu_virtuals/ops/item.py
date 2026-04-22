@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import EMPTY, Sentinel
-from nu.terms.op import Command, Query
+from nu.terms import Command, Query
 
 
 if TYPE_CHECKING:

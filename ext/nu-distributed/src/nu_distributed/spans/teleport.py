@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms.op import Query
+from nu.terms import Query
 
 
 if TYPE_CHECKING:

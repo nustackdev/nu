@@ -1,92 +1,116 @@
-"""Nu terms - building blocks of the algebra."""
+"""Nu terms - the four Nu kinds + shared types + authoring utilities.
 
-from .arg import (
-    Arg,
-    BoolArg,
-    BytesArg,
-    DictArg,
-    FloatArg,
-    FrozenSetArg,
-    IntArg,
-    ListArg,
-    NoneArg,
-    SetArg,
-    StrArg,
-    TupleArg,
-)
-from .effect import Direction, TrackedEffect, is_pure, tracked_effects
+Layout (see projects/nu/model/programming/components.md + interactions.md):
+
+    Nu                  - primitive (nu.py)
+    ├── Ref             - addressable location (ref.py)
+    ├── Interaction     - compute or mutate (interaction.py)
+    │   ├── Query       - functional construction (query.py)
+    │   │   └── Literal, NAryOp / Unary / Binary / Ternary, Stream
+    │   └── Command     - imperative mutation (command.py)
+    │       └── Atomic, Flow
+    ├── Form            - typed descriptor (interface.py; rename later)
+    └── ContextManager  - bracket hooks (context_manager.py)
+
+Shared: types.py (Mode, sup, Sentinel, EMPTY/INVALID, Direction, TrackedEffect,
+Arg types, T_co). Analysis + Form/Interface descriptors: utils.py.
+"""
+
+from .command import Atomic, Command, Flow
+from .context_manager import ContextManager
 from .interaction import Interaction
-from .literal import Literal
+from .interface import Interface, TypedNu
 from .nu import LValue, Nu, NuIndepComm, RValue
-from .op import (
+from .query import (
     BinaryOp,
-    Command,
+    Literal,
     NAryOp,
-    Op,
     Query,
-    ScopedOp,
+    Stream,
     TernaryOp,
     UnaryOp,
 )
 from .ref import Ref
-from .sentinel import (
+from .types import (
     EMPTY,
     INVALID,
+    Arg,
+    BoolArg,
+    BytesArg,
+    DictArg,
+    Direction,
     Empty,
+    FloatArg,
+    FrozenSetArg,
+    IntArg,
     Invalid,
+    ListArg,
+    Mode,
+    NoneArg,
     Sentinel,
+    SetArg,
+    StrArg,
+    T_co,
+    TrackedEffect,
+    TupleArg,
     is_empty,
     is_invalid,
     is_sentinel,
     propagate_special,
+    sup,
 )
-from .type_vars import T_co
+from .utils import AutoInterface, is_pure, method, prop, tracked_effects
 
 
 __all__ = [
-    "Direction",
     "EMPTY",
     "INVALID",
-    # Args
     "Arg",
+    "Atomic",
+    "AutoInterface",
     "BinaryOp",
     "BoolArg",
     "BytesArg",
     "Command",
+    "ContextManager",
     "DictArg",
+    "Direction",
     "Empty",
     "FloatArg",
+    "Flow",
     "FrozenSetArg",
     "IntArg",
     "Interaction",
+    "Interface",
     "Invalid",
     "LValue",
     "ListArg",
+    "Literal",
+    "Mode",
     "NAryOp",
     "NoneArg",
-    # Core
     "Nu",
     "NuIndepComm",
-    "Op",
     "Query",
     "RValue",
     "Ref",
-    "ScopedOp",
-    # Sentinels
     "Sentinel",
     "SetArg",
     "StrArg",
+    "Stream",
     "T_co",
     "TernaryOp",
-    "TupleArg",
-    "UnaryOp",
     "TrackedEffect",
-    # Terms
-    "Literal",
+    "TupleArg",
+    "TypedNu",
+    "UnaryOp",
     "is_empty",
     "is_invalid",
     "is_pure",
     "is_sentinel",
+    "method",
+    "prop",
     "propagate_special",
+    "sup",
     "tracked_effects",
 ]

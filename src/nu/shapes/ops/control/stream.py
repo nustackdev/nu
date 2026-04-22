@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import aclosing
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Op, Sentinel
+from nu.terms import Interaction, Mode, Sentinel
 from nu.utils import ensure_nu
 
 from ..cursor import AdvanceCursorOp
@@ -31,7 +31,7 @@ __all__ = [
 ]
 
 
-class Stream(Op):
+class Stream(Interaction):
     """Drain-then-follow over an ordered collection.
 
     Iterates existing items (drain), then subscribes and follows new
@@ -39,6 +39,8 @@ class Stream(Op):
 
     Children layout: [advance_op, change_op, body, key, log_key]
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(
         self,
@@ -74,9 +76,7 @@ class Stream(Op):
         async for v in self._react(ctx, key, log_key):
             yield v
 
-    async def _drain(
-        self, ctx: Context, key: str, log_key: str
-    ) -> AsyncGenerator[Any, None]:
+    async def _drain(self, ctx: Context, key: str, log_key: str) -> AsyncGenerator[Any, None]:
         """Drain existing items from source."""
         while True:
             result = await self.children[0].first(ctx)
@@ -89,9 +89,7 @@ class Stream(Op):
                 async for v in gen:
                     yield v
 
-    async def _react(
-        self, ctx: Context, key: str, log_key: str
-    ) -> AsyncGenerator[Any, None]:
+    async def _react(self, ctx: Context, key: str, log_key: str) -> AsyncGenerator[Any, None]:
         """Follow new items via reactive subscription."""
         loop = asyncio.get_running_loop()
         event = asyncio.Event()

@@ -31,6 +31,10 @@ class AttrGetOp[T](Query[T | Sentinel]):
         key = await self.children[0]._resolve_name(ctx)
         return ctx.attrs[key]
 
+    def run_sync(self, ctx: Context) -> T | Sentinel:
+        key = self.children[0]._resolve_name_sync(ctx)
+        return ctx.attrs[key]
+
 
 class AttrExistsOp(Query[bool]):
     """Check if name exists in context."""
@@ -40,4 +44,8 @@ class AttrExistsOp(Query[bool]):
 
     async def run(self, ctx: Context) -> bool:
         key = await self.children[0]._resolve_name(ctx)
+        return key in ctx.attrs
+
+    def run_sync(self, ctx: Context) -> bool:
+        key = self.children[0]._resolve_name_sync(ctx)
         return key in ctx.attrs

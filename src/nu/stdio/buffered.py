@@ -8,7 +8,7 @@ from __future__ import annotations
 from io import StringIO
 from typing import TYPE_CHECKING
 
-from nu.terms.op import ScopedOp
+from nu.terms import ContextManager
 
 from .backend import StdioBackend
 
@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 
-class BufferedStdio(ScopedOp):
+class BufferedStdio(ContextManager):
     """Buffer stdio writes. Flush on success, discard on failure.
 
     before(): creates StdioBackend with StringIO buffers, rebinds in Context.

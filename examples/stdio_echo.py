@@ -14,8 +14,7 @@ from typing import TYPE_CHECKING
 
 from nu import Context, DoWhile, If, NeOp, StrAttrRef, TryCatch
 from nu.stdio import STDERR, STDIN, STDOUT, StdioFlush, StdioRead, StdioWrite
-from nu.terms.effect import tracked_effects
-from nu.terms.op import Command
+from nu.terms import Command, tracked_effects
 
 
 if TYPE_CHECKING:

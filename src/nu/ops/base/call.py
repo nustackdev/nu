@@ -14,9 +14,9 @@ All variants support:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import NAryOp, Sentinel
+from nu.terms import Mode, NAryOp, Sentinel
 
 
 if TYPE_CHECKING:
@@ -53,6 +53,8 @@ class FuncCall[T](NAryOp[T | Sentinel]):
         FuncCallOp(datetime.now)
         FuncCallCmd(requests.get, url_term, timeout=5)
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, func: Callable[..., Any], *args: object, **kwargs: object) -> None:
         super().__init__(*args, *kwargs.values())
@@ -106,6 +108,8 @@ class MethodCall[T](NAryOp[T | Sentinel]):
         MethodCallOp(my_str_value, "upper")
         MethodCallCmd(api_client, "fetch", url_term)
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, target: object, method_name: str, *args: object, **kwargs: object) -> None:
         super().__init__(target, *args, *kwargs.values())

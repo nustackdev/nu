@@ -14,7 +14,7 @@ dependencies = [
     "nu>=0.1.0",
     "virtuals-py",
 ]
-keywords = ["every", "virtuals", "refs", "kv", "views"]
+keywords = ["virtuals", "refs", "kv", "views"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",

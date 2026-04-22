@@ -1,0 +1,274 @@
+"""Query - functional construction. Yields value(s). No observable mutation.
+
+Taxonomy under Interaction:
+
+    Query[T]                  yields value(s); effect set ⊆ {CALC, RESOLVE, READ}
+    ├── Literal[T]            trivial leaf: holds a value, yields it once
+    ├── Scalar Query:         1 yield
+    │   ├── Query[T] base          hook: run(ctx) -> T / arun(ctx) -> T
+    │   ├── NAryOp[T]              hook: apply(*values) / aapply(*values); resolves children + sentinel propagation
+    │   ├── UnaryOp[T]             arity refinement, self.operand
+    │   ├── BinaryOp[T]            arity refinement, self.left / self.right
+    │   └── TernaryOp[T]           arity refinement
+    └── Stream[T]             N yields; author overrides open / aopen
+
+Command children are forbidden anywhere in a Query subtree (purity is global).
+"""
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from contextlib import AsyncExitStack, ExitStack, aclosing, closing
+from inspect import isawaitable, iscoroutinefunction
+from typing import TYPE_CHECKING, Any
+
+from .interaction import Interaction
+from .types import INVALID, Mode, Sentinel, T_co, is_sentinel
+
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, Generator
+
+    from ..context import Context
+    from .nu import Nu
+
+
+__all__ = [
+    "BinaryOp",
+    "Literal",
+    "NAryOp",
+    "Query",
+    "Stream",
+    "TernaryOp",
+    "UnaryOp",
+]
+
+
+# =============================================================================
+# QUERY BASE - 1-yield sugar
+# =============================================================================
+
+
+class Query(Interaction[T_co], ABC):
+    """1-yield Interaction. Hook: run(ctx) -> T / arun(ctx) -> T.
+
+    Use for Interactions that compute one value from raw ctx access. For
+    operand-driven compute with sentinel propagation, prefer NAryOp.
+    """
+
+    @abstractmethod
+    async def run(self, ctx: Context) -> T_co:
+        """Compute the value. Called once; its return is the single yield."""
+        ...
+
+    def run_sync(self, ctx: Context) -> T_co:
+        """Sync compute. Override for SYNC / BOTH Queries; default raises."""
+        msg = f"{type(self).__name__} has no run_sync; ASYNC-only Query"
+        raise RuntimeError(msg)
+
+    async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+        yield await self.run(ctx)
+
+    def open_sync(self, ctx: Context) -> Generator[T_co, None, None]:
+        if self.mode is Mode.ASYNC:
+            msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
+            raise RuntimeError(msg)
+        yield self.run_sync(ctx)
+
+
+# =============================================================================
+# LITERAL - trivial leaf Query
+# =============================================================================
+
+
+class Literal(Interaction[T_co]):
+    """Irreducible leaf. Holds a value, yields it once. No children.
+
+    Structurally a trivial scalar Query (no Ref in subtree → CALC-only), but
+    bypasses the Query hook machinery: the stored value IS the yield.
+    """
+
+    _value: object
+
+    def __init__(self, value: T_co) -> None:
+        super().__init__()  # no children
+        self._value = value
+
+    async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+        yield self._value  # type: ignore[misc]
+
+    def open_sync(self, ctx: Context) -> Generator[T_co, None, None]:
+        yield self._value  # type: ignore[misc]
+
+    @property
+    def is_self_pure(self) -> bool:
+        return True
+
+    def __repr__(self) -> str:
+        return f"Literal({self._value!r})"
+
+
+# =============================================================================
+# NARY - operand-driven compute with sentinel propagation
+# =============================================================================
+
+
+class NAryOp(Query[T_co | Sentinel], ABC):
+    """Query with auto-resolved operands. Hook: apply(*values) / aapply(*values).
+
+    Opens each child, takes the first yield, propagates EMPTY / INVALID
+    (yields INVALID without calling apply), calls apply, yields once.
+
+    Each child's generator stays suspended at its yield point via an exit
+    stack - this keeps any scope the child opened (Snapshot, Atomic) alive
+    through `apply`, so live views passed to `apply` still read from their
+    backing context. Generators close LIFO on exit.
+    """
+
+    def __init__(self, *children: object) -> None:
+        super().__init__(*children)
+
+    def __repr__(self) -> str:
+        args = ", ".join(repr(c) for c in self._children)
+        return f"{self.__class__.__name__}({args})"
+
+    def __str__(self) -> str:
+        args = ", ".join(str(c) for c in self._children)
+        return f"{self.__class__.__name__}({args})"
+
+    async def open(self, ctx: Context) -> AsyncGenerator[T_co | Sentinel, None]:
+        async with AsyncExitStack() as stack:
+            values: list[Any] = []
+            for child in self._children:
+                gen = await stack.enter_async_context(aclosing(child.open(ctx)))
+                try:
+                    v = await gen.__anext__()
+                except StopAsyncIteration:
+                    yield INVALID
+                    return
+                if is_sentinel(v):
+                    yield INVALID
+                    return
+                values.append(v)
+            result = self.apply(*values)
+            if isawaitable(result):
+                result = await result
+            yield result
+
+    def open_sync(self, ctx: Context) -> Generator[T_co | Sentinel, None, None]:
+        if self.mode is Mode.ASYNC:
+            msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
+            raise RuntimeError(msg)
+        if iscoroutinefunction(self.apply):
+            msg = f"{type(self).__name__}.apply is async; cannot run sync"
+            raise RuntimeError(msg)
+        with ExitStack() as stack:
+            values: list[Any] = []
+            for child in self._children:
+                gen = stack.enter_context(closing(child.open_sync(ctx)))
+                try:
+                    v = next(gen)
+                except StopIteration:
+                    yield INVALID
+                    return
+                if is_sentinel(v):
+                    yield INVALID
+                    return
+                values.append(v)
+            yield self.apply(*values)
+
+    @abstractmethod
+    def apply(self, *values: Any) -> T_co | Sentinel:  # noqa: ANN401
+        """Apply the transformation to resolved values. Sync or async."""
+        ...
+
+    # NAryOp overrides open/open_sync directly; Query's run/run_sync are unused.
+    async def run(self, ctx: Context) -> T_co | Sentinel:  # type: ignore[override]
+        msg = f"{type(self).__name__} implements apply, not run"
+        raise NotImplementedError(msg)
+
+
+# =============================================================================
+# ARITY REFINEMENTS
+# =============================================================================
+
+
+class UnaryOp(NAryOp[T_co], ABC):
+    """Single operand. For: -x, abs(x), not x, len(x), etc."""
+
+    def __init__(self, operand: object) -> None:
+        super().__init__(operand)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.operand!r})"
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}({self.operand})"
+
+    @property
+    def operand(self) -> Nu:
+        return self._children[0]
+
+    @abstractmethod
+    def apply(self, operand: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
+        ...
+
+
+class BinaryOp(NAryOp[T_co], ABC):
+    """Two operands. For: x + y, x > y, x and y, x[y], etc."""
+
+    def __init__(self, left: object, right: object) -> None:
+        super().__init__(left, right)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.left!r}, {self.right!r})"
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}({self.left}, {self.right})"
+
+    @property
+    def left(self) -> Nu:
+        return self._children[0]
+
+    @property
+    def right(self) -> Nu:
+        return self._children[1]
+
+    @abstractmethod
+    def apply(self, left: Any, right: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
+        ...
+
+
+class TernaryOp(NAryOp[T_co], ABC):
+    """Three operands. Children accessed via self.children[0..2]."""
+
+    def __init__(self, a: object, b: object, c: object) -> None:
+        super().__init__(a, b, c)
+
+    def __repr__(self) -> str:
+        c0, c1, c2 = self._children
+        return f"{self.__class__.__name__}({c0!r}, {c1!r}, {c2!r})"
+
+    def __str__(self) -> str:
+        c0, c1, c2 = self._children
+        return f"{self.__class__.__name__}({c0}, {c1}, {c2})"
+
+    @abstractmethod
+    def apply(self, a: Any, b: Any, c: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
+        ...
+
+
+# =============================================================================
+# STREAM - multi-yield Query
+# =============================================================================
+
+
+class Stream(Interaction[T_co], ABC):
+    """N-yield Query. Author overrides open / aopen directly.
+
+    Use for streaming value producers: Map, Filter, Take, Subscribe, IfExpr,
+    and any multi-yield Query whose shape doesn't fit the 1-yield sugar.
+
+    No hook; override open / aopen. Still a Query by role (no WRITE in
+    subtree). Composes inside other Queries and Commands like any Query.
+    """

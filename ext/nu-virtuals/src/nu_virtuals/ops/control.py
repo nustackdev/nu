@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Context, ScopedOp
+from nu import Context, ContextManager
 from virtuals import Navigator
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
 
@@ -40,7 +40,7 @@ def _scope_tags(scope: Hashable | None) -> tuple:
     return (scope,) if scope is not None else ()
 
 
-class Atomic(ScopedOp):
+class Atomic(ContextManager):
     """Atomic transaction boundary for virtuals operations.
 
     Before:
@@ -176,7 +176,7 @@ class Atomic(ScopedOp):
         return f"Atomic({scope_name})"
 
 
-class Snapshot(ScopedOp):
+class Snapshot(ContextManager):
     """Read-only snapshot boundary for virtuals operations.
 
     Like Atomic but always opens a snapshot, never a transaction.
@@ -248,7 +248,7 @@ class Snapshot(ScopedOp):
         return f"Snapshot({scope_name})"
 
 
-class Transaction(ScopedOp):
+class Transaction(ContextManager):
     """Write transaction boundary for virtuals operations.
 
     Like Atomic but always opens a transaction, never a snapshot.

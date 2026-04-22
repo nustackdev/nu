@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import asyncio
-from contextlib import aclosing
-from typing import TYPE_CHECKING, Any
+from contextlib import aclosing, closing
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu.primitives import NoneI
-from nu.terms import Op
-from nu.terms.op import Command
+from nu.terms import Command, Interaction, Mode
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
+    from collections.abc import AsyncGenerator, Generator
 
     from nu.context import Context
     from nu.terms import FloatArg, IntArg, Nu, StrArg
@@ -25,7 +24,7 @@ __all__ = [
 ]
 
 
-class TryCatch(Op):
+class TryCatch(Interaction):
     """Try/catch/finally error handling.
 
     Children: ``[body, catch, finally_]``
@@ -85,8 +84,34 @@ class TryCatch(Op):
         if caught is not None and not handled:
             raise caught
 
+    def open_sync(self, ctx: Context) -> Generator[Any, None, None]:
+        body = self.children[0]
+        catch = self.catch
+        finally_ = self.finally_
 
-class Retry(Op):
+        caught: Exception | None = None
+        handled = False
+        try:
+            with closing(body.open_sync(ctx)) as gen:
+                yield from gen
+        except Exception as e:
+            caught = e
+            if catch is not None and (self._errors is None or isinstance(e, self._errors)):
+                catch_ctx = ctx._copy()
+                catch_ctx.attrs["error"] = str(e)
+                with closing(catch.open_sync(catch_ctx)) as gen:
+                    yield from gen
+                handled = True
+        finally:
+            if finally_ is not None:
+                with closing(finally_.open_sync(ctx)) as gen:
+                    yield from gen
+
+        if caught is not None and not handled:
+            raise caught
+
+
+class Retry(Interaction):
     """Retry child on failure with exponential backoff.
 
     Children: ``[body, max_attempts, delay, backoff,
@@ -94,6 +119,8 @@ class Retry(Op):
 
     Always 7 children. Missing hooks are ``NoneI()`` sentinels.
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(
         self,
@@ -181,4 +208,10 @@ class Assert(Command):
         result = await self.children[0].first(ctx)
         if not result:
             message = await self.children[1].first(ctx)
+            raise AssertionError(message)
+
+    def run_sync(self, ctx: Context) -> None:
+        result = self.children[0].first_sync(ctx)
+        if not result:
+            message = self.children[1].first_sync(ctx)
             raise AssertionError(message)

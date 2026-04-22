@@ -17,6 +17,8 @@ from nu.utils import ensure_nu
 
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from nu.context import Context
     from nu.terms import StrArg
 
@@ -78,6 +80,21 @@ class AttrRef[T](Ref[T]):
         """Fetch value from context attrs by name."""
         key = await self._resolve_name(ctx)
         return ctx.attrs[key]  # type: ignore[attr-defined]
+
+    def _resolve_name_sync(self, ctx: Context) -> str:
+        """Sync counterpart of `_resolve_name`."""
+        if self._raw_name is not None:
+            return self._raw_name
+        return self._name_nu.first_sync(ctx)
+
+    def fetch_sync(self, ctx: Context) -> T | Sentinel:
+        """Sync counterpart of `fetch`."""
+        key = self._resolve_name_sync(ctx)
+        return ctx.attrs[key]  # type: ignore[attr-defined]
+
+    def open_sync(self, ctx: Context) -> Generator[T | Sentinel, None, None]:
+        """Sync counterpart of `open`; yields the fetched value once."""
+        yield self.fetch_sync(ctx)
 
     def exists(self) -> BoolI:
         """Check if name exists in context."""

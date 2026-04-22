@@ -1,7 +1,7 @@
 """auto_atomic - wrap unwrapped virtuals fabric interactions.
 
 Two rules (applied to shapes Refs and FlatRefs, i.e. virtuals fabric refs):
-1. Op with WRITE override + virtuals Ref at that position -> Transaction(Op)
+1. Interaction with WRITE override + virtuals Ref at that position -> Transaction(Interaction)
 2. Bare virtuals Ref -> Snapshot(Ref)
 
 Non-virtuals Refs (StdioRef, AttrRef, ServiceRef) are left unwrapped.
@@ -17,8 +17,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.shapes.refs.base import Ref as ShapesRef
-from nu.terms.effect import Direction, tracked_effects
-from nu.terms.op import Op
+from nu.terms import Direction, Interaction, tracked_effects
 
 from ..meta.flat_ref import FlatRef
 from ..ops.control import Atomic, Snapshot, Transaction
@@ -46,24 +45,24 @@ def _has_pv_write(node: Nu) -> bool:
     return any(Direction.WRITE in e.direction for e in tracked_effects(node))
 
 
-def _write_positions(op: Op) -> tuple[int, ...]:
-    """Return WRITE child positions declared on the Op."""
+def _write_positions(op: Interaction) -> tuple[int, ...]:
+    """Return WRITE child positions declared on the Interaction."""
     spec = op.writes
     if isinstance(spec, int):
         return (spec,)
     return tuple(spec)
 
 
-def _has_write_ref(op: Op) -> bool:
-    """Check if Op has a WRITE position with a virtuals Ref at that position."""
+def _has_write_ref(op: Interaction) -> bool:
+    """Check if Interaction has a WRITE position with a virtuals Ref at that position."""
     for i in _write_positions(op):
         if i < len(op.children) and isinstance(op.children[i], _VirtualsRef):
             return True
     return False
 
 
-def _find_write_ref(op: Op) -> ShapesRef | FlatRef | None:
-    """Find the first WRITE-position virtuals Ref in an Op."""
+def _find_write_ref(op: Interaction) -> ShapesRef | FlatRef | None:
+    """Find the first WRITE-position virtuals Ref in an Interaction."""
     for i in _write_positions(op):
         if i < len(op.children) and isinstance(op.children[i], _VirtualsRef):
             return op.children[i]
@@ -126,8 +125,8 @@ def _walk(tree: Nu, scope: Hashable | None, enclosing: tuple) -> Nu:
     if scope is not None:
         kwargs["scope"] = scope
 
-    # Rule 1: Op with WRITE position + virtuals Ref -> Transaction(Op)
-    if isinstance(tree, Op) and _write_positions(tree):
+    # Rule 1: Interaction with WRITE position + virtuals Ref -> Transaction(Interaction)
+    if isinstance(tree, Interaction) and _write_positions(tree):
         if scope is not None:
             # Scoped: only wrap if the write ref matches this scope
             write_ref = _find_write_ref(tree)

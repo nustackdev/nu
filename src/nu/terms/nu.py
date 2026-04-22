@@ -26,7 +26,7 @@ Hierarchy:
     │   └── Ref[T_co]       - typed pointer (see ref.py)
     └── RValue[T_co]        - evaluable expression (internal)
         ├── Literal[T_co]   - literal data (see literal.py)
-        └── Op[T_co]        - operation (see op.py)
+        └── Interaction[T_co]        - operation (see op.py)
 """
 
 from __future__ import annotations
@@ -38,11 +38,11 @@ from typing import TYPE_CHECKING, Any, ClassVar, Generic
 
 from nu.tree.node import _Node
 
-from .type_vars import T_co
+from .types import Mode, T_co, sup
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
+    from collections.abc import AsyncGenerator, Generator
 
     from ..context import Context
 
@@ -72,9 +72,19 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
     indep: ClassVar[bool] = False
     assoc: ClassVar[bool] = True
 
+    # Execution mode. BOTH = works under either evaluator. ASYNC = needs
+    # event loop. SYNC = plain generator, no loop. Subtree effective mode
+    # is sup(self.mode, *children.effective_mode()).
+    mode: ClassVar[Mode] = Mode.BOTH
+
     def can_parallelize(self) -> bool:
         """Licenses the interleaving pump. comm ∧ indep."""
         return self.comm and self.indep
+
+    def effective_mode(self) -> Mode:
+        """Subtree mode. Sup of own mode and each child's effective_mode."""
+        child_modes = tuple(c.effective_mode() for c in self._children)
+        return sup(self.mode, *child_modes)
 
     async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
         """Run this Nu as a scope. Yields 0..N values.
@@ -126,6 +136,32 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
                 except (asyncio.CancelledError, Exception):
                     pass
 
+    # --- sync evaluator path ---
+
+    def open_sync(self, ctx: Context) -> Generator[T_co, None, None]:
+        """Run as plain generator. Only valid when effective_mode ∈ {SYNC, BOTH}.
+
+        Default: dispatch by `can_parallelize()`. Parallel-sync sequentializes
+        (true thread parallelism goes through ExecutorRef, not the pump).
+        """
+        if self.mode is Mode.ASYNC:
+            msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
+            raise RuntimeError(msg)
+        if self.can_parallelize():
+            yield from self._pump_parallel_sync(ctx)
+        else:
+            yield from self._pump_sequential_sync(ctx)
+
+    def _pump_sequential_sync(self, ctx: Context) -> Generator[T_co, None, None]:
+        for child in self._children:
+            yield from child.open_sync(ctx)
+
+    def _pump_parallel_sync(self, ctx: Context) -> Generator[T_co, None, None]:
+        # Parallel-sync = interleave sequentially. Threads would help only for
+        # blocking calls, which belong on an executor.
+        for child in self._children:
+            yield from child.open_sync(ctx)
+
     # --- consumption helpers (sugar over open) ---
 
     async def execute(self, ctx: Context | None = None) -> None:
@@ -134,6 +170,25 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
         async with aclosing(self.open(ctx)) as gen:
             async for _ in gen:
                 pass
+
+    def execute_sync(self, ctx: Context | None = None) -> None:
+        """Drain on the sync path. Subtree must not contain ASYNC nodes."""
+        ctx = self._default_ctx(ctx)
+        for _ in self.open_sync(ctx):
+            pass
+
+    def first_sync(self, ctx: Context | None = None) -> Any:
+        """Sync-path `first`. Subtree must not contain ASYNC nodes."""
+        ctx = self._default_ctx(ctx)
+        for v in self.open_sync(ctx):
+            return v
+        msg = "nu yielded no values"
+        raise RuntimeError(msg)
+
+    def collect_sync(self, ctx: Context | None = None) -> list[Any]:
+        """Sync-path `collect`. Subtree must not contain ASYNC nodes."""
+        ctx = self._default_ctx(ctx)
+        return list(self.open_sync(ctx))
 
     async def drain(self, ctx: Context | None = None) -> None:
         """Alias for execute."""
@@ -223,4 +278,4 @@ class LValue(Nu[T_co], ABC):
 
 
 class RValue(Nu[T_co], ABC):
-    """Evaluable expression. Internal base for Literal and Op."""
+    """Evaluable expression. Internal base for Literal and Interaction."""

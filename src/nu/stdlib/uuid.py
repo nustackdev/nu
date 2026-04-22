@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid1, uuid3, uuid4, uuid5
 
-from nu.interface import Interface, TypedNu
+from nu.terms import Interface, TypedNu
 
 
 if TYPE_CHECKING:

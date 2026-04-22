@@ -3,7 +3,7 @@
 Covers all three computation rules plus edge cases:
 1. Literal -> empty
 2. Ref -> READ + recurse children
-3. Op -> overrides + recurse, union all
+3. Interaction -> overrides + recurse, union all
 """
 
 from __future__ import annotations
@@ -11,8 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from nu import Context, Literal, Nu
-from nu.terms.effect import Direction, TrackedEffect, is_pure, tracked_effects
-from nu.terms.op import BinaryOp, UnaryOp
+from nu.terms import BinaryOp, Direction, TrackedEffect, UnaryOp, is_pure, tracked_effects
 from nu.terms.ref import Ref
 
 
@@ -110,7 +109,7 @@ def test_ref_with_child_ref_dynamic_address():
 
 
 # ---------------------------------------------------------------------------
-# Rule 3: Op with overrides
+# Rule 3: Interaction with overrides
 # ---------------------------------------------------------------------------
 
 

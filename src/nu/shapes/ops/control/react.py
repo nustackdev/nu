@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import aclosing
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Op
+from nu.terms import Interaction, Mode
 from nu.utils import ensure_nu
 
 from ..reactive import ChangeOp  # noqa: TC001 - runtime dependency
@@ -36,11 +36,13 @@ __all__ = [
 ]
 
 
-class React(Op):
+class React(Interaction):
     """Wait for a single change, then execute body once.
 
     Children layout: [change, body?, changed_key?]
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(
         self,
@@ -89,11 +91,13 @@ class React(Op):
             sub.close()
 
 
-class ReactForever(Op):
+class ReactForever(Interaction):
     """Execute body on every change (runs forever).
 
     Children layout: [change, body, changed_key?]
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(
         self,
@@ -139,11 +143,13 @@ class ReactForever(Op):
             sub.close()
 
 
-class ReactWhile(Op):
+class ReactWhile(Interaction):
     """Execute body on each change while condition is truthy.
 
     Children layout: [change, condition, body, changed_key?]
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(
         self,

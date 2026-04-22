@@ -11,11 +11,9 @@ WRITE ops use children[0] as Ref directly (inside Transaction wrapper).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Sentinel
-from nu.terms.op import Command, Query
-from nu.terms.sentinel import is_sentinel
+from nu.terms import Command, Mode, Query, Sentinel, is_sentinel
 
 
 if TYPE_CHECKING:
@@ -41,6 +39,9 @@ class CollectionLoadOp[T](Query[T | Sentinel]):
     async def run(self, ctx: Context) -> T | Sentinel:
         return await self.children[0].first(ctx)
 
+    def run_sync(self, ctx: Context) -> T | Sentinel:
+        return self.children[0].first_sync(ctx)
+
     def __repr__(self) -> str:
         return f"CollectionLoadOp({self.children[0]!r})"
 
@@ -49,6 +50,7 @@ class CollectionStoreCmd[T](Command):
     """Write collection to parent: parent[address] = data."""
 
     writes = 0
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: Ref, data: Nu[T | Sentinel]) -> None:
         super().__init__(ref, data)
@@ -70,6 +72,7 @@ class CollectionEraseCmd(Command):
     """Delete collection from parent: del parent[address]."""
 
     writes = 0
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
@@ -94,6 +97,10 @@ class CollectionExistsOp(Query[bool]):
         val = await self.children[0].first(ctx)
         return not is_sentinel(val)
 
+    def run_sync(self, ctx: Context) -> bool:
+        val = self.children[0].first_sync(ctx)
+        return not is_sentinel(val)
+
     def __repr__(self) -> str:
         return f"CollectionExistsOp({self.children[0]!r})"
 
@@ -106,6 +113,10 @@ class CollectionMissingOp(Query[bool]):
 
     async def run(self, ctx: Context) -> bool:
         val = await self.children[0].first(ctx)
+        return is_sentinel(val)
+
+    def run_sync(self, ctx: Context) -> bool:
+        val = self.children[0].first_sync(ctx)
         return is_sentinel(val)
 
     def __repr__(self) -> str:

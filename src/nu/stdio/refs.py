@@ -13,6 +13,8 @@ from nu.terms.ref import Ref
 
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from nu.context import Context
 
 
@@ -58,6 +60,18 @@ class StdioRef(Ref[IO]):
         if ctx.has(StdioBackend):
             return ctx.get(StdioBackend).stream_for(self)
         return getattr(sys, self._name)
+
+    def fetch_sync(self, ctx: Context) -> IO:
+        """Sync counterpart of `fetch`."""
+        from .backend import StdioBackend
+
+        if ctx.has(StdioBackend):
+            return ctx.get(StdioBackend).stream_for(self)
+        return getattr(sys, self._name)
+
+    def open_sync(self, ctx: Context) -> Generator[IO, None, None]:
+        """Sync counterpart of `open`; yields the fetched value once."""
+        yield self.fetch_sync(ctx)
 
     def __repr__(self) -> str:
         return f"StdioRef.{self._name.upper()}"

@@ -8,9 +8,9 @@ over concurrent children - first-completed, fail-fast, succeed-if-any.)
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Op
+from nu.terms import Interaction, Mode
 
 
 if TYPE_CHECKING:
@@ -27,11 +27,13 @@ __all__ = [
 ]
 
 
-class Race(Op):
+class Race(Interaction):
     """Execute children concurrently, complete on first finish.
 
     Children: ``[*children]``
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
@@ -58,11 +60,13 @@ class Race(Op):
             raise
 
 
-class All(Op):
+class All(Interaction):
     """Execute children concurrently, fail fast on first exception.
 
     Children: ``[*children]``
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
@@ -83,11 +87,13 @@ class All(Op):
             raise
 
 
-class Any(Op):
+class Any(Interaction):
     """Execute children concurrently, succeed if any one succeeds.
 
     Children: ``[*children]``
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)

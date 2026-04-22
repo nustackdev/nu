@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from nu.interface import Interface, TypedNu
-from nu.terms import EMPTY, INVALID, Empty, Invalid, Sentinel
+from nu.terms import EMPTY, INVALID, Empty, Interface, Invalid, Sentinel, TypedNu
 
 
 __all__ = [

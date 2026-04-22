@@ -8,10 +8,13 @@ Modules mirror Python's stdlib naming:
     cmath       complex
     pathlib     Path
     fin         Percentage, BasisPoint (financial types)
+    asyncio     AsyncSleep  (ASYNC)
+    time        TimeSleep   (SYNC)
 """
 
 from __future__ import annotations
 
+from .asyncio import AsyncSleep
 from .cmath import ComplexArg, ComplexI
 from .datetime import (
     DateArg,
@@ -36,11 +39,13 @@ from .fin import (
 )
 from .fractions import FractionArg, FractionI
 from .pathlib import PathArg, PathI
+from .time import TimeSleep
 from .uuid import UUIDI, UUIDArg
 
 
 __all__ = [
     "UUIDI",
+    "AsyncSleep",
     "BasisPoint",
     "BasisPointArg",
     "BasisPointI",
@@ -61,6 +66,7 @@ __all__ = [
     "PercentageI",
     "TimeArg",
     "TimeI",
+    "TimeSleep",
     "TimedeltaArg",
     "TimedeltaI",
     "TimezoneArg",

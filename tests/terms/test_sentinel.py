@@ -10,8 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from nu import EMPTY, INVALID, Literal
-from nu.terms.op import BinaryOp
-from nu.terms.sentinel import Empty, Invalid, is_empty, is_invalid, is_sentinel, propagate_special
+from nu.terms import BinaryOp, Empty, Invalid, is_empty, is_invalid, is_sentinel, propagate_special
 
 
 # ---------------------------------------------------------------------------
@@ -132,7 +131,7 @@ def test_propagate_special_no_args():
 # NAryOp sentinel propagation
 # ---------------------------------------------------------------------------
 
-# Local test Op - verifies apply() is/isn't called.
+# Local test Interaction - verifies apply() is/isn't called.
 
 
 class _TestAddOp(BinaryOp[int]):
