@@ -1,6 +1,6 @@
-"""Stream queries — multi-yield functional construction."""
+"""Stream queries — multi-yield functional construction.
 
-from .fold import Fold
+Currently empty — real Stream classes may land here later.
+"""
 
-
-__all__ = ["Fold"]
+__all__: list[str] = []

@@ -384,21 +384,21 @@ class _PercentageI(Interface):
     @classmethod
     def from_float(cls, value: float | Nu[float]) -> PercentageI:
         """Create from percentage float."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return PercentageI(FuncCall(Percentage, value))
 
     @classmethod
     def from_dec(cls, dec: float | Nu[float]) -> PercentageI:
         """Create from decimal."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return PercentageI(FuncCall(Percentage.from_dec, dec))
 
     @classmethod
     def from_bps(cls, bps: int | Nu[int]) -> PercentageI:
         """Create from basis points."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return PercentageI(FuncCall(Percentage.from_bps, bps))
 
@@ -408,21 +408,21 @@ class _PercentageI(Interface):
 
     def to_dec(self) -> FloatI:
         """Convert to decimal."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "to_dec"))
 
     def to_bps(self) -> IntI:
         """Convert to basis points."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import IntI
 
         return IntI(MethodCall(self, "to_bps"))
 
     def to_float(self) -> FloatI:
         """Get raw percentage."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "to_float"))
@@ -433,28 +433,28 @@ class _PercentageI(Interface):
 
     def apply(self, amount: int | float | Nu) -> FloatI:
         """Apply percentage to amount."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "apply", amount))
 
     def of(self, amount: int | float | Nu) -> FloatI:
         """Alias for apply."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "of", amount))
 
     def add_to(self, amount: int | float | Nu) -> FloatI:
         """Add percentage to amount."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "add_to", amount))
 
     def sub_from(self, amount: int | float | Nu) -> FloatI:
         """Subtract percentage from amount."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "sub_from", amount))
@@ -465,14 +465,14 @@ class _PercentageI(Interface):
 
     def is_valid(self, min_val: float = 0.0, max_val: float = 100.0) -> BoolI:
         """Check if within range."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import BoolI
 
         return BoolI(MethodCall(self, "is_valid", min_val, max_val))
 
     def clamp(self, min_val: float = 0.0, max_val: float = 100.0) -> PercentageI:
         """Clamp to range."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
 
         return PercentageI(MethodCall(self, "clamp", min_val, max_val))
 
@@ -604,21 +604,21 @@ class _BasisPointI(Interface):
     @classmethod
     def from_int(cls, value: int | Nu[int]) -> BasisPointI:
         """Create from raw basis points."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return BasisPointI(FuncCall(BasisPoint, value))
 
     @classmethod
     def from_pct(cls, pct: float | Nu[float]) -> BasisPointI:
         """Create from percentage."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return BasisPointI(FuncCall(BasisPoint.from_pct, pct))
 
     @classmethod
     def from_dec(cls, dec: float | Nu[float]) -> BasisPointI:
         """Create from decimal."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return BasisPointI(FuncCall(BasisPoint.from_dec, dec))
 
@@ -628,21 +628,21 @@ class _BasisPointI(Interface):
 
     def to_pct(self) -> FloatI:
         """Convert to percentage."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "to_pct"))
 
     def to_dec(self) -> FloatI:
         """Convert to decimal."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "to_dec"))
 
     def to_int(self) -> IntI:
         """Get raw basis points."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import IntI
 
         return IntI(MethodCall(self, "to_int"))
@@ -653,21 +653,21 @@ class _BasisPointI(Interface):
 
     def apply(self, amount: int | float | Nu) -> FloatI:
         """Apply basis points to amount."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "apply", amount))
 
     def add_to(self, amount: int | float | Nu) -> FloatI:
         """Add basis points to amount."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "add_to", amount))
 
     def sub_from(self, amount: int | float | Nu) -> FloatI:
         """Subtract basis points from amount."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "sub_from", amount))

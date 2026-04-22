@@ -18,6 +18,7 @@ Arg types, T_co). Analysis + Form/Interface descriptors: utils.py.
 
 from .command import Atomic, Command, Flow
 from .context_manager import ContextManager
+from .injection import FuncCall, FuncCallCmd, MethodCall, MethodCallCmd
 from .interaction import Interaction
 from .interface import Interface, TypedNu
 from .nu import LValue, Nu, NuIndepComm, RValue
@@ -79,6 +80,8 @@ __all__ = [
     "FloatArg",
     "Flow",
     "FrozenSetArg",
+    "FuncCall",
+    "FuncCallCmd",
     "IntArg",
     "Interaction",
     "Interface",
@@ -86,6 +89,8 @@ __all__ = [
     "LValue",
     "ListArg",
     "Literal",
+    "MethodCall",
+    "MethodCallCmd",
     "Mode",
     "NAryScalar",
     "NoneArg",

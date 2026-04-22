@@ -20,7 +20,7 @@ nu.Print(nu.Nu() >> nu.Literal(42) >> nu.Nu()).execute_sync()
 
 
 # --- branch: If forwards the chosen branch's stream ---
-nu.Print(nu.If(nu.Literal(True), nu.Literal("then"), nu.Literal("else"))).execute_sync()
+nu.Print(nu.IfDo(nu.Literal(True), nu.Literal("then"), nu.Literal("else"))).execute_sync()
 
 
 # --- iteration: ForEach binds the element via AttrRef ---

@@ -50,21 +50,29 @@ __all__ = [
 
 
 class Query(Interaction[T_co], ABC):
-    """1-yield Interaction. Hook: run(ctx) -> T / arun(ctx) -> T.
+    """Functional-role Interaction. No observable mutation; yields value(s).
 
-    Use for Interactions that compute one value from raw ctx access. For
-    operand-driven compute with sentinel propagation, prefer NAryScalar.
+    Base has non-abstract `run` / `run_sync` that raise by default. Two
+    authoring patterns:
+
+    - 1-yield sugar: override `run(ctx) -> T` (async) or `run_sync(ctx) -> T`
+      (sync). The base's `open` / `open_sync` wrap into a 1-yield generator.
+    - Override `open` / `open_sync` directly (for N-yield streaming or
+      apply-style compute). Leave `run` as the default raise.
+
+    For operand-driven compute with sentinel propagation, use `NAryScalar`
+    (and the arity refinements). For N-yield streams, use `Stream`.
     """
 
-    @abstractmethod
     async def run(self, ctx: Context) -> T_co:
-        """Compute the value. Called once; its return is the single yield."""
-        ...
+        """Async compute. Default raises; override or use open."""
+        msg = f"{type(self).__name__} has no run; override run or open"
+        raise NotImplementedError(msg)
 
     def run_sync(self, ctx: Context) -> T_co:
-        """Sync compute. Override for SYNC / BOTH Queries; default raises."""
-        msg = f"{type(self).__name__} has no run_sync; ASYNC-only Query"
-        raise RuntimeError(msg)
+        """Sync compute. Default raises; override or use open_sync."""
+        msg = f"{type(self).__name__} has no run_sync; override run_sync or open_sync"
+        raise NotImplementedError(msg)
 
     async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
         yield await self.run(ctx)
@@ -81,11 +89,11 @@ class Query(Interaction[T_co], ABC):
 # =============================================================================
 
 
-class Literal(Interaction[T_co]):
+class Literal(Query[T_co]):
     """Irreducible leaf. Holds a value, yields it once. No children.
 
-    Structurally a trivial scalar Query (no Ref in subtree → CALC-only), but
-    bypasses the Query hook machinery: the stored value IS the yield.
+    A trivial scalar Query. Bypasses the Query hook machinery: the stored
+    value IS the yield.
     """
 
     _value: object
@@ -182,11 +190,6 @@ class NAryScalar(Query[T_co | Sentinel], ABC):
         """Apply the transformation to resolved values. Sync or async."""
         ...
 
-    # NAryScalar overrides open/open_sync directly; Query's run/run_sync are unused.
-    async def run(self, ctx: Context) -> T_co | Sentinel:  # type: ignore[override]
-        msg = f"{type(self).__name__} implements apply, not run"
-        raise NotImplementedError(msg)
-
 
 # =============================================================================
 # ARITY REFINEMENTS
@@ -263,10 +266,10 @@ class TernaryScalar(NAryScalar[T_co], ABC):
 # =============================================================================
 
 
-class Stream(Interaction[T_co], ABC):
+class Stream(Query[T_co], ABC):
     """N-yield Query. Author overrides open / aopen directly.
 
-    Use for streaming value producers: Map, Filter, Take, Subscribe, IfExpr,
+    Use for streaming value producers: Map, Filter, Take, Subscribe,
     and any multi-yield Query whose shape doesn't fit the 1-yield sugar.
 
     No hook; override open / aopen. Still a Query by role (no WRITE in

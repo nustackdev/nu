@@ -9,10 +9,10 @@ These require PV views with UnsafePrimitiveOpsBase in MRO.
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import EMPTY, Sentinel
-from nu.terms import Command, Query
+from nu.terms import Command, Mode, Query
 
 
 if TYPE_CHECKING:
@@ -34,6 +34,8 @@ class ScanPrimitivesUnsafeOp[T](Query[Iterator[T] | Sentinel]):
     The ref must implement:
         fetch(ctx) -> view with _unsafe_primitive_scan_values() method
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -62,6 +64,7 @@ class ClearPrimitivesUnsafeCmd(Command):
     """
 
     writes = 0
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)

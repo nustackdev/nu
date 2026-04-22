@@ -67,7 +67,7 @@ class _TimezoneI(Interface):
         name: str | Nu[str] | None = None,
     ) -> TimezoneI:
         """Create a TimezoneI from hour/minute offset."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         offset = TimedeltaI.from_components(hours=hours, minutes=minutes)
         if name is not None:
@@ -81,7 +81,7 @@ class _TimezoneI(Interface):
         name: str | Nu[str] | None = None,
     ) -> TimezoneI:
         """Create a TimezoneI from a timedelta offset."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         if isinstance(offset, timedelta):
             offset = TimedeltaI(offset)
@@ -95,7 +95,7 @@ class _TimezoneI(Interface):
 
     def tzname(self, dt: DatetimeArg | None = None) -> StrI:
         """Get the timezone name."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import StrI
 
         if dt is None:
@@ -108,7 +108,7 @@ class _TimezoneI(Interface):
 
     def utcoffset(self, dt: DatetimeArg | None = None) -> TimedeltaI:
         """Get the UTC offset as timedelta."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
 
         if dt is None:
             dt_arg = None
@@ -164,7 +164,7 @@ class _TimedeltaI(Interface):
     @classmethod
     def from_seconds(cls, seconds: float | Nu[float]) -> TimedeltaI:
         """Create a TimedeltaI from seconds."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return TimedeltaI(FuncCall(timedelta, seconds=seconds))
 
@@ -180,7 +180,7 @@ class _TimedeltaI(Interface):
         weeks: float | Nu[float] = 0,
     ) -> TimedeltaI:
         """Create a TimedeltaI from time components."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return TimedeltaI(
             FuncCall(
@@ -201,21 +201,21 @@ class _TimedeltaI(Interface):
 
     def days(self) -> IntI:
         """Get the days component (normalized)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "days"))
 
     def seconds(self) -> IntI:
         """Get the seconds component (0-86399)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "seconds"))
 
     def microseconds(self) -> IntI:
         """Get the microseconds component (0-999999)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "microseconds"))
@@ -226,7 +226,7 @@ class _TimedeltaI(Interface):
 
     def total_seconds(self) -> FloatI:
         """Get total duration in seconds."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "total_seconds"))
@@ -394,14 +394,14 @@ class _DateI(Interface):
     @classmethod
     def today(cls) -> DateI:
         """Create a DateI for today."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return DateI(FuncCall(date.today))
 
     @classmethod
     def from_iso(cls, iso_str: str | Nu[str]) -> DateI:
         """Create a DateI from an ISO format string (YYYY-MM-DD)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.terms import Sentinel
 
         def _safe_fromisoformat(s: object) -> date | Sentinel:
@@ -416,14 +416,14 @@ class _DateI(Interface):
     @classmethod
     def from_ordinal(cls, ordinal: int | Nu[int]) -> DateI:
         """Create a DateI from a Gregorian ordinal."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return DateI(FuncCall(date.fromordinal, ordinal))
 
     @classmethod
     def from_timestamp(cls, timestamp: float | Nu[float]) -> DateI:
         """Create a DateI from a POSIX timestamp."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return DateI(FuncCall(date.fromtimestamp, timestamp))
 
@@ -433,42 +433,42 @@ class _DateI(Interface):
 
     def year(self) -> IntI:
         """Get the year component."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "year"))
 
     def month(self) -> IntI:
         """Get the month component (1-12)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "month"))
 
     def day(self) -> IntI:
         """Get the day component (1-31)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "day"))
 
     def weekday(self) -> IntI:
         """Get the day of week (Monday=0, Sunday=6)."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import IntI
 
         return IntI(MethodCall(self, "weekday"))
 
     def isoweekday(self) -> IntI:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import IntI
 
         return IntI(MethodCall(self, "isoweekday"))
 
     def toordinal(self) -> IntI:
         """Get the Gregorian ordinal."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import IntI
 
         return IntI(MethodCall(self, "toordinal"))
@@ -479,21 +479,21 @@ class _DateI(Interface):
 
     def isoformat(self) -> StrI:
         """Convert to ISO 8601 format string (YYYY-MM-DD)."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import StrI
 
         return StrI(MethodCall(self, "isoformat"))
 
     def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format date as string."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import StrI
 
         return StrI(MethodCall(self, "strftime", fmt))
 
     def ctime(self) -> StrI:
         """Return ctime-style string."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import StrI
 
         return StrI(MethodCall(self, "ctime"))
@@ -509,7 +509,7 @@ class _DateI(Interface):
         day: int | Nu[int] | None = None,
     ) -> DateI:
         """Create a new date with some components replaced."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
 
         kwargs = {}
         if year is not None:
@@ -606,7 +606,7 @@ class _TimeI(Interface):
     @classmethod
     def from_iso(cls, iso_str: str | Nu[str]) -> TimeI:
         """Create a TimeI from an ISO format string (HH:MM:SS[.ffffff])."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.terms import Sentinel
 
         def _safe_fromisoformat(s: object) -> time | Sentinel:
@@ -627,7 +627,7 @@ class _TimeI(Interface):
         microsecond: int | Nu[int] = 0,
     ) -> TimeI:
         """Create a TimeI from time components."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return TimeI(FuncCall(time, hour, minute, second, microsecond))
 
@@ -647,28 +647,28 @@ class _TimeI(Interface):
 
     def hour(self) -> IntI:
         """Get the hour component (0-23)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "hour"))
 
     def minute(self) -> IntI:
         """Get the minute component (0-59)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "minute"))
 
     def second(self) -> IntI:
         """Get the second component (0-59)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "second"))
 
     def microsecond(self) -> IntI:
         """Get the microsecond component (0-999999)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "microsecond"))
@@ -679,14 +679,14 @@ class _TimeI(Interface):
 
     def isoformat(self, timespec: str | Nu[str] = "auto") -> StrI:
         """Convert to ISO 8601 format string."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import StrI
 
         return StrI(MethodCall(self, "isoformat", timespec))
 
     def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format time as string."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import StrI
 
         return StrI(MethodCall(self, "strftime", fmt))
@@ -703,7 +703,7 @@ class _TimeI(Interface):
         microsecond: int | Nu[int] | None = None,
     ) -> TimeI:
         """Create a new time with some components replaced."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
 
         kwargs = {}
         if hour is not None:
@@ -778,7 +778,7 @@ class _DatetimeI(Interface):
     @classmethod
     def now(cls, tz: TimezoneArg | None = None) -> DatetimeI:
         """Create a DatetimeI for the current time."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         if tz is not None:
             if isinstance(tz, timezone):
@@ -789,14 +789,14 @@ class _DatetimeI(Interface):
     @classmethod
     def utcnow(cls) -> DatetimeI:
         """Create a DatetimeI for current UTC time."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         return DatetimeI(FuncCall(datetime.now, TimezoneI(UTC)))
 
     @classmethod
     def from_timestamp(cls, ts: float | Nu[float], tz: TimezoneArg | None = None) -> DatetimeI:
         """Create a DatetimeI from a POSIX timestamp."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
 
         if tz is not None:
             if isinstance(tz, timezone):
@@ -807,7 +807,7 @@ class _DatetimeI(Interface):
     @classmethod
     def from_iso(cls, iso_str: str | Nu[str]) -> DatetimeI:
         """Create a DatetimeI from an ISO format string."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.terms import Sentinel
 
         def _safe_fromisoformat(s: object) -> datetime | Sentinel:
@@ -825,63 +825,63 @@ class _DatetimeI(Interface):
 
     def year(self) -> IntI:
         """Get the year component."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "year"))
 
     def month(self) -> IntI:
         """Get the month component (1-12)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "month"))
 
     def day(self) -> IntI:
         """Get the day component (1-31)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "day"))
 
     def hour(self) -> IntI:
         """Get the hour component (0-23)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "hour"))
 
     def minute(self) -> IntI:
         """Get the minute component (0-59)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "minute"))
 
     def second(self) -> IntI:
         """Get the second component (0-59)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "second"))
 
     def microsecond(self) -> IntI:
         """Get the microsecond component (0-999999)."""
-        from nu.interactions import FuncCall
+        from nu.terms import FuncCall
         from nu.primitives import IntI
 
         return IntI(FuncCall(getattr, self, "microsecond"))
 
     def weekday(self) -> IntI:
         """Get the day of week (Monday=0, Sunday=6)."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import IntI
 
         return IntI(MethodCall(self, "weekday"))
 
     def isoweekday(self) -> IntI:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import IntI
 
         return IntI(MethodCall(self, "isoweekday"))
@@ -892,33 +892,33 @@ class _DatetimeI(Interface):
 
     def timestamp(self) -> FloatI:
         """Convert to POSIX timestamp."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import FloatI
 
         return FloatI(MethodCall(self, "timestamp"))
 
     def isoformat(self, sep: str | Nu[str] = "T", timespec: str | Nu[str] = "auto") -> StrI:
         """Convert to ISO 8601 format string."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import StrI
 
         return StrI(MethodCall(self, "isoformat", sep, timespec))
 
     def date(self) -> DateI:
         """Extract the date component."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
 
         return DateI(MethodCall(self, "date"))
 
     def time(self) -> TimeI:
         """Extract the time component."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
 
         return TimeI(MethodCall(self, "time"))
 
     def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format datetime as string."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
         from nu.primitives import StrI
 
         return StrI(MethodCall(self, "strftime", fmt))
@@ -938,7 +938,7 @@ class _DatetimeI(Interface):
         microsecond: int | Nu[int] | None = None,
     ) -> DatetimeI:
         """Create a new datetime with some components replaced."""
-        from nu.interactions import MethodCall
+        from nu.terms import MethodCall
 
         kwargs = {}
         if year is not None:

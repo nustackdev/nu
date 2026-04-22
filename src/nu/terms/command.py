@@ -3,12 +3,12 @@
 Taxonomy under Interaction:
 
     Command                   yields nothing; effect set contains WRITE
-    ├── Atomic                terminal mutation; no inner Command (children all Query)
-    └── Flow                  orchestrates inner Commands (body/branches Cmd, control values Q)
+    ├── Atomic                terminal mutation; no inner Command. Hook: run / run_sync
+    └── Flow                  orchestrates inner Commands. Override open / open_sync
 
-Atomic and Flow are markers. Structural invariants (Atomic has no Command
-child; Flow has >= 1 Command descendant) are documented and can be checked
-at init under a debug flag - not enforced by default.
+Atomic is the leaf pattern: override `run` / `run_sync`; base wraps to 0-yield.
+Flow is the orchestrator pattern: override `open` / `open_sync` directly;
+`run` is left as the default raise (Flow doesn't use it).
 """
 
 from __future__ import annotations
@@ -34,21 +34,22 @@ __all__ = [
 
 
 class Command(Interaction, ABC):
-    """0-yield Interaction. Hook: run(ctx) / arun(ctx) returning None.
+    """0-yield Interaction. Role marker.
 
-    Use for Interactions that transform Γ (write through a Ref, call a
-    fabric side-effect) and return nothing to the stream.
+    No abstract hook on the base: Atomic subclasses authoring via `run`
+    declare their own abstract; Flow subclasses override `open` directly
+    and leave `run` as the default raise.
     """
 
-    @abstractmethod
     async def run(self, ctx: Context) -> None:
-        """Perform the side effect. No return value."""
-        ...
+        """Async side effect. Default raises; override or use open."""
+        msg = f"{type(self).__name__} has no run; override run or open"
+        raise NotImplementedError(msg)
 
     def run_sync(self, ctx: Context) -> None:
-        """Sync side effect. Override for SYNC / BOTH Commands; default raises."""
-        msg = f"{type(self).__name__} has no run_sync; ASYNC-only Command"
-        raise RuntimeError(msg)
+        """Sync side effect. Default raises; override or use open_sync."""
+        msg = f"{type(self).__name__} has no run_sync; override run_sync or open_sync"
+        raise NotImplementedError(msg)
 
     async def open(self, ctx: Context) -> AsyncGenerator[None, None]:
         await self.run(ctx)
@@ -65,19 +66,21 @@ class Command(Interaction, ABC):
 
 
 class Atomic(Command, ABC):
-    """Terminal mutation. No inner Command.
+    """Terminal mutation. Leaf in the Command tree.
 
-    Marker. Children are all Queries (value to write, target Ref, etc).
-    Structural invariant: no Command anywhere in the children. Not enforced
-    by default.
+    Override `run(ctx)` for async or `run_sync(ctx)` for sync. No inner
+    Command; children are all Queries (value to write, target Ref, etc).
     """
+
+    @abstractmethod
+    async def run(self, ctx: Context) -> None:
+        """Perform the mutation. Called once."""
+        ...
 
 
 class Flow(Command, ABC):
-    """Orchestrates inner Commands. Control flow over mutations.
+    """Orchestrates inner Commands. Override `open` / `open_sync`.
 
-    Marker. Children include Commands (body, branches) and Queries (control
-    values: condition, items, retry count, etc). Structural invariant: at
-    least one Command in the subtree (a Flow around no mutation is a
-    control-flow skeleton around nothing). Not enforced by default.
+    Children include Commands (body, branches) and Queries (control
+    values). Flow doesn't use `run`; override `open` directly.
     """

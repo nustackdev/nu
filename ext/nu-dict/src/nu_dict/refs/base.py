@@ -13,10 +13,11 @@ Core vocabulary:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import EMPTY, Sentinel
 from nu.shapes import Ref
+from nu.terms import Mode
 
 
 if TYPE_CHECKING:
@@ -36,6 +37,8 @@ class RefBase[T](Ref[T]):
 
     The root dict is retrieved from Context via ctx[dict, scope].
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     async def resolve(self, ctx: Context) -> tuple[str | int, ...]:
         """Build key path from parent chain."""

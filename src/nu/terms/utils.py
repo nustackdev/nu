@@ -49,7 +49,7 @@ class _BoundMethod[V: Interface]:
         self._pure = pure
 
     def __call__(self, *args: object, **kwargs: object) -> V:
-        from nu.interactions import MethodCallCmd, MethodCall
+        from nu.terms import MethodCallCmd, MethodCall
 
         morph_cls = MethodCall if self._pure else MethodCallCmd
         return self._value_type(morph_cls(self._owner, self._method_name, *args, **kwargs))
@@ -81,7 +81,7 @@ class _ClassBoundMethod[V: Interface]:
         self._pure = pure
 
     def __call__(self, *args: object, **kwargs: object) -> V:
-        from nu.interactions import MethodCallCmd, MethodCall
+        from nu.terms import MethodCallCmd, MethodCall
 
         target = self._ref_cls()
         morph_cls = MethodCall if self._pure else MethodCallCmd

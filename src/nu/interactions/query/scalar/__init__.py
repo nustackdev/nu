@@ -22,12 +22,6 @@ from .bitwise import (
     RShift,
     Xor,
 )
-from .call import (
-    FuncCall,
-    FuncCallCmd,
-    MethodCall,
-    MethodCallCmd,
-)
 from .combine import Chain, Enumerate, Zip
 from .combiners import all_, and_, any_, none_, or_
 from .comparison import (
@@ -50,6 +44,7 @@ from .conversion import (
     ToStr,
     ToTuple,
 )
+from .fold import Fold
 from .logical import (
     And,
     Bool,
@@ -90,8 +85,7 @@ __all__ = [
     "FilterBy",
     "Flatten",
     "FloorDiv",
-    "FuncCall",
-    "FuncCallCmd",
+    "Fold",
     "Ge",
     "GetAttr",
     "Gt",
@@ -104,8 +98,6 @@ __all__ = [
     "Len",
     "Lt",
     "Max",
-    "MethodCall",
-    "MethodCallCmd",
     "Min",
     "Mod",
     "Mul",

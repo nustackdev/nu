@@ -26,10 +26,11 @@ from __future__ import annotations
 import copy
 from enum import Enum
 from logging import getLogger
-from typing import TYPE_CHECKING, Generic, Self, TypeVar
+from typing import TYPE_CHECKING, ClassVar, Generic, Self, TypeVar
 
 from nu import EMPTY, Context, Sentinel
 from nu.shapes import Ref
+from nu.terms import Mode
 from nu_virtuals.paths import ViewPathSer
 from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
@@ -123,6 +124,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
     Use .lazy / .eager to switch facet before calling iteration methods.
     """
 
+    mode: ClassVar[Mode] = Mode.ASYNC
     _facet: Facet = Facet.NONE
 
     def __init__(
@@ -252,6 +254,8 @@ class PrimitiveRef[T](Ref[T]):
     Used for scalar values like int, str, float, etc.
     fetch() navigates to the parent view and subscripts to get the value.
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(
         self,

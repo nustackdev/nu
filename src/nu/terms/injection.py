@@ -18,7 +18,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Mode, NAryScalar, Sentinel
+from .query import NAryScalar
+from .types import Mode, Sentinel
 
 
 if TYPE_CHECKING:

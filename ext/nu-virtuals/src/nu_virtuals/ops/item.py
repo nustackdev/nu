@@ -14,10 +14,10 @@ These require PV views with UnsafePrimitiveOpsBase in MRO.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import EMPTY, Sentinel
-from nu.terms import Command, Query
+from nu.terms import Command, Mode, Query
 
 
 if TYPE_CHECKING:
@@ -50,6 +50,7 @@ class EnsureLayoutCmd(Command):
     """
 
     writes = 0
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -78,6 +79,7 @@ class InitCmd(Command):
     """
 
     writes = 0
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -101,6 +103,8 @@ class ItemPrimitiveGetUnsafeOp[T](Query[T | Sentinel]):
         fetch_parent(ctx) -> view with _unsafe_primitive_read()
         resolve_address(ctx) -> key/index
     """
+
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -131,6 +135,7 @@ class ItemPrimitiveSetUnsafeCmd[T](Command):
     """
 
     writes = 0
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
@@ -162,6 +167,7 @@ class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command):
     """
 
     writes = 0
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
@@ -193,6 +199,7 @@ class ItemPrimitiveDeleteUnsafeCmd(Command):
     """
 
     writes = 0
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -222,6 +229,7 @@ class PrimitiveStoreCmd[T](Command):
     """
 
     writes = 0
+    mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object, data: object) -> None:
         super().__init__(ref, data)

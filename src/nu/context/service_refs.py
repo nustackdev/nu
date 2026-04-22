@@ -8,8 +8,6 @@ from nu.terms import Ref, Sentinel
 
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
-
     from nu.context import Context
     from nu.primitives import BoolI
 
@@ -50,6 +48,10 @@ class ServiceRef[T](Ref[T]):
         """Resolve to the service type."""
         return self._service_type
 
+    def resolve_sync(self, ctx: Context) -> type:
+        """Sync counterpart of `resolve`."""
+        return self._service_type
+
     async def fetch(self, ctx: Context) -> T | Sentinel:
         """Fetch service directly from context bindings."""
         return ctx.get(self._service_type)
@@ -57,10 +59,6 @@ class ServiceRef[T](Ref[T]):
     def fetch_sync(self, ctx: Context) -> T | Sentinel:
         """Sync counterpart of `fetch`."""
         return ctx.get(self._service_type)
-
-    def open_sync(self, ctx: Context) -> Generator[T | Sentinel, None, None]:
-        """Sync counterpart of `open`; yields the fetched value once."""
-        yield self.fetch_sync(ctx)
 
     def exists(self) -> BoolI:
         """Check if service exists in context."""
