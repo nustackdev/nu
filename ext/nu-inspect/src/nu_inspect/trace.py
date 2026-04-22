@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 
 from nu.context import Context, IntAttrRef, StrAttrRef
-from nu.ops import Log, Retry, ToStr
+from nu.interactions import Log, Retry, ToStr
 from nu.terms import ContextManager, Literal, Nu
 from nu.tree import map_nodes
 

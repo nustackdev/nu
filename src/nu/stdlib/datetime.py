@@ -67,12 +67,12 @@ class _TimezoneI(Interface):
         name: str | Nu[str] | None = None,
     ) -> TimezoneI:
         """Create a TimezoneI from hour/minute offset."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
         offset = TimedeltaI.from_components(hours=hours, minutes=minutes)
         if name is not None:
-            return TimezoneI(FuncCallOp(timezone, offset, name))
-        return TimezoneI(FuncCallOp(timezone, offset))
+            return TimezoneI(FuncCall(timezone, offset, name))
+        return TimezoneI(FuncCall(timezone, offset))
 
     @classmethod
     def from_timedelta(
@@ -81,13 +81,13 @@ class _TimezoneI(Interface):
         name: str | Nu[str] | None = None,
     ) -> TimezoneI:
         """Create a TimezoneI from a timedelta offset."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
         if isinstance(offset, timedelta):
             offset = TimedeltaI(offset)
         if name is not None:
-            return TimezoneI(FuncCallOp(timezone, offset, name))
-        return TimezoneI(FuncCallOp(timezone, offset))
+            return TimezoneI(FuncCall(timezone, offset, name))
+        return TimezoneI(FuncCall(timezone, offset))
 
     # =========================================================================
     # METHODS
@@ -95,7 +95,7 @@ class _TimezoneI(Interface):
 
     def tzname(self, dt: DatetimeArg | None = None) -> StrI:
         """Get the timezone name."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import StrI
 
         if dt is None:
@@ -104,11 +104,11 @@ class _TimezoneI(Interface):
             dt_arg = DatetimeI(dt)
         else:
             dt_arg = dt
-        return StrI(MethodCallOp(self, "tzname", dt_arg))
+        return StrI(MethodCall(self, "tzname", dt_arg))
 
     def utcoffset(self, dt: DatetimeArg | None = None) -> TimedeltaI:
         """Get the UTC offset as timedelta."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
 
         if dt is None:
             dt_arg = None
@@ -116,7 +116,7 @@ class _TimezoneI(Interface):
             dt_arg = DatetimeI(dt)
         else:
             dt_arg = dt
-        return TimedeltaI(MethodCallOp(self, "utcoffset", dt_arg))
+        return TimedeltaI(MethodCall(self, "utcoffset", dt_arg))
 
     def dst(self, dt: DatetimeArg | None = None) -> NoneI:
         """Get the daylight saving time offset (returns None for fixed-offset timezones)."""
@@ -130,17 +130,17 @@ class _TimezoneI(Interface):
 
     def eq(self, other: TimezoneArg) -> BoolI:
         """Equality check."""
-        from nu.ops import EqOp
+        from nu.interactions import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: TimezoneArg) -> BoolI:
         """Inequality check."""
-        from nu.ops import NeOp
+        from nu.interactions import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
 
 class TimezoneI(_TimezoneI, TypedNu[timezone]):
@@ -164,9 +164,9 @@ class _TimedeltaI(Interface):
     @classmethod
     def from_seconds(cls, seconds: float | Nu[float]) -> TimedeltaI:
         """Create a TimedeltaI from seconds."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
-        return TimedeltaI(FuncCallOp(timedelta, seconds=seconds))
+        return TimedeltaI(FuncCall(timedelta, seconds=seconds))
 
     @classmethod
     def from_components(
@@ -180,10 +180,10 @@ class _TimedeltaI(Interface):
         weeks: float | Nu[float] = 0,
     ) -> TimedeltaI:
         """Create a TimedeltaI from time components."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
         return TimedeltaI(
-            FuncCallOp(
+            FuncCall(
                 timedelta,
                 days=days,
                 seconds=seconds,
@@ -201,24 +201,24 @@ class _TimedeltaI(Interface):
 
     def days(self) -> IntI:
         """Get the days component (normalized)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "days"))
+        return IntI(FuncCall(getattr, self, "days"))
 
     def seconds(self) -> IntI:
         """Get the seconds component (0-86399)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "seconds"))
+        return IntI(FuncCall(getattr, self, "seconds"))
 
     def microseconds(self) -> IntI:
         """Get the microseconds component (0-999999)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "microseconds"))
+        return IntI(FuncCall(getattr, self, "microseconds"))
 
     # =========================================================================
     # CONVERSIONS
@@ -226,10 +226,10 @@ class _TimedeltaI(Interface):
 
     def total_seconds(self) -> FloatI:
         """Get total duration in seconds."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "total_seconds"))
+        return FloatI(MethodCall(self, "total_seconds"))
 
     def total_minutes(self) -> FloatI:
         """Get total duration in minutes."""
@@ -249,84 +249,84 @@ class _TimedeltaI(Interface):
 
     def __add__(self, other: TimedeltaArg) -> TimedeltaI:
         """Add two timedeltas."""
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
         if isinstance(other, timedelta):
             other = TimedeltaI(other)
-        return TimedeltaI(AddOp(self, other))
+        return TimedeltaI(Add(self, other))
 
     def __radd__(self, other: timedelta) -> TimedeltaI:
         """Right add."""
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
         if isinstance(other, timedelta):
             other = TimedeltaI(other)
-        return TimedeltaI(AddOp(other, self))
+        return TimedeltaI(Add(other, self))
 
     def __sub__(self, other: TimedeltaArg) -> TimedeltaI:
         """Subtract timedeltas."""
-        from nu.ops import SubOp
+        from nu.interactions import Sub
 
         if isinstance(other, timedelta):
             other = TimedeltaI(other)
-        return TimedeltaI(SubOp(self, other))
+        return TimedeltaI(Sub(self, other))
 
     def __rsub__(self, other: timedelta) -> TimedeltaI:
         """Right subtract."""
-        from nu.ops import SubOp
+        from nu.interactions import Sub
 
         if isinstance(other, timedelta):
             other = TimedeltaI(other)
-        return TimedeltaI(SubOp(other, self))
+        return TimedeltaI(Sub(other, self))
 
     def __mul__(self, factor: int | float | Nu) -> TimedeltaI:
         """Multiply timedelta by a scalar."""
-        from nu.ops import MulOp
+        from nu.interactions import Mul
 
-        return TimedeltaI(MulOp(self, factor))
+        return TimedeltaI(Mul(self, factor))
 
     def __rmul__(self, factor: int | float) -> TimedeltaI:
         """Right multiply."""
-        from nu.ops import MulOp
+        from nu.interactions import Mul
 
-        return TimedeltaI(MulOp(factor, self))
+        return TimedeltaI(Mul(factor, self))
 
     def __truediv__(self, divisor: int | float | TimedeltaArg) -> TimedeltaI | FloatI:
         """Divide timedelta."""
-        from nu.ops import DivOp
+        from nu.interactions import Div
         from nu.primitives import FloatI
 
         if isinstance(divisor, timedelta):
             divisor = TimedeltaI(divisor)
         if isinstance(divisor, _TimedeltaI):
-            return FloatI(DivOp(self, divisor))
-        return TimedeltaI(DivOp(self, divisor))
+            return FloatI(Div(self, divisor))
+        return TimedeltaI(Div(self, divisor))
 
     def __floordiv__(self, divisor: int | Nu[int]) -> TimedeltaI:
         """Floor divide timedelta by scalar."""
-        from nu.ops import FloorDivOp
+        from nu.interactions import FloorDiv
 
-        return TimedeltaI(FloorDivOp(self, divisor))
+        return TimedeltaI(FloorDiv(self, divisor))
 
     def __mod__(self, other: TimedeltaArg) -> TimedeltaI:
         """Modulo operation."""
-        from nu.ops import ModOp
+        from nu.interactions import Mod
 
         if isinstance(other, timedelta):
             other = TimedeltaI(other)
-        return TimedeltaI(ModOp(self, other))
+        return TimedeltaI(Mod(self, other))
 
     def __neg__(self) -> TimedeltaI:
         """Negate."""
-        from nu.ops import NegOp
+        from nu.interactions import Neg
 
-        return TimedeltaI(NegOp(self))
+        return TimedeltaI(Neg(self))
 
     def __abs__(self) -> TimedeltaI:
         """Absolute value."""
-        from nu.ops import AbsOp
+        from nu.interactions import Abs
 
-        return TimedeltaI(AbsOp(self))
+        return TimedeltaI(Abs(self))
 
     def __pos__(self) -> TimedeltaI:
         """Unary positive (returns self)."""
@@ -337,40 +337,40 @@ class _TimedeltaI(Interface):
     # =========================================================================
 
     def __gt__(self, other: TimedeltaArg) -> BoolI:
-        from nu.ops import GtOp
+        from nu.interactions import Gt
         from nu.primitives import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: TimedeltaArg) -> BoolI:
-        from nu.ops import LtOp
+        from nu.interactions import Lt
         from nu.primitives import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: TimedeltaArg) -> BoolI:
-        from nu.ops import GeOp
+        from nu.interactions import Ge
         from nu.primitives import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: TimedeltaArg) -> BoolI:
-        from nu.ops import LeOp
+        from nu.interactions import Le
         from nu.primitives import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: TimedeltaArg) -> BoolI:
-        from nu.ops import EqOp
+        from nu.interactions import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: TimedeltaArg) -> BoolI:
-        from nu.ops import NeOp
+        from nu.interactions import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
 
 class TimedeltaI(_TimedeltaI, TypedNu[timedelta]):
@@ -394,14 +394,14 @@ class _DateI(Interface):
     @classmethod
     def today(cls) -> DateI:
         """Create a DateI for today."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
-        return DateI(FuncCallOp(date.today))
+        return DateI(FuncCall(date.today))
 
     @classmethod
     def from_iso(cls, iso_str: str | Nu[str]) -> DateI:
         """Create a DateI from an ISO format string (YYYY-MM-DD)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.terms import Sentinel
 
         def _safe_fromisoformat(s: object) -> date | Sentinel:
@@ -411,21 +411,21 @@ class _DateI(Interface):
                 return EMPTY
             return date.fromisoformat(s)
 
-        return DateI(FuncCallOp(_safe_fromisoformat, iso_str))
+        return DateI(FuncCall(_safe_fromisoformat, iso_str))
 
     @classmethod
     def from_ordinal(cls, ordinal: int | Nu[int]) -> DateI:
         """Create a DateI from a Gregorian ordinal."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
-        return DateI(FuncCallOp(date.fromordinal, ordinal))
+        return DateI(FuncCall(date.fromordinal, ordinal))
 
     @classmethod
     def from_timestamp(cls, timestamp: float | Nu[float]) -> DateI:
         """Create a DateI from a POSIX timestamp."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
-        return DateI(FuncCallOp(date.fromtimestamp, timestamp))
+        return DateI(FuncCall(date.fromtimestamp, timestamp))
 
     # =========================================================================
     # COMPONENT ACCESSORS
@@ -433,45 +433,45 @@ class _DateI(Interface):
 
     def year(self) -> IntI:
         """Get the year component."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "year"))
+        return IntI(FuncCall(getattr, self, "year"))
 
     def month(self) -> IntI:
         """Get the month component (1-12)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "month"))
+        return IntI(FuncCall(getattr, self, "month"))
 
     def day(self) -> IntI:
         """Get the day component (1-31)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "day"))
+        return IntI(FuncCall(getattr, self, "day"))
 
     def weekday(self) -> IntI:
         """Get the day of week (Monday=0, Sunday=6)."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import IntI
 
-        return IntI(MethodCallOp(self, "weekday"))
+        return IntI(MethodCall(self, "weekday"))
 
     def isoweekday(self) -> IntI:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import IntI
 
-        return IntI(MethodCallOp(self, "isoweekday"))
+        return IntI(MethodCall(self, "isoweekday"))
 
     def toordinal(self) -> IntI:
         """Get the Gregorian ordinal."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import IntI
 
-        return IntI(MethodCallOp(self, "toordinal"))
+        return IntI(MethodCall(self, "toordinal"))
 
     # =========================================================================
     # CONVERSIONS
@@ -479,24 +479,24 @@ class _DateI(Interface):
 
     def isoformat(self) -> StrI:
         """Convert to ISO 8601 format string (YYYY-MM-DD)."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import StrI
 
-        return StrI(MethodCallOp(self, "isoformat"))
+        return StrI(MethodCall(self, "isoformat"))
 
     def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format date as string."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import StrI
 
-        return StrI(MethodCallOp(self, "strftime", fmt))
+        return StrI(MethodCall(self, "strftime", fmt))
 
     def ctime(self) -> StrI:
         """Return ctime-style string."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import StrI
 
-        return StrI(MethodCallOp(self, "ctime"))
+        return StrI(MethodCall(self, "ctime"))
 
     # =========================================================================
     # MANIPULATION
@@ -509,7 +509,7 @@ class _DateI(Interface):
         day: int | Nu[int] | None = None,
     ) -> DateI:
         """Create a new date with some components replaced."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
 
         kwargs = {}
         if year is not None:
@@ -518,7 +518,7 @@ class _DateI(Interface):
             kwargs["month"] = month
         if day is not None:
             kwargs["day"] = day
-        return DateI(MethodCallOp(self, "replace", **kwargs))
+        return DateI(MethodCall(self, "replace", **kwargs))
 
     # =========================================================================
     # ARITHMETIC
@@ -526,63 +526,63 @@ class _DateI(Interface):
 
     def __add__(self, delta: TimedeltaArg) -> DateI:
         """Add a timedelta to this date."""
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
         if isinstance(delta, timedelta):
             delta = TimedeltaI(delta)
-        return DateI(AddOp(self, delta))
+        return DateI(Add(self, delta))
 
     def __sub__(self, other: DateArg | TimedeltaArg) -> DateI | TimedeltaI:
         """Subtract a date or timedelta."""
-        from nu.ops import SubOp
+        from nu.interactions import Sub
 
         if isinstance(other, date):
             other = DateI(other)
         if isinstance(other, timedelta):
             other = TimedeltaI(other)
         if isinstance(other, _DateI):
-            return TimedeltaI(SubOp(self, other))
-        return DateI(SubOp(self, other))
+            return TimedeltaI(Sub(self, other))
+        return DateI(Sub(self, other))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: DateArg) -> BoolI:
-        from nu.ops import GtOp
+        from nu.interactions import Gt
         from nu.primitives import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: DateArg) -> BoolI:
-        from nu.ops import LtOp
+        from nu.interactions import Lt
         from nu.primitives import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: DateArg) -> BoolI:
-        from nu.ops import GeOp
+        from nu.interactions import Ge
         from nu.primitives import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: DateArg) -> BoolI:
-        from nu.ops import LeOp
+        from nu.interactions import Le
         from nu.primitives import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: DateArg) -> BoolI:
-        from nu.ops import EqOp
+        from nu.interactions import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: DateArg) -> BoolI:
-        from nu.ops import NeOp
+        from nu.interactions import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
 
 class DateI(_DateI, TypedNu[date]):
@@ -606,7 +606,7 @@ class _TimeI(Interface):
     @classmethod
     def from_iso(cls, iso_str: str | Nu[str]) -> TimeI:
         """Create a TimeI from an ISO format string (HH:MM:SS[.ffffff])."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.terms import Sentinel
 
         def _safe_fromisoformat(s: object) -> time | Sentinel:
@@ -616,7 +616,7 @@ class _TimeI(Interface):
                 return EMPTY
             return time.fromisoformat(s)
 
-        return TimeI(FuncCallOp(_safe_fromisoformat, iso_str))
+        return TimeI(FuncCall(_safe_fromisoformat, iso_str))
 
     @classmethod
     def from_components(
@@ -627,9 +627,9 @@ class _TimeI(Interface):
         microsecond: int | Nu[int] = 0,
     ) -> TimeI:
         """Create a TimeI from time components."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
-        return TimeI(FuncCallOp(time, hour, minute, second, microsecond))
+        return TimeI(FuncCall(time, hour, minute, second, microsecond))
 
     @classmethod
     def midnight(cls) -> TimeI:
@@ -647,31 +647,31 @@ class _TimeI(Interface):
 
     def hour(self) -> IntI:
         """Get the hour component (0-23)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "hour"))
+        return IntI(FuncCall(getattr, self, "hour"))
 
     def minute(self) -> IntI:
         """Get the minute component (0-59)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "minute"))
+        return IntI(FuncCall(getattr, self, "minute"))
 
     def second(self) -> IntI:
         """Get the second component (0-59)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "second"))
+        return IntI(FuncCall(getattr, self, "second"))
 
     def microsecond(self) -> IntI:
         """Get the microsecond component (0-999999)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "microsecond"))
+        return IntI(FuncCall(getattr, self, "microsecond"))
 
     # =========================================================================
     # CONVERSIONS
@@ -679,17 +679,17 @@ class _TimeI(Interface):
 
     def isoformat(self, timespec: str | Nu[str] = "auto") -> StrI:
         """Convert to ISO 8601 format string."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import StrI
 
-        return StrI(MethodCallOp(self, "isoformat", timespec))
+        return StrI(MethodCall(self, "isoformat", timespec))
 
     def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format time as string."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import StrI
 
-        return StrI(MethodCallOp(self, "strftime", fmt))
+        return StrI(MethodCall(self, "strftime", fmt))
 
     # =========================================================================
     # MANIPULATION
@@ -703,7 +703,7 @@ class _TimeI(Interface):
         microsecond: int | Nu[int] | None = None,
     ) -> TimeI:
         """Create a new time with some components replaced."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
 
         kwargs = {}
         if hour is not None:
@@ -714,47 +714,47 @@ class _TimeI(Interface):
             kwargs["second"] = second
         if microsecond is not None:
             kwargs["microsecond"] = microsecond
-        return TimeI(MethodCallOp(self, "replace", **kwargs))
+        return TimeI(MethodCall(self, "replace", **kwargs))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: TimeArg) -> BoolI:
-        from nu.ops import GtOp
+        from nu.interactions import Gt
         from nu.primitives import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: TimeArg) -> BoolI:
-        from nu.ops import LtOp
+        from nu.interactions import Lt
         from nu.primitives import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: TimeArg) -> BoolI:
-        from nu.ops import GeOp
+        from nu.interactions import Ge
         from nu.primitives import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: TimeArg) -> BoolI:
-        from nu.ops import LeOp
+        from nu.interactions import Le
         from nu.primitives import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: TimeArg) -> BoolI:
-        from nu.ops import EqOp
+        from nu.interactions import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: TimeArg) -> BoolI:
-        from nu.ops import NeOp
+        from nu.interactions import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
 
 class TimeI(_TimeI, TypedNu[time]):
@@ -778,36 +778,36 @@ class _DatetimeI(Interface):
     @classmethod
     def now(cls, tz: TimezoneArg | None = None) -> DatetimeI:
         """Create a DatetimeI for the current time."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
         if tz is not None:
             if isinstance(tz, timezone):
                 tz = TimezoneI(tz)
-            return DatetimeI(FuncCallOp(datetime.now, tz))
-        return DatetimeI(FuncCallOp(datetime.now))
+            return DatetimeI(FuncCall(datetime.now, tz))
+        return DatetimeI(FuncCall(datetime.now))
 
     @classmethod
     def utcnow(cls) -> DatetimeI:
         """Create a DatetimeI for current UTC time."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
-        return DatetimeI(FuncCallOp(datetime.now, TimezoneI(UTC)))
+        return DatetimeI(FuncCall(datetime.now, TimezoneI(UTC)))
 
     @classmethod
     def from_timestamp(cls, ts: float | Nu[float], tz: TimezoneArg | None = None) -> DatetimeI:
         """Create a DatetimeI from a POSIX timestamp."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
         if tz is not None:
             if isinstance(tz, timezone):
                 tz = TimezoneI(tz)
-            return DatetimeI(FuncCallOp(datetime.fromtimestamp, ts, tz))
-        return DatetimeI(FuncCallOp(datetime.fromtimestamp, ts))
+            return DatetimeI(FuncCall(datetime.fromtimestamp, ts, tz))
+        return DatetimeI(FuncCall(datetime.fromtimestamp, ts))
 
     @classmethod
     def from_iso(cls, iso_str: str | Nu[str]) -> DatetimeI:
         """Create a DatetimeI from an ISO format string."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.terms import Sentinel
 
         def _safe_fromisoformat(s: object) -> datetime | Sentinel:
@@ -817,7 +817,7 @@ class _DatetimeI(Interface):
                 return EMPTY
             return datetime.fromisoformat(s)
 
-        return DatetimeI(FuncCallOp(_safe_fromisoformat, iso_str))
+        return DatetimeI(FuncCall(_safe_fromisoformat, iso_str))
 
     # =========================================================================
     # COMPONENT ACCESSORS
@@ -825,66 +825,66 @@ class _DatetimeI(Interface):
 
     def year(self) -> IntI:
         """Get the year component."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "year"))
+        return IntI(FuncCall(getattr, self, "year"))
 
     def month(self) -> IntI:
         """Get the month component (1-12)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "month"))
+        return IntI(FuncCall(getattr, self, "month"))
 
     def day(self) -> IntI:
         """Get the day component (1-31)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "day"))
+        return IntI(FuncCall(getattr, self, "day"))
 
     def hour(self) -> IntI:
         """Get the hour component (0-23)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "hour"))
+        return IntI(FuncCall(getattr, self, "hour"))
 
     def minute(self) -> IntI:
         """Get the minute component (0-59)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "minute"))
+        return IntI(FuncCall(getattr, self, "minute"))
 
     def second(self) -> IntI:
         """Get the second component (0-59)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "second"))
+        return IntI(FuncCall(getattr, self, "second"))
 
     def microsecond(self) -> IntI:
         """Get the microsecond component (0-999999)."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "microsecond"))
+        return IntI(FuncCall(getattr, self, "microsecond"))
 
     def weekday(self) -> IntI:
         """Get the day of week (Monday=0, Sunday=6)."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import IntI
 
-        return IntI(MethodCallOp(self, "weekday"))
+        return IntI(MethodCall(self, "weekday"))
 
     def isoweekday(self) -> IntI:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import IntI
 
-        return IntI(MethodCallOp(self, "isoweekday"))
+        return IntI(MethodCall(self, "isoweekday"))
 
     # =========================================================================
     # CONVERSIONS
@@ -892,36 +892,36 @@ class _DatetimeI(Interface):
 
     def timestamp(self) -> FloatI:
         """Convert to POSIX timestamp."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "timestamp"))
+        return FloatI(MethodCall(self, "timestamp"))
 
     def isoformat(self, sep: str | Nu[str] = "T", timespec: str | Nu[str] = "auto") -> StrI:
         """Convert to ISO 8601 format string."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import StrI
 
-        return StrI(MethodCallOp(self, "isoformat", sep, timespec))
+        return StrI(MethodCall(self, "isoformat", sep, timespec))
 
     def date(self) -> DateI:
         """Extract the date component."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
 
-        return DateI(MethodCallOp(self, "date"))
+        return DateI(MethodCall(self, "date"))
 
     def time(self) -> TimeI:
         """Extract the time component."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
 
-        return TimeI(MethodCallOp(self, "time"))
+        return TimeI(MethodCall(self, "time"))
 
     def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format datetime as string."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import StrI
 
-        return StrI(MethodCallOp(self, "strftime", fmt))
+        return StrI(MethodCall(self, "strftime", fmt))
 
     # =========================================================================
     # MANIPULATION
@@ -938,7 +938,7 @@ class _DatetimeI(Interface):
         microsecond: int | Nu[int] | None = None,
     ) -> DatetimeI:
         """Create a new datetime with some components replaced."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
 
         kwargs = {}
         if year is not None:
@@ -955,7 +955,7 @@ class _DatetimeI(Interface):
             kwargs["second"] = second
         if microsecond is not None:
             kwargs["microsecond"] = microsecond
-        return DatetimeI(MethodCallOp(self, "replace", **kwargs))
+        return DatetimeI(MethodCall(self, "replace", **kwargs))
 
     # =========================================================================
     # ARITHMETIC
@@ -963,63 +963,63 @@ class _DatetimeI(Interface):
 
     def __add__(self, delta: TimedeltaArg) -> DatetimeI:
         """Add a timedelta to this datetime."""
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
         if isinstance(delta, timedelta):
             delta = TimedeltaI(delta)
-        return DatetimeI(AddOp(self, delta))
+        return DatetimeI(Add(self, delta))
 
     def __sub__(self, other: DatetimeArg | TimedeltaArg) -> DatetimeI | TimedeltaI:
         """Subtract a datetime or timedelta."""
-        from nu.ops import SubOp
+        from nu.interactions import Sub
 
         if isinstance(other, datetime):
             other = DatetimeI(other)
         if isinstance(other, timedelta):
             other = TimedeltaI(other)
         if isinstance(other, _DatetimeI):
-            return TimedeltaI(SubOp(self, other))
-        return DatetimeI(SubOp(self, other))
+            return TimedeltaI(Sub(self, other))
+        return DatetimeI(Sub(self, other))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: DatetimeArg) -> BoolI:
-        from nu.ops import GtOp
+        from nu.interactions import Gt
         from nu.primitives import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: DatetimeArg) -> BoolI:
-        from nu.ops import LtOp
+        from nu.interactions import Lt
         from nu.primitives import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: DatetimeArg) -> BoolI:
-        from nu.ops import GeOp
+        from nu.interactions import Ge
         from nu.primitives import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: DatetimeArg) -> BoolI:
-        from nu.ops import LeOp
+        from nu.interactions import Le
         from nu.primitives import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: DatetimeArg) -> BoolI:
-        from nu.ops import EqOp
+        from nu.interactions import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: DatetimeArg) -> BoolI:
-        from nu.ops import NeOp
+        from nu.interactions import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
 
 class DatetimeI(_DatetimeI, TypedNu[datetime]):

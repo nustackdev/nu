@@ -34,23 +34,23 @@ class _PathI(Interface):
     @classmethod
     def from_str(cls, value: str | Nu[str]) -> PathI:
         """Create a PathI from a string."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return PathI(FuncCallOp(Path, value))
+        return PathI(FuncCall(Path, value))
 
     @classmethod
     def cwd(cls) -> PathI:
         """Get current working directory."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return PathI(FuncCallOp(Path.cwd))
+        return PathI(FuncCall(Path.cwd))
 
     @classmethod
     def home(cls) -> PathI:
         """Get user home directory."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return PathI(FuncCallOp(Path.home))
+        return PathI(FuncCall(Path.home))
 
     # =========================================================================
     # PATH COMPONENTS
@@ -58,57 +58,57 @@ class _PathI(Interface):
 
     def name(self) -> StrI:
         """Get the final component (filename)."""
-        from nu import FuncCallOp, StrI
+        from nu import FuncCall, StrI
 
-        return StrI(FuncCallOp(getattr, self, "name"))
+        return StrI(FuncCall(getattr, self, "name"))
 
     def stem(self) -> StrI:
         """Get the filename without the final extension."""
-        from nu import FuncCallOp, StrI
+        from nu import FuncCall, StrI
 
-        return StrI(FuncCallOp(getattr, self, "stem"))
+        return StrI(FuncCall(getattr, self, "stem"))
 
     def suffix(self) -> StrI:
         """Get the file extension (including dot)."""
-        from nu import FuncCallOp, StrI
+        from nu import FuncCall, StrI
 
-        return StrI(FuncCallOp(getattr, self, "suffix"))
+        return StrI(FuncCall(getattr, self, "suffix"))
 
     def suffixes(self) -> ListI:
         """Get all file extensions."""
-        from nu import FuncCallOp, ListI
+        from nu import FuncCall, ListI
 
-        return ListI(FuncCallOp(getattr, self, "suffixes"))
+        return ListI(FuncCall(getattr, self, "suffixes"))
 
     def parent(self) -> PathI:
         """Get the parent directory."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return PathI(FuncCallOp(getattr, self, "parent"))
+        return PathI(FuncCall(getattr, self, "parent"))
 
     def root(self) -> StrI:
         """Get the root (e.g., '/' on Unix)."""
-        from nu import FuncCallOp, StrI
+        from nu import FuncCall, StrI
 
-        return StrI(FuncCallOp(getattr, self, "root"))
+        return StrI(FuncCall(getattr, self, "root"))
 
     def anchor(self) -> StrI:
         """Get the anchor (drive + root)."""
-        from nu import FuncCallOp, StrI
+        from nu import FuncCall, StrI
 
-        return StrI(FuncCallOp(getattr, self, "anchor"))
+        return StrI(FuncCall(getattr, self, "anchor"))
 
     def parts(self) -> TupleI:
         """Get path parts as a tuple."""
-        from nu import FuncCallOp, TupleI
+        from nu import FuncCall, TupleI
 
-        return TupleI(FuncCallOp(getattr, self, "parts"))
+        return TupleI(FuncCall(getattr, self, "parts"))
 
     def parents(self) -> TupleI:
         """Get an immutable sequence of parent paths."""
-        from nu import FuncCallOp, TupleI
+        from nu import FuncCall, TupleI
 
-        return TupleI(FuncCallOp(tuple, FuncCallOp(getattr, self, "parents")))
+        return TupleI(FuncCall(tuple, FuncCall(getattr, self, "parents")))
 
     # =========================================================================
     # PATH MANIPULATION
@@ -116,59 +116,59 @@ class _PathI(Interface):
 
     def __truediv__(self, other: PathArg | str | Nu[str]) -> PathI:
         """Join paths using / operator."""
-        from nu import DivOp
+        from nu import Div
 
         if isinstance(other, (Path, PurePath)):
             other = PathI(other)
-        return PathI(DivOp(self, other))
+        return PathI(Div(self, other))
 
     def joinpath(self, *others: PathArg | str) -> PathI:
         """Join with multiple path components."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
         wrapped = tuple(PathI(o) if isinstance(o, (Path, PurePath)) else o for o in others)
-        return PathI(MethodCallOp(self, "joinpath", *wrapped))
+        return PathI(MethodCall(self, "joinpath", *wrapped))
 
     def with_name(self, name: str | Nu[str]) -> PathI:
         """Return a new path with the name changed."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
-        return PathI(MethodCallOp(self, "with_name", name))
+        return PathI(MethodCall(self, "with_name", name))
 
     def with_stem(self, stem: str | Nu[str]) -> PathI:
         """Return a new path with the stem changed."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
-        return PathI(MethodCallOp(self, "with_stem", stem))
+        return PathI(MethodCall(self, "with_stem", stem))
 
     def with_suffix(self, suffix: str | Nu[str]) -> PathI:
         """Return a new path with the suffix changed."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
-        return PathI(MethodCallOp(self, "with_suffix", suffix))
+        return PathI(MethodCall(self, "with_suffix", suffix))
 
     def resolve_path(self, strict: bool | Nu[bool] = False) -> PathI:
         """Make the path absolute, resolving symlinks.
 
         Named resolve_path() to avoid collision with RefBase.resolve().
         """
-        from nu import MethodCallOp
+        from nu import MethodCall
 
-        return PathI(MethodCallOp(self, "resolve", strict))
+        return PathI(MethodCall(self, "resolve", strict))
 
     def absolute(self) -> PathI:
         """Make the path absolute (without resolving symlinks)."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
-        return PathI(MethodCallOp(self, "absolute"))
+        return PathI(MethodCall(self, "absolute"))
 
     def relative_to(self, other: PathArg | str | Nu[str]) -> PathI:
         """Compute relative path from other."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
         if isinstance(other, (Path, PurePath)):
             other = PathI(other)
-        return PathI(MethodCallOp(self, "relative_to", other))
+        return PathI(MethodCall(self, "relative_to", other))
 
     # =========================================================================
     # PATH TESTS
@@ -176,23 +176,23 @@ class _PathI(Interface):
 
     def is_absolute(self) -> BoolI:
         """Check if path is absolute."""
-        from nu import BoolI, MethodCallOp
+        from nu import BoolI, MethodCall
 
-        return BoolI(MethodCallOp(self, "is_absolute"))
+        return BoolI(MethodCall(self, "is_absolute"))
 
     def is_relative_to(self, other: PathArg | str | Nu[str]) -> BoolI:
         """Check if path is relative to other."""
-        from nu import BoolI, MethodCallOp
+        from nu import BoolI, MethodCall
 
         if isinstance(other, (Path, PurePath)):
             other = PathI(other)
-        return BoolI(MethodCallOp(self, "is_relative_to", other))
+        return BoolI(MethodCall(self, "is_relative_to", other))
 
     def match(self, pattern: str | Nu[str]) -> BoolI:
         """Match path against a glob pattern."""
-        from nu import BoolI, MethodCallOp
+        from nu import BoolI, MethodCall
 
-        return BoolI(MethodCallOp(self, "match", pattern))
+        return BoolI(MethodCall(self, "match", pattern))
 
     # =========================================================================
     # FILESYSTEM OPERATIONS (executed at runtime)
@@ -200,33 +200,33 @@ class _PathI(Interface):
 
     def exists(self) -> BoolI:
         """Check if path exists."""
-        from nu import BoolI, MethodCallOp
+        from nu import BoolI, MethodCall
 
-        return BoolI(MethodCallOp(self, "exists"))
+        return BoolI(MethodCall(self, "exists"))
 
     def is_file(self) -> BoolI:
         """Check if path is a file."""
-        from nu import BoolI, MethodCallOp
+        from nu import BoolI, MethodCall
 
-        return BoolI(MethodCallOp(self, "is_file"))
+        return BoolI(MethodCall(self, "is_file"))
 
     def is_dir(self) -> BoolI:
         """Check if path is a directory."""
-        from nu import BoolI, MethodCallOp
+        from nu import BoolI, MethodCall
 
-        return BoolI(MethodCallOp(self, "is_dir"))
+        return BoolI(MethodCall(self, "is_dir"))
 
     def is_symlink(self) -> BoolI:
         """Check if path is a symlink."""
-        from nu import BoolI, MethodCallOp
+        from nu import BoolI, MethodCall
 
-        return BoolI(MethodCallOp(self, "is_symlink"))
+        return BoolI(MethodCall(self, "is_symlink"))
 
     def is_mount(self) -> BoolI:
         """Check if path is a mount point."""
-        from nu import BoolI, MethodCallOp
+        from nu import BoolI, MethodCall
 
-        return BoolI(MethodCallOp(self, "is_mount"))
+        return BoolI(MethodCall(self, "is_mount"))
 
     # =========================================================================
     # CONVERSIONS
@@ -234,49 +234,49 @@ class _PathI(Interface):
 
     def as_posix(self) -> StrI:
         """Return path with forward slashes."""
-        from nu import MethodCallOp, StrI
+        from nu import MethodCall, StrI
 
-        return StrI(MethodCallOp(self, "as_posix"))
+        return StrI(MethodCall(self, "as_posix"))
 
     def as_uri(self) -> StrI:
         """Return path as file:// URI."""
-        from nu import MethodCallOp, StrI
+        from nu import MethodCall, StrI
 
-        return StrI(MethodCallOp(self, "as_uri"))
+        return StrI(MethodCall(self, "as_uri"))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: PathArg) -> BoolI:
-        from nu import BoolI, GtOp
+        from nu import BoolI, Gt
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: PathArg) -> BoolI:
-        from nu import BoolI, LtOp
+        from nu import BoolI, Lt
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: PathArg) -> BoolI:
-        from nu import BoolI, GeOp
+        from nu import BoolI, Ge
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: PathArg) -> BoolI:
-        from nu import BoolI, LeOp
+        from nu import BoolI, Le
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: PathArg) -> BoolI:
-        from nu import BoolI, EqOp
+        from nu import BoolI, Eq
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: PathArg) -> BoolI:
-        from nu import BoolI, NeOp
+        from nu import BoolI, Ne
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
 
 # =============================================================================

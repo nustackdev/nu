@@ -48,7 +48,7 @@ class ContextManager(Nu, ABC):
         after_failure(ctx, exc)   exit, exception path.
 
     `open` runs children under the bracket. `GeneratorExit` (raised when a
-    consumer closes the generator early, e.g. NAryOp taking a single yield
+    consumer closes the generator early, e.g. NAryScalar taking a single yield
     from a scope-producing child) counts as clean and routes to `after`.
     Real exceptions route to `after_failure`.
     """

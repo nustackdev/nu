@@ -26,7 +26,7 @@ class ContainerI(Interface):
 
     def __contains__(self, item: object) -> BoolI:
         """Check if item is in this collection."""
-        from nu.ops import ContainsOp
+        from nu.interactions import Contains
         from nu.primitives import BoolI
 
-        return BoolI(ContainsOp(self, item))
+        return BoolI(Contains(self, item))

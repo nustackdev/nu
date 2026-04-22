@@ -61,16 +61,16 @@ class Interface:
     # =========================================================================
 
     def is_empty(self) -> BoolI:
-        from nu.ops import IsEmptyOp
+        from nu.interactions import IsEmpty
         from nu.primitives import BoolI
 
-        return BoolI(IsEmptyOp(self))
+        return BoolI(IsEmpty(self))
 
     def is_invalid(self) -> BoolI:
-        from nu.ops import IsInvalidOp
+        from nu.interactions import IsInvalid
         from nu.primitives import BoolI
 
-        return BoolI(IsInvalidOp(self))
+        return BoolI(IsInvalid(self))
 
     def is_sentinel(self) -> BoolI:
         return self.is_empty().or_(self.is_invalid())
@@ -90,7 +90,7 @@ class TypedNu(RValue[T_co]):
 
     Leaf interfaces (IntI, DictI, etc) inherit this alongside Interface so
     they can participate in Nu tree construction:
-        IntI(AddOp(a, b)) + 1  ->  AddOp(IntI(AddOp(a, b)), Literal(1))
+        IntI(Add(a, b)) + 1  ->  Add(IntI(Add(a, b)), Literal(1))
     """
 
     def __init__(self, source: object = None, *args: object) -> None:

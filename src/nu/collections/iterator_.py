@@ -23,22 +23,22 @@ class IteratorI[T](Interface, TypedNu[Iterator[T]]):
     """Lazy iterator interface. Materializes via to_list/to_set/to_tuple."""
 
     def to_list(self) -> ListI[T]:
-        from nu.ops import ToListOp
+        from nu.interactions import ToList
 
         from .list_ import ListI
 
-        return ListI(ToListOp(self))
+        return ListI(ToList(self))
 
     def to_set(self) -> SetI[T]:
-        from nu.ops import ToSetOp
+        from nu.interactions import ToSet
 
         from .set_ import SetI
 
-        return SetI(ToSetOp(self))
+        return SetI(ToSet(self))
 
     def to_tuple(self) -> TupleI:
-        from nu.ops import ToTupleOp
+        from nu.interactions import ToTuple
 
         from .tuple_ import TupleI
 
-        return TupleI(ToTupleOp(self))
+        return TupleI(ToTuple(self))

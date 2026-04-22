@@ -43,30 +43,30 @@ class _FractionI(Interface):
         denominator: int | Nu[int] = 1,
     ) -> FractionI:
         """Create a FractionI from numerator and denominator."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return FractionI(FuncCallOp(Fraction, numerator, denominator))
+        return FractionI(FuncCall(Fraction, numerator, denominator))
 
     @classmethod
     def from_str(cls, value: str | Nu[str]) -> FractionI:
         """Create a FractionI from a string."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return FractionI(FuncCallOp(Fraction, value))
+        return FractionI(FuncCall(Fraction, value))
 
     @classmethod
     def from_float(cls, value: float | Nu[float]) -> FractionI:
         """Create a FractionI from a float."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return FractionI(FuncCallOp(Fraction, value))
+        return FractionI(FuncCall(Fraction, value))
 
     @classmethod
     def from_decimal(cls, value: DecimalArg) -> FractionI:
         """Create a FractionI from a Decimal."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return FractionI(FuncCallOp(Fraction, value))
+        return FractionI(FuncCall(Fraction, value))
 
     # =========================================================================
     # COMPONENT ACCESSORS
@@ -74,17 +74,17 @@ class _FractionI(Interface):
 
     def numerator(self) -> IntI:
         """Get the numerator."""
-        from nu import FuncCallOp
+        from nu import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "numerator"))
+        return IntI(FuncCall(getattr, self, "numerator"))
 
     def denominator(self) -> IntI:
         """Get the denominator."""
-        from nu import FuncCallOp
+        from nu import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(getattr, self, "denominator"))
+        return IntI(FuncCall(getattr, self, "denominator"))
 
     # =========================================================================
     # ARITHMETIC
@@ -92,119 +92,119 @@ class _FractionI(Interface):
 
     def __add__(self, other: FractionArg | int | float) -> FractionI:
         """Add fractions."""
-        from nu import AddOp
+        from nu import Add
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return FractionI(AddOp(self, other))
+        return FractionI(Add(self, other))
 
     def __radd__(self, other: Fraction | int | float) -> FractionI:
         """Right add."""
-        from nu import AddOp
+        from nu import Add
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return FractionI(AddOp(other, self))
+        return FractionI(Add(other, self))
 
     def __sub__(self, other: FractionArg | int | float) -> FractionI:
         """Subtract fractions."""
-        from nu import SubOp
+        from nu import Sub
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return FractionI(SubOp(self, other))
+        return FractionI(Sub(self, other))
 
     def __rsub__(self, other: Fraction | int | float) -> FractionI:
         """Right subtract."""
-        from nu import SubOp
+        from nu import Sub
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return FractionI(SubOp(other, self))
+        return FractionI(Sub(other, self))
 
     def __mul__(self, other: FractionArg | int | float) -> FractionI:
         """Multiply fractions."""
-        from nu import MulOp
+        from nu import Mul
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return FractionI(MulOp(self, other))
+        return FractionI(Mul(self, other))
 
     def __rmul__(self, other: Fraction | int | float) -> FractionI:
         """Right multiply."""
-        from nu import MulOp
+        from nu import Mul
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return FractionI(MulOp(other, self))
+        return FractionI(Mul(other, self))
 
     def __truediv__(self, other: FractionArg | int | float) -> FractionI:
         """Divide fractions."""
-        from nu import DivOp
+        from nu import Div
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return FractionI(DivOp(self, other))
+        return FractionI(Div(self, other))
 
     def __rtruediv__(self, other: Fraction | int | float) -> FractionI:
         """Right divide."""
-        from nu import DivOp
+        from nu import Div
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return FractionI(DivOp(other, self))
+        return FractionI(Div(other, self))
 
     def __floordiv__(self, other: FractionArg | int | float) -> IntI:
         """Floor divide fractions."""
-        from nu import FloorDivOp
+        from nu import FloorDiv
         from nu.primitives import IntI
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return IntI(FloorDivOp(self, other))
+        return IntI(FloorDiv(self, other))
 
     def __mod__(self, other: FractionArg | int | float) -> FractionI:
         """Modulo operation."""
-        from nu import ModOp
+        from nu import Mod
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return FractionI(ModOp(self, other))
+        return FractionI(Mod(self, other))
 
     def __rfloordiv__(self, other: Fraction | int | float) -> IntI:
         """Right floor divide."""
-        from nu import FloorDivOp
+        from nu import FloorDiv
         from nu.primitives import IntI
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return IntI(FloorDivOp(other, self))
+        return IntI(FloorDiv(other, self))
 
     def __rmod__(self, other: Fraction | int | float) -> FractionI:
         """Right modulo."""
-        from nu import ModOp
+        from nu import Mod
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return FractionI(ModOp(other, self))
+        return FractionI(Mod(other, self))
 
     def __pow__(self, other: int) -> FractionI:
         """Raise to power."""
-        from nu import PowOp
+        from nu import Pow
 
-        return FractionI(PowOp(self, other))
+        return FractionI(Pow(self, other))
 
     def __neg__(self) -> FractionI:
         """Negate."""
-        from nu import NegOp
+        from nu import Neg
 
-        return FractionI(NegOp(self))
+        return FractionI(Neg(self))
 
     def __abs__(self) -> FractionI:
         """Absolute value."""
-        from nu import AbsOp
+        from nu import Abs
 
-        return FractionI(AbsOp(self))
+        return FractionI(Abs(self))
 
     # =========================================================================
     # CONVERSIONS
@@ -212,23 +212,23 @@ class _FractionI(Interface):
 
     def limit_denominator(self, max_denominator: int = 10**6) -> FractionI:
         """Find closest fraction with denominator at most max_denominator."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
-        return FractionI(MethodCallOp(self, "limit_denominator", max_denominator))
+        return FractionI(MethodCall(self, "limit_denominator", max_denominator))
 
     def as_float(self) -> FloatI:
         """Convert to float."""
-        from nu import FuncCallOp
+        from nu import FuncCall
         from nu.primitives import FloatI
 
-        return FloatI(FuncCallOp(float, self))
+        return FloatI(FuncCall(float, self))
 
     def as_integer_ratio(self) -> TupleI:
         """Return (numerator, denominator) tuple."""
-        from nu import MethodCallOp
+        from nu import MethodCall
         from nu.collections import TupleI
 
-        return TupleI(MethodCallOp(self, "as_integer_ratio"))
+        return TupleI(MethodCall(self, "as_integer_ratio"))
 
     # =========================================================================
     # COMPARISON
@@ -236,45 +236,45 @@ class _FractionI(Interface):
 
     def __gt__(self, other: FractionArg | int | float) -> BoolI:
         """Greater than."""
-        from nu import GtOp
+        from nu import Gt
         from nu.primitives import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: FractionArg | int | float) -> BoolI:
         """Less than."""
-        from nu import LtOp
+        from nu import Lt
         from nu.primitives import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: FractionArg | int | float) -> BoolI:
         """Greater than or equal."""
-        from nu import GeOp
+        from nu import Ge
         from nu.primitives import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: FractionArg | int | float) -> BoolI:
         """Less than or equal."""
-        from nu import LeOp
+        from nu import Le
         from nu.primitives import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: FractionArg | int | float) -> BoolI:
         """Equal."""
-        from nu import EqOp
+        from nu import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: FractionArg | int | float) -> BoolI:
         """Not equal."""
-        from nu import NeOp
+        from nu import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
 
 class FractionI(_FractionI, TypedNu[Fraction]):

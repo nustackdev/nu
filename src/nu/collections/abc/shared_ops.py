@@ -5,7 +5,7 @@ ClearCmd: Clear all items from a mutable collection.
 
 from __future__ import annotations
 
-from nu.terms import UnaryOp
+from nu.terms import UnaryScalar
 
 
 __all__ = [
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 
-class ClearCmd(UnaryOp[None]):
+class ClearCmd(UnaryScalar[None]):
     """Clear all items: collection.clear(). Returns None."""
 
     def apply(self, operand: object) -> None:

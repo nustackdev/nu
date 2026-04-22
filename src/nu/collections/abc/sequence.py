@@ -80,9 +80,9 @@ class SequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def reversed(self) -> CollectionResultT:
         """Reversed copy of this sequence."""
-        from nu.ops import ReversedOp
+        from nu.interactions import Reversed
 
-        return cast("CollectionResultT", self._wrap_iterable_result(ReversedOp(self)))
+        return cast("CollectionResultT", self._wrap_iterable_result(Reversed(self)))
 
 
 class MutableSequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT](

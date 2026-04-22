@@ -41,14 +41,14 @@ class ListI[T](
     # =========================================================================
 
     def __add__(self, other: ListArg[T]) -> ListI[T]:
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
-        return ListI(AddOp(self, other))
+        return ListI(Add(self, other))
 
     def __radd__(self, other: ListArg[T]) -> ListI[T]:
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
-        return ListI(AddOp(other, self))
+        return ListI(Add(other, self))
 
     # =========================================================================
     # INDEXING / SLICING
@@ -59,55 +59,55 @@ class ListI[T](
     @overload
     def __getitem__(self, key: slice) -> ListI[T]: ...
     def __getitem__(self, key: IntArg | slice) -> AnyI | ListI[T]:
-        from nu.ops import AtOp, SliceOp
+        from nu.interactions import At, Slice
         from nu.primitives import AnyI
 
         if isinstance(key, slice):
-            return ListI(SliceOp(self, key.start, key.stop, key.step))
-        return AnyI(AtOp(self, key))
+            return ListI(Slice(self, key.start, key.stop, key.step))
+        return AnyI(At(self, key))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: ListArg[T]) -> BoolI:
-        from nu.ops import GtOp
+        from nu.interactions import Gt
         from nu.primitives import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: ListArg[T]) -> BoolI:
-        from nu.ops import LtOp
+        from nu.interactions import Lt
         from nu.primitives import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: ListArg[T]) -> BoolI:
-        from nu.ops import GeOp
+        from nu.interactions import Ge
         from nu.primitives import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: ListArg[T]) -> BoolI:
-        from nu.ops import LeOp
+        from nu.interactions import Le
         from nu.primitives import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: ListArg[T]) -> BoolI:
-        from nu.ops import EqOp
+        from nu.interactions import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: ListArg[T]) -> BoolI:
-        from nu.ops import NeOp
+        from nu.interactions import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
     def is_(self, other: ListArg[T]) -> BoolI:
-        from nu.ops import IdCompOp
+        from nu.interactions import IdComp
         from nu.primitives import BoolI
 
-        return BoolI(IdCompOp(self, other))
+        return BoolI(IdComp(self, other))

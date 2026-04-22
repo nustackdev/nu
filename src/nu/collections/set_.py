@@ -44,46 +44,46 @@ class SetI[T](
     # =========================================================================
 
     def __gt__(self, other: SetArg[T]) -> BoolI:
-        from nu.ops import GtOp
+        from nu.interactions import Gt
         from nu.primitives import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: SetArg[T]) -> BoolI:
-        from nu.ops import LtOp
+        from nu.interactions import Lt
         from nu.primitives import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: SetArg[T]) -> BoolI:
-        from nu.ops import GeOp
+        from nu.interactions import Ge
         from nu.primitives import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: SetArg[T]) -> BoolI:
-        from nu.ops import LeOp
+        from nu.interactions import Le
         from nu.primitives import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: SetArg[T]) -> BoolI:
-        from nu.ops import EqOp
+        from nu.interactions import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: SetArg[T]) -> BoolI:
-        from nu.ops import NeOp
+        from nu.interactions import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
     def is_(self, other: SetArg[T]) -> BoolI:
-        from nu.ops import IdCompOp
+        from nu.interactions import IdComp
         from nu.primitives import BoolI
 
-        return BoolI(IdCompOp(self, other))
+        return BoolI(IdComp(self, other))
 
 
 class FrozenSetI[T](
@@ -110,43 +110,43 @@ class FrozenSetI[T](
     # =========================================================================
 
     def __gt__(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.ops import GtOp
+        from nu.interactions import Gt
         from nu.primitives import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.ops import LtOp
+        from nu.interactions import Lt
         from nu.primitives import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.ops import GeOp
+        from nu.interactions import Ge
         from nu.primitives import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.ops import LeOp
+        from nu.interactions import Le
         from nu.primitives import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.ops import EqOp
+        from nu.interactions import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.ops import NeOp
+        from nu.interactions import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
     def is_(self, other: FrozenSetArg[T]) -> BoolI:
-        from nu.ops import IdCompOp
+        from nu.interactions import IdComp
         from nu.primitives import BoolI
 
-        return BoolI(IdCompOp(self, other))
+        return BoolI(IdComp(self, other))

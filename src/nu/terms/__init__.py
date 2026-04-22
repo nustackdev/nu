@@ -6,7 +6,7 @@ Layout (see projects/nu/model/programming/components.md + interactions.md):
     ├── Ref             - addressable location (ref.py)
     ├── Interaction     - compute or mutate (interaction.py)
     │   ├── Query       - functional construction (query.py)
-    │   │   └── Literal, NAryOp / Unary / Binary / Ternary, Stream
+    │   │   └── Literal, NAryScalar / Unary / Binary / Ternary, Stream
     │   └── Command     - imperative mutation (command.py)
     │       └── Atomic, Flow
     ├── Form            - typed descriptor (interface.py; rename later)
@@ -22,13 +22,13 @@ from .interaction import Interaction
 from .interface import Interface, TypedNu
 from .nu import LValue, Nu, NuIndepComm, RValue
 from .query import (
-    BinaryOp,
+    BinaryScalar,
     Literal,
-    NAryOp,
+    NAryScalar,
     Query,
     Stream,
-    TernaryOp,
-    UnaryOp,
+    TernaryScalar,
+    UnaryScalar,
 )
 from .ref import Ref
 from .types import (
@@ -68,7 +68,7 @@ __all__ = [
     "Arg",
     "Atomic",
     "AutoInterface",
-    "BinaryOp",
+    "BinaryScalar",
     "BoolArg",
     "BytesArg",
     "Command",
@@ -87,7 +87,7 @@ __all__ = [
     "ListArg",
     "Literal",
     "Mode",
-    "NAryOp",
+    "NAryScalar",
     "NoneArg",
     "Nu",
     "NuIndepComm",
@@ -99,11 +99,11 @@ __all__ = [
     "StrArg",
     "Stream",
     "T_co",
-    "TernaryOp",
+    "TernaryScalar",
     "TrackedEffect",
     "TupleArg",
     "TypedNu",
-    "UnaryOp",
+    "UnaryScalar",
     "is_empty",
     "is_invalid",
     "is_pure",

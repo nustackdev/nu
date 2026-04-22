@@ -26,7 +26,7 @@ class SizedI(Interface):
 
     def len(self) -> IntI:
         """Length of this collection."""
-        from nu.ops import LenOp
+        from nu.interactions import Len
         from nu.primitives import IntI
 
-        return IntI(LenOp(self))
+        return IntI(Len(self))

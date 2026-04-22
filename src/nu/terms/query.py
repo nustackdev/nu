@@ -6,10 +6,10 @@ Taxonomy under Interaction:
     ├── Literal[T]            trivial leaf: holds a value, yields it once
     ├── Scalar Query:         1 yield
     │   ├── Query[T] base          hook: run(ctx) -> T / arun(ctx) -> T
-    │   ├── NAryOp[T]              hook: apply(*values) / aapply(*values); resolves children + sentinel propagation
-    │   ├── UnaryOp[T]             arity refinement, self.operand
-    │   ├── BinaryOp[T]            arity refinement, self.left / self.right
-    │   └── TernaryOp[T]           arity refinement
+    │   ├── NAryScalar[T]              hook: apply(*values) / aapply(*values); resolves children + sentinel propagation
+    │   ├── UnaryScalar[T]             arity refinement, self.operand
+    │   ├── BinaryScalar[T]            arity refinement, self.left / self.right
+    │   └── TernaryScalar[T]           arity refinement
     └── Stream[T]             N yields; author overrides open / aopen
 
 Command children are forbidden anywhere in a Query subtree (purity is global).
@@ -34,13 +34,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "BinaryOp",
+    "BinaryScalar",
     "Literal",
-    "NAryOp",
+    "NAryScalar",
     "Query",
     "Stream",
-    "TernaryOp",
-    "UnaryOp",
+    "TernaryScalar",
+    "UnaryScalar",
 ]
 
 
@@ -53,7 +53,7 @@ class Query(Interaction[T_co], ABC):
     """1-yield Interaction. Hook: run(ctx) -> T / arun(ctx) -> T.
 
     Use for Interactions that compute one value from raw ctx access. For
-    operand-driven compute with sentinel propagation, prefer NAryOp.
+    operand-driven compute with sentinel propagation, prefer NAryScalar.
     """
 
     @abstractmethod
@@ -113,7 +113,7 @@ class Literal(Interaction[T_co]):
 # =============================================================================
 
 
-class NAryOp(Query[T_co | Sentinel], ABC):
+class NAryScalar(Query[T_co | Sentinel], ABC):
     """Query with auto-resolved operands. Hook: apply(*values) / aapply(*values).
 
     Opens each child, takes the first yield, propagates EMPTY / INVALID
@@ -182,7 +182,7 @@ class NAryOp(Query[T_co | Sentinel], ABC):
         """Apply the transformation to resolved values. Sync or async."""
         ...
 
-    # NAryOp overrides open/open_sync directly; Query's run/run_sync are unused.
+    # NAryScalar overrides open/open_sync directly; Query's run/run_sync are unused.
     async def run(self, ctx: Context) -> T_co | Sentinel:  # type: ignore[override]
         msg = f"{type(self).__name__} implements apply, not run"
         raise NotImplementedError(msg)
@@ -193,7 +193,7 @@ class NAryOp(Query[T_co | Sentinel], ABC):
 # =============================================================================
 
 
-class UnaryOp(NAryOp[T_co], ABC):
+class UnaryScalar(NAryScalar[T_co], ABC):
     """Single operand. For: -x, abs(x), not x, len(x), etc."""
 
     def __init__(self, operand: object) -> None:
@@ -214,7 +214,7 @@ class UnaryOp(NAryOp[T_co], ABC):
         ...
 
 
-class BinaryOp(NAryOp[T_co], ABC):
+class BinaryScalar(NAryScalar[T_co], ABC):
     """Two operands. For: x + y, x > y, x and y, x[y], etc."""
 
     def __init__(self, left: object, right: object) -> None:
@@ -239,7 +239,7 @@ class BinaryOp(NAryOp[T_co], ABC):
         ...
 
 
-class TernaryOp(NAryOp[T_co], ABC):
+class TernaryScalar(NAryScalar[T_co], ABC):
     """Three operands. Children accessed via self.children[0..2]."""
 
     def __init__(self, a: object, b: object, c: object) -> None:

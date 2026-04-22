@@ -95,7 +95,7 @@ class MutableItemI[T, InterfaceT](ItemI[T, InterfaceT]):
 
     def init(self, default: T | Sentinel | Nu[T | Sentinel]) -> Nu:
         """Store default if value is missing. No-op if already set."""
-        from nu.ops.control import If
+        from nu.interactions import If
 
         return If(self.missing(), self.store(default))
 

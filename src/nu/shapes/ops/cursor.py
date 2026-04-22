@@ -29,8 +29,8 @@ class AdvanceCursorOp(Query[tuple | None]):
     Returns:
         (log_key, actual_key) tuple if next item exists, None if exhausted.
 
-    Uses Query (not NAryOp) because a Sentinel cursor is a valid input signalling
-    "fresh start" - NAryOp's sentinel propagation would short-circuit it.
+    Uses Query (not NAryScalar) because a Sentinel cursor is a valid input signalling
+    "fresh start" - NAryScalar's sentinel propagation would short-circuit it.
     """
 
     def __init__(self, source: object, cursor: object) -> None:

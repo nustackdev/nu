@@ -26,15 +26,15 @@ from typing import TYPE_CHECKING
 from nu import (
     Arg,
     FloatI,
-    FuncCallOp,
+    FuncCall,
     IntI,
-    MethodCallOp,
+    MethodCall,
     NoneI,
     Nu,
     StrI,
-    ToFloatOp,
-    ToIntOp,
-    ToStrOp,
+    ToFloat,
+    ToInt,
+    ToStr,
     ensure_nu,
 )
 from nu.shapes import Slot
@@ -130,7 +130,7 @@ class DecimalRef(ItemRef[str, StrI], _DecimalI):
     def store(self, value: Arg[Decimal | str]) -> NoneI:
         """Store the Decimal value."""
         if isinstance(value, Nu):
-            val = ToStrOp(value)
+            val = ToStr(value)
         else:
             val = str(value)
         return NoneI(ItemStoreCmd(self, ensure_nu(val)))
@@ -170,7 +170,7 @@ class FractionRef(ItemRef[str, StrI], _FractionI):
     def store(self, value: Arg[Fraction | str]) -> NoneI:
         """Store the Fraction value."""
         if isinstance(value, Nu):
-            val = ToStrOp(value)
+            val = ToStr(value)
         else:
             val = str(value)
         return NoneI(ItemStoreCmd(self, ensure_nu(val)))
@@ -210,7 +210,7 @@ class ComplexRef(ItemRef[str, StrI], _ComplexI):
             parts = s.split(",")
             return complex(float(parts[0]), float(parts[1]))
 
-        return ComplexI(FuncCallOp(parse_complex, op))
+        return ComplexI(FuncCall(parse_complex, op))
 
     def store(self, value: Arg[complex | str]) -> NoneI:
         """Store the complex value."""
@@ -223,7 +223,7 @@ class ComplexRef(ItemRef[str, StrI], _ComplexI):
             def format_complex(c: complex) -> str:
                 return f"{c.real},{c.imag}"
 
-            val = FuncCallOp(format_complex, value)
+            val = FuncCall(format_complex, value)
         return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
@@ -259,7 +259,7 @@ class BasisPointRef(ItemRef[int, IntI], _BasisPointI):
     def store(self, value: Arg[BasisPoint | int]) -> NoneI:
         """Store the BasisPoint value."""
         if isinstance(value, Nu):
-            val = ToIntOp(value)
+            val = ToInt(value)
         else:
             val = int(value)
         return NoneI(ItemStoreCmd(self, ensure_nu(val)))
@@ -297,7 +297,7 @@ class PercentageRef(ItemRef[float, FloatI], _PercentageI):
     def store(self, value: Arg[Percentage | float]) -> NoneI:
         """Store the Percentage value."""
         if isinstance(value, Nu):
-            val = ToFloatOp(value)
+            val = ToFloat(value)
         else:
             val = float(value)
         return NoneI(ItemStoreCmd(self, ensure_nu(val)))
@@ -342,7 +342,7 @@ class DateRef(ItemRef[str, StrI], _DateI):
     def store(self, value: Arg[date | str]) -> NoneI:
         """Store the date value. Stores as ISO string."""
         if isinstance(value, Nu):
-            val = ToStrOp(value)
+            val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
         return NoneI(ItemStoreCmd(self, ensure_nu(val)))
@@ -384,7 +384,7 @@ class DatetimeRef(ItemRef[str, StrI], _DatetimeI):
     def store(self, value: Arg[datetime | str]) -> NoneI:
         """Store the datetime value. Stores as ISO string."""
         if isinstance(value, Nu):
-            val = ToStrOp(value)
+            val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, datetime) else str(value)
         return NoneI(ItemStoreCmd(self, ensure_nu(val)))
@@ -424,7 +424,7 @@ class TimeRef(ItemRef[str, StrI], _TimeI):
     def store(self, value: Arg[time | str]) -> NoneI:
         """Store the time value. Stores as ISO string."""
         if isinstance(value, Nu):
-            val = ToStrOp(value)
+            val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, time) else str(value)
         return NoneI(ItemStoreCmd(self, ensure_nu(val)))
@@ -465,7 +465,7 @@ class TimedeltaRef(ItemRef[float, FloatI], _TimedeltaI):
         """Store the timedelta value. Stores as float (seconds)."""
         if isinstance(value, Nu):
             # timedelta is stdlib — no __float__, so use .total_seconds()
-            val = MethodCallOp(value, "total_seconds")
+            val = MethodCall(value, "total_seconds")
         elif isinstance(value, timedelta):
             val = value.total_seconds()
         else:
@@ -522,7 +522,7 @@ class TimezoneRef(ItemRef[str, StrI], _TimezoneI):
             minutes = int(parts[1]) if len(parts) > 1 else 0
             return timezone(timedelta(hours=sign * hours, minutes=sign * minutes))
 
-        return TimezoneI(FuncCallOp(parse_timezone, op))
+        return TimezoneI(FuncCall(parse_timezone, op))
 
     def store(self, value: Arg[timezone | str]) -> NoneI:
         """Store the timezone value."""
@@ -556,7 +556,7 @@ class TimezoneRef(ItemRef[str, StrI], _TimezoneI):
                 minutes = (total_seconds % 3600) // 60
                 return f"{sign}{hours:02d}:{minutes:02d}"
 
-            val = FuncCallOp(format_timezone, value)
+            val = FuncCall(format_timezone, value)
         return NoneI(ItemStoreCmd(self, ensure_nu(val)))
 
 
@@ -599,7 +599,7 @@ class PathRef(ItemRef[str, StrI], _PathI):
     def store(self, value: Arg[Path | str]) -> NoneI:
         """Store the Path value."""
         if isinstance(value, Nu):
-            val = ToStrOp(value)
+            val = ToStr(value)
         else:
             val = str(value)
         return NoneI(ItemStoreCmd(self, ensure_nu(val)))
@@ -639,7 +639,7 @@ class UUIDRef(ItemRef[str, StrI], _UUIDI):
     def store(self, value: Arg[UUID | str]) -> NoneI:
         """Store the UUID value."""
         if isinstance(value, Nu):
-            val = ToStrOp(value)
+            val = ToStr(value)
         else:
             val = str(value)
         return NoneI(ItemStoreCmd(self, ensure_nu(val)))

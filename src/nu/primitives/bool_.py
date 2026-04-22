@@ -25,63 +25,63 @@ class BoolI(Interface, TypedNu[bool]):
 
     def and_(self, other: BoolArg) -> BoolI:
         """Logical AND: self AND other."""
-        from nu.ops import AndOp
+        from nu.interactions import And
 
-        return BoolI(AndOp(self, other))
+        return BoolI(And(self, other))
 
     def or_(self, other: BoolArg) -> BoolI:
         """Logical OR: self OR other."""
-        from nu.ops import OrOp
+        from nu.interactions import Or
 
-        return BoolI(OrOp(self, other))
+        return BoolI(Or(self, other))
 
     def not_(self) -> BoolI:
         """Logical NOT: NOT self."""
-        from nu.ops import NotOp
+        from nu.interactions import Not
 
-        return BoolI(NotOp(self))
+        return BoolI(Not(self))
 
     def bool_(self) -> BoolI:
         """Convert to boolean."""
-        from nu.ops import BoolOp
+        from nu.interactions import Bool
 
-        return BoolI(BoolOp(self))
+        return BoolI(Bool(self))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: BoolArg) -> BoolI:
-        from nu.ops import GtOp
+        from nu.interactions import Gt
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: BoolArg) -> BoolI:
-        from nu.ops import LtOp
+        from nu.interactions import Lt
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: BoolArg) -> BoolI:
-        from nu.ops import GeOp
+        from nu.interactions import Ge
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: BoolArg) -> BoolI:
-        from nu.ops import LeOp
+        from nu.interactions import Le
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: BoolArg) -> BoolI:
-        from nu.ops import EqOp
+        from nu.interactions import Eq
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: BoolArg) -> BoolI:
-        from nu.ops import NeOp
+        from nu.interactions import Ne
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
     def is_(self, other: BoolArg) -> BoolI:
-        from nu.ops import IdCompOp
+        from nu.interactions import IdComp
 
-        return BoolI(IdCompOp(self, other))
+        return BoolI(IdComp(self, other))

@@ -10,11 +10,11 @@ from typing import Any
 
 from nu import Literal, Nu
 from nu.terms import (
-    BinaryOp,
+    BinaryScalar,
     Interaction,
-    NAryOp,
-    TernaryOp,
-    UnaryOp,
+    NAryScalar,
+    TernaryScalar,
+    UnaryScalar,
 )
 
 
@@ -23,22 +23,22 @@ from nu.terms import (
 # ---------------------------------------------------------------------------
 
 
-class _AddOp(BinaryOp[int]):
+class _AddOp(BinaryScalar[int]):
     def apply(self, left: Any, right: Any) -> int:
         return left + right
 
 
-class _NegOp(UnaryOp[int]):
+class _NegOp(UnaryScalar[int]):
     def apply(self, operand: Any) -> int:
         return -operand
 
 
-class _ClampOp(TernaryOp[int]):
+class _ClampOp(TernaryScalar[int]):
     def apply(self, first: Any, second: Any, third: Any) -> int:
         return max(second, min(third, first))
 
 
-class _SumOp(NAryOp[int]):
+class _SumOp(NAryScalar[int]):
     def apply(self, *values: Any) -> int:
         return sum(values)
 

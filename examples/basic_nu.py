@@ -12,7 +12,7 @@ async def main() -> None:
     ctx = nu.Context()
 
     # Build (3 + 4) * 2
-    expr = nu.MulOp(nu.AddOp(nu.Literal(3), nu.Literal(4)), nu.Literal(2))
+    expr = nu.Mul(nu.Add(nu.Literal(3), nu.Literal(4)), nu.Literal(2))
 
     # single-yield value via `first`
     print(f"(3 + 4) * 2 = {await expr.first(ctx)}")

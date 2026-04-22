@@ -36,7 +36,7 @@ __all__ = [
 class _BoundMethod[V: Interface]:
     """Method descriptor bound to a specific instance.
 
-    Calling this creates a MethodCallOp (pure) or MethodCallCmd (impure) op
+    Calling this creates a MethodCall (pure) or MethodCallCmd (impure) op
     wrapping the call, then wraps it in value_type.
     """
 
@@ -49,9 +49,9 @@ class _BoundMethod[V: Interface]:
         self._pure = pure
 
     def __call__(self, *args: object, **kwargs: object) -> V:
-        from nu.ops import MethodCallCmd, MethodCallOp
+        from nu.interactions import MethodCallCmd, MethodCall
 
-        morph_cls = MethodCallOp if self._pure else MethodCallCmd
+        morph_cls = MethodCall if self._pure else MethodCallCmd
         return self._value_type(morph_cls(self._owner, self._method_name, *args, **kwargs))
 
     def __repr__(self) -> str:
@@ -81,10 +81,10 @@ class _ClassBoundMethod[V: Interface]:
         self._pure = pure
 
     def __call__(self, *args: object, **kwargs: object) -> V:
-        from nu.ops import MethodCallCmd, MethodCallOp
+        from nu.interactions import MethodCallCmd, MethodCall
 
         target = self._ref_cls()
-        morph_cls = MethodCallOp if self._pure else MethodCallCmd
+        morph_cls = MethodCall if self._pure else MethodCallCmd
         return self._value_type(morph_cls(target, self._method_name, *args, **kwargs))
 
     def __repr__(self) -> str:
@@ -157,13 +157,13 @@ class prop[V: Interface]:  # noqa: N801
     def __get__(self, obj: object, objtype: type | None = None) -> V: ...
 
     def __get__(self, obj: object | None, objtype: type | None = None) -> prop[V] | V:
-        from nu.ops import GetAttrOp
+        from nu.interactions import GetAttr
 
         if obj is None:
             if objtype is not None and issubclass(objtype, Ref):
-                return self._value_type(GetAttrOp(objtype(), self._prop_name))
+                return self._value_type(GetAttr(objtype(), self._prop_name))
             return self
-        return self._value_type(GetAttrOp(obj, self._prop_name))
+        return self._value_type(GetAttr(obj, self._prop_name))
 
     def __repr__(self) -> str:
         name = self._prop_name or self._explicit_name or "?"

@@ -8,7 +8,7 @@ from io import StringIO
 import pytest
 
 from nu import Context
-from nu.ops import Debug, Log, Print
+from nu.interactions import Debug, Log, Print
 from nu.stdio import (
     STDERR,
     STDIN,
@@ -289,9 +289,9 @@ class TestBufferedStdio:
 class TestEffectIsolation:
     def test_stdio_effects_separate_from_calc(self):
         """StdioWrite produces effects, pure ops don't."""
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
-        pure = AddOp(1, 2)
+        pure = Add(1, 2)
         assert len(tracked_effects(pure)) == 0
 
         impure = StdioWrite(STDOUT, "hello")
@@ -299,9 +299,9 @@ class TestEffectIsolation:
 
     def test_mixed_tree_effects(self):
         """A composed tree with both stdio and pure ops tracks only stdio effects."""
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
-        tree = StdioWrite(STDOUT, "start") >> AddOp(1, 2) >> StdioWrite(STDERR, "end")
+        tree = StdioWrite(STDOUT, "start") >> Add(1, 2) >> StdioWrite(STDERR, "end")
         effects = tracked_effects(tree)
         assert TrackedEffect(StdioRef, Direction.WRITE) in effects
         assert len(effects) == 1  # Both writes are same fabric+direction

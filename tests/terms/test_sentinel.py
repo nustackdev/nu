@@ -1,7 +1,7 @@
-"""Tests for sentinels and sentinel propagation through NAryOp.
+"""Tests for sentinels and sentinel propagation through NAryScalar.
 
 Sentinel propagation is the most critical behavioral contract in Nu.
-If any operand resolves to EMPTY or INVALID, NAryOp returns INVALID
+If any operand resolves to EMPTY or INVALID, NAryScalar returns INVALID
 without calling apply(). This is the safety net for the entire algebra.
 """
 
@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from nu import EMPTY, INVALID, Literal
-from nu.terms import BinaryOp, Empty, Invalid, is_empty, is_invalid, is_sentinel, propagate_special
+from nu.terms import BinaryScalar, Empty, Invalid, is_empty, is_invalid, is_sentinel, propagate_special
 
 
 # ---------------------------------------------------------------------------
@@ -128,14 +128,14 @@ def test_propagate_special_no_args():
 
 
 # ---------------------------------------------------------------------------
-# NAryOp sentinel propagation
+# NAryScalar sentinel propagation
 # ---------------------------------------------------------------------------
 
 # Local test Interaction - verifies apply() is/isn't called.
 
 
-class _TestAddOp(BinaryOp[int]):
-    """BinaryOp that tracks whether apply was called."""
+class _TestAddOp(BinaryScalar[int]):
+    """BinaryScalar that tracks whether apply was called."""
 
     apply_called: bool = False
 
@@ -145,7 +145,7 @@ class _TestAddOp(BinaryOp[int]):
 
 
 class TestNAryOpSentinelPropagation:
-    """NAryOp.execute intercepts sentinels before apply."""
+    """NAryScalar.execute intercepts sentinels before apply."""
 
     def setup_method(self):
         _TestAddOp.apply_called = False

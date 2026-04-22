@@ -198,7 +198,7 @@ class _RangeScratch(nu.Shape):
 def _persist_tx(ledger: type[Ledger], slot: nu.IntArg) -> nu.Nu:
     # tx_id = slot * 10_000 + block_index
     return _SlotScratch.tx_id.store(
-        nu.IntI(slot) * 10_000 + nu.AtOp(nu.AttrRef("tx"), "block_index")
+        nu.IntI(slot) * 10_000 + nu.At(nu.AttrRef("tx"), "block_index")
     ) >> ledger.txs[_SlotScratch.tx_id].store(nu.DictAttrRef("tx"))
 
 
@@ -258,7 +258,7 @@ def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
     return (
         nu.shapes.ReactForever(
             ledger.blocks_meta.on_descendants_change("*"),
-            nu.Log("new block:", nu.AtOp(nu.TupleAttrRef("slot_change"), -1)),
+            nu.Log("new block:", nu.At(nu.TupleAttrRef("slot_change"), -1)),
             changed_key="slot_change",
         )
         | nu.shapes.ReactForever(
@@ -267,9 +267,9 @@ def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
                 0.2,
                 nu.Log(
                     "block",
-                    nu.AtOp(nu.TupleAttrRef("skipped_change"), -2),
+                    nu.At(nu.TupleAttrRef("skipped_change"), -2),
                     "txs skipped:",
-                    ledger.blocks_meta[nu.AtOp(nu.TupleAttrRef("skipped_change"), -2)].skipped,
+                    ledger.blocks_meta[nu.At(nu.TupleAttrRef("skipped_change"), -2)].skipped,
                 ),
             ),
             changed_key="skipped_change",
@@ -280,9 +280,9 @@ def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
                 0.2,
                 nu.Log(
                     "block",
-                    nu.AtOp(nu.TupleAttrRef("synced_change"), -2),
+                    nu.At(nu.TupleAttrRef("synced_change"), -2),
                     "txs synced:",
-                    ledger.blocks_meta[nu.AtOp(nu.TupleAttrRef("synced_change"), -2)].synced,
+                    ledger.blocks_meta[nu.At(nu.TupleAttrRef("synced_change"), -2)].synced,
                 ),
             ),
             changed_key="synced_change",

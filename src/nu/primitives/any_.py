@@ -24,210 +24,210 @@ class AnyI(Interface, TypedNu[object]):
     # =========================================================================
 
     def __add__(self, other: object) -> AnyI:
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
-        return AnyI(AddOp(self, other))
+        return AnyI(Add(self, other))
 
     def __radd__(self, other: object) -> AnyI:
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
-        return AnyI(AddOp(other, self))
+        return AnyI(Add(other, self))
 
     def __sub__(self, other: object) -> AnyI:
-        from nu.ops import SubOp
+        from nu.interactions import Sub
 
-        return AnyI(SubOp(self, other))
+        return AnyI(Sub(self, other))
 
     def __rsub__(self, other: object) -> AnyI:
-        from nu.ops import SubOp
+        from nu.interactions import Sub
 
-        return AnyI(SubOp(other, self))
+        return AnyI(Sub(other, self))
 
     def __mul__(self, other: object) -> AnyI:
-        from nu.ops import MulOp
+        from nu.interactions import Mul
 
-        return AnyI(MulOp(self, other))
+        return AnyI(Mul(self, other))
 
     def __rmul__(self, other: object) -> AnyI:
-        from nu.ops import MulOp
+        from nu.interactions import Mul
 
-        return AnyI(MulOp(other, self))
+        return AnyI(Mul(other, self))
 
     def __truediv__(self, other: object) -> AnyI:
-        from nu.ops import DivOp
+        from nu.interactions import Div
 
-        return AnyI(DivOp(self, other))
+        return AnyI(Div(self, other))
 
     def __rtruediv__(self, other: object) -> AnyI:
-        from nu.ops import DivOp
+        from nu.interactions import Div
 
-        return AnyI(DivOp(other, self))
+        return AnyI(Div(other, self))
 
     def __floordiv__(self, other: object) -> AnyI:
-        from nu.ops import FloorDivOp
+        from nu.interactions import FloorDiv
 
-        return AnyI(FloorDivOp(self, other))
+        return AnyI(FloorDiv(self, other))
 
     def __rfloordiv__(self, other: object) -> AnyI:
-        from nu.ops import FloorDivOp
+        from nu.interactions import FloorDiv
 
-        return AnyI(FloorDivOp(other, self))
+        return AnyI(FloorDiv(other, self))
 
     def __mod__(self, other: object) -> AnyI:
-        from nu.ops import ModOp
+        from nu.interactions import Mod
 
-        return AnyI(ModOp(self, other))
+        return AnyI(Mod(self, other))
 
     def __rmod__(self, other: object) -> AnyI:
-        from nu.ops import ModOp
+        from nu.interactions import Mod
 
-        return AnyI(ModOp(other, self))
+        return AnyI(Mod(other, self))
 
     def __pow__(self, other: object) -> AnyI:
-        from nu.ops import PowOp
+        from nu.interactions import Pow
 
-        return AnyI(PowOp(self, other))
+        return AnyI(Pow(self, other))
 
     def __rpow__(self, other: object) -> AnyI:
-        from nu.ops import PowOp
+        from nu.interactions import Pow
 
-        return AnyI(PowOp(other, self))
+        return AnyI(Pow(other, self))
 
     def __neg__(self) -> AnyI:
-        from nu.ops import NegOp
+        from nu.interactions import Neg
 
-        return AnyI(NegOp(self))
+        return AnyI(Neg(self))
 
     def __pos__(self) -> AnyI:
-        from nu.ops import PosOp
+        from nu.interactions import Pos
 
-        return AnyI(PosOp(self))
+        return AnyI(Pos(self))
 
     def __abs__(self) -> AnyI:
-        from nu.ops import AbsOp
+        from nu.interactions import Abs
 
-        return AnyI(AbsOp(self))
+        return AnyI(Abs(self))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: object) -> BoolI:
-        from nu.ops import GtOp
+        from nu.interactions import Gt
 
         from .bool_ import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: object) -> BoolI:
-        from nu.ops import LtOp
+        from nu.interactions import Lt
 
         from .bool_ import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: object) -> BoolI:
-        from nu.ops import GeOp
+        from nu.interactions import Ge
 
         from .bool_ import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: object) -> BoolI:
-        from nu.ops import LeOp
+        from nu.interactions import Le
 
         from .bool_ import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: object) -> BoolI:
-        from nu.ops import EqOp
+        from nu.interactions import Eq
 
         from .bool_ import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: object) -> BoolI:
-        from nu.ops import NeOp
+        from nu.interactions import Ne
 
         from .bool_ import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
     def is_(self, other: object) -> BoolI:
-        from nu.ops import IdCompOp
+        from nu.interactions import IdComp
 
         from .bool_ import BoolI
 
-        return BoolI(IdCompOp(self, other))
+        return BoolI(IdComp(self, other))
 
     # =========================================================================
     # LOGICAL
     # =========================================================================
 
     def and_(self, other: object) -> BoolI:
-        from nu.ops import AndOp
+        from nu.interactions import And
 
         from .bool_ import BoolI
 
-        return BoolI(AndOp(self, other))
+        return BoolI(And(self, other))
 
     def or_(self, other: object) -> BoolI:
-        from nu.ops import OrOp
+        from nu.interactions import Or
 
         from .bool_ import BoolI
 
-        return BoolI(OrOp(self, other))
+        return BoolI(Or(self, other))
 
     def not_(self) -> BoolI:
-        from nu.ops import NotOp
+        from nu.interactions import Not
 
         from .bool_ import BoolI
 
-        return BoolI(NotOp(self))
+        return BoolI(Not(self))
 
     def bool_(self) -> BoolI:
-        from nu.ops import BoolOp
+        from nu.interactions import Bool
 
         from .bool_ import BoolI
 
-        return BoolI(BoolOp(self))
+        return BoolI(Bool(self))
 
     # =========================================================================
     # BITWISE
     # =========================================================================
 
     def bitand(self, other: object) -> AnyI:
-        from nu.ops import BitwiseAndOp
+        from nu.interactions import BitwiseAnd
 
-        return AnyI(BitwiseAndOp(self, other))
+        return AnyI(BitwiseAnd(self, other))
 
     def bitor(self, other: object) -> AnyI:
-        from nu.ops import BitwiseOrOp
+        from nu.interactions import BitwiseOr
 
-        return AnyI(BitwiseOrOp(self, other))
+        return AnyI(BitwiseOr(self, other))
 
     def __xor__(self, other: object) -> AnyI:
-        from nu.ops import XorOp
+        from nu.interactions import Xor
 
-        return AnyI(XorOp(self, other))
+        return AnyI(Xor(self, other))
 
     def __rxor__(self, other: object) -> AnyI:
-        from nu.ops import XorOp
+        from nu.interactions import Xor
 
-        return AnyI(XorOp(other, self))
+        return AnyI(Xor(other, self))
 
     def bitnot(self) -> AnyI:
-        from nu.ops import BitwiseNotOp
+        from nu.interactions import BitwiseNot
 
-        return AnyI(BitwiseNotOp(self))
+        return AnyI(BitwiseNot(self))
 
     def __lshift__(self, other: object) -> AnyI:
-        from nu.ops import LShiftOp
+        from nu.interactions import LShift
 
-        return AnyI(LShiftOp(self, other))
+        return AnyI(LShift(self, other))
 
     def __rshift__(self, other: object) -> AnyI:
-        from nu.ops import RShiftOp
+        from nu.interactions import RShift
 
-        return AnyI(RShiftOp(self, other))
+        return AnyI(RShift(self, other))

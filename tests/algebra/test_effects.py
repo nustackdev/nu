@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from nu import Context, Literal, Nu
-from nu.terms import BinaryOp, Direction, TrackedEffect, UnaryOp, is_pure, tracked_effects
+from nu.terms import BinaryScalar, Direction, TrackedEffect, UnaryScalar, is_pure, tracked_effects
 from nu.terms.ref import Ref
 
 
@@ -50,21 +50,21 @@ class FabricB(Ref[int]):
         return 0
 
 
-class StoreOp(BinaryOp[None]):
+class StoreOp(BinaryScalar[None]):
     writes = 0
 
     def apply(self, ref_val: Any, value: Any) -> None:
         return None
 
 
-class LoadOp(UnaryOp[object]):
+class LoadOp(UnaryScalar[object]):
     reads = 0
 
     def apply(self, value: Any) -> object:
         return value
 
 
-class AddOp(BinaryOp[int]):
+class Add(BinaryScalar[int]):
     def apply(self, left: Any, right: Any) -> int:
         return left + right
 
@@ -130,9 +130,9 @@ def test_load_op_read():
 
 
 def test_store_load_increment():
-    """StoreOp(ref, AddOp(LoadOp(ref), Literal(1))) -> READ + WRITE."""
+    """StoreOp(ref, Add(LoadOp(ref), Literal(1))) -> READ + WRITE."""
     ref = FabricA()
-    tree = StoreOp(ref, AddOp(LoadOp(ref), Literal(1)))
+    tree = StoreOp(ref, Add(LoadOp(ref), Literal(1)))
     effects = tracked_effects(tree)
     assert TrackedEffect(FabricA, WRITE) in effects
     assert TrackedEffect(FabricA, READ) in effects
@@ -145,17 +145,17 @@ def test_store_load_increment():
 
 
 def test_add_literals_pure():
-    """AddOp(Literal(1), Literal(2)) -> empty (pure)."""
-    tree = AddOp(Literal(1), Literal(2))
+    """Add(Literal(1), Literal(2)) -> empty (pure)."""
+    tree = Add(Literal(1), Literal(2))
     assert tracked_effects(tree) == frozenset()
     assert is_pure(tree) is True
 
 
 def test_add_refs_read():
-    """AddOp(ref_a, ref_b) -> READ from both fabrics."""
+    """Add(ref_a, ref_b) -> READ from both fabrics."""
     ref_a = FabricA()
     ref_b = FabricB()
-    tree = AddOp(ref_a, ref_b)
+    tree = Add(ref_a, ref_b)
     effects = tracked_effects(tree)
     assert TrackedEffect(FabricA, READ) in effects
     assert TrackedEffect(FabricB, READ) in effects
@@ -163,10 +163,10 @@ def test_add_refs_read():
 
 
 def test_add_same_ref_type():
-    """AddOp(ref_a, ref_a2) -> single READ (same fabric type, deduped)."""
+    """Add(ref_a, ref_a2) -> single READ (same fabric type, deduped)."""
     ref_a1 = FabricA()
     ref_a2 = FabricA()
-    tree = AddOp(ref_a1, ref_a2)
+    tree = Add(ref_a1, ref_a2)
     effects = tracked_effects(tree)
     assert effects == frozenset({TrackedEffect(FabricA, READ)})
 
@@ -221,7 +221,7 @@ def test_deeply_nested_effects():
     """Effects propagate through deep nesting."""
     ref = FabricA()
     # add(add(add(ref, lit), lit), lit) - ref buried 3 levels deep
-    tree = AddOp(AddOp(AddOp(ref, Literal(1)), Literal(2)), Literal(3))
+    tree = Add(Add(Add(ref, Literal(1)), Literal(2)), Literal(3))
     effects = tracked_effects(tree)
     assert effects == frozenset({TrackedEffect(FabricA, READ)})
 

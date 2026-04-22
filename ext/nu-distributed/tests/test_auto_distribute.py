@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from nu import AddOp, All, Any, Parallel, Print, Race, Seq
+from nu import Add, All, Any, Parallel, Print, Race, Seq
 from nu.terms import Literal
 from nu.tree import preorder
 from nu_distributed import Teleport, auto_distribute
@@ -125,7 +125,7 @@ class TestNonConcurrent:
         assert result is tree
 
     def test_pure_op_not_touched(self):
-        tree = AddOp(Literal(1), Literal(2))
+        tree = Add(Literal(1), Literal(2))
         result = auto_distribute(tree)
         assert result is tree
 

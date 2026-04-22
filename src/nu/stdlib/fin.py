@@ -384,23 +384,23 @@ class _PercentageI(Interface):
     @classmethod
     def from_float(cls, value: float | Nu[float]) -> PercentageI:
         """Create from percentage float."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
-        return PercentageI(FuncCallOp(Percentage, value))
+        return PercentageI(FuncCall(Percentage, value))
 
     @classmethod
     def from_dec(cls, dec: float | Nu[float]) -> PercentageI:
         """Create from decimal."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
-        return PercentageI(FuncCallOp(Percentage.from_dec, dec))
+        return PercentageI(FuncCall(Percentage.from_dec, dec))
 
     @classmethod
     def from_bps(cls, bps: int | Nu[int]) -> PercentageI:
         """Create from basis points."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
-        return PercentageI(FuncCallOp(Percentage.from_bps, bps))
+        return PercentageI(FuncCall(Percentage.from_bps, bps))
 
     # =========================================================================
     # CONVERSIONS
@@ -408,24 +408,24 @@ class _PercentageI(Interface):
 
     def to_dec(self) -> FloatI:
         """Convert to decimal."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "to_dec"))
+        return FloatI(MethodCall(self, "to_dec"))
 
     def to_bps(self) -> IntI:
         """Convert to basis points."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import IntI
 
-        return IntI(MethodCallOp(self, "to_bps"))
+        return IntI(MethodCall(self, "to_bps"))
 
     def to_float(self) -> FloatI:
         """Get raw percentage."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "to_float"))
+        return FloatI(MethodCall(self, "to_float"))
 
     # =========================================================================
     # APPLICATION
@@ -433,31 +433,31 @@ class _PercentageI(Interface):
 
     def apply(self, amount: int | float | Nu) -> FloatI:
         """Apply percentage to amount."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "apply", amount))
+        return FloatI(MethodCall(self, "apply", amount))
 
     def of(self, amount: int | float | Nu) -> FloatI:
         """Alias for apply."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "of", amount))
+        return FloatI(MethodCall(self, "of", amount))
 
     def add_to(self, amount: int | float | Nu) -> FloatI:
         """Add percentage to amount."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "add_to", amount))
+        return FloatI(MethodCall(self, "add_to", amount))
 
     def sub_from(self, amount: int | float | Nu) -> FloatI:
         """Subtract percentage from amount."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "sub_from", amount))
+        return FloatI(MethodCall(self, "sub_from", amount))
 
     # =========================================================================
     # VALIDATION
@@ -465,16 +465,16 @@ class _PercentageI(Interface):
 
     def is_valid(self, min_val: float = 0.0, max_val: float = 100.0) -> BoolI:
         """Check if within range."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import BoolI
 
-        return BoolI(MethodCallOp(self, "is_valid", min_val, max_val))
+        return BoolI(MethodCall(self, "is_valid", min_val, max_val))
 
     def clamp(self, min_val: float = 0.0, max_val: float = 100.0) -> PercentageI:
         """Clamp to range."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
 
-        return PercentageI(MethodCallOp(self, "clamp", min_val, max_val))
+        return PercentageI(MethodCall(self, "clamp", min_val, max_val))
 
     # =========================================================================
     # ARITHMETIC
@@ -482,59 +482,59 @@ class _PercentageI(Interface):
 
     def __add__(self, other: PercentageArg | float) -> PercentageI:
         """Add percentages."""
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
         if isinstance(other, Percentage):
             other = PercentageI(other)
-        return PercentageI(AddOp(self, other))
+        return PercentageI(Add(self, other))
 
     def __radd__(self, other: Percentage | float) -> PercentageI:
         """Right add."""
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
         if isinstance(other, Percentage):
             other = PercentageI(other)
-        return PercentageI(AddOp(other, self))
+        return PercentageI(Add(other, self))
 
     def __sub__(self, other: PercentageArg | float) -> PercentageI:
         """Subtract percentages."""
-        from nu.ops import SubOp
+        from nu.interactions import Sub
 
         if isinstance(other, Percentage):
             other = PercentageI(other)
-        return PercentageI(SubOp(self, other))
+        return PercentageI(Sub(self, other))
 
     def __rsub__(self, other: Percentage | float) -> PercentageI:
         """Right subtract."""
-        from nu.ops import SubOp
+        from nu.interactions import Sub
 
         if isinstance(other, Percentage):
             other = PercentageI(other)
-        return PercentageI(SubOp(other, self))
+        return PercentageI(Sub(other, self))
 
     def __mul__(self, factor: int | float | Nu) -> PercentageI:
         """Multiply by factor."""
-        from nu.ops import MulOp
+        from nu.interactions import Mul
 
-        return PercentageI(MulOp(self, factor))
+        return PercentageI(Mul(self, factor))
 
     def __rmul__(self, factor: int | float) -> PercentageI:
         """Right multiply."""
-        from nu.ops import MulOp
+        from nu.interactions import Mul
 
-        return PercentageI(MulOp(factor, self))
+        return PercentageI(Mul(factor, self))
 
     def __truediv__(self, divisor: int | float | Nu) -> PercentageI:
         """Divide by factor."""
-        from nu.ops import DivOp
+        from nu.interactions import Div
 
-        return PercentageI(DivOp(self, divisor))
+        return PercentageI(Div(self, divisor))
 
     def __neg__(self) -> PercentageI:
         """Negate."""
-        from nu.ops import NegOp
+        from nu.interactions import Neg
 
-        return PercentageI(NegOp(self))
+        return PercentageI(Neg(self))
 
     # =========================================================================
     # COMPARISON
@@ -542,45 +542,45 @@ class _PercentageI(Interface):
 
     def __gt__(self, other: PercentageArg) -> BoolI:
         """Greater than."""
-        from nu.ops import GtOp
+        from nu.interactions import Gt
         from nu.primitives import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: PercentageArg) -> BoolI:
         """Less than."""
-        from nu.ops import LtOp
+        from nu.interactions import Lt
         from nu.primitives import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: PercentageArg) -> BoolI:
         """Greater than or equal."""
-        from nu.ops import GeOp
+        from nu.interactions import Ge
         from nu.primitives import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: PercentageArg) -> BoolI:
         """Less than or equal."""
-        from nu.ops import LeOp
+        from nu.interactions import Le
         from nu.primitives import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: PercentageArg) -> BoolI:
         """Equal."""
-        from nu.ops import EqOp
+        from nu.interactions import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: PercentageArg) -> BoolI:
         """Not equal."""
-        from nu.ops import NeOp
+        from nu.interactions import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
 
 class PercentageI(_PercentageI, TypedNu[Percentage]):
@@ -604,23 +604,23 @@ class _BasisPointI(Interface):
     @classmethod
     def from_int(cls, value: int | Nu[int]) -> BasisPointI:
         """Create from raw basis points."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
-        return BasisPointI(FuncCallOp(BasisPoint, value))
+        return BasisPointI(FuncCall(BasisPoint, value))
 
     @classmethod
     def from_pct(cls, pct: float | Nu[float]) -> BasisPointI:
         """Create from percentage."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
-        return BasisPointI(FuncCallOp(BasisPoint.from_pct, pct))
+        return BasisPointI(FuncCall(BasisPoint.from_pct, pct))
 
     @classmethod
     def from_dec(cls, dec: float | Nu[float]) -> BasisPointI:
         """Create from decimal."""
-        from nu.ops import FuncCallOp
+        from nu.interactions import FuncCall
 
-        return BasisPointI(FuncCallOp(BasisPoint.from_dec, dec))
+        return BasisPointI(FuncCall(BasisPoint.from_dec, dec))
 
     # =========================================================================
     # CONVERSIONS
@@ -628,24 +628,24 @@ class _BasisPointI(Interface):
 
     def to_pct(self) -> FloatI:
         """Convert to percentage."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "to_pct"))
+        return FloatI(MethodCall(self, "to_pct"))
 
     def to_dec(self) -> FloatI:
         """Convert to decimal."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "to_dec"))
+        return FloatI(MethodCall(self, "to_dec"))
 
     def to_int(self) -> IntI:
         """Get raw basis points."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import IntI
 
-        return IntI(MethodCallOp(self, "to_int"))
+        return IntI(MethodCall(self, "to_int"))
 
     # =========================================================================
     # APPLICATION
@@ -653,24 +653,24 @@ class _BasisPointI(Interface):
 
     def apply(self, amount: int | float | Nu) -> FloatI:
         """Apply basis points to amount."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "apply", amount))
+        return FloatI(MethodCall(self, "apply", amount))
 
     def add_to(self, amount: int | float | Nu) -> FloatI:
         """Add basis points to amount."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "add_to", amount))
+        return FloatI(MethodCall(self, "add_to", amount))
 
     def sub_from(self, amount: int | float | Nu) -> FloatI:
         """Subtract basis points from amount."""
-        from nu.ops import MethodCallOp
+        from nu.interactions import MethodCall
         from nu.primitives import FloatI
 
-        return FloatI(MethodCallOp(self, "sub_from", amount))
+        return FloatI(MethodCall(self, "sub_from", amount))
 
     # =========================================================================
     # ARITHMETIC
@@ -678,53 +678,53 @@ class _BasisPointI(Interface):
 
     def __add__(self, other: BasisPointArg) -> BasisPointI:
         """Add basis points."""
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
         if isinstance(other, BasisPoint):
             other = BasisPointI(other)
-        return BasisPointI(AddOp(self, other))
+        return BasisPointI(Add(self, other))
 
     def __radd__(self, other: BasisPoint | int) -> BasisPointI:
         """Right add."""
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
         if isinstance(other, BasisPoint):
             other = BasisPointI(other)
-        return BasisPointI(AddOp(other, self))
+        return BasisPointI(Add(other, self))
 
     def __sub__(self, other: BasisPointArg) -> BasisPointI:
         """Subtract basis points."""
-        from nu.ops import SubOp
+        from nu.interactions import Sub
 
         if isinstance(other, BasisPoint):
             other = BasisPointI(other)
-        return BasisPointI(SubOp(self, other))
+        return BasisPointI(Sub(self, other))
 
     def __rsub__(self, other: BasisPoint | int) -> BasisPointI:
         """Right subtract."""
-        from nu.ops import SubOp
+        from nu.interactions import Sub
 
         if isinstance(other, BasisPoint):
             other = BasisPointI(other)
-        return BasisPointI(SubOp(other, self))
+        return BasisPointI(Sub(other, self))
 
     def __mul__(self, factor: int | float | Nu) -> BasisPointI:
         """Multiply by factor."""
-        from nu.ops import MulOp
+        from nu.interactions import Mul
 
-        return BasisPointI(MulOp(self, factor))
+        return BasisPointI(Mul(self, factor))
 
     def __rmul__(self, factor: int | float) -> BasisPointI:
         """Right multiply."""
-        from nu.ops import MulOp
+        from nu.interactions import Mul
 
-        return BasisPointI(MulOp(factor, self))
+        return BasisPointI(Mul(factor, self))
 
     def __truediv__(self, divisor: int | float | Nu) -> BasisPointI:
         """Divide by factor."""
-        from nu.ops import DivOp
+        from nu.interactions import Div
 
-        return BasisPointI(DivOp(self, divisor))
+        return BasisPointI(Div(self, divisor))
 
     # =========================================================================
     # COMPARISON
@@ -732,45 +732,45 @@ class _BasisPointI(Interface):
 
     def __gt__(self, other: BasisPointArg) -> BoolI:
         """Greater than."""
-        from nu.ops import GtOp
+        from nu.interactions import Gt
         from nu.primitives import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: BasisPointArg) -> BoolI:
         """Less than."""
-        from nu.ops import LtOp
+        from nu.interactions import Lt
         from nu.primitives import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: BasisPointArg) -> BoolI:
         """Greater than or equal."""
-        from nu.ops import GeOp
+        from nu.interactions import Ge
         from nu.primitives import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: BasisPointArg) -> BoolI:
         """Less than or equal."""
-        from nu.ops import LeOp
+        from nu.interactions import Le
         from nu.primitives import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: BasisPointArg) -> BoolI:
         """Equal."""
-        from nu.ops import EqOp
+        from nu.interactions import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: BasisPointArg) -> BoolI:
         """Not equal."""
-        from nu.ops import NeOp
+        from nu.interactions import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
 
 class BasisPointI(_BasisPointI, TypedNu[BasisPoint]):

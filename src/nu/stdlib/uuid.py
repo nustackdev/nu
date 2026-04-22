@@ -33,9 +33,9 @@ class _UUIDI(Interface):
     @classmethod
     def uuid4(cls) -> UUIDI:
         """Generate a random UUID (version 4)."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return UUIDI(FuncCallOp(uuid4))
+        return UUIDI(FuncCall(uuid4))
 
     @classmethod
     def uuid1(
@@ -44,52 +44,52 @@ class _UUIDI(Interface):
         clock_seq: int | Nu[int] | None = None,
     ) -> UUIDI:
         """Generate a UUID from host ID and current time (version 1)."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
         if node is not None and clock_seq is not None:
-            return UUIDI(FuncCallOp(uuid1, node, clock_seq))
+            return UUIDI(FuncCall(uuid1, node, clock_seq))
         elif node is not None:
-            return UUIDI(FuncCallOp(uuid1, node))
-        return UUIDI(FuncCallOp(uuid1))
+            return UUIDI(FuncCall(uuid1, node))
+        return UUIDI(FuncCall(uuid1))
 
     @classmethod
     def uuid3(cls, namespace: UUIDArg, name: str | Nu[str]) -> UUIDI:
         """Generate a UUID based on MD5 hash of namespace and name (version 3)."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
         if isinstance(namespace, UUID):
             namespace = UUIDI(namespace)
-        return UUIDI(FuncCallOp(uuid3, namespace, name))
+        return UUIDI(FuncCall(uuid3, namespace, name))
 
     @classmethod
     def uuid5(cls, namespace: UUIDArg, name: str | Nu[str]) -> UUIDI:
         """Generate a UUID based on SHA-1 hash of namespace and name (version 5)."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
         if isinstance(namespace, UUID):
             namespace = UUIDI(namespace)
-        return UUIDI(FuncCallOp(uuid5, namespace, name))
+        return UUIDI(FuncCall(uuid5, namespace, name))
 
     @classmethod
     def from_str(cls, value: str | Nu[str]) -> UUIDI:
         """Create a UUIDI from a string (hex with or without hyphens)."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return UUIDI(FuncCallOp(UUID, value))
+        return UUIDI(FuncCall(UUID, value))
 
     @classmethod
     def from_bytes(cls, b: bytes | Nu[bytes]) -> UUIDI:
         """Create a UUIDI from 16 bytes."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return UUIDI(FuncCallOp(UUID, bytes=b))
+        return UUIDI(FuncCall(UUID, bytes=b))
 
     @classmethod
     def from_int(cls, value: int | Nu[int]) -> UUIDI:
         """Create a UUIDI from a 128-bit integer."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return UUIDI(FuncCallOp(UUID, int=value))
+        return UUIDI(FuncCall(UUID, int=value))
 
     # =========================================================================
     # COMPONENT ACCESSORS
@@ -97,33 +97,33 @@ class _UUIDI(Interface):
 
     def version(self) -> IntI:
         """Get the UUID version number (1, 3, 4, or 5)."""
-        from nu import FuncCallOp, IntI
+        from nu import FuncCall, IntI
 
-        return IntI(FuncCallOp(getattr, self, "version"))
+        return IntI(FuncCall(getattr, self, "version"))
 
     def variant(self) -> StrI:
         """Get the UUID variant."""
-        from nu import FuncCallOp, StrI
+        from nu import FuncCall, StrI
 
-        return StrI(FuncCallOp(getattr, self, "variant"))
+        return StrI(FuncCall(getattr, self, "variant"))
 
     def time(self) -> IntI:
         """Get the 60-bit timestamp (for UUID version 1)."""
-        from nu import FuncCallOp, IntI
+        from nu import FuncCall, IntI
 
-        return IntI(FuncCallOp(getattr, self, "time"))
+        return IntI(FuncCall(getattr, self, "time"))
 
     def clock_seq(self) -> IntI:
         """Get the 14-bit clock sequence (for UUID version 1)."""
-        from nu import FuncCallOp, IntI
+        from nu import FuncCall, IntI
 
-        return IntI(FuncCallOp(getattr, self, "clock_seq"))
+        return IntI(FuncCall(getattr, self, "clock_seq"))
 
     def node(self) -> IntI:
         """Get the 48-bit node (for UUID version 1)."""
-        from nu import FuncCallOp, IntI
+        from nu import FuncCall, IntI
 
-        return IntI(FuncCallOp(getattr, self, "node"))
+        return IntI(FuncCall(getattr, self, "node"))
 
     # =========================================================================
     # CONVERSIONS
@@ -131,67 +131,67 @@ class _UUIDI(Interface):
 
     def hex(self) -> StrI:
         """Get the UUID as a 32-character hexadecimal string."""
-        from nu import FuncCallOp, StrI
+        from nu import FuncCall, StrI
 
-        return StrI(FuncCallOp(getattr, self, "hex"))
+        return StrI(FuncCall(getattr, self, "hex"))
 
     def urn(self) -> StrI:
         """Get the UUID as a URN (urn:uuid:...)."""
-        from nu import FuncCallOp, StrI
+        from nu import FuncCall, StrI
 
-        return StrI(FuncCallOp(getattr, self, "urn"))
+        return StrI(FuncCall(getattr, self, "urn"))
 
     def bytes(self) -> BytesI:
         """Get the UUID as a 16-byte string."""
-        from nu import BytesI, FuncCallOp
+        from nu import BytesI, FuncCall
 
-        return BytesI(FuncCallOp(getattr, self, "bytes"))
+        return BytesI(FuncCall(getattr, self, "bytes"))
 
     def bytes_le(self) -> BytesI:
         """Get the UUID as a 16-byte string in little-endian order."""
-        from nu import BytesI, FuncCallOp
+        from nu import BytesI, FuncCall
 
-        return BytesI(FuncCallOp(getattr, self, "bytes_le"))
+        return BytesI(FuncCall(getattr, self, "bytes_le"))
 
     def int_(self) -> IntI:
         """Get the UUID as a 128-bit integer."""
-        from nu import FuncCallOp, IntI
+        from nu import FuncCall, IntI
 
-        return IntI(FuncCallOp(getattr, self, "int"))
+        return IntI(FuncCall(getattr, self, "int"))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: UUIDArg) -> BoolI:
-        from nu import BoolI, GtOp
+        from nu import BoolI, Gt
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: UUIDArg) -> BoolI:
-        from nu import BoolI, LtOp
+        from nu import BoolI, Lt
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: UUIDArg) -> BoolI:
-        from nu import BoolI, GeOp
+        from nu import BoolI, Ge
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: UUIDArg) -> BoolI:
-        from nu import BoolI, LeOp
+        from nu import BoolI, Le
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: UUIDArg) -> BoolI:
-        from nu import BoolI, EqOp
+        from nu import BoolI, Eq
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: UUIDArg) -> BoolI:
-        from nu import BoolI, NeOp
+        from nu import BoolI, Ne
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
 
 # =============================================================================

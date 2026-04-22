@@ -27,14 +27,14 @@ class StrI(Interface, TypedNu[str]):
     # =========================================================================
 
     def __add__(self, other: StrArg) -> StrI:
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
-        return StrI(AddOp(self, other))
+        return StrI(Add(self, other))
 
     def __radd__(self, other: StrArg) -> StrI:
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
-        return StrI(AddOp(other, self))
+        return StrI(Add(other, self))
 
     # =========================================================================
     # INDEXING / SLICING
@@ -45,96 +45,96 @@ class StrI(Interface, TypedNu[str]):
     @overload
     def __getitem__(self, key: slice) -> StrI: ...
     def __getitem__(self, key: IntArg | slice) -> StrI:
-        from nu.ops import AtOp, SliceOp
+        from nu.interactions import At, Slice
 
         if isinstance(key, slice):
-            return StrI(SliceOp(self, key.start, key.stop, key.step))
-        return StrI(AtOp(self, key))
+            return StrI(Slice(self, key.start, key.stop, key.step))
+        return StrI(At(self, key))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: StrArg) -> BoolI:
-        from nu.ops import GtOp
+        from nu.interactions import Gt
 
         from .bool_ import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: StrArg) -> BoolI:
-        from nu.ops import LtOp
+        from nu.interactions import Lt
 
         from .bool_ import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: StrArg) -> BoolI:
-        from nu.ops import GeOp
+        from nu.interactions import Ge
 
         from .bool_ import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: StrArg) -> BoolI:
-        from nu.ops import LeOp
+        from nu.interactions import Le
 
         from .bool_ import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: StrArg) -> BoolI:
-        from nu.ops import EqOp
+        from nu.interactions import Eq
 
         from .bool_ import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: StrArg) -> BoolI:
-        from nu.ops import NeOp
+        from nu.interactions import Ne
 
         from .bool_ import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
     def is_(self, other: StrArg) -> BoolI:
-        from nu.ops import IdCompOp
+        from nu.interactions import IdComp
 
         from .bool_ import BoolI
 
-        return BoolI(IdCompOp(self, other))
+        return BoolI(IdComp(self, other))
 
     # =========================================================================
     # LOGICAL
     # =========================================================================
 
     def and_(self, other: StrArg) -> BoolI:
-        from nu.ops import AndOp
+        from nu.interactions import And
 
         from .bool_ import BoolI
 
-        return BoolI(AndOp(self, other))
+        return BoolI(And(self, other))
 
     def or_(self, other: StrArg) -> BoolI:
-        from nu.ops import OrOp
+        from nu.interactions import Or
 
         from .bool_ import BoolI
 
-        return BoolI(OrOp(self, other))
+        return BoolI(Or(self, other))
 
     def not_(self) -> BoolI:
-        from nu.ops import NotOp
+        from nu.interactions import Not
 
         from .bool_ import BoolI
 
-        return BoolI(NotOp(self))
+        return BoolI(Not(self))
 
     def bool_(self) -> BoolI:
-        from nu.ops import BoolOp
+        from nu.interactions import Bool
 
         from .bool_ import BoolI
 
-        return BoolI(BoolOp(self))
+        return BoolI(Bool(self))
 
     # =========================================================================
     # CASE TRANSFORMATION

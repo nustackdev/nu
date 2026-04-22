@@ -1,13 +1,15 @@
 """Control ops for virtuals storage operations.
 
-Atomic: Opens a transaction lazily, provides View on top of it.
+AtomicScope: Opens a transaction lazily, provides View on top of it. If the
+subtree is pure, auto-selects a snapshot instead.
 Snapshot: Opens a read-only snapshot lazily, provides View on top of it.
+Transaction: Opens a write transaction lazily, provides View on top of it.
 
 Looks up Navigator from context, gets storage from it, and creates
 root views via nav.root(). No view_cls parameter needed.
 
 Usage:
-    tree = Atomic(
+    tree = AtomicScope(
         SetCmd(ref, Lit(42)) >> GetOp(ref),
         scope=UserShape,
     )
@@ -17,7 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Context, ContextManager
+from nu import Context, ContextManager, Flow, Query
 from virtuals import Navigator
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
 
@@ -29,7 +31,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Atomic",
+    "AtomicScope",
     "Snapshot",
     "Transaction",
 ]
@@ -40,8 +42,8 @@ def _scope_tags(scope: Hashable | None) -> tuple:
     return (scope,) if scope is not None else ()
 
 
-class Atomic(ContextManager):
-    """Atomic transaction boundary for virtuals operations.
+class AtomicScope(ContextManager):
+    """Atomic transaction/snapshot boundary for virtuals operations.
 
     Before:
       1. Gets Navigator from context (by scope)
@@ -173,13 +175,13 @@ class Atomic(ContextManager):
 
     def __repr__(self) -> str:
         scope_name = self.scope.__name__ if hasattr(self.scope, "__name__") else str(self.scope)
-        return f"Atomic({scope_name})"
+        return f"AtomicScope({scope_name})"
 
 
-class Snapshot(ContextManager):
+class Snapshot(ContextManager, Query):
     """Read-only snapshot boundary for virtuals operations.
 
-    Like Atomic but always opens a snapshot, never a transaction.
+    Like AtomicScope but always opens a snapshot, never a transaction.
     Use when you know the subtree is read-only.
     """
 
@@ -248,10 +250,10 @@ class Snapshot(ContextManager):
         return f"Snapshot({scope_name})"
 
 
-class Transaction(ContextManager):
+class Transaction(Flow, ContextManager):
     """Write transaction boundary for virtuals operations.
 
-    Like Atomic but always opens a transaction, never a snapshot.
+    Like AtomicScope but always opens a transaction, never a snapshot.
     Use when you know the subtree has writes - skips the purity check.
     """
 

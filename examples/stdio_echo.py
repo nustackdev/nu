@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from nu import Context, DoWhile, If, NeOp, StrAttrRef, TryCatch
+from nu import Context, DoWhile, If, Ne, StrAttrRef, TryCatch
 from nu.stdio import STDERR, STDIN, STDOUT, StdioFlush, StdioRead, StdioWrite
 from nu.terms import Command, tracked_effects
 
@@ -40,13 +40,13 @@ def build_tree():
 
     return TryCatch(
         body=DoWhile(
-            condition=NeOp(line, "quit"),
+            condition=Ne(line, "quit"),
             body=(
                 StdioWrite(STDOUT, "> ")
                 >> StdioFlush(STDOUT)
                 >> StoreAttr("line", StdioRead(STDIN))
                 >> If(
-                    NeOp(line, "quit"),
+                    Ne(line, "quit"),
                     StdioWrite(STDOUT, "echo:", line),
                 )
             ),

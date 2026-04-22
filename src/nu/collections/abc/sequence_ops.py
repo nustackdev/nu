@@ -11,10 +11,10 @@ from collections.abc import Iterable, MutableSequence, Sequence
 
 from nu.terms import (
     INVALID,
-    BinaryOp,
+    BinaryScalar,
     Sentinel,
-    TernaryOp,
-    UnaryOp,
+    TernaryScalar,
+    UnaryScalar,
 )
 
 
@@ -37,7 +37,7 @@ __all__ = [
 # =============================================================================
 
 
-class FirstOp[ResultT](UnaryOp[ResultT]):
+class FirstOp[ResultT](UnaryScalar[ResultT]):
     """First element: seq[0]. Returns Invalid if empty."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -49,7 +49,7 @@ class FirstOp[ResultT](UnaryOp[ResultT]):
         return operand[0]  # type: ignore
 
 
-class LastOp[ResultT](UnaryOp[ResultT]):
+class LastOp[ResultT](UnaryScalar[ResultT]):
     """Last element: seq[-1]. Returns Invalid if empty."""
 
     def apply(self, operand: object) -> ResultT | Sentinel:
@@ -61,7 +61,7 @@ class LastOp[ResultT](UnaryOp[ResultT]):
         return operand[-1]  # type: ignore
 
 
-class IndexOfOp(BinaryOp[int]):
+class IndexOfOp(BinaryScalar[int]):
     """Find index of value: seq.index(value). Returns Invalid if not found."""
 
     def apply(self, left: object, right: object) -> int | Sentinel:
@@ -74,7 +74,7 @@ class IndexOfOp(BinaryOp[int]):
             return INVALID
 
 
-class CountOp(BinaryOp[int]):
+class CountOp(BinaryScalar[int]):
     """Count occurrences: seq.count(value)."""
 
     def apply(self, left: object, right: object) -> int | Sentinel:
@@ -89,7 +89,7 @@ class CountOp(BinaryOp[int]):
 # =============================================================================
 
 
-class AppendCmd[T](BinaryOp[None]):
+class AppendCmd[T](BinaryScalar[None]):
     """Append item to end: seq.append(value). Returns None (mutates in-place)."""
 
     writes = 0
@@ -102,7 +102,7 @@ class AppendCmd[T](BinaryOp[None]):
         return None
 
 
-class InsertCmd[T](TernaryOp[None]):
+class InsertCmd[T](TernaryScalar[None]):
     """Insert item at index: seq.insert(index, value). Returns None (mutates in-place)."""
 
     writes = 0
@@ -117,7 +117,7 @@ class InsertCmd[T](TernaryOp[None]):
         return None
 
 
-class PopCmd[T](BinaryOp[T]):
+class PopCmd[T](BinaryScalar[T]):
     """Pop item at index: seq.pop(index). Returns popped value.
 
     Default index is -1 (last item).
@@ -137,7 +137,7 @@ class PopCmd[T](BinaryOp[T]):
             return INVALID
 
 
-class ExtendCmd[T](BinaryOp[None]):
+class ExtendCmd[T](BinaryScalar[None]):
     """Extend sequence with iterable: seq.extend(other). Returns None (mutates in-place)."""
 
     writes = 0
@@ -152,7 +152,7 @@ class ExtendCmd[T](BinaryOp[None]):
         return None
 
 
-class RemoveValueCmd[T](BinaryOp[None]):
+class RemoveValueCmd[T](BinaryScalar[None]):
     """Remove first occurrence of value: seq.remove(value). Returns None, or INVALID if not found."""
 
     writes = 0
@@ -168,7 +168,7 @@ class RemoveValueCmd[T](BinaryOp[None]):
         return None
 
 
-class ReverseCmd(UnaryOp[None]):
+class ReverseCmd(UnaryScalar[None]):
     """Reverse sequence in-place: seq.reverse(). Returns None (mutates in-place)."""
 
     writes = 0

@@ -37,16 +37,16 @@ class _DecimalI(Interface):
     @classmethod
     def from_str(cls, value: str | Nu[str]) -> DecimalI:
         """Create a DecimalI from a string."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return DecimalI(FuncCallOp(Decimal, value))
+        return DecimalI(FuncCall(Decimal, value))
 
     @classmethod
     def from_int(cls, value: int | Nu[int]) -> DecimalI:
         """Create a DecimalI from an integer."""
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return DecimalI(FuncCallOp(Decimal, value))
+        return DecimalI(FuncCall(Decimal, value))
 
     @classmethod
     def from_float(cls, value: float | Nu[float]) -> DecimalI:
@@ -55,9 +55,9 @@ class _DecimalI(Interface):
         Note: Converting from float may introduce precision issues.
         Prefer from_str() for exact values.
         """
-        from nu import FuncCallOp
+        from nu import FuncCall
 
-        return DecimalI(FuncCallOp(Decimal, value))
+        return DecimalI(FuncCall(Decimal, value))
 
     # =========================================================================
     # ARITHMETIC
@@ -65,103 +65,103 @@ class _DecimalI(Interface):
 
     def __add__(self, other: DecimalArg) -> DecimalI:
         """Add two decimals."""
-        from nu import AddOp
+        from nu import Add
 
         if isinstance(other, Decimal):
             other = DecimalI(other)
-        return DecimalI(AddOp(self, other))
+        return DecimalI(Add(self, other))
 
     def __radd__(self, other: Decimal | int | float | str) -> DecimalI:
         """Right add."""
-        from nu import AddOp
+        from nu import Add
 
         if isinstance(other, Decimal):
             other = DecimalI(other)
-        return DecimalI(AddOp(other, self))
+        return DecimalI(Add(other, self))
 
     def __sub__(self, other: DecimalArg) -> DecimalI:
         """Subtract decimals."""
-        from nu import SubOp
+        from nu import Sub
 
         if isinstance(other, Decimal):
             other = DecimalI(other)
-        return DecimalI(SubOp(self, other))
+        return DecimalI(Sub(self, other))
 
     def __rsub__(self, other: Decimal | int | float | str) -> DecimalI:
         """Right subtract."""
-        from nu import SubOp
+        from nu import Sub
 
         if isinstance(other, Decimal):
             other = DecimalI(other)
-        return DecimalI(SubOp(other, self))
+        return DecimalI(Sub(other, self))
 
     def __mul__(self, other: DecimalArg) -> DecimalI:
         """Multiply decimals."""
-        from nu import MulOp
+        from nu import Mul
 
         if isinstance(other, Decimal):
             other = DecimalI(other)
-        return DecimalI(MulOp(self, other))
+        return DecimalI(Mul(self, other))
 
     def __rmul__(self, other: Decimal | int | float | str) -> DecimalI:
         """Right multiply."""
-        from nu import MulOp
+        from nu import Mul
 
         if isinstance(other, Decimal):
             other = DecimalI(other)
-        return DecimalI(MulOp(other, self))
+        return DecimalI(Mul(other, self))
 
     def __truediv__(self, other: DecimalArg) -> DecimalI:
         """Divide decimals."""
-        from nu import DivOp
+        from nu import Div
 
         if isinstance(other, Decimal):
             other = DecimalI(other)
-        return DecimalI(DivOp(self, other))
+        return DecimalI(Div(self, other))
 
     def __rtruediv__(self, other: Decimal | int | float | str) -> DecimalI:
         """Right divide."""
-        from nu import DivOp
+        from nu import Div
 
         if isinstance(other, Decimal):
             other = DecimalI(other)
-        return DecimalI(DivOp(other, self))
+        return DecimalI(Div(other, self))
 
     def __floordiv__(self, other: DecimalArg) -> DecimalI:
         """Floor divide decimals."""
-        from nu import FloorDivOp
+        from nu import FloorDiv
 
         if isinstance(other, Decimal):
             other = DecimalI(other)
-        return DecimalI(FloorDivOp(self, other))
+        return DecimalI(FloorDiv(self, other))
 
     def __mod__(self, other: DecimalArg) -> DecimalI:
         """Modulo operation."""
-        from nu import ModOp
+        from nu import Mod
 
         if isinstance(other, Decimal):
             other = DecimalI(other)
-        return DecimalI(ModOp(self, other))
+        return DecimalI(Mod(self, other))
 
     def __pow__(self, other: int | DecimalArg) -> DecimalI:
         """Raise to power."""
-        from nu import PowOp
+        from nu import Pow
 
         if isinstance(other, Decimal):
             other = DecimalI(other)
-        return DecimalI(PowOp(self, other))
+        return DecimalI(Pow(self, other))
 
     def __neg__(self) -> DecimalI:
         """Negate."""
-        from nu import NegOp
+        from nu import Neg
 
-        return DecimalI(NegOp(self))
+        return DecimalI(Neg(self))
 
     def __abs__(self) -> DecimalI:
         """Absolute value."""
-        from nu import AbsOp
+        from nu import Abs
 
-        return DecimalI(AbsOp(self))
+        return DecimalI(Abs(self))
 
     # =========================================================================
     # ROUNDING AND QUANTIZATION
@@ -169,43 +169,43 @@ class _DecimalI(Interface):
 
     def quantize(self, exp: str | DecimalArg, rounding: str | None = None) -> DecimalI:
         """Quantize to a given exponent (e.g., "0.01" for 2 decimal places)."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
         if isinstance(exp, Decimal):
             exp = DecimalI(exp)
         if rounding is not None:
-            return DecimalI(MethodCallOp(self, "quantize", exp, rounding))
-        return DecimalI(MethodCallOp(self, "quantize", exp))
+            return DecimalI(MethodCall(self, "quantize", exp, rounding))
+        return DecimalI(MethodCall(self, "quantize", exp))
 
     def normalize(self) -> DecimalI:
         """Remove trailing zeros."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
-        return DecimalI(MethodCallOp(self, "normalize"))
+        return DecimalI(MethodCall(self, "normalize"))
 
     def sqrt(self) -> DecimalI:
         """Square root."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
-        return DecimalI(MethodCallOp(self, "sqrt"))
+        return DecimalI(MethodCall(self, "sqrt"))
 
     def exp(self) -> DecimalI:
         """Exponential (e^self)."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
-        return DecimalI(MethodCallOp(self, "exp"))
+        return DecimalI(MethodCall(self, "exp"))
 
     def ln(self) -> DecimalI:
         """Natural logarithm."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
-        return DecimalI(MethodCallOp(self, "ln"))
+        return DecimalI(MethodCall(self, "ln"))
 
     def log10(self) -> DecimalI:
         """Base-10 logarithm."""
-        from nu import MethodCallOp
+        from nu import MethodCall
 
-        return DecimalI(MethodCallOp(self, "log10"))
+        return DecimalI(MethodCall(self, "log10"))
 
     # =========================================================================
     # INSPECTION
@@ -213,31 +213,31 @@ class _DecimalI(Interface):
 
     def is_finite(self) -> BoolI:
         """Check if value is finite."""
-        from nu import MethodCallOp
+        from nu import MethodCall
         from nu.primitives import BoolI
 
-        return BoolI(MethodCallOp(self, "is_finite"))
+        return BoolI(MethodCall(self, "is_finite"))
 
     def is_infinite(self) -> BoolI:
         """Check if value is infinite."""
-        from nu import MethodCallOp
+        from nu import MethodCall
         from nu.primitives import BoolI
 
-        return BoolI(MethodCallOp(self, "is_infinite"))
+        return BoolI(MethodCall(self, "is_infinite"))
 
     def is_signed(self) -> BoolI:
         """Check if value is negative."""
-        from nu import MethodCallOp
+        from nu import MethodCall
         from nu.primitives import BoolI
 
-        return BoolI(MethodCallOp(self, "is_signed"))
+        return BoolI(MethodCall(self, "is_signed"))
 
     def is_zero(self) -> BoolI:
         """Check if value is zero."""
-        from nu import MethodCallOp
+        from nu import MethodCall
         from nu.primitives import BoolI
 
-        return BoolI(MethodCallOp(self, "is_zero"))
+        return BoolI(MethodCall(self, "is_zero"))
 
     # =========================================================================
     # CONVERSIONS
@@ -245,10 +245,10 @@ class _DecimalI(Interface):
 
     def to_int(self) -> IntI:
         """Convert to integer (truncating decimal)."""
-        from nu import FuncCallOp
+        from nu import FuncCall
         from nu.primitives import IntI
 
-        return IntI(FuncCallOp(int, self))
+        return IntI(FuncCall(int, self))
 
     # =========================================================================
     # COMPARISON
@@ -256,45 +256,45 @@ class _DecimalI(Interface):
 
     def __gt__(self, other: DecimalArg) -> BoolI:
         """Greater than."""
-        from nu import GtOp
+        from nu import Gt
         from nu.primitives import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: DecimalArg) -> BoolI:
         """Less than."""
-        from nu import LtOp
+        from nu import Lt
         from nu.primitives import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: DecimalArg) -> BoolI:
         """Greater than or equal."""
-        from nu import GeOp
+        from nu import Ge
         from nu.primitives import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: DecimalArg) -> BoolI:
         """Less than or equal."""
-        from nu import LeOp
+        from nu import Le
         from nu.primitives import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: DecimalArg) -> BoolI:
         """Equal."""
-        from nu import EqOp
+        from nu import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: DecimalArg) -> BoolI:
         """Not equal."""
-        from nu import NeOp
+        from nu import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
 
 class DecimalI(_DecimalI, TypedNu[Decimal]):

@@ -58,53 +58,53 @@ class DictI[K, V](
         return AnyI(operand)
 
     def __getitem__(self, key: K) -> AnyI:
-        from nu.ops import AtOp
+        from nu.interactions import At
         from nu.primitives import AnyI
 
-        return AnyI(AtOp(self, key))
+        return AnyI(At(self, key))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: DictArg[K, V]) -> BoolI:
-        from nu.ops import GtOp
+        from nu.interactions import Gt
         from nu.primitives import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: DictArg[K, V]) -> BoolI:
-        from nu.ops import LtOp
+        from nu.interactions import Lt
         from nu.primitives import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: DictArg[K, V]) -> BoolI:
-        from nu.ops import GeOp
+        from nu.interactions import Ge
         from nu.primitives import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: DictArg[K, V]) -> BoolI:
-        from nu.ops import LeOp
+        from nu.interactions import Le
         from nu.primitives import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: DictArg[K, V]) -> BoolI:
-        from nu.ops import EqOp
+        from nu.interactions import Eq
         from nu.primitives import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: DictArg[K, V]) -> BoolI:
-        from nu.ops import NeOp
+        from nu.interactions import Ne
         from nu.primitives import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
     def is_(self, other: DictArg[K, V]) -> BoolI:
-        from nu.ops import IdCompOp
+        from nu.interactions import IdComp
         from nu.primitives import BoolI
 
-        return BoolI(IdCompOp(self, other))
+        return BoolI(IdComp(self, other))

@@ -35,316 +35,316 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __add__(self, other: FloatArg) -> FloatI: ...
     def __add__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
         from .float_ import FloatI
 
         if isinstance(other, (float, FloatI)):
-            return FloatI(AddOp(self, other))
-        return IntI(AddOp(self, other))
+            return FloatI(Add(self, other))
+        return IntI(Add(self, other))
 
     @overload
     def __radd__(self, other: IntArg) -> IntI: ...
     @overload
     def __radd__(self, other: FloatArg) -> FloatI: ...
     def __radd__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.ops import AddOp
+        from nu.interactions import Add
 
         from .float_ import FloatI
 
         if isinstance(other, float):
-            return FloatI(AddOp(other, self))
-        return IntI(AddOp(other, self))
+            return FloatI(Add(other, self))
+        return IntI(Add(other, self))
 
     @overload
     def __sub__(self, other: IntArg) -> IntI: ...
     @overload
     def __sub__(self, other: FloatArg) -> FloatI: ...
     def __sub__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.ops import SubOp
+        from nu.interactions import Sub
 
         from .float_ import FloatI
 
         if isinstance(other, (float, FloatI)):
-            return FloatI(SubOp(self, other))
-        return IntI(SubOp(self, other))
+            return FloatI(Sub(self, other))
+        return IntI(Sub(self, other))
 
     @overload
     def __rsub__(self, other: IntArg) -> IntI: ...
     @overload
     def __rsub__(self, other: FloatArg) -> FloatI: ...
     def __rsub__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.ops import SubOp
+        from nu.interactions import Sub
 
         from .float_ import FloatI
 
         if isinstance(other, float):
-            return FloatI(SubOp(other, self))
-        return IntI(SubOp(other, self))
+            return FloatI(Sub(other, self))
+        return IntI(Sub(other, self))
 
     @overload
     def __mul__(self, other: IntArg) -> IntI: ...
     @overload
     def __mul__(self, other: FloatArg) -> FloatI: ...
     def __mul__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.ops import MulOp
+        from nu.interactions import Mul
 
         from .float_ import FloatI
 
         if isinstance(other, (float, FloatI)):
-            return FloatI(MulOp(self, other))
-        return IntI(MulOp(self, other))
+            return FloatI(Mul(self, other))
+        return IntI(Mul(self, other))
 
     @overload
     def __rmul__(self, other: IntArg) -> IntI: ...
     @overload
     def __rmul__(self, other: FloatArg) -> FloatI: ...
     def __rmul__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.ops import MulOp
+        from nu.interactions import Mul
 
         from .float_ import FloatI
 
         if isinstance(other, float):
-            return FloatI(MulOp(other, self))
-        return IntI(MulOp(other, self))
+            return FloatI(Mul(other, self))
+        return IntI(Mul(other, self))
 
     def __truediv__(self, other: IntArg | FloatArg) -> FloatI:
-        from nu.ops import DivOp
+        from nu.interactions import Div
 
         from .float_ import FloatI
 
-        return FloatI(DivOp(self, other))
+        return FloatI(Div(self, other))
 
     def __rtruediv__(self, other: IntArg | FloatArg) -> FloatI:
-        from nu.ops import DivOp
+        from nu.interactions import Div
 
         from .float_ import FloatI
 
-        return FloatI(DivOp(other, self))
+        return FloatI(Div(other, self))
 
     @overload
     def __floordiv__(self, other: IntArg) -> IntI: ...
     @overload
     def __floordiv__(self, other: FloatArg) -> FloatI: ...
     def __floordiv__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.ops import FloorDivOp
+        from nu.interactions import FloorDiv
 
         from .float_ import FloatI
 
         if isinstance(other, (float, FloatI)):
-            return FloatI(FloorDivOp(self, other))
-        return IntI(FloorDivOp(self, other))
+            return FloatI(FloorDiv(self, other))
+        return IntI(FloorDiv(self, other))
 
     @overload
     def __rfloordiv__(self, other: IntArg) -> IntI: ...
     @overload
     def __rfloordiv__(self, other: FloatArg) -> FloatI: ...
     def __rfloordiv__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.ops import FloorDivOp
+        from nu.interactions import FloorDiv
 
         from .float_ import FloatI
 
         if isinstance(other, float):
-            return FloatI(FloorDivOp(other, self))
-        return IntI(FloorDivOp(other, self))
+            return FloatI(FloorDiv(other, self))
+        return IntI(FloorDiv(other, self))
 
     @overload
     def __mod__(self, other: IntArg) -> IntI: ...
     @overload
     def __mod__(self, other: FloatArg) -> FloatI: ...
     def __mod__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.ops import ModOp
+        from nu.interactions import Mod
 
         from .float_ import FloatI
 
         if isinstance(other, (float, FloatI)):
-            return FloatI(ModOp(self, other))
-        return IntI(ModOp(self, other))
+            return FloatI(Mod(self, other))
+        return IntI(Mod(self, other))
 
     @overload
     def __rmod__(self, other: IntArg) -> IntI: ...
     @overload
     def __rmod__(self, other: FloatArg) -> FloatI: ...
     def __rmod__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.ops import ModOp
+        from nu.interactions import Mod
 
         from .float_ import FloatI
 
         if isinstance(other, float):
-            return FloatI(ModOp(other, self))
-        return IntI(ModOp(other, self))
+            return FloatI(Mod(other, self))
+        return IntI(Mod(other, self))
 
     @overload
     def __pow__(self, other: IntArg) -> IntI: ...
     @overload
     def __pow__(self, other: FloatArg) -> FloatI: ...
     def __pow__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.ops import PowOp
+        from nu.interactions import Pow
 
         from .float_ import FloatI
 
         if isinstance(other, (float, FloatI)):
-            return FloatI(PowOp(self, other))
-        return IntI(PowOp(self, other))
+            return FloatI(Pow(self, other))
+        return IntI(Pow(self, other))
 
     @overload
     def __rpow__(self, other: IntArg) -> IntI: ...
     @overload
     def __rpow__(self, other: FloatArg) -> FloatI: ...
     def __rpow__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.ops import PowOp
+        from nu.interactions import Pow
 
         from .float_ import FloatI
 
         if isinstance(other, float):
-            return FloatI(PowOp(other, self))
-        return IntI(PowOp(other, self))
+            return FloatI(Pow(other, self))
+        return IntI(Pow(other, self))
 
     def __neg__(self) -> IntI:
-        from nu.ops import NegOp
+        from nu.interactions import Neg
 
-        return IntI(NegOp(self))
+        return IntI(Neg(self))
 
     def __pos__(self) -> IntI:
-        from nu.ops import PosOp
+        from nu.interactions import Pos
 
-        return IntI(PosOp(self))
+        return IntI(Pos(self))
 
     def __abs__(self) -> IntI:
-        from nu.ops import AbsOp
+        from nu.interactions import Abs
 
-        return IntI(AbsOp(self))
+        return IntI(Abs(self))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.ops import GtOp
+        from nu.interactions import Gt
 
         from .bool_ import BoolI
 
-        return BoolI(GtOp(self, other))
+        return BoolI(Gt(self, other))
 
     def __lt__(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.ops import LtOp
+        from nu.interactions import Lt
 
         from .bool_ import BoolI
 
-        return BoolI(LtOp(self, other))
+        return BoolI(Lt(self, other))
 
     def __ge__(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.ops import GeOp
+        from nu.interactions import Ge
 
         from .bool_ import BoolI
 
-        return BoolI(GeOp(self, other))
+        return BoolI(Ge(self, other))
 
     def __le__(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.ops import LeOp
+        from nu.interactions import Le
 
         from .bool_ import BoolI
 
-        return BoolI(LeOp(self, other))
+        return BoolI(Le(self, other))
 
     def eq(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.ops import EqOp
+        from nu.interactions import Eq
 
         from .bool_ import BoolI
 
-        return BoolI(EqOp(self, other))
+        return BoolI(Eq(self, other))
 
     def ne(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.ops import NeOp
+        from nu.interactions import Ne
 
         from .bool_ import BoolI
 
-        return BoolI(NeOp(self, other))
+        return BoolI(Ne(self, other))
 
     def is_(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.ops import IdCompOp
+        from nu.interactions import IdComp
 
         from .bool_ import BoolI
 
-        return BoolI(IdCompOp(self, other))
+        return BoolI(IdComp(self, other))
 
     # =========================================================================
     # LOGICAL
     # =========================================================================
 
     def and_(self, other: BoolArg | IntArg) -> BoolI:
-        from nu.ops import AndOp
+        from nu.interactions import And
 
         from .bool_ import BoolI
 
-        return BoolI(AndOp(self, other))
+        return BoolI(And(self, other))
 
     def or_(self, other: BoolArg | IntArg) -> BoolI:
-        from nu.ops import OrOp
+        from nu.interactions import Or
 
         from .bool_ import BoolI
 
-        return BoolI(OrOp(self, other))
+        return BoolI(Or(self, other))
 
     def not_(self) -> BoolI:
-        from nu.ops import NotOp
+        from nu.interactions import Not
 
         from .bool_ import BoolI
 
-        return BoolI(NotOp(self))
+        return BoolI(Not(self))
 
     def bool_(self) -> BoolI:
-        from nu.ops import BoolOp
+        from nu.interactions import Bool
 
         from .bool_ import BoolI
 
-        return BoolI(BoolOp(self))
+        return BoolI(Bool(self))
 
     # =========================================================================
     # BITWISE
     # =========================================================================
 
     def bitand(self, other: IntArg) -> IntI:
-        from nu.ops import BitwiseAndOp
+        from nu.interactions import BitwiseAnd
 
-        return IntI(BitwiseAndOp(self, other))
+        return IntI(BitwiseAnd(self, other))
 
     def bitor(self, other: IntArg) -> IntI:
-        from nu.ops import BitwiseOrOp
+        from nu.interactions import BitwiseOr
 
-        return IntI(BitwiseOrOp(self, other))
+        return IntI(BitwiseOr(self, other))
 
     def __xor__(self, other: IntArg) -> IntI:
-        from nu.ops import XorOp
+        from nu.interactions import Xor
 
-        return IntI(XorOp(self, other))
+        return IntI(Xor(self, other))
 
     def __rxor__(self, other: IntArg) -> IntI:
-        from nu.ops import XorOp
+        from nu.interactions import Xor
 
-        return IntI(XorOp(other, self))
+        return IntI(Xor(other, self))
 
     def bitnot(self) -> IntI:
-        from nu.ops import BitwiseNotOp
+        from nu.interactions import BitwiseNot
 
-        return IntI(BitwiseNotOp(self))
+        return IntI(BitwiseNot(self))
 
     def __lshift__(self, other: IntArg) -> IntI:
-        from nu.ops import LShiftOp
+        from nu.interactions import LShift
 
-        return IntI(LShiftOp(self, other))
+        return IntI(LShift(self, other))
 
     def __rlshift__(self, other: IntArg) -> IntI:
-        from nu.ops import LShiftOp
+        from nu.interactions import LShift
 
-        return IntI(LShiftOp(other, self))
+        return IntI(LShift(other, self))
 
     def __rshift__(self, other: IntArg) -> IntI:
-        from nu.ops import RShiftOp
+        from nu.interactions import RShift
 
-        return IntI(RShiftOp(self, other))
+        return IntI(RShift(self, other))
 
     def __rrshift__(self, other: IntArg) -> IntI:
-        from nu.ops import RShiftOp
+        from nu.interactions import RShift
 
-        return IntI(RShiftOp(other, self))
+        return IntI(RShift(other, self))

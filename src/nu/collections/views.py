@@ -48,18 +48,18 @@ class DictKeysI[K](
         return AnyI(operand)
 
     def to_list(self) -> ListI[K]:
-        from nu.ops import ToListOp
+        from nu.interactions import ToList
 
         from .list_ import ListI
 
-        return ListI(ToListOp(self))
+        return ListI(ToList(self))
 
     def to_set(self) -> SetI[K]:
-        from nu.ops import ToSetOp
+        from nu.interactions import ToSet
 
         from .set_ import SetI
 
-        return SetI(ToSetOp(self))
+        return SetI(ToSet(self))
 
 
 class DictValuesI[V](
@@ -79,18 +79,18 @@ class DictValuesI[V](
         return AnyI(operand)
 
     def to_list(self) -> ListI[V]:
-        from nu.ops import ToListOp
+        from nu.interactions import ToList
 
         from .list_ import ListI
 
-        return ListI(ToListOp(self))
+        return ListI(ToList(self))
 
     def to_set(self) -> SetI[V]:
-        from nu.ops import ToSetOp
+        from nu.interactions import ToSet
 
         from .set_ import SetI
 
-        return SetI(ToSetOp(self))
+        return SetI(ToSet(self))
 
 
 class DictItemsI[K, V](
@@ -115,15 +115,15 @@ class DictItemsI[K, V](
         return AnyI(operand)
 
     def to_list(self) -> ListI[tuple[K, V]]:
-        from nu.ops import ToListOp
+        from nu.interactions import ToList
 
         from .list_ import ListI
 
-        return ListI(ToListOp(self))
+        return ListI(ToList(self))
 
     def to_set(self) -> SetI[tuple[K, V]]:
-        from nu.ops import ToSetOp
+        from nu.interactions import ToSet
 
         from .set_ import SetI
 
-        return SetI(ToSetOp(self))
+        return SetI(ToSet(self))
