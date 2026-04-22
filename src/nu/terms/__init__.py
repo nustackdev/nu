@@ -16,7 +16,15 @@ Shared: types.py (Mode, sup, Sentinel, EMPTY/INVALID, Direction, TrackedEffect,
 Arg types, T_co). Analysis + Form/Interface descriptors: utils.py.
 """
 
-from .command import Atomic, Command, Flow
+from .command import (
+    Atomic,
+    BinaryAtomic,
+    Command,
+    Flow,
+    NAryAtomic,
+    TernaryAtomic,
+    UnaryAtomic,
+)
 from .context_manager import ContextManager
 from .injection import FuncCall, FuncCallCmd, MethodCall, MethodCallCmd
 from .interaction import Interaction
@@ -69,6 +77,7 @@ __all__ = [
     "Arg",
     "Atomic",
     "AutoInterface",
+    "BinaryAtomic",
     "BinaryScalar",
     "BoolArg",
     "BytesArg",
@@ -92,6 +101,7 @@ __all__ = [
     "MethodCall",
     "MethodCallCmd",
     "Mode",
+    "NAryAtomic",
     "NAryScalar",
     "NoneArg",
     "Nu",
@@ -104,10 +114,12 @@ __all__ = [
     "StrArg",
     "Stream",
     "T_co",
+    "TernaryAtomic",
     "TernaryScalar",
     "TrackedEffect",
     "TupleArg",
     "TypedNu",
+    "UnaryAtomic",
     "UnaryScalar",
     "is_empty",
     "is_invalid",

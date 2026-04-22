@@ -1,22 +1,21 @@
-"""Time-backed Ops. SYNC-mode wrappers over the ``time`` module."""
+"""Time-backed Commands. SYNC-mode wrappers over the ``time`` module."""
 
 from __future__ import annotations
 
 import time
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Command, Mode
+from nu.terms import Mode, UnaryAtomic
 
 
 if TYPE_CHECKING:
-    from nu.context import Context
     from nu.terms import FloatArg
 
 
 __all__ = ["TimeSleep"]
 
 
-class TimeSleep(Command):
+class TimeSleep(UnaryAtomic):
     """Block the thread for ``delay`` seconds. Wraps `time.sleep`.
 
     Children: ``[delay]``
@@ -27,10 +26,5 @@ class TimeSleep(Command):
     def __init__(self, delay: FloatArg) -> None:
         super().__init__(delay)
 
-    async def run(self, ctx: Context) -> None:
-        delay = await self.children[0].first(ctx)
-        time.sleep(delay)
-
-    def run_sync(self, ctx: Context) -> None:
-        delay = self.children[0].first_sync(ctx)
+    def apply(self, delay: float) -> None:
         time.sleep(delay)
