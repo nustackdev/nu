@@ -5,7 +5,7 @@ IsEmpty, IsInvalid, NotEmpty, NotInvalid
 These are inspections, not computations. They need to see sentinels to
 answer the question, so they cannot use NAryScalar (which short-circuits
 on sentinels before `apply`). Instead they are plain Query[bool] subclasses
-that override `run` / `run_sync` and take the child's first yield directly.
+that override `arun` / `run` and take the child's first yield directly.
 """
 
 from __future__ import annotations
@@ -34,11 +34,11 @@ class IsEmpty(Query[bool]):
     def __init__(self, operand: Nu) -> None:
         super().__init__(operand)
 
-    async def run(self, ctx: Context) -> bool:
-        return is_empty(await self._children[0].first(ctx))
+    async def arun(self, ctx: Context) -> bool:
+        return is_empty(await self._children[0].afirst(ctx))
 
-    def run_sync(self, ctx: Context) -> bool:
-        return is_empty(self._children[0].first_sync(ctx))
+    def run(self, ctx: Context) -> bool:
+        return is_empty(self._children[0].first(ctx))
 
 
 class NotEmpty(Query[bool]):
@@ -47,11 +47,11 @@ class NotEmpty(Query[bool]):
     def __init__(self, operand: Nu) -> None:
         super().__init__(operand)
 
-    async def run(self, ctx: Context) -> bool:
-        return not is_empty(await self._children[0].first(ctx))
+    async def arun(self, ctx: Context) -> bool:
+        return not is_empty(await self._children[0].afirst(ctx))
 
-    def run_sync(self, ctx: Context) -> bool:
-        return not is_empty(self._children[0].first_sync(ctx))
+    def run(self, ctx: Context) -> bool:
+        return not is_empty(self._children[0].first(ctx))
 
 
 class IsInvalid(Query[bool]):
@@ -60,11 +60,11 @@ class IsInvalid(Query[bool]):
     def __init__(self, operand: Nu) -> None:
         super().__init__(operand)
 
-    async def run(self, ctx: Context) -> bool:
-        return is_invalid(await self._children[0].first(ctx))
+    async def arun(self, ctx: Context) -> bool:
+        return is_invalid(await self._children[0].afirst(ctx))
 
-    def run_sync(self, ctx: Context) -> bool:
-        return is_invalid(self._children[0].first_sync(ctx))
+    def run(self, ctx: Context) -> bool:
+        return is_invalid(self._children[0].first(ctx))
 
 
 class NotInvalid(Query[bool]):
@@ -73,8 +73,8 @@ class NotInvalid(Query[bool]):
     def __init__(self, operand: Nu) -> None:
         super().__init__(operand)
 
-    async def run(self, ctx: Context) -> bool:
-        return not is_invalid(await self._children[0].first(ctx))
+    async def arun(self, ctx: Context) -> bool:
+        return not is_invalid(await self._children[0].afirst(ctx))
 
-    def run_sync(self, ctx: Context) -> bool:
-        return not is_invalid(self._children[0].first_sync(ctx))
+    def run(self, ctx: Context) -> bool:
+        return not is_invalid(self._children[0].first(ctx))

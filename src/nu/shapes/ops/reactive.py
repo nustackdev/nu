@@ -37,7 +37,7 @@ class ChangeOp(Query[object]):
     mode: ClassVar[Mode] = Mode.ASYNC
 
     @abstractmethod
-    async def run(self, ctx: Context) -> object: ...
+    async def arun(self, ctx: Context) -> object: ...
 
 
 class OnChangeOp(ChangeOp):
@@ -46,8 +46,8 @@ class OnChangeOp(ChangeOp):
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> object:
-        view = await self.children[0].first(ctx)
+    async def arun(self, ctx: Context) -> object:
+        view = await self.children[0].afirst(ctx)
         return view.on_change()  # type: ignore[union-attr]
 
     def __repr__(self) -> str:
@@ -61,13 +61,13 @@ class OnChildChangeOp[A](ChangeOp):
         super().__init__(ref)
         self.address = address
 
-    async def run(self, ctx: Context) -> object:
+    async def arun(self, ctx: Context) -> object:
         if isinstance(self.address, Nu):
-            address = await self.address.first(ctx)
+            address = await self.address.afirst(ctx)
         else:
             address = self.address
 
-        view = await self.children[0].first(ctx)
+        view = await self.children[0].afirst(ctx)
         return view.on_child_change(address)  # type: ignore[union-attr]
 
     def __repr__(self) -> str:
@@ -80,8 +80,8 @@ class OnChildrenChangeOp(ChangeOp):
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> object:
-        view = await self.children[0].first(ctx)
+    async def arun(self, ctx: Context) -> object:
+        view = await self.children[0].afirst(ctx)
         return view.on_children_change()  # type: ignore[union-attr]
 
     def __repr__(self) -> str:
@@ -95,11 +95,11 @@ class OnDescendantsChangeOp(ChangeOp):
         super().__init__(ref)
         self.pattern = pattern
 
-    async def run(self, ctx: Context) -> object:
+    async def arun(self, ctx: Context) -> object:
         if not self.pattern:
             raise ValueError("Pattern cannot be empty for on_descendants_change")
 
-        view = await self.children[0].first(ctx)
+        view = await self.children[0].afirst(ctx)
         return view.on_descendents_change(self.pattern[0], *self.pattern[1:])  # type: ignore[union-attr]
 
     def __repr__(self) -> str:

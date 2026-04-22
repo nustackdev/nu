@@ -41,10 +41,10 @@ class ScanPrimitivesUnsafeOp[T](Query[Iterator[T] | Sentinel]):
         super().__init__(ref)
         self.ref = ref
 
-    async def run(self, ctx: Context) -> Iterator[T] | Sentinel:
+    async def arun(self, ctx: Context) -> Iterator[T] | Sentinel:
         """Scan all primitive children via raw storage scan."""
         try:
-            view = await self.ref.fetch(ctx)
+            view = await self.ref.afetch(ctx)
         except (KeyError, IndexError):
             return EMPTY
         return view._unsafe_primitive_scan_values()
@@ -70,9 +70,9 @@ class ClearPrimitivesUnsafeCmd(Command):
         super().__init__(ref)
         self.ref = ref
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         """Clear all primitive children via scan + delete."""
-        view = await self.ref.fetch(ctx)
+        view = await self.ref.afetch(ctx)
         view._unsafe_primitive_clear()
 
     def __repr__(self) -> str:

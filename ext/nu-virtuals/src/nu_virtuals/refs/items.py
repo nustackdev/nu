@@ -309,8 +309,8 @@ class PrimitiveDictRef[K, V](
         return Slot(cls)  # type: ignore[return-value]
 
     # TODO task-079: write-back view (Stream D). Yields mutable view, flushes
-    # on generator close. Override `open` directly so finally runs on aclose.
-    async def open(self, ctx: Context) -> AsyncGenerator[object, None]:
+    # on generator close. Override `aopen` directly so finally runs on aclose.
+    async def aopen(self, ctx: Context) -> AsyncGenerator[object, None]:
         """Yield a write-back dict view; flush on generator close if dirty."""
         from nu_virtuals.views import PrimitiveDictView
 
@@ -363,8 +363,8 @@ class PrimitiveListRef[T](
         return Slot(cls)  # type: ignore[return-value]
 
     # TODO task-079: write-back view (Stream D). Yields mutable view, flushes
-    # on generator close. Override `open` directly so finally runs on aclose.
-    async def open(self, ctx: Context) -> AsyncGenerator[object, None]:
+    # on generator close. Override `aopen` directly so finally runs on aclose.
+    async def aopen(self, ctx: Context) -> AsyncGenerator[object, None]:
         """Yield a write-back list view; flush on generator close if dirty."""
         from nu_virtuals.views import PrimitiveListView
 
@@ -417,8 +417,8 @@ class PrimitiveSetRef[T](
         return Slot(cls)  # type: ignore[return-value]
 
     # TODO task-079: write-back view (Stream D). Yields mutable view, flushes
-    # on generator close. Override `open` directly so finally runs on aclose.
-    async def open(self, ctx: Context) -> AsyncGenerator[object, None]:
+    # on generator close. Override `aopen` directly so finally runs on aclose.
+    async def aopen(self, ctx: Context) -> AsyncGenerator[object, None]:
         """Yield a write-back set view; flush on generator close if dirty."""
         from nu_virtuals.views import PrimitiveSetView
 

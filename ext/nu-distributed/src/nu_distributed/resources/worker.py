@@ -40,12 +40,12 @@ class Worker(Resource):
     spec: WorkerSpec
     context = Attach()
 
-    async def execute(self, tree: object) -> object:
+    async def aexecute(self, tree: object) -> object:
         """Execute a Nu tree against this worker's Context.
 
         Returns the last yielded value, or None if the tree yielded nothing.
         """
-        values = await tree.collect(self.context.ctx)
+        values = await tree.acollect(self.context.ctx)
         return values[-1] if values else None
 
     @property

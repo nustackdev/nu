@@ -7,7 +7,7 @@ ItemEraseCmd:  Delete item - del parent[address]
 ItemExistsOp:  Check if item exists
 ItemMissingOp: Check if item is missing
 
-READ ops go through ref.open (Snapshot wrapper).
+READ ops go through ref.aopen (Snapshot wrapper).
 WRITE ops use children[0] as Ref directly (inside Transaction wrapper).
 """
 
@@ -38,11 +38,11 @@ class ItemLoadOp[T](Query[T | Sentinel]):
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> T | Sentinel:
-        return await self.children[0].first(ctx)
+    async def arun(self, ctx: Context) -> T | Sentinel:
+        return await self.children[0].afirst(ctx)
 
-    def run_sync(self, ctx: Context) -> T | Sentinel:
-        return self.children[0].first_sync(ctx)
+    def run(self, ctx: Context) -> T | Sentinel:
+        return self.children[0].first(ctx)
 
     def __repr__(self) -> str:
         return f"ItemLoadOp({self.children[0]!r})"
@@ -57,11 +57,11 @@ class ItemStoreCmd[T](Command):
     def __init__(self, ref: Ref, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         ref = self.children[0]
         parent = await ref.fetch_parent(ctx)
         address = await ref.resolve_address(ctx)
-        value = await self.children[1].first(ctx)
+        value = await self.children[1].afirst(ctx)
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent[address] = value
@@ -79,7 +79,7 @@ class ItemEraseCmd(Command):
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         ref = self.children[0]
         parent = await ref.fetch_parent(ctx)
         address = await ref.resolve_address(ctx)
@@ -95,12 +95,12 @@ class ItemExistsOp(Query[bool]):
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> bool:
-        val = await self.children[0].first(ctx)
+    async def arun(self, ctx: Context) -> bool:
+        val = await self.children[0].afirst(ctx)
         return not is_sentinel(val)
 
-    def run_sync(self, ctx: Context) -> bool:
-        val = self.children[0].first_sync(ctx)
+    def run(self, ctx: Context) -> bool:
+        val = self.children[0].first(ctx)
         return not is_sentinel(val)
 
     def __repr__(self) -> str:
@@ -113,12 +113,12 @@ class ItemMissingOp(Query[bool]):
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> bool:
-        val = await self.children[0].first(ctx)
+    async def arun(self, ctx: Context) -> bool:
+        val = await self.children[0].afirst(ctx)
         return is_sentinel(val)
 
-    def run_sync(self, ctx: Context) -> bool:
-        val = self.children[0].first_sync(ctx)
+    def run(self, ctx: Context) -> bool:
+        val = self.children[0].first(ctx)
         return is_sentinel(val)
 
     def __repr__(self) -> str:

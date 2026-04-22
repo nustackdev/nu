@@ -23,10 +23,10 @@ class StubRef(Ref[int]):
         self._key = key
         self._value = value
 
-    async def resolve(self, ctx: Context) -> str:
+    async def aresolve(self, ctx: Context) -> str:
         return self._key
 
-    async def fetch(self, ctx: Context) -> int:
+    async def afetch(self, ctx: Context) -> int:
         return self._value
 
 
@@ -37,22 +37,22 @@ class StubRef(Ref[int]):
 
 async def test_resolve(ctx):
     ref = StubRef("loc", 42)
-    assert await ref.resolve(ctx) == "loc"
+    assert await ref.aresolve(ctx) == "loc"
 
 
 async def test_fetch(ctx):
     ref = StubRef("loc", 42)
-    assert await ref.fetch(ctx) == 42
+    assert await ref.afetch(ctx) == 42
 
 
 async def test_open_yields_fetched_value(ctx):
     ref = StubRef("loc", 42)
-    assert await ref.first(ctx) == 42
+    assert await ref.afirst(ctx) == 42
 
 
 async def test_fetch_method(ctx):
     ref = StubRef("loc", 42)
-    assert await ref.fetch(ctx) == 42
+    assert await ref.afetch(ctx) == 42
 
 
 # ---------------------------------------------------------------------------

@@ -3,7 +3,7 @@
 Nu is the recursive unit of computation. A Nu is made of Nus.
 Both a leaf (`Literal(5)`) and a full app are Nus.
 
-The single evaluator primitive is `open(ctx)` - a raw async generator
+The single evaluator primitive is `aopen(ctx)` - a raw async generator
 over Γ. Body = scope. Pre-first-yield = enter, each `yield` = a value
 crossing the bracket, `finally` = exit. Yields 0..N times.
 
@@ -61,8 +61,8 @@ _DONE = object()
 class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
     """The primitive. Recursive unit of computation.
 
-    Default `open`: runs children sequentially, forwards their yields.
-    Subclasses override `open` for domain semantics.
+    Default `aopen`: runs children sequentially, forwards their yields.
+    Subclasses override `aopen` for domain semantics.
     `Nu()` with no children is the identity (algebra's `0`).
     """
 
@@ -86,7 +86,7 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
         child_modes = tuple(c.effective_mode() for c in self._children)
         return sup(self.mode, *child_modes)
 
-    async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[T_co, None]:
         """Run this Nu as a scope. Yields 0..N values.
 
         Default: dispatch by `can_parallelize()`.
@@ -94,24 +94,24 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
         - False -> forward each child's stream in order.
         """
         if self.can_parallelize():
-            async for v in self._pump_parallel(ctx):
+            async for v in self._apump_parallel(ctx):
                 yield v
         else:
-            async for v in self._pump_sequential(ctx):
+            async for v in self._apump_sequential(ctx):
                 yield v
 
-    async def _pump_sequential(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+    async def _apump_sequential(self, ctx: Context) -> AsyncGenerator[T_co, None]:
         for child in self._children:
-            async with aclosing(child.open(ctx)) as gen:
+            async with aclosing(child.aopen(ctx)) as gen:
                 async for v in gen:
                     yield v
 
-    async def _pump_parallel(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+    async def _apump_parallel(self, ctx: Context) -> AsyncGenerator[T_co, None]:
         queue: asyncio.Queue[Any] = asyncio.Queue()
 
         async def pump(child: Nu) -> None:
             try:
-                async with aclosing(child.open(ctx)) as gen:
+                async with aclosing(child.aopen(ctx)) as gen:
                     async for v in gen:
                         await queue.put(v)
             finally:
@@ -138,7 +138,7 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
 
     # --- sync evaluator path ---
 
-    def open_sync(self, ctx: Context) -> Generator[T_co, None, None]:
+    def open(self, ctx: Context) -> Generator[T_co, None, None]:
         """Run as plain generator. Only valid when effective_mode ∈ {SYNC, BOTH}.
 
         Default: dispatch by `can_parallelize()`. Parallel-sync sequentializes
@@ -148,67 +148,67 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
             msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
             raise RuntimeError(msg)
         if self.can_parallelize():
-            yield from self._pump_parallel_sync(ctx)
+            yield from self._pump_parallel(ctx)
         else:
-            yield from self._pump_sequential_sync(ctx)
+            yield from self._pump_sequential(ctx)
 
-    def _pump_sequential_sync(self, ctx: Context) -> Generator[T_co, None, None]:
+    def _pump_sequential(self, ctx: Context) -> Generator[T_co, None, None]:
         for child in self._children:
-            yield from child.open_sync(ctx)
+            yield from child.open(ctx)
 
-    def _pump_parallel_sync(self, ctx: Context) -> Generator[T_co, None, None]:
+    def _pump_parallel(self, ctx: Context) -> Generator[T_co, None, None]:
         # Parallel-sync = interleave sequentially. Threads would help only for
         # blocking calls, which belong on an executor.
         for child in self._children:
-            yield from child.open_sync(ctx)
+            yield from child.open(ctx)
 
     # --- consumption helpers (sugar over open) ---
 
-    async def execute(self, ctx: Context | None = None) -> None:
+    async def aexecute(self, ctx: Context | None = None) -> None:
         """Drain. Yields are discarded. Empty Context if none passed."""
         ctx = self._default_ctx(ctx)
-        async with aclosing(self.open(ctx)) as gen:
+        async with aclosing(self.aopen(ctx)) as gen:
             async for _ in gen:
                 pass
 
-    def execute_sync(self, ctx: Context | None = None) -> None:
+    def execute(self, ctx: Context | None = None) -> None:
         """Drain on the sync path. Subtree must not contain ASYNC nodes."""
         ctx = self._default_ctx(ctx)
-        for _ in self.open_sync(ctx):
+        for _ in self.open(ctx):
             pass
 
-    def first_sync(self, ctx: Context | None = None) -> Any:
-        """Sync-path `first`. Subtree must not contain ASYNC nodes."""
+    def first(self, ctx: Context | None = None) -> Any:
+        """Take the first yield on the sync path. Subtree must not contain ASYNC nodes."""
         ctx = self._default_ctx(ctx)
-        for v in self.open_sync(ctx):
+        for v in self.open(ctx):
             return v
         msg = "nu yielded no values"
         raise RuntimeError(msg)
 
-    def collect_sync(self, ctx: Context | None = None) -> list[Any]:
-        """Sync-path `collect`. Subtree must not contain ASYNC nodes."""
+    def collect(self, ctx: Context | None = None) -> list[Any]:
+        """Drain into a list on the sync path. Subtree must not contain ASYNC nodes."""
         ctx = self._default_ctx(ctx)
-        return list(self.open_sync(ctx))
+        return list(self.open(ctx))
 
-    async def drain(self, ctx: Context | None = None) -> None:
+    async def adrain(self, ctx: Context | None = None) -> None:
         """Alias for execute."""
-        await self.execute(ctx)
+        await self.aexecute(ctx)
 
-    async def first(self, ctx: Context | None = None) -> Any:
+    async def afirst(self, ctx: Context | None = None) -> Any:
         """Take the first yield, close the rest."""
         ctx = self._default_ctx(ctx)
-        async with aclosing(self.open(ctx)) as gen:
+        async with aclosing(self.aopen(ctx)) as gen:
             async for v in gen:
                 return v
         msg = "nu yielded no values"
         raise RuntimeError(msg)
 
-    async def last(self, ctx: Context | None = None) -> Any:
+    async def alast(self, ctx: Context | None = None) -> Any:
         """Drain, return last yield."""
         ctx = self._default_ctx(ctx)
         found = False
         val: Any = None
-        async with aclosing(self.open(ctx)) as gen:
+        async with aclosing(self.aopen(ctx)) as gen:
             async for v in gen:
                 val = v
                 found = True
@@ -217,11 +217,11 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
             raise RuntimeError(msg)
         return val
 
-    async def collect(self, ctx: Context | None = None) -> list[Any]:
+    async def acollect(self, ctx: Context | None = None) -> list[Any]:
         """Drain into a list."""
         ctx = self._default_ctx(ctx)
         out: list[Any] = []
-        async with aclosing(self.open(ctx)) as gen:
+        async with aclosing(self.aopen(ctx)) as gen:
             async for v in gen:
                 out.append(v)
         return out

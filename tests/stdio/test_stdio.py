@@ -78,19 +78,19 @@ class TestStdioRef:
 
     def test_resolve(self):
         ctx = _make_ctx()
-        assert _run(STDOUT.resolve(ctx)) == "stdout"
+        assert _run(STDOUT.aresolve(ctx)) == "stdout"
 
     def test_fetch_with_backend(self):
         out = StringIO()
         ctx = _make_ctx(stdout=out)
-        stream = _run(STDOUT.fetch(ctx))
+        stream = _run(STDOUT.afetch(ctx))
         assert stream is out
 
     def test_fetch_fallback_to_sys(self):
         import sys
 
         ctx = Context()  # No StdioBackend bound
-        stream = _run(STDOUT.fetch(ctx))
+        stream = _run(STDOUT.afetch(ctx))
         assert stream is sys.stdout
 
 
@@ -126,14 +126,14 @@ class TestStdioWrite:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = StdioWrite(STDOUT, "hello", "world")
-        _run(op.execute(ctx))
+        _run(op.aexecute(ctx))
         assert out.getvalue() == "hello world\n"
 
     def test_write_to_stderr(self):
         err = StringIO()
         ctx = _make_ctx(stderr=err)
         op = StdioWrite(STDERR, "error message")
-        _run(op.execute(ctx))
+        _run(op.aexecute(ctx))
         assert err.getvalue() == "error message\n"
 
     def test_write_overrides(self):
@@ -155,7 +155,7 @@ class TestStdioRead:
         inp = StringIO("hello world\n")
         ctx = _make_ctx(stdin=inp)
         op = StdioRead()
-        result = _run(op.first(ctx))
+        result = _run(op.afirst(ctx))
         assert result == "hello world"
 
     def test_no_override(self):
@@ -179,7 +179,7 @@ class TestStdioFlush:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = StdioFlush(STDOUT)
-        _run(op.execute(ctx))
+        _run(op.aexecute(ctx))
         # StringIO.flush() is a no-op but shouldn't error
 
     def test_overrides(self):
@@ -196,7 +196,7 @@ class TestPrintStdio:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = Print("test", 42)
-        _run(op.execute(ctx))
+        _run(op.aexecute(ctx))
         assert "[Print:test] 42" in out.getvalue()
 
     def test_print_has_write_override(self):
@@ -228,7 +228,7 @@ class TestDebugStdio:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = Debug(42, prefix="[DBG]")
-        _run(op.execute(ctx))
+        _run(op.aexecute(ctx))
         assert "[DBG]" in out.getvalue()
 
     def test_debug_has_write_override(self):
@@ -248,7 +248,7 @@ class TestBufferedStdio:
             StdioWrite(STDOUT, "line 1"),
             StdioWrite(STDOUT, "line 2"),
         )
-        _run(op.execute(ctx))
+        _run(op.aexecute(ctx))
         content = out.getvalue()
         assert "line 1" in content
         assert "line 2" in content
@@ -258,8 +258,8 @@ class TestBufferedStdio:
         ctx = _make_ctx(stdout=out)
 
         class FailOp(StdioWrite):
-            async def open(self, ctx):
-                async for _ in super().open(ctx):
+            async def aopen(self, ctx):
+                async for _ in super().aopen(ctx):
                     pass
                 raise RuntimeError("boom")
                 yield  # unreachable; marks generator
@@ -269,7 +269,7 @@ class TestBufferedStdio:
             FailOp(STDOUT, "after"),
         )
         with pytest.raises(RuntimeError, match="boom"):
-            _run(op.execute(ctx))
+            _run(op.aexecute(ctx))
         # Nothing should have been written to real stdout
         assert out.getvalue() == ""
 
@@ -277,7 +277,7 @@ class TestBufferedStdio:
         inp = StringIO("hello\n")
         ctx = _make_ctx(stdin=inp)
         op = BufferedStdio(StdioRead())
-        result = _run(op.first(ctx))
+        result = _run(op.afirst(ctx))
         assert result == "hello"
 
 

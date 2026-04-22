@@ -29,13 +29,13 @@ class Obj:
 
 async def test_get_attr(ctx):
     obj = Obj(name="alice")
-    assert await GetAttr(Literal(obj), "name").first(ctx) == "alice"
+    assert await GetAttr(Literal(obj), "name").afirst(ctx) == "alice"
 
 
 async def test_get_attr_missing_raises(ctx):
     obj = Obj()
     with pytest.raises(AttributeError):
-        await GetAttr(Literal(obj), "missing").first(ctx)
+        await GetAttr(Literal(obj), "missing").afirst(ctx)
 
 
 # ---------------------------------------------------------------------------
@@ -45,13 +45,13 @@ async def test_get_attr_missing_raises(ctx):
 
 async def test_set_attr(ctx):
     obj = Obj()
-    await SetAttr(Literal(obj), "x", 42).first(ctx)
+    await SetAttr(Literal(obj), "x", 42).afirst(ctx)
     assert obj.x == 42  # type: ignore
 
 
 async def test_set_attr_overwrite(ctx):
     obj = Obj(x=1)
-    await SetAttr(Literal(obj), "x", 2).first(ctx)
+    await SetAttr(Literal(obj), "x", 2).afirst(ctx)
     assert obj.x == 2  # type: ignore
 
 
@@ -62,11 +62,11 @@ async def test_set_attr_overwrite(ctx):
 
 async def test_del_attr(ctx):
     obj = Obj(x=1)
-    await DelAttr(Literal(obj), "x").first(ctx)
+    await DelAttr(Literal(obj), "x").afirst(ctx)
     assert not hasattr(obj, "x")
 
 
 async def test_del_attr_missing_raises(ctx):
     obj = Obj()
     with pytest.raises(AttributeError):
-        await DelAttr(Literal(obj), "missing").first(ctx)
+        await DelAttr(Literal(obj), "missing").afirst(ctx)

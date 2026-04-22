@@ -19,7 +19,7 @@ async def test_teleport_int_tag():
     )
     async with Runtime() as rt:
         ctx = await local(rt, NavigatorSpec(), workers=2)
-        await flow.execute(ctx)
+        await flow.aexecute(ctx)
 
 
 @pytest.mark.asyncio
@@ -32,7 +32,7 @@ async def test_teleport_multiple_children():
     )
     async with Runtime() as rt:
         ctx = await local(rt, NavigatorSpec(), workers=1)
-        await flow.execute(ctx)
+        await flow.aexecute(ctx)
 
 
 @pytest.mark.asyncio
@@ -49,7 +49,7 @@ async def test_teleport_string_tag():
         # Rebind worker with string tag
         worker = ctx.get(Worker, 0)
         ctx = ctx.bind(Worker, worker, "gpu")
-        await flow.execute(ctx)
+        await flow.aexecute(ctx)
 
 
 @pytest.mark.asyncio
@@ -66,7 +66,7 @@ async def test_teleport_tuple_tag():
         # Rebind worker with tuple tag
         worker = ctx.get(Worker, 0)
         ctx = ctx.bind(Worker, worker, ("red", 0))
-        await flow.execute(ctx)
+        await flow.aexecute(ctx)
 
 
 @pytest.mark.asyncio

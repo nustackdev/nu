@@ -3,22 +3,22 @@
 Taxonomy under Interaction:
 
     Command                   yields nothing; effect set contains WRITE
-    ├── Atomic                terminal mutation; no inner Command. Hook: run / run_sync
+    ├── Atomic                terminal mutation; no inner Command. Hook: run / arun
     │   ├── NAryAtomic        auto-resolved operands, hook: apply / aapply
     │   │   ├── UnaryAtomic
     │   │   ├── BinaryAtomic
     │   │   └── TernaryAtomic
-    └── Flow                  orchestrates inner Commands. Override open / open_sync
+    └── Flow                  orchestrates inner Commands. Override open / aopen
 
-Atomic is the leaf pattern: override `run` / `run_sync`; base wraps to 0-yield.
+Atomic is the leaf pattern: override `arun` / `run`; base wraps to 0-yield.
 NAryAtomic family mirrors NAryScalar for Atomic: resolve each child's first
 yield (propagating sentinels), then call `apply(*values)` returning None.
-Flow is the orchestrator pattern: override `open` / `open_sync` directly.
+Flow is the orchestrator pattern: override `aopen` / `open` directly.
 """
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from contextlib import AsyncExitStack, ExitStack, aclosing, closing
 from inspect import isawaitable, iscoroutinefunction
 from typing import TYPE_CHECKING, Any
@@ -48,31 +48,30 @@ __all__ = [
 class Command(Interaction, ABC):
     """0-yield Interaction. Role marker.
 
-    No abstract hook on the base: Atomic subclasses authoring via `run`
-    declare their own abstract; Flow subclasses override `open` directly
-    and leave `run` as the default raise.
+    No abstract hook on the base: Atomic subclasses authoring via `arun`
+    declare their own abstract; Flow subclasses override `aopen` directly
+    and leave `arun` as the default raise.
     """
 
-    async def run(self, ctx: Context) -> None:
-        """Async side effect. Default raises; override or use open."""
-        msg = f"{type(self).__name__} has no run; override run or open"
+    async def arun(self, ctx: Context) -> None:
+        """Async side effect. Default delegates to sync `run`; override for async-only."""
+        self.run(ctx)
+
+    def run(self, ctx: Context) -> None:
+        """Sync side effect. Default raises; override or use `open`."""
+        msg = f"{type(self).__name__} has no run; override run or arun or open/aopen"
         raise NotImplementedError(msg)
 
-    def run_sync(self, ctx: Context) -> None:
-        """Sync side effect. Default raises; override or use open_sync."""
-        msg = f"{type(self).__name__} has no run_sync; override run_sync or open_sync"
-        raise NotImplementedError(msg)
-
-    async def open(self, ctx: Context) -> AsyncGenerator[None, None]:
-        await self.run(ctx)
+    async def aopen(self, ctx: Context) -> AsyncGenerator[None, None]:
+        await self.arun(ctx)
         return
         yield  # unreachable; marks this as a generator
 
-    def open_sync(self, ctx: Context) -> Generator[None, None, None]:
+    def open(self, ctx: Context) -> Generator[None, None, None]:
         if self.mode is Mode.ASYNC:
             msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
             raise RuntimeError(msg)
-        self.run_sync(ctx)
+        self.run(ctx)
         return
         yield  # unreachable
 
@@ -80,21 +79,16 @@ class Command(Interaction, ABC):
 class Atomic(Command, ABC):
     """Terminal mutation. Leaf in the Command tree.
 
-    Override `run(ctx)` for async or `run_sync(ctx)` for sync. No inner
+    Override `run(ctx)` for sync or `arun(ctx)` for async-only. No inner
     Command; children are all Queries (value to write, target Ref, etc).
     """
 
-    @abstractmethod
-    async def run(self, ctx: Context) -> None:
-        """Perform the mutation. Called once."""
-        ...
-
 
 class Flow(Command, ABC):
-    """Orchestrates inner Commands. Override `open` / `open_sync`.
+    """Orchestrates inner Commands. Override `aopen` / `open`.
 
     Children include Commands (body, branches) and Queries (control
-    values). Flow doesn't use `run`; override `open` directly.
+    values). Flow doesn't use `arun`; override `aopen` directly.
     """
 
 
@@ -126,11 +120,11 @@ class NAryAtomic(Atomic, ABC):
         args = ", ".join(str(c) for c in self._children)
         return f"{self.__class__.__name__}({args})"
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         async with AsyncExitStack() as stack:
             values: list[Any] = []
             for child in self._children:
-                gen = await stack.enter_async_context(aclosing(child.open(ctx)))
+                gen = await stack.enter_async_context(aclosing(child.aopen(ctx)))
                 try:
                     v = await gen.__anext__()
                 except StopAsyncIteration:
@@ -138,11 +132,14 @@ class NAryAtomic(Atomic, ABC):
                 if is_sentinel(v):
                     return
                 values.append(v)
-            result = self.apply(*values)
-            if isawaitable(result):
-                await result
+            if type(self).aapply is not NAryAtomic.aapply:
+                await self.aapply(*values)
+            else:
+                result = self.apply(*values)
+                if isawaitable(result):
+                    await result
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         if self.mode is Mode.ASYNC:
             msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
             raise RuntimeError(msg)
@@ -152,7 +149,7 @@ class NAryAtomic(Atomic, ABC):
         with ExitStack() as stack:
             values: list[Any] = []
             for child in self._children:
-                gen = stack.enter_context(closing(child.open_sync(ctx)))
+                gen = stack.enter_context(closing(child.open(ctx)))
                 try:
                     v = next(gen)
                 except StopIteration:
@@ -162,10 +159,20 @@ class NAryAtomic(Atomic, ABC):
                 values.append(v)
             self.apply(*values)
 
-    @abstractmethod
     def apply(self, *values: Any) -> None:  # noqa: ANN401
-        """Apply the mutation on resolved values. Sync or async; returns None."""
-        ...
+        """Apply the mutation on resolved values (sync).
+
+        Override this OR `aapply` (for async-only subclasses).
+        """
+        msg = f"{type(self).__name__} has no apply; override apply or aapply"
+        raise NotImplementedError(msg)
+
+    async def aapply(self, *values: Any) -> None:  # noqa: ANN401
+        """Apply the mutation on resolved values (async).
+
+        Default delegates to `apply`. Override for async-only subclasses.
+        """
+        self.apply(*values)
 
 
 class UnaryAtomic(NAryAtomic, ABC):
@@ -183,10 +190,6 @@ class UnaryAtomic(NAryAtomic, ABC):
     @property
     def operand(self) -> Nu:
         return self._children[0]
-
-    @abstractmethod
-    def apply(self, operand: Any) -> None:  # type: ignore[override]  # noqa: ANN401
-        ...
 
 
 class BinaryAtomic(NAryAtomic, ABC):
@@ -209,10 +212,6 @@ class BinaryAtomic(NAryAtomic, ABC):
     def right(self) -> Nu:
         return self._children[1]
 
-    @abstractmethod
-    def apply(self, left: Any, right: Any) -> None:  # type: ignore[override]  # noqa: ANN401
-        ...
-
 
 class TernaryAtomic(NAryAtomic, ABC):
     """Three operands."""
@@ -228,6 +227,3 @@ class TernaryAtomic(NAryAtomic, ABC):
         c0, c1, c2 = self._children
         return f"{self.__class__.__name__}({c0}, {c1}, {c2})"
 
-    @abstractmethod
-    def apply(self, a: Any, b: Any, c: Any) -> None:  # type: ignore[override]  # noqa: ANN401
-        ...

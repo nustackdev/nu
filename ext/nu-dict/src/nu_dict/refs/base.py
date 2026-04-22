@@ -40,19 +40,19 @@ class RefBase[T](Ref[T]):
 
     mode: ClassVar[Mode] = Mode.ASYNC
 
-    async def resolve(self, ctx: Context) -> tuple[str | int, ...]:
+    async def aresolve(self, ctx: Context) -> tuple[str | int, ...]:
         """Build key path from parent chain."""
         address = await self.resolve_address(ctx)
 
         if self.parent is None:
             return (address,) if address != "" else ()
 
-        parent_path = await self.parent.resolve(ctx)
+        parent_path = await self.parent.aresolve(ctx)
         return (*parent_path, address)
 
-    async def fetch(self, ctx: Context) -> T | Sentinel:
+    async def afetch(self, ctx: Context) -> T | Sentinel:
         """Fetch value by navigating the dict."""
-        key_path = await self.resolve(ctx)
+        key_path = await self.aresolve(ctx)
         data = self._get_root_data(ctx, key_path)
         try:
             raw = _navigate(data, key_path)
@@ -62,7 +62,7 @@ class RefBase[T](Ref[T]):
 
     async def fetch_parent(self, ctx: Context) -> object:
         """Fetch the parent container, auto-creating intermediate dicts."""
-        key_path = await self.resolve(ctx)
+        key_path = await self.aresolve(ctx)
         data = self._get_root_data(ctx, key_path)
 
         if len(key_path) <= 1:

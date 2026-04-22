@@ -62,9 +62,9 @@ class Stream(Interaction):
 
         super().__init__(advance, change, body, ensure_nu(key), ensure_nu(log_key))
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        key = await self.children[3].first(ctx)
-        log_key = await self.children[4].first(ctx)
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        key = await self.children[3].afirst(ctx)
+        log_key = await self.children[4].afirst(ctx)
 
         if log_key not in ctx.attrs:
             ctx.attrs[log_key] = Sentinel()
@@ -79,13 +79,13 @@ class Stream(Interaction):
     async def _drain(self, ctx: Context, key: str, log_key: str) -> AsyncGenerator[Any, None]:
         """Drain existing items from source."""
         while True:
-            result = await self.children[0].first(ctx)
+            result = await self.children[0].afirst(ctx)
             if result is None:
                 break
             log_k, actual_key = result
             ctx.attrs[key] = actual_key
             ctx.attrs[log_key] = log_k
-            async with aclosing(self.children[2].open(ctx)) as gen:
+            async with aclosing(self.children[2].aopen(ctx)) as gen:
                 async for v in gen:
                     yield v
 
@@ -97,7 +97,7 @@ class Stream(Interaction):
         def on_change(_changed_key: object) -> None:
             loop.call_soon_threadsafe(event.set)
 
-        sub = await self.children[1].first(ctx)
+        sub = await self.children[1].afirst(ctx)
         sub.bind(on_change)
         try:
             while True:

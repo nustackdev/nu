@@ -52,36 +52,35 @@ __all__ = [
 class Query(Interaction[T_co], ABC):
     """Functional-role Interaction. No observable mutation; yields value(s).
 
-    Base has non-abstract `run` / `run_sync` that raise by default. Two
+    Base has non-abstract `arun` / `run` that raise by default. Two
     authoring patterns:
 
-    - 1-yield sugar: override `run(ctx) -> T` (async) or `run_sync(ctx) -> T`
-      (sync). The base's `open` / `open_sync` wrap into a 1-yield generator.
-    - Override `open` / `open_sync` directly (for N-yield streaming or
-      apply-style compute). Leave `run` as the default raise.
+    - 1-yield sugar: override `arun(ctx) -> T` (async) or `run(ctx) -> T`
+      (sync). The base's `aopen` / `open` wrap into a 1-yield generator.
+    - Override `aopen` / `open` directly (for N-yield streaming or
+      apply-style compute). Leave `arun` as the default raise.
 
     For operand-driven compute with sentinel propagation, use `NAryScalar`
     (and the arity refinements). For N-yield streams, use `Stream`.
     """
 
-    async def run(self, ctx: Context) -> T_co:
-        """Async compute. Default raises; override or use open."""
-        msg = f"{type(self).__name__} has no run; override run or open"
+    async def arun(self, ctx: Context) -> T_co:
+        """Async compute. Default delegates to sync `run`; override for async-only."""
+        return self.run(ctx)
+
+    def run(self, ctx: Context) -> T_co:
+        """Sync compute. Default raises; override or use `open`."""
+        msg = f"{type(self).__name__} has no run; override run or arun or open/aopen"
         raise NotImplementedError(msg)
 
-    def run_sync(self, ctx: Context) -> T_co:
-        """Sync compute. Default raises; override or use open_sync."""
-        msg = f"{type(self).__name__} has no run_sync; override run_sync or open_sync"
-        raise NotImplementedError(msg)
+    async def aopen(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+        yield await self.arun(ctx)
 
-    async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
-        yield await self.run(ctx)
-
-    def open_sync(self, ctx: Context) -> Generator[T_co, None, None]:
+    def open(self, ctx: Context) -> Generator[T_co, None, None]:
         if self.mode is Mode.ASYNC:
             msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
             raise RuntimeError(msg)
-        yield self.run_sync(ctx)
+        yield self.run(ctx)
 
 
 # =============================================================================
@@ -102,10 +101,10 @@ class Literal(Query[T_co]):
         super().__init__()  # no children
         self._value = value
 
-    async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[T_co, None]:
         yield self._value  # type: ignore[misc]
 
-    def open_sync(self, ctx: Context) -> Generator[T_co, None, None]:
+    def open(self, ctx: Context) -> Generator[T_co, None, None]:
         yield self._value  # type: ignore[misc]
 
     @property
@@ -144,11 +143,11 @@ class NAryScalar(Query[T_co | Sentinel], ABC):
         args = ", ".join(str(c) for c in self._children)
         return f"{self.__class__.__name__}({args})"
 
-    async def open(self, ctx: Context) -> AsyncGenerator[T_co | Sentinel, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[T_co | Sentinel, None]:
         async with AsyncExitStack() as stack:
             values: list[Any] = []
             for child in self._children:
-                gen = await stack.enter_async_context(aclosing(child.open(ctx)))
+                gen = await stack.enter_async_context(aclosing(child.aopen(ctx)))
                 try:
                     v = await gen.__anext__()
                 except StopAsyncIteration:
@@ -158,12 +157,16 @@ class NAryScalar(Query[T_co | Sentinel], ABC):
                     yield INVALID
                     return
                 values.append(v)
-            result = self.apply(*values)
-            if isawaitable(result):
-                result = await result
+            # Prefer aapply if the subclass overrides it; otherwise fall back to apply.
+            if type(self).aapply is not NAryScalar.aapply:
+                result = await self.aapply(*values)
+            else:
+                result = self.apply(*values)
+                if isawaitable(result):
+                    result = await result
             yield result
 
-    def open_sync(self, ctx: Context) -> Generator[T_co | Sentinel, None, None]:
+    def open(self, ctx: Context) -> Generator[T_co | Sentinel, None, None]:
         if self.mode is Mode.ASYNC:
             msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
             raise RuntimeError(msg)
@@ -173,7 +176,7 @@ class NAryScalar(Query[T_co | Sentinel], ABC):
         with ExitStack() as stack:
             values: list[Any] = []
             for child in self._children:
-                gen = stack.enter_context(closing(child.open_sync(ctx)))
+                gen = stack.enter_context(closing(child.open(ctx)))
                 try:
                     v = next(gen)
                 except StopIteration:
@@ -185,10 +188,20 @@ class NAryScalar(Query[T_co | Sentinel], ABC):
                 values.append(v)
             yield self.apply(*values)
 
-    @abstractmethod
     def apply(self, *values: Any) -> T_co | Sentinel:  # noqa: ANN401
-        """Apply the transformation to resolved values. Sync or async."""
-        ...
+        """Apply the transformation on resolved values (sync).
+
+        Override this OR `aapply` (for async-only subclasses).
+        """
+        msg = f"{type(self).__name__} has no apply; override apply or aapply"
+        raise NotImplementedError(msg)
+
+    async def aapply(self, *values: Any) -> T_co | Sentinel:  # noqa: ANN401
+        """Apply the transformation on resolved values (async).
+
+        Default delegates to `apply`. Override for async-only subclasses.
+        """
+        return self.apply(*values)
 
 
 # =============================================================================
@@ -212,10 +225,6 @@ class UnaryScalar(NAryScalar[T_co], ABC):
     def operand(self) -> Nu:
         return self._children[0]
 
-    @abstractmethod
-    def apply(self, operand: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
-        ...
-
 
 class BinaryScalar(NAryScalar[T_co], ABC):
     """Two operands. For: x + y, x > y, x and y, x[y], etc."""
@@ -237,10 +246,6 @@ class BinaryScalar(NAryScalar[T_co], ABC):
     def right(self) -> Nu:
         return self._children[1]
 
-    @abstractmethod
-    def apply(self, left: Any, right: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
-        ...
-
 
 class TernaryScalar(NAryScalar[T_co], ABC):
     """Three operands. Children accessed via self.children[0..2]."""
@@ -256,9 +261,6 @@ class TernaryScalar(NAryScalar[T_co], ABC):
         c0, c1, c2 = self._children
         return f"{self.__class__.__name__}({c0}, {c1}, {c2})"
 
-    @abstractmethod
-    def apply(self, a: Any, b: Any, c: Any) -> T_co | Sentinel:  # type: ignore[override]  # noqa: ANN401
-        ...
 
 
 # =============================================================================

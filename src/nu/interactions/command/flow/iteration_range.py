@@ -45,38 +45,38 @@ class ForRange(Flow):
             children.append(index)
         super().__init__(*children)
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         """Execute body for each i in range(start, stop, step)."""
-        start = await self.children[0].first(ctx)
-        stop = await self.children[1].first(ctx)
-        step = await self.children[2].first(ctx)
+        start = await self.children[0].afirst(ctx)
+        stop = await self.children[1].afirst(ctx)
+        step = await self.children[2].afirst(ctx)
         body = self.children[3]
 
         index_key: str | None = None
         if self._has_index:
-            index_key = await self.children[4].first(ctx)
+            index_key = await self.children[4].afirst(ctx)
 
         for i in range(start, stop, step):
             if index_key is not None:
                 ctx.attrs[index_key] = i
-            async with aclosing(body.open(ctx)) as gen:
+            async with aclosing(body.aopen(ctx)) as gen:
                 async for v in gen:
                     yield v
 
-    def open_sync(self, ctx: Context) -> Generator[Any, None, None]:
-        start = self.children[0].first_sync(ctx)
-        stop = self.children[1].first_sync(ctx)
-        step = self.children[2].first_sync(ctx)
+    def open(self, ctx: Context) -> Generator[Any, None, None]:
+        start = self.children[0].first(ctx)
+        stop = self.children[1].first(ctx)
+        step = self.children[2].first(ctx)
         body = self.children[3]
 
         index_key: str | None = None
         if self._has_index:
-            index_key = self.children[4].first_sync(ctx)
+            index_key = self.children[4].first(ctx)
 
         for i in range(start, stop, step):
             if index_key is not None:
                 ctx.attrs[index_key] = i
-            with closing(body.open_sync(ctx)) as gen:
+            with closing(body.open(ctx)) as gen:
                 yield from gen
 
 
@@ -106,7 +106,7 @@ class ForEach(Flow):
             children.append(index)
         super().__init__(*children)
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         """Execute body for each element of items."""
         body = self.children[1]
 
@@ -114,44 +114,44 @@ class ForEach(Flow):
         item_key: str | None = None
         index_key: str | None = None
         if self._has_item:
-            item_key = await self.children[child_idx].first(ctx)
+            item_key = await self.children[child_idx].afirst(ctx)
             child_idx += 1
         if self._has_index:
-            index_key = await self.children[child_idx].first(ctx)
+            index_key = await self.children[child_idx].afirst(ctx)
 
         # Keep items generator open across body iterations so any scope
         # opened by the items subtree (e.g. Snapshot) stays alive while
         # the body reads from its view.
-        async with aclosing(self.children[0].open(ctx)) as items_gen:
+        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
             async for items in items_gen:
                 for i, elem in enumerate(items):
                     if item_key is not None:
                         ctx.attrs[item_key] = elem
                     if index_key is not None:
                         ctx.attrs[index_key] = i
-                    async with aclosing(body.open(ctx)) as gen:
+                    async with aclosing(body.aopen(ctx)) as gen:
                         async for v in gen:
                             yield v
 
-    def open_sync(self, ctx: Context) -> Generator[Any, None, None]:
+    def open(self, ctx: Context) -> Generator[Any, None, None]:
         body = self.children[1]
 
         child_idx = 2
         item_key: str | None = None
         index_key: str | None = None
         if self._has_item:
-            item_key = self.children[child_idx].first_sync(ctx)
+            item_key = self.children[child_idx].first(ctx)
             child_idx += 1
         if self._has_index:
-            index_key = self.children[child_idx].first_sync(ctx)
+            index_key = self.children[child_idx].first(ctx)
 
-        with closing(self.children[0].open_sync(ctx)) as items_gen:
+        with closing(self.children[0].open(ctx)) as items_gen:
             for items in items_gen:
                 for i, elem in enumerate(items):
                     if item_key is not None:
                         ctx.attrs[item_key] = elem
                     if index_key is not None:
                         ctx.attrs[index_key] = i
-                    with closing(body.open_sync(ctx)) as gen:
+                    with closing(body.open(ctx)) as gen:
                         yield from gen
 

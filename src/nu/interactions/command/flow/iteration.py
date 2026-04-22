@@ -52,30 +52,30 @@ class Filter(Flow):
     ) -> None:
         super().__init__(items, condition, body, item)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         """Execute body for each item where condition holds."""
         condition = self.children[1]
         body = self.children[2]
-        item_key: str = await self.children[3].first(ctx)
+        item_key: str = await self.children[3].afirst(ctx)
 
-        async with aclosing(self.children[0].open(ctx)) as items_gen:
+        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
             async for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    if await condition.first(ctx):
-                        await body.execute(ctx)
+                    if await condition.afirst(ctx):
+                        await body.aexecute(ctx)
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         condition = self.children[1]
         body = self.children[2]
-        item_key: str = self.children[3].first_sync(ctx)
+        item_key: str = self.children[3].first(ctx)
 
-        with closing(self.children[0].open_sync(ctx)) as items_gen:
+        with closing(self.children[0].open(ctx)) as items_gen:
             for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    if condition.first_sync(ctx):
-                        body.execute_sync(ctx)
+                    if condition.first(ctx):
+                        body.execute(ctx)
 
 
 class Map(Flow):
@@ -96,31 +96,31 @@ class Map(Flow):
     ) -> None:
         super().__init__(items, transform, item, output)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         """Collect transform(item) for each item into output_key."""
         transform = self.children[1]
-        item_key: str = await self.children[2].first(ctx)
-        output_key: str = await self.children[3].first(ctx)
+        item_key: str = await self.children[2].afirst(ctx)
+        output_key: str = await self.children[3].afirst(ctx)
 
         results = []
-        async with aclosing(self.children[0].open(ctx)) as items_gen:
+        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
             async for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    results.append(await transform.first(ctx))
+                    results.append(await transform.afirst(ctx))
         ctx.attrs[output_key] = results
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         transform = self.children[1]
-        item_key: str = self.children[2].first_sync(ctx)
-        output_key: str = self.children[3].first_sync(ctx)
+        item_key: str = self.children[2].first(ctx)
+        output_key: str = self.children[3].first(ctx)
 
         results = []
-        with closing(self.children[0].open_sync(ctx)) as items_gen:
+        with closing(self.children[0].open(ctx)) as items_gen:
             for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    results.append(transform.first_sync(ctx))
+                    results.append(transform.first(ctx))
         ctx.attrs[output_key] = results
 
 
@@ -140,32 +140,32 @@ class TakeWhile(Flow):
     ) -> None:
         super().__init__(items, condition, body, item)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         """Execute body while condition holds; stop on first false."""
         condition = self.children[1]
         body = self.children[2]
-        item_key: str = await self.children[3].first(ctx)
+        item_key: str = await self.children[3].afirst(ctx)
 
-        async with aclosing(self.children[0].open(ctx)) as items_gen:
+        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
             async for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    if not await condition.first(ctx):
+                    if not await condition.afirst(ctx):
                         return
-                    await body.execute(ctx)
+                    await body.aexecute(ctx)
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         condition = self.children[1]
         body = self.children[2]
-        item_key: str = self.children[3].first_sync(ctx)
+        item_key: str = self.children[3].first(ctx)
 
-        with closing(self.children[0].open_sync(ctx)) as items_gen:
+        with closing(self.children[0].open(ctx)) as items_gen:
             for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    if not condition.first_sync(ctx):
+                    if not condition.first(ctx):
                         return
-                    body.execute_sync(ctx)
+                    body.execute(ctx)
 
 
 class UniqueDo(Flow):
@@ -184,36 +184,36 @@ class UniqueDo(Flow):
     ) -> None:
         super().__init__(items, key, body, item)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         """Execute body for each item whose key has not been seen."""
         key_expr = self.children[1]
         body = self.children[2]
-        item_key: str = await self.children[3].first(ctx)
+        item_key: str = await self.children[3].afirst(ctx)
 
         seen: set = set()
-        async with aclosing(self.children[0].open(ctx)) as items_gen:
+        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
             async for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    k = await key_expr.first(ctx)
+                    k = await key_expr.afirst(ctx)
                     if k not in seen:
                         seen.add(k)
-                        await body.execute(ctx)
+                        await body.aexecute(ctx)
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         key_expr = self.children[1]
         body = self.children[2]
-        item_key: str = self.children[3].first_sync(ctx)
+        item_key: str = self.children[3].first(ctx)
 
         seen: set = set()
-        with closing(self.children[0].open_sync(ctx)) as items_gen:
+        with closing(self.children[0].open(ctx)) as items_gen:
             for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    k = key_expr.first_sync(ctx)
+                    k = key_expr.first(ctx)
                     if k not in seen:
                         seen.add(k)
-                        body.execute_sync(ctx)
+                        body.execute(ctx)
 
 
 class Find(Flow):
@@ -235,30 +235,30 @@ class Find(Flow):
     ) -> None:
         super().__init__(items, condition, item, output)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         """Store the first matching element in output_key."""
         condition = self.children[1]
-        item_key: str = await self.children[2].first(ctx)
-        output_key: str = await self.children[3].first(ctx)
+        item_key: str = await self.children[2].afirst(ctx)
+        output_key: str = await self.children[3].afirst(ctx)
 
-        async with aclosing(self.children[0].open(ctx)) as items_gen:
+        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
             async for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    if await condition.first(ctx):
+                    if await condition.afirst(ctx):
                         ctx.attrs[output_key] = elem
                         return
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         condition = self.children[1]
-        item_key: str = self.children[2].first_sync(ctx)
-        output_key: str = self.children[3].first_sync(ctx)
+        item_key: str = self.children[2].first(ctx)
+        output_key: str = self.children[3].first(ctx)
 
-        with closing(self.children[0].open_sync(ctx)) as items_gen:
+        with closing(self.children[0].open(ctx)) as items_gen:
             for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    if condition.first_sync(ctx):
+                    if condition.first(ctx):
                         ctx.attrs[output_key] = elem
                         return
 
@@ -282,30 +282,30 @@ class FindIndex(Flow):
     ) -> None:
         super().__init__(items, condition, item, output)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         """Store the index of the first matching element in output_key."""
         condition = self.children[1]
-        item_key: str = await self.children[2].first(ctx)
-        output_key: str = await self.children[3].first(ctx)
+        item_key: str = await self.children[2].afirst(ctx)
+        output_key: str = await self.children[3].afirst(ctx)
 
-        async with aclosing(self.children[0].open(ctx)) as items_gen:
+        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
             async for items in items_gen:
                 for i, elem in enumerate(items):
                     ctx.attrs[item_key] = elem
-                    if await condition.first(ctx):
+                    if await condition.afirst(ctx):
                         ctx.attrs[output_key] = i
                         return
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         condition = self.children[1]
-        item_key: str = self.children[2].first_sync(ctx)
-        output_key: str = self.children[3].first_sync(ctx)
+        item_key: str = self.children[2].first(ctx)
+        output_key: str = self.children[3].first(ctx)
 
-        with closing(self.children[0].open_sync(ctx)) as items_gen:
+        with closing(self.children[0].open(ctx)) as items_gen:
             for items in items_gen:
                 for i, elem in enumerate(items):
                     ctx.attrs[item_key] = elem
-                    if condition.first_sync(ctx):
+                    if condition.first(ctx):
                         ctx.attrs[output_key] = i
                         return
 
@@ -330,44 +330,44 @@ class GroupBy(Flow):
     ) -> None:
         super().__init__(items, key, body, item, group)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         """Group items by key, execute body once per group."""
         key_expr = self.children[1]
         body = self.children[2]
-        item_key: str = await self.children[3].first(ctx)
-        group_key: str = await self.children[4].first(ctx)
+        item_key: str = await self.children[3].afirst(ctx)
+        group_key: str = await self.children[4].afirst(ctx)
 
         groups: dict = {}
-        async with aclosing(self.children[0].open(ctx)) as items_gen:
+        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
             async for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    k = await key_expr.first(ctx)
+                    k = await key_expr.afirst(ctx)
                     groups.setdefault(k, []).append(elem)
 
         for k, group_items in groups.items():
             ctx.attrs[item_key] = k
             ctx.attrs[group_key] = group_items
-            await body.execute(ctx)
+            await body.aexecute(ctx)
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         key_expr = self.children[1]
         body = self.children[2]
-        item_key: str = self.children[3].first_sync(ctx)
-        group_key: str = self.children[4].first_sync(ctx)
+        item_key: str = self.children[3].first(ctx)
+        group_key: str = self.children[4].first(ctx)
 
         groups: dict = {}
-        with closing(self.children[0].open_sync(ctx)) as items_gen:
+        with closing(self.children[0].open(ctx)) as items_gen:
             for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    k = key_expr.first_sync(ctx)
+                    k = key_expr.first(ctx)
                     groups.setdefault(k, []).append(elem)
 
         for k, group_items in groups.items():
             ctx.attrs[item_key] = k
             ctx.attrs[group_key] = group_items
-            body.execute_sync(ctx)
+            body.execute(ctx)
 
 
 class Partition(Flow):
@@ -390,39 +390,39 @@ class Partition(Flow):
     ) -> None:
         super().__init__(items, condition, item, matches, rest)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         """Split items into matches/rest by condition."""
         condition = self.children[1]
-        item_key: str = await self.children[2].first(ctx)
-        matches_key: str = await self.children[3].first(ctx)
-        rest_key: str = await self.children[4].first(ctx)
+        item_key: str = await self.children[2].afirst(ctx)
+        matches_key: str = await self.children[3].afirst(ctx)
+        rest_key: str = await self.children[4].afirst(ctx)
 
         matches_list: list = []
         rest_list: list = []
-        async with aclosing(self.children[0].open(ctx)) as items_gen:
+        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
             async for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    if await condition.first(ctx):
+                    if await condition.afirst(ctx):
                         matches_list.append(elem)
                     else:
                         rest_list.append(elem)
         ctx.attrs[matches_key] = matches_list
         ctx.attrs[rest_key] = rest_list
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         condition = self.children[1]
-        item_key: str = self.children[2].first_sync(ctx)
-        matches_key: str = self.children[3].first_sync(ctx)
-        rest_key: str = self.children[4].first_sync(ctx)
+        item_key: str = self.children[2].first(ctx)
+        matches_key: str = self.children[3].first(ctx)
+        rest_key: str = self.children[4].first(ctx)
 
         matches_list: list = []
         rest_list: list = []
-        with closing(self.children[0].open_sync(ctx)) as items_gen:
+        with closing(self.children[0].open(ctx)) as items_gen:
             for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    if condition.first_sync(ctx):
+                    if condition.first(ctx):
                         matches_list.append(elem)
                     else:
                         rest_list.append(elem)
@@ -449,35 +449,35 @@ class ToDict(Flow):
     ) -> None:
         super().__init__(items, key, value, item, output)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         """Build a dict from items via key and value expressions."""
         key_expr = self.children[1]
         value_expr = self.children[2]
-        item_key: str = await self.children[3].first(ctx)
-        output_key: str = await self.children[4].first(ctx)
+        item_key: str = await self.children[3].afirst(ctx)
+        output_key: str = await self.children[4].afirst(ctx)
 
         result: dict = {}
-        async with aclosing(self.children[0].open(ctx)) as items_gen:
+        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
             async for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    k = await key_expr.first(ctx)
-                    v = await value_expr.first(ctx)
+                    k = await key_expr.afirst(ctx)
+                    v = await value_expr.afirst(ctx)
                     result[k] = v
         ctx.attrs[output_key] = result
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         key_expr = self.children[1]
         value_expr = self.children[2]
-        item_key: str = self.children[3].first_sync(ctx)
-        output_key: str = self.children[4].first_sync(ctx)
+        item_key: str = self.children[3].first(ctx)
+        output_key: str = self.children[4].first(ctx)
 
         result: dict = {}
-        with closing(self.children[0].open_sync(ctx)) as items_gen:
+        with closing(self.children[0].open(ctx)) as items_gen:
             for items in items_gen:
                 for elem in items:
                     ctx.attrs[item_key] = elem
-                    k = key_expr.first_sync(ctx)
-                    v = value_expr.first_sync(ctx)
+                    k = key_expr.first(ctx)
+                    v = value_expr.first(ctx)
                     result[k] = v
         ctx.attrs[output_key] = result

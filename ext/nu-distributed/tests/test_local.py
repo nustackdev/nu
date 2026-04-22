@@ -36,7 +36,7 @@ async def test_local_basic():
     """Two workers, sequential writes."""
     async with Runtime() as rt:
         ctx = await local(rt, NavigatorSpec(), workers=2)
-        await _make_flow().execute(ctx)
+        await _make_flow().aexecute(ctx)
 
 
 @pytest.mark.asyncio
@@ -54,7 +54,7 @@ async def test_local_parallel():
     )
     async with Runtime() as rt:
         ctx = await local(rt, NavigatorSpec(), workers=2)
-        await flow.execute(ctx)
+        await flow.aexecute(ctx)
 
 
 @pytest.mark.asyncio
@@ -66,4 +66,4 @@ async def test_local_single_worker():
     )
     async with Runtime() as rt:
         ctx = await local(rt, NavigatorSpec(), workers=1)
-        await flow.execute(ctx)
+        await flow.aexecute(ctx)

@@ -33,41 +33,41 @@ __all__ = [
 class Ref(LValue[T_co | Sentinel], ABC):
     """Typed pointer to a location. Pure protocol.
 
-    - `resolve()` / `resolve_sync()` build identity/location.
-    - `fetch()` / `fetch_sync()` extract the value.
-    - `open()` / `open_sync()` are Nu evaluator primitives; yield the fetched value once.
+    - `aresolve()` / `resolve()` build identity/location.
+    - `afetch()` / `fetch()` extract the value.
+    - `aopen()` / `open()` are Nu evaluator primitives; yield the fetched value once.
     """
 
     @abstractmethod
-    async def resolve(self, ctx: Context) -> object:
+    async def aresolve(self, ctx: Context) -> object:
         """Build identity/location for this reference."""
         ...
 
     @abstractmethod
-    async def fetch(self, ctx: Context) -> T_co | Sentinel:
+    async def afetch(self, ctx: Context) -> T_co | Sentinel:
         """Extract value from this location."""
         ...
 
-    def resolve_sync(self, ctx: Context) -> object:
+    def resolve(self, ctx: Context) -> object:
         """Sync counterpart of resolve. Override for SYNC / BOTH Refs."""
         msg = f"{type(self).__name__} has no sync resolve; ASYNC-only Ref"
         raise RuntimeError(msg)
 
-    def fetch_sync(self, ctx: Context) -> T_co | Sentinel:
+    def fetch(self, ctx: Context) -> T_co | Sentinel:
         """Sync counterpart of fetch. Override for SYNC / BOTH Refs."""
         msg = f"{type(self).__name__} has no sync fetch; ASYNC-only Ref"
         raise RuntimeError(msg)
 
-    async def open(self, ctx: Context) -> AsyncGenerator[T_co | Sentinel, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[T_co | Sentinel, None]:
         """Yield the fetched value once."""
-        yield await self.fetch(ctx)
+        yield await self.afetch(ctx)
 
-    def open_sync(self, ctx: Context) -> Generator[T_co | Sentinel, None, None]:
+    def open(self, ctx: Context) -> Generator[T_co | Sentinel, None, None]:
         """Yield the fetched value once (sync)."""
         if self.mode is Mode.ASYNC:
             msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
             raise RuntimeError(msg)
-        yield self.fetch_sync(ctx)
+        yield self.fetch(ctx)
 
     @property
     def is_self_pure(self) -> bool:

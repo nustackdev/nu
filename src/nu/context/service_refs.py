@@ -25,7 +25,7 @@ class ServiceRef[T](Ref[T]):
 
     Usage:
         ref = ServiceRef(SolanaRpc)
-        val = await ref.fetch(ctx)  # -> ctx[SolanaRpc]
+        val = await ref.afetch(ctx)  # -> ctx[SolanaRpc]
     """
 
     def __init__(self, service_type: type[T] | None = None) -> None:
@@ -44,20 +44,20 @@ class ServiceRef[T](Ref[T]):
         """The service type tag for context lookup."""
         return self._service_type
 
-    async def resolve(self, ctx: Context) -> type:
+    async def aresolve(self, ctx: Context) -> type:
         """Resolve to the service type."""
         return self._service_type
 
-    def resolve_sync(self, ctx: Context) -> type:
-        """Sync counterpart of `resolve`."""
+    def resolve(self, ctx: Context) -> type:
+        """Sync counterpart of `aresolve`."""
         return self._service_type
 
-    async def fetch(self, ctx: Context) -> T | Sentinel:
+    async def afetch(self, ctx: Context) -> T | Sentinel:
         """Fetch service directly from context bindings."""
         return ctx.get(self._service_type)
 
-    def fetch_sync(self, ctx: Context) -> T | Sentinel:
-        """Sync counterpart of `fetch`."""
+    def fetch(self, ctx: Context) -> T | Sentinel:
+        """Sync counterpart of `afetch`."""
         return ctx.get(self._service_type)
 
     def exists(self) -> BoolI:

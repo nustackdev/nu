@@ -36,20 +36,20 @@ class Print(Atomic):
     def __init__(self, *values: Arg) -> None:
         super().__init__(STDOUT, *values)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         from nu.stdio.ops import _get_stream
 
         stream = _get_stream(ctx, self.children[0])
         parts = []
         for child in self.children[1:]:
-            parts.append(str(await child.collect(ctx)))
+            parts.append(str(await child.acollect(ctx)))
         stream.write(" ".join(parts) + "\n")
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         from nu.stdio.ops import _get_stream
 
         stream = _get_stream(ctx, self.children[0])
-        parts = [str(c.collect_sync(ctx)) for c in self.children[1:]]
+        parts = [str(c.collect(ctx)) for c in self.children[1:]]
         stream.write(" ".join(parts) + "\n")
 
 
@@ -71,19 +71,19 @@ class Log(Atomic):
         super().__init__(STDERR, level, logger_name, message, *values)
         self._path = ""
 
-    async def run(self, ctx: Context) -> None:
-        level = await self.children[1].first(ctx)
-        logger_name = await self.children[2].first(ctx)
-        parts = [str(await c.collect(ctx)) for c in self.children[3:]]
+    async def arun(self, ctx: Context) -> None:
+        level = await self.children[1].afirst(ctx)
+        logger_name = await self.children[2].afirst(ctx)
+        parts = [str(await c.acollect(ctx)) for c in self.children[3:]]
         message = " ".join(parts)
         if self._path:
             message = f"[{self._path}] {message}"
         getattr(logging.getLogger(logger_name), level)(message)
 
-    def run_sync(self, ctx: Context) -> None:
-        level = self.children[1].first_sync(ctx)
-        logger_name = self.children[2].first_sync(ctx)
-        parts = [str(c.collect_sync(ctx)) for c in self.children[3:]]
+    def run(self, ctx: Context) -> None:
+        level = self.children[1].first(ctx)
+        logger_name = self.children[2].first(ctx)
+        parts = [str(c.collect(ctx)) for c in self.children[3:]]
         message = " ".join(parts)
         if self._path:
             message = f"[{self._path}] {message}"
@@ -106,30 +106,30 @@ class Debug(Atomic):
     ) -> None:
         super().__init__(STDOUT, prefix, labels, *values)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         from nu.stdio.ops import _get_stream
 
         stream = _get_stream(ctx, self.children[0])
-        prefix = await self.children[1].first(ctx)
-        labels = await self.children[2].first(ctx)
+        prefix = await self.children[1].afirst(ctx)
+        labels = await self.children[2].afirst(ctx)
         parts = [str(prefix)]
         for i, child in enumerate(self.children[3:]):
-            val = await child.collect(ctx)
+            val = await child.acollect(ctx)
             if labels and i < len(labels):
                 parts.append(f"{labels[i]}={val!r}")
             else:
                 parts.append(repr(val))
         stream.write(" ".join(parts) + "\n")
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         from nu.stdio.ops import _get_stream
 
         stream = _get_stream(ctx, self.children[0])
-        prefix = self.children[1].first_sync(ctx)
-        labels = self.children[2].first_sync(ctx)
+        prefix = self.children[1].first(ctx)
+        labels = self.children[2].first(ctx)
         parts = [str(prefix)]
         for i, child in enumerate(self.children[3:]):
-            val = child.collect_sync(ctx)
+            val = child.collect(ctx)
             if labels and i < len(labels):
                 parts.append(f"{labels[i]}={val!r}")
             else:

@@ -99,7 +99,7 @@ class RayWorker(RayActor):
     """Hosts a Worker on a Ray node via WorkerProcess.
 
     Inherits lifecycle from RayActor, adds execute() for tree dispatch.
-    Bound to Context for Teleport: ctx[Worker, idx].execute(tree).
+    Bound to Context for Teleport: ctx[Worker, idx].aexecute(tree).
     """
 
     spec: RayWorkerSpec
@@ -112,9 +112,9 @@ class RayWorker(RayActor):
         await self._process.start.remote(self.spec.inner_spec)
         self._address = None
 
-    async def execute(self, tree: object) -> object:
+    async def aexecute(self, tree: object) -> object:
         """Dispatch tree execution to the remote WorkerProcess."""
-        return await self._process.execute.remote(tree)
+        return await self._process.aexecute.remote(tree)
 
 
 # ============================================================================

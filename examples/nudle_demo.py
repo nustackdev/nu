@@ -43,7 +43,7 @@ async def main() -> None:
             >> nu.Print("value:", Counter.value, "step:", Counter.step)
         )
 
-        await nv.auto_atomic(app).execute(ctx)
+        await nv.auto_atomic(app).aexecute(ctx)
 
         await nudle.arun_ui(Counter, nav.storage, port=8001)
 

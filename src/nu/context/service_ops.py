@@ -25,12 +25,12 @@ class ServiceGetOp[T](Query[T | Sentinel]):
         """Initialize with ref."""
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> T | Sentinel:
+    async def arun(self, ctx: Context) -> T | Sentinel:
         """Return service bound in ctx for the ref's service_type."""
         return ctx[self.children[0].service_type]
 
-    def run_sync(self, ctx: Context) -> T | Sentinel:
-        """Sync counterpart of `run`."""
+    def run(self, ctx: Context) -> T | Sentinel:
+        """Sync counterpart of `arun`."""
         return ctx[self.children[0].service_type]
 
 
@@ -41,10 +41,10 @@ class ServiceExistsOp(Query[bool]):
         """Initialize with ref."""
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> bool:
+    async def arun(self, ctx: Context) -> bool:
         """Return True if the ref's service_type is bound in ctx."""
         return self.children[0].service_type in ctx
 
-    def run_sync(self, ctx: Context) -> bool:
-        """Sync counterpart of `run`."""
+    def run(self, ctx: Context) -> bool:
+        """Sync counterpart of `arun`."""
         return self.children[0].service_type in ctx

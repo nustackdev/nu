@@ -43,15 +43,15 @@ class StdioRef(Ref[IO]):
         """Stream name: 'stdout', 'stderr', or 'stdin'."""
         return self._name
 
-    async def resolve(self, ctx: Context) -> str:
+    async def aresolve(self, ctx: Context) -> str:
         """Resolve to stream name."""
         return self._name
 
-    def resolve_sync(self, ctx: Context) -> str:
-        """Sync counterpart of `resolve`."""
+    def resolve(self, ctx: Context) -> str:
+        """Sync counterpart of `aresolve`."""
         return self._name
 
-    async def fetch(self, ctx: Context) -> IO:
+    async def afetch(self, ctx: Context) -> IO:
         """Fetch the stream handle.
 
         If StdioBackend is bound in Context, uses it.
@@ -63,8 +63,8 @@ class StdioRef(Ref[IO]):
             return ctx.get(StdioBackend).stream_for(self)
         return getattr(sys, self._name)
 
-    def fetch_sync(self, ctx: Context) -> IO:
-        """Sync counterpart of `fetch`."""
+    def fetch(self, ctx: Context) -> IO:
+        """Sync counterpart of `afetch`."""
         from .backend import StdioBackend
 
         if ctx.has(StdioBackend):

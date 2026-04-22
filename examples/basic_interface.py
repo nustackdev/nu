@@ -19,44 +19,44 @@ async def main():
     expr = (x + y) * 2
     print("Tree: (5 + 3) * 2")
     print(render_nu(expr))
-    print(f"= {await expr.execute(ctx)}\n")
+    print(f"= {await expr.aexecute(ctx)}\n")
 
     # --- Int/float promotion ---
     half = IntI(10) / 3
-    print(f"10 / 3 = {await half.execute(ctx)}")
+    print(f"10 / 3 = {await half.aexecute(ctx)}")
     print(f"  type: {type(half).__name__}\n")  # FloatI
 
     # --- Chained arithmetic ---
     chain = ((IntI(100) - 20) * 3 + 7) % 11
-    print(f"((100 - 20) * 3 + 7) % 11 = {await chain.execute(ctx)}\n")
+    print(f"((100 - 20) * 3 + 7) % 11 = {await chain.aexecute(ctx)}\n")
 
     # --- Strings ---
     greeting = StrI("hello") + " " + StrI("world")
-    print(f"'hello' + ' ' + 'world' = {await greeting.execute(ctx)}")
+    print(f"'hello' + ' ' + 'world' = {await greeting.aexecute(ctx)}")
 
     loud = StrI("whisper").upper()
-    print(f"'whisper'.upper() = {await loud.execute(ctx)}\n")
+    print(f"'whisper'.upper() = {await loud.aexecute(ctx)}\n")
 
     # --- Comparisons return BoolI ---
     cmp = IntI(42) > 10
-    print(f"42 > 10 = {await cmp.execute(ctx)}")
+    print(f"42 > 10 = {await cmp.aexecute(ctx)}")
     print(f"  type: {type(cmp).__name__}")  # BoolI
 
     eq = StrI("abc").eq("abc")
-    print(f"'abc'.eq('abc') = {await eq.execute(ctx)}\n")
+    print(f"'abc'.eq('abc') = {await eq.aexecute(ctx)}\n")
 
     # --- Logical ---
     both = BoolI(True).and_(BoolI(False))
-    print(f"True AND False = {await both.execute(ctx)}")
+    print(f"True AND False = {await both.aexecute(ctx)}")
 
     either = (IntI(5) > 10).or_(IntI(3) < 7)
-    print(f"(5 > 10) OR (3 < 7) = {await either.execute(ctx)}\n")
+    print(f"(5 > 10) OR (3 < 7) = {await either.aexecute(ctx)}\n")
 
     # --- Tree inspection ---
     tree = (IntI(2) ** 10) > 1000
     print("Tree: (2 ** 10) > 1000")
     print(render_nu(tree))
-    print(f"= {await tree.execute(ctx)}")
+    print(f"= {await tree.aexecute(ctx)}")
 
 
 asyncio.run(main())

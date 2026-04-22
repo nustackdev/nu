@@ -35,7 +35,7 @@ class StubNu(Nu):
         super().__init__(*children)
         self._label = label
 
-    async def open(self, ctx: Context) -> AsyncGenerator[object, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[object, None]:
         yield self._label
 
     def __repr__(self) -> str:
@@ -63,7 +63,7 @@ class FailingNu(Nu):
         self._exc = exc
         self._msg = msg
 
-    async def open(self, ctx: Context) -> AsyncGenerator[object, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[object, None]:
         raise self._exc(self._msg)
         yield  # unreachable; marks this as a generator
 

@@ -116,19 +116,19 @@ def test_nary_variable_children():
 
 
 async def test_unary_execute(ctx):
-    assert await _NegOp(5).first(ctx) == -5
+    assert await _NegOp(5).afirst(ctx) == -5
 
 
 async def test_binary_execute(ctx):
-    assert await _AddOp(3, 4).first(ctx) == 7
+    assert await _AddOp(3, 4).afirst(ctx) == 7
 
 
 async def test_ternary_execute(ctx):
-    assert await _ClampOp(10, 0, 5).first(ctx) == 5
+    assert await _ClampOp(10, 0, 5).afirst(ctx) == 5
 
 
 async def test_nary_execute(ctx):
-    assert await _SumOp(1, 2, 3, 4).first(ctx) == 10
+    assert await _SumOp(1, 2, 3, 4).afirst(ctx) == 10
 
 
 # ---------------------------------------------------------------------------

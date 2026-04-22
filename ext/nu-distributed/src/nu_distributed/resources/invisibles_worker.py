@@ -94,9 +94,9 @@ class _ExecutionService:
         await self._runtime.__aenter__()
         self._worker = await self._runtime.create(worker_spec)
 
-    def execute(self, tree: object) -> object:
+    def aexecute(self, tree: object) -> object:
         """Execute tree against worker's Context. Sync wrapper."""
-        future = asyncio.run_coroutine_threadsafe(self._worker.execute(tree), self._loop)
+        future = asyncio.run_coroutine_threadsafe(self._worker.aexecute(tree), self._loop)
         return future.result()
 
     def shutdown(self) -> None:
@@ -301,7 +301,7 @@ class InvisiblesWorker(Resource):
         if self.spec.bg_serve:
             self._bg_serve = BgServingThread(self._connection)
 
-    async def execute(self, tree: object) -> object:
+    async def aexecute(self, tree: object) -> object:
         """Send tree to remote worker for execution. 1 RPC.
 
         The underlying invisibles call is synchronous; run it in a thread so
@@ -310,7 +310,7 @@ class InvisiblesWorker(Resource):
         """
         import asyncio
 
-        return await asyncio.to_thread(self._remote.execute, tree)
+        return await asyncio.to_thread(self._remote.aexecute, tree)
 
     async def cleanup(self) -> None:
         """Close connection."""

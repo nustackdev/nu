@@ -5,7 +5,7 @@ Same logic as item ops but distinct tree node types, so substrates
 can match on CollectionLoadOp vs ItemLoadOp for type-specific deformations
 (e.g. PV primitive optimizations only target Item* variants).
 
-READ ops go through ref.open (Snapshot wrapper).
+READ ops go through ref.aopen (Snapshot wrapper).
 WRITE ops use children[0] as Ref directly (inside Transaction wrapper).
 """
 
@@ -36,11 +36,11 @@ class CollectionLoadOp[T](Query[T | Sentinel]):
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> T | Sentinel:
-        return await self.children[0].first(ctx)
+    async def arun(self, ctx: Context) -> T | Sentinel:
+        return await self.children[0].afirst(ctx)
 
-    def run_sync(self, ctx: Context) -> T | Sentinel:
-        return self.children[0].first_sync(ctx)
+    def run(self, ctx: Context) -> T | Sentinel:
+        return self.children[0].first(ctx)
 
     def __repr__(self) -> str:
         return f"CollectionLoadOp({self.children[0]!r})"
@@ -55,8 +55,8 @@ class CollectionStoreCmd[T](Command):
     def __init__(self, ref: Ref, data: Nu[T | Sentinel]) -> None:
         super().__init__(ref, data)
 
-    async def run(self, ctx: Context) -> None:
-        data = await self.children[1].first(ctx)
+    async def arun(self, ctx: Context) -> None:
+        data = await self.children[1].afirst(ctx)
         if isinstance(data, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {data}")
         ref = self.children[0]
@@ -77,7 +77,7 @@ class CollectionEraseCmd(Command):
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         ref = self.children[0]
         parent = await ref.fetch_parent(ctx)
         address = await ref.resolve_address(ctx)
@@ -93,12 +93,12 @@ class CollectionExistsOp(Query[bool]):
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> bool:
-        val = await self.children[0].first(ctx)
+    async def arun(self, ctx: Context) -> bool:
+        val = await self.children[0].afirst(ctx)
         return not is_sentinel(val)
 
-    def run_sync(self, ctx: Context) -> bool:
-        val = self.children[0].first_sync(ctx)
+    def run(self, ctx: Context) -> bool:
+        val = self.children[0].first(ctx)
         return not is_sentinel(val)
 
     def __repr__(self) -> str:
@@ -111,12 +111,12 @@ class CollectionMissingOp(Query[bool]):
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> bool:
-        val = await self.children[0].first(ctx)
+    async def arun(self, ctx: Context) -> bool:
+        val = await self.children[0].afirst(ctx)
         return is_sentinel(val)
 
-    def run_sync(self, ctx: Context) -> bool:
-        val = self.children[0].first_sync(ctx)
+    def run(self, ctx: Context) -> bool:
+        val = self.children[0].first(ctx)
         return is_sentinel(val)
 
     def __repr__(self) -> str:

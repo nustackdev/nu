@@ -165,7 +165,7 @@ class Ref[T](RefABC[T]):
         """
         addr = self.address
         if isinstance(addr, Nu):
-            return await addr.first(ctx)
+            return await addr.afirst(ctx)
         return addr
 
     def get_path_segments(self) -> list[Ref]:
@@ -204,7 +204,7 @@ class Ref[T](RefABC[T]):
         ...
 
     @abstractmethod
-    async def resolve(self, ctx: Context) -> Iterable:
+    async def aresolve(self, ctx: Context) -> Iterable:
         """Resolve returns an iterable identifier (full chain of parents + self).
 
         Args:
@@ -245,7 +245,7 @@ class Ref[T](RefABC[T]):
     def coerce(self, raw: object) -> object:
         """Convert raw storage value to domain type.
 
-        Called by substrate ``fetch()`` after reading the raw value.
+        Called by substrate ``afetch()`` after reading the raw value.
         Default is identity (return as-is). Override in custom types
         to convert storage representation to domain objects.
 

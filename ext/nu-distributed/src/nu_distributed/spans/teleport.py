@@ -63,7 +63,7 @@ class Teleport(Query[object]):
         self._worker_tag = worker
         self._carry = carry
 
-    async def run(self, ctx: Context) -> object:
+    async def arun(self, ctx: Context) -> object:
         """Execute children on the target worker."""
         from nu import Nu
 
@@ -79,7 +79,7 @@ class Teleport(Query[object]):
 
         if self._carry:
             return await self._execute_with_carry(ctx, worker, subtree)
-        return await worker.execute(subtree)
+        return await worker.aexecute(subtree)
 
     async def _execute_with_carry(
         self,
@@ -93,7 +93,7 @@ class Teleport(Query[object]):
         carried = parent_ctx.attrs.copy()
         for key, value in carried.items():
             worker_ctx.attrs[key] = value
-        values = await subtree.collect(worker_ctx)
+        values = await subtree.acollect(worker_ctx)
         return values[-1] if values else None
 
     def __repr__(self) -> str:

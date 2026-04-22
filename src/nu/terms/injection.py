@@ -62,7 +62,7 @@ class FuncCall[T](NAryScalar[T | Sentinel]):
         self._func = func
         self._kwarg_keys = tuple(kwargs.keys())
 
-    async def apply(self, *values: Any) -> T | Sentinel:  # type: ignore[override]
+    async def aapply(self, *values: Any) -> T | Sentinel:  # type: ignore[override]
         num_kwargs = len(self._kwarg_keys)
         if num_kwargs:
             pos_args = values[:-num_kwargs]
@@ -72,7 +72,6 @@ class FuncCall[T](NAryScalar[T | Sentinel]):
             kw_args = {}
 
         result = self._func(*pos_args, **kw_args)
-        # NAryScalar.open awaits results if awaitable; returning an awaitable is fine.
         return await result if hasattr(result, "__await__") else result
 
     def __repr__(self) -> str:
@@ -118,7 +117,7 @@ class MethodCall[T](NAryScalar[T | Sentinel]):
         self._method_name = method_name
         self._kwarg_keys = tuple(kwargs.keys())
 
-    async def apply(self, *values: Any) -> T | Sentinel:  # type: ignore[override]
+    async def aapply(self, *values: Any) -> T | Sentinel:  # type: ignore[override]
         target = values[0]
         remaining = values[1:]
 

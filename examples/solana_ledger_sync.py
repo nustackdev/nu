@@ -133,10 +133,10 @@ class SolanaRpc:
 class SolanaRef(nu.Ref[SolanaRpc]):
     """Ref that resolves SolanaRpc from Context. method() descriptors create lazy terms."""
 
-    async def resolve(self, ctx: nu.Context) -> str:
+    async def aresolve(self, ctx: nu.Context) -> str:
         return "solana_rpc"
 
-    async def fetch(self, ctx: nu.Context) -> SolanaRpc:
+    async def afetch(self, ctx: nu.Context) -> SolanaRpc:
         return ctx.get(SolanaRpc)
 
     get_slot = nu.method(nu.IntI, "get_slot")
@@ -363,7 +363,7 @@ async def main() -> None:
             print(nu_inspect.render_nu(app))
 
             # Execute the app
-            await app.execute(ctx)
+            await app.aexecute(ctx)
 
 
 if __name__ == "__main__":

@@ -50,6 +50,6 @@ class RayProcess(_ProcessBase):
 class WorkerProcess(_ProcessBase):
     """Everybase worker Ray actor. Inherits lifecycle, adds tree execution."""
 
-    async def execute(self, tree: object) -> object:
+    async def aexecute(self, tree: object) -> object:
         """Execute an everybase tree against this worker's Context."""
-        return await self._resource.execute(tree)
+        return await self._resource.aexecute(tree)

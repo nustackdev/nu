@@ -145,30 +145,30 @@ class _TestAddOp(BinaryScalar[int]):
 
 
 class TestNAryOpSentinelPropagation:
-    """NAryScalar.execute intercepts sentinels before apply."""
+    """NAryScalar.aexecute intercepts sentinels before apply."""
 
     def setup_method(self):
         _TestAddOp.apply_called = False
 
     async def test_clean_operands_calls_apply(self, ctx):
-        result = await _TestAddOp(Literal(3), Literal(4)).first(ctx)
+        result = await _TestAddOp(Literal(3), Literal(4)).afirst(ctx)
         assert result == 7
         assert _TestAddOp.apply_called is True
 
     async def test_empty_operand_returns_invalid(self, ctx):
         """EMPTY child -> INVALID result, apply never called."""
-        result = await _TestAddOp(Literal(EMPTY), Literal(4)).first(ctx)
+        result = await _TestAddOp(Literal(EMPTY), Literal(4)).afirst(ctx)
         assert is_invalid(result)
         assert _TestAddOp.apply_called is False
 
     async def test_invalid_operand_returns_invalid(self, ctx):
         """INVALID child -> INVALID result, apply never called."""
-        result = await _TestAddOp(Literal(3), Literal(INVALID)).first(ctx)
+        result = await _TestAddOp(Literal(3), Literal(INVALID)).afirst(ctx)
         assert is_invalid(result)
         assert _TestAddOp.apply_called is False
 
     async def test_both_sentinels_returns_invalid(self, ctx):
-        result = await _TestAddOp(Literal(EMPTY), Literal(INVALID)).first(ctx)
+        result = await _TestAddOp(Literal(EMPTY), Literal(INVALID)).afirst(ctx)
         assert is_invalid(result)
         assert _TestAddOp.apply_called is False
 
@@ -176,5 +176,5 @@ class TestNAryOpSentinelPropagation:
         """Sentinel propagates through nested ops."""
         inner = _TestAddOp(Literal(EMPTY), Literal(1))
         outer = _TestAddOp(inner, Literal(2))
-        result = await outer.first(ctx)
+        result = await outer.afirst(ctx)
         assert is_invalid(result)

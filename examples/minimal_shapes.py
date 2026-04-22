@@ -19,17 +19,17 @@ class Counter(nu.Shape):
 # --- bind a fresh dict as the substrate and run one write ---
 data: dict = {}
 ctx = nu.Context().bind(dict, data, Counter)
-asyncio.run(Counter.value.store(7).execute(ctx))
+asyncio.run(Counter.value.store(7).aexecute(ctx))
 print(data)  # {'value': 7}
 
 
 # --- read back through the ref; first() drains the open generator ---
-print(asyncio.run(Counter.value.first(ctx)))  # 7
+print(asyncio.run(Counter.value.afirst(ctx)))  # 7
 
 
 # --- inc compiles to store(self + step); chain writes with >> ---
 app = Counter.value.inc() >> Counter.value.inc() >> Counter.value.inc(10)
-asyncio.run(app.execute(ctx))
+asyncio.run(app.aexecute(ctx))
 print(data["value"])  # 19
 
 
@@ -37,7 +37,7 @@ print(data["value"])  # 19
 data2: dict = {}
 ctx2 = nu.Context().bind(dict, data2, Counter)
 init = nu.If(Counter.value.missing(), Counter.value.store(0))
-asyncio.run((init >> Counter.value.inc()).execute(ctx2))
+asyncio.run((init >> Counter.value.inc()).aexecute(ctx2))
 print(data2["value"])  # 1
 
 
@@ -53,12 +53,12 @@ uctx = nu.Context().bind(dict, udata, User)
 setup = (
     User.name.store("mir") >> User.age.store(0) >> User.age.inc(30) >> User.tags.store(["ai", "nu"])
 )
-asyncio.run(setup.execute(uctx))
+asyncio.run(setup.aexecute(uctx))
 print(udata)  # {'name': 'mir', 'age': 30, 'tags': ['ai', 'nu']}
 
 
 # --- expressions over refs: arithmetic flows through store ---
-asyncio.run(User.age.store(User.age * 2).execute(uctx))
+asyncio.run(User.age.store(User.age * 2).aexecute(uctx))
 print(udata["age"])  # 60
 
 
@@ -77,4 +77,4 @@ app = (
     >> Score.hits.inc()
     >> nu.Print("score:", Score.total, "hits:", Score.hits)
 )
-asyncio.run(app.execute(sctx))
+asyncio.run(app.aexecute(sctx))

@@ -157,13 +157,13 @@ class Shape(metaclass=ShapeMeta):
     # Type stubs for Ref methods. At runtime, shape refs (ShapeRef[T])
     # provide these — but since __getitem__ returns T (type lie for slot
     # navigation), Shape needs the signatures so Pyright can resolve
-    # Market.orders[0].execute(ctx) etc.
-    # TODO task-079: `execute` as a method is gone; use `nu.eval.first(ref, ctx)`
-    # or `await ref.fetch(ctx)`. Keeping the stub for now since pyright references
+    # Market.orders[0].aexecute(ctx) etc.
+    # TODO task-079: `aexecute` as a method is gone; use `nu.eval.afirst(ref, ctx)`
+    # or `await ref.afetch(ctx)`. Keeping the stub for now since pyright references
     # across the codebase haven't been migrated yet.
     if TYPE_CHECKING:
 
-        async def execute(self, ctx: Context) -> object | Sentinel:  # noqa: D102
+        async def aexecute(self, ctx: Context) -> object | Sentinel:  # noqa: D102
             ...
 
         def store(  # noqa: D102

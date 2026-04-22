@@ -49,7 +49,7 @@ async def main() -> None:
     print(render_nu(app))
 
     print("\n=== Running ===")
-    await app.execute(ctx)
+    await app.aexecute(ctx)
 
     print("\n=== Shape (after) ===")
     print(render_shape(Counter, data))

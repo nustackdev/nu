@@ -42,10 +42,10 @@ class Timed(Flow):
     def __init__(self, *children: Nu, label: StrArg = "Timed") -> None:
         super().__init__(label, *children)
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         if False:  # pragma: no cover
             yield
-        label = await self.children[0].first(ctx)
+        label = await self.children[0].afirst(ctx)
         timings: list[tuple[str, float]] = []
         for child in self.children[1:]:
             name = child.__class__.__name__
@@ -56,7 +56,7 @@ class Timed(Flow):
                 if len(r) < 60:
                     name = r
             t0 = time.perf_counter()
-            await child.execute(ctx)
+            await child.aexecute(ctx)
             elapsed = time.perf_counter() - t0
             timings.append((name, elapsed))
 
@@ -87,16 +87,16 @@ class Timeout(Flow):
             children.append(on_timeout)
         super().__init__(*children)
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         if False:  # pragma: no cover
             yield
-        timeout = await self.children[0].first(ctx)
+        timeout = await self.children[0].afirst(ctx)
         body = self.children[1]
         try:
-            await asyncio.wait_for(body.execute(ctx), timeout=timeout)
+            await asyncio.wait_for(body.aexecute(ctx), timeout=timeout)
         except TimeoutError:
             if self._has_on_timeout:
-                await self.children[2].execute(ctx)
+                await self.children[2].aexecute(ctx)
 
 
 class Throttle(Flow):
@@ -116,14 +116,14 @@ class Throttle(Flow):
         else:
             super().__init__(interval)
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        interval = await self.children[0].first(ctx)
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        interval = await self.children[0].afirst(ctx)
         now = time.monotonic()
         if now - self._last_time < interval:
             return  # drop
         self._last_time = now
         if self._child_count > 1:
-            async with aclosing(self.children[1].open(ctx)) as gen:
+            async with aclosing(self.children[1].aopen(ctx)) as gen:
                 async for v in gen:
                     yield v
 
@@ -146,10 +146,10 @@ class Debounce(Flow):
         else:
             super().__init__(delay)
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         if False:  # pragma: no cover
             yield
-        delay = await self.children[0].first(ctx)
+        delay = await self.children[0].afirst(ctx)
         if self._pending is not None and not self._pending.done():
             self._pending.cancel()
         if self._child_count > 1:
@@ -157,4 +157,4 @@ class Debounce(Flow):
 
     async def _run_after(self, delay: float, ctx: Context) -> None:
         await asyncio.sleep(delay)
-        await self.children[1].execute(ctx)
+        await self.children[1].aexecute(ctx)

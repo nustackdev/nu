@@ -178,7 +178,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
             return view.lazy  # type: ignore[return-value]
         return view
 
-    async def resolve(self, ctx: Context) -> path.PathToView:
+    async def aresolve(self, ctx: Context) -> path.PathToView:
         """Build path from parent chain ending at this view.
 
         Args:
@@ -196,7 +196,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         if parent is None:
             resolved_path = ((address, self._view_type),)
         else:
-            parent_path = await parent.resolve(ctx)
+            parent_path = await parent.aresolve(ctx)
             resolved_path = (*parent_path, (address, self._view_type))
 
         logger.debug(
@@ -216,7 +216,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         Returns:
             The parent view, or root view if this is a top-level ref.
         """
-        view_path = await self.resolve(ctx)
+        view_path = await self.aresolve(ctx)
         nav = _resolve_navigator(ctx, self._root_shape, view_path)
         storage_ctx = _resolve_ctx(ctx, self._root_shape, view_path)
 
@@ -226,7 +226,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         parent_path = view_path[:-1]
         return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
 
-    async def fetch(self, ctx: Context) -> ViewT | Sentinel:
+    async def afetch(self, ctx: Context) -> ViewT | Sentinel:
         """Fetch the view from virtuals storage.
 
         Navigates through Navigator for proxy-transparent resolution.
@@ -238,7 +238,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         Returns:
             The faceted view instance
         """
-        view_path = await self.resolve(ctx)
+        view_path = await self.aresolve(ctx)
         nav = _resolve_navigator(ctx, self._root_shape, view_path)
         storage_ctx = _resolve_ctx(ctx, self._root_shape, view_path)
 
@@ -282,7 +282,7 @@ class PrimitiveRef[T](Ref[T]):
     def _type_marker(self) -> type:
         return self._value_type
 
-    async def resolve(self, ctx: Context) -> path.PathToValue:
+    async def aresolve(self, ctx: Context) -> path.PathToValue:
         """Build path from parent chain ending at this value.
 
         Args:
@@ -300,7 +300,7 @@ class PrimitiveRef[T](Ref[T]):
         if parent is None:
             resolved_path = ((address, self._value_type),)
         else:
-            parent_path = await parent.resolve(ctx)
+            parent_path = await parent.aresolve(ctx)
             resolved_path = (*parent_path, (address, self._value_type))
 
         logger.debug(
@@ -326,7 +326,7 @@ class PrimitiveRef[T](Ref[T]):
         Returns:
             The parent view object
         """
-        value_path = await self.resolve(ctx)
+        value_path = await self.aresolve(ctx)
         nav = _resolve_navigator(ctx, self._root_shape, value_path)
         storage_ctx = _resolve_ctx(ctx, self._root_shape, value_path)
 
@@ -335,7 +335,7 @@ class PrimitiveRef[T](Ref[T]):
             return nav.root(storage_ctx)
         return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
 
-    async def fetch(self, ctx: Context) -> T | Sentinel:
+    async def afetch(self, ctx: Context) -> T | Sentinel:
         """Fetch the value from virtuals storage.
 
         Navigates through Navigator and reads the value.
@@ -347,7 +347,7 @@ class PrimitiveRef[T](Ref[T]):
         Returns:
             The value, or Empty if not found
         """
-        value_path = await self.resolve(ctx)
+        value_path = await self.aresolve(ctx)
         nav = _resolve_navigator(ctx, self._root_shape, value_path)
         storage_ctx = _resolve_ctx(ctx, self._root_shape, value_path)
 

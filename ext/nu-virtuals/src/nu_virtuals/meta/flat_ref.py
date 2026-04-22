@@ -63,7 +63,7 @@ class FlatRef(Ref):
     # Ref interface — what ops call
     # =========================================================================
 
-    async def resolve(self, ctx: Context) -> object:
+    async def aresolve(self, ctx: Context) -> object:
         """Build identity for this ref (path tuple)."""
         if self._dynamic_segments:
             return await self._build_path(ctx)
@@ -93,7 +93,7 @@ class FlatRef(Ref):
             parent_path = resolved[:-1]
             return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
 
-    async def fetch(self, ctx: Context) -> object | Sentinel:
+    async def afetch(self, ctx: Context) -> object | Sentinel:
         """Fetch value/view via Navigator."""
         from virtuals import Empty as StorageEmpty
         from virtuals.collections import Subscriptable
@@ -122,15 +122,15 @@ class FlatRef(Ref):
         except (KeyError, IndexError):
             return EMPTY
 
-    async def resolve(self, ctx: Context) -> tuple:
+    async def aresolve(self, ctx: Context) -> tuple:
         """Return full resolved path."""
         if self._dynamic_segments is None:
             return self._static_path
         return await self._build_path(ctx)
 
-    async def execute(self, ctx: Context) -> object | Sentinel:
+    async def aexecute(self, ctx: Context) -> object | Sentinel:
         """Nu interface — delegates to fetch."""
-        return await self.fetch(ctx)
+        return await self.afetch(ctx)
 
     def get_root_shape(self) -> type:
         """Return root shape for context lookup."""
@@ -175,7 +175,7 @@ class FlatRef(Ref):
             return self._static_path
         path_list = list(self._static_path)
         for idx, term in self._dynamic_segments:
-            addr = await term.first(ctx)
+            addr = await term.afirst(ctx)
             _old_addr, marker = path_list[idx]
             path_list[idx] = (addr, marker)
         return tuple(path_list)

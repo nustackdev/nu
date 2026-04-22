@@ -79,7 +79,7 @@ def portfolio_ctx(nav, tx):
 
 
 async def store(ref, value, ctx):
-    await ref.store(value).execute(ctx)
+    await ref.store(value).aexecute(ctx)
 
 
 # ============================================================================
@@ -164,35 +164,35 @@ class TestDictRefExecution:
     @pytest.mark.asyncio
     async def test_store_and_keys(self, portfolio_ctx):
         await store(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
-        result = await Portfolio.metadata.keys().execute(portfolio_ctx)
+        result = await Portfolio.metadata.keys().aexecute(portfolio_ctx)
         assert isinstance(result, KeysView)
         assert set(result) == {"strategy", "risk"}
 
     @pytest.mark.asyncio
     async def test_store_and_values(self, portfolio_ctx):
         await store(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
-        result = await Portfolio.metadata.values().execute(portfolio_ctx)
+        result = await Portfolio.metadata.values().aexecute(portfolio_ctx)
         assert isinstance(result, ValuesView)
         assert set(result) == {"momentum", "medium"}
 
     @pytest.mark.asyncio
     async def test_store_and_items(self, portfolio_ctx):
         await store(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
-        result = await Portfolio.metadata.items().execute(portfolio_ctx)
+        result = await Portfolio.metadata.items().aexecute(portfolio_ctx)
         assert isinstance(result, ItemsView)
         assert set(result) == {("strategy", "momentum"), ("risk", "medium")}
 
     @pytest.mark.asyncio
     async def test_get(self, portfolio_ctx):
         await store(Portfolio.metadata, {"key": "value"}, portfolio_ctx)
-        result = await Portfolio.metadata.get("key").execute(portfolio_ctx)
+        result = await Portfolio.metadata.get("key").aexecute(portfolio_ctx)
         assert result == "value"
 
     @pytest.mark.asyncio
     async def test_set_item(self, portfolio_ctx):
         await store(Portfolio.metadata, {}, portfolio_ctx)
-        await Portfolio.metadata.set("new_key", "new_val").execute(portfolio_ctx)
-        result = await Portfolio.metadata.get("new_key").execute(portfolio_ctx)
+        await Portfolio.metadata.set("new_key", "new_val").aexecute(portfolio_ctx)
+        result = await Portfolio.metadata.get("new_key").aexecute(portfolio_ctx)
         assert result == "new_val"
 
 
@@ -223,26 +223,26 @@ class TestListRefExecution:
     @pytest.mark.asyncio
     async def test_store_and_first(self, portfolio_ctx):
         await store(Portfolio.tags, ["alpha", "beta", "gamma"], portfolio_ctx)
-        result = await Portfolio.tags.first().execute(portfolio_ctx)
+        result = await Portfolio.tags.afirst().aexecute(portfolio_ctx)
         assert result == "alpha"
 
     @pytest.mark.asyncio
     async def test_store_and_last(self, portfolio_ctx):
         await store(Portfolio.tags, ["alpha", "beta", "gamma"], portfolio_ctx)
-        result = await Portfolio.tags.last().execute(portfolio_ctx)
+        result = await Portfolio.tags.alast().aexecute(portfolio_ctx)
         assert result == "gamma"
 
     @pytest.mark.asyncio
     async def test_store_and_slice(self, portfolio_ctx):
         await store(Portfolio.tags, ["a", "b", "c", "d", "e"], portfolio_ctx)
-        result = await Portfolio.tags.slice(1, 3).execute(portfolio_ctx)
+        result = await Portfolio.tags.slice(1, 3).aexecute(portfolio_ctx)
         assert list(result) == ["b", "c"]
 
     @pytest.mark.asyncio
     async def test_append(self, portfolio_ctx):
         await store(Portfolio.tags, ["x"], portfolio_ctx)
-        await Portfolio.tags.append("y").execute(portfolio_ctx)
-        result = await Portfolio.tags.execute(portfolio_ctx)
+        await Portfolio.tags.append("y").aexecute(portfolio_ctx)
+        result = await Portfolio.tags.aexecute(portfolio_ctx)
         assert list(result) == ["x", "y"]
 
 
@@ -267,14 +267,14 @@ class TestSetRefExecution:
     @pytest.mark.asyncio
     async def test_store_and_add(self, portfolio_ctx):
         await store(Portfolio.members, {"alice"}, portfolio_ctx)
-        await Portfolio.members.add("bob").execute(portfolio_ctx)
-        result = await Portfolio.members.execute(portfolio_ctx)
+        await Portfolio.members.add("bob").aexecute(portfolio_ctx)
+        result = await Portfolio.members.aexecute(portfolio_ctx)
         assert set(result) == {"alice", "bob"}
 
     @pytest.mark.asyncio
     async def test_union(self, portfolio_ctx):
         await store(Portfolio.members, {"alice", "bob"}, portfolio_ctx)
-        result = await Portfolio.members.union({"bob", "charlie"}).execute(portfolio_ctx)
+        result = await Portfolio.members.union({"bob", "charlie"}).aexecute(portfolio_ctx)
         assert result == {"alice", "bob", "charlie"}
 
 
@@ -296,7 +296,7 @@ class TestShapesListRefExecution:
             ],
             portfolio_ctx,
         )
-        result = await Portfolio.orders[0].symbol.execute(portfolio_ctx)
+        result = await Portfolio.orders[0].symbol.aexecute(portfolio_ctx)
         assert result == "AAPL"
 
     @pytest.mark.asyncio
@@ -309,7 +309,7 @@ class TestShapesListRefExecution:
             ],
             portfolio_ctx,
         )
-        result = await Portfolio.orders[1].price.execute(portfolio_ctx)
+        result = await Portfolio.orders[1].price.aexecute(portfolio_ctx)
         assert result == 142.3
 
 
@@ -347,7 +347,7 @@ class TestShapesDictRefExecution:
             },
             portfolio_ctx,
         )
-        result = await Portfolio.team.keys().execute(portfolio_ctx)
+        result = await Portfolio.team.keys().aexecute(portfolio_ctx)
         assert set(result) == {"desk_a", "desk_b"}
 
     @pytest.mark.asyncio
@@ -359,7 +359,7 @@ class TestShapesDictRefExecution:
             },
             portfolio_ctx,
         )
-        result = await Portfolio.team["desk_a"].symbol.execute(portfolio_ctx)
+        result = await Portfolio.team["desk_a"].symbol.aexecute(portfolio_ctx)
         assert result == "AAPL"
 
 
@@ -379,7 +379,7 @@ class TestTermComposition:
             portfolio_ctx,
         )
         total = Portfolio.orders[0].price * Portfolio.orders[0].qty
-        result = await total.execute(portfolio_ctx)
+        result = await total.aexecute(portfolio_ctx)
         assert result == 1855.0
 
     @pytest.mark.asyncio
@@ -393,7 +393,7 @@ class TestTermComposition:
             portfolio_ctx,
         )
         spread = Portfolio.orders[0].price - Portfolio.orders[1].price
-        result = await spread.execute(portfolio_ctx)
+        result = await spread.aexecute(portfolio_ctx)
         assert abs(result - 43.2) < 0.01
 
 
@@ -408,31 +408,31 @@ class TestLazyTake:
     @pytest.mark.asyncio
     async def test_take_keys(self, portfolio_ctx):
         await store(Portfolio.metadata, {f"k{i}": f"v{i}" for i in range(50)}, portfolio_ctx)
-        result = await fn.Take(Portfolio.metadata.keys(), 5).to_list().execute(portfolio_ctx)
+        result = await fn.Take(Portfolio.metadata.keys(), 5).to_list().aexecute(portfolio_ctx)
         assert len(result) == 5
 
     @pytest.mark.asyncio
     async def test_take_values(self, portfolio_ctx):
         await store(Portfolio.metadata, {f"k{i}": f"v{i}" for i in range(50)}, portfolio_ctx)
-        result = await fn.Take(Portfolio.metadata.values(), 3).to_list().execute(portfolio_ctx)
+        result = await fn.Take(Portfolio.metadata.values(), 3).to_list().aexecute(portfolio_ctx)
         assert len(result) == 3
 
     @pytest.mark.asyncio
     async def test_take_items(self, portfolio_ctx):
         await store(Portfolio.metadata, {"a": "1", "b": "2", "c": "3"}, portfolio_ctx)
-        result = await fn.Take(Portfolio.metadata.items(), 2).to_list().execute(portfolio_ctx)
+        result = await fn.Take(Portfolio.metadata.items(), 2).to_list().aexecute(portfolio_ctx)
         assert len(result) == 2
 
     @pytest.mark.asyncio
     async def test_take_list(self, portfolio_ctx):
         await store(Portfolio.tags, ["a", "b", "c", "d", "e"], portfolio_ctx)
-        result = await fn.Take(Portfolio.tags, 3).to_list().execute(portfolio_ctx)
+        result = await fn.Take(Portfolio.tags, 3).to_list().aexecute(portfolio_ctx)
         assert result == ["a", "b", "c"]
 
     @pytest.mark.asyncio
     async def test_take_more_than_available(self, portfolio_ctx):
         await store(Portfolio.metadata, {"a": "1", "b": "2"}, portfolio_ctx)
-        result = await fn.Take(Portfolio.metadata.keys(), 100).to_list().execute(portfolio_ctx)
+        result = await fn.Take(Portfolio.metadata.keys(), 100).to_list().aexecute(portfolio_ctx)
         assert sorted(result) == ["a", "b"]
 
     def test_take_returns_iterator_value(self):
@@ -470,64 +470,64 @@ class TestEndToEnd:
         )
 
         # --- primitives ---
-        assert await Portfolio.name.execute(ctx) == "Main Portfolio"
+        assert await Portfolio.name.aexecute(ctx) == "Main Portfolio"
 
         # --- dict keys iteration ---
-        keys = await Portfolio.metadata.keys().execute(ctx)
+        keys = await Portfolio.metadata.keys().aexecute(ctx)
         assert set(keys) == {"strategy", "risk", "horizon"}
 
         # --- dict get ---
-        assert await Portfolio.metadata.get("strategy").execute(ctx) == "momentum"
+        assert await Portfolio.metadata.get("strategy").aexecute(ctx) == "momentum"
 
         # --- lazy Take over keys ---
-        first_2 = await fn.Take(Portfolio.metadata.keys(), 2).to_list().execute(ctx)
+        first_2 = await fn.Take(Portfolio.metadata.keys(), 2).to_list().aexecute(ctx)
         assert len(first_2) == 2
 
         # --- list operations ---
-        assert await Portfolio.tags.first().execute(ctx) == "alpha"
-        assert await Portfolio.tags.last().execute(ctx) == "epsilon"
+        assert await Portfolio.tags.afirst().aexecute(ctx) == "alpha"
+        assert await Portfolio.tags.alast().aexecute(ctx) == "epsilon"
 
         # --- lazy Take over list ---
-        first_3 = await fn.Take(Portfolio.tags, 3).to_list().execute(ctx)
+        first_3 = await fn.Take(Portfolio.tags, 3).to_list().aexecute(ctx)
         assert first_3 == ["alpha", "beta", "gamma"]
 
         # --- set operations ---
-        union = await Portfolio.members.union({"dave"}).execute(ctx)
+        union = await Portfolio.members.union({"dave"}).aexecute(ctx)
         assert union == {"alice", "bob", "charlie", "dave"}
 
         # --- shape navigation ---
-        assert await Portfolio.orders[0].symbol.execute(ctx) == "AAPL"
-        assert await Portfolio.orders[1].price.execute(ctx) == 142.3
+        assert await Portfolio.orders[0].symbol.aexecute(ctx) == "AAPL"
+        assert await Portfolio.orders[1].price.aexecute(ctx) == 142.3
 
         # --- term composition ---
         total = Portfolio.orders[0].price * Portfolio.orders[0].qty
-        assert await total.execute(ctx) == 1855.0
+        assert await total.aexecute(ctx) == 1855.0
 
         spread = Portfolio.orders[0].price - Portfolio.orders[2].price
-        assert abs(await spread.execute(ctx) - (-59.5)) < 0.01
+        assert abs(await spread.aexecute(ctx) - (-59.5)) < 0.01
 
         # --- dict mutation ---
-        await Portfolio.metadata.set("sector", "tech").execute(ctx)
-        assert await Portfolio.metadata.get("sector").execute(ctx) == "tech"
+        await Portfolio.metadata.set("sector", "tech").aexecute(ctx)
+        assert await Portfolio.metadata.get("sector").aexecute(ctx) == "tech"
 
         # --- list mutation ---
-        await Portfolio.tags.append("zeta").execute(ctx)
-        assert await Portfolio.tags.last().execute(ctx) == "zeta"
+        await Portfolio.tags.append("zeta").aexecute(ctx)
+        assert await Portfolio.tags.alast().aexecute(ctx) == "zeta"
 
         # --- set mutation ---
-        await Portfolio.members.add("eve").execute(ctx)
-        result = await Portfolio.members.execute(ctx)
+        await Portfolio.members.add("eve").aexecute(ctx)
+        result = await Portfolio.members.aexecute(ctx)
         assert "eve" in set(result)
 
         # --- fn combinators ---
-        sorted_keys = await fn.Sorted(Portfolio.metadata.keys()).execute(ctx)
+        sorted_keys = await fn.Sorted(Portfolio.metadata.keys()).aexecute(ctx)
         assert sorted_keys == ["horizon", "risk", "sector", "strategy"]
 
-        key_count = await fn.Len(Portfolio.metadata.keys()).execute(ctx)
+        key_count = await fn.Len(Portfolio.metadata.keys()).aexecute(ctx)
         assert key_count == 4
 
-        has_risk = await fn.Contains(Portfolio.metadata.keys(), "risk").execute(ctx)
+        has_risk = await fn.Contains(Portfolio.metadata.keys(), "risk").aexecute(ctx)
         assert has_risk is True
 
-        has_fake = await fn.Contains(Portfolio.metadata.keys(), "fake").execute(ctx)
+        has_fake = await fn.Contains(Portfolio.metadata.keys(), "fake").aexecute(ctx)
         assert has_fake is False

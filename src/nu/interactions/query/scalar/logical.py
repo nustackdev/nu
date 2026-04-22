@@ -61,7 +61,7 @@ class Bool(UnaryScalar[bool]):
 
 async def _drain_last(child: Nu, ctx: Context) -> Any:
     val: Any = None
-    async with aclosing(child.open(ctx)) as gen:
+    async with aclosing(child.aopen(ctx)) as gen:
         async for v in gen:
             val = v
     return val
@@ -69,7 +69,7 @@ async def _drain_last(child: Nu, ctx: Context) -> Any:
 
 def _drain_last_sync(child: Nu, ctx: Context) -> Any:
     val: Any = None
-    with closing(child.open_sync(ctx)) as gen:
+    with closing(child.open(ctx)) as gen:
         for v in gen:
             val = v
     return val
@@ -82,7 +82,7 @@ class And[ResultT](BinaryScalar[ResultT]):
     if left is falsy, yields left without evaluating right.
     """
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:  # type: ignore[override]
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:  # type: ignore[override]
         left_val = await _drain_last(self._children[0], ctx)
 
         sp = propagate_special(left_val)
@@ -103,7 +103,7 @@ class And[ResultT](BinaryScalar[ResultT]):
 
         yield left_val and right_val
 
-    def open_sync(self, ctx: Context) -> Generator[Any, None, None]:  # type: ignore[override]
+    def open(self, ctx: Context) -> Generator[Any, None, None]:  # type: ignore[override]
         left_val = _drain_last_sync(self._children[0], ctx)
 
         sp = propagate_special(left_val)
@@ -137,7 +137,7 @@ class Or[ResultT](BinaryScalar[ResultT]):
     if left is truthy, yields left without evaluating right.
     """
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:  # type: ignore[override]
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:  # type: ignore[override]
         left_val = await _drain_last(self._children[0], ctx)
 
         sp = propagate_special(left_val)
@@ -158,7 +158,7 @@ class Or[ResultT](BinaryScalar[ResultT]):
 
         yield left_val or right_val
 
-    def open_sync(self, ctx: Context) -> Generator[Any, None, None]:  # type: ignore[override]
+    def open(self, ctx: Context) -> Generator[Any, None, None]:  # type: ignore[override]
         left_val = _drain_last_sync(self._children[0], ctx)
 
         sp = propagate_special(left_val)

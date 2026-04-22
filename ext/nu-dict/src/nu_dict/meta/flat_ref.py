@@ -83,7 +83,7 @@ class FlatRef(Nu):
                 current = current[key]  # type: ignore[index]
         return current
 
-    async def fetch(self, ctx: Context) -> object | Sentinel:
+    async def afetch(self, ctx: Context) -> object | Sentinel:
         """Fetch value at this path. O(path_length) dict lookups."""
         path = await self._build_path(ctx) if self._dynamic_segments else self._static_path
         data = self._get_root_data(ctx, path)
@@ -95,15 +95,15 @@ class FlatRef(Nu):
         except (KeyError, IndexError):
             return EMPTY
 
-    async def resolve(self, ctx: Context) -> tuple:
+    async def aresolve(self, ctx: Context) -> tuple:
         """Return full resolved path."""
         if self._dynamic_segments is None:
             return self._static_path
         return await self._build_path(ctx)
 
-    async def execute(self, ctx: Context) -> object | Sentinel:
+    async def aexecute(self, ctx: Context) -> object | Sentinel:
         """Nu interface — delegates to fetch."""
-        return await self.fetch(ctx)
+        return await self.afetch(ctx)
 
     def get_root_shape(self) -> type:
         """Return root shape for context lookup."""
@@ -130,7 +130,7 @@ class FlatRef(Nu):
             return self._static_path
         path = list(self._static_path)
         for idx, term in self._dynamic_segments:
-            path[idx] = await term.execute(ctx)
+            path[idx] = await term.aexecute(ctx)
         return tuple(path)
 
     def __repr__(self) -> str:

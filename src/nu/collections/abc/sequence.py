@@ -50,13 +50,13 @@ class SequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT](
         ElementResultT: Result for element-level ops (first, last, sum_, min_, max_)
     """
 
-    def first(self) -> ElementResultT:
+    def afirst(self) -> ElementResultT:
         """Get first element."""
         from .sequence_ops import FirstOp
 
         return cast("ElementResultT", self._wrap_element_result(FirstOp(self)))
 
-    def last(self) -> ElementResultT:
+    def alast(self) -> ElementResultT:
         """Get last element."""
         from .sequence_ops import LastOp
 

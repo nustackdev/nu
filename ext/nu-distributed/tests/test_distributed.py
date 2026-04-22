@@ -40,7 +40,7 @@ async def test_distributed_basic(db_path):
             NavigatorSpec(storage_resource=RocksDBStorageSpec(path=db_path)),
             workers=2,
         )
-        await _store_and_read_flow().execute(ctx)
+        await _store_and_read_flow().aexecute(ctx)
 
 
 @pytest.mark.asyncio
@@ -73,7 +73,7 @@ async def test_distributed_parallel(db_path):
             NavigatorSpec(storage_resource=RocksDBStorageSpec(path=db_path)),
             workers=2,
         )
-        await flow.execute(ctx)
+        await flow.aexecute(ctx)
 
 
 @pytest.mark.asyncio
@@ -102,7 +102,7 @@ async def test_distributed_many_workers(db_path):
             NavigatorSpec(storage_resource=RocksDBStorageSpec(path=db_path)),
             workers=4,
         )
-        await flow.execute(ctx)
+        await flow.aexecute(ctx)
 
 
 @pytest.mark.asyncio
@@ -128,4 +128,4 @@ async def test_distributed_forrange(db_path):
             NavigatorSpec(storage_resource=RocksDBStorageSpec(path=db_path)),
             workers=1,
         )
-        await flow.execute(ctx)
+        await flow.aexecute(ctx)

@@ -1,6 +1,6 @@
 """Context - tagged value store for execution.
 
-Context is the runtime environment passed to Nu.execute().
+Context is the runtime environment passed to Nu.aexecute().
 It holds bindings keyed by service type + scope tags, with specificity-based
 resolution and optional named predicate guards.
 

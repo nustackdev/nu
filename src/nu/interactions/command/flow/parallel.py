@@ -38,12 +38,12 @@ class Race(Flow):
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         if False:  # pragma: no cover - marks this as an async generator
             yield
         if not self.children:
             return
-        tasks = [asyncio.create_task(child.execute(ctx)) for child in self.children]
+        tasks = [asyncio.create_task(child.aexecute(ctx)) for child in self.children]
         try:
             done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
             for task in pending:
@@ -71,12 +71,12 @@ class ParAll(Flow):
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         if False:  # pragma: no cover
             yield
         if not self.children:
             return
-        tasks = [asyncio.create_task(child.execute(ctx)) for child in self.children]
+        tasks = [asyncio.create_task(child.aexecute(ctx)) for child in self.children]
         try:
             await asyncio.gather(*tasks)
         except Exception:
@@ -98,12 +98,12 @@ class ParAny(Flow):
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         if False:  # pragma: no cover
             yield
         if not self.children:
             return
-        tasks = {asyncio.create_task(child.execute(ctx)) for child in self.children}
+        tasks = {asyncio.create_task(child.aexecute(ctx)) for child in self.children}
         last_error: Exception | None = None
         try:
             while tasks:

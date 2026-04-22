@@ -27,11 +27,11 @@ class AttrGetOp[T](Query[T | Sentinel]):
     def __init__(self, ref: AttrRef[T]) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> T | Sentinel:
+    async def arun(self, ctx: Context) -> T | Sentinel:
         key = await self.children[0]._resolve_name(ctx)
         return ctx.attrs[key]
 
-    def run_sync(self, ctx: Context) -> T | Sentinel:
+    def run(self, ctx: Context) -> T | Sentinel:
         key = self.children[0]._resolve_name_sync(ctx)
         return ctx.attrs[key]
 
@@ -42,10 +42,10 @@ class AttrExistsOp(Query[bool]):
     def __init__(self, ref: AttrRef) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> bool:
+    async def arun(self, ctx: Context) -> bool:
         key = await self.children[0]._resolve_name(ctx)
         return key in ctx.attrs
 
-    def run_sync(self, ctx: Context) -> bool:
+    def run(self, ctx: Context) -> bool:
         key = self.children[0]._resolve_name_sync(ctx)
         return key in ctx.attrs

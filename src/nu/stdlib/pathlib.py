@@ -150,7 +150,7 @@ class _PathI(Interface):
     def resolve_path(self, strict: bool | Nu[bool] = False) -> PathI:
         """Make the path absolute, resolving symlinks.
 
-        Named resolve_path() to avoid collision with RefBase.resolve().
+        Named resolve_path() to avoid collision with RefBase.aresolve().
         """
         from nu import MethodCall
 

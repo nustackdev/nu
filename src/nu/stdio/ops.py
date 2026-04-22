@@ -47,16 +47,16 @@ class StdioWrite(Command):
     def __init__(self, ref: StdioRef, *values: object) -> None:
         super().__init__(ref, *values)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         stream = _get_stream(ctx, self.children[0])
         parts = []
         for child in self.children[1:]:
-            parts.append(str(await child.first(ctx)))
+            parts.append(str(await child.afirst(ctx)))
         stream.write(" ".join(parts) + "\n")
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         stream = _get_stream(ctx, self.children[0])
-        parts = [str(c.first_sync(ctx)) for c in self.children[1:]]
+        parts = [str(c.first(ctx)) for c in self.children[1:]]
         stream.write(" ".join(parts) + "\n")
 
     def __repr__(self) -> str:
@@ -76,12 +76,12 @@ class StdioRead(Query[str]):
 
         super().__init__(ref or STDIN)
 
-    async def run(self, ctx: Context) -> str:
+    async def arun(self, ctx: Context) -> str:
         stream = _get_stream(ctx, self.children[0])
         line = stream.readline()
         return line.rstrip("\n")
 
-    def run_sync(self, ctx: Context) -> str:
+    def run(self, ctx: Context) -> str:
         stream = _get_stream(ctx, self.children[0])
         line = stream.readline()
         return line.rstrip("\n")
@@ -101,11 +101,11 @@ class StdioFlush(Command):
     def __init__(self, ref: StdioRef) -> None:
         super().__init__(ref)
 
-    async def run(self, ctx: Context) -> None:
+    async def arun(self, ctx: Context) -> None:
         stream = _get_stream(ctx, self.children[0])
         stream.flush()
 
-    def run_sync(self, ctx: Context) -> None:
+    def run(self, ctx: Context) -> None:
         stream = _get_stream(ctx, self.children[0])
         stream.flush()
 

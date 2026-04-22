@@ -30,10 +30,10 @@ class FabricA(Ref[int]):
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
 
-    async def resolve(self, ctx: Context) -> str:
+    async def aresolve(self, ctx: Context) -> str:
         return "a"
 
-    async def fetch(self, ctx: Context) -> int:
+    async def afetch(self, ctx: Context) -> int:
         return 0
 
 
@@ -43,10 +43,10 @@ class FabricB(Ref[int]):
     def __init__(self) -> None:
         super().__init__()
 
-    async def resolve(self, ctx: Context) -> str:
+    async def aresolve(self, ctx: Context) -> str:
         return "b"
 
-    async def fetch(self, ctx: Context) -> int:
+    async def afetch(self, ctx: Context) -> int:
         return 0
 
 

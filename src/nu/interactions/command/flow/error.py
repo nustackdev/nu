@@ -54,7 +54,7 @@ class TryCatch(Flow):
         c = self.children[2]
         return None if isinstance(c, NoneI) else c
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         body = self.children[0]
         catch = self.catch
         finally_ = self.finally_
@@ -62,7 +62,7 @@ class TryCatch(Flow):
         caught: Exception | None = None
         handled = False
         try:
-            async with aclosing(body.open(ctx)) as gen:
+            async with aclosing(body.aopen(ctx)) as gen:
                 async for v in gen:
                     yield v
         except Exception as e:
@@ -70,20 +70,20 @@ class TryCatch(Flow):
             if catch is not None and (self._errors is None or isinstance(e, self._errors)):
                 catch_ctx = ctx._copy()
                 catch_ctx.attrs["error"] = str(e)
-                async with aclosing(catch.open(catch_ctx)) as gen:
+                async with aclosing(catch.aopen(catch_ctx)) as gen:
                     async for v in gen:
                         yield v
                 handled = True
         finally:
             if finally_ is not None:
-                async with aclosing(finally_.open(ctx)) as gen:
+                async with aclosing(finally_.aopen(ctx)) as gen:
                     async for v in gen:
                         yield v
 
         if caught is not None and not handled:
             raise caught
 
-    def open_sync(self, ctx: Context) -> Generator[Any, None, None]:
+    def open(self, ctx: Context) -> Generator[Any, None, None]:
         body = self.children[0]
         catch = self.catch
         finally_ = self.finally_
@@ -91,19 +91,19 @@ class TryCatch(Flow):
         caught: Exception | None = None
         handled = False
         try:
-            with closing(body.open_sync(ctx)) as gen:
+            with closing(body.open(ctx)) as gen:
                 yield from gen
         except Exception as e:
             caught = e
             if catch is not None and (self._errors is None or isinstance(e, self._errors)):
                 catch_ctx = ctx._copy()
                 catch_ctx.attrs["error"] = str(e)
-                with closing(catch.open_sync(catch_ctx)) as gen:
+                with closing(catch.open(catch_ctx)) as gen:
                     yield from gen
                 handled = True
         finally:
             if finally_ is not None:
-                with closing(finally_.open_sync(ctx)) as gen:
+                with closing(finally_.open(ctx)) as gen:
                     yield from gen
 
         if caught is not None and not handled:
@@ -158,22 +158,22 @@ class Retry(Flow):
         c = self.children[6]
         return None if isinstance(c, NoneI) else c
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         body = self.children[0]
-        max_attempts = await self.children[1].first(ctx)
-        delay = await self.children[2].first(ctx)
-        backoff = await self.children[3].first(ctx)
+        max_attempts = await self.children[1].afirst(ctx)
+        delay = await self.children[2].afirst(ctx)
+        backoff = await self.children[3].afirst(ctx)
 
         for attempt in range(1, max_attempts + 1):
             try:
-                async with aclosing(body.open(ctx)) as gen:
+                async with aclosing(body.aopen(ctx)) as gen:
                     async for v in gen:
                         yield v
                 hook = self.on_success
                 if hook is not None:
                     hook_ctx = ctx._copy()
                     hook_ctx.attrs["attempt"] = attempt
-                    await hook.execute(hook_ctx)
+                    await hook.aexecute(hook_ctx)
                 return
             except Exception as e:
                 hook_ctx = ctx._copy()
@@ -182,11 +182,11 @@ class Retry(Flow):
                 if attempt >= max_attempts:
                     hook = self.on_fail
                     if hook is not None:
-                        await hook.execute(hook_ctx)
+                        await hook.aexecute(hook_ctx)
                     else:
                         raise
                 hook = self.on_attempt_fail
                 if hook is not None:
-                    await hook.execute(hook_ctx)
+                    await hook.aexecute(hook_ctx)
                 await asyncio.sleep(delay)
                 delay *= backoff

@@ -26,5 +26,5 @@ class AsyncSleep(UnaryAtomic):
     def __init__(self, delay: FloatArg) -> None:
         super().__init__(delay)
 
-    async def apply(self, delay: float) -> None:
+    async def aapply(self, delay: float) -> None:
         await asyncio.sleep(delay)

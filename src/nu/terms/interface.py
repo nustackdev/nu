@@ -103,13 +103,13 @@ class TypedNu(RValue[T_co]):
     def source(self) -> object:
         return self.children[0] if self.children else None
 
-    async def open(self, ctx: Context) -> AsyncGenerator[T_co, None]:
-        async with aclosing(self.children[0].open(ctx)) as gen:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+        async with aclosing(self.children[0].aopen(ctx)) as gen:
             async for v in gen:
                 yield v
 
-    def open_sync(self, ctx: Context) -> Generator[T_co, None, None]:
-        with closing(self.children[0].open_sync(ctx)) as gen:
+    def open(self, ctx: Context) -> Generator[T_co, None, None]:
+        with closing(self.children[0].open(ctx)) as gen:
             yield from gen
 
     @property

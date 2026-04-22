@@ -47,17 +47,17 @@ class ContextManager(Nu, ABC):
         after(ctx)                exit, clean path.
         after_failure(ctx, exc)   exit, exception path.
 
-    `open` runs children under the bracket. `GeneratorExit` (raised when a
+    `aopen` runs children under the bracket. `GeneratorExit` (raised when a
     consumer closes the generator early, e.g. NAryScalar taking a single yield
     from a scope-producing child) counts as clean and routes to `after`.
     Real exceptions route to `after_failure`.
     """
 
-    async def open(self, ctx: Context) -> AsyncGenerator[Any, None]:
+    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         scoped_ctx = self.before(ctx)
         try:
             for child in self._children:
-                async with aclosing(child.open(scoped_ctx)) as gen:
+                async with aclosing(child.aopen(scoped_ctx)) as gen:
                     async for v in gen:
                         yield v
         except BaseException as e:
@@ -69,14 +69,14 @@ class ContextManager(Nu, ABC):
         else:
             self.after(scoped_ctx)
 
-    def open_sync(self, ctx: Context) -> Generator[Any, None, None]:
+    def open(self, ctx: Context) -> Generator[Any, None, None]:
         if self.mode is Mode.ASYNC:
             msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
             raise RuntimeError(msg)
         scoped_ctx = self.before(ctx)
         try:
             for child in self._children:
-                with closing(child.open_sync(scoped_ctx)) as gen:
+                with closing(child.open(scoped_ctx)) as gen:
                     yield from gen
         except BaseException as e:
             if isinstance(e, GeneratorExit):

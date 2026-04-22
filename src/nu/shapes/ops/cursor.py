@@ -36,9 +36,9 @@ class AdvanceCursorOp(Query[tuple | None]):
     def __init__(self, source: object, cursor: object) -> None:
         super().__init__(source, cursor)
 
-    async def run(self, ctx: Context) -> tuple | None:
-        view = await self.children[0].first(ctx)
-        cursor = await self.children[1].first(ctx)
+    async def arun(self, ctx: Context) -> tuple | None:
+        view = await self.children[0].afirst(ctx)
+        cursor = await self.children[1].afirst(ctx)
 
         # Sentinel means no cursor yet (fresh start)
         if isinstance(cursor, Sentinel):
@@ -46,9 +46,9 @@ class AdvanceCursorOp(Query[tuple | None]):
 
         return view.next_key_after(cursor)
 
-    def run_sync(self, ctx: Context) -> tuple | None:
-        view = self.children[0].first_sync(ctx)
-        cursor = self.children[1].first_sync(ctx)
+    def run(self, ctx: Context) -> tuple | None:
+        view = self.children[0].first(ctx)
+        cursor = self.children[1].first(ctx)
 
         if isinstance(cursor, Sentinel):
             cursor = None

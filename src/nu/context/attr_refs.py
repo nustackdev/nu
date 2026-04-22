@@ -68,13 +68,13 @@ class AttrRef[T](Ref[T]):
         """Resolve the name — fast path for static, execute for dynamic."""
         if self._raw_name is not None:
             return self._raw_name
-        return await self._name_ctx.execute()
+        return await self._name_ctx.aexecute()
 
-    async def resolve(self, ctx: Context) -> str:
+    async def aresolve(self, ctx: Context) -> str:
         """Resolve to the name string."""
         return await self._resolve_name(ctx)
 
-    async def fetch(self, ctx: Context) -> T | Sentinel:
+    async def afetch(self, ctx: Context) -> T | Sentinel:
         """Fetch value from context attrs by name."""
         key = await self._resolve_name(ctx)
         return ctx.attrs[key]  # type: ignore[attr-defined]
@@ -83,14 +83,14 @@ class AttrRef[T](Ref[T]):
         """Sync counterpart of `_resolve_name`."""
         if self._raw_name is not None:
             return self._raw_name
-        return self._name_nu.first_sync(ctx)
+        return self._name_nu.first(ctx)
 
-    def resolve_sync(self, ctx: Context) -> str:
-        """Sync counterpart of `resolve`."""
+    def resolve(self, ctx: Context) -> str:
+        """Sync counterpart of `aresolve`."""
         return self._resolve_name_sync(ctx)
 
-    def fetch_sync(self, ctx: Context) -> T | Sentinel:
-        """Sync counterpart of `fetch`."""
+    def fetch(self, ctx: Context) -> T | Sentinel:
+        """Sync counterpart of `afetch`."""
         key = self._resolve_name_sync(ctx)
         return ctx.attrs[key]  # type: ignore[attr-defined]
 
