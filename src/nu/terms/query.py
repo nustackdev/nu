@@ -4,13 +4,16 @@ Taxonomy under Interaction:
 
     Query[T]                  yields value(s); effect set ⊆ {CALC, RESOLVE, READ}
     ├── Literal[T]            trivial leaf: holds a value, yields it once
-    ├── Scalar Query:         1 yield
-    │   ├── Query[T] base          hook: run(ctx) -> T / arun(ctx) -> T
-    │   ├── NAryScalar[T]              hook: apply(*values) / aapply(*values); resolves children + sentinel propagation
-    │   ├── UnaryScalar[T]             arity refinement, self.operand
-    │   ├── BinaryScalar[T]            arity refinement, self.left / self.right
-    │   └── TernaryScalar[T]           arity refinement
-    └── Stream[T]             N yields; author overrides open / aopen
+    ├── Stream[T]             N yields; author overrides open / aopen
+    └── ScalarQuery[T]        operand-driven compute with sentinel propagation
+        ├── UnaryQuery[T]
+        ├── BinaryQuery[T]
+        └── TernaryQuery[T]
+
+Stream is the multi-yield pattern: override `aopen` / `open` directly.
+ScalarQuery is symmetric to ScalarCommand (see command.py) — same sentinel
+propagation, same apply / aapply hook, same arity refinements — but the
+hook returns T and the scope yields once.
 
 Command children are forbidden anywhere in a Query subtree (purity is global).
 """
@@ -34,13 +37,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "BinaryScalar",
+    "BinaryQuery",
     "Literal",
-    "NAryScalar",
     "Query",
+    "ScalarQuery",
     "Stream",
-    "TernaryScalar",
-    "UnaryScalar",
+    "TernaryQuery",
+    "UnaryQuery",
 ]
 
 
@@ -60,7 +63,7 @@ class Query(Interaction[T_co], ABC):
     - Override `aopen` / `open` directly (for N-yield streaming or
       apply-style compute). Leave `arun` as the default raise.
 
-    For operand-driven compute with sentinel propagation, use `NAryScalar`
+    For operand-driven compute with sentinel propagation, use `ScalarQuery`
     (and the arity refinements). For N-yield streams, use `Stream`.
     """
 
@@ -119,20 +122,22 @@ class Literal(Query[T_co]):
 
 
 # =============================================================================
-# NARY - operand-driven compute with sentinel propagation
+# SCALAR - operand-driven compute with sentinel propagation
 # =============================================================================
 
 
-class NAryScalar(Query[T_co | Sentinel], ABC):
+class ScalarQuery(Query[T_co | Sentinel], ABC):
     """Query with auto-resolved operands. Hook: apply(*values) / aapply(*values).
 
     Opens each child, takes the first yield, propagates EMPTY / INVALID
     (yields INVALID without calling apply), calls apply, yields once.
 
     Each child's generator stays suspended at its yield point via an exit
-    stack - this keeps any scope the child opened (Snapshot, Atomic) alive
+    stack — this keeps any scope the child opened (Snapshot, Atomic) alive
     through `apply`, so live views passed to `apply` still read from their
     backing context. Generators close LIFO on exit.
+
+    Symmetric to `ScalarCommand` in command.py.
     """
 
     def __init__(self, *children: object) -> None:
@@ -161,7 +166,7 @@ class NAryScalar(Query[T_co | Sentinel], ABC):
                     return
                 values.append(v)
             # Prefer aapply if the subclass overrides it; otherwise fall back to apply.
-            if type(self).aapply is not NAryScalar.aapply:
+            if type(self).aapply is not ScalarQuery.aapply:
                 result = await self.aapply(*values)
             else:
                 result = self.apply(*values)
@@ -212,7 +217,7 @@ class NAryScalar(Query[T_co | Sentinel], ABC):
 # =============================================================================
 
 
-class UnaryScalar(NAryScalar[T_co], ABC):
+class UnaryQuery(ScalarQuery[T_co], ABC):
     """Single operand. For: -x, abs(x), not x, len(x), etc."""
 
     def __init__(self, operand: object) -> None:
@@ -229,7 +234,7 @@ class UnaryScalar(NAryScalar[T_co], ABC):
         return self._children[0]
 
 
-class BinaryScalar(NAryScalar[T_co], ABC):
+class BinaryQuery(ScalarQuery[T_co], ABC):
     """Two operands. For: x + y, x > y, x and y, x[y], etc."""
 
     def __init__(self, left: object, right: object) -> None:
@@ -250,7 +255,7 @@ class BinaryScalar(NAryScalar[T_co], ABC):
         return self._children[1]
 
 
-class TernaryScalar(NAryScalar[T_co], ABC):
+class TernaryQuery(ScalarQuery[T_co], ABC):
     """Three operands. Children accessed via self.children[0..2]."""
 
     def __init__(self, a: object, b: object, c: object) -> None:

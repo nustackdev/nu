@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu import Context, ContextManager, Flow, Mode, Query
+from nu import Context, ContextManager, Mode
 from virtuals import Navigator
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
 
@@ -181,7 +181,7 @@ class Atomic(ContextManager):
         return f"Atomic({scope_name})"
 
 
-class Snapshot(ContextManager, Query):
+class Snapshot(ContextManager):
     """Read-only snapshot boundary for virtuals operations.
 
     Like Atomic but always opens a snapshot, never a transaction.
@@ -256,7 +256,7 @@ class Snapshot(ContextManager, Query):
         return f"Snapshot({scope_name})"
 
 
-class Transaction(ContextManager, Flow):
+class Transaction(ContextManager):
     """Write transaction boundary for virtuals operations.
 
     Like Atomic but always opens a transaction, never a snapshot.

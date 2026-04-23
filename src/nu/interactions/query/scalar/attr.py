@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from nu.terms import BinaryScalar, Mode, TernaryScalar
+from nu.terms import BinaryQuery, Mode, TernaryQuery
 
 
 __all__ = [
@@ -24,7 +24,7 @@ __all__ = [
 # =============================================================================
 
 
-class GetAttr[ResultT](BinaryScalar[ResultT]):
+class GetAttr[ResultT](BinaryQuery[ResultT]):
     """Get an attribute from an instance.
 
     Both instance and attr_name can be Terms for dynamic attribute access.
@@ -42,7 +42,7 @@ class GetAttr[ResultT](BinaryScalar[ResultT]):
         return getattr(left, str(right))
 
 
-class SetAttr(TernaryScalar[None]):
+class SetAttr(TernaryQuery[None]):
     """Set an attribute on an instance.
 
     All arguments can be Terms for dynamic attribute setting.
@@ -60,7 +60,7 @@ class SetAttr(TernaryScalar[None]):
         setattr(first, str(second), third)
 
 
-class DelAttr(BinaryScalar[None]):
+class DelAttr(BinaryQuery[None]):
     """Delete an attribute from an instance.
 
     Both instance and attr_name can be Terms for dynamic attribute deletion.

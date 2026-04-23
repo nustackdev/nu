@@ -29,8 +29,8 @@ class AdvanceCursorOp(Query[tuple | None]):
     Returns:
         (log_key, actual_key) tuple if next item exists, None if exhausted.
 
-    Uses Query (not NAryScalar) because a Sentinel cursor is a valid input signalling
-    "fresh start" - NAryScalar's sentinel propagation would short-circuit it.
+    Uses Query (not ScalarQuery) because a Sentinel cursor is a valid input signalling
+    "fresh start" - ScalarQuery's sentinel propagation would short-circuit it.
     """
 
     own_mode: ClassVar[Mode] = Mode.BOTH

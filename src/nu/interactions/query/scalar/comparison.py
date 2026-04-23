@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from nu.terms import BinaryScalar, Mode
+from nu.terms import BinaryQuery, Mode
 
 
 __all__ = [
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class Gt(BinaryScalar[bool]):
+class Gt(BinaryQuery[bool]):
     """Greater than: left > right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -32,7 +32,7 @@ class Gt(BinaryScalar[bool]):
         return left > right  # type: ignore
 
 
-class Lt(BinaryScalar[bool]):
+class Lt(BinaryQuery[bool]):
     """Less than: left < right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -43,7 +43,7 @@ class Lt(BinaryScalar[bool]):
         return left < right  # type: ignore
 
 
-class Eq(BinaryScalar[bool]):
+class Eq(BinaryQuery[bool]):
     """Equality: left == right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -54,7 +54,7 @@ class Eq(BinaryScalar[bool]):
         return left == right  # type: ignore
 
 
-class Ne(BinaryScalar[bool]):
+class Ne(BinaryQuery[bool]):
     """Not equal: left != right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -65,7 +65,7 @@ class Ne(BinaryScalar[bool]):
         return left != right  # type: ignore
 
 
-class Ge(BinaryScalar[bool]):
+class Ge(BinaryQuery[bool]):
     """Greater than or equal: left >= right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -76,7 +76,7 @@ class Ge(BinaryScalar[bool]):
         return left >= right  # type: ignore
 
 
-class Le(BinaryScalar[bool]):
+class Le(BinaryQuery[bool]):
     """Less than or equal: left <= right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -87,7 +87,7 @@ class Le(BinaryScalar[bool]):
         return left <= right  # type: ignore
 
 
-class IdComp(BinaryScalar[bool]):
+class IdComp(BinaryQuery[bool]):
     """Identity comparison: left is right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH

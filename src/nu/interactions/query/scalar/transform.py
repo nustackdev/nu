@@ -17,7 +17,7 @@ from collections.abc import Iterable, Iterator, Sequence
 from itertools import chain as itertools_chain
 from typing import ClassVar
 
-from nu.terms import INVALID, BinaryScalar, Mode, Sentinel, TernaryScalar, UnaryScalar
+from nu.terms import INVALID, BinaryQuery, Mode, Sentinel, TernaryQuery, UnaryQuery
 
 
 __all__ = [
@@ -30,7 +30,7 @@ __all__ = [
 ]
 
 
-class Sorted[ResultT](BinaryScalar[list[ResultT]]):
+class Sorted[ResultT](BinaryQuery[list[ResultT]]):
     """Sorted list: sorted(seq, reverse=reverse). Terminal — inherently eager."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -49,7 +49,7 @@ class Sorted[ResultT](BinaryScalar[list[ResultT]]):
         return f"Sorted({self._children[0]!r}, reverse={self._children[1]!r})"
 
 
-class Reversed[ResultT](UnaryScalar[Iterator[ResultT]]):
+class Reversed[ResultT](UnaryQuery[Iterator[ResultT]]):
     """Reversed sequence: reversed(seq) -> lazy iterator."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -62,7 +62,7 @@ class Reversed[ResultT](UnaryScalar[Iterator[ResultT]]):
         return reversed(operand)  # type: ignore
 
 
-class Pluck[T](BinaryScalar[Iterator[T]]):
+class Pluck[T](BinaryQuery[Iterator[T]]):
     """Extract field from each element: (x[key] for x in seq) -> lazy iterator.
 
     Both operand and key are resolved as terms at execution time.
@@ -89,7 +89,7 @@ class Pluck[T](BinaryScalar[Iterator[T]]):
             return INVALID
 
 
-class FilterBy[T](TernaryScalar[Iterator[T]]):
+class FilterBy[T](TernaryQuery[Iterator[T]]):
     """Filter by field value: (x for x in seq if x[key] == value) -> lazy iterator.
 
     All three operands (collection, field, value) are resolved as terms
@@ -118,7 +118,7 @@ class FilterBy[T](TernaryScalar[Iterator[T]]):
             return INVALID
 
 
-class Flatten(UnaryScalar[Iterator]):
+class Flatten(UnaryQuery[Iterator]):
     """Flatten one level: chain.from_iterable(seq) -> lazy iterator."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -134,7 +134,7 @@ class Flatten(UnaryScalar[Iterator]):
             return INVALID
 
 
-class Unique(UnaryScalar[Iterator]):
+class Unique(UnaryQuery[Iterator]):
     """Unique elements preserving order -> lazy iterator."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH

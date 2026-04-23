@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from nu.terms import Mode, UnaryScalar
+from nu.terms import Mode, UnaryQuery
 
 
 __all__ = [
@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-class ClearCmd(UnaryScalar[None]):
+class ClearCmd(UnaryQuery[None]):
     """Clear all items: collection.clear(). Returns None."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH

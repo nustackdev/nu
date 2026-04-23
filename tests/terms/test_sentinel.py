@@ -1,7 +1,7 @@
-"""Tests for sentinels and sentinel propagation through NAryScalar.
+"""Tests for sentinels and sentinel propagation through ScalarQuery.
 
 Sentinel propagation is the most critical behavioral contract in Nu.
-If any operand resolves to EMPTY or INVALID, NAryScalar returns INVALID
+If any operand resolves to EMPTY or INVALID, ScalarQuery returns INVALID
 without calling apply(). This is the safety net for the entire algebra.
 """
 
@@ -11,7 +11,7 @@ from typing import Any, ClassVar
 
 from nu import EMPTY, INVALID, Literal
 from nu.terms import (
-    BinaryScalar,
+    BinaryQuery,
     Empty,
     Invalid,
     Mode,
@@ -137,14 +137,14 @@ def test_propagate_special_no_args():
 
 
 # ---------------------------------------------------------------------------
-# NAryScalar sentinel propagation
+# ScalarQuery sentinel propagation
 # ---------------------------------------------------------------------------
 
 # Local test Interaction - verifies apply() is/isn't called.
 
 
-class _TestAddOp(BinaryScalar[int]):
-    """BinaryScalar that tracks whether apply was called."""
+class _TestAddOp(BinaryQuery[int]):
+    """BinaryQuery that tracks whether apply was called."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
     func_mode: ClassVar[Mode] = Mode.SYNC
@@ -157,7 +157,7 @@ class _TestAddOp(BinaryScalar[int]):
 
 
 class TestNAryOpSentinelPropagation:
-    """NAryScalar.aexecute intercepts sentinels before apply."""
+    """ScalarQuery.aexecute intercepts sentinels before apply."""
 
     def setup_method(self):
         _TestAddOp.apply_called = False

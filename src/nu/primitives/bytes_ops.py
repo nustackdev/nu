@@ -15,12 +15,12 @@ from typing import ClassVar
 
 from nu.terms import (
     INVALID,
-    BinaryScalar,
+    BinaryQuery,
     Mode,
-    NAryScalar,
+    ScalarQuery,
     Sentinel,
-    TernaryScalar,
-    UnaryScalar,
+    TernaryQuery,
+    UnaryQuery,
 )
 
 
@@ -46,7 +46,7 @@ __all__ = [
 # =============================================================================
 
 
-class DecodeOp(BinaryScalar[str]):
+class DecodeOp(BinaryQuery[str]):
     """Decode bytes to string: bytes.decode(encoding)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -62,7 +62,7 @@ class DecodeOp(BinaryScalar[str]):
             return INVALID
 
 
-class HexOp(UnaryScalar[str]):
+class HexOp(UnaryQuery[str]):
     """Convert to hex string: bytes.hex()."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -80,7 +80,7 @@ class HexOp(UnaryScalar[str]):
 # =============================================================================
 
 
-class BytesUpperOp(UnaryScalar[bytes]):
+class BytesUpperOp(UnaryQuery[bytes]):
     """Convert to uppercase: bytes.upper()."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -93,7 +93,7 @@ class BytesUpperOp(UnaryScalar[bytes]):
         return operand.upper()
 
 
-class BytesLowerOp(UnaryScalar[bytes]):
+class BytesLowerOp(UnaryQuery[bytes]):
     """Convert to lowercase: bytes.lower()."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -111,7 +111,7 @@ class BytesLowerOp(UnaryScalar[bytes]):
 # =============================================================================
 
 
-class BytesStripOp(BinaryScalar[bytes]):
+class BytesStripOp(BinaryQuery[bytes]):
     """Strip bytes: bytes.strip(chars)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -126,7 +126,7 @@ class BytesStripOp(BinaryScalar[bytes]):
         return left.strip(right)
 
 
-class BytesLStripOp(BinaryScalar[bytes]):
+class BytesLStripOp(BinaryQuery[bytes]):
     """Strip leading bytes: bytes.lstrip(chars)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -141,7 +141,7 @@ class BytesLStripOp(BinaryScalar[bytes]):
         return left.lstrip(right)
 
 
-class BytesRStripOp(BinaryScalar[bytes]):
+class BytesRStripOp(BinaryQuery[bytes]):
     """Strip trailing bytes: bytes.rstrip(chars)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -161,7 +161,7 @@ class BytesRStripOp(BinaryScalar[bytes]):
 # =============================================================================
 
 
-class BytesSplitOp(TernaryScalar[list[bytes]]):
+class BytesSplitOp(TernaryQuery[list[bytes]]):
     """Split bytes: bytes.split(sep, maxsplit)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -181,7 +181,7 @@ class BytesSplitOp(TernaryScalar[list[bytes]]):
 # =============================================================================
 
 
-class BytesFindOp(NAryScalar[int]):
+class BytesFindOp(ScalarQuery[int]):
     """Find sub-bytes: bytes.find(sub, start, end)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -197,7 +197,7 @@ class BytesFindOp(NAryScalar[int]):
         return operand.find(sub, int(start), int(end))  # type: ignore[arg-type]
 
 
-class BytesCountOp(BinaryScalar[int]):
+class BytesCountOp(BinaryQuery[int]):
     """Count sub-bytes occurrences: bytes.count(sub)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -215,7 +215,7 @@ class BytesCountOp(BinaryScalar[int]):
 # =============================================================================
 
 
-class BytesStartsWithOp(BinaryScalar[bool]):
+class BytesStartsWithOp(BinaryQuery[bool]):
     """Check if starts with prefix: bytes.startswith(prefix)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -228,7 +228,7 @@ class BytesStartsWithOp(BinaryScalar[bool]):
         return left.startswith(right)
 
 
-class BytesEndsWithOp(BinaryScalar[bool]):
+class BytesEndsWithOp(BinaryQuery[bool]):
     """Check if ends with suffix: bytes.endswith(suffix)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -246,7 +246,7 @@ class BytesEndsWithOp(BinaryScalar[bool]):
 # =============================================================================
 
 
-class BytesReplaceOp(NAryScalar[bytes]):
+class BytesReplaceOp(ScalarQuery[bytes]):
     """Replace sub-bytes: bytes.replace(old, new, count)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH

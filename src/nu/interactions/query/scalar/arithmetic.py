@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from nu.terms import BinaryScalar, Mode, UnaryScalar
+from nu.terms import BinaryQuery, Mode, UnaryQuery
 
 
 __all__ = [
@@ -30,7 +30,7 @@ __all__ = [
 # =============================================================================
 
 
-class Neg[ResultT](UnaryScalar[ResultT]):
+class Neg[ResultT](UnaryQuery[ResultT]):
     """Negation: -operand."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -41,7 +41,7 @@ class Neg[ResultT](UnaryScalar[ResultT]):
         return -operand  # type: ignore
 
 
-class Abs[ResultT](UnaryScalar[ResultT]):
+class Abs[ResultT](UnaryQuery[ResultT]):
     """Absolute value: abs(operand)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -52,7 +52,7 @@ class Abs[ResultT](UnaryScalar[ResultT]):
         return abs(operand)  # type: ignore
 
 
-class Pos[ResultT](UnaryScalar[ResultT]):
+class Pos[ResultT](UnaryQuery[ResultT]):
     """Unary plus: +operand."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -68,7 +68,7 @@ class Pos[ResultT](UnaryScalar[ResultT]):
 # =============================================================================
 
 
-class Add[ResultT](BinaryScalar[ResultT]):
+class Add[ResultT](BinaryQuery[ResultT]):
     """Addition: left + right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -79,7 +79,7 @@ class Add[ResultT](BinaryScalar[ResultT]):
         return left + right  # type: ignore
 
 
-class Sub[ResultT](BinaryScalar[ResultT]):
+class Sub[ResultT](BinaryQuery[ResultT]):
     """Subtraction: left - right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -90,7 +90,7 @@ class Sub[ResultT](BinaryScalar[ResultT]):
         return left - right  # type: ignore
 
 
-class Mul[ResultT](BinaryScalar[ResultT]):
+class Mul[ResultT](BinaryQuery[ResultT]):
     """Multiplication: left * right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -101,7 +101,7 @@ class Mul[ResultT](BinaryScalar[ResultT]):
         return left * right  # type: ignore
 
 
-class Div[ResultT](BinaryScalar[ResultT]):
+class Div[ResultT](BinaryQuery[ResultT]):
     """Division: left / right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -112,7 +112,7 @@ class Div[ResultT](BinaryScalar[ResultT]):
         return left / right  # type: ignore
 
 
-class FloorDiv[ResultT](BinaryScalar[ResultT]):
+class FloorDiv[ResultT](BinaryQuery[ResultT]):
     """Floor division: left // right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -123,7 +123,7 @@ class FloorDiv[ResultT](BinaryScalar[ResultT]):
         return left // right  # type: ignore
 
 
-class Mod[ResultT](BinaryScalar[ResultT]):
+class Mod[ResultT](BinaryQuery[ResultT]):
     """Modulo: left % right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -134,7 +134,7 @@ class Mod[ResultT](BinaryScalar[ResultT]):
         return left % right  # type: ignore
 
 
-class Pow[ResultT](BinaryScalar[ResultT]):
+class Pow[ResultT](BinaryQuery[ResultT]):
     """Power: left ** right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH

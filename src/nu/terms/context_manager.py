@@ -1,4 +1,4 @@
-"""ContextManager - bracket around a body.
+"""ContextManager - transparent bracket around a body.
 
 One of the four direct Nu kinds:
 
@@ -8,18 +8,19 @@ One of the four direct Nu kinds:
     ├── Form
     └── ContextManager    (this module)
 
-Pure structural. No fabric interaction, no computation of its own. Brackets
-child evaluation with `before` / `after` / `after_failure` hooks. Role comes
-from what the hooks do (commit a transaction -> Command; release a snapshot
--> Query) and from mixing with Command / Query bases.
+Pure structural. No fabric interaction, no computation of its own, no role.
+Brackets child evaluation with `before` / `after` / `after_failure` hooks and
+forwards children's yields in order. Transparent: the yield shape is whatever
+the body produces (0-yield if children are all Commands, N-yield if children
+include Queries / Streams).
 
-Typical composition:
-    class Transaction(ContextManager, Command): ...
-    class Snapshot(ContextManager, Query[T]): ...
+ContextManager does NOT mix with Command / Query. Effect contributions come
+from the body's children, not the bracket itself.
 """
 
 from __future__ import annotations
 
+import inspect
 from abc import ABC
 from contextlib import closing
 from typing import TYPE_CHECKING, Any
@@ -39,6 +40,16 @@ __all__ = [
 ]
 
 
+_VALID_MODE_PAIRS: frozenset[tuple[Mode, Mode]] = frozenset(
+    {
+        (Mode.SYNC, Mode.SYNC),
+        (Mode.BOTH, Mode.SYNC),
+        (Mode.BOTH, Mode.BOTH),
+        (Mode.ASYNC, Mode.ASYNC),
+    }
+)
+
+
 class ContextManager(Nu, ABC):
     """Brackets children with before/after hooks.
 
@@ -47,11 +58,38 @@ class ContextManager(Nu, ABC):
         after(ctx)                exit, clean path.
         after_failure(ctx, exc)   exit, exception path.
 
-    `aopen` runs children under the bracket. `GeneratorExit` (raised when a
-    consumer closes the generator early, e.g. NAryScalar taking a single yield
-    from a scope-producing child) counts as clean and routes to `after`.
-    Real exceptions route to `after_failure`.
+    `aopen` runs children under the bracket. Early generator close
+    (`GeneratorExit`) routes to `after_failure` — partial consumption is
+    treated as abort, not commit. A Transaction half-read shouldn't silently
+    persist writes the downstream never observed. Only clean fall-through
+    (all children drained, no exception) calls `after`.
+
+    Mode enforcement mirrors Interaction / Ref: concrete subclasses declare
+    `own_mode` and `func_mode` in their own __dict__; pair must be one of
+    (SYNC,SYNC), (BOTH,SYNC), (BOTH,BOTH), (ASYNC,ASYNC).
     """
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        if ABC in cls.__bases__ or inspect.isabstract(cls):
+            return
+        for name in ("own_mode", "func_mode"):
+            if name not in cls.__dict__:
+                msg = (
+                    f"{cls.__module__}.{cls.__qualname__} must declare "
+                    f"`{name}` explicitly (Mode.SYNC, Mode.ASYNC, or Mode.BOTH). "
+                    "Inheritance is not enough — explicit is better than implicit."
+                )
+                raise TypeError(msg)
+        pair = (cls.own_mode, cls.func_mode)
+        if pair not in _VALID_MODE_PAIRS:
+            msg = (
+                f"{cls.__module__}.{cls.__qualname__} declares "
+                f"own_mode={cls.own_mode.name}, func_mode={cls.func_mode.name}. "
+                "Valid pairs: (SYNC,SYNC), (BOTH,SYNC), (BOTH,BOTH), "
+                "(ASYNC,ASYNC). See projects/nu/model/programming/modes.md."
+            )
+            raise TypeError(msg)
 
     async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         scoped_ctx = self.before(ctx)
@@ -60,10 +98,7 @@ class ContextManager(Nu, ABC):
                 async for v in self._adispatch_child(child, scoped_ctx):
                     yield v
         except BaseException as e:
-            if isinstance(e, GeneratorExit):
-                self.after(scoped_ctx)
-            else:
-                self.after_failure(scoped_ctx, e)
+            self.after_failure(scoped_ctx, e)
             raise
         else:
             self.after(scoped_ctx)
@@ -81,10 +116,7 @@ class ContextManager(Nu, ABC):
                 with closing(child.open(scoped_ctx)) as gen:
                     yield from gen
         except BaseException as e:
-            if isinstance(e, GeneratorExit):
-                self.after(scoped_ctx)
-            else:
-                self.after_failure(scoped_ctx, e)
+            self.after_failure(scoped_ctx, e)
             raise
         else:
             self.after(scoped_ctx)

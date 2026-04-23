@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from nu.terms import Mode, UnaryScalar
+from nu.terms import Mode, UnaryQuery
 
 
 __all__ = [
@@ -27,7 +27,7 @@ __all__ = [
 # =============================================================================
 
 
-class ToInt(UnaryScalar[int]):
+class ToInt(UnaryQuery[int]):
     """Convert value to integer."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -38,7 +38,7 @@ class ToInt(UnaryScalar[int]):
         return int(operand)  # type: ignore
 
 
-class ToFloat(UnaryScalar[float]):
+class ToFloat(UnaryQuery[float]):
     """Convert value to float."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -49,7 +49,7 @@ class ToFloat(UnaryScalar[float]):
         return float(operand)  # type: ignore
 
 
-class ToBool(UnaryScalar[bool]):
+class ToBool(UnaryQuery[bool]):
     """Convert value to boolean."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -60,7 +60,7 @@ class ToBool(UnaryScalar[bool]):
         return bool(operand)
 
 
-class ToStr(UnaryScalar[str]):
+class ToStr(UnaryQuery[str]):
     """Convert value to string."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -71,7 +71,7 @@ class ToStr(UnaryScalar[str]):
         return str(operand)
 
 
-class ToBytes(UnaryScalar[bytes]):
+class ToBytes(UnaryQuery[bytes]):
     """Convert value to bytes.
 
     Supports:
@@ -110,7 +110,7 @@ class ToBytes(UnaryScalar[bytes]):
 # =============================================================================
 
 
-class ToList[T](UnaryScalar[list[T]]):
+class ToList[T](UnaryQuery[list[T]]):
     """Convert value to list."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -121,7 +121,7 @@ class ToList[T](UnaryScalar[list[T]]):
         return list(operand)  # type: ignore
 
 
-class ToSet[T](UnaryScalar[set[T]]):
+class ToSet[T](UnaryQuery[set[T]]):
     """Convert value to set."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -132,7 +132,7 @@ class ToSet[T](UnaryScalar[set[T]]):
         return set(operand)  # type: ignore
 
 
-class ToTuple[*Ts](UnaryScalar[tuple[*Ts]]):
+class ToTuple[*Ts](UnaryQuery[tuple[*Ts]]):
     """Convert value to tuple."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH

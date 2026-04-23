@@ -12,11 +12,11 @@ from typing import Any, ClassVar
 
 from nu import Context, Literal, Nu
 from nu.terms import (
-    BinaryScalar,
+    BinaryQuery,
     Direction,
     Mode,
     TrackedEffect,
-    UnaryScalar,
+    UnaryQuery,
     is_pure,
     tracked_effects,
 )
@@ -64,7 +64,7 @@ class FabricB(Ref[int]):
         return 0
 
 
-class StoreOp(BinaryScalar[None]):
+class StoreOp(BinaryQuery[None]):
     own_mode: ClassVar[Mode] = Mode.BOTH
     func_mode: ClassVar[Mode] = Mode.SYNC
 
@@ -74,7 +74,7 @@ class StoreOp(BinaryScalar[None]):
         return None
 
 
-class LoadOp(UnaryScalar[object]):
+class LoadOp(UnaryQuery[object]):
     own_mode: ClassVar[Mode] = Mode.BOTH
     func_mode: ClassVar[Mode] = Mode.SYNC
 
@@ -84,7 +84,7 @@ class LoadOp(UnaryScalar[object]):
         return value
 
 
-class Add(BinaryScalar[int]):
+class Add(BinaryQuery[int]):
     own_mode: ClassVar[Mode] = Mode.BOTH
     func_mode: ClassVar[Mode] = Mode.SYNC
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Mode, UnaryAtomic
+from nu.terms import Mode, UnaryCommand
 
 
 if TYPE_CHECKING:
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 __all__ = ["AsyncSleep"]
 
 
-class AsyncSleep(UnaryAtomic):
+class AsyncSleep(UnaryCommand):
     """Yield to the event loop for ``delay`` seconds. Wraps `asyncio.sleep`.
 
     Children: ``[delay]``

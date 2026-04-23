@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import ClassVar
 
-from nu.terms import INVALID, Mode, Sentinel, UnaryScalar
+from nu.terms import INVALID, Mode, Sentinel, UnaryQuery
 
 
 __all__ = [
@@ -24,7 +24,7 @@ __all__ = [
 ]
 
 
-class Sum[ResultT](UnaryScalar[ResultT]):
+class Sum[ResultT](UnaryQuery[ResultT]):
     """Sum of sequence elements: sum(seq)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -40,7 +40,7 @@ class Sum[ResultT](UnaryScalar[ResultT]):
             return INVALID
 
 
-class Min[ResultT](UnaryScalar[ResultT]):
+class Min[ResultT](UnaryQuery[ResultT]):
     """Minimum element: min(seq)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -56,7 +56,7 @@ class Min[ResultT](UnaryScalar[ResultT]):
             return INVALID
 
 
-class Max[ResultT](UnaryScalar[ResultT]):
+class Max[ResultT](UnaryQuery[ResultT]):
     """Maximum element: max(seq)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -72,7 +72,7 @@ class Max[ResultT](UnaryScalar[ResultT]):
             return INVALID
 
 
-class Any(UnaryScalar[bool]):
+class Any(UnaryQuery[bool]):
     """Any truthy element: any(seq)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -85,7 +85,7 @@ class Any(UnaryScalar[bool]):
         return any(operand)
 
 
-class All(UnaryScalar[bool]):
+class All(UnaryQuery[bool]):
     """All truthy elements: all(seq)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH

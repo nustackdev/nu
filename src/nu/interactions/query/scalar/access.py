@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from nu.terms import BinaryScalar, Mode, NAryScalar, UnaryScalar
+from nu.terms import BinaryQuery, Mode, ScalarQuery, UnaryQuery
 
 
 __all__ = [
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class Len(UnaryScalar[int]):
+class Len(UnaryQuery[int]):
     """Length: len(operand)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -32,7 +32,7 @@ class Len(UnaryScalar[int]):
         return len(operand)  # type: ignore
 
 
-class At[ResultT](BinaryScalar[ResultT]):
+class At[ResultT](BinaryQuery[ResultT]):
     """Subscript access: left[right]."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -43,7 +43,7 @@ class At[ResultT](BinaryScalar[ResultT]):
         return left[right]  # type: ignore
 
 
-class Slice[ResultT](NAryScalar[ResultT]):
+class Slice[ResultT](ScalarQuery[ResultT]):
     """Slice access: operand[start:stop:step]."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -55,7 +55,7 @@ class Slice[ResultT](NAryScalar[ResultT]):
         return operand[slice(start, stop, step)]  # type: ignore
 
 
-class Contains(BinaryScalar[bool]):
+class Contains(BinaryQuery[bool]):
     """Containment check: right in left."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH

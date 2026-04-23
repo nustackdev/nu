@@ -3,17 +3,16 @@
 Taxonomy under Interaction:
 
     Command                   yields nothing; effect set contains WRITE
-    ├── Atomic                terminal mutation; no inner Command. Hook: run / arun
-    │   ├── NAryAtomic        auto-resolved operands, hook: apply / aapply
-    │   │   ├── UnaryAtomic
-    │   │   ├── BinaryAtomic
-    │   │   └── TernaryAtomic
-    └── Flow                  orchestrates inner Commands. Override open / aopen
+    ├── Flow                  orchestrates inner Commands. Override open / aopen
+    └── ScalarCommand         operand-driven mutation with sentinel propagation
+        ├── UnaryCommand
+        ├── BinaryCommand
+        └── TernaryCommand
 
-Atomic is the leaf pattern: override `arun` / `run`; base wraps to 0-yield.
-NAryAtomic family mirrors NAryScalar for Atomic: resolve each child's first
-yield (propagating sentinels), then call `apply(*values)` returning None.
 Flow is the orchestrator pattern: override `aopen` / `open` directly.
+ScalarCommand is symmetric to ScalarQuery (see query.py) — same sentinel
+propagation, same apply / aapply hook, same arity refinements — but the
+hook returns None and the scope yields nothing.
 """
 
 from __future__ import annotations
@@ -35,22 +34,32 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Atomic",
-    "BinaryAtomic",
+    "BinaryCommand",
     "Command",
     "Flow",
-    "NAryAtomic",
-    "TernaryAtomic",
-    "UnaryAtomic",
+    "ScalarCommand",
+    "TernaryCommand",
+    "UnaryCommand",
 ]
+
+
+# =============================================================================
+# COMMAND BASE - 0-yield role marker
+# =============================================================================
 
 
 class Command(Interaction, ABC):
     """0-yield Interaction. Role marker.
 
-    No abstract hook on the base: Atomic subclasses authoring via `arun`
-    declare their own abstract; Flow subclasses override `aopen` directly
-    and leave `arun` as the default raise.
+    Base has non-abstract `arun` / `run` that raise by default. Two
+    authoring patterns:
+
+    - Override `arun(ctx)` or `run(ctx)`. The base's `aopen` / `open`
+      wrap into a 0-yield generator.
+    - Override `aopen` / `open` directly (for Flow-style orchestration).
+
+    For operand-driven mutation with sentinel propagation, use
+    `ScalarCommand` (and the arity refinements).
     """
 
     async def arun(self, ctx: Context) -> None:
@@ -76,16 +85,13 @@ class Command(Interaction, ABC):
         yield  # unreachable
 
 
-class Atomic(Command, ABC):
-    """Terminal mutation. Leaf in the Command tree.
-
-    Override `run(ctx)` for sync or `arun(ctx)` for async-only. No inner
-    Command; children are all Queries (value to write, target Ref, etc).
-    """
+# =============================================================================
+# FLOW - orchestrator pattern
+# =============================================================================
 
 
 class Flow(Command, ABC):
-    """Orchestrates inner Commands. Override `aopen` / `open`.
+    """Orchestrates inner Commands. Override `aopen` / `open` directly.
 
     Children include Commands (body, branches) and Queries (control
     values). Flow doesn't use `arun`; override `aopen` directly.
@@ -93,20 +99,23 @@ class Flow(Command, ABC):
 
 
 # =============================================================================
-# NARYATOMIC - operand-driven mutation with sentinel short-circuit
+# SCALAR - operand-driven mutation with sentinel propagation
 # =============================================================================
 
 
-class NAryAtomic(Atomic, ABC):
-    """Atomic with auto-resolved operands. Hook: apply(*values) / aapply(*values).
+class ScalarCommand(Command, ABC):
+    """Command with auto-resolved operands. Hook: apply(*values) / aapply(*values).
 
     Opens each child, takes the first yield, propagates EMPTY / INVALID
     (skips `apply` on sentinel — the mutation is aborted, nothing yielded).
     Calls `apply(*values)` once; `apply` returns None. Yields nothing.
 
-    Use for Commands whose operands should be fully resolved before the
-    side effect. For Commands that hold Ref targets (Store, Copy), stay on
-    raw `Atomic` and manage resolution manually.
+    Each child's generator stays suspended at its yield point via an exit
+    stack — this keeps any scope the child opened (Snapshot, Atomic) alive
+    through `apply`, so live views passed to `apply` still read from their
+    backing context. Generators close LIFO on exit.
+
+    Symmetric to `ScalarQuery` in query.py.
     """
 
     def __init__(self, *children: object) -> None:
@@ -132,7 +141,8 @@ class NAryAtomic(Atomic, ABC):
                 if is_sentinel(v):
                     return
                 values.append(v)
-            if type(self).aapply is not NAryAtomic.aapply:
+            # Prefer aapply if the subclass overrides it; otherwise fall back to apply.
+            if type(self).aapply is not ScalarCommand.aapply:
                 await self.aapply(*values)
             else:
                 result = self.apply(*values)
@@ -175,7 +185,12 @@ class NAryAtomic(Atomic, ABC):
         self.apply(*values)
 
 
-class UnaryAtomic(NAryAtomic, ABC):
+# =============================================================================
+# ARITY REFINEMENTS
+# =============================================================================
+
+
+class UnaryCommand(ScalarCommand, ABC):
     """Single operand. For side effects on one resolved value."""
 
     def __init__(self, operand: object) -> None:
@@ -192,7 +207,7 @@ class UnaryAtomic(NAryAtomic, ABC):
         return self._children[0]
 
 
-class BinaryAtomic(NAryAtomic, ABC):
+class BinaryCommand(ScalarCommand, ABC):
     """Two operands."""
 
     def __init__(self, left: object, right: object) -> None:
@@ -213,7 +228,7 @@ class BinaryAtomic(NAryAtomic, ABC):
         return self._children[1]
 
 
-class TernaryAtomic(NAryAtomic, ABC):
+class TernaryCommand(ScalarCommand, ABC):
     """Three operands."""
 
     def __init__(self, a: object, b: object, c: object) -> None:

@@ -3,7 +3,7 @@
 IsEmpty, IsInvalid, NotEmpty, NotInvalid
 
 These are inspections, not computations. They need to see sentinels to
-answer the question, so they cannot use NAryScalar (which short-circuits
+answer the question, so they cannot use ScalarQuery (which short-circuits
 on sentinels before `apply`). Instead they are plain Query[bool] subclasses
 that override `arun` / `run` and take the child's first yield directly.
 """

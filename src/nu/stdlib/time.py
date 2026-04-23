@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Mode, UnaryAtomic
+from nu.terms import Mode, UnaryCommand
 
 
 if TYPE_CHECKING:
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 __all__ = ["TimeSleep"]
 
 
-class TimeSleep(UnaryAtomic):
+class TimeSleep(UnaryCommand):
     """Block the thread for ``delay`` seconds. Wraps `time.sleep`.
 
     Children: ``[delay]``

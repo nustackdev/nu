@@ -6,9 +6,9 @@ Captures all writes in StringIO buffers. Flushes on success, discards on failure
 from __future__ import annotations
 
 from io import StringIO
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import ContextManager
+from nu.terms import ContextManager, Mode
 
 from .backend import StdioBackend
 
@@ -31,6 +31,9 @@ class BufferedStdio(ContextManager):
 
     stdin passes through unbuffered (can't rollback reads).
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(self, *children: object) -> None:
         super().__init__(*children)

@@ -10,12 +10,12 @@ from typing import Any, ClassVar
 
 from nu import Literal, Nu
 from nu.terms import (
-    BinaryScalar,
+    BinaryQuery,
     Interaction,
     Mode,
-    NAryScalar,
-    TernaryScalar,
-    UnaryScalar,
+    ScalarQuery,
+    TernaryQuery,
+    UnaryQuery,
 )
 
 
@@ -24,7 +24,7 @@ from nu.terms import (
 # ---------------------------------------------------------------------------
 
 
-class _AddOp(BinaryScalar[int]):
+class _AddOp(BinaryQuery[int]):
     own_mode: ClassVar[Mode] = Mode.BOTH
     func_mode: ClassVar[Mode] = Mode.SYNC
 
@@ -32,7 +32,7 @@ class _AddOp(BinaryScalar[int]):
         return left + right
 
 
-class _NegOp(UnaryScalar[int]):
+class _NegOp(UnaryQuery[int]):
     own_mode: ClassVar[Mode] = Mode.BOTH
     func_mode: ClassVar[Mode] = Mode.SYNC
 
@@ -40,7 +40,7 @@ class _NegOp(UnaryScalar[int]):
         return -operand
 
 
-class _ClampOp(TernaryScalar[int]):
+class _ClampOp(TernaryQuery[int]):
     own_mode: ClassVar[Mode] = Mode.BOTH
     func_mode: ClassVar[Mode] = Mode.SYNC
 
@@ -48,7 +48,7 @@ class _ClampOp(TernaryScalar[int]):
         return max(second, min(third, first))
 
 
-class _SumOp(NAryScalar[int]):
+class _SumOp(ScalarQuery[int]):
     own_mode: ClassVar[Mode] = Mode.BOTH
     func_mode: ClassVar[Mode] = Mode.SYNC
 

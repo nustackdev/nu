@@ -2,7 +2,7 @@
 
 IsEmpty, IsInvalid, NotEmpty, NotInvalid
 
-These are inspections, not computations. They bypass NAryScalar's sentinel
+These are inspections, not computations. They bypass ScalarQuery's sentinel
 propagation - they need to see the sentinel to answer the question.
 """
 

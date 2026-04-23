@@ -11,7 +11,7 @@ from __future__ import annotations
 from contextlib import aclosing, closing
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import BinaryScalar, Mode, Sentinel, UnaryScalar, propagate_special
+from nu.terms import BinaryQuery, Mode, Sentinel, UnaryQuery, propagate_special
 
 
 if TYPE_CHECKING:
@@ -34,7 +34,7 @@ __all__ = [
 # =============================================================================
 
 
-class Not[ResultT](UnaryScalar[ResultT]):
+class Not[ResultT](UnaryQuery[ResultT]):
     """Logical NOT: not operand.
 
     Python's 'not' keyword cannot be overloaded.
@@ -49,7 +49,7 @@ class Not[ResultT](UnaryScalar[ResultT]):
         return not operand  # type: ignore
 
 
-class Bool(UnaryScalar[bool]):
+class Bool(UnaryQuery[bool]):
     """Boolean conversion: bool(operand)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -81,7 +81,7 @@ def _drain_last_sync(child: Nu, ctx: Context) -> Any:
     return val
 
 
-class And[ResultT](BinaryScalar[ResultT]):
+class And[ResultT](BinaryQuery[ResultT]):
     """Logical AND: left and right.
 
     Overrides open() for short-circuit evaluation:
@@ -139,7 +139,7 @@ class And[ResultT](BinaryScalar[ResultT]):
         raise NotImplementedError
 
 
-class Or[ResultT](BinaryScalar[ResultT]):
+class Or[ResultT](BinaryQuery[ResultT]):
     """Logical OR: left or right.
 
     Overrides open() for short-circuit evaluation:

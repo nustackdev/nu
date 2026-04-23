@@ -9,7 +9,7 @@ import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu.stdio.refs import STDERR, STDOUT
-from nu.terms import Atomic, Mode
+from nu.terms import Command, Mode
 
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ __all__ = [
 ]
 
 
-class Print(Atomic):
+class Print(Command):
     """Print messages to stdout.
 
     Children: [StdioRef.STDOUT, message, *values]
@@ -46,7 +46,7 @@ class Print(Atomic):
         stream.write(" ".join(parts) + "\n")
 
 
-class Log(Atomic):
+class Log(Command):
     """Structured logging with configurable level.
 
     Children: [StdioRef.STDERR, level, logger_name, message, *values]
@@ -76,7 +76,7 @@ class Log(Atomic):
         getattr(logging.getLogger(logger_name), level)(message)
 
 
-class Debug(Atomic):
+class Debug(Command):
     """Quick debug output for development.
 
     Children: [StdioRef.STDOUT, prefix, labels, *values]

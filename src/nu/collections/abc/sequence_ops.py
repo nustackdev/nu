@@ -12,11 +12,11 @@ from typing import ClassVar
 
 from nu.terms import (
     INVALID,
-    BinaryScalar,
+    BinaryQuery,
     Mode,
     Sentinel,
-    TernaryScalar,
-    UnaryScalar,
+    TernaryQuery,
+    UnaryQuery,
 )
 
 
@@ -39,7 +39,7 @@ __all__ = [
 # =============================================================================
 
 
-class FirstOp[ResultT](UnaryScalar[ResultT]):
+class FirstOp[ResultT](UnaryQuery[ResultT]):
     """First element: seq[0]. Returns Invalid if empty."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -54,7 +54,7 @@ class FirstOp[ResultT](UnaryScalar[ResultT]):
         return operand[0]  # type: ignore
 
 
-class LastOp[ResultT](UnaryScalar[ResultT]):
+class LastOp[ResultT](UnaryQuery[ResultT]):
     """Last element: seq[-1]. Returns Invalid if empty."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -69,7 +69,7 @@ class LastOp[ResultT](UnaryScalar[ResultT]):
         return operand[-1]  # type: ignore
 
 
-class IndexOfOp(BinaryScalar[int]):
+class IndexOfOp(BinaryQuery[int]):
     """Find index of value: seq.index(value). Returns Invalid if not found."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -85,7 +85,7 @@ class IndexOfOp(BinaryScalar[int]):
             return INVALID
 
 
-class CountOp(BinaryScalar[int]):
+class CountOp(BinaryQuery[int]):
     """Count occurrences: seq.count(value)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -103,7 +103,7 @@ class CountOp(BinaryScalar[int]):
 # =============================================================================
 
 
-class AppendCmd[T](BinaryScalar[None]):
+class AppendCmd[T](BinaryQuery[None]):
     """Append item to end: seq.append(value). Returns None (mutates in-place)."""
 
     writes = 0
@@ -118,7 +118,7 @@ class AppendCmd[T](BinaryScalar[None]):
         return None
 
 
-class InsertCmd[T](TernaryScalar[None]):
+class InsertCmd[T](TernaryQuery[None]):
     """Insert item at index: seq.insert(index, value). Returns None (mutates in-place)."""
 
     writes = 0
@@ -135,7 +135,7 @@ class InsertCmd[T](TernaryScalar[None]):
         return None
 
 
-class PopCmd[T](BinaryScalar[T]):
+class PopCmd[T](BinaryQuery[T]):
     """Pop item at index: seq.pop(index). Returns popped value.
 
     Default index is -1 (last item).
@@ -157,7 +157,7 @@ class PopCmd[T](BinaryScalar[T]):
             return INVALID
 
 
-class ExtendCmd[T](BinaryScalar[None]):
+class ExtendCmd[T](BinaryQuery[None]):
     """Extend sequence with iterable: seq.extend(other). Returns None (mutates in-place)."""
 
     writes = 0
@@ -174,7 +174,7 @@ class ExtendCmd[T](BinaryScalar[None]):
         return None
 
 
-class RemoveValueCmd[T](BinaryScalar[None]):
+class RemoveValueCmd[T](BinaryQuery[None]):
     """Remove first occurrence of value: seq.remove(value). Returns None, or INVALID if not found."""
 
     writes = 0
@@ -192,7 +192,7 @@ class RemoveValueCmd[T](BinaryScalar[None]):
         return None
 
 
-class ReverseCmd(UnaryScalar[None]):
+class ReverseCmd(UnaryQuery[None]):
     """Reverse sequence in-place: seq.reverse(). Returns None (mutates in-place)."""
 
     writes = 0

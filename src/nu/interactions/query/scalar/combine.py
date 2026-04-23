@@ -6,7 +6,7 @@ from collections.abc import Iterable, Iterator
 from itertools import chain
 from typing import Any, ClassVar
 
-from nu.terms import INVALID, BinaryScalar, Mode, NAryScalar, Sentinel
+from nu.terms import INVALID, BinaryQuery, Mode, ScalarQuery, Sentinel
 
 
 __all__ = [
@@ -16,7 +16,7 @@ __all__ = [
 ]
 
 
-class Zip(NAryScalar[Iterator[tuple]]):
+class Zip(ScalarQuery[Iterator[tuple]]):
     """Zip multiple iterables: zip(*iterables) -> lazy iterator."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -24,7 +24,7 @@ class Zip(NAryScalar[Iterator[tuple]]):
 
     def __init__(self, *operands: object) -> None:
         """Initialize with 2+ iterables."""
-        NAryScalar.__init__(self, *operands)
+        ScalarQuery.__init__(self, *operands)
 
     def apply(self, *values: Any) -> Iterator[tuple] | Sentinel:
         """Apply: zip resolved iterables lazily."""
@@ -38,7 +38,7 @@ class Zip(NAryScalar[Iterator[tuple]]):
         return f"Zip({args})"
 
 
-class Chain(NAryScalar[Iterator]):
+class Chain(ScalarQuery[Iterator]):
     """Chain multiple iterables: chain(*iterables) -> lazy iterator."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -46,7 +46,7 @@ class Chain(NAryScalar[Iterator]):
 
     def __init__(self, *operands: object) -> None:
         """Initialize with 2+ iterables."""
-        NAryScalar.__init__(self, *operands)
+        ScalarQuery.__init__(self, *operands)
 
     def apply(self, *values: Any) -> Iterator | Sentinel:
         """Apply: chain resolved iterables lazily."""
@@ -60,7 +60,7 @@ class Chain(NAryScalar[Iterator]):
         return f"Chain({args})"
 
 
-class Enumerate(BinaryScalar[Iterator[tuple[int, object]]]):
+class Enumerate(BinaryQuery[Iterator[tuple[int, object]]]):
     """Enumerate iterable: enumerate(iterable, start) -> lazy iterator."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH

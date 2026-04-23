@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from nu.terms import BinaryScalar, Mode, UnaryScalar
+from nu.terms import BinaryQuery, Mode, UnaryQuery
 
 
 __all__ = [
@@ -29,7 +29,7 @@ __all__ = [
 # =============================================================================
 
 
-class BitwiseNot[ResultT](UnaryScalar[ResultT]):
+class BitwiseNot[ResultT](UnaryQuery[ResultT]):
     """Bitwise NOT: ~operand (two's complement).
 
     Note: Python's ~ operator is blocked in traits.
@@ -49,7 +49,7 @@ class BitwiseNot[ResultT](UnaryScalar[ResultT]):
 # =============================================================================
 
 
-class BitwiseAnd[ResultT](BinaryScalar[ResultT]):
+class BitwiseAnd[ResultT](BinaryQuery[ResultT]):
     """Bitwise AND: left & right.
 
     Note: Distinct from And (logical AND).
@@ -64,7 +64,7 @@ class BitwiseAnd[ResultT](BinaryScalar[ResultT]):
         return left & right  # type: ignore
 
 
-class BitwiseOr[ResultT](BinaryScalar[ResultT]):
+class BitwiseOr[ResultT](BinaryQuery[ResultT]):
     """Bitwise OR: left | right.
 
     Note: Distinct from Or (logical OR).
@@ -79,7 +79,7 @@ class BitwiseOr[ResultT](BinaryScalar[ResultT]):
         return left | right  # type: ignore
 
 
-class Xor[ResultT](BinaryScalar[ResultT]):
+class Xor[ResultT](BinaryQuery[ResultT]):
     """Bitwise XOR: left ^ right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -90,7 +90,7 @@ class Xor[ResultT](BinaryScalar[ResultT]):
         return left ^ right  # type: ignore
 
 
-class LShift[ResultT](BinaryScalar[ResultT]):
+class LShift[ResultT](BinaryQuery[ResultT]):
     """Left shift: left << right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -101,7 +101,7 @@ class LShift[ResultT](BinaryScalar[ResultT]):
         return left << right  # type: ignore
 
 
-class RShift[ResultT](BinaryScalar[ResultT]):
+class RShift[ResultT](BinaryQuery[ResultT]):
     """Right shift: left >> right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH

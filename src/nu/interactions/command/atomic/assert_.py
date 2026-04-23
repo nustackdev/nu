@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import BinaryAtomic, Mode
+from nu.terms import BinaryCommand, Mode
 
 
 if TYPE_CHECKING:
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 __all__ = ["Assert"]
 
 
-class Assert(BinaryAtomic):
+class Assert(BinaryCommand):
     """Validate a condition during execution.
 
     Children: ``[condition, message]``

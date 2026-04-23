@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import MutableSet, Set
 from typing import ClassVar
 
-from nu.terms import INVALID, BinaryScalar, Mode, Sentinel, UnaryScalar
+from nu.terms import INVALID, BinaryQuery, Mode, Sentinel, UnaryQuery
 
 
 __all__ = [
@@ -39,7 +39,7 @@ __all__ = [
 # =============================================================================
 
 
-class UnionOp[T](BinaryScalar[set[T] | frozenset[T]]):
+class UnionOp[T](BinaryQuery[set[T] | frozenset[T]]):
     """Set union: left | right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -52,7 +52,7 @@ class UnionOp[T](BinaryScalar[set[T] | frozenset[T]]):
         return left | right  # type: ignore
 
 
-class IntersectionOp[T](BinaryScalar[set[T] | frozenset[T]]):
+class IntersectionOp[T](BinaryQuery[set[T] | frozenset[T]]):
     """Set intersection: left & right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -65,7 +65,7 @@ class IntersectionOp[T](BinaryScalar[set[T] | frozenset[T]]):
         return left & right  # type: ignore
 
 
-class DifferenceOp[T](BinaryScalar[set[T] | frozenset[T]]):
+class DifferenceOp[T](BinaryQuery[set[T] | frozenset[T]]):
     """Set difference: left - right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -78,7 +78,7 @@ class DifferenceOp[T](BinaryScalar[set[T] | frozenset[T]]):
         return left - right  # type: ignore
 
 
-class SymmetricDifferenceOp[T](BinaryScalar[set[T] | frozenset[T]]):
+class SymmetricDifferenceOp[T](BinaryQuery[set[T] | frozenset[T]]):
     """Set symmetric difference: left ^ right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -91,7 +91,7 @@ class SymmetricDifferenceOp[T](BinaryScalar[set[T] | frozenset[T]]):
         return left ^ right  # type: ignore
 
 
-class IsSubsetOp(BinaryScalar[bool]):
+class IsSubsetOp(BinaryQuery[bool]):
     """Test if subset: left <= right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -104,7 +104,7 @@ class IsSubsetOp(BinaryScalar[bool]):
         return left <= right
 
 
-class IsSupersetOp(BinaryScalar[bool]):
+class IsSupersetOp(BinaryQuery[bool]):
     """Test if superset: left >= right."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -117,7 +117,7 @@ class IsSupersetOp(BinaryScalar[bool]):
         return left >= right
 
 
-class IsDisjointOp(BinaryScalar[bool]):
+class IsDisjointOp(BinaryQuery[bool]):
     """Test if disjoint: left.isdisjoint(right)."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -135,7 +135,7 @@ class IsDisjointOp(BinaryScalar[bool]):
 # =============================================================================
 
 
-class AddCmd[T](BinaryScalar[None]):
+class AddCmd[T](BinaryQuery[None]):
     """Add element to set: s.add(value). Returns None (mutates in-place)."""
 
     writes = 0
@@ -150,7 +150,7 @@ class AddCmd[T](BinaryScalar[None]):
         return None
 
 
-class RemoveCmd[T](BinaryScalar[None]):
+class RemoveCmd[T](BinaryQuery[None]):
     """Remove element from set: s.remove(value). Returns None, or INVALID if not found."""
 
     writes = 0
@@ -168,7 +168,7 @@ class RemoveCmd[T](BinaryScalar[None]):
         return None
 
 
-class DiscardCmd[T](BinaryScalar[None]):
+class DiscardCmd[T](BinaryQuery[None]):
     """Discard element from set: s.discard(value). Returns None (mutates in-place)."""
 
     writes = 0
@@ -183,7 +183,7 @@ class DiscardCmd[T](BinaryScalar[None]):
         return None
 
 
-class SetPopCmd[T](UnaryScalar[T]):
+class SetPopCmd[T](UnaryQuery[T]):
     """Pop arbitrary element: s.pop(). Returns element, or INVALID if empty."""
 
     writes = 0
@@ -200,7 +200,7 @@ class SetPopCmd[T](UnaryScalar[T]):
             return INVALID
 
 
-class SetUpdateCmd[T](BinaryScalar[None]):
+class SetUpdateCmd[T](BinaryQuery[None]):
     """Update set with elements from other: s.update(other). Returns None."""
 
     writes = 0
@@ -217,7 +217,7 @@ class SetUpdateCmd[T](BinaryScalar[None]):
         return None
 
 
-class IntersectionUpdateCmd[T](BinaryScalar[None]):
+class IntersectionUpdateCmd[T](BinaryQuery[None]):
     """Keep only elements found in both: s.intersection_update(other). Returns None."""
 
     writes = 0
@@ -236,7 +236,7 @@ class IntersectionUpdateCmd[T](BinaryScalar[None]):
         return None
 
 
-class DifferenceUpdateCmd[T](BinaryScalar[None]):
+class DifferenceUpdateCmd[T](BinaryQuery[None]):
     """Remove elements found in other: s.difference_update(other). Returns None."""
 
     writes = 0
@@ -253,7 +253,7 @@ class DifferenceUpdateCmd[T](BinaryScalar[None]):
         return None
 
 
-class SymmetricDifferenceUpdateCmd[T](BinaryScalar[None]):
+class SymmetricDifferenceUpdateCmd[T](BinaryQuery[None]):
     """Keep elements in either but not both: s.symmetric_difference_update(other). Returns None."""
 
     writes = 0

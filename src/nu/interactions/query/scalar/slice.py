@@ -6,7 +6,7 @@ from collections.abc import Iterable, Iterator
 from itertools import islice
 from typing import ClassVar
 
-from nu.terms import INVALID, BinaryScalar, Mode, Sentinel
+from nu.terms import INVALID, BinaryQuery, Mode, Sentinel
 
 
 __all__ = [
@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-class Take(BinaryScalar[Iterator]):
+class Take(BinaryQuery[Iterator]):
     """Take first N elements: islice(iterable, n) -> lazy iterator."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH
@@ -31,7 +31,7 @@ class Take(BinaryScalar[Iterator]):
             return INVALID
 
 
-class Drop(BinaryScalar[Iterator]):
+class Drop(BinaryQuery[Iterator]):
     """Drop first N elements: islice(iterable, n, None) -> lazy iterator."""
 
     own_mode: ClassVar[Mode] = Mode.BOTH

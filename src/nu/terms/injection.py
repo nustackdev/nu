@@ -10,15 +10,15 @@ MethodCall / MethodCallCmd:
 
 Both variants support:
 - Args/kwargs as Terms or literals
-- Sentinel propagation via NAryScalar (INVALID on sentinel operands)
-- Auto-await for async callables/methods (NAryScalar awaits async apply)
+- Sentinel propagation via ScalarQuery (INVALID on sentinel operands)
+- Auto-await for async callables/methods (ScalarQuery awaits async apply)
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from .query import NAryScalar
+from .query import ScalarQuery
 from .types import Mode, Sentinel
 
 
@@ -39,12 +39,12 @@ __all__ = [
 # =============================================================================
 
 
-class FuncCall[T](NAryScalar[T | Sentinel]):
+class FuncCall[T](ScalarQuery[T | Sentinel]):
     """Call a function with arguments.
 
     Arguments can be Terms or literals — Terms are resolved before
-    the function is called. Auto-awaits async results (NAryScalar awaits
-    async apply). Sentinel propagation via NAryScalar: yields INVALID if
+    the function is called. Auto-awaits async results (ScalarQuery awaits
+    async apply). Sentinel propagation via ScalarQuery: yields INVALID if
     any arg is a sentinel.
 
     Use ``FuncCall`` for pure calls (Query), ``FuncCallCmd`` for impure (Command).
@@ -85,7 +85,7 @@ class FuncCall[T](NAryScalar[T | Sentinel]):
 class FuncCallCmd[T](FuncCall[T]):
     """Impure function call. May have side effects.
 
-    Structurally a Command — but inherits FuncCall's NAryScalar apply for
+    Structurally a Command — but inherits FuncCall's ScalarQuery apply for
     evaluation. Marker inheritance for Command role is provided via the
     explicit Command base in the command/atomic/call module.
     """
@@ -99,12 +99,12 @@ class FuncCallCmd[T](FuncCall[T]):
 # =============================================================================
 
 
-class MethodCall[T](NAryScalar[T | Sentinel]):
+class MethodCall[T](ScalarQuery[T | Sentinel]):
     """Call a named method on a target with arguments.
 
     Target is the first child Nu. Args/kwargs are remaining children.
-    Method name is a static string. Auto-awaits async results via NAryScalar.
-    Sentinel propagation via NAryScalar: yields INVALID if any child is a sentinel.
+    Method name is a static string. Auto-awaits async results via ScalarQuery.
+    Sentinel propagation via ScalarQuery: yields INVALID if any child is a sentinel.
 
     Use ``MethodCall`` for pure calls (Query), ``MethodCallCmd`` for impure (Command).
 
@@ -157,7 +157,7 @@ class MethodCall[T](NAryScalar[T | Sentinel]):
 class MethodCallCmd[T](MethodCall[T]):
     """Impure method call. May have side effects.
 
-    Structurally a Command — inherits MethodCall's NAryScalar apply. Marker
+    Structurally a Command — inherits MethodCall's ScalarQuery apply. Marker
     inheritance for Command role lives in command/atomic/call.
     """
 

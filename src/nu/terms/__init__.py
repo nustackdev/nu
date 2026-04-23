@@ -6,9 +6,9 @@ Layout (see projects/nu/model/programming/components.md + interactions.md):
     ├── Ref             - addressable location (ref.py)
     ├── Interaction     - compute or mutate (interaction.py)
     │   ├── Query       - functional construction (query.py)
-    │   │   └── Literal, NAryScalar / Unary / Binary / Ternary, Stream
+    │   │   └── Literal, Stream, ScalarQuery / Unary / Binary / Ternary
     │   └── Command     - imperative mutation (command.py)
-    │       └── Atomic, Flow
+    │       └── Flow, ScalarCommand / Unary / Binary / Ternary
     ├── Form            - typed descriptor (interface.py; rename later)
     └── ContextManager  - bracket hooks (context_manager.py)
 
@@ -17,13 +17,12 @@ Arg types, T_co). Analysis + Form/Interface descriptors: utils.py.
 """
 
 from .command import (
-    Atomic,
-    BinaryAtomic,
+    BinaryCommand,
     Command,
     Flow,
-    NAryAtomic,
-    TernaryAtomic,
-    UnaryAtomic,
+    ScalarCommand,
+    TernaryCommand,
+    UnaryCommand,
 )
 from .context_manager import ContextManager
 from .injection import FuncCall, FuncCallCmd, MethodCall, MethodCallCmd
@@ -31,13 +30,13 @@ from .interaction import Interaction
 from .interface import Interface, TypedNu
 from .nu import LValue, Nu, NuIndepComm, RValue
 from .query import (
-    BinaryScalar,
+    BinaryQuery,
     Literal,
-    NAryScalar,
     Query,
+    ScalarQuery,
     Stream,
-    TernaryScalar,
-    UnaryScalar,
+    TernaryQuery,
+    UnaryQuery,
 )
 from .ref import Ref
 from .types import (
@@ -75,10 +74,9 @@ __all__ = [
     "EMPTY",
     "INVALID",
     "Arg",
-    "Atomic",
     "AutoInterface",
-    "BinaryAtomic",
-    "BinaryScalar",
+    "BinaryCommand",
+    "BinaryQuery",
     "BoolArg",
     "BytesArg",
     "Command",
@@ -101,26 +99,26 @@ __all__ = [
     "MethodCall",
     "MethodCallCmd",
     "Mode",
-    "NAryAtomic",
-    "NAryScalar",
     "NoneArg",
     "Nu",
     "NuIndepComm",
     "Query",
     "RValue",
     "Ref",
+    "ScalarCommand",
+    "ScalarQuery",
     "Sentinel",
     "SetArg",
     "StrArg",
     "Stream",
     "T_co",
-    "TernaryAtomic",
-    "TernaryScalar",
+    "TernaryCommand",
+    "TernaryQuery",
     "TrackedEffect",
     "TupleArg",
     "TypedNu",
-    "UnaryAtomic",
-    "UnaryScalar",
+    "UnaryCommand",
+    "UnaryQuery",
     "is_empty",
     "is_invalid",
     "is_pure",
