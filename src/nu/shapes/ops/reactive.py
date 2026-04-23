@@ -41,14 +41,18 @@ class ChangeOp(Query[object]):
 class OnChangeOp(ChangeOp):
     """Subscribe to all changes on a view/collection."""
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
     async def arun(self, ctx: Context) -> object:
         view = await self.children[0].afirst(ctx)
+        return view.on_change()  # type: ignore[union-attr]
+
+    def run(self, ctx: Context) -> object:
+        view = self.children[0].first(ctx)
         return view.on_change()  # type: ignore[union-attr]
 
     def __repr__(self) -> str:
@@ -58,8 +62,8 @@ class OnChangeOp(ChangeOp):
 class OnChildChangeOp[A](ChangeOp):
     """Subscribe to changes on a specific child of a view."""
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, ref: Ref, address: A | Nu[A]) -> None:
         super().__init__(ref)
@@ -74,6 +78,15 @@ class OnChildChangeOp[A](ChangeOp):
         view = await self.children[0].afirst(ctx)
         return view.on_child_change(address)  # type: ignore[union-attr]
 
+    def run(self, ctx: Context) -> object:
+        if isinstance(self.address, Nu):
+            address = self.address.first(ctx)
+        else:
+            address = self.address
+
+        view = self.children[0].first(ctx)
+        return view.on_child_change(address)  # type: ignore[union-attr]
+
     def __repr__(self) -> str:
         return f"OnChildChangeOp({self.children[0]!r}, {self.address!r})"
 
@@ -81,14 +94,18 @@ class OnChildChangeOp[A](ChangeOp):
 class OnChildrenChangeOp(ChangeOp):
     """Subscribe to changes on all immediate children of a view."""
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
     async def arun(self, ctx: Context) -> object:
         view = await self.children[0].afirst(ctx)
+        return view.on_children_change()  # type: ignore[union-attr]
+
+    def run(self, ctx: Context) -> object:
+        view = self.children[0].first(ctx)
         return view.on_children_change()  # type: ignore[union-attr]
 
     def __repr__(self) -> str:
@@ -98,8 +115,8 @@ class OnChildrenChangeOp(ChangeOp):
 class OnDescendantsChangeOp(ChangeOp):
     """Subscribe to descendants matching a pattern."""
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, ref: Ref, *pattern: object) -> None:
         super().__init__(ref)
@@ -110,6 +127,13 @@ class OnDescendantsChangeOp(ChangeOp):
             raise ValueError("Pattern cannot be empty for on_descendants_change")
 
         view = await self.children[0].afirst(ctx)
+        return view.on_descendents_change(self.pattern[0], *self.pattern[1:])  # type: ignore[union-attr]
+
+    def run(self, ctx: Context) -> object:
+        if not self.pattern:
+            raise ValueError("Pattern cannot be empty for on_descendants_change")
+
+        view = self.children[0].first(ctx)
         return view.on_descendents_change(self.pattern[0], *self.pattern[1:])  # type: ignore[union-attr]
 
     def __repr__(self) -> str:

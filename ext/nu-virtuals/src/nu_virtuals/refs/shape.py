@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import (
     AnyI,
@@ -13,6 +13,7 @@ from nu import (
     IteratorI,
 )
 from nu.shapes import ReactiveShapeRef, Shape, Slot
+from nu.terms import Mode
 from virtuals.collections import MutableMappingBase
 from virtuals.types import Value as StorageValue
 
@@ -41,6 +42,9 @@ class ShapeRef[T: Shape](
     Inherits attribute navigation and _create_child_ref from nu.shape ShapeRef.
     Inherits PV path resolution and view fetching from ViewRef.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def result(self, op: Nu) -> DictI[str, object]:
         """Wrap op in DictI for shape extract/store."""

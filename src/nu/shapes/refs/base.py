@@ -152,20 +152,25 @@ class Ref[T](RefABC[T]):
     # PATH COMPOSITION — Building Full Paths
     # =========================================================================
 
-    async def resolve_address(self, ctx: Context) -> object:
-        """Resolve this segment's address to concrete value.
+    async def aresolve_address(self, ctx: Context) -> object:
+        """Resolve this segment's address to concrete value (async).
 
         Handles dynamic (Nu) addresses by executing them.
-
-        Args:
-            ctx: Execution context
-
-        Returns:
-            Resolved address (str for keys, int for indices)
         """
         addr = self.address
         if isinstance(addr, Nu):
             return await addr.afirst(ctx)
+        return addr
+
+    def resolve_address(self, ctx: Context) -> object:
+        """Sync counterpart of `aresolve_address`.
+
+        Safe to call only when the address subtree has no ASYNC nodes.
+        `open`/`fetch`/`resolve` gate on `effective_mode` upstream.
+        """
+        addr = self.address
+        if isinstance(addr, Nu):
+            return addr.first(ctx)
         return addr
 
     def get_path_segments(self) -> list[Ref]:
@@ -189,7 +194,7 @@ class Ref[T](RefABC[T]):
     # =========================================================================
 
     @abstractmethod
-    async def fetch_parent(self, ctx: Context) -> object:
+    async def afetch_parent(self, ctx: Context) -> object:
         """Fetch the parent container holding this ref's value.
 
         Returns the dict/list/view that contains this ref's slot.

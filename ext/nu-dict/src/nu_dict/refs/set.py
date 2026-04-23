@@ -3,10 +3,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import AnyI, SetI
 from nu.shapes import MutableSetRef, Slot
+from nu.terms import Mode
 
 from .base import RefBase
 
@@ -25,6 +26,9 @@ class SetRef[T](
     RefBase[set[T]],
 ):
     """Dict set reference — unordered unique-element container."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def result(self, op: Nu) -> SetI[T]:
         return SetI(op)

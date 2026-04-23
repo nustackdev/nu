@@ -6,7 +6,10 @@ resolve, fetch, execute delegation, and purity.
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from nu import Context, Nu
+from nu.terms import Mode
 from nu.terms.ref import Ref
 
 
@@ -17,6 +20,9 @@ from nu.terms.ref import Ref
 
 class StubRef(Ref[int]):
     """Minimal Ref that resolves to a fixed key and fetches a fixed value."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(self, key: str, value: int) -> None:
         super().__init__()

@@ -55,17 +55,26 @@ class ItemStoreCmd[T](Command):
     """Write item to collection: parent[address] = value."""
 
     writes = 0
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, ref: Ref, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
 
     async def arun(self, ctx: Context) -> None:
         ref = self.children[0]
-        parent = await ref.fetch_parent(ctx)
-        address = await ref.resolve_address(ctx)
+        parent = await ref.afetch_parent(ctx)
+        address = await ref.aresolve_address(ctx)
         value = await self.children[1].afirst(ctx)
+        if isinstance(value, Sentinel):
+            raise ValueError(f"Cannot store sentinel value: {value}")
+        parent[address] = value
+
+    def run(self, ctx: Context) -> None:
+        ref = self.children[0]
+        parent = ref.fetch_parent(ctx)
+        address = ref.resolve_address(ctx)
+        value = self.children[1].first(ctx)
         if isinstance(value, Sentinel):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent[address] = value
@@ -78,16 +87,22 @@ class ItemEraseCmd(Command):
     """Delete item from collection: del parent[address]."""
 
     writes = 0
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
     async def arun(self, ctx: Context) -> None:
         ref = self.children[0]
-        parent = await ref.fetch_parent(ctx)
-        address = await ref.resolve_address(ctx)
+        parent = await ref.afetch_parent(ctx)
+        address = await ref.aresolve_address(ctx)
+        del parent[address]
+
+    def run(self, ctx: Context) -> None:
+        ref = self.children[0]
+        parent = ref.fetch_parent(ctx)
+        address = ref.resolve_address(ctx)
         del parent[address]
 
     def __repr__(self) -> str:

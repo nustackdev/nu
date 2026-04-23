@@ -10,9 +10,10 @@ Not user-facing. Created only by the inline_refs() deformation.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import EMPTY, Sentinel
+from nu.terms import Mode
 from nu.terms.ref import Ref
 from nu_virtuals.paths import ViewPathSer
 
@@ -37,6 +38,9 @@ class FlatRef(Ref):
         _last_address: Pre-extracted last address for resolve_address fast path.
         _is_primitive: True if leaf ref is a PrimitiveRef (not a ViewRef).
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -69,14 +73,14 @@ class FlatRef(Ref):
             return await self._build_path(ctx)
         return self._static_path
 
-    async def resolve_address(self, ctx: Context) -> object:
+    async def aresolve_address(self, ctx: Context) -> object:
         """Return this ref's address (last path segment). O(1) for static."""
         if not self._is_last_dynamic:
             return self._last_address
         resolved = await self._build_path(ctx)
         return resolved[-1][0]
 
-    async def fetch_parent(self, ctx: Context) -> object:
+    async def afetch_parent(self, ctx: Context) -> object:
         """Navigate to parent view via Navigator."""
         resolved = await self._build_path(ctx) if self._dynamic_segments else self._static_path
         nav = self._resolve_navigator(ctx, resolved)
@@ -179,6 +183,72 @@ class FlatRef(Ref):
             _old_addr, marker = path_list[idx]
             path_list[idx] = (addr, marker)
         return tuple(path_list)
+
+    def _build_path_sync(self, ctx: Context) -> tuple:
+        """Sync counterpart of `_build_path`."""
+        if self._dynamic_segments is None:
+            return self._static_path
+        path_list = list(self._static_path)
+        for idx, term in self._dynamic_segments:
+            addr = term.first(ctx)
+            _old_addr, marker = path_list[idx]
+            path_list[idx] = (addr, marker)
+        return tuple(path_list)
+
+    def resolve(self, ctx: Context) -> tuple:
+        """Sync counterpart of `aresolve`."""
+        if self._dynamic_segments is None:
+            return self._static_path
+        return self._build_path_sync(ctx)
+
+    def resolve_address(self, ctx: Context) -> object:
+        """Sync counterpart of `aresolve_address`."""
+        if not self._is_last_dynamic:
+            return self._last_address
+        return self._build_path_sync(ctx)[-1][0]
+
+    def fetch_parent(self, ctx: Context) -> object:
+        """Sync counterpart of `afetch_parent`."""
+        resolved = self._build_path_sync(ctx) if self._dynamic_segments else self._static_path
+        nav = self._resolve_navigator(ctx, resolved)
+        storage_ctx = self._resolve_storage_ctx(ctx, resolved)
+        if self._is_primitive:
+            parent_path = resolved[:-1]
+            if not parent_path:
+                return nav.root(storage_ctx)
+            return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
+        if len(resolved) <= 1:
+            return nav.root(storage_ctx)
+        parent_path = resolved[:-1]
+        return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
+
+    def fetch(self, ctx: Context) -> object | Sentinel:
+        """Sync counterpart of `afetch`."""
+        from virtuals import Empty as StorageEmpty
+        from virtuals.collections import Subscriptable
+
+        resolved = self._build_path_sync(ctx) if self._dynamic_segments else self._static_path
+        nav = self._resolve_navigator(ctx, resolved)
+        storage_ctx = self._resolve_storage_ctx(ctx, resolved)
+
+        if not self._is_primitive:
+            if not resolved:
+                return nav.root(storage_ctx)
+            return nav.open_at_path(ViewPathSer(resolved), storage_ctx)
+
+        parent_path = resolved[:-1]
+        key = resolved[-1][0]
+        try:
+            if not parent_path:
+                parent_view = nav.root(storage_ctx)
+            else:
+                parent_view = nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
+            if isinstance(parent_view, Subscriptable):
+                val = parent_view[key]
+                return val if not isinstance(val, StorageEmpty) else EMPTY
+            raise TypeError(f"View {parent_view.__class__.__name__} is not subscriptable")
+        except (KeyError, IndexError):
+            return EMPTY
 
     def __repr__(self) -> str:
         addrs = tuple(a for a, _m in self._static_path)

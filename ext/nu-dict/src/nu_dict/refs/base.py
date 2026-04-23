@@ -38,16 +38,27 @@ class RefBase[T](Ref[T]):
     The root dict is retrieved from Context via ctx[dict, scope].
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     async def aresolve(self, ctx: Context) -> tuple[str | int, ...]:
         """Build key path from parent chain."""
-        address = await self.resolve_address(ctx)
+        address = await self.aresolve_address(ctx)
 
         if self.parent is None:
             return (address,) if address != "" else ()
 
         parent_path = await self.parent.aresolve(ctx)
+        return (*parent_path, address)
+
+    def resolve(self, ctx: Context) -> tuple[str | int, ...]:
+        """Build key path from parent chain (sync)."""
+        address = self.resolve_address(ctx)
+
+        if self.parent is None:
+            return (address,) if address != "" else ()
+
+        parent_path = self.parent.resolve(ctx)
         return (*parent_path, address)
 
     async def afetch(self, ctx: Context) -> T | Sentinel:
@@ -60,9 +71,28 @@ class RefBase[T](Ref[T]):
         except (KeyError, IndexError):
             return EMPTY
 
-    async def fetch_parent(self, ctx: Context) -> object:
+    def fetch(self, ctx: Context) -> T | Sentinel:
+        """Fetch value by navigating the dict (sync)."""
+        key_path = self.resolve(ctx)
+        data = self._get_root_data(ctx, key_path)
+        try:
+            raw = _navigate(data, key_path)
+            return self.coerce(raw)
+        except (KeyError, IndexError):
+            return EMPTY
+
+    async def afetch_parent(self, ctx: Context) -> object:
         """Fetch the parent container, auto-creating intermediate dicts."""
         key_path = await self.aresolve(ctx)
+        data = self._get_root_data(ctx, key_path)
+
+        if len(key_path) <= 1:
+            return data
+        return _navigate_vivify(data, key_path[:-1])
+
+    def fetch_parent(self, ctx: Context) -> object:
+        """Fetch the parent container, auto-creating intermediate dicts (sync)."""
+        key_path = self.resolve(ctx)
         data = self._get_root_data(ctx, key_path)
 
         if len(key_path) <= 1:

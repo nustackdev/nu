@@ -3,10 +3,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import ensure_nu
 from nu.shapes import MutableShapesSequenceRef, Slot
+from nu.terms import Mode
 
 from .base import RefBase
 from .shape import ShapeRef
@@ -26,6 +27,9 @@ class ShapesListRef[T: Shape](
     RefBase[list[dict]],
 ):
     """Dict shapes list reference — sequence of homogeneous shapes."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,

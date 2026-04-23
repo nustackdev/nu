@@ -3,10 +3,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 
 from nu import AnyI, SetI
 from nu.shapes import ReactiveSetRef, Shape, Slot
+from nu.terms import Mode
 from virtuals.collections import MutableSetBase
 
 from .base import ViewRef
@@ -30,6 +31,9 @@ class SetRef[T](
 
     Operations work lazily on PV views without loading into memory.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def result(self, op: Nu) -> SetI[T]:
         return SetI(op)

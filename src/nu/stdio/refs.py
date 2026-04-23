@@ -7,8 +7,9 @@ Flat topology - no hierarchy, no paths, just named streams.
 from __future__ import annotations
 
 import sys
-from typing import IO, TYPE_CHECKING
+from typing import IO, TYPE_CHECKING, ClassVar
 
+from nu.terms import Mode
 from nu.terms.ref import Ref
 
 
@@ -33,6 +34,9 @@ class StdioRef(Ref[IO]):
     Topology: flat. Validates the interaction model works for
     non-KV, stream-based fabrics.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(self, name: str) -> None:
         super().__init__()

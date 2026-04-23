@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import (
     AnyI,
@@ -19,6 +19,7 @@ from nu import (
     ensure_nu,
 )
 from nu.shapes import MutableSequenceRef, Slot
+from nu.terms import Mode
 
 from .base import RefBase
 from .items import ItemRef
@@ -53,6 +54,9 @@ class ListRef[T](
     RefBase[list[T]],
 ):
     """Dict sequence reference — ordered container backed by nested list."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def result(self, op: Nu) -> ListI[T]:
         return ListI(op)

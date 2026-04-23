@@ -21,7 +21,7 @@ Storage formats:
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, time, timedelta, timezone
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import (
     Arg,
@@ -38,6 +38,7 @@ from nu import (
     ensure_nu,
 )
 from nu.shapes import Slot
+from nu.terms import Mode
 from nu.shapes.ops import ItemStoreCmd
 from nu.stdlib import BasisPoint, Percentage
 from nu.stdlib.cmath import ComplexI, _ComplexI
@@ -99,6 +100,9 @@ __all__ = [
 class DecimalRef(ItemRef[str, StrI], _DecimalI):
     """PV storage ref for Decimal values. Stores as str."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -139,6 +143,9 @@ class DecimalRef(ItemRef[str, StrI], _DecimalI):
 class FractionRef(ItemRef[str, StrI], _FractionI):
     """PV storage ref for Fraction values. Stores as str."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -178,6 +185,9 @@ class FractionRef(ItemRef[str, StrI], _FractionI):
 
 class ComplexRef(ItemRef[str, StrI], _ComplexI):
     """PV storage ref for complex values. Stores as str ("real,imag")."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -230,6 +240,9 @@ class ComplexRef(ItemRef[str, StrI], _ComplexI):
 class BasisPointRef(ItemRef[int, IntI], _BasisPointI):
     """PV storage ref for BasisPoint values. Stores as int."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -267,6 +280,9 @@ class BasisPointRef(ItemRef[int, IntI], _BasisPointI):
 
 class PercentageRef(ItemRef[float, FloatI], _PercentageI):
     """PV storage ref for Percentage values. Stores as float."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -311,6 +327,9 @@ class PercentageRef(ItemRef[float, FloatI], _PercentageI):
 class DateRef(ItemRef[str, StrI], _DateI):
     """PV storage ref for date values. Stores as str (ISO format)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -350,6 +369,9 @@ class DateRef(ItemRef[str, StrI], _DateI):
 
 class DatetimeRef(ItemRef[str, StrI], _DatetimeI):
     """PV storage ref for datetime values. Stores as str (ISO format)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -393,6 +415,9 @@ class DatetimeRef(ItemRef[str, StrI], _DatetimeI):
 class TimeRef(ItemRef[str, StrI], _TimeI):
     """PV storage ref for time values. Stores as str (ISO format)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -432,6 +457,9 @@ class TimeRef(ItemRef[str, StrI], _TimeI):
 
 class TimedeltaRef(ItemRef[float, FloatI], _TimedeltaI):
     """PV storage ref for timedelta values. Stores as float (seconds)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -475,6 +503,9 @@ class TimedeltaRef(ItemRef[float, FloatI], _TimedeltaI):
 
 class TimezoneRef(ItemRef[str, StrI], _TimezoneI):
     """PV storage ref for timezone values. Stores as str (offset)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -568,6 +599,9 @@ class TimezoneRef(ItemRef[str, StrI], _TimezoneI):
 class PathRef(ItemRef[str, StrI], _PathI):
     """PV storage ref for Path values. Stores as str."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -607,6 +641,9 @@ class PathRef(ItemRef[str, StrI], _PathI):
 
 class UUIDRef(ItemRef[str, StrI], _UUIDI):
     """PV storage ref for UUID values. Stores as str."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,

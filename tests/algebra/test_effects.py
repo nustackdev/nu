@@ -35,8 +35,8 @@ WRITE = Direction.WRITE
 class FabricA(Ref[int]):
     """Test ref for fabric A."""
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
@@ -51,8 +51,8 @@ class FabricA(Ref[int]):
 class FabricB(Ref[int]):
     """Test ref for fabric B."""
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(self) -> None:
         super().__init__()

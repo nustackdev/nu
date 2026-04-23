@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import (
     AnyI,
@@ -22,6 +22,7 @@ from nu import (
     ensure_nu,
 )
 from nu.shapes import MutableMappingRef, Slot
+from nu.terms import Mode
 
 from .base import RefBase
 from .items import ItemRef
@@ -56,6 +57,9 @@ class DictRef[K, V](
     RefBase[dict[K, V]],
 ):
     """Dict mapping reference — key-value container backed by nested dict."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def result(self, op: Nu) -> DictI[K, V]:
         return DictI(op)

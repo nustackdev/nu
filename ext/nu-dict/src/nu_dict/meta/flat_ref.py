@@ -10,9 +10,10 @@ Not user-facing. Created only by the inline_refs() deformation.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import EMPTY, Nu, Sentinel
+from nu.terms import Mode
 
 
 if TYPE_CHECKING:
@@ -36,6 +37,9 @@ class FlatRef(Nu):
         _dynamic_segments: tuple of (index, Nu) for dynamic positions, or None.
         _last_address: Pre-extracted last path segment (for resolve_address fast path).
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -62,7 +66,7 @@ class FlatRef(Nu):
     # Ref interface — what morphisms call
     # =========================================================================
 
-    async def resolve_address(self, ctx: Context) -> object:
+    async def aresolve_address(self, ctx: Context) -> object:
         """Return this ref's address (last path segment). O(1) for static."""
         if not self._is_last_dynamic:
             return self._last_address
@@ -70,7 +74,7 @@ class FlatRef(Nu):
         path = await self._build_path(ctx)
         return path[-1]
 
-    async def fetch_parent(self, ctx: Context) -> object:
+    async def afetch_parent(self, ctx: Context) -> object:
         """Navigate to parent container. O(path_length) dict lookups."""
         path = await self._build_path(ctx) if self._dynamic_segments else self._static_path
         data = self._get_root_data(ctx, path)

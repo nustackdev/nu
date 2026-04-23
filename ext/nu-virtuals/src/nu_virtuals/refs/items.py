@@ -16,7 +16,7 @@ Pattern:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 
 from nu import (
     BoolI,
@@ -30,6 +30,7 @@ from nu import (
     StrI,
 )
 from nu.shapes import ReactiveItemRef, Slot
+from nu.terms import Mode
 
 from .base import PrimitiveRef
 
@@ -77,6 +78,9 @@ class ItemRef[T, ValueT: Interface](
     semantics (e.g. LogIndexedDictView's __data__ + __keys__ layout).
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -118,6 +122,9 @@ class IntRef(ItemRef[int, IntI], IntI):
         - IntI: Arithmetic, comparison, bitwise, logical operators
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -156,6 +163,9 @@ class StrRef(ItemRef[str, StrI], StrI):
         - StrI: String methods (upper, lower, split, etc.), concatenation
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -185,6 +195,9 @@ class FloatRef(ItemRef[float, FloatI], FloatI):
         - ItemRef: PV storage access + CRUD + observation
         - FloatI: Arithmetic, comparison, logical operators
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -216,6 +229,9 @@ class BoolRef(ItemRef[bool, BoolI], BoolI):
         - BoolI: Logical operators (and_, or_, not_)
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -245,6 +261,9 @@ class BytesRef(ItemRef[bytes, BytesI], BytesI):
         - ItemRef: PV storage access + CRUD + observation
         - BytesI: Bytes methods (decode, hex, etc.)
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -287,6 +306,9 @@ class PrimitiveDictRef[K, V](
         - DictI: Dict methods (keys, values, items, get, set, etc.)
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -314,8 +336,8 @@ class PrimitiveDictRef[K, V](
         """Yield a write-back dict view; flush on generator close if dirty."""
         from nu_virtuals.views import PrimitiveDictView
 
-        parent = await self.fetch_parent(ctx)
-        address = await self.resolve_address(ctx)
+        parent = await self.afetch_parent(ctx)
+        address = await self.aresolve_address(ctx)
         try:
             current = parent[address]
         except (KeyError, IndexError):
@@ -340,6 +362,9 @@ class PrimitiveListRef[T](
         - ItemRef: PV storage access + CRUD + observation
         - ListI: List methods (append, extend, insert, etc.)
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -368,8 +393,8 @@ class PrimitiveListRef[T](
         """Yield a write-back list view; flush on generator close if dirty."""
         from nu_virtuals.views import PrimitiveListView
 
-        parent = await self.fetch_parent(ctx)
-        address = await self.resolve_address(ctx)
+        parent = await self.afetch_parent(ctx)
+        address = await self.aresolve_address(ctx)
         try:
             current = parent[address]
         except (KeyError, IndexError):
@@ -394,6 +419,9 @@ class PrimitiveSetRef[T](
         - ItemRef: PV storage access + CRUD + observation
         - SetI: Set methods (add, remove, union, intersection, etc.)
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -422,8 +450,8 @@ class PrimitiveSetRef[T](
         """Yield a write-back set view; flush on generator close if dirty."""
         from nu_virtuals.views import PrimitiveSetView
 
-        parent = await self.fetch_parent(ctx)
-        address = await self.resolve_address(ctx)
+        parent = await self.afetch_parent(ctx)
+        address = await self.aresolve_address(ctx)
         try:
             current = parent[address]
         except (KeyError, IndexError):

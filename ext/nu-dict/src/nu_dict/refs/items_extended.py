@@ -21,7 +21,7 @@ Storage formats:
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, time, timedelta, timezone
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import (
     Arg,
@@ -36,6 +36,7 @@ from nu import (
 )
 from nu.shapes import Slot
 from nu.shapes.ops.item import ItemStoreCmd
+from nu.terms import Mode
 from nu.stdlib import BasisPoint, Percentage
 from nu.stdlib.cmath import ComplexI, _ComplexI
 from nu.stdlib.datetime import (
@@ -92,6 +93,9 @@ __all__ = [
 class DecimalRef(RefBase[str], _DecimalI):
     """Dict storage ref for Decimal values. Stores as str."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -124,6 +128,9 @@ class DecimalRef(RefBase[str], _DecimalI):
 class FractionRef(RefBase[str], _FractionI):
     """Dict storage ref for Fraction values. Stores as str."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -155,6 +162,9 @@ class FractionRef(RefBase[str], _FractionI):
 
 class ComplexRef(RefBase[str], _ComplexI):
     """Dict storage ref for complex values. Stores as str ("real,imag")."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -200,6 +210,9 @@ class ComplexRef(RefBase[str], _ComplexI):
 class BasisPointRef(RefBase[int], _BasisPointI):
     """Dict storage ref for BasisPoint values. Stores as int."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -229,6 +242,9 @@ class BasisPointRef(RefBase[int], _BasisPointI):
 
 class PercentageRef(RefBase[float], _PercentageI):
     """Dict storage ref for Percentage values. Stores as float."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -265,6 +281,9 @@ class PercentageRef(RefBase[float], _PercentageI):
 class DateRef(RefBase[str], _DateI):
     """Dict storage ref for date values. Stores as str (ISO format)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -297,6 +316,9 @@ class DateRef(RefBase[str], _DateI):
 
 class DatetimeRef(RefBase[str], _DatetimeI):
     """Dict storage ref for datetime values. Stores as str (ISO format)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -333,6 +355,9 @@ class DatetimeRef(RefBase[str], _DatetimeI):
 class TimeRef(RefBase[str], _TimeI):
     """Dict storage ref for time values. Stores as str (ISO format)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -365,6 +390,9 @@ class TimeRef(RefBase[str], _TimeI):
 
 class TimedeltaRef(RefBase[float], _TimedeltaI):
     """Dict storage ref for timedelta values. Stores as float (seconds)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -401,6 +429,9 @@ class TimedeltaRef(RefBase[float], _TimedeltaI):
 
 class TimezoneRef(RefBase[str], _TimezoneI):
     """Dict storage ref for timezone values. Stores as str (offset)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -487,6 +518,9 @@ class TimezoneRef(RefBase[str], _TimezoneI):
 class PathRef(RefBase[str], _PathI):
     """Dict storage ref for Path values. Stores as str."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *,
@@ -518,6 +552,9 @@ class PathRef(RefBase[str], _PathI):
 
 class UUIDRef(RefBase[str], _UUIDI):
     """Dict storage ref for UUID values. Stores as str."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,

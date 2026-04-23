@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import (
     AnyI,
@@ -22,6 +22,7 @@ from nu import (
     ensure_nu,
 )
 from nu.shapes import ReactiveShapesMappingRef, Shape, Slot
+from nu.terms import Mode
 from virtuals.collections import MutableMappingBase
 
 from .base import ViewRef
@@ -68,6 +69,9 @@ class ShapesDictRef[
     ],
 ):
     """PV shapes dict reference — document model + PV substrate."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def result(self, op: Nu) -> DictI:
         return DictI(op)

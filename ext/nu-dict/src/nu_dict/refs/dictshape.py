@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import (
     AnyI,
@@ -22,6 +22,7 @@ from nu import (
     ensure_nu,
 )
 from nu.shapes import MutableShapesMappingRef, Slot
+from nu.terms import Mode
 
 from .base import RefBase
 from .shape import ShapeRef
@@ -57,6 +58,9 @@ class ShapesDictRef[K, T: Shape](
     RefBase[dict[K, dict]],
 ):
     """Dict shapes dict reference — mapping of homogeneous shapes."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def result(self, op: Nu) -> DictI:
         return DictI(op)

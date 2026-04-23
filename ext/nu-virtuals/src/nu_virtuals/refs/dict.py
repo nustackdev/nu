@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import (
     AnyI,
@@ -22,6 +22,7 @@ from nu import (
     ensure_nu,
 )
 from nu.shapes import ReactiveMappingRef, Shape, Slot
+from nu.terms import Mode
 from virtuals.collections import MutableMappingBase
 
 from .base import ViewRef
@@ -74,6 +75,9 @@ class DictRef[
 
     Operations work lazily on PV views without loading into memory.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def result(self, op: Nu) -> DictI[K, V]:
         return DictI(op)

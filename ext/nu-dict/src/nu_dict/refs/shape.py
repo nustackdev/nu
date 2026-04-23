@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu import (
     AnyI,
@@ -14,6 +14,7 @@ from nu import (
     IteratorI,
 )
 from nu.shapes import MutableShapeRef, Slot
+from nu.terms import Mode
 
 from .base import RefBase
 
@@ -32,6 +33,9 @@ class ShapeRef[T: Shape](
     RefBase[dict[str, object]],
 ):
     """Dict shape reference — structured container backed by nested dict."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def result(self, op: Nu) -> DictI[str, object]:
         return DictI(op)

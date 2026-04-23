@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Ref, Sentinel
+from nu.terms import Mode, Ref, Sentinel
 
 
 if TYPE_CHECKING:
@@ -27,6 +27,9 @@ class ServiceRef[T](Ref[T]):
         ref = ServiceRef(SolanaRpc)
         val = await ref.afetch(ctx)  # -> ctx[SolanaRpc]
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(self, service_type: type[T] | None = None) -> None:
         """Initialize with service type tag."""

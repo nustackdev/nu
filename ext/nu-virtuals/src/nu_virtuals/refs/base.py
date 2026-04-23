@@ -124,7 +124,8 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
     Use .lazy / .eager to switch facet before calling iteration methods.
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
     _facet: Facet = Facet.NONE
 
     def __init__(
@@ -190,7 +191,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         if self._static_path is not None:
             return self._static_path
 
-        address = await self.resolve_address(ctx)
+        address = await self.aresolve_address(ctx)
 
         parent = self.parent
         if parent is None:
@@ -210,13 +211,50 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         )
         return resolved_path
 
-    async def fetch_parent(self, ctx: Context) -> object:
+    def resolve(self, ctx: Context) -> path.PathToView:
+        """Sync counterpart of `aresolve`."""
+        if self._static_path is not None:
+            return self._static_path
+
+        address = self.resolve_address(ctx)
+
+        parent = self.parent
+        if parent is None:
+            resolved_path = ((address, self._view_type),)
+        else:
+            parent_path = parent.resolve(ctx)
+            resolved_path = (*parent_path, (address, self._view_type))
+
+        logger.debug(
+            "ViewRef resolved",
+            extra={
+                "address": address,
+                "view_type": self._view_type.__name__,
+                "has_parent": parent is not None,
+                "resolved_path": resolved_path,
+            },
+        )
+        return resolved_path
+
+    async def afetch_parent(self, ctx: Context) -> object:
         """Fetch the parent container of this view.
 
         Returns:
             The parent view, or root view if this is a top-level ref.
         """
         view_path = await self.aresolve(ctx)
+        nav = _resolve_navigator(ctx, self._root_shape, view_path)
+        storage_ctx = _resolve_ctx(ctx, self._root_shape, view_path)
+
+        if not view_path or len(view_path) <= 1:
+            return nav.root(storage_ctx)
+
+        parent_path = view_path[:-1]
+        return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
+
+    def fetch_parent(self, ctx: Context) -> object:
+        """Sync counterpart of `afetch_parent`."""
+        view_path = self.resolve(ctx)
         nav = _resolve_navigator(ctx, self._root_shape, view_path)
         storage_ctx = _resolve_ctx(ctx, self._root_shape, view_path)
 
@@ -248,6 +286,18 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         view = nav.open_at_path(ViewPathSer(view_path), storage_ctx)
         return self._apply_facet(view)  # type: ignore
 
+    def fetch(self, ctx: Context) -> ViewT | Sentinel:
+        """Sync counterpart of `afetch`."""
+        view_path = self.resolve(ctx)
+        nav = _resolve_navigator(ctx, self._root_shape, view_path)
+        storage_ctx = _resolve_ctx(ctx, self._root_shape, view_path)
+
+        if not view_path:
+            return self._apply_facet(nav.root(storage_ctx))  # type: ignore
+
+        view = nav.open_at_path(ViewPathSer(view_path), storage_ctx)
+        return self._apply_facet(view)  # type: ignore
+
 class PrimitiveRef[T](Ref[T]):
     """Virtuals ref to a primitive/leaf value.
 
@@ -255,7 +305,8 @@ class PrimitiveRef[T](Ref[T]):
     fetch() navigates to the parent view and subscripts to get the value.
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -294,7 +345,7 @@ class PrimitiveRef[T](Ref[T]):
         if self._static_path is not None:
             return self._static_path  # type: ignore
 
-        address = await self.resolve_address(ctx)
+        address = await self.aresolve_address(ctx)
 
         parent = self.parent
         if parent is None:
@@ -314,7 +365,32 @@ class PrimitiveRef[T](Ref[T]):
         )
         return resolved_path  # type: ignore
 
-    async def fetch_parent(self, ctx: Context) -> object:
+    def resolve(self, ctx: Context) -> path.PathToValue:
+        """Sync counterpart of `aresolve`."""
+        if self._static_path is not None:
+            return self._static_path  # type: ignore
+
+        address = self.resolve_address(ctx)
+
+        parent = self.parent
+        if parent is None:
+            resolved_path = ((address, self._value_type),)
+        else:
+            parent_path = parent.resolve(ctx)
+            resolved_path = (*parent_path, (address, self._value_type))
+
+        logger.debug(
+            "PrimitiveRef resolved",
+            extra={
+                "address": address,
+                "value_type": self._value_type.__name__,
+                "has_parent": parent is not None,
+                "resolved_path": resolved_path,
+            },
+        )
+        return resolved_path  # type: ignore
+
+    async def afetch_parent(self, ctx: Context) -> object:
         """Fetch the parent collection (view) for item access.
 
         Navigates through Navigator and returns the parent view
@@ -327,6 +403,17 @@ class PrimitiveRef[T](Ref[T]):
             The parent view object
         """
         value_path = await self.aresolve(ctx)
+        nav = _resolve_navigator(ctx, self._root_shape, value_path)
+        storage_ctx = _resolve_ctx(ctx, self._root_shape, value_path)
+
+        parent_path = value_path[:-1]
+        if not parent_path:
+            return nav.root(storage_ctx)
+        return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
+
+    def fetch_parent(self, ctx: Context) -> object:
+        """Sync counterpart of `afetch_parent`."""
+        value_path = self.resolve(ctx)
         nav = _resolve_navigator(ctx, self._root_shape, value_path)
         storage_ctx = _resolve_ctx(ctx, self._root_shape, value_path)
 
@@ -348,6 +435,29 @@ class PrimitiveRef[T](Ref[T]):
             The value, or Empty if not found
         """
         value_path = await self.aresolve(ctx)
+        nav = _resolve_navigator(ctx, self._root_shape, value_path)
+        storage_ctx = _resolve_ctx(ctx, self._root_shape, value_path)
+
+        parent_path = value_path[:-1]
+        key = value_path[-1][0]
+
+        try:
+            if not parent_path:
+                parent_view = nav.root(storage_ctx)
+            else:
+                parent_view = nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
+            if isinstance(parent_view, Subscriptable):
+                val = parent_view[key]
+                if isinstance(val, StorageEmpty):
+                    return EMPTY
+                return self.coerce(val)
+            raise TypeError(f"View {parent_view.__class__.__name__} is not subscriptable")
+        except (KeyError, IndexError):
+            return EMPTY
+
+    def fetch(self, ctx: Context) -> T | Sentinel:
+        """Sync counterpart of `afetch`."""
+        value_path = self.resolve(ctx)
         nav = _resolve_navigator(ctx, self._root_shape, value_path)
         storage_ctx = _resolve_ctx(ctx, self._root_shape, value_path)
 
