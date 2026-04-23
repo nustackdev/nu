@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from io import StringIO
+from typing import ClassVar
 
 import pytest
 
@@ -20,7 +21,7 @@ from nu.stdio import (
     StdioRef,
     StdioWrite,
 )
-from nu.terms import Direction, TrackedEffect, tracked_effects
+from nu.terms import Direction, Mode, TrackedEffect, tracked_effects
 
 
 # ---------------------------------------------------------------------------
@@ -258,6 +259,9 @@ class TestBufferedStdio:
         ctx = _make_ctx(stdout=out)
 
         class FailOp(StdioWrite):
+            own_mode: ClassVar[Mode] = Mode.ASYNC
+            func_mode: ClassVar[Mode] = Mode.ASYNC
+
             async def aopen(self, ctx):
                 async for _ in super().aopen(ctx):
                     pass

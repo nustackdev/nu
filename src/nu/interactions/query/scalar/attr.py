@@ -7,7 +7,9 @@ DelAttr: Delete an attribute from an instance
 
 from __future__ import annotations
 
-from nu.terms import BinaryScalar, TernaryScalar
+from typing import ClassVar
+
+from nu.terms import BinaryScalar, Mode, TernaryScalar
 
 
 __all__ = [
@@ -32,6 +34,9 @@ class GetAttr[ResultT](BinaryScalar[ResultT]):
         >>> GetAttr(obj, attr_name_term)  # dynamic attribute
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
         return getattr(left, str(right))
@@ -47,6 +52,9 @@ class SetAttr(TernaryScalar[None]):
         >>> SetAttr(obj, "name", "value")
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, first: object, second: object, third: object) -> None:
         """Apply."""
         setattr(first, str(second), third)
@@ -61,6 +69,9 @@ class DelAttr(BinaryScalar[None]):
     Example:
         >>> DelAttr(obj, "cached_value")
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None:
         """Apply."""

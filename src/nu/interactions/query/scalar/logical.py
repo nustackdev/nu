@@ -9,9 +9,9 @@ And and Or override open() for short-circuit semantics.
 from __future__ import annotations
 
 from contextlib import aclosing, closing
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import BinaryScalar, Sentinel, UnaryScalar, propagate_special
+from nu.terms import BinaryScalar, Mode, Sentinel, UnaryScalar, propagate_special
 
 
 if TYPE_CHECKING:
@@ -41,6 +41,9 @@ class Not[ResultT](UnaryScalar[ResultT]):
     Use .not_() method in trait classes instead.
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
         return not operand  # type: ignore
@@ -48,6 +51,9 @@ class Not[ResultT](UnaryScalar[ResultT]):
 
 class Bool(UnaryScalar[bool]):
     """Boolean conversion: bool(operand)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> bool:
         """Apply."""
@@ -81,6 +87,9 @@ class And[ResultT](BinaryScalar[ResultT]):
     Overrides open() for short-circuit evaluation:
     if left is falsy, yields left without evaluating right.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:  # type: ignore[override]
         left_val = await _drain_last(self._children[0], ctx)
@@ -136,6 +145,9 @@ class Or[ResultT](BinaryScalar[ResultT]):
     Overrides open() for short-circuit evaluation:
     if left is truthy, yields left without evaluating right.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:  # type: ignore[override]
         left_val = await _drain_last(self._children[0], ctx)

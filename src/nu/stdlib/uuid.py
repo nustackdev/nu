@@ -6,10 +6,10 @@ UUIDI is the leaf: _UUIDI + TypedNu[UUID].
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 from uuid import UUID, uuid1, uuid3, uuid4, uuid5
 
-from nu.terms import Interface, TypedNu
+from nu.terms import Interface, Mode, TypedNu
 
 
 if TYPE_CHECKING:
@@ -202,4 +202,5 @@ class _UUIDI(Interface):
 class UUIDI(_UUIDI, TypedNu[UUID]):
     """UUID leaf - _UUIDI + TypedNu[UUID]."""
 
-    pass
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH

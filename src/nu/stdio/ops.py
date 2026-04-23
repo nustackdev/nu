@@ -8,9 +8,9 @@ StdioFlush: flush a stream (Command, writes=0)
 from __future__ import annotations
 
 import sys
-from typing import IO, TYPE_CHECKING
+from typing import IO, TYPE_CHECKING, ClassVar
 
-from nu.terms import Command, Query
+from nu.terms import Command, Mode, Query
 
 
 if TYPE_CHECKING:
@@ -43,6 +43,8 @@ class StdioWrite(Command):
     """
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, ref: StdioRef, *values: object) -> None:
         super().__init__(ref, *values)
@@ -71,15 +73,13 @@ class StdioRead(Query[str]):
     Returns the line read (stripped of trailing newline).
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(self, ref: StdioRef | None = None) -> None:
         from .refs import STDIN
 
         super().__init__(ref or STDIN)
-
-    async def arun(self, ctx: Context) -> str:
-        stream = _get_stream(ctx, self.children[0])
-        line = stream.readline()
-        return line.rstrip("\n")
 
     def run(self, ctx: Context) -> str:
         stream = _get_stream(ctx, self.children[0])
@@ -97,13 +97,11 @@ class StdioFlush(Command):
     """
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(self, ref: StdioRef) -> None:
         super().__init__(ref)
-
-    async def arun(self, ctx: Context) -> None:
-        stream = _get_stream(ctx, self.children[0])
-        stream.flush()
 
     def run(self, ctx: Context) -> None:
         stream = _get_stream(ctx, self.children[0])

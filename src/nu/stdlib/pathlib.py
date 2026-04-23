@@ -7,9 +7,9 @@ PathI is the leaf: _PathI + TypedNu[Path].
 from __future__ import annotations
 
 from pathlib import Path, PurePath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Interface, TypedNu
+from nu.terms import Interface, Mode, TypedNu
 
 
 if TYPE_CHECKING:
@@ -287,4 +287,5 @@ class _PathI(Interface):
 class PathI(_PathI, TypedNu[Path]):
     """Path leaf - _PathI + TypedNu[Path]."""
 
-    pass
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH

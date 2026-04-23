@@ -21,7 +21,8 @@ class AsyncSleep(UnaryAtomic):
     Children: ``[delay]``
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, delay: FloatArg) -> None:
         super().__init__(delay)

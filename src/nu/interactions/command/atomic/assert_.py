@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import BinaryAtomic
+from nu.terms import BinaryAtomic, Mode
 
 
 if TYPE_CHECKING:
@@ -21,6 +21,9 @@ class Assert(BinaryAtomic):
 
     Raises ``AssertionError`` when condition is falsy.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(self, condition: Any, message: StrArg = "Assertion failed") -> None:
         super().__init__(condition, message)

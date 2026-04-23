@@ -6,9 +6,9 @@ Complex numbers are not orderable (no <, >, <=, >=).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Interface, TypedNu
+from nu.terms import Interface, Mode, TypedNu
 
 
 if TYPE_CHECKING:
@@ -280,3 +280,6 @@ class _ComplexI(Interface):
 
 class ComplexI(_ComplexI, TypedNu[complex]):
     """Complex interface. Arithmetic + equality + component access."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH

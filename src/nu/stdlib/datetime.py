@@ -7,9 +7,9 @@ Each type has a private _*I(Interface) mixin and a public *I leaf.
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, time, timedelta, timezone
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Arg, Interface, TypedNu
+from nu.terms import Arg, Interface, Mode, TypedNu
 
 
 if TYPE_CHECKING:
@@ -95,8 +95,8 @@ class _TimezoneI(Interface):
 
     def tzname(self, dt: DatetimeArg | None = None) -> StrI:
         """Get the timezone name."""
-        from nu.terms import MethodCall
         from nu.primitives import StrI
+        from nu.terms import MethodCall
 
         if dt is None:
             dt_arg = None
@@ -146,7 +146,8 @@ class _TimezoneI(Interface):
 class TimezoneI(_TimezoneI, TypedNu[timezone]):
     """Timezone interface."""
 
-    pass
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
 
 # =============================================================================
@@ -201,22 +202,22 @@ class _TimedeltaI(Interface):
 
     def days(self) -> IntI:
         """Get the days component (normalized)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "days"))
 
     def seconds(self) -> IntI:
         """Get the seconds component (0-86399)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "seconds"))
 
     def microseconds(self) -> IntI:
         """Get the microseconds component (0-999999)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "microseconds"))
 
@@ -226,8 +227,8 @@ class _TimedeltaI(Interface):
 
     def total_seconds(self) -> FloatI:
         """Get total duration in seconds."""
-        from nu.terms import MethodCall
         from nu.primitives import FloatI
+        from nu.terms import MethodCall
 
         return FloatI(MethodCall(self, "total_seconds"))
 
@@ -376,7 +377,8 @@ class _TimedeltaI(Interface):
 class TimedeltaI(_TimedeltaI, TypedNu[timedelta]):
     """Timedelta interface."""
 
-    pass
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
 
 # =============================================================================
@@ -401,8 +403,7 @@ class _DateI(Interface):
     @classmethod
     def from_iso(cls, iso_str: str | Nu[str]) -> DateI:
         """Create a DateI from an ISO format string (YYYY-MM-DD)."""
-        from nu.terms import FuncCall
-        from nu.terms import Sentinel
+        from nu.terms import FuncCall, Sentinel
 
         def _safe_fromisoformat(s: object) -> date | Sentinel:
             if not isinstance(s, str):
@@ -433,43 +434,43 @@ class _DateI(Interface):
 
     def year(self) -> IntI:
         """Get the year component."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "year"))
 
     def month(self) -> IntI:
         """Get the month component (1-12)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "month"))
 
     def day(self) -> IntI:
         """Get the day component (1-31)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "day"))
 
     def weekday(self) -> IntI:
         """Get the day of week (Monday=0, Sunday=6)."""
-        from nu.terms import MethodCall
         from nu.primitives import IntI
+        from nu.terms import MethodCall
 
         return IntI(MethodCall(self, "weekday"))
 
     def isoweekday(self) -> IntI:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
-        from nu.terms import MethodCall
         from nu.primitives import IntI
+        from nu.terms import MethodCall
 
         return IntI(MethodCall(self, "isoweekday"))
 
     def toordinal(self) -> IntI:
         """Get the Gregorian ordinal."""
-        from nu.terms import MethodCall
         from nu.primitives import IntI
+        from nu.terms import MethodCall
 
         return IntI(MethodCall(self, "toordinal"))
 
@@ -479,22 +480,22 @@ class _DateI(Interface):
 
     def isoformat(self) -> StrI:
         """Convert to ISO 8601 format string (YYYY-MM-DD)."""
-        from nu.terms import MethodCall
         from nu.primitives import StrI
+        from nu.terms import MethodCall
 
         return StrI(MethodCall(self, "isoformat"))
 
     def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format date as string."""
-        from nu.terms import MethodCall
         from nu.primitives import StrI
+        from nu.terms import MethodCall
 
         return StrI(MethodCall(self, "strftime", fmt))
 
     def ctime(self) -> StrI:
         """Return ctime-style string."""
-        from nu.terms import MethodCall
         from nu.primitives import StrI
+        from nu.terms import MethodCall
 
         return StrI(MethodCall(self, "ctime"))
 
@@ -588,7 +589,8 @@ class _DateI(Interface):
 class DateI(_DateI, TypedNu[date]):
     """Date interface."""
 
-    pass
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
 
 # =============================================================================
@@ -606,8 +608,7 @@ class _TimeI(Interface):
     @classmethod
     def from_iso(cls, iso_str: str | Nu[str]) -> TimeI:
         """Create a TimeI from an ISO format string (HH:MM:SS[.ffffff])."""
-        from nu.terms import FuncCall
-        from nu.terms import Sentinel
+        from nu.terms import FuncCall, Sentinel
 
         def _safe_fromisoformat(s: object) -> time | Sentinel:
             if not isinstance(s, str):
@@ -647,29 +648,29 @@ class _TimeI(Interface):
 
     def hour(self) -> IntI:
         """Get the hour component (0-23)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "hour"))
 
     def minute(self) -> IntI:
         """Get the minute component (0-59)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "minute"))
 
     def second(self) -> IntI:
         """Get the second component (0-59)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "second"))
 
     def microsecond(self) -> IntI:
         """Get the microsecond component (0-999999)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "microsecond"))
 
@@ -679,15 +680,15 @@ class _TimeI(Interface):
 
     def isoformat(self, timespec: str | Nu[str] = "auto") -> StrI:
         """Convert to ISO 8601 format string."""
-        from nu.terms import MethodCall
         from nu.primitives import StrI
+        from nu.terms import MethodCall
 
         return StrI(MethodCall(self, "isoformat", timespec))
 
     def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format time as string."""
-        from nu.terms import MethodCall
         from nu.primitives import StrI
+        from nu.terms import MethodCall
 
         return StrI(MethodCall(self, "strftime", fmt))
 
@@ -760,7 +761,8 @@ class _TimeI(Interface):
 class TimeI(_TimeI, TypedNu[time]):
     """Time interface."""
 
-    pass
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
 
 # =============================================================================
@@ -807,8 +809,7 @@ class _DatetimeI(Interface):
     @classmethod
     def from_iso(cls, iso_str: str | Nu[str]) -> DatetimeI:
         """Create a DatetimeI from an ISO format string."""
-        from nu.terms import FuncCall
-        from nu.terms import Sentinel
+        from nu.terms import FuncCall, Sentinel
 
         def _safe_fromisoformat(s: object) -> datetime | Sentinel:
             if not isinstance(s, str):
@@ -825,64 +826,64 @@ class _DatetimeI(Interface):
 
     def year(self) -> IntI:
         """Get the year component."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "year"))
 
     def month(self) -> IntI:
         """Get the month component (1-12)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "month"))
 
     def day(self) -> IntI:
         """Get the day component (1-31)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "day"))
 
     def hour(self) -> IntI:
         """Get the hour component (0-23)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "hour"))
 
     def minute(self) -> IntI:
         """Get the minute component (0-59)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "minute"))
 
     def second(self) -> IntI:
         """Get the second component (0-59)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "second"))
 
     def microsecond(self) -> IntI:
         """Get the microsecond component (0-999999)."""
-        from nu.terms import FuncCall
         from nu.primitives import IntI
+        from nu.terms import FuncCall
 
         return IntI(FuncCall(getattr, self, "microsecond"))
 
     def weekday(self) -> IntI:
         """Get the day of week (Monday=0, Sunday=6)."""
-        from nu.terms import MethodCall
         from nu.primitives import IntI
+        from nu.terms import MethodCall
 
         return IntI(MethodCall(self, "weekday"))
 
     def isoweekday(self) -> IntI:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
-        from nu.terms import MethodCall
         from nu.primitives import IntI
+        from nu.terms import MethodCall
 
         return IntI(MethodCall(self, "isoweekday"))
 
@@ -892,15 +893,15 @@ class _DatetimeI(Interface):
 
     def timestamp(self) -> FloatI:
         """Convert to POSIX timestamp."""
-        from nu.terms import MethodCall
         from nu.primitives import FloatI
+        from nu.terms import MethodCall
 
         return FloatI(MethodCall(self, "timestamp"))
 
     def isoformat(self, sep: str | Nu[str] = "T", timespec: str | Nu[str] = "auto") -> StrI:
         """Convert to ISO 8601 format string."""
-        from nu.terms import MethodCall
         from nu.primitives import StrI
+        from nu.terms import MethodCall
 
         return StrI(MethodCall(self, "isoformat", sep, timespec))
 
@@ -918,8 +919,8 @@ class _DatetimeI(Interface):
 
     def strftime(self, fmt: str | Nu[str]) -> StrI:
         """Format datetime as string."""
-        from nu.terms import MethodCall
         from nu.primitives import StrI
+        from nu.terms import MethodCall
 
         return StrI(MethodCall(self, "strftime", fmt))
 
@@ -1024,5 +1025,8 @@ class _DatetimeI(Interface):
 
 class DatetimeI(_DatetimeI, TypedNu[datetime]):
     """Datetime interface."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     pass

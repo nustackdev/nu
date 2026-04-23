@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from itertools import chain
-from typing import Any
+from typing import Any, ClassVar
 
-from nu.terms import INVALID, BinaryScalar, NAryScalar, Sentinel
+from nu.terms import INVALID, BinaryScalar, Mode, NAryScalar, Sentinel
 
 
 __all__ = [
@@ -18,6 +18,9 @@ __all__ = [
 
 class Zip(NAryScalar[Iterator[tuple]]):
     """Zip multiple iterables: zip(*iterables) -> lazy iterator."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(self, *operands: object) -> None:
         """Initialize with 2+ iterables."""
@@ -38,6 +41,9 @@ class Zip(NAryScalar[Iterator[tuple]]):
 class Chain(NAryScalar[Iterator]):
     """Chain multiple iterables: chain(*iterables) -> lazy iterator."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(self, *operands: object) -> None:
         """Initialize with 2+ iterables."""
         NAryScalar.__init__(self, *operands)
@@ -56,6 +62,9 @@ class Chain(NAryScalar[Iterator]):
 
 class Enumerate(BinaryScalar[Iterator[tuple[int, object]]]):
     """Enumerate iterable: enumerate(iterable, start) -> lazy iterator."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> Iterator[tuple[int, object]] | Sentinel:
         """Apply: left=iterable, right=start."""

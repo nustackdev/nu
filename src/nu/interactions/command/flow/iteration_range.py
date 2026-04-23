@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from contextlib import aclosing, closing
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Flow
+from nu.terms import Flow, Mode
 
 
 if TYPE_CHECKING:
@@ -29,6 +29,9 @@ class ForRange(Flow):
 
     Sets ``ctx.attrs[index]`` to the current loop value each iteration.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(
         self,
@@ -88,6 +91,9 @@ class ForEach(Flow):
     Sets ``ctx.attrs[item]`` to the current element and optionally
     ``ctx.attrs[index]`` to the current iteration count.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(
         self,
@@ -154,4 +160,3 @@ class ForEach(Flow):
                         ctx.attrs[index_key] = i
                     with closing(body.open(ctx)) as gen:
                         yield from gen
-

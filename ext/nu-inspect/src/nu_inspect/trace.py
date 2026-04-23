@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import logging
+from typing import ClassVar
 
 from nu.context import Context, IntAttrRef, StrAttrRef
 from nu.interactions import Log, Retry, ToStr
-from nu.terms import ContextManager, Literal, Nu
+from nu.terms import ContextManager, Literal, Mode, Nu
 from nu.tree import map_nodes
 
 
@@ -21,6 +22,9 @@ _step_logger = logging.getLogger("nu.steps")
 
 class _StepSpan(ContextManager):
     """Wraps a sequential child to log step progress. Path is baked at construction."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(self, child: Nu, step: int, total: int, path: str) -> None:
         super().__init__(child)

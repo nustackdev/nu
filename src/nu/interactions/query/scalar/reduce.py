@@ -10,8 +10,9 @@ All: All truthy (all(seq))
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import ClassVar
 
-from nu.terms import INVALID, Sentinel, UnaryScalar
+from nu.terms import INVALID, Mode, Sentinel, UnaryScalar
 
 
 __all__ = [
@@ -26,6 +27,9 @@ __all__ = [
 class Sum[ResultT](UnaryScalar[ResultT]):
     """Sum of sequence elements: sum(seq)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
         if not isinstance(operand, Iterable):
@@ -38,6 +42,9 @@ class Sum[ResultT](UnaryScalar[ResultT]):
 
 class Min[ResultT](UnaryScalar[ResultT]):
     """Minimum element: min(seq)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
@@ -52,6 +59,9 @@ class Min[ResultT](UnaryScalar[ResultT]):
 class Max[ResultT](UnaryScalar[ResultT]):
     """Maximum element: max(seq)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
         if not isinstance(operand, Iterable):
@@ -65,6 +75,9 @@ class Max[ResultT](UnaryScalar[ResultT]):
 class Any(UnaryScalar[bool]):
     """Any truthy element: any(seq)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> bool:
         """Apply."""
         if not isinstance(operand, Iterable):
@@ -74,6 +87,9 @@ class Any(UnaryScalar[bool]):
 
 class All(UnaryScalar[bool]):
     """All truthy elements: all(seq)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> bool:
         """Apply."""

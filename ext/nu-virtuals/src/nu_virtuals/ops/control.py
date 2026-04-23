@@ -17,9 +17,9 @@ Usage:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu import Context, ContextManager, Flow, Query
+from nu import Context, ContextManager, Flow, Mode, Query
 from virtuals import Navigator
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
 
@@ -59,6 +59,9 @@ class AtomicScope(ContextManager):
     Auto-select: inspects subtree purity. If all terms are pure,
     opens a SnapshotProtocol instead of TransactionProtocol.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -185,6 +188,9 @@ class Snapshot(ContextManager, Query):
     Use when you know the subtree is read-only.
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(
         self,
         *children: Nu,
@@ -256,6 +262,9 @@ class Transaction(Flow, ContextManager):
     Like AtomicScope but always opens a transaction, never a snapshot.
     Use when you know the subtree has writes - skips the purity check.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,

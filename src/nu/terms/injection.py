@@ -55,7 +55,8 @@ class FuncCall[T](NAryScalar[T | Sentinel]):
         FuncCallCmd(requests.get, url_term, timeout=5)
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, func: Callable[..., Any], *args: object, **kwargs: object) -> None:
         super().__init__(*args, *kwargs.values())
@@ -89,6 +90,9 @@ class FuncCallCmd[T](FuncCall[T]):
     explicit Command base in the command/atomic/call module.
     """
 
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
+
 
 # =============================================================================
 # METHOD CALL
@@ -110,7 +114,8 @@ class MethodCall[T](NAryScalar[T | Sentinel]):
         MethodCallCmd(api_client, "fetch", url_term)
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, target: object, method_name: str, *args: object, **kwargs: object) -> None:
         super().__init__(target, *args, *kwargs.values())
@@ -155,3 +160,6 @@ class MethodCallCmd[T](MethodCall[T]):
     Structurally a Command — inherits MethodCall's NAryScalar apply. Marker
     inheritance for Command role lives in command/atomic/call.
     """
+
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC

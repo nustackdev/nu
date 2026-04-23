@@ -34,14 +34,15 @@ __all__ = [
 class ChangeOp(Query[object]):
     """Base class for all change subscription operations."""
 
-    mode: ClassVar[Mode] = Mode.ASYNC
-
     @abstractmethod
     async def arun(self, ctx: Context) -> object: ...
 
 
 class OnChangeOp(ChangeOp):
     """Subscribe to all changes on a view/collection."""
+
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
@@ -56,6 +57,9 @@ class OnChangeOp(ChangeOp):
 
 class OnChildChangeOp[A](ChangeOp):
     """Subscribe to changes on a specific child of a view."""
+
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: Ref, address: A | Nu[A]) -> None:
         super().__init__(ref)
@@ -77,6 +81,9 @@ class OnChildChangeOp[A](ChangeOp):
 class OnChildrenChangeOp(ChangeOp):
     """Subscribe to changes on all immediate children of a view."""
 
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
+
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
@@ -90,6 +97,9 @@ class OnChildrenChangeOp(ChangeOp):
 
 class OnDescendantsChangeOp(ChangeOp):
     """Subscribe to descendants matching a pattern."""
+
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: Ref, *pattern: object) -> None:
         super().__init__(ref)

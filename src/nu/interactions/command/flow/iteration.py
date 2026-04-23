@@ -11,9 +11,9 @@ condition/transform Nus can read them via AttrRef.
 from __future__ import annotations
 
 from contextlib import aclosing, closing
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Flow
+from nu.terms import Flow, Mode
 
 
 if TYPE_CHECKING:
@@ -41,6 +41,9 @@ class Filter(Flow):
 
     Children: ``[items, condition, body, item_key]``
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(
         self,
@@ -86,6 +89,9 @@ class Map(Flow):
     Results stored in ``ctx.attrs[output]`` as a list.
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
+
     def __init__(
         self,
         items: Arg[Iterable],
@@ -130,6 +136,9 @@ class TakeWhile(Flow):
     Children: ``[items, condition, body, item_key]``
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
+
     def __init__(
         self,
         items: Arg[Iterable],
@@ -173,6 +182,9 @@ class UniqueDo(Flow):
 
     Children: ``[items, key, body, item_key]``
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(
         self,
@@ -225,6 +237,9 @@ class Find(Flow):
     If no match, output is not set.
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
+
     def __init__(
         self,
         items: Arg[Iterable],
@@ -272,6 +287,9 @@ class FindIndex(Flow):
     If no match, output is not set.
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
+
     def __init__(
         self,
         items: Arg[Iterable],
@@ -318,6 +336,9 @@ class GroupBy(Flow):
     For each unique key value, collects all matching items into a list
     and sets ``ctx.attrs[group]`` to that list before executing body.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(
         self,
@@ -379,6 +400,9 @@ class Partition(Flow):
     non-matching in ``ctx.attrs[rest]``.
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
+
     def __init__(
         self,
         items: Arg[Iterable],
@@ -437,6 +461,9 @@ class ToDict(Flow):
 
     Stores the resulting dict in ``ctx.attrs[output]``.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(
         self,

@@ -28,9 +28,9 @@ Workers are resolved from context by tag:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Query
+from nu.terms import Mode, Query
 
 
 if TYPE_CHECKING:
@@ -52,6 +52,9 @@ class Teleport(Query[object]):
             before execution. Attrs are primitive key-value data
             (error strings, loop counters, config) that PrimRefs read.
     """
+
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(
         self,

@@ -11,9 +11,12 @@ Replacing: BytesReplaceOp
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from nu.terms import (
     INVALID,
     BinaryScalar,
+    Mode,
     NAryScalar,
     Sentinel,
     TernaryScalar,
@@ -46,6 +49,9 @@ __all__ = [
 class DecodeOp(BinaryScalar[str]):
     """Decode bytes to string: bytes.decode(encoding)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
         if not isinstance(left, bytes):
@@ -58,6 +64,9 @@ class DecodeOp(BinaryScalar[str]):
 
 class HexOp(UnaryScalar[str]):
     """Convert to hex string: bytes.hex()."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> str | Sentinel:
         """Apply."""
@@ -74,6 +83,9 @@ class HexOp(UnaryScalar[str]):
 class BytesUpperOp(UnaryScalar[bytes]):
     """Convert to uppercase: bytes.upper()."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> bytes | Sentinel:
         """Apply."""
         if not isinstance(operand, bytes):
@@ -83,6 +95,9 @@ class BytesUpperOp(UnaryScalar[bytes]):
 
 class BytesLowerOp(UnaryScalar[bytes]):
     """Convert to lowercase: bytes.lower()."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> bytes | Sentinel:
         """Apply."""
@@ -99,6 +114,9 @@ class BytesLowerOp(UnaryScalar[bytes]):
 class BytesStripOp(BinaryScalar[bytes]):
     """Strip bytes: bytes.strip(chars)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> bytes | Sentinel:
         """Apply."""
         if not isinstance(left, bytes):
@@ -111,6 +129,9 @@ class BytesStripOp(BinaryScalar[bytes]):
 class BytesLStripOp(BinaryScalar[bytes]):
     """Strip leading bytes: bytes.lstrip(chars)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> bytes | Sentinel:
         """Apply."""
         if not isinstance(left, bytes):
@@ -122,6 +143,9 @@ class BytesLStripOp(BinaryScalar[bytes]):
 
 class BytesRStripOp(BinaryScalar[bytes]):
     """Strip trailing bytes: bytes.rstrip(chars)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> bytes | Sentinel:
         """Apply."""
@@ -140,6 +164,9 @@ class BytesRStripOp(BinaryScalar[bytes]):
 class BytesSplitOp(TernaryScalar[list[bytes]]):
     """Split bytes: bytes.split(sep, maxsplit)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, first: object, second: object, third: object) -> list[bytes] | Sentinel:
         """Apply."""
         if not isinstance(first, bytes):
@@ -157,6 +184,9 @@ class BytesSplitOp(TernaryScalar[list[bytes]]):
 class BytesFindOp(NAryScalar[int]):
     """Find sub-bytes: bytes.find(sub, start, end)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, *args: object) -> int | Sentinel:
         """Apply."""
         operand, sub, start, end = args
@@ -169,6 +199,9 @@ class BytesFindOp(NAryScalar[int]):
 
 class BytesCountOp(BinaryScalar[int]):
     """Count sub-bytes occurrences: bytes.count(sub)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> int | Sentinel:
         """Apply."""
@@ -185,6 +218,9 @@ class BytesCountOp(BinaryScalar[int]):
 class BytesStartsWithOp(BinaryScalar[bool]):
     """Check if starts with prefix: bytes.startswith(prefix)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
         if not isinstance(left, bytes) or not isinstance(right, bytes):
@@ -194,6 +230,9 @@ class BytesStartsWithOp(BinaryScalar[bool]):
 
 class BytesEndsWithOp(BinaryScalar[bool]):
     """Check if ends with suffix: bytes.endswith(suffix)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
@@ -209,6 +248,9 @@ class BytesEndsWithOp(BinaryScalar[bool]):
 
 class BytesReplaceOp(NAryScalar[bytes]):
     """Replace sub-bytes: bytes.replace(old, new, count)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, *args: object) -> bytes | Sentinel:
         """Apply."""

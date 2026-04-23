@@ -62,7 +62,20 @@ T_co = TypeVar("T_co", covariant=True)
 
 
 class Mode(str, Enum):
-    """Execution mode. SYNC = plain generator; ASYNC = event loop; BOTH = either."""
+    """Execution mode — which of `open` / `aopen` a Nu supports.
+
+    Mechanical property, determined by which hooks the class overrides.
+
+    BOTH   both `open` and `aopen` execute successfully. Any sync hook
+           (apply / run / open / before / after) overridden gives this,
+           since default delegation propagates sync → async.
+    ASYNC  only `aopen` works; the sync path raises. Happens when the
+           class overrides ONLY async hooks (aapply / arun / aopen).
+    SYNC   only `open` works; the async path is disabled. Rare — only
+           when the author explicitly blocks async evaluation.
+
+    Default on the Nu base is BOTH (base open/aopen both work).
+    """
 
     SYNC = "sync"
     ASYNC = "async"
@@ -70,7 +83,14 @@ class Mode(str, Enum):
 
 
 def sup(*modes: Mode) -> Mode:
-    """Supremum over modes. ASYNC dominates; SYNC + BOTH = SYNC; all BOTH = BOTH."""
+    """Supremum over modes — combines a subtree's mode constraints.
+
+    ASYNC dominates (any async-only node forces the subtree async).
+    SYNC + BOTH = SYNC (sync-only node narrows the subtree to sync).
+    SYNC + ASYNC is a conflict (cannot satisfy both); returns ASYNC and
+    the subtree will fail at evaluation of the sync-only node.
+    All BOTH = BOTH.
+    """
     if not modes:
         return Mode.BOTH
     has_async = any(m is Mode.ASYNC for m in modes)

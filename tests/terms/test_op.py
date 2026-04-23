@@ -6,12 +6,13 @@ This is the parasitic embedding - Python values become tree nodes.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from nu import Literal, Nu
 from nu.terms import (
     BinaryScalar,
     Interaction,
+    Mode,
     NAryScalar,
     TernaryScalar,
     UnaryScalar,
@@ -24,21 +25,33 @@ from nu.terms import (
 
 
 class _AddOp(BinaryScalar[int]):
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: Any, right: Any) -> int:
         return left + right
 
 
 class _NegOp(UnaryScalar[int]):
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: Any) -> int:
         return -operand
 
 
 class _ClampOp(TernaryScalar[int]):
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, first: Any, second: Any, third: Any) -> int:
         return max(second, min(third, first))
 
 
 class _SumOp(NAryScalar[int]):
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, *values: Any) -> int:
         return sum(values)
 

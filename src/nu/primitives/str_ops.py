@@ -13,9 +13,12 @@ Joining: JoinOp
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from nu.terms import (
     INVALID,
     BinaryScalar,
+    Mode,
     NAryScalar,
     Sentinel,
     TernaryScalar,
@@ -61,6 +64,9 @@ __all__ = [
 class UpperOp(UnaryScalar[str]):
     """Convert to uppercase: str.upper()."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> str | Sentinel:
         """Apply."""
         if not isinstance(operand, str):
@@ -70,6 +76,9 @@ class UpperOp(UnaryScalar[str]):
 
 class LowerOp(UnaryScalar[str]):
     """Convert to lowercase: str.lower()."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> str | Sentinel:
         """Apply."""
@@ -81,6 +90,9 @@ class LowerOp(UnaryScalar[str]):
 class TitleOp(UnaryScalar[str]):
     """Convert to title case: str.title()."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> str | Sentinel:
         """Apply."""
         if not isinstance(operand, str):
@@ -91,6 +103,9 @@ class TitleOp(UnaryScalar[str]):
 class CapitalizeOp(UnaryScalar[str]):
     """Capitalize first character: str.capitalize()."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> str | Sentinel:
         """Apply."""
         if not isinstance(operand, str):
@@ -100,6 +115,9 @@ class CapitalizeOp(UnaryScalar[str]):
 
 class SwapCaseOp(UnaryScalar[str]):
     """Swap case: str.swapcase()."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> str | Sentinel:
         """Apply."""
@@ -116,6 +134,9 @@ class SwapCaseOp(UnaryScalar[str]):
 class IsDigitOp(UnaryScalar[bool]):
     """Check if all digits: str.isdigit()."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> bool | Sentinel:
         """Apply."""
         if not isinstance(operand, str):
@@ -125,6 +146,9 @@ class IsDigitOp(UnaryScalar[bool]):
 
 class IsAlphaOp(UnaryScalar[bool]):
     """Check if all alphabetic: str.isalpha()."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> bool | Sentinel:
         """Apply."""
@@ -136,6 +160,9 @@ class IsAlphaOp(UnaryScalar[bool]):
 class IsAlnumOp(UnaryScalar[bool]):
     """Check if alphanumeric: str.isalnum()."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> bool | Sentinel:
         """Apply."""
         if not isinstance(operand, str):
@@ -145,6 +172,9 @@ class IsAlnumOp(UnaryScalar[bool]):
 
 class IsSpaceOp(UnaryScalar[bool]):
     """Check if all whitespace: str.isspace()."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> bool | Sentinel:
         """Apply."""
@@ -161,6 +191,9 @@ class IsSpaceOp(UnaryScalar[bool]):
 class StripOp(BinaryScalar[str]):
     """Strip whitespace or chars: str.strip(chars)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
         if not isinstance(left, str):
@@ -173,6 +206,9 @@ class StripOp(BinaryScalar[str]):
 class LStripOp(BinaryScalar[str]):
     """Strip leading whitespace or chars: str.lstrip(chars)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
         if not isinstance(left, str):
@@ -184,6 +220,9 @@ class LStripOp(BinaryScalar[str]):
 
 class RStripOp(BinaryScalar[str]):
     """Strip trailing whitespace or chars: str.rstrip(chars)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
@@ -202,6 +241,9 @@ class RStripOp(BinaryScalar[str]):
 class SplitOp(TernaryScalar[list[str]]):
     """Split string: str.split(sep, maxsplit)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, first: object, second: object, third: object) -> list[str] | Sentinel:
         """Apply."""
         if not isinstance(first, str):
@@ -213,6 +255,9 @@ class SplitOp(TernaryScalar[list[str]]):
 
 class RSplitOp(TernaryScalar[list[str]]):
     """Right split string: str.rsplit(sep, maxsplit)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, first: object, second: object, third: object) -> list[str] | Sentinel:
         """Apply."""
@@ -231,6 +276,9 @@ class RSplitOp(TernaryScalar[list[str]]):
 class FindOp(NAryScalar[int]):
     """Find substring: str.find(sub, start, end)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, *args: object) -> int | Sentinel:
         """Apply."""
         operand, sub, start, end = args
@@ -244,6 +292,9 @@ class FindOp(NAryScalar[int]):
 class RFindOp(NAryScalar[int]):
     """Find substring from right: str.rfind(sub, start, end)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, *args: object) -> int | Sentinel:
         """Apply."""
         operand, sub, start, end = args
@@ -256,6 +307,9 @@ class RFindOp(NAryScalar[int]):
 
 class CountSubstringOp(BinaryScalar[int]):
     """Count substring occurrences: str.count(sub)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> int | Sentinel:
         """Apply."""
@@ -272,6 +326,9 @@ class CountSubstringOp(BinaryScalar[int]):
 class StartsWithOp(BinaryScalar[bool]):
     """Check if starts with prefix: str.startswith(prefix)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
         if not isinstance(left, str) or not isinstance(right, str):
@@ -281,6 +338,9 @@ class StartsWithOp(BinaryScalar[bool]):
 
 class EndsWithOp(BinaryScalar[bool]):
     """Check if ends with suffix: str.endswith(suffix)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
@@ -297,6 +357,9 @@ class EndsWithOp(BinaryScalar[bool]):
 class CenterOp(TernaryScalar[str]):
     """Center in width: str.center(width, fillchar)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, first: object, second: object, third: object) -> str | Sentinel:
         """Apply."""
         if not isinstance(first, str) or not isinstance(second, int):
@@ -307,6 +370,9 @@ class CenterOp(TernaryScalar[str]):
 
 class LJustOp(TernaryScalar[str]):
     """Left justify: str.ljust(width, fillchar)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, first: object, second: object, third: object) -> str | Sentinel:
         """Apply."""
@@ -319,6 +385,9 @@ class LJustOp(TernaryScalar[str]):
 class RJustOp(TernaryScalar[str]):
     """Right justify: str.rjust(width, fillchar)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, first: object, second: object, third: object) -> str | Sentinel:
         """Apply."""
         if not isinstance(first, str) or not isinstance(second, int):
@@ -329,6 +398,9 @@ class RJustOp(TernaryScalar[str]):
 
 class ZFillOp(BinaryScalar[str]):
     """Zero-fill: str.zfill(width)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
@@ -344,6 +416,9 @@ class ZFillOp(BinaryScalar[str]):
 
 class ReplaceOp(NAryScalar[str]):
     """Replace substring: str.replace(old, new, count)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, *args: object) -> str | Sentinel:
         """Apply."""
@@ -364,6 +439,9 @@ class ReplaceOp(NAryScalar[str]):
 class EncodeOp(BinaryScalar[bytes]):
     """Encode string to bytes: str.encode(encoding)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> bytes | Sentinel:
         """Apply."""
         if not isinstance(left, str):
@@ -381,6 +459,9 @@ class EncodeOp(BinaryScalar[bytes]):
 
 class JoinOp(BinaryScalar[str]):
     """Join iterable elements into string: sep.join(seq)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""

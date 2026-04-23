@@ -33,6 +33,9 @@ __all__ = [
 class CollectionLoadOp[T](Query[T | Sentinel]):
     """Read collection from parent. Returns EMPTY if missing."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
+
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
@@ -50,7 +53,8 @@ class CollectionStoreCmd[T](Command):
     """Write collection to parent: parent[address] = data."""
 
     writes = 0
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: Ref, data: Nu[T | Sentinel]) -> None:
         super().__init__(ref, data)
@@ -72,7 +76,8 @@ class CollectionEraseCmd(Command):
     """Delete collection from parent: del parent[address]."""
 
     writes = 0
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
@@ -89,6 +94,9 @@ class CollectionEraseCmd(Command):
 
 class CollectionExistsOp(Query[bool]):
     """Check if collection exists: not is_sentinel(ref value)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
@@ -107,6 +115,9 @@ class CollectionExistsOp(Query[bool]):
 
 class CollectionMissingOp(Query[bool]):
     """Check if collection is missing: is_sentinel(ref value)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)

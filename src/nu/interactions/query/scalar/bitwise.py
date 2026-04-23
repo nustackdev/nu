@@ -9,7 +9,9 @@ Use .bitand(), .bitor(), .bitnot() methods instead.
 
 from __future__ import annotations
 
-from nu.terms import BinaryScalar, UnaryScalar
+from typing import ClassVar
+
+from nu.terms import BinaryScalar, Mode, UnaryScalar
 
 
 __all__ = [
@@ -34,6 +36,9 @@ class BitwiseNot[ResultT](UnaryScalar[ResultT]):
     Use .bitnot() method instead.
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> ResultT:
         """Apply."""
         return ~operand  # type: ignore
@@ -51,6 +56,9 @@ class BitwiseAnd[ResultT](BinaryScalar[ResultT]):
     Use .bitand() method to create this operation.
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
         return left & right  # type: ignore
@@ -63,6 +71,9 @@ class BitwiseOr[ResultT](BinaryScalar[ResultT]):
     Use .bitor() method to create this operation.
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
         return left | right  # type: ignore
@@ -70,6 +81,9 @@ class BitwiseOr[ResultT](BinaryScalar[ResultT]):
 
 class Xor[ResultT](BinaryScalar[ResultT]):
     """Bitwise XOR: left ^ right."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -79,6 +93,9 @@ class Xor[ResultT](BinaryScalar[ResultT]):
 class LShift[ResultT](BinaryScalar[ResultT]):
     """Left shift: left << right."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
         return left << right  # type: ignore
@@ -86,6 +103,9 @@ class LShift[ResultT](BinaryScalar[ResultT]):
 
 class RShift[ResultT](BinaryScalar[ResultT]):
     """Right shift: left >> right."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""

@@ -6,10 +6,10 @@ Commands that write to stdio. All declare `writes = 0` (StdioRef position).
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu.stdio.refs import STDERR, STDOUT
-from nu.terms import Atomic
+from nu.terms import Atomic, Mode
 
 
 if TYPE_CHECKING:
@@ -32,18 +32,11 @@ class Print(Atomic):
     """
 
     writes = 0  # StdioRef at child 0 is a WRITE target
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(self, *values: Arg) -> None:
         super().__init__(STDOUT, *values)
-
-    async def arun(self, ctx: Context) -> None:
-        from nu.stdio.ops import _get_stream
-
-        stream = _get_stream(ctx, self.children[0])
-        parts = []
-        for child in self.children[1:]:
-            parts.append(str(await child.acollect(ctx)))
-        stream.write(" ".join(parts) + "\n")
 
     def run(self, ctx: Context) -> None:
         from nu.stdio.ops import _get_stream
@@ -60,6 +53,8 @@ class Log(Atomic):
     """
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -70,15 +65,6 @@ class Log(Atomic):
     ) -> None:
         super().__init__(STDERR, level, logger_name, message, *values)
         self._path = ""
-
-    async def arun(self, ctx: Context) -> None:
-        level = await self.children[1].afirst(ctx)
-        logger_name = await self.children[2].afirst(ctx)
-        parts = [str(await c.acollect(ctx)) for c in self.children[3:]]
-        message = " ".join(parts)
-        if self._path:
-            message = f"[{self._path}] {message}"
-        getattr(logging.getLogger(logger_name), level)(message)
 
     def run(self, ctx: Context) -> None:
         level = self.children[1].first(ctx)
@@ -97,6 +83,8 @@ class Debug(Atomic):
     """
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(
         self,
@@ -105,21 +93,6 @@ class Debug(Atomic):
         prefix: StrArg = "[DEBUG]",
     ) -> None:
         super().__init__(STDOUT, prefix, labels, *values)
-
-    async def arun(self, ctx: Context) -> None:
-        from nu.stdio.ops import _get_stream
-
-        stream = _get_stream(ctx, self.children[0])
-        prefix = await self.children[1].afirst(ctx)
-        labels = await self.children[2].afirst(ctx)
-        parts = [str(prefix)]
-        for i, child in enumerate(self.children[3:]):
-            val = await child.acollect(ctx)
-            if labels and i < len(labels):
-                parts.append(f"{labels[i]}={val!r}")
-            else:
-                parts.append(repr(val))
-        stream.write(" ".join(parts) + "\n")
 
     def run(self, ctx: Context) -> None:
         from nu.stdio.ops import _get_stream

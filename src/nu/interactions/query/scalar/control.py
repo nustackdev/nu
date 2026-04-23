@@ -9,9 +9,9 @@ dispatch the branch's full stream, see
 from __future__ import annotations
 
 from contextlib import aclosing, closing
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Query
+from nu.terms import Mode, Query
 
 
 if TYPE_CHECKING:
@@ -32,6 +32,9 @@ class If(Query):
 
     Children: [condition, then_branch, else_branch?]
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(
         self,
@@ -73,6 +76,9 @@ class Switch(Query):
 
     Children: ``[selector, *case_values, default?]``
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(
         self,

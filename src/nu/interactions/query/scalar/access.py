@@ -8,7 +8,9 @@ Contains: Containment check (item in container)
 
 from __future__ import annotations
 
-from nu.terms import BinaryScalar, NAryScalar, UnaryScalar
+from typing import ClassVar
+
+from nu.terms import BinaryScalar, Mode, NAryScalar, UnaryScalar
 
 
 __all__ = [
@@ -22,6 +24,9 @@ __all__ = [
 class Len(UnaryScalar[int]):
     """Length: len(operand)."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> int:
         """Apply."""
         return len(operand)  # type: ignore
@@ -29,6 +34,9 @@ class Len(UnaryScalar[int]):
 
 class At[ResultT](BinaryScalar[ResultT]):
     """Subscript access: left[right]."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -38,6 +46,9 @@ class At[ResultT](BinaryScalar[ResultT]):
 class Slice[ResultT](NAryScalar[ResultT]):
     """Slice access: operand[start:stop:step]."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, *args: object) -> ResultT:
         """Apply."""
         operand, start, stop, step = args
@@ -46,6 +57,9 @@ class Slice[ResultT](NAryScalar[ResultT]):
 
 class Contains(BinaryScalar[bool]):
     """Containment check: right in left."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> bool:
         """Apply."""

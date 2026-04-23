@@ -8,10 +8,12 @@ PopCmd, RemoveValueCmd, ReverseCmd
 from __future__ import annotations
 
 from collections.abc import Iterable, MutableSequence, Sequence
+from typing import ClassVar
 
 from nu.terms import (
     INVALID,
     BinaryScalar,
+    Mode,
     Sentinel,
     TernaryScalar,
     UnaryScalar,
@@ -40,6 +42,9 @@ __all__ = [
 class FirstOp[ResultT](UnaryScalar[ResultT]):
     """First element: seq[0]. Returns Invalid if empty."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
         if not isinstance(operand, Sequence):
@@ -51,6 +56,9 @@ class FirstOp[ResultT](UnaryScalar[ResultT]):
 
 class LastOp[ResultT](UnaryScalar[ResultT]):
     """Last element: seq[-1]. Returns Invalid if empty."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
@@ -64,6 +72,9 @@ class LastOp[ResultT](UnaryScalar[ResultT]):
 class IndexOfOp(BinaryScalar[int]):
     """Find index of value: seq.index(value). Returns Invalid if not found."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> int | Sentinel:
         """Apply."""
         if not isinstance(left, Sequence):
@@ -76,6 +87,9 @@ class IndexOfOp(BinaryScalar[int]):
 
 class CountOp(BinaryScalar[int]):
     """Count occurrences: seq.count(value)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> int | Sentinel:
         """Apply."""
@@ -93,6 +107,8 @@ class AppendCmd[T](BinaryScalar[None]):
     """Append item to end: seq.append(value). Returns None (mutates in-place)."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -106,6 +122,8 @@ class InsertCmd[T](TernaryScalar[None]):
     """Insert item at index: seq.insert(index, value). Returns None (mutates in-place)."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, first: object, second: object, third: object) -> None | Sentinel:
         """Apply."""
@@ -124,6 +142,8 @@ class PopCmd[T](BinaryScalar[T]):
     """
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> T | Sentinel:
         """Apply."""
@@ -141,6 +161,8 @@ class ExtendCmd[T](BinaryScalar[None]):
     """Extend sequence with iterable: seq.extend(other). Returns None (mutates in-place)."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -156,6 +178,8 @@ class RemoveValueCmd[T](BinaryScalar[None]):
     """Remove first occurrence of value: seq.remove(value). Returns None, or INVALID if not found."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -172,6 +196,8 @@ class ReverseCmd(UnaryScalar[None]):
     """Reverse sequence in-place: seq.reverse(). Returns None (mutates in-place)."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> None | Sentinel:
         """Apply."""

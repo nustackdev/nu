@@ -33,8 +33,9 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC
-from contextlib import aclosing
-from typing import TYPE_CHECKING, Any, ClassVar, Generic
+from contextlib import aclosing, closing
+from functools import cached_property
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Self
 
 from nu.tree.node import _Node
 
@@ -72,19 +73,37 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
     indep: ClassVar[bool] = False
     assoc: ClassVar[bool] = True
 
-    # Execution mode. BOTH = works under either evaluator. ASYNC = needs
-    # event loop. SYNC = plain generator, no loop. Subtree effective mode
-    # is sup(self.mode, *children.effective_mode()).
-    mode: ClassVar[Mode] = Mode.BOTH
+    # own_mode — which of open / aopen the class has working.
+    # SYNC: only open. ASYNC: only aopen. BOTH: both.
+    # func_mode — execution mode of the core functionality.
+    # SYNC: core is sync. ASYNC: core is async. BOTH: two first-class impls.
+    # Valid pairs: (SYNC,SYNC), (BOTH,SYNC), (BOTH,BOTH), (ASYNC,ASYNC).
+    # Concrete Interaction subclasses must declare both explicitly.
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def can_parallelize(self) -> bool:
         """Licenses the interleaving pump. comm ∧ indep."""
         return self.comm and self.indep
 
+    @cached_property
     def effective_mode(self) -> Mode:
-        """Subtree mode. Sup of own mode and each child's effective_mode."""
-        child_modes = tuple(c.effective_mode() for c in self._children)
-        return sup(self.mode, *child_modes)
+        """Subtree sup of own_mode. Cached per instance.
+
+        Tells dispatch whether the subtree contains an ASYNC-only node.
+        Sync entry points raise when this is ASYNC; async pump runs child
+        sync when this is SYNC or BOTH.
+
+        Nu trees are immutable post-construction; `_with_children`
+        invalidates the cache for the clone.
+        """
+        child_modes = tuple(c.effective_mode for c in self._children)
+        return sup(self.own_mode, *child_modes)
+
+    def _with_children(self, *children: Nu) -> Self:
+        clone = super()._with_children(*children)
+        clone.__dict__.pop("effective_mode", None)
+        return clone
 
     async def aopen(self, ctx: Context) -> AsyncGenerator[T_co, None]:
         """Run this Nu as a scope. Yields 0..N values.
@@ -100,20 +119,34 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
             async for v in self._apump_sequential(ctx):
                 yield v
 
-    async def _apump_sequential(self, ctx: Context) -> AsyncGenerator[T_co, None]:
-        for child in self._children:
+    async def _adispatch_child(self, child: Nu, ctx: Context) -> AsyncGenerator[Any, None]:
+        """Open a child on its most efficient path.
+
+        If the child's effective_mode is ASYNC, use aopen. Otherwise run
+        the child's sync generator inline — the child's sync path works,
+        so no event loop needed.
+        """
+        if child.effective_mode is Mode.ASYNC:
             async with aclosing(child.aopen(ctx)) as gen:
                 async for v in gen:
                     yield v
+        else:
+            with closing(child.open(ctx)) as gen:
+                for v in gen:
+                    yield v
+
+    async def _apump_sequential(self, ctx: Context) -> AsyncGenerator[T_co, None]:
+        for child in self._children:
+            async for v in self._adispatch_child(child, ctx):
+                yield v
 
     async def _apump_parallel(self, ctx: Context) -> AsyncGenerator[T_co, None]:
         queue: asyncio.Queue[Any] = asyncio.Queue()
 
         async def pump(child: Nu) -> None:
             try:
-                async with aclosing(child.aopen(ctx)) as gen:
-                    async for v in gen:
-                        await queue.put(v)
+                async for v in self._adispatch_child(child, ctx):
+                    await queue.put(v)
             finally:
                 await queue.put(_DONE)
 
@@ -144,8 +177,11 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
         Default: dispatch by `can_parallelize()`. Parallel-sync sequentializes
         (true thread parallelism goes through ExecutorRef, not the pump).
         """
-        if self.mode is Mode.ASYNC:
-            msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
+        if self.effective_mode is Mode.ASYNC:
+            msg = (
+                f"{type(self).__name__} has ASYNC in its subtree; "
+                "cannot run sync. Use aopen / aexecute."
+            )
             raise RuntimeError(msg)
         if self.can_parallelize():
             yield from self._pump_parallel(ctx)
@@ -171,14 +207,25 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
             async for _ in gen:
                 pass
 
+    def _check_sync_safe(self) -> None:
+        """Eager guard at sync entry. Fails before any side effect."""
+        if self.effective_mode is Mode.ASYNC:
+            msg = (
+                f"{type(self).__name__} has ASYNC in its subtree; "
+                "cannot run sync. Use aexecute / afirst / acollect."
+            )
+            raise RuntimeError(msg)
+
     def execute(self, ctx: Context | None = None) -> None:
         """Drain on the sync path. Subtree must not contain ASYNC nodes."""
+        self._check_sync_safe()
         ctx = self._default_ctx(ctx)
         for _ in self.open(ctx):
             pass
 
     def first(self, ctx: Context | None = None) -> Any:
         """Take the first yield on the sync path. Subtree must not contain ASYNC nodes."""
+        self._check_sync_safe()
         ctx = self._default_ctx(ctx)
         for v in self.open(ctx):
             return v
@@ -187,6 +234,7 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
 
     def collect(self, ctx: Context | None = None) -> list[Any]:
         """Drain into a list on the sync path. Subtree must not contain ASYNC nodes."""
+        self._check_sync_safe()
         ctx = self._default_ctx(ctx)
         return list(self.open(ctx))
 

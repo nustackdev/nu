@@ -50,7 +50,8 @@ class EnsureLayoutCmd(Command):
     """
 
     writes = 0
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -79,7 +80,8 @@ class InitCmd(Command):
     """
 
     writes = 0
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -104,7 +106,8 @@ class ItemPrimitiveGetUnsafeOp[T](Query[T | Sentinel]):
         resolve_address(ctx) -> key/index
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -135,7 +138,8 @@ class ItemPrimitiveSetUnsafeCmd[T](Command):
     """
 
     writes = 0
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
@@ -167,7 +171,8 @@ class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command):
     """
 
     writes = 0
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
@@ -199,7 +204,8 @@ class ItemPrimitiveDeleteUnsafeCmd(Command):
     """
 
     writes = 0
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -229,7 +235,8 @@ class PrimitiveStoreCmd[T](Command):
     """
 
     writes = 0
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object, data: object) -> None:
         super().__init__(ref, data)

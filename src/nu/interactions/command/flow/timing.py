@@ -37,7 +37,8 @@ class Timed(Flow):
     Children: ``[label, *children]``
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, *children: Nu, label: StrArg = "Timed") -> None:
         super().__init__(label, *children)
@@ -73,7 +74,8 @@ class Timeout(Flow):
     Children: ``[timeout, body, on_timeout?]``
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(
         self,
@@ -107,7 +109,8 @@ class Throttle(Flow):
     First call always executes. Subsequent calls within the interval are skipped.
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, interval: FloatArg, body: Nu | None = None) -> None:
         self._last_time: float = 0.0
@@ -137,7 +140,8 @@ class Debounce(Flow):
     Body executes only when the timer expires without being reset.
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, delay: FloatArg, body: Nu | None = None) -> None:
         self._pending: asyncio.Task | None = None

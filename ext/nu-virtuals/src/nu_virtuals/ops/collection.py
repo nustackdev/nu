@@ -35,7 +35,8 @@ class ScanPrimitivesUnsafeOp[T](Query[Iterator[T] | Sentinel]):
         fetch(ctx) -> view with _unsafe_primitive_scan_values() method
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -64,7 +65,8 @@ class ClearPrimitivesUnsafeCmd(Command):
     """
 
     writes = 0
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)

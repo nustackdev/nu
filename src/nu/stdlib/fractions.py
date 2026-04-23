@@ -6,9 +6,9 @@ FractionI = TypedNu[Fraction] + arithmetic + comparison + conversions.
 from __future__ import annotations
 
 from fractions import Fraction
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Interface, TypedNu
+from nu.terms import Interface, Mode, TypedNu
 
 
 if TYPE_CHECKING:
@@ -279,3 +279,6 @@ class _FractionI(Interface):
 
 class FractionI(_FractionI, TypedNu[Fraction]):
     """Fraction interface. Exact rational arithmetic + comparable."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH

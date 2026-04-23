@@ -15,8 +15,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator, Sequence
 from itertools import chain as itertools_chain
+from typing import ClassVar
 
-from nu.terms import INVALID, BinaryScalar, Sentinel, TernaryScalar, UnaryScalar
+from nu.terms import INVALID, BinaryScalar, Mode, Sentinel, TernaryScalar, UnaryScalar
 
 
 __all__ = [
@@ -31,6 +32,9 @@ __all__ = [
 
 class Sorted[ResultT](BinaryScalar[list[ResultT]]):
     """Sorted list: sorted(seq, reverse=reverse). Terminal — inherently eager."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> list[ResultT] | Sentinel:
         """Apply."""
@@ -48,6 +52,9 @@ class Sorted[ResultT](BinaryScalar[list[ResultT]]):
 class Reversed[ResultT](UnaryScalar[Iterator[ResultT]]):
     """Reversed sequence: reversed(seq) -> lazy iterator."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> Iterator[ResultT]:
         """Apply."""
         if not isinstance(operand, Sequence):
@@ -63,6 +70,9 @@ class Pluck[T](BinaryScalar[Iterator[T]]):
     Example:
         >>> Pluck(token_balances, "mint")
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> Iterator[T] | Sentinel:
         """Apply."""
@@ -89,6 +99,9 @@ class FilterBy[T](TernaryScalar[Iterator[T]]):
         >>> FilterBy(balances, "mint", t.current_mint)
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, first: object, second: object, third: object) -> Iterator[T] | Sentinel:
         """Apply: first=collection, second=field, third=value."""
         if not isinstance(first, Iterable):
@@ -108,6 +121,9 @@ class FilterBy[T](TernaryScalar[Iterator[T]]):
 class Flatten(UnaryScalar[Iterator]):
     """Flatten one level: chain.from_iterable(seq) -> lazy iterator."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> Iterator | Sentinel:
         """Apply."""
         if not isinstance(operand, Iterable):
@@ -120,6 +136,9 @@ class Flatten(UnaryScalar[Iterator]):
 
 class Unique(UnaryScalar[Iterator]):
     """Unique elements preserving order -> lazy iterator."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> Iterator | Sentinel:
         """Apply."""

@@ -21,7 +21,7 @@ Typical composition:
 from __future__ import annotations
 
 from abc import ABC
-from contextlib import aclosing, closing
+from contextlib import closing
 from typing import TYPE_CHECKING, Any
 
 from .nu import Nu
@@ -57,9 +57,8 @@ class ContextManager(Nu, ABC):
         scoped_ctx = self.before(ctx)
         try:
             for child in self._children:
-                async with aclosing(child.aopen(scoped_ctx)) as gen:
-                    async for v in gen:
-                        yield v
+                async for v in self._adispatch_child(child, scoped_ctx):
+                    yield v
         except BaseException as e:
             if isinstance(e, GeneratorExit):
                 self.after(scoped_ctx)
@@ -70,8 +69,11 @@ class ContextManager(Nu, ABC):
             self.after(scoped_ctx)
 
     def open(self, ctx: Context) -> Generator[Any, None, None]:
-        if self.mode is Mode.ASYNC:
-            msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
+        if self.effective_mode is Mode.ASYNC:  # subtree sup of own_mode
+            msg = (
+                f"{type(self).__name__} has ASYNC in its subtree; "
+                "cannot run sync. Use aopen / aexecute."
+            )
             raise RuntimeError(msg)
         scoped_ctx = self.before(ctx)
         try:

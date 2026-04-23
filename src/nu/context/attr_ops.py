@@ -5,9 +5,9 @@ Queries over `ctx.attrs`. Yield one value each.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Query, Sentinel
+from nu.terms import Mode, Query, Sentinel
 
 
 if TYPE_CHECKING:
@@ -24,12 +24,11 @@ __all__ = [
 class AttrGetOp[T](Query[T | Sentinel]):
     """Read value by name from context: ctx.attrs[name]."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(self, ref: AttrRef[T]) -> None:
         super().__init__(ref)
-
-    async def arun(self, ctx: Context) -> T | Sentinel:
-        key = await self.children[0]._resolve_name(ctx)
-        return ctx.attrs[key]
 
     def run(self, ctx: Context) -> T | Sentinel:
         key = self.children[0]._resolve_name_sync(ctx)
@@ -39,12 +38,11 @@ class AttrGetOp[T](Query[T | Sentinel]):
 class AttrExistsOp(Query[bool]):
     """Check if name exists in context."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def __init__(self, ref: AttrRef) -> None:
         super().__init__(ref)
-
-    async def arun(self, ctx: Context) -> bool:
-        key = await self.children[0]._resolve_name(ctx)
-        return key in ctx.attrs
 
     def run(self, ctx: Context) -> bool:
         key = self.children[0]._resolve_name_sync(ctx)

@@ -8,10 +8,12 @@ DictPopCmd, PopItemCmd, SetDefaultCmd
 from __future__ import annotations
 
 from collections.abc import ItemsView, KeysView, Mapping, MutableMapping, ValuesView
+from typing import ClassVar
 
 from nu.terms import (
     INVALID,
     BinaryScalar,
+    Mode,
     Sentinel,
     TernaryScalar,
     UnaryScalar,
@@ -40,6 +42,9 @@ __all__ = [
 class KeysOp[K](UnaryScalar[KeysView[K]]):
     """Get keys view from mapping: mapping.keys()."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> KeysView[K]:
         """Apply."""
         if not isinstance(operand, Mapping):
@@ -49,6 +54,9 @@ class KeysOp[K](UnaryScalar[KeysView[K]]):
 
 class ValuesOp[V](UnaryScalar[ValuesView[V]]):
     """Get values view from mapping: mapping.values()."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> ValuesView[V]:
         """Apply."""
@@ -60,6 +68,9 @@ class ValuesOp[V](UnaryScalar[ValuesView[V]]):
 class ItemsOp[K, V](UnaryScalar[ItemsView[K, V]]):
     """Get items view from mapping: mapping.items()."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> ItemsView[K, V]:
         """Apply."""
         if not isinstance(operand, Mapping):
@@ -69,6 +80,9 @@ class ItemsOp[K, V](UnaryScalar[ItemsView[K, V]]):
 
 class GetOp[V](TernaryScalar[V]):
     """Get value from mapping with optional default: mapping.get(key, default) or mapping[key]."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
         """Apply."""
@@ -88,6 +102,8 @@ class SetItemCmd[K, V](TernaryScalar[None]):
     """Set value at key: mapping[key] = value. Returns None."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, first: object, second: object, third: object) -> None | Sentinel:
         """Apply."""
@@ -101,6 +117,8 @@ class DeleteItemCmd[K](BinaryScalar[None]):
     """Delete entry by key: del mapping[key]. Returns None."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -117,6 +135,8 @@ class UpdateCmd[K, V](BinaryScalar[None]):
     """Update mapping with another: mapping.update(other). Returns None (mutates in-place)."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -132,6 +152,8 @@ class DictPopCmd[K, V](TernaryScalar[V]):
     """Pop value by key with optional default: mapping.pop(key, default). Returns value or default."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
         """Apply."""
@@ -149,6 +171,8 @@ class PopItemCmd[K, V](UnaryScalar[tuple[K, V]]):
     """Pop arbitrary item: mapping.popitem(). Returns (key, value) tuple."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> tuple[K, V] | Sentinel:
         """Apply."""
@@ -164,11 +188,11 @@ class SetDefaultCmd[K, V](TernaryScalar[V]):
     """Set default value if key missing: mapping.setdefault(key, default). Returns value at key."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
         """Apply."""
         if not isinstance(first, MutableMapping):
             raise TypeError(f"setdefault() requires mutable mapping, got {type(first).__name__}")
         return first.setdefault(second, third)  # type: ignore[arg-type]
-
-

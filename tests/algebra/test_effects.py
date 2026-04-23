@@ -8,10 +8,18 @@ Covers all three computation rules plus edge cases:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from nu import Context, Literal, Nu
-from nu.terms import BinaryScalar, Direction, TrackedEffect, UnaryScalar, is_pure, tracked_effects
+from nu.terms import (
+    BinaryScalar,
+    Direction,
+    Mode,
+    TrackedEffect,
+    UnaryScalar,
+    is_pure,
+    tracked_effects,
+)
 from nu.terms.ref import Ref
 
 
@@ -27,6 +35,9 @@ WRITE = Direction.WRITE
 class FabricA(Ref[int]):
     """Test ref for fabric A."""
 
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
+
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
 
@@ -40,6 +51,9 @@ class FabricA(Ref[int]):
 class FabricB(Ref[int]):
     """Test ref for fabric B."""
 
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -51,6 +65,9 @@ class FabricB(Ref[int]):
 
 
 class StoreOp(BinaryScalar[None]):
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     writes = 0
 
     def apply(self, ref_val: Any, value: Any) -> None:
@@ -58,6 +75,9 @@ class StoreOp(BinaryScalar[None]):
 
 
 class LoadOp(UnaryScalar[object]):
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     reads = 0
 
     def apply(self, value: Any) -> object:
@@ -65,6 +85,9 @@ class LoadOp(UnaryScalar[object]):
 
 
 class Add(BinaryScalar[int]):
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: Any, right: Any) -> int:
         return left + right
 

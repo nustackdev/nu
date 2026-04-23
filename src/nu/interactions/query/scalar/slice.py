@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from itertools import islice
+from typing import ClassVar
 
-from nu.terms import INVALID, BinaryScalar, Sentinel
+from nu.terms import INVALID, BinaryScalar, Mode, Sentinel
 
 
 __all__ = [
@@ -16,6 +17,9 @@ __all__ = [
 
 class Take(BinaryScalar[Iterator]):
     """Take first N elements: islice(iterable, n) -> lazy iterator."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> Iterator | Sentinel:
         """Apply: left=iterable, right=n."""
@@ -29,6 +33,9 @@ class Take(BinaryScalar[Iterator]):
 
 class Drop(BinaryScalar[Iterator]):
     """Drop first N elements: islice(iterable, n, None) -> lazy iterator."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> Iterator | Sentinel:
         """Apply: left=iterable, right=n."""

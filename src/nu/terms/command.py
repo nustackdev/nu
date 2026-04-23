@@ -68,7 +68,7 @@ class Command(Interaction, ABC):
         yield  # unreachable; marks this as a generator
 
     def open(self, ctx: Context) -> Generator[None, None, None]:
-        if self.mode is Mode.ASYNC:
+        if self.own_mode is Mode.ASYNC:
             msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
             raise RuntimeError(msg)
         self.run(ctx)
@@ -140,7 +140,7 @@ class NAryAtomic(Atomic, ABC):
                     await result
 
     def run(self, ctx: Context) -> None:
-        if self.mode is Mode.ASYNC:
+        if self.own_mode is Mode.ASYNC:
             msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
             raise RuntimeError(msg)
         if iscoroutinefunction(self.apply):
@@ -226,4 +226,3 @@ class TernaryAtomic(NAryAtomic, ABC):
     def __str__(self) -> str:
         c0, c1, c2 = self._children
         return f"{self.__class__.__name__}({c0}, {c1}, {c2})"
-

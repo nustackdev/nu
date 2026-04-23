@@ -31,6 +31,9 @@ class TryCatch(Flow):
     Always 3 children. Missing handlers are ``NoneI()`` sentinels.
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
+
     def __init__(
         self,
         body: Nu,
@@ -119,7 +122,8 @@ class Retry(Flow):
     Always 7 children. Missing hooks are ``NoneI()`` sentinels.
     """
 
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(
         self,

@@ -6,9 +6,9 @@ DecimalI = TypedNu[Decimal] + arithmetic + comparison + rounding + inspection.
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Interface, TypedNu
+from nu.terms import Interface, Mode, TypedNu
 
 
 if TYPE_CHECKING:
@@ -299,3 +299,6 @@ class _DecimalI(Interface):
 
 class DecimalI(_DecimalI, TypedNu[Decimal]):
     """Decimal interface. Arbitrary precision arithmetic + comparable."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH

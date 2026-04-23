@@ -35,6 +35,9 @@ __all__ = [
 class ItemLoadOp[T](Query[T | Sentinel]):
     """Read item from collection. Returns EMPTY if missing."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
+
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
@@ -52,7 +55,8 @@ class ItemStoreCmd[T](Command):
     """Write item to collection: parent[address] = value."""
 
     writes = 0
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: Ref, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
@@ -74,7 +78,8 @@ class ItemEraseCmd(Command):
     """Delete item from collection: del parent[address]."""
 
     writes = 0
-    mode: ClassVar[Mode] = Mode.ASYNC
+    own_mode: ClassVar[Mode] = Mode.ASYNC
+    func_mode: ClassVar[Mode] = Mode.ASYNC
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
@@ -91,6 +96,9 @@ class ItemEraseCmd(Command):
 
 class ItemExistsOp(Query[bool]):
     """Check if item exists."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
@@ -109,6 +117,9 @@ class ItemExistsOp(Query[bool]):
 
 class ItemMissingOp(Query[bool]):
     """Check if item is missing."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)

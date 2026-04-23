@@ -7,10 +7,19 @@ without calling apply(). This is the safety net for the entire algebra.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from nu import EMPTY, INVALID, Literal
-from nu.terms import BinaryScalar, Empty, Invalid, is_empty, is_invalid, is_sentinel, propagate_special
+from nu.terms import (
+    BinaryScalar,
+    Empty,
+    Invalid,
+    Mode,
+    is_empty,
+    is_invalid,
+    is_sentinel,
+    propagate_special,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -136,6 +145,9 @@ def test_propagate_special_no_args():
 
 class _TestAddOp(BinaryScalar[int]):
     """BinaryScalar that tracks whether apply was called."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     apply_called: bool = False
 

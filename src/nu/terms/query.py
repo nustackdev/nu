@@ -17,10 +17,10 @@ Command children are forbidden anywhere in a Query subtree (purity is global).
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from contextlib import AsyncExitStack, ExitStack, aclosing, closing
 from inspect import isawaitable, iscoroutinefunction
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from .interaction import Interaction
 from .types import INVALID, Mode, Sentinel, T_co, is_sentinel
@@ -77,7 +77,7 @@ class Query(Interaction[T_co], ABC):
         yield await self.arun(ctx)
 
     def open(self, ctx: Context) -> Generator[T_co, None, None]:
-        if self.mode is Mode.ASYNC:
+        if self.own_mode is Mode.ASYNC:
             msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
             raise RuntimeError(msg)
         yield self.run(ctx)
@@ -94,6 +94,9 @@ class Literal(Query[T_co]):
     A trivial scalar Query. Bypasses the Query hook machinery: the stored
     value IS the yield.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     _value: object
 
@@ -167,7 +170,7 @@ class NAryScalar(Query[T_co | Sentinel], ABC):
             yield result
 
     def open(self, ctx: Context) -> Generator[T_co | Sentinel, None, None]:
-        if self.mode is Mode.ASYNC:
+        if self.own_mode is Mode.ASYNC:
             msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
             raise RuntimeError(msg)
         if iscoroutinefunction(self.apply):
@@ -260,7 +263,6 @@ class TernaryScalar(NAryScalar[T_co], ABC):
     def __str__(self) -> str:
         c0, c1, c2 = self._children
         return f"{self.__class__.__name__}({c0}, {c1}, {c2})"
-
 
 
 # =============================================================================

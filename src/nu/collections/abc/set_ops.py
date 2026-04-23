@@ -10,8 +10,9 @@ IntersectionUpdateCmd, DifferenceUpdateCmd, SymmetricDifferenceUpdateCmd
 from __future__ import annotations
 
 from collections.abc import MutableSet, Set
+from typing import ClassVar
 
-from nu.terms import INVALID, BinaryScalar, Sentinel, UnaryScalar
+from nu.terms import INVALID, BinaryScalar, Mode, Sentinel, UnaryScalar
 
 
 __all__ = [
@@ -41,6 +42,9 @@ __all__ = [
 class UnionOp[T](BinaryScalar[set[T] | frozenset[T]]):
     """Set union: left | right."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
         """Apply."""
         if not isinstance(left, Set) or not isinstance(right, Set):
@@ -50,6 +54,9 @@ class UnionOp[T](BinaryScalar[set[T] | frozenset[T]]):
 
 class IntersectionOp[T](BinaryScalar[set[T] | frozenset[T]]):
     """Set intersection: left & right."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
         """Apply."""
@@ -61,6 +68,9 @@ class IntersectionOp[T](BinaryScalar[set[T] | frozenset[T]]):
 class DifferenceOp[T](BinaryScalar[set[T] | frozenset[T]]):
     """Set difference: left - right."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
         """Apply."""
         if not isinstance(left, Set) or not isinstance(right, Set):
@@ -70,6 +80,9 @@ class DifferenceOp[T](BinaryScalar[set[T] | frozenset[T]]):
 
 class SymmetricDifferenceOp[T](BinaryScalar[set[T] | frozenset[T]]):
     """Set symmetric difference: left ^ right."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
         """Apply."""
@@ -81,6 +94,9 @@ class SymmetricDifferenceOp[T](BinaryScalar[set[T] | frozenset[T]]):
 class IsSubsetOp(BinaryScalar[bool]):
     """Test if subset: left <= right."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
         if not isinstance(left, Set) or not isinstance(right, Set):
@@ -91,6 +107,9 @@ class IsSubsetOp(BinaryScalar[bool]):
 class IsSupersetOp(BinaryScalar[bool]):
     """Test if superset: left >= right."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
         if not isinstance(left, Set) or not isinstance(right, Set):
@@ -100,6 +119,9 @@ class IsSupersetOp(BinaryScalar[bool]):
 
 class IsDisjointOp(BinaryScalar[bool]):
     """Test if disjoint: left.isdisjoint(right)."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
@@ -117,6 +139,8 @@ class AddCmd[T](BinaryScalar[None]):
     """Add element to set: s.add(value). Returns None (mutates in-place)."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -130,6 +154,8 @@ class RemoveCmd[T](BinaryScalar[None]):
     """Remove element from set: s.remove(value). Returns None, or INVALID if not found."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -146,6 +172,8 @@ class DiscardCmd[T](BinaryScalar[None]):
     """Discard element from set: s.discard(value). Returns None (mutates in-place)."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -159,6 +187,8 @@ class SetPopCmd[T](UnaryScalar[T]):
     """Pop arbitrary element: s.pop(). Returns element, or INVALID if empty."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> T | Sentinel:
         """Apply."""
@@ -174,6 +204,8 @@ class SetUpdateCmd[T](BinaryScalar[None]):
     """Update set with elements from other: s.update(other). Returns None."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -189,6 +221,8 @@ class IntersectionUpdateCmd[T](BinaryScalar[None]):
     """Keep only elements found in both: s.intersection_update(other). Returns None."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -206,6 +240,8 @@ class DifferenceUpdateCmd[T](BinaryScalar[None]):
     """Remove elements found in other: s.difference_update(other). Returns None."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -221,6 +257,8 @@ class SymmetricDifferenceUpdateCmd[T](BinaryScalar[None]):
     """Keep elements in either but not both: s.symmetric_difference_update(other). Returns None."""
 
     writes = 0
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""

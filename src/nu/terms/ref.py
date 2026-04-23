@@ -64,7 +64,7 @@ class Ref(LValue[T_co | Sentinel], ABC):
 
     def open(self, ctx: Context) -> Generator[T_co | Sentinel, None, None]:
         """Yield the fetched value once (sync)."""
-        if self.mode is Mode.ASYNC:
+        if self.own_mode is Mode.ASYNC:
             msg = f"{type(self).__name__} is ASYNC-only; cannot run sync"
             raise RuntimeError(msg)
         yield self.fetch(ctx)

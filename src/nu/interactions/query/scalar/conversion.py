@@ -5,7 +5,9 @@ ToInt, ToFloat, ToBool, ToStr, ToBytes, ToList, ToSet, ToTuple
 
 from __future__ import annotations
 
-from nu.terms import UnaryScalar
+from typing import ClassVar
+
+from nu.terms import Mode, UnaryScalar
 
 
 __all__ = [
@@ -28,6 +30,9 @@ __all__ = [
 class ToInt(UnaryScalar[int]):
     """Convert value to integer."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> int:
         """Apply."""
         return int(operand)  # type: ignore
@@ -35,6 +40,9 @@ class ToInt(UnaryScalar[int]):
 
 class ToFloat(UnaryScalar[float]):
     """Convert value to float."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> float:
         """Apply."""
@@ -44,6 +52,9 @@ class ToFloat(UnaryScalar[float]):
 class ToBool(UnaryScalar[bool]):
     """Convert value to boolean."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> bool:
         """Apply."""
         return bool(operand)
@@ -51,6 +62,9 @@ class ToBool(UnaryScalar[bool]):
 
 class ToStr(UnaryScalar[str]):
     """Convert value to string."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> str:
         """Apply."""
@@ -66,6 +80,9 @@ class ToBytes(UnaryScalar[bytes]):
     - bytearray -> bytes
     - Iterables of ints -> bytes
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def __init__(self, operand: object, encoding: str = "utf-8") -> None:
         """Initialize bytes conversion.
@@ -96,6 +113,9 @@ class ToBytes(UnaryScalar[bytes]):
 class ToList[T](UnaryScalar[list[T]]):
     """Convert value to list."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> list[T]:
         """Apply."""
         return list(operand)  # type: ignore
@@ -104,6 +124,9 @@ class ToList[T](UnaryScalar[list[T]]):
 class ToSet[T](UnaryScalar[set[T]]):
     """Convert value to set."""
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
+
     def apply(self, operand: object) -> set[T]:
         """Apply."""
         return set(operand)  # type: ignore
@@ -111,6 +134,9 @@ class ToSet[T](UnaryScalar[set[T]]):
 
 class ToTuple[*Ts](UnaryScalar[tuple[*Ts]]):
     """Convert value to tuple."""
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.SYNC
 
     def apply(self, operand: object) -> tuple[*Ts]:
         """Apply."""

@@ -5,9 +5,9 @@ AdvanceCursorOp: resolve source view + cursor, return next (log_key, key) or Non
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Query, Sentinel
+from nu.terms import Mode, Query, Sentinel
 
 
 if TYPE_CHECKING:
@@ -32,6 +32,9 @@ class AdvanceCursorOp(Query[tuple | None]):
     Uses Query (not NAryScalar) because a Sentinel cursor is a valid input signalling
     "fresh start" - NAryScalar's sentinel propagation would short-circuit it.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, source: object, cursor: object) -> None:
         super().__init__(source, cursor)

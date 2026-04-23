@@ -7,9 +7,9 @@ an accumulator through ctx.attrs.
 from __future__ import annotations
 
 from contextlib import aclosing, closing
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Stream
+from nu.terms import Mode, Stream
 
 
 if TYPE_CHECKING:
@@ -30,6 +30,9 @@ class Fold(Stream):
     Sets ``ctx.attrs[acc]`` to the running accumulator and
     ``ctx.attrs[item]`` to the current element each iteration.
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(
         self,

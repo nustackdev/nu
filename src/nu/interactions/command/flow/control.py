@@ -8,9 +8,9 @@ These dispatch the chosen branch as an imperative mutation. For Query-form
 from __future__ import annotations
 
 from contextlib import aclosing, closing
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Flow
+from nu.terms import Flow, Mode
 
 
 if TYPE_CHECKING:
@@ -34,6 +34,9 @@ class IfDo(Flow):
 
     Children: [condition, then_branch, else_branch?]
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(
         self,
@@ -76,6 +79,9 @@ class While(Flow):
     Children: ``[condition, body]``
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
+
     def __init__(self, condition: Any, body: Nu) -> None:
         super().__init__(condition, body)
 
@@ -98,6 +104,9 @@ class DoWhile(Flow):
 
     Children: ``[condition, body]``
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(self, condition: Any, body: Nu) -> None:
         super().__init__(condition, body)
@@ -127,6 +136,9 @@ class Forever(Flow):
     Children: ``[body]``
     """
 
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
+
     def __init__(self, body: Nu) -> None:
         super().__init__(body)
 
@@ -149,6 +161,9 @@ class SwitchDo(Flow):
 
     Children: ``[selector, *case_values, default?]``
     """
+
+    own_mode: ClassVar[Mode] = Mode.BOTH
+    func_mode: ClassVar[Mode] = Mode.BOTH
 
     def __init__(
         self,
