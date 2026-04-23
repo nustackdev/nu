@@ -3,7 +3,7 @@
 Refs over virtuals (polymorphic views) KV storage.
 
 Usage:
-    from nu_virtuals import IntRef, StrRef, ShapeRef, AtomicScope
+    from nu_virtuals import IntRef, StrRef, ShapeRef, Atomic
 
     class User(Shape):
         name = StrRef.slot()
@@ -31,7 +31,7 @@ from nu_virtuals.meta import (
     optimize_primitive_writes,
 )
 from nu_virtuals.ops import (
-    AtomicScope,
+    Atomic,
     ClearPrimitivesUnsafeCmd,
     EnsureLayoutCmd,
     InitCmd,
@@ -93,7 +93,7 @@ __all__ = [  # noqa: RUF022
     "inline_refs",
     "optimize_primitive_reads",
     "optimize_primitive_writes",
-    "AtomicScope",
+    "Atomic",
     "BasisPointRef",
     "BoolRef",
     "BytesRef",

@@ -1,6 +1,6 @@
 """Control ops for virtuals storage operations.
 
-AtomicScope: Opens a transaction lazily, provides View on top of it. If the
+Atomic: Opens a transaction lazily, provides View on top of it. If the
 subtree is pure, auto-selects a snapshot instead.
 Snapshot: Opens a read-only snapshot lazily, provides View on top of it.
 Transaction: Opens a write transaction lazily, provides View on top of it.
@@ -9,7 +9,7 @@ Looks up Navigator from context, gets storage from it, and creates
 root views via nav.root(). No view_cls parameter needed.
 
 Usage:
-    tree = AtomicScope(
+    tree = Atomic(
         SetCmd(ref, Lit(42)) >> GetOp(ref),
         scope=UserShape,
     )
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "AtomicScope",
+    "Atomic",
     "Snapshot",
     "Transaction",
 ]
@@ -42,7 +42,7 @@ def _scope_tags(scope: Hashable | None) -> tuple:
     return (scope,) if scope is not None else ()
 
 
-class AtomicScope(ContextManager):
+class Atomic(ContextManager):
     """Atomic transaction/snapshot boundary for virtuals operations.
 
     Before:
@@ -178,13 +178,13 @@ class AtomicScope(ContextManager):
 
     def __repr__(self) -> str:
         scope_name = self.scope.__name__ if hasattr(self.scope, "__name__") else str(self.scope)
-        return f"AtomicScope({scope_name})"
+        return f"Atomic({scope_name})"
 
 
 class Snapshot(ContextManager, Query):
     """Read-only snapshot boundary for virtuals operations.
 
-    Like AtomicScope but always opens a snapshot, never a transaction.
+    Like Atomic but always opens a snapshot, never a transaction.
     Use when you know the subtree is read-only.
     """
 
@@ -256,10 +256,10 @@ class Snapshot(ContextManager, Query):
         return f"Snapshot({scope_name})"
 
 
-class Transaction(Flow, ContextManager):
+class Transaction(ContextManager, Flow):
     """Write transaction boundary for virtuals operations.
 
-    Like AtomicScope but always opens a transaction, never a snapshot.
+    Like Atomic but always opens a transaction, never a snapshot.
     Use when you know the subtree has writes - skips the purity check.
     """
 

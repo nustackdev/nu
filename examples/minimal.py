@@ -26,16 +26,3 @@ nu.Print(nu.IfDo(nu.Literal(True), nu.Literal("then"), nu.Literal("else"))).exec
 # --- iteration: ForEach binds the element via AttrRef ---
 i = nu.IntAttrRef("i")
 nu.ForEach(nu.Literal([10, 20, 30]), nu.Print(i + 1), item="i").execute()
-
-
-# --- stateful read: ctx.attrs prepopulated, Ref reads it ---
-x = nu.IntAttrRef("x")
-ctx = nu.Context()
-ctx.attrs["x"] = 5
-nu.Print(x * 10).execute(ctx)
-
-
-# --- collect keeps the stream as a list; execute drains it ---
-app = nu.Literal("x") >> nu.Literal("y")
-print(app.collect())
-app.execute()

@@ -1,14 +1,14 @@
-"""Basic virtuals example - counter Shape with scoped ops.
+"""Basic virtuals example.
 
 Shows: Shape definition, refs, Transaction (write), Snapshot (read).
 A counter Shape gets incremented inside a Transaction,
 then read and printed inside a Snapshot.
 """
 
-import asyncio
-
 import nu
 import nu_virtuals as nv
+from nu_virtuals.presets import rocksdb_storage_inmemory
+from virtuals import Navigator
 
 
 class Counter(nu.Shape):
@@ -44,16 +44,10 @@ app = (
 )
 
 
-async def main() -> None:
-    """Run the app."""
-    from nu_virtuals.presets import rocksdb_storage_inmemory
-    from virtuals import Navigator
-
-    with rocksdb_storage_inmemory(".dbtest") as storage:
-        nav = Navigator(storage)
-        ctx = nu.Context().bind(Navigator, nav)
-
-        await app.aexecute(ctx)
-
-
-asyncio.run(main())
+with rocksdb_storage_inmemory(".dbtest") as storage:
+    app.execute(
+        nu.Context().bind(
+            Navigator,
+            Navigator(storage),
+        )
+    )

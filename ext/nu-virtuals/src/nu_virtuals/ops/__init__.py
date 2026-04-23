@@ -20,7 +20,7 @@ Collection ops:
     ClearPrimitivesUnsafeCmd             - _unsafe_primitive_clear()
 
 Control ops:
-    AtomicScope                               - transaction/snapshot boundary (auto-selects)
+    Atomic                               - transaction/snapshot boundary (auto-selects)
     Snapshot                             - read-only snapshot boundary
     Transaction                          - write transaction boundary
 """
@@ -29,7 +29,7 @@ from .collection import (
     ClearPrimitivesUnsafeCmd,
     ScanPrimitivesUnsafeOp,
 )
-from .control import AtomicScope, Snapshot, Transaction
+from .control import Atomic, Snapshot, Transaction
 from .item import (
     EnsureLayoutCmd,
     InitCmd,
@@ -42,7 +42,7 @@ from .item import (
 
 
 __all__ = [
-    "AtomicScope",
+    "Atomic",
     "ClearPrimitivesUnsafeCmd",
     "EnsureLayoutCmd",
     "InitCmd",
