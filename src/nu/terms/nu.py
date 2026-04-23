@@ -32,7 +32,9 @@ Hierarchy:
 from __future__ import annotations
 
 import asyncio
+import queue as _queue
 from abc import ABC
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import aclosing, closing
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, Self
@@ -57,6 +59,91 @@ __all__ = [
 
 
 _DONE = object()
+
+
+class _Budget:
+    """Execution budget: thread pool + concurrency gate for one run.
+
+    Built at entry (execute/aexecute/...). Attached to Context and shared
+    across child contexts produced during the run. Nested pumps read the
+    same budget so `max_parallel` is tree-wide, not per-subtree.
+
+    `max_parallel == 1` is the zero-concurrency case: no pool, no
+    semaphore, pumps fall through to sequential. For `> 1` the async
+    path uses an asyncio.Semaphore (gating both loop-resident async
+    children and thread-dispatched sync children); the sync path uses a
+    bounded ThreadPoolExecutor (pool size is the gate).
+    """
+
+    __slots__ = ("async_mode", "async_sem", "max_parallel", "thread_pool")
+
+    def __init__(self, max_parallel: int, async_mode: bool) -> None:
+        if max_parallel < 1:
+            msg = f"max_parallel must be >= 1, got {max_parallel}"
+            raise ValueError(msg)
+        self.max_parallel = max_parallel
+        self.async_mode = async_mode
+        self.thread_pool: ThreadPoolExecutor | None = None
+        self.async_sem: asyncio.Semaphore | None = None
+        if max_parallel > 1:
+            self.thread_pool = ThreadPoolExecutor(
+                max_workers=max_parallel,
+                thread_name_prefix="nu-worker",
+            )
+            if async_mode:
+                self.async_sem = asyncio.Semaphore(max_parallel)
+
+    def close(self) -> None:
+        if self.thread_pool is not None:
+            self.thread_pool.shutdown(wait=False, cancel_futures=True)
+            self.thread_pool = None
+
+
+class _BudgetScope:
+    """Context manager: install _Budget on ctx for an entry's lifetime.
+
+    If ctx already has a budget, this scope is a no-op (outer entry
+    owns the pool). Otherwise, creates/attaches a budget and tears it
+    down on exit. Works with both `with` and sync entry methods; async
+    entries use it as a plain `with` since budget lifecycle is sync.
+    """
+
+    __slots__ = ("_budget", "_ctx", "_owned")
+
+    def __init__(self, ctx: Context, max_parallel: int, async_mode: bool) -> None:
+        self._ctx = ctx
+        existing = getattr(ctx, "_budget", None)
+        if existing is not None:
+            self._budget = None
+            self._owned = False
+        else:
+            self._budget = _Budget(max_parallel, async_mode)
+            self._owned = True
+
+    def __enter__(self) -> _BudgetScope:
+        if self._owned:
+            self._ctx._budget = self._budget
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        if self._owned:
+            try:
+                if self._budget is not None:
+                    self._budget.close()
+            finally:
+                self._ctx._budget = None
+
+
+def _pump_sync_into_async_queue(
+    child: Nu,
+    ctx: Context,
+    loop: asyncio.AbstractEventLoop,
+    queue: asyncio.Queue,
+) -> None:
+    """Run sync generator on a worker thread; forward yields to the loop's queue."""
+    with closing(child.open(ctx)) as gen:
+        for v in gen:
+            loop.call_soon_threadsafe(queue.put_nowait, v)
 
 
 class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
@@ -148,16 +235,54 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
                 yield v
 
     async def _apump_parallel(self, ctx: Context) -> AsyncGenerator[T_co, None]:
-        queue: asyncio.Queue[Any] = asyncio.Queue()
+        """Parallel async pump.
 
-        async def pump(child: Nu) -> None:
-            try:
+        Dispatch per child by `effective_mode` and budget:
+        - async child: runs on the loop via `create_task`.
+        - sync child, budget > 1: runs on a worker thread via
+          `run_in_executor`; its yields forward through the queue.
+        - sync child, budget == 1 (or no budget): inlined as an async
+          task (no thread), serialized by the `async_sem=None` path.
+
+        `max_parallel == 1` falls through to sequential: no tasks, no
+        threads, one child drained at a time. `async_sem` gates all
+        concurrent launches when the budget allows more than one.
+        """
+        budget: _Budget | None = getattr(ctx, "_budget", None)
+        max_par = budget.max_parallel if budget is not None else 1
+
+        if max_par == 1:
+            # No concurrency budget. Serialize.
+            for child in self._children:
                 async for v in self._adispatch_child(child, ctx):
-                    await queue.put(v)
+                    yield v
+            return
+
+        loop = asyncio.get_running_loop()
+        queue: asyncio.Queue[Any] = asyncio.Queue()
+        sem = budget.async_sem
+        pool = budget.thread_pool
+        assert sem is not None and pool is not None  # noqa: S101
+
+        async def run_child(child: Nu) -> None:
+            try:
+                async with sem:
+                    if child.effective_mode is Mode.ASYNC:
+                        async for v in self._adispatch_child(child, ctx):
+                            await queue.put(v)
+                    else:
+                        await loop.run_in_executor(
+                            pool,
+                            _pump_sync_into_async_queue,
+                            child,
+                            ctx,
+                            loop,
+                            queue,
+                        )
             finally:
                 await queue.put(_DONE)
 
-        tasks = [asyncio.create_task(pump(c)) for c in self._children]
+        tasks = [asyncio.create_task(run_child(c)) for c in self._children]
         remaining = len(tasks)
         try:
             while remaining > 0:
@@ -173,7 +298,7 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
             for t in tasks:
                 try:
                     await t
-                except (asyncio.CancelledError, Exception):
+                except (asyncio.CancelledError, Exception):  # noqa: S110
                     pass
 
     # --- sync evaluator path ---
@@ -200,19 +325,61 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
             yield from child.open(ctx)
 
     def _pump_parallel(self, ctx: Context) -> Generator[T_co, None, None]:
-        # Parallel-sync = interleave sequentially. Threads would help only for
-        # blocking calls, which belong on an executor.
-        for child in self._children:
-            yield from child.open(ctx)
+        """Parallel sync pump.
+
+        `max_parallel == 1` (or no budget): sequentialize. Else each
+        child runs on a worker thread from the bounded pool; yields
+        stream through a `queue.Queue`. Pool size = max_parallel caps
+        concurrency, no separate semaphore needed on this path.
+        """
+        budget: _Budget | None = getattr(ctx, "_budget", None)
+        max_par = budget.max_parallel if budget is not None else 1
+
+        if max_par == 1:
+            for child in self._children:
+                yield from child.open(ctx)
+            return
+
+        pool = budget.thread_pool
+        assert pool is not None  # noqa: S101
+        q: _queue.Queue[Any] = _queue.Queue()
+
+        def run_child(child: Nu) -> None:
+            try:
+                with closing(child.open(ctx)) as gen:
+                    for v in gen:
+                        q.put(v)
+            finally:
+                q.put(_DONE)
+
+        futures = [pool.submit(run_child, c) for c in self._children]
+        remaining = len(futures)
+        try:
+            while remaining > 0:
+                v = q.get()
+                if v is _DONE:
+                    remaining -= 1
+                else:
+                    yield v
+        finally:
+            for f in futures:
+                f.cancel()
 
     # --- consumption helpers (sugar over open) ---
+    #
+    # `max_parallel` is the only concurrency knob. Default 1 = no threads,
+    # no semaphores, pumps sequentialize. > 1 spins up a ThreadPoolExecutor
+    # for this run (torn down on exit) and gates concurrent children. The
+    # budget is shared across child Contexts produced mid-run, so nested
+    # `|` subtrees share one tree-wide budget.
 
-    async def aexecute(self, ctx: Context | None = None) -> None:
+    async def aexecute(self, ctx: Context | None = None, *, max_parallel: int = 1) -> None:
         """Drain. Yields are discarded. Empty Context if none passed."""
         ctx = self._default_ctx(ctx)
-        async with aclosing(self.aopen(ctx)) as gen:
-            async for _ in gen:
-                pass
+        with self._scoped_budget(ctx, max_parallel, async_mode=True):
+            async with aclosing(self.aopen(ctx)) as gen:
+                async for _ in gen:
+                    pass
 
     def _check_sync_safe(self) -> None:
         """Eager guard at sync entry. Fails before any side effect."""
@@ -223,62 +390,68 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
             )
             raise RuntimeError(msg)
 
-    def execute(self, ctx: Context | None = None) -> None:
+    def execute(self, ctx: Context | None = None, *, max_parallel: int = 1) -> None:
         """Drain on the sync path. Subtree must not contain ASYNC nodes."""
         self._check_sync_safe()
         ctx = self._default_ctx(ctx)
-        for _ in self.open(ctx):
-            pass
+        with self._scoped_budget(ctx, max_parallel, async_mode=False):
+            for _ in self.open(ctx):
+                pass
 
-    def first(self, ctx: Context | None = None) -> Any:
+    def first(self, ctx: Context | None = None, *, max_parallel: int = 1) -> Any:  # noqa: ANN401
         """Take the first yield on the sync path. Subtree must not contain ASYNC nodes."""
         self._check_sync_safe()
         ctx = self._default_ctx(ctx)
-        for v in self.open(ctx):
-            return v
-        msg = "nu yielded no values"
-        raise RuntimeError(msg)
-
-    def collect(self, ctx: Context | None = None) -> list[Any]:
-        """Drain into a list on the sync path. Subtree must not contain ASYNC nodes."""
-        self._check_sync_safe()
-        ctx = self._default_ctx(ctx)
-        return list(self.open(ctx))
-
-    async def adrain(self, ctx: Context | None = None) -> None:
-        """Alias for execute."""
-        await self.aexecute(ctx)
-
-    async def afirst(self, ctx: Context | None = None) -> Any:
-        """Take the first yield, close the rest."""
-        ctx = self._default_ctx(ctx)
-        async with aclosing(self.aopen(ctx)) as gen:
-            async for v in gen:
+        with self._scoped_budget(ctx, max_parallel, async_mode=False):
+            for v in self.open(ctx):
                 return v
         msg = "nu yielded no values"
         raise RuntimeError(msg)
 
-    async def alast(self, ctx: Context | None = None) -> Any:
+    def collect(self, ctx: Context | None = None, *, max_parallel: int = 1) -> list[Any]:
+        """Drain into a list on the sync path. Subtree must not contain ASYNC nodes."""
+        self._check_sync_safe()
+        ctx = self._default_ctx(ctx)
+        with self._scoped_budget(ctx, max_parallel, async_mode=False):
+            return list(self.open(ctx))
+
+    async def adrain(self, ctx: Context | None = None, *, max_parallel: int = 1) -> None:
+        """Alias for aexecute."""
+        await self.aexecute(ctx, max_parallel=max_parallel)
+
+    async def afirst(self, ctx: Context | None = None, *, max_parallel: int = 1) -> Any:  # noqa: ANN401
+        """Take the first yield, close the rest."""
+        ctx = self._default_ctx(ctx)
+        with self._scoped_budget(ctx, max_parallel, async_mode=True):
+            async with aclosing(self.aopen(ctx)) as gen:
+                async for v in gen:
+                    return v
+        msg = "nu yielded no values"
+        raise RuntimeError(msg)
+
+    async def alast(self, ctx: Context | None = None, *, max_parallel: int = 1) -> Any:  # noqa: ANN401
         """Drain, return last yield."""
         ctx = self._default_ctx(ctx)
         found = False
         val: Any = None
-        async with aclosing(self.aopen(ctx)) as gen:
-            async for v in gen:
-                val = v
-                found = True
+        with self._scoped_budget(ctx, max_parallel, async_mode=True):
+            async with aclosing(self.aopen(ctx)) as gen:
+                async for v in gen:
+                    val = v
+                    found = True
         if not found:
             msg = "nu yielded no values"
             raise RuntimeError(msg)
         return val
 
-    async def acollect(self, ctx: Context | None = None) -> list[Any]:
+    async def acollect(self, ctx: Context | None = None, *, max_parallel: int = 1) -> list[Any]:
         """Drain into a list."""
         ctx = self._default_ctx(ctx)
         out: list[Any] = []
-        async with aclosing(self.aopen(ctx)) as gen:
-            async for v in gen:
-                out.append(v)
+        with self._scoped_budget(ctx, max_parallel, async_mode=True):
+            async with aclosing(self.aopen(ctx)) as gen:
+                async for v in gen:
+                    out.append(v)
         return out
 
     @staticmethod
@@ -288,6 +461,20 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
         from ..context import Context as _Ctx
 
         return _Ctx()
+
+    @staticmethod
+    def _scoped_budget(
+        ctx: Context,
+        max_parallel: int,
+        *,
+        async_mode: bool,
+    ) -> _BudgetScope:
+        """Install a budget on ctx for the entry's lifetime.
+
+        Nested entries (rare) don't stack — if a budget is already
+        attached, this is a no-op scope. The outer entry owns teardown.
+        """
+        return _BudgetScope(ctx, max_parallel, async_mode)
 
     # --- composition operators ---
 

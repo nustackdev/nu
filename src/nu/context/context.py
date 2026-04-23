@@ -145,7 +145,7 @@ class Context:
     fallback. Named predicate kwargs act as guards evaluated at lookup.
     """
 
-    __slots__ = ("_attrs", "_entries", "_guarded")
+    __slots__ = ("_attrs", "_budget", "_entries", "_guarded")
 
     def __init__(self) -> None:
         from .attributes import Attributes
@@ -153,6 +153,9 @@ class Context:
         self._attrs = Attributes()
         self._entries: dict[tuple, _Entry] = {}
         self._guarded: dict[type, list[_GuardedEntry]] = {}
+        # Execution budget (thread pool + semaphores). None outside of
+        # execute/aexecute/etc. Set at entry, shared across copies.
+        self._budget: object | None = None
 
     # -- properties ----------------------------------------------------------
 
@@ -351,6 +354,7 @@ class Context:
         ctx._attrs = self._attrs.copy()
         ctx._entries = dict(self._entries)
         ctx._guarded = {k: list(v) for k, v in self._guarded.items()}
+        ctx._budget = self._budget  # shared across copies for one run
         return ctx
 
     # -- repr ----------------------------------------------------------------

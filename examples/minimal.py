@@ -15,6 +15,12 @@ nu.Print(nu.Literal(1) >> nu.Literal(2) >> nu.Literal(3)).execute()
 nu.Print(nu.Literal("a") | nu.Literal("b") | nu.Literal("c")).execute()
 
 
+nu.Print(
+    nu.ForRange(0, 100, nu.Print(nu.IntAttrRef("i")), index="i")
+    | nu.ForRange(0, 100, nu.Print(nu.IntAttrRef("j")), index="j")
+    | nu.ForRange(0, 100, nu.Print(nu.IntAttrRef("k")), index="k")
+).execute(max_parallel=3)
+
 # --- identity: Nu() is the algebra's 0; absorbed in composition ---
 nu.Print(nu.Nu() >> nu.Literal(42) >> nu.Nu()).execute()
 
