@@ -22,6 +22,7 @@ from nu import (
     DictValuesI,
     IteratorI,
     ListI,
+    Literal,
     SetI,
     fn,
 )
@@ -152,9 +153,7 @@ class TestDictRefWrapTypes:
         assert isinstance(items, DictItemsI)
 
     def test_result_returns_dict_value(self):
-        from nu import ensure_nu
-
-        result = Portfolio.metadata.result(ensure_nu("x"))
+        result = Portfolio.metadata.result(Literal("x"))
         assert isinstance(result, DictI)
 
 
@@ -205,15 +204,11 @@ class TestListRefWrapTypes:
     """ListRef wrapping types."""
 
     def test_iterable_is_iterator_value(self):
-        from nu import ensure_nu
-
-        wrapped = Portfolio.tags._wrap_iterable_result(ensure_nu("x"))
+        wrapped = Portfolio.tags._wrap_iterable_result(Literal("x"))
         assert isinstance(wrapped, IteratorI)
 
     def test_sliceable_is_list_value(self):
-        from nu import ensure_nu
-
-        wrapped = Portfolio.tags._wrap_sliceable_result(ensure_nu("x"))
+        wrapped = Portfolio.tags._wrap_sliceable_result(Literal("x"))
         assert isinstance(wrapped, ListI)
 
 
@@ -255,9 +250,7 @@ class TestSetRefWrapTypes:
     """SetRef wrapping types."""
 
     def test_set_result_is_set_value(self):
-        from nu import ensure_nu
-
-        wrapped = Portfolio.members._wrap_set_result(ensure_nu("x"))
+        wrapped = Portfolio.members._wrap_set_result(Literal("x"))
         assert isinstance(wrapped, SetI)
 
 

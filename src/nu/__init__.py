@@ -251,7 +251,6 @@ from .tree import (
     unwrap,
     wrap,
 )
-from .utils import ensure_nu
 from .shapes import Shape, Slot
 from .stdio import (
     STDERR,
@@ -480,7 +479,6 @@ __all__ = [
     "compose",
     "count",
     "depth",
-    "ensure_nu",
     "find",
     "find_first",
     "graft",

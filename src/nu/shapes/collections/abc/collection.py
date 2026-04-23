@@ -48,9 +48,8 @@ class MutableCollectionI[CollectionT](CollectionI):
 
     def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> NoneI:
         from nu.shapes.ops import CollectionStoreCmd
-        from nu.utils import ensure_nu
 
-        return NoneI(CollectionStoreCmd(self, ensure_nu(value)))
+        return NoneI(CollectionStoreCmd(self, value))
 
     def erase(self) -> NoneI:
         from nu.shapes.ops import CollectionEraseCmd

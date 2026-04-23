@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu import AnyI, IteratorI, ListI, ensure_nu
+from nu import AnyI, IteratorI, ListI
 from nu.shapes import ReactiveShapesSequenceRef, Shape, Slot
 from nu.terms import Mode
 from virtuals.collections import MutableSequenceBase
@@ -69,7 +69,7 @@ class ShapesListRef[T: Shape](
         from virtuals.views import DictView
 
         return ShapeRef(
-            address=ensure_nu(index),
+            address=index,
             shape_type=self._shape_type,
             view_type=DictView,
             parent=self,

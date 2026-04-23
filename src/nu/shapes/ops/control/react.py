@@ -17,7 +17,6 @@ from contextlib import aclosing
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu.terms import Interaction, Mode
-from nu.utils import ensure_nu
 
 from ..reactive import ChangeOp  # noqa: TC001 - runtime dependency
 
@@ -59,7 +58,7 @@ class React(Interaction):
         self._body_idx = 1 if body is not None else None
         if changed_key is not None:
             self._changed_key_idx = len(children)
-            children.append(ensure_nu(changed_key))
+            children.append(changed_key)
         else:
             self._changed_key_idx = None
         super().__init__(*children)
@@ -110,7 +109,7 @@ class ReactForever(Interaction):
     ) -> None:
         self._has_changed_key = changed_key is not None
         if changed_key is not None:
-            super().__init__(change, body, ensure_nu(changed_key))
+            super().__init__(change, body, changed_key)
         else:
             super().__init__(change, body)
 
@@ -164,9 +163,9 @@ class ReactWhile(Interaction):
     ) -> None:
         self._has_changed_key = changed_key is not None
         if changed_key is not None:
-            super().__init__(change, ensure_nu(condition), body, ensure_nu(changed_key))
+            super().__init__(change, condition, body, changed_key)
         else:
-            super().__init__(change, ensure_nu(condition), body)
+            super().__init__(change, condition, body)
 
     async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         loop = asyncio.get_running_loop()

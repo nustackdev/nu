@@ -16,7 +16,6 @@ from nu import (
     ListI,
     SetI,
     StrI,
-    ensure_nu,
 )
 from nu.shapes import MutableSequenceRef, Slot
 from nu.terms import Mode
@@ -83,7 +82,7 @@ class ListRef[T](
 
     def _create_item_ref(self, index: int | Sentinel | Nu[int | Sentinel]) -> ItemRef[T, ...]:
         return ItemRef(
-            address=ensure_nu(index),
+            address=index,
             value_type=self.item_type,
             value_value_type=self.item_value_type,
             parent=self,

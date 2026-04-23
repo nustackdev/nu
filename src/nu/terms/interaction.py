@@ -79,9 +79,3 @@ class Interaction(RValue[T_co], ABC):
                 "(ASYNC,ASYNC). See projects/nu/model/programming/modes.md."
             )
             raise TypeError(msg)
-
-    def __init__(self, *children: object) -> None:
-        """Wrap raw Python values as Literals."""
-        from nu.utils import ensure_nu
-
-        super().__init__(*[ensure_nu(c) for c in children])

@@ -27,8 +27,7 @@ from __future__ import annotations
 from contextlib import aclosing, closing
 from typing import TYPE_CHECKING
 
-from .nu import Nu, RValue
-from .query import Literal
+from .nu import RValue
 from .types import T_co
 
 
@@ -94,10 +93,7 @@ class TypedNu(RValue[T_co]):
     """
 
     def __init__(self, source: object = None, *args: object) -> None:
-        if isinstance(source, Nu):
-            super().__init__(source, *args)
-        else:
-            super().__init__(Literal(source), *args)
+        super().__init__(source, *args)
 
     @property
     def source(self) -> object:

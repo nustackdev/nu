@@ -82,6 +82,13 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
     own_mode: ClassVar[Mode] = Mode.BOTH
     func_mode: ClassVar[Mode] = Mode.BOTH
 
+    def __init__(self, *children: object) -> None:
+        """Wrap raw Python values as Literals; pass Nus through unchanged."""
+        from .query import Literal
+
+        wrapped: tuple[Nu, ...] = tuple(c if isinstance(c, Nu) else Literal(c) for c in children)
+        super().__init__(*wrapped)
+
     def can_parallelize(self) -> bool:
         """Licenses the interleaving pump. comm ∧ indep."""
         return self.comm and self.indep

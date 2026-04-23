@@ -84,9 +84,8 @@ class MutableItemI[T, InterfaceT](ItemI[T, InterfaceT]):
 
     def store(self, value: T | Sentinel | Nu[T | Sentinel]) -> NoneI:
         from nu.shapes.ops import ItemStoreCmd
-        from nu.utils import ensure_nu
 
-        return NoneI(ItemStoreCmd(self, ensure_nu(value)))
+        return NoneI(ItemStoreCmd(self, value))
 
     def erase(self) -> NoneI:
         from nu.shapes.ops import ItemEraseCmd

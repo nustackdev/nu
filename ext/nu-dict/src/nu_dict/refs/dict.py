@@ -19,7 +19,6 @@ from nu import (
     ListI,
     SetI,
     StrI,
-    ensure_nu,
 )
 from nu.shapes import MutableMappingRef, Slot
 from nu.terms import Mode
@@ -99,7 +98,7 @@ class DictRef[K, V](
 
     def _create_child_ref(self, key: K | Sentinel | Nu[K | Sentinel]) -> ItemRef[V, ...]:
         return ItemRef(
-            address=ensure_nu(key),
+            address=key,
             value_type=self.value_type,
             value_value_type=self.value_value_type,
             parent=self,

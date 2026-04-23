@@ -37,9 +37,15 @@ from __future__ import annotations
 from functools import reduce
 from typing import TYPE_CHECKING
 
+from nu.terms import Literal, Nu
+
 
 if TYPE_CHECKING:
     from nu.primitives import BoolI as BoolI
+
+
+def _wrap(value: object) -> Nu:
+    return value if isinstance(value, Nu) else Literal(value)
 
 
 __all__ = [
@@ -71,13 +77,11 @@ def and_(left: object, right: object) -> BoolI:
     Example:
         >>> and_(price > 0, price < 100)
     """
-    from nu.utils import ensure_nu
-
-    left_op = ensure_nu(left)
+    left_op = _wrap(left)
     if not hasattr(left_op, "and_"):
         raise TypeError(f"Operand {type(left).__name__} does not support AND logical operation")
 
-    return left_op.and_(ensure_nu(right))
+    return left_op.and_(_wrap(right))
 
 
 def or_(left: object, right: object) -> BoolI:
@@ -95,13 +99,11 @@ def or_(left: object, right: object) -> BoolI:
     Example:
         >>> or_(status.eq("ready"), status.eq("pending"))
     """
-    from nu.utils import ensure_nu
-
-    left_op = ensure_nu(left)
+    left_op = _wrap(left)
     if not hasattr(left_op, "or_"):
         raise TypeError(f"Operand {type(left).__name__} does not support OR logical operation")
 
-    return left_op.or_(ensure_nu(right))
+    return left_op.or_(_wrap(right))
 
 
 def all_(*conditions: object) -> BoolI:
@@ -124,10 +126,7 @@ def all_(*conditions: object) -> BoolI:
     if not conditions:
         raise ValueError("all_() requires at least one condition")
 
-    from nu.utils import ensure_nu
-
-    # Convert all to RValues
-    rvalues = [ensure_nu(c) for c in conditions]
+    rvalues = [_wrap(c) for c in conditions]
 
     # Reduce with and_()
     return reduce(lambda a, b: a.and_(b), rvalues)  # type: ignore
@@ -153,10 +152,7 @@ def any_(*conditions: object) -> BoolI:
     if not conditions:
         raise ValueError("any_() requires at least one condition")
 
-    from nu.utils import ensure_nu
-
-    # Convert all to RValues
-    rvalues = [ensure_nu(c) for c in conditions]
+    rvalues = [_wrap(c) for c in conditions]
 
     # Reduce with or_()
     return reduce(lambda a, b: a.or_(b), rvalues)  # type: ignore

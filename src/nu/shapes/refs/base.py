@@ -31,8 +31,6 @@ from typing import TYPE_CHECKING, Self
 
 from nu import Nu
 from nu import Ref as RefABC
-from nu.primitives import AnyI
-from nu.utils import ensure_nu
 
 
 if TYPE_CHECKING:
@@ -89,15 +87,10 @@ class Ref[T](RefABC[T]):
         # (literal str/int) vs dynamic (Nu) addresses for fast-path optimisation.
         self._raw_address = address if not isinstance(address, Nu) else None
 
-        try:
-            address_term = ensure_nu(address)
-        except TypeError:
-            address_term = AnyI(address)
-
         if parent is not None:
-            super().__init__(address_term, parent)
+            super().__init__(address, parent)
         else:
-            super().__init__(address_term)
+            super().__init__(address)
         self._owner_shape = owner_shape
 
         # Cache root shape — identical for entire ref chain, avoids O(depth) walk.

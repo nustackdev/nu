@@ -35,10 +35,8 @@ from nu import (
     ToFloat,
     ToInt,
     ToStr,
-    ensure_nu,
 )
 from nu.shapes import Slot
-from nu.terms import Mode
 from nu.shapes.ops import ItemStoreCmd
 from nu.stdlib import BasisPoint, Percentage
 from nu.stdlib.cmath import ComplexI, _ComplexI
@@ -59,6 +57,7 @@ from nu.stdlib.fin import BasisPointI, PercentageI, _BasisPointI, _PercentageI
 from nu.stdlib.fractions import FractionI, _FractionI
 from nu.stdlib.pathlib import PathI, _PathI
 from nu.stdlib.uuid import _UUIDI, UUIDI
+from nu.terms import Mode
 
 from .items import ItemRef
 
@@ -137,7 +136,7 @@ class DecimalRef(ItemRef[str, StrI], _DecimalI):
             val = ToStr(value)
         else:
             val = str(value)
-        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, val))
 
 
 class FractionRef(ItemRef[str, StrI], _FractionI):
@@ -180,7 +179,7 @@ class FractionRef(ItemRef[str, StrI], _FractionI):
             val = ToStr(value)
         else:
             val = str(value)
-        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, val))
 
 
 class ComplexRef(ItemRef[str, StrI], _ComplexI):
@@ -234,7 +233,7 @@ class ComplexRef(ItemRef[str, StrI], _ComplexI):
                 return f"{c.real},{c.imag}"
 
             val = FuncCall(format_complex, value)
-        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, val))
 
 
 class BasisPointRef(ItemRef[int, IntI], _BasisPointI):
@@ -275,7 +274,7 @@ class BasisPointRef(ItemRef[int, IntI], _BasisPointI):
             val = ToInt(value)
         else:
             val = int(value)
-        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, val))
 
 
 class PercentageRef(ItemRef[float, FloatI], _PercentageI):
@@ -316,7 +315,7 @@ class PercentageRef(ItemRef[float, FloatI], _PercentageI):
             val = ToFloat(value)
         else:
             val = float(value)
-        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, val))
 
 
 # =============================================================================
@@ -364,7 +363,7 @@ class DateRef(ItemRef[str, StrI], _DateI):
             val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, val))
 
 
 class DatetimeRef(ItemRef[str, StrI], _DatetimeI):
@@ -409,7 +408,7 @@ class DatetimeRef(ItemRef[str, StrI], _DatetimeI):
             val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, datetime) else str(value)
-        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, val))
 
 
 class TimeRef(ItemRef[str, StrI], _TimeI):
@@ -452,7 +451,7 @@ class TimeRef(ItemRef[str, StrI], _TimeI):
             val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, time) else str(value)
-        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, val))
 
 
 class TimedeltaRef(ItemRef[float, FloatI], _TimedeltaI):
@@ -498,7 +497,7 @@ class TimedeltaRef(ItemRef[float, FloatI], _TimedeltaI):
             val = value.total_seconds()
         else:
             val = float(value)
-        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, val))
 
 
 class TimezoneRef(ItemRef[str, StrI], _TimezoneI):
@@ -588,7 +587,7 @@ class TimezoneRef(ItemRef[str, StrI], _TimezoneI):
                 return f"{sign}{hours:02d}:{minutes:02d}"
 
             val = FuncCall(format_timezone, value)
-        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, val))
 
 
 # =============================================================================
@@ -636,7 +635,7 @@ class PathRef(ItemRef[str, StrI], _PathI):
             val = ToStr(value)
         else:
             val = str(value)
-        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, val))
 
 
 class UUIDRef(ItemRef[str, StrI], _UUIDI):
@@ -679,4 +678,4 @@ class UUIDRef(ItemRef[str, StrI], _UUIDI):
             val = ToStr(value)
         else:
             val = str(value)
-        return NoneI(ItemStoreCmd(self, ensure_nu(val)))
+        return NoneI(ItemStoreCmd(self, val))

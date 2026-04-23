@@ -24,6 +24,7 @@ from nu import (
     DictValuesI,
     IteratorI,
     ListI,
+    Literal,
     SetI,
     fn,
 )
@@ -52,9 +53,7 @@ class TestDictRefViewTypes:
         assert isinstance(items, DictItemsI)
 
     def test_result_returns_dict_value(self):
-        from nu import ensure_nu
-
-        result = PortfolioShape.metadata.result(ensure_nu("dummy"))
+        result = PortfolioShape.metadata.result(Literal("dummy"))
         assert isinstance(result, DictI)
 
 
@@ -160,24 +159,18 @@ class TestListRefTypes:
     """ListRef wrapping types are correct."""
 
     def test_iterable_result_is_iterator_value(self):
-        from nu import ensure_nu
-
         ref = PortfolioShape.tags
-        wrapped = ref._wrap_iterable_result(ensure_nu("dummy"))
+        wrapped = ref._wrap_iterable_result(Literal("dummy"))
         assert isinstance(wrapped, IteratorI)
 
     def test_sliceable_result_is_list_value(self):
-        from nu import ensure_nu
-
         ref = PortfolioShape.tags
-        wrapped = ref._wrap_sliceable_result(ensure_nu("dummy"))
+        wrapped = ref._wrap_sliceable_result(Literal("dummy"))
         assert isinstance(wrapped, ListI)
 
     def test_element_result_is_any_value(self):
-        from nu import ensure_nu
-
         ref = PortfolioShape.tags
-        wrapped = ref._wrap_element_result(ensure_nu("dummy"))
+        wrapped = ref._wrap_element_result(Literal("dummy"))
         assert isinstance(wrapped, AnyI)
 
 
@@ -218,17 +211,13 @@ class TestSetRefTypes:
     """SetRef wrapping types are correct."""
 
     def test_set_result_is_set_value(self):
-        from nu import ensure_nu
-
         ref = PortfolioShape.members
-        wrapped = ref._wrap_set_result(ensure_nu("dummy"))
+        wrapped = ref._wrap_set_result(Literal("dummy"))
         assert isinstance(wrapped, SetI)
 
     def test_element_result_is_any_value(self):
-        from nu import ensure_nu
-
         ref = PortfolioShape.members
-        wrapped = ref._wrap_element_result(ensure_nu("dummy"))
+        wrapped = ref._wrap_element_result(Literal("dummy"))
         assert isinstance(wrapped, AnyI)
 
 
@@ -387,7 +376,9 @@ class TestLazyTake:
     @pytest.mark.asyncio
     async def test_take_values(self, data, portfolio_ctx):
         data["metadata"] = {f"k{i}": f"v{i}" for i in range(50)}
-        result = await fn.Take(PortfolioShape.metadata.values(), 5).to_list().aexecute(portfolio_ctx)
+        result = (
+            await fn.Take(PortfolioShape.metadata.values(), 5).to_list().aexecute(portfolio_ctx)
+        )
         assert len(result) == 5
 
     @pytest.mark.asyncio
@@ -400,7 +391,9 @@ class TestLazyTake:
     @pytest.mark.asyncio
     async def test_take_more_than_available(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1, "b": 2}
-        result = await fn.Take(PortfolioShape.metadata.keys(), 100).to_list().aexecute(portfolio_ctx)
+        result = (
+            await fn.Take(PortfolioShape.metadata.keys(), 100).to_list().aexecute(portfolio_ctx)
+        )
         assert sorted(result) == ["a", "b"]
 
     @pytest.mark.asyncio

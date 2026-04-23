@@ -19,7 +19,6 @@ from nu import (
     ListI,
     SetI,
     StrI,
-    ensure_nu,
 )
 from nu.shapes import MutableShapesMappingRef, Slot
 from nu.terms import Mode
@@ -99,7 +98,7 @@ class ShapesDictRef[K, T: Shape](
 
     def _create_child_ref(self, key: K | Sentinel | Nu[K | Sentinel]) -> ShapeRef[T]:
         return ShapeRef(
-            address=ensure_nu(key),
+            address=key,
             shape_type=self._shape_type,
             parent=self,
             owner_shape=self._owner_shape,

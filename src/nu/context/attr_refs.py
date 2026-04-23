@@ -12,8 +12,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from nu.collections import DictI, FrozenSetI, ListI, SetI, TupleI
 from nu.primitives import AnyI, BoolI, BytesI, FloatI, IntI, StrI
-from nu.terms import Mode, Nu, Ref, Sentinel
-from nu.utils import ensure_nu
+from nu.terms import Literal, Mode, Nu, Ref, Sentinel
 
 
 if TYPE_CHECKING:
@@ -60,7 +59,7 @@ class AttrRef[T](Ref[T]):
     def __init__(self, name: StrArg) -> None:
         super().__init__()
         self._raw_name: str | None = name if isinstance(name, str) else None
-        self._name_nu: Nu = ensure_nu(name)
+        self._name_nu: Nu = name if isinstance(name, Nu) else Literal(name)
 
     @property
     def name(self) -> str | None:

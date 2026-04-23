@@ -1,6 +1,6 @@
-"""Tests for Interaction hierarchy - ensure_nu wrapping and arity.
+"""Tests for Interaction hierarchy - literal wrapping and arity.
 
-Interaction.__init__ auto-wraps Python literals into Nus via ensure_nu.
+Nu.__init__ auto-wraps Python literals into Literal Nus.
 This is the parasitic embedding - Python values become tree nodes.
 """
 
@@ -57,7 +57,7 @@ class _SumOp(ScalarQuery[int]):
 
 
 # ---------------------------------------------------------------------------
-# ensure_nu wrapping - Interaction.__init__ wraps literals
+# literal wrapping - Nu.__init__ wraps literals
 # ---------------------------------------------------------------------------
 
 
@@ -88,7 +88,7 @@ def test_op_wraps_none():
 
 
 def test_op_wraps_bool_before_int():
-    """Bool is subclass of int - ensure_nu must check bool first."""
+    """Bool is subclass of int - wrapper must check bool first."""
     op = _AddOp(True, False)
     # Both should be wrapped as BoolI, not IntI
     assert isinstance(op.left, Nu)

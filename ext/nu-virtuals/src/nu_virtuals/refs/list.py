@@ -16,7 +16,6 @@ from nu import (
     ListI,
     SetI,
     StrI,
-    ensure_nu,
 )
 from nu.shapes import ReactiveSequenceRef, Shape, Slot
 from nu.terms import Mode
@@ -107,7 +106,7 @@ class ListRef[
     ) -> ItemRef[T, ItemValueT]:
         """Create a reference to an item at the given index."""
         return ItemRef(
-            address=ensure_nu(index),
+            address=index,
             value_type=self.item_type,
             value_value_type=self.item_value_type,
             parent=self,

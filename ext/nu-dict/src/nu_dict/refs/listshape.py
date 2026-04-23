@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu import ensure_nu
 from nu.shapes import MutableShapesSequenceRef, Slot
 from nu.terms import Mode
 
@@ -43,7 +42,7 @@ class ShapesListRef[T: Shape](
 
     def _create_item_ref(self, index: int | Sentinel | Nu[int | Sentinel]) -> ShapeRef[T]:
         return ShapeRef(
-            address=ensure_nu(index),
+            address=index,
             shape_type=self._shape_type,
             parent=self,
             owner_shape=self._owner_shape,

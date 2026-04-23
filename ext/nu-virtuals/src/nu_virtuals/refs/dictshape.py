@@ -19,7 +19,6 @@ from nu import (
     ListI,
     SetI,
     StrI,
-    ensure_nu,
 )
 from nu.shapes import ReactiveShapesMappingRef, Shape, Slot
 from nu.terms import Mode
@@ -119,7 +118,7 @@ class ShapesDictRef[
         from virtuals.views import DictView
 
         return ShapeRef(
-            address=ensure_nu(key),
+            address=key,
             shape_type=self._shape_type,
             view_type=DictView,
             parent=self,

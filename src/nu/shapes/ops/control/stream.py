@@ -13,7 +13,6 @@ from contextlib import aclosing
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu.terms import Interaction, Mode, Sentinel
-from nu.utils import ensure_nu
 
 from ..cursor import AdvanceCursorOp
 from ..reactive import OnChildrenChangeOp
@@ -52,16 +51,14 @@ class Stream(Interaction):
         log_key: StrArg = "stream_log_key",
         cursor: object | None = None,
     ) -> None:
-        source_term = ensure_nu(source)
-
         from nu.context import AttrRef
 
         cursor_ref = AttrRef(log_key)
 
-        advance = AdvanceCursorOp(source_term, cursor_ref)
-        change = OnChildrenChangeOp(source_term)
+        advance = AdvanceCursorOp(source, cursor_ref)
+        change = OnChildrenChangeOp(source)
 
-        super().__init__(advance, change, body, ensure_nu(key), ensure_nu(log_key))
+        super().__init__(advance, change, body, key, log_key)
 
     async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
         key = await self.children[3].afirst(ctx)
