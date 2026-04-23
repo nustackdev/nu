@@ -238,15 +238,15 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
         """Parallel async pump.
 
         Dispatch per child by `effective_mode` and budget:
-        - async child: runs on the loop via `create_task`.
-        - sync child, budget > 1: runs on a worker thread via
-          `run_in_executor`; its yields forward through the queue.
-        - sync child, budget == 1 (or no budget): inlined as an async
-          task (no thread), serialized by the `async_sem=None` path.
+        - async child: runs on the loop via `create_task`, cooperatively
+          multiplexed with peers. No semaphore gating -- the loop itself
+          is the scarce resource and it's shared freely.
+        - sync child: runs on a worker thread via `run_in_executor`.
+          Semaphore-gated because each sync branch holds a real OS
+          thread, and the thread pool is sized to `max_parallel`.
 
-        `max_parallel == 1` falls through to sequential: no tasks, no
-        threads, one child drained at a time. `async_sem` gates all
-        concurrent launches when the budget allows more than one.
+        `max_parallel == 1` falls through to sequential: one child drained
+        at a time, no tasks, no threads.
         """
         budget: _Budget | None = getattr(ctx, "_budget", None)
         max_par = budget.max_parallel if budget is not None else 1
@@ -266,11 +266,13 @@ class Nu(_Node["Nu"], Generic[T_co]):  # noqa: UP046
 
         async def run_child(child: Nu) -> None:
             try:
-                async with sem:
-                    if child.effective_mode is Mode.ASYNC:
-                        async for v in self._adispatch_child(child, ctx):
-                            await queue.put(v)
-                    else:
+                if child.effective_mode is Mode.ASYNC:
+                    # Cooperative on the loop -- no slot needed.
+                    async for v in self._adispatch_child(child, ctx):
+                        await queue.put(v)
+                else:
+                    # Sync branch holds an OS thread -- gate on the pool.
+                    async with sem:
                         await loop.run_in_executor(
                             pool,
                             _pump_sync_into_async_queue,

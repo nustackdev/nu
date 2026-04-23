@@ -9,13 +9,15 @@ Usage:
 
 from __future__ import annotations
 
-from typing import Any
+import asyncio
+from typing import Any, ClassVar
 
 import aiohttp
 
 import nu
 import nu_dict
 import nu_virtuals
+import nudle
 
 
 class DroppedSlotError(Exception):
@@ -131,17 +133,30 @@ class SolanaRpc:
 
 
 class SolanaRef(nu.Ref[SolanaRpc]):
-    """Ref that resolves SolanaRpc from Context. method() descriptors create lazy terms."""
+    """Ref that resolves SolanaRpc from Context. Invocation descriptors create lazy terms.
 
-    async def aresolve(self, ctx: nu.Context) -> str:
+    Resolution is sync (ctx.get). Per-method async lives on the Invoke nodes
+    that Invocation descriptors produce; each carries its own mode.
+    """
+
+    own_mode: ClassVar[nu.Mode] = nu.Mode.BOTH
+    func_mode: ClassVar[nu.Mode] = nu.Mode.SYNC
+
+    def resolve(self, ctx: nu.Context) -> str:
         return "solana_rpc"
 
-    async def afetch(self, ctx: nu.Context) -> SolanaRpc:
+    def fetch(self, ctx: nu.Context) -> SolanaRpc:
         return ctx.get(SolanaRpc)
 
-    get_slot = nu.method(nu.IntI, "get_slot")
-    get_blocks = nu.method(nu.ListI, "get_blocks")
-    get_block = nu.method(nu.ListI, "get_block")
+    async def aresolve(self, ctx: nu.Context) -> str:
+        return self.resolve(ctx)
+
+    async def afetch(self, ctx: nu.Context) -> SolanaRpc:
+        return self.fetch(ctx)
+
+    get_slot = nu.Invocation(nu.IntI, "get_slot")
+    get_blocks = nu.Invocation(nu.ListI, "get_blocks")
+    get_block = nu.Invocation(nu.ListI, "get_block")
 
 
 # -- Shapes -------------------------------------------------------------------
@@ -206,14 +221,14 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
     """Fetch one block, iterate txs, persist per-tx. Skip if already synced."""
     bm = ledger.blocks_meta[slot]
     return nu.If(
-        nu.Contains(ledger.slots_synced, slot).not_(),
+        nu.BoolI(nu.Contains(ledger.slots_synced, slot)).not_(),
         nu.Retry(
             nu.TryCatch(
                 bm.skipped.init(0)
                 >> bm.synced.init(0)
                 >> nu.ForEach(
                     SolanaRef.get_block(slot),
-                    nu.If(
+                    nu.IfDo(
                         nu.ToBool(program_id),
                         nu.If(
                             nu.Contains(nu.DictAttrRef("tx").get("programs"), program_id),
@@ -336,9 +351,9 @@ async def main() -> None:
                     >> nu.Log("filter: program", args.program or "(none)")
                     >> nu.Log("db:", args.db_path)
                 )
-                >> nu.Race(
-                    sync_range(Ledger, args.slot_from, slot_to, program_id=args.program or ""),
-                    reactive_stats(Ledger),
+                >> (
+                    sync_range(Ledger, args.slot_from, slot_to, program_id=args.program or "")
+                    | reactive_stats(Ledger)
                 )
                 >> (
                     nu.Log("--- sync report ---")
@@ -363,10 +378,11 @@ async def main() -> None:
             print(nu_inspect.render_nu(app))
 
             # Execute the app
-            await app.aexecute(ctx)
+            await asyncio.gather(
+                app.aexecute(ctx, max_parallel=2),
+                nudle.arun_ui(Ledger, ctx),
+            )
 
 
 if __name__ == "__main__":
-    import asyncio
-
     asyncio.run(main())

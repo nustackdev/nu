@@ -25,7 +25,6 @@ from .command import (
     UnaryCommand,
 )
 from .context_manager import ContextManager
-from .injection import FuncCall, FuncCallCmd, MethodCall, MethodCallCmd
 from .interaction import Interaction
 from .interface import Interface, TypedNu
 from .nu import LValue, Nu, NuIndepComm, RValue
@@ -67,14 +66,15 @@ from .types import (
     propagate_special,
     sup,
 )
-from .utils import AutoInterface, is_pure, method, prop, tracked_effects
+from .utils import is_pure, tracked_effects
+# Re-exports from invocation/ for back-compat of legacy stdlib + ext callsites.
+from ..invocation import FuncCall, FuncCallCmd, Invocation, Invoke, MethodCall, MethodCallCmd
 
 
 __all__ = [
     "EMPTY",
     "INVALID",
     "Arg",
-    "AutoInterface",
     "BinaryCommand",
     "BinaryQuery",
     "BoolArg",
@@ -93,6 +93,8 @@ __all__ = [
     "Interaction",
     "Interface",
     "Invalid",
+    "Invocation",
+    "Invoke",
     "LValue",
     "ListArg",
     "Literal",
@@ -123,8 +125,6 @@ __all__ = [
     "is_invalid",
     "is_pure",
     "is_sentinel",
-    "method",
-    "prop",
     "propagate_special",
     "sup",
     "tracked_effects",
