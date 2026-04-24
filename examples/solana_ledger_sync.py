@@ -17,7 +17,8 @@ import aiohttp
 import nu
 import nu_dict
 import nu_virtuals
-import nudle
+import nu_virtuals as nv
+from nu.stdlib import TimeSleep
 
 
 class DroppedSlotError(Exception):
@@ -52,16 +53,8 @@ class SolanaRpc:
             raise RuntimeError(data["error"])
         return data.get("result")
 
-    async def get_slot(self) -> int:
-        return int(await self._call("getSlot", [{"commitment": "confirmed"}]))
-
-    async def get_blocks(self, start: int, end: int) -> list[int]:
-        return [
-            int(s) for s in await self._call("getBlocks", [start, end, {"commitment": "confirmed"}])
-        ]
-
-    async def get_block(self, slot: int) -> list[dict]:
-        """Fetch block, return tx dicts matching Transaction shape."""
+    async def get_block(self, slot: int) -> dict:
+        """Fetch block, return {"slot": slot, "txs": [tx dicts]}."""
         result = await self._call(
             "getBlock",
             [
@@ -116,7 +109,7 @@ class SolanaRpc:
                     "log_messages": meta.get("logMessages", []),
                 }
             )
-        return txs
+        return {"slot": slot, "txs": txs}
 
     async def close(self):
         if self._session and not self._session.closed:
@@ -154,9 +147,7 @@ class SolanaRef(nu.Ref[SolanaRpc]):
     async def afetch(self, ctx: nu.Context) -> SolanaRpc:
         return self.fetch(ctx)
 
-    get_slot = nu.Invocation(nu.IntI, "get_slot")
-    get_blocks = nu.Invocation(nu.ListI, "get_blocks")
-    get_block = nu.Invocation(nu.ListI, "get_block")
+    get_block = nu.Invocation(nu.DictI, "get_block", mode=(nu.Mode.ASYNC, nu.Mode.ASYNC))
 
 
 # -- Shapes -------------------------------------------------------------------
@@ -204,7 +195,8 @@ class _SlotScratch(nu.Shape):
 
 
 class _RangeScratch(nu.Shape):
-    slots = nu_dict.ListRef.slot(int)
+    blocks = nu_dict.ListRef.slot(dict)  # {"slot": int, "txs": list[dict]}
+    cursor = nu_dict.IntRef.slot()
 
 
 # -- Compositions -------------------------------------------------------------
@@ -217,29 +209,22 @@ def _persist_tx(ledger: type[Ledger], slot: nu.IntArg) -> nu.Nu:
     ) >> ledger.txs[_SlotScratch.tx_id].store(nu.DictAttrRef("tx"))
 
 
-def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = "") -> nu.Nu:
-    """Fetch one block, iterate txs, persist per-tx. Skip if already synced."""
-    bm = ledger.blocks_meta[slot]
-    return nu.If(
-        nu.BoolI(nu.Contains(ledger.slots_synced, slot)).not_(),
+def fetcher(
+    ledger: type[Ledger], slot_from: int, slot_count: int, worker_id: int, n_workers: int
+) -> nu.Nu:
+    """One fetch branch. Strides ``[slot_from + worker_id, slot_from + slot_count)``
+    by ``n_workers``, pulls each block, appends an entry to ``_RangeScratch.blocks``.
+    On drop: logs and skips (no append).
+    """
+    slot = nu.IntAttrRef(f"slot_{worker_id}")
+    return nu.ForRange(
+        slot_from + worker_id,
+        slot_from + slot_count,
         nu.Retry(
             nu.TryCatch(
-                bm.skipped.init(0)
-                >> bm.synced.init(0)
-                >> nu.ForEach(
-                    SolanaRef.get_block(slot),
-                    nu.IfDo(
-                        nu.ToBool(program_id),
-                        nu.If(
-                            nu.Contains(nu.DictAttrRef("tx").get("programs"), program_id),
-                            bm.synced.inc() >> _persist_tx(ledger, slot),
-                            bm.skipped.inc(),
-                        ),
-                        bm.synced.inc() >> _persist_tx(ledger, slot),
-                    ),
-                    item="tx",
-                ),
-                ledger.slots_dropped.add(slot) >> nu.Log("dropped slot", slot),
+                _RangeScratch.blocks.append(SolanaRef.get_block(slot))
+                >> nu.Log("slot arrived:", slot),
+                nu.Log("dropped slot (skipping):", slot) >> ledger.slots_dropped.add(slot),
                 errors=DroppedSlotError,
             ),
             max_attempts=5,
@@ -248,22 +233,79 @@ def sync_slot(ledger: type[Ledger], slot: nu.IntArg, *, program_id: nu.StrArg = 
             on_attempt_fail=nu.Log("retry slot", slot),
             on_fail=nu.Log("giving up on slot", slot),
         ),
+        step=n_workers,
+        index=f"slot_{worker_id}",
+    )
+
+
+def process_entry(ledger: type[Ledger], entry_ref: nu.Nu, *, program_id: nu.StrArg = "") -> nu.Nu:
+    """Persist one fetched block entry."""
+    slot = nu.IntI(nu.At(entry_ref, "slot"))
+    bm = ledger.blocks_meta[slot]
+    return (
+        bm.skipped.init(0)
+        >> bm.synced.init(0)
+        >> nv.Transaction(
+            nu.ForEach(
+                nu.At(entry_ref, "txs"),
+                nu.IfDo(
+                    nu.ToBool(program_id),
+                    nu.If(
+                        nu.Contains(nu.DictAttrRef("tx").get("programs"), program_id),
+                        bm.synced.inc() >> _persist_tx(ledger, slot),
+                        bm.skipped.inc(),
+                    ),
+                    bm.synced.inc() >> _persist_tx(ledger, slot),
+                ),
+                item="tx",
+            )
+        )
+        >> ledger.slots_synced.add(slot)
+    )
+
+
+def processor(ledger: type[Ledger], *, program_id: nu.StrArg = "") -> nu.Nu:
+    """Sync consumer. Polls ``_RangeScratch.blocks`` at ``cursor``, persists,
+    increments cursor. Polls indefinitely with a 50ms sleep when caught up.
+    Runs on a worker thread under ``max_parallel >= 2``.
+    """
+    entry = _RangeScratch.blocks[_RangeScratch.cursor]
+    return nu.Forever(
+        nu.If(
+            nu.Lt(_RangeScratch.cursor, nu.Len(_RangeScratch.blocks)),
+            process_entry(ledger, entry, program_id=program_id) >> _RangeScratch.cursor.inc(),
+            TimeSleep(0.05),
+        ),
     )
 
 
 def sync_range(
-    ledger: type[Ledger], slot_from: int, slot_to: int, *, program_id: nu.StrArg = ""
+    ledger: type[Ledger],
+    slot_from: int,
+    slot_count: int,
+    *,
+    program_id: nu.StrArg = "",
+    n_workers: int = 5,
 ) -> nu.Nu:
-    """Sync all confirmed slots in [slot_from, slot_to]."""
+    """Sync ``slot_count`` slots starting at ``slot_from``.
+
+    ``n_workers`` async fetchers pull blocks concurrently (striped modulo
+    n_workers) into ``_RangeScratch.blocks``; one sync processor drains the
+    list and persists each entry. Fetchers share the event loop; the processor
+    runs on a worker thread. Needs ``max_parallel >= 2`` at execution time.
+    """
     return (
         Ledger.slots_synced.init(set())
         >> Ledger.slots_dropped.init(set())
-        >> _RangeScratch.slots.store(SolanaRef.get_blocks(slot_from, slot_to))
-        >> nu.Log("sync:", slot_from, "->", slot_to, "(", nu.Len(_RangeScratch.slots), "confirmed)")
-        >> nu.ForEach(
-            _RangeScratch.slots,
-            sync_slot(ledger, nu.IntAttrRef("slot"), program_id=program_id),
-            item="slot",
+        >> _RangeScratch.blocks.store([])
+        >> _RangeScratch.cursor.init(0)
+        >> nu.Log("sync:", slot_from, "->", slot_from + slot_count)
+        >> (
+            fetcher(ledger, slot_from, slot_count, 0, n_workers)
+            | fetcher(ledger, slot_from, slot_count, 1, n_workers)
+            | fetcher(ledger, slot_from, slot_count, 2, n_workers)
+            | fetcher(ledger, slot_from, slot_count, 3, n_workers)
+            | processor(ledger, program_id=program_id)
         )
     )
 
@@ -316,20 +358,32 @@ async def main() -> None:
     from nu_virtuals.presets import rocksdb_storage_inmemory
     from virtuals import Navigator
 
-    # Set up logging
     logging.basicConfig(level=logging.WARNING)
     logger = logging.getLogger("sol")
     logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler())
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s.%(msecs)03d %(message)s", datefmt="%H:%M:%S")
+    )
+    logger.addHandler(handler)
     logger.propagate = False
 
     # Parse CLI args
     p = argparse.ArgumentParser(description="Solana ledger sync")
-    p.add_argument("--slot-from", type=int, required=True)
-    p.add_argument("--slots", type=int, default=100)
+    p.add_argument("--slot-from", type=int, default=408000000)
+    p.add_argument("--slots", type=int, default=20)
     p.add_argument("--endpoint", default="https://api.mainnet-beta.solana.com")
     p.add_argument("--program", default="6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P")
     p.add_argument("--db-path", default=".db-ledger")
+    p.add_argument(
+        "--workers", type=int, default=5, help="concurrent fetchers; processor is 1 extra thread"
+    )
+    p.add_argument(
+        "--max-parallel",
+        type=int,
+        default=2,
+        help="tree-wide threading budget (>=2 for concurrent fetch/process)",
+    )
     args = p.parse_args()
 
     # Init services
@@ -342,17 +396,22 @@ async def main() -> None:
             ctx = ctx.bind(dict, {})
 
             # Construct the app
-            slot_to = args.slot_from + args.slots
             app = (
                 (
                     nu.Log("--- sync ---")
-                    >> nu.Log("syncing slots", args.slot_from, "->", slot_to)
+                    >> nu.Log("syncing", args.slots, "slots from", args.slot_from)
                     >> nu.Log("endpoint:", args.endpoint)
                     >> nu.Log("filter: program", args.program or "(none)")
                     >> nu.Log("db:", args.db_path)
                 )
                 >> (
-                    sync_range(Ledger, args.slot_from, slot_to, program_id=args.program or "")
+                    sync_range(
+                        Ledger,
+                        args.slot_from,
+                        args.slots,
+                        program_id=args.program or "",
+                        n_workers=args.workers,
+                    )
                     | reactive_stats(Ledger)
                 )
                 >> (
@@ -375,12 +434,12 @@ async def main() -> None:
             app = nu_inspect.set_logger_name(app, "sol")
 
             # Print the app
-            print(nu_inspect.render_nu(app))
+            # print(nu_inspect.render_nu(app))
 
             # Execute the app
             await asyncio.gather(
-                app.aexecute(ctx, max_parallel=2),
-                nudle.arun_ui(Ledger, ctx),
+                app.aexecute(ctx, max_parallel=args.max_parallel),
+                # nudle.arun_ui(Ledger, ctx),
             )
 
 

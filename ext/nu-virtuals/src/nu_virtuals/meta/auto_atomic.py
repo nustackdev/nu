@@ -16,17 +16,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.shapes.refs.base import Ref as ShapesRef
 from nu.terms import Direction, Interaction, tracked_effects
 
 from ..meta.flat_ref import FlatRef
 from ..ops.control import Atomic, Snapshot, Transaction
+from ..refs.base import PrimitiveRef, ViewRef
 
 
 # Refs that belong to the virtuals fabric and need atomic wrapping.
-# After inline_refs: virtuals refs are FlatRef, nu_dict refs are gone.
-# ShapesRef catches non-inlined virtuals refs (e.g. cross-fabric dynamic keys).
-_VirtualsRef = (ShapesRef, FlatRef)
+# After inline_refs: virtuals refs are FlatRef.
+# ViewRef / PrimitiveRef catch non-inlined virtuals refs (e.g. cross-fabric
+# dynamic keys). Other nu.shapes Refs (nu_dict etc.) live in different
+# fabrics and must not be wrapped here.
+_VirtualsRef = (ViewRef, PrimitiveRef, FlatRef)
 
 
 if TYPE_CHECKING:
@@ -61,7 +63,7 @@ def _has_write_ref(op: Interaction) -> bool:
     return False
 
 
-def _find_write_ref(op: Interaction) -> ShapesRef | FlatRef | None:
+def _find_write_ref(op: Interaction) -> ViewRef | PrimitiveRef | FlatRef | None:
     """Find the first WRITE-position virtuals Ref in an Interaction."""
     for i in _write_positions(op):
         if i < len(op.children) and isinstance(op.children[i], _VirtualsRef):
@@ -69,7 +71,7 @@ def _find_write_ref(op: Interaction) -> ShapesRef | FlatRef | None:
     return None
 
 
-def _ref_matches_scope(ref: ShapesRef | FlatRef, scope: Hashable) -> bool:
+def _ref_matches_scope(ref: ViewRef | PrimitiveRef | FlatRef, scope: Hashable) -> bool:
     """Check if a virtuals ref belongs to the given root shape."""
     return ref.get_root_shape() is scope
 
@@ -107,7 +109,7 @@ def _walk(tree: Nu, scope: Hashable | None, enclosing: tuple) -> Nu:
     if isinstance(tree, (Transaction, Snapshot, Atomic)):
         if tree.scope is scope:
             return tree
-        child_enclosing = enclosing + (tree.scope,)
+        child_enclosing = (*enclosing, tree.scope)
         if tree._is_leaf:
             return tree
         new_children = []
