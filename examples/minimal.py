@@ -12,6 +12,37 @@ runtime.execute(nu.Print(nu.IntI(5) + 10))
 runtime.execute(nu.Print(1) >> nu.Print(2) >> nu.Print(3))
 
 
+import time
+
+
+s = time.perf_counter()
+runtime.execute(
+    nu.Print(
+        nu.Last(
+            nu.Map(
+                nu.Map(
+                    nu.Iter(range(10000)),
+                    transform=nu.IntAttrRef("item") * 2,
+                ),
+                transform=nu.IntAttrRef("item2") * 2,
+                item="item2",
+            )
+        )
+    )
+    & nu.Print("12")
+)
+pp = f"{(time.perf_counter() - s):5f}"
+
+
+s = time.perf_counter()
+a = []
+for i in range(10000):
+    a.append(i * 2)
+for j in range(10000):
+    a[j] = a[j] * 2
+print(f"{(time.perf_counter() - s):5f}")
+print(pp)
+
 # import time
 
 # s = time.perf_counter()

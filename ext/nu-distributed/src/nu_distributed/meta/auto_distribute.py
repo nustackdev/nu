@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interactions.command.flow.parallel import ParAny
+from nu.interactions.flow.strategy import ParAny
 from nu.terms.flow import Parallel, Race
 from nu.tree.rewrite import map_nodes
 

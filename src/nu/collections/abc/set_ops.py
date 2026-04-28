@@ -12,9 +12,10 @@ from __future__ import annotations
 from collections.abc import MutableSet, Set
 from typing import Any, ClassVar
 
+from nu.terms.command import ScalarCommand
 from nu.terms.query import ScalarQuery
 from nu.terms.sentinels import INVALID
-from nu.terms.types import Mode
+from nu.terms.types import Effect, Mode
 
 
 __all__ = [
@@ -154,55 +155,88 @@ class IsDisjointOp(ScalarQuery):
 # =============================================================================
 
 
-class AddCmd(ScalarQuery):
-    """Add element to set: s.add(value). Returns None (mutates in-place)."""
+class AddCmd(ScalarCommand):
+    """Add element to set: s.add(value). Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
         super().__init__(left, right)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b = ops
-        if not isinstance(a, MutableSet):
-            raise TypeError(f"add() requires mutable set, got {type(a).__name__}")
-        a.add(b)
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        value = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"add() requires mutable set, got {type(target).__name__}")
+        target.add(value)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        value = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"add() requires mutable set, got {type(target).__name__}")
+        target.add(value)
 
 
-class RemoveCmd(ScalarQuery):
-    """Remove element from set: s.remove(value). Returns None, or INVALID if not found."""
+class RemoveCmd(ScalarCommand):
+    """Remove element from set: s.remove(value). Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
         super().__init__(left, right)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b = ops
-        if not isinstance(a, MutableSet):
-            raise TypeError(f"remove() requires mutable set, got {type(a).__name__}")
-        try:
-            a.remove(b)
-        except KeyError:
-            return INVALID
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        value = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"remove() requires mutable set, got {type(target).__name__}")
+        target.remove(value)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        value = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"remove() requires mutable set, got {type(target).__name__}")
+        target.remove(value)
 
 
-class DiscardCmd(ScalarQuery):
-    """Discard element from set: s.discard(value). Returns None (mutates in-place)."""
+class DiscardCmd(ScalarCommand):
+    """Discard element from set: s.discard(value). Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
         super().__init__(left, right)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b = ops
-        if not isinstance(a, MutableSet):
-            raise TypeError(f"discard() requires mutable set, got {type(a).__name__}")
-        a.discard(b)
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        value = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"discard() requires mutable set, got {type(target).__name__}")
+        target.discard(value)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        value = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"discard() requires mutable set, got {type(target).__name__}")
+        target.discard(value)
 
 
 class SetPopCmd(ScalarQuery):
@@ -223,75 +257,145 @@ class SetPopCmd(ScalarQuery):
             return INVALID
 
 
-class SetUpdateCmd(ScalarQuery):
-    """Update set with elements from other: s.update(other). Returns None."""
+class SetUpdateCmd(ScalarCommand):
+    """Update set with elements from other: s.update(other). Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
         super().__init__(left, right)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b = ops
-        if not isinstance(a, MutableSet):
-            raise TypeError(f"update() requires mutable set, got {type(a).__name__}")
-        if not isinstance(b, Set):
-            return INVALID
-        a |= b
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        other = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"update() requires mutable set, got {type(target).__name__}")
+        if not isinstance(other, Set):
+            raise TypeError(f"update() requires set, got {type(other).__name__}")
+        target |= other
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        other = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"update() requires mutable set, got {type(target).__name__}")
+        if not isinstance(other, Set):
+            raise TypeError(f"update() requires set, got {type(other).__name__}")
+        target |= other
 
 
-class IntersectionUpdateCmd(ScalarQuery):
-    """Keep only elements found in both: s.intersection_update(other). Returns None."""
+class IntersectionUpdateCmd(ScalarCommand):
+    """Keep only elements found in both: s.intersection_update(other). Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
         super().__init__(left, right)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b = ops
-        if not isinstance(a, MutableSet):
-            raise TypeError(f"intersection_update() requires mutable set, got {type(a).__name__}")
-        if not isinstance(b, Set):
-            return INVALID
-        a &= b
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
 
-
-class DifferenceUpdateCmd(ScalarQuery):
-    """Remove elements found in other: s.difference_update(other). Returns None."""
-
-    support: ClassVar[frozenset[Mode]] = _BOTH
-
-    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
-        super().__init__(left, right)
-
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b = ops
-        if not isinstance(a, MutableSet):
-            raise TypeError(f"difference_update() requires mutable set, got {type(a).__name__}")
-        if not isinstance(b, Set):
-            return INVALID
-        a -= b
-        return None
-
-
-class SymmetricDifferenceUpdateCmd(ScalarQuery):
-    """Keep elements in either but not both: s.symmetric_difference_update(other). Returns None."""
-
-    support: ClassVar[frozenset[Mode]] = _BOTH
-
-    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
-        super().__init__(left, right)
-
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b = ops
-        if not isinstance(a, MutableSet):
+        target = runtime.first(self._children[0], ctx)
+        other = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
             raise TypeError(
-                f"symmetric_difference_update() requires mutable set, got {type(a).__name__}"
+                f"intersection_update() requires mutable set, got {type(target).__name__}"
             )
-        if not isinstance(b, Set):
-            return INVALID
-        a ^= b
-        return None
+        if not isinstance(other, Set):
+            raise TypeError(f"intersection_update() requires set, got {type(other).__name__}")
+        target &= other
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        other = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(
+                f"intersection_update() requires mutable set, got {type(target).__name__}"
+            )
+        if not isinstance(other, Set):
+            raise TypeError(f"intersection_update() requires set, got {type(other).__name__}")
+        target &= other
+
+
+class DifferenceUpdateCmd(ScalarCommand):
+    """Remove elements found in other: s.difference_update(other). Mutates target Ref in-place."""
+
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        other = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(
+                f"difference_update() requires mutable set, got {type(target).__name__}"
+            )
+        if not isinstance(other, Set):
+            raise TypeError(f"difference_update() requires set, got {type(other).__name__}")
+        target -= other
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        other = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(
+                f"difference_update() requires mutable set, got {type(target).__name__}"
+            )
+        if not isinstance(other, Set):
+            raise TypeError(f"difference_update() requires set, got {type(other).__name__}")
+        target -= other
+
+
+class SymmetricDifferenceUpdateCmd(ScalarCommand):
+    """Keep elements in either but not both: s.symmetric_difference_update(other). Mutates target Ref in-place."""
+
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        other = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(
+                f"symmetric_difference_update() requires mutable set, got {type(target).__name__}"
+            )
+        if not isinstance(other, Set):
+            raise TypeError(
+                f"symmetric_difference_update() requires set, got {type(other).__name__}"
+            )
+        target ^= other
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        other = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(
+                f"symmetric_difference_update() requires mutable set, got {type(target).__name__}"
+            )
+        if not isinstance(other, Set):
+            raise TypeError(
+                f"symmetric_difference_update() requires set, got {type(other).__name__}"
+            )
+        target ^= other

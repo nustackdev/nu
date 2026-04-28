@@ -97,29 +97,23 @@ class MutableSequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT]
         ElementResultT: Result for element-level ops (pop)
     """
 
-    def append(self, value: Arg[ElementT]) -> NoneI:
+    def append(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Append item to end of sequence."""
-        from nu.primitives import NoneI
-
         from .sequence_ops import AppendCmd
 
-        return NoneI(AppendCmd(self, value))
+        return AppendCmd(self, value)
 
-    def extend(self, other: Arg[Iterable[ElementT]]) -> NoneI:
+    def extend(self, other: Arg[Iterable[ElementT]]) -> Any:  # noqa: ANN401
         """Extend sequence with elements from iterable."""
-        from nu.primitives import NoneI
-
         from .sequence_ops import ExtendCmd
 
-        return NoneI(ExtendCmd(self, other))
+        return ExtendCmd(self, other)
 
-    def insert(self, index: IntArg, value: Arg[ElementT]) -> NoneI:
+    def insert(self, index: IntArg, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Insert item at index."""
-        from nu.primitives import NoneI
-
         from .sequence_ops import InsertCmd
 
-        return NoneI(InsertCmd(self, index, value))
+        return InsertCmd(self, index, value)
 
     def pop(self, index: IntArg = -1) -> ElementResultT:
         """Remove and return item at index (default: last)."""
@@ -127,26 +121,20 @@ class MutableSequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT]
 
         return cast("ElementResultT", self._wrap_element_result(PopCmd(self, index)))
 
-    def remove(self, value: Arg[ElementT]) -> NoneI:
+    def remove(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Remove first occurrence of value."""
-        from nu.primitives import NoneI
-
         from .sequence_ops import RemoveValueCmd
 
-        return NoneI(RemoveValueCmd(self, value))
+        return RemoveValueCmd(self, value)
 
-    def reverse(self) -> NoneI:
+    def reverse(self) -> Any:  # noqa: ANN401
         """Reverse sequence in-place."""
-        from nu.primitives import NoneI
-
         from .sequence_ops import ReverseCmd
 
-        return NoneI(ReverseCmd(self))
+        return ReverseCmd(self)
 
-    def clear(self) -> NoneI:
+    def clear(self) -> Any:  # noqa: ANN401
         """Remove all items."""
-        from nu.primitives import NoneI
-
         from .shared_ops import ClearCmd
 
-        return NoneI(ClearCmd(self))
+        return ClearCmd(self)

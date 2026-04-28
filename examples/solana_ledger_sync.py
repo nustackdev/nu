@@ -18,7 +18,8 @@ import nu
 import nu_dict
 import nu_virtuals
 import nu_virtuals as nv
-from nu.stdlib import TimeSleep
+from nu import runtime
+from nu.stdlib import AsyncSleep
 
 
 class DroppedSlotError(Exception):
@@ -126,26 +127,17 @@ class SolanaRpc:
 
 
 class SolanaRef(nu.Ref[SolanaRpc]):
-    """Ref that resolves SolanaRpc from Context. Invocation descriptors create lazy terms.
-
-    Resolution is sync (ctx.get). Per-method async lives on the Invoke nodes
-    that Invocation descriptors produce; each carries its own mode.
+    """Ref that resolves SolanaRpc from Context. Invocation descriptors create
+    lazy Invoke terms.
     """
 
-    own_mode: ClassVar[nu.Mode] = nu.Mode.BOTH
-    func_mode: ClassVar[nu.Mode] = nu.Mode.SYNC
+    support: ClassVar[frozenset[nu.Mode]] = frozenset({nu.Mode.SYNC, nu.Mode.ASYNC})
 
-    def resolve(self, ctx: nu.Context) -> str:
-        return "solana_rpc"
-
-    def fetch(self, ctx: nu.Context) -> SolanaRpc:
+    def eval(self, ctx: nu.Context) -> SolanaRpc:
         return ctx.get(SolanaRpc)
 
-    async def aresolve(self, ctx: nu.Context) -> str:
-        return self.resolve(ctx)
-
-    async def afetch(self, ctx: nu.Context) -> SolanaRpc:
-        return self.fetch(ctx)
+    async def aeval(self, ctx: nu.Context) -> SolanaRpc:
+        return ctx.get(SolanaRpc)
 
     get_block = nu.Invocation(nu.DictI, "get_block", support=frozenset({nu.Mode.ASYNC}))
 
@@ -250,7 +242,7 @@ def process_entry(ledger: type[Ledger], entry_ref: nu.Nu, *, program_id: nu.StrA
                 nu.At(entry_ref, "txs"),
                 nu.IfDo(
                     nu.ToBool(program_id),
-                    nu.If(
+                    nu.IfDo(
                         nu.Contains(nu.DictAttrRef("tx").get("programs"), program_id),
                         bm.synced.inc() >> _persist_tx(ledger, slot),
                         bm.skipped.inc(),
@@ -271,10 +263,10 @@ def processor(ledger: type[Ledger], *, program_id: nu.StrArg = "") -> nu.Nu:
     """
     entry = _RangeScratch.blocks[_RangeScratch.cursor]
     return nu.Forever(
-        nu.If(
+        nu.IfDo(
             nu.Lt(_RangeScratch.cursor, nu.Len(_RangeScratch.blocks)),
             process_entry(ledger, entry, program_id=program_id) >> _RangeScratch.cursor.inc(),
-            TimeSleep(0.05),
+            AsyncSleep(0.05),
         ),
     )
 
@@ -301,11 +293,12 @@ def sync_range(
         >> _RangeScratch.cursor.init(0)
         >> nu.Log("sync:", slot_from, "->", slot_from + slot_count)
         >> (
-            fetcher(ledger, slot_from, slot_count, 0, n_workers)
-            | fetcher(ledger, slot_from, slot_count, 1, n_workers)
-            | fetcher(ledger, slot_from, slot_count, 2, n_workers)
-            | fetcher(ledger, slot_from, slot_count, 3, n_workers)
-            | processor(ledger, program_id=program_id)
+            (
+                fetcher(ledger, slot_from, slot_count, 0, n_workers)
+                | fetcher(ledger, slot_from, slot_count, 1, n_workers)
+                | fetcher(ledger, slot_from, slot_count, 2, n_workers)
+                | fetcher(ledger, slot_from, slot_count, 3, n_workers)
+            ) & processor(ledger, program_id=program_id)
         )
     )
 
@@ -372,7 +365,10 @@ async def main() -> None:
     p = argparse.ArgumentParser(description="Solana ledger sync")
     p.add_argument("--slot-from", type=int, default=408000000)
     p.add_argument("--slots", type=int, default=20)
-    p.add_argument("--endpoint", default="https://api.mainnet-beta.solana.com")
+    p.add_argument(
+        "--endpoint",
+        default="https://mainnet.helius-rpc.com/?api-key=ebf174cb-9472-4232-93f3-81bd3044b0c4",
+    )
     p.add_argument("--program", default="6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P")
     p.add_argument("--db-path", default=".db-ledger")
     p.add_argument(
@@ -381,7 +377,7 @@ async def main() -> None:
     p.add_argument(
         "--max-parallel",
         type=int,
-        default=2,
+        default=10,
         help="tree-wide threading budget (>=2 for concurrent fetch/process)",
     )
     args = p.parse_args()
@@ -412,17 +408,19 @@ async def main() -> None:
                         program_id=args.program or "",
                         n_workers=args.workers,
                     )
-                    | reactive_stats(Ledger)
+                    & reactive_stats(Ledger)
                 )
                 >> (
                     nu.Log("--- sync report ---")
-                    >> nu.Log(
-                        "txs synced",
-                        nu.Sum(nu.Pluck(Ledger.blocks_meta.values(), "synced")),
-                    )
-                    >> nu.Log(
-                        "txs skipped",
-                        nu.Sum(nu.Pluck(Ledger.blocks_meta.values(), "skipped")),
+                    >> nu_virtuals.Snapshot(
+                        nu.Log(
+                            "txs synced",
+                            nu.Sum(nu.Pluck(Ledger.blocks_meta.values(), "synced")),
+                        )
+                        >> nu.Log(
+                            "txs skipped",
+                            nu.Sum(nu.Pluck(Ledger.blocks_meta.values(), "skipped")),
+                        )
                     )
                 )
             )
@@ -438,7 +436,7 @@ async def main() -> None:
 
             # Execute the app
             await asyncio.gather(
-                app.aexecute(ctx, max_parallel=args.max_parallel),
+                runtime.aexecute(app, ctx, max_parallel=args.max_parallel),
                 # nudle.arun_ui(Ledger, ctx),
             )
 

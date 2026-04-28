@@ -46,15 +46,15 @@ class CollectionI(Interface):
 class MutableCollectionI[CollectionT](CollectionI):
     """Mutable collection - can store and erase."""
 
-    def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> NoneI:
+    def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> Nu:
         from nu.shapes.ops import CollectionStoreCmd
 
-        return NoneI(CollectionStoreCmd(self, value))
+        return CollectionStoreCmd(self, value)
 
-    def erase(self) -> NoneI:
+    def erase(self) -> Nu:
         from nu.shapes.ops import CollectionEraseCmd
 
-        return NoneI(CollectionEraseCmd(self))
+        return CollectionEraseCmd(self)
 
 
 class ReactiveCollectionI[CollectionT](MutableCollectionI[CollectionT]):

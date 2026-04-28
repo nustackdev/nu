@@ -16,13 +16,13 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from .collection import CollectionI
 
 
 if TYPE_CHECKING:
-    from nu.primitives import BoolI, NoneI
+    from nu.primitives import BoolI
     from nu.terms import Arg, Nu
 
 
@@ -114,29 +114,23 @@ class MutableSetI[CollectionT, ElementT, CollectionResultT, ElementResultT](
         ElementResultT: Result for element-level ops (sum_, min_, max_)
     """
 
-    def add(self, value: Arg[ElementT]) -> NoneI:
+    def add(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Add element to set."""
-        from nu.primitives import NoneI
-
         from .set_ops import AddCmd
 
-        return NoneI(AddCmd(self, value))
+        return AddCmd(self, value)
 
-    def remove(self, value: Arg[ElementT]) -> NoneI:
+    def remove(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Remove element from set. Returns INVALID if not found."""
-        from nu.primitives import NoneI
-
         from .set_ops import RemoveCmd
 
-        return NoneI(RemoveCmd(self, value))
+        return RemoveCmd(self, value)
 
-    def discard(self, value: Arg[ElementT]) -> NoneI:
+    def discard(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Remove element if present (no error if absent)."""
-        from nu.primitives import NoneI
-
         from .set_ops import DiscardCmd
 
-        return NoneI(DiscardCmd(self, value))
+        return DiscardCmd(self, value)
 
     def pop(self) -> ElementResultT:
         """Remove and return arbitrary element."""
@@ -144,42 +138,32 @@ class MutableSetI[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return cast("ElementResultT", self._wrap_element_result(SetPopCmd(self)))
 
-    def clear(self) -> NoneI:
+    def clear(self) -> Any:  # noqa: ANN401
         """Remove all items."""
-        from nu.primitives import NoneI
-
         from .shared_ops import ClearCmd
 
-        return NoneI(ClearCmd(self))
+        return ClearCmd(self)
 
-    def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
+    def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
         """Add all elements from other."""
-        from nu.primitives import NoneI
-
         from .set_ops import SetUpdateCmd
 
-        return NoneI(SetUpdateCmd(self, other))
+        return SetUpdateCmd(self, other)
 
-    def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
+    def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
         """Keep only elements found in both."""
-        from nu.primitives import NoneI
-
         from .set_ops import IntersectionUpdateCmd
 
-        return NoneI(IntersectionUpdateCmd(self, other))
+        return IntersectionUpdateCmd(self, other)
 
-    def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
+    def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
         """Remove all elements found in other."""
-        from nu.primitives import NoneI
-
         from .set_ops import DifferenceUpdateCmd
 
-        return NoneI(DifferenceUpdateCmd(self, other))
+        return DifferenceUpdateCmd(self, other)
 
-    def symmetric_difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> NoneI:
+    def symmetric_difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
         """Keep elements in either set but not both."""
-        from nu.primitives import NoneI
-
         from .set_ops import SymmetricDifferenceUpdateCmd
 
-        return NoneI(SymmetricDifferenceUpdateCmd(self, other))
+        return SymmetricDifferenceUpdateCmd(self, other)

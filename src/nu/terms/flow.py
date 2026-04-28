@@ -145,12 +145,20 @@ class Race(Strategy):
         from .dispatch import ExecState, atom_dispatch
 
         tasks = [asyncio.create_task(atom_dispatch(c, ExecState.LOOP)(ctx)) for c in self._children]
-        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-        for t in pending:
-            t.cancel()
-        for t in done:
-            await t
-            break
+        try:
+            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+            for t in pending:
+                t.cancel()
+            if pending:
+                await asyncio.gather(*pending, return_exceptions=True)
+            for t in done:
+                await t
+                break
+        except BaseException:
+            for t in tasks:
+                t.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise
 
 
 class Gather(Strategy):

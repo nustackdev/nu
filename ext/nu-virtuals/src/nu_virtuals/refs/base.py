@@ -297,6 +297,12 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         view = nav.open_at_path(ViewPathSer(view_path), storage_ctx)
         return self._apply_facet(view)  # type: ignore
 
+    def eval(self, ctx: Context) -> ViewT | Sentinel:
+        return self.fetch(ctx)
+
+    async def aeval(self, ctx: Context) -> ViewT | Sentinel:
+        return await self.afetch(ctx)
+
 
 class PrimitiveRef[T](Ref[T]):
     """Virtuals ref to a primitive/leaf value.
@@ -476,3 +482,9 @@ class PrimitiveRef[T](Ref[T]):
             raise TypeError(f"View {parent_view.__class__.__name__} is not subscriptable")
         except (KeyError, IndexError):
             return EMPTY
+
+    def eval(self, ctx: Context) -> T | Sentinel:
+        return self.fetch(ctx)
+
+    async def aeval(self, ctx: Context) -> T | Sentinel:
+        return await self.afetch(ctx)

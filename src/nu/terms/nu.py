@@ -95,7 +95,9 @@ class NuBase:
             validator(self)  # type: ignore[arg-type]
 
     def _with_children(self, children: tuple[Nu, ...]) -> Self:
-        new = object.__new__(type(self))
+        import copy
+
+        new = copy.copy(self)
         new._children = children
         for validator in _COMPOSITION_VALIDATORS:
             validator(new)  # type: ignore[arg-type]
@@ -333,7 +335,11 @@ def _validate_slot_trichotomy(nu: Nu) -> None:
 
         # 3. Body slots.
         if slot_idx in body:
-            if not isinstance(child, (Command, Flow, _Span)):
+            # Span's body_slot is transparent: it inherits role from its body
+            # so any Nu kind is acceptable. Strategy/Control's body_slots are
+            # strict: Command / Flow / Span only.
+            is_span_body = isinstance(nu, _Span)
+            if not is_span_body and not isinstance(child, (Command, Flow, _Span)):
                 msg = (
                     f"{cls.__name__}.slot[{slot_idx}] is a body slot; "
                     f"expected Command / Flow / Span, got "

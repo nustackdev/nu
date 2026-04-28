@@ -10,9 +10,10 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from typing import Any, ClassVar
 
+from nu.terms.command import ScalarCommand
 from nu.terms.query import ScalarQuery
 from nu.terms.sentinels import INVALID
-from nu.terms.types import Mode
+from nu.terms.types import Effect, Mode
 
 
 __all__ = [
@@ -104,57 +105,94 @@ class GetOp(ScalarQuery):
 # =============================================================================
 
 
-class SetItemCmd(ScalarQuery):
-    """Set value at key: mapping[key] = value. Returns None."""
+class SetItemCmd(ScalarCommand):
+    """Set value at key: mapping[key] = value. Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, first: Any, second: Any, third: Any) -> None:  # noqa: ANN401
         super().__init__(first, second, third)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b, c = ops
-        if not isinstance(a, MutableMapping):
-            raise TypeError(f"set() requires mutable mapping, got {type(a).__name__}")
-        a[b] = c
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        key = runtime.first(self._children[1], ctx)
+        value = runtime.first(self._children[2], ctx)
+        if not isinstance(target, MutableMapping):
+            raise TypeError(f"set() requires mutable mapping, got {type(target).__name__}")
+        target[key] = value
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        key = await runtime.afirst(self._children[1], ctx)
+        value = await runtime.afirst(self._children[2], ctx)
+        if not isinstance(target, MutableMapping):
+            raise TypeError(f"set() requires mutable mapping, got {type(target).__name__}")
+        target[key] = value
 
 
-class DeleteItemCmd(ScalarQuery):
-    """Delete entry by key: del mapping[key]. Returns None."""
+class DeleteItemCmd(ScalarCommand):
+    """Delete entry by key: del mapping[key]. Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
         super().__init__(left, right)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b = ops
-        if not isinstance(a, MutableMapping):
-            raise TypeError(f"delete() requires mutable mapping, got {type(a).__name__}")
-        try:
-            del a[b]
-        except KeyError:
-            return INVALID
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        key = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableMapping):
+            raise TypeError(f"delete() requires mutable mapping, got {type(target).__name__}")
+        del target[key]
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        key = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableMapping):
+            raise TypeError(f"delete() requires mutable mapping, got {type(target).__name__}")
+        del target[key]
 
 
-class UpdateCmd(ScalarQuery):
-    """Update mapping with another: mapping.update(other). Returns None (mutates in-place)."""
+class UpdateCmd(ScalarCommand):
+    """Update mapping with another: mapping.update(other). Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
         super().__init__(left, right)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b = ops
-        if not isinstance(a, MutableMapping):
-            raise TypeError(f"update() requires mutable mapping, got {type(a).__name__}")
-        if not isinstance(b, Mapping):
-            return INVALID
-        a.update(b)
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        other = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableMapping):
+            raise TypeError(f"update() requires mutable mapping, got {type(target).__name__}")
+        if not isinstance(other, Mapping):
+            raise TypeError(f"update() requires mapping, got {type(other).__name__}")
+        target.update(other)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        other = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableMapping):
+            raise TypeError(f"update() requires mutable mapping, got {type(target).__name__}")
+        if not isinstance(other, Mapping):
+            raise TypeError(f"update() requires mapping, got {type(other).__name__}")
+        target.update(other)
 
 
 class DictPopCmd(ScalarQuery):

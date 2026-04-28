@@ -93,7 +93,7 @@ def reconstruct_with_flat_ref(node: Nu, flat_ref: Nu) -> Nu:
     # Rebuild children: replace the old ref child with FlatRef,
     # keep other children (like value_expr terms) intact.
     new_children = []
-    for child in node.children:  # type: ignore[attr-defined]
+    for child in node._children:
         if child is old_ref:
             new_children.append(flat_ref)
         else:

@@ -78,8 +78,8 @@ class TypedNu(ScalarQuery, Generic[T_co]):
     support: ClassVar[frozenset[Mode]] = _BOTH
     accepts_sentinels: ClassVar[bool] = False
 
-    def __init__(self, source: object = None) -> None:
-        super().__init__(source)
+    def __init__(self, *children: object) -> None:
+        super().__init__(*children)
 
     @property
     def source(self) -> Any:  # noqa: ANN401

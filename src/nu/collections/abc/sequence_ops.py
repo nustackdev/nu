@@ -10,9 +10,10 @@ from __future__ import annotations
 from collections.abc import Iterable, MutableSequence, Sequence
 from typing import Any, ClassVar
 
+from nu.terms.command import ScalarCommand
 from nu.terms.query import ScalarQuery
 from nu.terms.sentinels import INVALID
-from nu.terms.types import Mode
+from nu.terms.types import Effect, Mode
 
 
 __all__ = [
@@ -109,38 +110,66 @@ class CountOp(ScalarQuery):
 # =============================================================================
 
 
-class AppendCmd(ScalarQuery):
-    """Append item to end: seq.append(value). Returns None (mutates in-place)."""
+class AppendCmd(ScalarCommand):
+    """Append item to end: seq.append(value). Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
         super().__init__(left, right)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b = ops
-        if not isinstance(a, MutableSequence):
-            raise TypeError(f"append() requires mutable sequence, got {type(a).__name__}")
-        a.append(b)
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        value = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"append() requires mutable sequence, got {type(target).__name__}")
+        target.append(value)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        value = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"append() requires mutable sequence, got {type(target).__name__}")
+        target.append(value)
 
 
-class InsertCmd(ScalarQuery):
-    """Insert item at index: seq.insert(index, value). Returns None (mutates in-place)."""
+class InsertCmd(ScalarCommand):
+    """Insert item at index: seq.insert(index, value). Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, first: Any, second: Any, third: Any) -> None:  # noqa: ANN401
         super().__init__(first, second, third)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b, c = ops
-        if not isinstance(a, MutableSequence):
-            raise TypeError(f"insert() requires mutable sequence, got {type(a).__name__}")
-        if not isinstance(b, int):
-            return INVALID
-        a.insert(b, c)
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        index = runtime.first(self._children[1], ctx)
+        value = runtime.first(self._children[2], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"insert() requires mutable sequence, got {type(target).__name__}")
+        if not isinstance(index, int):
+            raise TypeError(f"insert() requires int index, got {type(index).__name__}")
+        target.insert(index, value)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        index = await runtime.afirst(self._children[1], ctx)
+        value = await runtime.afirst(self._children[2], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"insert() requires mutable sequence, got {type(target).__name__}")
+        if not isinstance(index, int):
+            raise TypeError(f"insert() requires int index, got {type(index).__name__}")
+        target.insert(index, value)
 
 
 class PopCmd(ScalarQuery):
@@ -166,54 +195,87 @@ class PopCmd(ScalarQuery):
             return INVALID
 
 
-class ExtendCmd(ScalarQuery):
-    """Extend sequence with iterable: seq.extend(other). Returns None (mutates in-place)."""
+class ExtendCmd(ScalarCommand):
+    """Extend sequence with iterable: seq.extend(other). Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
         super().__init__(left, right)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b = ops
-        if not isinstance(a, MutableSequence):
-            raise TypeError(f"extend() requires mutable sequence, got {type(a).__name__}")
-        if not isinstance(b, Iterable):
-            return INVALID
-        a.extend(b)
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        other = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"extend() requires mutable sequence, got {type(target).__name__}")
+        if not isinstance(other, Iterable):
+            raise TypeError(f"extend() requires iterable, got {type(other).__name__}")
+        target.extend(other)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        other = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"extend() requires mutable sequence, got {type(target).__name__}")
+        if not isinstance(other, Iterable):
+            raise TypeError(f"extend() requires iterable, got {type(other).__name__}")
+        target.extend(other)
 
 
-class RemoveValueCmd(ScalarQuery):
-    """Remove first occurrence of value: seq.remove(value). Returns None, or INVALID if not found."""
+class RemoveValueCmd(ScalarCommand):
+    """Remove first occurrence of value: seq.remove(value). Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
         super().__init__(left, right)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        a, b = ops
-        if not isinstance(a, MutableSequence):
-            raise TypeError(f"remove() requires mutable sequence, got {type(a).__name__}")
-        try:
-            a.remove(b)
-        except ValueError:
-            return INVALID
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        value = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"remove() requires mutable sequence, got {type(target).__name__}")
+        target.remove(value)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        value = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"remove() requires mutable sequence, got {type(target).__name__}")
+        target.remove(value)
 
 
-class ReverseCmd(ScalarQuery):
-    """Reverse sequence in-place: seq.reverse(). Returns None (mutates in-place)."""
+class ReverseCmd(ScalarCommand):
+    """Reverse sequence in-place: seq.reverse(). Mutates target Ref in-place."""
 
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, operand: Any) -> None:  # noqa: ANN401
         super().__init__(operand)
 
-    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
-        operand = ops[0]
-        if not isinstance(operand, MutableSequence):
-            raise TypeError(f"reverse() requires mutable sequence, got {type(operand).__name__}")
-        operand.reverse()
-        return None
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"reverse() requires mutable sequence, got {type(target).__name__}")
+        target.reverse()
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"reverse() requires mutable sequence, got {type(target).__name__}")
+        target.reverse()

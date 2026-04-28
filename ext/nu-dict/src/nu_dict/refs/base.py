@@ -80,6 +80,12 @@ class RefBase[T](Ref[T]):
         except (KeyError, IndexError):
             return EMPTY
 
+    def eval(self, ctx: Context) -> T | Sentinel:
+        return self.fetch(ctx)
+
+    async def aeval(self, ctx: Context) -> T | Sentinel:
+        return await self.afetch(ctx)
+
     async def afetch_parent(self, ctx: Context) -> object:
         """Fetch the parent container, auto-creating intermediate dicts."""
         key_path = await self.aresolve(ctx)

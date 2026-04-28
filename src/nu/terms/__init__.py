@@ -27,7 +27,7 @@ from .flow import (
 )
 from .nu import NuBase, walk
 from .protocol import Nu
-from .query import Literal, Query, Reduction, ScalarQuery, StreamQuery
+from .query import Collect, First, Last, Literal, Query, Reduce, Reduction, ScalarQuery, StreamQuery
 from .ref import Ref
 from .sentinels import EMPTY, INVALID, Empty, Invalid, Sentinel, is_empty, is_invalid, is_sentinel
 from .span import Bracket, Policy, Retry, Snapshot, Span, Transaction, TryCatch
@@ -59,6 +59,7 @@ __all__ = [
     "BoolArg",
     "Bracket",
     "BytesArg",
+    "Collect",
     "Command",
     "Control",
     "DictArg",
@@ -68,6 +69,7 @@ __all__ = [
     "FloatArg",
     "Flow",
     "ForEachDo",
+    "First",
     "FrozenSetArg",
     "FuncCall",
     "FuncCallCmd",
@@ -78,6 +80,7 @@ __all__ = [
     "Invalid",
     "Invocation",
     "Invoke",
+    "Last",
     "ListArg",
     "Literal",
     "MethodCall",
@@ -91,6 +94,7 @@ __all__ = [
     "Query",
     "Race",
     "Realization",
+    "Reduce",
     "Reduction",
     "Ref",
     "Retry",

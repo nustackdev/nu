@@ -17,7 +17,7 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from .collection import CollectionI
 
@@ -25,7 +25,6 @@ from .collection import CollectionI
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from nu.primitives import NoneI
     from nu.terms import Arg, Nu
 
 
@@ -108,29 +107,23 @@ class MutableMappingI[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT
         ValueResultT: Result for value-level ops (get, pop, setdefault)
     """
 
-    def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> NoneI:
+    def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> Any:  # noqa: ANN401
         """Set value at key."""
-        from nu.primitives import NoneI
-
         from .mapping_ops import SetItemCmd
 
-        return NoneI(SetItemCmd(self, key, value))
+        return SetItemCmd(self, key, value)
 
-    def delete(self, key: Arg[KeyT]) -> NoneI:
+    def delete(self, key: Arg[KeyT]) -> Any:  # noqa: ANN401
         """Delete entry by key."""
-        from nu.primitives import NoneI
-
         from .mapping_ops import DeleteItemCmd
 
-        return NoneI(DeleteItemCmd(self, key))
+        return DeleteItemCmd(self, key)
 
-    def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> NoneI:
+    def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> Any:  # noqa: ANN401
         """Update mapping with another mapping."""
-        from nu.primitives import NoneI
-
         from .mapping_ops import UpdateCmd
 
-        return NoneI(UpdateCmd(self, other))
+        return UpdateCmd(self, other)
 
     def pop(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Remove key and return value, or default if missing."""
@@ -150,10 +143,8 @@ class MutableMappingI[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT
 
         return cast("ValueResultT", self._wrap_value_result(SetDefaultCmd(self, key, default)))
 
-    def clear(self) -> NoneI:
+    def clear(self) -> Any:  # noqa: ANN401
         """Remove all items."""
-        from nu.primitives import NoneI
-
         from .shared_ops import ClearCmd
 
-        return NoneI(ClearCmd(self))
+        return ClearCmd(self)
