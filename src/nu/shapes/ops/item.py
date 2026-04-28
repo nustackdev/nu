@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Command, Mode, Query, Sentinel, is_sentinel
+from nu.terms import Command, Effect, Mode, Query, Sentinel, is_sentinel
 
 
 if TYPE_CHECKING:
@@ -35,8 +35,7 @@ __all__ = [
 class ItemLoadOp[T](Query[T | Sentinel]):
     """Read item from collection. Returns EMPTY if missing."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
@@ -54,9 +53,8 @@ class ItemLoadOp[T](Query[T | Sentinel]):
 class ItemStoreCmd[T](Command):
     """Write item to collection: parent[address] = value."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: Ref, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
@@ -86,9 +84,8 @@ class ItemStoreCmd[T](Command):
 class ItemEraseCmd(Command):
     """Delete item from collection: del parent[address]."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
@@ -112,8 +109,7 @@ class ItemEraseCmd(Command):
 class ItemExistsOp(Query[bool]):
     """Check if item exists."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
@@ -133,8 +129,7 @@ class ItemExistsOp(Query[bool]):
 class ItemMissingOp(Query[bool]):
     """Check if item is missing."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)

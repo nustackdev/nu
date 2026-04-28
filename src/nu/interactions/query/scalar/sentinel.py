@@ -31,8 +31,7 @@ __all__ = [
 class IsEmpty(Query[bool]):
     """Check if operand is Empty sentinel."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, operand: Nu) -> None:
         super().__init__(operand)
@@ -44,8 +43,7 @@ class IsEmpty(Query[bool]):
 class NotEmpty(Query[bool]):
     """Check if operand is NOT Empty sentinel."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, operand: Nu) -> None:
         super().__init__(operand)
@@ -57,8 +55,7 @@ class NotEmpty(Query[bool]):
 class IsInvalid(Query[bool]):
     """Check if operand is Invalid sentinel."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, operand: Nu) -> None:
         super().__init__(operand)
@@ -70,8 +67,7 @@ class IsInvalid(Query[bool]):
 class NotInvalid(Query[bool]):
     """Check if operand is NOT Invalid sentinel."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, operand: Nu) -> None:
         super().__init__(operand)

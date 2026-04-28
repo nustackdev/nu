@@ -21,7 +21,7 @@ from nu.stdio import (
     StdioRef,
     StdioWrite,
 )
-from nu.terms import Direction, Mode, TrackedEffect, tracked_effects
+from nu.terms import Direction, Effect, Mode, TrackedEffect, tracked_effects
 
 
 # ---------------------------------------------------------------------------
@@ -138,7 +138,7 @@ class TestStdioWrite:
         assert err.getvalue() == "error message\n"
 
     def test_write_overrides(self):
-        assert StdioWrite.writes == 0
+        assert StdioWrite.own_effects == {0: Effect.WRITE}
 
     def test_effect_tracking(self):
         op = StdioWrite(STDOUT, "hello")
@@ -161,7 +161,7 @@ class TestStdioRead:
 
     def test_no_override(self):
         """StdioRead has no writes (READ is default for bare Ref)."""
-        assert StdioRead.writes == ()
+        assert getattr(StdioRead, "own_effects", {}) == {}
 
     def test_effect_tracking(self):
         """StdioRef child produces READ effect via default rule."""
@@ -184,7 +184,7 @@ class TestStdioFlush:
         # StringIO.flush() is a no-op but shouldn't error
 
     def test_overrides(self):
-        assert StdioFlush.writes == 0
+        assert StdioFlush.own_effects == {0: Effect.WRITE}
 
 
 # ---------------------------------------------------------------------------
@@ -201,7 +201,7 @@ class TestPrintStdio:
         assert "[Print:test] 42" in out.getvalue()
 
     def test_print_has_write_override(self):
-        assert Print.writes == 0
+        assert Print.own_effects == {0: Effect.WRITE}
 
     def test_print_first_child_is_stdio_ref(self):
         op = Print("msg")
@@ -216,7 +216,7 @@ class TestPrintStdio:
 
 class TestLogStdio:
     def test_log_has_write_override(self):
-        assert Log.writes == 0
+        assert Log.own_effects == {0: Effect.WRITE}
 
     def test_log_first_child_is_stderr(self):
         op = Log("msg")
@@ -233,7 +233,7 @@ class TestDebugStdio:
         assert "[DBG]" in out.getvalue()
 
     def test_debug_has_write_override(self):
-        assert Debug.writes == 0
+        assert Debug.own_effects == {0: Effect.WRITE}
 
 
 # ---------------------------------------------------------------------------

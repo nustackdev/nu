@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from nu import EMPTY, Sentinel
-from nu.terms import Command, Mode, Query
+from nu.terms import Command, Effect, Mode, Query
 
 
 if TYPE_CHECKING:
@@ -49,9 +49,8 @@ class EnsureLayoutCmd(Command):
         fetch(ctx) -> view object
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -86,9 +85,8 @@ class InitCmd(Command):
         fetch(ctx) -> view object
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -117,8 +115,7 @@ class ItemPrimitiveGetUnsafeOp[T](Query[T | Sentinel]):
         resolve_address(ctx) -> key/index
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -157,9 +154,8 @@ class ItemPrimitiveSetUnsafeCmd[T](Command):
         resolve_address(ctx) -> key/index
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
@@ -199,9 +195,8 @@ class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command):
         resolve_address(ctx) -> key/index
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
         super().__init__(ref, value)
@@ -241,9 +236,8 @@ class ItemPrimitiveDeleteUnsafeCmd(Command):
         resolve_address(ctx) -> key/index
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -278,9 +272,8 @@ class PrimitiveStoreCmd[T](Command):
         resolve_address(ctx) -> key/index
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: object, data: object) -> None:
         super().__init__(ref, data)

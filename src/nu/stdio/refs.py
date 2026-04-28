@@ -10,7 +10,7 @@ import sys
 from typing import IO, TYPE_CHECKING, ClassVar
 
 from nu.terms import Mode
-from nu.terms.ref import Ref
+from nu.terms._compat_ref import Ref
 
 
 if TYPE_CHECKING:
@@ -35,8 +35,7 @@ class StdioRef(Ref[IO]):
     non-KV, stream-based fabrics.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, name: str) -> None:
         super().__init__()

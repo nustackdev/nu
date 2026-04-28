@@ -41,8 +41,7 @@ class React(Interaction):
     Children layout: [change, body?, changed_key?]
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(
         self,
@@ -97,8 +96,7 @@ class ReactForever(Interaction):
     Children layout: [change, body, changed_key?]
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(
         self,
@@ -150,8 +148,7 @@ class ReactWhile(Interaction):
     Children layout: [change, condition, body, changed_key?]
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(
         self,

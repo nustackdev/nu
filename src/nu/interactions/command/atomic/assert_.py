@@ -22,8 +22,7 @@ class Assert(BinaryCommand):
     Raises ``AssertionError`` when condition is falsy.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, condition: Any, message: StrArg = "Assertion failed") -> None:
         super().__init__(condition, message)

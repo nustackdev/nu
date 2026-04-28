@@ -21,8 +21,7 @@ __all__ = [
 class ServiceGetOp[T](Query[T | Sentinel]):
     """Read service from context: ctx[service_type]."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: ServiceRef[T]) -> None:
         """Initialize with ref."""
@@ -36,8 +35,7 @@ class ServiceGetOp[T](Query[T | Sentinel]):
 class ServiceExistsOp(Query[bool]):
     """Check if service type exists in context."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: ServiceRef) -> None:
         """Initialize with ref."""

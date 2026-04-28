@@ -58,8 +58,7 @@ class ShapesDictRef[K, T: Shape](
 ):
     """Dict shapes dict reference — mapping of homogeneous shapes."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def result(self, op: Nu) -> DictI:
         return DictI(op)

@@ -13,6 +13,7 @@ from typing import ClassVar
 from nu.terms import (
     INVALID,
     BinaryQuery,
+    Effect,
     Mode,
     Sentinel,
     TernaryQuery,
@@ -42,8 +43,7 @@ __all__ = [
 class KeysOp[K](UnaryQuery[KeysView[K]]):
     """Get keys view from mapping: mapping.keys()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> KeysView[K]:
         """Apply."""
@@ -55,8 +55,7 @@ class KeysOp[K](UnaryQuery[KeysView[K]]):
 class ValuesOp[V](UnaryQuery[ValuesView[V]]):
     """Get values view from mapping: mapping.values()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> ValuesView[V]:
         """Apply."""
@@ -68,8 +67,7 @@ class ValuesOp[V](UnaryQuery[ValuesView[V]]):
 class ItemsOp[K, V](UnaryQuery[ItemsView[K, V]]):
     """Get items view from mapping: mapping.items()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> ItemsView[K, V]:
         """Apply."""
@@ -81,8 +79,7 @@ class ItemsOp[K, V](UnaryQuery[ItemsView[K, V]]):
 class GetOp[V](TernaryQuery[V]):
     """Get value from mapping with optional default: mapping.get(key, default) or mapping[key]."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
         """Apply."""
@@ -101,9 +98,8 @@ class GetOp[V](TernaryQuery[V]):
 class SetItemCmd[K, V](TernaryQuery[None]):
     """Set value at key: mapping[key] = value. Returns None."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> None | Sentinel:
         """Apply."""
@@ -116,9 +112,8 @@ class SetItemCmd[K, V](TernaryQuery[None]):
 class DeleteItemCmd[K](BinaryQuery[None]):
     """Delete entry by key: del mapping[key]. Returns None."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -134,9 +129,8 @@ class DeleteItemCmd[K](BinaryQuery[None]):
 class UpdateCmd[K, V](BinaryQuery[None]):
     """Update mapping with another: mapping.update(other). Returns None (mutates in-place)."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -151,9 +145,8 @@ class UpdateCmd[K, V](BinaryQuery[None]):
 class DictPopCmd[K, V](TernaryQuery[V]):
     """Pop value by key with optional default: mapping.pop(key, default). Returns value or default."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
         """Apply."""
@@ -170,9 +163,8 @@ class DictPopCmd[K, V](TernaryQuery[V]):
 class PopItemCmd[K, V](UnaryQuery[tuple[K, V]]):
     """Pop arbitrary item: mapping.popitem(). Returns (key, value) tuple."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> tuple[K, V] | Sentinel:
         """Apply."""
@@ -187,9 +179,8 @@ class PopItemCmd[K, V](UnaryQuery[tuple[K, V]]):
 class SetDefaultCmd[K, V](TernaryQuery[V]):
     """Set default value if key missing: mapping.setdefault(key, default). Returns value at key."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> V | Sentinel:
         """Apply."""

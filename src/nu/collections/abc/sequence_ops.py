@@ -13,6 +13,7 @@ from typing import ClassVar
 from nu.terms import (
     INVALID,
     BinaryQuery,
+    Effect,
     Mode,
     Sentinel,
     TernaryQuery,
@@ -42,8 +43,7 @@ __all__ = [
 class FirstOp[ResultT](UnaryQuery[ResultT]):
     """First element: seq[0]. Returns Invalid if empty."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
@@ -57,8 +57,7 @@ class FirstOp[ResultT](UnaryQuery[ResultT]):
 class LastOp[ResultT](UnaryQuery[ResultT]):
     """Last element: seq[-1]. Returns Invalid if empty."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
@@ -72,8 +71,7 @@ class LastOp[ResultT](UnaryQuery[ResultT]):
 class IndexOfOp(BinaryQuery[int]):
     """Find index of value: seq.index(value). Returns Invalid if not found."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> int | Sentinel:
         """Apply."""
@@ -88,8 +86,7 @@ class IndexOfOp(BinaryQuery[int]):
 class CountOp(BinaryQuery[int]):
     """Count occurrences: seq.count(value)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> int | Sentinel:
         """Apply."""
@@ -106,9 +103,8 @@ class CountOp(BinaryQuery[int]):
 class AppendCmd[T](BinaryQuery[None]):
     """Append item to end: seq.append(value). Returns None (mutates in-place)."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -121,9 +117,8 @@ class AppendCmd[T](BinaryQuery[None]):
 class InsertCmd[T](TernaryQuery[None]):
     """Insert item at index: seq.insert(index, value). Returns None (mutates in-place)."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> None | Sentinel:
         """Apply."""
@@ -141,9 +136,8 @@ class PopCmd[T](BinaryQuery[T]):
     Default index is -1 (last item).
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> T | Sentinel:
         """Apply."""
@@ -160,9 +154,8 @@ class PopCmd[T](BinaryQuery[T]):
 class ExtendCmd[T](BinaryQuery[None]):
     """Extend sequence with iterable: seq.extend(other). Returns None (mutates in-place)."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -177,9 +170,8 @@ class ExtendCmd[T](BinaryQuery[None]):
 class RemoveValueCmd[T](BinaryQuery[None]):
     """Remove first occurrence of value: seq.remove(value). Returns None, or INVALID if not found."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> None | Sentinel:
         """Apply."""
@@ -195,9 +187,8 @@ class RemoveValueCmd[T](BinaryQuery[None]):
 class ReverseCmd(UnaryQuery[None]):
     """Reverse sequence in-place: seq.reverse(). Returns None (mutates in-place)."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> None | Sentinel:
         """Apply."""

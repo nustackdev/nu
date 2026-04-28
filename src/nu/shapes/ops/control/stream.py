@@ -39,8 +39,7 @@ class Stream(Interaction):
     Children layout: [advance_op, change_op, body, key, log_key]
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(
         self,

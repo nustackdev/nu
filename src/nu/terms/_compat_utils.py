@@ -1,19 +1,19 @@
 """Tree analysis helpers.
 
-    tracked_effects(nu)  - compute the set of TrackedEffects in a tree.
-    is_pure(nu)          - True iff tracked_effects(nu) is empty.
+tracked_effects(nu)  - compute the set of TrackedEffects in a tree.
+is_pure(nu)          - True iff tracked_effects(nu) is empty.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .ref import Ref
-from .types import Direction, TrackedEffect
+from ._compat_ref import Ref
+from ._compat_types import Direction, TrackedEffect
 
 
 if TYPE_CHECKING:
-    from .nu import Nu
+    from ._compat_nu import Nu
 
 
 __all__ = [
@@ -30,9 +30,27 @@ def _as_positions(spec: int | tuple[int, ...]) -> frozenset[int]:
 
 def _position_map(op: object) -> dict[int, Direction]:
     result: dict[int, Direction] = {}
-    for i in _as_positions(op.reads):  # type: ignore[attr-defined]
+    # Phase E: prefer the new `own_effects` declaration. Fall back to legacy
+    # `reads` / `writes` tuples when `own_effects` is absent (legacy classes
+    # not yet swept).
+    own = getattr(op, "own_effects", None)
+    if own:
+        for i, eff in own.items():
+            effs = eff if isinstance(eff, (set, frozenset)) else {eff}
+            # New Effect enum values: RESOLVE, READ, WRITE.
+            for e in effs:
+                name = getattr(e, "name", str(e))
+                if name == "WRITE":
+                    result[i] = Direction.WRITE
+                elif name in ("READ", "RESOLVE"):
+                    # Don't override an existing WRITE.
+                    result.setdefault(i, Direction.READ)
+        return result
+    reads = getattr(op, "reads", ())
+    writes = getattr(op, "writes", ())
+    for i in _as_positions(reads):
         result[i] = Direction.READ
-    for i in _as_positions(op.writes):  # type: ignore[attr-defined]
+    for i in _as_positions(writes):
         result[i] = Direction.WRITE
     return result
 
@@ -45,8 +63,8 @@ def tracked_effects(nu: Nu) -> frozenset[TrackedEffect]:
         2. Ref (not at a declared position) -> {(type(ref), READ)} + children
         3. Interaction with reads/writes -> check declared positions, recurse
     """
-    from .interaction import Interaction
-    from .query import Literal
+    from ._compat_interaction import Interaction
+    from ._compat_query import Literal
 
     if isinstance(nu, Literal):
         return frozenset()

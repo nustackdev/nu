@@ -27,8 +27,7 @@ __all__ = [
 class Sum[ResultT](UnaryQuery[ResultT]):
     """Sum of sequence elements: sum(seq)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
@@ -43,8 +42,7 @@ class Sum[ResultT](UnaryQuery[ResultT]):
 class Min[ResultT](UnaryQuery[ResultT]):
     """Minimum element: min(seq)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
@@ -59,8 +57,7 @@ class Min[ResultT](UnaryQuery[ResultT]):
 class Max[ResultT](UnaryQuery[ResultT]):
     """Maximum element: max(seq)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
@@ -75,8 +72,7 @@ class Max[ResultT](UnaryQuery[ResultT]):
 class Any(UnaryQuery[bool]):
     """Any truthy element: any(seq)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> bool:
         """Apply."""
@@ -88,8 +84,7 @@ class Any(UnaryQuery[bool]):
 class All(UnaryQuery[bool]):
     """All truthy elements: all(seq)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> bool:
         """Apply."""

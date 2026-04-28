@@ -54,8 +54,7 @@ class ListRef[T](
 ):
     """Dict sequence reference — ordered container backed by nested list."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def result(self, op: Nu) -> ListI[T]:
         return ListI(op)

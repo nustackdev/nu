@@ -33,8 +33,7 @@ __all__ = [
 class Sorted[ResultT](BinaryQuery[list[ResultT]]):
     """Sorted list: sorted(seq, reverse=reverse). Terminal — inherently eager."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> list[ResultT] | Sentinel:
         """Apply."""
@@ -52,8 +51,7 @@ class Sorted[ResultT](BinaryQuery[list[ResultT]]):
 class Reversed[ResultT](UnaryQuery[Iterator[ResultT]]):
     """Reversed sequence: reversed(seq) -> lazy iterator."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> Iterator[ResultT]:
         """Apply."""
@@ -71,8 +69,7 @@ class Pluck[T](BinaryQuery[Iterator[T]]):
         >>> Pluck(token_balances, "mint")
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> Iterator[T] | Sentinel:
         """Apply."""
@@ -99,8 +96,7 @@ class FilterBy[T](TernaryQuery[Iterator[T]]):
         >>> FilterBy(balances, "mint", t.current_mint)
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> Iterator[T] | Sentinel:
         """Apply: first=collection, second=field, third=value."""
@@ -121,8 +117,7 @@ class FilterBy[T](TernaryQuery[Iterator[T]]):
 class Flatten(UnaryQuery[Iterator]):
     """Flatten one level: chain.from_iterable(seq) -> lazy iterator."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> Iterator | Sentinel:
         """Apply."""
@@ -137,8 +132,7 @@ class Flatten(UnaryQuery[Iterator]):
 class Unique(UnaryQuery[Iterator]):
     """Unique elements preserving order -> lazy iterator."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> Iterator | Sentinel:
         """Apply."""

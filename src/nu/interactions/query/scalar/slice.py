@@ -18,8 +18,7 @@ __all__ = [
 class Take(BinaryQuery[Iterator]):
     """Take first N elements: islice(iterable, n) -> lazy iterator."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> Iterator | Sentinel:
         """Apply: left=iterable, right=n."""
@@ -34,8 +33,7 @@ class Take(BinaryQuery[Iterator]):
 class Drop(BinaryQuery[Iterator]):
     """Drop first N elements: islice(iterable, n, None) -> lazy iterator."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> Iterator | Sentinel:
         """Apply: left=iterable, right=n."""

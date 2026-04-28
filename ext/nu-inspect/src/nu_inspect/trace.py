@@ -23,8 +23,7 @@ _step_logger = logging.getLogger("nu.steps")
 class _StepSpan(ContextManager):
     """Wraps a sequential child to log step progress. Path is baked at construction."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, child: Nu, step: int, total: int, path: str) -> None:
         super().__init__(child)

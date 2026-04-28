@@ -30,8 +30,7 @@ __all__ = [
 class ToInt(UnaryQuery[int]):
     """Convert value to integer."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> int:
         """Apply."""
@@ -41,8 +40,7 @@ class ToInt(UnaryQuery[int]):
 class ToFloat(UnaryQuery[float]):
     """Convert value to float."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> float:
         """Apply."""
@@ -52,8 +50,7 @@ class ToFloat(UnaryQuery[float]):
 class ToBool(UnaryQuery[bool]):
     """Convert value to boolean."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> bool:
         """Apply."""
@@ -63,8 +60,7 @@ class ToBool(UnaryQuery[bool]):
 class ToStr(UnaryQuery[str]):
     """Convert value to string."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> str:
         """Apply."""
@@ -81,8 +77,7 @@ class ToBytes(UnaryQuery[bytes]):
     - Iterables of ints -> bytes
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, operand: object, encoding: str = "utf-8") -> None:
         """Initialize bytes conversion.
@@ -113,8 +108,7 @@ class ToBytes(UnaryQuery[bytes]):
 class ToList[T](UnaryQuery[list[T]]):
     """Convert value to list."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> list[T]:
         """Apply."""
@@ -124,8 +118,7 @@ class ToList[T](UnaryQuery[list[T]]):
 class ToSet[T](UnaryQuery[set[T]]):
     """Convert value to set."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> set[T]:
         """Apply."""
@@ -135,8 +128,7 @@ class ToSet[T](UnaryQuery[set[T]]):
 class ToTuple[*Ts](UnaryQuery[tuple[*Ts]]):
     """Convert value to tuple."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> tuple[*Ts]:
         """Apply."""

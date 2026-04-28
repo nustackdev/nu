@@ -10,7 +10,7 @@ from __future__ import annotations
 import sys
 from typing import IO, TYPE_CHECKING, ClassVar
 
-from nu.terms import Command, Mode, Query
+from nu.terms import Command, Effect, Mode, Query
 
 
 if TYPE_CHECKING:
@@ -42,9 +42,8 @@ class StdioWrite(Command):
     Joins string-converted values with spaces, appends newline.
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: StdioRef, *values: object) -> None:
         super().__init__(ref, *values)
@@ -73,8 +72,7 @@ class StdioRead(Query[str]):
     Returns the line read (stripped of trailing newline).
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: StdioRef | None = None) -> None:
         from .refs import STDIN
@@ -96,9 +94,8 @@ class StdioFlush(Command):
     Children: [StdioRef]
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: StdioRef) -> None:
         super().__init__(ref)

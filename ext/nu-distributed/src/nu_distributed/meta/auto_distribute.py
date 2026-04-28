@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.interactions.command.flow.parallel import ParAll, ParAny, Race
-from nu.terms.nu import NuIndepComm
+from nu.terms._compat_nu import NuIndepComm
 from nu.tree.rewrite import map_nodes
 
 from ..spans.teleport import Teleport

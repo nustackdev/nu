@@ -42,8 +42,7 @@ class Filter(Flow):
     Children: ``[items, condition, body, item_key]``
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -89,8 +88,7 @@ class Map(Flow):
     Results stored in ``ctx.attrs[output]`` as a list.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -136,8 +134,7 @@ class TakeWhile(Flow):
     Children: ``[items, condition, body, item_key]``
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -183,8 +180,7 @@ class UniqueDo(Flow):
     Children: ``[items, key, body, item_key]``
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -237,8 +233,7 @@ class Find(Flow):
     If no match, output is not set.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -287,8 +282,7 @@ class FindIndex(Flow):
     If no match, output is not set.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -337,8 +331,7 @@ class GroupBy(Flow):
     and sets ``ctx.attrs[group]`` to that list before executing body.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -400,8 +393,7 @@ class Partition(Flow):
     non-matching in ``ctx.attrs[rest]``.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -462,8 +454,7 @@ class ToDict(Flow):
     Stores the resulting dict in ``ctx.attrs[output]``.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,

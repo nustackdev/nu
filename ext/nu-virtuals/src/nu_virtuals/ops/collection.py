@@ -12,7 +12,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, ClassVar
 
 from nu import EMPTY, Sentinel
-from nu.terms import Command, Mode, Query
+from nu.terms import Command, Effect, Mode, Query
 
 
 if TYPE_CHECKING:
@@ -35,8 +35,7 @@ class ScanPrimitivesUnsafeOp[T](Query[Iterator[T] | Sentinel]):
         fetch(ctx) -> view with _unsafe_primitive_scan_values() method
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
@@ -72,9 +71,8 @@ class ClearPrimitivesUnsafeCmd(Command):
         fetch(ctx) -> view with _unsafe_primitive_clear() method
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)

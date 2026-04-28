@@ -24,8 +24,7 @@ __all__ = [
 class Len(UnaryQuery[int]):
     """Length: len(operand)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> int:
         """Apply."""
@@ -35,8 +34,7 @@ class Len(UnaryQuery[int]):
 class At[ResultT](BinaryQuery[ResultT]):
     """Subscript access: left[right]."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -46,8 +44,7 @@ class At[ResultT](BinaryQuery[ResultT]):
 class Slice[ResultT](ScalarQuery[ResultT]):
     """Slice access: operand[start:stop:step]."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, *args: object) -> ResultT:
         """Apply."""
@@ -58,8 +55,7 @@ class Slice[ResultT](ScalarQuery[ResultT]):
 class Contains(BinaryQuery[bool]):
     """Containment check: right in left."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bool:
         """Apply."""

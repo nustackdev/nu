@@ -11,7 +11,7 @@ from __future__ import annotations
 from contextlib import aclosing, closing
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import BinaryQuery, Mode, Sentinel, UnaryQuery, propagate_special
+from nu.terms import INVALID, BinaryQuery, Mode, Sentinel, UnaryQuery, is_sentinel
 
 
 if TYPE_CHECKING:
@@ -41,8 +41,7 @@ class Not[ResultT](UnaryQuery[ResultT]):
     Use .not_() method in trait classes instead.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> ResultT | Sentinel:
         """Apply."""
@@ -52,8 +51,7 @@ class Not[ResultT](UnaryQuery[ResultT]):
 class Bool(UnaryQuery[bool]):
     """Boolean conversion: bool(operand)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> bool:
         """Apply."""
@@ -88,15 +86,13 @@ class And[ResultT](BinaryQuery[ResultT]):
     if left is falsy, yields left without evaluating right.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:  # type: ignore[override]
         left_val = await _drain_last(self._children[0], ctx)
 
-        sp = propagate_special(left_val)
-        if sp is not None:
-            yield sp
+        if is_sentinel(left_val):
+            yield INVALID
             return
 
         if not left_val:
@@ -105,9 +101,8 @@ class And[ResultT](BinaryQuery[ResultT]):
 
         right_val = await _drain_last(self._children[1], ctx)
 
-        special = propagate_special(right_val)
-        if special is not None:
-            yield special
+        if is_sentinel(right_val):
+            yield INVALID
             return
 
         yield left_val and right_val
@@ -115,9 +110,8 @@ class And[ResultT](BinaryQuery[ResultT]):
     def open(self, ctx: Context) -> Generator[Any, None, None]:  # type: ignore[override]
         left_val = _drain_last_sync(self._children[0], ctx)
 
-        sp = propagate_special(left_val)
-        if sp is not None:
-            yield sp
+        if is_sentinel(left_val):
+            yield INVALID
             return
 
         if not left_val:
@@ -126,9 +120,8 @@ class And[ResultT](BinaryQuery[ResultT]):
 
         right_val = _drain_last_sync(self._children[1], ctx)
 
-        special = propagate_special(right_val)
-        if special is not None:
-            yield special
+        if is_sentinel(right_val):
+            yield INVALID
             return
 
         yield left_val and right_val
@@ -146,15 +139,13 @@ class Or[ResultT](BinaryQuery[ResultT]):
     if left is truthy, yields left without evaluating right.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:  # type: ignore[override]
         left_val = await _drain_last(self._children[0], ctx)
 
-        sp = propagate_special(left_val)
-        if sp is not None:
-            yield sp
+        if is_sentinel(left_val):
+            yield INVALID
             return
 
         if left_val:
@@ -163,9 +154,8 @@ class Or[ResultT](BinaryQuery[ResultT]):
 
         right_val = await _drain_last(self._children[1], ctx)
 
-        special = propagate_special(right_val)
-        if special is not None:
-            yield special
+        if is_sentinel(right_val):
+            yield INVALID
             return
 
         yield left_val or right_val
@@ -173,9 +163,8 @@ class Or[ResultT](BinaryQuery[ResultT]):
     def open(self, ctx: Context) -> Generator[Any, None, None]:  # type: ignore[override]
         left_val = _drain_last_sync(self._children[0], ctx)
 
-        sp = propagate_special(left_val)
-        if sp is not None:
-            yield sp
+        if is_sentinel(left_val):
+            yield INVALID
             return
 
         if left_val:
@@ -184,9 +173,8 @@ class Or[ResultT](BinaryQuery[ResultT]):
 
         right_val = _drain_last_sync(self._children[1], ctx)
 
-        special = propagate_special(right_val)
-        if special is not None:
-            yield special
+        if is_sentinel(right_val):
+            yield INVALID
             return
 
         yield left_val or right_val

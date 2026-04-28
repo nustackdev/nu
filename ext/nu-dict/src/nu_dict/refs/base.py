@@ -38,8 +38,7 @@ class RefBase[T](Ref[T]):
     The root dict is retrieved from Context via ctx[dict, scope].
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     async def aresolve(self, ctx: Context) -> tuple[str | int, ...]:
         """Build key path from parent chain."""

@@ -33,8 +33,7 @@ class Race(Flow):
     Children: ``[*children]``
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
@@ -67,8 +66,7 @@ class ParAll(Flow):
     Children: ``[*children]``
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
@@ -95,8 +93,7 @@ class ParAny(Flow):
     Children: ``[*children]``
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)

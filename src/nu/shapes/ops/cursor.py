@@ -33,8 +33,7 @@ class AdvanceCursorOp(Query[tuple | None]):
     "fresh start" - ScalarQuery's sentinel propagation would short-circuit it.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, source: object, cursor: object) -> None:
         super().__init__(source, cursor)

@@ -33,8 +33,7 @@ __all__ = [
 class Neg[ResultT](UnaryQuery[ResultT]):
     """Negation: -operand."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> ResultT:
         """Apply."""
@@ -44,8 +43,7 @@ class Neg[ResultT](UnaryQuery[ResultT]):
 class Abs[ResultT](UnaryQuery[ResultT]):
     """Absolute value: abs(operand)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> ResultT:
         """Apply."""
@@ -55,8 +53,7 @@ class Abs[ResultT](UnaryQuery[ResultT]):
 class Pos[ResultT](UnaryQuery[ResultT]):
     """Unary plus: +operand."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> ResultT:
         """Apply."""
@@ -71,8 +68,7 @@ class Pos[ResultT](UnaryQuery[ResultT]):
 class Add[ResultT](BinaryQuery[ResultT]):
     """Addition: left + right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -82,8 +78,7 @@ class Add[ResultT](BinaryQuery[ResultT]):
 class Sub[ResultT](BinaryQuery[ResultT]):
     """Subtraction: left - right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -93,8 +88,7 @@ class Sub[ResultT](BinaryQuery[ResultT]):
 class Mul[ResultT](BinaryQuery[ResultT]):
     """Multiplication: left * right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -104,8 +98,7 @@ class Mul[ResultT](BinaryQuery[ResultT]):
 class Div[ResultT](BinaryQuery[ResultT]):
     """Division: left / right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -115,8 +108,7 @@ class Div[ResultT](BinaryQuery[ResultT]):
 class FloorDiv[ResultT](BinaryQuery[ResultT]):
     """Floor division: left // right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -126,8 +118,7 @@ class FloorDiv[ResultT](BinaryQuery[ResultT]):
 class Mod[ResultT](BinaryQuery[ResultT]):
     """Modulo: left % right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -137,8 +128,7 @@ class Mod[ResultT](BinaryQuery[ResultT]):
 class Pow[ResultT](BinaryQuery[ResultT]):
     """Power: left ** right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""

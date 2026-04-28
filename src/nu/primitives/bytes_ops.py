@@ -49,8 +49,7 @@ __all__ = [
 class DecodeOp(BinaryQuery[str]):
     """Decode bytes to string: bytes.decode(encoding)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
@@ -65,8 +64,7 @@ class DecodeOp(BinaryQuery[str]):
 class HexOp(UnaryQuery[str]):
     """Convert to hex string: bytes.hex()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> str | Sentinel:
         """Apply."""
@@ -83,8 +81,7 @@ class HexOp(UnaryQuery[str]):
 class BytesUpperOp(UnaryQuery[bytes]):
     """Convert to uppercase: bytes.upper()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> bytes | Sentinel:
         """Apply."""
@@ -96,8 +93,7 @@ class BytesUpperOp(UnaryQuery[bytes]):
 class BytesLowerOp(UnaryQuery[bytes]):
     """Convert to lowercase: bytes.lower()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> bytes | Sentinel:
         """Apply."""
@@ -114,8 +110,7 @@ class BytesLowerOp(UnaryQuery[bytes]):
 class BytesStripOp(BinaryQuery[bytes]):
     """Strip bytes: bytes.strip(chars)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bytes | Sentinel:
         """Apply."""
@@ -129,8 +124,7 @@ class BytesStripOp(BinaryQuery[bytes]):
 class BytesLStripOp(BinaryQuery[bytes]):
     """Strip leading bytes: bytes.lstrip(chars)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bytes | Sentinel:
         """Apply."""
@@ -144,8 +138,7 @@ class BytesLStripOp(BinaryQuery[bytes]):
 class BytesRStripOp(BinaryQuery[bytes]):
     """Strip trailing bytes: bytes.rstrip(chars)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bytes | Sentinel:
         """Apply."""
@@ -164,8 +157,7 @@ class BytesRStripOp(BinaryQuery[bytes]):
 class BytesSplitOp(TernaryQuery[list[bytes]]):
     """Split bytes: bytes.split(sep, maxsplit)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> list[bytes] | Sentinel:
         """Apply."""
@@ -184,8 +176,7 @@ class BytesSplitOp(TernaryQuery[list[bytes]]):
 class BytesFindOp(ScalarQuery[int]):
     """Find sub-bytes: bytes.find(sub, start, end)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, *args: object) -> int | Sentinel:
         """Apply."""
@@ -200,8 +191,7 @@ class BytesFindOp(ScalarQuery[int]):
 class BytesCountOp(BinaryQuery[int]):
     """Count sub-bytes occurrences: bytes.count(sub)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> int | Sentinel:
         """Apply."""
@@ -218,8 +208,7 @@ class BytesCountOp(BinaryQuery[int]):
 class BytesStartsWithOp(BinaryQuery[bool]):
     """Check if starts with prefix: bytes.startswith(prefix)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
@@ -231,8 +220,7 @@ class BytesStartsWithOp(BinaryQuery[bool]):
 class BytesEndsWithOp(BinaryQuery[bool]):
     """Check if ends with suffix: bytes.endswith(suffix)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
@@ -249,8 +237,7 @@ class BytesEndsWithOp(BinaryQuery[bool]):
 class BytesReplaceOp(ScalarQuery[bytes]):
     """Replace sub-bytes: bytes.replace(old, new, count)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, *args: object) -> bytes | Sentinel:
         """Apply."""

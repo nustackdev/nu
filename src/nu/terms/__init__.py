@@ -1,22 +1,33 @@
-"""Nu terms - the four Nu kinds + shared types + authoring utilities.
+"""Nu terms - the public surface during the task-083 phased rewrite.
 
-Layout (see projects/nu/model/programming/components.md + interactions.md):
+Two layers re-exported here:
 
-    Nu                  - primitive (nu.py)
-    ├── Ref             - addressable location (ref.py)
-    ├── Interaction     - compute or mutate (interaction.py)
-    │   ├── Query       - functional construction (query.py)
-    │   │   └── Literal, Stream, ScalarQuery / Unary / Binary / Ternary
-    │   └── Command     - imperative mutation (command.py)
-    │       └── Flow, ScalarCommand / Unary / Binary / Ternary
-    ├── Form            - typed descriptor (interface.py; rename later)
-    └── ContextManager  - bracket hooks (context_manager.py)
+- **Compat** (from `_compat_*` modules): the pre-refactor surface.
+  Downstream (`interactions/`, `tree/`, `ext/...`) still imports these
+  names. ARCH-NOTE: full mechanical migration to the new core is
+  deferred; the compat shim retains legacy semantics so the runtime
+  keeps working while downstream gets swept incrementally.
+- **New** (from `protocol`, `nu`, `ref`, `query`, `command`, `flow`,
+  `span`, `effects`, `sentinels`, `types`): the new shape this refactor
+  builds. Not wired into the runtime yet (Phase D does that).
 
-Shared: types.py (Mode, sup, Sentinel, EMPTY/INVALID, Direction, TrackedEffect,
-Arg types, T_co). Analysis + Form/Interface descriptors: utils.py.
+Where the names overlap (`Nu`, `Ref`, `Query`, `Command`, `Flow`,
+`ScalarQuery`, `ScalarCommand`, `Literal`, `Sentinel`, `EMPTY`,
+`INVALID`), the compat class wins at the unqualified import site so
+downstream keeps running. The new shapes are reachable under explicit
+module paths (`nu.terms.protocol.Nu`, `nu.terms.nu.NuBase`,
+`nu.terms.ref.Ref`, etc.).
+
+New-only names (`NuBase`, `Effect`, `Realization`, `ExecState`, `Span`,
+`Bracket`, `Policy`, `Snapshot`, `Transaction`, `Retry`, `TryCatch`,
+`Sequential`, `Parallel`, `Race`, `Gather`, `IfDo`, `ForEachDo`,
+`WhileDo`, `Strategy`, `Control`, `Reduction`, `StreamQuery`) are
+re-exported here too.
 """
 
-from .command import (
+# Re-exports from invocation/ for back-compat of legacy stdlib + ext callsites.
+from ..invocation import FuncCall, FuncCallCmd, Invocation, Invoke, MethodCall, MethodCallCmd
+from ._compat_command import (
     BinaryCommand,
     Command,
     Flow,
@@ -24,11 +35,11 @@ from .command import (
     TernaryCommand,
     UnaryCommand,
 )
-from .context_manager import ContextManager
-from .interaction import Interaction
-from .interface import Interface, TypedNu
-from .nu import LValue, Nu, NuIndepComm, RValue
-from .query import (
+from ._compat_context_manager import ContextManager
+from ._compat_interaction import Interaction
+from ._compat_interface import Interface, TypedNu
+from ._compat_nu import LValue, Nu, NuIndepComm, RValue
+from ._compat_query import (
     BinaryQuery,
     Literal,
     Query,
@@ -37,8 +48,8 @@ from .query import (
     TernaryQuery,
     UnaryQuery,
 )
-from .ref import Ref
-from .types import (
+from ._compat_ref import Ref
+from ._compat_types import (
     EMPTY,
     INVALID,
     Arg,
@@ -66,9 +77,24 @@ from .types import (
     propagate_special,
     sup,
 )
-from .utils import is_pure, tracked_effects
-# Re-exports from invocation/ for back-compat of legacy stdlib + ext callsites.
-from ..invocation import FuncCall, FuncCallCmd, Invocation, Invoke, MethodCall, MethodCallCmd
+from ._compat_utils import is_pure, tracked_effects
+from .flow import (
+    Control,
+    ForEachDo,
+    Gather,
+    IfDo,
+    Parallel,
+    Race,
+    Sequential,
+    Strategy,
+    WhileDo,
+)
+
+# New-layer names that don't clash with legacy.
+from .nu import NuBase, walk
+from .query import Reduction, StreamQuery
+from .span import Bracket, Policy, Retry, Snapshot, Span, Transaction, TryCatch
+from .types import Effect, ExecState, Realization
 
 
 __all__ = [
@@ -78,17 +104,24 @@ __all__ = [
     "BinaryCommand",
     "BinaryQuery",
     "BoolArg",
+    "Bracket",
     "BytesArg",
     "Command",
     "ContextManager",
+    "Control",
     "DictArg",
     "Direction",
+    "Effect",
     "Empty",
+    "ExecState",
     "FloatArg",
     "Flow",
+    "ForEachDo",
     "FrozenSetArg",
     "FuncCall",
     "FuncCallCmd",
+    "Gather",
+    "IfDo",
     "IntArg",
     "Interaction",
     "Interface",
@@ -103,24 +136,39 @@ __all__ = [
     "Mode",
     "NoneArg",
     "Nu",
+    "NuBase",
     "NuIndepComm",
+    "Parallel",
+    "Policy",
     "Query",
     "RValue",
+    "Race",
+    "Realization",
+    "Reduction",
     "Ref",
+    "Retry",
     "ScalarCommand",
     "ScalarQuery",
     "Sentinel",
+    "Sequential",
     "SetArg",
+    "Snapshot",
+    "Span",
     "StrArg",
+    "Strategy",
     "Stream",
+    "StreamQuery",
     "T_co",
     "TernaryCommand",
     "TernaryQuery",
     "TrackedEffect",
+    "Transaction",
+    "TryCatch",
     "TupleArg",
     "TypedNu",
     "UnaryCommand",
     "UnaryQuery",
+    "WhileDo",
     "is_empty",
     "is_invalid",
     "is_pure",
@@ -128,4 +176,5 @@ __all__ = [
     "propagate_special",
     "sup",
     "tracked_effects",
+    "walk",
 ]

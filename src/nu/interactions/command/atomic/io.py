@@ -9,7 +9,7 @@ import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu.stdio.refs import STDERR, STDOUT
-from nu.terms import Command, Mode
+from nu.terms import Command, Effect, Mode
 
 
 if TYPE_CHECKING:
@@ -31,9 +31,10 @@ class Print(Command):
     Output: `[Print:message] value1 value2 ...`
     """
 
-    writes = 0  # StdioRef at child 0 is a WRITE target
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {
+        0: Effect.WRITE
+    }  # StdioRef at child 0 is a WRITE target
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, *values: Arg) -> None:
         super().__init__(STDOUT, *values)
@@ -52,9 +53,8 @@ class Log(Command):
     Children: [StdioRef.STDERR, level, logger_name, message, *values]
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -82,9 +82,8 @@ class Debug(Command):
     Children: [StdioRef.STDOUT, prefix, labels, *values]
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,

@@ -202,5 +202,4 @@ class _UUIDI(Interface):
 class UUIDI(_UUIDI, TypedNu[UUID]):
     """UUID leaf - _UUIDI + TypedNu[UUID]."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})

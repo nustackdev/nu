@@ -18,8 +18,7 @@ __all__ = [
 class ClearCmd(UnaryQuery[None]):
     """Clear all items: collection.clear(). Returns None."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> None:
         """Apply."""

@@ -25,8 +25,8 @@ from abc import ABC
 from contextlib import closing
 from typing import TYPE_CHECKING, Any
 
-from .nu import Nu
-from .types import Mode
+from ._compat_nu import Nu
+from ._compat_types import Mode
 
 
 if TYPE_CHECKING:
@@ -73,12 +73,31 @@ class ContextManager(Nu, ABC):
         super().__init_subclass__(**kwargs)
         if ABC in cls.__bases__ or inspect.isabstract(cls):
             return
+        # Phase E: accept the new `support` declaration in lieu of the legacy
+        # `(own_mode, func_mode)` pair.
+        if "support" in cls.__dict__:
+            support = cls.__dict__["support"]
+            sync_in = any(getattr(m, "name", None) == "SYNC" for m in support)
+            async_in = any(getattr(m, "name", None) == "ASYNC" for m in support)
+            if sync_in and async_in:
+                cls.own_mode = Mode.BOTH
+                cls.func_mode = Mode.BOTH
+            elif async_in:
+                cls.own_mode = Mode.ASYNC
+                cls.func_mode = Mode.ASYNC
+            elif sync_in:
+                cls.own_mode = Mode.SYNC
+                cls.func_mode = Mode.SYNC
+            else:
+                msg = f"{cls.__module__}.{cls.__qualname__}: empty `support` set."
+                raise TypeError(msg)
+            return
         for name in ("own_mode", "func_mode"):
             if name not in cls.__dict__:
                 msg = (
                     f"{cls.__module__}.{cls.__qualname__} must declare "
-                    f"`{name}` explicitly (Mode.SYNC, Mode.ASYNC, or Mode.BOTH). "
-                    "Inheritance is not enough — explicit is better than implicit."
+                    f"`{name}` explicitly (Mode.SYNC, Mode.ASYNC, or Mode.BOTH), "
+                    "or declare `support` (frozenset[Mode])."
                 )
                 raise TypeError(msg)
         pair = (cls.own_mode, cls.func_mode)

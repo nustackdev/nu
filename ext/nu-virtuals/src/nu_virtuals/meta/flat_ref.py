@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from nu import EMPTY, Sentinel
 from nu.terms import Mode
-from nu.terms.ref import Ref
+from nu.terms._compat_ref import Ref
 from nu_virtuals.paths import ViewPathSer
 
 
@@ -39,8 +39,7 @@ class FlatRef(Ref):
         _is_primitive: True if leaf ref is a PrimitiveRef (not a ViewRef).
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,

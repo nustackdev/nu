@@ -32,8 +32,7 @@ class BufferedStdio(ContextManager):
     stdin passes through unbuffered (can't rollback reads).
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, *children: object) -> None:
         super().__init__(*children)

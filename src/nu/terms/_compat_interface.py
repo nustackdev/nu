@@ -27,8 +27,8 @@ from __future__ import annotations
 from contextlib import aclosing, closing
 from typing import TYPE_CHECKING
 
-from .nu import RValue
-from .types import T_co
+from ._compat_nu import RValue
+from ._compat_types import T_co
 
 
 if TYPE_CHECKING:

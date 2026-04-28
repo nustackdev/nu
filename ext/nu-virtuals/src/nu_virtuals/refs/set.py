@@ -32,8 +32,7 @@ class SetRef[T](
     Operations work lazily on PV views without loading into memory.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def result(self, op: Nu) -> SetI[T]:
         return SetI(op)

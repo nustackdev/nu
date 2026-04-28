@@ -24,8 +24,7 @@ __all__ = [
 class Gt(BinaryQuery[bool]):
     """Greater than: left > right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bool:
         """Apply."""
@@ -35,8 +34,7 @@ class Gt(BinaryQuery[bool]):
 class Lt(BinaryQuery[bool]):
     """Less than: left < right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bool:
         """Apply."""
@@ -46,8 +44,7 @@ class Lt(BinaryQuery[bool]):
 class Eq(BinaryQuery[bool]):
     """Equality: left == right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bool:
         """Apply."""
@@ -57,8 +54,7 @@ class Eq(BinaryQuery[bool]):
 class Ne(BinaryQuery[bool]):
     """Not equal: left != right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bool:
         """Apply."""
@@ -68,8 +64,7 @@ class Ne(BinaryQuery[bool]):
 class Ge(BinaryQuery[bool]):
     """Greater than or equal: left >= right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bool:
         """Apply."""
@@ -79,8 +74,7 @@ class Ge(BinaryQuery[bool]):
 class Le(BinaryQuery[bool]):
     """Less than or equal: left <= right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bool:
         """Apply."""
@@ -90,8 +84,7 @@ class Le(BinaryQuery[bool]):
 class IdComp(BinaryQuery[bool]):
     """Identity comparison: left is right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bool:
         """Apply."""

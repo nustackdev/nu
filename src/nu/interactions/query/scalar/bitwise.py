@@ -36,8 +36,7 @@ class BitwiseNot[ResultT](UnaryQuery[ResultT]):
     Use .bitnot() method instead.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> ResultT:
         """Apply."""
@@ -56,8 +55,7 @@ class BitwiseAnd[ResultT](BinaryQuery[ResultT]):
     Use .bitand() method to create this operation.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -71,8 +69,7 @@ class BitwiseOr[ResultT](BinaryQuery[ResultT]):
     Use .bitor() method to create this operation.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -82,8 +79,7 @@ class BitwiseOr[ResultT](BinaryQuery[ResultT]):
 class Xor[ResultT](BinaryQuery[ResultT]):
     """Bitwise XOR: left ^ right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -93,8 +89,7 @@ class Xor[ResultT](BinaryQuery[ResultT]):
 class LShift[ResultT](BinaryQuery[ResultT]):
     """Left shift: left << right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -104,8 +99,7 @@ class LShift[ResultT](BinaryQuery[ResultT]):
 class RShift[ResultT](BinaryQuery[ResultT]):
     """Right shift: left >> right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""

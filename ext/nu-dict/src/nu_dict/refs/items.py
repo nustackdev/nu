@@ -48,8 +48,7 @@ class ItemRef[T, ValueT: Interface](
 ):
     """Dict item reference for values in nested dicts."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -75,8 +74,7 @@ class ItemRef[T, ValueT: Interface](
 class IntRef(ItemRef[int, IntI], IntI):
     """Dict integer reference with full numeric interface."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -109,8 +107,7 @@ class IntRef(ItemRef[int, IntI], IntI):
 class StrRef(ItemRef[str, StrI], StrI):
     """Dict string reference with full string interface."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -135,8 +132,7 @@ class StrRef(ItemRef[str, StrI], StrI):
 class FloatRef(ItemRef[float, FloatI], FloatI):
     """Dict float reference with full numeric interface."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -161,8 +157,7 @@ class FloatRef(ItemRef[float, FloatI], FloatI):
 class BoolRef(ItemRef[bool, BoolI], BoolI):
     """Dict boolean reference with full logical interface."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -187,8 +182,7 @@ class BoolRef(ItemRef[bool, BoolI], BoolI):
 class BytesRef(ItemRef[bytes, BytesI], BytesI):
     """Dict bytes reference with full bytes interface."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,

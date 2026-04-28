@@ -24,8 +24,7 @@ __all__ = [
 class AttrGetOp[T](Query[T | Sentinel]):
     """Read value by name from context: ctx.attrs[name]."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: AttrRef[T]) -> None:
         super().__init__(ref)
@@ -38,8 +37,7 @@ class AttrGetOp[T](Query[T | Sentinel]):
 class AttrExistsOp(Query[bool]):
     """Check if name exists in context."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: AttrRef) -> None:
         super().__init__(ref)

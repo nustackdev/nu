@@ -53,8 +53,7 @@ class Teleport(Query[object]):
             (error strings, loop counters, config) that PrimRefs read.
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(
         self,

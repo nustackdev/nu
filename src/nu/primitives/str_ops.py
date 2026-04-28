@@ -64,8 +64,7 @@ __all__ = [
 class UpperOp(UnaryQuery[str]):
     """Convert to uppercase: str.upper()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> str | Sentinel:
         """Apply."""
@@ -77,8 +76,7 @@ class UpperOp(UnaryQuery[str]):
 class LowerOp(UnaryQuery[str]):
     """Convert to lowercase: str.lower()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> str | Sentinel:
         """Apply."""
@@ -90,8 +88,7 @@ class LowerOp(UnaryQuery[str]):
 class TitleOp(UnaryQuery[str]):
     """Convert to title case: str.title()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> str | Sentinel:
         """Apply."""
@@ -103,8 +100,7 @@ class TitleOp(UnaryQuery[str]):
 class CapitalizeOp(UnaryQuery[str]):
     """Capitalize first character: str.capitalize()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> str | Sentinel:
         """Apply."""
@@ -116,8 +112,7 @@ class CapitalizeOp(UnaryQuery[str]):
 class SwapCaseOp(UnaryQuery[str]):
     """Swap case: str.swapcase()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> str | Sentinel:
         """Apply."""
@@ -134,8 +129,7 @@ class SwapCaseOp(UnaryQuery[str]):
 class IsDigitOp(UnaryQuery[bool]):
     """Check if all digits: str.isdigit()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> bool | Sentinel:
         """Apply."""
@@ -147,8 +141,7 @@ class IsDigitOp(UnaryQuery[bool]):
 class IsAlphaOp(UnaryQuery[bool]):
     """Check if all alphabetic: str.isalpha()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> bool | Sentinel:
         """Apply."""
@@ -160,8 +153,7 @@ class IsAlphaOp(UnaryQuery[bool]):
 class IsAlnumOp(UnaryQuery[bool]):
     """Check if alphanumeric: str.isalnum()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> bool | Sentinel:
         """Apply."""
@@ -173,8 +165,7 @@ class IsAlnumOp(UnaryQuery[bool]):
 class IsSpaceOp(UnaryQuery[bool]):
     """Check if all whitespace: str.isspace()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, operand: object) -> bool | Sentinel:
         """Apply."""
@@ -191,8 +182,7 @@ class IsSpaceOp(UnaryQuery[bool]):
 class StripOp(BinaryQuery[str]):
     """Strip whitespace or chars: str.strip(chars)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
@@ -206,8 +196,7 @@ class StripOp(BinaryQuery[str]):
 class LStripOp(BinaryQuery[str]):
     """Strip leading whitespace or chars: str.lstrip(chars)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
@@ -221,8 +210,7 @@ class LStripOp(BinaryQuery[str]):
 class RStripOp(BinaryQuery[str]):
     """Strip trailing whitespace or chars: str.rstrip(chars)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
@@ -241,8 +229,7 @@ class RStripOp(BinaryQuery[str]):
 class SplitOp(TernaryQuery[list[str]]):
     """Split string: str.split(sep, maxsplit)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> list[str] | Sentinel:
         """Apply."""
@@ -256,8 +243,7 @@ class SplitOp(TernaryQuery[list[str]]):
 class RSplitOp(TernaryQuery[list[str]]):
     """Right split string: str.rsplit(sep, maxsplit)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> list[str] | Sentinel:
         """Apply."""
@@ -276,8 +262,7 @@ class RSplitOp(TernaryQuery[list[str]]):
 class FindOp(ScalarQuery[int]):
     """Find substring: str.find(sub, start, end)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, *args: object) -> int | Sentinel:
         """Apply."""
@@ -292,8 +277,7 @@ class FindOp(ScalarQuery[int]):
 class RFindOp(ScalarQuery[int]):
     """Find substring from right: str.rfind(sub, start, end)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, *args: object) -> int | Sentinel:
         """Apply."""
@@ -308,8 +292,7 @@ class RFindOp(ScalarQuery[int]):
 class CountSubstringOp(BinaryQuery[int]):
     """Count substring occurrences: str.count(sub)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> int | Sentinel:
         """Apply."""
@@ -326,8 +309,7 @@ class CountSubstringOp(BinaryQuery[int]):
 class StartsWithOp(BinaryQuery[bool]):
     """Check if starts with prefix: str.startswith(prefix)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
@@ -339,8 +321,7 @@ class StartsWithOp(BinaryQuery[bool]):
 class EndsWithOp(BinaryQuery[bool]):
     """Check if ends with suffix: str.endswith(suffix)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bool | Sentinel:
         """Apply."""
@@ -357,8 +338,7 @@ class EndsWithOp(BinaryQuery[bool]):
 class CenterOp(TernaryQuery[str]):
     """Center in width: str.center(width, fillchar)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> str | Sentinel:
         """Apply."""
@@ -371,8 +351,7 @@ class CenterOp(TernaryQuery[str]):
 class LJustOp(TernaryQuery[str]):
     """Left justify: str.ljust(width, fillchar)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> str | Sentinel:
         """Apply."""
@@ -385,8 +364,7 @@ class LJustOp(TernaryQuery[str]):
 class RJustOp(TernaryQuery[str]):
     """Right justify: str.rjust(width, fillchar)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> str | Sentinel:
         """Apply."""
@@ -399,8 +377,7 @@ class RJustOp(TernaryQuery[str]):
 class ZFillOp(BinaryQuery[str]):
     """Zero-fill: str.zfill(width)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""
@@ -417,8 +394,7 @@ class ZFillOp(BinaryQuery[str]):
 class ReplaceOp(ScalarQuery[str]):
     """Replace substring: str.replace(old, new, count)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, *args: object) -> str | Sentinel:
         """Apply."""
@@ -439,8 +415,7 @@ class ReplaceOp(ScalarQuery[str]):
 class EncodeOp(BinaryQuery[bytes]):
     """Encode string to bytes: str.encode(encoding)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> bytes | Sentinel:
         """Apply."""
@@ -460,8 +435,7 @@ class EncodeOp(BinaryQuery[bytes]):
 class JoinOp(BinaryQuery[str]):
     """Join iterable elements into string: sep.join(seq)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> str | Sentinel:
         """Apply."""

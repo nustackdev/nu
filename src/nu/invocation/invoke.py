@@ -17,16 +17,16 @@ import inspect
 import typing
 from typing import TYPE_CHECKING, Any, ClassVar, overload
 
-from ..terms.query import ScalarQuery
-from ..terms.ref import Ref
-from ..terms.types import Mode, Sentinel
+from ..terms._compat_query import ScalarQuery
+from ..terms._compat_ref import Ref
+from ..terms._compat_types import Mode, Sentinel
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ..terms.interface import Interface
-    from ..terms.types import TrackedEffect
+    from ..terms._compat_interface import Interface
+    from ..terms._compat_types import TrackedEffect
 
 
 __all__ = [
@@ -64,7 +64,7 @@ def _infer_mode(fn: Callable[..., Any]) -> tuple[Mode, Mode]:
 
 def _extract_py_type(owner: type) -> type | None:
     """Find the generic argument of Ref[T] or TypedNu[T] in owner's MRO."""
-    from ..terms.interface import TypedNu
+    from ..terms._compat_interface import TypedNu
 
     seen: set[type] = set()
 
@@ -106,8 +106,7 @@ class Invoke[T](ScalarQuery[T | Sentinel]):
     """
 
     # Class defaults are the widest valid pair; instance __init__ narrows.
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -230,7 +229,7 @@ class _InstanceBoundInvocation[V]:
         return f"{self._owner!r}.{self._inv._name}"
 
 
-class Invocation[V: "Interface"]:  # noqa: N801
+class Invocation[V: "Interface"]:
     """Descriptor that compiles attribute access into an Invoke.
 
     Use on a Ref[T] or TypedNu[T] subclass. At descriptor resolution time,
@@ -283,9 +282,7 @@ class Invocation[V: "Interface"]:  # noqa: N801
     @overload
     def __get__(self, obj: None, objtype: type) -> _RefBoundInvocation[V]: ...
     @overload
-    def __get__(
-        self, obj: object, objtype: type | None = None
-    ) -> _InstanceBoundInvocation[V]: ...
+    def __get__(self, obj: object, objtype: type | None = None) -> _InstanceBoundInvocation[V]: ...
 
     def __get__(
         self, obj: object | None, objtype: type | None = None
@@ -335,6 +332,7 @@ def MethodCall(
     fn_candidate = getattr(py_type, name, None) if py_type is not None else None
 
     if fn_candidate is None:
+
         def fn(t: Any, *a: Any, **kw: Any) -> Any:  # noqa: ANN401
             return getattr(t, name)(*a, **kw)
 

@@ -21,8 +21,7 @@ class TimeSleep(UnaryCommand):
     Children: ``[delay]``
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, delay: FloatArg) -> None:
         super().__init__(delay)

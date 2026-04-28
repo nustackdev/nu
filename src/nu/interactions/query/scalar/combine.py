@@ -19,8 +19,7 @@ __all__ = [
 class Zip(ScalarQuery[Iterator[tuple]]):
     """Zip multiple iterables: zip(*iterables) -> lazy iterator."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, *operands: object) -> None:
         """Initialize with 2+ iterables."""
@@ -41,8 +40,7 @@ class Zip(ScalarQuery[Iterator[tuple]]):
 class Chain(ScalarQuery[Iterator]):
     """Chain multiple iterables: chain(*iterables) -> lazy iterator."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, *operands: object) -> None:
         """Initialize with 2+ iterables."""
@@ -63,8 +61,7 @@ class Chain(ScalarQuery[Iterator]):
 class Enumerate(BinaryQuery[Iterator[tuple[int, object]]]):
     """Enumerate iterable: enumerate(iterable, start) -> lazy iterator."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> Iterator[tuple[int, object]] | Sentinel:
         """Apply: left=iterable, right=start."""

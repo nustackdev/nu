@@ -35,8 +35,7 @@ class IfDo(Flow):
     Children: [condition, then_branch, else_branch?]
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -79,8 +78,7 @@ class While(Flow):
     Children: ``[condition, body]``
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, condition: Any, body: Nu) -> None:
         super().__init__(condition, body)
@@ -105,8 +103,7 @@ class DoWhile(Flow):
     Children: ``[condition, body]``
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, condition: Any, body: Nu) -> None:
         super().__init__(condition, body)
@@ -136,8 +133,7 @@ class Forever(Flow):
     Children: ``[body]``
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, body: Nu) -> None:
         super().__init__(body)
@@ -162,8 +158,7 @@ class SwitchDo(Flow):
     Children: ``[selector, *case_values, default?]``
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,

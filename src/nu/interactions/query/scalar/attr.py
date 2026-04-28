@@ -34,8 +34,7 @@ class GetAttr[ResultT](BinaryQuery[ResultT]):
         >>> GetAttr(obj, attr_name_term)  # dynamic attribute
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> ResultT:
         """Apply."""
@@ -52,8 +51,7 @@ class SetAttr(TernaryQuery[None]):
         >>> SetAttr(obj, "name", "value")
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, first: object, second: object, third: object) -> None:
         """Apply."""
@@ -70,8 +68,7 @@ class DelAttr(BinaryQuery[None]):
         >>> DelAttr(obj, "cached_value")
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def apply(self, left: object, right: object) -> None:
         """Apply."""

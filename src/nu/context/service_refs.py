@@ -28,8 +28,7 @@ class ServiceRef[T](Ref[T]):
         val = await ref.afetch(ctx)  # -> ctx[SolanaRpc]
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, service_type: type[T] | None = None) -> None:
         """Initialize with service type tag."""

@@ -124,8 +124,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
     Use .lazy / .eager to switch facet before calling iteration methods.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
     _facet: Facet = Facet.NONE
 
     def __init__(
@@ -298,6 +297,7 @@ class ViewRef(Generic[T, ViewT], Ref[T]):  # noqa: UP046
         view = nav.open_at_path(ViewPathSer(view_path), storage_ctx)
         return self._apply_facet(view)  # type: ignore
 
+
 class PrimitiveRef[T](Ref[T]):
     """Virtuals ref to a primitive/leaf value.
 
@@ -305,8 +305,7 @@ class PrimitiveRef[T](Ref[T]):
     fetch() navigates to the parent view and subscripts to get the value.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
