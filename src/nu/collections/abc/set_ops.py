@@ -10,9 +10,11 @@ IntersectionUpdateCmd, DifferenceUpdateCmd, SymmetricDifferenceUpdateCmd
 from __future__ import annotations
 
 from collections.abc import MutableSet, Set
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import INVALID, BinaryQuery, Effect, Mode, Sentinel, UnaryQuery
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import INVALID
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -34,93 +36,117 @@ __all__ = [
 ]
 
 
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
 # =============================================================================
 # SET OPERATIONS
 # =============================================================================
 
 
-class UnionOp[T](BinaryQuery[set[T] | frozenset[T]]):
+class UnionOp(ScalarQuery):
     """Set union: left | right."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left | right  # type: ignore
+        return a | b
 
 
-class IntersectionOp[T](BinaryQuery[set[T] | frozenset[T]]):
+class IntersectionOp(ScalarQuery):
     """Set intersection: left & right."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left & right  # type: ignore
+        return a & b
 
 
-class DifferenceOp[T](BinaryQuery[set[T] | frozenset[T]]):
+class DifferenceOp(ScalarQuery):
     """Set difference: left - right."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left - right  # type: ignore
+        return a - b
 
 
-class SymmetricDifferenceOp[T](BinaryQuery[set[T] | frozenset[T]]):
+class SymmetricDifferenceOp(ScalarQuery):
     """Set symmetric difference: left ^ right."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left ^ right  # type: ignore
+        return a ^ b
 
 
-class IsSubsetOp(BinaryQuery[bool]):
+class IsSubsetOp(ScalarQuery):
     """Test if subset: left <= right."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left <= right
+        return a <= b
 
 
-class IsSupersetOp(BinaryQuery[bool]):
+class IsSupersetOp(ScalarQuery):
     """Test if superset: left >= right."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left >= right
+        return a >= b
 
 
-class IsDisjointOp(BinaryQuery[bool]):
+class IsDisjointOp(ScalarQuery):
     """Test if disjoint: left.isdisjoint(right)."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left.isdisjoint(right)
+        return a.isdisjoint(b)
 
 
 # =============================================================================
@@ -128,130 +154,144 @@ class IsDisjointOp(BinaryQuery[bool]):
 # =============================================================================
 
 
-class AddCmd[T](BinaryQuery[None]):
+class AddCmd(ScalarQuery):
     """Add element to set: s.add(value). Returns None (mutates in-place)."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
-            raise TypeError(f"add() requires mutable set, got {type(left).__name__}")
-        left.add(right)
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, MutableSet):
+            raise TypeError(f"add() requires mutable set, got {type(a).__name__}")
+        a.add(b)
         return None
 
 
-class RemoveCmd[T](BinaryQuery[None]):
+class RemoveCmd(ScalarQuery):
     """Remove element from set: s.remove(value). Returns None, or INVALID if not found."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
-            raise TypeError(f"remove() requires mutable set, got {type(left).__name__}")
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, MutableSet):
+            raise TypeError(f"remove() requires mutable set, got {type(a).__name__}")
         try:
-            left.remove(right)
+            a.remove(b)
         except KeyError:
             return INVALID
         return None
 
 
-class DiscardCmd[T](BinaryQuery[None]):
+class DiscardCmd(ScalarQuery):
     """Discard element from set: s.discard(value). Returns None (mutates in-place)."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
-            raise TypeError(f"discard() requires mutable set, got {type(left).__name__}")
-        left.discard(right)
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, MutableSet):
+            raise TypeError(f"discard() requires mutable set, got {type(a).__name__}")
+        a.discard(b)
         return None
 
 
-class SetPopCmd[T](UnaryQuery[T]):
+class SetPopCmd(ScalarQuery):
     """Pop arbitrary element: s.pop(). Returns element, or INVALID if empty."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> T | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, MutableSet):
             raise TypeError(f"pop() requires mutable set, got {type(operand).__name__}")
         try:
-            return operand.pop()  # type: ignore[return-value]
+            return operand.pop()
         except KeyError:
             return INVALID
 
 
-class SetUpdateCmd[T](BinaryQuery[None]):
+class SetUpdateCmd(ScalarQuery):
     """Update set with elements from other: s.update(other). Returns None."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
-            raise TypeError(f"update() requires mutable set, got {type(left).__name__}")
-        if not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, MutableSet):
+            raise TypeError(f"update() requires mutable set, got {type(a).__name__}")
+        if not isinstance(b, Set):
             return INVALID
-        left |= right
+        a |= b
         return None
 
 
-class IntersectionUpdateCmd[T](BinaryQuery[None]):
+class IntersectionUpdateCmd(ScalarQuery):
     """Keep only elements found in both: s.intersection_update(other). Returns None."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
-            raise TypeError(
-                f"intersection_update() requires mutable set, got {type(left).__name__}"
-            )
-        if not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, MutableSet):
+            raise TypeError(f"intersection_update() requires mutable set, got {type(a).__name__}")
+        if not isinstance(b, Set):
             return INVALID
-        left &= right
+        a &= b
         return None
 
 
-class DifferenceUpdateCmd[T](BinaryQuery[None]):
+class DifferenceUpdateCmd(ScalarQuery):
     """Remove elements found in other: s.difference_update(other). Returns None."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
-            raise TypeError(f"difference_update() requires mutable set, got {type(left).__name__}")
-        if not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, MutableSet):
+            raise TypeError(f"difference_update() requires mutable set, got {type(a).__name__}")
+        if not isinstance(b, Set):
             return INVALID
-        left -= right
+        a -= b
         return None
 
 
-class SymmetricDifferenceUpdateCmd[T](BinaryQuery[None]):
+class SymmetricDifferenceUpdateCmd(ScalarQuery):
     """Keep elements in either but not both: s.symmetric_difference_update(other). Returns None."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, MutableSet):
             raise TypeError(
-                f"symmetric_difference_update() requires mutable set, got {type(left).__name__}"
+                f"symmetric_difference_update() requires mutable set, got {type(a).__name__}"
             )
-        if not isinstance(right, Set):
+        if not isinstance(b, Set):
             return INVALID
-        left ^= right
+        a ^= b
         return None

@@ -1,23 +1,14 @@
-"""Iterable transformation ops — lazy iterators.
-
-Transform ops return lazy iterators instead of materialized lists.
-Use ToList/ToSet/ToDict to explicitly materialize.
-
-Sorted: sorted(seq) -> list (terminal — inherently eager)
-Reversed: reversed(seq) -> Iterator
-Pluck: (x[key] for x in seq) -> Iterator
-FilterBy: (x for x in seq if x[key] == value) -> Iterator
-Flatten: chain.from_iterable(seq) -> Iterator
-Unique: unique elements preserving order -> Iterator
-"""
+"""Iterable transformation ops - lazy iterators."""
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator, Sequence
 from itertools import chain as itertools_chain
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import INVALID, BinaryQuery, Mode, Sentinel, TernaryQuery, UnaryQuery
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import INVALID
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -30,114 +21,119 @@ __all__ = [
 ]
 
 
-class Sorted[ResultT](BinaryQuery[list[ResultT]]):
-    """Sorted list: sorted(seq, reverse=reverse). Terminal — inherently eager."""
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    def apply(self, left: object, right: object) -> list[ResultT] | Sentinel:
-        """Apply."""
+class Sorted(ScalarQuery):
+    """Sorted list: sorted(seq, reverse=reverse)."""
+
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self, iterable: Any, reverse: Any = False) -> None:  # noqa: ANN401
+        super().__init__(iterable, reverse)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, Iterable):
-            raise TypeError(f"sorted_() requires iterable, got {type(left).__name__}")
+            msg = f"sorted_() requires iterable, got {type(left).__name__}"
+            raise TypeError(msg)
         try:
-            return sorted(left, reverse=right)  # type: ignore
+            return sorted(left, reverse=bool(right))
         except TypeError:
             return INVALID
 
-    def __repr__(self) -> str:
-        return f"Sorted({self._children[0]!r}, reverse={self._children[1]!r})"
 
-
-class Reversed[ResultT](UnaryQuery[Iterator[ResultT]]):
+class Reversed(ScalarQuery):
     """Reversed sequence: reversed(seq) -> lazy iterator."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> Iterator[ResultT]:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Iterator:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, Sequence):
-            raise TypeError(f"reversed_() requires sequence, got {type(operand).__name__}")
-        return reversed(operand)  # type: ignore
+            msg = f"reversed_() requires sequence, got {type(operand).__name__}"
+            raise TypeError(msg)
+        return reversed(operand)
 
 
-class Pluck[T](BinaryQuery[Iterator[T]]):
-    """Extract field from each element: (x[key] for x in seq) -> lazy iterator.
+class Pluck(ScalarQuery):
+    """Extract field from each element."""
 
-    Both operand and key are resolved as terms at execution time.
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    Example:
-        >>> Pluck(token_balances, "mint")
-    """
+    def __init__(self, iterable: Any, key: Any) -> None:  # noqa: ANN401
+        super().__init__(iterable, key)
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
-    def apply(self, left: object, right: object) -> Iterator[T] | Sentinel:
-        """Apply."""
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, Iterable):
-            raise TypeError(f"pluck_() requires iterable, got {type(left).__name__}")
+            msg = f"pluck_() requires iterable, got {type(left).__name__}"
+            raise TypeError(msg)
 
-        def _gen() -> Iterator[T]:
+        def _gen() -> Iterator:
             for item in left:
-                yield item[right]  # type: ignore
+                yield item[right]
 
-        try:
-            return _gen()
-        except (KeyError, TypeError):
-            return INVALID
+        return _gen()
 
 
-class FilterBy[T](TernaryQuery[Iterator[T]]):
-    """Filter by field value: (x for x in seq if x[key] == value) -> lazy iterator.
+class FilterBy(ScalarQuery):
+    """Filter by field value."""
 
-    All three operands (collection, field, value) are resolved as terms
-    at execution time — so both field name and value can be dynamic.
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    Example:
-        >>> FilterBy(balances, "mint", t.current_mint)
-    """
+    def __init__(self, iterable: Any, field: Any, value: Any) -> None:  # noqa: ANN401
+        super().__init__(iterable, field, value)
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
-    def apply(self, first: object, second: object, third: object) -> Iterator[T] | Sentinel:
-        """Apply: first=collection, second=field, third=value."""
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        first, second, third = ops
         if not isinstance(first, Iterable):
-            raise TypeError(f"filter_by_() requires iterable, got {type(first).__name__}")
+            msg = f"filter_by_() requires iterable, got {type(first).__name__}"
+            raise TypeError(msg)
 
-        def _gen() -> Iterator[T]:
+        def _gen() -> Iterator:
             for item in first:
-                if item[second] == third:  # type: ignore
-                    yield item  # type: ignore
+                if item[second] == third:
+                    yield item
 
-        try:
-            return _gen()
-        except (KeyError, TypeError):
-            return INVALID
+        return _gen()
 
 
-class Flatten(UnaryQuery[Iterator]):
-    """Flatten one level: chain.from_iterable(seq) -> lazy iterator."""
+class Flatten(ScalarQuery):
+    """Flatten one level."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> Iterator | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, Iterable):
-            raise TypeError(f"Flatten requires iterable, got {type(operand).__name__}")
+            msg = f"Flatten requires iterable, got {type(operand).__name__}"
+            raise TypeError(msg)
         try:
-            return itertools_chain.from_iterable(operand)  # type: ignore
+            return itertools_chain.from_iterable(operand)
         except TypeError:
             return INVALID
 
 
-class Unique(UnaryQuery[Iterator]):
-    """Unique elements preserving order -> lazy iterator."""
+class Unique(ScalarQuery):
+    """Unique elements preserving order."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> Iterator | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, Iterable):
-            raise TypeError(f"Unique requires iterable, got {type(operand).__name__}")
+            msg = f"Unique requires iterable, got {type(operand).__name__}"
+            raise TypeError(msg)
 
         def _gen() -> Iterator:
             seen: set = set()
@@ -146,7 +142,4 @@ class Unique(UnaryQuery[Iterator]):
                     seen.add(item)
                     yield item
 
-        try:
-            return _gen()
-        except Exception:
-            return INVALID
+        return _gen()

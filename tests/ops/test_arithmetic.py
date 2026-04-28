@@ -13,7 +13,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from nu import Context
+from nu import Context, runtime
 from nu.interactions import (
     Abs,
     Add,
@@ -52,65 +52,65 @@ small_pos = st.integers(min_value=0, max_value=10)
 @given(a=numbers, b=numbers)
 async def test_add_commutative(a, b):
     ctx = Context()
-    r1 = await Add(a, b).afirst(ctx)
-    r2 = await Add(b, a).afirst(ctx)
+    r1 = await runtime.afirst(Add(a, b), ctx)
+    r2 = await runtime.afirst(Add(b, a), ctx)
     assert r1 == r2
 
 
 @given(a=numbers, b=numbers)
 async def test_mul_commutative(a, b):
     ctx = Context()
-    r1 = await Mul(a, b).afirst(ctx)
-    r2 = await Mul(b, a).afirst(ctx)
+    r1 = await runtime.afirst(Mul(a, b), ctx)
+    r2 = await runtime.afirst(Mul(b, a), ctx)
     assert r1 == r2
 
 
 @given(a=numbers)
 async def test_add_identity(a):
     ctx = Context()
-    assert await Add(a, 0).afirst(ctx) == a
+    assert await runtime.afirst(Add(a, 0), ctx) == a
 
 
 @given(a=numbers)
 async def test_mul_identity(a):
     ctx = Context()
-    assert await Mul(a, 1).afirst(ctx) == a
+    assert await runtime.afirst(Mul(a, 1), ctx) == a
 
 
 @given(a=numbers)
 async def test_neg_involution(a):
     """Double negation returns original."""
     ctx = Context()
-    result = await Neg(Neg(a)).afirst(ctx)
+    result = await runtime.afirst(Neg(Neg(a)), ctx)
     assert result == a
 
 
 @given(a=numbers)
 async def test_sub_self_is_zero(a):
     ctx = Context()
-    assert await Sub(a, a).afirst(ctx) == 0
+    assert await runtime.afirst(Sub(a, a), ctx) == 0
 
 
 @given(a=ints, b=nonzero)
 async def test_div_mul_inverse(a, b):
     """a == (a / b) * b for integers (using floor div)."""
     ctx = Context()
-    q = await FloorDiv(a, b).afirst(ctx)
-    r = await Mod(a, b).afirst(ctx)
+    q = await runtime.afirst(FloorDiv(a, b), ctx)
+    r = await runtime.afirst(Mod(a, b), ctx)
     assert q * b + r == a
 
 
 @given(a=small_ints)
 async def test_abs_non_negative(a):
     ctx = Context()
-    result = await Abs(a).afirst(ctx)
+    result = await runtime.afirst(Abs(a), ctx)
     assert result >= 0  # type: ignore
 
 
 @given(a=small_ints, b=small_pos)
 async def test_pow_matches_python(a, b):
     ctx = Context()
-    assert await Pow(a, b).afirst(ctx) == a**b
+    assert await runtime.afirst(Pow(a, b), ctx) == a**b
 
 
 # ---------------------------------------------------------------------------
@@ -120,24 +120,24 @@ async def test_pow_matches_python(a, b):
 
 async def test_add_strings(ctx):
     """String concatenation via Add."""
-    assert await Add("hello ", "world").afirst(ctx) == "hello world"
+    assert await runtime.afirst(Add("hello ", "world"), ctx) == "hello world"
 
 
 async def test_mul_string_repeat(ctx):
     """String repetition via Mul."""
-    assert await Mul("ab", 3).afirst(ctx) == "ababab"
+    assert await runtime.afirst(Mul("ab", 3), ctx) == "ababab"
 
 
 async def test_div_returns_float(ctx):
-    assert await Div(7, 2).afirst(ctx) == 3.5
+    assert await runtime.afirst(Div(7, 2), ctx) == 3.5
 
 
 async def test_floor_div_truncates(ctx):
-    assert await FloorDiv(7, 2).afirst(ctx) == 3
+    assert await runtime.afirst(FloorDiv(7, 2), ctx) == 3
 
 
 async def test_floor_div_negative(ctx):
-    assert await FloorDiv(-7, 2).afirst(ctx) == -4
+    assert await runtime.afirst(FloorDiv(-7, 2), ctx) == -4
 
 
 # ---------------------------------------------------------------------------
@@ -148,7 +148,7 @@ async def test_floor_div_negative(ctx):
 @pytest.mark.parametrize("op_cls", [Neg, Abs, Pos])
 async def test_unary_type_error_raises(ctx, op_cls):
     with pytest.raises(TypeError):
-        await op_cls("not_a_number").afirst(ctx)
+        await runtime.afirst(op_cls("not_a_number"), ctx)
 
 
 @pytest.mark.parametrize(
@@ -165,10 +165,10 @@ async def test_unary_type_error_raises(ctx, op_cls):
 )
 async def test_binary_type_error_raises(ctx, op_cls, left, right):
     with pytest.raises(TypeError):
-        await op_cls(left, right).afirst(ctx)
+        await runtime.afirst(op_cls(left, right), ctx)
 
 
 @pytest.mark.parametrize("op_cls", [Div, FloorDiv, Mod])
 async def test_division_by_zero_raises(ctx, op_cls):
     with pytest.raises(ZeroDivisionError):
-        await op_cls(1, 0).afirst(ctx)
+        await runtime.afirst(op_cls(1, 0), ctx)

@@ -1,8 +1,11 @@
-"""Parallel ops -- Race, ParAll, ParAny.
+"""Parallel ops -- ParAny.
 
-(Parallel removed: parallel composition is `a | b` on the Nu base,
-building a NuIndepComm. Race/ParAll/ParAny stay: they are distinct semantics
-over concurrent children - first-completed, fail-fast, succeed-if-any.)
+``Race`` and ``ParAll`` are deleted: the new core ships
+``nu.terms.flow.Race`` and ``nu.terms.flow.Parallel`` (was ``ParAll``).
+Top-level ``nu.Race`` and ``nu.Parallel`` resolve there.
+
+``ParAny`` stays as a distinct semantic over concurrent children:
+succeed if any child succeeds.
 """
 
 from __future__ import annotations
@@ -10,27 +13,23 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Flow, Mode
+from nu.terms.flow import Strategy
+from nu.terms.types import Mode
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
-
-    from nu.context import Context
     from nu.terms import Nu
 
 
 __all__ = [
-    "ParAll",
     "ParAny",
-    "Race",
 ]
 
 
-class Race(Flow):
-    """Execute children concurrently, complete on first finish.
+class ParAny(Strategy):
+    """Run children concurrently; succeed if any one succeeds.
 
-    Children: ``[*children]``
+    Children: ``[*children]`` -- all body slots (Strategy semantics).
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
@@ -38,76 +37,19 @@ class Race(Flow):
     def __init__(self, *children: Nu) -> None:
         super().__init__(*children)
 
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        if False:  # pragma: no cover - marks this as an async generator
-            yield
-        if not self.children:
+    async def _arun_children(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        if not self._children:
             return
-        tasks = [asyncio.create_task(child.aexecute(ctx)) for child in self.children]
-        try:
-            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-            for task in pending:
-                task.cancel()
-            if pending:
-                await asyncio.gather(*pending, return_exceptions=True)
-            for task in done:
-                if task.exception() is not None:
-                    raise task.exception()  # type: ignore[misc]
-        except BaseException:
-            for task in tasks:
-                task.cancel()
-            await asyncio.gather(*tasks, return_exceptions=True)
-            raise
-
-
-class ParAll(Flow):
-    """Execute children concurrently, fail fast on first exception.
-
-    Children: ``[*children]``
-    """
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
-
-    def __init__(self, *children: Nu) -> None:
-        super().__init__(*children)
-
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        if False:  # pragma: no cover
-            yield
-        if not self.children:
-            return
-        tasks = [asyncio.create_task(child.aexecute(ctx)) for child in self.children]
-        try:
-            await asyncio.gather(*tasks)
-        except Exception:
-            for task in tasks:
-                if not task.done():
-                    task.cancel()
-            await asyncio.gather(*tasks, return_exceptions=True)
-            raise
-
-
-class ParAny(Flow):
-    """Execute children concurrently, succeed if any one succeeds.
-
-    Children: ``[*children]``
-    """
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
-
-    def __init__(self, *children: Nu) -> None:
-        super().__init__(*children)
-
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        if False:  # pragma: no cover
-            yield
-        if not self.children:
-            return
-        tasks = {asyncio.create_task(child.aexecute(ctx)) for child in self.children}
-        last_error: Exception | None = None
+        tasks = {asyncio.create_task(runtime.aexecute(child, ctx)) for child in self._children}
+        last_error: BaseException | None = None
         try:
             while tasks:
-                done, tasks = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+                done, tasks = await asyncio.wait(
+                    tasks,
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
                 for task in done:
                     exc = task.exception()
                     if exc is None:
@@ -116,7 +58,7 @@ class ParAny(Flow):
                         if tasks:
                             await asyncio.gather(*tasks, return_exceptions=True)
                         return
-                    last_error = exc  # type: ignore[assignment]
+                    last_error = exc
             if last_error is not None:
                 raise last_error
         except BaseException:

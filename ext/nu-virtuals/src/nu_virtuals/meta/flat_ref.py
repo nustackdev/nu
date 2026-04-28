@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from nu import EMPTY, Sentinel
 from nu.terms import Mode
-from nu.terms._compat_ref import Ref
+from nu.terms.ref import Ref
 from nu_virtuals.paths import ViewPathSer
 
 

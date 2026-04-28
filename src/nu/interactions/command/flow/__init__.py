@@ -1,6 +1,12 @@
-"""Flow Commands — imperative mutations composing sub-flows."""
+"""Flow Commands -- imperative mutations composing sub-flows.
 
-from .control import DoWhile, Forever, IfDo, SwitchDo, While
+`IfDo`, `Race`, `Parallel` (was `ParAll`), and `ForEachDo` (was
+`ForEach`) live in `nu.terms.flow` (new core); they're not re-exported
+here. Top-level `nu.IfDo` / `nu.Race` / `nu.Parallel` / `nu.ForEachDo`
+resolve there.
+"""
+
+from .control import DoWhile, Forever, SwitchDo, While
 from .error import Retry, TryCatch
 from .iteration import (
     Filter,
@@ -13,8 +19,8 @@ from .iteration import (
     ToDict,
     UniqueDo,
 )
-from .iteration_range import ForEach, ForRange
-from .parallel import ParAll, ParAny, Race
+from .iteration_range import ForRange
+from .parallel import ParAny
 from .timing import Debounce, Throttle, Timed, Timeout
 
 
@@ -24,16 +30,12 @@ __all__ = [
     "Filter",
     "Find",
     "FindIndex",
-    "ForEach",
     "ForRange",
     "Forever",
     "GroupBy",
-    "IfDo",
     "Map",
-    "ParAll",
     "ParAny",
     "Partition",
-    "Race",
     "Retry",
     "SwitchDo",
     "TakeWhile",

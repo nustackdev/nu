@@ -11,17 +11,11 @@ Replacing: BytesReplaceOp
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import (
-    INVALID,
-    BinaryQuery,
-    Mode,
-    ScalarQuery,
-    Sentinel,
-    TernaryQuery,
-    UnaryQuery,
-)
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import INVALID
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -41,18 +35,24 @@ __all__ = [
 ]
 
 
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
 # =============================================================================
 # DECODING
 # =============================================================================
 
 
-class DecodeOp(BinaryQuery[str]):
+class DecodeOp(ScalarQuery):
     """Decode bytes to string: bytes.decode(encoding)."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, bytes):
             return INVALID
         try:
@@ -61,13 +61,16 @@ class DecodeOp(BinaryQuery[str]):
             return INVALID
 
 
-class HexOp(UnaryQuery[str]):
+class HexOp(ScalarQuery):
     """Convert to hex string: bytes.hex()."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, bytes):
             return INVALID
         return operand.hex()
@@ -78,25 +81,31 @@ class HexOp(UnaryQuery[str]):
 # =============================================================================
 
 
-class BytesUpperOp(UnaryQuery[bytes]):
+class BytesUpperOp(ScalarQuery):
     """Convert to uppercase: bytes.upper()."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> bytes | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, bytes):
             return INVALID
         return operand.upper()
 
 
-class BytesLowerOp(UnaryQuery[bytes]):
+class BytesLowerOp(ScalarQuery):
     """Convert to lowercase: bytes.lower()."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> bytes | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, bytes):
             return INVALID
         return operand.lower()
@@ -107,13 +116,16 @@ class BytesLowerOp(UnaryQuery[bytes]):
 # =============================================================================
 
 
-class BytesStripOp(BinaryQuery[bytes]):
+class BytesStripOp(ScalarQuery):
     """Strip bytes: bytes.strip(chars)."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bytes | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, bytes):
             return INVALID
         if right is not None and not isinstance(right, bytes):
@@ -121,13 +133,16 @@ class BytesStripOp(BinaryQuery[bytes]):
         return left.strip(right)
 
 
-class BytesLStripOp(BinaryQuery[bytes]):
+class BytesLStripOp(ScalarQuery):
     """Strip leading bytes: bytes.lstrip(chars)."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bytes | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, bytes):
             return INVALID
         if right is not None and not isinstance(right, bytes):
@@ -135,13 +150,16 @@ class BytesLStripOp(BinaryQuery[bytes]):
         return left.lstrip(right)
 
 
-class BytesRStripOp(BinaryQuery[bytes]):
+class BytesRStripOp(ScalarQuery):
     """Strip trailing bytes: bytes.rstrip(chars)."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bytes | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, bytes):
             return INVALID
         if right is not None and not isinstance(right, bytes):
@@ -154,18 +172,21 @@ class BytesRStripOp(BinaryQuery[bytes]):
 # =============================================================================
 
 
-class BytesSplitOp(TernaryQuery[list[bytes]]):
+class BytesSplitOp(ScalarQuery):
     """Split bytes: bytes.split(sep, maxsplit)."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, first: object, second: object, third: object) -> list[bytes] | Sentinel:
-        """Apply."""
+    def __init__(self, a: Any, b: Any, c: Any) -> None:  # noqa: ANN401
+        super().__init__(a, b, c)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        first, second, third = ops
         if not isinstance(first, bytes):
             return INVALID
         if second is not None and not isinstance(second, bytes):
             return INVALID
-        return first.split(second, int(third))  # type: ignore[arg-type]
+        return first.split(second, int(third))
 
 
 # =============================================================================
@@ -173,28 +194,33 @@ class BytesSplitOp(TernaryQuery[list[bytes]]):
 # =============================================================================
 
 
-class BytesFindOp(ScalarQuery[int]):
+class BytesFindOp(ScalarQuery):
     """Find sub-bytes: bytes.find(sub, start, end)."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, *args: object) -> int | Sentinel:
-        """Apply."""
-        operand, sub, start, end = args
+    def __init__(self, a: Any, b: Any, c: Any, d: Any) -> None:  # noqa: ANN401
+        super().__init__(a, b, c, d)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand, sub, start, end = ops
         if not isinstance(operand, bytes) or not isinstance(sub, bytes):
             return INVALID
         if end is None:
-            return operand.find(sub, int(start))  # type: ignore[arg-type]
-        return operand.find(sub, int(start), int(end))  # type: ignore[arg-type]
+            return operand.find(sub, int(start))
+        return operand.find(sub, int(start), int(end))
 
 
-class BytesCountOp(BinaryQuery[int]):
+class BytesCountOp(ScalarQuery):
     """Count sub-bytes occurrences: bytes.count(sub)."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> int | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, bytes) or not isinstance(right, bytes):
             return INVALID
         return left.count(right)
@@ -205,25 +231,31 @@ class BytesCountOp(BinaryQuery[int]):
 # =============================================================================
 
 
-class BytesStartsWithOp(BinaryQuery[bool]):
+class BytesStartsWithOp(ScalarQuery):
     """Check if starts with prefix: bytes.startswith(prefix)."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, bytes) or not isinstance(right, bytes):
             return INVALID
         return left.startswith(right)
 
 
-class BytesEndsWithOp(BinaryQuery[bool]):
+class BytesEndsWithOp(ScalarQuery):
     """Check if ends with suffix: bytes.endswith(suffix)."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, bytes) or not isinstance(right, bytes):
             return INVALID
         return left.endswith(right)
@@ -234,21 +266,23 @@ class BytesEndsWithOp(BinaryQuery[bool]):
 # =============================================================================
 
 
-class BytesReplaceOp(ScalarQuery[bytes]):
+class BytesReplaceOp(ScalarQuery):
     """Replace sub-bytes: bytes.replace(old, new, count)."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, *args: object) -> bytes | Sentinel:
-        """Apply."""
-        operand, old, new, count = args
+    def __init__(self, a: Any, b: Any, c: Any, d: Any) -> None:  # noqa: ANN401
+        super().__init__(a, b, c, d)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand, old, new, count = ops
         if (
             not isinstance(operand, bytes)
             or not isinstance(old, bytes)
             or not isinstance(new, bytes)
         ):
             return INVALID
-        count_int = int(count)  # type: ignore[arg-type]
+        count_int = int(count)
         if count_int == -1:
             return operand.replace(old, new)
         return operand.replace(old, new, count_int)

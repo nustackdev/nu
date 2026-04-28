@@ -1,34 +1,47 @@
 """Minimal Nu sketches. One pattern per section. Each runs standalone."""
 
 import nu
+from nu import runtime
 
 
 # --- typed expression: arithmetic flows into a Command ---
-nu.Print(nu.IntI(5) + 10).execute()
+runtime.execute(nu.Print(nu.IntI(5) + 10))
 
 
-# --- sequential composition: yields in order ---
-nu.Print(nu.Literal(1) >> nu.Literal(2) >> nu.Literal(3)).execute()
+# # --- sequential composition: Commands run in order ---
+runtime.execute(nu.Print(1) >> nu.Print(2) >> nu.Print(3))
 
 
-# --- parallel composition: interleaved stream ---
-nu.Print(nu.Literal("a") | nu.Literal("b") | nu.Literal("c")).execute()
+# import time
+
+# s = time.perf_counter()
+# runtime.collect(nu.ForRange(1, 100000, nu.Print(nu.IntAttrRef("i")), index="i"))
+# pp = f"{(time.perf_counter() - s):5f}"
 
 
-nu.Print(
-    nu.ForRange(0, 100, nu.Print(nu.IntAttrRef("i")), index="i")
-    | nu.ForRange(0, 100, nu.Print(nu.IntAttrRef("j")), index="j")
-    | nu.ForRange(0, 100, nu.Print(nu.IntAttrRef("k")), index="k")
-).execute(max_parallel=3)
+# s = time.perf_counter()
+# for i in range(100000):
+#     print(i)
+# print(f"{(time.perf_counter() - s):5f}")
+# print(pp)
 
-# --- identity: Nu() is the algebra's 0; absorbed in composition ---
-nu.Print(nu.Nu() >> nu.Literal(42) >> nu.Nu()).execute()
-
-
-# --- branch: If forwards the chosen branch's stream ---
-nu.Print(nu.IfDo(nu.Literal(True), nu.Literal("then"), nu.Literal("else"))).execute()
+# # --- parallel composition: Commands run concurrently ---
+# runtime.execute(nu.Print("a") | nu.Print("b") | nu.Print("c"))
 
 
-# --- iteration: ForEach binds the element via AttrRef ---
-i = nu.IntAttrRef("i")
-nu.ForEach(nu.Literal([10, 20, 30]), nu.Print(i + 1), item="i").execute()
+# # --- counted loops, parallelized ---
+# runtime.execute(
+#     nu.ForRange(0, 100, nu.Print(nu.IntAttrRef("i")), index="i")
+#     | nu.ForRange(0, 100, nu.Print(nu.IntAttrRef("j")), index="j")
+#     | nu.ForRange(0, 100, nu.Print(nu.IntAttrRef("k")), index="k"),
+#     max_parallel=3,
+# )
+
+
+# # --- branch: IfDo runs the chosen branch ---
+# runtime.execute(nu.IfDo(nu.Literal(True), nu.Print("then"), nu.Print("else")))
+
+
+# # --- iteration: ForRange binds the index via AttrRef and runs the body ---
+# i = nu.IntAttrRef("i")
+# runtime.execute(nu.ForRange(0, 3, nu.Print(i + 10), index="i"))

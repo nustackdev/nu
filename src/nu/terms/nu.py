@@ -79,8 +79,18 @@ class NuBase:
 
     _children: tuple[Nu, ...]
 
-    def __init__(self, *children: Nu) -> None:
-        self._children = children
+    def __init__(self, *children: Any) -> None:  # noqa: ANN401
+        # Auto-wrap any non-NuBase child as Literal. Ergonomic, not legacy:
+        # `Add(7, 3)` becomes `Add(Literal(7), Literal(3))`.
+        wrapped: list[NuBase] = []
+        for c in children:
+            if isinstance(c, NuBase):
+                wrapped.append(c)
+            else:
+                from .query import Literal
+
+                wrapped.append(Literal(c))
+        self._children = tuple(wrapped)  # type: ignore[assignment]
         for validator in _COMPOSITION_VALIDATORS:
             validator(self)  # type: ignore[arg-type]
 
@@ -281,10 +291,8 @@ def _validate_slot_trichotomy(nu: Nu) -> None:
     4. Query slots receive Query / Ref / Span.
     5. Parent-kind / child-kind allowed by the composition matrix.
 
-    ARCH-NOTE: legacy concrete kinds in `interactions/` haven't moved to
-    NuBase yet. They subclass the legacy `Nu` from `_compat_nu.py`.
-    Validators here are gated on `isinstance(child, NuBase)` so legacy
-    children pass through. Phase E sweeps tighten this.
+    Non-NuBase children are skipped (e.g. raw values that haven't been
+    wrapped, though `NuBase.__init__` auto-wraps via `Literal`).
     """
     # Lazy imports - avoid cycle.
     from .command import Command

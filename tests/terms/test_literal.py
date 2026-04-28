@@ -6,7 +6,7 @@ literal and yields it once on open. No children, always pure.
 
 from __future__ import annotations
 
-from nu import EMPTY, INVALID, Literal
+from nu import EMPTY, INVALID, Literal, runtime
 
 
 # ---------------------------------------------------------------------------
@@ -15,33 +15,33 @@ from nu import EMPTY, INVALID, Literal
 
 
 async def test_first_returns_int(ctx):
-    assert await Literal(42).afirst(ctx) == 42
+    assert await runtime.afirst(Literal(42), ctx) == 42
 
 
 async def test_first_returns_str(ctx):
-    assert await Literal("hello").afirst(ctx) == "hello"
+    assert await runtime.afirst(Literal("hello"), ctx) == "hello"
 
 
 async def test_first_returns_none(ctx):
-    assert await Literal(None).afirst(ctx) is None
+    assert await runtime.afirst(Literal(None), ctx) is None
 
 
 async def test_first_returns_list(ctx):
-    assert await Literal([1, 2, 3]).afirst(ctx) == [1, 2, 3]
+    assert await runtime.afirst(Literal([1, 2, 3]), ctx) == [1, 2, 3]
 
 
 async def test_first_returns_dict(ctx):
-    assert await Literal({"a": 1}).afirst(ctx) == {"a": 1}
+    assert await runtime.afirst(Literal({"a": 1}), ctx) == {"a": 1}
 
 
 async def test_first_holds_sentinel(ctx):
     """Literal stores sentinels as literals - it does not propagate them."""
-    result = await Literal(EMPTY).afirst(ctx)
+    result = await runtime.afirst(Literal(EMPTY), ctx)
     assert result is EMPTY
 
 
 async def test_first_holds_invalid(ctx):
-    result = await Literal(INVALID).afirst(ctx)
+    result = await runtime.afirst(Literal(INVALID), ctx)
     assert result is INVALID
 
 
@@ -51,9 +51,8 @@ async def test_first_holds_invalid(ctx):
 
 
 def test_is_leaf():
-    assert Literal(42)._is_leaf is True
-    assert Literal(42)._child_count == 0
-    assert Literal(42).children == ()
+    assert Literal(42)._children == ()
+    assert len(Literal(42)._children) == 0
 
 
 # ---------------------------------------------------------------------------

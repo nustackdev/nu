@@ -5,9 +5,10 @@ ToInt, ToFloat, ToBool, ToStr, ToBytes, ToList, ToSet, ToTuple
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import Mode, UnaryQuery
+from nu.terms.query import ScalarQuery
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -22,114 +23,108 @@ __all__ = [
 ]
 
 
-# =============================================================================
-# PRIMITIVE CONVERSIONS
-# =============================================================================
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
 
-class ToInt(UnaryQuery[int]):
+class ToInt(ScalarQuery):
     """Convert value to integer."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> int:
-        """Apply."""
-        return int(operand)  # type: ignore
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> int:  # noqa: ANN401
+        return int(ops[0])
 
 
-class ToFloat(UnaryQuery[float]):
+class ToFloat(ScalarQuery):
     """Convert value to float."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> float:
-        """Apply."""
-        return float(operand)  # type: ignore
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> float:  # noqa: ANN401
+        return float(ops[0])
 
 
-class ToBool(UnaryQuery[bool]):
+class ToBool(ScalarQuery):
     """Convert value to boolean."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> bool:
-        """Apply."""
-        return bool(operand)
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return bool(ops[0])
 
 
-class ToStr(UnaryQuery[str]):
+class ToStr(ScalarQuery):
     """Convert value to string."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> str:
-        """Apply."""
-        return str(operand)
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> str:  # noqa: ANN401
+        return str(ops[0])
 
 
-class ToBytes(UnaryQuery[bytes]):
-    """Convert value to bytes.
+class ToBytes(ScalarQuery):
+    """Convert value to bytes."""
 
-    Supports:
-    - str -> bytes (using UTF-8 encoding by default)
-    - bytes -> bytes (passthrough)
-    - bytearray -> bytes
-    - Iterables of ints -> bytes
-    """
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
-    def __init__(self, operand: object, encoding: str = "utf-8") -> None:
-        """Initialize bytes conversion.
-
-        Args:
-            operand: Value to convert
-            encoding: Encoding to use for string conversion
-        """
+    def __init__(self, operand: Any, encoding: str = "utf-8") -> None:  # noqa: ANN401
         super().__init__(operand)
         self._encoding = encoding
 
-    def apply(self, operand: object) -> bytes:
-        """Apply."""
+    def _apply(self, ctx: Any, ops: list[Any]) -> bytes:  # noqa: ANN401
+        operand = ops[0]
         if isinstance(operand, bytes):
             return operand
         if isinstance(operand, str):
             return operand.encode(self._encoding)
         if isinstance(operand, bytearray):
             return bytes(operand)
-        return bytes(operand)  # type: ignore
+        return bytes(operand)
 
 
-# =============================================================================
-# COLLECTION CONVERSIONS
-# =============================================================================
-
-
-class ToList[T](UnaryQuery[list[T]]):
+class ToList(ScalarQuery):
     """Convert value to list."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> list[T]:
-        """Apply."""
-        return list(operand)  # type: ignore
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> list[Any]:  # noqa: ANN401
+        return list(ops[0])
 
 
-class ToSet[T](UnaryQuery[set[T]]):
+class ToSet(ScalarQuery):
     """Convert value to set."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> set[T]:
-        """Apply."""
-        return set(operand)  # type: ignore
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> set[Any]:  # noqa: ANN401
+        return set(ops[0])
 
 
-class ToTuple[*Ts](UnaryQuery[tuple[*Ts]]):
+class ToTuple(ScalarQuery):
     """Convert value to tuple."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> tuple[*Ts]:
-        """Apply."""
-        return tuple(operand)  # type: ignore
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> tuple[Any, ...]:  # noqa: ANN401
+        return tuple(ops[0])

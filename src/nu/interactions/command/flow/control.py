@@ -1,168 +1,135 @@
-"""Control Flow Commands -- IfDo, While, DoWhile, Forever, SwitchDo.
+"""Control Flow Commands -- While, DoWhile, Forever, SwitchDo.
 
-These dispatch the chosen branch as an imperative mutation. For Query-form
-(single-yield, returns the chosen branch's value), see
-``nu.interactions.query.scalar.control``.
+Imperative branching/looping. Each evaluates conditions/selectors and
+drives Command bodies. ``IfDo`` lives in ``nu.terms.flow`` (new-core);
+re-exported here only for the package surface, NOT a separate class.
 """
 
 from __future__ import annotations
 
-from contextlib import aclosing, closing
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Flow, Mode
+from nu.terms.flow import Control
+from nu.terms.types import Mode
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Generator
-
-    from nu.context import Context
     from nu.terms import Nu
 
 
 __all__ = [
     "DoWhile",
     "Forever",
-    "IfDo",
     "SwitchDo",
     "While",
 ]
 
 
-class IfDo(Flow):
-    """Conditional branch (Command). Evaluates cond, runs chosen branch's stream.
-
-    Children: [condition, then_branch, else_branch?]
-    """
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
-    def __init__(
-        self,
-        condition: Any,
-        then_branch: Nu,
-        else_branch: Nu | None = None,
-    ) -> None:
-        if else_branch is None:
-            super().__init__(condition, then_branch)
-        else:
-            super().__init__(condition, then_branch, else_branch)
-
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        cond, *branches = self.children
-        if await cond.afirst(ctx):
-            branch = branches[0]
-        elif len(branches) > 1:
-            branch = branches[1]
-        else:
-            return
-        async with aclosing(branch.aopen(ctx)) as gen:
-            async for v in gen:
-                yield v
-
-    def open(self, ctx: Context) -> Generator[Any, None, None]:
-        cond, *branches = self.children
-        if cond.first(ctx):
-            branch = branches[0]
-        elif len(branches) > 1:
-            branch = branches[1]
-        else:
-            return
-        with closing(branch.open(ctx)) as gen:
-            yield from gen
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
 
-class While(Flow):
+class While(Control):
     """Loop while condition is truthy.
 
-    Children: ``[condition, body]``
+    Children: ``[condition, body]`` -- body is the Command at slot 1.
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    body_slots: ClassVar[tuple[int, ...]] = (1,)
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def __init__(self, condition: Any, body: Nu) -> None:
+    def __init__(self, condition: Any, body: Nu) -> None:  # noqa: ANN401
         super().__init__(condition, body)
 
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        cond, body = self.children
-        while await cond.afirst(ctx):
-            async with aclosing(body.aopen(ctx)) as gen:
-                async for v in gen:
-                    yield v
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
 
-    def open(self, ctx: Context) -> Generator[Any, None, None]:
-        cond, body = self.children
-        while cond.first(ctx):
-            with closing(body.open(ctx)) as gen:
-                yield from gen
+        cond_q = self._children[0]
+        body = self._children[1]
+        while runtime.first(cond_q, ctx):
+            runtime.execute(body, ctx)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        cond_q = self._children[0]
+        body = self._children[1]
+        while await runtime.afirst(cond_q, ctx):
+            await runtime.aexecute(body, ctx)
 
 
-class DoWhile(Flow):
+class DoWhile(Control):
     """Execute body first, then loop while condition is truthy.
 
-    Children: ``[condition, body]``
+    Children: ``[body, condition]`` -- body is the Command at slot 0.
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    body_slots: ClassVar[tuple[int, ...]] = (0,)
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def __init__(self, condition: Any, body: Nu) -> None:
-        super().__init__(condition, body)
+    def __init__(self, condition: Any, body: Nu) -> None:  # noqa: ANN401
+        # Body in slot 0, condition in slot 1 to satisfy body_slots invariants.
+        super().__init__(body, condition)
 
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        cond, body = self.children
-        async with aclosing(body.aopen(ctx)) as gen:
-            async for v in gen:
-                yield v
-        while await cond.afirst(ctx):
-            async with aclosing(body.aopen(ctx)) as gen:
-                async for v in gen:
-                    yield v
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
 
-    def open(self, ctx: Context) -> Generator[Any, None, None]:
-        cond, body = self.children
-        with closing(body.open(ctx)) as gen:
-            yield from gen
-        while cond.first(ctx):
-            with closing(body.open(ctx)) as gen:
-                yield from gen
+        body = self._children[0]
+        cond_q = self._children[1]
+        runtime.execute(body, ctx)
+        while runtime.first(cond_q, ctx):
+            runtime.execute(body, ctx)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        body = self._children[0]
+        cond_q = self._children[1]
+        await runtime.aexecute(body, ctx)
+        while await runtime.afirst(cond_q, ctx):
+            await runtime.aexecute(body, ctx)
 
 
-class Forever(Flow):
+class Forever(Control):
     """Execute body indefinitely.
 
     Children: ``[body]``
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    body_slots: ClassVar[tuple[int, ...]] = (0,)
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, body: Nu) -> None:
         super().__init__(body)
 
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        body = self.children[0]
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        body = self._children[0]
         while True:
-            async with aclosing(body.aopen(ctx)) as gen:
-                async for v in gen:
-                    yield v
+            runtime.execute(body, ctx)
 
-    def open(self, ctx: Context) -> Generator[Any, None, None]:
-        body = self.children[0]
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        body = self._children[0]
         while True:
-            with closing(body.open(ctx)) as gen:
-                yield from gen
+            await runtime.aexecute(body, ctx)
 
 
-class SwitchDo(Flow):
-    """Multi-way branching Command based on a selector value.
+class SwitchDo(Control):
+    """Multi-way branching based on a selector value.
 
-    Children: ``[selector, *case_values, default?]``
+    Children: ``[selector, *case_bodies, default?]``
+
+    Selector is at slot 0 (Query). All other slots are Command bodies
+    (case branches and the optional default branch).
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(
         self,
-        selector: Any,
+        selector: Any,  # noqa: ANN401
         cases: dict[Any, Nu],
         default: Nu | None = None,
     ) -> None:
@@ -174,30 +141,29 @@ class SwitchDo(Flow):
             children.append(default)
         super().__init__(*children)
 
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        value = await self.children[0].afirst(ctx)
-        for i, key in enumerate(self._case_keys):
-            if key == value:
-                branch = self.children[i + 1]
-                async with aclosing(branch.aopen(ctx)) as gen:
-                    async for v in gen:
-                        yield v
-                return
-        if self._has_default:
-            branch = self.children[-1]
-            async with aclosing(branch.aopen(ctx)) as gen:
-                async for v in gen:
-                    yield v
+    # body_slots covers every slot except 0 (the selector). Wide range so
+    # any number of cases is within scope; trichotomy only inspects slots
+    # that actually have children.
+    body_slots: ClassVar[tuple[int, ...]] = tuple(range(1, 1024))
 
-    def open(self, ctx: Context) -> Generator[Any, None, None]:
-        value = self.children[0].first(ctx)
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        value = runtime.first(self._children[0], ctx)
         for i, key in enumerate(self._case_keys):
             if key == value:
-                branch = self.children[i + 1]
-                with closing(branch.open(ctx)) as gen:
-                    yield from gen
+                runtime.execute(self._children[i + 1], ctx)
                 return
         if self._has_default:
-            branch = self.children[-1]
-            with closing(branch.open(ctx)) as gen:
-                yield from gen
+            runtime.execute(self._children[-1], ctx)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        value = await runtime.afirst(self._children[0], ctx)
+        for i, key in enumerate(self._case_keys):
+            if key == value:
+                await runtime.aexecute(self._children[i + 1], ctx)
+                return
+        if self._has_default:
+            await runtime.aexecute(self._children[-1], ctx)

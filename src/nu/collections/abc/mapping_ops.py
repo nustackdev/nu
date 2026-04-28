@@ -7,18 +7,12 @@ DictPopCmd, PopItemCmd, SetDefaultCmd
 
 from __future__ import annotations
 
-from collections.abc import ItemsView, KeysView, Mapping, MutableMapping, ValuesView
-from typing import ClassVar
+from collections.abc import Mapping, MutableMapping
+from typing import Any, ClassVar
 
-from nu.terms import (
-    INVALID,
-    BinaryQuery,
-    Effect,
-    Mode,
-    Sentinel,
-    TernaryQuery,
-    UnaryQuery,
-)
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import INVALID
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -35,59 +29,74 @@ __all__ = [
 ]
 
 
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
 # =============================================================================
 # MAPPING READS
 # =============================================================================
 
 
-class KeysOp[K](UnaryQuery[KeysView[K]]):
+class KeysOp(ScalarQuery):
     """Get keys view from mapping: mapping.keys()."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> KeysView[K]:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, Mapping):
             raise TypeError(f"keys() requires mapping, got {type(operand).__name__}")
-        return operand.keys()  # type: ignore
+        return operand.keys()
 
 
-class ValuesOp[V](UnaryQuery[ValuesView[V]]):
+class ValuesOp(ScalarQuery):
     """Get values view from mapping: mapping.values()."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> ValuesView[V]:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, Mapping):
             raise TypeError(f"values() requires mapping, got {type(operand).__name__}")
-        return operand.values()  # type: ignore
+        return operand.values()
 
 
-class ItemsOp[K, V](UnaryQuery[ItemsView[K, V]]):
+class ItemsOp(ScalarQuery):
     """Get items view from mapping: mapping.items()."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> ItemsView[K, V]:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, Mapping):
             raise TypeError(f"items() requires mapping, got {type(operand).__name__}")
-        return operand.items()  # type: ignore
+        return operand.items()
 
 
-class GetOp[V](TernaryQuery[V]):
+class GetOp(ScalarQuery):
     """Get value from mapping with optional default: mapping.get(key, default) or mapping[key]."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, first: object, second: object, third: object) -> V | Sentinel:
-        """Apply."""
-        if not isinstance(first, Mapping):
-            raise TypeError(f"get() requires mapping, got {type(first).__name__}")
-        if third is None:
-            return first[second]  # type: ignore
-        return first.get(second, third)  # type: ignore
+    def __init__(self, first: Any, second: Any, third: Any) -> None:  # noqa: ANN401
+        super().__init__(first, second, third)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b, c = ops
+        if not isinstance(a, Mapping):
+            raise TypeError(f"get() requires mapping, got {type(a).__name__}")
+        if c is None:
+            return a[b]
+        return a.get(b, c)
 
 
 # =============================================================================
@@ -95,95 +104,107 @@ class GetOp[V](TernaryQuery[V]):
 # =============================================================================
 
 
-class SetItemCmd[K, V](TernaryQuery[None]):
+class SetItemCmd(ScalarQuery):
     """Set value at key: mapping[key] = value. Returns None."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, first: object, second: object, third: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(first, MutableMapping):
-            raise TypeError(f"set() requires mutable mapping, got {type(first).__name__}")
-        first[second] = third
+    def __init__(self, first: Any, second: Any, third: Any) -> None:  # noqa: ANN401
+        super().__init__(first, second, third)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b, c = ops
+        if not isinstance(a, MutableMapping):
+            raise TypeError(f"set() requires mutable mapping, got {type(a).__name__}")
+        a[b] = c
         return None
 
 
-class DeleteItemCmd[K](BinaryQuery[None]):
+class DeleteItemCmd(ScalarQuery):
     """Delete entry by key: del mapping[key]. Returns None."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableMapping):
-            raise TypeError(f"delete() requires mutable mapping, got {type(left).__name__}")
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, MutableMapping):
+            raise TypeError(f"delete() requires mutable mapping, got {type(a).__name__}")
         try:
-            del left[right]
+            del a[b]
         except KeyError:
             return INVALID
         return None
 
 
-class UpdateCmd[K, V](BinaryQuery[None]):
+class UpdateCmd(ScalarQuery):
     """Update mapping with another: mapping.update(other). Returns None (mutates in-place)."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableMapping):
-            raise TypeError(f"update() requires mutable mapping, got {type(left).__name__}")
-        if not isinstance(right, Mapping):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, MutableMapping):
+            raise TypeError(f"update() requires mutable mapping, got {type(a).__name__}")
+        if not isinstance(b, Mapping):
             return INVALID
-        left.update(right)
+        a.update(b)
         return None
 
 
-class DictPopCmd[K, V](TernaryQuery[V]):
+class DictPopCmd(ScalarQuery):
     """Pop value by key with optional default: mapping.pop(key, default). Returns value or default."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, first: object, second: object, third: object) -> V | Sentinel:
-        """Apply."""
-        if not isinstance(first, MutableMapping):
-            raise TypeError(f"pop() requires mutable mapping, got {type(first).__name__}")
-        if third is None:
+    def __init__(self, first: Any, second: Any, third: Any) -> None:  # noqa: ANN401
+        super().__init__(first, second, third)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b, c = ops
+        if not isinstance(a, MutableMapping):
+            raise TypeError(f"pop() requires mutable mapping, got {type(a).__name__}")
+        if c is None:
             try:
-                return first.pop(second)  # type: ignore[arg-type]
+                return a.pop(b)
             except KeyError:
                 return INVALID
-        return first.pop(second, third)  # type: ignore[arg-type]
+        return a.pop(b, c)
 
 
-class PopItemCmd[K, V](UnaryQuery[tuple[K, V]]):
+class PopItemCmd(ScalarQuery):
     """Pop arbitrary item: mapping.popitem(). Returns (key, value) tuple."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> tuple[K, V] | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, MutableMapping):
             raise TypeError(f"popitem() requires mutable mapping, got {type(operand).__name__}")
         try:
-            return operand.popitem()  # type: ignore[union-attr]
+            return operand.popitem()
         except KeyError:
             return INVALID
 
 
-class SetDefaultCmd[K, V](TernaryQuery[V]):
+class SetDefaultCmd(ScalarQuery):
     """Set default value if key missing: mapping.setdefault(key, default). Returns value at key."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, first: object, second: object, third: object) -> V | Sentinel:
-        """Apply."""
-        if not isinstance(first, MutableMapping):
-            raise TypeError(f"setdefault() requires mutable mapping, got {type(first).__name__}")
-        return first.setdefault(second, third)  # type: ignore[arg-type]
+    def __init__(self, first: Any, second: Any, third: Any) -> None:  # noqa: ANN401
+        super().__init__(first, second, third)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b, c = ops
+        if not isinstance(a, MutableMapping):
+            raise TypeError(f"setdefault() requires mutable mapping, got {type(a).__name__}")
+        return a.setdefault(b, c)

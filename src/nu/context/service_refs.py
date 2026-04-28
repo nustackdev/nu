@@ -1,10 +1,11 @@
-"""ServiceRef -- resolve a service object directly from Context bindings."""
+"""ServiceRef - resolve a service object directly from Context bindings."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Mode, Ref, Sentinel
+from nu.terms.ref import Ref
+from nu.terms.types import Mode
 
 
 if TYPE_CHECKING:
@@ -17,49 +18,39 @@ __all__ = [
 ]
 
 
-class ServiceRef[T](Ref[T]):
-    """Service ref -- resolves an object directly from Context by type tag.
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    Like AttrRef but for service bindings instead of attrs.
-    The service type is used as the Context key.
+
+class ServiceRef[T](Ref[T]):
+    """Service ref - resolves an object from Context by type tag.
+
+    Like AttrRef but for service bindings instead of attrs. The service
+    type is used as the Context key.
 
     Usage:
         ref = ServiceRef(SolanaRpc)
-        val = await ref.afetch(ctx)  # -> ctx[SolanaRpc]
+        val = ref.eval(ctx)  # -> ctx[SolanaRpc]
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, service_type: type[T] | None = None) -> None:
-        """Initialize with service type tag."""
         super().__init__()
         self._service_type = service_type or self.__class__._default_service_type()
 
     @classmethod
     def _default_service_type(cls) -> type:
-        """Subclasses override to provide their service type."""
         msg = f"{cls.__name__} must provide service_type or override _default_service_type()"
         raise TypeError(msg)
 
     @property
     def service_type(self) -> type:
-        """The service type tag for context lookup."""
         return self._service_type
 
-    async def aresolve(self, ctx: Context) -> type:
-        """Resolve to the service type."""
-        return self._service_type
-
-    def resolve(self, ctx: Context) -> type:
-        """Sync counterpart of `aresolve`."""
-        return self._service_type
-
-    async def afetch(self, ctx: Context) -> T | Sentinel:
-        """Fetch service directly from context bindings."""
+    def eval(self, ctx: Context) -> Any:  # noqa: ANN401, D102
         return ctx.get(self._service_type)
 
-    def fetch(self, ctx: Context) -> T | Sentinel:
-        """Sync counterpart of `afetch`."""
+    async def aeval(self, ctx: Context) -> Any:  # noqa: ANN401, D102
         return ctx.get(self._service_type)
 
     def exists(self) -> BoolI:

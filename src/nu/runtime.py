@@ -13,13 +13,13 @@ Algorithm:
   child's exec_state, `parallel_shape` picks the pump.
 - Spans wrap their body's method via `span_dispatch`.
 
-The hybrid pump is the existing `_apump_parallel` from the legacy
-`terms/_compat_nu.py`, lifted and renamed `_apump_hybrid`. Sync branches
-gate on a thread + semaphore slot; async branches don't gate; one async
-queue drains both. `max_parallel == 1` falls through to sequential.
+The hybrid pump (`_apump_hybrid`) gates sync branches on a thread +
+semaphore slot; async branches don't gate; one async queue drains
+both. `max_parallel == 1` falls through to sequential.
 
-Entry helpers preserve the legacy public signatures so downstream
-imports keep working through Phase E.
+Public entry helpers (`execute`, `aexecute`, `first`, `afirst`, etc.)
+drive new-core kinds via `four_method_pick` for producers and
+`atom_dispatch` for Commands.
 """
 
 from __future__ import annotations
@@ -30,13 +30,19 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import aclosing, closing
 from typing import TYPE_CHECKING, Any
 
+from .terms.command import Command
 from .terms.dispatch import (
     ExecState,
     ParallelShape,
+    atom_dispatch,
     parallel_per_child,
     parallel_shape,
     tree_needs_loop,
 )
+from .terms.flow import Flow
+from .terms.realization import four_method_pick, realization_of
+from .terms.span import Span
+from .terms.types import Realization
 
 
 if TYPE_CHECKING:
@@ -361,6 +367,69 @@ def pick_pump(
 # remain valid as long as a Context is in scope.
 
 
+def _try_realization(nu: Nu) -> Realization | None:
+    """Try to read the producer realization. None for non-producers (Commands etc.)."""
+    try:
+        return realization_of(nu)
+    except TypeError:
+        return None
+
+
+def _is_command_body(nu: Nu) -> bool:
+    """Whether the node is Command-shaped (recurses through Spans).
+
+    Includes Flow (Strategy/Control) since those are CommandAtoms - they
+    expose `run`/`arun`, no value yield.
+    """
+    if isinstance(nu, Span):
+        return _is_command_body(nu._children[type(nu).body_slot])
+    return isinstance(nu, (Command, Flow))
+
+
+def _drive_sync(nu: Nu, ctx: Context) -> Generator[Any, None, None]:
+    """Sync-drive a node, preferring new-core dispatch over `open`.
+
+    - Command (or Span around a Command) -> `atom_dispatch`, no yield.
+    - Scalar producer -> `four_method_pick` -> single-yield.
+    - Stream producer or unknown -> `nu.open(ctx)`.
+    """
+    if _is_command_body(nu):
+        atom_dispatch(nu, ExecState.NO_LOOP)(ctx)
+        return
+    real = _try_realization(nu)
+    if real is Realization.SCALAR:
+        v = four_method_pick(nu, ExecState.NO_LOOP)(ctx)
+        yield v
+        return
+    if real is Realization.STREAM:
+        with closing(nu.open(ctx)) as gen:
+            yield from gen
+        return
+    # Unknown realization (e.g. legacy concrete kinds): fall back to open.
+    with closing(nu.open(ctx)) as gen:
+        yield from gen
+
+
+async def _drive_async(nu: Nu, ctx: Context) -> AsyncGenerator[Any, None]:
+    """Async-drive a node. Mirror of `_drive_sync`."""
+    if _is_command_body(nu):
+        await atom_dispatch(nu, ExecState.LOOP)(ctx)
+        return
+    real = _try_realization(nu)
+    if real is Realization.SCALAR:
+        v = await four_method_pick(nu, ExecState.LOOP)(ctx)
+        yield v
+        return
+    if real is Realization.STREAM:
+        async with aclosing(nu.aopen(ctx)) as gen:
+            async for v in gen:
+                yield v
+        return
+    async with aclosing(nu.aopen(ctx)) as gen:
+        async for v in gen:
+            yield v
+
+
 def _default_ctx(ctx: Context | None) -> Context:
     if ctx is not None:
         return ctx
@@ -384,9 +453,8 @@ def execute(
         raise RuntimeError(msg)
     ctx = _default_ctx(ctx)
     with _BudgetScope(ctx, max_parallel, async_mode=False):
-        with closing(nu.open(ctx)) as gen:
-            for _ in gen:
-                pass
+        for _ in _drive_sync(nu, ctx):
+            pass
 
 
 def first(
@@ -401,9 +469,8 @@ def first(
         raise RuntimeError(msg)
     ctx = _default_ctx(ctx)
     with _BudgetScope(ctx, max_parallel, async_mode=False):
-        with closing(nu.open(ctx)) as gen:
-            for v in gen:
-                return v
+        for v in _drive_sync(nu, ctx):
+            return v
     msg = "nu yielded no values"
     raise RuntimeError(msg)
 
@@ -420,8 +487,7 @@ def collect(
         raise RuntimeError(msg)
     ctx = _default_ctx(ctx)
     with _BudgetScope(ctx, max_parallel, async_mode=False):
-        with closing(nu.open(ctx)) as gen:
-            return list(gen)
+        return list(_drive_sync(nu, ctx))
 
 
 async def aexecute(
@@ -433,9 +499,8 @@ async def aexecute(
     """Drain on the async path. Yields are discarded."""
     ctx = _default_ctx(ctx)
     with _BudgetScope(ctx, max_parallel, async_mode=True):
-        async with aclosing(nu.aopen(ctx)) as gen:
-            async for _ in gen:
-                pass
+        async for _ in _drive_async(nu, ctx):
+            pass
 
 
 async def afirst(
@@ -447,9 +512,8 @@ async def afirst(
     """First yield on the async path."""
     ctx = _default_ctx(ctx)
     with _BudgetScope(ctx, max_parallel, async_mode=True):
-        async with aclosing(nu.aopen(ctx)) as gen:
-            async for v in gen:
-                return v
+        async for v in _drive_async(nu, ctx):
+            return v
     msg = "nu yielded no values"
     raise RuntimeError(msg)
 
@@ -465,10 +529,9 @@ async def alast(
     found = False
     val: Any = None
     with _BudgetScope(ctx, max_parallel, async_mode=True):
-        async with aclosing(nu.aopen(ctx)) as gen:
-            async for v in gen:
-                val = v
-                found = True
+        async for v in _drive_async(nu, ctx):
+            val = v
+            found = True
     if not found:
         msg = "nu yielded no values"
         raise RuntimeError(msg)
@@ -485,7 +548,6 @@ async def acollect(
     ctx = _default_ctx(ctx)
     out: list[Any] = []
     with _BudgetScope(ctx, max_parallel, async_mode=True):
-        async with aclosing(nu.aopen(ctx)) as gen:
-            async for v in gen:
-                out.append(v)
+        async for v in _drive_async(nu, ctx):
+            out.append(v)
     return out

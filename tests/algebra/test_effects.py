@@ -1,99 +1,75 @@
-"""Tests for effect tracking - static analysis of fabric interactions.
+"""Tests for effect tracking - static analysis over the new core.
 
-TODO(task-083): rewrite for new core. Uses legacy `Direction` /
-`BinaryQuery` / `UnaryQuery` / `own_mode` / `aresolve` shape; new core
-uses `Effect` and `ScalarQuery`. Skipping module-level until rewritten.
+`tracked_effects(nu)` returns a `frozenset[(Ref instance, Effect)]`.
+
+Two annotation sources: class-time (`own_effects` on the kind) and
+construction-time (Ref bound into a Query slot adds `(ref, READ)`).
 """
 
 from __future__ import annotations
 
-import pytest
-
-
-pytest.skip("legacy API; rewrite for new core - task-083 follow-up", allow_module_level=True)
-
 from typing import Any, ClassVar
 
-from nu import Context, Literal, Nu
-from nu.terms import (
-    BinaryQuery,
-    Direction,
-    Mode,
-    TrackedEffect,
-    UnaryQuery,
-    is_pure,
-    tracked_effects,
-)
+from nu import Context
+from nu.terms.command import ScalarCommand
+from nu.terms.effects import is_pure, tracked_effects
+from nu.terms.query import Literal, ScalarQuery
 from nu.terms.ref import Ref
-
-
-READ = Direction.READ
-WRITE = Direction.WRITE
+from nu.terms.types import Effect, Mode
 
 
 # ---------------------------------------------------------------------------
-# Test fixtures - minimal concrete types
+# Test fixtures - minimal concrete kinds on the new core
 # ---------------------------------------------------------------------------
 
 
 class FabricA(Ref[int]):
-    """Test ref for fabric A."""
+    """Ref on fabric A."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    def __init__(self, *children: Nu) -> None:
-        super().__init__(*children)
+    def eval(self, ctx: Context) -> int:
+        return 0
 
-    async def aresolve(self, ctx: Context) -> str:
-        return "a"
-
-    async def afetch(self, ctx: Context) -> int:
+    async def aeval(self, ctx: Context) -> int:
         return 0
 
 
 class FabricB(Ref[int]):
-    """Test ref for fabric B."""
+    """Ref on fabric B."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    def __init__(self) -> None:
-        super().__init__()
+    def eval(self, ctx: Context) -> int:
+        return 0
 
-    async def aresolve(self, ctx: Context) -> str:
-        return "b"
-
-    async def afetch(self, ctx: Context) -> int:
+    async def aeval(self, ctx: Context) -> int:
         return 0
 
 
-class StoreOp(BinaryQuery[None]):
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+class StoreCmd(ScalarCommand):
+    """Cmd that writes to a Ref at slot 0."""
 
-    writes = 0
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    def apply(self, ref_val: Any, value: Any) -> None:
+    def run(self, ctx: Context) -> None:
+        return None
+
+    async def arun(self, ctx: Context) -> None:
         return None
 
 
-class LoadOp(UnaryQuery[object]):
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+class Add(ScalarQuery):
+    """Pure binary add. Operand-driven; effects derived from children."""
 
-    reads = 0
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    commutative: ClassVar[bool] = True
+    associative: ClassVar[bool] = True
+    deterministic: ClassVar[bool] = True
 
-    def apply(self, value: Any) -> object:
-        return value
-
-
-class Add(BinaryQuery[int]):
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
-
-    def apply(self, left: Any, right: Any) -> int:
-        return left + right
+    def _apply(self, ctx: Context, ops: list[Any]) -> int:
+        return ops[0] + ops[1]
 
 
 # ---------------------------------------------------------------------------
@@ -110,60 +86,52 @@ def test_literal_is_pure():
 
 
 # ---------------------------------------------------------------------------
-# Rule 2: Ref -> READ
+# Rule 2: Ref alone -> no own effects (Ref's own_effects empty)
 # ---------------------------------------------------------------------------
 
 
-def test_ref_produces_read():
+def test_ref_alone_has_no_own_effects():
+    """A bare Ref is not a parent edge - no construction-time READ fires."""
     ref = FabricA()
-    effects = tracked_effects(ref)
-    assert effects == frozenset({TrackedEffect(FabricA, READ)})
-
-
-def test_ref_is_not_pure():
-    ref = FabricA()
-    assert is_pure(ref) is False
-
-
-def test_ref_with_child_ref_dynamic_address():
-    """Ref with a child Ref (dynamic address) -> both READs."""
-    inner = FabricB()
-    outer = FabricA(inner)
-    effects = tracked_effects(outer)
-    assert TrackedEffect(FabricA, READ) in effects
-    assert TrackedEffect(FabricB, READ) in effects
-    assert len(effects) == 2
+    assert tracked_effects(ref) == frozenset()
 
 
 # ---------------------------------------------------------------------------
-# Rule 3: Interaction with overrides
+# Rule 3: construction-time READ when Ref binds into a Query slot
 # ---------------------------------------------------------------------------
 
 
-def test_store_op_write():
-    """StoreOp(ref, literal) -> WRITE only."""
+def test_ref_in_query_slot_emits_read():
+    """`Add(ref, lit)` - Ref bound into a Query slot adds `(ref, READ)`."""
     ref = FabricA()
-    tree = StoreOp(ref, Literal(42))
+    tree = Add(ref, Literal(1))
     effects = tracked_effects(tree)
-    assert effects == frozenset({TrackedEffect(FabricA, WRITE)})
+    assert (ref, Effect.READ) in effects
 
 
-def test_load_op_read():
-    """LoadOp(ref) -> READ only."""
+def test_two_refs_in_query_slots_each_emit_read():
+    ra = FabricA()
+    rb = FabricB()
+    tree = Add(ra, rb)
+    effects = tracked_effects(tree)
+    assert (ra, Effect.READ) in effects
+    assert (rb, Effect.READ) in effects
+
+
+# ---------------------------------------------------------------------------
+# Rule 4: class-time WRITE on a Ref-only slot
+# ---------------------------------------------------------------------------
+
+
+def test_command_write_slot_emits_write():
+    """`StoreCmd(ref)` - class-time WRITE on slot 0."""
     ref = FabricA()
-    tree = LoadOp(ref)
-    effects = tracked_effects(tree)
-    assert effects == frozenset({TrackedEffect(FabricA, READ)})
-
-
-def test_store_load_increment():
-    """StoreOp(ref, Add(LoadOp(ref), Literal(1))) -> READ + WRITE."""
-    ref = FabricA()
-    tree = StoreOp(ref, Add(LoadOp(ref), Literal(1)))
-    effects = tracked_effects(tree)
-    assert TrackedEffect(FabricA, WRITE) in effects
-    assert TrackedEffect(FabricA, READ) in effects
-    assert len(effects) == 2
+    cmd = StoreCmd(ref)
+    effects = tracked_effects(cmd)
+    assert (ref, Effect.WRITE) in effects
+    # Slot 0 is keyed in own_effects; it must NOT also fire construction-time
+    # READ - the slot trichotomy makes them disjoint.
+    assert (ref, Effect.READ) not in effects
 
 
 # ---------------------------------------------------------------------------
@@ -172,102 +140,24 @@ def test_store_load_increment():
 
 
 def test_add_literals_pure():
-    """Add(Literal(1), Literal(2)) -> empty (pure)."""
     tree = Add(Literal(1), Literal(2))
     assert tracked_effects(tree) == frozenset()
     assert is_pure(tree) is True
 
 
-def test_add_refs_read():
-    """Add(ref_a, ref_b) -> READ from both fabrics."""
-    ref_a = FabricA()
-    ref_b = FabricB()
-    tree = Add(ref_a, ref_b)
-    effects = tracked_effects(tree)
-    assert TrackedEffect(FabricA, READ) in effects
-    assert TrackedEffect(FabricB, READ) in effects
+def test_add_refs_not_pure():
+    tree = Add(FabricA(), FabricB())
     assert is_pure(tree) is False
 
 
-def test_add_same_ref_type():
-    """Add(ref_a, ref_a2) -> single READ (same fabric type, deduped)."""
-    ref_a1 = FabricA()
-    ref_a2 = FabricA()
-    tree = Add(ref_a1, ref_a2)
-    effects = tracked_effects(tree)
-    assert effects == frozenset({TrackedEffect(FabricA, READ)})
-
-
 # ---------------------------------------------------------------------------
-# Composed Nu (parallel via |, sequential via >>)
+# Subtree propagation
 # ---------------------------------------------------------------------------
-
-
-def test_composed_nu_mixed():
-    """Composed Nu with mixed children unions effects."""
-    ref = FabricA()
-    tree = Literal(1) >> StoreOp(ref, Literal(2)) >> LoadOp(ref)
-    effects = tracked_effects(tree)
-    assert TrackedEffect(FabricA, WRITE) in effects
-    assert TrackedEffect(FabricA, READ) in effects
-
-
-def test_composed_nu_pure_children():
-    """Composed Nu with only literals is pure."""
-    tree = Literal(1) >> Literal(2) >> Literal(3)
-    assert is_pure(tree) is True
-
-
-# ---------------------------------------------------------------------------
-# Edge cases
-# ---------------------------------------------------------------------------
-
-
-def test_is_pure_empty_nu():
-    """Empty bare Nu has no effects."""
-    tree = Nu()
-    assert is_pure(tree) is True
-
-
-def test_store_with_dynamic_ref_address():
-    """StoreOp where the ref has a child ref (dynamic address).
-
-    Override applies WRITE to the outer ref, but the child ref
-    still contributes READ.
-    """
-    inner_ref = FabricB()
-    outer_ref = FabricA(inner_ref)
-    tree = StoreOp(outer_ref, Literal(99))
-    effects = tracked_effects(tree)
-    assert TrackedEffect(FabricA, WRITE) in effects
-    assert TrackedEffect(FabricB, READ) in effects
-    assert len(effects) == 2
 
 
 def test_deeply_nested_effects():
     """Effects propagate through deep nesting."""
     ref = FabricA()
-    # add(add(add(ref, lit), lit), lit) - ref buried 3 levels deep
     tree = Add(Add(Add(ref, Literal(1)), Literal(2)), Literal(3))
     effects = tracked_effects(tree)
-    assert effects == frozenset({TrackedEffect(FabricA, READ)})
-
-
-def test_tracked_effect_equality():
-    """TrackedEffect is a frozen dataclass - equality by value."""
-    e1 = TrackedEffect(FabricA, READ)
-    e2 = TrackedEffect(FabricA, READ)
-    assert e1 == e2
-    assert hash(e1) == hash(e2)
-
-
-def test_tracked_effect_different_direction():
-    e_read = TrackedEffect(FabricA, READ)
-    e_write = TrackedEffect(FabricA, WRITE)
-    assert e_read != e_write
-
-
-def test_tracked_effect_different_fabric():
-    e_a = TrackedEffect(FabricA, READ)
-    e_b = TrackedEffect(FabricB, READ)
-    assert e_a != e_b
+    assert (ref, Effect.READ) in effects

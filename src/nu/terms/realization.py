@@ -128,11 +128,20 @@ def four_method_pick(producer: Nu, exec_state: ExecState) -> Callable[[Any], Any
 
 
 def _is_producer(nu: Any) -> bool:  # noqa: ANN401
-    """A node has a realization iff it's a producer (Query / Ref / Span)."""
+    """A node has a realization iff it's a producer (Query / Ref / Span).
+
+    For Span: only when its body is itself a producer (Span around a
+    Command body has no realization edge to check).
+    """
     real = getattr(type(nu), "realization", None)
     if isinstance(real, Realization):
         return True
-    return isinstance(nu, Span)
+    if isinstance(nu, Span):
+        body_slot = getattr(type(nu), "body_slot", None)
+        if body_slot is None or body_slot >= len(nu._children):
+            return False
+        return _is_producer(nu._children[body_slot])
+    return False
 
 
 def _validate_no_refused(nu: Any) -> None:  # noqa: ANN401

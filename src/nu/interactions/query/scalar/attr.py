@@ -7,9 +7,10 @@ DelAttr: Delete an attribute from an instance
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import BinaryQuery, Mode, TernaryQuery
+from nu.terms.query import ScalarQuery
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -19,57 +20,40 @@ __all__ = [
 ]
 
 
-# =============================================================================
-# ATTRIBUTE ACCESS
-# =============================================================================
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
 
-class GetAttr[ResultT](BinaryQuery[ResultT]):
-    """Get an attribute from an instance.
+class GetAttr(ScalarQuery):
+    """Get an attribute from an instance."""
 
-    Both instance and attr_name can be Terms for dynamic attribute access.
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    Example:
-        >>> GetAttr(datetime_value, "year")
-        >>> GetAttr(obj, attr_name_term)  # dynamic attribute
-    """
+    def __init__(self, instance: Any, attr_name: Any) -> None:  # noqa: ANN401
+        super().__init__(instance, attr_name)
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return getattr(left, str(right))
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return getattr(ops[0], str(ops[1]))
 
 
-class SetAttr(TernaryQuery[None]):
-    """Set an attribute on an instance.
+class SetAttr(ScalarQuery):
+    """Set an attribute on an instance."""
 
-    All arguments can be Terms for dynamic attribute setting.
-    Mutates state.
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    Example:
-        >>> SetAttr(obj, "name", "value")
-    """
+    def __init__(self, instance: Any, attr_name: Any, value: Any) -> None:  # noqa: ANN401
+        super().__init__(instance, attr_name, value)
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
-    def apply(self, first: object, second: object, third: object) -> None:
-        """Apply."""
-        setattr(first, str(second), third)
+    def _apply(self, ctx: Any, ops: list[Any]) -> None:  # noqa: ANN401
+        setattr(ops[0], str(ops[1]), ops[2])
 
 
-class DelAttr(BinaryQuery[None]):
-    """Delete an attribute from an instance.
+class DelAttr(ScalarQuery):
+    """Delete an attribute from an instance."""
 
-    Both instance and attr_name can be Terms for dynamic attribute deletion.
-    Mutates state.
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    Example:
-        >>> DelAttr(obj, "cached_value")
-    """
+    def __init__(self, instance: Any, attr_name: Any) -> None:  # noqa: ANN401
+        super().__init__(instance, attr_name)
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
-    def apply(self, left: object, right: object) -> None:
-        """Apply."""
-        delattr(left, str(right))
+    def _apply(self, ctx: Any, ops: list[Any]) -> None:  # noqa: ANN401
+        delattr(ops[0], str(ops[1]))

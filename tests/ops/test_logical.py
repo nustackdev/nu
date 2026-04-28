@@ -13,9 +13,9 @@ from hypothesis import given
 from hypothesis import strategies as st
 from tests.conftest import FailingNu
 
-from nu import EMPTY, INVALID, Context, Literal
+from nu import Context, Literal, runtime
 from nu.interactions import And, Bool, Not, Or
-from nu.terms import is_invalid, is_sentinel
+from nu.terms.sentinels import EMPTY, INVALID, is_invalid, is_sentinel
 
 
 ints = st.integers(min_value=-1000, max_value=1000)
@@ -30,24 +30,24 @@ ints = st.integers(min_value=-1000, max_value=1000)
 async def test_not_involution(a):
     """Double negation restores truthiness."""
     ctx = Context()
-    result = await Not(Not(a)).afirst(ctx)
+    result = await runtime.afirst(Not(Not(a)), ctx)
     assert result == (not not a)
 
 
 async def test_not_true(ctx):
-    assert await Not(True).afirst(ctx) is False
+    assert await runtime.afirst(Not(True), ctx) is False
 
 
 async def test_not_false(ctx):
-    assert await Not(False).afirst(ctx) is True
+    assert await runtime.afirst(Not(False), ctx) is True
 
 
 async def test_not_zero(ctx):
-    assert await Not(0).afirst(ctx) is True
+    assert await runtime.afirst(Not(0), ctx) is True
 
 
 async def test_not_nonempty_string(ctx):
-    assert await Not("hello").afirst(ctx) is False
+    assert await runtime.afirst(Not("hello"), ctx) is False
 
 
 # ---------------------------------------------------------------------------
@@ -56,19 +56,19 @@ async def test_not_nonempty_string(ctx):
 
 
 async def test_bool_truthy(ctx):
-    assert await Bool(1).afirst(ctx) is True
+    assert await runtime.afirst(Bool(1), ctx) is True
 
 
 async def test_bool_falsy(ctx):
-    assert await Bool(0).afirst(ctx) is False
+    assert await runtime.afirst(Bool(0), ctx) is False
 
 
 async def test_bool_empty_string(ctx):
-    assert await Bool("").afirst(ctx) is False
+    assert await runtime.afirst(Bool(""), ctx) is False
 
 
 async def test_bool_nonempty_list(ctx):
-    assert await Bool(Literal([1, 2])).afirst(ctx) is True
+    assert await runtime.afirst(Bool(Literal([1, 2])), ctx) is True
 
 
 # ---------------------------------------------------------------------------
@@ -77,35 +77,35 @@ async def test_bool_nonempty_list(ctx):
 
 
 async def test_and_both_truthy(ctx):
-    result = await And(3, 5).afirst(ctx)
+    result = await runtime.afirst(And(3, 5), ctx)
     assert result == 5
 
 
 async def test_and_left_falsy(ctx):
-    result = await And(0, 5).afirst(ctx)
+    result = await runtime.afirst(And(0, 5), ctx)
     assert result == 0
 
 
 async def test_and_right_falsy(ctx):
-    result = await And(3, 0).afirst(ctx)
+    result = await runtime.afirst(And(3, 0), ctx)
     assert result == 0
 
 
 async def test_and_short_circuit_skips_right(ctx):
     """Left is falsy -> right is never evaluated."""
-    result = await And(Literal(0), FailingNu()).afirst(ctx)
+    result = await runtime.afirst(And(Literal(0), FailingNu()), ctx)
     assert result == 0
 
 
 async def test_and_sentinel_left(ctx):
     """EMPTY left -> INVALID, right not evaluated."""
-    result = await And(Literal(EMPTY), FailingNu()).afirst(ctx)
+    result = await runtime.afirst(And(Literal(EMPTY), FailingNu()), ctx)
     assert is_sentinel(result)
 
 
 async def test_and_sentinel_right(ctx):
     """Clean left, INVALID right -> INVALID."""
-    result = await And(Literal(3), Literal(INVALID)).afirst(ctx)
+    result = await runtime.afirst(And(Literal(3), Literal(INVALID)), ctx)
     assert is_invalid(result)
 
 
@@ -115,33 +115,33 @@ async def test_and_sentinel_right(ctx):
 
 
 async def test_or_both_truthy(ctx):
-    result = await Or(3, 5).afirst(ctx)
+    result = await runtime.afirst(Or(3, 5), ctx)
     assert result == 3
 
 
 async def test_or_left_falsy(ctx):
-    result = await Or(0, 5).afirst(ctx)
+    result = await runtime.afirst(Or(0, 5), ctx)
     assert result == 5
 
 
 async def test_or_both_falsy(ctx):
-    result = await Or(0, "").afirst(ctx)
+    result = await runtime.afirst(Or(0, ""), ctx)
     assert result == ""
 
 
 async def test_or_short_circuit_skips_right(ctx):
     """Left is truthy -> right is never evaluated."""
-    result = await Or(Literal(3), FailingNu()).afirst(ctx)
+    result = await runtime.afirst(Or(Literal(3), FailingNu()), ctx)
     assert result == 3
 
 
 async def test_or_sentinel_left(ctx):
     """EMPTY left -> INVALID, right not evaluated."""
-    result = await Or(Literal(EMPTY), FailingNu()).afirst(ctx)
+    result = await runtime.afirst(Or(Literal(EMPTY), FailingNu()), ctx)
     assert is_sentinel(result)
 
 
 async def test_or_sentinel_right(ctx):
     """Falsy left, INVALID right -> INVALID."""
-    result = await Or(Literal(0), Literal(INVALID)).afirst(ctx)
+    result = await runtime.afirst(Or(Literal(0), Literal(INVALID)), ctx)
     assert is_invalid(result)

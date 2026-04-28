@@ -1,18 +1,16 @@
 """auto_distribute - wrap concurrent op children in Teleport.
 
-Finds parallel-capable nodes (NuIndepComm via `|`, plus ParAll/Race/ParAny) and
-wraps their children in Teleport for distributed execution.
-
-Children already wrapped in Teleport are skipped.
-Follows the same deformation pattern as auto_atomic in nu-virtuals.
+Finds parallel-capable nodes (Parallel, Race, ParAny) and wraps their
+children in Teleport for distributed execution. Children already
+wrapped in Teleport are skipped.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.interactions.command.flow.parallel import ParAll, ParAny, Race
-from nu.terms._compat_nu import NuIndepComm
+from nu.interactions.command.flow.parallel import ParAny
+from nu.terms.flow import Parallel, Race
 from nu.tree.rewrite import map_nodes
 
 from ..spans.teleport import Teleport
@@ -32,7 +30,7 @@ __all__ = [
     "round_robin",
 ]
 
-_CONCURRENT_OPS = (NuIndepComm, ParAll, Race, ParAny)
+_CONCURRENT_OPS = (Parallel, Race, ParAny)
 
 
 def round_robin(index: int, count: int) -> int:
@@ -46,37 +44,27 @@ def auto_distribute(
 ) -> Nu:
     """Wrap concurrent op children in Teleport.
 
-    Finds parallel-capable nodes (NuIndepComm via `|`, plus ParAll, Race, ParAny)
-    and wraps each child in Teleport with a worker tag assigned by strategy.
-
     Children already wrapped in Teleport are left as-is.
-
-    Args:
-        tree: Tree to rewrite.
-        strategy: Worker assignment function (index, count) -> tag.
-
-    Returns:
-        New tree with Teleport injected around concurrent children.
     """
 
     def _rewrite(node: Nu) -> Nu:
         if not isinstance(node, _CONCURRENT_OPS):
             return node
-        if not node.children:
+        if not node._children:
             return node
 
         new_children: list = []
         changed = False
-        for i, child in enumerate(node.children):
+        for i, child in enumerate(node._children):
             if isinstance(child, Teleport):
                 new_children.append(child)
             else:
-                tag = strategy(i, len(node.children))
+                tag = strategy(i, len(node._children))
                 new_children.append(Teleport(child, worker=tag))
                 changed = True
 
         if not changed:
             return node
-        return node._with_children(*new_children)
+        return node._with_children(tuple(new_children))
 
     return map_nodes(tree, _rewrite, order="bottom_up")

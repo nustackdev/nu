@@ -2,25 +2,22 @@
 
 For sleep primitives, see ``nu.stdlib.asyncio.AsyncSleep`` (ASYNC) and
 ``nu.stdlib.time.TimeSleep`` (SYNC). Core ships no ``Delay``: asyncio.sleep
-and time.sleep are different primitives under different modes, and the
-wrapper belongs in stdlib.
+and time.sleep live in stdlib.
 """
 
 from __future__ import annotations
 
 import asyncio
 import time
-from contextlib import aclosing
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Flow, Mode
+from nu.terms.query import ScalarQuery
+from nu.terms.span import Policy
+from nu.terms.types import Mode
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
-
-    from nu.context import Context
-    from nu.terms import FloatArg, Nu, StrArg
+    from nu.terms import FloatArg, Nu
 
 
 __all__ = [
@@ -31,48 +28,46 @@ __all__ = [
 ]
 
 
-class Timed(Flow):
-    """Time each child and print results.
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    Children: ``[label, *children]``
+
+class Timed(ScalarQuery):
+    """Run a body and return its elapsed duration in seconds.
+
+    Children: ``[body]``. ``support`` covers sync and async; the body
+    runs via ``runtime.execute`` / ``runtime.aexecute`` and the wall-clock
+    delta is returned as a float.
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def __init__(self, *children: Nu, label: StrArg = "Timed") -> None:
-        super().__init__(label, *children)
+    def __init__(self, body: Nu, *, label: str = "Timed") -> None:
+        super().__init__(body)
+        self._label = label
 
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        if False:  # pragma: no cover
-            yield
-        label = await self.children[0].afirst(ctx)
-        timings: list[tuple[str, float]] = []
-        for child in self.children[1:]:
-            name = child.__class__.__name__
-            if hasattr(child, "_label"):
-                name = child._label
-            elif hasattr(child, "__repr__"):
-                r = repr(child)
-                if len(r) < 60:
-                    name = r
-            t0 = time.perf_counter()
-            await child.aexecute(ctx)
-            elapsed = time.perf_counter() - t0
-            timings.append((name, elapsed))
+    def eval(self, ctx: Any) -> float:  # noqa: ANN401
+        from nu import runtime
 
-        total = sum(t for _, t in timings)
-        print(f"[Timed:{label}]")  # noqa: T201
-        for i, (name, elapsed) in enumerate(timings, 1):
-            print(f"  {i}. {name:<40} {elapsed * 1000:>8.1f}ms")  # noqa: T201
-        print(f"  {'total':<42} {total * 1000:>8.1f}ms")  # noqa: T201
+        t0 = time.perf_counter()
+        runtime.execute(self._children[0], ctx)
+        return time.perf_counter() - t0
+
+    async def aeval(self, ctx: Any) -> float:  # noqa: ANN401
+        from nu import runtime
+
+        t0 = time.perf_counter()
+        await runtime.aexecute(self._children[0], ctx)
+        return time.perf_counter() - t0
 
 
-class Timeout(Flow):
-    """Execute a child with a time limit.
+class Timeout(Policy):
+    """Run body with a wall-clock time limit.
 
-    Children: ``[timeout, body, on_timeout?]``
+    Children: ``[body]``. ``timeout`` and ``on_timeout`` kept on the
+    instance so the body slot semantics stay clean (body_slot = 0).
     """
 
+    body_slot: ClassVar[int] = 0
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(
@@ -81,80 +76,93 @@ class Timeout(Flow):
         body: Nu,
         on_timeout: Nu | None = None,
     ) -> None:
-        self._has_on_timeout = on_timeout is not None
-        children: list = [timeout, body]
-        if on_timeout is not None:
-            children.append(on_timeout)
-        super().__init__(*children)
+        super().__init__(body)
+        self._timeout = timeout
+        self._on_timeout = on_timeout
 
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        if False:  # pragma: no cover
-            yield
-        timeout = await self.children[0].afirst(ctx)
-        body = self.children[1]
+    async def _resolve(self, ctx: Any, val: Any) -> Any:  # noqa: ANN401
+        from nu import runtime
+        from nu.terms.nu import NuBase
+
+        if isinstance(val, NuBase):
+            return await runtime.afirst(val, ctx)
+        return val
+
+    async def aaround(self, ctx: Any, call: Any) -> Any:  # noqa: ANN401
+        from nu import runtime
+
+        timeout = float(await self._resolve(ctx, self._timeout))
         try:
-            await asyncio.wait_for(body.aexecute(ctx), timeout=timeout)
+            return await asyncio.wait_for(call(), timeout=timeout)
         except TimeoutError:
-            if self._has_on_timeout:
-                await self.children[2].aexecute(ctx)
+            if self._on_timeout is not None:
+                await runtime.aexecute(self._on_timeout, ctx)
+                return None
+            raise
 
 
-class Throttle(Flow):
-    """Drop executions within interval. Execute at most once per interval.
+class Throttle(Policy):
+    """Drop body executions inside ``interval`` seconds of the prior run.
 
-    Children: ``[interval, body?]``
-
-    First call always executes. Subsequent calls within the interval are skipped.
+    Children: ``[body]``. ``interval`` kept on the instance.
     """
 
+    body_slot: ClassVar[int] = 0
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
-    def __init__(self, interval: FloatArg, body: Nu | None = None) -> None:
+    def __init__(self, interval: FloatArg, body: Nu) -> None:
+        super().__init__(body)
+        self._interval = interval
         self._last_time: float = 0.0
-        if body is not None:
-            super().__init__(interval, body)
-        else:
-            super().__init__(interval)
 
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        interval = await self.children[0].afirst(ctx)
+    async def _resolve(self, ctx: Any, val: Any) -> Any:  # noqa: ANN401
+        from nu import runtime
+        from nu.terms.nu import NuBase
+
+        if isinstance(val, NuBase):
+            return await runtime.afirst(val, ctx)
+        return val
+
+    async def aaround(self, ctx: Any, call: Any) -> Any:  # noqa: ANN401
+        interval = float(await self._resolve(ctx, self._interval))
         now = time.monotonic()
         if now - self._last_time < interval:
-            return  # drop
+            return None
         self._last_time = now
-        if self._child_count > 1:
-            async with aclosing(self.children[1].aopen(ctx)) as gen:
-                async for v in gen:
-                    yield v
+        return await call()
 
 
-class Debounce(Flow):
-    """Cancel pending, restart timer. Execute only after quiet period.
+class Debounce(Policy):
+    """Delay body execution by ``delay``; cancel pending on re-entry.
 
-    Children: ``[delay, body?]``
-
-    Each call cancels any pending execution and starts a new timer.
-    Body executes only when the timer expires without being reset.
+    Children: ``[body]``. Each invocation cancels any in-flight task and
+    starts a fresh timer.
     """
 
+    body_slot: ClassVar[int] = 0
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
-    def __init__(self, delay: FloatArg, body: Nu | None = None) -> None:
+    def __init__(self, delay: FloatArg, body: Nu) -> None:
+        super().__init__(body)
+        self._delay = delay
         self._pending: asyncio.Task | None = None
-        if body is not None:
-            super().__init__(delay, body)
-        else:
-            super().__init__(delay)
 
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        if False:  # pragma: no cover
-            yield
-        delay = await self.children[0].afirst(ctx)
+    async def _resolve(self, ctx: Any, val: Any) -> Any:  # noqa: ANN401
+        from nu import runtime
+        from nu.terms.nu import NuBase
+
+        if isinstance(val, NuBase):
+            return await runtime.afirst(val, ctx)
+        return val
+
+    async def aaround(self, ctx: Any, call: Any) -> Any:  # noqa: ANN401
+        delay = float(await self._resolve(ctx, self._delay))
         if self._pending is not None and not self._pending.done():
             self._pending.cancel()
-        if self._child_count > 1:
-            self._pending = asyncio.create_task(self._run_after(delay, ctx))
 
-    async def _run_after(self, delay: float, ctx: Context) -> None:
-        await asyncio.sleep(delay)
-        await self.children[1].aexecute(ctx)
+        async def _later() -> Any:
+            await asyncio.sleep(delay)
+            return await call()
+
+        self._pending = asyncio.create_task(_later())
+        return None

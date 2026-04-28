@@ -14,14 +14,16 @@ These require PV views with UnsafePrimitiveOpsBase in MRO.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu import EMPTY, Sentinel
-from nu.terms import Command, Effect, Mode, Query
+from nu.terms.command import ScalarCommand
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import EMPTY, is_sentinel
+from nu.terms.types import Effect, Mode
 
 
 if TYPE_CHECKING:
-    from nu import Context, Nu
+    from nu import Nu
 
 
 __all__ = [
@@ -35,7 +37,7 @@ __all__ = [
 ]
 
 
-class EnsureLayoutCmd(Command):
+class EnsureLayoutCmd(ScalarCommand):
     """Ensure view container and its internal layout exist in storage.
 
     Navigates to the view via fetch(), then calls _ensure_layout() to
@@ -56,15 +58,15 @@ class EnsureLayoutCmd(Command):
         super().__init__(ref)
         self.ref = ref
 
-    async def arun(self, ctx: Context) -> None:
-        view = await self.ref.afetch(ctx)
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        view = self.ref.fetch(ctx)
         if hasattr(view, "_ensure_layout"):
             view._ensure_layout()
         elif hasattr(view, "ensure_created"):
             view.ensure_created()
 
-    def run(self, ctx: Context) -> None:
-        view = self.ref.fetch(ctx)
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        view = await self.ref.afetch(ctx)
         if hasattr(view, "_ensure_layout"):
             view._ensure_layout()
         elif hasattr(view, "ensure_created"):
@@ -74,7 +76,7 @@ class EnsureLayoutCmd(Command):
         return f"EnsureLayoutCmd({self.ref!r})"
 
 
-class InitCmd(Command):
+class InitCmd(ScalarCommand):
     """Materialize container chain for a ViewRef.
 
     Navigates the view hierarchy via fetch(), triggering ensure_created()
@@ -92,19 +94,19 @@ class InitCmd(Command):
         super().__init__(ref)
         self.ref = ref
 
-    async def arun(self, ctx: Context) -> None:
-        """Fetch view hierarchy, materializing containers along the way."""
-        await self.ref.afetch(ctx)
-
-    def run(self, ctx: Context) -> None:
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
         """Fetch view hierarchy, materializing containers along the way (sync)."""
         self.ref.fetch(ctx)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        """Fetch view hierarchy, materializing containers along the way."""
+        await self.ref.afetch(ctx)
 
     def __repr__(self) -> str:
         return f"InitCmd({self.ref!r})"
 
 
-class ItemPrimitiveGetUnsafeOp[T](Query[T | Sentinel]):
+class ItemPrimitiveGetUnsafeOp(ScalarQuery):
     """Read primitive value via _unsafe_primitive_read().
 
     Single ctx[] call — no marker parsing, no type checks.
@@ -121,21 +123,21 @@ class ItemPrimitiveGetUnsafeOp[T](Query[T | Sentinel]):
         super().__init__(ref)
         self.ref = ref
 
-    async def arun(self, ctx: Context) -> T | Sentinel:
-        """Read primitive via single ctx[] lookup."""
-        parent = await self.ref.afetch_parent(ctx)
-        address = await self.ref.aresolve_address(ctx)
-        value = parent._unsafe_primitive_read(address)
-        if isinstance(value, Sentinel):
-            return EMPTY
-        return value
-
-    def run(self, ctx: Context) -> T | Sentinel:
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
         """Read primitive via single ctx[] lookup (sync)."""
         parent = self.ref.fetch_parent(ctx)
         address = self.ref.resolve_address(ctx)
         value = parent._unsafe_primitive_read(address)
-        if isinstance(value, Sentinel):
+        if is_sentinel(value):
+            return EMPTY
+        return value
+
+    async def _aapply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        """Read primitive via single ctx[] lookup."""
+        parent = await self.ref.afetch_parent(ctx)
+        address = await self.ref.aresolve_address(ctx)
+        value = parent._unsafe_primitive_read(address)
+        if is_sentinel(value):
             return EMPTY
         return value
 
@@ -143,7 +145,7 @@ class ItemPrimitiveGetUnsafeOp[T](Query[T | Sentinel]):
         return f"ItemPrimitiveGetUnsafeOp({self.ref!r})"
 
 
-class ItemPrimitiveSetUnsafeCmd[T](Command):
+class ItemPrimitiveSetUnsafeCmd(ScalarCommand):
     """Write primitive via _unsafe_primitive_write(ensure_exists=True).
 
     Ensures the container chain exists before writing (calls ensure_created),
@@ -157,26 +159,30 @@ class ItemPrimitiveSetUnsafeCmd[T](Command):
     own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
+    def __init__(self, ref: object, value: Nu) -> None:
         super().__init__(ref, value)
         self.ref = ref
         self.value_expr = value
 
-    async def arun(self, ctx: Context) -> None:
-        """Write primitive via ctx.put() with ensure_exists."""
-        parent = await self.ref.afetch_parent(ctx)
-        address = await self.ref.aresolve_address(ctx)
-        value = await self.value_expr.afirst(ctx)
-        if isinstance(value, Sentinel):
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        """Write primitive via ctx.put() with ensure_exists (sync)."""
+        from nu import runtime
+
+        parent = self.ref.fetch_parent(ctx)
+        address = self.ref.resolve_address(ctx)
+        value = runtime.first(self.value_expr, ctx)
+        if is_sentinel(value):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent._unsafe_primitive_write(address, value, ensure_exists=True)
 
-    def run(self, ctx: Context) -> None:
-        """Write primitive via ctx.put() with ensure_exists (sync)."""
-        parent = self.ref.fetch_parent(ctx)
-        address = self.ref.resolve_address(ctx)
-        value = self.value_expr.first(ctx)
-        if isinstance(value, Sentinel):
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        """Write primitive via ctx.put() with ensure_exists."""
+        from nu import runtime
+
+        parent = await self.ref.afetch_parent(ctx)
+        address = await self.ref.aresolve_address(ctx)
+        value = await runtime.afirst(self.value_expr, ctx)
+        if is_sentinel(value):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent._unsafe_primitive_write(address, value, ensure_exists=True)
 
@@ -184,7 +190,7 @@ class ItemPrimitiveSetUnsafeCmd[T](Command):
         return f"ItemPrimitiveSetUnsafeCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command):
+class ItemPrimitiveSetUnsafeParentSkipCmd(ScalarCommand):
     """Write primitive via _unsafe_primitive_write() -- full skip.
 
     Single ctx.put() call -- no ensure_created, no validation reads.
@@ -198,26 +204,30 @@ class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command):
     own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    def __init__(self, ref: object, value: Nu[T | Sentinel]) -> None:
+    def __init__(self, ref: object, value: Nu) -> None:
         super().__init__(ref, value)
         self.ref = ref
         self.value_expr = value
 
-    async def arun(self, ctx: Context) -> None:
-        """Write primitive via single ctx.put(), skipping all validation."""
-        parent = await self.ref.afetch_parent(ctx)
-        address = await self.ref.aresolve_address(ctx)
-        value = await self.value_expr.afirst(ctx)
-        if isinstance(value, Sentinel):
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        """Write primitive via single ctx.put(), skipping all validation (sync)."""
+        from nu import runtime
+
+        parent = self.ref.fetch_parent(ctx)
+        address = self.ref.resolve_address(ctx)
+        value = runtime.first(self.value_expr, ctx)
+        if is_sentinel(value):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent._unsafe_primitive_write(address, value)
 
-    def run(self, ctx: Context) -> None:
-        """Write primitive via single ctx.put(), skipping all validation (sync)."""
-        parent = self.ref.fetch_parent(ctx)
-        address = self.ref.resolve_address(ctx)
-        value = self.value_expr.first(ctx)
-        if isinstance(value, Sentinel):
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        """Write primitive via single ctx.put(), skipping all validation."""
+        from nu import runtime
+
+        parent = await self.ref.afetch_parent(ctx)
+        address = await self.ref.aresolve_address(ctx)
+        value = await runtime.afirst(self.value_expr, ctx)
+        if is_sentinel(value):
             raise ValueError(f"Cannot store sentinel value: {value}")
         parent._unsafe_primitive_write(address, value)
 
@@ -225,7 +235,7 @@ class ItemPrimitiveSetUnsafeParentSkipCmd[T](Command):
         return f"ItemPrimitiveSetUnsafeParentSkipCmd({self.ref!r}, {self.value_expr!r})"
 
 
-class ItemPrimitiveDeleteUnsafeCmd(Command):
+class ItemPrimitiveDeleteUnsafeCmd(ScalarCommand):
     """Delete primitive via _unsafe_primitive_delete().
 
     Single ctx.delete() call -- no validation, no descendant cleanup.
@@ -243,23 +253,23 @@ class ItemPrimitiveDeleteUnsafeCmd(Command):
         super().__init__(ref)
         self.ref = ref
 
-    async def arun(self, ctx: Context) -> None:
-        """Delete primitive via single ctx.delete()."""
-        parent = await self.ref.afetch_parent(ctx)
-        address = await self.ref.aresolve_address(ctx)
-        parent._unsafe_primitive_delete(address)
-
-    def run(self, ctx: Context) -> None:
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
         """Delete primitive via single ctx.delete() (sync)."""
         parent = self.ref.fetch_parent(ctx)
         address = self.ref.resolve_address(ctx)
+        parent._unsafe_primitive_delete(address)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        """Delete primitive via single ctx.delete()."""
+        parent = await self.ref.afetch_parent(ctx)
+        address = await self.ref.aresolve_address(ctx)
         parent._unsafe_primitive_delete(address)
 
     def __repr__(self) -> str:
         return f"ItemPrimitiveDeleteUnsafeCmd({self.ref!r})"
 
 
-class PrimitiveStoreCmd[T](Command):
+class PrimitiveStoreCmd(ScalarCommand):
     """Store a value via _primitive_write(), bypassing container type checks.
 
     Uses PrimitiveOpsBase._primitive_write() which does ensure_created() +
@@ -280,22 +290,26 @@ class PrimitiveStoreCmd[T](Command):
         self.ref = ref
         self.data_expr = data
 
-    async def arun(self, ctx: Context) -> None:
-        data = await self.data_expr.afirst(ctx)
-        if isinstance(data, Sentinel):
-            raise ValueError(f"Cannot store sentinel value: {data}")
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
 
-        parent = await self.ref.afetch_parent(ctx)
-        address = await self.ref.aresolve_address(ctx)
-        parent._primitive_write(address, data)
-
-    def run(self, ctx: Context) -> None:
-        data = self.data_expr.first(ctx)
-        if isinstance(data, Sentinel):
+        data = runtime.first(self.data_expr, ctx)
+        if is_sentinel(data):
             raise ValueError(f"Cannot store sentinel value: {data}")
 
         parent = self.ref.fetch_parent(ctx)
         address = self.ref.resolve_address(ctx)
+        parent._primitive_write(address, data)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        data = await runtime.afirst(self.data_expr, ctx)
+        if is_sentinel(data):
+            raise ValueError(f"Cannot store sentinel value: {data}")
+
+        parent = await self.ref.afetch_parent(ctx)
+        address = await self.ref.aresolve_address(ctx)
         parent._primitive_write(address, data)
 
     def __repr__(self) -> str:

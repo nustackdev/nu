@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Mode, Query, Sentinel
+from nu.terms.query import ScalarQuery
+from nu.terms.types import Mode
 
 
 if TYPE_CHECKING:
@@ -18,29 +19,32 @@ __all__ = [
 ]
 
 
-class ServiceGetOp[T](Query[T | Sentinel]):
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
+class ServiceGetOp(ScalarQuery):
     """Read service from context: ctx[service_type]."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
-    def __init__(self, ref: ServiceRef[T]) -> None:
-        """Initialize with ref."""
-        super().__init__(ref)
-
-    def run(self, ctx: Context) -> T | Sentinel:
-        """Return service bound in ctx for the ref's service_type."""
-        return ctx[self.children[0].service_type]
-
-
-class ServiceExistsOp(Query[bool]):
-    """Check if service type exists in context."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    accepts_sentinels: ClassVar[bool] = True
 
     def __init__(self, ref: ServiceRef) -> None:
-        """Initialize with ref."""
         super().__init__(ref)
 
-    def run(self, ctx: Context) -> bool:
-        """Return True if the ref's service_type is bound in ctx."""
-        return self.children[0].service_type in ctx
+    def _apply(self, ctx: Context, ops: list[Any]) -> Any:  # noqa: ANN401
+        ref: ServiceRef = self._children[0]  # type: ignore[assignment]
+        return ctx[ref.service_type]
+
+
+class ServiceExistsOp(ScalarQuery):
+    """Check if service type exists in context."""
+
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    accepts_sentinels: ClassVar[bool] = True
+
+    def __init__(self, ref: ServiceRef) -> None:
+        super().__init__(ref)
+
+    def _apply(self, ctx: Context, ops: list[Any]) -> bool:
+        ref: ServiceRef = self._children[0]  # type: ignore[assignment]
+        return ref.service_type in ctx

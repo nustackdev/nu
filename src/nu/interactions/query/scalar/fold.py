@@ -1,4 +1,4 @@
-"""Fold — stateful sequential reduction over an iterable.
+"""Fold - stateful sequential reduction over an iterable.
 
 Stream Query: yields per-iteration values from the body while threading
 an accumulator through ctx.attrs.
@@ -9,71 +9,68 @@ from __future__ import annotations
 from contextlib import aclosing, closing
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Mode, Stream
+from nu.terms.query import StreamQuery
+from nu.terms.types import Mode
 
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Generator
 
-    from nu.context import Context
-    from nu.terms import Nu, StrArg
-
 
 __all__ = ["Fold"]
 
 
-class Fold(Stream):
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
+class Fold(StreamQuery):
     """Stateful sequential reduction over an iterable.
 
     Children: ``[items, initial, body, acc, item]``
-
-    Sets ``ctx.attrs[acc]`` to the running accumulator and
-    ``ctx.attrs[item]`` to the current element each iteration.
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(
         self,
-        items: Any,
+        items: Any,  # noqa: ANN401
         *,
-        acc: StrArg = "acc",
-        initial: Any,
-        item: StrArg = "item",
-        body: Nu,
+        acc: Any = "acc",  # noqa: ANN401
+        initial: Any,  # noqa: ANN401
+        item: Any = "item",  # noqa: ANN401
+        body: Any,  # noqa: ANN401
     ) -> None:
         super().__init__(items, initial, body, acc, item)
 
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        """Execute body for each element, threading acc through ctx.attrs."""
-        initial = await self.children[1].afirst(ctx)
-        body = self.children[2]
-        acc_key: str = await self.children[3].afirst(ctx)
-        item_key: str = await self.children[4].afirst(ctx)
+    async def aopen(self, ctx: Any) -> AsyncGenerator[Any, None]:  # type: ignore[override]
+        from nu import runtime
+
+        initial = await runtime.afirst(self._children[1], ctx)
+        body = self._children[2]
+        acc_key: str = await runtime.afirst(self._children[3], ctx)
+        item_key: str = await runtime.afirst(self._children[4], ctx)
 
         ctx.attrs[acc_key] = initial
 
-        # Keep items generator open so any scope opened by the items
-        # subtree (e.g. Snapshot) stays alive while the body reads from it.
-        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
-            async for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    async with aclosing(body.aopen(ctx)) as gen:
-                        async for v in gen:
-                            yield v
+        items_first = await runtime.afirst(self._children[0], ctx)
+        for elem in items_first:
+            ctx.attrs[item_key] = elem
+            async with aclosing(body.aopen(ctx)) as gen:
+                async for v in gen:
+                    yield v
 
-    def open(self, ctx: Context) -> Generator[Any, None, None]:
-        initial = self.children[1].first(ctx)
-        body = self.children[2]
-        acc_key: str = self.children[3].first(ctx)
-        item_key: str = self.children[4].first(ctx)
+    def open(self, ctx: Any) -> Generator[Any, None, None]:  # type: ignore[override]
+        from nu import runtime
+
+        initial = runtime.first(self._children[1], ctx)
+        body = self._children[2]
+        acc_key: str = runtime.first(self._children[3], ctx)
+        item_key: str = runtime.first(self._children[4], ctx)
 
         ctx.attrs[acc_key] = initial
 
-        with closing(self.children[0].open(ctx)) as items_gen:
-            for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    with closing(body.open(ctx)) as gen:
-                        yield from gen
+        items_first = runtime.first(self._children[0], ctx)
+        for elem in items_first:
+            ctx.attrs[item_key] = elem
+            with closing(body.open(ctx)) as gen:
+                yield from gen

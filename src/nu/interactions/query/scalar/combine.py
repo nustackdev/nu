@@ -1,4 +1,4 @@
-"""Iterable combination ops — Zip, Chain, Enumerate. Lazy iterators."""
+"""Iterable combination ops - Zip, Chain, Enumerate. Lazy iterators."""
 
 from __future__ import annotations
 
@@ -6,7 +6,8 @@ from collections.abc import Iterable, Iterator
 from itertools import chain
 from typing import Any, ClassVar
 
-from nu.terms import INVALID, BinaryQuery, Mode, ScalarQuery, Sentinel
+from nu.terms.query import ScalarQuery
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -16,58 +17,44 @@ __all__ = [
 ]
 
 
-class Zip(ScalarQuery[Iterator[tuple]]):
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
+class Zip(ScalarQuery):
     """Zip multiple iterables: zip(*iterables) -> lazy iterator."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def __init__(self, *operands: object) -> None:
-        """Initialize with 2+ iterables."""
-        ScalarQuery.__init__(self, *operands)
+    def __init__(self, *operands: Any) -> None:  # noqa: ANN401
+        super().__init__(*operands)
 
-    def apply(self, *values: Any) -> Iterator[tuple] | Sentinel:
-        """Apply: zip resolved iterables lazily."""
-        for v in values:
-            if isinstance(v, Sentinel):
-                return INVALID
-        return zip(*values, strict=False)
-
-    def __repr__(self) -> str:
-        args = ", ".join(repr(c) for c in self._children)
-        return f"Zip({args})"
+    def _apply(self, ctx: Any, ops: list[Any]) -> Iterator[tuple]:  # noqa: ANN401
+        return zip(*ops, strict=False)
 
 
-class Chain(ScalarQuery[Iterator]):
+class Chain(ScalarQuery):
     """Chain multiple iterables: chain(*iterables) -> lazy iterator."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def __init__(self, *operands: object) -> None:
-        """Initialize with 2+ iterables."""
-        ScalarQuery.__init__(self, *operands)
+    def __init__(self, *operands: Any) -> None:  # noqa: ANN401
+        super().__init__(*operands)
 
-    def apply(self, *values: Any) -> Iterator | Sentinel:
-        """Apply: chain resolved iterables lazily."""
-        for v in values:
-            if isinstance(v, Sentinel):
-                return INVALID
-        return chain(*values)
-
-    def __repr__(self) -> str:
-        args = ", ".join(repr(c) for c in self._children)
-        return f"Chain({args})"
+    def _apply(self, ctx: Any, ops: list[Any]) -> Iterator:  # noqa: ANN401
+        return chain(*ops)
 
 
-class Enumerate(BinaryQuery[Iterator[tuple[int, object]]]):
+class Enumerate(ScalarQuery):
     """Enumerate iterable: enumerate(iterable, start) -> lazy iterator."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> Iterator[tuple[int, object]] | Sentinel:
-        """Apply: left=iterable, right=start."""
+    def __init__(self, iterable: Any, start: Any) -> None:  # noqa: ANN401
+        super().__init__(iterable, start)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Iterator[tuple[int, object]]:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, Iterable):
-            raise TypeError(f"Enumerate requires iterable, got {type(left).__name__}")
-        return enumerate(left, start=int(right))  # type: ignore
-
-    def __repr__(self) -> str:
-        return f"Enumerate({self._children[0]!r}, start={self._children[1]!r})"
+            msg = f"Enumerate requires iterable, got {type(left).__name__}"
+            raise TypeError(msg)
+        return enumerate(left, start=int(right))

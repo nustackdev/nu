@@ -1,86 +1,86 @@
 """Tests for Ref - typed pointer to a location.
 
-TODO(task-083): rewrite for new core. Current fixtures target legacy
-`own_mode`/`func_mode`/`aresolve`/`afetch` shape; new Ref uses
-`support`/`eval`/`aeval`. Skipping module-level until rewritten.
+New-core shape: `Ref[T]` (Generic), `support` set, `eval`/`aeval`
+overrides on the concrete subclass. Ref's `own_effects` is empty by
+class-time validator.
 """
 
 from __future__ import annotations
 
-import pytest
-
-
-pytest.skip("legacy API; rewrite for new core - task-083 follow-up", allow_module_level=True)
-
 from typing import ClassVar
 
-from nu import Context, Nu
-from nu.terms import Mode
+from nu import Context, runtime
+from nu.terms.nu import NuBase
 from nu.terms.ref import Ref
+from nu.terms.types import Mode, Realization
 
 
 # ---------------------------------------------------------------------------
-# Minimal concrete Ref for testing the abstract protocol
+# Minimal concrete Ref for testing the abstract surface
 # ---------------------------------------------------------------------------
 
 
 class StubRef(Ref[int]):
-    """Minimal Ref that resolves to a fixed key and fetches a fixed value."""
+    """Minimal Ref that resolves to a fixed value, sync+async."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    def __init__(self, key: str, value: int) -> None:
+    def __init__(self, value: int) -> None:
         super().__init__()
-        self._key = key
         self._value = value
 
-    async def aresolve(self, ctx: Context) -> str:
-        return self._key
+    def eval(self, ctx: Context) -> int:
+        return self._value
 
-    async def afetch(self, ctx: Context) -> int:
+    async def aeval(self, ctx: Context) -> int:
         return self._value
 
 
 # ---------------------------------------------------------------------------
-# Protocol
+# Surface
 # ---------------------------------------------------------------------------
 
 
-async def test_resolve(ctx):
-    ref = StubRef("loc", 42)
-    assert await ref.aresolve(ctx) == "loc"
-
-
-async def test_fetch(ctx):
-    ref = StubRef("loc", 42)
-    assert await ref.afetch(ctx) == 42
-
-
-async def test_open_yields_fetched_value(ctx):
-    ref = StubRef("loc", 42)
-    assert await ref.afirst(ctx) == 42
-
-
-async def test_fetch_method(ctx):
-    ref = StubRef("loc", 42)
-    assert await ref.afetch(ctx) == 42
-
-
-# ---------------------------------------------------------------------------
-# Structure
-# ---------------------------------------------------------------------------
-
-
-def test_ref_is_leaf():
-    ref = StubRef("loc", 42)
-    assert ref._is_leaf is True
-    assert ref._child_count == 0
-
-
-def test_ref_is_nu():
-    assert isinstance(StubRef("loc", 42), Nu)
+def test_ref_is_nu_base():
+    assert isinstance(StubRef(42), NuBase)
 
 
 def test_ref_is_ref():
-    assert isinstance(StubRef("loc", 42), Ref)
+    assert isinstance(StubRef(42), Ref)
+
+
+def test_ref_realization_is_scalar():
+    assert StubRef(42).realization is Realization.SCALAR
+
+
+def test_ref_own_effects_empty():
+    assert StubRef.own_effects == {}
+
+
+def test_ref_no_children():
+    assert StubRef(42)._children == ()
+
+
+def test_eval_returns_value(ctx):
+    ref = StubRef(42)
+    assert ref.eval(ctx) == 42
+
+
+async def test_aeval_returns_value(ctx):
+    ref = StubRef(42)
+    assert await ref.aeval(ctx) == 42
+
+
+# ---------------------------------------------------------------------------
+# Drive via runtime (no instance shims on NuBase)
+# ---------------------------------------------------------------------------
+
+
+def test_ref_first_via_runtime(ctx):
+    ref = StubRef(7)
+    assert runtime.first(ref, ctx) == 7
+
+
+async def test_ref_afirst_via_runtime(ctx):
+    ref = StubRef(7)
+    assert await runtime.afirst(ref, ctx) == 7

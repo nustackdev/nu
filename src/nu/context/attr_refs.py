@@ -1,23 +1,27 @@
-"""AttrRef — flat name-based lookup from Context.
+"""AttrRef - flat name-based lookup from Context.
 
-AttrRef is the simplest substrate: resolves a name directly from ctx.attrs.
-Typed variants mix in Interface so you can chain operations directly on the ref.
+Resolves a name directly from `ctx.attrs`. Typed variants mix in the
+Interface so you can chain operations on the ref.
 
 Name can be a plain string or a Nu that resolves to a string.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu.collections import DictI, FrozenSetI, ListI, SetI, TupleI
 from nu.primitives import AnyI, BoolI, BytesI, FloatI, IntI, StrI
-from nu.terms import Literal, Mode, Nu, Ref, Sentinel
+from nu.terms.query import Literal
+from nu.terms.ref import Ref
+from nu.terms.sentinels import EMPTY
+from nu.terms.types import Mode
 
 
 if TYPE_CHECKING:
     from nu.context import Context
     from nu.terms import StrArg
+    from nu.terms.protocol import Nu
 
 __all__ = [
     "AnyAttrRef",
@@ -35,65 +39,73 @@ __all__ = [
 ]
 
 
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
 class AttrRef[T](Ref[T]):
-    """Attr ref — flat name-based lookup from Context.
+    """Attr ref - flat name-based lookup from Context.
 
-    The simplest substrate: resolves a name directly from ctx.attrs.
-    No parent chain, no shape, no hierarchical addressing.
-
-    Name can be a plain string (static) or a Nu (dynamic, resolved at
-    execution time).
+    Resolves a name from `ctx.attrs`. Name can be a plain string (static)
+    or a Nu (dynamic, resolved at eval time).
 
     Args:
         name: ctx.attrs key. Plain string or Nu resolving to string.
 
     Example::
 
-        AttrRef("error")                    # static key
-        AttrRef(some_computed_key)           # dynamic key
+        AttrRef("error")              # static key
+        AttrRef(some_computed_key)    # dynamic key
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, name: StrArg) -> None:
         super().__init__()
         self._raw_name: str | None = name if isinstance(name, str) else None
-        self._name_nu: Nu = name if isinstance(name, Nu) else Literal(name)
+        # Wrap dynamic names so we can drive them through the runtime.
+        from nu.terms.nu import NuBase
+
+        if isinstance(name, NuBase):
+            self._name_nu: Nu = name  # type: ignore[assignment]
+        else:
+            self._name_nu = Literal(name)  # type: ignore[assignment]
 
     @property
     def name(self) -> str | None:
         """Static name tag, or None if dynamic."""
         return self._raw_name
 
-    async def _resolve_name(self, ctx: Context) -> str:
-        """Resolve the name — fast path for static, execute for dynamic."""
-        if self._raw_name is not None:
-            return self._raw_name
-        return await self._name_ctx.aexecute()
-
-    async def aresolve(self, ctx: Context) -> str:
-        """Resolve to the name string."""
-        return await self._resolve_name(ctx)
-
-    async def afetch(self, ctx: Context) -> T | Sentinel:
-        """Fetch value from context attrs by name."""
-        key = await self._resolve_name(ctx)
-        return ctx.attrs[key]  # type: ignore[attr-defined]
-
     def _resolve_name_sync(self, ctx: Context) -> str:
-        """Sync counterpart of `_resolve_name`."""
         if self._raw_name is not None:
             return self._raw_name
-        return self._name_nu.first(ctx)
+        return self._name_nu.eval(ctx)
 
-    def resolve(self, ctx: Context) -> str:
-        """Sync counterpart of `aresolve`."""
-        return self._resolve_name_sync(ctx)
+    async def _resolve_name_async(self, ctx: Context) -> str:
+        if self._raw_name is not None:
+            return self._raw_name
+        return await self._name_nu.aeval(ctx)
 
-    def fetch(self, ctx: Context) -> T | Sentinel:
-        """Sync counterpart of `afetch`."""
+    def eval(self, ctx: Context) -> Any:  # noqa: ANN401, D102
         key = self._resolve_name_sync(ctx)
-        return ctx.attrs[key]  # type: ignore[attr-defined]
+        return (
+            ctx.attrs.get(key, EMPTY)
+            if hasattr(ctx.attrs, "get")
+            # type: ignore[union-attr]
+            else (
+                ctx.attrs[key] if key in ctx.attrs else EMPTY  # type: ignore[operator]
+            )
+        )
+
+    async def aeval(self, ctx: Context) -> Any:  # noqa: ANN401, D102
+        key = await self._resolve_name_async(ctx)
+        return (
+            ctx.attrs.get(key, EMPTY)
+            if hasattr(ctx.attrs, "get")
+            # type: ignore[union-attr]
+            else (
+                ctx.attrs[key] if key in ctx.attrs else EMPTY  # type: ignore[operator]
+            )
+        )
 
     def exists(self) -> BoolI:
         """Check if name exists in context."""
@@ -110,37 +122,37 @@ class AttrRef[T](Ref[T]):
 class IntAttrRef(AttrRef[int], IntI):
     """Int attr ref with full numeric interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
 
 class FloatAttrRef(AttrRef[float], FloatI):
     """Float attr ref with full numeric interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
 
 class StrAttrRef(AttrRef[str], StrI):
     """Str attr ref with full string interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
 
 class BoolAttrRef(AttrRef[bool], BoolI):
     """Bool attr ref with full logical interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
 
 class BytesAttrRef(AttrRef[bytes], BytesI):
     """Bytes attr ref with full bytes interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
 
 class AnyAttrRef(AttrRef[object], AnyI):
     """Any attr ref with dynamic interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
 
 # =========================================================================
@@ -151,28 +163,28 @@ class AnyAttrRef(AttrRef[object], AnyI):
 class ListAttrRef(AttrRef[list], ListI):
     """List attr ref with full list interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
 
 class DictAttrRef(AttrRef[dict], DictI):
     """Dict attr ref with full dict interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
 
 class SetAttrRef(AttrRef[set], SetI):
     """Set attr ref with full set interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
 
 class FrozenSetAttrRef(AttrRef[frozenset], FrozenSetI):
     """FrozenSet attr ref with full frozenset interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
 
 class TupleAttrRef(AttrRef[tuple], TupleI):
     """Tuple attr ref with full tuple interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH

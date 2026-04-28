@@ -1,25 +1,29 @@
-"""Collection iteration ops -- Nu-native iteration over collections.
+"""Collection iteration ops -- Filter, Map, TakeWhile, UniqueDo, Find,
+FindIndex, GroupBy, Partition, ToDict.
 
-Every predicate/transform is a Nu -- no lambdas, no holes in the tree.
-Deformations see everything.
+Stream-shaped variants (Filter, Map, TakeWhile, UniqueDo) are
+``StreamQuery`` -- they yield items pulled from a stream child, gated by
+a Nu predicate / transform child. Reduction-shaped variants (Find,
+FindIndex, GroupBy, Partition, ToDict) are ``ScalarQuery`` returning a
+single scalar value (the match, the dict, the partition tuple).
 
-Pattern: items + Nu expression(s) + body/output + item key.
-Items are set on ctx.attrs[item] each iteration so the body and
-condition/transform Nus can read them via AttrRef.
+Per-item Nu predicates / transforms are evaluated against ``ctx.attrs``
+keyed by an item key (string), so the predicate body can read the
+current element via ``AttrRef``. The item-key plumbing keeps the legacy
+authoring style; new-core only sees a stream pull and a scalar lookup.
 """
 
 from __future__ import annotations
 
-from contextlib import aclosing, closing
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Flow, Mode
+from nu.terms.query import Reduction, ScalarQuery, StreamQuery  # noqa: F401
+from nu.terms.types import Mode
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import AsyncGenerator, Generator, Iterable
 
-    from nu.context import Context
     from nu.terms import Arg, Nu, StrArg
 
 
@@ -36,425 +40,379 @@ __all__ = [
 ]
 
 
-class Filter(Flow):
-    """Execute body for each item where condition is truthy.
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    Children: ``[items, condition, body, item_key]``
+
+def _iterate_sync(items_q: Nu, ctx: Any) -> Generator[Any, None, None]:  # noqa: ANN401
+    """Open the items stream and yield each individual element.
+
+    Legacy items children yield batches (iterables); flatten them.
+    """
+    from contextlib import closing
+
+    with closing(items_q.open(ctx)) as gen:
+        for batch in gen:
+            if hasattr(batch, "__iter__") and not isinstance(batch, (str, bytes)):
+                yield from batch
+            else:
+                yield batch
+
+
+async def _iterate_async(items_q: Nu, ctx: Any) -> AsyncGenerator[Any, None]:  # noqa: ANN401
+    from contextlib import aclosing
+
+    async with aclosing(items_q.aopen(ctx)) as gen:
+        async for batch in gen:
+            if hasattr(batch, "__iter__") and not isinstance(batch, (str, bytes)):
+                for elem in batch:
+                    yield elem
+            else:
+                yield batch
+
+
+# --- Stream-shaped: Filter, Map, TakeWhile, UniqueDo ------------------------
+
+
+class Filter(StreamQuery):
+    """Yield items where the condition is truthy.
+
+    Children: ``[items, condition, item_key]``
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(
         self,
         items: Arg[Iterable],
         *,
         condition: Nu,
-        body: Nu,
         item: StrArg = "item",
     ) -> None:
-        super().__init__(items, condition, body, item)
+        super().__init__(items, condition, item)
 
-    async def arun(self, ctx: Context) -> None:
-        """Execute body for each item where condition holds."""
-        condition = self.children[1]
-        body = self.children[2]
-        item_key: str = await self.children[3].afirst(ctx)
+    def open(self, ctx: Any) -> Generator[Any, None, None]:  # noqa: ANN401
+        from nu import runtime
 
-        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
-            async for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    if await condition.afirst(ctx):
-                        await body.aexecute(ctx)
+        condition = self._children[1]
+        item_key: str = runtime.first(self._children[2], ctx)
+        for elem in _iterate_sync(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            if runtime.first(condition, ctx):
+                yield elem
 
-    def run(self, ctx: Context) -> None:
-        condition = self.children[1]
-        body = self.children[2]
-        item_key: str = self.children[3].first(ctx)
+    async def aopen(self, ctx: Any) -> AsyncGenerator[Any, None]:  # noqa: ANN401
+        from nu import runtime
 
-        with closing(self.children[0].open(ctx)) as items_gen:
-            for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    if condition.first(ctx):
-                        body.execute(ctx)
+        condition = self._children[1]
+        item_key: str = await runtime.afirst(self._children[2], ctx)
+        async for elem in _iterate_async(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            if await runtime.afirst(condition, ctx):
+                yield elem
 
 
-class Map(Flow):
-    """Transform each item via a Nu expression, collect results.
+class Map(StreamQuery):
+    """Yield ``transform(item)`` for each item.
 
-    Children: ``[items, transform, item_key, output_key]``
-
-    Results stored in ``ctx.attrs[output]`` as a list.
+    Children: ``[items, transform, item_key]``
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(
         self,
         items: Arg[Iterable],
         *,
         transform: Nu,
-        output: StrArg = "result",
         item: StrArg = "item",
     ) -> None:
-        super().__init__(items, transform, item, output)
+        super().__init__(items, transform, item)
 
-    async def arun(self, ctx: Context) -> None:
-        """Collect transform(item) for each item into output_key."""
-        transform = self.children[1]
-        item_key: str = await self.children[2].afirst(ctx)
-        output_key: str = await self.children[3].afirst(ctx)
+    def open(self, ctx: Any) -> Generator[Any, None, None]:  # noqa: ANN401
+        from nu import runtime
 
-        results = []
-        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
-            async for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    results.append(await transform.afirst(ctx))
-        ctx.attrs[output_key] = results
+        transform = self._children[1]
+        item_key: str = runtime.first(self._children[2], ctx)
+        for elem in _iterate_sync(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            yield runtime.first(transform, ctx)
 
-    def run(self, ctx: Context) -> None:
-        transform = self.children[1]
-        item_key: str = self.children[2].first(ctx)
-        output_key: str = self.children[3].first(ctx)
+    async def aopen(self, ctx: Any) -> AsyncGenerator[Any, None]:  # noqa: ANN401
+        from nu import runtime
 
-        results = []
-        with closing(self.children[0].open(ctx)) as items_gen:
-            for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    results.append(transform.first(ctx))
-        ctx.attrs[output_key] = results
+        transform = self._children[1]
+        item_key: str = await runtime.afirst(self._children[2], ctx)
+        async for elem in _iterate_async(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            yield await runtime.afirst(transform, ctx)
 
 
-class TakeWhile(Flow):
-    """Execute body while condition holds. Stop on first false.
+class TakeWhile(StreamQuery):
+    """Yield items while condition holds; stop on first false.
 
-    Children: ``[items, condition, body, item_key]``
+    Children: ``[items, condition, item_key]``
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(
         self,
         items: Arg[Iterable],
         *,
         condition: Nu,
-        body: Nu,
         item: StrArg = "item",
     ) -> None:
-        super().__init__(items, condition, body, item)
+        super().__init__(items, condition, item)
 
-    async def arun(self, ctx: Context) -> None:
-        """Execute body while condition holds; stop on first false."""
-        condition = self.children[1]
-        body = self.children[2]
-        item_key: str = await self.children[3].afirst(ctx)
+    def open(self, ctx: Any) -> Generator[Any, None, None]:  # noqa: ANN401
+        from nu import runtime
 
-        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
-            async for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    if not await condition.afirst(ctx):
-                        return
-                    await body.aexecute(ctx)
+        condition = self._children[1]
+        item_key: str = runtime.first(self._children[2], ctx)
+        for elem in _iterate_sync(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            if not runtime.first(condition, ctx):
+                return
+            yield elem
 
-    def run(self, ctx: Context) -> None:
-        condition = self.children[1]
-        body = self.children[2]
-        item_key: str = self.children[3].first(ctx)
+    async def aopen(self, ctx: Any) -> AsyncGenerator[Any, None]:  # noqa: ANN401
+        from nu import runtime
 
-        with closing(self.children[0].open(ctx)) as items_gen:
-            for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    if not condition.first(ctx):
-                        return
-                    body.execute(ctx)
+        condition = self._children[1]
+        item_key: str = await runtime.afirst(self._children[2], ctx)
+        async for elem in _iterate_async(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            if not await runtime.afirst(condition, ctx):
+                return
+            yield elem
 
 
-class UniqueDo(Flow):
-    """Execute body for each item with a unique key.
+class UniqueDo(StreamQuery):
+    """Yield items whose key value has not been seen yet.
 
-    Children: ``[items, key, body, item_key]``
+    Children: ``[items, key, item_key]``
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(
         self,
         items: Arg[Iterable],
         *,
         key: Nu,
-        body: Nu,
         item: StrArg = "item",
     ) -> None:
-        super().__init__(items, key, body, item)
+        super().__init__(items, key, item)
 
-    async def arun(self, ctx: Context) -> None:
-        """Execute body for each item whose key has not been seen."""
-        key_expr = self.children[1]
-        body = self.children[2]
-        item_key: str = await self.children[3].afirst(ctx)
+    def open(self, ctx: Any) -> Generator[Any, None, None]:  # noqa: ANN401
+        from nu import runtime
 
+        key_expr = self._children[1]
+        item_key: str = runtime.first(self._children[2], ctx)
         seen: set = set()
-        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
-            async for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    k = await key_expr.afirst(ctx)
-                    if k not in seen:
-                        seen.add(k)
-                        await body.aexecute(ctx)
+        for elem in _iterate_sync(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            k = runtime.first(key_expr, ctx)
+            if k not in seen:
+                seen.add(k)
+                yield elem
 
-    def run(self, ctx: Context) -> None:
-        key_expr = self.children[1]
-        body = self.children[2]
-        item_key: str = self.children[3].first(ctx)
+    async def aopen(self, ctx: Any) -> AsyncGenerator[Any, None]:  # noqa: ANN401
+        from nu import runtime
 
+        key_expr = self._children[1]
+        item_key: str = await runtime.afirst(self._children[2], ctx)
         seen: set = set()
-        with closing(self.children[0].open(ctx)) as items_gen:
-            for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    k = key_expr.first(ctx)
-                    if k not in seen:
-                        seen.add(k)
-                        body.execute(ctx)
+        async for elem in _iterate_async(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            k = await runtime.afirst(key_expr, ctx)
+            if k not in seen:
+                seen.add(k)
+                yield elem
 
 
-class Find(Flow):
-    """Find first item where condition is truthy.
+# --- Scalar-shaped: Find, FindIndex, GroupBy, Partition, ToDict --------------
 
-    Children: ``[items, condition, item_key, output_key]``
 
-    Stores the matching element in ``ctx.attrs[output]``.
-    If no match, output is not set.
+class Find(Reduction):
+    """Return the first item where condition is truthy. ``None`` if none.
+
+    Children: ``[items, condition, item_key]``
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(
         self,
         items: Arg[Iterable],
         *,
         condition: Nu,
-        output: StrArg = "found",
         item: StrArg = "item",
     ) -> None:
-        super().__init__(items, condition, item, output)
+        super().__init__(items, condition, item)
 
-    async def arun(self, ctx: Context) -> None:
-        """Store the first matching element in output_key."""
-        condition = self.children[1]
-        item_key: str = await self.children[2].afirst(ctx)
-        output_key: str = await self.children[3].afirst(ctx)
+    def eval(self, ctx: Any) -> Any:  # noqa: ANN401
+        from nu import runtime
 
-        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
-            async for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    if await condition.afirst(ctx):
-                        ctx.attrs[output_key] = elem
-                        return
+        condition = self._children[1]
+        item_key: str = runtime.first(self._children[2], ctx)
+        for elem in _iterate_sync(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            if runtime.first(condition, ctx):
+                return elem
+        return None
 
-    def run(self, ctx: Context) -> None:
-        condition = self.children[1]
-        item_key: str = self.children[2].first(ctx)
-        output_key: str = self.children[3].first(ctx)
+    async def aeval(self, ctx: Any) -> Any:  # noqa: ANN401
+        from nu import runtime
 
-        with closing(self.children[0].open(ctx)) as items_gen:
-            for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    if condition.first(ctx):
-                        ctx.attrs[output_key] = elem
-                        return
+        condition = self._children[1]
+        item_key: str = await runtime.afirst(self._children[2], ctx)
+        async for elem in _iterate_async(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            if await runtime.afirst(condition, ctx):
+                return elem
+        return None
 
 
-class FindIndex(Flow):
-    """Find index of first item where condition is truthy.
+class FindIndex(Reduction):
+    """Return the index of the first item where condition is truthy.
 
-    Children: ``[items, condition, item_key, output_key]``
-
-    Stores the index (int) in ``ctx.attrs[output]``.
-    If no match, output is not set.
+    Children: ``[items, condition, item_key]``. ``-1`` if none.
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(
         self,
         items: Arg[Iterable],
         *,
         condition: Nu,
-        output: StrArg = "found_index",
         item: StrArg = "item",
     ) -> None:
-        super().__init__(items, condition, item, output)
+        super().__init__(items, condition, item)
 
-    async def arun(self, ctx: Context) -> None:
-        """Store the index of the first matching element in output_key."""
-        condition = self.children[1]
-        item_key: str = await self.children[2].afirst(ctx)
-        output_key: str = await self.children[3].afirst(ctx)
+    def eval(self, ctx: Any) -> int:
+        from nu import runtime
 
-        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
-            async for items in items_gen:
-                for i, elem in enumerate(items):
-                    ctx.attrs[item_key] = elem
-                    if await condition.afirst(ctx):
-                        ctx.attrs[output_key] = i
-                        return
+        condition = self._children[1]
+        item_key: str = runtime.first(self._children[2], ctx)
+        for i, elem in enumerate(_iterate_sync(self._children[0], ctx)):
+            ctx.attrs[item_key] = elem
+            if runtime.first(condition, ctx):
+                return i
+        return -1
 
-    def run(self, ctx: Context) -> None:
-        condition = self.children[1]
-        item_key: str = self.children[2].first(ctx)
-        output_key: str = self.children[3].first(ctx)
+    async def aeval(self, ctx: Any) -> int:
+        from nu import runtime
 
-        with closing(self.children[0].open(ctx)) as items_gen:
-            for items in items_gen:
-                for i, elem in enumerate(items):
-                    ctx.attrs[item_key] = elem
-                    if condition.first(ctx):
-                        ctx.attrs[output_key] = i
-                        return
+        condition = self._children[1]
+        item_key: str = await runtime.afirst(self._children[2], ctx)
+        i = 0
+        async for elem in _iterate_async(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            if await runtime.afirst(condition, ctx):
+                return i
+            i += 1
+        return -1
 
 
-class GroupBy(Flow):
-    """Group items by a Nu key, execute body per group.
+class GroupBy(Reduction):
+    """Return ``{key: [items]}`` grouped by Nu key.
 
-    Children: ``[items, key, body, item_key, group_key]``
-
-    For each unique key value, collects all matching items into a list
-    and sets ``ctx.attrs[group]`` to that list before executing body.
+    Children: ``[items, key, item_key]``
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(
         self,
         items: Arg[Iterable],
         *,
         key: Nu,
-        body: Nu,
         item: StrArg = "item",
-        group: StrArg = "group",
     ) -> None:
-        super().__init__(items, key, body, item, group)
+        super().__init__(items, key, item)
 
-    async def arun(self, ctx: Context) -> None:
-        """Group items by key, execute body once per group."""
-        key_expr = self.children[1]
-        body = self.children[2]
-        item_key: str = await self.children[3].afirst(ctx)
-        group_key: str = await self.children[4].afirst(ctx)
+    def eval(self, ctx: Any) -> dict:
+        from nu import runtime
 
+        key_expr = self._children[1]
+        item_key: str = runtime.first(self._children[2], ctx)
         groups: dict = {}
-        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
-            async for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    k = await key_expr.afirst(ctx)
-                    groups.setdefault(k, []).append(elem)
+        for elem in _iterate_sync(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            k = runtime.first(key_expr, ctx)
+            groups.setdefault(k, []).append(elem)
+        return groups
 
-        for k, group_items in groups.items():
-            ctx.attrs[item_key] = k
-            ctx.attrs[group_key] = group_items
-            await body.aexecute(ctx)
+    async def aeval(self, ctx: Any) -> dict:
+        from nu import runtime
 
-    def run(self, ctx: Context) -> None:
-        key_expr = self.children[1]
-        body = self.children[2]
-        item_key: str = self.children[3].first(ctx)
-        group_key: str = self.children[4].first(ctx)
-
+        key_expr = self._children[1]
+        item_key: str = await runtime.afirst(self._children[2], ctx)
         groups: dict = {}
-        with closing(self.children[0].open(ctx)) as items_gen:
-            for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    k = key_expr.first(ctx)
-                    groups.setdefault(k, []).append(elem)
-
-        for k, group_items in groups.items():
-            ctx.attrs[item_key] = k
-            ctx.attrs[group_key] = group_items
-            body.execute(ctx)
+        async for elem in _iterate_async(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            k = await runtime.afirst(key_expr, ctx)
+            groups.setdefault(k, []).append(elem)
+        return groups
 
 
-class Partition(Flow):
-    """Split items into matches and rest by a Nu condition.
+class Partition(Reduction):
+    """Return ``(matches, rest)`` split by Nu condition.
 
-    Children: ``[items, condition, item_key, matches_key, rest_key]``
-
-    Stores matching items in ``ctx.attrs[matches]`` and
-    non-matching in ``ctx.attrs[rest]``.
+    Children: ``[items, condition, item_key]``
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(
         self,
         items: Arg[Iterable],
         *,
         condition: Nu,
-        matches: StrArg = "matches",
-        rest: StrArg = "rest",
         item: StrArg = "item",
     ) -> None:
-        super().__init__(items, condition, item, matches, rest)
+        super().__init__(items, condition, item)
 
-    async def arun(self, ctx: Context) -> None:
-        """Split items into matches/rest by condition."""
-        condition = self.children[1]
-        item_key: str = await self.children[2].afirst(ctx)
-        matches_key: str = await self.children[3].afirst(ctx)
-        rest_key: str = await self.children[4].afirst(ctx)
+    def eval(self, ctx: Any) -> tuple[list, list]:
+        from nu import runtime
 
-        matches_list: list = []
-        rest_list: list = []
-        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
-            async for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    if await condition.afirst(ctx):
-                        matches_list.append(elem)
-                    else:
-                        rest_list.append(elem)
-        ctx.attrs[matches_key] = matches_list
-        ctx.attrs[rest_key] = rest_list
+        condition = self._children[1]
+        item_key: str = runtime.first(self._children[2], ctx)
+        matches: list = []
+        rest: list = []
+        for elem in _iterate_sync(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            if runtime.first(condition, ctx):
+                matches.append(elem)
+            else:
+                rest.append(elem)
+        return matches, rest
 
-    def run(self, ctx: Context) -> None:
-        condition = self.children[1]
-        item_key: str = self.children[2].first(ctx)
-        matches_key: str = self.children[3].first(ctx)
-        rest_key: str = self.children[4].first(ctx)
+    async def aeval(self, ctx: Any) -> tuple[list, list]:
+        from nu import runtime
 
-        matches_list: list = []
-        rest_list: list = []
-        with closing(self.children[0].open(ctx)) as items_gen:
-            for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    if condition.first(ctx):
-                        matches_list.append(elem)
-                    else:
-                        rest_list.append(elem)
-        ctx.attrs[matches_key] = matches_list
-        ctx.attrs[rest_key] = rest_list
+        condition = self._children[1]
+        item_key: str = await runtime.afirst(self._children[2], ctx)
+        matches: list = []
+        rest: list = []
+        async for elem in _iterate_async(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            if await runtime.afirst(condition, ctx):
+                matches.append(elem)
+            else:
+                rest.append(elem)
+        return matches, rest
 
 
-class ToDict(Flow):
-    """Build a dict from items using Nu key and value expressions.
+class ToDict(Reduction):
+    """Return a dict built from key/value Nu expressions over each item.
 
-    Children: ``[items, key, value, item_key, output_key]``
-
-    Stores the resulting dict in ``ctx.attrs[output]``.
+    Children: ``[items, key, value, item_key]``
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(
         self,
@@ -462,40 +420,34 @@ class ToDict(Flow):
         *,
         key: Nu,
         value: Nu,
-        output: StrArg = "result",
         item: StrArg = "item",
     ) -> None:
-        super().__init__(items, key, value, item, output)
+        super().__init__(items, key, value, item)
 
-    async def arun(self, ctx: Context) -> None:
-        """Build a dict from items via key and value expressions."""
-        key_expr = self.children[1]
-        value_expr = self.children[2]
-        item_key: str = await self.children[3].afirst(ctx)
-        output_key: str = await self.children[4].afirst(ctx)
+    def eval(self, ctx: Any) -> dict:
+        from nu import runtime
 
+        key_expr = self._children[1]
+        value_expr = self._children[2]
+        item_key: str = runtime.first(self._children[3], ctx)
         result: dict = {}
-        async with aclosing(self.children[0].aopen(ctx)) as items_gen:
-            async for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    k = await key_expr.afirst(ctx)
-                    v = await value_expr.afirst(ctx)
-                    result[k] = v
-        ctx.attrs[output_key] = result
+        for elem in _iterate_sync(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            k = runtime.first(key_expr, ctx)
+            v = runtime.first(value_expr, ctx)
+            result[k] = v
+        return result
 
-    def run(self, ctx: Context) -> None:
-        key_expr = self.children[1]
-        value_expr = self.children[2]
-        item_key: str = self.children[3].first(ctx)
-        output_key: str = self.children[4].first(ctx)
+    async def aeval(self, ctx: Any) -> dict:
+        from nu import runtime
 
+        key_expr = self._children[1]
+        value_expr = self._children[2]
+        item_key: str = await runtime.afirst(self._children[3], ctx)
         result: dict = {}
-        with closing(self.children[0].open(ctx)) as items_gen:
-            for items in items_gen:
-                for elem in items:
-                    ctx.attrs[item_key] = elem
-                    k = key_expr.first(ctx)
-                    v = value_expr.first(ctx)
-                    result[k] = v
-        ctx.attrs[output_key] = result
+        async for elem in _iterate_async(self._children[0], ctx):
+            ctx.attrs[item_key] = elem
+            k = await runtime.afirst(key_expr, ctx)
+            v = await runtime.afirst(value_expr, ctx)
+            result[k] = v
+        return result

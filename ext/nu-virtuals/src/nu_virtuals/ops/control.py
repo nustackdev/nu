@@ -19,7 +19,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu import Context, ContextManager, Mode
+from nu import Context, Mode
+from nu.terms.flow import Sequential
+from nu.terms.span import Bracket
+from nu.terms.span import Snapshot as _CoreSnapshot
+from nu.terms.span import Transaction as _CoreTransaction
 from virtuals import Navigator
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
 
@@ -42,7 +46,14 @@ def _scope_tags(scope: Hashable | None) -> tuple:
     return (scope,) if scope is not None else ()
 
 
-class Atomic(ContextManager):
+def _wrap_body(children: tuple[Nu, ...]) -> Nu:
+    """Pack a variadic body into a single Span body slot."""
+    if len(children) == 1:
+        return children[0]
+    return Sequential(*children)
+
+
+class Atomic(Bracket):
     """Atomic transaction/snapshot boundary for virtuals operations.
 
     Before:
@@ -60,6 +71,7 @@ class Atomic(ContextManager):
     opens a SnapshotProtocol instead of TransactionProtocol.
     """
 
+    body_slot: ClassVar[int] = 0
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
@@ -67,10 +79,12 @@ class Atomic(ContextManager):
         *children: Nu,
         scope: Hashable | None = None,
     ) -> None:
-        super().__init__(*children)
+        super().__init__(_wrap_body(children))
         self.scope = scope
         self._txn: TransactionProtocol | None = None
         self._snap: SnapshotProtocol | None = None
+        self._txns: list[TransactionProtocol] = []
+        self._snaps: list[SnapshotProtocol] = []
 
     def before(self, ctx: Context) -> Context:
         """Scope context: register lazy transaction or snapshot factory.
@@ -180,13 +194,14 @@ class Atomic(ContextManager):
         return f"Atomic({scope_name})"
 
 
-class Snapshot(ContextManager):
+class Snapshot(_CoreSnapshot):
     """Read-only snapshot boundary for virtuals operations.
 
     Like Atomic but always opens a snapshot, never a transaction.
     Use when you know the subtree is read-only.
     """
 
+    body_slot: ClassVar[int] = 0
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
@@ -194,7 +209,7 @@ class Snapshot(ContextManager):
         *children: Nu,
         scope: Hashable | None = None,
     ) -> None:
-        super().__init__(*children)
+        super().__init__(_wrap_body(children))
         self.scope = scope
         self._snaps: list[SnapshotProtocol] = []
 
@@ -254,13 +269,14 @@ class Snapshot(ContextManager):
         return f"Snapshot({scope_name})"
 
 
-class Transaction(ContextManager):
+class Transaction(_CoreTransaction):
     """Write transaction boundary for virtuals operations.
 
     Like Atomic but always opens a transaction, never a snapshot.
     Use when you know the subtree has writes - skips the purity check.
     """
 
+    body_slot: ClassVar[int] = 0
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
@@ -268,7 +284,7 @@ class Transaction(ContextManager):
         *children: Nu,
         scope: Hashable | None = None,
     ) -> None:
-        super().__init__(*children)
+        super().__init__(_wrap_body(children))
         self.scope = scope
         self._txns: list[TransactionProtocol] = []
 

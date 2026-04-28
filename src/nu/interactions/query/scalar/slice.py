@@ -1,12 +1,14 @@
-"""Iterable slicing ops — Take, Drop. Lazy iterators."""
+"""Iterable slicing ops - Take, Drop. Lazy iterators."""
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from itertools import islice
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import INVALID, BinaryQuery, Mode, Sentinel
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import INVALID
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -15,31 +17,42 @@ __all__ = [
 ]
 
 
-class Take(BinaryQuery[Iterator]):
-    """Take first N elements: islice(iterable, n) -> lazy iterator."""
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    def apply(self, left: object, right: object) -> Iterator | Sentinel:
-        """Apply: left=iterable, right=n."""
+class Take(ScalarQuery):
+    """Take first N elements."""
+
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self, iterable: Any, n: Any) -> None:  # noqa: ANN401
+        super().__init__(iterable, n)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, Iterable):
-            raise TypeError(f"Take requires iterable, got {type(left).__name__}")
+            msg = f"Take requires iterable, got {type(left).__name__}"
+            raise TypeError(msg)
         try:
-            return islice(left, int(right))  # type: ignore
+            return islice(left, int(right))
         except (TypeError, ValueError):
             return INVALID
 
 
-class Drop(BinaryQuery[Iterator]):
-    """Drop first N elements: islice(iterable, n, None) -> lazy iterator."""
+class Drop(ScalarQuery):
+    """Drop first N elements."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> Iterator | Sentinel:
-        """Apply: left=iterable, right=n."""
+    def __init__(self, iterable: Any, n: Any) -> None:  # noqa: ANN401
+        super().__init__(iterable, n)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Iterator:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, Iterable):
-            raise TypeError(f"Drop requires iterable, got {type(left).__name__}")
+            msg = f"Drop requires iterable, got {type(left).__name__}"
+            raise TypeError(msg)
         try:
-            return islice(left, int(right), None)  # type: ignore
+            return islice(left, int(right), None)
         except (TypeError, ValueError):
             return INVALID

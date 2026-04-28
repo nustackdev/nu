@@ -147,7 +147,7 @@ class SolanaRef(nu.Ref[SolanaRpc]):
     async def afetch(self, ctx: nu.Context) -> SolanaRpc:
         return self.fetch(ctx)
 
-    get_block = nu.Invocation(nu.DictI, "get_block", mode=(nu.Mode.ASYNC, nu.Mode.ASYNC))
+    get_block = nu.Invocation(nu.DictI, "get_block", support=frozenset({nu.Mode.ASYNC}))
 
 
 # -- Shapes -------------------------------------------------------------------
