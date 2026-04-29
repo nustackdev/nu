@@ -287,5 +287,4 @@ class _PathI(Interface):
 class PathI(_PathI, TypedNu[Path]):
     """Path leaf - _PathI + TypedNu[Path]."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})

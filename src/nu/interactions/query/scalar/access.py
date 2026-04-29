@@ -8,9 +8,10 @@ Contains: Containment check (item in container)
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import BinaryQuery, Mode, ScalarQuery, UnaryQuery
+from nu.terms.query import ScalarQuery
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -21,46 +22,53 @@ __all__ = [
 ]
 
 
-class Len(UnaryQuery[int]):
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
+class Len(ScalarQuery):
     """Length: len(operand)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> int:
-        """Apply."""
-        return len(operand)  # type: ignore
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> int:  # noqa: ANN401
+        return len(ops[0])
 
 
-class At[ResultT](BinaryQuery[ResultT]):
+class At(ScalarQuery):
     """Subscript access: left[right]."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left[right]  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0][ops[1]]
 
 
-class Slice[ResultT](ScalarQuery[ResultT]):
+class Slice(ScalarQuery):
     """Slice access: operand[start:stop:step]."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, *args: object) -> ResultT:
-        """Apply."""
-        operand, start, stop, step = args
-        return operand[slice(start, stop, step)]  # type: ignore
+    def __init__(self, operand: Any, start: Any, stop: Any, step: Any) -> None:  # noqa: ANN401
+        super().__init__(operand, start, stop, step)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand, start, stop, step = ops
+        return operand[slice(start, stop, step)]
 
 
-class Contains(BinaryQuery[bool]):
+class Contains(ScalarQuery):
     """Containment check: right in left."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool:
-        """Apply."""
-        return right in left  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return ops[1] in ops[0]

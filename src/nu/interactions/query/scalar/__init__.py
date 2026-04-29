@@ -1,4 +1,4 @@
-"""Scalar queries — single-yield functional construction over operand values."""
+"""Scalar queries - single-value functional construction."""
 
 from .access import At, Contains, Len, Slice
 from .arithmetic import (
@@ -44,16 +44,17 @@ from .conversion import (
     ToStr,
     ToTuple,
 )
-from .fold import Fold
+from .iter_reduce import Find, FindIndex, GroupBy, Partition, ToDict
 from .logical import (
     And,
     Bool,
     Not,
     Or,
 )
-from .reduce import All, Any, Max, Min, Sum
+from .reduce import AllElem, AnyElem, MaxElem, MinElem, Sum
 from .sentinel import IsEmpty, IsInvalid, NotEmpty, NotInvalid
 from .slice import Drop, Take
+from .timing import Timed
 from .transform import (
     FilterBy,
     Flatten,
@@ -67,9 +68,9 @@ from .transform import (
 __all__ = [
     "Abs",
     "Add",
-    "All",
+    "AllElem",
     "And",
-    "Any",
+    "AnyElem",
     "At",
     "BitwiseAnd",
     "BitwiseNot",
@@ -83,11 +84,13 @@ __all__ = [
     "Enumerate",
     "Eq",
     "FilterBy",
+    "Find",
+    "FindIndex",
     "Flatten",
     "FloorDiv",
-    "Fold",
     "Ge",
     "GetAttr",
+    "GroupBy",
     "Gt",
     "IdComp",
     "If",
@@ -97,8 +100,8 @@ __all__ = [
     "Le",
     "Len",
     "Lt",
-    "Max",
-    "Min",
+    "MaxElem",
+    "MinElem",
     "Mod",
     "Mul",
     "Ne",
@@ -107,6 +110,7 @@ __all__ = [
     "NotEmpty",
     "NotInvalid",
     "Or",
+    "Partition",
     "Pluck",
     "Pos",
     "Pow",
@@ -115,12 +119,14 @@ __all__ = [
     "SetAttr",
     "Slice",
     "Sorted",
-    "Switch",
     "Sub",
     "Sum",
+    "Switch",
     "Take",
+    "Timed",
     "ToBool",
     "ToBytes",
+    "ToDict",
     "ToFloat",
     "ToInt",
     "ToList",

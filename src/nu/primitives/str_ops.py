@@ -13,17 +13,11 @@ Joining: JoinOp
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import (
-    INVALID,
-    BinaryQuery,
-    Mode,
-    ScalarQuery,
-    Sentinel,
-    TernaryQuery,
-    UnaryQuery,
-)
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import INVALID
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -56,71 +50,84 @@ __all__ = [
 ]
 
 
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
 # =============================================================================
 # CASE TRANSFORMATION (Unary)
 # =============================================================================
 
 
-class UpperOp(UnaryQuery[str]):
+class UpperOp(ScalarQuery):
     """Convert to uppercase: str.upper()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, str):
             return INVALID
         return operand.upper()
 
 
-class LowerOp(UnaryQuery[str]):
+class LowerOp(ScalarQuery):
     """Convert to lowercase: str.lower()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, str):
             return INVALID
         return operand.lower()
 
 
-class TitleOp(UnaryQuery[str]):
+class TitleOp(ScalarQuery):
     """Convert to title case: str.title()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, str):
             return INVALID
         return operand.title()
 
 
-class CapitalizeOp(UnaryQuery[str]):
+class CapitalizeOp(ScalarQuery):
     """Capitalize first character: str.capitalize()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, str):
             return INVALID
         return operand.capitalize()
 
 
-class SwapCaseOp(UnaryQuery[str]):
+class SwapCaseOp(ScalarQuery):
     """Swap case: str.swapcase()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, str):
             return INVALID
         return operand.swapcase()
@@ -131,53 +138,61 @@ class SwapCaseOp(UnaryQuery[str]):
 # =============================================================================
 
 
-class IsDigitOp(UnaryQuery[bool]):
+class IsDigitOp(ScalarQuery):
     """Check if all digits: str.isdigit()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> bool | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, str):
             return INVALID
         return operand.isdigit()
 
 
-class IsAlphaOp(UnaryQuery[bool]):
+class IsAlphaOp(ScalarQuery):
     """Check if all alphabetic: str.isalpha()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> bool | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, str):
             return INVALID
         return operand.isalpha()
 
 
-class IsAlnumOp(UnaryQuery[bool]):
+class IsAlnumOp(ScalarQuery):
     """Check if alphanumeric: str.isalnum()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> bool | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, str):
             return INVALID
         return operand.isalnum()
 
 
-class IsSpaceOp(UnaryQuery[bool]):
+class IsSpaceOp(ScalarQuery):
     """Check if all whitespace: str.isspace()."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> bool | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, str):
             return INVALID
         return operand.isspace()
@@ -188,49 +203,55 @@ class IsSpaceOp(UnaryQuery[bool]):
 # =============================================================================
 
 
-class StripOp(BinaryQuery[str]):
+class StripOp(ScalarQuery):
     """Strip whitespace or chars: str.strip(chars)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, str):
             return INVALID
         if right is not None and not isinstance(right, str):
             return INVALID
-        return left.strip(right)  # type: ignore
+        return left.strip(right)
 
 
-class LStripOp(BinaryQuery[str]):
+class LStripOp(ScalarQuery):
     """Strip leading whitespace or chars: str.lstrip(chars)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, str):
             return INVALID
         if right is not None and not isinstance(right, str):
             return INVALID
-        return left.lstrip(right)  # type: ignore
+        return left.lstrip(right)
 
 
-class RStripOp(BinaryQuery[str]):
+class RStripOp(ScalarQuery):
     """Strip trailing whitespace or chars: str.rstrip(chars)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, str):
             return INVALID
         if right is not None and not isinstance(right, str):
             return INVALID
-        return left.rstrip(right)  # type: ignore
+        return left.rstrip(right)
 
 
 # =============================================================================
@@ -238,34 +259,38 @@ class RStripOp(BinaryQuery[str]):
 # =============================================================================
 
 
-class SplitOp(TernaryQuery[list[str]]):
+class SplitOp(ScalarQuery):
     """Split string: str.split(sep, maxsplit)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, first: object, second: object, third: object) -> list[str] | Sentinel:
-        """Apply."""
+    def __init__(self, a: Any, b: Any, c: Any) -> None:  # noqa: ANN401
+        super().__init__(a, b, c)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        first, second, third = ops
         if not isinstance(first, str):
             return INVALID
         if second is not None and not isinstance(second, str):
             return INVALID
-        return first.split(second, int(third))  # type: ignore
+        return first.split(second, int(third))
 
 
-class RSplitOp(TernaryQuery[list[str]]):
+class RSplitOp(ScalarQuery):
     """Right split string: str.rsplit(sep, maxsplit)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, first: object, second: object, third: object) -> list[str] | Sentinel:
-        """Apply."""
+    def __init__(self, a: Any, b: Any, c: Any) -> None:  # noqa: ANN401
+        super().__init__(a, b, c)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        first, second, third = ops
         if not isinstance(first, str):
             return INVALID
         if second is not None and not isinstance(second, str):
             return INVALID
-        return first.rsplit(second, int(third))  # type: ignore
+        return first.rsplit(second, int(third))
 
 
 # =============================================================================
@@ -273,46 +298,50 @@ class RSplitOp(TernaryQuery[list[str]]):
 # =============================================================================
 
 
-class FindOp(ScalarQuery[int]):
+class FindOp(ScalarQuery):
     """Find substring: str.find(sub, start, end)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, *args: object) -> int | Sentinel:
-        """Apply."""
-        operand, sub, start, end = args
+    def __init__(self, a: Any, b: Any, c: Any, d: Any) -> None:  # noqa: ANN401
+        super().__init__(a, b, c, d)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand, sub, start, end = ops
         if not isinstance(operand, str) or not isinstance(sub, str):
             return INVALID
         if end is None:
-            return operand.find(sub, int(start))  # type: ignore
-        return operand.find(sub, int(start), int(end))  # type: ignore
+            return operand.find(sub, int(start))
+        return operand.find(sub, int(start), int(end))
 
 
-class RFindOp(ScalarQuery[int]):
+class RFindOp(ScalarQuery):
     """Find substring from right: str.rfind(sub, start, end)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, *args: object) -> int | Sentinel:
-        """Apply."""
-        operand, sub, start, end = args
+    def __init__(self, a: Any, b: Any, c: Any, d: Any) -> None:  # noqa: ANN401
+        super().__init__(a, b, c, d)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand, sub, start, end = ops
         if not isinstance(operand, str) or not isinstance(sub, str):
             return INVALID
         if end is None:
-            return operand.rfind(sub, int(start))  # type: ignore
-        return operand.rfind(sub, int(start), int(end))  # type: ignore
+            return operand.rfind(sub, int(start))
+        return operand.rfind(sub, int(start), int(end))
 
 
-class CountSubstringOp(BinaryQuery[int]):
+class CountSubstringOp(ScalarQuery):
     """Count substring occurrences: str.count(sub)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> int | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, str) or not isinstance(right, str):
             return INVALID
         return left.count(right)
@@ -323,27 +352,31 @@ class CountSubstringOp(BinaryQuery[int]):
 # =============================================================================
 
 
-class StartsWithOp(BinaryQuery[bool]):
+class StartsWithOp(ScalarQuery):
     """Check if starts with prefix: str.startswith(prefix)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, str) or not isinstance(right, str):
             return INVALID
         return left.startswith(right)
 
 
-class EndsWithOp(BinaryQuery[bool]):
+class EndsWithOp(ScalarQuery):
     """Check if ends with suffix: str.endswith(suffix)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, str) or not isinstance(right, str):
             return INVALID
         return left.endswith(right)
@@ -354,56 +387,64 @@ class EndsWithOp(BinaryQuery[bool]):
 # =============================================================================
 
 
-class CenterOp(TernaryQuery[str]):
+class CenterOp(ScalarQuery):
     """Center in width: str.center(width, fillchar)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, first: object, second: object, third: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, a: Any, b: Any, c: Any) -> None:  # noqa: ANN401
+        super().__init__(a, b, c)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        first, second, third = ops
         if not isinstance(first, str) or not isinstance(second, int):
             return INVALID
         fill = str(third) if third else " "
         return first.center(second, fill[0] if fill else " ")
 
 
-class LJustOp(TernaryQuery[str]):
+class LJustOp(ScalarQuery):
     """Left justify: str.ljust(width, fillchar)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, first: object, second: object, third: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, a: Any, b: Any, c: Any) -> None:  # noqa: ANN401
+        super().__init__(a, b, c)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        first, second, third = ops
         if not isinstance(first, str) or not isinstance(second, int):
             return INVALID
         fill = str(third) if third else " "
         return first.ljust(second, fill[0] if fill else " ")
 
 
-class RJustOp(TernaryQuery[str]):
+class RJustOp(ScalarQuery):
     """Right justify: str.rjust(width, fillchar)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, first: object, second: object, third: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, a: Any, b: Any, c: Any) -> None:  # noqa: ANN401
+        super().__init__(a, b, c)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        first, second, third = ops
         if not isinstance(first, str) or not isinstance(second, int):
             return INVALID
         fill = str(third) if third else " "
         return first.rjust(second, fill[0] if fill else " ")
 
 
-class ZFillOp(BinaryQuery[str]):
+class ZFillOp(ScalarQuery):
     """Zero-fill: str.zfill(width)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, str) or not isinstance(right, int):
             return INVALID
         return left.zfill(right)
@@ -414,18 +455,19 @@ class ZFillOp(BinaryQuery[str]):
 # =============================================================================
 
 
-class ReplaceOp(ScalarQuery[str]):
+class ReplaceOp(ScalarQuery):
     """Replace substring: str.replace(old, new, count)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, *args: object) -> str | Sentinel:
-        """Apply."""
-        operand, old, new, count = args
+    def __init__(self, a: Any, b: Any, c: Any, d: Any) -> None:  # noqa: ANN401
+        super().__init__(a, b, c, d)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand, old, new, count = ops
         if not isinstance(operand, str) or not isinstance(old, str) or not isinstance(new, str):
             return INVALID
-        count_int = int(count)  # type: ignore
+        count_int = int(count)
         if count_int == -1:
             return operand.replace(old, new)
         return operand.replace(old, new, count_int)
@@ -436,14 +478,16 @@ class ReplaceOp(ScalarQuery[str]):
 # =============================================================================
 
 
-class EncodeOp(BinaryQuery[bytes]):
+class EncodeOp(ScalarQuery):
     """Encode string to bytes: str.encode(encoding)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bytes | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, str):
             return INVALID
         try:
@@ -457,17 +501,19 @@ class EncodeOp(BinaryQuery[bytes]):
 # =============================================================================
 
 
-class JoinOp(BinaryQuery[str]):
+class JoinOp(ScalarQuery):
     """Join iterable elements into string: sep.join(seq)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> str | Sentinel:
-        """Apply."""
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        left, right = ops
         if not isinstance(left, str):
             return INVALID
         try:
-            return left.join(str(x) for x in right)  # type: ignore
+            return left.join(str(x) for x in right)
         except TypeError:
             return INVALID

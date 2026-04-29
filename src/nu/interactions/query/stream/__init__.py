@@ -1,6 +1,15 @@
-"""Stream queries — multi-yield functional construction.
+"""Stream queries - multi-value functional construction."""
 
-Currently empty — real Stream classes may land here later.
-"""
+from .fold import Fold
+from .iter import Iter
+from .transform import Filter, Map, TakeWhile, UniqueDo
 
-__all__: list[str] = []
+
+__all__ = [
+    "Filter",
+    "Fold",
+    "Iter",
+    "Map",
+    "TakeWhile",
+    "UniqueDo",
+]

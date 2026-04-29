@@ -28,9 +28,10 @@ Workers are resolved from context by tag:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Mode, Query
+from nu.terms.query import ScalarQuery
+from nu.terms.types import Mode
 
 
 if TYPE_CHECKING:
@@ -42,7 +43,7 @@ __all__ = [
 ]
 
 
-class Teleport(Query[object]):
+class Teleport(ScalarQuery):
     """Ships children to a Worker for remote execution.
 
     Args:
@@ -53,8 +54,7 @@ class Teleport(Query[object]):
             (error strings, loop counters, config) that PrimRefs read.
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(
         self,
@@ -66,23 +66,28 @@ class Teleport(Query[object]):
         self._worker_tag = worker
         self._carry = carry
 
-    async def arun(self, ctx: Context) -> object:
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        msg = f"{type(self).__name__} is async-only"
+        raise NotImplementedError(msg)
+
+    async def _aapply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
         """Execute children on the target worker."""
-        from nu import Nu
+        from nu import Nu, runtime
 
         from ..resources.worker import Worker
 
         worker = ctx.get(Worker, self._worker_tag)
 
-        if len(self.children) == 1:
-            subtree = self.children[0]
+        if len(self._children) == 1:
+            subtree = self._children[0]
         else:
             # Sequential composition of multiple children.
-            subtree = Nu(*self.children)
+            subtree = Nu(*self._children)
 
         if self._carry:
             return await self._execute_with_carry(ctx, worker, subtree)
-        return await worker.aexecute(subtree)
+        values = await runtime.acollect(subtree, worker.ctx)
+        return values[-1] if values else None
 
     async def _execute_with_carry(
         self,
@@ -91,12 +96,14 @@ class Teleport(Query[object]):
         subtree: object,
     ) -> object:
         """Execute with parent attrs copied to worker context."""
+        from nu import runtime
+
         worker_ctx = worker.ctx._copy()
         # Deep copy parent attrs into worker context
         carried = parent_ctx.attrs.copy()
         for key, value in carried.items():
             worker_ctx.attrs[key] = value
-        values = await subtree.acollect(worker_ctx)
+        values = await runtime.acollect(subtree, worker_ctx)
         return values[-1] if values else None
 
     def __repr__(self) -> str:

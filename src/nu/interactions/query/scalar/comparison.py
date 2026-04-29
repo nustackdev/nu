@@ -5,9 +5,10 @@ Binary: Eq, Ne, Gt, Lt, Ge, Le, IdComp
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import BinaryQuery, Mode
+from nu.terms.query import ScalarQuery
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -21,78 +22,91 @@ __all__ = [
 ]
 
 
-class Gt(BinaryQuery[bool]):
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
+class Gt(ScalarQuery):
     """Greater than: left > right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool:
-        """Apply."""
-        return left > right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return ops[0] > ops[1]
 
 
-class Lt(BinaryQuery[bool]):
+class Lt(ScalarQuery):
     """Less than: left < right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool:
-        """Apply."""
-        return left < right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return ops[0] < ops[1]
 
 
-class Eq(BinaryQuery[bool]):
+class Eq(ScalarQuery):
     """Equality: left == right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    commutative: ClassVar[bool] = True
 
-    def apply(self, left: object, right: object) -> bool:
-        """Apply."""
-        return left == right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return ops[0] == ops[1]
 
 
-class Ne(BinaryQuery[bool]):
+class Ne(ScalarQuery):
     """Not equal: left != right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    commutative: ClassVar[bool] = True
 
-    def apply(self, left: object, right: object) -> bool:
-        """Apply."""
-        return left != right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return ops[0] != ops[1]
 
 
-class Ge(BinaryQuery[bool]):
+class Ge(ScalarQuery):
     """Greater than or equal: left >= right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool:
-        """Apply."""
-        return left >= right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return ops[0] >= ops[1]
 
 
-class Le(BinaryQuery[bool]):
+class Le(ScalarQuery):
     """Less than or equal: left <= right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool:
-        """Apply."""
-        return left <= right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return ops[0] <= ops[1]
 
 
-class IdComp(BinaryQuery[bool]):
+class IdComp(ScalarQuery):
     """Identity comparison: left is right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    commutative: ClassVar[bool] = True
 
-    def apply(self, left: object, right: object) -> bool:
-        """Apply."""
-        return left is right
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return ops[0] is ops[1]

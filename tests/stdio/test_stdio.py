@@ -8,7 +8,7 @@ from typing import ClassVar
 
 import pytest
 
-from nu import Context
+from nu import Context, runtime
 from nu.interactions import Debug, Log, Print
 from nu.stdio import (
     STDERR,
@@ -21,7 +21,8 @@ from nu.stdio import (
     StdioRef,
     StdioWrite,
 )
-from nu.terms import Direction, Mode, TrackedEffect, tracked_effects
+from nu.terms.effects import tracked_effects
+from nu.terms.types import Effect, Mode
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +76,7 @@ class TestStdioRef:
         assert len(s) == 3
 
     def test_is_leaf(self):
-        assert STDOUT._is_leaf
+        assert not STDOUT._children
 
     def test_resolve(self):
         ctx = _make_ctx()
@@ -127,23 +128,23 @@ class TestStdioWrite:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = StdioWrite(STDOUT, "hello", "world")
-        _run(op.aexecute(ctx))
+        _run(runtime.aexecute(op, ctx))
         assert out.getvalue() == "hello world\n"
 
     def test_write_to_stderr(self):
         err = StringIO()
         ctx = _make_ctx(stderr=err)
         op = StdioWrite(STDERR, "error message")
-        _run(op.aexecute(ctx))
+        _run(runtime.aexecute(op, ctx))
         assert err.getvalue() == "error message\n"
 
     def test_write_overrides(self):
-        assert StdioWrite.writes == 0
+        assert StdioWrite.own_effects == {0: Effect.WRITE}
 
     def test_effect_tracking(self):
         op = StdioWrite(STDOUT, "hello")
         effects = tracked_effects(op)
-        assert TrackedEffect(StdioRef, Direction.WRITE) in effects
+        assert (STDOUT, Effect.WRITE) in effects
 
 
 # ---------------------------------------------------------------------------
@@ -156,18 +157,18 @@ class TestStdioRead:
         inp = StringIO("hello world\n")
         ctx = _make_ctx(stdin=inp)
         op = StdioRead()
-        result = _run(op.afirst(ctx))
+        result = _run(runtime.afirst(op, ctx))
         assert result == "hello world"
 
     def test_no_override(self):
         """StdioRead has no writes (READ is default for bare Ref)."""
-        assert StdioRead.writes == ()
+        assert getattr(StdioRead, "own_effects", {}) == {}
 
     def test_effect_tracking(self):
         """StdioRef child produces READ effect via default rule."""
         op = StdioRead()
         effects = tracked_effects(op)
-        assert TrackedEffect(StdioRef, Direction.READ) in effects
+        assert (STDIN, Effect.READ) in effects
 
 
 # ---------------------------------------------------------------------------
@@ -180,11 +181,11 @@ class TestStdioFlush:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = StdioFlush(STDOUT)
-        _run(op.aexecute(ctx))
+        _run(runtime.aexecute(op, ctx))
         # StringIO.flush() is a no-op but shouldn't error
 
     def test_overrides(self):
-        assert StdioFlush.writes == 0
+        assert StdioFlush.own_effects == {0: Effect.WRITE}
 
 
 # ---------------------------------------------------------------------------
@@ -197,31 +198,31 @@ class TestPrintStdio:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = Print("test", 42)
-        _run(op.aexecute(ctx))
+        _run(runtime.aexecute(op, ctx))
         assert "[Print:test] 42" in out.getvalue()
 
     def test_print_has_write_override(self):
-        assert Print.writes == 0
+        assert Print.own_effects == {0: Effect.WRITE}
 
     def test_print_first_child_is_stdio_ref(self):
         op = Print("msg")
-        assert isinstance(op.children[0], StdioRef)
-        assert op.children[0].name == "stdout"
+        assert isinstance(op._children[0], StdioRef)
+        assert op._children[0].name == "stdout"
 
     def test_print_effect_tracking(self):
         op = Print("test")
         effects = tracked_effects(op)
-        assert TrackedEffect(StdioRef, Direction.WRITE) in effects
+        assert (STDOUT, Effect.WRITE) in effects
 
 
 class TestLogStdio:
     def test_log_has_write_override(self):
-        assert Log.writes == 0
+        assert Log.own_effects == {0: Effect.WRITE}
 
     def test_log_first_child_is_stderr(self):
         op = Log("msg")
-        assert isinstance(op.children[0], StdioRef)
-        assert op.children[0].name == "stderr"
+        assert isinstance(op._children[0], StdioRef)
+        assert op._children[0].name == "stderr"
 
 
 class TestDebugStdio:
@@ -229,11 +230,11 @@ class TestDebugStdio:
         out = StringIO()
         ctx = _make_ctx(stdout=out)
         op = Debug(42, prefix="[DBG]")
-        _run(op.aexecute(ctx))
+        _run(runtime.aexecute(op, ctx))
         assert "[DBG]" in out.getvalue()
 
     def test_debug_has_write_override(self):
-        assert Debug.writes == 0
+        assert Debug.own_effects == {0: Effect.WRITE}
 
 
 # ---------------------------------------------------------------------------
@@ -249,7 +250,7 @@ class TestBufferedStdio:
             StdioWrite(STDOUT, "line 1"),
             StdioWrite(STDOUT, "line 2"),
         )
-        _run(op.aexecute(ctx))
+        _run(runtime.aexecute(op, ctx))
         content = out.getvalue()
         assert "line 1" in content
         assert "line 2" in content
@@ -259,30 +260,36 @@ class TestBufferedStdio:
         ctx = _make_ctx(stdout=out)
 
         class FailOp(StdioWrite):
-            own_mode: ClassVar[Mode] = Mode.ASYNC
-            func_mode: ClassVar[Mode] = Mode.ASYNC
+            support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
-            async def aopen(self, ctx):
-                async for _ in super().aopen(ctx):
-                    pass
+            def run(self, ctx):
+                super().run(ctx)
                 raise RuntimeError("boom")
-                yield  # unreachable; marks generator
+
+            async def arun(self, ctx):
+                await super().arun(ctx)
+                raise RuntimeError("boom")
 
         op = BufferedStdio(
             StdioWrite(STDOUT, "before"),
             FailOp(STDOUT, "after"),
         )
         with pytest.raises(RuntimeError, match="boom"):
-            _run(op.aexecute(ctx))
+            _run(runtime.aexecute(op, ctx))
         # Nothing should have been written to real stdout
         assert out.getvalue() == ""
 
     def test_buffered_stdin_passes_through(self):
+        # stdin reads can't be rolled back, so BufferedStdio passes them through.
+        # Verify the buffered backend's stdin is the same object as the real one.
         inp = StringIO("hello\n")
         ctx = _make_ctx(stdin=inp)
-        op = BufferedStdio(StdioRead())
-        result = _run(op.afirst(ctx))
-        assert result == "hello"
+        op = BufferedStdio(StdioWrite(STDOUT, "noop"))
+        # Drive the bracket: in `before` it captures real_backend; in `after`
+        # it flushes. We just verify stdin pass-through directly.
+        scoped = op.before(ctx)
+        assert scoped.get(StdioBackend).stdin is inp
+        op.after(scoped)
 
 
 # ---------------------------------------------------------------------------
@@ -305,7 +312,13 @@ class TestEffectIsolation:
         """A composed tree with both stdio and pure ops tracks only stdio effects."""
         from nu.interactions import Add
 
-        tree = StdioWrite(STDOUT, "start") >> Add(1, 2) >> StdioWrite(STDERR, "end")
+        # Sequential >> needs Commands; mix two stdio writes around a pure op
+        # via a Sequential of two stdio commands. Add is a Query, can't be in
+        # body slot, so just compose the two writes.
+        tree = StdioWrite(STDOUT, "start") >> StdioWrite(STDERR, "end")
         effects = tracked_effects(tree)
-        assert TrackedEffect(StdioRef, Direction.WRITE) in effects
-        assert len(effects) == 1  # Both writes are same fabric+direction
+        # Each StdioWrite contributes (Ref, WRITE); two distinct refs
+        assert (STDOUT, Effect.WRITE) in effects
+        assert (STDERR, Effect.WRITE) in effects
+        # Just sanity: pure Add has no effects
+        assert len(tracked_effects(Add(1, 2))) == 0

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import pytest
 
+from nu import runtime
 from nu.interactions import (
     ToBool,
     ToBytes,
@@ -28,24 +29,24 @@ from nu.interactions import (
 
 
 async def test_int_from_int(ctx):
-    assert await ToInt(42).afirst(ctx) == 42
+    assert await runtime.afirst(ToInt(42), ctx) == 42
 
 
 async def test_int_from_float(ctx):
-    assert await ToInt(3.7).afirst(ctx) == 3
+    assert await runtime.afirst(ToInt(3.7), ctx) == 3
 
 
 async def test_int_from_str(ctx):
-    assert await ToInt("123").afirst(ctx) == 123
+    assert await runtime.afirst(ToInt("123"), ctx) == 123
 
 
 async def test_int_from_bool(ctx):
-    assert await ToInt(True).afirst(ctx) == 1
+    assert await runtime.afirst(ToInt(True), ctx) == 1
 
 
 async def test_int_from_bad_str_raises(ctx):
     with pytest.raises(ValueError):
-        await ToInt("hello").afirst(ctx)
+        await runtime.afirst(ToInt("hello"), ctx)
 
 
 # ---------------------------------------------------------------------------
@@ -54,16 +55,16 @@ async def test_int_from_bad_str_raises(ctx):
 
 
 async def test_float_from_int(ctx):
-    assert await ToFloat(5).afirst(ctx) == 5.0
+    assert await runtime.afirst(ToFloat(5), ctx) == 5.0
 
 
 async def test_float_from_str(ctx):
-    assert await ToFloat("3.14").afirst(ctx) == 3.14
+    assert await runtime.afirst(ToFloat("3.14"), ctx) == 3.14
 
 
 async def test_float_from_bad_str_raises(ctx):
     with pytest.raises(ValueError):
-        await ToFloat("hello").afirst(ctx)
+        await runtime.afirst(ToFloat("hello"), ctx)
 
 
 # ---------------------------------------------------------------------------
@@ -72,19 +73,19 @@ async def test_float_from_bad_str_raises(ctx):
 
 
 async def test_bool_truthy(ctx):
-    assert await ToBool(1).afirst(ctx) is True
+    assert await runtime.afirst(ToBool(1), ctx) is True
 
 
 async def test_bool_falsy(ctx):
-    assert await ToBool(0).afirst(ctx) is False
+    assert await runtime.afirst(ToBool(0), ctx) is False
 
 
 async def test_bool_empty_str(ctx):
-    assert await ToBool("").afirst(ctx) is False
+    assert await runtime.afirst(ToBool(""), ctx) is False
 
 
 async def test_bool_nonempty_str(ctx):
-    assert await ToBool("x").afirst(ctx) is True
+    assert await runtime.afirst(ToBool("x"), ctx) is True
 
 
 # ---------------------------------------------------------------------------
@@ -93,15 +94,15 @@ async def test_bool_nonempty_str(ctx):
 
 
 async def test_str_from_int(ctx):
-    assert await ToStr(42).afirst(ctx) == "42"
+    assert await runtime.afirst(ToStr(42), ctx) == "42"
 
 
 async def test_str_from_float(ctx):
-    assert await ToStr(3.14).afirst(ctx) == "3.14"
+    assert await runtime.afirst(ToStr(3.14), ctx) == "3.14"
 
 
 async def test_str_from_none(ctx):
-    assert await ToStr(None).afirst(ctx) == "None"
+    assert await runtime.afirst(ToStr(None), ctx) == "None"
 
 
 # ---------------------------------------------------------------------------
@@ -110,15 +111,15 @@ async def test_str_from_none(ctx):
 
 
 async def test_bytes_from_str(ctx):
-    assert await ToBytes("hello").afirst(ctx) == b"hello"
+    assert await runtime.afirst(ToBytes("hello"), ctx) == b"hello"
 
 
 async def test_bytes_passthrough(ctx):
-    assert await ToBytes(b"raw").afirst(ctx) == b"raw"
+    assert await runtime.afirst(ToBytes(b"raw"), ctx) == b"raw"
 
 
 async def test_bytes_from_int_iterable(ctx):
-    assert await ToBytes([72, 105]).afirst(ctx) == b"Hi"
+    assert await runtime.afirst(ToBytes([72, 105]), ctx) == b"Hi"
 
 
 # ---------------------------------------------------------------------------
@@ -127,19 +128,19 @@ async def test_bytes_from_int_iterable(ctx):
 
 
 async def test_list_from_tuple(ctx):
-    assert await ToList((1, 2, 3)).afirst(ctx) == [1, 2, 3]
+    assert await runtime.afirst(ToList((1, 2, 3)), ctx) == [1, 2, 3]
 
 
 async def test_list_from_str(ctx):
-    assert await ToList("abc").afirst(ctx) == ["a", "b", "c"]
+    assert await runtime.afirst(ToList("abc"), ctx) == ["a", "b", "c"]
 
 
 async def test_set_from_list(ctx):
-    assert await ToSet([1, 2, 2, 3]).afirst(ctx) == {1, 2, 3}
+    assert await runtime.afirst(ToSet([1, 2, 2, 3]), ctx) == {1, 2, 3}
 
 
 async def test_tuple_from_list(ctx):
-    assert await ToTuple([1, 2, 3]).afirst(ctx) == (1, 2, 3)
+    assert await runtime.afirst(ToTuple([1, 2, 3]), ctx) == (1, 2, 3)
 
 
 # ---------------------------------------------------------------------------
@@ -150,4 +151,4 @@ async def test_tuple_from_list(ctx):
 @pytest.mark.parametrize("op_cls", [ToList, ToSet, ToTuple])
 async def test_collection_from_non_iterable_raises(ctx, op_cls):
     with pytest.raises(TypeError):
-        await op_cls(42).afirst(ctx)
+        await runtime.afirst(op_cls(42), ctx)

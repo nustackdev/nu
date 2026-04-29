@@ -281,5 +281,4 @@ class _ComplexI(Interface):
 class ComplexI(_ComplexI, TypedNu[complex]):
     """Complex interface. Arithmetic + equality + component access."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})

@@ -57,8 +57,7 @@ class DictRef[K, V](
 ):
     """Dict mapping reference — key-value container backed by nested dict."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def result(self, op: Nu) -> DictI[K, V]:
         return DictI(op)

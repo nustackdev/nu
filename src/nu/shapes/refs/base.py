@@ -112,7 +112,7 @@ class Ref[T](RefABC[T]):
         - Nu: computed address (resolved at execution time)
         - None: root ref with no address
         """
-        return self.children[0]
+        return self._children[0]
 
     @property
     def parent(self) -> Ref | None:
@@ -121,8 +121,8 @@ class Ref[T](RefABC[T]):
         None for root refs (entry points from Storage).
         Stored as children[1] in the tree.
         """
-        if len(self.children) > 1:
-            return self.children[1]
+        if len(self._children) > 1:
+            return self._children[1]
         return None
 
     @property
@@ -150,20 +150,20 @@ class Ref[T](RefABC[T]):
 
         Handles dynamic (Nu) addresses by executing them.
         """
+        from nu import runtime
+
         addr = self.address
         if isinstance(addr, Nu):
-            return await addr.afirst(ctx)
+            return await runtime.afirst(addr, ctx)
         return addr
 
     def resolve_address(self, ctx: Context) -> object:
-        """Sync counterpart of `aresolve_address`.
+        """Sync counterpart of `aresolve_address`."""
+        from nu import runtime
 
-        Safe to call only when the address subtree has no ASYNC nodes.
-        `open`/`fetch`/`resolve` gate on `effective_mode` upstream.
-        """
         addr = self.address
         if isinstance(addr, Nu):
-            return addr.first(ctx)
+            return runtime.first(addr, ctx)
         return addr
 
     def get_path_segments(self) -> list[Ref]:
@@ -262,12 +262,12 @@ class Ref[T](RefABC[T]):
         """Debug representation showing address and parent chain."""
         parent = self.parent
         if parent:
-            return f"<{self.__class__.__name__}: {parent!r} -> {self.children[0]!r}>"
-        return f"<{self.__class__.__name__}: {self.children[0]!r}>"
+            return f"<{self.__class__.__name__}: {parent!r} -> {self._children[0]!r}>"
+        return f"<{self.__class__.__name__}: {self._children[0]!r}>"
 
     def __str__(self) -> str:
         """String representation showing address and parent chain."""
         parent = self.parent
         if parent:
-            return f"{self.__class__.__name__}({parent!s} -> {self.children[0]!s})"
-        return f"{self.__class__.__name__}({self.children[0]!s})"
+            return f"{self.__class__.__name__}({parent!s} -> {self._children[0]!s})"
+        return f"{self.__class__.__name__}({self._children[0]!s})"

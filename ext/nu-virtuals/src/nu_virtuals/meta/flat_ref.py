@@ -39,8 +39,7 @@ class FlatRef(Ref):
         _is_primitive: True if leaf ref is a PrimitiveRef (not a ViewRef).
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,

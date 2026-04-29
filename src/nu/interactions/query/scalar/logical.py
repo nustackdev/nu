@@ -3,22 +3,16 @@
 Unary: Not, Bool
 Binary: And, Or (with short-circuit evaluation)
 
-And and Or override open() for short-circuit semantics.
+And and Or override eval/aeval directly for short-circuit semantics.
 """
 
 from __future__ import annotations
 
-from contextlib import aclosing, closing
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import BinaryQuery, Mode, Sentinel, UnaryQuery, propagate_special
-
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Generator
-
-    from nu.context import Context
-    from nu.terms import Nu
+from nu.terms.query import ScalarQuery, _child_aeval, _child_eval
+from nu.terms.sentinels import INVALID, is_sentinel
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -29,169 +23,94 @@ __all__ = [
 ]
 
 
-# =============================================================================
-# UNARY LOGICAL
-# =============================================================================
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
 
-class Not[ResultT](UnaryQuery[ResultT]):
-    """Logical NOT: not operand.
+class Not(ScalarQuery):
+    """Logical NOT: not operand."""
 
-    Python's 'not' keyword cannot be overloaded.
-    Use .not_() method in trait classes instead.
-    """
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
 
-    def apply(self, operand: object) -> ResultT | Sentinel:
-        """Apply."""
-        return not operand  # type: ignore
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return not ops[0]
 
 
-class Bool(UnaryQuery[bool]):
+class Bool(ScalarQuery):
     """Boolean conversion: bool(operand)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> bool:
-        """Apply."""
-        return bool(operand)
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
 
-
-# =============================================================================
-# BINARY LOGICAL (with short-circuit)
-# =============================================================================
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return bool(ops[0])
 
 
-async def _drain_last(child: Nu, ctx: Context) -> Any:
-    val: Any = None
-    async with aclosing(child.aopen(ctx)) as gen:
-        async for v in gen:
-            val = v
-    return val
+class And(ScalarQuery):
+    """Logical AND with short-circuit."""
+
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    commutative: ClassVar[bool] = True
+    associative: ClassVar[bool] = True
+
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def eval(self, ctx: Any) -> Any:  # noqa: ANN401
+        left = _child_eval(self._children[0], ctx)
+        if is_sentinel(left):
+            return INVALID
+        if not left:
+            return left
+        right = _child_eval(self._children[1], ctx)
+        if is_sentinel(right):
+            return INVALID
+        return left and right
+
+    async def aeval(self, ctx: Any) -> Any:  # noqa: ANN401
+        left = await _child_aeval(self._children[0], ctx)
+        if is_sentinel(left):
+            return INVALID
+        if not left:
+            return left
+        right = await _child_aeval(self._children[1], ctx)
+        if is_sentinel(right):
+            return INVALID
+        return left and right
 
 
-def _drain_last_sync(child: Nu, ctx: Context) -> Any:
-    val: Any = None
-    with closing(child.open(ctx)) as gen:
-        for v in gen:
-            val = v
-    return val
+class Or(ScalarQuery):
+    """Logical OR with short-circuit."""
 
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    commutative: ClassVar[bool] = True
+    associative: ClassVar[bool] = True
 
-class And[ResultT](BinaryQuery[ResultT]):
-    """Logical AND: left and right.
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
 
-    Overrides open() for short-circuit evaluation:
-    if left is falsy, yields left without evaluating right.
-    """
+    def eval(self, ctx: Any) -> Any:  # noqa: ANN401
+        left = _child_eval(self._children[0], ctx)
+        if is_sentinel(left):
+            return INVALID
+        if left:
+            return left
+        right = _child_eval(self._children[1], ctx)
+        if is_sentinel(right):
+            return INVALID
+        return left or right
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
-
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:  # type: ignore[override]
-        left_val = await _drain_last(self._children[0], ctx)
-
-        sp = propagate_special(left_val)
-        if sp is not None:
-            yield sp
-            return
-
-        if not left_val:
-            yield left_val
-            return
-
-        right_val = await _drain_last(self._children[1], ctx)
-
-        special = propagate_special(right_val)
-        if special is not None:
-            yield special
-            return
-
-        yield left_val and right_val
-
-    def open(self, ctx: Context) -> Generator[Any, None, None]:  # type: ignore[override]
-        left_val = _drain_last_sync(self._children[0], ctx)
-
-        sp = propagate_special(left_val)
-        if sp is not None:
-            yield sp
-            return
-
-        if not left_val:
-            yield left_val
-            return
-
-        right_val = _drain_last_sync(self._children[1], ctx)
-
-        special = propagate_special(right_val)
-        if special is not None:
-            yield special
-            return
-
-        yield left_val and right_val
-
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
-        """Apply."""
-        # Not used - open() handles everything
-        raise NotImplementedError
-
-
-class Or[ResultT](BinaryQuery[ResultT]):
-    """Logical OR: left or right.
-
-    Overrides open() for short-circuit evaluation:
-    if left is truthy, yields left without evaluating right.
-    """
-
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
-
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:  # type: ignore[override]
-        left_val = await _drain_last(self._children[0], ctx)
-
-        sp = propagate_special(left_val)
-        if sp is not None:
-            yield sp
-            return
-
-        if left_val:
-            yield left_val
-            return
-
-        right_val = await _drain_last(self._children[1], ctx)
-
-        special = propagate_special(right_val)
-        if special is not None:
-            yield special
-            return
-
-        yield left_val or right_val
-
-    def open(self, ctx: Context) -> Generator[Any, None, None]:  # type: ignore[override]
-        left_val = _drain_last_sync(self._children[0], ctx)
-
-        sp = propagate_special(left_val)
-        if sp is not None:
-            yield sp
-            return
-
-        if left_val:
-            yield left_val
-            return
-
-        right_val = _drain_last_sync(self._children[1], ctx)
-
-        special = propagate_special(right_val)
-        if special is not None:
-            yield special
-            return
-
-        yield left_val or right_val
-
-    def apply(self, left: object, right: object) -> ResultT | Sentinel:
-        """Apply."""
-        # Not used - open() handles everything
-        raise NotImplementedError
+    async def aeval(self, ctx: Any) -> Any:  # noqa: ANN401
+        left = await _child_aeval(self._children[0], ctx)
+        if is_sentinel(left):
+            return INVALID
+        if left:
+            return left
+        right = await _child_aeval(self._children[1], ctx)
+        if is_sentinel(right):
+            return INVALID
+        return left or right

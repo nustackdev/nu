@@ -146,8 +146,7 @@ class _TimezoneI(Interface):
 class TimezoneI(_TimezoneI, TypedNu[timezone]):
     """Timezone interface."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
 
 # =============================================================================
@@ -377,8 +376,7 @@ class _TimedeltaI(Interface):
 class TimedeltaI(_TimedeltaI, TypedNu[timedelta]):
     """Timedelta interface."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
 
 # =============================================================================
@@ -589,8 +587,7 @@ class _DateI(Interface):
 class DateI(_DateI, TypedNu[date]):
     """Date interface."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
 
 # =============================================================================
@@ -761,8 +758,7 @@ class _TimeI(Interface):
 class TimeI(_TimeI, TypedNu[time]):
     """Time interface."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
 
 # =============================================================================
@@ -1026,7 +1022,5 @@ class _DatetimeI(Interface):
 class DatetimeI(_DatetimeI, TypedNu[datetime]):
     """Datetime interface."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
-
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
     pass

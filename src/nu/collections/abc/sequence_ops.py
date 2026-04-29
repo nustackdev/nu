@@ -8,16 +8,12 @@ PopCmd, RemoveValueCmd, ReverseCmd
 from __future__ import annotations
 
 from collections.abc import Iterable, MutableSequence, Sequence
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import (
-    INVALID,
-    BinaryQuery,
-    Mode,
-    Sentinel,
-    TernaryQuery,
-    UnaryQuery,
-)
+from nu.terms.command import ScalarCommand
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import INVALID
+from nu.terms.types import Effect, Mode
 
 
 __all__ = [
@@ -34,68 +30,79 @@ __all__ = [
 ]
 
 
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
 # =============================================================================
 # SEQUENCE READS
 # =============================================================================
 
 
-class FirstOp[ResultT](UnaryQuery[ResultT]):
+class FirstOp(ScalarQuery):
     """First element: seq[0]. Returns Invalid if empty."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> ResultT | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, Sequence):
             raise TypeError(f"first() requires sequence, got {type(operand).__name__}")
         if len(operand) == 0:
             return INVALID
-        return operand[0]  # type: ignore
+        return operand[0]
 
 
-class LastOp[ResultT](UnaryQuery[ResultT]):
+class LastOp(ScalarQuery):
     """Last element: seq[-1]. Returns Invalid if empty."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> ResultT | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, Sequence):
             raise TypeError(f"last() requires sequence, got {type(operand).__name__}")
         if len(operand) == 0:
             return INVALID
-        return operand[-1]  # type: ignore
+        return operand[-1]
 
 
-class IndexOfOp(BinaryQuery[int]):
+class IndexOfOp(ScalarQuery):
     """Find index of value: seq.index(value). Returns Invalid if not found."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> int | Sentinel:
-        """Apply."""
-        if not isinstance(left, Sequence):
-            raise TypeError(f"index_() requires sequence, got {type(left).__name__}")
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Sequence):
+            raise TypeError(f"index_() requires sequence, got {type(a).__name__}")
         try:
-            return left.index(right)
+            return a.index(b)
         except ValueError:
             return INVALID
 
 
-class CountOp(BinaryQuery[int]):
+class CountOp(ScalarQuery):
     """Count occurrences: seq.count(value)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> int | Sentinel:
-        """Apply."""
-        if not isinstance(left, Sequence):
-            raise TypeError(f"count_() requires sequence, got {type(left).__name__}")
-        return left.count(right)
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Sequence):
+            raise TypeError(f"count_() requires sequence, got {type(a).__name__}")
+        return a.count(b)
 
 
 # =============================================================================
@@ -103,105 +110,172 @@ class CountOp(BinaryQuery[int]):
 # =============================================================================
 
 
-class AppendCmd[T](BinaryQuery[None]):
-    """Append item to end: seq.append(value). Returns None (mutates in-place)."""
+class AppendCmd(ScalarCommand):
+    """Append item to end: seq.append(value). Mutates target Ref in-place."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSequence):
-            raise TypeError(f"append() requires mutable sequence, got {type(left).__name__}")
-        left.append(right)
-        return None
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
 
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
 
-class InsertCmd[T](TernaryQuery[None]):
-    """Insert item at index: seq.insert(index, value). Returns None (mutates in-place)."""
+        target = runtime.first(self._children[0], ctx)
+        value = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"append() requires mutable sequence, got {type(target).__name__}")
+        target.append(value)
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
 
-    def apply(self, first: object, second: object, third: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(first, MutableSequence):
-            raise TypeError(f"insert() requires mutable sequence, got {type(first).__name__}")
-        if not isinstance(second, int):
-            return INVALID
-        first.insert(second, third)
-        return None
+        target = await runtime.afirst(self._children[0], ctx)
+        value = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"append() requires mutable sequence, got {type(target).__name__}")
+        target.append(value)
 
 
-class PopCmd[T](BinaryQuery[T]):
+class InsertCmd(ScalarCommand):
+    """Insert item at index: seq.insert(index, value). Mutates target Ref in-place."""
+
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self, first: Any, second: Any, third: Any) -> None:  # noqa: ANN401
+        super().__init__(first, second, third)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        index = runtime.first(self._children[1], ctx)
+        value = runtime.first(self._children[2], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"insert() requires mutable sequence, got {type(target).__name__}")
+        if not isinstance(index, int):
+            raise TypeError(f"insert() requires int index, got {type(index).__name__}")
+        target.insert(index, value)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        index = await runtime.afirst(self._children[1], ctx)
+        value = await runtime.afirst(self._children[2], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"insert() requires mutable sequence, got {type(target).__name__}")
+        if not isinstance(index, int):
+            raise TypeError(f"insert() requires int index, got {type(index).__name__}")
+        target.insert(index, value)
+
+
+class PopCmd(ScalarQuery):
     """Pop item at index: seq.pop(index). Returns popped value.
 
     Default index is -1 (last item).
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> T | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSequence):
-            raise TypeError(f"pop() requires mutable sequence, got {type(left).__name__}")
-        if not isinstance(right, int):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, MutableSequence):
+            raise TypeError(f"pop() requires mutable sequence, got {type(a).__name__}")
+        if not isinstance(b, int):
             return INVALID
         try:
-            return left.pop(right)  # type: ignore[return-value]
+            return a.pop(b)
         except IndexError:
             return INVALID
 
 
-class ExtendCmd[T](BinaryQuery[None]):
-    """Extend sequence with iterable: seq.extend(other). Returns None (mutates in-place)."""
+class ExtendCmd(ScalarCommand):
+    """Extend sequence with iterable: seq.extend(other). Mutates target Ref in-place."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSequence):
-            raise TypeError(f"extend() requires mutable sequence, got {type(left).__name__}")
-        if not isinstance(right, Iterable):
-            return INVALID
-        left.extend(right)
-        return None
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
 
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
 
-class RemoveValueCmd[T](BinaryQuery[None]):
-    """Remove first occurrence of value: seq.remove(value). Returns None, or INVALID if not found."""
+        target = runtime.first(self._children[0], ctx)
+        other = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"extend() requires mutable sequence, got {type(target).__name__}")
+        if not isinstance(other, Iterable):
+            raise TypeError(f"extend() requires iterable, got {type(other).__name__}")
+        target.extend(other)
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSequence):
-            raise TypeError(f"remove() requires mutable sequence, got {type(left).__name__}")
-        try:
-            left.remove(right)
-        except ValueError:
-            return INVALID
-        return None
+        target = await runtime.afirst(self._children[0], ctx)
+        other = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"extend() requires mutable sequence, got {type(target).__name__}")
+        if not isinstance(other, Iterable):
+            raise TypeError(f"extend() requires iterable, got {type(other).__name__}")
+        target.extend(other)
 
 
-class ReverseCmd(UnaryQuery[None]):
-    """Reverse sequence in-place: seq.reverse(). Returns None (mutates in-place)."""
+class RemoveValueCmd(ScalarCommand):
+    """Remove first occurrence of value: seq.remove(value). Mutates target Ref in-place."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(operand, MutableSequence):
-            raise TypeError(f"reverse() requires mutable sequence, got {type(operand).__name__}")
-        operand.reverse()
-        return None
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        value = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"remove() requires mutable sequence, got {type(target).__name__}")
+        target.remove(value)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        value = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"remove() requires mutable sequence, got {type(target).__name__}")
+        target.remove(value)
+
+
+class ReverseCmd(ScalarCommand):
+    """Reverse sequence in-place: seq.reverse(). Mutates target Ref in-place."""
+
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"reverse() requires mutable sequence, got {type(target).__name__}")
+        target.reverse()
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        if not isinstance(target, MutableSequence):
+            raise TypeError(f"reverse() requires mutable sequence, got {type(target).__name__}")
+        target.reverse()

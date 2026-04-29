@@ -1,21 +1,16 @@
-"""Stdio Ops - write, read, flush.
-
-StdioWrite: write to stdout/stderr (Command, writes=0)
-StdioRead:  read line from stdin (Query)
-StdioFlush: flush a stream (Command, writes=0)
-"""
+"""Stdio Ops - write, read, flush."""
 
 from __future__ import annotations
 
 import sys
-from typing import IO, TYPE_CHECKING, ClassVar
+from typing import IO, TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Command, Mode, Query
+from nu.terms.command import ScalarCommand
+from nu.terms.query import ScalarQuery
+from nu.terms.types import Effect, Mode
 
 
 if TYPE_CHECKING:
-    from nu.context import Context
-
     from .refs import StdioRef
 
 
@@ -26,8 +21,10 @@ __all__ = [
 ]
 
 
-def _get_stream(ctx: Context, ref: object) -> IO:
-    """Get stream for ref, with fallback to sys streams."""
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
+def _get_stream(ctx: Any, ref: Any) -> IO:  # noqa: ANN401
     from .backend import StdioBackend
 
     if ctx.has(StdioBackend):
@@ -35,77 +32,61 @@ def _get_stream(ctx: Context, ref: object) -> IO:
     return getattr(sys, ref.name)
 
 
-class StdioWrite(Command):
-    """Write values to a stdio stream.
+class StdioWrite(ScalarCommand):
+    """Write values to a stdio stream."""
 
-    Children: [StdioRef, *values]
-    Joins string-converted values with spaces, appends newline.
-    """
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
-
-    def __init__(self, ref: StdioRef, *values: object) -> None:
+    def __init__(self, ref: StdioRef, *values: Any) -> None:  # noqa: ANN401
         super().__init__(ref, *values)
 
-    async def arun(self, ctx: Context) -> None:
-        stream = _get_stream(ctx, self.children[0])
-        parts = []
-        for child in self.children[1:]:
-            parts.append(str(await child.afirst(ctx)))
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        stream = _get_stream(ctx, self._children[0])
+        parts = [str(runtime.first(c, ctx)) for c in self._children[1:]]
         stream.write(" ".join(parts) + "\n")
 
-    def run(self, ctx: Context) -> None:
-        stream = _get_stream(ctx, self.children[0])
-        parts = [str(c.first(ctx)) for c in self.children[1:]]
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        stream = _get_stream(ctx, self._children[0])
+        parts = [str(await runtime.afirst(c, ctx)) for c in self._children[1:]]
         stream.write(" ".join(parts) + "\n")
 
-    def __repr__(self) -> str:
-        args = ", ".join(repr(c) for c in self.children)
-        return f"StdioWrite({args})"
 
+class StdioRead(ScalarQuery):
+    """Read a line from stdin."""
 
-class StdioRead(Query[str]):
-    """Read a line from stdin.
-
-    Children: [StdioRef]
-    Returns the line read (stripped of trailing newline).
-    """
-
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, ref: StdioRef | None = None) -> None:
         from .refs import STDIN
 
         super().__init__(ref or STDIN)
 
-    def run(self, ctx: Context) -> str:
-        stream = _get_stream(ctx, self.children[0])
+    def _apply(self, ctx: Any, ops: list[Any]) -> str:  # noqa: ANN401
+        # ops[0] is the resolved ref value (stream handle from Ref.eval).
+        # We need the ref itself to use _get_stream; pull from _children.
+        stream = _get_stream(ctx, self._children[0])
         line = stream.readline()
         return line.rstrip("\n")
 
-    def __repr__(self) -> str:
-        return f"StdioRead({self.children[0]!r})"
 
+class StdioFlush(ScalarCommand):
+    """Flush a stdio stream's buffer."""
 
-class StdioFlush(Command):
-    """Flush a stdio stream's buffer.
-
-    Children: [StdioRef]
-    """
-
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, ref: StdioRef) -> None:
         super().__init__(ref)
 
-    def run(self, ctx: Context) -> None:
-        stream = _get_stream(ctx, self.children[0])
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        stream = _get_stream(ctx, self._children[0])
         stream.flush()
 
-    def __repr__(self) -> str:
-        return f"StdioFlush({self.children[0]!r})"
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        stream = _get_stream(ctx, self._children[0])
+        stream.flush()

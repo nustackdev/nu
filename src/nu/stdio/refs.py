@@ -1,20 +1,15 @@
 """StdioRef - references to standard streams.
 
 Three fixed singletons: STDOUT, STDERR, STDIN.
-Flat topology - no hierarchy, no paths, just named streams.
 """
 
 from __future__ import annotations
 
 import sys
-from typing import IO, TYPE_CHECKING, ClassVar
+from typing import IO, ClassVar
 
-from nu.terms import Mode
 from nu.terms.ref import Ref
-
-
-if TYPE_CHECKING:
-    from nu.context import Context
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -26,17 +21,9 @@ __all__ = [
 
 
 class StdioRef(Ref[IO]):
-    """Ref to a standard stream. Three singleton instances.
+    """Ref to a standard stream. Three singleton instances."""
 
-    StdioRef is a flat, non-hierarchical Ref. No parent chain,
-    no address composition. Just a name that maps to a stream.
-
-    Topology: flat. Validates the interaction model works for
-    non-KV, stream-based fabrics.
-    """
-
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, name: str) -> None:
         super().__init__()
@@ -44,36 +31,33 @@ class StdioRef(Ref[IO]):
 
     @property
     def name(self) -> str:
-        """Stream name: 'stdout', 'stderr', or 'stdin'."""
         return self._name
 
-    async def aresolve(self, ctx: Context) -> str:
-        """Resolve to stream name."""
+    def resolve(self, ctx: object) -> str:
         return self._name
 
-    def resolve(self, ctx: Context) -> str:
-        """Sync counterpart of `aresolve`."""
+    async def aresolve(self, ctx: object) -> str:
         return self._name
 
-    async def afetch(self, ctx: Context) -> IO:
-        """Fetch the stream handle.
-
-        If StdioBackend is bound in Context, uses it.
-        Otherwise falls back to sys streams.
-        """
+    def fetch(self, ctx: object) -> IO:
         from .backend import StdioBackend
 
         if ctx.has(StdioBackend):
             return ctx.get(StdioBackend).stream_for(self)
         return getattr(sys, self._name)
 
-    def fetch(self, ctx: Context) -> IO:
-        """Sync counterpart of `afetch`."""
+    async def afetch(self, ctx: object) -> IO:
         from .backend import StdioBackend
 
         if ctx.has(StdioBackend):
             return ctx.get(StdioBackend).stream_for(self)
         return getattr(sys, self._name)
+
+    def eval(self, ctx: object) -> IO:
+        return self.fetch(ctx)
+
+    async def aeval(self, ctx: object) -> IO:
+        return await self.afetch(ctx)
 
     def __repr__(self) -> str:
         return f"StdioRef.{self._name.upper()}"
@@ -87,7 +71,6 @@ class StdioRef(Ref[IO]):
         return hash(("StdioRef", self._name))
 
 
-# Singletons
 STDOUT = StdioRef("stdout")
 STDERR = StdioRef("stderr")
 STDIN = StdioRef("stdin")

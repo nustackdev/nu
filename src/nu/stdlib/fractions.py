@@ -280,5 +280,4 @@ class _FractionI(Interface):
 class FractionI(_FractionI, TypedNu[Fraction]):
     """Fraction interface. Exact rational arithmetic + comparable."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})

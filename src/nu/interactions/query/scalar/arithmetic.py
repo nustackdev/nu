@@ -6,9 +6,10 @@ Binary: Add, Sub, Mul, Div, FloorDiv, Mod, Pow
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import BinaryQuery, Mode, UnaryQuery
+from nu.terms.query import ScalarQuery
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -25,42 +26,48 @@ __all__ = [
 ]
 
 
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
 # =============================================================================
 # UNARY ARITHMETIC
 # =============================================================================
 
 
-class Neg[ResultT](UnaryQuery[ResultT]):
+class Neg(ScalarQuery):
     """Negation: -operand."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> ResultT:
-        """Apply."""
-        return -operand  # type: ignore
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return -ops[0]
 
 
-class Abs[ResultT](UnaryQuery[ResultT]):
+class Abs(ScalarQuery):
     """Absolute value: abs(operand)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> ResultT:
-        """Apply."""
-        return abs(operand)  # type: ignore
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return abs(ops[0])
 
 
-class Pos[ResultT](UnaryQuery[ResultT]):
+class Pos(ScalarQuery):
     """Unary plus: +operand."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> ResultT:
-        """Apply."""
-        return +operand  # type: ignore
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return +ops[0]
 
 
 # =============================================================================
@@ -68,78 +75,89 @@ class Pos[ResultT](UnaryQuery[ResultT]):
 # =============================================================================
 
 
-class Add[ResultT](BinaryQuery[ResultT]):
+class Add(ScalarQuery):
     """Addition: left + right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    commutative: ClassVar[bool] = True
+    associative: ClassVar[bool] = True
 
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left + right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0] + ops[1]
 
 
-class Sub[ResultT](BinaryQuery[ResultT]):
+class Sub(ScalarQuery):
     """Subtraction: left - right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left - right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0] - ops[1]
 
 
-class Mul[ResultT](BinaryQuery[ResultT]):
+class Mul(ScalarQuery):
     """Multiplication: left * right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    commutative: ClassVar[bool] = True
+    associative: ClassVar[bool] = True
 
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left * right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0] * ops[1]
 
 
-class Div[ResultT](BinaryQuery[ResultT]):
+class Div(ScalarQuery):
     """Division: left / right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left / right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0] / ops[1]
 
 
-class FloorDiv[ResultT](BinaryQuery[ResultT]):
+class FloorDiv(ScalarQuery):
     """Floor division: left // right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left // right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0] // ops[1]
 
 
-class Mod[ResultT](BinaryQuery[ResultT]):
+class Mod(ScalarQuery):
     """Modulo: left % right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left % right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0] % ops[1]
 
 
-class Pow[ResultT](BinaryQuery[ResultT]):
+class Pow(ScalarQuery):
     """Power: left ** right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left**right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0] ** ops[1]

@@ -82,21 +82,21 @@ class MutableItemI[T, InterfaceT](ItemI[T, InterfaceT]):
         init(default) -> Nu  (store if missing)
     """
 
-    def store(self, value: T | Sentinel | Nu[T | Sentinel]) -> NoneI:
+    def store(self, value: T | Sentinel | Nu[T | Sentinel]) -> Nu:
         from nu.shapes.ops import ItemStoreCmd
 
-        return NoneI(ItemStoreCmd(self, value))
+        return ItemStoreCmd(self, value)
 
-    def erase(self) -> NoneI:
+    def erase(self) -> Nu:
         from nu.shapes.ops import ItemEraseCmd
 
-        return NoneI(ItemEraseCmd(self))
+        return ItemEraseCmd(self)
 
     def init(self, default: T | Sentinel | Nu[T | Sentinel]) -> Nu:
         """Store default if value is missing. No-op if already set."""
-        from nu.interactions import If
+        from nu.terms.flow import IfDo
 
-        return If(self.missing(), self.store(default))
+        return IfDo(self.missing(), self.store(default))
 
 
 class ReactiveItemI[T, InterfaceT](MutableItemI[T, InterfaceT]):

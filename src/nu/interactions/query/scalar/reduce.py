@@ -1,98 +1,111 @@
-"""Iterable reduction ops — terminal operations that consume iterables.
-
-Sum: Sum of elements (sum(seq))
-Min: Minimum element (min(seq))
-Max: Maximum element (max(seq))
-Any: Any truthy (any(seq))
-All: All truthy (all(seq))
-"""
+"""Iterable reduction ops - terminal operations that consume iterables."""
 
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import INVALID, Mode, Sentinel, UnaryQuery
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import INVALID
+from nu.terms.types import Mode
 
 
 __all__ = [
-    "All",
-    "Any",
-    "Max",
-    "Min",
+    "AllElem",
+    "AnyElem",
+    "MaxElem",
+    "MinElem",
     "Sum",
 ]
 
 
-class Sum[ResultT](UnaryQuery[ResultT]):
-    """Sum of sequence elements: sum(seq)."""
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
 
-    def apply(self, operand: object) -> ResultT | Sentinel:
-        """Apply."""
+class Sum(ScalarQuery):
+    """Sum of sequence elements."""
+
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self, operand: Any) -> None:
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:
+        operand = ops[0]
         if not isinstance(operand, Iterable):
-            raise TypeError(f"sum_() requires iterable, got {type(operand).__name__}")
+            msg = f"Sum() requires iterable, got {type(operand).__name__}"
+            raise TypeError(msg)
         try:
-            return sum(operand)  # type: ignore
+            return sum(operand)
         except TypeError:
             return INVALID
 
 
-class Min[ResultT](UnaryQuery[ResultT]):
-    """Minimum element: min(seq)."""
+class MinElem(ScalarQuery):
+    """Minimum element."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> ResultT | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:
+        operand = ops[0]
         if not isinstance(operand, Iterable):
-            raise TypeError(f"min_() requires iterable, got {type(operand).__name__}")
+            msg = f"MinElem() requires iterable, got {type(operand).__name__}"
+            raise TypeError(msg)
         try:
-            return min(operand)  # type: ignore
+            return min(operand)
         except (TypeError, ValueError):
             return INVALID
 
 
-class Max[ResultT](UnaryQuery[ResultT]):
-    """Maximum element: max(seq)."""
+class MaxElem(ScalarQuery):
+    """Maximum element."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> ResultT | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:
+        operand = ops[0]
         if not isinstance(operand, Iterable):
-            raise TypeError(f"max_() requires iterable, got {type(operand).__name__}")
+            msg = f"MaxElem() requires iterable, got {type(operand).__name__}"
+            raise TypeError(msg)
         try:
-            return max(operand)  # type: ignore
+            return max(operand)
         except (TypeError, ValueError):
             return INVALID
 
 
-class Any(UnaryQuery[bool]):
-    """Any truthy element: any(seq)."""
+class AnyElem(ScalarQuery):
+    """Any truthy element."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> bool:
-        """Apply."""
+    def __init__(self, operand: object) -> None:
+        super().__init__(operand)
+
+    def _apply(self, ctx: object, ops: list[object]) -> bool:
+        operand = ops[0]
         if not isinstance(operand, Iterable):
-            raise TypeError(f"any_() requires iterable, got {type(operand).__name__}")
+            msg = f"AnyElem() requires iterable, got {type(operand).__name__}"
+            raise TypeError(msg)
         return any(operand)
 
 
-class All(UnaryQuery[bool]):
-    """All truthy elements: all(seq)."""
+class AllElem(ScalarQuery):
+    """All truthy elements."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> bool:
-        """Apply."""
+    def __init__(self, operand: object) -> None:
+        super().__init__(operand)
+
+    def _apply(self, ctx: object, ops: list[object]) -> bool:
+        operand = ops[0]
         if not isinstance(operand, Iterable):
-            raise TypeError(f"all_() requires iterable, got {type(operand).__name__}")
+            msg = f"AllElem() requires iterable, got {type(operand).__name__}"
+            raise TypeError(msg)
         return all(operand)

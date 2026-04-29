@@ -16,7 +16,9 @@ import asyncio
 from contextlib import aclosing
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Interaction, Mode
+from nu.terms.flow import Control
+from nu.terms.nu import NuBase
+from nu.terms.types import Mode
 
 from ..reactive import ChangeOp  # noqa: TC001 - runtime dependency
 
@@ -35,14 +37,13 @@ __all__ = [
 ]
 
 
-class React(Interaction):
+class React(NuBase):
     """Wait for a single change, then execute body once.
 
     Children layout: [change, body?, changed_key?]
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(
         self,
@@ -64,6 +65,8 @@ class React(Interaction):
         super().__init__(*children)
 
     async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        from nu import runtime
+
         loop = asyncio.get_running_loop()
         queue: asyncio.Queue[object] = asyncio.Queue()
 
@@ -72,9 +75,12 @@ class React(Interaction):
 
         changed_key_name: str | None = None
         if self._changed_key_idx is not None:
-            changed_key_name = await self.children[self._changed_key_idx].afirst(ctx)
+            changed_key_name = await runtime.afirst(
+                self._children[self._changed_key_idx],
+                ctx,
+            )
 
-        sub = await self.children[0].afirst(ctx)
+        sub = await runtime.afirst(self._children[0], ctx)
         sub.bind(on_change)
         try:
             key = await queue.get()
@@ -83,7 +89,7 @@ class React(Interaction):
                 ctx.attrs[changed_key_name] = key
 
             if self._body_idx is not None:
-                async with aclosing(self.children[self._body_idx].aopen(ctx)) as gen:
+                async with aclosing(self._children[self._body_idx].aopen(ctx)) as gen:
                     async for v in gen:
                         yield v
         finally:
@@ -91,14 +97,14 @@ class React(Interaction):
             sub.close()
 
 
-class ReactForever(Interaction):
+class ReactForever(Control):
     """Execute body on every change (runs forever).
 
     Children layout: [change, body, changed_key?]
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    body_slots: ClassVar[tuple[int, ...]] = (1,)
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(
         self,
@@ -113,7 +119,13 @@ class ReactForever(Interaction):
         else:
             super().__init__(change, body)
 
-    async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
+    def run(self, ctx: Context) -> None:
+        msg = "ReactForever requires async runtime"
+        raise NotImplementedError(msg)
+
+    async def arun(self, ctx: Context) -> None:
+        from nu import runtime
+
         loop = asyncio.get_running_loop()
         queue: asyncio.Queue[object] = asyncio.Queue()
 
@@ -122,9 +134,9 @@ class ReactForever(Interaction):
 
         changed_key_name: str | None = None
         if self._has_changed_key:
-            changed_key_name = await self.children[2].afirst(ctx)
+            changed_key_name = await runtime.afirst(self._children[2], ctx)
 
-        sub = await self.children[0].afirst(ctx)
+        sub = await runtime.afirst(self._children[0], ctx)
         sub.bind(on_change)
         try:
             while True:
@@ -136,22 +148,19 @@ class ReactForever(Interaction):
                 # TODO task-079: redesign changed_key smuggling. For now,
                 # body is executed (drained), not streamed, to preserve
                 # legolas ledger app semantics.
-                await self.children[1].aexecute(ctx)
-                if False:
-                    yield  # mark as async generator
+                await runtime.aexecute(self._children[1], ctx)
         finally:
             sub.unbind(on_change)
             sub.close()
 
 
-class ReactWhile(Interaction):
+class ReactWhile(NuBase):
     """Execute body on each change while condition is truthy.
 
     Children layout: [change, condition, body, changed_key?]
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(
         self,
@@ -168,6 +177,8 @@ class ReactWhile(Interaction):
             super().__init__(change, condition, body)
 
     async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
+        from nu import runtime
+
         loop = asyncio.get_running_loop()
         queue: asyncio.Queue[object] = asyncio.Queue()
 
@@ -176,21 +187,21 @@ class ReactWhile(Interaction):
 
         changed_key_name: str | None = None
         if self._has_changed_key:
-            changed_key_name = await self.children[3].afirst(ctx)
+            changed_key_name = await runtime.afirst(self._children[3], ctx)
 
-        sub = await self.children[0].afirst(ctx)
+        sub = await runtime.afirst(self._children[0], ctx)
         sub.bind(on_change)
         try:
             while True:
                 key = await queue.get()
 
-                if not await self.children[1].afirst(ctx):
+                if not await runtime.afirst(self._children[1], ctx):
                     break
 
                 if changed_key_name is not None:
                     ctx.attrs[changed_key_name] = key
 
-                async with aclosing(self.children[2].aopen(ctx)) as gen:
+                async with aclosing(self._children[2].aopen(ctx)) as gen:
                     async for v in gen:
                         yield v
         finally:

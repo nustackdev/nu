@@ -1,101 +1,86 @@
-"""Nu terms - the four Nu kinds + shared types + authoring utilities.
+"""Nu terms - public surface.
 
-Layout (see projects/nu/model/programming/components.md + interactions.md):
+Re-exports the new-core types from `protocol`, `nu`, `ref`, `query`,
+`command`, `flow`, `span`, `effects`, `sentinels`, `types`. Plus
+`Interface` and `TypedNu` from `nu.interface`, and the python bridge
+(`Invoke`, `Invocation`, `FuncCall`, `MethodCall`) from `nu.invocation`.
 
-    Nu                  - primitive (nu.py)
-    ├── Ref             - addressable location (ref.py)
-    ├── Interaction     - compute or mutate (interaction.py)
-    │   ├── Query       - functional construction (query.py)
-    │   │   └── Literal, Stream, ScalarQuery / Unary / Binary / Ternary
-    │   └── Command     - imperative mutation (command.py)
-    │       └── Flow, ScalarCommand / Unary / Binary / Ternary
-    ├── Form            - typed descriptor (interface.py; rename later)
-    └── ContextManager  - bracket hooks (context_manager.py)
-
-Shared: types.py (Mode, sup, Sentinel, EMPTY/INVALID, Direction, TrackedEffect,
-Arg types, T_co). Analysis + Form/Interface descriptors: utils.py.
+`Nu` resolves to the protocol type for type hints. `NuBase` is the
+algebraic primitive every kind class subclasses.
 """
 
-from .command import (
-    BinaryCommand,
-    Command,
+from ..interface import Interface, TypedNu
+from ..invocation import FuncCall, FuncCallCmd, Invocation, Invoke, MethodCall, MethodCallCmd
+from .command import Command, ScalarCommand
+from .effects import TrackedEffect, is_pure, tracked_effects
+from .flow import (
+    Control,
     Flow,
-    ScalarCommand,
-    TernaryCommand,
-    UnaryCommand,
+    ForEachDo,
+    Gather,
+    IfDo,
+    Parallel,
+    Race,
+    Sequential,
+    Strategy,
+    WhileDo,
 )
-from .context_manager import ContextManager
-from .interaction import Interaction
-from .interface import Interface, TypedNu
-from .nu import LValue, Nu, NuIndepComm, RValue
-from .query import (
-    BinaryQuery,
-    Literal,
-    Query,
-    ScalarQuery,
-    Stream,
-    TernaryQuery,
-    UnaryQuery,
-)
+from .nu import NuBase, walk
+from .protocol import Nu
+from .query import Collect, First, Last, Literal, Query, Reduce, Reduction, ScalarQuery, StreamQuery
 from .ref import Ref
+from .sentinels import EMPTY, INVALID, Empty, Invalid, Sentinel, is_empty, is_invalid, is_sentinel
+from .span import Bracket, Policy, Retry, Snapshot, Span, Transaction, TryCatch
 from .types import (
-    EMPTY,
-    INVALID,
     Arg,
     BoolArg,
     BytesArg,
     DictArg,
-    Direction,
-    Empty,
+    Effect,
+    ExecState,
     FloatArg,
     FrozenSetArg,
     IntArg,
-    Invalid,
     ListArg,
     Mode,
     NoneArg,
-    Sentinel,
+    Realization,
     SetArg,
     StrArg,
     T_co,
-    TrackedEffect,
     TupleArg,
-    is_empty,
-    is_invalid,
-    is_sentinel,
-    propagate_special,
-    sup,
 )
-from .utils import is_pure, tracked_effects
-# Re-exports from invocation/ for back-compat of legacy stdlib + ext callsites.
-from ..invocation import FuncCall, FuncCallCmd, Invocation, Invoke, MethodCall, MethodCallCmd
 
 
 __all__ = [
     "EMPTY",
     "INVALID",
     "Arg",
-    "BinaryCommand",
-    "BinaryQuery",
     "BoolArg",
+    "Bracket",
     "BytesArg",
+    "Collect",
     "Command",
-    "ContextManager",
+    "Control",
     "DictArg",
-    "Direction",
+    "Effect",
     "Empty",
+    "ExecState",
     "FloatArg",
     "Flow",
+    "ForEachDo",
+    "First",
     "FrozenSetArg",
     "FuncCall",
     "FuncCallCmd",
+    "Gather",
+    "IfDo",
     "IntArg",
-    "Interaction",
     "Interface",
     "Invalid",
     "Invocation",
     "Invoke",
-    "LValue",
+    "Last",
     "ListArg",
     "Literal",
     "MethodCall",
@@ -103,29 +88,37 @@ __all__ = [
     "Mode",
     "NoneArg",
     "Nu",
-    "NuIndepComm",
+    "NuBase",
+    "Parallel",
+    "Policy",
     "Query",
-    "RValue",
+    "Race",
+    "Realization",
+    "Reduce",
+    "Reduction",
     "Ref",
+    "Retry",
     "ScalarCommand",
     "ScalarQuery",
     "Sentinel",
+    "Sequential",
     "SetArg",
+    "Snapshot",
+    "Span",
     "StrArg",
-    "Stream",
+    "Strategy",
+    "StreamQuery",
     "T_co",
-    "TernaryCommand",
-    "TernaryQuery",
     "TrackedEffect",
+    "Transaction",
+    "TryCatch",
     "TupleArg",
     "TypedNu",
-    "UnaryCommand",
-    "UnaryQuery",
+    "WhileDo",
     "is_empty",
     "is_invalid",
     "is_pure",
     "is_sentinel",
-    "propagate_special",
-    "sup",
     "tracked_effects",
+    "walk",
 ]

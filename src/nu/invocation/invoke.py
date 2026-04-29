@@ -1,14 +1,13 @@
-"""Invoke + Invocation -- the python bridge.
+"""Invoke + Invocation - the python bridge.
 
-Invoke is the one ScalarQuery that calls a python callable. Mode is
-inferred from the callable at construction: ``async def`` yields an
-ASYNC-only node, plain ``def`` yields a sync-capable node. Effects can be
-declared explicitly.
+Invoke is the one ScalarQuery that calls a python callable. The kind's
+`support` is inferred from the callable at construction time:
+``async def`` yields ASYNC-only, plain ``def`` yields {SYNC, ASYNC}.
 
-Invocation is a descriptor: drop it on a ``Ref[T]`` or ``TypedNu[T]``
+Invocation is a descriptor: drop it on a `Ref[T]` or `TypedNu[T]`
 subclass, and method access compiles to an Invoke bound to the named
 python method. The target python class is pulled from the generic
-parameter via ``__orig_bases__``.
+parameter via `__orig_bases__`.
 """
 
 from __future__ import annotations
@@ -19,14 +18,13 @@ from typing import TYPE_CHECKING, Any, ClassVar, overload
 
 from ..terms.query import ScalarQuery
 from ..terms.ref import Ref
-from ..terms.types import Mode, Sentinel
+from ..terms.types import Mode
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ..terms.interface import Interface
-    from ..terms.types import TrackedEffect
+    from ..interface import Interface
 
 
 __all__ = [
@@ -39,9 +37,8 @@ __all__ = [
 ]
 
 
-# =============================================================================
-# HELPERS
-# =============================================================================
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+_ASYNC_ONLY = frozenset({Mode.ASYNC})
 
 
 def _unwrap(fn: Callable[..., Any]) -> Callable[..., Any]:
@@ -50,21 +47,21 @@ def _unwrap(fn: Callable[..., Any]) -> Callable[..., Any]:
     return fn
 
 
-def _infer_mode(fn: Callable[..., Any]) -> tuple[Mode, Mode]:
-    """(own_mode, func_mode) from a python callable.
+def _infer_support(fn: Callable[..., Any]) -> frozenset[Mode]:
+    """Infer `support` from a python callable.
 
-    ``async def`` or async generator -> (ASYNC, ASYNC).
-    Plain callable -> (BOTH, SYNC).
+    `async def` / async generator -> {ASYNC}.
+    Plain callable -> {SYNC, ASYNC}.
     """
     target = _unwrap(fn)
     if inspect.iscoroutinefunction(target) or inspect.isasyncgenfunction(target):
-        return (Mode.ASYNC, Mode.ASYNC)
-    return (Mode.BOTH, Mode.SYNC)
+        return _ASYNC_ONLY
+    return _BOTH
 
 
 def _extract_py_type(owner: type) -> type | None:
     """Find the generic argument of Ref[T] or TypedNu[T] in owner's MRO."""
-    from ..terms.interface import TypedNu
+    from ..interface import TypedNu
 
     seen: set[type] = set()
 
@@ -91,61 +88,46 @@ def _extract_py_type(owner: type) -> type | None:
     return walk(owner)
 
 
-# =============================================================================
-# INVOKE
-# =============================================================================
-
-
-class Invoke[T](ScalarQuery[T | Sentinel]):
+class Invoke[T](ScalarQuery):
     """Call a python callable with Nu-resolved arguments.
 
-    Args and kwargs are children; they are resolved (first yield each)
-    before the callable runs. Sentinels on any operand short-circuit to
-    INVALID via ScalarQuery. Async callables are awaited on the async
-    path; on the sync path they raise (own_mode=ASYNC blocks sync entry).
+    Args and kwargs are children; resolved (single yield each) before the
+    callable runs. Sentinels on any operand short-circuit to INVALID via
+    ScalarQuery's wrap. Async callables are awaited on the async path; on
+    the sync path the kind raises (support={ASYNC} blocks sync entry).
     """
 
-    # Class defaults are the widest valid pair; instance __init__ narrows.
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(
         self,
         fn: Callable[..., Any],
         *args: object,
-        effects: frozenset[TrackedEffect] = frozenset(),
-        mode: tuple[Mode, Mode] | None = None,
+        support: frozenset[Mode] | None = None,
         **kwargs: object,
     ) -> None:
         super().__init__(*args, *kwargs.values())
         self._fn = fn
         self._kwarg_keys = tuple(kwargs.keys())
-        self._effects = effects
-        own, func = mode if mode is not None else _infer_mode(fn)
-        # Instance-level override; Nu.effective_mode reads via self.
-        self.own_mode = own  # type: ignore[misc]
-        self.func_mode = func  # type: ignore[misc]
+        # Instance-level narrowing of class-level `support`.
+        self.support = support if support is not None else _infer_support(fn)  # type: ignore[misc]
 
     @property
     def fn(self) -> Callable[..., Any]:
         return self._fn
 
-    @property
-    def effects(self) -> frozenset[TrackedEffect]:
-        return self._effects
-
-    def _split(self, values: tuple[Any, ...]) -> tuple[tuple[Any, ...], dict[str, Any]]:
+    def _split(self, ops: list[Any]) -> tuple[tuple[Any, ...], dict[str, Any]]:
         n = len(self._kwarg_keys)
         if n == 0:
-            return values, {}
-        return values[:-n], dict(zip(self._kwarg_keys, values[-n:], strict=True))
+            return tuple(ops), {}
+        return tuple(ops[:-n]), dict(zip(self._kwarg_keys, ops[-n:], strict=True))
 
-    def apply(self, *values: Any) -> T | Sentinel:  # noqa: ANN401
-        pos, kw = self._split(values)
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        pos, kw = self._split(ops)
         return self._fn(*pos, **kw)
 
-    async def aapply(self, *values: Any) -> T | Sentinel:  # noqa: ANN401
-        pos, kw = self._split(values)
+    async def _aapply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        pos, kw = self._split(ops)
         result = self._fn(*pos, **kw)
         if inspect.isawaitable(result):
             return await result
@@ -194,8 +176,7 @@ class _RefBoundInvocation[V]:
                 self._fn,
                 target,
                 *args,
-                effects=self._inv._effects,
-                mode=self._inv._mode,
+                support=self._inv._support,
                 **kwargs,
             )
         )
@@ -220,8 +201,7 @@ class _InstanceBoundInvocation[V]:
                 self._fn,
                 self._owner,
                 *args,
-                effects=self._inv._effects,
-                mode=self._inv._mode,
+                support=self._inv._support,
                 **kwargs,
             )
         )
@@ -230,16 +210,13 @@ class _InstanceBoundInvocation[V]:
         return f"{self._owner!r}.{self._inv._name}"
 
 
-class Invocation[V: "Interface"]:  # noqa: N801
+class Invocation[V: "Interface"]:
     """Descriptor that compiles attribute access into an Invoke.
 
     Use on a Ref[T] or TypedNu[T] subclass. At descriptor resolution time,
     the target python class is pulled from the generic argument via
-    ``__orig_bases__``; the named method is looked up and its mode is
-    inferred. Explicit ``effects`` / ``mode`` override inference.
-
-    The generic parameter must be resolvable (either on the owner class
-    directly or via its MRO). If it is not, supply ``mode=`` explicitly.
+    `__orig_bases__`; the named method is looked up and its `support` is
+    inferred. Pass `support=` to override.
     """
 
     def __init__(
@@ -247,14 +224,12 @@ class Invocation[V: "Interface"]:  # noqa: N801
         return_type: type[V],
         name: str | None = None,
         *,
-        effects: frozenset[TrackedEffect] = frozenset(),
-        mode: tuple[Mode, Mode] | None = None,
+        support: frozenset[Mode] | None = None,
     ) -> None:
         self._return_type = return_type
         self._explicit_name = name
         self._name: str = name or ""
-        self._effects = effects
-        self._mode = mode
+        self._support = support
         self._fn_cache: dict[type, Callable[..., Any]] = {}
 
     def __set_name__(self, owner: type, attr_name: str) -> None:
@@ -283,9 +258,7 @@ class Invocation[V: "Interface"]:  # noqa: N801
     @overload
     def __get__(self, obj: None, objtype: type) -> _RefBoundInvocation[V]: ...
     @overload
-    def __get__(
-        self, obj: object, objtype: type | None = None
-    ) -> _InstanceBoundInvocation[V]: ...
+    def __get__(self, obj: object, objtype: type | None = None) -> _InstanceBoundInvocation[V]: ...
 
     def __get__(
         self, obj: object | None, objtype: type | None = None
@@ -303,12 +276,10 @@ class Invocation[V: "Interface"]:  # noqa: N801
 
 
 # =============================================================================
-# COMPAT SHIMS
-#
-# FuncCall / MethodCall predate Invoke. They remain as public names because a
-# lot of code uses them; under the hood every call builds an Invoke. The Cmd
-# variants are structurally identical for now (Command role distinction is a
-# later refinement).
+# Public sugar names. FuncCall / MethodCall predate Invoke; they remain
+# as exports because lots of code uses them. Each is structurally an
+# Invoke; the *Cmd variants are identical for now (Command-role split is
+# a later refinement).
 # =============================================================================
 
 
@@ -320,29 +291,29 @@ def MethodCall(
     target: object,
     name: str,
     *args: object,
-    effects: frozenset[TrackedEffect] = frozenset(),
-    mode: tuple[Mode, Mode] | None = None,
+    support: frozenset[Mode] | None = None,
     **kwargs: object,
 ) -> Invoke:
     """Call a named method on target. Sugar for Invoke(T.name, target, *args).
 
-    Resolves ``T`` from target's python class (via ``_extract_py_type`` when
-    target is a Nu carrying a generic). Falls back to a runtime-getattr
-    closure when the type can't be inferred; explicit ``mode=`` is needed
-    there if the method is async.
+    Resolves T from target's python class (via `_extract_py_type` when
+    target carries a generic). Falls back to a runtime-getattr closure
+    when the type can't be inferred; explicit `support=` is needed there
+    if the method is async.
     """
     py_type = _extract_py_type(type(target))
     fn_candidate = getattr(py_type, name, None) if py_type is not None else None
 
     if fn_candidate is None:
+
         def fn(t: Any, *a: Any, **kw: Any) -> Any:  # noqa: ANN401
             return getattr(t, name)(*a, **kw)
 
         fn.__name__ = name
         fn.__qualname__ = name
-        return Invoke(fn, target, *args, effects=effects, mode=mode, **kwargs)
+        return Invoke(fn, target, *args, support=support, **kwargs)
 
-    return Invoke(fn_candidate, target, *args, effects=effects, mode=mode, **kwargs)
+    return Invoke(fn_candidate, target, *args, support=support, **kwargs)
 
 
 MethodCallCmd = MethodCall

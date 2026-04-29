@@ -43,8 +43,7 @@ class ShapeRef[T: Shape](
     Inherits PV path resolution and view fetching from ViewRef.
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def result(self, op: Nu) -> DictI[str, object]:
         """Wrap op in DictI for shape extract/store."""

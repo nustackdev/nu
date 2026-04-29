@@ -38,8 +38,7 @@ class FlatRef(Nu):
         _last_address: Pre-extracted last path segment (for resolve_address fast path).
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,

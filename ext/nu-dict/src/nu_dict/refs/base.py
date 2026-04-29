@@ -38,8 +38,7 @@ class RefBase[T](Ref[T]):
     The root dict is retrieved from Context via ctx[dict, scope].
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     async def aresolve(self, ctx: Context) -> tuple[str | int, ...]:
         """Build key path from parent chain."""
@@ -80,6 +79,12 @@ class RefBase[T](Ref[T]):
             return self.coerce(raw)
         except (KeyError, IndexError):
             return EMPTY
+
+    def eval(self, ctx: Context) -> T | Sentinel:
+        return self.fetch(ctx)
+
+    async def aeval(self, ctx: Context) -> T | Sentinel:
+        return await self.afetch(ctx)
 
     async def afetch_parent(self, ctx: Context) -> object:
         """Fetch the parent container, auto-creating intermediate dicts."""

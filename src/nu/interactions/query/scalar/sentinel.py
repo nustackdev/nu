@@ -2,22 +2,17 @@
 
 IsEmpty, IsInvalid, NotEmpty, NotInvalid
 
-These are inspections, not computations. They need to see sentinels to
-answer the question, so they cannot use ScalarQuery (which short-circuits
-on sentinels before `apply`). Instead they are plain Query[bool] subclasses
-that override `arun` / `run` and take the child's first yield directly.
+These accept sentinels (don't propagate them). They use `accepts_sentinels = True`
+on ScalarQuery so the sentinel-propagation wrap doesn't short-circuit them.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import Mode, Query, is_empty, is_invalid
-
-
-if TYPE_CHECKING:
-    from nu.context import Context
-    from nu.terms import Nu
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import is_empty, is_invalid
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -28,53 +23,56 @@ __all__ = [
 ]
 
 
-class IsEmpty(Query[bool]):
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
+class IsEmpty(ScalarQuery):
     """Check if operand is Empty sentinel."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    accepts_sentinels: ClassVar[bool] = True
 
-    def __init__(self, operand: Nu) -> None:
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
         super().__init__(operand)
 
-    def run(self, ctx: Context) -> bool:
-        return is_empty(self._children[0].first(ctx))
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return is_empty(ops[0])
 
 
-class NotEmpty(Query[bool]):
+class NotEmpty(ScalarQuery):
     """Check if operand is NOT Empty sentinel."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    accepts_sentinels: ClassVar[bool] = True
 
-    def __init__(self, operand: Nu) -> None:
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
         super().__init__(operand)
 
-    def run(self, ctx: Context) -> bool:
-        return not is_empty(self._children[0].first(ctx))
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return not is_empty(ops[0])
 
 
-class IsInvalid(Query[bool]):
+class IsInvalid(ScalarQuery):
     """Check if operand is Invalid sentinel."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    accepts_sentinels: ClassVar[bool] = True
 
-    def __init__(self, operand: Nu) -> None:
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
         super().__init__(operand)
 
-    def run(self, ctx: Context) -> bool:
-        return is_invalid(self._children[0].first(ctx))
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return is_invalid(ops[0])
 
 
-class NotInvalid(Query[bool]):
+class NotInvalid(ScalarQuery):
     """Check if operand is NOT Invalid sentinel."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    accepts_sentinels: ClassVar[bool] = True
 
-    def __init__(self, operand: Nu) -> None:
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
         super().__init__(operand)
 
-    def run(self, ctx: Context) -> bool:
-        return not is_invalid(self._children[0].first(ctx))
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return not is_invalid(ops[0])

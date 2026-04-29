@@ -300,5 +300,4 @@ class _DecimalI(Interface):
 class DecimalI(_DecimalI, TypedNu[Decimal]):
     """Decimal interface. Arbitrary precision arithmetic + comparable."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})

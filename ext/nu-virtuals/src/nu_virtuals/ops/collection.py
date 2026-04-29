@@ -8,15 +8,12 @@ These require PV views with UnsafePrimitiveOpsBase in MRO.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, ClassVar
+from typing import Any, ClassVar
 
-from nu import EMPTY, Sentinel
-from nu.terms import Command, Mode, Query
-
-
-if TYPE_CHECKING:
-    from nu import Context
+from nu.terms.command import ScalarCommand
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import EMPTY
+from nu.terms.types import Effect, Mode
 
 
 __all__ = [
@@ -25,7 +22,7 @@ __all__ = [
 ]
 
 
-class ScanPrimitivesUnsafeOp[T](Query[Iterator[T] | Sentinel]):
+class ScanPrimitivesUnsafeOp(ScalarQuery):
     """Scan all direct primitive child values via _unsafe_primitive_scan_values().
 
     Single ctx.scan() call -- no marker parsing, no type checks.
@@ -35,25 +32,24 @@ class ScanPrimitivesUnsafeOp[T](Query[Iterator[T] | Sentinel]):
         fetch(ctx) -> view with _unsafe_primitive_scan_values() method
     """
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
 
-    async def arun(self, ctx: Context) -> Iterator[T] | Sentinel:
-        """Scan all primitive children via raw storage scan."""
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        """Scan all primitive children via raw storage scan (sync)."""
         try:
-            view = await self.ref.afetch(ctx)
+            view = self.ref.fetch(ctx)
         except (KeyError, IndexError):
             return EMPTY
         return view._unsafe_primitive_scan_values()
 
-    def run(self, ctx: Context) -> Iterator[T] | Sentinel:
-        """Scan all primitive children via raw storage scan (sync)."""
+    async def _aapply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        """Scan all primitive children via raw storage scan."""
         try:
-            view = self.ref.fetch(ctx)
+            view = await self.ref.afetch(ctx)
         except (KeyError, IndexError):
             return EMPTY
         return view._unsafe_primitive_scan_values()
@@ -62,7 +58,7 @@ class ScanPrimitivesUnsafeOp[T](Query[Iterator[T] | Sentinel]):
         return f"ScanPrimitivesUnsafeOp({self.ref!r})"
 
 
-class ClearPrimitivesUnsafeCmd(Command):
+class ClearPrimitivesUnsafeCmd(ScalarCommand):
     """Clear all primitive children via _unsafe_primitive_clear().
 
     Scan + ctx.delete() each -- no validation, no descendant cleanup.
@@ -72,22 +68,21 @@ class ClearPrimitivesUnsafeCmd(Command):
         fetch(ctx) -> view with _unsafe_primitive_clear() method
     """
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(self, ref: object) -> None:
         super().__init__(ref)
         self.ref = ref
 
-    async def arun(self, ctx: Context) -> None:
-        """Clear all primitive children via scan + delete."""
-        view = await self.ref.afetch(ctx)
-        view._unsafe_primitive_clear()
-
-    def run(self, ctx: Context) -> None:
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
         """Clear all primitive children via scan + delete (sync)."""
         view = self.ref.fetch(ctx)
+        view._unsafe_primitive_clear()
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        """Clear all primitive children via scan + delete."""
+        view = await self.ref.afetch(ctx)
         view._unsafe_primitive_clear()
 
     def __repr__(self) -> str:

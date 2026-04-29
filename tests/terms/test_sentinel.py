@@ -9,16 +9,17 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from nu import EMPTY, INVALID, Literal
-from nu.terms import (
-    BinaryQuery,
+from nu import Literal, runtime
+from nu.terms import Mode
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import (
+    EMPTY,
+    INVALID,
     Empty,
     Invalid,
-    Mode,
     is_empty,
     is_invalid,
     is_sentinel,
-    propagate_special,
 )
 
 
@@ -36,11 +37,11 @@ def test_invalid_is_falsy():
 
 
 def test_empty_repr():
-    assert repr(EMPTY) == "<Empty>"
+    assert repr(EMPTY) == "<EMPTY>"
 
 
 def test_invalid_repr():
-    assert repr(INVALID) == "<Invalid>"
+    assert repr(INVALID) == "<INVALID>"
 
 
 # ---------------------------------------------------------------------------
@@ -108,52 +109,25 @@ def test_is_invalid():
 
 
 # ---------------------------------------------------------------------------
-# propagate_special
-# ---------------------------------------------------------------------------
-
-
-def test_propagate_special_all_clean():
-    assert propagate_special(1, 2, 3) is None
-
-
-def test_propagate_special_with_empty():
-    """EMPTY in any position -> returns INVALID."""
-    result = propagate_special(1, EMPTY, 3)
-    assert is_invalid(result)
-
-
-def test_propagate_special_with_invalid():
-    result = propagate_special(1, INVALID, 3)
-    assert is_invalid(result)
-
-
-def test_propagate_special_both_sentinels():
-    result = propagate_special(EMPTY, INVALID)
-    assert is_invalid(result)
-
-
-def test_propagate_special_no_args():
-    assert propagate_special() is None
-
-
-# ---------------------------------------------------------------------------
 # ScalarQuery sentinel propagation
 # ---------------------------------------------------------------------------
 
 # Local test Interaction - verifies apply() is/isn't called.
 
 
-class _TestAddOp(BinaryQuery[int]):
-    """BinaryQuery that tracks whether apply was called."""
+class _TestAddOp(ScalarQuery):
+    """ScalarQuery that tracks whether _apply was called."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     apply_called: bool = False
 
-    def apply(self, left: Any, right: Any) -> int:
+    def __init__(self, left: Any, right: Any) -> None:
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> int:
         _TestAddOp.apply_called = True
-        return left + right
+        return ops[0] + ops[1]
 
 
 class TestNAryOpSentinelPropagation:
@@ -163,24 +137,24 @@ class TestNAryOpSentinelPropagation:
         _TestAddOp.apply_called = False
 
     async def test_clean_operands_calls_apply(self, ctx):
-        result = await _TestAddOp(Literal(3), Literal(4)).afirst(ctx)
+        result = await runtime.afirst(_TestAddOp(Literal(3), Literal(4)), ctx)
         assert result == 7
         assert _TestAddOp.apply_called is True
 
     async def test_empty_operand_returns_invalid(self, ctx):
         """EMPTY child -> INVALID result, apply never called."""
-        result = await _TestAddOp(Literal(EMPTY), Literal(4)).afirst(ctx)
+        result = await runtime.afirst(_TestAddOp(Literal(EMPTY), Literal(4)), ctx)
         assert is_invalid(result)
         assert _TestAddOp.apply_called is False
 
     async def test_invalid_operand_returns_invalid(self, ctx):
         """INVALID child -> INVALID result, apply never called."""
-        result = await _TestAddOp(Literal(3), Literal(INVALID)).afirst(ctx)
+        result = await runtime.afirst(_TestAddOp(Literal(3), Literal(INVALID)), ctx)
         assert is_invalid(result)
         assert _TestAddOp.apply_called is False
 
     async def test_both_sentinels_returns_invalid(self, ctx):
-        result = await _TestAddOp(Literal(EMPTY), Literal(INVALID)).afirst(ctx)
+        result = await runtime.afirst(_TestAddOp(Literal(EMPTY), Literal(INVALID)), ctx)
         assert is_invalid(result)
         assert _TestAddOp.apply_called is False
 
@@ -188,5 +162,5 @@ class TestNAryOpSentinelPropagation:
         """Sentinel propagates through nested ops."""
         inner = _TestAddOp(Literal(EMPTY), Literal(1))
         outer = _TestAddOp(inner, Literal(2))
-        result = await outer.afirst(ctx)
+        result = await runtime.afirst(outer, ctx)
         assert is_invalid(result)

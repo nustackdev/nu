@@ -2,16 +2,14 @@
 
 Unary: BitwiseNot
 Binary: BitwiseAnd, BitwiseOr, Xor, LShift, RShift
-
-Note: Python's & and | operators are blocked in traits for safety.
-Use .bitand(), .bitor(), .bitnot() methods instead.
 """
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import BinaryQuery, Mode, UnaryQuery
+from nu.terms.query import ScalarQuery
+from nu.terms.types import Mode
 
 
 __all__ = [
@@ -24,89 +22,82 @@ __all__ = [
 ]
 
 
-# =============================================================================
-# UNARY BITWISE
-# =============================================================================
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
 
-class BitwiseNot[ResultT](UnaryQuery[ResultT]):
-    """Bitwise NOT: ~operand (two's complement).
+class BitwiseNot(ScalarQuery):
+    """Bitwise NOT: ~operand."""
 
-    Note: Python's ~ operator is blocked in traits.
-    Use .bitnot() method instead.
-    """
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
 
-    def apply(self, operand: object) -> ResultT:
-        """Apply."""
-        return ~operand  # type: ignore
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ~ops[0]
 
 
-# =============================================================================
-# BINARY BITWISE
-# =============================================================================
+class BitwiseAnd(ScalarQuery):
+    """Bitwise AND: left & right."""
+
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    commutative: ClassVar[bool] = True
+    associative: ClassVar[bool] = True
+
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0] & ops[1]
 
 
-class BitwiseAnd[ResultT](BinaryQuery[ResultT]):
-    """Bitwise AND: left & right.
+class BitwiseOr(ScalarQuery):
+    """Bitwise OR: left | right."""
 
-    Note: Distinct from And (logical AND).
-    Use .bitand() method to create this operation.
-    """
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    commutative: ClassVar[bool] = True
+    associative: ClassVar[bool] = True
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
 
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left & right  # type: ignore
-
-
-class BitwiseOr[ResultT](BinaryQuery[ResultT]):
-    """Bitwise OR: left | right.
-
-    Note: Distinct from Or (logical OR).
-    Use .bitor() method to create this operation.
-    """
-
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
-
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left | right  # type: ignore
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0] | ops[1]
 
 
-class Xor[ResultT](BinaryQuery[ResultT]):
+class Xor(ScalarQuery):
     """Bitwise XOR: left ^ right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    commutative: ClassVar[bool] = True
+    associative: ClassVar[bool] = True
 
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left ^ right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0] ^ ops[1]
 
 
-class LShift[ResultT](BinaryQuery[ResultT]):
+class LShift(ScalarQuery):
     """Left shift: left << right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left << right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0] << ops[1]
 
 
-class RShift[ResultT](BinaryQuery[ResultT]):
+class RShift(ScalarQuery):
     """Right shift: left >> right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> ResultT:
-        """Apply."""
-        return left >> right  # type: ignore
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0] >> ops[1]

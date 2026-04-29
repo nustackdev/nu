@@ -27,8 +27,7 @@ class SetRef[T](
 ):
     """Dict set reference — unordered unique-element container."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def result(self, op: Nu) -> SetI[T]:
         return SetI(op)

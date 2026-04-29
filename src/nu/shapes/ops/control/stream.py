@@ -12,9 +12,10 @@ import asyncio
 from contextlib import aclosing
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Interaction, Mode, Sentinel
+from nu.terms.nu import NuBase
+from nu.terms.types import Mode
 
-from ..cursor import AdvanceCursorOp
+from ..cursor import _UNSET, AdvanceCursorOp
 from ..reactive import OnChildrenChangeOp
 
 
@@ -30,7 +31,7 @@ __all__ = [
 ]
 
 
-class Stream(Interaction):
+class Stream(NuBase):
     """Drain-then-follow over an ordered collection.
 
     Iterates existing items (drain), then subscribes and follows new
@@ -39,8 +40,7 @@ class Stream(Interaction):
     Children layout: [advance_op, change_op, body, key, log_key]
     """
 
-    own_mode: ClassVar[Mode] = Mode.ASYNC
-    func_mode: ClassVar[Mode] = Mode.ASYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
 
     def __init__(
         self,
@@ -61,13 +61,15 @@ class Stream(Interaction):
         super().__init__(advance, change, body, key, log_key)
 
     async def aopen(self, ctx: Context) -> AsyncGenerator[Any, None]:
-        key = await self.children[3].afirst(ctx)
-        log_key = await self.children[4].afirst(ctx)
+        from nu import runtime
+
+        key = await runtime.afirst(self._children[3], ctx)
+        log_key = await runtime.afirst(self._children[4], ctx)
 
         if log_key not in ctx.attrs:
-            ctx.attrs[log_key] = Sentinel()
+            ctx.attrs[log_key] = _UNSET
         if key not in ctx.attrs:
-            ctx.attrs[key] = Sentinel()
+            ctx.attrs[key] = _UNSET
 
         async for v in self._drain(ctx, key, log_key):
             yield v
@@ -76,26 +78,30 @@ class Stream(Interaction):
 
     async def _drain(self, ctx: Context, key: str, log_key: str) -> AsyncGenerator[Any, None]:
         """Drain existing items from source."""
+        from nu import runtime
+
         while True:
-            result = await self.children[0].afirst(ctx)
+            result = await runtime.afirst(self._children[0], ctx)
             if result is None:
                 break
             log_k, actual_key = result
             ctx.attrs[key] = actual_key
             ctx.attrs[log_key] = log_k
-            async with aclosing(self.children[2].aopen(ctx)) as gen:
+            async with aclosing(self._children[2].aopen(ctx)) as gen:
                 async for v in gen:
                     yield v
 
     async def _react(self, ctx: Context, key: str, log_key: str) -> AsyncGenerator[Any, None]:
         """Follow new items via reactive subscription."""
+        from nu import runtime
+
         loop = asyncio.get_running_loop()
         event = asyncio.Event()
 
         def on_change(_changed_key: object) -> None:
             loop.call_soon_threadsafe(event.set)
 
-        sub = await self.children[1].afirst(ctx)
+        sub = await runtime.afirst(self._children[1], ctx)
         sub.bind(on_change)
         try:
             while True:

@@ -27,8 +27,7 @@ class ShapesListRef[T: Shape](
 ):
     """Dict shapes list reference — sequence of homogeneous shapes."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,

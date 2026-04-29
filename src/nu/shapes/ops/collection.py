@@ -1,4 +1,3 @@
-# ruff: noqa: D102
 """Collection-level ops - get, set, delete, exists, missing.
 
 Same logic as item ops but distinct tree node types, so substrates
@@ -11,139 +10,164 @@ WRITE ops use children[0] as Ref directly (inside Transaction wrapper).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms import Command, Mode, Query, Sentinel, is_sentinel
+from nu.terms.command import ScalarCommand
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import is_sentinel
+from nu.terms.types import Effect, Mode
 
 
 if TYPE_CHECKING:
-    from nu import Context, Nu
+    from nu import Nu
     from nu.shapes.refs import Ref
 
 
 __all__ = [
     "CollectionEraseCmd",
     "CollectionExistsOp",
+    "CollectionExtractOp",
     "CollectionLoadOp",
     "CollectionMissingOp",
     "CollectionStoreCmd",
 ]
 
 
-class CollectionLoadOp[T](Query[T | Sentinel]):
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
+class CollectionLoadOp(ScalarQuery):
     """Read collection from parent. Returns EMPTY if missing."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    accepts_sentinels: ClassVar[bool] = True
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def arun(self, ctx: Context) -> T | Sentinel:
-        return await self.children[0].afirst(ctx)
-
-    def run(self, ctx: Context) -> T | Sentinel:
-        return self.children[0].first(ctx)
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        return ops[0]
 
     def __repr__(self) -> str:
-        return f"CollectionLoadOp({self.children[0]!r})"
+        return f"CollectionLoadOp({self._children[0]!r})"
 
 
-class CollectionStoreCmd[T](Command):
+class CollectionStoreCmd(ScalarCommand):
     """Write collection to parent: parent[address] = data."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def __init__(self, ref: Ref, data: Nu[T | Sentinel]) -> None:
+    def __init__(self, ref: Ref, data: Nu) -> None:
         super().__init__(ref, data)
 
-    async def arun(self, ctx: Context) -> None:
-        data = await self.children[1].afirst(ctx)
-        if isinstance(data, Sentinel):
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
+        from nu import runtime
+
+        data = await runtime.afirst(self._children[1], ctx)
+        if is_sentinel(data):
             raise ValueError(f"Cannot store sentinel value: {data}")
-        ref = self.children[0]
+        ref = self._children[0]
         parent = await ref.afetch_parent(ctx)
         address = await ref.aresolve_address(ctx)
         parent[address] = data
 
-    def run(self, ctx: Context) -> None:
-        data = self.children[1].first(ctx)
-        if isinstance(data, Sentinel):
+    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
+        from nu import runtime
+
+        data = runtime.first(self._children[1], ctx)
+        if is_sentinel(data):
             raise ValueError(f"Cannot store sentinel value: {data}")
-        ref = self.children[0]
+        ref = self._children[0]
         parent = ref.fetch_parent(ctx)
         address = ref.resolve_address(ctx)
         parent[address] = data
 
     def __repr__(self) -> str:
-        return f"CollectionStoreCmd({self.children[0]!r}, {self.children[1]!r})"
+        return f"CollectionStoreCmd({self._children[0]!r}, {self._children[1]!r})"
 
 
-class CollectionEraseCmd(Command):
+class CollectionEraseCmd(ScalarCommand):
     """Delete collection from parent: del parent[address]."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def arun(self, ctx: Context) -> None:
-        ref = self.children[0]
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
+        ref = self._children[0]
         parent = await ref.afetch_parent(ctx)
         address = await ref.aresolve_address(ctx)
         del parent[address]
 
-    def run(self, ctx: Context) -> None:
-        ref = self.children[0]
+    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
+        ref = self._children[0]
         parent = ref.fetch_parent(ctx)
         address = ref.resolve_address(ctx)
         del parent[address]
 
     def __repr__(self) -> str:
-        return f"CollectionEraseCmd({self.children[0]!r})"
+        return f"CollectionEraseCmd({self._children[0]!r})"
 
 
-class CollectionExistsOp(Query[bool]):
+class CollectionExtractOp(ScalarQuery):
+    """Materialize the full value tree at the ref via view.extract().
+
+    Recursive read — for container views walks the subtree and returns
+    a plain Python value (dict / list / nested mix). Counterpart to a
+    flat fetch.
+
+    The ref must implement:
+        fetch(ctx) / afetch(ctx) -> view with .extract() method
+    """
+
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    accepts_sentinels: ClassVar[bool] = True
+
+    def __init__(self, ref: Ref) -> None:
+        super().__init__(ref)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        view = ops[0]
+        if is_sentinel(view):
+            return view
+        if hasattr(view, "eager"):
+            view = view.eager
+        return view.extract()
+
+    def __repr__(self) -> str:
+        return f"CollectionExtractOp({self._children[0]!r})"
+
+
+class CollectionExistsOp(ScalarQuery):
     """Check if collection exists: not is_sentinel(ref value)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    accepts_sentinels: ClassVar[bool] = True
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def arun(self, ctx: Context) -> bool:
-        val = await self.children[0].afirst(ctx)
-        return not is_sentinel(val)
-
-    def run(self, ctx: Context) -> bool:
-        val = self.children[0].first(ctx)
-        return not is_sentinel(val)
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return not is_sentinel(ops[0])
 
     def __repr__(self) -> str:
-        return f"CollectionExistsOp({self.children[0]!r})"
+        return f"CollectionExistsOp({self._children[0]!r})"
 
 
-class CollectionMissingOp(Query[bool]):
+class CollectionMissingOp(ScalarQuery):
     """Check if collection is missing: is_sentinel(ref value)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.BOTH
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    accepts_sentinels: ClassVar[bool] = True
 
     def __init__(self, ref: Ref) -> None:
         super().__init__(ref)
 
-    async def arun(self, ctx: Context) -> bool:
-        val = await self.children[0].afirst(ctx)
-        return is_sentinel(val)
-
-    def run(self, ctx: Context) -> bool:
-        val = self.children[0].first(ctx)
-        return is_sentinel(val)
+    def _apply(self, ctx: Any, ops: list[Any]) -> bool:  # noqa: ANN401
+        return is_sentinel(ops[0])
 
     def __repr__(self) -> str:
-        return f"CollectionMissingOp({self.children[0]!r})"
+        return f"CollectionMissingOp({self._children[0]!r})"

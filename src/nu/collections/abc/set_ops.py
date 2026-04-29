@@ -10,9 +10,12 @@ IntersectionUpdateCmd, DifferenceUpdateCmd, SymmetricDifferenceUpdateCmd
 from __future__ import annotations
 
 from collections.abc import MutableSet, Set
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from nu.terms import INVALID, BinaryQuery, Mode, Sentinel, UnaryQuery
+from nu.terms.command import ScalarCommand
+from nu.terms.query import ScalarQuery
+from nu.terms.sentinels import INVALID
+from nu.terms.types import Effect, Mode
 
 
 __all__ = [
@@ -34,100 +37,117 @@ __all__ = [
 ]
 
 
+_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
 # =============================================================================
 # SET OPERATIONS
 # =============================================================================
 
 
-class UnionOp[T](BinaryQuery[set[T] | frozenset[T]]):
+class UnionOp(ScalarQuery):
     """Set union: left | right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left | right  # type: ignore
+        return a | b
 
 
-class IntersectionOp[T](BinaryQuery[set[T] | frozenset[T]]):
+class IntersectionOp(ScalarQuery):
     """Set intersection: left & right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left & right  # type: ignore
+        return a & b
 
 
-class DifferenceOp[T](BinaryQuery[set[T] | frozenset[T]]):
+class DifferenceOp(ScalarQuery):
     """Set difference: left - right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left - right  # type: ignore
+        return a - b
 
 
-class SymmetricDifferenceOp[T](BinaryQuery[set[T] | frozenset[T]]):
+class SymmetricDifferenceOp(ScalarQuery):
     """Set symmetric difference: left ^ right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> set[T] | frozenset[T] | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left ^ right  # type: ignore
+        return a ^ b
 
 
-class IsSubsetOp(BinaryQuery[bool]):
+class IsSubsetOp(ScalarQuery):
     """Test if subset: left <= right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left <= right
+        return a <= b
 
 
-class IsSupersetOp(BinaryQuery[bool]):
+class IsSupersetOp(ScalarQuery):
     """Test if superset: left >= right."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left >= right
+        return a >= b
 
 
-class IsDisjointOp(BinaryQuery[bool]):
+class IsDisjointOp(ScalarQuery):
     """Test if disjoint: left.isdisjoint(right)."""
 
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> bool | Sentinel:
-        """Apply."""
-        if not isinstance(left, Set) or not isinstance(right, Set):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        a, b = ops
+        if not isinstance(a, Set) or not isinstance(b, Set):
             return INVALID
-        return left.isdisjoint(right)
+        return a.isdisjoint(b)
 
 
 # =============================================================================
@@ -135,138 +155,247 @@ class IsDisjointOp(BinaryQuery[bool]):
 # =============================================================================
 
 
-class AddCmd[T](BinaryQuery[None]):
-    """Add element to set: s.add(value). Returns None (mutates in-place)."""
+class AddCmd(ScalarCommand):
+    """Add element to set: s.add(value). Mutates target Ref in-place."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
-            raise TypeError(f"add() requires mutable set, got {type(left).__name__}")
-        left.add(right)
-        return None
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
 
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
 
-class RemoveCmd[T](BinaryQuery[None]):
-    """Remove element from set: s.remove(value). Returns None, or INVALID if not found."""
+        target = runtime.first(self._children[0], ctx)
+        value = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"add() requires mutable set, got {type(target).__name__}")
+        target.add(value)
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
-            raise TypeError(f"remove() requires mutable set, got {type(left).__name__}")
-        try:
-            left.remove(right)
-        except KeyError:
-            return INVALID
-        return None
+        target = await runtime.afirst(self._children[0], ctx)
+        value = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"add() requires mutable set, got {type(target).__name__}")
+        target.add(value)
 
 
-class DiscardCmd[T](BinaryQuery[None]):
-    """Discard element from set: s.discard(value). Returns None (mutates in-place)."""
+class RemoveCmd(ScalarCommand):
+    """Remove element from set: s.remove(value). Mutates target Ref in-place."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
-            raise TypeError(f"discard() requires mutable set, got {type(left).__name__}")
-        left.discard(right)
-        return None
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        value = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"remove() requires mutable set, got {type(target).__name__}")
+        target.remove(value)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        value = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"remove() requires mutable set, got {type(target).__name__}")
+        target.remove(value)
 
 
-class SetPopCmd[T](UnaryQuery[T]):
+class DiscardCmd(ScalarCommand):
+    """Discard element from set: s.discard(value). Mutates target Ref in-place."""
+
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        value = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"discard() requires mutable set, got {type(target).__name__}")
+        target.discard(value)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        value = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"discard() requires mutable set, got {type(target).__name__}")
+        target.discard(value)
+
+
+class SetPopCmd(ScalarQuery):
     """Pop arbitrary element: s.pop(). Returns element, or INVALID if empty."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, operand: object) -> T | Sentinel:
-        """Apply."""
+    def __init__(self, operand: Any) -> None:  # noqa: ANN401
+        super().__init__(operand)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        operand = ops[0]
         if not isinstance(operand, MutableSet):
             raise TypeError(f"pop() requires mutable set, got {type(operand).__name__}")
         try:
-            return operand.pop()  # type: ignore[return-value]
+            return operand.pop()
         except KeyError:
             return INVALID
 
 
-class SetUpdateCmd[T](BinaryQuery[None]):
-    """Update set with elements from other: s.update(other). Returns None."""
+class SetUpdateCmd(ScalarCommand):
+    """Update set with elements from other: s.update(other). Mutates target Ref in-place."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
-            raise TypeError(f"update() requires mutable set, got {type(left).__name__}")
-        if not isinstance(right, Set):
-            return INVALID
-        left |= right
-        return None
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        other = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"update() requires mutable set, got {type(target).__name__}")
+        if not isinstance(other, Set):
+            raise TypeError(f"update() requires set, got {type(other).__name__}")
+        target |= other
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        other = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(f"update() requires mutable set, got {type(target).__name__}")
+        if not isinstance(other, Set):
+            raise TypeError(f"update() requires set, got {type(other).__name__}")
+        target |= other
 
 
-class IntersectionUpdateCmd[T](BinaryQuery[None]):
-    """Keep only elements found in both: s.intersection_update(other). Returns None."""
+class IntersectionUpdateCmd(ScalarCommand):
+    """Keep only elements found in both: s.intersection_update(other). Mutates target Ref in-place."""
 
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
 
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        other = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
             raise TypeError(
-                f"intersection_update() requires mutable set, got {type(left).__name__}"
+                f"intersection_update() requires mutable set, got {type(target).__name__}"
             )
-        if not isinstance(right, Set):
-            return INVALID
-        left &= right
-        return None
+        if not isinstance(other, Set):
+            raise TypeError(f"intersection_update() requires set, got {type(other).__name__}")
+        target &= other
 
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
 
-class DifferenceUpdateCmd[T](BinaryQuery[None]):
-    """Remove elements found in other: s.difference_update(other). Returns None."""
-
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
-
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
-            raise TypeError(f"difference_update() requires mutable set, got {type(left).__name__}")
-        if not isinstance(right, Set):
-            return INVALID
-        left -= right
-        return None
-
-
-class SymmetricDifferenceUpdateCmd[T](BinaryQuery[None]):
-    """Keep elements in either but not both: s.symmetric_difference_update(other). Returns None."""
-
-    writes = 0
-    own_mode: ClassVar[Mode] = Mode.BOTH
-    func_mode: ClassVar[Mode] = Mode.SYNC
-
-    def apply(self, left: object, right: object) -> None | Sentinel:
-        """Apply."""
-        if not isinstance(left, MutableSet):
+        target = await runtime.afirst(self._children[0], ctx)
+        other = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
             raise TypeError(
-                f"symmetric_difference_update() requires mutable set, got {type(left).__name__}"
+                f"intersection_update() requires mutable set, got {type(target).__name__}"
             )
-        if not isinstance(right, Set):
-            return INVALID
-        left ^= right
-        return None
+        if not isinstance(other, Set):
+            raise TypeError(f"intersection_update() requires set, got {type(other).__name__}")
+        target &= other
+
+
+class DifferenceUpdateCmd(ScalarCommand):
+    """Remove elements found in other: s.difference_update(other). Mutates target Ref in-place."""
+
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        other = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(
+                f"difference_update() requires mutable set, got {type(target).__name__}"
+            )
+        if not isinstance(other, Set):
+            raise TypeError(f"difference_update() requires set, got {type(other).__name__}")
+        target -= other
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        other = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(
+                f"difference_update() requires mutable set, got {type(target).__name__}"
+            )
+        if not isinstance(other, Set):
+            raise TypeError(f"difference_update() requires set, got {type(other).__name__}")
+        target -= other
+
+
+class SymmetricDifferenceUpdateCmd(ScalarCommand):
+    """Keep elements in either but not both: s.symmetric_difference_update(other). Mutates target Ref in-place."""
+
+    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
+        super().__init__(left, right)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = runtime.first(self._children[0], ctx)
+        other = runtime.first(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(
+                f"symmetric_difference_update() requires mutable set, got {type(target).__name__}"
+            )
+        if not isinstance(other, Set):
+            raise TypeError(
+                f"symmetric_difference_update() requires set, got {type(other).__name__}"
+            )
+        target ^= other
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        from nu import runtime
+
+        target = await runtime.afirst(self._children[0], ctx)
+        other = await runtime.afirst(self._children[1], ctx)
+        if not isinstance(target, MutableSet):
+            raise TypeError(
+                f"symmetric_difference_update() requires mutable set, got {type(target).__name__}"
+            )
+        if not isinstance(other, Set):
+            raise TypeError(
+                f"symmetric_difference_update() requires set, got {type(other).__name__}"
+            )
+        target ^= other

@@ -51,7 +51,7 @@ def annotate_ref_loads(root: Nu) -> Nu:
         new_children: list[Nu] = []
         changed = False
 
-        for child in node.children:
+        for child in node._children:
             if child is target_ref:
                 new_children.append(child)
                 continue
