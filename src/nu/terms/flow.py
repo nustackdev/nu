@@ -113,9 +113,34 @@ class Parallel(Strategy):
 
         from .dispatch import ExecState, atom_dispatch
 
-        await asyncio.gather(
-            *(atom_dispatch(c, ExecState.LOOP)(ctx) for c in self._children),
-        )
+        loop = asyncio.get_running_loop()
+        awaitables: list[Any] = []
+        for c in self._children:
+            if _has_async_only(c):
+                awaitables.append(atom_dispatch(c, ExecState.LOOP)(ctx))
+            else:
+                sync_method = atom_dispatch(c, ExecState.NO_LOOP)
+                awaitables.append(loop.run_in_executor(None, sync_method, ctx))
+        await asyncio.gather(*awaitables)
+
+
+def _has_async_only(nu: Any) -> bool:  # noqa: ANN401
+    """True if any node in the subtree has `support = {ASYNC}` exclusively.
+
+    Async-only descendants must run on the event loop (they need
+    asyncio primitives). Subtrees without any async-only node can run
+    on a worker thread without losing functionality.
+    """
+    support = getattr(type(nu), "support", None)
+    if support is not None and support == _ASYNC_ONLY:
+        return True
+    for child in getattr(nu, "_children", ()):
+        if _has_async_only(child):
+            return True
+    return False
+
+
+_ASYNC_ONLY = frozenset({Mode.ASYNC})
 
 
 class Race(Strategy):
@@ -144,7 +169,14 @@ class Race(Strategy):
 
         from .dispatch import ExecState, atom_dispatch
 
-        tasks = [asyncio.create_task(atom_dispatch(c, ExecState.LOOP)(ctx)) for c in self._children]
+        loop = asyncio.get_running_loop()
+        tasks: list[asyncio.Future] = []
+        for c in self._children:
+            if _has_async_only(c):
+                tasks.append(asyncio.ensure_future(atom_dispatch(c, ExecState.LOOP)(ctx)))
+            else:
+                sync_method = atom_dispatch(c, ExecState.NO_LOOP)
+                tasks.append(loop.run_in_executor(None, sync_method, ctx))
         try:
             done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
             for t in pending:

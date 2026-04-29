@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 __all__ = [
     "CollectionEraseCmd",
     "CollectionExistsOp",
+    "CollectionExtractOp",
     "CollectionLoadOp",
     "CollectionMissingOp",
     "CollectionStoreCmd",
@@ -109,6 +110,35 @@ class CollectionEraseCmd(ScalarCommand):
 
     def __repr__(self) -> str:
         return f"CollectionEraseCmd({self._children[0]!r})"
+
+
+class CollectionExtractOp(ScalarQuery):
+    """Materialize the full value tree at the ref via view.extract().
+
+    Recursive read — for container views walks the subtree and returns
+    a plain Python value (dict / list / nested mix). Counterpart to a
+    flat fetch.
+
+    The ref must implement:
+        fetch(ctx) / afetch(ctx) -> view with .extract() method
+    """
+
+    support: ClassVar[frozenset[Mode]] = _BOTH
+    accepts_sentinels: ClassVar[bool] = True
+
+    def __init__(self, ref: Ref) -> None:
+        super().__init__(ref)
+
+    def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
+        view = ops[0]
+        if is_sentinel(view):
+            return view
+        if hasattr(view, "eager"):
+            view = view.eager
+        return view.extract()
+
+    def __repr__(self) -> str:
+        return f"CollectionExtractOp({self._children[0]!r})"
 
 
 class CollectionExistsOp(ScalarQuery):

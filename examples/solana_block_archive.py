@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Solana ledger sync -- fetch blocks, persist transactions, resumable archive.
+"""Solana block archive -- fetch blocks, persist transactions as-is.
+
+Same orchestration as `solana_ledger_sync.py` (parallel fetchers + sync
+processor + reactive stats + snapshot report) -- but the Tx shape and the
+RPC client mirror the JSON-RPC `getBlock` response verbatim. No field
+flattening, no per-tx massaging in the RPC client.
 
 Usage:
-    python examples/solana_ledger_sync.py --slot-from 335000000 --slots 100
-    python examples/solana_ledger_sync.py --slot-from 335000000 --slots 500 \\
-        --program 6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P
+    python examples/solana_block_archive.py --slot-from 408000000 --slots 20
 """
 
 from __future__ import annotations
@@ -18,6 +21,7 @@ import nu
 import nu_dict
 import nu_virtuals
 import nu_virtuals as nv
+import nudle
 from nu import runtime
 from nu.stdlib import TimeSleep
 
@@ -30,7 +34,7 @@ class DroppedSlotError(Exception):
 
 
 class SolanaRpc:
-    """Minimal async Solana JSON-RPC client."""
+    """Minimal async Solana JSON-RPC client. Returns raw `result` payload."""
 
     def __init__(self, endpoint: str) -> None:
         self._endpoint = endpoint
@@ -55,7 +59,7 @@ class SolanaRpc:
         return data.get("result")
 
     async def get_block(self, slot: int) -> dict:
-        """Fetch block, return {"slot": slot, "txs": [tx dicts]}."""
+        """Fetch block; return ``{"slot": slot, "block": <raw result>}``."""
         result = await self._call(
             "getBlock",
             [
@@ -71,46 +75,7 @@ class SolanaRpc:
         )
         if result is None:
             raise DroppedSlotError(slot)
-        block_time = result.get("blockTime", 0) or 0
-        txs = []
-        for i, raw in enumerate(result.get("transactions", [])):
-            tx, meta = raw.get("transaction", {}), raw.get("meta", {})
-            if not tx:
-                continue
-            msg = tx.get("message", {})
-            accounts = list(msg.get("accountKeys", []))
-            for t in ("writable", "readonly"):
-                accounts.extend(meta.get("loadedAddresses", {}).get(t, []))
-            all_ixs = list(msg.get("instructions", []))
-            for inner in meta.get("innerInstructions", []):
-                all_ixs.extend(inner.get("instructions", []))
-            programs = {
-                accounts[ix.get("programIdIndex", 0)]
-                for ix in all_ixs
-                if ix.get("programIdIndex", 0) < len(accounts)
-            }
-            txs.append(
-                {
-                    "slot_number": slot,
-                    "block_time": block_time,
-                    "block_index": i,
-                    "signatures": tx.get("signatures", []),
-                    "account_keys": msg.get("accountKeys", []),
-                    "instructions": msg.get("instructions", []),
-                    "fee": meta.get("fee", 0),
-                    "err": str(meta.get("err") or ""),
-                    "compute_units": meta.get("computeUnitsConsumed", 0),
-                    "programs": list(programs),
-                    "pre_balances": meta.get("preBalances", []),
-                    "post_balances": meta.get("postBalances", []),
-                    "pre_token_balances": meta.get("preTokenBalances", []),
-                    "post_token_balances": meta.get("postTokenBalances", []),
-                    "loaded_addresses": meta.get("loadedAddresses", {}),
-                    "inner_instructions": meta.get("innerInstructions", []),
-                    "log_messages": meta.get("logMessages", []),
-                }
-            )
-        return {"slot": slot, "txs": txs}
+        return {"slot": slot, "block": result}
 
     async def close(self):
         if self._session and not self._session.closed:
@@ -127,10 +92,6 @@ class SolanaRpc:
 
 
 class SolanaRef(nu.Ref[SolanaRpc]):
-    """Ref that resolves SolanaRpc from Context. Invocation descriptors create
-    lazy Invoke terms.
-    """
-
     support: ClassVar[frozenset[nu.Mode]] = frozenset({nu.Mode.SYNC, nu.Mode.ASYNC})
 
     def eval(self, ctx: nu.Context) -> SolanaRpc:
@@ -142,53 +103,65 @@ class SolanaRef(nu.Ref[SolanaRpc]):
     get_block = nu.Invocation(nu.DictI, "get_block", support=frozenset({nu.Mode.ASYNC}))
 
 
-# -- Shapes -------------------------------------------------------------------
+# -- Shapes (mirror RPC structure verbatim) -----------------------------------
+
+
+class TxMessage(nu.Shape):
+    accountKeys = nv.PrimitiveListRef.slot()
+    recentBlockhash = nv.StrRef.slot()
+    instructions = nv.PrimitiveListRef.slot()
+    header = nv.PrimitiveDictRef.slot()
+    addressTableLookups = nv.PrimitiveListRef.slot()
+
+
+class TxInner(nu.Shape):
+    signatures = nv.PrimitiveListRef.slot()
+    message = nv.ShapeRef.slot(TxMessage)
+
+
+class TxMeta(nu.Shape):
+    err = nv.PrimitiveDictRef.slot()
+    fee = nv.IntRef.slot()
+    preBalances = nv.PrimitiveListRef.slot()
+    postBalances = nv.PrimitiveListRef.slot()
+    innerInstructions = nv.PrimitiveListRef.slot()
+    logMessages = nv.PrimitiveListRef.slot()
+    preTokenBalances = nv.PrimitiveListRef.slot()
+    postTokenBalances = nv.PrimitiveListRef.slot()
+    loadedAddresses = nv.PrimitiveDictRef.slot()
+    computeUnitsConsumed = nv.IntRef.slot()
+    status = nv.PrimitiveDictRef.slot()
 
 
 class Transaction(nu.Shape):
-    """Solana transaction. Mirrors RPC structure, no parsing."""
-
-    slot_number = nu_virtuals.IntRef.slot()
-    block_time = nu_virtuals.IntRef.slot()
-    block_index = nu_virtuals.IntRef.slot()
-    signatures = nu_virtuals.PrimitiveListRef.slot()
-    account_keys = nu_virtuals.PrimitiveListRef.slot()
-    instructions = nu_virtuals.PrimitiveListRef.slot()
-    fee = nu_virtuals.IntRef.slot()
-    err = nu_virtuals.StrRef.slot()
-    compute_units = nu_virtuals.IntRef.slot()
-    programs = nu_virtuals.PrimitiveListRef.slot()
-    pre_balances = nu_virtuals.PrimitiveListRef.slot()
-    post_balances = nu_virtuals.PrimitiveListRef.slot()
-    pre_token_balances = nu_virtuals.PrimitiveListRef.slot()
-    post_token_balances = nu_virtuals.PrimitiveListRef.slot()
-    loaded_addresses = nu_virtuals.PrimitiveDictRef.slot()
-    inner_instructions = nu_virtuals.PrimitiveListRef.slot()  # primitive blobs
-    log_messages = nu_virtuals.PrimitiveListRef.slot()
+    transaction = nv.ShapeRef.slot(TxInner)
+    meta = nv.ShapeRef.slot(TxMeta)
+    version = nv.StrRef.slot()
 
 
 class BlockMeta(nu.Shape):
-    synced = nu_virtuals.IntRef.slot()
-    skipped = nu_virtuals.IntRef.slot()
+    synced = nv.IntRef.slot()
+    skipped = nv.IntRef.slot()
 
 
 class Ledger(nu.Shape):
     """Persistent transaction archive. Resumable via slots_synced."""
 
-    txs = nu_virtuals.ShapesDictRef.slot(Transaction, key_type=int)
-    slots_synced = nu_virtuals.PrimitiveSetRef.slot()
-    slots_dropped = nu_virtuals.PrimitiveSetRef.slot()
-    current_slot = nu_virtuals.IntRef.slot()
-    blocks_meta = nu_virtuals.ShapesDictRef.slot(BlockMeta, key_type=int)
-    fetch_done = nu_virtuals.BoolRef.slot()
+    txs = nv.ShapesDictRef.slot(Transaction, key_type=int)
+    slots_synced = nv.PrimitiveSetRef.slot()
+    slots_dropped = nv.PrimitiveSetRef.slot()
+    current_slot = nv.IntRef.slot()
+    blocks_meta = nv.ShapesDictRef.slot(BlockMeta, key_type=int)
+    fetch_done = nv.BoolRef.slot()
 
 
 class _SlotScratch(nu.Shape):
+    tx_idx = nu_dict.IntRef.slot()
     tx_id = nu_dict.IntRef.slot()
 
 
 class _RangeScratch(nu.Shape):
-    blocks = nu_dict.ListRef.slot(dict)  # {"slot": int, "txs": list[dict]}
+    blocks = nu_dict.ListRef.slot(dict)  # {"slot": int, "block": <raw RPC dict>}
     cursor = nu_dict.IntRef.slot()
 
 
@@ -196,18 +169,19 @@ class _RangeScratch(nu.Shape):
 
 
 def _persist_tx(ledger: type[Ledger], slot: nu.IntArg) -> nu.Nu:
-    # tx_id = slot * 10_000 + block_index
-    return _SlotScratch.tx_id.store(
-        nu.IntI(slot) * 10_000 + nu.At(nu.AttrRef("tx"), "block_index")
-    ) >> ledger.txs[_SlotScratch.tx_id].store(nu.DictAttrRef("tx"))
+    """tx_id = slot * 10_000 + per-block tx index. Store the raw tx dict."""
+    return (
+        _SlotScratch.tx_id.store(nu.IntI(slot) * 10_000 + _SlotScratch.tx_idx)
+        >> ledger.txs[_SlotScratch.tx_id].store(nu.DictAttrRef("tx"))
+        >> _SlotScratch.tx_idx.inc()
+    )
 
 
 def fetcher(
     ledger: type[Ledger], slot_from: int, slot_count: int, worker_id: int, n_workers: int
 ) -> nu.Nu:
-    """One fetch branch. Strides ``[slot_from + worker_id, slot_from + slot_count)``
-    by ``n_workers``, pulls each block, appends an entry to ``_RangeScratch.blocks``.
-    On drop: logs and skips (no append).
+    """One fetch branch. Strides by ``n_workers``, pulls each block, appends the
+    raw entry to ``_RangeScratch.blocks``. On drop: log + skip.
     """
     slot = nu.IntAttrRef(f"slot_{worker_id}")
     return nu.ForRange(
@@ -232,19 +206,23 @@ def fetcher(
 
 
 def process_entry(ledger: type[Ledger], entry_ref: nu.Nu, *, program_id: nu.StrArg = "") -> nu.Nu:
-    """Persist one fetched block entry."""
+    """Persist one fetched block entry. ``entry_ref`` is ``{"slot", "block"}``."""
     slot = nu.IntI(nu.At(entry_ref, "slot"))
+    block = nu.At(entry_ref, "block")
     bm = ledger.blocks_meta[slot]
+    # Filter: program_id appears in tx.transaction.message.accountKeys.
+    tx_account_keys = nu.At(nu.At(nu.At(nu.AttrRef("tx"), "transaction"), "message"), "accountKeys")
     return (
         bm.skipped.init(0)
         >> bm.synced.init(0)
+        >> _SlotScratch.tx_idx.store(0)
         >> nv.Transaction(
             nu.ForEach(
-                nu.At(entry_ref, "txs"),
+                nu.At(block, "transactions"),
                 nu.IfDo(
                     nu.ToBool(program_id),
                     nu.IfDo(
-                        nu.Contains(nu.DictAttrRef("tx").get("programs"), program_id),
+                        nu.Contains(tx_account_keys, program_id),
                         bm.synced.inc() >> _persist_tx(ledger, slot),
                         # bm.skipped.inc(),
                     ),
@@ -259,8 +237,9 @@ def process_entry(ledger: type[Ledger], entry_ref: nu.Nu, *, program_id: nu.StrA
 
 def processor(ledger: type[Ledger], *, program_id: nu.StrArg = "") -> nu.Nu:
     """Sync consumer. Polls ``_RangeScratch.blocks`` at ``cursor``, persists,
-    increments cursor. Polls indefinitely with a 50ms sleep when caught up.
-    Runs on a worker thread under ``max_parallel >= 2``.
+    increments cursor. Sleeps 50ms when caught up. Terminates when fetchers
+    finish (``fetch_done``) and the buffer is fully drained. Runs on a worker
+    thread under ``max_parallel >= 2``.
     """
     entry = _RangeScratch.blocks[_RangeScratch.cursor]
     return nu.DoWhile(
@@ -279,14 +258,14 @@ def sync_range(
     slot_count: int,
     *,
     program_id: nu.StrArg = "",
-    n_workers: int = 5,
+    n_workers: int = 6,
 ) -> nu.Nu:
     """Sync ``slot_count`` slots starting at ``slot_from``.
 
-    ``n_workers`` async fetchers pull blocks concurrently (striped modulo
-    n_workers) into ``_RangeScratch.blocks``; one sync processor drains the
-    list and persists each entry. Fetchers share the event loop; the processor
-    runs on a worker thread. Needs ``max_parallel >= 2`` at execution time.
+    ``n_workers`` async fetchers stream blocks into ``_RangeScratch.blocks``;
+    one sync processor drains the list and persists each entry. Fetchers share
+    the event loop; the processor runs on a worker thread. Needs
+    ``max_parallel >= 2``.
     """
     return (
         Ledger.slots_synced.init(set())
@@ -369,8 +348,7 @@ async def main() -> None:
     logger.addHandler(handler)
     logger.propagate = False
 
-    # Parse CLI args
-    p = argparse.ArgumentParser(description="Solana ledger sync")
+    p = argparse.ArgumentParser(description="Solana block archive")
     p.add_argument("--slot-from", type=int, default=408000000)
     p.add_argument("--slots", type=int, default=20)
     p.add_argument(
@@ -378,28 +356,18 @@ async def main() -> None:
         default="https://mainnet.helius-rpc.com/?api-key=ebf174cb-9472-4232-93f3-81bd3044b0c4",
     )
     p.add_argument("--program", default="6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P")
-    p.add_argument("--db-path", default=".db-ledger")
-    p.add_argument(
-        "--workers", type=int, default=6, help="concurrent fetchers; processor is 1 extra thread"
-    )
-    p.add_argument(
-        "--max-parallel",
-        type=int,
-        default=10,
-        help="tree-wide threading budget (>=2 for concurrent fetch/process)",
-    )
+    p.add_argument("--db-path", default=".db-archive")
+    p.add_argument("--workers", type=int, default=6)
+    p.add_argument("--max-parallel", type=int, default=10)
     args = p.parse_args()
 
-    # Init services
     async with SolanaRpc(endpoint=args.endpoint) as rpc:
         with rocksdb_storage_inmemory(args.db_path) as store:
-            # Prepare the execution context
             ctx = nu.Context()
             ctx = ctx.bind(Navigator, Navigator(store))
             ctx = ctx.bind(SolanaRpc, rpc)
             ctx = ctx.bind(dict, {})
 
-            # Construct the app
             app = (
                 (
                     nu.Log("--- sync ---")
@@ -434,20 +402,35 @@ async def main() -> None:
                 )
             )
 
-            # Apply app meta-transformations
+            # Archive phase
             app = nu_dict.inline_refs(app)
             app = nu_virtuals.inline_refs(app)
             app = nu_virtuals.auto_atomic(app)
             app = nu_inspect.set_logger_name(app, "sol")
 
-            # Print the app
-            # print(nu_inspect.render_nu(app))
+            await runtime.aexecute(app, ctx, max_parallel=args.max_parallel)
 
-            # Execute the app
-            await asyncio.gather(
-                runtime.aexecute(app, ctx, max_parallel=args.max_parallel),
-                # nudle.arun_ui(Ledger, ctx),
+            # Read phase
+            app = nu.Print(
+                nu_virtuals.Snapshot(
+                    Ledger.txs[
+                        nu.Last(
+                            nu.Filter(
+                                nu.Iter(Ledger.txs.keys()),
+                                condition=Ledger.txs[nu.StrAttrRef("item")].meta.fee > 100_000,
+                            ),
+                        )
+                    ].extract()
+                )
             )
+
+            app = nu_dict.inline_refs(app)
+            app = nu_virtuals.inline_refs(app)
+            app = nu_virtuals.auto_atomic(app)
+            app = nu_inspect.set_logger_name(app, "sol")
+            runtime.execute(app, ctx)
+
+            await nudle.arun_ui(Ledger, ctx)
 
 
 if __name__ == "__main__":

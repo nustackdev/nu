@@ -9,28 +9,29 @@ runtime.execute(nu.Print(nu.IntI(5) + 10))
 
 
 # # --- sequential composition: Commands run in order ---
-runtime.execute(nu.Print(1) >> nu.Print(2) >> nu.Print(3))
+runtime.execute(nu.Print(1) | nu.Print(2) | nu.Print(3))
 
+
+app = nu.Print(
+    nu.Last(
+        nu.Map(
+            nu.Map(
+                nu.Iter(range(10000)),
+                transform=nu.IntAttrRef("item") * 2,
+            ),
+            transform=nu.IntAttrRef("item2") * 2,
+            item="item2",
+        )
+    )
+) & nu.Print("12")
 
 import time
 
 
 s = time.perf_counter()
-runtime.execute(
-    nu.Print(
-        nu.Last(
-            nu.Map(
-                nu.Map(
-                    nu.Iter(range(10000)),
-                    transform=nu.IntAttrRef("item") * 2,
-                ),
-                transform=nu.IntAttrRef("item2") * 2,
-                item="item2",
-            )
-        )
-    )
-    & nu.Print("12")
-)
+runtime.execute()
+
+
 pp = f"{(time.perf_counter() - s):5f}"
 
 

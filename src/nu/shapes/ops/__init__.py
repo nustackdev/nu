@@ -3,6 +3,7 @@
 from .collection import (
     CollectionEraseCmd,
     CollectionExistsOp,
+    CollectionExtractOp,
     CollectionLoadOp,
     CollectionMissingOp,
     CollectionStoreCmd,
@@ -24,6 +25,7 @@ __all__ = [
     "ChangeOp",
     "CollectionEraseCmd",
     "CollectionExistsOp",
+    "CollectionExtractOp",
     "CollectionLoadOp",
     "CollectionMissingOp",
     "CollectionStoreCmd",

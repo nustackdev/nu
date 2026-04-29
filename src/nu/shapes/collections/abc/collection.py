@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.primitives import BoolI, NoneI
+from nu.primitives import BoolI
 from nu.terms import Interface
 
 
@@ -41,6 +41,11 @@ class CollectionI(Interface):
         from nu.shapes.ops import CollectionMissingOp
 
         return BoolI(CollectionMissingOp(self))
+
+    def extract(self) -> Nu:
+        from nu.shapes.ops import CollectionExtractOp
+
+        return CollectionExtractOp(self)
 
 
 class MutableCollectionI[CollectionT](CollectionI):

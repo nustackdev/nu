@@ -51,7 +51,7 @@ from .logical import (
     Not,
     Or,
 )
-from .reduce import All, Any, Max, Min, Sum
+from .reduce import AllElem, AnyElem, MaxElem, MinElem, Sum
 from .sentinel import IsEmpty, IsInvalid, NotEmpty, NotInvalid
 from .slice import Drop, Take
 from .timing import Timed
@@ -68,9 +68,9 @@ from .transform import (
 __all__ = [
     "Abs",
     "Add",
-    "All",
+    "AllElem",
     "And",
-    "Any",
+    "AnyElem",
     "At",
     "BitwiseAnd",
     "BitwiseNot",
@@ -100,8 +100,8 @@ __all__ = [
     "Le",
     "Len",
     "Lt",
-    "Max",
-    "Min",
+    "MaxElem",
+    "MinElem",
     "Mod",
     "Mul",
     "Ne",

@@ -11,10 +11,10 @@ from nu.terms.types import Mode
 
 
 __all__ = [
-    "All",
-    "Any",
-    "Max",
-    "Min",
+    "AllElem",
+    "AnyElem",
+    "MaxElem",
+    "MinElem",
     "Sum",
 ]
 
@@ -33,7 +33,7 @@ class Sum(ScalarQuery):
     def _apply(self, ctx: Any, ops: list[Any]) -> Any:
         operand = ops[0]
         if not isinstance(operand, Iterable):
-            msg = f"sum_() requires iterable, got {type(operand).__name__}"
+            msg = f"Sum() requires iterable, got {type(operand).__name__}"
             raise TypeError(msg)
         try:
             return sum(operand)
@@ -41,7 +41,7 @@ class Sum(ScalarQuery):
             return INVALID
 
 
-class Min(ScalarQuery):
+class MinElem(ScalarQuery):
     """Minimum element."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
@@ -52,7 +52,7 @@ class Min(ScalarQuery):
     def _apply(self, ctx: Any, ops: list[Any]) -> Any:
         operand = ops[0]
         if not isinstance(operand, Iterable):
-            msg = f"min_() requires iterable, got {type(operand).__name__}"
+            msg = f"MinElem() requires iterable, got {type(operand).__name__}"
             raise TypeError(msg)
         try:
             return min(operand)
@@ -60,7 +60,7 @@ class Min(ScalarQuery):
             return INVALID
 
 
-class Max(ScalarQuery):
+class MaxElem(ScalarQuery):
     """Maximum element."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
@@ -71,7 +71,7 @@ class Max(ScalarQuery):
     def _apply(self, ctx: Any, ops: list[Any]) -> Any:
         operand = ops[0]
         if not isinstance(operand, Iterable):
-            msg = f"max_() requires iterable, got {type(operand).__name__}"
+            msg = f"MaxElem() requires iterable, got {type(operand).__name__}"
             raise TypeError(msg)
         try:
             return max(operand)
@@ -79,7 +79,7 @@ class Max(ScalarQuery):
             return INVALID
 
 
-class Any(ScalarQuery):
+class AnyElem(ScalarQuery):
     """Any truthy element."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
@@ -90,12 +90,12 @@ class Any(ScalarQuery):
     def _apply(self, ctx: object, ops: list[object]) -> bool:
         operand = ops[0]
         if not isinstance(operand, Iterable):
-            msg = f"any_() requires iterable, got {type(operand).__name__}"
+            msg = f"AnyElem() requires iterable, got {type(operand).__name__}"
             raise TypeError(msg)
         return any(operand)
 
 
-class All(ScalarQuery):
+class AllElem(ScalarQuery):
     """All truthy elements."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
@@ -106,6 +106,6 @@ class All(ScalarQuery):
     def _apply(self, ctx: object, ops: list[object]) -> bool:
         operand = ops[0]
         if not isinstance(operand, Iterable):
-            msg = f"all_() requires iterable, got {type(operand).__name__}"
+            msg = f"AllElem() requires iterable, got {type(operand).__name__}"
             raise TypeError(msg)
         return all(operand)
