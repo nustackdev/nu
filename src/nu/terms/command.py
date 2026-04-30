@@ -12,7 +12,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .nu import NuBase, register_subclass_validator
+from .interaction import Interaction
+from .nu import register_subclass_validator
 from .types import Effect
 
 
@@ -22,7 +23,7 @@ __all__ = [
 ]
 
 
-class Command(NuBase):
+class Command(Interaction):
     """Abstract Command base. ≥1 slot in `own_effects` carries WRITE."""
 
 

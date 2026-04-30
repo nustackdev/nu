@@ -17,7 +17,8 @@ from __future__ import annotations
 from typing import Any, ClassVar
 
 from .effects import own_tracked_effects
-from .nu import NuBase, register_subclass_validator
+from .interaction import Interaction
+from .nu import register_subclass_validator
 from .sentinels import INVALID, is_sentinel
 from .types import Effect, Realization
 
@@ -35,7 +36,7 @@ __all__ = [
 ]
 
 
-class Query(NuBase):
+class Query(Interaction):
     """Abstract Query base. Subtree effects ⊆ {RESOLVE, READ}."""
 
 

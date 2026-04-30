@@ -1,21 +1,24 @@
-"""Span - transparent execution span around a body.
+"""Span - transparent Interaction sub-kind.
 
-Role and realization inherited from `body_slot`. Bracket: lifecycle
-hooks (`before` / `after` / `after_failure`). Policy: re-run / fall
-back on failure.
+Wraps a body and forwards the body's yield in the same shape and
+protocol. The Span atom is always a Span; parents slot-fit it by
+looking through to the body. Sub-shapes: Bracket (lifecycle hooks
+`before` / `after` / `after_failure`), Policy (re-run / fall back on
+failure).
 
 `body_slot` is a single int (deliberately distinct from
 `Flow.Control.body_slots`, a tuple - two different concepts).
 
 Span exposes the four-method API by delegating to its body and layering
-Bracket / Policy hooks around the body's call. The body's role decides
-which method is non-trivial; the others delegate naively.
+Bracket / Policy hooks around the body's call. The body's yield-shape
+decides which method is non-trivial; the others delegate naively.
 """
 
 from __future__ import annotations
 
 from typing import Any, ClassVar
 
+from .interaction import Interaction
 from .nu import NuBase, register_subclass_validator
 from .types import Realization
 
@@ -31,18 +34,20 @@ __all__ = [
 ]
 
 
-class Span(NuBase):
+class Span(Interaction):
     """Abstract Span base. Concrete subclasses declare `body_slot`.
 
-    Span is transparent: its role and realization are inherited from the
-    body. The four-method API delegates to the body and layers Bracket
-    or Policy hooks around it. Concrete Bracket / Policy subclasses
-    override the `before` / `after` / `after_failure` / `around` hooks.
+    Span is transparent: it wraps any Nu (Ref, Query, Command, Flow, or
+    another Span) and forwards the body's yield in the same shape and
+    protocol. The four-method API delegates to the body and layers
+    Bracket or Policy hooks around it. Concrete Bracket / Policy
+    subclasses override the `before` / `after` / `after_failure` /
+    `around` hooks.
     """
 
     @property
     def realization(self) -> Realization:
-        """Span realization recurses into the body."""
+        """Yield-shape forwarded from the body."""
         body = self._children[type(self).body_slot]  # type: ignore[attr-defined]
         body_real = getattr(type(body), "realization", None)
         if isinstance(body_real, Realization):

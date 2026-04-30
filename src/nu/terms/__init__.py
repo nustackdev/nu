@@ -25,6 +25,7 @@ from .flow import (
     Strategy,
     WhileDo,
 )
+from .interaction import Interaction
 from .nu import NuBase, walk
 from .protocol import Nu
 from .query import Collect, First, Last, Literal, Query, Reduce, Reduction, ScalarQuery, StreamQuery
@@ -66,16 +67,17 @@ __all__ = [
     "Effect",
     "Empty",
     "ExecState",
+    "First",
     "FloatArg",
     "Flow",
     "ForEachDo",
-    "First",
     "FrozenSetArg",
     "FuncCall",
     "FuncCallCmd",
     "Gather",
     "IfDo",
     "IntArg",
+    "Interaction",
     "Interface",
     "Invalid",
     "Invocation",
