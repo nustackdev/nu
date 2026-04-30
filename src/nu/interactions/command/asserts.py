@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from nu.terms.nu import NuBase as Nu
 
-from nu.terms.flow import IfDo
+from nu.flows.control import IfDo
 
 
 __all__ = [

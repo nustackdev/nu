@@ -94,7 +94,7 @@ class MutableItemI[T, InterfaceT](ItemI[T, InterfaceT]):
 
     def init(self, default: T | Sentinel | Nu[T | Sentinel]) -> Nu:
         """Store default if value is missing. No-op if already set."""
-        from nu.terms.flow import IfDo
+        from nu.flows.control import IfDo
 
         return IfDo(self.missing(), self.store(default))
 

@@ -1,37 +1,28 @@
 """Nu terms - public surface.
 
-Re-exports the new-core types from `protocol`, `nu`, `ref`, `query`,
-`command`, `flow`, `span`, `effects`, `sentinels`, `types`. Plus
-`Interface` and `TypedNu` from `nu.interface`, and the python bridge
-(`Invoke`, `Invocation`, `FuncCall`, `MethodCall`) from `nu.invocation`.
+Re-exports the abstract bases from `protocol`, `nu`, `interaction`,
+`ref`, `query`, `command`, `flow`, `span`, `effects`, `sentinels`,
+`types`. Plus `Interface` and `TypedNu` from `nu.interface`, and the
+python bridge (`Invoke`, `Invocation`, `FuncCall`, `MethodCall`) from
+`nu.invocation`.
 
-`Nu` resolves to the protocol type for type hints. `NuBase` is the
-algebraic primitive every kind class subclasses.
+Concrete Query/Flow/Span atoms live in `nu.queries`, `nu.flows`,
+`nu.spans`. `Nu` resolves to the protocol type for type hints; `NuBase`
+is the algebraic primitive every kind class subclasses.
 """
 
 from ..interface import Interface, TypedNu
 from ..invocation import FuncCall, FuncCallCmd, Invocation, Invoke, MethodCall, MethodCallCmd
 from .command import Command, ScalarCommand
 from .effects import TrackedEffect, is_pure, tracked_effects
-from .flow import (
-    Control,
-    Flow,
-    ForEachDo,
-    Gather,
-    IfDo,
-    Parallel,
-    Race,
-    Sequential,
-    Strategy,
-    WhileDo,
-)
+from .flow import Control, Flow, Strategy
 from .interaction import Interaction
 from .nu import NuBase, walk
 from .protocol import Nu
-from .query import Collect, First, Last, Literal, Query, Reduce, Reduction, ScalarQuery, StreamQuery
+from .query import Query, Reduction, ScalarQuery, StreamQuery
 from .ref import Ref
 from .sentinels import EMPTY, INVALID, Empty, Invalid, Sentinel, is_empty, is_invalid, is_sentinel
-from .span import Bracket, Policy, Retry, Snapshot, Span, Transaction, TryCatch
+from .span import Bracket, Policy, Span
 from .types import (
     Arg,
     BoolArg,
@@ -60,63 +51,47 @@ __all__ = [
     "BoolArg",
     "Bracket",
     "BytesArg",
-    "Collect",
     "Command",
     "Control",
     "DictArg",
     "Effect",
     "Empty",
     "ExecState",
-    "First",
     "FloatArg",
     "Flow",
-    "ForEachDo",
     "FrozenSetArg",
     "FuncCall",
     "FuncCallCmd",
-    "Gather",
-    "IfDo",
     "IntArg",
     "Interaction",
     "Interface",
     "Invalid",
     "Invocation",
     "Invoke",
-    "Last",
     "ListArg",
-    "Literal",
     "MethodCall",
     "MethodCallCmd",
     "Mode",
     "NoneArg",
     "Nu",
     "NuBase",
-    "Parallel",
     "Policy",
     "Query",
-    "Race",
     "Realization",
-    "Reduce",
     "Reduction",
     "Ref",
-    "Retry",
     "ScalarCommand",
     "ScalarQuery",
     "Sentinel",
-    "Sequential",
     "SetArg",
-    "Snapshot",
     "Span",
     "StrArg",
     "Strategy",
     "StreamQuery",
     "T_co",
     "TrackedEffect",
-    "Transaction",
-    "TryCatch",
     "TupleArg",
     "TypedNu",
-    "WhileDo",
     "is_empty",
     "is_invalid",
     "is_pure",

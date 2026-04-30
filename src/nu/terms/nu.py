@@ -87,7 +87,7 @@ class NuBase:
             if isinstance(c, NuBase):
                 wrapped.append(c)
             else:
-                from .query import Literal
+                from ..queries.literal import Literal
 
                 wrapped.append(Literal(c))
         self._children = tuple(wrapped)  # type: ignore[assignment]
@@ -104,17 +104,17 @@ class NuBase:
         return new
 
     def __rshift__(self, other: Nu) -> Nu:
-        from .flow import Sequential
+        from ..flows.strategy import Sequential
 
         return Sequential(self, other)  # type: ignore[arg-type]
 
     def __or__(self, other: Nu) -> Nu:
-        from .flow import Parallel
+        from ..flows.strategy import Parallel
 
         return Parallel(self, other)  # type: ignore[arg-type]
 
     def __and__(self, other: Nu) -> Nu:
-        from .flow import Race
+        from ..flows.strategy import Race
 
         return Race(self, other)  # type: ignore[arg-type]
 

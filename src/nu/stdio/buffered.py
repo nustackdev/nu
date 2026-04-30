@@ -12,7 +12,7 @@ from __future__ import annotations
 from io import StringIO
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms.flow import Sequential
+from nu.flows.strategy import Sequential
 from nu.terms.span import Bracket
 from nu.terms.types import Mode
 

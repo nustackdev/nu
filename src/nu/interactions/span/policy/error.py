@@ -10,8 +10,8 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms.span import Retry as _CoreRetry
-from nu.terms.span import TryCatch as _CoreTryCatch
+from nu.spans.policy import Retry as _CoreRetry
+from nu.spans.policy import TryCatch as _CoreTryCatch
 from nu.terms.types import Mode
 
 

@@ -38,7 +38,7 @@ from functools import reduce
 from typing import TYPE_CHECKING
 
 from nu.terms.nu import NuBase as Nu
-from nu.terms.query import Literal
+from nu.queries.literal import Literal
 
 
 if TYPE_CHECKING:

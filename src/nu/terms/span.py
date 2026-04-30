@@ -12,6 +12,9 @@ failure).
 Span exposes the four-method API by delegating to its body and layering
 Bracket / Policy hooks around the body's call. The body's yield-shape
 decides which method is non-trivial; the others delegate naively.
+
+Concrete Spans (Snapshot, Transaction, Retry, TryCatch) live in
+`nu.spans`.
 """
 
 from __future__ import annotations
@@ -26,11 +29,7 @@ from .types import Realization
 __all__ = [
     "Bracket",
     "Policy",
-    "Retry",
-    "Snapshot",
     "Span",
-    "Transaction",
-    "TryCatch",
 ]
 
 
@@ -166,28 +165,6 @@ class Bracket(Span):
         self.after(scoped)
 
 
-class Snapshot(Bracket):
-    """Snapshot the body's reads. No commit on success.
-
-    Lightweight Bracket - in this simple shape the hooks are no-ops at
-    the term level; concrete fabric-aware Snapshots subclass and
-    override.
-    """
-
-    body_slot: ClassVar[int] = 0
-
-
-class Transaction(Bracket):
-    """Atomic body execution: commit on success, rollback on failure.
-
-    Simple shape: `before` opens a transaction, `after` commits,
-    `after_failure` rolls back. Concrete fabric-aware Transactions
-    subclass and override these to talk to the actual store.
-    """
-
-    body_slot: ClassVar[int] = 0
-
-
 # --- Policy ------------------------------------------------------------------
 
 
@@ -235,95 +212,6 @@ class Policy(Span):
 
         for v in await self.aaround(ctx, _drain):
             yield v
-
-
-class Retry(Policy):
-    """`Retry(body, attempts_q)` - re-run body on failure up to N times.
-
-    Simple shape: catch any exception, re-run up to `attempts` times
-    total. Feature-rich variants (per-attempt callbacks, exponential
-    backoff, exception filters) subclass `Retry` and override hooks.
-
-    `attempts` is read from the second child slot if present (a Query
-    yielding an int), else defaults to 3.
-    """
-
-    body_slot: ClassVar[int] = 0
-
-    def _attempts(self, ctx: Any) -> int:  # noqa: ANN401
-        if len(self._children) > 1:
-            attempts_node = self._children[1]
-            n = attempts_node.eval(ctx)
-            return int(n) if n is not None else 3
-        return 3
-
-    async def _aattempts(self, ctx: Any) -> int:  # noqa: ANN401
-        if len(self._children) > 1:
-            attempts_node = self._children[1]
-            n = await attempts_node.aeval(ctx)
-            return int(n) if n is not None else 3
-        return 3
-
-    def around(self, ctx: Any, call: Any) -> Any:  # noqa: ANN401, D102
-        n = self._attempts(ctx)
-        last_error: BaseException | None = None
-        for _ in range(max(1, n)):
-            try:
-                return call()
-            except Exception as e:
-                last_error = e
-        if last_error is not None:
-            raise last_error
-        msg = "Retry: attempts <= 0"
-        raise RuntimeError(msg)
-
-    async def aaround(self, ctx: Any, call: Any) -> Any:  # noqa: ANN401, D102
-        n = await self._aattempts(ctx)
-        last_error: BaseException | None = None
-        for _ in range(max(1, n)):
-            try:
-                return await call()
-            except Exception as e:
-                last_error = e
-        if last_error is not None:
-            raise last_error
-        msg = "Retry: attempts <= 0"
-        raise RuntimeError(msg)
-
-
-class TryCatch(Policy):
-    """`TryCatch(body, fallback_body)` - run body; on failure run fallback.
-
-    Simple shape: catches any exception from the body and runs the
-    fallback once. Feature-rich variants (typed exception filters,
-    exception-bound rebinding) subclass.
-    """
-
-    body_slot: ClassVar[int] = 0
-
-    def around(self, ctx: Any, call: Any) -> Any:  # noqa: ANN401, D102
-        try:
-            return call()
-        except Exception:
-            if len(self._children) > 1:
-                fb = self._children[1]
-                # Run fallback in scalar/command position - use eval if it
-                # yields a value, run if it's a Command.
-                fn = getattr(fb, "eval", None) or getattr(fb, "run", None)
-                if fn is not None:
-                    return fn(ctx)
-            raise
-
-    async def aaround(self, ctx: Any, call: Any) -> Any:  # noqa: ANN401, D102
-        try:
-            return await call()
-        except Exception:
-            if len(self._children) > 1:
-                fb = self._children[1]
-                fn = getattr(fb, "aeval", None) or getattr(fb, "arun", None)
-                if fn is not None:
-                    return await fn(ctx)
-            raise
 
 
 # --- subclass validator ------------------------------------------------------

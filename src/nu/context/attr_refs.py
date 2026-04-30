@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu.collections import DictI, FrozenSetI, ListI, SetI, TupleI
 from nu.primitives import AnyI, BoolI, BytesI, FloatI, IntI, StrI
-from nu.terms.query import Literal
+from nu.queries.literal import Literal
 from nu.terms.ref import Ref
 from nu.terms.sentinels import EMPTY
 from nu.terms.types import Mode

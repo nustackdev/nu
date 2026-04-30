@@ -43,43 +43,36 @@ from .context import (
     StrAttrRef,
     TupleAttrRef,
 )
+from .flows import ForEachDo, IfDo, Parallel, Race
+from .queries import Collect, First, Last, Literal, Reduce
 from .terms import (
     EMPTY,
     INVALID,
     Arg,
     BoolArg,
     BytesArg,
-    Collect,
     Command,
     DictArg,
     Effect,
     Empty,
-    First,
     FloatArg,
     Flow,
-    ForEachDo,
     FrozenSetArg,
     FuncCall,
     FuncCallCmd,
-    IfDo,
     IntArg,
     Interaction,
     Interface,
     Invalid,
-    Last,
     ListArg,
-    Literal,
     MethodCall,
     MethodCallCmd,
     Mode,
     NoneArg,
     Nu,
     NuBase,
-    Parallel,
     Query,
-    Race,
     Realization,
-    Reduce,
     Ref,
     ScalarCommand,
     ScalarQuery,
@@ -248,7 +241,21 @@ from .stdio import (
 )
 
 # explicit submodule re-exports
-from . import collections, context, interactions, primitives, shapes, stdio, terms, tree  # noqa: E402, F401
+from . import (  # noqa: E402, F401
+    collections,
+    commands,
+    context,
+    flows,
+    forms,
+    interactions,
+    primitives,
+    queries,
+    shapes,
+    spans,
+    stdio,
+    terms,
+    tree,
+)
 
 
 __all__ = [
