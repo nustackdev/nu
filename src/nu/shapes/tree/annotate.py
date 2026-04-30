@@ -34,7 +34,7 @@ def annotate_ref_loads(root: Nu) -> Nu:
 
     This is idempotent - already-wrapped refs are not double-wrapped.
     """
-    from nu.shapes.collections import ItemI
+    from nu.shapes.collections import ItemForm
     from nu.shapes.ops import CollectionLoadOp, ItemLoadOp
     from nu.shapes.refs import Ref as ShapeRef
 
@@ -57,7 +57,7 @@ def annotate_ref_loads(root: Nu) -> Nu:
                 continue
 
             if isinstance(child, ShapeRef) and not isinstance(child, load_op_types):
-                if isinstance(child, ItemI):
+                if isinstance(child, ItemForm):
                     new_children.append(ItemLoadOp(child))
                 else:
                     new_children.append(CollectionLoadOp(child))

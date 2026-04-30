@@ -8,12 +8,12 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Interface, Mode, TypedNu
+from nu.terms import Form, Mode, TypedNu
 
 
 if TYPE_CHECKING:
     from nu import Arg, Nu
-    from nu.primitives import BoolI, IntI
+    from nu.forms.primitives import BoolForm, IntForm
 
 __all__ = [
     "DecimalArg",
@@ -23,7 +23,7 @@ __all__ = [
 type DecimalArg = Arg[Decimal]
 
 
-class _DecimalI(Interface):
+class _DecimalI(Form):
     """Mixin for Decimal operations.
 
     Provides arbitrary precision decimal arithmetic for financial
@@ -211,90 +211,90 @@ class _DecimalI(Interface):
     # INSPECTION
     # =========================================================================
 
-    def is_finite(self) -> BoolI:
+    def is_finite(self) -> BoolForm:
         """Check if value is finite."""
         from nu import MethodCall
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(MethodCall(self, "is_finite"))
+        return BoolForm(MethodCall(self, "is_finite"))
 
-    def is_infinite(self) -> BoolI:
+    def is_infinite(self) -> BoolForm:
         """Check if value is infinite."""
         from nu import MethodCall
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(MethodCall(self, "is_infinite"))
+        return BoolForm(MethodCall(self, "is_infinite"))
 
-    def is_signed(self) -> BoolI:
+    def is_signed(self) -> BoolForm:
         """Check if value is negative."""
         from nu import MethodCall
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(MethodCall(self, "is_signed"))
+        return BoolForm(MethodCall(self, "is_signed"))
 
-    def is_zero(self) -> BoolI:
+    def is_zero(self) -> BoolForm:
         """Check if value is zero."""
         from nu import MethodCall
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(MethodCall(self, "is_zero"))
+        return BoolForm(MethodCall(self, "is_zero"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def to_int(self) -> IntI:
+    def to_int(self) -> IntForm:
         """Convert to integer (truncating decimal)."""
         from nu import FuncCall
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
 
-        return IntI(FuncCall(int, self))
+        return IntForm(FuncCall(int, self))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: DecimalArg) -> BoolI:
+    def __gt__(self, other: DecimalArg) -> BoolForm:
         """Greater than."""
         from nu import Gt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Gt(self, other))
+        return BoolForm(Gt(self, other))
 
-    def __lt__(self, other: DecimalArg) -> BoolI:
+    def __lt__(self, other: DecimalArg) -> BoolForm:
         """Less than."""
         from nu import Lt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Lt(self, other))
+        return BoolForm(Lt(self, other))
 
-    def __ge__(self, other: DecimalArg) -> BoolI:
+    def __ge__(self, other: DecimalArg) -> BoolForm:
         """Greater than or equal."""
         from nu import Ge
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ge(self, other))
+        return BoolForm(Ge(self, other))
 
-    def __le__(self, other: DecimalArg) -> BoolI:
+    def __le__(self, other: DecimalArg) -> BoolForm:
         """Less than or equal."""
         from nu import Le
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Le(self, other))
+        return BoolForm(Le(self, other))
 
-    def eq(self, other: DecimalArg) -> BoolI:
+    def eq(self, other: DecimalArg) -> BoolForm:
         """Equal."""
         from nu import Eq
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Eq(self, other))
+        return BoolForm(Eq(self, other))
 
-    def ne(self, other: DecimalArg) -> BoolI:
+    def ne(self, other: DecimalArg) -> BoolForm:
         """Not equal."""
         from nu import Ne
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ne(self, other))
+        return BoolForm(Ne(self, other))
 
 
 class DecimalI(_DecimalI, TypedNu[Decimal]):

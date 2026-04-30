@@ -5,7 +5,7 @@ from nu import runtime
 
 
 # --- typed expression: arithmetic flows into a Command ---
-runtime.execute(nu.Print(nu.IntI(5) + 10))
+runtime.execute(nu.Print(nu.IntForm(5) + 10))
 
 
 # # --- sequential composition: Commands run in order ---

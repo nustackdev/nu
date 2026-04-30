@@ -1,8 +1,8 @@
 """Primitive interfaces and ops."""
 
-from .any_ import AnyI
-from .bool_ import BoolI
-from .bytes_ import BytesI
+from .any_ import AnyForm
+from .bool_ import BoolForm
+from .bytes_ import BytesForm
 from .bytes_ops import (
     BytesCountOp,
     BytesEndsWithOp,
@@ -18,11 +18,11 @@ from .bytes_ops import (
     DecodeOp,
     HexOp,
 )
-from .float_ import FloatI
-from .int_ import IntI
-from .none_ import NoneI
-from .sentinel_ import EmptyI, InvalidI, SentinelI
-from .str_ import StrI
+from .float_ import FloatForm
+from .int_ import IntForm
+from .none_ import NoneForm
+from .sentinel_ import EmptyForm, InvalidForm, SentinelForm
+from .str_ import StrForm
 from .str_ops import (
     CapitalizeOp,
     CenterOp,
@@ -54,12 +54,12 @@ from .str_ops import (
 
 
 __all__ = [
-    "AnyI",
-    "BoolI",
+    "AnyForm",
+    "BoolForm",
     "BytesCountOp",
     "BytesEndsWithOp",
     "BytesFindOp",
-    "BytesI",
+    "BytesForm",
     "BytesLStripOp",
     "BytesLowerOp",
     "BytesRStripOp",
@@ -72,14 +72,14 @@ __all__ = [
     "CenterOp",
     "CountSubstringOp",
     "DecodeOp",
-    "EmptyI",
+    "EmptyForm",
     "EncodeOp",
     "EndsWithOp",
     "FindOp",
-    "FloatI",
+    "FloatForm",
     "HexOp",
-    "IntI",
-    "InvalidI",
+    "IntForm",
+    "InvalidForm",
     "IsAlnumOp",
     "IsAlphaOp",
     "IsDigitOp",
@@ -88,16 +88,16 @@ __all__ = [
     "LJustOp",
     "LStripOp",
     "LowerOp",
-    "NoneI",
+    "NoneForm",
     "RFindOp",
     "RJustOp",
     "RSplitOp",
     "RStripOp",
     "ReplaceOp",
-    "SentinelI",
+    "SentinelForm",
     "SplitOp",
     "StartsWithOp",
-    "StrI",
+    "StrForm",
     "StripOp",
     "SwapCaseOp",
     "TitleOp",

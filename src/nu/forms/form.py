@@ -1,40 +1,40 @@
-"""Interface and TypedNu - the type-wrapping layer.
+"""Form and TypedNu - the type-wrapping layer.
 
-`Interface` is an ABC that contributes shared methods (sentinel checks)
-to typed interfaces. ABCs like MappingI, ContainerI, SizedI inherit
-Interface to get these methods.
+`Form` is an ABC that contributes shared methods (sentinel checks)
+to typed interfaces. ABCs like MappingForm, ContainerForm, SizedForm inherit
+Form to get these methods.
 
 `TypedNu[T]` is a transparent ScalarQuery wrapper: it wraps a Nu child
 (or literal) and passes the child's value through. Leaf interfaces like
-IntI, DictI, StrI inherit both Interface and TypedNu so they can
+IntForm, DictForm, StrForm inherit both Form and TypedNu so they can
 participate as Nu tree nodes:
 
-    IntI(Add(a, b)) + 1  ->  Add(IntI(Add(a, b)), Literal(1))
+    IntForm(Add(a, b)) + 1  ->  Add(IntForm(Add(a, b)), Literal(1))
 
 Hierarchy:
-    Interface                       abstract base (sentinel checks)
-        ContainerI, SizedI, ...     zero-level ABCs
-        MappingI, SequenceI, ...    higher ABCs
+    Form                       abstract base (sentinel checks)
+        ContainerForm, SizedForm, ...     zero-level ABCs
+        MappingForm, SequenceForm, ...    higher ABCs
 
     TypedNu[T]                      ScalarQuery passthrough
-    IntI(Interface, TypedNu[int])   primitive leaf
-    DictI(MutableMappingI, TypedNu[dict])  collection leaf
+    IntForm(Form, TypedNu[int])   primitive leaf
+    DictForm(MutableMappingForm, TypedNu[dict])  collection leaf
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, Generic
 
-from .terms.query import ScalarQuery
-from .terms.types import Mode, T_co
+from ..terms.query import ScalarQuery
+from ..terms.types import Mode, T_co
 
 
 if TYPE_CHECKING:
-    from .primitives import BoolI
+    from .primitives import BoolForm
 
 
 __all__ = [
-    "Interface",
+    "Form",
     "TypedNu",
 ]
 
@@ -42,28 +42,28 @@ __all__ = [
 _BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
 
-class Interface:
+class Form:
     """ABC for typed interfaces. Contributes sentinel-check helpers."""
 
-    def is_empty(self) -> BoolI:
+    def is_empty(self) -> BoolForm:
         from nu import IsEmpty
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(IsEmpty(self))
+        return BoolForm(IsEmpty(self))
 
-    def is_invalid(self) -> BoolI:
+    def is_invalid(self) -> BoolForm:
         from nu import IsInvalid
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(IsInvalid(self))
+        return BoolForm(IsInvalid(self))
 
-    def is_sentinel(self) -> BoolI:
+    def is_sentinel(self) -> BoolForm:
         return self.is_empty().or_(self.is_invalid())
 
-    def not_empty(self) -> BoolI:
+    def not_empty(self) -> BoolForm:
         return self.is_empty().not_()
 
-    def not_invalid(self) -> BoolI:
+    def not_invalid(self) -> BoolForm:
         return self.is_invalid().not_()
 
 

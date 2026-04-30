@@ -1,7 +1,7 @@
 """Datetime types - timezone, timedelta, date, time, datetime.
 
 All datetime types converted to the Interface/TypedNu pattern.
-Each type has a private _*I(Interface) mixin and a public *I leaf.
+Each type has a private _*I(Form) mixin and a public *I leaf.
 """
 
 from __future__ import annotations
@@ -9,11 +9,11 @@ from __future__ import annotations
 from datetime import UTC, date, datetime, time, timedelta, timezone
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Arg, Interface, Mode, TypedNu
+from nu.terms import Arg, Form, Mode, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu.primitives import BoolI, FloatI, IntI, NoneI, StrI
+    from nu.forms.primitives import BoolForm, FloatForm, IntForm, NoneForm, StrForm
     from nu.terms import Nu
 
 
@@ -47,7 +47,7 @@ type TimezoneArg = Arg[timezone]
 # =============================================================================
 
 
-class _TimezoneI(Interface):
+class _TimezoneI(Form):
     """Timezone operations mixin. Equalable only (no ordering)."""
 
     # =========================================================================
@@ -93,9 +93,9 @@ class _TimezoneI(Interface):
     # METHODS
     # =========================================================================
 
-    def tzname(self, dt: DatetimeArg | None = None) -> StrI:
+    def tzname(self, dt: DatetimeArg | None = None) -> StrForm:
         """Get the timezone name."""
-        from nu.primitives import StrI
+        from nu.forms.primitives import StrForm
         from nu.terms import MethodCall
 
         if dt is None:
@@ -104,7 +104,7 @@ class _TimezoneI(Interface):
             dt_arg = DatetimeI(dt)
         else:
             dt_arg = dt
-        return StrI(MethodCall(self, "tzname", dt_arg))
+        return StrForm(MethodCall(self, "tzname", dt_arg))
 
     def utcoffset(self, dt: DatetimeArg | None = None) -> TimedeltaI:
         """Get the UTC offset as timedelta."""
@@ -118,29 +118,29 @@ class _TimezoneI(Interface):
             dt_arg = dt
         return TimedeltaI(MethodCall(self, "utcoffset", dt_arg))
 
-    def dst(self, dt: DatetimeArg | None = None) -> NoneI:
+    def dst(self, dt: DatetimeArg | None = None) -> NoneForm:
         """Get the daylight saving time offset (returns None for fixed-offset timezones)."""
-        from nu.primitives import NoneI
+        from nu.forms.primitives import NoneForm
 
-        return NoneI()
+        return NoneForm()
 
     # =========================================================================
     # COMPARISON (equalable only - no ordering)
     # =========================================================================
 
-    def eq(self, other: TimezoneArg) -> BoolI:
+    def eq(self, other: TimezoneArg) -> BoolForm:
         """Equality check."""
         from nu import Eq
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Eq(self, other))
+        return BoolForm(Eq(self, other))
 
-    def ne(self, other: TimezoneArg) -> BoolI:
+    def ne(self, other: TimezoneArg) -> BoolForm:
         """Inequality check."""
         from nu import Ne
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ne(self, other))
+        return BoolForm(Ne(self, other))
 
 
 class TimezoneI(_TimezoneI, TypedNu[timezone]):
@@ -154,7 +154,7 @@ class TimezoneI(_TimezoneI, TypedNu[timezone]):
 # =============================================================================
 
 
-class _TimedeltaI(Interface):
+class _TimedeltaI(Form):
     """Timedelta operations mixin. Comparable + arithmetic."""
 
     # =========================================================================
@@ -199,47 +199,47 @@ class _TimedeltaI(Interface):
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def days(self) -> IntI:
+    def days(self) -> IntForm:
         """Get the days component (normalized)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "days"))
+        return IntForm(FuncCall(getattr, self, "days"))
 
-    def seconds(self) -> IntI:
+    def seconds(self) -> IntForm:
         """Get the seconds component (0-86399)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "seconds"))
+        return IntForm(FuncCall(getattr, self, "seconds"))
 
-    def microseconds(self) -> IntI:
+    def microseconds(self) -> IntForm:
         """Get the microseconds component (0-999999)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "microseconds"))
+        return IntForm(FuncCall(getattr, self, "microseconds"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def total_seconds(self) -> FloatI:
+    def total_seconds(self) -> FloatForm:
         """Get total duration in seconds."""
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
         from nu.terms import MethodCall
 
-        return FloatI(MethodCall(self, "total_seconds"))
+        return FloatForm(MethodCall(self, "total_seconds"))
 
-    def total_minutes(self) -> FloatI:
+    def total_minutes(self) -> FloatForm:
         """Get total duration in minutes."""
         return self.total_seconds() / 60.0
 
-    def total_hours(self) -> FloatI:
+    def total_hours(self) -> FloatForm:
         """Get total duration in hours."""
         return self.total_seconds() / 3600.0
 
-    def total_days(self) -> FloatI:
+    def total_days(self) -> FloatForm:
         """Get total duration in days."""
         return self.total_seconds() / 86400.0
 
@@ -291,15 +291,15 @@ class _TimedeltaI(Interface):
 
         return TimedeltaI(Mul(factor, self))
 
-    def __truediv__(self, divisor: int | float | TimedeltaArg) -> TimedeltaI | FloatI:
+    def __truediv__(self, divisor: int | float | TimedeltaArg) -> TimedeltaI | FloatForm:
         """Divide timedelta."""
         from nu import Div
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
         if isinstance(divisor, timedelta):
             divisor = TimedeltaI(divisor)
         if isinstance(divisor, _TimedeltaI):
-            return FloatI(Div(self, divisor))
+            return FloatForm(Div(self, divisor))
         return TimedeltaI(Div(self, divisor))
 
     def __floordiv__(self, divisor: int | Nu[int]) -> TimedeltaI:
@@ -336,41 +336,41 @@ class _TimedeltaI(Interface):
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: TimedeltaArg) -> BoolI:
+    def __gt__(self, other: TimedeltaArg) -> BoolForm:
         from nu import Gt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Gt(self, other))
+        return BoolForm(Gt(self, other))
 
-    def __lt__(self, other: TimedeltaArg) -> BoolI:
+    def __lt__(self, other: TimedeltaArg) -> BoolForm:
         from nu import Lt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Lt(self, other))
+        return BoolForm(Lt(self, other))
 
-    def __ge__(self, other: TimedeltaArg) -> BoolI:
+    def __ge__(self, other: TimedeltaArg) -> BoolForm:
         from nu import Ge
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ge(self, other))
+        return BoolForm(Ge(self, other))
 
-    def __le__(self, other: TimedeltaArg) -> BoolI:
+    def __le__(self, other: TimedeltaArg) -> BoolForm:
         from nu import Le
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Le(self, other))
+        return BoolForm(Le(self, other))
 
-    def eq(self, other: TimedeltaArg) -> BoolI:
+    def eq(self, other: TimedeltaArg) -> BoolForm:
         from nu import Eq
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Eq(self, other))
+        return BoolForm(Eq(self, other))
 
-    def ne(self, other: TimedeltaArg) -> BoolI:
+    def ne(self, other: TimedeltaArg) -> BoolForm:
         from nu import Ne
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ne(self, other))
+        return BoolForm(Ne(self, other))
 
 
 class TimedeltaI(_TimedeltaI, TypedNu[timedelta]):
@@ -384,7 +384,7 @@ class TimedeltaI(_TimedeltaI, TypedNu[timedelta]):
 # =============================================================================
 
 
-class _DateI(Interface):
+class _DateI(Form):
     """Date operations mixin. Comparable + date-specific methods."""
 
     # =========================================================================
@@ -430,72 +430,72 @@ class _DateI(Interface):
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def year(self) -> IntI:
+    def year(self) -> IntForm:
         """Get the year component."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "year"))
+        return IntForm(FuncCall(getattr, self, "year"))
 
-    def month(self) -> IntI:
+    def month(self) -> IntForm:
         """Get the month component (1-12)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "month"))
+        return IntForm(FuncCall(getattr, self, "month"))
 
-    def day(self) -> IntI:
+    def day(self) -> IntForm:
         """Get the day component (1-31)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "day"))
+        return IntForm(FuncCall(getattr, self, "day"))
 
-    def weekday(self) -> IntI:
+    def weekday(self) -> IntForm:
         """Get the day of week (Monday=0, Sunday=6)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import MethodCall
 
-        return IntI(MethodCall(self, "weekday"))
+        return IntForm(MethodCall(self, "weekday"))
 
-    def isoweekday(self) -> IntI:
+    def isoweekday(self) -> IntForm:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import MethodCall
 
-        return IntI(MethodCall(self, "isoweekday"))
+        return IntForm(MethodCall(self, "isoweekday"))
 
-    def toordinal(self) -> IntI:
+    def toordinal(self) -> IntForm:
         """Get the Gregorian ordinal."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import MethodCall
 
-        return IntI(MethodCall(self, "toordinal"))
+        return IntForm(MethodCall(self, "toordinal"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def isoformat(self) -> StrI:
+    def isoformat(self) -> StrForm:
         """Convert to ISO 8601 format string (YYYY-MM-DD)."""
-        from nu.primitives import StrI
+        from nu.forms.primitives import StrForm
         from nu.terms import MethodCall
 
-        return StrI(MethodCall(self, "isoformat"))
+        return StrForm(MethodCall(self, "isoformat"))
 
-    def strftime(self, fmt: str | Nu[str]) -> StrI:
+    def strftime(self, fmt: str | Nu[str]) -> StrForm:
         """Format date as string."""
-        from nu.primitives import StrI
+        from nu.forms.primitives import StrForm
         from nu.terms import MethodCall
 
-        return StrI(MethodCall(self, "strftime", fmt))
+        return StrForm(MethodCall(self, "strftime", fmt))
 
-    def ctime(self) -> StrI:
+    def ctime(self) -> StrForm:
         """Return ctime-style string."""
-        from nu.primitives import StrI
+        from nu.forms.primitives import StrForm
         from nu.terms import MethodCall
 
-        return StrI(MethodCall(self, "ctime"))
+        return StrForm(MethodCall(self, "ctime"))
 
     # =========================================================================
     # MANIPULATION
@@ -547,41 +547,41 @@ class _DateI(Interface):
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: DateArg) -> BoolI:
+    def __gt__(self, other: DateArg) -> BoolForm:
         from nu import Gt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Gt(self, other))
+        return BoolForm(Gt(self, other))
 
-    def __lt__(self, other: DateArg) -> BoolI:
+    def __lt__(self, other: DateArg) -> BoolForm:
         from nu import Lt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Lt(self, other))
+        return BoolForm(Lt(self, other))
 
-    def __ge__(self, other: DateArg) -> BoolI:
+    def __ge__(self, other: DateArg) -> BoolForm:
         from nu import Ge
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ge(self, other))
+        return BoolForm(Ge(self, other))
 
-    def __le__(self, other: DateArg) -> BoolI:
+    def __le__(self, other: DateArg) -> BoolForm:
         from nu import Le
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Le(self, other))
+        return BoolForm(Le(self, other))
 
-    def eq(self, other: DateArg) -> BoolI:
+    def eq(self, other: DateArg) -> BoolForm:
         from nu import Eq
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Eq(self, other))
+        return BoolForm(Eq(self, other))
 
-    def ne(self, other: DateArg) -> BoolI:
+    def ne(self, other: DateArg) -> BoolForm:
         from nu import Ne
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ne(self, other))
+        return BoolForm(Ne(self, other))
 
 
 class DateI(_DateI, TypedNu[date]):
@@ -595,7 +595,7 @@ class DateI(_DateI, TypedNu[date]):
 # =============================================================================
 
 
-class _TimeI(Interface):
+class _TimeI(Form):
     """Time operations mixin. Comparable + time-specific methods."""
 
     # =========================================================================
@@ -643,51 +643,51 @@ class _TimeI(Interface):
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def hour(self) -> IntI:
+    def hour(self) -> IntForm:
         """Get the hour component (0-23)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "hour"))
+        return IntForm(FuncCall(getattr, self, "hour"))
 
-    def minute(self) -> IntI:
+    def minute(self) -> IntForm:
         """Get the minute component (0-59)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "minute"))
+        return IntForm(FuncCall(getattr, self, "minute"))
 
-    def second(self) -> IntI:
+    def second(self) -> IntForm:
         """Get the second component (0-59)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "second"))
+        return IntForm(FuncCall(getattr, self, "second"))
 
-    def microsecond(self) -> IntI:
+    def microsecond(self) -> IntForm:
         """Get the microsecond component (0-999999)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "microsecond"))
+        return IntForm(FuncCall(getattr, self, "microsecond"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def isoformat(self, timespec: str | Nu[str] = "auto") -> StrI:
+    def isoformat(self, timespec: str | Nu[str] = "auto") -> StrForm:
         """Convert to ISO 8601 format string."""
-        from nu.primitives import StrI
+        from nu.forms.primitives import StrForm
         from nu.terms import MethodCall
 
-        return StrI(MethodCall(self, "isoformat", timespec))
+        return StrForm(MethodCall(self, "isoformat", timespec))
 
-    def strftime(self, fmt: str | Nu[str]) -> StrI:
+    def strftime(self, fmt: str | Nu[str]) -> StrForm:
         """Format time as string."""
-        from nu.primitives import StrI
+        from nu.forms.primitives import StrForm
         from nu.terms import MethodCall
 
-        return StrI(MethodCall(self, "strftime", fmt))
+        return StrForm(MethodCall(self, "strftime", fmt))
 
     # =========================================================================
     # MANIPULATION
@@ -718,41 +718,41 @@ class _TimeI(Interface):
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: TimeArg) -> BoolI:
+    def __gt__(self, other: TimeArg) -> BoolForm:
         from nu import Gt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Gt(self, other))
+        return BoolForm(Gt(self, other))
 
-    def __lt__(self, other: TimeArg) -> BoolI:
+    def __lt__(self, other: TimeArg) -> BoolForm:
         from nu import Lt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Lt(self, other))
+        return BoolForm(Lt(self, other))
 
-    def __ge__(self, other: TimeArg) -> BoolI:
+    def __ge__(self, other: TimeArg) -> BoolForm:
         from nu import Ge
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ge(self, other))
+        return BoolForm(Ge(self, other))
 
-    def __le__(self, other: TimeArg) -> BoolI:
+    def __le__(self, other: TimeArg) -> BoolForm:
         from nu import Le
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Le(self, other))
+        return BoolForm(Le(self, other))
 
-    def eq(self, other: TimeArg) -> BoolI:
+    def eq(self, other: TimeArg) -> BoolForm:
         from nu import Eq
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Eq(self, other))
+        return BoolForm(Eq(self, other))
 
-    def ne(self, other: TimeArg) -> BoolI:
+    def ne(self, other: TimeArg) -> BoolForm:
         from nu import Ne
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ne(self, other))
+        return BoolForm(Ne(self, other))
 
 
 class TimeI(_TimeI, TypedNu[time]):
@@ -766,7 +766,7 @@ class TimeI(_TimeI, TypedNu[time]):
 # =============================================================================
 
 
-class _DatetimeI(Interface):
+class _DatetimeI(Form):
     """Datetime operations mixin. Comparable + datetime-specific methods."""
 
     # =========================================================================
@@ -820,86 +820,86 @@ class _DatetimeI(Interface):
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def year(self) -> IntI:
+    def year(self) -> IntForm:
         """Get the year component."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "year"))
+        return IntForm(FuncCall(getattr, self, "year"))
 
-    def month(self) -> IntI:
+    def month(self) -> IntForm:
         """Get the month component (1-12)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "month"))
+        return IntForm(FuncCall(getattr, self, "month"))
 
-    def day(self) -> IntI:
+    def day(self) -> IntForm:
         """Get the day component (1-31)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "day"))
+        return IntForm(FuncCall(getattr, self, "day"))
 
-    def hour(self) -> IntI:
+    def hour(self) -> IntForm:
         """Get the hour component (0-23)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "hour"))
+        return IntForm(FuncCall(getattr, self, "hour"))
 
-    def minute(self) -> IntI:
+    def minute(self) -> IntForm:
         """Get the minute component (0-59)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "minute"))
+        return IntForm(FuncCall(getattr, self, "minute"))
 
-    def second(self) -> IntI:
+    def second(self) -> IntForm:
         """Get the second component (0-59)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "second"))
+        return IntForm(FuncCall(getattr, self, "second"))
 
-    def microsecond(self) -> IntI:
+    def microsecond(self) -> IntForm:
         """Get the microsecond component (0-999999)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import FuncCall
 
-        return IntI(FuncCall(getattr, self, "microsecond"))
+        return IntForm(FuncCall(getattr, self, "microsecond"))
 
-    def weekday(self) -> IntI:
+    def weekday(self) -> IntForm:
         """Get the day of week (Monday=0, Sunday=6)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import MethodCall
 
-        return IntI(MethodCall(self, "weekday"))
+        return IntForm(MethodCall(self, "weekday"))
 
-    def isoweekday(self) -> IntI:
+    def isoweekday(self) -> IntForm:
         """Get the ISO day of week (Monday=1, Sunday=7)."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
         from nu.terms import MethodCall
 
-        return IntI(MethodCall(self, "isoweekday"))
+        return IntForm(MethodCall(self, "isoweekday"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def timestamp(self) -> FloatI:
+    def timestamp(self) -> FloatForm:
         """Convert to POSIX timestamp."""
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
         from nu.terms import MethodCall
 
-        return FloatI(MethodCall(self, "timestamp"))
+        return FloatForm(MethodCall(self, "timestamp"))
 
-    def isoformat(self, sep: str | Nu[str] = "T", timespec: str | Nu[str] = "auto") -> StrI:
+    def isoformat(self, sep: str | Nu[str] = "T", timespec: str | Nu[str] = "auto") -> StrForm:
         """Convert to ISO 8601 format string."""
-        from nu.primitives import StrI
+        from nu.forms.primitives import StrForm
         from nu.terms import MethodCall
 
-        return StrI(MethodCall(self, "isoformat", sep, timespec))
+        return StrForm(MethodCall(self, "isoformat", sep, timespec))
 
     def date(self) -> DateI:
         """Extract the date component."""
@@ -913,12 +913,12 @@ class _DatetimeI(Interface):
 
         return TimeI(MethodCall(self, "time"))
 
-    def strftime(self, fmt: str | Nu[str]) -> StrI:
+    def strftime(self, fmt: str | Nu[str]) -> StrForm:
         """Format datetime as string."""
-        from nu.primitives import StrI
+        from nu.forms.primitives import StrForm
         from nu.terms import MethodCall
 
-        return StrI(MethodCall(self, "strftime", fmt))
+        return StrForm(MethodCall(self, "strftime", fmt))
 
     # =========================================================================
     # MANIPULATION
@@ -982,41 +982,41 @@ class _DatetimeI(Interface):
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: DatetimeArg) -> BoolI:
+    def __gt__(self, other: DatetimeArg) -> BoolForm:
         from nu import Gt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Gt(self, other))
+        return BoolForm(Gt(self, other))
 
-    def __lt__(self, other: DatetimeArg) -> BoolI:
+    def __lt__(self, other: DatetimeArg) -> BoolForm:
         from nu import Lt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Lt(self, other))
+        return BoolForm(Lt(self, other))
 
-    def __ge__(self, other: DatetimeArg) -> BoolI:
+    def __ge__(self, other: DatetimeArg) -> BoolForm:
         from nu import Ge
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ge(self, other))
+        return BoolForm(Ge(self, other))
 
-    def __le__(self, other: DatetimeArg) -> BoolI:
+    def __le__(self, other: DatetimeArg) -> BoolForm:
         from nu import Le
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Le(self, other))
+        return BoolForm(Le(self, other))
 
-    def eq(self, other: DatetimeArg) -> BoolI:
+    def eq(self, other: DatetimeArg) -> BoolForm:
         from nu import Eq
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Eq(self, other))
+        return BoolForm(Eq(self, other))
 
-    def ne(self, other: DatetimeArg) -> BoolI:
+    def ne(self, other: DatetimeArg) -> BoolForm:
         from nu import Ne
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ne(self, other))
+        return BoolForm(Ne(self, other))
 
 
 class DatetimeI(_DatetimeI, TypedNu[datetime]):

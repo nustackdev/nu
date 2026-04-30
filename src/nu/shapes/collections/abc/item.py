@@ -2,13 +2,13 @@
 """Item base hierarchy - typed values in a document model.
 
 Three tiers:
-    ItemI          exists(), missing()
-    MutableItemI   + store(), erase()
-    ReactiveItemI  + on_change()
+    ItemForm          exists(), missing()
+    MutableItemForm   + store(), erase()
+    ReactiveItemForm  + on_change()
 
 Type Parameters:
     T:           Native Python type of the value (int, str, etc.)
-    InterfaceT:  Interface class for this item's type (IntI, StrI, etc.)
+    InterfaceT:  Form class for this item's type (IntForm, StrForm, etc.)
 
 Substrates extend these with their own storage mechanisms.
 """
@@ -17,8 +17,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.primitives import BoolI, NoneI
-from nu.terms import Interface
+from nu.forms.primitives import BoolForm, NoneForm
+from nu.terms import Form
 
 
 if TYPE_CHECKING:
@@ -27,13 +27,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "ItemI",
-    "MutableItemI",
-    "ReactiveItemI",
+    "ItemForm",
+    "MutableItemForm",
+    "ReactiveItemForm",
 ]
 
 
-class ItemI[T, InterfaceT](Interface):
+class ItemForm[T, InterfaceT](Form):
     """Item in a document - holds a typed value.
 
     An item is the leaf node of the document model: a single typed value
@@ -58,27 +58,27 @@ class ItemI[T, InterfaceT](Interface):
 
     @property
     def interface_cls(self) -> type[InterfaceT]:
-        """The Interface class for this item's type."""
+        """The Form class for this item's type."""
         return self._value_value_type
 
-    def exists(self) -> BoolI:
+    def exists(self) -> BoolForm:
         from nu.shapes.ops import ItemExistsOp
 
-        return BoolI(ItemExistsOp(self))
+        return BoolForm(ItemExistsOp(self))
 
-    def missing(self) -> BoolI:
+    def missing(self) -> BoolForm:
         from nu.shapes.ops import ItemMissingOp
 
-        return BoolI(ItemMissingOp(self))
+        return BoolForm(ItemMissingOp(self))
 
 
-class MutableItemI[T, InterfaceT](ItemI[T, InterfaceT]):
+class MutableItemForm[T, InterfaceT](ItemForm[T, InterfaceT]):
     """Item with mutable capabilities.
 
     Provides:
         immutable capabilities +
-        store(value) -> NoneI
-        erase() -> NoneI
+        store(value) -> NoneForm
+        erase() -> NoneForm
         init(default) -> Nu  (store if missing)
     """
 
@@ -99,7 +99,7 @@ class MutableItemI[T, InterfaceT](ItemI[T, InterfaceT]):
         return IfDo(self.missing(), self.store(default))
 
 
-class ReactiveItemI[T, InterfaceT](MutableItemI[T, InterfaceT]):
+class ReactiveItemForm[T, InterfaceT](MutableItemForm[T, InterfaceT]):
     """Reactive item - CRUD + change observation."""
 
     def on_change(self) -> OnChildChangeOp:

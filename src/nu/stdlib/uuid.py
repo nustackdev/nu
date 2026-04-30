@@ -9,12 +9,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 from uuid import UUID, uuid1, uuid3, uuid4, uuid5
 
-from nu.terms import Interface, Mode, TypedNu
+from nu.terms import Form, Mode, TypedNu
 
 
 if TYPE_CHECKING:
     from nu import Arg, Nu
-    from nu.primitives import BoolI, BytesI, IntI, StrI
+    from nu.forms.primitives import BoolForm, BytesForm, IntForm, StrForm
 
 
 __all__ = ["UUIDI", "UUIDArg"]
@@ -23,7 +23,7 @@ __all__ = ["UUIDI", "UUIDArg"]
 type UUIDArg = Arg[UUID]
 
 
-class _UUIDI(Interface):
+class _UUIDI(Form):
     """UUID operations mixin - constructors, accessors, conversions, comparison."""
 
     # =========================================================================
@@ -95,103 +95,103 @@ class _UUIDI(Interface):
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def version(self) -> IntI:
+    def version(self) -> IntForm:
         """Get the UUID version number (1, 3, 4, or 5)."""
-        from nu import FuncCall, IntI
+        from nu import FuncCall, IntForm
 
-        return IntI(FuncCall(getattr, self, "version"))
+        return IntForm(FuncCall(getattr, self, "version"))
 
-    def variant(self) -> StrI:
+    def variant(self) -> StrForm:
         """Get the UUID variant."""
-        from nu import FuncCall, StrI
+        from nu import FuncCall, StrForm
 
-        return StrI(FuncCall(getattr, self, "variant"))
+        return StrForm(FuncCall(getattr, self, "variant"))
 
-    def time(self) -> IntI:
+    def time(self) -> IntForm:
         """Get the 60-bit timestamp (for UUID version 1)."""
-        from nu import FuncCall, IntI
+        from nu import FuncCall, IntForm
 
-        return IntI(FuncCall(getattr, self, "time"))
+        return IntForm(FuncCall(getattr, self, "time"))
 
-    def clock_seq(self) -> IntI:
+    def clock_seq(self) -> IntForm:
         """Get the 14-bit clock sequence (for UUID version 1)."""
-        from nu import FuncCall, IntI
+        from nu import FuncCall, IntForm
 
-        return IntI(FuncCall(getattr, self, "clock_seq"))
+        return IntForm(FuncCall(getattr, self, "clock_seq"))
 
-    def node(self) -> IntI:
+    def node(self) -> IntForm:
         """Get the 48-bit node (for UUID version 1)."""
-        from nu import FuncCall, IntI
+        from nu import FuncCall, IntForm
 
-        return IntI(FuncCall(getattr, self, "node"))
+        return IntForm(FuncCall(getattr, self, "node"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def hex(self) -> StrI:
+    def hex(self) -> StrForm:
         """Get the UUID as a 32-character hexadecimal string."""
-        from nu import FuncCall, StrI
+        from nu import FuncCall, StrForm
 
-        return StrI(FuncCall(getattr, self, "hex"))
+        return StrForm(FuncCall(getattr, self, "hex"))
 
-    def urn(self) -> StrI:
+    def urn(self) -> StrForm:
         """Get the UUID as a URN (urn:uuid:...)."""
-        from nu import FuncCall, StrI
+        from nu import FuncCall, StrForm
 
-        return StrI(FuncCall(getattr, self, "urn"))
+        return StrForm(FuncCall(getattr, self, "urn"))
 
-    def bytes(self) -> BytesI:
+    def bytes(self) -> BytesForm:
         """Get the UUID as a 16-byte string."""
-        from nu import BytesI, FuncCall
+        from nu import BytesForm, FuncCall
 
-        return BytesI(FuncCall(getattr, self, "bytes"))
+        return BytesForm(FuncCall(getattr, self, "bytes"))
 
-    def bytes_le(self) -> BytesI:
+    def bytes_le(self) -> BytesForm:
         """Get the UUID as a 16-byte string in little-endian order."""
-        from nu import BytesI, FuncCall
+        from nu import BytesForm, FuncCall
 
-        return BytesI(FuncCall(getattr, self, "bytes_le"))
+        return BytesForm(FuncCall(getattr, self, "bytes_le"))
 
-    def int_(self) -> IntI:
+    def int_(self) -> IntForm:
         """Get the UUID as a 128-bit integer."""
-        from nu import FuncCall, IntI
+        from nu import FuncCall, IntForm
 
-        return IntI(FuncCall(getattr, self, "int"))
+        return IntForm(FuncCall(getattr, self, "int"))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: UUIDArg) -> BoolI:
-        from nu import BoolI, Gt
+    def __gt__(self, other: UUIDArg) -> BoolForm:
+        from nu import BoolForm, Gt
 
-        return BoolI(Gt(self, other))
+        return BoolForm(Gt(self, other))
 
-    def __lt__(self, other: UUIDArg) -> BoolI:
-        from nu import BoolI, Lt
+    def __lt__(self, other: UUIDArg) -> BoolForm:
+        from nu import BoolForm, Lt
 
-        return BoolI(Lt(self, other))
+        return BoolForm(Lt(self, other))
 
-    def __ge__(self, other: UUIDArg) -> BoolI:
-        from nu import BoolI, Ge
+    def __ge__(self, other: UUIDArg) -> BoolForm:
+        from nu import BoolForm, Ge
 
-        return BoolI(Ge(self, other))
+        return BoolForm(Ge(self, other))
 
-    def __le__(self, other: UUIDArg) -> BoolI:
-        from nu import BoolI, Le
+    def __le__(self, other: UUIDArg) -> BoolForm:
+        from nu import BoolForm, Le
 
-        return BoolI(Le(self, other))
+        return BoolForm(Le(self, other))
 
-    def eq(self, other: UUIDArg) -> BoolI:
-        from nu import BoolI, Eq
+    def eq(self, other: UUIDArg) -> BoolForm:
+        from nu import BoolForm, Eq
 
-        return BoolI(Eq(self, other))
+        return BoolForm(Eq(self, other))
 
-    def ne(self, other: UUIDArg) -> BoolI:
-        from nu import BoolI, Ne
+    def ne(self, other: UUIDArg) -> BoolForm:
+        from nu import BoolForm, Ne
 
-        return BoolI(Ne(self, other))
+        return BoolForm(Ne(self, other))
 
 
 # =============================================================================

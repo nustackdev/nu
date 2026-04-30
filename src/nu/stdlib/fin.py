@@ -10,12 +10,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from nu.terms import Interface, TypedNu
+from nu.terms import Form, TypedNu
 
 
 if TYPE_CHECKING:
     from nu import Arg
-    from nu.primitives import BoolI, FloatI, IntI
+    from nu.forms.primitives import BoolForm, FloatForm, IntForm
     from nu.terms import Nu
 
 
@@ -374,7 +374,7 @@ class BasisPoint:
 # =============================================================================
 
 
-class _PercentageI(Interface):
+class _PercentageI(Form):
     """Mixin for Percentage operations."""
 
     # =========================================================================
@@ -406,69 +406,69 @@ class _PercentageI(Interface):
     # CONVERSIONS
     # =========================================================================
 
-    def to_dec(self) -> FloatI:
+    def to_dec(self) -> FloatForm:
         """Convert to decimal."""
         from nu.terms import MethodCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(MethodCall(self, "to_dec"))
+        return FloatForm(MethodCall(self, "to_dec"))
 
-    def to_bps(self) -> IntI:
+    def to_bps(self) -> IntForm:
         """Convert to basis points."""
         from nu.terms import MethodCall
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
 
-        return IntI(MethodCall(self, "to_bps"))
+        return IntForm(MethodCall(self, "to_bps"))
 
-    def to_float(self) -> FloatI:
+    def to_float(self) -> FloatForm:
         """Get raw percentage."""
         from nu.terms import MethodCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(MethodCall(self, "to_float"))
+        return FloatForm(MethodCall(self, "to_float"))
 
     # =========================================================================
     # APPLICATION
     # =========================================================================
 
-    def apply(self, amount: int | float | Nu) -> FloatI:
+    def apply(self, amount: int | float | Nu) -> FloatForm:
         """Apply percentage to amount."""
         from nu.terms import MethodCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(MethodCall(self, "apply", amount))
+        return FloatForm(MethodCall(self, "apply", amount))
 
-    def of(self, amount: int | float | Nu) -> FloatI:
+    def of(self, amount: int | float | Nu) -> FloatForm:
         """Alias for apply."""
         from nu.terms import MethodCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(MethodCall(self, "of", amount))
+        return FloatForm(MethodCall(self, "of", amount))
 
-    def add_to(self, amount: int | float | Nu) -> FloatI:
+    def add_to(self, amount: int | float | Nu) -> FloatForm:
         """Add percentage to amount."""
         from nu.terms import MethodCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(MethodCall(self, "add_to", amount))
+        return FloatForm(MethodCall(self, "add_to", amount))
 
-    def sub_from(self, amount: int | float | Nu) -> FloatI:
+    def sub_from(self, amount: int | float | Nu) -> FloatForm:
         """Subtract percentage from amount."""
         from nu.terms import MethodCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(MethodCall(self, "sub_from", amount))
+        return FloatForm(MethodCall(self, "sub_from", amount))
 
     # =========================================================================
     # VALIDATION
     # =========================================================================
 
-    def is_valid(self, min_val: float = 0.0, max_val: float = 100.0) -> BoolI:
+    def is_valid(self, min_val: float = 0.0, max_val: float = 100.0) -> BoolForm:
         """Check if within range."""
         from nu.terms import MethodCall
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(MethodCall(self, "is_valid", min_val, max_val))
+        return BoolForm(MethodCall(self, "is_valid", min_val, max_val))
 
     def clamp(self, min_val: float = 0.0, max_val: float = 100.0) -> PercentageI:
         """Clamp to range."""
@@ -540,47 +540,47 @@ class _PercentageI(Interface):
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: PercentageArg) -> BoolI:
+    def __gt__(self, other: PercentageArg) -> BoolForm:
         """Greater than."""
         from nu import Gt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Gt(self, other))
+        return BoolForm(Gt(self, other))
 
-    def __lt__(self, other: PercentageArg) -> BoolI:
+    def __lt__(self, other: PercentageArg) -> BoolForm:
         """Less than."""
         from nu import Lt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Lt(self, other))
+        return BoolForm(Lt(self, other))
 
-    def __ge__(self, other: PercentageArg) -> BoolI:
+    def __ge__(self, other: PercentageArg) -> BoolForm:
         """Greater than or equal."""
         from nu import Ge
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ge(self, other))
+        return BoolForm(Ge(self, other))
 
-    def __le__(self, other: PercentageArg) -> BoolI:
+    def __le__(self, other: PercentageArg) -> BoolForm:
         """Less than or equal."""
         from nu import Le
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Le(self, other))
+        return BoolForm(Le(self, other))
 
-    def eq(self, other: PercentageArg) -> BoolI:
+    def eq(self, other: PercentageArg) -> BoolForm:
         """Equal."""
         from nu import Eq
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Eq(self, other))
+        return BoolForm(Eq(self, other))
 
-    def ne(self, other: PercentageArg) -> BoolI:
+    def ne(self, other: PercentageArg) -> BoolForm:
         """Not equal."""
         from nu import Ne
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ne(self, other))
+        return BoolForm(Ne(self, other))
 
 
 class PercentageI(_PercentageI, TypedNu[Percentage]):
@@ -594,7 +594,7 @@ class PercentageI(_PercentageI, TypedNu[Percentage]):
 # =============================================================================
 
 
-class _BasisPointI(Interface):
+class _BasisPointI(Form):
     """Mixin for BasisPoint operations."""
 
     # =========================================================================
@@ -626,51 +626,51 @@ class _BasisPointI(Interface):
     # CONVERSIONS
     # =========================================================================
 
-    def to_pct(self) -> FloatI:
+    def to_pct(self) -> FloatForm:
         """Convert to percentage."""
         from nu.terms import MethodCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(MethodCall(self, "to_pct"))
+        return FloatForm(MethodCall(self, "to_pct"))
 
-    def to_dec(self) -> FloatI:
+    def to_dec(self) -> FloatForm:
         """Convert to decimal."""
         from nu.terms import MethodCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(MethodCall(self, "to_dec"))
+        return FloatForm(MethodCall(self, "to_dec"))
 
-    def to_int(self) -> IntI:
+    def to_int(self) -> IntForm:
         """Get raw basis points."""
         from nu.terms import MethodCall
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
 
-        return IntI(MethodCall(self, "to_int"))
+        return IntForm(MethodCall(self, "to_int"))
 
     # =========================================================================
     # APPLICATION
     # =========================================================================
 
-    def apply(self, amount: int | float | Nu) -> FloatI:
+    def apply(self, amount: int | float | Nu) -> FloatForm:
         """Apply basis points to amount."""
         from nu.terms import MethodCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(MethodCall(self, "apply", amount))
+        return FloatForm(MethodCall(self, "apply", amount))
 
-    def add_to(self, amount: int | float | Nu) -> FloatI:
+    def add_to(self, amount: int | float | Nu) -> FloatForm:
         """Add basis points to amount."""
         from nu.terms import MethodCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(MethodCall(self, "add_to", amount))
+        return FloatForm(MethodCall(self, "add_to", amount))
 
-    def sub_from(self, amount: int | float | Nu) -> FloatI:
+    def sub_from(self, amount: int | float | Nu) -> FloatForm:
         """Subtract basis points from amount."""
         from nu.terms import MethodCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(MethodCall(self, "sub_from", amount))
+        return FloatForm(MethodCall(self, "sub_from", amount))
 
     # =========================================================================
     # ARITHMETIC
@@ -730,47 +730,47 @@ class _BasisPointI(Interface):
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: BasisPointArg) -> BoolI:
+    def __gt__(self, other: BasisPointArg) -> BoolForm:
         """Greater than."""
         from nu import Gt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Gt(self, other))
+        return BoolForm(Gt(self, other))
 
-    def __lt__(self, other: BasisPointArg) -> BoolI:
+    def __lt__(self, other: BasisPointArg) -> BoolForm:
         """Less than."""
         from nu import Lt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Lt(self, other))
+        return BoolForm(Lt(self, other))
 
-    def __ge__(self, other: BasisPointArg) -> BoolI:
+    def __ge__(self, other: BasisPointArg) -> BoolForm:
         """Greater than or equal."""
         from nu import Ge
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ge(self, other))
+        return BoolForm(Ge(self, other))
 
-    def __le__(self, other: BasisPointArg) -> BoolI:
+    def __le__(self, other: BasisPointArg) -> BoolForm:
         """Less than or equal."""
         from nu import Le
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Le(self, other))
+        return BoolForm(Le(self, other))
 
-    def eq(self, other: BasisPointArg) -> BoolI:
+    def eq(self, other: BasisPointArg) -> BoolForm:
         """Equal."""
         from nu import Eq
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Eq(self, other))
+        return BoolForm(Eq(self, other))
 
-    def ne(self, other: BasisPointArg) -> BoolI:
+    def ne(self, other: BasisPointArg) -> BoolForm:
         """Not equal."""
         from nu import Ne
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ne(self, other))
+        return BoolForm(Ne(self, other))
 
 
 class BasisPointI(_BasisPointI, TypedNu[BasisPoint]):

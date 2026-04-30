@@ -24,7 +24,7 @@ from ..terms.types import Mode
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ..interface import Interface
+    from ..forms.form import Form
 
 
 __all__ = [
@@ -61,7 +61,7 @@ def _infer_support(fn: Callable[..., Any]) -> frozenset[Mode]:
 
 def _extract_py_type(owner: type) -> type | None:
     """Find the generic argument of Ref[T] or TypedNu[T] in owner's MRO."""
-    from ..interface import TypedNu
+    from ..forms.form import TypedNu
 
     seen: set[type] = set()
 
@@ -160,7 +160,7 @@ class Invoke[T](ScalarQuery):
 
 
 class _RefBoundInvocation[V]:
-    """Class-bound: SolanaRef.get_slot(42) -> IntI(Invoke(SolanaRpc.get_slot, SolanaRef(), 42))."""
+    """Class-bound: SolanaRef.get_slot(42) -> IntForm(Invoke(SolanaRpc.get_slot, SolanaRef(), 42))."""
 
     __slots__ = ("_fn", "_inv", "_ref_cls")
 
@@ -186,7 +186,7 @@ class _RefBoundInvocation[V]:
 
 
 class _InstanceBoundInvocation[V]:
-    """Instance-bound: percentage.to_dec() -> FloatI(Invoke(Percentage.to_dec, percentage))."""
+    """Instance-bound: percentage.to_dec() -> FloatForm(Invoke(Percentage.to_dec, percentage))."""
 
     __slots__ = ("_fn", "_inv", "_owner")
 
@@ -210,7 +210,7 @@ class _InstanceBoundInvocation[V]:
         return f"{self._owner!r}.{self._inv._name}"
 
 
-class Invocation[V: "Interface"]:
+class Invocation[V: "Form"]:
     """Descriptor that compiles attribute access into an Invoke.
 
     Use on a Ref[T] or TypedNu[T] subclass. At descriptor resolution time,

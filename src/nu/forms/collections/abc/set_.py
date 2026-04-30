@@ -1,7 +1,7 @@
 """Set collection — bases + mutations.
 
-SetLikeI = Collection + union/intersection/difference/symmetric_difference/issubset/issuperset/isdisjoint
-MutableSetI = SetLike + add/remove/discard
+SetLikeForm = Collection + union/intersection/difference/symmetric_difference/issubset/issuperset/isdisjoint
+MutableSetForm = SetLike + add/remove/discard
 
 Follows Python's collections.abc.Set / MutableSet pattern.
 
@@ -18,22 +18,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
-from .collection import CollectionI
+from .collection import CollectionForm
 
 
 if TYPE_CHECKING:
-    from nu.primitives import BoolI
+    from nu.forms.primitives import BoolForm
     from nu.terms import Arg, Nu
 
 
 __all__ = [
-    "MutableSetI",
-    "SetLikeI",
+    "MutableSetForm",
+    "SetLikeForm",
 ]
 
 
-class SetLikeI[CollectionT, ElementT, CollectionResultT, ElementResultT](
-    CollectionI[ElementT, CollectionResultT, ElementResultT],
+class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    CollectionForm[ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for set values — like collections.abc.Set.
 
@@ -77,33 +77,33 @@ class SetLikeI[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return cast("CollectionResultT", self._wrap_set_result(SymmetricDifferenceOp(self, other)))
 
-    def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
+    def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolForm:
         """Check if subset."""
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
         from .set_ops import IsSubsetOp
 
-        return BoolI(IsSubsetOp(self, other))
+        return BoolForm(IsSubsetOp(self, other))
 
-    def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
+    def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolForm:
         """Check if superset."""
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
         from .set_ops import IsSupersetOp
 
-        return BoolI(IsSupersetOp(self, other))
+        return BoolForm(IsSupersetOp(self, other))
 
-    def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolI:
+    def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolForm:
         """Check if disjoint."""
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
         from .set_ops import IsDisjointOp
 
-        return BoolI(IsDisjointOp(self, other))
+        return BoolForm(IsDisjointOp(self, other))
 
 
-class MutableSetI[CollectionT, ElementT, CollectionResultT, ElementResultT](
-    SetLikeI[CollectionT, ElementT, CollectionResultT, ElementResultT],
+class MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for mutable set values — like collections.abc.MutableSet.
 

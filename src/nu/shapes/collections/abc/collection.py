@@ -2,19 +2,19 @@
 """Collection base hierarchy - lifecycle ops for collections in the document model.
 
 Three tiers:
-    CollectionI          exists(), missing()
+    CollectionForm          exists(), missing()
     MutableCollectionI   + store(), erase()
     ReactiveCollectionI  + on_change(), on_child_change(), ...
 
-Mirrors nu.collections.abc pattern.
+Mirrors nu.forms.collections.abc pattern.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.primitives import BoolI
-from nu.terms import Interface
+from nu.forms.primitives import BoolForm
+from nu.terms import Form
 
 
 if TYPE_CHECKING:
@@ -23,24 +23,24 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "CollectionI",
+    "CollectionForm",
     "MutableCollectionI",
     "ReactiveCollectionI",
 ]
 
 
-class CollectionI(Interface):
+class CollectionForm(Form):
     """Collection in a document - can check existence."""
 
-    def exists(self) -> BoolI:
+    def exists(self) -> BoolForm:
         from nu.shapes.ops import CollectionExistsOp
 
-        return BoolI(CollectionExistsOp(self))
+        return BoolForm(CollectionExistsOp(self))
 
-    def missing(self) -> BoolI:
+    def missing(self) -> BoolForm:
         from nu.shapes.ops import CollectionMissingOp
 
-        return BoolI(CollectionMissingOp(self))
+        return BoolForm(CollectionMissingOp(self))
 
     def extract(self) -> Nu:
         from nu.shapes.ops import CollectionExtractOp
@@ -48,7 +48,7 @@ class CollectionI(Interface):
         return CollectionExtractOp(self)
 
 
-class MutableCollectionI[CollectionT](CollectionI):
+class MutableCollectionI[CollectionT](CollectionForm):
     """Mutable collection - can store and erase."""
 
     def store(self, value: CollectionT | Sentinel | Nu[CollectionT | Sentinel]) -> Nu:

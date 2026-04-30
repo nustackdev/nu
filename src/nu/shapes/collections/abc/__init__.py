@@ -1,26 +1,26 @@
 """Shapes collection ABCs - interface hierarchies for the document model."""
 
-from .collection import CollectionI, MutableCollectionI, ReactiveCollectionI
-from .item import ItemI, MutableItemI, ReactiveItemI
-from .mapping import MappingI, MutableMappingI, ReactiveMappingI
-from .sequence import MutableSequenceI, ReactiveSequenceI, SequenceI
-from .set import MutableSetI, ReactiveSetI, SetLikeI
+from .collection import CollectionForm, MutableCollectionI, ReactiveCollectionI
+from .item import ItemForm, MutableItemForm, ReactiveItemForm
+from .mapping import MappingForm, MutableMappingForm, ReactiveMappingI
+from .sequence import MutableSequenceForm, ReactiveSequenceI, SequenceForm
+from .set import MutableSetForm, ReactiveSetI, SetLikeForm
 
 
 __all__ = [
-    "CollectionI",
-    "ItemI",
-    "MappingI",
+    "CollectionForm",
+    "ItemForm",
+    "MappingForm",
     "MutableCollectionI",
-    "MutableItemI",
-    "MutableMappingI",
-    "MutableSequenceI",
-    "MutableSetI",
+    "MutableItemForm",
+    "MutableMappingForm",
+    "MutableSequenceForm",
+    "MutableSetForm",
     "ReactiveCollectionI",
-    "ReactiveItemI",
+    "ReactiveItemForm",
     "ReactiveMappingI",
     "ReactiveSequenceI",
     "ReactiveSetI",
-    "SequenceI",
-    "SetLikeI",
+    "SequenceForm",
+    "SetLikeForm",
 ]

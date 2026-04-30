@@ -1,9 +1,9 @@
 """Generic collection interfaces and ops."""
 
-from .collection import CollectionI
-from .container import ContainerI
-from .iterable import IterableI
-from .mapping import MappingI, MutableMappingI
+from .collection import CollectionForm
+from .container import ContainerForm
+from .iterable import IterableForm
+from .mapping import MappingForm, MutableMappingForm
 from .mapping_ops import (
     DeleteItemCmd,
     DictPopCmd,
@@ -16,7 +16,7 @@ from .mapping_ops import (
     UpdateCmd,
     ValuesOp,
 )
-from .sequence import MutableSequenceI, SequenceI
+from .sequence import MutableSequenceForm, SequenceForm
 from .sequence_ops import (
     AppendCmd,
     CountOp,
@@ -29,7 +29,7 @@ from .sequence_ops import (
     RemoveValueCmd,
     ReverseCmd,
 )
-from .set_ import MutableSetI, SetLikeI
+from .set_ import MutableSetForm, SetLikeForm
 from .set_ops import (
     AddCmd,
     DifferenceOp,
@@ -48,16 +48,16 @@ from .set_ops import (
     UnionOp,
 )
 from .shared_ops import ClearCmd
-from .sized import SizedI
-from .sliceable import SliceableI
+from .sized import SizedForm
+from .sliceable import SliceableForm
 
 
 __all__ = [
     "AddCmd",
     "AppendCmd",
     "ClearCmd",
-    "CollectionI",
-    "ContainerI",
+    "CollectionForm",
+    "ContainerForm",
     "CountOp",
     "DeleteItemCmd",
     "DictPopCmd",
@@ -75,26 +75,26 @@ __all__ = [
     "IsSubsetOp",
     "IsSupersetOp",
     "ItemsOp",
-    "IterableI",
+    "IterableForm",
     "KeysOp",
     "LastOp",
-    "MappingI",
-    "MutableMappingI",
-    "MutableSequenceI",
-    "MutableSetI",
+    "MappingForm",
+    "MutableMappingForm",
+    "MutableSequenceForm",
+    "MutableSetForm",
     "PopCmd",
     "PopItemCmd",
     "RemoveCmd",
     "RemoveValueCmd",
     "ReverseCmd",
-    "SequenceI",
+    "SequenceForm",
     "SetDefaultCmd",
     "SetItemCmd",
-    "SetLikeI",
+    "SetLikeForm",
     "SetPopCmd",
     "SetUpdateCmd",
-    "SizedI",
-    "SliceableI",
+    "SizedForm",
+    "SliceableForm",
     "SymmetricDifferenceOp",
     "SymmetricDifferenceUpdateCmd",
     "UnionOp",

@@ -1,7 +1,7 @@
 """Set ref hierarchy — set bases + Ref navigation.
 
-SetLikeRef     = SetLikeI + Ref
-MutableSetRef  = MutableSetI + Ref
+SetLikeRef     = SetLikeForm + Ref
+MutableSetRef  = MutableSetForm + Ref
 ReactiveSetRef = ReactiveSetI + Ref
 
 Sets have no child ref navigation (no subscript access) — only
@@ -15,7 +15,7 @@ Type Parameters:
 
 from __future__ import annotations
 
-from nu.shapes.collections import MutableSetI, ReactiveSetI, SetLikeI
+from nu.shapes.collections import MutableSetForm, ReactiveSetI, SetLikeForm
 
 from .base import Ref
 
@@ -28,14 +28,14 @@ __all__ = [
 
 
 class SetLikeRef[T, CollectionValueT, ElementValueT](
-    SetLikeI[T, CollectionValueT, ElementValueT],
+    SetLikeForm[T, CollectionValueT, ElementValueT],
     Ref[set[T]],
 ):
     """Set ref — unordered unique-element container with document-model navigation."""
 
 
 class MutableSetRef[T, CollectionValueT, ElementValueT](
-    MutableSetI[T, CollectionValueT, ElementValueT],
+    MutableSetForm[T, CollectionValueT, ElementValueT],
     SetLikeRef[T, CollectionValueT, ElementValueT],
 ):
     """Mutable set ref — add/remove/discard + navigation."""

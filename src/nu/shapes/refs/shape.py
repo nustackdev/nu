@@ -1,7 +1,7 @@
 """Shape ref hierarchy — structured containers with named slots.
 
-ShapeRef         = MappingI[str, object, ...] + Ref
-MutableShapeRef  = MutableMappingI[str, object, ...] + ShapeRef
+ShapeRef         = MappingForm[str, object, ...] + Ref
+MutableShapeRef  = MutableMappingForm[str, object, ...] + ShapeRef
 ReactiveShapeRef = ReactiveMappingI[str, object, ...] + MutableShapeRef
 
 A shape is a mapping (dict[str, object]) with attribute-based slot navigation.
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.shapes.collections import MappingI, MutableMappingI, ReactiveMappingI
+from nu.shapes.collections import MappingForm, MutableMappingForm, ReactiveMappingI
 
 from .base import Ref
 
@@ -40,12 +40,12 @@ __all__ = [
 
 class ShapeRef[T: ShapeBase](
     Ref[dict[str, object]],
-    MappingI[str, object, object, object],
+    MappingForm[str, object, object, object],
 ):
     """Reference to a shape — a structured container with named fields.
 
     A shape IS a mapping (dict[str, object]) by nature. Inherits full mapping
-    ops (keys, values, items, get, extract, exists, etc.) from MappingI.
+    ops (keys, values, items, get, extract, exists, etc.) from MappingForm.
 
     Attribute access is intercepted to look up slots on the shape class.
     If the name matches a slot, a child ref is created via slot.create_ref().
@@ -60,7 +60,7 @@ class ShapeRef[T: ShapeBase](
         _wrap_*: wrap operations in substrate Value types
 
     Slot navigation uses __getattr__ (fallback). Methods inherited from
-    Ref, MappingI, etc. resolve via normal MRO first. Only names not
+    Ref, MappingForm, etc. resolve via normal MRO first. Only names not
     found in the class hierarchy trigger slot lookup.
     """
 
@@ -141,7 +141,7 @@ class ShapeRef[T: ShapeBase](
 
 class MutableShapeRef[T: ShapeBase](
     ShapeRef[T],
-    MutableMappingI[str, object, object, object],
+    MutableMappingForm[str, object, object, object],
 ):
     """Shape + mapping mutations (set, delete, update) + store/length/clear."""
 

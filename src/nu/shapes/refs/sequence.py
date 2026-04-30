@@ -1,7 +1,7 @@
 """Sequence ref hierarchy — sequence bases + Ref navigation.
 
-SequenceRef         = SequenceI + Ref
-MutableSequenceRef  = MutableSequenceI + Ref
+SequenceRef         = SequenceForm + Ref
+MutableSequenceRef  = MutableSequenceForm + Ref
 ReactiveSequenceRef = ReactiveSequenceI + Ref
 
 Type Parameters:
@@ -15,7 +15,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu.shapes.collections import MutableSequenceI, ReactiveSequenceI, SequenceI
+from nu.shapes.collections import MutableSequenceForm, ReactiveSequenceI, SequenceForm
 
 from .base import Ref
 
@@ -34,7 +34,7 @@ __all__ = [
 
 
 class SequenceRef[T, CollectionValueT, ItemValueT](
-    SequenceI[T, CollectionValueT, ItemValueT],
+    SequenceForm[T, CollectionValueT, ItemValueT],
     Ref[list[T]],
 ):
     """Sequence ref — ordered container with document-model navigation."""
@@ -50,7 +50,7 @@ class SequenceRef[T, CollectionValueT, ItemValueT](
 
 
 class MutableSequenceRef[T, CollectionValueT, ItemValueT](
-    MutableSequenceI[T, CollectionValueT, ItemValueT],
+    MutableSequenceForm[T, CollectionValueT, ItemValueT],
     SequenceRef[T, CollectionValueT, ItemValueT],
 ):
     """Mutable sequence ref — mutations + navigation."""

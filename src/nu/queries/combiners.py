@@ -42,7 +42,7 @@ from nu.queries.literal import Literal
 
 
 if TYPE_CHECKING:
-    from nu.primitives import BoolI as BoolI
+    from nu.forms.primitives import BoolForm as BoolForm
 
 
 def _wrap(value: object) -> Nu:
@@ -63,7 +63,7 @@ __all__ = [
 # =============================================================================
 
 
-def and_(left: object, right: object) -> BoolI:
+def and_(left: object, right: object) -> BoolForm:
     """Combine exactly two conditions with AND.
 
     Both conditions must be true for the result to be true.
@@ -85,7 +85,7 @@ def and_(left: object, right: object) -> BoolI:
     return left_op.and_(_wrap(right))
 
 
-def or_(left: object, right: object) -> BoolI:
+def or_(left: object, right: object) -> BoolForm:
     """Combine exactly two conditions with OR.
 
     At least one condition must be true for the result to be true.
@@ -107,7 +107,7 @@ def or_(left: object, right: object) -> BoolI:
     return left_op.or_(_wrap(right))
 
 
-def all_(*conditions: object) -> BoolI:
+def all_(*conditions: object) -> BoolForm:
     """Combine multiple conditions with AND.
 
     All conditions must be true for the result to be true.
@@ -133,7 +133,7 @@ def all_(*conditions: object) -> BoolI:
     return reduce(lambda a, b: a.and_(b), rvalues)  # type: ignore
 
 
-def any_(*conditions: object) -> BoolI:
+def any_(*conditions: object) -> BoolForm:
     """Combine multiple conditions with OR.
 
     At least one condition must be true for the result to be true.
@@ -159,7 +159,7 @@ def any_(*conditions: object) -> BoolI:
     return reduce(lambda a, b: a.or_(b), rvalues)  # type: ignore
 
 
-def none_(*conditions: object) -> BoolI:
+def none_(*conditions: object) -> BoolForm:
     """None of the conditions should be true.
 
     This is equivalent to NOT(any_(...)).

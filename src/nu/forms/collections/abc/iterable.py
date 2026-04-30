@@ -1,6 +1,6 @@
 """Iterable capability.
 
-IterableI: wrapping infrastructure for collection results.
+IterableForm: wrapping infrastructure for collection results.
 
 Follows Python's collections.abc.Iterable pattern. In Nu's tree model,
 iteration is controlled by Flows (ForEach, ForRange), not Python's
@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Interface
+from nu.terms import Form
 
 
 if TYPE_CHECKING:
@@ -25,15 +25,15 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "IterableI",
+    "IterableForm",
 ]
 
 
-class IterableI[ElementT, CollectionResultT, ElementResultT](Interface):
+class IterableForm[ElementT, CollectionResultT, ElementResultT](Form):
     """Base for values that support iteration.
 
     Provides wrapping infrastructure used by subclass traits
-    (SequenceI, MappingI, etc.) to wrap op results
+    (SequenceForm, MappingForm, etc.) to wrap op results
     in appropriate Value types.
 
     Higher-order operations (Map, Filter, Reduce, etc.) are standalone

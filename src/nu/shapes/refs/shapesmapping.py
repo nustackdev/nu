@@ -1,7 +1,7 @@
 """ShapesMapping ref hierarchy — mapping of shapes + Ref navigation.
 
-ShapesMappingRef         = MappingI[K, dict[str, object], ...] + Ref
-MutableShapesMappingRef  = MutableMappingI[K, dict[str, object], ...] + Ref
+ShapesMappingRef         = MappingForm[K, dict[str, object], ...] + Ref
+MutableShapesMappingRef  = MutableMappingForm[K, dict[str, object], ...] + Ref
 ReactiveShapesMappingRef = ReactiveMappingI[K, dict[str, object], ...] + Ref
 
 Specialized mapping refs where each value is a shape (dict[str, object]).
@@ -17,7 +17,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu.shapes.collections import MappingI, MutableMappingI, ReactiveMappingI
+from nu.shapes.collections import MappingForm, MutableMappingForm, ReactiveMappingI
 
 from .base import Ref
 
@@ -37,7 +37,7 @@ __all__ = [
 
 
 class ShapesMappingRef[K, T: ShapeBase](
-    MappingI[K, dict[str, object], object, object],
+    MappingForm[K, dict[str, object], object, object],
     Ref[dict[K, dict[str, object]]],
 ):
     """Shapes mapping ref — read-only mapping of shapes with navigation."""
@@ -57,7 +57,7 @@ class ShapesMappingRef[K, T: ShapeBase](
 
 
 class MutableShapesMappingRef[K, T: ShapeBase](
-    MutableMappingI[K, dict[str, object], object, object],
+    MutableMappingForm[K, dict[str, object], object, object],
     ShapesMappingRef[K, T],
 ):
     """Mutable shapes mapping ref — mutations + navigation."""

@@ -1,7 +1,7 @@
 """AttrRef - flat name-based lookup from Context.
 
 Resolves a name directly from `ctx.attrs`. Typed variants mix in the
-Interface so you can chain operations on the ref.
+Form so you can chain operations on the ref.
 
 Name can be a plain string or a Nu that resolves to a string.
 """
@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.collections import DictI, FrozenSetI, ListI, SetI, TupleI
-from nu.primitives import AnyI, BoolI, BytesI, FloatI, IntI, StrI
+from nu.forms.collections import DictForm, FrozenSetForm, ListForm, SetForm, TupleForm
+from nu.forms.primitives import AnyForm, BoolForm, BytesForm, FloatForm, IntForm, StrForm
 from nu.queries.literal import Literal
 from nu.terms.ref import Ref
 from nu.terms.sentinels import EMPTY
@@ -107,11 +107,11 @@ class AttrRef[T](Ref[T]):
             )
         )
 
-    def exists(self) -> BoolI:
+    def exists(self) -> BoolForm:
         """Check if name exists in context."""
         from .attr_ops import AttrExistsOp
 
-        return BoolI(AttrExistsOp(self))
+        return BoolForm(AttrExistsOp(self))
 
 
 # =========================================================================
@@ -119,37 +119,37 @@ class AttrRef[T](Ref[T]):
 # =========================================================================
 
 
-class IntAttrRef(AttrRef[int], IntI):
+class IntAttrRef(AttrRef[int], IntForm):
     """Int attr ref with full numeric interface."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
 
 
-class FloatAttrRef(AttrRef[float], FloatI):
+class FloatAttrRef(AttrRef[float], FloatForm):
     """Float attr ref with full numeric interface."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
 
 
-class StrAttrRef(AttrRef[str], StrI):
+class StrAttrRef(AttrRef[str], StrForm):
     """Str attr ref with full string interface."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
 
 
-class BoolAttrRef(AttrRef[bool], BoolI):
+class BoolAttrRef(AttrRef[bool], BoolForm):
     """Bool attr ref with full logical interface."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
 
 
-class BytesAttrRef(AttrRef[bytes], BytesI):
+class BytesAttrRef(AttrRef[bytes], BytesForm):
     """Bytes attr ref with full bytes interface."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
 
 
-class AnyAttrRef(AttrRef[object], AnyI):
+class AnyAttrRef(AttrRef[object], AnyForm):
     """Any attr ref with dynamic interface."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
@@ -160,31 +160,31 @@ class AnyAttrRef(AttrRef[object], AnyI):
 # =========================================================================
 
 
-class ListAttrRef(AttrRef[list], ListI):
+class ListAttrRef(AttrRef[list], ListForm):
     """List attr ref with full list interface."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
 
 
-class DictAttrRef(AttrRef[dict], DictI):
+class DictAttrRef(AttrRef[dict], DictForm):
     """Dict attr ref with full dict interface."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
 
 
-class SetAttrRef(AttrRef[set], SetI):
+class SetAttrRef(AttrRef[set], SetForm):
     """Set attr ref with full set interface."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
 
 
-class FrozenSetAttrRef(AttrRef[frozenset], FrozenSetI):
+class FrozenSetAttrRef(AttrRef[frozenset], FrozenSetForm):
     """FrozenSet attr ref with full frozenset interface."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
 
 
-class TupleAttrRef(AttrRef[tuple], TupleI):
+class TupleAttrRef(AttrRef[tuple], TupleForm):
     """Tuple attr ref with full tuple interface."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH

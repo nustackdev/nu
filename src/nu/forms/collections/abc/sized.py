@@ -1,6 +1,6 @@
 """Sized capability.
 
-SizedI: values that have a length.
+SizedForm: values that have a length.
 
 Follows Python's collections.abc.Sized pattern.
 """
@@ -9,24 +9,24 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Interface
+from nu.terms import Form
 
 
 if TYPE_CHECKING:
-    from nu.primitives import IntI
+    from nu.forms.primitives import IntForm
 
 
 __all__ = [
-    "SizedI",
+    "SizedForm",
 ]
 
 
-class SizedI(Interface):
+class SizedForm(Form):
     """Base for values that have a length - like collections.abc.Sized."""
 
-    def len(self) -> IntI:
+    def len(self) -> IntForm:
         """Length of this collection."""
         from nu import Len
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
 
-        return IntI(Len(self))
+        return IntForm(Len(self))

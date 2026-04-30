@@ -9,13 +9,13 @@ from __future__ import annotations
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Interface, Mode, TypedNu
+from nu.terms import Form, Mode, TypedNu
 
 
 if TYPE_CHECKING:
     from nu import Arg, Nu
-    from nu.collections import ListI, TupleI
-    from nu.primitives import BoolI, StrI
+    from nu.forms.collections import ListForm, TupleForm
+    from nu.forms.primitives import BoolForm, StrForm
 
 
 __all__ = ["PathArg", "PathI"]
@@ -24,7 +24,7 @@ __all__ = ["PathArg", "PathI"]
 type PathArg = Arg[Path | PurePath | str]
 
 
-class _PathI(Interface):
+class _PathI(Form):
     """Path operations mixin - constructors, components, manipulation, tests, conversions, comparison."""
 
     # =========================================================================
@@ -56,29 +56,29 @@ class _PathI(Interface):
     # PATH COMPONENTS
     # =========================================================================
 
-    def name(self) -> StrI:
+    def name(self) -> StrForm:
         """Get the final component (filename)."""
-        from nu import FuncCall, StrI
+        from nu import FuncCall, StrForm
 
-        return StrI(FuncCall(getattr, self, "name"))
+        return StrForm(FuncCall(getattr, self, "name"))
 
-    def stem(self) -> StrI:
+    def stem(self) -> StrForm:
         """Get the filename without the final extension."""
-        from nu import FuncCall, StrI
+        from nu import FuncCall, StrForm
 
-        return StrI(FuncCall(getattr, self, "stem"))
+        return StrForm(FuncCall(getattr, self, "stem"))
 
-    def suffix(self) -> StrI:
+    def suffix(self) -> StrForm:
         """Get the file extension (including dot)."""
-        from nu import FuncCall, StrI
+        from nu import FuncCall, StrForm
 
-        return StrI(FuncCall(getattr, self, "suffix"))
+        return StrForm(FuncCall(getattr, self, "suffix"))
 
-    def suffixes(self) -> ListI:
+    def suffixes(self) -> ListForm:
         """Get all file extensions."""
-        from nu import FuncCall, ListI
+        from nu import FuncCall, ListForm
 
-        return ListI(FuncCall(getattr, self, "suffixes"))
+        return ListForm(FuncCall(getattr, self, "suffixes"))
 
     def parent(self) -> PathI:
         """Get the parent directory."""
@@ -86,29 +86,29 @@ class _PathI(Interface):
 
         return PathI(FuncCall(getattr, self, "parent"))
 
-    def root(self) -> StrI:
+    def root(self) -> StrForm:
         """Get the root (e.g., '/' on Unix)."""
-        from nu import FuncCall, StrI
+        from nu import FuncCall, StrForm
 
-        return StrI(FuncCall(getattr, self, "root"))
+        return StrForm(FuncCall(getattr, self, "root"))
 
-    def anchor(self) -> StrI:
+    def anchor(self) -> StrForm:
         """Get the anchor (drive + root)."""
-        from nu import FuncCall, StrI
+        from nu import FuncCall, StrForm
 
-        return StrI(FuncCall(getattr, self, "anchor"))
+        return StrForm(FuncCall(getattr, self, "anchor"))
 
-    def parts(self) -> TupleI:
+    def parts(self) -> TupleForm:
         """Get path parts as a tuple."""
-        from nu import FuncCall, TupleI
+        from nu import FuncCall, TupleForm
 
-        return TupleI(FuncCall(getattr, self, "parts"))
+        return TupleForm(FuncCall(getattr, self, "parts"))
 
-    def parents(self) -> TupleI:
+    def parents(self) -> TupleForm:
         """Get an immutable sequence of parent paths."""
-        from nu import FuncCall, TupleI
+        from nu import FuncCall, TupleForm
 
-        return TupleI(FuncCall(tuple, FuncCall(getattr, self, "parents")))
+        return TupleForm(FuncCall(tuple, FuncCall(getattr, self, "parents")))
 
     # =========================================================================
     # PATH MANIPULATION
@@ -174,109 +174,109 @@ class _PathI(Interface):
     # PATH TESTS
     # =========================================================================
 
-    def is_absolute(self) -> BoolI:
+    def is_absolute(self) -> BoolForm:
         """Check if path is absolute."""
-        from nu import BoolI, MethodCall
+        from nu import BoolForm, MethodCall
 
-        return BoolI(MethodCall(self, "is_absolute"))
+        return BoolForm(MethodCall(self, "is_absolute"))
 
-    def is_relative_to(self, other: PathArg | str | Nu[str]) -> BoolI:
+    def is_relative_to(self, other: PathArg | str | Nu[str]) -> BoolForm:
         """Check if path is relative to other."""
-        from nu import BoolI, MethodCall
+        from nu import BoolForm, MethodCall
 
         if isinstance(other, (Path, PurePath)):
             other = PathI(other)
-        return BoolI(MethodCall(self, "is_relative_to", other))
+        return BoolForm(MethodCall(self, "is_relative_to", other))
 
-    def match(self, pattern: str | Nu[str]) -> BoolI:
+    def match(self, pattern: str | Nu[str]) -> BoolForm:
         """Match path against a glob pattern."""
-        from nu import BoolI, MethodCall
+        from nu import BoolForm, MethodCall
 
-        return BoolI(MethodCall(self, "match", pattern))
+        return BoolForm(MethodCall(self, "match", pattern))
 
     # =========================================================================
     # FILESYSTEM OPERATIONS (executed at runtime)
     # =========================================================================
 
-    def exists(self) -> BoolI:
+    def exists(self) -> BoolForm:
         """Check if path exists."""
-        from nu import BoolI, MethodCall
+        from nu import BoolForm, MethodCall
 
-        return BoolI(MethodCall(self, "exists"))
+        return BoolForm(MethodCall(self, "exists"))
 
-    def is_file(self) -> BoolI:
+    def is_file(self) -> BoolForm:
         """Check if path is a file."""
-        from nu import BoolI, MethodCall
+        from nu import BoolForm, MethodCall
 
-        return BoolI(MethodCall(self, "is_file"))
+        return BoolForm(MethodCall(self, "is_file"))
 
-    def is_dir(self) -> BoolI:
+    def is_dir(self) -> BoolForm:
         """Check if path is a directory."""
-        from nu import BoolI, MethodCall
+        from nu import BoolForm, MethodCall
 
-        return BoolI(MethodCall(self, "is_dir"))
+        return BoolForm(MethodCall(self, "is_dir"))
 
-    def is_symlink(self) -> BoolI:
+    def is_symlink(self) -> BoolForm:
         """Check if path is a symlink."""
-        from nu import BoolI, MethodCall
+        from nu import BoolForm, MethodCall
 
-        return BoolI(MethodCall(self, "is_symlink"))
+        return BoolForm(MethodCall(self, "is_symlink"))
 
-    def is_mount(self) -> BoolI:
+    def is_mount(self) -> BoolForm:
         """Check if path is a mount point."""
-        from nu import BoolI, MethodCall
+        from nu import BoolForm, MethodCall
 
-        return BoolI(MethodCall(self, "is_mount"))
+        return BoolForm(MethodCall(self, "is_mount"))
 
     # =========================================================================
     # CONVERSIONS
     # =========================================================================
 
-    def as_posix(self) -> StrI:
+    def as_posix(self) -> StrForm:
         """Return path with forward slashes."""
-        from nu import MethodCall, StrI
+        from nu import MethodCall, StrForm
 
-        return StrI(MethodCall(self, "as_posix"))
+        return StrForm(MethodCall(self, "as_posix"))
 
-    def as_uri(self) -> StrI:
+    def as_uri(self) -> StrForm:
         """Return path as file:// URI."""
-        from nu import MethodCall, StrI
+        from nu import MethodCall, StrForm
 
-        return StrI(MethodCall(self, "as_uri"))
+        return StrForm(MethodCall(self, "as_uri"))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: PathArg) -> BoolI:
-        from nu import BoolI, Gt
+    def __gt__(self, other: PathArg) -> BoolForm:
+        from nu import BoolForm, Gt
 
-        return BoolI(Gt(self, other))
+        return BoolForm(Gt(self, other))
 
-    def __lt__(self, other: PathArg) -> BoolI:
-        from nu import BoolI, Lt
+    def __lt__(self, other: PathArg) -> BoolForm:
+        from nu import BoolForm, Lt
 
-        return BoolI(Lt(self, other))
+        return BoolForm(Lt(self, other))
 
-    def __ge__(self, other: PathArg) -> BoolI:
-        from nu import BoolI, Ge
+    def __ge__(self, other: PathArg) -> BoolForm:
+        from nu import BoolForm, Ge
 
-        return BoolI(Ge(self, other))
+        return BoolForm(Ge(self, other))
 
-    def __le__(self, other: PathArg) -> BoolI:
-        from nu import BoolI, Le
+    def __le__(self, other: PathArg) -> BoolForm:
+        from nu import BoolForm, Le
 
-        return BoolI(Le(self, other))
+        return BoolForm(Le(self, other))
 
-    def eq(self, other: PathArg) -> BoolI:
-        from nu import BoolI, Eq
+    def eq(self, other: PathArg) -> BoolForm:
+        from nu import BoolForm, Eq
 
-        return BoolI(Eq(self, other))
+        return BoolForm(Eq(self, other))
 
-    def ne(self, other: PathArg) -> BoolI:
-        from nu import BoolI, Ne
+    def ne(self, other: PathArg) -> BoolForm:
+        from nu import BoolForm, Ne
 
-        return BoolI(Ne(self, other))
+        return BoolForm(Ne(self, other))
 
 
 # =============================================================================

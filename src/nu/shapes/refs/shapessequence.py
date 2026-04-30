@@ -1,7 +1,7 @@
 """ShapesSequence ref hierarchy — sequence of shapes + Ref navigation.
 
-ShapesSequenceRef         = SequenceI[dict[str, object], ...] + Ref
-MutableShapesSequenceRef  = MutableSequenceI[dict[str, object], ...] + Ref
+ShapesSequenceRef         = SequenceForm[dict[str, object], ...] + Ref
+MutableShapesSequenceRef  = MutableSequenceForm[dict[str, object], ...] + Ref
 ReactiveShapesSequenceRef = ReactiveSequenceI[dict[str, object], ...] + Ref
 
 Specialized sequence refs where each element is a shape (dict[str, object]).
@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu.shapes.collections import MutableSequenceI, ReactiveSequenceI, SequenceI
+from nu.shapes.collections import MutableSequenceForm, ReactiveSequenceI, SequenceForm
 
 from .base import Ref
 
@@ -36,7 +36,7 @@ __all__ = [
 
 
 class ShapesSequenceRef[T: ShapeBase](
-    SequenceI[dict[str, object], object, object],
+    SequenceForm[dict[str, object], object, object],
     Ref[list[dict[str, object]]],
 ):
     """Shapes sequence ref — read-only sequence of shapes with navigation."""
@@ -56,7 +56,7 @@ class ShapesSequenceRef[T: ShapeBase](
 
 
 class MutableShapesSequenceRef[T: ShapeBase](
-    MutableSequenceI[dict[str, object], object, object],
+    MutableSequenceForm[dict[str, object], object, object],
     ShapesSequenceRef[T],
 ):
     """Mutable shapes sequence ref — mutations + navigation."""

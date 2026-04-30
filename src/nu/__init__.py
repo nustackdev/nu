@@ -1,16 +1,13 @@
 """Nu - core library for the Nu ecosystem.
 
 Subpackages:
-    terms/          -- algebra terms (Nu, Literal, Ref, Interaction, Sentinel, Arg)
+    terms/          -- algebra terms (Nu, NuBase, Interaction, Ref, ...)
     context/        -- runtime resource container
-    interface/      -- base Interface class and descriptors
-    primitives/     -- primitive type interfaces (IntI, StrI, etc.)
-    collections/    -- collection type interfaces (ListI, DictI, etc.)
+    forms/          -- typed Form layer (Form base, primitives/, collections/)
     queries/        -- concrete Query atoms (Add, Eq, Filter, Map, ...)
     commands/       -- concrete Command atoms (Print, Log, Debug, SkipIf*)
     flows/          -- concrete Flow atoms (Sequential, Parallel, IfDo, ForEachDo, ...)
     spans/          -- concrete Span atoms (Snapshot, Transaction, Retry, TryCatch, ...)
-    forms/          -- (placeholder for native Form layer)
     shapes/         -- document data model
     stdio/          -- stdio fabric (StdioRef, StdioWrite, StdioBackend)
     tree/           -- node structure, traversal, queries, and rewrites
@@ -20,16 +17,16 @@ Subpackages:
 
 from __future__ import annotations
 
-from .collections import (
-    DictI,
-    DictItemsI,
-    DictKeysI,
-    DictValuesI,
-    FrozenSetI,
-    IteratorI,
-    ListI,
-    SetI,
-    TupleI,
+from .forms.collections import (
+    DictForm,
+    DictItemsForm,
+    DictKeysForm,
+    DictValuesForm,
+    FrozenSetForm,
+    IteratorForm,
+    ListForm,
+    SetForm,
+    TupleForm,
 )
 from .context import (
     AnyAttrRef,
@@ -78,7 +75,7 @@ from .terms import (
     FuncCallCmd,
     IntArg,
     Interaction,
-    Interface,
+    Form,
     Invalid,
     ListArg,
     MethodCall,
@@ -200,17 +197,17 @@ from .queries import (
     or_,
 )
 from .spans import Debounce, Retry, Throttle, Timeout, TryCatch
-from .primitives import (
-    AnyI,
-    BoolI,
-    BytesI,
-    EmptyI,
-    FloatI,
-    IntI,
-    InvalidI,
-    NoneI,
-    SentinelI,
-    StrI,
+from .forms.primitives import (
+    AnyForm,
+    BoolForm,
+    BytesForm,
+    EmptyForm,
+    FloatForm,
+    IntForm,
+    InvalidForm,
+    NoneForm,
+    SentinelForm,
+    StrForm,
 )
 from .tree import (
     Transform,
@@ -249,12 +246,10 @@ from .stdio import (
 
 # explicit submodule re-exports
 from . import (  # noqa: E402, F401
-    collections,
     commands,
     context,
     flows,
     forms,
-    primitives,
     queries,
     shapes,
     spans,
@@ -276,7 +271,7 @@ __all__ = [
     "And",
     "AnyElem",
     "AnyAttrRef",
-    "AnyI",
+    "AnyForm",
     "Arg",
     "At",
     "AttrRef",
@@ -287,11 +282,11 @@ __all__ = [
     "Bool",
     "BoolArg",
     "BoolAttrRef",
-    "BoolI",
+    "BoolForm",
     "BufferedStdio",
     "BytesArg",
     "BytesAttrRef",
-    "BytesI",
+    "BytesForm",
     "Chain",
     "Collect",
     "Command",
@@ -302,15 +297,15 @@ __all__ = [
     "DelAttr",
     "DictArg",
     "DictAttrRef",
-    "DictI",
-    "DictItemsI",
-    "DictKeysI",
-    "DictValuesI",
+    "DictForm",
+    "DictItemsForm",
+    "DictKeysForm",
+    "DictValuesForm",
     "Div",
     "DoWhile",
     "Drop",
     "Empty",
-    "EmptyI",
+    "EmptyForm",
     "Enumerate",
     "Eq",
     "Filter",
@@ -321,7 +316,7 @@ __all__ = [
     "Flatten",
     "FloatArg",
     "FloatAttrRef",
-    "FloatI",
+    "FloatForm",
     "FloorDiv",
     "Flow",
     "Fold",
@@ -331,7 +326,7 @@ __all__ = [
     "Forever",
     "FrozenSetArg",
     "FrozenSetAttrRef",
-    "FrozenSetI",
+    "FrozenSetForm",
     "FuncCall",
     "FuncCallCmd",
     "Ge",
@@ -343,24 +338,24 @@ __all__ = [
     "IfDo",
     "IntArg",
     "IntAttrRef",
-    "IntI",
+    "IntForm",
     "Interaction",
-    "Interface",
+    "Form",
     "Invalid",
     "Invocation",
     "Invoke",
-    "InvalidI",
+    "InvalidForm",
     "IsEmpty",
     "IsInvalid",
     "Iter",
-    "IteratorI",
+    "IteratorForm",
     "LShift",
     "Last",
     "Le",
     "Len",
     "ListArg",
     "ListAttrRef",
-    "ListI",
+    "ListForm",
     "Literal",
     "Log",
     "Lt",
@@ -377,7 +372,7 @@ __all__ = [
     "Ne",
     "Neg",
     "NoneArg",
-    "NoneI",
+    "NoneForm",
     "Not",
     "NotEmpty",
     "NotInvalid",
@@ -398,11 +393,11 @@ __all__ = [
     "Retry",
     "Reversed",
     "Sentinel",
-    "SentinelI",
+    "SentinelForm",
     "SetArg",
     "SetAttr",
     "SetAttrRef",
-    "SetI",
+    "SetForm",
     "Shape",
     "SkipIfEmpty",
     "SkipIfExists",
@@ -418,7 +413,7 @@ __all__ = [
     "StdioWrite",
     "StrArg",
     "StrAttrRef",
-    "StrI",
+    "StrForm",
     "Sub",
     "Sum",
     "Switch",
@@ -443,7 +438,7 @@ __all__ = [
     "TryCatch",
     "TupleArg",
     "TupleAttrRef",
-    "TupleI",
+    "TupleForm",
     "TypedNu",
     "Unique",
     "UniqueDo",

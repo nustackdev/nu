@@ -1,29 +1,29 @@
-"""Sentinel interfaces - SentinelI, EmptyI, InvalidI."""
+"""Sentinel interfaces - SentinelForm, EmptyForm, InvalidForm."""
 
 from __future__ import annotations
 
-from nu.terms import EMPTY, INVALID, Empty, Interface, Invalid, Sentinel, TypedNu
+from nu.terms import EMPTY, INVALID, Empty, Form, Invalid, Sentinel, TypedNu
 
 
 __all__ = [
-    "EmptyI",
-    "InvalidI",
-    "SentinelI",
+    "EmptyForm",
+    "InvalidForm",
+    "SentinelForm",
 ]
 
 
-class SentinelI[T: Sentinel](Interface, TypedNu[T]):
+class SentinelForm[T: Sentinel](Form, TypedNu[T]):
     """Base for sentinel interfaces (Empty, Invalid)."""
 
 
-class EmptyI(SentinelI[Empty]):
+class EmptyForm(SentinelForm[Empty]):
     """Empty interface - represents absence of a value."""
 
     def __init__(self) -> None:
         super().__init__(EMPTY)
 
 
-class InvalidI(SentinelI[Invalid]):
+class InvalidForm(SentinelForm[Invalid]):
     """Invalid interface - represents invalid/undefined operations."""
 
     def __init__(self) -> None:

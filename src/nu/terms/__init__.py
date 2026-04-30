@@ -2,7 +2,7 @@
 
 Re-exports the abstract bases from `protocol`, `nu`, `interaction`,
 `ref`, `query`, `command`, `flow`, `span`, `effects`, `sentinels`,
-`types`. Plus `Interface` and `TypedNu` from `nu.interface`, and the
+`types`. Plus `Form` and `TypedNu` from `nu.forms.form`, and the
 python bridge (`Invoke`, `Invocation`, `FuncCall`, `MethodCall`) from
 `nu.invocation`.
 
@@ -11,7 +11,7 @@ Concrete Query/Flow/Span atoms live in `nu.queries`, `nu.flows`,
 is the algebraic primitive every kind class subclasses.
 """
 
-from ..interface import Interface, TypedNu
+from ..forms.form import Form, TypedNu
 from ..invocation import FuncCall, FuncCallCmd, Invocation, Invoke, MethodCall, MethodCallCmd
 from .command import Command, ScalarCommand
 from .effects import TrackedEffect, is_pure, tracked_effects
@@ -64,7 +64,7 @@ __all__ = [
     "FuncCallCmd",
     "IntArg",
     "Interaction",
-    "Interface",
+    "Form",
     "Invalid",
     "Invocation",
     "Invoke",

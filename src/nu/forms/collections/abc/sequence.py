@@ -1,7 +1,7 @@
 """Sequence collection — bases + mutations.
 
-SequenceI = Collection + Sliceable + first/last/index/count/reversed
-MutableSequenceI = Sequence + append/insert/pop/extend/remove/reverse
+SequenceForm = Collection + Sliceable + first/last/index/count/reversed
+MutableSequenceForm = Sequence + append/insert/pop/extend/remove/reverse
 
 Sorted/Reversed are standalone functions in ``abc.fn``.
 
@@ -20,26 +20,26 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from .collection import CollectionI
-from .sliceable import SliceableI
+from .collection import CollectionForm
+from .sliceable import SliceableForm
 
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from nu.primitives import IntI, NoneI
+    from nu.forms.primitives import IntForm, NoneForm
     from nu.terms import Arg, IntArg
 
 
 __all__ = [
-    "MutableSequenceI",
-    "SequenceI",
+    "MutableSequenceForm",
+    "SequenceForm",
 ]
 
 
-class SequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT](
-    CollectionI[ElementT, CollectionResultT, ElementResultT],
-    SliceableI[CollectionResultT],
+class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    CollectionForm[ElementT, CollectionResultT, ElementResultT],
+    SliceableForm[CollectionResultT],
 ):
     """Base for sequence values — like collections.abc.Sequence.
 
@@ -62,21 +62,21 @@ class SequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return cast("ElementResultT", self._wrap_element_result(LastOp(self)))
 
-    def index(self, value: Arg[ElementT]) -> IntI:
+    def index(self, value: Arg[ElementT]) -> IntForm:
         """Find index of value."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
 
         from .sequence_ops import IndexOfOp
 
-        return IntI(IndexOfOp(self, value))
+        return IntForm(IndexOfOp(self, value))
 
-    def count(self, value: Arg[ElementT]) -> IntI:
+    def count(self, value: Arg[ElementT]) -> IntForm:
         """Count occurrences."""
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
 
         from .sequence_ops import CountOp
 
-        return IntI(CountOp(self, value))
+        return IntForm(CountOp(self, value))
 
     def reversed(self) -> CollectionResultT:
         """Reversed copy of this sequence."""
@@ -85,8 +85,8 @@ class SequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return cast("CollectionResultT", self._wrap_iterable_result(Reversed(self)))
 
 
-class MutableSequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT](
-    SequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT],
+class MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for mutable sequence values — like collections.abc.MutableSequence.
 

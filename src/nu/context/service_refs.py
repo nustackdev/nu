@@ -10,7 +10,7 @@ from nu.terms.types import Mode
 
 if TYPE_CHECKING:
     from nu.context import Context
-    from nu.primitives import BoolI
+    from nu.forms.primitives import BoolForm
 
 
 __all__ = [
@@ -53,10 +53,10 @@ class ServiceRef[T](Ref[T]):
     async def aeval(self, ctx: Context) -> Any:  # noqa: ANN401, D102
         return ctx.get(self._service_type)
 
-    def exists(self) -> BoolI:
+    def exists(self) -> BoolForm:
         """Check if service exists in context."""
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
         from .service_ops import ServiceExistsOp
 
-        return BoolI(ServiceExistsOp(self))
+        return BoolForm(ServiceExistsOp(self))

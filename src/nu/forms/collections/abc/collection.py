@@ -1,6 +1,6 @@
 """Collection capability.
 
-CollectionI = Sized + Iterable + Container.
+CollectionForm = Sized + Iterable + Container.
 
 Follows Python's collections.abc.Collection pattern.
 
@@ -12,25 +12,25 @@ Type Parameters:
 
 from __future__ import annotations
 
-from .container import ContainerI
-from .iterable import IterableI
-from .sized import SizedI
+from .container import ContainerForm
+from .iterable import IterableForm
+from .sized import SizedForm
 
 
 __all__ = [
-    "CollectionI",
+    "CollectionForm",
 ]
 
 
-class CollectionI[ElementT, CollectionResultT, ElementResultT](
-    SizedI,
-    IterableI[ElementT, CollectionResultT, ElementResultT],
-    ContainerI,
+class CollectionForm[ElementT, CollectionResultT, ElementResultT](
+    SizedForm,
+    IterableForm[ElementT, CollectionResultT, ElementResultT],
+    ContainerForm,
 ):
     """Base for collection values - like collections.abc.Collection.
 
-    Inherits len() from SizedI, __contains__ from ContainerI,
-    and wrapping infrastructure from IterableI.
+    Inherits len() from SizedForm, __contains__ from ContainerForm,
+    and wrapping infrastructure from IterableForm.
 
     Type Parameters:
         ElementT: Native Python element type

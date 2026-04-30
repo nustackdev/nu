@@ -1,7 +1,7 @@
 """Mapping collection — bases + mutations.
 
-MappingI = Collection + keys/values/items/get
-MutableMappingI = Mapping + set/delete/update/pop/popitem/setdefault/clear
+MappingForm = Collection + keys/values/items/get
+MutableMappingForm = Mapping + set/delete/update/pop/popitem/setdefault/clear
 
 Follows Python's collections.abc.Mapping / MutableMapping pattern.
 
@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
-from .collection import CollectionI
+from .collection import CollectionForm
 
 
 if TYPE_CHECKING:
@@ -29,13 +29,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "MappingI",
-    "MutableMappingI",
+    "MappingForm",
+    "MutableMappingForm",
 ]
 
 
-class MappingI[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
-    CollectionI[KeyT, CollectionResultT, ValueResultT],
+class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
+    CollectionForm[KeyT, CollectionResultT, ValueResultT],
 ):
     """Base for mapping values — like collections.abc.Mapping.
 
@@ -94,8 +94,8 @@ class MappingI[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
         return cast("ValueResultT", self._wrap_value_result(GetOp(self, key, default)))
 
 
-class MutableMappingI[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
-    MappingI[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
+    MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
     """Base for mutable mapping values — like collections.abc.MutableMapping.
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from nu.terms import Interface
+from nu.terms import Form
 
 
 if TYPE_CHECKING:
@@ -12,11 +12,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "SliceableI",
+    "SliceableForm",
 ]
 
 
-class SliceableI[ResultT](Interface):
+class SliceableForm[ResultT](Form):
     """Base for values that support slicing."""
 
     def _wrap_sliceable_result(self, operand: Nu) -> Nu:
