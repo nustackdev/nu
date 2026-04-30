@@ -9,7 +9,9 @@ from nu.terms.types import Mode
 
 
 if TYPE_CHECKING:
-    from nu.terms import Nu
+    from collections.abc import Iterable
+
+    from nu.terms import Arg, Nu, StrArg
 
 
 __all__ = [
@@ -56,23 +58,39 @@ class IfDo(Control):
 
 
 class ForEachDo(Control):
-    """`ForEachDo(items_q, body_c)` - run body for each item."""
+    """`ForEachDo(items_q, body_c, item="item")` - run body for each item.
+
+    Binds the current element to `ctx.attrs[item]` before running body,
+    so the body can read it via `AttrRef(item)`.
+    """
 
     body_slots: ClassVar[tuple[int, ...]] = (1,)
     support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(
+        self,
+        items: Arg[Iterable],
+        body: Nu,
+        *,
+        item: StrArg = "item",
+    ) -> None:
+        super().__init__(items, body, item)
 
     def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu.terms.dispatch import ExecState, atom_dispatch
 
         items_q = self._children[0]
         body = self._children[1]
+        item_key: str = self._children[2].eval(ctx)
         opener = getattr(items_q, "open", None)
         if opener is not None:
-            for _ in opener(ctx):
+            for elem in opener(ctx):
+                ctx.attrs[item_key] = elem
                 atom_dispatch(body, ExecState.NO_LOOP)(ctx)
         else:
             seq = items_q.eval(ctx)
-            for _ in seq:
+            for elem in seq:
+                ctx.attrs[item_key] = elem
                 atom_dispatch(body, ExecState.NO_LOOP)(ctx)
 
     async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
@@ -80,13 +98,16 @@ class ForEachDo(Control):
 
         items_q = self._children[0]
         body = self._children[1]
+        item_key: str = await self._children[2].aeval(ctx)
         opener = getattr(items_q, "aopen", None)
         if opener is not None:
-            async for _ in opener(ctx):
+            async for elem in opener(ctx):
+                ctx.attrs[item_key] = elem
                 await atom_dispatch(body, ExecState.LOOP)(ctx)
         else:
             seq = await items_q.aeval(ctx)
-            for _ in seq:
+            for elem in seq:
+                ctx.attrs[item_key] = elem
                 await atom_dispatch(body, ExecState.LOOP)(ctx)
 
 
@@ -127,7 +148,7 @@ class While(Control):
     def __init__(self, condition: Any, body: Nu) -> None:  # noqa: ANN401
         super().__init__(condition, body)
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401
+    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         cond_q = self._children[0]
@@ -135,7 +156,7 @@ class While(Control):
         while runtime.first(cond_q, ctx):
             runtime.execute(body, ctx)
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         cond_q = self._children[0]
@@ -157,7 +178,7 @@ class DoWhile(Control):
         # Body in slot 0, condition in slot 1 to satisfy body_slots invariants.
         super().__init__(body, condition)
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401
+    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         body = self._children[0]
@@ -166,7 +187,7 @@ class DoWhile(Control):
         while runtime.first(cond_q, ctx):
             runtime.execute(body, ctx)
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         body = self._children[0]
@@ -188,14 +209,14 @@ class Forever(Control):
     def __init__(self, body: Nu) -> None:
         super().__init__(body)
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401
+    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         body = self._children[0]
         while True:
             runtime.execute(body, ctx)
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         body = self._children[0]
@@ -230,7 +251,7 @@ class SwitchDo(Control):
 
     body_slots: ClassVar[tuple[int, ...]] = tuple(range(1, 1024))
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401
+    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         value = runtime.first(self._children[0], ctx)
@@ -241,7 +262,7 @@ class SwitchDo(Control):
         if self._has_default:
             runtime.execute(self._children[-1], ctx)
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         value = await runtime.afirst(self._children[0], ctx)
