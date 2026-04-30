@@ -41,12 +41,12 @@ class ListI[T](
     # =========================================================================
 
     def __add__(self, other: ListArg[T]) -> ListI[T]:
-        from nu.interactions import Add
+        from nu import Add
 
         return ListI(Add(self, other))
 
     def __radd__(self, other: ListArg[T]) -> ListI[T]:
-        from nu.interactions import Add
+        from nu import Add
 
         return ListI(Add(other, self))
 
@@ -59,7 +59,7 @@ class ListI[T](
     @overload
     def __getitem__(self, key: slice) -> ListI[T]: ...
     def __getitem__(self, key: IntArg | slice) -> AnyI | ListI[T]:
-        from nu.interactions import At, Slice
+        from nu import At, Slice
         from nu.primitives import AnyI
 
         if isinstance(key, slice):
@@ -71,43 +71,43 @@ class ListI[T](
     # =========================================================================
 
     def __gt__(self, other: ListArg[T]) -> BoolI:
-        from nu.interactions import Gt
+        from nu import Gt
         from nu.primitives import BoolI
 
         return BoolI(Gt(self, other))
 
     def __lt__(self, other: ListArg[T]) -> BoolI:
-        from nu.interactions import Lt
+        from nu import Lt
         from nu.primitives import BoolI
 
         return BoolI(Lt(self, other))
 
     def __ge__(self, other: ListArg[T]) -> BoolI:
-        from nu.interactions import Ge
+        from nu import Ge
         from nu.primitives import BoolI
 
         return BoolI(Ge(self, other))
 
     def __le__(self, other: ListArg[T]) -> BoolI:
-        from nu.interactions import Le
+        from nu import Le
         from nu.primitives import BoolI
 
         return BoolI(Le(self, other))
 
     def eq(self, other: ListArg[T]) -> BoolI:
-        from nu.interactions import Eq
+        from nu import Eq
         from nu.primitives import BoolI
 
         return BoolI(Eq(self, other))
 
     def ne(self, other: ListArg[T]) -> BoolI:
-        from nu.interactions import Ne
+        from nu import Ne
         from nu.primitives import BoolI
 
         return BoolI(Ne(self, other))
 
     def is_(self, other: ListArg[T]) -> BoolI:
-        from nu.interactions import IdComp
+        from nu import IdComp
         from nu.primitives import BoolI
 
         return BoolI(IdComp(self, other))

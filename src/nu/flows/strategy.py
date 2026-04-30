@@ -1,20 +1,26 @@
-"""Strategy concretes - Sequential, Parallel, Race, Gather.
+"""Strategy concretes - Sequential, Parallel, Race, Gather, ParAny.
 
 `Sequential` is the `>>` operator's target; `Parallel` is `|`; `Race`
 is `&`. `Gather` runs concurrently and (eventually) collects yields.
+`ParAny` runs children concurrently and succeeds if any one succeeds.
 """
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 from typing import Literal as TLiteral
 
 from nu.terms.flow import Strategy
 from nu.terms.types import Mode
 
 
+if TYPE_CHECKING:
+    from nu.terms import Nu
+
+
 __all__ = [
     "Gather",
+    "ParAny",
     "Parallel",
     "Race",
     "Sequential",
@@ -149,3 +155,48 @@ class Gather(Strategy):
 
     _run_children = Parallel._run_children
     _arun_children = Parallel._arun_children
+
+
+class ParAny(Strategy):
+    """Run children concurrently; succeed if any one succeeds.
+
+    Children: ``[*children]`` -- all body slots (Strategy semantics).
+    """
+
+    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
+
+    def __init__(self, *children: Nu) -> None:
+        super().__init__(*children)
+
+    async def _arun_children(self, ctx: Any) -> None:  # noqa: ANN401
+        import asyncio
+
+        from nu import runtime
+
+        if not self._children:
+            return
+        tasks = {asyncio.create_task(runtime.aexecute(child, ctx)) for child in self._children}
+        last_error: BaseException | None = None
+        try:
+            while tasks:
+                done, tasks = await asyncio.wait(
+                    tasks,
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                for task in done:
+                    exc = task.exception()
+                    if exc is None:
+                        for t in tasks:
+                            t.cancel()
+                        if tasks:
+                            await asyncio.gather(*tasks, return_exceptions=True)
+                        return
+                    last_error = exc
+            if last_error is not None:
+                raise last_error
+        except BaseException:
+            for task in tasks:
+                task.cancel()
+            if tasks:
+                await asyncio.gather(*tasks, return_exceptions=True)
+            raise

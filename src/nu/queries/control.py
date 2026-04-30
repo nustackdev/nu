@@ -3,7 +3,7 @@
 Single-yield Scalar Queries that evaluate a selector and return the
 chosen branch's first value. For the imperative Command variants that
 dispatch the branch's full stream, see
-``nu.interactions.command.flow.control`` (IfDo, SwitchDo).
+``nu.flows.control`` (IfDo, SwitchDo).
 """
 
 from __future__ import annotations

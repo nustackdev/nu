@@ -30,28 +30,28 @@ class NoneI(Interface, TypedNu[None]):
     # =========================================================================
 
     def and_(self, other: NoneArg) -> BoolI:
-        from nu.interactions import And
+        from nu import And
 
         from .bool_ import BoolI
 
         return BoolI(And(self, other))
 
     def or_(self, other: NoneArg) -> BoolI:
-        from nu.interactions import Or
+        from nu import Or
 
         from .bool_ import BoolI
 
         return BoolI(Or(self, other))
 
     def not_(self) -> BoolI:
-        from nu.interactions import Not
+        from nu import Not
 
         from .bool_ import BoolI
 
         return BoolI(Not(self))
 
     def bool_(self) -> BoolI:
-        from nu.interactions import Bool
+        from nu import Bool
 
         from .bool_ import BoolI
 

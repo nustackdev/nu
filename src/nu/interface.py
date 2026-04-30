@@ -46,13 +46,13 @@ class Interface:
     """ABC for typed interfaces. Contributes sentinel-check helpers."""
 
     def is_empty(self) -> BoolI:
-        from nu.interactions import IsEmpty
+        from nu import IsEmpty
         from nu.primitives import BoolI
 
         return BoolI(IsEmpty(self))
 
     def is_invalid(self) -> BoolI:
-        from nu.interactions import IsInvalid
+        from nu import IsInvalid
         from nu.primitives import BoolI
 
         return BoolI(IsInvalid(self))

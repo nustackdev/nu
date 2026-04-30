@@ -9,7 +9,7 @@ from typing import ClassVar
 import pytest
 
 from nu import Context, runtime
-from nu.interactions import Debug, Log, Print
+from nu import Debug, Log, Print
 from nu.stdio import (
     STDERR,
     STDIN,
@@ -300,7 +300,7 @@ class TestBufferedStdio:
 class TestEffectIsolation:
     def test_stdio_effects_separate_from_calc(self):
         """StdioWrite produces effects, pure ops don't."""
-        from nu.interactions import Add
+        from nu import Add
 
         pure = Add(1, 2)
         assert len(tracked_effects(pure)) == 0
@@ -310,7 +310,7 @@ class TestEffectIsolation:
 
     def test_mixed_tree_effects(self):
         """A composed tree with both stdio and pure ops tracks only stdio effects."""
-        from nu.interactions import Add
+        from nu import Add
 
         # Sequential >> needs Commands; mix two stdio writes around a pure op
         # via a Sequential of two stdio commands. Add is a Query, can't be in

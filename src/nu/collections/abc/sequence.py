@@ -80,7 +80,7 @@ class SequenceI[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def reversed(self) -> CollectionResultT:
         """Reversed copy of this sequence."""
-        from nu.interactions import Reversed
+        from nu import Reversed
 
         return cast("CollectionResultT", self._wrap_iterable_result(Reversed(self)))
 

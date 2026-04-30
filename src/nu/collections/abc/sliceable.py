@@ -27,6 +27,6 @@ class SliceableI[ResultT](Interface):
         self, start: IntArg | None, stop: IntArg | None, step: IntArg | None = None
     ) -> ResultT:
         """Get slice of this value."""
-        from nu.interactions import Slice
+        from nu import Slice
 
         return cast("ResultT", self._wrap_sliceable_result(Slice(self, start, stop, step)))

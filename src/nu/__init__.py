@@ -6,7 +6,11 @@ Subpackages:
     interface/      -- base Interface class and descriptors
     primitives/     -- primitive type interfaces (IntI, StrI, etc.)
     collections/    -- collection type interfaces (ListI, DictI, etc.)
-    interactions/   -- all concrete Query/Command classes
+    queries/        -- concrete Query atoms (Add, Eq, Filter, Map, ...)
+    commands/       -- concrete Command atoms (Print, Log, Debug, SkipIf*)
+    flows/          -- concrete Flow atoms (Sequential, Parallel, IfDo, ForEachDo, ...)
+    spans/          -- concrete Span atoms (Snapshot, Transaction, Retry, TryCatch, ...)
+    forms/          -- (placeholder for native Form layer)
     shapes/         -- document data model
     stdio/          -- stdio fabric (StdioRef, StdioWrite, StdioBackend)
     tree/           -- node structure, traversal, queries, and rewrites
@@ -43,7 +47,19 @@ from .context import (
     StrAttrRef,
     TupleAttrRef,
 )
-from .flows import ForEachDo, IfDo, Parallel, Race
+from .flows import (
+    DoWhile,
+    ForEach,
+    ForEachDo,
+    ForRange,
+    Forever,
+    IfDo,
+    ParAny,
+    Parallel,
+    Race,
+    SwitchDo,
+    While,
+)
 from .queries import Collect, First, Last, Literal, Reduce
 from .terms import (
     EMPTY,
@@ -91,7 +107,16 @@ from .terms import (
     tracked_effects,
 )
 from .invocation import Invocation, Invoke
-from .interactions import (
+from .commands import (
+    Debug,
+    Log,
+    Print,
+    SkipIfEmpty,
+    SkipIfExists,
+    SkipIfMissing,
+    SkipIfNotEmpty,
+)
+from .queries import (
     Abs,
     Add,
     AllElem,
@@ -104,11 +129,8 @@ from .interactions import (
     Bool,
     Chain,
     Contains,
-    Debounce,
-    Debug,
     DelAttr,
     Div,
-    DoWhile,
     Drop,
     Enumerate,
     Eq,
@@ -119,9 +141,6 @@ from .interactions import (
     Flatten,
     FloorDiv,
     Fold,
-    ForEach,
-    Forever,
-    ForRange,
     Ge,
     GetAttr,
     GroupBy,
@@ -131,10 +150,9 @@ from .interactions import (
     IsEmpty,
     IsInvalid,
     Iter,
+    LShift,
     Le,
     Len,
-    Log,
-    LShift,
     Lt,
     Map,
     MaxElem,
@@ -147,31 +165,21 @@ from .interactions import (
     NotEmpty,
     NotInvalid,
     Or,
-    ParAny,
     Partition,
     Pluck,
     Pos,
     Pow,
-    Print,
-    Retry,
-    Reversed,
     RShift,
+    Reversed,
     SetAttr,
-    SkipIfEmpty,
-    SkipIfExists,
-    SkipIfMissing,
-    SkipIfNotEmpty,
     Slice,
     Sorted,
     Sub,
     Sum,
     Switch,
-    SwitchDo,
     Take,
     TakeWhile,
-    Throttle,
     Timed,
-    Timeout,
     ToBool,
     ToBytes,
     ToDict,
@@ -181,10 +189,8 @@ from .interactions import (
     ToSet,
     ToStr,
     ToTuple,
-    TryCatch,
     Unique,
     UniqueDo,
-    While,
     Xor,
     Zip,
     all_,
@@ -193,6 +199,7 @@ from .interactions import (
     none_,
     or_,
 )
+from .spans import Debounce, Retry, Throttle, Timeout, TryCatch
 from .primitives import (
     AnyI,
     BoolI,
@@ -247,7 +254,6 @@ from . import (  # noqa: E402, F401
     context,
     flows,
     forms,
-    interactions,
     primitives,
     queries,
     shapes,

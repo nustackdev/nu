@@ -35,7 +35,7 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __add__(self, other: FloatArg) -> FloatI: ...
     def __add__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.interactions import Add
+        from nu import Add
 
         from .float_ import FloatI
 
@@ -48,7 +48,7 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __radd__(self, other: FloatArg) -> FloatI: ...
     def __radd__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.interactions import Add
+        from nu import Add
 
         from .float_ import FloatI
 
@@ -61,7 +61,7 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __sub__(self, other: FloatArg) -> FloatI: ...
     def __sub__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.interactions import Sub
+        from nu import Sub
 
         from .float_ import FloatI
 
@@ -74,7 +74,7 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __rsub__(self, other: FloatArg) -> FloatI: ...
     def __rsub__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.interactions import Sub
+        from nu import Sub
 
         from .float_ import FloatI
 
@@ -87,7 +87,7 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __mul__(self, other: FloatArg) -> FloatI: ...
     def __mul__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.interactions import Mul
+        from nu import Mul
 
         from .float_ import FloatI
 
@@ -100,7 +100,7 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __rmul__(self, other: FloatArg) -> FloatI: ...
     def __rmul__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.interactions import Mul
+        from nu import Mul
 
         from .float_ import FloatI
 
@@ -109,14 +109,14 @@ class IntI(Interface, TypedNu[int]):
         return IntI(Mul(other, self))
 
     def __truediv__(self, other: IntArg | FloatArg) -> FloatI:
-        from nu.interactions import Div
+        from nu import Div
 
         from .float_ import FloatI
 
         return FloatI(Div(self, other))
 
     def __rtruediv__(self, other: IntArg | FloatArg) -> FloatI:
-        from nu.interactions import Div
+        from nu import Div
 
         from .float_ import FloatI
 
@@ -127,7 +127,7 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __floordiv__(self, other: FloatArg) -> FloatI: ...
     def __floordiv__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.interactions import FloorDiv
+        from nu import FloorDiv
 
         from .float_ import FloatI
 
@@ -140,7 +140,7 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __rfloordiv__(self, other: FloatArg) -> FloatI: ...
     def __rfloordiv__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.interactions import FloorDiv
+        from nu import FloorDiv
 
         from .float_ import FloatI
 
@@ -153,7 +153,7 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __mod__(self, other: FloatArg) -> FloatI: ...
     def __mod__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.interactions import Mod
+        from nu import Mod
 
         from .float_ import FloatI
 
@@ -166,7 +166,7 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __rmod__(self, other: FloatArg) -> FloatI: ...
     def __rmod__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.interactions import Mod
+        from nu import Mod
 
         from .float_ import FloatI
 
@@ -179,7 +179,7 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __pow__(self, other: FloatArg) -> FloatI: ...
     def __pow__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.interactions import Pow
+        from nu import Pow
 
         from .float_ import FloatI
 
@@ -192,7 +192,7 @@ class IntI(Interface, TypedNu[int]):
     @overload
     def __rpow__(self, other: FloatArg) -> FloatI: ...
     def __rpow__(self, other: IntArg | FloatArg) -> IntI | FloatI:
-        from nu.interactions import Pow
+        from nu import Pow
 
         from .float_ import FloatI
 
@@ -201,17 +201,17 @@ class IntI(Interface, TypedNu[int]):
         return IntI(Pow(other, self))
 
     def __neg__(self) -> IntI:
-        from nu.interactions import Neg
+        from nu import Neg
 
         return IntI(Neg(self))
 
     def __pos__(self) -> IntI:
-        from nu.interactions import Pos
+        from nu import Pos
 
         return IntI(Pos(self))
 
     def __abs__(self) -> IntI:
-        from nu.interactions import Abs
+        from nu import Abs
 
         return IntI(Abs(self))
 
@@ -220,49 +220,49 @@ class IntI(Interface, TypedNu[int]):
     # =========================================================================
 
     def __gt__(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.interactions import Gt
+        from nu import Gt
 
         from .bool_ import BoolI
 
         return BoolI(Gt(self, other))
 
     def __lt__(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.interactions import Lt
+        from nu import Lt
 
         from .bool_ import BoolI
 
         return BoolI(Lt(self, other))
 
     def __ge__(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.interactions import Ge
+        from nu import Ge
 
         from .bool_ import BoolI
 
         return BoolI(Ge(self, other))
 
     def __le__(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.interactions import Le
+        from nu import Le
 
         from .bool_ import BoolI
 
         return BoolI(Le(self, other))
 
     def eq(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.interactions import Eq
+        from nu import Eq
 
         from .bool_ import BoolI
 
         return BoolI(Eq(self, other))
 
     def ne(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.interactions import Ne
+        from nu import Ne
 
         from .bool_ import BoolI
 
         return BoolI(Ne(self, other))
 
     def is_(self, other: IntArg | FloatArg) -> BoolI:
-        from nu.interactions import IdComp
+        from nu import IdComp
 
         from .bool_ import BoolI
 
@@ -273,28 +273,28 @@ class IntI(Interface, TypedNu[int]):
     # =========================================================================
 
     def and_(self, other: BoolArg | IntArg) -> BoolI:
-        from nu.interactions import And
+        from nu import And
 
         from .bool_ import BoolI
 
         return BoolI(And(self, other))
 
     def or_(self, other: BoolArg | IntArg) -> BoolI:
-        from nu.interactions import Or
+        from nu import Or
 
         from .bool_ import BoolI
 
         return BoolI(Or(self, other))
 
     def not_(self) -> BoolI:
-        from nu.interactions import Not
+        from nu import Not
 
         from .bool_ import BoolI
 
         return BoolI(Not(self))
 
     def bool_(self) -> BoolI:
-        from nu.interactions import Bool
+        from nu import Bool
 
         from .bool_ import BoolI
 
@@ -305,46 +305,46 @@ class IntI(Interface, TypedNu[int]):
     # =========================================================================
 
     def bitand(self, other: IntArg) -> IntI:
-        from nu.interactions import BitwiseAnd
+        from nu import BitwiseAnd
 
         return IntI(BitwiseAnd(self, other))
 
     def bitor(self, other: IntArg) -> IntI:
-        from nu.interactions import BitwiseOr
+        from nu import BitwiseOr
 
         return IntI(BitwiseOr(self, other))
 
     def __xor__(self, other: IntArg) -> IntI:
-        from nu.interactions import Xor
+        from nu import Xor
 
         return IntI(Xor(self, other))
 
     def __rxor__(self, other: IntArg) -> IntI:
-        from nu.interactions import Xor
+        from nu import Xor
 
         return IntI(Xor(other, self))
 
     def bitnot(self) -> IntI:
-        from nu.interactions import BitwiseNot
+        from nu import BitwiseNot
 
         return IntI(BitwiseNot(self))
 
     def __lshift__(self, other: IntArg) -> IntI:
-        from nu.interactions import LShift
+        from nu import LShift
 
         return IntI(LShift(self, other))
 
     def __rlshift__(self, other: IntArg) -> IntI:
-        from nu.interactions import LShift
+        from nu import LShift
 
         return IntI(LShift(other, self))
 
     def __rshift__(self, other: IntArg) -> IntI:
-        from nu.interactions import RShift
+        from nu import RShift
 
         return IntI(RShift(self, other))
 
     def __rrshift__(self, other: IntArg) -> IntI:
-        from nu.interactions import RShift
+        from nu import RShift
 
         return IntI(RShift(other, self))

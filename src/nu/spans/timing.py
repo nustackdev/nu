@@ -3,7 +3,7 @@
 Span:Policy kinds that wrap a body Command with timing-related rules.
 ASYNC-only (rely on the asyncio loop for cancellation / scheduling).
 
-For wall-clock measurement see `nu.interactions.query.scalar.timing.Timed`.
+For wall-clock measurement see `nu.queries.timing.Timed`.
 For sleep primitives see `nu.stdlib.asyncio.AsyncSleep`.
 """
 

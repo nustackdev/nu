@@ -130,14 +130,14 @@ class _TimezoneI(Interface):
 
     def eq(self, other: TimezoneArg) -> BoolI:
         """Equality check."""
-        from nu.interactions import Eq
+        from nu import Eq
         from nu.primitives import BoolI
 
         return BoolI(Eq(self, other))
 
     def ne(self, other: TimezoneArg) -> BoolI:
         """Inequality check."""
-        from nu.interactions import Ne
+        from nu import Ne
         from nu.primitives import BoolI
 
         return BoolI(Ne(self, other))
@@ -249,7 +249,7 @@ class _TimedeltaI(Interface):
 
     def __add__(self, other: TimedeltaArg) -> TimedeltaI:
         """Add two timedeltas."""
-        from nu.interactions import Add
+        from nu import Add
 
         if isinstance(other, timedelta):
             other = TimedeltaI(other)
@@ -257,7 +257,7 @@ class _TimedeltaI(Interface):
 
     def __radd__(self, other: timedelta) -> TimedeltaI:
         """Right add."""
-        from nu.interactions import Add
+        from nu import Add
 
         if isinstance(other, timedelta):
             other = TimedeltaI(other)
@@ -265,7 +265,7 @@ class _TimedeltaI(Interface):
 
     def __sub__(self, other: TimedeltaArg) -> TimedeltaI:
         """Subtract timedeltas."""
-        from nu.interactions import Sub
+        from nu import Sub
 
         if isinstance(other, timedelta):
             other = TimedeltaI(other)
@@ -273,7 +273,7 @@ class _TimedeltaI(Interface):
 
     def __rsub__(self, other: timedelta) -> TimedeltaI:
         """Right subtract."""
-        from nu.interactions import Sub
+        from nu import Sub
 
         if isinstance(other, timedelta):
             other = TimedeltaI(other)
@@ -281,19 +281,19 @@ class _TimedeltaI(Interface):
 
     def __mul__(self, factor: int | float | Nu) -> TimedeltaI:
         """Multiply timedelta by a scalar."""
-        from nu.interactions import Mul
+        from nu import Mul
 
         return TimedeltaI(Mul(self, factor))
 
     def __rmul__(self, factor: int | float) -> TimedeltaI:
         """Right multiply."""
-        from nu.interactions import Mul
+        from nu import Mul
 
         return TimedeltaI(Mul(factor, self))
 
     def __truediv__(self, divisor: int | float | TimedeltaArg) -> TimedeltaI | FloatI:
         """Divide timedelta."""
-        from nu.interactions import Div
+        from nu import Div
         from nu.primitives import FloatI
 
         if isinstance(divisor, timedelta):
@@ -304,13 +304,13 @@ class _TimedeltaI(Interface):
 
     def __floordiv__(self, divisor: int | Nu[int]) -> TimedeltaI:
         """Floor divide timedelta by scalar."""
-        from nu.interactions import FloorDiv
+        from nu import FloorDiv
 
         return TimedeltaI(FloorDiv(self, divisor))
 
     def __mod__(self, other: TimedeltaArg) -> TimedeltaI:
         """Modulo operation."""
-        from nu.interactions import Mod
+        from nu import Mod
 
         if isinstance(other, timedelta):
             other = TimedeltaI(other)
@@ -318,13 +318,13 @@ class _TimedeltaI(Interface):
 
     def __neg__(self) -> TimedeltaI:
         """Negate."""
-        from nu.interactions import Neg
+        from nu import Neg
 
         return TimedeltaI(Neg(self))
 
     def __abs__(self) -> TimedeltaI:
         """Absolute value."""
-        from nu.interactions import Abs
+        from nu import Abs
 
         return TimedeltaI(Abs(self))
 
@@ -337,37 +337,37 @@ class _TimedeltaI(Interface):
     # =========================================================================
 
     def __gt__(self, other: TimedeltaArg) -> BoolI:
-        from nu.interactions import Gt
+        from nu import Gt
         from nu.primitives import BoolI
 
         return BoolI(Gt(self, other))
 
     def __lt__(self, other: TimedeltaArg) -> BoolI:
-        from nu.interactions import Lt
+        from nu import Lt
         from nu.primitives import BoolI
 
         return BoolI(Lt(self, other))
 
     def __ge__(self, other: TimedeltaArg) -> BoolI:
-        from nu.interactions import Ge
+        from nu import Ge
         from nu.primitives import BoolI
 
         return BoolI(Ge(self, other))
 
     def __le__(self, other: TimedeltaArg) -> BoolI:
-        from nu.interactions import Le
+        from nu import Le
         from nu.primitives import BoolI
 
         return BoolI(Le(self, other))
 
     def eq(self, other: TimedeltaArg) -> BoolI:
-        from nu.interactions import Eq
+        from nu import Eq
         from nu.primitives import BoolI
 
         return BoolI(Eq(self, other))
 
     def ne(self, other: TimedeltaArg) -> BoolI:
-        from nu.interactions import Ne
+        from nu import Ne
         from nu.primitives import BoolI
 
         return BoolI(Ne(self, other))
@@ -525,7 +525,7 @@ class _DateI(Interface):
 
     def __add__(self, delta: TimedeltaArg) -> DateI:
         """Add a timedelta to this date."""
-        from nu.interactions import Add
+        from nu import Add
 
         if isinstance(delta, timedelta):
             delta = TimedeltaI(delta)
@@ -533,7 +533,7 @@ class _DateI(Interface):
 
     def __sub__(self, other: DateArg | TimedeltaArg) -> DateI | TimedeltaI:
         """Subtract a date or timedelta."""
-        from nu.interactions import Sub
+        from nu import Sub
 
         if isinstance(other, date):
             other = DateI(other)
@@ -548,37 +548,37 @@ class _DateI(Interface):
     # =========================================================================
 
     def __gt__(self, other: DateArg) -> BoolI:
-        from nu.interactions import Gt
+        from nu import Gt
         from nu.primitives import BoolI
 
         return BoolI(Gt(self, other))
 
     def __lt__(self, other: DateArg) -> BoolI:
-        from nu.interactions import Lt
+        from nu import Lt
         from nu.primitives import BoolI
 
         return BoolI(Lt(self, other))
 
     def __ge__(self, other: DateArg) -> BoolI:
-        from nu.interactions import Ge
+        from nu import Ge
         from nu.primitives import BoolI
 
         return BoolI(Ge(self, other))
 
     def __le__(self, other: DateArg) -> BoolI:
-        from nu.interactions import Le
+        from nu import Le
         from nu.primitives import BoolI
 
         return BoolI(Le(self, other))
 
     def eq(self, other: DateArg) -> BoolI:
-        from nu.interactions import Eq
+        from nu import Eq
         from nu.primitives import BoolI
 
         return BoolI(Eq(self, other))
 
     def ne(self, other: DateArg) -> BoolI:
-        from nu.interactions import Ne
+        from nu import Ne
         from nu.primitives import BoolI
 
         return BoolI(Ne(self, other))
@@ -719,37 +719,37 @@ class _TimeI(Interface):
     # =========================================================================
 
     def __gt__(self, other: TimeArg) -> BoolI:
-        from nu.interactions import Gt
+        from nu import Gt
         from nu.primitives import BoolI
 
         return BoolI(Gt(self, other))
 
     def __lt__(self, other: TimeArg) -> BoolI:
-        from nu.interactions import Lt
+        from nu import Lt
         from nu.primitives import BoolI
 
         return BoolI(Lt(self, other))
 
     def __ge__(self, other: TimeArg) -> BoolI:
-        from nu.interactions import Ge
+        from nu import Ge
         from nu.primitives import BoolI
 
         return BoolI(Ge(self, other))
 
     def __le__(self, other: TimeArg) -> BoolI:
-        from nu.interactions import Le
+        from nu import Le
         from nu.primitives import BoolI
 
         return BoolI(Le(self, other))
 
     def eq(self, other: TimeArg) -> BoolI:
-        from nu.interactions import Eq
+        from nu import Eq
         from nu.primitives import BoolI
 
         return BoolI(Eq(self, other))
 
     def ne(self, other: TimeArg) -> BoolI:
-        from nu.interactions import Ne
+        from nu import Ne
         from nu.primitives import BoolI
 
         return BoolI(Ne(self, other))
@@ -960,7 +960,7 @@ class _DatetimeI(Interface):
 
     def __add__(self, delta: TimedeltaArg) -> DatetimeI:
         """Add a timedelta to this datetime."""
-        from nu.interactions import Add
+        from nu import Add
 
         if isinstance(delta, timedelta):
             delta = TimedeltaI(delta)
@@ -968,7 +968,7 @@ class _DatetimeI(Interface):
 
     def __sub__(self, other: DatetimeArg | TimedeltaArg) -> DatetimeI | TimedeltaI:
         """Subtract a datetime or timedelta."""
-        from nu.interactions import Sub
+        from nu import Sub
 
         if isinstance(other, datetime):
             other = DatetimeI(other)
@@ -983,37 +983,37 @@ class _DatetimeI(Interface):
     # =========================================================================
 
     def __gt__(self, other: DatetimeArg) -> BoolI:
-        from nu.interactions import Gt
+        from nu import Gt
         from nu.primitives import BoolI
 
         return BoolI(Gt(self, other))
 
     def __lt__(self, other: DatetimeArg) -> BoolI:
-        from nu.interactions import Lt
+        from nu import Lt
         from nu.primitives import BoolI
 
         return BoolI(Lt(self, other))
 
     def __ge__(self, other: DatetimeArg) -> BoolI:
-        from nu.interactions import Ge
+        from nu import Ge
         from nu.primitives import BoolI
 
         return BoolI(Ge(self, other))
 
     def __le__(self, other: DatetimeArg) -> BoolI:
-        from nu.interactions import Le
+        from nu import Le
         from nu.primitives import BoolI
 
         return BoolI(Le(self, other))
 
     def eq(self, other: DatetimeArg) -> BoolI:
-        from nu.interactions import Eq
+        from nu import Eq
         from nu.primitives import BoolI
 
         return BoolI(Eq(self, other))
 
     def ne(self, other: DatetimeArg) -> BoolI:
-        from nu.interactions import Ne
+        from nu import Ne
         from nu.primitives import BoolI
 
         return BoolI(Ne(self, other))

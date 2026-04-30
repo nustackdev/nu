@@ -27,12 +27,12 @@ class StrI(Interface, TypedNu[str]):
     # =========================================================================
 
     def __add__(self, other: StrArg) -> StrI:
-        from nu.interactions import Add
+        from nu import Add
 
         return StrI(Add(self, other))
 
     def __radd__(self, other: StrArg) -> StrI:
-        from nu.interactions import Add
+        from nu import Add
 
         return StrI(Add(other, self))
 
@@ -45,7 +45,7 @@ class StrI(Interface, TypedNu[str]):
     @overload
     def __getitem__(self, key: slice) -> StrI: ...
     def __getitem__(self, key: IntArg | slice) -> StrI:
-        from nu.interactions import At, Slice
+        from nu import At, Slice
 
         if isinstance(key, slice):
             return StrI(Slice(self, key.start, key.stop, key.step))
@@ -56,49 +56,49 @@ class StrI(Interface, TypedNu[str]):
     # =========================================================================
 
     def __gt__(self, other: StrArg) -> BoolI:
-        from nu.interactions import Gt
+        from nu import Gt
 
         from .bool_ import BoolI
 
         return BoolI(Gt(self, other))
 
     def __lt__(self, other: StrArg) -> BoolI:
-        from nu.interactions import Lt
+        from nu import Lt
 
         from .bool_ import BoolI
 
         return BoolI(Lt(self, other))
 
     def __ge__(self, other: StrArg) -> BoolI:
-        from nu.interactions import Ge
+        from nu import Ge
 
         from .bool_ import BoolI
 
         return BoolI(Ge(self, other))
 
     def __le__(self, other: StrArg) -> BoolI:
-        from nu.interactions import Le
+        from nu import Le
 
         from .bool_ import BoolI
 
         return BoolI(Le(self, other))
 
     def eq(self, other: StrArg) -> BoolI:
-        from nu.interactions import Eq
+        from nu import Eq
 
         from .bool_ import BoolI
 
         return BoolI(Eq(self, other))
 
     def ne(self, other: StrArg) -> BoolI:
-        from nu.interactions import Ne
+        from nu import Ne
 
         from .bool_ import BoolI
 
         return BoolI(Ne(self, other))
 
     def is_(self, other: StrArg) -> BoolI:
-        from nu.interactions import IdComp
+        from nu import IdComp
 
         from .bool_ import BoolI
 
@@ -109,28 +109,28 @@ class StrI(Interface, TypedNu[str]):
     # =========================================================================
 
     def and_(self, other: StrArg) -> BoolI:
-        from nu.interactions import And
+        from nu import And
 
         from .bool_ import BoolI
 
         return BoolI(And(self, other))
 
     def or_(self, other: StrArg) -> BoolI:
-        from nu.interactions import Or
+        from nu import Or
 
         from .bool_ import BoolI
 
         return BoolI(Or(self, other))
 
     def not_(self) -> BoolI:
-        from nu.interactions import Not
+        from nu import Not
 
         from .bool_ import BoolI
 
         return BoolI(Not(self))
 
     def bool_(self) -> BoolI:
-        from nu.interactions import Bool
+        from nu import Bool
 
         from .bool_ import BoolI
 

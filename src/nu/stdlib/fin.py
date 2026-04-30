@@ -482,7 +482,7 @@ class _PercentageI(Interface):
 
     def __add__(self, other: PercentageArg | float) -> PercentageI:
         """Add percentages."""
-        from nu.interactions import Add
+        from nu import Add
 
         if isinstance(other, Percentage):
             other = PercentageI(other)
@@ -490,7 +490,7 @@ class _PercentageI(Interface):
 
     def __radd__(self, other: Percentage | float) -> PercentageI:
         """Right add."""
-        from nu.interactions import Add
+        from nu import Add
 
         if isinstance(other, Percentage):
             other = PercentageI(other)
@@ -498,7 +498,7 @@ class _PercentageI(Interface):
 
     def __sub__(self, other: PercentageArg | float) -> PercentageI:
         """Subtract percentages."""
-        from nu.interactions import Sub
+        from nu import Sub
 
         if isinstance(other, Percentage):
             other = PercentageI(other)
@@ -506,7 +506,7 @@ class _PercentageI(Interface):
 
     def __rsub__(self, other: Percentage | float) -> PercentageI:
         """Right subtract."""
-        from nu.interactions import Sub
+        from nu import Sub
 
         if isinstance(other, Percentage):
             other = PercentageI(other)
@@ -514,25 +514,25 @@ class _PercentageI(Interface):
 
     def __mul__(self, factor: int | float | Nu) -> PercentageI:
         """Multiply by factor."""
-        from nu.interactions import Mul
+        from nu import Mul
 
         return PercentageI(Mul(self, factor))
 
     def __rmul__(self, factor: int | float) -> PercentageI:
         """Right multiply."""
-        from nu.interactions import Mul
+        from nu import Mul
 
         return PercentageI(Mul(factor, self))
 
     def __truediv__(self, divisor: int | float | Nu) -> PercentageI:
         """Divide by factor."""
-        from nu.interactions import Div
+        from nu import Div
 
         return PercentageI(Div(self, divisor))
 
     def __neg__(self) -> PercentageI:
         """Negate."""
-        from nu.interactions import Neg
+        from nu import Neg
 
         return PercentageI(Neg(self))
 
@@ -542,42 +542,42 @@ class _PercentageI(Interface):
 
     def __gt__(self, other: PercentageArg) -> BoolI:
         """Greater than."""
-        from nu.interactions import Gt
+        from nu import Gt
         from nu.primitives import BoolI
 
         return BoolI(Gt(self, other))
 
     def __lt__(self, other: PercentageArg) -> BoolI:
         """Less than."""
-        from nu.interactions import Lt
+        from nu import Lt
         from nu.primitives import BoolI
 
         return BoolI(Lt(self, other))
 
     def __ge__(self, other: PercentageArg) -> BoolI:
         """Greater than or equal."""
-        from nu.interactions import Ge
+        from nu import Ge
         from nu.primitives import BoolI
 
         return BoolI(Ge(self, other))
 
     def __le__(self, other: PercentageArg) -> BoolI:
         """Less than or equal."""
-        from nu.interactions import Le
+        from nu import Le
         from nu.primitives import BoolI
 
         return BoolI(Le(self, other))
 
     def eq(self, other: PercentageArg) -> BoolI:
         """Equal."""
-        from nu.interactions import Eq
+        from nu import Eq
         from nu.primitives import BoolI
 
         return BoolI(Eq(self, other))
 
     def ne(self, other: PercentageArg) -> BoolI:
         """Not equal."""
-        from nu.interactions import Ne
+        from nu import Ne
         from nu.primitives import BoolI
 
         return BoolI(Ne(self, other))
@@ -678,7 +678,7 @@ class _BasisPointI(Interface):
 
     def __add__(self, other: BasisPointArg) -> BasisPointI:
         """Add basis points."""
-        from nu.interactions import Add
+        from nu import Add
 
         if isinstance(other, BasisPoint):
             other = BasisPointI(other)
@@ -686,7 +686,7 @@ class _BasisPointI(Interface):
 
     def __radd__(self, other: BasisPoint | int) -> BasisPointI:
         """Right add."""
-        from nu.interactions import Add
+        from nu import Add
 
         if isinstance(other, BasisPoint):
             other = BasisPointI(other)
@@ -694,7 +694,7 @@ class _BasisPointI(Interface):
 
     def __sub__(self, other: BasisPointArg) -> BasisPointI:
         """Subtract basis points."""
-        from nu.interactions import Sub
+        from nu import Sub
 
         if isinstance(other, BasisPoint):
             other = BasisPointI(other)
@@ -702,7 +702,7 @@ class _BasisPointI(Interface):
 
     def __rsub__(self, other: BasisPoint | int) -> BasisPointI:
         """Right subtract."""
-        from nu.interactions import Sub
+        from nu import Sub
 
         if isinstance(other, BasisPoint):
             other = BasisPointI(other)
@@ -710,19 +710,19 @@ class _BasisPointI(Interface):
 
     def __mul__(self, factor: int | float | Nu) -> BasisPointI:
         """Multiply by factor."""
-        from nu.interactions import Mul
+        from nu import Mul
 
         return BasisPointI(Mul(self, factor))
 
     def __rmul__(self, factor: int | float) -> BasisPointI:
         """Right multiply."""
-        from nu.interactions import Mul
+        from nu import Mul
 
         return BasisPointI(Mul(factor, self))
 
     def __truediv__(self, divisor: int | float | Nu) -> BasisPointI:
         """Divide by factor."""
-        from nu.interactions import Div
+        from nu import Div
 
         return BasisPointI(Div(self, divisor))
 
@@ -732,42 +732,42 @@ class _BasisPointI(Interface):
 
     def __gt__(self, other: BasisPointArg) -> BoolI:
         """Greater than."""
-        from nu.interactions import Gt
+        from nu import Gt
         from nu.primitives import BoolI
 
         return BoolI(Gt(self, other))
 
     def __lt__(self, other: BasisPointArg) -> BoolI:
         """Less than."""
-        from nu.interactions import Lt
+        from nu import Lt
         from nu.primitives import BoolI
 
         return BoolI(Lt(self, other))
 
     def __ge__(self, other: BasisPointArg) -> BoolI:
         """Greater than or equal."""
-        from nu.interactions import Ge
+        from nu import Ge
         from nu.primitives import BoolI
 
         return BoolI(Ge(self, other))
 
     def __le__(self, other: BasisPointArg) -> BoolI:
         """Less than or equal."""
-        from nu.interactions import Le
+        from nu import Le
         from nu.primitives import BoolI
 
         return BoolI(Le(self, other))
 
     def eq(self, other: BasisPointArg) -> BoolI:
         """Equal."""
-        from nu.interactions import Eq
+        from nu import Eq
         from nu.primitives import BoolI
 
         return BoolI(Eq(self, other))
 
     def ne(self, other: BasisPointArg) -> BoolI:
         """Not equal."""
-        from nu.interactions import Ne
+        from nu import Ne
         from nu.primitives import BoolI
 
         return BoolI(Ne(self, other))

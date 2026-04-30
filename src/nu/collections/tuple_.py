@@ -43,7 +43,7 @@ class TupleI[*Ts](
     @overload
     def __getitem__(self, key: slice) -> TupleI: ...
     def __getitem__(self, key: IntArg | slice) -> AnyI | TupleI:
-        from nu.interactions import At, Slice
+        from nu import At, Slice
         from nu.primitives import AnyI
 
         if isinstance(key, slice):
@@ -55,43 +55,43 @@ class TupleI[*Ts](
     # =========================================================================
 
     def __gt__(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.interactions import Gt
+        from nu import Gt
         from nu.primitives import BoolI
 
         return BoolI(Gt(self, other))
 
     def __lt__(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.interactions import Lt
+        from nu import Lt
         from nu.primitives import BoolI
 
         return BoolI(Lt(self, other))
 
     def __ge__(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.interactions import Ge
+        from nu import Ge
         from nu.primitives import BoolI
 
         return BoolI(Ge(self, other))
 
     def __le__(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.interactions import Le
+        from nu import Le
         from nu.primitives import BoolI
 
         return BoolI(Le(self, other))
 
     def eq(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.interactions import Eq
+        from nu import Eq
         from nu.primitives import BoolI
 
         return BoolI(Eq(self, other))
 
     def ne(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.interactions import Ne
+        from nu import Ne
         from nu.primitives import BoolI
 
         return BoolI(Ne(self, other))
 
     def is_(self, other: TupleArg[*Ts]) -> BoolI:
-        from nu.interactions import IdComp
+        from nu import IdComp
         from nu.primitives import BoolI
 
         return BoolI(IdComp(self, other))

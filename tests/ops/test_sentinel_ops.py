@@ -9,7 +9,7 @@ propagation - they need to see the sentinel to answer the question.
 from __future__ import annotations
 
 from nu import Literal, runtime
-from nu.interactions import IsEmpty, IsInvalid, NotEmpty, NotInvalid
+from nu import IsEmpty, IsInvalid, NotEmpty, NotInvalid
 from nu.terms.sentinels import EMPTY, INVALID
 
 

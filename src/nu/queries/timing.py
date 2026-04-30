@@ -4,7 +4,7 @@
 
 For sleep primitives see `nu.stdlib.asyncio.AsyncSleep` and
 `nu.stdlib.time.TimeSleep`. For timeout / throttle / debounce policies
-see `nu.interactions.span.policy.timing`.
+see `nu.spans.timing`.
 """
 
 from __future__ import annotations
