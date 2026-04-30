@@ -12,7 +12,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from nu import Context, Literal, runtime
-from nu.interactions import Eq, Ge, Gt, IdComp, Le, Lt, Ne
+from nu import Eq, Ge, Gt, IdComp, Le, Lt, Ne
 
 
 ints = st.integers(min_value=-10000, max_value=10000)

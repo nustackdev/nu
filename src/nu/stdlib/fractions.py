@@ -8,13 +8,13 @@ from __future__ import annotations
 from fractions import Fraction
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Interface, Mode, TypedNu
+from nu.terms import Form, Mode, TypedNu
 
 
 if TYPE_CHECKING:
     from nu import Arg, Nu
-    from nu.collections import TupleI
-    from nu.primitives import BoolI, FloatI, IntI
+    from nu.forms.collections import TupleForm
+    from nu.forms.primitives import BoolForm, FloatForm, IntForm
 
     from .decimal import DecimalArg
 
@@ -26,7 +26,7 @@ __all__ = [
 type FractionArg = Arg[Fraction]
 
 
-class _FractionI(Interface):
+class _FractionI(Form):
     """Mixin for Fraction operations.
 
     Provides exact rational arithmetic.
@@ -72,19 +72,19 @@ class _FractionI(Interface):
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def numerator(self) -> IntI:
+    def numerator(self) -> IntForm:
         """Get the numerator."""
         from nu import FuncCall
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
 
-        return IntI(FuncCall(getattr, self, "numerator"))
+        return IntForm(FuncCall(getattr, self, "numerator"))
 
-    def denominator(self) -> IntI:
+    def denominator(self) -> IntForm:
         """Get the denominator."""
         from nu import FuncCall
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
 
-        return IntI(FuncCall(getattr, self, "denominator"))
+        return IntForm(FuncCall(getattr, self, "denominator"))
 
     # =========================================================================
     # ARITHMETIC
@@ -154,14 +154,14 @@ class _FractionI(Interface):
             other = FractionI(other)
         return FractionI(Div(other, self))
 
-    def __floordiv__(self, other: FractionArg | int | float) -> IntI:
+    def __floordiv__(self, other: FractionArg | int | float) -> IntForm:
         """Floor divide fractions."""
         from nu import FloorDiv
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return IntI(FloorDiv(self, other))
+        return IntForm(FloorDiv(self, other))
 
     def __mod__(self, other: FractionArg | int | float) -> FractionI:
         """Modulo operation."""
@@ -171,14 +171,14 @@ class _FractionI(Interface):
             other = FractionI(other)
         return FractionI(Mod(self, other))
 
-    def __rfloordiv__(self, other: Fraction | int | float) -> IntI:
+    def __rfloordiv__(self, other: Fraction | int | float) -> IntForm:
         """Right floor divide."""
         from nu import FloorDiv
-        from nu.primitives import IntI
+        from nu.forms.primitives import IntForm
 
         if isinstance(other, Fraction):
             other = FractionI(other)
-        return IntI(FloorDiv(other, self))
+        return IntForm(FloorDiv(other, self))
 
     def __rmod__(self, other: Fraction | int | float) -> FractionI:
         """Right modulo."""
@@ -216,65 +216,65 @@ class _FractionI(Interface):
 
         return FractionI(MethodCall(self, "limit_denominator", max_denominator))
 
-    def as_float(self) -> FloatI:
+    def as_float(self) -> FloatForm:
         """Convert to float."""
         from nu import FuncCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(FuncCall(float, self))
+        return FloatForm(FuncCall(float, self))
 
-    def as_integer_ratio(self) -> TupleI:
+    def as_integer_ratio(self) -> TupleForm:
         """Return (numerator, denominator) tuple."""
         from nu import MethodCall
-        from nu.collections import TupleI
+        from nu.forms.collections import TupleForm
 
-        return TupleI(MethodCall(self, "as_integer_ratio"))
+        return TupleForm(MethodCall(self, "as_integer_ratio"))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: FractionArg | int | float) -> BoolI:
+    def __gt__(self, other: FractionArg | int | float) -> BoolForm:
         """Greater than."""
         from nu import Gt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Gt(self, other))
+        return BoolForm(Gt(self, other))
 
-    def __lt__(self, other: FractionArg | int | float) -> BoolI:
+    def __lt__(self, other: FractionArg | int | float) -> BoolForm:
         """Less than."""
         from nu import Lt
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Lt(self, other))
+        return BoolForm(Lt(self, other))
 
-    def __ge__(self, other: FractionArg | int | float) -> BoolI:
+    def __ge__(self, other: FractionArg | int | float) -> BoolForm:
         """Greater than or equal."""
         from nu import Ge
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ge(self, other))
+        return BoolForm(Ge(self, other))
 
-    def __le__(self, other: FractionArg | int | float) -> BoolI:
+    def __le__(self, other: FractionArg | int | float) -> BoolForm:
         """Less than or equal."""
         from nu import Le
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Le(self, other))
+        return BoolForm(Le(self, other))
 
-    def eq(self, other: FractionArg | int | float) -> BoolI:
+    def eq(self, other: FractionArg | int | float) -> BoolForm:
         """Equal."""
         from nu import Eq
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Eq(self, other))
+        return BoolForm(Eq(self, other))
 
-    def ne(self, other: FractionArg | int | float) -> BoolI:
+    def ne(self, other: FractionArg | int | float) -> BoolForm:
         """Not equal."""
         from nu import Ne
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ne(self, other))
+        return BoolForm(Ne(self, other))
 
 
 class FractionI(_FractionI, TypedNu[Fraction]):

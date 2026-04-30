@@ -14,7 +14,7 @@ from hypothesis import strategies as st
 from tests.conftest import FailingNu
 
 from nu import Context, Literal, runtime
-from nu.interactions import And, Bool, Not, Or
+from nu import And, Bool, Not, Or
 from nu.terms.sentinels import EMPTY, INVALID, is_invalid, is_sentinel
 
 

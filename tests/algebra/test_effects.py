@@ -13,7 +13,8 @@ from typing import Any, ClassVar
 from nu import Context
 from nu.terms.command import ScalarCommand
 from nu.terms.effects import is_pure, tracked_effects
-from nu.terms.query import Literal, ScalarQuery
+from nu.queries.literal import Literal
+from nu.terms.query import ScalarQuery
 from nu.terms.ref import Ref
 from nu.terms.types import Effect, Mode
 

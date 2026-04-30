@@ -1,13 +1,14 @@
 """optimize_primitives — replace standard ops with unsafe virtuals-native ops.
 
-optimize_primitive_reads:  ItemLoadOp → ItemPrimitiveGetUnsafeOp
+optimize_primitive_reads:  ItemLoad → ItemPrimitiveGetUnsafeOp
 optimize_primitive_writes: ItemStoreCmd → ItemPrimitiveSetUnsafeCmd
 """
 
 from __future__ import annotations
 
 from nu import Nu, replace
-from nu.shapes.ops.item import ItemLoadOp, ItemStoreCmd
+from nu.shapes.commands.item import ItemStoreCmd
+from nu.shapes.queries.item import ItemLoad
 from nu_virtuals.meta.flat_ref import FlatRef
 from nu_virtuals.ops.item import ItemPrimitiveGetUnsafeOp, ItemPrimitiveSetUnsafeCmd
 
@@ -25,10 +26,10 @@ def _is_substrate_ref(node: object) -> bool:
 
 
 def optimize_primitive_reads[N: Nu](tree: N) -> N:
-    """ItemLoadOp → ItemPrimitiveGetUnsafeOp (virtuals refs only)."""
+    """ItemLoad → ItemPrimitiveGetUnsafeOp (virtuals refs only)."""
     return replace(
         tree,
-        lambda n: isinstance(n, ItemLoadOp) and _is_substrate_ref(n),
+        lambda n: isinstance(n, ItemLoad) and _is_substrate_ref(n),
         lambda n: ItemPrimitiveGetUnsafeOp(n.ref),
     )
 

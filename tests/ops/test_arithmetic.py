@@ -14,7 +14,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from nu import Context, runtime
-from nu.interactions import (
+from nu import (
     Abs,
     Add,
     Div,

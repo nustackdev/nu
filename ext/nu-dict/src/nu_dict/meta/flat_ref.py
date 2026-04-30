@@ -2,7 +2,7 @@
 
 Replaces the Ref parent-chain (O(depth) resolve per operation) with a single
 node holding a pre-computed path tuple (O(1) resolve). All existing morphisms
-(ItemLoadOp, ItemStoreCmd, etc.) work unchanged — they call fetch_parent() and
+(ItemLoad, ItemStoreCmd, etc.) work unchanged — they call fetch_parent() and
 resolve_address(), which FlatRef provides.
 
 Not user-facing. Created only by the inline_refs() deformation.

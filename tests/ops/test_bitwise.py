@@ -13,7 +13,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from nu import Context, runtime
-from nu.interactions import BitwiseAnd, BitwiseNot, BitwiseOr, LShift, RShift, Xor
+from nu import BitwiseAnd, BitwiseNot, BitwiseOr, LShift, RShift, Xor
 
 
 ints = st.integers(min_value=-10000, max_value=10000)

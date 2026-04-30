@@ -139,7 +139,7 @@ class SolanaRef(nu.Ref[SolanaRpc]):
     async def aeval(self, ctx: nu.Context) -> SolanaRpc:
         return ctx.get(SolanaRpc)
 
-    get_block = nu.Invocation(nu.DictI, "get_block", support=frozenset({nu.Mode.ASYNC}))
+    get_block = nu.Invocation(nu.DictForm, "get_block", support=frozenset({nu.Mode.ASYNC}))
 
 
 # -- Shapes -------------------------------------------------------------------
@@ -198,7 +198,7 @@ class _RangeScratch(nu.Shape):
 def _persist_tx(ledger: type[Ledger], slot: nu.IntArg) -> nu.Nu:
     # tx_id = slot * 10_000 + block_index
     return _SlotScratch.tx_id.store(
-        nu.IntI(slot) * 10_000 + nu.At(nu.AttrRef("tx"), "block_index")
+        nu.IntForm(slot) * 10_000 + nu.At(nu.AttrRef("tx"), "block_index")
     ) >> ledger.txs[_SlotScratch.tx_id].store(nu.DictAttrRef("tx"))
 
 
@@ -233,7 +233,7 @@ def fetcher(
 
 def process_entry(ledger: type[Ledger], entry_ref: nu.Nu, *, program_id: nu.StrArg = "") -> nu.Nu:
     """Persist one fetched block entry."""
-    slot = nu.IntI(nu.At(entry_ref, "slot"))
+    slot = nu.IntForm(nu.At(entry_ref, "slot"))
     bm = ledger.blocks_meta[slot]
     return (
         bm.skipped.init(0)

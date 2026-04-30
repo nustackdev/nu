@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.terms import Interface, Mode, TypedNu
+from nu.terms import Form, Mode, TypedNu
 
 
 if TYPE_CHECKING:
     from nu import Arg, Nu
-    from nu.collections import TupleI
-    from nu.primitives import BoolI, FloatI
+    from nu.forms.collections import TupleForm
+    from nu.forms.primitives import BoolForm, FloatForm
 
 __all__ = [
     "ComplexArg",
@@ -24,7 +24,7 @@ __all__ = [
 type ComplexArg = Arg[complex]
 
 
-class _ComplexI(Interface):
+class _ComplexI(Form):
     """Mixin for complex number operations.
 
     Supports complex arithmetic and component access.
@@ -66,19 +66,19 @@ class _ComplexI(Interface):
     # COMPONENT ACCESSORS
     # =========================================================================
 
-    def real(self) -> FloatI:
+    def real(self) -> FloatForm:
         """Get the real part."""
         from nu import FuncCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(FuncCall(getattr, self, "real"))
+        return FloatForm(FuncCall(getattr, self, "real"))
 
-    def imag(self) -> FloatI:
+    def imag(self) -> FloatForm:
         """Get the imaginary part."""
         from nu import FuncCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(FuncCall(getattr, self, "imag"))
+        return FloatForm(FuncCall(getattr, self, "imag"))
 
     # =========================================================================
     # ARITHMETIC
@@ -170,12 +170,12 @@ class _ComplexI(Interface):
 
         return ComplexI(Neg(self))
 
-    def __abs__(self) -> FloatI:
+    def __abs__(self) -> FloatForm:
         """Get magnitude (absolute value)."""
         from nu import FuncCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(FuncCall(abs, self))
+        return FloatForm(FuncCall(abs, self))
 
     # =========================================================================
     # COMPLEX OPERATIONS
@@ -187,23 +187,23 @@ class _ComplexI(Interface):
 
         return ComplexI(MethodCall(self, "conjugate"))
 
-    def phase(self) -> FloatI:
+    def phase(self) -> FloatForm:
         """Get the phase angle in radians."""
         import cmath
 
         from nu import FuncCall
-        from nu.primitives import FloatI
+        from nu.forms.primitives import FloatForm
 
-        return FloatI(FuncCall(cmath.phase, self))
+        return FloatForm(FuncCall(cmath.phase, self))
 
-    def polar(self) -> TupleI:
+    def polar(self) -> TupleForm:
         """Get polar coordinates (r, phi)."""
         import cmath
 
         from nu import FuncCall
-        from nu.collections import TupleI
+        from nu.forms.collections import TupleForm
 
-        return TupleI(FuncCall(cmath.polar, self))
+        return TupleForm(FuncCall(cmath.polar, self))
 
     # =========================================================================
     # MATHEMATICAL FUNCTIONS
@@ -263,19 +263,19 @@ class _ComplexI(Interface):
     # EQUALITY (complex is equalable only, not comparable)
     # =========================================================================
 
-    def eq(self, other: ComplexArg) -> BoolI:
+    def eq(self, other: ComplexArg) -> BoolForm:
         """Equal."""
         from nu import Eq
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Eq(self, other))
+        return BoolForm(Eq(self, other))
 
-    def ne(self, other: ComplexArg) -> BoolI:
+    def ne(self, other: ComplexArg) -> BoolForm:
         """Not equal."""
         from nu import Ne
-        from nu.primitives import BoolI
+        from nu.forms.primitives import BoolForm
 
-        return BoolI(Ne(self, other))
+        return BoolForm(Ne(self, other))
 
 
 class ComplexI(_ComplexI, TypedNu[complex]):

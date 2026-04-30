@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 
 from nu import runtime
-from nu.interactions import (
+from nu import (
     ToBool,
     ToBytes,
     ToFloat,

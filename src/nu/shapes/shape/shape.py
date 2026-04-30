@@ -23,7 +23,7 @@ from .slot import Slot
 
 if TYPE_CHECKING:
     from nu import Context, Ref, Sentinel
-    from nu.primitives import NoneI
+    from nu.forms.primitives import NoneForm
 
 
 __all__ = [
@@ -168,7 +168,7 @@ class Shape(metaclass=ShapeMeta):
 
         def store(  # noqa: D102
             self, value: object
-        ) -> NoneI: ...
+        ) -> NoneForm: ...
 
-        def erase(self) -> NoneI:  # noqa: D102
+        def erase(self) -> NoneForm:  # noqa: D102
             ...

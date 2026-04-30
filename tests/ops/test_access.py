@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 
 from nu import runtime
-from nu.interactions import At, Contains, Len, Slice
+from nu import At, Contains, Len, Slice
 
 
 # ---------------------------------------------------------------------------

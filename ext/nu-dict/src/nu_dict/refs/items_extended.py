@@ -34,7 +34,7 @@ from nu import (
     ToStr,
 )
 from nu.shapes import Slot
-from nu.shapes.ops.item import ItemStoreCmd
+from nu.shapes.commands.item import ItemStoreCmd
 from nu.stdlib import BasisPoint, Percentage
 from nu.stdlib.cmath import ComplexI, _ComplexI
 from nu.stdlib.datetime import (

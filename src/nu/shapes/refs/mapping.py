@@ -1,8 +1,8 @@
 """Mapping ref hierarchy — mapping bases + Ref navigation.
 
-MappingRef         = MappingI + Ref
-MutableMappingRef  = MutableMappingI + MappingRef
-ReactiveMappingRef = ReactiveMappingI + MutableMappingRef
+MappingRef         = MappingForm + Ref
+MutableMappingRef  = MutableMappingForm + MappingRef
+ReactiveMappingRef = ReactiveMappingForm + MutableMappingRef
 
 Type Parameters:
     K:              Native key type (str, int, etc.)
@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu.shapes.collections import MappingI, MutableMappingI, ReactiveMappingI
+from nu.shapes.forms import MappingForm, MutableMappingForm, ReactiveMappingForm
 
 from .base import Ref
 
@@ -35,7 +35,7 @@ __all__ = [
 
 
 class MappingRef[K, V, CollectionValueT, ValueValueT](
-    MappingI[K, V, CollectionValueT, ValueValueT],
+    MappingForm[K, V, CollectionValueT, ValueValueT],
     Ref[dict[K, V]],
 ):
     """Mapping ref — key-value container with document-model navigation."""
@@ -51,7 +51,7 @@ class MappingRef[K, V, CollectionValueT, ValueValueT](
 
 
 class MutableMappingRef[K, V, CollectionValueT, ValueValueT](
-    MutableMappingI[K, V, CollectionValueT, ValueValueT],
+    MutableMappingForm[K, V, CollectionValueT, ValueValueT],
     MappingRef[K, V, CollectionValueT, ValueValueT],
 ):
     """Mutable mapping ref — mutations + navigation."""
@@ -67,7 +67,7 @@ class MutableMappingRef[K, V, CollectionValueT, ValueValueT](
 
 
 class ReactiveMappingRef[K, V, CollectionValueT, ValueValueT](
-    ReactiveMappingI[K, V, CollectionValueT, ValueValueT],
+    ReactiveMappingForm[K, V, CollectionValueT, ValueValueT],
     MutableMappingRef[K, V, CollectionValueT, ValueValueT],
 ):
     """Reactive mapping ref — observation + mutations + navigation."""

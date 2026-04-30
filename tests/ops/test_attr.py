@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 
 from nu import Literal, runtime
-from nu.interactions import DelAttr, GetAttr, SetAttr
+from nu import DelAttr, GetAttr, SetAttr
 
 
 # ---------------------------------------------------------------------------
