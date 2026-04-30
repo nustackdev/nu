@@ -5,12 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from nu import (
-    AnyI,
-    DictI,
-    DictItemsI,
-    DictKeysI,
-    DictValuesI,
-    IteratorI,
+    AnyForm,
+    DictForm,
+    DictItemsForm,
+    DictKeysForm,
+    DictValuesForm,
+    IteratorForm,
 )
 from nu.shapes import ReactiveShapeRef, Shape, Slot
 from nu.terms import Mode
@@ -45,27 +45,27 @@ class ShapeRef[T: Shape](
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    def result(self, op: Nu) -> DictI[str, object]:
-        """Wrap op in DictI for shape extract/store."""
-        return DictI(op)
+    def result(self, op: Nu) -> DictForm[str, object]:
+        """Wrap op in DictForm for shape extract/store."""
+        return DictForm(op)
 
-    def _wrap_keys_result(self, operand: Nu) -> DictKeysI:
-        return DictKeysI(operand)
+    def _wrap_keys_result(self, operand: Nu) -> DictKeysForm:
+        return DictKeysForm(operand)
 
-    def _wrap_values_result(self, operand: Nu) -> DictValuesI:
-        return DictValuesI(operand)
+    def _wrap_values_result(self, operand: Nu) -> DictValuesForm:
+        return DictValuesForm(operand)
 
-    def _wrap_items_result(self, operand: Nu) -> DictItemsI:
-        return DictItemsI(operand)
+    def _wrap_items_result(self, operand: Nu) -> DictItemsForm:
+        return DictItemsForm(operand)
 
-    def _wrap_iterable_result(self, operand: Nu) -> IteratorI:
-        return IteratorI(operand)
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorForm:
+        return IteratorForm(operand)
 
-    def _wrap_value_result(self, operand: Nu) -> AnyI:
-        return AnyI(operand)
+    def _wrap_value_result(self, operand: Nu) -> AnyForm:
+        return AnyForm(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> AnyI:
-        return AnyI(operand)
+    def _wrap_element_result(self, operand: Nu) -> AnyForm:
+        return AnyForm(operand)
 
     def __init__(
         self,

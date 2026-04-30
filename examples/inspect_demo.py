@@ -4,20 +4,20 @@ Shows ``render_shape`` on a nested Shape + ``render_nu`` on a multi-step app.
 """
 
 import nu
-import nu_dict as nd
+import nu_mem as nm
 from nu_inspect import render_nu, render_shape
 
 
 class Meta(nu.Shape):
-    label = nd.StrRef.slot()
-    version = nd.IntRef.slot()
+    label = nm.StrRef.slot()
+    version = nm.IntRef.slot()
 
 
 class Counter(nu.Shape):
-    value = nd.IntRef.slot()
-    step = nd.IntRef.slot()
-    tags = nd.ListRef.slot(str)
-    meta = nd.ShapeRef.slot(Meta)
+    value = nm.IntRef.slot()
+    step = nm.IntRef.slot()
+    tags = nm.ListRef.slot(str)
+    meta = nm.ShapeRef.slot(Meta)
 
 
 app = (

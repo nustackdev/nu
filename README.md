@@ -29,7 +29,7 @@ Requires Python 3.12+.
 | Package | What |
 |---------|------|
 | **nu-virtuals** | bridges Nu Refs to virtuals Views with RocksDB backend, in-memory or text storages |
-| **nu-dict** | in-memory python dict for stroage |
+| **nu-mem** | in-memory adapter — plain Python dicts as the data bag |
 | **nu-distributed** | distribution via Ray + invisibles |
 
 ## Status

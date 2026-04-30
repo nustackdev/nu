@@ -13,7 +13,7 @@ requires-python = ">=3.12"
 dependencies = [
     "nu",
     "nu-virtuals[infra]",
-    "nu-dict",
+    "nu-mem",
     "nu-distributed",
     "nu-inspect",
     "nudle",
@@ -30,7 +30,7 @@ members = [
     # Extensions — adapters
     "ext/nu-distributed",
     "ext/nu-virtuals",
-    "ext/nu-dict",
+    "ext/nu-mem",
 
     # Extensions — tools
     "ext/nu-inspect",
@@ -42,7 +42,7 @@ nu = { workspace = true }
 # Extensions
 nu-distributed = { workspace = true }
 nu-virtuals = { workspace = true }
-nu-dict = { workspace = true }
+nu-mem = { workspace = true }
 nu-inspect = { workspace = true }
 # In-house libs (local editable)
 virtuals-py = { path = "../virtuals", editable = true }
@@ -90,7 +90,7 @@ markers = [
 source = [
     "src/nu",
     "ext/nu-virtuals",
-    "ext/nu-dict",
+    "ext/nu-mem",
 ]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
@@ -125,7 +125,7 @@ target-version = "py312"
 src = [
     "src",
     "ext/nu-virtuals/src",
-    "ext/nu-dict/src",
+    "ext/nu-mem/src",
     "ext/nu-inspect/src",
 ]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
@@ -198,7 +198,7 @@ convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = [
-    "nu", "nu_distributed", "nu_virtuals", "nu_dict", "nu_inspect",
+    "nu", "nu_distributed", "nu_virtuals", "nu_mem", "nu_inspect",
     "virtuals", "composables", "invisibles", "nudle",
     ]
 force-single-line = false

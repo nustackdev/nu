@@ -6,8 +6,8 @@ Trees are built once outside the timed section. Only .execute(ctx) is measured.
 Modes:
   PV auto_atomic  -- each Term wrapped in its own Atomic (1 txn per field op)
   PV Atomic       -- single Atomic wrapping entire Seq (1 txn for all ops)
-  everydict       -- plain dict substrate (no storage, no views)
-  everydict+inline -- everydict with inline_refs deformation applied
+  nu-mem       -- plain dict substrate (no storage, no views)
+  nu-mem+inline -- nu-mem with inline_refs deformation applied
 
 Benchmarks (x4 modes):
   store  -- populate entire catalog (200+ values)
@@ -34,16 +34,16 @@ from utils import (
     timed_run,
     uninstall_counters,
 )
-from virtuals.tkv.storage import StorageProtocol
 
-import nu_dict as ed
+import nu_mem as ed
 import nu_virtuals as ebv
-from nu_dict.meta import inline_refs as dict_inline_refs
-from nu_virtuals import Atomic, auto_atomic
-from nu_virtuals.meta import inline_refs as v_inline_refs
 from nu import Context
 from nu.abc import Seq
 from nu.shape import Shape
+from nu_mem.tree import inline_refs as dict_inline_refs
+from nu_virtuals import Atomic, auto_atomic
+from nu_virtuals.tree import inline_refs as v_inline_refs
+from virtuals.tkv.storage import StorageProtocol
 
 
 # ── Shapes (PV substrate) ────────────────────────────────────────────────────
@@ -201,7 +201,7 @@ read_tree_ai = v_inline_refs(Atomic(_read_seq))
 update_tree_ai = v_inline_refs(Atomic(_update_seq))
 
 
-# ── Trees: everydict (built once) ───────────────────────────────────────────
+# ── Trees: nu-mem (built once) ───────────────────────────────────────────
 
 _d_store_seq = Seq(
     *[
@@ -240,7 +240,7 @@ _d_update_seq = Seq(
     ]
 )
 
-# everydict + inline_refs deformation
+# nu-mem + inline_refs deformation
 d_store_tree = _d_store_seq
 d_read_tree = _d_read_seq
 d_update_tree = _d_update_seq
@@ -325,15 +325,15 @@ async def run_all() -> list[TimingResult]:
         await _bench_v("update virtuals Atomic+inline", update_tree_ai, store_tree_ai, u)
     )
 
-    # everydict (no deformation)
-    results.append(await _bench_dict("store everydict", d_store_tree, d_store_tree, s))
-    results.append(await _bench_dict("read everydict", d_read_tree, d_store_tree, r))
-    results.append(await _bench_dict("update everydict", d_update_tree, d_store_tree, u))
+    # nu-mem (no deformation)
+    results.append(await _bench_dict("store nu-mem", d_store_tree, d_store_tree, s))
+    results.append(await _bench_dict("read nu-mem", d_read_tree, d_store_tree, r))
+    results.append(await _bench_dict("update nu-mem", d_update_tree, d_store_tree, u))
 
-    # everydict + inline_refs
-    results.append(await _bench_dict("store everydict+inline", di_store_tree, di_store_tree, s))
-    results.append(await _bench_dict("read everydict+inline", di_read_tree, di_store_tree, r))
-    results.append(await _bench_dict("update everydict+inline", di_update_tree, di_store_tree, u))
+    # nu-mem + inline_refs
+    results.append(await _bench_dict("store nu-mem+inline", di_store_tree, di_store_tree, s))
+    results.append(await _bench_dict("read nu-mem+inline", di_read_tree, di_store_tree, r))
+    results.append(await _bench_dict("update nu-mem+inline", di_update_tree, di_store_tree, u))
 
     uninstall_counters()
     print_results("Scenario: Market Catalog", results)

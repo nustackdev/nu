@@ -15,7 +15,7 @@ from typing import Any, ClassVar
 import aiohttp
 
 import nu
-import nu_dict
+import nu_mem as nm
 import nu_virtuals
 import nu_virtuals as nv
 from nu import runtime
@@ -184,12 +184,12 @@ class Ledger(nu.Shape):
 
 
 class _SlotScratch(nu.Shape):
-    tx_id = nu_dict.IntRef.slot()
+    tx_id = nm.IntRef.slot()
 
 
 class _RangeScratch(nu.Shape):
-    blocks = nu_dict.ListRef.slot(dict)  # {"slot": int, "txs": list[dict]}
-    cursor = nu_dict.IntRef.slot()
+    blocks = nm.ListRef.slot(dict)  # {"slot": int, "txs": list[dict]}
+    cursor = nm.IntRef.slot()
 
 
 # -- Compositions -------------------------------------------------------------
@@ -435,7 +435,7 @@ async def main() -> None:
             )
 
             # Apply app meta-transformations
-            app = nu_dict.inline_refs(app)
+            app = nm.inline_refs(app)
             app = nu_virtuals.inline_refs(app)
             app = nu_virtuals.auto_atomic(app)
             app = nu_inspect.set_logger_name(app, "sol")

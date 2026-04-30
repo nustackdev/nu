@@ -12,8 +12,8 @@ Modes:
   pure dict        -- imperative Python baseline
   PV Atomic        -- single Atomic wrapping entire Seq
   PV Atomic+inline -- PV with inline_refs deformation
-  everydict        -- plain dict substrate
-  everydict+inline -- everydict with inline_refs deformation
+  nu-mem        -- plain dict substrate
+  nu-mem+inline -- nu-mem with inline_refs deformation
 
 Benchmarks:
   write  -- set all 4 leaf fields (N times)
@@ -39,16 +39,16 @@ from utils import (
     timed_run,
     uninstall_counters,
 )
-from virtuals.tkv.storage import StorageProtocol
 
-import nu_dict as ed
+import nu_mem as ed
 import nu_virtuals as ebv
-from nu_dict.meta import inline_refs as dict_inline_refs
-from nu_virtuals import Atomic
-from nu_virtuals.meta import inline_refs as v_inline_refs
 from nu import Context
 from nu.abc import Seq
 from nu.shape import Shape
+from nu_mem.tree import inline_refs as dict_inline_refs
+from nu_virtuals import Atomic
+from nu_virtuals.tree import inline_refs as v_inline_refs
+from virtuals.tkv.storage import StorageProtocol
 
 
 # ── Shapes (PV) ──────────────────────────────────────────────────────────────
@@ -192,7 +192,7 @@ v_read_at = Atomic(_v_read)
 v_write_ai = v_inline_refs(Atomic(_v_write))
 v_read_ai = v_inline_refs(Atomic(_v_read))
 
-# everydict
+# nu-mem
 d_write = Seq(
     _d_leaf.a.store(10),
     _d_leaf.b.store(11),
@@ -288,13 +288,13 @@ async def run_all() -> list[TimingResult]:
     results.append(await _bench_v("write virtuals Atomic+inline", v_write_ai, _v_seed))
     results.append(await _bench_v("read virtuals Atomic+inline", v_read_ai, _v_seed))
 
-    # everydict
-    results.append(await _bench_dict("write everydict", d_write, _d_seed))
-    results.append(await _bench_dict("read everydict", d_read, _d_seed))
+    # nu-mem
+    results.append(await _bench_dict("write nu-mem", d_write, _d_seed))
+    results.append(await _bench_dict("read nu-mem", d_read, _d_seed))
 
-    # everydict+inline
-    results.append(await _bench_dict("write everydict+inline", di_write, _di_seed))
-    results.append(await _bench_dict("read everydict+inline", di_read, _di_seed))
+    # nu-mem+inline
+    results.append(await _bench_dict("write nu-mem+inline", di_write, _di_seed))
+    results.append(await _bench_dict("read nu-mem+inline", di_read, _di_seed))
 
     uninstall_counters()
     print_results("Scenario: Deep Nesting (depth=8, 4 fields)", results)

@@ -1,12 +1,12 @@
 """Minimal Shape sketches. One pattern per section. Each runs standalone.
 
-Shapes = typed access to nested data. nu_dict is the dict-backed substrate:
+Shapes = typed access to nested data. nu_mem is the dict-backed substrate:
 the root is a plain Python `dict`, bound into a Context. Shape slots become
 typed Refs you read/write through Nu ops.
 """
 
 import nu
-import nu_dict as nd
+import nu_mem as nm
 
 
 # --- util ---
@@ -18,18 +18,18 @@ def exec(app: nu.Nu):
 
 # --- define some shapes ---
 class Counter(nu.Shape):
-    value = nd.IntRef.slot()
+    value = nm.IntRef.slot()
 
 
 class User(nu.Shape):
-    name = nd.StrRef.slot()
-    age = nd.IntRef.slot()
-    tags = nd.ListRef.slot(str)
+    name = nm.StrRef.slot()
+    age = nm.IntRef.slot()
+    tags = nm.ListRef.slot(str)
 
 
 class Score(nu.Shape):
-    total = nd.IntRef.slot()
-    hits = nd.IntRef.slot()
+    total = nm.IntRef.slot()
+    hits = nm.IntRef.slot()
 
 
 # --- bind a fresh dict as the substrate and run one write ---

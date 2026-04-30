@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu import AnyI, IteratorI, ListI
+from nu import AnyForm, IteratorForm, ListForm
 from nu.shapes import ReactiveShapesSequenceRef, Shape, Slot
 from nu.terms import Mode
 from virtuals.collections import MutableSequenceBase
@@ -35,17 +35,17 @@ class ShapesListRef[T: Shape](
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    def result(self, op: Nu) -> ListI:
-        return ListI(op)
+    def result(self, op: Nu) -> ListForm:
+        return ListForm(op)
 
-    def _wrap_iterable_result(self, operand: Nu) -> IteratorI:
-        return IteratorI(operand)
+    def _wrap_iterable_result(self, operand: Nu) -> IteratorForm:
+        return IteratorForm(operand)
 
-    def _wrap_sliceable_result(self, operand: Nu) -> ListI:
-        return ListI(operand)  # slices stay materialized
+    def _wrap_sliceable_result(self, operand: Nu) -> ListForm:
+        return ListForm(operand)  # slices stay materialized
 
-    def _wrap_element_result(self, operand: Nu) -> AnyI:
-        return AnyI(operand)
+    def _wrap_element_result(self, operand: Nu) -> AnyForm:
+        return AnyForm(operand)
 
     def __init__(
         self,

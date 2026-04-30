@@ -18,7 +18,7 @@ from typing import Any, ClassVar
 import aiohttp
 
 import nu
-import nu_dict
+import nu_mem as nm
 import nu_virtuals
 import nu_virtuals as nv
 import nudle
@@ -156,13 +156,13 @@ class Ledger(nu.Shape):
 
 
 class _SlotScratch(nu.Shape):
-    tx_idx = nu_dict.IntRef.slot()
-    tx_id = nu_dict.IntRef.slot()
+    tx_idx = nm.IntRef.slot()
+    tx_id = nm.IntRef.slot()
 
 
 class _RangeScratch(nu.Shape):
-    blocks = nu_dict.ListRef.slot(dict)  # {"slot": int, "block": <raw RPC dict>}
-    cursor = nu_dict.IntRef.slot()
+    blocks = nm.ListRef.slot(dict)  # {"slot": int, "block": <raw RPC dict>}
+    cursor = nm.IntRef.slot()
 
 
 # -- Compositions -------------------------------------------------------------
@@ -403,7 +403,7 @@ async def main() -> None:
             )
 
             # Archive phase
-            app = nu_dict.inline_refs(app)
+            app = nm.inline_refs(app)
             app = nu_virtuals.inline_refs(app)
             app = nu_virtuals.auto_atomic(app)
             app = nu_inspect.set_logger_name(app, "sol")
@@ -424,7 +424,7 @@ async def main() -> None:
                 )
             )
 
-            app = nu_dict.inline_refs(app)
+            app = nm.inline_refs(app)
             app = nu_virtuals.inline_refs(app)
             app = nu_virtuals.auto_atomic(app)
             app = nu_inspect.set_logger_name(app, "sol")

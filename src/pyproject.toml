@@ -25,7 +25,7 @@ classifiers = [
 [project.optional-dependencies]
 default = [
     "nu-virtuals",
-    "nu-dict",
+    "nu-mem",
 ]
 infra = [
     "nu[default]",

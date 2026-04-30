@@ -24,25 +24,18 @@ try:
 except ImportError:
     pass
 
-from nu_virtuals.meta import (
-    auto_atomic,
-    inline_refs,
-    optimize_primitive_reads,
-    optimize_primitive_writes,
-)
-from nu_virtuals.ops import (
-    Atomic,
+from nu_virtuals.commands import (
     ClearPrimitivesUnsafeCmd,
     EnsureLayoutCmd,
-    InitCmd,
+    InitItemCmd,
     ItemPrimitiveDeleteUnsafeCmd,
-    ItemPrimitiveGetUnsafeOp,
     ItemPrimitiveSetUnsafeCmd,
     ItemPrimitiveSetUnsafeParentSkipCmd,
-    PrimitiveStoreCmd,
-    ScanPrimitivesUnsafeOp,
-    Snapshot,
-    Transaction,
+    ItemPrimitiveStoreCmd,
+)
+from nu_virtuals.queries import (
+    ItemPrimitiveGetUnsafe,
+    ScanPrimitivesUnsafe,
 )
 from nu_virtuals.refs import (
     BasisPointRef,
@@ -75,20 +68,29 @@ from nu_virtuals.refs import (
     UUIDRef,
     ViewRef,
 )
+from nu_virtuals.spans import Atomic, Snapshot, Transaction
+from nu_virtuals.tree import (
+    auto_atomic,
+    inline_refs,
+    optimize_primitive_reads,
+    optimize_primitive_writes,
+)
 
 
 __all__ = [  # noqa: RUF022
-    # Ops — Item
+    # Commands — Item
     "EnsureLayoutCmd",
-    "InitCmd",
-    "ItemPrimitiveGetUnsafeOp",
+    "InitItemCmd",
     "ItemPrimitiveSetUnsafeCmd",
     "ItemPrimitiveSetUnsafeParentSkipCmd",
     "ItemPrimitiveDeleteUnsafeCmd",
-    # Ops — Collection
-    "ScanPrimitivesUnsafeOp",
+    "ItemPrimitiveStoreCmd",
+    # Commands — Collection
     "ClearPrimitivesUnsafeCmd",
-    # Meta
+    # Queries
+    "ItemPrimitiveGetUnsafe",
+    "ScanPrimitivesUnsafe",
+    # Tree
     "auto_atomic",
     "inline_refs",
     "optimize_primitive_reads",
@@ -113,7 +115,6 @@ __all__ = [  # noqa: RUF022
     "PrimitiveListRef",
     "PrimitiveRef",
     "PrimitiveSetRef",
-    "PrimitiveStoreCmd",
     "SetRef",
     "ShapeRef",
     "ShapesDictRef",

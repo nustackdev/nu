@@ -35,23 +35,23 @@ from utils import (
     timed_run,
     uninstall_counters,
 )
-from virtuals.tkv.storage import StorageProtocol
 
 import nu_virtuals as ebv
+from nu import Context, replace
+from nu.abc import Seq
+from nu.shape import Shape
 from nu_virtuals import (
     Atomic,
-    InitCmd,
+    InitItemCmd,
     ItemPrimitiveSetUnsafeParentSkipCmd,
     Snapshot,
     Transaction,
     optimize_primitive_reads,
     optimize_primitive_writes,
 )
-from nu_virtuals.meta import inline_refs
 from nu_virtuals.morphisms.item import ItemPrimitiveSetUnsafeCmd
-from nu import Context, replace
-from nu.abc import Seq
-from nu.shape import Shape
+from nu_virtuals.tree import inline_refs
+from virtuals.tkv.storage import StorageProtocol
 
 
 # ── Shape ─────────────────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ inline_read = inline_refs(optimize_primitive_reads(Atomic(Seq(*FIELDS))))
 #
 # Hand-built tree that represents the theoretical optimum for PV:
 #   - Transaction (not Atomic) -- skip purity detection
-#   - InitCmd once to materialize container chain
+#   - InitItemCmd once to materialize container chain
 #   - ItemPrimitiveSetUnsafeParentSkipCmd -- single ctx.put() per field
 #   - Snapshot for reads -- cheaper than Transaction
 #
@@ -115,7 +115,7 @@ _manual_write_parentskip = replace(
     lambda n: ItemPrimitiveSetUnsafeParentSkipCmd(n.ref, n.value_expr),
 )
 _manual_write_inlined = inline_refs(_manual_write_parentskip)
-_init_inlined = inline_refs(InitCmd(_init_ref))
+_init_inlined = inline_refs(InitItemCmd(_init_ref))
 manual_write = Transaction(Seq(_init_inlined, _manual_write_inlined))
 
 # Read: Snapshot(UnsafeGet x 4) with inlined refs

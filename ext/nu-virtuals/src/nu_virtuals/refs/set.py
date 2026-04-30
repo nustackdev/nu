@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Self
 
-from nu import AnyI, SetI
+from nu import AnyForm, SetForm
 from nu.shapes import ReactiveSetRef, Shape, Slot
 from nu.terms import Mode
 from virtuals.collections import MutableSetBase
@@ -24,7 +24,7 @@ __all__ = [
 
 
 class SetRef[T](
-    ReactiveSetRef[T, SetI[T], AnyI],
+    ReactiveSetRef[T, SetForm[T], AnyForm],
     ViewRef[set[T], MutableSetBase],
 ):
     """PV set reference — document model + PV substrate.
@@ -34,14 +34,14 @@ class SetRef[T](
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
-    def result(self, op: Nu) -> SetI[T]:
-        return SetI(op)
+    def result(self, op: Nu) -> SetForm[T]:
+        return SetForm(op)
 
-    def _wrap_set_result(self, operand: Nu) -> SetI[T]:
-        return SetI(operand)
+    def _wrap_set_result(self, operand: Nu) -> SetForm[T]:
+        return SetForm(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> AnyI:
-        return AnyI(operand)
+    def _wrap_element_result(self, operand: Nu) -> AnyForm:
+        return AnyForm(operand)
 
     def __init__(
         self,

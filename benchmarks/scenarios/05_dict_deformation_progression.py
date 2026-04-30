@@ -1,12 +1,12 @@
 """Scenario: Dict Deformation Progression -- same tree, cumulative optimizations.
 
-Shows how inline_refs deformation improves everydict performance on a simple
+Shows how inline_refs deformation improves nu-mem performance on a simple
 User shape (name, age, email, score -- 4 scalar fields).
 
 Realistic pattern: one tree execution per 4-field batch, repeated N times.
 
 Progression:
-  1. Raw everydict  -- Seq(ref.set/get)    standard morphisms + Ref parent-chains
+  1. Raw nu-mem  -- Seq(ref.set/get)    standard morphisms + Ref parent-chains
   2. Inline refs    -- inline_refs          flatten Ref parent-chains to O(1) lookups
 
 Dict substrate has no unsafe ops, no Transaction/Snapshot, no Init --
@@ -27,11 +27,11 @@ from utils import (
     print_results,
 )
 
-import nu_dict as ed
-from nu_dict.meta import inline_refs
+import nu_mem as ed
 from nu import Context
 from nu.abc import Seq
 from nu.shape import Shape
+from nu_mem.tree import inline_refs
 
 
 # ── Shape ─────────────────────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ NUM_FIELDS = len(FIELDS)
 WRITE_VALUES = ["Alice", 30, "alice@example.com", 99.5]
 
 
-# ── 1. Raw everydict — standard morphisms ────────────────────────────────────
+# ── 1. Raw nu-mem — standard morphisms ────────────────────────────────────
 
 raw_write = Seq(*[f.store(v) for f, v in zip(FIELDS, WRITE_VALUES, strict=True)])
 raw_read = Seq(*FIELDS)
@@ -112,7 +112,7 @@ async def run_all() -> list[TimingResult]:
     results.append(_bench_pure_dict("write pure dict", py_write, py_write))
     results.append(_bench_pure_dict("read pure dict", py_read, py_write))
 
-    # 1. Raw everydict
+    # 1. Raw nu-mem
     results.append(await _bench_dict("write 1:raw", raw_write, raw_write))
     results.append(await _bench_dict("read 1:raw", raw_read, raw_write))
 

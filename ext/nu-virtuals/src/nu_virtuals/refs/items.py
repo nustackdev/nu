@@ -10,7 +10,7 @@ Pattern:
     class ItemRef(ReactiveItemRef[T, ValueT], PrimitiveRef[T]):
         # Document model (CRUD + observe) + PV substrate
 
-    class IntRef(ItemRef[int, IntI], IntI):
+    class IntRef(ItemRef[int, IntForm], IntForm):
         # PV item + int operators
 """
 
@@ -19,15 +19,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, Self
 
 from nu import (
-    BoolI,
-    BytesI,
-    DictI,
-    FloatI,
-    IntI,
-    ListI,
-    NoneI,
-    SetI,
-    StrI,
+    BoolForm,
+    BytesForm,
+    DictForm,
+    FloatForm,
+    IntForm,
+    ListForm,
+    NoneForm,
+    SetForm,
+    StrForm,
 )
 from nu.shapes import ReactiveItemRef, Slot
 from nu.terms import Mode
@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 
 
 if TYPE_CHECKING:
-    from nu import Interface, Nu
+    from nu import Form, Nu
     from nu.shapes import Shape
     from virtuals.loc import path
 
@@ -64,7 +64,7 @@ __all__ = [
 # =============================================================================
 
 
-class ItemRef[T, ValueT: Interface](
+class ItemRef[T, ValueT: Form](
     ReactiveItemRef[T, ValueT],
     PrimitiveRef[T],
 ):
@@ -113,12 +113,12 @@ class ItemRef[T, ValueT: Interface](
 # =============================================================================
 
 
-class IntRef(ItemRef[int, IntI], IntI):
+class IntRef(ItemRef[int, IntForm], IntForm):
     """PV integer reference with full numeric interface.
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - IntI: Arithmetic, comparison, bitwise, logical operators
+        - IntForm: Arithmetic, comparison, bitwise, logical operators
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
@@ -134,16 +134,16 @@ class IntRef(ItemRef[int, IntI], IntI):
         super().__init__(
             address=address,
             value_type=int,
-            value_value_type=IntI,
+            value_value_type=IntForm,
             parent=parent,
             owner_shape=owner_shape,
         )
 
-    def inc(self, step: int | Nu = 1) -> NoneI:
+    def inc(self, step: int | Nu = 1) -> NoneForm:
         """Increment in place."""
         return self.store(self + step)
 
-    def dec(self, step: int | Nu = 1) -> NoneI:
+    def dec(self, step: int | Nu = 1) -> NoneForm:
         """Decrement in place."""
         return self.store(self - step)
 
@@ -153,12 +153,12 @@ class IntRef(ItemRef[int, IntI], IntI):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class StrRef(ItemRef[str, StrI], StrI):
+class StrRef(ItemRef[str, StrForm], StrForm):
     """PV string reference with full string interface.
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - StrI: String methods (upper, lower, split, etc.), concatenation
+        - StrForm: String methods (upper, lower, split, etc.), concatenation
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
@@ -174,7 +174,7 @@ class StrRef(ItemRef[str, StrI], StrI):
         super().__init__(
             address=address,
             value_type=str,
-            value_value_type=StrI,
+            value_value_type=StrForm,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -185,12 +185,12 @@ class StrRef(ItemRef[str, StrI], StrI):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class FloatRef(ItemRef[float, FloatI], FloatI):
+class FloatRef(ItemRef[float, FloatForm], FloatForm):
     """PV float reference with full numeric interface.
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - FloatI: Arithmetic, comparison, logical operators
+        - FloatForm: Arithmetic, comparison, logical operators
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
@@ -206,7 +206,7 @@ class FloatRef(ItemRef[float, FloatI], FloatI):
         super().__init__(
             address=address,
             value_type=float,
-            value_value_type=FloatI,
+            value_value_type=FloatForm,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -217,12 +217,12 @@ class FloatRef(ItemRef[float, FloatI], FloatI):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class BoolRef(ItemRef[bool, BoolI], BoolI):
+class BoolRef(ItemRef[bool, BoolForm], BoolForm):
     """PV boolean reference with full logical interface.
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - BoolI: Logical operators (and_, or_, not_)
+        - BoolForm: Logical operators (and_, or_, not_)
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
@@ -238,7 +238,7 @@ class BoolRef(ItemRef[bool, BoolI], BoolI):
         super().__init__(
             address=address,
             value_type=bool,
-            value_value_type=BoolI,
+            value_value_type=BoolForm,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -249,12 +249,12 @@ class BoolRef(ItemRef[bool, BoolI], BoolI):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class BytesRef(ItemRef[bytes, BytesI], BytesI):
+class BytesRef(ItemRef[bytes, BytesForm], BytesForm):
     """PV bytes reference with full bytes interface.
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - BytesI: Bytes methods (decode, hex, etc.)
+        - BytesForm: Bytes methods (decode, hex, etc.)
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
@@ -270,7 +270,7 @@ class BytesRef(ItemRef[bytes, BytesI], BytesI):
         super().__init__(
             address=address,
             value_type=bytes,
-            value_value_type=BytesI,
+            value_value_type=BytesForm,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -287,8 +287,8 @@ class BytesRef(ItemRef[bytes, BytesI], BytesI):
 
 
 class PrimitiveDictRef[K, V](
-    ItemRef[dict[K, V], DictI[K, V]],
-    DictI[K, V],
+    ItemRef[dict[K, V], DictForm[K, V]],
+    DictForm[K, V],
 ):
     """PV dict reference stored as a single primitive blob.
 
@@ -297,7 +297,7 @@ class PrimitiveDictRef[K, V](
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - DictI: Dict methods (keys, values, items, get, set, etc.)
+        - DictForm: Dict methods (keys, values, items, get, set, etc.)
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
@@ -313,7 +313,7 @@ class PrimitiveDictRef[K, V](
         super().__init__(
             address=address,
             value_type=dict,
-            value_value_type=DictI,
+            value_value_type=DictForm,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -343,8 +343,8 @@ class PrimitiveDictRef[K, V](
 
 
 class PrimitiveListRef[T](
-    ItemRef[list[T], ListI[T]],
-    ListI[T],
+    ItemRef[list[T], ListForm[T]],
+    ListForm[T],
 ):
     """PV list reference stored as a single primitive blob.
 
@@ -353,7 +353,7 @@ class PrimitiveListRef[T](
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - ListI: List methods (append, extend, insert, etc.)
+        - ListForm: List methods (append, extend, insert, etc.)
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
@@ -369,7 +369,7 @@ class PrimitiveListRef[T](
         super().__init__(
             address=address,
             value_type=list,
-            value_value_type=ListI,
+            value_value_type=ListForm,
             parent=parent,
             owner_shape=owner_shape,
         )
@@ -399,8 +399,8 @@ class PrimitiveListRef[T](
 
 
 class PrimitiveSetRef[T](
-    ItemRef[set[T], SetI[T]],
-    SetI[T],
+    ItemRef[set[T], SetForm[T]],
+    SetForm[T],
 ):
     """PV set reference stored as a single primitive blob.
 
@@ -409,7 +409,7 @@ class PrimitiveSetRef[T](
 
     Inherits:
         - ItemRef: PV storage access + CRUD + observation
-        - SetI: Set methods (add, remove, union, intersection, etc.)
+        - SetForm: Set methods (add, remove, union, intersection, etc.)
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
@@ -425,7 +425,7 @@ class PrimitiveSetRef[T](
         super().__init__(
             address=address,
             value_type=set,
-            value_value_type=SetI,
+            value_value_type=SetForm,
             parent=parent,
             owner_shape=owner_shape,
         )

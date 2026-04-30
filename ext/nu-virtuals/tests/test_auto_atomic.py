@@ -13,7 +13,7 @@ requiring live storage/navigator setup. Checks:
 
 from __future__ import annotations
 
-from nu import Seq
+from nu.flows import Sequential as Seq
 from nu.shapes import Shape
 from nu_virtuals import (
     EnsureLayoutCmd,
@@ -23,7 +23,7 @@ from nu_virtuals import (
     Transaction,
     auto_atomic,
 )
-from nu_virtuals.meta.flat_ref import FlatRef
+from nu_virtuals.refs.flat import FlatRef
 
 
 def _flat_ref(root_shape: type) -> FlatRef:

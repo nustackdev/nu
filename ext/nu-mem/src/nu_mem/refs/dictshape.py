@@ -1,5 +1,5 @@
 # ruff: noqa: D102
-"""PV shapes dict reference — document model + PV substrate."""
+"""Dict shapes dict reference — mapping of homogeneous shapes."""
 
 from __future__ import annotations
 
@@ -20,22 +20,21 @@ from nu import (
     SetForm,
     StrForm,
 )
-from nu.shapes import ReactiveShapesMappingRef, Shape, Slot
+from nu.shapes import MutableShapesMappingRef, Slot
 from nu.terms import Mode
-from virtuals.collections import MutableMappingBase
 
-from .base import ViewRef
+from .base import RefBase
 from .shape import ShapeRef
 
 
 if TYPE_CHECKING:
     from nu import Form, Nu, Sentinel
-    from virtuals.loc import path
+    from nu.shapes import Shape
 
 
 def _value_type_for(python_type: type) -> type[Form]:
     """Map Python type to its corresponding Form."""
-    mapping: dict[type, type] = {
+    mapping: dict[type, type[Form]] = {
         int: IntForm,
         str: StrForm,
         float: FloatForm,
@@ -53,21 +52,11 @@ __all__ = [
 ]
 
 
-class ShapesDictRef[
-    K: int | str,
-    T: Shape,
-    KeyValueT,
-](
-    ReactiveShapesMappingRef[
-        K,
-        T,
-    ],
-    ViewRef[
-        dict[K, dict],
-        MutableMappingBase,
-    ],
+class ShapesDictRef[K, T: Shape](
+    MutableShapesMappingRef[K, T],
+    RefBase[dict[K, dict]],
 ):
-    """PV shapes dict reference — document model + PV substrate."""
+    """Dict shapes dict reference — mapping of homogeneous shapes."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
@@ -95,58 +84,32 @@ class ShapesDictRef[
     def __init__(
         self,
         *,
-        address: path.PathAddress | Nu,
         key_type: type[K],
-        key_value_type: type[KeyValueT],
+        key_value_type: type,
         shape_type: type[T],
-        view_type: type[MutableMappingBase],
-        parent: ViewRef | None = None,
-        owner_shape: type[Shape] | None = None,
+        **kwargs: object,
     ) -> None:
-        """Initialize mapping shape reference."""
-        super().__init__(
-            address=address, view_type=view_type, parent=parent, owner_shape=owner_shape
-        )
+        super().__init__(**kwargs)
         self.value_type = dict
         self.key_type = key_type
         self.key_value_type = key_value_type
         self._shape_type = shape_type
 
     def _create_child_ref(self, key: K | Sentinel | Nu[K | Sentinel]) -> ShapeRef[T]:
-        """Create a reference to a shape at the given key."""
-        from virtuals.views import DictView
-
         return ShapeRef(
             address=key,
             shape_type=self._shape_type,
-            view_type=DictView,
             parent=self,
             owner_shape=self._owner_shape,
         )
 
     @classmethod
-    def slot[DK: (int, str), S: Shape](
-        cls,
-        shape_type: type[S],
-        view_type: type[MutableMappingBase] | None = None,
-        key_type: type[DK] = str,  # type: ignore[assignment]
-    ) -> ShapesDictRef[DK, S, Value]:
-        """Create a slot for this shapes dict ref type.
-
-        Args:
-            shape_type: Shape class for values
-            view_type: View class implementing MutableMappingBase protocol
-            key_type: Python type for keys (default: str)
-
-        Returns:
-            Slot configured to create ShapesDictRef instances
-        """
-        from virtuals.views import DictView
-
+    def slot[DK, S: Shape](
+        cls, shape_type: type[S], key_type: type[DK] = str
+    ) -> ShapesDictRef[DK, S]:  # type: ignore[assignment]
         return Slot(
             cls,
+            shape_type=shape_type,
             key_type=key_type,
             key_value_type=_value_type_for(key_type),
-            shape_type=shape_type,
-            view_type=view_type or DictView,
-        )  # type: ignore
+        )  # type: ignore[return-value]

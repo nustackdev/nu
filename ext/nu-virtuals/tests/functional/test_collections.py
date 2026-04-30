@@ -15,16 +15,19 @@ from collections.abc import ItemsView, KeysView, ValuesView
 import pytest
 
 from nu import (
+    Contains,
     Context,
-    DictI,
-    DictItemsI,
-    DictKeysI,
-    DictValuesI,
-    IteratorI,
-    ListI,
+    DictForm,
+    DictItemsForm,
+    DictKeysForm,
+    DictValuesForm,
+    IteratorForm,
+    Len,
+    ListForm,
     Literal,
-    SetI,
-    fn,
+    SetForm,
+    Sorted,
+    Take,
 )
 from nu.shapes import Shape
 from nu_virtuals import (
@@ -138,23 +141,23 @@ class TestFacets:
 
 
 class TestDictRefWrapTypes:
-    """DictRef returns DictKeysI/DictValuesI/DictItemsI."""
+    """DictRef returns DictKeysForm/DictValuesForm/DictItemsForm."""
 
     def test_keys_returns_dict_keys_value(self):
         keys = Portfolio.metadata.keys()
-        assert isinstance(keys, DictKeysI)
+        assert isinstance(keys, DictKeysForm)
 
     def test_values_returns_dict_values_value(self):
         vals = Portfolio.metadata.values()
-        assert isinstance(vals, DictValuesI)
+        assert isinstance(vals, DictValuesForm)
 
     def test_items_returns_dict_items_value(self):
         items = Portfolio.metadata.items()
-        assert isinstance(items, DictItemsI)
+        assert isinstance(items, DictItemsForm)
 
     def test_result_returns_dict_value(self):
         result = Portfolio.metadata.result(Literal("x"))
-        assert isinstance(result, DictI)
+        assert isinstance(result, DictForm)
 
 
 class TestDictRefExecution:
@@ -205,11 +208,11 @@ class TestListRefWrapTypes:
 
     def test_iterable_is_iterator_value(self):
         wrapped = Portfolio.tags._wrap_iterable_result(Literal("x"))
-        assert isinstance(wrapped, IteratorI)
+        assert isinstance(wrapped, IteratorForm)
 
     def test_sliceable_is_list_value(self):
         wrapped = Portfolio.tags._wrap_sliceable_result(Literal("x"))
-        assert isinstance(wrapped, ListI)
+        assert isinstance(wrapped, ListForm)
 
 
 class TestListRefExecution:
@@ -251,7 +254,7 @@ class TestSetRefWrapTypes:
 
     def test_set_result_is_set_value(self):
         wrapped = Portfolio.members._wrap_set_result(Literal("x"))
-        assert isinstance(wrapped, SetI)
+        assert isinstance(wrapped, SetForm)
 
 
 class TestSetRefExecution:
@@ -312,19 +315,19 @@ class TestShapesListRefExecution:
 
 
 class TestShapesDictRefWrapTypes:
-    """ShapesDictRef returns DictKeysI/DictValuesI/DictItemsI."""
+    """ShapesDictRef returns DictKeysForm/DictValuesForm/DictItemsForm."""
 
     def test_keys_returns_dict_keys_value(self):
         keys = Portfolio.team.keys()
-        assert isinstance(keys, DictKeysI)
+        assert isinstance(keys, DictKeysForm)
 
     def test_values_returns_dict_values_value(self):
         vals = Portfolio.team.values()
-        assert isinstance(vals, DictValuesI)
+        assert isinstance(vals, DictValuesForm)
 
     def test_items_returns_dict_items_value(self):
         items = Portfolio.team.items()
-        assert isinstance(items, DictItemsI)
+        assert isinstance(items, DictItemsForm)
 
 
 class TestShapesDictRefExecution:
@@ -396,41 +399,41 @@ class TestTermComposition:
 
 
 class TestLazyTake:
-    """fn.Take(keys, n) lazily slices collections via itertools.islice."""
+    """Take(keys, n) lazily slices collections via itertools.islice."""
 
     @pytest.mark.asyncio
     async def test_take_keys(self, portfolio_ctx):
         await store(Portfolio.metadata, {f"k{i}": f"v{i}" for i in range(50)}, portfolio_ctx)
-        result = await fn.Take(Portfolio.metadata.keys(), 5).to_list().aexecute(portfolio_ctx)
+        result = await Take(Portfolio.metadata.keys(), 5).to_list().aexecute(portfolio_ctx)
         assert len(result) == 5
 
     @pytest.mark.asyncio
     async def test_take_values(self, portfolio_ctx):
         await store(Portfolio.metadata, {f"k{i}": f"v{i}" for i in range(50)}, portfolio_ctx)
-        result = await fn.Take(Portfolio.metadata.values(), 3).to_list().aexecute(portfolio_ctx)
+        result = await Take(Portfolio.metadata.values(), 3).to_list().aexecute(portfolio_ctx)
         assert len(result) == 3
 
     @pytest.mark.asyncio
     async def test_take_items(self, portfolio_ctx):
         await store(Portfolio.metadata, {"a": "1", "b": "2", "c": "3"}, portfolio_ctx)
-        result = await fn.Take(Portfolio.metadata.items(), 2).to_list().aexecute(portfolio_ctx)
+        result = await Take(Portfolio.metadata.items(), 2).to_list().aexecute(portfolio_ctx)
         assert len(result) == 2
 
     @pytest.mark.asyncio
     async def test_take_list(self, portfolio_ctx):
         await store(Portfolio.tags, ["a", "b", "c", "d", "e"], portfolio_ctx)
-        result = await fn.Take(Portfolio.tags, 3).to_list().aexecute(portfolio_ctx)
+        result = await Take(Portfolio.tags, 3).to_list().aexecute(portfolio_ctx)
         assert result == ["a", "b", "c"]
 
     @pytest.mark.asyncio
     async def test_take_more_than_available(self, portfolio_ctx):
         await store(Portfolio.metadata, {"a": "1", "b": "2"}, portfolio_ctx)
-        result = await fn.Take(Portfolio.metadata.keys(), 100).to_list().aexecute(portfolio_ctx)
+        result = await Take(Portfolio.metadata.keys(), 100).to_list().aexecute(portfolio_ctx)
         assert sorted(result) == ["a", "b"]
 
     def test_take_returns_iterator_value(self):
-        term = fn.Take(Portfolio.metadata.keys(), 10)
-        assert isinstance(term, IteratorI)
+        term = Take(Portfolio.metadata.keys(), 10)
+        assert isinstance(term, IteratorForm)
 
 
 # ============================================================================
@@ -473,7 +476,7 @@ class TestEndToEnd:
         assert await Portfolio.metadata.get("strategy").aexecute(ctx) == "momentum"
 
         # --- lazy Take over keys ---
-        first_2 = await fn.Take(Portfolio.metadata.keys(), 2).to_list().aexecute(ctx)
+        first_2 = await Take(Portfolio.metadata.keys(), 2).to_list().aexecute(ctx)
         assert len(first_2) == 2
 
         # --- list operations ---
@@ -481,7 +484,7 @@ class TestEndToEnd:
         assert await Portfolio.tags.alast().aexecute(ctx) == "epsilon"
 
         # --- lazy Take over list ---
-        first_3 = await fn.Take(Portfolio.tags, 3).to_list().aexecute(ctx)
+        first_3 = await Take(Portfolio.tags, 3).to_list().aexecute(ctx)
         assert first_3 == ["alpha", "beta", "gamma"]
 
         # --- set operations ---
@@ -513,14 +516,14 @@ class TestEndToEnd:
         assert "eve" in set(result)
 
         # --- fn combinators ---
-        sorted_keys = await fn.Sorted(Portfolio.metadata.keys()).aexecute(ctx)
+        sorted_keys = await Sorted(Portfolio.metadata.keys()).aexecute(ctx)
         assert sorted_keys == ["horizon", "risk", "sector", "strategy"]
 
-        key_count = await fn.Len(Portfolio.metadata.keys()).aexecute(ctx)
+        key_count = await Len(Portfolio.metadata.keys()).aexecute(ctx)
         assert key_count == 4
 
-        has_risk = await fn.Contains(Portfolio.metadata.keys(), "risk").aexecute(ctx)
+        has_risk = await Contains(Portfolio.metadata.keys(), "risk").aexecute(ctx)
         assert has_risk is True
 
-        has_fake = await fn.Contains(Portfolio.metadata.keys(), "fake").aexecute(ctx)
+        has_fake = await Contains(Portfolio.metadata.keys(), "fake").aexecute(ctx)
         assert has_fake is False
