@@ -1,5 +1,5 @@
 # ruff: noqa: D102
-"""PV sequence reference — document model + PV substrate."""
+"""virtuals sequence reference — document model + virtuals substrate."""
 
 from __future__ import annotations
 
@@ -64,9 +64,9 @@ class ListRef[
         MutableSequenceBase,
     ],
 ):
-    """PV sequence reference — document model + PV substrate.
+    """virtuals sequence reference — document model + virtuals substrate.
 
-    Operations work lazily on PV views without loading into memory.
+    Operations work lazily on virtuals views without loading into memory.
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})

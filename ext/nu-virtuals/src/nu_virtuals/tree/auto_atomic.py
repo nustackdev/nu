@@ -7,7 +7,7 @@ Two rules (applied to shapes Refs and FlatRefs, i.e. virtuals fabric refs):
 Non-virtuals Refs (StdioRef, AttrRef, ServiceRef) are left unwrapped.
 They belong to different fabrics with their own boundary mechanisms.
 
-Recurses top-down. Skips existing Transaction/Snapshot/Atomic only when their
+Recurses top-down. Skips existing Transaction/Snapshot only when their
 scope matches the current scope. Boundaries with a different scope are recursed
 into - they don't cover refs belonging to our scope.
 """
@@ -16,12 +16,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Effect, tracked_effects
+from nu.terms import Effect
 from nu.terms.nu import NuBase
 
 from ..refs.base import PrimitiveRef, ViewRef
 from ..refs.flat import FlatRef
-from ..spans.atomic import Atomic, Snapshot, Transaction
+from ..spans.atomic import Snapshot, Transaction
 
 
 # Refs that belong to the virtuals fabric and need atomic wrapping.
@@ -41,11 +41,6 @@ if TYPE_CHECKING:
 __all__ = [
     "auto_atomic",
 ]
-
-
-def _has_pv_write(node: NuBase) -> bool:
-    """Check if subtree has any WRITE effects. Used by Atomic."""
-    return any(eff is Effect.WRITE for _ref, eff in tracked_effects(node))
 
 
 def _write_positions(op: NuBase) -> tuple[int, ...]:
@@ -87,7 +82,7 @@ def _covers(enclosing_scopes: tuple, ref_scope: Hashable) -> bool:
     - boundary scope is None (unscoped boundary covers everything), OR
     - boundary scope is the ref's root shape (scoped boundary covers matching refs).
 
-    ``enclosing_scopes`` is a tuple of scope values from Transaction/Atomic/Snapshot
+    ``enclosing_scopes`` is a tuple of scope values from Transaction/Snapshot
     ancestors already seen on the walk path. Sentinel ``_UNSET`` means "no ancestor".
     """
     for s in enclosing_scopes:
@@ -103,14 +98,14 @@ def _walk(tree: Nu, scope: Hashable | None, enclosing: tuple) -> Nu:
     When scope is set: only wrap refs whose root_shape matches scope,
     tagging the boundary with that scope. Other refs are left unwrapped.
 
-    ``enclosing`` is a tuple of scope values of Transaction/Atomic/Snapshot
+    ``enclosing`` is a tuple of scope values of Transaction/Snapshot
     ancestors already passed through. Used to skip redundant wrapping when
     an ancestor boundary already covers the ref(s) we'd wrap.
     """
     # Skip existing boundaries whose scope matches ours (identical wrap).
     # For non-matching scope, still recurse but register this boundary as
     # enclosing so nested rules can see it already covers compatible refs.
-    if isinstance(tree, (Transaction, Snapshot, Atomic)):
+    if isinstance(tree, (Transaction, Snapshot)):
         if tree.scope is scope:
             return tree
         child_enclosing = (*enclosing, tree.scope)

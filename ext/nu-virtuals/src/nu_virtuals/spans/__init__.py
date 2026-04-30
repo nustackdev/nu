@@ -1,4 +1,4 @@
-"""PV-specific spans — atomic boundaries (Atomic / Snapshot / Transaction)."""
+"""virtuals-specific spans — atomic boundaries (Atomic / Snapshot / Transaction)."""
 
 from .atomic import Atomic, Snapshot, Transaction
 

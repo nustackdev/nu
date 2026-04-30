@@ -1,4 +1,4 @@
-"""PV shape reference — document model + PV substrate."""
+"""virtuals shape reference — document model + virtuals substrate."""
 
 from __future__ import annotations
 
@@ -37,10 +37,10 @@ class ShapeRef[T: Shape](
         MutableMappingBase,
     ],
 ):
-    """PV shape reference — document model + PV substrate.
+    """virtuals shape reference — document model + virtuals substrate.
 
     Inherits attribute navigation and _create_child_ref from nu.shape ShapeRef.
-    Inherits PV path resolution and view fetching from ViewRef.
+    Inherits virtuals path resolution and view fetching from ViewRef.
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})

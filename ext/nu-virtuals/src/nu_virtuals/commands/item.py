@@ -1,4 +1,4 @@
-"""PV item commands — unsafe primitive write/delete + container materialization.
+"""virtuals item commands — unsafe primitive write/delete + container materialization.
 
 EnsureLayoutCmd: Materialize view container layout (idempotent setup).
 InitItemCmd: Materialize container chain via fetch().
@@ -8,7 +8,7 @@ ItemPrimitiveDeleteUnsafeCmd: Delete — _unsafe_primitive_delete().
 ItemPrimitiveStoreCmd: Store value via _primitive_write() — bypasses container type check.
 
 All named explicitly Unsafe — these are optimization internals for tree
-deformers, not user-facing APIs. They require PV views with
+deformers, not user-facing APIs. They require virtuals views with
 UnsafePrimitiveOpsBase in MRO.
 """
 

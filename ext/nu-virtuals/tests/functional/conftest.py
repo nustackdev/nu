@@ -1,4 +1,4 @@
-"""Functional test configuration for PV stdtype tests."""
+"""Functional test configuration for virtuals stdtype tests."""
 
 import pathlib
 from collections.abc import Generator

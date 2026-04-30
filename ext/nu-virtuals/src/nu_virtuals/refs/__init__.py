@@ -1,4 +1,4 @@
-"""PV substrate collections — refs for containers in PV view hierarchy.
+"""virtuals substrate collections — refs for containers in virtuals view hierarchy.
 
 Base:
     PrimitiveRef    refs to leaf values (int, str, etc.)

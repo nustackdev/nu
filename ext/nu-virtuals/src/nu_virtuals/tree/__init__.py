@@ -1,4 +1,4 @@
-"""PV-specific tree meta-passes — atomic wrapping, ref inlining, primitive optimization."""
+"""virtuals-specific tree meta-passes — atomic wrapping, ref inlining, primitive optimization."""
 
 from .auto_atomic import auto_atomic
 from .inline_refs import inline_refs

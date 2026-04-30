@@ -1,7 +1,7 @@
-"""PV storage refs for standard library types.
+"""virtuals storage refs for standard library types.
 
-These refs store values in PV storage with serialization/deserialization.
-Pattern: PV*Ref = ItemRef[StorageType, StrForm] + *Type + load/store methods
+These refs store values in virtuals storage with serialization/deserialization.
+Pattern: virtuals*Ref = ItemRef[StorageType, StrForm] + *Type + load/store methods
 
 Storage formats:
 - Decimal: str (exact representation)
@@ -92,12 +92,12 @@ __all__ = [
 
 
 # =============================================================================
-# NUMERIC PV REFS
+# NUMERIC virtuals REFS
 # =============================================================================
 
 
 class DecimalRef(ItemRef[str, StrForm], _DecimalI):
-    """PV storage ref for Decimal values. Stores as str."""
+    """virtuals storage ref for Decimal values. Stores as str."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
@@ -139,7 +139,7 @@ class DecimalRef(ItemRef[str, StrForm], _DecimalI):
 
 
 class FractionRef(ItemRef[str, StrForm], _FractionI):
-    """PV storage ref for Fraction values. Stores as str."""
+    """virtuals storage ref for Fraction values. Stores as str."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
@@ -181,7 +181,7 @@ class FractionRef(ItemRef[str, StrForm], _FractionI):
 
 
 class ComplexRef(ItemRef[str, StrForm], _ComplexI):
-    """PV storage ref for complex values. Stores as str ("real,imag")."""
+    """virtuals storage ref for complex values. Stores as str ("real,imag")."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
@@ -234,7 +234,7 @@ class ComplexRef(ItemRef[str, StrForm], _ComplexI):
 
 
 class BasisPointRef(ItemRef[int, IntForm], _BasisPointI):
-    """PV storage ref for BasisPoint values. Stores as int."""
+    """virtuals storage ref for BasisPoint values. Stores as int."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
@@ -274,7 +274,7 @@ class BasisPointRef(ItemRef[int, IntForm], _BasisPointI):
 
 
 class PercentageRef(ItemRef[float, FloatForm], _PercentageI):
-    """PV storage ref for Percentage values. Stores as float."""
+    """virtuals storage ref for Percentage values. Stores as float."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
@@ -314,12 +314,12 @@ class PercentageRef(ItemRef[float, FloatForm], _PercentageI):
 
 
 # =============================================================================
-# DATETIME PV REFS
+# DATETIME virtuals REFS
 # =============================================================================
 
 
 class DateRef(ItemRef[str, StrForm], _DateI):
-    """PV storage ref for date values. Stores as str (ISO format)."""
+    """virtuals storage ref for date values. Stores as str (ISO format)."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
@@ -361,7 +361,7 @@ class DateRef(ItemRef[str, StrForm], _DateI):
 
 
 class DatetimeRef(ItemRef[str, StrForm], _DatetimeI):
-    """PV storage ref for datetime values. Stores as str (ISO format)."""
+    """virtuals storage ref for datetime values. Stores as str (ISO format)."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
@@ -405,7 +405,7 @@ class DatetimeRef(ItemRef[str, StrForm], _DatetimeI):
 
 
 class TimeRef(ItemRef[str, StrForm], _TimeI):
-    """PV storage ref for time values. Stores as str (ISO format)."""
+    """virtuals storage ref for time values. Stores as str (ISO format)."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
@@ -447,7 +447,7 @@ class TimeRef(ItemRef[str, StrForm], _TimeI):
 
 
 class TimedeltaRef(ItemRef[float, FloatForm], _TimedeltaI):
-    """PV storage ref for timedelta values. Stores as float (seconds)."""
+    """virtuals storage ref for timedelta values. Stores as float (seconds)."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
@@ -492,7 +492,7 @@ class TimedeltaRef(ItemRef[float, FloatForm], _TimedeltaI):
 
 
 class TimezoneRef(ItemRef[str, StrForm], _TimezoneI):
-    """PV storage ref for timezone values. Stores as str (offset)."""
+    """virtuals storage ref for timezone values. Stores as str (offset)."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
@@ -581,12 +581,12 @@ class TimezoneRef(ItemRef[str, StrForm], _TimezoneI):
 
 
 # =============================================================================
-# PATH AND UUID PV REFS
+# PATH AND UUID virtuals REFS
 # =============================================================================
 
 
 class PathRef(ItemRef[str, StrForm], _PathI):
-    """PV storage ref for Path values. Stores as str."""
+    """virtuals storage ref for Path values. Stores as str."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
@@ -628,7 +628,7 @@ class PathRef(ItemRef[str, StrForm], _PathI):
 
 
 class UUIDRef(ItemRef[str, StrForm], _UUIDI):
-    """PV storage ref for UUID values. Stores as str."""
+    """virtuals storage ref for UUID values. Stores as str."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 

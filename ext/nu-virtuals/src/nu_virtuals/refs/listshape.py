@@ -1,5 +1,5 @@
 # ruff: noqa: D102
-"""PV shapes list reference — document model + PV substrate."""
+"""virtuals shapes list reference — document model + virtuals substrate."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class ShapesListRef[T: Shape](
         MutableSequenceBase,
     ],
 ):
-    """PV shapes list reference — document model + PV substrate."""
+    """virtuals shapes list reference — document model + virtuals substrate."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 

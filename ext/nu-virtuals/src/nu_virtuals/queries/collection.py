@@ -1,8 +1,8 @@
-"""PV collection queries — unsafe scan primitives.
+"""virtuals collection queries — unsafe scan primitives.
 
 ScanPrimitivesUnsafe: Scan all primitive children — _unsafe_primitive_scan_values().
 
-Requires PV views with UnsafePrimitiveOpsBase in MRO.
+Requires virtuals views with UnsafePrimitiveOpsBase in MRO.
 """
 
 from __future__ import annotations

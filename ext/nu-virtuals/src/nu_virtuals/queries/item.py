@@ -1,9 +1,9 @@
-"""PV item queries — unsafe primitive reads.
+"""virtuals item queries — unsafe primitive reads.
 
 ItemPrimitiveGetUnsafe: Read — _unsafe_primitive_read() (single ctx.get).
 
 Named explicitly Unsafe — optimization internal for tree deformers, not a
-user-facing API. Requires PV views with UnsafePrimitiveOpsBase in MRO.
+user-facing API. Requires virtuals views with UnsafePrimitiveOpsBase in MRO.
 """
 
 from __future__ import annotations

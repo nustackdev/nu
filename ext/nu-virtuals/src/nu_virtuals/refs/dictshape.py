@@ -1,5 +1,5 @@
 # ruff: noqa: D102
-"""PV shapes dict reference — document model + PV substrate."""
+"""virtuals shapes dict reference — document model + virtuals substrate."""
 
 from __future__ import annotations
 
@@ -67,7 +67,7 @@ class ShapesDictRef[
         MutableMappingBase,
     ],
 ):
-    """PV shapes dict reference — document model + PV substrate."""
+    """virtuals shapes dict reference — document model + virtuals substrate."""
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 

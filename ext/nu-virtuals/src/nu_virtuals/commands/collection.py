@@ -1,8 +1,8 @@
-"""PV collection commands — unsafe clear primitives.
+"""virtuals collection commands — unsafe clear primitives.
 
 ClearPrimitivesUnsafeCmd: Clear all primitive children — _unsafe_primitive_clear().
 
-Requires PV views with UnsafePrimitiveOpsBase in MRO.
+Requires virtuals views with UnsafePrimitiveOpsBase in MRO.
 """
 
 from __future__ import annotations

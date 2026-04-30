@@ -1,5 +1,5 @@
 # ruff: noqa: D102
-"""PV set reference — document model + PV substrate."""
+"""virtuals set reference — document model + virtuals substrate."""
 
 from __future__ import annotations
 
@@ -27,9 +27,9 @@ class SetRef[T](
     ReactiveSetRef[T, SetForm[T], AnyForm],
     ViewRef[set[T], MutableSetBase],
 ):
-    """PV set reference — document model + PV substrate.
+    """virtuals set reference — document model + virtuals substrate.
 
-    Operations work lazily on PV views without loading into memory.
+    Operations work lazily on virtuals views without loading into memory.
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
