@@ -2,7 +2,7 @@
 
 SetLikeRef     = SetLikeForm + Ref
 MutableSetRef  = MutableSetForm + Ref
-ReactiveSetRef = ReactiveSetI + Ref
+ReactiveSetRef = ReactiveSetForm + Ref
 
 Sets have no child ref navigation (no subscript access) — only
 collection-level operations (union, intersection, add, remove, etc.).
@@ -15,7 +15,7 @@ Type Parameters:
 
 from __future__ import annotations
 
-from nu.shapes.collections import MutableSetForm, ReactiveSetI, SetLikeForm
+from nu.shapes.forms import MutableSetForm, ReactiveSetForm, SetLikeForm
 
 from .base import Ref
 
@@ -42,7 +42,7 @@ class MutableSetRef[T, CollectionValueT, ElementValueT](
 
 
 class ReactiveSetRef[T, CollectionValueT, ElementValueT](
-    ReactiveSetI[T, CollectionValueT, ElementValueT],
+    ReactiveSetForm[T, CollectionValueT, ElementValueT],
     MutableSetRef[T, CollectionValueT, ElementValueT],
 ):
     """Reactive set ref — observation + mutations + navigation."""

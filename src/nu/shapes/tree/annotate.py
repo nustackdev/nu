@@ -2,7 +2,7 @@
 
 When Refs are used directly as Nu children (e.g. ref + 1), the tree
 contains bare Ref nodes. Substrate optimizers (like PV's optimize_primitive_reads)
-match on ItemLoadOp/CollectionLoadOp nodes to replace them with fast-path ops.
+match on ItemLoad/CollectionLoad nodes to replace them with fast-path ops.
 
 This pass walks the tree and wraps bare Refs that appear in value positions
 with the appropriate load op, giving optimizers something to match on.
@@ -29,16 +29,16 @@ def annotate_ref_loads(root: Nu) -> Nu:
 
     Walks the tree bottom-up. For each non-leaf node, wraps any child
     that is a shape Ref (and not already the target of an op) with
-    the appropriate load op (ItemLoadOp for item refs, CollectionLoadOp
+    the appropriate load op (ItemLoad for item refs, CollectionLoad
     for collection refs).
 
     This is idempotent - already-wrapped refs are not double-wrapped.
     """
-    from nu.shapes.collections import ItemForm
-    from nu.shapes.ops import CollectionLoadOp, ItemLoadOp
+    from nu.shapes.forms import ItemForm
+    from nu.shapes.queries import CollectionLoad, ItemLoad
     from nu.shapes.refs import Ref as ShapeRef
 
-    load_op_types = (ItemLoadOp, CollectionLoadOp)
+    load_op_types = (ItemLoad, CollectionLoad)
 
     def _process(node: Nu) -> Nu:
         if node._is_leaf:
@@ -58,9 +58,9 @@ def annotate_ref_loads(root: Nu) -> Nu:
 
             if isinstance(child, ShapeRef) and not isinstance(child, load_op_types):
                 if isinstance(child, ItemForm):
-                    new_children.append(ItemLoadOp(child))
+                    new_children.append(ItemLoad(child))
                 else:
-                    new_children.append(CollectionLoadOp(child))
+                    new_children.append(CollectionLoad(child))
                 changed = True
             else:
                 new_children.append(child)

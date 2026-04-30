@@ -2,7 +2,7 @@
 
 ShapesMappingRef         = MappingForm[K, dict[str, object], ...] + Ref
 MutableShapesMappingRef  = MutableMappingForm[K, dict[str, object], ...] + Ref
-ReactiveShapesMappingRef = ReactiveMappingI[K, dict[str, object], ...] + Ref
+ReactiveShapesMappingRef = ReactiveMappingForm[K, dict[str, object], ...] + Ref
 
 Specialized mapping refs where each value is a shape (dict[str, object]).
 Child navigation returns ShapeRef variants instead of ItemRef.
@@ -17,7 +17,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu.shapes.collections import MappingForm, MutableMappingForm, ReactiveMappingI
+from nu.shapes.forms import MappingForm, MutableMappingForm, ReactiveMappingForm
 
 from .base import Ref
 
@@ -73,7 +73,7 @@ class MutableShapesMappingRef[K, T: ShapeBase](
 
 
 class ReactiveShapesMappingRef[K, T: ShapeBase](
-    ReactiveMappingI[K, dict[str, object], object, object],
+    ReactiveMappingForm[K, dict[str, object], object, object],
     MutableShapesMappingRef[K, T],
 ):
     """Reactive shapes mapping ref — observation + mutations + navigation."""

@@ -2,7 +2,7 @@
 
 ShapesSequenceRef         = SequenceForm[dict[str, object], ...] + Ref
 MutableShapesSequenceRef  = MutableSequenceForm[dict[str, object], ...] + Ref
-ReactiveShapesSequenceRef = ReactiveSequenceI[dict[str, object], ...] + Ref
+ReactiveShapesSequenceRef = ReactiveSequenceForm[dict[str, object], ...] + Ref
 
 Specialized sequence refs where each element is a shape (dict[str, object]).
 Child navigation returns ShapeRef variants instead of ItemRef.
@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu.shapes.collections import MutableSequenceForm, ReactiveSequenceI, SequenceForm
+from nu.shapes.forms import MutableSequenceForm, ReactiveSequenceForm, SequenceForm
 
 from .base import Ref
 
@@ -72,7 +72,7 @@ class MutableShapesSequenceRef[T: ShapeBase](
 
 
 class ReactiveShapesSequenceRef[T: ShapeBase](
-    ReactiveSequenceI[dict[str, object], object, object],
+    ReactiveSequenceForm[dict[str, object], object, object],
     MutableShapesSequenceRef[T],
 ):
     """Reactive shapes sequence ref — observation + mutations + navigation."""

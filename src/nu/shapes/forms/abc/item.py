@@ -17,13 +17,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.forms.primitives import BoolForm, NoneForm
+from nu.forms.primitives import BoolForm
 from nu.terms import Form
 
 
 if TYPE_CHECKING:
     from nu import Nu, Sentinel
-    from nu.shapes.ops import OnChildChangeOp
+    from nu.shapes.queries import OnChildChange
 
 
 __all__ = [
@@ -62,14 +62,14 @@ class ItemForm[T, InterfaceT](Form):
         return self._value_value_type
 
     def exists(self) -> BoolForm:
-        from nu.shapes.ops import ItemExistsOp
+        from nu.shapes.queries import ItemExists
 
-        return BoolForm(ItemExistsOp(self))
+        return BoolForm(ItemExists(self))
 
     def missing(self) -> BoolForm:
-        from nu.shapes.ops import ItemMissingOp
+        from nu.shapes.queries import ItemMissing
 
-        return BoolForm(ItemMissingOp(self))
+        return BoolForm(ItemMissing(self))
 
 
 class MutableItemForm[T, InterfaceT](ItemForm[T, InterfaceT]):
@@ -83,12 +83,12 @@ class MutableItemForm[T, InterfaceT](ItemForm[T, InterfaceT]):
     """
 
     def store(self, value: T | Sentinel | Nu[T | Sentinel]) -> Nu:
-        from nu.shapes.ops import ItemStoreCmd
+        from nu.shapes.commands import ItemStoreCmd
 
         return ItemStoreCmd(self, value)
 
     def erase(self) -> Nu:
-        from nu.shapes.ops import ItemEraseCmd
+        from nu.shapes.commands import ItemEraseCmd
 
         return ItemEraseCmd(self)
 
@@ -102,7 +102,7 @@ class MutableItemForm[T, InterfaceT](ItemForm[T, InterfaceT]):
 class ReactiveItemForm[T, InterfaceT](MutableItemForm[T, InterfaceT]):
     """Reactive item - CRUD + change observation."""
 
-    def on_change(self) -> OnChildChangeOp:
-        from nu.shapes.ops import OnChildChangeOp
+    def on_change(self) -> OnChildChange:
+        from nu.shapes.queries import OnChildChange
 
-        return OnChildChangeOp(self.parent, self._raw_address)
+        return OnChildChange(self.parent, self._raw_address)

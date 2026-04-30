@@ -2,7 +2,7 @@
 
 ShapeRef         = MappingForm[str, object, ...] + Ref
 MutableShapeRef  = MutableMappingForm[str, object, ...] + ShapeRef
-ReactiveShapeRef = ReactiveMappingI[str, object, ...] + MutableShapeRef
+ReactiveShapeRef = ReactiveMappingForm[str, object, ...] + MutableShapeRef
 
 A shape is a mapping (dict[str, object]) with attribute-based slot navigation.
 Substrates extend these with their own storage mechanisms.
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.shapes.collections import MappingForm, MutableMappingForm, ReactiveMappingI
+from nu.shapes.forms import MappingForm, MutableMappingForm, ReactiveMappingForm
 
 from .base import Ref
 
@@ -148,6 +148,6 @@ class MutableShapeRef[T: ShapeBase](
 
 class ReactiveShapeRef[T: ShapeBase](
     MutableShapeRef[T],
-    ReactiveMappingI[str, object, object, object],
+    ReactiveMappingForm[str, object, object, object],
 ):
     """Shape + mapping mutations + change observation."""

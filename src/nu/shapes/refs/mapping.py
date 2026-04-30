@@ -2,7 +2,7 @@
 
 MappingRef         = MappingForm + Ref
 MutableMappingRef  = MutableMappingForm + MappingRef
-ReactiveMappingRef = ReactiveMappingI + MutableMappingRef
+ReactiveMappingRef = ReactiveMappingForm + MutableMappingRef
 
 Type Parameters:
     K:              Native key type (str, int, etc.)
@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu.shapes.collections import MappingForm, MutableMappingForm, ReactiveMappingI
+from nu.shapes.forms import MappingForm, MutableMappingForm, ReactiveMappingForm
 
 from .base import Ref
 
@@ -67,7 +67,7 @@ class MutableMappingRef[K, V, CollectionValueT, ValueValueT](
 
 
 class ReactiveMappingRef[K, V, CollectionValueT, ValueValueT](
-    ReactiveMappingI[K, V, CollectionValueT, ValueValueT],
+    ReactiveMappingForm[K, V, CollectionValueT, ValueValueT],
     MutableMappingRef[K, V, CollectionValueT, ValueValueT],
 ):
     """Reactive mapping ref — observation + mutations + navigation."""

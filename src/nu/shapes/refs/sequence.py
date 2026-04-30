@@ -2,7 +2,7 @@
 
 SequenceRef         = SequenceForm + Ref
 MutableSequenceRef  = MutableSequenceForm + Ref
-ReactiveSequenceRef = ReactiveSequenceI + Ref
+ReactiveSequenceRef = ReactiveSequenceForm + Ref
 
 Type Parameters:
     T:               Native element type (int, str, etc.)
@@ -15,7 +15,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from nu.shapes.collections import MutableSequenceForm, ReactiveSequenceI, SequenceForm
+from nu.shapes.forms import MutableSequenceForm, ReactiveSequenceForm, SequenceForm
 
 from .base import Ref
 
@@ -66,7 +66,7 @@ class MutableSequenceRef[T, CollectionValueT, ItemValueT](
 
 
 class ReactiveSequenceRef[T, CollectionValueT, ItemValueT](
-    ReactiveSequenceI[T, CollectionValueT, ItemValueT],
+    ReactiveSequenceForm[T, CollectionValueT, ItemValueT],
     MutableSequenceRef[T, CollectionValueT, ItemValueT],
 ):
     """Reactive sequence ref — observation + mutations + navigation."""

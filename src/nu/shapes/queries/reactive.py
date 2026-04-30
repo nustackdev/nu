@@ -1,11 +1,9 @@
-"""Reactive ops - change observation at various granularities.
+"""Reactive subscription queries — observe changes at various granularities.
 
-OnChangeOp: Subscribe to all changes on a view
-OnChildChangeOp: Subscribe to changes on a specific child
-OnChildrenChangeOp: Subscribe to changes on all immediate children
-OnDescendantsChangeOp: Subscribe to descendants matching a pattern
-
-All ops read the view via children[0] (goes through Snapshot wrapper).
+OnChange:             all changes on a view
+OnChildChange:        changes on one specific child
+OnChildrenChange:     changes on any immediate child
+OnDescendantsChange:  descendants matching a pattern
 """
 
 from __future__ import annotations
@@ -22,24 +20,24 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "ChangeOp",
-    "OnChangeOp",
-    "OnChildChangeOp",
-    "OnChildrenChangeOp",
-    "OnDescendantsChangeOp",
+    "Change",
+    "OnChange",
+    "OnChildChange",
+    "OnChildrenChange",
+    "OnDescendantsChange",
 ]
 
 
 _BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
 
-class ChangeOp(ScalarQuery):
-    """Base class for all change subscription operations."""
+class Change(ScalarQuery):
+    """Base class for all change subscription queries."""
 
     accepts_sentinels: ClassVar[bool] = True
 
 
-class OnChangeOp(ChangeOp):
+class OnChange(Change):
     """Subscribe to all changes on a view/collection."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
@@ -52,10 +50,10 @@ class OnChangeOp(ChangeOp):
         return view.on_change()
 
     def __repr__(self) -> str:
-        return f"OnChangeOp({self._children[0]!r})"
+        return f"OnChange({self._children[0]!r})"
 
 
-class OnChildChangeOp(ChangeOp):
+class OnChildChange(Change):
     """Subscribe to changes on a specific child of a view."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
@@ -71,7 +69,6 @@ class OnChildChangeOp(ChangeOp):
             address = runtime.first(self.address, ctx)
         else:
             address = self.address
-
         view = ops[0]
         return view.on_child_change(address)
 
@@ -82,15 +79,14 @@ class OnChildChangeOp(ChangeOp):
             address = await runtime.afirst(self.address, ctx)
         else:
             address = self.address
-
         view = ops[0]
         return view.on_child_change(address)
 
     def __repr__(self) -> str:
-        return f"OnChildChangeOp({self._children[0]!r}, {self.address!r})"
+        return f"OnChildChange({self._children[0]!r}, {self.address!r})"
 
 
-class OnChildrenChangeOp(ChangeOp):
+class OnChildrenChange(Change):
     """Subscribe to changes on all immediate children of a view."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
@@ -103,10 +99,10 @@ class OnChildrenChangeOp(ChangeOp):
         return view.on_children_change()
 
     def __repr__(self) -> str:
-        return f"OnChildrenChangeOp({self._children[0]!r})"
+        return f"OnChildrenChange({self._children[0]!r})"
 
 
-class OnDescendantsChangeOp(ChangeOp):
+class OnDescendantsChange(Change):
     """Subscribe to descendants matching a pattern."""
 
     support: ClassVar[frozenset[Mode]] = _BOTH
@@ -118,9 +114,8 @@ class OnDescendantsChangeOp(ChangeOp):
     def _apply(self, ctx: Any, ops: list[Any]) -> object:  # noqa: ANN401
         if not self.pattern:
             raise ValueError("Pattern cannot be empty for on_descendants_change")
-
         view = ops[0]
         return view.on_descendents_change(self.pattern[0], *self.pattern[1:])
 
     def __repr__(self) -> str:
-        return f"OnDescendantsChangeOp({self._children[0]!r}, {self.pattern!r})"
+        return f"OnDescendantsChange({self._children[0]!r}, {self.pattern!r})"

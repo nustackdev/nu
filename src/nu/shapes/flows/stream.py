@@ -1,9 +1,9 @@
-"""Stream flow - drain-then-follow over ordered collections.
+"""Stream flow — drain-then-follow over ordered collections.
 
-The ``cat file; tail -f`` of Nu. One declaration that handles
-batch catch-up, live follow, and the seamless transition between them.
+The ``cat file; tail -f`` of Nu. One declaration that handles batch
+catch-up, live follow, and the seamless transition between them.
 
-Children: [advance_op, change_op, body, key, log_key]
+Children: [advance, change, body, key, log_key]
 """
 
 from __future__ import annotations
@@ -15,8 +15,8 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from nu.terms.nu import NuBase
 from nu.terms.types import Mode
 
-from ..cursor import _UNSET, AdvanceCursorOp
-from ..reactive import OnChildrenChangeOp
+from ..queries.cursor import _UNSET, AdvanceCursor
+from ..queries.reactive import OnChildrenChange
 
 
 if TYPE_CHECKING:
@@ -34,10 +34,10 @@ __all__ = [
 class Stream(NuBase):
     """Drain-then-follow over an ordered collection.
 
-    Iterates existing items (drain), then subscribes and follows new
-    items (react). Transition is seamless - cursor tracks position.
+    Iterates existing items (drain), then subscribes and follows new items
+    (react). Transition is seamless — cursor tracks position.
 
-    Children layout: [advance_op, change_op, body, key, log_key]
+    Children layout: [advance, change, body, key, log_key]
     """
 
     support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
@@ -55,8 +55,8 @@ class Stream(NuBase):
 
         cursor_ref = AttrRef(log_key)
 
-        advance = AdvanceCursorOp(source, cursor_ref)
-        change = OnChildrenChangeOp(source)
+        advance = AdvanceCursor(source, cursor_ref)
+        change = OnChildrenChange(source)
 
         super().__init__(advance, change, body, key, log_key)
 

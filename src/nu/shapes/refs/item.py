@@ -11,7 +11,7 @@ Type Parameters:
 
 from __future__ import annotations
 
-from nu.shapes.collections import ItemForm, MutableItemForm, ReactiveItemForm
+from nu.shapes.forms import ItemForm, MutableItemForm, ReactiveItemForm
 
 from .base import Ref
 

@@ -1,4 +1,4 @@
-"""Shape control flow ops."""
+"""Shape control flows — reactive subscriptions and ordered streaming."""
 
 from .react import React, ReactForever, ReactWhile
 from .stream import Stream

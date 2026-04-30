@@ -7,7 +7,7 @@ Realistic pattern: one Transaction/Snapshot per 4-field batch, repeated N times.
 
 Progression:
   1. Raw virtuals         -- Atomic(Seq(ref.store/load))           standard morphisms
-  2. Unsafe ops     -- optimize_primitive_reads/writes     ItemLoadOp->UnsafeGet etc.
+  2. Unsafe ops     -- optimize_primitive_reads/writes     ItemLoad->UnsafeGet etc.
   3. Inline refs    -- inline_refs                         flatten Ref parent-chains
   4. Manual optimal -- Transaction + Init + ParentSkipSet  hand-built, no deformation
 

@@ -1,13 +1,9 @@
-"""Reactive control flows - React, ReactForever, ReactWhile.
+"""Reactive control flows — React, ReactForever, ReactWhile.
 
-Subscribe to change events and execute children in response.
-Uses ChangeOp ops from shapes.ops to obtain subscription
-handles, then bridges callback-based notifications into async via
-asyncio.Queue (one wake per notification, no collapsing).
-
-React:         Wait for a single change, optionally execute body once.
-ReactForever:  Execute body on every change (runs forever).
-ReactWhile:    Execute body on each change while condition is truthy.
+Subscribe to change events and execute children in response. Uses Change
+queries from shapes.queries to obtain subscription handles, bridges
+callback notifications into async via asyncio.Queue (one wake per
+notification, no collapsing).
 """
 
 from __future__ import annotations
@@ -20,7 +16,7 @@ from nu.terms.flow import Control
 from nu.terms.nu import NuBase
 from nu.terms.types import Mode
 
-from ..reactive import ChangeOp  # noqa: TC001 - runtime dependency
+from ..queries.reactive import Change  # noqa: TC001 - runtime dependency
 
 
 if TYPE_CHECKING:
@@ -47,7 +43,7 @@ class React(NuBase):
 
     def __init__(
         self,
-        change: ChangeOp,
+        change: Change,
         body: Nu | None = None,
         *,
         changed_key: StrArg | None = None,
@@ -108,7 +104,7 @@ class ReactForever(Control):
 
     def __init__(
         self,
-        change: ChangeOp,
+        change: Change,
         body: Nu,
         *,
         changed_key: StrArg | None = None,
@@ -164,7 +160,7 @@ class ReactWhile(NuBase):
 
     def __init__(
         self,
-        change: ChangeOp,
+        change: Change,
         condition: Any,
         body: Nu,
         *,
