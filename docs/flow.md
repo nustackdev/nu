@@ -1,27 +1,35 @@
 # Flow
 
-Command-composing atoms. Sub-shapes: Strategy, Control. Flows yield nothing.
+Command-composing atoms. Sub-shapes: Strategy (how children run together) and Control (branching, looping). Flows yield nothing.
 
-Partial - samples below to confirm direction.
+Convention: Control names carry the `*Do` suffix to mark them as Flow (effectful) rather than Query (pure). Bare verb forms (`If`, `Switch`, `ForEach`) are reserved for Queries.
+
+Core only - shapes and ext/ not included.
 
 ## Strategy
 
-| Name       | Sub-shape | Signature         | Operator | Meaning                         |
-| ---------- | --------- | ----------------- | -------- | ------------------------------- |
-| Sequential | Strategy  | `Sequential(*cs)` | `>>`     | run children in order           |
-| Parallel   | Strategy  | `Parallel(*cs)`   | `\|`     | run children concurrently       |
-| Race       | Strategy  | `Race(*cs)`       | `&`      | first to finish wins            |
-| Gather     | Strategy  | `Gather(*cs)`     |          | parallel + collect all results  |
-| ParAny     | Strategy  | `ParAny(*cs)`     |          | parallel + first non-EMPTY wins |
+| Name       | Sub-shape | Signature         | Operator | Meaning                              |
+| ---------- | --------- | ----------------- | -------- | ------------------------------------ |
+| Sequential | Strategy  | `Sequential(*cs)` | `>>`     | run children in order                |
+| Parallel   | Strategy  | `Parallel(*cs)`   | `\|`     | run children concurrently            |
+| Race       | Strategy  | `Race(*cs)`       | `&`      | first to complete wins               |
+| Gather     | Strategy  | `Gather(*cs)`     |          | run concurrently and collect yields  |
+| AnyN       | Strategy  | `AnyN(*cs)`       |          | concurrent; succeed if any succeeds  |
 
 ## Control
 
-| Name      | Sub-shape | Signature                     | Meaning                  |
-| --------- | --------- | ----------------------------- | ------------------------ |
-| IfDo      | Control   | `IfDo(cond, then, else_)`     | conditional Command      |
-| SwitchDo  | Control   | `SwitchDo(...)`               | multi-branch Command     |
-| ForEachDo | Control   | `ForEachDo(stream, body)`     | run body per element     |
-| WhileDo   | Control   | `WhileDo(cond, body)`         | run body while cond holds|
-| DoWhile   | Control   | `DoWhile(body, cond)`         | run body, then while cond|
-| Forever   | Control   | `Forever(body)`               | unbounded loop           |
-| ForRange  | Control   | `ForRange(start, stop, body)` | loop over integer range  |
+### Branch
+
+| Name     | Sub-shape | Signature                                  | Meaning                              |
+| -------- | --------- | ------------------------------------------ | ------------------------------------ |
+| IfDo     | Control   | `IfDo(cond, body, else_body=None)`         | run body if cond is truthy           |
+| SwitchDo | Control   | `SwitchDo(selector, cases, default=None)`  | multi-way branch on selector value   |
+
+### Loop
+
+| Name      | Sub-shape | Signature                                            | Meaning                                                  |
+| --------- | --------- | ---------------------------------------------------- | -------------------------------------------------------- |
+| WhileDo   | Control   | `WhileDo(cond, body)`                                | run body while cond holds                                |
+| ForeverDo | Control   | `ForeverDo(body)`                                    | run body indefinitely                                    |
+| ForEachDo | Control   | `ForEachDo(items, body, item="item")`                | run body per element; binds element to `ctx.attrs[item]` |
+| ForRangeDo| Control   | `ForRangeDo(start, stop, body, step=1, index="i")`   | counted loop over `range(start, stop, step)`             |

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Iteration micro-benchmark.
 
-Pure ForEach + IfDo dispatch cost. No state, no storage, no RPC.
+Pure ForEachDo + IfDo dispatch cost. No state, no storage, no RPC.
 Print only on the matched branch (every 3rd item).
 
 Usage:
@@ -22,7 +22,7 @@ def build_app(n: int) -> nu.Nu:
     items = [{"tx_id": i, "match": (i % 1000) == 0} for i in range(n)]
     matched = nu.At(nu.DictAttrRef("tx"), "match")
 
-    return nu.ForEach(
+    return nu.ForEachDo(
         items,
         nu.IfDo(
             nu.ToBool(matched),

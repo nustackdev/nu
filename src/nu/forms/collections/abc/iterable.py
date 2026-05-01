@@ -3,7 +3,7 @@
 IterableForm: wrapping infrastructure for collection results.
 
 Follows Python's collections.abc.Iterable pattern. In Nu's tree model,
-iteration is controlled by Flows (ForEach, ForRange), not Python's
+iteration is controlled by Flows (ForEachDo, ForRangeDo), not Python's
 iterator protocol. This marks types as iterable and provides
 the wrapping infrastructure for typed results.
 

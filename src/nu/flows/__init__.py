@@ -1,32 +1,26 @@
 """Native Flow concretes - Strategy and Control families."""
 
 from .control import (
-    DoWhile,
     ForEachDo,
-    Forever,
+    ForeverDo,
+    ForRangeDo,
     IfDo,
     SwitchDo,
-    While,
     WhileDo,
 )
-from .iter_each import ForEach
-from .iteration_range import ForRange
-from .strategy import Gather, ParAny, Parallel, Race, Sequential
+from .strategy import AnyN, Gather, Parallel, Race, Sequential
 
 
 __all__ = [
-    "DoWhile",
-    "ForEach",
+    "AnyN",
     "ForEachDo",
-    "ForRange",
-    "Forever",
+    "ForRangeDo",
+    "ForeverDo",
     "Gather",
     "IfDo",
-    "ParAny",
     "Parallel",
     "Race",
     "Sequential",
     "SwitchDo",
-    "While",
     "WhileDo",
 ]

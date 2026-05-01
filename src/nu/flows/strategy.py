@@ -1,8 +1,8 @@
-"""Strategy concretes - Sequential, Parallel, Race, Gather, ParAny.
+"""Strategy concretes - Sequential, Parallel, Race, Gather, AnyN.
 
 `Sequential` is the `>>` operator's target; `Parallel` is `|`; `Race`
 is `&`. `Gather` runs concurrently and (eventually) collects yields.
-`ParAny` runs children concurrently and succeeds if any one succeeds.
+`AnyN` runs children concurrently and succeeds if any one succeeds.
 """
 
 from __future__ import annotations
@@ -19,8 +19,8 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "AnyN",
     "Gather",
-    "ParAny",
     "Parallel",
     "Race",
     "Sequential",
@@ -157,7 +157,7 @@ class Gather(Strategy):
     _arun_children = Parallel._arun_children
 
 
-class ParAny(Strategy):
+class AnyN(Strategy):
     """Run children concurrently; succeed if any one succeeds.
 
     Children: ``[*children]`` -- all body slots (Strategy semantics).

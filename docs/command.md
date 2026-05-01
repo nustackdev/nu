@@ -2,14 +2,14 @@
 
 Mutating atoms. WRITE effect. Sub-shape: ScalarCommand. Commands yield nothing.
 
-Partial - samples below to confirm direction.
+Core only - shapes and ext/ not included.
 
 ## IO
 
-| Name  | Sub-shape     | Signature       | Effect | Meaning            |
-| ----- | ------------- | --------------- | ------ | ------------------ |
-| Print | ScalarCommand | `Print(x)`      | WRITE  | write to stdout    |
-| Log   | ScalarCommand | `Log(x, level)` | WRITE  | log at given level |
-| Debug | ScalarCommand | `Debug(x)`      | WRITE  | debug-level log    |
+| Name  | Sub-shape     | Signature                               | Effect | Meaning                                  |
+| ----- | ------------- | --------------------------------------- | ------ | ---------------------------------------- |
+| Print | ScalarCommand | `Print(*values)`                        | WRITE  | print messages to stdout                 |
+| Log   | ScalarCommand | `Log(message, *values, level, logger_name)` | WRITE | structured logging at given level    |
+| Debug | ScalarCommand | `Debug(*values, labels, prefix)`        | WRITE  | quick debug output for development       |
 
-> Remaining: asserts.
+> `commands/asserts.py` exists but is empty - no asserts shipped yet.

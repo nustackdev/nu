@@ -7,7 +7,7 @@ from conftest import TestShape, distributed
 
 import nu_virtuals as ebv
 from composables import Runtime
-from nu import ForRange, Parallel, Print, Seq
+from nu import ForRangeDo, Parallel, Print, Seq
 from nu_distributed import NavigatorSpec, RocksDBStorageSpec, Teleport
 
 
@@ -107,14 +107,14 @@ async def test_distributed_many_workers(db_path):
 
 @pytest.mark.asyncio
 async def test_distributed_forrange(db_path):
-    """ForRange loop on a Ray worker."""
+    """ForRangeDo loop on a Ray worker."""
     flow = Seq(
         Teleport(
             ebv.Transaction(TestShape.price.store(0)),
             worker=0,
         ),
         Teleport(
-            ForRange(
+            ForRangeDo(
                 0,
                 10,
                 ebv.Transaction(TestShape.price.store(42.0)),

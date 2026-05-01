@@ -1,4 +1,4 @@
-"""Control concretes - IfDo, ForEachDo, WhileDo, While, DoWhile, Forever, SwitchDo."""
+"""Control concretes - IfDo, SwitchDo, WhileDo, ForeverDo, ForEachDo, ForRangeDo."""
 
 from __future__ import annotations
 
@@ -11,16 +11,15 @@ from nu.terms.types import Mode
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from nu.terms import Arg, Nu, StrArg
+    from nu.terms import Arg, IntArg, Nu, StrArg
 
 
 __all__ = [
-    "DoWhile",
     "ForEachDo",
-    "Forever",
+    "ForRangeDo",
+    "ForeverDo",
     "IfDo",
     "SwitchDo",
-    "While",
     "WhileDo",
 ]
 
@@ -136,68 +135,7 @@ class WhileDo(Control):
             await atom_dispatch(body, ExecState.LOOP)(ctx)
 
 
-class While(Control):
-    """Loop while condition is truthy.
-
-    Children: ``[condition, body]`` -- body is the Command at slot 1.
-    """
-
-    body_slots: ClassVar[tuple[int, ...]] = (1,)
-    support: ClassVar[frozenset[Mode]] = _BOTH
-
-    def __init__(self, condition: Any, body: Nu) -> None:  # noqa: ANN401
-        super().__init__(condition, body)
-
-    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
-
-        cond_q = self._children[0]
-        body = self._children[1]
-        while runtime.first(cond_q, ctx):
-            runtime.execute(body, ctx)
-
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
-
-        cond_q = self._children[0]
-        body = self._children[1]
-        while await runtime.afirst(cond_q, ctx):
-            await runtime.aexecute(body, ctx)
-
-
-class DoWhile(Control):
-    """Execute body first, then loop while condition is truthy.
-
-    Children: ``[body, condition]`` -- body is the Command at slot 0.
-    """
-
-    body_slots: ClassVar[tuple[int, ...]] = (0,)
-    support: ClassVar[frozenset[Mode]] = _BOTH
-
-    def __init__(self, condition: Any, body: Nu) -> None:  # noqa: ANN401
-        # Body in slot 0, condition in slot 1 to satisfy body_slots invariants.
-        super().__init__(body, condition)
-
-    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
-
-        body = self._children[0]
-        cond_q = self._children[1]
-        runtime.execute(body, ctx)
-        while runtime.first(cond_q, ctx):
-            runtime.execute(body, ctx)
-
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
-
-        body = self._children[0]
-        cond_q = self._children[1]
-        await runtime.aexecute(body, ctx)
-        while await runtime.afirst(cond_q, ctx):
-            await runtime.aexecute(body, ctx)
-
-
-class Forever(Control):
+class ForeverDo(Control):
     """Execute body indefinitely.
 
     Children: ``[body]``
@@ -221,6 +159,69 @@ class Forever(Control):
 
         body = self._children[0]
         while True:
+            await runtime.aexecute(body, ctx)
+
+
+class ForRangeDo(Control):
+    """Counted loop over ``range(start, stop, step)``.
+
+    Children: ``[start, stop, step, body]`` or
+    ``[start, stop, step, body, index_key]``. Body lives at slot 3.
+
+    Sets ``ctx.attrs[index_key]`` to the current loop value each
+    iteration when an index key is provided.
+    """
+
+    body_slots: ClassVar[tuple[int, ...]] = (3,)
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(
+        self,
+        start: IntArg,
+        stop: IntArg,
+        body: Nu,
+        *,
+        step: IntArg = 1,
+        index: StrArg | None = None,
+    ) -> None:
+        self._has_index = index is not None
+        children: list = [start, stop, step, body]
+        if index is not None:
+            children.append(index)
+        super().__init__(*children)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
+        from nu import runtime
+
+        start = self._children[0].eval(ctx)
+        stop = self._children[1].eval(ctx)
+        step = self._children[2].eval(ctx)
+        body = self._children[3]
+
+        index_key: str | None = None
+        if self._has_index:
+            index_key = self._children[4].eval(ctx)
+
+        for i in range(start, stop, step):
+            if index_key is not None:
+                ctx.attrs[index_key] = i
+            runtime.execute(body, ctx)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
+        from nu import runtime
+
+        start = await self._children[0].aeval(ctx)
+        stop = await self._children[1].aeval(ctx)
+        step = await self._children[2].aeval(ctx)
+        body = self._children[3]
+
+        index_key: str | None = None
+        if self._has_index:
+            index_key = await self._children[4].aeval(ctx)
+
+        for i in range(start, stop, step):
+            if index_key is not None:
+                ctx.attrs[index_key] = i
             await runtime.aexecute(body, ctx)
 
 
@@ -254,7 +255,7 @@ class SwitchDo(Control):
     def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
-        value = runtime.first(self._children[0], ctx)
+        value = self._children[0].eval(ctx)
         for i, key in enumerate(self._case_keys):
             if key == value:
                 runtime.execute(self._children[i + 1], ctx)
@@ -265,7 +266,7 @@ class SwitchDo(Control):
     async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
-        value = await runtime.afirst(self._children[0], ctx)
+        value = await self._children[0].aeval(ctx)
         for i, key in enumerate(self._case_keys):
             if key == value:
                 await runtime.aexecute(self._children[i + 1], ctx)
