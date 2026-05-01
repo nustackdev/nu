@@ -36,8 +36,11 @@ def _has_async_only(nu: Any) -> bool:  # noqa: ANN401
 
     Async-only descendants must run on the event loop. Subtrees without
     any async-only node can run on a worker thread.
+
+    Reads the instance attribute so atoms that narrow their support at
+    construction time (e.g. an async-only ``Invoke``) are visible.
     """
-    support = getattr(type(nu), "support", None)
+    support = getattr(nu, "support", None)
     if support is not None and support == _ASYNC_ONLY:
         return True
     for child in getattr(nu, "_children", ()):

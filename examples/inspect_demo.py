@@ -5,6 +5,7 @@ Shows ``render_shape`` on a nested Shape + ``render_nu`` on a multi-step app.
 
 import nu
 import nu_mem as nm
+from nu import runtime
 from nu_inspect import render_nu, render_shape
 
 
@@ -21,8 +22,8 @@ class Counter(nu.Shape):
 
 
 app = (
-    nu.If(Counter.value.missing(), Counter.value.store(0))
-    >> nu.If(Counter.step.missing(), Counter.step.store(1))
+    nu.IfDo(Counter.value.missing(), Counter.value.store(0))
+    >> nu.IfDo(Counter.step.missing(), Counter.step.store(1))
     >> Counter.meta.label.store("demo")
     >> Counter.meta.version.store(1)
     >> Counter.tags.store(["seed"])
@@ -45,7 +46,7 @@ print("\n=== App ===")
 print(render_nu(app))
 
 print("\n=== Running ===")
-app.execute(nu.Context().bind(dict, data))
+runtime.execute(app, nu.Context().bind(dict, data))
 
 print("\n=== Shape (after) ===")
 print(render_shape(Counter, data))

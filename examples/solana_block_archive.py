@@ -30,9 +30,6 @@ class DroppedSlotError(Exception):
     pass
 
 
-# -- RPC client ---------------------------------------------------------------
-
-
 class SolanaRpc:
     """Minimal async Solana JSON-RPC client. Returns raw `result` payload."""
 
@@ -80,15 +77,6 @@ class SolanaRpc:
     async def close(self):
         if self._session and not self._session.closed:
             await self._session.close()
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, *a):
-        await self.close()
-
-
-# -- Service declaration ------------------------------------------------------
 
 
 class SolanaRef(nu.Ref[SolanaRpc]):
@@ -184,7 +172,7 @@ def fetcher(
     raw entry to ``_RangeScratch.blocks``. On drop: log + skip.
     """
     slot = nu.IntAttrRef(f"slot_{worker_id}")
-    return nu.ForRange(
+    return nu.ForRangeDo(
         slot_from + worker_id,
         slot_from + slot_count,
         nu.Retry(
@@ -217,7 +205,7 @@ def process_entry(ledger: type[Ledger], entry_ref: nu.Nu, *, program_id: nu.StrA
         >> bm.synced.init(0)
         >> _SlotScratch.tx_idx.store(0)
         >> nv.Transaction(
-            nu.ForEach(
+            nu.ForEachDo(
                 nu.At(block, "transactions"),
                 nu.IfDo(
                     nu.ToBool(program_id),
@@ -242,7 +230,7 @@ def processor(ledger: type[Ledger], *, program_id: nu.StrArg = "") -> nu.Nu:
     thread under ``max_parallel >= 2``.
     """
     entry = _RangeScratch.blocks[_RangeScratch.cursor]
-    return nu.DoWhile(
+    return nu.WhileDo(
         nu.or_(ledger.fetch_done.not_(), _RangeScratch.cursor < nu.Len(_RangeScratch.blocks)),
         nu.IfDo(
             nu.Lt(_RangeScratch.cursor, nu.Len(_RangeScratch.blocks)),
@@ -295,7 +283,7 @@ def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
     return (
         nu.shapes.ReactForever(
             ledger.blocks_meta.on_descendants_change("*"),
-            nu.Log("new block:", nu.At(nu.TupleAttrRef("slot_change"), -1)),
+            nu.Log("new block:", nu.TupleAttrRef("slot_change")[-1]),
             changed_key="slot_change",
         )
         | nu.shapes.ReactForever(
@@ -304,9 +292,9 @@ def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
                 0.2,
                 nu.Log(
                     "block",
-                    nu.At(nu.TupleAttrRef("skipped_change"), -2),
+                    nu.TupleAttrRef("skipped_change")[-2],
                     "txs skipped:",
-                    ledger.blocks_meta[nu.At(nu.TupleAttrRef("skipped_change"), -2)].skipped,
+                    ledger.blocks_meta[nu.TupleAttrRef("skipped_change")[-2]].skipped,
                 ),
             ),
             changed_key="skipped_change",
@@ -317,9 +305,9 @@ def reactive_stats(ledger: type[Ledger]) -> nu.Nu:
                 0.2,
                 nu.Log(
                     "block",
-                    nu.At(nu.TupleAttrRef("synced_change"), -2),
+                    nu.TupleAttrRef("synced_change")[-2],
                     "txs synced:",
-                    ledger.blocks_meta[nu.At(nu.TupleAttrRef("synced_change"), -2)].synced,
+                    ledger.blocks_meta[nu.TupleAttrRef("synced_change")[-2]].synced,
                 ),
             ),
             changed_key="synced_change",
@@ -361,76 +349,78 @@ async def main() -> None:
     p.add_argument("--max-parallel", type=int, default=10)
     args = p.parse_args()
 
-    async with SolanaRpc(endpoint=args.endpoint) as rpc:
-        with rocksdb_storage_inmemory(args.db_path) as store:
-            ctx = nu.Context()
-            ctx = ctx.bind(Navigator, Navigator(store))
-            ctx = ctx.bind(SolanaRpc, rpc)
-            ctx = ctx.bind(dict, {})
+    rpc = SolanaRpc(endpoint=args.endpoint)
+    with rocksdb_storage_inmemory(args.db_path) as store:
+        ctx = nu.Context()
+        ctx = ctx.bind(Navigator, Navigator(store))
+        ctx = ctx.bind(SolanaRpc, rpc)
+        ctx = ctx.bind(dict, {})
 
-            app = (
-                (
-                    nu.Log("--- sync ---")
-                    >> nu.Log("syncing", args.slots, "slots from", args.slot_from)
-                    >> nu.Log("endpoint:", args.endpoint)
-                    >> nu.Log("filter: program", args.program or "(none)")
-                    >> nu.Log("db:", args.db_path)
-                    >> Ledger.fetch_done.store(False)
+        app = (
+            (
+                nu.Log("--- sync ---")
+                >> nu.Log("syncing", args.slots, "slots from", args.slot_from)
+                >> nu.Log("endpoint:", args.endpoint)
+                >> nu.Log("filter: program", args.program or "(none)")
+                >> nu.Log("db:", args.db_path)
+                >> Ledger.fetch_done.store(False)
+            )
+            >> (
+                sync_range(
+                    Ledger,
+                    args.slot_from,
+                    args.slots,
+                    program_id=args.program or "",
+                    n_workers=args.workers,
                 )
-                >> (
-                    sync_range(
-                        Ledger,
-                        args.slot_from,
-                        args.slots,
-                        program_id=args.program or "",
-                        n_workers=args.workers,
+                & reactive_stats(Ledger)
+            )
+            >> (
+                nu.Log("--- sync report ---")
+                >> nu_virtuals.Snapshot(
+                    nu.Log(
+                        "txs synced",
+                        nu.Sum(nu.Pluck(Ledger.blocks_meta.values(), "synced")),
                     )
-                    & reactive_stats(Ledger)
-                )
-                >> (
-                    nu.Log("--- sync report ---")
-                    >> nu_virtuals.Snapshot(
-                        nu.Log(
-                            "txs synced",
-                            nu.Sum(nu.Pluck(Ledger.blocks_meta.values(), "synced")),
-                        )
-                        >> nu.Log(
-                            "txs skipped",
-                            nu.Sum(nu.Pluck(Ledger.blocks_meta.values(), "skipped")),
-                        )
+                    >> nu.Log(
+                        "txs skipped",
+                        nu.Sum(nu.Pluck(Ledger.blocks_meta.values(), "skipped")),
                     )
                 )
             )
+        )
 
-            # Archive phase
-            app = nm.inline_refs(app)
-            app = nu_virtuals.inline_refs(app)
-            app = nu_virtuals.auto_atomic(app)
-            app = nu_inspect.set_logger_name(app, "sol")
+        # Archive phase
+        app = nm.inline_refs(app)
+        app = nu_virtuals.inline_refs(app)
+        app = nu_virtuals.auto_atomic(app)
+        app = nu_inspect.set_logger_name(app, "sol")
 
-            await runtime.aexecute(app, ctx, max_parallel=args.max_parallel)
+        await runtime.aexecute(app, ctx, max_parallel=args.max_parallel)
 
-            # Read phase
-            app = nu.Print(
-                nu_virtuals.Snapshot(
-                    Ledger.txs[
-                        nu.Last(
-                            nu.Filter(
-                                nu.Iter(Ledger.txs.keys()),
-                                condition=Ledger.txs[nu.StrAttrRef("item")].meta.fee > 100_000,
-                            ),
-                        )
-                    ].extract()
-                )
+        # Read phase
+        app = nu.Print(
+            nu_virtuals.Snapshot(
+                Ledger.txs[
+                    nu.Last(
+                        nu.Filter(
+                            nu.Iter(Ledger.txs.keys()),
+                            condition=Ledger.txs[nu.StrAttrRef("item")].meta.fee > 100_000,
+                        ),
+                    )
+                ].extract()
             )
+        )
 
-            app = nm.inline_refs(app)
-            app = nu_virtuals.inline_refs(app)
-            app = nu_virtuals.auto_atomic(app)
-            app = nu_inspect.set_logger_name(app, "sol")
-            runtime.execute(app, ctx)
+        app = nm.inline_refs(app)
+        app = nu_virtuals.inline_refs(app)
+        app = nu_virtuals.auto_atomic(app)
+        app = nu_inspect.set_logger_name(app, "sol")
+        runtime.execute(app, ctx)
 
-            await nudle.arun_ui(Ledger, ctx)
+        await nudle.arun_ui(Ledger, ctx)
+
+        await rpc.close()
 
 
 if __name__ == "__main__":

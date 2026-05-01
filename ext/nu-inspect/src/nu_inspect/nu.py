@@ -1,22 +1,37 @@
 """Nu tree rendering -- ANSI, plain, or HTML.
 
-Color coding by node category for ANSI. Duck-typed node classification
-with no imports from other Nu modules.
+Classification follows the current Nu kind model (see
+`projects/nu/model/02-atoms`). Each node is one of:
 
-ANSI color scheme:
-    Literals             : cyan
-    Literals (computed)  : dim cyan
-    Refs                 : yellow
-    Ops                  : green
-    Connectors           : dim
-    Nu names             : bold (within their color)
+    Ref        - address atom              (yellow)
+    Literal    - trivial scalar Query      (cyan / dim cyan)
+    Query      - non-Literal Query         (green)
+    Command    - mutating atom             (red)
+    Flow       - composer (Strategy/Control) (blue)
+    Span       - transparent (Bracket/Policy) (magenta)
+
+Classification is via isinstance against the kind classes from
+`nu.terms`. No duck-typing on private attributes.
 """
 
 from __future__ import annotations
 
 import json
 from importlib.resources import files
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
+from typing import Literal as TLiteral
+
+from nu.queries.literal import Literal
+from nu.terms import (
+    Bracket,
+    Command,
+    Flow,
+    Policy,
+    Query,
+    Ref,
+    Span,
+    Strategy,
+)
 
 
 if TYPE_CHECKING:
@@ -28,7 +43,7 @@ if TYPE_CHECKING:
 __all__ = ["render_nu"]
 
 
-# ── ANSI escape codes ─────────────────────────────────────────────────────────
+# -- ANSI escape codes --------------------------------------------------------
 
 RESET = "\033[0m"
 BOLD = "\033[1m"
@@ -38,169 +53,153 @@ CYAN = "\033[36m"
 DIM_CYAN = "\033[2;36m"
 YELLOW = "\033[33m"
 GREEN = "\033[32m"
+RED = "\033[31m"
+BLUE = "\033[34m"
+MAGENTA = "\033[35m"
 
-PURE_DOT = f"{GREEN}\u25cf{RESET}"
-
-
-# ── Node categorization (duck-typed, no imports) ─────────────────────────────
-
-
-def _is_span(node: Any) -> bool:
-    return (
-        hasattr(node, "enter") and hasattr(node, "exit_success") and hasattr(node, "exit_failure")
-    )
+PURE_DOT = f"{GREEN}●{RESET}"
 
 
-def _is_flow(node: Any) -> bool:
-    return (
-        hasattr(node, "run")
-        and not hasattr(node, "apply")
-        and not hasattr(node, "is_self_pure")
-        and not _is_span(node)
-    )
-
-
-def _is_ref(node: Any) -> bool:
-    return hasattr(node, "resolve") and hasattr(node, "fetch")
-
-
-def _is_value(node: Any) -> bool:
-    return hasattr(node, "is_self_pure") and not hasattr(node, "apply") and not _is_ref(node)
+# -- Classification (isinstance against the kind classes) ---------------------
 
 
 def _is_literal(node: Any) -> bool:
-    """Literals have a source attribute, no apply method, not a Ref."""
-    return hasattr(node, "source") and not hasattr(node, "apply") and not _is_ref(node)
+    return isinstance(node, Literal)
 
 
-def _is_op(node: Any) -> bool:
-    return hasattr(node, "apply") or hasattr(node, "_func") or hasattr(node, "_method_name")
+def _is_ref(node: Any) -> bool:
+    return isinstance(node, Ref)
 
 
-def _is_morphism(node: Any) -> bool:
-    return _is_op(node)
+def _is_query(node: Any) -> bool:
+    return isinstance(node, Query)
 
 
-def _is_pure(node: Any) -> bool:
-    if hasattr(node, "is_self_pure"):
-        return node.is_self_pure
-    return True
+def _is_command(node: Any) -> bool:
+    return isinstance(node, Command)
 
 
-def _classify_html(node: Any) -> str:
+def _is_flow(node: Any) -> bool:
+    return isinstance(node, Flow)
+
+
+def _is_span(node: Any) -> bool:
+    return isinstance(node, Span)
+
+
+def _classify(node: Any) -> str:
+    """Return one of: span, flow, ref, op, cmd, value."""
     if _is_span(node):
         return "span"
     if _is_flow(node):
         return "flow"
     if _is_ref(node):
         return "ref"
-    if _is_morphism(node):
-        return "op" if _is_pure(node) else "cmd"
-    if _is_value(node):
+    if _is_command(node):
+        return "cmd"
+    if _is_literal(node):
         return "value"
+    if _is_query(node):
+        return "op"
     return "value"
 
 
-# ── ANSI labels ───────────────────────────────────────────────────────────────
+# -- ANSI labels --------------------------------------------------------------
 
 
-def _get_category_color(node: Any) -> str:
+def _category_color(node: Any) -> str:
+    if _is_span(node):
+        return MAGENTA
+    if _is_flow(node):
+        return BLUE
     if _is_ref(node):
         return YELLOW
-    if _is_op(node):
-        return GREEN
+    if _is_command(node):
+        return RED
     if _is_literal(node):
-        if hasattr(node, "source") and node._is_leaf:
-            return CYAN
-        return DIM_CYAN
+        # Trivial leaf literal vs computed (children present).
+        return CYAN if not node._children else DIM_CYAN
+    if _is_query(node):
+        return GREEN
     return ""
 
 
-def _format_ref_label(node: Any) -> str:
+def _ref_label(node: Ref) -> str:
     cls = type(node).__name__
-
-    addr_repr = None
-    if hasattr(node, "address"):
-        addr = node.address
-        if hasattr(addr, "source") and hasattr(addr, "is_leaf") and addr._is_leaf:
-            addr_repr = repr(addr.source)
-        elif hasattr(addr, "source"):
-            addr_repr = repr(addr.source)
+    name = getattr(node, "name", None)
+    name_repr = repr(name) if name is not None else "<dyn>"
 
     shape_str = ""
-    if hasattr(node, "owner_shape") and node.owner_shape is not None:
-        shape_str = f"[{node.owner_shape.__name__}]"
-    elif hasattr(node, "get_root_shape"):
-        try:
-            root_shape = node.get_root_shape()
-            if root_shape is not None:
-                shape_str = f"[{root_shape.__name__}]"
-        except Exception:  # noqa: S110
-            pass
+    owner = getattr(node, "owner_shape", None)
+    if owner is not None:
+        shape_str = f"[{owner.__name__}]"
+    else:
+        get_root = getattr(node, "get_root_shape", None)
+        if callable(get_root):
+            try:
+                root = get_root()
+            except Exception:
+                root = None
+            if root is not None:
+                shape_str = f"[{root.__name__}]"
 
-    if addr_repr:
-        return f"{cls}{shape_str}@{addr_repr}"
-    return f"{cls}{shape_str}"
+    return f"{cls}{shape_str}@{name_repr}"
 
 
-def _format_literal_label(node: Any) -> str:
+def _literal_label(node: Literal) -> str:
     cls = type(node).__name__
-    if hasattr(node, "source") and node._is_leaf:
-        src = node.source
-        return f"{cls}({src!r})"
+    if not node._children:
+        return f"{cls}({node._value!r})"
     return cls
 
 
-def _format_op_label(node: Any) -> str:
-    cls = type(node).__name__
-    if hasattr(node, "_method_name"):
-        return f"{cls}(.{node._method_name})"
-    if hasattr(node, "_func"):
-        func = node._func
+def _invocation_suffix(node: Any) -> str:
+    """Optional method/func suffix for Invoke / FuncCall / MethodCall."""
+    method = getattr(node, "_method_name", None)
+    if method is not None:
+        return f"(.{method})"
+    func = getattr(node, "_func", None)
+    if func is not None:
         fname = getattr(func, "__name__", repr(func))
-        return f"{cls}({fname})"
-    return cls
+        return f"({fname})"
+    return ""
+
+
+def _kind_label(node: Any) -> str:
+    return f"{type(node).__name__}{_invocation_suffix(node)}"
 
 
 def _default_label(node: Any, *, color: bool = True) -> str:
     if _is_ref(node):
-        text = _format_ref_label(node)
-    elif _is_op(node):
-        text = _format_op_label(node)
+        text = _ref_label(node)
     elif _is_literal(node):
-        text = _format_literal_label(node)
+        text = _literal_label(node)
     else:
-        text = type(node).__name__
+        text = _kind_label(node)
 
     if not color:
-        if _is_op(node):
-            return f"\u25cf {text}"
+        # Mark Query (pure value-producer) with a leading dot for plain output.
+        if _is_query(node) and not _is_literal(node):
+            return f"● {text}"
         return text
 
-    cat_color = _get_category_color(node)
-    if cat_color:
-        colored_text = f"{cat_color}{BOLD}{text}{RESET}"
-    else:
-        colored_text = f"{BOLD}{text}{RESET}"
-
-    if _is_op(node):
-        colored_text = f"{PURE_DOT} {colored_text}"
-
-    return colored_text
+    cat_color = _category_color(node)
+    colored = f"{cat_color}{BOLD}{text}{RESET}" if cat_color else f"{BOLD}{text}{RESET}"
+    if _is_query(node) and not _is_literal(node):
+        colored = f"{PURE_DOT} {colored}"
+    return colored
 
 
-# ── Tree connectors ──────────────────────────────────────────────────────────
+# -- Tree connectors ----------------------------------------------------------
 
-CONNECTOR_BRANCH = "\u251c\u2500\u2500"
-CONNECTOR_LAST = "\u2514\u2500\u2500"
-CONNECTOR_PIPE = "\u2502  "
+CONNECTOR_BRANCH = "├──"
+CONNECTOR_LAST = "└──"
+CONNECTOR_PIPE = "│  "
 CONNECTOR_SPACE = "   "
 
 
 def _dim(text: str, *, color: bool = True) -> str:
-    if color:
-        return f"{DIM}{text}{RESET}"
-    return text
+    return f"{DIM}{text}{RESET}" if color else text
 
 
 def _render_ansi(
@@ -216,126 +215,103 @@ def _render_ansi(
             return label(node)
         return _default_label(node, color=color)
 
-    def _walk(node: Nu, prefix: str, connector: str, is_root: bool = False) -> None:
+    def _walk(node: Nu, prefix: str, connector: str, *, is_root: bool = False) -> None:
         node_label = _get_label(node)
-
         if is_root:
             lines.append(node_label)
         else:
-            dim_connector = _dim(connector, color=color)
-            lines.append(f"{prefix}{dim_connector} {node_label}")
+            lines.append(f"{prefix}{_dim(connector, color=color)} {node_label}")
 
-        children = node.children
-        child_count = len(children)
-
+        children = node._children
+        last_idx = len(children) - 1
         for i, child in enumerate(children):
-            is_last = i == child_count - 1
-
+            is_last = i == last_idx
             if is_root:
                 child_prefix = ""
-                child_connector = CONNECTOR_LAST if is_last else CONNECTOR_BRANCH
             else:
-                if connector == CONNECTOR_LAST:
-                    child_prefix = prefix + CONNECTOR_SPACE
-                else:
-                    child_prefix = prefix + _dim(CONNECTOR_PIPE, color=color)
-
-                child_connector = CONNECTOR_LAST if is_last else CONNECTOR_BRANCH
-
+                child_prefix = (
+                    prefix + CONNECTOR_SPACE
+                    if connector == CONNECTOR_LAST
+                    else prefix + _dim(CONNECTOR_PIPE, color=color)
+                )
+            child_connector = CONNECTOR_LAST if is_last else CONNECTOR_BRANCH
             _walk(child, child_prefix, child_connector)
 
     _walk(root, "", "", is_root=True)
     return "\n".join(lines)
 
 
-# ── HTML labels + attrs ──────────────────────────────────────────────────────
+# -- HTML labels + attrs ------------------------------------------------------
 
 
 def _html_label(node: Any) -> str:
-    cls = type(node).__name__
-
-    if _is_span(node):
-        if hasattr(node, "shape"):
-            shape = node.shape
-            shape_name = shape.__name__ if hasattr(shape, "__name__") else str(shape)
-            return f"{cls}[{shape_name}]"
-        return cls
-
     if _is_ref(node):
-        addr_repr = None
-        if hasattr(node, "address"):
-            addr = node.address
-            if hasattr(addr, "source"):
-                addr_repr = repr(addr.source)
-        shape_str = ""
-        if hasattr(node, "owner_shape") and node.owner_shape is not None:
-            shape_str = f"[{node.owner_shape.__name__}]"
-        elif hasattr(node, "get_root_shape"):
-            try:
-                root_shape = node.get_root_shape()
-                if root_shape is not None:
-                    shape_str = f"[{root_shape.__name__}]"
-            except Exception:  # noqa: S110
-                pass
-        if addr_repr:
-            return f"{cls}{shape_str}@{addr_repr}"
-        return f"{cls}{shape_str}"
-
-    if _is_morphism(node):
-        if hasattr(node, "_method_name"):
-            return f"{cls}(.{node._method_name})"
-        if hasattr(node, "_func"):
-            func = node._func
-            fname = getattr(func, "__name__", repr(func))
-            return f"{cls}({fname})"
+        return _ref_label(node)
+    if _is_literal(node):
+        return _literal_label(node)
+    if _is_span(node):
+        cls = type(node).__name__
+        body_slot = getattr(type(node), "body_slot", None)
+        if body_slot is not None and body_slot < len(node._children):
+            body = node._children[body_slot]
+            return f"{cls}<{type(body).__name__}>"
         return cls
-
-    if _is_value(node):
-        if hasattr(node, "source") and node._is_leaf:
-            return f"{cls}({node.source!r})"
-        return cls
-
-    return cls
+    return _kind_label(node)
 
 
 def _html_attrs(node: Any) -> dict[str, Any]:
     attrs: dict[str, Any] = {}
 
-    if hasattr(node, "shape"):
-        shape = node.shape
-        attrs["shape"] = shape.__name__ if hasattr(shape, "__name__") else str(shape)
+    if _is_ref(node):
+        name = getattr(node, "name", None)
+        if name is not None:
+            attrs["name"] = name
+        owner = getattr(node, "owner_shape", None)
+        if owner is not None:
+            attrs["owner_shape"] = owner.__name__
 
-    if hasattr(node, "owner_shape") and node.owner_shape is not None:
-        attrs["owner_shape"] = node.owner_shape.__name__
+    if _is_literal(node) and not node._children:
+        attrs["value"] = repr(node._value)
 
-    if hasattr(node, "address"):
-        addr = node.address
-        if hasattr(addr, "source"):
-            attrs["address"] = repr(addr.source)
+    if _is_span(node):
+        body_slot = getattr(type(node), "body_slot", None)
+        if body_slot is not None:
+            attrs["body_slot"] = body_slot
+        if isinstance(node, Bracket):
+            attrs["span_kind"] = "bracket"
+        elif isinstance(node, Policy):
+            attrs["span_kind"] = "policy"
+        else:
+            attrs["span_kind"] = "span"
 
-    if hasattr(node, "_method_name"):
-        attrs["method"] = node._method_name
+    if _is_flow(node):
+        attrs["flow_kind"] = "strategy" if isinstance(node, Strategy) else "control"
+        body_slots = getattr(type(node), "body_slots", None)
+        if body_slots:
+            attrs["body_slots"] = list(body_slots)
 
-    if hasattr(node, "_func"):
-        func = node._func
+    realization = getattr(type(node), "realization", None)
+    if realization is not None:
+        attrs["realization"] = getattr(realization, "name", str(realization))
+
+    own_effects = getattr(type(node), "own_effects", None)
+    if own_effects:
+        attrs["own_effects"] = {str(slot): _format_effect(eff) for slot, eff in own_effects.items()}
+
+    method = getattr(node, "_method_name", None)
+    if method is not None:
+        attrs["method"] = method
+    func = getattr(node, "_func", None)
+    if func is not None:
         attrs["func"] = getattr(func, "__name__", repr(func))
 
-    if hasattr(node, "source") and node._is_leaf:
-        attrs["source"] = repr(node.source)
-
-    if hasattr(node, "is_self_pure"):
-        attrs["purity"] = "pure" if node.is_self_pure else "impure"
-
-    if hasattr(node, "_view_cls"):
-        attrs["view_cls"] = node._view_cls.__name__
-
-    if hasattr(node, "_kwarg_keys"):
-        attrs["kwarg_keys"] = list(node._kwarg_keys)
-
-    if hasattr(node, "_case_keys"):
-        attrs["case_keys"] = list(node._case_keys)
-
     return attrs
+
+
+def _format_effect(eff: Any) -> str:
+    if isinstance(eff, frozenset):
+        return "{" + ", ".join(getattr(e, "name", str(e)) for e in eff) + "}"
+    return getattr(eff, "name", str(eff))
 
 
 def _serialize(root: Any) -> dict[str, Any]:
@@ -345,12 +321,19 @@ def _serialize(root: Any) -> dict[str, Any]:
         node_id = counter[0]
         counter[0] += 1
 
-        category = _classify_html(node)
-        children = [_ser(child) for child in node.children]
+        category = _classify(node)
+        children = [_ser(child) for child in node._children]
 
-        pure: bool | None = None
-        if _is_morphism(node):
-            pure = _is_pure(node)
+        # `pure` flag is meaningful for value-producers: True for any Query
+        # (its subtree contributes only RESOLVE/READ), False for Command/Flow
+        # (Flow yields nothing but holds Commands), N/A for Span/Ref/Literal.
+        pure: bool | None
+        if _is_query(node) and not _is_literal(node):
+            pure = True
+        elif _is_command(node):
+            pure = False
+        else:
+            pure = None
 
         return {
             "id": node_id,
@@ -358,7 +341,7 @@ def _serialize(root: Any) -> dict[str, Any]:
             "category": category,
             "label": _html_label(node),
             "pure": pure,
-            "leaf": node._is_leaf,
+            "leaf": not node._children,
             "attrs": _html_attrs(node),
             "children": children,
         }
@@ -375,13 +358,13 @@ def _render_html(root: Nu, *, title: str = "Nu tree explorer") -> str:
     return html
 
 
-# ── Public entry ──────────────────────────────────────────────────────────────
+# -- Public entry -------------------------------------------------------------
 
 
 def render_nu(
     nu: Nu,
     *,
-    as_: Literal["ansi", "plain", "html"] = "ansi",
+    as_: TLiteral["ansi", "plain", "html"] = "ansi",
     label: Callable[[Nu], str] | None = None,
     title: str = "Nu tree explorer",
 ) -> str:

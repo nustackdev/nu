@@ -56,11 +56,16 @@ _BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
 
 def support_of(nu: Nu) -> frozenset[Mode]:
-    """The atom's `support` set. Span recurses into its body."""
+    """The atom's `support` set. Span recurses into its body.
+
+    Reads the instance attribute so atoms that narrow their support at
+    construction time (e.g. ``Invoke`` from an async-only callable) are
+    visible to dispatch routing. Falls back to the class-level default.
+    """
     if isinstance(nu, Span):
         body = nu._children[type(nu).body_slot]
         return support_of(body)
-    support = getattr(type(nu), "support", None)
+    support = getattr(nu, "support", None)
     if isinstance(support, frozenset):
         return support
     msg = f"{type(nu).__name__}: no support declared"
@@ -75,7 +80,7 @@ def tree_needs_loop(nu: Nu) -> bool:
     for atom in walk(nu):
         if isinstance(atom, Span):
             continue
-        support = getattr(type(atom), "support", None)
+        support = getattr(atom, "support", None)
         if support == _ASYNC_ONLY:
             return True
     return False
@@ -129,7 +134,7 @@ def parallel_per_child(child: Nu, parent_state: ExecState) -> ExecState:
     for atom in walk(child):
         if isinstance(atom, Span):
             continue
-        support = getattr(type(atom), "support", None)
+        support = getattr(atom, "support", None)
         if support == _ASYNC_ONLY:
             has_async_only = True
             break

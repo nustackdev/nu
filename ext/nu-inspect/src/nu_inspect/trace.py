@@ -5,11 +5,13 @@ from __future__ import annotations
 import logging
 from typing import ClassVar
 
-from nu.context import Context, IntAttrRef, StrAttrRef
-from nu.interactions import Log, Retry, ToStr
-from nu.terms import Literal, Mode, Nu
-from nu.terms.flow import Sequential
-from nu.terms.span import Bracket
+from nu import Log, Retry
+from nu.commands.io import Log as _LogCls
+from nu.context import IntAttrRef, StrAttrRef
+from nu.flows.strategy import Sequential
+from nu.queries.literal import Literal
+from nu.spans.policy import Retry as _RetryCls
+from nu.terms import Bracket, Mode, Nu
 from nu.tree import map_nodes
 
 
@@ -38,14 +40,14 @@ class _StepSpan(Bracket):
     def _log(self, level: str, msg: str, *args: object) -> None:
         logging.getLogger(self._logger_name).log(logging.getLevelName(level), msg, *args)
 
-    def before(self, ctx: Context) -> Context:
+    def before(self, ctx):  # noqa: ANN001
         self._log("INFO", "[%s] step %d/%d start", self._path, self._step, self._total)
         return ctx
 
-    def after(self, ctx: Context) -> None:
+    def after(self, ctx) -> None:  # noqa: ANN001
         self._log("INFO", "[%s] step %d/%d done", self._path, self._step, self._total)
 
-    def after_failure(self, ctx: Context, error: BaseException) -> None:
+    def after_failure(self, ctx, error: BaseException) -> None:  # noqa: ANN001
         self._log(
             "WARNING",
             "[%s] step %d/%d failed: %s",
@@ -65,20 +67,14 @@ def annotate_retries(tree: Nu) -> Nu:
     """
 
     def _annotate(node: Nu) -> Nu:
-        if not isinstance(node, Retry):
+        if not isinstance(node, _RetryCls):
             return node
 
         error = StrAttrRef("error")
         attempt = IntAttrRef("attempt")
 
-        log_af = Log(
-            "retry attempt " + ToStr(attempt.get()) + " failed: " + error.get(),
-            level="warning",
-        )
-        log_fail = Log(
-            "retry exhausted after " + ToStr(attempt.get()) + " attempts: " + error.get(),
-            level="error",
-        )
+        log_af = Log("retry attempt", attempt, "failed:", error, level="warning")
+        log_fail = Log("retry exhausted after", attempt, "attempts:", error, level="error")
 
         existing_af = node.on_attempt_fail
         existing_fail = node.on_fail
@@ -86,7 +82,6 @@ def annotate_retries(tree: Nu) -> Nu:
         on_af = (log_af >> existing_af) if existing_af else log_af
         on_fail = (log_fail >> existing_fail) if existing_fail else log_fail
 
-        # Rebuild the Retry preserving its body and config, replacing hooks.
         body = node._children[0]
         return Retry(
             body,
@@ -105,25 +100,22 @@ def annotate_steps(tree: Nu) -> Nu:
     """Wrap sequential composition children in step-tracking spans with baked tree paths."""
 
     def _walk(node: Nu, path: str) -> Nu:
-        if isinstance(node, Sequential):
-            if len(node._children) >= 2:
-                seq_path = f"{path}{type(node).__name__}"
-                total = len(node._children)
-                step = 0
-                new_children: list = []
-                for child in node._children:
-                    if not isinstance(child, _StepSpan):
-                        step += 1
-                        name = type(child).__name__
-                        walked = _walk(child, f"{seq_path}.{name}.")
-                        new_children.append(
-                            _StepSpan(walked, step, total, path=seq_path),
-                        )
-                    else:
-                        new_children.append(_walk(child, f"{seq_path}."))
-                return node._with_children(tuple(new_children))
+        if isinstance(node, Sequential) and len(node._children) >= 2:
+            seq_path = f"{path}{type(node).__name__}"
+            total = len(node._children)
+            step = 0
+            new_children: list = []
+            for child in node._children:
+                if not isinstance(child, _StepSpan):
+                    step += 1
+                    name = type(child).__name__
+                    walked = _walk(child, f"{seq_path}.{name}.")
+                    new_children.append(_StepSpan(walked, step, total, path=seq_path))
+                else:
+                    new_children.append(_walk(child, f"{seq_path}."))
+            return node._with_children(tuple(new_children))
 
-        if isinstance(node, Log) and path:
+        if isinstance(node, _LogCls) and path:
             clone = node._with_children(node._children)
             clone._path = path.rstrip(".")
             return clone
@@ -139,13 +131,21 @@ def annotate_steps(tree: Nu) -> Nu:
 
 
 def set_logger_name(tree: Nu, name: str) -> Nu:
-    """Rename the logger on all Log nodes in the tree."""
+    """Rename the logger on all Log nodes in the tree.
+
+    Log children = [STDERR, level, logger_name, message, *values]; we
+    swap slot 2 (logger_name).
+    """
 
     def _rename(node: Nu) -> Nu:
-        if not isinstance(node, (Log, _StepSpan)):
+        if not isinstance(node, (_LogCls, _StepSpan)):
+            return node
+        if isinstance(node, _StepSpan):
+            node._logger_name = name
             return node
         new_children = (
-            *node._children[:2],
+            node._children[0],
+            node._children[1],
             Literal(name),
             *node._children[3:],
         )
