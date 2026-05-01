@@ -5,7 +5,7 @@ Subpackages:
     context/        -- runtime resource container
     forms/          -- typed Form layer (Form base, primitives/, collections/)
     queries/        -- concrete Query atoms (Add, Eq, Filter, Map, ...)
-    commands/       -- concrete Command atoms (Print, Log, Debug, SkipIf*)
+    commands/       -- concrete Command atoms (Print, Log, Debug)
     flows/          -- concrete Flow atoms (Sequential, Parallel, IfDo, ForEachDo, ...)
     spans/          -- concrete Span atoms (Snapshot, Transaction, Retry, TryCatch, ...)
     shapes/         -- document data model
@@ -108,10 +108,6 @@ from .commands import (
     Debug,
     Log,
     Print,
-    SkipIfEmpty,
-    SkipIfExists,
-    SkipIfMissing,
-    SkipIfNotEmpty,
 )
 from .queries import (
     Abs,
@@ -397,10 +393,6 @@ __all__ = [
     "SetAttrRef",
     "SetForm",
     "Shape",
-    "SkipIfEmpty",
-    "SkipIfExists",
-    "SkipIfMissing",
-    "SkipIfNotEmpty",
     "Slice",
     "Slot",
     "Sorted",
