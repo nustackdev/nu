@@ -68,13 +68,23 @@ from nu_virtuals.refs import (
     UUIDRef,
     ViewRef,
 )
+from nu_virtuals.paths import ValuePathSer, ViewPathSer
+from nu_virtuals.presets import (
+    memory_storage,
+    rocksdb_storage,
+    rocksdb_storage_inmemory,
+    text_storage,
+)
 from nu_virtuals.spans import Atomic, Snapshot, Transaction
 from nu_virtuals.tree import (
     auto_atomic,
+    auto_flow_atomic,
+    auto_total_atomic,
     inline_refs,
     optimize_primitive_reads,
     optimize_primitive_writes,
 )
+from nu_virtuals.views import PrimitiveDictView, PrimitiveListView, PrimitiveSetView
 
 
 __all__ = [  # noqa: RUF022
@@ -92,9 +102,23 @@ __all__ = [  # noqa: RUF022
     "ScanPrimitivesUnsafe",
     # Tree
     "auto_atomic",
+    "auto_flow_atomic",
+    "auto_total_atomic",
     "inline_refs",
     "optimize_primitive_reads",
     "optimize_primitive_writes",
+    # Paths
+    "ValuePathSer",
+    "ViewPathSer",
+    # Presets
+    "memory_storage",
+    "rocksdb_storage",
+    "rocksdb_storage_inmemory",
+    "text_storage",
+    # Views
+    "PrimitiveDictView",
+    "PrimitiveListView",
+    "PrimitiveSetView",
     "Atomic",
     "BasisPointRef",
     "BoolRef",

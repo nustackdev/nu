@@ -247,9 +247,11 @@ from . import (  # noqa: E402, F401
     flows,
     forms,
     queries,
+    runtime,
     shapes,
     spans,
     stdio,
+    stdlib,
     terms,
     tree,
 )
