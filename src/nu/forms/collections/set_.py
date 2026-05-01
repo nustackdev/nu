@@ -67,13 +67,15 @@ class SetForm[T](
 
         return BoolForm(Le(self, other))
 
-    def eq(self, other: SetArg[T]) -> BoolForm:
+    __hash__ = object.__hash__
+
+    def __eq__(self, other: SetArg[T]) -> BoolForm:  # type: ignore[override]
         from nu import Eq
         from nu.forms.primitives import BoolForm
 
         return BoolForm(Eq(self, other))
 
-    def ne(self, other: SetArg[T]) -> BoolForm:
+    def __ne__(self, other: SetArg[T]) -> BoolForm:  # type: ignore[override]
         from nu import Ne
         from nu.forms.primitives import BoolForm
 
@@ -133,13 +135,15 @@ class FrozenSetForm[T](
 
         return BoolForm(Le(self, other))
 
-    def eq(self, other: FrozenSetArg[T]) -> BoolForm:
+    __hash__ = object.__hash__
+
+    def __eq__(self, other: FrozenSetArg[T]) -> BoolForm:  # type: ignore[override]
         from nu import Eq
         from nu.forms.primitives import BoolForm
 
         return BoolForm(Eq(self, other))
 
-    def ne(self, other: FrozenSetArg[T]) -> BoolForm:
+    def __ne__(self, other: FrozenSetArg[T]) -> BoolForm:  # type: ignore[override]
         from nu import Ne
         from nu.forms.primitives import BoolForm
 

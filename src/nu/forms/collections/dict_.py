@@ -91,13 +91,15 @@ class DictForm[K, V](
 
         return BoolForm(Le(self, other))
 
-    def eq(self, other: DictArg[K, V]) -> BoolForm:
+    __hash__ = object.__hash__
+
+    def __eq__(self, other: DictArg[K, V]) -> BoolForm:  # type: ignore[override]
         from nu import Eq
         from nu.forms.primitives import BoolForm
 
         return BoolForm(Eq(self, other))
 
-    def ne(self, other: DictArg[K, V]) -> BoolForm:
+    def __ne__(self, other: DictArg[K, V]) -> BoolForm:  # type: ignore[override]
         from nu import Ne
         from nu.forms.primitives import BoolForm
 

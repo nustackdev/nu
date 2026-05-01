@@ -86,14 +86,16 @@ class BytesForm(Form, TypedNu[bytes]):
 
         return BoolForm(Le(self, other))
 
-    def eq(self, other: BytesArg) -> BoolForm:
+    __hash__ = object.__hash__
+
+    def __eq__(self, other: BytesArg) -> BoolForm:  # type: ignore[override]
         from nu import Eq
 
         from .bool_ import BoolForm
 
         return BoolForm(Eq(self, other))
 
-    def ne(self, other: BytesArg) -> BoolForm:
+    def __ne__(self, other: BytesArg) -> BoolForm:  # type: ignore[override]
         from nu import Ne
 
         from .bool_ import BoolForm

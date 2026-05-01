@@ -118,6 +118,10 @@ class NuBase:
 
         return Race(self, other)  # type: ignore[arg-type]
 
+    def eq(self, other: Nu) -> bool:
+        """Structural tree equality. Compares class + children recursively."""
+        raise NotImplementedError
+
     def __init_subclass__(cls, **kw: Any) -> None:  # noqa: ANN401
         super().__init_subclass__(**kw)
         for base, validators in _INIT_SUBCLASS_VALIDATORS.items():

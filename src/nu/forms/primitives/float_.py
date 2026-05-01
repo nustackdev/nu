@@ -142,14 +142,16 @@ class FloatForm(Form, TypedNu[float]):
 
         return BoolForm(Le(self, other))
 
-    def eq(self, other: IntArg | FloatArg) -> BoolForm:
+    __hash__ = object.__hash__
+
+    def __eq__(self, other: IntArg | FloatArg) -> BoolForm:  # type: ignore[override]
         from nu import Eq
 
         from .bool_ import BoolForm
 
         return BoolForm(Eq(self, other))
 
-    def ne(self, other: IntArg | FloatArg) -> BoolForm:
+    def __ne__(self, other: IntArg | FloatArg) -> BoolForm:  # type: ignore[override]
         from nu import Ne
 
         from .bool_ import BoolForm

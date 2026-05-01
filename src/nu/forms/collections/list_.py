@@ -94,13 +94,15 @@ class ListForm[T](
 
         return BoolForm(Le(self, other))
 
-    def eq(self, other: ListArg[T]) -> BoolForm:
+    __hash__ = object.__hash__
+
+    def __eq__(self, other: ListArg[T]) -> BoolForm:  # type: ignore[override]
         from nu import Eq
         from nu.forms.primitives import BoolForm
 
         return BoolForm(Eq(self, other))
 
-    def ne(self, other: ListArg[T]) -> BoolForm:
+    def __ne__(self, other: ListArg[T]) -> BoolForm:  # type: ignore[override]
         from nu import Ne
         from nu.forms.primitives import BoolForm
 

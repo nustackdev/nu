@@ -71,12 +71,14 @@ class BoolForm(Form, TypedNu[bool]):
 
         return BoolForm(Le(self, other))
 
-    def eq(self, other: BoolArg) -> BoolForm:
+    __hash__ = object.__hash__
+
+    def __eq__(self, other: BoolArg) -> BoolForm:  # type: ignore[override]
         from nu import Eq
 
         return BoolForm(Eq(self, other))
 
-    def ne(self, other: BoolArg) -> BoolForm:
+    def __ne__(self, other: BoolArg) -> BoolForm:  # type: ignore[override]
         from nu import Ne
 
         return BoolForm(Ne(self, other))

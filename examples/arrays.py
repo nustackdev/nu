@@ -16,7 +16,7 @@ runtime.execute(
     nu.ForEachDo(
         nu.Filter(
             nu.Map(nu.Iter(range(10)), transform=i * 2),
-            condition=((i % 4).eq(0)),
+            condition=(i % 4 == 0),
         ),
         nu.Print(i),
     )
@@ -35,7 +35,7 @@ runtime.execute(nu.Print(total))
 # 4. Partition and label. Split 0..20 by even/odd, print each bucket.
 parts = nu.Partition(
     nu.Iter(range(20)),
-    condition=((i % 2).eq(0)),
+    condition=(i % 2 == 0),
 )
 evens = nu.At(parts, 0)
 odds = nu.At(parts, 1)

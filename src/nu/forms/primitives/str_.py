@@ -83,14 +83,16 @@ class StrForm(Form, TypedNu[str]):
 
         return BoolForm(Le(self, other))
 
-    def eq(self, other: StrArg) -> BoolForm:
+    __hash__ = object.__hash__
+
+    def __eq__(self, other: StrArg) -> BoolForm:  # type: ignore[override]
         from nu import Eq
 
         from .bool_ import BoolForm
 
         return BoolForm(Eq(self, other))
 
-    def ne(self, other: StrArg) -> BoolForm:
+    def __ne__(self, other: StrArg) -> BoolForm:  # type: ignore[override]
         from nu import Ne
 
         from .bool_ import BoolForm
