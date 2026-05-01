@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING
 
 from nu.terms import TypedNu
 
@@ -11,7 +11,7 @@ from .abc import SequenceForm
 
 if TYPE_CHECKING:
     from nu.forms.primitives import AnyForm, BoolForm
-    from nu.terms import IntArg, Nu, TupleArg
+    from nu.terms import Nu, TupleArg
 
 
 __all__ = [
@@ -37,18 +37,6 @@ class TupleForm[*Ts](
         from nu.forms.primitives import AnyForm
 
         return AnyForm(operand)
-
-    @overload
-    def __getitem__(self, key: IntArg) -> AnyForm: ...
-    @overload
-    def __getitem__(self, key: slice) -> TupleForm: ...
-    def __getitem__(self, key: IntArg | slice) -> AnyForm | TupleForm:
-        from nu import At, Slice
-        from nu.forms.primitives import AnyForm
-
-        if isinstance(key, slice):
-            return TupleForm(Slice(self, key.start, key.stop, key.step))
-        return AnyForm(At(self, key))
 
     # =========================================================================
     # COMPARISON

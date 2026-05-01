@@ -50,6 +50,19 @@ class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         ElementResultT: Result for element-level ops (first, last, sum_, min_, max_)
     """
 
+    def __getitem__(
+        self, key: IntArg | slice
+    ) -> ElementResultT | CollectionResultT:
+        """Index → element via At; slice → subsequence via Slice."""
+        from nu import At, Slice
+
+        if isinstance(key, slice):
+            return cast(
+                "CollectionResultT",
+                self._wrap_sliceable_result(Slice(self, key.start, key.stop, key.step)),
+            )
+        return cast("ElementResultT", self._wrap_element_result(At(self, key)))
+
     def first_elem(self) -> ElementResultT:
         """Get first element."""
         from .sequence_ops import FirstOp

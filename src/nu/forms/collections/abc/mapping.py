@@ -69,6 +69,12 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
         """Override in subclass to wrap single value result."""
         raise NotImplementedError()
 
+    def __getitem__(self, key: Arg[KeyT]) -> ValueResultT:
+        """Key → value via At."""
+        from nu import At
+
+        return cast("ValueResultT", self._wrap_value_result(At(self, key)))
+
     def keys(self) -> CollectionResultT:
         """Get all keys."""
         from .mapping_ops import KeysOp

@@ -33,11 +33,11 @@ runtime.execute(nu.Print(total))
 
 
 # 4. Partition and label. Split 0..20 by even/odd, print each bucket.
-parts = nu.Partition(
-    nu.Iter(range(20)),
-    condition=(i % 2 == 0),
+parts = nu.TupleForm(
+    nu.Partition(
+        nu.Iter(range(20)),
+        condition=(i % 2 == 0),
+    )
 )
-evens = nu.At(parts, 0)
-odds = nu.At(parts, 1)
 
-runtime.execute(nu.Print("evens:") >> nu.Print(evens) >> nu.Print("odds:") >> nu.Print(odds))
+runtime.execute(nu.Print("evens:") >> nu.Print(parts[0]) >> nu.Print("odds:") >> nu.Print(parts[1]))

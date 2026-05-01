@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING
 
 from nu.terms import TypedNu
 
@@ -11,7 +11,7 @@ from .abc import MutableSequenceForm
 
 if TYPE_CHECKING:
     from nu.forms.primitives import AnyForm, BoolForm
-    from nu.terms import IntArg, ListArg, Nu
+    from nu.terms import ListArg, Nu
 
 
 __all__ = [
@@ -49,22 +49,6 @@ class ListForm[T](
         from nu import Add
 
         return ListForm(Add(other, self))
-
-    # =========================================================================
-    # INDEXING / SLICING
-    # =========================================================================
-
-    @overload
-    def __getitem__(self, key: IntArg) -> AnyForm: ...
-    @overload
-    def __getitem__(self, key: slice) -> ListForm[T]: ...
-    def __getitem__(self, key: IntArg | slice) -> AnyForm | ListForm[T]:
-        from nu import At, Slice
-        from nu.forms.primitives import AnyForm
-
-        if isinstance(key, slice):
-            return ListForm(Slice(self, key.start, key.stop, key.step))
-        return AnyForm(At(self, key))
 
     # =========================================================================
     # COMPARISON

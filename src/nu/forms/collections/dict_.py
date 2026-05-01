@@ -57,12 +57,6 @@ class DictForm[K, V](
 
         return AnyForm(operand)
 
-    def __getitem__(self, key: K) -> AnyForm:
-        from nu import At
-        from nu.forms.primitives import AnyForm
-
-        return AnyForm(At(self, key))
-
     # =========================================================================
     # COMPARISON
     # =========================================================================
