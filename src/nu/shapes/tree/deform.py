@@ -1,7 +1,7 @@
 """Shared utilities for inline ref deformations.
 
-Substrate-specific inline_refs() live in their owning packages
-(nu-mem.meta, eb_virtuals.meta). This module provides the shared
+Substrate-specific ``inline_refs()`` live in their owning packages
+(``nu_mem.tree``, ``nu_virtuals.tree``). This module provides the shared
 building blocks they both use.
 
 Public API:
@@ -57,7 +57,7 @@ def walk_ref_chain(ref: Ref) -> tuple[list[object | None], list[Nu | None]]:
     Each slot in addresses is the static address or None (dynamic).
     Each slot in address_terms is the address Nu for dynamic slots, or None.
 
-    This is pure everyshape.Ref logic — no substrate knowledge.
+    This is pure ``nu.shapes.Ref`` logic — no substrate knowledge.
     """
     addresses: list[object | None] = []
     address_terms: list[Nu | None] = []
