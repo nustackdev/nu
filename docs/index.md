@@ -8,13 +8,12 @@ A flat catalog of every atom and Form, with one-line meanings.
 
 | Doc                          | What                                                |
 | ---------------------------- | --------------------------------------------------- |
-| [ref.md](ref.md)             | Address atom                                        |
 | [query.md](query.md)         | Value-producing atoms - ScalarQuery, StreamQuery    |
 | [command.md](command.md)     | Mutating atoms - ScalarCommand                      |
 | [flow.md](flow.md)           | Command composers - Strategy, Control               |
 | [span.md](span.md)           | Transparent wrappers - Bracket, Policy              |
 | [forms.md](forms.md)         | Forms - primitives, collections                     |
-| [stdlib.md](stdlib.md)       | Stdlib (stub)                                       |
+| [meta.md](meta.md)           | Tree meta-programming - walk, query, rewrite        |
 
 ## Spine
 

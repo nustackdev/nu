@@ -1,35 +1,39 @@
 # Forms
 
-Every Form in the repo. A Form is what a fabric location holds - independent of where it lives (RocksDB, Python dict, remote).
+A Form is what a fabric location holds, independent of where it lives (RocksDB, Python dict, remote). Concretely each Form is a `ScalarQuery` passthrough that carries a Python type, so it participates in the Nu tree while preserving type information for downstream ops.
 
-This page is partial - filled below as samples to confirm direction.
+Two layers:
 
-## Primitives (sample)
+- **ABCs** (`Form`, `ContainerForm`, `SizedForm`, `SequenceForm`, `MappingForm`, ...) - shared interfaces, not used directly.
+- **Leaf Forms** - the concrete things you write in code. Listed below.
 
-| Form         | Holds        | Notes                                  |
-| ------------ | ------------ | -------------------------------------- |
-| AnyForm      | object       | escape hatch - any Python value        |
-| NoneForm     | None         |                                        |
-| BoolForm     | bool         |                                        |
-| IntForm      | int          |                                        |
-| FloatForm    | float        |                                        |
-| StrForm      | str          | string ops via attached Queries        |
-| BytesForm    | bytes        | byte ops via attached Queries          |
-| EmptyForm    | Empty        | EMPTY sentinel                         |
-| InvalidForm  | Invalid      | INVALID sentinel                       |
+Core only - shapes and ext/ not included.
 
-## Collections (sample)
+## Primitives
 
-| Form           | Holds              | Notes                                |
-| -------------- | ------------------ | ------------------------------------ |
-| ListForm       | list[T]            | ordered, mutable                     |
-| TupleForm      | tuple[*Ts]         | heterogeneous, fixed-arity           |
-| SetForm        | set[T]             | unordered, unique                    |
-| FrozenSetForm  | frozenset[T]       | immutable set                        |
-| DictForm       | dict[K, V]         |                                      |
-| DictKeysForm   | dict_keys[K]       | view over a DictForm                 |
-| DictValuesForm | dict_values[V]     | view over a DictForm                 |
-| DictItemsForm  | dict_items[K, V]   | view over a DictForm                 |
-| IteratorForm   | Iterator[T]        | one-shot stream                      |
+| Form         | Holds   | Capabilities                                                |
+| ------------ | ------- | ----------------------------------------------------------- |
+| AnyForm      | object  | dynamic - all operations, results stay AnyForm              |
+| BoolForm     | bool    | logical, comparable                                         |
+| IntForm      | int     | numeric, comparable, logical, bitwise                       |
+| FloatForm    | float   | numeric, comparable, logical                                |
+| StrForm      | str     | addable, sliceable, comparable, logical, string ops         |
+| BytesForm    | bytes   | sliceable, comparable, logical, bytes ops                   |
+| NoneForm     | None    | logical only                                                |
+| SentinelForm | T       | base for sentinel interfaces (Empty, Invalid)               |
+| EmptyForm    | Empty   | absence of a value (the EMPTY sentinel)                     |
+| InvalidForm  | Invalid | invalid or undefined operation result (the INVALID sentinel) |
 
-> Slot layout column to be added once we agree on shape.
+## Collections
+
+| Form           | Holds              | Capabilities                                            |
+| -------------- | ------------------ | ------------------------------------------------------- |
+| ListForm       | list[T]            | mutable sequence, comparable                            |
+| TupleForm      | tuple[*Ts]         | immutable sequence, heterogeneous, comparable           |
+| SetForm        | set[T]             | mutable set, comparable                                 |
+| FrozenSetForm  | frozenset[T]       | immutable set, comparable                               |
+| DictForm       | dict[K, V]         | mutable mapping, comparable                             |
+| DictKeysForm   | KeysView[K]        | set-like view over a DictForm; lazy, live               |
+| DictValuesForm | ValuesView[V]      | collection view over a DictForm; iterable, sized        |
+| DictItemsForm  | ItemsView[K, V]    | set-like view over a DictForm; lazy, live               |
+| IteratorForm   | Iterator[T]        | lazy iterator; materialize via `to_list`/`to_set`/`to_tuple` |
