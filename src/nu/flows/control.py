@@ -1,4 +1,4 @@
-"""Control concretes - IfDo, SwitchDo, WhileDo, ForeverDo, ForEachDo, ForRangeDo."""
+"""Control concretes - IfDo, SwitchDo, WhileDo, ForeverDo, ForEachDo, ForRangeDo, DelayedDo."""
 
 from __future__ import annotations
 
@@ -11,10 +11,11 @@ from nu.terms.types import Mode
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from nu.terms import Arg, IntArg, Nu, StrArg
+    from nu.terms import Arg, FloatArg, IntArg, Nu, StrArg
 
 
 __all__ = [
+    "DelayedDo",
     "ForEachDo",
     "ForRangeDo",
     "ForeverDo",
@@ -223,6 +224,38 @@ class ForRangeDo(Control):
             if index_key is not None:
                 ctx.attrs[index_key] = i
             await runtime.aexecute(body, ctx)
+
+
+class DelayedDo(Control):
+    """`DelayedDo(delay, body)` - sleep for ``delay`` seconds, then run body.
+
+    Children: ``[delay, body]``. Sync path uses ``time.sleep``, async path
+    uses ``asyncio.sleep``.
+    """
+
+    body_slots: ClassVar[tuple[int, ...]] = (1,)
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self, delay: FloatArg, body: Nu) -> None:
+        super().__init__(delay, body)
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
+        import time
+
+        from nu.terms.dispatch import ExecState, atom_dispatch
+
+        delay = self._children[0].eval(ctx)
+        time.sleep(delay)
+        atom_dispatch(self._children[1], ExecState.NO_LOOP)(ctx)
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
+        import asyncio
+
+        from nu.terms.dispatch import ExecState, atom_dispatch
+
+        delay = await self._children[0].aeval(ctx)
+        await asyncio.sleep(delay)
+        await atom_dispatch(self._children[1], ExecState.LOOP)(ctx)
 
 
 class SwitchDo(Control):

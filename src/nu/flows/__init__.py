@@ -1,6 +1,7 @@
 """Native Flow concretes - Strategy and Control families."""
 
 from .control import (
+    DelayedDo,
     ForEachDo,
     ForeverDo,
     ForRangeDo,
@@ -13,6 +14,7 @@ from .strategy import AnyN, Gather, Parallel, Race, Sequential
 
 __all__ = [
     "AnyN",
+    "DelayedDo",
     "ForEachDo",
     "ForRangeDo",
     "ForeverDo",

@@ -33,3 +33,9 @@ Core only - shapes and ext/ not included.
 | ForeverDo | Control   | `ForeverDo(body)`                                    | run body indefinitely                                    |
 | ForEachDo | Control   | `ForEachDo(items, body, item="item")`                | run body per element; binds element to `ctx.attrs[item]` |
 | ForRangeDo| Control   | `ForRangeDo(start, stop, body, step=1, index="i")`   | counted loop over `range(start, stop, step)`             |
+
+### Timing
+
+| Name      | Sub-shape | Signature                  | Meaning                                                              |
+| --------- | --------- | -------------------------- | -------------------------------------------------------------------- |
+| DelayedDo | Control   | `DelayedDo(delay, body)`   | sleep `delay` seconds then run body (sync: time.sleep, async: asyncio.sleep) |

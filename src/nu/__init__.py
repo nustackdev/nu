@@ -46,6 +46,7 @@ from .context import (
 )
 from .flows import (
     AnyN,
+    DelayedDo,
     ForEachDo,
     ForeverDo,
     ForRangeDo,
@@ -293,6 +294,7 @@ __all__ = [
     "Debounce",
     "Debug",
     "DelAttr",
+    "DelayedDo",
     "DictArg",
     "DictAttrRef",
     "DictForm",

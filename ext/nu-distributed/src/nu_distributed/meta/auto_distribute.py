@@ -9,8 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.flows.strategy import AnyN
-from nu.terms.flow import Parallel, Race
+from nu.flows.strategy import AnyN, Parallel, Race
 from nu.tree.rewrite import map_nodes
 
 from ..spans.teleport import Teleport

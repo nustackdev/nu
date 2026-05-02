@@ -40,12 +40,22 @@ class Worker(Resource):
     spec: WorkerSpec
     context = Attach()
 
-    async def aexecute(self, tree: object) -> object:
+    async def aexecute(self, tree: object, *, attrs: dict | None = None) -> object:
         """Execute a Nu tree against this worker's Context.
+
+        ``attrs`` (optional) is merged into the worker context's attrs
+        before execution (used by ``Teleport(carry=True)``).
 
         Returns the last yielded value, or None if the tree yielded nothing.
         """
-        values = await tree.acollect(self.context.ctx)
+        from nu import runtime
+
+        ctx = self.context.ctx
+        if attrs:
+            ctx = ctx._copy()
+            for key, value in attrs.items():
+                ctx.attrs[key] = value
+        values = await runtime.acollect(tree, ctx)
         return values[-1] if values else None
 
     @property
