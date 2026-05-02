@@ -108,6 +108,7 @@ from .invocation import Invocation, Invoke
 from .commands import (
     Debug,
     Log,
+    Noop,
     Print,
 )
 from .queries import (

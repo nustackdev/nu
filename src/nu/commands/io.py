@@ -17,11 +17,35 @@ from nu.terms.types import Effect, Mode
 __all__ = [
     "Debug",
     "Log",
+    "Noop",
     "Print",
 ]
 
 
 _BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
+
+
+class Noop(ScalarCommand):
+    """No-op command. Does nothing. No effects, no children.
+
+    Useful as a placeholder/identity in compositions (e.g. an `IfDo`
+    else-branch, a default tree, a sentinel that satisfies a Nu argument
+    without producing observable behavior).
+    """
+
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def run(self, ctx: Any) -> None:  # noqa: ANN401
+        return
+
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+        return
+
+    def __repr__(self) -> str:
+        return "Noop()"
 
 
 class Print(ScalarCommand):

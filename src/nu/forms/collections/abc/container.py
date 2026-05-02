@@ -22,10 +22,16 @@ __all__ = [
 
 
 class ContainerForm(Form):
-    """Base for values that support containment checks - like collections.abc.Container."""
+    """Base for values that support containment checks - like collections.abc.Container.
 
-    def __contains__(self, item: object) -> BoolForm:
-        """Check if item is in this collection."""
+    Note: Python's ``in`` operator coerces the result of ``__contains__`` to
+    ``bool`` at the C level, which would discard the Nu tree and yield a
+    constant ``True`` for any Form instance. We expose ``.contains(item)``
+    instead, returning a real ``BoolForm`` tree node.
+    """
+
+    def contains(self, item: object) -> BoolForm:
+        """Check if item is in this collection. Returns a BoolForm tree."""
         from nu import Contains
         from nu.forms.primitives import BoolForm
 

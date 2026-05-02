@@ -29,7 +29,7 @@ class CollectionForm[ElementT, CollectionResultT, ElementResultT](
 ):
     """Base for collection values - like collections.abc.Collection.
 
-    Inherits len() from SizedForm, __contains__ from ContainerForm,
+    Inherits len() from SizedForm, contains() from ContainerForm,
     and wrapping infrastructure from IterableForm.
 
     Type Parameters:
