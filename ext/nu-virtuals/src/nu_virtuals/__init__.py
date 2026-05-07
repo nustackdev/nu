@@ -33,6 +33,13 @@ from nu_virtuals.commands import (
     ItemPrimitiveSetUnsafeParentSkipCmd,
     ItemPrimitiveStoreCmd,
 )
+from nu_virtuals.paths import ValuePathSer, ViewPathSer
+from nu_virtuals.presets import (
+    memory_storage,
+    rocksdb_storage,
+    rocksdb_storage_inmemory,
+    text_storage,
+)
 from nu_virtuals.queries import (
     ItemPrimitiveGetUnsafe,
     ScanPrimitivesUnsafe,
@@ -68,14 +75,7 @@ from nu_virtuals.refs import (
     UUIDRef,
     ViewRef,
 )
-from nu_virtuals.paths import ValuePathSer, ViewPathSer
-from nu_virtuals.presets import (
-    memory_storage,
-    rocksdb_storage,
-    rocksdb_storage_inmemory,
-    text_storage,
-)
-from nu_virtuals.spans import Atomic, Snapshot, Transaction
+from nu_virtuals.spans import Atomic, RetryOnConflict, Snapshot, Transaction
 from nu_virtuals.tree import (
     auto_atomic,
     auto_flow_atomic,
@@ -143,6 +143,7 @@ __all__ = [  # noqa: RUF022
     "ShapeRef",
     "ShapesDictRef",
     "ShapesListRef",
+    "RetryOnConflict",
     "Snapshot",
     "Transaction",
     "StrRef",

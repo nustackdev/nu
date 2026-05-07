@@ -1,13 +1,14 @@
 """Policy concretes - Retry, TryCatch.
 
 Both have full sync + async surface. Retry supports max_attempts, delay,
-backoff, and per-attempt hooks (async only); TryCatch supports a typed
-exception filter and a `finally` branch.
+backoff, jitter, a typed exception filter, and per-attempt hooks (async
+only); TryCatch supports a typed exception filter and a `finally` branch.
 """
 
 from __future__ import annotations
 
 import asyncio
+import random
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu.terms.span import Policy
@@ -55,10 +56,12 @@ class TryCatch(Policy):
 
     @property
     def catch(self) -> Nu | None:
+        """Optional fallback branch run when an exception matches `errors`."""
         return self._children[1] if len(self._children) > 1 else None
 
     @property
     def finally_(self) -> Nu | None:
+        """Optional branch run after success or failure."""
         return self._finally
 
     def around(self, ctx: Any, call: Any) -> Any:  # noqa: ANN401, D102
@@ -103,12 +106,22 @@ class TryCatch(Policy):
 
 
 class Retry(Policy):
-    """Retry body on failure with exponential backoff and per-attempt hooks.
+    """Retry body on failure with exponential backoff, jitter, typed error filter, and per-attempt hooks.
 
     Children: ``[body]``. Numeric/hook config kept as instance state so
     Span body-slot semantics stay clean. Sync mode runs basic retry
-    (no delay or hooks); async mode supports `delay`, `backoff`, and
-    `on_attempt_fail` / `on_success` / `on_fail` hooks.
+    (no delay or hooks); async mode supports `delay`, `backoff`,
+    `jitter`, and `on_attempt_fail` / `on_success` / `on_fail` hooks.
+
+    `errors` scopes the retry to a typed exception (or tuple). When set,
+    exceptions outside the filter propagate immediately - they are not
+    retried. Default `None` means retry any `Exception` (current
+    behavior).
+
+    `jitter` is a fraction in [0, 1] applied to each delay as a uniform
+    random multiplier in `[1 - jitter, 1 + jitter]`. Decorrelates retries
+    across concurrent workers so they don't re-collide in lockstep.
+    Async mode only; sync mode ignores it (it ignores delay too).
     """
 
     body_slot: ClassVar[int] = 0
@@ -121,6 +134,8 @@ class Retry(Policy):
         max_attempts: IntArg = 3,
         delay: FloatArg = 0.0,
         backoff: FloatArg = 1.0,
+        jitter: FloatArg = 0.0,
+        errors: tuple[type[Exception], ...] | type[Exception] | None = None,
         on_attempt_fail: Nu | None = None,
         on_success: Nu | None = None,
         on_fail: Nu | None = None,
@@ -129,20 +144,27 @@ class Retry(Policy):
         self._max_attempts = max_attempts
         self._delay = delay
         self._backoff = backoff
+        self._jitter = jitter
+        if errors is not None and not isinstance(errors, tuple):
+            errors = (errors,)
+        self._errors: tuple[type[Exception], ...] | None = errors
         self._on_attempt_fail = on_attempt_fail
         self._on_success = on_success
         self._on_fail = on_fail
 
     @property
     def on_attempt_fail(self) -> Nu | None:
+        """Optional hook fired after each failed attempt (async only)."""
         return self._on_attempt_fail
 
     @property
     def on_success(self) -> Nu | None:
+        """Optional hook fired after a successful attempt (async only)."""
         return self._on_success
 
     @property
     def on_fail(self) -> Nu | None:
+        """Optional hook fired when all attempts are exhausted (async only)."""
         return self._on_fail
 
     def around(self, ctx: Any, call: Any) -> Any:  # noqa: ANN401, D102
@@ -152,6 +174,8 @@ class Retry(Policy):
             try:
                 return call()
             except Exception as e:
+                if self._errors is not None and not isinstance(e, self._errors):
+                    raise
                 last_error = e
         if last_error is not None:
             raise last_error
@@ -172,6 +196,7 @@ class Retry(Policy):
         max_attempts = int(await self._resolve(ctx, self._max_attempts))
         delay = float(await self._resolve(ctx, self._delay))
         backoff = float(await self._resolve(ctx, self._backoff))
+        jitter = float(await self._resolve(ctx, self._jitter))
 
         for attempt in range(1, max_attempts + 1):
             try:
@@ -183,6 +208,8 @@ class Retry(Policy):
                     await runtime.aexecute(self._on_success, hook_ctx)
                 return result
             except Exception as e:
+                if self._errors is not None and not isinstance(e, self._errors):
+                    raise
                 hook_ctx = ctx._copy() if hasattr(ctx, "_copy") else ctx
                 if hasattr(hook_ctx, "attrs"):
                     hook_ctx.attrs["error"] = str(e)
@@ -194,6 +221,10 @@ class Retry(Policy):
                     raise
                 if self._on_attempt_fail is not None:
                     await runtime.aexecute(self._on_attempt_fail, hook_ctx)
-                await asyncio.sleep(delay)
+                sleep_for = delay
+                if jitter > 0.0 and sleep_for > 0.0:
+                    spread = max(0.0, min(1.0, jitter))
+                    sleep_for *= 1.0 + random.uniform(-spread, spread)  # noqa: S311
+                await asyncio.sleep(sleep_for)
                 delay *= backoff
         return None
