@@ -40,7 +40,10 @@ class ItemStoreCmd(ScalarCommand):
         address = await ref.aresolve_address(ctx)
         value = await runtime.afirst(self._children[1], ctx)
         if is_sentinel(value):
-            raise ValueError(f"Cannot store sentinel value: {value}")
+            raise ValueError(
+                f"Cannot store sentinel value: {value} "
+                f"(ref={ref!r}, value_node={self._children[1]!r})"
+            )
         parent[address] = value
 
     def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
@@ -51,7 +54,10 @@ class ItemStoreCmd(ScalarCommand):
         address = ref.resolve_address(ctx)
         value = runtime.first(self._children[1], ctx)
         if is_sentinel(value):
-            raise ValueError(f"Cannot store sentinel value: {value}")
+            raise ValueError(
+                f"Cannot store sentinel value: {value} "
+                f"(ref={ref!r}, value_node={self._children[1]!r})"
+            )
         parent[address] = value
 
     def __repr__(self) -> str:

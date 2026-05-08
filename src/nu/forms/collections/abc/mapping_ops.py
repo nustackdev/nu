@@ -48,8 +48,6 @@ class KeysOp(ScalarQuery):
 
     def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
         operand = ops[0]
-        if not isinstance(operand, Mapping):
-            raise TypeError(f"keys() requires mapping, got {type(operand).__name__}")
         return operand.keys()
 
 
@@ -63,8 +61,6 @@ class ValuesOp(ScalarQuery):
 
     def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
         operand = ops[0]
-        if not isinstance(operand, Mapping):
-            raise TypeError(f"values() requires mapping, got {type(operand).__name__}")
         return operand.values()
 
 
@@ -78,8 +74,6 @@ class ItemsOp(ScalarQuery):
 
     def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
         operand = ops[0]
-        if not isinstance(operand, Mapping):
-            raise TypeError(f"items() requires mapping, got {type(operand).__name__}")
         return operand.items()
 
 
@@ -93,8 +87,6 @@ class GetOp(ScalarQuery):
 
     def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
         a, b, c = ops
-        if not isinstance(a, Mapping):
-            raise TypeError(f"get() requires mapping, got {type(a).__name__}")
         if c is None:
             return a[b]
         return a.get(b, c)
@@ -114,17 +106,15 @@ class SetItemCmd(ScalarCommand):
     def __init__(self, first: Any, second: Any, third: Any) -> None:  # noqa: ANN401
         super().__init__(first, second, third)
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401
+    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         target = runtime.first(self._children[0], ctx)
         key = runtime.first(self._children[1], ctx)
         value = runtime.first(self._children[2], ctx)
-        if not isinstance(target, MutableMapping):
-            raise TypeError(f"set() requires mutable mapping, got {type(target).__name__}")
         target[key] = value
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         target = await runtime.afirst(self._children[0], ctx)
@@ -144,16 +134,14 @@ class DeleteItemCmd(ScalarCommand):
     def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
         super().__init__(left, right)
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401
+    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         target = runtime.first(self._children[0], ctx)
         key = runtime.first(self._children[1], ctx)
-        if not isinstance(target, MutableMapping):
-            raise TypeError(f"delete() requires mutable mapping, got {type(target).__name__}")
         del target[key]
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         target = await runtime.afirst(self._children[0], ctx)
@@ -172,18 +160,14 @@ class UpdateCmd(ScalarCommand):
     def __init__(self, left: Any, right: Any) -> None:  # noqa: ANN401
         super().__init__(left, right)
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401
+    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         target = runtime.first(self._children[0], ctx)
         other = runtime.first(self._children[1], ctx)
-        if not isinstance(target, MutableMapping):
-            raise TypeError(f"update() requires mutable mapping, got {type(target).__name__}")
-        if not isinstance(other, Mapping):
-            raise TypeError(f"update() requires mapping, got {type(other).__name__}")
         target.update(other)
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401
+    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
         from nu import runtime
 
         target = await runtime.afirst(self._children[0], ctx)
@@ -205,8 +189,6 @@ class DictPopCmd(ScalarQuery):
 
     def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
         a, b, c = ops
-        if not isinstance(a, MutableMapping):
-            raise TypeError(f"pop() requires mutable mapping, got {type(a).__name__}")
         if c is None:
             try:
                 return a.pop(b)
@@ -225,8 +207,6 @@ class PopItemCmd(ScalarQuery):
 
     def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
         operand = ops[0]
-        if not isinstance(operand, MutableMapping):
-            raise TypeError(f"popitem() requires mutable mapping, got {type(operand).__name__}")
         try:
             return operand.popitem()
         except KeyError:
@@ -243,6 +223,4 @@ class SetDefaultCmd(ScalarQuery):
 
     def _apply(self, ctx: Any, ops: list[Any]) -> Any:  # noqa: ANN401
         a, b, c = ops
-        if not isinstance(a, MutableMapping):
-            raise TypeError(f"setdefault() requires mutable mapping, got {type(a).__name__}")
         return a.setdefault(b, c)

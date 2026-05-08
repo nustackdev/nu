@@ -113,7 +113,7 @@ class Invoke[T](ScalarQuery):
         self.support = support if support is not None else _infer_support(fn)  # type: ignore[misc]
 
     @property
-    def fn(self) -> Callable[..., Any]:
+    def fn(self) -> Callable[..., Any]:  # noqa: D102
         return self._fn
 
     def _split(self, ops: list[Any]) -> tuple[tuple[Any, ...], dict[str, Any]]:
@@ -287,7 +287,35 @@ FuncCall = Invoke
 FuncCallCmd = Invoke
 
 
-def MethodCall(
+class _AttrInvoker:
+    """Picklable callable for `MethodCall`'s untyped-target fallback.
+
+    The closure form (`def fn(t, *a, **kw): ...`) used previously was
+    unpicklable, which broke distributed execution (Teleport) when the
+    target's python type couldn't be inferred. This class is a top-level
+    callable: pickle resolves instances by the class qualname against
+    this module.
+    """
+
+    __slots__ = ("name",)
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def __call__(self, t: Any, *a: Any, **kw: Any) -> Any:  # noqa: ANN401
+        return getattr(t, self.name)(*a, **kw)
+
+    def __getstate__(self) -> str:
+        return self.name
+
+    def __setstate__(self, state: str) -> None:
+        self.name = state
+
+    def __repr__(self) -> str:
+        return f"_AttrInvoker({self.name!r})"
+
+
+def MethodCall(  # noqa: N802
     target: object,
     name: str,
     *args: object,
@@ -297,7 +325,7 @@ def MethodCall(
     """Call a named method on target. Sugar for Invoke(T.name, target, *args).
 
     Resolves T from target's python class (via `_extract_py_type` when
-    target carries a generic). Falls back to a runtime-getattr closure
+    target carries a generic). Falls back to a runtime-getattr callable
     when the type can't be inferred; explicit `support=` is needed there
     if the method is async.
     """
@@ -305,13 +333,7 @@ def MethodCall(
     fn_candidate = getattr(py_type, name, None) if py_type is not None else None
 
     if fn_candidate is None:
-
-        def fn(t: Any, *a: Any, **kw: Any) -> Any:  # noqa: ANN401
-            return getattr(t, name)(*a, **kw)
-
-        fn.__name__ = name
-        fn.__qualname__ = name
-        return Invoke(fn, target, *args, support=support, **kwargs)
+        return Invoke(_AttrInvoker(name), target, *args, support=support, **kwargs)
 
     return Invoke(fn_candidate, target, *args, support=support, **kwargs)
 

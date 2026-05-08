@@ -135,7 +135,7 @@ class DecimalRef(ItemRef[str, StrForm], _DecimalI):
             val = ToStr(value)
         else:
             val = str(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class FractionRef(ItemRef[str, StrForm], _FractionI):
@@ -177,7 +177,7 @@ class FractionRef(ItemRef[str, StrForm], _FractionI):
             val = ToStr(value)
         else:
             val = str(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class ComplexRef(ItemRef[str, StrForm], _ComplexI):
@@ -230,7 +230,7 @@ class ComplexRef(ItemRef[str, StrForm], _ComplexI):
                 return f"{c.real},{c.imag}"
 
             val = FuncCall(format_complex, value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class BasisPointRef(ItemRef[int, IntForm], _BasisPointI):
@@ -270,7 +270,7 @@ class BasisPointRef(ItemRef[int, IntForm], _BasisPointI):
             val = ToInt(value)
         else:
             val = int(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class PercentageRef(ItemRef[float, FloatForm], _PercentageI):
@@ -310,7 +310,7 @@ class PercentageRef(ItemRef[float, FloatForm], _PercentageI):
             val = ToFloat(value)
         else:
             val = float(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 # =============================================================================
@@ -357,7 +357,7 @@ class DateRef(ItemRef[str, StrForm], _DateI):
             val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class DatetimeRef(ItemRef[str, StrForm], _DatetimeI):
@@ -401,7 +401,7 @@ class DatetimeRef(ItemRef[str, StrForm], _DatetimeI):
             val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, datetime) else str(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class TimeRef(ItemRef[str, StrForm], _TimeI):
@@ -443,7 +443,7 @@ class TimeRef(ItemRef[str, StrForm], _TimeI):
             val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, time) else str(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class TimedeltaRef(ItemRef[float, FloatForm], _TimedeltaI):
@@ -488,7 +488,7 @@ class TimedeltaRef(ItemRef[float, FloatForm], _TimedeltaI):
             val = value.total_seconds()
         else:
             val = float(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class TimezoneRef(ItemRef[str, StrForm], _TimezoneI):
@@ -577,7 +577,7 @@ class TimezoneRef(ItemRef[str, StrForm], _TimezoneI):
                 return f"{sign}{hours:02d}:{minutes:02d}"
 
             val = FuncCall(format_timezone, value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 # =============================================================================
@@ -624,7 +624,7 @@ class PathRef(ItemRef[str, StrForm], _PathI):
             val = ToStr(value)
         else:
             val = str(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class UUIDRef(ItemRef[str, StrForm], _UUIDI):
@@ -666,4 +666,4 @@ class UUIDRef(ItemRef[str, StrForm], _UUIDI):
             val = ToStr(value)
         else:
             val = str(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)

@@ -120,7 +120,7 @@ class DecimalRef(RefBase[str], _DecimalI):
             val = ToStr(value)
         else:
             val = str(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class FractionRef(RefBase[str], _FractionI):
@@ -154,7 +154,7 @@ class FractionRef(RefBase[str], _FractionI):
             val = ToStr(value)
         else:
             val = str(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class ComplexRef(RefBase[str], _ComplexI):
@@ -200,7 +200,7 @@ class ComplexRef(RefBase[str], _ComplexI):
             val = f"{value.real},{value.imag}"
         else:
             val = str(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class BasisPointRef(RefBase[int], _BasisPointI):
@@ -232,7 +232,7 @@ class BasisPointRef(RefBase[int], _BasisPointI):
             val = ToInt(value)
         else:
             val = int(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class PercentageRef(RefBase[float], _PercentageI):
@@ -264,7 +264,7 @@ class PercentageRef(RefBase[float], _PercentageI):
             val = ToFloat(value)
         else:
             val = float(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 # =============================================================================
@@ -304,7 +304,7 @@ class DateRef(RefBase[str], _DateI):
             val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return NoneForm(ItemStoreCmd(self, val))
+        return ItemStoreCmd(self, val)
 
 
 class DatetimeRef(RefBase[str], _DatetimeI):
