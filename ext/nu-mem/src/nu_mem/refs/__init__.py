@@ -34,6 +34,7 @@ from .items_extended import (
     TimezoneRef,
     UUIDRef,
 )
+from .jqueue import JQueueForm, JQueueRef, QueueClosed
 from .list import ListRef
 from .listshape import ShapesListRef
 from .set import SetRef
@@ -53,9 +54,12 @@ __all__ = [
     "FractionRef",
     "IntRef",
     "ItemRef",
+    "JQueueForm",
+    "JQueueRef",
     "ListRef",
     "PathRef",
     "PercentageRef",
+    "QueueClosed",
     "RefBase",
     "SetRef",
     "ShapeRef",
