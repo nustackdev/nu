@@ -453,8 +453,9 @@ def execute(
         raise RuntimeError(msg)
     ctx = _default_ctx(ctx)
     with _BudgetScope(ctx, max_parallel, async_mode=False):
-        for _ in _drive_sync(nu, ctx):
-            pass
+        with closing(_drive_sync(nu, ctx)) as gen:
+            for _ in gen:
+                pass
 
 
 def first(
@@ -469,8 +470,9 @@ def first(
         raise RuntimeError(msg)
     ctx = _default_ctx(ctx)
     with _BudgetScope(ctx, max_parallel, async_mode=False):
-        for v in _drive_sync(nu, ctx):
-            return v
+        with closing(_drive_sync(nu, ctx)) as gen:
+            for v in gen:
+                return v
     msg = "nu yielded no values"
     raise RuntimeError(msg)
 
@@ -487,7 +489,8 @@ def collect(
         raise RuntimeError(msg)
     ctx = _default_ctx(ctx)
     with _BudgetScope(ctx, max_parallel, async_mode=False):
-        return list(_drive_sync(nu, ctx))
+        with closing(_drive_sync(nu, ctx)) as gen:
+            return list(gen)
 
 
 async def aexecute(
@@ -499,8 +502,9 @@ async def aexecute(
     """Drain on the async path. Yields are discarded."""
     ctx = _default_ctx(ctx)
     with _BudgetScope(ctx, max_parallel, async_mode=True):
-        async for _ in _drive_async(nu, ctx):
-            pass
+        async with aclosing(_drive_async(nu, ctx)) as agen:
+            async for _ in agen:
+                pass
 
 
 async def afirst(
@@ -512,8 +516,13 @@ async def afirst(
     """First yield on the async path."""
     ctx = _default_ctx(ctx)
     with _BudgetScope(ctx, max_parallel, async_mode=True):
-        async for v in _drive_async(nu, ctx):
-            return v
+        # Explicit aclose: short-circuiting `async for ... return v` leaves
+        # the generator un-closed, making CPython's finalizer queue an
+        # `agen.aclose()` Task on the loop. On a CPU-bound loop those
+        # Tasks pile up retaining frames + ctx (real, observable leak).
+        async with aclosing(_drive_async(nu, ctx)) as agen:
+            async for v in agen:
+                return v
     msg = "nu yielded no values"
     raise RuntimeError(msg)
 
@@ -529,9 +538,10 @@ async def alast(
     found = False
     val: Any = None
     with _BudgetScope(ctx, max_parallel, async_mode=True):
-        async for v in _drive_async(nu, ctx):
-            val = v
-            found = True
+        async with aclosing(_drive_async(nu, ctx)) as agen:
+            async for v in agen:
+                val = v
+                found = True
     if not found:
         msg = "nu yielded no values"
         raise RuntimeError(msg)
@@ -548,6 +558,7 @@ async def acollect(
     ctx = _default_ctx(ctx)
     out: list[Any] = []
     with _BudgetScope(ctx, max_parallel, async_mode=True):
-        async for v in _drive_async(nu, ctx):
-            out.append(v)
+        async with aclosing(_drive_async(nu, ctx)) as agen:
+            async for v in agen:
+                out.append(v)
     return out
