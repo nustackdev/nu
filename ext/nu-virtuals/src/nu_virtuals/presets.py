@@ -85,6 +85,7 @@ def rocksdb_storage_inmemory(
     path: str,
     read_only: bool = False,
     secondary_path: str | None = None,
+    secondary_refresh_interval: float | None = 0.01,
 ) -> Generator[StorageProtocol, None, None]:
     """Create RocksDB storage with binary codec and in-memory observer.
 
@@ -92,6 +93,8 @@ def rocksdb_storage_inmemory(
         path: Path to RocksDB database directory
         read_only: Open database in read-only mode
         secondary_path: Path to secondary RocksDB instance
+        secondary_refresh_interval: Interval in seconds for background
+            try_catch_up_with_primary on secondary DBs. None disables.
 
     Yields:
         Configured RocksDB storage instance
@@ -113,6 +116,7 @@ def rocksdb_storage_inmemory(
             observer=observer,
             read_only=read_only,
             secondary_path=secondary_path,
+            secondary_refresh_interval=secondary_refresh_interval,
         ) as storage,
     ):
         yield storage
@@ -123,6 +127,7 @@ def rocksdb_storage(
     path: str,
     read_only: bool = False,
     secondary_path: str | None = None,
+    secondary_refresh_interval: float | None = 0.01,
     redis_url: str = "redis://localhost:6379",
     channel_prefix: str = "__every__",
 ) -> Generator[StorageProtocol, None, None]:
@@ -132,6 +137,8 @@ def rocksdb_storage(
         path: Path to RocksDB database directory
         read_only: Permissions
         secondary_path: Open as secondary rocksdb storage
+        secondary_refresh_interval: Interval in seconds for background
+            try_catch_up_with_primary on secondary DBs. None disables.
         redis_url: Redis service url
         channel_prefix: Redis channel prefix
 
@@ -159,6 +166,7 @@ def rocksdb_storage(
             observer=observer,
             read_only=read_only,
             secondary_path=secondary_path,
+            secondary_refresh_interval=secondary_refresh_interval,
         ) as storage,
     ):
         yield storage
