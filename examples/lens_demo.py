@@ -1,10 +1,11 @@
-"""nudle demo - run a Nu and explore state via browser."""
+"""lens demo - run a Nu and explore state via browser."""
 
 import asyncio
 
+import lens
+
 import nu
 import nu_virtuals as nv
-import nudle
 import virtuals as v
 
 
@@ -45,7 +46,7 @@ async def main() -> None:
 
         await nv.auto_atomic(app).aexecute(ctx)
 
-        await nudle.arun_ui(Counter, nav.storage, port=8001)
+        await lens.arun_ui(Counter, nav.storage, port=8001)
 
 
 if __name__ == "__main__":

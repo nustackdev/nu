@@ -17,12 +17,12 @@ from functools import reduce
 from operator import or_
 
 import aiohttp
+import lens
 
 import nu
 import nu_inspect
 import nu_mem as nm
 import nu_virtuals as nv
-import nudle
 import virtuals
 
 
@@ -444,7 +444,7 @@ async def main() -> None:
         await nu.runtime.aexecute(archive, ctx, max_parallel=args.max_parallel)
         nu.runtime.execute(query, ctx)
 
-        await nudle.arun_ui(Ledger, ctx)
+        await lens.arun_ui(Ledger, ctx)
         await rpc.close()
 
 
