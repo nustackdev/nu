@@ -323,6 +323,12 @@ class PrimitiveDictRef[K, V](
         """Create a slot for primitive dict values."""
         return Slot(cls)  # type: ignore[return-value]
 
+    def store(self, value: dict[K, V] | Nu) -> Nu:  # type: ignore[override]
+        """Write the dict as a single primitive blob (no per-key decomposition)."""
+        from nu.shapes.commands import ItemPrimitiveStoreCmd
+
+        return ItemPrimitiveStoreCmd(self, value)
+
     # TODO task-079: write-back view (Stream D). Yields mutable view, flushes
     # on generator close. Override `aopen` directly so finally runs on aclose.
     async def aopen(self, ctx: Context) -> AsyncGenerator[object, None]:
@@ -379,6 +385,12 @@ class PrimitiveListRef[T](
         """Create a slot for primitive list values."""
         return Slot(cls)  # type: ignore[return-value]
 
+    def store(self, value: list[T] | Nu) -> Nu:  # type: ignore[override]
+        """Write the list as a single primitive blob (no per-index decomposition)."""
+        from nu.shapes.commands import ItemPrimitiveStoreCmd
+
+        return ItemPrimitiveStoreCmd(self, value)
+
     # TODO task-079: write-back view (Stream D). Yields mutable view, flushes
     # on generator close. Override `aopen` directly so finally runs on aclose.
     async def aopen(self, ctx: Context) -> AsyncGenerator[object, None]:
@@ -434,6 +446,12 @@ class PrimitiveSetRef[T](
     def slot(cls) -> Self:  # type: ignore[override]
         """Create a slot for primitive set values."""
         return Slot(cls)  # type: ignore[return-value]
+
+    def store(self, value: set[T] | Nu) -> Nu:  # type: ignore[override]
+        """Write the set as a single primitive blob (no per-element decomposition)."""
+        from nu.shapes.commands import ItemPrimitiveStoreCmd
+
+        return ItemPrimitiveStoreCmd(self, value)
 
     # TODO task-079: write-back view (Stream D). Yields mutable view, flushes
     # on generator close. Override `aopen` directly so finally runs on aclose.

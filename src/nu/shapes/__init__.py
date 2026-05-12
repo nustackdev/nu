@@ -1,6 +1,14 @@
 """Shape - declarative structure definitions."""
 
-from . import commands, flows, forms, queries, refs, shape, tree
+from . import commands, flows, forms, queries, refs, shape, tree  # noqa: F401
+from .commands import (
+    CollectionEraseCmd,
+    CollectionStoreCmd,
+    ItemEraseCmd,
+    ItemPrimitiveStoreCmd,
+    ItemStoreCmd,
+)
+from .flows import React, ReactForever, ReactWhile, Stream
 from .forms import (
     CollectionForm,
     ItemForm,
@@ -18,13 +26,6 @@ from .forms import (
     SequenceForm,
     SetLikeForm,
 )
-from .commands import (
-    CollectionEraseCmd,
-    CollectionStoreCmd,
-    ItemEraseCmd,
-    ItemStoreCmd,
-)
-from .flows import React, ReactForever, ReactWhile, Stream
 from .queries import (
     AdvanceCursor,
     Change,
@@ -82,6 +83,7 @@ __all__ = [
     "ItemForm",
     "ItemLoad",
     "ItemMissing",
+    "ItemPrimitiveStoreCmd",
     "ItemRef",
     "ItemStoreCmd",
     "MappingForm",
