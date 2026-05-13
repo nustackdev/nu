@@ -1,59 +1,59 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-type Status = "connecting" | "connected" | "disconnected";
+import { decode } from "./protocol";
+import { renderers } from "./renderers";
+import { useStore } from "./store";
 
 const statusConfig = {
 	connecting: { label: "connecting", variant: "outline" as const },
 	connected: { label: "connected", variant: "default" as const },
 	disconnected: { label: "disconnected", variant: "destructive" as const },
-} satisfies Record<Status, { label: string; variant: "outline" | "default" | "destructive" }>;
+};
 
 function App() {
-	const [status, setStatus] = useState<Status>("connecting");
-	const [message, setMessage] = useState("");
+	const status = useStore((s) => s.status);
+	const page = useStore((s) => s.page);
+	const setStatus = useStore((s) => s.setStatus);
+	const dispatch = useStore((s) => s.dispatch);
 
 	useEffect(() => {
 		const ws = new WebSocket(`ws://${window.location.host}/ws`);
-
-		ws.addEventListener("open", () => {
-			setStatus("connected");
-		});
-
+		ws.addEventListener("open", () => setStatus("connected"));
+		ws.addEventListener("close", () => setStatus("disconnected"));
 		ws.addEventListener("message", (event) => {
-			const data = JSON.parse(event.data);
-			if (data.type === "hello") {
-				setMessage(data.message);
-			}
+			const frame = decode(event.data);
+			dispatch(frame);
 		});
-
-		ws.addEventListener("close", () => {
-			setStatus("disconnected");
-		});
-
-		return () => {
-			ws.close();
-		};
-	}, []);
+		return () => ws.close();
+	}, [setStatus, dispatch]);
 
 	const { label, variant } = statusConfig[status];
 
 	return (
-		<div className="flex h-screen items-center justify-center">
-			<Card className="w-80">
-				<CardHeader>
-					<CardTitle className="flex items-center justify-between">
-						nudle
-						<Badge variant={variant}>{label}</Badge>
-					</CardTitle>
-				</CardHeader>
-				{message && (
-					<CardContent>
-						<p className="text-sm text-muted-foreground font-mono">{message}</p>
-					</CardContent>
+		<div className="min-h-screen p-6">
+			<div className="mx-auto max-w-3xl">
+				<div className="mb-4 flex items-center justify-between">
+					<span className="text-sm text-muted-foreground font-mono">nudle</span>
+					<Badge variant={variant}>{label}</Badge>
+				</div>
+				{page ? (
+					<div className="flex flex-col gap-6">
+						{page.fields.map((f) => {
+							const Comp = renderers[f.type];
+							if (!Comp) {
+								return (
+									<div key={f.path} className="text-sm text-destructive font-mono">
+										no renderer for {f.type}
+									</div>
+								);
+							}
+							return <Comp key={f.path} path={f.path} />;
+						})}
+					</div>
+				) : (
+					<p className="text-sm text-muted-foreground font-mono">waiting for mount...</p>
 				)}
-			</Card>
+			</div>
 		</div>
 	);
 }
