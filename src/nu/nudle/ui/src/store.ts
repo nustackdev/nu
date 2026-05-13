@@ -1,9 +1,9 @@
 // Browser-side store. zustand + immer.
 //
-// One global store, keyed by ref path. The dispatcher is a one-liner over
-// the slice for that path: `store.refs[ref][op](payload)`. The dispatcher
-// understands only the three reserved lifecycle ops (mount, unmount, error).
-// Everything else is routed to the slice's matching method.
+// One global store keyed by ref path. Dispatcher routes inbound frames to
+// per-slice methods. Outbound frames go through `send` (set by App once
+// the ws is open). Server-initiated reads are answered by calling the
+// slice's optional `get()` and shipping back a frame with the same id.
 
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
@@ -13,9 +13,11 @@ import {
 	type MountPayload,
 	OP_ERROR,
 	OP_MOUNT,
+	OP_READ,
 	OP_UNMOUNT,
 } from "./protocol";
-import { factories, type RefSlice } from "./slices";
+import { factories } from "./refs";
+import type { RefSlice } from "./refs/types";
 
 type Status = "connecting" | "connected" | "disconnected";
 
@@ -27,11 +29,16 @@ type State = {
 
 type Actions = {
 	setStatus: (s: Status) => void;
+	setSender: (send: (f: Frame) => void) => void;
+	send: (frame: Frame) => void;
+	setLocal: (path: string, value: unknown) => void;
 	dispatch: (frame: Frame) => void;
 	mount: (payload: MountPayload) => void;
 	unmount: () => void;
 	logError: (code: ErrorCode, message: string, ref?: string) => void;
 };
+
+let outbound: ((f: Frame) => void) | null = null;
 
 export const useStore = create<State & Actions>()(
 	immer((set, get) => ({
@@ -44,21 +51,39 @@ export const useStore = create<State & Actions>()(
 				draft.status = s;
 			}),
 
+		setSender: (sender) => {
+			outbound = sender;
+		},
+
+		send: (frame) => {
+			if (outbound) outbound(frame);
+		},
+
+		setLocal: (path, value) =>
+			set((draft) => {
+				if (draft.refs[path]) draft.refs[path].value = value;
+			}),
+
 		mount: (payload) =>
 			set((draft) => {
 				draft.page = payload;
 				draft.refs = {};
-				const setter = (mutator: (refs: Record<string, RefSlice>) => void) =>
-					set((d) => {
-						mutator(d.refs);
-					});
+				const ctx = {
+					set: (mutator: (refs: Record<string, RefSlice>) => void) =>
+						set((d) => {
+							mutator(d.refs);
+						}),
+					send: (f: Frame) => {
+						if (outbound) outbound(f);
+					},
+				};
 				for (const field of payload.fields) {
 					const factory = factories[field.type];
 					if (!factory) {
 						console.warn(`nudle: no factory for Ref type "${field.type}"`);
 						continue;
 					}
-					draft.refs[field.path] = factory(field.path, setter);
+					draft.refs[field.path] = factory(field.path, ctx);
 				}
 			}),
 
@@ -83,6 +108,14 @@ export const useStore = create<State & Actions>()(
 			if (frame.op === OP_ERROR) {
 				const p = frame.payload as { code: ErrorCode; message: string };
 				get().logError(p.code, p.message, frame.ref);
+				return;
+			}
+			if (frame.op === OP_READ) {
+				// Server is asking for our current value. Reply with the
+				// same id so the server's future resolves.
+				const slice = get().refs[frame.ref];
+				const value = slice?.get ? slice.get() : (slice?.value ?? null);
+				get().send({ op: OP_READ, ref: frame.ref, payload: value, id: frame.id });
 				return;
 			}
 			const slice = get().refs[frame.ref];

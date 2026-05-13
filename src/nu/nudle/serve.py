@@ -1,8 +1,9 @@
-"""`nudle.serve` — async host function that runs a Nu UI program over ws.
+"""`nudle.serve` -- async host function that runs a Nu UI program over ws.
 
 Not a Nu. A plain async function that owns the ws listener, accepts
 connections, and for each one evaluates the user's Nu with a fresh
-NudleSession bound on Context.
+NudleSession bound on Context. Inbound frames (notify, read replies)
+are drained by `session.run_intake` in parallel with the Nu evaluation.
 """
 
 from __future__ import annotations
@@ -12,13 +13,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
 from nu import runtime
 from nu.tree.walk import preorder
 
 from .page import Page
-from .refs import NudleRef
+from .refs.base import NudleRef
 from .session import NudleSession
 
 
@@ -53,17 +54,8 @@ async def serve(
     port: int = 8080,
     static_dir: Path | str | None = None,
 ) -> None:
-    """Run a nudle UI program.
-
-    Args:
-        app: The Nu tree describing the UI behavior.
-        ctx: Root Context. Per-connection narrowing happens internally.
-        host, port: ws + static listener.
-        static_dir: Where to serve the built browser bundle from. If None,
-            defaults to `web/dist` relative to the example file's cwd.
-    """
+    """Run a nudle UI program."""
     page_cls = _find_page(app)
-
     fastapi_app = FastAPI(title="nudle")
 
     @fastapi_app.websocket("/ws")
@@ -72,20 +64,25 @@ async def serve(
         session = NudleSession(ws)
         await session.mount(page_cls.__name__, page_cls.mount_fields())
         per_conn_ctx = ctx.bind(NudleSession, session)
+        intake_task = asyncio.create_task(session.run_intake())
         eval_task = asyncio.create_task(runtime.aexecute(app, per_conn_ctx))
         try:
-            while True:
-                # v0.1.0: ignore browser->server frames. Keeps the socket
-                # readable so a disconnect surfaces here.
-                await ws.receive_text()
-        except WebSocketDisconnect:
-            pass
+            done, _ = await asyncio.wait(
+                {intake_task, eval_task},
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for t in done:
+                exc = t.exception()
+                if exc is not None and not isinstance(exc, asyncio.CancelledError):
+                    raise exc
         finally:
-            eval_task.cancel()
-            try:
-                await eval_task
-            except (asyncio.CancelledError, Exception):
-                pass
+            for t in (intake_task, eval_task):
+                if not t.done():
+                    t.cancel()
+                    try:
+                        await t
+                    except (asyncio.CancelledError, Exception):
+                        pass
 
     if static_dir is not None:
         path = Path(static_dir)

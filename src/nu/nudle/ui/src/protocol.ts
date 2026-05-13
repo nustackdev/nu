@@ -4,6 +4,8 @@
 export const OP_MOUNT = "mount";
 export const OP_UNMOUNT = "unmount";
 export const OP_ERROR = "error";
+export const OP_NOTIFY = "notify";
+export const OP_READ = "read";
 
 export type Frame = {
 	op: string;

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { decode } from "./protocol";
-import { renderers } from "./renderers";
+import { decode, encode, type Frame } from "./protocol";
+import { renderers } from "./refs";
 import { useStore } from "./store";
 
 const statusConfig = {
@@ -14,10 +14,15 @@ function App() {
 	const status = useStore((s) => s.status);
 	const page = useStore((s) => s.page);
 	const setStatus = useStore((s) => s.setStatus);
+	const setSender = useStore((s) => s.setSender);
 	const dispatch = useStore((s) => s.dispatch);
 
 	useEffect(() => {
 		const ws = new WebSocket(`ws://${window.location.host}/ws`);
+		const send = (f: Frame) => {
+			if (ws.readyState === WebSocket.OPEN) ws.send(encode(f));
+		};
+		setSender(send);
 		ws.addEventListener("open", () => setStatus("connected"));
 		ws.addEventListener("close", () => setStatus("disconnected"));
 		ws.addEventListener("message", (event) => {
@@ -25,7 +30,7 @@ function App() {
 			dispatch(frame);
 		});
 		return () => ws.close();
-	}, [setStatus, dispatch]);
+	}, [setStatus, setSender, dispatch]);
 
 	const { label, variant } = statusConfig[status];
 

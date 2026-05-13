@@ -1,5 +1,8 @@
-"""End-to-end nudle smoke test: rocksdb-backed counter ticking on a worker
-thread, browser tab showing the live count and a line chart of its history.
+"""End-to-end nudle smoke test.
+
+- rocksdb-backed counter ticks once a second on a worker thread
+- browser dashboard shows the count, a line chart of its history,
+  and an input + button to set a greeting that's echoed back as the title
 
 Run:
     make build         # produces web/dist
@@ -17,6 +20,7 @@ from pathlib import Path
 import nu
 import nu_virtuals as nv
 import nudle
+from nu.shapes.flows.react import ReactForever
 from nu.stdlib import TimeSleep
 from nu.stdlib.asyncio import AsyncSleep
 from nu_virtuals.presets import rocksdb_storage_inmemory
@@ -38,6 +42,8 @@ class Dashboard(nudle.Page):
     title = nudle.TitleRef.slot()
     count = nudle.IntRef.slot()
     history = nudle.LineChart.slot()
+    name = nudle.InputRef.slot()
+    greet = nudle.ButtonRef.slot()
 
 
 worker = nv.Transaction(
@@ -47,15 +53,21 @@ worker = nv.Transaction(
 )
 
 
-ui = Dashboard.title.store("counter live") >> nu.ForeverDo(
+ticking = nu.ForeverDo(
     nv.Snapshot(
         Dashboard.count.store(Counter.value)
         | Dashboard.history.append(Counter.value, Counter.value),
     )
     >> AsyncSleep(1.0),
 )
-# Wall-clock x is what we want here, but nu has no Now() term yet, so we
-# plot (counter, counter) for the smoke test. Chart line will be linear.
+
+greeting = ReactForever(
+    Dashboard.greet.clicked(),
+    Dashboard.title.store(Dashboard.name),
+)
+
+
+ui = Dashboard.title.store("counter live") >> (ticking | greeting)
 
 
 async def main() -> None:
