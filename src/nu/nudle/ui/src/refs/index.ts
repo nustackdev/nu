@@ -6,6 +6,7 @@ import { ButtonRef } from "./button";
 import { InputRef } from "./input";
 import { IntRef } from "./int";
 import { LineChart } from "./line-chart";
+import { TableRef } from "./table";
 import { TitleRef } from "./title";
 import type { RefEntry, SliceFactory } from "./types";
 
@@ -15,6 +16,7 @@ const entries: Record<string, RefEntry> = {
 	LineChart,
 	InputRef,
 	ButtonRef,
+	TableRef,
 };
 
 export const factories: Record<string, SliceFactory> = Object.fromEntries(

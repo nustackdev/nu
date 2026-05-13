@@ -30,6 +30,9 @@ if TYPE_CHECKING:
 __all__ = ["serve"]
 
 
+_BUNDLED_STATIC = Path(__file__).parent / "_static"
+
+
 def _find_page(app: Nu) -> type[Page]:
     """Walk the Nu tree, find the page Shape that owns the nudle refs."""
     seen: set[type[Page]] = set()
@@ -84,10 +87,11 @@ async def serve(
                     except (asyncio.CancelledError, Exception):
                         pass
 
-    if static_dir is not None:
-        path = Path(static_dir)
-        if path.exists():
-            fastapi_app.mount("/", StaticFiles(directory=path, html=True), name="static")
+    # Resolve static dir: explicit override wins; otherwise fall back to the
+    # bundle baked into the wheel at nudle/_static.
+    path = Path(static_dir) if static_dir is not None else _BUNDLED_STATIC
+    if path.exists():
+        fastapi_app.mount("/", StaticFiles(directory=path, html=True), name="static")
 
     config = uvicorn.Config(fastapi_app, host=host, port=port, log_level="info")
     server = uvicorn.Server(config)

@@ -13,12 +13,26 @@ import type { RefEntry, SliceFactory } from "./types";
 
 type LineChartValue = { points: [number, number][] };
 
+// Server may push either a flat list of Y values (auto-x = 0..n-1) or
+// a {points: [[x, y], ...]} payload. Normalize at write time.
+function _toPoints(v: unknown): [number, number][] {
+	if (Array.isArray(v)) {
+		if (v.length === 0) return [];
+		if (typeof v[0] === "number") return (v as number[]).map((y, i) => [i, y]);
+		return v as [number, number][];
+	}
+	if (v && typeof v === "object" && "points" in v) {
+		return ((v as LineChartValue).points ?? []) as [number, number][];
+	}
+	return [];
+}
+
 const factory: SliceFactory = (path, ctx) => ({
 	type: "LineChart",
 	value: { points: [] } as LineChartValue,
 	write: (v) =>
 		ctx.set((refs) => {
-			refs[path].value = v as LineChartValue;
+			refs[path].value = { points: _toPoints(v) };
 		}),
 	append: (v) =>
 		ctx.set((refs) => {

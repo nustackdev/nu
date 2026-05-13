@@ -7,6 +7,7 @@ from .button import ButtonRef
 from .input import InputRef
 from .int_ import IntRef
 from .line_chart import LineChart
+from .table import TableRef
 from .title import TitleRef
 
 
@@ -16,5 +17,6 @@ __all__ = [
     "IntRef",
     "LineChart",
     "NudleRef",
+    "TableRef",
     "TitleRef",
 ]
