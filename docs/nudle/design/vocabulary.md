@@ -1,6 +1,6 @@
 # Design — Vocabulary
 
-Use everybase terms only. No generic database or UI jargon.
+Use Nu terms only. No generic database or UI jargon.
 
 ## Terms Used
 

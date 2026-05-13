@@ -1,8 +1,8 @@
-# everylens — Model
+# nudle — Model
 
 ## Core Idea
 
-everylens is two things:
+nudle is two things:
 
 1. **A visual Term builder** — every user interaction constructs a Term expression
 2. **A data visualizer** — results of Term evaluation are rendered as UI
@@ -33,7 +33,7 @@ The frontend maps gestures to Terms automatically. The user doesn't see Terms �
 
 ## Built-in and Extensible
 
-everylens ships with built-in Terms for standard Shape operations — get, set, slice, append, remove, filter. These cover navigation and editing out of the box.
+nudle ships with built-in Terms for standard Shape operations — get, set, slice, append, remove, filter. These cover navigation and editing out of the box.
 
 Users can extend with custom Terms — for complex queries, domain-specific queries, computed views, or batch operations. Same pipeline: construct Term → evaluate → render result.
 

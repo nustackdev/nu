@@ -1,7 +1,7 @@
 # Engineering — Project Structure
 
 ```text
-everylens/
+nudle/
 ├── docs/
 │   ├── vision.md
 │   ├── model.md
@@ -17,7 +17,7 @@ everylens/
 │   ├── tsconfig.json
 │   └── vite.config.ts
 ├── api/                    # Python backend
-│   ├── src/everylens/
+│   ├── src/nudle/
 │   │   ├── server.py       # WebSocket handler
 │   │   ├── schema.py       # Shape introspection → JSON
 │   │   └── evaluate.py     # Term deserialization + evaluation
@@ -28,4 +28,4 @@ everylens/
 
 Frontend and backend are independent packages in one repo. No shared code — they communicate only through the WebSocket protocol.
 
-`web/` is a standalone Vite + React app. `api/` is a standalone Python package with everybase as a dependency. Either can be developed, tested, and built independently.
+`web/` is a standalone Vite + React app. `api/` is a standalone Python package with Nu as a dependency. Either can be developed, tested, and built independently.

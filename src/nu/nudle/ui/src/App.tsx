@@ -44,7 +44,7 @@ function App() {
 			<Card className="w-80">
 				<CardHeader>
 					<CardTitle className="flex items-center justify-between">
-						everylens
+						nudle
 						<Badge variant={variant}>{label}</Badge>
 					</CardTitle>
 				</CardHeader>

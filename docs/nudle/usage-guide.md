@@ -1,17 +1,17 @@
 # Usage Guide
 
-everylens is a pip-installable package. You import it into your code, pass it a Shape and storage, and it runs a web UI for browsing and editing your data.
+nudle is a pip-installable package. You import it into your code, pass it a Shape and storage, and it runs a web UI for browsing and editing your data.
 
 ## Install
 
 ```bash
-pip install everylens
+pip install nudle
 ```
 
 ## Instrument your code
 
 ```python
-from everylens import run_ui
+from nudle import run_ui
 from eb_pv.views import DictView
 from eb_shape import Shape
 import eb_pv as pv
@@ -51,12 +51,12 @@ Open `http://localhost:8080` — you get a live UI for your Shape tree.
 ## What you provide
 
 - **Shape** — your data schema, defined as Python classes with typed slots
-- **Storage** — any storage instance implementing the everybase `StorageProtocol` (InMemory, RocksDB, etc.)
+- **Storage** — any storage instance implementing the Nu `StorageProtocol` (InMemory, RocksDB, etc.)
 
-## What everylens does
+## What nudle does
 
 - Introspects your Shape to build a schema (slot names, types, nesting)
 - Runs a FastAPI server with a WebSocket endpoint
 - Serves a React frontend that renders your Shape generically
 - On each request: re-constructs the Term tree, wraps in `Atomic` span, executes against your storage
-- Storage boundaries (transactions, snapshots) are handled automatically — everylens never touches them directly
+- Storage boundaries (transactions, snapshots) are handled automatically — nudle never touches them directly

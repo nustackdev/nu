@@ -15,7 +15,7 @@
 - **Python ≥ 3.10**
 - **FastAPI** + WebSocket
 - **Ruff** — lint + format
-- Direct everybase integration — Shape introspection, Term evaluation, PV storage access
+- Direct Nu integration — Shape introspection, Term evaluation, PV storage access
 - `uv.lock` committed
 
 ## Stores
@@ -28,7 +28,7 @@
 The pip package ships a pre-built frontend bundle — no JS runtime needed at install time. This means:
 
 - **Frontend** — pin to latest versions aggressively. The bundle is frozen at build time, so there's zero compatibility surface. Always use the newest React, Tailwind, Vite, etc.
-- **Backend** — keep Python deps loose (`>=` floors, no upper bounds). Users install everylens into their own environments alongside everybase and other packages. Tight pins cause resolver conflicts.
+- **Backend** — keep Python deps loose (`>=` floors, no upper bounds). Users install nudle into their own environments alongside Nu and other packages. Tight pins cause resolver conflicts.
 
 ## Dev
 

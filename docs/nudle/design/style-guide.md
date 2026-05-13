@@ -12,7 +12,7 @@ Nice UI is the standard, not a stretch goal.
 
 ## Type Coloring
 
-Every everybase category gets a distinct color. This is the primary visual language — you should be able to glance at a tree and know what's a Value, what's a Ref, what's a Flow, what's a Span, what's an Op without reading text.
+Every Nu category gets a distinct color. This is the primary visual language — you should be able to glance at a tree and know what's a Value, what's a Ref, what's a Flow, what's a Span, what's an Op without reading text.
 
 Exact palette TBD — but the principle is non-negotiable: type = color, always, everywhere.
 
