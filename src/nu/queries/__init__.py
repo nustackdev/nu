@@ -12,10 +12,12 @@ from .conversion import ToBool, ToBytes, ToFloat, ToInt, ToList, ToSet, ToStr, T
 from .iter_reduce import Find, FindIndex, GroupBy, Partition, ToDict
 from .literal import Literal
 from .logical import And, Bool, Not, Or
+from .record import Record
 from .reduce import AllElem, AnyElem, MaxElem, MinElem, Sum
 from .reduction import Collect, First, Last, Reduce
 from .sentinel import IsEmpty, IsInvalid, NotEmpty, NotInvalid
 from .slice import Drop, Take
+from .sort_by import SortBy
 from .stream_fold import Fold
 from .stream_iter import Iter
 from .stream_transform import Filter, Map, TakeWhile, UniqueDo
@@ -81,10 +83,12 @@ __all__ = [
     "Pos",
     "Pow",
     "RShift",
+    "Record",
     "Reduce",
     "Reversed",
     "SetAttr",
     "Slice",
+    "SortBy",
     "Sorted",
     "Sub",
     "Sum",
