@@ -1,4 +1,4 @@
-"""End-to-end: a POC-style layer-1 slice run on the engine.
+"""End-to-end: a POC-style layer-1 slice run on the attribute layer.
 
 Construct -> compile -> query -> gate, with declared, synthesized, and
 inherited attributes all in play.
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu.engine import Attribute, Schema, Symbol, Violation, compile, gate, validate
+from nu.attribute import Attribute, Law, Schema, Symbol, compile, gate, validate
 
 
 _SORT_PARENT = {"ScalarQuery": "Query", "Ref": "Query", "Literal": "Query", "ScalarCmd": "Command"}
@@ -90,9 +90,12 @@ class Put(Symbol):
     own_effects = Attribute.declared({0: "write"})
 
 
-def rule_put_target(program, path):
-    if program.kind(path) is Put and program.kind(program.children(path)[0]) is not Ref:
-        yield Violation(path, "SLOT", "Put slot 0 must be a Ref")
+put_target = Law(
+    "put_target",
+    scope=lambda program, path: program.kind(path) is Put,
+    holds=lambda program, path: program.kind(program.children(path)[0]) is Ref,
+    message="Put slot 0 must be a Ref",
+)
 
 
 @pytest.fixture
@@ -127,11 +130,11 @@ def test_construct_compile_query(schema):
 
 def test_gate_and_validate(schema):
     valid = compile(Put(Ref("c"), Literal(1)), schema)
-    assert gate(valid, rule_put_target) == []
-    assert validate(valid, rule_put_target) is valid
+    assert gate(valid, put_target) == []
+    assert validate(valid, put_target) is valid
 
     invalid = compile(Put(Literal(0), Literal(1)), schema)
-    verdict = gate(invalid, rule_put_target)
-    assert len(verdict) == 1 and verdict[0].rule == "SLOT"
-    with pytest.raises(ValueError, match="SLOT"):
-        validate(invalid, rule_put_target)
+    verdict = gate(invalid, put_target)
+    assert len(verdict) == 1 and verdict[0].law == "put_target"
+    with pytest.raises(ValueError, match="put_target"):
+        validate(invalid, put_target)

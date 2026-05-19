@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu.engine import Attribute, CycleError, Schema, Symbol
+from nu.attribute import Attribute, CycleError, Schema, Symbol
 
 
 class Kind(Symbol):

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Literal
 
-    from nu.engine.symbol import Symbol
+    from nu.attribute.symbol import Symbol
 
 __all__ = ["Attribute", "CycleError", "Flavor", "RuleFn", "Schema"]
 
@@ -100,7 +100,7 @@ class Schema:
     registered here, tree-wide. ``finalize`` builds and topologically sorts
     the cross-attribute dependency graph; a cycle raises CycleError.
 
-    The engine never owns a Schema instance. A layer-1 language builds one,
+    The attribute layer never owns a Schema instance. A layer-1 language builds one,
     registers its attributes, finalizes it once, and never mutates it again.
     """
 

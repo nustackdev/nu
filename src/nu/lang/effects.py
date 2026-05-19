@@ -1,0 +1,67 @@
+"""Effects concern: what a Nu program touches in the Context.
+
+An effect is one interaction with the Context (RESOLVE, READ or WRITE) bound to
+a named location. The declared ``own_effects`` annotates a sort's effect slots;
+the synthesized ``composition_effects`` folds a subtree's whole effect set.
+Purity is a derived fact, not an attribute: ``composition_effects`` is empty.
+"""
+
+from __future__ import annotations
+
+from enum import StrEnum
+from typing import TYPE_CHECKING
+
+from nu.attribute import Attribute
+from nu.lang.attrs import Attr
+from nu.lang.sort import Sort
+
+
+if TYPE_CHECKING:
+    from nu.attribute import Program
+    from nu.attribute.program import Path
+
+__all__ = ["ATTRIBUTES", "Effect", "EffectSet"]
+
+
+class Effect(StrEnum):
+    """An interaction with the Context, carried in a tracked-effect tuple."""
+
+    RESOLVE = "resolve"
+    READ = "read"
+    WRITE = "write"
+
+
+type EffectSet = frozenset[tuple[str, Effect]]
+
+
+def _own_effects(program: Program, path: Path) -> EffectSet:
+    """The (ref, effect) tuples a node contributes through its own Ref children.
+
+    A slot the sort annotates contributes that effect; every other slot holding
+    a Ref binds in read role. A slot annotated but unfilled contributes nothing.
+    """
+    annotated: dict[int, Effect] = program.attr(path, Attr.OWN_EFFECTS)
+    kids = program.children(path)
+    tuples: set[tuple[str, Effect]] = set()
+    for slot, child in enumerate(kids):
+        if program.attr(child, Attr.SORT) != Sort.REF:
+            continue
+        name: str = program.payload(child)["name"]
+        tuples.add((name, annotated.get(slot, Effect.READ)))
+    return frozenset(tuples)
+
+
+def _union_effects(own: EffectSet, kids: list[EffectSet]) -> EffectSet:
+    """Fold a subtree's effects: a node's own, plus every child's."""
+    return own.union(*kids)
+
+
+ATTRIBUTES: tuple[Attribute, ...] = (
+    Attribute.declared({}, name=Attr.OWN_EFFECTS),
+    Attribute.synthesized(
+        Attr.COMPOSITION_EFFECTS,
+        base=_own_effects,
+        combine=_union_effects,
+        reads=(Attr.OWN_EFFECTS, Attr.SORT),
+    ),
+)

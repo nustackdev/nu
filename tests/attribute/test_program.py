@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu.engine import Attribute, Program, Rows, Schema, Symbol, compile
+from nu.attribute import Attribute, Program, Rows, Schema, Symbol, compile
 
 
 class Leaf(Symbol):

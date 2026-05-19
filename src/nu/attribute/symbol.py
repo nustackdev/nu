@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.engine.attribute import Attribute
+from nu.attribute.attribute import Attribute
 
 
 if TYPE_CHECKING:
