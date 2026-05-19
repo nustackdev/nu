@@ -13,8 +13,10 @@ const factory: SliceFactory = (path, ctx) => ({
 });
 
 function IntView({ path }: { path: string }) {
-	const value = useStore((s) => (s.refs[path]?.value as number) ?? 0);
-	return <span className="font-mono text-2xl">{value}</span>;
+	// A null value (sentinel) renders as a dash, not a thrown render.
+	const value = useStore((s) => s.refs[path]?.value);
+	const text = typeof value === "number" ? String(value) : value == null ? "-" : String(value);
+	return <span className="font-mono text-2xl">{text}</span>;
 }
 
 export const IntRef: RefEntry = { factory, component: IntView };

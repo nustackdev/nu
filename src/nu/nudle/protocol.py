@@ -14,6 +14,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from nu.terms.sentinels import is_sentinel
+
 
 __all__ = [
     "OP_ERROR",
@@ -68,8 +70,22 @@ class Frame:
         return f"Frame(op={self.op!r}, ref={self.ref!r}, payload={self.payload!r}, id={self.id!r})"
 
 
+def _json_default(obj: object) -> Any:
+    """Coerce values json.dumps can't handle on its own.
+
+    Nu sentinels (EMPTY / INVALID) are first-class values: a Ref resolves to
+    one when its address is absent or an operation didn't apply. The wire
+    carries Nu values, so the display layer renders them as JSON null rather
+    than crashing the connection. The browser decides what null looks like
+    per Ref type (a blank cell, a gap in a chart).
+    """
+    if is_sentinel(obj):
+        return None
+    raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
+
+
 def encode(frame: Frame) -> str:
-    return json.dumps(frame.to_dict())
+    return json.dumps(frame.to_dict(), default=_json_default)
 
 
 def decode(raw: str) -> Frame:

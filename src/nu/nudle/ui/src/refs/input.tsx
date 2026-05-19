@@ -13,7 +13,9 @@ const factory: SliceFactory = (path, ctx) => ({
 	value: "",
 	write: (v) =>
 		ctx.set((refs) => {
-			refs[path].value = v as string;
+			// Coerce: a null write (sentinel) must not make the input
+			// uncontrolled. Always land a string.
+			refs[path].value = v == null ? "" : String(v);
 		}),
 	get: () => {
 		// Read the current value via a one-shot store inspection. Avoids

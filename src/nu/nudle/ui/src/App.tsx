@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Badge } from "@/components/ui/badge";
 import { decode, encode, type Frame } from "./protocol";
 import { renderers } from "./refs";
@@ -52,7 +53,11 @@ function App() {
 									</div>
 								);
 							}
-							return <Comp key={f.path} path={f.path} />;
+							return (
+								<ErrorBoundary key={f.path} label={`${f.path} (${f.type})`}>
+									<Comp path={f.path} />
+								</ErrorBoundary>
+							);
 						})}
 					</div>
 				) : (
