@@ -9,8 +9,8 @@ that read them come later.
 
 from __future__ import annotations
 
-from nu.attribute import Attribute
-from nu.lang.attrs import Attr
+from nu2.attribute import Attribute
+from nu2.lang.attrs import Attr
 
 
 __all__ = ["ATTRIBUTES"]

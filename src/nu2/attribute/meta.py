@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, NamedTuple
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu.attribute.program import Path, Program
+    from nu2.attribute.program import Path, Program
 
 __all__ = ["Law", "Predicate", "Severity", "Violation", "gate", "predicate", "validate"]
 

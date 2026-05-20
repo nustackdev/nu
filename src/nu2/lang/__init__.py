@@ -1,6 +1,6 @@
 """Nu the language, layer 1 on the attribute layer.
 
-``lang`` is Nu defined on ``nu.attribute``, organized by concern: one module
+``lang`` is Nu defined on ``nu2.attribute``, organized by concern: one module
 per attribute group, each carrying that concern's value types, rule functions
 and ``Attribute`` objects.
 
@@ -15,22 +15,22 @@ and ``Attribute`` objects.
 
 A description is built from the sort taxonomy, ``compile``d against the schema,
 then queried, ``gate``d or ``validate``d. This package is the attribute-layer
-successor to ``nu.terms``.
+successor to ``nu2.terms``.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.attribute import Law, Predicate, Severity, Violation, gate, predicate, validate
-from nu.attribute import compile as _compile
-from nu.lang.attrs import Attr
-from nu.lang.cardinality import Cardinality
-from nu.lang.effects import Effect, EffectSet
-from nu.lang.execution import ExecOrder
-from nu.lang.laws import LAWS
-from nu.lang.schema import build_schema
-from nu.lang.sort import (
+from nu2.attribute import Law, Predicate, Severity, Violation, gate, predicate, validate
+from nu2.attribute import compile as _compile
+from nu2.lang.attrs import Attr
+from nu2.lang.cardinality import Cardinality
+from nu2.lang.effects import Effect, EffectSet
+from nu2.lang.execution import ExecOrder
+from nu2.lang.laws import LAWS
+from nu2.lang.schema import build_schema
+from nu2.lang.sort import (
     MATRIX,
     Bracket,
     Command,
@@ -52,8 +52,8 @@ from nu.lang.sort import (
 
 
 if TYPE_CHECKING:
-    from nu.attribute import Program, Schema
-    from nu.attribute.symbol import Symbol
+    from nu2.attribute import Program, Schema
+    from nu2.attribute.symbol import Symbol
 
 __all__ = [
     "LAWS",

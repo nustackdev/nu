@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.attribute import Schema
-from nu.lang import algebra, cardinality, effects, execution, sort
+from nu2.attribute import Schema
+from nu2.lang import algebra, cardinality, effects, execution, sort
 
 
 if TYPE_CHECKING:

@@ -8,10 +8,10 @@ The attribute layer knows no sorts, no effects, no execution and holds no
 global state. A layer-1 language (Nu) defines kinds and attributes on top of it.
 """
 
-from nu.attribute.attribute import Attribute, CycleError, Schema
-from nu.attribute.meta import Law, Predicate, Severity, Violation, gate, predicate, validate
-from nu.attribute.program import Attr, Program, Rows, compile
-from nu.attribute.symbol import Symbol, SymbolMeta
+from nu2.attribute.attribute import Attribute, CycleError, Schema
+from nu2.attribute.meta import Law, Predicate, Severity, Violation, gate, predicate, validate
+from nu2.attribute.program import Attr, Program, Rows, compile
+from nu2.attribute.symbol import Symbol, SymbolMeta
 
 
 __all__ = [

@@ -14,8 +14,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
-    from nu.attribute.attribute import Attribute, Schema
-    from nu.attribute.symbol import Symbol
+    from nu2.attribute.attribute import Attribute, Schema
+    from nu2.attribute.symbol import Symbol
 
 __all__ = ["Attr", "Path", "Program", "Row", "Rows", "compile"]
 

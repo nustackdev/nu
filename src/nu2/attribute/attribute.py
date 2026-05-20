@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Literal
 
-    from nu.attribute.symbol import Symbol
+    from nu2.attribute.symbol import Symbol
 
 __all__ = ["Attribute", "CycleError", "Flavor", "RuleFn", "Schema"]
 
