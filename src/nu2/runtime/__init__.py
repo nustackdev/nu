@@ -14,17 +14,37 @@ inspect structure through the Runtime's toolkit.
 
 from nu2.runtime.budget import Budget
 from nu2.runtime.driver import Runtime
-from nu2.runtime.entry import aeval, eval, eval_in_loop
+from nu2.runtime.entry import (
+    acollect,
+    aeval,
+    afirst,
+    alast,
+    arun,
+    collect,
+    eval,
+    eval_in_loop,
+    first,
+    run,
+    run_in_loop,
+)
 from nu2.runtime.loop import into_loop, safely_aclosing, safely_closing
 
 
 __all__ = [
     "Budget",
     "Runtime",
+    "acollect",
     "aeval",
+    "afirst",
+    "alast",
+    "arun",
+    "collect",
     "eval",
     "eval_in_loop",
+    "first",
     "into_loop",
+    "run",
+    "run_in_loop",
     "safely_aclosing",
     "safely_closing",
 ]

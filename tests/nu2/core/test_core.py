@@ -1,30 +1,40 @@
 """Functional tests for the Nu core symbols built on nu2.lang.
 
 Compile real core programs and check the attributes the language assigns:
-effects, cardinality, sync/async, and the law set.
+effects, cardinality, sync/async, the law set. Execution coverage is the
+pure-leaf slice for now (Literal, arithmetic, logic); the rest lands as the
+fabric pieces (Ref, streams) come online.
 """
 
 from __future__ import annotations
 
+import asyncio
+
 from nu2.core import (
     Add,
+    And,
     Delete,
+    Div,
     Emit,
     Eq,
     If,
     Literal,
     Lt,
     Mul,
+    Neg,
+    Not,
+    Or,
     Par,
     Range,
     Seq,
     Set,
+    Sub,
     Sum,
     Watch,
     While,
 )
-from nu2.core.runtime import Context, run
-from nu2.lang import LAWS, Attr, Cardinality, Effect, Ref, compile, gate, validate
+from nu2.lang import EMPTY, INVALID, LAWS, Attr, Cardinality, Effect, Ref, compile, gate, validate
+from nu2.runtime import aeval, arun, eval, run
 
 
 # --- effects -------------------------------------------------------------
@@ -99,56 +109,92 @@ def test_a_control_holds_commands_under_a_condition():
     assert validate(program, *LAWS) is program
 
 
-# --- execution -----------------------------------------------------------
+# --- execution: pure scalars --------------------------------------------
+#
+# This is the pure leaf-of-leaves slice: Literal + arithmetic + logic.
+# Atoms that need a fabric (Ref, streams, reductions, commands) land later.
 
 
-def test_a_set_writes_an_evaluated_query():
-    ctx = run(compile(Set(Ref("x"), Add(Literal(2), Literal(3)))))
-    assert ctx.store == {"x": 5}
+def _eval(symbol: object) -> object:
+    value, _ = eval(compile(symbol))
+    return value
 
 
-def test_a_reduction_runs_over_a_stream_source():
-    ctx = run(compile(Set(Ref("n"), Sum(Range(Literal(0), Literal(5))))))
-    assert ctx.store == {"n": 10}
+async def _aeval(symbol: object) -> object:
+    value, _ = await aeval(compile(symbol))
+    return value
 
 
-def test_a_ref_reads_what_an_earlier_command_wrote():
-    program = compile(
-        Seq(
-            Set(Ref("a"), Literal(10)),
-            Set(Ref("b"), Mul(Ref("a"), Literal(3))),
-        )
-    )
-    assert run(program).store == {"a": 10, "b": 30}
+def test_literal_yields_its_payload():
+    assert _eval(Literal(42)) == 42
 
 
-def test_an_if_runs_its_body_only_when_the_condition_holds():
-    taken = run(compile(If(Lt(Literal(1), Literal(2)), Set(Ref("hit"), Literal(1)))))
-    skipped = run(compile(If(Lt(Literal(2), Literal(1)), Set(Ref("hit"), Literal(1)))))
-    assert taken.store == {"hit": 1}
-    assert skipped.store == {}
+def test_arithmetic_folds_operands():
+    assert _eval(Add(Literal(1), Literal(2), Literal(3))) == 6
+    assert _eval(Mul(Literal(2), Literal(3), Literal(4))) == 24
+    assert _eval(Sub(Literal(10), Literal(3))) == 7
+    assert _eval(Div(Literal(8), Literal(2))) == 4
+    assert _eval(Neg(Literal(5))) == -5
 
 
-def test_a_while_loops_until_the_condition_fails():
-    program = compile(
-        While(
-            Lt(Ref("i"), Literal(4)),
-            Set(Ref("i"), Add(Ref("i"), Literal(1))),
-        )
-    )
-    assert run(program, Context(i=0)).store == {"i": 4}
+def test_nested_arithmetic():
+    program = Add(Mul(Literal(2), Literal(3)), Neg(Literal(1)))
+    assert _eval(program) == 5
 
 
-def test_a_delete_drops_a_ref():
-    program = compile(Seq(Set(Ref("gone"), Literal(1)), Delete(Ref("gone"))))
-    assert run(program).store == {}
+def test_logic_comparisons():
+    assert _eval(Eq(Literal(2), Literal(2))) is True
+    assert _eval(Lt(Literal(1), Literal(2))) is True
+    assert _eval(Lt(Literal(2), Literal(1))) is False
 
 
-def test_an_emit_appends_to_a_stream_ref():
-    program = compile(Seq(Emit(Ref("log"), Literal("a")), Emit(Ref("log"), Literal("b"))))
-    assert run(program, Context(log=[])).store == {"log": ["a", "b"]}
+def test_boolean_ops():
+    assert _eval(And(Literal(True), Literal(True))) is True
+    assert _eval(And(Literal(True), Literal(False))) is False
+    assert _eval(Or(Literal(False), Literal(True))) is True
+    assert _eval(Not(Literal(False))) is True
 
 
-def test_run_starts_from_a_supplied_context():
-    ctx = run(compile(Set(Ref("y"), Add(Ref("y"), Literal(1)))), Context(y=41))
-    assert ctx.store == {"y": 42}
+def test_aeval_mirrors_eval():
+    assert asyncio.run(_aeval(Add(Literal(2), Literal(3)))) == 5
+    assert asyncio.run(_aeval(And(Literal(True), Literal(True)))) is True
+
+
+def test_a_sentinel_operand_collapses_a_query_to_invalid():
+    # Literal yields its payload value as-is, so a Literal carrying EMPTY
+    # serves as a sentinel-producing leaf. Add's sentinel-aware fold
+    # collapses on it.
+    assert _eval(Add(Literal(EMPTY), Literal(1))) is INVALID
+    assert _eval(Mul(Literal(2), Literal(INVALID))) is INVALID
+    assert asyncio.run(_aeval(And(Literal(True), Literal(EMPTY)))) is INVALID
+
+
+def test_run_compiles_validates_and_evaluates_a_description():
+    # One-call: description -> Program -> validated -> driven.
+    value, _ = run(Add(Literal(2), Mul(Literal(3), Literal(4))))
+    assert value == 14
+    value, _ = asyncio.run(arun(And(Literal(True), Literal(True))))
+    assert value is True
+
+
+def test_run_raises_on_an_invalid_description():
+    import pytest
+
+    # A Command in a Query slot fails the composition law.
+    with pytest.raises(ValueError, match="invalid program"):
+        run(Add(Set(Ref("x"), Literal(1)), Literal(2)))
+
+
+def test_eval_refuses_async_only_programs():
+    import pytest
+
+    program = compile(Emit(Ref("out"), Watch()))
+    with pytest.raises(RuntimeError, match="async-only"):
+        eval(program)
+
+
+# --- placeholders: command / flow / span execution requires a fabric -----
+#
+# Set, Seq, Par, If, While, Delete, Emit, Scope, Retry: pending. Once Refs
+# and Commands have eval / aeval methods, the old execution tests come back.
+_ = (Set, Delete, Emit, Seq, Par, If, While, Sum, Range)
