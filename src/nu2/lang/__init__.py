@@ -30,6 +30,16 @@ from nu2.lang.effects import Effect, EffectSet
 from nu2.lang.execution import ExecOrder
 from nu2.lang.laws import LAWS
 from nu2.lang.schema import build_schema
+from nu2.lang.sentinels import (
+    EMPTY,
+    INVALID,
+    Empty,
+    Invalid,
+    Sentinel,
+    is_empty,
+    is_invalid,
+    is_sentinel,
+)
 from nu2.lang.sort import (
     MATRIX,
     Bracket,
@@ -56,6 +66,8 @@ if TYPE_CHECKING:
     from nu2.attribute.symbol import Symbol
 
 __all__ = [
+    "EMPTY",
+    "INVALID",
     "LAWS",
     "MATRIX",
     "SCHEMA",
@@ -66,9 +78,11 @@ __all__ = [
     "Control",
     "Effect",
     "EffectSet",
+    "Empty",
     "ExecOrder",
     "Flow",
     "Interaction",
+    "Invalid",
     "Law",
     "Policy",
     "Predicate",
@@ -76,6 +90,7 @@ __all__ = [
     "Reduction",
     "Ref",
     "ScalarQuery",
+    "Sentinel",
     "Severity",
     "Sort",
     "Span",
@@ -84,6 +99,9 @@ __all__ = [
     "Violation",
     "compile",
     "gate",
+    "is_empty",
+    "is_invalid",
+    "is_sentinel",
     "matrix_sort",
     "predicate",
     "subsort",
