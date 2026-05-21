@@ -13,14 +13,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.attribute import Predicate, predicate
+from nu2.engine.attribution import Predicate, predicate
 from nu2.lang.attrs import Attr
 from nu2.lang.sort import MATRIX, Sort, matrix_sort, subsort
 
 
 if TYPE_CHECKING:
-    from nu2.attribute import Program
-    from nu2.attribute.program import Path
+    from nu2.engine.attribution import Program
+    from nu2.engine.attribution.program import Path
     from nu2.lang.cardinality import Cardinality
     from nu2.lang.effects import Effect
 

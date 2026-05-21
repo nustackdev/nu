@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.attribute import Schema
+from nu2.engine.structure import Schema
 from nu2.lang import algebra, cardinality, effects, execution, sort
 
 

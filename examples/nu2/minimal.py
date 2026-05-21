@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from nu2.core import Add, And, Div, Eq, Literal, Lt, Mul, Neg, Not, Or, Set, Sub
 from nu2.lang import EMPTY, INVALID, Ref
-from nu2.runtime import run, run_in_loop
+from nu2.lang.entry import run, run_in_loop
 
 
 # 1. The trivial program: a Literal yields its value.

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu2.attribute import (
+from nu2.engine import (
     Attribute,
     Law,
     Predicate,

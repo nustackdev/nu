@@ -6,7 +6,7 @@ so the stream order does not change the result; Max and Min are idempotent too.
 
 from __future__ import annotations
 
-from nu2.attribute import Attribute
+from nu2.engine.structure import Attribute
 from nu2.lang import Reduction
 
 

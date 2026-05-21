@@ -13,16 +13,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.context import Context
+from nu2.engine.execute.budget import Budget
+from nu2.engine.execute.loop import into_loop, safely_aclosing, safely_closing
 from nu2.lang.attrs import Attr
-from nu2.runtime.budget import Budget
-from nu2.runtime.driver import Runtime
-from nu2.runtime.loop import into_loop, safely_aclosing, safely_closing
+from nu2.lang.context import Context
+from nu2.lang.runtime import NuRuntime
 
 
 if TYPE_CHECKING:
-    from nu2.attribute import Program
-    from nu2.attribute.symbol import Symbol
+    from nu2.engine.attribution import Program
+    from nu2.engine.structure import Symbol
 
 __all__ = [
     "acollect",
@@ -75,7 +75,7 @@ def eval(
     _refuse_async_only(program, "eval", "aeval")
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=False) as budget:
-        rt = Runtime(program, ctx, budget=budget)
+        rt = NuRuntime(program, ctx, budget=budget)
         return rt.eval(), ctx
 
 
@@ -88,7 +88,7 @@ async def aeval(
     """Drive a Program asynchronously; return ``(value, ctx)``."""
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=True) as budget:
-        rt = Runtime(program, ctx, budget=budget)
+        rt = NuRuntime(program, ctx, budget=budget)
         return await rt.aeval(), ctx
 
 
@@ -127,7 +127,7 @@ def first(
     _refuse_async_only(program, "first", "afirst")
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=False) as budget:
-        rt = Runtime(program, ctx, budget=budget)
+        rt = NuRuntime(program, ctx, budget=budget)
         with safely_closing(rt.iter(program.root)) as gen:
             for v in gen:
                 return v, ctx
@@ -145,7 +145,7 @@ def collect(
     _refuse_async_only(program, "collect", "acollect")
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=False) as budget:
-        rt = Runtime(program, ctx, budget=budget)
+        rt = NuRuntime(program, ctx, budget=budget)
         return rt.collect(program.root), ctx
 
 
@@ -158,7 +158,7 @@ async def afirst(
     """Async sibling of ``first``."""
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=True) as budget:
-        rt = Runtime(program, ctx, budget=budget)
+        rt = NuRuntime(program, ctx, budget=budget)
         async with safely_aclosing(await rt.aiter(program.root)) as agen:
             async for v in agen:
                 return v, ctx
@@ -180,7 +180,7 @@ async def alast(
     found = False
     last: object = None
     with Budget(max_parallel, async_mode=True) as budget:
-        rt = Runtime(program, ctx, budget=budget)
+        rt = NuRuntime(program, ctx, budget=budget)
         async with safely_aclosing(await rt.aiter(program.root)) as agen:
             async for v in agen:
                 last = v
@@ -200,7 +200,7 @@ async def acollect(
     """Async sibling of ``collect``."""
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=True) as budget:
-        rt = Runtime(program, ctx, budget=budget)
+        rt = NuRuntime(program, ctx, budget=budget)
         return await rt.acollect(program.root), ctx
 
 

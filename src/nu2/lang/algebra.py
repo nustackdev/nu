@@ -9,7 +9,7 @@ that read them come later.
 
 from __future__ import annotations
 
-from nu2.attribute import Attribute
+from nu2.engine.structure import Attribute
 from nu2.lang.attrs import Attr
 
 

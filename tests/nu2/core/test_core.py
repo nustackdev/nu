@@ -34,7 +34,7 @@ from nu2.core import (
     While,
 )
 from nu2.lang import EMPTY, INVALID, LAWS, Attr, Cardinality, Effect, Ref, compile, gate, validate
-from nu2.runtime import aeval, arun, eval, run
+from nu2.lang.entry import aeval, arun, eval, run
 
 
 # --- effects -------------------------------------------------------------

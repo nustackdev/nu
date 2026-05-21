@@ -1,8 +1,8 @@
-"""Nu the language, layer 1 on the attribute layer.
+"""Nu the language, layer 1 on the engine.
 
-``lang`` is Nu defined on ``nu2.attribute``, organized by concern: one module
-per attribute group, each carrying that concern's value types, rule functions
-and ``Attribute`` objects.
+``lang`` is Nu defined on ``nu2.engine``, organized by concern: one module per
+attribute group, each carrying that concern's value types, rule functions and
+``Attribute`` objects.
 
 - ``sort`` - the structural taxonomy and composition matrix
 - ``effects`` - what a program touches in the Context
@@ -22,8 +22,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.attribute import Law, Predicate, Severity, Violation, gate, predicate, validate
-from nu2.attribute import compile as _compile
+from nu2.engine.attribution import (
+    Law,
+    Predicate,
+    Severity,
+    Violation,
+    gate,
+    predicate,
+    validate,
+)
+from nu2.engine.attribution import compile as _compile
 from nu2.lang.attrs import Attr
 from nu2.lang.cardinality import Cardinality
 from nu2.lang.effects import Effect, EffectSet
@@ -62,8 +70,8 @@ from nu2.lang.sort import (
 
 
 if TYPE_CHECKING:
-    from nu2.attribute import Program, Schema
-    from nu2.attribute.symbol import Symbol
+    from nu2.engine.attribution import Program
+    from nu2.engine.structure import Schema, Symbol
 
 __all__ = [
     "EMPTY",

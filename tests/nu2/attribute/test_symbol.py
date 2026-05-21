@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from nu2.attribute import Attribute, Symbol
+from nu2.engine import Attribute, Symbol
 
 
 class Leaf(Symbol):

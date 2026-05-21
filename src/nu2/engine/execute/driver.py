@@ -1,21 +1,18 @@
-"""Runtime - the per-execution driver.
+"""Runtime - the generic per-execution driver.
 
 A thin object that walks a compiled Program, dispatches to each Symbol's
 ``eval`` / ``aeval`` method, and exposes a toolkit of helpers that atoms
-use to recurse, inspect structure, and compose.
+use to recurse, inspect structure, and compose. Domain-free: knows nothing
+of sentinels (the language layer's ``NuRuntime`` subclass adds those).
 
 Three groups of helpers:
 
 - **dispatch** - ``eval`` / ``aeval`` on a path.
 - **sequential** - ``eval_each`` / ``eval_kids`` (and async siblings) for
   in-order evaluation.
-- **sentinel-propagating** - ``eval_or_short`` / ``eval_kids_or_short`` (and
-  async siblings) implement the Query propagation rule: any EMPTY/INVALID
-  operand collapses the result to INVALID.
 - **parallel** - ``eval_parallel`` / ``aeval_parallel`` / ``aeval_race``
   for fan-out, plus ``merge`` / ``amerge`` / ``amerge_hybrid`` for stream
-  interleaving (the hybrid covers the mixed sync/async per-child case),
-  and ``*_parallel_or_short`` variants for sentinel-propagating fan-out.
+  interleaving (the hybrid covers the mixed sync/async per-child case).
   All gated by the Runtime's Budget; ``max_parallel == 1`` falls through
   to sequential.
 
@@ -33,10 +30,10 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable, Iterable
     from concurrent.futures import Future
 
-    from nu2.attribute import Program
-    from nu2.attribute.program import Path
-    from nu2.context import Context
-    from nu2.runtime.budget import Budget
+    from nu2.engine.attribution import Program
+    from nu2.engine.attribution.program import Path
+    from nu2.engine.execute.budget import Budget
+    from nu2.lang.context import Context
 
 __all__ = ["Runtime"]
 
@@ -56,7 +53,7 @@ class Runtime:
     __slots__ = ("budget", "ctx", "program")
 
     def __init__(self, program: Program, ctx: Context, *, budget: Budget | None = None) -> None:
-        from nu2.runtime.budget import Budget as _Budget
+        from nu2.engine.execute.budget import Budget as _Budget
 
         self.program = program
         self.ctx = ctx
@@ -90,49 +87,6 @@ class Runtime:
         """Async-evaluate every child of ``path`` in order; return the values."""
         return await self.aeval_each(self.children(path))
 
-    # --- sentinel-propagating evaluation -----------------------------------
-
-    def eval_or_short(self, paths: Iterable[Path]) -> list | object:
-        """Evaluate every path, short-circuiting on a sentinel.
-
-        Implements the Query propagation rule: if any operand is EMPTY or
-        INVALID, the result is INVALID. Otherwise returns the values list.
-
-        Use in a ScalarQuery's ``eval``::
-
-            values = rt.eval_or_short(rt.children(path))
-            return values if is_sentinel(values) else sum(values)
-        """
-        from nu2.lang.sentinels import INVALID, is_sentinel
-
-        values: list = []
-        for p in paths:
-            v = self.eval(p)
-            if is_sentinel(v):
-                return INVALID
-            values.append(v)
-        return values
-
-    async def aeval_or_short(self, paths: Iterable[Path]) -> list | object:
-        """Async variant of ``eval_or_short``."""
-        from nu2.lang.sentinels import INVALID, is_sentinel
-
-        values: list = []
-        for p in paths:
-            v = await self.aeval(p)
-            if is_sentinel(v):
-                return INVALID
-            values.append(v)
-        return values
-
-    def eval_kids_or_short(self, path: Path) -> list | object:
-        """Sugar: ``eval_or_short(rt.children(path))``."""
-        return self.eval_or_short(self.children(path))
-
-    async def aeval_kids_or_short(self, path: Path) -> list | object:
-        """Sugar: ``aeval_or_short(rt.children(path))``."""
-        return await self.aeval_or_short(self.children(path))
-
     # --- parallel: values ---------------------------------------------------
 
     def eval_parallel(self, paths: Iterable[Path]) -> list:
@@ -160,24 +114,6 @@ class Runtime:
                 return await self.aeval(p)
 
         return await asyncio.gather(*(one(p) for p in paths))
-
-    def eval_parallel_or_short(self, paths: Iterable[Path]) -> list | object:
-        """Parallel ``eval`` with sentinel propagation; returns INVALID on any.
-
-        Branches still all run (they have already been dispatched to the pool);
-        the propagation rule applies to the aggregated result.
-        """
-        from nu2.lang.sentinels import INVALID, is_sentinel
-
-        values = self.eval_parallel(paths)
-        return INVALID if any(is_sentinel(v) for v in values) else values
-
-    async def aeval_parallel_or_short(self, paths: Iterable[Path]) -> list | object:
-        """Async parallel with sentinel propagation."""
-        from nu2.lang.sentinels import INVALID, is_sentinel
-
-        values = await self.aeval_parallel(paths)
-        return INVALID if any(is_sentinel(v) for v in values) else values
 
     async def aeval_race(self, paths: Iterable[Path]) -> object:
         """Return the first child's value to complete; cancel the rest."""
@@ -215,7 +151,7 @@ class Runtime:
         """
         import queue as _queue
 
-        from nu2.runtime.loop import safely_closing
+        from nu2.engine.execute.loop import safely_closing
 
         paths = list(paths)
         if self.budget.max_parallel == 1 or self.budget.thread_pool is None:
@@ -256,7 +192,7 @@ class Runtime:
         async iterable is wrapped with ``safely_aclosing`` so a caller's
         short-circuit doesn't leak finalizer Tasks on the loop.
         """
-        from nu2.runtime.loop import safely_aclosing
+        from nu2.engine.execute.loop import safely_aclosing
 
         paths = list(paths)
         if self.budget.max_parallel == 1:
@@ -310,8 +246,8 @@ class Runtime:
         ``safely_closing`` / ``safely_aclosing`` so a caller short-circuit
         finalizes every underlying generator.
         """
+        from nu2.engine.execute.loop import safely_aclosing, safely_closing
         from nu2.lang.attrs import Attr
-        from nu2.runtime.loop import safely_aclosing, safely_closing
 
         paths = list(paths)
 
@@ -404,14 +340,14 @@ class Runtime:
         Wraps the child iterable with ``safely_closing`` so an exception
         mid-iteration still finalizes the generator.
         """
-        from nu2.runtime.loop import safely_closing
+        from nu2.engine.execute.loop import safely_closing
 
         with safely_closing(self.iter(path)) as gen:
             return list(gen)
 
     async def acollect(self, path: Path) -> list:
         """Async-materialize a stream child to a list, with ``safely_aclosing``."""
-        from nu2.runtime.loop import safely_aclosing
+        from nu2.engine.execute.loop import safely_aclosing
 
         out: list = []
         async with safely_aclosing(await self.aiter(path)) as agen:
@@ -441,7 +377,7 @@ class Runtime:
         Use sparingly; the schema's ``on_loop`` should make this unnecessary
         in well-formed programs. Escape hatch for ad-hoc bridges.
         """
-        from nu2.runtime.loop import into_loop
+        from nu2.engine.execute.loop import into_loop
 
         return into_loop(coro)
 

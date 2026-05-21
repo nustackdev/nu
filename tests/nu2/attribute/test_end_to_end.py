@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu2.attribute import Attribute, Law, Schema, Symbol, compile, gate, validate
+from nu2.engine import Attribute, Law, Schema, Symbol, compile, gate, validate
 
 
 _SORT_PARENT = {"ScalarQuery": "Query", "Ref": "Query", "Literal": "Query", "ScalarCmd": "Command"}

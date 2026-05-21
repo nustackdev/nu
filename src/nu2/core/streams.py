@@ -7,7 +7,7 @@ contains one runs on an event loop.
 
 from __future__ import annotations
 
-from nu2.attribute import Attribute
+from nu2.engine.structure import Attribute
 from nu2.lang import StreamQuery
 
 

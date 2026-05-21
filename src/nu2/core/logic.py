@@ -10,14 +10,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.attribute import Attribute
+from nu2.engine.structure import Attribute
 from nu2.lang import ScalarQuery
 from nu2.lang.sentinels import is_sentinel
 
 
 if TYPE_CHECKING:
-    from nu2.attribute.program import Path
-    from nu2.runtime import Runtime
+    from nu2.engine.attribution.program import Path
+    from nu2.lang.runtime import NuRuntime as Runtime
 
 __all__ = ["And", "Eq", "Lt", "Not", "Or"]
 

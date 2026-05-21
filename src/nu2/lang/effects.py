@@ -11,14 +11,14 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from nu2.attribute import Attribute
+from nu2.engine.structure import Attribute
 from nu2.lang.attrs import Attr
 from nu2.lang.sort import Sort
 
 
 if TYPE_CHECKING:
-    from nu2.attribute import Program
-    from nu2.attribute.program import Path
+    from nu2.engine.attribution import Program
+    from nu2.engine.attribution.program import Path
 
 __all__ = ["ATTRIBUTES", "Effect", "EffectSet"]
 

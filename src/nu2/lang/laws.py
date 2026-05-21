@@ -8,7 +8,7 @@ and a ``holds`` predicate that must be true on each, both drawn from
 
 from __future__ import annotations
 
-from nu2.attribute import Law, Severity
+from nu2.engine.attribution import Law, Severity
 from nu2.lang.attrs import Attr
 from nu2.lang.cardinality import Cardinality
 from nu2.lang.effects import Effect
