@@ -11,8 +11,7 @@ Three groups of helpers:
 - **sequential** - ``eval_each`` / ``eval_kids`` (and async siblings) for
   in-order evaluation.
 - **parallel** - ``eval_parallel`` / ``aeval_parallel`` / ``aeval_race``
-  for fan-out, plus ``merge`` / ``amerge`` / ``amerge_hybrid`` for stream
-  interleaving (the hybrid covers the mixed sync/async per-child case).
+  for fan-out, plus ``merge`` / ``amerge`` for stream interleaving.
   All gated by the Runtime's Budget; ``max_parallel == 1`` falls through
   to sequential.
 
@@ -33,7 +32,6 @@ if TYPE_CHECKING:
     from nu2.engine.attribution import Program
     from nu2.engine.attribution.program import Path
     from nu2.engine.execute.budget import Budget
-    from nu2.lang.context import Context
 
 __all__ = ["Runtime"]
 
@@ -52,7 +50,7 @@ class Runtime:
 
     __slots__ = ("budget", "ctx", "program")
 
-    def __init__(self, program: Program, ctx: Context, *, budget: Budget | None = None) -> None:
+    def __init__(self, program: Program, ctx: object, *, budget: Budget | None = None) -> None:
         from nu2.engine.execute.budget import Budget as _Budget
 
         self.program = program
@@ -213,85 +211,6 @@ class Runtime:
                 await q.put(_DONE)
 
         tasks = [asyncio.create_task(drain(p)) for p in paths]
-        remaining = len(tasks)
-        try:
-            while remaining > 0:
-                v = await q.get()
-                if v is _DONE:
-                    remaining -= 1
-                else:
-                    yield v
-        finally:
-            for t in tasks:
-                if not t.done():
-                    t.cancel()
-            for t in tasks:
-                try:
-                    await t
-                except (asyncio.CancelledError, Exception):  # noqa: S110
-                    pass
-
-    async def amerge_hybrid(self, paths: Iterable[Path]) -> AsyncIterable:
-        """Async-merge stream children with mixed sync/async per-child state.
-
-        The canonical Par/Race case under a parallel async caller. Each child's
-        ``Attr.ON_LOOP`` decides its path: async-on-loop children drive their
-        ``aiter`` cooperatively, sync children run their ``iter`` on a worker
-        thread via ``loop.run_in_executor`` and forward into the same
-        ``asyncio.Queue``. Sync branches are semaphore-gated (each holds an
-        OS thread); async branches don't gate (the loop itself serializes).
-
-        Falls through to sequential per-child iteration when
-        ``max_parallel == 1``. Both sync and async branches are wrapped with
-        ``safely_closing`` / ``safely_aclosing`` so a caller short-circuit
-        finalizes every underlying generator.
-        """
-        from nu2.engine.execute.loop import safely_aclosing, safely_closing
-        from nu2.lang.attrs import Attr
-
-        paths = list(paths)
-
-        def _on_loop(p: Path) -> bool:
-            return bool(self.program.attr(p, Attr.ON_LOOP))
-
-        if self.budget.max_parallel == 1:
-            for p in paths:
-                if _on_loop(p):
-                    async with safely_aclosing(await self.aiter(p)) as agen:
-                        async for v in agen:
-                            yield v
-                else:
-                    with safely_closing(self.iter(p)) as gen:
-                        for v in gen:
-                            yield v
-            return
-
-        if self.budget.thread_pool is None or self.budget.async_sem is None:
-            msg = "amerge_hybrid requires a Budget allocated with async_mode and max_parallel > 1"
-            raise RuntimeError(msg)
-        loop = asyncio.get_running_loop()
-        q: asyncio.Queue = asyncio.Queue()
-        sem = self.budget.async_sem
-        pool = self.budget.thread_pool
-
-        def _drain_sync(p: Path, loop_: asyncio.AbstractEventLoop) -> None:
-            with safely_closing(self.iter(p)) as gen:
-                for v in gen:
-                    loop_.call_soon_threadsafe(q.put_nowait, v)
-
-        async def run_child(p: Path) -> None:
-            try:
-                if _on_loop(p):
-                    async with safely_aclosing(await self.aiter(p)) as agen:
-                        async for v in agen:
-                            await q.put(v)
-                else:
-                    async with sem:
-                        await loop.run_in_executor(pool, _drain_sync, p, loop)
-            finally:
-                await q.put(_DONE)
-
-        tasks = [asyncio.create_task(run_child(p)) for p in paths]
         remaining = len(tasks)
         try:
             while remaining > 0:
