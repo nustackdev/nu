@@ -7,7 +7,7 @@ under three engines:
 - ``nu1`` - the v1 ``nu`` package, driven via ``runtime.first``
 - ``nu2`` - the v2 ``nu2`` package, driven via ``nu2.lang.entry.run``
 
-For Nu v2 we also break the cost down into ``attribute + validate`` (one-time
+For Nu v2 we also break the cost down into ``compile + validate`` (one-time
 setup) and ``eval`` (steady-state) so the optimization surface is visible.
 
 Run: ``uv run python benchmarks/nu2/arithmetic.py``.
@@ -22,7 +22,7 @@ from dataclasses import dataclass
 import nu as nu1
 from nu import runtime as nu1_runtime
 from nu2.core import Add, Literal, Mul, Neg, Sub
-from nu2.lang import LAWS, attribute, validate
+from nu2.lang import LAWS, compile, validate
 from nu2.lang.entry import eval as nu2_eval
 from nu2.lang.entry import run as nu2_run
 
@@ -128,15 +128,16 @@ def main() -> None:
         n2_total = _bench("nu2.run", lambda t=n2_tree: nu2_run(t), iters)
 
         # Split nu2 into setup vs eval.
-        attributed = validate(attribute(n2_tree), *LAWS)
-        n2_eval_t = _bench("nu2.eval", lambda p=attributed: nu2_eval(p), iters)
+        program = compile(n2_tree)
+        validate(program, *LAWS)
+        n2_eval_t = _bench("nu2.eval", lambda p=program: nu2_eval(p), iters)
         n2_setup_t = max(0.0, n2_total - n2_eval_t)
 
         rows = (
             ("py", py_t),
             ("nu1.first", n1_t),
             ("nu2.run", n2_total),
-            ("  attr+valid", n2_setup_t),
+            ("  compile+val", n2_setup_t),
             ("  eval", n2_eval_t),
         )
         for i, (engine, t) in enumerate(rows):
