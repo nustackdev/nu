@@ -79,7 +79,7 @@ class NudleSession:
     # ---- outbound -----------------------------------------------------------
 
     async def send(self, frame: Frame) -> None:
-        await self._ws.send_text(encode(frame))
+        await self._ws.send_bytes(encode(frame))
 
     async def mount(
         self,
@@ -117,7 +117,7 @@ class NudleSession:
 
         try:
             while not self._stopped:
-                raw = await self._ws.receive_text()
+                raw = await self._ws.receive_bytes()
                 frame = decode(raw)
                 self._dispatch(frame)
         except WebSocketDisconnect:
