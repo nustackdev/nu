@@ -1,4 +1,4 @@
-"""Nu's laws: the validity rules a compiled Nu program must satisfy.
+"""Nu's laws: the validity rules an attributed Nu program must satisfy.
 
 Each law is a declarative ``Law``: a ``scope`` selecting the nodes it judges
 and a ``holds`` predicate that must be true on each, both drawn from

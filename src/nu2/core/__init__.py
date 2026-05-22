@@ -1,4 +1,4 @@
-"""Nu core: the native standard symbols.
+"""Nu core: the native standard terms.
 
 Concrete atoms layered on ``nu2.lang``'s sort taxonomy - the kinds a real Nu
 program is built from. Each module is one family:

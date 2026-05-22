@@ -10,21 +10,21 @@ from nu2.engine import (
     Predicate,
     Schema,
     Severity,
-    Symbol,
+    Term,
     Violation,
-    compile,
+    attribute,
     gate,
     validate,
 )
 
 
-class Node(Symbol):
+class Node(Term):
     sort = Attribute.declared("Node")
 
 
 def make_program(*children):
     schema = Schema().finalize()
-    return compile(Node(*children), schema)
+    return attribute(Node(*children), schema)
 
 
 def _is_leaf(program, path):

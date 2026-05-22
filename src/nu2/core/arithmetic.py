@@ -19,7 +19,7 @@ from nu2.lang.sentinels import is_sentinel
 
 
 if TYPE_CHECKING:
-    from nu2.engine.attribution.program import Path
+    from nu2.engine.attribution.attributed_term import Path
     from nu2.lang.runtime import NuRuntime as Runtime
 
 __all__ = ["Add", "Div", "Literal", "Mul", "Neg", "Sub"]

@@ -1,6 +1,6 @@
-"""The Symbol primitive and its metaclass.
+"""The Term primitive and its metaclass.
 
-A Symbol is layer 0's node: a kind (its class), an ordered tuple of child
+A Term is layer 0's node: a kind (its class), an ordered tuple of child
 Symbols, and an opaque payload. It is pure immutable data with no parent and
 no position. The metaclass collects Attribute declarations off the class body.
 """
@@ -15,18 +15,18 @@ from nu2.engine.structure.attribute import Attribute
 if TYPE_CHECKING:
     from typing import ClassVar, Self
 
-__all__ = ["Symbol", "SymbolMeta"]
+__all__ = ["Term", "TermMeta"]
 
 
-class SymbolMeta(type):
-    """Metaclass that collects Attribute declarations off a Symbol class body."""
+class TermMeta(type):
+    """Metaclass that collects Attribute declarations off a Term class body."""
 
     def __new__(
         mcs,
         name: str,
         bases: tuple[type, ...],
         namespace: dict[str, object],
-    ) -> SymbolMeta:
+    ) -> TermMeta:
         """Build the class and attach the attributes collected across its MRO."""
         cls = super().__new__(mcs, name, bases, namespace)
         attributes: dict[str, Attribute] = {}
@@ -40,7 +40,7 @@ class SymbolMeta(type):
         return cls
 
 
-class Symbol(metaclass=SymbolMeta):
+class Term(metaclass=TermMeta):
     """Pure immutable construction data: a kind, children, and a payload.
 
     A description is a DAG of Symbols. Constructing one builds a nested
@@ -49,12 +49,12 @@ class Symbol(metaclass=SymbolMeta):
 
     _attributes: ClassVar[dict[str, Attribute]]
 
-    def __init__(self, *children: Symbol) -> None:
-        self.children: tuple[Symbol, ...] = children
+    def __init__(self, *children: Term) -> None:
+        self.children: tuple[Term, ...] = children
         self.payload: dict[str, object] = {}
 
-    def with_children(self, *children: Symbol) -> Self:
-        """Return a variant of this Symbol with different children.
+    def with_children(self, *children: Term) -> Self:
+        """Return a variant of this Term with different children.
 
         The original is untouched; the variant shares the same payload.
         """

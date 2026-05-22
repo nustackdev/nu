@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from nu2.engine import Attribute, CycleError, Schema, Symbol
+from nu2.engine import Attribute, CycleError, Schema, Term
 
 
-class Kind(Symbol):
+class Kind(Term):
     sort = Attribute.declared("Kind")
 
 

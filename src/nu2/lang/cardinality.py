@@ -16,8 +16,8 @@ from nu2.lang.attrs import Attr
 
 
 if TYPE_CHECKING:
-    from nu2.engine.attribution import Program
-    from nu2.engine.attribution.program import Path
+    from nu2.engine.attribution import AttributedTerm
+    from nu2.engine.attribution.attributed_term import Path
 
 __all__ = ["ATTRIBUTES", "Cardinality"]
 
@@ -31,7 +31,7 @@ class Cardinality(StrEnum):
     TRANSPARENT = "transparent"
 
 
-def _own_cardinality(program: Program, path: Path) -> Cardinality:
+def _own_cardinality(program: AttributedTerm, path: Path) -> Cardinality:
     """A node's cardinality as its sort declares it, before Span resolution."""
     return program.attr(path, Attr.CARDINALITY)
 

@@ -1,7 +1,7 @@
-"""Sort concern: the structural taxonomy of a Symbol.
+"""Sort concern: the structural taxonomy of a Term.
 
 A sort is a node's structural category. Sorts form a tree with two roots, Ref
-and Interaction; ``subsort`` walks it. The taxonomy proper is the set of Symbol
+and Interaction; ``subsort`` walks it. The taxonomy proper is the set of Term
 classes that declare those sorts: abstract Interaction sub-kinds down to the
 leaf sorts a real node carries. Concrete atoms are layered on these later.
 
@@ -15,15 +15,15 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Attribute, Symbol
+from nu2.engine.structure import Attribute, Term
 from nu2.lang.attrs import Attr
 from nu2.lang.cardinality import Cardinality
 
 
 if TYPE_CHECKING:
-    from nu2.engine.attribution import Program
-    from nu2.engine.attribution.program import Path
-    from nu2.engine.execute import Runtime
+    from nu2.engine.attribution import AttributedTerm
+    from nu2.engine.attribution.attributed_term import Path
+    from nu2.engine.evaluation import Runtime
 
 __all__ = [
     "ATTRIBUTES",
@@ -144,21 +144,21 @@ MATRIX: dict[Sort, frozenset[Sort]] = {
 }
 
 
-# --- the sort taxonomy: the Symbol classes that declare the sorts -----------
+# --- the sort taxonomy: the Term classes that declare the sorts -----------
 
 
-class Ref(Symbol):
+class Ref(Term):
     """A name for a Context location: a leaf, or keyed by child Refs."""
 
     sort = Attribute.declared(Sort.REF)
     cardinality = Attribute.declared(Cardinality.SCALAR)
 
-    def __init__(self, name: str, *key: Symbol) -> None:
+    def __init__(self, name: str, *key: Term) -> None:
         super().__init__(*key)
         self.payload = {"name": name}
 
 
-class Interaction(Symbol):
+class Interaction(Term):
     """Abstract: a node that interacts with the Context. Never instantiated.
 
     Concrete sub-kinds implement ``eval`` / ``aeval`` to drive execution.
@@ -248,7 +248,7 @@ class Policy(Span):
 # --- has_command: a sort fold -----------------------------------------------
 
 
-def _is_command(program: Program, path: Path) -> bool:
+def _is_command(program: AttributedTerm, path: Path) -> bool:
     """A node is itself a Command."""
     return subsort(program.attr(path, Attr.SORT), Sort.COMMAND)
 

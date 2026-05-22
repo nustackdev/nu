@@ -1,6 +1,6 @@
 """Runtime - the generic per-execution driver.
 
-A thin object that walks a compiled Program, dispatches to each Symbol's
+A thin object that walks an AttributedTerm, dispatches to each Term's
 ``eval`` / ``aeval`` method, and exposes a toolkit of helpers that atoms
 use to recurse, inspect structure, and compose. Domain-free: knows nothing
 of sentinels (the language layer's ``NuRuntime`` subclass adds those).
@@ -29,9 +29,9 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable, Iterable
     from concurrent.futures import Future
 
-    from nu2.engine.attribution import Program
-    from nu2.engine.attribution.program import Path
-    from nu2.engine.execute.budget import Budget
+    from nu2.engine.attribution import AttributedTerm
+    from nu2.engine.attribution.attributed_term import Path
+    from nu2.engine.evaluation.budget import Budget
 
 __all__ = ["Runtime"]
 
@@ -40,7 +40,7 @@ _DONE = object()
 
 
 class Runtime:
-    """Per-execution driver. Holds the compiled program, the Context, and a Budget.
+    """Per-execution driver. Holds the attributed program, the Context, and a Budget.
 
     Atoms receive the Runtime as their first argument; they recurse via
     ``rt.eval(child_path)`` / ``rt.aeval(child_path)`` and inspect structure
@@ -50,8 +50,10 @@ class Runtime:
 
     __slots__ = ("budget", "ctx", "program")
 
-    def __init__(self, program: Program, ctx: object, *, budget: Budget | None = None) -> None:
-        from nu2.engine.execute.budget import Budget as _Budget
+    def __init__(
+        self, program: AttributedTerm, ctx: object, *, budget: Budget | None = None
+    ) -> None:
+        from nu2.engine.evaluation.budget import Budget as _Budget
 
         self.program = program
         self.ctx = ctx
@@ -60,12 +62,12 @@ class Runtime:
     # --- dispatch -----------------------------------------------------------
 
     def eval(self, path: Path = ()) -> object:
-        """Evaluate the symbol at ``path``; return its value or None."""
-        return self.program.symbol(path).eval(self, path)
+        """Evaluate the term at ``path``; return its value or None."""
+        return self.program.term(path).eval(self, path)
 
     async def aeval(self, path: Path = ()) -> object:
-        """Async-evaluate the symbol at ``path``; return its value or None."""
-        return await self.program.symbol(path).aeval(self, path)
+        """Async-evaluate the term at ``path``; return its value or None."""
+        return await self.program.term(path).aeval(self, path)
 
     # --- sequential ---------------------------------------------------------
 
@@ -149,7 +151,7 @@ class Runtime:
         """
         import queue as _queue
 
-        from nu2.engine.execute.loop import safely_closing
+        from nu2.engine.evaluation.loop import safely_closing
 
         paths = list(paths)
         if self.budget.max_parallel == 1 or self.budget.thread_pool is None:
@@ -190,7 +192,7 @@ class Runtime:
         async iterable is wrapped with ``safely_aclosing`` so a caller's
         short-circuit doesn't leak finalizer Tasks on the loop.
         """
-        from nu2.engine.execute.loop import safely_aclosing
+        from nu2.engine.evaluation.loop import safely_aclosing
 
         paths = list(paths)
         if self.budget.max_parallel == 1:
@@ -259,14 +261,14 @@ class Runtime:
         Wraps the child iterable with ``safely_closing`` so an exception
         mid-iteration still finalizes the generator.
         """
-        from nu2.engine.execute.loop import safely_closing
+        from nu2.engine.evaluation.loop import safely_closing
 
         with safely_closing(self.iter(path)) as gen:
             return list(gen)
 
     async def acollect(self, path: Path) -> list:
         """Async-materialize a stream child to a list, with ``safely_aclosing``."""
-        from nu2.engine.execute.loop import safely_aclosing
+        from nu2.engine.evaluation.loop import safely_aclosing
 
         out: list = []
         async with safely_aclosing(await self.aiter(path)) as agen:
@@ -281,11 +283,11 @@ class Runtime:
         return self.program.children(path)
 
     def payload(self, path: Path) -> dict:
-        """The payload of the symbol at ``path``."""
+        """The payload of the term at ``path``."""
         return self.program.payload(path)
 
     def attr(self, path: Path, name: str) -> object:
-        """The compiled value of attribute ``name`` at ``path``."""
+        """The attributed value of attribute ``name`` at ``path``."""
         return self.program.attr(path, name)
 
     # --- boundary helpers ---------------------------------------------------
@@ -296,7 +298,7 @@ class Runtime:
         Use sparingly; the schema's ``on_loop`` should make this unnecessary
         in well-formed programs. Escape hatch for ad-hoc bridges.
         """
-        from nu2.engine.execute.loop import into_loop
+        from nu2.engine.evaluation.loop import into_loop
 
         return into_loop(coro)
 

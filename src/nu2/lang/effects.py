@@ -17,8 +17,8 @@ from nu2.lang.sort import Sort
 
 
 if TYPE_CHECKING:
-    from nu2.engine.attribution import Program
-    from nu2.engine.attribution.program import Path
+    from nu2.engine.attribution import AttributedTerm
+    from nu2.engine.attribution.attributed_term import Path
 
 __all__ = ["ATTRIBUTES", "Effect", "EffectSet"]
 
@@ -34,7 +34,7 @@ class Effect(StrEnum):
 type EffectSet = frozenset[tuple[str, Effect]]
 
 
-def _own_effects(program: Program, path: Path) -> EffectSet:
+def _own_effects(program: AttributedTerm, path: Path) -> EffectSet:
     """The (ref, effect) tuples a node contributes through its own Ref children.
 
     A slot the sort annotates contributes that effect; every other slot holding

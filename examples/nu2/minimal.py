@@ -1,7 +1,7 @@
 """Minimal nu2 sketches. One pattern per section. Each runs standalone.
 
-The high-level ``run`` / ``arun`` entries take a description (Symbol),
-compile it, validate it, then evaluate it. No Program juggling, no
+The high-level ``run`` / ``arun`` entries take a description (Term),
+attribute it, validate it, then evaluate it. No AttributedTerm juggling, no
 ceremony - the three phases collapse into one call.
 
 This is the pure scalar slice: Literal, arithmetic, logic. Refs, streams,

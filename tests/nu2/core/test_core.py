@@ -1,6 +1,6 @@
-"""Functional tests for the Nu core symbols built on nu2.lang.
+"""Functional tests for the Nu core terms built on nu2.lang.
 
-Compile real core programs and check the attributes the language assigns:
+Attribute real core programs and check the attributes the language assigns:
 effects, cardinality, sync/async, the law set. Execution coverage is the
 pure-leaf slice for now (Literal, arithmetic, logic); the rest lands as the
 fabric pieces (Ref, streams) come online.
@@ -33,7 +33,7 @@ from nu2.core import (
     Watch,
     While,
 )
-from nu2.lang import EMPTY, INVALID, LAWS, Attr, Cardinality, Effect, Ref, compile, gate, validate
+from nu2.lang import EMPTY, INVALID, LAWS, Attr, Cardinality, Effect, Ref, attribute, gate, validate
 from nu2.lang.entry import aeval, arun, eval, run
 
 
@@ -41,19 +41,19 @@ from nu2.lang.entry import aeval, arun, eval, run
 
 
 def test_arithmetic_is_pure():
-    program = compile(Add(Literal(1), Literal(2)))
+    program = attribute(Add(Literal(1), Literal(2)))
     assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset()
 
 
 def test_set_tracks_a_write_and_a_read():
-    program = compile(Set(Ref("total"), Add(Ref("total"), Literal(1))))
+    program = attribute(Set(Ref("total"), Add(Ref("total"), Literal(1))))
     assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
         {("total", Effect.WRITE), ("total", Effect.READ)}
     )
 
 
 def test_a_flow_folds_every_command_effect():
-    program = compile(Seq(Set(Ref("a"), Literal(1)), Set(Ref("b"), Literal(2))))
+    program = attribute(Seq(Set(Ref("a"), Literal(1)), Set(Ref("b"), Literal(2))))
     assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
         {("a", Effect.WRITE), ("b", Effect.WRITE)}
     )
@@ -63,7 +63,7 @@ def test_a_flow_folds_every_command_effect():
 
 
 def test_reduction_is_scalar_over_a_stream():
-    program = compile(Sum(Range(Literal(0), Literal(10))))
+    program = attribute(Sum(Range(Literal(0), Literal(10))))
     assert program.attr(program.root, Attr.CHILD_CARDINALITY) is Cardinality.SCALAR
     assert program.attr((0,), Attr.CHILD_CARDINALITY) is Cardinality.STREAM
 
@@ -72,15 +72,15 @@ def test_reduction_is_scalar_over_a_stream():
 
 
 def test_a_watch_puts_the_program_on_a_loop():
-    assert compile(Seq(Set(Ref("x"), Literal(1)))).attr((), Attr.ON_LOOP) is False
-    assert compile(Emit(Ref("out"), Watch())).attr((), Attr.ON_LOOP) is True
+    assert attribute(Seq(Set(Ref("x"), Literal(1)))).attr((), Attr.ON_LOOP) is False
+    assert attribute(Emit(Ref("out"), Watch())).attr((), Attr.ON_LOOP) is True
 
 
 # --- algebra -------------------------------------------------------------
 
 
 def test_declared_algebra_reaches_the_program():
-    program = compile(Add(Literal(1), Literal(2)))
+    program = attribute(Add(Literal(1), Literal(2)))
     assert program.attr(program.root, Attr.COMMUTATIVE) is True
     assert program.attr(program.root, Attr.ASSOCIATIVE) is True
 
@@ -89,23 +89,23 @@ def test_declared_algebra_reaches_the_program():
 
 
 def test_a_clean_program_validates():
-    program = compile(Seq(Set(Ref("a"), Literal(1)), Set(Ref("b"), Add(Ref("a"), Literal(1)))))
+    program = attribute(Seq(Set(Ref("a"), Literal(1)), Set(Ref("b"), Add(Ref("a"), Literal(1)))))
     assert validate(program, *LAWS) is program
 
 
 def test_a_command_in_a_query_slot_is_refused():
-    verdict = gate(compile(Add(Set(Ref("x"), Literal(1)), Literal(2))), *LAWS)
+    verdict = gate(attribute(Add(Set(Ref("x"), Literal(1)), Literal(2))), *LAWS)
     assert any(v.law == "composition" for v in verdict)
 
 
 def test_a_parallel_flow_runs_its_commands():
-    program = compile(Par(Set(Ref("a"), Literal(1)), Set(Ref("b"), Literal(2))))
+    program = attribute(Par(Set(Ref("a"), Literal(1)), Set(Ref("b"), Literal(2))))
     assert program.attr(program.root, Attr.EXEC_ORDER) is not None
     assert validate(program, *LAWS) is program
 
 
 def test_a_control_holds_commands_under_a_condition():
-    program = compile(If(Eq(Ref("flag"), Literal(1)), Set(Ref("done"), Literal(1))))
+    program = attribute(If(Eq(Ref("flag"), Literal(1)), Set(Ref("done"), Literal(1))))
     assert validate(program, *LAWS) is program
 
 
@@ -115,13 +115,13 @@ def test_a_control_holds_commands_under_a_condition():
 # Atoms that need a fabric (Ref, streams, reductions, commands) land later.
 
 
-def _eval(symbol: object) -> object:
-    value, _ = eval(compile(symbol))
+def _eval(term: object) -> object:
+    value, _ = eval(attribute(term))
     return value
 
 
-async def _aeval(symbol: object) -> object:
-    value, _ = await aeval(compile(symbol))
+async def _aeval(term: object) -> object:
+    value, _ = await aeval(attribute(term))
     return value
 
 
@@ -169,8 +169,8 @@ def test_a_sentinel_operand_collapses_a_query_to_invalid():
     assert asyncio.run(_aeval(And(Literal(True), Literal(EMPTY)))) is INVALID
 
 
-def test_run_compiles_validates_and_evaluates_a_description():
-    # One-call: description -> Program -> validated -> driven.
+def test_run_attributes_validates_and_evaluates_a_description():
+    # One-call: description -> AttributedTerm -> validated -> driven.
     value, _ = run(Add(Literal(2), Mul(Literal(3), Literal(4))))
     assert value == 14
     value, _ = asyncio.run(arun(And(Literal(True), Literal(True))))
@@ -188,7 +188,7 @@ def test_run_raises_on_an_invalid_description():
 def test_eval_refuses_async_only_programs():
     import pytest
 
-    program = compile(Emit(Ref("out"), Watch()))
+    program = attribute(Emit(Ref("out"), Watch()))
     with pytest.raises(RuntimeError, match="async-only"):
         eval(program)
 

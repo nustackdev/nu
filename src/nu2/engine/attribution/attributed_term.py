@@ -1,6 +1,6 @@
-"""Program: a compiled program, the description plus the attr relation.
+"""AttributedTerm: a description plus the attr relation.
 
-Compilation evaluates every attribute on every node. The only thing stored is
+Attribution evaluates every attribute on every node. The only thing stored is
 the attr(path, name, value) relation; the description is held by reference.
 Evaluation is directional: synthesized folds bottom-up, inherited threads
 top-down, in the topological order of the schema's dependency graph.
@@ -15,9 +15,9 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
     from nu2.engine.structure.attribute import Attribute, Schema
-    from nu2.engine.structure.symbol import Symbol
+    from nu2.engine.structure.term import Term
 
-__all__ = ["Attr", "Path", "Program", "Row", "Rows", "compile"]
+__all__ = ["Attr", "AttributedTerm", "Path", "Row", "Rows", "attribute"]
 
 type Path = tuple[int, ...]
 type Row = dict[str, object]
@@ -45,7 +45,7 @@ class Attr:
     It is also the evaluation memo: a computed value is written exactly once.
     """
 
-    def __init__(self, program: Program) -> None:
+    def __init__(self, program: AttributedTerm) -> None:
         self._program = program
         self._rows: dict[tuple[Path, str], object] = {}
 
@@ -68,32 +68,32 @@ class Attr:
         return f"Attr({len(self._rows)} rows)"
 
 
-class Program:
-    """A compiled program: the description held by reference, plus ``attr``."""
+class AttributedTerm:
+    """An attributed Nu program: the description held by reference, plus ``attr``."""
 
     root: Path = ()
 
-    def __init__(self, description: Symbol, schema: Schema) -> None:
+    def __init__(self, description: Term, schema: Schema) -> None:
         self._description = description
         self._schema = schema
         self.attr = Attr(self)
 
     # --- structure: read straight off the held description, never copied ---
 
-    def symbol(self, path: Path) -> Symbol:
-        """The Symbol at ``path``."""
+    def term(self, path: Path) -> Term:
+        """The Term at ``path``."""
         node = self._description
         for slot in path:
             node = node.children[slot]
         return node
 
-    def kind(self, path: Path) -> type[Symbol]:
-        """The kind (class) of the Symbol at ``path``."""
-        return type(self.symbol(path))
+    def kind(self, path: Path) -> type[Term]:
+        """The kind (class) of the Term at ``path``."""
+        return type(self.term(path))
 
     def payload(self, path: Path) -> dict[str, object]:
-        """The payload of the Symbol at ``path``."""
-        return self.symbol(path).payload
+        """The payload of the Term at ``path``."""
+        return self.term(path).payload
 
     def parent(self, path: Path) -> Path | None:
         """The parent path, or None at the root."""
@@ -101,7 +101,7 @@ class Program:
 
     def children(self, path: Path) -> list[Path]:
         """The child paths of ``path``."""
-        count = len(self.symbol(path).children)
+        count = len(self.term(path).children)
         return [(*path, slot) for slot in range(count)]
 
     def walk(self, under: Path = ()) -> Iterator[Path]:
@@ -116,7 +116,7 @@ class Program:
         """Read attribute ``name`` at ``path``.
 
         Declared attributes are schema constants. Computed attributes are read
-        from ``attr``, which ``compile`` has fully populated.
+        from ``attr``, which ``attribute`` has fully populated.
         """
         attribute = self._schema.attribute(self.kind(path), name)
         if attribute is None:
@@ -125,7 +125,7 @@ class Program:
             return attribute.value
         return self.attr._rows[path, name]
 
-    def _compile(self) -> None:
+    def _attribute(self) -> None:
         """Force every computed attribute on every node, in dependency order."""
         for name in self._schema.order():
             attribute = self._schema._global[name]
@@ -158,19 +158,19 @@ class Program:
         yield under
 
     def __repr__(self) -> str:
-        return f"Program({self._description!r}, {self.attr!r})"
+        return f"AttributedTerm({self._description!r}, {self.attr!r})"
 
 
-def compile(description: Symbol, schema: Schema) -> Program:
-    """Construct then compile: evaluate every attribute on every node.
+def attribute(description: Term, schema: Schema) -> AttributedTerm:
+    """Construct then attribute: evaluate every attribute on every node.
 
     Args:
-        description: the root Symbol of the application.
+        description: the root Term of the application.
         schema: a finalized Schema.
 
     Returns:
-        A compiled Program with ``attr`` fully populated.
+        An AttributedTerm with ``attr`` fully populated.
     """
-    program = Program(description, schema)
-    program._compile()
+    program = AttributedTerm(description, schema)
+    program._attribute()
     return program

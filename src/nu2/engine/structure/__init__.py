@@ -1,13 +1,13 @@
-"""Engine layer: the alphabet - the generic ``Symbol`` + ``Attribute`` primitive."""
+"""Engine layer: the alphabet - the generic ``Term`` + ``Attribute`` primitive."""
 
 from nu2.engine.structure.attribute import Attribute, CycleError, Schema
-from nu2.engine.structure.symbol import Symbol, SymbolMeta
+from nu2.engine.structure.term import Term, TermMeta
 
 
 __all__ = [
     "Attribute",
     "CycleError",
     "Schema",
-    "Symbol",
-    "SymbolMeta",
+    "Term",
+    "TermMeta",
 ]

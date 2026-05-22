@@ -1,6 +1,6 @@
 """End-to-end: a POC-style layer-1 slice run on the attribute layer.
 
-Construct -> compile -> query -> gate, with declared, synthesized, and
+Construct -> attribute -> query -> gate, with declared, synthesized, and
 inherited attributes all in play.
 """
 
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu2.engine import Attribute, Law, Schema, Symbol, compile, gate, validate
+from nu2.engine import Attribute, Law, Schema, Term, attribute, gate, validate
 
 
 _SORT_PARENT = {"ScalarQuery": "Query", "Ref": "Query", "Literal": "Query", "ScalarCmd": "Command"}
@@ -65,7 +65,7 @@ def build_schema():
     return schema.finalize()
 
 
-class Ref(Symbol):
+class Ref(Term):
     sort = Attribute.declared("Ref")
 
     def __init__(self, name):
@@ -73,7 +73,7 @@ class Ref(Symbol):
         self.payload = {"name": name}
 
 
-class Literal(Symbol):
+class Literal(Term):
     sort = Attribute.declared("Literal")
 
     def __init__(self, value):
@@ -81,11 +81,11 @@ class Literal(Symbol):
         self.payload = {"value": value}
 
 
-class Add(Symbol):
+class Add(Term):
     sort = Attribute.declared("ScalarQuery")
 
 
-class Put(Symbol):
+class Put(Term):
     sort = Attribute.declared("ScalarCmd")
     own_effects = Attribute.declared({0: "write"})
 
@@ -108,16 +108,16 @@ def test_dependency_order(schema):
     assert order.index("tracked_effects") < order.index("is_pure")
 
 
-def test_construct_compile_query(schema):
+def test_construct_attribute_query(schema):
     counter = Ref("counter")
-    program = compile(Put(counter, Add(counter, Literal(1))), schema)
+    program = attribute(Put(counter, Add(counter, Literal(1))), schema)
 
     # synthesized: purity folds bottom-up.
     assert program.attr(program.root, "is_pure") is False
     assert program.attr((1, 0), "is_pure") is True
 
     # inherited: ancestor kinds thread top-down; shared Ref, two paths.
-    assert program.symbol((0,)) is program.symbol((1, 0))
+    assert program.term((0,)) is program.term((1, 0))
     assert program.attr((0,), "ancestor_kinds") == ("Put",)
     assert program.attr((1, 0), "ancestor_kinds") == ("Put", "Add")
 
@@ -129,11 +129,11 @@ def test_construct_compile_query(schema):
 
 
 def test_gate_and_validate(schema):
-    valid = compile(Put(Ref("c"), Literal(1)), schema)
+    valid = attribute(Put(Ref("c"), Literal(1)), schema)
     assert gate(valid, put_target) == []
     assert validate(valid, put_target) is valid
 
-    invalid = compile(Put(Literal(0), Literal(1)), schema)
+    invalid = attribute(Put(Literal(0), Literal(1)), schema)
     verdict = gate(invalid, put_target)
     assert len(verdict) == 1 and verdict[0].law == "put_target"
     with pytest.raises(ValueError, match="put_target"):

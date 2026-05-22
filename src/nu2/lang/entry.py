@@ -13,16 +13,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.execute.budget import Budget
-from nu2.engine.execute.loop import into_loop, safely_aclosing, safely_closing
+from nu2.engine.evaluation.budget import Budget
+from nu2.engine.evaluation.loop import into_loop, safely_aclosing, safely_closing
 from nu2.lang.attrs import Attr
 from nu2.lang.context import Context
 from nu2.lang.runtime import NuRuntime
 
 
 if TYPE_CHECKING:
-    from nu2.engine.attribution import Program
-    from nu2.engine.structure import Symbol
+    from nu2.engine.attribution import AttributedTerm
+    from nu2.engine.structure import Term
 
 __all__ = [
     "acollect",
@@ -39,7 +39,7 @@ __all__ = [
 ]
 
 
-def _refuse_async_only(program: Program, entry: str, swap: str) -> None:
+def _refuse_async_only(program: AttributedTerm, entry: str, swap: str) -> None:
     """Raise if a sync entry sees an async-only subtree.
 
     Reads the root's ``Attr.HAS_ASYNC_ONLY_ATOM``. The cost is one attribute
@@ -52,15 +52,15 @@ def _refuse_async_only(program: Program, entry: str, swap: str) -> None:
 
 
 def eval(
-    program: Program,
+    program: AttributedTerm,
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
 ) -> tuple[object, Context]:
-    """Drive a Program synchronously; return ``(value, ctx)``.
+    """Drive an AttributedTerm synchronously; return ``(value, ctx)``.
 
     Args:
-        program: a compiled Program.
+        program: an AttributedTerm.
         ctx: the Context to drive against; a fresh one if omitted.
         max_parallel: tree-wide concurrency gate. ``1`` is sequential.
 
@@ -80,12 +80,12 @@ def eval(
 
 
 async def aeval(
-    program: Program,
+    program: AttributedTerm,
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
 ) -> tuple[object, Context]:
-    """Drive a Program asynchronously; return ``(value, ctx)``."""
+    """Drive an AttributedTerm asynchronously; return ``(value, ctx)``."""
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=True) as budget:
         rt = NuRuntime(program, ctx, budget=budget)
@@ -93,14 +93,14 @@ async def aeval(
 
 
 def eval_in_loop(
-    program: Program,
+    program: AttributedTerm,
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
 ) -> tuple[object, Context]:
-    """Drive an async-only Program from sync code by spinning a loop.
+    """Drive an async-only AttributedTerm from sync code by spinning a loop.
 
-    Convenience for the rare top-level sync caller whose Program contains an
+    Convenience for the rare top-level sync caller whose AttributedTerm contains an
     async-only atom. Most callers should use ``aeval`` directly.
     """
     return into_loop(aeval(program, ctx, max_parallel=max_parallel))
@@ -115,7 +115,7 @@ def eval_in_loop(
 
 
 def first(
-    program: Program,
+    program: AttributedTerm,
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
@@ -136,7 +136,7 @@ def first(
 
 
 def collect(
-    program: Program,
+    program: AttributedTerm,
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
@@ -150,7 +150,7 @@ def collect(
 
 
 async def afirst(
-    program: Program,
+    program: AttributedTerm,
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
@@ -167,7 +167,7 @@ async def afirst(
 
 
 async def alast(
-    program: Program,
+    program: AttributedTerm,
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
@@ -192,7 +192,7 @@ async def alast(
 
 
 async def acollect(
-    program: Program,
+    program: AttributedTerm,
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
@@ -206,23 +206,23 @@ async def acollect(
 
 # --- description-level convenience --------------------------------------
 #
-# The all-in-one entry: take a description (Symbol), compile it against the
+# The all-in-one entry: take a description (Term), attribute it against the
 # Nu schema, validate against the Nu law set, then drive. Three phases in
-# one call - what app code actually wants. The compile/validate pieces are
+# one call - what app code actually wants. The attribute/validate pieces are
 # still available standalone via ``nu2.lang`` for callers that want a
-# Program in hand (e.g. for static inspection).
+# AttributedTerm in hand (e.g. for static inspection).
 
 
 def run(
-    description: Symbol,
+    description: Term,
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
 ) -> tuple[object, Context]:
-    """Compile a description, validate it, evaluate it; return ``(value, ctx)``.
+    """Attribute a description, validate it, evaluate it; return ``(value, ctx)``.
 
     Args:
-        description: a Nu description (any ``Symbol``).
+        description: a Nu description (any ``Term``).
         ctx: the Context to drive against; a fresh one if omitted.
         max_parallel: tree-wide concurrency gate. ``1`` is sequential.
 
@@ -235,32 +235,32 @@ def run(
         RuntimeError: the program subtree contains an async-only atom; use
             ``arun`` instead.
     """
-    from nu2.lang import LAWS, compile, validate
+    from nu2.lang import LAWS, attribute, validate
 
-    program = validate(compile(description), *LAWS)
+    program = validate(attribute(description), *LAWS)
     return eval(program, ctx, max_parallel=max_parallel)
 
 
 async def arun(
-    description: Symbol,
+    description: Term,
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
 ) -> tuple[object, Context]:
-    """Async sibling of ``run``: compile, validate, then ``aeval``."""
-    from nu2.lang import LAWS, compile, validate
+    """Async sibling of ``run``: attribute, validate, then ``aeval``."""
+    from nu2.lang import LAWS, attribute, validate
 
-    program = validate(compile(description), *LAWS)
+    program = validate(attribute(description), *LAWS)
     return await aeval(program, ctx, max_parallel=max_parallel)
 
 
 def run_in_loop(
-    description: Symbol,
+    description: Term,
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
 ) -> tuple[object, Context]:
-    """Compile, validate, then drive on a fresh loop from sync code.
+    """Attribute, validate, then drive on a fresh loop from sync code.
 
     The convenience for the rare top-level sync caller whose description
     contains an async-only atom: spins a loop via ``asyncio.run`` and drives

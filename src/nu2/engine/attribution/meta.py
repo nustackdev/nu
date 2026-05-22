@@ -1,4 +1,4 @@
-"""Metaprogramming: laws over a compiled program, and the gate that runs them.
+"""Metaprogramming: laws over an attributed program, and the gate that runs them.
 
 A Law is a declarative validity rule: a ``scope`` selecting the nodes it
 judges, a ``holds`` predicate that must be true on each, a message, and a
@@ -18,13 +18,13 @@ from typing import TYPE_CHECKING, NamedTuple
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu2.engine.attribution.program import Path, Program
+    from nu2.engine.attribution.attributed_term import AttributedTerm, Path
 
 __all__ = ["Law", "Predicate", "Severity", "Violation", "gate", "predicate", "validate"]
 
 
-type Test = Callable[[Program, Path], bool]
-type Message = str | Callable[[Program, Path], str]
+type Test = Callable[[AttributedTerm, Path], bool]
+type Message = str | Callable[[AttributedTerm, Path], str]
 
 
 class Severity(StrEnum):
@@ -47,7 +47,7 @@ class Predicate:
         self.__name__ = getattr(test, "__name__", "predicate")
         self.__doc__ = getattr(test, "__doc__", None)
 
-    def __call__(self, program: Program, path: Path) -> bool:
+    def __call__(self, program: AttributedTerm, path: Path) -> bool:
         """Run the test against ``path`` in ``program``."""
         return self._test(program, path)
 
@@ -79,7 +79,7 @@ class Violation(NamedTuple):
 
 
 class Law:
-    """A declarative validity rule over the nodes of a compiled program.
+    """A declarative validity rule over the nodes of an attributed program.
 
     ``scope`` selects the nodes the law judges; ``holds`` is the predicate that
     must be true on each. When ``holds`` is false the law yields a Violation
@@ -105,7 +105,7 @@ class Law:
         self.message = message
         self.severity = severity
 
-    def check(self, program: Program, path: Path) -> Violation | None:
+    def check(self, program: AttributedTerm, path: Path) -> Violation | None:
         """The Violation this law yields at ``path``, or None if it holds."""
         if not self.scope(program, path) or self.holds(program, path):
             return None
@@ -116,7 +116,7 @@ class Law:
         return f"Law({self.name!r})"
 
 
-def gate(program: Program, *laws: Law) -> list[Violation]:
+def gate(program: AttributedTerm, *laws: Law) -> list[Violation]:
     """Run every law over every node and return every Violation found.
 
     The verdict is returned, never written onto the program.
@@ -129,7 +129,7 @@ def gate(program: Program, *laws: Law) -> list[Violation]:
     ]
 
 
-def validate(program: Program, *laws: Law) -> Program:
+def validate(program: AttributedTerm, *laws: Law) -> AttributedTerm:
     """Run a gate; raise on any error-level Violation, else return the program.
 
     Warning-level violations pass through; read them with ``gate`` directly.

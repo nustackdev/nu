@@ -11,9 +11,9 @@ attribute group, each carrying that concern's value types, rule functions and
 - ``algebra`` - the rewrite-relevant laws a kind obeys
 - ``attrs`` - the ``Attr`` name vocabulary shared across concerns
 - ``schema`` - assembles every concern into the Nu schema
-- ``predicates``, ``laws`` - the validity rules over a compiled program
+- ``predicates``, ``laws`` - the validity rules over an attributed program
 
-A description is built from the sort taxonomy, ``compile``d against the schema,
+A description is built from the sort taxonomy, ``attribute``d against the schema,
 then queried, ``gate``d or ``validate``d. This package is the attribute-layer
 successor to ``nu2.terms``.
 """
@@ -31,7 +31,7 @@ from nu2.engine.attribution import (
     predicate,
     validate,
 )
-from nu2.engine.attribution import compile as _compile
+from nu2.engine.attribution import attribute as _attribute
 from nu2.lang.attrs import Attr
 from nu2.lang.cardinality import Cardinality
 from nu2.lang.effects import Effect, EffectSet
@@ -70,8 +70,8 @@ from nu2.lang.sort import (
 
 
 if TYPE_CHECKING:
-    from nu2.engine.attribution import Program
-    from nu2.engine.structure import Schema, Symbol
+    from nu2.engine.attribution import AttributedTerm
+    from nu2.engine.structure import Schema, Term
 
 __all__ = [
     "EMPTY",
@@ -105,7 +105,7 @@ __all__ = [
     "Strategy",
     "StreamQuery",
     "Violation",
-    "compile",
+    "attribute",
     "gate",
     "is_empty",
     "is_invalid",
@@ -120,6 +120,6 @@ __all__ = [
 SCHEMA: Schema = build_schema()
 
 
-def compile(description: Symbol) -> Program:
-    """Compile a Nu description against the Nu schema."""
-    return _compile(description, SCHEMA)
+def attribute(description: Term) -> AttributedTerm:
+    """Attribute a Nu description against the Nu schema."""
+    return _attribute(description, SCHEMA)

@@ -6,9 +6,9 @@
 - ``safely_closing`` / ``safely_aclosing`` - generator-finalization helpers.
 """
 
-from nu2.engine.execute.budget import Budget
-from nu2.engine.execute.driver import Runtime
-from nu2.engine.execute.loop import into_loop, safely_aclosing, safely_closing
+from nu2.engine.evaluation.budget import Budget
+from nu2.engine.evaluation.driver import Runtime
+from nu2.engine.evaluation.loop import into_loop, safely_aclosing, safely_closing
 
 
 __all__ = [

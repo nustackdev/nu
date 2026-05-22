@@ -1,15 +1,15 @@
-"""Tests for Symbol and SymbolMeta."""
+"""Tests for Term and TermMeta."""
 
 from __future__ import annotations
 
-from nu2.engine import Attribute, Symbol
+from nu2.engine import Attribute, Term
 
 
-class Leaf(Symbol):
+class Leaf(Term):
     sort = Attribute.declared("Leaf")
 
 
-class Node(Symbol):
+class Node(Term):
     sort = Attribute.declared("Node")
     weight = Attribute.declared(1)
 
@@ -30,8 +30,8 @@ def test_subclass_inherits_and_overrides():
     assert HeavyNode._attributes["sort"].value == "Node"
 
 
-def test_base_symbol_has_no_attributes():
-    assert Symbol._attributes == {}
+def test_base_term_has_no_attributes():
+    assert Term._attributes == {}
 
 
 def test_children_is_a_tuple():

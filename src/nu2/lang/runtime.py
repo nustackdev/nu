@@ -11,13 +11,13 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from nu2.engine.execute.driver import Runtime
+from nu2.engine.evaluation.driver import Runtime
 
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterable, Iterable
 
-    from nu2.engine.attribution.program import Path
+    from nu2.engine.attribution.attributed_term import Path
 
 __all__ = ["NuRuntime"]
 
@@ -113,7 +113,7 @@ class NuRuntime(Runtime):
         ``safely_closing`` / ``safely_aclosing`` so a caller short-circuit
         finalizes every underlying generator.
         """
-        from nu2.engine.execute.loop import safely_aclosing, safely_closing
+        from nu2.engine.evaluation.loop import safely_aclosing, safely_closing
         from nu2.lang.attrs import Attr
 
         paths = list(paths)

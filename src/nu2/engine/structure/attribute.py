@@ -1,4 +1,4 @@
-"""Attribute and Schema: the named values on Symbol classes, and the registry.
+"""Attribute and Schema: the named values on Term classes, and the registry.
 
 An Attribute is a named value attached to a kind, in one of three flavors:
 declared (a constant), synthesized (folded bottom-up), inherited (threaded
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Literal
 
-    from nu2.engine.structure.symbol import Symbol
+    from nu2.engine.structure.term import Term
 
 __all__ = ["Attribute", "CycleError", "Flavor", "RuleFn", "Schema"]
 
@@ -28,7 +28,7 @@ class CycleError(Exception):
 
 
 class Attribute:
-    """A named value on a Symbol class, in one of three flavors.
+    """A named value on a Term class, in one of three flavors.
 
     declared: a constant, read straight off the class. synthesized: an own
     value via ``base``, folded with children by ``combine``. inherited: a
@@ -95,8 +95,8 @@ class Attribute:
 class Schema:
     """The tree-wide attributes plus the finalized dependency order.
 
-    Per-class declared attributes live on the Symbol classes themselves,
-    collected by SymbolMeta. Computed attributes (synthesized, inherited) are
+    Per-class declared attributes live on the Term classes themselves,
+    collected by TermMeta. Computed attributes (synthesized, inherited) are
     registered here, tree-wide. ``finalize`` builds and topologically sorts
     the cross-attribute dependency graph; a cycle raises CycleError.
 
@@ -115,7 +115,7 @@ class Schema:
         self._global[attribute.name] = attribute
         self._order = None
 
-    def attribute(self, kind: type[Symbol], name: str) -> Attribute | None:
+    def attribute(self, kind: type[Term], name: str) -> Attribute | None:
         """Resolve an attribute for a kind: per-class first, then tree-wide."""
         per_class = kind._attributes.get(name)
         if per_class is not None:
