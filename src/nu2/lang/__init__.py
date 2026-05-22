@@ -22,7 +22,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.attribution import (
+from nu2.engine.attribution import attribute as _attribute
+from nu2.engine.validation import (
     Law,
     Predicate,
     Severity,
@@ -31,7 +32,6 @@ from nu2.engine.attribution import (
     predicate,
     validate,
 )
-from nu2.engine.attribution import attribute as _attribute
 from nu2.lang.attrs import Attr
 from nu2.lang.cardinality import Cardinality
 from nu2.lang.effects import Effect, EffectSet

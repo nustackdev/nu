@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.attribution import Predicate, predicate
+from nu2.engine.validation import Predicate, predicate
 from nu2.lang.attrs import Attr
 from nu2.lang.sort import MATRIX, Sort, matrix_sort, subsort
 

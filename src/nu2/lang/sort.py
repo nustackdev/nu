@@ -24,7 +24,7 @@ from nu2.lang.nu import Nu
 if TYPE_CHECKING:
     from nu2.engine.attribution import AttributedTerm
     from nu2.engine.attribution.attributed_term import Path
-    from nu2.engine.evaluation import Runtime
+    from nu2.lang.runtime import NuRuntime as Runtime
 
 __all__ = [
     "ATTRIBUTES",
@@ -163,17 +163,18 @@ class Interaction(Nu):
     """Abstract: a node that interacts with the Context. Never instantiated.
 
     Concrete sub-kinds implement ``eval`` / ``aeval`` to drive execution.
-    Both receive the per-execution ``Runtime`` and the node's ``Path``; they
-    recurse via ``rt.eval(child_path)`` / ``rt.aeval(child_path)`` and reach
-    for the Runtime's toolkit.
+    Both receive the per-execution ``Runtime`` and the node's ``nid`` (its
+    integer position in the attributed program); they recurse via
+    ``rt.eval(child_nid)`` and reach for ``self.children`` / ``self.payload``
+    directly. Attribute reads use ``rt.program.attrs[name][nid]``.
     """
 
-    def eval(self, rt: Runtime, path: Path) -> object:
+    def eval(self, rt: Runtime, nid: int) -> object:
         """Evaluate this node synchronously; return its value or None."""
         msg = f"{type(self).__name__}.eval is not implemented"
         raise NotImplementedError(msg)
 
-    async def aeval(self, rt: Runtime, path: Path) -> object:
+    async def aeval(self, rt: Runtime, nid: int) -> object:
         """Evaluate this node asynchronously; return its value or None."""
         msg = f"{type(self).__name__}.aeval is not implemented"
         raise NotImplementedError(msg)

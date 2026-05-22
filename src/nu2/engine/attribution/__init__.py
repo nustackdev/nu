@@ -1,33 +1,24 @@
-"""Engine layer: generic attribute-grammar machinery.
+"""Engine layer: the attribute phase.
 
-``attribute`` turns a description plus a schema into an ``AttributedTerm``; ``gate`` and
-``validate`` are metaprograms over an attributed program.
+Two modules:
+
+- ``attributed_term`` - the ``AttributedTerm`` data model (``Path``, the
+  flat columns, the ``attribute()`` factory and its sweep algorithms).
+- ``attr``            - the ``Attr`` relation view plus ``Row`` / ``Rows``.
+
+Attribution builds the data. The judging machinery lives in
+``engine.validation``.
 """
 
-from nu2.engine.attribution.attributed_term import Attr, AttributedTerm, Path, Row, Rows, attribute
-from nu2.engine.attribution.meta import (
-    Law,
-    Predicate,
-    Severity,
-    Violation,
-    gate,
-    predicate,
-    validate,
-)
+from nu2.engine.attribution.attr import Attr, Row, Rows
+from nu2.engine.attribution.attributed_term import AttributedTerm, Path, attribute
 
 
 __all__ = [
     "Attr",
     "AttributedTerm",
-    "Law",
     "Path",
-    "Predicate",
     "Row",
     "Rows",
-    "Severity",
-    "Violation",
     "attribute",
-    "gate",
-    "predicate",
-    "validate",
 ]

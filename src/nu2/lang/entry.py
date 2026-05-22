@@ -42,11 +42,10 @@ __all__ = [
 def _refuse_async_only(program: AttributedTerm, entry: str, swap: str) -> None:
     """Raise if a sync entry sees an async-only subtree.
 
-    Reads the root's ``Attr.HAS_ASYNC_ONLY_ATOM``. The cost is one attribute
-    lookup; the check catches a Watch-bearing program before it tries to
-    run on no loop and fails deep in dispatch.
+    Reads the root's ``Attr.HAS_ASYNC_ONLY_ATOM`` column directly; one list
+    index, no schema lookup.
     """
-    if program.attr(program.root, Attr.HAS_ASYNC_ONLY_ATOM):
+    if program.attrs[Attr.HAS_ASYNC_ONLY_ATOM][0]:
         msg = f"{entry}: program contains an async-only atom (e.g. Watch); use {swap}."
         raise RuntimeError(msg)
 
@@ -128,7 +127,7 @@ def first(
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=False) as budget:
         rt = NuRuntime(program, ctx, budget=budget)
-        with safely_closing(rt.iter(program.root)) as gen:
+        with safely_closing(rt.iter(0)) as gen:
             for v in gen:
                 return v, ctx
     msg = "first: program yielded no values"
@@ -146,7 +145,7 @@ def collect(
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=False) as budget:
         rt = NuRuntime(program, ctx, budget=budget)
-        return rt.collect(program.root), ctx
+        return rt.collect(0), ctx
 
 
 async def afirst(
@@ -159,7 +158,7 @@ async def afirst(
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=True) as budget:
         rt = NuRuntime(program, ctx, budget=budget)
-        async with safely_aclosing(await rt.aiter(program.root)) as agen:
+        async with safely_aclosing(await rt.aiter(0)) as agen:
             async for v in agen:
                 return v, ctx
     msg = "afirst: program yielded no values"
@@ -181,7 +180,7 @@ async def alast(
     last: object = None
     with Budget(max_parallel, async_mode=True) as budget:
         rt = NuRuntime(program, ctx, budget=budget)
-        async with safely_aclosing(await rt.aiter(program.root)) as agen:
+        async with safely_aclosing(await rt.aiter(0)) as agen:
             async for v in agen:
                 last = v
                 found = True
@@ -201,7 +200,7 @@ async def acollect(
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=True) as budget:
         rt = NuRuntime(program, ctx, budget=budget)
-        return await rt.acollect(program.root), ctx
+        return await rt.acollect(0), ctx
 
 
 # --- description-level convenience --------------------------------------

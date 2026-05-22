@@ -1,22 +1,19 @@
 """Runtime - the generic per-execution driver.
 
-A thin object that walks an AttributedTerm, dispatches to each Term's
-``eval`` / ``aeval`` method, and exposes a toolkit of helpers that atoms
-use to recurse, inspect structure, and compose. Domain-free: knows nothing
-of sentinels (the language layer's ``NuRuntime`` subclass adds those).
+A thin object that walks an AttributedTerm by ``nid`` and dispatches to each
+Term's ``eval`` / ``aeval`` method. Domain-free: knows nothing of sentinels
+(the language layer's ``NuRuntime`` subclass adds those).
 
-Three groups of helpers:
+Hot-path contract: dispatch is one method call (``term.eval(rt, nid)``).
+Atoms reach for their own ``self.children`` and ``self.payload`` and recurse
+via ``rt.eval(cnid)``. Attribute reads go directly through
+``rt.program.attrs[name][nid]``. The Runtime exposes only what the dispatcher
+must do; trivial passthroughs are deleted.
 
-- **dispatch** - ``eval`` / ``aeval`` on a path.
-- **sequential** - ``eval_each`` / ``eval_kids`` (and async siblings) for
-  in-order evaluation.
-- **parallel** - ``eval_parallel`` / ``aeval_parallel`` / ``aeval_race``
-  for fan-out, plus ``merge`` / ``amerge`` for stream interleaving.
-  All gated by the Runtime's Budget; ``max_parallel == 1`` falls through
-  to sequential.
-
-Plus structure passthroughs (``children``, ``payload``, ``attr``) and
-boundary helpers (``into_loop``, ``in_thread``, ``a_in_thread``).
+Compositional helpers (``eval_each`` / ``eval_parallel`` / ``merge`` /
+``amerge``) accept iterables of ``nid`` and do real work (pools, semaphores,
+queues). Boundary helpers (``into_loop``, ``in_thread``, ``a_in_thread``)
+stay; they are escape hatches, not passthroughs.
 """
 
 from __future__ import annotations
@@ -30,7 +27,6 @@ if TYPE_CHECKING:
     from concurrent.futures import Future
 
     from nu2.engine.attribution import AttributedTerm
-    from nu2.engine.attribution.attributed_term import Path
     from nu2.engine.evaluation.budget import Budget
 
 __all__ = ["Runtime"]
@@ -40,13 +36,7 @@ _DONE = object()
 
 
 class Runtime:
-    """Per-execution driver. Holds the attributed program, the Context, and a Budget.
-
-    Atoms receive the Runtime as their first argument; they recurse via
-    ``rt.eval(child_path)`` / ``rt.aeval(child_path)`` and inspect structure
-    via ``rt.children`` / ``rt.payload`` / ``rt.attr``. Compositional atoms
-    (Par, Race, Seq, ...) reach for the parallel/merge helpers.
-    """
+    """Per-execution driver. Holds the attributed program, the Context, and a Budget."""
 
     __slots__ = ("budget", "ctx", "program")
 
@@ -61,67 +51,59 @@ class Runtime:
 
     # --- dispatch -----------------------------------------------------------
 
-    def eval(self, path: Path = ()) -> object:
-        """Evaluate the term at ``path``; return its value or None."""
-        return self.program.term(path).eval(self, path)
+    def eval(self, nid: int = 0) -> object:
+        """Evaluate the term at ``nid``; return its value or None."""
+        return self.program.terms[nid].eval(self, nid)
 
-    async def aeval(self, path: Path = ()) -> object:
-        """Async-evaluate the term at ``path``; return its value or None."""
-        return await self.program.term(path).aeval(self, path)
+    async def aeval(self, nid: int = 0) -> object:
+        """Async-evaluate the term at ``nid``; return its value or None."""
+        return await self.program.terms[nid].aeval(self, nid)
 
     # --- sequential ---------------------------------------------------------
 
-    def eval_each(self, paths: Iterable[Path]) -> list:
-        """Evaluate every given path in order; return the values."""
-        return [self.eval(p) for p in paths]
+    def eval_each(self, nids: Iterable[int]) -> list:
+        """Evaluate every given nid in order; return the values."""
+        return [self.eval(n) for n in nids]
 
-    def eval_kids(self, path: Path) -> list:
-        """Evaluate every child of ``path`` in order; return the values."""
-        return self.eval_each(self.children(path))
-
-    async def aeval_each(self, paths: Iterable[Path]) -> list:
-        """Async-evaluate every given path in order; return the values."""
-        return [await self.aeval(p) for p in paths]
-
-    async def aeval_kids(self, path: Path) -> list:
-        """Async-evaluate every child of ``path`` in order; return the values."""
-        return await self.aeval_each(self.children(path))
+    async def aeval_each(self, nids: Iterable[int]) -> list:
+        """Async-evaluate every given nid in order; return the values."""
+        return [await self.aeval(n) for n in nids]
 
     # --- parallel: values ---------------------------------------------------
 
-    def eval_parallel(self, paths: Iterable[Path]) -> list:
+    def eval_parallel(self, nids: Iterable[int]) -> list:
         """Sync-parallel evaluation via the Budget's thread pool.
 
         Falls through to sequential when ``max_parallel == 1``. Values are
-        returned in the order of ``paths`` regardless of completion order.
+        returned in the order of ``nids`` regardless of completion order.
         """
-        paths = list(paths)
+        nids = list(nids)
         if self.budget.max_parallel == 1 or self.budget.thread_pool is None:
-            return self.eval_each(paths)
+            return self.eval_each(nids)
         pool = self.budget.thread_pool
-        futures = [pool.submit(self.eval, p) for p in paths]
+        futures = [pool.submit(self.eval, n) for n in nids]
         return [f.result() for f in futures]
 
-    async def aeval_parallel(self, paths: Iterable[Path]) -> list:
+    async def aeval_parallel(self, nids: Iterable[int]) -> list:
         """Async-parallel evaluation via ``asyncio.gather``, semaphore-gated."""
-        paths = list(paths)
+        nids = list(nids)
         if self.budget.max_parallel == 1 or self.budget.async_sem is None:
-            return await asyncio.gather(*(self.aeval(p) for p in paths))
+            return await asyncio.gather(*(self.aeval(n) for n in nids))
         sem = self.budget.async_sem
 
-        async def one(p: Path) -> object:
+        async def one(n: int) -> object:
             async with sem:
-                return await self.aeval(p)
+                return await self.aeval(n)
 
-        return await asyncio.gather(*(one(p) for p in paths))
+        return await asyncio.gather(*(one(n) for n in nids))
 
-    async def aeval_race(self, paths: Iterable[Path]) -> object:
+    async def aeval_race(self, nids: Iterable[int]) -> object:
         """Return the first child's value to complete; cancel the rest."""
-        paths = list(paths)
-        if not paths:
-            msg = "aeval_race needs at least one path"
+        nids = list(nids)
+        if not nids:
+            msg = "aeval_race needs at least one nid"
             raise ValueError(msg)
-        tasks = [asyncio.create_task(self.aeval(p)) for p in paths]
+        tasks = [asyncio.create_task(self.aeval(n)) for n in nids]
         try:
             done, _ = await asyncio.wait(
                 tasks,
@@ -141,37 +123,35 @@ class Runtime:
 
     # --- parallel: streams --------------------------------------------------
 
-    def merge(self, paths: Iterable[Path]) -> Iterable:
+    def merge(self, nids: Iterable[int]) -> Iterable:
         """Sync-merge multiple stream children via the thread pool + queue.
 
         Yields values in completion order (unordered across children). Falls
         through to sequential per-child iteration when ``max_parallel == 1``.
-        Each child iterable is wrapped with ``safely_closing`` so a caller's
-        short-circuit finalizes every child stream.
         """
         import queue as _queue
 
         from nu2.engine.evaluation.loop import safely_closing
 
-        paths = list(paths)
+        nids = list(nids)
         if self.budget.max_parallel == 1 or self.budget.thread_pool is None:
-            for p in paths:
-                with safely_closing(self.iter(p)) as gen:
+            for n in nids:
+                with safely_closing(self.iter(n)) as gen:
                     yield from gen
             return
 
         pool = self.budget.thread_pool
         q: _queue.Queue = _queue.Queue()
 
-        def drain(p: Path) -> None:
+        def drain(n: int) -> None:
             try:
-                with safely_closing(self.iter(p)) as gen:
+                with safely_closing(self.iter(n)) as gen:
                     for v in gen:
                         q.put(v)
             finally:
                 q.put(_DONE)
 
-        futures = [pool.submit(drain, p) for p in paths]
+        futures = [pool.submit(drain, n) for n in nids]
         remaining = len(futures)
         try:
             while remaining > 0:
@@ -184,35 +164,29 @@ class Runtime:
             for f in futures:
                 f.cancel()
 
-    async def amerge(self, paths: Iterable[Path]) -> AsyncIterable:
-        """Async-merge multiple stream children via tasks + asyncio.Queue.
-
-        Yields values in completion order (unordered). Falls through to
-        sequential per-child iteration when ``max_parallel == 1``. Each child
-        async iterable is wrapped with ``safely_aclosing`` so a caller's
-        short-circuit doesn't leak finalizer Tasks on the loop.
-        """
+    async def amerge(self, nids: Iterable[int]) -> AsyncIterable:
+        """Async-merge multiple stream children via tasks + asyncio.Queue."""
         from nu2.engine.evaluation.loop import safely_aclosing
 
-        paths = list(paths)
+        nids = list(nids)
         if self.budget.max_parallel == 1:
-            for p in paths:
-                async with safely_aclosing(await self.aiter(p)) as agen:
+            for n in nids:
+                async with safely_aclosing(await self.aiter(n)) as agen:
                     async for v in agen:
                         yield v
             return
 
         q: asyncio.Queue = asyncio.Queue()
 
-        async def drain(p: Path) -> None:
+        async def drain(n: int) -> None:
             try:
-                async with safely_aclosing(await self.aiter(p)) as agen:
+                async with safely_aclosing(await self.aiter(n)) as agen:
                     async for v in agen:
                         await q.put(v)
             finally:
                 await q.put(_DONE)
 
-        tasks = [asyncio.create_task(drain(p)) for p in paths]
+        tasks = [asyncio.create_task(drain(n)) for n in nids]
         remaining = len(tasks)
         try:
             while remaining > 0:
@@ -233,80 +207,43 @@ class Runtime:
 
     # --- stream helpers -----------------------------------------------------
 
-    def iter(self, path: Path) -> Iterable:
-        """Iterable view of a stream-yielding child.
-
-        Returns the raw iterable; the caller owns finalization. If you may
-        short-circuit, wrap with ``safely_closing`` to guarantee the
-        generator's frames are released. ``collect`` and ``merge`` do this
-        for you.
-        """
-        result = self.eval(path)
+    def iter(self, nid: int) -> Iterable:
+        """Iterable view of a stream-yielding child."""
+        result = self.eval(nid)
         return result if result is not None else ()
 
-    async def aiter(self, path: Path) -> AsyncIterable:
-        """Async-iterable view of a stream-yielding child.
-
-        Returns the raw async iterable. Short-circuiting iteration without
-        ``safely_aclosing`` (or ``contextlib.aclosing``) leaks finalizer Tasks
-        on the loop, retaining frames + Context. ``acollect`` / ``amerge`` do
-        this for you.
-        """
-        result = await self.aeval(path)
+    async def aiter(self, nid: int) -> AsyncIterable:
+        """Async-iterable view of a stream-yielding child."""
+        result = await self.aeval(nid)
         return result if result is not None else _empty_aiter()
 
-    def collect(self, path: Path) -> list:
-        """Materialize a stream child to a list.
-
-        Wraps the child iterable with ``safely_closing`` so an exception
-        mid-iteration still finalizes the generator.
-        """
+    def collect(self, nid: int) -> list:
+        """Materialize a stream child to a list."""
         from nu2.engine.evaluation.loop import safely_closing
 
-        with safely_closing(self.iter(path)) as gen:
+        with safely_closing(self.iter(nid)) as gen:
             return list(gen)
 
-    async def acollect(self, path: Path) -> list:
-        """Async-materialize a stream child to a list, with ``safely_aclosing``."""
+    async def acollect(self, nid: int) -> list:
+        """Async-materialize a stream child to a list."""
         from nu2.engine.evaluation.loop import safely_aclosing
 
         out: list = []
-        async with safely_aclosing(await self.aiter(path)) as agen:
+        async with safely_aclosing(await self.aiter(nid)) as agen:
             async for v in agen:
                 out.append(v)
         return out
 
-    # --- structure passthroughs --------------------------------------------
-
-    def children(self, path: Path) -> list[Path]:
-        """The child paths of ``path``."""
-        return self.program.children(path)
-
-    def payload(self, path: Path) -> dict:
-        """The payload of the term at ``path``."""
-        return self.program.payload(path)
-
-    def attr(self, path: Path, name: str) -> object:
-        """The attributed value of attribute ``name`` at ``path``."""
-        return self.program.attr(path, name)
-
     # --- boundary helpers ---------------------------------------------------
 
     def into_loop(self, coro: Awaitable) -> object:
-        """Run a coroutine to completion from inside sync ``eval``.
-
-        Use sparingly; the schema's ``on_loop`` should make this unnecessary
-        in well-formed programs. Escape hatch for ad-hoc bridges.
-        """
+        """Run a coroutine to completion from inside sync ``eval``."""
         from nu2.engine.evaluation.loop import into_loop
 
         return into_loop(coro)
 
     def in_thread(self, fn: Callable, *args: object, **kwargs: object) -> Future:
-        """Submit a blocking call to the Budget's thread pool; return the Future.
-
-        Raises if ``max_parallel == 1`` (no pool was allocated).
-        """
+        """Submit a blocking call to the Budget's thread pool; return the Future."""
         if self.budget.thread_pool is None:
             msg = "in_thread requires max_parallel > 1"
             raise RuntimeError(msg)
