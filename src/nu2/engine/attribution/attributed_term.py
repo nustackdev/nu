@@ -30,7 +30,7 @@ from nu2.engine.attribution.attr import Attr
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
 
     from nu2.engine.structure.attribute import Attribute, Schema
     from nu2.engine.structure.term import Term
@@ -56,6 +56,11 @@ class AttributedTerm:
         self.id_of: dict[Path, int] = {}
         # Attribute columns; one entry per computed attribute after the sweep.
         self.attrs: dict[str, list[object]] = {}
+        # Compiled per-nid thunks: each takes a Runtime, returns the node's
+        # value (sync) or an awaitable of it (async). Populated by
+        # ``_compile`` at the end of ``attribute``.
+        self.thunks: list[Callable] = []
+        self.athunks: list[Callable] = []
         self.attr = Attr(self)
         self._build_index(description)
 
@@ -129,6 +134,31 @@ class AttributedTerm:
         for cnid in self.kids[nid]:
             yield from self._walk_nid(cnid)
 
+    # --- compile ------------------------------------------------------------
+
+    def _compile(self) -> None:
+        """Build the per-nid sync and async thunk columns, children before parents.
+
+        Each ``Term.compile`` / ``Term.acompile`` receives its node's compiled
+        child thunks and returns a thunk that evaluates the subtree. The
+        reverse-preorder walk (``n - 1`` down to ``0``) guarantees a child's
+        thunk is in hand by the time its parent is compiled.
+        """
+        terms = self.terms
+        kids_col = self.kids
+        n = len(terms)
+        thunks: list[Callable] = [None] * n  # type: ignore[list-item]
+        athunks: list[Callable] = [None] * n  # type: ignore[list-item]
+        for nid in range(n - 1, -1, -1):
+            kids = kids_col[nid]
+            kid_thunks = tuple(thunks[k] for k in kids)
+            kid_athunks = tuple(athunks[k] for k in kids)
+            term = terms[nid]
+            thunks[nid] = term.compile(nid, kid_thunks)
+            athunks[nid] = term.acompile(nid, kid_athunks)
+        self.thunks = thunks
+        self.athunks = athunks
+
     # --- attribute read -----------------------------------------------------
 
     def _read(self, path: Path, name: str) -> object:
@@ -176,6 +206,7 @@ def attribute(description: Term, schema: Schema) -> AttributedTerm:
             _synthesize(program, spec, column)
         else:
             _inherit(program, spec, column)
+    program._compile()
     return program
 
 

@@ -52,12 +52,20 @@ class Runtime:
     # --- dispatch -----------------------------------------------------------
 
     def eval(self, nid: int = 0) -> object:
-        """Evaluate the term at ``nid``; return its value or None."""
-        return self.program.terms[nid].eval(self, nid)
+        """Evaluate the term at ``nid``; return its value or None.
+
+        Dispatches through the compiled thunk column. Optimized atoms have
+        baked their kid thunks into the closure, so the hot recursion runs
+        thunk-to-thunk without revisiting this method.
+        """
+        return self.program.thunks[nid](self)
 
     async def aeval(self, nid: int = 0) -> object:
-        """Async-evaluate the term at ``nid``; return its value or None."""
-        return await self.program.terms[nid].aeval(self, nid)
+        """Async-evaluate the term at ``nid``; return its value or None.
+
+        Dispatches through the compiled async thunk column, mirroring ``eval``.
+        """
+        return await self.program.athunks[nid](self)
 
     # --- sequential ---------------------------------------------------------
 

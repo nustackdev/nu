@@ -5,9 +5,12 @@ its payload; Add and Mul are commutative and associative, Sub, Div and Neg
 are neither. None touch the Context on their own - effects come from Ref
 children.
 
-Each atom implements ``eval`` and ``aeval``. Operand evaluation goes through
-the Runtime toolkit (``eval_kids_or_short`` / ``aeval_kids_or_short``) so an
-EMPTY or INVALID operand collapses the result to INVALID without folding.
+Each atom defines ``compile`` (sync hot path) and ``acompile`` (async hot
+path). Both return a thunk ``(rt) -> value`` (sync) or ``(rt) -> awaitable``
+(async) that captures the precompiled child thunks, so recursion skips the
+``Runtime.eval`` / ``Runtime.aeval`` dispatch hop per child. Sentinel
+propagation is inlined: an EMPTY or INVALID operand collapses the result to
+INVALID without further folding.
 """
 
 from __future__ import annotations
@@ -20,16 +23,11 @@ from nu2.lang.evaluation.sentinels import EMPTY, INVALID
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from nu2.lang.evaluation.runtime import NuRuntime as Runtime
 
 __all__ = ["Add", "Div", "Literal", "Mul", "Neg", "Sub"]
-
-
-def _product(values: list) -> object:
-    out: object = 1
-    for v in values:
-        out = out * v
-    return out
 
 
 class Literal(ScalarQuery):
@@ -39,11 +37,21 @@ class Literal(ScalarQuery):
         super().__init__()
         self.payload = {"value": value}
 
-    def eval(self, rt: Runtime, nid: int) -> object:  # noqa: D102
-        return self.payload["value"]
+    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        value = self.payload["value"]
 
-    async def aeval(self, rt: Runtime, nid: int) -> object:  # noqa: D102
-        return self.payload["value"]
+        def thunk(rt: Runtime) -> object:
+            return value
+
+        return thunk
+
+    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        value = self.payload["value"]
+
+        async def athunk(rt: Runtime) -> object:
+            return value
+
+        return athunk
 
 
 class Add(ScalarQuery):
@@ -52,23 +60,29 @@ class Add(ScalarQuery):
     commutative = Attribute.declared(True)
     associative = Attribute.declared(True)
 
-    def eval(self, rt: Runtime, nid: int) -> object:  # noqa: D102
-        s = 0
-        for cnid in rt.program.kids[nid]:
-            v = rt.eval(cnid)
-            if v is EMPTY or v is INVALID:
-                return INVALID
-            s += v
-        return s
+    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        def thunk(rt: Runtime) -> object:
+            s: object = 0
+            for kt in kids:
+                v = kt(rt)
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                s = s + v
+            return s
 
-    async def aeval(self, rt: Runtime, nid: int) -> object:  # noqa: D102
-        s = 0
-        for cnid in rt.program.kids[nid]:
-            v = await rt.aeval(cnid)
-            if v is EMPTY or v is INVALID:
-                return INVALID
-            s += v
-        return s
+        return thunk
+
+    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        async def athunk(rt: Runtime) -> object:
+            s: object = 0
+            for kt in kids:
+                v = await kt(rt)
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                s = s + v
+            return s
+
+        return athunk
 
 
 class Mul(ScalarQuery):
@@ -77,86 +91,116 @@ class Mul(ScalarQuery):
     commutative = Attribute.declared(True)
     associative = Attribute.declared(True)
 
-    def eval(self, rt: Runtime, nid: int) -> object:  # noqa: D102
-        out: object = 1
-        for cnid in rt.program.kids[nid]:
-            v = rt.eval(cnid)
-            if v is EMPTY or v is INVALID:
-                return INVALID
-            out = out * v
-        return out
+    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        def thunk(rt: Runtime) -> object:
+            out: object = 1
+            for kt in kids:
+                v = kt(rt)
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                out = out * v
+            return out
 
-    async def aeval(self, rt: Runtime, nid: int) -> object:  # noqa: D102
-        out: object = 1
-        for cnid in rt.program.kids[nid]:
-            v = await rt.aeval(cnid)
-            if v is EMPTY or v is INVALID:
-                return INVALID
-            out = out * v
-        return out
+        return thunk
+
+    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        async def athunk(rt: Runtime) -> object:
+            out: object = 1
+            for kt in kids:
+                v = await kt(rt)
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                out = out * v
+            return out
+
+        return athunk
 
 
 class Sub(ScalarQuery):
     """The first child minus the second."""
 
-    def eval(self, rt: Runtime, nid: int) -> object:  # noqa: D102
-        kids = rt.program.kids[nid]
-        a = rt.eval(kids[0])
-        if a is EMPTY or a is INVALID:
-            return INVALID
-        b = rt.eval(kids[1])
-        if b is EMPTY or b is INVALID:
-            return INVALID
-        return a - b
+    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        left, right = kids
 
-    async def aeval(self, rt: Runtime, nid: int) -> object:  # noqa: D102
-        kids = rt.program.kids[nid]
-        a = await rt.aeval(kids[0])
-        if a is EMPTY or a is INVALID:
-            return INVALID
-        b = await rt.aeval(kids[1])
-        if b is EMPTY or b is INVALID:
-            return INVALID
-        return a - b
+        def thunk(rt: Runtime) -> object:
+            a = left(rt)
+            if a is EMPTY or a is INVALID:
+                return INVALID
+            b = right(rt)
+            if b is EMPTY or b is INVALID:
+                return INVALID
+            return a - b
+
+        return thunk
+
+    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        left, right = kids
+
+        async def athunk(rt: Runtime) -> object:
+            a = await left(rt)
+            if a is EMPTY or a is INVALID:
+                return INVALID
+            b = await right(rt)
+            if b is EMPTY or b is INVALID:
+                return INVALID
+            return a - b
+
+        return athunk
 
 
 class Div(ScalarQuery):
     """The first child divided by the second."""
 
-    def eval(self, rt: Runtime, nid: int) -> object:  # noqa: D102
-        kids = rt.program.kids[nid]
-        a = rt.eval(kids[0])
-        if a is EMPTY or a is INVALID:
-            return INVALID
-        b = rt.eval(kids[1])
-        if b is EMPTY or b is INVALID:
-            return INVALID
-        return a / b
+    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        left, right = kids
 
-    async def aeval(self, rt: Runtime, nid: int) -> object:  # noqa: D102
-        kids = rt.program.kids[nid]
-        a = await rt.aeval(kids[0])
-        if a is EMPTY or a is INVALID:
-            return INVALID
-        b = await rt.aeval(kids[1])
-        if b is EMPTY or b is INVALID:
-            return INVALID
-        return a / b
+        def thunk(rt: Runtime) -> object:
+            a = left(rt)
+            if a is EMPTY or a is INVALID:
+                return INVALID
+            b = right(rt)
+            if b is EMPTY or b is INVALID:
+                return INVALID
+            return a / b
+
+        return thunk
+
+    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        left, right = kids
+
+        async def athunk(rt: Runtime) -> object:
+            a = await left(rt)
+            if a is EMPTY or a is INVALID:
+                return INVALID
+            b = await right(rt)
+            if b is EMPTY or b is INVALID:
+                return INVALID
+            return a / b
+
+        return athunk
 
 
 class Neg(ScalarQuery):
     """The arithmetic negation of its one child."""
 
-    def eval(self, rt: Runtime, nid: int) -> object:  # noqa: D102
-        (cnid,) = rt.program.kids[nid]
-        v = rt.eval(cnid)
-        if v is EMPTY or v is INVALID:
-            return INVALID
-        return -v
+    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = kids
 
-    async def aeval(self, rt: Runtime, nid: int) -> object:  # noqa: D102
-        (cnid,) = rt.program.kids[nid]
-        v = await rt.aeval(cnid)
-        if v is EMPTY or v is INVALID:
-            return INVALID
-        return -v
+        def thunk(rt: Runtime) -> object:
+            v = only(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            return -v
+
+        return thunk
+
+    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = kids
+
+        async def athunk(rt: Runtime) -> object:
+            v = await only(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            return -v
+
+        return athunk

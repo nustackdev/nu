@@ -13,6 +13,7 @@ from nu2.engine.structure.attribute import Attribute
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from typing import ClassVar, Self
 
 __all__ = ["Term", "TermMeta"]
@@ -62,6 +63,33 @@ class Term(metaclass=TermMeta):
         variant.children = children
         variant.payload = self.payload
         return variant
+
+    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:
+        """Build a thunk ``(rt) -> value`` for this Term at ``nid``.
+
+        The default falls back to ``self.eval(rt, nid)`` so atoms that have not
+        adopted the compile contract keep working. Atoms on the hot path
+        override this to capture ``kids`` (a tuple of child thunks) and call
+        them directly, skipping the ``Runtime.eval`` / ``terms[nid].eval``
+        double indirection per child.
+        """
+
+        def thunk(rt: object) -> object:
+            return self.eval(rt, nid)
+
+        return thunk
+
+    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:
+        """Async sibling of ``compile``: build an async thunk ``(rt) -> awaitable``.
+
+        Default falls back to ``self.aeval(rt, nid)``. Atoms override to capture
+        their async child thunks and skip the ``Runtime.aeval`` indirection.
+        """
+
+        async def athunk(rt: object) -> object:
+            return await self.aeval(rt, nid)
+
+        return athunk
 
     def __repr__(self) -> str:
         if "name" in self.payload:
