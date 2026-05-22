@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 from nu2.engine.structure import Attribute, Term
 from nu2.lang.attrs import Attr
 from nu2.lang.cardinality import Cardinality
+from nu2.lang.nu import Nu
 
 
 if TYPE_CHECKING:
@@ -147,7 +148,7 @@ MATRIX: dict[Sort, frozenset[Sort]] = {
 # --- the sort taxonomy: the Term classes that declare the sorts -----------
 
 
-class Ref(Term):
+class Ref(Nu):
     """A name for a Context location: a leaf, or keyed by child Refs."""
 
     sort = Attribute.declared(Sort.REF)
@@ -158,7 +159,7 @@ class Ref(Term):
         self.payload = {"name": name}
 
 
-class Interaction(Term):
+class Interaction(Nu):
     """Abstract: a node that interacts with the Context. Never instantiated.
 
     Concrete sub-kinds implement ``eval`` / ``aeval`` to drive execution.

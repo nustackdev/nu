@@ -37,6 +37,7 @@ from nu2.lang.cardinality import Cardinality
 from nu2.lang.effects import Effect, EffectSet
 from nu2.lang.execution import ExecOrder
 from nu2.lang.laws import LAWS
+from nu2.lang.nu import Nu
 from nu2.lang.schema import build_schema
 from nu2.lang.sentinels import (
     EMPTY,
@@ -92,6 +93,7 @@ __all__ = [
     "Interaction",
     "Invalid",
     "Law",
+    "Nu",
     "Policy",
     "Predicate",
     "Query",
