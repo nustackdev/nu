@@ -30,8 +30,8 @@ class Eq(ScalarQuery):
 
     commutative = Attribute.declared(True)
 
-    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        left, right = kids
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        left, right = children
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
@@ -44,8 +44,8 @@ class Eq(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        left, right = kids
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        left, right = children
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
@@ -62,8 +62,8 @@ class Eq(ScalarQuery):
 class Lt(ScalarQuery):
     """Whether the first child is less than the second."""
 
-    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        left, right = kids
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        left, right = children
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
@@ -76,8 +76,8 @@ class Lt(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        left, right = kids
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        left, right = children
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
@@ -98,11 +98,11 @@ class And(ScalarQuery):
     associative = Attribute.declared(True)
     idempotent = Attribute.declared(True)
 
-    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
             out = True
-            for kt in kids:
-                v = kt(rt)
+            for ct in children:
+                v = ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
                 out = out and bool(v)
@@ -110,11 +110,11 @@ class And(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
             out = True
-            for kt in kids:
-                v = await kt(rt)
+            for ct in children:
+                v = await ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
                 out = out and bool(v)
@@ -130,11 +130,11 @@ class Or(ScalarQuery):
     associative = Attribute.declared(True)
     idempotent = Attribute.declared(True)
 
-    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
             out = False
-            for kt in kids:
-                v = kt(rt)
+            for ct in children:
+                v = ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
                 out = out or bool(v)
@@ -142,11 +142,11 @@ class Or(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
             out = False
-            for kt in kids:
-                v = await kt(rt)
+            for ct in children:
+                v = await ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
                 out = out or bool(v)
@@ -158,8 +158,8 @@ class Or(ScalarQuery):
 class Not(ScalarQuery):
     """The negation of its one boolean child."""
 
-    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        (only,) = kids
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = children
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
@@ -169,8 +169,8 @@ class Not(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        (only,) = kids
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = children
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)

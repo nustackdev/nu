@@ -21,8 +21,7 @@ from nu2.lang.structure.attrs.names import Attr
 
 
 if TYPE_CHECKING:
-    from nu2.engine.attribution import AttributedTerm
-    from nu2.engine.attribution.attributed_term import Path
+    from nu2.engine.compilation import Path, Program
 
 __all__ = [
     "ATTRIBUTES",
@@ -133,14 +132,14 @@ MATRIX: dict[Sort, frozenset[Sort]] = {
 # --- has_command: a sort fold -----------------------------------------------
 
 
-def _is_command(program: AttributedTerm, path: Path) -> bool:
+def _is_command(program: Program, path: Path) -> bool:
     """A node is itself a Command."""
     return subsort(program.attr(path, Attr.SORT), Sort.COMMAND)
 
 
-def _any(own: bool, kids: list[bool]) -> bool:
+def _any(own: bool, children: list[bool]) -> bool:
     """Fold a flag up a subtree by disjunction."""
-    return own or any(kids)
+    return own or any(children)
 
 
 ATTRIBUTES: tuple[Attribute, ...] = (

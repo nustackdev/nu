@@ -56,29 +56,6 @@ class NuRuntime(Runtime):
             values.append(v)
         return values
 
-    def eval_kids_or_short(self, nid: int) -> list | object:
-        """Sugar: ``eval_or_short`` over the child nids of ``nid``."""
-        kids = self.program.kids[nid]
-        eval_ = self.eval
-        values: list = []
-        for c in kids:
-            v = eval_(c)
-            if v is EMPTY or v is INVALID:
-                return INVALID
-            values.append(v)
-        return values
-
-    async def aeval_kids_or_short(self, nid: int) -> list | object:
-        """Async sugar for child nids of ``nid``."""
-        kids = self.program.kids[nid]
-        values: list = []
-        for c in kids:
-            v = await self.aeval(c)
-            if v is EMPTY or v is INVALID:
-                return INVALID
-            values.append(v)
-        return values
-
     # --- sentinel-propagating parallel -------------------------------------
 
     def eval_parallel_or_short(self, nids: Iterable[int]) -> list | object:

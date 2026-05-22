@@ -21,12 +21,12 @@ from typing import TYPE_CHECKING, NamedTuple
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu2.engine.attribution.attributed_term import AttributedTerm, Path
+    from nu2.engine.compilation.program import Path, Program
     from nu2.engine.validation.predicate import Test
 
 __all__ = ["Law", "Message", "Severity", "Violation", "gate", "validate"]
 
-type Message = str | Callable[["AttributedTerm", "Path"], str]
+type Message = str | Callable[["Program", "Path"], str]
 
 
 class Severity(StrEnum):
@@ -46,7 +46,7 @@ class Violation(NamedTuple):
 
 
 class Law:
-    """A declarative validity rule over one node of an attributed program."""
+    """A declarative validity rule over one node of a compiled Program."""
 
     def __init__(
         self,
@@ -63,7 +63,7 @@ class Law:
         self.message = message
         self.severity = severity
 
-    def check(self, program: AttributedTerm, path: Path) -> Violation | None:
+    def check(self, program: Program, path: Path) -> Violation | None:
         """The Violation this law yields at ``path``, or ``None`` if it holds."""
         if not self.scope(program, path) or self.holds(program, path):
             return None
@@ -74,7 +74,7 @@ class Law:
         return f"Law({self.name!r})"
 
 
-def gate(program: AttributedTerm, *laws: Law) -> list[Violation]:
+def gate(program: Program, *laws: Law) -> list[Violation]:
     """Run every law over every node and return every Violation found."""
     return [
         violation
@@ -84,7 +84,7 @@ def gate(program: AttributedTerm, *laws: Law) -> list[Violation]:
     ]
 
 
-def validate(program: AttributedTerm, *laws: Law) -> AttributedTerm:
+def validate(program: Program, *laws: Law) -> Program:
     """Run a gate; raise on any error-level Violation, else return the program.
 
     Warning-level violations pass through; read them with ``gate`` directly.

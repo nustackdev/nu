@@ -15,11 +15,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu2.engine.attribution.attributed_term import AttributedTerm, Path
+    from nu2.engine.compilation.program import Path, Program
 
 __all__ = ["Predicate", "Test", "predicate"]
 
-type Test = Callable[["AttributedTerm", "Path"], bool]
+type Test = Callable[["Program", "Path"], bool]
 
 
 class Predicate:
@@ -30,7 +30,7 @@ class Predicate:
         self.__name__ = getattr(test, "__name__", "predicate")
         self.__doc__ = getattr(test, "__doc__", None)
 
-    def __call__(self, program: AttributedTerm, path: Path) -> bool:
+    def __call__(self, program: Program, path: Path) -> bool:
         """Run the test against ``path`` in ``program``."""
         return self._test(program, path)
 

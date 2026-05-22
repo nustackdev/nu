@@ -20,7 +20,7 @@ def test_declared_constructor():
 
 def test_synthesized_constructor():
     base = lambda p, path: 0  # noqa: E731
-    combine = lambda own, kids: own  # noqa: E731
+    combine = lambda own, children: own  # noqa: E731
     a = Attribute.synthesized("size", base, combine, reads=("sort",))
     assert a.flavor == "synthesized"
     assert a.base is base
@@ -57,7 +57,7 @@ def test_per_class_overrides_global():
 
 
 def _noop_synth(name, reads):
-    return Attribute.synthesized(name, lambda p, path: 0, lambda own, kids: own, reads=reads)
+    return Attribute.synthesized(name, lambda p, path: 0, lambda own, children: own, reads=reads)
 
 
 def test_finalize_topo_order_respects_reads():

@@ -16,8 +16,7 @@ from nu2.lang.structure.attrs.names import Attr
 
 
 if TYPE_CHECKING:
-    from nu2.engine.attribution import AttributedTerm
-    from nu2.engine.attribution.attributed_term import Path
+    from nu2.engine.compilation import Path, Program
 
 __all__ = ["ATTRIBUTES", "Cardinality"]
 
@@ -31,16 +30,16 @@ class Cardinality(StrEnum):
     TRANSPARENT = "transparent"
 
 
-def _own_cardinality(program: AttributedTerm, path: Path) -> Cardinality:
+def _own_cardinality(program: Program, path: Path) -> Cardinality:
     """A node's cardinality as its sort declares it, before Span resolution."""
     return program.attr(path, Attr.CARDINALITY)
 
 
-def _resolve_cardinality(own: Cardinality, kids: list[Cardinality]) -> Cardinality:
+def _resolve_cardinality(own: Cardinality, children: list[Cardinality]) -> Cardinality:
     """Resolve cardinality: a Span (declared TRANSPARENT) takes its body's; else fixed."""
     if own is not Cardinality.TRANSPARENT:
         return own
-    return kids[0] if kids else Cardinality.VOID
+    return children[0] if children else Cardinality.VOID
 
 
 ATTRIBUTES: tuple[Attribute, ...] = (

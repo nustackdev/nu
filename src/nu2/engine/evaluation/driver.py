@@ -1,14 +1,15 @@
 """Runtime - the generic per-execution driver.
 
-A thin object that walks an AttributedTerm by ``nid`` and dispatches to each
-Term's ``eval`` / ``aeval`` method. Domain-free: knows nothing of sentinels
-(the language layer's ``NuRuntime`` subclass adds those).
+A thin object that drives a compiled ``Program`` by ``nid``. Domain-free:
+knows nothing of sentinels (the language layer's ``NuRuntime`` subclass adds
+those).
 
-Hot-path contract: dispatch is one method call (``term.eval(rt, nid)``).
-Atoms reach for their own ``self.children`` and ``self.payload`` and recurse
-via ``rt.eval(cnid)``. Attribute reads go directly through
-``rt.program.attrs[name][nid]``. The Runtime exposes only what the dispatcher
-must do; trivial passthroughs are deleted.
+Hot-path contract: dispatch is one indexed call into the precompiled thunk
+column - ``program.thunks[nid](rt)`` (sync) or ``program.athunks[nid](rt)``
+(async). Each thunk captures its child thunks, so recursion is closure to
+closure with no method lookup. Attribute reads go directly through
+``rt.program.attrs[name][nid]``. The Runtime exposes only what the
+dispatcher must do; trivial passthroughs are deleted.
 
 Compositional helpers (``eval_each`` / ``eval_parallel`` / ``merge`` /
 ``amerge``) accept iterables of ``nid`` and do real work (pools, semaphores,
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable, Iterable
     from concurrent.futures import Future
 
-    from nu2.engine.attribution import AttributedTerm
+    from nu2.engine.compilation import Program
     from nu2.engine.evaluation.budget import Budget
 
 __all__ = ["Runtime"]
@@ -36,13 +37,11 @@ _DONE = object()
 
 
 class Runtime:
-    """Per-execution driver. Holds the attributed program, the Context, and a Budget."""
+    """Per-execution driver. Holds the compiled Program, the Context, and a Budget."""
 
     __slots__ = ("budget", "ctx", "program")
 
-    def __init__(
-        self, program: AttributedTerm, ctx: object, *, budget: Budget | None = None
-    ) -> None:
+    def __init__(self, program: Program, ctx: object, *, budget: Budget | None = None) -> None:
         from nu2.engine.evaluation.budget import Budget as _Budget
 
         self.program = program
@@ -52,18 +51,18 @@ class Runtime:
     # --- dispatch -----------------------------------------------------------
 
     def eval(self, nid: int = 0) -> object:
-        """Evaluate the term at ``nid``; return its value or None.
+        """Evaluate the node at ``nid``; return its value or None.
 
-        Dispatches through the compiled thunk column. Optimized atoms have
-        baked their kid thunks into the closure, so the hot recursion runs
-        thunk-to-thunk without revisiting this method.
+        Dispatches through the precompiled thunk column. Each thunk has its
+        child thunks captured in its closure, so the hot recursion runs
+        thunk-to-thunk and never re-enters this method.
         """
         return self.program.thunks[nid](self)
 
     async def aeval(self, nid: int = 0) -> object:
-        """Async-evaluate the term at ``nid``; return its value or None.
+        """Async-evaluate the node at ``nid``; return its value or None.
 
-        Dispatches through the compiled async thunk column, mirroring ``eval``.
+        Mirror of ``eval`` through the precompiled async thunk column.
         """
         return await self.program.athunks[nid](self)
 

@@ -8,8 +8,8 @@ Two modules:
   (``Severity``, ``Violation``) and the verdict runners (``gate``,
   ``validate``).
 
-Validation operates over an ``AttributedTerm`` from
-``engine.attribution`` - this package judges, it never builds.
+Validation operates over a ``Program`` from ``engine.compilation`` - this
+package judges, it never builds.
 """
 
 from nu2.engine.validation.law import Law, Severity, Violation, gate, validate

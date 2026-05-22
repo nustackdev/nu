@@ -12,7 +12,7 @@ from nu2.engine import (
     Severity,
     Term,
     Violation,
-    attribute,
+    compile,
     gate,
     validate,
 )
@@ -24,11 +24,11 @@ class Node(Term):
 
 def make_program(*children):
     schema = Schema().finalize()
-    return attribute(Node(*children), schema)
+    return compile(Node(*children), schema)
 
 
 def _is_leaf(program, path):
-    return not program.children(path)
+    return not program.children[program.id_of[path]]
 
 
 leaves_only = Law(
@@ -113,6 +113,7 @@ def test_message_may_be_a_function_of_the_node():
 
 def test_gate_does_not_mutate_the_program():
     program = make_program(Node())
-    before = len(program.attr.rows())
+    before = {name: list(col) for name, col in program.attrs.items()}
     gate(program, leaves_only)
-    assert len(program.attr.rows()) == before
+    after = {name: list(col) for name, col in program.attrs.items()}
+    assert after == before

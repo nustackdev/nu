@@ -9,16 +9,15 @@ phase axis the engine uses:
 - ``evaluation`` - how programs run: ``NuRuntime``, ``Context``, sentinels.
 - ``entry``      - top-level user-facing entries (``run``, ``eval``, ...).
 
-A description is built from the sort taxonomy, ``attribute``d against the
-schema, then queried, ``gate``d or ``validate``d, then driven through an
-entry point.
+A Term is built from the sort taxonomy, ``compile``d against the schema,
+then ``gate``d or ``validate``d, then driven through an entry point.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.attribution import attribute as _attribute
+from nu2.engine.compilation import compile as _compile
 from nu2.engine.validation import (
     Law,
     Predicate,
@@ -70,7 +69,7 @@ from nu2.lang.structure import (
 
 
 if TYPE_CHECKING:
-    from nu2.engine.attribution import AttributedTerm
+    from nu2.engine.compilation import Program
     from nu2.engine.structure import Schema, Term
 
 __all__ = [
@@ -108,8 +107,8 @@ __all__ = [
     "Strategy",
     "StreamQuery",
     "Violation",
-    "attribute",
     "build_schema",
+    "compile",
     "gate",
     "is_empty",
     "is_invalid",
@@ -124,6 +123,6 @@ __all__ = [
 SCHEMA: Schema = build_schema()
 
 
-def attribute(description: Term) -> AttributedTerm:
-    """Attribute a Nu description against the Nu schema."""
-    return _attribute(description, SCHEMA)
+def compile(term: Term) -> Program:
+    """Compile a Nu Term against the Nu schema; return a runnable Program."""
+    return _compile(term, SCHEMA)

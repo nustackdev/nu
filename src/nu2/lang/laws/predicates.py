@@ -18,8 +18,7 @@ from nu2.lang.structure.attrs import MATRIX, Attr, Sort, matrix_sort, subsort
 
 
 if TYPE_CHECKING:
-    from nu2.engine.attribution import AttributedTerm
-    from nu2.engine.attribution.attributed_term import Path
+    from nu2.engine.compilation import Path, Program
     from nu2.lang.structure.attrs import Cardinality, Effect
 
 __all__ = [
@@ -36,6 +35,12 @@ __all__ = [
     "ref_slot_detail",
     "ref_slots_hold_refs",
 ]
+
+
+def _child_paths(program: Program, path: Path) -> list[Path]:
+    """The child paths of ``path``. Local helper for path-keyed predicates."""
+    path_of = program.path_of
+    return [path_of[c] for c in program.children[program.id_of[path]]]
 
 
 # --- scope predicates: which nodes a law judges --------------------------
@@ -57,9 +62,9 @@ def attr_true(name: Attr) -> Predicate:
 
 
 @predicate
-def has_children(program: AttributedTerm, path: Path) -> bool:
+def has_children(program: Program, path: Path) -> bool:
     """Nodes that hold at least one child."""
-    return bool(program.children(path))
+    return bool(program.children[program.id_of[path]])
 
 
 # --- holds predicates: the condition a scoped node must satisfy ----------
@@ -89,7 +94,7 @@ def no_child_yields(cardinality: Cardinality) -> Predicate:
     return Predicate(
         lambda program, path: all(
             program.attr(child, Attr.CHILD_CARDINALITY) is not cardinality
-            for child in program.children(path)
+            for child in _child_paths(program, path)
         )
     )
 
@@ -97,7 +102,7 @@ def no_child_yields(cardinality: Cardinality) -> Predicate:
 # --- composition matrix --------------------------------------------------
 
 
-def _slot_fit_sort(program: AttributedTerm, path: Path) -> Sort | None:
+def _slot_fit_sort(program: Program, path: Path) -> Sort | None:
     """The matrix sort a parent sees for the node at ``path``, through Spans.
 
     A Span is transparent: its parent slot-fits it by the sort of its body.
@@ -105,16 +110,16 @@ def _slot_fit_sort(program: AttributedTerm, path: Path) -> Sort | None:
     sort: Sort = program.attr(path, Attr.SORT)
     if not subsort(sort, Sort.SPAN):
         return matrix_sort(sort)
-    body = program.children(path)
+    body = _child_paths(program, path)
     return _slot_fit_sort(program, body[0]) if body else matrix_sort(sort)
 
 
-def _rejected_child(program: AttributedTerm, path: Path) -> Path | None:
+def _rejected_child(program: Program, path: Path) -> Path | None:
     """The first child the node's composition matrix row rejects, if any."""
     row = matrix_sort(program.attr(path, Attr.SORT))
     if row is None:
         return None
-    for child in program.children(path):
+    for child in _child_paths(program, path):
         fit = _slot_fit_sort(program, child)
         if fit is not None and fit not in MATRIX[row]:
             return child
@@ -122,12 +127,12 @@ def _rejected_child(program: AttributedTerm, path: Path) -> Path | None:
 
 
 @predicate
-def composes(program: AttributedTerm, path: Path) -> bool:
+def composes(program: Program, path: Path) -> bool:
     """Holds when every child fits the node's composition matrix row."""
     return _rejected_child(program, path) is None
 
 
-def compose_detail(program: AttributedTerm, path: Path) -> str:
+def compose_detail(program: Program, path: Path) -> str:
     """Name the parent sort and the child sort its matrix rejects."""
     parent = matrix_sort(program.attr(path, Attr.SORT))
     child = _rejected_child(program, path)
@@ -138,21 +143,21 @@ def compose_detail(program: AttributedTerm, path: Path) -> str:
 # --- ref-typed slots -----------------------------------------------------
 
 
-def _unfilled_ref_slot(program: AttributedTerm, path: Path) -> int | None:
+def _unfilled_ref_slot(program: Program, path: Path) -> int | None:
     """The first annotated effect slot not filled by a Ref, if any."""
-    kids = program.children(path)
+    children = _child_paths(program, path)
     for slot in program.attr(path, Attr.OWN_EFFECTS):
-        if slot < len(kids) and program.attr(kids[slot], Attr.SORT) is not Sort.REF:
+        if slot < len(children) and program.attr(children[slot], Attr.SORT) is not Sort.REF:
             return slot
     return None
 
 
 @predicate
-def ref_slots_hold_refs(program: AttributedTerm, path: Path) -> bool:
+def ref_slots_hold_refs(program: Program, path: Path) -> bool:
     """Holds when every annotated effect slot present is filled by a Ref."""
     return _unfilled_ref_slot(program, path) is None
 
 
-def ref_slot_detail(program: AttributedTerm, path: Path) -> str:
+def ref_slot_detail(program: Program, path: Path) -> str:
     """Name the annotated slot that should hold a Ref but does not."""
     return f"slot {_unfilled_ref_slot(program, path)} must hold a Ref"

@@ -1,6 +1,6 @@
 """Context - tagged value store for execution.
 
-The runtime environment the runtime drives an AttributedTerm against. Two axes:
+The runtime environment the runtime drives a Program against. Two axes:
 
 - ``ctx.attrs`` - flat key-value store. Refs read and write here.
 - ``bind`` / ``get`` - typed service bindings with scope tags and predicate

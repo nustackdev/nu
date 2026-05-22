@@ -64,14 +64,14 @@ class Term(metaclass=TermMeta):
         variant.payload = self.payload
         return variant
 
-    def compile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build a thunk ``(rt) -> value`` for this Term at ``nid``.
 
         The default falls back to ``self.eval(rt, nid)`` so atoms that have not
         adopted the compile contract keep working. Atoms on the hot path
-        override this to capture ``kids`` (a tuple of child thunks) and call
-        them directly, skipping the ``Runtime.eval`` / ``terms[nid].eval``
-        double indirection per child.
+        override this to capture ``children`` (a tuple of child thunks) and
+        call them directly, skipping the ``Runtime.eval`` /
+        ``terms[nid].eval`` double indirection per child.
         """
 
         def thunk(rt: object) -> object:
@@ -79,7 +79,7 @@ class Term(metaclass=TermMeta):
 
         return thunk
 
-    def acompile(self, nid: int, kids: tuple[Callable, ...]) -> Callable:
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Async sibling of ``compile``: build an async thunk ``(rt) -> awaitable``.
 
         Default falls back to ``self.aeval(rt, nid)``. Atoms override to capture

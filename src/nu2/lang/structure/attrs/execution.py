@@ -18,8 +18,7 @@ from nu2.lang.structure.attrs.names import Attr
 
 
 if TYPE_CHECKING:
-    from nu2.engine.attribution import AttributedTerm
-    from nu2.engine.attribution.attributed_term import Path
+    from nu2.engine.compilation import Path, Program
 
 __all__ = ["ATTRIBUTES", "ExecOrder"]
 
@@ -31,27 +30,27 @@ class ExecOrder(StrEnum):
     PARALLEL = "parallel"
 
 
-def _async_only(program: AttributedTerm, path: Path) -> bool:
+def _async_only(program: Program, path: Path) -> bool:
     """A node's sort requires async, so it requires a loop."""
     return program.attr(path, Attr.REQUIRES_ASYNC)
 
 
-def _sync_only(program: AttributedTerm, path: Path) -> bool:
+def _sync_only(program: Program, path: Path) -> bool:
     """A node's sort has no async affinity, so it belongs off a loop."""
     return not program.attr(path, Attr.ASYNC_AFFINITY)
 
 
-def _any(own: bool, kids: list[bool]) -> bool:
+def _any(own: bool, children: list[bool]) -> bool:
     """Fold a flag up a subtree by disjunction."""
-    return own or any(kids)
+    return own or any(children)
 
 
-def _on_loop_root(program: AttributedTerm, path: Path) -> bool:
+def _on_loop_root(program: Program, path: Path) -> bool:
     """The root runs on a loop exactly when its subtree holds an async-only atom."""
     return program.attr(path, Attr.HAS_ASYNC_ONLY_ATOM)
 
 
-def _on_loop_derive(program: AttributedTerm, parent: Path, slot: int, inherited: bool) -> bool:
+def _on_loop_derive(program: Program, parent: Path, slot: int, inherited: bool) -> bool:
     """Thread on_loop down; resolve per-child under a parallel parent.
 
     A sequential parent passes its value straight through. A parallel Flow

@@ -1,14 +1,14 @@
-"""End-to-end: a POC-style layer-1 slice run on the attribute layer.
+"""End-to-end: a POC-style layer-1 slice run on the compilation layer.
 
-Construct -> attribute -> query -> gate, with declared, synthesized, and
-inherited attributes all in play.
+Construct -> compile -> read attributes -> gate, with declared, synthesized,
+and inherited attributes all in play.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from nu2.engine import Attribute, Law, Schema, Term, attribute, gate, validate
+from nu2.engine import Attribute, Law, Schema, Term, compile, gate, validate
 
 
 _SORT_PARENT = {"ScalarQuery": "Query", "Ref": "Query", "Literal": "Query", "ScalarCmd": "Command"}
@@ -22,15 +22,20 @@ def _subsort(a, b):
     return False
 
 
+def _child_paths(program, path):
+    path_of = program.path_of
+    return [path_of[c] for c in program.children[program.id_of[path]]]
+
+
 def _own_effects(program, path):
     declared = program.attr(path, "own_effects")
-    kids = program.children(path)
+    children = _child_paths(program, path)
     out = set()
     for slot, eff in declared.items():
-        child = kids[slot]
+        child = children[slot]
         if _subsort(program.attr(child, "sort"), "Ref"):
             out.add((program.payload(child)["name"], eff))
-    for i, child in enumerate(kids):
+    for i, child in enumerate(children):
         if i not in declared and _subsort(program.attr(child, "sort"), "Ref"):
             out.add((program.payload(child)["name"], "read"))
     return frozenset(out)
@@ -43,7 +48,7 @@ def build_schema():
         Attribute.synthesized(
             "tracked_effects",
             base=_own_effects,
-            combine=lambda own, kids: frozenset(own).union(*kids),
+            combine=lambda own, children: frozenset(own).union(*children),
             reads=("own_effects", "sort"),
         )
     )
@@ -51,7 +56,7 @@ def build_schema():
         Attribute.synthesized(
             "is_pure",
             base=lambda program, path: not program.attr(path, "tracked_effects"),
-            combine=lambda own, kids: own and all(kids),
+            combine=lambda own, children: own and all(children),
             reads=("tracked_effects",),
         )
     )
@@ -93,7 +98,7 @@ class Put(Term):
 put_target = Law(
     "put_target",
     scope=lambda program, path: program.kind(path) is Put,
-    holds=lambda program, path: program.kind(program.children(path)[0]) is Ref,
+    holds=lambda program, path: program.kind(_child_paths(program, path)[0]) is Ref,
     message="Put slot 0 must be a Ref",
 )
 
@@ -108,9 +113,9 @@ def test_dependency_order(schema):
     assert order.index("tracked_effects") < order.index("is_pure")
 
 
-def test_construct_attribute_query(schema):
+def test_construct_compile_read(schema):
     counter = Ref("counter")
-    program = attribute(Put(counter, Add(counter, Literal(1))), schema)
+    program = compile(Put(counter, Add(counter, Literal(1))), schema)
 
     # synthesized: purity folds bottom-up.
     assert program.attr(program.root, "is_pure") is False
@@ -121,19 +126,17 @@ def test_construct_attribute_query(schema):
     assert program.attr((0,), "ancestor_kinds") == ("Put",)
     assert program.attr((1, 0), "ancestor_kinds") == ("Put", "Add")
 
-    # the relation queries.
-    writes = program.attr.rows(name="tracked_effects").where(
-        lambda r: any(e == "write" for _, e in r["value"])
-    )
-    assert sorted(writes.paths()) == [()]
+    # the root's tracked_effects holds the write.
+    effects = program.attrs["tracked_effects"][0]
+    assert any(e == "write" for _, e in effects)
 
 
 def test_gate_and_validate(schema):
-    valid = attribute(Put(Ref("c"), Literal(1)), schema)
+    valid = compile(Put(Ref("c"), Literal(1)), schema)
     assert gate(valid, put_target) == []
     assert validate(valid, put_target) is valid
 
-    invalid = attribute(Put(Literal(0), Literal(1)), schema)
+    invalid = compile(Put(Literal(0), Literal(1)), schema)
     verdict = gate(invalid, put_target)
     assert len(verdict) == 1 and verdict[0].law == "put_target"
     with pytest.raises(ValueError, match="put_target"):
