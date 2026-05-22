@@ -1,4 +1,4 @@
-"""Algebra concern: the rewrite-relevant laws a kind obeys.
+"""Algebra attribute: the rewrite-relevant laws a kind obeys.
 
 Four declared bools per kind: ``commutative`` (children may be reordered),
 ``associative`` (same-kind nestings may be regrouped), ``idempotent`` (running
@@ -10,7 +10,7 @@ that read them come later.
 from __future__ import annotations
 
 from nu2.engine.structure import Attribute
-from nu2.lang.attrs import Attr
+from nu2.lang.structure.attrs.names import Attr
 
 
 __all__ = ["ATTRIBUTES"]

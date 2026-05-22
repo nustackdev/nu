@@ -1,4 +1,4 @@
-"""Execution concern: sync vs async, event-loop placement, and exec order.
+"""Execution attribute: sync vs async, event-loop placement, and exec order.
 
 A sort declares two bools: ``requires_async`` (the atom holds an async-only
 operation, so it must run on a loop) and ``async_affinity`` (the atom suits an
@@ -14,7 +14,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from nu2.engine.structure import Attribute
-from nu2.lang.attrs import Attr
+from nu2.lang.structure.attrs.names import Attr
 
 
 if TYPE_CHECKING:

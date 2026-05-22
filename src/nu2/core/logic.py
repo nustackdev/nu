@@ -12,11 +12,11 @@ from typing import TYPE_CHECKING
 
 from nu2.engine.structure import Attribute
 from nu2.lang import ScalarQuery
-from nu2.lang.sentinels import EMPTY, INVALID
+from nu2.lang.evaluation.sentinels import EMPTY, INVALID
 
 
 if TYPE_CHECKING:
-    from nu2.lang.runtime import NuRuntime as Runtime
+    from nu2.lang.evaluation.runtime import NuRuntime as Runtime
 
 __all__ = ["And", "Eq", "Lt", "Not", "Or"]
 

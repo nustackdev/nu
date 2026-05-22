@@ -1,4 +1,4 @@
-"""Cardinality concern: how a node yields a result.
+"""Cardinality attribute: how a node yields a result.
 
 A node yields one value, a stream, nothing, or whatever its body yields. The
 declared ``cardinality`` fixes that per sort; the synthesized
@@ -12,7 +12,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from nu2.engine.structure import Attribute
-from nu2.lang.attrs import Attr
+from nu2.lang.structure.attrs.names import Attr
 
 
 if TYPE_CHECKING:

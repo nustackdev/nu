@@ -15,9 +15,9 @@ from typing import TYPE_CHECKING
 
 from nu2.engine.evaluation.budget import Budget
 from nu2.engine.evaluation.loop import into_loop, safely_aclosing, safely_closing
-from nu2.lang.attrs import Attr
-from nu2.lang.context import Context
-from nu2.lang.runtime import NuRuntime
+from nu2.lang.evaluation.context import Context
+from nu2.lang.evaluation.runtime import NuRuntime
+from nu2.lang.structure.attrs import Attr
 
 
 if TYPE_CHECKING:

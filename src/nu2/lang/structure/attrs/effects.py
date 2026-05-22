@@ -1,4 +1,4 @@
-"""Effects concern: what a Nu program touches in the Context.
+"""Effects attribute: what a Nu program touches in the Context.
 
 An effect is one interaction with the Context (RESOLVE, READ or WRITE) bound to
 a named location. The declared ``own_effects`` annotates a sort's effect slots;
@@ -12,8 +12,8 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from nu2.engine.structure import Attribute
-from nu2.lang.attrs import Attr
-from nu2.lang.sort import Sort
+from nu2.lang.structure.attrs.names import Attr
+from nu2.lang.structure.attrs.sort import Sort
 
 
 if TYPE_CHECKING:

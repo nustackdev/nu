@@ -1,13 +1,14 @@
-"""Sort concern: the structural taxonomy of a Term.
+"""Sort attribute: the structural taxonomy of a Term.
 
 A sort is a node's structural category. Sorts form a tree with two roots, Ref
-and Interaction; ``subsort`` walks it. The taxonomy proper is the set of Term
-classes that declare those sorts: abstract Interaction sub-kinds down to the
-leaf sorts a real node carries. Concrete atoms are layered on these later.
+and Interaction; ``subsort`` walks it. The composition matrix records, per
+parent sort, the child sorts that parent may hold; ``matrix_sort`` folds any
+sort onto the eight that carry a row. The synthesized ``has_command`` folds
+the sort tree to a subtree-presence flag.
 
-The composition matrix records, per parent sort, the child sorts that parent
-may hold; ``matrix_sort`` folds any sort onto the eight that carry a row. The
-synthesized ``has_command`` folds the sort tree to a subtree-presence flag.
+The user-facing Term classes that declare these sorts live in
+``nu2.lang.structure.sorts``; this module owns the value space (``Sort``
+enum, matrix, helpers) and the sort-flavored attribute folds only.
 """
 
 from __future__ import annotations
@@ -15,34 +16,18 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Attribute, Term
-from nu2.lang.attrs import Attr
-from nu2.lang.cardinality import Cardinality
-from nu2.lang.nu import Nu
+from nu2.engine.structure import Attribute
+from nu2.lang.structure.attrs.names import Attr
 
 
 if TYPE_CHECKING:
     from nu2.engine.attribution import AttributedTerm
     from nu2.engine.attribution.attributed_term import Path
-    from nu2.lang.runtime import NuRuntime as Runtime
 
 __all__ = [
     "ATTRIBUTES",
     "MATRIX",
-    "Bracket",
-    "Command",
-    "Control",
-    "Flow",
-    "Interaction",
-    "Policy",
-    "Query",
-    "Reduction",
-    "Ref",
-    "ScalarQuery",
     "Sort",
-    "Span",
-    "Strategy",
-    "StreamQuery",
     "matrix_sort",
     "subsort",
 ]
@@ -143,108 +128,6 @@ MATRIX: dict[Sort, frozenset[Sort]] = {
     Sort.BRACKET: _ANY,
     Sort.POLICY: _ANY,
 }
-
-
-# --- the sort taxonomy: the Term classes that declare the sorts -----------
-
-
-class Ref(Nu):
-    """A name for a Context location: a leaf, or keyed by child Refs."""
-
-    sort = Attribute.declared(Sort.REF)
-    cardinality = Attribute.declared(Cardinality.SCALAR)
-
-    def __init__(self, name: str, *key: Term) -> None:
-        super().__init__(*key)
-        self.payload = {"name": name}
-
-
-class Interaction(Nu):
-    """Abstract: a node that interacts with the Context. Never instantiated.
-
-    Concrete sub-kinds implement ``eval`` / ``aeval`` to drive execution.
-    Both receive the per-execution ``Runtime`` and the node's ``nid`` (its
-    integer position in the attributed program); they recurse via
-    ``rt.eval(child_nid)`` and reach for ``self.children`` / ``self.payload``
-    directly. Attribute reads use ``rt.program.attrs[name][nid]``.
-    """
-
-    def eval(self, rt: Runtime, nid: int) -> object:
-        """Evaluate this node synchronously; return its value or None."""
-        msg = f"{type(self).__name__}.eval is not implemented"
-        raise NotImplementedError(msg)
-
-    async def aeval(self, rt: Runtime, nid: int) -> object:
-        """Evaluate this node asynchronously; return its value or None."""
-        msg = f"{type(self).__name__}.aeval is not implemented"
-        raise NotImplementedError(msg)
-
-
-class Query(Interaction):
-    """Abstract: a value-producing Interaction."""
-
-
-class ScalarQuery(Query):
-    """A Query that yields exactly one value."""
-
-    sort = Attribute.declared(Sort.SCALAR_QUERY)
-    cardinality = Attribute.declared(Cardinality.SCALAR)
-
-
-class StreamQuery(Query):
-    """A Query that yields zero or more values."""
-
-    sort = Attribute.declared(Sort.STREAM_QUERY)
-    cardinality = Attribute.declared(Cardinality.STREAM)
-
-
-class Reduction(ScalarQuery):
-    """A ScalarQuery that folds a stream child down to one value."""
-
-    sort = Attribute.declared(Sort.REDUCTION)
-
-
-class Command(Interaction):
-    """A mutating Interaction. Yields nothing; its only sub-shape is scalar."""
-
-    sort = Attribute.declared(Sort.SCALAR_COMMAND)
-    cardinality = Attribute.declared(Cardinality.VOID)
-
-
-class Flow(Interaction):
-    """Abstract: a Command-composing Interaction. Yields nothing."""
-
-    cardinality = Attribute.declared(Cardinality.VOID)
-
-
-class Strategy(Flow):
-    """A Flow that composes Commands directly."""
-
-    sort = Attribute.declared(Sort.STRATEGY)
-
-
-class Control(Flow):
-    """A Flow that composes Commands under Query parameters."""
-
-    sort = Attribute.declared(Sort.CONTROL)
-
-
-class Span(Interaction):
-    """Abstract: a transparent Interaction; yields what its body yields."""
-
-    cardinality = Attribute.declared(Cardinality.TRANSPARENT)
-
-
-class Bracket(Span):
-    """A Span that governs a body's lifecycle."""
-
-    sort = Attribute.declared(Sort.BRACKET)
-
-
-class Policy(Span):
-    """A Span that governs a body's execution on failure."""
-
-    sort = Attribute.declared(Sort.POLICY)
 
 
 # --- has_command: a sort fold -----------------------------------------------

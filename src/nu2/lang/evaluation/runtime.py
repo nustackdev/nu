@@ -14,7 +14,7 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from nu2.engine.evaluation.driver import Runtime
-from nu2.lang.sentinels import EMPTY, INVALID
+from nu2.lang.evaluation.sentinels import EMPTY, INVALID
 
 
 if TYPE_CHECKING:
@@ -109,7 +109,7 @@ class NuRuntime(Runtime):
         semaphore-gated (each holds an OS thread); async branches don't gate.
         """
         from nu2.engine.evaluation.loop import safely_aclosing, safely_closing
-        from nu2.lang.attrs import Attr
+        from nu2.lang.structure.attrs import Attr
 
         nids = list(nids)
         on_loop_col = self.program.attrs[Attr.ON_LOOP]

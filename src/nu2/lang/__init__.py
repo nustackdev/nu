@@ -1,21 +1,17 @@
 """Nu the language, layer 1 on the engine.
 
-``lang`` is Nu defined on ``nu2.engine``, organized by concern: one module per
-attribute group, each carrying that concern's value types, rule functions and
-``Attribute`` objects.
+``lang`` is Nu defined on top of ``nu2.engine``. It splits along the same
+phase axis the engine uses:
 
-- ``sort`` - the structural taxonomy and composition matrix
-- ``effects`` - what a program touches in the Context
-- ``cardinality`` - how a node yields
-- ``execution`` - sync/async, event-loop placement, and exec order
-- ``algebra`` - the rewrite-relevant laws a kind obeys
-- ``attrs`` - the ``Attr`` name vocabulary shared across concerns
-- ``schema`` - assembles every concern into the Nu schema
-- ``predicates``, ``laws`` - the validity rules over an attributed program
+- ``structure``  - the alphabet Nu adds (``Nu`` base, attribute concerns,
+  the sort taxonomy classes ``Ref``/``Interaction``/...).
+- ``laws``       - the validity rules: ``LAWS`` and the predicate library.
+- ``evaluation`` - how programs run: ``NuRuntime``, ``Context``, sentinels.
+- ``entry``      - top-level user-facing entries (``run``, ``eval``, ...).
 
-A description is built from the sort taxonomy, ``attribute``d against the schema,
-then queried, ``gate``d or ``validate``d. This package is the attribute-layer
-successor to ``nu2.terms``.
+A description is built from the sort taxonomy, ``attribute``d against the
+schema, then queried, ``gate``d or ``validate``d, then driven through an
+entry point.
 """
 
 from __future__ import annotations
@@ -32,30 +28,32 @@ from nu2.engine.validation import (
     predicate,
     validate,
 )
-from nu2.lang.attrs import Attr
-from nu2.lang.cardinality import Cardinality
-from nu2.lang.effects import Effect, EffectSet
-from nu2.lang.execution import ExecOrder
-from nu2.lang.laws import LAWS
-from nu2.lang.nu import Nu
-from nu2.lang.schema import build_schema
-from nu2.lang.sentinels import (
+from nu2.lang.evaluation import (
     EMPTY,
     INVALID,
+    Context,
     Empty,
     Invalid,
+    NuRuntime,
     Sentinel,
     is_empty,
     is_invalid,
     is_sentinel,
 )
-from nu2.lang.sort import (
+from nu2.lang.laws import LAWS
+from nu2.lang.structure import (
     MATRIX,
+    Attr,
     Bracket,
+    Cardinality,
     Command,
     Control,
+    Effect,
+    EffectSet,
+    ExecOrder,
     Flow,
     Interaction,
+    Nu,
     Policy,
     Query,
     Reduction,
@@ -65,6 +63,7 @@ from nu2.lang.sort import (
     Span,
     Strategy,
     StreamQuery,
+    build_schema,
     matrix_sort,
     subsort,
 )
@@ -84,6 +83,7 @@ __all__ = [
     "Bracket",
     "Cardinality",
     "Command",
+    "Context",
     "Control",
     "Effect",
     "EffectSet",
@@ -94,6 +94,7 @@ __all__ = [
     "Invalid",
     "Law",
     "Nu",
+    "NuRuntime",
     "Policy",
     "Predicate",
     "Query",
@@ -108,6 +109,7 @@ __all__ = [
     "StreamQuery",
     "Violation",
     "attribute",
+    "build_schema",
     "gate",
     "is_empty",
     "is_invalid",
