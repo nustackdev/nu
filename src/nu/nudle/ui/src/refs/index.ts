@@ -2,6 +2,7 @@
 // drop a new module under refs/ and add one line here.
 
 import type { ComponentType } from "react";
+import { BadgeRef } from "./badge";
 import { ButtonRef } from "./button";
 import { HeadingRef } from "./heading";
 import { InputRef } from "./input";
@@ -19,6 +20,7 @@ const entries: Record<string, RefEntry> = {
 	LineChart,
 	InputRef,
 	ButtonRef,
+	BadgeRef,
 	TableRef,
 	// Structural Refs (bound to browser APIs; no body output).
 	TitleRef,

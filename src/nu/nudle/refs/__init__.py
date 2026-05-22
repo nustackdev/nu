@@ -9,6 +9,7 @@ Two kinds:
 
 from __future__ import annotations
 
+from .badge import BadgeRef
 from .base import NudleRef
 from .button import ButtonRef
 from .heading import HeadingRef
@@ -21,6 +22,7 @@ from .title import TitleRef
 
 
 __all__ = [
+    "BadgeRef",
     "ButtonRef",
     "HeadingRef",
     "InputRef",

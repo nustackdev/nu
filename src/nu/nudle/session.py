@@ -84,7 +84,7 @@ class NudleSession:
     async def mount(
         self,
         name: str,
-        fields: list[dict[str, str]],
+        fields: list[dict[str, object]],
         pages: list[dict[str, object]] | None = None,
     ) -> None:
         payload: dict[str, object] = {"name": name, "fields": fields}

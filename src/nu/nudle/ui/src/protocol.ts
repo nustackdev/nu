@@ -16,7 +16,13 @@ export type Frame = {
 	id?: string;
 };
 
-export type MountField = { path: string; type: string };
+export type MountField = {
+	path: string;
+	type: string;
+	// Optional class-level defaults for the Ref. When present, the slice
+	// factory should seed its state from these values.
+	props?: Record<string, unknown>;
+};
 export type MountPage = { route: string; name: string; fields: MountField[] };
 // `name` is the Index class name; `fields` are Index-level structural
 // slots (TitleRef, NavRef, ...); `pages` lists Page subtrees by route.

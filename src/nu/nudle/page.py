@@ -33,18 +33,27 @@ class Page(Shape):
     _is_nudle_page: ClassVar[bool] = True
 
     @classmethod
-    def mount_fields(cls) -> list[dict[str, str]]:
-        """Flatten Page slots into `{path, type}` dicts.
+    def mount_fields(cls) -> list[dict[str, object]]:
+        """Flatten Page slots into `{path, type, props?}` dicts.
 
         Paths are prefixed with the Page class name so wire paths are
-        unique across all pages in an Index.
+        unique across all pages in an Index. `props` is included only when
+        the Ref class exposes non-empty class-level defaults via
+        `mount_props()`.
         """
-        out: list[dict[str, str]] = []
+        out: list[dict[str, object]] = []
         for name, slot in cls._slots.items():
             ref_cls = slot.ref_cls
             if not issubclass(ref_cls, NudleRef):
                 continue
-            out.append({"path": f"{cls.__name__}.{name}", "type": ref_cls.__name__})
+            entry: dict[str, object] = {
+                "path": f"{cls.__name__}.{name}",
+                "type": ref_cls.__name__,
+            }
+            props = ref_cls.mount_props()
+            if props:
+                entry["props"] = props
+            out.append(entry)
         return out
 
 
@@ -83,14 +92,18 @@ class Index(Shape):
     pages: ClassVar[Pages] = Pages({})
 
     @classmethod
-    def structural_fields(cls) -> list[dict[str, str]]:
+    def structural_fields(cls) -> list[dict[str, object]]:
         """Index-level slot list: structural Refs (title, nav, ...)."""
-        out: list[dict[str, str]] = []
+        out: list[dict[str, object]] = []
         for name, slot in cls._slots.items():
             ref_cls = slot.ref_cls
             if not issubclass(ref_cls, NudleRef):
                 continue
-            out.append({"path": name, "type": ref_cls.__name__})
+            entry: dict[str, object] = {"path": name, "type": ref_cls.__name__}
+            props = ref_cls.mount_props()
+            if props:
+                entry["props"] = props
+            out.append(entry)
         return out
 
     @classmethod

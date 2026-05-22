@@ -17,6 +17,9 @@ export type RefSlice = {
 	// Called by the store on unmount / re-mount so a slice can release
 	// resources (e.g. detach window event listeners).
 	dispose?: () => void;
+	// Per-Ref slice extras: state fields beyond the canonical `value`
+	// (e.g. BadgeRef carries `label` and `variant` directly on the slice).
+	[key: string]: unknown;
 };
 
 export type SliceCtx = {
@@ -24,7 +27,11 @@ export type SliceCtx = {
 	send: (frame: Frame) => void;
 };
 
-export type SliceFactory = (path: string, ctx: SliceCtx) => RefSlice;
+export type SliceFactory = (
+	path: string,
+	ctx: SliceCtx,
+	props?: Record<string, unknown>,
+) => RefSlice;
 
 export type RefEntry = {
 	factory: SliceFactory;

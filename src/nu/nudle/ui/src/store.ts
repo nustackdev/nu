@@ -98,7 +98,7 @@ export const useStore = create<State & Actions>()(
 						console.warn(`nudle: no factory for Ref type "${field.type}"`);
 						return;
 					}
-					draft.refs[field.path] = factory(field.path, ctx);
+					draft.refs[field.path] = factory(field.path, ctx, field.props);
 				};
 				// Structural Refs (Index-level: TitleRef, NavRef, ...).
 				for (const f of payload.fields) build(f);

@@ -63,5 +63,15 @@ class NudleRef(Ref[Any]):
         )
 
     @classmethod
+    def mount_props(cls) -> dict[str, object]:
+        """Class-level defaults to ship in the mount field entry.
+
+        Override on Refs whose slice should be seeded without an explicit
+        `write`. Empty by default; non-empty results are included under the
+        optional `props` key on the mount field entry.
+        """
+        return {}
+
+    @classmethod
     def slot(cls) -> Self:
         return Slot(cls)  # type: ignore[return-value]
