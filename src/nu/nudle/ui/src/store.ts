@@ -20,7 +20,7 @@ import {
 import { factories } from "./refs";
 import type { RefSlice } from "./refs/types";
 
-type Status = "connecting" | "connected" | "disconnected";
+type Status = "connecting" | "connected" | "disconnected" | "reconnecting";
 
 type State = {
 	status: Status;
