@@ -25,10 +25,11 @@ from pathlib import Path
 
 import nu
 import nu_virtuals as nv
-import nudle
 from nu.shapes.flows.react import ReactForever
 from nu_virtuals.presets import rocksdb_storage_inmemory
 from virtuals import Navigator
+
+import nudle
 
 
 class Stats(nu.Shape):
@@ -38,12 +39,22 @@ class Stats(nu.Shape):
 
 
 class Dashboard(nudle.Page):
-    title = nudle.TitleRef.slot()
+    """Single page: title, count, history, wish input, drop + clear buttons."""
+
+    heading = nudle.HeadingRef.slot()
     tries = nudle.IntRef.slot()
     history = nudle.LineChart.slot()
     wish = nudle.InputRef.slot()
     drop = nudle.ButtonRef.slot()
     clear = nudle.ButtonRef.slot()
+
+
+class App(nudle.Index):
+    """Browser entrypoint: doc title, nav, and the one dashboard page."""
+
+    title = nudle.TitleRef.slot()
+    nav = nudle.NavRef.slot()
+    pages = nudle.Pages({"/": Dashboard})
 
 
 init = nv.Transaction(
@@ -57,7 +68,7 @@ on_drop = ReactForever(
     >> nv.Snapshot(
         Dashboard.tries.store(Stats.count)
         | Dashboard.history.append(Stats.count, Stats.count)
-        | Dashboard.title.store(Dashboard.wish),
+        | Dashboard.heading.store(Dashboard.wish),
     ),
 )
 
@@ -67,19 +78,19 @@ on_clear = ReactForever(
     nv.Transaction(Stats.count.store(0))
     >> (
         Dashboard.tries.store(0)
-        | Dashboard.title.store("the jar is empty")
+        | Dashboard.heading.store("the jar is empty")
         | Dashboard.history.store({"points": []})
     ),
 )
 
 
 hydrate = nv.Snapshot(
-    Dashboard.title.store("drop a wish in the jar")
+    Dashboard.heading.store("drop a wish in the jar")
     | Dashboard.tries.store(Stats.count),
 )
 
 
-ui = init >> hydrate >> (on_drop | on_clear)
+ui = init >> App.title.store("wish jar") >> hydrate >> (on_drop | on_clear)
 
 
 async def main() -> None:

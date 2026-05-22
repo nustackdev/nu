@@ -10,6 +10,7 @@ import { immer } from "zustand/middleware/immer";
 import {
 	type ErrorCode,
 	type Frame,
+	type MountField,
 	type MountPayload,
 	OP_ERROR,
 	OP_MOUNT,
@@ -40,6 +41,19 @@ type Actions = {
 
 let outbound: ((f: Frame) => void) | null = null;
 
+function disposeAll(refs: Record<string, RefSlice>): void {
+	for (const path in refs) {
+		const dispose = refs[path].dispose;
+		if (dispose) {
+			try {
+				dispose();
+			} catch (err) {
+				console.warn(`nudle: dispose threw for ${path}`, err);
+			}
+		}
+	}
+}
+
 export const useStore = create<State & Actions>()(
 	immer((set, get) => ({
 		status: "connecting",
@@ -66,6 +80,7 @@ export const useStore = create<State & Actions>()(
 
 		mount: (payload) =>
 			set((draft) => {
+				disposeAll(draft.refs);
 				draft.page = payload;
 				draft.refs = {};
 				const ctx = {
@@ -77,18 +92,25 @@ export const useStore = create<State & Actions>()(
 						if (outbound) outbound(f);
 					},
 				};
-				for (const field of payload.fields) {
+				const build = (field: MountField) => {
 					const factory = factories[field.type];
 					if (!factory) {
 						console.warn(`nudle: no factory for Ref type "${field.type}"`);
-						continue;
+						return;
 					}
 					draft.refs[field.path] = factory(field.path, ctx);
+				};
+				// Structural Refs (Index-level: TitleRef, NavRef, ...).
+				for (const f of payload.fields) build(f);
+				// Page subtrees: every page mounted, flat-keyed by prefixed path.
+				for (const p of payload.pages ?? []) {
+					for (const f of p.fields) build(f);
 				}
 			}),
 
 		unmount: () =>
 			set((draft) => {
+				disposeAll(draft.refs);
 				draft.page = null;
 				draft.refs = {};
 			}),

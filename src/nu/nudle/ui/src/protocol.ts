@@ -15,7 +15,14 @@ export type Frame = {
 };
 
 export type MountField = { path: string; type: string };
-export type MountPayload = { page: string; fields: MountField[] };
+export type MountPage = { route: string; name: string; fields: MountField[] };
+// `name` is the Index class name; `fields` are Index-level structural
+// slots (TitleRef, NavRef, ...); `pages` lists Page subtrees by route.
+export type MountPayload = {
+	name: string;
+	fields: MountField[];
+	pages?: MountPage[];
+};
 
 export type ErrorCode =
 	| "ref_not_found"

@@ -3,20 +3,26 @@
 
 import type { ComponentType } from "react";
 import { ButtonRef } from "./button";
+import { HeadingRef } from "./heading";
 import { InputRef } from "./input";
 import { IntRef } from "./int";
 import { LineChart } from "./line-chart";
+import { NavRef } from "./nav";
 import { TableRef } from "./table";
 import { TitleRef } from "./title";
 import type { RefEntry, SliceFactory } from "./types";
 
 const entries: Record<string, RefEntry> = {
-	TitleRef,
+	// Display Refs (rendered in the body).
+	HeadingRef,
 	IntRef,
 	LineChart,
 	InputRef,
 	ButtonRef,
 	TableRef,
+	// Structural Refs (bound to browser APIs; no body output).
+	TitleRef,
+	NavRef,
 };
 
 export const factories: Record<string, SliceFactory> = Object.fromEntries(

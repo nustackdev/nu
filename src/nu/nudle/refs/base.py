@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, Self
 
+from nu import Nu
 from nu.shapes.refs import Ref
 from nu.shapes.shape.slot import Slot
 from nu.terms.types import Mode
@@ -36,6 +37,22 @@ class NudleRef(Ref[Any]):
 
     async def aresolve(self, ctx: Context) -> str:
         return await self.aresolve_address(ctx)
+
+    async def aresolve_address(self, ctx: Context) -> str:
+        """Wire path for this Ref.
+
+        - root is an Index: slot name alone (structural Refs at top).
+        - root is a Page: "<PageShapeName>.<slot>" (namespaced per page).
+        """
+        from nu import runtime
+
+        addr = self.address
+        if isinstance(addr, Nu):
+            addr = await runtime.afirst(addr, ctx)
+        root = self.get_root_shape()
+        if root is not None and getattr(root, "_is_nudle_page", False):
+            return f"{root.__name__}.{addr}"
+        return str(addr)
 
     def eval(self, ctx: Context) -> Any:
         raise RuntimeError("nudle is async-only; use aexecute")

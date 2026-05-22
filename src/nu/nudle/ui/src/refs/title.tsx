@@ -1,20 +1,20 @@
-// TitleRef -- display-only string, renders as <h1>.
+// TitleRef -- structural Ref bound to document.title.
+// Index-level. Not rendered into the body.
 
-import { useStore } from "../store";
 import type { RefEntry, SliceFactory } from "./types";
 
-const factory: SliceFactory = (path, ctx) => ({
+const factory: SliceFactory = (_path, _ctx) => ({
 	type: "TitleRef",
 	value: "",
-	write: (v) =>
-		ctx.set((refs) => {
-			refs[path].value = v as string;
-		}),
+	write: (v) => {
+		const s = v == null ? "" : String(v);
+		document.title = s;
+	},
 });
 
-function TitleView({ path }: { path: string }) {
-	const value = useStore((s) => (s.refs[path]?.value as string) ?? "");
-	return <h1 className="text-3xl font-semibold">{value}</h1>;
+// Structural Ref: zero body output.
+function TitleView(_: { path: string }) {
+	return null;
 }
 
 export const TitleRef: RefEntry = { factory, component: TitleView };

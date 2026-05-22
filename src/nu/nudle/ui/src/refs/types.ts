@@ -14,6 +14,9 @@ export type RefSlice = {
 	append?: (value: unknown) => void;
 	// Server-initiated read: return the current local value.
 	get?: () => unknown;
+	// Called by the store on unmount / re-mount so a slice can release
+	// resources (e.g. detach window event listeners).
+	dispose?: () => void;
 };
 
 export type SliceCtx = {

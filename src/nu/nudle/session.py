@@ -81,8 +81,15 @@ class NudleSession:
     async def send(self, frame: Frame) -> None:
         await self._ws.send_text(encode(frame))
 
-    async def mount(self, page_name: str, fields: list[dict[str, str]]) -> None:
-        payload = {"page": page_name, "fields": fields}
+    async def mount(
+        self,
+        name: str,
+        fields: list[dict[str, str]],
+        pages: list[dict[str, object]] | None = None,
+    ) -> None:
+        payload: dict[str, object] = {"name": name, "fields": fields}
+        if pages is not None:
+            payload["pages"] = pages
         await self.send(Frame(OP_MOUNT, ref="", payload=payload))
 
     async def aread(self, path: str) -> Any:

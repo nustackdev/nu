@@ -19,12 +19,13 @@ from pathlib import Path
 
 import nu
 import nu_virtuals as nv
-import nudle
 from nu.shapes.flows.react import ReactForever
 from nu.stdlib import TimeSleep
 from nu.stdlib.asyncio import AsyncSleep
 from nu_virtuals.presets import rocksdb_storage_inmemory
 from virtuals import Navigator
+
+import nudle
 
 
 WEB_DIST = Path(__file__).resolve().parent.parent / "web" / "dist"
@@ -37,13 +38,21 @@ class Counter(nu.Shape):
 
 
 class Dashboard(nudle.Page):
-    """nudle page rendered in a browser tab."""
+    """The single page in this app. Display Refs only."""
 
-    title = nudle.TitleRef.slot()
+    heading = nudle.HeadingRef.slot()
     count = nudle.IntRef.slot()
     history = nudle.LineChart.slot()
     name = nudle.InputRef.slot()
     greet = nudle.ButtonRef.slot()
+
+
+class App(nudle.Index):
+    """Browser entrypoint. Structural Refs + one page at /."""
+
+    title = nudle.TitleRef.slot()
+    nav = nudle.NavRef.slot()
+    pages = nudle.Pages({"/": Dashboard})
 
 
 worker = nv.Transaction(
@@ -63,11 +72,15 @@ ticking = nu.ForeverDo(
 
 greeting = ReactForever(
     Dashboard.greet.clicked(),
-    Dashboard.title.store(Dashboard.name),
+    Dashboard.heading.store(Dashboard.name),
 )
 
 
-ui = Dashboard.title.store("counter live") >> (ticking | greeting)
+ui = (
+    App.title.store("nudle counter")
+    >> Dashboard.heading.store("counter live")
+    >> (ticking | greeting)
+)
 
 
 async def main() -> None:
