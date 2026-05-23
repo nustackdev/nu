@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from nu import Context, Nu
 
 
-__all__ = ["serve"]
+__all__ = ["build_fastapi_app", "serve"]
 
 
 _BUNDLED_STATIC = Path(__file__).parent / "_static"
@@ -103,15 +103,14 @@ def _all_index_subclasses() -> list[type[Index]]:
     return out
 
 
-async def serve(
-    app: Nu,
-    ctx: Context,
-    *,
-    host: str = "127.0.0.1",
-    port: int = 8080,
-    static_dir: Path | str | None = None,
-) -> None:
-    """Run a nudle UI program."""
+def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
+    """Build the FastAPI app for a nudle program (without starting uvicorn).
+
+    Static assets (the compiled web bundle) are served from `nudle/_static`,
+    which is force-included into the wheel at build time. If that path is
+    missing (editable install), the static mount is skipped and only `/ws`
+    is exposed -- run vite separately for the frontend in that case.
+    """
     index_cls = _find_index(app)
     fastapi_app = FastAPI(title="nudle")
 
@@ -145,12 +144,24 @@ async def serve(
                     except (asyncio.CancelledError, Exception):
                         pass
 
-    # Resolve static dir: explicit override wins; otherwise fall back to the
-    # bundle baked into the wheel at nudle/_static.
-    path = Path(static_dir) if static_dir is not None else _BUNDLED_STATIC
-    if path.exists():
-        fastapi_app.mount("/", _SPAStatic(directory=path, html=True), name="static")
+    if _BUNDLED_STATIC.exists():
+        fastapi_app.mount(
+            "/",
+            _SPAStatic(directory=_BUNDLED_STATIC, html=True),
+            name="static",
+        )
+    return fastapi_app
 
+
+async def serve(
+    app: Nu,
+    ctx: Context,
+    *,
+    host: str = "127.0.0.1",
+    port: int = 8080,
+) -> None:
+    """Run a nudle UI program."""
+    fastapi_app = build_fastapi_app(app, ctx)
     config = uvicorn.Config(fastapi_app, host=host, port=port, log_level="info")
     server = uvicorn.Server(config)
     await server.serve()
