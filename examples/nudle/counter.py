@@ -41,7 +41,7 @@ class Dashboard(nudle.Page):
     """The single page in this app. Display Refs only."""
 
     heading = nudle.HeadingRef.slot()
-    count = nudle.IntRef.slot()
+    count = nudle.TextRef.slot()
     history = nudle.LineChart.slot()
     name = nudle.InputRef.slot()
     greet = nudle.ButtonRef.slot()

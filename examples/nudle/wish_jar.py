@@ -3,7 +3,7 @@
 Exercises every Ref type on both sides:
 
 - TitleRef   server pushes the latest wish (or status)
-- IntRef     server pushes the running wish count
+- FloatRef   server pushes the running wish count (precision=0)
 - LineChart  server appends a point per wish
 - InputRef   browser owns; server reads on every click
 - ButtonRef  two of them: 'wish' and 'clear'
@@ -42,7 +42,7 @@ class Dashboard(nudle.Page):
     """Single page: title, count, history, wish input, drop + clear buttons."""
 
     heading = nudle.HeadingRef.slot()
-    tries = nudle.IntRef.slot()
+    tries = nudle.TextRef.slot()
     history = nudle.LineChart.slot()
     wish = nudle.InputRef.slot()
     drop = nudle.ButtonRef.slot()

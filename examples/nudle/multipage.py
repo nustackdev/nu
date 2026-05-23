@@ -41,7 +41,7 @@ class HomePage(nudle.Page):
     """Live counter, one button to nav to /feed."""
 
     heading = nudle.HeadingRef.slot()
-    count = nudle.IntRef.slot()
+    count = nudle.TextRef.slot()
     go_feed = nudle.ButtonRef.slot()
 
 
