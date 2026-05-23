@@ -5,22 +5,21 @@ host. Switching between them via the buttons keeps state intact: come
 back to a page and the chart / counter is exactly where you left it.
 
 Run:
-    make build         # produces web/dist
-    cd api && uv run python ../examples/multipage.py
+    nudle run examples/multipage.py
+    # or, with hot reload:
+    nudle dev examples/multipage.py
 
 Then open http://127.0.0.1:8080.
 """
 
 from __future__ import annotations
 
-import asyncio
-import threading
-from pathlib import Path
+from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
 import nu
 import nu_virtuals as nv
 from nu.shapes.flows.react import ReactForever
-from nu.stdlib import TimeSleep
 from nu.stdlib.asyncio import AsyncSleep
 from nu_virtuals.presets import rocksdb_storage_inmemory
 from virtuals import Navigator
@@ -28,7 +27,8 @@ from virtuals import Navigator
 import nudle
 
 
-WEB_DIST = Path(__file__).resolve().parent.parent / "web" / "dist"
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 class Counter(nu.Shape):
@@ -61,10 +61,10 @@ class App(nudle.Index):
     pages = nudle.Pages({"/": HomePage, "/feed": FeedPage})
 
 
-worker = nv.Transaction(
+bg = nv.Transaction(
     nu.IfDo(Counter.value.missing(), Counter.value.store(0)),
 ) >> nu.ForeverDo(
-    nv.Transaction(Counter.value.store(Counter.value + 1)) >> TimeSleep(1.0),
+    nv.Transaction(Counter.value.store(Counter.value + 1)) >> AsyncSleep(1.0),
 )
 
 
@@ -83,7 +83,7 @@ nav_home = ReactForever(HomePage.go_feed.clicked(), App.nav.store("/feed"))
 nav_feed = ReactForever(FeedPage.go_home.clicked(), App.nav.store("/"))
 
 
-ui = (
+app = (
     App.title.store("nudle multipage")
     >> HomePage.heading.store("home")
     >> FeedPage.heading.store("feed")
@@ -91,17 +91,8 @@ ui = (
 )
 
 
-async def main() -> None:
+@contextmanager
+def context() -> Iterator[nu.Context]:
+    """Open rocksdb storage and yield a bound Context."""
     with rocksdb_storage_inmemory(".dbtest_mp") as storage:
-        ctx = nu.Context().bind(Navigator, Navigator(storage))
-
-        threading.Thread(
-            target=lambda: nu.runtime.execute(worker, ctx),
-            daemon=True,
-        ).start()
-
-        await nudle.serve(ui, ctx, host="127.0.0.1", port=8080, static_dir=WEB_DIST)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+        yield nu.Context().bind(Navigator, Navigator(storage))

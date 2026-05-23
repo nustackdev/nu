@@ -14,20 +14,25 @@ counter, and writes the new title + tries + chart point. Clear resets
 the rocksdb counter and the display state.
 
 Run:
-    make build
-    cd api && uv run python ../examples/wish_jar.py
+    nudle run examples/wish_jar.py
+    # or, with hot reload:
+    nudle dev examples/wish_jar.py
 """
 
 from __future__ import annotations
 
-import asyncio
-from pathlib import Path
+from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
 import nu
 import nu_virtuals as nv
 from nu.shapes.flows.react import ReactForever
 from nu_virtuals.presets import rocksdb_storage_inmemory
 from virtuals import Navigator
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 import nudle
 
@@ -90,20 +95,11 @@ hydrate = nv.Snapshot(
 )
 
 
-ui = init >> App.title.store("wish jar") >> hydrate >> (on_drop | on_clear)
+app = init >> App.title.store("wish jar") >> hydrate >> (on_drop | on_clear)
 
 
-async def main() -> None:
+@contextmanager
+def context() -> Iterator[nu.Context]:
+    """Open rocksdb storage and yield a bound Context."""
     with rocksdb_storage_inmemory(".dbw") as storage:
-        ctx = nu.Context().bind(Navigator, Navigator(storage))
-        await nudle.serve(
-            ui,
-            ctx,
-            host="127.0.0.1",
-            port=8080,
-            static_dir=Path(__file__).resolve().parent.parent / "web" / "dist",
-        )
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+        yield nu.Context().bind(Navigator, Navigator(storage))

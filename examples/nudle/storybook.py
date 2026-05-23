@@ -6,23 +6,21 @@ One Index, one Page, sectioned by component family. Most cells are static
 chart and the interactive section exercise the dynamic interactions.
 
 Run:
-    make build
-    cd api && uv run python ../examples/storybook.py
+    nudle run examples/storybook.py
+    # or, with hot reload:
+    nudle dev examples/storybook.py
 
 Then open http://127.0.0.1:8080.
 """
 
 from __future__ import annotations
 
-import asyncio
-import threading
-from pathlib import Path
-from typing import ClassVar
+from contextlib import contextmanager
+from typing import TYPE_CHECKING, ClassVar
 
 import nu
 import nu_virtuals as nv
 from nu.shapes.flows.react import ReactForever
-from nu.stdlib import TimeSleep
 from nu.stdlib.asyncio import AsyncSleep
 from nu_virtuals.presets import rocksdb_storage_inmemory
 from virtuals import Navigator
@@ -30,7 +28,8 @@ from virtuals import Navigator
 import nudle
 
 
-WEB_DIST = Path(__file__).resolve().parent.parent / "web" / "dist"
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 # ---- Ref customizations -----------------------------------------------------
@@ -445,8 +444,8 @@ init_state = nv.Transaction(
 )
 
 
-tick_worker = init_state >> nu.ForeverDo(
-    nv.Transaction(State.tick.store(State.tick + 1)) >> TimeSleep(1.0),
+bg = init_state >> nu.ForeverDo(
+    nv.Transaction(State.tick.store(State.tick + 1)) >> AsyncSleep(1.0),
 )
 
 
@@ -471,7 +470,7 @@ on_reset = ReactForever(
 
 # ---- Compose ----------------------------------------------------------------
 
-ui = (
+app = (
     App.title.store("nudle storybook")
     >> showcase_snapshot
     >> options_snapshot
@@ -479,17 +478,8 @@ ui = (
 )
 
 
-async def main() -> None:
+@contextmanager
+def context() -> Iterator[nu.Context]:
+    """Open rocksdb storage and yield a bound Context."""
     with rocksdb_storage_inmemory(".dbstorybook") as storage:
-        ctx = nu.Context().bind(Navigator, Navigator(storage))
-
-        threading.Thread(
-            target=lambda: nu.runtime.execute(tick_worker, ctx),
-            daemon=True,
-        ).start()
-
-        await nudle.serve(ui, ctx, host="127.0.0.1", port=8080, static_dir=WEB_DIST)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+        yield nu.Context().bind(Navigator, Navigator(storage))
