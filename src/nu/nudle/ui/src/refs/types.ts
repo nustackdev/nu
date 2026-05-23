@@ -31,6 +31,7 @@ export type SliceFactory = (
 	path: string,
 	ctx: SliceCtx,
 	props?: Record<string, unknown>,
+	children?: string[],
 ) => RefSlice;
 
 export type RefEntry = {

@@ -98,7 +98,12 @@ export const useStore = create<State & Actions>()(
 						console.warn(`nudle: no factory for Ref type "${field.type}"`);
 						return;
 					}
-					draft.refs[field.path] = factory(field.path, ctx, field.props);
+					// Layout entries (Section subclasses) carry nested `fields`.
+					// Pass child paths to the factory so layout slices know what
+					// to render. Then recurse so every leaf gets registered.
+					const childPaths = (field.fields ?? []).map((f) => f.path);
+					draft.refs[field.path] = factory(field.path, ctx, field.props, childPaths);
+					for (const child of field.fields ?? []) build(child);
 				};
 				// Structural Refs (Index-level: TitleRef, NavRef, ...).
 				for (const f of payload.fields) build(f);

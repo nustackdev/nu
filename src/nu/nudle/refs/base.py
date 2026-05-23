@@ -41,18 +41,39 @@ class NudleRef(Ref[Any]):
     async def aresolve_address(self, ctx: Context) -> str:
         """Wire path for this Ref.
 
-        - root is an Index: slot name alone (structural Refs at top).
-        - root is a Page: "<PageShapeName>.<slot>" (namespaced per page).
+        Walks the parent chain to collect segment addresses, then:
+        - root is an Index: join segments alone ("title", "nav").
+        - root is a Page: prefix "<PageShapeName>." and join.
+        - root is a Section: look up the Section's mount point on a Page
+          via `Section._nudle_mount` and prefix
+          "<PageShapeName>.<section_slot_path>." then join segments.
         """
         from nu import runtime
 
-        addr = self.address
-        if isinstance(addr, Nu):
-            addr = await runtime.afirst(addr, ctx)
+        # Collect address segments from root to self.
+        segments: list[str] = []
+        cur: Ref | None = self
+        while cur is not None:
+            addr = cur.address
+            if isinstance(addr, Nu):
+                addr = await runtime.afirst(addr, ctx)
+            segments.append(str(addr))
+            cur = cur.parent
+        segments.reverse()
+
         root = self.get_root_shape()
         if root is not None and getattr(root, "_is_nudle_page", False):
-            return f"{root.__name__}.{addr}"
-        return str(addr)
+            return ".".join([root.__name__, *segments])
+        if root is not None and getattr(root, "_is_nudle_section", False):
+            mount = getattr(root, "_nudle_mount", None)
+            if mount is None:
+                raise RuntimeError(
+                    f"Section {root.__name__} has no mount point. "
+                    "Did you forget to declare it on a Page slot?",
+                )
+            page_cls, slot_path = mount
+            return ".".join([page_cls.__name__, *slot_path, *segments])
+        return ".".join(segments)
 
     def eval(self, ctx: Context) -> Any:
         raise RuntimeError("nudle is async-only; use aexecute")

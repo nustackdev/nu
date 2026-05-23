@@ -19,9 +19,13 @@ export type Frame = {
 export type MountField = {
 	path: string;
 	type: string;
-	// Optional class-level defaults for the Ref. When present, the slice
-	// factory should seed its state from these values.
+	// Optional class-level defaults for the Ref or Section. When present,
+	// the slice factory seeds its state from these values.
 	props?: Record<string, unknown>;
+	// Optional nested fields. Layout entries (Row, Column, Container) carry
+	// their child entries here. Leaf Ref entries omit this key. The browser
+	// walks the tree recursively to register slices for every leaf.
+	fields?: MountField[];
 };
 export type MountPage = { route: string; name: string; fields: MountField[] };
 // `name` is the Index class name; `fields` are Index-level structural

@@ -36,6 +36,7 @@ function App() {
 	const status = useStore((s) => s.status);
 	const page = useStore((s) => s.page);
 	const refs = useStore((s) => s.refs);
+	// `refs` is used to read the NavRef value below.
 	const setStatus = useStore((s) => s.setStatus);
 	const setSender = useStore((s) => s.setSender);
 	const dispatch = useStore((s) => s.dispatch);
