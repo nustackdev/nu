@@ -1,17 +1,20 @@
 """NavRef: structural Ref bound to the browser's history + location.
 
-Lives on an Index. Bidirectional: host writes push a new entry into
+Lives on an Index. Bidirectional: host writes manipulate
 window.history; user navigation (link clicks, back/forward) ships a
 `notify` whose payload is the new URI.
 
 API for host code:
-    nav.store("/feed")          -- push a new URI onto history
+    nav.store(uri)              -- push a new URI onto history
+    nav.replace(uri)            -- replace the current entry (no back-stack growth)
+    nav.back()                  -- history.back()
+    nav.forward()               -- history.forward()
     nav.changed()               -- subscribe to user navigation events
     await nav.aread(...)        -- through session, fetch current URI
 
-Underneath this is just `Write` (push) + `Changed` (popstate) + a `read`
-round-trip. The browser-side factory binds these ops to window.history,
-window.location, and popstate.
+All four host writes compile to the existing `write` op. `store(uri)`
+ships a bare string for back-compat; the other three ship a tagged dict
+the browser slice dispatches on.
 """
 
 from __future__ import annotations
@@ -40,7 +43,18 @@ class NavRef(NudleRef):
         return await session.aread(path)
 
     def store(self, value: Nu | str) -> Nu:
+        # Bare-string push -- shorthand for {"action": "push", "uri": value}.
+        # Kept as bare-string to preserve existing host code (multipage.py).
         return Write(self, value)
+
+    def replace(self, value: Nu | str) -> Nu:
+        return Write(self, {"action": "replace", "uri": value})
+
+    def back(self) -> Nu:
+        return Write(self, {"action": "back"})
+
+    def forward(self) -> Nu:
+        return Write(self, {"action": "forward"})
 
     def changed(self) -> Changed:
         return Changed(self)
