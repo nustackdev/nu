@@ -21,6 +21,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from nu.queries.record import Record
+
 from ..interactions.changed import Changed
 from ..interactions.write import Write
 from ..session import NudleSession
@@ -48,13 +50,13 @@ class NavRef(NudleRef):
         return Write(self, value)
 
     def replace(self, value: Nu | str) -> Nu:
-        return Write(self, {"action": "replace", "uri": value})
+        return Write(self, Record(action="replace", uri=value))
 
     def back(self) -> Nu:
-        return Write(self, {"action": "back"})
+        return Write(self, Record(action="back"))
 
     def forward(self) -> Nu:
-        return Write(self, {"action": "forward"})
+        return Write(self, Record(action="forward"))
 
     def changed(self) -> Changed:
         return Changed(self)

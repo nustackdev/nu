@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from nu.queries.record import Record
+
 from ..interactions.changed import Changed
 from ..interactions.write import Write
 from ..session import NudleSession
@@ -63,7 +65,7 @@ class SelectRef(NudleRef):
             payload: object = {"options": _normalize_options(opts)}
         else:
             payload = {"options": opts}
-        return Write(self, payload)
+        return Write(self, Record(**payload))
 
     def changed(self) -> Changed:
         return Changed(self)

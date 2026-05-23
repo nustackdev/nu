@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from nu.queries.record import Record
+
 from ..interactions.changed import Changed
 from ..interactions.write import Write
 from ..session import NudleSession
@@ -44,22 +46,22 @@ class SliderRef(NudleRef):
         return await session.aread(path)
 
     def store_value(self, value: Nu | float | int) -> Nu:
-        return Write(self, {"value": value})
+        return Write(self, Record(value=value))
 
     def store_min(self, value: Nu | float | int) -> Nu:
-        return Write(self, {"min": value})
+        return Write(self, Record(min=value))
 
     def store_max(self, value: Nu | float | int) -> Nu:
-        return Write(self, {"max": value})
+        return Write(self, Record(max=value))
 
     def store_step(self, value: Nu | float | int) -> Nu:
-        return Write(self, {"step": value})
+        return Write(self, Record(step=value))
 
     def store_label(self, text: Nu | str) -> Nu:
-        return Write(self, {"label": text})
+        return Write(self, Record(label=text))
 
     def store_show_value(self, flag: Nu | bool) -> Nu:
-        return Write(self, {"show_value": flag})
+        return Write(self, Record(show_value=flag))
 
     def store(
         self,
@@ -84,7 +86,7 @@ class SliderRef(NudleRef):
             payload["label"] = label
         if show_value is not None:
             payload["show_value"] = show_value
-        return Write(self, payload)
+        return Write(self, Record(**payload))
 
     def changed(self) -> Changed:
         return Changed(self)
