@@ -69,7 +69,7 @@ def _register_section_mounts(
     section_cls._nudle_mount = (page_cls, path_segments)
 
     for name, slot in section_cls._slots.items():
-        if slot.ref_cls is SectionRef:
+        if issubclass(slot.ref_cls, SectionRef):
             child_section_cls = slot.kwargs["section_cls"]
             _register_section_mounts(
                 page_cls,
@@ -93,7 +93,7 @@ def _build_fields(
         path = f"{base_path}.{name}"
         ref_cls = slot.ref_cls
 
-        if ref_cls is SectionRef:
+        if issubclass(ref_cls, SectionRef):
             section_cls: type[Section] = slot.kwargs["section_cls"]
             entry: dict[str, object] = {
                 "path": path,
@@ -125,7 +125,7 @@ class Page(Shape):
         super().__init_subclass__(**kwargs)
         # Register mount points for every Section slot on this Page.
         for name, slot in cls._slots.items():
-            if slot.ref_cls is SectionRef:
+            if issubclass(slot.ref_cls, SectionRef):
                 section_cls = slot.kwargs["section_cls"]
                 _register_section_mounts(cls, section_cls, (name,))
 
