@@ -5,11 +5,12 @@ must be true on each. When ``holds`` is false the law yields a ``Violation``
 at the given ``Severity``. The subtree-wide check belongs in a synthesized
 attribute; the law itself stays a flat predicate over one node.
 
-- ``Severity``    - how hard a failure bites (``ERROR`` or ``WARNING``).
-- ``Violation``   - one failure: path, law, detail, severity.
-- ``Law``         - the rule.
-- ``gate``        - run every law over every node; return every Violation.
-- ``validate``    - same, but raise on any error-level Violation.
+- ``Severity``        - how hard a failure bites (``ERROR`` or ``WARNING``).
+- ``Violation``       - one failure: path, law, detail, severity.
+- ``Law``             - the rule.
+- ``gate``            - run every law over every node; return every Violation.
+- ``validate``        - same, but raise on any error-level Violation.
+- ``ValidationError`` - raised by ``validate`` when error-level laws fail.
 """
 
 from __future__ import annotations
@@ -24,7 +25,15 @@ if TYPE_CHECKING:
     from nu2.engine.compilation.program import Path, Program
     from nu2.engine.validation.predicate import Test
 
-__all__ = ["Law", "Message", "Severity", "Violation", "gate", "validate"]
+__all__ = [
+    "Law",
+    "Message",
+    "Severity",
+    "ValidationError",
+    "Violation",
+    "gate",
+    "validate",
+]
 
 type Message = str | Callable[["Program", "Path"], str]
 
@@ -64,8 +73,14 @@ class Law:
         self.severity = severity
 
     def check(self, program: Program, path: Path) -> Violation | None:
-        """The Violation this law yields at ``path``, or ``None`` if it holds."""
-        if not self.scope(program, path) or self.holds(program, path):
+        """The Violation this law yields at ``path``, or ``None`` if it holds.
+
+        Returns ``None`` in two distinct cases: the node is out of scope, or
+        the predicate holds. Otherwise returns the failure.
+        """
+        if not self.scope(program, path):
+            return None
+        if self.holds(program, path):
             return None
         detail = self.message if isinstance(self.message, str) else self.message(program, path)
         return Violation(path, self.name, detail, self.severity)
@@ -90,10 +105,26 @@ def validate(program: Program, *laws: Law) -> Program:
     Warning-level violations pass through; read them with ``gate`` directly.
 
     Raises:
-        ValueError: if any law yields an error-level Violation.
+        ValidationError: if any law yields an error-level Violation. The
+            error's ``violations`` attribute holds every error-level
+            Violation found.
     """
     errors = [v for v in gate(program, *laws) if v.severity is Severity.ERROR]
     if errors:
-        lines = "\n".join(f"  [{v.law}] {v.detail}  at {v.path}" for v in errors)
-        raise ValueError(f"invalid program:\n{lines}")
+        raise ValidationError(errors)
     return program
+
+
+class ValidationError(ValueError):
+    """Raised by :func:`validate` when one or more error-level laws fail.
+
+    Subclasses :class:`ValueError` so existing ``except ValueError`` sites
+    keep working. The ``violations`` attribute is the full list of
+    error-level Violations as found by ``gate``; the formatted message
+    follows the ``[law] detail  at path`` shape, one violation per line.
+    """
+
+    def __init__(self, violations: list[Violation]) -> None:
+        self.violations = violations
+        lines = "\n".join(f"  [{v.law}] {v.detail}  at {v.path}" for v in violations)
+        super().__init__(f"invalid program:\n{lines}")

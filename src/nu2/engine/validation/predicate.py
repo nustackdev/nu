@@ -1,10 +1,17 @@
 """Predicate: a composable ``(program, path) -> bool`` test.
 
-Combine predicates with ``&``, ``|`` and ``~``; the right operand of a binary
-combinator may be any bare callable of the same shape. Wrap a plain function
-with the ``@predicate`` decorator to give it the same algebra.
+Two names appear here:
 
-Predicates are the building block for ``Law.scope`` and ``Law.holds``.
+- ``Test`` is the callable *shape* -- any ``(program, path) -> bool``
+  function. It is what laws ultimately consume; nothing more.
+- ``Predicate`` wraps a ``Test`` to give it an *algebra*: ``&``, ``|``, and
+  ``~`` combine predicates without forcing the caller to nest lambdas. The
+  right operand of a binary combinator may be any bare ``Test`` -- the
+  result is always a ``Predicate``.
+
+Wrap a plain function with the ``@predicate`` decorator to give it the same
+algebra. Predicates are the building block for ``Law.scope`` and
+``Law.holds``.
 """
 
 from __future__ import annotations

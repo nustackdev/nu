@@ -12,14 +12,25 @@ Validation operates over a ``Program`` from ``engine.compilation`` - this
 package judges, it never builds.
 """
 
-from nu2.engine.validation.law import Law, Severity, Violation, gate, validate
-from nu2.engine.validation.predicate import Predicate, predicate
+from nu2.engine.validation.law import (
+    Law,
+    Message,
+    Severity,
+    ValidationError,
+    Violation,
+    gate,
+    validate,
+)
+from nu2.engine.validation.predicate import Predicate, Test, predicate
 
 
 __all__ = [
     "Law",
+    "Message",
     "Predicate",
     "Severity",
+    "Test",
+    "ValidationError",
     "Violation",
     "gate",
     "predicate",
