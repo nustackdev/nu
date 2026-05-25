@@ -1,18 +1,19 @@
-"""Nu engine: domain-free Term + Attribute machinery and the execution driver.
+"""Nu engine: domain-free Term + Attribute machinery and a dispatch contract.
 
 Four subpackages, one per phase the engine cares about:
 
 - ``engine.structure``   - the alphabet: ``Term`` and ``Attribute``.
 - ``engine.compilation`` - Term -> Program: indexing, attribute sweeps, emit.
 - ``engine.validation``  - the validate phase: ``Law``, ``Predicate``, ``gate``, ``validate``.
-- ``engine.evaluation``  - the evaluate phase: ``Runtime``, ``Budget``, loop primitives.
+- ``engine.evaluation``  - the dispatch contract: the ``Runtime`` Protocol.
 
 The engine knows no sorts, no effects, no execution and holds no global state.
-A layer-1 language (Nu, in ``nu2.lang``) defines kinds and attributes on top.
+A layer-1 language (Nu, in ``nu2.lang``) defines kinds, attributes, and the
+concrete Runtime that drives compiled Programs.
 """
 
 from nu2.engine.compilation import Path, Program, compile
-from nu2.engine.evaluation import Budget, Runtime, into_loop, safely_aclosing, safely_closing
+from nu2.engine.evaluation import Runtime
 from nu2.engine.structure import (
     Attribute,
     Computed,
@@ -30,7 +31,6 @@ from nu2.engine.validation import Law, Predicate, Severity, Violation, gate, pre
 
 __all__ = [
     "Attribute",
-    "Budget",
     "Computed",
     "CycleError",
     "Declared",
@@ -49,9 +49,6 @@ __all__ = [
     "Violation",
     "compile",
     "gate",
-    "into_loop",
     "predicate",
-    "safely_aclosing",
-    "safely_closing",
     "validate",
 ]

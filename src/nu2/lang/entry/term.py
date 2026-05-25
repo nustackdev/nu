@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.evaluation.loop import into_loop
 from nu2.lang.entry.value import aeval, eval
+from nu2.lang.evaluation.loop import into_loop
 
 
 if TYPE_CHECKING:

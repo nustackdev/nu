@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.evaluation.budget import Budget
-from nu2.engine.evaluation.loop import safely_aclosing, safely_closing
 from nu2.lang.entry._guard import refuse_async_only
+from nu2.lang.evaluation.budget import Budget
 from nu2.lang.evaluation.context import Context
+from nu2.lang.evaluation.loop import safely_aclosing, safely_closing
 from nu2.lang.evaluation.runtime import NuRuntime
 
 

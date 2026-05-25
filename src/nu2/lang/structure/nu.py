@@ -18,10 +18,11 @@ for engine-level work.
 from __future__ import annotations
 
 from nu2.engine.structure import Term
+from nu2.lang.evaluation.runtime import NuRuntime
 
 
 __all__ = ["Nu"]
 
 
-class Nu(Term):
+class Nu(Term[NuRuntime]):
     """The user-facing base for every Nu construct. A tagged ``Term``."""

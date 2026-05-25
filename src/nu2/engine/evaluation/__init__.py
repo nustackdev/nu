@@ -1,20 +1,13 @@
-"""Engine layer: the generic execution driver.
+"""Engine layer: the evaluation contract.
 
-- ``Runtime`` - generic per-execution driver; the toolkit lives as methods on it.
-- ``Budget`` - per-execution thread pool + concurrency gate; owned by Runtime.
-- ``into_loop`` - stateless coroutine-runner for sync code.
-- ``safely_closing`` / ``safely_aclosing`` - generator-finalization helpers.
+The engine's evaluation layer is a single Protocol -- :class:`Runtime` --
+that declares the dispatch shape a compiled Program is driven through.
+The engine ships no concrete runtime, no budget primitives, no
+concurrency toolkit; those belong to whichever language layer drives the
+Program (Nu's concrete implementation lives in ``nu2.lang.evaluation``).
 """
 
-from nu2.engine.evaluation.budget import Budget
-from nu2.engine.evaluation.driver import Runtime
-from nu2.engine.evaluation.loop import into_loop, safely_aclosing, safely_closing
+from nu2.engine.evaluation.protocol import Runtime
 
 
-__all__ = [
-    "Budget",
-    "Runtime",
-    "into_loop",
-    "safely_aclosing",
-    "safely_closing",
-]
+__all__ = ["Runtime"]

@@ -8,12 +8,19 @@ The :class:`TermMeta` metaclass collects :class:`Attribute` declarations off
 the class body, populating the per-class :attr:`Term.attributes` mapping.
 The compile phase consumes this together with the tree-wide
 :class:`~nu2.engine.structure.schema.Schema`.
+
+``Term`` is generic over the Runtime it compiles thunks for. A language
+layer narrows the parameter to its concrete Runtime (e.g. ``NuRuntime``)
+so the emitted thunks have access to whatever per-drive state the language
+needs. The engine bound is the bare :class:`~nu2.engine.evaluation.Runtime`
+Protocol: only ``eval`` / ``aeval`` dispatch are guaranteed.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu2.engine.evaluation import Runtime
 from nu2.engine.structure.attribute import Attribute
 
 
@@ -53,7 +60,7 @@ class TermMeta(type):
         return cls
 
 
-class Term(metaclass=TermMeta):
+class Term[R: Runtime](metaclass=TermMeta):
     """Pure immutable construction data: a kind, children, and a payload.
 
     A description is a DAG of Terms. Constructing one builds a nested
@@ -66,6 +73,10 @@ class Term(metaclass=TermMeta):
     fallback default invokes :meth:`eval` / :meth:`aeval`, which raise
     ``NotImplementedError`` on the base Term -- a concrete kind must
     implement at least one of the two paths.
+
+    The type parameter ``R`` is the concrete Runtime emitted thunks close
+    over. A language layer narrows it (``class Nu(Term[NuRuntime])``); the
+    engine bound is the bare :class:`Runtime` Protocol.
     """
 
     attributes: ClassVar[dict[str, Attribute]]
@@ -89,7 +100,9 @@ class Term(metaclass=TermMeta):
 
     # --- compile hooks ------------------------------------------------------
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def compile(
+        self, nid: int, children: tuple[Callable[[R], object], ...]
+    ) -> Callable[[R], object]:
         """Build a sync thunk ``(rt) -> value`` for this Term at ``nid``.
 
         ``children`` is the tuple of precompiled child thunks. Atoms on the
@@ -98,12 +111,14 @@ class Term(metaclass=TermMeta):
         indirection. The default delegates to :meth:`eval`.
         """
 
-        def thunk(rt: object) -> object:
+        def thunk(rt: R) -> object:
             return self.eval(rt, nid)
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def acompile(
+        self, nid: int, children: tuple[Callable[[R], object], ...]
+    ) -> Callable[[R], object]:
         """Build an async thunk ``(rt) -> awaitable`` for this Term at ``nid``.
 
         ``children`` is the tuple of precompiled async child thunks. Atoms
@@ -111,14 +126,14 @@ class Term(metaclass=TermMeta):
         directly; the default delegates to :meth:`aeval`.
         """
 
-        async def athunk(rt: object) -> object:
+        async def athunk(rt: R) -> object:
             return await self.aeval(rt, nid)
 
         return athunk
 
     # --- evaluation fallbacks ----------------------------------------------
 
-    def eval(self, rt: object, nid: int) -> object:
+    def eval(self, rt: R, nid: int) -> object:
         """Synchronous evaluation hook for the default :meth:`compile` thunk.
 
         Concrete Terms either override :meth:`compile` (typical, hot path)
@@ -129,7 +144,7 @@ class Term(metaclass=TermMeta):
         msg = f"{type(self).__name__}.eval is not implemented"
         raise NotImplementedError(msg)
 
-    async def aeval(self, rt: object, nid: int) -> object:
+    async def aeval(self, rt: R, nid: int) -> object:
         """Asynchronous sibling of :meth:`eval`.
 
         Concrete Terms either override :meth:`acompile` or override this;
