@@ -1,4 +1,4 @@
-"""The Nu sort taxonomy: the user-facing Term classes that declare each sort.
+"""The Nu kind taxonomy: the user-facing Term classes that declare each sort.
 
 A taxonomy of ``Nu`` subclasses. The leaves (``Ref``, ``ScalarQuery``,
 ``StreamQuery``, ``Reduction``, ``Command``, ``Strategy``, ``Control``,
@@ -7,8 +7,10 @@ nodes use. The interiors (``Interaction``, ``Query``, ``Flow``, ``Span``) are
 abstract groupings for ``subsort`` queries and for the dispatch surface
 ``Interaction.eval`` / ``aeval``.
 
-This module sits on top of ``nu2.lang.structure.nu`` (the base) and
-``nu2.lang.structure.attrs`` (Sort and Cardinality value spaces).
+"Kind" is the Python class of a Term (Ref, Interaction, ...); "sort" is the
+attribute concern naming the structural category. This module sits on top
+of ``nu2.lang.nu`` (the base) and ``nu2.lang.attributes`` (Sort and
+Cardinality value spaces).
 """
 
 from __future__ import annotations
@@ -17,12 +19,12 @@ from typing import TYPE_CHECKING
 
 from nu2.engine import Declared, Term
 
-from .attrs import Cardinality, Sort
+from .attributes import Cardinality, Sort
 from .nu import Nu
 
 
 if TYPE_CHECKING:
-    from nu2.lang.evaluation import NuRuntime as Runtime
+    from nu2.lang.runtime import NuRuntime as Runtime
 
 __all__ = [
     "Bracket",

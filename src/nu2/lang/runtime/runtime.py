@@ -28,8 +28,9 @@ import asyncio
 import queue as _queue
 from typing import TYPE_CHECKING
 
-from .loop import safely_aclosing, safely_closing
-from .sentinels import EMPTY, INVALID
+from nu2.lang.sentinels import EMPTY, INVALID
+
+from .utils.loop import safely_aclosing, safely_closing
 
 
 if TYPE_CHECKING:
@@ -38,7 +39,7 @@ if TYPE_CHECKING:
 
     from nu2.engine import Program
 
-    from .budget import Budget
+    from .utils.budget import Budget
 
 __all__ = ["NuRuntime"]
 
@@ -52,7 +53,7 @@ class NuRuntime:
     __slots__ = ("budget", "ctx", "program")
 
     def __init__(self, program: Program, ctx: object, *, budget: Budget | None = None) -> None:
-        from nu2.lang.evaluation.budget import Budget as _Budget
+        from nu2.lang.runtime.utils.budget import Budget as _Budget
 
         self.program = program
         self.ctx = ctx
@@ -319,7 +320,7 @@ class NuRuntime:
         a worker thread via ``loop.run_in_executor``. Sync branches are
         semaphore-gated (each holds an OS thread); async branches don't gate.
         """
-        from nu2.lang.structure.attrs import Attr
+        from nu2.lang.attributes import Attr
 
         nids = list(nids)
         on_loop_col = self.program.attrs[Attr.ON_LOOP]

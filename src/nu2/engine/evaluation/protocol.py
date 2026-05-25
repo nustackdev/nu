@@ -6,7 +6,7 @@ state it needs (context, budget, scheduler, ...) and provides the two
 dispatch entry points the thunk columns of a :class:`Program` close over.
 
 The engine does not instantiate Runtimes. A language layer (Nu, in
-``nu2.lang.evaluation``) supplies the concrete implementation.
+``nu2.lang.runtime``) supplies the concrete implementation.
 
 Contract:
 

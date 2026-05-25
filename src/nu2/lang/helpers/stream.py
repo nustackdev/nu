@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.lang.evaluation import Budget, Context, NuRuntime, safely_aclosing, safely_closing
+from nu2.lang.runtime import Budget, Context, NuRuntime, safely_aclosing, safely_closing
 
 from ._guard import refuse_async_only
 

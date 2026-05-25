@@ -1,16 +1,18 @@
 """Nu the language, layer 1 on the engine.
 
-``lang`` is Nu defined on top of ``nu2.engine``. It splits along the same
-phase axis the engine uses:
+``lang`` is Nu defined on top of ``nu2.engine``. Top-level vocabulary:
 
-- ``structure``  - the alphabet Nu adds (``Nu`` base, attribute concerns,
-  the sort taxonomy classes ``Ref``/``Interaction``/...).
-- ``laws``       - the validity rules: ``LAWS`` and the predicate library.
-- ``evaluation`` - how programs run: ``NuRuntime``, ``Context``, sentinels.
-- ``entry``      - top-level user-facing entries (``run``, ``eval``, ...).
+- ``nu``         - the ``Nu`` base class.
+- ``kinds``      - the kind taxonomy (``Ref`` / ``Interaction`` / ``ScalarQuery`` / ...).
+- ``args``       - argument type aliases (``IntArg``, ``StrArg``, ...) for kind signatures.
+- ``sentinels``  - ``EMPTY`` / ``INVALID`` and their guards.
+- ``attributes`` - the attribute concerns (sort, cardinality, effects, execution, algebra).
+- ``laws``       - ``LAWS`` and the predicate library.
+- ``runtime``    - ``NuRuntime``, ``Context``, ``Budget``, lifecycle helpers.
+- ``helpers``    - top-level user-facing entries (``run``, ``eval``, ``astream``, ...).
 
-A Term is built from the sort taxonomy, ``compile``d against the schema,
-then ``gate``d or ``validate``d, then driven through an entry point.
+A Term is built from the kind taxonomy, ``compile``d against the schema,
+then ``gate``d or ``validate``d, then driven through an entry.
 """
 
 from __future__ import annotations
@@ -28,56 +30,59 @@ from nu2.engine import (
 )
 from nu2.engine import compile as _compile
 
-from .evaluation import (
-    EMPTY,
-    INVALID,
-    Context,
-    Empty,
-    Invalid,
-    NuRuntime,
-    Sentinel,
-    is_empty,
-    is_invalid,
-    is_sentinel,
-)
-from .laws import LAWS
-from .structure import (
-    MATRIX,
+from .args import (
     Arg,
-    Attr,
     BoolArg,
-    Bracket,
     BytesArg,
-    Cardinality,
-    Command,
-    Control,
     DictArg,
+    FloatArg,
+    FrozenSetArg,
+    IntArg,
+    ListArg,
+    NoneArg,
+    SetArg,
+    StrArg,
+    TupleArg,
+)
+from .attributes import (
+    MATRIX,
+    Attr,
+    Cardinality,
     Effect,
     EffectSet,
     ExecOrder,
-    FloatArg,
+    Sort,
+    build_schema,
+    matrix_sort,
+    subsort,
+)
+from .kinds import (
+    Bracket,
+    Command,
+    Control,
     Flow,
-    FrozenSetArg,
-    IntArg,
     Interaction,
-    ListArg,
-    NoneArg,
-    Nu,
     Policy,
     Query,
     Reduction,
     Ref,
     ScalarQuery,
-    SetArg,
-    Sort,
     Span,
-    StrArg,
     Strategy,
     StreamQuery,
-    TupleArg,
-    build_schema,
-    matrix_sort,
-    subsort,
+)
+from .laws import LAWS
+from .nu import Nu
+from .runtime import Context, NuRuntime
+from .sentinels import (
+    EMPTY,
+    INVALID,
+    Empty,
+    Invalid,
+    Sentinel,
+    is_empty,
+    is_invalid,
+    is_sentinel,
 )
 
 

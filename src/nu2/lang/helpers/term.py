@@ -11,14 +11,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.lang.evaluation import into_loop
+from nu2.lang.runtime import into_loop
 
 from .value import aeval, eval
 
 
 if TYPE_CHECKING:
     from nu2.engine import Term
-    from nu2.lang.evaluation import Context
+    from nu2.lang.runtime import Context
 
 
 def run(

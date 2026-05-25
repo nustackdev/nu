@@ -9,7 +9,7 @@ and a ``holds`` predicate that must be true on each, both drawn from
 from __future__ import annotations
 
 from nu2.engine import Law, Severity
-from nu2.lang.structure import Attr, Cardinality, Effect, Sort
+from nu2.lang.attributes import Attr, Cardinality, Effect, Sort
 
 from .predicates import (
     attr_true,

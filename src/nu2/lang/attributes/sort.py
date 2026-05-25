@@ -7,8 +7,8 @@ sort onto the eight that carry a row. The synthesized ``has_command`` folds
 the sort tree to a subtree-presence flag.
 
 The user-facing Term classes that declare these sorts live in
-``nu2.lang.structure.sorts``; this module owns the value space (``Sort``
-enum, matrix, helpers) and the sort-flavored attribute folds only.
+``nu2.lang.kinds``; this module owns the value space (``Sort`` enum,
+matrix, helpers) and the sort-flavored attribute folds only.
 """
 
 from __future__ import annotations

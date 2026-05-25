@@ -7,7 +7,7 @@ cross-attribute dependency graph.
 
 This package is the home of the *names* (``Attr``), the *value enums* and the
 *attribute definitions*. The user-facing Term classes that declare these on
-their bindings live one level up in ``nu2.lang.structure.sorts``.
+their bindings live one level up in ``nu2.lang.kinds``.
 """
 
 from __future__ import annotations

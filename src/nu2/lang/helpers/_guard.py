@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.lang.structure import Attr
+from nu2.lang.attributes import Attr
 
 
 if TYPE_CHECKING:

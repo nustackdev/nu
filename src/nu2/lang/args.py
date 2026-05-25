@@ -16,9 +16,8 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from nu2.lang.evaluation import Sentinel
-
     from .nu import Nu
+    from .sentinels import Sentinel
 
 
 __all__ = [

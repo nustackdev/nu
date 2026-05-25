@@ -28,7 +28,7 @@ from __future__ import annotations
 from typing import Generic, TypeVar
 
 from nu2.engine import Term
-from nu2.lang.evaluation import NuRuntime
+from nu2.lang.runtime import NuRuntime
 
 
 __all__ = ["Nu"]
