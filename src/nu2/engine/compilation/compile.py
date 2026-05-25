@@ -10,8 +10,9 @@ Three named acts, in order:
 3. **emit** -- reverse preorder; each Term's ``compile``/``acompile``
    captures its children's thunks (``emit.emit_thunks``).
 
-``Program.__init__`` runs act 1 immediately; this driver runs acts 2 and 3.
-The Program is fully built when the driver returns.
+``Program.__init__`` is a dumb constructor that initializes empty columns;
+the driver runs all three acts in order. The Program is fully built when
+the driver returns.
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ from typing import TYPE_CHECKING
 
 from nu2.engine.compilation.attribution import sweep_attributes
 from nu2.engine.compilation.emit import emit_thunks
+from nu2.engine.compilation.index import build_index
 from nu2.engine.compilation.program import Program
 
 
@@ -44,6 +46,7 @@ def compile(term: Term, schema: Schema) -> Program:
         resolve through the schema on demand via :meth:`Program.attr`.
     """
     program = Program(term, schema)
+    build_index(program, term)
     sweep_attributes(program)
     emit_thunks(program)
     return program

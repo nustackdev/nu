@@ -13,9 +13,10 @@ buckets:
 The hot path reads columns by nid; path-keyed sugar (``term``, ``kind``,
 ``payload``, ``parent``, ``walk``, ``attr``) is cold-path.
 
-Construction goes through :func:`nu2.engine.compilation.compile`; calling
-``Program(term, schema)`` directly builds the index but leaves the attribute
-and thunk columns empty.
+Construction goes through :func:`nu2.engine.compilation.compile`. Calling
+``Program(term, schema)`` directly returns an empty shell -- all columns
+start empty -- which is useful only for phase-isolated tests that run
+``build_index`` / ``sweep_attributes`` / ``emit_thunks`` themselves.
 
 Access conventions
 ------------------
@@ -83,8 +84,6 @@ class Program:
     root: ClassVar[Path] = ()
 
     def __init__(self, term: Term, schema: Schema) -> None:
-        from nu2.engine.compilation.index import build_index
-
         # The examples below all assume one running shape -- a minimal DAG
         # with a shared leaf:
         #
@@ -162,8 +161,6 @@ class Program:
         # ``athunks[nid](runtime) -> awaitable``.
         # Example: [add_athunk, x_athunk_a, x_athunk_b]
         self.athunks: list[Callable[[object], Awaitable[object]]] = []
-
-        build_index(self, term)
 
     # --- structure access ---------------------------------------------------
 
