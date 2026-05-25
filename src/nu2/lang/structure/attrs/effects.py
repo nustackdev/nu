@@ -46,7 +46,7 @@ def _own_effects(program: Program, path: Path) -> EffectSet:
     for slot, child in enumerate(children):
         if program.attr(child, Attr.SORT) != Sort.REF:
             continue
-        name: str = program.payload(child)["name"]
+        name: str = program.terms[program.id_of[child]].payload["name"]
         tuples.add((name, annotated.get(slot, Effect.READ)))
     return frozenset(tuples)
 

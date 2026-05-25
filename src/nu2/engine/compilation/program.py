@@ -1,113 +1,175 @@
-"""Program: an indexed, attributed, compiled Term, ready for a Runtime.
+"""Program: an indexed, attributed, compiled Term, ready for a Runtime to drive.
 
-Compilation produces this. A ``Term`` goes in; a ``Program`` comes out. Inside
-it holds three buckets, all flat columns indexed by a dense ``nid: int``:
+A Program is a flat column store indexed by a dense ``nid: int``. Three
+buckets:
 
-- index   - ``terms[nid]``, ``children[nid]``, ``parent_id[nid]``,
-            ``path_of[nid]``, ``id_of[path]``. Given by the Term's shape.
-- attrs   - ``attrs[name][nid]``. Computed by schema rules.
-- thunks  - ``thunks[nid]``, ``athunks[nid]``. Closures emitted from each
-            Term's ``compile`` / ``acompile`` hook, capturing child thunks.
+- **index** -- ``terms[nid]``, ``children[nid]``, ``parent_id[nid]``,
+  ``path_of[nid]``, ``id_of[path]``. Given by the Term's shape.
+- **attrs** -- ``attrs[name][nid]``. Computed by schema rules during the
+  compile phase.
+- **thunks** -- ``thunks[nid]``, ``athunks[nid]``. Per-node closures emitted
+  from each Term's ``compile`` / ``acompile`` hook.
 
-Hot path reads columns by nid; path-keyed sugar (``term``, ``kind``, ``attr``,
-``walk``) is cold-path.
+The hot path reads columns by nid; path-keyed sugar (``term``, ``kind``,
+``payload``, ``parent``, ``walk``, ``attr``) is cold-path.
 
-The top-level entry is ``compile(term, schema)``: build the index, run a
-sweep per computed attribute in finalized order, then emit the thunk
-columns. The two sweep helpers live below as free functions.
+Construction goes through :func:`nu2.engine.compilation.compile`; calling
+``Program(term, schema)`` directly builds the index but leaves the attribute
+and thunk columns empty.
+
+Access conventions
+------------------
+
+The store has two public access tiers:
+
+- **Path-keyed (model API)** -- ``attr(path, name)``, ``walk(under)``.
+  Semantic, cold path. Use in rule bodies, validation laws, debugging.
+- **nid-keyed (storage API)** -- ``terms[nid]``, ``children[nid]``,
+  ``attrs[name][nid]``, ``thunks[nid]``, ... All columns indexed by nid.
+  Hot path. The Runtime dispatches via ``thunks[nid](rt)``; predicates
+  index directly for speed.
+
+The two are bridged by ``path_of`` (nid -> Path) and ``id_of`` (Path ->
+nid); both are public.
+
+Why both: nid lookups are the absolute fastest indexed access (one C-level
+list index), with no per-step tuple construction. Path-based access has
+to build/hash Path tuples and resolve through ``id_of`` -- fine on the
+cold path, prohibitive on the per-node hot loop the Runtime drives.
+Storing a dense ``nid`` and dispatching by it is what lets evaluation
+avoid allocating during the inner loop.
+
+Truly private: ``_term`` and ``_schema``, used by ``attr`` for declared
+resolution and by ``__repr__``.
+
+Other conventions
+-----------------
+
+- The root path is ``()``; the root nid is ``0``. Do not use truthiness on
+  either: write ``path == program.root`` and ``parent_id[nid] < 0``.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Awaitable, Callable, Iterator
 
-    from nu2.engine.structure.attribute import Inherited, Synthesized
     from nu2.engine.structure.schema import Schema
     from nu2.engine.structure.term import Term
 
-__all__ = ["Path", "Program", "compile"]
+__all__ = ["Path", "Program", "UnknownAttributeError"]
 
 type Path = tuple[int, ...]
+"""A node's identity: the slot indices along the descent from the root.
+
+Each element is the slot of one descent step (which child of the parent):
+
+- ``()`` is the root itself -- no descent, no slots.
+- ``(1,)`` is the root's slot-1 child.
+- ``(1, 0)`` is that child's slot-0 child.
+- ``(1, 0, 2)`` is that grandchild's slot-2 child, and so on.
+
+A shared Term reached by two different paths is two distinct nodes; each
+occurrence has its own Path (and its own ``nid`` in the Program).
+"""
 
 
 class Program:
     """An indexed, attributed, compiled Term, ready for a Runtime to drive."""
 
-    root: Path = ()
+    root: ClassVar[Path] = ()
 
     def __init__(self, term: Term, schema: Schema) -> None:
+        from nu2.engine.compilation.index import build_index
+
+        # The examples below all assume one running shape -- a minimal DAG
+        # with a shared leaf:
+        #
+        #     x = Literal(7)
+        #     description = Add(x, x)
+        #
+        # The two occurrences of ``x`` get distinct nids (1 and 2) even
+        # though they point to the same Term object by identity:
+        #
+        #     nid 0  Add        path ()
+        #     nid 1  Literal(7) path (0,)
+        #     nid 2  Literal(7) path (1,)     <-- same Term object as nid 1
+
+        # The root Term of the description, held by reference. The DAG is
+        # read off this on every walk; never copied.
+        # Example: _term is the Add node; _term.children -> (x, x).
         self._term = term
+
+        # The finalized Schema this Program was compiled against. Read by
+        # ``attr`` to resolve declared attributes (which are class constants,
+        # not stored in ``attrs``).
+        # Example: a schema registering "depth" (inherited) and "size" (synthesized).
         self._schema = schema
-        # index
+
+        # --- index columns (filled by ``build_index``) -----------------------
+
+        # ``nid -> Term``. The dense list of Terms in preorder; ``terms[0]``
+        # is always the root. A shared subtree appears once per occurrence,
+        # so two nids may point to the same Term object by identity.
+        # Example: [Add, Literal(7), Literal(7)]   (terms[1] is terms[2])
         self.terms: list[Term] = []
+
+        # ``nid -> tuple of child nids``. The structural edge list. Empty
+        # tuple at a leaf. Frozen to tuple after the index walk so the public
+        # column is immutable.
+        # Example: [(1, 2), (), ()]
         self.children: list[tuple[int, ...]] = []
+
+        # ``nid -> parent nid``, or ``-1`` at the root. The ``-1`` sentinel is
+        # the only correct "is root" test on an nid (do not use ``if nid``).
+        # Example: [-1, 0, 0]
         self.parent_id: list[int] = []
+
+        # ``nid -> Path``. The path-tuple address of each node, used by
+        # path-keyed sugar and by rules that need a node's position.
+        # Example: [(), (0,), (1,)]
         self.path_of: list[Path] = []
+
+        # ``Path -> nid``. The inverse of ``path_of``; the path-to-nid lookup
+        # that backs every path-keyed accessor.
+        # Example: {(): 0, (0,): 1, (1,): 2}
         self.id_of: dict[Path, int] = {}
-        # attrs (populated by the compile phase)
+
+        # --- attribute column store (filled by ``sweep_attributes``) ---------
+
+        # ``name -> per-nid column of values``. One column per *computed*
+        # attribute (synthesized or inherited). Declared attributes are
+        # class constants and are not stored here; they resolve through the
+        # schema on demand inside ``Program.attr``.
+        # Example: {"depth": [0, 1, 1], "size": [3, 1, 1]}
         self.attrs: dict[str, list[object]] = {}
-        # thunks (populated by the emit pass at the end of compile)
-        self.thunks: list[Callable] = []
-        self.athunks: list[Callable] = []
-        self._build_index(term)
 
-    # --- index build --------------------------------------------------------
+        # --- thunk columns (filled by ``emit_thunks``) -----------------------
 
-    def _build_index(self, root: Term) -> None:
-        """Iterative preorder walk: assign nids, populate the index columns.
+        # ``nid -> sync evaluator``. The thunk a sync Runtime calls:
+        # ``thunks[nid](runtime) -> value``. Each thunk closes over its
+        # children's thunks, so dispatch is a single indexed call. Each
+        # occurrence of a shared Term gets its own thunk -- ``thunks[1]`` and
+        # ``thunks[2]`` are distinct closures, even though ``terms[1]`` and
+        # ``terms[2]`` are the same Term.
+        # Example: [add_thunk, x_thunk_a, x_thunk_b]
+        self.thunks: list[Callable[[object], object]] = []
 
-        Children are pushed onto the stack in reverse so they pop in slot
-        order; each popped node knows its parent's nid and appends itself to
-        that parent's child list. Final child lists are frozen into tuples.
-        """
-        terms = self.terms
-        path_of = self.path_of
-        parent_id = self.parent_id
-        id_of = self.id_of
-        child_lists: list[list[int]] = []
+        # ``nid -> async evaluator``. Async sibling of ``thunks``:
+        # ``athunks[nid](runtime) -> awaitable``.
+        # Example: [add_athunk, x_athunk_a, x_athunk_b]
+        self.athunks: list[Callable[[object], Awaitable[object]]] = []
 
-        stack: list[tuple[Term, Path, int]] = [(root, (), -1)]
-        while stack:
-            node, path, parent_nid = stack.pop()
-            nid = len(terms)
-            terms.append(node)
-            path_of.append(path)
-            parent_id.append(parent_nid)
-            id_of[path] = nid
-            child_lists.append([])
-            if parent_nid >= 0:
-                child_lists[parent_nid].append(nid)
-            term_children = node.children
-            for slot in range(len(term_children) - 1, -1, -1):
-                stack.append((term_children[slot], (*path, slot), nid))
+        build_index(self, term)
 
-        self.children = [tuple(c) for c in child_lists]
-
-    # --- structure ----------------------------------------------------------
-
-    def term(self, path: Path) -> Term:
-        """The Term at ``path``."""
-        return self.terms[self.id_of[path]]
-
-    def kind(self, path: Path) -> type[Term]:
-        """The kind (class) of the Term at ``path``."""
-        return type(self.terms[self.id_of[path]])
-
-    def payload(self, path: Path) -> dict[str, object]:
-        """The payload of the Term at ``path``."""
-        return self.terms[self.id_of[path]].payload
-
-    def parent(self, path: Path) -> Path | None:
-        """The parent path, or ``None`` at the root."""
-        return path[:-1] if path else None
+    # --- structure access ---------------------------------------------------
 
     def walk(self, under: Path = ()) -> Iterator[Path]:
         """Enumerate every path under ``under`` in preorder, that node first."""
-        if under == ():
+        if under == self.root:
             yield from self.path_of
             return
         start = self.id_of[under]
@@ -128,6 +190,10 @@ class Program:
         Computed attributes live in ``attrs`` (one dict get + one list index).
         Declared attributes are class constants resolved via the schema. The
         hot path skips this and reads ``program.attrs[name][nid]`` directly.
+
+        Raises:
+            UnknownAttributeError: ``name`` is neither a stored column nor a
+                declared attribute on the Term's kind.
         """
         nid = self.id_of[path]
         column = self.attrs.get(name)
@@ -137,90 +203,19 @@ class Program:
 
         attribute = self._schema.resolve(type(self.terms[nid]), name)
         if not isinstance(attribute, Declared):
-            raise KeyError(f"{type(self.terms[nid]).__name__} has no attribute {name!r}")
+            raise UnknownAttributeError(
+                f"{type(self.terms[nid]).__name__} has no attribute {name!r}"
+            )
         return attribute.value
-
-    # --- emit ---------------------------------------------------------------
-
-    def _emit(self) -> None:
-        """Build the per-nid sync and async thunk columns, children before parents.
-
-        Each ``Term.compile`` / ``Term.acompile`` receives its node's compiled
-        child thunks and returns a thunk that evaluates the subtree. The
-        reverse-preorder walk (``n - 1`` down to ``0``) guarantees a child's
-        thunk is in hand by the time its parent is compiled.
-        """
-        terms = self.terms
-        children = self.children
-        n = len(terms)
-        thunks: list[Callable] = [None] * n  # type: ignore[list-item]
-        athunks: list[Callable] = [None] * n  # type: ignore[list-item]
-        for nid in range(n - 1, -1, -1):
-            child_nids = children[nid]
-            child_thunks = tuple(thunks[c] for c in child_nids)
-            child_athunks = tuple(athunks[c] for c in child_nids)
-            term = terms[nid]
-            thunks[nid] = term.compile(nid, child_thunks)
-            athunks[nid] = term.acompile(nid, child_athunks)
-        self.thunks = thunks
-        self.athunks = athunks
 
     def __repr__(self) -> str:
         return f"Program({self._term!r})"
 
 
-# --- compile phase ----------------------------------------------------------
+class UnknownAttributeError(KeyError):
+    """Raised by :meth:`Program.attr` when an attribute is not on the kind.
 
-
-def compile(term: Term, schema: Schema) -> Program:
-    """Compile a Term against a finalized Schema: index, attribute, emit.
-
-    Args:
-        term: the root Term of the description.
-        schema: a finalized Schema.
-
-    Returns:
-        A Program with every computed attribute column populated and the
-        thunk columns emitted. Declared attributes are not stored; they read
-        through the schema on demand via ``Program.attr``.
+    Subclasses :class:`KeyError` so existing ``except KeyError`` sites keep
+    working; the message string matches the bare-``KeyError`` text that the
+    previous implementation produced.
     """
-    from nu2.engine.structure.attribute import Synthesized
-
-    program = Program(term, schema)
-    n = len(program.terms)
-    for name in schema.topo_order():
-        spec = schema[name]
-        column: list[object] = [None] * n
-        program.attrs[name] = column
-        if isinstance(spec, Synthesized):
-            _synthesize(program, spec, column)
-        else:
-            _inherit(program, spec, column)  # type: ignore[arg-type]
-    program._emit()
-    return program
-
-
-def _synthesize(program: Program, spec: Synthesized, column: list[object]) -> None:
-    """Fill a synthesized attribute, children before parents (reverse preorder)."""
-    children = program.children
-    path_of = program.path_of
-    base = spec.base
-    combine = spec.combine
-    for nid in range(len(program.terms) - 1, -1, -1):
-        own = base(program, path_of[nid])
-        column[nid] = combine(own, [column[cnid] for cnid in children[nid]])
-
-
-def _inherit(program: Program, spec: Inherited, column: list[object]) -> None:
-    """Fill an inherited attribute, parents before children (preorder)."""
-    parent_id = program.parent_id
-    path_of = program.path_of
-    root = spec.root
-    derive = spec.derive
-    for nid in range(len(program.terms)):
-        parent = parent_id[nid]
-        if parent < 0:
-            column[nid] = root(program, path_of[nid])
-            continue
-        path = path_of[nid]
-        column[nid] = derive(program, path_of[parent], path[-1], column[parent])
