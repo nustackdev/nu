@@ -11,9 +11,7 @@ from __future__ import annotations
 import pytest
 from _support.terms import Leaf, Node
 
-from nu2.engine.compilation import Program, compile
-from nu2.engine.compilation.attribution import sweep_attributes
-from nu2.engine.compilation.index import build_index
+from nu2.engine.compilation import Program, build_index, compile, sweep_attributes
 from nu2.engine.structure import Declared, Inherited, Synthesized
 
 

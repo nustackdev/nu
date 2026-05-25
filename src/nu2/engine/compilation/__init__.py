@@ -14,8 +14,19 @@ Output is a Program: the indexed Term plus attribute and thunk columns,
 ready for a Runtime to drive. No IR, no optimizer.
 """
 
-from nu2.engine.compilation.compile import compile
-from nu2.engine.compilation.program import Path, Program, UnknownAttributeError
+from .attribution import sweep_attributes
+from .compile import compile
+from .emit import emit_thunks
+from .index import build_index
+from .program import Path, Program, UnknownAttributeError
 
 
-__all__ = ["Path", "Program", "UnknownAttributeError", "compile"]
+__all__ = [
+    "Path",
+    "Program",
+    "UnknownAttributeError",
+    "build_index",
+    "compile",
+    "emit_thunks",
+    "sweep_attributes",
+]

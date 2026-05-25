@@ -7,7 +7,7 @@ concurrency toolkit; those belong to whichever language layer drives the
 Program (Nu's concrete implementation lives in ``nu2.lang.evaluation``).
 """
 
-from nu2.engine.evaluation.protocol import Runtime
+from .protocol import Runtime
 
 
 __all__ = ["Runtime"]

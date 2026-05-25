@@ -13,17 +13,17 @@ The engine's alphabet -- the primitives every layer-1 language reuses.
 - :data:`RuleFn` -- the type alias for attribute rule callables.
 """
 
-from nu2.engine.structure.attribute import (
+from .attribute import (
     Attribute,
     Computed,
     Declared,
     Inherited,
     Synthesized,
 )
-from nu2.engine.structure.exceptions import CycleError, NotFinalizedError
-from nu2.engine.structure.schema import Schema
-from nu2.engine.structure.term import Term, TermMeta
-from nu2.engine.structure.types import RuleFn
+from .exceptions import CycleError, NotFinalizedError
+from .schema import Schema
+from .term import Term, TermMeta
+from .types import RuleFn
 
 
 __all__ = [

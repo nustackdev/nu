@@ -19,12 +19,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure.exceptions import CycleError, NotFinalizedError
+from .exceptions import CycleError, NotFinalizedError
 
 
 if TYPE_CHECKING:
-    from nu2.engine.structure.attribute import Attribute
-    from nu2.engine.structure.term import Term
+    from .attribute import Attribute
+    from .term import Term
 
 __all__ = ["Schema"]
 

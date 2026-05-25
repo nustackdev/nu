@@ -22,8 +22,9 @@ from typing import TYPE_CHECKING, NamedTuple
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu2.engine.compilation.program import Path, Program
-    from nu2.engine.validation.predicate import Test
+    from nu2.engine.compilation import Path, Program
+
+    from .predicate import Test
 
 __all__ = [
     "Law",

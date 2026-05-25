@@ -12,8 +12,7 @@ from typing import TYPE_CHECKING
 
 from _support.terms import Leaf, Node
 
-from nu2.engine.compilation import Program
-from nu2.engine.compilation.index import build_index
+from nu2.engine.compilation import Program, build_index
 
 
 if TYPE_CHECKING:

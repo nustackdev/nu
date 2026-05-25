@@ -58,8 +58,7 @@ from typing import TYPE_CHECKING, ClassVar
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Iterator
 
-    from nu2.engine.structure.schema import Schema
-    from nu2.engine.structure.term import Term
+    from nu2.engine.structure import Schema, Term
 
 __all__ = ["Path", "Program", "UnknownAttributeError"]
 

@@ -13,8 +13,9 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from nu2.engine.compilation.program import Path, Program
-    from nu2.engine.structure.term import Term
+    from nu2.engine.structure import Term
+
+    from .program import Path, Program
 
 __all__ = ["build_index"]
 

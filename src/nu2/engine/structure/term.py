@@ -20,13 +20,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.evaluation import Runtime
-from nu2.engine.structure.attribute import Attribute
+from .attribute import Attribute
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import ClassVar, Self
+
+    from nu2.engine.evaluation import Runtime
 
 __all__ = ["Term", "TermMeta"]
 
@@ -56,7 +57,7 @@ class TermMeta(type):
                 if value.name is None:
                     value.name = key
                 attributes[value.name] = value
-        cls.attributes = attributes
+        cls.attributes = attributes  # type: ignore
         return cls
 
 

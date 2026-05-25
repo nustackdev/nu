@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
-    from nu2.engine.compilation.program import Program
+    from .program import Program
 
 __all__ = ["emit_thunks"]
 

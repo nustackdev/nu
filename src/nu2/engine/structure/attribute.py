@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from nu2.engine.structure.types import RuleFn
+    from .types import RuleFn
 
 __all__ = ["Attribute", "Computed", "Declared", "Inherited", "Synthesized"]
 

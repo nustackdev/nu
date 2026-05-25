@@ -13,15 +13,16 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from nu2.engine.compilation.program import Program
-    from nu2.engine.structure.attribute import Inherited, Synthesized
+    from nu2.engine.structure import Inherited, Synthesized
+
+    from .program import Program
 
 __all__ = ["sweep_attributes"]
 
 
 def sweep_attributes(program: Program) -> None:
     """Run one sweep per computed attribute, in the schema's topological order."""
-    from nu2.engine.structure.attribute import Inherited, Synthesized
+    from nu2.engine.structure import Inherited, Synthesized
 
     schema = program._schema
     n = len(program.terms)

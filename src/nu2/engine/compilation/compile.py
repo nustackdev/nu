@@ -19,15 +19,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.compilation.attribution import sweep_attributes
-from nu2.engine.compilation.emit import emit_thunks
-from nu2.engine.compilation.index import build_index
-from nu2.engine.compilation.program import Program
+from .attribution import sweep_attributes
+from .emit import emit_thunks
+from .index import build_index
+from .program import Program
 
 
 if TYPE_CHECKING:
-    from nu2.engine.structure.schema import Schema
-    from nu2.engine.structure.term import Term
+    from nu2.engine.structure import Schema, Term
 
 __all__ = ["compile"]
 
