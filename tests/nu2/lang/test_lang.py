@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu2.engine import Attribute
+from nu2.engine import Declared
 from nu2.lang import (
     LAWS,
     Attr,
@@ -36,27 +36,27 @@ from nu2.lang import (
 class Write(Command):
     """A Command that writes its first slot."""
 
-    own_effects = Attribute.declared({0: Effect.WRITE})
+    own_effects = Declared(value={0: Effect.WRITE})
 
 
 class AsyncWrite(Command):
     """A write Command that runs only on an event loop."""
 
-    requires_async = Attribute.declared(True)
-    own_effects = Attribute.declared({0: Effect.WRITE})
+    requires_async = Declared(value=True)
+    own_effects = Declared(value={0: Effect.WRITE})
 
 
 class SyncWrite(Command):
     """A write Command that runs only off an event loop."""
 
-    async_affinity = Attribute.declared(False)
-    own_effects = Attribute.declared({0: Effect.WRITE})
+    async_affinity = Declared(value=False)
+    own_effects = Declared(value={0: Effect.WRITE})
 
 
 class Fork(Strategy):
     """A Strategy that runs its child Commands in parallel."""
 
-    exec_order = Attribute.declared(ExecOrder.PARALLEL)
+    exec_order = Declared(value=ExecOrder.PARALLEL)
 
 
 # --- effects -------------------------------------------------------------

@@ -46,7 +46,7 @@ class Attribute:
         return f"{type(self).__name__}({self.name!r})"
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Declared(Attribute):
     """A constant attribute: schema data baked onto the class.
 
@@ -58,7 +58,7 @@ class Declared(Attribute):
     value: object
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Computed(Attribute):
     """Abstract base for a computed attribute.
 
@@ -70,7 +70,7 @@ class Computed(Attribute):
     reads: tuple[str, ...] = ()
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Synthesized(Computed):
     """A bottom-up attribute.
 
@@ -91,7 +91,7 @@ class Synthesized(Computed):
     combine: RuleFn
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class Inherited(Computed):
     """A top-down attribute.
 

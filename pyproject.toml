@@ -73,11 +73,18 @@ examples = [
 testpaths = [
     "tests",
 ]
+# Make the nu2 test-support package importable as `_support.<module>` from any
+# test file under tests/nu2/. The leading underscore keeps pytest from
+# auto-collecting it as tests.
+pythonpath = [
+    "tests/nu2",
+]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
 asyncio_mode = "auto"
+xfail_strict = true
 markers = [
     "slow: marks tests as slow",
     "integration: marks tests as integration tests",
