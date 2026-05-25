@@ -10,8 +10,8 @@ Typed Refs (AttrRef, ServiceRef and their Form-mixed variants) and their
 ScalarQuery ops are deferred until the Form layer lands in nu2.
 """
 
-from nu2.lang.evaluation.context.attributes import Attributes
-from nu2.lang.evaluation.context.context import Context
+from .attributes import Attributes
+from .context import Context
 
 
 __all__ = ["Attributes", "Context"]

@@ -15,14 +15,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Declared, Term
-from nu2.lang.structure.attrs.cardinality import Cardinality
-from nu2.lang.structure.attrs.sort import Sort
-from nu2.lang.structure.nu import Nu
+from nu2.engine import Declared, Term
+
+from .attrs import Cardinality, Sort
+from .nu import Nu
 
 
 if TYPE_CHECKING:
-    from nu2.lang.evaluation.runtime import NuRuntime as Runtime
+    from nu2.lang.evaluation import NuRuntime as Runtime
 
 __all__ = [
     "Bracket",

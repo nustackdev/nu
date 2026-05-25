@@ -20,9 +20,9 @@ Modules:
 
 from __future__ import annotations
 
-from nu2.lang.entry.stream import acollect, afirst, alast, collect, first
-from nu2.lang.entry.term import arun, run, run_in_loop
-from nu2.lang.entry.value import aeval, eval, eval_in_loop
+from .stream import acollect, afirst, alast, collect, first
+from .term import arun, run, run_in_loop
+from .value import aeval, eval, eval_in_loop
 
 
 __all__ = [

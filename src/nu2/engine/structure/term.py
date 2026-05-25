@@ -9,27 +9,43 @@ the class body, populating the per-class :attr:`Term.attributes` mapping.
 The compile phase consumes this together with the tree-wide
 :class:`~nu2.engine.structure.schema.Schema`.
 
-``Term`` is generic over the Runtime it compiles thunks for. A language
-layer narrows the parameter to its concrete Runtime (e.g. ``NuRuntime``)
-so the emitted thunks have access to whatever per-drive state the language
-needs. The engine bound is the bare :class:`~nu2.engine.evaluation.Runtime`
-Protocol: only ``eval`` / ``aeval`` dispatch are guaranteed.
+``Term`` carries two type parameters:
+
+- ``R_contra`` -- the concrete Runtime emitted thunks close over. A
+  language layer narrows it (e.g. ``NuRuntime``) so thunks have access to
+  whatever per-drive state the language needs. The engine bound is the
+  bare :class:`~nu2.engine.evaluation.Runtime` Protocol: only ``eval`` /
+  ``aeval`` dispatch are guaranteed. ``R`` appears only in **input**
+  positions (the thunk's argument), so it is **contravariant**.
+- ``V_co`` -- the value type this Term yields. ``eval`` returns ``V``;
+  the sync thunk returned by ``compile`` has signature ``(R) -> V``, and
+  the async thunk returned by ``acompile`` has signature
+  ``(R) -> Awaitable[V]``. ``V`` appears only in **output** positions, so
+  it is **covariant**. Children are heterogeneous and stay opaque
+  (``Callable[[R], object]``).
+
+The variance markers require legacy ``TypeVar`` + ``Generic`` rather than
+the PEP 695 inline form, since PEP 695 has no explicit variance syntax.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from .attribute import Attribute
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Awaitable, Callable
     from typing import ClassVar, Self
 
     from nu2.engine.evaluation import Runtime
 
 __all__ = ["Term", "TermMeta"]
+
+
+R_contra = TypeVar("R_contra", bound="Runtime", contravariant=True)
+V_co = TypeVar("V_co", covariant=True)
 
 
 class TermMeta(type):
@@ -61,7 +77,7 @@ class TermMeta(type):
         return cls
 
 
-class Term[R: Runtime](metaclass=TermMeta):
+class Term(Generic[R_contra, V_co], metaclass=TermMeta):  # noqa: UP046  # PEP 695 has no variance markers
     """Pure immutable construction data: a kind, children, and a payload.
 
     A description is a DAG of Terms. Constructing one builds a nested
@@ -75,9 +91,16 @@ class Term[R: Runtime](metaclass=TermMeta):
     ``NotImplementedError`` on the base Term -- a concrete kind must
     implement at least one of the two paths.
 
-    The type parameter ``R`` is the concrete Runtime emitted thunks close
-    over. A language layer narrows it (``class Nu(Term[NuRuntime])``); the
-    engine bound is the bare :class:`Runtime` Protocol.
+    Type parameters:
+
+    - ``R_contra`` -- the concrete Runtime thunks close over. **Contravariant**
+      since ``R`` is consumed only in input positions. A language layer
+      narrows it (``class Nu(Term[NuRuntime, V_co])``); the engine bound is
+      the bare :class:`Runtime` Protocol.
+    - ``V_co`` -- the value type this Term yields. **Covariant** since
+      ``V`` appears only in output positions. The sync thunk returned by
+      :meth:`compile` is ``(R) -> V``; the async thunk returned by
+      :meth:`acompile` is ``(R) -> Awaitable[V]``.
     """
 
     attributes: ClassVar[dict[str, Attribute]]
@@ -102,9 +125,9 @@ class Term[R: Runtime](metaclass=TermMeta):
     # --- compile hooks ------------------------------------------------------
 
     def compile(
-        self, nid: int, children: tuple[Callable[[R], object], ...]
-    ) -> Callable[[R], object]:
-        """Build a sync thunk ``(rt) -> value`` for this Term at ``nid``.
+        self, nid: int, children: tuple[Callable[[R_contra], object], ...]
+    ) -> Callable[[R_contra], V_co]:
+        """Build a sync thunk ``(rt) -> V`` for this Term at ``nid``.
 
         ``children`` is the tuple of precompiled child thunks. Atoms on the
         hot path override this to capture ``children`` and call them
@@ -112,29 +135,29 @@ class Term[R: Runtime](metaclass=TermMeta):
         indirection. The default delegates to :meth:`eval`.
         """
 
-        def thunk(rt: R) -> object:
+        def thunk(rt: R_contra) -> V_co:
             return self.eval(rt, nid)
 
         return thunk
 
     def acompile(
-        self, nid: int, children: tuple[Callable[[R], object], ...]
-    ) -> Callable[[R], object]:
-        """Build an async thunk ``(rt) -> awaitable`` for this Term at ``nid``.
+        self, nid: int, children: tuple[Callable[[R_contra], object], ...]
+    ) -> Callable[[R_contra], Awaitable[V_co]]:
+        """Build an async thunk ``(rt) -> Awaitable[V]`` for this Term at ``nid``.
 
         ``children`` is the tuple of precompiled async child thunks. Atoms
         on the hot path override this to capture ``children`` and call them
         directly; the default delegates to :meth:`aeval`.
         """
 
-        async def athunk(rt: R) -> object:
+        async def athunk(rt: R_contra) -> V_co:
             return await self.aeval(rt, nid)
 
         return athunk
 
     # --- evaluation fallbacks ----------------------------------------------
 
-    def eval(self, rt: R, nid: int) -> object:
+    def eval(self, rt: R_contra, nid: int) -> V_co:
         """Synchronous evaluation hook for the default :meth:`compile` thunk.
 
         Concrete Terms either override :meth:`compile` (typical, hot path)
@@ -145,7 +168,7 @@ class Term[R: Runtime](metaclass=TermMeta):
         msg = f"{type(self).__name__}.eval is not implemented"
         raise NotImplementedError(msg)
 
-    async def aeval(self, rt: R, nid: int) -> object:
+    async def aeval(self, rt: R_contra, nid: int) -> V_co:
         """Asynchronous sibling of :meth:`eval`.
 
         Concrete Terms either override :meth:`acompile` or override this;

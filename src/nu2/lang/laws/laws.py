@@ -8,8 +8,10 @@ and a ``holds`` predicate that must be true on each, both drawn from
 
 from __future__ import annotations
 
-from nu2.engine.validation import Law, Severity
-from nu2.lang.laws.predicates import (
+from nu2.engine import Law, Severity
+from nu2.lang.structure import Attr, Cardinality, Effect, Sort
+
+from .predicates import (
     attr_true,
     cardinality_is,
     compose_detail,
@@ -22,7 +24,6 @@ from nu2.lang.laws.predicates import (
     ref_slot_detail,
     ref_slots_hold_refs,
 )
-from nu2.lang.structure.attrs import Attr, Cardinality, Effect, Sort
 
 
 __all__ = ["LAWS"]

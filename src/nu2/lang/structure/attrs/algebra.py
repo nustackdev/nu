@@ -9,8 +9,9 @@ that read them come later.
 
 from __future__ import annotations
 
-from nu2.engine.structure import Attribute, Declared
-from nu2.lang.structure.attrs.names import Attr
+from nu2.engine import Attribute, Declared
+
+from .names import Attr
 
 
 __all__ = ["ATTRIBUTES"]

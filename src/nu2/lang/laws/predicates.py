@@ -13,13 +13,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.validation import Predicate, predicate
-from nu2.lang.structure.attrs import MATRIX, Attr, Sort, matrix_sort, subsort
+from nu2.engine import Predicate, predicate
+from nu2.lang.structure import MATRIX, Attr, Sort, matrix_sort, subsort
 
 
 if TYPE_CHECKING:
-    from nu2.engine.compilation import Path, Program
-    from nu2.lang.structure.attrs import Cardinality, Effect
+    from nu2.engine import Path, Program
+    from nu2.lang.structure import Cardinality, Effect
 
 __all__ = [
     "attr_equals",

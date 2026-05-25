@@ -12,13 +12,14 @@ their bindings live one level up in ``nu2.lang.structure.sorts``.
 
 from __future__ import annotations
 
-from nu2.engine.structure import Schema
-from nu2.lang.structure.attrs import algebra, cardinality, effects, execution, sort
-from nu2.lang.structure.attrs.cardinality import Cardinality
-from nu2.lang.structure.attrs.effects import Effect, EffectSet
-from nu2.lang.structure.attrs.execution import ExecOrder
-from nu2.lang.structure.attrs.names import Attr
-from nu2.lang.structure.attrs.sort import MATRIX, Sort, matrix_sort, subsort
+from nu2.engine import Schema
+
+from . import algebra, cardinality, effects, execution, sort
+from .cardinality import Cardinality
+from .effects import Effect, EffectSet
+from .execution import ExecOrder
+from .names import Attr
+from .sort import MATRIX, Sort, matrix_sort, subsort
 
 
 __all__ = [

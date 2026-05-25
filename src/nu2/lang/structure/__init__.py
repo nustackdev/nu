@@ -1,8 +1,9 @@
 """Structure: the alphabet Nu adds on top of ``engine.structure``.
 
-Three layers:
+Four layers:
 
-- ``nu``   - the ``Nu`` base class, the user-facing brand on every construct.
+- ``nu``    - the ``Nu`` base class, the user-facing brand on every construct.
+- ``args``  - ``Arg[T]`` / ``IntArg`` / ``StrArg`` ... aliases for kind slots.
 - ``attrs`` - one module per attribute concern (sort, cardinality, effects,
   execution, algebra) plus the ``Attr`` name vocabulary and ``build_schema``.
 - ``sorts`` - the user-facing Term classes (``Ref``, ``Interaction``,
@@ -12,6 +13,20 @@ Three layers:
 
 from __future__ import annotations
 
+from nu2.lang.structure.args import (
+    Arg,
+    BoolArg,
+    BytesArg,
+    DictArg,
+    FloatArg,
+    FrozenSetArg,
+    IntArg,
+    ListArg,
+    NoneArg,
+    SetArg,
+    StrArg,
+    TupleArg,
+)
 from nu2.lang.structure.attrs import (
     MATRIX,
     Attr,
@@ -44,26 +59,38 @@ from nu2.lang.structure.sorts import (
 
 __all__ = [
     "MATRIX",
+    "Arg",
     "Attr",
+    "BoolArg",
     "Bracket",
+    "BytesArg",
     "Cardinality",
     "Command",
     "Control",
+    "DictArg",
     "Effect",
     "EffectSet",
     "ExecOrder",
+    "FloatArg",
     "Flow",
+    "FrozenSetArg",
+    "IntArg",
     "Interaction",
+    "ListArg",
+    "NoneArg",
     "Nu",
     "Policy",
     "Query",
     "Reduction",
     "Ref",
     "ScalarQuery",
+    "SetArg",
     "Sort",
     "Span",
+    "StrArg",
     "Strategy",
     "StreamQuery",
+    "TupleArg",
     "build_schema",
     "matrix_sort",
     "subsort",

@@ -28,16 +28,17 @@ import asyncio
 import queue as _queue
 from typing import TYPE_CHECKING
 
-from nu2.lang.evaluation.loop import safely_aclosing, safely_closing
-from nu2.lang.evaluation.sentinels import EMPTY, INVALID
+from .loop import safely_aclosing, safely_closing
+from .sentinels import EMPTY, INVALID
 
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterable, AsyncIterator, Callable, Iterable
     from concurrent.futures import Future
 
-    from nu2.engine.compilation import Program
-    from nu2.lang.evaluation.budget import Budget
+    from nu2.engine import Program
+
+    from .budget import Budget
 
 __all__ = ["NuRuntime"]
 

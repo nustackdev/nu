@@ -12,11 +12,11 @@ in ``nu2.lang.entry`` - they are the user's front door, not internals.
 
 from __future__ import annotations
 
-from nu2.lang.evaluation.budget import Budget
-from nu2.lang.evaluation.context import Attributes, Context
-from nu2.lang.evaluation.loop import into_loop, safely_aclosing, safely_closing
-from nu2.lang.evaluation.runtime import NuRuntime
-from nu2.lang.evaluation.sentinels import (
+from .budget import Budget
+from .context import Attributes, Context
+from .loop import into_loop, safely_aclosing, safely_closing
+from .runtime import NuRuntime
+from .sentinels import (
     EMPTY,
     INVALID,
     Empty,

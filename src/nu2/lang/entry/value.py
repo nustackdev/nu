@@ -4,15 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.lang.entry._guard import refuse_async_only
-from nu2.lang.evaluation.budget import Budget
-from nu2.lang.evaluation.context import Context
-from nu2.lang.evaluation.loop import into_loop
-from nu2.lang.evaluation.runtime import NuRuntime
+from nu2.lang.evaluation import Budget, Context, NuRuntime, into_loop
+
+from ._guard import refuse_async_only
 
 
 if TYPE_CHECKING:
-    from nu2.engine.compilation import Program
+    from nu2.engine import Program
 
 
 def eval(

@@ -11,12 +11,13 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Attribute, Synthesized
-from nu2.lang.structure.attrs.names import Attr
+from nu2.engine import Attribute, Synthesized
+
+from .names import Attr
 
 
 if TYPE_CHECKING:
-    from nu2.engine.compilation import Path, Program
+    from nu2.engine import Path, Program
 
 __all__ = ["ATTRIBUTES", "Cardinality"]
 

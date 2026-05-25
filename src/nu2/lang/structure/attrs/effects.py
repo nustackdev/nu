@@ -11,9 +11,10 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Attribute, Declared, Synthesized
-from nu2.lang.structure.attrs.names import Attr
-from nu2.lang.structure.attrs.sort import Sort
+from nu2.engine import Attribute, Declared, Synthesized
+
+from .names import Attr
+from .sort import Sort
 
 
 if TYPE_CHECKING:

@@ -10,7 +10,7 @@ Feed ``LAWS`` to ``gate`` for a verdict or to ``validate`` for a rejection.
 
 from __future__ import annotations
 
-from nu2.lang.laws.laws import LAWS
+from .laws import LAWS
 
 
 __all__ = ["LAWS"]

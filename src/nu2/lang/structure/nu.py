@@ -12,17 +12,35 @@ Typical use::
         return Add(Literal(1), Literal(2))
 
 Custom atoms extend ``Nu`` (or one of its sort subclasses); ``Term`` is reserved
-for engine-level work.
+for engine-level work. ``Nu`` itself is abstract: it declares no ``sort`` /
+``cardinality`` / effect / algebra attributes, so a plain ``Nu(...)`` cannot
+pass schema resolution. The algebraic identity element of the tree is
+``Span`` (and its sub-shapes ``Bracket`` / ``Policy``), which carries the
+TRANSPARENT cardinality and the rest of the forwarding machinery.
+
+``Nu`` is generic over ``V_co``, the yield type, covariant since ``V``
+appears only in output positions. The ``R`` parameter of ``Term`` is fixed
+to ``NuRuntime`` at this layer.
 """
 
 from __future__ import annotations
 
-from nu2.engine.structure import Term
-from nu2.lang.evaluation.runtime import NuRuntime
+from typing import Generic, TypeVar
+
+from nu2.engine import Term
+from nu2.lang.evaluation import NuRuntime
 
 
 __all__ = ["Nu"]
 
 
-class Nu(Term[NuRuntime]):
-    """The user-facing base for every Nu construct. A tagged ``Term``."""
+V_co = TypeVar("V_co", covariant=True)
+
+
+class Nu(Term[NuRuntime, V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+    """The user-facing base for every Nu construct.
+
+    A tagged ``Term`` carrying the language's ``NuRuntime`` binding and a
+    yield type ``V_co``. Abstract -- concrete sorts declare the structural,
+    effect, cardinality, async, and algebra attributes the engine requires.
+    """

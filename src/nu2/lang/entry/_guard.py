@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.lang.structure.attrs import Attr
+from nu2.lang.structure import Attr
 
 
 if TYPE_CHECKING:
-    from nu2.engine.compilation import Program
+    from nu2.engine import Program
 
 
 def refuse_async_only(program: Program, entry: str, swap: str) -> None:

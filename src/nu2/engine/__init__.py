@@ -12,9 +12,9 @@ A layer-1 language (Nu, in ``nu2.lang``) defines kinds, attributes, and the
 concrete Runtime that drives compiled Programs.
 """
 
-from nu2.engine.compilation import Path, Program, compile
-from nu2.engine.evaluation import Runtime
-from nu2.engine.structure import (
+from .compilation import Path, Program, compile
+from .evaluation import Runtime
+from .structure import (
     Attribute,
     Computed,
     CycleError,
@@ -26,7 +26,7 @@ from nu2.engine.structure import (
     Term,
     TermMeta,
 )
-from nu2.engine.validation import Law, Predicate, Severity, Violation, gate, predicate, validate
+from .validation import Law, Predicate, Severity, Violation, gate, predicate, validate
 
 
 __all__ = [
