@@ -7,7 +7,7 @@ contains one runs on an event loop.
 
 from __future__ import annotations
 
-from nu2.engine.structure import Attribute
+from nu2.engine.structure import Declared
 from nu2.lang import StreamQuery
 
 
@@ -33,4 +33,4 @@ class Take(StreamQuery):
 class Watch(StreamQuery):
     """An event subscription; yields items as they arrive on a loop."""
 
-    requires_async = Attribute.declared(True)
+    requires_async = Declared(value=True)

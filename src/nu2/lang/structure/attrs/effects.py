@@ -11,7 +11,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Attribute
+from nu2.engine.structure import Attribute, Declared, Synthesized
 from nu2.lang.structure.attrs.names import Attr
 from nu2.lang.structure.attrs.sort import Sort
 
@@ -57,9 +57,9 @@ def _union_effects(own: EffectSet, children: list[EffectSet]) -> EffectSet:
 
 
 ATTRIBUTES: tuple[Attribute, ...] = (
-    Attribute.declared({}, name=Attr.OWN_EFFECTS),
-    Attribute.synthesized(
-        Attr.COMPOSITION_EFFECTS,
+    Declared(value={}, name=Attr.OWN_EFFECTS),
+    Synthesized(
+        name=Attr.COMPOSITION_EFFECTS,
         base=_own_effects,
         combine=_union_effects,
         reads=(Attr.OWN_EFFECTS, Attr.SORT),

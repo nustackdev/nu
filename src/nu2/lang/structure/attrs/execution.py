@@ -13,7 +13,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Attribute
+from nu2.engine.structure import Attribute, Declared, Inherited, Synthesized
 from nu2.lang.structure.attrs.names import Attr
 
 
@@ -68,23 +68,23 @@ def _on_loop_derive(program: Program, parent: Path, slot: int, inherited: bool) 
 
 
 ATTRIBUTES: tuple[Attribute, ...] = (
-    Attribute.declared(value=False, name=Attr.REQUIRES_ASYNC),
-    Attribute.declared(value=True, name=Attr.ASYNC_AFFINITY),
-    Attribute.declared(ExecOrder.SEQUENTIAL, name=Attr.EXEC_ORDER),
-    Attribute.synthesized(
-        Attr.HAS_ASYNC_ONLY_ATOM,
+    Declared(value=False, name=Attr.REQUIRES_ASYNC),
+    Declared(value=True, name=Attr.ASYNC_AFFINITY),
+    Declared(value=ExecOrder.SEQUENTIAL, name=Attr.EXEC_ORDER),
+    Synthesized(
+        name=Attr.HAS_ASYNC_ONLY_ATOM,
         base=_async_only,
         combine=_any,
         reads=(Attr.REQUIRES_ASYNC,),
     ),
-    Attribute.synthesized(
-        Attr.HAS_SYNC_ONLY_ATOM,
+    Synthesized(
+        name=Attr.HAS_SYNC_ONLY_ATOM,
         base=_sync_only,
         combine=_any,
         reads=(Attr.ASYNC_AFFINITY,),
     ),
-    Attribute.inherited(
-        Attr.ON_LOOP,
+    Inherited(
+        name=Attr.ON_LOOP,
         root=_on_loop_root,
         derive=_on_loop_derive,
         reads=(Attr.HAS_ASYNC_ONLY_ATOM, Attr.HAS_SYNC_ONLY_ATOM, Attr.EXEC_ORDER),

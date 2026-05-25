@@ -11,7 +11,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Attribute
+from nu2.engine.structure import Attribute, Synthesized
 from nu2.lang.structure.attrs.names import Attr
 
 
@@ -43,8 +43,8 @@ def _resolve_cardinality(own: Cardinality, children: list[Cardinality]) -> Cardi
 
 
 ATTRIBUTES: tuple[Attribute, ...] = (
-    Attribute.synthesized(
-        Attr.CHILD_CARDINALITY,
+    Synthesized(
+        name=Attr.CHILD_CARDINALITY,
         base=_own_cardinality,
         combine=_resolve_cardinality,
         reads=(Attr.CARDINALITY,),

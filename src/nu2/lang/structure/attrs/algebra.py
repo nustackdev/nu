@@ -9,7 +9,7 @@ that read them come later.
 
 from __future__ import annotations
 
-from nu2.engine.structure import Attribute
+from nu2.engine.structure import Attribute, Declared
 from nu2.lang.structure.attrs.names import Attr
 
 
@@ -17,8 +17,8 @@ __all__ = ["ATTRIBUTES"]
 
 
 ATTRIBUTES: tuple[Attribute, ...] = (
-    Attribute.declared(value=False, name=Attr.COMMUTATIVE),
-    Attribute.declared(value=False, name=Attr.ASSOCIATIVE),
-    Attribute.declared(value=False, name=Attr.IDEMPOTENT),
-    Attribute.declared(value=True, name=Attr.DETERMINISTIC),
+    Declared(value=False, name=Attr.COMMUTATIVE),
+    Declared(value=False, name=Attr.ASSOCIATIVE),
+    Declared(value=False, name=Attr.IDEMPOTENT),
+    Declared(value=True, name=Attr.DETERMINISTIC),
 )

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Attribute, Term
+from nu2.engine.structure import Declared, Term
 from nu2.lang.structure.attrs.cardinality import Cardinality
 from nu2.lang.structure.attrs.sort import Sort
 from nu2.lang.structure.nu import Nu
@@ -44,8 +44,8 @@ __all__ = [
 class Ref(Nu):
     """A name for a Context location: a leaf, or keyed by child Refs."""
 
-    sort = Attribute.declared(Sort.REF)
-    cardinality = Attribute.declared(Cardinality.SCALAR)
+    sort = Declared(value=Sort.REF)
+    cardinality = Declared(value=Cardinality.SCALAR)
 
     def __init__(self, name: str, *key: Term) -> None:
         super().__init__(*key)
@@ -80,61 +80,61 @@ class Query(Interaction):
 class ScalarQuery(Query):
     """A Query that yields exactly one value."""
 
-    sort = Attribute.declared(Sort.SCALAR_QUERY)
-    cardinality = Attribute.declared(Cardinality.SCALAR)
+    sort = Declared(value=Sort.SCALAR_QUERY)
+    cardinality = Declared(value=Cardinality.SCALAR)
 
 
 class StreamQuery(Query):
     """A Query that yields zero or more values."""
 
-    sort = Attribute.declared(Sort.STREAM_QUERY)
-    cardinality = Attribute.declared(Cardinality.STREAM)
+    sort = Declared(value=Sort.STREAM_QUERY)
+    cardinality = Declared(value=Cardinality.STREAM)
 
 
 class Reduction(ScalarQuery):
     """A ScalarQuery that folds a stream child down to one value."""
 
-    sort = Attribute.declared(Sort.REDUCTION)
+    sort = Declared(value=Sort.REDUCTION)
 
 
 class Command(Interaction):
     """A mutating Interaction. Yields nothing; its only sub-shape is scalar."""
 
-    sort = Attribute.declared(Sort.SCALAR_COMMAND)
-    cardinality = Attribute.declared(Cardinality.VOID)
+    sort = Declared(value=Sort.SCALAR_COMMAND)
+    cardinality = Declared(value=Cardinality.VOID)
 
 
 class Flow(Interaction):
     """Abstract: a Command-composing Interaction. Yields nothing."""
 
-    cardinality = Attribute.declared(Cardinality.VOID)
+    cardinality = Declared(value=Cardinality.VOID)
 
 
 class Strategy(Flow):
     """A Flow that composes Commands directly."""
 
-    sort = Attribute.declared(Sort.STRATEGY)
+    sort = Declared(value=Sort.STRATEGY)
 
 
 class Control(Flow):
     """A Flow that composes Commands under Query parameters."""
 
-    sort = Attribute.declared(Sort.CONTROL)
+    sort = Declared(value=Sort.CONTROL)
 
 
 class Span(Interaction):
     """Abstract: a transparent Interaction; yields what its body yields."""
 
-    cardinality = Attribute.declared(Cardinality.TRANSPARENT)
+    cardinality = Declared(value=Cardinality.TRANSPARENT)
 
 
 class Bracket(Span):
     """A Span that governs a body's lifecycle."""
 
-    sort = Attribute.declared(Sort.BRACKET)
+    sort = Declared(value=Sort.BRACKET)
 
 
 class Policy(Span):
     """A Span that governs a body's execution on failure."""
 
-    sort = Attribute.declared(Sort.POLICY)
+    sort = Declared(value=Sort.POLICY)

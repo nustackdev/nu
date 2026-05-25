@@ -16,7 +16,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Attribute
+from nu2.engine.structure import Attribute, Synthesized
 from nu2.lang.structure.attrs.names import Attr
 
 
@@ -143,8 +143,8 @@ def _any(own: bool, children: list[bool]) -> bool:
 
 
 ATTRIBUTES: tuple[Attribute, ...] = (
-    Attribute.synthesized(
-        Attr.HAS_COMMAND,
+    Synthesized(
+        name=Attr.HAS_COMMAND,
         base=_is_command,
         combine=_any,
         reads=(Attr.SORT,),

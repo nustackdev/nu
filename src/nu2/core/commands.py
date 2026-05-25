@@ -7,7 +7,7 @@ one write of ``a`` and one read of ``b``.
 
 from __future__ import annotations
 
-from nu2.engine.structure import Attribute
+from nu2.engine.structure import Declared
 from nu2.lang import Command, Effect
 
 
@@ -17,16 +17,16 @@ __all__ = ["Delete", "Emit", "Set"]
 class Set(Command):
     """Writes the value of slot 1 to the Ref in slot 0."""
 
-    own_effects = Attribute.declared({0: Effect.WRITE})
+    own_effects = Declared(value={0: Effect.WRITE})
 
 
 class Delete(Command):
     """Removes the Ref in slot 0 from the Context."""
 
-    own_effects = Attribute.declared({0: Effect.WRITE})
+    own_effects = Declared(value={0: Effect.WRITE})
 
 
 class Emit(Command):
     """Appends the value of slot 1 to the stream Ref in slot 0."""
 
-    own_effects = Attribute.declared({0: Effect.WRITE})
+    own_effects = Declared(value={0: Effect.WRITE})

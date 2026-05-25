@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Attribute
+from nu2.engine.structure import Declared
 from nu2.lang import ScalarQuery
 from nu2.lang.evaluation.sentinels import EMPTY, INVALID
 
@@ -57,8 +57,8 @@ class Literal(ScalarQuery):
 class Add(ScalarQuery):
     """The sum of its scalar children."""
 
-    commutative = Attribute.declared(True)
-    associative = Attribute.declared(True)
+    commutative = Declared(value=True)
+    associative = Declared(value=True)
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
@@ -88,8 +88,8 @@ class Add(ScalarQuery):
 class Mul(ScalarQuery):
     """The product of its scalar children."""
 
-    commutative = Attribute.declared(True)
-    associative = Attribute.declared(True)
+    commutative = Declared(value=True)
+    associative = Declared(value=True)
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:

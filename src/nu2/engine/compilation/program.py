@@ -25,7 +25,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
-    from nu2.engine.structure.attribute import Attribute, Schema
+    from nu2.engine.structure.attribute import Inherited, Synthesized
+    from nu2.engine.structure.schema import Schema
     from nu2.engine.structure.term import Term
 
 __all__ = ["Path", "Program", "compile"]
@@ -132,8 +133,10 @@ class Program:
         column = self.attrs.get(name)
         if column is not None:
             return column[nid]
-        attribute = self._schema.attribute(type(self.terms[nid]), name)
-        if attribute is None or attribute.flavor != "declared":
+        from nu2.engine.structure.attribute import Declared
+
+        attribute = self._schema.resolve(type(self.terms[nid]), name)
+        if not isinstance(attribute, Declared):
             raise KeyError(f"{type(self.terms[nid]).__name__} has no attribute {name!r}")
         return attribute.value
 
@@ -181,21 +184,23 @@ def compile(term: Term, schema: Schema) -> Program:
         thunk columns emitted. Declared attributes are not stored; they read
         through the schema on demand via ``Program.attr``.
     """
+    from nu2.engine.structure.attribute import Synthesized
+
     program = Program(term, schema)
     n = len(program.terms)
-    for name in schema.order():
-        spec = schema._global[name]
+    for name in schema.topo_order():
+        spec = schema[name]
         column: list[object] = [None] * n
         program.attrs[name] = column
-        if spec.flavor == "synthesized":
+        if isinstance(spec, Synthesized):
             _synthesize(program, spec, column)
         else:
-            _inherit(program, spec, column)
+            _inherit(program, spec, column)  # type: ignore[arg-type]
     program._emit()
     return program
 
 
-def _synthesize(program: Program, spec: Attribute, column: list[object]) -> None:
+def _synthesize(program: Program, spec: Synthesized, column: list[object]) -> None:
     """Fill a synthesized attribute, children before parents (reverse preorder)."""
     children = program.children
     path_of = program.path_of
@@ -206,7 +211,7 @@ def _synthesize(program: Program, spec: Attribute, column: list[object]) -> None
         column[nid] = combine(own, [column[cnid] for cnid in children[nid]])
 
 
-def _inherit(program: Program, spec: Attribute, column: list[object]) -> None:
+def _inherit(program: Program, spec: Inherited, column: list[object]) -> None:
     """Fill an inherited attribute, parents before children (preorder)."""
     parent_id = program.parent_id
     path_of = program.path_of

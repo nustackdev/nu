@@ -13,21 +13,37 @@ A layer-1 language (Nu, in ``nu2.lang``) defines kinds and attributes on top.
 
 from nu2.engine.compilation import Path, Program, compile
 from nu2.engine.evaluation import Budget, Runtime, into_loop, safely_aclosing, safely_closing
-from nu2.engine.structure import Attribute, CycleError, Schema, Term, TermMeta
+from nu2.engine.structure import (
+    Attribute,
+    Computed,
+    CycleError,
+    Declared,
+    Inherited,
+    NotFinalizedError,
+    Schema,
+    Synthesized,
+    Term,
+    TermMeta,
+)
 from nu2.engine.validation import Law, Predicate, Severity, Violation, gate, predicate, validate
 
 
 __all__ = [
     "Attribute",
     "Budget",
+    "Computed",
     "CycleError",
+    "Declared",
+    "Inherited",
     "Law",
+    "NotFinalizedError",
     "Path",
     "Predicate",
     "Program",
     "Runtime",
     "Schema",
     "Severity",
+    "Synthesized",
     "Term",
     "TermMeta",
     "Violation",

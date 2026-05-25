@@ -1,13 +1,41 @@
-"""Engine layer: the alphabet - the generic ``Term`` + ``Attribute`` primitive."""
+"""Engine layer: structure.
 
-from nu2.engine.structure.attribute import Attribute, CycleError, Schema
+The engine's alphabet -- the primitives every layer-1 language reuses.
+
+- :class:`Term`, :class:`TermMeta` -- the node and its metaclass.
+- :class:`Attribute` and its three concrete kinds -- :class:`Declared`,
+  :class:`Synthesized`, :class:`Inherited` -- the named values attached to
+  Term classes. :class:`Computed` is the abstract base shared by the two
+  computed kinds.
+- :class:`Schema` -- the tree-wide attribute registry plus the finalized
+  cross-attribute dependency order.
+- :exc:`CycleError`, :exc:`NotFinalizedError` -- structural failures.
+- :data:`RuleFn` -- the type alias for attribute rule callables.
+"""
+
+from nu2.engine.structure.attribute import (
+    Attribute,
+    Computed,
+    Declared,
+    Inherited,
+    Synthesized,
+)
+from nu2.engine.structure.exceptions import CycleError, NotFinalizedError
+from nu2.engine.structure.schema import Schema
 from nu2.engine.structure.term import Term, TermMeta
+from nu2.engine.structure.types import RuleFn
 
 
 __all__ = [
     "Attribute",
+    "Computed",
     "CycleError",
+    "Declared",
+    "Inherited",
+    "NotFinalizedError",
+    "RuleFn",
     "Schema",
+    "Synthesized",
     "Term",
     "TermMeta",
 ]

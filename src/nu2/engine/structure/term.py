@@ -1,8 +1,13 @@
-"""The Term primitive and its metaclass.
+"""Term: the primitive node of an engine description, and its metaclass.
 
 A Term is layer 0's node: a kind (its class), an ordered tuple of child
-Symbols, and an opaque payload. It is pure immutable data with no parent and
-no position. The metaclass collects Attribute declarations off the class body.
+Terms, and an opaque payload. It is pure immutable construction data with
+no parent and no position; an application is a Term-rooted DAG.
+
+The :class:`TermMeta` metaclass collects :class:`Attribute` declarations off
+the class body, populating the per-class :attr:`Term.attributes` mapping.
+The compile phase consumes this together with the tree-wide
+:class:`~nu2.engine.structure.schema.Schema`.
 """
 
 from __future__ import annotations
@@ -20,7 +25,13 @@ __all__ = ["Term", "TermMeta"]
 
 
 class TermMeta(type):
-    """Metaclass that collects Attribute declarations off a Term class body."""
+    """Metaclass that collects :class:`Attribute` declarations off the class body.
+
+    For each class created, walks the MRO and assembles a flat mapping from
+    attribute name to :class:`Attribute` instance, stored as the class
+    attribute ``attributes``. Class-body declarations that omit ``name``
+    inherit it from the binding name.
+    """
 
     def __new__(
         mcs,
@@ -28,31 +39,43 @@ class TermMeta(type):
         bases: tuple[type, ...],
         namespace: dict[str, object],
     ) -> TermMeta:
-        """Build the class and attach the attributes collected across its MRO."""
+        """Build the class and populate its ``attributes`` mapping."""
         cls = super().__new__(mcs, name, bases, namespace)
         attributes: dict[str, Attribute] = {}
         for klass in reversed(cls.__mro__):
             for key, value in vars(klass).items():
-                if isinstance(value, Attribute):
-                    if value.name is None:
-                        value.name = key
-                    attributes[value.name] = value
-        cls._attributes = attributes
+                if not isinstance(value, Attribute):
+                    continue
+                if value.name is None:
+                    value.name = key
+                attributes[value.name] = value
+        cls.attributes = attributes
         return cls
 
 
 class Term(metaclass=TermMeta):
     """Pure immutable construction data: a kind, children, and a payload.
 
-    A description is a DAG of Symbols. Constructing one builds a nested
-    immutable value and nothing else: no store, no evaluation, no checks.
+    A description is a DAG of Terms. Constructing one builds a nested
+    immutable value and nothing else -- no store, no evaluation, no checks.
+    Attribute values and runtime thunks are produced later by the compile
+    phase and live on the resulting Program.
+
+    Subclasses override :meth:`compile` (and :meth:`acompile` for the async
+    path) to emit a thunk that consumes precompiled child thunks. The
+    fallback default invokes :meth:`eval` / :meth:`aeval`, which raise
+    ``NotImplementedError`` on the base Term -- a concrete kind must
+    implement at least one of the two paths.
     """
 
-    _attributes: ClassVar[dict[str, Attribute]]
+    attributes: ClassVar[dict[str, Attribute]]
+    """Per-class mapping ``name -> Attribute``, populated by :class:`TermMeta`."""
 
     def __init__(self, *children: Term) -> None:
         self.children: tuple[Term, ...] = children
         self.payload: dict[str, object] = {}
+
+    # --- construction -------------------------------------------------------
 
     def with_children(self, *children: Term) -> Self:
         """Return a variant of this Term with different children.
@@ -64,14 +87,15 @@ class Term(metaclass=TermMeta):
         variant.payload = self.payload
         return variant
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        """Build a thunk ``(rt) -> value`` for this Term at ``nid``.
+    # --- compile hooks ------------------------------------------------------
 
-        The default falls back to ``self.eval(rt, nid)`` so atoms that have not
-        adopted the compile contract keep working. Atoms on the hot path
-        override this to capture ``children`` (a tuple of child thunks) and
-        call them directly, skipping the ``Runtime.eval`` /
-        ``terms[nid].eval`` double indirection per child.
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build a sync thunk ``(rt) -> value`` for this Term at ``nid``.
+
+        ``children`` is the tuple of precompiled child thunks. Atoms on the
+        hot path override this to capture ``children`` and call them
+        directly, skipping the ``Runtime.eval`` / ``terms[nid].eval`` double
+        indirection. The default delegates to :meth:`eval`.
         """
 
         def thunk(rt: object) -> object:
@@ -80,16 +104,41 @@ class Term(metaclass=TermMeta):
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        """Async sibling of ``compile``: build an async thunk ``(rt) -> awaitable``.
+        """Build an async thunk ``(rt) -> awaitable`` for this Term at ``nid``.
 
-        Default falls back to ``self.aeval(rt, nid)``. Atoms override to capture
-        their async child thunks and skip the ``Runtime.aeval`` indirection.
+        ``children`` is the tuple of precompiled async child thunks. Atoms
+        on the hot path override this to capture ``children`` and call them
+        directly; the default delegates to :meth:`aeval`.
         """
 
         async def athunk(rt: object) -> object:
             return await self.aeval(rt, nid)
 
         return athunk
+
+    # --- evaluation fallbacks ----------------------------------------------
+
+    def eval(self, rt: object, nid: int) -> object:
+        """Synchronous evaluation hook for the default :meth:`compile` thunk.
+
+        Concrete Terms either override :meth:`compile` (typical, hot path)
+        or override this; the base raises so a missing implementation
+        surfaces as a clear error rather than at thunk-call time with a
+        cryptic attribute lookup.
+        """
+        msg = f"{type(self).__name__}.eval is not implemented"
+        raise NotImplementedError(msg)
+
+    async def aeval(self, rt: object, nid: int) -> object:
+        """Asynchronous sibling of :meth:`eval`.
+
+        Concrete Terms either override :meth:`acompile` or override this;
+        the base raises.
+        """
+        msg = f"{type(self).__name__}.aeval is not implemented"
+        raise NotImplementedError(msg)
+
+    # --- repr ---------------------------------------------------------------
 
     def __repr__(self) -> str:
         if "name" in self.payload:

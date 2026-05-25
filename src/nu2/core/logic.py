@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Attribute
+from nu2.engine.structure import Declared
 from nu2.lang import ScalarQuery
 from nu2.lang.evaluation.sentinels import EMPTY, INVALID
 
@@ -28,7 +28,7 @@ __all__ = ["And", "Eq", "Lt", "Not", "Or"]
 class Eq(ScalarQuery):
     """Whether its two children are equal."""
 
-    commutative = Attribute.declared(True)
+    commutative = Declared(value=True)
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left, right = children
@@ -94,9 +94,9 @@ class Lt(ScalarQuery):
 class And(ScalarQuery):
     """The conjunction of its boolean children."""
 
-    commutative = Attribute.declared(True)
-    associative = Attribute.declared(True)
-    idempotent = Attribute.declared(True)
+    commutative = Declared(value=True)
+    associative = Declared(value=True)
+    idempotent = Declared(value=True)
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
@@ -126,9 +126,9 @@ class And(ScalarQuery):
 class Or(ScalarQuery):
     """The disjunction of its boolean children."""
 
-    commutative = Attribute.declared(True)
-    associative = Attribute.declared(True)
-    idempotent = Attribute.declared(True)
+    commutative = Declared(value=True)
+    associative = Declared(value=True)
+    idempotent = Declared(value=True)
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:

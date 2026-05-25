@@ -1,161 +1,111 @@
-"""Attribute and Schema: the named values on Term classes, and the registry.
+"""Attribute: a named value on a Term class.
 
-An Attribute is a named value attached to a kind, in one of three flavors:
-declared (a constant), synthesized (folded bottom-up), inherited (threaded
-top-down). A Schema holds the tree-wide attributes and, at finalize, builds
-and topologically sorts the cross-attribute dependency graph.
+An attribute is one of three concrete kinds:
+
+- :class:`Declared` -- a constant baked into the class. Just data.
+- :class:`Synthesized` -- a bottom-up fold: own value via ``base``, combined
+  with the values at the children via ``combine``.
+- :class:`Inherited` -- a top-down thread: a value via ``root`` at the root,
+  derived from the parent's value below it.
+
+The two computed kinds share :class:`Computed` as their base, which carries
+``reads`` -- the names of the attributes their rules consult. Those reads are
+the edges of the cross-attribute dependency graph; the graph and its
+topological order live on the :class:`~nu2.engine.structure.schema.Schema`.
+
+Construction shapes are keyword-only and per-kind. ``Attribute`` and
+``Computed`` are abstract bases; do not instantiate them directly.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import Literal
+    from nu2.engine.structure.types import RuleFn
 
-    from nu2.engine.structure.term import Term
-
-__all__ = ["Attribute", "CycleError", "Flavor", "RuleFn", "Schema"]
-
-type Flavor = Literal["declared", "synthesized", "inherited"]
-type RuleFn = Callable[..., object]
+__all__ = ["Attribute", "Computed", "Declared", "Inherited", "Synthesized"]
 
 
-class CycleError(Exception):
-    """Raised when the attribute dependency graph contains a cycle."""
-
-
+@dataclass(kw_only=True)
 class Attribute:
-    """A named value on a Term class, in one of three flavors.
+    """Abstract base: a named value on a Term class.
 
-    declared: a constant, read straight off the class. synthesized: an own
-    value via ``base``, folded with children by ``combine``. inherited: a
-    value via ``root`` at the root, else via ``derive`` from the parent.
-
-    The computed flavors carry ``reads``: the names of the attributes their
-    rules consult, the edges of the dependency graph.
+    Concrete kinds are :class:`Declared`, :class:`Synthesized`,
+    :class:`Inherited`. ``name`` is optional at construction: for tree-wide
+    attributes pass it explicitly; for class-body attributes the
+    :class:`~nu2.engine.structure.term.TermMeta` metaclass fills it in from
+    the binding name.
     """
 
-    def __init__(
-        self,
-        flavor: Flavor,
-        name: str | None = None,
-        *,
-        value: object = None,
-        reads: tuple[str, ...] = (),
-        base: RuleFn | None = None,
-        combine: RuleFn | None = None,
-        root: RuleFn | None = None,
-        derive: RuleFn | None = None,
-    ) -> None:
-        self.flavor = flavor
-        self.name = name
-        self.value = value
-        self.reads = reads
-        self.base = base
-        self.combine = combine
-        self.root = root
-        self.derive = derive
-
-    @classmethod
-    def declared(cls, value: object, name: str | None = None) -> Attribute:
-        """A constant attribute, read straight off the class."""
-        return cls("declared", name, value=value)
-
-    @classmethod
-    def synthesized(
-        cls,
-        name: str,
-        base: RuleFn,
-        combine: RuleFn,
-        *,
-        reads: tuple[str, ...] = (),
-    ) -> Attribute:
-        """A bottom-up attribute: own value via ``base``, folded with ``combine``."""
-        return cls("synthesized", name, base=base, combine=combine, reads=reads)
-
-    @classmethod
-    def inherited(
-        cls,
-        name: str,
-        root: RuleFn,
-        derive: RuleFn,
-        *,
-        reads: tuple[str, ...] = (),
-    ) -> Attribute:
-        """A top-down attribute: ``root`` at the root, ``derive`` below it."""
-        return cls("inherited", name, root=root, derive=derive, reads=reads)
+    name: str | None = None
 
     def __repr__(self) -> str:
-        return f"Attribute({self.flavor!r}, {self.name!r})"
+        return f"{type(self).__name__}({self.name!r})"
 
 
-class Schema:
-    """The tree-wide attributes plus the finalized dependency order.
+@dataclass(kw_only=True)
+class Declared(Attribute):
+    """A constant attribute: schema data baked onto the class.
 
-    Per-class declared attributes live on the Term classes themselves,
-    collected by TermMeta. Computed attributes (synthesized, inherited) are
-    registered here, tree-wide. ``finalize`` builds and topologically sorts
-    the cross-attribute dependency graph; a cycle raises CycleError.
-
-    The attribute layer never owns a Schema instance. A layer-1 language builds one,
-    registers its attributes, finalizes it once, and never mutates it again.
+    Read straight off the class via the schema; never stored on a Program.
+    A tree-wide ``Declared`` can register a default that any kind overrides
+    in its own class body.
     """
 
-    def __init__(self) -> None:
-        self._global: dict[str, Attribute] = {}
-        self._order: list[str] | None = None
+    value: object
 
-    def register(self, attribute: Attribute) -> None:
-        """Register a tree-wide attribute; invalidates any prior finalize."""
-        if attribute.name is None:
-            raise ValueError("a registered attribute must have a name")
-        self._global[attribute.name] = attribute
-        self._order = None
 
-    def attribute(self, kind: type[Term], name: str) -> Attribute | None:
-        """Resolve an attribute for a kind: per-class first, then tree-wide."""
-        per_class = kind._attributes.get(name)
-        if per_class is not None:
-            return per_class
-        return self._global.get(name)
+@dataclass(kw_only=True)
+class Computed(Attribute):
+    """Abstract base for a computed attribute.
 
-    def finalize(self) -> Schema:
-        """Build and topologically sort the dependency graph.
+    Computed attributes are produced during the compile phase and stored as
+    columns on the Program. ``reads`` declares the other attributes the rules
+    consult; the schema topologically sorts the read-graph at finalize.
+    """
 
-        Returns:
-            This schema, for chaining.
+    reads: tuple[str, ...] = ()
 
-        Raises:
-            CycleError: if the cross-attribute dependency graph has a cycle.
-        """
-        computed = {name: attr for name, attr in self._global.items() if attr.flavor != "declared"}
-        order: list[str] = []
-        state: dict[str, int] = {}  # name -> 0 visiting, 1 done
 
-        def visit(name: str) -> None:
-            """Depth-first visit for the topological sort."""
-            mark = state.get(name)
-            if mark == 1:
-                return
-            if mark == 0:
-                raise CycleError(f"cyclic attribute dependency at {name!r}")
-            state[name] = 0
-            for dep in computed[name].reads:
-                if dep in computed:
-                    visit(dep)
-            state[name] = 1
-            order.append(name)
+@dataclass(kw_only=True)
+class Synthesized(Computed):
+    """A bottom-up attribute.
 
-        for name in computed:
-            visit(name)
-        self._order = order
-        return self
+    Two rules:
 
-    def order(self) -> list[str]:
-        """The topological order of computed attributes; requires finalize."""
-        if self._order is None:
-            raise RuntimeError("schema is not finalized; call finalize() first")
-        return self._order
+    - ``base(program, path) -> own_value`` at every node, producing the
+      node's contribution.
+    - ``combine(own, child_values) -> value`` folds the own value with the
+      ordered list of child values. At a leaf, ``child_values`` is empty,
+      so the fold bottoms out on ``base`` alone.
+
+    ``combine`` is the one pure rule: it gets no ``program`` handle, only
+    ``own`` and the child values. This keeps it a pure merge operator and
+    forbids it from breaking directionality.
+    """
+
+    base: RuleFn
+    combine: RuleFn
+
+
+@dataclass(kw_only=True)
+class Inherited(Computed):
+    """A top-down attribute.
+
+    Two rules:
+
+    - ``root(program, path) -> value`` at the root.
+    - ``derive(program, parent_path, slot, parent_value) -> value`` at every
+      non-root node, where ``parent_path`` is the parent's path and ``slot``
+      the child index under it.
+
+    ``derive`` may read a sibling's *synthesized* attribute in the same step;
+    this is the bridge that lets one rule combine top-down and bottom-up
+    information without a fourth flavor.
+    """
+
+    root: RuleFn
+    derive: RuleFn
