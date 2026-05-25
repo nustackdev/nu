@@ -61,6 +61,6 @@ def test_a_class_missing_eval_does_not_satisfy_the_protocol():
 def test_nu_runtime_satisfies_the_runtime_protocol():
     # Imported here, not at module top, so this file does not couple the
     # engine test suite to the lang package on collection.
-    from nu2.lang.runtime import NuRuntime
+    from nu2.lang.runtime import Runtime as LangRuntime
 
-    assert issubclass(NuRuntime, Runtime)
+    assert issubclass(LangRuntime, Runtime)

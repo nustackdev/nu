@@ -20,7 +20,7 @@ TRANSPARENT cardinality and the rest of the forwarding machinery.
 
 ``Nu`` is generic over ``V_co``, the yield type, covariant since ``V``
 appears only in output positions. The ``R`` parameter of ``Term`` is fixed
-to ``NuRuntime`` at this layer.
+to ``Runtime`` at this layer.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from __future__ import annotations
 from typing import Generic, TypeVar
 
 from nu2.engine import Term
-from nu2.lang.runtime import NuRuntime
+from nu2.lang.runtime import Runtime
 
 
 __all__ = ["Nu"]
@@ -37,10 +37,10 @@ __all__ = ["Nu"]
 V_co = TypeVar("V_co", covariant=True)
 
 
-class Nu(Term[NuRuntime, V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Nu(Term[Runtime, V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """The user-facing base for every Nu construct.
 
-    A tagged ``Term`` carrying the language's ``NuRuntime`` binding and a
+    A tagged ``Term`` carrying the language's ``Runtime`` binding and a
     yield type ``V_co``. Abstract -- concrete sorts declare the structural,
     effect, cardinality, async, and algebra attributes the engine requires.
     """

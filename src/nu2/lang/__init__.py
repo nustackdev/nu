@@ -8,7 +8,7 @@
 - ``sentinels``  - ``EMPTY`` / ``INVALID`` and their guards.
 - ``attributes`` - the attribute concerns (sort, cardinality, effects, execution, algebra).
 - ``laws``       - ``LAWS`` and the predicate library.
-- ``runtime``    - ``NuRuntime``, ``Context``, ``Budget``, lifecycle helpers.
+- ``runtime``    - ``Runtime``, ``Context``, ``Budget``, lifecycle helpers.
 - ``helpers``    - top-level user-facing entries (``run``, ``eval``, ``astream``, ...).
 
 A Term is built from the kind taxonomy, ``compile``d against the schema,
@@ -73,7 +73,7 @@ from .kinds import (
 )
 from .laws import LAWS
 from .nu import Nu
-from .runtime import Context, NuRuntime
+from .runtime import Context, Runtime
 from .sentinels import (
     EMPTY,
     INVALID,
@@ -120,12 +120,12 @@ __all__ = [
     "ListArg",
     "NoneArg",
     "Nu",
-    "NuRuntime",
     "Policy",
     "Predicate",
     "Query",
     "Reduction",
     "Ref",
+    "Runtime",
     "ScalarQuery",
     "Sentinel",
     "SetArg",

@@ -12,7 +12,7 @@ The compile phase consumes this together with the tree-wide
 ``Term`` carries two type parameters:
 
 - ``R_contra`` -- the concrete Runtime emitted thunks close over. A
-  language layer narrows it (e.g. ``NuRuntime``) so thunks have access to
+  language layer narrows it (e.g. ``nu2.lang.runtime.Runtime``) so thunks have access to
   whatever per-drive state the language needs. The engine bound is the
   bare :class:`~nu2.engine.evaluation.Runtime` Protocol: only ``eval`` /
   ``aeval`` dispatch are guaranteed. ``R`` appears only in **input**
@@ -95,7 +95,7 @@ class Term(Generic[R_contra, V_co], metaclass=TermMeta):  # noqa: UP046  # PEP 6
 
     - ``R_contra`` -- the concrete Runtime thunks close over. **Contravariant**
       since ``R`` is consumed only in input positions. A language layer
-      narrows it (``class Nu(Term[NuRuntime, V_co])``); the engine bound is
+      narrows it (``class Nu(Term[Runtime, V_co])``); the engine bound is
       the bare :class:`Runtime` Protocol.
     - ``V_co`` -- the value type this Term yields. **Covariant** since
       ``V`` appears only in output positions. The sync thunk returned by

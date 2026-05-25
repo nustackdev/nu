@@ -1,6 +1,6 @@
 """Runtime: how Nu programs run.
 
-- ``runtime``   - ``NuRuntime``: the concrete Runtime that drives compiled Programs.
+- ``runtime``   - ``Runtime``: the concrete Runtime that drives compiled Programs.
 - ``context``   - ``Context``: the tagged value store the runtime drives against.
 - ``utils``     - ``Budget``, ``into_loop``, ``safely_(a)closing``: per-call
   resources and lifecycle helpers.
@@ -14,7 +14,7 @@ in ``nu2.lang.helpers``.
 from __future__ import annotations
 
 from .context import Attributes, Context
-from .runtime import NuRuntime
+from .runtime import Runtime
 from .utils import Budget, into_loop, safely_aclosing, safely_closing
 
 
@@ -22,7 +22,7 @@ __all__ = [
     "Attributes",
     "Budget",
     "Context",
-    "NuRuntime",
+    "Runtime",
     "into_loop",
     "safely_aclosing",
     "safely_closing",

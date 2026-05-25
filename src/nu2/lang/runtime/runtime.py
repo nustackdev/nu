@@ -1,4 +1,4 @@
-"""NuRuntime: the concrete Runtime that drives a compiled Nu Program.
+"""Runtime: the concrete Runtime that drives a compiled Nu Program.
 
 Implements the engine's :class:`~nu2.engine.evaluation.Runtime` Protocol
 and adds the Nu-specific runtime toolkit: a per-drive Budget, sequential
@@ -41,13 +41,13 @@ if TYPE_CHECKING:
 
     from .utils.budget import Budget
 
-__all__ = ["NuRuntime"]
+__all__ = ["Runtime"]
 
 
 _DONE = object()
 
 
-class NuRuntime:
+class Runtime:
     """Per-drive Runtime. Owns a Program, a Context, and a Budget."""
 
     __slots__ = ("budget", "ctx", "program")

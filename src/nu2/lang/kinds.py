@@ -24,7 +24,7 @@ from .nu import Nu
 
 
 if TYPE_CHECKING:
-    from nu2.lang.runtime import NuRuntime as Runtime
+    from nu2.lang.runtime import Runtime
 
 __all__ = [
     "Bracket",

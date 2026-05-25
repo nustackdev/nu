@@ -1,10 +1,12 @@
-"""Term-level convenience entries: compile, validate, evaluate in one call.
+"""All-in-one entries: compile, validate, drive in one call.
 
-The all-in-one entry: take a Term, compile it against the Nu schema,
-validate against the Nu law set, then drive. Three phases in one call -
-what app code usually wants. The compile/validate pieces are still
-available standalone via ``nu2.lang`` for callers that want a Program in
-hand (e.g. for static inspection).
+Take a Term, compile it against the Nu schema, validate against the Nu
+law set, then drive. Three phases in one call -- what app code usually
+wants. The standalone pieces stay available via ``nu2.lang`` for callers
+that want a Program in hand (e.g. for static inspection).
+
+Currently value-root only. Stream-root siblings (``run_stream`` and
+friends) land here when needed.
 """
 
 from __future__ import annotations
@@ -13,7 +15,7 @@ from typing import TYPE_CHECKING
 
 from nu2.lang.runtime import into_loop
 
-from .value import aeval, eval
+from .drive import aeval, eval
 
 
 if TYPE_CHECKING:
@@ -45,16 +47,9 @@ def run(
     """
     from nu2.lang import LAWS, compile, validate
 
-    # Compilation phase
     program = compile(term)
-
-    # Validation phase
     validate(program, *LAWS)
-
-    # Evaluation phase
-    result = eval(program, ctx, max_parallel=max_parallel)
-
-    return result
+    return eval(program, ctx, max_parallel=max_parallel)
 
 
 async def arun(
@@ -66,16 +61,9 @@ async def arun(
     """Async sibling of ``run``: compile, validate, then ``aeval``."""
     from nu2.lang import LAWS, compile, validate
 
-    # Compilation phase
     program = compile(term)
-
-    # Validation phase
     validate(program, *LAWS)
-
-    # Evaluation phase
-    result = await aeval(program, ctx, max_parallel=max_parallel)
-
-    return result
+    return await aeval(program, ctx, max_parallel=max_parallel)
 
 
 def run_in_loop(
@@ -86,9 +74,9 @@ def run_in_loop(
 ) -> tuple[object, Context]:
     """Compile, validate, then drive on a fresh loop from sync code.
 
-    The convenience for the rare top-level sync caller whose Term compiles
-    to an async-only Program: spins a loop via ``asyncio.run`` and drives
-    the async path so the caller doesn't have to write an ``async def`` and
-    import ``asyncio`` itself. Most callers should use ``arun`` directly.
+    For the rare top-level sync caller whose Term compiles to an async-only
+    Program: spins a loop via ``asyncio.run`` and drives the async path so
+    the caller doesn't have to write an ``async def``. Most callers should
+    use ``arun`` directly.
     """
     return into_loop(arun(term, ctx, max_parallel=max_parallel))

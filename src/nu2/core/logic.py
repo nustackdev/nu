@@ -20,7 +20,7 @@ from nu2.lang.sentinels import EMPTY, INVALID
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu2.lang.runtime import NuRuntime as Runtime
+    from nu2.lang.runtime import Runtime
 
 __all__ = ["And", "Eq", "Lt", "Not", "Or"]
 
