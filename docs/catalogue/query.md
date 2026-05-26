@@ -157,16 +157,22 @@ Core only - shapes and ext/ not included.
 
 | Name | Sub-shape   | Signature      | Effect | Meaning                            |
 | ---- | ----------- | -------------- | ------ | ---------------------------------- |
-| Iter | StreamQuery | `Iter(source)` | pure   | open a scalar iterable as a stream |
+| Iter     | StreamQuery | `Iter(source)`                                  | pure   | open a scalar iterable as a stream                       |
+| MapRange | StreamQuery | `MapRange(start, stop, body, step=1, item="index")` | pure | walk `range(start, stop, step)`, run body per index, flat-concat results |
 
 ### Transform
 
 | Name      | Sub-shape   | Signature                       | Effect | Meaning                              |
 | --------- | ----------- | ------------------------------- | ------ | ------------------------------------ |
 | Map       | StreamQuery | `Map(items, transform, item)`   | pure   | yield transform(item) per element    |
+| MapFn     | StreamQuery | `MapFn(items, transform)`       | pure   | like Map, transform is a python callable |
+| FlatMapFn | StreamQuery | `FlatMapFn(items, transform)`   | pure   | transform returns stream/iterable per item, flat-concat results |
 | Filter    | StreamQuery | `Filter(items, condition, item)`| pure   | yield items where condition is true  |
+| FilterFn  | StreamQuery | `FilterFn(items, predicate)`    | pure   | like Filter, predicate is a python callable |
 | TakeWhile | StreamQuery | `TakeWhile(items, condition, item)`| pure| yield while condition holds          |
 | UniqueDo  | StreamQuery | `UniqueDo(items, key, item)`    | pure   | yield items with unseen key          |
+
+`FlatMapFn` snapshot caveat: when the source is a lazy ref and the transform reads fields via separate lazy refs across sibling subtrees, the auto-wrapper cannot cover both sides. Wrap the whole `FlatMapFn(...)` term in `nv.Snapshot(..., scope=...)` manually so source iteration and per-element reads share one generation.
 
 ### Fold
 

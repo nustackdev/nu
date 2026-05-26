@@ -12,6 +12,7 @@ from .conversion import ToBool, ToBytes, ToFloat, ToInt, ToList, ToSet, ToStr, T
 from .iter_reduce import Find, FindIndex, GroupBy, Partition, ToDict
 from .literal import Literal
 from .logical import And, Bool, Not, Or
+from .range_map import MapRange
 from .record import Record
 from .reduce import AllElem, AnyElem, MaxElem, MinElem, Sum
 from .reduction import Collect, First, Last, Reduce
@@ -20,7 +21,7 @@ from .slice import Drop, Take
 from .sort_by import SortBy
 from .stream_fold import Fold
 from .stream_iter import Iter
-from .stream_transform import Filter, Map, TakeWhile, UniqueDo
+from .stream_transform import Filter, FilterFn, FlatMapFn, Map, MapFn, TakeWhile, UniqueDo
 from .timing import Timed
 from .transform import FilterBy, Flatten, Pluck, Reversed, Sorted, Unique
 
@@ -46,9 +47,11 @@ __all__ = [
     "Eq",
     "Filter",
     "FilterBy",
+    "FilterFn",
     "Find",
     "FindIndex",
     "First",
+    "FlatMapFn",
     "Flatten",
     "FloorDiv",
     "Fold",
@@ -68,6 +71,8 @@ __all__ = [
     "Literal",
     "Lt",
     "Map",
+    "MapFn",
+    "MapRange",
     "MaxElem",
     "MinElem",
     "Mod",
