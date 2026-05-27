@@ -57,6 +57,7 @@ from .attributes import (
     subsort,
 )
 from .kinds import (
+    Action,
     Bracket,
     Command,
     Control,
@@ -66,6 +67,7 @@ from .kinds import (
     Query,
     Reduction,
     Ref,
+    ScalarAction,
     ScalarQuery,
     Span,
     Strategy,
@@ -96,6 +98,7 @@ __all__ = [
     "LAWS",
     "MATRIX",
     "SCHEMA",
+    "Action",
     "Arg",
     "Attr",
     "BoolArg",
@@ -126,6 +129,7 @@ __all__ = [
     "Reduction",
     "Ref",
     "Runtime",
+    "ScalarAction",
     "ScalarQuery",
     "Sentinel",
     "SetArg",

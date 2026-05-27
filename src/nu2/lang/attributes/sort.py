@@ -49,6 +49,8 @@ class Sort(StrEnum):
     REDUCTION = "reduction"
     COMMAND = "command"
     SCALAR_COMMAND = "scalar_command"
+    ACTION = "action"
+    SCALAR_ACTION = "scalar_action"
     FLOW = "flow"
     STRATEGY = "strategy"
     CONTROL = "control"
@@ -61,12 +63,14 @@ class Sort(StrEnum):
 _PARENT: dict[Sort, Sort] = {
     Sort.QUERY: Sort.INTERACTION,
     Sort.COMMAND: Sort.INTERACTION,
+    Sort.ACTION: Sort.INTERACTION,
     Sort.FLOW: Sort.INTERACTION,
     Sort.SPAN: Sort.INTERACTION,
     Sort.SCALAR_QUERY: Sort.QUERY,
     Sort.STREAM_QUERY: Sort.QUERY,
     Sort.REDUCTION: Sort.SCALAR_QUERY,
     Sort.SCALAR_COMMAND: Sort.COMMAND,
+    Sort.SCALAR_ACTION: Sort.ACTION,
     Sort.STRATEGY: Sort.FLOW,
     Sort.CONTROL: Sort.FLOW,
     Sort.BRACKET: Sort.SPAN,
@@ -90,6 +94,7 @@ _MATRIX_SORTS: tuple[Sort, ...] = (
     Sort.STREAM_QUERY,
     Sort.SCALAR_QUERY,
     Sort.SCALAR_COMMAND,
+    Sort.SCALAR_ACTION,
     Sort.STRATEGY,
     Sort.CONTROL,
     Sort.BRACKET,
@@ -110,19 +115,41 @@ def matrix_sort(sort: Sort) -> Sort | None:
     return None
 
 
-# Child sorts that produce a value, and child sorts that do work.
-_VALUE = frozenset({Sort.REF, Sort.SCALAR_QUERY, Sort.STREAM_QUERY, Sort.BRACKET, Sort.POLICY})
-_WORK = frozenset({Sort.SCALAR_COMMAND, Sort.STRATEGY, Sort.CONTROL, Sort.BRACKET, Sort.POLICY})
+# Child sorts that produce a value, and child sorts that do work. Action is the
+# dual citizen: it yields a value (so joins _VALUE) and mutates Context (so
+# joins _WORK alongside Command).
+_VALUE = frozenset(
+    {
+        Sort.REF,
+        Sort.SCALAR_QUERY,
+        Sort.STREAM_QUERY,
+        Sort.SCALAR_ACTION,
+        Sort.BRACKET,
+        Sort.POLICY,
+    }
+)
+_WORK = frozenset(
+    {
+        Sort.SCALAR_COMMAND,
+        Sort.SCALAR_ACTION,
+        Sort.STRATEGY,
+        Sort.CONTROL,
+        Sort.BRACKET,
+        Sort.POLICY,
+    }
+)
 _ANY = _VALUE | _WORK
 
 # The composition matrix: each parent sort mapped to the child sorts it holds.
 # A value-producing parent holds values; a Strategy holds work; the parents
-# that take a body (Control, Bracket, Policy) hold anything.
+# that take a body (Control, Bracket, Policy) hold anything. Action's slots
+# need values (the payload, the address) like Command's do.
 MATRIX: dict[Sort, frozenset[Sort]] = {
     Sort.REF: _VALUE,
     Sort.SCALAR_QUERY: _VALUE,
     Sort.STREAM_QUERY: _VALUE,
     Sort.SCALAR_COMMAND: _VALUE,
+    Sort.SCALAR_ACTION: _VALUE,
     Sort.STRATEGY: _WORK,
     Sort.CONTROL: _ANY,
     Sort.BRACKET: _ANY,

@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from nu2.lang.runtime import Runtime
 
 __all__ = [
+    "Action",
     "Bracket",
     "Command",
     "Control",
@@ -36,6 +37,7 @@ __all__ = [
     "Query",
     "Reduction",
     "Ref",
+    "ScalarAction",
     "ScalarQuery",
     "Span",
     "Strategy",
@@ -104,6 +106,17 @@ class Command(Interaction):
 
     sort = Declared(value=Sort.SCALAR_COMMAND)
     cardinality = Declared(value=Cardinality.VOID)
+
+
+class Action(Interaction):
+    """Abstract: a dual-citizen Interaction. Mutates Context and yields a value."""
+
+
+class ScalarAction(Action):
+    """An Action that mutates and yields exactly one value."""
+
+    sort = Declared(value=Sort.SCALAR_ACTION)
+    cardinality = Declared(value=Cardinality.SCALAR)
 
 
 class Flow(Interaction):
