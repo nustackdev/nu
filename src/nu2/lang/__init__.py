@@ -56,6 +56,7 @@ from .attributes import (
     matrix_sort,
     subsort,
 )
+from .factory import InteractionFactory
 from .kinds import (
     Action,
     Bracket,
@@ -118,6 +119,7 @@ __all__ = [
     "FrozenSetArg",
     "IntArg",
     "Interaction",
+    "InteractionFactory",
     "Invalid",
     "Law",
     "ListArg",
