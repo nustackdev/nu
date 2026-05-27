@@ -25,8 +25,20 @@ class Par(Strategy):
 
 
 class If(Control):
-    """Runs its body Commands once when a Query condition holds."""
+    """Runs its body Commands once when a Query condition holds.
+
+    Slot 0 is the param (the yielding condition); slot 1+ are body
+    (mutating children).
+    """
+
+    param_slots = Declared(value=frozenset({0}))
 
 
 class While(Control):
-    """Repeats its body Commands while a Query condition holds."""
+    """Repeats its body Commands while a Query condition holds.
+
+    Slot 0 is the param (the yielding condition); slot 1+ are body
+    (mutating children).
+    """
+
+    param_slots = Declared(value=frozenset({0}))

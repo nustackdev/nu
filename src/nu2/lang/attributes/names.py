@@ -19,6 +19,7 @@ class Attr(StrEnum):
 
     # structure
     SORT = "sort"
+    PARAM_SLOTS = "param_slots"
     # effects
     OWN_EFFECTS = "own_effects"
     COMPOSITION_EFFECTS = "composition_effects"

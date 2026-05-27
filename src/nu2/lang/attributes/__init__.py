@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from nu2.engine import Schema
 
-from . import algebra, cardinality, effects, execution, sort
+from . import algebra, cardinality, effects, execution, slots, sort
 from .cardinality import Cardinality
 from .effects import Effect, EffectSet
 from .execution import ExecOrder
@@ -36,7 +36,7 @@ __all__ = [
 ]
 
 
-_CONCERNS = (sort, effects, cardinality, execution, algebra)
+_CONCERNS = (sort, slots, effects, cardinality, execution, algebra)
 
 
 def build_schema() -> Schema:

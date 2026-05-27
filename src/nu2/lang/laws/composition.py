@@ -1,12 +1,13 @@
 """Sort and composition laws: the structural floor of Nu.
 
 Every direct child of every node fits its parent's composition matrix row.
-A Query atom annotates no WRITE on itself; a Command annotates at least
-one; a Flow's body is a mutator. Span is handled transparently in the
-matrix-fit walk: a Span child slot-fits as its body's sort.
+A Query atom annotates no WRITE on itself; a Command and an Action each
+annotate at least one; a Flow's body slots hold mutators. Span is handled
+transparently in the matrix-fit walk: a Span child slot-fits as its body's
+sort.
 
-These laws read ``sort``, ``own_effects``, ``composition_effects`` and the
-synthesized ``has_command`` folds; nothing here recomputes attributes.
+These laws read ``sort`` and ``own_effects``; nothing here recomputes
+attributes.
 """
 
 from __future__ import annotations
@@ -17,11 +18,9 @@ from nu2.engine import Law, predicate
 from nu2.lang.attributes import MATRIX, Attr, Effect, Sort, matrix_sort, subsort
 
 from .predicates import (
-    attr_true,
     child_paths,
     declares_effect,
     has_children,
-    no_composition_effect,
     of_sort,
 )
 
@@ -74,6 +73,76 @@ def compose_detail(program: Program, path: Path) -> str:
     return f"{parent} cannot hold {fit}"
 
 
+# --- flow slot-role walk ------------------------------------------------
+
+
+_MUTATING_SORTS: frozenset[Sort] = frozenset({Sort.COMMAND, Sort.ACTION, Sort.FLOW})
+_YIELDING_SORTS: frozenset[Sort] = frozenset({Sort.REF, Sort.QUERY, Sort.ACTION})
+
+
+def _effective_sort(program: Program, path: Path) -> Sort:
+    """The sort of ``path`` after looking through Spans to the body.
+
+    A Span is transparent: its parent sees through to whatever the Span
+    wraps. An empty Span resolves to its own sort.
+    """
+    sort: Sort = program.attr(path, Attr.SORT)
+    if not subsort(sort, Sort.SPAN):
+        return sort
+    body = child_paths(program, path)
+    return _effective_sort(program, body[0]) if body else sort
+
+
+def _non_mutating_body(program: Program, path: Path) -> Path | None:
+    """The first direct body-slot child that is not a mutating child."""
+    param_slots: frozenset[int] = program.attr(path, Attr.PARAM_SLOTS)
+    for slot, child in enumerate(child_paths(program, path)):
+        if slot in param_slots:
+            continue
+        sort = _effective_sort(program, child)
+        if not any(subsort(sort, m) for m in _MUTATING_SORTS):
+            return child
+    return None
+
+
+def _non_yielding_param(program: Program, path: Path) -> Path | None:
+    """The first direct param-slot child that is not a yielding child."""
+    param_slots: frozenset[int] = program.attr(path, Attr.PARAM_SLOTS)
+    for slot, child in enumerate(child_paths(program, path)):
+        if slot not in param_slots:
+            continue
+        sort = _effective_sort(program, child)
+        if not any(subsort(sort, y) for y in _YIELDING_SORTS):
+            return child
+    return None
+
+
+@predicate
+def flow_body_mutators(program: Program, path: Path) -> bool:
+    """Holds when every direct body-slot child of a Flow is mutating."""
+    return _non_mutating_body(program, path) is None
+
+
+def flow_body_detail(program: Program, path: Path) -> str:
+    """Name the non-mutating child sort a Flow body slot holds."""
+    child = _non_mutating_body(program, path)
+    sort = _effective_sort(program, child) if child is not None else None
+    return f"a Flow body slot is not a mutating child: {sort}"
+
+
+@predicate
+def control_param_yielders(program: Program, path: Path) -> bool:
+    """Holds when every direct param-slot child of a Control is yielding."""
+    return _non_yielding_param(program, path) is None
+
+
+def control_param_detail(program: Program, path: Path) -> str:
+    """Name the non-yielding child sort a Control param slot holds."""
+    child = _non_yielding_param(program, path)
+    sort = _effective_sort(program, child) if child is not None else None
+    return f"a Control param slot is not a yielding child: {sort}"
+
+
 # --- laws ---------------------------------------------------------------
 
 
@@ -85,10 +154,10 @@ LAWS: tuple[Law, ...] = (
         message=compose_detail,
     ),
     Law(
-        "query_no_write",
+        "query_no_own_write",
         scope=of_sort(Sort.QUERY),
-        holds=no_composition_effect(Effect.WRITE),
-        message="a Query subtree contains a WRITE",
+        holds=~declares_effect(Effect.WRITE),
+        message="a Query annotates a WRITE slot",
     ),
     Law(
         "command_has_write",
@@ -97,9 +166,21 @@ LAWS: tuple[Law, ...] = (
         message="a Command annotates no WRITE slot",
     ),
     Law(
-        "flow_has_command",
+        "action_has_write",
+        scope=of_sort(Sort.ACTION),
+        holds=declares_effect(Effect.WRITE),
+        message="an Action annotates no WRITE slot",
+    ),
+    Law(
+        "flow_body_is_mutator",
         scope=of_sort(Sort.FLOW),
-        holds=attr_true(Attr.HAS_COMMAND),
-        message="a Flow subtree contains no Command",
+        holds=flow_body_mutators,
+        message=flow_body_detail,
+    ),
+    Law(
+        "control_param_is_yielder",
+        scope=of_sort(Sort.CONTROL),
+        holds=control_param_yielders,
+        message=control_param_detail,
     ),
 )
