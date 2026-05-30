@@ -1,7 +1,7 @@
 """Nu's validity layer: laws and the predicates they're written from.
 
 - ``predicates`` - the generic scope/holds combinators (``of_sort``,
-  ``attr_true``, ``declares_effect``, ...).
+  ``attr_true``, ``cardinality_is``, ...).
 - one module per *dimension* of validity: ``composition``, ``effects``,
   ``cardinality``, ``execution``, ``observability``, ``refs``, ``spans``.
   Each owns its dimension-specific helpers and its ``LAWS`` tuple.

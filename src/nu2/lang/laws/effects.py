@@ -1,8 +1,12 @@
-"""Effects laws: well-formedness of effect annotations.
+"""Effects laws: well-formedness of mutation and effect annotations.
 
-Every Ref-typed slot is filled by a real Ref child, and every effect a
-node attributes to its subtree is sourced from a Ref present somewhere
-beneath it.
+A non-yielding mutator (a VOID-cardinality Command) is observable only by
+landing a WRITE on Context, so its mutation slot *must* hold a Ref. A yielding
+mutator (a SCALAR Action) is observable through its yield, so its mutation slot
+*need not* hold a Ref - addressless, it just degrades to a Query. The Ref-slot
+law therefore fires off cardinality, not off "declares a mutation". The second
+law is a sanity check: every effect a node attributes to its subtree is sourced
+from a Ref present somewhere beneath it.
 """
 
 from __future__ import annotations
@@ -10,9 +14,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu2.engine import Law, predicate
-from nu2.lang.attributes import Attr, Sort
+from nu2.lang.attributes import Attr, Cardinality, Sort
 
-from .predicates import attr_true, child_paths
+from .predicates import attr_true, cardinality_is, child_paths
 
 
 if TYPE_CHECKING:
@@ -26,9 +30,9 @@ __all__ = ["LAWS"]
 
 
 def _unfilled_ref_slot(program: Program, path: Path) -> int | None:
-    """The first annotated effect slot not filled by a Ref, if any."""
+    """The first mutation slot not filled by a Ref, if any."""
     children = child_paths(program, path)
-    for slot in program.attr(path, Attr.OWN_EFFECTS):
+    for slot in program.attr(path, Attr.MUTATES):
         if slot < len(children) and program.attr(children[slot], Attr.SORT) is not Sort.REF:
             return slot
     return None
@@ -36,12 +40,12 @@ def _unfilled_ref_slot(program: Program, path: Path) -> int | None:
 
 @predicate
 def ref_slots_hold_refs(program: Program, path: Path) -> bool:
-    """Holds when every annotated effect slot present is filled by a Ref."""
+    """Holds when every mutation slot of a non-yielding mutator holds a Ref."""
     return _unfilled_ref_slot(program, path) is None
 
 
 def ref_slot_detail(program: Program, path: Path) -> str:
-    """Name the annotated slot that should hold a Ref but does not."""
+    """Name the mutation slot that should hold a Ref but does not."""
     return f"slot {_unfilled_ref_slot(program, path)} must hold a Ref"
 
 
@@ -84,7 +88,7 @@ def orphan_effect_detail(program: Program, path: Path) -> str:
 LAWS: tuple[Law, ...] = (
     Law(
         "ref_slots",
-        scope=attr_true(Attr.OWN_EFFECTS),
+        scope=cardinality_is(Cardinality.VOID) & attr_true(Attr.MUTATES),
         holds=ref_slots_hold_refs,
         message=ref_slot_detail,
     ),

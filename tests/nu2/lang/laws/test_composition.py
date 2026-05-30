@@ -12,16 +12,15 @@ from _support.laws import assert_fails, assert_passes
 
 from nu2.engine.structure import Declared
 from nu2.lang import Command, Control, ScalarAction, ScalarQuery, Strategy
-from nu2.lang.attributes import Effect
 
 
 # --- malformed shapes for negative cases -------------------------------
 
 
 class QWrite(ScalarQuery):
-    """A ScalarQuery that wrongly declares a WRITE slot."""
+    """A ScalarQuery that wrongly declares a mutation slot."""
 
-    own_effects = Declared(value={0: Effect.WRITE})
+    mutates = Declared(value=frozenset({0}))
 
 
 class CmdNoWrite(Command):
@@ -96,7 +95,7 @@ def test_command_has_write_passes_for_plain_command() -> None:
 
 
 def test_command_has_write_fails_when_command_declares_no_write() -> None:
-    """A Command with empty ``own_effects`` is structurally a Query."""
+    """A Command with empty ``mutates`` is structurally a Query."""
     assert_fails(CmdNoWrite(R()), "command_has_write")
 
 

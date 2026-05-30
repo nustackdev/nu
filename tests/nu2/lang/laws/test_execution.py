@@ -14,7 +14,6 @@ from _support.laws import assert_fails, assert_passes, violations
 from nu2.engine import Severity
 from nu2.engine.structure import Declared
 from nu2.lang import Command, ScalarQuery
-from nu2.lang.attributes import Effect
 
 
 # --- malformed shapes for negative cases -------------------------------
@@ -30,7 +29,7 @@ class AsyncCmd(Command):
     """A Command that only runs async. Slot 0 writes."""
 
     requires_async = Declared(value=True)
-    own_effects = Declared(value={0: Effect.WRITE})
+    mutates = Declared(value=frozenset({0}))
 
 
 class SyncOnly(ScalarQuery):
@@ -43,7 +42,7 @@ class SyncCmd(Command):
     """A Command with no async affinity. Slot 0 writes."""
 
     async_affinity = Declared(value=False)
-    own_effects = Declared(value={0: Effect.WRITE})
+    mutates = Declared(value=frozenset({0}))
 
 
 # --- async_atom_needs_loop ---------------------------------------------

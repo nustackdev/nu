@@ -23,7 +23,6 @@ from nu2.lang import (
     Bracket,
     Command,
     Control,
-    Effect,
     Policy,
     Reduction,
     Ref,
@@ -52,13 +51,13 @@ class Red(Reduction):
 class Cmd(Command):
     """A bare Command. Slot 0 is the Ref it writes."""
 
-    own_effects = Declared(value={0: Effect.WRITE})
+    mutates = Declared(value=frozenset({0}))
 
 
 class Act(ScalarAction):
     """A bare ScalarAction. Slot 0 is the Ref it writes; yields a value."""
 
-    own_effects = Declared(value={0: Effect.WRITE})
+    mutates = Declared(value=frozenset({0}))
 
 
 class FlowS(Strategy):

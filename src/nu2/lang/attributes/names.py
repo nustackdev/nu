@@ -21,7 +21,7 @@ class Attr(StrEnum):
     SORT = "sort"
     PARAM_SLOTS = "param_slots"
     # effects
-    OWN_EFFECTS = "own_effects"
+    MUTATES = "mutates"
     COMPOSITION_EFFECTS = "composition_effects"
     # cardinality
     CARDINALITY = "cardinality"

@@ -1,6 +1,6 @@
 """Unit tests for ``nu2.lang.attributes.effects``.
 
-Covers the ``Effect`` enum, the declared ``OWN_EFFECTS`` per kind, and the
+Covers the ``Effect`` enum, the declared ``MUTATES`` per kind, and the
 synthesized ``COMPOSITION_EFFECTS`` fold.
 """
 
@@ -19,7 +19,6 @@ from nu2.lang.attributes import Attr, Effect
 
 
 def test_effect_enum_members() -> None:
-    assert Effect.RESOLVE.value == "resolve"
     assert Effect.READ.value == "read"
     assert Effect.WRITE.value == "write"
 
@@ -28,28 +27,28 @@ def test_effect_is_str_enum() -> None:
     assert isinstance(Effect.WRITE, str)
 
 
-# --- own_effects declared default ---------------------------------------
+# --- mutates declared default -------------------------------------------
 
 
-def _own_at_root(term: object) -> dict[int, Effect]:
+def _mutates_at_root(term: object) -> frozenset[int]:
     program = nu_compile(term)
-    return program.attr(program.root, Attr.OWN_EFFECTS)
+    return program.attr(program.root, Attr.MUTATES)
 
 
-def test_own_effects_empty_for_bare_query() -> None:
-    assert _own_at_root(Q()) == {}
+def test_mutates_empty_for_bare_query() -> None:
+    assert _mutates_at_root(Q()) == frozenset()
 
 
-def test_own_effects_for_command_annotates_write_slot() -> None:
-    assert _own_at_root(Cmd(R())) == {0: Effect.WRITE}
+def test_mutates_for_command_annotates_write_slot() -> None:
+    assert _mutates_at_root(Cmd(R())) == frozenset({0})
 
 
-def test_own_effects_for_action_annotates_write_slot() -> None:
-    assert _own_at_root(Act(R())) == {0: Effect.WRITE}
+def test_mutates_for_action_annotates_write_slot() -> None:
+    assert _mutates_at_root(Act(R())) == frozenset({0})
 
 
-def test_own_effects_empty_for_strategy() -> None:
-    assert _own_at_root(FlowS(Cmd(R()))) == {}
+def test_mutates_empty_for_strategy() -> None:
+    assert _mutates_at_root(FlowS(Cmd(R()))) == frozenset()
 
 
 # --- composition_effects synthesized fold -------------------------------
@@ -84,7 +83,7 @@ def test_composition_effects_strategy_unions_children() -> None:
 
 def test_composition_effects_unannotated_ref_slot_defaults_to_read() -> None:
     class TwoSlotCmd(Command):
-        own_effects = Declared(value={0: Effect.WRITE})
+        mutates = Declared(value=frozenset({0}))
 
     result = _composition_at_root(TwoSlotCmd(R("a"), R("b")))
     assert result == frozenset({("a", Effect.WRITE), ("b", Effect.READ)})
@@ -98,7 +97,7 @@ def test_composition_effects_skips_non_ref_child_in_annotated_slot() -> None:
 def test_composition_effects_query_in_write_slot_does_not_contribute() -> None:
     program = nu_compile(Cmd(Q()))
     root_id = program.id_of[program.root]
-    assert program.attr(program.root, Attr.OWN_EFFECTS) == {0: Effect.WRITE}
+    assert program.attr(program.root, Attr.MUTATES) == frozenset({0})
     assert program.attrs[Attr.COMPOSITION_EFFECTS][root_id] == frozenset()
 
 

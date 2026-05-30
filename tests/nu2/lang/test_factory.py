@@ -16,7 +16,6 @@ from nu2.core import Literal
 from nu2.engine.structure import Declared
 from nu2.lang import (
     Command,
-    Effect,
     InteractionFactory,
     Reduction,
     ScalarQuery,
@@ -117,7 +116,7 @@ def test_command_thunk_returns_none_and_calls_fn() -> None:
         Command,
         "Touch",
         side_effect,
-        own_effects={0: Effect.WRITE},
+        mutates=frozenset({0}),
     )
     # A Command must wrap a Ref in slot 0; for a unit check we drive the
     # built thunk directly. compile() gives us back a (rt) -> None thunk.
@@ -135,7 +134,7 @@ def test_command_short_circuits_to_none_on_sentinel() -> None:
     def fn(x: object) -> object:
         calls.append(x)
 
-    Touch = InteractionFactory(Command, "Touch", fn, own_effects={0: Effect.WRITE})
+    Touch = InteractionFactory(Command, "Touch", fn, mutates=frozenset({0}))
     instance = Touch.__new__(Touch)
     instance.children = ()
     instance.payload = {}

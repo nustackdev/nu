@@ -1,12 +1,12 @@
 """Sort and composition laws: the structural floor of Nu.
 
 Every direct child of every node fits its parent's composition matrix row.
-A Query atom annotates no WRITE on itself; a Command and an Action each
-annotate at least one; a Flow's body slots hold mutators. Span is handled
+A Query atom declares no mutation on itself; a Command and an Action each
+declare at least one; a Flow's body slots hold mutators. Span is handled
 transparently in the matrix-fit walk: a Span child slot-fits as its body's
 sort.
 
-These laws read ``sort`` and ``own_effects``; nothing here recomputes
+These laws read ``sort`` and ``mutates``; nothing here recomputes
 attributes.
 """
 
@@ -15,11 +15,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu2.engine import Law, predicate
-from nu2.lang.attributes import MATRIX, Attr, Effect, Sort, matrix_sort, subsort
+from nu2.lang.attributes import MATRIX, Attr, Sort, matrix_sort, subsort
 
 from .predicates import (
+    attr_true,
     child_paths,
-    declares_effect,
     has_children,
     of_sort,
 )
@@ -156,20 +156,20 @@ LAWS: tuple[Law, ...] = (
     Law(
         "query_no_own_write",
         scope=of_sort(Sort.QUERY),
-        holds=~declares_effect(Effect.WRITE),
-        message="a Query annotates a WRITE slot",
+        holds=~attr_true(Attr.MUTATES),
+        message="a Query declares a mutation slot",
     ),
     Law(
         "command_has_write",
         scope=of_sort(Sort.COMMAND),
-        holds=declares_effect(Effect.WRITE),
-        message="a Command annotates no WRITE slot",
+        holds=attr_true(Attr.MUTATES),
+        message="a Command declares no mutation slot",
     ),
     Law(
         "action_has_write",
         scope=of_sort(Sort.ACTION),
-        holds=declares_effect(Effect.WRITE),
-        message="an Action annotates no WRITE slot",
+        holds=attr_true(Attr.MUTATES),
+        message="an Action declares no mutation slot",
     ),
     Law(
         "flow_body_is_mutator",

@@ -30,7 +30,6 @@ __all__ = [
     "attr_true",
     "cardinality_is",
     "child_paths",
-    "declares_effect",
     "has_children",
     "no_child_yields",
     "no_composition_effect",
@@ -74,11 +73,6 @@ def has_children(program: Program, path: Path) -> bool:
 
 
 # --- holds predicates ---------------------------------------------------
-
-
-def declares_effect(effect: Effect) -> Predicate:
-    """Holds when the node annotates at least one slot with ``effect``."""
-    return Predicate(lambda program, path: effect in program.attr(path, Attr.OWN_EFFECTS).values())
 
 
 def no_composition_effect(effect: Effect) -> Predicate:

@@ -1,9 +1,15 @@
 """Effects attribute: what a Nu program touches in the Context.
 
-An effect is one interaction with the Context (RESOLVE, READ or WRITE) bound to
-a named location. The declared ``own_effects`` annotates a sort's effect slots;
-the synthesized ``composition_effects`` folds a subtree's whole effect set.
-Purity is a derived fact, not an attribute: ``composition_effects`` is empty.
+An effect is an *observable* interaction with the Context, bound to the named
+location it acts through: a READ materializes a value, a WRITE transforms it.
+Nothing declares an effect. A kind declares ``mutates`` - the slot indices it
+writes to - and effects are synthesized by pairing a Ref with how it gets used:
+mutation on a Ref is a WRITE, a Ref in any other slot self-yields a READ, and
+mutation on a non-Ref is a local change that contributes no effect at all.
+
+The declared ``mutates`` annotates a sort's mutation slots; the synthesized
+``composition_effects`` folds a subtree's whole effect set. Purity is a derived
+fact, not an attribute: ``composition_effects`` is empty.
 """
 
 from __future__ import annotations
@@ -24,9 +30,8 @@ __all__ = ["ATTRIBUTES", "Effect", "EffectSet"]
 
 
 class Effect(StrEnum):
-    """An interaction with the Context, carried in a tracked-effect tuple."""
+    """An observable interaction with the Context, carried in an effect tuple."""
 
-    RESOLVE = "resolve"
     READ = "read"
     WRITE = "write"
 
@@ -34,13 +39,15 @@ class Effect(StrEnum):
 type EffectSet = frozenset[tuple[str, Effect]]
 
 
-def _own_effects(program: Program, path: Path) -> EffectSet:
+def _tracked_effects(program: Program, path: Path) -> EffectSet:
     """The (ref, effect) tuples a node contributes through its own Ref children.
 
-    A slot the sort annotates contributes that effect; every other slot holding
-    a Ref binds in read role. A slot annotated but unfilled contributes nothing.
+    A Ref child in a mutation slot (an index in ``mutates``) binds as a WRITE;
+    a Ref child in any other slot binds as a READ. A non-Ref child contributes
+    nothing - a mutation with no address is a local change, not an effect, so a
+    WRITE annotation over a Literal computes to no tuple at all.
     """
-    annotated: dict[int, Effect] = program.attr(path, Attr.OWN_EFFECTS)
+    mutates: frozenset[int] = program.attr(path, Attr.MUTATES)
     path_of = program.path_of
     children = [path_of[c] for c in program.children[program.id_of[path]]]
     tuples: set[tuple[str, Effect]] = set()
@@ -48,7 +55,7 @@ def _own_effects(program: Program, path: Path) -> EffectSet:
         if program.attr(child, Attr.SORT) != Sort.REF:
             continue
         name: str = program.terms[program.id_of[child]].payload["name"]
-        tuples.add((name, annotated.get(slot, Effect.READ)))
+        tuples.add((name, Effect.WRITE if slot in mutates else Effect.READ))
     return frozenset(tuples)
 
 
@@ -58,11 +65,11 @@ def _union_effects(own: EffectSet, children: list[EffectSet]) -> EffectSet:
 
 
 ATTRIBUTES: tuple[Attribute, ...] = (
-    Declared(value={}, name=Attr.OWN_EFFECTS),
+    Declared(value=frozenset(), name=Attr.MUTATES),
     Synthesized(
         name=Attr.COMPOSITION_EFFECTS,
-        base=_own_effects,
+        base=_tracked_effects,
         combine=_union_effects,
-        reads=(Attr.OWN_EFFECTS, Attr.SORT),
+        reads=(Attr.MUTATES, Attr.SORT),
     ),
 )

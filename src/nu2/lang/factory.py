@@ -40,7 +40,7 @@ Attribute declarations are passed by keyword. Raw values are wrapped in
     Set = InteractionFactory(
         Command, "Set",
         lambda ref, value: ...,
-        own_effects={0: Effect.WRITE},
+        mutates=frozenset({0}),
     )
 
 Note: IDEs and static type checkers see the factory's return as

@@ -23,19 +23,21 @@ def test_ref_slots_passes_when_write_slot_holds_a_ref() -> None:
     assert_passes(Cmd(R()))
 
 
-def test_ref_slots_passes_for_action_slot() -> None:
-    """``Act`` annotates slot 0 as WRITE and slot 0 is a Ref. Law holds."""
+def test_ref_slots_out_of_scope_for_action_with_ref() -> None:
+    """``Act`` yields, so it is out of the VOID-only ref_slots scope. Law holds."""
     assert_passes(Act(R("y")))
 
 
 def test_ref_slots_fails_when_write_slot_holds_a_non_ref() -> None:
-    """Slot 0 carries a Query instead of a Ref; the WRITE has no referent."""
+    """Slot 0 carries a Query instead of a Ref; the Command WRITE has no referent."""
     assert_fails(Cmd(Q()), "ref_slots")
 
 
-def test_ref_slots_fails_when_action_write_slot_holds_a_non_ref() -> None:
-    """An Action's WRITE slot points at a Query; no referent."""
-    assert_fails(Act(Q()), "ref_slots")
+def test_ref_slots_relaxes_for_addressless_action() -> None:
+    """An Action's mutation slot may hold a non-Ref: addressless, it degrades to
+    a Query rather than failing. The VOID-scoped law never fires on it."""
+    fired = [v for v in violations(Act(Q())) if v.law == "ref_slots"]
+    assert not fired
 
 
 # --- effects_originate_at_refs ------------------------------------------
