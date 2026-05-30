@@ -79,7 +79,8 @@ function App() {
 			retryTimer = null;
 			if (intentionalClose) return;
 			setStatus(attempts === 0 ? "connecting" : "reconnecting");
-			ws = new WebSocket(`ws://${window.location.host}/ws`);
+			const wsProto = window.location.protocol === "https:" ? "wss:" : "ws:";
+			ws = new WebSocket(`${wsProto}//${window.location.host}/ws`);
 			ws.binaryType = "arraybuffer";
 			ws.addEventListener("open", () => {
 				attempts = 0;
