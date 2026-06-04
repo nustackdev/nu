@@ -21,7 +21,16 @@ from .slice import Drop, Take
 from .sort_by import SortBy
 from .stream_fold import Fold
 from .stream_iter import Iter
-from .stream_transform import Filter, FilterFn, FlatMapFn, Map, MapFn, TakeWhile, UniqueDo
+from .stream_transform import (
+    Filter,
+    FilterFn,
+    FlatMapFn,
+    Map,
+    MapFn,
+    StreamTake,
+    TakeWhile,
+    UniqueDo,
+)
 from .timing import Timed
 from .transform import FilterBy, Flatten, Pluck, Reversed, Sorted, Unique
 
@@ -95,6 +104,7 @@ __all__ = [
     "Slice",
     "SortBy",
     "Sorted",
+    "StreamTake",
     "Sub",
     "Sum",
     "Switch",

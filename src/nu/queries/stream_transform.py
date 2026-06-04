@@ -1,4 +1,4 @@
-"""Stream transforms - Filter, Map, TakeWhile, UniqueDo.
+"""Stream transforms - Filter, Map, StreamTake, TakeWhile, UniqueDo.
 
 StreamQuery kinds that pull items from a stream child and yield them
 gated/transformed by a per-item Nu predicate or transform child.
@@ -20,7 +20,7 @@ from nu.terms.types import Mode
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Callable, Generator, Iterable
 
-    from nu.terms import Arg, Nu, StrArg
+    from nu.terms import Arg, IntArg, Nu, StrArg
 
 
 __all__ = [
@@ -29,6 +29,7 @@ __all__ = [
     "FlatMapFn",
     "Map",
     "MapFn",
+    "StreamTake",
     "TakeWhile",
     "UniqueDo",
 ]
@@ -186,6 +187,50 @@ class TakeWhile(StreamQuery):
             if not await runtime.afirst(condition, ctx):
                 return
             yield elem
+
+
+class StreamTake(StreamQuery):
+    """Yield the first `n` items, then stop pulling.
+
+    Count-based twin of `TakeWhile`: consumes a stream and yields its
+    prefix of length `n`, stopping as soon as `n` items are out. It pulls
+    at most `n` items from its child, so the upstream is never drained
+    past the cap. `n <= 0` yields nothing; a stream shorter than `n`
+    yields all of it.
+
+    Children: `[items, n]`
+    """
+
+    support: ClassVar[frozenset[Mode]] = _BOTH
+
+    def __init__(self, items: Arg[Iterable], n: IntArg) -> None:
+        super().__init__(items, n)
+
+    def open(self, ctx: Any) -> Generator[Any, None, None]:  # noqa: ANN401, D102
+        from nu import runtime
+
+        n = int(runtime.first(self._children[1], ctx))
+        if n <= 0:
+            return
+        count = 0
+        for elem in _iterate_sync(self._children[0], ctx):
+            yield elem
+            count += 1
+            if count >= n:
+                return
+
+    async def aopen(self, ctx: Any) -> AsyncGenerator[Any, None]:  # noqa: ANN401, D102
+        from nu import runtime
+
+        n = int(await runtime.afirst(self._children[1], ctx))
+        if n <= 0:
+            return
+        count = 0
+        async for elem in _iterate_async(self._children[0], ctx):
+            yield elem
+            count += 1
+            if count >= n:
+                return
 
 
 def _fn_support(fn: Callable[..., Any]) -> frozenset[Mode]:
