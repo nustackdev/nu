@@ -14,8 +14,7 @@ dependencies = [
     "nu>=0.1.0",
     "composables>=0.1.0",
     "invisibles>=0.1.0",
-    "ray>=2.0; sys_platform != 'darwin' or platform_machine == 'arm64'",
-    "ray>=2.0,<=2.49.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "ray>=2.0",
 ]
 
 keywords = ["distributed", "rpc", "invisibles", "ray"]
