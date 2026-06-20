@@ -51,6 +51,7 @@ class Sort(StrEnum):
     SCALAR_COMMAND = "scalar_command"
     ACTION = "action"
     SCALAR_ACTION = "scalar_action"
+    STREAM_ACTION = "stream_action"
     FLOW = "flow"
     STRATEGY = "strategy"
     CONTROL = "control"
@@ -71,6 +72,7 @@ _PARENT: dict[Sort, Sort] = {
     Sort.REDUCTION: Sort.SCALAR_QUERY,
     Sort.SCALAR_COMMAND: Sort.COMMAND,
     Sort.SCALAR_ACTION: Sort.ACTION,
+    Sort.STREAM_ACTION: Sort.ACTION,
     Sort.STRATEGY: Sort.FLOW,
     Sort.CONTROL: Sort.FLOW,
     Sort.BRACKET: Sort.SPAN,
@@ -95,6 +97,7 @@ _MATRIX_SORTS: tuple[Sort, ...] = (
     Sort.SCALAR_QUERY,
     Sort.SCALAR_COMMAND,
     Sort.SCALAR_ACTION,
+    Sort.STREAM_ACTION,
     Sort.STRATEGY,
     Sort.CONTROL,
     Sort.BRACKET,
@@ -116,14 +119,18 @@ def matrix_sort(sort: Sort) -> Sort | None:
 
 
 # Child sorts that produce a value, and child sorts that do work. Action is the
-# dual citizen: it yields a value (so joins _VALUE) and mutates Context (so
-# joins _WORK alongside Command).
+# dual citizen, in both cardinalities: a ScalarAction or StreamAction yields (so
+# joins _VALUE) and mutates Context (so joins _WORK alongside Command). A
+# StreamAction yielding into a scalar slot is gated by the cardinality law, not
+# here -- the same way a StreamQuery sits in _VALUE yet a scalar consumer must
+# reduce it.
 _VALUE = frozenset(
     {
         Sort.REF,
         Sort.SCALAR_QUERY,
         Sort.STREAM_QUERY,
         Sort.SCALAR_ACTION,
+        Sort.STREAM_ACTION,
         Sort.BRACKET,
         Sort.POLICY,
     }
@@ -132,6 +139,7 @@ _WORK = frozenset(
     {
         Sort.SCALAR_COMMAND,
         Sort.SCALAR_ACTION,
+        Sort.STREAM_ACTION,
         Sort.STRATEGY,
         Sort.CONTROL,
         Sort.BRACKET,
@@ -143,13 +151,14 @@ _ANY = _VALUE | _WORK
 # The composition matrix: each parent sort mapped to the child sorts it holds.
 # A value-producing parent holds values; a Strategy holds work; the parents
 # that take a body (Control, Bracket, Policy) hold anything. Action's slots
-# need values (the payload, the address) like Command's do.
+# need values (the payload, the address) like Command's do, in either cardinality.
 MATRIX: dict[Sort, frozenset[Sort]] = {
     Sort.REF: _VALUE,
     Sort.SCALAR_QUERY: _VALUE,
     Sort.STREAM_QUERY: _VALUE,
     Sort.SCALAR_COMMAND: _VALUE,
     Sort.SCALAR_ACTION: _VALUE,
+    Sort.STREAM_ACTION: _VALUE,
     Sort.STRATEGY: _WORK,
     Sort.CONTROL: _ANY,
     Sort.BRACKET: _ANY,

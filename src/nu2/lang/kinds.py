@@ -1,10 +1,11 @@
 """The Nu kind taxonomy: the user-facing Term classes that declare each sort.
 
 A taxonomy of ``Nu`` subclasses. The leaves (``Ref``, ``ScalarQuery``,
-``StreamQuery``, ``Reduction``, ``Command``, ``Strategy``, ``Control``,
-``Bracket``, ``Policy``) carry the sort and cardinality bindings concrete
-nodes use. The interiors (``Interaction``, ``Query``, ``Flow``, ``Span``) are
-abstract groupings for ``subsort`` queries and for the dispatch surface
+``StreamQuery``, ``Reduction``, ``Command``, ``ScalarAction``,
+``StreamAction``, ``Strategy``, ``Control``, ``Bracket``, ``Policy``) carry
+the sort and cardinality bindings concrete nodes use. The interiors
+(``Interaction``, ``Query``, ``Action``, ``Flow``, ``Span``) are abstract
+groupings for ``subsort`` queries and for the dispatch surface
 ``Interaction.eval`` / ``aeval``.
 
 "Kind" is the Python class of a Term (Ref, Interaction, ...); "sort" is the
@@ -41,6 +42,7 @@ __all__ = [
     "ScalarQuery",
     "Span",
     "Strategy",
+    "StreamAction",
     "StreamQuery",
 ]
 
@@ -117,6 +119,19 @@ class ScalarAction(Action):
 
     sort = Declared(value=Sort.SCALAR_ACTION)
     cardinality = Declared(value=Cardinality.SCALAR)
+
+
+class StreamAction(Action):
+    """An Action that mutates and yields zero or more values.
+
+    The stream-shaped twin of ScalarAction: one atomic mutate-and-yield-many
+    (drain a queue, ``DELETE ... RETURNING`` over a predicate). A scalar
+    consumer must reduce it like any StreamQuery; the cardinality law gates
+    that off ``cardinality`` alone, with no per-kind special case.
+    """
+
+    sort = Declared(value=Sort.STREAM_ACTION)
+    cardinality = Declared(value=Cardinality.STREAM)
 
 
 class Flow(Interaction):

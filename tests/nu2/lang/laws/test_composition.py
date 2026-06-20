@@ -7,11 +7,11 @@ Mirrors ``src/nu2/lang/laws/composition.py``. Exercises ``composition``,
 
 from __future__ import annotations
 
-from _support.law_terms import Act, Brk, Cmd, FlowS, Pol, Q, R, Red, Stream
+from _support.law_terms import Act, Brk, Cmd, FlowS, Pol, Q, R, Red, Stream, StreamAct
 from _support.laws import assert_fails, assert_passes
 
 from nu2.engine.structure import Declared
-from nu2.lang import Command, Control, ScalarAction, ScalarQuery, Strategy
+from nu2.lang import Command, Control, ScalarAction, ScalarQuery, Strategy, StreamAction
 
 
 # --- malformed shapes for negative cases -------------------------------
@@ -29,6 +29,10 @@ class CmdNoWrite(Command):
 
 class ActNoWrite(ScalarAction):
     """A ScalarAction that wrongly declares no WRITE slot."""
+
+
+class StreamActNoWrite(StreamAction):
+    """A StreamAction that wrongly declares no WRITE slot."""
 
 
 class FlowCQ(Control):
@@ -66,6 +70,16 @@ def test_composition_passes_when_query_holds_action() -> None:
 def test_composition_passes_through_span() -> None:
     """A Span is transparent: a Bracket-wrapped Command fits a Strategy."""
     assert_passes(FlowS(Brk(Cmd(R()))))
+
+
+def test_composition_passes_when_strategy_holds_stream_action() -> None:
+    """A StreamAction is a mutator too: a Strategy body slot accepts it."""
+    assert_passes(FlowS(StreamAct(R())))
+
+
+def test_composition_fails_when_stream_action_holds_command() -> None:
+    """A StreamAction's slots need yielders; a Command yields nothing."""
+    assert_fails(StreamAct(Cmd(R())), "composition")
 
 
 # --- query_no_own_write ------------------------------------------------
@@ -110,6 +124,16 @@ def test_action_has_write_passes_for_plain_action() -> None:
 def test_action_has_write_fails_when_action_declares_no_write() -> None:
     """An Action with no WRITE is a Query wearing the wrong kind."""
     assert_fails(Q(ActNoWrite(R())), "action_has_write")
+
+
+def test_action_has_write_passes_for_plain_stream_action() -> None:
+    """A StreamAction declares WRITE on slot 0 like any Action; reduced by Red."""
+    assert_passes(Red(StreamAct(R())))
+
+
+def test_action_has_write_fails_when_stream_action_declares_no_write() -> None:
+    """The action_has_write law is sort-scoped, so it covers StreamAction too."""
+    assert_fails(Red(StreamActNoWrite(R())), "action_has_write")
 
 
 # --- flow_body_is_mutator ----------------------------------------------

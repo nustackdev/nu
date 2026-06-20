@@ -72,6 +72,7 @@ from .kinds import (
     ScalarQuery,
     Span,
     Strategy,
+    StreamAction,
     StreamQuery,
 )
 from .laws import LAWS
@@ -140,6 +141,7 @@ __all__ = [
     "Span",
     "StrArg",
     "Strategy",
+    "StreamAction",
     "StreamQuery",
     "TupleArg",
     "Violation",

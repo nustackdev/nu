@@ -39,6 +39,7 @@ def test_subsort_is_reflexive(sort: Sort) -> None:
         (Sort.REDUCTION, Sort.SCALAR_QUERY),
         (Sort.SCALAR_COMMAND, Sort.COMMAND),
         (Sort.SCALAR_ACTION, Sort.ACTION),
+        (Sort.STREAM_ACTION, Sort.ACTION),
         (Sort.STRATEGY, Sort.FLOW),
         (Sort.CONTROL, Sort.FLOW),
         (Sort.BRACKET, Sort.SPAN),
@@ -57,6 +58,7 @@ def test_subsort_holds_for_direct_parent(sort: Sort, parent: Sort) -> None:
         Sort.REDUCTION,
         Sort.SCALAR_COMMAND,
         Sort.SCALAR_ACTION,
+        Sort.STREAM_ACTION,
         Sort.STRATEGY,
         Sort.CONTROL,
         Sort.BRACKET,
@@ -90,6 +92,7 @@ def test_subsort_interaction_does_not_descend_from_ref() -> None:
         (Sort.STRATEGY, Sort.CONTROL),
         (Sort.BRACKET, Sort.POLICY),
         (Sort.SCALAR_COMMAND, Sort.SCALAR_ACTION),
+        (Sort.SCALAR_ACTION, Sort.STREAM_ACTION),
     ],
 )
 def test_subsort_false_for_siblings(sort: Sort, sibling: Sort) -> None:
@@ -108,6 +111,7 @@ def test_subsort_false_for_siblings(sort: Sort, sibling: Sort) -> None:
         (Sort.REDUCTION, Sort.SCALAR_QUERY),
         (Sort.SCALAR_COMMAND, Sort.SCALAR_COMMAND),
         (Sort.SCALAR_ACTION, Sort.SCALAR_ACTION),
+        (Sort.STREAM_ACTION, Sort.STREAM_ACTION),
         (Sort.STRATEGY, Sort.STRATEGY),
         (Sort.CONTROL, Sort.CONTROL),
         (Sort.BRACKET, Sort.BRACKET),
@@ -166,6 +170,13 @@ def test_matrix_strategy_row_holds_work_excludes_pure_values() -> None:
 def test_matrix_scalar_action_in_both_value_and_work_rows() -> None:
     assert Sort.SCALAR_ACTION in MATRIX[Sort.SCALAR_QUERY]
     assert Sort.SCALAR_ACTION in MATRIX[Sort.STRATEGY]
+
+
+def test_matrix_stream_action_in_both_value_and_work_rows() -> None:
+    # StreamAction is the dual citizen too: a stream-shaped mutate-and-yield
+    # fits a value slot (reduced by a scalar consumer) and a Strategy body.
+    assert Sort.STREAM_ACTION in MATRIX[Sort.SCALAR_QUERY]
+    assert Sort.STREAM_ACTION in MATRIX[Sort.STRATEGY]
 
 
 @pytest.mark.parametrize("parent", [Sort.CONTROL, Sort.BRACKET, Sort.POLICY])

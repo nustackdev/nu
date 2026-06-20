@@ -7,8 +7,8 @@ you get back a real ``Nu`` subclass wired with sync/async thunks,
 sentinel handling, and any declared attributes.
 
 Supported base kinds: ``ScalarQuery``, ``Command``, ``ScalarAction``.
-Stream, reduction, flow, and span have non-trivial dispatch shapes that
-the factory does not try to reproduce.
+Stream (query or action), reduction, flow, and span have non-trivial
+dispatch shapes that the factory does not try to reproduce.
 
 Yield semantics follow the base:
 - ``ScalarQuery`` / ``ScalarAction`` -- the function's return value is the
@@ -56,7 +56,16 @@ from typing import TYPE_CHECKING
 
 from nu2.engine.structure import Attribute, Declared
 
-from .kinds import Command, Flow, Reduction, ScalarAction, ScalarQuery, Span, StreamQuery
+from .kinds import (
+    Command,
+    Flow,
+    Reduction,
+    ScalarAction,
+    ScalarQuery,
+    Span,
+    StreamAction,
+    StreamQuery,
+)
 from .nu import Nu
 from .sentinels import EMPTY, INVALID
 
@@ -71,7 +80,7 @@ __all__ = ["InteractionFactory"]
 
 
 _ALLOWED_BASES: tuple[type, ...] = (ScalarQuery, Command, ScalarAction)
-_REJECTED_BASES: tuple[type, ...] = (StreamQuery, Reduction, Flow, Span)
+_REJECTED_BASES: tuple[type, ...] = (StreamQuery, StreamAction, Reduction, Flow, Span)
 
 
 def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a class at the call site
@@ -88,7 +97,7 @@ def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a clas
     ``name`` whose metaclass-driven attribute collection picks up every
     declared attribute (and ``requires_async`` for ``async def`` targets).
     """
-    if not isinstance(base, type) or not issubclass(base, _ALLOWED_BASES):
+    if not isinstance(base, type):
         msg = (
             f"InteractionFactory base must subclass ScalarQuery, Command, "
             f"or ScalarAction (got {base!r})"
@@ -98,6 +107,12 @@ def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a clas
         msg = (
             f"InteractionFactory does not support stream, reduction, flow, "
             f"or span kinds (got {base.__name__})"
+        )
+        raise TypeError(msg)
+    if not issubclass(base, _ALLOWED_BASES):
+        msg = (
+            f"InteractionFactory base must subclass ScalarQuery, Command, "
+            f"or ScalarAction (got {base!r})"
         )
         raise TypeError(msg)
 

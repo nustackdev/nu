@@ -6,7 +6,7 @@ Mirrors ``src/nu2/lang/laws/cardinality.py``. Exercises
 
 from __future__ import annotations
 
-from _support.law_terms import Q, R, Red, Stream
+from _support.law_terms import Q, R, Red, Stream, StreamAct
 from _support.laws import assert_fails, assert_passes
 
 
@@ -16,6 +16,17 @@ def test_scalar_stream_refused_passes_when_query_holds_a_scalar() -> None:
 
 def test_scalar_stream_refused_fails_when_query_holds_a_stream() -> None:
     assert_fails(Q(Stream()), "scalar_stream_refused")
+
+
+def test_scalar_stream_refused_fails_when_query_holds_a_stream_action() -> None:
+    # A StreamAction yields a stream, so a scalar consumer refuses it exactly
+    # like a StreamQuery: the gate is cardinality alone, no per-kind case.
+    assert_fails(Q(StreamAct(R())), "scalar_stream_refused")
+
+
+def test_scalar_stream_refused_passes_when_reduction_holds_a_stream_action() -> None:
+    # The consumer names the reduction, so the stream-yielding Action is fine.
+    assert_passes(Red(StreamAct(R())))
 
 
 def test_scalar_stream_refused_passes_when_reduction_holds_a_stream() -> None:

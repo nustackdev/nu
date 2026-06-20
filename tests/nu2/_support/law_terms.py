@@ -29,11 +29,24 @@ from nu2.lang import (
     ScalarAction,
     ScalarQuery,
     Strategy,
+    StreamAction,
     StreamQuery,
 )
 
 
-__all__ = ["Act", "Brk", "Cmd", "FlowC", "FlowS", "Pol", "Q", "R", "Red", "Stream"]
+__all__ = [
+    "Act",
+    "Brk",
+    "Cmd",
+    "FlowC",
+    "FlowS",
+    "Pol",
+    "Q",
+    "R",
+    "Red",
+    "Stream",
+    "StreamAct",
+]
 
 
 class Q(ScalarQuery):
@@ -56,6 +69,12 @@ class Cmd(Command):
 
 class Act(ScalarAction):
     """A bare ScalarAction. Slot 0 is the Ref it writes; yields a value."""
+
+    mutates = Declared(value=frozenset({0}))
+
+
+class StreamAct(StreamAction):
+    """A bare StreamAction. Slot 0 is the Ref it writes; yields a stream."""
 
     mutates = Declared(value=frozenset({0}))
 

@@ -2,9 +2,10 @@
 
 A non-yielding mutator (a VOID-cardinality Command) is observable only by
 landing a WRITE on Context, so its mutation slot *must* hold a Ref. A yielding
-mutator (a SCALAR Action) is observable through its yield, so its mutation slot
-*need not* hold a Ref - addressless, it just degrades to a Query. The Ref-slot
-law therefore fires off cardinality, not off "declares a mutation". The second
+mutator (an Action, scalar or stream) is observable through its yield, so its
+mutation slot *need not* hold a Ref - addressless, it just degrades to a Query.
+The Ref-slot law therefore fires off cardinality, not off "declares a mutation".
+The second
 law is a sanity check: every effect a node attributes to its subtree is sourced
 from a Ref present somewhere beneath it.
 """
