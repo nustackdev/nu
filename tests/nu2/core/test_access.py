@@ -1,15 +1,16 @@
 """Tests for the access atoms (item / attribute member access).
 
-Reads (GetItem, Len, Contains, Slice, GetAttr, HasAttr) are evaluable
-ScalarQueries: evaluate them and check the value, plus sentinel propagation.
-Writes (SetItem, DelItem, SetAttr, DelAttr) are structural Commands: check the
-effect attribution and law verdicts, not evaluation (their runtime is pending
-the fabric write path).
+Every atom is an evaluable ScalarQuery: reads (GetItem, Len, Contains, Slice,
+GetAttr, HasAttr) yield the member; writes (SetItem, DelItem, SetAttr, DelAttr)
+mutate the Python value in place and yield it back. All driven end to end -
+value, sentinel propagation, async mirror. The writes are local Python mutation
+off a value, not a fabric write (that is context.Set's job).
 """
 
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
 
 from nu2.core.access import (
     Contains,
@@ -24,7 +25,7 @@ from nu2.core.access import (
     Slice,
 )
 from nu2.core.literal import Literal
-from nu2.lang import EMPTY, INVALID, LAWS, Attr, Effect, Ref, compile, gate, validate
+from nu2.lang import EMPTY, INVALID, compile
 from nu2.lang.helpers import aeval, eval
 
 
@@ -96,42 +97,65 @@ def test_a_sentinel_operand_collapses_a_read_to_invalid():
     assert _eval(Slice(Literal(EMPTY), Literal(1), Literal(1))) is INVALID
 
 
-# --- writes: effects and laws --------------------------------------------
+# --- writes: evaluation --------------------------------------------------
 
 
-def test_set_item_tracks_a_write_and_a_read():
-    program = compile(SetItem(Ref("grid"), Literal("k"), Ref("v")))
-    assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
-        {("grid", Effect.WRITE), ("v", Effect.READ)}
-    )
+def test_set_item_mutates_and_yields_the_container():
+    grid = {"a": 1}
+    out = _eval(SetItem(Literal(grid), Literal("b"), Literal(2)))
+    assert out is grid
+    assert grid == {"a": 1, "b": 2}
 
 
-def test_del_item_tracks_a_write():
-    program = compile(DelItem(Ref("grid"), Literal("k")))
-    assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
-        {("grid", Effect.WRITE)}
-    )
+def test_del_item_removes_a_key_and_yields_the_container():
+    grid = {"a": 1, "b": 2}
+    out = _eval(DelItem(Literal(grid), Literal("a")))
+    assert out is grid
+    assert grid == {"b": 2}
 
 
-def test_set_attr_tracks_a_write_and_a_read():
-    program = compile(SetAttr(Ref("obj"), Literal("field"), Ref("val")))
-    assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
-        {("obj", Effect.WRITE), ("val", Effect.READ)}
-    )
+def test_set_attr_mutates_and_yields_the_object():
+    obj = SimpleNamespace(x=1)
+    out = _eval(SetAttr(Literal(obj), Literal("y"), Literal(2)))
+    assert out is obj
+    assert obj.y == 2
 
 
-def test_del_attr_tracks_a_write():
-    program = compile(DelAttr(Ref("obj"), Literal("field")))
-    assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
-        {("obj", Effect.WRITE)}
-    )
+def test_del_attr_removes_an_attribute_and_yields_the_object():
+    obj = SimpleNamespace(x=1, y=2)
+    out = _eval(DelAttr(Literal(obj), Literal("y")))
+    assert out is obj
+    assert not hasattr(obj, "y")
 
 
-def test_a_clean_write_validates():
-    program = compile(SetItem(Ref("grid"), Literal("k"), Literal(1)))
-    assert validate(program, *LAWS) is program
+def test_writes_compose():
+    # SetItem yields the container, so writes chain.
+    grid = {}
+    out = _eval(SetItem(SetItem(Literal(grid), Literal("a"), Literal(1)), Literal("b"), Literal(2)))
+    assert out == {"a": 1, "b": 2}
 
 
-def test_a_write_in_a_query_slot_is_refused():
-    verdict = gate(compile(Len(SetItem(Ref("g"), Literal("k"), Literal(1)))), *LAWS)
-    assert any(v.law == "composition" for v in verdict)
+# --- writes: sentinel propagation ----------------------------------------
+
+
+def test_a_sentinel_operand_collapses_a_write_to_invalid():
+    grid = {"a": 1}
+    assert _eval(SetItem(Literal(EMPTY), Literal("k"), Literal(1))) is INVALID
+    assert _eval(SetItem(Literal(grid), Literal("k"), Literal(INVALID))) is INVALID
+    assert _eval(DelItem(Literal(grid), Literal(EMPTY))) is INVALID
+    assert _eval(SetAttr(Literal(EMPTY), Literal("x"), Literal(1))) is INVALID
+    assert _eval(DelAttr(Literal(INVALID), Literal("x"))) is INVALID
+    # A refused write leaves the value untouched.
+    assert grid == {"a": 1}
+
+
+# --- writes: async mirrors sync ------------------------------------------
+
+
+def test_async_writes_mirror_sync():
+    grid = {"a": 1}
+    assert asyncio.run(_aeval(SetItem(Literal(grid), Literal("b"), Literal(2)))) is grid
+    assert grid == {"a": 1, "b": 2}
+    obj = SimpleNamespace()
+    assert asyncio.run(_aeval(SetAttr(Literal(obj), Literal("z"), Literal(9)))) is obj
+    assert obj.z == 9

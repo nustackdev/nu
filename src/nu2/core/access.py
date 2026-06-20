@@ -1,38 +1,37 @@
-"""Access atoms: Python's item and attribute access.
+"""Access atoms: Python's item and attribute management.
 
-Maps Python's member-access builtins and operators onto Nu. This file crosses
-sorts on purpose: reads are Queries, writes/deletes are Commands - they belong
-together as one domain (accessing a value's members), not split by sort.
+Maps Python's member-access builtins and operators onto Nu - getting, setting,
+and deleting an item or attribute of a plain Python value. Every atom here is a
+``ScalarQuery``: a read yields the member, a write/delete mutates the value
+in-place and yields it back. This is local Python mutation off a value, not a
+fabric write - writing into a Ref's fabric location is the fabric's own
+interaction (``context.Set`` / ``context.Delete`` and the like), which lives in
+the fabric dirs, never here. ``core`` is the pure Python builtins.
 
 Builtins / operators to cover (Python -> Nu):
-- items (read, Q): ``x[k]`` -> ``GetItem``, ``len`` -> ``Len``,
+- items (read): ``x[k]`` -> ``GetItem``, ``len`` -> ``Len``,
   ``in`` -> ``Contains``, ``slice`` / ``x[a:b]`` -> ``Slice``
-- items (write, C): ``x[k] = v`` -> ``SetItem``, ``del x[k]`` -> ``DelItem``
-- attrs (read, Q): ``getattr`` -> ``GetAttr``, ``hasattr`` -> ``HasAttr``
-- attrs (write, C): ``setattr`` -> ``SetAttr``, ``delattr`` -> ``DelAttr``
+- items (write): ``x[k] = v`` -> ``SetItem``, ``del x[k]`` -> ``DelItem``
+- attrs (read): ``getattr`` -> ``GetAttr``, ``hasattr`` -> ``HasAttr``
+- attrs (write): ``setattr`` -> ``SetAttr``, ``delattr`` -> ``DelAttr``
 
-Sorts: ScalarQuery (Q) for the reads, Command (C) for the writes/deletes. A
-mutating access whose target is a Ref is a WRITE; off a non-Ref it is local. If
-a remove-and-return variant is wanted (pop-style), that is an Action - note it
-but the builtins here are plain get/set/del.
-
-The reads are EVALUABLE: each defines ``compile`` (sync hot path) and
+Every atom is EVALUABLE: each defines ``compile`` (sync hot path) and
 ``acompile`` (async hot path) returning a thunk that computes from its child
 values, with inlined EMPTY / INVALID sentinel propagation (mirroring
-``nu2.core.arithmetic``). The writes are STRUCTURAL only: they subclass Command
-and declare ``mutates`` (slot 0 is the target Ref), with no ``compile`` - their
-runtime lands once the fabric write path is wired.
+``nu2.core.arithmetic``). The writes apply Python's ``x[k]=v`` / ``setattr`` /
+``del`` to the object value and return that object so they compose. If a
+remove-and-return variant is wanted (pop-style), that is an Action - note it,
+but the builtins here are plain get/set/del.
 
 v1 reference: ``src/nu/queries/access.py`` (Len, At, Slice, Contains) and
-``src/nu/queries/attr.py`` (GetAttr, SetAttr, DelAttr).
+``src/nu/queries/attr.py`` (GetAttr, SetAttr, DelAttr - all ScalarQueries).
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Declared
-from nu2.lang import Command, ScalarQuery
+from nu2.lang import ScalarQuery
 from nu2.lang.sentinels import EMPTY, INVALID
 
 
@@ -273,42 +272,168 @@ class HasAttr(ScalarQuery):
         return athunk
 
 
-# --- writes (Command, structural) ----------------------------------------
+# --- writes (ScalarQuery, local Python mutation) -------------------------
 
 
-class SetItem(Command):
-    """Subscript write: ``x[k] = v``. Writes into the Ref in slot 0.
+class SetItem(ScalarQuery):
+    """Subscript write: ``x[k] = v`` for child 0 keyed by child 1.
 
-    Slots: 0 target Ref, 1 key, 2 value. Runtime lands with the fabric write
-    path; this declares the effect shape only.
+    Slots: 0 container, 1 key, 2 value. Mutates the container value in place
+    and yields it back so writes compose.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target, key, value = children
+
+        def thunk(rt: Runtime) -> object:
+            x = target(rt)
+            if x is EMPTY or x is INVALID:
+                return INVALID
+            k = key(rt)
+            if k is EMPTY or k is INVALID:
+                return INVALID
+            v = value(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            x[k] = v
+            return x
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target, key, value = children
+
+        async def athunk(rt: Runtime) -> object:
+            x = await target(rt)
+            if x is EMPTY or x is INVALID:
+                return INVALID
+            k = await key(rt)
+            if k is EMPTY or k is INVALID:
+                return INVALID
+            v = await value(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            x[k] = v
+            return x
+
+        return athunk
 
 
-class DelItem(Command):
-    """Subscript delete: ``del x[k]``. Writes into the Ref in slot 0.
+class DelItem(ScalarQuery):
+    """Subscript delete: ``del x[k]`` for child 0 keyed by child 1.
 
-    Slots: 0 target Ref, 1 key. Runtime lands with the fabric write path.
+    Slots: 0 container, 1 key. Mutates the container value in place and yields
+    it back.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target, key = children
+
+        def thunk(rt: Runtime) -> object:
+            x = target(rt)
+            if x is EMPTY or x is INVALID:
+                return INVALID
+            k = key(rt)
+            if k is EMPTY or k is INVALID:
+                return INVALID
+            del x[k]
+            return x
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target, key = children
+
+        async def athunk(rt: Runtime) -> object:
+            x = await target(rt)
+            if x is EMPTY or x is INVALID:
+                return INVALID
+            k = await key(rt)
+            if k is EMPTY or k is INVALID:
+                return INVALID
+            del x[k]
+            return x
+
+        return athunk
 
 
-class SetAttr(Command):
-    """Attribute write: ``setattr(obj, name, value)``. Writes the Ref in slot 0.
+class SetAttr(ScalarQuery):
+    """Attribute write: ``setattr(obj, name, value)``.
 
-    Slots: 0 target Ref, 1 name, 2 value. Runtime lands with the fabric write
-    path.
+    Slots: 0 object, 1 name, 2 value. Mutates the object value in place and
+    yields it back so writes compose.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        obj_t, name_t, value_t = children
+
+        def thunk(rt: Runtime) -> object:
+            obj = obj_t(rt)
+            if obj is EMPTY or obj is INVALID:
+                return INVALID
+            name = name_t(rt)
+            if name is EMPTY or name is INVALID:
+                return INVALID
+            value = value_t(rt)
+            if value is EMPTY or value is INVALID:
+                return INVALID
+            setattr(obj, str(name), value)
+            return obj
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        obj_t, name_t, value_t = children
+
+        async def athunk(rt: Runtime) -> object:
+            obj = await obj_t(rt)
+            if obj is EMPTY or obj is INVALID:
+                return INVALID
+            name = await name_t(rt)
+            if name is EMPTY or name is INVALID:
+                return INVALID
+            value = await value_t(rt)
+            if value is EMPTY or value is INVALID:
+                return INVALID
+            setattr(obj, str(name), value)
+            return obj
+
+        return athunk
 
 
-class DelAttr(Command):
-    """Attribute delete: ``delattr(obj, name)``. Writes the Ref in slot 0.
+class DelAttr(ScalarQuery):
+    """Attribute delete: ``delattr(obj, name)``.
 
-    Slots: 0 target Ref, 1 name. Runtime lands with the fabric write path.
+    Slots: 0 object, 1 name. Mutates the object value in place and yields it
+    back.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        obj_t, name_t = children
+
+        def thunk(rt: Runtime) -> object:
+            obj = obj_t(rt)
+            if obj is EMPTY or obj is INVALID:
+                return INVALID
+            name = name_t(rt)
+            if name is EMPTY or name is INVALID:
+                return INVALID
+            delattr(obj, str(name))
+            return obj
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        obj_t, name_t = children
+
+        async def athunk(rt: Runtime) -> object:
+            obj = await obj_t(rt)
+            if obj is EMPTY or obj is INVALID:
+                return INVALID
+            name = await name_t(rt)
+            if name is EMPTY or name is INVALID:
+                return INVALID
+            delattr(obj, str(name))
+            return obj
+
+        return athunk
