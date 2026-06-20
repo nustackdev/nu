@@ -4,9 +4,9 @@ The scalar casts (Int, Float, Complex, Str, Bytes, ByteArray) are pure
 ScalarQueries with compile / acompile thunks, so they are driven end to end:
 compile the term, evaluate, check the value, including the optional second
 operand and sentinel propagation, with the async siblings mirroring the sync
-path. The collection constructors (List, Tuple, Set, FrozenSet, Dict) consume
-an iterable child and need the stream fabric, which is not wired yet, so they
-are checked structurally only - sort and cardinality - not evaluated.
+path. The collection constructors (List, Tuple, Set, FrozenSet, Dict) apply the
+Python constructor to an iterable operand value, so they are driven end to end
+too; draining a stream into a container is a Reduction's job, not theirs.
 """
 
 from __future__ import annotations
@@ -115,7 +115,7 @@ def test_aeval_mirrors_eval():
     assert asyncio.run(_aeval(Int(Literal(EMPTY)))) is INVALID
 
 
-# --- collection constructors: structural only ----------------------------
+# --- collection constructors ---------------------------------------------
 
 
 def test_collection_constructors_are_scalar_queries():
@@ -123,3 +123,21 @@ def test_collection_constructors_are_scalar_queries():
         program = compile(ctor(Literal(1)))
         assert program.attr(program.root, Attr.SORT) is Sort.SCALAR_QUERY
         assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.SCALAR
+
+
+def test_collection_constructors_build_their_containers():
+    assert _eval(List(Literal((1, 2, 3)))) == [1, 2, 3]
+    assert _eval(Tuple(Literal([1, 2, 3]))) == (1, 2, 3)
+    assert _eval(Set(Literal([1, 1, 2]))) == {1, 2}
+    assert _eval(FrozenSet(Literal([1, 2]))) == frozenset({1, 2})
+    assert _eval(Dict(Literal([("a", 1), ("b", 2)]))) == {"a": 1, "b": 2}
+
+
+def test_collection_constructor_propagates_a_sentinel():
+    assert _eval(List(Literal(EMPTY))) is INVALID
+    assert _eval(Dict(Literal(INVALID))) is INVALID
+
+
+def test_collection_aeval_mirrors_eval():
+    assert asyncio.run(_aeval(List(Literal((1, 2))))) == [1, 2]
+    assert asyncio.run(_aeval(Set(Literal([1, 1, 2])))) == {1, 2}

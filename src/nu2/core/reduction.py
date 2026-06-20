@@ -94,19 +94,71 @@ class Sum(Reduction):
 
 
 class Min(Reduction):
-    """The smallest item in its stream child (``min``)."""
+    """The smallest item in its stream child (``min``); EMPTY if empty."""
 
     commutative = Declared(value=True)
     associative = Declared(value=True)
     idempotent = Declared(value=True)
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        def thunk(rt: Runtime) -> object:
+            items = []
+            for v in sync_iter(stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                items.append(v)
+            return min(items) if items else EMPTY
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            items = []
+            async for v in aiter_any(await stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                items.append(v)
+            return min(items) if items else EMPTY
+
+        return athunk
 
 
 class Max(Reduction):
-    """The largest item in its stream child (``max``)."""
+    """The largest item in its stream child (``max``); EMPTY if empty."""
 
     commutative = Declared(value=True)
     associative = Declared(value=True)
     idempotent = Declared(value=True)
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        def thunk(rt: Runtime) -> object:
+            items = []
+            for v in sync_iter(stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                items.append(v)
+            return max(items) if items else EMPTY
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            items = []
+            async for v in aiter_any(await stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                items.append(v)
+            return max(items) if items else EMPTY
+
+        return athunk
 
 
 class Any(Reduction):
@@ -116,6 +168,32 @@ class Any(Reduction):
     associative = Declared(value=True)
     idempotent = Declared(value=True)
 
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        def thunk(rt: Runtime) -> object:
+            for v in sync_iter(stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                if v:
+                    return True
+            return False
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            async for v in aiter_any(await stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                if v:
+                    return True
+            return False
+
+        return athunk
+
 
 class All(Reduction):
     """True if every item in its stream child is truthy (``all``)."""
@@ -124,6 +202,32 @@ class All(Reduction):
     associative = Declared(value=True)
     idempotent = Declared(value=True)
 
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        def thunk(rt: Runtime) -> object:
+            for v in sync_iter(stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                if not v:
+                    return False
+            return True
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            async for v in aiter_any(await stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                if not v:
+                    return False
+            return True
+
+        return athunk
+
 
 class Count(Reduction):
     """The number of items in its stream child (``len`` over a stream)."""
@@ -131,13 +235,89 @@ class Count(Reduction):
     commutative = Declared(value=True)
     associative = Declared(value=True)
 
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        def thunk(rt: Runtime) -> object:
+            n = 0
+            for v in sync_iter(stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                n += 1
+            return n
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            n = 0
+            async for v in aiter_any(await stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                n += 1
+            return n
+
+        return athunk
+
 
 class First(Reduction):
     """The first item of its stream child; EMPTY if the stream is empty."""
 
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        def thunk(rt: Runtime) -> object:
+            for v in sync_iter(stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                return v
+            return EMPTY
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            async for v in aiter_any(await stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                return v
+            return EMPTY
+
+        return athunk
+
 
 class Last(Reduction):
     """The last item of its stream child; EMPTY if the stream is empty."""
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        def thunk(rt: Runtime) -> object:
+            last: object = EMPTY
+            for v in sync_iter(stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                last = v
+            return last
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            last: object = EMPTY
+            async for v in aiter_any(await stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                last = v
+            return last
+
+        return athunk
 
 
 class Collect(Reduction):

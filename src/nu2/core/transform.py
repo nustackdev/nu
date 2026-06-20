@@ -141,12 +141,99 @@ class Filter(StreamQuery):
 
 
 class Sorted(StreamQuery):
-    """Its stream child, ordered. Eager: drains the source, then yields."""
+    """Its source child, ordered. Eager: drains the source, then yields.
+
+    Children: ``[source]``. The one barrier among these lenses - a pull on its
+    output blocks until the whole source is drained and sorted.
+    """
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (source,) = children
+
+        def thunk(rt: Runtime) -> object:
+            return iter(sorted(sync_iter(source(rt))))
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (source,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            items = sorted([x async for x in aiter_any(await source(rt))])
+
+            async def agen() -> object:
+                for x in items:
+                    yield x
+
+            return agen()
+
+        return athunk
 
 
 class Flatten(StreamQuery):
-    """Concatenates a stream of streams one level into a flat stream (lazy)."""
+    """Concatenates a source of iterables one level into a flat stream (lazy).
+
+    Children: ``[source]`` where each item of ``source`` is itself iterable.
+    """
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (source,) = children
+
+        def thunk(rt: Runtime) -> object:
+            def gen() -> object:
+                for sub in sync_iter(source(rt)):
+                    yield from sub
+
+            return gen()
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (source,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            async def agen() -> object:
+                async for sub in aiter_any(await source(rt)):
+                    for x in sub:
+                        yield x
+
+            return agen()
+
+        return athunk
 
 
 class Unique(StreamQuery):
-    """Yields each item of its stream child once, first-seen order (lazy)."""
+    """Yields each item of its source child once, first-seen order (lazy).
+
+    Children: ``[source]``. Items must be hashable.
+    """
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (source,) = children
+
+        def thunk(rt: Runtime) -> object:
+            def gen() -> object:
+                seen: set = set()
+                for x in sync_iter(source(rt)):
+                    if x not in seen:
+                        seen.add(x)
+                        yield x
+
+            return gen()
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (source,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            async def agen() -> object:
+                seen: set = set()
+                async for x in aiter_any(await source(rt)):
+                    if x not in seen:
+                        seen.add(x)
+                        yield x
+
+            return agen()
+
+        return athunk

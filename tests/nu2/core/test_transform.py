@@ -1,13 +1,11 @@
 """Tests for the transform atoms (stream-to-stream lenses).
 
 Map and Filter bind each item under a name (a child, default "item") and
-evaluate a Nu child against it, read via AttrRef. Coverage runs real programs
-through ``run``. Sorted / Flatten / Unique are still structural stubs.
+evaluate a Nu child against it, read via AttrRef. Sorted / Flatten / Unique are
+single-source lenses. Coverage runs real programs through ``run``.
 """
 
 from __future__ import annotations
-
-import pytest
 
 from nu2.context import AttrRef
 from nu2.core import Collect, Filter, Iter, Literal, Lt, Map, Mul
@@ -16,20 +14,27 @@ from nu2.lang import LAWS, Attr, Cardinality, compile, validate
 from nu2.lang.helpers import run
 
 
-# --- structural stubs (Sorted / Flatten / Unique) ------------------------
-
-STUBS = [Sorted, Flatten, Unique]
+# --- single-source lenses (Sorted / Flatten / Unique) --------------------
 
 
-@pytest.mark.parametrize("atom", STUBS)
-def test_stub_is_a_stream(atom):
-    program = compile(atom(Literal([1, 2, 3])))
+def test_sorted_orders_its_source():
+    value, _ = run(Collect(Sorted(Iter(Literal([3, 1, 2])))))
+    assert value == [1, 2, 3]
+
+
+def test_flatten_concatenates_one_level():
+    value, _ = run(Collect(Flatten(Iter(Literal([[1, 2], [3], [4, 5]])))))
+    assert value == [1, 2, 3, 4, 5]
+
+
+def test_unique_drops_repeats_first_seen_order():
+    value, _ = run(Collect(Unique(Iter(Literal([1, 2, 1, 3, 2])))))
+    assert value == [1, 2, 3]
+
+
+def test_a_single_source_lens_is_a_stream_and_validates():
+    program = compile(Sorted(Literal([3, 1, 2])))
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.STREAM
-
-
-@pytest.mark.parametrize("atom", STUBS)
-def test_stub_validates(atom):
-    program = compile(atom(Literal([1, 2, 3])))
     assert validate(program, *LAWS) is program
 
 

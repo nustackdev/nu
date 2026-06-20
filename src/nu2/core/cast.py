@@ -324,24 +324,139 @@ class ByteArray(ScalarQuery):
         return athunk
 
 
-# --- collection constructors: structural, evaluable once the fabric lands -
+# --- collection constructors: scalar over an iterable value --------------
+#
+# Each takes one scalar child whose value is iterable and applies the Python
+# constructor. Draining a *stream* into a container is a Reduction's job
+# (``Collect``); these cast an iterable value, so the child is scalar and the
+# scalar/stream law is satisfied.
 
 
 class List(ScalarQuery):
     """The iterable child collected into a ``list``."""
 
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = children
+
+        def thunk(rt: Runtime) -> object:
+            v = only(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            return list(v)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            v = await only(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            return list(v)
+
+        return athunk
+
 
 class Tuple(ScalarQuery):
     """The iterable child collected into a ``tuple``."""
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = children
+
+        def thunk(rt: Runtime) -> object:
+            v = only(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            return tuple(v)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            v = await only(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            return tuple(v)
+
+        return athunk
 
 
 class Set(ScalarQuery):
     """The iterable child collected into a ``set``."""
 
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = children
+
+        def thunk(rt: Runtime) -> object:
+            v = only(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            return set(v)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            v = await only(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            return set(v)
+
+        return athunk
+
 
 class FrozenSet(ScalarQuery):
     """The iterable child collected into a ``frozenset``."""
 
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = children
+
+        def thunk(rt: Runtime) -> object:
+            v = only(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            return frozenset(v)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            v = await only(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            return frozenset(v)
+
+        return athunk
+
 
 class Dict(ScalarQuery):
     """The key/value pairs of the iterable child collected into a ``dict``."""
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = children
+
+        def thunk(rt: Runtime) -> object:
+            v = only(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            return dict(v)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (only,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            v = await only(rt)
+            if v is EMPTY or v is INVALID:
+                return INVALID
+            return dict(v)
+
+        return athunk

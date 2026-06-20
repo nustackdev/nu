@@ -42,29 +42,34 @@ from nu2.core._legacy.logic import And, Eq, Lt, Not, Or
 from nu2.core._legacy.spans import Retry, Scope
 from nu2.core._legacy.streams import Take, Watch
 from nu2.core.dynamic import Compile, Eval, Exec, Globals, Locals
-from nu2.core.iteration import Iter
+from nu2.core.iteration import Enumerate, Iter, Reversed, Zip
 from nu2.core.literal import Literal
-from nu2.core.reduction import Collect, Count, Max, Min, Sum
-from nu2.core.transform import Filter, Map
+from nu2.core.reduction import All, Any, Collect, Count, First, Last, Max, Min, Sum
+from nu2.core.transform import Filter, Flatten, Map, Sorted, Unique
 
 
 __all__ = [
     "Add",
+    "All",
     "And",
+    "Any",
     "Collect",
     "Compile",
     "Count",
     "Delete",
     "Div",
     "Emit",
+    "Enumerate",
     "Eq",
     "Eval",
     "Exec",
     "Filter",
-    "ForEachDo",
+    "First",
+    "Flatten",
     "Globals",
     "If",
     "Iter",
+    "Last",
     "Literal",
     "Locals",
     "Lt",
@@ -77,13 +82,16 @@ __all__ = [
     "Or",
     "Par",
     "Retry",
+    "Reversed",
     "Scope",
     "Seq",
     "Set",
+    "Sorted",
     "Sub",
     "Sum",
     "Take",
-    "Transaction",
+    "Unique",
     "Watch",
     "While",
+    "Zip",
 ]

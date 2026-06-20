@@ -5,27 +5,22 @@ StreamQuery sources; ``next`` is the odd one - it advances an iterator (mutates
 its state) and yields the item, so it is an Action.
 
 Builtins to cover (Python -> Nu):
-- sources (Q-stream): ``iter`` -> ``Iter``, ``range`` -> ``Range``,
-  ``enumerate`` -> ``Enumerate``, ``zip`` -> ``Zip``, ``reversed`` -> ``Reversed``
+- sources (Q-stream): ``iter`` -> ``Iter``, ``enumerate`` -> ``Enumerate``,
+  ``zip`` -> ``Zip``, ``reversed`` -> ``Reversed``
 - stepping (A): ``next`` -> ``Next`` (advance + yield; mutate-and-yield)
 
-Sorts: StreamQuery (Q) for the sources, ScalarAction (A) for ``Next``. Async
-twins ``aiter`` / ``anext`` can follow once async sources are needed; note them.
-Lazy lenses (map / filter) live in ``transform``; folds in ``reduction``.
+Sorts: StreamQuery (Q) for the sources, ScalarAction (A) for ``Next``. Each
+source returns an iterator from its thunk (the stream contract); the async twin
+returns an async iterator. Lazy lenses (map / filter) live in ``transform``;
+folds in ``reduction``.
 
-These atoms are declared **structurally**: each subclasses the right kind and
-carries ``Declared`` attributes only, with no ``compile`` / ``acompile``. The
-StreamQuery sources and the one Action all need the fabric/stream runtime that
-is not wired yet, so they stand as descriptions the language can attribute and
-gate, but not yet evaluate. Behaviour lands when the fabric comes online,
-matching the structural pattern in ``_legacy/streams.py`` and
-``_legacy/commands.py``.
+``range`` is a Python type, not a stream function, so it is a Form (a later
+pass), not an atom here; stream a range with ``Iter(<range value>)``. ``Next``
+steps a ref-held iterator, so it stays a structural stub until the iterator
+fabric lands.
 
-The placeholder ``Range`` in ``_legacy/streams.py`` is superseded here; this
-module is the real home for the iterator sources.
-
-v1 reference: ``src/nu/queries/stream_iter.py``, ``combine.py`` (Zip, Chain,
-Enumerate), ``range_map.py``.
+v1 reference: ``src/nu/queries/stream_iter.py`` (Iter), ``combine.py`` (Zip,
+Enumerate), ``transform.py`` (Reversed).
 """
 
 from __future__ import annotations
@@ -34,6 +29,7 @@ from typing import TYPE_CHECKING
 
 from nu2.engine.structure import Declared
 from nu2.lang import ScalarAction, StreamQuery
+from nu2.lang.sentinels import EMPTY, INVALID
 
 from ._stream import aiter_any, sync_iter
 
@@ -76,27 +72,111 @@ class Iter(StreamQuery):
 
 
 class Enumerate(StreamQuery):
-    """Pairs each item of a stream child with its running index.
+    """Pairs each item of a source child with its running index.
 
-    Children: ``[source, start]``. Yields ``(index, item)`` tuples, the index
-    counting up from ``start`` (Python's ``enumerate``).
+    Children: ``[source]`` or ``[source, start]``. Yields ``(index, item)``
+    tuples, the index counting up from ``start`` (default 0), Python's
+    ``enumerate``.
     """
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        source = children[0]
+        start = children[1] if len(children) > 1 else None
+
+        def thunk(rt: Runtime) -> object:
+            if start is None:
+                return enumerate(sync_iter(source(rt)))
+            s = start(rt)
+            if s is EMPTY or s is INVALID:
+                return iter(())
+            return enumerate(sync_iter(source(rt)), s)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        source = children[0]
+        start = children[1] if len(children) > 1 else None
+
+        async def athunk(rt: Runtime) -> object:
+            begin = 0
+            if start is not None:
+                s = await start(rt)
+                if s is EMPTY or s is INVALID:
+                    return aiter_any(())
+                begin = s
+            src = await source(rt)
+
+            async def agen() -> object:
+                i = begin
+                async for item in aiter_any(src):
+                    yield (i, item)
+                    i += 1
+
+            return agen()
+
+        return athunk
 
 
 class Zip(StreamQuery):
-    """Threads several stream children together item by item.
+    """Threads several source children together item by item.
 
     Children: ``[*sources]``. Yields tuples of one item per source, stopping
     with the shortest (Python's ``zip``).
     """
 
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        def thunk(rt: Runtime) -> object:
+            return zip(*(sync_iter(c(rt)) for c in children), strict=False)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        async def athunk(rt: Runtime) -> object:
+            aiters = [aiter_any(await c(rt)) for c in children]
+
+            async def agen() -> object:
+                while True:
+                    row = []
+                    for ai in aiters:
+                        try:
+                            row.append(await ai.__anext__())
+                        except StopAsyncIteration:
+                            return
+                    yield tuple(row)
+
+            return agen()
+
+        return athunk
+
 
 class Reversed(StreamQuery):
-    """Yields the items of a stream child in reverse order.
+    """Yields the items of a source child in reverse order.
 
     Children: ``[source]``. The stream-shaped twin of Python's ``reversed``;
     it materializes the source to walk it backwards.
     """
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (source,) = children
+
+        def thunk(rt: Runtime) -> object:
+            return reversed(list(sync_iter(source(rt))))
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (source,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            items = [x async for x in aiter_any(await source(rt))]
+
+            async def agen() -> object:
+                for x in reversed(items):
+                    yield x
+
+            return agen()
+
+        return athunk
 
 
 # --- stepping (ScalarAction) ---------------------------------------------

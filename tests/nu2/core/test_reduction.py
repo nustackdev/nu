@@ -80,3 +80,46 @@ def test_collect_drains_a_stream_to_a_list():
 
     value, _ = run(Collect(Iter(Literal(range(3)))))
     assert value == [0, 1, 2]
+
+
+def test_min_and_max_fold_the_extremes():
+    from nu2.lang.helpers import run
+
+    assert run(Min(Iter(Literal([3, 1, 2]))))[0] == 1
+    assert run(Max(Iter(Literal([3, 1, 2]))))[0] == 3
+
+
+def test_min_of_an_empty_stream_is_empty():
+    from nu2.lang import EMPTY
+    from nu2.lang.helpers import run
+
+    assert run(Min(Iter(Literal([]))))[0] is EMPTY
+
+
+def test_any_and_all_fold_truthiness():
+    from nu2.lang.helpers import run
+
+    assert run(Any(Iter(Literal([0, 0, 1]))))[0] is True
+    assert run(Any(Iter(Literal([0, 0, 0]))))[0] is False
+    assert run(All(Iter(Literal([1, 2, 3]))))[0] is True
+    assert run(All(Iter(Literal([1, 0, 3]))))[0] is False
+
+
+def test_count_counts_items():
+    from nu2.lang.helpers import run
+
+    assert run(Count(Iter(Literal([1, 2, 3, 4]))))[0] == 4
+
+
+def test_first_and_last_take_the_ends():
+    from nu2.lang.helpers import run
+
+    assert run(First(Iter(Literal([10, 20, 30]))))[0] == 10
+    assert run(Last(Iter(Literal([10, 20, 30]))))[0] == 30
+
+
+def test_first_of_an_empty_stream_is_empty():
+    from nu2.lang import EMPTY
+    from nu2.lang.helpers import run
+
+    assert run(First(Iter(Literal([]))))[0] is EMPTY

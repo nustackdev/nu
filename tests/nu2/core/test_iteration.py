@@ -105,3 +105,35 @@ def test_iter_lifts_a_range_value_into_a_stream():
 
     value, _ = run(Collect(Iter(Literal(range(0, 4)))))
     assert value == [0, 1, 2, 3]
+
+
+def test_enumerate_pairs_index_and_item():
+    from nu2.core import Collect, Literal
+    from nu2.lang.helpers import run
+
+    value, _ = run(Collect(Enumerate(Iter(Literal(["a", "b", "c"])))))
+    assert value == [(0, "a"), (1, "b"), (2, "c")]
+
+
+def test_enumerate_honors_a_start():
+    from nu2.core import Collect, Literal
+    from nu2.lang.helpers import run
+
+    value, _ = run(Collect(Enumerate(Iter(Literal(["a", "b"])), Literal(1))))
+    assert value == [(1, "a"), (2, "b")]
+
+
+def test_zip_threads_sources_to_shortest():
+    from nu2.core import Collect, Literal
+    from nu2.lang.helpers import run
+
+    value, _ = run(Collect(Zip(Iter(Literal([1, 2, 3])), Iter(Literal(["a", "b"])))))
+    assert value == [(1, "a"), (2, "b")]
+
+
+def test_reversed_walks_a_source_backwards():
+    from nu2.core import Collect, Literal
+    from nu2.lang.helpers import run
+
+    value, _ = run(Collect(Reversed(Iter(Literal([1, 2, 3])))))
+    assert value == [3, 2, 1]
