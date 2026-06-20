@@ -114,35 +114,91 @@ class Compile(ScalarQuery):
         return athunk
 
 
-# --- structural: read the live namespace fabric (NO compile) -------------
+# --- ESCAPE HATCH: punches through the model into the host namespace ------
+#
+# Globals / Locals / Exec reach the live Python interpreter directly, not the
+# Context. They are escape hatches for host glue, not Nu interactions in the
+# usual sense - a Nu program built only from these is just wrapped Python.
+# Kept thin and explicit so their use is obvious; under review whether they
+# belong in core at all.
 
 
 class Globals(ScalarQuery):
-    """The module-level namespace dict (Python ``globals``).
+    """ESCAPE HATCH: the host module namespace dict (Python ``globals``).
 
-    Reads the live interpreter namespace, so it is structural and waits for the
-    namespace fabric - no pure ``compile`` hot path.
+    Returns the live interpreter globals at evaluation. Bypasses the Context
+    entirely - host glue, not a Context read.
     """
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        def thunk(rt: Runtime) -> object:
+            return globals()
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        async def athunk(rt: Runtime) -> object:
+            return globals()
+
+        return athunk
 
 
 class Locals(ScalarQuery):
-    """The current local namespace dict (Python ``locals``).
+    """ESCAPE HATCH: the host local namespace dict (Python ``locals``).
 
-    Reads the live interpreter namespace, so it is structural and waits for the
-    namespace fabric - no pure ``compile`` hot path.
+    Returns the live interpreter locals at evaluation. Bypasses the Context
+    entirely - host glue, not a Context read.
     """
 
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        def thunk(rt: Runtime) -> object:
+            return locals()
 
-# --- structural: mutate a namespace (NO compile) -------------------------
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        async def athunk(rt: Runtime) -> object:
+            return locals()
+
+        return athunk
 
 
 class Exec(ScalarAction):
-    """Run statements against a namespace (Python ``exec``).
+    """ESCAPE HATCH: run statements against a namespace dict (Python ``exec``).
 
-    Writes the namespace Ref in slot 0; remaining slots (source, explicit
-    globals / locals) bind in read role. Mutating the live namespace needs the
-    namespace fabric, so it is declared structurally with no ``compile`` hot
-    path.
+    Children: ``[namespace, source]``. Runs ``exec(source, namespace)``,
+    mutating the namespace dict in place (slot 0), and yields it. Bypasses the
+    Context - it mutates the dict object passed in, not a Context location.
     """
 
     mutates = Declared(value=frozenset({0}))
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        namespace, source = children
+
+        def thunk(rt: Runtime) -> object:
+            ns = namespace(rt)
+            if ns is EMPTY or ns is INVALID:
+                return INVALID
+            src = source(rt)
+            if src is EMPTY or src is INVALID:
+                return INVALID
+            exec(src, ns)  # noqa: S102
+            return ns
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        namespace, source = children
+
+        async def athunk(rt: Runtime) -> object:
+            ns = await namespace(rt)
+            if ns is EMPTY or ns is INVALID:
+                return INVALID
+            src = await source(rt)
+            if src is EMPTY or src is INVALID:
+                return INVALID
+            exec(src, ns)  # noqa: S102
+            return ns
+
+        return athunk

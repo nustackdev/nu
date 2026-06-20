@@ -33,9 +33,19 @@ v1 reference: ``src/nu/queries/reduction.py`` (First, Last, Collect, Reduce),
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from nu2.engine.structure import Declared
 from nu2.lang import Reduction
+from nu2.lang.sentinels import EMPTY, INVALID
 
+from ._stream import aiter_any, sync_iter
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from nu2.lang.runtime import Runtime
 
 __all__ = [
     "All",
@@ -55,6 +65,32 @@ class Sum(Reduction):
 
     commutative = Declared(value=True)
     associative = Declared(value=True)
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        def thunk(rt: Runtime) -> object:
+            total: object = 0
+            for v in sync_iter(stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                total = total + v
+            return total
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            total: object = 0
+            async for v in aiter_any(await stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                total = total + v
+            return total
+
+        return athunk
 
 
 class Min(Reduction):
@@ -106,3 +142,29 @@ class Last(Reduction):
 
 class Collect(Reduction):
     """Drain its stream child into one list value."""
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        def thunk(rt: Runtime) -> object:
+            out: list = []
+            for v in sync_iter(stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                out.append(v)
+            return out
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (stream,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            out: list = []
+            async for v in aiter_any(await stream(rt)):
+                if v is EMPTY or v is INVALID:
+                    return INVALID
+                out.append(v)
+            return out
+
+        return athunk

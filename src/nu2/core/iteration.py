@@ -30,11 +30,20 @@ Enumerate), ``range_map.py``.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from nu2.engine.structure import Declared
 from nu2.lang import ScalarAction, StreamQuery
 
+from ._stream import aiter_any, sync_iter
 
-__all__ = ["Enumerate", "Iter", "Next", "Range", "Reversed", "Zip"]
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from nu2.lang.runtime import Runtime
+
+__all__ = ["Enumerate", "Iter", "Next", "Reversed", "Zip"]
 
 
 # --- sources (StreamQuery) -----------------------------------------------
@@ -46,16 +55,24 @@ class Iter(StreamQuery):
     Children: ``[source]``. ``source`` is any ScalarQuery whose value is
     iterable (list, tuple, range, generator, dict, set, ...). The inverse of
     a Reduction: where a Reduction folds a stream to a scalar, ``Iter`` opens
-    a scalar iterable into a stream.
+    a scalar iterable into a stream. A stream atom's thunk returns an iterator.
     """
 
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (source,) = children
 
-class Range(StreamQuery):
-    """A stream of integers between scalar bounds.
+        def thunk(rt: Runtime) -> object:
+            return sync_iter(source(rt))
 
-    Children: ``[start, stop]`` (and an optional ``step``). Yields the
-    half-open integer range, the stream-shaped twin of Python's ``range``.
-    """
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (source,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            return aiter_any(await source(rt))
+
+        return athunk
 
 
 class Enumerate(StreamQuery):

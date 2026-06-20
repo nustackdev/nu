@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import pytest
 
-from nu2.core.iteration import Enumerate, Iter, Next, Range, Reversed, Zip
+from nu2.core.iteration import Enumerate, Iter, Next, Reversed, Zip
 from nu2.lang import LAWS, Attr, Cardinality, Effect, Ref, Sort, compile, gate, validate
 
 
-_SOURCES = (Iter, Range, Enumerate, Zip, Reversed)
+_SOURCES = (Iter, Enumerate, Zip, Reversed)
 
 
 # --- sort ----------------------------------------------------------------
@@ -85,3 +85,23 @@ def test_an_action_yields_so_it_fits_a_query_slot():
     assert gate(compile(Add(Next(Ref("it")), Literal(1))), *LAWS) == []
     verdict = gate(compile(Add(Set(Ref("x"), Literal(1)), Literal(2))), *LAWS)
     assert any(v.law == "composition" for v in verdict)
+
+
+# --- evaluation (Iter) ---------------------------------------------------
+
+
+def test_iter_streams_a_scalar_iterable():
+    from nu2.core import Collect, Literal
+    from nu2.lang.helpers import run
+
+    value, _ = run(Collect(Iter(Literal([1, 2, 3]))))
+    assert value == [1, 2, 3]
+
+
+def test_iter_lifts_a_range_value_into_a_stream():
+    # range is a Python value (a type), not a Nu stream atom; Iter lifts it.
+    from nu2.core import Collect, Literal
+    from nu2.lang.helpers import run
+
+    value, _ = run(Collect(Iter(Literal(range(0, 4)))))
+    assert value == [0, 1, 2, 3]

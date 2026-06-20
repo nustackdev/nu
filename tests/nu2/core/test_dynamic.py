@@ -1,10 +1,10 @@
 """Tests for the dynamic atoms (Python's runtime evaluation builtins).
 
 Evaluable atoms (Eval, Compile) are driven over literal-string operands to
-check they fold operand values into the real builtin. Structural atoms
-(Globals, Locals, Exec) are checked at the attribute level only - they read or
-write the live namespace fabric, which is not wired yet, so they are not
-evaluated.
+check they fold operand values into the real builtin. The escape-hatch atoms
+(Globals, Locals, Exec) reach the host namespace directly; they are checked at
+the attribute level and driven to confirm they bypass the Context into raw
+Python.
 """
 
 from __future__ import annotations
@@ -75,3 +75,23 @@ def test_exec_declares_a_namespace_write():
     program = compile(Exec(Ref("ns"), Literal("x = 1")))
     effects = program.attr(program.root, Attr.COMPOSITION_EFFECTS)
     assert ("ns", Effect.WRITE) in effects
+
+
+# --- escape-hatch evaluation ---------------------------------------------
+
+
+def test_globals_returns_the_host_namespace_dict():
+    assert isinstance(_eval(Globals()), dict)
+
+
+def test_locals_returns_a_dict():
+    assert isinstance(_eval(Locals()), dict)
+
+
+def test_exec_runs_statements_into_a_namespace_dict():
+    ns = _eval(Exec(Literal({}), Literal("x = 21 * 2")))
+    assert ns["x"] == 42
+
+
+def test_exec_propagates_a_sentinel():
+    assert _eval(Exec(Literal(INVALID), Literal("x = 1"))) is INVALID

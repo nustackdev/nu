@@ -1,49 +1,78 @@
-"""Structural tests for the transform atoms (stream-to-stream lenses).
+"""Tests for the transform atoms (stream-to-stream lenses).
 
-These atoms are declared structurally - StreamQuery subclasses with no
-``compile`` yet (the stream runtime is not wired). So coverage is
-attribute/law conformance only: assert each is STREAM-carded, takes a stream
-source, and a query-only program over them compiles and validates. No eval.
+Map and Filter bind each item under a name (a child, default "item") and
+evaluate a Nu child against it, read via AttrRef. Coverage runs real programs
+through ``run``. Sorted / Flatten / Unique are still structural stubs.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from nu2.core.literal import Literal
-from nu2.core.transform import Filter, Flatten, Map, Sorted, Unique
-from nu2.lang import LAWS, Attr, Cardinality, compile, gate, validate
+from nu2.context import AttrRef
+from nu2.core import Collect, Filter, Iter, Literal, Lt, Map, Mul
+from nu2.core.transform import Flatten, Sorted, Unique
+from nu2.lang import LAWS, Attr, Cardinality, compile, validate
+from nu2.lang.helpers import run
 
 
-ATOMS = [Map, Filter, Sorted, Flatten, Unique]
+# --- structural stubs (Sorted / Flatten / Unique) ------------------------
+
+STUBS = [Sorted, Flatten, Unique]
 
 
-@pytest.mark.parametrize("atom", ATOMS)
-def test_atom_is_a_stream(atom):
+@pytest.mark.parametrize("atom", STUBS)
+def test_stub_is_a_stream(atom):
     program = compile(atom(Literal([1, 2, 3])))
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.STREAM
 
 
-@pytest.mark.parametrize("atom", ATOMS)
-def test_atom_validates(atom):
+@pytest.mark.parametrize("atom", STUBS)
+def test_stub_validates(atom):
     program = compile(atom(Literal([1, 2, 3])))
     assert validate(program, *LAWS) is program
 
 
-def test_a_lens_chain_stays_a_stream():
-    # Lenses compose: a Filter over a Map over a source is still one stream.
-    program = compile(Filter(Map(Literal([1, 2, 3]))))
+# --- Map -----------------------------------------------------------------
+
+
+def test_map_is_a_stream():
+    program = compile(Map(Iter(Literal([1, 2, 3])), Mul(AttrRef("item"), Literal(10))))
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.STREAM
+
+
+def test_map_applies_its_transform_per_item():
+    tree = Collect(Map(Iter(Literal([1, 2, 3])), Mul(AttrRef("item"), Literal(10))))
+    value, _ = run(tree)
+    assert value == [10, 20, 30]
+
+
+def test_map_honors_a_custom_item_name():
+    tree = Collect(Map(Iter(Literal([1, 2])), Mul(AttrRef("x"), Literal(2)), key="x"))
+    value, _ = run(tree)
+    assert value == [2, 4]
+
+
+# --- Filter --------------------------------------------------------------
+
+
+def test_filter_keeps_matching_items():
+    tree = Collect(Filter(Iter(Literal([1, 2, 3, 4])), Lt(AttrRef("item"), Literal(3))))
+    value, _ = run(tree)
+    assert value == [1, 2]
+
+
+# --- composition ---------------------------------------------------------
+
+
+def test_a_lens_chain_stays_a_stream_and_evaluates():
+    tree = Collect(
+        Filter(
+            Map(Iter(Literal([1, 2, 3])), Mul(AttrRef("item"), Literal(10))),
+            Lt(AttrRef("item"), Literal(25)),
+        )
+    )
+    program = compile(tree)
     assert validate(program, *LAWS) is program
-
-
-def test_lenses_carry_no_effects():
-    # Pure shape over a constant source - no Context reads or writes.
-    program = compile(Map(Literal([1, 2, 3])))
-    assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset()
-
-
-def test_a_lens_program_does_no_mutation():
-    # Query-only, so the program_mutates law warns (it never writes Context).
-    program = compile(Sorted(Literal([3, 1, 2])))
-    assert any(v.law == "program_mutates" for v in gate(program, *LAWS))
+    value, _ = run(tree)
+    assert value == [10, 20]

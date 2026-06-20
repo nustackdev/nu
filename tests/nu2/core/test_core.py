@@ -18,6 +18,7 @@ from nu2.core import (
     Emit,
     Eq,
     If,
+    Iter,
     Literal,
     Lt,
     Mul,
@@ -25,7 +26,6 @@ from nu2.core import (
     Not,
     Or,
     Par,
-    Range,
     Seq,
     Set,
     Sub,
@@ -63,7 +63,7 @@ def test_a_flow_folds_every_command_effect():
 
 
 def test_reduction_is_scalar_over_a_stream():
-    program = compile(Sum(Range(Literal(0), Literal(10))))
+    program = compile(Sum(Iter(Literal(range(10)))))
     assert program.attr(program.root, Attr.CHILD_CARDINALITY) is Cardinality.SCALAR
     assert program.attr((0,), Attr.CHILD_CARDINALITY) is Cardinality.STREAM
 
@@ -197,4 +197,4 @@ def test_eval_refuses_async_only_programs():
 #
 # Set, Seq, Par, If, While, Delete, Emit, Scope, Retry: pending. Once Refs
 # and Commands have eval / aeval methods, the old execution tests come back.
-_ = (Set, Delete, Emit, Seq, Par, If, While, Sum, Range)
+_ = (Set, Delete, Emit, Seq, Par, If, While, Sum, Iter)

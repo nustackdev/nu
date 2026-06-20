@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu2.core import Literal, Range
+from nu2.core import Iter, Literal
 from nu2.core.reduction import All, Any, Collect, Count, First, Last, Max, Min, Sum
 from nu2.lang import LAWS, Attr, Cardinality, compile, gate, validate
 
@@ -21,8 +21,8 @@ _COMMUTATIVE = {Sum, Min, Max, Any, All, Count}
 _IDEMPOTENT = {Min, Max, Any, All}
 
 
-def _stream() -> Range:
-    return Range(Literal(0), Literal(10))
+def _stream() -> Iter:
+    return Iter(Literal(range(10)))
 
 
 @pytest.mark.parametrize("fold", _FOLDS)
@@ -63,3 +63,20 @@ def test_a_scalar_in_the_stream_slot_is_refused():
     # needs a stream to consume.
     verdict = gate(compile(Sum(Literal(1))), *LAWS)
     assert any(v.law == "reduction_takes_stream" for v in verdict)
+
+
+# --- evaluation (Sum, Collect) -------------------------------------------
+
+
+def test_sum_folds_a_stream_to_its_total():
+    from nu2.lang.helpers import run
+
+    value, _ = run(Sum(Iter(Literal(range(1, 5)))))
+    assert value == 10
+
+
+def test_collect_drains_a_stream_to_a_list():
+    from nu2.lang.helpers import run
+
+    value, _ = run(Collect(Iter(Literal(range(3)))))
+    assert value == [0, 1, 2]

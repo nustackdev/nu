@@ -39,23 +39,34 @@ from nu2.core._legacy.arithmetic import Add, Div, Mul, Neg, Sub
 from nu2.core._legacy.commands import Delete, Emit, Set
 from nu2.core._legacy.flows import If, Par, Seq, While
 from nu2.core._legacy.logic import And, Eq, Lt, Not, Or
-from nu2.core._legacy.reductions import Count, Max, Min, Sum
 from nu2.core._legacy.spans import Retry, Scope
-from nu2.core._legacy.streams import Filter, Map, Range, Take, Watch
+from nu2.core._legacy.streams import Take, Watch
+from nu2.core.dynamic import Compile, Eval, Exec, Globals, Locals
+from nu2.core.iteration import Iter
 from nu2.core.literal import Literal
+from nu2.core.reduction import Collect, Count, Max, Min, Sum
+from nu2.core.transform import Filter, Map
 
 
 __all__ = [
     "Add",
     "And",
+    "Collect",
+    "Compile",
     "Count",
     "Delete",
     "Div",
     "Emit",
     "Eq",
+    "Eval",
+    "Exec",
     "Filter",
+    "ForEachDo",
+    "Globals",
     "If",
+    "Iter",
     "Literal",
+    "Locals",
     "Lt",
     "Map",
     "Max",
@@ -65,7 +76,6 @@ __all__ = [
     "Not",
     "Or",
     "Par",
-    "Range",
     "Retry",
     "Scope",
     "Seq",
@@ -73,6 +83,7 @@ __all__ = [
     "Sub",
     "Sum",
     "Take",
+    "Transaction",
     "Watch",
     "While",
 ]

@@ -48,7 +48,17 @@ __all__ = [
 
 
 class Ref(Nu):
-    """A name for a Context location: a leaf, or keyed by child Refs."""
+    """A name for a location in a Fabric: the abstract Ref kind.
+
+    A Ref is the only atom that touches Context, but it touches it through a
+    Fabric, and each Fabric has its own concrete Ref (``AttrRef`` for the
+    Context-attrs fabric, service / shape Refs for others). This base carries
+    only the sort and cardinality every Ref shares; it declares no read or
+    write of its own. A bare ``Ref`` is for structural analysis - to run, use
+    a concrete fabric Ref.
+
+    The name is intrinsic data (payload); a dynamic key is a child.
+    """
 
     sort = Declared(value=Sort.REF)
     cardinality = Declared(value=Cardinality.SCALAR)

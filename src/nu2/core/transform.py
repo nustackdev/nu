@@ -7,53 +7,141 @@ over their source; effects only ride in through Ref children.
 Builtins to cover (Python -> Nu):
 - ``map`` -> ``Map``, ``filter`` -> ``Filter``, ``sorted`` -> ``Sorted``
 
-Plus two transforms v1 keeps as core (no single bare builtin, but native shape
-over a stream): ``Flatten`` (one-level concat of a stream of streams) and
-``Unique`` (drop already-seen items, order preserved).
+Plus two transforms v1 keeps as core: ``Flatten`` (one-level concat) and
+``Unique`` (drop already-seen, order preserved).
 
-``sorted`` is eager: it is the one barrier among these lazy lenses. ``Map`` /
-``Filter`` / ``Flatten`` / ``Unique`` pull one item at a time and yield as they
-go, but ``Sorted`` must drain its whole source before it can order it, so it
-pulls everything then yields - a pull on its output blocks until upstream is
-exhausted. No attribute marks this; it is a runtime property noted here.
+``Map`` and ``Filter`` bind each item into the attrs side-channel under a name
+and evaluate a Nu child against it. The name is a **child** (a Query yielding
+the name), so it can be a ``Literal`` or a Ref computed elsewhere - never an
+opaque payload. The body reads the item with ``AttrRef(<name>)``. The per-item
+binding writes ``ctx.attrs`` directly - the model's side-channel for loop
+variables, not a tracked fabric write.
 
-Extra lenses Python spells with itertools (chain, takewhile, ...) are NOT core -
-they go to ``nu.std`` later; keep here only bare builtins plus the two v1
-core transforms. ``reversed`` is a source, so it lives in ``iteration``.
+These supersede the placeholder ``Map`` / ``Filter`` in ``_legacy.streams``.
 
-These supersede the placeholder ``Map`` / ``Filter`` in ``_legacy.streams`` -
-this module is their real home.
+Sorts: all StreamQuery (Q). ``Sorted`` / ``Flatten`` / ``Unique`` stay
+structural stubs (no ``compile``) until they are filled.
 
-Sorts: all StreamQuery (Q). Declared structurally (subclass + Declared attrs,
-no ``compile``) - they are lenses over the stream runtime, which is not wired
-yet; eval lands once that fabric comes online.
-
-v1 reference: ``src/nu/queries/stream_transform.py`` (Filter, Map, TakeWhile),
-``transform.py`` (Sorted, Reversed, Flatten, Unique), ``sort_by.py``.
+v1 reference: ``src/nu/queries/stream_transform.py`` (Filter, Map),
+``transform.py`` (Sorted, Flatten, Unique).
 """
 
 from __future__ import annotations
 
-from nu2.lang import StreamQuery
+from typing import TYPE_CHECKING
 
+from nu2.engine import Term
+from nu2.lang import StreamQuery
+from nu2.lang.sentinels import EMPTY, INVALID
+
+from ._stream import aiter_any, sync_iter
+from .literal import Literal
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from nu2.lang.runtime import Runtime
 
 __all__ = ["Filter", "Flatten", "Map", "Sorted", "Unique"]
 
 
 class Map(StreamQuery):
-    """Applies a query child to every item of its stream child (lazy)."""
+    """Applies a query child to every item of its stream child (lazy).
+
+    Children: ``[source, transform, key]``. Each item of ``source`` is bound
+    under the name ``key`` yields, then ``transform`` is evaluated and its
+    value yielded. The transform reads the item with ``AttrRef(<name>)``.
+    """
+
+    def __init__(self, source: Term, transform: Term, key: object = "item") -> None:
+        key_node = key if isinstance(key, Term) else Literal(key)
+        super().__init__(source, transform, key_node)
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        source, transform, key_t = children
+
+        def thunk(rt: Runtime) -> object:
+            name = key_t(rt)
+
+            def gen() -> object:
+                for elem in sync_iter(source(rt)):
+                    rt.ctx.attrs[name] = elem
+                    yield transform(rt)
+
+            return gen()
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        source, transform, key_t = children
+
+        async def athunk(rt: Runtime) -> object:
+            name = await key_t(rt)
+
+            async def agen() -> object:
+                async for elem in aiter_any(await source(rt)):
+                    rt.ctx.attrs[name] = elem
+                    yield await transform(rt)
+
+            return agen()
+
+        return athunk
 
 
 class Filter(StreamQuery):
-    """Keeps the items of its stream child for which a predicate holds (lazy)."""
+    """Keeps the items of its stream child for which a predicate holds (lazy).
+
+    Children: ``[source, predicate, key]``. Each item is bound under the name
+    ``key`` yields, then ``predicate`` is evaluated; the item is yielded only
+    when truthy. A sentinel predicate drops the item.
+    """
+
+    def __init__(self, source: Term, predicate: Term, key: object = "item") -> None:
+        key_node = key if isinstance(key, Term) else Literal(key)
+        super().__init__(source, predicate, key_node)
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        source, predicate, key_t = children
+
+        def thunk(rt: Runtime) -> object:
+            name = key_t(rt)
+
+            def gen() -> object:
+                for elem in sync_iter(source(rt)):
+                    rt.ctx.attrs[name] = elem
+                    keep = predicate(rt)
+                    if keep is EMPTY or keep is INVALID:
+                        continue
+                    if keep:
+                        yield elem
+
+            return gen()
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        source, predicate, key_t = children
+
+        async def athunk(rt: Runtime) -> object:
+            name = await key_t(rt)
+
+            async def agen() -> object:
+                async for elem in aiter_any(await source(rt)):
+                    rt.ctx.attrs[name] = elem
+                    keep = await predicate(rt)
+                    if keep is EMPTY or keep is INVALID:
+                        continue
+                    if keep:
+                        yield elem
+
+            return agen()
+
+        return athunk
 
 
 class Sorted(StreamQuery):
-    """Its stream child, ordered. Eager: drains the source, then yields.
-
-    The one barrier among these lenses - a pull on its output blocks until the
-    whole source is exhausted and sorted.
-    """
+    """Its stream child, ordered. Eager: drains the source, then yields."""
 
 
 class Flatten(StreamQuery):
