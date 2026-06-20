@@ -10,9 +10,16 @@ from __future__ import annotations
 
 import pytest
 
-from nu2.core import Add, Literal, Watch
-from nu2.lang import Context
+from nu2.core import Add, Literal
+from nu2.engine.structure import Declared
+from nu2.lang import Context, StreamQuery
 from nu2.lang.helpers import arun, run, run_in_loop
+
+
+class _AsyncOnly(StreamQuery):
+    """An async-only stream stub (no sync path), to drive sync-refusal tests."""
+
+    requires_async = Declared(value=True)
 
 
 def test_run_returns_value_for_value_root():
@@ -63,12 +70,12 @@ async def test_arun_with_nested_arithmetic():
 
 def test_run_refuses_async_only_subtree():
     with pytest.raises(RuntimeError, match=r"async-only"):
-        run(Watch())
+        run(_AsyncOnly())
 
 
 def test_run_refusal_names_async_swap():
     with pytest.raises(RuntimeError) as excinfo:
-        run(Watch())
+        run(_AsyncOnly())
     msg = str(excinfo.value)
     assert "aeval" in msg or "arun" in msg
 

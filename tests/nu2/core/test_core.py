@@ -10,29 +10,8 @@ from __future__ import annotations
 
 import asyncio
 
-from nu2.core import (
-    Add,
-    And,
-    Delete,
-    Div,
-    Emit,
-    Eq,
-    If,
-    Iter,
-    Literal,
-    Lt,
-    Mul,
-    Neg,
-    Not,
-    Or,
-    Par,
-    Seq,
-    Set,
-    Sub,
-    Sum,
-    Watch,
-    While,
-)
+from nu2.context import Set
+from nu2.core import Add, And, Div, Eq, Iter, Literal, Lt, Mul, Neg, Not, Or, Sub, Sum
 from nu2.lang import EMPTY, INVALID, LAWS, Attr, Cardinality, Effect, Ref, compile, gate, validate
 from nu2.lang.helpers import aeval, arun, eval, run
 
@@ -52,13 +31,6 @@ def test_set_tracks_a_write_and_a_read():
     )
 
 
-def test_a_flow_folds_every_command_effect():
-    program = compile(Seq(Set(Ref("a"), Literal(1)), Set(Ref("b"), Literal(2))))
-    assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
-        {("a", Effect.WRITE), ("b", Effect.WRITE)}
-    )
-
-
 # --- cardinality ---------------------------------------------------------
 
 
@@ -66,14 +38,6 @@ def test_reduction_is_scalar_over_a_stream():
     program = compile(Sum(Iter(Literal(range(10)))))
     assert program.attr(program.root, Attr.CHILD_CARDINALITY) is Cardinality.SCALAR
     assert program.attr((0,), Attr.CHILD_CARDINALITY) is Cardinality.STREAM
-
-
-# --- sync / async --------------------------------------------------------
-
-
-def test_a_watch_puts_the_program_on_a_loop():
-    assert compile(Seq(Set(Ref("x"), Literal(1)))).attr((), Attr.ON_LOOP) is False
-    assert compile(Emit(Ref("out"), Watch())).attr((), Attr.ON_LOOP) is True
 
 
 # --- algebra -------------------------------------------------------------
@@ -89,24 +53,13 @@ def test_declared_algebra_reaches_the_program():
 
 
 def test_a_clean_program_validates():
-    program = compile(Seq(Set(Ref("a"), Literal(1)), Set(Ref("b"), Add(Ref("a"), Literal(1)))))
+    program = compile(Set(Ref("total"), Add(Ref("total"), Literal(1))))
     assert validate(program, *LAWS) is program
 
 
 def test_a_command_in_a_query_slot_is_refused():
     verdict = gate(compile(Add(Set(Ref("x"), Literal(1)), Literal(2))), *LAWS)
     assert any(v.law == "composition" for v in verdict)
-
-
-def test_a_parallel_flow_runs_its_commands():
-    program = compile(Par(Set(Ref("a"), Literal(1)), Set(Ref("b"), Literal(2))))
-    assert program.attr(program.root, Attr.EXEC_ORDER) is not None
-    assert validate(program, *LAWS) is program
-
-
-def test_a_control_holds_commands_under_a_condition():
-    program = compile(If(Eq(Ref("flag"), Literal(1)), Set(Ref("done"), Literal(1))))
-    assert validate(program, *LAWS) is program
 
 
 # --- execution: pure scalars --------------------------------------------
@@ -183,18 +136,3 @@ def test_run_raises_on_an_invalid_description():
     # A Command in a Query slot fails the composition law.
     with pytest.raises(ValueError, match="invalid program"):
         run(Add(Set(Ref("x"), Literal(1)), Literal(2)))
-
-
-def test_eval_refuses_async_only_programs():
-    import pytest
-
-    program = compile(Emit(Ref("out"), Watch()))
-    with pytest.raises(RuntimeError, match="async-only"):
-        eval(program)
-
-
-# --- placeholders: command / flow / span execution requires a fabric -----
-#
-# Set, Seq, Par, If, While, Delete, Emit, Scope, Retry: pending. Once Refs
-# and Commands have eval / aeval methods, the old execution tests come back.
-_ = (Set, Delete, Emit, Seq, Par, If, While, Sum, Iter)

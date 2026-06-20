@@ -18,47 +18,102 @@ family, crossing Query / Command / Action as the builtins do:
 - ``cast`` - type construction / conversion (Int, Str, List, Dict, Set)
 - ``repr`` - representations (Repr, Format, Bin, Hex, Ord, Chr)
 - ``access`` - item and attribute access (GetItem, Len, GetAttr, SetAttr)
-- ``iteration`` - iterator sources (Iter, Next, Range, Enumerate, Zip)
+- ``iteration`` - iterator sources (Iter, Next, Enumerate, Zip, Reversed)
 - ``transform`` - stream-to-stream lenses (Map, Filter, Sorted, Flatten)
-- ``reduction`` - stream-to-scalar folds (Sum, Min, Max, Any, All, Reduce)
+- ``reduction`` - stream-to-scalar folds (Sum, Min, Max, Any, All, Collect)
 - ``reflection`` - introspection (Type, IsInstance, Callable, Id, Hash)
 - ``io`` - console / file effects (Print, Input, Open)
 - ``dynamic`` - dynamic evaluation (Eval, Exec, Compile, Globals)
 
-Flows and Spans are built in a later pass.
-
-Restructure in progress: the new domain files start as docstring stubs and are
-filled by dispatched agents. Until each lands, the names below are re-exported
-from ``nu2.core._legacy`` (the old sort-grouped modules) so callers keep
-working. As a domain module is implemented, its imports move off ``_legacy``.
+Core is the pure Python builtins. The fabric interactions (writing through a
+Ref into the Context store, a database, stdio) live in their own fabric dirs -
+``nu2.context`` owns ``Set`` / ``Delete`` / ``AttrRef``, not core. The Forms
+layer (types, classes) and the Flows / Spans layer (Seq, Par, If, Retry,
+Transaction) are later passes with their own homes, not here.
 """
 
 from __future__ import annotations
 
-from nu2.core._legacy.arithmetic import Add, Div, Mul, Neg, Sub
-from nu2.core._legacy.commands import Delete, Emit, Set
-from nu2.core._legacy.flows import If, Par, Seq, While
-from nu2.core._legacy.logic import And, Eq, Lt, Not, Or
-from nu2.core._legacy.spans import Retry, Scope
-from nu2.core._legacy.streams import Take, Watch
+from nu2.core.access import (
+    Contains,
+    DelAttr,
+    DelItem,
+    GetAttr,
+    GetItem,
+    HasAttr,
+    Len,
+    SetAttr,
+    SetItem,
+    Slice,
+)
+from nu2.core.arithmetic import (
+    Abs,
+    Add,
+    Div,
+    DivMod,
+    FloorDiv,
+    Mod,
+    Mul,
+    Neg,
+    Pos,
+    Pow,
+    Round,
+    Sub,
+)
+from nu2.core.bitwise import BitAnd, BitNot, BitOr, BitXor, LShift, RShift
+from nu2.core.cast import (
+    ByteArray,
+    Bytes,
+    Complex,
+    Dict,
+    Float,
+    FrozenSet,
+    Int,
+    List,
+    Set,
+    Str,
+    Tuple,
+)
+from nu2.core.comparison import Eq, Ge, Gt, Is, Le, Lt, Ne
 from nu2.core.dynamic import Compile, Eval, Exec, Globals, Locals
-from nu2.core.iteration import Enumerate, Iter, Reversed, Zip
+from nu2.core.io import Input, Open, Print
+from nu2.core.iteration import Enumerate, Iter, Next, Reversed, Zip
 from nu2.core.literal import Literal
+from nu2.core.logical import And, Bool, Not, Or
 from nu2.core.reduction import All, Any, Collect, Count, First, Last, Max, Min, Sum
+from nu2.core.reflection import Callable, Dir, Hash, Id, IsInstance, IsSubclass, Type, Vars
+from nu2.core.repr import Ascii, Bin, Chr, Format, Hex, Oct, Ord, Repr
 from nu2.core.transform import Filter, Flatten, Map, Sorted, Unique
 
 
 __all__ = [
+    "Abs",
     "Add",
     "All",
     "And",
     "Any",
+    "Ascii",
+    "Bin",
+    "BitAnd",
+    "BitNot",
+    "BitOr",
+    "BitXor",
+    "Bool",
+    "ByteArray",
+    "Bytes",
+    "Callable",
+    "Chr",
     "Collect",
     "Compile",
+    "Complex",
+    "Contains",
     "Count",
-    "Delete",
+    "DelAttr",
+    "DelItem",
+    "Dict",
+    "Dir",
     "Div",
-    "Emit",
+    "DivMod",
     "Enumerate",
     "Eq",
     "Eval",
@@ -66,32 +121,64 @@ __all__ = [
     "Filter",
     "First",
     "Flatten",
+    "Float",
+    "FloorDiv",
+    "Format",
+    "FrozenSet",
+    "Ge",
+    "GetAttr",
+    "GetItem",
     "Globals",
-    "If",
+    "Gt",
+    "HasAttr",
+    "Hash",
+    "Hex",
+    "Id",
+    "Input",
+    "Int",
+    "Is",
+    "IsInstance",
+    "IsSubclass",
     "Iter",
+    "LShift",
     "Last",
+    "Le",
+    "Len",
+    "List",
     "Literal",
     "Locals",
     "Lt",
     "Map",
     "Max",
     "Min",
+    "Mod",
     "Mul",
+    "Ne",
     "Neg",
+    "Next",
     "Not",
+    "Oct",
+    "Open",
     "Or",
-    "Par",
-    "Retry",
+    "Ord",
+    "Pos",
+    "Pow",
+    "Print",
+    "RShift",
+    "Repr",
     "Reversed",
-    "Scope",
-    "Seq",
+    "Round",
     "Set",
+    "SetAttr",
+    "SetItem",
+    "Slice",
     "Sorted",
+    "Str",
     "Sub",
     "Sum",
-    "Take",
+    "Tuple",
+    "Type",
     "Unique",
-    "Watch",
-    "While",
+    "Vars",
     "Zip",
 ]

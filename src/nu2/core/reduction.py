@@ -18,10 +18,9 @@ or the whole drain of a stream.
 core-adjacent (borderline). It is deferred to ``nu.std``, not declared here:
 core stays the 1:1 map of native builtins.
 
-Every atom is **declared structurally** - a ``Reduction`` subclass with
-``Declared`` attrs and no ``compile`` - because a Reduction consumes a stream
-child and the stream runtime is not wired yet. They supersede the placeholders
-in ``nu2.core._legacy.reductions``; this module is their real home.
+Every atom is EVALUABLE: each ``Reduction`` defines ``compile`` (sync) and
+``acompile`` (async) returning a thunk that drains its stream child to a scalar,
+with EMPTY / INVALID sentinel propagation.
 
 Sorts: all ScalarQuery / Reduction (Q-scalar over Q-stream). Sum, Min, Max,
 Any, All and Count are commutative and associative (stream order does not

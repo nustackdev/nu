@@ -17,8 +17,6 @@ opaque payload. The body reads the item with ``AttrRef(<name>)``. The per-item
 binding writes ``ctx.attrs`` directly - the model's side-channel for loop
 variables, not a tracked fabric write.
 
-These supersede the placeholder ``Map`` / ``Filter`` in ``_legacy.streams``.
-
 Sorts: all StreamQuery (Q). ``Sorted`` / ``Flatten`` / ``Unique`` stay
 structural stubs (no ``compile``) until they are filled.
 

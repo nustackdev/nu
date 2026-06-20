@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from nu2.core import Add, Literal, Watch
+from nu2.core import Add, Literal
+from nu2.engine.structure import Declared
 from nu2.lang import Context, StreamQuery, compile
 from nu2.lang.helpers import (
     acollect,
@@ -22,6 +23,12 @@ from nu2.lang.helpers import (
     eval_in_loop,
     first,
 )
+
+
+class _AsyncOnly(StreamQuery):
+    """An async-only stream stub (no sync path), to drive sync-refusal tests."""
+
+    requires_async = Declared(value=True)
 
 
 class _Src(StreamQuery):
@@ -71,13 +78,13 @@ def test_eval_uses_provided_context():
 
 
 def test_eval_refuses_async_only_program():
-    prog = compile(Watch())
+    prog = compile(_AsyncOnly())
     with pytest.raises(RuntimeError, match=r"async-only"):
         eval(prog)
 
 
 def test_eval_refusal_points_to_aeval():
-    prog = compile(Watch())
+    prog = compile(_AsyncOnly())
     with pytest.raises(RuntimeError, match=r"aeval"):
         eval(prog)
 
@@ -90,7 +97,7 @@ async def test_aeval_returns_value_and_context():
 
 
 async def test_aeval_runs_async_only_program():
-    prog = compile(Add(Watch(), Literal(0)))
+    prog = compile(Add(_AsyncOnly(), Literal(0)))
     with pytest.raises(Exception):  # noqa: B017
         await aeval(prog)
 

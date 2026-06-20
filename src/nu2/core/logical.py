@@ -12,8 +12,8 @@ idempotent and variadic; ``Not`` and ``Bool`` are unary. ``logical`` owns
 ``Bool``; ``cast`` does not define it.
 
 And / Or semantics: Python's ``and`` / ``or`` short-circuit and return an
-operand (not a bool). Nu does not mirror that. Like the ``_legacy.logic``
-precedent, these atoms coerce to ``bool`` and fold every operand eagerly,
+operand (not a bool). Nu does not mirror that: these atoms coerce to ``bool``
+and fold every operand eagerly,
 so a Nu ``And`` / ``Or`` always yields a plain boolean and sentinel
 propagation gets the chance to fire on any branch. ``And`` yields ``True``
 over no operands, ``Or`` yields ``False``.

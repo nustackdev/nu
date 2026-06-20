@@ -17,9 +17,8 @@ an in-memory value Ref - ``Print`` writes through the stdout fabric, ``Input``
 through stdin, ``Open`` through the filesystem fabric. The effect is attributed
 exactly like any Command write (slot 0 in write role), so the language tracks it
 today; full evaluation lands once the stdio fabric is wired, hence these atoms
-are declared **structurally** (no ``eval`` / ``aeval``, like
-``nu2.core._legacy.commands``). Async file IO (an async ``Open`` twin) can
-follow once the fabric exposes it.
+are declared **structurally** (no ``eval`` / ``aeval``). Async file IO (an
+async ``Open`` twin) can follow once the fabric exposes it.
 
 v1 reference: ``src/nu/commands/io.py`` (Print, Log) and ``src/nu/stdio/ops.py``
 (StdioWrite, StdioRead, StdioFlush).
