@@ -30,7 +30,7 @@ class Eq(ScalarQuery):
 
     commutative = Declared(value=True)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -44,7 +44,7 @@ class Eq(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -62,7 +62,7 @@ class Eq(ScalarQuery):
 class Lt(ScalarQuery):
     """Whether the first child is less than the second."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -76,7 +76,7 @@ class Lt(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -98,7 +98,7 @@ class And(ScalarQuery):
     associative = Declared(value=True)
     idempotent = Declared(value=True)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             out = True
             for ct in children:
@@ -110,7 +110,7 @@ class And(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             out = True
             for ct in children:
@@ -130,7 +130,7 @@ class Or(ScalarQuery):
     associative = Declared(value=True)
     idempotent = Declared(value=True)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             out = False
             for ct in children:
@@ -142,7 +142,7 @@ class Or(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             out = False
             for ct in children:
@@ -158,7 +158,7 @@ class Or(ScalarQuery):
 class Not(ScalarQuery):
     """The negation of its one boolean child."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -169,7 +169,7 @@ class Not(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:

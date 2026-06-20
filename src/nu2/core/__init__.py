@@ -1,29 +1,48 @@
 """Nu core: the native standard terms.
 
 Concrete atoms layered on ``nu2.lang``'s sort taxonomy - the kinds a real Nu
-program is built from. Each module is one family:
+program is built from. The goal is a 1:1 map of Python's native builtin
+functions (the ones that are not methods of a class) onto Nu interactions:
+``abs`` -> ``Abs``, ``getattr`` -> ``GetAttr``, ``print`` -> ``Print``. Library
+functions (itertools, functools, ...) are not core; they land in ``nu.std`` in a
+later pass. Class methods land in extensions later too.
 
-- ``arithmetic`` - literals and the numeric ScalarQueries
-- ``logic`` - comparison and boolean ScalarQueries
-- ``streams`` - StreamQuery sources and stream-to-stream operators
-- ``reductions`` - Reductions that fold a stream to one value
-- ``commands`` - Commands that write the Context
-- ``flows`` - Strategies and Controls that compose Commands
-- ``spans`` - Brackets and Policies that govern a body
+Files group atoms by **Python domain**, not by sort - one file per logical
+family, crossing Query / Command / Action as the builtins do:
 
-This is an intermediate set for validating the language; expect it to move
-or be reshaped once the law work lands.
+- ``literal`` - the constant-yielding ScalarQuery
+- ``arithmetic`` - numeric ops (Add, Sub, Mul, Pow, Abs, DivMod, Round)
+- ``comparison`` - ordering and identity (Eq, Lt, Gt, Is)
+- ``logical`` - boolean ops (And, Or, Not, Bool)
+- ``bitwise`` - bit ops (BitAnd, BitOr, BitXor, LShift)
+- ``cast`` - type construction / conversion (Int, Str, List, Dict, Set)
+- ``repr`` - representations (Repr, Format, Bin, Hex, Ord, Chr)
+- ``access`` - item and attribute access (GetItem, Len, GetAttr, SetAttr)
+- ``iteration`` - iterator sources (Iter, Next, Range, Enumerate, Zip)
+- ``transform`` - stream-to-stream lenses (Map, Filter, Sorted, Flatten)
+- ``reduction`` - stream-to-scalar folds (Sum, Min, Max, Any, All, Reduce)
+- ``reflection`` - introspection (Type, IsInstance, Callable, Id, Hash)
+- ``io`` - console / file effects (Print, Input, Open)
+- ``dynamic`` - dynamic evaluation (Eval, Exec, Compile, Globals)
+
+Flows and Spans are built in a later pass.
+
+Restructure in progress: the new domain files start as docstring stubs and are
+filled by dispatched agents. Until each lands, the names below are re-exported
+from ``nu2.core._legacy`` (the old sort-grouped modules) so callers keep
+working. As a domain module is implemented, its imports move off ``_legacy``.
 """
 
 from __future__ import annotations
 
-from nu2.core.arithmetic import Add, Div, Literal, Mul, Neg, Sub
-from nu2.core.commands import Delete, Emit, Set
-from nu2.core.flows import If, Par, Seq, While
-from nu2.core.logic import And, Eq, Lt, Not, Or
-from nu2.core.reductions import Count, Max, Min, Sum
-from nu2.core.spans import Retry, Scope
-from nu2.core.streams import Filter, Map, Range, Take, Watch
+from nu2.core._legacy.arithmetic import Add, Div, Mul, Neg, Sub
+from nu2.core._legacy.commands import Delete, Emit, Set
+from nu2.core._legacy.flows import If, Par, Seq, While
+from nu2.core._legacy.logic import And, Eq, Lt, Not, Or
+from nu2.core._legacy.reductions import Count, Max, Min, Sum
+from nu2.core._legacy.spans import Retry, Scope
+from nu2.core._legacy.streams import Filter, Map, Range, Take, Watch
+from nu2.core.literal import Literal
 
 
 __all__ = [
