@@ -1,4 +1,4 @@
-"""Write interactions over the Context fabric.
+"""Write interactions over the Context attrs fabric.
 
 A Command names a target Ref in its mutation slot and the Fabric carries out
 the write. These delegate to the Ref (``ref.write`` / ``ref.erase``) so the
@@ -6,7 +6,9 @@ write mechanism lives with the fabric (the Ref), not hardcoded here - the same
 ``Set`` works for any fabric whose Ref implements the write contract.
 
 The mutation slot holds the Ref; every other slot is a read. ``mutates``
-declares slot 0 so the effect synthesis binds it as a WRITE.
+declares slot 0 so the effect synthesis binds it as a WRITE. The Ref resolves
+its own address (static or dynamic), so the Command passes it the Ref's node id
+and never touches the address itself.
 
 v1 reference: ``src/nu/context/attr_ops.py``, ``src/nu/shapes/commands/item.py``.
 """
@@ -41,7 +43,7 @@ class Set(Command):
             v = value(rt)
             if v is EMPTY or v is INVALID:
                 return
-            ref.write(rt, v)
+            ref.write(rt, v, rt.program.children[nid][0])
 
         return thunk
 
@@ -53,7 +55,7 @@ class Set(Command):
             v = await value(rt)
             if v is EMPTY or v is INVALID:
                 return
-            ref.write(rt, v)
+            await ref.awrite(rt, v, rt.program.children[nid][0])
 
         return athunk
 
@@ -67,7 +69,7 @@ class Delete(Command):
         ref = self.children[0]
 
         def thunk(rt: Runtime) -> None:
-            ref.erase(rt)
+            ref.erase(rt, rt.program.children[nid][0])
 
         return thunk
 
@@ -75,6 +77,6 @@ class Delete(Command):
         ref = self.children[0]
 
         async def athunk(rt: Runtime) -> None:
-            ref.erase(rt)
+            await ref.aerase(rt, rt.program.children[nid][0])
 
         return athunk

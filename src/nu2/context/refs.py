@@ -1,16 +1,22 @@
-"""AttrRef: the Context-fabric Ref.
+"""Context-fabric Refs: ``AttrRef`` (attrs store) and ``ServiceRef`` (bindings).
 
-The simplest Ref shape - a name-keyed slot in ``ctx.attrs``, no Shape, no
-parent chain. The Context fabric's own Ref: it reads its value from
-``ctx.attrs`` (the dual-role self-yield) and writes it there when a Command
-holds it in a mutation slot. Short-lived primitives live here: loop counters,
-accumulators, markers.
+Two concrete Refs over the Context fabric. A Ref names an *address*, and an
+address is just a Nu child: it is resolved through the runtime like any other
+child. A bare string or type is auto-wrapped into a ``Literal`` (so
+``AttrRef("total")`` carries ``Literal("total")`` as its address); a computed
+address is whatever Nu term you pass. There is no special "name" - one uniform
+path: resolve the address child, then run the fabric lookup.
 
-Every fabric owns its Ref this way. There is no fabric-less Ref; the abstract
-``Ref`` kind in ``nu2.lang`` carries only sort and cardinality, and concrete
-Refs like this one supply the read / write against their fabric.
+- ``AttrRef`` - address resolves to a key into ``ctx.attrs``. Reads through the
+  dual role (self-yield the value at the address); writes and erases go through
+  the Ref so a Command never touches ``ctx.attrs`` itself.
+- ``ServiceRef`` - address resolves to a service type, looked up in the typed
+  bindings (``ctx.bind`` / ``ctx.get``). Read-only: services are bound on the
+  Context, not written through a Ref.
 
-v1 reference: ``src/nu/context/attr_refs.py`` (AttrRef).
+The abstract ``Ref`` kind carries nothing; the fabric is the concrete class and
+the address is the child. v1 reference: ``src/nu/context/attr_refs.py``,
+``src/nu/context/service_refs.py``.
 """
 
 from __future__ import annotations
@@ -26,48 +32,109 @@ if TYPE_CHECKING:
 
     from nu2.lang.runtime import Runtime
 
-__all__ = ["AttrRef"]
+    from .queries import AttrExists, ServiceExists
+
+__all__ = ["AttrRef", "ServiceRef"]
 
 
-class AttrRef(Ref):
-    """A name-keyed Ref into the ``ctx.attrs`` store.
+class _ContextRef(Ref):
+    """A Context Ref whose address is its sole child, resolved through the runtime.
 
-    The name is the concrete Ref's own data, not the base kind's: a static
-    key lives in this Ref's payload (a static Ref stays a leaf). The base
-    ``Ref`` carries no name at all - the effect system reads only the fabric,
-    which this class identifies.
-
-    Reads yield the bound value (EMPTY when unbound). Writes and erases go
-    through this Ref - the fabric owns the mechanism, so a Command never
-    touches ``ctx.attrs`` itself, only ``ref.write`` / ``ref.erase``.
+    ``address`` / ``aaddress`` evaluate the address child given the Ref's own
+    node id - the same resolution the dual-role read uses, exposed so the write
+    ops can resolve the target through the Ref rather than reaching past it.
     """
 
-    def __init__(self, name: str) -> None:
-        super().__init__()
-        self.payload = {"name": name}
+    def address(self, rt: Runtime, nid: int) -> object:
+        """Resolve this Ref's address; ``nid`` is the Ref's own node id."""
+        return rt.eval(rt.program.children[nid][0])
+
+    async def aaddress(self, rt: Runtime, nid: int) -> object:
+        """Async sibling of :meth:`address`."""
+        return await rt.aeval(rt.program.children[nid][0])
+
+
+class AttrRef(_ContextRef):
+    """A Ref into the ``ctx.attrs`` store, keyed by its resolved address.
+
+    The address child resolves to a key. Reads yield the value at that key
+    (EMPTY when unbound) through the dual role; writes and erases resolve the
+    address and go through the Ref. The address can be anything that yields a
+    value - ``AttrRef("total")`` (a literal key) or ``AttrRef(AttrRef("k"))``
+    (a key read from another slot).
+    """
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        name = self.payload["name"]
+        address = children[0]
 
         def thunk(rt: Runtime) -> object:
-            return rt.ctx.attrs.get(name, EMPTY)
+            return rt.ctx.attrs.get(address(rt), EMPTY)
 
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        name = self.payload["name"]
+        address = children[0]
 
         async def athunk(rt: Runtime) -> object:
-            return rt.ctx.attrs.get(name, EMPTY)
+            return rt.ctx.attrs.get(await address(rt), EMPTY)
 
         return athunk
 
-    def write(self, rt: Runtime, value: object) -> None:
+    def write(self, rt: Runtime, value: object, nid: int) -> None:
         """Write ``value`` to this Ref's slot in the attrs fabric."""
-        rt.ctx.attrs[self.payload["name"]] = value
+        rt.ctx.attrs[self.address(rt, nid)] = value
 
-    def erase(self, rt: Runtime) -> None:
+    async def awrite(self, rt: Runtime, value: object, nid: int) -> None:
+        """Async sibling of :meth:`write`."""
+        rt.ctx.attrs[await self.aaddress(rt, nid)] = value
+
+    def erase(self, rt: Runtime, nid: int) -> None:
         """Remove this Ref's slot from the attrs fabric, if present."""
-        name = self.payload["name"]
-        if name in rt.ctx.attrs:
-            del rt.ctx.attrs[name]
+        address = self.address(rt, nid)
+        if address in rt.ctx.attrs:
+            del rt.ctx.attrs[address]
+
+    async def aerase(self, rt: Runtime, nid: int) -> None:
+        """Async sibling of :meth:`erase`."""
+        address = await self.aaddress(rt, nid)
+        if address in rt.ctx.attrs:
+            del rt.ctx.attrs[address]
+
+    def exists(self) -> AttrExists:
+        """A Query yielding whether this Ref's address is bound in ``ctx.attrs``."""
+        from .queries import AttrExists
+
+        return AttrExists(self)
+
+
+class ServiceRef(_ContextRef):
+    """A Ref into the Context service bindings, keyed by its resolved address.
+
+    The address resolves to a service type; the read self-yields the bound
+    service (EMPTY when unbound). Services are bound on the Context, not written
+    through a Ref, so ``ServiceRef`` is read-only.
+    """
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        service = children[0]
+
+        def thunk(rt: Runtime) -> object:
+            svc = service(rt)
+            return rt.ctx.get(svc) if rt.ctx.has(svc) else EMPTY
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        service = children[0]
+
+        async def athunk(rt: Runtime) -> object:
+            svc = await service(rt)
+            return rt.ctx.get(svc) if rt.ctx.has(svc) else EMPTY
+
+        return athunk
+
+    def exists(self) -> ServiceExists:
+        """A Query yielding whether this Ref's service type is bound."""
+        from .queries import ServiceExists
+
+        return ServiceExists(self)
