@@ -22,6 +22,7 @@ family, crossing Query / Command / Action as the builtins do:
 - ``transform`` - stream-to-stream lenses (Map, Filter, Sorted, Flatten)
 - ``reduction`` - stream-to-scalar folds (Sum, Min, Max, Any, All, Collect)
 - ``reflection`` - introspection (Type, IsInstance, Callable, Id, Hash)
+- ``sentinel`` - the EMPTY / INVALID predicates (IsEmpty, IsInvalid)
 - ``io`` - console / file effects (Print, Input, Open)
 - ``dynamic`` - dynamic evaluation (Eval, Exec, Compile, Globals)
 
@@ -83,6 +84,7 @@ from nu2.core.logical import And, Bool, Not, Or
 from nu2.core.reduction import All, Any, Collect, Count, First, Last, Max, Min, Sum
 from nu2.core.reflection import Callable, Dir, Hash, Id, IsInstance, IsSubclass, Type, Vars
 from nu2.core.repr import Ascii, Bin, Chr, Format, Hex, Oct, Ord, Repr
+from nu2.core.sentinel import IsEmpty, IsInvalid, NotEmpty, NotInvalid
 from nu2.core.transform import Filter, Flatten, Map, Sorted, Unique
 
 
@@ -137,7 +139,9 @@ __all__ = [
     "Input",
     "Int",
     "Is",
+    "IsEmpty",
     "IsInstance",
+    "IsInvalid",
     "IsSubclass",
     "Iter",
     "LShift",
@@ -157,6 +161,8 @@ __all__ = [
     "Neg",
     "Next",
     "Not",
+    "NotEmpty",
+    "NotInvalid",
     "Oct",
     "Open",
     "Or",

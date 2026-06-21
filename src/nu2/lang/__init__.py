@@ -57,6 +57,7 @@ from .attributes import (
     subsort,
 )
 from .factory import InteractionFactory
+from .forms import Form, TypedNu
 from .kinds import (
     Action,
     Bracket,
@@ -117,6 +118,7 @@ __all__ = [
     "ExecOrder",
     "FloatArg",
     "Flow",
+    "Form",
     "FrozenSetArg",
     "IntArg",
     "Interaction",
@@ -144,6 +146,7 @@ __all__ = [
     "StreamAction",
     "StreamQuery",
     "TupleArg",
+    "TypedNu",
     "Violation",
     "build_schema",
     "compile",

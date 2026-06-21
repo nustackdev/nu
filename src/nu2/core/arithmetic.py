@@ -64,24 +64,26 @@ class Add(ScalarQuery):
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
-            s: object = 0
-            for ct in children:
+            s: object = 0  # additive identity for the no-children case
+            for i, ct in enumerate(children):
                 v = ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                s = s + v
+                # Fold from the first operand so `+` works for any type that
+                # supports it (str / list / tuple concat), not just numbers.
+                s = v if i == 0 else s + v
             return s
 
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
-            s: object = 0
-            for ct in children:
+            s: object = 0  # additive identity for the no-children case
+            for i, ct in enumerate(children):
                 v = await ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                s = s + v
+                s = v if i == 0 else s + v
             return s
 
         return athunk

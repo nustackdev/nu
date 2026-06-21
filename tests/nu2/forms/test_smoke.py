@@ -1,0 +1,154 @@
+"""End-to-end smoke tests for the ported Forms layer.
+
+Builds fluent Form programs, compiles them, and evaluates both sync and async,
+asserting the value the underlying op atom should yield. Covers each form family
+and exercises the real eval paths (the op-atom thunks), not just construction.
+"""
+
+from __future__ import annotations
+
+from nu2.core import Literal
+from nu2.forms import (
+    BoolForm,
+    BytesForm,
+    DictForm,
+    IntForm,
+    ListForm,
+    SetForm,
+    StrForm,
+)
+from nu2.lang import EMPTY, compile
+from nu2.lang.helpers import aeval, eval
+from nu2.lang.runtime import Context
+
+
+def val(term):
+    return eval(compile(term), Context())[0]
+
+
+async def aval(term):
+    return (await aeval(compile(term), Context()))[0]
+
+
+# --- primitives ----------------------------------------------------------
+
+
+def test_int_arithmetic_and_promotion():
+    assert val(IntForm(5) + 3) == 8
+    assert val(IntForm(10) - IntForm(4)) == 6
+    assert val(IntForm(6) * 7) == 42
+    assert val(IntForm(2) ** 10) == 1024
+    assert val(IntForm(7) % 3) == 1
+    assert val(IntForm(7) // 2) == 3
+    assert val(-IntForm(5)) == -5
+    assert val(abs(IntForm(-9))) == 9
+    # int op float promotes (still evaluates numerically)
+    assert val(IntForm(1) + 2.5) == 3.5
+
+
+def test_int_comparison_logical_bitwise():
+    assert val(IntForm(3) < 5) is True
+    assert val(IntForm(5) >= 5) is True
+    assert val(IntForm(4).bitand(6)) == 4
+    assert val(IntForm(4).bitor(1)) == 5
+    assert val(IntForm(1) << 4) == 16
+    assert val(IntForm(5).and_(0)) is False
+
+
+def test_bool_form():
+    assert val(BoolForm(True).and_(False)) is False
+    assert val(BoolForm(False).or_(True)) is True
+    assert val(BoolForm(True).not_()) is False
+
+
+def test_str_ops():
+    assert val(StrForm("hello").upper()) == "HELLO"
+    assert val(StrForm("HELLO").lower()) == "hello"
+    assert val(StrForm("  hi  ").strip()) == "hi"
+    assert val(StrForm("a,b,c").split(",")) == ["a", "b", "c"]
+    assert val(StrForm("ab").replace("a", "z")) == "zb"
+    assert val(StrForm("foo").startswith("fo")) is True
+    assert val(StrForm("123").isdigit()) is True
+    assert val(StrForm("-").join(Literal(["a", "b"]))) == "a-b"
+    assert val(StrForm("hello") + " world") == "hello world"
+
+
+def test_bytes_ops():
+    assert val(BytesForm(b"hi").upper()) == b"HI"
+    assert val(BytesForm(b"  x ").strip()) == b"x"
+    assert val(BytesForm(b"a,b").split_bytes(b",")) == [b"a", b"b"]
+
+
+# --- collections: reads --------------------------------------------------
+
+
+def test_list_reads():
+    assert val(ListForm([3, 1, 2]).first_elem()) == 3
+    assert val(ListForm([3, 1, 2]).last_elem()) == 2
+    assert val(ListForm([3, 1, 2]).index(1)) == 1
+    assert val(ListForm([1, 1, 2]).count(1)) == 2
+
+
+def test_dict_reads():
+    assert val(DictForm({"a": 1, "b": 2}).keys()) == {"a", "b"} or list(
+        val(DictForm({"a": 1, "b": 2}).keys())
+    ) == ["a", "b"]
+    assert val(DictForm({"a": 1}).get("a")) == 1
+    assert val(DictForm({"a": 1}).get("z", 9)) == 9
+    assert val(DictForm({"a": 1}).setdefault("b", 5)) == 5
+
+
+def test_set_reads():
+    assert val(SetForm({1, 2}).union(Literal({3}))) == {1, 2, 3}
+    assert val(SetForm({1, 2, 3}).intersection(Literal({2, 3, 4}))) == {2, 3}
+    assert val(SetForm({1, 2}).issubset(Literal({1, 2, 3}))) is True
+    assert val(SetForm({1, 2}).isdisjoint(Literal({3, 4}))) is True
+
+
+# --- collections: local mutation yields the mutated target ---------------
+
+
+def test_list_mutation_returns_target():
+    assert val(ListForm([1, 2]).append(3)) == [1, 2, 3]
+    assert val(ListForm([1, 2]).insert(0, 9)) == [9, 1, 2]
+    assert val(ListForm([1, 2]).extend(Literal([3, 4]))) == [1, 2, 3, 4]
+    assert val(ListForm([1, 2, 3]).reverse()) == [3, 2, 1]
+    assert val(ListForm([1, 2, 3]).remove(2)) == [1, 3]
+
+
+def test_dict_mutation_returns_target():
+    assert val(DictForm({"a": 1}).set("b", 2)) == {"a": 1, "b": 2}
+    assert val(DictForm({"a": 1, "b": 2}).delete("a")) == {"b": 2}
+    assert val(DictForm({"a": 1}).update(Literal({"b": 2}))) == {"a": 1, "b": 2}
+    assert val(DictForm({"a": 1, "b": 2}).pop("a")) == 1
+
+
+def test_set_mutation_returns_target():
+    assert val(SetForm({1, 2}).add(3)) == {1, 2, 3}
+    assert val(SetForm({1, 2, 3}).discard(2)) == {1, 3}
+    assert val(SetForm({1, 2}).update(Literal({3}))) == {1, 2, 3}
+
+
+# --- sentinel predicates via Form base -----------------------------------
+
+
+def test_sentinel_predicates():
+    assert val(IntForm(1).is_empty()) is False
+    assert val(IntForm(1).not_empty()) is True
+    assert val(IntForm(Literal(EMPTY)).is_empty()) is True
+
+
+# --- async mirror --------------------------------------------------------
+
+
+def test_async_mirrors_sync():
+    import asyncio
+
+    async def go():
+        assert await aval(IntForm(5) + 3) == 8
+        assert await aval(StrForm("hi").upper()) == "HI"
+        assert await aval(ListForm([1, 2]).append(3)) == [1, 2, 3]
+        assert await aval(DictForm({"a": 1}).get("a")) == 1
+        assert await aval(SetForm({1, 2}).union(Literal({3}))) == {1, 2, 3}
+
+    asyncio.run(go())
