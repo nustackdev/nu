@@ -25,9 +25,10 @@ def test_arithmetic_is_pure():
 
 
 def test_set_tracks_a_write_and_a_read():
-    program = compile(Set(Ref("total"), Add(Ref("total"), Literal(1))))
+    # Both Refs are the same class, so the same fabric: a WRITE and a READ on it.
+    program = compile(Set(Ref(), Add(Ref(), Literal(1))))
     assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
-        {("total", Effect.WRITE), ("total", Effect.READ)}
+        {(Ref, Effect.WRITE), (Ref, Effect.READ)}
     )
 
 

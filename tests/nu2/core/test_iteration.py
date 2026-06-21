@@ -51,16 +51,16 @@ def test_next_yields_a_scalar():
 
 def test_next_declares_a_write_on_its_iterator():
     # Slot 0 is the mutation slot, so a Ref there binds as a WRITE.
-    program = compile(Next(Ref("it")))
+    program = compile(Next(Ref()))
     assert program.attr(program.root, Attr.MUTATES) == frozenset({0})
-    assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset({("it", Effect.WRITE)})
+    assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset({(Ref, Effect.WRITE)})
 
 
 def test_a_source_only_reads_its_children():
     # A StreamQuery source declares no mutation, so a Ref child is a READ.
-    program = compile(Iter(Ref("xs")))
+    program = compile(Iter(Ref()))
     assert program.attr(program.root, Attr.MUTATES) == frozenset()
-    assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset({("xs", Effect.READ)})
+    assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset({(Ref, Effect.READ)})
 
 
 # --- laws ----------------------------------------------------------------

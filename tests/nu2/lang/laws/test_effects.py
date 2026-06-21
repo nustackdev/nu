@@ -6,7 +6,7 @@ Mirrors ``src/nu2/lang/laws/effects.py``. Exercises ``ref_slots`` and
 
 from __future__ import annotations
 
-from _support.law_terms import Act, Cmd, FlowS, Q, R
+from _support.law_terms import R2, Act, Cmd, FlowS, Q, R
 from _support.laws import assert_fails, assert_passes, violations
 
 from nu2.engine import Severity, gate
@@ -44,18 +44,18 @@ def test_ref_slots_relaxes_for_addressless_action() -> None:
 
 
 def test_effects_originate_at_refs_passes_for_command_subtree() -> None:
-    """``Cmd(R("x"))`` emits ``("x", WRITE)``; the subtree holds Ref "x"."""
-    assert_passes(Cmd(R("x")))
+    """``Cmd(R())`` emits ``(R, WRITE)``; the subtree holds a Ref of class R."""
+    assert_passes(Cmd(R()))
 
 
 def test_effects_originate_at_refs_passes_for_nested_flow() -> None:
-    """A Strategy with two Commands sees both Ref names in its subtree."""
-    assert_passes(FlowS(Cmd(R("a")), Cmd(R("b"))))
+    """A Strategy with two Commands sees both Ref classes in its subtree."""
+    assert_passes(FlowS(Cmd(R()), Cmd(R2())))
 
 
 def test_effects_originate_at_refs_passes_for_action_in_query() -> None:
-    """A Query whose subtree carries an Action still resolves its Ref names."""
-    assert_passes(Q(Act(R("z"))))
+    """A Query whose subtree carries an Action still resolves its Ref class."""
+    assert_passes(Q(Act(R())))
 
 
 def test_effects_originate_at_refs_fails_when_column_carries_orphan_tuple() -> None:
@@ -65,30 +65,30 @@ def test_effects_originate_at_refs_fails_when_column_carries_orphan_tuple() -> N
     when the column is inconsistent with the tree below, which cannot
     arise from a well-formed compile. We inject the inconsistency directly.
     """
-    program = nu_compile(Cmd(R("x")))
+    program = nu_compile(Cmd(R()))
     column = program.attrs[Attr.COMPOSITION_EFFECTS]
     root_id = program.id_of[program.root]
-    column[root_id] = frozenset({*column[root_id], ("ghost", Effect.WRITE)})
+    column[root_id] = frozenset({*column[root_id], (R2, Effect.WRITE)})
     fired = [v for v in gate(program, *LAWS) if v.law == "effects_originate_at_refs"]
     assert fired, f"expected 'effects_originate_at_refs' to fire; got: {gate(program, *LAWS)}"
 
 
 def test_effects_originate_at_refs_message_names_the_orphan() -> None:
-    """The violation's detail names the orphan ref name."""
-    program = nu_compile(Cmd(R("x")))
+    """The violation's detail names the orphan ref class."""
+    program = nu_compile(Cmd(R()))
     column = program.attrs[Attr.COMPOSITION_EFFECTS]
     root_id = program.id_of[program.root]
-    column[root_id] = frozenset({*column[root_id], ("ghost", Effect.READ)})
+    column[root_id] = frozenset({*column[root_id], (R2, Effect.READ)})
     fired = [v for v in gate(program, *LAWS) if v.law == "effects_originate_at_refs"]
-    assert fired and "ghost" in fired[0].detail
+    assert fired and "R2" in fired[0].detail
 
 
 def test_effects_originate_at_refs_fires_at_error_severity() -> None:
     """The law rejects programs at ERROR severity."""
-    program = nu_compile(Cmd(R("x")))
+    program = nu_compile(Cmd(R()))
     column = program.attrs[Attr.COMPOSITION_EFFECTS]
     root_id = program.id_of[program.root]
-    column[root_id] = frozenset({*column[root_id], ("ghost", Effect.WRITE)})
+    column[root_id] = frozenset({*column[root_id], (R2, Effect.WRITE)})
     fired = [v for v in gate(program, *LAWS) if v.law == "effects_originate_at_refs"]
     assert fired[0].severity is Severity.ERROR
 

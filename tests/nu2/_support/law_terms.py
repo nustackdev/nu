@@ -35,6 +35,7 @@ from nu2.lang import (
 
 
 __all__ = [
+    "R2",
     "Act",
     "Brk",
     "Cmd",
@@ -96,7 +97,26 @@ class Pol(Policy):
 
 
 class R(Ref):
-    """A Ref with a default name. Pass ``name=`` to override."""
+    """A concrete test Ref - one fabric.
+
+    Like every concrete Ref, it owns its name (in payload); the base ``Ref``
+    carries none. The effect system keys off the Ref's *class*, not the name,
+    so the name is a free label here - two ``R`` instances share one fabric.
+    For a second, distinct fabric in a test, use :class:`R2`.
+    """
 
     def __init__(self, name: str = "x") -> None:
-        super().__init__(name)
+        super().__init__()
+        self.payload = {"name": name}
+
+
+class R2(Ref):
+    """A second concrete test Ref - a distinct fabric from :class:`R`.
+
+    Same shape as ``R`` but a different class, so ``(R2, effect)`` tuples are
+    independent of ``(R, effect)`` ones. Use it where a test needs two fabrics.
+    """
+
+    def __init__(self, name: str = "y") -> None:
+        super().__init__()
+        self.payload = {"name": name}

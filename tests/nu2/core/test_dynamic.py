@@ -72,9 +72,9 @@ def test_globals_and_locals_are_scalar_queries():
 
 
 def test_exec_declares_a_namespace_write():
-    program = compile(Exec(Ref("ns"), Literal("x = 1")))
+    program = compile(Exec(Ref(), Literal("x = 1")))
     effects = program.attr(program.root, Attr.COMPOSITION_EFFECTS)
-    assert ("ns", Effect.WRITE) in effects
+    assert (Ref, Effect.WRITE) in effects
 
 
 # --- escape-hatch evaluation ---------------------------------------------

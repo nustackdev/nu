@@ -32,10 +32,19 @@ __all__ = ["AttrRef"]
 class AttrRef(Ref):
     """A name-keyed Ref into the ``ctx.attrs`` store.
 
+    The name is the concrete Ref's own data, not the base kind's: a static
+    key lives in this Ref's payload (a static Ref stays a leaf). The base
+    ``Ref`` carries no name at all - the effect system reads only the fabric,
+    which this class identifies.
+
     Reads yield the bound value (EMPTY when unbound). Writes and erases go
     through this Ref - the fabric owns the mechanism, so a Command never
     touches ``ctx.attrs`` itself, only ``ref.write`` / ``ref.erase``.
     """
+
+    def __init__(self, name: str) -> None:
+        super().__init__()
+        self.payload = {"name": name}
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         name = self.payload["name"]

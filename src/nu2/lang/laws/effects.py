@@ -53,34 +53,35 @@ def ref_slot_detail(program: Program, path: Path) -> str:
 # --- effects originate at refs ------------------------------------------
 
 
-def _subtree_ref_names(program: Program, path: Path) -> set[str]:
-    """Every Ref payload name found in the subtree rooted at ``path``."""
-    names: set[str] = set()
+def _subtree_ref_classes(program: Program, path: Path) -> set[type]:
+    """Every Ref class found in the subtree rooted at ``path``."""
+    classes: set[type] = set()
     for descendant in program.walk(path):
         if program.attr(descendant, Attr.SORT) is Sort.REF:
-            nid = program.id_of[descendant]
-            names.add(program.terms[nid].payload["name"])
-    return names
+            classes.add(type(program.terms[program.id_of[descendant]]))
+    return classes
 
 
-def _orphan_effect_name(program: Program, path: Path) -> str | None:
-    """The first effect-tuple name with no matching Ref in the subtree, if any."""
-    names = _subtree_ref_names(program, path)
-    for name, _ in program.attr(path, Attr.COMPOSITION_EFFECTS):
-        if name not in names:
-            return name
+def _orphan_effect_class(program: Program, path: Path) -> type | None:
+    """The first effect-tuple class with no matching Ref in the subtree, if any."""
+    classes = _subtree_ref_classes(program, path)
+    for ref_class, _ in program.attr(path, Attr.COMPOSITION_EFFECTS):
+        if ref_class not in classes:
+            return ref_class
     return None
 
 
 @predicate
 def effects_have_ref_source(program: Program, path: Path) -> bool:
     """Holds when every composition-effect tuple is sourced from a subtree Ref."""
-    return _orphan_effect_name(program, path) is None
+    return _orphan_effect_class(program, path) is None
 
 
 def orphan_effect_detail(program: Program, path: Path) -> str:
     """Name the orphan effect tuple whose Ref source is missing."""
-    return f"effect on '{_orphan_effect_name(program, path)}' has no corresponding Ref in subtree"
+    orphan = _orphan_effect_class(program, path)
+    name = orphan.__name__ if orphan is not None else None
+    return f"effect on '{name}' has no corresponding Ref in subtree"
 
 
 # --- laws ---------------------------------------------------------------

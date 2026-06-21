@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine import Declared, Term
+from nu2.engine import Declared
 
 from .attributes import Cardinality, Sort
 from .nu import Nu
@@ -52,20 +52,19 @@ class Ref(Nu):
 
     A Ref is the only atom that touches Context, but it touches it through a
     Fabric, and each Fabric has its own concrete Ref (``AttrRef`` for the
-    Context-attrs fabric, service / shape Refs for others). This base carries
-    only the sort and cardinality every Ref shares; it declares no read or
-    write of its own. A bare ``Ref`` is for structural analysis - to run, use
-    a concrete fabric Ref.
+    Context-attrs fabric, service / shape Refs for others). This base is bare:
+    it declares only the sort and cardinality every Ref shares and nothing
+    else - no name, no read, no write. A bare ``Ref`` is for structural
+    analysis; to run, use a concrete fabric Ref.
 
-    The name is intrinsic data (payload); a dynamic key is a child.
+    A Ref names a location, but the location is never knowable from the base:
+    it can be static or computed, and it lives in the concrete fabric Ref, not
+    here. What the effect system reads off a Ref is its *fabric*, identified by
+    its concrete class, never a location name (which may not exist statically).
     """
 
     sort = Declared(value=Sort.REF)
     cardinality = Declared(value=Cardinality.SCALAR)
-
-    def __init__(self, name: str, *key: Term) -> None:
-        super().__init__(*key)
-        self.payload = {"name": name}
 
 
 class Interaction(Nu):
