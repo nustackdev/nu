@@ -6,8 +6,8 @@ Follows Python's collections.abc.Collection pattern.
 
 Type Parameters:
     ElementT: Native Python element type (int, str, dict, etc.)
-    CollectionResultT: Wrapped result for collection-level operations
-    ElementResultT: Wrapped result for element-level operations
+    CollectionResultT: Wrapped result for collection-level interactions
+    ElementResultT: Wrapped result for element-level interactions
 """
 
 from __future__ import annotations
@@ -34,8 +34,8 @@ class CollectionForm[ElementT, CollectionResultT, ElementResultT](
 
     Type Parameters:
         ElementT: Native Python element type
-        CollectionResultT: Result for collection-level ops
-        ElementResultT: Result for element-level ops
+        CollectionResultT: Result for collection-level interactions
+        ElementResultT: Result for element-level interactions
     """
 
     pass

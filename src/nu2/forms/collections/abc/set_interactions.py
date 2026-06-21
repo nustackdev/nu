@@ -1,10 +1,10 @@
-"""Set ops.
+"""Set interactions.
 
-UnionOp, IntersectionOp, DifferenceOp, SymmetricDifferenceOp
-IsSubsetOp, IsSupersetOp, IsDisjointOp
-AddCmd, RemoveCmd, DiscardCmd
-SetPopCmd, SetUpdateCmd
-IntersectionUpdateCmd, DifferenceUpdateCmd, SymmetricDifferenceUpdateCmd
+UnionQuery, IntersectionQuery, DifferenceQuery, SymmetricDifferenceQuery
+IsSubsetQuery, IsSupersetQuery, IsDisjointQuery
+AddQuery, RemoveQuery, DiscardQuery
+SetPopQuery, SetUpdateQuery
+IntersectionUpdateQuery, DifferenceUpdateQuery, SymmetricDifferenceUpdateQuery
 """
 
 from __future__ import annotations
@@ -23,30 +23,30 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "AddCmd",
-    "DifferenceOp",
-    "DifferenceUpdateCmd",
-    "DiscardCmd",
-    "IntersectionOp",
-    "IntersectionUpdateCmd",
-    "IsDisjointOp",
-    "IsSubsetOp",
-    "IsSupersetOp",
-    "RemoveCmd",
-    "SetPopCmd",
-    "SetUpdateCmd",
-    "SymmetricDifferenceOp",
-    "SymmetricDifferenceUpdateCmd",
-    "UnionOp",
+    "AddQuery",
+    "DifferenceQuery",
+    "DifferenceUpdateQuery",
+    "DiscardQuery",
+    "IntersectionQuery",
+    "IntersectionUpdateQuery",
+    "IsDisjointQuery",
+    "IsSubsetQuery",
+    "IsSupersetQuery",
+    "RemoveQuery",
+    "SetPopQuery",
+    "SetUpdateQuery",
+    "SymmetricDifferenceQuery",
+    "SymmetricDifferenceUpdateQuery",
+    "UnionQuery",
 ]
 
 
 # =============================================================================
-# SET OPERATIONS
+# SET INTERACTIONS
 # =============================================================================
 
 
-class UnionOp(ScalarQuery):
+class UnionQuery(ScalarQuery):
     """Set union: left | right."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -82,7 +82,7 @@ class UnionOp(ScalarQuery):
         return athunk
 
 
-class IntersectionOp(ScalarQuery):
+class IntersectionQuery(ScalarQuery):
     """Set intersection: left & right."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -118,7 +118,7 @@ class IntersectionOp(ScalarQuery):
         return athunk
 
 
-class DifferenceOp(ScalarQuery):
+class DifferenceQuery(ScalarQuery):
     """Set difference: left - right."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -154,7 +154,7 @@ class DifferenceOp(ScalarQuery):
         return athunk
 
 
-class SymmetricDifferenceOp(ScalarQuery):
+class SymmetricDifferenceQuery(ScalarQuery):
     """Set symmetric difference: left ^ right."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -190,7 +190,7 @@ class SymmetricDifferenceOp(ScalarQuery):
         return athunk
 
 
-class IsSubsetOp(ScalarQuery):
+class IsSubsetQuery(ScalarQuery):
     """Test if subset: left <= right."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -226,7 +226,7 @@ class IsSubsetOp(ScalarQuery):
         return athunk
 
 
-class IsSupersetOp(ScalarQuery):
+class IsSupersetQuery(ScalarQuery):
     """Test if superset: left >= right."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -262,7 +262,7 @@ class IsSupersetOp(ScalarQuery):
         return athunk
 
 
-class IsDisjointOp(ScalarQuery):
+class IsDisjointQuery(ScalarQuery):
     """Test if disjoint: left.isdisjoint(right)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -303,7 +303,7 @@ class IsDisjointOp(ScalarQuery):
 # =============================================================================
 
 
-class AddCmd(ScalarQuery):
+class AddQuery(ScalarQuery):
     """Add element to set: s.add(value); yields the set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -337,7 +337,7 @@ class AddCmd(ScalarQuery):
         return athunk
 
 
-class RemoveCmd(ScalarQuery):
+class RemoveQuery(ScalarQuery):
     """Remove element from set: s.remove(value); yields the set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -371,7 +371,7 @@ class RemoveCmd(ScalarQuery):
         return athunk
 
 
-class DiscardCmd(ScalarQuery):
+class DiscardQuery(ScalarQuery):
     """Discard element from set: s.discard(value); yields the set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -405,7 +405,7 @@ class DiscardCmd(ScalarQuery):
         return athunk
 
 
-class SetPopCmd(ScalarQuery):
+class SetPopQuery(ScalarQuery):
     """Pop arbitrary element: s.pop(). Returns element, or INVALID if empty."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -441,7 +441,7 @@ class SetPopCmd(ScalarQuery):
         return athunk
 
 
-class SetUpdateCmd(ScalarQuery):
+class SetUpdateQuery(ScalarQuery):
     """Update set with elements from other: s.update(other); yields the set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -475,7 +475,7 @@ class SetUpdateCmd(ScalarQuery):
         return athunk
 
 
-class IntersectionUpdateCmd(ScalarQuery):
+class IntersectionUpdateQuery(ScalarQuery):
     """Keep only elements found in both: s.intersection_update(other); yields the set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -509,7 +509,7 @@ class IntersectionUpdateCmd(ScalarQuery):
         return athunk
 
 
-class DifferenceUpdateCmd(ScalarQuery):
+class DifferenceUpdateQuery(ScalarQuery):
     """Remove elements found in other: s.difference_update(other); yields the set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -543,7 +543,7 @@ class DifferenceUpdateCmd(ScalarQuery):
         return athunk
 
 
-class SymmetricDifferenceUpdateCmd(ScalarQuery):
+class SymmetricDifferenceUpdateQuery(ScalarQuery):
     """Keep elements in either but not both: s.symmetric_difference_update(other); yields the set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102

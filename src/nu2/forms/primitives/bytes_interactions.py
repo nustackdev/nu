@@ -1,12 +1,12 @@
-"""Bytes-specific ops.
+"""Bytes-specific interactions.
 
-Decoding: DecodeOp, HexOp
-Case transformation: BytesUpperOp, BytesLowerOp
-Stripping: BytesStripOp, BytesLStripOp, BytesRStripOp
-Splitting: BytesSplitOp
-Searching: BytesFindOp, BytesCountOp
-Testing: BytesStartsWithOp, BytesEndsWithOp
-Replacing: BytesReplaceOp
+Decoding: DecodeQuery, HexQuery
+Case transformation: BytesUpperQuery, BytesLowerQuery
+Stripping: BytesStripQuery, BytesLStripQuery, BytesRStripQuery
+Splitting: BytesSplitQuery
+Searching: BytesFindQuery, BytesCountQuery
+Testing: BytesStartsWithQuery, BytesEndsWithQuery
+Replacing: BytesReplaceQuery
 """
 
 from __future__ import annotations
@@ -24,19 +24,19 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "BytesCountOp",
-    "BytesEndsWithOp",
-    "BytesFindOp",
-    "BytesLStripOp",
-    "BytesLowerOp",
-    "BytesRStripOp",
-    "BytesReplaceOp",
-    "BytesSplitOp",
-    "BytesStartsWithOp",
-    "BytesStripOp",
-    "BytesUpperOp",
-    "DecodeOp",
-    "HexOp",
+    "BytesCountQuery",
+    "BytesEndsWithQuery",
+    "BytesFindQuery",
+    "BytesLStripQuery",
+    "BytesLowerQuery",
+    "BytesRStripQuery",
+    "BytesReplaceQuery",
+    "BytesSplitQuery",
+    "BytesStartsWithQuery",
+    "BytesStripQuery",
+    "BytesUpperQuery",
+    "DecodeQuery",
+    "HexQuery",
 ]
 
 
@@ -45,7 +45,7 @@ __all__ = [
 # =============================================================================
 
 
-class DecodeOp(ScalarQuery):
+class DecodeQuery(ScalarQuery):
     """Decode bytes to string: bytes.decode(encoding)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -87,7 +87,7 @@ class DecodeOp(ScalarQuery):
         return athunk
 
 
-class HexOp(ScalarQuery):
+class HexQuery(ScalarQuery):
     """Convert to hex string: bytes.hex()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -122,7 +122,7 @@ class HexOp(ScalarQuery):
 # =============================================================================
 
 
-class BytesUpperOp(ScalarQuery):
+class BytesUpperQuery(ScalarQuery):
     """Convert to uppercase: bytes.upper()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -152,7 +152,7 @@ class BytesUpperOp(ScalarQuery):
         return athunk
 
 
-class BytesLowerOp(ScalarQuery):
+class BytesLowerQuery(ScalarQuery):
     """Convert to lowercase: bytes.lower()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -187,7 +187,7 @@ class BytesLowerOp(ScalarQuery):
 # =============================================================================
 
 
-class BytesStripOp(ScalarQuery):
+class BytesStripQuery(ScalarQuery):
     """Strip bytes: bytes.strip(chars)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -227,7 +227,7 @@ class BytesStripOp(ScalarQuery):
         return athunk
 
 
-class BytesLStripOp(ScalarQuery):
+class BytesLStripQuery(ScalarQuery):
     """Strip leading bytes: bytes.lstrip(chars)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -267,7 +267,7 @@ class BytesLStripOp(ScalarQuery):
         return athunk
 
 
-class BytesRStripOp(ScalarQuery):
+class BytesRStripQuery(ScalarQuery):
     """Strip trailing bytes: bytes.rstrip(chars)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -312,7 +312,7 @@ class BytesRStripOp(ScalarQuery):
 # =============================================================================
 
 
-class BytesSplitOp(ScalarQuery):
+class BytesSplitQuery(ScalarQuery):
     """Split bytes: bytes.split(sep, maxsplit)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -363,7 +363,7 @@ class BytesSplitOp(ScalarQuery):
 # =============================================================================
 
 
-class BytesFindOp(ScalarQuery):
+class BytesFindQuery(ScalarQuery):
     """Find sub-bytes: bytes.find(sub, start, end)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -415,7 +415,7 @@ class BytesFindOp(ScalarQuery):
         return athunk
 
 
-class BytesCountOp(ScalarQuery):
+class BytesCountQuery(ScalarQuery):
     """Count sub-bytes occurrences: bytes.count(sub)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -456,7 +456,7 @@ class BytesCountOp(ScalarQuery):
 # =============================================================================
 
 
-class BytesStartsWithOp(ScalarQuery):
+class BytesStartsWithQuery(ScalarQuery):
     """Check if starts with prefix: bytes.startswith(prefix)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -492,7 +492,7 @@ class BytesStartsWithOp(ScalarQuery):
         return athunk
 
 
-class BytesEndsWithOp(ScalarQuery):
+class BytesEndsWithQuery(ScalarQuery):
     """Check if ends with suffix: bytes.endswith(suffix)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -533,7 +533,7 @@ class BytesEndsWithOp(ScalarQuery):
 # =============================================================================
 
 
-class BytesReplaceOp(ScalarQuery):
+class BytesReplaceQuery(ScalarQuery):
     """Replace sub-bytes: bytes.replace(old, new, count)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102

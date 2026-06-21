@@ -24,7 +24,7 @@ class EmptyForm(SentinelForm[Empty]):
 
 
 class InvalidForm(SentinelForm[Invalid]):
-    """Invalid interface - represents invalid/undefined operations."""
+    """Invalid interface - represents invalid/undefined interactions."""
 
     def __init__(self) -> None:
         super().__init__(INVALID)

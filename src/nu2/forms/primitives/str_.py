@@ -151,33 +151,33 @@ class StrForm(Form, TypedNu[str]):
 
     def upper(self) -> StrForm:
         """Convert to uppercase."""
-        from .str_ops import UpperOp
+        from .str_interactions import UpperQuery
 
-        return StrForm(UpperOp(self))
+        return StrForm(UpperQuery(self))
 
     def lower(self) -> StrForm:
         """Convert to lowercase."""
-        from .str_ops import LowerOp
+        from .str_interactions import LowerQuery
 
-        return StrForm(LowerOp(self))
+        return StrForm(LowerQuery(self))
 
     def title(self) -> StrForm:
         """Convert to title case."""
-        from .str_ops import TitleOp
+        from .str_interactions import TitleQuery
 
-        return StrForm(TitleOp(self))
+        return StrForm(TitleQuery(self))
 
     def capitalize(self) -> StrForm:
         """Capitalize first character."""
-        from .str_ops import CapitalizeOp
+        from .str_interactions import CapitalizeQuery
 
-        return StrForm(CapitalizeOp(self))
+        return StrForm(CapitalizeQuery(self))
 
     def swapcase(self) -> StrForm:
         """Swap case of all characters."""
-        from .str_ops import SwapCaseOp
+        from .str_interactions import SwapCaseQuery
 
-        return StrForm(SwapCaseOp(self))
+        return StrForm(SwapCaseQuery(self))
 
     # =========================================================================
     # STRIPPING
@@ -185,21 +185,21 @@ class StrForm(Form, TypedNu[str]):
 
     def strip(self, chars: StrArg | None = None) -> StrForm:
         """Strip leading and trailing whitespace or chars."""
-        from .str_ops import StripOp
+        from .str_interactions import StripQuery
 
-        return StrForm(StripOp(self, chars))
+        return StrForm(StripQuery(self, chars))
 
     def lstrip(self, chars: StrArg | None = None) -> StrForm:
         """Strip leading whitespace or chars."""
-        from .str_ops import LStripOp
+        from .str_interactions import LStripQuery
 
-        return StrForm(LStripOp(self, chars))
+        return StrForm(LStripQuery(self, chars))
 
     def rstrip(self, chars: StrArg | None = None) -> StrForm:
         """Strip trailing whitespace or chars."""
-        from .str_ops import RStripOp
+        from .str_interactions import RStripQuery
 
-        return StrForm(RStripOp(self, chars))
+        return StrForm(RStripQuery(self, chars))
 
     # =========================================================================
     # SPLITTING
@@ -208,16 +208,16 @@ class StrForm(Form, TypedNu[str]):
     def split(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListForm:
         """Split string into list on sep."""
         from ..collections.list_ import ListForm
-        from .str_ops import SplitOp
+        from .str_interactions import SplitQuery
 
-        return ListForm(SplitOp(self, sep, maxsplit))
+        return ListForm(SplitQuery(self, sep, maxsplit))
 
     def rsplit(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListForm:
         """Right-split string into list on sep."""
         from ..collections.list_ import ListForm
-        from .str_ops import RSplitOp
+        from .str_interactions import RSplitQuery
 
-        return ListForm(RSplitOp(self, sep, maxsplit))
+        return ListForm(RSplitQuery(self, sep, maxsplit))
 
     # =========================================================================
     # SEARCHING
@@ -226,23 +226,23 @@ class StrForm(Form, TypedNu[str]):
     def find(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntForm:
         """Find substring index: str.find(sub, start, end)."""
         from .int_ import IntForm
-        from .str_ops import FindOp
+        from .str_interactions import FindQuery
 
-        return IntForm(FindOp(self, sub, start, end))
+        return IntForm(FindQuery(self, sub, start, end))
 
     def rfind(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntForm:
         """Find substring index from right: str.rfind(sub, start, end)."""
         from .int_ import IntForm
-        from .str_ops import RFindOp
+        from .str_interactions import RFindQuery
 
-        return IntForm(RFindOp(self, sub, start, end))
+        return IntForm(RFindQuery(self, sub, start, end))
 
     def count_substring(self, sub: StrArg) -> IntForm:
         """Count non-overlapping occurrences of sub."""
         from .int_ import IntForm
-        from .str_ops import CountSubstringOp
+        from .str_interactions import CountSubstringQuery
 
-        return IntForm(CountSubstringOp(self, sub))
+        return IntForm(CountSubstringQuery(self, sub))
 
     # =========================================================================
     # TESTING
@@ -251,44 +251,44 @@ class StrForm(Form, TypedNu[str]):
     def startswith(self, prefix: StrArg) -> BoolForm:
         """Check if string starts with prefix."""
         from .bool_ import BoolForm
-        from .str_ops import StartsWithOp
+        from .str_interactions import StartsWithQuery
 
-        return BoolForm(StartsWithOp(self, prefix))
+        return BoolForm(StartsWithQuery(self, prefix))
 
     def endswith(self, suffix: StrArg) -> BoolForm:
         """Check if string ends with suffix."""
         from .bool_ import BoolForm
-        from .str_ops import EndsWithOp
+        from .str_interactions import EndsWithQuery
 
-        return BoolForm(EndsWithOp(self, suffix))
+        return BoolForm(EndsWithQuery(self, suffix))
 
     def isdigit(self) -> BoolForm:
         """Check if all characters are digits."""
         from .bool_ import BoolForm
-        from .str_ops import IsDigitOp
+        from .str_interactions import IsDigitQuery
 
-        return BoolForm(IsDigitOp(self))
+        return BoolForm(IsDigitQuery(self))
 
     def isalpha(self) -> BoolForm:
         """Check if all characters are alphabetic."""
         from .bool_ import BoolForm
-        from .str_ops import IsAlphaOp
+        from .str_interactions import IsAlphaQuery
 
-        return BoolForm(IsAlphaOp(self))
+        return BoolForm(IsAlphaQuery(self))
 
     def isalnum(self) -> BoolForm:
         """Check if all characters are alphanumeric."""
         from .bool_ import BoolForm
-        from .str_ops import IsAlnumOp
+        from .str_interactions import IsAlnumQuery
 
-        return BoolForm(IsAlnumOp(self))
+        return BoolForm(IsAlnumQuery(self))
 
     def isspace(self) -> BoolForm:
         """Check if all characters are whitespace."""
         from .bool_ import BoolForm
-        from .str_ops import IsSpaceOp
+        from .str_interactions import IsSpaceQuery
 
-        return BoolForm(IsSpaceOp(self))
+        return BoolForm(IsSpaceQuery(self))
 
     # =========================================================================
     # PADDING
@@ -296,27 +296,27 @@ class StrForm(Form, TypedNu[str]):
 
     def center(self, width: IntArg, fillchar: StrArg = " ") -> StrForm:
         """Center string in field of given width."""
-        from .str_ops import CenterOp
+        from .str_interactions import CenterQuery
 
-        return StrForm(CenterOp(self, width, fillchar))
+        return StrForm(CenterQuery(self, width, fillchar))
 
     def ljust(self, width: IntArg, fillchar: StrArg = " ") -> StrForm:
         """Left-justify string in field of given width."""
-        from .str_ops import LJustOp
+        from .str_interactions import LJustQuery
 
-        return StrForm(LJustOp(self, width, fillchar))
+        return StrForm(LJustQuery(self, width, fillchar))
 
     def rjust(self, width: IntArg, fillchar: StrArg = " ") -> StrForm:
         """Right-justify string in field of given width."""
-        from .str_ops import RJustOp
+        from .str_interactions import RJustQuery
 
-        return StrForm(RJustOp(self, width, fillchar))
+        return StrForm(RJustQuery(self, width, fillchar))
 
     def zfill(self, width: IntArg) -> StrForm:
         """Zero-fill string to given width."""
-        from .str_ops import ZFillOp
+        from .str_interactions import ZFillQuery
 
-        return StrForm(ZFillOp(self, width))
+        return StrForm(ZFillQuery(self, width))
 
     # =========================================================================
     # REPLACING
@@ -324,9 +324,9 @@ class StrForm(Form, TypedNu[str]):
 
     def replace(self, old: StrArg, new: StrArg, count: IntArg = -1) -> StrForm:
         """Replace occurrences of old with new."""
-        from .str_ops import ReplaceOp
+        from .str_interactions import ReplaceQuery
 
-        return StrForm(ReplaceOp(self, old, new, count))
+        return StrForm(ReplaceQuery(self, old, new, count))
 
     # =========================================================================
     # ENCODING
@@ -335,9 +335,9 @@ class StrForm(Form, TypedNu[str]):
     def encode(self, encoding: StrArg = "utf-8") -> BytesForm:
         """Encode string to bytes."""
         from .bytes_ import BytesForm
-        from .str_ops import EncodeOp
+        from .str_interactions import EncodeQuery
 
-        return BytesForm(EncodeOp(self, encoding))
+        return BytesForm(EncodeQuery(self, encoding))
 
     # =========================================================================
     # JOINING
@@ -345,6 +345,6 @@ class StrForm(Form, TypedNu[str]):
 
     def join(self, iterable: object) -> StrForm:
         """Join iterable elements with this string as separator."""
-        from .str_ops import JoinOp
+        from .str_interactions import JoinQuery
 
-        return StrForm(JoinOp(self, iterable))
+        return StrForm(JoinQuery(self, iterable))

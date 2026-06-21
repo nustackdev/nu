@@ -153,87 +153,87 @@ class BytesForm(Form, TypedNu[bytes]):
 
     def decode(self, encoding: StrArg = "utf-8") -> StrForm:
         """Decode bytes to string using the given encoding."""
-        from .bytes_ops import DecodeOp
+        from .bytes_interactions import DecodeQuery
         from .str_ import StrForm
 
-        return StrForm(DecodeOp(self, encoding))
+        return StrForm(DecodeQuery(self, encoding))
 
     def hex_(self) -> StrForm:
         """Convert bytes to hex string."""
-        from .bytes_ops import HexOp
+        from .bytes_interactions import HexQuery
         from .str_ import StrForm
 
-        return StrForm(HexOp(self))
+        return StrForm(HexQuery(self))
 
     def upper(self) -> BytesForm:
         """Convert bytes to uppercase."""
-        from .bytes_ops import BytesUpperOp
+        from .bytes_interactions import BytesUpperQuery
 
-        return BytesForm(BytesUpperOp(self))
+        return BytesForm(BytesUpperQuery(self))
 
     def lower(self) -> BytesForm:
         """Convert bytes to lowercase."""
-        from .bytes_ops import BytesLowerOp
+        from .bytes_interactions import BytesLowerQuery
 
-        return BytesForm(BytesLowerOp(self))
+        return BytesForm(BytesLowerQuery(self))
 
     def strip(self, chars: BytesArg | None = None) -> BytesForm:
         """Strip leading and trailing bytes."""
-        from .bytes_ops import BytesStripOp
+        from .bytes_interactions import BytesStripQuery
 
-        return BytesForm(BytesStripOp(self, chars))
+        return BytesForm(BytesStripQuery(self, chars))
 
     def lstrip(self, chars: BytesArg | None = None) -> BytesForm:
         """Strip leading bytes."""
-        from .bytes_ops import BytesLStripOp
+        from .bytes_interactions import BytesLStripQuery
 
-        return BytesForm(BytesLStripOp(self, chars))
+        return BytesForm(BytesLStripQuery(self, chars))
 
     def rstrip(self, chars: BytesArg | None = None) -> BytesForm:
         """Strip trailing bytes."""
-        from .bytes_ops import BytesRStripOp
+        from .bytes_interactions import BytesRStripQuery
 
-        return BytesForm(BytesRStripOp(self, chars))
+        return BytesForm(BytesRStripQuery(self, chars))
 
     def split_bytes(self, sep: BytesArg | None = None, maxsplit: IntArg = -1) -> ListForm:
         """Split bytes on sep, up to maxsplit times."""
         from ..collections.list_ import ListForm
-        from .bytes_ops import BytesSplitOp
+        from .bytes_interactions import BytesSplitQuery
 
         if sep is not None:
-            return ListForm(BytesSplitOp(self, sep, maxsplit))
-        return ListForm(BytesSplitOp(self, None, maxsplit))
+            return ListForm(BytesSplitQuery(self, sep, maxsplit))
+        return ListForm(BytesSplitQuery(self, None, maxsplit))
 
     def find_bytes(self, sub: BytesArg, start: IntArg = 0, end: IntArg | None = None) -> IntForm:
         """Find sub-bytes, returning the index or -1."""
-        from .bytes_ops import BytesFindOp
+        from .bytes_interactions import BytesFindQuery
         from .int_ import IntForm
 
-        return IntForm(BytesFindOp(self, sub, start, end))
+        return IntForm(BytesFindQuery(self, sub, start, end))
 
     def count_bytes(self, sub: BytesArg) -> IntForm:
         """Count non-overlapping occurrences of sub in bytes."""
-        from .bytes_ops import BytesCountOp
+        from .bytes_interactions import BytesCountQuery
         from .int_ import IntForm
 
-        return IntForm(BytesCountOp(self, sub))
+        return IntForm(BytesCountQuery(self, sub))
 
     def startswith(self, prefix: BytesArg) -> BoolForm:
         """Return True if bytes start with prefix."""
         from .bool_ import BoolForm
-        from .bytes_ops import BytesStartsWithOp
+        from .bytes_interactions import BytesStartsWithQuery
 
-        return BoolForm(BytesStartsWithOp(self, prefix))
+        return BoolForm(BytesStartsWithQuery(self, prefix))
 
     def endswith(self, suffix: BytesArg) -> BoolForm:
         """Return True if bytes end with suffix."""
         from .bool_ import BoolForm
-        from .bytes_ops import BytesEndsWithOp
+        from .bytes_interactions import BytesEndsWithQuery
 
-        return BoolForm(BytesEndsWithOp(self, suffix))
+        return BoolForm(BytesEndsWithQuery(self, suffix))
 
     def replace(self, old: BytesArg, new: BytesArg, count: IntArg = -1) -> BytesForm:
         """Replace occurrences of old with new in bytes."""
-        from .bytes_ops import BytesReplaceOp
+        from .bytes_interactions import BytesReplaceQuery
 
-        return BytesForm(BytesReplaceOp(self, old, new, count))
+        return BytesForm(BytesReplaceQuery(self, old, new, count))

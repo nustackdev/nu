@@ -1,8 +1,8 @@
-"""Sequence ops.
+"""Sequence interactions.
 
-FirstOp, LastOp, IndexOfOp, CountOp
-AppendCmd, ExtendCmd, InsertCmd
-PopCmd, RemoveValueCmd, ReverseCmd
+FirstQuery, LastQuery, IndexOfQuery, CountQuery
+AppendQuery, ExtendQuery, InsertQuery
+PopQuery, RemoveValueQuery, ReverseQuery
 """
 
 from __future__ import annotations
@@ -21,16 +21,16 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "AppendCmd",
-    "CountOp",
-    "ExtendCmd",
-    "FirstOp",
-    "IndexOfOp",
-    "InsertCmd",
-    "LastOp",
-    "PopCmd",
-    "RemoveValueCmd",
-    "ReverseCmd",
+    "AppendQuery",
+    "CountQuery",
+    "ExtendQuery",
+    "FirstQuery",
+    "IndexOfQuery",
+    "InsertQuery",
+    "LastQuery",
+    "PopQuery",
+    "RemoveValueQuery",
+    "ReverseQuery",
 ]
 
 
@@ -39,7 +39,7 @@ __all__ = [
 # =============================================================================
 
 
-class FirstOp(ScalarQuery):
+class FirstQuery(ScalarQuery):
     """First element: seq[0]. Returns Invalid if empty."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -73,7 +73,7 @@ class FirstOp(ScalarQuery):
         return athunk
 
 
-class LastOp(ScalarQuery):
+class LastQuery(ScalarQuery):
     """Last element: seq[-1]. Returns Invalid if empty."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -107,7 +107,7 @@ class LastOp(ScalarQuery):
         return athunk
 
 
-class IndexOfOp(ScalarQuery):
+class IndexOfQuery(ScalarQuery):
     """Find index of value: seq.index(value). Returns Invalid if not found."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -149,7 +149,7 @@ class IndexOfOp(ScalarQuery):
         return athunk
 
 
-class CountOp(ScalarQuery):
+class CountQuery(ScalarQuery):
     """Count occurrences: seq.count(value)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -190,7 +190,7 @@ class CountOp(ScalarQuery):
 # =============================================================================
 
 
-class AppendCmd(ScalarQuery):
+class AppendQuery(ScalarQuery):
     """Append item to end: seq.append(value); yields the sequence."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -224,7 +224,7 @@ class AppendCmd(ScalarQuery):
         return athunk
 
 
-class InsertCmd(ScalarQuery):
+class InsertQuery(ScalarQuery):
     """Insert item at index: seq.insert(index, value); yields the sequence."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -268,7 +268,7 @@ class InsertCmd(ScalarQuery):
         return athunk
 
 
-class PopCmd(ScalarQuery):
+class PopQuery(ScalarQuery):
     """Pop item at index: seq.pop(index). Returns popped value.
 
     Default index is -1 (last item).
@@ -313,7 +313,7 @@ class PopCmd(ScalarQuery):
         return athunk
 
 
-class ExtendCmd(ScalarQuery):
+class ExtendQuery(ScalarQuery):
     """Extend sequence with iterable: seq.extend(other); yields the sequence."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -347,7 +347,7 @@ class ExtendCmd(ScalarQuery):
         return athunk
 
 
-class RemoveValueCmd(ScalarQuery):
+class RemoveValueQuery(ScalarQuery):
     """Remove first occurrence of value: seq.remove(value); yields the sequence."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -381,7 +381,7 @@ class RemoveValueCmd(ScalarQuery):
         return athunk
 
 
-class ReverseCmd(ScalarQuery):
+class ReverseQuery(ScalarQuery):
     """Reverse sequence in-place: seq.reverse(); yields the sequence."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102

@@ -9,9 +9,9 @@ Type Parameters:
     CollectionT: Native Python collection type (dict[str, int], etc.)
     KeyT: Native Python key type (str, int, etc.)
     ValueT: Native Python value type (int, str, dict, etc.)
-    CollectionResultT: Wrapped result for collection-level operations
+    CollectionResultT: Wrapped result for collection-level interactions
         (keys, values, items, update)
-    ValueResultT: Wrapped result for value-level operations
+    ValueResultT: Wrapped result for value-level interactions
         (get, key_at)
 """
 
@@ -49,8 +49,8 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
         CollectionT: Native Python collection type (dict[str, int])
         KeyT: Native Python key type
         ValueT: Native Python value type
-        CollectionResultT: Result for collection-level ops (keys, values, items)
-        ValueResultT: Result for value-level ops (get)
+        CollectionResultT: Result for collection-level interactions (keys, values, items)
+        ValueResultT: Result for value-level interactions (get)
     """
 
     def _wrap_keys_result(self, operand: Nu) -> CollectionResultT:
@@ -77,27 +77,27 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
     def keys(self) -> CollectionResultT:
         """Get all keys."""
-        from .mapping_ops import KeysOp
+        from .mapping_interactions import KeysQuery
 
-        return cast("CollectionResultT", self._wrap_keys_result(KeysOp(self)))
+        return cast("CollectionResultT", self._wrap_keys_result(KeysQuery(self)))
 
     def values(self) -> CollectionResultT:
         """Get all values."""
-        from .mapping_ops import ValuesOp
+        from .mapping_interactions import ValuesQuery
 
-        return cast("CollectionResultT", self._wrap_values_result(ValuesOp(self)))
+        return cast("CollectionResultT", self._wrap_values_result(ValuesQuery(self)))
 
     def items(self) -> CollectionResultT:
         """Get all key-value pairs."""
-        from .mapping_ops import ItemsOp
+        from .mapping_interactions import ItemsQuery
 
-        return cast("CollectionResultT", self._wrap_items_result(ItemsOp(self)))
+        return cast("CollectionResultT", self._wrap_items_result(ItemsQuery(self)))
 
     def get(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Get value with default."""
-        from .mapping_ops import GetOp
+        from .mapping_interactions import GetQuery
 
-        return cast("ValueResultT", self._wrap_value_result(GetOp(self, key, default)))
+        return cast("ValueResultT", self._wrap_value_result(GetQuery(self, key, default)))
 
 
 class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
@@ -109,48 +109,48 @@ class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
         CollectionT: Native Python collection type
         KeyT: Native Python key type
         ValueT: Native Python value type
-        CollectionResultT: Result for collection-level ops (update)
-        ValueResultT: Result for value-level ops (get, pop, setdefault)
+        CollectionResultT: Result for collection-level interactions (update)
+        ValueResultT: Result for value-level interactions (get, pop, setdefault)
     """
 
     def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> Any:  # noqa: ANN401
         """Set value at key."""
-        from .mapping_ops import SetItemCmd
+        from .mapping_interactions import SetItemQuery
 
-        return SetItemCmd(self, key, value)
+        return SetItemQuery(self, key, value)
 
     def delete(self, key: Arg[KeyT]) -> Any:  # noqa: ANN401
         """Delete entry by key."""
-        from .mapping_ops import DeleteItemCmd
+        from .mapping_interactions import DeleteItemQuery
 
-        return DeleteItemCmd(self, key)
+        return DeleteItemQuery(self, key)
 
     def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> Any:  # noqa: ANN401
         """Update mapping with another mapping."""
-        from .mapping_ops import UpdateCmd
+        from .mapping_interactions import UpdateQuery
 
-        return UpdateCmd(self, other)
+        return UpdateQuery(self, other)
 
     def pop(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Remove key and return value, or default if missing."""
-        from .mapping_ops import DictPopCmd
+        from .mapping_interactions import DictPopQuery
 
-        return cast("ValueResultT", self._wrap_value_result(DictPopCmd(self, key, default)))
+        return cast("ValueResultT", self._wrap_value_result(DictPopQuery(self, key, default)))
 
     def popitem(self) -> ValueResultT:
         """Remove and return arbitrary (key, value) pair."""
-        from .mapping_ops import PopItemCmd
+        from .mapping_interactions import PopItemQuery
 
-        return cast("ValueResultT", self._wrap_value_result(PopItemCmd(self)))
+        return cast("ValueResultT", self._wrap_value_result(PopItemQuery(self)))
 
     def setdefault(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Get value at key, setting it to default if missing."""
-        from .mapping_ops import SetDefaultCmd
+        from .mapping_interactions import SetDefaultQuery
 
-        return cast("ValueResultT", self._wrap_value_result(SetDefaultCmd(self, key, default)))
+        return cast("ValueResultT", self._wrap_value_result(SetDefaultQuery(self, key, default)))
 
     def clear(self) -> Any:  # noqa: ANN401
         """Remove all items."""
-        from .shared_ops import ClearCmd
+        from .shared_interactions import ClearQuery
 
-        return ClearCmd(self)
+        return ClearQuery(self)

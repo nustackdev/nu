@@ -10,9 +10,9 @@ Follows Python's collections.abc.Sequence / MutableSequence pattern.
 Type Parameters:
     CollectionT: Native Python collection type (list[int], tuple[str, ...], etc.)
     ElementT: Native Python element type (int, str, dict, etc.)
-    CollectionResultT: Wrapped result for collection-level operations
+    CollectionResultT: Wrapped result for collection-level interactions
         (slice_, append, insert, extend, remove)
-    ElementResultT: Wrapped result for element-level operations
+    ElementResultT: Wrapped result for element-level interactions
         (first, last, pop)
 """
 
@@ -46,8 +46,8 @@ class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     Type Parameters:
         CollectionT: Native Python collection type (list[int], tuple[str, ...])
         ElementT: Native Python element type
-        CollectionResultT: Result for collection-level ops (map_, filter_, reversed_, sorted_)
-        ElementResultT: Result for element-level ops (first, last, sum_, min_, max_)
+        CollectionResultT: Result for collection-level interactions (map_, filter_, reversed_, sorted_)
+        ElementResultT: Result for element-level interactions (first, last, sum_, min_, max_)
     """
 
     def __getitem__(self, key: IntArg | slice) -> ElementResultT | CollectionResultT:
@@ -64,31 +64,31 @@ class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def first_elem(self) -> ElementResultT:
         """Get first element."""
-        from .sequence_ops import FirstOp
+        from .sequence_interactions import FirstQuery
 
-        return cast("ElementResultT", self._wrap_element_result(FirstOp(self)))
+        return cast("ElementResultT", self._wrap_element_result(FirstQuery(self)))
 
     def last_elem(self) -> ElementResultT:
         """Get last element."""
-        from .sequence_ops import LastOp
+        from .sequence_interactions import LastQuery
 
-        return cast("ElementResultT", self._wrap_element_result(LastOp(self)))
+        return cast("ElementResultT", self._wrap_element_result(LastQuery(self)))
 
     def index(self, value: Arg[ElementT]) -> IntForm:
         """Find index of value."""
         from nu2.forms.primitives import IntForm
 
-        from .sequence_ops import IndexOfOp
+        from .sequence_interactions import IndexOfQuery
 
-        return IntForm(IndexOfOp(self, value))
+        return IntForm(IndexOfQuery(self, value))
 
     def count(self, value: Arg[ElementT]) -> IntForm:
         """Count occurrences."""
         from nu2.forms.primitives import IntForm
 
-        from .sequence_ops import CountOp
+        from .sequence_interactions import CountQuery
 
-        return IntForm(CountOp(self, value))
+        return IntForm(CountQuery(self, value))
 
     def reversed(self) -> CollectionResultT:
         """Reversed copy of this sequence."""
@@ -105,48 +105,48 @@ class MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResul
     Type Parameters:
         CollectionT: Native Python collection type
         ElementT: Native Python element type
-        CollectionResultT: Result for collection-level ops (append, extend, insert, remove)
-        ElementResultT: Result for element-level ops (pop)
+        CollectionResultT: Result for collection-level interactions (append, extend, insert, remove)
+        ElementResultT: Result for element-level interactions (pop)
     """
 
     def append(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Append item to end of sequence."""
-        from .sequence_ops import AppendCmd
+        from .sequence_interactions import AppendQuery
 
-        return AppendCmd(self, value)
+        return AppendQuery(self, value)
 
     def extend(self, other: Arg[Iterable[ElementT]]) -> Any:  # noqa: ANN401
         """Extend sequence with elements from iterable."""
-        from .sequence_ops import ExtendCmd
+        from .sequence_interactions import ExtendQuery
 
-        return ExtendCmd(self, other)
+        return ExtendQuery(self, other)
 
     def insert(self, index: IntArg, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Insert item at index."""
-        from .sequence_ops import InsertCmd
+        from .sequence_interactions import InsertQuery
 
-        return InsertCmd(self, index, value)
+        return InsertQuery(self, index, value)
 
     def pop(self, index: IntArg = -1) -> ElementResultT:
         """Remove and return item at index (default: last)."""
-        from .sequence_ops import PopCmd
+        from .sequence_interactions import PopQuery
 
-        return cast("ElementResultT", self._wrap_element_result(PopCmd(self, index)))
+        return cast("ElementResultT", self._wrap_element_result(PopQuery(self, index)))
 
     def remove(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Remove first occurrence of value."""
-        from .sequence_ops import RemoveValueCmd
+        from .sequence_interactions import RemoveValueQuery
 
-        return RemoveValueCmd(self, value)
+        return RemoveValueQuery(self, value)
 
     def reverse(self) -> Any:  # noqa: ANN401
         """Reverse sequence in-place."""
-        from .sequence_ops import ReverseCmd
+        from .sequence_interactions import ReverseQuery
 
-        return ReverseCmd(self)
+        return ReverseQuery(self)
 
     def clear(self) -> Any:  # noqa: ANN401
         """Remove all items."""
-        from .shared_ops import ClearCmd
+        from .shared_interactions import ClearQuery
 
-        return ClearCmd(self)
+        return ClearQuery(self)

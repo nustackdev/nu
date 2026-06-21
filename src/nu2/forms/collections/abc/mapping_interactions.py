@@ -1,8 +1,8 @@
-"""Mapping ops.
+"""Mapping interactions.
 
-KeysOp, ValuesOp, ItemsOp, GetOp
-SetItemCmd, DeleteItemCmd, UpdateCmd
-DictPopCmd, PopItemCmd, SetDefaultCmd
+KeysQuery, ValuesQuery, ItemsQuery, GetQuery
+SetItemQuery, DeleteItemQuery, UpdateQuery
+DictPopQuery, PopItemQuery, SetDefaultQuery
 """
 
 from __future__ import annotations
@@ -20,16 +20,16 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "DeleteItemCmd",
-    "DictPopCmd",
-    "GetOp",
-    "ItemsOp",
-    "KeysOp",
-    "PopItemCmd",
-    "SetDefaultCmd",
-    "SetItemCmd",
-    "UpdateCmd",
-    "ValuesOp",
+    "DeleteItemQuery",
+    "DictPopQuery",
+    "GetQuery",
+    "ItemsQuery",
+    "KeysQuery",
+    "PopItemQuery",
+    "SetDefaultQuery",
+    "SetItemQuery",
+    "UpdateQuery",
+    "ValuesQuery",
 ]
 
 
@@ -38,7 +38,7 @@ __all__ = [
 # =============================================================================
 
 
-class KeysOp(ScalarQuery):
+class KeysQuery(ScalarQuery):
     """Get keys view from mapping: mapping.keys()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -64,7 +64,7 @@ class KeysOp(ScalarQuery):
         return athunk
 
 
-class ValuesOp(ScalarQuery):
+class ValuesQuery(ScalarQuery):
     """Get values view from mapping: mapping.values()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -90,7 +90,7 @@ class ValuesOp(ScalarQuery):
         return athunk
 
 
-class ItemsOp(ScalarQuery):
+class ItemsQuery(ScalarQuery):
     """Get items view from mapping: mapping.items()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -116,7 +116,7 @@ class ItemsOp(ScalarQuery):
         return athunk
 
 
-class GetOp(ScalarQuery):
+class GetQuery(ScalarQuery):
     """Get value from mapping with optional default: mapping.get(key, default) or mapping[key]."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -163,7 +163,7 @@ class GetOp(ScalarQuery):
 # =============================================================================
 
 
-class SetItemCmd(ScalarQuery):
+class SetItemQuery(ScalarQuery):
     """Set value at key: mapping[key] = value; yields the mapping."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -203,7 +203,7 @@ class SetItemCmd(ScalarQuery):
         return athunk
 
 
-class DeleteItemCmd(ScalarQuery):
+class DeleteItemQuery(ScalarQuery):
     """Delete entry by key: del mapping[key]; yields the mapping."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -237,7 +237,7 @@ class DeleteItemCmd(ScalarQuery):
         return athunk
 
 
-class UpdateCmd(ScalarQuery):
+class UpdateQuery(ScalarQuery):
     """Update mapping with another: mapping.update(other); yields the mapping."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -271,7 +271,7 @@ class UpdateCmd(ScalarQuery):
         return athunk
 
 
-class DictPopCmd(ScalarQuery):
+class DictPopQuery(ScalarQuery):
     """Pop value by key with optional default: mapping.pop(key, default). Returns value or default."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -319,7 +319,7 @@ class DictPopCmd(ScalarQuery):
         return athunk
 
 
-class PopItemCmd(ScalarQuery):
+class PopItemQuery(ScalarQuery):
     """Pop arbitrary item: mapping.popitem(). Returns (key, value) tuple."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -351,7 +351,7 @@ class PopItemCmd(ScalarQuery):
         return athunk
 
 
-class SetDefaultCmd(ScalarQuery):
+class SetDefaultQuery(ScalarQuery):
     """Set default value if key missing: mapping.setdefault(key, default). Returns value at key."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102

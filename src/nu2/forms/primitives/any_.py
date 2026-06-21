@@ -17,7 +17,7 @@ __all__ = [
 
 
 class AnyForm(Form, TypedNu[object]):
-    """Any/dynamic interface. Supports all operations, results stay AnyForm."""
+    """Any/dynamic interface. Supports all interactions, results stay AnyForm."""
 
     # =========================================================================
     # ARITHMETIC

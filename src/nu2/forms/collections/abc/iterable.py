@@ -9,8 +9,8 @@ the wrapping infrastructure for typed results.
 
 Type Parameters:
     ElementT: Native Python element type (int, str, dict, etc.)
-    CollectionResultT: Wrapped result for collection-level operations
-    ElementResultT: Wrapped result for element-level operations
+    CollectionResultT: Wrapped result for collection-level interactions
+    ElementResultT: Wrapped result for element-level interactions
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ class IterableForm[ElementT, CollectionResultT, ElementResultT](Form):
     (SequenceForm, MappingForm, etc.) to wrap op results
     in appropriate Value types.
 
-    Higher-order operations (Map, Filter, Reduce, etc.) are standalone
+    Higher-order interactions (Map, Filter, Reduce, etc.) are standalone
     functions in ``abc.fn``.
 
     Subclasses must override:
@@ -47,8 +47,8 @@ class IterableForm[ElementT, CollectionResultT, ElementResultT](Form):
 
     Type Parameters:
         ElementT: Native Python element type (int, str, dict, etc.)
-        CollectionResultT: Result type for ops that return collections
-        ElementResultT: Result type for ops that extract single elements
+        CollectionResultT: Result type for interactions that return collections
+        ElementResultT: Result type for interactions that extract single elements
     """
 
     def _wrap_iterable_result(self, operand: Nu) -> CollectionResultT:

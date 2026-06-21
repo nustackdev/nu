@@ -1,8 +1,9 @@
 """End-to-end smoke tests for the ported Forms layer.
 
 Builds fluent Form programs, compiles them, and evaluates both sync and async,
-asserting the value the underlying op atom should yield. Covers each form family
-and exercises the real eval paths (the op-atom thunks), not just construction.
+asserting the value the underlying interaction should yield. Covers each form
+family and exercises the real eval paths (the interaction thunks), not just
+construction.
 """
 
 from __future__ import annotations

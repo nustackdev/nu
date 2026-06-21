@@ -1,14 +1,14 @@
-"""String-specific ops.
+"""String-specific interactions.
 
-Case transformation: UpperOp, LowerOp, TitleOp, CapitalizeOp, SwapCaseOp
-Stripping: StripOp, LStripOp, RStripOp
-Splitting: SplitOp, RSplitOp
-Searching: FindOp, RFindOp, CountSubstringOp
-Padding: CenterOp, LJustOp, RJustOp, ZFillOp
-Testing: StartsWithOp, EndsWithOp, IsDigitOp, IsAlphaOp, IsAlnumOp, IsSpaceOp
-Replacing: ReplaceOp
-Encoding: EncodeOp
-Joining: JoinOp
+Case transformation: UpperQuery, LowerQuery, TitleQuery, CapitalizeQuery, SwapCaseQuery
+Stripping: StripQuery, LStripQuery, RStripQuery
+Splitting: SplitQuery, RSplitQuery
+Searching: FindQuery, RFindQuery, CountSubstringQuery
+Padding: CenterQuery, LJustQuery, RJustQuery, ZFillQuery
+Testing: StartsWithQuery, EndsWithQuery, IsDigitQuery, IsAlphaQuery, IsAlnumQuery, IsSpaceQuery
+Replacing: ReplaceQuery
+Encoding: EncodeQuery
+Joining: JoinQuery
 """
 
 from __future__ import annotations
@@ -26,32 +26,32 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "CapitalizeOp",
-    "CenterOp",
-    "CountSubstringOp",
-    "EncodeOp",
-    "EndsWithOp",
-    "FindOp",
-    "IsAlnumOp",
-    "IsAlphaOp",
-    "IsDigitOp",
-    "IsSpaceOp",
-    "JoinOp",
-    "LJustOp",
-    "LStripOp",
-    "LowerOp",
-    "RFindOp",
-    "RJustOp",
-    "RSplitOp",
-    "RStripOp",
-    "ReplaceOp",
-    "SplitOp",
-    "StartsWithOp",
-    "StripOp",
-    "SwapCaseOp",
-    "TitleOp",
-    "UpperOp",
-    "ZFillOp",
+    "CapitalizeQuery",
+    "CenterQuery",
+    "CountSubstringQuery",
+    "EncodeQuery",
+    "EndsWithQuery",
+    "FindQuery",
+    "IsAlnumQuery",
+    "IsAlphaQuery",
+    "IsDigitQuery",
+    "IsSpaceQuery",
+    "JoinQuery",
+    "LJustQuery",
+    "LStripQuery",
+    "LowerQuery",
+    "RFindQuery",
+    "RJustQuery",
+    "RSplitQuery",
+    "RStripQuery",
+    "ReplaceQuery",
+    "SplitQuery",
+    "StartsWithQuery",
+    "StripQuery",
+    "SwapCaseQuery",
+    "TitleQuery",
+    "UpperQuery",
+    "ZFillQuery",
 ]
 
 
@@ -60,7 +60,7 @@ __all__ = [
 # =============================================================================
 
 
-class UpperOp(ScalarQuery):
+class UpperQuery(ScalarQuery):
     """Convert to uppercase: str.upper()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -90,7 +90,7 @@ class UpperOp(ScalarQuery):
         return athunk
 
 
-class LowerOp(ScalarQuery):
+class LowerQuery(ScalarQuery):
     """Convert to lowercase: str.lower()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -120,7 +120,7 @@ class LowerOp(ScalarQuery):
         return athunk
 
 
-class TitleOp(ScalarQuery):
+class TitleQuery(ScalarQuery):
     """Convert to title case: str.title()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -150,7 +150,7 @@ class TitleOp(ScalarQuery):
         return athunk
 
 
-class CapitalizeOp(ScalarQuery):
+class CapitalizeQuery(ScalarQuery):
     """Capitalize first character: str.capitalize()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -180,7 +180,7 @@ class CapitalizeOp(ScalarQuery):
         return athunk
 
 
-class SwapCaseOp(ScalarQuery):
+class SwapCaseQuery(ScalarQuery):
     """Swap case: str.swapcase()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -215,7 +215,7 @@ class SwapCaseOp(ScalarQuery):
 # =============================================================================
 
 
-class IsDigitOp(ScalarQuery):
+class IsDigitQuery(ScalarQuery):
     """Check if all digits: str.isdigit()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -245,7 +245,7 @@ class IsDigitOp(ScalarQuery):
         return athunk
 
 
-class IsAlphaOp(ScalarQuery):
+class IsAlphaQuery(ScalarQuery):
     """Check if all alphabetic: str.isalpha()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -275,7 +275,7 @@ class IsAlphaOp(ScalarQuery):
         return athunk
 
 
-class IsAlnumOp(ScalarQuery):
+class IsAlnumQuery(ScalarQuery):
     """Check if alphanumeric: str.isalnum()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -305,7 +305,7 @@ class IsAlnumOp(ScalarQuery):
         return athunk
 
 
-class IsSpaceOp(ScalarQuery):
+class IsSpaceQuery(ScalarQuery):
     """Check if all whitespace: str.isspace()."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -340,7 +340,7 @@ class IsSpaceOp(ScalarQuery):
 # =============================================================================
 
 
-class StripOp(ScalarQuery):
+class StripQuery(ScalarQuery):
     """Strip whitespace or chars: str.strip(chars)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -380,7 +380,7 @@ class StripOp(ScalarQuery):
         return athunk
 
 
-class LStripOp(ScalarQuery):
+class LStripQuery(ScalarQuery):
     """Strip leading whitespace or chars: str.lstrip(chars)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -420,7 +420,7 @@ class LStripOp(ScalarQuery):
         return athunk
 
 
-class RStripOp(ScalarQuery):
+class RStripQuery(ScalarQuery):
     """Strip trailing whitespace or chars: str.rstrip(chars)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -465,7 +465,7 @@ class RStripOp(ScalarQuery):
 # =============================================================================
 
 
-class SplitOp(ScalarQuery):
+class SplitQuery(ScalarQuery):
     """Split string: str.split(sep, maxsplit)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -511,7 +511,7 @@ class SplitOp(ScalarQuery):
         return athunk
 
 
-class RSplitOp(ScalarQuery):
+class RSplitQuery(ScalarQuery):
     """Right split string: str.rsplit(sep, maxsplit)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -562,7 +562,7 @@ class RSplitOp(ScalarQuery):
 # =============================================================================
 
 
-class FindOp(ScalarQuery):
+class FindQuery(ScalarQuery):
     """Find substring: str.find(sub, start, end)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -614,7 +614,7 @@ class FindOp(ScalarQuery):
         return athunk
 
 
-class RFindOp(ScalarQuery):
+class RFindQuery(ScalarQuery):
     """Find substring from right: str.rfind(sub, start, end)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -666,7 +666,7 @@ class RFindOp(ScalarQuery):
         return athunk
 
 
-class CountSubstringOp(ScalarQuery):
+class CountSubstringQuery(ScalarQuery):
     """Count substring occurrences: str.count(sub)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -707,7 +707,7 @@ class CountSubstringOp(ScalarQuery):
 # =============================================================================
 
 
-class StartsWithOp(ScalarQuery):
+class StartsWithQuery(ScalarQuery):
     """Check if starts with prefix: str.startswith(prefix)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -743,7 +743,7 @@ class StartsWithOp(ScalarQuery):
         return athunk
 
 
-class EndsWithOp(ScalarQuery):
+class EndsWithQuery(ScalarQuery):
     """Check if ends with suffix: str.endswith(suffix)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -784,7 +784,7 @@ class EndsWithOp(ScalarQuery):
 # =============================================================================
 
 
-class CenterOp(ScalarQuery):
+class CenterQuery(ScalarQuery):
     """Center in width: str.center(width, fillchar)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -828,7 +828,7 @@ class CenterOp(ScalarQuery):
         return athunk
 
 
-class LJustOp(ScalarQuery):
+class LJustQuery(ScalarQuery):
     """Left justify: str.ljust(width, fillchar)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -872,7 +872,7 @@ class LJustOp(ScalarQuery):
         return athunk
 
 
-class RJustOp(ScalarQuery):
+class RJustQuery(ScalarQuery):
     """Right justify: str.rjust(width, fillchar)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -916,7 +916,7 @@ class RJustOp(ScalarQuery):
         return athunk
 
 
-class ZFillOp(ScalarQuery):
+class ZFillQuery(ScalarQuery):
     """Zero-fill: str.zfill(width)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -957,7 +957,7 @@ class ZFillOp(ScalarQuery):
 # =============================================================================
 
 
-class ReplaceOp(ScalarQuery):
+class ReplaceQuery(ScalarQuery):
     """Replace substring: str.replace(old, new, count)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -1016,7 +1016,7 @@ class ReplaceOp(ScalarQuery):
 # =============================================================================
 
 
-class EncodeOp(ScalarQuery):
+class EncodeQuery(ScalarQuery):
     """Encode string to bytes: str.encode(encoding)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -1063,7 +1063,7 @@ class EncodeOp(ScalarQuery):
 # =============================================================================
 
 
-class JoinOp(ScalarQuery):
+class JoinQuery(ScalarQuery):
     """Join iterable elements into string: sep.join(seq)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102

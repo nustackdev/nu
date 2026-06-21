@@ -1,6 +1,6 @@
 """Shared collection mutation commands.
 
-ClearCmd: Clear all items from a mutable collection.
+ClearQuery: Clear all items from a mutable collection.
 """
 
 from __future__ import annotations
@@ -18,11 +18,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "ClearCmd",
+    "ClearQuery",
 ]
 
 
-class ClearCmd(ScalarQuery):
+class ClearQuery(ScalarQuery):
     """Clear all items: collection.clear(); yields the collection."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
