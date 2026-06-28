@@ -3,7 +3,7 @@
 A Command names a target Ref in its mutation slot and the Fabric carries out
 the write. These delegate to the Ref (``ref.write`` / ``ref.erase``) so the
 write mechanism lives with the fabric (the Ref), not hardcoded here - the same
-``Set`` works for any fabric whose Ref implements the write contract.
+``SetCommand`` works for any fabric whose Ref implements the write contract.
 
 The mutation slot holds the Ref; every other slot is a read. ``mutates``
 declares slot 0 so the effect synthesis binds it as a WRITE. The Ref resolves
@@ -27,10 +27,10 @@ if TYPE_CHECKING:
 
     from nu2.lang.runtime import Runtime
 
-__all__ = ["Delete", "Set"]
+__all__ = ["DeleteCommand", "SetCommand"]
 
 
-class Set(Command):
+class SetCommand(Command):
     """Writes the value of slot 1 to the Ref in slot 0, through that Ref."""
 
     mutates = Declared(value=frozenset({0}))
@@ -60,7 +60,7 @@ class Set(Command):
         return athunk
 
 
-class Delete(Command):
+class DeleteCommand(Command):
     """Removes the Ref in slot 0 from its fabric, through that Ref."""
 
     mutates = Declared(value=frozenset({0}))

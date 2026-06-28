@@ -69,53 +69,53 @@ class DictForm[K, V](
     # =========================================================================
 
     def __gt__(self, other: DictArg[K, V]) -> BoolForm:
-        from nu2.core import Gt
+        from nu2.core import GtQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Gt(self, other))
+        return BoolForm(GtQuery(self, other))
 
     def __lt__(self, other: DictArg[K, V]) -> BoolForm:
-        from nu2.core import Lt
+        from nu2.core import LtQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Lt(self, other))
+        return BoolForm(LtQuery(self, other))
 
     def __ge__(self, other: DictArg[K, V]) -> BoolForm:
-        from nu2.core import Ge
+        from nu2.core import GeQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Ge(self, other))
+        return BoolForm(GeQuery(self, other))
 
     def __le__(self, other: DictArg[K, V]) -> BoolForm:
-        from nu2.core import Le
+        from nu2.core import LeQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Le(self, other))
+        return BoolForm(LeQuery(self, other))
 
     __hash__ = object.__hash__
 
     def __eq__(self, other: DictArg[K, V]) -> BoolForm:  # type: ignore[override]
-        from nu2.core import Eq
+        from nu2.core import EqQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Eq(self, other))
+        return BoolForm(EqQuery(self, other))
 
     def __ne__(self, other: DictArg[K, V]) -> BoolForm:  # type: ignore[override]
-        from nu2.core import Ne
+        from nu2.core import NeQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Ne(self, other))
+        return BoolForm(NeQuery(self, other))
 
     def is_(self, other: DictArg[K, V]) -> BoolForm:
         """Identity comparison: self is other."""
-        from nu2.core import Is
+        from nu2.core import IsQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Is(self, other))
+        return BoolForm(IsQuery(self, other))

@@ -24,7 +24,7 @@ class ListForm[T](
     MutableSequenceForm[list[T], T, "ListForm[T]", "AnyForm"],
     TypedNu[list[T]],
 ):
-    """List interface. Mutable sequence + comparable."""
+    """ListQuery interface. Mutable sequence + comparable."""
 
     def _wrap_iterable_result(self, operand: Nu) -> ListForm:
         """Wrap operand as ListForm."""
@@ -45,14 +45,14 @@ class ListForm[T](
     # =========================================================================
 
     def __add__(self, other: ListArg[T]) -> ListForm[T]:
-        from nu2.core import Add
+        from nu2.core import AddQuery
 
-        return ListForm(Add(self, other))
+        return ListForm(AddQuery(self, other))
 
     def __radd__(self, other: ListArg[T]) -> ListForm[T]:
-        from nu2.core import Add
+        from nu2.core import AddQuery
 
-        return ListForm(Add(other, self))
+        return ListForm(AddQuery(other, self))
 
     def __iadd__(self, other: ListArg[T]) -> ListForm[T]:
         """In-place concat: self += other. Mutates and returns self (Action)."""
@@ -62,15 +62,15 @@ class ListForm[T](
 
     def __mul__(self, n: IntArg) -> ListForm[T]:
         """Repeat: self * n -> new list (Query)."""
-        from nu2.core import Mul
+        from nu2.core import MulQuery
 
-        return ListForm(Mul(self, n))
+        return ListForm(MulQuery(self, n))
 
     def __rmul__(self, n: IntArg) -> ListForm[T]:
         """Repeat: n * self -> new list (Query)."""
-        from nu2.core import Mul
+        from nu2.core import MulQuery
 
-        return ListForm(Mul(n, self))
+        return ListForm(MulQuery(n, self))
 
     def __imul__(self, n: IntArg) -> ListForm[T]:
         """In-place repeat: self *= n. Mutates and returns self (Action)."""
@@ -99,53 +99,53 @@ class ListForm[T](
     # =========================================================================
 
     def __gt__(self, other: ListArg[T]) -> BoolForm:
-        from nu2.core import Gt
+        from nu2.core import GtQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Gt(self, other))
+        return BoolForm(GtQuery(self, other))
 
     def __lt__(self, other: ListArg[T]) -> BoolForm:
-        from nu2.core import Lt
+        from nu2.core import LtQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Lt(self, other))
+        return BoolForm(LtQuery(self, other))
 
     def __ge__(self, other: ListArg[T]) -> BoolForm:
-        from nu2.core import Ge
+        from nu2.core import GeQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Ge(self, other))
+        return BoolForm(GeQuery(self, other))
 
     def __le__(self, other: ListArg[T]) -> BoolForm:
-        from nu2.core import Le
+        from nu2.core import LeQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Le(self, other))
+        return BoolForm(LeQuery(self, other))
 
     __hash__ = object.__hash__
 
     def __eq__(self, other: ListArg[T]) -> BoolForm:  # type: ignore[override]
-        from nu2.core import Eq
+        from nu2.core import EqQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Eq(self, other))
+        return BoolForm(EqQuery(self, other))
 
     def __ne__(self, other: ListArg[T]) -> BoolForm:  # type: ignore[override]
-        from nu2.core import Ne
+        from nu2.core import NeQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Ne(self, other))
+        return BoolForm(NeQuery(self, other))
 
     def is_(self, other: ListArg[T]) -> BoolForm:
         """Identity comparison: self is other."""
-        from nu2.core import Is
+        from nu2.core import IsQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Is(self, other))
+        return BoolForm(IsQuery(self, other))

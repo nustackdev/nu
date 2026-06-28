@@ -12,7 +12,7 @@ import asyncio
 
 import pytest
 
-from nu2.core import Literal
+from nu2.core import LiteralQuery
 from nu2.engine.structure import Declared
 from nu2.lang import (
     Command,
@@ -30,18 +30,18 @@ from nu2.lang.sentinels import EMPTY, INVALID
 
 
 def test_returns_a_subclass_of_the_base() -> None:
-    Add = InteractionFactory(ScalarQuery, "Add", lambda *xs: sum(xs))
-    assert issubclass(Add, ScalarQuery)
-    assert Add.__name__ == "Add"
+    AddQuery = InteractionFactory(ScalarQuery, "AddQuery", lambda *xs: sum(xs))
+    assert issubclass(AddQuery, ScalarQuery)
+    assert AddQuery.__name__ == "AddQuery"
 
 
 def test_declared_attribute_is_wrapped() -> None:
-    Add = InteractionFactory(
-        ScalarQuery, "Add", lambda *xs: sum(xs), commutative=True, associative=True
+    AddQuery = InteractionFactory(
+        ScalarQuery, "AddQuery", lambda *xs: sum(xs), commutative=True, associative=True
     )
-    assert "commutative" in Add.attributes
-    assert "associative" in Add.attributes
-    assert Add.attributes["commutative"].value is True
+    assert "commutative" in AddQuery.attributes
+    assert "associative" in AddQuery.attributes
+    assert AddQuery.attributes["commutative"].value is True
 
 
 def test_pre_wrapped_attribute_passes_through() -> None:
@@ -60,21 +60,21 @@ def test_rejects_unsupported_base() -> None:
 
 
 def test_scalar_query_runs_end_to_end() -> None:
-    Add = InteractionFactory(ScalarQuery, "Add", lambda *xs: sum(xs))
-    value, _ = run(Add(1, 2, 3))
+    AddQuery = InteractionFactory(ScalarQuery, "AddQuery", lambda *xs: sum(xs))
+    value, _ = run(AddQuery(1, 2, 3))
     assert value == 6
 
 
 def test_unary_atom_works() -> None:
-    Neg = InteractionFactory(ScalarQuery, "Neg", lambda x: -x)
-    value, _ = run(Neg(7))
+    NegQuery = InteractionFactory(ScalarQuery, "NegQuery", lambda x: -x)
+    value, _ = run(NegQuery(7))
     assert value == -7
 
 
 def test_nested_built_atoms_compose() -> None:
-    Add = InteractionFactory(ScalarQuery, "Add", lambda a, b: a + b)
-    Mul = InteractionFactory(ScalarQuery, "Mul", lambda a, b: a * b)
-    value, _ = run(Add(Mul(2, 3), 4))
+    AddQuery = InteractionFactory(ScalarQuery, "AddQuery", lambda a, b: a + b)
+    MulQuery = InteractionFactory(ScalarQuery, "MulQuery", lambda a, b: a * b)
+    value, _ = run(AddQuery(MulQuery(2, 3), 4))
     assert value == 10
 
 
@@ -82,10 +82,10 @@ def test_nested_built_atoms_compose() -> None:
 
 
 def test_sentinel_short_circuits_by_default() -> None:
-    Add = InteractionFactory(ScalarQuery, "Add", lambda a, b: a + b)
-    value, _ = run(Add(Literal(EMPTY), 1))
+    AddQuery = InteractionFactory(ScalarQuery, "AddQuery", lambda a, b: a + b)
+    value, _ = run(AddQuery(LiteralQuery(EMPTY), 1))
     assert value is INVALID
-    value, _ = run(Add(1, Literal(INVALID)))
+    value, _ = run(AddQuery(1, LiteralQuery(INVALID)))
     assert value is INVALID
 
 
@@ -97,7 +97,7 @@ def test_propagate_off_passes_sentinels_through() -> None:
         return "ok"
 
     NoProp = InteractionFactory(ScalarQuery, "NoProp", keep, propagate_sentinels=False)
-    value, _ = run(NoProp(Literal(EMPTY), Literal(INVALID)))
+    value, _ = run(NoProp(LiteralQuery(EMPTY), LiteralQuery(INVALID)))
     assert value == "ok"
     assert seen == [(EMPTY, INVALID)]
 

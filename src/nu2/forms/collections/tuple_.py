@@ -25,7 +25,7 @@ class TupleForm[*Ts](
     SequenceForm[tuple[*Ts], object, "ListForm[object]", "AnyForm"],
     TypedNu[tuple[*Ts]],
 ):
-    """Tuple interface. Immutable sequence + comparable."""
+    """TupleQuery interface. Immutable sequence + comparable."""
 
     def _wrap_sliceable_result(self, operand: Nu) -> TupleForm:
         """Wrap operand as TupleForm for slice results."""
@@ -49,80 +49,80 @@ class TupleForm[*Ts](
 
     def __add__(self, other: TupleArg[*Ts]) -> TupleForm:
         """Concat: self + other -> new tuple (Query)."""
-        from nu2.core import Add
+        from nu2.core import AddQuery
 
-        return TupleForm(Add(self, other))
+        return TupleForm(AddQuery(self, other))
 
     def __radd__(self, other: TupleArg[*Ts]) -> TupleForm:
         """Concat: other + self -> new tuple (Query)."""
-        from nu2.core import Add
+        from nu2.core import AddQuery
 
-        return TupleForm(Add(other, self))
+        return TupleForm(AddQuery(other, self))
 
     def __mul__(self, n: IntArg) -> TupleForm:
         """Repeat: self * n -> new tuple (Query)."""
-        from nu2.core import Mul
+        from nu2.core import MulQuery
 
-        return TupleForm(Mul(self, n))
+        return TupleForm(MulQuery(self, n))
 
     def __rmul__(self, n: IntArg) -> TupleForm:
         """Repeat: n * self -> new tuple (Query)."""
-        from nu2.core import Mul
+        from nu2.core import MulQuery
 
-        return TupleForm(Mul(n, self))
+        return TupleForm(MulQuery(n, self))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: TupleArg[*Ts]) -> BoolForm:
-        from nu2.core import Gt
+        from nu2.core import GtQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Gt(self, other))
+        return BoolForm(GtQuery(self, other))
 
     def __lt__(self, other: TupleArg[*Ts]) -> BoolForm:
-        from nu2.core import Lt
+        from nu2.core import LtQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Lt(self, other))
+        return BoolForm(LtQuery(self, other))
 
     def __ge__(self, other: TupleArg[*Ts]) -> BoolForm:
-        from nu2.core import Ge
+        from nu2.core import GeQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Ge(self, other))
+        return BoolForm(GeQuery(self, other))
 
     def __le__(self, other: TupleArg[*Ts]) -> BoolForm:
-        from nu2.core import Le
+        from nu2.core import LeQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Le(self, other))
+        return BoolForm(LeQuery(self, other))
 
     __hash__ = object.__hash__
 
     def __eq__(self, other: TupleArg[*Ts]) -> BoolForm:  # type: ignore[override]
-        from nu2.core import Eq
+        from nu2.core import EqQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Eq(self, other))
+        return BoolForm(EqQuery(self, other))
 
     def __ne__(self, other: TupleArg[*Ts]) -> BoolForm:  # type: ignore[override]
-        from nu2.core import Ne
+        from nu2.core import NeQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Ne(self, other))
+        return BoolForm(NeQuery(self, other))
 
     def is_(self, other: TupleArg[*Ts]) -> BoolForm:
         """Identity comparison: self is other."""
-        from nu2.core import Is
+        from nu2.core import IsQuery
 
         from ..primitives import BoolForm
 
-        return BoolForm(Is(self, other))
+        return BoolForm(IsQuery(self, other))

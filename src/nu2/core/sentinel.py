@@ -1,6 +1,6 @@
 """Sentinel atoms: the predicates that observe EMPTY / INVALID.
 
-The one core family that is not a Python builtin: ``IsEmpty`` / ``IsInvalid``
+The one core family that is not a Python builtin: ``IsEmptyQuery`` / ``IsInvalidQuery``
 (and their negations) ask whether a value IS one of Nu's sentinels. Every other
 atom propagates a sentinel operand; these observe it, so they are the only core
 atoms that do **not** guard - the compile thunk runs the predicate on the raw
@@ -26,14 +26,14 @@ if TYPE_CHECKING:
     from nu2.lang.runtime import Runtime
 
 __all__ = [
-    "IsEmpty",
-    "IsInvalid",
-    "NotEmpty",
-    "NotInvalid",
+    "IsEmptyQuery",
+    "IsInvalidQuery",
+    "NotEmptyQuery",
+    "NotInvalidQuery",
 ]
 
 
-class IsEmpty(ScalarQuery):
+class IsEmptyQuery(ScalarQuery):
     """True if its one child yields the EMPTY sentinel (accepts sentinels)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -53,7 +53,7 @@ class IsEmpty(ScalarQuery):
         return athunk
 
 
-class NotEmpty(ScalarQuery):
+class NotEmptyQuery(ScalarQuery):
     """True if its one child does not yield EMPTY (accepts sentinels)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -73,7 +73,7 @@ class NotEmpty(ScalarQuery):
         return athunk
 
 
-class IsInvalid(ScalarQuery):
+class IsInvalidQuery(ScalarQuery):
     """True if its one child yields the INVALID sentinel (accepts sentinels)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -93,7 +93,7 @@ class IsInvalid(ScalarQuery):
         return athunk
 
 
-class NotInvalid(ScalarQuery):
+class NotInvalidQuery(ScalarQuery):
     """True if its one child does not yield INVALID (accepts sentinels)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102

@@ -11,24 +11,24 @@ Files group atoms by **Python domain**, not by sort - one file per logical
 family, crossing Query / Command / Action as the builtins do:
 
 - ``literal`` - the constant-yielding ScalarQuery
-- ``arithmetic`` - numeric ops (Add, Sub, Mul, Pow, Abs, DivMod, Round)
-- ``comparison`` - ordering and identity (Eq, Lt, Gt, Is)
-- ``logical`` - boolean ops (And, Or, Not, Bool)
-- ``bitwise`` - bit ops (BitAnd, BitOr, BitXor, LShift)
-- ``cast`` - type construction / conversion (Int, Str, List, Dict, Set)
-- ``repr`` - representations (Repr, Format, Bin, Hex, Ord, Chr)
-- ``access`` - item and attribute access (GetItem, Len, GetAttr, SetAttr)
-- ``iteration`` - iterator sources (Iter, Next, Enumerate, Zip, Reversed)
-- ``transform`` - stream-to-stream lenses (Map, Filter, Sorted, Flatten)
-- ``reduction`` - stream-to-scalar folds (Sum, Min, Max, Any, All, Collect)
-- ``reflection`` - introspection (Type, IsInstance, Callable, Id, Hash)
-- ``sentinel`` - the EMPTY / INVALID predicates (IsEmpty, IsInvalid)
-- ``io`` - console / file effects (Print, Input, Open)
-- ``dynamic`` - dynamic evaluation (Eval, Exec, Compile, Globals)
+- ``arithmetic`` - numeric ops (AddQuery, SubQuery, MulQuery, PowQuery, AbsQuery, DivModQuery, RoundQuery)
+- ``comparison`` - ordering and identity (EqQuery, LtQuery, GtQuery, IsQuery)
+- ``logical`` - boolean ops (AndQuery, OrQuery, NotQuery, BoolQuery)
+- ``bitwise`` - bit ops (BitAndQuery, BitOrQuery, BitXorQuery, LShiftQuery)
+- ``cast`` - type construction / conversion (IntQuery, StrQuery, ListQuery, DictQuery, SetQuery)
+- ``repr`` - representations (ReprQuery, FormatQuery, BinQuery, HexQuery, OrdQuery, ChrQuery)
+- ``access`` - item and attribute access (GetItemQuery, LenQuery, GetAttrQuery, SetAttrCommand)
+- ``iteration`` - iterator sources (IterQuery, NextAction, EnumerateQuery, ZipQuery, ReversedQuery)
+- ``transform`` - stream-to-stream lenses (MapQuery, FilterQuery, SortedQuery, FlattenQuery)
+- ``reduction`` - stream-to-scalar folds (SumQuery, MinQuery, MaxQuery, AnyQuery, AllQuery, CollectQuery)
+- ``reflection`` - introspection (TypeQuery, IsInstanceQuery, CallableQuery, IdQuery, HashQuery)
+- ``sentinel`` - the EMPTY / INVALID predicates (IsEmptyQuery, IsInvalidQuery)
+- ``io`` - console / file effects (PrintCommand, InputAction, OpenAction)
+- ``dynamic`` - dynamic evaluation (EvalQuery, ExecQuery, CompileQuery, GlobalsQuery)
 
 Core is the pure Python builtins. The fabric interactions (writing through a
 Ref into the Context store, a database, stdio) live in their own fabric dirs -
-``nu2.context`` owns ``Set`` / ``Delete`` / ``AttrRef``, not core. The Forms
+``nu2.context`` owns ``SetCommand`` / ``DeleteCommand`` / ``AttrRef``, not core. The Forms
 layer (types, classes) and the Flows / Spans layer (Seq, Par, If, Retry,
 Transaction) are later passes with their own homes, not here.
 """
@@ -36,155 +36,190 @@ Transaction) are later passes with their own homes, not here.
 from __future__ import annotations
 
 from nu2.core.access import (
-    Contains,
-    DelAttr,
-    DelItem,
-    GetAttr,
-    GetItem,
-    HasAttr,
-    Len,
-    SetAttr,
-    SetItem,
-    Slice,
+    ContainsQuery,
+    DelAttrCommand,
+    DelItemCommand,
+    GetAttrQuery,
+    GetItemQuery,
+    HasAttrQuery,
+    LenQuery,
+    SetAttrCommand,
+    SetItemCommand,
+    SliceQuery,
 )
 from nu2.core.arithmetic import (
-    Abs,
-    Add,
-    Div,
-    DivMod,
-    FloorDiv,
-    Mod,
-    Mul,
-    Neg,
-    Pos,
-    Pow,
-    Round,
-    Sub,
+    AbsQuery,
+    AddQuery,
+    DivModQuery,
+    DivQuery,
+    FloorDivQuery,
+    ModQuery,
+    MulQuery,
+    NegQuery,
+    PosQuery,
+    PowQuery,
+    RoundQuery,
+    SubQuery,
 )
-from nu2.core.bitwise import BitAnd, BitNot, BitOr, BitXor, LShift, RShift
+from nu2.core.bitwise import (
+    BitAndQuery,
+    BitNotQuery,
+    BitOrQuery,
+    BitXorQuery,
+    LShiftQuery,
+    RShiftQuery,
+)
 from nu2.core.cast import (
-    ByteArray,
-    Bytes,
-    Complex,
-    Dict,
-    Float,
-    FrozenSet,
-    Int,
-    List,
-    Set,
-    Str,
-    Tuple,
+    ByteArrayQuery,
+    BytesQuery,
+    ComplexQuery,
+    DictQuery,
+    FloatQuery,
+    FrozenSetQuery,
+    IntQuery,
+    ListQuery,
+    SetQuery,
+    StrQuery,
+    TupleQuery,
 )
-from nu2.core.comparison import Eq, Ge, Gt, Is, Le, Lt, Ne
-from nu2.core.dynamic import Compile, Eval, Exec, Globals, Locals
-from nu2.core.io import Input, Open, Print
-from nu2.core.iteration import Enumerate, Iter, Next, Reversed, Zip
-from nu2.core.literal import Literal
-from nu2.core.logical import And, Bool, Not, Or
-from nu2.core.reduction import All, Any, Collect, Count, First, Last, Max, Min, Sum
-from nu2.core.reflection import Callable, Dir, Hash, Id, IsInstance, IsSubclass, Type, Vars
-from nu2.core.repr import Ascii, Bin, Chr, Format, Hex, Oct, Ord, Repr
-from nu2.core.sentinel import IsEmpty, IsInvalid, NotEmpty, NotInvalid
-from nu2.core.transform import Filter, Flatten, Map, Sorted, Unique
+from nu2.core.comparison import EqQuery, GeQuery, GtQuery, IsQuery, LeQuery, LtQuery, NeQuery
+from nu2.core.dynamic import CompileQuery, EvalQuery, ExecQuery, GlobalsQuery, LocalsQuery
+from nu2.core.io import InputAction, OpenAction, PrintCommand
+from nu2.core.iteration import EnumerateQuery, IterQuery, NextAction, ReversedQuery, ZipQuery
+from nu2.core.literal import LiteralQuery
+from nu2.core.logical import AndQuery, BoolQuery, NotQuery, OrQuery
+from nu2.core.reduction import (
+    AllQuery,
+    AnyQuery,
+    CollectQuery,
+    CountQuery,
+    FirstQuery,
+    LastQuery,
+    MaxQuery,
+    MinQuery,
+    SumQuery,
+)
+from nu2.core.reflection import (
+    CallableQuery,
+    DirQuery,
+    HashQuery,
+    IdQuery,
+    IsInstanceQuery,
+    IsSubclassQuery,
+    TypeQuery,
+    VarsQuery,
+)
+from nu2.core.repr import (
+    AsciiQuery,
+    BinQuery,
+    ChrQuery,
+    FormatQuery,
+    HexQuery,
+    OctQuery,
+    OrdQuery,
+    ReprQuery,
+)
+from nu2.core.sentinel import IsEmptyQuery, IsInvalidQuery, NotEmptyQuery, NotInvalidQuery
+from nu2.core.transform import FilterQuery, FlattenQuery, MapQuery, SortedQuery, UniqueQuery
 
 
 __all__ = [
-    "Abs",
-    "Add",
-    "All",
-    "And",
-    "Any",
-    "Ascii",
-    "Bin",
-    "BitAnd",
-    "BitNot",
-    "BitOr",
-    "BitXor",
-    "Bool",
-    "ByteArray",
-    "Bytes",
-    "Callable",
-    "Chr",
-    "Collect",
-    "Compile",
-    "Complex",
-    "Contains",
-    "Count",
-    "DelAttr",
-    "DelItem",
-    "Dict",
-    "Dir",
-    "Div",
-    "DivMod",
-    "Enumerate",
-    "Eq",
-    "Eval",
-    "Exec",
-    "Filter",
-    "First",
-    "Flatten",
-    "Float",
-    "FloorDiv",
-    "Format",
-    "FrozenSet",
-    "Ge",
-    "GetAttr",
-    "GetItem",
-    "Globals",
-    "Gt",
-    "HasAttr",
-    "Hash",
-    "Hex",
-    "Id",
-    "Input",
-    "Int",
-    "Is",
-    "IsEmpty",
-    "IsInstance",
-    "IsInvalid",
-    "IsSubclass",
-    "Iter",
-    "LShift",
-    "Last",
-    "Le",
-    "Len",
-    "List",
-    "Literal",
-    "Locals",
-    "Lt",
-    "Map",
-    "Max",
-    "Min",
-    "Mod",
-    "Mul",
-    "Ne",
-    "Neg",
-    "Next",
-    "Not",
-    "NotEmpty",
-    "NotInvalid",
-    "Oct",
-    "Open",
-    "Or",
-    "Ord",
-    "Pos",
-    "Pow",
-    "Print",
-    "RShift",
-    "Repr",
-    "Reversed",
-    "Round",
-    "Set",
-    "SetAttr",
-    "SetItem",
-    "Slice",
-    "Sorted",
-    "Str",
-    "Sub",
-    "Sum",
-    "Tuple",
-    "Type",
-    "Unique",
-    "Vars",
-    "Zip",
+    "AbsQuery",
+    "AddQuery",
+    "AllQuery",
+    "AndQuery",
+    "AnyQuery",
+    "AsciiQuery",
+    "BinQuery",
+    "BitAndQuery",
+    "BitNotQuery",
+    "BitOrQuery",
+    "BitXorQuery",
+    "BoolQuery",
+    "ByteArrayQuery",
+    "BytesQuery",
+    "CallableQuery",
+    "ChrQuery",
+    "CollectQuery",
+    "CompileQuery",
+    "ComplexQuery",
+    "ContainsQuery",
+    "CountQuery",
+    "DelAttrCommand",
+    "DelItemCommand",
+    "DictQuery",
+    "DirQuery",
+    "DivModQuery",
+    "DivQuery",
+    "EnumerateQuery",
+    "EqQuery",
+    "EvalQuery",
+    "ExecQuery",
+    "FilterQuery",
+    "FirstQuery",
+    "FlattenQuery",
+    "FloatQuery",
+    "FloorDivQuery",
+    "FormatQuery",
+    "FrozenSetQuery",
+    "GeQuery",
+    "GetAttrQuery",
+    "GetItemQuery",
+    "GlobalsQuery",
+    "GtQuery",
+    "HasAttrQuery",
+    "HashQuery",
+    "HexQuery",
+    "IdQuery",
+    "InputAction",
+    "IntQuery",
+    "IsEmptyQuery",
+    "IsInstanceQuery",
+    "IsInvalidQuery",
+    "IsQuery",
+    "IsSubclassQuery",
+    "IterQuery",
+    "LShiftQuery",
+    "LastQuery",
+    "LeQuery",
+    "LenQuery",
+    "ListQuery",
+    "LiteralQuery",
+    "LocalsQuery",
+    "LtQuery",
+    "MapQuery",
+    "MaxQuery",
+    "MinQuery",
+    "ModQuery",
+    "MulQuery",
+    "NeQuery",
+    "NegQuery",
+    "NextAction",
+    "NotEmptyQuery",
+    "NotInvalidQuery",
+    "NotQuery",
+    "OctQuery",
+    "OpenAction",
+    "OrQuery",
+    "OrdQuery",
+    "PosQuery",
+    "PowQuery",
+    "PrintCommand",
+    "RShiftQuery",
+    "ReprQuery",
+    "ReversedQuery",
+    "RoundQuery",
+    "SetAttrCommand",
+    "SetItemCommand",
+    "SetQuery",
+    "SliceQuery",
+    "SortedQuery",
+    "StrQuery",
+    "SubQuery",
+    "SumQuery",
+    "TupleQuery",
+    "TypeQuery",
+    "UniqueQuery",
+    "VarsQuery",
+    "ZipQuery",
 ]

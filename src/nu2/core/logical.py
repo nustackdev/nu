@@ -4,19 +4,19 @@ Maps Python's boolean operations onto Nu ScalarQueries. Pure compute; no
 Context effect of their own.
 
 Builtins / operators to cover (Python -> Nu):
-- ``and`` -> ``And``, ``or`` -> ``Or``, ``not`` -> ``Not``
-- ``bool`` (truthiness) -> ``Bool``
+- ``and`` -> ``AndQuery``, ``or`` -> ``OrQuery``, ``not`` -> ``NotQuery``
+- ``bool`` (truthiness) -> ``BoolQuery``
 
-Sorts: all ScalarQuery (Q). ``And`` / ``Or`` are commutative + associative +
-idempotent and variadic; ``Not`` and ``Bool`` are unary. ``logical`` owns
-``Bool``; ``cast`` does not define it.
+Sorts: all ScalarQuery (Q). ``AndQuery`` / ``OrQuery`` are commutative + associative +
+idempotent and variadic; ``NotQuery`` and ``BoolQuery`` are unary. ``logical`` owns
+``BoolQuery``; ``cast`` does not define it.
 
-And / Or semantics: Python's ``and`` / ``or`` short-circuit and return an
+AndQuery / OrQuery semantics: Python's ``and`` / ``or`` short-circuit and return an
 operand (not a bool). Nu does not mirror that: these atoms coerce to ``bool``
 and fold every operand eagerly,
-so a Nu ``And`` / ``Or`` always yields a plain boolean and sentinel
-propagation gets the chance to fire on any branch. ``And`` yields ``True``
-over no operands, ``Or`` yields ``False``.
+so a Nu ``AndQuery`` / ``OrQuery`` always yields a plain boolean and sentinel
+propagation gets the chance to fire on any branch. ``AndQuery`` yields ``True``
+over no operands, ``OrQuery`` yields ``False``.
 
 Sentinels: each operand is checked; an ``EMPTY`` or ``INVALID`` operand
 collapses the whole query to ``INVALID`` (per ``nu2.lang.sentinels``).
@@ -38,10 +38,10 @@ if TYPE_CHECKING:
 
     from nu2.lang.runtime import Runtime
 
-__all__ = ["And", "Bool", "Not", "Or"]
+__all__ = ["AndQuery", "BoolQuery", "NotQuery", "OrQuery"]
 
 
-class And(ScalarQuery):
+class AndQuery(ScalarQuery):
     """The conjunction of its boolean children. Yields ``True`` if empty."""
 
     commutative = Declared(value=True)
@@ -73,7 +73,7 @@ class And(ScalarQuery):
         return athunk
 
 
-class Or(ScalarQuery):
+class OrQuery(ScalarQuery):
     """The disjunction of its boolean children. Yields ``False`` if empty."""
 
     commutative = Declared(value=True)
@@ -105,7 +105,7 @@ class Or(ScalarQuery):
         return athunk
 
 
-class Not(ScalarQuery):
+class NotQuery(ScalarQuery):
     """The negation of its one boolean child."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -131,7 +131,7 @@ class Not(ScalarQuery):
         return athunk
 
 
-class Bool(ScalarQuery):
+class BoolQuery(ScalarQuery):
     """The truthiness of its one child as a plain ``bool``."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102

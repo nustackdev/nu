@@ -5,8 +5,8 @@ value at its address, ``ServiceRef`` the bound service. What the dual role does
 *not* cover is asking whether an address is bound at all, since an unbound read
 yields EMPTY, which a bound EMPTY would alias. These queries answer that:
 
-- ``AttrExists`` - is the ``AttrRef``'s address bound in ``ctx.attrs``?
-- ``ServiceExists`` - is the ``ServiceRef``'s service type bound in ``ctx``?
+- ``AttrExistsQuery`` - is the ``AttrRef``'s address bound in ``ctx.attrs``?
+- ``ServiceExistsQuery`` - is the ``ServiceRef``'s service type bound in ``ctx``?
 
 Each holds its Ref in a read slot, so the effect synthesis binds it as a READ
 on that Ref's fabric. The query needs the Ref's *address* (not its value), so
@@ -27,10 +27,10 @@ if TYPE_CHECKING:
 
     from nu2.lang.runtime import Runtime
 
-__all__ = ["AttrExists", "ServiceExists"]
+__all__ = ["AttrExistsQuery", "ServiceExistsQuery"]
 
 
-class AttrExists(ScalarQuery):
+class AttrExistsQuery(ScalarQuery):
     """Yields whether the slot-0 ``AttrRef``'s address is bound in ``ctx.attrs``."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -52,7 +52,7 @@ class AttrExists(ScalarQuery):
         return athunk
 
 
-class ServiceExists(ScalarQuery):
+class ServiceExistsQuery(ScalarQuery):
     """Yields whether the slot-0 ``ServiceRef``'s service type is bound."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102

@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
     from nu2.lang.runtime import Runtime
 
-    from .queries import AttrExists, ServiceExists
+    from .queries import AttrExistsQuery, ServiceExistsQuery
 
 __all__ = ["AttrRef", "ServiceRef"]
 
@@ -100,11 +100,11 @@ class AttrRef(_ContextRef):
         if address in rt.ctx.attrs:
             del rt.ctx.attrs[address]
 
-    def exists(self) -> AttrExists:
+    def exists(self) -> AttrExistsQuery:
         """A Query yielding whether this Ref's address is bound in ``ctx.attrs``."""
-        from .queries import AttrExists
+        from .queries import AttrExistsQuery
 
-        return AttrExists(self)
+        return AttrExistsQuery(self)
 
 
 class ServiceRef(_ContextRef):
@@ -133,8 +133,8 @@ class ServiceRef(_ContextRef):
 
         return athunk
 
-    def exists(self) -> ServiceExists:
+    def exists(self) -> ServiceExistsQuery:
         """A Query yielding whether this Ref's service type is bound."""
-        from .queries import ServiceExists
+        from .queries import ServiceExistsQuery
 
-        return ServiceExists(self)
+        return ServiceExistsQuery(self)

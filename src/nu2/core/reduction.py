@@ -6,12 +6,12 @@ the cardinality matrix by naming the fold). Pure compute over the source.
 
 Builtins covered (Python -> Nu):
 
-- ``sum`` -> ``Sum``, ``min`` -> ``Min``, ``max`` -> ``Max``
-- ``any`` -> ``Any``, ``all`` -> ``All``
-- ``len`` over a stream -> ``Count``
+- ``sum`` -> ``SumQuery``, ``min`` -> ``MinQuery``, ``max`` -> ``MaxQuery``
+- ``any`` -> ``AnyQuery``, ``all`` -> ``AllQuery``
+- ``len`` over a stream -> ``CountQuery``
 
 Plus the structural folds Python reaches for without a single builtin name -
-``First`` / ``Last`` / ``Collect`` - the native ways to take the head, the tail,
+``FirstQuery`` / ``LastQuery`` / ``CollectQuery`` - the native ways to take the head, the tail,
 or the whole drain of a stream.
 
 ``functools.reduce`` is stdlib, not a bare builtin, so a generic ``Reduce`` is
@@ -47,19 +47,19 @@ if TYPE_CHECKING:
     from nu2.lang.runtime import Runtime
 
 __all__ = [
-    "All",
-    "Any",
-    "Collect",
-    "Count",
-    "First",
-    "Last",
-    "Max",
-    "Min",
-    "Sum",
+    "AllQuery",
+    "AnyQuery",
+    "CollectQuery",
+    "CountQuery",
+    "FirstQuery",
+    "LastQuery",
+    "MaxQuery",
+    "MinQuery",
+    "SumQuery",
 ]
 
 
-class Sum(Reduction):
+class SumQuery(Reduction):
     """The sum of every item in its stream child (``sum``)."""
 
     commutative = Declared(value=True)
@@ -92,7 +92,7 @@ class Sum(Reduction):
         return athunk
 
 
-class Min(Reduction):
+class MinQuery(Reduction):
     """The smallest item in its stream child (``min``); EMPTY if empty."""
 
     commutative = Declared(value=True)
@@ -126,7 +126,7 @@ class Min(Reduction):
         return athunk
 
 
-class Max(Reduction):
+class MaxQuery(Reduction):
     """The largest item in its stream child (``max``); EMPTY if empty."""
 
     commutative = Declared(value=True)
@@ -160,7 +160,7 @@ class Max(Reduction):
         return athunk
 
 
-class Any(Reduction):
+class AnyQuery(Reduction):
     """True if any item in its stream child is truthy (``any``)."""
 
     commutative = Declared(value=True)
@@ -194,7 +194,7 @@ class Any(Reduction):
         return athunk
 
 
-class All(Reduction):
+class AllQuery(Reduction):
     """True if every item in its stream child is truthy (``all``)."""
 
     commutative = Declared(value=True)
@@ -228,7 +228,7 @@ class All(Reduction):
         return athunk
 
 
-class Count(Reduction):
+class CountQuery(Reduction):
     """The number of items in its stream child (``len`` over a stream)."""
 
     commutative = Declared(value=True)
@@ -261,7 +261,7 @@ class Count(Reduction):
         return athunk
 
 
-class First(Reduction):
+class FirstQuery(Reduction):
     """The first item of its stream child; EMPTY if the stream is empty."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -289,7 +289,7 @@ class First(Reduction):
         return athunk
 
 
-class Last(Reduction):
+class LastQuery(Reduction):
     """The last item of its stream child; EMPTY if the stream is empty."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -319,7 +319,7 @@ class Last(Reduction):
         return athunk
 
 
-class Collect(Reduction):
+class CollectQuery(Reduction):
     """Drain its stream child into one list value."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102

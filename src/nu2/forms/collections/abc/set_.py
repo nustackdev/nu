@@ -1,10 +1,10 @@
-"""Set collection — bases + mutations.
+"""SetQuery collection — bases + mutations.
 
 SetLikeForm = Collection + union/intersection/difference/symmetric_difference/issubset/issuperset/isdisjoint
     + copy + __or__/__and__/__sub__/__xor__
 MutableSetForm = SetLike + add/remove/discard/pop/clear/update/*_update + __ior__/__iand__/__isub__/__ixor__
 
-Follows Python's collections.abc.Set / MutableSet pattern.
+Follows Python's collections.abc.SetQuery / MutableSet pattern.
 
 Type Parameters:
     CollectionT: Native Python collection type (set[int], frozenset[str], etc.)
@@ -36,7 +36,7 @@ __all__ = [
 class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     CollectionForm[ElementT, CollectionResultT, ElementResultT],
 ):
-    """Base for set values — like collections.abc.Set.
+    """Base for set values — like collections.abc.SetQuery.
 
     Subclasses must override:
         _wrap_set_result(operand): Wrap set interaction result.
@@ -53,19 +53,19 @@ class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         raise NotImplementedError()
 
     def union(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set union."""
+        """SetQuery union."""
         from .set_interactions import UnionQuery
 
         return cast("CollectionResultT", self._wrap_set_result(UnionQuery(self, other)))
 
     def intersection(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set intersection."""
+        """SetQuery intersection."""
         from .set_interactions import IntersectionQuery
 
         return cast("CollectionResultT", self._wrap_set_result(IntersectionQuery(self, other)))
 
     def difference(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set difference."""
+        """SetQuery difference."""
         from .set_interactions import DifferenceQuery
 
         return cast("CollectionResultT", self._wrap_set_result(DifferenceQuery(self, other)))
@@ -73,7 +73,7 @@ class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     def symmetric_difference(
         self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> CollectionResultT:
-        """Set symmetric difference."""
+        """SetQuery symmetric difference."""
         from .set_interactions import SymmetricDifferenceQuery
 
         return cast(
@@ -111,25 +111,25 @@ class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return cast("CollectionResultT", self._wrap_set_result(CopyQuery(self)))
 
     def __or__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set union operator: self | other. Returns a new set."""
+        """SetQuery union operator: self | other. Returns a new set."""
         from .set_interactions import SetOrQuery
 
         return cast("CollectionResultT", self._wrap_set_result(SetOrQuery(self, other)))
 
     def __and__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set intersection operator: self & other. Returns a new set."""
+        """SetQuery intersection operator: self & other. Returns a new set."""
         from .set_interactions import SetAndQuery
 
         return cast("CollectionResultT", self._wrap_set_result(SetAndQuery(self, other)))
 
     def __sub__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set difference operator: self - other. Returns a new set."""
+        """SetQuery difference operator: self - other. Returns a new set."""
         from .set_interactions import SetSubQuery
 
         return cast("CollectionResultT", self._wrap_set_result(SetSubQuery(self, other)))
 
     def __xor__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set symmetric difference operator: self ^ other. Returns a new set."""
+        """SetQuery symmetric difference operator: self ^ other. Returns a new set."""
         from .set_interactions import SetXorQuery
 
         return cast("CollectionResultT", self._wrap_set_result(SetXorQuery(self, other)))
@@ -148,7 +148,7 @@ class MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     """
 
     def add(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
-        """Add element to set. Mutates the set; returns nothing."""
+        """AddQuery element to set. Mutates the set; returns nothing."""
         from .set_interactions import AddCommand
 
         return AddCommand(self, value)
@@ -178,7 +178,7 @@ class MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return ClearCommand(self)
 
     def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
-        """Add all elements from other. Mutates the set; returns nothing."""
+        """AddQuery all elements from other. Mutates the set; returns nothing."""
         from .set_interactions import SetUpdateCommand
 
         return SetUpdateCommand(self, other)

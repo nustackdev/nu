@@ -52,19 +52,19 @@ class DictKeysForm[K](
 
     def to_list(self) -> ListForm[K]:
         """Materialize keys view into a list."""
-        from nu2.core import List
+        from nu2.core import ListQuery
 
         from .list_ import ListForm
 
-        return ListForm(List(self))
+        return ListForm(ListQuery(self))
 
     def to_set(self) -> SetForm[K]:
         """Materialize keys view into a set."""
-        from nu2.core import Set
+        from nu2.core import SetQuery
 
         from .set_ import SetForm
 
-        return SetForm(Set(self))
+        return SetForm(SetQuery(self))
 
 
 class DictValuesForm[V](
@@ -87,19 +87,19 @@ class DictValuesForm[V](
 
     def to_list(self) -> ListForm[V]:
         """Materialize values view into a list."""
-        from nu2.core import List
+        from nu2.core import ListQuery
 
         from .list_ import ListForm
 
-        return ListForm(List(self))
+        return ListForm(ListQuery(self))
 
     def to_set(self) -> SetForm[V]:
         """Materialize values view into a set."""
-        from nu2.core import Set
+        from nu2.core import SetQuery
 
         from .set_ import SetForm
 
-        return SetForm(Set(self))
+        return SetForm(SetQuery(self))
 
 
 class DictItemsForm[K, V](
@@ -128,16 +128,16 @@ class DictItemsForm[K, V](
 
     def to_list(self) -> ListForm[tuple[K, V]]:
         """Materialize items view into a list."""
-        from nu2.core import List
+        from nu2.core import ListQuery
 
         from .list_ import ListForm
 
-        return ListForm(List(self))
+        return ListForm(ListQuery(self))
 
     def to_set(self) -> SetForm[tuple[K, V]]:
         """Materialize items view into a set."""
-        from nu2.core import Set
+        from nu2.core import SetQuery
 
         from .set_ import SetForm
 
-        return SetForm(Set(self))
+        return SetForm(SetQuery(self))

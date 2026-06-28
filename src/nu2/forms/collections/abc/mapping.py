@@ -71,7 +71,7 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
     def __getitem__(self, key: Arg[KeyT]) -> ValueResultT:
         """Key → value via At."""
-        from nu2.core import GetItem as At
+        from nu2.core import GetItemQuery as At
 
         return cast("ValueResultT", self._wrap_value_result(At(self, key)))
 
@@ -132,7 +132,7 @@ class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
     """
 
     def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> Any:  # noqa: ANN401
-        """Set value at key. Mutating Command; returns nothing."""
+        """SetQuery value at key. Mutating Command; returns nothing."""
         from .mapping_interactions import SetItemCommand
 
         return SetItemCommand(self, key, value)

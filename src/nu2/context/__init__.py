@@ -19,9 +19,16 @@ Nothing in ``nu2.core`` touches a fabric - core is the pure Python builtins.
 
 from __future__ import annotations
 
-from .ops import Delete, Set
-from .queries import AttrExists, ServiceExists
+from .ops import DeleteCommand, SetCommand
+from .queries import AttrExistsQuery, ServiceExistsQuery
 from .refs import AttrRef, ServiceRef
 
 
-__all__ = ["AttrExists", "AttrRef", "Delete", "ServiceExists", "ServiceRef", "Set"]
+__all__ = [
+    "AttrExistsQuery",
+    "AttrRef",
+    "DeleteCommand",
+    "ServiceExistsQuery",
+    "ServiceRef",
+    "SetCommand",
+]

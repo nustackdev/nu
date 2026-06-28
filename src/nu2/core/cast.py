@@ -8,17 +8,17 @@ The split follows one rule - what the constructor consumes:
 
 - scalar casts take a scalar operand and compute a scalar, so they are pure
   ScalarQueries with ``compile`` / ``acompile`` thunks (sentinel-aware, like
-  ``arithmetic``): ``int`` -> ``Int``, ``float`` -> ``Float``,
-  ``complex`` -> ``Complex``, ``str`` -> ``Str``, ``bytes`` -> ``Bytes``,
-  ``bytearray`` -> ``ByteArray``. ``Int``, ``Bytes`` and ``ByteArray`` take an
+  ``arithmetic``): ``int`` -> ``IntQuery``, ``float`` -> ``FloatQuery``,
+  ``complex`` -> ``ComplexQuery``, ``str`` -> ``StrQuery``, ``bytes`` -> ``BytesQuery``,
+  ``bytearray`` -> ``ByteArrayQuery``. ``IntQuery``, ``BytesQuery`` and ``ByteArrayQuery`` take an
   optional second operand (base / encoding) where Python does, branched on
   child count like ``arithmetic.Round``.
 - collection constructors consume an iterable child and fold it to one
   container (Scalar over Stream, a Reduction in spirit), so they need the
   stream/fabric runtime that is not wired yet. They are declared
   structurally - ScalarQuery subclasses with no ``compile`` - matching v1, and
-  evaluate once the fabric lands: ``list`` -> ``List``, ``tuple`` -> ``Tuple``,
-  ``set`` -> ``Set``, ``frozenset`` -> ``FrozenSet``, ``dict`` -> ``Dict``.
+  evaluate once the fabric lands: ``list`` -> ``ListQuery``, ``tuple`` -> ``TupleQuery``,
+  ``set`` -> ``SetQuery``, ``frozenset`` -> ``FrozenSetQuery``, ``dict`` -> ``DictQuery``.
 
 ``Bool`` truthiness lives in ``logical``; it is intentionally not defined here.
 
@@ -39,24 +39,24 @@ if TYPE_CHECKING:
     from nu2.lang.runtime import Runtime
 
 __all__ = [
-    "ByteArray",
-    "Bytes",
-    "Complex",
-    "Dict",
-    "Float",
-    "FrozenSet",
-    "Int",
-    "List",
-    "Set",
-    "Str",
-    "Tuple",
+    "ByteArrayQuery",
+    "BytesQuery",
+    "ComplexQuery",
+    "DictQuery",
+    "FloatQuery",
+    "FrozenSetQuery",
+    "IntQuery",
+    "ListQuery",
+    "SetQuery",
+    "StrQuery",
+    "TupleQuery",
 ]
 
 
 # --- scalar casts: evaluable ScalarQueries -------------------------------
 
 
-class Int(ScalarQuery):
+class IntQuery(ScalarQuery):
     """The operand cast to ``int``; with a second child, parsed in that base."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -110,7 +110,7 @@ class Int(ScalarQuery):
         return athunk
 
 
-class Float(ScalarQuery):
+class FloatQuery(ScalarQuery):
     """The operand cast to ``float``."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -136,7 +136,7 @@ class Float(ScalarQuery):
         return athunk
 
 
-class Complex(ScalarQuery):
+class ComplexQuery(ScalarQuery):
     """The operand cast to ``complex``; with a second child, the imaginary part."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -190,7 +190,7 @@ class Complex(ScalarQuery):
         return athunk
 
 
-class Str(ScalarQuery):
+class StrQuery(ScalarQuery):
     """The operand cast to ``str``."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -216,7 +216,7 @@ class Str(ScalarQuery):
         return athunk
 
 
-class Bytes(ScalarQuery):
+class BytesQuery(ScalarQuery):
     """The operand cast to ``bytes``; with a second child, encoded in it."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -270,7 +270,7 @@ class Bytes(ScalarQuery):
         return athunk
 
 
-class ByteArray(ScalarQuery):
+class ByteArrayQuery(ScalarQuery):
     """The operand cast to ``bytearray``; with a second child, encoded in it."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -332,7 +332,7 @@ class ByteArray(ScalarQuery):
 # scalar/stream law is satisfied.
 
 
-class List(ScalarQuery):
+class ListQuery(ScalarQuery):
     """The iterable child collected into a ``list``."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -358,7 +358,7 @@ class List(ScalarQuery):
         return athunk
 
 
-class Tuple(ScalarQuery):
+class TupleQuery(ScalarQuery):
     """The iterable child collected into a ``tuple``."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -384,7 +384,7 @@ class Tuple(ScalarQuery):
         return athunk
 
 
-class Set(ScalarQuery):
+class SetQuery(ScalarQuery):
     """The iterable child collected into a ``set``."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -410,7 +410,7 @@ class Set(ScalarQuery):
         return athunk
 
 
-class FrozenSet(ScalarQuery):
+class FrozenSetQuery(ScalarQuery):
     """The iterable child collected into a ``frozenset``."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -436,7 +436,7 @@ class FrozenSet(ScalarQuery):
         return athunk
 
 
-class Dict(ScalarQuery):
+class DictQuery(ScalarQuery):
     """The key/value pairs of the iterable child collected into a ``dict``."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102

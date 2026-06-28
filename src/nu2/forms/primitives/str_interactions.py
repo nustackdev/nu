@@ -1080,7 +1080,7 @@ class EncodeQuery(ScalarQuery):
             if not isinstance(left, str):
                 return INVALID
             try:
-                return left.encode(str(right) if right else "utf-8")
+                return left.encode(right)
             except (UnicodeEncodeError, LookupError):
                 return INVALID
 
@@ -1099,7 +1099,7 @@ class EncodeQuery(ScalarQuery):
             if not isinstance(left, str):
                 return INVALID
             try:
-                return left.encode(str(right) if right else "utf-8")
+                return left.encode(right)
             except (UnicodeEncodeError, LookupError):
                 return INVALID
 
@@ -1127,7 +1127,7 @@ class JoinQuery(ScalarQuery):
             if not isinstance(left, str):
                 return INVALID
             try:
-                return left.join(str(x) for x in right)
+                return left.join(right)
             except TypeError:
                 return INVALID
 
@@ -1146,7 +1146,7 @@ class JoinQuery(ScalarQuery):
             if not isinstance(left, str):
                 return INVALID
             try:
-                return left.join(str(x) for x in right)
+                return left.join(right)
             except TypeError:
                 return INVALID
 
@@ -1808,7 +1808,7 @@ class RemoveSuffixQuery(ScalarQuery):
 
 
 class TranslateQuery(ScalarQuery):
-    """Map characters through a table: str.translate(table)."""
+    """MapQuery characters through a table: str.translate(table)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, table_t = children

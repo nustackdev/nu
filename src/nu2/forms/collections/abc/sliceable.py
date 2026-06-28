@@ -27,6 +27,6 @@ class SliceableForm[ResultT](Form):
         self, start: IntArg | None, stop: IntArg | None, step: IntArg | None = None
     ) -> ResultT:
         """Get slice of this value."""
-        from nu2.core import Slice
+        from nu2.core import SliceQuery
 
-        return cast("ResultT", self._wrap_sliceable_result(Slice(self, start, stop, step)))
+        return cast("ResultT", self._wrap_sliceable_result(SliceQuery(self, start, stop, step)))

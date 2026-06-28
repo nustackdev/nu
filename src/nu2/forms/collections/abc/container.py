@@ -32,7 +32,7 @@ class ContainerForm(Form):
 
     def contains(self, item: object) -> BoolForm:
         """Check if item is in this collection. Returns a BoolForm tree."""
-        from nu2.core import Contains
+        from nu2.core import ContainsQuery
         from nu2.forms.primitives import BoolForm
 
-        return BoolForm(Contains(self, item))
+        return BoolForm(ContainsQuery(self, item))

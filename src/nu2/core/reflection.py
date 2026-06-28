@@ -4,13 +4,13 @@ Maps Python's builtins that inspect a value's type, identity, or shape onto Nu
 ScalarQueries. Pure compute; no Context effect of their own.
 
 Builtins covered (Python -> Nu):
-- type / class: ``type`` -> ``Type``, ``isinstance`` -> ``IsInstance``,
-  ``issubclass`` -> ``IsSubclass``, ``callable`` -> ``Callable``
-- identity / value: ``id`` -> ``Id``, ``hash`` -> ``Hash``
-- namespace: ``dir`` -> ``Dir``, ``vars`` -> ``Vars``
+- type / class: ``type`` -> ``TypeQuery``, ``isinstance`` -> ``IsInstanceQuery``,
+  ``issubclass`` -> ``IsSubclassQuery``, ``callable`` -> ``CallableQuery``
+- identity / value: ``id`` -> ``IdQuery``, ``hash`` -> ``HashQuery``
+- namespace: ``dir`` -> ``DirQuery``, ``vars`` -> ``VarsQuery``
 
-Sorts: all ScalarQuery (Q). ``Type`` / ``Callable`` / ``Id`` / ``Hash`` /
-``Dir`` / ``Vars`` are unary; ``IsInstance`` / ``IsSubclass`` are binary (value,
+Sorts: all ScalarQuery (Q). ``TypeQuery`` / ``CallableQuery`` / ``IdQuery`` / ``HashQuery`` /
+``DirQuery`` / ``VarsQuery`` are unary; ``IsInstanceQuery`` / ``IsSubclassQuery`` are binary (value,
 class). ``Dir`` / ``Vars`` yield a collection but are scalar builders (one list /
 dict), not streams.
 
@@ -42,18 +42,18 @@ if TYPE_CHECKING:
     from nu2.lang.runtime import Runtime
 
 __all__ = [
-    "Callable",
-    "Dir",
-    "Hash",
-    "Id",
-    "IsInstance",
-    "IsSubclass",
-    "Type",
-    "Vars",
+    "CallableQuery",
+    "DirQuery",
+    "HashQuery",
+    "IdQuery",
+    "IsInstanceQuery",
+    "IsSubclassQuery",
+    "TypeQuery",
+    "VarsQuery",
 ]
 
 
-class Type(ScalarQuery):
+class TypeQuery(ScalarQuery):
     """The type of its one child (``type``)."""
 
     def compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
@@ -79,7 +79,7 @@ class Type(ScalarQuery):
         return athunk
 
 
-class IsInstance(ScalarQuery):
+class IsInstanceQuery(ScalarQuery):
     """Whether the first child is an instance of the second (``isinstance``)."""
 
     def compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
@@ -111,7 +111,7 @@ class IsInstance(ScalarQuery):
         return athunk
 
 
-class IsSubclass(ScalarQuery):
+class IsSubclassQuery(ScalarQuery):
     """Whether the first child is a subclass of the second (``issubclass``)."""
 
     def compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
@@ -143,7 +143,7 @@ class IsSubclass(ScalarQuery):
         return athunk
 
 
-class Callable(ScalarQuery):
+class CallableQuery(ScalarQuery):
     """Whether its one child appears callable (``callable``)."""
 
     def compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
@@ -169,7 +169,7 @@ class Callable(ScalarQuery):
         return athunk
 
 
-class Id(ScalarQuery):
+class IdQuery(ScalarQuery):
     """The identity of its one child (``id``)."""
 
     def compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
@@ -195,7 +195,7 @@ class Id(ScalarQuery):
         return athunk
 
 
-class Hash(ScalarQuery):
+class HashQuery(ScalarQuery):
     """The hash of its one child (``hash``)."""
 
     def compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
@@ -221,7 +221,7 @@ class Hash(ScalarQuery):
         return athunk
 
 
-class Dir(ScalarQuery):
+class DirQuery(ScalarQuery):
     """The sorted attribute-name list of its one child (``dir``)."""
 
     def compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
@@ -247,7 +247,7 @@ class Dir(ScalarQuery):
         return athunk
 
 
-class Vars(ScalarQuery):
+class VarsQuery(ScalarQuery):
     """The ``__dict__`` of its one child (``vars``)."""
 
     def compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102

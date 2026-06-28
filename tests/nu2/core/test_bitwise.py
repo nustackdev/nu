@@ -9,8 +9,15 @@ from __future__ import annotations
 
 import asyncio
 
-from nu2.core.bitwise import BitAnd, BitNot, BitOr, BitXor, LShift, RShift
-from nu2.core.literal import Literal
+from nu2.core.bitwise import (
+    BitAndQuery,
+    BitNotQuery,
+    BitOrQuery,
+    BitXorQuery,
+    LShiftQuery,
+    RShiftQuery,
+)
+from nu2.core.literal import LiteralQuery
 from nu2.lang import EMPTY, INVALID, Attr, compile
 from nu2.lang.helpers import aeval, eval
 
@@ -29,15 +36,15 @@ async def _aeval(term: object) -> object:
 
 
 def test_logical_bitops_declare_their_algebra():
-    for atom in (BitAnd, BitOr, BitXor):
-        program = compile(atom(Literal(1), Literal(2)))
+    for atom in (BitAndQuery, BitOrQuery, BitXorQuery):
+        program = compile(atom(LiteralQuery(1), LiteralQuery(2)))
         assert program.attr(program.root, Attr.COMMUTATIVE) is True
         assert program.attr(program.root, Attr.ASSOCIATIVE) is True
 
 
 def test_shifts_declare_no_algebra():
-    for atom in (LShift, RShift):
-        program = compile(atom(Literal(1), Literal(2)))
+    for atom in (LShiftQuery, RShiftQuery):
+        program = compile(atom(LiteralQuery(1), LiteralQuery(2)))
         assert program.attr(program.root, Attr.COMMUTATIVE) is False
         assert program.attr(program.root, Attr.ASSOCIATIVE) is False
 
@@ -46,7 +53,7 @@ def test_shifts_declare_no_algebra():
 
 
 def test_bitwise_is_pure():
-    program = compile(BitAnd(Literal(6), Literal(3)))
+    program = compile(BitAndQuery(LiteralQuery(6), LiteralQuery(3)))
     assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset()
 
 
@@ -54,53 +61,60 @@ def test_bitwise_is_pure():
 
 
 def test_bitand_folds_operands():
-    assert _eval(BitAnd(Literal(0b110), Literal(0b011))) == 0b010
-    assert _eval(BitAnd(Literal(0b111), Literal(0b110), Literal(0b100))) == 0b100
+    assert _eval(BitAndQuery(LiteralQuery(0b110), LiteralQuery(0b011))) == 0b010
+    assert (
+        _eval(BitAndQuery(LiteralQuery(0b111), LiteralQuery(0b110), LiteralQuery(0b100))) == 0b100
+    )
     # identity is -1 (all bits), so a lone operand passes through.
-    assert _eval(BitAnd(Literal(5))) == 5
+    assert _eval(BitAndQuery(LiteralQuery(5))) == 5
 
 
 def test_bitor_folds_operands():
-    assert _eval(BitOr(Literal(0b100), Literal(0b001))) == 0b101
-    assert _eval(BitOr(Literal(0b001), Literal(0b010), Literal(0b100))) == 0b111
-    assert _eval(BitOr(Literal(5))) == 5
+    assert _eval(BitOrQuery(LiteralQuery(0b100), LiteralQuery(0b001))) == 0b101
+    assert _eval(BitOrQuery(LiteralQuery(0b001), LiteralQuery(0b010), LiteralQuery(0b100))) == 0b111
+    assert _eval(BitOrQuery(LiteralQuery(5))) == 5
 
 
 def test_bitxor_folds_operands():
-    assert _eval(BitXor(Literal(0b110), Literal(0b011))) == 0b101
-    assert _eval(BitXor(Literal(0b111), Literal(0b001), Literal(0b010))) == 0b100
-    assert _eval(BitXor(Literal(5))) == 5
+    assert _eval(BitXorQuery(LiteralQuery(0b110), LiteralQuery(0b011))) == 0b101
+    assert (
+        _eval(BitXorQuery(LiteralQuery(0b111), LiteralQuery(0b001), LiteralQuery(0b010))) == 0b100
+    )
+    assert _eval(BitXorQuery(LiteralQuery(5))) == 5
 
 
 def test_bitnot_negates_bits():
-    assert _eval(BitNot(Literal(0))) == -1
-    assert _eval(BitNot(Literal(5))) == -6
+    assert _eval(BitNotQuery(LiteralQuery(0))) == -1
+    assert _eval(BitNotQuery(LiteralQuery(5))) == -6
 
 
 def test_shifts_move_bits():
-    assert _eval(LShift(Literal(1), Literal(4))) == 16
-    assert _eval(RShift(Literal(16), Literal(2))) == 4
+    assert _eval(LShiftQuery(LiteralQuery(1), LiteralQuery(4))) == 16
+    assert _eval(RShiftQuery(LiteralQuery(16), LiteralQuery(2))) == 4
 
 
 def test_nested_bitwise():
-    program = BitOr(BitAnd(Literal(0b110), Literal(0b011)), LShift(Literal(1), Literal(2)))
+    program = BitOrQuery(
+        BitAndQuery(LiteralQuery(0b110), LiteralQuery(0b011)),
+        LShiftQuery(LiteralQuery(1), LiteralQuery(2)),
+    )
     assert _eval(program) == 0b110
 
 
 def test_aeval_mirrors_eval():
-    assert asyncio.run(_aeval(BitAnd(Literal(0b110), Literal(0b011)))) == 0b010
-    assert asyncio.run(_aeval(BitNot(Literal(0)))) == -1
-    assert asyncio.run(_aeval(LShift(Literal(1), Literal(4)))) == 16
+    assert asyncio.run(_aeval(BitAndQuery(LiteralQuery(0b110), LiteralQuery(0b011)))) == 0b010
+    assert asyncio.run(_aeval(BitNotQuery(LiteralQuery(0)))) == -1
+    assert asyncio.run(_aeval(LShiftQuery(LiteralQuery(1), LiteralQuery(4)))) == 16
 
 
 # --- sentinels -----------------------------------------------------------
 
 
 def test_a_sentinel_operand_collapses_to_invalid():
-    assert _eval(BitAnd(Literal(EMPTY), Literal(1))) is INVALID
-    assert _eval(BitOr(Literal(1), Literal(INVALID))) is INVALID
-    assert _eval(BitXor(Literal(EMPTY), Literal(1))) is INVALID
-    assert _eval(BitNot(Literal(EMPTY))) is INVALID
-    assert _eval(LShift(Literal(EMPTY), Literal(1))) is INVALID
-    assert _eval(RShift(Literal(1), Literal(INVALID))) is INVALID
-    assert asyncio.run(_aeval(BitAnd(Literal(1), Literal(EMPTY)))) is INVALID
+    assert _eval(BitAndQuery(LiteralQuery(EMPTY), LiteralQuery(1))) is INVALID
+    assert _eval(BitOrQuery(LiteralQuery(1), LiteralQuery(INVALID))) is INVALID
+    assert _eval(BitXorQuery(LiteralQuery(EMPTY), LiteralQuery(1))) is INVALID
+    assert _eval(BitNotQuery(LiteralQuery(EMPTY))) is INVALID
+    assert _eval(LShiftQuery(LiteralQuery(EMPTY), LiteralQuery(1))) is INVALID
+    assert _eval(RShiftQuery(LiteralQuery(1), LiteralQuery(INVALID))) is INVALID
+    assert asyncio.run(_aeval(BitAndQuery(LiteralQuery(1), LiteralQuery(EMPTY)))) is INVALID

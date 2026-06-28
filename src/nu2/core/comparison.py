@@ -4,11 +4,11 @@ Maps Python's comparison operators onto Nu ScalarQueries yielding a bool. Pure
 compute over their operands; no Context effect of their own.
 
 Operators to cover (Python -> Nu):
-- ``==`` -> ``Eq``, ``!=`` -> ``Ne``
-- ``<`` -> ``Lt``, ``>`` -> ``Gt``, ``<=`` -> ``Le``, ``>=`` -> ``Ge``
-- ``is`` / ``is not`` -> ``Is`` (identity)
+- ``==`` -> ``EqQuery``, ``!=`` -> ``NeQuery``
+- ``<`` -> ``LtQuery``, ``>`` -> ``GtQuery``, ``<=`` -> ``LeQuery``, ``>=`` -> ``GeQuery``
+- ``is`` / ``is not`` -> ``IsQuery`` (identity)
 
-Sorts: all ScalarQuery (Q). ``Eq`` / ``Ne`` / ``Is`` are commutative; the
+Sorts: all ScalarQuery (Q). ``EqQuery`` / ``NeQuery`` / ``IsQuery`` are commutative; the
 orderings are not. Membership (``in``) lives in ``access`` as ``Contains``.
 
 Each atom is binary and defines ``compile`` (sync hot path) and ``acompile``
@@ -35,10 +35,10 @@ if TYPE_CHECKING:
 
     from nu2.lang.runtime import Runtime
 
-__all__ = ["Eq", "Ge", "Gt", "Is", "Le", "Lt", "Ne"]
+__all__ = ["EqQuery", "GeQuery", "GtQuery", "IsQuery", "LeQuery", "LtQuery", "NeQuery"]
 
 
-class Eq(ScalarQuery):
+class EqQuery(ScalarQuery):
     """Whether its two children are equal (``==``)."""
 
     commutative = Declared(value=True)
@@ -72,7 +72,7 @@ class Eq(ScalarQuery):
         return athunk
 
 
-class Ne(ScalarQuery):
+class NeQuery(ScalarQuery):
     """Whether its two children are unequal (``!=``)."""
 
     commutative = Declared(value=True)
@@ -106,7 +106,7 @@ class Ne(ScalarQuery):
         return athunk
 
 
-class Lt(ScalarQuery):
+class LtQuery(ScalarQuery):
     """Whether the first child is less than the second (``<``)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -138,7 +138,7 @@ class Lt(ScalarQuery):
         return athunk
 
 
-class Gt(ScalarQuery):
+class GtQuery(ScalarQuery):
     """Whether the first child is greater than the second (``>``)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -170,7 +170,7 @@ class Gt(ScalarQuery):
         return athunk
 
 
-class Le(ScalarQuery):
+class LeQuery(ScalarQuery):
     """Whether the first child is less than or equal to the second (``<=``)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -202,7 +202,7 @@ class Le(ScalarQuery):
         return athunk
 
 
-class Ge(ScalarQuery):
+class GeQuery(ScalarQuery):
     """Whether the first child is greater than or equal to the second (``>=``)."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -234,7 +234,7 @@ class Ge(ScalarQuery):
         return athunk
 
 
-class Is(ScalarQuery):
+class IsQuery(ScalarQuery):
     """Whether its two children are the same object (``is``)."""
 
     commutative = Declared(value=True)

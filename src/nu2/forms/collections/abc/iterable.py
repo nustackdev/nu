@@ -37,7 +37,7 @@ class IterableForm[ElementT, CollectionResultT, ElementResultT](Form):
     (SequenceForm, MappingForm, etc.) to wrap op results
     in appropriate Value types.
 
-    Higher-order interactions (Map, Filter, Reduce, etc.) are standalone
+    Higher-order interactions (MapQuery, FilterQuery, Reduce, etc.) are standalone
     functions in ``abc.fn``.
 
     Subclasses must override:
@@ -55,15 +55,15 @@ class IterableForm[ElementT, CollectionResultT, ElementResultT](Form):
     def __iter__(self) -> IteratorForm[ElementT]:
         """Open this iterable into a lazy iterator stream (Python's ``iter``).
 
-        A pure read: builds the StreamQuery ``Iter`` over this value and wraps
+        A pure read: builds the StreamQuery ``IterQuery`` over this value and wraps
         it as an ``IteratorForm``. Unlike ``len``/``contains`` (whose results
         Python coerces at the C level), ``iter`` keeps whatever ``__iter__``
         returns, so the Nu tree survives.
         """
-        from nu2.core import Iter
+        from nu2.core import IterQuery
         from nu2.forms.collections.iterator_ import IteratorForm
 
-        return IteratorForm(Iter(self))
+        return IteratorForm(IterQuery(self))
 
     def _wrap_iterable_result(self, operand: Nu) -> CollectionResultT:
         """Override in subclass to wrap result in appropriate collection type."""

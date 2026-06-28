@@ -293,7 +293,7 @@ class MergeQuery(ScalarQuery):
 
 
 class SetItemCommand(Command):
-    """Set value at key: mapping[key] = value. Mutates slot 0; returns nothing."""
+    """SetQuery value at key: mapping[key] = value. Mutates slot 0; returns nothing."""
 
     mutates = Declared(value=frozenset({0}))
 
@@ -536,7 +536,7 @@ class PopItemAction(ScalarAction):
 
 
 class SetDefaultAction(ScalarAction):
-    """Set default value if key missing: mapping.setdefault(key, default).
+    """SetQuery default value if key missing: mapping.setdefault(key, default).
 
     Mutates slot 0 (inserts the entry when the key is missing) and yields the
     value at the key.

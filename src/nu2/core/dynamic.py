@@ -6,32 +6,33 @@ mutates a namespace, so it leans Action; ``globals`` / ``locals`` read the live
 namespace fabric.
 
 Builtins to cover (Python -> Nu):
-- ``eval`` -> ``Eval`` (Q, evaluable: evaluate an expression to a value)
-- ``compile`` -> ``Compile`` (Q, evaluable: source -> code object)
-- ``exec`` -> ``Exec`` (A, structural: run statements, mutate the namespace)
-- ``globals`` -> ``Globals``, ``locals`` -> ``Locals`` (Q, structural)
+- ``eval`` -> ``EvalQuery`` (Q, evaluable: evaluate an expression to a value)
+- ``compile`` -> ``CompileQuery`` (Q, evaluable: source -> code object)
+- ``exec`` -> ``ExecQuery`` (Q, evaluable: runs statements, returns the namespace dict; mutation of the dict is host-visible only, not a Nu effect)
+- ``globals`` -> ``GlobalsQuery``, ``locals`` -> ``LocalsQuery`` (Q, structural)
 
 THE RULE applied conservatively: anything that touches the live interpreter
 namespace needs a fabric that is not wired yet, so it stays structural (no
-``compile`` hot path). ``Eval`` / ``Compile`` stay pure - they only fold over
+``compile`` hot path). ``EvalQuery`` / ``CompileQuery`` stay pure - they only fold over
 their operand values (the source, and optional explicit globals/locals dicts
 passed as children), never reaching into a live Context. They mirror
 ``literal.py``: ``compile`` / ``acompile`` return a thunk over precompiled
 child thunks, with EMPTY / INVALID sentinel propagation.
 
-``Globals`` / ``Locals`` read the live namespace fabric and ``Exec`` writes it
-(slot 0 = the namespace Ref), so they are declared structurally and wait for
-that fabric. These touch the host interpreter; keep them thin and explicit
-about which namespace Ref is read or written. Interactive-only builtins
-(``breakpoint``, ``help``) are out of this pass.
+``GlobalsQuery`` / ``LocalsQuery`` read the live namespace fabric. ``ExecQuery``
+takes a plain dict (non-Ref) as slot 0, so no fabric is available to declare
+a mutation against - by the model rule, it degrades to a Query. The dict
+mutation is host-visible only, not a Nu effect. These touch the host
+interpreter; keep them thin and explicit about which namespace is read or
+written. Interactive-only builtins (``breakpoint``, ``help``) are out of this
+pass.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.engine.structure import Declared
-from nu2.lang import ScalarAction, ScalarQuery
+from nu2.lang import ScalarQuery
 from nu2.lang.sentinels import EMPTY, INVALID
 
 
@@ -40,13 +41,13 @@ if TYPE_CHECKING:
 
     from nu2.lang.runtime import Runtime
 
-__all__ = ["Compile", "Eval", "Exec", "Globals", "Locals"]
+__all__ = ["CompileQuery", "EvalQuery", "ExecQuery", "GlobalsQuery", "LocalsQuery"]
 
 
 # --- evaluable: pure value -> value over operands ------------------------
 
 
-class Eval(ScalarQuery):
+class EvalQuery(ScalarQuery):
     """Evaluate an expression string (Python ``eval``).
 
     Folds over operand values only: child 0 is the expression source, optional
@@ -80,7 +81,7 @@ class Eval(ScalarQuery):
         return athunk
 
 
-class Compile(ScalarQuery):
+class CompileQuery(ScalarQuery):
     """Compile source to a code object (Python ``compile``).
 
     Folds over operand values only: child 0 is the source, child 1 the
@@ -123,7 +124,7 @@ class Compile(ScalarQuery):
 # belong in core at all.
 
 
-class Globals(ScalarQuery):
+class GlobalsQuery(ScalarQuery):
     """ESCAPE HATCH: the host module namespace dict (Python ``globals``).
 
     Returns the live interpreter globals at evaluation. Bypasses the Context
@@ -143,7 +144,7 @@ class Globals(ScalarQuery):
         return athunk
 
 
-class Locals(ScalarQuery):
+class LocalsQuery(ScalarQuery):
     """ESCAPE HATCH: the host local namespace dict (Python ``locals``).
 
     Returns the live interpreter locals at evaluation. Bypasses the Context
@@ -163,15 +164,15 @@ class Locals(ScalarQuery):
         return athunk
 
 
-class Exec(ScalarAction):
+class ExecQuery(ScalarQuery):
     """ESCAPE HATCH: run statements against a namespace dict (Python ``exec``).
 
     Children: ``[namespace, source]``. Runs ``exec(source, namespace)``,
-    mutating the namespace dict in place (slot 0), and yields it. Bypasses the
-    Context - it mutates the dict object passed in, not a Context location.
+    mutating the namespace dict in place, and yields it. Slot 0 is a plain
+    dict (non-Ref), so no fabric can be declared - degrades to Query per the
+    model rule. Bypasses the Context - dict mutation is host-visible only, not
+    a Nu effect.
     """
-
-    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         namespace, source = children

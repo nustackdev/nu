@@ -5,19 +5,19 @@ StreamQueries (lazy lenses - pulled per item, no materialization). Pure shape
 over their source; effects only ride in through Ref children.
 
 Builtins to cover (Python -> Nu):
-- ``map`` -> ``Map``, ``filter`` -> ``Filter``, ``sorted`` -> ``Sorted``
+- ``map`` -> ``MapQuery``, ``filter`` -> ``FilterQuery``, ``sorted`` -> ``SortedQuery``
 
-Plus two transforms v1 keeps as core: ``Flatten`` (one-level concat) and
-``Unique`` (drop already-seen, order preserved).
+Plus two transforms v1 keeps as core: ``FlattenQuery`` (one-level concat) and
+``UniqueQuery`` (drop already-seen, order preserved).
 
-``Map`` and ``Filter`` bind each item into the attrs side-channel under a name
+``MapQuery`` and ``FilterQuery`` bind each item into the attrs side-channel under a name
 and evaluate a Nu child against it. The name is a **child** (a Query yielding
 the name), so it can be a ``Literal`` or a Ref computed elsewhere - never an
 opaque payload. The body reads the item with ``AttrRef(<name>)``. The per-item
 binding writes ``ctx.attrs`` directly - the model's side-channel for loop
 variables, not a tracked fabric write.
 
-Sorts: all StreamQuery (Q). ``Sorted`` / ``Flatten`` / ``Unique`` stay
+Sorts: all StreamQuery (Q). ``SortedQuery`` / ``FlattenQuery`` / ``UniqueQuery`` stay
 structural stubs (no ``compile``) until they are filled.
 
 v1 reference: ``src/nu/queries/stream_transform.py`` (Filter, Map),
@@ -33,7 +33,7 @@ from nu2.lang import StreamQuery
 from nu2.lang.sentinels import EMPTY, INVALID
 
 from ._stream import aiter_any, sync_iter
-from .literal import Literal
+from .literal import LiteralQuery
 
 
 if TYPE_CHECKING:
@@ -41,10 +41,10 @@ if TYPE_CHECKING:
 
     from nu2.lang.runtime import Runtime
 
-__all__ = ["Filter", "Flatten", "Map", "Sorted", "Unique"]
+__all__ = ["FilterQuery", "FlattenQuery", "MapQuery", "SortedQuery", "UniqueQuery"]
 
 
-class Map(StreamQuery):
+class MapQuery(StreamQuery):
     """Applies a query child to every item of its stream child (lazy).
 
     Children: ``[source, transform, key]``. Each item of ``source`` is bound
@@ -53,7 +53,7 @@ class Map(StreamQuery):
     """
 
     def __init__(self, source: Term, transform: Term, key: object = "item") -> None:
-        key_node = key if isinstance(key, Term) else Literal(key)
+        key_node = key if isinstance(key, Term) else LiteralQuery(key)
         super().__init__(source, transform, key_node)
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -87,7 +87,7 @@ class Map(StreamQuery):
         return athunk
 
 
-class Filter(StreamQuery):
+class FilterQuery(StreamQuery):
     """Keeps the items of its stream child for which a predicate holds (lazy).
 
     Children: ``[source, predicate, key]``. Each item is bound under the name
@@ -96,7 +96,7 @@ class Filter(StreamQuery):
     """
 
     def __init__(self, source: Term, predicate: Term, key: object = "item") -> None:
-        key_node = key if isinstance(key, Term) else Literal(key)
+        key_node = key if isinstance(key, Term) else LiteralQuery(key)
         super().__init__(source, predicate, key_node)
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -138,7 +138,7 @@ class Filter(StreamQuery):
         return athunk
 
 
-class Sorted(StreamQuery):
+class SortedQuery(StreamQuery):
     """Its source child, ordered. Eager: drains the source, then yields.
 
     Children: ``[source]``. The one barrier among these lenses - a pull on its
@@ -168,7 +168,7 @@ class Sorted(StreamQuery):
         return athunk
 
 
-class Flatten(StreamQuery):
+class FlattenQuery(StreamQuery):
     """Concatenates a source of iterables one level into a flat stream (lazy).
 
     Children: ``[source]`` where each item of ``source`` is itself iterable.
@@ -200,7 +200,7 @@ class Flatten(StreamQuery):
         return athunk
 
 
-class Unique(StreamQuery):
+class UniqueQuery(StreamQuery):
     """Yields each item of its source child once, first-seen order (lazy).
 
     Children: ``[source]``. Items must be hashable.

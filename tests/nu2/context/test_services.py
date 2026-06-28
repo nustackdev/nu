@@ -1,14 +1,14 @@
-"""Tests for the Context service axis: ServiceRef read, ServiceExists.
+"""Tests for the Context service axis: ServiceRef read, ServiceExistsQuery.
 
 A ServiceRef self-yields the service bound by type on the Context
-(``ctx.bind`` / ``ctx.get``); unbound, it yields EMPTY. ServiceExists answers
+(``ctx.bind`` / ``ctx.get``); unbound, it yields EMPTY. ServiceExistsQuery answers
 whether a binding is present. Services are bound on the Context, never written
 through a Ref, so there is no service write op - mirrors v1.
 """
 
 from __future__ import annotations
 
-from nu2.context import AttrRef, ServiceExists, ServiceRef, Set
+from nu2.context import AttrRef, ServiceExistsQuery, ServiceRef, SetCommand
 from nu2.lang import Attr, Context, Effect, compile
 from nu2.lang.helpers import run
 
@@ -25,23 +25,23 @@ class Clock:
 def test_serviceref_yields_a_bound_service():
     clock = Clock()
     ctx = Context().bind(Clock, clock)
-    _, ctx = run(Set(AttrRef("saved"), ServiceRef(Clock)), ctx)
+    _, ctx = run(SetCommand(AttrRef("saved"), ServiceRef(Clock)), ctx)
     assert ctx.attrs["saved"] is clock
 
 
 def test_serviceref_on_an_unbound_type_is_empty():
-    # Unbound -> EMPTY; Set's sentinel guard then leaves the slot unwritten.
+    # Unbound -> EMPTY; SetCommand's sentinel guard then leaves the slot unwritten.
     ctx = Context()
-    _, ctx = run(Set(AttrRef("saved"), ServiceRef(Clock)), ctx)
+    _, ctx = run(SetCommand(AttrRef("saved"), ServiceRef(Clock)), ctx)
     assert "saved" not in ctx.attrs
 
 
-# --- ServiceExists -------------------------------------------------------
+# --- ServiceExistsQuery -------------------------------------------------------
 
 
 def test_service_exists_is_true_when_bound():
     ctx = Context().bind(Clock, Clock())
-    value, _ = run(ServiceExists(ServiceRef(Clock)), ctx)
+    value, _ = run(ServiceExistsQuery(ServiceRef(Clock)), ctx)
     assert value is True
 
 
@@ -54,7 +54,7 @@ def test_service_exists_is_false_when_unbound():
 
 
 def test_service_exists_reads_its_ref_fabric():
-    program = compile(ServiceExists(ServiceRef(Clock)))
+    program = compile(ServiceExistsQuery(ServiceRef(Clock)))
     assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
         {(ServiceRef, Effect.READ)}
     )

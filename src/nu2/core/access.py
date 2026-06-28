@@ -31,7 +31,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.lang import ScalarQuery
+from nu2.engine.structure import Declared
+from nu2.lang import Command, ScalarQuery
 from nu2.lang.sentinels import EMPTY, INVALID
 
 
@@ -41,23 +42,23 @@ if TYPE_CHECKING:
     from nu2.lang.runtime import Runtime
 
 __all__ = [
-    "Contains",
-    "DelAttr",
-    "DelItem",
-    "GetAttr",
-    "GetItem",
-    "HasAttr",
-    "Len",
-    "SetAttr",
-    "SetItem",
-    "Slice",
+    "ContainsQuery",
+    "DelAttrCommand",
+    "DelItemCommand",
+    "GetAttrQuery",
+    "GetItemQuery",
+    "HasAttrQuery",
+    "LenQuery",
+    "SetAttrCommand",
+    "SetItemCommand",
+    "SliceQuery",
 ]
 
 
 # --- reads (ScalarQuery, evaluable) --------------------------------------
 
 
-class GetItem(ScalarQuery):
+class GetItemQuery(ScalarQuery):
     """Subscript access: ``x[k]`` for child 0 indexed by child 1."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -89,7 +90,7 @@ class GetItem(ScalarQuery):
         return athunk
 
 
-class Len(ScalarQuery):
+class LenQuery(ScalarQuery):
     """Length: ``len(x)`` of its one child."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -115,7 +116,7 @@ class Len(ScalarQuery):
         return athunk
 
 
-class Contains(ScalarQuery):
+class ContainsQuery(ScalarQuery):
     """Containment: ``item in container`` for child 1 in child 0."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -147,7 +148,7 @@ class Contains(ScalarQuery):
         return athunk
 
 
-class Slice(ScalarQuery):
+class SliceQuery(ScalarQuery):
     """The ``slice(...)`` builtin: builds a slice object from its children.
 
     Children are ``start, stop, step`` (mirroring ``slice(start, stop, step)``).
@@ -189,7 +190,7 @@ class Slice(ScalarQuery):
         return athunk
 
 
-class GetAttr(ScalarQuery):
+class GetAttrQuery(ScalarQuery):
     """Attribute read: ``getattr(obj, name[, default])``.
 
     Child 0 is the object, child 1 the attribute name. An optional child 2
@@ -240,7 +241,7 @@ class GetAttr(ScalarQuery):
         return athunk
 
 
-class HasAttr(ScalarQuery):
+class HasAttrQuery(ScalarQuery):
     """Attribute presence: ``hasattr(obj, name)`` for child 0 and child 1."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -275,165 +276,163 @@ class HasAttr(ScalarQuery):
 # --- writes (ScalarQuery, local Python mutation) -------------------------
 
 
-class SetItem(ScalarQuery):
+class SetItemCommand(Command):
     """Subscript write: ``x[k] = v`` for child 0 keyed by child 1.
 
-    Slots: 0 container, 1 key, 2 value. Mutates the container value in place
-    and yields it back so writes compose.
+    Slots: 0 container, 1 key, 2 value. Mutates the container in place; returns
+    nothing, matching Python's ``x[k] = v``.
     """
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target, key, value = children
 
-        def thunk(rt: Runtime) -> object:
+        def thunk(rt: Runtime) -> None:
             x = target(rt)
             if x is EMPTY or x is INVALID:
-                return INVALID
+                return
             k = key(rt)
             if k is EMPTY or k is INVALID:
-                return INVALID
+                return
             v = value(rt)
             if v is EMPTY or v is INVALID:
-                return INVALID
+                return
             x[k] = v
-            return x
 
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target, key, value = children
 
-        async def athunk(rt: Runtime) -> object:
+        async def athunk(rt: Runtime) -> None:
             x = await target(rt)
             if x is EMPTY or x is INVALID:
-                return INVALID
+                return
             k = await key(rt)
             if k is EMPTY or k is INVALID:
-                return INVALID
+                return
             v = await value(rt)
             if v is EMPTY or v is INVALID:
-                return INVALID
+                return
             x[k] = v
-            return x
 
         return athunk
 
 
-class DelItem(ScalarQuery):
+class DelItemCommand(Command):
     """Subscript delete: ``del x[k]`` for child 0 keyed by child 1.
 
-    Slots: 0 container, 1 key. Mutates the container value in place and yields
-    it back.
+    Slots: 0 container, 1 key. Mutates the container in place; returns nothing.
     """
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target, key = children
 
-        def thunk(rt: Runtime) -> object:
+        def thunk(rt: Runtime) -> None:
             x = target(rt)
             if x is EMPTY or x is INVALID:
-                return INVALID
+                return
             k = key(rt)
             if k is EMPTY or k is INVALID:
-                return INVALID
+                return
             del x[k]
-            return x
 
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target, key = children
 
-        async def athunk(rt: Runtime) -> object:
+        async def athunk(rt: Runtime) -> None:
             x = await target(rt)
             if x is EMPTY or x is INVALID:
-                return INVALID
+                return
             k = await key(rt)
             if k is EMPTY or k is INVALID:
-                return INVALID
+                return
             del x[k]
-            return x
 
         return athunk
 
 
-class SetAttr(ScalarQuery):
+class SetAttrCommand(Command):
     """Attribute write: ``setattr(obj, name, value)``.
 
-    Slots: 0 object, 1 name, 2 value. Mutates the object value in place and
-    yields it back so writes compose.
+    Slots: 0 object, 1 name, 2 value. Mutates the object in place; returns
+    nothing, matching Python's ``setattr``.
     """
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         obj_t, name_t, value_t = children
 
-        def thunk(rt: Runtime) -> object:
+        def thunk(rt: Runtime) -> None:
             obj = obj_t(rt)
             if obj is EMPTY or obj is INVALID:
-                return INVALID
+                return
             name = name_t(rt)
             if name is EMPTY or name is INVALID:
-                return INVALID
+                return
             value = value_t(rt)
             if value is EMPTY or value is INVALID:
-                return INVALID
+                return
             setattr(obj, str(name), value)
-            return obj
 
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         obj_t, name_t, value_t = children
 
-        async def athunk(rt: Runtime) -> object:
+        async def athunk(rt: Runtime) -> None:
             obj = await obj_t(rt)
             if obj is EMPTY or obj is INVALID:
-                return INVALID
+                return
             name = await name_t(rt)
             if name is EMPTY or name is INVALID:
-                return INVALID
+                return
             value = await value_t(rt)
             if value is EMPTY or value is INVALID:
-                return INVALID
+                return
             setattr(obj, str(name), value)
-            return obj
 
         return athunk
 
 
-class DelAttr(ScalarQuery):
+class DelAttrCommand(Command):
     """Attribute delete: ``delattr(obj, name)``.
 
-    Slots: 0 object, 1 name. Mutates the object value in place and yields it
-    back.
+    Slots: 0 object, 1 name. Mutates the object in place; returns nothing.
     """
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         obj_t, name_t = children
 
-        def thunk(rt: Runtime) -> object:
+        def thunk(rt: Runtime) -> None:
             obj = obj_t(rt)
             if obj is EMPTY or obj is INVALID:
-                return INVALID
+                return
             name = name_t(rt)
             if name is EMPTY or name is INVALID:
-                return INVALID
+                return
             delattr(obj, str(name))
-            return obj
 
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         obj_t, name_t = children
 
-        async def athunk(rt: Runtime) -> object:
+        async def athunk(rt: Runtime) -> None:
             obj = await obj_t(rt)
             if obj is EMPTY or obj is INVALID:
-                return INVALID
+                return
             name = await name_t(rt)
             if name is EMPTY or name is INVALID:
-                return INVALID
+                return
             delattr(obj, str(name))
-            return obj
 
         return athunk

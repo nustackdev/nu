@@ -8,7 +8,7 @@ construction.
 
 from __future__ import annotations
 
-from nu2.core import Literal
+from nu2.core import LiteralQuery
 from nu2.forms import (
     BoolForm,
     BytesForm,
@@ -70,7 +70,7 @@ def test_str_ops():
     assert val(StrForm("ab").replace("a", "z")) == "zb"
     assert val(StrForm("foo").startswith("fo")) is True
     assert val(StrForm("123").isdigit()) is True
-    assert val(StrForm("-").join(Literal(["a", "b"]))) == "a-b"
+    assert val(StrForm("-").join(LiteralQuery(["a", "b"]))) == "a-b"
     assert val(StrForm("hello") + " world") == "hello world"
 
 
@@ -100,10 +100,10 @@ def test_dict_reads():
 
 
 def test_set_reads():
-    assert val(SetForm({1, 2}).union(Literal({3}))) == {1, 2, 3}
-    assert val(SetForm({1, 2, 3}).intersection(Literal({2, 3, 4}))) == {2, 3}
-    assert val(SetForm({1, 2}).issubset(Literal({1, 2, 3}))) is True
-    assert val(SetForm({1, 2}).isdisjoint(Literal({3, 4}))) is True
+    assert val(SetForm({1, 2}).union(LiteralQuery({3}))) == {1, 2, 3}
+    assert val(SetForm({1, 2, 3}).intersection(LiteralQuery({2, 3, 4}))) == {2, 3}
+    assert val(SetForm({1, 2}).issubset(LiteralQuery({1, 2, 3}))) is True
+    assert val(SetForm({1, 2}).isdisjoint(LiteralQuery({3, 4}))) is True
 
 
 # --- collections: local mutation (Command yields nothing; Action yields) -
@@ -114,7 +114,7 @@ def test_list_mutation_commands_yield_nothing():
     # and yield nothing (None); they do not return the mutated target.
     assert val(ListForm([1, 2]).append(3)) is None
     assert val(ListForm([1, 2]).insert(0, 9)) is None
-    assert val(ListForm([1, 2]).extend(Literal([3, 4]))) is None
+    assert val(ListForm([1, 2]).extend(LiteralQuery([3, 4]))) is None
     assert val(ListForm([1, 2, 3]).reverse()) is None
     assert val(ListForm([1, 2, 3]).remove(2)) is None
     # pop is an Action: it mutates and yields the popped value.
@@ -125,7 +125,7 @@ def test_dict_mutation_commands_yield_nothing():
     # set/delete/update are Commands; they yield nothing.
     assert val(DictForm({"a": 1}).set("b", 2)) is None
     assert val(DictForm({"a": 1, "b": 2}).delete("a")) is None
-    assert val(DictForm({"a": 1}).update(Literal({"b": 2}))) is None
+    assert val(DictForm({"a": 1}).update(LiteralQuery({"b": 2}))) is None
     # pop is an Action: it yields the popped value.
     assert val(DictForm({"a": 1, "b": 2}).pop("a")) == 1
 
@@ -134,7 +134,7 @@ def test_set_mutation_commands_yield_nothing():
     # add/discard/update are Commands; they yield nothing.
     assert val(SetForm({1, 2}).add(3)) is None
     assert val(SetForm({1, 2, 3}).discard(2)) is None
-    assert val(SetForm({1, 2}).update(Literal({3}))) is None
+    assert val(SetForm({1, 2}).update(LiteralQuery({3}))) is None
 
 
 # --- sentinel predicates via Form base -----------------------------------
@@ -143,7 +143,7 @@ def test_set_mutation_commands_yield_nothing():
 def test_sentinel_predicates():
     assert val(IntForm(1).is_empty()) is False
     assert val(IntForm(1).not_empty()) is True
-    assert val(IntForm(Literal(EMPTY)).is_empty()) is True
+    assert val(IntForm(LiteralQuery(EMPTY)).is_empty()) is True
 
 
 # --- async mirror --------------------------------------------------------
@@ -158,6 +158,6 @@ def test_async_mirrors_sync():
         # append is a Command: yields nothing (None) on the async path too.
         assert await aval(ListForm([1, 2]).append(3)) is None
         assert await aval(DictForm({"a": 1}).get("a")) == 1
-        assert await aval(SetForm({1, 2}).union(Literal({3}))) == {1, 2, 3}
+        assert await aval(SetForm({1, 2}).union(LiteralQuery({3}))) == {1, 2, 3}
 
     asyncio.run(go())

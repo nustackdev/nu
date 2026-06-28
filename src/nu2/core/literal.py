@@ -1,8 +1,8 @@
-"""Literal: the constant-yielding ScalarQuery.
+"""LiteralQuery: the constant-yielding ScalarQuery.
 
 The trivial Query - an irreducible leaf that carries a value in its payload
 and yields it once, pure (no effects). Most non-Ref leaves in a Nu program are
-Literals, so it gets its own module apart from the numeric ScalarQueries in
+LiteralQuerys, so it gets its own module apart from the numeric ScalarQueries in
 ``arithmetic``.
 
 ``compile`` (sync hot path) and ``acompile`` (async hot path) each return a
@@ -22,10 +22,10 @@ if TYPE_CHECKING:
 
     from nu2.lang.runtime import Runtime
 
-__all__ = ["Literal"]
+__all__ = ["LiteralQuery"]
 
 
-class Literal(ScalarQuery):
+class LiteralQuery(ScalarQuery):
     """A ScalarQuery that yields a constant value carried in its payload."""
 
     def __init__(self, value: object) -> None:

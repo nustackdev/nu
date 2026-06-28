@@ -26,7 +26,7 @@ class SizedForm(Form):
 
     def len(self) -> IntForm:
         """Length of this collection."""
-        from nu2.core import Len
+        from nu2.core import LenQuery
         from nu2.forms.primitives import IntForm
 
-        return IntForm(Len(self))
+        return IntForm(LenQuery(self))

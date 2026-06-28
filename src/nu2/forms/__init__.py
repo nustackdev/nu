@@ -1,9 +1,9 @@
 """Native Form layer.
 
-A Form is what a fabric location holds (an Int, a Str, a Dict, a List) and the
+A Form is what a fabric location holds (an Int, a Str, a Dict, a ListQuery) and the
 fluent typed surface for building Nu over it. The base mixin ``Form`` and the
 passthrough ``TypedNu`` live in ``nu2.lang`` (re-exported here for convenience);
-the sentinel predicates (``IsEmpty`` / ``IsInvalid``) live in ``nu2.core``.
+the sentinel predicates (``IsEmptyQuery`` / ``IsInvalidQuery``) live in ``nu2.core``.
 
 Concrete primitive Forms live in ``primitives/``, concrete collection Forms in
 ``collections/`` (with abstract contracts in ``collections/abc/``).

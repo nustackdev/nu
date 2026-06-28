@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu2.core.io import Input, Open, Print
+from nu2.core.io import InputAction, OpenAction, PrintCommand
 from nu2.lang import Cardinality, Sort
 
 
@@ -43,21 +43,21 @@ def test_open_declares_a_write_through_its_fabric_ref():
 
 
 def test_print_is_a_command():
-    assert Print.sort.value is Sort.SCALAR_COMMAND
+    assert PrintCommand.sort.value is Sort.SCALAR_COMMAND
 
 
 def test_input_and_open_are_scalar_actions():
-    assert Input.sort.value is Sort.SCALAR_ACTION
-    assert Open.sort.value is Sort.SCALAR_ACTION
+    assert InputAction.sort.value is Sort.SCALAR_ACTION
+    assert OpenAction.sort.value is Sort.SCALAR_ACTION
 
 
 # --- cardinality ---------------------------------------------------------
 
 
 def test_print_yields_nothing():
-    assert Print.cardinality.value is Cardinality.VOID
+    assert PrintCommand.cardinality.value is Cardinality.VOID
 
 
 def test_actions_yield_a_scalar():
-    assert Input.cardinality.value is Cardinality.SCALAR
-    assert Open.cardinality.value is Cardinality.SCALAR
+    assert InputAction.cardinality.value is Cardinality.SCALAR
+    assert OpenAction.cardinality.value is Cardinality.SCALAR

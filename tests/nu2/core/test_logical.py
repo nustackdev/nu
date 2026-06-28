@@ -1,6 +1,6 @@
 """Execution tests for the logical atoms in ``nu2.core.logical``.
 
-Compile small programs over Literal leaves and check the value each logical
+Compile small programs over LiteralQuery leaves and check the value each logical
 atom yields, the bool-coercing (non-short-circuit) semantics of And / Or,
 and sentinel propagation to INVALID.
 """
@@ -9,8 +9,11 @@ from __future__ import annotations
 
 import asyncio
 
-from nu2.core.literal import Literal
-from nu2.core.logical import And, Bool, Not, Or
+from nu2.core.literal import LiteralQuery
+from nu2.core.logical import AndQuery as And
+from nu2.core.logical import BoolQuery as Bool
+from nu2.core.logical import NotQuery as Not
+from nu2.core.logical import OrQuery as Or
 from nu2.lang import EMPTY, INVALID, compile
 from nu2.lang.helpers import aeval, eval
 
@@ -29,78 +32,78 @@ async def _aeval(term: object) -> object:
 
 
 def test_and_conjoins():
-    assert _eval(And(Literal(True), Literal(True))) is True
-    assert _eval(And(Literal(True), Literal(False))) is False
-    assert _eval(And(Literal(False), Literal(False))) is False
+    assert _eval(And(LiteralQuery(True), LiteralQuery(True))) is True
+    assert _eval(And(LiteralQuery(True), LiteralQuery(False))) is False
+    assert _eval(And(LiteralQuery(False), LiteralQuery(False))) is False
 
 
 def test_and_is_variadic():
-    assert _eval(And(Literal(True), Literal(True), Literal(True))) is True
-    assert _eval(And(Literal(True), Literal(True), Literal(False))) is False
+    assert _eval(And(LiteralQuery(True), LiteralQuery(True), LiteralQuery(True))) is True
+    assert _eval(And(LiteralQuery(True), LiteralQuery(True), LiteralQuery(False))) is False
 
 
 def test_and_coerces_to_bool_not_an_operand():
     # Python `1 and 2` is 2; Nu And yields a plain bool.
-    assert _eval(And(Literal(1), Literal(2))) is True
-    assert _eval(And(Literal(0), Literal(2))) is False
+    assert _eval(And(LiteralQuery(1), LiteralQuery(2))) is True
+    assert _eval(And(LiteralQuery(0), LiteralQuery(2))) is False
 
 
 # --- Or ------------------------------------------------------------------
 
 
 def test_or_disjoins():
-    assert _eval(Or(Literal(False), Literal(True))) is True
-    assert _eval(Or(Literal(False), Literal(False))) is False
-    assert _eval(Or(Literal(True), Literal(True))) is True
+    assert _eval(Or(LiteralQuery(False), LiteralQuery(True))) is True
+    assert _eval(Or(LiteralQuery(False), LiteralQuery(False))) is False
+    assert _eval(Or(LiteralQuery(True), LiteralQuery(True))) is True
 
 
 def test_or_is_variadic():
-    assert _eval(Or(Literal(False), Literal(False), Literal(True))) is True
-    assert _eval(Or(Literal(False), Literal(False), Literal(False))) is False
+    assert _eval(Or(LiteralQuery(False), LiteralQuery(False), LiteralQuery(True))) is True
+    assert _eval(Or(LiteralQuery(False), LiteralQuery(False), LiteralQuery(False))) is False
 
 
 def test_or_coerces_to_bool_not_an_operand():
     # Python `0 or 3` is 3; Nu Or yields a plain bool.
-    assert _eval(Or(Literal(0), Literal(3))) is True
-    assert _eval(Or(Literal(0), Literal(0))) is False
+    assert _eval(Or(LiteralQuery(0), LiteralQuery(3))) is True
+    assert _eval(Or(LiteralQuery(0), LiteralQuery(0))) is False
 
 
 # --- Not -----------------------------------------------------------------
 
 
 def test_not_negates():
-    assert _eval(Not(Literal(False))) is True
-    assert _eval(Not(Literal(True))) is False
-    assert _eval(Not(Literal(0))) is True
-    assert _eval(Not(Literal(7))) is False
+    assert _eval(Not(LiteralQuery(False))) is True
+    assert _eval(Not(LiteralQuery(True))) is False
+    assert _eval(Not(LiteralQuery(0))) is True
+    assert _eval(Not(LiteralQuery(7))) is False
 
 
 # --- Bool ----------------------------------------------------------------
 
 
 def test_bool_casts_truthiness():
-    assert _eval(Bool(Literal(7))) is True
-    assert _eval(Bool(Literal(0))) is False
-    assert _eval(Bool(Literal(""))) is False
-    assert _eval(Bool(Literal("x"))) is True
+    assert _eval(Bool(LiteralQuery(7))) is True
+    assert _eval(Bool(LiteralQuery(0))) is False
+    assert _eval(Bool(LiteralQuery(""))) is False
+    assert _eval(Bool(LiteralQuery("x"))) is True
 
 
 # --- async mirrors sync --------------------------------------------------
 
 
 def test_aeval_mirrors_eval():
-    assert asyncio.run(_aeval(And(Literal(True), Literal(True)))) is True
-    assert asyncio.run(_aeval(Or(Literal(False), Literal(True)))) is True
-    assert asyncio.run(_aeval(Not(Literal(False)))) is True
-    assert asyncio.run(_aeval(Bool(Literal(7)))) is True
+    assert asyncio.run(_aeval(And(LiteralQuery(True), LiteralQuery(True)))) is True
+    assert asyncio.run(_aeval(Or(LiteralQuery(False), LiteralQuery(True)))) is True
+    assert asyncio.run(_aeval(Not(LiteralQuery(False)))) is True
+    assert asyncio.run(_aeval(Bool(LiteralQuery(7)))) is True
 
 
 # --- sentinel propagation ------------------------------------------------
 
 
 def test_a_sentinel_operand_collapses_to_invalid():
-    assert _eval(And(Literal(True), Literal(EMPTY))) is INVALID
-    assert _eval(Or(Literal(False), Literal(INVALID))) is INVALID
-    assert _eval(Not(Literal(EMPTY))) is INVALID
-    assert _eval(Bool(Literal(INVALID))) is INVALID
-    assert asyncio.run(_aeval(And(Literal(EMPTY), Literal(True)))) is INVALID
+    assert _eval(And(LiteralQuery(True), LiteralQuery(EMPTY))) is INVALID
+    assert _eval(Or(LiteralQuery(False), LiteralQuery(INVALID))) is INVALID
+    assert _eval(Not(LiteralQuery(EMPTY))) is INVALID
+    assert _eval(Bool(LiteralQuery(INVALID))) is INVALID
+    assert asyncio.run(_aeval(And(LiteralQuery(EMPTY), LiteralQuery(True)))) is INVALID

@@ -101,7 +101,7 @@ class DecodeQuery(ScalarQuery):
             if not isinstance(left, bytes):
                 return INVALID
             try:
-                return left.decode(str(right))
+                return left.decode(right)
             except (UnicodeDecodeError, LookupError):
                 return INVALID
 
@@ -120,7 +120,7 @@ class DecodeQuery(ScalarQuery):
             if not isinstance(left, bytes):
                 return INVALID
             try:
-                return left.decode(str(right))
+                return left.decode(right)
             except (UnicodeDecodeError, LookupError):
                 return INVALID
 

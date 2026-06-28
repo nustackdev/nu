@@ -5,12 +5,12 @@ interfaces. The collection ABCs (``MappingForm``, ``SequenceForm``, ...) and the
 primitive leaves (``IntForm``, ``StrForm``, ...) inherit ``Form`` to get them.
 
 ``TypedNu[T]`` is a transparent ``ScalarQuery`` passthrough: it wraps a single
-Nu child (any non-Term child is auto-wrapped as a ``Literal`` by ``Nu``) and
+Nu child (any non-Term child is auto-wrapped as a ``LiteralQuery`` by ``Nu``) and
 yields the child's value unchanged. Operand recursion lives in the child thunk;
 ``TypedNu`` just forwards. Leaf interfaces inherit both ``Form`` and ``TypedNu``
 so they participate as Nu tree nodes::
 
-    IntForm(Add(a, b)) + 1  ->  Add(IntForm(Add(a, b)), Literal(1))
+    IntForm(AddQuery(a, b)) + 1  ->  AddQuery(IntForm(AddQuery(a, b)), LiteralQuery(1))
 
 Hierarchy::
 
@@ -54,17 +54,17 @@ class Form:
 
     def is_empty(self) -> BoolForm:
         """True if this Form yields the EMPTY sentinel."""
-        from nu2.core import IsEmpty
+        from nu2.core import IsEmptyQuery
         from nu2.forms import BoolForm
 
-        return BoolForm(IsEmpty(self))
+        return BoolForm(IsEmptyQuery(self))
 
     def is_invalid(self) -> BoolForm:
         """True if this Form yields the INVALID sentinel."""
-        from nu2.core import IsInvalid
+        from nu2.core import IsInvalidQuery
         from nu2.forms import BoolForm
 
-        return BoolForm(IsInvalid(self))
+        return BoolForm(IsInvalidQuery(self))
 
     def is_sentinel(self) -> BoolForm:
         """True if this Form yields either sentinel (EMPTY or INVALID)."""

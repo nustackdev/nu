@@ -3,7 +3,7 @@
 SequenceForm = Collection + Sliceable + first/last/index/count/reversed
 MutableSequenceForm = Sequence + append/insert/pop/extend/remove/reverse
 
-Sorted/Reversed are standalone functions in ``abc.fn``.
+Sorted/ReversedQuery are standalone functions in ``abc.fn``.
 
 Follows Python's collections.abc.Sequence / MutableSequence pattern.
 
@@ -51,14 +51,14 @@ class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     """
 
     def __getitem__(self, key: IntArg | slice) -> ElementResultT | CollectionResultT:
-        """Index → element via At; slice → subsequence via Slice."""
-        from nu2.core import GetItem as At
-        from nu2.core import Slice
+        """Index → element via At; slice → subsequence via SliceQuery."""
+        from nu2.core import GetItemQuery as At
+        from nu2.core import SliceQuery
 
         if isinstance(key, slice):
             return cast(
                 "CollectionResultT",
-                self._wrap_sliceable_result(Slice(self, key.start, key.stop, key.step)),
+                self._wrap_sliceable_result(SliceQuery(self, key.start, key.stop, key.step)),
             )
         return cast("ElementResultT", self._wrap_element_result(At(self, key)))
 
@@ -91,10 +91,10 @@ class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return IntForm(CountQuery(self, value))
 
     def reversed(self) -> CollectionResultT:
-        """Reversed copy of this sequence."""
-        from nu2.core import Reversed
+        """ReversedQuery copy of this sequence."""
+        from nu2.core import ReversedQuery
 
-        return cast("CollectionResultT", self._wrap_iterable_result(Reversed(self)))
+        return cast("CollectionResultT", self._wrap_iterable_result(ReversedQuery(self)))
 
 
 class MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](

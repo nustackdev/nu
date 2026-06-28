@@ -30,14 +30,14 @@ class BytesForm(Form, TypedNu[bytes]):
     # =========================================================================
 
     def __add__(self, other: BytesArg) -> BytesForm:
-        from nu2.core import Add
+        from nu2.core import AddQuery
 
-        return BytesForm(Add(self, other))
+        return BytesForm(AddQuery(self, other))
 
     def __radd__(self, other: BytesArg) -> BytesForm:
-        from nu2.core import Add
+        from nu2.core import AddQuery
 
-        return BytesForm(Add(other, self))
+        return BytesForm(AddQuery(other, self))
 
     # =========================================================================
     # INDEXING / SLICING
@@ -48,69 +48,69 @@ class BytesForm(Form, TypedNu[bytes]):
     @overload
     def __getitem__(self, key: slice) -> BytesForm: ...
     def __getitem__(self, key: IntArg | slice) -> BytesForm | IntForm:
-        from nu2.core import GetItem, Slice
+        from nu2.core import GetItemQuery, SliceQuery
 
         from .int_ import IntForm
 
         if isinstance(key, slice):
-            return BytesForm(Slice(self, key.start, key.stop, key.step))
-        return IntForm(GetItem(self, key))
+            return BytesForm(SliceQuery(self, key.start, key.stop, key.step))
+        return IntForm(GetItemQuery(self, key))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: BytesArg) -> BoolForm:
-        from nu2.core import Gt
+        from nu2.core import GtQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Gt(self, other))
+        return BoolForm(GtQuery(self, other))
 
     def __lt__(self, other: BytesArg) -> BoolForm:
-        from nu2.core import Lt
+        from nu2.core import LtQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Lt(self, other))
+        return BoolForm(LtQuery(self, other))
 
     def __ge__(self, other: BytesArg) -> BoolForm:
-        from nu2.core import Ge
+        from nu2.core import GeQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Ge(self, other))
+        return BoolForm(GeQuery(self, other))
 
     def __le__(self, other: BytesArg) -> BoolForm:
-        from nu2.core import Le
+        from nu2.core import LeQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Le(self, other))
+        return BoolForm(LeQuery(self, other))
 
     __hash__ = object.__hash__
 
     def __eq__(self, other: BytesArg) -> BoolForm:  # type: ignore[override]
-        from nu2.core import Eq
+        from nu2.core import EqQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Eq(self, other))
+        return BoolForm(EqQuery(self, other))
 
     def __ne__(self, other: BytesArg) -> BoolForm:  # type: ignore[override]
-        from nu2.core import Ne
+        from nu2.core import NeQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Ne(self, other))
+        return BoolForm(NeQuery(self, other))
 
     def is_(self, other: BytesArg) -> BoolForm:
         """Identity comparison: self is other."""
-        from nu2.core import Is
+        from nu2.core import IsQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Is(self, other))
+        return BoolForm(IsQuery(self, other))
 
     # =========================================================================
     # LOGICAL
@@ -118,35 +118,35 @@ class BytesForm(Form, TypedNu[bytes]):
 
     def and_(self, other: BytesArg) -> BoolForm:
         """Logical AND: self AND other."""
-        from nu2.core import And
+        from nu2.core import AndQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(And(self, other))
+        return BoolForm(AndQuery(self, other))
 
     def or_(self, other: BytesArg) -> BoolForm:
         """Logical OR: self OR other."""
-        from nu2.core import Or
+        from nu2.core import OrQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Or(self, other))
+        return BoolForm(OrQuery(self, other))
 
     def not_(self) -> BoolForm:
         """Logical NOT: NOT self."""
-        from nu2.core import Not
+        from nu2.core import NotQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Not(self))
+        return BoolForm(NotQuery(self))
 
     def bool_(self) -> BoolForm:
         """Convert to boolean."""
-        from nu2.core import Bool
+        from nu2.core import BoolQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Bool(self))
+        return BoolForm(BoolQuery(self))
 
     # =========================================================================
     # BYTES METHODS

@@ -4,13 +4,13 @@ Maps Python's bitwise operators onto Nu ScalarQueries over integers. Pure
 compute; no Context effect of their own.
 
 Operators to cover (Python -> Nu):
-- ``&`` -> ``BitAnd``, ``|`` -> ``BitOr``, ``^`` -> ``BitXor``
-- ``~`` -> ``BitNot`` (unary)
-- ``<<`` -> ``LShift``, ``>>`` -> ``RShift``
+- ``&`` -> ``BitAndQuery``, ``|`` -> ``BitOrQuery``, ``^`` -> ``BitXorQuery``
+- ``~`` -> ``BitNotQuery`` (unary)
+- ``<<`` -> ``LShiftQuery``, ``>>`` -> ``RShiftQuery``
 
-Sorts: all ScalarQuery (Q). ``BitAnd`` / ``BitOr`` / ``BitXor`` are commutative
+Sorts: all ScalarQuery (Q). ``BitAndQuery`` / ``BitOrQuery`` / ``BitXorQuery`` are commutative
 + associative and fold over their children (identity ``-1`` for AND, ``0`` for
-OR / XOR); the shifts are binary and ``BitNot`` is unary, neither commutative
+OR / XOR); the shifts are binary and ``BitNotQuery`` is unary, neither commutative
 nor associative. Each atom defines ``compile`` (sync hot path) and ``acompile``
 (async hot path), both returning a thunk that captures the precompiled child
 thunks. Sentinel propagation is inlined: an EMPTY or INVALID operand collapses
@@ -33,10 +33,10 @@ if TYPE_CHECKING:
 
     from nu2.lang.runtime import Runtime
 
-__all__ = ["BitAnd", "BitNot", "BitOr", "BitXor", "LShift", "RShift"]
+__all__ = ["BitAndQuery", "BitNotQuery", "BitOrQuery", "BitXorQuery", "LShiftQuery", "RShiftQuery"]
 
 
-class BitAnd(ScalarQuery):
+class BitAndQuery(ScalarQuery):
     """The bitwise AND of its scalar children."""
 
     commutative = Declared(value=True)
@@ -67,7 +67,7 @@ class BitAnd(ScalarQuery):
         return athunk
 
 
-class BitOr(ScalarQuery):
+class BitOrQuery(ScalarQuery):
     """The bitwise OR of its scalar children."""
 
     commutative = Declared(value=True)
@@ -98,7 +98,7 @@ class BitOr(ScalarQuery):
         return athunk
 
 
-class BitXor(ScalarQuery):
+class BitXorQuery(ScalarQuery):
     """The bitwise XOR of its scalar children."""
 
     commutative = Declared(value=True)
@@ -129,7 +129,7 @@ class BitXor(ScalarQuery):
         return athunk
 
 
-class BitNot(ScalarQuery):
+class BitNotQuery(ScalarQuery):
     """The bitwise NOT of its one child."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -155,7 +155,7 @@ class BitNot(ScalarQuery):
         return athunk
 
 
-class LShift(ScalarQuery):
+class LShiftQuery(ScalarQuery):
     """The first child shifted left by the second."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
@@ -187,7 +187,7 @@ class LShift(ScalarQuery):
         return athunk
 
 
-class RShift(ScalarQuery):
+class RShiftQuery(ScalarQuery):
     """The first child shifted right by the second."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102

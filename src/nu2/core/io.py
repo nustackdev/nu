@@ -5,20 +5,20 @@ that yields nothing is a Command, a read or open that yields a value is an
 Action (effect + yield in one atom).
 
 Builtins to cover (Python -> Nu):
-- ``print`` -> ``Print`` (write to stdout, yields nothing -> Command)
-- ``input`` -> ``Input`` (read a line, mutate stdin position + yield -> Action)
-- ``open`` -> ``Open`` (open a file, side effect + yield the handle -> Action)
+- ``print`` -> ``PrintCommand`` (write to stdout, yields nothing -> Command)
+- ``input`` -> ``InputAction`` (read a line, mutate stdin position + yield -> Action)
+- ``open`` -> ``OpenAction`` (open a file, side effect + yield the handle -> Action)
 
-Sorts: Command (C) for ``Print``, ScalarAction (A) for ``Input`` / ``Open``.
+Sorts: Command (C) for ``PrintCommand``, ScalarAction (A) for ``InputAction`` / ``OpenAction``.
 
 Every atom declares ``mutates``: slot 0 holds the Ref it writes through. For IO
 that Ref is an **IO fabric Ref** (the stdio fabric, see ``src/nu/stdio``), not
-an in-memory value Ref - ``Print`` writes through the stdout fabric, ``Input``
-through stdin, ``Open`` through the filesystem fabric. The effect is attributed
+an in-memory value Ref - ``PrintCommand`` writes through the stdout fabric, ``InputAction``
+through stdin, ``OpenAction`` through the filesystem fabric. The effect is attributed
 exactly like any Command write (slot 0 in write role), so the language tracks it
 today; full evaluation lands once the stdio fabric is wired, hence these atoms
 are declared **structurally** (no ``eval`` / ``aeval``). Async file IO (an
-async ``Open`` twin) can follow once the fabric exposes it.
+async ``OpenAction`` twin) can follow once the fabric exposes it.
 
 v1 reference: ``src/nu/commands/io.py`` (Print, Log) and ``src/nu/stdio/ops.py``
 (StdioWrite, StdioRead, StdioFlush).
@@ -30,10 +30,10 @@ from nu2.engine.structure import Declared
 from nu2.lang import Command, ScalarAction
 
 
-__all__ = ["Input", "Open", "Print"]
+__all__ = ["InputAction", "OpenAction", "PrintCommand"]
 
 
-class Print(Command):
+class PrintCommand(Command):
     """Writes the values in slots 1.. to the stdout fabric Ref in slot 0.
 
     Python's ``print``. A Command: it mutates the stdout fabric and yields
@@ -44,7 +44,7 @@ class Print(Command):
     mutates = Declared(value=frozenset({0}))
 
 
-class Input(ScalarAction):
+class InputAction(ScalarAction):
     """Reads one line from the stdin fabric Ref in slot 0 and yields it.
 
     Python's ``input``. A ScalarAction: it mutates the stdin fabric (advances
@@ -56,13 +56,13 @@ class Input(ScalarAction):
     mutates = Declared(value=frozenset({0}))
 
 
-class Open(ScalarAction):
+class OpenAction(ScalarAction):
     """Opens the path in slots 1.. on the filesystem fabric Ref in slot 0.
 
     Python's ``open``. A ScalarAction: it mutates the filesystem fabric (opens
     a handle) and yields the file handle. Slot 0 is the IO Ref it acts through
     (the filesystem fabric, not an in-memory value Ref); the path and mode slots
-    bind in read role. An async ``Open`` twin can land once the fabric exposes
+    bind in read role. An async ``OpenAction`` twin can land once the fabric exposes
     async file IO.
     """
 

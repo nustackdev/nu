@@ -12,20 +12,20 @@ from __future__ import annotations
 import asyncio
 
 from nu2.core.arithmetic import (
-    Abs,
-    Add,
-    Div,
-    DivMod,
-    FloorDiv,
-    Mod,
-    Mul,
-    Neg,
-    Pos,
-    Pow,
-    Round,
-    Sub,
+    AbsQuery,
+    AddQuery,
+    DivModQuery,
+    DivQuery,
+    FloorDivQuery,
+    ModQuery,
+    MulQuery,
+    NegQuery,
+    PosQuery,
+    PowQuery,
+    RoundQuery,
+    SubQuery,
 )
-from nu2.core.literal import Literal
+from nu2.core.literal import LiteralQuery
 from nu2.lang import EMPTY, INVALID, Attr, compile
 from nu2.lang.helpers import aeval, eval
 
@@ -44,70 +44,70 @@ async def _aeval(term: object) -> object:
 
 
 def test_add_folds_its_operands():
-    assert _eval(Add(Literal(1), Literal(2), Literal(3))) == 6
+    assert _eval(AddQuery(LiteralQuery(1), LiteralQuery(2), LiteralQuery(3))) == 6
 
 
 def test_mul_folds_its_operands():
-    assert _eval(Mul(Literal(2), Literal(3), Literal(4))) == 24
+    assert _eval(MulQuery(LiteralQuery(2), LiteralQuery(3), LiteralQuery(4))) == 24
 
 
 def test_sub_subtracts():
-    assert _eval(Sub(Literal(10), Literal(3))) == 7
+    assert _eval(SubQuery(LiteralQuery(10), LiteralQuery(3))) == 7
 
 
 def test_div_is_true_division():
-    assert _eval(Div(Literal(7), Literal(2))) == 3.5
+    assert _eval(DivQuery(LiteralQuery(7), LiteralQuery(2))) == 3.5
 
 
 def test_floordiv_floors():
-    assert _eval(FloorDiv(Literal(7), Literal(2))) == 3
+    assert _eval(FloorDivQuery(LiteralQuery(7), LiteralQuery(2))) == 3
 
 
 def test_mod_takes_the_remainder():
-    assert _eval(Mod(Literal(7), Literal(3))) == 1
+    assert _eval(ModQuery(LiteralQuery(7), LiteralQuery(3))) == 1
 
 
 def test_pow_raises():
-    assert _eval(Pow(Literal(2), Literal(10))) == 1024
+    assert _eval(PowQuery(LiteralQuery(2), LiteralQuery(10))) == 1024
 
 
 # --- unary ---------------------------------------------------------------
 
 
 def test_neg_negates():
-    assert _eval(Neg(Literal(5))) == -5
+    assert _eval(NegQuery(LiteralQuery(5))) == -5
 
 
 def test_pos_keeps_sign():
-    assert _eval(Pos(Literal(-5))) == -5
-    assert _eval(Pos(Literal(5))) == 5
+    assert _eval(PosQuery(LiteralQuery(-5))) == -5
+    assert _eval(PosQuery(LiteralQuery(5))) == 5
 
 
 def test_abs_takes_magnitude():
-    assert _eval(Abs(Literal(-5))) == 5
-    assert _eval(Abs(Literal(5))) == 5
+    assert _eval(AbsQuery(LiteralQuery(-5))) == 5
+    assert _eval(AbsQuery(LiteralQuery(5))) == 5
 
 
 # --- divmod / round ------------------------------------------------------
 
 
 def test_divmod_yields_the_pair():
-    assert _eval(DivMod(Literal(17), Literal(5))) == (3, 2)
+    assert _eval(DivModQuery(LiteralQuery(17), LiteralQuery(5))) == (3, 2)
 
 
 def test_round_with_one_operand():
-    assert _eval(Round(Literal(3.14159))) == 3
+    assert _eval(RoundQuery(LiteralQuery(3.14159))) == 3
 
 
 def test_round_with_ndigits():
-    assert _eval(Round(Literal(3.14159), Literal(2))) == 3.14
+    assert _eval(RoundQuery(LiteralQuery(3.14159), LiteralQuery(2))) == 3.14
 
 
 # --- nesting -------------------------------------------------------------
 
 
 def test_nested_arithmetic():
-    program = Add(Mul(Literal(2), Literal(3)), Neg(Literal(1)))
+    program = AddQuery(MulQuery(LiteralQuery(2), LiteralQuery(3)), NegQuery(LiteralQuery(1)))
     assert _eval(program) == 5
 
 
@@ -115,16 +115,16 @@ def test_nested_arithmetic():
 
 
 def test_add_and_mul_declare_their_algebra():
-    program = compile(Add(Literal(1), Literal(2)))
+    program = compile(AddQuery(LiteralQuery(1), LiteralQuery(2)))
     assert program.attr(program.root, Attr.COMMUTATIVE) is True
     assert program.attr(program.root, Attr.ASSOCIATIVE) is True
-    program = compile(Mul(Literal(2), Literal(3)))
+    program = compile(MulQuery(LiteralQuery(2), LiteralQuery(3)))
     assert program.attr(program.root, Attr.COMMUTATIVE) is True
     assert program.attr(program.root, Attr.ASSOCIATIVE) is True
 
 
 def test_sub_is_neither_commutative_nor_associative():
-    program = compile(Sub(Literal(1), Literal(2)))
+    program = compile(SubQuery(LiteralQuery(1), LiteralQuery(2)))
     assert program.attr(program.root, Attr.COMMUTATIVE) is not True
     assert program.attr(program.root, Attr.ASSOCIATIVE) is not True
 
@@ -133,21 +133,21 @@ def test_sub_is_neither_commutative_nor_associative():
 
 
 def test_a_sentinel_operand_collapses_to_invalid():
-    assert _eval(Add(Literal(EMPTY), Literal(1))) is INVALID
-    assert _eval(Mul(Literal(2), Literal(INVALID))) is INVALID
-    assert _eval(Sub(Literal(1), Literal(EMPTY))) is INVALID
-    assert _eval(Neg(Literal(INVALID))) is INVALID
-    assert _eval(DivMod(Literal(EMPTY), Literal(2))) is INVALID
-    assert _eval(Round(Literal(1.5), Literal(EMPTY))) is INVALID
+    assert _eval(AddQuery(LiteralQuery(EMPTY), LiteralQuery(1))) is INVALID
+    assert _eval(MulQuery(LiteralQuery(2), LiteralQuery(INVALID))) is INVALID
+    assert _eval(SubQuery(LiteralQuery(1), LiteralQuery(EMPTY))) is INVALID
+    assert _eval(NegQuery(LiteralQuery(INVALID))) is INVALID
+    assert _eval(DivModQuery(LiteralQuery(EMPTY), LiteralQuery(2))) is INVALID
+    assert _eval(RoundQuery(LiteralQuery(1.5), LiteralQuery(EMPTY))) is INVALID
 
 
 # --- async mirrors sync --------------------------------------------------
 
 
 def test_aeval_mirrors_eval():
-    assert asyncio.run(_aeval(Add(Literal(2), Literal(3)))) == 5
-    assert asyncio.run(_aeval(Pow(Literal(2), Literal(5)))) == 32
-    assert asyncio.run(_aeval(Abs(Literal(-4)))) == 4
-    assert asyncio.run(_aeval(DivMod(Literal(17), Literal(5)))) == (3, 2)
-    assert asyncio.run(_aeval(Round(Literal(3.14159), Literal(2)))) == 3.14
-    assert asyncio.run(_aeval(Mul(Literal(2), Literal(EMPTY)))) is INVALID
+    assert asyncio.run(_aeval(AddQuery(LiteralQuery(2), LiteralQuery(3)))) == 5
+    assert asyncio.run(_aeval(PowQuery(LiteralQuery(2), LiteralQuery(5)))) == 32
+    assert asyncio.run(_aeval(AbsQuery(LiteralQuery(-4)))) == 4
+    assert asyncio.run(_aeval(DivModQuery(LiteralQuery(17), LiteralQuery(5)))) == (3, 2)
+    assert asyncio.run(_aeval(RoundQuery(LiteralQuery(3.14159), LiteralQuery(2)))) == 3.14
+    assert asyncio.run(_aeval(MulQuery(LiteralQuery(2), LiteralQuery(EMPTY)))) is INVALID

@@ -49,7 +49,7 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no v
         # Auto-wrap any non-Term child as Literal so `Add(1, 2)` reads the
         # same as `Add(Literal(1), Literal(2))`. Lazy import keeps the lang
         # layer free of a core dependency.
-        from nu2.core import Literal
+        from nu2.core import LiteralQuery
 
-        wrapped = tuple(c if isinstance(c, Term) else Literal(c) for c in children)
+        wrapped = tuple(c if isinstance(c, Term) else LiteralQuery(c) for c in children)
         super().__init__(*wrapped)

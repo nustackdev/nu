@@ -1,4 +1,4 @@
-"""Set interactions.
+"""SetQuery interactions.
 
 Reads (Query):
     UnionQuery, IntersectionQuery, DifferenceQuery, SymmetricDifferenceQuery
@@ -18,7 +18,8 @@ Mutations that return a value (Action):
 
 from __future__ import annotations
 
-from collections.abc import MutableSet, Set
+from collections.abc import MutableSet
+from collections.abc import Set as ABCSet
 from typing import TYPE_CHECKING
 
 from nu2.engine.structure import Declared
@@ -66,7 +67,7 @@ __all__ = [
 
 
 class UnionQuery(ScalarQuery):
-    """Set union: left.union(right). Returns a new set."""
+    """SetQuery union: left.union(right). Returns a new set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
@@ -78,9 +79,9 @@ class UnionQuery(ScalarQuery):
             b = b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet):
                 return INVALID
-            return a | b
+            return a.union(b)
 
         return thunk
 
@@ -94,15 +95,15 @@ class UnionQuery(ScalarQuery):
             b = await b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet):
                 return INVALID
-            return a | b
+            return a.union(b)
 
         return athunk
 
 
 class IntersectionQuery(ScalarQuery):
-    """Set intersection: left.intersection(right). Returns a new set."""
+    """SetQuery intersection: left.intersection(right). Returns a new set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
@@ -114,9 +115,9 @@ class IntersectionQuery(ScalarQuery):
             b = b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet):
                 return INVALID
-            return a & b
+            return a.intersection(b)
 
         return thunk
 
@@ -130,15 +131,15 @@ class IntersectionQuery(ScalarQuery):
             b = await b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet):
                 return INVALID
-            return a & b
+            return a.intersection(b)
 
         return athunk
 
 
 class DifferenceQuery(ScalarQuery):
-    """Set difference: left.difference(right). Returns a new set."""
+    """SetQuery difference: left.difference(right). Returns a new set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
@@ -150,9 +151,9 @@ class DifferenceQuery(ScalarQuery):
             b = b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet):
                 return INVALID
-            return a - b
+            return a.difference(b)
 
         return thunk
 
@@ -166,15 +167,15 @@ class DifferenceQuery(ScalarQuery):
             b = await b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet):
                 return INVALID
-            return a - b
+            return a.difference(b)
 
         return athunk
 
 
 class SymmetricDifferenceQuery(ScalarQuery):
-    """Set symmetric difference: left.symmetric_difference(right). Returns a new set."""
+    """SetQuery symmetric difference: left.symmetric_difference(right). Returns a new set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
@@ -186,9 +187,9 @@ class SymmetricDifferenceQuery(ScalarQuery):
             b = b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet):
                 return INVALID
-            return a ^ b
+            return a.symmetric_difference(b)
 
         return thunk
 
@@ -202,9 +203,9 @@ class SymmetricDifferenceQuery(ScalarQuery):
             b = await b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet):
                 return INVALID
-            return a ^ b
+            return a.symmetric_difference(b)
 
         return athunk
 
@@ -222,7 +223,7 @@ class IsSubsetQuery(ScalarQuery):
             b = b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a <= b
 
@@ -238,7 +239,7 @@ class IsSubsetQuery(ScalarQuery):
             b = await b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a <= b
 
@@ -258,7 +259,7 @@ class IsSupersetQuery(ScalarQuery):
             b = b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a >= b
 
@@ -274,7 +275,7 @@ class IsSupersetQuery(ScalarQuery):
             b = await b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a >= b
 
@@ -294,7 +295,7 @@ class IsDisjointQuery(ScalarQuery):
             b = b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a.isdisjoint(b)
 
@@ -310,7 +311,7 @@ class IsDisjointQuery(ScalarQuery):
             b = await b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a.isdisjoint(b)
 
@@ -327,7 +328,7 @@ class CopyQuery(ScalarQuery):
             obj = operand(rt)
             if obj is EMPTY or obj is INVALID:
                 return INVALID
-            if not isinstance(obj, Set):
+            if not isinstance(obj, ABCSet):
                 return INVALID
             return obj.copy()
 
@@ -340,7 +341,7 @@ class CopyQuery(ScalarQuery):
             obj = await operand(rt)
             if obj is EMPTY or obj is INVALID:
                 return INVALID
-            if not isinstance(obj, Set):
+            if not isinstance(obj, ABCSet):
                 return INVALID
             return obj.copy()
 
@@ -348,7 +349,7 @@ class CopyQuery(ScalarQuery):
 
 
 class SetOrQuery(ScalarQuery):
-    """Set union operator: left | right. Returns a new set."""
+    """SetQuery union operator: left | right. Returns a new set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
@@ -360,7 +361,7 @@ class SetOrQuery(ScalarQuery):
             b = b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a | b
 
@@ -376,7 +377,7 @@ class SetOrQuery(ScalarQuery):
             b = await b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a | b
 
@@ -384,7 +385,7 @@ class SetOrQuery(ScalarQuery):
 
 
 class SetAndQuery(ScalarQuery):
-    """Set intersection operator: left & right. Returns a new set."""
+    """SetQuery intersection operator: left & right. Returns a new set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
@@ -396,7 +397,7 @@ class SetAndQuery(ScalarQuery):
             b = b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a & b
 
@@ -412,7 +413,7 @@ class SetAndQuery(ScalarQuery):
             b = await b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a & b
 
@@ -420,7 +421,7 @@ class SetAndQuery(ScalarQuery):
 
 
 class SetSubQuery(ScalarQuery):
-    """Set difference operator: left - right. Returns a new set."""
+    """SetQuery difference operator: left - right. Returns a new set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
@@ -432,7 +433,7 @@ class SetSubQuery(ScalarQuery):
             b = b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a - b
 
@@ -448,7 +449,7 @@ class SetSubQuery(ScalarQuery):
             b = await b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a - b
 
@@ -456,7 +457,7 @@ class SetSubQuery(ScalarQuery):
 
 
 class SetXorQuery(ScalarQuery):
-    """Set symmetric difference operator: left ^ right. Returns a new set."""
+    """SetQuery symmetric difference operator: left ^ right. Returns a new set."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
@@ -468,7 +469,7 @@ class SetXorQuery(ScalarQuery):
             b = b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a ^ b
 
@@ -484,7 +485,7 @@ class SetXorQuery(ScalarQuery):
             b = await b_t(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            if not isinstance(a, Set) or not isinstance(b, Set):
+            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
                 return INVALID
             return a ^ b
 
@@ -497,7 +498,7 @@ class SetXorQuery(ScalarQuery):
 
 
 class AddCommand(Command):
-    """Add element to set: s.add(value). Mutates the set; returns nothing."""
+    """AddQuery element to set: s.add(value). Mutates the set; returns nothing."""
 
     mutates = Declared(value=frozenset({0}))
 
