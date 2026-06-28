@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from nu2.lang import BytesArg, IntArg, StrArg
 
     from ..collections.list_ import ListForm
+    from ..collections.tuple_ import TupleForm
     from .bool_ import BoolForm
     from .int_ import IntForm
     from .str_ import StrForm
@@ -237,3 +238,210 @@ class BytesForm(Form, TypedNu[bytes]):
         from .bytes_interactions import BytesReplaceQuery
 
         return BytesForm(BytesReplaceQuery(self, old, new, count))
+
+    def removeprefix(self, prefix: BytesArg) -> BytesForm:
+        """Remove prefix if present, else return bytes unchanged."""
+        from .bytes_interactions import BytesRemovePrefixQuery
+
+        return BytesForm(BytesRemovePrefixQuery(self, prefix))
+
+    def removesuffix(self, suffix: BytesArg) -> BytesForm:
+        """Remove suffix if present, else return bytes unchanged."""
+        from .bytes_interactions import BytesRemoveSuffixQuery
+
+        return BytesForm(BytesRemoveSuffixQuery(self, suffix))
+
+    def translate(self, table: BytesArg | None, delete: BytesArg = b"") -> BytesForm:
+        """Translate via a 256-length table, deleting bytes in delete."""
+        from .bytes_interactions import BytesTranslateQuery
+
+        return BytesForm(BytesTranslateQuery(self, table, delete))
+
+    # =========================================================================
+    # CASE TRANSFORMATION (extra)
+    # =========================================================================
+
+    def title(self) -> BytesForm:
+        """Titlecase bytes."""
+        from .bytes_interactions import BytesTitleQuery
+
+        return BytesForm(BytesTitleQuery(self))
+
+    def capitalize(self) -> BytesForm:
+        """Capitalize bytes."""
+        from .bytes_interactions import BytesCapitalizeQuery
+
+        return BytesForm(BytesCapitalizeQuery(self))
+
+    def swapcase(self) -> BytesForm:
+        """Swap case of bytes."""
+        from .bytes_interactions import BytesSwapCaseQuery
+
+        return BytesForm(BytesSwapCaseQuery(self))
+
+    # =========================================================================
+    # SPLITTING (extra)
+    # =========================================================================
+
+    def rsplit_bytes(self, sep: BytesArg | None = None, maxsplit: IntArg = -1) -> ListForm:
+        """Split bytes from the right on sep, up to maxsplit times."""
+        from ..collections.list_ import ListForm
+        from .bytes_interactions import BytesRSplitQuery
+
+        if sep is not None:
+            return ListForm(BytesRSplitQuery(self, sep, maxsplit))
+        return ListForm(BytesRSplitQuery(self, None, maxsplit))
+
+    def splitlines(self, keepends: bool = False) -> ListForm:
+        """Split bytes on line boundaries."""
+        from ..collections.list_ import ListForm
+        from .bytes_interactions import BytesSplitLinesQuery
+
+        return ListForm(BytesSplitLinesQuery(self, keepends))
+
+    def partition(self, sep: BytesArg) -> TupleForm:
+        """Partition on first occurrence of sep into a 3-tuple."""
+        from ..collections.tuple_ import TupleForm
+        from .bytes_interactions import BytesPartitionQuery
+
+        return TupleForm(BytesPartitionQuery(self, sep))
+
+    def rpartition(self, sep: BytesArg) -> TupleForm:
+        """Partition on last occurrence of sep into a 3-tuple."""
+        from ..collections.tuple_ import TupleForm
+        from .bytes_interactions import BytesRPartitionQuery
+
+        return TupleForm(BytesRPartitionQuery(self, sep))
+
+    # =========================================================================
+    # SEARCHING (extra)
+    # =========================================================================
+
+    def rfind_bytes(self, sub: BytesArg, start: IntArg = 0, end: IntArg | None = None) -> IntForm:
+        """Find sub-bytes from the right, returning the index or -1."""
+        from .bytes_interactions import BytesRFindQuery
+        from .int_ import IntForm
+
+        return IntForm(BytesRFindQuery(self, sub, start, end))
+
+    def index_bytes(self, sub: BytesArg, start: IntArg = 0, end: IntArg | None = None) -> IntForm:
+        """Find sub-bytes index, raising ValueError if absent."""
+        from .bytes_interactions import BytesIndexQuery
+        from .int_ import IntForm
+
+        return IntForm(BytesIndexQuery(self, sub, start, end))
+
+    def rindex_bytes(self, sub: BytesArg, start: IntArg = 0, end: IntArg | None = None) -> IntForm:
+        """Find sub-bytes index from the right, raising ValueError if absent."""
+        from .bytes_interactions import BytesRIndexQuery
+        from .int_ import IntForm
+
+        return IntForm(BytesRIndexQuery(self, sub, start, end))
+
+    # =========================================================================
+    # PREDICATES
+    # =========================================================================
+
+    def isascii(self) -> BoolForm:
+        """Return True if all bytes are ASCII (or empty)."""
+        from .bool_ import BoolForm
+        from .bytes_interactions import BytesIsAsciiQuery
+
+        return BoolForm(BytesIsAsciiQuery(self))
+
+    def isdigit(self) -> BoolForm:
+        """Return True if all bytes are ASCII digits and there is at least one."""
+        from .bool_ import BoolForm
+        from .bytes_interactions import BytesIsDigitQuery
+
+        return BoolForm(BytesIsDigitQuery(self))
+
+    def isalpha(self) -> BoolForm:
+        """Return True if all bytes are ASCII letters and there is at least one."""
+        from .bool_ import BoolForm
+        from .bytes_interactions import BytesIsAlphaQuery
+
+        return BoolForm(BytesIsAlphaQuery(self))
+
+    def isalnum(self) -> BoolForm:
+        """Return True if all bytes are ASCII alphanumeric and there is at least one."""
+        from .bool_ import BoolForm
+        from .bytes_interactions import BytesIsAlnumQuery
+
+        return BoolForm(BytesIsAlnumQuery(self))
+
+    def isspace(self) -> BoolForm:
+        """Return True if all bytes are ASCII whitespace and there is at least one."""
+        from .bool_ import BoolForm
+        from .bytes_interactions import BytesIsSpaceQuery
+
+        return BoolForm(BytesIsSpaceQuery(self))
+
+    def istitle(self) -> BoolForm:
+        """Return True if bytes are titlecased and there is at least one cased byte."""
+        from .bool_ import BoolForm
+        from .bytes_interactions import BytesIsTitleQuery
+
+        return BoolForm(BytesIsTitleQuery(self))
+
+    def isupper(self) -> BoolForm:
+        """Return True if all cased bytes are uppercase and there is at least one."""
+        from .bool_ import BoolForm
+        from .bytes_interactions import BytesIsUpperQuery
+
+        return BoolForm(BytesIsUpperQuery(self))
+
+    def islower(self) -> BoolForm:
+        """Return True if all cased bytes are lowercase and there is at least one."""
+        from .bool_ import BoolForm
+        from .bytes_interactions import BytesIsLowerQuery
+
+        return BoolForm(BytesIsLowerQuery(self))
+
+    # =========================================================================
+    # JUSTIFYING
+    # =========================================================================
+
+    def center(self, width: IntArg, fillbyte: BytesArg = b" ") -> BytesForm:
+        """Center bytes in field of given width."""
+        from .bytes_interactions import BytesCenterQuery
+
+        return BytesForm(BytesCenterQuery(self, width, fillbyte))
+
+    def ljust(self, width: IntArg, fillbyte: BytesArg = b" ") -> BytesForm:
+        """Left-justify bytes in field of given width."""
+        from .bytes_interactions import BytesLJustQuery
+
+        return BytesForm(BytesLJustQuery(self, width, fillbyte))
+
+    def rjust(self, width: IntArg, fillbyte: BytesArg = b" ") -> BytesForm:
+        """Right-justify bytes in field of given width."""
+        from .bytes_interactions import BytesRJustQuery
+
+        return BytesForm(BytesRJustQuery(self, width, fillbyte))
+
+    def zfill(self, width: IntArg) -> BytesForm:
+        """Zero-fill bytes to given width."""
+        from .bytes_interactions import BytesZFillQuery
+
+        return BytesForm(BytesZFillQuery(self, width))
+
+    # =========================================================================
+    # TABS
+    # =========================================================================
+
+    def expandtabs(self, tabsize: IntArg = 8) -> BytesForm:
+        """Expand tabs to spaces using the given tab size."""
+        from .bytes_interactions import BytesExpandTabsQuery
+
+        return BytesForm(BytesExpandTabsQuery(self, tabsize))
+
+    # =========================================================================
+    # JOINING
+    # =========================================================================
+
+    def join(self, iterable: object) -> BytesForm:
+        """Join an iterable of bytes with this bytes as separator."""
+        from .bytes_interactions import BytesJoinQuery
+
+        return BytesForm(BytesJoinQuery(self, iterable))

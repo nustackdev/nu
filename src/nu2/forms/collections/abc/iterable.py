@@ -21,6 +21,7 @@ from nu2.lang import Form
 
 
 if TYPE_CHECKING:
+    from nu2.forms.collections.iterator_ import IteratorForm
     from nu2.lang import Nu
 
 
@@ -50,6 +51,19 @@ class IterableForm[ElementT, CollectionResultT, ElementResultT](Form):
         CollectionResultT: Result type for interactions that return collections
         ElementResultT: Result type for interactions that extract single elements
     """
+
+    def __iter__(self) -> IteratorForm[ElementT]:
+        """Open this iterable into a lazy iterator stream (Python's ``iter``).
+
+        A pure read: builds the StreamQuery ``Iter`` over this value and wraps
+        it as an ``IteratorForm``. Unlike ``len``/``contains`` (whose results
+        Python coerces at the C level), ``iter`` keeps whatever ``__iter__``
+        returns, so the Nu tree survives.
+        """
+        from nu2.core import Iter
+        from nu2.forms.collections.iterator_ import IteratorForm
+
+        return IteratorForm(Iter(self))
 
     def _wrap_iterable_result(self, operand: Nu) -> CollectionResultT:
         """Override in subclass to wrap result in appropriate collection type."""

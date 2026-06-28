@@ -8,9 +8,10 @@ from nu2.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu2.lang import IntArg, StrArg
+    from nu2.lang import BoolArg, DictArg, IntArg, StrArg
 
     from ..collections.list_ import ListForm
+    from ..collections.tuple_ import TupleForm
     from .bool_ import BoolForm
     from .bytes_ import BytesForm
     from .int_ import IntForm
@@ -179,6 +180,12 @@ class StrForm(Form, TypedNu[str]):
 
         return StrForm(SwapCaseQuery(self))
 
+    def casefold(self) -> StrForm:
+        """Casefold for caseless matching."""
+        from .str_interactions import CasefoldQuery
+
+        return StrForm(CasefoldQuery(self))
+
     # =========================================================================
     # STRIPPING
     # =========================================================================
@@ -219,6 +226,27 @@ class StrForm(Form, TypedNu[str]):
 
         return ListForm(RSplitQuery(self, sep, maxsplit))
 
+    def splitlines(self, keepends: BoolArg = False) -> ListForm:
+        """Split at line boundaries into a list."""
+        from ..collections.list_ import ListForm
+        from .str_interactions import SplitLinesQuery
+
+        return ListForm(SplitLinesQuery(self, keepends))
+
+    def partition(self, sep: StrArg) -> TupleForm:
+        """Split around first occurrence of sep into a 3-tuple."""
+        from ..collections.tuple_ import TupleForm
+        from .str_interactions import PartitionQuery
+
+        return TupleForm(PartitionQuery(self, sep))
+
+    def rpartition(self, sep: StrArg) -> TupleForm:
+        """Split around last occurrence of sep into a 3-tuple."""
+        from ..collections.tuple_ import TupleForm
+        from .str_interactions import RPartitionQuery
+
+        return TupleForm(RPartitionQuery(self, sep))
+
     # =========================================================================
     # SEARCHING
     # =========================================================================
@@ -236,6 +264,20 @@ class StrForm(Form, TypedNu[str]):
         from .str_interactions import RFindQuery
 
         return IntForm(RFindQuery(self, sub, start, end))
+
+    def index(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntForm:
+        """Find substring index, error if absent: str.index(sub, start, end)."""
+        from .int_ import IntForm
+        from .str_interactions import IndexQuery
+
+        return IntForm(IndexQuery(self, sub, start, end))
+
+    def rindex(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntForm:
+        """Find substring index from right, error if absent: str.rindex(sub, start, end)."""
+        from .int_ import IntForm
+        from .str_interactions import RIndexQuery
+
+        return IntForm(RIndexQuery(self, sub, start, end))
 
     def count_substring(self, sub: StrArg) -> IntForm:
         """Count non-overlapping occurrences of sub."""
@@ -290,6 +332,62 @@ class StrForm(Form, TypedNu[str]):
 
         return BoolForm(IsSpaceQuery(self))
 
+    def isnumeric(self) -> BoolForm:
+        """Check if all characters are numeric."""
+        from .bool_ import BoolForm
+        from .str_interactions import IsNumericQuery
+
+        return BoolForm(IsNumericQuery(self))
+
+    def isdecimal(self) -> BoolForm:
+        """Check if all characters are decimal."""
+        from .bool_ import BoolForm
+        from .str_interactions import IsDecimalQuery
+
+        return BoolForm(IsDecimalQuery(self))
+
+    def isidentifier(self) -> BoolForm:
+        """Check if string is a valid identifier."""
+        from .bool_ import BoolForm
+        from .str_interactions import IsIdentifierQuery
+
+        return BoolForm(IsIdentifierQuery(self))
+
+    def isprintable(self) -> BoolForm:
+        """Check if all characters are printable."""
+        from .bool_ import BoolForm
+        from .str_interactions import IsPrintableQuery
+
+        return BoolForm(IsPrintableQuery(self))
+
+    def istitle(self) -> BoolForm:
+        """Check if string is titlecased."""
+        from .bool_ import BoolForm
+        from .str_interactions import IsTitleQuery
+
+        return BoolForm(IsTitleQuery(self))
+
+    def isupper(self) -> BoolForm:
+        """Check if all cased characters are uppercase."""
+        from .bool_ import BoolForm
+        from .str_interactions import IsUpperQuery
+
+        return BoolForm(IsUpperQuery(self))
+
+    def islower(self) -> BoolForm:
+        """Check if all cased characters are lowercase."""
+        from .bool_ import BoolForm
+        from .str_interactions import IsLowerQuery
+
+        return BoolForm(IsLowerQuery(self))
+
+    def isascii(self) -> BoolForm:
+        """Check if all characters are ASCII (empty string is True)."""
+        from .bool_ import BoolForm
+        from .str_interactions import IsAsciiQuery
+
+        return BoolForm(IsAsciiQuery(self))
+
     # =========================================================================
     # PADDING
     # =========================================================================
@@ -318,6 +416,12 @@ class StrForm(Form, TypedNu[str]):
 
         return StrForm(ZFillQuery(self, width))
 
+    def expandtabs(self, tabsize: IntArg = 8) -> StrForm:
+        """Expand tabs to spaces using the given tab size."""
+        from .str_interactions import ExpandTabsQuery
+
+        return StrForm(ExpandTabsQuery(self, tabsize))
+
     # =========================================================================
     # REPLACING
     # =========================================================================
@@ -327,6 +431,34 @@ class StrForm(Form, TypedNu[str]):
         from .str_interactions import ReplaceQuery
 
         return StrForm(ReplaceQuery(self, old, new, count))
+
+    def removeprefix(self, prefix: StrArg) -> StrForm:
+        """Remove the given prefix if present."""
+        from .str_interactions import RemovePrefixQuery
+
+        return StrForm(RemovePrefixQuery(self, prefix))
+
+    def removesuffix(self, suffix: StrArg) -> StrForm:
+        """Remove the given suffix if present."""
+        from .str_interactions import RemoveSuffixQuery
+
+        return StrForm(RemoveSuffixQuery(self, suffix))
+
+    def translate(self, table: DictArg) -> StrForm:
+        """Map characters through a translation table."""
+        from .str_interactions import TranslateQuery
+
+        return StrForm(TranslateQuery(self, table))
+
+    # =========================================================================
+    # FORMATTING
+    # =========================================================================
+
+    def format_map(self, mapping: DictArg) -> StrForm:
+        """Format the string using a mapping of field values."""
+        from .str_interactions import FormatMapQuery
+
+        return StrForm(FormatMapQuery(self, mapping))
 
     # =========================================================================
     # ENCODING

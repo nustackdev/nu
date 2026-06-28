@@ -110,43 +110,55 @@ class MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResul
     """
 
     def append(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
-        """Append item to end of sequence."""
-        from .sequence_interactions import AppendQuery
+        """Append item to end of sequence. Mutates in place; yields nothing (Command)."""
+        from .sequence_interactions import AppendCommand
 
-        return AppendQuery(self, value)
+        return AppendCommand(self, value)
 
     def extend(self, other: Arg[Iterable[ElementT]]) -> Any:  # noqa: ANN401
-        """Extend sequence with elements from iterable."""
-        from .sequence_interactions import ExtendQuery
+        """Extend sequence with elements from iterable. Mutates in place; yields nothing (Command)."""
+        from .sequence_interactions import ExtendCommand
 
-        return ExtendQuery(self, other)
+        return ExtendCommand(self, other)
 
     def insert(self, index: IntArg, value: Arg[ElementT]) -> Any:  # noqa: ANN401
-        """Insert item at index."""
-        from .sequence_interactions import InsertQuery
+        """Insert item at index. Mutates in place; yields nothing (Command)."""
+        from .sequence_interactions import InsertCommand
 
-        return InsertQuery(self, index, value)
+        return InsertCommand(self, index, value)
 
     def pop(self, index: IntArg = -1) -> ElementResultT:
-        """Remove and return item at index (default: last)."""
-        from .sequence_interactions import PopQuery
+        """Remove and return item at index (default: last). Mutates and yields (Action)."""
+        from .sequence_interactions import PopAction
 
-        return cast("ElementResultT", self._wrap_element_result(PopQuery(self, index)))
+        return cast("ElementResultT", self._wrap_element_result(PopAction(self, index)))
 
     def remove(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
-        """Remove first occurrence of value."""
-        from .sequence_interactions import RemoveValueQuery
+        """Remove first occurrence of value. Mutates in place; yields nothing (Command)."""
+        from .sequence_interactions import RemoveValueCommand
 
-        return RemoveValueQuery(self, value)
+        return RemoveValueCommand(self, value)
 
     def reverse(self) -> Any:  # noqa: ANN401
-        """Reverse sequence in-place."""
-        from .sequence_interactions import ReverseQuery
+        """Reverse sequence in-place. Mutates in place; yields nothing (Command)."""
+        from .sequence_interactions import ReverseCommand
 
-        return ReverseQuery(self)
+        return ReverseCommand(self)
+
+    def sort(self) -> Any:  # noqa: ANN401
+        """Sort sequence in-place (no key). Mutates in place; yields nothing (Command)."""
+        from .sequence_interactions import SortCommand
+
+        return SortCommand(self)
+
+    def copy(self) -> CollectionResultT:
+        """Shallow copy: new sequence with the same elements (Query)."""
+        from .sequence_interactions import CopyQuery
+
+        return cast("CollectionResultT", self._wrap_sliceable_result(CopyQuery(self)))
 
     def clear(self) -> Any:  # noqa: ANN401
-        """Remove all items."""
-        from .shared_interactions import ClearQuery
+        """Remove all items. Mutates in place; yields nothing (Command)."""
+        from .shared_interactions import ClearCommand
 
-        return ClearQuery(self)
+        return ClearCommand(self)

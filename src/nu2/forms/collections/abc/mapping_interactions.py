@@ -1,15 +1,18 @@
 """Mapping interactions.
 
-KeysQuery, ValuesQuery, ItemsQuery, GetQuery
-SetItemQuery, DeleteItemQuery, UpdateQuery
-DictPopQuery, PopItemQuery, SetDefaultQuery
+Reads (Query): KeysQuery, ValuesQuery, ItemsQuery, GetQuery, ContainsKeyQuery,
+    CopyQuery, ReversedKeysQuery, MergeQuery
+Mutate, yield nothing (Command): SetItemCommand, DeleteItemCommand, UpdateCommand
+Mutate and yield a value (Action): DictPopAction, PopItemAction, SetDefaultAction,
+    MergeUpdateAction
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.lang import ScalarQuery
+from nu2.engine.structure import Declared
+from nu2.lang import Command, ScalarAction, ScalarQuery, StreamQuery
 from nu2.lang.sentinels import EMPTY, INVALID
 
 
@@ -20,21 +23,26 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "DeleteItemQuery",
-    "DictPopQuery",
+    "ContainsKeyQuery",
+    "CopyQuery",
+    "DeleteItemCommand",
+    "DictPopAction",
     "GetQuery",
     "ItemsQuery",
     "KeysQuery",
-    "PopItemQuery",
-    "SetDefaultQuery",
-    "SetItemQuery",
-    "UpdateQuery",
+    "MergeQuery",
+    "MergeUpdateAction",
+    "PopItemAction",
+    "ReversedKeysQuery",
+    "SetDefaultAction",
+    "SetItemCommand",
+    "UpdateCommand",
     "ValuesQuery",
 ]
 
 
 # =============================================================================
-# MAPPING READS
+# MAPPING READS (Query)
 # =============================================================================
 
 
@@ -158,16 +166,11 @@ class GetQuery(ScalarQuery):
         return athunk
 
 
-# =============================================================================
-# MAPPING MUTATIONS
-# =============================================================================
-
-
-class SetItemQuery(ScalarQuery):
-    """Set value at key: mapping[key] = value; yields the mapping."""
+class ContainsKeyQuery(ScalarQuery):
+    """Test key membership: key in mapping. Yields a bool."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        target_t, key_t, value_t = children
+        target_t, key_t = children
 
         def thunk(rt: Runtime) -> object:
             target = target_t(rt)
@@ -176,69 +179,240 @@ class SetItemQuery(ScalarQuery):
             key = key_t(rt)
             if key is EMPTY or key is INVALID:
                 return INVALID
+            return key in target
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, key_t = children
+
+        async def athunk(rt: Runtime) -> object:
+            target = await target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return INVALID
+            key = await key_t(rt)
+            if key is EMPTY or key is INVALID:
+                return INVALID
+            return key in target
+
+        return athunk
+
+
+class CopyQuery(ScalarQuery):
+    """Shallow copy of the mapping: mapping.copy(). Yields a new dict."""
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (operand,) = children
+
+        def thunk(rt: Runtime) -> object:
+            obj = operand(rt)
+            if obj is EMPTY or obj is INVALID:
+                return INVALID
+            return obj.copy()
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (operand,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            obj = await operand(rt)
+            if obj is EMPTY or obj is INVALID:
+                return INVALID
+            return obj.copy()
+
+        return athunk
+
+
+class ReversedKeysQuery(StreamQuery):
+    """Reverse-order keys: reversed(mapping). Yields keys in reverse insertion order."""
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (operand,) = children
+
+        def thunk(rt: Runtime) -> object:
+            obj = operand(rt)
+            if obj is EMPTY or obj is INVALID:
+                return INVALID
+            return reversed(obj)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (operand,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            obj = await operand(rt)
+            if obj is EMPTY or obj is INVALID:
+                return INVALID
+
+            async def agen() -> object:
+                for k in reversed(obj):
+                    yield k
+
+            return agen()
+
+        return athunk
+
+
+class MergeQuery(ScalarQuery):
+    """Merge two mappings into a new one: mapping | other. Yields a new dict."""
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        a_t, b_t = children
+
+        def thunk(rt: Runtime) -> object:
+            a = a_t(rt)
+            if a is EMPTY or a is INVALID:
+                return INVALID
+            b = b_t(rt)
+            if b is EMPTY or b is INVALID:
+                return INVALID
+            return a | b
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        a_t, b_t = children
+
+        async def athunk(rt: Runtime) -> object:
+            a = await a_t(rt)
+            if a is EMPTY or a is INVALID:
+                return INVALID
+            b = await b_t(rt)
+            if b is EMPTY or b is INVALID:
+                return INVALID
+            return a | b
+
+        return athunk
+
+
+# =============================================================================
+# MAPPING MUTATIONS, YIELD NOTHING (Command)
+# =============================================================================
+
+
+class SetItemCommand(Command):
+    """Set value at key: mapping[key] = value. Mutates slot 0; returns nothing."""
+
+    mutates = Declared(value=frozenset({0}))
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, key_t, value_t = children
+
+        def thunk(rt: Runtime) -> None:
+            target = target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            key = key_t(rt)
+            if key is EMPTY or key is INVALID:
+                return
             value = value_t(rt)
             if value is EMPTY or value is INVALID:
-                return INVALID
+                return
             target[key] = value
-            return target
 
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, key_t, value_t = children
 
-        async def athunk(rt: Runtime) -> object:
+        async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
             if target is EMPTY or target is INVALID:
-                return INVALID
+                return
             key = await key_t(rt)
             if key is EMPTY or key is INVALID:
-                return INVALID
+                return
             value = await value_t(rt)
             if value is EMPTY or value is INVALID:
-                return INVALID
+                return
             target[key] = value
-            return target
 
         return athunk
 
 
-class DeleteItemQuery(ScalarQuery):
-    """Delete entry by key: del mapping[key]; yields the mapping."""
+class DeleteItemCommand(Command):
+    """Delete entry by key: del mapping[key]. Mutates slot 0; returns nothing."""
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, key_t = children
 
-        def thunk(rt: Runtime) -> object:
+        def thunk(rt: Runtime) -> None:
             target = target_t(rt)
             if target is EMPTY or target is INVALID:
-                return INVALID
+                return
             key = key_t(rt)
             if key is EMPTY or key is INVALID:
-                return INVALID
+                return
             del target[key]
-            return target
 
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, key_t = children
 
-        async def athunk(rt: Runtime) -> object:
+        async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
             if target is EMPTY or target is INVALID:
-                return INVALID
+                return
             key = await key_t(rt)
             if key is EMPTY or key is INVALID:
-                return INVALID
+                return
             del target[key]
-            return target
 
         return athunk
 
 
-class UpdateQuery(ScalarQuery):
-    """Update mapping with another: mapping.update(other); yields the mapping."""
+class UpdateCommand(Command):
+    """Update mapping with another: mapping.update(other). Mutates slot 0; returns nothing."""
+
+    mutates = Declared(value=frozenset({0}))
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, other_t = children
+
+        def thunk(rt: Runtime) -> None:
+            target = target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            other = other_t(rt)
+            if other is EMPTY or other is INVALID:
+                return
+            target.update(other)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, other_t = children
+
+        async def athunk(rt: Runtime) -> None:
+            target = await target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            other = await other_t(rt)
+            if other is EMPTY or other is INVALID:
+                return
+            target.update(other)
+
+        return athunk
+
+
+# =============================================================================
+# MAPPING MUTATIONS, YIELD A VALUE (Action)
+# =============================================================================
+
+
+class MergeUpdateAction(ScalarAction):
+    """In-place merge: mapping |= other. Mutates slot 0 and yields the mapping.
+
+    Python's ``dict.__ior__`` updates in place and returns ``self``, so it both
+    mutates and yields -> Action.
+    """
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
@@ -250,7 +424,7 @@ class UpdateQuery(ScalarQuery):
             other = other_t(rt)
             if other is EMPTY or other is INVALID:
                 return INVALID
-            target.update(other)
+            target |= other
             return target
 
         return thunk
@@ -265,14 +439,19 @@ class UpdateQuery(ScalarQuery):
             other = await other_t(rt)
             if other is EMPTY or other is INVALID:
                 return INVALID
-            target.update(other)
+            target |= other
             return target
 
         return athunk
 
 
-class DictPopQuery(ScalarQuery):
-    """Pop value by key with optional default: mapping.pop(key, default). Returns value or default."""
+class DictPopAction(ScalarAction):
+    """Pop value by key with optional default: mapping.pop(key, default).
+
+    Mutates slot 0 (removes the entry) and yields the value or default.
+    """
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t, c_t = children
@@ -319,8 +498,13 @@ class DictPopQuery(ScalarQuery):
         return athunk
 
 
-class PopItemQuery(ScalarQuery):
-    """Pop arbitrary item: mapping.popitem(). Returns (key, value) tuple."""
+class PopItemAction(ScalarAction):
+    """Pop arbitrary item: mapping.popitem().
+
+    Mutates slot 0 (removes the entry) and yields the (key, value) tuple.
+    """
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
@@ -351,8 +535,14 @@ class PopItemQuery(ScalarQuery):
         return athunk
 
 
-class SetDefaultQuery(ScalarQuery):
-    """Set default value if key missing: mapping.setdefault(key, default). Returns value at key."""
+class SetDefaultAction(ScalarAction):
+    """Set default value if key missing: mapping.setdefault(key, default).
+
+    Mutates slot 0 (inserts the entry when the key is missing) and yields the
+    value at the key.
+    """
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t, c_t = children

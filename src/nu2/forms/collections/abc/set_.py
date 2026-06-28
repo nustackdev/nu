@@ -1,7 +1,8 @@
 """Set collection — bases + mutations.
 
 SetLikeForm = Collection + union/intersection/difference/symmetric_difference/issubset/issuperset/isdisjoint
-MutableSetForm = SetLike + add/remove/discard
+    + copy + __or__/__and__/__sub__/__xor__
+MutableSetForm = SetLike + add/remove/discard/pop/clear/update/*_update + __ior__/__iand__/__isub__/__ixor__
 
 Follows Python's collections.abc.Set / MutableSet pattern.
 
@@ -103,6 +104,36 @@ class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
         return BoolForm(IsDisjointQuery(self, other))
 
+    def copy(self) -> CollectionResultT:
+        """Shallow copy. Returns a new set."""
+        from .set_interactions import CopyQuery
+
+        return cast("CollectionResultT", self._wrap_set_result(CopyQuery(self)))
+
+    def __or__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
+        """Set union operator: self | other. Returns a new set."""
+        from .set_interactions import SetOrQuery
+
+        return cast("CollectionResultT", self._wrap_set_result(SetOrQuery(self, other)))
+
+    def __and__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
+        """Set intersection operator: self & other. Returns a new set."""
+        from .set_interactions import SetAndQuery
+
+        return cast("CollectionResultT", self._wrap_set_result(SetAndQuery(self, other)))
+
+    def __sub__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
+        """Set difference operator: self - other. Returns a new set."""
+        from .set_interactions import SetSubQuery
+
+        return cast("CollectionResultT", self._wrap_set_result(SetSubQuery(self, other)))
+
+    def __xor__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
+        """Set symmetric difference operator: self ^ other. Returns a new set."""
+        from .set_interactions import SetXorQuery
+
+        return cast("CollectionResultT", self._wrap_set_result(SetXorQuery(self, other)))
+
 
 class MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
@@ -117,55 +148,79 @@ class MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     """
 
     def add(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
-        """Add element to set."""
-        from .set_interactions import AddQuery
+        """Add element to set. Mutates the set; returns nothing."""
+        from .set_interactions import AddCommand
 
-        return AddQuery(self, value)
+        return AddCommand(self, value)
 
     def remove(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
-        """Remove element from set. Returns INVALID if not found."""
-        from .set_interactions import RemoveQuery
+        """Remove element from set. Mutates the set; returns nothing (KeyError if absent)."""
+        from .set_interactions import RemoveCommand
 
-        return RemoveQuery(self, value)
+        return RemoveCommand(self, value)
 
     def discard(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
-        """Remove element if present (no error if absent)."""
-        from .set_interactions import DiscardQuery
+        """Remove element if present (no error if absent). Mutates the set; returns nothing."""
+        from .set_interactions import DiscardCommand
 
-        return DiscardQuery(self, value)
+        return DiscardCommand(self, value)
 
     def pop(self) -> ElementResultT:
-        """Remove and return arbitrary element."""
-        from .set_interactions import SetPopQuery
+        """Remove and return arbitrary element. Mutates the set; returns the element."""
+        from .set_interactions import SetPopAction
 
-        return cast("ElementResultT", self._wrap_element_result(SetPopQuery(self)))
+        return cast("ElementResultT", self._wrap_element_result(SetPopAction(self)))
 
     def clear(self) -> Any:  # noqa: ANN401
-        """Remove all items."""
-        from .shared_interactions import ClearQuery
+        """Remove all items. Mutates the set; returns nothing."""
+        from .shared_interactions import ClearCommand
 
-        return ClearQuery(self)
+        return ClearCommand(self)
 
     def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
-        """Add all elements from other."""
-        from .set_interactions import SetUpdateQuery
+        """Add all elements from other. Mutates the set; returns nothing."""
+        from .set_interactions import SetUpdateCommand
 
-        return SetUpdateQuery(self, other)
+        return SetUpdateCommand(self, other)
 
     def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
-        """Keep only elements found in both."""
-        from .set_interactions import IntersectionUpdateQuery
+        """Keep only elements found in both. Mutates the set; returns nothing."""
+        from .set_interactions import IntersectionUpdateCommand
 
-        return IntersectionUpdateQuery(self, other)
+        return IntersectionUpdateCommand(self, other)
 
     def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
-        """Remove all elements found in other."""
-        from .set_interactions import DifferenceUpdateQuery
+        """Remove all elements found in other. Mutates the set; returns nothing."""
+        from .set_interactions import DifferenceUpdateCommand
 
-        return DifferenceUpdateQuery(self, other)
+        return DifferenceUpdateCommand(self, other)
 
     def symmetric_difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
-        """Keep elements in either set but not both."""
-        from .set_interactions import SymmetricDifferenceUpdateQuery
+        """Keep elements in either set but not both. Mutates the set; returns nothing."""
+        from .set_interactions import SymmetricDifferenceUpdateCommand
 
-        return SymmetricDifferenceUpdateQuery(self, other)
+        return SymmetricDifferenceUpdateCommand(self, other)
+
+    def __ior__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
+        """In-place union: self |= other. Mutates the set; returns the set."""
+        from .set_interactions import SetIOrAction
+
+        return cast("CollectionResultT", self._wrap_set_result(SetIOrAction(self, other)))
+
+    def __iand__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
+        """In-place intersection: self &= other. Mutates the set; returns the set."""
+        from .set_interactions import SetIAndAction
+
+        return cast("CollectionResultT", self._wrap_set_result(SetIAndAction(self, other)))
+
+    def __isub__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
+        """In-place difference: self -= other. Mutates the set; returns the set."""
+        from .set_interactions import SetISubAction
+
+        return cast("CollectionResultT", self._wrap_set_result(SetISubAction(self, other)))
+
+    def __ixor__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
+        """In-place symmetric difference: self ^= other. Mutates the set; returns the set."""
+        from .set_interactions import SetIXorAction
+
+        return cast("CollectionResultT", self._wrap_set_result(SetIXorAction(self, other)))

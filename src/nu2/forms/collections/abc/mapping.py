@@ -99,6 +99,24 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
         return cast("ValueResultT", self._wrap_value_result(GetQuery(self, key, default)))
 
+    def copy(self) -> Any:  # noqa: ANN401
+        """Shallow copy: mapping.copy(). Query yielding a new mapping."""
+        from .mapping_interactions import CopyQuery
+
+        return CopyQuery(self)
+
+    def reversed_keys(self) -> CollectionResultT:
+        """Keys in reverse insertion order: reversed(mapping). Query (3.8+)."""
+        from .mapping_interactions import ReversedKeysQuery
+
+        return cast("CollectionResultT", self._wrap_keys_result(ReversedKeysQuery(self)))
+
+    def merge(self, other: Arg[Mapping[KeyT, ValueT]]) -> Any:  # noqa: ANN401
+        """Merge into a new mapping: mapping | other. Query yielding a new mapping."""
+        from .mapping_interactions import MergeQuery
+
+        return MergeQuery(self, other)
+
 
 class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
     MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
@@ -114,43 +132,49 @@ class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
     """
 
     def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> Any:  # noqa: ANN401
-        """Set value at key."""
-        from .mapping_interactions import SetItemQuery
+        """Set value at key. Mutating Command; returns nothing."""
+        from .mapping_interactions import SetItemCommand
 
-        return SetItemQuery(self, key, value)
+        return SetItemCommand(self, key, value)
 
     def delete(self, key: Arg[KeyT]) -> Any:  # noqa: ANN401
-        """Delete entry by key."""
-        from .mapping_interactions import DeleteItemQuery
+        """Delete entry by key. Mutating Command; returns nothing."""
+        from .mapping_interactions import DeleteItemCommand
 
-        return DeleteItemQuery(self, key)
+        return DeleteItemCommand(self, key)
 
     def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> Any:  # noqa: ANN401
-        """Update mapping with another mapping."""
-        from .mapping_interactions import UpdateQuery
+        """Update mapping with another mapping. Mutating Command; returns nothing."""
+        from .mapping_interactions import UpdateCommand
 
-        return UpdateQuery(self, other)
+        return UpdateCommand(self, other)
 
     def pop(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Remove key and return value, or default if missing."""
-        from .mapping_interactions import DictPopQuery
+        from .mapping_interactions import DictPopAction
 
-        return cast("ValueResultT", self._wrap_value_result(DictPopQuery(self, key, default)))
+        return cast("ValueResultT", self._wrap_value_result(DictPopAction(self, key, default)))
 
     def popitem(self) -> ValueResultT:
         """Remove and return arbitrary (key, value) pair."""
-        from .mapping_interactions import PopItemQuery
+        from .mapping_interactions import PopItemAction
 
-        return cast("ValueResultT", self._wrap_value_result(PopItemQuery(self)))
+        return cast("ValueResultT", self._wrap_value_result(PopItemAction(self)))
 
     def setdefault(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Get value at key, setting it to default if missing."""
-        from .mapping_interactions import SetDefaultQuery
+        from .mapping_interactions import SetDefaultAction
 
-        return cast("ValueResultT", self._wrap_value_result(SetDefaultQuery(self, key, default)))
+        return cast("ValueResultT", self._wrap_value_result(SetDefaultAction(self, key, default)))
+
+    def merge_update(self, other: Arg[Mapping[KeyT, ValueT]]) -> Any:  # noqa: ANN401
+        """In-place merge: mapping |= other. Mutating Action; yields the mapping."""
+        from .mapping_interactions import MergeUpdateAction
+
+        return MergeUpdateAction(self, other)
 
     def clear(self) -> Any:  # noqa: ANN401
         """Remove all items."""
-        from .shared_interactions import ClearQuery
+        from .shared_interactions import ClearCommand
 
-        return ClearQuery(self)
+        return ClearCommand(self)

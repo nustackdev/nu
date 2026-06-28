@@ -1,8 +1,9 @@
 """Sequence interactions.
 
-FirstQuery, LastQuery, IndexOfQuery, CountQuery
-AppendQuery, ExtendQuery, InsertQuery
-PopQuery, RemoveValueQuery, ReverseQuery
+Reads (Query): FirstQuery, LastQuery, IndexOfQuery, CountQuery, CopyQuery
+Mutators returning nothing (Command): AppendCommand, ExtendCommand, InsertCommand,
+    RemoveValueCommand, ReverseCommand, SortCommand, SetIndexCommand, DelIndexCommand
+Mutators returning a value (Action): PopAction, IAddAction, IMulAction
 """
 
 from __future__ import annotations
@@ -10,7 +11,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from nu2.lang import ScalarQuery
+from nu2.engine.structure import Declared
+from nu2.lang import Command, ScalarAction, ScalarQuery
 from nu2.lang.sentinels import EMPTY, INVALID
 
 
@@ -21,16 +23,22 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "AppendQuery",
+    "AppendCommand",
+    "CopyQuery",
     "CountQuery",
-    "ExtendQuery",
+    "DelIndexCommand",
+    "ExtendCommand",
     "FirstQuery",
+    "IAddAction",
+    "IMulAction",
     "IndexOfQuery",
-    "InsertQuery",
+    "InsertCommand",
     "LastQuery",
-    "PopQuery",
-    "RemoveValueQuery",
-    "ReverseQuery",
+    "PopAction",
+    "RemoveValueCommand",
+    "ReverseCommand",
+    "SetIndexCommand",
+    "SortCommand",
 ]
 
 
@@ -185,94 +193,328 @@ class CountQuery(ScalarQuery):
         return athunk
 
 
-# =============================================================================
-# SEQUENCE MUTATIONS
-# =============================================================================
-
-
-class AppendQuery(ScalarQuery):
-    """Append item to end: seq.append(value); yields the sequence."""
+class CopyQuery(ScalarQuery):
+    """Shallow copy: list.copy(). Returns a new list; does not mutate."""
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        target_t, value_t = children
+        (target_t,) = children
 
         def thunk(rt: Runtime) -> object:
             target = target_t(rt)
             if target is EMPTY or target is INVALID:
                 return INVALID
+            return target.copy()
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (target_t,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            target = await target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return INVALID
+            return target.copy()
+
+        return athunk
+
+
+# =============================================================================
+# SEQUENCE MUTATIONS — Command (mutate, return nothing)
+# =============================================================================
+
+
+class AppendCommand(Command):
+    """Append item to end: seq.append(value). Mutates slot 0; returns nothing."""
+
+    mutates = Declared(value=frozenset({0}))
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, value_t = children
+
+        def thunk(rt: Runtime) -> None:
+            target = target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
             value = value_t(rt)
             if value is EMPTY or value is INVALID:
-                return INVALID
+                return
             target.append(value)
-            return target
 
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, value_t = children
 
-        async def athunk(rt: Runtime) -> object:
+        async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
             if target is EMPTY or target is INVALID:
-                return INVALID
+                return
             value = await value_t(rt)
             if value is EMPTY or value is INVALID:
-                return INVALID
+                return
             target.append(value)
-            return target
 
         return athunk
 
 
-class InsertQuery(ScalarQuery):
-    """Insert item at index: seq.insert(index, value); yields the sequence."""
+class InsertCommand(Command):
+    """Insert item at index: seq.insert(index, value). Mutates slot 0; returns nothing."""
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, index_t, value_t = children
 
-        def thunk(rt: Runtime) -> object:
+        def thunk(rt: Runtime) -> None:
             target = target_t(rt)
             if target is EMPTY or target is INVALID:
-                return INVALID
+                return
             index = index_t(rt)
             if index is EMPTY or index is INVALID:
-                return INVALID
+                return
             value = value_t(rt)
             if value is EMPTY or value is INVALID:
-                return INVALID
+                return
             if not isinstance(index, int):
                 raise TypeError(f"insert() requires int index, got {type(index).__name__}")
             target.insert(index, value)
-            return target
 
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, index_t, value_t = children
 
-        async def athunk(rt: Runtime) -> object:
+        async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
             if target is EMPTY or target is INVALID:
-                return INVALID
+                return
             index = await index_t(rt)
             if index is EMPTY or index is INVALID:
-                return INVALID
+                return
             value = await value_t(rt)
             if value is EMPTY or value is INVALID:
-                return INVALID
+                return
             if not isinstance(index, int):
                 raise TypeError(f"insert() requires int index, got {type(index).__name__}")
             target.insert(index, value)
-            return target
 
         return athunk
 
 
-class PopQuery(ScalarQuery):
-    """Pop item at index: seq.pop(index). Returns popped value.
+class ExtendCommand(Command):
+    """Extend sequence with iterable: seq.extend(other). Mutates slot 0; returns nothing."""
+
+    mutates = Declared(value=frozenset({0}))
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, other_t = children
+
+        def thunk(rt: Runtime) -> None:
+            target = target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            other = other_t(rt)
+            if other is EMPTY or other is INVALID:
+                return
+            target.extend(other)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, other_t = children
+
+        async def athunk(rt: Runtime) -> None:
+            target = await target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            other = await other_t(rt)
+            if other is EMPTY or other is INVALID:
+                return
+            target.extend(other)
+
+        return athunk
+
+
+class RemoveValueCommand(Command):
+    """Remove first occurrence of value: seq.remove(value). Mutates slot 0; returns nothing."""
+
+    mutates = Declared(value=frozenset({0}))
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, value_t = children
+
+        def thunk(rt: Runtime) -> None:
+            target = target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            value = value_t(rt)
+            if value is EMPTY or value is INVALID:
+                return
+            target.remove(value)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, value_t = children
+
+        async def athunk(rt: Runtime) -> None:
+            target = await target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            value = await value_t(rt)
+            if value is EMPTY or value is INVALID:
+                return
+            target.remove(value)
+
+        return athunk
+
+
+class ReverseCommand(Command):
+    """Reverse sequence in-place: seq.reverse(). Mutates slot 0; returns nothing."""
+
+    mutates = Declared(value=frozenset({0}))
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (target_t,) = children
+
+        def thunk(rt: Runtime) -> None:
+            target = target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            target.reverse()
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (target_t,) = children
+
+        async def athunk(rt: Runtime) -> None:
+            target = await target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            target.reverse()
+
+        return athunk
+
+
+class SortCommand(Command):
+    """Sort sequence in-place: list.sort(). Mutates slot 0; returns nothing.
+
+    No-key variant only (key= injection is deferred).
+    """
+
+    mutates = Declared(value=frozenset({0}))
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (target_t,) = children
+
+        def thunk(rt: Runtime) -> None:
+            target = target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            target.sort()
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (target_t,) = children
+
+        async def athunk(rt: Runtime) -> None:
+            target = await target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            target.sort()
+
+        return athunk
+
+
+class SetIndexCommand(Command):
+    """Subscript write: seq[index] = value. Mutates slot 0; returns nothing."""
+
+    mutates = Declared(value=frozenset({0}))
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, index_t, value_t = children
+
+        def thunk(rt: Runtime) -> None:
+            target = target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            index = index_t(rt)
+            if index is EMPTY or index is INVALID:
+                return
+            value = value_t(rt)
+            if value is EMPTY or value is INVALID:
+                return
+            target[index] = value
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, index_t, value_t = children
+
+        async def athunk(rt: Runtime) -> None:
+            target = await target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            index = await index_t(rt)
+            if index is EMPTY or index is INVALID:
+                return
+            value = await value_t(rt)
+            if value is EMPTY or value is INVALID:
+                return
+            target[index] = value
+
+        return athunk
+
+
+class DelIndexCommand(Command):
+    """Subscript delete: del seq[index]. Mutates slot 0; returns nothing."""
+
+    mutates = Declared(value=frozenset({0}))
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, index_t = children
+
+        def thunk(rt: Runtime) -> None:
+            target = target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            index = index_t(rt)
+            if index is EMPTY or index is INVALID:
+                return
+            del target[index]
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        target_t, index_t = children
+
+        async def athunk(rt: Runtime) -> None:
+            target = await target_t(rt)
+            if target is EMPTY or target is INVALID:
+                return
+            index = await index_t(rt)
+            if index is EMPTY or index is INVALID:
+                return
+            del target[index]
+
+        return athunk
+
+
+# =============================================================================
+# SEQUENCE MUTATIONS — Action (mutate AND return a value)
+# =============================================================================
+
+
+class PopAction(ScalarAction):
+    """Pop item at index: seq.pop(index). Mutates slot 0 and returns the popped value.
 
     Default index is -1 (last item).
     """
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
@@ -313,8 +555,10 @@ class PopQuery(ScalarQuery):
         return athunk
 
 
-class ExtendQuery(ScalarQuery):
-    """Extend sequence with iterable: seq.extend(other); yields the sequence."""
+class IAddAction(ScalarAction):
+    """In-place concat: seq += other. Mutates slot 0 and returns it (Python __iadd__)."""
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
@@ -326,7 +570,7 @@ class ExtendQuery(ScalarQuery):
             other = other_t(rt)
             if other is EMPTY or other is INVALID:
                 return INVALID
-            target.extend(other)
+            target += other
             return target
 
         return thunk
@@ -341,69 +585,43 @@ class ExtendQuery(ScalarQuery):
             other = await other_t(rt)
             if other is EMPTY or other is INVALID:
                 return INVALID
-            target.extend(other)
+            target += other
             return target
 
         return athunk
 
 
-class RemoveValueQuery(ScalarQuery):
-    """Remove first occurrence of value: seq.remove(value); yields the sequence."""
+class IMulAction(ScalarAction):
+    """In-place repeat: seq *= n. Mutates slot 0 and returns it (Python __imul__)."""
+
+    mutates = Declared(value=frozenset({0}))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        target_t, value_t = children
+        target_t, n_t = children
 
         def thunk(rt: Runtime) -> object:
             target = target_t(rt)
             if target is EMPTY or target is INVALID:
                 return INVALID
-            value = value_t(rt)
-            if value is EMPTY or value is INVALID:
+            n = n_t(rt)
+            if n is EMPTY or n is INVALID:
                 return INVALID
-            target.remove(value)
+            target *= n
             return target
 
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        target_t, value_t = children
+        target_t, n_t = children
 
         async def athunk(rt: Runtime) -> object:
             target = await target_t(rt)
             if target is EMPTY or target is INVALID:
                 return INVALID
-            value = await value_t(rt)
-            if value is EMPTY or value is INVALID:
+            n = await n_t(rt)
+            if n is EMPTY or n is INVALID:
                 return INVALID
-            target.remove(value)
-            return target
-
-        return athunk
-
-
-class ReverseQuery(ScalarQuery):
-    """Reverse sequence in-place: seq.reverse(); yields the sequence."""
-
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        (target_t,) = children
-
-        def thunk(rt: Runtime) -> object:
-            target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
-            target.reverse()
-            return target
-
-        return thunk
-
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        (target_t,) = children
-
-        async def athunk(rt: Runtime) -> object:
-            target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
-            target.reverse()
+            target *= n
             return target
 
         return athunk

@@ -10,7 +10,7 @@ from .abc import SequenceForm
 
 
 if TYPE_CHECKING:
-    from nu2.lang import Nu, TupleArg
+    from nu2.lang import IntArg, Nu, TupleArg
 
     from ..primitives import AnyForm, BoolForm
     from .list_ import ListForm
@@ -42,6 +42,34 @@ class TupleForm[*Ts](
         from ..primitives import AnyForm
 
         return AnyForm(operand)
+
+    # =========================================================================
+    # ARITHMETIC (concatenation / repeat) — new value, no mutation
+    # =========================================================================
+
+    def __add__(self, other: TupleArg[*Ts]) -> TupleForm:
+        """Concat: self + other -> new tuple (Query)."""
+        from nu2.core import Add
+
+        return TupleForm(Add(self, other))
+
+    def __radd__(self, other: TupleArg[*Ts]) -> TupleForm:
+        """Concat: other + self -> new tuple (Query)."""
+        from nu2.core import Add
+
+        return TupleForm(Add(other, self))
+
+    def __mul__(self, n: IntArg) -> TupleForm:
+        """Repeat: self * n -> new tuple (Query)."""
+        from nu2.core import Mul
+
+        return TupleForm(Mul(self, n))
+
+    def __rmul__(self, n: IntArg) -> TupleForm:
+        """Repeat: n * self -> new tuple (Query)."""
+        from nu2.core import Mul
+
+        return TupleForm(Mul(n, self))
 
     # =========================================================================
     # COMPARISON
