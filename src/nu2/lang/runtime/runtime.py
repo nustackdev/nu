@@ -15,11 +15,13 @@ Layout:
 - construction         -- program / ctx / budget binding
 - dispatch             -- ``eval`` / ``aeval``
 - sequential           -- ``eval_each`` / ``aeval_each``
-- parallel             -- ``eval_parallel`` / ``aeval_parallel`` / ``aeval_race``
-- streams              -- ``iter`` / ``aiter`` / ``collect`` / ``acollect`` / ``merge`` / ``amerge``
+- parallel values      -- ``eval_parallel`` / ``aeval_parallel`` / ``aeval_race`` / ``aeval_any``
+- parallel streams     -- ``merge`` / ``amerge``
+- streams              -- ``iter`` / ``aiter`` / ``collect`` / ``acollect``
 - boundary             -- ``in_thread`` / ``a_in_thread``
 - sentinel propagation -- ``*_or_short`` family
-- hybrid pump          -- ``amerge_hybrid`` (reads ``Attr.ON_LOOP``)
+- placement            -- ``_drive_async`` (reads ``Attr.ON_LOOP``); the async value
+                          combinators and ``amerge`` share it
 """
 
 from __future__ import annotations
@@ -102,42 +104,119 @@ class Runtime:
         futures = [pool.submit(self.eval, n) for n in nids]
         return [f.result() for f in futures]
 
+    def _drive_async(self, nids: list[int]) -> list:
+        """Place each child on the loop per ``Attr.ON_LOOP``; one awaitable each.
+
+        The shared async placement for value fan-in. An async-on-loop child
+        drives its ``aeval`` cooperatively; a sync child runs on a worker thread
+        via ``run_in_executor``. Every branch is semaphore-gated, so total
+        concurrency stays within ``max_parallel``. Each awaitable resolves to
+        the child's value (sentinels included), in the order of ``nids``.
+
+        Requires a Budget allocated with ``async_mode`` and ``max_parallel > 1``;
+        the value combinators handle the sequential fall-through before calling.
+        """
+        from nu2.lang.attributes import Attr
+
+        if self.budget.thread_pool is None or self.budget.async_sem is None:
+            msg = "_drive_async requires a Budget allocated with async_mode and max_parallel > 1"
+            raise RuntimeError(msg)
+        loop = asyncio.get_running_loop()
+        on_loop_col = self.program.attrs[Attr.ON_LOOP]
+        sem = self.budget.async_sem
+        pool = self.budget.thread_pool
+
+        async def place(n: int) -> object:
+            async with sem:
+                if on_loop_col[n]:
+                    return await self.aeval(n)
+                return await loop.run_in_executor(pool, self.eval, n)
+
+        return [place(n) for n in nids]
+
     async def aeval_parallel(self, nids: Iterable[int]) -> list:
-        """Async-parallel evaluation via ``asyncio.gather``, semaphore-gated."""
+        """Async-parallel join-all: gather every child, placement-aware.
+
+        Falls through to a plain on-loop ``gather`` when ``max_parallel == 1``
+        (no pool to offload to); otherwise each child is placed via
+        ``_drive_async`` (async on the loop, sync-only on a worker thread) so a
+        mixed subtree runs hybrid rather than blocking the loop. Returns values
+        in the order of ``nids``.
+        """
         nids = list(nids)
         if self.budget.max_parallel == 1 or self.budget.async_sem is None:
             return await asyncio.gather(*(self.aeval(n) for n in nids))
-        sem = self.budget.async_sem
+        return await asyncio.gather(*self._drive_async(nids))
 
-        async def one(n: int) -> object:
-            async with sem:
-                return await self.aeval(n)
+    async def _settle(self, tasks: Iterable) -> None:
+        """Cancel any unfinished tasks and drain every one.
 
-        return await asyncio.gather(*(one(n) for n in nids))
+        Awaiting each task retrieves its outcome - a value, an exception, or a
+        ``CancelledError`` - so no task is left with an unretrieved exception
+        (which asyncio would log as a warning). Swallows everything: callers
+        have already taken the result they care about.
+        """
+        tasks = list(tasks)
+        for t in tasks:
+            if not t.done():
+                t.cancel()
+        for t in tasks:
+            try:
+                await t
+            except (asyncio.CancelledError, Exception):  # noqa: S110
+                pass
 
     async def aeval_race(self, nids: Iterable[int]) -> object:
-        """Return the first child's value to complete; cancel the rest."""
+        """Return the first child's value to complete; cancel the rest.
+
+        Placement-aware via ``_drive_async`` when ``max_parallel > 1``.
+        """
         nids = list(nids)
         if not nids:
             msg = "aeval_race needs at least one nid"
             raise ValueError(msg)
-        tasks = [asyncio.create_task(self.aeval(n)) for n in nids]
+        if self.budget.max_parallel == 1 or self.budget.async_sem is None:
+            coros: list = [self.aeval(n) for n in nids]
+        else:
+            coros = self._drive_async(nids)
+        tasks = [asyncio.ensure_future(c) for c in coros]
         try:
-            done, _ = await asyncio.wait(
-                tasks,
-                return_when=asyncio.FIRST_COMPLETED,
-            )
+            done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
             return next(iter(done)).result()
         finally:
-            for t in tasks:
-                if not t.done():
-                    t.cancel()
-            for t in tasks:
-                if not t.done():
-                    try:
-                        await t
-                    except (asyncio.CancelledError, Exception):  # noqa: S110
-                        pass
+            await self._settle(tasks)
+
+    async def aeval_any(self, nids: Iterable[int]) -> object:
+        """Return the first child's value to **succeed**; cancel the rest.
+
+        First-success, not first-complete: a child that raises is set aside and
+        the wait continues. If every child fails, the last error is re-raised.
+        Placement-aware via ``_drive_async`` when ``max_parallel > 1``.
+        """
+        nids = list(nids)
+        if not nids:
+            msg = "aeval_any needs at least one nid"
+            raise ValueError(msg)
+        if self.budget.max_parallel == 1 or self.budget.async_sem is None:
+            coros: list = [self.aeval(n) for n in nids]
+        else:
+            coros = self._drive_async(nids)
+        tasks = [asyncio.ensure_future(c) for c in coros]
+        pending = set(tasks)
+        last_error: BaseException | None = None
+        try:
+            while pending:
+                done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+                for task in done:
+                    exc = task.exception()
+                    if exc is None:
+                        return task.result()
+                    last_error = exc
+            if last_error is not None:
+                raise last_error
+            return None
+        finally:
+            await self._settle(tasks)
 
     # --- parallel: streams --------------------------------------------------
 
@@ -177,45 +256,6 @@ class Runtime:
         finally:
             for f in futures:
                 f.cancel()
-
-    async def amerge(self, nids: Iterable[int]) -> AsyncIterable:
-        """Async-merge multiple stream children via tasks + asyncio.Queue."""
-        nids = list(nids)
-        if self.budget.max_parallel == 1:
-            for n in nids:
-                async with safely_aclosing(await self.aiter(n)) as agen:
-                    async for v in agen:
-                        yield v
-            return
-
-        q: asyncio.Queue = asyncio.Queue()
-
-        async def drain(n: int) -> None:
-            try:
-                async with safely_aclosing(await self.aiter(n)) as agen:
-                    async for v in agen:
-                        await q.put(v)
-            finally:
-                await q.put(_DONE)
-
-        tasks = [asyncio.create_task(drain(n)) for n in nids]
-        remaining = len(tasks)
-        try:
-            while remaining > 0:
-                v = await q.get()
-                if v is _DONE:
-                    remaining -= 1
-                else:
-                    yield v
-        finally:
-            for t in tasks:
-                if not t.done():
-                    t.cancel()
-            for t in tasks:
-                try:
-                    await t
-                except (asyncio.CancelledError, Exception):  # noqa: S110
-                    pass
 
     # --- stream helpers -----------------------------------------------------
 
@@ -309,16 +349,18 @@ class Runtime:
                 return INVALID
         return values
 
-    # --- hybrid stream pump (reads Nu's ON_LOOP attribute) -----------------
+    # --- parallel: streams (async, reads Nu's ON_LOOP attribute) -----------
 
-    async def amerge_hybrid(self, nids: Iterable[int]) -> AsyncIterable:
-        """Async-merge stream children with mixed sync/async per-child state.
+    async def amerge(self, nids: Iterable[int]) -> AsyncIterable:
+        """Async-merge stream children, placement-aware - one async stream merge.
 
-        The canonical Par/Race case under a parallel async caller. Each
-        child's ``Attr.ON_LOOP`` column decides its path: async-on-loop
-        children drive their ``aiter`` cooperatively, sync children run on
-        a worker thread via ``loop.run_in_executor``. Sync branches are
-        semaphore-gated (each holds an OS thread); async branches don't gate.
+        The canonical Par/Race case over stream children under an async caller.
+        Each child's ``Attr.ON_LOOP`` column decides its path: async-on-loop
+        children drive their ``aiter`` cooperatively, sync children run on a
+        worker thread via ``loop.run_in_executor``. Sync branches are
+        semaphore-gated (each holds an OS thread); async branches don't gate,
+        so a long-lived async stream never holds the semaphore for its lifetime.
+        Yields in completion order (unordered across children).
         """
         from nu2.lang.attributes import Attr
 
@@ -338,7 +380,7 @@ class Runtime:
             return
 
         if self.budget.thread_pool is None or self.budget.async_sem is None:
-            msg = "amerge_hybrid requires a Budget allocated with async_mode and max_parallel > 1"
+            msg = "amerge requires a Budget allocated with async_mode and max_parallel > 1"
             raise RuntimeError(msg)
         loop = asyncio.get_running_loop()
         q: asyncio.Queue = asyncio.Queue()

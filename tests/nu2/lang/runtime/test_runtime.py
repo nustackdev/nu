@@ -218,10 +218,26 @@ async def test_aeval_parallel_returns_values_in_order() -> None:
         return t
 
     athunks = [await mk(i) for i in range(4)]
-    program = _fake_program(athunks=athunks)
+    program = _fake_program(athunks=athunks, on_loop=[True, True, True, True])
     with Budget(max_parallel=2, async_mode=True) as budget:
         rt = Runtime(program, Context(), budget=budget)
         assert await rt.aeval_parallel([0, 1, 2, 3]) == [0, 1, 2, 3]
+
+
+async def test_aeval_parallel_hybrid_places_sync_child_on_thread() -> None:
+    # Mixed subtree: child 0 is async-on-loop, child 1 is sync-only. The hybrid
+    # placement drives the async child via aeval and the sync child via the
+    # thread pool, joining both - rather than running the sync one on the loop.
+    async def a0(rt: Runtime) -> object:
+        return 100
+
+    def s1(rt: Runtime) -> object:
+        return 200
+
+    program = _fake_program(thunks=[None, s1], athunks=[a0, None], on_loop=[True, False])
+    with Budget(max_parallel=2, async_mode=True) as budget:
+        rt = Runtime(program, Context(), budget=budget)
+        assert await rt.aeval_parallel([0, 1]) == [100, 200]
 
 
 async def test_aeval_race_returns_first_completed() -> None:
@@ -244,6 +260,56 @@ async def test_aeval_race_rejects_empty() -> None:
     rt = Runtime(program, Context())
     with pytest.raises(ValueError, match="aeval_race needs"):
         await rt.aeval_race([])
+
+
+async def test_aeval_any_returns_first_success() -> None:
+    import asyncio
+
+    async def slow_ok(rt: Runtime) -> object:
+        await asyncio.sleep(0.1)
+        return "slow"
+
+    async def fast_ok(rt: Runtime) -> object:
+        return "fast"
+
+    program = _fake_program(athunks=[slow_ok, fast_ok])
+    rt = Runtime(program, Context())
+    assert await rt.aeval_any([0, 1]) == "fast"
+
+
+async def test_aeval_any_skips_a_failing_child() -> None:
+    import asyncio
+
+    async def boom(rt: Runtime) -> object:
+        raise ValueError("nope")
+
+    async def ok(rt: Runtime) -> object:
+        await asyncio.sleep(0.05)
+        return "ok"
+
+    program = _fake_program(athunks=[boom, ok])
+    rt = Runtime(program, Context())
+    assert await rt.aeval_any([0, 1]) == "ok"
+
+
+async def test_aeval_any_reraises_when_all_fail() -> None:
+    async def boom1(rt: Runtime) -> object:
+        raise ValueError("first")
+
+    async def boom2(rt: Runtime) -> object:
+        raise ValueError("second")
+
+    program = _fake_program(athunks=[boom1, boom2])
+    rt = Runtime(program, Context())
+    with pytest.raises(ValueError, match=r"first|second"):
+        await rt.aeval_any([0, 1])
+
+
+async def test_aeval_any_rejects_empty() -> None:
+    program = _fake_program()
+    rt = Runtime(program, Context())
+    with pytest.raises(ValueError, match="aeval_any needs"):
+        await rt.aeval_any([])
 
 
 # --- sentinel-propagating parallel ----------------------------------------
@@ -336,49 +402,6 @@ def test_merge_yields_all_under_threads() -> None:
         assert sorted(rt.merge([0, 1])) == [1, 2, 3, 4]
 
 
-async def test_amerge_yields_all_at_max_parallel_one() -> None:
-    async def ag0():
-        for v in [1, 2]:
-            yield v
-
-    async def ag1():
-        for v in [3, 4]:
-            yield v
-
-    async def t0(rt: Runtime) -> object:
-        return ag0()
-
-    async def t1(rt: Runtime) -> object:
-        return ag1()
-
-    program = _fake_program(athunks=[t0, t1])
-    rt = Runtime(program, Context())
-    got = [v async for v in rt.amerge([0, 1])]
-    assert sorted(got) == [1, 2, 3, 4]
-
-
-async def test_amerge_yields_all_under_parallel() -> None:
-    async def ag0():
-        for v in [10, 20]:
-            yield v
-
-    async def ag1():
-        for v in [30, 40]:
-            yield v
-
-    async def t0(rt: Runtime) -> object:
-        return ag0()
-
-    async def t1(rt: Runtime) -> object:
-        return ag1()
-
-    program = _fake_program(athunks=[t0, t1])
-    with Budget(max_parallel=2, async_mode=True) as budget:
-        rt = Runtime(program, Context(), budget=budget)
-        got = [v async for v in rt.amerge([0, 1])]
-        assert sorted(got) == [10, 20, 30, 40]
-
-
 # --- boundary helpers -----------------------------------------------------
 
 
@@ -418,10 +441,10 @@ async def test_a_in_thread_requires_pool() -> None:
         await rt.a_in_thread(lambda: 1)
 
 
-# --- hybrid pump: amerge_hybrid -------------------------------------------
+# --- parallel streams: amerge (placement-aware) ---------------------------
 
 
-async def test_amerge_hybrid_sequential_dispatches_per_on_loop() -> None:
+async def test_amerge_sequential_dispatches_per_on_loop() -> None:
     async def aon():
         for v in [1, 2]:
             yield v
@@ -441,11 +464,11 @@ async def test_amerge_hybrid_sequential_dispatches_per_on_loop() -> None:
         on_loop=[True, False],
     )
     rt = Runtime(program, Context())
-    got = [v async for v in rt.amerge_hybrid([0, 1])]
+    got = [v async for v in rt.amerge([0, 1])]
     assert sorted(got) == [1, 2, 3, 4]
 
 
-async def test_amerge_hybrid_parallel_yields_all() -> None:
+async def test_amerge_parallel_yields_all() -> None:
     async def aon():
         for v in [1, 2]:
             yield v
@@ -466,16 +489,16 @@ async def test_amerge_hybrid_parallel_yields_all() -> None:
     )
     with Budget(max_parallel=2, async_mode=True) as budget:
         rt = Runtime(program, Context(), budget=budget)
-        got = [v async for v in rt.amerge_hybrid([0, 1])]
+        got = [v async for v in rt.amerge([0, 1])]
         assert sorted(got) == [1, 2, 3, 4]
 
 
-async def test_amerge_hybrid_rejects_non_async_budget() -> None:
+async def test_amerge_rejects_non_async_budget() -> None:
     program = _fake_program(thunks=[lambda rt: iter([])], athunks=[None], on_loop=[False])
     with Budget(max_parallel=2, async_mode=False) as budget:
         rt = Runtime(program, Context(), budget=budget)
-        with pytest.raises(RuntimeError, match="amerge_hybrid requires"):
-            async for _ in rt.amerge_hybrid([0]):  # pragma: no cover - generator body
+        with pytest.raises(RuntimeError, match="amerge requires"):
+            async for _ in rt.amerge([0]):  # pragma: no cover - generator body
                 pass
 
 

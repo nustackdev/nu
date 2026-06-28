@@ -1,17 +1,44 @@
-"""Generic reactive control flows for Nu2.
+"""Nu2 Flow atoms: the Command-composing sub-kind.
 
-Flows consume change subscriptions from the shape fabric and execute bodies
-in response. They are not shape-specific — any Nu2 program composing reactive
-event handling uses these atoms.
+Two families plus the reactive set:
 
-- ``React``        - wait for one change event, execute body once.
-- ``ReactWhile``   - execute body on each change while condition is truthy.
-- ``ReactForever`` - execute body on every change; runs forever.
-- ``Stream``       - drain-then-follow over an ordered collection.
+- **Strategy** - compose mutating atoms directly: ``Sequential`` (``>>``),
+  ``Parallel`` (``|``), ``Race`` (``&``), ``Gather``, ``AnyN``.
+- **Control** - compose bodies under Query parameters: ``IfDo``, ``WhileDo``,
+  ``ForeverDo``, ``ForEachDo``, ``ForRangeDo``, ``DelayedDo``, ``SwitchDo``.
+- **Reactive** - consume change subscriptions and execute bodies in response:
+  ``React``, ``ReactWhile``, ``ReactForever``, ``Stream``.
 """
 
+from .control import (
+    DelayedDo,
+    ForEachDo,
+    ForeverDo,
+    ForRangeDo,
+    IfDo,
+    SwitchDo,
+    WhileDo,
+)
 from .react import React, ReactForever, ReactWhile
+from .strategy import AnyN, Gather, Parallel, Race, Sequential
 from .stream import Stream
 
 
-__all__ = ["React", "ReactForever", "ReactWhile", "Stream"]
+__all__ = [
+    "AnyN",
+    "DelayedDo",
+    "ForEachDo",
+    "ForRangeDo",
+    "ForeverDo",
+    "Gather",
+    "IfDo",
+    "Parallel",
+    "Race",
+    "React",
+    "ReactForever",
+    "ReactWhile",
+    "Sequential",
+    "Stream",
+    "SwitchDo",
+    "WhileDo",
+]
