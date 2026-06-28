@@ -53,3 +53,27 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no v
 
         wrapped = tuple(c if isinstance(c, Term) else LiteralQuery(c) for c in children)
         super().__init__(*wrapped)
+
+    # --- composition operators ------------------------------------------
+    #
+    # Sugar for the Strategy flows: ``a >> b`` is ``Sequential(a, b)``,
+    # ``a | b`` is ``Parallel(a, b)``, ``a & b`` is ``Race(a, b)``. Lazy
+    # imports keep the lang base free of a flows dependency (flows import
+    # from lang). Each call builds a fresh two-child Strategy; chains nest
+    # left-to-right (``a >> b >> c`` is ``Sequential(Sequential(a, b), c)``),
+    # which the associativity attribute lets the engine flatten.
+
+    def __rshift__(self, other: object) -> Nu:
+        from nu2.flows import Sequential
+
+        return Sequential(self, other)
+
+    def __or__(self, other: object) -> Nu:
+        from nu2.flows import Parallel
+
+        return Parallel(self, other)
+
+    def __and__(self, other: object) -> Nu:
+        from nu2.flows import Race
+
+        return Race(self, other)
