@@ -38,4 +38,8 @@ class CollectionForm[ElementT, CollectionResultT, ElementResultT](
         ElementResultT: Result for element-level interactions
     """
 
-    pass
+    def extract(self) -> object:
+        """Materialise the full subtree rooted at this Ref via ExtractQuery."""
+        from nu2.domains.shape.interactions import ExtractQuery
+
+        return ExtractQuery(self)

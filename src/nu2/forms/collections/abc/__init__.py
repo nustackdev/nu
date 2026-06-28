@@ -3,7 +3,7 @@
 from .collection import CollectionForm
 from .container import ContainerForm
 from .iterable import IterableForm
-from .mapping import MappingForm, MutableMappingForm
+from .mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
 from .mapping_interactions import (
     ContainsKeyQuery,
     DeleteItemCommand,
@@ -20,7 +20,7 @@ from .mapping_interactions import (
     UpdateCommand,
     ValuesQuery,
 )
-from .sequence import MutableSequenceForm, SequenceForm
+from .sequence import MutableSequenceForm, ReactiveSequenceForm, SequenceForm
 from .sequence_interactions import (
     AppendCommand,
     CountQuery,
@@ -38,7 +38,7 @@ from .sequence_interactions import (
     SetIndexCommand,
     SortCommand,
 )
-from .set_ import MutableSetForm, SetLikeForm
+from .set_ import MutableSetForm, ReactiveSetForm, SetLikeForm
 from .set_interactions import (
     AddCommand,
     DifferenceQuery,
@@ -107,6 +107,9 @@ __all__ = [
     "MutableSetForm",
     "PopAction",
     "PopItemAction",
+    "ReactiveMappingForm",
+    "ReactiveSequenceForm",
+    "ReactiveSetForm",
     "RemoveCommand",
     "RemoveValueCommand",
     "ReverseCommand",

@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "MutableSequenceForm",
+    "ReactiveSequenceForm",
     "SequenceForm",
 ]
 
@@ -162,3 +163,23 @@ class MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResul
         from .shared_interactions import ClearCommand
 
         return ClearCommand(self)
+
+
+class ReactiveSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
+):
+    """Reactive sequence — adds on_change() for any-change observation.
+
+    Provides (in addition to MutableSequenceForm):
+        on_change() → OnChangeQuery
+
+    The three tree-aware methods (on_child_change, on_children_change,
+    on_descendants_change) are shape-domain and live on
+    ``nu2.domains.shape.forms.collection.ReactiveCollectionForm``.
+    """
+
+    def on_change(self) -> object:
+        """Subscribe to any change on this sequence slot."""
+        from nu2.forms.reactive import OnChangeQuery
+
+        return OnChangeQuery(self)

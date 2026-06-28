@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "MutableSetForm",
+    "ReactiveSetForm",
     "SetLikeForm",
 ]
 
@@ -224,3 +225,23 @@ class MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         from .set_interactions import SetIXorAction
 
         return cast("CollectionResultT", self._wrap_set_result(SetIXorAction(self, other)))
+
+
+class ReactiveSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
+    MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
+):
+    """Reactive set — adds on_change() for any-change observation.
+
+    Provides (in addition to MutableSetForm):
+        on_change() → OnChangeQuery
+
+    The three tree-aware methods (on_child_change, on_children_change,
+    on_descendants_change) are shape-domain and live on
+    ``nu2.domains.shape.forms.collection.ReactiveCollectionForm``.
+    """
+
+    def on_change(self) -> object:
+        """Subscribe to any change on this set slot."""
+        from nu2.forms.reactive import OnChangeQuery
+
+        return OnChangeQuery(self)

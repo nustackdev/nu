@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 __all__ = [
     "MappingForm",
     "MutableMappingForm",
+    "ReactiveMappingForm",
 ]
 
 
@@ -178,3 +179,23 @@ class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
         from .shared_interactions import ClearCommand
 
         return ClearCommand(self)
+
+
+class ReactiveMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
+    MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+):
+    """Reactive mapping — adds on_change() for any-change observation.
+
+    Provides (in addition to MutableMappingForm):
+        on_change() → OnChangeQuery
+
+    The three tree-aware methods (on_child_change, on_children_change,
+    on_descendants_change) are shape-domain and live on
+    ``nu2.domains.shape.forms.collection.ReactiveCollectionForm``.
+    """
+
+    def on_change(self) -> object:
+        """Subscribe to any change on this mapping slot."""
+        from nu2.forms.reactive import OnChangeQuery
+
+        return OnChangeQuery(self)
