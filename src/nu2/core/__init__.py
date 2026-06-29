@@ -88,6 +88,7 @@ from nu2.core.io import InputAction, OpenAction, PrintCommand
 from nu2.core.iteration import EnumerateQuery, IterQuery, NextAction, ReversedQuery, ZipQuery
 from nu2.core.literal import LiteralQuery
 from nu2.core.logical import AndQuery, BoolQuery, NotQuery, OrQuery
+from nu2.core.noop import Noop
 from nu2.core.reduction import (
     AllQuery,
     AnyQuery,
@@ -195,6 +196,7 @@ __all__ = [
     "NeQuery",
     "NegQuery",
     "NextAction",
+    "Noop",
     "NotEmptyQuery",
     "NotInvalidQuery",
     "NotQuery",
