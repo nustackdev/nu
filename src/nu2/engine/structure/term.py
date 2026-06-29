@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-from .attribute import Attribute
+from .attribute import Attribute, Declared
 
 
 if TYPE_CHECKING:
@@ -65,14 +65,14 @@ class TermMeta(type):
     ) -> TermMeta:
         """Build the class and populate its ``attributes`` mapping."""
         cls = super().__new__(mcs, name, bases, namespace)
-        attributes: dict[str, Attribute] = {}
+        attributes: dict[str, Declared] = {}
         for klass in reversed(cls.__mro__):
             for key, value in vars(klass).items():
                 if not isinstance(value, Attribute):
                     continue
                 if value.name is None:
                     value.name = key
-                attributes[value.name] = value
+                attributes[value.name] = value  # type: ignore[assignment]
         cls.attributes = attributes  # type: ignore
         return cls
 
@@ -103,8 +103,8 @@ class Term(Generic[R_contra, V_co], metaclass=TermMeta):  # noqa: UP046  # PEP 6
       :meth:`acompile` is ``(R) -> Awaitable[V]``.
     """
 
-    attributes: ClassVar[dict[str, Attribute]]
-    """Per-class mapping ``name -> Attribute``, populated by :class:`TermMeta`."""
+    attributes: ClassVar[dict[str, Declared]]
+    """Per-class mapping ``name -> Declared``, populated by :class:`TermMeta`."""
 
     def __init__(self, *children: Term) -> None:
         self.children: tuple[Term, ...] = children

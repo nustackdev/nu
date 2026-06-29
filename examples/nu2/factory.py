@@ -70,7 +70,7 @@ async def adouble(x: int) -> int:
 
 
 Double = InteractionFactory(ScalarQuery, "Double", adouble)
-assert Double.attributes["requires_async"].value is True  # type: ignore[attr-defined]
+assert Double.attributes["requires_async"].value is True
 value, _ = asyncio.run(arun(Double(21)))
 assert value == 42
 print(value)
@@ -86,7 +86,7 @@ def record(*args: object) -> None:
 
 
 Log = InteractionFactory(Command, "Log", record, own_effects={0: Effect.WRITE})
-print(Log.attributes["own_effects"].value)  # type: ignore[attr-defined]
+print(Log.attributes["own_effects"].value)
 
 
 # 7. Custom attributes pass through declared. Beyond effects, attributes like
@@ -99,7 +99,7 @@ Max = InteractionFactory(
     associative=True,
     idempotent=True,
 )
-assert Max.attributes["idempotent"].value is True  # type: ignore[attr-defined]
+assert Max.attributes["idempotent"].value is True
 value, _ = run(Max(3, 7, 1, 5))
 assert value == 7
 print(value)
