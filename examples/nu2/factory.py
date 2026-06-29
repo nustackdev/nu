@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 
-from nu2.core import Literal
+from nu2.core import LiteralQuery
 from nu2.lang import Command, Effect, InteractionFactory, ScalarQuery
 from nu2.lang.helpers import arun, run
 from nu2.lang.sentinels import EMPTY, INVALID
@@ -37,8 +37,15 @@ print(value)
 # 3. Sentinel propagation is on by default: any EMPTY/INVALID child collapses
 #    the call to INVALID without invoking the function.
 calls: list[object] = []
-Track = InteractionFactory(ScalarQuery, "Track", lambda x: calls.append(x) or x)
-value, _ = run(Track(Literal(EMPTY)))
+
+
+def _track(x: object) -> object:
+    calls.append(x)
+    return x
+
+
+Track = InteractionFactory(ScalarQuery, "Track", _track)
+value, _ = run(Track(LiteralQuery(EMPTY)))
 assert value is INVALID
 assert calls == []  # function never ran
 print(value)
@@ -50,7 +57,7 @@ def keep(a: object, b: object) -> object:
 
 
 Pair = InteractionFactory(ScalarQuery, "Pair", keep, propagate_sentinels=False)
-value, _ = run(Pair(Literal(EMPTY), Literal(INVALID)))
+value, _ = run(Pair(LiteralQuery(EMPTY), LiteralQuery(INVALID)))
 assert value == (EMPTY, INVALID)
 print(value)
 
@@ -63,7 +70,7 @@ async def adouble(x: int) -> int:
 
 
 Double = InteractionFactory(ScalarQuery, "Double", adouble)
-assert Double.attributes["requires_async"].value is True
+assert Double.attributes["requires_async"].value is True  # type: ignore[attr-defined]
 value, _ = asyncio.run(arun(Double(21)))
 assert value == 42
 print(value)
@@ -79,7 +86,7 @@ def record(*args: object) -> None:
 
 
 Log = InteractionFactory(Command, "Log", record, own_effects={0: Effect.WRITE})
-print(Log.attributes["own_effects"].value)
+print(Log.attributes["own_effects"].value)  # type: ignore[attr-defined]
 
 
 # 7. Custom attributes pass through declared. Beyond effects, attributes like
@@ -92,7 +99,7 @@ Max = InteractionFactory(
     associative=True,
     idempotent=True,
 )
-assert Max.attributes["idempotent"].value is True
+assert Max.attributes["idempotent"].value is True  # type: ignore[attr-defined]
 value, _ = run(Max(3, 7, 1, 5))
 assert value == 7
 print(value)
