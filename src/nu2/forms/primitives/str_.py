@@ -51,7 +51,7 @@ class StrForm(Form, TypedNu[str]):
         from nu2.core import GetItemQuery, SliceQuery
 
         if isinstance(key, slice):
-            return StrForm(SliceQuery(self, key.start, key.stop, key.step))
+            return StrForm(GetItemQuery(self, SliceQuery(key.start, key.stop, key.step)))
         return StrForm(GetItemQuery(self, key))
 
     # =========================================================================

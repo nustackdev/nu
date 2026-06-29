@@ -37,8 +37,9 @@ from .literal import LiteralQuery
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
+    from nu2.lang import Arg, Nu, StrArg
     from nu2.lang.runtime import Runtime
 
 __all__ = ["FilterQuery", "FlattenQuery", "MapQuery", "SortedQuery", "UniqueQuery"]
@@ -52,7 +53,7 @@ class MapQuery(StreamQuery):
     value yielded. The transform reads the item with ``AttrRef(<name>)``.
     """
 
-    def __init__(self, source: Term, transform: Term, key: object = "item") -> None:
+    def __init__(self, source: Arg[Iterable], transform: Nu, key: StrArg = "item") -> None:
         key_node = key if isinstance(key, Term) else LiteralQuery(key)
         super().__init__(source, transform, key_node)
 
@@ -95,7 +96,7 @@ class FilterQuery(StreamQuery):
     when truthy. A sentinel predicate drops the item.
     """
 
-    def __init__(self, source: Term, predicate: Term, key: object = "item") -> None:
+    def __init__(self, source: Arg[Iterable], predicate: Nu, key: StrArg = "item") -> None:
         key_node = key if isinstance(key, Term) else LiteralQuery(key)
         super().__init__(source, predicate, key_node)
 

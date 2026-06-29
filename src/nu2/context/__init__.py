@@ -21,14 +21,41 @@ from __future__ import annotations
 
 from .ops import DeleteCommand, SetCommand
 from .queries import AttrExistsQuery, ServiceExistsQuery
-from .refs import AttrRef, ServiceRef
+from .refs import (
+    AnyAttrRef,
+    AttrRef,
+    BoolAttrRef,
+    BytesAttrRef,
+    DictAttrRef,
+    FloatAttrRef,
+    FrozenSetAttrRef,
+    IntAttrRef,
+    ListAttrRef,
+    NoneAttrRef,
+    ServiceRef,
+    SetAttrRef,
+    StrAttrRef,
+    TupleAttrRef,
+)
 
 
 __all__ = [
+    "AnyAttrRef",
     "AttrExistsQuery",
     "AttrRef",
+    "BoolAttrRef",
+    "BytesAttrRef",
     "DeleteCommand",
+    "DictAttrRef",
+    "FloatAttrRef",
+    "FrozenSetAttrRef",
+    "IntAttrRef",
+    "ListAttrRef",
+    "NoneAttrRef",
     "ServiceExistsQuery",
     "ServiceRef",
+    "SetAttrRef",
     "SetCommand",
+    "StrAttrRef",
+    "TupleAttrRef",
 ]

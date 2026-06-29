@@ -23,6 +23,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu2.forms.collections import DictForm, FrozenSetForm, ListForm, SetForm, TupleForm
+from nu2.forms.primitives import AnyForm, BoolForm, BytesForm, FloatForm, IntForm, NoneForm, StrForm
 from nu2.lang import Ref
 from nu2.lang.sentinels import EMPTY
 
@@ -34,7 +36,22 @@ if TYPE_CHECKING:
 
     from .queries import AttrExistsQuery, ServiceExistsQuery
 
-__all__ = ["AttrRef", "ServiceRef"]
+__all__ = [
+    "AnyAttrRef",
+    "AttrRef",
+    "BoolAttrRef",
+    "BytesAttrRef",
+    "DictAttrRef",
+    "FloatAttrRef",
+    "FrozenSetAttrRef",
+    "IntAttrRef",
+    "ListAttrRef",
+    "NoneAttrRef",
+    "ServiceRef",
+    "SetAttrRef",
+    "StrAttrRef",
+    "TupleAttrRef",
+]
 
 
 class _ContextRef(Ref):
@@ -138,3 +155,61 @@ class ServiceRef(_ContextRef):
         from .queries import ServiceExistsQuery
 
         return ServiceExistsQuery(self)
+
+
+# =========================================================================
+# TYPED ATTR REFS - PRIMITIVES
+# =========================================================================
+
+
+class IntAttrRef(AttrRef, IntForm):
+    """An AttrRef with the full integer interface."""
+
+
+class FloatAttrRef(AttrRef, FloatForm):
+    """An AttrRef with the full float interface."""
+
+
+class StrAttrRef(AttrRef, StrForm):
+    """An AttrRef with the full string interface."""
+
+
+class BoolAttrRef(AttrRef, BoolForm):
+    """An AttrRef with the full boolean interface."""
+
+
+class BytesAttrRef(AttrRef, BytesForm):
+    """An AttrRef with the full bytes interface."""
+
+
+class AnyAttrRef(AttrRef, AnyForm):
+    """An AttrRef with the dynamic any interface."""
+
+
+class NoneAttrRef(AttrRef, NoneForm):
+    """An AttrRef with the none interface."""
+
+
+# =========================================================================
+# TYPED ATTR REFS - COLLECTIONS
+# =========================================================================
+
+
+class ListAttrRef(AttrRef, ListForm):
+    """An AttrRef with the full list interface."""
+
+
+class DictAttrRef(AttrRef, DictForm):
+    """An AttrRef with the full dict interface."""
+
+
+class SetAttrRef(AttrRef, SetForm):
+    """An AttrRef with the full set interface."""
+
+
+class FrozenSetAttrRef(AttrRef, FrozenSetForm):
+    """An AttrRef with the full frozenset interface."""
+
+
+class TupleAttrRef(AttrRef, TupleForm):
+    """An AttrRef with the full tuple interface."""

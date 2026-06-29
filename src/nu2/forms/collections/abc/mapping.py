@@ -45,6 +45,7 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
         _wrap_values_result(operand): Wrap values query result.
         _wrap_items_result(operand): Wrap items query result.
         _wrap_value_result(operand): Wrap single-value result.
+        _wrap_mapping_result(operand): Wrap mapping-level result (copy, merge, merge_update).
 
     Type Parameters:
         CollectionT: Native Python collection type (dict[str, int])
@@ -68,6 +69,10 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
     def _wrap_value_result(self, operand: Nu) -> ValueResultT:
         """Override in subclass to wrap single value result."""
+        raise NotImplementedError()
+
+    def _wrap_mapping_result(self, operand: Nu) -> CollectionResultT:
+        """Override in subclass to wrap mapping-level result (copy, merge, merge_update)."""
         raise NotImplementedError()
 
     def __getitem__(self, key: Arg[KeyT]) -> ValueResultT:
@@ -100,11 +105,11 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
         return cast("ValueResultT", self._wrap_value_result(GetQuery(self, key, default)))
 
-    def copy(self) -> Any:  # noqa: ANN401
+    def copy(self) -> CollectionResultT:
         """Shallow copy: mapping.copy(). Query yielding a new mapping."""
         from .mapping_interactions import CopyQuery
 
-        return CopyQuery(self)
+        return cast("CollectionResultT", self._wrap_mapping_result(CopyQuery(self)))
 
     def reversed_keys(self) -> CollectionResultT:
         """Keys in reverse insertion order: reversed(mapping). Query (3.8+)."""
@@ -112,11 +117,11 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
         return cast("CollectionResultT", self._wrap_keys_result(ReversedKeysQuery(self)))
 
-    def merge(self, other: Arg[Mapping[KeyT, ValueT]]) -> Any:  # noqa: ANN401
+    def merge(self, other: Arg[Mapping[KeyT, ValueT]]) -> CollectionResultT:
         """Merge into a new mapping: mapping | other. Query yielding a new mapping."""
         from .mapping_interactions import MergeQuery
 
-        return MergeQuery(self, other)
+        return cast("CollectionResultT", self._wrap_mapping_result(MergeQuery(self, other)))
 
 
 class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
@@ -168,11 +173,11 @@ class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
 
         return cast("ValueResultT", self._wrap_value_result(SetDefaultAction(self, key, default)))
 
-    def merge_update(self, other: Arg[Mapping[KeyT, ValueT]]) -> Any:  # noqa: ANN401
+    def merge_update(self, other: Arg[Mapping[KeyT, ValueT]]) -> CollectionResultT:
         """In-place merge: mapping |= other. Mutating Action; yields the mapping."""
         from .mapping_interactions import MergeUpdateAction
 
-        return MergeUpdateAction(self, other)
+        return cast("CollectionResultT", self._wrap_mapping_result(MergeUpdateAction(self, other)))
 
     def clear(self) -> Any:  # noqa: ANN401
         """Remove all items."""

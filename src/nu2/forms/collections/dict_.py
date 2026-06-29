@@ -52,6 +52,10 @@ class DictForm[K, V](
 
         return AnyForm(operand)
 
+    def _wrap_mapping_result(self, operand: Nu) -> DictForm[K, V]:
+        """Wrap operand as DictForm."""
+        return DictForm(operand)
+
     def _wrap_iterable_result(self, operand: Nu) -> ListForm:
         """Wrap operand as ListForm."""
         from .list_ import ListForm

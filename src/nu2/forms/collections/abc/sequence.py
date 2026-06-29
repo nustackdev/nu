@@ -59,7 +59,7 @@ class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         if isinstance(key, slice):
             return cast(
                 "CollectionResultT",
-                self._wrap_sliceable_result(SliceQuery(self, key.start, key.stop, key.step)),
+                self._wrap_sliceable_result(At(self, SliceQuery(key.start, key.stop, key.step))),
             )
         return cast("ElementResultT", self._wrap_element_result(At(self, key)))
 

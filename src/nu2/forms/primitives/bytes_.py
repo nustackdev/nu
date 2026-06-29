@@ -8,7 +8,9 @@ from nu2.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu2.lang import BytesArg, IntArg, StrArg
+    from collections.abc import Iterable
+
+    from nu2.lang import BoolArg, BytesArg, IntArg, StrArg
 
     from ..collections.list_ import ListForm
     from ..collections.tuple_ import TupleForm
@@ -53,7 +55,7 @@ class BytesForm(Form, TypedNu[bytes]):
         from .int_ import IntForm
 
         if isinstance(key, slice):
-            return BytesForm(SliceQuery(self, key.start, key.stop, key.step))
+            return BytesForm(GetItemQuery(self, SliceQuery(key.start, key.stop, key.step)))
         return IntForm(GetItemQuery(self, key))
 
     # =========================================================================
@@ -292,7 +294,7 @@ class BytesForm(Form, TypedNu[bytes]):
             return ListForm(BytesRSplitQuery(self, sep, maxsplit))
         return ListForm(BytesRSplitQuery(self, None, maxsplit))
 
-    def splitlines(self, keepends: bool = False) -> ListForm:
+    def splitlines(self, keepends: BoolArg = False) -> ListForm:
         """Split bytes on line boundaries."""
         from ..collections.list_ import ListForm
         from .bytes_interactions import BytesSplitLinesQuery
@@ -440,7 +442,7 @@ class BytesForm(Form, TypedNu[bytes]):
     # JOINING
     # =========================================================================
 
-    def join(self, iterable: object) -> BytesForm:
+    def join(self, iterable: Iterable[BytesArg]) -> BytesForm:
         """Join an iterable of bytes with this bytes as separator."""
         from .bytes_interactions import BytesJoinQuery
 
