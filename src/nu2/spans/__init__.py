@@ -5,15 +5,14 @@ A Span does no work of its own; it forwards the body's yield in the same shape
 execution policy (Policy). The body is the required slot-0 child; auxiliary
 children sit alongside and are consumed internally.
 
-Ported from v1 ``src/nu/spans/`` (``bracket`` / ``policy`` / ``timing``). So
-far: Policy ``TryCatch``. Bracket (Snapshot, Transaction) is fabric-specific and
-lands with the fabric work; the remaining Policy/timing spans (Retry, Timeout,
-Throttle, Debounce) follow.
+Ported from v1 ``src/nu/spans/`` (``bracket`` / ``policy`` / ``timing``). Policy:
+``TryCatch``, ``Retry``, ``Timeout``, ``Throttle``, ``Debounce``. Bracket
+(Snapshot, Transaction) is fabric-specific and lands with the fabric work.
 """
 
 from __future__ import annotations
 
-from .policy import TryCatch
+from .policy import Debounce, Retry, Throttle, Timeout, TryCatch
 
 
-__all__ = ["TryCatch"]
+__all__ = ["Debounce", "Retry", "Throttle", "Timeout", "TryCatch"]
