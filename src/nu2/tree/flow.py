@@ -3,7 +3,8 @@
 Generic, semantically-aware tools for injecting wrappers (Brackets,
 Policies, instrumentation) at the natural unit of mutation: the Flow.
 No fabric or boundary knowledge — wrappers and predicates are
-caller-provided.
+caller-provided. Effect analysis (which Refs a subtree touches) lives
+in the sibling ``effects`` module.
 
 v1 source: ``src/nu/shapes/tree/wrap.py``.
 """
@@ -12,56 +13,25 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu2.lang import Effect, Flow, Ref
+from nu2.lang import Flow
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable
 
     from nu2.lang import Nu
 
 
 __all__ = [
-    "has_write_on_fabric",
     "is_flow",
-    "touches_fabric",
     "wrap_flow_children",
     "wrap_flows",
 ]
 
 
-def _iter_effects(node: Nu) -> Iterator[tuple[Ref, Effect]]:
-    """Walk the subtree yielding ``(ref_instance, effect)`` for every Ref child.
-
-    Mirrors the v2 effect synthesis (``nu2.lang.attributes.effects``):
-    a Ref child in a mutation slot (declared via ``mutates``) binds as
-    WRITE; any other Ref child binds as READ.  Pre-compilation tree walk
-    — no Program needed.
-    """
-    mutates_obj = type(node).attributes.get("mutates")
-    mutated_slots: frozenset[int] = getattr(mutates_obj, "value", frozenset())
-    for slot, child in enumerate(node.children):
-        if isinstance(child, Ref):
-            yield child, Effect.WRITE if slot in mutated_slots else Effect.READ
-    for child in node.children:
-        yield from _iter_effects(child)
-
-
 def is_flow(node: Nu) -> bool:
     """Predicate: node is a Flow."""
     return isinstance(node, Flow)
-
-
-def touches_fabric(node: Nu, ref_types: tuple[type, ...]) -> bool:
-    """Predicate: subtree holds at least one Ref whose type is in ref_types."""
-    return any(isinstance(ref, ref_types) for ref, _ in _iter_effects(node))
-
-
-def has_write_on_fabric(node: Nu, ref_types: tuple[type, ...]) -> bool:
-    """Predicate: subtree has a WRITE effect through a Ref of given type."""
-    return any(
-        eff is Effect.WRITE and isinstance(ref, ref_types) for ref, eff in _iter_effects(node)
-    )
 
 
 def wrap_flows(

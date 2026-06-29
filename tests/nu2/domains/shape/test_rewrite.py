@@ -1,4 +1,4 @@
-"""Tests for engine.rewrite: annotate_ref_loads and substrate optimizer helpers.
+"""Tests for domains.shape.rewrite: annotate_ref_loads and substrate optimizer helpers.
 
 annotate_ref_loads wraps bare shape Refs with LoadQuery and is testable
 with the base nu2 tree. extract_static_address / walk_ref_chain /
@@ -14,7 +14,7 @@ import pytest
 from nu2.core import LiteralQuery
 from nu2.domains.shape.interactions import LoadQuery
 from nu2.domains.shape.refs.item import ItemRef
-from nu2.engine.rewrite import (
+from nu2.domains.shape.rewrite import (
     annotate_ref_loads,
     extract_static_address,
     walk_ref_chain,

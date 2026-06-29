@@ -1,4 +1,4 @@
-"""Tests for engine.tree: flow-aware wrapping primitives.
+"""Tests for nu2.tree: flow-aware wrapping primitives.
 
 is_flow, touches_fabric, has_write_on_fabric, wrap_flows, wrap_flow_children.
 All tests work on the Nu-layer tree with no substrate needed.
@@ -11,14 +11,14 @@ from nu2.domains.shape.interactions import LoadQuery
 from nu2.domains.shape.refs.item import ItemRef
 from nu2.domains.shape.refs.mapping import MappingRef
 from nu2.engine.structure import Declared
-from nu2.engine.tree import (
+from nu2.lang import Control
+from nu2.tree import (
     has_write_on_fabric,
     is_flow,
     touches_fabric,
     wrap_flow_children,
     wrap_flows,
 )
-from nu2.lang import Control
 
 
 # ---------------------------------------------------------------------------

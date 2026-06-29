@@ -1,4 +1,9 @@
-"""Tree rewrite passes: ref annotation and substrate optimizer helpers.
+"""Shape-domain rewrite passes: ref annotation and substrate optimizer helpers.
+
+Domain-specific (Layer 3): these know about shape interactions
+(``LoadQuery``) and shape Refs (``_StructuredRef``). They build on the
+generic, domain-free toolkit in ``nu2.tree``. Other fabrics ship their
+own equivalents the same way.
 
 Two sources merged here:
 
@@ -14,12 +19,12 @@ Two sources merged here:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
+
+from nu2.tree import map_nodes
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from nu2.lang import Nu
     from nu2.lang.kinds import Ref
 
@@ -30,35 +35,6 @@ __all__ = [
     "reconstruct_with_flat_ref",
     "walk_ref_chain",
 ]
-
-
-# ---------------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------------
-
-
-def _map_nodes(
-    root: Nu,
-    fn: Callable[[Nu], Nu],
-    order: Literal["bottom_up", "top_down"] = "bottom_up",
-) -> Nu:
-    """Apply ``fn`` to every node in the tree.
-
-    Args:
-        root:  Tree root.
-        fn:    Function applied to each node.
-        order: ``"bottom_up"`` (default) transforms children first,
-               ``"top_down"`` transforms parent first.
-    """
-    if order == "top_down":
-        node = fn(root)
-        if not node.children:
-            return node
-        return node.with_children(*(_map_nodes(c, fn, order) for c in node.children))
-    # bottom_up
-    if root.children:
-        root = root.with_children(*(_map_nodes(c, fn, order) for c in root.children))
-    return fn(root)
 
 
 # ---------------------------------------------------------------------------
@@ -79,8 +55,8 @@ def annotate_ref_loads(root: Nu) -> Nu:
     Requires ``nu2.domains.shape.refs._StructuredRef`` and
     ``nu2.domains.shape.interactions.LoadQuery`` at call time.
     """
-    from nu2.domains.shape.interactions import LoadQuery
-    from nu2.domains.shape.refs import _StructuredRef as ShapeRef
+    from .interactions import LoadQuery
+    from .refs import _StructuredRef as ShapeRef
 
     def _process(node: Nu) -> Nu:
         if not node.children:
@@ -108,7 +84,7 @@ def annotate_ref_loads(root: Nu) -> Nu:
             return node.with_children(*new_children)
         return node
 
-    return _map_nodes(root, _process, order="bottom_up")
+    return map_nodes(root, _process, order="bottom_up")
 
 
 # ---------------------------------------------------------------------------
