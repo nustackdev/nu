@@ -84,6 +84,12 @@ Laws (`lang/laws/spans.py`): a Span needs a body (slot 0), and its
 `child_cardinality` must equal the body's - both hold automatically when body is
 slot 0. Aux children (catch, finally, key) sit at later slots, unconstrained.
 
+The semantics are in the model (Go: `model/04-attributes/04-cardinality.md`
+"Choosing an atom's cardinality", `model/02-atoms/06-span.md` "Atomic
+re-evaluation"). A span that re-runs or rolls back its body (Retry, Transaction)
+evaluates the body fresh per attempt, realizing a stream body *inside* the
+attempt - never resuming a half-drained stream.
+
 ## Handler isolation (ctx copy) vs persistence
 
 Two disciplines, both faithful to v1:
