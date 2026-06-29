@@ -18,7 +18,7 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, cast, overload
 
 from .collection import CollectionForm
 from .sliceable import SliceableForm
@@ -51,6 +51,10 @@ class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         ElementResultT: Result for element-level interactions (first, last, sum_, min_, max_)
     """
 
+    @overload
+    def __getitem__(self, key: IntArg) -> ElementResultT: ...
+    @overload
+    def __getitem__(self, key: slice) -> CollectionResultT: ...
     def __getitem__(self, key: IntArg | slice) -> ElementResultT | CollectionResultT:
         """Index → element via At; slice → subsequence via SliceQuery."""
         from nu2.core import GetItemQuery as At

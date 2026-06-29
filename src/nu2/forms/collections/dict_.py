@@ -56,6 +56,24 @@ class DictForm[K, V](
         """Wrap operand as DictForm."""
         return DictForm(operand)
 
+    def keys(self) -> DictKeysForm[K]:  # type: ignore[override]
+        """Get all keys as a DictKeysForm."""
+        from .abc.mapping_interactions import KeysQuery
+
+        return self._wrap_keys_result(KeysQuery(self))
+
+    def values(self) -> DictValuesForm[V]:  # type: ignore[override]
+        """Get all values as a DictValuesForm."""
+        from .abc.mapping_interactions import ValuesQuery
+
+        return self._wrap_values_result(ValuesQuery(self))
+
+    def items(self) -> DictItemsForm[K, V]:  # type: ignore[override]
+        """Get all key-value pairs as a DictItemsForm."""
+        from .abc.mapping_interactions import ItemsQuery
+
+        return self._wrap_items_result(ItemsQuery(self))
+
     def _wrap_iterable_result(self, operand: Nu) -> ListForm:
         """Wrap operand as ListForm."""
         from .list_ import ListForm
