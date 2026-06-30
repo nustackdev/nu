@@ -79,7 +79,7 @@ class Form:
         return self.is_invalid().not_()
 
 
-class TypedNu(ScalarQuery, Generic[T_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class TypedNu(ScalarQuery[T_co], Generic[T_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """Transparent ScalarQuery passthrough carrying a python type tag ``T``.
 
     Wraps a single Nu child and yields its value unchanged - sentinels ride

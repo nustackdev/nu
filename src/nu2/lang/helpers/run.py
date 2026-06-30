@@ -11,7 +11,7 @@ friends) land here when needed.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from nu2.lang.runtime import into_loop
 
@@ -19,16 +19,18 @@ from .drive import aeval, eval
 
 
 if TYPE_CHECKING:
-    from nu2.engine import Term
+    from nu2.lang.nu import Nu
     from nu2.lang.runtime import Context
 
+V = TypeVar("V")
 
-def run(
-    term: Term,
+
+def run(  # noqa: UP047  # legacy TypeVar to match the kind-chain V_co convention
+    term: Nu[V],
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
-) -> tuple[object, Context]:
+) -> tuple[V, Context]:
     """Compile a Term, validate it, evaluate it; return ``(value, ctx)``.
 
     Args:
@@ -49,29 +51,33 @@ def run(
 
     program = compile(term)
     validate(program, *LAWS)
-    return eval(program, ctx, max_parallel=max_parallel)
+    value, ctx = eval(program, ctx, max_parallel=max_parallel)
+    # runtime thunks are object-typed; V is recovered from the typed entry point
+    return cast("V", value), ctx
 
 
-async def arun(
-    term: Term,
+async def arun(  # noqa: UP047  # legacy TypeVar to match the kind-chain V_co convention
+    term: Nu[V],
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
-) -> tuple[object, Context]:
+) -> tuple[V, Context]:
     """Async sibling of ``run``: compile, validate, then ``aeval``."""
     from nu2.lang import LAWS, compile, validate
 
     program = compile(term)
     validate(program, *LAWS)
-    return await aeval(program, ctx, max_parallel=max_parallel)
+    value, ctx = await aeval(program, ctx, max_parallel=max_parallel)
+    # runtime thunks are object-typed; V is recovered from the typed entry point
+    return cast("V", value), ctx
 
 
-def run_in_loop(
-    term: Term,
+def run_in_loop(  # noqa: UP047  # legacy TypeVar to match the kind-chain V_co convention
+    term: Nu[V],
     ctx: Context | None = None,
     *,
     max_parallel: int = 1,
-) -> tuple[object, Context]:
+) -> tuple[V, Context]:
     """Compile, validate, then drive on a fresh loop from sync code.
 
     For the rare top-level sync caller whose Term compiles to an async-only
