@@ -20,7 +20,19 @@ Notes:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from nu.lang import Form
+
+
+if TYPE_CHECKING:
+    from nu.domains.shape.interactions import (
+        EraseCommand,
+        ExistsQuery,
+        MissingQuery,
+        OnChildChangeQuery,
+        StoreCommand,
+    )
 
 
 __all__ = [
@@ -38,13 +50,13 @@ class ItemForm(Form):
         missing() → MissingQuery — True if the slot is unbound.
     """
 
-    def exists(self) -> object:
+    def exists(self) -> ExistsQuery:
         """Return an ExistsQuery — True if this slot is bound."""
         from nu.domains.shape.interactions import ExistsQuery
 
         return ExistsQuery(self)
 
-    def missing(self) -> object:
+    def missing(self) -> MissingQuery:
         """Return a MissingQuery — True if this slot is unbound."""
         from nu.domains.shape.interactions import MissingQuery
 
@@ -61,13 +73,13 @@ class MutableItemForm(ItemForm):
     ``init()`` is absent: IfDo control flow is not yet available.
     """
 
-    def store(self, value: object) -> object:
+    def store(self, value: object) -> StoreCommand:
         """Return a StoreCommand — write ``value`` to this slot."""
         from nu.domains.shape.interactions import StoreCommand
 
         return StoreCommand(self, value)
 
-    def erase(self) -> object:
+    def erase(self) -> EraseCommand:
         """Return an EraseCommand — remove this slot from the fabric."""
         from nu.domains.shape.interactions import EraseCommand
 
@@ -81,7 +93,7 @@ class ReactiveItemForm(MutableItemForm):
         on_change() → OnChangeQuery — subscribe to changes on this slot.
     """
 
-    def on_change(self) -> object:
+    def on_change(self) -> OnChildChangeQuery:
         """Return an OnChildChangeQuery: subscribe to changes at this slot's address within the parent.
 
         ``OnChildChangeQuery(self.parent_ref, self.children[0])`` subscribes on

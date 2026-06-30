@@ -4,11 +4,8 @@
   "python.analysis.typeCheckingMode": "standard",
   "python.analysis.autoImportCompletions": true,
   "python.analysis.extraPaths": [
-    "core/everyabc/src",
-    "core/everybase/src",
-    "core/everyshape/src",
-    "core/everytable/src",
-    "packages/every-pv/src"
+    "fabrics/mem/src",
+    "fabrics/virtuals/src",
   ],
   "ruff.enable": true,
   "ruff.lint.enable": true,

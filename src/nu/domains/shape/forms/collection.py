@@ -19,7 +19,22 @@ require the shape domain's child/children/descendants concept.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from nu.lang import Form
+
+
+if TYPE_CHECKING:
+    from nu.domains.shape.interactions import (
+        EraseCommand,
+        ExistsQuery,
+        ExtractQuery,
+        MissingQuery,
+        OnChildChangeQuery,
+        OnChildrenChangeQuery,
+        OnDescendantsChangeQuery,
+        StoreCommand,
+    )
 
 
 __all__ = [
@@ -32,19 +47,19 @@ __all__ = [
 class CollectionForm(Form):
     """Shape collection — can check existence and extract its subtree."""
 
-    def exists(self) -> object:
+    def exists(self) -> ExistsQuery:
         """Return an ExistsQuery — True if this collection slot is bound."""
         from nu.domains.shape.interactions import ExistsQuery
 
         return ExistsQuery(self)
 
-    def missing(self) -> object:
+    def missing(self) -> MissingQuery:
         """Return a MissingQuery — True if this collection slot is unbound."""
         from nu.domains.shape.interactions import MissingQuery
 
         return MissingQuery(self)
 
-    def extract(self) -> object:
+    def extract(self) -> ExtractQuery:
         """Materialise the full subtree rooted at this slot via ExtractQuery."""
         from nu.domains.shape.interactions import ExtractQuery
 
@@ -54,13 +69,13 @@ class CollectionForm(Form):
 class MutableCollectionForm(CollectionForm):
     """Mutable shape collection — read + store + erase."""
 
-    def store(self, value: object) -> object:
+    def store(self, value: object) -> StoreCommand:
         """Return a StoreCommand — write ``value`` to this collection slot."""
         from nu.domains.shape.interactions import StoreCommand
 
         return StoreCommand(self, value)
 
-    def erase(self) -> object:
+    def erase(self) -> EraseCommand:
         """Return an EraseCommand — remove this collection slot from the fabric."""
         from nu.domains.shape.interactions import EraseCommand
 
@@ -79,19 +94,19 @@ class ReactiveCollectionForm(MutableCollectionForm):
     supplied by the generic ``ReactiveXxxForm`` tier via MRO.
     """
 
-    def on_child_change(self, address: object) -> object:
+    def on_child_change(self, address: object) -> OnChildChangeQuery:
         """Return an OnChildChangeQuery — subscribe to changes on the child at ``address``."""
         from nu.domains.shape.interactions import OnChildChangeQuery
 
         return OnChildChangeQuery(self, address)
 
-    def on_children_change(self) -> object:
+    def on_children_change(self) -> OnChildrenChangeQuery:
         """Return an OnChildrenChangeQuery — subscribe to changes on any immediate child."""
         from nu.domains.shape.interactions import OnChildrenChangeQuery
 
         return OnChildrenChangeQuery(self)
 
-    def on_descendants_change(self, *pattern: object) -> object:
+    def on_descendants_change(self, *pattern: object) -> OnDescendantsChangeQuery:
         """Return an OnDescendantsChangeQuery — subscribe to descendants matching ``pattern``."""
         from nu.domains.shape.interactions import OnDescendantsChangeQuery
 
