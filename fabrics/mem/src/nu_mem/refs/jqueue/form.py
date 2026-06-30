@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import janus
 
-from nu.terms import Form, TypedNu
+from nu import Form, TypedNu
 
 
 if TYPE_CHECKING:
@@ -27,22 +27,26 @@ class JQueueForm[T](Form, TypedNu[janus.Queue[T]]):
     Interaction trees over the wrapped node.
     """
 
-    def put(self, value: object) -> Put:  # noqa: D102
+    def put(self, value: object) -> Put:
+        """Build a Put interaction enqueuing ``value`` onto this queue."""
         from .interactions import Put
 
         return Put(self, value)
 
-    def get(self) -> Get:  # noqa: D102
+    def get(self) -> Get:
+        """Build a Get interaction popping one item from this queue."""
         from .interactions import Get
 
         return Get(self)
 
-    def qsize(self) -> QSize:  # noqa: D102
+    def qsize(self) -> QSize:
+        """Build a QSize interaction yielding this queue's item count."""
         from .interactions import QSize
 
         return QSize(self)
 
-    def close(self) -> Close:  # noqa: D102
+    def close(self) -> Close:
+        """Build a Close interaction shutting down this queue."""
         from .interactions import Close
 
         return Close(self)

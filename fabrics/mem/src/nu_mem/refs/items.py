@@ -1,35 +1,23 @@
-# ruff: noqa: D102
 """Dict substrate item refs — typed value holders in nested dicts.
 
-ItemRef combines MutableItemRef (everyshape CRUD) with RefBase
-(dict navigation).
-
-Typed refs (IntRef, StrRef, etc.) combine ItemRef behavior with
-everybase type operators for a rich interface.
+``ItemRef`` combines the shape ``MutableItemRef`` blueprint (slot-level CRUD)
+with ``RefBase`` (dict navigation). Typed refs (``IntRef``, ``StrRef``, ...) add
+the matching primitive Form so the value carries its full operator interface.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import TYPE_CHECKING, Self
 
-from nu import (
-    BoolForm,
-    BytesForm,
-    FloatForm,
-    Form,
-    IntForm,
-    NoneForm,
-    StrForm,
-)
-from nu.shapes import MutableItemRef, Slot
-from nu.terms import Mode
+from nu import BoolForm, BytesForm, FloatForm, IntForm, NoneForm, StrForm
+from nu.domains.shape import MutableItemRef, Slot
 
 from .base import RefBase
 
 
 if TYPE_CHECKING:
     from nu import Nu
-    from nu.shapes import Shape
+    from nu.domains.shape.dsl import Shape
 
 
 __all__ = [
@@ -42,52 +30,48 @@ __all__ = [
 ]
 
 
-class ItemRef[T, ValueT: Form](
-    MutableItemRef[T, ValueT],
-    RefBase[T],
-):
+class ItemRef(MutableItemRef, RefBase):
     """Dict item reference for values in nested dicts."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        value_type: type[T],
-        value_value_type: type[ValueT],
-        **kwargs: object,
+        value_type: type,
+        value_value_type: type,
+        parent_ref: RefBase | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(**kwargs)
+        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
         self._value_type = value_type
         self._value_value_type = value_value_type
 
     @classmethod
-    def slot(cls, value_type: type[T], value_value_type: type[ValueT]) -> Self:
+    def slot(cls, value_type: type, value_value_type: type) -> Self:
+        """Declare a generic item slot for ``value_type`` (with its Form)."""
         return Slot(cls, value_type=value_type, value_value_type=value_value_type)  # type: ignore[return-value]
 
 
 # =============================================================================
-# TYPED REFS (with everybase interface)
+# TYPED REFS (with primitive Form interface)
 # =============================================================================
 
 
-class IntRef(ItemRef[int, IntForm], IntForm):
+class IntRef(ItemRef, IntForm):
     """Dict integer reference with full numeric interface."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
-        *,
         address: str | int | Nu,
-        parent: RefBase | None = None,
+        *,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=int,
             value_value_type=IntForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
@@ -101,104 +85,101 @@ class IntRef(ItemRef[int, IntForm], IntForm):
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding this typed value."""
         return Slot(cls)  # type: ignore[return-value]
 
 
-class StrRef(ItemRef[str, StrForm], StrForm):
+class StrRef(ItemRef, StrForm):
     """Dict string reference with full string interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
     def __init__(
         self,
-        *,
         address: str | int | Nu,
-        parent: RefBase | None = None,
+        *,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=str,
             value_value_type=StrForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding this typed value."""
         return Slot(cls)  # type: ignore[return-value]
 
 
-class FloatRef(ItemRef[float, FloatForm], FloatForm):
+class FloatRef(ItemRef, FloatForm):
     """Dict float reference with full numeric interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
     def __init__(
         self,
-        *,
         address: str | int | Nu,
-        parent: RefBase | None = None,
+        *,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=float,
             value_value_type=FloatForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding this typed value."""
         return Slot(cls)  # type: ignore[return-value]
 
 
-class BoolRef(ItemRef[bool, BoolForm], BoolForm):
+class BoolRef(ItemRef, BoolForm):
     """Dict boolean reference with full logical interface."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
     def __init__(
         self,
-        *,
         address: str | int | Nu,
-        parent: RefBase | None = None,
+        *,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=bool,
             value_value_type=BoolForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding this typed value."""
         return Slot(cls)  # type: ignore[return-value]
 
 
-class BytesRef(ItemRef[bytes, BytesForm], BytesForm):
+class BytesRef(ItemRef, BytesForm):
     """Dict bytes reference with full bytes interface."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
-        *,
         address: str | int | Nu,
-        parent: RefBase | None = None,
+        *,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=bytes,
             value_value_type=BytesForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding this typed value."""
         return Slot(cls)  # type: ignore[return-value]

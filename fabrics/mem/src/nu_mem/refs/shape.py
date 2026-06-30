@@ -1,9 +1,13 @@
-# ruff: noqa: D102
-"""Dict shape reference — structured container backed by nested dict."""
+"""Dict shape reference — structured container backed by nested dict.
+
+Field descent (``ShapeRef.field``) is the blueprint's ``__getattr__``: it
+resolves the slot to the field's own mem ref (``StrRef``, ``IntRef``, ...) with
+this ref as ``parent_ref``, so navigation rides the substrate automatically.
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from nu import (
     AnyForm,
@@ -13,14 +17,14 @@ from nu import (
     DictValuesForm,
     IteratorForm,
 )
-from nu.shapes import MutableShapeRef, Slot
-from nu.terms import Mode
+from nu.domains.shape import MutableShapeRef, Slot
 
 from .base import RefBase
 
 
 if TYPE_CHECKING:
-    from nu import Nu, Shape
+    from nu import Nu
+    from nu.domains.shape.dsl import Shape
 
 
 __all__ = [
@@ -28,15 +32,11 @@ __all__ = [
 ]
 
 
-class ShapeRef[T: Shape](
-    MutableShapeRef[T],
-    RefBase[dict[str, object]],
-):
+class ShapeRef[T: Shape](MutableShapeRef, RefBase[dict[str, object]]):
     """Dict shape reference — structured container backed by nested dict."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
     def result(self, op: Nu) -> DictForm[str, object]:
+        """Wrap a shape-level op result as a DictForm."""
         return DictForm(op)
 
     def _wrap_keys_result(self, operand: Nu) -> DictKeysForm:
@@ -59,21 +59,22 @@ class ShapeRef[T: Shape](
 
     def __init__(
         self,
-        *,
         address: str | int | Nu,
+        *,
         shape_type: type[T],
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             shape_type=shape_type,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
         self.key_type: type = str
         self.value_type: type = object
 
     @classmethod
-    def slot[S: Shape](cls, shape_type: type[S]) -> S:
+    def slot[S: Shape](cls, shape_type: type[S]) -> ShapeRef[S]:
+        """Declare a slot holding a nested ``shape_type`` shape."""
         return Slot(cls, shape_type=shape_type)  # type: ignore[return-value]

@@ -1,50 +1,31 @@
-# ruff: noqa: D102
-"""Dict shapes dict reference — mapping of homogeneous shapes."""
+"""Dict shapes dict reference — mapping of homogeneous shapes.
+
+Key descent (``ref[k]``) is the blueprint's ``__getitem__``: it returns a
+``ShapeRef`` at the key with this ref as ``parent_ref``. The value shape type is
+passed to the blueprint as ``item_shape_type``.
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from nu import (
     AnyForm,
-    BoolForm,
-    BytesForm,
     DictForm,
     DictItemsForm,
     DictKeysForm,
     DictValuesForm,
-    FloatForm,
-    IntForm,
     IteratorForm,
-    ListForm,
-    SetForm,
-    StrForm,
 )
-from nu.shapes import MutableShapesMappingRef, Slot
-from nu.terms import Mode
+from nu.domains.shape import MutableShapesMappingRef, Slot
 
+from ._typemap import value_type_for
 from .base import RefBase
-from .shape import ShapeRef
 
 
 if TYPE_CHECKING:
-    from nu import Form, Nu, Sentinel
-    from nu.shapes import Shape
-
-
-def _value_type_for(python_type: type) -> type[Form]:
-    """Map Python type to its corresponding Form."""
-    mapping: dict[type, type[Form]] = {
-        int: IntForm,
-        str: StrForm,
-        float: FloatForm,
-        bool: BoolForm,
-        bytes: BytesForm,
-        list: ListForm,
-        dict: DictForm,
-        set: SetForm,
-    }
-    return mapping.get(python_type, AnyForm)
+    from nu import Nu
+    from nu.domains.shape.dsl import Shape
 
 
 __all__ = [
@@ -52,15 +33,11 @@ __all__ = [
 ]
 
 
-class ShapesDictRef[K, T: Shape](
-    MutableShapesMappingRef[K, T],
-    RefBase[dict[K, dict]],
-):
+class ShapesDictRef[K, T: Shape](MutableShapesMappingRef, RefBase[dict[K, dict]]):
     """Dict shapes dict reference — mapping of homogeneous shapes."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
     def result(self, op: Nu) -> DictForm:
+        """Wrap a mapping-level op result as a DictForm."""
         return DictForm(op)
 
     def _wrap_keys_result(self, operand: Nu) -> DictKeysForm:
@@ -83,33 +60,32 @@ class ShapesDictRef[K, T: Shape](
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
+        shape_type: type[T],
         key_type: type[K],
         key_value_type: type,
-        shape_type: type[T],
-        **kwargs: object,
+        parent_ref: RefBase | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(**kwargs)
-        self.value_type = dict
+        super().__init__(
+            address,
+            item_shape_type=shape_type,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
+        self.value_type: type = dict
         self.key_type = key_type
         self.key_value_type = key_value_type
-        self._shape_type = shape_type
-
-    def _create_child_ref(self, key: K | Sentinel | Nu[K | Sentinel]) -> ShapeRef[T]:
-        return ShapeRef(
-            address=key,
-            shape_type=self._shape_type,
-            parent=self,
-            owner_shape=self._owner_shape,
-        )
 
     @classmethod
     def slot[DK, S: Shape](
         cls, shape_type: type[S], key_type: type[DK] = str
     ) -> ShapesDictRef[DK, S]:  # type: ignore[assignment]
+        """Declare a mapping slot whose values are ``shape_type`` shapes."""
         return Slot(
             cls,
             shape_type=shape_type,
             key_type=key_type,
-            key_value_type=_value_type_for(key_type),
+            key_value_type=value_type_for(key_type),
         )  # type: ignore[return-value]

@@ -5,24 +5,24 @@ item_type), and on first fetch vivifies a ``janus.Queue`` at the slot's
 path in the backing dict. Subsequent fetches return the same live queue.
 """
 
-# ruff: noqa: D102
-
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import TYPE_CHECKING, Self
 
 import janus
 
-from nu.shapes import Slot
-from nu.terms import Mode
+from nu.domains.shape import Slot
 
 from ..base import RefBase
 from .form import JQueueForm
 
 
 if TYPE_CHECKING:
-    from nu import Context, Nu
-    from nu.shapes import Shape
+    from collections.abc import Callable
+
+    from nu import Nu
+    from nu.domains.shape import Shape
+    from nu.lang.runtime import Runtime
 
 
 __all__ = ["JQueueRef"]
@@ -36,53 +36,58 @@ class JQueueRef[T](RefBase[janus.Queue[T]], JQueueForm[T]):
     element types at runtime.
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
-
     def __init__(
         self,
-        *,
         address: str | int | Nu,
-        parent: RefBase | None = None,
+        *,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
         capacity: int | None = None,
         item_type: type[T] = object,  # type: ignore[assignment]
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
         self._capacity = capacity
         self._item_type = item_type
 
     def result(self, op: Nu) -> JQueueForm[T]:
+        """Wrap an interaction node in the typed JQueueForm surface."""
         return JQueueForm(op)
 
-    def fetch(self, ctx: Context) -> janus.Queue[T]:
-        parent = self.fetch_parent(ctx)
-        address = self.resolve_address(ctx)
-        if not isinstance(parent, dict):
-            msg = f"JQueueRef parent must be a dict, got {type(parent).__name__}"
-            raise TypeError(msg)
-        q = parent.get(address)
-        if q is None:
-            q = janus.Queue(maxsize=self._capacity or 0)
-            parent[address] = q
-        return q
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build the sync read thunk that vivifies and yields the queue."""
+        address = children[0]
 
-    async def afetch(self, ctx: Context) -> janus.Queue[T]:
-        parent = await self.afetch_parent(ctx)
-        address = await self.aresolve_address(ctx)
-        if not isinstance(parent, dict):
-            msg = f"JQueueRef parent must be a dict, got {type(parent).__name__}"
-            raise TypeError(msg)
-        q = parent.get(address)
-        if q is None:
-            q = janus.Queue(maxsize=self._capacity or 0)
-            parent[address] = q
-        return q
+        def thunk(rt: Runtime) -> janus.Queue[T]:
+            parent = self._fetch_parent(rt)
+            if not isinstance(parent, dict):
+                msg = f"JQueueRef parent must be a dict, got {type(parent).__name__}"
+                raise TypeError(msg)
+            addr = address(rt)
+            q = parent.get(addr)
+            if q is None:
+                q = janus.Queue(maxsize=self._capacity or 0)
+                parent[addr] = q
+            return q
 
-    def eval(self, ctx: Context) -> janus.Queue[T]:
-        return self.fetch(ctx)
+        return thunk
 
-    async def aeval(self, ctx: Context) -> janus.Queue[T]:
-        return await self.afetch(ctx)
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build the async read thunk that vivifies and yields the queue."""
+        address = children[0]
+
+        async def athunk(rt: Runtime) -> janus.Queue[T]:
+            parent = self._fetch_parent(rt)
+            if not isinstance(parent, dict):
+                msg = f"JQueueRef parent must be a dict, got {type(parent).__name__}"
+                raise TypeError(msg)
+            addr = await address(rt)
+            q = parent.get(addr)
+            if q is None:
+                q = janus.Queue(maxsize=self._capacity or 0)
+                parent[addr] = q
+            return q
+
+        return athunk
 
     @classmethod
     def slot(
@@ -91,6 +96,7 @@ class JQueueRef[T](RefBase[janus.Queue[T]], JQueueForm[T]):
         capacity: int | None = None,
         item_type: type = object,
     ) -> Self:
+        """Declare a JQueueRef slot in a Shape with optional capacity/type."""
         return Slot(cls, capacity=capacity, item_type=item_type)  # type: ignore[return-value]
 
     def __repr__(self) -> str:

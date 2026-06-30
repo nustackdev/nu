@@ -7,77 +7,51 @@ Usage::
 
     import nu_mem as nm
     from nu import Context
-    from nu.shapes import Shape
+    from nu.domains.shape import Shape
 
     class User(Shape):
         name = nm.StrRef.slot()
         age = nm.IntRef.slot()
 
     data = {}
-    ctx = Context().bind(data, dict, User)
+    ctx = Context().bind(dict, data, User)
 """
 
 from nu_mem.refs import (
-    BasisPointRef,
     BoolRef,
     BytesRef,
-    ComplexRef,
-    DateRef,
-    DatetimeRef,
-    DecimalRef,
     DictRef,
     FloatRef,
-    FractionRef,
     IntRef,
     ItemRef,
-    JQueueForm,
-    JQueueRef,
     ListRef,
-    PathRef,
-    PercentageRef,
-    QueueClosed,
     RefBase,
     SetRef,
     ShapeRef,
     ShapesDictRef,
     ShapesListRef,
     StrRef,
-    TimedeltaRef,
-    TimeRef,
-    TimezoneRef,
-    UUIDRef,
 )
-from nu_mem.tree import inline_refs
+
+
+# --- ported incrementally during the P2 v2 port ------------------------------
+# Collection refs (DictRef/ListRef/SetRef/ShapeRef/ShapesDictRef/ShapesListRef),
+# the stdlib-typed refs (-> P4), jqueue (deferred pass), and tree/inline_refs are
+# re-added here as each lands on the v2 substrate seam.
 
 
 __all__ = [
-    "BasisPointRef",
     "BoolRef",
     "BytesRef",
-    "ComplexRef",
-    "DateRef",
-    "DatetimeRef",
-    "DecimalRef",
     "DictRef",
     "FloatRef",
-    "FractionRef",
     "IntRef",
     "ItemRef",
-    "JQueueForm",
-    "JQueueRef",
     "ListRef",
-    "PathRef",
-    "PercentageRef",
-    "QueueClosed",
     "RefBase",
     "SetRef",
     "ShapeRef",
     "ShapesDictRef",
     "ShapesListRef",
     "StrRef",
-    "TimeRef",
-    "TimedeltaRef",
-    "TimezoneRef",
-    "UUIDRef",
-    "inline_refs",
 ]

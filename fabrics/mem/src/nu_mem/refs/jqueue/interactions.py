@@ -1,29 +1,31 @@
 """Interactions for JQueueRef / JQueueForm.
 
 - Put   — Command, blocks when full → back-pressure.
-- Get   — ScalarQuery, blocks when empty, yields one item.
+- Get   — ScalarAction, blocks when empty, yields one item (mutating producer).
 - QSize — ScalarQuery, snapshot count.
 - Close — Command, shuts down both halves.
 
-TODO(nu-model): Get is a *mutating* Query. The current Query/Command
-split forbids WRITE in Query own_effects, so Get does not declare WRITE
-on slot 0 — its mutation of the underlying janus.Queue is invisible to
-the effect tracker. Acceptable for now; revisit when a dedicated
-Interaction kind for queue-style consume-and-return is introduced.
+Get mutates the underlying janus.Queue while yielding the popped item, so in v2
+it is a ScalarAction (effect + yield) rather than a ScalarQuery, and declares
+``mutates`` on slot 0. QSize is a pure read: the queue ref in its read slot
+yields READ automatically, so it needs no ``mutates``.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING
 
 import janus
 
-from nu.terms.command import ScalarCommand
-from nu.terms.query import ScalarQuery
-from nu.terms.types import Effect, Mode
+from nu import Command, ScalarAction, ScalarQuery
+from nu.engine.structure import Declared
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from nu.lang.runtime import Runtime
+
     from .form import JQueueForm
 
 
@@ -35,8 +37,6 @@ __all__ = [
     "QueueClosed",
 ]
 
-
-_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
 
 _SHUTDOWN_EXCS: tuple[type[BaseException], ...] = (
     janus.ShutDown,
@@ -54,67 +54,80 @@ def _normalize_shutdown(exc: BaseException) -> QueueClosed:
     return QueueClosed(str(exc) or "queue is closed")
 
 
-class Put(ScalarCommand):
+class Put(Command):
     """Put a value into a JQueueRef. Blocks when full → back-pressure.
 
     Children: ``[queue, value]``.
     """
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = _BOTH
+    mutates = Declared(value=frozenset({0}))
 
-    def __init__(self, queue: JQueueForm, value: Any) -> None:  # noqa: ANN401
+    def __init__(self, queue: JQueueForm, value: object) -> None:
         super().__init__(queue, value)
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build the sync put thunk."""
 
-        q = runtime.first(self._children[0], ctx)
-        value = runtime.first(self._children[1], ctx)
-        try:
-            q.sync_q.put(value)
-        except _SHUTDOWN_EXCS as e:
-            raise _normalize_shutdown(e) from e
+        def thunk(rt: Runtime) -> None:
+            q = children[0](rt)
+            value = children[1](rt)
+            try:
+                q.sync_q.put(value)
+            except _SHUTDOWN_EXCS as e:
+                raise _normalize_shutdown(e) from e
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
+        return thunk
 
-        q = await runtime.afirst(self._children[0], ctx)
-        value = await runtime.afirst(self._children[1], ctx)
-        try:
-            await q.async_q.put(value)
-        except _SHUTDOWN_EXCS as e:
-            raise _normalize_shutdown(e) from e
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build the async put thunk."""
+
+        async def athunk(rt: Runtime) -> None:
+            q = await children[0](rt)
+            value = await children[1](rt)
+            try:
+                await q.async_q.put(value)
+            except _SHUTDOWN_EXCS as e:
+                raise _normalize_shutdown(e) from e
+
+        return athunk
 
 
-class Get(ScalarQuery):
+class Get(ScalarAction):
     """Pop one value from a JQueueRef. Blocks when empty.
 
-    Children: ``[queue]``. Yields the popped item.
-
-    NOTE: Mutating Query (gray zone in the current Q/C split). See
-    module TODO.
+    Children: ``[queue]``. Yields the popped item. A mutating producer: it
+    consumes from the underlying queue and yields, so it is a ScalarAction and
+    declares ``mutates`` on slot 0.
     """
 
-    support: ClassVar[frozenset[Mode]] = _BOTH
-    accepts_sentinels: ClassVar[bool] = True
+    mutates = Declared(value=frozenset({0}))
 
     def __init__(self, queue: JQueueForm) -> None:
         super().__init__(queue)
 
-    def eval(self, ctx: Any) -> Any:  # noqa: ANN401, D102
-        q = self._children[0].eval(ctx)
-        try:
-            return q.sync_q.get()
-        except _SHUTDOWN_EXCS as e:
-            raise _normalize_shutdown(e) from e
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build the sync get thunk."""
 
-    async def aeval(self, ctx: Any) -> Any:  # noqa: ANN401, D102
-        q = await self._children[0].aeval(ctx)
-        try:
-            return await q.async_q.get()
-        except _SHUTDOWN_EXCS as e:
-            raise _normalize_shutdown(e) from e
+        def thunk(rt: Runtime) -> object:
+            q = children[0](rt)
+            try:
+                return q.sync_q.get()
+            except _SHUTDOWN_EXCS as e:
+                raise _normalize_shutdown(e) from e
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build the async get thunk."""
+
+        async def athunk(rt: Runtime) -> object:
+            q = await children[0](rt)
+            try:
+                return await q.async_q.get()
+            except _SHUTDOWN_EXCS as e:
+                raise _normalize_shutdown(e) from e
+
+        return athunk
 
 
 class QSize(ScalarQuery):
@@ -123,22 +136,29 @@ class QSize(ScalarQuery):
     Children: ``[queue]``. Yields an int.
     """
 
-    support: ClassVar[frozenset[Mode]] = _BOTH
-    accepts_sentinels: ClassVar[bool] = True
-
     def __init__(self, queue: JQueueForm) -> None:
         super().__init__(queue)
 
-    def eval(self, ctx: Any) -> int:  # noqa: ANN401, D102
-        q = self._children[0].eval(ctx)
-        return q.sync_q.qsize()
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build the sync qsize thunk."""
 
-    async def aeval(self, ctx: Any) -> int:  # noqa: ANN401, D102
-        q = await self._children[0].aeval(ctx)
-        return q.async_q.qsize()
+        def thunk(rt: Runtime) -> int:
+            q = children[0](rt)
+            return q.sync_q.qsize()
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build the async qsize thunk."""
+
+        async def athunk(rt: Runtime) -> int:
+            q = await children[0](rt)
+            return q.async_q.qsize()
+
+        return athunk
 
 
-class Close(ScalarCommand):
+class Close(Command):
     """Shut down a JQueueRef.
 
     Subsequent puts raise; pending and subsequent gets drain remaining
@@ -147,20 +167,25 @@ class Close(ScalarCommand):
     Children: ``[queue]``.
     """
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = _BOTH
+    mutates = Declared(value=frozenset({0}))
 
     def __init__(self, queue: JQueueForm) -> None:
         super().__init__(queue)
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build the sync close thunk."""
 
-        q = runtime.first(self._children[0], ctx)
-        q.shutdown()
+        def thunk(rt: Runtime) -> None:
+            q = children[0](rt)
+            q.shutdown()
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
+        return thunk
 
-        q = await runtime.afirst(self._children[0], ctx)
-        q.shutdown()
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build the async close thunk."""
+
+        async def athunk(rt: Runtime) -> None:
+            q = await children[0](rt)
+            q.shutdown()
+
+        return athunk

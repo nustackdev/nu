@@ -1,137 +1,138 @@
-"""Dict substrate refs — navigate nested Python dicts.
+"""Dict substrate refs — navigate nested Python dicts under the v2 runtime.
 
-Hierarchy:
-    everyshape.Ref[T]     - document-model base (address/parent/shape)
-        |
-    RefBase[T]            - dict substrate implementation
+``RefBase`` is the first concrete substrate against the shape Ref seam
+(``_StructuredRef``): it fills the plug-points with nested-dict navigation.
 
-Core vocabulary:
-    resolve(ctx) -> tuple[str | int, ...]  - build key path from parent chain
-    fetch(ctx) -> T                        - navigate dict and extract value
-    fetch_parent(ctx) -> container         - get parent dict/list
+A ref names one path segment - its address, held as ``children[0]`` and resolved
+through the runtime like any child. The parent chain (``_parent_ref``) supplies
+the segments above it; for the common shape-field case those are static slot
+names, read off each parent's stored segment at compile time. The root dict is
+bound in the Context under ``(dict, root_shape)`` and fetched with
+``rt.ctx.get(dict, scope)``.
+
+Read is the Ref's dual role (``compile`` returns the navigate-and-fetch thunk);
+``write`` / ``erase`` resolve the address and mutate the parent container,
+auto-creating intermediate dicts. Dynamic parent keys (a computed segment above
+the leaf) are deferred to the FlatRef / inline-refs pass.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from nu import EMPTY, Sentinel
-from nu.shapes import Ref
-from nu.terms import Mode
+from nu import EMPTY
+from nu.domains.shape.refs.base import _StructuredRef
 
 
 if TYPE_CHECKING:
-    from nu import Context
+    from collections.abc import Callable
+
+    from nu.domains.shape.dsl import Shape
+    from nu.lang.runtime import Runtime
 
 
-__all__ = [
-    "RefBase",
-]
+__all__ = ["RefBase"]
 
 
-class RefBase[T](Ref[T]):
-    """Base for all dict-substrate refs.
+class RefBase[T](_StructuredRef):
+    """Base for all dict-substrate refs: nested-dict navigation, no backend.
 
-    Dict refs navigate nested Python dicts using a parent chain
-    of string keys. No storage backend, no views, no reactivity.
-
-    The root dict is retrieved from Context via ctx[dict, scope].
+    The root dict comes from the Context via ``rt.ctx.get(dict, root_shape)``.
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    def __init__(
+        self,
+        address: object,
+        *,
+        parent_ref: RefBase | None = None,
+        owner_shape: type[Shape] | None = None,
+        **kwargs: object,
+    ) -> None:
+        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
+        self._segment = address  # raw static segment, for parent-chain path building
 
-    async def aresolve(self, ctx: Context) -> tuple[str | int, ...]:
-        """Build key path from parent chain."""
-        address = await self.aresolve_address(ctx)
+    # --- path building -------------------------------------------------------
 
-        if self.parent is None:
-            return (address,) if address != "" else ()
+    def _parent_path(self) -> tuple:
+        """Static segments of the parent chain, root-first (excludes self)."""
+        segs: list[object] = []
+        ref = self._parent_ref
+        while ref is not None:
+            segs.append(ref._segment)  # type: ignore[attr-defined]
+            ref = ref._parent_ref
+        segs.reverse()
+        return tuple(segs)
 
-        parent_path = await self.parent.aresolve(ctx)
-        return (*parent_path, address)
-
-    def resolve(self, ctx: Context) -> tuple[str | int, ...]:
-        """Build key path from parent chain (sync)."""
-        address = self.resolve_address(ctx)
-
-        if self.parent is None:
-            return (address,) if address != "" else ()
-
-        parent_path = self.parent.resolve(ctx)
-        return (*parent_path, address)
-
-    async def afetch(self, ctx: Context) -> T | Sentinel:
-        """Fetch value by navigating the dict."""
-        key_path = await self.aresolve(ctx)
-        data = self._get_root_data(ctx, key_path)
-        try:
-            raw = _navigate(data, key_path)
-            return self.coerce(raw)
-        except (KeyError, IndexError):
-            return EMPTY
-
-    def fetch(self, ctx: Context) -> T | Sentinel:
-        """Fetch value by navigating the dict (sync)."""
-        key_path = self.resolve(ctx)
-        data = self._get_root_data(ctx, key_path)
-        try:
-            raw = _navigate(data, key_path)
-            return self.coerce(raw)
-        except (KeyError, IndexError):
-            return EMPTY
-
-    def eval(self, ctx: Context) -> T | Sentinel:
-        return self.fetch(ctx)
-
-    async def aeval(self, ctx: Context) -> T | Sentinel:
-        return await self.afetch(ctx)
-
-    async def afetch_parent(self, ctx: Context) -> object:
-        """Fetch the parent container, auto-creating intermediate dicts."""
-        key_path = await self.aresolve(ctx)
-        data = self._get_root_data(ctx, key_path)
-
-        if len(key_path) <= 1:
-            return data
-        return _navigate_vivify(data, key_path[:-1])
-
-    def fetch_parent(self, ctx: Context) -> object:
-        """Fetch the parent container, auto-creating intermediate dicts (sync)."""
-        key_path = self.resolve(ctx)
-        data = self._get_root_data(ctx, key_path)
-
-        if len(key_path) <= 1:
-            return data
-        return _navigate_vivify(data, key_path[:-1])
-
-    def _get_root_data(self, ctx: Context, key_path: tuple | None = None) -> dict:
-        """Get the root dict from context.
-
-        Passes site= to ctx.get() so predicate bindings (sharding etc.)
-        can route to the correct storage based on the key path.
-        """
+    def _root_data(self, rt: Runtime) -> object:
+        """The root dict bound in the Context, scoped to this ref's root shape."""
         scope = self.get_root_shape()
-        if key_path is not None:
-            return ctx.get(dict, scope, site=key_path)
-        return ctx[dict, scope]
+        return rt.ctx.get(dict, scope) if scope is not None else rt.ctx.get(dict)
 
+    # --- read (the dual role) ------------------------------------------------
 
-def _navigate(data: object, key_path: tuple[str | int, ...]) -> object:
-    """Walk a nested structure following path keys."""
-    current = data
-    for key in key_path:
-        current = current[key]  # type: ignore[index]
-    return current
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        address = children[0]
+        parents = self._parent_path()
 
+        def thunk(rt: Runtime) -> object:
+            cur = self._root_data(rt)
+            try:
+                for k in parents:
+                    cur = cur[k]  # type: ignore[index]
+                cur = cur[address(rt)]  # type: ignore[index]
+            except (KeyError, IndexError, TypeError):
+                return EMPTY
+            return self.coerce(cur)
 
-def _navigate_vivify(data: dict, key_path: tuple[str | int, ...]) -> object:
-    """Walk a nested structure, auto-creating missing dicts."""
-    current: object = data
-    for key in key_path:
-        if isinstance(current, dict):
-            if key not in current:
-                current[key] = {}
-            current = current[key]
-        else:
-            current = current[key]  # type: ignore[index]
-    return current
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        address = children[0]
+        parents = self._parent_path()
+
+        async def athunk(rt: Runtime) -> object:
+            cur = self._root_data(rt)
+            try:
+                for k in parents:
+                    cur = cur[k]  # type: ignore[index]
+                cur = cur[await address(rt)]  # type: ignore[index]
+            except (KeyError, IndexError, TypeError):
+                return EMPTY
+            return await self.acoerce(cur)
+
+        return athunk
+
+    # --- write / erase -------------------------------------------------------
+
+    def write(self, rt: Runtime, value: object, nid: int) -> None:
+        """Write ``value`` through this ref, vivifying intermediate dicts."""
+        container = self._fetch_parent(rt)
+        container[self.address(rt, nid)] = value  # type: ignore[index]
+
+    async def awrite(self, rt: Runtime, value: object, nid: int) -> None:
+        """Async sibling of :meth:`write`."""
+        container = self._fetch_parent(rt)
+        container[await self.aaddress(rt, nid)] = value  # type: ignore[index]
+
+    def erase(self, rt: Runtime, nid: int) -> None:
+        """Remove this ref's slot from its parent container, if present."""
+        container = self._fetch_parent(rt)
+        key = self.address(rt, nid)
+        if isinstance(container, dict) and key in container:
+            del container[key]
+
+    async def aerase(self, rt: Runtime, nid: int) -> None:
+        """Async sibling of :meth:`erase`."""
+        container = self._fetch_parent(rt)
+        key = await self.aaddress(rt, nid)
+        if isinstance(container, dict) and key in container:
+            del container[key]
+
+    def _fetch_parent(self, rt: Runtime) -> object:
+        """Navigate to the parent container, auto-creating intermediate dicts."""
+        cur = self._root_data(rt)
+        for k in self._parent_path():
+            if isinstance(cur, dict) and k not in cur:
+                cur[k] = {}
+            cur = cur[k]  # type: ignore[index]
+        return cur

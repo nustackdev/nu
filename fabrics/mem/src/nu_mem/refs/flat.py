@@ -1,23 +1,29 @@
 """FlatRef — flat, pre-resolved ref for dict substrate execution.
 
-Replaces the Ref parent-chain (O(depth) resolve per operation) with a single
-node holding a pre-computed path tuple (O(1) resolve). All existing morphisms
-(ItemLoad, ItemStoreCmd, etc.) work unchanged — they call fetch_parent() and
-resolve_address(), which FlatRef provides.
+Replaces a Ref parent-chain (O(depth) resolve per op) with a single node holding
+a pre-computed path tuple (O(1) for all-static paths). Created only by the
+``inline_refs()`` deformation, never user-facing.
 
-Not user-facing. Created only by the inline_refs() deformation.
+The path is ``_static_path`` with ``None`` placeholders at dynamic positions;
+``_dynamic_segments`` pairs each placeholder index with the Nu that fills it. The
+dynamic Nus are this node's tree children (slot order = ``_dynamic_segments``
+order), resolved through the runtime like any child thunk.
+
+Note: this rides the v2 substrate seam (``compile`` read thunk, ``write`` /
+``erase`` (rt, nid)) but is wired only once ``tree/inline_refs`` is ported.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from nu import EMPTY, Nu, Sentinel
-from nu.terms import Mode
+from nu import EMPTY, Nu
 
 
 if TYPE_CHECKING:
-    from nu import Context
+    from collections.abc import Callable
+
+    from nu.lang.runtime import Runtime
 
 
 __all__ = [
@@ -26,19 +32,11 @@ __all__ = [
 
 
 class FlatRef(Nu):
-    """Flat, pre-resolved ref for dict substrate.
+    """Flat, pre-resolved ref for the dict substrate.
 
-    For all-static paths (the common case), this is just a tuple lookup.
-    For mixed static/dynamic paths, only the dynamic Nu segments are executed.
-
-    Attributes:
-        _static_path: Full path tuple. Dynamic positions hold None placeholders.
-        _root_shape: Shape class for context lookup.
-        _dynamic_segments: tuple of (index, Nu) for dynamic positions, or None.
-        _last_address: Pre-extracted last path segment (for resolve_address fast path).
+    For all-static paths (the common case) this is a plain tuple lookup; for
+    mixed paths only the dynamic Nu segments are executed.
     """
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
@@ -47,7 +45,7 @@ class FlatRef(Nu):
         root_shape: type,
         dynamic_segments: tuple[tuple[int, Nu], ...] | None = None,
     ) -> None:
-        # Tree children: only dynamic Nu segments (for traversal / further deformations)
+        # Tree children: the dynamic Nu segments, in slot order.
         if dynamic_segments:
             super().__init__(*(seg[1] for seg in dynamic_segments))
         else:
@@ -55,86 +53,81 @@ class FlatRef(Nu):
         self._static_path = static_path
         self._root_shape = root_shape
         self._dynamic_segments = dynamic_segments
-        # Pre-extract last address for the all-static fast path
-        self._last_address: object = static_path[-1] if static_path else None
-        self._is_last_dynamic = dynamic_segments is not None and any(
-            idx == len(static_path) - 1 for idx, _ in dynamic_segments
-        )
 
-    # =========================================================================
-    # Ref interface — what morphisms call
-    # =========================================================================
+    # --- path building -------------------------------------------------------
 
-    async def aresolve_address(self, ctx: Context) -> object:
-        """Return this ref's address (last path segment). O(1) for static."""
-        if not self._is_last_dynamic:
-            return self._last_address
-        # Dynamic last segment — resolve it
-        path = await self._build_path(ctx)
-        return path[-1]
+    def _root_data(self, rt: Runtime) -> object:
+        """The root dict bound in the Context, scoped to this ref's root shape."""
+        return rt.ctx.get(dict, self._root_shape)
 
-    async def afetch_parent(self, ctx: Context) -> object:
-        """Navigate to parent container. O(path_length) dict lookups."""
-        path = await self._build_path(ctx) if self._dynamic_segments else self._static_path
-        data = self._get_root_data(ctx, path)
-        current = data
-        for key in path[:-1]:
-            if isinstance(current, dict) and key not in current:
-                current[key] = {}
-                current = current[key]
-            else:
-                current = current[key]  # type: ignore[index]
-        return current
-
-    async def afetch(self, ctx: Context) -> object | Sentinel:
-        """Fetch value at this path. O(path_length) dict lookups."""
-        path = await self._build_path(ctx) if self._dynamic_segments else self._static_path
-        data = self._get_root_data(ctx, path)
-        try:
-            current = data
-            for key in path:
-                current = current[key]  # type: ignore[index]
-            return current
-        except (KeyError, IndexError):
-            return EMPTY
-
-    async def aresolve(self, ctx: Context) -> tuple:
-        """Return full resolved path."""
-        if self._dynamic_segments is None:
-            return self._static_path
-        return await self._build_path(ctx)
-
-    async def aexecute(self, ctx: Context) -> object | Sentinel:
-        """Nu interface — delegates to fetch."""
-        return await self.afetch(ctx)
-
-    def get_root_shape(self) -> type:
-        """Return root shape for context lookup."""
-        return self._root_shape
-
-    @property
-    def is_self_pure(self) -> bool:
-        """Reads are always pure."""
-        return True
-
-    # =========================================================================
-    # Internal
-    # =========================================================================
-
-    def _get_root_data(self, ctx: Context, path: tuple | None = None) -> object:
-        """Get root data from context."""
-        if path is not None:
-            return ctx.get(dict, self._root_shape, site=path)
-        return ctx[dict, self._root_shape]
-
-    async def _build_path(self, ctx: Context) -> tuple:
-        """Build full path, resolving dynamic segments."""
+    def _resolve_path(self, segment_values: tuple) -> tuple:
+        """Fill the static path's dynamic placeholders with resolved values."""
         if self._dynamic_segments is None:
             return self._static_path
         path = list(self._static_path)
-        for idx, term in self._dynamic_segments:
-            path[idx] = await term.aexecute(ctx)
+        for (idx, _), value in zip(self._dynamic_segments, segment_values, strict=True):
+            path[idx] = value
         return tuple(path)
+
+    # --- read (the dual role) ------------------------------------------------
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        def thunk(rt: Runtime) -> object:
+            path = self._resolve_path(tuple(c(rt) for c in children))
+            cur = self._root_data(rt)
+            try:
+                for k in path:
+                    cur = cur[k]  # type: ignore[index]
+            except (KeyError, IndexError, TypeError):
+                return EMPTY
+            return cur
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        async def athunk(rt: Runtime) -> object:
+            path = self._resolve_path(tuple([await c(rt) for c in children]))
+            cur = self._root_data(rt)
+            try:
+                for k in path:
+                    cur = cur[k]  # type: ignore[index]
+            except (KeyError, IndexError, TypeError):
+                return EMPTY
+            return cur
+
+        return athunk
+
+    # --- write / erase -------------------------------------------------------
+
+    def write(self, rt: Runtime, value: object, nid: int) -> None:
+        """Write ``value`` at this ref's path, vivifying intermediate dicts."""
+        path = self._resolve_path(self._segment_values(rt, nid))
+        container = self._vivify_parent(rt, path)
+        container[path[-1]] = value  # type: ignore[index]
+
+    def erase(self, rt: Runtime, nid: int) -> None:
+        """Remove this ref's slot from its parent container, if present."""
+        path = self._resolve_path(self._segment_values(rt, nid))
+        container = self._vivify_parent(rt, path)
+        key = path[-1]
+        if isinstance(container, dict) and key in container:
+            del container[key]
+
+    def _segment_values(self, rt: Runtime, nid: int) -> tuple:
+        """Resolve the dynamic segment children by their own node ids."""
+        if self._dynamic_segments is None:
+            return ()
+        child_nids = rt.program.children[nid]
+        return tuple(rt.eval(cn) for cn in child_nids)
+
+    def _vivify_parent(self, rt: Runtime, path: tuple) -> object:
+        """Navigate to the parent container, auto-creating intermediate dicts."""
+        cur = self._root_data(rt)
+        for k in path[:-1]:
+            if isinstance(cur, dict) and k not in cur:
+                cur[k] = {}
+            cur = cur[k]  # type: ignore[index]
+        return cur
 
     def __repr__(self) -> str:
         if self._dynamic_segments:

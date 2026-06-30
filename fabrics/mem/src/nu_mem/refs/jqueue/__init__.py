@@ -10,7 +10,7 @@ Optional dep: ``nu-mem[jqueue]``.
 Usage::
 
     from nu_mem import JQueueRef
-    from nu.shapes import Shape
+    from nu.domains.shape import Shape
 
     class Buf(Shape):
         queue = JQueueRef.slot(capacity=16, item_type=int)

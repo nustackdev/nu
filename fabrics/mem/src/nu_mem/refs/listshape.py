@@ -1,19 +1,22 @@
-# ruff: noqa: D102
-"""Dict shapes list reference — sequence of homogeneous shapes."""
+"""Dict shapes list reference — sequence of homogeneous shapes.
+
+Index descent (``ref[i]``) is the blueprint's ``__getitem__``: it returns a
+``ShapeRef`` at the index with this ref as ``parent_ref``. The element shape type
+is passed to the blueprint as ``item_shape_type``.
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from nu.shapes import MutableShapesSequenceRef, Slot
-from nu.terms import Mode
+from nu.domains.shape import MutableShapesSequenceRef, Slot
 
 from .base import RefBase
-from .shape import ShapeRef
 
 
 if TYPE_CHECKING:
-    from nu import Nu, Sentinel, Shape
+    from nu import Nu
+    from nu.domains.shape.dsl import Shape
 
 
 __all__ = [
@@ -21,32 +24,26 @@ __all__ = [
 ]
 
 
-class ShapesListRef[T: Shape](
-    MutableShapesSequenceRef[T],
-    RefBase[list[dict]],
-):
+class ShapesListRef[T: Shape](MutableShapesSequenceRef, RefBase[list[dict]]):
     """Dict shapes list reference — sequence of homogeneous shapes."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
         shape_type: type[T],
-        **kwargs: object,
+        parent_ref: RefBase | None = None,
+        owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(**kwargs)
-        self._shape_type = shape_type
-        self.item_type = dict
-
-    def _create_item_ref(self, index: int | Sentinel | Nu[int | Sentinel]) -> ShapeRef[T]:
-        return ShapeRef(
-            address=index,
-            shape_type=self._shape_type,
-            parent=self,
-            owner_shape=self._owner_shape,
+        super().__init__(
+            address,
+            item_shape_type=shape_type,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
         )
+        self.item_type: type = dict
 
     @classmethod
     def slot[S: Shape](cls, shape_type: type[S]) -> ShapesListRef[S]:
+        """Declare a slot holding a sequence of ``shape_type`` shapes."""
         return Slot(cls, shape_type=shape_type)  # type: ignore[return-value]
