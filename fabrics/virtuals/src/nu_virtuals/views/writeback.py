@@ -1,3 +1,6 @@
+# ruff: noqa
+# Parked: not yet ported to the v2 API (writeback views land with the primitive
+# compound refs in a later phase). Excluded from the package __init__.
 """Write-back wrappers for primitive compound values.
 
 Subclass the native Python container (set/dict/list) so the object passes

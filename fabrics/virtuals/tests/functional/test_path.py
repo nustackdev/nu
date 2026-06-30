@@ -5,7 +5,12 @@ Tests PathRef and PathSlot execution with real storage context.
 
 from pathlib import Path
 
-from nu.stdlib.pathlib import PathI as PathRef
+import pytest
+
+
+pytest.importorskip("nu.stdlib", reason="nu.stdlib stdtype refs deferred in v2 port")
+
+from nu.stdlib.pathlib import PathI as PathRef  # noqa: E402
 
 
 # ============================================================================

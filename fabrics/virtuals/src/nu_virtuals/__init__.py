@@ -1,21 +1,22 @@
-"""eb_virtuals — virtuals adapter for everybase.
+"""nu_virtuals — virtuals (polymorphic views) KV-storage fabric for Nu Shapes.
 
-Refs over virtuals (polymorphic views) KV storage.
+Refs over virtuals views backed by a tkv snapshot / transaction.
 
-Usage:
+Usage::
+
     from nu_virtuals import IntRef, StrRef, ShapeRef, Atomic
+    from nu import Context
+    from nu.domains.shape import Shape
 
     class User(Shape):
         name = StrRef.slot()
         age = IntRef.slot()
-        profile = ShapeRef.slot(Profile)
 """
 
-import nu_virtuals._compat  # noqa: F401  — register virtuals ABCs
+import nu_virtuals._compat  # noqa: F401  — register virtuals view ABCs
 
 
-# Register path types as invisibles value types so they serialize by value
-# (pickled whole) rather than being proxied element-by-element.
+# Register path types as invisibles value types so they serialize by value.
 try:
     from invisibles.core.boxing import register_value_type
     from nu_virtuals.paths import ValuePathSer, ViewPathSer
@@ -24,14 +25,21 @@ try:
 except ImportError:
     pass
 
-from nu_virtuals.commands import (
+from nu_virtuals.interactions import (
+    CONFLICT_ERRORS,
+    Atomic,
     ClearPrimitivesUnsafeCmd,
     EnsureLayoutCmd,
     InitItemCmd,
     ItemPrimitiveDeleteUnsafeCmd,
+    ItemPrimitiveGetUnsafe,
     ItemPrimitiveSetUnsafeCmd,
     ItemPrimitiveSetUnsafeParentSkipCmd,
     ItemPrimitiveStoreCmd,
+    RetryOnConflict,
+    ScanPrimitivesUnsafe,
+    Snapshot,
+    Transaction,
 )
 from nu_virtuals.paths import ValuePathSer, ViewPathSer
 from nu_virtuals.presets import (
@@ -40,73 +48,54 @@ from nu_virtuals.presets import (
     rocksdb_storage_inmemory,
     text_storage,
 )
-from nu_virtuals.queries import (
-    ItemPrimitiveGetUnsafe,
-    ScanPrimitivesUnsafe,
-)
 from nu_virtuals.refs import (
-    BasisPointRef,
     BoolRef,
     BytesRef,
-    ComplexRef,
-    DateRef,
-    DatetimeRef,
-    DecimalRef,
     DictRef,
+    Facet,
     FloatRef,
-    FractionRef,
     IntRef,
     ItemRef,
     ListRef,
-    PathRef,
-    PercentageRef,
-    PrimitiveDictRef,
-    PrimitiveListRef,
     PrimitiveRef,
-    PrimitiveSetRef,
     SetRef,
     ShapeRef,
     ShapesDictRef,
     ShapesListRef,
     StrRef,
-    TimedeltaRef,
-    TimeRef,
-    TimezoneRef,
-    UUIDRef,
     ViewRef,
 )
-from nu_virtuals.spans import Atomic, RetryOnConflict, Snapshot, Transaction
-from nu_virtuals.tree import (
-    auto_atomic,
-    auto_flow_atomic,
-    auto_total_atomic,
-    inline_refs,
-    optimize_primitive_reads,
-    optimize_primitive_writes,
-)
-from nu_virtuals.views import PrimitiveDictView, PrimitiveListView, PrimitiveSetView
+from nu_virtuals.tree import auto_atomic, inline_refs
+
+
+# --- deferred during the v2 port ---------------------------------------------
+# stdlib-typed refs (items_extended), write-back views (views/writeback),
+# auto_flow_atomic / auto_total_atomic / optimize_primitive_reads|writes,
+# PrimitiveDictRef/PrimitiveListRef/PrimitiveSetRef — re-added as each lands on
+# the v2 substrate seam.
 
 
 __all__ = [  # noqa: RUF022
-    # Commands — Item
+    # Interactions — Item
     "EnsureLayoutCmd",
     "InitItemCmd",
+    "ItemPrimitiveGetUnsafe",
     "ItemPrimitiveSetUnsafeCmd",
     "ItemPrimitiveSetUnsafeParentSkipCmd",
     "ItemPrimitiveDeleteUnsafeCmd",
     "ItemPrimitiveStoreCmd",
-    # Commands — Collection
+    # Interactions — Collection
     "ClearPrimitivesUnsafeCmd",
-    # Queries
-    "ItemPrimitiveGetUnsafe",
     "ScanPrimitivesUnsafe",
+    # Interactions — Atomicity
+    "Atomic",
+    "Snapshot",
+    "Transaction",
+    "RetryOnConflict",
+    "CONFLICT_ERRORS",
     # Tree
     "auto_atomic",
-    "auto_flow_atomic",
-    "auto_total_atomic",
     "inline_refs",
-    "optimize_primitive_reads",
-    "optimize_primitive_writes",
     # Paths
     "ValuePathSer",
     "ViewPathSer",
@@ -115,41 +104,20 @@ __all__ = [  # noqa: RUF022
     "rocksdb_storage",
     "rocksdb_storage_inmemory",
     "text_storage",
-    # Views
-    "PrimitiveDictView",
-    "PrimitiveListView",
-    "PrimitiveSetView",
-    "Atomic",
-    "BasisPointRef",
+    # Refs
+    "Facet",
     "BoolRef",
     "BytesRef",
-    "ComplexRef",
-    "DateRef",
-    "DatetimeRef",
-    "DecimalRef",
     "DictRef",
     "FloatRef",
-    "FractionRef",
     "IntRef",
     "ItemRef",
     "ListRef",
-    "PathRef",
-    "PercentageRef",
-    "PrimitiveDictRef",
-    "PrimitiveListRef",
     "PrimitiveRef",
-    "PrimitiveSetRef",
     "SetRef",
     "ShapeRef",
     "ShapesDictRef",
     "ShapesListRef",
-    "RetryOnConflict",
-    "Snapshot",
-    "Transaction",
     "StrRef",
-    "TimedeltaRef",
-    "TimeRef",
-    "TimezoneRef",
-    "UUIDRef",
     "ViewRef",
 ]

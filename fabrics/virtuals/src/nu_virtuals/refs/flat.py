@@ -1,25 +1,36 @@
 """FlatRef — flat, pre-resolved ref for virtuals substrate execution.
 
-Replaces the Ref parent-chain with a single node holding a pre-computed
-path tuple. Paths are tuples of (address, type_marker) segments where
-type_marker is a View subclass (for containers) or a Python type
-(for primitives). Navigation uses virtuals.loc.path.navigate_view() / navigate_value().
+Replaces a Ref parent-chain (O(depth) resolve per op) with a single node holding
+a pre-computed path tuple of ``(address, type_marker)`` segments, where
+type_marker is a View subclass (containers) or a Python type (primitives).
+Created only by the ``inline_refs()`` deformation, never user-facing.
 
-Not user-facing. Created only by the inline_refs() deformation.
+The path is ``_static_path`` with ``(None, marker)`` placeholders at dynamic
+positions; ``_dynamic_segments`` pairs each placeholder index with the Nu that
+fills it. The dynamic Nus are this node's tree children (slot order =
+``_dynamic_segments`` order), resolved through the runtime like any child thunk.
+
+``is_primitive`` selects the read mode: a leaf (navigate to parent View +
+subscript) or a container (open the View at the full path, faceted lazy/eager
+is dropped at this flat layer — extract handles materialization).
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from nu import EMPTY, Sentinel
-from nu.terms import Mode
-from nu.terms.ref import Ref
+from nu import EMPTY, Nu
 from nu_virtuals.paths import ViewPathSer
+from virtuals import Empty as StorageEmpty
+from virtuals import Navigator
+from virtuals.collections import Subscriptable
+from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
 
 
 if TYPE_CHECKING:
-    from nu import Context
+    from collections.abc import Callable
+
+    from nu.lang.runtime import Runtime
 
 
 __all__ = [
@@ -27,28 +38,18 @@ __all__ = [
 ]
 
 
-class FlatRef(Ref):
-    """Flat, pre-resolved ref for virtuals substrate.
-
-    Attributes:
-        _static_path: Path tuple ((addr, marker), ...). Dynamic positions
-            hold (None, marker) placeholders.
-        _root_shape: Shape class for context lookup.
-        _dynamic_segments: tuple of (index, Nu) for dynamic positions, or None.
-        _last_address: Pre-extracted last address for resolve_address fast path.
-        _is_primitive: True if leaf ref is a PrimitiveRef (not a ViewRef).
-    """
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class FlatRef(Nu):
+    """Flat, pre-resolved ref for the virtuals substrate."""
 
     def __init__(
         self,
         *,
         static_path: tuple[tuple[object, type], ...],
-        root_shape: type,
+        root_shape: type | None,
         is_primitive: bool,
         dynamic_segments: tuple[tuple[int, Nu], ...] | None = None,
     ) -> None:
+        # Tree children: the dynamic Nu segments, in slot order.
         if dynamic_segments:
             super().__init__(*(seg[1] for seg in dynamic_segments))
         else:
@@ -57,197 +58,114 @@ class FlatRef(Ref):
         self._root_shape = root_shape
         self._is_primitive = is_primitive
         self._dynamic_segments = dynamic_segments
-        self._last_address: object = static_path[-1][0] if static_path else None
-        self._is_last_dynamic = dynamic_segments is not None and any(
-            idx == len(static_path) - 1 for idx, _ in dynamic_segments
-        )
 
-    # =========================================================================
-    # Ref interface — what ops call
-    # =========================================================================
-
-    async def aresolve(self, ctx: Context) -> object:
-        """Build identity for this ref (path tuple)."""
-        if self._dynamic_segments:
-            return await self._build_path(ctx)
-        return self._static_path
-
-    async def aresolve_address(self, ctx: Context) -> object:
-        """Return this ref's address (last path segment). O(1) for static."""
-        if not self._is_last_dynamic:
-            return self._last_address
-        resolved = await self._build_path(ctx)
-        return resolved[-1][0]
-
-    async def afetch_parent(self, ctx: Context) -> object:
-        """Navigate to parent view via Navigator."""
-        resolved = await self._build_path(ctx) if self._dynamic_segments else self._static_path
-        nav = self._resolve_navigator(ctx, resolved)
-        storage_ctx = self._resolve_storage_ctx(ctx, resolved)
-
-        if self._is_primitive:
-            parent_path = resolved[:-1]
-            if not parent_path:
-                return nav.root(storage_ctx)
-            return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
-        else:
-            if len(resolved) <= 1:
-                return nav.root(storage_ctx)
-            parent_path = resolved[:-1]
-            return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
-
-    async def afetch(self, ctx: Context) -> object | Sentinel:
-        """Fetch value/view via Navigator."""
-        from virtuals import Empty as StorageEmpty
-        from virtuals.collections import Subscriptable
-
-        resolved = await self._build_path(ctx) if self._dynamic_segments else self._static_path
-        nav = self._resolve_navigator(ctx, resolved)
-        storage_ctx = self._resolve_storage_ctx(ctx, resolved)
-
-        if not self._is_primitive:
-            if not resolved:
-                return nav.root(storage_ctx)
-            return nav.open_at_path(ViewPathSer(resolved), storage_ctx)
-
-        parent_path = resolved[:-1]
-        key = resolved[-1][0]
-
-        try:
-            if not parent_path:
-                parent_view = nav.root(storage_ctx)
-            else:
-                parent_view = nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
-            if isinstance(parent_view, Subscriptable):
-                val = parent_view[key]
-                return val if not isinstance(val, StorageEmpty) else EMPTY
-            raise TypeError(f"View {parent_view.__class__.__name__} is not subscriptable")
-        except (KeyError, IndexError):
-            return EMPTY
-
-    async def aresolve(self, ctx: Context) -> tuple:
-        """Return full resolved path."""
-        if self._dynamic_segments is None:
-            return self._static_path
-        return await self._build_path(ctx)
-
-    async def aexecute(self, ctx: Context) -> object | Sentinel:
-        """Nu interface — delegates to fetch."""
-        return await self.afetch(ctx)
-
-    def get_root_shape(self) -> type:
-        """Return root shape for context lookup."""
+    def get_root_shape(self) -> type | None:
+        """Return the root shape for context lookup."""
         return self._root_shape
 
-    @property
-    def is_self_pure(self) -> bool:
-        """Reads are always pure."""
-        return True
+    # --- path building -------------------------------------------------------
 
-    # =========================================================================
-    # Internal
-    # =========================================================================
+    def _resolve_path(self, segment_values: tuple) -> tuple[tuple[object, type], ...]:
+        """Fill the static path's dynamic placeholders with resolved values."""
+        if self._dynamic_segments is None:
+            return self._static_path
+        path = list(self._static_path)
+        for (idx, _), value in zip(self._dynamic_segments, segment_values, strict=True):
+            _old_addr, marker = path[idx]
+            path[idx] = (value, marker)
+        return tuple(path)
 
-    def _resolve_navigator(self, ctx: Context, resolved_path: tuple) -> object:
-        """Resolve Navigator, passing site and path for predicate routing."""
-        from virtuals import Navigator
+    def _resolve_navigator(self, rt: Runtime, path: tuple) -> Navigator:
+        scope = self._root_shape
+        if not path:
+            return rt.ctx.get(Navigator, scope) if scope is not None else rt.ctx.get(Navigator)
+        site = tuple(addr for addr, _ in path)
+        if scope is not None:
+            return rt.ctx.get(Navigator, scope, site=site, path=path)
+        return rt.ctx.get(Navigator, site=site, path=path)
 
-        if not resolved_path:
-            return ctx.get(Navigator, self._root_shape)
-        site = tuple(addr for addr, _ in resolved_path)
-        return ctx.get(Navigator, self._root_shape, site=site, path=resolved_path)
-
-    def _resolve_storage_ctx(self, ctx: Context, resolved_path: tuple) -> object:
-        """Resolve storage context (transaction/snapshot) for predicate routing."""
-        from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
-
-        if not resolved_path:
+    def _resolve_storage_ctx(self, rt: Runtime, path: tuple) -> object:
+        scope = self._root_shape
+        tags = (scope,) if scope is not None else ()
+        if not path:
             try:
-                return ctx.get(TransactionProtocol, self._root_shape)
+                return rt.ctx.get(TransactionProtocol, *tags)
             except (KeyError, LookupError):
-                return ctx.get(SnapshotProtocol, self._root_shape)
-        site = tuple(addr for addr, _ in resolved_path)
+                return rt.ctx.get(SnapshotProtocol, *tags)
+        site = tuple(addr for addr, _ in path)
         try:
-            return ctx.get(TransactionProtocol, self._root_shape, site=site, path=resolved_path)
+            return rt.ctx.get(TransactionProtocol, *tags, site=site, path=path)
         except (KeyError, LookupError):
-            return ctx.get(SnapshotProtocol, self._root_shape, site=site, path=resolved_path)
+            return rt.ctx.get(SnapshotProtocol, *tags, site=site, path=path)
 
-    async def _build_path(self, ctx: Context) -> tuple:
-        """Build full path, resolving dynamic segments."""
-        if self._dynamic_segments is None:
-            return self._static_path
-        path_list = list(self._static_path)
-        for idx, term in self._dynamic_segments:
-            addr = await term.afirst(ctx)
-            _old_addr, marker = path_list[idx]
-            path_list[idx] = (addr, marker)
-        return tuple(path_list)
+    # --- read (the dual role) ------------------------------------------------
 
-    def _build_path_sync(self, ctx: Context) -> tuple:
-        """Sync counterpart of `_build_path`."""
-        if self._dynamic_segments is None:
-            return self._static_path
-        path_list = list(self._static_path)
-        for idx, term in self._dynamic_segments:
-            addr = term.first(ctx)
-            _old_addr, marker = path_list[idx]
-            path_list[idx] = (addr, marker)
-        return tuple(path_list)
-
-    def resolve(self, ctx: Context) -> tuple:
-        """Sync counterpart of `aresolve`."""
-        if self._dynamic_segments is None:
-            return self._static_path
-        return self._build_path_sync(ctx)
-
-    def resolve_address(self, ctx: Context) -> object:
-        """Sync counterpart of `aresolve_address`."""
-        if not self._is_last_dynamic:
-            return self._last_address
-        return self._build_path_sync(ctx)[-1][0]
-
-    def fetch_parent(self, ctx: Context) -> object:
-        """Sync counterpart of `afetch_parent`."""
-        resolved = self._build_path_sync(ctx) if self._dynamic_segments else self._static_path
-        nav = self._resolve_navigator(ctx, resolved)
-        storage_ctx = self._resolve_storage_ctx(ctx, resolved)
-        if self._is_primitive:
-            parent_path = resolved[:-1]
-            if not parent_path:
-                return nav.root(storage_ctx)
-            return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
-        if len(resolved) <= 1:
-            return nav.root(storage_ctx)
-        parent_path = resolved[:-1]
-        return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
-
-    def fetch(self, ctx: Context) -> object | Sentinel:
-        """Sync counterpart of `afetch`."""
-        from virtuals import Empty as StorageEmpty
-        from virtuals.collections import Subscriptable
-
-        resolved = self._build_path_sync(ctx) if self._dynamic_segments else self._static_path
-        nav = self._resolve_navigator(ctx, resolved)
-        storage_ctx = self._resolve_storage_ctx(ctx, resolved)
-
+    def _read(self, rt: Runtime, path: tuple) -> object:
+        nav = self._resolve_navigator(rt, path)
+        storage_ctx = self._resolve_storage_ctx(rt, path)
         if not self._is_primitive:
-            if not resolved:
+            if not path:
                 return nav.root(storage_ctx)
-            return nav.open_at_path(ViewPathSer(resolved), storage_ctx)
-
-        parent_path = resolved[:-1]
-        key = resolved[-1][0]
+            return nav.open_at_path(ViewPathSer(path), storage_ctx)
+        parent_path = path[:-1]
+        key = path[-1][0]
         try:
-            if not parent_path:
-                parent_view = nav.root(storage_ctx)
-            else:
-                parent_view = nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
+            parent_view = nav.root(storage_ctx) if not parent_path else nav.open_at_path(
+                ViewPathSer(parent_path), storage_ctx
+            )
             if isinstance(parent_view, Subscriptable):
                 val = parent_view[key]
-                return val if not isinstance(val, StorageEmpty) else EMPTY
-            raise TypeError(f"View {parent_view.__class__.__name__} is not subscriptable")
+                return EMPTY if isinstance(val, StorageEmpty) else val
+            msg = f"View {parent_view.__class__.__name__} is not subscriptable"
+            raise TypeError(msg)
         except (KeyError, IndexError):
             return EMPTY
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        def thunk(rt: Runtime) -> object:
+            path = self._resolve_path(tuple(c(rt) for c in children))
+            return self._read(rt, path)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        async def athunk(rt: Runtime) -> object:
+            path = self._resolve_path(tuple([await c(rt) for c in children]))
+            return self._read(rt, path)
+
+        return athunk
+
+    # --- write / erase -------------------------------------------------------
+
+    def _fetch_parent(self, rt: Runtime, path: tuple) -> object:
+        nav = self._resolve_navigator(rt, path)
+        storage_ctx = self._resolve_storage_ctx(rt, path)
+        parent_path = path[:-1]
+        if not parent_path:
+            return nav.root(storage_ctx)
+        return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
+
+    def _segment_values(self, rt: Runtime, nid: int) -> tuple:
+        if self._dynamic_segments is None:
+            return ()
+        child_nids = rt.program.children[nid]
+        return tuple(rt.eval(cn) for cn in child_nids)
+
+    def write(self, rt: Runtime, value: object, nid: int) -> None:
+        """Write ``value`` at this ref's path through the parent View."""
+        path = self._resolve_path(self._segment_values(rt, nid))
+        parent = self._fetch_parent(rt, path)
+        parent[path[-1][0]] = value  # type: ignore[index]
+
+    def erase(self, rt: Runtime, nid: int) -> None:
+        """Remove this ref's slot from its parent View, if present."""
+        path = self._resolve_path(self._segment_values(rt, nid))
+        parent = self._fetch_parent(rt, path)
+        key = path[-1][0]
+        try:
+            del parent[key]  # type: ignore[attr-defined]
+        except (KeyError, IndexError):
+            pass
 
     def __repr__(self) -> str:
         addrs = tuple(a for a, _m in self._static_path)

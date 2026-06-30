@@ -1,22 +1,24 @@
-# ruff: noqa: D102
-"""virtuals shapes list reference — document model + virtuals substrate."""
+"""Virtuals shapes list reference — sequence of homogeneous shapes.
+
+Index descent (``ref[i]``) is overridden to return a substrate-backed virtuals
+``ShapeRef`` at the index, with this ref as ``parent_ref``.
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from nu import AnyForm, IteratorForm, ListForm
-from nu.shapes import ReactiveShapesSequenceRef, Shape, Slot
-from nu.terms import Mode
-from virtuals.collections import MutableSequenceBase
+from nu.domains.shape import MutableShapesSequenceRef, Slot
 
-from .base import ViewRef
+from .base import Facet, ViewRef
 from .shape import ShapeRef
 
 
 if TYPE_CHECKING:
-    from nu import Nu, Sentinel
-    from virtuals.loc import path
+    from nu import Nu
+    from nu.domains.shape.dsl import Shape
+    from virtuals.collections import MutableSequenceBase
 
 
 __all__ = [
@@ -24,18 +26,23 @@ __all__ = [
 ]
 
 
-class ShapesListRef[T: Shape](
-    ReactiveShapesSequenceRef[T],
-    ViewRef[
-        list[dict],
-        MutableSequenceBase,
-    ],
-):
-    """virtuals shapes list reference — document model + virtuals substrate."""
+class ShapesListRef[T: Shape](MutableShapesSequenceRef, ViewRef[list[dict]]):
+    """Virtuals shapes list reference — sequence of homogeneous shapes."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+    def __getitem__(self, index: object) -> ShapeRef:
+        """Navigate to the shape at ``index`` as a substrate-backed virtuals ShapeRef."""
+        from virtuals.views import DictView
+
+        return ShapeRef(
+            index,
+            shape_type=self._item_shape_type,
+            view_type=DictView,
+            parent_ref=self,
+            owner_shape=self._owner_shape,
+        )
 
     def result(self, op: Nu) -> ListForm:
+        """Wrap a sequence-level op result as a ListForm."""
         return ListForm(op)
 
     def _wrap_iterable_result(self, operand: Nu) -> IteratorForm:
@@ -49,51 +56,33 @@ class ShapesListRef[T: Shape](
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
         shape_type: type[T],
-        view_type: type[MutableSequenceBase],
-        parent: ViewRef | None = None,
+        view_type: type[MutableSequenceBase] | None = None,
+        parent_ref: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        """Initialize sequence shape reference."""
+        if view_type is None:
+            from virtuals.views import ListView
+
+            view_type = ListView
         super().__init__(
-            address=address, view_type=view_type, parent=parent, owner_shape=owner_shape
+            address,
+            item_shape_type=shape_type,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
         )
-        self._shape_type = shape_type
-        self.item_type = dict
-
-    def _create_item_ref(self, index: int | Sentinel | Nu[int | Sentinel]) -> ShapeRef[T]:
-        """Create a reference to a shape at the given index."""
-        from virtuals.views import DictView
-
-        return ShapeRef(
-            address=index,
-            shape_type=self._shape_type,
-            view_type=DictView,
-            parent=self,
-            owner_shape=self._owner_shape,
-        )
+        self._segment = address
+        self._view_type = view_type
+        self._facet = Facet.LAZY
+        self.item_type: type = dict
 
     @classmethod
     def slot[S: Shape](
-        cls,
-        shape_type: type[S],
-        view_type: type[MutableSequenceBase] | None = None,
+        cls, shape_type: type[S], view_type: type[MutableSequenceBase] | None = None
     ) -> ShapesListRef[S]:
-        """Create a slot for this shapes list ref type.
-
-        Args:
-            shape_type: Shape class for items
-            view_type: View class implementing MutableSequenceBase protocol
-
-        Returns:
-            Slot configured to create ShapesListRef instances
-        """
+        """Declare a slot holding a sequence of ``shape_type`` shapes."""
         from virtuals.views import ListView
 
-        return Slot(
-            cls,
-            shape_type=shape_type,
-            view_type=view_type or ListView,
-        )  # type: ignore
+        return Slot(cls, shape_type=shape_type, view_type=view_type or ListView)  # type: ignore[return-value]

@@ -1,21 +1,19 @@
-# ruff: noqa: D102
-"""virtuals set reference — document model + virtuals substrate."""
+"""Virtuals set reference — unordered unique-element container backed by a View."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import TYPE_CHECKING
 
 from nu import AnyForm, SetForm
-from nu.shapes import ReactiveSetRef, Shape, Slot
-from nu.terms import Mode
-from virtuals.collections import MutableSetBase
+from nu.domains.shape import MutableSetRef, Slot
 
 from .base import ViewRef
 
 
 if TYPE_CHECKING:
     from nu import Nu
-    from virtuals.loc import path
+    from nu.domains.shape.dsl import Shape
+    from virtuals.collections import MutableSetBase
 
 
 __all__ = [
@@ -23,18 +21,11 @@ __all__ = [
 ]
 
 
-class SetRef[T](
-    ReactiveSetRef[T, SetForm[T], AnyForm],
-    ViewRef[set[T], MutableSetBase],
-):
-    """virtuals set reference — document model + virtuals substrate.
-
-    Operations work lazily on virtuals views without loading into memory.
-    """
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class SetRef[T](MutableSetRef, ViewRef[set[T]]):
+    """Virtuals set reference — unordered unique-element container backed by a View."""
 
     def result(self, op: Nu) -> SetForm[T]:
+        """Wrap a set-level op result as a SetForm."""
         return SetForm(op)
 
     def _wrap_set_result(self, operand: Nu) -> SetForm[T]:
@@ -45,38 +36,21 @@ class SetRef[T](
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
         item_type: type[T],
         view_type: type[MutableSetBase],
-        parent: ViewRef | None = None,
+        parent_ref: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        """Initialize set reference."""
         super().__init__(
-            address=address, view_type=view_type, parent=parent, owner_shape=owner_shape
+            address, view_type=view_type, parent_ref=parent_ref, owner_shape=owner_shape
         )
         self.item_type = item_type
 
     @classmethod
-    def slot(
-        cls,
-        item_type: type[T],
-        view_type: type[MutableSetBase] | None = None,
-    ) -> Self:
-        """Create a slot for this set ref type.
-
-        Args:
-            item_type: Python type of items (primitives)
-            view_type: View class implementing MutableSetBase protocol
-
-        Returns:
-            Slot configured to create SetRef instances
-        """
+    def slot[E](cls, item_type: type[E], view_type: type[MutableSetBase] | None = None) -> SetRef[E]:
+        """Declare a set slot holding elements of ``item_type``."""
         from virtuals.views import SetView
 
-        return Slot(
-            cls,
-            item_type=item_type,
-            view_type=view_type or SetView,
-        )  # type: ignore
+        return Slot(cls, item_type=item_type, view_type=view_type or SetView)  # type: ignore[return-value]

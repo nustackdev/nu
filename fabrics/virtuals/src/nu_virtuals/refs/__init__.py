@@ -1,85 +1,45 @@
-"""virtuals substrate collections — refs for containers in virtuals view hierarchy.
+"""Virtuals substrate refs.
 
 Base:
+    ViewRef         refs to container views (dict, list, set, shape)
     PrimitiveRef    refs to leaf values (int, str, etc.)
-    ViewRef         refs to container views (dict, list, set)
 
 Items:
-    ItemRef                                        document-model item ref
-    IntRef, StrRef, FloatRef, BoolRef, BytesRef    typed primitive refs
-    PrimitiveDictRef, PrimitiveListRef, PrimitiveSetRef    compound primitive refs (blob storage)
+    ItemRef         generic typed leaf-value holder
+    IntRef, StrRef, FloatRef, BoolRef, BytesRef   typed item refs
 
 Collections:
-    ShapeRef        structured container with named slots
-    DictRef         key-value container (child ref creation)
-    ListRef         ordered container (item ref creation)
-    SetRef          unordered unique-element container
-    ShapesListRef   sequence of homogeneous shapes
-    ShapesDictRef   mapping of homogeneous shapes
+    ShapeRef, DictRef, ListRef, SetRef, ShapesListRef, ShapesDictRef
 """
 
-from .base import PrimitiveRef, ViewRef
+from .base import Facet, PrimitiveRef, ViewRef
 from .dict import DictRef
 from .dictshape import ShapesDictRef
-from .items import (
-    BoolRef,
-    BytesRef,
-    FloatRef,
-    IntRef,
-    ItemRef,
-    PrimitiveDictRef,
-    PrimitiveListRef,
-    PrimitiveSetRef,
-    StrRef,
-)
-from .items_extended import (
-    BasisPointRef,
-    ComplexRef,
-    DateRef,
-    DatetimeRef,
-    DecimalRef,
-    FractionRef,
-    PathRef,
-    PercentageRef,
-    TimedeltaRef,
-    TimeRef,
-    TimezoneRef,
-    UUIDRef,
-)
+from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
 from .list import ListRef
 from .listshape import ShapesListRef
 from .set import SetRef
 from .shape import ShapeRef
 
 
+# --- deferred ----------------------------------------------------------------
+# from .items_extended import (...)   # stdlib-typed refs -> needs nu/stdlib
+
+
 __all__ = [
-    "BasisPointRef",
     "BoolRef",
     "BytesRef",
-    "ComplexRef",
-    "DateRef",
-    "DatetimeRef",
-    "DecimalRef",
     "DictRef",
+    "Facet",
     "FloatRef",
-    "FractionRef",
     "IntRef",
     "ItemRef",
     "ListRef",
-    "PathRef",
-    "PercentageRef",
-    "PrimitiveDictRef",
-    "PrimitiveListRef",
     "PrimitiveRef",
-    "PrimitiveSetRef",
     "SetRef",
     "ShapeRef",
     "ShapesDictRef",
     "ShapesListRef",
     "StrRef",
-    "TimeRef",
-    "TimedeltaRef",
-    "TimezoneRef",
-    "UUIDRef",
     "ViewRef",
 ]

@@ -90,6 +90,10 @@ xfail_strict = true
 markers = [
     "slow: marks tests as slow",
     "integration: marks tests as integration tests",
+    "inmemory: storage-backend parametrization — in-memory tkv",
+    "rocksdb: storage-backend parametrization — rocksdb tkv",
+    "lmdb: storage-backend parametrization — lmdb tkv",
+    "text: storage-backend parametrization — text/debug tkv",
 ]
 
 # =============================================================================

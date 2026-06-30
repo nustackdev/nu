@@ -5,7 +5,12 @@ Tests DecimalRef and DecimalSlot execution with real storage context.
 
 from decimal import Decimal
 
-from nu.stdlib.decimal import DecimalI as DecimalRef
+import pytest
+
+
+pytest.importorskip("nu.stdlib", reason="nu.stdlib stdtype refs deferred in v2 port")
+
+from nu.stdlib.decimal import DecimalI as DecimalRef  # noqa: E402
 
 
 # ============================================================================
