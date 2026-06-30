@@ -1,58 +1,71 @@
-"""Class factory for declaring Interaction kinds from Python callables.
+"""Build interaction atoms from Python callables.
 
-Most concrete atoms in ``nu.core`` boil down to "resolve the children,
-call a Python function, return the result". ``InteractionFactory``
-collapses the boilerplate: pass a base kind, a name, and a function, and
-you get back a real ``Nu`` subclass wired with sync/async thunks,
-sentinel handling, and any declared attributes.
+One mechanism, ``InteractionFactory``: pass a base kind, a name, and a callable,
+get back a real ``Nu`` subclass wired with sync/async thunks, sentinel handling,
+and declared attributes. It collapses the "resolve the children, call a Python
+function, return the result" boilerplate that most non-hot interactions are.
 
-Supported base kinds: ``ScalarQuery``, ``Command``, ``ScalarAction``.
-Stream (query or action), reduction, flow, and span have non-trivial
-dispatch shapes that the factory does not try to reproduce.
+``nu.core`` atoms stay hand-written end-to-end (a clean thunk, no extra hop) for
+the hot path. The factory is for the rest - the ``nu.std`` library and anything
+else that just bridges to a host callable.
+
+A method call needs no special support: an *unbound* method is a plain callable
+whose first argument is the receiver, so ``d.weekday()`` is ``date.weekday(d)``.
+Bind the unbound method and pass the receiver as the first child.
+
+``ScalarQueryFactory`` is the kind-fixed helper for the common case. Sibling
+helpers (``CommandFactory`` etc.) can be added the same way when a consumer
+needs them.
+
+Supported base kinds: ``ScalarQuery``, ``Command``, ``ScalarAction``. Stream
+(query or action), reduction, flow, and span have non-trivial dispatch shapes
+the factory does not reproduce.
 
 Yield semantics follow the base:
-- ``ScalarQuery`` / ``ScalarAction`` -- the function's return value is the
-  yielded value.
-- ``Command`` -- the function is called for its side effect; the thunk
-  returns ``None``.
+- ``ScalarQuery`` / ``ScalarAction`` -- the function's return value is yielded.
+- ``Command`` -- the function runs for its side effect; the thunk returns ``None``.
 
-Sync vs async is inferred from the callable. An ``async def`` produces a
-class whose ``compile`` falls back to the base (which raises) and whose
-``acompile`` awaits the function; the class also declares
-``requires_async = True``. A plain ``def`` produces both paths.
+Arguments. Children passed positionally land as positional args to the callable;
+children passed by keyword land as keyword args. The split is recorded in the
+atom's payload so ``compile`` can rebuild the call::
+
+    DateOf(2026, 6, 30)            -> date(2026, 6, 30)
+    DatetimeReplace(dt, hour=9)    -> datetime.replace(dt, hour=9)
+
+Sync vs async is inferred from the callable. An ``async def`` produces a class
+whose ``compile`` falls back to the base (which raises) and whose ``acompile``
+awaits the function; the class also declares ``requires_async = True``. A plain
+``def`` produces both paths.
 
 Sentinel handling:
-- ``propagate_sentinels=True`` (default) -- if any resolved child is
-  ``EMPTY`` or ``INVALID``, the thunk short-circuits without invoking the
-  function. ``ScalarQuery`` / ``ScalarAction`` return ``INVALID``;
-  ``Command`` returns ``None``.
+- ``propagate_sentinels=True`` (default) -- a resolved child that is ``EMPTY``
+  or ``INVALID`` short-circuits the thunk without invoking the function.
+  ``ScalarQuery`` / ``ScalarAction`` return ``INVALID``; ``Command`` returns
+  ``None``.
 - ``propagate_sentinels=False`` -- sentinels pass through to the function.
 
-Attribute declarations are passed by keyword. Raw values are wrapped in
-``Declared``; pre-built ``Attribute`` instances pass through unchanged::
+Declared attributes are passed by keyword. Raw values are wrapped in
+``Declared``; pre-built ``Attribute`` instances (including computed
+``Synthesized`` / ``Inherited``) pass through unchanged::
 
     Add = InteractionFactory(
-        ScalarQuery, "Add",
-        lambda *xs: sum(xs),
-        commutative=True,
-        associative=True,
+        ScalarQuery, "Add", lambda *xs: sum(xs),
+        commutative=True, associative=True,
     )
     Set = InteractionFactory(
-        Command, "Set",
-        lambda ref, value: ...,
+        Command, "Set", lambda ref, value: ...,
         mutates=frozenset({0}),
     )
 
-Note: IDEs and static type checkers see the factory's return as
-``type[B]`` where ``B`` is the base you passed. They cannot show a
-docstring or signature specific to the synthesised class. Hand-write the
-class when IDE discoverability matters.
+Note: IDEs and static type checkers see the return as ``type[B]`` where ``B`` is
+the base; they cannot show a docstring or signature specific to the synthesised
+class. Hand-write the class when IDE discoverability matters.
 """
 
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Attribute, Declared
 
@@ -76,7 +89,7 @@ if TYPE_CHECKING:
     from .runtime import Runtime
 
 
-__all__ = ["InteractionFactory"]
+__all__ = ["InteractionFactory", "ScalarQueryFactory"]
 
 
 _ALLOWED_BASES: tuple[type, ...] = (ScalarQuery, Command, ScalarAction)
@@ -93,9 +106,9 @@ def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a clas
 ) -> type[B]:
     """Build a ``Nu`` subclass bound to a Python callable.
 
-    See module docstring for semantics. Returns a fresh class named
-    ``name`` whose metaclass-driven attribute collection picks up every
-    declared attribute (and ``requires_async`` for ``async def`` targets).
+    See the module docstring for semantics. Returns a fresh class named
+    ``name`` whose metaclass collects every declared attribute (and
+    ``requires_async`` for ``async def`` targets).
     """
     if not isinstance(base, type):
         msg = (
@@ -128,6 +141,12 @@ def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a clas
     if is_async:
         namespace["requires_async"] = Declared(value=True)
 
+    def init_method(self: Nu, *args: object, **kwargs: object) -> None:
+        Nu.__init__(self, *args, *kwargs.values())
+        self.payload = {"npos": len(args), "kwkeys": tuple(kwargs.keys())}
+
+    namespace["__init__"] = init_method
+
     if not is_async:
 
         def compile_method(
@@ -135,14 +154,25 @@ def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a clas
             nid: int,
             children: tuple[Callable[[Runtime], object], ...],
         ) -> Callable[[Runtime], object]:
+            npos = cast("int", self.payload.get("npos", len(children)))
+            kwkeys = cast("tuple[str, ...]", self.payload.get("kwkeys", ()))
+            pos_ts = children[:npos]
+            kw_ts = children[npos:]
+
             def thunk(rt: Runtime) -> object:
                 args: list[object] = []
-                for ct in children:
+                for ct in pos_ts:
                     v = ct(rt)
                     if propagate_sentinels and (v is EMPTY or v is INVALID):
                         return sentinel_value
                     args.append(v)
-                result = fn(*args)
+                kwargs: dict[str, object] = {}
+                for k, kt in zip(kwkeys, kw_ts, strict=True):
+                    v = kt(rt)
+                    if propagate_sentinels and (v is EMPTY or v is INVALID):
+                        return sentinel_value
+                    kwargs[k] = v
+                result = fn(*args, **kwargs)
                 return void_value if is_command else result
 
             return thunk
@@ -154,14 +184,25 @@ def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a clas
         nid: int,
         children: tuple[Callable[[Runtime], object], ...],
     ) -> Callable[[Runtime], object]:
+        npos = cast("int", self.payload["npos"])
+        kwkeys = cast("tuple[str, ...]", self.payload["kwkeys"])
+        pos_ts = children[:npos]
+        kw_ts = children[npos:]
+
         async def athunk(rt: Runtime) -> object:
             args: list[object] = []
-            for ct in children:
+            for ct in pos_ts:
                 v = await ct(rt)  # type: ignore[misc]
                 if propagate_sentinels and (v is EMPTY or v is INVALID):
                     return sentinel_value
                 args.append(v)
-            result = fn(*args)
+            kwargs: dict[str, object] = {}
+            for k, kt in zip(kwkeys, kw_ts, strict=True):
+                v = await kt(rt)  # type: ignore[misc]
+                if propagate_sentinels and (v is EMPTY or v is INVALID):
+                    return sentinel_value
+                kwargs[k] = v
+            result = fn(*args, **kwargs)
             if inspect.isawaitable(result):
                 result = await result
             return void_value if is_command else result
@@ -172,3 +213,20 @@ def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a clas
     namespace["__doc__"] = f"Built atom calling {getattr(fn, '__qualname__', fn)!r}."
 
     return type(name, (base,), namespace)  # type: ignore[return-value]
+
+
+def ScalarQueryFactory(  # noqa: N802 -- a class factory; reads as a class at the call site
+    name: str,
+    fn: Callable[..., object],
+    *,
+    propagate_sentinels: bool = True,
+    **attributes: object,
+) -> type[ScalarQuery]:
+    """Build a ``ScalarQuery`` atom from a callable - the common-case helper.
+
+    Equivalent to ``InteractionFactory(ScalarQuery, name, fn, ...)``; fixes the
+    base kind, which is the easiest argument to get wrong.
+    """
+    return InteractionFactory(
+        ScalarQuery, name, fn, propagate_sentinels=propagate_sentinels, **attributes
+    )

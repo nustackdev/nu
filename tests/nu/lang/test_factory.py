@@ -19,6 +19,7 @@ from nu.lang import (
     InteractionFactory,
     Reduction,
     ScalarQuery,
+    ScalarQueryFactory,
     Span,
     StreamQuery,
 )
@@ -76,6 +77,54 @@ def test_nested_built_atoms_compose() -> None:
     MulQuery = InteractionFactory(ScalarQuery, "MulQuery", lambda a, b: a * b)
     value, _ = run(AddQuery(MulQuery(2, 3), 4))
     assert value == 10
+
+
+# --- keyword arguments --------------------------------------------------
+
+
+def test_keyword_children_dispatch_to_kwargs() -> None:
+    Sub = InteractionFactory(ScalarQuery, "Sub", lambda a, *, b: a - b)
+    value, _ = run(Sub(10, b=3))
+    assert value == 7
+
+
+def test_mixed_positional_and_keyword() -> None:
+    def fn(a: int, b: int, *, c: int, d: int) -> int:
+        return a + b + c + d
+
+    Mix = InteractionFactory(ScalarQuery, "Mix", fn)
+    value, _ = run(Mix(1, 2, c=3, d=4))
+    assert value == 10
+
+
+def test_keyword_child_sentinel_short_circuits() -> None:
+    Sub = InteractionFactory(ScalarQuery, "Sub", lambda a, *, b: a - b)
+    value, _ = run(Sub(10, b=LiteralQuery(EMPTY)))
+    assert value is INVALID
+
+
+def test_keyword_args_run_on_async_path() -> None:
+    Sub = InteractionFactory(ScalarQuery, "Sub", lambda a, *, b: a - b)
+    value, _ = asyncio.run(arun(Sub(10, b=4)))
+    assert value == 6
+
+
+# --- ScalarQueryFactory helper ------------------------------------------
+
+
+def test_scalar_query_factory_builds_scalar_query() -> None:
+    Add = ScalarQueryFactory("Add", lambda a, b: a + b, commutative=True)
+    assert issubclass(Add, ScalarQuery)
+    assert Add.attributes["commutative"].value is True
+    value, _ = run(Add(2, 3))
+    assert value == 5
+
+
+def test_scalar_query_factory_binds_an_unbound_method() -> None:
+    # an unbound method is a plain callable whose first arg is the receiver
+    Upper = ScalarQueryFactory("Upper", str.upper)
+    value, _ = run(Upper("nu"))
+    assert value == "NU"
 
 
 # --- sentinel propagation -----------------------------------------------
