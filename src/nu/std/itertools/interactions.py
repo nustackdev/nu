@@ -67,6 +67,9 @@ __all__ = [
 ]
 
 
+_UNSET = object()  # "no previous item yet" marker for lazy lenses
+
+
 # --- infinite sources -------------------------------------------------------
 
 
@@ -266,11 +269,27 @@ class Islice(StreamQuery):
 
         async def athunk(rt: Runtime) -> object:
             args = [await b(rt) for b in bounds]
-            items = [x async for x in aiter_any(await source(rt))]
+            if len(args) == 1:
+                start, stop, step = 0, args[0], 1
+            elif len(args) == 2:
+                start, stop, step = args[0], args[1], 1
+            else:
+                start, stop, step = args[0], args[1], args[2]
+            start = 0 if start is None else start
+            step = 1 if step is None else step
 
             async def agen() -> object:
-                for x in _it.islice(items, *args):
-                    yield x
+                # lazy: never drains the source past `stop`, so an infinite
+                # source (count/cycle/repeat) is bounded correctly
+                target = start
+                i = 0
+                async for x in aiter_any(await source(rt)):
+                    if stop is not None and i >= stop:
+                        break
+                    if i == target:
+                        yield x
+                        target += step
+                    i += 1
 
             return agen()
 
@@ -298,12 +317,16 @@ class Compress(StreamQuery):
         data, selectors = children
 
         async def athunk(rt: Runtime) -> object:
-            ds = [x async for x in aiter_any(await data(rt))]
-            ss = [x async for x in aiter_any(await selectors(rt))]
-
             async def agen() -> object:
-                for x in _it.compress(ds, ss):
-                    yield x
+                # lazy: walk data and selectors in lockstep, never materialize
+                sel = aiter_any(await selectors(rt))
+                async for d in aiter_any(await data(rt)):
+                    try:
+                        s = await sel.__anext__()
+                    except StopAsyncIteration:
+                        break
+                    if s:
+                        yield d
 
             return agen()
 
@@ -331,11 +354,13 @@ class Pairwise(StreamQuery):
         (source,) = children
 
         async def athunk(rt: Runtime) -> object:
-            items = [x async for x in aiter_any(await source(rt))]
-
             async def agen() -> object:
-                for x in _it.pairwise(items):
-                    yield x
+                # lazy: keep only the previous item, never materialize
+                prev: object = _UNSET
+                async for x in aiter_any(await source(rt)):
+                    if prev is not _UNSET:
+                        yield (prev, x)
+                    prev = x
 
             return agen()
 
