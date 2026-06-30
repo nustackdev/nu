@@ -1,4 +1,7 @@
-"""Tree queries -- read-only inspection of node structures."""
+"""Tree queries -- read-only inspection of Term structures.
+
+Domain-free: predicates and counts over any Term tree.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +13,7 @@ from .walk import preorder
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu.terms import Nu
+    from nu.lang import Nu
 
 
 __all__ = [
@@ -24,19 +27,19 @@ __all__ = [
 
 def find(root: Nu, pred: Callable[[Nu], bool]) -> list[Nu]:
     """Find all nodes matching predicate (pre-order)."""
-    return [node for node in preorder(root) if pred(node)]  # type: ignore[misc]
+    return [node for node in preorder(root) if pred(node)]
 
 
 def find_first(root: Nu, pred: Callable[[Nu], bool]) -> Nu | None:
     """Find first matching node (pre-order), or None."""
     for node in preorder(root):
         if pred(node):
-            return node  # type: ignore[return-value]
+            return node
     return None
 
 
 def count(root: Nu, pred: Callable[[Nu], bool] | None = None) -> int:
-    """Count nodes matching predicate. None = count all."""
+    """Count nodes matching predicate. ``None`` counts all."""
     if pred is None:
         return sum(1 for _ in preorder(root))
     return sum(1 for node in preorder(root) if pred(node))
@@ -49,6 +52,6 @@ def size(root: Nu) -> int:
 
 def depth(root: Nu) -> int:
     """Maximum depth. A leaf has depth 0."""
-    if not root._children:
+    if not root.children:
         return 0
-    return 1 + max(depth(c) for c in root._children)
+    return 1 + max(depth(c) for c in root.children)

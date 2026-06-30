@@ -44,4 +44,4 @@ all = [
 Repository = "https://github.com/nustackdev/nu"
 
 [tool.hatch.build.targets.wheel]
-packages = ["nu", "nu2"]
+packages = ["nu"]

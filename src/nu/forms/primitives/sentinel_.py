@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from nu.terms import EMPTY, INVALID, Empty, Form, Invalid, Sentinel, TypedNu
+from nu.lang import EMPTY, INVALID, Empty, Form, Invalid, Sentinel, TypedNu
 
 
 __all__ = [
@@ -24,7 +24,7 @@ class EmptyForm(SentinelForm[Empty]):
 
 
 class InvalidForm(SentinelForm[Invalid]):
-    """Invalid interface - represents invalid/undefined operations."""
+    """Invalid interface - represents invalid/undefined interactions."""
 
     def __init__(self) -> None:
         super().__init__(INVALID)

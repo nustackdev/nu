@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Form
+from nu.lang import Form
 
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ class SizedForm(Form):
 
     def len(self) -> IntForm:
         """Length of this collection."""
-        from nu import Len
+        from nu.core import LenQuery
         from nu.forms.primitives import IntForm
 
-        return IntForm(Len(self))
+        return IntForm(LenQuery(self))

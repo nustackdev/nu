@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Form
+from nu.lang import Form
 
 
 if TYPE_CHECKING:
@@ -32,7 +32,7 @@ class ContainerForm(Form):
 
     def contains(self, item: object) -> BoolForm:
         """Check if item is in this collection. Returns a BoolForm tree."""
-        from nu import Contains
+        from nu.core import ContainsQuery
         from nu.forms.primitives import BoolForm
 
-        return BoolForm(Contains(self, item))
+        return BoolForm(ContainsQuery(self, item))

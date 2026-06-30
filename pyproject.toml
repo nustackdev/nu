@@ -73,11 +73,11 @@ examples = [
 testpaths = [
     "tests",
 ]
-# Make the nu2 test-support package importable as `_support.<module>` from any
-# test file under tests/nu2/. The leading underscore keeps pytest from
+# Make the nu test-support package importable as `_support.<module>` from any
+# test file under tests/nu/. The leading underscore keeps pytest from
 # auto-collecting it as tests.
 pythonpath = [
-    "tests/nu2",
+    "tests/nu",
 ]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]

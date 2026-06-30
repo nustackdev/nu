@@ -1,205 +1,162 @@
-"""Strategy concretes - Sequential, Parallel, Race, Gather, AnyN.
+"""Strategy flows: Command-composing atoms that dispatch their children.
 
-`Sequential` is the `>>` operator's target; `Parallel` is `|`; `Race`
-is `&`. `Gather` runs concurrently and (eventually) collects yields.
-`AnyN` runs children concurrently and succeeds if any one succeeds.
+Nu's Strategy sub-shape - the Flows that compose mutating atoms directly, with
+no Query parameters. ``Sequential`` runs its children in order (the ``>>``
+composition); ``Parallel`` (``|``), ``Race`` (``&``), ``Gather`` and ``AnyN``
+run them concurrently. A Strategy owns no effects and yields nothing (VOID):
+the children carry the writes, and the ``flow_body_is_mutator`` law holds every
+slot to a mutating child (the matrix STRATEGY row admits only work sorts).
+
+Concurrency is the Runtime's job, not ours. The Runtime owns the Budget (its
+thread pool, async semaphore, and the ``max_parallel`` gate) and exposes the
+fan-in primitives keyed on child node ids: ``eval_parallel`` / ``aeval_parallel``
+(join on all) and ``aeval_race`` (first to complete wins). Each falls through to
+sequential when ``max_parallel == 1``, and the async variants are semaphore-
+gated; per-child sync/async placement is resolved off ``Attr.ON_LOOP`` inside
+the Runtime. So a Strategy thunk just hands the child nids
+(``rt.program.children[nid]``) to the matching primitive - no thread pools or
+``gather`` here. The Term stays immutable; all behaviour lives in the thunk.
+
+``Parallel`` / ``Race`` / ``Gather`` / ``AnyN`` declare ``exec_order = PARALLEL``.
+``Race`` and ``AnyN`` are async-only (``requires_async``): cancelling the losing
+branches only works on a loop, and the Runtime provides a race primitive only
+on the async path. Their sync thunks raise, but sync ``run`` refuses the
+async-only subtree first (``refuse_async_only``), so the raise is a backstop.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
-from typing import Literal as TLiteral
+from typing import TYPE_CHECKING
 
-from nu.terms.flow import Strategy
-from nu.terms.types import Mode
+from nu.engine.structure import Declared
+from nu.lang import Strategy
+from nu.lang.attributes.execution import ExecOrder
 
 
 if TYPE_CHECKING:
-    from nu.terms import Nu
+    from collections.abc import Callable
 
+    from nu.lang.runtime import Runtime
 
-__all__ = [
-    "AnyN",
-    "Gather",
-    "Parallel",
-    "Race",
-    "Sequential",
-]
-
-
-_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
-_ASYNC_ONLY = frozenset({Mode.ASYNC})
-
-
-def _has_async_only(nu: Any) -> bool:  # noqa: ANN401
-    """True if any node in the subtree has `support = {ASYNC}` exclusively.
-
-    Async-only descendants must run on the event loop. Subtrees without
-    any async-only node can run on a worker thread.
-
-    Reads the instance attribute so atoms that narrow their support at
-    construction time (e.g. an async-only ``Invoke``) are visible.
-    """
-    support = getattr(nu, "support", None)
-    if support is not None and support == _ASYNC_ONLY:
-        return True
-    for child in getattr(nu, "_children", ()):
-        if _has_async_only(child):
-            return True
-    return False
+__all__ = ["AnyN", "Gather", "Parallel", "Race", "Sequential"]
 
 
 class Sequential(Strategy):
-    """`a >> b` - run children in order."""
+    """Runs its children in order - the ``>>`` composition.
 
-    support: ClassVar[frozenset[Mode]] = _BOTH
-    associative: ClassVar[bool] = True
-    commutative: ClassVar[bool | TLiteral["if-independent"]] = "if-independent"
+    Associative (``a >> (b >> c)`` regroups freely); not commutative in
+    general - order is the whole point. Calls the child thunks directly: the
+    sequential hot path needs no Budget, so it skips the Runtime dispatch hop.
+    """
 
-    # Inherits sequential `_run_children` from Strategy.
+    associative = Declared(value=True)
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        def thunk(rt: Runtime) -> None:
+            for child in children:
+                child(rt)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        async def athunk(rt: Runtime) -> None:
+            for child in children:
+                await child(rt)
+
+        return athunk
 
 
 class Parallel(Strategy):
-    """`a | b` - run children concurrently."""
+    """Runs its children concurrently, joins on all - the ``|`` composition.
 
-    support: ClassVar[frozenset[Mode]] = _BOTH
-    associative: ClassVar[bool] = True
-    commutative: ClassVar[bool] = True
+    Hands the child nids to the Runtime's parallel fan-in: ``eval_parallel``
+    (Budget thread pool) on the sync path, ``aeval_parallel`` (semaphore-gated
+    ``gather``) on the async path. Both join on every child and fall through to
+    sequential under ``max_parallel == 1``. Commutative and associative.
+    """
 
-    def _run_children(self, ctx: Any) -> None:  # noqa: ANN401
-        from concurrent.futures import ThreadPoolExecutor, as_completed
+    associative = Declared(value=True)
+    commutative = Declared(value=True)
+    exec_order = Declared(value=ExecOrder.PARALLEL)
 
-        from nu.terms.dispatch import ExecState, atom_dispatch
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        def thunk(rt: Runtime) -> None:
+            rt.eval_parallel(rt.program.children[nid])
 
-        with ThreadPoolExecutor(max_workers=max(1, len(self._children))) as pool:
-            futures = [
-                pool.submit(atom_dispatch(c, ExecState.NO_LOOP), ctx) for c in self._children
-            ]
-            for f in as_completed(futures):
-                f.result()
+        return thunk
 
-    async def _arun_children(self, ctx: Any) -> None:  # noqa: ANN401
-        import asyncio
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        async def athunk(rt: Runtime) -> None:
+            await rt.aeval_parallel(rt.program.children[nid])
 
-        from nu.terms.dispatch import ExecState, atom_dispatch
-
-        loop = asyncio.get_running_loop()
-        awaitables: list[Any] = []
-        for c in self._children:
-            if _has_async_only(c):
-                awaitables.append(atom_dispatch(c, ExecState.LOOP)(ctx))
-            else:
-                sync_method = atom_dispatch(c, ExecState.NO_LOOP)
-                awaitables.append(loop.run_in_executor(None, sync_method, ctx))
-        await asyncio.gather(*awaitables)
+        return athunk
 
 
 class Race(Strategy):
-    """`a & b` - run children concurrently; first to complete wins."""
+    """Runs its children concurrently; the first to finish wins - the ``&`` composition.
 
-    support: ClassVar[frozenset[Mode]] = _BOTH
-    associative: ClassVar[bool] = True
-    commutative: ClassVar[bool] = True
+    Delegates to the Runtime's ``aeval_race``, which cancels the losing branches
+    once one completes. Async-only: real cancellation needs a loop, and the
+    Runtime provides a race primitive only on the async path. The sync thunk
+    raises, but sync ``run`` refuses the async-only subtree first.
+    """
 
-    def _run_children(self, ctx: Any) -> None:  # noqa: ANN401
-        from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+    associative = Declared(value=True)
+    commutative = Declared(value=True)
+    requires_async = Declared(value=True)
+    exec_order = Declared(value=ExecOrder.PARALLEL)
 
-        from nu.terms.dispatch import ExecState, atom_dispatch
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        def thunk(rt: Runtime) -> None:
+            msg = "Race requires an async runtime; use arun"
+            raise RuntimeError(msg)
 
-        with ThreadPoolExecutor(max_workers=max(1, len(self._children))) as pool:
-            futures = [
-                pool.submit(atom_dispatch(c, ExecState.NO_LOOP), ctx) for c in self._children
-            ]
-            done, _pending = wait(futures, return_when=FIRST_COMPLETED)
-            for f in done:
-                f.result()
-                break
+        return thunk
 
-    async def _arun_children(self, ctx: Any) -> None:  # noqa: ANN401
-        import asyncio
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        async def athunk(rt: Runtime) -> None:
+            await rt.aeval_race(rt.program.children[nid])
 
-        from nu.terms.dispatch import ExecState, atom_dispatch
-
-        loop = asyncio.get_running_loop()
-        tasks: list[asyncio.Future] = []
-        for c in self._children:
-            if _has_async_only(c):
-                tasks.append(asyncio.ensure_future(atom_dispatch(c, ExecState.LOOP)(ctx)))
-            else:
-                sync_method = atom_dispatch(c, ExecState.NO_LOOP)
-                tasks.append(loop.run_in_executor(None, sync_method, ctx))
-        try:
-            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-            for t in pending:
-                t.cancel()
-            if pending:
-                await asyncio.gather(*pending, return_exceptions=True)
-            for t in done:
-                await t
-                break
-        except BaseException:
-            for t in tasks:
-                t.cancel()
-            await asyncio.gather(*tasks, return_exceptions=True)
-            raise
+        return athunk
 
 
 class Gather(Strategy):
-    """Run children concurrently and collect their yields.
+    """Runs its children concurrently and joins on all.
 
-    For Command children, `run/arun` returns None; this kind is most
-    interesting once stream collection is wired. For now it behaves
-    like Parallel.
+    The yield-collecting twin of ``Parallel``: it will hand back the children's
+    yields once Flow-level yield collection is wired. A Flow yields nothing
+    today, so for now it dispatches exactly like ``Parallel`` - through the same
+    Runtime fan-in primitives.
     """
 
-    support: ClassVar[frozenset[Mode]] = _BOTH
-    associative: ClassVar[bool] = True
-    commutative: ClassVar[bool] = True
+    associative = Declared(value=True)
+    commutative = Declared(value=True)
+    exec_order = Declared(value=ExecOrder.PARALLEL)
 
-    _run_children = Parallel._run_children
-    _arun_children = Parallel._arun_children
+    compile = Parallel.compile
+    acompile = Parallel.acompile
 
 
 class AnyN(Strategy):
-    """Run children concurrently; succeed if any one succeeds.
+    """Runs its children concurrently; succeeds as soon as any one succeeds.
 
-    Children: ``[*children]`` -- all body slots (Strategy semantics).
+    Delegates to the Runtime's ``aeval_any``, which sets a failing branch aside
+    and keeps waiting, cancels the rest on the first success, and re-raises the
+    last error only if all fail. Async-only, like ``Race``.
     """
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
+    requires_async = Declared(value=True)
+    exec_order = Declared(value=ExecOrder.PARALLEL)
 
-    def __init__(self, *children: Nu) -> None:
-        super().__init__(*children)
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        def thunk(rt: Runtime) -> None:
+            msg = "AnyN requires an async runtime; use arun"
+            raise RuntimeError(msg)
 
-    async def _arun_children(self, ctx: Any) -> None:  # noqa: ANN401
-        import asyncio
+        return thunk
 
-        from nu import runtime
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        async def athunk(rt: Runtime) -> None:
+            await rt.aeval_any(rt.program.children[nid])
 
-        if not self._children:
-            return
-        tasks = {asyncio.create_task(runtime.aexecute(child, ctx)) for child in self._children}
-        last_error: BaseException | None = None
-        try:
-            while tasks:
-                done, tasks = await asyncio.wait(
-                    tasks,
-                    return_when=asyncio.FIRST_COMPLETED,
-                )
-                for task in done:
-                    exc = task.exception()
-                    if exc is None:
-                        for t in tasks:
-                            t.cancel()
-                        if tasks:
-                            await asyncio.gather(*tasks, return_exceptions=True)
-                        return
-                    last_error = exc
-            if last_error is not None:
-                raise last_error
-        except BaseException:
-            for task in tasks:
-                task.cancel()
-            if tasks:
-                await asyncio.gather(*tasks, return_exceptions=True)
-            raise
+        return athunk

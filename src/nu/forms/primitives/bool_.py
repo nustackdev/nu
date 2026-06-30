@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Form, TypedNu
+from nu.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu.terms import BoolArg
+    from nu.lang import BoolArg
 
 
 __all__ = [
@@ -25,65 +25,66 @@ class BoolForm(Form, TypedNu[bool]):
 
     def and_(self, other: BoolArg) -> BoolForm:
         """Logical AND: self AND other."""
-        from nu import And
+        from nu.core import AndQuery
 
-        return BoolForm(And(self, other))
+        return BoolForm(AndQuery(self, other))
 
     def or_(self, other: BoolArg) -> BoolForm:
         """Logical OR: self OR other."""
-        from nu import Or
+        from nu.core import OrQuery
 
-        return BoolForm(Or(self, other))
+        return BoolForm(OrQuery(self, other))
 
     def not_(self) -> BoolForm:
         """Logical NOT: NOT self."""
-        from nu import Not
+        from nu.core import NotQuery
 
-        return BoolForm(Not(self))
+        return BoolForm(NotQuery(self))
 
     def bool_(self) -> BoolForm:
         """Convert to boolean."""
-        from nu import Bool
+        from nu.core import BoolQuery
 
-        return BoolForm(Bool(self))
+        return BoolForm(BoolQuery(self))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: BoolArg) -> BoolForm:
-        from nu import Gt
+        from nu.core import GtQuery
 
-        return BoolForm(Gt(self, other))
+        return BoolForm(GtQuery(self, other))
 
     def __lt__(self, other: BoolArg) -> BoolForm:
-        from nu import Lt
+        from nu.core import LtQuery
 
-        return BoolForm(Lt(self, other))
+        return BoolForm(LtQuery(self, other))
 
     def __ge__(self, other: BoolArg) -> BoolForm:
-        from nu import Ge
+        from nu.core import GeQuery
 
-        return BoolForm(Ge(self, other))
+        return BoolForm(GeQuery(self, other))
 
     def __le__(self, other: BoolArg) -> BoolForm:
-        from nu import Le
+        from nu.core import LeQuery
 
-        return BoolForm(Le(self, other))
+        return BoolForm(LeQuery(self, other))
 
     __hash__ = object.__hash__
 
     def __eq__(self, other: BoolArg) -> BoolForm:  # type: ignore[override]
-        from nu import Eq
+        from nu.core import EqQuery
 
-        return BoolForm(Eq(self, other))
+        return BoolForm(EqQuery(self, other))
 
     def __ne__(self, other: BoolArg) -> BoolForm:  # type: ignore[override]
-        from nu import Ne
+        from nu.core import NeQuery
 
-        return BoolForm(Ne(self, other))
+        return BoolForm(NeQuery(self, other))
 
     def is_(self, other: BoolArg) -> BoolForm:
-        from nu import IdComp
+        """Identity comparison: self is other."""
+        from nu.core import IsQuery
 
-        return BoolForm(IdComp(self, other))
+        return BoolForm(IsQuery(self, other))

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Form, TypedNu
+from nu.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
@@ -17,219 +17,227 @@ __all__ = [
 
 
 class AnyForm(Form, TypedNu[object]):
-    """Any/dynamic interface. Supports all operations, results stay AnyForm."""
+    """Any/dynamic interface. Supports all interactions, results stay AnyForm."""
 
     # =========================================================================
     # ARITHMETIC
     # =========================================================================
 
     def __add__(self, other: object) -> AnyForm:
-        from nu import Add
+        from nu.core import AddQuery
 
-        return AnyForm(Add(self, other))
+        return AnyForm(AddQuery(self, other))
 
     def __radd__(self, other: object) -> AnyForm:
-        from nu import Add
+        from nu.core import AddQuery
 
-        return AnyForm(Add(other, self))
+        return AnyForm(AddQuery(other, self))
 
     def __sub__(self, other: object) -> AnyForm:
-        from nu import Sub
+        from nu.core import SubQuery
 
-        return AnyForm(Sub(self, other))
+        return AnyForm(SubQuery(self, other))
 
     def __rsub__(self, other: object) -> AnyForm:
-        from nu import Sub
+        from nu.core import SubQuery
 
-        return AnyForm(Sub(other, self))
+        return AnyForm(SubQuery(other, self))
 
     def __mul__(self, other: object) -> AnyForm:
-        from nu import Mul
+        from nu.core import MulQuery
 
-        return AnyForm(Mul(self, other))
+        return AnyForm(MulQuery(self, other))
 
     def __rmul__(self, other: object) -> AnyForm:
-        from nu import Mul
+        from nu.core import MulQuery
 
-        return AnyForm(Mul(other, self))
+        return AnyForm(MulQuery(other, self))
 
     def __truediv__(self, other: object) -> AnyForm:
-        from nu import Div
+        from nu.core import DivQuery
 
-        return AnyForm(Div(self, other))
+        return AnyForm(DivQuery(self, other))
 
     def __rtruediv__(self, other: object) -> AnyForm:
-        from nu import Div
+        from nu.core import DivQuery
 
-        return AnyForm(Div(other, self))
+        return AnyForm(DivQuery(other, self))
 
     def __floordiv__(self, other: object) -> AnyForm:
-        from nu import FloorDiv
+        from nu.core import FloorDivQuery
 
-        return AnyForm(FloorDiv(self, other))
+        return AnyForm(FloorDivQuery(self, other))
 
     def __rfloordiv__(self, other: object) -> AnyForm:
-        from nu import FloorDiv
+        from nu.core import FloorDivQuery
 
-        return AnyForm(FloorDiv(other, self))
+        return AnyForm(FloorDivQuery(other, self))
 
     def __mod__(self, other: object) -> AnyForm:
-        from nu import Mod
+        from nu.core import ModQuery
 
-        return AnyForm(Mod(self, other))
+        return AnyForm(ModQuery(self, other))
 
     def __rmod__(self, other: object) -> AnyForm:
-        from nu import Mod
+        from nu.core import ModQuery
 
-        return AnyForm(Mod(other, self))
+        return AnyForm(ModQuery(other, self))
 
     def __pow__(self, other: object) -> AnyForm:
-        from nu import Pow
+        from nu.core import PowQuery
 
-        return AnyForm(Pow(self, other))
+        return AnyForm(PowQuery(self, other))
 
     def __rpow__(self, other: object) -> AnyForm:
-        from nu import Pow
+        from nu.core import PowQuery
 
-        return AnyForm(Pow(other, self))
+        return AnyForm(PowQuery(other, self))
 
     def __neg__(self) -> AnyForm:
-        from nu import Neg
+        from nu.core import NegQuery
 
-        return AnyForm(Neg(self))
+        return AnyForm(NegQuery(self))
 
     def __pos__(self) -> AnyForm:
-        from nu import Pos
+        from nu.core import PosQuery
 
-        return AnyForm(Pos(self))
+        return AnyForm(PosQuery(self))
 
     def __abs__(self) -> AnyForm:
-        from nu import Abs
+        from nu.core import AbsQuery
 
-        return AnyForm(Abs(self))
+        return AnyForm(AbsQuery(self))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: object) -> BoolForm:
-        from nu import Gt
+        from nu.core import GtQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Gt(self, other))
+        return BoolForm(GtQuery(self, other))
 
     def __lt__(self, other: object) -> BoolForm:
-        from nu import Lt
+        from nu.core import LtQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Lt(self, other))
+        return BoolForm(LtQuery(self, other))
 
     def __ge__(self, other: object) -> BoolForm:
-        from nu import Ge
+        from nu.core import GeQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Ge(self, other))
+        return BoolForm(GeQuery(self, other))
 
     def __le__(self, other: object) -> BoolForm:
-        from nu import Le
+        from nu.core import LeQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Le(self, other))
+        return BoolForm(LeQuery(self, other))
 
     __hash__ = object.__hash__
 
     def __eq__(self, other: object) -> BoolForm:  # type: ignore[override]
-        from nu import Eq
+        from nu.core import EqQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Eq(self, other))
+        return BoolForm(EqQuery(self, other))
 
     def __ne__(self, other: object) -> BoolForm:  # type: ignore[override]
-        from nu import Ne
+        from nu.core import NeQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Ne(self, other))
+        return BoolForm(NeQuery(self, other))
 
     def is_(self, other: object) -> BoolForm:
-        from nu import IdComp
+        """Identity comparison: self is other."""
+        from nu.core import IsQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(IdComp(self, other))
+        return BoolForm(IsQuery(self, other))
 
     # =========================================================================
     # LOGICAL
     # =========================================================================
 
     def and_(self, other: object) -> BoolForm:
-        from nu import And
+        """Logical AND: self AND other."""
+        from nu.core import AndQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(And(self, other))
+        return BoolForm(AndQuery(self, other))
 
     def or_(self, other: object) -> BoolForm:
-        from nu import Or
+        """Logical OR: self OR other."""
+        from nu.core import OrQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Or(self, other))
+        return BoolForm(OrQuery(self, other))
 
     def not_(self) -> BoolForm:
-        from nu import Not
+        """Logical NOT: NOT self."""
+        from nu.core import NotQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Not(self))
+        return BoolForm(NotQuery(self))
 
     def bool_(self) -> BoolForm:
-        from nu import Bool
+        """Convert to boolean."""
+        from nu.core import BoolQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Bool(self))
+        return BoolForm(BoolQuery(self))
 
     # =========================================================================
     # BITWISE
     # =========================================================================
 
     def bitand(self, other: object) -> AnyForm:
-        from nu import BitwiseAnd
+        """Bitwise AND: self & other."""
+        from nu.core import BitAndQuery
 
-        return AnyForm(BitwiseAnd(self, other))
+        return AnyForm(BitAndQuery(self, other))
 
     def bitor(self, other: object) -> AnyForm:
-        from nu import BitwiseOr
+        """Bitwise OR: self | other."""
+        from nu.core import BitOrQuery
 
-        return AnyForm(BitwiseOr(self, other))
+        return AnyForm(BitOrQuery(self, other))
 
     def __xor__(self, other: object) -> AnyForm:
-        from nu import Xor
+        from nu.core import BitXorQuery
 
-        return AnyForm(Xor(self, other))
+        return AnyForm(BitXorQuery(self, other))
 
     def __rxor__(self, other: object) -> AnyForm:
-        from nu import Xor
+        from nu.core import BitXorQuery
 
-        return AnyForm(Xor(other, self))
+        return AnyForm(BitXorQuery(other, self))
 
     def bitnot(self) -> AnyForm:
-        from nu import BitwiseNot
+        """Bitwise NOT: ~self."""
+        from nu.core import BitNotQuery
 
-        return AnyForm(BitwiseNot(self))
+        return AnyForm(BitNotQuery(self))
 
     def __lshift__(self, other: object) -> AnyForm:
-        from nu import LShift
+        from nu.core import LShiftQuery
 
-        return AnyForm(LShift(self, other))
+        return AnyForm(LShiftQuery(self, other))
 
     def __rshift__(self, other: object) -> AnyForm:
-        from nu import RShift
+        from nu.core import RShiftQuery
 
-        return AnyForm(RShift(self, other))
+        return AnyForm(RShiftQuery(self, other))

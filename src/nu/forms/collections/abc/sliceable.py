@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from nu.terms import Form
+from nu.lang import Form
 
 
 if TYPE_CHECKING:
-    from nu.terms import IntArg, Nu
+    from nu.lang import IntArg, Nu
 
 
 __all__ = [
@@ -27,6 +27,6 @@ class SliceableForm[ResultT](Form):
         self, start: IntArg | None, stop: IntArg | None, step: IntArg | None = None
     ) -> ResultT:
         """Get slice of this value."""
-        from nu import Slice
+        from nu.core import GetItemQuery, SliceQuery
 
-        return cast("ResultT", self._wrap_sliceable_result(Slice(self, start, stop, step)))
+        return cast("ResultT", self._wrap_sliceable_result(GetItemQuery(self, SliceQuery(start, stop, step))))

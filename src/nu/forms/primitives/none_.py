@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Form, TypedNu
+from nu.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu.terms import NoneArg
+    from nu.lang import NoneArg
 
     from .bool_ import BoolForm
 
@@ -30,29 +30,33 @@ class NoneForm(Form, TypedNu[None]):
     # =========================================================================
 
     def and_(self, other: NoneArg) -> BoolForm:
-        from nu import And
+        """Logical AND: self AND other."""
+        from nu.core import AndQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(And(self, other))
+        return BoolForm(AndQuery(self, other))
 
     def or_(self, other: NoneArg) -> BoolForm:
-        from nu import Or
+        """Logical OR: self OR other."""
+        from nu.core import OrQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Or(self, other))
+        return BoolForm(OrQuery(self, other))
 
     def not_(self) -> BoolForm:
-        from nu import Not
+        """Logical NOT: NOT self."""
+        from nu.core import NotQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Not(self))
+        return BoolForm(NotQuery(self))
 
     def bool_(self) -> BoolForm:
-        from nu import Bool
+        """Convert to boolean."""
+        from nu.core import BoolQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Bool(self))
+        return BoolForm(BoolQuery(self))

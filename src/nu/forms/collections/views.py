@@ -5,16 +5,16 @@ from __future__ import annotations
 from collections.abc import ItemsView, KeysView, ValuesView
 from typing import TYPE_CHECKING
 
-from nu.terms import TypedNu
+from nu.lang import TypedNu
 
 from .abc import CollectionForm
 from .abc.set_ import SetLikeForm
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import AnyForm
-    from nu.terms import Nu
+    from nu.lang import Nu
 
+    from ..primitives import AnyForm
     from .list_ import ListForm
     from .set_ import SetForm
 
@@ -33,33 +33,38 @@ class DictKeysForm[K](
     """Dict key view interface - set-like, lazy, live."""
 
     def _wrap_set_result(self, operand: Nu) -> SetForm[K]:
+        """Wrap operand as SetForm."""
         from .set_ import SetForm
 
         return SetForm(operand)
 
     def _wrap_iterable_result(self, operand: Nu) -> ListForm[K]:
+        """Wrap operand as ListForm."""
         from .list_ import ListForm
 
         return ListForm(operand)
 
     def _wrap_element_result(self, operand: Nu) -> AnyForm:
-        from nu.forms.primitives import AnyForm
+        """Wrap operand as AnyForm element."""
+        from ..primitives import AnyForm
 
         return AnyForm(operand)
 
     def to_list(self) -> ListForm[K]:
-        from nu import ToList
+        """Materialize keys view into a list."""
+        from nu.core import ListQuery
 
         from .list_ import ListForm
 
-        return ListForm(ToList(self))
+        return ListForm(ListQuery(self))
 
     def to_set(self) -> SetForm[K]:
-        from nu import ToSet
+        """Materialize keys view into a set."""
+        from nu.core import SetQuery
 
         from .set_ import SetForm
 
-        return SetForm(ToSet(self))
+        return SetForm(SetQuery(self))
 
 
 class DictValuesForm[V](
@@ -69,28 +74,32 @@ class DictValuesForm[V](
     """Dict value view interface - iterable, sized, containment."""
 
     def _wrap_iterable_result(self, operand: Nu) -> ListForm[V]:
+        """Wrap operand as ListForm."""
         from .list_ import ListForm
 
         return ListForm(operand)
 
     def _wrap_element_result(self, operand: Nu) -> AnyForm:
-        from nu.forms.primitives import AnyForm
+        """Wrap operand as AnyForm element."""
+        from ..primitives import AnyForm
 
         return AnyForm(operand)
 
     def to_list(self) -> ListForm[V]:
-        from nu import ToList
+        """Materialize values view into a list."""
+        from nu.core import ListQuery
 
         from .list_ import ListForm
 
-        return ListForm(ToList(self))
+        return ListForm(ListQuery(self))
 
     def to_set(self) -> SetForm[V]:
-        from nu import ToSet
+        """Materialize values view into a set."""
+        from nu.core import SetQuery
 
         from .set_ import SetForm
 
-        return SetForm(ToSet(self))
+        return SetForm(SetQuery(self))
 
 
 class DictItemsForm[K, V](
@@ -100,30 +109,35 @@ class DictItemsForm[K, V](
     """Dict item view interface - set-like, lazy, live."""
 
     def _wrap_set_result(self, operand: Nu) -> SetForm[tuple[K, V]]:
+        """Wrap operand as SetForm."""
         from .set_ import SetForm
 
         return SetForm(operand)
 
     def _wrap_iterable_result(self, operand: Nu) -> ListForm[tuple[K, V]]:
+        """Wrap operand as ListForm."""
         from .list_ import ListForm
 
         return ListForm(operand)
 
     def _wrap_element_result(self, operand: Nu) -> AnyForm:
-        from nu.forms.primitives import AnyForm
+        """Wrap operand as AnyForm element."""
+        from ..primitives import AnyForm
 
         return AnyForm(operand)
 
     def to_list(self) -> ListForm[tuple[K, V]]:
-        from nu import ToList
+        """Materialize items view into a list."""
+        from nu.core import ListQuery
 
         from .list_ import ListForm
 
-        return ListForm(ToList(self))
+        return ListForm(ListQuery(self))
 
     def to_set(self) -> SetForm[tuple[K, V]]:
-        from nu import ToSet
+        """Materialize items view into a set."""
+        from nu.core import SetQuery
 
         from .set_ import SetForm
 
-        return SetForm(ToSet(self))
+        return SetForm(SetQuery(self))

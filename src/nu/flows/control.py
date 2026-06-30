@@ -1,18 +1,39 @@
-"""Control concretes - IfDo, SwitchDo, WhileDo, ForeverDo, ForEachDo, ForRangeDo, DelayedDo."""
+"""Control flows: Command-composing atoms steered by Query parameters.
+
+Nu's Control sub-shape - the Flows that run their bodies under Query
+parameters (a condition, an iterable, a count). A Control owns no effects and
+yields nothing (VOID): the param slots feed the orchestration, the body slots
+carry the writes. ``param_slots`` declares which slot indices are parameters;
+the rest are bodies. The ``control_param_is_yielder`` law holds every param to
+a yielding child (Ref / Query / Action) and ``flow_body_is_mutator`` holds
+every body to a mutating child (Command / Action / Flow).
+
+Loop variables ride the attrs side-channel: ``ForEachDo`` / ``ForRangeDo`` bind
+the current element under a name (itself a child, so it can be a Literal or a
+computed Ref) before each body run, read back via ``AttrRef`` - the same
+designated channel ``Map`` / ``Filter`` use, not a tracked fabric write.
+
+Each atom emits a thunk via ``compile`` / ``acompile`` and stays immutable -
+construction config that must survive ``with_children`` lives in ``payload``
+(``SwitchDo``'s match keys), never as mutable per-run state.
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+import asyncio
+import time
+from typing import TYPE_CHECKING
 
-from nu.terms.flow import Control
-from nu.terms.types import Mode
+from nu.core._stream import aiter_any, sync_iter
+from nu.engine.structure import Declared
+from nu.lang import Control
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Mapping
 
-    from nu.terms import Arg, FloatArg, IntArg, Nu, StrArg
-
+    from nu.engine import Term
+    from nu.lang.runtime import Runtime
 
 __all__ = [
     "DelayedDo",
@@ -25,284 +46,263 @@ __all__ = [
 ]
 
 
-_BOTH = frozenset({Mode.SYNC, Mode.ASYNC})
-
-
 class IfDo(Control):
-    """`IfDo(cond_q, body_c [, else_c])` - run body if cond is truthy."""
+    """``IfDo(cond, then [, else_])`` - run ``then`` if ``cond`` is truthy, else ``else_``.
 
-    body_slots: ClassVar[tuple[int, ...]] = (1,)
-    support: ClassVar[frozenset[Mode]] = _BOTH
-
-    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu.terms.dispatch import ExecState, atom_dispatch
-        from nu.terms.realization import four_method_pick
-
-        cond_q = self._children[0]
-        cond = four_method_pick(cond_q, ExecState.NO_LOOP)(ctx)
-        body_idx = 1 if cond else 2
-        if body_idx < len(self._children):
-            body = self._children[body_idx]
-            atom_dispatch(body, ExecState.NO_LOOP)(ctx)
-
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu.terms.dispatch import ExecState, atom_dispatch
-        from nu.terms.realization import four_method_pick
-
-        cond_q = self._children[0]
-        cond = await four_method_pick(cond_q, ExecState.LOOP)(ctx)
-        body_idx = 1 if cond else 2
-        if body_idx < len(self._children):
-            body = self._children[body_idx]
-            await atom_dispatch(body, ExecState.LOOP)(ctx)
-
-
-class ForEachDo(Control):
-    """`ForEachDo(items_q, body_c, item="item")` - run body for each item.
-
-    Binds the current element to `ctx.attrs[item]` before running body,
-    so the body can read it via `AttrRef(item)`.
+    Children: ``[cond, then]`` or ``[cond, then, else_]``. Slot 0 is the
+    condition parameter; the body slots hold mutating children.
     """
 
-    body_slots: ClassVar[tuple[int, ...]] = (1,)
-    support: ClassVar[frozenset[Mode]] = _BOTH
+    param_slots = Declared(value=frozenset({0}))
 
-    def __init__(
-        self,
-        items: Arg[Iterable],
-        body: Nu,
-        *,
-        item: StrArg = "item",
-    ) -> None:
-        super().__init__(items, body, item)
-
-    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu.terms.dispatch import ExecState, atom_dispatch
-
-        items_q = self._children[0]
-        body = self._children[1]
-        item_key: str = self._children[2].eval(ctx)
-        opener = getattr(items_q, "open", None)
-        if opener is not None:
-            for elem in opener(ctx):
-                ctx.attrs[item_key] = elem
-                atom_dispatch(body, ExecState.NO_LOOP)(ctx)
+    def __init__(self, cond: object, then: object, else_: object = None) -> None:
+        if else_ is not None:
+            super().__init__(cond, then, else_)
         else:
-            seq = items_q.eval(ctx)
-            for elem in seq:
-                ctx.attrs[item_key] = elem
-                atom_dispatch(body, ExecState.NO_LOOP)(ctx)
+            super().__init__(cond, then)
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu.terms.dispatch import ExecState, atom_dispatch
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        cond = children[0]
 
-        items_q = self._children[0]
-        body = self._children[1]
-        item_key: str = await self._children[2].aeval(ctx)
-        opener = getattr(items_q, "aopen", None)
-        if opener is not None:
-            async for elem in opener(ctx):
-                ctx.attrs[item_key] = elem
-                await atom_dispatch(body, ExecState.LOOP)(ctx)
-        else:
-            seq = await items_q.aeval(ctx)
-            for elem in seq:
-                ctx.attrs[item_key] = elem
-                await atom_dispatch(body, ExecState.LOOP)(ctx)
+        def thunk(rt: Runtime) -> None:
+            if cond(rt):
+                children[1](rt)
+            elif len(children) > 2:
+                children[2](rt)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        cond = children[0]
+
+        async def athunk(rt: Runtime) -> None:
+            if await cond(rt):
+                await children[1](rt)
+            elif len(children) > 2:
+                await children[2](rt)
+
+        return athunk
 
 
 class WhileDo(Control):
-    """`WhileDo(cond_q, body_c)` - run body while cond is truthy."""
+    """``WhileDo(cond, body)`` - run ``body`` while ``cond`` is truthy.
 
-    body_slots: ClassVar[tuple[int, ...]] = (1,)
-    support: ClassVar[frozenset[Mode]] = _BOTH
+    Children: ``[cond, body]``. Slot 0 is the condition parameter, re-evaluated
+    each turn; slot 1 is the body.
+    """
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu.terms.dispatch import ExecState, atom_dispatch
-        from nu.terms.realization import four_method_pick
+    param_slots = Declared(value=frozenset({0}))
 
-        cond_q = self._children[0]
-        body = self._children[1]
-        while four_method_pick(cond_q, ExecState.NO_LOOP)(ctx):
-            atom_dispatch(body, ExecState.NO_LOOP)(ctx)
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        cond, body = children
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu.terms.dispatch import ExecState, atom_dispatch
-        from nu.terms.realization import four_method_pick
+        def thunk(rt: Runtime) -> None:
+            while cond(rt):
+                body(rt)
 
-        cond_q = self._children[0]
-        body = self._children[1]
-        while await four_method_pick(cond_q, ExecState.LOOP)(ctx):
-            await atom_dispatch(body, ExecState.LOOP)(ctx)
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        cond, body = children
+
+        async def athunk(rt: Runtime) -> None:
+            while await cond(rt):
+                await body(rt)
+
+        return athunk
 
 
 class ForeverDo(Control):
-    """Execute body indefinitely.
+    """``ForeverDo(body)`` - run ``body`` endlessly. No parameters.
 
-    Children: ``[body]``
+    Children: ``[body]``. Every slot is a body, so ``param_slots`` keeps the
+    empty default.
     """
 
-    body_slots: ClassVar[tuple[int, ...]] = (0,)
-    support: ClassVar[frozenset[Mode]] = _BOTH
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (body,) = children
 
-    def __init__(self, body: Nu) -> None:
-        super().__init__(body)
+        def thunk(rt: Runtime) -> None:
+            while True:
+                body(rt)
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
+        return thunk
 
-        body = self._children[0]
-        while True:
-            runtime.execute(body, ctx)
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (body,) = children
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
+        async def athunk(rt: Runtime) -> None:
+            while True:
+                await body(rt)
 
-        body = self._children[0]
-        while True:
-            await runtime.aexecute(body, ctx)
+        return athunk
+
+
+class ForEachDo(Control):
+    """``ForEachDo(items, body, item="item")`` - run ``body`` for each element.
+
+    Children: ``[items, body, item_name]``. Binds the current element under the
+    name ``item_name`` yields (the attrs side-channel) before each body run, so
+    the body reads it via ``AttrRef(<name>)``. Slots 0 (items) and 2 (the name)
+    are parameters; slot 1 is the body.
+    """
+
+    param_slots = Declared(value=frozenset({0, 2}))
+
+    def __init__(self, items: object, body: object, item: object = "item") -> None:
+        super().__init__(items, body, item)
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        items_t, body, key_t = children
+
+        def thunk(rt: Runtime) -> None:
+            name = key_t(rt)
+            for elem in sync_iter(items_t(rt)):
+                rt.ctx.attrs[name] = elem
+                body(rt)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        items_t, body, key_t = children
+
+        async def athunk(rt: Runtime) -> None:
+            name = await key_t(rt)
+            async for elem in aiter_any(await items_t(rt)):
+                rt.ctx.attrs[name] = elem
+                await body(rt)
+
+        return athunk
 
 
 class ForRangeDo(Control):
-    """Counted loop over ``range(start, stop, step)``.
+    """``ForRangeDo(start, stop, body, *, step=1, index="index")`` - counted loop.
 
-    Children: ``[start, stop, step, body]`` or
-    ``[start, stop, step, body, index_key]``. Body lives at slot 3.
-
-    Sets ``ctx.attrs[index_key]`` to the current loop value each
-    iteration when an index key is provided.
+    Children: ``[start, stop, step, body, index_name]``. Iterates
+    ``range(start, stop, step)``, binding each value under the name
+    ``index_name`` yields before each body run. Slots 0, 1, 2 and 4 are
+    parameters; slot 3 is the body.
     """
 
-    body_slots: ClassVar[tuple[int, ...]] = (3,)
-    support: ClassVar[frozenset[Mode]] = _BOTH
+    param_slots = Declared(value=frozenset({0, 1, 2, 4}))
 
     def __init__(
         self,
-        start: IntArg,
-        stop: IntArg,
-        body: Nu,
+        start: object,
+        stop: object,
+        body: object,
         *,
-        step: IntArg = 1,
-        index: StrArg | None = None,
+        step: object = 1,
+        index: object = "index",
     ) -> None:
-        self._has_index = index is not None
-        children: list = [start, stop, step, body]
-        if index is not None:
-            children.append(index)
-        super().__init__(*children)
+        super().__init__(start, stop, step, body, index)
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        start_t, stop_t, step_t, body, index_t = children
 
-        start = self._children[0].eval(ctx)
-        stop = self._children[1].eval(ctx)
-        step = self._children[2].eval(ctx)
-        body = self._children[3]
+        def thunk(rt: Runtime) -> None:
+            name = index_t(rt)
+            for i in range(start_t(rt), stop_t(rt), step_t(rt)):
+                rt.ctx.attrs[name] = i
+                body(rt)
 
-        index_key: str | None = None
-        if self._has_index:
-            index_key = self._children[4].eval(ctx)
+        return thunk
 
-        for i in range(start, stop, step):
-            if index_key is not None:
-                ctx.attrs[index_key] = i
-            runtime.execute(body, ctx)
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        start_t, stop_t, step_t, body, index_t = children
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
+        async def athunk(rt: Runtime) -> None:
+            name = await index_t(rt)
+            for i in range(await start_t(rt), await stop_t(rt), await step_t(rt)):
+                rt.ctx.attrs[name] = i
+                await body(rt)
 
-        start = await self._children[0].aeval(ctx)
-        stop = await self._children[1].aeval(ctx)
-        step = await self._children[2].aeval(ctx)
-        body = self._children[3]
-
-        index_key: str | None = None
-        if self._has_index:
-            index_key = await self._children[4].aeval(ctx)
-
-        for i in range(start, stop, step):
-            if index_key is not None:
-                ctx.attrs[index_key] = i
-            await runtime.aexecute(body, ctx)
+        return athunk
 
 
 class DelayedDo(Control):
-    """`DelayedDo(delay, body)` - sleep for ``delay`` seconds, then run body.
+    """``DelayedDo(delay, body)`` - sleep ``delay`` seconds, then run ``body``.
 
-    Children: ``[delay, body]``. Sync path uses ``time.sleep``, async path
-    uses ``asyncio.sleep``.
+    Children: ``[delay, body]``. Slot 0 is the delay parameter; slot 1 the
+    body. Sync path uses ``time.sleep``, async path ``asyncio.sleep``.
     """
 
-    body_slots: ClassVar[tuple[int, ...]] = (1,)
-    support: ClassVar[frozenset[Mode]] = _BOTH
+    param_slots = Declared(value=frozenset({0}))
 
-    def __init__(self, delay: FloatArg, body: Nu) -> None:
-        super().__init__(delay, body)
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        delay_t, body = children
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        import time
+        def thunk(rt: Runtime) -> None:
+            time.sleep(delay_t(rt))
+            body(rt)
 
-        from nu.terms.dispatch import ExecState, atom_dispatch
+        return thunk
 
-        delay = self._children[0].eval(ctx)
-        time.sleep(delay)
-        atom_dispatch(self._children[1], ExecState.NO_LOOP)(ctx)
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        delay_t, body = children
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        import asyncio
+        async def athunk(rt: Runtime) -> None:
+            await asyncio.sleep(await delay_t(rt))
+            await body(rt)
 
-        from nu.terms.dispatch import ExecState, atom_dispatch
-
-        delay = await self._children[0].aeval(ctx)
-        await asyncio.sleep(delay)
-        await atom_dispatch(self._children[1], ExecState.LOOP)(ctx)
+        return athunk
 
 
 class SwitchDo(Control):
-    """Multi-way branching based on a selector value.
+    """``SwitchDo(selector, cases, default=None)`` - branch on a selector value.
 
-    Children: ``[selector, *case_bodies, default?]``
-
-    Selector is at slot 0 (Query). All other slots are Command bodies
-    (case branches and the optional default branch).
+    Children: ``[selector, *case_bodies, default?]``. Slot 0 is the selector
+    parameter; the rest are bodies. The match keys are intrinsic constants of
+    the switch, kept in ``payload`` (so they survive ``with_children``), paired
+    by position with the case bodies. The first key equal to the selector value
+    runs its body; failing any match, the optional default runs.
     """
 
-    support: ClassVar[frozenset[Mode]] = _BOTH
+    param_slots = Declared(value=frozenset({0}))
 
     def __init__(
         self,
-        selector: Any,  # noqa: ANN401
-        cases: dict[Any, Nu],
-        default: Nu | None = None,
+        selector: object,
+        cases: Mapping[object, Term],
+        default: object = None,
     ) -> None:
-        self._case_keys: list[Any] = list(cases.keys())
-        self._has_default = default is not None
-
-        children: list = [selector, *cases.values()]
+        bodies = list(cases.values())
         if default is not None:
-            children.append(default)
-        super().__init__(*children)
+            bodies.append(default)
+        super().__init__(selector, *bodies)
+        self.payload["keys"] = tuple(cases.keys())
+        self.payload["has_default"] = default is not None
 
-    body_slots: ClassVar[tuple[int, ...]] = tuple(range(1, 1024))
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        selector = children[0]
+        bodies = children[1:]
+        keys = self.payload["keys"]
+        has_default = self.payload["has_default"]
 
-    def run(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
+        def thunk(rt: Runtime) -> None:
+            value = selector(rt)
+            for i, key in enumerate(keys):
+                if key == value:
+                    bodies[i](rt)
+                    return
+            if has_default:
+                bodies[-1](rt)
 
-        value = self._children[0].eval(ctx)
-        for i, key in enumerate(self._case_keys):
-            if key == value:
-                runtime.execute(self._children[i + 1], ctx)
-                return
-        if self._has_default:
-            runtime.execute(self._children[-1], ctx)
+        return thunk
 
-    async def arun(self, ctx: Any) -> None:  # noqa: ANN401, D102
-        from nu import runtime
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        selector = children[0]
+        bodies = children[1:]
+        keys = self.payload["keys"]
+        has_default = self.payload["has_default"]
 
-        value = await self._children[0].aeval(ctx)
-        for i, key in enumerate(self._case_keys):
-            if key == value:
-                await runtime.aexecute(self._children[i + 1], ctx)
-                return
-        if self._has_default:
-            await runtime.aexecute(self._children[-1], ctx)
+        async def athunk(rt: Runtime) -> None:
+            value = await selector(rt)
+            for i, key in enumerate(keys):
+                if key == value:
+                    await bodies[i](rt)
+                    return
+            if has_default:
+                await bodies[-1](rt)
+
+        return athunk

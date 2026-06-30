@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Form, TypedNu
+from nu.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu.terms import BoolArg, FloatArg, IntArg
+    from nu.lang import BoolArg, FloatArg, IntArg
 
     from .bool_ import BoolForm
 
@@ -26,173 +26,178 @@ class FloatForm(Form, TypedNu[float]):
     # =========================================================================
 
     def __add__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import Add
+        from nu.core import AddQuery
 
-        return FloatForm(Add(self, other))
+        return FloatForm(AddQuery(self, other))
 
     def __radd__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import Add
+        from nu.core import AddQuery
 
-        return FloatForm(Add(other, self))
+        return FloatForm(AddQuery(other, self))
 
     def __sub__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import Sub
+        from nu.core import SubQuery
 
-        return FloatForm(Sub(self, other))
+        return FloatForm(SubQuery(self, other))
 
     def __rsub__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import Sub
+        from nu.core import SubQuery
 
-        return FloatForm(Sub(other, self))
+        return FloatForm(SubQuery(other, self))
 
     def __mul__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import Mul
+        from nu.core import MulQuery
 
-        return FloatForm(Mul(self, other))
+        return FloatForm(MulQuery(self, other))
 
     def __rmul__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import Mul
+        from nu.core import MulQuery
 
-        return FloatForm(Mul(other, self))
+        return FloatForm(MulQuery(other, self))
 
     def __truediv__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import Div
+        from nu.core import DivQuery
 
-        return FloatForm(Div(self, other))
+        return FloatForm(DivQuery(self, other))
 
     def __rtruediv__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import Div
+        from nu.core import DivQuery
 
-        return FloatForm(Div(other, self))
+        return FloatForm(DivQuery(other, self))
 
     def __floordiv__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import FloorDiv
+        from nu.core import FloorDivQuery
 
-        return FloatForm(FloorDiv(self, other))
+        return FloatForm(FloorDivQuery(self, other))
 
     def __rfloordiv__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import FloorDiv
+        from nu.core import FloorDivQuery
 
-        return FloatForm(FloorDiv(other, self))
+        return FloatForm(FloorDivQuery(other, self))
 
     def __mod__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import Mod
+        from nu.core import ModQuery
 
-        return FloatForm(Mod(self, other))
+        return FloatForm(ModQuery(self, other))
 
     def __rmod__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import Mod
+        from nu.core import ModQuery
 
-        return FloatForm(Mod(other, self))
+        return FloatForm(ModQuery(other, self))
 
     def __pow__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import Pow
+        from nu.core import PowQuery
 
-        return FloatForm(Pow(self, other))
+        return FloatForm(PowQuery(self, other))
 
     def __rpow__(self, other: IntArg | FloatArg) -> FloatForm:
-        from nu import Pow
+        from nu.core import PowQuery
 
-        return FloatForm(Pow(other, self))
+        return FloatForm(PowQuery(other, self))
 
     def __neg__(self) -> FloatForm:
-        from nu import Neg
+        from nu.core import NegQuery
 
-        return FloatForm(Neg(self))
+        return FloatForm(NegQuery(self))
 
     def __pos__(self) -> FloatForm:
-        from nu import Pos
+        from nu.core import PosQuery
 
-        return FloatForm(Pos(self))
+        return FloatForm(PosQuery(self))
 
     def __abs__(self) -> FloatForm:
-        from nu import Abs
+        from nu.core import AbsQuery
 
-        return FloatForm(Abs(self))
+        return FloatForm(AbsQuery(self))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
     def __gt__(self, other: IntArg | FloatArg) -> BoolForm:
-        from nu import Gt
+        from nu.core import GtQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Gt(self, other))
+        return BoolForm(GtQuery(self, other))
 
     def __lt__(self, other: IntArg | FloatArg) -> BoolForm:
-        from nu import Lt
+        from nu.core import LtQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Lt(self, other))
+        return BoolForm(LtQuery(self, other))
 
     def __ge__(self, other: IntArg | FloatArg) -> BoolForm:
-        from nu import Ge
+        from nu.core import GeQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Ge(self, other))
+        return BoolForm(GeQuery(self, other))
 
     def __le__(self, other: IntArg | FloatArg) -> BoolForm:
-        from nu import Le
+        from nu.core import LeQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Le(self, other))
+        return BoolForm(LeQuery(self, other))
 
     __hash__ = object.__hash__
 
     def __eq__(self, other: IntArg | FloatArg) -> BoolForm:  # type: ignore[override]
-        from nu import Eq
+        from nu.core import EqQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Eq(self, other))
+        return BoolForm(EqQuery(self, other))
 
     def __ne__(self, other: IntArg | FloatArg) -> BoolForm:  # type: ignore[override]
-        from nu import Ne
+        from nu.core import NeQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Ne(self, other))
+        return BoolForm(NeQuery(self, other))
 
     def is_(self, other: IntArg | FloatArg) -> BoolForm:
-        from nu import IdComp
+        """Identity comparison: self is other."""
+        from nu.core import IsQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(IdComp(self, other))
+        return BoolForm(IsQuery(self, other))
 
     # =========================================================================
     # LOGICAL
     # =========================================================================
 
     def and_(self, other: BoolArg | FloatArg) -> BoolForm:
-        from nu import And
+        """Logical AND: self AND other."""
+        from nu.core import AndQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(And(self, other))
+        return BoolForm(AndQuery(self, other))
 
     def or_(self, other: BoolArg | FloatArg) -> BoolForm:
-        from nu import Or
+        """Logical OR: self OR other."""
+        from nu.core import OrQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Or(self, other))
+        return BoolForm(OrQuery(self, other))
 
     def not_(self) -> BoolForm:
-        from nu import Not
+        """Logical NOT: NOT self."""
+        from nu.core import NotQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Not(self))
+        return BoolForm(NotQuery(self))
 
     def bool_(self) -> BoolForm:
-        from nu import Bool
+        """Convert to boolean."""
+        from nu.core import BoolQuery
 
         from .bool_ import BoolForm
 
-        return BoolForm(Bool(self))
+        return BoolForm(BoolQuery(self))

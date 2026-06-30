@@ -9,19 +9,20 @@ the wrapping infrastructure for typed results.
 
 Type Parameters:
     ElementT: Native Python element type (int, str, dict, etc.)
-    CollectionResultT: Wrapped result for collection-level operations
-    ElementResultT: Wrapped result for element-level operations
+    CollectionResultT: Wrapped result for collection-level interactions
+    ElementResultT: Wrapped result for element-level interactions
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.terms import Form
+from nu.lang import Form
 
 
 if TYPE_CHECKING:
-    from nu.terms import Nu
+    from nu.forms.collections.iterator_ import IteratorForm
+    from nu.lang import Nu
 
 
 __all__ = [
@@ -36,7 +37,7 @@ class IterableForm[ElementT, CollectionResultT, ElementResultT](Form):
     (SequenceForm, MappingForm, etc.) to wrap op results
     in appropriate Value types.
 
-    Higher-order operations (Map, Filter, Reduce, etc.) are standalone
+    Higher-order interactions (MapQuery, FilterQuery, Reduce, etc.) are standalone
     functions in ``abc.fn``.
 
     Subclasses must override:
@@ -47,9 +48,22 @@ class IterableForm[ElementT, CollectionResultT, ElementResultT](Form):
 
     Type Parameters:
         ElementT: Native Python element type (int, str, dict, etc.)
-        CollectionResultT: Result type for ops that return collections
-        ElementResultT: Result type for ops that extract single elements
+        CollectionResultT: Result type for interactions that return collections
+        ElementResultT: Result type for interactions that extract single elements
     """
+
+    def __iter__(self) -> IteratorForm[ElementT]:
+        """Open this iterable into a lazy iterator stream (Python's ``iter``).
+
+        A pure read: builds the StreamQuery ``IterQuery`` over this value and wraps
+        it as an ``IteratorForm``. Unlike ``len``/``contains`` (whose results
+        Python coerces at the C level), ``iter`` keeps whatever ``__iter__``
+        returns, so the Nu tree survives.
+        """
+        from nu.core import IterQuery
+        from nu.forms.collections.iterator_ import IteratorForm
+
+        return IteratorForm(IterQuery(self))
 
     def _wrap_iterable_result(self, operand: Nu) -> CollectionResultT:
         """Override in subclass to wrap result in appropriate collection type."""

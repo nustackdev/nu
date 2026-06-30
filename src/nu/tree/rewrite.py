@@ -1,9 +1,12 @@
-"""Tree rewrites -- structural tree-to-tree operations.
+"""Generic tree rewrites -- structural Term-to-Term operations.
 
-Transforms are Nu -> Nu functions. They modify tree shape.
-All operations are non-mutating (return new trees).
+Transforms are ``Nu -> Nu`` functions that change tree shape. All
+operations are non-mutating (return new trees) and domain-free -- they
+touch only ``.children`` and ``.with_children``, so they apply to any
+Term tree.
 
-Key design: map_children uses with_children() -- no type dispatch.
+Key design: child reconstruction goes through ``with_children`` -- no
+type dispatch.
 """
 
 from __future__ import annotations
@@ -14,7 +17,8 @@ from typing import TYPE_CHECKING, Literal
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu.terms import Nu
+    from nu.lang import Nu
+
 
 type Transform = "Callable[[Nu], Nu]"
 """A tree transform: takes a node tree and returns a new node tree."""
@@ -37,7 +41,7 @@ __all__ = [
 def compose(*transforms: Transform) -> Transform:
     """Compose transforms left-to-right.
 
-    compose(f, g)(x) == g(f(x)).
+    ``compose(f, g)(x) == g(f(x))``.
     """
 
     def composed(root: Nu) -> Nu:
@@ -51,18 +55,18 @@ def compose(*transforms: Transform) -> Transform:
 def apply(root: Nu, *transforms: Transform) -> Nu:
     """Apply transforms in order to root."""
     for t in transforms:
-        root = t(root)  # type: ignore[assignment]
+        root = t(root)
     return root
 
 
 def map_children(node: Nu, fn: Callable[[Nu], Nu]) -> Nu:
-    """Apply fn to each direct child, reconstruct via with_children.
+    """Apply fn to each direct child, reconstruct via ``with_children``.
 
-    Shallow (one level). For deep transforms, use map_nodes.
+    Shallow (one level). For deep transforms, use ``map_nodes``.
     """
-    if not node._children:
+    if not node.children:
         return node
-    return node._with_children(tuple(fn(c) for c in node._children))  # type: ignore[arg-type]
+    return node.with_children(*(fn(c) for c in node.children))
 
 
 def map_nodes(
@@ -73,20 +77,20 @@ def map_nodes(
     """Apply fn to every node in the tree.
 
     Args:
-        root: Tree root.
-        fn: Function applied to each node.
-        order: "bottom_up" (default) transforms children first,
-               "top_down" transforms parent first.
+        root:  Tree root.
+        fn:    Function applied to each node.
+        order: ``"bottom_up"`` (default) transforms children first,
+               ``"top_down"`` transforms parent first.
     """
     if order == "top_down":
         node = fn(root)
-        if not node._children:
-            return node  # type: ignore[return-value]
-        return node._with_children(tuple(map_nodes(c, fn, order) for c in node._children))  # type: ignore[return-value]
+        if not node.children:
+            return node
+        return node.with_children(*(map_nodes(c, fn, order) for c in node.children))
     # bottom_up
-    if root._children:
-        root = root._with_children(tuple(map_nodes(c, fn, order) for c in root._children))  # type: ignore[arg-type]
-    return fn(root)  # type: ignore[return-value]
+    if root.children:
+        root = root.with_children(*(map_nodes(c, fn, order) for c in root.children))
+    return fn(root)
 
 
 def replace(
@@ -94,7 +98,7 @@ def replace(
     pred: Callable[[Nu], bool],
     replacement: Callable[[Nu], Nu],
 ) -> Nu:
-    """Replace nodes matching pred with replacement(node). Bottom-up."""
+    """Replace nodes matching pred with ``replacement(node)``. Bottom-up."""
 
     def _replace(node: Nu) -> Nu:
         return replacement(node) if pred(node) else node
@@ -107,7 +111,7 @@ def wrap(
     pred: Callable[[Nu], bool],
     wrapper: Callable[[Nu], Nu],
 ) -> Nu:
-    """Wrap nodes matching pred: node -> wrapper(node). Bottom-up."""
+    """Wrap nodes matching pred: ``node -> wrapper(node)``. Bottom-up."""
 
     def _wrap(node: Nu) -> Nu:
         return wrapper(node) if pred(node) else node
@@ -122,18 +126,18 @@ def unwrap(
     """Remove single-child wrapper nodes matching pred, splicing child up."""
 
     def _process(node: Nu) -> Nu:
-        if not node._children:
+        if not node.children:
             return node
         new_children: list[Nu] = []
-        for child in node._children:
+        for child in node.children:
             processed = _process(child)
-            if pred(processed) and len(processed._children) == 1:
-                new_children.append(processed._children[0])
+            if pred(processed) and len(processed.children) == 1:
+                new_children.append(processed.children[0])
             else:
                 new_children.append(processed)
-        return node._with_children(tuple(new_children))
+        return node.with_children(*new_children)
 
-    return _process(root)  # type: ignore[return-value]
+    return _process(root)
 
 
 def graft(root: Nu, target: Nu, subtree: Nu) -> Nu:
@@ -142,26 +146,27 @@ def graft(root: Nu, target: Nu, subtree: Nu) -> Nu:
 
 
 def prune(root: Nu, pred: Callable[[Nu], bool]) -> Nu | None:
-    """Remove subtrees matching pred. Returns None if root matches.
+    """Remove subtrees matching pred. Returns ``None`` if root matches.
 
     Preserves unchanged subtrees by identity.
     """
     if pred(root):
         return None
 
-    if not root._children:
+    if not root.children:
         return root
 
     new_children: list[Nu] = []
-    for child in root._children:
+    for child in root.children:
         pruned = prune(child, pred)
         if pruned is not None:
             new_children.append(pruned)
 
-    if len(new_children) == len(root._children):
-        if all(n is o for n, o in zip(new_children, root._children, strict=True)):
-            return root
-    return root._with_children(tuple(new_children))  # type: ignore[arg-type]
+    if len(new_children) == len(root.children) and all(
+        n is o for n, o in zip(new_children, root.children, strict=True)
+    ):
+        return root
+    return root.with_children(*new_children)
 
 
 def conditional_wrap(
@@ -178,14 +183,14 @@ def conditional_wrap(
     whole by the nearest non-matching ancestor, giving the biggest
     matching subtree at each level.
     """
-    if pred(root) or not root._children:
+    if pred(root) or not root.children:
         return root
 
     new_children: list[Nu] = []
-    for child in root._children:
+    for child in root.children:
         if pred(child):
             new_children.append(wrapper(child))
         else:
             new_children.append(conditional_wrap(child, pred, wrapper))
 
-    return root._with_children(tuple(new_children))  # type: ignore[arg-type]
+    return root.with_children(*new_children)
