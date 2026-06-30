@@ -18,7 +18,7 @@ from nu.core import LiteralQuery
 from nu.core._stream import aiter_any, sync_iter
 from nu.engine import Term
 from nu.lang import Reduction
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY, INVALID, UNSET
 
 
 if TYPE_CHECKING:
@@ -28,10 +28,7 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
-__all__ = ["NO_INITIAL", "ReduceQuery"]
-
-
-NO_INITIAL = object()  # marks "no initializer" - distinct from any real value
+__all__ = ["ReduceQuery"]
 
 
 class ReduceQuery(Reduction):
@@ -48,13 +45,13 @@ class ReduceQuery(Reduction):
         source: object,
         function: Nu,
         *,
-        initial: object = NO_INITIAL,
+        initial: object = UNSET,
         acc_key: StrArg = "acc",
         item_key: StrArg = "item",
     ) -> None:
         acc_node = acc_key if isinstance(acc_key, Term) else LiteralQuery(acc_key)
         item_node = item_key if isinstance(item_key, Term) else LiteralQuery(item_key)
-        if initial is NO_INITIAL:
+        if initial is UNSET:
             super().__init__(source, function, acc_node, item_node)
             self.payload = {"has_initial": False}
         else:

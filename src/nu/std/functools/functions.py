@@ -11,8 +11,9 @@ from typing import TYPE_CHECKING
 
 from nu import AnyForm
 from nu.core import IterQuery
+from nu.lang.sentinels import UNSET
 
-from .interactions import NO_INITIAL, ReduceQuery
+from .interactions import ReduceQuery
 
 
 if TYPE_CHECKING:
@@ -24,7 +25,7 @@ if TYPE_CHECKING:
 __all__ = ["reduce"]
 
 
-def reduce(function: Nu, iterable: Arg[Iterable], initializer: object = NO_INITIAL) -> AnyForm:
+def reduce(function: Nu, iterable: Arg[Iterable], initializer: object = UNSET) -> AnyForm:
     """Fold ``iterable`` left-to-right with ``function`` (``functools.reduce``).
 
     ``function`` is a Nu query that reads the accumulator and the current item
@@ -33,6 +34,6 @@ def reduce(function: Nu, iterable: Arg[Iterable], initializer: object = NO_INITI
     ``initializer`` the accumulator starts there; otherwise at the first item.
     """
     # A Reduction requires a stream source; IterQuery lifts the iterable to one.
-    if initializer is NO_INITIAL:
+    if initializer is UNSET:
         return AnyForm(ReduceQuery(IterQuery(iterable), function))
     return AnyForm(ReduceQuery(IterQuery(iterable), function, initial=initializer))

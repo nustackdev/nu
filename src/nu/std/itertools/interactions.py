@@ -26,13 +26,13 @@ from __future__ import annotations
 
 import itertools as _it
 import operator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.core import LiteralQuery
 from nu.core._stream import aiter_any, sync_iter
 from nu.engine import Term
 from nu.lang import ScalarQuery, StreamQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY, INVALID, UNSET
 
 
 if TYPE_CHECKING:
@@ -65,9 +65,6 @@ __all__ = [
     "Tee",
     "ZipLongest",
 ]
-
-
-_UNSET = object()  # "no previous item yet" marker for lazy lenses
 
 
 # --- infinite sources -------------------------------------------------------
@@ -356,9 +353,9 @@ class Pairwise(StreamQuery):
         async def athunk(rt: Runtime) -> object:
             async def agen() -> object:
                 # lazy: keep only the previous item, never materialize
-                prev: object = _UNSET
+                prev: object = UNSET
                 async for x in aiter_any(await source(rt)):
-                    if prev is not _UNSET:
+                    if prev is not UNSET:
                         yield (prev, x)
                     prev = x
 
@@ -799,8 +796,8 @@ class Accumulate(StreamQuery):
                     if func is None:
                         acc = operator.add(acc, elem)
                     else:
-                        rt.ctx.attrs[acc_name] = acc
-                        rt.ctx.attrs[item_name] = elem
+                        rt.ctx.attrs[cast("str", acc_name)] = acc
+                        rt.ctx.attrs[cast("str", item_name)] = elem
                         acc = func(rt)
                     yield acc
 
@@ -831,8 +828,8 @@ class Accumulate(StreamQuery):
                     if func is None:
                         acc = operator.add(acc, elem)
                     else:
-                        rt.ctx.attrs[acc_name] = acc
-                        rt.ctx.attrs[item_name] = elem
+                        rt.ctx.attrs[cast("str", acc_name)] = acc
+                        rt.ctx.attrs[cast("str", item_name)] = elem
                         acc = await func(rt)
                     yield acc
 
@@ -919,7 +916,7 @@ class GroupBy(StreamQuery):
             def keyer(item: object) -> object:
                 if key_fn is None:
                     return item
-                rt.ctx.attrs[name] = item
+                rt.ctx.attrs[cast("str", name)] = item
                 return key_fn(rt)
 
             def gen() -> object:
@@ -944,7 +941,7 @@ class GroupBy(StreamQuery):
                 if key_fn is None:
                     keyed.append((item, item))
                 else:
-                    rt.ctx.attrs[name] = item
+                    rt.ctx.attrs[cast("str", name)] = item
                     keyed.append((await key_fn(rt), item))
 
             async def agen() -> object:

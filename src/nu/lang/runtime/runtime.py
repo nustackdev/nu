@@ -41,6 +41,7 @@ if TYPE_CHECKING:
 
     from nu.engine import Program
 
+    from .context import Context
     from .utils.budget import Budget
 
 __all__ = ["Runtime"]
@@ -54,7 +55,7 @@ class Runtime:
 
     __slots__ = ("budget", "ctx", "program")
 
-    def __init__(self, program: Program, ctx: object, *, budget: Budget | None = None) -> None:
+    def __init__(self, program: Program, ctx: Context, *, budget: Budget | None = None) -> None:
         from nu.lang.runtime.utils.budget import Budget as _Budget
 
         self.program = program

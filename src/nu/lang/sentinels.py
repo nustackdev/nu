@@ -18,9 +18,11 @@ from typing import TypeGuard
 __all__ = [
     "EMPTY",
     "INVALID",
+    "UNSET",
     "Empty",
     "Invalid",
     "Sentinel",
+    "Unset",
     "is_empty",
     "is_invalid",
     "is_sentinel",
@@ -63,8 +65,22 @@ class Invalid(Sentinel):
         return hash(type(self).__name__)
 
 
+class Unset(Sentinel):
+    """Absence marker: an argument not provided, or a value not yet set.
+
+    Distinct from EMPTY (which means "address resolved, no value"): UNSET never
+    flows as a value through the engine and takes no part in Query sentinel
+    propagation. Callers test ``is UNSET`` explicitly - e.g. an optional
+    ``initial`` for a fold, or "no previous item yet" loop state in a lens.
+    """
+
+    def __repr__(self) -> str:
+        return "<UNSET>"
+
+
 EMPTY: Empty = Empty()
 INVALID: Invalid = Invalid()
+UNSET: Unset = Unset()
 
 
 def is_empty(value: object) -> TypeGuard[Empty]:
