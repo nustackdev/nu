@@ -1,12 +1,133 @@
-"""Nu, the layered rewrite.
+# ruff: noqa
+"""Nu: the term programming platform.
 
-This package is the in-development successor to ``nu``. Three layers:
+Two ways to import. Grab what you need flat from the root:
 
-- ``nu.engine`` - layer 0, the domain-free Term + Attribute engine plus
-  the generic execution driver.
-- ``nu.lang`` - layer 1, Nu the language on top of the engine.
-- ``nu.core`` - layer 2, the concrete atoms a real program is built from.
+    from nu import IntForm, Sequential, Retry, AttrRef, Nu, run
 
-Importers should reach into the subpackages; this root re-exports nothing.
-At swap time ``nu`` becomes ``nu``.
+Or reach a subpackage by dot-access:
+
+    import nu
+    nu.forms.IntForm    nu.core.AddQuery    nu.flows.Sequential
+    nu.spans.Retry      nu.shape.Shape      nu.tree.map_nodes
+
+Flat at the root: forms, core interactions, flows, spans, the context fabric,
+and the language essentials (``Nu``, the kinds, the ``Arg`` aliases, the
+sentinels, the entry points). The shape DSL (``Shape`` / ``Slot``) is flat; its
+fabric atoms stay at ``nu.shape.*``. The generic tree toolkit (``nu.tree``) and
+the layer-0 engine (``nu.engine``) are namespace-only, never flat.
 """
+
+from __future__ import annotations
+
+# Subpackage namespaces for dot-access.
+from . import context, core, engine, flows, forms, lang, spans, tree
+from .domains import shape
+
+# Flat re-exports: the program-authoring surface.
+from .context import *
+from .core import *
+from .flows import *
+from .forms import *
+from .spans import *
+
+# Shape DSL only; fabric atoms (LoadQuery, StoreCommand, ...) stay at nu.shape.*.
+from .domains.shape import Shape, Slot
+
+# Language essentials (curated; internals stay at nu.lang.*).
+from .lang import (
+    EMPTY,
+    INVALID,
+    Action,
+    Arg,
+    Attr,
+    BoolArg,
+    Bracket,
+    BytesArg,
+    Cardinality,
+    Command,
+    Context,
+    Control,
+    DictArg,
+    Effect,
+    EffectSet,
+    Empty,
+    ExecOrder,
+    FloatArg,
+    Flow,
+    Form,
+    FrozenSetArg,
+    IntArg,
+    Interaction,
+    Invalid,
+    ListArg,
+    NoneArg,
+    Nu,
+    Policy,
+    Query,
+    Reduction,
+    Ref,
+    Runtime,
+    ScalarAction,
+    ScalarQuery,
+    Sentinel,
+    SetArg,
+    Sort,
+    Span,
+    StrArg,
+    Strategy,
+    StreamAction,
+    StreamQuery,
+    TupleArg,
+    TypedNu,
+    compile,
+    is_empty,
+    is_invalid,
+    is_sentinel,
+    validate,
+)
+
+# Entry points.
+from .lang.helpers import (
+    acollect,
+    aeval,
+    afirst,
+    alast,
+    arun,
+    collect,
+    eval,
+    eval_in_loop,
+    first,
+    run,
+    run_in_loop,
+)
+
+
+_NAMESPACES = ["context", "core", "engine", "flows", "forms", "lang", "shape", "spans", "tree"]
+_LANG = [
+    "EMPTY", "INVALID", "Action", "Arg", "Attr", "BoolArg", "Bracket", "BytesArg",
+    "Cardinality", "Command", "Context", "Control", "DictArg", "Effect", "EffectSet",
+    "Empty", "ExecOrder", "FloatArg", "Flow", "FrozenSetArg", "IntArg",
+    "Interaction", "Invalid", "ListArg", "NoneArg", "Nu", "Policy", "Query",
+    "Reduction", "Ref", "Runtime", "ScalarAction", "ScalarQuery", "Sentinel",
+    "SetArg", "Sort", "Span", "StrArg", "Strategy", "StreamAction", "StreamQuery",
+    "TupleArg", "compile", "is_empty", "is_invalid", "is_sentinel",
+    "validate",
+]
+_HELPERS = [
+    "acollect", "aeval", "afirst", "alast", "arun", "collect", "eval",
+    "eval_in_loop", "first", "run", "run_in_loop",
+]
+
+__all__ = [
+    *_NAMESPACES,
+    *core.__all__,
+    *forms.__all__,
+    *flows.__all__,
+    *spans.__all__,
+    *context.__all__,
+    "Shape",
+    "Slot",
+    *_LANG,
+    *_HELPERS,
+]
