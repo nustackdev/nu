@@ -103,31 +103,10 @@ from .lang.helpers import (
 )
 
 
-_NAMESPACES = ["context", "core", "engine", "flows", "forms", "lang", "shape", "spans", "tree"]
-_LANG = [
-    "EMPTY", "INVALID", "Action", "Arg", "Attr", "BoolArg", "Bracket", "BytesArg",
-    "Cardinality", "Command", "Context", "Control", "DictArg", "Effect", "EffectSet",
-    "Empty", "ExecOrder", "FloatArg", "Flow", "FrozenSetArg", "IntArg",
-    "Interaction", "Invalid", "ListArg", "NoneArg", "Nu", "Policy", "Query",
-    "Reduction", "Ref", "Runtime", "ScalarAction", "ScalarQuery", "Sentinel",
-    "SetArg", "Sort", "Span", "StrArg", "Strategy", "StreamAction", "StreamQuery",
-    "TupleArg", "compile", "is_empty", "is_invalid", "is_sentinel",
-    "validate",
-]
-_HELPERS = [
-    "acollect", "aeval", "afirst", "alast", "arun", "collect", "eval",
-    "eval_in_loop", "first", "run", "run_in_loop",
-]
-
-__all__ = [
-    *_NAMESPACES,
-    *core.__all__,
-    *forms.__all__,
-    *flows.__all__,
-    *spans.__all__,
-    *context.__all__,
-    "Shape",
-    "Slot",
-    *_LANG,
-    *_HELPERS,
-]
+# __all__ is everything bound above: the subpackage namespaces, the flat
+# re-exports, the shape DSL, and the curated lang + entry-point names. The
+# imports are the single source of truth; we just drop privates, the
+# __future__ shim, and the internal ``domains`` layer (reached as ``nu.shape``).
+# A namespace holds each name once, so dupes can't happen.
+_HIDDEN = {"annotations", "domains"}
+__all__ = sorted(n for n in dir() if not n.startswith("_") and n not in _HIDDEN)
