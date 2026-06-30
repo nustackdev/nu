@@ -61,6 +61,16 @@ __all__ = [
 ]
 
 
+def _as_set(value: object) -> object:
+    """A set-like exposing the named set methods (``.union`` / ``.intersection`` / ...).
+
+    Real ``set`` / ``frozenset`` keep their type and methods; other ABCSet
+    instances (``dict_keys`` / ``dict_items`` / ``KeysView`` / ``ItemsView``)
+    implement only the operators, so materialize them to ``set``.
+    """
+    return value if isinstance(value, (set, frozenset)) else set(value)  # type: ignore[arg-type]
+
+
 # =============================================================================
 # SET READS (Query) — return new sets / bools, no mutation
 # =============================================================================
@@ -81,7 +91,7 @@ class UnionQuery(ScalarQuery):
                 return INVALID
             if not isinstance(a, ABCSet):
                 return INVALID
-            return a.union(b)
+            return _as_set(a).union(b)
 
         return thunk
 
@@ -97,7 +107,7 @@ class UnionQuery(ScalarQuery):
                 return INVALID
             if not isinstance(a, ABCSet):
                 return INVALID
-            return a.union(b)
+            return _as_set(a).union(b)
 
         return athunk
 
@@ -117,7 +127,7 @@ class IntersectionQuery(ScalarQuery):
                 return INVALID
             if not isinstance(a, ABCSet):
                 return INVALID
-            return a.intersection(b)
+            return _as_set(a).intersection(b)
 
         return thunk
 
@@ -133,7 +143,7 @@ class IntersectionQuery(ScalarQuery):
                 return INVALID
             if not isinstance(a, ABCSet):
                 return INVALID
-            return a.intersection(b)
+            return _as_set(a).intersection(b)
 
         return athunk
 
@@ -153,7 +163,7 @@ class DifferenceQuery(ScalarQuery):
                 return INVALID
             if not isinstance(a, ABCSet):
                 return INVALID
-            return a.difference(b)
+            return _as_set(a).difference(b)
 
         return thunk
 
@@ -169,7 +179,7 @@ class DifferenceQuery(ScalarQuery):
                 return INVALID
             if not isinstance(a, ABCSet):
                 return INVALID
-            return a.difference(b)
+            return _as_set(a).difference(b)
 
         return athunk
 
@@ -189,7 +199,7 @@ class SymmetricDifferenceQuery(ScalarQuery):
                 return INVALID
             if not isinstance(a, ABCSet):
                 return INVALID
-            return a.symmetric_difference(b)
+            return _as_set(a).symmetric_difference(b)
 
         return thunk
 
@@ -205,7 +215,7 @@ class SymmetricDifferenceQuery(ScalarQuery):
                 return INVALID
             if not isinstance(a, ABCSet):
                 return INVALID
-            return a.symmetric_difference(b)
+            return _as_set(a).symmetric_difference(b)
 
         return athunk
 
