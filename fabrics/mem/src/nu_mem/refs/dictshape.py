@@ -21,6 +21,7 @@ from nu.domains.shape import MutableShapesMappingRef, Slot
 
 from ._typemap import value_type_for
 from .base import RefBase
+from .shape import ShapeRef
 
 
 if TYPE_CHECKING:
@@ -35,6 +36,15 @@ __all__ = [
 
 class ShapesDictRef[K, T: Shape](MutableShapesMappingRef, RefBase[dict[K, dict]]):
     """Dict shapes dict reference — mapping of homogeneous shapes."""
+
+    def __getitem__(self, key: object) -> ShapeRef:
+        """Navigate to the shape at ``key`` as a substrate-backed mem ShapeRef."""
+        return ShapeRef(
+            key,
+            shape_type=self._item_shape_type,
+            parent_ref=self,
+            owner_shape=self._owner_shape,
+        )
 
     def result(self, op: Nu) -> DictForm:
         """Wrap a mapping-level op result as a DictForm."""

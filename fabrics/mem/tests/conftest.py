@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from nu import Context
-from nu.shapes import Shape
+from nu.domains.shape import Shape
 from nu_mem import (
     DictRef,
     FloatRef,
@@ -28,7 +28,7 @@ def data() -> dict:
 @pytest.fixture
 def ctx(data: dict) -> Context:
     """Context with root dict bound (no shape scope)."""
-    return Context().bind(data, dict)
+    return Context().bind(dict, data)
 
 
 # ============================================================================
@@ -65,16 +65,16 @@ class TeamShape(Shape):
 @pytest.fixture
 def user_ctx(data: dict) -> Context:
     """Context scoped to UserShape."""
-    return Context().bind(data, dict, UserShape)
+    return Context().bind(dict, data, UserShape)
 
 
 @pytest.fixture
 def portfolio_ctx(data: dict) -> Context:
     """Context scoped to PortfolioShape."""
-    return Context().bind(data, dict, PortfolioShape)
+    return Context().bind(dict, data, PortfolioShape)
 
 
 @pytest.fixture
 def team_ctx(data: dict) -> Context:
     """Context scoped to TeamShape."""
-    return Context().bind(data, dict, TeamShape)
+    return Context().bind(dict, data, TeamShape)

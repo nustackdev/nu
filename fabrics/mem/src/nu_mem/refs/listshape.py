@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from nu.domains.shape import MutableShapesSequenceRef, Slot
 
 from .base import RefBase
+from .shape import ShapeRef
 
 
 if TYPE_CHECKING:
@@ -26,6 +27,15 @@ __all__ = [
 
 class ShapesListRef[T: Shape](MutableShapesSequenceRef, RefBase[list[dict]]):
     """Dict shapes list reference — sequence of homogeneous shapes."""
+
+    def __getitem__(self, index: object) -> ShapeRef:
+        """Navigate to the shape at ``index`` as a substrate-backed mem ShapeRef."""
+        return ShapeRef(
+            index,
+            shape_type=self._item_shape_type,
+            parent_ref=self,
+            owner_shape=self._owner_shape,
+        )
 
     def __init__(
         self,
