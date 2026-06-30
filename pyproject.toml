@@ -27,10 +27,12 @@ members = [
     # Core (unified package, includes stdlib)
     "src",
 
+    # Fabrics — storage adapters
+    "fabrics/virtuals",
+    "fabrics/mem",
+
     # Extensions — adapters
     "ext/nu-distributed",
-    "ext/nu-virtuals",
-    "ext/nu-mem",
 
     # Extensions — tools
     "ext/nu-inspect",
@@ -96,8 +98,8 @@ markers = [
 [tool.coverage.run]
 source = [
     "src/nu",
-    "ext/nu-virtuals",
-    "ext/nu-mem",
+    "fabrics/virtuals",
+    "fabrics/mem",
 ]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
@@ -131,8 +133,8 @@ line-length = 100
 target-version = "py312"
 src = [
     "src",
-    "ext/nu-virtuals/src",
-    "ext/nu-mem/src",
+    "fabrics/virtuals/src",
+    "fabrics/mem/src",
     "ext/nu-inspect/src",
 ]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
