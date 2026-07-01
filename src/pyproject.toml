@@ -37,7 +37,6 @@ distributed = [
 ]
 all = [
     "nu[distributed]",
-    "nu-inspect",
 ]
 
 [project.urls]

@@ -15,7 +15,6 @@ dependencies = [
     "nu-virtuals[infra]",
     "nu-mem",
     "nu-distributed",
-    "nu-inspect",
     "nudle",
 ]
 
@@ -33,9 +32,6 @@ members = [
 
     # Extensions — adapters
     "ext/nu-distributed",
-
-    # Extensions — tools
-    "ext/nu-inspect",
 ]
 
 [tool.uv.sources]
@@ -45,7 +41,6 @@ nu = { workspace = true }
 nu-distributed = { workspace = true }
 nu-virtuals = { workspace = true }
 nu-mem = { workspace = true }
-nu-inspect = { workspace = true }
 # In-house libs (local editable)
 virtuals-py = { path = "../virtuals", editable = true }
 composables = { path = "../composables", editable = true }
@@ -139,7 +134,6 @@ src = [
     "src",
     "fabrics/virtuals/src",
     "fabrics/mem/src",
-    "ext/nu-inspect/src",
 ]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
 
@@ -211,7 +205,7 @@ convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = [
-    "nu", "nu_distributed", "nu_virtuals", "nu_mem", "nu_inspect",
+    "nu", "nu_distributed", "nu_virtuals", "nu_mem",
     "virtuals", "composables", "invisibles", "nudle",
     ]
 force-single-line = false

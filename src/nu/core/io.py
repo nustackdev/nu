@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     from typing import IO
 
     from nu.forms.primitives import StrForm
-    from nu.lang.runtime import Runtime
+    from nu.lang.runtime import Context, Runtime
 
 
 __all__ = [
@@ -52,10 +52,12 @@ __all__ = [
     "STDIN",
     "STDOUT",
     "InputAction",
+    "LogCommand",
     "PrintCommand",
     "StdioBackend",
     "StdioRef",
     "input",
+    "log",
     "print",
 ]
 
@@ -93,6 +95,30 @@ class StdioBackend:
         return stream if stream is not None else getattr(sys, name)
 
 
+def _stream_for(ctx: Context, name: str) -> IO:
+    """Resolve a stream by name off the Context: the bound backend, else ``sys``."""
+    import sys
+
+    if ctx.has(StdioBackend):
+        return ctx.get(StdioBackend).stream_for(name)
+    return getattr(sys, name)
+
+
+def _format_log(level: str, logger: str, parts: list[str]) -> str:
+    """The one log-line shape shared by ``LogCommand`` and the annotate spans."""
+    return f"[{level.upper()}] {logger}: {' '.join(parts)}\n"
+
+
+def _emit_log(ctx: Context, level: str, logger: str, message: str) -> None:
+    """Write one formatted log line to the stderr stream (backend-aware).
+
+    The imperative seam for code that logs outside the atom path - notably the
+    step-tracking Bracket in ``nu.inspect``, whose ``scope`` logs around a body
+    and so cannot delegate to a ``LogCommand`` child.
+    """
+    _stream_for(ctx, "stderr").write(_format_log(level, logger, [message]))
+
+
 # --- the stdio fabric Ref ---------------------------------------------------
 
 
@@ -111,12 +137,7 @@ class StdioRef(Ref):
         self.payload = {"stream": name}
 
     def _resolve_stream(self, rt: Runtime) -> IO:
-        import sys
-
-        name = cast("str", self.payload["stream"])
-        if rt.ctx.has(StdioBackend):
-            return rt.ctx.get(StdioBackend).stream_for(name)
-        return getattr(sys, name)
+        return _stream_for(rt.ctx, cast("str", self.payload["stream"]))
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> IO:
@@ -196,6 +217,57 @@ class PrintCommand(Command):
         return athunk
 
 
+class LogCommand(Command):
+    r"""Writes a leveled, named log line to the stderr fabric Ref in slot 0.
+
+    Children: ``[STDERR, level, logger, *values]``. Formats
+    ``"[LEVEL] logger: v1 v2 ...\n"`` and writes it through the stderr Ref
+    (slot 0), so it is a Command exactly like :class:`PrintCommand` - the effect
+    is a fabric WRITE, testable through a bound ``StdioBackend``. What sets it
+    apart from ``print`` is the ``level`` and ``logger`` name, both carried as
+    ``StrArg`` children (slots 1-2) so a tree rewrite can retarget them - that is
+    how ``nu.inspect.set_logger_name`` renames a logger across a whole tree. A
+    value slot reading a sentinel (an unbound attr) is skipped, not fatal, so a
+    log line still emits when one of its interpolated attrs is absent.
+    """
+
+    mutates = Declared(value=frozenset({0}))
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = cast("StdioRef", self.children[0])
+        level_thunk, logger_thunk = children[1], children[2]
+        value_thunks = children[3:]
+
+        def thunk(rt: Runtime) -> None:
+            parts: list[str] = []
+            for vt in value_thunks:
+                v = vt(rt)
+                if v is EMPTY or v is INVALID:
+                    continue
+                parts.append(str(v))
+            line = _format_log(str(level_thunk(rt)), str(logger_thunk(rt)), parts)
+            ref.write(rt, line, rt.program.children[nid][0])
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = cast("StdioRef", self.children[0])
+        level_thunk, logger_thunk = children[1], children[2]
+        value_thunks = children[3:]
+
+        async def athunk(rt: Runtime) -> None:
+            parts: list[str] = []
+            for vt in value_thunks:
+                v = await vt(rt)
+                if v is EMPTY or v is INVALID:
+                    continue
+                parts.append(str(v))
+            line = _format_log(str(await level_thunk(rt)), str(await logger_thunk(rt)), parts)
+            await ref.awrite(rt, line, rt.program.children[nid][0])
+
+        return athunk
+
+
 class InputAction(ScalarAction):
     """Reads one line from the stdin fabric Ref in slot 0 and yields it.
 
@@ -237,6 +309,17 @@ def print(*values: object) -> PrintCommand:  # shadowing the builtin is intended
     drive it with ``run`` / ``arun`` or compose it in a Flow.
     """
     return PrintCommand(STDOUT, *values)
+
+
+def log(*values: object, level: str = "info", logger: str = "nu") -> LogCommand:
+    """Write a leveled log line to stderr: ``[LEVEL] logger: values...``.
+
+    Nu's logging effect: like ``print`` but to stderr and tagged with a ``level``
+    and ``logger`` name (both plain strings, auto-wrapped as literals). Returns
+    the ``LogCommand`` atom (a Command yields nothing); drive it with ``run`` /
+    ``arun`` or compose it - e.g. as a ``Retry`` failure hook.
+    """
+    return LogCommand(STDERR, level, logger, *values)
 
 
 def input() -> StrForm:  # shadowing the builtin is intended
