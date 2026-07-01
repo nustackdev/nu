@@ -23,7 +23,7 @@ family, crossing Query / Command / Action as the builtins do:
 - ``reduction`` - stream-to-scalar folds (SumQuery, MinQuery, MaxQuery, AnyQuery, AllQuery, CollectQuery)
 - ``reflection`` - introspection (TypeQuery, IsInstanceQuery, CallableQuery, IdQuery, HashQuery)
 - ``sentinel`` - the EMPTY / INVALID predicates (IsEmptyQuery, IsInvalidQuery)
-- ``io`` - console / file effects (PrintCommand, InputAction, OpenAction)
+- ``io`` - console effects through the stdio fabric (PrintCommand, InputAction)
 - ``dynamic`` - dynamic evaluation (EvalQuery, ExecQuery, CompileQuery, GlobalsQuery)
 
 Core is the pure Python builtins. The fabric interactions (writing through a
@@ -84,7 +84,7 @@ from nu.core.cast import (
 )
 from nu.core.comparison import EqQuery, GeQuery, GtQuery, IsQuery, LeQuery, LtQuery, NeQuery
 from nu.core.dynamic import CompileQuery, EvalQuery, ExecQuery, GlobalsQuery, LocalsQuery
-from nu.core.io import InputAction, OpenAction, PrintCommand
+from nu.core.io import InputAction, PrintCommand
 from nu.core.iteration import EnumerateQuery, IterQuery, NextAction, ReversedQuery, ZipQuery
 from nu.core.literal import LiteralQuery
 from nu.core.logical import AndQuery, BoolQuery, NotQuery, OrQuery
@@ -201,7 +201,6 @@ __all__ = [
     "NotInvalidQuery",
     "NotQuery",
     "OctQuery",
-    "OpenAction",
     "OrQuery",
     "OrdQuery",
     "PosQuery",

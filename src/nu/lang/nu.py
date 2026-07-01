@@ -25,7 +25,7 @@ to ``Runtime`` at this layer.
 
 from __future__ import annotations
 
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, cast
 
 from nu.engine import Term
 from nu.lang.runtime import Runtime
@@ -46,12 +46,17 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no v
     """
 
     def __init__(self, *children: object) -> None:
-        # Auto-wrap any non-Term child as Literal so `Add(1, 2)` reads the
-        # same as `Add(Literal(1), Literal(2))`. Lazy import keeps the lang
-        # layer free of a core dependency.
-        from nu.core import LiteralQuery
+        # Auto-wrap any non-Nu child as Literal so `Add(1, 2)` reads the same as
+        # `Add(Literal(1), Literal(2))`. Lazy import keeps the lang layer free of
+        # a core dependency; skip it entirely when every child is already a Nu
+        # (the common case, and what lets a childless Ref - e.g. the stdio
+        # singletons - construct during `nu.core` import).
+        if all(isinstance(c, Nu) for c in children):
+            wrapped = cast("tuple[Nu, ...]", children)
+        else:
+            from nu.core import LiteralQuery
 
-        wrapped = tuple(c if isinstance(c, Term) else LiteralQuery(c) for c in children)
+            wrapped = tuple(c if isinstance(c, Nu) else LiteralQuery(c) for c in children)
         super().__init__(*wrapped)
 
     # --- composition operators ------------------------------------------
