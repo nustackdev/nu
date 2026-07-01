@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+from nu.core.reactive import OnChangeQuery, OnChildrenChangeQuery
 from nu.domains.shape.dsl import Shape, Slot
 from nu.domains.shape.interactions import (
     EraseCommand,
     ExistsQuery,
     MissingQuery,
-    OnChildrenChangeQuery,
     StoreCommand,
 )
 from nu.domains.shape.refs.item import ItemRef
@@ -17,7 +17,6 @@ from nu.domains.shape.refs.shapes_sequence import (
     ReactiveShapesSequenceRef,
     ShapesSequenceRef,
 )
-from nu.forms.reactive import OnChangeQuery
 
 
 class Row(Shape):

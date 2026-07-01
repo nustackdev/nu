@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import AnyForm, IteratorForm, ListForm
-from nu.domains.shape import MutableShapesSequenceRef, Slot
+from nu.domains.shape import ReactiveShapesSequenceRef, Slot
 
 from .base import Facet, ViewRef
 from .shape import ShapeRef
@@ -26,7 +26,7 @@ __all__ = [
 ]
 
 
-class ShapesListRef[T: Shape](MutableShapesSequenceRef, ViewRef[list[dict]]):
+class ShapesListRef[T: Shape](ReactiveShapesSequenceRef, ViewRef[list[dict]]):
     """Virtuals shapes list reference — sequence of homogeneous shapes."""
 
     def __getitem__(self, index: object) -> ShapeRef:

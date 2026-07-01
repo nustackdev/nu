@@ -2,22 +2,26 @@
 
 Covers class hierarchy, construction, and domain placement. Full subscription
 (view.on_change() with a real substrate) is deferred to substrate integration.
+
+Reactive queries all live in ``nu.core.reactive`` -- unified interface across
+substrates. Shape Form mixins reach into that module.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from nu.domains.shape.interactions import (
+from nu.core.reactive import (
+    OnChangeQuery,
     OnChildChangeQuery,
     OnChildrenChangeQuery,
     OnDescendantsChangeQuery,
+    OnPrimitiveChangeQuery,
 )
-from nu.domains.shape.refs.item import ItemRef
+from nu.domains.shape.refs.item import ItemRef, ReactiveItemRef
 from nu.domains.shape.refs.mapping import ReactiveMappingRef
 from nu.domains.shape.refs.sequence import ReactiveSequenceRef
 from nu.domains.shape.refs.set_ import ReactiveSetRef
-from nu.forms.reactive import OnChangeQuery
 from nu.lang import ScalarQuery
 
 
@@ -42,28 +46,41 @@ def test_on_descendants_change_query_is_scalar_query():
     assert issubclass(OnDescendantsChangeQuery, ScalarQuery)
 
 
+def test_on_primitive_change_query_is_scalar_query():
+    assert issubclass(OnPrimitiveChangeQuery, ScalarQuery)
+
+
 # ---------------------------------------------------------------------------
-# Domain placement: shape queries live in interactions, not forms.reactive
+# Domain placement: all reactive queries live in nu.core.reactive
 # ---------------------------------------------------------------------------
 
 
-def test_on_child_change_query_not_in_forms_reactive():
-    """OnChildChangeQuery must NOT be importable from nu.forms.reactive."""
-    import nu.forms.reactive as generic_reactive
+def test_all_reactive_queries_exported_from_core():
+    """Every reactive query is reachable via ``nu.core.reactive`` (one namespace)."""
+    import nu.core.reactive as core_reactive
 
-    assert not hasattr(generic_reactive, "OnChildChangeQuery")
+    for name in (
+        "OnChangeQuery",
+        "OnChildChangeQuery",
+        "OnChildrenChangeQuery",
+        "OnDescendantsChangeQuery",
+        "OnPrimitiveChangeQuery",
+    ):
+        assert hasattr(core_reactive, name)
 
 
-def test_on_children_change_query_not_in_forms_reactive():
-    import nu.forms.reactive as generic_reactive
+def test_all_reactive_queries_also_flat_on_nu_core():
+    """The core-flat re-exports include the reactive queries."""
+    import nu.core as core
 
-    assert not hasattr(generic_reactive, "OnChildrenChangeQuery")
-
-
-def test_on_descendants_change_query_not_in_forms_reactive():
-    import nu.forms.reactive as generic_reactive
-
-    assert not hasattr(generic_reactive, "OnDescendantsChangeQuery")
+    for name in (
+        "OnChangeQuery",
+        "OnChildChangeQuery",
+        "OnChildrenChangeQuery",
+        "OnDescendantsChangeQuery",
+        "OnPrimitiveChangeQuery",
+    ):
+        assert hasattr(core, name)
 
 
 # ---------------------------------------------------------------------------
@@ -96,8 +113,14 @@ def test_on_descendants_change_query_constructs_with_ref_and_pattern():
     assert len(q.children) == 2
 
 
+def test_on_primitive_change_query_constructs_with_ref():
+    ref = ReactiveItemRef("slot")
+    q = OnPrimitiveChangeQuery(ref)
+    assert q.children
+
+
 # ---------------------------------------------------------------------------
-# Reactive Refs expose tree-aware methods that return shape-domain queries
+# Reactive Refs expose tree-aware methods that return core reactive queries
 # ---------------------------------------------------------------------------
 
 
@@ -146,6 +169,11 @@ def test_reactive_set_ref_on_change_returns_generic_query():
     assert isinstance(r.on_change(), OnChangeQuery)
 
 
+def test_reactive_item_ref_on_change_returns_primitive_query():
+    r = ReactiveItemRef("slot")
+    assert isinstance(r.on_change(), OnPrimitiveChangeQuery)
+
+
 # ---------------------------------------------------------------------------
 # ReactiveCollectionForm is in the MRO of reactive Refs
 # ---------------------------------------------------------------------------
@@ -186,6 +214,11 @@ def test_on_child_change_query_has_no_mutates():
 
 def test_on_children_change_query_has_no_mutates():
     mutates = OnChildrenChangeQuery.attributes.get("mutates")
+    assert mutates is None
+
+
+def test_on_primitive_change_query_has_no_mutates():
+    mutates = OnPrimitiveChangeQuery.attributes.get("mutates")
     assert mutates is None
 
 

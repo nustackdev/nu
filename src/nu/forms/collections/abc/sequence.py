@@ -184,6 +184,6 @@ class ReactiveSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResu
 
     def on_change(self) -> object:
         """Subscribe to any change on this sequence slot."""
-        from nu.forms.reactive import OnChangeQuery
+        from nu.core.reactive import OnChangeQuery
 
         return OnChangeQuery(self)

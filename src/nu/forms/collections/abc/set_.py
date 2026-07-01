@@ -242,6 +242,6 @@ class ReactiveSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def on_change(self) -> object:
         """Subscribe to any change on this set slot."""
-        from nu.forms.reactive import OnChangeQuery
+        from nu.core.reactive import OnChangeQuery
 
         return OnChangeQuery(self)

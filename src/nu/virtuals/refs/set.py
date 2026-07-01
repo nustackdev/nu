@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import AnyForm, SetForm
-from nu.domains.shape import MutableSetRef, Slot
+from nu.domains.shape import ReactiveSetRef, Slot
 
 from .base import ViewRef
 
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class SetRef[T](MutableSetRef, ViewRef[set[T]]):
+class SetRef[T](ReactiveSetRef, ViewRef[set[T]]):
     """Virtuals set reference — unordered unique-element container backed by a View."""
 
     def result(self, op: Nu) -> SetForm[T]:

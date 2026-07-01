@@ -18,7 +18,7 @@ from nu import (
     DictValuesForm,
     IteratorForm,
 )
-from nu.domains.shape import MutableShapeRef, Slot
+from nu.domains.shape import ReactiveShapeRef, Slot
 
 from .base import Facet, ViewRef
 
@@ -34,7 +34,7 @@ __all__ = [
 ]
 
 
-class ShapeRef[T: Shape](MutableShapeRef, ViewRef[dict[str, object]]):
+class ShapeRef[T: Shape](ReactiveShapeRef, ViewRef[dict[str, object]]):
     """Virtuals shape reference — structured container backed by a virtuals View."""
 
     def result(self, op: Nu) -> DictForm[str, object]:

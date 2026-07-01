@@ -77,28 +77,36 @@ def test_react_forever_constructs():
 # ---------------------------------------------------------------------------
 
 
-def test_react_sync_compile_raises():
+def test_react_sync_thunk_raises():
+    """Sync compile returns a thunk that raises at execution -- matches Race/AnyN.
+
+    Compile itself must succeed so emit_thunks can walk the whole tree; the raise
+    only fires if the sync path is actually driven (arun uses acompile).
+    """
     change = ItemRef("sub")
     r = React(change)
-    with pytest.raises(NotImplementedError, match="async"):
-        r.compile(0, ())
+    thunk = r.compile(0, ())
+    with pytest.raises(RuntimeError, match="async"):
+        thunk(None)
 
 
-def test_react_while_sync_compile_raises():
+def test_react_while_sync_thunk_raises():
     change = ItemRef("sub")
     cond = ItemRef("cond")
     body = ItemRef("body")
     r = ReactWhile(change, cond, body)
-    with pytest.raises(NotImplementedError, match="async"):
-        r.compile(0, ())
+    thunk = r.compile(0, ())
+    with pytest.raises(RuntimeError, match="async"):
+        thunk(None)
 
 
-def test_react_forever_sync_compile_raises():
+def test_react_forever_sync_thunk_raises():
     change = ItemRef("sub")
     body = ItemRef("body")
     r = ReactForever(change, body)
-    with pytest.raises(NotImplementedError, match="async"):
-        r.compile(0, ())
+    thunk = r.compile(0, ())
+    with pytest.raises(RuntimeError, match="async"):
+        thunk(None)
 
 
 # ---------------------------------------------------------------------------

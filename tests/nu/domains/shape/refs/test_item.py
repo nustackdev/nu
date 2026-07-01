@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+from nu.core.reactive import OnPrimitiveChangeQuery
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     EraseCommand,
     ExistsQuery,
     MissingQuery,
-    OnChildChangeQuery,
     StoreCommand,
 )
 from nu.domains.shape.refs.base import _StructuredRef
@@ -128,24 +128,24 @@ def test_reactive_item_ref_has_on_change():
     assert hasattr(ref, "on_change")
 
 
-def test_reactive_item_ref_on_change_returns_on_child_change_query():
-    # v1 parity: on_change() subscribes on the PARENT's child-change channel
-    # for this item's address, not on self — so it returns OnChildChangeQuery.
+def test_reactive_item_ref_on_change_returns_on_primitive_change_query():
+    # v1 parity: on_change() on a leaf subscribes on the PARENT's child-change
+    # channel for this item's address. In v2 this is expressed as a
+    # substrate-uniform OnPrimitiveChangeQuery -- the query carries the leaf
+    # ref (slot 0) and resolves parent + address at runtime.
     ref = ReactiveItemRef("field")
     result = ref.on_change()
-    assert isinstance(result, OnChildChangeQuery)
+    assert isinstance(result, OnPrimitiveChangeQuery)
 
 
-def test_reactive_item_ref_on_change_with_parent_uses_parent_ref():
-    parent = ReactiveItemRef("container")
-    child = ReactiveItemRef("field", parent_ref=parent)
-    result = child.on_change()
-    assert isinstance(result, OnChildChangeQuery)
-    # slot-0 of OnChildChangeQuery should be the parent (wrapped via Nu.__init__)
-    # children[0] wraps the parent ref as a LiteralQuery since parent is not a Term;
-    # but actually parent IS a Term (Nu subclass), so it's passed directly.
-    # The address (children[0] of child) is LiteralQuery("field").
-    assert len(result.children) == 2
+def test_reactive_item_ref_on_change_carries_self_as_slot_zero():
+    ref = ReactiveItemRef("field")
+    result = ref.on_change()
+    # OnPrimitiveChangeQuery carries the leaf ref as its sole child; at runtime
+    # ``ref.afetch_parent`` + ``ref.aaddress`` reconstruct the parent view and
+    # address, regardless of whether ``parent_ref`` is wired.
+    assert len(result.children) == 1
+    assert result.children[0] is ref
 
 
 def test_reactive_item_ref_inherits_store_erase():

@@ -26,11 +26,11 @@ from nu.lang import Form
 
 
 if TYPE_CHECKING:
+    from nu.core.reactive import OnPrimitiveChangeQuery
     from nu.domains.shape.interactions import (
         EraseCommand,
         ExistsQuery,
         MissingQuery,
-        OnChildChangeQuery,
         StoreCommand,
     )
 
@@ -90,21 +90,20 @@ class ReactiveItemForm(MutableItemForm):
     """Slot-level reactive surface — read + write + change observation.
 
     Provides (in addition to MutableItemForm):
-        on_change() → OnChangeQuery — subscribe to changes on this slot.
+        on_change() → OnPrimitiveChangeQuery — subscribe to changes on this slot.
     """
 
-    def on_change(self) -> OnChildChangeQuery:
-        """Return an OnChildChangeQuery: subscribe to changes at this slot's address within the parent.
+    def on_change(self) -> OnPrimitiveChangeQuery:
+        """Return an ``OnPrimitiveChangeQuery`` -- subscribe to changes on this leaf.
 
-        ``OnChildChangeQuery(self.parent_ref, self.children[0])`` subscribes on
-        the PARENT's child-change channel for this item's address, not on self
-        (``parent_ref`` + ``children[0]`` as the address Nu node).
-        ``parent_ref`` and ``children[0]`` resolve via ``_StructuredRef`` in the
-        composition chain.
-
-        Note: OnChildChangeQuery is shape-domain (lives in
-        ``nu.domains.shape.interactions``, not ``nu.forms.reactive``).
+        A leaf yields a scalar, not a view, so the subscription happens on the
+        *parent* view's child-change channel keyed by this leaf's address.
+        ``OnPrimitiveChangeQuery`` carries only the leaf ref (self); at runtime
+        it calls ``ref.afetch_parent`` and ``ref.aaddress`` to resolve the
+        parent view and address, then returns
+        ``parent.on_child_change(address)`` -- one uniform path across
+        substrates, no per-substrate override needed.
         """
-        from nu.domains.shape.interactions import OnChildChangeQuery
+        from nu.core.reactive import OnPrimitiveChangeQuery
 
-        return OnChildChangeQuery(self.parent_ref, self.children[0])  # type: ignore[attr-defined]
+        return OnPrimitiveChangeQuery(self)

@@ -12,7 +12,7 @@ from nu import (
     DictValuesForm,
     IteratorForm,
 )
-from nu.domains.shape import MutableMappingRef, Slot
+from nu.domains.shape import ReactiveMappingRef, Slot
 
 from ._typemap import value_type_for
 from .base import ViewRef
@@ -29,7 +29,7 @@ __all__ = [
 ]
 
 
-class DictRef[K, V](MutableMappingRef, ViewRef[dict[K, V]]):
+class DictRef[K, V](ReactiveMappingRef, ViewRef[dict[K, V]]):
     """Virtuals mapping reference — key-value container backed by a virtuals View."""
 
     def result(self, op: Nu) -> DictForm[K, V]:

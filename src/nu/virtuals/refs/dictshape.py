@@ -16,7 +16,7 @@ from nu import (
     DictValuesForm,
     IteratorForm,
 )
-from nu.domains.shape import MutableShapesMappingRef, Slot
+from nu.domains.shape import ReactiveShapesMappingRef, Slot
 
 from ._typemap import value_type_for
 from .base import Facet, ViewRef
@@ -34,7 +34,7 @@ __all__ = [
 ]
 
 
-class ShapesDictRef[K, T: Shape](MutableShapesMappingRef, ViewRef[dict[K, dict]]):
+class ShapesDictRef[K, T: Shape](ReactiveShapesMappingRef, ViewRef[dict[K, dict]]):
     """Virtuals shapes dict reference — mapping of homogeneous shapes."""
 
     def __getitem__(self, key: object) -> ShapeRef:

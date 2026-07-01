@@ -15,7 +15,8 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from nu.core._stream import aiter_any
-from nu.domains.shape.interactions import AdvanceCursorQuery, OnChildrenChangeQuery
+from nu.core.reactive import OnChildrenChangeQuery
+from nu.domains.shape.interactions import AdvanceCursorQuery
 from nu.lang import StreamQuery
 from nu.lang.sentinels import EMPTY
 

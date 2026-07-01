@@ -31,6 +31,8 @@ __all__ = ["React", "ReactForever", "ReactWhile"]
 class React(StreamQuery):
     """Wait for one change event, execute body once; yields stream of body results."""
 
+    requires_async = Declared(value=True)
+
     def __init__(
         self,
         change: object,
@@ -39,23 +41,28 @@ class React(StreamQuery):
         changed_key: object = None,
     ) -> None:
         children: list = [change]
-        self._body_idx: int | None = None
-        self._changed_key_idx: int | None = None
+        body_idx: int | None = None
+        changed_key_idx: int | None = None
         if body is not None:
-            self._body_idx = len(children)
+            body_idx = len(children)
             children.append(body)
         if changed_key is not None:
-            self._changed_key_idx = len(children)
+            changed_key_idx = len(children)
             children.append(changed_key)
         super().__init__(*children)
+        self.payload["body_idx"] = body_idx
+        self.payload["changed_key_idx"] = changed_key_idx
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        msg = "React requires async runtime"
-        raise NotImplementedError(msg)
+        def thunk(rt: Runtime) -> object:
+            msg = "React requires an async runtime; use arun"
+            raise RuntimeError(msg)
+
+        return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        body_idx = self._body_idx
-        ck_idx = self._changed_key_idx
+        body_idx = self.payload["body_idx"]
+        ck_idx = self.payload["changed_key_idx"]
 
         async def athunk(rt: Runtime) -> object:
             changed_key_name = await children[ck_idx](rt) if ck_idx is not None else None
@@ -88,6 +95,8 @@ class React(StreamQuery):
 class ReactWhile(StreamQuery):
     """Execute body on each change event while condition is truthy; yields body results."""
 
+    requires_async = Declared(value=True)
+
     def __init__(
         self,
         change: object,
@@ -96,18 +105,22 @@ class ReactWhile(StreamQuery):
         *,
         changed_key: object = None,
     ) -> None:
-        self._has_changed_key = changed_key is not None
+        has_changed_key = changed_key is not None
         if changed_key is not None:
             super().__init__(change, condition, body, changed_key)
         else:
             super().__init__(change, condition, body)
+        self.payload["has_changed_key"] = has_changed_key
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        msg = "ReactWhile requires async runtime"
-        raise NotImplementedError(msg)
+        def thunk(rt: Runtime) -> object:
+            msg = "ReactWhile requires an async runtime; use arun"
+            raise RuntimeError(msg)
+
+        return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        has_ck = self._has_changed_key
+        has_ck = self.payload["has_changed_key"]
 
         async def athunk(rt: Runtime) -> object:
             changed_key_name = await children[3](rt) if has_ck else None
@@ -143,6 +156,7 @@ class ReactForever(Control):
     """Execute body on every change event; runs forever, never returns."""
 
     mutates = Declared(value=frozenset())
+    requires_async = Declared(value=True)
 
     def __init__(
         self,
@@ -151,18 +165,22 @@ class ReactForever(Control):
         *,
         changed_key: object = None,
     ) -> None:
-        self._has_changed_key = changed_key is not None
+        has_changed_key = changed_key is not None
         if changed_key is not None:
             super().__init__(change, body, changed_key)
         else:
             super().__init__(change, body)
+        self.payload["has_changed_key"] = has_changed_key
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        msg = "ReactForever requires async runtime"
-        raise NotImplementedError(msg)
+        def thunk(rt: Runtime) -> None:
+            msg = "ReactForever requires an async runtime; use arun"
+            raise RuntimeError(msg)
+
+        return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        has_ck = self._has_changed_key
+        has_ck = self.payload["has_changed_key"]
 
         async def athunk(rt: Runtime) -> None:
             loop = asyncio.get_running_loop()

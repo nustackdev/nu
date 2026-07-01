@@ -4,18 +4,17 @@ from __future__ import annotations
 
 import pytest
 
+from nu.core.reactive import OnChangeQuery, OnChildrenChangeQuery
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     EraseCommand,
     ExistsQuery,
     MissingQuery,
-    OnChildrenChangeQuery,
     StoreCommand,
 )
 from nu.domains.shape.refs.base import _StructuredRef
 from nu.domains.shape.refs.set_ import MutableSetRef, ReactiveSetRef, SetRef
 from nu.forms.primitives import IntForm
-from nu.forms.reactive import OnChangeQuery
 
 
 class MyShape(Shape):

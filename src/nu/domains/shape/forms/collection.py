@@ -12,9 +12,11 @@ the generic collection forms and the concrete Refs, adding shape-domain ops
 whatever generic collection surface the Ref already exposes.
 
 ``on_change()`` (observe self) is deliberately absent here — it is generic and
-lives on the generic ``ReactiveXxxForm`` tiers in ``nu.forms.collections.abc``.
-``ReactiveCollectionForm`` provides only the three tree-aware methods that
-require the shape domain's child/children/descendants concept.
+lives on the generic ``ReactiveXxxForm`` tiers in ``nu.forms.collections.abc``,
+returning ``nu.core.reactive.OnChangeQuery``. ``ReactiveCollectionForm``
+provides only the three tree-aware methods, which reach for the shape-tier
+counterparts in ``nu.core.reactive`` too — one unified location for every
+reactive query.
 """
 
 from __future__ import annotations
@@ -25,14 +27,16 @@ from nu.lang import Form
 
 
 if TYPE_CHECKING:
+    from nu.core.reactive import (
+        OnChildChangeQuery,
+        OnChildrenChangeQuery,
+        OnDescendantsChangeQuery,
+    )
     from nu.domains.shape.interactions import (
         EraseCommand,
         ExistsQuery,
         ExtractQuery,
         MissingQuery,
-        OnChildChangeQuery,
-        OnChildrenChangeQuery,
-        OnDescendantsChangeQuery,
         StoreCommand,
     )
 
@@ -96,18 +100,18 @@ class ReactiveCollectionForm(MutableCollectionForm):
 
     def on_child_change(self, address: object) -> OnChildChangeQuery:
         """Return an OnChildChangeQuery — subscribe to changes on the child at ``address``."""
-        from nu.domains.shape.interactions import OnChildChangeQuery
+        from nu.core.reactive import OnChildChangeQuery
 
         return OnChildChangeQuery(self, address)
 
     def on_children_change(self) -> OnChildrenChangeQuery:
         """Return an OnChildrenChangeQuery — subscribe to changes on any immediate child."""
-        from nu.domains.shape.interactions import OnChildrenChangeQuery
+        from nu.core.reactive import OnChildrenChangeQuery
 
         return OnChildrenChangeQuery(self)
 
     def on_descendants_change(self, *pattern: object) -> OnDescendantsChangeQuery:
         """Return an OnDescendantsChangeQuery — subscribe to descendants matching ``pattern``."""
-        from nu.domains.shape.interactions import OnDescendantsChangeQuery
+        from nu.core.reactive import OnDescendantsChangeQuery
 
         return OnDescendantsChangeQuery(self, *pattern)

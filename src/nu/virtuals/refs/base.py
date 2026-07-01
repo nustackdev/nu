@@ -375,3 +375,13 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
             del parent[key]  # type: ignore[attr-defined]
         except (KeyError, IndexError):
             pass
+
+    # --- fetch_parent (structured-ref plug-point; consumed by OnPrimitiveChangeQuery)
+
+    def fetch_parent(self, rt: Runtime, nid: int) -> object:
+        """Return the parent view holding this leaf's slot (top-level -> root)."""
+        return self._fetch_parent_view(rt, self._resolve_path(rt, nid))
+
+    async def afetch_parent(self, rt: Runtime, nid: int) -> object:
+        """Async sibling of :meth:`fetch_parent`."""
+        return self._fetch_parent_view(rt, await self._aresolve_path(rt, nid))

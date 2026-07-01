@@ -1,4 +1,4 @@
-"""Nu shape fabric: DSL + Ref blueprints (3-tier matrix) + queries/commands/reactive.
+"""Nu shape fabric: DSL + Ref blueprints (3-tier matrix) + queries/commands.
 
 Public surface:
 - ``Shape``, ``ShapeMeta``, ``Slot``, ``SlotDescriptor`` — the DSL.
@@ -6,19 +6,14 @@ Public surface:
 - ``StoreCommand``, ``EraseCommand`` — slot-level write commands.
 - ``LoadQuery``, ``ExistsQuery``, ``MissingQuery``, ``ExtractQuery``,
   ``AdvanceCursorQuery`` — slot-level read queries.
-- ``OnChangeQuery`` — generic reactive query (any observable Ref).
-- ``OnChildChangeQuery``, ``OnChildrenChangeQuery``, ``OnDescendantsChangeQuery``
-  — shape-domain reactive queries (require structured Refs with tree structure).
+
+Reactive queries (``OnChangeQuery`` / ``OnChildChangeQuery`` /
+``OnChildrenChangeQuery`` / ``OnDescendantsChangeQuery`` /
+``OnPrimitiveChangeQuery``) live in ``nu.core.reactive`` -- one unified
+interface for every substrate, reached through the shape Form mixins.
 """
 
 from __future__ import annotations
-
-from nu.domains.shape.interactions import (
-    OnChildChangeQuery,
-    OnChildrenChangeQuery,
-    OnDescendantsChangeQuery,
-)
-from nu.forms.reactive import OnChangeQuery
 
 from .dsl import Shape, ShapeMeta, Slot, SlotDescriptor
 from .interactions import (
@@ -81,11 +76,6 @@ __all__ = [
     "MutableShapesMappingRef",
     # ShapesSequence Refs
     "MutableShapesSequenceRef",
-    # Reactive Queries
-    "OnChangeQuery",
-    "OnChildChangeQuery",
-    "OnChildrenChangeQuery",
-    "OnDescendantsChangeQuery",
     "PrimitiveStoreCommand",
     "ReactiveItemRef",
     "ReactiveMappingRef",

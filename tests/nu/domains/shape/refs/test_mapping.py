@@ -2,20 +2,22 @@
 
 from __future__ import annotations
 
+from nu.core.reactive import (
+    OnChangeQuery,
+    OnChildChangeQuery,
+    OnChildrenChangeQuery,
+    OnDescendantsChangeQuery,
+)
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     EraseCommand,
     ExistsQuery,
     MissingQuery,
-    OnChildChangeQuery,
-    OnChildrenChangeQuery,
-    OnDescendantsChangeQuery,
     StoreCommand,
 )
 from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
 from nu.domains.shape.refs.mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
 from nu.forms.primitives import IntForm
-from nu.forms.reactive import OnChangeQuery
 
 
 class MyShape(Shape):

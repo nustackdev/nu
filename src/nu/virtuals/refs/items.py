@@ -1,9 +1,14 @@
 """Virtuals item refs — typed leaf-value holders backed by virtuals storage.
 
-``ItemRef`` combines the shape ``MutableItemRef`` blueprint (slot-level CRUD)
-with ``PrimitiveRef`` (virtuals leaf navigation). Typed refs (``IntRef``,
-``StrRef``, ...) add the matching primitive Form so the value carries its full
-operator interface.
+``ItemRef`` combines the shape ``ReactiveItemRef`` blueprint (slot-level CRUD +
+change observation) with ``PrimitiveRef`` (virtuals leaf navigation). Typed
+refs (``IntRef``, ``StrRef``, ...) add the matching primitive Form so the value
+carries its full operator interface.
+
+Reactivity is uniform: ``ReactiveItemForm.on_change()`` -> ``nu.core.reactive
+.OnPrimitiveChangeQuery`` calls ``ref.afetch_parent`` + ``ref.aaddress`` on the
+leaf, and the virtuals ``PrimitiveRef`` implements both -- no substrate-side
+override needed.
 """
 
 from __future__ import annotations
@@ -11,7 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self
 
 from nu import BoolForm, BytesForm, FloatForm, IntForm, NoneForm, StrForm
-from nu.domains.shape import MutableItemRef, Slot
+from nu.domains.shape import ReactiveItemRef, Slot
 
 from .base import PrimitiveRef
 
@@ -31,7 +36,7 @@ __all__ = [
 ]
 
 
-class ItemRef(MutableItemRef, PrimitiveRef):
+class ItemRef(ReactiveItemRef, PrimitiveRef):
     """Virtuals item reference for primitive leaf values."""
 
     def __init__(

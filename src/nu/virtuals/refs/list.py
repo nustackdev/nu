@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import AnyForm, IteratorForm, ListForm
-from nu.domains.shape import MutableSequenceRef, Slot
+from nu.domains.shape import ReactiveSequenceRef, Slot
 
 from ._typemap import value_type_for
 from .base import ViewRef
@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 
-class ListRef[T](MutableSequenceRef, ViewRef[list[T]]):
+class ListRef[T](ReactiveSequenceRef, ViewRef[list[T]]):
     """Virtuals sequence reference — ordered container backed by a virtuals View."""
 
     def result(self, op: Nu) -> ListForm[T]:

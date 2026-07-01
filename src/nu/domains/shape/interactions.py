@@ -7,20 +7,17 @@ Read queries (polymorphic on Ref class):
 - ``ExtractQuery``       - materialise the full subtree rooted at the Ref.
 - ``AdvanceCursorQuery`` - read the next key after the cursor on an ordered view.
 
-Reactive observation queries (shape-domain; require structured Refs with tree structure):
-- ``OnChildChangeQuery``        subscribe to changes on one specific child.
-- ``OnChildrenChangeQuery``     subscribe to changes on any immediate child.
-- ``OnDescendantsChangeQuery``  subscribe to descendants matching a pattern.
-
-(The generic ``OnChangeQuery`` — subscribe to any change on self — lives in
-``nu.forms.reactive`` because it works on any observable Ref, not just shapes.)
-
 Write commands (polymorphic on Ref class):
 - ``StoreCommand`` - write the slot-1 value to the slot-0 Ref's address.
 - ``EraseCommand``  - remove the slot-0 Ref from its fabric.
 
 The Item/Collection split is dropped; the substrate optimizer matches on
 the concrete Ref class. ``*Cmd`` suffix dropped by naming convention.
+
+Reactive queries (``OnChangeQuery``, ``OnChildChangeQuery``,
+``OnChildrenChangeQuery``, ``OnDescendantsChangeQuery``,
+``OnPrimitiveChangeQuery``) live in ``nu.core.reactive`` -- one unified
+interface for all substrates, reached through the shape Form mixins.
 """
 
 from __future__ import annotations
@@ -44,9 +41,6 @@ __all__ = [
     "ExtractQuery",
     "LoadQuery",
     "MissingQuery",
-    "OnChildChangeQuery",
-    "OnChildrenChangeQuery",
-    "OnDescendantsChangeQuery",
     "PrimitiveStoreCommand",
     "StoreCommand",
 ]
@@ -289,126 +283,3 @@ class PrimitiveStoreCommand(Command):
         return athunk
 
 
-# ---------------------------------------------------------------------------
-# Reactive observation queries (shape-domain)
-# ---------------------------------------------------------------------------
-
-
-class OnChildChangeQuery(ScalarQuery):
-    """Subscribe to changes on the slot-1 address within the slot-0 Ref's view.
-
-    Shape-domain: requires a structured Ref whose view exposes
-    ``on_child_change(address)``.
-    """
-
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        view_thunk, address_thunk = children[0], children[1]
-
-        def thunk(rt: Runtime) -> object:
-            view = view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
-            address = address_thunk(rt)
-            if address is EMPTY or address is INVALID:
-                return INVALID
-            return view.on_child_change(address)
-
-        return thunk
-
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        view_thunk, address_thunk = children[0], children[1]
-
-        async def athunk(rt: Runtime) -> object:
-            view = await view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
-            address = await address_thunk(rt)
-            if address is EMPTY or address is INVALID:
-                return INVALID
-            return view.on_child_change(address)
-
-        return athunk
-
-
-class OnChildrenChangeQuery(ScalarQuery):
-    """Subscribe to changes on all immediate children of the slot-0 Ref's view.
-
-    Shape-domain: requires a structured Ref whose view exposes
-    ``on_children_change()``.
-    """
-
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        view_thunk = children[0]
-
-        def thunk(rt: Runtime) -> object:
-            view = view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
-            return view.on_children_change()
-
-        return thunk
-
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        view_thunk = children[0]
-
-        async def athunk(rt: Runtime) -> object:
-            view = await view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
-            return view.on_children_change()
-
-        return athunk
-
-
-class OnDescendantsChangeQuery(ScalarQuery):
-    """Subscribe to descendants matching a pattern on the slot-0 Ref's view.
-
-    Shape-domain: requires a structured Ref whose view exposes
-    ``on_descendants_change(p0, p1, ...)``.
-
-    Children: ``[ref, pattern_0, pattern_1, ...]``. At least one pattern child
-    is required. Calls ``view.on_descendants_change(p0, p1, ...)``.
-
-    Note: an earlier substrate API misspelled this as
-    ``on_descendents_change``; substrates implement the correct spelling.
-    """
-
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        view_thunk = children[0]
-        pattern_thunks = children[1:]
-
-        def thunk(rt: Runtime) -> object:
-            view = view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
-            if not pattern_thunks:
-                raise ValueError("Pattern cannot be empty for on_descendants_change")
-            pattern = []
-            for pt in pattern_thunks:
-                p = pt(rt)
-                if p is EMPTY or p is INVALID:
-                    return INVALID
-                pattern.append(p)
-            return view.on_descendants_change(pattern[0], *pattern[1:])
-
-        return thunk
-
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        view_thunk = children[0]
-        pattern_thunks = children[1:]
-
-        async def athunk(rt: Runtime) -> object:
-            view = await view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
-            if not pattern_thunks:
-                raise ValueError("Pattern cannot be empty for on_descendants_change")
-            pattern = []
-            for pt in pattern_thunks:
-                p = await pt(rt)
-                if p is EMPTY or p is INVALID:
-                    return INVALID
-                pattern.append(p)
-            return view.on_descendants_change(pattern[0], *pattern[1:])
-
-        return athunk

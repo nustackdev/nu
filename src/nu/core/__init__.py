@@ -89,6 +89,13 @@ from nu.core.iteration import EnumerateQuery, IterQuery, NextAction, ReversedQue
 from nu.core.literal import LiteralQuery
 from nu.core.logical import AndQuery, BoolQuery, NotQuery, OrQuery
 from nu.core.noop import Noop
+from nu.core.reactive import (
+    OnChangeQuery,
+    OnChildChangeQuery,
+    OnChildrenChangeQuery,
+    OnDescendantsChangeQuery,
+    OnPrimitiveChangeQuery,
+)
 from nu.core.reduction import (
     AllQuery,
     AnyQuery,
@@ -202,6 +209,11 @@ __all__ = [
     "NotInvalidQuery",
     "NotQuery",
     "OctQuery",
+    "OnChangeQuery",
+    "OnChildChangeQuery",
+    "OnChildrenChangeQuery",
+    "OnDescendantsChangeQuery",
+    "OnPrimitiveChangeQuery",
     "OrQuery",
     "OrdQuery",
     "PosQuery",
