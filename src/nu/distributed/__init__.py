@@ -15,7 +15,7 @@ invisibles by value automatically (no manual serialization needed).
 
 from composables.spec import BaseSpec
 from invisibles import register_value_type
-from nu.terms import Nu
+from nu.lang import Nu
 
 from .meta import auto_distribute
 from .resources import (

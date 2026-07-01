@@ -48,14 +48,14 @@ class Worker(Resource):
 
         Returns the last yielded value, or None if the tree yielded nothing.
         """
-        from nu import runtime
+        from nu import acollect
 
         ctx = self.context.ctx
         if attrs:
             ctx = ctx._copy()
             for key, value in attrs.items():
                 ctx.attrs[key] = value
-        values = await runtime.acollect(tree, ctx)
+        values, _ = await acollect(tree, ctx)
         return values[-1] if values else None
 
     @property

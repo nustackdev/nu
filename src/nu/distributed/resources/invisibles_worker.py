@@ -87,7 +87,7 @@ class _ExecutionService:
         future.result(timeout=30.0)
 
     async def _setup(self, worker_spec: WorkerSpec) -> None:
-        import nu_distributed  # noqa: F401 - ensure value types registered
+        import nu.distributed  # noqa: F401 - ensure value types registered
         from composables import Runtime
 
         self._runtime = Runtime()
@@ -202,7 +202,7 @@ class InvisiblesWorkerServer(Resource):
         """Register everybase Nu as value type if not already."""
         try:
             from invisibles.core.boxing import register_value_type
-            from nu.terms import Nu
+            from nu.lang import Nu
 
             register_value_type(Nu)
         except ImportError:
@@ -323,7 +323,7 @@ class InvisiblesWorker(Resource):
     def _register_value_types() -> None:
         try:
             from invisibles.core.boxing import register_value_type
-            from nu.terms import Nu
+            from nu.lang import Nu
 
             register_value_type(Nu)
         except ImportError:

@@ -18,7 +18,7 @@ from ..spans.teleport import Teleport
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu.terms import Nu
+    from nu.lang import Nu
 
 type Strategy = Callable[[int, int], object]
 """Worker selection: (child_index, child_count) -> worker_tag."""
@@ -49,21 +49,21 @@ def auto_distribute(
     def _rewrite(node: Nu) -> Nu:
         if not isinstance(node, _CONCURRENT_OPS):
             return node
-        if not node._children:
+        if not node.children:
             return node
 
         new_children: list = []
         changed = False
-        for i, child in enumerate(node._children):
+        for i, child in enumerate(node.children):
             if isinstance(child, Teleport):
                 new_children.append(child)
             else:
-                tag = strategy(i, len(node._children))
+                tag = strategy(i, len(node.children))
                 new_children.append(Teleport(child, worker=tag))
                 changed = True
 
         if not changed:
             return node
-        return node._with_children(tuple(new_children))
+        return node.with_children(*new_children)
 
     return map_nodes(tree, _rewrite, order="bottom_up")

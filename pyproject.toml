@@ -11,10 +11,7 @@ version = "0.0.0"
 description = "Term Programming platform - monorepo workspace"
 requires-python = ">=3.12"
 dependencies = [
-    "nu",
-    "nu-virtuals[infra]",
-    "nu-mem",
-    "nu-distributed",
+    "nu[distributed]",
     "nudle",
 ]
 
@@ -29,16 +26,12 @@ members = [
     # Fabrics — storage adapters
     "fabrics/virtuals",
     "fabrics/mem",
-
-    # Extensions — adapters
-    "ext/nu-distributed",
 ]
 
 [tool.uv.sources]
 # Core
 nu = { workspace = true }
-# Extensions
-nu-distributed = { workspace = true }
+# Fabrics
 nu-virtuals = { workspace = true }
 nu-mem = { workspace = true }
 # In-house libs (local editable)
@@ -205,7 +198,7 @@ convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = [
-    "nu", "nu_distributed", "nu_virtuals", "nu_mem",
+    "nu", "nu_virtuals", "nu_mem",
     "virtuals", "composables", "invisibles", "nudle",
     ]
 force-single-line = false

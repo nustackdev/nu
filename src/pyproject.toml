@@ -33,7 +33,9 @@ infra = [
 ]
 distributed = [
     "nu[infra]",
-    "nu-distributed",
+    "composables",
+    "invisibles",
+    "ray>=2.0",
 ]
 all = [
     "nu[distributed]",
