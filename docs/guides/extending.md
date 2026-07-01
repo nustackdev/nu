@@ -58,7 +58,7 @@ How to add to Nu: a new stdlib module, an interaction atom, a value-type Form, a
 - Declare algebra where true: `commutative = Declared(value=True)`, `associative`, `idempotent`.
 - Declare `mutates = Declared(value=frozenset({0}))` for a fabric write; the named slot holds the Ref, and effect synthesis binds it WRITE.
 - `**attrs` on the factory covers all of these generically: a raw value is wrapped in `Declared`; a pre-built `Attribute` (incl. computed `Synthesized`/`Inherited`) passes through.
-- Non-determinism (`uuid4`, `now`, `random.*`, `time`) is currently UNTAGGED — they ride as ordinary atoms. A purity/effect tag is a pending core item; until then they must not be constant-folded.
+- Non-determinism (`uuid4`, `now`, `random.*`, `time`) declares `deterministic=False` (the algebra attribute). A fold/cache pass gates on pure AND deterministic, so these stay un-folded. Effects that produce no value but must not be dropped (`time.sleep`, `asyncio.sleep`) also carry `deterministic=False` as a conservative fold-guard until the io/effect model lands; `time.sleep` is sync-only (`async_affinity=False`), `asyncio.sleep` is async-only (an `async def`, so `requires_async=True`).
 
 ## Type-hinting gotchas
 

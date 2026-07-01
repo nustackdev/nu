@@ -8,9 +8,8 @@ method (a plain callable whose first argument is the receiver, so
 
 Everything is backed by ``PurePath`` - the pure (no filesystem I/O) half of
 ``pathlib``. ``cwd`` / ``home`` are the two exceptions: they read the process
-environment, so they bind the concrete ``Path`` classmethods and are
-non-deterministic (a future constant-folding pass must treat them as impure -
-open item until the model grows a purity tag).
+environment, so they bind the concrete ``Path`` classmethods and declare
+``deterministic=False`` to stay un-folded.
 """
 
 from __future__ import annotations
@@ -41,8 +40,8 @@ __all__ = [
 # --- constructors -----------------------------------------------------------
 
 PathOf = ScalarQueryFactory("PathOf", _PurePath)
-PathCwd = ScalarQueryFactory("PathCwd", _Path.cwd)
-PathHome = ScalarQueryFactory("PathHome", _Path.home)
+PathCwd = ScalarQueryFactory("PathCwd", _Path.cwd, deterministic=False)
+PathHome = ScalarQueryFactory("PathHome", _Path.home, deterministic=False)
 
 # --- path-returning methods -------------------------------------------------
 

@@ -6,7 +6,7 @@ constructor interaction atom and returns a ``UUID`` form. The atoms live in
 ``interactions``; the value type lives in ``forms``.
 
 ``uuid4`` / ``uuid1`` are non-deterministic (randomness / the clock), so their
-atoms must not be constant-folded - open item until the model grows a purity tag.
+atoms declare ``deterministic=False`` and must not be constant-folded.
 """
 
 from __future__ import annotations

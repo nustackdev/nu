@@ -6,8 +6,9 @@ straight to the ``random.*`` callable.
 
 Every binding here is NON-DETERMINISTIC - each reads the process-global RNG, the
 same way ``uuid.uuid4`` / ``datetime.now`` do. So none of these atoms may be
-constant-folded: two runs of the same tree must be free to differ. This is an
-open item until the model grows a purity tag; there is no purity mechanism yet.
+constant-folded: two runs of the same tree must be free to differ. Each declares
+``deterministic=False`` (the algebra attribute), which a folding/caching pass
+reads to keep them un-folded (fold gate = pure AND deterministic).
 """
 
 from __future__ import annotations
@@ -35,26 +36,29 @@ __all__ = [
 
 # --- uniform reals and ints -------------------------------------------------
 
-RandomRandom = ScalarQueryFactory("RandomRandom", random.random)
-RandomUniform = ScalarQueryFactory("RandomUniform", random.uniform)
-RandomRandint = ScalarQueryFactory("RandomRandint", random.randint)
-RandomRandrange = ScalarQueryFactory("RandomRandrange", random.randrange)
-RandomGetrandbits = ScalarQueryFactory("RandomGetrandbits", random.getrandbits)
+RandomRandom = ScalarQueryFactory("RandomRandom", random.random, deterministic=False)
+RandomUniform = ScalarQueryFactory("RandomUniform", random.uniform, deterministic=False)
+RandomRandint = ScalarQueryFactory("RandomRandint", random.randint, deterministic=False)
+RandomRandrange = ScalarQueryFactory("RandomRandrange", random.randrange, deterministic=False)
+RandomGetrandbits = ScalarQueryFactory("RandomGetrandbits", random.getrandbits, deterministic=False)
 
 # --- sequence draws ---------------------------------------------------------
 
-RandomChoice = ScalarQueryFactory("RandomChoice", random.choice)
+RandomChoice = ScalarQueryFactory("RandomChoice", random.choice, deterministic=False)
 # ``random.choices`` takes ``k`` keyword-only; wrap so the atom can pass it
 # positionally (factory atoms type-check as their base ScalarQuery init).
 RandomChoices = ScalarQueryFactory(
     "RandomChoices",
     lambda population, k: random.choices(population, k=k),  # noqa: S311 -- general RNG, not crypto
+    deterministic=False,
 )
-RandomSample = ScalarQueryFactory("RandomSample", random.sample)
+RandomSample = ScalarQueryFactory("RandomSample", random.sample, deterministic=False)
 
 # --- continuous distributions -----------------------------------------------
 
-RandomGauss = ScalarQueryFactory("RandomGauss", random.gauss)
-RandomNormalvariate = ScalarQueryFactory("RandomNormalvariate", random.normalvariate)
-RandomExpovariate = ScalarQueryFactory("RandomExpovariate", random.expovariate)
-RandomTriangular = ScalarQueryFactory("RandomTriangular", random.triangular)
+RandomGauss = ScalarQueryFactory("RandomGauss", random.gauss, deterministic=False)
+RandomNormalvariate = ScalarQueryFactory(
+    "RandomNormalvariate", random.normalvariate, deterministic=False
+)
+RandomExpovariate = ScalarQueryFactory("RandomExpovariate", random.expovariate, deterministic=False)
+RandomTriangular = ScalarQueryFactory("RandomTriangular", random.triangular, deterministic=False)

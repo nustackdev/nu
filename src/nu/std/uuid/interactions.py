@@ -5,8 +5,8 @@ module adds. Everything else a UUID does (attribute reads, comparison) reuses
 core interactions, so it lives on the Form, not here.
 
 ``Uuid4Query`` / ``Uuid1Query`` are non-deterministic (they read randomness /
-the clock), so a future constant-folding pass must treat them as impure
-(open item until the model grows a purity tag).
+the clock), so they declare ``deterministic=False`` to stay un-folded. ``uuid3``
+/ ``uuid5`` are pure functions of their args, so they stay deterministic.
 """
 
 from __future__ import annotations
@@ -27,8 +27,8 @@ __all__ = [
 ]
 
 
-Uuid4Query = ScalarQueryFactory("Uuid4Query", uuid4)
-Uuid1Query = ScalarQueryFactory("Uuid1Query", uuid1)
+Uuid4Query = ScalarQueryFactory("Uuid4Query", uuid4, deterministic=False)
+Uuid1Query = ScalarQueryFactory("Uuid1Query", uuid1, deterministic=False)
 Uuid3Query = ScalarQueryFactory("Uuid3Query", uuid3)
 Uuid5Query = ScalarQueryFactory("Uuid5Query", uuid5)
 UuidFromStrQuery = ScalarQueryFactory("UuidFromStrQuery", lambda v: UUID(str(v)))

@@ -9,8 +9,8 @@ it the way you would the stdlib::
     from nu.std.random import randint, choice
     import nu.std.random as random     # then random.randint(1, 6)
 
-Every function is NON-DETERMINISTIC (it reads the global RNG), so its atom must
-not be constant-folded - open item until the model grows a purity tag. The
+Every function is NON-DETERMINISTIC (it reads the global RNG), so its atom
+declares ``deterministic=False`` and must not be constant-folded. The
 effectful / stateful pieces (``seed``, ``shuffle``, ``getstate`` / ``setstate``)
 are deferred until the effect model lands.
 """

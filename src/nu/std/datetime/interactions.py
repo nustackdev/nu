@@ -6,9 +6,9 @@ plain callable whose first argument is the receiver, so ``d.weekday()`` is
 not here - they reuse core ``GetAttrQuery`` from the Form. Arithmetic and
 comparison reuse the core atoms.
 
-``DateToday`` / ``DatetimeNow`` / ``Date*FromTimestamp`` read the clock, so they
-are non-deterministic - a future constant-folding pass must treat them as impure
-(open item until the model grows a purity tag).
+``DateToday`` / ``DatetimeNow`` read the clock, so they declare
+``deterministic=False`` to stay un-folded. The ``*FromTimestamp`` constructors
+take an explicit timestamp, so they are deterministic functions of their args.
 """
 
 from __future__ import annotations
@@ -66,7 +66,7 @@ __all__ = [
 # --- date -------------------------------------------------------------------
 
 DateOf = ScalarQueryFactory("DateOf", _date)
-DateToday = ScalarQueryFactory("DateToday", _date.today)
+DateToday = ScalarQueryFactory("DateToday", _date.today, deterministic=False)
 DateFromIso = ScalarQueryFactory("DateFromIso", _date.fromisoformat)
 DateFromOrdinal = ScalarQueryFactory("DateFromOrdinal", _date.fromordinal)
 DateFromTimestamp = ScalarQueryFactory("DateFromTimestamp", _date.fromtimestamp)
@@ -89,7 +89,7 @@ TimeReplace = ScalarQueryFactory("TimeReplace", _time.replace)
 # --- datetime ---------------------------------------------------------------
 
 DatetimeOf = ScalarQueryFactory("DatetimeOf", _datetime)
-DatetimeNow = ScalarQueryFactory("DatetimeNow", _datetime.now)
+DatetimeNow = ScalarQueryFactory("DatetimeNow", _datetime.now, deterministic=False)
 DatetimeFromIso = ScalarQueryFactory("DatetimeFromIso", _datetime.fromisoformat)
 DatetimeFromTimestamp = ScalarQueryFactory("DatetimeFromTimestamp", _datetime.fromtimestamp)
 DatetimeCombine = ScalarQueryFactory("DatetimeCombine", _datetime.combine)

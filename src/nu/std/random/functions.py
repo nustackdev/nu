@@ -11,8 +11,8 @@ returns the Form that matches the host return type:
 - ``choices`` / ``sample`` -> ``ListForm``
 
 Every function here is NON-DETERMINISTIC: it reads the global RNG, so its atom
-must not be constant-folded (open item until the model grows a purity tag -
-see ``interactions``).
+declares ``deterministic=False`` and must not be constant-folded (see
+``interactions``).
 
 Deferred (effectful / stateful, need the effect model first): ``seed``,
 ``shuffle`` (mutates the sequence in place), ``getstate`` / ``setstate``.
