@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from nu import Context, run
 from nu.domains.shape import Shape
-from nu_mem import (
+from nu.mem import (
     DictRef,
     FloatRef,
     IntRef,

@@ -10,7 +10,7 @@ import pytest
 
 pytest.importorskip("nu.stdlib", reason="nu.stdlib stdtype refs deferred in v2 port")
 
-from nu.stdlib.uuid import UUIDI as UUIDRef  # noqa: E402
+from nu.stdlib.uuid import UUIDI as UUIDRef  # noqa: N811
 
 
 # ============================================================================

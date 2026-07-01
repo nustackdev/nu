@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING
 
 from nu import EMPTY
 from nu.domains.shape.refs.base import _StructuredRef
-from nu_virtuals.paths import ViewPathSer
+from nu.virtuals.paths import ViewPathSer
 from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
 from virtuals.collections import Subscriptable

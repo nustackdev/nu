@@ -1,4 +1,4 @@
-"""Tests for nu_mem.JQueueRef — janus-backed queue ref."""
+"""Tests for nu.mem.JQueueRef — janus-backed queue ref."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ import threading
 import pytest
 
 from nu import Context, runtime
+from nu.mem import JQueueRef, QueueClosed
 from nu.shapes import Shape
-from nu_mem import JQueueRef, QueueClosed
 
 
 class BufShape(Shape):

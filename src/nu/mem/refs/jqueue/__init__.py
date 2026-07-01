@@ -9,7 +9,7 @@ Optional dep: ``nu-mem[jqueue]``.
 
 Usage::
 
-    from nu_mem import JQueueRef
+    from nu.mem import JQueueRef
     from nu.domains.shape import Shape
 
     class Buf(Shape):

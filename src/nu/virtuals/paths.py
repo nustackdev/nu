@@ -7,7 +7,7 @@ by value rather than proxied element-by-element.
 Register with invisibles at process startup::
 
     from invisibles.core.boxing import register_value_type
-    from nu_virtuals.paths import ViewPathSer, ValuePathSer
+    from nu.virtuals.paths import ViewPathSer, ValuePathSer
 
     register_value_type(ViewPathSer, ValuePathSer)
 """

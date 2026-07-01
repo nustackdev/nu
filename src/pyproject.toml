@@ -23,13 +23,21 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+# Fabrics — accessed as nu.virtuals / nu.mem (not exposed on the top-level nu namespace).
+virtuals = [
+    "virtuals-py",
+]
+mem = [
+    "janus>=2.0.0",
+]
 default = [
-    "nu-virtuals",
-    "nu-mem",
+    "nu[virtuals]",
+    "nu[mem]",
 ]
 infra = [
     "nu[default]",
-    "nu-virtuals[infra]",
+    "virtuals-py[rocksdb]",
+    "redis",
 ]
 distributed = [
     "nu[infra]",

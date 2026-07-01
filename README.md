@@ -26,11 +26,14 @@ Requires Python 3.12+.
 
 ## Ecosystem
 
-| Package | What |
-|---------|------|
-| **nu-virtuals** | bridges Nu Refs to virtuals Views with RocksDB backend, in-memory or text storages |
-| **nu-mem** | in-memory adapter — plain Python dicts as the data bag |
-| **nu-distributed** | distribution via Ray + invisibles |
+One package, `nu`. The fabrics and topologies are submodules (not exposed on the
+top-level namespace — import them directly), each behind an optional extra:
+
+| Module | Extra | What |
+|--------|-------|------|
+| **nu.virtuals** | `nu[virtuals]` | bridges Nu Refs to virtuals Views with RocksDB backend, in-memory or text storages |
+| **nu.mem** | `nu[mem]` | in-memory adapter — plain Python dicts as the data bag |
+| **nu.distributed** | `nu[distributed]` | distribution via Ray + invisibles |
 
 ## Status
 

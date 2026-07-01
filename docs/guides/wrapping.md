@@ -92,7 +92,7 @@ Each pass sees the previous passes' Brackets and respects them by the rules abov
 ## API
 
 ```python
-from nu_virtuals.tree import auto_flow_atomic
+from nu.virtuals.tree import auto_flow_atomic
 
 wrapped = auto_flow_atomic(tree, scope=Ledger)
 ```

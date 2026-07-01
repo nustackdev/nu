@@ -11,8 +11,8 @@ from __future__ import annotations
 from nu.domains.shape.refs.base import _StructuredRef
 from nu.domains.shape.rewrite import reconstruct_with_flat_ref, walk_ref_chain
 from nu.tree import map_nodes
-from nu_virtuals.refs.base import PrimitiveRef, ViewRef
-from nu_virtuals.refs.flat import FlatRef
+from nu.virtuals.refs.base import PrimitiveRef, ViewRef
+from nu.virtuals.refs.flat import FlatRef
 
 
 __all__ = [

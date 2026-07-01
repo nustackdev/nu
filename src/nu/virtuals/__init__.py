@@ -1,10 +1,10 @@
-"""nu_virtuals — virtuals (polymorphic views) KV-storage fabric for Nu Shapes.
+"""nu.virtuals — virtuals (polymorphic views) KV-storage fabric for Nu Shapes.
 
 Refs over virtuals views backed by a tkv snapshot / transaction.
 
 Usage::
 
-    from nu_virtuals import IntRef, StrRef, ShapeRef, Atomic
+    from nu.virtuals import IntRef, StrRef, ShapeRef, Atomic
     from nu import Context
     from nu.domains.shape import Shape
 
@@ -13,19 +13,19 @@ Usage::
         age = IntRef.slot()
 """
 
-import nu_virtuals._compat  # noqa: F401  — register virtuals view ABCs
+import nu.virtuals._compat  # noqa: F401  — register virtuals view ABCs
 
 
 # Register path types as invisibles value types so they serialize by value.
 try:
     from invisibles.core.boxing import register_value_type
-    from nu_virtuals.paths import ValuePathSer, ViewPathSer
+    from nu.virtuals.paths import ValuePathSer, ViewPathSer
 
     register_value_type(ViewPathSer, ValuePathSer)
 except ImportError:
     pass
 
-from nu_virtuals.interactions import (
+from nu.virtuals.interactions import (
     CONFLICT_ERRORS,
     Atomic,
     ClearPrimitivesUnsafeCmd,
@@ -41,14 +41,14 @@ from nu_virtuals.interactions import (
     Snapshot,
     Transaction,
 )
-from nu_virtuals.paths import ValuePathSer, ViewPathSer
-from nu_virtuals.presets import (
+from nu.virtuals.paths import ValuePathSer, ViewPathSer
+from nu.virtuals.presets import (
     memory_storage,
     rocksdb_storage,
     rocksdb_storage_inmemory,
     text_storage,
 )
-from nu_virtuals.refs import (
+from nu.virtuals.refs import (
     BoolRef,
     BytesRef,
     DictRef,
@@ -65,7 +65,7 @@ from nu_virtuals.refs import (
     StrRef,
     ViewRef,
 )
-from nu_virtuals.tree import auto_atomic, inline_refs
+from nu.virtuals.tree import auto_atomic, inline_refs
 
 
 # --- deferred during the v2 port ---------------------------------------------

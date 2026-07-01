@@ -1,11 +1,11 @@
-"""nu-mem — Nu Shapes fabric adapter for in-memory state.
+"""nu.mem — Nu Shapes fabric adapter for in-memory state.
 
 Plain nested Python dicts as the data bag. No storage backend, no views,
 no reactivity. Just dicts.
 
 Usage::
 
-    import nu_mem as nm
+    import nu.mem as nm
     from nu import Context
     from nu.domains.shape import Shape
 
@@ -17,7 +17,7 @@ Usage::
     ctx = Context().bind(dict, data, User)
 """
 
-from nu_mem.refs import (
+from nu.mem.refs import (
     BoolRef,
     BytesRef,
     DictRef,

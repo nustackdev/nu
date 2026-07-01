@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from nu.domains.shape import Shape
 from nu.flows import Sequential as Seq
-from nu_virtuals import (
+from nu.virtuals import (
     EnsureLayoutCmd,
     IntRef,
     Snapshot,
@@ -23,7 +23,7 @@ from nu_virtuals import (
     Transaction,
     auto_atomic,
 )
-from nu_virtuals.refs.flat import FlatRef
+from nu.virtuals.refs.flat import FlatRef
 
 
 def _flat_ref(root_shape: type) -> FlatRef:
@@ -54,7 +54,7 @@ class Account(Shape):
 # =============================================================================
 
 
-def _count(tree, cls, scope_sentinel=object()) -> int:
+def _count(tree, cls, scope_sentinel=object()) -> int:  # noqa: B008
     """Count ContextManager boundaries of ``cls`` in the tree.
 
     If scope_sentinel is given, only count ones with ``.scope is scope_sentinel``.

@@ -20,20 +20,14 @@ dependencies = [
 # =============================================================================
 [tool.uv.workspace]
 members = [
-    # Core (unified package, includes stdlib)
+    # Core: the one unified `nu` package — kernel, stdlib, fabrics (nu.virtuals /
+    # nu.mem), and topologies (nu.distributed). No sub-packages.
     "src",
-
-    # Fabrics — storage adapters
-    "fabrics/virtuals",
-    "fabrics/mem",
 ]
 
 [tool.uv.sources]
 # Core
 nu = { workspace = true }
-# Fabrics
-nu-virtuals = { workspace = true }
-nu-mem = { workspace = true }
 # In-house libs (local editable)
 virtuals-py = { path = "../virtuals", editable = true }
 composables = { path = "../composables", editable = true }
@@ -90,8 +84,6 @@ markers = [
 [tool.coverage.run]
 source = [
     "src/nu",
-    "fabrics/virtuals",
-    "fabrics/mem",
 ]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
@@ -125,8 +117,6 @@ line-length = 100
 target-version = "py312"
 src = [
     "src",
-    "fabrics/virtuals/src",
-    "fabrics/mem/src",
 ]
 extend-exclude = [".venv", "build", "dist", "*.egg-info"]
 
@@ -198,7 +188,7 @@ convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = [
-    "nu", "nu_virtuals", "nu_mem",
+    "nu",
     "virtuals", "composables", "invisibles", "nudle",
     ]
 force-single-line = false

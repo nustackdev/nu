@@ -10,7 +10,7 @@ import pytest
 
 pytest.importorskip("nu.stdlib", reason="nu.stdlib stdtype refs deferred in v2 port")
 
-from nu.stdlib.decimal import DecimalI as DecimalRef  # noqa: E402
+from nu.stdlib.decimal import DecimalI as DecimalRef
 
 
 # ============================================================================

@@ -20,7 +20,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu import EMPTY, Nu
-from nu_virtuals.paths import ViewPathSer
+from nu.virtuals.paths import ViewPathSer
 from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
 from virtuals.collections import Subscriptable

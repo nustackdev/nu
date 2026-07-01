@@ -20,7 +20,7 @@ from pathlib import Path
 
 from nu import Context, arun
 from nu.domains.shape import Shape
-from nu_virtuals import (
+from nu.virtuals import (
     DictRef,
     FloatRef,
     IntRef,
@@ -29,7 +29,7 @@ from nu_virtuals import (
     ShapesListRef,
     StrRef,
 )
-from nu_virtuals.presets import rocksdb_storage_inmemory
+from nu.virtuals.presets import rocksdb_storage_inmemory
 from virtuals import Navigator
 from virtuals.tkv.storage import TransactionProtocol
 

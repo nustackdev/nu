@@ -8,11 +8,11 @@ a pre-resolved path tuple.
 
 from __future__ import annotations
 
+from nu.mem.refs.base import RefBase
+from nu.mem.refs.flat import FlatRef
 from nu.shapes.refs.base import Ref
 from nu.shapes.tree.deform import reconstruct_with_flat_ref, walk_ref_chain
 from nu.tree import map_nodes
-from nu_mem.refs.base import RefBase
-from nu_mem.refs.flat import FlatRef
 
 
 __all__ = [

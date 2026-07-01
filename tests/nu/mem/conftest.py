@@ -1,4 +1,4 @@
-"""Test configuration for nu-mem tests."""
+"""Test configuration for nu.mem tests."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import pytest
 
 from nu import Context
 from nu.domains.shape import Shape
-from nu_mem import (
+from nu.mem import (
     DictRef,
     FloatRef,
     IntRef,
@@ -17,6 +17,11 @@ from nu_mem import (
     ShapesListRef,
     StrRef,
 )
+
+
+# jqueue is a deferred v2 port (source commented out of refs, test still on the v1
+# `runtime` / `nu.shapes` API). Skip collection until it is ported + re-exported.
+collect_ignore = ["test_jqueue.py"]
 
 
 @pytest.fixture

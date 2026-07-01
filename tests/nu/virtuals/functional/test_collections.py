@@ -30,7 +30,7 @@ from nu import (
     arun,
 )
 from nu.domains.shape import Shape
-from nu_virtuals import (
+from nu.virtuals import (
     DictRef,
     FloatRef,
     IntRef,
@@ -40,7 +40,7 @@ from nu_virtuals import (
     ShapesListRef,
     StrRef,
 )
-from nu_virtuals.refs.base import Facet
+from nu.virtuals.refs.base import Facet
 from virtuals import Navigator
 from virtuals.tkv.storage import TransactionProtocol
 

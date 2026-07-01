@@ -8,7 +8,7 @@ forwards the body's yield unchanged (scalar, stream, or nothing).
 The core ships two named brackets, ``Snapshot`` and ``Transaction``, as the
 model-level shapes. Their lifecycle is a no-op here: a bare core bracket just
 runs its body. A fabric subclasses them and overrides the lifecycle to talk to a
-real store (see ``nu_virtuals.spans.atomic``).
+real store (see ``nu.virtuals.interactions.atomicity``).
 
 The lifecycle is one method, ``scope`` - a context manager. It opens the
 boundary, ``yield``s the scoped context the body runs under, then commits on a
