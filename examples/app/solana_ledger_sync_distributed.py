@@ -29,11 +29,12 @@ from typing import Any
 
 import aiohttp
 import ray
+
+import nu
+import nu.mem as m
+import nu.virtuals as v
 from composables import Runtime
 from composables.spec import SpecBuilder
-
-from nu import Context, arun
-from nu.core.io import log as nu_log
 from nu.distributed import (
     ContextSpec,
     InvisiblesClientSpec,
@@ -45,18 +46,6 @@ from nu.distributed import (
     Teleport,
     Worker,
     WorkerSpec,
-)
-from nu.domains.shape import Shape
-from nu.flows import IfDo, Parallel, Sequential
-from nu.mem import IntRef as MemIntRef
-from nu.mem import ListRef as MemListRef
-from nu.virtuals import (
-    IntRef,
-    ListRef,
-    SetRef,
-    ShapesDictRef,
-    StrRef,
-    Transaction as VTransaction,
 )
 
 
@@ -235,32 +224,32 @@ def _parse_token_balances(raw: list[dict] | None) -> list[dict]:
 # =============================================================================
 
 
-class Transaction(Shape):
-    signature = StrRef.slot()
-    slot_number = IntRef.slot()
-    block_time = IntRef.slot()
-    block_index = IntRef.slot()
-    fee = IntRef.slot()
-    err = StrRef.slot()
-    accounts = ListRef.slot(str)
-    instructions = ListRef.slot(dict)
-    inner_instructions = ListRef.slot(dict)
-    pre_balances = ListRef.slot(int)
-    post_balances = ListRef.slot(int)
-    pre_token_balances = ListRef.slot(dict)
-    post_token_balances = ListRef.slot(dict)
-    logs = ListRef.slot(str)
-    compute_units = IntRef.slot()
+class Transaction(nu.Shape):
+    signature = v.StrRef.slot()
+    slot_number = v.IntRef.slot()
+    block_time = v.IntRef.slot()
+    block_index = v.IntRef.slot()
+    fee = v.IntRef.slot()
+    err = v.StrRef.slot()
+    accounts = v.ListRef.slot(str)
+    instructions = v.ListRef.slot(dict)
+    inner_instructions = v.ListRef.slot(dict)
+    pre_balances = v.ListRef.slot(int)
+    post_balances = v.ListRef.slot(int)
+    pre_token_balances = v.ListRef.slot(dict)
+    post_token_balances = v.ListRef.slot(dict)
+    logs = v.ListRef.slot(str)
+    compute_units = v.IntRef.slot()
 
 
 TX_ID_MULTIPLIER = 10_000
 
 
-class Ledger(Shape):
-    txs = ShapesDictRef.slot(Transaction, key_type=int)
-    slots_synced = SetRef.slot(int)
-    slots_dropped = SetRef.slot(int)
-    current_slot = IntRef.slot()
+class Ledger(nu.Shape):
+    txs = v.ShapesDictRef.slot(Transaction, key_type=int)
+    slots_synced = v.SetRef.slot(int)
+    slots_dropped = v.SetRef.slot(int)
+    current_slot = v.IntRef.slot()
 
 
 # =============================================================================
@@ -268,17 +257,17 @@ class Ledger(Shape):
 # =============================================================================
 
 
-class _SlotScratch(Shape):
+class _SlotScratch(nu.Shape):
     """Per-slot scratch for a single slot sync."""
 
-    block_txs = MemListRef.slot(dict)
-    tx_id = MemIntRef.slot()
+    block_txs = m.ListRef.slot(dict)
+    tx_id = m.IntRef.slot()
 
 
-class _WorkerScratch(Shape):
+class _WorkerScratch(nu.Shape):
     """Per-worker scratch for stride iteration."""
 
-    cursor = MemIntRef.slot()
+    cursor = m.IntRef.slot()
 
 
 # =============================================================================
@@ -308,18 +297,18 @@ def distributed_ledger_sync(
     """
     worker_teleports = []
     for w in range(num_workers):
-        worker_teleports.append(Teleport(Sequential(), worker=w))  # FIXME: shell body
+        worker_teleports.append(Teleport(nu.Sequential(), worker=w))  # FIXME: shell body
 
-    init = VTransaction(
-        Sequential(
-            IfDo(ledger.slots_synced.missing(), ledger.slots_synced.store(set())),
-            IfDo(ledger.slots_dropped.missing(), ledger.slots_dropped.store(set())),
+    init = v.Transaction(
+        nu.Sequential(
+            nu.IfDo(ledger.slots_synced.missing(), ledger.slots_synced.store(set())),
+            nu.IfDo(ledger.slots_dropped.missing(), ledger.slots_dropped.store(set())),
         ),
     )
 
-    return Sequential(
+    return nu.Sequential(
         init,
-        nu_log(
+        nu.log(
             "distributed sync:",
             slot_from,
             "->",
@@ -327,8 +316,8 @@ def distributed_ledger_sync(
             "workers:",
             num_workers,
         ),
-        Parallel(*worker_teleports),
-        nu_log("distributed sync done"),
+        nu.Parallel(*worker_teleports),
+        nu.log("distributed sync done"),
     )
 
 
@@ -385,7 +374,7 @@ async def main() -> None:
                 .build()
             )
 
-            ctx = Context()
+            ctx = nu.Context()
             for i in range(args.workers):
                 w = await rt.create(
                     RayWorkerSpec(
@@ -413,7 +402,7 @@ async def main() -> None:
             print(f"workers: {args.workers}, db: {db_path}")
             print(f"endpoint: {args.endpoint}\n")
 
-            await arun(tree, ctx)
+            await nu.arun(tree, ctx)
 
     finally:
         ray.shutdown()

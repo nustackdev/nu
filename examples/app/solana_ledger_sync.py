@@ -36,26 +36,9 @@ from pathlib import Path
 
 import aiohttp
 
-from nu import Context, arun
-from nu.context import AnyAttrRef, IntAttrRef
-from nu.core import LenQuery
-from nu.core.io import log as nu_log
-from nu.domains.shape import Shape
-from nu.flows import IfDo, Sequential
-from nu.mem import IntRef as MemIntRef
-from nu.mem import ListRef as MemListRef
-from nu.spans import Retry, TryCatch
-from nu.virtuals import (
-    IntRef,
-    ListRef,
-    SetRef,
-    ShapesDictRef,
-    StrRef,
-    Transaction as VTransaction,
-    auto_atomic,
-    inline_refs,
-)
-from nu.virtuals.presets import rocksdb_storage_inmemory
+import nu
+import nu.mem as m
+import nu.virtuals as v
 from virtuals import Navigator
 from virtuals.tkv.storage import TransactionProtocol
 
@@ -265,48 +248,48 @@ def _tx_involves_program(tx: dict, program_id: str) -> bool:
 # =============================================================================
 
 
-class Transaction(Shape):
+class Transaction(nu.Shape):
     """Single Solana transaction. All standard fields, stored as-is."""
 
     # Metadata
-    signature = StrRef.slot()
-    slot_number = IntRef.slot()
-    block_time = IntRef.slot()
-    block_index = IntRef.slot()
-    fee = IntRef.slot()
-    err = StrRef.slot()  # empty = success
+    signature = v.StrRef.slot()
+    slot_number = v.IntRef.slot()
+    block_time = v.IntRef.slot()
+    block_index = v.IntRef.slot()
+    fee = v.IntRef.slot()
+    err = v.StrRef.slot()  # empty = success
 
     # Structure (typed lists / dicts -- old PrimitiveListRef is deferred)
-    accounts = ListRef.slot(str)
-    instructions = ListRef.slot(dict)
-    inner_instructions = ListRef.slot(dict)
+    accounts = v.ListRef.slot(str)
+    instructions = v.ListRef.slot(dict)
+    inner_instructions = v.ListRef.slot(dict)
 
     # Balances
-    pre_balances = ListRef.slot(int)
-    post_balances = ListRef.slot(int)
-    pre_token_balances = ListRef.slot(dict)
-    post_token_balances = ListRef.slot(dict)
+    pre_balances = v.ListRef.slot(int)
+    post_balances = v.ListRef.slot(int)
+    pre_token_balances = v.ListRef.slot(dict)
+    post_token_balances = v.ListRef.slot(dict)
 
     # Extra
-    logs = ListRef.slot(str)
-    compute_units = IntRef.slot()
+    logs = v.ListRef.slot(str)
+    compute_units = v.IntRef.slot()
 
 
 TX_ID_MULTIPLIER = 10_000
 """Numeric tx ID = slot * 10_000 + block_index. Preserves block ordering."""
 
 
-class Ledger(Shape):
+class Ledger(nu.Shape):
     """Persistent transaction archive.
 
     tx_id = slot * 10_000 + block_index.
     Resumable via slots_synced.
     """
 
-    txs = ShapesDictRef.slot(Transaction, key_type=int)
-    slots_synced = SetRef.slot(int)
-    slots_dropped = SetRef.slot(int)
-    current_slot = IntRef.slot()
+    txs = v.ShapesDictRef.slot(Transaction, key_type=int)
+    slots_synced = v.SetRef.slot(int)
+    slots_dropped = v.SetRef.slot(int)
+    current_slot = v.IntRef.slot()
 
 
 # =============================================================================
@@ -314,11 +297,11 @@ class Ledger(Shape):
 # =============================================================================
 
 
-class _SlotScratch(Shape):
+class _SlotScratch(nu.Shape):
     """Per-slot scratch for sync_slot."""
 
-    block_txs = MemListRef.slot(dict)
-    tx_id = MemIntRef.slot()
+    block_txs = m.ListRef.slot(dict)
+    tx_id = m.IntRef.slot()
 
 
 # =============================================================================
@@ -333,18 +316,18 @@ def _persist_tx(ledger: type[Ledger], slot_expr: object) -> object:
     ``AnyAttrRef("tx")``.
     """
     sc = _SlotScratch
-    tx_ref = AnyAttrRef("tx")
+    tx_ref = nu.AnyAttrRef("tx")
 
     # FIXME: no AtOp/GetItem on AnyAttrRef today; block_index is fed via attrs
     # by the driver before persistence rather than pulled from the tx dict here.
-    return Sequential(
-        sc.tx_id.store(slot_expr * TX_ID_MULTIPLIER + IntAttrRef("tx_block_index")),
+    return nu.Sequential(
+        sc.tx_id.store(slot_expr * TX_ID_MULTIPLIER + nu.IntAttrRef("tx_block_index")),
         ledger.txs[sc.tx_id].store(tx_ref),
     )
 
 
 async def _sync_one_slot(
-    ctx: Context,
+    ctx: nu.Context,
     ledger: type[Ledger],
     slot: int,
     program_id: str,
@@ -364,11 +347,11 @@ async def _sync_one_slot(
     try:
         block_txs = await rpc.get_block(slot)
     except DroppedSlotError:
-        await arun(
-            VTransaction(ledger.slots_dropped.add(slot)),
+        await nu.arun(
+            v.Transaction(ledger.slots_dropped.add(slot)),
             ctx,
         )
-        await arun(nu_log("dropped slot", slot), ctx)
+        await nu.arun(nu.log("dropped slot", slot), ctx)
         return
 
     if program_id:
@@ -383,18 +366,18 @@ async def _sync_one_slot(
         ctx.attrs["tx_block_index"] = tx.get("block_index", i)
         persist_all.append(_persist_tx(ledger, slot))
 
-    tree = VTransaction(
-        Sequential(
+    tree = v.Transaction(
+        nu.Sequential(
             *persist_all,
             ledger.slots_synced.add(slot),
         ),
     )
-    await arun(nu_log("slot", slot, ":", len(block_txs), "txs"), ctx)
-    await arun(tree, ctx)
+    await nu.arun(nu.log("slot", slot, ":", len(block_txs), "txs"), ctx)
+    await nu.arun(tree, ctx)
 
 
 async def sync_range(
-    ctx: Context,
+    ctx: nu.Context,
     ledger: type[Ledger],
     slot_from: int,
     slot_to: int,
@@ -407,8 +390,8 @@ async def sync_range(
     """
     rpc = ctx.get(SolanaRpc)
     slots = await rpc.get_blocks(slot_from, slot_to)
-    await arun(
-        nu_log("sync:", slot_from, "->", slot_to, "(", len(slots), "confirmed)"),
+    await nu.arun(
+        nu.log("sync:", slot_from, "->", slot_to, "(", len(slots), "confirmed)"),
         ctx,
     )
 
@@ -420,11 +403,11 @@ async def sync_range(
             continue
         await Retry_via_driver(ctx, ledger, slot, program_id)
 
-    await arun(nu_log("sync complete"), ctx)
+    await nu.arun(nu.log("sync complete"), ctx)
 
 
-async def Retry_via_driver(
-    ctx: Context, ledger: type[Ledger], slot: int, program_id: str
+async def Retry_via_driver(  # noqa: N802
+    ctx: nu.Context, ledger: type[Ledger], slot: int, program_id: str
 ) -> None:
     """Ad-hoc driver-side retry loop; see FIXME at top of file.
 
@@ -436,11 +419,11 @@ async def Retry_via_driver(
         try:
             await _sync_one_slot(ctx, ledger, slot, program_id)
             return
-        except Exception:  # noqa: BLE001
-            await arun(nu_log("retry slot", slot, "attempt", attempt + 1), ctx)
+        except Exception:
+            await nu.arun(nu.log("retry slot", slot, "attempt", attempt + 1), ctx)
             await asyncio.sleep(delay)
             delay *= 1.5
-    await arun(nu_log("giving up on slot", slot), ctx)
+    await nu.arun(nu.log("giving up on slot", slot), ctx)
 
 
 # =============================================================================
@@ -465,11 +448,11 @@ async def main() -> None:
     try:
         with tempfile.TemporaryDirectory() as tmp:
             db_path = args.db_path or str(Path(tmp) / "ledger")
-            with rocksdb_storage_inmemory(db_path) as storage:
+            with v.rocksdb_storage_inmemory(db_path) as storage:
                 nav = Navigator(storage)
                 with storage.transaction() as tx:
                     ctx = (
-                        Context()
+                        nu.Context()
                         .bind(Navigator, nav)
                         .bind(TransactionProtocol, tx)
                         .bind(SolanaRpc, rpc)
@@ -478,14 +461,14 @@ async def main() -> None:
                     slot_to = args.slot_from + args.slots
 
                     # Seed the ledger sets once (idempotent -- init if missing).
-                    init = VTransaction(
-                        Sequential(
-                            IfDo(Ledger.slots_synced.missing(), Ledger.slots_synced.store(set())),
-                            IfDo(Ledger.slots_dropped.missing(), Ledger.slots_dropped.store(set())),
+                    init = v.Transaction(
+                        nu.Sequential(
+                            nu.IfDo(Ledger.slots_synced.missing(), Ledger.slots_synced.store(set())),
+                            nu.IfDo(Ledger.slots_dropped.missing(), Ledger.slots_dropped.store(set())),
                         ),
                     )
-                    init = inline_refs(init)
-                    await arun(init, ctx)
+                    init = v.inline_refs(init)
+                    await nu.arun(init, ctx)
 
                     print(f"syncing slots {args.slot_from} -> {slot_to}")
                     print(f"endpoint: {args.endpoint}")

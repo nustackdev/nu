@@ -21,13 +21,8 @@ from pathlib import Path
 
 import httpx
 
+import nu
 import nu.virtuals as v
-from nu import Context, IntForm, arun
-from nu.context import ServiceRef, method_query
-from nu.core.io import print as nu_print
-from nu.domains.shape import Shape
-from nu.flows import Delay, ForRangeDo, Race, ReactWhile, Sequential
-from nu.virtuals.presets import text_storage
 from virtuals import Navigator
 from virtuals.tkv.storage import TransactionProtocol
 
@@ -59,25 +54,25 @@ class SolanaClient:
         return rpc_call
 
 
-class Solana(ServiceRef):
+class Solana(nu.ServiceRef):
     """The SolanaClient as a Nu service; ``Solana.slot()`` calls getSlot in-tree."""
 
     service = SolanaClient
 
-    slot = method_query(IntForm, "getSlot")
+    slot = nu.method_query(nu.IntForm, "getSlot")
 
 
 # ---- Shapes ----
 
 
-class SlotData(Shape):
+class SlotData(nu.Shape):
     """Slot tracking (virtuals -- persistent, observable)."""
 
     current = v.IntRef.slot()
     previous = v.IntRef.slot()
 
 
-class Stats(Shape):
+class Stats(nu.Shape):
     """Poll counters (virtuals)."""
 
     polls = v.IntRef.slot()
@@ -92,36 +87,36 @@ POLL_INTERVAL = 2.0
 # ---- Tree ----
 #
 # The whole poll now lives in the tree: each step sleeps, calls getSlot on the
-# bound Solana service, and advances the persistent shape. The RPC is a Nu
-# InvokeAction, so nothing is primed driver-side.
+# bound Solana service, and advances the persistent shape. The RPC is an in-tree
+# dispatch atom, so nothing is primed driver-side.
 
 
 def build_tracker() -> object:
     """Kept as a function so the module imports even when virtuals reactivity is off."""
-    return Sequential(
+    return nu.Sequential(
         # Seed
         SlotData.current.store(Solana.slot()),
         SlotData.previous.store(SlotData.current),
         Stats.polls.store(1),
-        nu_print("start slot", SlotData.current),
+        nu.print("start slot", SlotData.current),
         # Poll + react
-        Race(
+        nu.Race(
             # Producer: sleep + fetch + advance, all in-tree
-            ForRangeDo(
+            nu.ForRangeDo(
                 0,
                 N_POLLS - 1,
-                Sequential(
-                    Delay(POLL_INTERVAL),
+                nu.Sequential(
+                    nu.Delay(POLL_INTERVAL),
                     SlotData.previous.store(SlotData.current),
                     SlotData.current.store(Solana.slot()),
                     Stats.polls.store(Stats.polls + 1),
                 ),
             ),
             # Consumer: react to slot changes (see NOTE at top -- deferred)
-            ReactWhile(
+            nu.ReactWhile(
                 SlotData.current.on_change(),  # FIXME: virtuals reactivity deferred
                 Stats.polls < N_POLLS,
-                nu_print(
+                nu.print(
                     "slot",
                     SlotData.current,
                     "delta",
@@ -130,8 +125,8 @@ def build_tracker() -> object:
             ),
         ),
         # Final report
-        nu_print("final slot", SlotData.current),
-        nu_print("total polls", Stats.polls),
+        nu.print("final slot", SlotData.current),
+        nu.print("total polls", Stats.polls),
     )
 
 
@@ -143,17 +138,17 @@ async def main() -> None:
 
     with tempfile.TemporaryDirectory() as tmp:
         db_path = str(Path(tmp) / "slots")
-        with text_storage(db_path) as storage:
+        with v.text_storage(db_path) as storage:
             nav = Navigator(storage)
             with storage.transaction() as tx:
                 ctx = (
-                    Context()
+                    nu.Context()
                     .bind(Navigator, nav)
                     .bind(TransactionProtocol, tx)
                     .bind(SolanaClient, client)
                 )
                 tree = v.auto_atomic(build_tracker())
-                await arun(tree, ctx)
+                await nu.arun(tree, ctx)
 
 
 if __name__ == "__main__":
