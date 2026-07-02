@@ -18,40 +18,63 @@ Usage::
 """
 
 from nu.mem.refs import (
+    BasisPointRef,
     BoolRef,
     BytesRef,
+    ComplexRef,
+    DateRef,
+    DatetimeRef,
+    DecimalRef,
     DictRef,
     FloatRef,
+    FractionRef,
     IntRef,
     ItemRef,
     ListRef,
+    PathRef,
+    PercentageRef,
     RefBase,
     SetRef,
     ShapeRef,
     ShapesDictRef,
     ShapesListRef,
     StrRef,
+    TimedeltaRef,
+    TimeRef,
+    TimezoneRef,
+    UUIDRef,
 )
 
 
 # --- ported incrementally during the P2 v2 port ------------------------------
-# Collection refs (DictRef/ListRef/SetRef/ShapeRef/ShapesDictRef/ShapesListRef),
-# the stdlib-typed refs (-> P4), jqueue (deferred pass), and tree/inline_refs are
-# re-added here as each lands on the v2 substrate seam.
+# jqueue (deferred pass) and tree/inline_refs are re-added here as each lands on
+# the v2 substrate seam.
 
 
 __all__ = [
+    "BasisPointRef",
     "BoolRef",
     "BytesRef",
+    "ComplexRef",
+    "DateRef",
+    "DatetimeRef",
+    "DecimalRef",
     "DictRef",
     "FloatRef",
+    "FractionRef",
     "IntRef",
     "ItemRef",
     "ListRef",
+    "PathRef",
+    "PercentageRef",
     "RefBase",
     "SetRef",
     "ShapeRef",
     "ShapesDictRef",
     "ShapesListRef",
     "StrRef",
+    "TimeRef",
+    "TimedeltaRef",
+    "TimezoneRef",
+    "UUIDRef",
 ]

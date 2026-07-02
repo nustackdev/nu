@@ -1,71 +1,54 @@
-# ruff: noqa: D102
-"""Dict storage refs for standard library types.
+"""Dict-substrate refs for standard-library value types.
 
-These refs store values in nested Python dicts with serialization/deserialization.
+Each ref is a typed slot in the nested-dict substrate whose stored form differs
+from its domain type, so it overrides ``store`` (domain -> storage) and
+``coerce`` (storage -> domain). The value interface comes from mixing in the
+matching ``nu.std`` Form, exactly as ``IntRef`` mixes in ``IntForm``.
 
 Storage formats:
-- Decimal: str (exact representation)
-- Fraction: str ("numerator/denominator")
-- Complex: str ("real,imag")
-- BasisPoint: int (raw basis points)
-- Percentage: float (raw percentage)
-- Date: str (ISO format YYYY-MM-DD)
-- Datetime: str (ISO format)
-- Time: str (ISO format HH:MM:SS[.ffffff])
-- Timedelta: float (total_seconds)
-- Timezone: str (offset like "+05:30")
-- Path: str
-- UUID: str (hex format)
+- Decimal / Fraction / complex / Path / UUID: ``str``
+- date / datetime / time / timezone: ``str`` (ISO / offset)
+- BasisPoint: ``int`` (raw basis points)
+- Percentage: ``float`` (raw percentage)
+- timedelta: ``float`` (total seconds)
 """
 
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, time, timedelta, timezone
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Self
 
-from nu import (
-    Arg,
-    FuncCall,
-    MethodCall,
-    NoneForm,
-    Nu,
-    ToFloat,
-    ToInt,
-    ToStr,
-)
-from nu.shapes import Slot
-from nu.shapes.commands.item import ItemStoreCmd
-from nu.stdlib import BasisPoint, Percentage
-from nu.stdlib.cmath import ComplexI, _ComplexI
-from nu.stdlib.datetime import (
-    DateI,
-    DatetimeI,
-    TimedeltaI,
-    TimeI,
-    TimezoneI,
-    _DateI,
-    _DatetimeI,
-    _TimedeltaI,
-    _TimeI,
-    _TimezoneI,
-)
-from nu.stdlib.decimal import DecimalI, _DecimalI
-from nu.stdlib.fin import BasisPointI, PercentageI, _BasisPointI, _PercentageI
-from nu.stdlib.fractions import FractionI, _FractionI
-from nu.stdlib.pathlib import PathI, _PathI
-from nu.stdlib.uuid import _UUIDI, UUIDI
-from nu.terms import Mode
+from nu import FloatForm, IntForm, Nu, StrForm
+from nu.core import FloatQuery, IntQuery, StrQuery
+from nu.domains.shape import Slot, StoreCommand
+from nu.std.cmath import complex as ComplexForm
+from nu.std.datetime import date as DateForm
+from nu.std.datetime import datetime as DatetimeForm
+from nu.std.datetime import time as TimeForm
+from nu.std.datetime import timedelta as TimedeltaForm
+from nu.std.datetime import timezone as TimezoneForm
+from nu.std.datetime.interactions import TimedeltaTotalSeconds
+from nu.std.decimal import Decimal as DecimalForm
+from nu.std.fin import BasisPoint as BasisPointForm
+from nu.std.fin import Percentage as PercentageForm
+from nu.std.fin.native import BasisPoint, Percentage
+from nu.std.fractions import Fraction as FractionForm
+from nu.std.pathlib import Path as PathForm
+from nu.std.uuid import UUID as UUIDForm
 
-from .base import RefBase
+from .items import ItemRef
 
 
 if TYPE_CHECKING:
     from decimal import Decimal
     from fractions import Fraction
-    from pathlib import Path
+    from pathlib import PurePath
     from uuid import UUID
 
-    from nu.shapes import Shape
+    from nu.domains.shape.dsl import Shape
+    from nu.lang import Arg
+
+    from .base import RefBase
 
 
 __all__ = [
@@ -84,489 +67,452 @@ __all__ = [
 ]
 
 
+def _parse_timezone(raw: str) -> timezone:
+    """Parse ``str(timezone)`` output (``"UTC"`` or ``"UTC+05:30"``)."""
+    s = raw[3:] if raw.startswith("UTC") else raw
+    if not s:
+        return UTC
+    sign = 1 if s[0] == "+" else -1
+    parts = s[1:].split(":")
+    hours = int(parts[0])
+    minutes = int(parts[1]) if len(parts) > 1 else 0
+    return timezone(timedelta(hours=sign * hours, minutes=sign * minutes))
+
+
 # =============================================================================
-# NUMERIC DICT REFS
+# NUMERIC REFS
 # =============================================================================
 
 
-class DecimalRef(RefBase[str], _DecimalI):
-    """Dict storage ref for Decimal values. Stores as str."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class DecimalRef(ItemRef, DecimalForm):
+    """Dict Decimal ref. Stores as str (exact representation)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: str | Nu,
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(
+            address,
+            value_type=str,
+            value_value_type=StrForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
-    def slot(cls) -> DecimalRef:
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a Decimal value."""
         return Slot(cls)  # type: ignore[return-value]
 
     def coerce(self, raw: object) -> Decimal:
+        """Parse the stored str back to a Decimal."""
         from decimal import Decimal as DecimalCls
 
-        return DecimalCls(raw) if not isinstance(raw, DecimalCls) else raw
+        return raw if isinstance(raw, DecimalCls) else DecimalCls(raw)  # type: ignore[arg-type]
 
-    def result(self, op: Nu) -> object:
-        return DecimalI.from_str(op)
-
-    def store(self, value: Arg[Decimal | str]) -> NoneForm:
-        if isinstance(value, Nu):
-            val = ToStr(value)
-        else:
-            val = str(value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[Decimal | str]) -> StoreCommand:
+        """Serialize the Decimal to str, then write it."""
+        val = StrQuery(value) if isinstance(value, Nu) else str(value)
+        return StoreCommand(self, val)
 
 
-class FractionRef(RefBase[str], _FractionI):
-    """Dict storage ref for Fraction values. Stores as str."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class FractionRef(ItemRef, FractionForm):
+    """Dict Fraction ref. Stores as str (``"numerator/denominator"``)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: str | Nu,
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(
+            address,
+            value_type=str,
+            value_value_type=StrForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
-    def slot(cls) -> FractionRef:
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a Fraction value."""
         return Slot(cls)  # type: ignore[return-value]
 
     def coerce(self, raw: object) -> Fraction:
+        """Parse the stored str back to a Fraction."""
         from fractions import Fraction as FractionCls
 
-        return FractionCls(raw) if not isinstance(raw, FractionCls) else raw
+        return raw if isinstance(raw, FractionCls) else FractionCls(raw)  # type: ignore[arg-type]
 
-    def result(self, op: Nu) -> object:
-        return FractionI.from_str(op)
-
-    def store(self, value: Arg[Fraction | str]) -> NoneForm:
-        if isinstance(value, Nu):
-            val = ToStr(value)
-        else:
-            val = str(value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[Fraction | str]) -> StoreCommand:
+        """Serialize the Fraction to str, then write it."""
+        val = StrQuery(value) if isinstance(value, Nu) else str(value)
+        return StoreCommand(self, val)
 
 
-class ComplexRef(RefBase[str], _ComplexI):
-    """Dict storage ref for complex values. Stores as str ("real,imag")."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class ComplexRef(ItemRef, ComplexForm):
+    """Dict complex ref. Stores as str (``str(complex)``, round-trips)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: str | Nu,
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(
+            address,
+            value_type=str,
+            value_value_type=StrForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
-    def slot(cls) -> ComplexRef:
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a complex value."""
         return Slot(cls)  # type: ignore[return-value]
 
     def coerce(self, raw: object) -> complex:
-        if isinstance(raw, complex):
-            return raw
-        parts = str(raw).split(",")
-        return complex(float(parts[0]), float(parts[1]))
+        """Parse the stored str back to a complex."""
+        return raw if isinstance(raw, complex) else complex(raw)  # type: ignore[arg-type]
 
-    def result(self, op: Nu) -> object:
-        def parse_complex(s: str) -> complex:
-            parts = s.split(",")
-            return complex(float(parts[0]), float(parts[1]))
-
-        return ComplexI(FuncCall(parse_complex, op))
-
-    def store(self, value: Arg[complex | str]) -> NoneForm:
-        # complex uses custom "real,imag" format — str(complex) gives "(1+2j)"
-        if isinstance(value, Nu):
-
-            def format_complex(c: complex) -> str:
-                return f"{c.real},{c.imag}"
-
-            val = FuncCall(format_complex, value)
-        elif isinstance(value, complex):
-            val = f"{value.real},{value.imag}"
-        else:
-            val = str(value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[complex | str]) -> StoreCommand:
+        """Serialize the complex to str, then write it."""
+        val = StrQuery(value) if isinstance(value, Nu) else str(value)
+        return StoreCommand(self, val)
 
 
-class BasisPointRef(RefBase[int], _BasisPointI):
-    """Dict storage ref for BasisPoint values. Stores as int."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class BasisPointRef(ItemRef, BasisPointForm):
+    """Dict BasisPoint ref. Stores as int (raw basis points)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: str | Nu,
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(
+            address,
+            value_type=int,
+            value_value_type=IntForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
-    def slot(cls) -> BasisPointRef:
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a BasisPoint value."""
         return Slot(cls)  # type: ignore[return-value]
 
     def coerce(self, raw: object) -> BasisPoint:
-        return BasisPoint(int(raw)) if not isinstance(raw, BasisPoint) else raw
+        """Wrap the stored int back as a BasisPoint."""
+        return raw if isinstance(raw, BasisPoint) else BasisPoint(int(raw))  # type: ignore[arg-type]
 
-    def result(self, op: Nu) -> object:
-        return BasisPointI.from_int(op)
-
-    def store(self, value: Arg[BasisPoint | int]) -> NoneForm:
-        if isinstance(value, Nu):
-            val = ToInt(value)
-        else:
-            val = int(value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[BasisPoint | int]) -> StoreCommand:
+        """Serialize the BasisPoint to int, then write it."""
+        val = IntQuery(value) if isinstance(value, Nu) else int(value)
+        return StoreCommand(self, val)
 
 
-class PercentageRef(RefBase[float], _PercentageI):
-    """Dict storage ref for Percentage values. Stores as float."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class PercentageRef(ItemRef, PercentageForm):
+    """Dict Percentage ref. Stores as float (raw percentage)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: str | Nu,
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(
+            address,
+            value_type=float,
+            value_value_type=FloatForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
-    def slot(cls) -> PercentageRef:
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a Percentage value."""
         return Slot(cls)  # type: ignore[return-value]
 
     def coerce(self, raw: object) -> Percentage:
-        return Percentage(float(raw)) if not isinstance(raw, Percentage) else raw
+        """Wrap the stored float back as a Percentage."""
+        return raw if isinstance(raw, Percentage) else Percentage(float(raw))  # type: ignore[arg-type]
 
-    def result(self, op: Nu) -> object:
-        return PercentageI.from_float(op)
-
-    def store(self, value: Arg[Percentage | float]) -> NoneForm:
-        if isinstance(value, Nu):
-            val = ToFloat(value)
-        else:
-            val = float(value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[Percentage | float]) -> StoreCommand:
+        """Serialize the Percentage to float, then write it."""
+        val = FloatQuery(value) if isinstance(value, Nu) else float(value)
+        return StoreCommand(self, val)
 
 
 # =============================================================================
-# DATETIME DICT REFS
+# DATETIME REFS
 # =============================================================================
 
 
-class DateRef(RefBase[str], _DateI):
-    """Dict storage ref for date values. Stores as str (ISO format)."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class DateRef(ItemRef, DateForm):
+    """Dict date ref. Stores as ISO str."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: str | Nu,
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(
+            address,
+            value_type=str,
+            value_value_type=StrForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
-    def slot(cls) -> DateRef:
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a date value."""
         return Slot(cls)  # type: ignore[return-value]
 
     def coerce(self, raw: object) -> date:
-        if isinstance(raw, date):
-            return raw
-        return date.fromisoformat(str(raw))
+        """Parse the stored ISO str back to a date."""
+        return raw if isinstance(raw, date) else date.fromisoformat(str(raw))
 
-    def result(self, op: Nu) -> object:
-        return DateI.from_iso(op)
-
-    def store(self, value: Arg[date | str]) -> NoneForm:
-        """Stores as ISO string."""
+    def store(self, value: Arg[date | str]) -> StoreCommand:
+        """Serialize the date to an ISO str, then write it."""
         if isinstance(value, Nu):
-            val = ToStr(value)
+            val = StrQuery(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return ItemStoreCmd(self, val)
+        return StoreCommand(self, val)
 
 
-class DatetimeRef(RefBase[str], _DatetimeI):
-    """Dict storage ref for datetime values. Stores as str (ISO format)."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class DatetimeRef(ItemRef, DatetimeForm):
+    """Dict datetime ref. Stores as ISO str."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: str | Nu,
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(
+            address,
+            value_type=str,
+            value_value_type=StrForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
-    def slot(cls) -> DatetimeRef:
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a datetime value."""
         return Slot(cls)  # type: ignore[return-value]
 
     def coerce(self, raw: object) -> datetime:
+        """Parse the stored ISO str (or epoch) back to a datetime."""
+        from datetime import UTC
+
         if isinstance(raw, datetime):
             return raw
         if isinstance(raw, (int, float)):
             return datetime.fromtimestamp(raw, tz=UTC)
         return datetime.fromisoformat(str(raw))
 
-    def result(self, op: Nu) -> object:
-        return DatetimeI.from_iso(op)
-
-    def store(self, value: Arg[datetime | str]) -> DatetimeI:
-        """Stores as ISO string."""
+    def store(self, value: Arg[datetime | str]) -> StoreCommand:
+        """Serialize the datetime to an ISO str, then write it."""
         if isinstance(value, Nu):
-            val = ToStr(value)
+            val = StrQuery(value)
         else:
             val = value.isoformat() if isinstance(value, datetime) else str(value)
-        return DatetimeI(ItemStoreCmd(self, val))
+        return StoreCommand(self, val)
 
 
-class TimeRef(RefBase[str], _TimeI):
-    """Dict storage ref for time values. Stores as str (ISO format)."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class TimeRef(ItemRef, TimeForm):
+    """Dict time ref. Stores as ISO str."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: str | Nu,
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(
+            address,
+            value_type=str,
+            value_value_type=StrForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
-    def slot(cls) -> TimeRef:
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a time value."""
         return Slot(cls)  # type: ignore[return-value]
 
     def coerce(self, raw: object) -> time:
-        if isinstance(raw, time):
-            return raw
-        return time.fromisoformat(str(raw))
+        """Parse the stored ISO str back to a time."""
+        return raw if isinstance(raw, time) else time.fromisoformat(str(raw))
 
-    def result(self, op: Nu) -> object:
-        return TimeI.from_iso(op)
-
-    def store(self, value: Arg[time | str]) -> TimeI:
-        """Stores as ISO string."""
+    def store(self, value: Arg[time | str]) -> StoreCommand:
+        """Serialize the time to an ISO str, then write it."""
         if isinstance(value, Nu):
-            val = ToStr(value)
+            val = StrQuery(value)
         else:
             val = value.isoformat() if isinstance(value, time) else str(value)
-        return TimeI(ItemStoreCmd(self, val))
+        return StoreCommand(self, val)
 
 
-class TimedeltaRef(RefBase[float], _TimedeltaI):
-    """Dict storage ref for timedelta values. Stores as float (seconds)."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class TimedeltaRef(ItemRef, TimedeltaForm):
+    """Dict timedelta ref. Stores as float (total seconds)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: str | Nu,
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(
+            address,
+            value_type=float,
+            value_value_type=FloatForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
-    def slot(cls) -> TimedeltaRef:
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a timedelta value."""
         return Slot(cls)  # type: ignore[return-value]
 
     def coerce(self, raw: object) -> timedelta:
-        if isinstance(raw, timedelta):
-            return raw
-        return timedelta(seconds=float(raw))
+        """Rebuild the timedelta from the stored total-seconds float."""
+        return raw if isinstance(raw, timedelta) else timedelta(seconds=float(raw))  # type: ignore[arg-type]
 
-    def result(self, op: Nu) -> object:
-        return TimedeltaI.from_seconds(op)
-
-    def store(self, value: Arg[timedelta | float]) -> TimedeltaI:
-        """Stores as float (total seconds)."""
+    def store(self, value: Arg[timedelta | float]) -> StoreCommand:
+        """Serialize the timedelta to total-seconds float, then write it."""
         if isinstance(value, Nu):
-            # timedelta is stdlib — no __float__, so use .total_seconds()
-            val = MethodCall(value, "total_seconds")
+            val = TimedeltaTotalSeconds(value)
         elif isinstance(value, timedelta):
             val = value.total_seconds()
         else:
             val = float(value)
-        return TimedeltaI(ItemStoreCmd(self, val))
+        return StoreCommand(self, val)
 
 
-class TimezoneRef(RefBase[str], _TimezoneI):
-    """Dict storage ref for timezone values. Stores as str (offset)."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class TimezoneRef(ItemRef, TimezoneForm):
+    """Dict timezone ref. Stores as str (``str(timezone)`` offset)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: str | Nu,
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(
+            address,
+            value_type=str,
+            value_value_type=StrForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
-    def slot(cls) -> TimezoneRef:
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a timezone value."""
         return Slot(cls)  # type: ignore[return-value]
 
     def coerce(self, raw: object) -> timezone:
-        if isinstance(raw, timezone):
-            return raw
-        s = str(raw)
-        if s == "UTC":
-            from datetime import UTC
+        """Parse the stored offset str back to a timezone."""
+        return raw if isinstance(raw, timezone) else _parse_timezone(str(raw))
 
-            return UTC  # type: ignore[return-value]
-        sign = 1 if s[0] == "+" else -1
-        parts = s[1:].split(":")
-        hours = int(parts[0])
-        minutes = int(parts[1]) if len(parts) > 1 else 0
-        return timezone(timedelta(hours=sign * hours, minutes=sign * minutes))
-
-    def result(self, op: Nu) -> object:
-        def parse_timezone(s: str) -> timezone:
-            if s == "UTC":
-                from datetime import UTC
-
-                return UTC
-            sign = 1 if s[0] == "+" else -1
-            parts = s[1:].split(":")
-            hours = int(parts[0])
-            minutes = int(parts[1]) if len(parts) > 1 else 0
-            return timezone(timedelta(hours=sign * hours, minutes=sign * minutes))
-
-        return TimezoneI(FuncCall(parse_timezone, op))
-
-    def store(self, value: Arg[timezone | str]) -> TimezoneI:
-        # timezone uses custom offset format — no standard dunder
-        if isinstance(value, Nu):
-
-            def format_timezone(tz: timezone) -> str:
-                from datetime import UTC
-
-                if tz == UTC:
-                    return "UTC"
-                offset = tz.utcoffset(None)
-                total_seconds = int(offset.total_seconds())
-                sign = "+" if total_seconds >= 0 else "-"
-                total_seconds = abs(total_seconds)
-                hours = total_seconds // 3600
-                minutes = (total_seconds % 3600) // 60
-                return f"{sign}{hours:02d}:{minutes:02d}"
-
-            val = FuncCall(format_timezone, value)
-        elif isinstance(value, timezone):
-            from datetime import UTC
-
-            if value == UTC:
-                val = "UTC"
-            else:
-                offset = value.utcoffset(None)
-                total_seconds = int(offset.total_seconds())
-                sign = "+" if total_seconds >= 0 else "-"
-                total_seconds = abs(total_seconds)
-                hours = total_seconds // 3600
-                minutes = (total_seconds % 3600) // 60
-                val = f"{sign}{hours:02d}:{minutes:02d}"
-        else:
-            val = str(value)
-        return TimezoneI(ItemStoreCmd(self, val))
+    def store(self, value: Arg[timezone | str]) -> StoreCommand:
+        """Serialize the timezone to its offset str, then write it."""
+        val = StrQuery(value) if isinstance(value, Nu) else str(value)
+        return StoreCommand(self, val)
 
 
 # =============================================================================
-# PATH AND UUID DICT REFS
+# PATH AND UUID REFS
 # =============================================================================
 
 
-class PathRef(RefBase[str], _PathI):
-    """Dict storage ref for Path values. Stores as str."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class PathRef(ItemRef, PathForm):
+    """Dict Path ref. Stores as str."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: str | Nu,
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(
+            address,
+            value_type=str,
+            value_value_type=StrForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
-    def slot(cls) -> PathRef:
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a Path value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> Path:
+    def coerce(self, raw: object) -> PurePath:
+        """Parse the stored str back to a PurePath."""
         from pathlib import PurePath
 
-        return PurePath(raw) if not isinstance(raw, PurePath) else raw
+        return raw if isinstance(raw, PurePath) else PurePath(str(raw))
 
-    def result(self, op: Nu) -> object:
-        return PathI.from_str(op)
-
-    def store(self, value: Arg[Path | str]) -> PathI:
-        if isinstance(value, Nu):
-            val = ToStr(value)
-        else:
-            val = str(value)
-        return PathI(ItemStoreCmd(self, val))
+    def store(self, value: Arg[PurePath | str]) -> StoreCommand:
+        """Serialize the Path to str, then write it."""
+        val = StrQuery(value) if isinstance(value, Nu) else str(value)
+        return StoreCommand(self, val)
 
 
-class UUIDRef(RefBase[str], _UUIDI):
-    """Dict storage ref for UUID values. Stores as str."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class UUIDRef(ItemRef, UUIDForm):
+    """Dict UUID ref. Stores as str."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: str | Nu,
-        parent: RefBase | None = None,
+        parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address=address, parent=parent, owner_shape=owner_shape)
+        super().__init__(
+            address,
+            value_type=str,
+            value_value_type=StrForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
 
     @classmethod
-    def slot(cls) -> UUIDRef:
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a UUID value."""
         return Slot(cls)  # type: ignore[return-value]
 
     def coerce(self, raw: object) -> UUID:
+        """Parse the stored str back to a UUID."""
         import uuid
 
-        return uuid.UUID(raw) if not isinstance(raw, uuid.UUID) else raw
+        return raw if isinstance(raw, uuid.UUID) else uuid.UUID(str(raw))
 
-    def result(self, op: Nu) -> object:
-        return UUIDI.from_str(op)
-
-    def store(self, value: Arg[UUID | str]) -> UUIDI:
-        if isinstance(value, Nu):
-            val = ToStr(value)
-        else:
-            val = str(value)
-        return UUIDI(ItemStoreCmd(self, val))
+    def store(self, value: Arg[UUID | str]) -> StoreCommand:
+        """Serialize the UUID to str, then write it."""
+        val = StrQuery(value) if isinstance(value, Nu) else str(value)
+        return StoreCommand(self, val)

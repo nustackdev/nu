@@ -227,6 +227,10 @@ convention = "google"
 "**/ops/control/**/*.py" = [
     "ANN401",  # Any type needed for polymorphic control op parameters
 ]
+"**/refs/items_extended.py" = [
+    "N811",   # std Forms (UUID) aliased as *Form to not shadow the stdlib type
+    "N812",   # std Forms (date, complex, ...) aliased as *Form for the same reason
+]
 
 [tool.ruff.lint.isort]
 known-first-party = [

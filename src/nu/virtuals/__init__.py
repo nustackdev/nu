@@ -49,27 +49,39 @@ from nu.virtuals.presets import (
     text_storage,
 )
 from nu.virtuals.refs import (
+    BasisPointRef,
     BoolRef,
     BytesRef,
+    ComplexRef,
+    DateRef,
+    DatetimeRef,
+    DecimalRef,
     DictRef,
     Facet,
     FloatRef,
+    FractionRef,
     IntRef,
     ItemRef,
     ListRef,
+    PathRef,
+    PercentageRef,
     PrimitiveRef,
     SetRef,
     ShapeRef,
     ShapesDictRef,
     ShapesListRef,
     StrRef,
+    TimedeltaRef,
+    TimeRef,
+    TimezoneRef,
+    UUIDRef,
     ViewRef,
 )
 from nu.virtuals.tree import auto_atomic, inline_refs
 
 
 # --- deferred during the v2 port ---------------------------------------------
-# stdlib-typed refs (items_extended), write-back views (views/writeback),
+# write-back views (views/writeback),
 # auto_flow_atomic / auto_total_atomic / optimize_primitive_reads|writes,
 # PrimitiveDictRef/PrimitiveListRef/PrimitiveSetRef — re-added as each lands on
 # the v2 substrate seam.
@@ -120,4 +132,17 @@ __all__ = [  # noqa: RUF022
     "ShapesListRef",
     "StrRef",
     "ViewRef",
+    # Refs — stdlib-typed (items_extended)
+    "BasisPointRef",
+    "ComplexRef",
+    "DateRef",
+    "DatetimeRef",
+    "DecimalRef",
+    "FractionRef",
+    "PathRef",
+    "PercentageRef",
+    "TimeRef",
+    "TimedeltaRef",
+    "TimezoneRef",
+    "UUIDRef",
 ]

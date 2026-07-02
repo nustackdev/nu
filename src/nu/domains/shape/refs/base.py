@@ -114,8 +114,13 @@ class _StructuredRef(Ref):
         return raw
 
     async def acoerce(self, raw: object) -> object:
-        """Async sibling of :meth:`coerce`. Identity by default."""
-        return raw
+        """Async sibling of :meth:`coerce`; delegates to it by default.
+
+        Coercion is pure storage->domain shaping, so the async path reuses the
+        sync ``coerce``. A ref overriding only ``coerce`` is therefore correct on
+        both read paths; override this too only for genuinely async coercion.
+        """
+        return self.coerce(raw)
 
     # --- repr ----------------------------------------------------------------
 

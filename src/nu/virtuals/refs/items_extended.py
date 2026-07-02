@@ -1,63 +1,40 @@
-"""virtuals storage refs for standard library types.
+"""virtuals-substrate refs for standard-library value types.
 
-These refs store values in virtuals storage with serialization/deserialization.
-Pattern: virtuals*Ref = ItemRef[StorageType, StrForm] + *Type + load/store methods
+Each ref is a typed leaf on the virtuals View substrate whose stored form differs
+from its domain type, so it overrides ``store`` (domain -> storage) and
+``coerce`` (storage -> domain). The value interface comes from mixing in the
+matching ``nu.std`` Form, exactly as ``IntRef`` mixes in ``IntForm``.
 
 Storage formats:
-- Decimal: str (exact representation)
-- Fraction: str ("numerator/denominator")
-- Complex: str ("real,imag")
-- BasisPoint: int (raw basis points)
-- Percentage: float (raw percentage)
-- Date: str (ISO format YYYY-MM-DD)
-- Datetime: str (ISO format)
-- Time: str (ISO format HH:MM:SS[.ffffff])
-- Timedelta: float (total_seconds)
-- Timezone: str (offset like "+05:30")
-- Path: str
-- UUID: str (hex format)
+- Decimal / Fraction / complex / Path / UUID: ``str``
+- date / datetime / time / timezone: ``str`` (ISO / offset)
+- BasisPoint: ``int`` (raw basis points)
+- Percentage: ``float`` (raw percentage)
+- timedelta: ``float`` (total seconds)
 """
 
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, time, timedelta, timezone
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Self
 
-from nu import (
-    Arg,
-    FloatForm,
-    FuncCall,
-    IntForm,
-    MethodCall,
-    NoneForm,
-    Nu,
-    StrForm,
-    ToFloat,
-    ToInt,
-    ToStr,
-)
-from nu.shapes import Slot
-from nu.shapes.commands import ItemStoreCmd
-from nu.stdlib import BasisPoint, Percentage
-from nu.stdlib.cmath import ComplexI, _ComplexI
-from nu.stdlib.datetime import (
-    DateI,
-    DatetimeI,
-    TimedeltaI,
-    TimeI,
-    TimezoneI,
-    _DateI,
-    _DatetimeI,
-    _TimedeltaI,
-    _TimeI,
-    _TimezoneI,
-)
-from nu.stdlib.decimal import DecimalI, _DecimalI
-from nu.stdlib.fin import BasisPointI, PercentageI, _BasisPointI, _PercentageI
-from nu.stdlib.fractions import FractionI, _FractionI
-from nu.stdlib.pathlib import PathI, _PathI
-from nu.stdlib.uuid import _UUIDI, UUIDI
-from nu.terms import Mode
+from nu import FloatForm, IntForm, Nu, StrForm
+from nu.core import FloatQuery, IntQuery, StrQuery
+from nu.domains.shape import Slot, StoreCommand
+from nu.std.cmath import complex as ComplexForm
+from nu.std.datetime import date as DateForm
+from nu.std.datetime import datetime as DatetimeForm
+from nu.std.datetime import time as TimeForm
+from nu.std.datetime import timedelta as TimedeltaForm
+from nu.std.datetime import timezone as TimezoneForm
+from nu.std.datetime.interactions import TimedeltaTotalSeconds
+from nu.std.decimal import Decimal as DecimalForm
+from nu.std.fin import BasisPoint as BasisPointForm
+from nu.std.fin import Percentage as PercentageForm
+from nu.std.fin.native import BasisPoint, Percentage
+from nu.std.fractions import Fraction as FractionForm
+from nu.std.pathlib import Path as PathForm
+from nu.std.uuid import UUID as UUIDForm
 
 from .items import ItemRef
 
@@ -65,14 +42,13 @@ from .items import ItemRef
 if TYPE_CHECKING:
     from decimal import Decimal
     from fractions import Fraction
-    from pathlib import Path
-    from typing import Self
+    from pathlib import PurePath
     from uuid import UUID
 
-    from nu.shapes import Shape
-    from virtuals.loc import path
+    from nu.domains.shape.dsl import Shape
+    from nu.lang import Arg
 
-    from .base import ViewRef
+    from .base import PrimitiveRef
 
 
 __all__ = [
@@ -91,579 +67,452 @@ __all__ = [
 ]
 
 
+def _parse_timezone(raw: str) -> timezone:
+    """Parse ``str(timezone)`` output (``"UTC"`` or ``"UTC+05:30"``)."""
+    s = raw[3:] if raw.startswith("UTC") else raw
+    if not s:
+        return UTC
+    sign = 1 if s[0] == "+" else -1
+    parts = s[1:].split(":")
+    hours = int(parts[0])
+    minutes = int(parts[1]) if len(parts) > 1 else 0
+    return timezone(timedelta(hours=sign * hours, minutes=sign * minutes))
+
+
 # =============================================================================
-# NUMERIC virtuals REFS
+# NUMERIC REFS
 # =============================================================================
 
 
-class DecimalRef(ItemRef[str, StrForm], _DecimalI):
-    """virtuals storage ref for Decimal values. Stores as str."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class DecimalRef(ItemRef, DecimalForm):
+    """virtuals Decimal ref. Stores as str (exact representation)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
-        parent: ViewRef | None = None,
+        parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=str,
             value_value_type=StrForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for Decimal values."""
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a Decimal value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> Decimal:  # noqa: D102
+    def coerce(self, raw: object) -> Decimal:
+        """Parse the stored str back to a Decimal."""
         from decimal import Decimal as DecimalCls
 
-        return DecimalCls(raw) if not isinstance(raw, DecimalCls) else raw
+        return raw if isinstance(raw, DecimalCls) else DecimalCls(raw)  # type: ignore[arg-type]
 
-    def result(self, op: Nu) -> object:  # noqa: D102
-        return DecimalI.from_str(op)
-
-    def store(self, value: Arg[Decimal | str]) -> NoneForm:
-        """Store the Decimal value."""
-        if isinstance(value, Nu):
-            val = ToStr(value)
-        else:
-            val = str(value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[Decimal | str]) -> StoreCommand:
+        """Serialize the Decimal to str, then write it."""
+        val = StrQuery(value) if isinstance(value, Nu) else str(value)
+        return StoreCommand(self, val)
 
 
-class FractionRef(ItemRef[str, StrForm], _FractionI):
-    """virtuals storage ref for Fraction values. Stores as str."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class FractionRef(ItemRef, FractionForm):
+    """virtuals Fraction ref. Stores as str (``"numerator/denominator"``)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
-        parent: ViewRef | None = None,
+        parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=str,
             value_value_type=StrForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for Fraction values."""
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a Fraction value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> Fraction:  # noqa: D102
+    def coerce(self, raw: object) -> Fraction:
+        """Parse the stored str back to a Fraction."""
         from fractions import Fraction as FractionCls
 
-        return FractionCls(raw) if not isinstance(raw, FractionCls) else raw
+        return raw if isinstance(raw, FractionCls) else FractionCls(raw)  # type: ignore[arg-type]
 
-    def result(self, op: Nu) -> object:  # noqa: D102
-        return FractionI.from_str(op)
-
-    def store(self, value: Arg[Fraction | str]) -> NoneForm:
-        """Store the Fraction value."""
-        if isinstance(value, Nu):
-            val = ToStr(value)
-        else:
-            val = str(value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[Fraction | str]) -> StoreCommand:
+        """Serialize the Fraction to str, then write it."""
+        val = StrQuery(value) if isinstance(value, Nu) else str(value)
+        return StoreCommand(self, val)
 
 
-class ComplexRef(ItemRef[str, StrForm], _ComplexI):
-    """virtuals storage ref for complex values. Stores as str ("real,imag")."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class ComplexRef(ItemRef, ComplexForm):
+    """virtuals complex ref. Stores as str (``str(complex)``, round-trips)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
-        parent: ViewRef | None = None,
+        parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=str,
             value_value_type=StrForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for complex values."""
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a complex value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> complex:  # noqa: D102
-        if isinstance(raw, complex):
-            return raw
-        parts = str(raw).split(",")
-        return complex(float(parts[0]), float(parts[1]))
+    def coerce(self, raw: object) -> complex:
+        """Parse the stored str back to a complex."""
+        return raw if isinstance(raw, complex) else complex(raw)  # type: ignore[arg-type]
 
-    def result(self, op: Nu) -> object:  # noqa: D102
-        def parse_complex(s: str) -> complex:
-            parts = s.split(",")
-            return complex(float(parts[0]), float(parts[1]))
-
-        return ComplexI(FuncCall(parse_complex, op))
-
-    def store(self, value: Arg[complex | str]) -> NoneForm:
-        """Store the complex value."""
-        if isinstance(value, complex):
-            val = f"{value.real},{value.imag}"
-        elif isinstance(value, str):
-            val = value
-        else:
-
-            def format_complex(c: complex) -> str:
-                return f"{c.real},{c.imag}"
-
-            val = FuncCall(format_complex, value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[complex | str]) -> StoreCommand:
+        """Serialize the complex to str, then write it."""
+        val = StrQuery(value) if isinstance(value, Nu) else str(value)
+        return StoreCommand(self, val)
 
 
-class BasisPointRef(ItemRef[int, IntForm], _BasisPointI):
-    """virtuals storage ref for BasisPoint values. Stores as int."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class BasisPointRef(ItemRef, BasisPointForm):
+    """virtuals BasisPoint ref. Stores as int (raw basis points)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
-        parent: ViewRef | None = None,
+        parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=int,
             value_value_type=IntForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for BasisPoint values."""
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a BasisPoint value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> BasisPoint:  # noqa: D102
-        return BasisPoint(int(raw)) if not isinstance(raw, BasisPoint) else raw
+    def coerce(self, raw: object) -> BasisPoint:
+        """Wrap the stored int back as a BasisPoint."""
+        return raw if isinstance(raw, BasisPoint) else BasisPoint(int(raw))  # type: ignore[arg-type]
 
-    def result(self, op: Nu) -> object:  # noqa: D102
-        return BasisPointI.from_int(op)
-
-    def store(self, value: Arg[BasisPoint | int]) -> NoneForm:
-        """Store the BasisPoint value."""
-        if isinstance(value, Nu):
-            val = ToInt(value)
-        else:
-            val = int(value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[BasisPoint | int]) -> StoreCommand:
+        """Serialize the BasisPoint to int, then write it."""
+        val = IntQuery(value) if isinstance(value, Nu) else int(value)
+        return StoreCommand(self, val)
 
 
-class PercentageRef(ItemRef[float, FloatForm], _PercentageI):
-    """virtuals storage ref for Percentage values. Stores as float."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class PercentageRef(ItemRef, PercentageForm):
+    """virtuals Percentage ref. Stores as float (raw percentage)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
-        parent: ViewRef | None = None,
+        parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=float,
             value_value_type=FloatForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for Percentage values."""
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a Percentage value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> Percentage:  # noqa: D102
-        return Percentage(float(raw)) if not isinstance(raw, Percentage) else raw
+    def coerce(self, raw: object) -> Percentage:
+        """Wrap the stored float back as a Percentage."""
+        return raw if isinstance(raw, Percentage) else Percentage(float(raw))  # type: ignore[arg-type]
 
-    def result(self, op: Nu) -> object:  # noqa: D102
-        return PercentageI.from_float(op)
-
-    def store(self, value: Arg[Percentage | float]) -> NoneForm:
-        """Store the Percentage value."""
-        if isinstance(value, Nu):
-            val = ToFloat(value)
-        else:
-            val = float(value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[Percentage | float]) -> StoreCommand:
+        """Serialize the Percentage to float, then write it."""
+        val = FloatQuery(value) if isinstance(value, Nu) else float(value)
+        return StoreCommand(self, val)
 
 
 # =============================================================================
-# DATETIME virtuals REFS
+# DATETIME REFS
 # =============================================================================
 
 
-class DateRef(ItemRef[str, StrForm], _DateI):
-    """virtuals storage ref for date values. Stores as str (ISO format)."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class DateRef(ItemRef, DateForm):
+    """virtuals date ref. Stores as ISO str."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
-        parent: ViewRef | None = None,
+        parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=str,
             value_value_type=StrForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for date values."""
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a date value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> date:  # noqa: D102
-        if isinstance(raw, date):
-            return raw
-        return date.fromisoformat(str(raw))
+    def coerce(self, raw: object) -> date:
+        """Parse the stored ISO str back to a date."""
+        return raw if isinstance(raw, date) else date.fromisoformat(str(raw))
 
-    def result(self, op: Nu) -> object:  # noqa: D102
-        return DateI.from_iso(op)
-
-    def store(self, value: Arg[date | str]) -> NoneForm:
-        """Store the date value. Stores as ISO string."""
+    def store(self, value: Arg[date | str]) -> StoreCommand:
+        """Serialize the date to an ISO str, then write it."""
         if isinstance(value, Nu):
-            val = ToStr(value)
+            val = StrQuery(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return ItemStoreCmd(self, val)
+        return StoreCommand(self, val)
 
 
-class DatetimeRef(ItemRef[str, StrForm], _DatetimeI):
-    """virtuals storage ref for datetime values. Stores as str (ISO format)."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class DatetimeRef(ItemRef, DatetimeForm):
+    """virtuals datetime ref. Stores as ISO str."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
-        parent: ViewRef | None = None,
+        parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=str,
             value_value_type=StrForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for datetime values."""
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a datetime value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> datetime:  # noqa: D102
+    def coerce(self, raw: object) -> datetime:
+        """Parse the stored ISO str (or epoch) back to a datetime."""
+        from datetime import UTC
+
         if isinstance(raw, datetime):
             return raw
         if isinstance(raw, (int, float)):
             return datetime.fromtimestamp(raw, tz=UTC)
         return datetime.fromisoformat(str(raw))
 
-    def result(self, op: Nu) -> object:  # noqa: D102
-        return DatetimeI.from_iso(op)
-
-    def store(self, value: Arg[datetime | str]) -> NoneForm:
-        """Store the datetime value. Stores as ISO string."""
+    def store(self, value: Arg[datetime | str]) -> StoreCommand:
+        """Serialize the datetime to an ISO str, then write it."""
         if isinstance(value, Nu):
-            val = ToStr(value)
+            val = StrQuery(value)
         else:
             val = value.isoformat() if isinstance(value, datetime) else str(value)
-        return ItemStoreCmd(self, val)
+        return StoreCommand(self, val)
 
 
-class TimeRef(ItemRef[str, StrForm], _TimeI):
-    """virtuals storage ref for time values. Stores as str (ISO format)."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class TimeRef(ItemRef, TimeForm):
+    """virtuals time ref. Stores as ISO str."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
-        parent: ViewRef | None = None,
+        parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=str,
             value_value_type=StrForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for time values."""
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a time value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> time:  # noqa: D102
-        if isinstance(raw, time):
-            return raw
-        return time.fromisoformat(str(raw))
+    def coerce(self, raw: object) -> time:
+        """Parse the stored ISO str back to a time."""
+        return raw if isinstance(raw, time) else time.fromisoformat(str(raw))
 
-    def result(self, op: Nu) -> object:  # noqa: D102
-        return TimeI.from_iso(op)
-
-    def store(self, value: Arg[time | str]) -> NoneForm:
-        """Store the time value. Stores as ISO string."""
+    def store(self, value: Arg[time | str]) -> StoreCommand:
+        """Serialize the time to an ISO str, then write it."""
         if isinstance(value, Nu):
-            val = ToStr(value)
+            val = StrQuery(value)
         else:
             val = value.isoformat() if isinstance(value, time) else str(value)
-        return ItemStoreCmd(self, val)
+        return StoreCommand(self, val)
 
 
-class TimedeltaRef(ItemRef[float, FloatForm], _TimedeltaI):
-    """virtuals storage ref for timedelta values. Stores as float (seconds)."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class TimedeltaRef(ItemRef, TimedeltaForm):
+    """virtuals timedelta ref. Stores as float (total seconds)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
-        parent: ViewRef | None = None,
+        parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=float,
             value_value_type=FloatForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for timedelta values."""
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a timedelta value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> timedelta:  # noqa: D102
-        if isinstance(raw, timedelta):
-            return raw
-        return timedelta(seconds=float(raw))
+    def coerce(self, raw: object) -> timedelta:
+        """Rebuild the timedelta from the stored total-seconds float."""
+        return raw if isinstance(raw, timedelta) else timedelta(seconds=float(raw))  # type: ignore[arg-type]
 
-    def result(self, op: Nu) -> object:  # noqa: D102
-        return TimedeltaI.from_seconds(op)
-
-    def store(self, value: Arg[timedelta | float]) -> NoneForm:
-        """Store the timedelta value. Stores as float (seconds)."""
+    def store(self, value: Arg[timedelta | float]) -> StoreCommand:
+        """Serialize the timedelta to total-seconds float, then write it."""
         if isinstance(value, Nu):
-            # timedelta is stdlib — no __float__, so use .total_seconds()
-            val = MethodCall(value, "total_seconds")
+            val = TimedeltaTotalSeconds(value)
         elif isinstance(value, timedelta):
             val = value.total_seconds()
         else:
             val = float(value)
-        return ItemStoreCmd(self, val)
+        return StoreCommand(self, val)
 
 
-class TimezoneRef(ItemRef[str, StrForm], _TimezoneI):
-    """virtuals storage ref for timezone values. Stores as str (offset)."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class TimezoneRef(ItemRef, TimezoneForm):
+    """virtuals timezone ref. Stores as str (``str(timezone)`` offset)."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
-        parent: ViewRef | None = None,
+        parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=str,
             value_value_type=StrForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for timezone values."""
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a timezone value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> timezone:  # noqa: D102
-        if isinstance(raw, timezone):
-            return raw
-        s = str(raw)
-        if s == "UTC":
-            from datetime import UTC
+    def coerce(self, raw: object) -> timezone:
+        """Parse the stored offset str back to a timezone."""
+        return raw if isinstance(raw, timezone) else _parse_timezone(str(raw))
 
-            return UTC
-        sign = 1 if s[0] == "+" else -1
-        parts = s[1:].split(":")
-        hours = int(parts[0])
-        minutes = int(parts[1]) if len(parts) > 1 else 0
-        return timezone(timedelta(hours=sign * hours, minutes=sign * minutes))
-
-    def result(self, op: Nu) -> object:  # noqa: D102
-        def parse_timezone(s: str) -> timezone:
-            if s == "UTC":
-                from datetime import UTC
-
-                return UTC
-            sign = 1 if s[0] == "+" else -1
-            parts = s[1:].split(":")
-            hours = int(parts[0])
-            minutes = int(parts[1]) if len(parts) > 1 else 0
-            return timezone(timedelta(hours=sign * hours, minutes=sign * minutes))
-
-        return TimezoneI(FuncCall(parse_timezone, op))
-
-    def store(self, value: Arg[timezone | str]) -> NoneForm:
-        """Store the timezone value."""
-        if isinstance(value, timezone):
-            from datetime import UTC
-
-            if value == UTC:
-                val = "UTC"
-            else:
-                offset = value.utcoffset(None)
-                total_seconds = int(offset.total_seconds())
-                sign = "+" if total_seconds >= 0 else "-"
-                total_seconds = abs(total_seconds)
-                hours = total_seconds // 3600
-                minutes = (total_seconds % 3600) // 60
-                val = f"{sign}{hours:02d}:{minutes:02d}"
-        elif isinstance(value, str):
-            val = value
-        else:
-
-            def format_timezone(tz: timezone) -> str:
-                from datetime import UTC
-
-                if tz == UTC:
-                    return "UTC"
-                offset = tz.utcoffset(None)
-                total_seconds = int(offset.total_seconds())
-                sign = "+" if total_seconds >= 0 else "-"
-                total_seconds = abs(total_seconds)
-                hours = total_seconds // 3600
-                minutes = (total_seconds % 3600) // 60
-                return f"{sign}{hours:02d}:{minutes:02d}"
-
-            val = FuncCall(format_timezone, value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[timezone | str]) -> StoreCommand:
+        """Serialize the timezone to its offset str, then write it."""
+        val = StrQuery(value) if isinstance(value, Nu) else str(value)
+        return StoreCommand(self, val)
 
 
 # =============================================================================
-# PATH AND UUID virtuals REFS
+# PATH AND UUID REFS
 # =============================================================================
 
 
-class PathRef(ItemRef[str, StrForm], _PathI):
-    """virtuals storage ref for Path values. Stores as str."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class PathRef(ItemRef, PathForm):
+    """virtuals Path ref. Stores as str."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
-        parent: ViewRef | None = None,
+        parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=str,
             value_value_type=StrForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for Path values."""
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a Path value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> Path:  # noqa: D102
+    def coerce(self, raw: object) -> PurePath:
+        """Parse the stored str back to a PurePath."""
         from pathlib import PurePath
 
-        return PurePath(raw) if not isinstance(raw, PurePath) else raw
+        return raw if isinstance(raw, PurePath) else PurePath(str(raw))
 
-    def result(self, op: Nu) -> object:  # noqa: D102
-        return PathI.from_str(op)
-
-    def store(self, value: Arg[Path | str]) -> NoneForm:
-        """Store the Path value."""
-        if isinstance(value, Nu):
-            val = ToStr(value)
-        else:
-            val = str(value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[PurePath | str]) -> StoreCommand:
+        """Serialize the Path to str, then write it."""
+        val = StrQuery(value) if isinstance(value, Nu) else str(value)
+        return StoreCommand(self, val)
 
 
-class UUIDRef(ItemRef[str, StrForm], _UUIDI):
-    """virtuals storage ref for UUID values. Stores as str."""
-
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.SYNC, Mode.ASYNC})
+class UUIDRef(ItemRef, UUIDForm):
+    """virtuals UUID ref. Stores as str."""
 
     def __init__(
         self,
+        address: str | int | Nu,
         *,
-        address: path.PathAddress | Nu,
-        parent: ViewRef | None = None,
+        parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(
-            address=address,
+            address,
             value_type=str,
             value_value_type=StrForm,
-            parent=parent,
+            parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
     @classmethod
-    def slot(cls) -> Self:
-        """Create a slot for UUID values."""
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a UUID value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> UUID:  # noqa: D102
+    def coerce(self, raw: object) -> UUID:
+        """Parse the stored str back to a UUID."""
         import uuid
 
-        return uuid.UUID(raw) if not isinstance(raw, uuid.UUID) else raw
+        return raw if isinstance(raw, uuid.UUID) else uuid.UUID(str(raw))
 
-    def result(self, op: Nu) -> object:  # noqa: D102
-        return UUIDI.from_str(op)
-
-    def store(self, value: Arg[UUID | str]) -> NoneForm:
-        """Store the UUID value."""
-        if isinstance(value, Nu):
-            val = ToStr(value)
-        else:
-            val = str(value)
-        return ItemStoreCmd(self, val)
+    def store(self, value: Arg[UUID | str]) -> StoreCommand:
+        """Serialize the UUID to str, then write it."""
+        val = StrQuery(value) if isinstance(value, Nu) else str(value)
+        return StoreCommand(self, val)
