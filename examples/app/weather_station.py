@@ -4,8 +4,8 @@ A producer writes sensor readings in a loop while two reactive consumers race
 alongside it, reacting to each change and updating a dashboard. Shapes live on
 the virtuals substrate, so leaf ``.on_change()`` yields a live subscription.
 
-``DelayedDo(0.02, nu.Noop())`` uses ``Noop`` (the empty Flow) as its body, so
-the loop body is just a wait -- a bodyless delay.
+``nu.Delay(0.02)`` in the producer loop is a bare wait -- a childless delay
+flow, no body.
 """
 
 from __future__ import annotations
@@ -68,7 +68,7 @@ def build_tree() -> nu.Nu:
                     nu.Sequential(
                         Station.temperature.store(Station.temperature + TEMP_DRIFT),
                         Station.wind_speed.store(Station.wind_speed + WIND_DRIFT),
-                        nu.DelayedDo(0.02, nu.Noop()),
+                        nu.Delay(0.02),
                     ),
                 ),
             ),

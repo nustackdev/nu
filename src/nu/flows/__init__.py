@@ -5,12 +5,14 @@ Two families plus the reactive set:
 - **Strategy** - compose mutating atoms directly: ``Sequential`` (``>>``),
   ``Parallel`` (``|``), ``Race`` (``&``), ``Gather``, ``AnyN``.
 - **Control** - compose bodies under Query parameters: ``IfDo``, ``WhileDo``,
-  ``ForeverDo``, ``ForEachDo``, ``ForRangeDo``, ``DelayedDo``, ``SwitchDo``.
+  ``ForeverDo``, ``ForEachDo``, ``ForRangeDo``, ``Delay``, ``DelayedDo``,
+  ``SwitchDo``.
 - **Reactive** - consume change subscriptions and execute bodies in response:
   ``React``, ``ReactWhile``, ``ReactForever``, ``Stream``.
 """
 
 from .control import (
+    Delay,
     DelayedDo,
     ForEachDo,
     ForeverDo,
@@ -27,6 +29,7 @@ from .stream import Stream
 
 __all__ = [
     "AnyN",
+    "Delay",
     "DelayedDo",
     "ForEachDo",
     "ForRangeDo",

@@ -1,4 +1,4 @@
-"""Tests for the Control flows: IfDo, WhileDo, ForeverDo, ForEachDo, ForRangeDo, DelayedDo, SwitchDo.
+"""Tests for the Control flows: IfDo, WhileDo, ForeverDo, ForEachDo, ForRangeDo, Delay, DelayedDo, SwitchDo.
 
 Control flows steer bodies under Query parameters. Coverage builds real
 programs - condition / counter / iterable parameters over ``SetCommand`` bodies
@@ -11,6 +11,7 @@ from __future__ import annotations
 from nu.context import AttrRef, SetCommand
 from nu.core import AddQuery, IterQuery, LiteralQuery, LtQuery
 from nu.flows.control import (
+    Delay,
     DelayedDo,
     ForEachDo,
     ForeverDo,
@@ -43,7 +44,7 @@ def _seed(**attrs: object) -> Context:
 
 
 def test_controls_are_control():
-    for kind in (IfDo, WhileDo, ForeverDo, ForEachDo, ForRangeDo, DelayedDo, SwitchDo):
+    for kind in (IfDo, WhileDo, ForeverDo, ForEachDo, ForRangeDo, Delay, DelayedDo, SwitchDo):
         assert issubclass(kind, Control)
 
 
@@ -135,6 +136,30 @@ def test_forrange_honours_step_and_custom_index_name():
     body = SetCommand(AttrRef("sum"), AddQuery(AttrRef("sum"), AttrRef("k")))
     _, ctx = run(ForRangeDo(0, 10, body, step=2, index="k"), _seed(sum=0))
     assert ctx.attrs["sum"] == 20  # 0 + 2 + 4 + 6 + 8
+
+
+# --- Delay ----------------------------------------------------------------
+
+
+def test_delay_is_childless_control():
+    d = Delay(LiteralQuery(0.0))
+    assert isinstance(d, Control)
+    assert len(d.children) == 1  # the delay param, no body
+
+
+def test_delay_runs_and_yields_none():
+    value, _ = run(Delay(LiteralQuery(0.0)))
+    assert value is None
+
+
+async def test_delay_runs_async():
+    value, _ = await arun(Delay(LiteralQuery(0.0)))
+    assert value is None
+
+
+def test_delay_composes_before_body():
+    _, ctx = run(Delay(LiteralQuery(0.0)) >> _set("a", 1))
+    assert ctx.attrs["a"] == 1
 
 
 # --- DelayedDo ------------------------------------------------------------

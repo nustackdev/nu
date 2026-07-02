@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 __all__ = [
+    "Delay",
     "DelayedDo",
     "ForEachDo",
     "ForRangeDo",
@@ -220,11 +221,40 @@ class ForRangeDo(Control):
         return athunk
 
 
+class Delay(Control):
+    """``Delay(seconds)`` - sleep ``seconds``, then continue; no body.
+
+    A childless delay: slot 0 is the delay parameter, there is no body. Runs
+    anywhere - the sync path uses ``time.sleep``, the async path
+    ``asyncio.sleep`` - so it picks the right primitive per execution mode.
+    For "wait, then run something", use ``DelayedDo`` or ``Delay(s) >> body``.
+    """
+
+    param_slots = Declared(value=frozenset({0}))
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (delay_t,) = children
+
+        def thunk(rt: Runtime) -> None:
+            time.sleep(delay_t(rt))
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        (delay_t,) = children
+
+        async def athunk(rt: Runtime) -> None:
+            await asyncio.sleep(await delay_t(rt))
+
+        return athunk
+
+
 class DelayedDo(Control):
     """``DelayedDo(delay, body)`` - sleep ``delay`` seconds, then run ``body``.
 
     Children: ``[delay, body]``. Slot 0 is the delay parameter; slot 1 the
-    body. Sync path uses ``time.sleep``, async path ``asyncio.sleep``.
+    body. Sync path uses ``time.sleep``, async path ``asyncio.sleep``. This is
+    sugar for ``Delay(delay) >> body``; for a bare wait, use ``Delay``.
     """
 
     param_slots = Declared(value=frozenset({0}))

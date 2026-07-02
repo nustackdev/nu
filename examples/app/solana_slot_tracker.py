@@ -6,7 +6,7 @@ tracks poll stats, reacts to slot changes on terminal.
 Uses:
   ServiceRef        -> Solana JSON-RPC client bound on the Context
   nu.virtuals       -> slot data (persistent, observable)
-  nu.flows          -> Sequential, ForRangeDo, Race, DelayedDo
+  nu.flows          -> Sequential, ForRangeDo, Race, Delay
   nu.core.io.print  -> stdio fabric writes
   ReactWhile        -> reactive subscription (virtuals-side reactivity is
                        deferred, so the react branch is a placeholder today)
@@ -28,10 +28,9 @@ import httpx
 import nu.virtuals as v
 from nu import Context, arun
 from nu.context import IntAttrRef, ServiceRef
-from nu.core import Noop
 from nu.core.io import print as nu_print
 from nu.domains.shape import Shape
-from nu.flows import DelayedDo, ForRangeDo, ReactWhile, Race, Sequential
+from nu.flows import Delay, ForRangeDo, ReactWhile, Race, Sequential
 from nu.virtuals.presets import text_storage
 from virtuals import Navigator
 from virtuals.tkv.storage import TransactionProtocol
@@ -120,7 +119,7 @@ def build_tracker() -> object:
                 0,
                 N_POLLS - 1,
                 Sequential(
-                    DelayedDo(POLL_INTERVAL, Noop()),
+                    Delay(POLL_INTERVAL),
                     SlotData.previous.store(SlotData.current),
                     SlotData.current.store(IntAttrRef("fetched_slot")),
                     Stats.polls.store(Stats.polls + 1),
