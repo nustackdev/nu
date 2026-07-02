@@ -2,43 +2,56 @@
 
 A nudle Ref is a Nu Ref whose storage is a ws connection to a browser
 tab. The class name is the wire identifier the browser uses to pick a
-renderer; the methods a Ref exposes (`store`, `append`, `fetch`,
-`changed`, ...) decide which interactions it accepts.
+renderer; the methods a Ref exposes (`store`, `append`, `changed`, ...)
+decide which interactions it accepts.
 
 Display Refs (server -> tab) override `store` / `append`. Input Refs
-(tab -> server) also override `aeval` to fetch the live value through
-session.aread, and `changed` to register a Subscription.
+(tab -> server) also override `acompile` to fetch the live value through
+`session.aread` (via `_aread`), and `changed` to register a Subscription.
+
+Built on `_StructuredRef`, the storage-agnostic shape-fabric Ref seam:
+it supplies the parent chain (`_parent_ref`), `owner_shape`, and
+`get_root_shape`; nudle fills the substrate plug-point `aresolve_address`
+(the wire path) and the async read path. nudle is async-only.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, Self
 
-from nu import Nu
-from nu.shapes.refs import Ref
-from nu.shapes.shape.slot import Slot
-from nu.terms.types import Mode
+from nu.domains.shape import Slot
+from nu.domains.shape.refs.base import _StructuredRef
+from nu.engine.structure import Declared
 
 
 if TYPE_CHECKING:
-    from nu import Context
+    from collections.abc import Callable
+
+    from nu.domains.shape.dsl import Shape
+    from nu.lang.runtime import Runtime
 
 
 __all__ = ["NudleRef"]
 
 
-class NudleRef(Ref[Any]):
-    """Base for Refs that live in a browser tab over ws."""
+class NudleRef(_StructuredRef):
+    """Base for Refs that live in a browser tab over ws. Async-only."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
+    requires_async = Declared(value=True)
 
-    async def afetch_parent(self, ctx: Context) -> object:
-        raise NotImplementedError("nudle refs do not expose a parent view")
+    def __init__(
+        self,
+        address: object,
+        *,
+        parent_ref: NudleRef | None = None,
+        owner_shape: type[Shape] | None = None,
+    ) -> None:
+        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
+        self._segment = address  # raw static segment, for parent-chain path building
 
-    async def aresolve(self, ctx: Context) -> str:
-        return await self.aresolve_address(ctx)
+    # --- wire-path resolution ------------------------------------------------
 
-    async def aresolve_address(self, ctx: Context) -> str:
+    async def aresolve_address(self, rt: Runtime, nid: int) -> str:
         """Wire path for this Ref.
 
         Walks the parent chain to collect segment addresses, then:
@@ -48,17 +61,14 @@ class NudleRef(Ref[Any]):
           via `Section._nudle_mount` and prefix
           "<PageShapeName>.<section_slot_path>." then join segments.
         """
-        from nu import runtime
-
-        # Collect address segments from root to self.
-        segments: list[str] = []
-        cur: Ref | None = self
+        # Leaf address may be computed; resolve it through the runtime. Ancestor
+        # segments are static slot names read straight off the parent chain.
+        leaf = await self.aaddress(rt, nid)
+        segments: list[str] = [str(leaf)]
+        cur = self._parent_ref
         while cur is not None:
-            addr = cur.address
-            if isinstance(addr, Nu):
-                addr = await runtime.afirst(addr, ctx)
-            segments.append(str(addr))
-            cur = cur.parent
+            segments.append(str(cur._segment))  # type: ignore[attr-defined]
+            cur = cur._parent_ref
         segments.reverse()
 
         root = self.get_root_shape()
@@ -75,13 +85,31 @@ class NudleRef(Ref[Any]):
             return ".".join([page_cls.__name__, *slot_path, *segments])
         return ".".join(segments)
 
-    def eval(self, ctx: Context) -> Any:
-        raise RuntimeError("nudle is async-only; use aexecute")
+    # --- execution (async-only) ----------------------------------------------
 
-    async def aeval(self, ctx: Context) -> Any:
-        raise NotImplementedError(
-            f"{type(self).__name__} is display-only; reading is not supported",
-        )
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> Any:
+            raise RuntimeError("nudle is async-only; use nu.arun")
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> Any:
+            raise NotImplementedError(
+                f"{type(self).__name__} is display-only; reading is not supported",
+            )
+
+        return athunk
+
+    async def _aread(self, rt: Runtime, nid: int) -> Any:
+        """Round-trip read of the live browser value (input Refs override acompile)."""
+        from ..session import NudleSession
+
+        session = rt.ctx.get(NudleSession)
+        path = await self.aresolve_address(rt, nid)
+        return self.coerce(await session.aread(path))
+
+    # --- mount ---------------------------------------------------------------
 
     @classmethod
     def mount_props(cls) -> dict[str, object]:

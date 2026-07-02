@@ -12,10 +12,10 @@ import asyncio
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import nu
 import uvicorn
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
-from nu import runtime
 from nu.tree.walk import preorder
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -125,7 +125,7 @@ def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
         )
         per_conn_ctx = ctx.bind(NudleSession, session)
         intake_task = asyncio.create_task(session.run_intake())
-        eval_task = asyncio.create_task(runtime.aexecute(app, per_conn_ctx))
+        eval_task = asyncio.create_task(nu.arun(app, per_conn_ctx))
         try:
             done, _ = await asyncio.wait(
                 {intake_task, eval_task},

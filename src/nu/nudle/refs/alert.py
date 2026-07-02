@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Literal
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.changed import Changed
 from ..interactions.write import Write
@@ -39,16 +39,16 @@ class AlertRef(NudleRef):
         }
 
     def store_variant(self, name: Nu | Variant | str) -> Nu:
-        return Write(self, Record(variant=name))
+        return Write(self, DictForm.of(variant=name))
 
     def store_title(self, text: Nu | str) -> Nu:
-        return Write(self, Record(title=text))
+        return Write(self, DictForm.of(title=text))
 
     def store_body(self, text: Nu | str) -> Nu:
-        return Write(self, Record(body=text))
+        return Write(self, DictForm.of(body=text))
 
     def store_dismissible(self, flag: Nu | bool) -> Nu:
-        return Write(self, Record(dismissible=flag))
+        return Write(self, DictForm.of(dismissible=flag))
 
     def store(
         self,
@@ -64,7 +64,7 @@ class AlertRef(NudleRef):
             payload["variant"] = variant
         if dismissible is not None:
             payload["dismissible"] = dismissible
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))
 
     def dismissed(self) -> Changed:
         return Changed(self)

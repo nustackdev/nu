@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any
 
-from nu.terms.command import ScalarCommand
-from nu.terms.types import Effect, Mode
+from nu.engine.structure import Declared
+from nu.lang import Command
 
 from ..protocol import Frame
 from ..session import NudleSession
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from nu import Nu
+    from nu.lang.runtime import Runtime
 
     from ..refs.base import NudleRef
 
@@ -20,26 +23,33 @@ if TYPE_CHECKING:
 __all__ = ["Write"]
 
 
-class Write(ScalarCommand):
+class Write(Command):
     """Send a `write` frame on a nudle Ref."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
+    mutates = Declared(value=frozenset({0}))
+    requires_async = Declared(value=True)
 
     def __init__(self, ref: NudleRef, value: Nu | Any) -> None:
         super().__init__(ref, value)
 
-    async def arun(self, ctx: Any) -> None:
-        from nu import runtime
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            raise RuntimeError("nudle is async-only; use nu.arun")
 
-        ref = self._children[0]
-        session = ctx.get(NudleSession)
-        path = await ref.aresolve_address(ctx)
-        value = await runtime.afirst(self._children[1], ctx)
-        await session.send(Frame(self, ref=path, payload=value))
+        return thunk
 
-    def run(self, ctx: Any) -> None:
-        raise RuntimeError("nudle is async-only; use aexecute")
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: NudleRef = self.children[0]
+        value_thunk = children[1]
+
+        async def athunk(rt: Runtime) -> None:
+            session = rt.ctx.get(NudleSession)
+            ref_nid = rt.program.children[nid][0]
+            path = await ref.aresolve_address(rt, ref_nid)
+            value = await value_thunk(rt)
+            await session.send(Frame(self, ref=path, payload=value))
+
+        return athunk
 
     def __repr__(self) -> str:
-        return f"Write({self._children[0]!r}, {self._children[1]!r})"
+        return f"Write({self.children[0]!r}, {self.children[1]!r})"

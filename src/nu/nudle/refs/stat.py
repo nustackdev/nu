@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Literal
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.write import Write
 from .base import NudleRef
@@ -38,13 +38,13 @@ class StatRef(NudleRef):
         }
 
     def store_label(self, text: Nu | str) -> Nu:
-        return Write(self, Record(label=text))
+        return Write(self, DictForm.of(label=text))
 
     def store_value(self, text: Nu | str) -> Nu:
-        return Write(self, Record(value=text))
+        return Write(self, DictForm.of(value=text))
 
     def store_delta(self, text: Nu | str) -> Nu:
-        return Write(self, Record(delta=text))
+        return Write(self, DictForm.of(delta=text))
 
     def store_trend(self, name: Nu | Trend | str) -> Nu:
-        return Write(self, Record(trend=name))
+        return Write(self, DictForm.of(trend=name))

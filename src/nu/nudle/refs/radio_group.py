@@ -4,16 +4,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.changed import Changed
 from ..interactions.write import Write
-from ..session import NudleSession
 from .base import NudleRef
 
 
 if TYPE_CHECKING:
-    from nu import Context, Nu
+    from collections.abc import Callable
+
+    from nu import Nu
+    from nu.lang.runtime import Runtime
 
 
 __all__ = ["RadioGroupRef"]
@@ -49,10 +51,11 @@ class RadioGroupRef(NudleRef):
             "orientation": cls.orientation,
         }
 
-    async def aeval(self, ctx: Context) -> Any:
-        session = ctx.get(NudleSession)
-        path = await self.aresolve_address(ctx)
-        return await session.aread(path)
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> Any:
+            return await self._aread(rt, nid)
+
+        return athunk
 
     def store(self, value: Nu | str) -> Nu:
         return Write(self, value)
@@ -62,7 +65,7 @@ class RadioGroupRef(NudleRef):
             payload: object = {"options": _normalize_options(opts)}
         else:
             payload = {"options": opts}
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))
 
     def changed(self) -> Changed:
         return Changed(self)

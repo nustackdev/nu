@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms.command import ScalarCommand
-from nu.terms.types import Effect, Mode
+from nu.engine.structure import Declared
+from nu.lang import Command
 
 from ..protocol import Frame
 from ..session import NudleSession
@@ -13,13 +13,16 @@ from .section import Section
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from nu import Nu
+    from nu.lang.runtime import Runtime
 
 
 __all__ = ["CardRef"]
 
 
-class _StoreSectionStr(ScalarCommand):
+class _StoreSectionStr(Command):
     """Send a string-payload Frame to a Section by mount path.
 
     Wire op is supplied at construction time (e.g. "store_title") so the
@@ -27,35 +30,41 @@ class _StoreSectionStr(ScalarCommand):
     class per op.
     """
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
+    mutates = Declared(value=frozenset({0}))
+    requires_async = Declared(value=True)
 
     def __init__(self, section_cls: type[Section], op: str, value: Nu | Any) -> None:
         super().__init__(value)
         self._section_cls = section_cls
         self._op = op
 
-    async def arun(self, ctx: Any) -> None:
-        from nu import runtime
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            raise RuntimeError("nudle is async-only; use nu.arun")
 
-        mount = getattr(self._section_cls, "_nudle_mount", None)
-        if mount is None:
-            raise RuntimeError(
-                f"Section {self._section_cls.__name__} has no mount point. "
-                "Declare it as a Slot on a Page before driving it.",
-            )
-        page_cls, slot_path = mount
-        path = ".".join([page_cls.__name__, *slot_path])
-        session = ctx.get(NudleSession)
-        value = await runtime.afirst(self._children[0], ctx)
-        await session.send(Frame(self._op, ref=path, payload=value))
+        return thunk
 
-    def run(self, ctx: Any) -> None:
-        raise RuntimeError("nudle is async-only; use aexecute")
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        value_thunk = children[0]
+
+        async def athunk(rt: Runtime) -> None:
+            mount = getattr(self._section_cls, "_nudle_mount", None)
+            if mount is None:
+                raise RuntimeError(
+                    f"Section {self._section_cls.__name__} has no mount point. "
+                    "Declare it as a Slot on a Page before driving it.",
+                )
+            page_cls, slot_path = mount
+            path = ".".join([page_cls.__name__, *slot_path])
+            session = rt.ctx.get(NudleSession)
+            value = await value_thunk(rt)
+            await session.send(Frame(self._op, ref=path, payload=value))
+
+        return athunk
 
     def __repr__(self) -> str:
         return (
-            f"_StoreSectionStr({self._section_cls.__name__}, {self._op!r}, {self._children[0]!r})"
+            f"_StoreSectionStr({self._section_cls.__name__}, {self._op!r}, {self.children[0]!r})"
         )
 
 

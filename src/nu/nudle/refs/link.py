@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Literal
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.write import Write
 from .base import NudleRef
@@ -40,16 +40,16 @@ class LinkRef(NudleRef):
         }
 
     def store_href(self, url: Nu | str) -> Nu:
-        return Write(self, Record(href=url))
+        return Write(self, DictForm.of(href=url))
 
     def store_label(self, text: Nu | str) -> Nu:
-        return Write(self, Record(label=text))
+        return Write(self, DictForm.of(label=text))
 
     def store_target(self, name: Nu | Target | str) -> Nu:
-        return Write(self, Record(target=name))
+        return Write(self, DictForm.of(target=name))
 
     def store_external(self, flag: Nu | bool | None) -> Nu:
-        return Write(self, Record(external=flag))
+        return Write(self, DictForm.of(external=flag))
 
     def store(
         self,
@@ -69,4 +69,4 @@ class LinkRef(NudleRef):
             payload["target"] = target
         if external is not _UNSET:
             payload["external"] = external
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))

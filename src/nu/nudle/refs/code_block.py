@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.write import Write
 from .base import NudleRef
@@ -45,10 +45,10 @@ class CodeBlockRef(NudleRef):
             payload["code"] = code
         if language is not None:
             payload["language"] = language
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))
 
     def store_code(self, code: Nu | str) -> Nu:
-        return Write(self, Record(code=code))
+        return Write(self, DictForm.of(code=code))
 
     def store_language(self, language: Nu | str) -> Nu:
-        return Write(self, Record(language=language))
+        return Write(self, DictForm.of(language=language))

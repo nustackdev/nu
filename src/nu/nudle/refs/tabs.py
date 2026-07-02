@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.terms.command import ScalarCommand
-from nu.terms.types import Effect, Mode
+from nu.engine.structure import Declared
+from nu.lang import Command
 
 from ..interactions.changed import Changed
 from ..protocol import Frame
@@ -15,7 +15,10 @@ from .section import Section
 
 
 if TYPE_CHECKING:
-    from nu import Context, Nu
+    from collections.abc import Callable
+
+    from nu import Nu
+    from nu.lang.runtime import Runtime
 
 
 __all__ = ["TabsRef"]
@@ -37,47 +40,61 @@ def _normalize_tabs(raw: object) -> list[dict[str, str]]:
     return out
 
 
-class _StoreTabs(ScalarCommand):
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
+class _StoreTabs(Command):
+    mutates = Declared(value=frozenset({0}))
+    requires_async = Declared(value=True)
 
     def __init__(self, ref: NudleRef, value: Nu | Any) -> None:
         super().__init__(ref, value)
 
-    async def arun(self, ctx: Any) -> None:
-        from nu import runtime
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            raise RuntimeError("nudle is async-only; use nu.arun")
 
-        ref = self._children[0]
-        session = ctx.get(NudleSession)
-        path = await ref.aresolve_address(ctx)
-        value = await runtime.afirst(self._children[1], ctx)
-        if isinstance(value, list):
-            value = _normalize_tabs(value)
-        await session.send(Frame("store_tabs", ref=path, payload=value))
+        return thunk
 
-    def run(self, ctx: Any) -> None:
-        raise RuntimeError("nudle is async-only; use aexecute")
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: NudleRef = self.children[0]
+        value_thunk = children[1]
+
+        async def athunk(rt: Runtime) -> None:
+            session = rt.ctx.get(NudleSession)
+            ref_nid = rt.program.children[nid][0]
+            path = await ref.aresolve_address(rt, ref_nid)
+            value = await value_thunk(rt)
+            if isinstance(value, list):
+                value = _normalize_tabs(value)
+            await session.send(Frame("store_tabs", ref=path, payload=value))
+
+        return athunk
 
 
-class _StoreActive(ScalarCommand):
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
+class _StoreActive(Command):
+    mutates = Declared(value=frozenset({0}))
+    requires_async = Declared(value=True)
 
     def __init__(self, ref: NudleRef, value: Nu | Any) -> None:
         super().__init__(ref, value)
 
-    async def arun(self, ctx: Any) -> None:
-        from nu import runtime
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            raise RuntimeError("nudle is async-only; use nu.arun")
 
-        ref = self._children[0]
-        session = ctx.get(NudleSession)
-        path = await ref.aresolve_address(ctx)
-        value = await runtime.afirst(self._children[1], ctx)
-        payload = "" if value is None else str(value)
-        await session.send(Frame("store_active", ref=path, payload=payload))
+        return thunk
 
-    def run(self, ctx: Any) -> None:
-        raise RuntimeError("nudle is async-only; use aexecute")
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: NudleRef = self.children[0]
+        value_thunk = children[1]
+
+        async def athunk(rt: Runtime) -> None:
+            session = rt.ctx.get(NudleSession)
+            ref_nid = rt.program.children[nid][0]
+            path = await ref.aresolve_address(rt, ref_nid)
+            value = await value_thunk(rt)
+            payload = "" if value is None else str(value)
+            await session.send(Frame("store_active", ref=path, payload=payload))
+
+        return athunk
 
 
 class _TabsMountRef(NudleRef):
@@ -88,10 +105,10 @@ class _TabsMountRef(NudleRef):
     """
 
     def __init__(self, *, section_cls: type[Section]) -> None:
-        super().__init__(address=None, owner_shape=section_cls)
+        super().__init__(None, owner_shape=section_cls)
         self._section_cls = section_cls
 
-    async def aresolve_address(self, ctx: Context) -> str:
+    async def aresolve_address(self, rt: Runtime, nid: int) -> str:
         mount = getattr(self._section_cls, "_nudle_mount", None)
         if mount is None:
             raise RuntimeError(

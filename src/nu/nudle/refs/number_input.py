@@ -4,16 +4,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.changed import Changed
 from ..interactions.write import Write
-from ..session import NudleSession
 from .base import NudleRef
 
 
 if TYPE_CHECKING:
-    from nu import Context, Nu
+    from collections.abc import Callable
+
+    from nu import Nu
+    from nu.lang.runtime import Runtime
 
 
 __all__ = ["NumberInputRef"]
@@ -40,25 +42,26 @@ class NumberInputRef(NudleRef):
             "default": cls.default,
         }
 
-    async def aeval(self, ctx: Context) -> Any:
-        session = ctx.get(NudleSession)
-        path = await self.aresolve_address(ctx)
-        return await session.aread(path)
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> Any:
+            return await self._aread(rt, nid)
+
+        return athunk
 
     def store_value(self, value: Nu | float | int) -> Nu:
-        return Write(self, Record(value=value))
+        return Write(self, DictForm.of(value=value))
 
     def store_min(self, value: Nu | float | int | None) -> Nu:
-        return Write(self, Record(min=value))
+        return Write(self, DictForm.of(min=value))
 
     def store_max(self, value: Nu | float | int | None) -> Nu:
-        return Write(self, Record(max=value))
+        return Write(self, DictForm.of(max=value))
 
     def store_step(self, value: Nu | float | int) -> Nu:
-        return Write(self, Record(step=value))
+        return Write(self, DictForm.of(step=value))
 
     def store_label(self, text: Nu | str) -> Nu:
-        return Write(self, Record(label=text))
+        return Write(self, DictForm.of(label=text))
 
     def store(
         self,
@@ -80,7 +83,7 @@ class NumberInputRef(NudleRef):
             payload["step"] = step
         if label is not None:
             payload["label"] = label
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))
 
     def changed(self) -> Changed:
         return Changed(self)

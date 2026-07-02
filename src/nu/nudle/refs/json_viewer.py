@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Literal
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.write import Write
 from .base import NudleRef
@@ -42,22 +42,22 @@ class JsonViewerRef(NudleRef):
         }
 
     def store_value(self, value: Nu | object) -> Nu:
-        return Write(self, Record(value=value))
+        return Write(self, DictForm.of(value=value))
 
     def store_expand_depth(self, depth: Nu | int) -> Nu:
-        return Write(self, Record(expand_depth=depth))
+        return Write(self, DictForm.of(expand_depth=depth))
 
     def store_theme(self, name: Nu | Theme | str) -> Nu:
-        return Write(self, Record(theme=name))
+        return Write(self, DictForm.of(theme=name))
 
     def store_copyable(self, flag: Nu | bool) -> Nu:
-        return Write(self, Record(copyable=flag))
+        return Write(self, DictForm.of(copyable=flag))
 
     def store_sortable(self, flag: Nu | bool) -> Nu:
-        return Write(self, Record(sortable=flag))
+        return Write(self, DictForm.of(sortable=flag))
 
     def store_max_height(self, px: Nu | int | None) -> Nu:
-        return Write(self, Record(max_height=px))
+        return Write(self, DictForm.of(max_height=px))
 
     def store(
         self,
@@ -79,4 +79,4 @@ class JsonViewerRef(NudleRef):
             payload["sortable"] = sortable
         if max_height is not None:
             payload["max_height"] = max_height
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))

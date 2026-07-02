@@ -23,8 +23,8 @@ from __future__ import annotations
 
 from typing import ClassVar, Self
 
-from nu.shapes.shape import Shape
-from nu.shapes.shape.slot import Slot
+from nu import Shape
+from nu.domains.shape import Slot
 
 from .base import NudleRef
 
@@ -43,12 +43,14 @@ class SectionRef(NudleRef):
 
     def __init__(
         self,
+        address: object,
         *,
         section_cls: type[Section],
-        **kwargs: object,
+        parent_ref: NudleRef | None = None,
+        owner_shape: type[Section] | None = None,
     ) -> None:
         self._section_cls = section_cls
-        super().__init__(**kwargs)
+        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
 
     @property
     def section_cls(self) -> type[Section]:

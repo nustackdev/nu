@@ -115,7 +115,7 @@ async def _serve_module(mod: ModuleType, host: str, port: int) -> None:
 
     async with _enter_context(ctx_value) as ctx:
         bg_tasks = (
-            [asyncio.create_task(nu.runtime.aexecute(bg, ctx), name="bg")] if bg is not None else []
+            [asyncio.create_task(nu.arun(bg, ctx), name="bg")] if bg is not None else []
         )
         fastapi_app = build_fastapi_app(app, ctx)
         config = uvicorn.Config(fastapi_app, host=host, port=port, log_level="info")

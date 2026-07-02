@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.write import Write
 from .base import NudleRef
@@ -33,13 +33,13 @@ class ProgressRef(NudleRef):
         }
 
     def store_value(self, value: Nu | float) -> Nu:
-        return Write(self, Record(value=value))
+        return Write(self, DictForm.of(value=value))
 
     def store_caption(self, text: Nu | str) -> Nu:
-        return Write(self, Record(caption=text))
+        return Write(self, DictForm.of(caption=text))
 
     def store_indeterminate(self, flag: Nu | bool) -> Nu:
-        return Write(self, Record(indeterminate=flag))
+        return Write(self, DictForm.of(indeterminate=flag))
 
     def store(
         self,
@@ -52,4 +52,4 @@ class ProgressRef(NudleRef):
             payload["caption"] = caption
         if indeterminate is not None:
             payload["indeterminate"] = indeterminate
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))

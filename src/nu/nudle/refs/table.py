@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.append import Append
 from ..interactions.changed import Changed
@@ -46,13 +46,13 @@ class TableRef(NudleRef):
         return Write(self, table)
 
     def clear(self) -> Nu:
-        return Write(self, Record(rows=[]))
+        return Write(self, DictForm.of(rows=[]))
 
     def append(self, row: Nu | list[Any]) -> Nu:
         return Append(self, row)
 
     def store_sort(self, column: Nu | str, direction: Nu | str) -> Nu:
-        return Write(self, Record(sort_column=column, sort_direction=direction))
+        return Write(self, DictForm.of(sort_column=column, sort_direction=direction))
 
     def row_clicked(self) -> Changed:
         return Changed(self)

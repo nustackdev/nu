@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Literal
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.write import Write
 from .base import NudleRef
@@ -60,12 +60,12 @@ class Fieldset(Section):
 
     @classmethod
     def store_legend(cls, text: Nu | str) -> Nu:
-        return Write(cls._mount_ref(), Record(legend=text))
+        return Write(cls._mount_ref(), DictForm.of(legend=text))
 
     @classmethod
     def store_gap(cls, value: Nu | Gap | str) -> Nu:
-        return Write(cls._mount_ref(), Record(gap=value))
+        return Write(cls._mount_ref(), DictForm.of(gap=value))
 
     @classmethod
     def store_disabled(cls, flag: Nu | bool) -> Nu:
-        return Write(cls._mount_ref(), Record(disabled=flag))
+        return Write(cls._mount_ref(), DictForm.of(disabled=flag))

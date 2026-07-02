@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from nu.shapes.shape import Shape
+from nu import Shape
 
 from .refs.base import NudleRef
 from .refs.section import Section, SectionRef

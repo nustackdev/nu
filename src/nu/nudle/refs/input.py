@@ -19,12 +19,14 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from ..interactions.changed import Changed
 from ..interactions.write import Write
-from ..session import NudleSession
 from .base import NudleRef
 
 
 if TYPE_CHECKING:
-    from nu import Context, Nu
+    from collections.abc import Callable
+
+    from nu import Nu
+    from nu.lang.runtime import Runtime
 
 
 __all__ = ["InputRef"]
@@ -52,10 +54,11 @@ class InputRef(NudleRef):
             "max_length": cls.max_length,
         }
 
-    async def aeval(self, ctx: Context) -> Any:
-        session = ctx.get(NudleSession)
-        path = await self.aresolve_address(ctx)
-        return await session.aread(path)
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> Any:
+            return await self._aread(rt, nid)
+
+        return athunk
 
     def store(self, value: Nu | str) -> Nu:
         return Write(self, value)

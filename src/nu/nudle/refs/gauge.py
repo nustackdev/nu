@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.write import Write
 from .base import NudleRef
@@ -33,13 +33,13 @@ class GaugeRef(NudleRef):
         }
 
     def store_value(self, value: Nu | float) -> Nu:
-        return Write(self, Record(value=value))
+        return Write(self, DictForm.of(value=value))
 
     def store_caption(self, text: Nu | str) -> Nu:
-        return Write(self, Record(caption=text))
+        return Write(self, DictForm.of(caption=text))
 
     def store_variant(self, variant: Nu | str) -> Nu:
-        return Write(self, Record(variant=variant))
+        return Write(self, DictForm.of(variant=variant))
 
     def store(
         self,
@@ -52,4 +52,4 @@ class GaugeRef(NudleRef):
             payload["caption"] = caption
         if variant is not None:
             payload["variant"] = variant
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))

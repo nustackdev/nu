@@ -21,16 +21,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.changed import Changed
 from ..interactions.write import Write
-from ..session import NudleSession
 from .base import NudleRef
 
 
 if TYPE_CHECKING:
-    from nu import Context, Nu
+    from collections.abc import Callable
+
+    from nu import Nu
+    from nu.lang.runtime import Runtime
 
 
 __all__ = ["NavRef"]
@@ -39,10 +41,11 @@ __all__ = ["NavRef"]
 class NavRef(NudleRef):
     """Bound to window.history + window.location. Index-level structural Ref."""
 
-    async def aeval(self, ctx: Context) -> Any:
-        session = ctx.get(NudleSession)
-        path = await self.aresolve_address(ctx)
-        return await session.aread(path)
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> Any:
+            return await self._aread(rt, nid)
+
+        return athunk
 
     def store(self, value: Nu | str) -> Nu:
         # Bare-string push -- shorthand for {"action": "push", "uri": value}.
@@ -50,13 +53,13 @@ class NavRef(NudleRef):
         return Write(self, value)
 
     def replace(self, value: Nu | str) -> Nu:
-        return Write(self, Record(action="replace", uri=value))
+        return Write(self, DictForm.of(action="replace", uri=value))
 
     def back(self) -> Nu:
-        return Write(self, Record(action="back"))
+        return Write(self, DictForm.of(action="back"))
 
     def forward(self) -> Nu:
-        return Write(self, Record(action="forward"))
+        return Write(self, DictForm.of(action="forward"))
 
     def changed(self) -> Changed:
         return Changed(self)

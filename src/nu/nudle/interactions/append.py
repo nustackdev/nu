@@ -6,17 +6,20 @@ Single-arg form ships the value directly.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any
 
-from nu.terms.command import ScalarCommand
-from nu.terms.types import Effect, Mode
+from nu.engine.structure import Declared
+from nu.lang import Command
 
 from ..protocol import Frame
 from ..session import NudleSession
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from nu import Nu
+    from nu.lang.runtime import Runtime
 
     from ..refs.base import NudleRef
 
@@ -24,28 +27,35 @@ if TYPE_CHECKING:
 __all__ = ["Append"]
 
 
-class Append(ScalarCommand):
+class Append(Command):
     """Send an `append` frame on a nudle Ref."""
 
-    own_effects: ClassVar[dict[int, Effect]] = {0: Effect.WRITE}
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
+    mutates = Declared(value=frozenset({0}))
+    requires_async = Declared(value=True)
 
     def __init__(self, ref: NudleRef, *values: Nu | Any) -> None:
         super().__init__(ref, *values)
 
-    async def arun(self, ctx: Any) -> None:
-        from nu import runtime
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            raise RuntimeError("nudle is async-only; use nu.arun")
 
-        ref = self._children[0]
-        session = ctx.get(NudleSession)
-        path = await ref.aresolve_address(ctx)
-        values = [await runtime.afirst(c, ctx) for c in self._children[1:]]
-        payload = values[0] if len(values) == 1 else values
-        await session.send(Frame(self, ref=path, payload=payload))
+        return thunk
 
-    def run(self, ctx: Any) -> None:
-        raise RuntimeError("nudle is async-only; use aexecute")
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: NudleRef = self.children[0]
+        value_thunks = children[1:]
+
+        async def athunk(rt: Runtime) -> None:
+            session = rt.ctx.get(NudleSession)
+            ref_nid = rt.program.children[nid][0]
+            path = await ref.aresolve_address(rt, ref_nid)
+            values = [await t(rt) for t in value_thunks]
+            payload = values[0] if len(values) == 1 else values
+            await session.send(Frame(self, ref=path, payload=payload))
+
+        return athunk
 
     def __repr__(self) -> str:
-        parts = ", ".join(repr(c) for c in self._children[1:])
-        return f"Append({self._children[0]!r}, {parts})"
+        parts = ", ".join(repr(c) for c in self.children[1:])
+        return f"Append({self.children[0]!r}, {parts})"

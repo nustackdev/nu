@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.append import Append
 from ..interactions.write import Write
@@ -34,19 +34,19 @@ class Sparkline(NudleRef):
         }
 
     def store_points(self, points: Nu | list) -> Nu:
-        return Write(self, Record(points=points))
+        return Write(self, DictForm.of(points=points))
 
     def store_color(self, value: Nu | str) -> Nu:
-        return Write(self, Record(color=value))
+        return Write(self, DictForm.of(color=value))
 
     def store_height(self, value: Nu | int) -> Nu:
-        return Write(self, Record(height=value))
+        return Write(self, DictForm.of(height=value))
 
     def store_max_points(self, value: Nu | int) -> Nu:
-        return Write(self, Record(max_points=value))
+        return Write(self, DictForm.of(max_points=value))
 
     def clear(self) -> Nu:
-        return Write(self, Record(points=[]))
+        return Write(self, DictForm.of(points=[]))
 
     def store(
         self,
@@ -67,7 +67,7 @@ class Sparkline(NudleRef):
             payload["height"] = height
         if max_points is not None:
             payload["max_points"] = max_points
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))
 
     def append(self, x: Nu | float, y: Nu | float) -> Nu:
         return Append(self, x, y)

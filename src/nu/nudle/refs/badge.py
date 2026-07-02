@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Literal
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.write import Write
 from .base import NudleRef
@@ -31,10 +31,10 @@ class BadgeRef(NudleRef):
         return {"label": cls.label, "variant": cls.variant}
 
     def store_label(self, text: Nu | str) -> Nu:
-        return Write(self, Record(label=text))
+        return Write(self, DictForm.of(label=text))
 
     def store_variant(self, name: Nu | Variant | str) -> Nu:
-        return Write(self, Record(variant=name))
+        return Write(self, DictForm.of(variant=name))
 
     def store(
         self,
@@ -44,4 +44,4 @@ class BadgeRef(NudleRef):
         payload: dict[str, object] = {"label": label}
         if variant is not None:
             payload["variant"] = variant
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))

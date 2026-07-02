@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.changed import Changed
 from ..interactions.write import Write
@@ -84,12 +84,12 @@ class AccordionRef(Section):
     @classmethod
     def store_sections(cls, items: Nu | list[dict[str, str]]) -> Nu:
         value = _normalize_sections(items) if isinstance(items, list) else items
-        return Write(cls._mount_ref(), Record(sections=value))
+        return Write(cls._mount_ref(), DictForm.of(sections=value))
 
     @classmethod
     def store_open(cls, ids: Nu | list[str]) -> Nu:
         value = _normalize_open(ids) if isinstance(ids, list) else ids
-        return Write(cls._mount_ref(), Record(open=value))
+        return Write(cls._mount_ref(), DictForm.of(open=value))
 
     @classmethod
     def changed(cls) -> Changed:

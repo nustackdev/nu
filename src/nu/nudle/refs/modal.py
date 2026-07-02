@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Self
 
-from nu.queries.record import Record
-from nu.shapes.shape.slot import Slot
+from nu import DictForm
+from nu.domains.shape import Slot
 
 from ..interactions.changed import Changed
 from ..interactions.write import Write
@@ -23,10 +23,10 @@ class ModalRef(SectionRef):
     """SectionRef backing a Modal slot. Carries Modal-only interaction methods."""
 
     def store_open(self, flag: Nu | bool) -> Nu:
-        return Write(self, Record(open=flag))
+        return Write(self, DictForm.of(open=flag))
 
     def store_title(self, text: Nu | str) -> Nu:
-        return Write(self, Record(title=text))
+        return Write(self, DictForm.of(title=text))
 
     def store(self, open: Nu | bool | None = None, title: Nu | str | None = None) -> Nu:
         payload: dict[str, object] = {}
@@ -34,7 +34,7 @@ class ModalRef(SectionRef):
             payload["open"] = open
         if title is not None:
             payload["title"] = title
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))
 
     def changed(self) -> Changed:
         return Changed(self)

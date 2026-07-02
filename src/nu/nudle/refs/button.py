@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Literal
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.changed import Changed
 from ..interactions.write import Write
@@ -42,13 +42,13 @@ class ButtonRef(NudleRef):
         return Changed(self)
 
     def store_label(self, text: Nu | str) -> Nu:
-        return Write(self, Record(label=text))
+        return Write(self, DictForm.of(label=text))
 
     def store_variant(self, name: Nu | Variant | str) -> Nu:
-        return Write(self, Record(variant=name))
+        return Write(self, DictForm.of(variant=name))
 
     def store_disabled(self, flag: Nu | bool) -> Nu:
-        return Write(self, Record(disabled=flag))
+        return Write(self, DictForm.of(disabled=flag))
 
     def store(
         self,
@@ -64,4 +64,4 @@ class ButtonRef(NudleRef):
             payload["disabled"] = disabled
         if icon is not None:
             payload["icon"] = icon
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))

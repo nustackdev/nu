@@ -25,9 +25,9 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 import nu
-import nu_virtuals as nv
-from nu.shapes.flows.react import ReactForever
-from nu_virtuals.presets import rocksdb_storage_inmemory
+import nu.virtuals as nv
+from nu import ReactForever
+from nu.virtuals.presets import rocksdb_storage_inmemory
 from virtuals import Navigator
 
 

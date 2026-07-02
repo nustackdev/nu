@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Literal
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.append import Append
 from ..interactions.write import Write
@@ -47,37 +47,37 @@ class LineChart(NudleRef):
         }
 
     def store_points(self, points: Nu | list) -> Nu:
-        return Write(self, Record(points=points))
+        return Write(self, DictForm.of(points=points))
 
     def store_series(self, series_list: Nu | list) -> Nu:
-        return Write(self, Record(series=series_list))
+        return Write(self, DictForm.of(series=series_list))
 
     def store_x_label(self, text: Nu | str) -> Nu:
-        return Write(self, Record(x_label=text))
+        return Write(self, DictForm.of(x_label=text))
 
     def store_y_label(self, text: Nu | str) -> Nu:
-        return Write(self, Record(y_label=text))
+        return Write(self, DictForm.of(y_label=text))
 
     def store_color(self, value: Nu | str) -> Nu:
-        return Write(self, Record(color=value))
+        return Write(self, DictForm.of(color=value))
 
     def store_max_points(self, value: Nu | int) -> Nu:
-        return Write(self, Record(max_points=value))
+        return Write(self, DictForm.of(max_points=value))
 
     def store_x_format(self, value: Nu | XFormat | str) -> Nu:
-        return Write(self, Record(x_format=value))
+        return Write(self, DictForm.of(x_format=value))
 
     def store_show_legend(self, flag: Nu | bool) -> Nu:
-        return Write(self, Record(show_legend=flag))
+        return Write(self, DictForm.of(show_legend=flag))
 
     def store_show_tooltip(self, flag: Nu | bool) -> Nu:
-        return Write(self, Record(show_tooltip=flag))
+        return Write(self, DictForm.of(show_tooltip=flag))
 
     def store_palette(self, colors: Nu | list) -> Nu:
-        return Write(self, Record(palette=colors))
+        return Write(self, DictForm.of(palette=colors))
 
     def clear(self) -> Nu:
-        return Write(self, Record(points=[]))
+        return Write(self, DictForm.of(points=[]))
 
     def store(
         self,
@@ -117,11 +117,11 @@ class LineChart(NudleRef):
             payload["show_tooltip"] = show_tooltip
         if palette is not None:
             payload["palette"] = palette
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))
 
     def append(self, x: Nu | float, y: Nu | float) -> Nu:
         return Append(self, x, y)
 
     def append_series(self, name: Nu | str, x: Nu | float, y: Nu | float) -> Nu:
         # single dict payload so the renderer can disambiguate from the single-series [x, y] form.
-        return Append(self, Record(name=name, x=x, y=y))
+        return Append(self, DictForm.of(name=name, x=x, y=y))

@@ -20,10 +20,10 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING, ClassVar
 
 import nu
-import nu_virtuals as nv
-from nu.shapes.flows.react import ReactForever
-from nu.stdlib.asyncio import AsyncSleep
-from nu_virtuals.presets import rocksdb_storage_inmemory
+import nu.virtuals as nv
+from nu import ReactForever
+from nu.std.asyncio import sleep
+from nu.virtuals.presets import rocksdb_storage_inmemory
 from virtuals import Navigator
 
 import nudle
@@ -944,7 +944,7 @@ init_state = nv.Transaction(
 
 
 ticker_bg = init_state >> nu.ForeverDo(
-    nv.Transaction(State.tick.store(State.tick + 1)) >> AsyncSleep(1.0),
+    nv.Transaction(State.tick.store(State.tick + 1)) >> sleep(1.0),
 )
 
 
@@ -954,25 +954,25 @@ tick_chart = nu.ForeverDo(
         Showcase.chart_live.append_series("alpha", State.tick, State.tick)
         | Showcase.chart_live.append_series("beta", State.tick, State.tick + 5),
     )
-    >> AsyncSleep(1.0),
+    >> sleep(1.0),
 )
 
 
 tick_area = nu.ForeverDo(
-    nv.Snapshot(Showcase.area_demo.append(State.tick, State.tick)) >> AsyncSleep(1.0),
+    nv.Snapshot(Showcase.area_demo.append(State.tick, State.tick)) >> sleep(1.0),
 )
 
 
 tick_sparkline = nu.ForeverDo(
     nv.Snapshot(Showcase.sparkline_demo.append(State.tick, State.tick))
-    >> AsyncSleep(1.0),
+    >> sleep(1.0),
 )
 
 
 # Gauge: tick % 100 / 100 -> [0, 1].
 tick_gauge = nu.ForeverDo(
     nv.Snapshot(Showcase.gauge_demo.store_value((State.tick % 100) / 100.0))
-    >> AsyncSleep(1.0),
+    >> sleep(1.0),
 )
 
 

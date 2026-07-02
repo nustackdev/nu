@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Literal
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.append import Append
 from ..interactions.write import Write
@@ -45,31 +45,31 @@ class AreaChart(NudleRef):
         }
 
     def store_points(self, points: Nu | list) -> Nu:
-        return Write(self, Record(points=points))
+        return Write(self, DictForm.of(points=points))
 
     def store_series(self, names: Nu | list) -> Nu:
-        return Write(self, Record(series=names))
+        return Write(self, DictForm.of(series=names))
 
     def store_colors(self, colors: Nu | list) -> Nu:
-        return Write(self, Record(colors=colors))
+        return Write(self, DictForm.of(colors=colors))
 
     def store_stacked(self, flag: Nu | bool) -> Nu:
-        return Write(self, Record(stacked=flag))
+        return Write(self, DictForm.of(stacked=flag))
 
     def store_x_label(self, text: Nu | str) -> Nu:
-        return Write(self, Record(x_label=text))
+        return Write(self, DictForm.of(x_label=text))
 
     def store_y_label(self, text: Nu | str) -> Nu:
-        return Write(self, Record(y_label=text))
+        return Write(self, DictForm.of(y_label=text))
 
     def store_max_points(self, value: Nu | int) -> Nu:
-        return Write(self, Record(max_points=value))
+        return Write(self, DictForm.of(max_points=value))
 
     def store_x_format(self, value: Nu | XFormat | str) -> Nu:
-        return Write(self, Record(x_format=value))
+        return Write(self, DictForm.of(x_format=value))
 
     def clear(self) -> Nu:
-        return Write(self, Record(points=[]))
+        return Write(self, DictForm.of(points=[]))
 
     def store(
         self,
@@ -99,7 +99,7 @@ class AreaChart(NudleRef):
             payload["max_points"] = max_points
         if x_format is not None:
             payload["x_format"] = x_format
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))
 
     def append(self, x: Nu | float, *ys: Nu | float) -> Nu:
         return Append(self, x, *ys)

@@ -5,43 +5,56 @@ No outbound frame is sent when this evaluates -- the browser pushes
 `notify` frames whenever the Ref changes, and session._dispatch fires
 the subscription's callbacks.
 
-We override `aeval` directly (rather than `_aapply`) so the Ref child
-is not itself eval'd: subscribing must not trigger a read.
+We resolve the Ref's wire path but never eval the Ref child: subscribing
+must not trigger a read. React drives the returned Subscription via its
+`bind` / `unbind` / `close` interface.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING
 
-from nu.shapes.queries.reactive import Change
-from nu.terms.types import Mode
+from nu.engine.structure import Declared
+from nu.lang import ScalarQuery
 
-from ..session import NudleSession
+from ..session import NudleSession, Subscription
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from nu.lang.runtime import Runtime
+
     from ..refs.base import NudleRef
 
 
 __all__ = ["Changed"]
 
 
-class Changed(Change):
+class Changed(ScalarQuery):
     """Subscribe to browser-side change notifications on a nudle Ref."""
 
-    support: ClassVar[frozenset[Mode]] = frozenset({Mode.ASYNC})
+    requires_async = Declared(value=True)
 
     def __init__(self, ref: NudleRef) -> None:
         super().__init__(ref)
 
-    def eval(self, ctx: Any) -> Any:
-        raise RuntimeError("nudle is async-only; use aexecute")
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> Subscription:
+            raise RuntimeError("nudle is async-only; use nu.arun")
 
-    async def aeval(self, ctx: Any) -> Any:
-        ref = self._children[0]
-        session = ctx.get(NudleSession)
-        path = await ref.aresolve_address(ctx)
-        return session.subscribe(path)
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: NudleRef = self.children[0]
+
+        async def athunk(rt: Runtime) -> Subscription:
+            session = rt.ctx.get(NudleSession)
+            ref_nid = rt.program.children[nid][0]
+            path = await ref.aresolve_address(rt, ref_nid)
+            return session.subscribe(path)
+
+        return athunk
 
     def __repr__(self) -> str:
-        return f"Changed({self._children[0]!r})"
+        return f"Changed({self.children[0]!r})"

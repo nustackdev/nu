@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Literal
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.append import Append
 from ..interactions.write import Write
@@ -41,25 +41,25 @@ class BarChart(NudleRef):
         }
 
     def store_bars(self, bars: Nu | list) -> Nu:
-        return Write(self, Record(bars=bars))
+        return Write(self, DictForm.of(bars=bars))
 
     def store_x_label(self, text: Nu | str) -> Nu:
-        return Write(self, Record(x_label=text))
+        return Write(self, DictForm.of(x_label=text))
 
     def store_y_label(self, text: Nu | str) -> Nu:
-        return Write(self, Record(y_label=text))
+        return Write(self, DictForm.of(y_label=text))
 
     def store_color(self, value: Nu | str) -> Nu:
-        return Write(self, Record(color=value))
+        return Write(self, DictForm.of(color=value))
 
     def store_orientation(self, value: Nu | Orientation | str) -> Nu:
-        return Write(self, Record(orientation=value))
+        return Write(self, DictForm.of(orientation=value))
 
     def store_max_bars(self, value: Nu | int) -> Nu:
-        return Write(self, Record(max_bars=value))
+        return Write(self, DictForm.of(max_bars=value))
 
     def clear(self) -> Nu:
-        return Write(self, Record(bars=[]))
+        return Write(self, DictForm.of(bars=[]))
 
     def store(
         self,
@@ -86,7 +86,7 @@ class BarChart(NudleRef):
             payload["orientation"] = orientation
         if max_bars is not None:
             payload["max_bars"] = max_bars
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))
 
     def append(self, category: Nu | str, value: Nu | float) -> Nu:
         return Append(self, category, value)

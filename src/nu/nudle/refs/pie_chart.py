@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.append import Append
 from ..interactions.write import Write
@@ -52,25 +52,25 @@ class PieChart(NudleRef):
         }
 
     def store_slices(self, slices: Nu | list) -> Nu:
-        return Write(self, Record(slices=slices))
+        return Write(self, DictForm.of(slices=slices))
 
     def store_colors(self, colors: Nu | list) -> Nu:
-        return Write(self, Record(colors=colors))
+        return Write(self, DictForm.of(colors=colors))
 
     def store_inner_radius(self, value: Nu | float) -> Nu:
-        return Write(self, Record(inner_radius=value))
+        return Write(self, DictForm.of(inner_radius=value))
 
     def store_show_labels(self, value: Nu | bool) -> Nu:
-        return Write(self, Record(show_labels=value))
+        return Write(self, DictForm.of(show_labels=value))
 
     def store_show_legend(self, value: Nu | bool) -> Nu:
-        return Write(self, Record(show_legend=value))
+        return Write(self, DictForm.of(show_legend=value))
 
     def store_total_label(self, value: Nu | str) -> Nu:
-        return Write(self, Record(total_label=value))
+        return Write(self, DictForm.of(total_label=value))
 
     def clear(self) -> Nu:
-        return Write(self, Record(slices=[]))
+        return Write(self, DictForm.of(slices=[]))
 
     def store(
         self,
@@ -98,7 +98,7 @@ class PieChart(NudleRef):
             payload["show_legend"] = show_legend
         if total_label is not None:
             payload["total_label"] = total_label
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))
 
     def append(self, label: Nu | str, value: Nu | float) -> Nu:
         return Append(self, label, value)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.write import Write
 from .base import NudleRef
@@ -73,16 +73,16 @@ class FieldRef(Section):
 
     @classmethod
     def store_label(cls, text: Nu | str) -> Nu:
-        return Write(cls._mount_ref(), Record(label=text))
+        return Write(cls._mount_ref(), DictForm.of(label=text))
 
     @classmethod
     def store_help(cls, text: Nu | str) -> Nu:
-        return Write(cls._mount_ref(), Record(help=text))
+        return Write(cls._mount_ref(), DictForm.of(help=text))
 
     @classmethod
     def store_error(cls, text: Nu | str) -> Nu:
-        return Write(cls._mount_ref(), Record(error=text))
+        return Write(cls._mount_ref(), DictForm.of(error=text))
 
     @classmethod
     def store_required(cls, flag: Nu | bool) -> Nu:
-        return Write(cls._mount_ref(), Record(required=flag))
+        return Write(cls._mount_ref(), DictForm.of(required=flag))

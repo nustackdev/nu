@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Literal
 
-from nu.queries.record import Record
+from nu import DictForm
 
 from ..interactions.write import Write
 from .base import NudleRef
@@ -48,23 +48,23 @@ class ImageRef(NudleRef):
         return out
 
     def store_src(self, url: Nu | str) -> Nu:
-        return Write(self, Record(src=url))
+        return Write(self, DictForm.of(src=url))
 
     def store_alt(self, text: Nu | str) -> Nu:
-        return Write(self, Record(alt=text))
+        return Write(self, DictForm.of(alt=text))
 
     def store_fit(self, mode: Nu | Fit | str) -> Nu:
-        return Write(self, Record(fit=mode))
+        return Write(self, DictForm.of(fit=mode))
 
     def store_size(
         self,
         width: Nu | int | None,
         height: Nu | int | None,
     ) -> Nu:
-        return Write(self, Record(width=width, height=height))
+        return Write(self, DictForm.of(width=width, height=height))
 
     def store_rounded(self, flag: Nu | bool) -> Nu:
-        return Write(self, Record(rounded=flag))
+        return Write(self, DictForm.of(rounded=flag))
 
     def store(
         self,
@@ -86,4 +86,4 @@ class ImageRef(NudleRef):
             payload["height"] = height
         if rounded is not None:
             payload["rounded"] = rounded
-        return Write(self, Record(**payload))
+        return Write(self, DictForm.of(**payload))
