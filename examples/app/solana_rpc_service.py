@@ -1,14 +1,19 @@
-"""Solana JSON-RPC demo -- service bound on the Context, called from the driver.
+"""Solana JSON-RPC demo -- a service called from inside the Nu tree.
 
-Shows: a bare-Python service (SolanaClient) bound on the Nu Context via
-``ctx.bind(SolanaClient, client)``, exercised outside the tree, with results
-funneled into a Nu tree via ``ctx.attrs``. The tree then reads those attrs
-through the typed ``IntAttrRef`` / ``StrAttrRef`` surface and prints them.
+Shows the in-tree service dispatch surface:
 
-FIXME: the old typed method-descriptor system (``method(IntI, "getSlot")``,
-``TypeBase``/``Interface`` + ``AtOp``) is gone. Until a typed-RPC dispatch
-surface returns, RPC calls happen outside the tree and their results are
-funneled in as attrs.
+- ``SolanaClient`` is a bare-Python JSON-RPC client, bound on the Context via
+  ``ctx.bind(SolanaClient, client)``.
+- ``Solana`` is a ``ServiceRef`` subclass naming that service (one fabric per
+  service), with each RPC method declared as a ``method`` descriptor.
+- ``Solana.slot()`` builds an ``InvokeAction`` that resolves the client from the
+  Context at run time and calls ``getSlot`` -- the RPC now happens *inside* the
+  tree, and its yield is a typed Form that composes like any query.
+
+The methods are ``async def`` on the client (they await ``httpx``), so the tree
+runs under ``arun``; the async path awaits the call. Two calls to ``Solana``
+serialize (a WRITE on the one service fabric); against a different service they
+would stay independent.
 """
 
 from __future__ import annotations
@@ -17,8 +22,8 @@ import asyncio
 
 import httpx
 
-from nu import Context, arun
-from nu.context import IntAttrRef, StrAttrRef
+from nu import Context, IntForm, arun
+from nu.context import ServiceRef, method_query
 from nu.core.io import print as nu_print
 from nu.flows import Sequential
 
@@ -55,25 +60,32 @@ class SolanaClient:
 
 
 # =============================================================================
+# SERVICE INTERFACE
+# =============================================================================
+
+
+class Solana(ServiceRef):
+    """The SolanaClient as a Nu service: one fabric, methods declared inline."""
+
+    service = SolanaClient
+
+    slot = method_query(IntForm, "getSlot")
+    block_height = method_query(IntForm, "getBlockHeight")
+
+
+# =============================================================================
 # DEMO
 # =============================================================================
 
 
 report = Sequential(
-    nu_print("Current slot:", IntAttrRef("slot")),
-    nu_print("Latest blockhash:", StrAttrRef("blockhash")),
+    nu_print("Current slot:", Solana.slot()),
+    nu_print("Block height:", Solana.block_height()),
 )
 
 
 async def main() -> None:
-    client = SolanaClient()
-    ctx = Context().bind(SolanaClient, client)
-
-    # Drive the RPC calls outside the tree, then let the tree render the results.
-    ctx.attrs["slot"] = int(await client.getSlot())
-    bh = await client.getLatestBlockhash()
-    ctx.attrs["blockhash"] = bh["value"]["blockhash"]
-
+    ctx = Context().bind(SolanaClient, SolanaClient())
     await arun(report, ctx)
 
 

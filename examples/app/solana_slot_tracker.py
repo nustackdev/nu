@@ -1,20 +1,16 @@
-"""Solana slot tracker -- external service + virtuals with reactive terminal output.
+"""Solana slot tracker -- in-tree service dispatch + virtuals + reactive output.
 
-Polls Solana mainnet for the current slot, persists to virtuals storage,
-tracks poll stats, reacts to slot changes on terminal.
+Polls Solana mainnet for the current slot from *inside* the Nu tree, persists to
+virtuals storage, tracks poll stats, and reacts to slot changes on the terminal.
 
 Uses:
-  ServiceRef        -> Solana JSON-RPC client bound on the Context
-  nu.virtuals       -> slot data (persistent, observable)
-  nu.flows          -> Sequential, ForRangeDo, Race, Delay
-  nu.core.io.print  -> stdio fabric writes
-  ReactWhile        -> reactive subscription (virtuals-side reactivity is
-                       deferred, so the react branch is a placeholder today)
-
-FIXME: the old typed-method-descriptor system (``method(IntI, "getSlot")``,
-``TypeBase``/``Interface``) is gone. This example wires the RPC calls as raw
-Python coroutines executed from the driver, then feeds the results into the Nu
-tree via attrs. Revisit once a typed-RPC dispatch surface lands.
+  Solana(ServiceRef) -> the JSON-RPC client as a Nu service; ``Solana.slot()``
+                        calls ``getSlot`` in-tree and yields a typed IntForm
+  nu.virtuals        -> slot data (persistent, observable)
+  nu.flows           -> Sequential, ForRangeDo, Race, Delay
+  nu.core.io.print   -> stdio fabric writes
+  ReactWhile         -> reactive subscription (virtuals-side reactivity is
+                        deferred, so the react branch is a placeholder today)
 """
 
 from __future__ import annotations
@@ -26,11 +22,11 @@ from pathlib import Path
 import httpx
 
 import nu.virtuals as v
-from nu import Context, arun
-from nu.context import IntAttrRef, ServiceRef
+from nu import Context, IntForm, arun
+from nu.context import ServiceRef, method_query
 from nu.core.io import print as nu_print
 from nu.domains.shape import Shape
-from nu.flows import Delay, ForRangeDo, ReactWhile, Race, Sequential
+from nu.flows import Delay, ForRangeDo, Race, ReactWhile, Sequential
 from nu.virtuals.presets import text_storage
 from virtuals import Navigator
 from virtuals.tkv.storage import TransactionProtocol
@@ -63,6 +59,14 @@ class SolanaClient:
         return rpc_call
 
 
+class Solana(ServiceRef):
+    """The SolanaClient as a Nu service; ``Solana.slot()`` calls getSlot in-tree."""
+
+    service = SolanaClient
+
+    slot = method_query(IntForm, "getSlot")
+
+
 # ---- Shapes ----
 
 
@@ -85,43 +89,31 @@ N_POLLS = 10
 POLL_INTERVAL = 2.0
 
 
-# ---- Helpers ----
-
-
-async def _fetch_slot(ctx: Context) -> int:
-    """Pull the current slot off the bound SolanaClient service and stash it."""
-    client = ctx.get(SolanaClient)
-    slot = int(await client.getSlot())
-    ctx.attrs["fetched_slot"] = slot
-    return slot
-
-
 # ---- Tree ----
 #
-# The pattern: the driver primes ctx.attrs["fetched_slot"] with a fresh slot
-# before each Nu step, and the Nu tree copies it into the persistent shape and
-# reacts to the change. Once the RPC dispatch story returns to Nu, the fetch
-# call moves back inside the tree.
+# The whole poll now lives in the tree: each step sleeps, calls getSlot on the
+# bound Solana service, and advances the persistent shape. The RPC is a Nu
+# InvokeAction, so nothing is primed driver-side.
 
 
 def build_tracker() -> object:
     """Kept as a function so the module imports even when virtuals reactivity is off."""
     return Sequential(
         # Seed
-        SlotData.current.store(IntAttrRef("fetched_slot")),
+        SlotData.current.store(Solana.slot()),
         SlotData.previous.store(SlotData.current),
         Stats.polls.store(1),
         nu_print("start slot", SlotData.current),
         # Poll + react
         Race(
-            # Producer: sleep + advance (fetch happens driver-side, see main())
+            # Producer: sleep + fetch + advance, all in-tree
             ForRangeDo(
                 0,
                 N_POLLS - 1,
                 Sequential(
                     Delay(POLL_INTERVAL),
                     SlotData.previous.store(SlotData.current),
-                    SlotData.current.store(IntAttrRef("fetched_slot")),
+                    SlotData.current.store(Solana.slot()),
                     Stats.polls.store(Stats.polls + 1),
                 ),
             ),
@@ -160,8 +152,6 @@ async def main() -> None:
                     .bind(TransactionProtocol, tx)
                     .bind(SolanaClient, client)
                 )
-                # Prime the first slot then run the tree.
-                await _fetch_slot(ctx)
                 tree = v.auto_atomic(build_tracker())
                 await arun(tree, ctx)
 

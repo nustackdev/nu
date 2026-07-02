@@ -8,7 +8,8 @@ out the Interactions over them. The Context fabric has two axes:
   ``Delete``; existence: ``AttrExists``. The read is ``AttrRef`` itself.
 - services - typed bindings (``ctx.bind`` / ``ctx.get``) for execution
   resources. Ref: ``ServiceRef`` (read-only, self-yields); existence:
-  ``ServiceExists``.
+  ``ServiceExists``; in-tree method calls: the ``method`` descriptor /
+  ``MethodFactory`` (a service-flavored ``InteractionFactory``).
 
 The read on either axis is the Ref's dual role; only existence needs an
 explicit query. Other fabrics (virtuals, mem, substrate) follow the same shape
@@ -18,6 +19,7 @@ Nothing in ``nu.core`` touches a fabric - core is the pure Python builtins.
 
 from __future__ import annotations
 
+from .dispatch import MethodFactory, method_action, method_command, method_query
 from .ops import DeleteCommand, SetCommand
 from .queries import AttrExistsQuery, ServiceExistsQuery
 from .refs import (
@@ -50,6 +52,7 @@ __all__ = [
     "FrozenSetAttrRef",
     "IntAttrRef",
     "ListAttrRef",
+    "MethodFactory",
     "NoneAttrRef",
     "ServiceExistsQuery",
     "ServiceRef",
@@ -57,4 +60,7 @@ __all__ = [
     "SetCommand",
     "StrAttrRef",
     "TupleAttrRef",
+    "method_action",
+    "method_command",
+    "method_query",
 ]

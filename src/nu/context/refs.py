@@ -20,7 +20,7 @@ the address is the child.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from nu.forms.collections import DictForm, FrozenSetForm, ListForm, SetForm, TupleForm
 from nu.forms.primitives import AnyForm, BoolForm, BytesForm, FloatForm, IntForm, NoneForm, StrForm
@@ -128,8 +128,31 @@ class ServiceRef(_ContextRef):
 
     The address resolves to a service type; the read self-yields the bound
     service (EMPTY when unbound). Services are bound on the Context, not written
-    through a Ref, so ``ServiceRef`` is read-only.
+    through a Ref, so ``ServiceRef`` is read-only *as a value*.
+
+    A service is a fabric, and each fabric is one concrete Ref class - so a
+    service gets its own ``ServiceRef`` subclass carrying the bound service type
+    in the ``service`` class attribute::
+
+        class Solana(ServiceRef):
+            service = SolanaClient
+            slot = method_query(IntForm, "getSlot")
+
+    ``Solana()`` then resolves ``SolanaClient`` from the Context, and its methods
+    (built by the ``method_*`` descriptors / ``MethodFactory``) serialize against
+    each other while staying independent of any other service. A bare
+    ``ServiceRef(SolanaClient)`` still works for the untyped, one-off read.
     """
+
+    service: ClassVar[type | None] = None
+
+    def __init__(self, address: object = None) -> None:
+        if address is None:
+            address = type(self).service
+            if address is None:
+                msg = f"{type(self).__name__} has no bound service; pass one or set `service`"
+                raise TypeError(msg)
+        super().__init__(address)
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         service = children[0]
