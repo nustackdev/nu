@@ -4,9 +4,8 @@ A producer writes sensor readings in a loop while two reactive consumers race
 alongside it, reacting to each change and updating a dashboard. Shapes live on
 the virtuals substrate, so leaf ``.on_change()`` yields a live subscription.
 
-Note: ``DelayedDo(0.02, nu.Noop())`` still fails ``flow_body_is_mutator`` (a
-flow body must mutate; Noop does not) -- the last gap before this runs end to
-end, pending the effect-only Command model. The reactive flows validate now.
+``DelayedDo(0.02, nu.Noop())`` uses ``Noop`` (the empty Flow) as its body, so
+the loop body is just a wait -- a bodyless delay.
 """
 
 from __future__ import annotations
@@ -49,7 +48,7 @@ WIND_WARN = 45.0
 # ---- Tree ----
 
 
-def build_tree() -> object:
+def build_tree() -> nu.Nu:
     """Build the full tree.
 
     Kept as a function (not a module constant) so the module imports cleanly --

@@ -88,7 +88,6 @@ from nu.core.io import InputAction, LogCommand, PrintCommand, input, log, print
 from nu.core.iteration import EnumerateQuery, IterQuery, NextAction, ReversedQuery, ZipQuery
 from nu.core.literal import LiteralQuery
 from nu.core.logical import AndQuery, BoolQuery, NotQuery, OrQuery
-from nu.core.noop import Noop
 from nu.core.reactive import (
     OnChangeQuery,
     OnChildChangeQuery,
@@ -204,7 +203,6 @@ __all__ = [
     "NeQuery",
     "NegQuery",
     "NextAction",
-    "Noop",
     "NotEmptyQuery",
     "NotInvalidQuery",
     "NotQuery",

@@ -31,9 +31,9 @@ import random
 import time
 from typing import TYPE_CHECKING
 
-from nu.core import Noop
 from nu.core._stream import aiter_any, sync_iter
 from nu.engine.structure import Declared
+from nu.flows import Noop
 from nu.lang import Attr, Cardinality, Policy
 
 

@@ -25,9 +25,9 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING, cast
 
 from nu.context import IntAttrRef, StrAttrRef
-from nu.core import LiteralQuery, Noop
+from nu.core import LiteralQuery
 from nu.core.io import LogCommand, _emit_log, log
-from nu.flows import Sequential
+from nu.flows import Noop, Sequential
 from nu.spans.bracket import _LifecycleBracket
 from nu.spans.policy import Retry
 from nu.tree import map_nodes

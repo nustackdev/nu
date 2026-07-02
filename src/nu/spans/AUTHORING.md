@@ -183,16 +183,18 @@ survives `with_children`). So:
 ## Gotchas
 
 - **No bare no-op `Command`.** The `command_has_write` law requires every
-  Command to declare a mutation slot. A do-nothing placeholder is a childless
-  `ScalarQuery` (that is what `core.Noop` is).
+  Command to declare a mutation slot. A do-nothing placeholder is `Noop`, the
+  empty Flow - a childless Strategy (`nu.Noop`, defined in `nu.flows`).
 - **`compile` cannot see the program.** Read synthesized/inherited attributes in
   the thunk via `rt.program.attrs[Attr.X][nid]`; read child node ids via
   `rt.program.children[nid]`.
 - **Writing through a Ref** takes the ref's own node id:
   `ref.write(rt, value, rt.program.children[nid][slot])` (see `context/ops.py`).
-- **`Noop` is query-shaped.** It slot-fits where the matrix admits a ScalarQuery
-  (value slots, Span aux slots). A universal no-op accepted in mutator/param
-  slots would need the matrix to look through it like a Span - deferred.
+- **`Noop` is the empty Flow.** A childless Strategy, the identity of flow
+  composition. It slot-fits wherever work fits - Strategy children, Control
+  bodies, Span bodies - and is rejected in value and param slots. No new sort,
+  no special-case law: a childless Strategy already validates (the body-mutator
+  law holds vacuously over zero children).
 
 ## Tests
 

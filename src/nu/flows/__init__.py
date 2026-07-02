@@ -19,6 +19,7 @@ from .control import (
     SwitchDo,
     WhileDo,
 )
+from .noop import Noop
 from .react import React, ReactForever, ReactWhile
 from .strategy import AnyN, Gather, Parallel, Race, Sequential
 from .stream import Stream
@@ -32,6 +33,7 @@ __all__ = [
     "ForeverDo",
     "Gather",
     "IfDo",
+    "Noop",
     "Parallel",
     "Race",
     "React",
