@@ -16,7 +16,18 @@ from .base import Facet, PrimitiveRef, ViewRef
 from .dict import DictRef
 from .dictshape import ShapesDictRef
 from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
-from .items_extended import (
+from .list import ListRef
+from .listshape import ShapesListRef
+from .primitives import (
+    PrimitiveDictRef,
+    PrimitiveFrozenSetRef,
+    PrimitiveListRef,
+    PrimitiveSetRef,
+    PrimitiveTupleRef,
+)
+from .set import SetRef
+from .shape import ShapeRef
+from .std import (
     BasisPointRef,
     ComplexRef,
     DateRef,
@@ -30,10 +41,6 @@ from .items_extended import (
     TimezoneRef,
     UUIDRef,
 )
-from .list import ListRef
-from .listshape import ShapesListRef
-from .set import SetRef
-from .shape import ShapeRef
 
 
 __all__ = [
@@ -53,7 +60,12 @@ __all__ = [
     "ListRef",
     "PathRef",
     "PercentageRef",
+    "PrimitiveDictRef",
+    "PrimitiveFrozenSetRef",
+    "PrimitiveListRef",
     "PrimitiveRef",
+    "PrimitiveSetRef",
+    "PrimitiveTupleRef",
     "SetRef",
     "ShapeRef",
     "ShapesDictRef",

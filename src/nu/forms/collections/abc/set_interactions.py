@@ -23,7 +23,7 @@ from collections.abc import Set as ABCSet
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.lang import Command, ScalarAction, ScalarQuery
+from nu.lang import Command, ScalarAction, ScalarQuery, ScalarQueryFactory
 from nu.lang.sentinels import EMPTY, INVALID
 
 
@@ -39,6 +39,7 @@ __all__ = [
     "DifferenceQuery",
     "DifferenceUpdateCommand",
     "DiscardCommand",
+    "FrozenSetCreate",
     "IntersectionQuery",
     "IntersectionUpdateCommand",
     "IsDisjointQuery",
@@ -46,6 +47,7 @@ __all__ = [
     "IsSupersetQuery",
     "RemoveCommand",
     "SetAndQuery",
+    "SetCreate",
     "SetIAndAction",
     "SetIOrAction",
     "SetISubAction",
@@ -59,6 +61,17 @@ __all__ = [
     "SymmetricDifferenceUpdateCommand",
     "UnionQuery",
 ]
+
+
+# =============================================================================
+# SET CONSTRUCTORS
+# =============================================================================
+
+# Empty set: deterministic (always set()), but each eval must yield a *fresh*
+# mutable object - a future fold/CSE pass must not alias two SetCreate results.
+SetCreate = ScalarQueryFactory("SetCreate", set)
+# Empty frozenset: deterministic and immutable (sharing one frozenset() is fine).
+FrozenSetCreate = ScalarQueryFactory("FrozenSetCreate", frozenset)
 
 
 def _as_set(value: object) -> object:

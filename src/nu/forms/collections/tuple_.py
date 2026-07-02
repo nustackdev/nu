@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from nu.lang import TypedNu
 
 from .abc import SequenceForm
+from .abc.sequence_interactions import TupleCreate
 
 
 if TYPE_CHECKING:
@@ -26,6 +27,11 @@ class TupleForm[*Ts](
     TypedNu[tuple[*Ts]],
 ):
     """TupleQuery interface. Immutable sequence + comparable."""
+
+    @classmethod
+    def create(cls) -> TupleForm[*Ts]:
+        """Yield an empty tuple."""
+        return cls(TupleCreate())
 
     def _wrap_sliceable_result(self, operand: Nu) -> TupleForm:
         """Wrap operand as TupleForm for slice results."""

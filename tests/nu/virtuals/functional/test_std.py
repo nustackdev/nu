@@ -1,4 +1,4 @@
-"""Functional tests for the virtuals stdlib-typed refs (``items_extended``).
+"""Functional tests for the virtuals stdlib-typed refs (``std``).
 
 Each ref stores a serialized primitive and carries the matching ``nu.std`` Form.
 These tests drive the store/read round-trip through a real virtuals transaction

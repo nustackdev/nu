@@ -1,0 +1,206 @@
+"""virtuals-substrate refs for whole-blob compound values.
+
+Unlike the decomposing container refs (``ListRef`` / ``DictRef`` / ``SetRef``,
+which fan a container out into per-element storage), these write the whole
+container as one opaque value via ``ItemPrimitiveStoreCmd`` and read it back as
+a plain Python object. Each mixes in the matching collection Form, so the value
+still carries the full list / dict / tuple / set interface.
+
+Use for opaque or heterogeneous containers that should round-trip whole rather
+than shape-decompose (log lines, raw account blobs, balance arrays, ...).
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Self
+
+from nu import DictForm, FrozenSetForm, ListForm, Nu, SetForm, TupleForm
+from nu.domains.shape import Slot
+
+from .items import ItemRef
+
+
+if TYPE_CHECKING:
+    from nu import Shape
+    from nu.lang import Arg
+
+    from .base import PrimitiveRef
+
+
+__all__ = [
+    "PrimitiveDictRef",
+    "PrimitiveFrozenSetRef",
+    "PrimitiveListRef",
+    "PrimitiveSetRef",
+    "PrimitiveTupleRef",
+]
+
+
+class PrimitiveListRef[T](ItemRef, ListForm[T]):
+    """virtuals list stored as a single primitive blob."""
+
+    def __init__(
+        self,
+        address: str | int | Nu,
+        *,
+        parent_ref: PrimitiveRef | None = None,
+        owner_shape: type[Shape] | None = None,
+    ) -> None:
+        super().__init__(
+            address,
+            value_type=list,
+            value_value_type=ListForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a whole-blob primitive list."""
+        return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> list:
+        """Return the stored value as a plain list."""
+        return raw if isinstance(raw, list) else list(raw)  # type: ignore[arg-type]
+
+    def store(self, value: Arg[list[T]]) -> object:
+        """Write the whole list as one primitive blob (no per-index decomposition)."""
+        from ..interactions import ItemPrimitiveStoreCmd
+
+        return ItemPrimitiveStoreCmd(self, value)
+
+
+class PrimitiveDictRef[K, V](ItemRef, DictForm[K, V]):
+    """virtuals dict stored as a single primitive blob."""
+
+    def __init__(
+        self,
+        address: str | int | Nu,
+        *,
+        parent_ref: PrimitiveRef | None = None,
+        owner_shape: type[Shape] | None = None,
+    ) -> None:
+        super().__init__(
+            address,
+            value_type=dict,
+            value_value_type=DictForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a whole-blob primitive dict."""
+        return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> dict:
+        """Return the stored value as a plain dict."""
+        return raw if isinstance(raw, dict) else dict(raw)  # type: ignore[arg-type]
+
+    def store(self, value: Arg[dict[K, V]]) -> object:
+        """Write the whole dict as one primitive blob (no per-key decomposition)."""
+        from ..interactions import ItemPrimitiveStoreCmd
+
+        return ItemPrimitiveStoreCmd(self, value)
+
+
+class PrimitiveTupleRef(ItemRef, TupleForm):
+    """virtuals tuple stored as a single primitive blob."""
+
+    def __init__(
+        self,
+        address: str | int | Nu,
+        *,
+        parent_ref: PrimitiveRef | None = None,
+        owner_shape: type[Shape] | None = None,
+    ) -> None:
+        super().__init__(
+            address,
+            value_type=tuple,
+            value_value_type=TupleForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a whole-blob primitive tuple."""
+        return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> tuple:
+        """Return the stored value as a plain tuple."""
+        return raw if isinstance(raw, tuple) else tuple(raw)  # type: ignore[arg-type]
+
+    def store(self, value: Arg[tuple]) -> object:
+        """Write the whole tuple as one primitive blob."""
+        from ..interactions import ItemPrimitiveStoreCmd
+
+        return ItemPrimitiveStoreCmd(self, value)
+
+
+class PrimitiveSetRef[T](ItemRef, SetForm[T]):
+    """virtuals set stored as a single primitive blob."""
+
+    def __init__(
+        self,
+        address: str | int | Nu,
+        *,
+        parent_ref: PrimitiveRef | None = None,
+        owner_shape: type[Shape] | None = None,
+    ) -> None:
+        super().__init__(
+            address,
+            value_type=set,
+            value_value_type=SetForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a whole-blob primitive set."""
+        return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> set:
+        """Return the stored value as a plain set."""
+        return raw if isinstance(raw, set) else set(raw)  # type: ignore[arg-type]
+
+    def store(self, value: Arg[set[T]]) -> object:
+        """Write the whole set as one primitive blob."""
+        from ..interactions import ItemPrimitiveStoreCmd
+
+        return ItemPrimitiveStoreCmd(self, value)
+
+
+class PrimitiveFrozenSetRef[T](ItemRef, FrozenSetForm[T]):
+    """virtuals frozenset stored as a single primitive blob."""
+
+    def __init__(
+        self,
+        address: str | int | Nu,
+        *,
+        parent_ref: PrimitiveRef | None = None,
+        owner_shape: type[Shape] | None = None,
+    ) -> None:
+        super().__init__(
+            address,
+            value_type=frozenset,
+            value_value_type=FrozenSetForm,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
+        )
+
+    @classmethod
+    def slot(cls) -> Self:  # type: ignore[override]
+        """Declare a slot holding a whole-blob primitive frozenset."""
+        return Slot(cls)  # type: ignore[return-value]
+
+    def coerce(self, raw: object) -> frozenset:
+        """Return the stored value as a plain frozenset."""
+        return raw if isinstance(raw, frozenset) else frozenset(raw)  # type: ignore[arg-type]
+
+    def store(self, value: Arg[frozenset[T]]) -> object:
+        """Write the whole frozenset as one primitive blob."""
+        from ..interactions import ItemPrimitiveStoreCmd
+
+        return ItemPrimitiveStoreCmd(self, value)

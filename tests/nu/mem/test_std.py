@@ -1,4 +1,4 @@
-"""Functional tests for the dict-substrate stdlib-typed refs (``items_extended``).
+"""Functional tests for the dict-substrate stdlib-typed refs (``std``).
 
 Each ref stores a serialized primitive in the nested dict and carries the
 matching ``nu.std`` Form. These tests drive the store/read round-trip through a

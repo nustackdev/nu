@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from nu.lang import TypedNu
 
 from .abc import MutableSetForm, SetLikeForm
+from .abc.set_interactions import FrozenSetCreate, SetCreate
 
 
 if TYPE_CHECKING:
@@ -27,6 +28,11 @@ class SetForm[T](
     TypedNu[set[T]],
 ):
     """SetQuery interface. Mutable set + comparable."""
+
+    @classmethod
+    def create(cls) -> SetForm[T]:
+        """Yield a fresh empty set."""
+        return cls(SetCreate())
 
     def _wrap_set_result(self, operand: Nu) -> SetForm[T]:
         """Wrap operand as SetForm."""
@@ -106,6 +112,11 @@ class FrozenSetForm[T](
     TypedNu[frozenset[T]],
 ):
     """FrozenSet interface. Immutable set + comparable."""
+
+    @classmethod
+    def create(cls) -> FrozenSetForm[T]:
+        """Yield an empty frozenset."""
+        return cls(FrozenSetCreate())
 
     def _wrap_set_result(self, operand: Nu) -> FrozenSetForm[T]:
         """Wrap operand as FrozenSetForm."""

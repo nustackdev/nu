@@ -12,7 +12,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.lang import Command, ScalarAction, ScalarQuery
+from nu.lang import Command, ScalarAction, ScalarQuery, ScalarQueryFactory
 from nu.lang.sentinels import EMPTY, INVALID
 
 
@@ -34,12 +34,25 @@ __all__ = [
     "IndexOfQuery",
     "InsertCommand",
     "LastQuery",
+    "ListCreate",
     "PopAction",
     "RemoveValueCommand",
     "ReverseCommand",
     "SetIndexCommand",
     "SortCommand",
+    "TupleCreate",
 ]
+
+
+# =============================================================================
+# SEQUENCE CONSTRUCTORS
+# =============================================================================
+
+# Empty list: deterministic (always []), but each eval must yield a *fresh*
+# mutable object - a future fold/CSE pass must not alias two ListCreate results.
+ListCreate = ScalarQueryFactory("ListCreate", list)
+# Empty tuple: deterministic and immutable (sharing one () is fine).
+TupleCreate = ScalarQueryFactory("TupleCreate", tuple)
 
 
 # =============================================================================

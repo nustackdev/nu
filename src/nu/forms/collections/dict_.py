@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from nu.lang import TypedNu
 
 from .abc import MutableMappingForm
+from .abc.mapping_interactions import DictCreate
 
 
 if TYPE_CHECKING:
@@ -27,6 +28,11 @@ class DictForm[K, V](
     TypedNu[dict[K, V]],
 ):
     """Dict interface. Mutable mapping + comparable."""
+
+    @classmethod
+    def create(cls) -> DictForm[K, V]:
+        """Yield a fresh empty dict."""
+        return cls(DictCreate())
 
     def _wrap_keys_result(self, operand: Nu) -> DictKeysForm:
         """Wrap operand as DictKeysForm."""

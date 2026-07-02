@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.lang import Command, ScalarAction, ScalarQuery, StreamQuery
+from nu.lang import Command, ScalarAction, ScalarQuery, ScalarQueryFactory, StreamQuery
 from nu.lang.sentinels import EMPTY, INVALID
 
 
@@ -26,6 +26,7 @@ __all__ = [
     "ContainsKeyQuery",
     "CopyQuery",
     "DeleteItemCommand",
+    "DictCreate",
     "DictPopAction",
     "GetQuery",
     "ItemsQuery",
@@ -39,6 +40,15 @@ __all__ = [
     "UpdateCommand",
     "ValuesQuery",
 ]
+
+
+# =============================================================================
+# MAPPING CONSTRUCTORS
+# =============================================================================
+
+# Empty dict: deterministic (always {}), but each eval must yield a *fresh*
+# mutable object - a future fold/CSE pass must not alias two DictCreate results.
+DictCreate = ScalarQueryFactory("DictCreate", dict)
 
 
 # =============================================================================

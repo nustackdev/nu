@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 from nu.lang import TypedNu
 
 from .abc import MutableSequenceForm
+from .abc.sequence_interactions import ListCreate
 
 
 if TYPE_CHECKING:
@@ -25,6 +26,11 @@ class ListForm[T](
     TypedNu[list[T]],
 ):
     """ListQuery interface. Mutable sequence + comparable."""
+
+    @classmethod
+    def create(cls) -> ListForm[T]:
+        """Yield a fresh empty list."""
+        return cls(ListCreate())
 
     def _wrap_iterable_result(self, operand: Nu) -> ListForm:
         """Wrap operand as ListForm."""

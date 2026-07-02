@@ -15,7 +15,11 @@ from .base import RefBase
 from .dict import DictRef
 from .dictshape import ShapesDictRef
 from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
-from .items_extended import (
+from .list import ListRef
+from .listshape import ShapesListRef
+from .set import SetRef
+from .shape import ShapeRef
+from .std import (
     BasisPointRef,
     ComplexRef,
     DateRef,
@@ -29,10 +33,6 @@ from .items_extended import (
     TimezoneRef,
     UUIDRef,
 )
-from .list import ListRef
-from .listshape import ShapesListRef
-from .set import SetRef
-from .shape import ShapeRef
 
 
 # --- deferred ----------------------------------------------------------------
