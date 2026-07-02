@@ -84,7 +84,7 @@ from nu.core.cast import (
 )
 from nu.core.comparison import EqQuery, GeQuery, GtQuery, IsQuery, LeQuery, LtQuery, NeQuery
 from nu.core.dynamic import CompileQuery, EvalQuery, ExecQuery, GlobalsQuery, LocalsQuery
-from nu.core.io import InputAction, LogCommand, PrintCommand
+from nu.core.io import InputAction, LogCommand, PrintCommand, input, log, print
 from nu.core.iteration import EnumerateQuery, IterQuery, NextAction, ReversedQuery, ZipQuery
 from nu.core.literal import LiteralQuery
 from nu.core.logical import AndQuery, BoolQuery, NotQuery, OrQuery
@@ -236,4 +236,7 @@ __all__ = [
     "UniqueQuery",
     "VarsQuery",
     "ZipQuery",
+    "input",
+    "log",
+    "print",
 ]

@@ -1,31 +1,12 @@
 """Weather station -- reactive multi-shape monitoring.
 
-Station     -> sensor readings (virtuals, persistent, observable)
-Dashboard   -> live counters (virtuals)
+A producer writes sensor readings in a loop while two reactive consumers race
+alongside it, reacting to each change and updating a dashboard. Shapes live on
+the virtuals substrate, so leaf ``.on_change()`` yields a live subscription.
 
-Two subtrees race in parallel:
-  feed   -> writes sensor data in a loop
-  react  -> prints on every change, cancelled when feed completes
-
-Flows: Sequential, ForRangeDo, IfDo, Race, DelayedDo, print (from nu.flows / nu.core.io)
-Reactive: ReactWhile (from nu.flows)
-
-Reactivity: ``.on_change()`` on virtuals leaf refs is wired via
-:class:`nu.core.reactive.OnPrimitiveChangeQuery`, and the collection refs
-(Dict/List/Set/Shape/ShapesDict/ShapesList) are all at the Reactive tier of the
-shape blueprint -- their ``on_change()`` / ``on_child_change`` /
-``on_children_change`` / ``on_descendants_change`` land as the matching
-``nu.core.reactive`` queries. A leaf subscription resolves to a live virtuals
-``Subscription`` and receives real change notifications after commit + observer
-flush.
-
-FIXME (composition laws, model-side): v2 laws currently reject
-``Race(producer, ReactWhile, ReactWhile)`` because Race is a Strategy demanding
-mutating children while ReactWhile is a StreamQuery. Also
-``DelayedDo(delay, Noop())`` fails ``flow_body_is_mutator`` since Noop is a
-scalar_query. Running this example end-to-end waits on either a law relaxation
-for reactive stream branches inside strategies, or a "stream sink" adapter that
-counts as a mutator. The reactive substrate itself is ready.
+Note: ``DelayedDo(0.02, nu.Noop())`` still fails ``flow_body_is_mutator`` (a
+flow body must mutate; Noop does not) -- the last gap before this runs end to
+end, pending the effect-only Command model. The reactive flows validate now.
 """
 
 from __future__ import annotations
@@ -34,13 +15,8 @@ import asyncio
 import tempfile
 from pathlib import Path
 
+import nu
 import nu.virtuals as v
-from nu import Context, arun
-from nu.core import Noop
-from nu.core.io import print as nu_print
-from nu.domains.shape import Shape
-from nu.flows import DelayedDo, ForRangeDo, IfDo, Race, ReactWhile, Sequential
-from nu.virtuals.presets import text_storage
 from virtuals import Navigator
 from virtuals.tkv.storage import TransactionProtocol
 
@@ -48,14 +24,14 @@ from virtuals.tkv.storage import TransactionProtocol
 # ---- Shapes ----
 
 
-class Station(Shape):
+class Station(nu.Shape):
     """Sensor readings (virtuals substrate -- observable)."""
 
     temperature = v.FloatRef.slot()
     wind_speed = v.FloatRef.slot()
 
 
-class Dashboard(Shape):
+class Dashboard(nu.Shape):
     """Live counters (virtuals substrate)."""
 
     warnings = v.IntRef.slot()
@@ -76,57 +52,56 @@ WIND_WARN = 45.0
 def build_tree() -> object:
     """Build the full tree.
 
-    Kept as a function (not a module-level constant) so the module imports
-    cleanly on a nu build where virtuals ``on_change()`` is not yet wired --
-    the reactive subtree only touches ``.on_change()`` when the function runs.
+    Kept as a function (not a module constant) so the module imports cleanly --
+    the reactive subtree only touches ``.on_change()`` when this runs.
     """
-    return Sequential(
+    return nu.Sequential(
         # Monitor
-        Race(
+        nu.Race(
             # Producer: seed + generate sensor data
-            Sequential(
+            nu.Sequential(
                 Station.temperature.store(18.0),
                 Station.wind_speed.store(10.0),
                 Dashboard.warnings.store(0),
-                ForRangeDo(
+                nu.ForRangeDo(
                     0,
                     N_READINGS,
-                    Sequential(
+                    nu.Sequential(
                         Station.temperature.store(Station.temperature + TEMP_DRIFT),
                         Station.wind_speed.store(Station.wind_speed + WIND_DRIFT),
-                        DelayedDo(0.02, Noop()),
+                        nu.DelayedDo(0.02, nu.Noop()),
                     ),
                 ),
             ),
             # Consumer: react to temperature
-            ReactWhile(
+            nu.ReactWhile(
                 Station.temperature.on_change(),
                 Station.temperature < 50.0,
-                IfDo(
+                nu.IfDo(
                     Station.temperature > TEMP_WARN,
-                    Sequential(
+                    nu.Sequential(
                         Dashboard.warnings.store(Dashboard.warnings + 1),
-                        nu_print("TEMP", Station.temperature),
+                        nu.print("TEMP", Station.temperature),
                     ),
                 ),
             ),
             # Consumer: react to wind
-            ReactWhile(
+            nu.ReactWhile(
                 Station.wind_speed.on_change(),
                 Station.wind_speed < 80.0,
-                IfDo(
+                nu.IfDo(
                     Station.wind_speed > WIND_WARN,
-                    Sequential(
+                    nu.Sequential(
                         Dashboard.warnings.store(Dashboard.warnings + 1),
-                        nu_print("WIND", Station.wind_speed),
+                        nu.print("WIND", Station.wind_speed),
                     ),
                 ),
             ),
         ),
         # Dashboard
-        nu_print("Temp", Station.temperature),
-        nu_print("Wind", Station.wind_speed),
-        nu_print("Warnings", Dashboard.warnings),
+        nu.print("Temp", Station.temperature),
+        nu.print("Wind", Station.wind_speed),
+        nu.print("Warnings", Dashboard.warnings),
     )
 
 
@@ -136,16 +111,12 @@ def build_tree() -> object:
 async def main() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         db_path = str(Path(tmp) / "weather")
-        with text_storage(db_path) as storage:
+        with v.text_storage(db_path) as storage:
             nav = Navigator(storage)
             with storage.transaction() as tx:
-                ctx = (
-                    Context()
-                    .bind(Navigator, nav)
-                    .bind(TransactionProtocol, tx)
-                )
+                ctx = nu.Context().bind(Navigator, nav).bind(TransactionProtocol, tx)
                 tree = v.auto_atomic(build_tree())
-                await arun(tree, ctx)
+                await nu.arun(tree, ctx)
 
 
 if __name__ == "__main__":

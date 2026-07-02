@@ -1,29 +1,34 @@
 """Tests for reactive control flows: React, ReactWhile, ReactForever.
 
-Construction and class-hierarchy checks run without a substrate. Execution
-(subscription binding, async queue drain) is deferred to substrate integration.
+All three are ``Control`` flows: they drive a mutating body on change events and
+yield nothing. Construction, class-hierarchy, and law-validation checks run
+without a substrate (validation is structural). Execution (subscription
+binding, async queue drain) is deferred to substrate integration.
 """
 
 from __future__ import annotations
 
 import pytest
 
+from nu.domains.shape import Shape
 from nu.domains.shape.refs.item import ItemRef
+from nu.flows import Race
 from nu.flows.react import React, ReactForever, ReactWhile
-from nu.lang import Control, StreamQuery
+from nu.lang import LAWS, Control, compile, validate
+from nu.virtuals import IntRef
 
 
 # ---------------------------------------------------------------------------
-# Class hierarchy
+# Class hierarchy — all three are Controls (Flows), not Queries
 # ---------------------------------------------------------------------------
 
 
-def test_react_is_stream_query():
-    assert issubclass(React, StreamQuery)
+def test_react_is_control():
+    assert issubclass(React, Control)
 
 
-def test_react_while_is_stream_query():
-    assert issubclass(ReactWhile, StreamQuery)
+def test_react_while_is_control():
+    assert issubclass(ReactWhile, Control)
 
 
 def test_react_forever_is_control():
@@ -48,6 +53,13 @@ def test_react_constructs_with_body():
     assert len(r.children) >= 2
 
 
+def test_react_changed_key_requires_body():
+    change = ItemRef("sub")
+    key = ItemRef("k")
+    with pytest.raises(ValueError, match="changed_key requires a body"):
+        React(change, changed_key=key)
+
+
 def test_react_while_constructs():
     change = ItemRef("sub")
     cond = ItemRef("cond")
@@ -70,6 +82,40 @@ def test_react_forever_constructs():
     body = ItemRef("body")
     r = ReactForever(change, body)
     assert len(r.children) == 2
+
+
+# ---------------------------------------------------------------------------
+# Law validation — a Control driving a mutating body validates, and composes
+# as a work branch inside a Strategy (Race). Structural; no substrate needed.
+# ---------------------------------------------------------------------------
+
+
+class _Sensor(Shape):
+    n = IntRef.slot()
+
+
+def _validate(term: object) -> None:
+    validate(compile(term), *LAWS)  # raises ValidationError on any failure
+
+
+def test_react_validates_with_mutating_body():
+    _validate(React(_Sensor.n.on_change(), _Sensor.n.store(_Sensor.n + 1)))
+
+
+def test_react_while_validates_with_mutating_body():
+    _validate(ReactWhile(_Sensor.n.on_change(), _Sensor.n < 10, _Sensor.n.store(_Sensor.n + 1)))
+
+
+def test_react_forever_validates_with_mutating_body():
+    _validate(ReactForever(_Sensor.n.on_change(), _Sensor.n.store(_Sensor.n + 1)))
+
+
+def test_react_while_composes_in_race():
+    """The reason for the refactor: a reactive branch is now WORK, so a Strategy holds it."""
+    producer = _Sensor.n.store(0)
+    consumer_a = ReactWhile(_Sensor.n.on_change(), _Sensor.n < 10, _Sensor.n.store(_Sensor.n + 1))
+    consumer_b = ReactForever(_Sensor.n.on_change(), _Sensor.n.store(_Sensor.n + 1))
+    _validate(Race(producer, consumer_a, consumer_b))
 
 
 # ---------------------------------------------------------------------------
