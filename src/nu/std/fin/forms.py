@@ -18,22 +18,21 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import Form, TypedNu
-from nu.std.fin.native import BasisPoint as _BasisPoint
-from nu.std.fin.native import Percentage as _Percentage
+from nu.std.fin.native import PyBasisPoint, PyPercentage
 
 
 if TYPE_CHECKING:
     from nu.forms.primitives import BoolForm, FloatForm, IntForm
     from nu.lang import Arg, FloatArg, IntArg
 
-    type PercentageArg = Arg[_Percentage] | FloatArg
-    type BasisPointArg = Arg[_BasisPoint] | IntArg
+    type PercentageArg = Arg[PyPercentage] | FloatArg
+    type BasisPointArg = Arg[PyBasisPoint] | IntArg
 
 
 __all__ = ["BasisPoint", "Percentage"]
 
 
-class Percentage(Form, TypedNu[_Percentage]):
+class Percentage(Form, TypedNu[PyPercentage]):
     """A percentage as a Form (``75.5`` = 75.5%).
 
     Build one with ``Percentage.of(75.5)`` (or ``from_dec`` / ``from_bps`` /
@@ -207,7 +206,7 @@ class Percentage(Form, TypedNu[_Percentage]):
         return BoolForm(NeQuery(self, other))
 
 
-class BasisPoint(Form, TypedNu[_BasisPoint]):
+class BasisPoint(Form, TypedNu[PyBasisPoint]):
     """A basis-point count as a Form - 1/100th of a percent (``500`` = 5%).
 
     Build one with ``BasisPoint.of(500)`` (or ``from_pct`` / ``from_dec``);

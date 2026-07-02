@@ -28,6 +28,7 @@ from nu import (
     SetForm,
     SortedQuery,
     arun,
+    run,
 )
 from nu.domains.shape import Shape
 from nu.virtuals import (
@@ -82,8 +83,8 @@ def portfolio_ctx(nav, tx):
     )
 
 
-async def store(ref, value, ctx):
-    await arun(ref.store(value), ctx)
+def store(ref, value, ctx):
+    run(ref.store(value), ctx)
 
 
 # ============================================================================
@@ -165,36 +166,33 @@ class TestDictRefExecution:
 
     @pytest.mark.asyncio
     async def test_store_and_keys(self, portfolio_ctx):
-        await store(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
+        # kept async: representative round-trip test for the async path
+        store(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
         result = (await arun(Portfolio.metadata.keys(), portfolio_ctx))[0]
         assert isinstance(result, KeysView)
         assert set(result) == {"strategy", "risk"}
 
-    @pytest.mark.asyncio
-    async def test_store_and_values(self, portfolio_ctx):
-        await store(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
-        result = (await arun(Portfolio.metadata.values(), portfolio_ctx))[0]
+    def test_store_and_values(self, portfolio_ctx):
+        store(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
+        result = run(Portfolio.metadata.values(), portfolio_ctx)[0]
         assert isinstance(result, ValuesView)
         assert set(result) == {"momentum", "medium"}
 
-    @pytest.mark.asyncio
-    async def test_store_and_items(self, portfolio_ctx):
-        await store(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
-        result = (await arun(Portfolio.metadata.items(), portfolio_ctx))[0]
+    def test_store_and_items(self, portfolio_ctx):
+        store(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
+        result = run(Portfolio.metadata.items(), portfolio_ctx)[0]
         assert isinstance(result, ItemsView)
         assert set(result) == {("strategy", "momentum"), ("risk", "medium")}
 
-    @pytest.mark.asyncio
-    async def test_get(self, portfolio_ctx):
-        await store(Portfolio.metadata, {"key": "value"}, portfolio_ctx)
-        result = (await arun(Portfolio.metadata.get("key"), portfolio_ctx))[0]
+    def test_get(self, portfolio_ctx):
+        store(Portfolio.metadata, {"key": "value"}, portfolio_ctx)
+        result = run(Portfolio.metadata.get("key"), portfolio_ctx)[0]
         assert result == "value"
 
-    @pytest.mark.asyncio
-    async def test_set_item(self, portfolio_ctx):
-        await store(Portfolio.metadata, {}, portfolio_ctx)
-        await arun(Portfolio.metadata.set("new_key", "new_val"), portfolio_ctx)
-        result = (await arun(Portfolio.metadata.get("new_key"), portfolio_ctx))[0]
+    def test_set_item(self, portfolio_ctx):
+        store(Portfolio.metadata, {}, portfolio_ctx)
+        run(Portfolio.metadata.set("new_key", "new_val"), portfolio_ctx)
+        result = run(Portfolio.metadata.get("new_key"), portfolio_ctx)[0]
         assert result == "new_val"
 
 
@@ -220,27 +218,25 @@ class TestListRefExecution:
 
     @pytest.mark.asyncio
     async def test_store_and_first(self, portfolio_ctx):
-        await store(Portfolio.tags, ["alpha", "beta", "gamma"], portfolio_ctx)
+        # kept async: representative round-trip test for the async path
+        store(Portfolio.tags, ["alpha", "beta", "gamma"], portfolio_ctx)
         result = (await arun(Portfolio.tags.first_elem(), portfolio_ctx))[0]
         assert result == "alpha"
 
-    @pytest.mark.asyncio
-    async def test_store_and_last(self, portfolio_ctx):
-        await store(Portfolio.tags, ["alpha", "beta", "gamma"], portfolio_ctx)
-        result = (await arun(Portfolio.tags.last_elem(), portfolio_ctx))[0]
+    def test_store_and_last(self, portfolio_ctx):
+        store(Portfolio.tags, ["alpha", "beta", "gamma"], portfolio_ctx)
+        result = run(Portfolio.tags.last_elem(), portfolio_ctx)[0]
         assert result == "gamma"
 
-    @pytest.mark.asyncio
-    async def test_store_and_slice(self, portfolio_ctx):
-        await store(Portfolio.tags, ["a", "b", "c", "d", "e"], portfolio_ctx)
-        result = (await arun(Portfolio.tags.slice(1, 3), portfolio_ctx))[0]
+    def test_store_and_slice(self, portfolio_ctx):
+        store(Portfolio.tags, ["a", "b", "c", "d", "e"], portfolio_ctx)
+        result = run(Portfolio.tags.slice(1, 3), portfolio_ctx)[0]
         assert list(result) == ["b", "c"]
 
-    @pytest.mark.asyncio
-    async def test_append(self, portfolio_ctx):
-        await store(Portfolio.tags, ["x"], portfolio_ctx)
-        await arun(Portfolio.tags.append("y"), portfolio_ctx)
-        result = (await arun(Portfolio.tags, portfolio_ctx))[0]
+    def test_append(self, portfolio_ctx):
+        store(Portfolio.tags, ["x"], portfolio_ctx)
+        run(Portfolio.tags.append("y"), portfolio_ctx)
+        result = run(Portfolio.tags, portfolio_ctx)[0]
         assert list(result) == ["x", "y"]
 
 
@@ -260,17 +256,15 @@ class TestSetRefWrapTypes:
 class TestSetRefExecution:
     """SetRef operations through virtuals."""
 
-    @pytest.mark.asyncio
-    async def test_store_and_add(self, portfolio_ctx):
-        await store(Portfolio.members, {"alice"}, portfolio_ctx)
-        await arun(Portfolio.members.add("bob"), portfolio_ctx)
-        result = (await arun(Portfolio.members, portfolio_ctx))[0]
+    def test_store_and_add(self, portfolio_ctx):
+        store(Portfolio.members, {"alice"}, portfolio_ctx)
+        run(Portfolio.members.add("bob"), portfolio_ctx)
+        result = run(Portfolio.members, portfolio_ctx)[0]
         assert set(result) == {"alice", "bob"}
 
-    @pytest.mark.asyncio
-    async def test_union(self, portfolio_ctx):
-        await store(Portfolio.members, {"alice", "bob"}, portfolio_ctx)
-        result = (await arun(Portfolio.members.union({"bob", "charlie"}), portfolio_ctx))[0]
+    def test_union(self, portfolio_ctx):
+        store(Portfolio.members, {"alice", "bob"}, portfolio_ctx)
+        result = run(Portfolio.members.union({"bob", "charlie"}), portfolio_ctx)[0]
         assert result == {"alice", "bob", "charlie"}
 
 
@@ -282,9 +276,8 @@ class TestSetRefExecution:
 class TestShapesListRefExecution:
     """ShapesListRef operations through virtuals."""
 
-    @pytest.mark.asyncio
-    async def test_store_and_navigate(self, portfolio_ctx):
-        await store(
+    def test_store_and_navigate(self, portfolio_ctx):
+        store(
             Portfolio.orders,
             [
                 {"symbol": "AAPL", "price": 185.5, "qty": 10},
@@ -292,12 +285,11 @@ class TestShapesListRefExecution:
             ],
             portfolio_ctx,
         )
-        result = (await arun(Portfolio.orders[0].symbol, portfolio_ctx))[0]
+        result = run(Portfolio.orders[0].symbol, portfolio_ctx)[0]
         assert result == "AAPL"
 
-    @pytest.mark.asyncio
-    async def test_store_and_second_element(self, portfolio_ctx):
-        await store(
+    def test_store_and_second_element(self, portfolio_ctx):
+        store(
             Portfolio.orders,
             [
                 {"symbol": "AAPL", "price": 185.5, "qty": 10},
@@ -305,7 +297,7 @@ class TestShapesListRefExecution:
             ],
             portfolio_ctx,
         )
-        result = (await arun(Portfolio.orders[1].price, portfolio_ctx))[0]
+        result = run(Portfolio.orders[1].price, portfolio_ctx)[0]
         assert result == 142.3
 
 
@@ -333,9 +325,8 @@ class TestShapesDictRefWrapTypes:
 class TestShapesDictRefExecution:
     """ShapesDictRef operations through virtuals."""
 
-    @pytest.mark.asyncio
-    async def test_store_and_keys(self, portfolio_ctx):
-        await store(
+    def test_store_and_keys(self, portfolio_ctx):
+        store(
             Portfolio.team,
             {
                 "desk_a": {"symbol": "AAPL", "price": 185.5, "qty": 10},
@@ -343,19 +334,18 @@ class TestShapesDictRefExecution:
             },
             portfolio_ctx,
         )
-        result = (await arun(Portfolio.team.keys(), portfolio_ctx))[0]
+        result = run(Portfolio.team.keys(), portfolio_ctx)[0]
         assert set(result) == {"desk_a", "desk_b"}
 
-    @pytest.mark.asyncio
-    async def test_slot_navigation(self, portfolio_ctx):
-        await store(
+    def test_slot_navigation(self, portfolio_ctx):
+        store(
             Portfolio.team,
             {
                 "desk_a": {"symbol": "AAPL", "price": 185.5, "qty": 10},
             },
             portfolio_ctx,
         )
-        result = (await arun(Portfolio.team["desk_a"].symbol, portfolio_ctx))[0]
+        result = run(Portfolio.team["desk_a"].symbol, portfolio_ctx)[0]
         assert result == "AAPL"
 
 
@@ -367,20 +357,18 @@ class TestShapesDictRefExecution:
 class TestTermComposition:
     """Nu arithmetic across refs."""
 
-    @pytest.mark.asyncio
-    async def test_multiply(self, portfolio_ctx):
-        await store(
+    def test_multiply(self, portfolio_ctx):
+        store(
             Portfolio.orders,
             [{"symbol": "AAPL", "price": 185.5, "qty": 10}],
             portfolio_ctx,
         )
         total = Portfolio.orders[0].price * Portfolio.orders[0].qty
-        result = (await arun(total, portfolio_ctx))[0]
+        result = run(total, portfolio_ctx)[0]
         assert result == 1855.0
 
-    @pytest.mark.asyncio
-    async def test_subtract(self, portfolio_ctx):
-        await store(
+    def test_subtract(self, portfolio_ctx):
+        store(
             Portfolio.orders,
             [
                 {"symbol": "AAPL", "price": 185.5, "qty": 10},
@@ -389,7 +377,7 @@ class TestTermComposition:
             portfolio_ctx,
         )
         spread = Portfolio.orders[0].price - Portfolio.orders[1].price
-        result = (await arun(spread, portfolio_ctx))[0]
+        result = run(spread, portfolio_ctx)[0]
         assert abs(result - 43.2) < 0.01
 
 
@@ -402,34 +390,29 @@ class TestTermComposition:
 class TestLazyTake:
     """Take(keys, n) lazily slices collections via itertools.islice."""
 
-    @pytest.mark.asyncio
-    async def test_take_keys(self, portfolio_ctx):
-        await store(Portfolio.metadata, {f"k{i}": f"v{i}" for i in range(50)}, portfolio_ctx)
-        result = (await arun(Take(Portfolio.metadata.keys(), 5).to_list(), portfolio_ctx))[0]  # noqa: F821
+    def test_take_keys(self, portfolio_ctx):
+        store(Portfolio.metadata, {f"k{i}": f"v{i}" for i in range(50)}, portfolio_ctx)
+        result = run(Take(Portfolio.metadata.keys(), 5).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert len(result) == 5
 
-    @pytest.mark.asyncio
-    async def test_take_values(self, portfolio_ctx):
-        await store(Portfolio.metadata, {f"k{i}": f"v{i}" for i in range(50)}, portfolio_ctx)
-        result = (await arun(Take(Portfolio.metadata.values(), 3).to_list(), portfolio_ctx))[0]  # noqa: F821
+    def test_take_values(self, portfolio_ctx):
+        store(Portfolio.metadata, {f"k{i}": f"v{i}" for i in range(50)}, portfolio_ctx)
+        result = run(Take(Portfolio.metadata.values(), 3).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert len(result) == 3
 
-    @pytest.mark.asyncio
-    async def test_take_items(self, portfolio_ctx):
-        await store(Portfolio.metadata, {"a": "1", "b": "2", "c": "3"}, portfolio_ctx)
-        result = (await arun(Take(Portfolio.metadata.items(), 2).to_list(), portfolio_ctx))[0]  # noqa: F821
+    def test_take_items(self, portfolio_ctx):
+        store(Portfolio.metadata, {"a": "1", "b": "2", "c": "3"}, portfolio_ctx)
+        result = run(Take(Portfolio.metadata.items(), 2).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert len(result) == 2
 
-    @pytest.mark.asyncio
-    async def test_take_list(self, portfolio_ctx):
-        await store(Portfolio.tags, ["a", "b", "c", "d", "e"], portfolio_ctx)
-        result = (await arun(Take(Portfolio.tags, 3).to_list(), portfolio_ctx))[0]  # noqa: F821
+    def test_take_list(self, portfolio_ctx):
+        store(Portfolio.tags, ["a", "b", "c", "d", "e"], portfolio_ctx)
+        result = run(Take(Portfolio.tags, 3).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert result == ["a", "b", "c"]
 
-    @pytest.mark.asyncio
-    async def test_take_more_than_available(self, portfolio_ctx):
-        await store(Portfolio.metadata, {"a": "1", "b": "2"}, portfolio_ctx)
-        result = (await arun(Take(Portfolio.metadata.keys(), 100).to_list(), portfolio_ctx))[0]  # noqa: F821
+    def test_take_more_than_available(self, portfolio_ctx):
+        store(Portfolio.metadata, {"a": "1", "b": "2"}, portfolio_ctx)
+        result = run(Take(Portfolio.metadata.keys(), 100).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert sorted(result) == ["a", "b"]
 
     def test_take_returns_iterator_value(self):
@@ -450,13 +433,13 @@ class TestEndToEnd:
         ctx = portfolio_ctx
 
         # --- populate ---
-        await store(Portfolio.name, "Main Portfolio", ctx)
-        await store(Portfolio.tags, ["alpha", "beta", "gamma", "delta", "epsilon"], ctx)
-        await store(
+        store(Portfolio.name, "Main Portfolio", ctx)
+        store(Portfolio.tags, ["alpha", "beta", "gamma", "delta", "epsilon"], ctx)
+        store(
             Portfolio.metadata, {"strategy": "momentum", "risk": "medium", "horizon": "long"}, ctx
         )
-        await store(Portfolio.members, {"alice", "bob", "charlie"}, ctx)
-        await store(
+        store(Portfolio.members, {"alice", "bob", "charlie"}, ctx)
+        store(
             Portfolio.orders,
             [
                 {"symbol": "AAPL", "price": 185.5, "qty": 10},

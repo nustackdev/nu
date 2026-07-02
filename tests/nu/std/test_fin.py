@@ -2,16 +2,13 @@
 
 Covers both value types (``Percentage``, ``BasisPoint``): constructors (factory
 atoms), conversions and application (factory atoms over native methods),
-arithmetic and comparison (core atoms), plus the async path. Asserts against the
-native dataclasses.
+arithmetic and comparison (core atoms). Asserts against the native dataclasses.
 """
 
 from __future__ import annotations
 
-from nu.lang.helpers import arun, run
-from nu.std.fin import BasisPoint, Percentage
-from nu.std.fin.native import BasisPoint as PyBasisPoint
-from nu.std.fin.native import Percentage as PyPercentage
+from nu.lang.helpers import run
+from nu.std.fin import BasisPoint, Percentage, PyBasisPoint, PyPercentage
 
 
 # --- percentage constructors ------------------------------------------------
@@ -125,14 +122,3 @@ def test_basis_point_floordiv() -> None:
 def test_basis_point_comparison() -> None:
     assert run(BasisPoint.of(100) < BasisPoint.of(200))[0] is True
     assert run(BasisPoint.of(500).eq(BasisPoint.of(500)))[0] is True
-
-
-# --- async path -------------------------------------------------------------
-
-
-async def test_async_percentage_apply() -> None:
-    assert (await arun(Percentage.of(10).apply(200)))[0] == 20.0
-
-
-async def test_async_basis_point_add() -> None:
-    assert (await arun(BasisPoint.of(500) + BasisPoint.of(100)))[0] == PyBasisPoint(600)

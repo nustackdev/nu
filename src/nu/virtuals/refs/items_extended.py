@@ -31,7 +31,7 @@ from nu.std.datetime.interactions import TimedeltaTotalSeconds
 from nu.std.decimal import Decimal as DecimalForm
 from nu.std.fin import BasisPoint as BasisPointForm
 from nu.std.fin import Percentage as PercentageForm
-from nu.std.fin.native import BasisPoint, Percentage
+from nu.std.fin import PyBasisPoint, PyPercentage
 from nu.std.fractions import Fraction as FractionForm
 from nu.std.pathlib import Path as PathForm
 from nu.std.uuid import UUID as UUIDForm
@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from pathlib import PurePath
     from uuid import UUID
 
-    from nu.domains.shape.dsl import Shape
+    from nu import Shape
     from nu.lang import Arg
 
     from .base import PrimitiveRef
@@ -210,11 +210,11 @@ class BasisPointRef(ItemRef, BasisPointForm):
         """Declare a slot holding a BasisPoint value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> BasisPoint:
+    def coerce(self, raw: object) -> PyBasisPoint:
         """Wrap the stored int back as a BasisPoint."""
-        return raw if isinstance(raw, BasisPoint) else BasisPoint(int(raw))  # type: ignore[arg-type]
+        return raw if isinstance(raw, PyBasisPoint) else PyBasisPoint(int(raw))  # type: ignore[arg-type]
 
-    def store(self, value: Arg[BasisPoint | int]) -> StoreCommand:
+    def store(self, value: Arg[PyBasisPoint | int]) -> StoreCommand:
         """Serialize the BasisPoint to int, then write it."""
         val = IntQuery(value) if isinstance(value, Nu) else int(value)
         return StoreCommand(self, val)
@@ -243,11 +243,11 @@ class PercentageRef(ItemRef, PercentageForm):
         """Declare a slot holding a Percentage value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> Percentage:
+    def coerce(self, raw: object) -> PyPercentage:
         """Wrap the stored float back as a Percentage."""
-        return raw if isinstance(raw, Percentage) else Percentage(float(raw))  # type: ignore[arg-type]
+        return raw if isinstance(raw, PyPercentage) else PyPercentage(float(raw))  # type: ignore[arg-type]
 
-    def store(self, value: Arg[Percentage | float]) -> StoreCommand:
+    def store(self, value: Arg[PyPercentage | float]) -> StoreCommand:
         """Serialize the Percentage to float, then write it."""
         val = FloatQuery(value) if isinstance(value, Nu) else float(value)
         return StoreCommand(self, val)

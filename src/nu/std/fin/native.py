@@ -1,11 +1,12 @@
-"""Native financial value types - ``Percentage`` and ``BasisPoint``.
+"""Native financial value types - ``PyPercentage`` and ``PyBasisPoint``.
 
 Plain immutable dataclasses, the way ``decimal.Decimal`` or ``fractions.Fraction``
-are plain stdlib types. The Nu Forms in ``forms`` wrap these; the ``interactions``
-atoms bind their constructors and methods.
+are plain stdlib types. The ``Py`` prefix marks them as the raw Python values (so
+they import without aliasing next to the ``Percentage`` / ``BasisPoint`` Forms in
+``forms``); the ``interactions`` atoms bind their constructors and methods.
 
-- ``Percentage`` stores a float (``75.5`` = 75.5%).
-- ``BasisPoint`` stores an int (``500`` = 5%), one basis point being 1/100th of
+- ``PyPercentage`` stores a float (``75.5`` = 75.5%).
+- ``PyBasisPoint`` stores an int (``500`` = 5%), one basis point being 1/100th of
   a percent.
 """
 
@@ -14,17 +15,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
-__all__ = ["BasisPoint", "Percentage"]
+__all__ = ["PyBasisPoint", "PyPercentage"]
 
 
 @dataclass(frozen=True, slots=True)
-class Percentage:
+class PyPercentage:
     """A percentage, stored as a float (``75.5`` = 75.5%).
 
     Examples:
-        >>> Percentage(75.5)            # 75.5%
-        >>> Percentage.from_dec(0.755)  # 75.5%
-        >>> Percentage.from_bps(7550)   # 75.5%
+        >>> PyPercentage(75.5)            # 75.5%
+        >>> PyPercentage.from_dec(0.755)  # 75.5%
+        >>> PyPercentage.from_bps(7550)   # 75.5%
     """
 
     value: float
@@ -32,17 +33,17 @@ class Percentage:
     # --- constructors --------------------------------------------------------
 
     @classmethod
-    def from_dec(cls, dec: float) -> Percentage:
+    def from_dec(cls, dec: float) -> PyPercentage:
         """Build from a decimal ratio (``0.755`` -> 75.5%)."""
         return cls(dec * 100)
 
     @classmethod
-    def from_bps(cls, bps: int) -> Percentage:
+    def from_bps(cls, bps: int) -> PyPercentage:
         """Build from basis points (``7550`` -> 75.5%)."""
         return cls(bps / 100)
 
     @classmethod
-    def from_ratio(cls, numerator: float, denominator: float) -> Percentage:
+    def from_ratio(cls, numerator: float, denominator: float) -> PyPercentage:
         """Build from a ratio (``3 / 4`` -> 75%). Zero denominator -> 0%."""
         if denominator == 0:
             return cls(0.0)
@@ -85,59 +86,59 @@ class Percentage:
         """Whether the value falls within ``[min_val, max_val]``."""
         return min_val <= self.value <= max_val
 
-    def clamp(self, min_val: float = 0.0, max_val: float = 100.0) -> Percentage:
+    def clamp(self, min_val: float = 0.0, max_val: float = 100.0) -> PyPercentage:
         """This percentage clamped to ``[min_val, max_val]``."""
-        return Percentage(max(min_val, min(max_val, self.value)))
+        return PyPercentage(max(min_val, min(max_val, self.value)))
 
     # --- arithmetic ----------------------------------------------------------
 
-    def __add__(self, other: Percentage | float) -> Percentage:
-        if isinstance(other, Percentage):
-            return Percentage(self.value + other.value)
-        return Percentage(self.value + other)
+    def __add__(self, other: PyPercentage | float) -> PyPercentage:
+        if isinstance(other, PyPercentage):
+            return PyPercentage(self.value + other.value)
+        return PyPercentage(self.value + other)
 
-    def __radd__(self, other: float) -> Percentage:
-        return Percentage(other + self.value)
+    def __radd__(self, other: float) -> PyPercentage:
+        return PyPercentage(other + self.value)
 
-    def __sub__(self, other: Percentage | float) -> Percentage:
-        if isinstance(other, Percentage):
-            return Percentage(self.value - other.value)
-        return Percentage(self.value - other)
+    def __sub__(self, other: PyPercentage | float) -> PyPercentage:
+        if isinstance(other, PyPercentage):
+            return PyPercentage(self.value - other.value)
+        return PyPercentage(self.value - other)
 
-    def __rsub__(self, other: float) -> Percentage:
-        return Percentage(other - self.value)
+    def __rsub__(self, other: float) -> PyPercentage:
+        return PyPercentage(other - self.value)
 
-    def __mul__(self, factor: int | float) -> Percentage:
-        return Percentage(self.value * factor)
+    def __mul__(self, factor: int | float) -> PyPercentage:
+        return PyPercentage(self.value * factor)
 
-    def __rmul__(self, factor: int | float) -> Percentage:
-        return Percentage(factor * self.value)
+    def __rmul__(self, factor: int | float) -> PyPercentage:
+        return PyPercentage(factor * self.value)
 
-    def __truediv__(self, divisor: int | float) -> Percentage:
-        return Percentage(self.value / divisor)
+    def __truediv__(self, divisor: int | float) -> PyPercentage:
+        return PyPercentage(self.value / divisor)
 
-    def __neg__(self) -> Percentage:
-        return Percentage(-self.value)
+    def __neg__(self) -> PyPercentage:
+        return PyPercentage(-self.value)
 
     # --- comparison ----------------------------------------------------------
 
-    def __lt__(self, other: Percentage | float) -> bool:
-        if isinstance(other, Percentage):
+    def __lt__(self, other: PyPercentage | float) -> bool:
+        if isinstance(other, PyPercentage):
             return self.value < other.value
         return self.value < other
 
-    def __le__(self, other: Percentage | float) -> bool:
-        if isinstance(other, Percentage):
+    def __le__(self, other: PyPercentage | float) -> bool:
+        if isinstance(other, PyPercentage):
             return self.value <= other.value
         return self.value <= other
 
-    def __gt__(self, other: Percentage | float) -> bool:
-        if isinstance(other, Percentage):
+    def __gt__(self, other: PyPercentage | float) -> bool:
+        if isinstance(other, PyPercentage):
             return self.value > other.value
         return self.value > other
 
-    def __ge__(self, other: Percentage | float) -> bool:
-        if isinstance(other, Percentage):
+    def __ge__(self, other: PyPercentage | float) -> bool:
+        if isinstance(other, PyPercentage):
             return self.value >= other.value
         return self.value >= other
 
@@ -152,15 +153,15 @@ class Percentage:
 
 
 @dataclass(frozen=True, slots=True)
-class BasisPoint:
+class PyBasisPoint:
     """A basis point count - 1/100th of a percent, stored as an int.
 
     Integer storage keeps rate/fee math exact (no binary-float drift).
 
     Examples:
-        >>> BasisPoint(500)            # 5%
-        >>> BasisPoint.from_pct(5.0)   # 500 bps
-        >>> BasisPoint.from_dec(0.05)  # 500 bps
+        >>> PyBasisPoint(500)            # 5%
+        >>> PyBasisPoint.from_pct(5.0)   # 500 bps
+        >>> PyBasisPoint.from_dec(0.05)  # 500 bps
     """
 
     value: int
@@ -168,12 +169,12 @@ class BasisPoint:
     # --- constructors --------------------------------------------------------
 
     @classmethod
-    def from_pct(cls, pct: float) -> BasisPoint:
+    def from_pct(cls, pct: float) -> PyBasisPoint:
         """Build from a percentage (``5.0`` -> 500 bps)."""
         return cls(int(pct * 100))
 
     @classmethod
-    def from_dec(cls, dec: float) -> BasisPoint:
+    def from_dec(cls, dec: float) -> PyBasisPoint:
         """Build from a decimal ratio (``0.05`` -> 500 bps)."""
         return cls(int(dec * 10000))
 
@@ -210,53 +211,53 @@ class BasisPoint:
 
     # --- arithmetic ----------------------------------------------------------
 
-    def __add__(self, other: BasisPoint | int) -> BasisPoint:
-        if isinstance(other, BasisPoint):
-            return BasisPoint(self.value + other.value)
-        return BasisPoint(self.value + other)
+    def __add__(self, other: PyBasisPoint | int) -> PyBasisPoint:
+        if isinstance(other, PyBasisPoint):
+            return PyBasisPoint(self.value + other.value)
+        return PyBasisPoint(self.value + other)
 
-    def __radd__(self, other: int) -> BasisPoint:
-        return BasisPoint(other + self.value)
+    def __radd__(self, other: int) -> PyBasisPoint:
+        return PyBasisPoint(other + self.value)
 
-    def __sub__(self, other: BasisPoint | int) -> BasisPoint:
-        if isinstance(other, BasisPoint):
-            return BasisPoint(self.value - other.value)
-        return BasisPoint(self.value - other)
+    def __sub__(self, other: PyBasisPoint | int) -> PyBasisPoint:
+        if isinstance(other, PyBasisPoint):
+            return PyBasisPoint(self.value - other.value)
+        return PyBasisPoint(self.value - other)
 
-    def __rsub__(self, other: int) -> BasisPoint:
-        return BasisPoint(other - self.value)
+    def __rsub__(self, other: int) -> PyBasisPoint:
+        return PyBasisPoint(other - self.value)
 
-    def __mul__(self, factor: int | float) -> BasisPoint:
-        return BasisPoint(int(self.value * factor))
+    def __mul__(self, factor: int | float) -> PyBasisPoint:
+        return PyBasisPoint(int(self.value * factor))
 
-    def __rmul__(self, factor: int | float) -> BasisPoint:
-        return BasisPoint(int(factor * self.value))
+    def __rmul__(self, factor: int | float) -> PyBasisPoint:
+        return PyBasisPoint(int(factor * self.value))
 
-    def __truediv__(self, divisor: int | float) -> BasisPoint:
-        return BasisPoint(int(self.value / divisor))
+    def __truediv__(self, divisor: int | float) -> PyBasisPoint:
+        return PyBasisPoint(int(self.value / divisor))
 
-    def __floordiv__(self, divisor: int) -> BasisPoint:
-        return BasisPoint(self.value // divisor)
+    def __floordiv__(self, divisor: int) -> PyBasisPoint:
+        return PyBasisPoint(self.value // divisor)
 
     # --- comparison ----------------------------------------------------------
 
-    def __lt__(self, other: BasisPoint | int) -> bool:
-        if isinstance(other, BasisPoint):
+    def __lt__(self, other: PyBasisPoint | int) -> bool:
+        if isinstance(other, PyBasisPoint):
             return self.value < other.value
         return self.value < other
 
-    def __le__(self, other: BasisPoint | int) -> bool:
-        if isinstance(other, BasisPoint):
+    def __le__(self, other: PyBasisPoint | int) -> bool:
+        if isinstance(other, PyBasisPoint):
             return self.value <= other.value
         return self.value <= other
 
-    def __gt__(self, other: BasisPoint | int) -> bool:
-        if isinstance(other, BasisPoint):
+    def __gt__(self, other: PyBasisPoint | int) -> bool:
+        if isinstance(other, PyBasisPoint):
             return self.value > other.value
         return self.value > other
 
-    def __ge__(self, other: BasisPoint | int) -> bool:
-        if isinstance(other, BasisPoint):
+    def __ge__(self, other: PyBasisPoint | int) -> bool:
+        if isinstance(other, PyBasisPoint):
             return self.value >= other.value
         return self.value >= other
 

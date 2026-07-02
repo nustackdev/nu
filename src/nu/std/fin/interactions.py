@@ -9,8 +9,7 @@ here - they reuse the core atoms.
 from __future__ import annotations
 
 from nu.lang import ScalarQueryFactory
-from nu.std.fin.native import BasisPoint as _BasisPoint
-from nu.std.fin.native import Percentage as _Percentage
+from nu.std.fin.native import PyBasisPoint, PyPercentage
 
 
 __all__ = [
@@ -40,39 +39,39 @@ __all__ = [
 
 # --- percentage constructors ------------------------------------------------
 
-PercentageOf = ScalarQueryFactory("PercentageOf", _Percentage)
-PercentageFromDec = ScalarQueryFactory("PercentageFromDec", _Percentage.from_dec)
-PercentageFromBps = ScalarQueryFactory("PercentageFromBps", _Percentage.from_bps)
-PercentageFromRatio = ScalarQueryFactory("PercentageFromRatio", _Percentage.from_ratio)
+PercentageOf = ScalarQueryFactory("PercentageOf", PyPercentage)
+PercentageFromDec = ScalarQueryFactory("PercentageFromDec", PyPercentage.from_dec)
+PercentageFromBps = ScalarQueryFactory("PercentageFromBps", PyPercentage.from_bps)
+PercentageFromRatio = ScalarQueryFactory("PercentageFromRatio", PyPercentage.from_ratio)
 
 # --- percentage conversions -------------------------------------------------
 
-PercentageToDec = ScalarQueryFactory("PercentageToDec", _Percentage.to_dec)
-PercentageToBps = ScalarQueryFactory("PercentageToBps", _Percentage.to_bps)
-PercentageToFloat = ScalarQueryFactory("PercentageToFloat", _Percentage.to_float)
+PercentageToDec = ScalarQueryFactory("PercentageToDec", PyPercentage.to_dec)
+PercentageToBps = ScalarQueryFactory("PercentageToBps", PyPercentage.to_bps)
+PercentageToFloat = ScalarQueryFactory("PercentageToFloat", PyPercentage.to_float)
 
 # --- percentage application + validation ------------------------------------
 
-PercentageApply = ScalarQueryFactory("PercentageApply", _Percentage.apply)
-PercentageAddTo = ScalarQueryFactory("PercentageAddTo", _Percentage.add_to)
-PercentageSubFrom = ScalarQueryFactory("PercentageSubFrom", _Percentage.sub_from)
-PercentageIsValid = ScalarQueryFactory("PercentageIsValid", _Percentage.is_valid)
-PercentageClamp = ScalarQueryFactory("PercentageClamp", _Percentage.clamp)
+PercentageApply = ScalarQueryFactory("PercentageApply", PyPercentage.apply)
+PercentageAddTo = ScalarQueryFactory("PercentageAddTo", PyPercentage.add_to)
+PercentageSubFrom = ScalarQueryFactory("PercentageSubFrom", PyPercentage.sub_from)
+PercentageIsValid = ScalarQueryFactory("PercentageIsValid", PyPercentage.is_valid)
+PercentageClamp = ScalarQueryFactory("PercentageClamp", PyPercentage.clamp)
 
 # --- basis point constructors -----------------------------------------------
 
-BasisPointOf = ScalarQueryFactory("BasisPointOf", _BasisPoint)
-BasisPointFromPct = ScalarQueryFactory("BasisPointFromPct", _BasisPoint.from_pct)
-BasisPointFromDec = ScalarQueryFactory("BasisPointFromDec", _BasisPoint.from_dec)
+BasisPointOf = ScalarQueryFactory("BasisPointOf", PyBasisPoint)
+BasisPointFromPct = ScalarQueryFactory("BasisPointFromPct", PyBasisPoint.from_pct)
+BasisPointFromDec = ScalarQueryFactory("BasisPointFromDec", PyBasisPoint.from_dec)
 
 # --- basis point conversions ------------------------------------------------
 
-BasisPointToPct = ScalarQueryFactory("BasisPointToPct", _BasisPoint.to_pct)
-BasisPointToDec = ScalarQueryFactory("BasisPointToDec", _BasisPoint.to_dec)
-BasisPointToInt = ScalarQueryFactory("BasisPointToInt", _BasisPoint.to_int)
+BasisPointToPct = ScalarQueryFactory("BasisPointToPct", PyBasisPoint.to_pct)
+BasisPointToDec = ScalarQueryFactory("BasisPointToDec", PyBasisPoint.to_dec)
+BasisPointToInt = ScalarQueryFactory("BasisPointToInt", PyBasisPoint.to_int)
 
 # --- basis point application ------------------------------------------------
 
-BasisPointApply = ScalarQueryFactory("BasisPointApply", _BasisPoint.apply)
-BasisPointAddTo = ScalarQueryFactory("BasisPointAddTo", _BasisPoint.add_to)
-BasisPointSubFrom = ScalarQueryFactory("BasisPointSubFrom", _BasisPoint.sub_from)
+BasisPointApply = ScalarQueryFactory("BasisPointApply", PyBasisPoint.apply)
+BasisPointAddTo = ScalarQueryFactory("BasisPointAddTo", PyBasisPoint.add_to)
+BasisPointSubFrom = ScalarQueryFactory("BasisPointSubFrom", PyBasisPoint.sub_from)

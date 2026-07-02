@@ -30,6 +30,7 @@ from nu import (
     SetForm,
     SortedQuery,
     arun,
+    run,
 )
 
 from .conftest import PortfolioShape, TeamShape, UserShape
@@ -65,97 +66,76 @@ class TestDictRefExecution:
 
     @pytest.mark.asyncio
     async def test_keys_execute(self, data, portfolio_ctx):
+        # kept async: representative dict round-trip on the async execution path
         data["metadata"] = {"strategy": "momentum", "risk": "medium"}
         result = (await arun(PortfolioShape.metadata.keys(), portfolio_ctx))[0]
         assert isinstance(result, KeysView)
         assert set(result) == {"strategy", "risk"}
 
-    @pytest.mark.asyncio
-    async def test_values_execute(self, data, portfolio_ctx):
+    def test_values_execute(self, data, portfolio_ctx):
         data["metadata"] = {"strategy": "momentum", "risk": "medium"}
-        result = (await arun(PortfolioShape.metadata.values(), portfolio_ctx))[0]
+        result = run(PortfolioShape.metadata.values(), portfolio_ctx)[0]
         assert isinstance(result, ValuesView)
         assert set(result) == {"momentum", "medium"}
 
-    @pytest.mark.asyncio
-    async def test_items_execute(self, data, portfolio_ctx):
+    def test_items_execute(self, data, portfolio_ctx):
         data["metadata"] = {"strategy": "momentum", "risk": "medium"}
-        result = (await arun(PortfolioShape.metadata.items(), portfolio_ctx))[0]
+        result = run(PortfolioShape.metadata.items(), portfolio_ctx)[0]
         assert isinstance(result, ItemsView)
         assert set(result) == {("strategy", "momentum"), ("risk", "medium")}
 
-    @pytest.mark.asyncio
-    async def test_get_execute(self, data, portfolio_ctx):
+    def test_get_execute(self, data, portfolio_ctx):
         data["metadata"] = {"strategy": "momentum"}
-        result = (await arun(PortfolioShape.metadata.get("strategy"), portfolio_ctx))[0]
+        result = run(PortfolioShape.metadata.get("strategy"), portfolio_ctx)[0]
         assert result == "momentum"
 
-    @pytest.mark.asyncio
-    async def test_set_and_get(self, data, portfolio_ctx):
+    def test_set_and_get(self, data, portfolio_ctx):
         data["metadata"] = {}
-        await arun(PortfolioShape.metadata.set("key", "value"), portfolio_ctx)
+        run(PortfolioShape.metadata.set("key", "value"), portfolio_ctx)
         assert data["metadata"]["key"] == "value"
 
 
 class TestDictRefViewOperations:
     """DictKeysForm supports set-like operations, DictValuesForm supports materialization."""
 
-    @pytest.mark.asyncio
-    async def test_keys_to_list(self, data, portfolio_ctx):
+    def test_keys_to_list(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1, "b": 2, "c": 3}
-        result = (await arun(PortfolioShape.metadata.keys().to_list(), portfolio_ctx))[0]
+        result = run(PortfolioShape.metadata.keys().to_list(), portfolio_ctx)[0]
         assert sorted(result) == ["a", "b", "c"]
 
-    @pytest.mark.asyncio
-    async def test_keys_to_set(self, data, portfolio_ctx):
+    def test_keys_to_set(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1, "b": 2, "c": 3}
-        result = (await arun(PortfolioShape.metadata.keys().to_set(), portfolio_ctx))[0]
+        result = run(PortfolioShape.metadata.keys().to_set(), portfolio_ctx)[0]
         assert result == {"a", "b", "c"}
 
-    @pytest.mark.asyncio
-    async def test_values_to_list(self, data, portfolio_ctx):
+    def test_values_to_list(self, data, portfolio_ctx):
         data["metadata"] = {"a": "x", "b": "y"}
-        result = (await arun(PortfolioShape.metadata.values().to_list(), portfolio_ctx))[0]
+        result = run(PortfolioShape.metadata.values().to_list(), portfolio_ctx)[0]
         assert sorted(result) == ["x", "y"]
 
-    @pytest.mark.asyncio
-    async def test_items_to_list(self, data, portfolio_ctx):
+    def test_items_to_list(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1, "b": 2}
-        result = (await arun(PortfolioShape.metadata.items().to_list(), portfolio_ctx))[0]
+        result = run(PortfolioShape.metadata.items().to_list(), portfolio_ctx)[0]
         assert sorted(result) == [("a", 1), ("b", 2)]
 
-    @pytest.mark.asyncio
-    async def test_keys_union(self, data, portfolio_ctx):
+    def test_keys_union(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1, "b": 2}
-        result = (
-            await arun(PortfolioShape.metadata.keys().union({"b", "c", "d"}), portfolio_ctx)
-        )[0]
+        result = run(PortfolioShape.metadata.keys().union({"b", "c", "d"}), portfolio_ctx)[0]
         assert result == {"a", "b", "c", "d"}
 
-    @pytest.mark.asyncio
-    async def test_keys_intersection(self, data, portfolio_ctx):
+    def test_keys_intersection(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1, "b": 2, "c": 3}
-        result = (
-            await arun(
-                PortfolioShape.metadata.keys().intersection({"b", "c", "d"}), portfolio_ctx
-            )
-        )[0]
+        result = run(PortfolioShape.metadata.keys().intersection({"b", "c", "d"}), portfolio_ctx)[0]
         assert result == {"b", "c"}
 
-    @pytest.mark.asyncio
-    async def test_keys_difference(self, data, portfolio_ctx):
+    def test_keys_difference(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1, "b": 2, "c": 3}
-        result = (
-            await arun(PortfolioShape.metadata.keys().difference({"b", "c"}), portfolio_ctx)
-        )[0]
+        result = run(PortfolioShape.metadata.keys().difference({"b", "c"}), portfolio_ctx)[0]
         assert result == {"a"}
 
-    @pytest.mark.asyncio
-    async def test_items_union(self, data, portfolio_ctx):
+    def test_items_union(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1}
-        result = (
-            await arun(PortfolioShape.metadata.items().union({("b", 2)}), portfolio_ctx)
-        )[0]
+        result = run(PortfolioShape.metadata.items().union({("b", 2)}), portfolio_ctx)[0]
         assert result == {("a", 1), ("b", 2)}
 
 
@@ -186,26 +166,24 @@ class TestListRefTypes:
 class TestListRefExecution:
     """ListRef operations execute correctly."""
 
-    @pytest.mark.asyncio
-    async def test_first(self, data, portfolio_ctx):
+    def test_first(self, data, portfolio_ctx):
         data["tags"] = ["alpha", "beta", "gamma"]
-        result = (await arun(PortfolioShape.tags.first_elem(), portfolio_ctx))[0]
+        result = run(PortfolioShape.tags.first_elem(), portfolio_ctx)[0]
         assert result == "alpha"
 
-    @pytest.mark.asyncio
-    async def test_last(self, data, portfolio_ctx):
+    def test_last(self, data, portfolio_ctx):
         data["tags"] = ["alpha", "beta", "gamma"]
-        result = (await arun(PortfolioShape.tags.last_elem(), portfolio_ctx))[0]
+        result = run(PortfolioShape.tags.last_elem(), portfolio_ctx)[0]
         assert result == "gamma"
 
-    @pytest.mark.asyncio
-    async def test_slice(self, data, portfolio_ctx):
+    def test_slice(self, data, portfolio_ctx):
         data["tags"] = ["a", "b", "c", "d", "e"]
-        result = (await arun(PortfolioShape.tags.slice(1, 3), portfolio_ctx))[0]
+        result = run(PortfolioShape.tags.slice(1, 3), portfolio_ctx)[0]
         assert result == ["b", "c"]
 
     @pytest.mark.asyncio
     async def test_append_and_read(self, data, portfolio_ctx):
+        # kept async: representative list round-trip on the async execution path
         data["tags"] = ["x"]
         await arun(PortfolioShape.tags.append("y"), portfolio_ctx)
         assert data["tags"] == ["x", "y"]
@@ -233,16 +211,14 @@ class TestSetRefTypes:
 class TestSetRefExecution:
     """SetRef operations execute correctly."""
 
-    @pytest.mark.asyncio
-    async def test_add_and_contains(self, data, portfolio_ctx):
+    def test_add_and_contains(self, data, portfolio_ctx):
         data["members"] = {"alice"}
-        await arun(PortfolioShape.members.add("bob"), portfolio_ctx)
+        run(PortfolioShape.members.add("bob"), portfolio_ctx)
         assert data["members"] == {"alice", "bob"}
 
-    @pytest.mark.asyncio
-    async def test_union(self, data, portfolio_ctx):
+    def test_union(self, data, portfolio_ctx):
         data["members"] = {"alice", "bob"}
-        result = (await arun(PortfolioShape.members.union({"bob", "charlie"}), portfolio_ctx))[0]
+        result = run(PortfolioShape.members.union({"bob", "charlie"}), portfolio_ctx)[0]
         assert result == {"alice", "bob", "charlie"}
 
 
@@ -273,28 +249,24 @@ class TestShapeRefViewTypes:
 class TestShapeRefExecution:
     """ShapeRef keys/values/items execute correctly."""
 
-    @pytest.mark.asyncio
-    async def test_shape_keys(self, data, team_ctx):
+    def test_shape_keys(self, data, team_ctx):
         data["info"] = {"name": "Alice", "age": 30, "score": 9.5}
-        result = (await arun(TeamShape.info.keys(), team_ctx))[0]
+        result = run(TeamShape.info.keys(), team_ctx)[0]
         assert set(result) == {"name", "age", "score"}
 
-    @pytest.mark.asyncio
-    async def test_shape_values(self, data, team_ctx):
+    def test_shape_values(self, data, team_ctx):
         data["info"] = {"name": "Alice", "age": 30, "score": 9.5}
-        result = (await arun(TeamShape.info.values(), team_ctx))[0]
+        result = run(TeamShape.info.values(), team_ctx)[0]
         assert set(result) == {"Alice", 30, 9.5}
 
-    @pytest.mark.asyncio
-    async def test_shape_items(self, data, team_ctx):
+    def test_shape_items(self, data, team_ctx):
         data["info"] = {"name": "Alice", "age": 30}
-        result = (await arun(TeamShape.info.items(), team_ctx))[0]
+        result = run(TeamShape.info.items(), team_ctx)[0]
         assert set(result) == {("name", "Alice"), ("age", 30)}
 
-    @pytest.mark.asyncio
-    async def test_shape_keys_to_list(self, data, team_ctx):
+    def test_shape_keys_to_list(self, data, team_ctx):
         data["info"] = {"name": "Alice", "age": 30}
-        result = (await arun(TeamShape.info.keys().to_list(), team_ctx))[0]
+        result = run(TeamShape.info.keys().to_list(), team_ctx)[0]
         assert sorted(result) == ["age", "name"]
 
 
@@ -322,22 +294,19 @@ class TestShapesDictRefViewTypes:
 class TestShapesDictRefExecution:
     """ShapesDictRef collection ops execute correctly."""
 
-    @pytest.mark.asyncio
-    async def test_keys(self, data, team_ctx):
+    def test_keys(self, data, team_ctx):
         data["members"] = {
             "alice": {"name": "Alice", "age": 30, "score": 9.0},
             "bob": {"name": "Bob", "age": 25, "score": 8.5},
         }
-        result = (await arun(TeamShape.members.keys(), team_ctx))[0]
+        result = run(TeamShape.members.keys(), team_ctx)[0]
         assert set(result) == {"alice", "bob"}
 
-    @pytest.mark.asyncio
-    @pytest.mark.asyncio
-    async def test_slot_navigation(self, data, team_ctx):
+    def test_slot_navigation(self, data, team_ctx):
         data["members"] = {
             "alice": {"name": "Alice", "age": 30, "score": 9.0},
         }
-        result = (await arun(TeamShape.members["alice"].name, team_ctx))[0]
+        result = run(TeamShape.members["alice"].name, team_ctx)[0]
         assert result == "Alice"
 
 
@@ -349,22 +318,19 @@ class TestShapesDictRefExecution:
 class TestPrimitiveRefs:
     """Basic set/get on typed primitive refs."""
 
-    @pytest.mark.asyncio
-    async def test_int_ref(self, data, user_ctx):
+    def test_int_ref(self, data, user_ctx):
         data["age"] = 25
-        result = (await arun(UserShape.age, user_ctx))[0]
+        result = run(UserShape.age, user_ctx)[0]
         assert result == 25
 
-    @pytest.mark.asyncio
-    async def test_str_ref(self, data, user_ctx):
+    def test_str_ref(self, data, user_ctx):
         data["name"] = "Alice"
-        result = (await arun(UserShape.name, user_ctx))[0]
+        result = run(UserShape.name, user_ctx)[0]
         assert result == "Alice"
 
-    @pytest.mark.asyncio
-    async def test_float_ref(self, data, user_ctx):
+    def test_float_ref(self, data, user_ctx):
         data["score"] = 9.5
-        result = (await arun(UserShape.score, user_ctx))[0]
+        result = run(UserShape.score, user_ctx)[0]
         assert result == 9.5
 
 
@@ -377,40 +343,34 @@ class TestPrimitiveRefs:
 class TestLazyTake:
     """Take(keys, n) lazily slices dict views via itertools.islice."""
 
-    @pytest.mark.asyncio
-    async def test_take_keys(self, data, portfolio_ctx):
+    def test_take_keys(self, data, portfolio_ctx):
         data["metadata"] = {f"key_{i}": f"val_{i}" for i in range(100)}
-        result = (await arun(Take(PortfolioShape.metadata.keys(), 3).to_list(), portfolio_ctx))[0]  # noqa: F821
+        result = run(Take(PortfolioShape.metadata.keys(), 3).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert len(result) == 3
         assert all(k.startswith("key_") for k in result)
 
-    @pytest.mark.asyncio
-    async def test_take_values(self, data, portfolio_ctx):
+    def test_take_values(self, data, portfolio_ctx):
         data["metadata"] = {f"k{i}": f"v{i}" for i in range(50)}
-        result = (await arun(Take(PortfolioShape.metadata.values(), 5).to_list(), portfolio_ctx))[0]  # noqa: F821
+        result = run(Take(PortfolioShape.metadata.values(), 5).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert len(result) == 5
 
-    @pytest.mark.asyncio
-    async def test_take_items(self, data, portfolio_ctx):
+    def test_take_items(self, data, portfolio_ctx):
         data["metadata"] = {f"k{i}": f"v{i}" for i in range(50)}
-        result = (await arun(Take(PortfolioShape.metadata.items(), 2).to_list(), portfolio_ctx))[0]  # noqa: F821
+        result = run(Take(PortfolioShape.metadata.items(), 2).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert len(result) == 2
         assert all(isinstance(item, tuple) and len(item) == 2 for item in result)
 
-    @pytest.mark.asyncio
-    async def test_take_more_than_available(self, data, portfolio_ctx):
+    def test_take_more_than_available(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1, "b": 2}
-        result = (await arun(Take(PortfolioShape.metadata.keys(), 100).to_list(), portfolio_ctx))[0]  # noqa: F821
+        result = run(Take(PortfolioShape.metadata.keys(), 100).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert sorted(result) == ["a", "b"]
 
-    @pytest.mark.asyncio
-    async def test_take_list(self, data, portfolio_ctx):
+    def test_take_list(self, data, portfolio_ctx):
         data["tags"] = ["a", "b", "c", "d", "e", "f", "g"]
-        result = (await arun(Take(PortfolioShape.tags, 3).to_list(), portfolio_ctx))[0]  # noqa: F821
+        result = run(Take(PortfolioShape.tags, 3).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert result == ["a", "b", "c"]
 
-    @pytest.mark.asyncio
-    async def test_take_returns_iterator_value(self):
+    def test_take_returns_iterator_value(self):
         term = Take(PortfolioShape.metadata.keys(), 10)  # noqa: F821
         assert isinstance(term, IteratorForm)
 
@@ -433,9 +393,8 @@ class TestEndToEnd:
 
         return Context().bind(dict, e2e_data, PortfolioShape)
 
-    @pytest.mark.asyncio
     @pytest.mark.skip(reason="TakeQuery not yet ported to v2 — scenario uses Take mid-body")
-    async def test_full_scenario(self, e2e_data, e2e_ctx):
+    def test_full_scenario(self, e2e_data, e2e_ctx):
         d = e2e_data
 
         # populate
@@ -445,85 +404,83 @@ class TestEndToEnd:
         d["members"] = {"alice", "bob", "charlie"}
 
         # --- primitives ---
-        title = (await arun(PortfolioShape.title, e2e_ctx))[0]
+        title = run(PortfolioShape.title, e2e_ctx)[0]
         assert title == "Main Portfolio"
 
         # --- dict keys view (DictKeysForm) ---
-        keys = (await arun(PortfolioShape.metadata.keys(), e2e_ctx))[0]
+        keys = run(PortfolioShape.metadata.keys(), e2e_ctx)[0]
         assert isinstance(keys, KeysView)
         assert set(keys) == {"strategy", "risk", "horizon"}
 
         # --- keys set operations ---
-        common = (
-            await arun(PortfolioShape.metadata.keys().intersection({"risk", "alpha"}), e2e_ctx)
-        )[0]
+        common = run(PortfolioShape.metadata.keys().intersection({"risk", "alpha"}), e2e_ctx)[0]
         assert common == {"risk"}
 
         # --- keys materialization ---
-        key_list = (await arun(PortfolioShape.metadata.keys().to_list(), e2e_ctx))[0]
+        key_list = run(PortfolioShape.metadata.keys().to_list(), e2e_ctx)[0]
         assert sorted(key_list) == ["horizon", "risk", "strategy"]
 
-        key_set = (await arun(PortfolioShape.metadata.keys().to_set(), e2e_ctx))[0]
+        key_set = run(PortfolioShape.metadata.keys().to_set(), e2e_ctx)[0]
         assert key_set == {"strategy", "risk", "horizon"}
 
         # --- dict values view ---
-        vals = (await arun(PortfolioShape.metadata.values(), e2e_ctx))[0]
+        vals = run(PortfolioShape.metadata.values(), e2e_ctx)[0]
         assert isinstance(vals, ValuesView)
         assert set(vals) == {"momentum", "medium", "long"}
 
         # --- dict items view ---
-        items = (await arun(PortfolioShape.metadata.items(), e2e_ctx))[0]
+        items = run(PortfolioShape.metadata.items(), e2e_ctx)[0]
         assert isinstance(items, ItemsView)
         assert ("strategy", "momentum") in items
 
         # --- lazy Take over keys ---
-        first_2 = (await arun(Take(PortfolioShape.metadata.keys(), 2).to_list(), e2e_ctx))[0]  # noqa: F821
+        first_2 = run(Take(PortfolioShape.metadata.keys(), 2).to_list(), e2e_ctx)[0]  # noqa: F821
         assert len(first_2) == 2
 
         # --- list operations ---
-        first_tag = (await arun(PortfolioShape.tags.first_elem(), e2e_ctx))[0]
+        first_tag = run(PortfolioShape.tags.first_elem(), e2e_ctx)[0]
         assert first_tag == "alpha"
 
-        last_tag = (await arun(PortfolioShape.tags.last_elem(), e2e_ctx))[0]
+        last_tag = run(PortfolioShape.tags.last_elem(), e2e_ctx)[0]
         assert last_tag == "epsilon"
 
-        sliced = (await arun(PortfolioShape.tags.slice(1, 4), e2e_ctx))[0]
+        sliced = run(PortfolioShape.tags.slice(1, 4), e2e_ctx)[0]
         assert sliced == ["beta", "gamma", "delta"]
 
         # --- lazy Take over list ---
-        first_3_tags = (await arun(Take(PortfolioShape.tags, 3).to_list(), e2e_ctx))[0]  # noqa: F821
+        first_3_tags = run(Take(PortfolioShape.tags, 3).to_list(), e2e_ctx)[0]  # noqa: F821
         assert first_3_tags == ["alpha", "beta", "gamma"]
 
         # --- set operations ---
-        union = (await arun(PortfolioShape.members.union({"dave"}), e2e_ctx))[0]
+        union = run(PortfolioShape.members.union({"dave"}), e2e_ctx)[0]
         assert union == {"alice", "bob", "charlie", "dave"}
 
         # --- dict mutation ---
-        await arun(PortfolioShape.metadata.set("sector", "tech"), e2e_ctx)
+        run(PortfolioShape.metadata.set("sector", "tech"), e2e_ctx)
         assert d["metadata"]["sector"] == "tech"
 
-        sector = (await arun(PortfolioShape.metadata.get("sector"), e2e_ctx))[0]
+        sector = run(PortfolioShape.metadata.get("sector"), e2e_ctx)[0]
         assert sector == "tech"
 
         # --- list mutation ---
-        await arun(PortfolioShape.tags.append("zeta"), e2e_ctx)
+        run(PortfolioShape.tags.append("zeta"), e2e_ctx)
         assert d["tags"][-1] == "zeta"
 
         # --- set mutation ---
-        await arun(PortfolioShape.members.add("eve"), e2e_ctx)
+        run(PortfolioShape.members.add("eve"), e2e_ctx)
         assert "eve" in d["members"]
 
         # --- fn combinators ---
-        sorted_keys = (await arun(SortedQuery(PortfolioShape.metadata.keys()), e2e_ctx))[0]
+        sorted_keys = run(SortedQuery(PortfolioShape.metadata.keys()), e2e_ctx)[0]
         assert sorted_keys == ["horizon", "risk", "sector", "strategy"]
 
-        key_count = (await arun(LenQuery(PortfolioShape.metadata.keys()), e2e_ctx))[0]
+        key_count = run(LenQuery(PortfolioShape.metadata.keys()), e2e_ctx)[0]
         assert key_count == 4
 
-        has_risk = (await arun(ContainsQuery(PortfolioShape.metadata.keys(), "risk"), e2e_ctx))[0]
+        has_risk = run(ContainsQuery(PortfolioShape.metadata.keys(), "risk"), e2e_ctx)[0]
         assert has_risk is True
 
-        has_fake = (await arun(ContainsQuery(PortfolioShape.metadata.keys(), "fake"), e2e_ctx))[0]
+        has_fake = run(ContainsQuery(PortfolioShape.metadata.keys(), "fake"), e2e_ctx)[0]
         assert has_fake is False
 
 
@@ -540,9 +497,7 @@ class TestEndToEndShapeNavigation:
 
         return Context().bind(dict, nav_data, TeamShape)
 
-    @pytest.mark.asyncio
-    @pytest.mark.asyncio
-    async def test_nested_shapes(self, nav_data, nav_ctx):
+    def test_nested_shapes(self, nav_data, nav_ctx):
         d = nav_data
 
         # populate shapes dict
@@ -563,40 +518,40 @@ class TestEndToEndShapeNavigation:
         d["info"] = {"name": "Team Alpha", "age": 5, "score": 9.0}
 
         # --- ShapesDictRef navigation ---
-        alice_name = (await arun(TeamShape.members["alice"].name, nav_ctx))[0]
+        alice_name = run(TeamShape.members["alice"].name, nav_ctx)[0]
         assert alice_name == "Alice"
 
-        bob_age = (await arun(TeamShape.members["bob"].age, nav_ctx))[0]
+        bob_age = run(TeamShape.members["bob"].age, nav_ctx)[0]
         assert bob_age == 25
 
         # --- ShapesDictRef keys ---
-        member_keys = (await arun(TeamShape.members.keys(), nav_ctx))[0]
+        member_keys = run(TeamShape.members.keys(), nav_ctx)[0]
         assert set(member_keys) == {"alice", "bob", "charlie"}
 
         # (lazy Take over keys covered in TestLazyTake — skipped until TakeQuery lands)
 
         # --- ShapesListRef navigation ---
-        sym0 = (await arun(TeamShape.roster[0].symbol, nav_ctx))[0]
+        sym0 = run(TeamShape.roster[0].symbol, nav_ctx)[0]
         assert sym0 == "AAPL"
 
-        price2 = (await arun(TeamShape.roster[2].price, nav_ctx))[0]
+        price2 = run(TeamShape.roster[2].price, nav_ctx)[0]
         assert price2 == 245.0
 
         # --- Nu composition across shapes list ---
         total_0 = TeamShape.roster[0].price * TeamShape.roster[0].qty
-        assert (await arun(total_0, nav_ctx))[0] == 1855.0
+        assert run(total_0, nav_ctx)[0] == 1855.0
 
         spread = TeamShape.roster[0].price - TeamShape.roster[2].price
-        result = (await arun(spread, nav_ctx))[0]
+        result = run(spread, nav_ctx)[0]
         assert abs(result - (-59.5)) < 0.01
 
         # --- ShapeRef (nested shape) ---
-        team_name = (await arun(TeamShape.info.name, nav_ctx))[0]
+        team_name = run(TeamShape.info.name, nav_ctx)[0]
         assert team_name == "Team Alpha"
 
-        info_keys = (await arun(TeamShape.info.keys(), nav_ctx))[0]
+        info_keys = run(TeamShape.info.keys(), nav_ctx)[0]
         assert set(info_keys) == {"name", "age", "score"}
 
         # --- keys set ops on nested shape ---
-        common = (await arun(TeamShape.info.keys().intersection({"name", "foo"}), nav_ctx))[0]
+        common = run(TeamShape.info.keys().intersection({"name", "foo"}), nav_ctx)[0]
         assert common == {"name"}
