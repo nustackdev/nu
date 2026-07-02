@@ -27,6 +27,7 @@ __all__ = [
     "CopyQuery",
     "DeleteItemCommand",
     "DictCreate",
+    "DictOf",
     "DictPopAction",
     "GetQuery",
     "ItemsQuery",
@@ -49,6 +50,10 @@ __all__ = [
 # Empty dict: deterministic (always {}), but each eval must yield a *fresh*
 # mutable object - a future fold/CSE pass must not alias two DictCreate results.
 DictCreate = ScalarQueryFactory("DictCreate", dict)
+# Dict from named fields: DictOf(a=x, b=y) evaluates each field expression and
+# zips names back into a fresh dict. A sentinel field short-circuits the whole
+# record to INVALID (propagate_sentinels default).
+DictOf = ScalarQueryFactory("DictOf", dict)
 
 
 # =============================================================================

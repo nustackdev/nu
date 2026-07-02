@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING
 from nu.lang import TypedNu
 
 from .abc import MutableMappingForm
-from .abc.mapping_interactions import DictCreate
+from .abc.mapping_interactions import DictCreate, DictOf
 
 
 if TYPE_CHECKING:
-    from nu.lang import DictArg, Nu
+    from nu.lang import Arg, DictArg, Nu
 
     from ..primitives import AnyForm, BoolForm
     from .list_ import ListForm
@@ -33,6 +33,17 @@ class DictForm[K, V](
     def create(cls) -> DictForm[K, V]:
         """Yield a fresh empty dict."""
         return cls(DictCreate())
+
+    @classmethod
+    def of(cls, **fields: Arg) -> DictForm[str, V]:
+        """Yield a dict from named field expressions.
+
+        ``DictForm.of(a=x, b=y)`` evaluates each value in the current context
+        and zips the names back in: ``{"a": <x>, "b": <y>}``. Values may be Nu
+        expressions or plain literals. A field that resolves to a sentinel
+        collapses the whole result to Invalid.
+        """
+        return cls(DictOf(**fields))
 
     def _wrap_keys_result(self, operand: Nu) -> DictKeysForm:
         """Wrap operand as DictKeysForm."""
