@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import EMPTY, Nu
+from nu import EMPTY, Nu, Ref
 from nu.virtuals.paths import ViewPathSer
 from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
@@ -38,7 +38,7 @@ __all__ = [
 ]
 
 
-class FlatRef(Nu):
+class FlatRef(Ref):
     """Flat, pre-resolved ref for the virtuals substrate."""
 
     def __init__(
