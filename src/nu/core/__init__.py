@@ -14,6 +14,7 @@ family, crossing Query / Command / Action as the builtins do:
 - ``arithmetic`` - numeric ops (AddQuery, SubQuery, MulQuery, PowQuery, AbsQuery, DivModQuery, RoundQuery)
 - ``comparison`` - ordering and identity (EqQuery, LtQuery, GtQuery, IsQuery)
 - ``logical`` - boolean ops (AndQuery, OrQuery, NotQuery, BoolQuery)
+- ``conditional`` - value-yielding branch selection (IfQuery)
 - ``bitwise`` - bit ops (BitAndQuery, BitOrQuery, BitXorQuery, LShiftQuery)
 - ``cast`` - type construction / conversion (IntQuery, StrQuery, ListQuery, DictQuery, SetQuery)
 - ``repr`` - representations (ReprQuery, FormatQuery, BinQuery, HexQuery, OrdQuery, ChrQuery)
@@ -83,6 +84,7 @@ from nu.core.cast import (
     TupleQuery,
 )
 from nu.core.comparison import EqQuery, GeQuery, GtQuery, IsQuery, LeQuery, LtQuery, NeQuery
+from nu.core.conditional import IfQuery
 from nu.core.dynamic import CompileQuery, EvalQuery, ExecQuery, GlobalsQuery, LocalsQuery
 from nu.core.io import InputAction, LogCommand, PrintCommand, input, log, print
 from nu.core.iteration import EnumerateQuery, IterQuery, NextAction, ReversedQuery, ZipQuery
@@ -178,6 +180,7 @@ __all__ = [
     "HashQuery",
     "HexQuery",
     "IdQuery",
+    "IfQuery",
     "InputAction",
     "IntQuery",
     "IsEmptyQuery",
