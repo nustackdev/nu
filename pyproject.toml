@@ -1,9 +1,14 @@
 # =============================================================================
 # nu — Term Programming platform
 # =============================================================================
-# One package: kernel, stdlib, fabrics (nu.virtuals / nu.mem), and topologies
-# (nu.distributed). Source lives under src/nu (src layout). Extras are opt-in;
-# the `local` dependency group pulls the full cluster dev closure by default.
+# One package: kernel, stdlib, fabrics (nu.virtuals / nu.mem / nu.nudle), and
+# topologies (nu.distributed). Source lives under src/nu (src layout). Extras
+# are opt-in; the `local` dependency group pulls the full cluster dev closure
+# by default.
+#
+# The nu.nudle fabric backend lives in-tree at src/nu/nudle/; its compiled web
+# bundle ships as a sibling PyPI wheel named `nudle` (source at
+# src/nu/nudle/ui/), kept out of the main nu wheel to keep releases lean.
 # =============================================================================
 
 [build-system]
@@ -31,12 +36,19 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-# Fabrics — accessed as nu.virtuals / nu.mem (not exposed on the top-level nu namespace).
+# Fabrics — accessed as nu.virtuals / nu.mem / nu.nudle (not exposed on the top-level nu namespace).
 virtuals = [
     "virtuals-py",
 ]
 mem = [
     "janus>=2.0.0",
+]
+nudle = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "msgpack>=1.1.2",
+    "watchfiles>=0.24.0",
+    "nudle==0.2.0",
 ]
 default = [
     "nu[virtuals]",
@@ -55,10 +67,29 @@ distributed = [
 ]
 all = [
     "nu[distributed]",
+    "nu[nudle]",
 ]
+
+[project.scripts]
+nudle = "nu.nudle.cli:main"
 
 [project.urls]
 Repository = "https://github.com/nustackdev/nu"
+
+# =============================================================================
+# Hatch — src layout; frontend subtree excluded (packaged as sibling `nudle` wheel)
+# =============================================================================
+[tool.hatch.build.targets.wheel]
+packages = ["src/nu"]
+exclude = [
+    "src/nu/nudle/ui/**",
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "src/nu/nudle/ui/node_modules",
+    "src/nu/nudle/ui/dist",
+]
 
 # =============================================================================
 # UV — local sources + dev closure
@@ -67,6 +98,7 @@ Repository = "https://github.com/nustackdev/nu"
 virtuals-py = { path = "../virtuals", editable = true }
 composables = { path = "../composables", editable = true }
 invisibles = { path = "../invisibles", editable = true }
+nudle = { path = "./src/nu/nudle/ui", editable = true }
 
 [tool.uv]
 # Bare `uv sync` provisions the full dev env: the distributed stack + tooling.
@@ -90,6 +122,7 @@ examples = [
 ]
 local = [
     "nu[distributed]",
+    "nu[nudle]",
 ]
 
 # =============================================================================
@@ -235,7 +268,7 @@ convention = "google"
 [tool.ruff.lint.isort]
 known-first-party = [
     "nu",
-    "virtuals", "composables", "invisibles", "nudle",
+    "virtuals", "composables", "invisibles",
     ]
 force-single-line = false
 lines-after-imports = 2

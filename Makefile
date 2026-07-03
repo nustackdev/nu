@@ -1,4 +1,4 @@
-.PHONY: help install sync dev test lint format clean
+.PHONY: help install sync dev test lint format clean web-install web-dev web-build build-nu build-nudle build-all
 
 # =============================================================================
 # Configuration
@@ -11,6 +11,8 @@ NC := \033[0m
 CORE := src
 EXT_DIRS := ext/nu-virtuals ext/nu-dict ext/nu-datetime ext/nu-fin ext/nu-math ext/nu-path ext/nu-uuid ext/nu-shape-lens ext/nu-tree-view
 ALL_SRC := $(CORE) $(addsuffix /src,$(EXT_DIRS))
+
+NUDLE_UI := src/nu/nudle/ui
 
 # =============================================================================
 # Help
@@ -39,6 +41,14 @@ help:
 	@echo "$(GREEN)Packages:$(NC)"
 	@echo "  make list            List workspace packages"
 	@echo "  make build PKG=x     Build specific package"
+	@echo "  make build-nu        Build the nu wheel"
+	@echo "  make build-nudle     Build the nudle web-bundle wheel"
+	@echo "  make build-all       Build both wheels"
+	@echo ""
+	@echo "$(GREEN)nudle web:$(NC)"
+	@echo "  make web-install     npm install for the nudle UI"
+	@echo "  make web-dev         Run vite dev server (HMR, ws proxy to :8080)"
+	@echo "  make web-build       Build the vite bundle into $(NUDLE_UI)/dist"
 	@echo ""
 	@echo "$(GREEN)Cleanup:$(NC)"
 	@echo "  make clean           Remove build artifacts"
@@ -139,6 +149,36 @@ endif
 	@echo "$(BLUE)Building $(PKG)...$(NC)"
 	cd $(PKG) && uv build
 	@echo "$(GREEN)Built: $(PKG)/dist/$(NC)"
+
+# =============================================================================
+# nudle web + two-wheel builds
+# =============================================================================
+web-install:
+	@echo "$(BLUE)Installing nudle UI deps...$(NC)"
+	cd $(NUDLE_UI) && npm install
+	@echo "$(GREEN)Installed$(NC)"
+
+web-dev:
+	@echo "$(BLUE)Starting vite dev server...$(NC)"
+	cd $(NUDLE_UI) && npm run dev
+
+web-build:
+	@echo "$(BLUE)Building nudle web bundle...$(NC)"
+	cd $(NUDLE_UI) && npm run build
+	@echo "$(GREEN)Built: $(NUDLE_UI)/dist/$(NC)"
+
+build-nu:
+	@echo "$(BLUE)Building nu wheel...$(NC)"
+	uv build --wheel
+	@echo "$(GREEN)Built: dist/$(NC)"
+
+build-nudle: web-build
+	@echo "$(BLUE)Building nudle web-bundle wheel...$(NC)"
+	cd $(NUDLE_UI) && uv build --wheel
+	@echo "$(GREEN)Built: $(NUDLE_UI)/dist/$(NC)"
+
+build-all: build-nu build-nudle
+	@echo "$(GREEN)Both wheels built$(NC)"
 
 # =============================================================================
 # Cleanup
