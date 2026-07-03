@@ -31,7 +31,17 @@ if TYPE_CHECKING:
 __all__ = ["build_fastapi_app", "serve"]
 
 
-_BUNDLED_STATIC = Path(__file__).parent / "_static"
+def _bundled_static() -> Path | None:
+    """Resolve the compiled web bundle shipped by the sibling `nudle` wheel.
+
+    Returns None when the wheel is not installed -- the backend still boots
+    (headless / dev / tests); the browser mount is just skipped.
+    """
+    try:
+        import nudle  # noqa: PLC0415 -- static bundle wheel; optional at runtime
+    except ImportError:
+        return None
+    return Path(nudle.__file__).parent / "build"
 
 
 class _SPAStatic(StaticFiles):
@@ -106,10 +116,11 @@ def _all_index_subclasses() -> list[type[Index]]:
 def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
     """Build the FastAPI app for a nudle program (without starting uvicorn).
 
-    Static assets (the compiled web bundle) are served from `nudle/_static`,
-    which is force-included into the wheel at build time. If that path is
-    missing (editable install), the static mount is skipped and only `/ws`
-    is exposed -- run vite separately for the frontend in that case.
+    Static assets (the compiled web bundle) come from the sibling `nudle`
+    wheel: it packages the vite build output under `nudle/build/`, and we
+    locate it at runtime via `import nudle`. If that wheel is not installed
+    (or its build/ directory is empty), the static mount is skipped and only
+    `/ws` is exposed -- run vite separately for the frontend in that case.
     """
     index_cls = _find_index(app)
     fastapi_app = FastAPI(title="nudle")
@@ -144,10 +155,11 @@ def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
                     except (asyncio.CancelledError, Exception):
                         pass
 
-    if _BUNDLED_STATIC.exists():
+    static_dir = _bundled_static()
+    if static_dir is not None and static_dir.exists():
         fastapi_app.mount(
             "/",
-            _SPAStatic(directory=_BUNDLED_STATIC, html=True),
+            _SPAStatic(directory=static_dir, html=True),
             name="static",
         )
     return fastapi_app

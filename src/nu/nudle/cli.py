@@ -16,9 +16,10 @@ Module convention (the file you pass to `nudle run` / `nudle dev`):
                                       returning a sync/async context
                                       manager yielding one.
 
-Static assets resolve automatically: in a wheel install, the compiled web
-bundle ships as `nudle/_static` and is served at `/`. In an editable install
-that path is missing, only `/ws` is served, and you run vite separately.
+Static assets resolve automatically: the sibling `nudle` wheel ships the
+compiled bundle at `nudle/build/`, and the backend imports it at request
+time. If the wheel is missing (or its build/ is empty), only `/ws` is
+served, and you run vite separately.
 
 Run modes:
 
