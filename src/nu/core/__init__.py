@@ -84,7 +84,7 @@ from nu.core.cast import (
     TupleQuery,
 )
 from nu.core.comparison import EqQuery, GeQuery, GtQuery, IsQuery, LeQuery, LtQuery, NeQuery
-from nu.core.conditional import IfQuery
+from nu.core.conditional import IfQuery, SwitchQuery
 from nu.core.dynamic import CompileQuery, EvalQuery, ExecQuery, GlobalsQuery, LocalsQuery
 from nu.core.io import InputAction, LogCommand, PrintCommand, input, log, print
 from nu.core.iteration import EnumerateQuery, IterQuery, NextAction, ReversedQuery, ZipQuery
@@ -129,7 +129,14 @@ from nu.core.repr import (
     ReprQuery,
 )
 from nu.core.sentinel import IsEmptyQuery, IsInvalidQuery, NotEmptyQuery, NotInvalidQuery
-from nu.core.transform import FilterQuery, FlattenQuery, MapQuery, SortedQuery, UniqueQuery
+from nu.core.transform import (
+    FilterQuery,
+    FlattenQuery,
+    MapQuery,
+    SortByQuery,
+    SortedQuery,
+    UniqueQuery,
+)
 
 
 __all__ = [
@@ -228,10 +235,12 @@ __all__ = [
     "SetItemCommand",
     "SetQuery",
     "SliceQuery",
+    "SortByQuery",
     "SortedQuery",
     "StrQuery",
     "SubQuery",
     "SumQuery",
+    "SwitchQuery",
     "TupleQuery",
     "TypeQuery",
     "UniqueQuery",
