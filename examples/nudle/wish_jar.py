@@ -34,7 +34,7 @@ from virtuals import Navigator
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-import nudle
+from nu import nudle
 
 
 class Stats(nu.Shape):

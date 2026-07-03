@@ -25,7 +25,7 @@ from nu.std.asyncio import sleep
 from nu.virtuals.presets import rocksdb_storage_inmemory
 from virtuals import Navigator
 
-import nudle
+from nu import nudle
 
 
 if TYPE_CHECKING:
