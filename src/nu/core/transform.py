@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from nu.lang import Arg, Nu, StrArg
     from nu.lang.runtime import Runtime
 
-__all__ = ["FilterQuery", "FlattenQuery", "MapQuery", "SortedQuery", "UniqueQuery"]
+__all__ = ["FilterQuery", "FlattenQuery", "MapQuery", "SortByQuery", "SortedQuery", "UniqueQuery"]
 
 
 class MapQuery(StreamQuery):
@@ -160,6 +160,63 @@ class SortedQuery(StreamQuery):
             async def agen() -> object:
                 for x in items:
                     yield x
+
+            return agen()
+
+        return athunk
+
+
+class SortByQuery(StreamQuery):
+    """Its source child, ordered by a per-item key expression. Eager: drains, sorts, yields.
+
+    Children: ``[source, key, reverse, key_name]``. Each item of ``source``
+    is bound under the name ``key_name`` yields, then ``key`` is evaluated
+    to produce the sort key. ``reverse`` (a bool child) flips the order. The
+    key expression reads the item via ``AttrRef(<name>)`` - same
+    side-channel :class:`MapQuery` / :class:`FilterQuery` use.
+    """
+
+    def __init__(
+        self,
+        source: Arg[Iterable],
+        key: Nu,
+        reverse: Arg[bool] = False,
+        item: StrArg = "item",
+    ) -> None:
+        reverse_node = reverse if isinstance(reverse, Term) else LiteralQuery(reverse)
+        item_node = item if isinstance(item, Term) else LiteralQuery(item)
+        super().__init__(source, key, reverse_node, item_node)
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        source, key_expr, reverse_t, item_t = children
+
+        def thunk(rt: Runtime) -> object:
+            reverse = bool(reverse_t(rt))
+            name = item_t(rt)
+            rows: list[tuple[object, object]] = []
+            for elem in sync_iter(source(rt)):
+                rt.ctx.attrs[name] = elem
+                rows.append((key_expr(rt), elem))
+            rows.sort(key=lambda kv: kv[0], reverse=reverse)
+            return iter(v for _, v in rows)
+
+        return thunk
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        source, key_expr, reverse_t, item_t = children
+
+        async def athunk(rt: Runtime) -> object:
+            reverse = bool(await reverse_t(rt))
+            name = await item_t(rt)
+            rows: list[tuple[object, object]] = []
+            async for elem in aiter_any(await source(rt)):
+                rt.ctx.attrs[name] = elem
+                rows.append((await key_expr(rt), elem))
+            rows.sort(key=lambda kv: kv[0], reverse=reverse)
+
+            async def agen() -> object:
+                for _, v in rows:
+                    yield v
 
             return agen()
 
