@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "lmdb_storage",
     "memory_storage",
     "rocksdb_storage",
     "rocksdb_storage_inmemory",
@@ -44,6 +45,53 @@ def memory_storage() -> Generator[StorageProtocol, None, None]:
         InMemoryStorage(
             codec=NoOpCodec(),
             observer=observer,
+        ) as storage,
+    ):
+        yield storage
+
+
+@contextmanager
+def lmdb_storage(
+    path: str,
+    read_only: bool = False,
+    map_size: int = 10 * 1024 * 1024 * 1024,
+    max_readers: int = 126,
+    subdir: bool = True,
+    sync: bool = True,
+) -> Generator[StorageProtocol, None, None]:
+    """Create LMDB storage with binary codec and in-memory observer.
+
+    Args:
+        path: Path to LMDB env (directory if subdir=True, file otherwise).
+        read_only: Open the environment read-only.
+        map_size: Maximum on-disk size in bytes. Default 10 GiB.
+        max_readers: Maximum concurrent reader slots.
+        subdir: If True, treat `path` as a directory; if False, as the env file.
+        sync: If True, fsync data pages after each commit.
+
+    Yields:
+        Configured LMDB storage instance.
+
+    Example:
+        >>> with lmdb_storage("/mnt/nvme4/.db_blocks_lmdb") as storage:
+        ...     with storage.transaction() as txn:
+        ...         txn.put(b"key", b"value")
+    """
+    from virtuals.codecs import BinaryCodec
+    from virtuals.observers.mem import InMemoryObserver
+    from virtuals.storages.lmdb import LMDBStorage
+
+    with (
+        InMemoryObserver(codec=BinaryCodec()) as observer,
+        LMDBStorage(
+            path=path,
+            codec=BinaryCodec(),
+            observer=observer,
+            read_only=read_only,
+            map_size=map_size,
+            max_readers=max_readers,
+            subdir=subdir,
+            sync=sync,
         ) as storage,
     ):
         yield storage
