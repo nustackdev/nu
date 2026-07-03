@@ -49,6 +49,25 @@ class _StructuredRef(Ref):
             parent_ref._root_shape if parent_ref is not None else owner_shape
         )
 
+    # --- construction --------------------------------------------------------
+
+    def with_children(self, *children: object):  # type: ignore[override]
+        """Rebuild with new children while preserving Ref identity state.
+
+        The base :class:`Term.with_children` copies only ``children`` and
+        ``payload``. Shape Refs carry navigation state as instance attrs
+        (``_parent_ref``, ``_owner_shape``, ``_root_shape``, plus substrate
+        markers like ``_segment``, ``_value_type``, ``_type_marker``), so we
+        copy the full ``__dict__`` and then override ``children``. The tree
+        rewriter (:mod:`nu.tree.rewrite`) always routes through this method,
+        so the address child can still be rewritten while the identity chain
+        survives.
+        """
+        variant = object.__new__(type(self))
+        variant.__dict__.update(self.__dict__)
+        variant.children = children
+        return variant
+
     # --- navigation properties -----------------------------------------------
 
     @property
