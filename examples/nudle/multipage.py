@@ -19,12 +19,9 @@ from typing import TYPE_CHECKING
 
 import nu
 import nu.virtuals as nv
-from nu import ReactForever
-from nu.std.asyncio import sleep
+from nu import ReactForever, nudle
 from nu.virtuals.presets import rocksdb_storage_inmemory
 from virtuals import Navigator
-
-from nu import nudle
 
 
 if TYPE_CHECKING:
@@ -64,19 +61,18 @@ class App(nudle.Index):
 bg = nv.Transaction(
     nu.IfDo(Counter.value.missing(), Counter.value.store(0)),
 ) >> nu.ForeverDo(
-    nv.Transaction(Counter.value.store(Counter.value + 1)) >> sleep(1.0),
+    nv.Transaction(Counter.value.store(Counter.value + 1)) >> nu.Delay(1.0),
 )
 
 
 # Both pages tick continuously. Switching between them never tears down
 # state -- you come back and the chart is exactly where you left it.
 tick_home = nu.ForeverDo(
-    nv.Snapshot(HomePage.count.store(Counter.value)) >> sleep(1.0),
+    nv.Snapshot(HomePage.count.store(Counter.value)) >> nu.Delay(1.0),
 )
 
 tick_feed = nu.ForeverDo(
-    nv.Snapshot(FeedPage.history.append(Counter.value, Counter.value))
-    >> sleep(1.0),
+    nv.Snapshot(FeedPage.history.append(Counter.value, Counter.value)) >> nu.Delay(1.0),
 )
 
 nav_home = ReactForever(HomePage.go_feed.clicked(), App.nav.store("/feed"))

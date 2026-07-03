@@ -20,12 +20,9 @@ from typing import TYPE_CHECKING
 
 import nu
 import nu.virtuals as nv
-from nu import ReactForever
-from nu.std.asyncio import sleep
+from nu import ReactForever, nudle
 from nu.virtuals.presets import rocksdb_storage_inmemory
 from virtuals import Navigator
-
-from nu import nudle
 
 
 if TYPE_CHECKING:
@@ -60,7 +57,7 @@ class App(nudle.Index):
 bg = nv.Transaction(
     nu.IfDo(Counter.value.missing(), Counter.value.store(0)),
 ) >> nu.ForeverDo(
-    nv.Transaction(Counter.value.store(Counter.value + 1)) >> sleep(1.0),
+    nv.Transaction(Counter.value.store(Counter.value + 1)) >> nu.Delay(1.0),
 )
 
 # UI flow: tick the dashboard + react to greet clicks.
@@ -69,7 +66,7 @@ ticking = nu.ForeverDo(
         Dashboard.count.store(Counter.value + 1)
         | Dashboard.history.append(Counter.value, Counter.value),
     )
-    >> sleep(1.0),
+    >> nu.Delay(1.0),
 )
 greeting = ReactForever(
     Dashboard.greet.clicked(),
