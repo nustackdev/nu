@@ -59,6 +59,21 @@ class FlatRef(Ref):
         self._is_primitive = is_primitive
         self._dynamic_segments = dynamic_segments
 
+    def with_children(self, *children: object):  # type: ignore[override]
+        """Rebuild with new children while preserving flat-path metadata.
+
+        The base :class:`Term.with_children` copies only ``children`` and
+        ``payload``. FlatRef carries the static path, root shape, primitive
+        flag, and dynamic-segment mapping as instance attrs, so we copy the
+        full ``__dict__`` and then override ``children``. The tree rewriter
+        always routes through this method, so the dynamic address children
+        can still be rewritten while the substrate state survives.
+        """
+        variant = object.__new__(type(self))
+        variant.__dict__.update(self.__dict__)
+        variant.children = children
+        return variant
+
     def get_root_shape(self) -> type | None:
         """Return the root shape for context lookup."""
         return self._root_shape
@@ -151,15 +166,37 @@ class FlatRef(Ref):
         child_nids = rt.program.children[nid]
         return tuple(rt.eval(cn) for cn in child_nids)
 
+    async def _asegment_values(self, rt: Runtime, nid: int) -> tuple:
+        if self._dynamic_segments is None:
+            return ()
+        child_nids = rt.program.children[nid]
+        return tuple([await rt.aeval(cn) for cn in child_nids])
+
     def write(self, rt: Runtime, value: object, nid: int) -> None:
         """Write ``value`` at this ref's path through the parent View."""
         path = self._resolve_path(self._segment_values(rt, nid))
         parent = self._fetch_parent(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
 
+    async def awrite(self, rt: Runtime, value: object, nid: int) -> None:
+        """Async sibling of :meth:`write`."""
+        path = self._resolve_path(await self._asegment_values(rt, nid))
+        parent = self._fetch_parent(rt, path)
+        parent[path[-1][0]] = value  # type: ignore[index]
+
     def erase(self, rt: Runtime, nid: int) -> None:
         """Remove this ref's slot from its parent View, if present."""
         path = self._resolve_path(self._segment_values(rt, nid))
+        parent = self._fetch_parent(rt, path)
+        key = path[-1][0]
+        try:
+            del parent[key]  # type: ignore[attr-defined]
+        except (KeyError, IndexError):
+            pass
+
+    async def aerase(self, rt: Runtime, nid: int) -> None:
+        """Async sibling of :meth:`erase`."""
+        path = self._resolve_path(await self._asegment_values(rt, nid))
         parent = self._fetch_parent(rt, path)
         key = path[-1][0]
         try:
