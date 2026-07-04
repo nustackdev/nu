@@ -62,23 +62,25 @@ Ref**, so the write mechanism lives with the fabric:
 # context/refs.py - the fabric owns read + write. The address is just a
 # child (a Literal for a static key, any Nu for a computed one), resolved
 # through the runtime like any other child - no special "name" payload.
+# Substrate verbs are underscore-private (`_write`, `_erase`, `_address`,
+# `_lift`/`_lower`, `_wrap_item_ref`): they are Nu internals, not user surface.
 class AttrRef(Ref):
     def compile(self, nid, children):
         address = children[0]
         return lambda rt: rt.ctx.attrs.get(address(rt), EMPTY)
-    def address(self, rt, nid): return rt.eval(rt.program.children[nid][0])
-    def write(self, rt, value, nid): rt.ctx.attrs[self.address(rt, nid)] = value
+    def _address(self, rt, nid): return rt.eval(rt.program.children[nid][0])
+    def _write(self, rt, value, nid): rt.ctx.attrs[self._address(rt, nid)] = value
 
 # context/ops.py - the Command delegates to the ref, declares the slot.
 # It passes the ref's node id so the ref resolves its own address.
-class Set(Command):
+class SetCommand(Command):
     mutates = Declared(value=frozenset({0}))
     def compile(self, nid, children):
         ref = self.children[0]; value = children[1]
         def thunk(rt):
             v = value(rt)
             if v is EMPTY or v is INVALID: return
-            ref.write(rt, v, rt.program.children[nid][0])
+            ref._write(rt, v, rt.program.children[nid][0])
         return thunk
 ```
 

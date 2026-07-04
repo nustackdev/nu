@@ -1,7 +1,7 @@
 """Write interactions over the Context attrs fabric.
 
 A Command names a target Ref in its mutation slot and the Fabric carries out
-the write. These delegate to the Ref (``ref.write`` / ``ref.erase``) so the
+the write. These delegate to the Ref (``ref._write`` / ``ref._erase``) so the
 write mechanism lives with the fabric (the Ref), not hardcoded here - the same
 ``SetCommand`` works for any fabric whose Ref implements the write contract.
 

@@ -189,7 +189,7 @@ survives `with_children`). So:
   the thunk via `rt.program.attrs[Attr.X][nid]`; read child node ids via
   `rt.program.children[nid]`.
 - **Writing through a Ref** takes the ref's own node id:
-  `ref.write(rt, value, rt.program.children[nid][slot])` (see `context/ops.py`).
+  `ref._write(rt, value, rt.program.children[nid][slot])` (see `context/ops.py`).
 - **`Noop` is the empty Flow.** A childless Strategy, the identity of flow
   composition. It slot-fits wherever work fits - Strategy children, Control
   bodies, Span bodies - and is rejected in value and param slots. No new sort,
