@@ -12,7 +12,7 @@ from nu.domains.shape.interactions import (
     MissingQuery,
     StoreCommand,
 )
-from nu.domains.shape.refs.base import _StructuredRef
+from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.refs.set_ import MutableSetRef, ReactiveSetRef, SetRef
 from nu.forms.primitives import IntForm
 
@@ -22,7 +22,7 @@ class MyShape(Shape):
 
 
 def test_set_ref_is_structured_ref():
-    assert issubclass(SetRef, _StructuredRef)
+    assert issubclass(SetRef, StructuredRef)
 
 
 def test_set_ref_constructs_with_address():
@@ -32,7 +32,7 @@ def test_set_ref_constructs_with_address():
 
 def test_set_ref_parent_ref_none_by_default():
     ref = SetRef("my_set")
-    assert ref.parent_ref is None
+    assert ref._parent is None
 
 
 def test_set_ref_stores_owner_shape():

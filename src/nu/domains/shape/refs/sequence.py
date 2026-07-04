@@ -1,6 +1,6 @@
 """SequenceRef hierarchy — ordered container Ref + Form mixin tiers.
 
-    SequenceRef         = shape.SequenceForm + _StructuredRef
+    SequenceRef         = shape.SequenceForm + StructuredRef
     MutableSequenceRef  = shape.MutableSequenceForm + SequenceRef
     ReactiveSequenceRef = shape.ReactiveSequenceForm + MutableSequenceRef
 
@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from nu.domains.shape.forms.sequence import MutableSequenceForm, ReactiveSequenceForm, SequenceForm
 
-from .base import _StructuredRef
+from .base import StructuredRef
 from .item import ItemRef, MutableItemRef, ReactiveItemRef
 
 
@@ -37,7 +37,7 @@ __all__ = [
 ]
 
 
-class SequenceRef(SequenceForm, _StructuredRef):
+class SequenceRef(SequenceForm, StructuredRef):
     """Ordered container Ref.
 
     ``ref[i]`` returns an ItemRef (immutable view of the element at index).

@@ -50,19 +50,28 @@ def _tracked_effects(program: Program, path: Path) -> EffectSet:
     """The (ref_class, effect) tuples a node contributes through its Ref children.
 
     A Ref child in a mutation slot (an index in ``mutates``) binds as a WRITE;
-    a Ref child in any other slot binds as a READ. A non-Ref child contributes
-    nothing - a mutation with no address is a local change, not an effect, so a
-    WRITE annotation over a Literal computes to no tuple at all.
+    a Ref child in a structural slot (an index in ``structural``) binds as
+    nothing - it is address structure, never evaluated; a Ref child in any
+    other slot binds as a READ. A non-Ref child contributes nothing - a
+    mutation with no address is a local change, not an effect, so a WRITE
+    annotation over a Literal computes to no tuple at all.
+
+    This is the node's *own* tuples only. Effects nested inside a structural
+    slot's subtree are still folded in by ``_union_effects``: ``structural``
+    excludes the Ref in the slot, not the value reads within it.
 
     Each tuple carries the Ref child's concrete *class* - the fabric it touches.
     The location name is never read: it may not exist statically, and conflict
     is decided at fabric granularity, which the class identifies.
     """
     mutates: frozenset[int] = program.attr(path, Attr.MUTATES)
+    structural: frozenset[int] = program.attr(path, Attr.STRUCTURAL)
     path_of = program.path_of
     children = [path_of[c] for c in program.children[program.id_of[path]]]
     tuples: set[tuple[type[Ref], Effect]] = set()
     for slot, child in enumerate(children):
+        if slot in structural:
+            continue
         if program.attr(child, Attr.SORT) != Sort.REF:
             continue
         ref_class = type(program.terms[program.id_of[child]])
@@ -81,6 +90,6 @@ ATTRIBUTES: tuple[Attribute, ...] = (
         name=Attr.COMPOSITION_EFFECTS,
         base=_tracked_effects,
         combine=_union_effects,
-        reads=(Attr.MUTATES, Attr.SORT),
+        reads=(Attr.MUTATES, Attr.STRUCTURAL, Attr.SORT),
     ),
 )

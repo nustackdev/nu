@@ -38,7 +38,7 @@ def test_shapes_sequence_ref_child_shape_type_matches():
 def test_shapes_sequence_ref_child_parent_is_self():
     s = ShapesSequenceRef("rows", item_shape_type=Row)
     child = s[0]
-    assert child.parent_ref is s
+    assert child._parent is s
 
 
 def test_shapes_sequence_ref_item_shape_type_property():

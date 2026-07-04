@@ -67,7 +67,7 @@ class DeleteCommand(Command):
         ref = self.children[0]
 
         def thunk(rt: Runtime) -> None:
-            ref.erase(rt, rt.program.children[nid][0])
+            ref._erase(rt, rt.program.children[nid][0])
 
         return thunk
 
@@ -75,6 +75,6 @@ class DeleteCommand(Command):
         ref = self.children[0]
 
         async def athunk(rt: Runtime) -> None:
-            await ref.aerase(rt, rt.program.children[nid][0])
+            await ref._aerase(rt, rt.program.children[nid][0])
 
         return athunk

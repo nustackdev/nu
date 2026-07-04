@@ -206,7 +206,7 @@ class FlatRef(Ref):
         parent = self._fetch_parent_view(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
 
-    def erase(self, rt: Runtime, nid: int) -> None:
+    def _erase(self, rt: Runtime, nid: int) -> None:
         """Remove this ref's slot from its parent View, if present."""
         path = self._resolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)
@@ -216,7 +216,7 @@ class FlatRef(Ref):
         except (KeyError, IndexError):
             pass
 
-    async def aerase(self, rt: Runtime, nid: int) -> None:
+    async def _aerase(self, rt: Runtime, nid: int) -> None:
         """Async sibling of :meth:`erase`."""
         path = await self._aresolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)

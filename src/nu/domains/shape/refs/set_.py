@@ -1,6 +1,6 @@
 """SetRef hierarchy — unordered unique-element container Ref + Form mixin tiers.
 
-    SetRef         = shape.SetLikeForm + _StructuredRef
+    SetRef         = shape.SetLikeForm + StructuredRef
     MutableSetRef  = shape.MutableSetForm + SetRef
     ReactiveSetRef = shape.ReactiveSetForm + MutableSetRef
 
@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from nu.domains.shape.forms.set_ import MutableSetForm, ReactiveSetForm, SetLikeForm
 
-from .base import _StructuredRef
+from .base import StructuredRef
 
 
 __all__ = [
@@ -37,7 +37,7 @@ __all__ = [
 ]
 
 
-class SetRef(SetLikeForm, _StructuredRef):
+class SetRef(SetLikeForm, StructuredRef):
     """Unordered unique-element container Ref; no child descent.
 
     SetLikeForm surface (len, contains, union, intersection, exists, missing, ...)

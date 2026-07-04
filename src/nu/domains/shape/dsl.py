@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 
 if TYPE_CHECKING:
-    from nu.domains.shape.refs.base import _StructuredRef
+    from nu.domains.shape.refs.base import StructuredRef
 
 __all__ = [
     "Shape",
@@ -43,7 +43,7 @@ class Slot(Generic[_RefT]):  # noqa: UP046
     def create_ref(
         self,
         owner_shape: type[Shape],
-        parent_ref: _StructuredRef | None = None,
+        parent_ref: StructuredRef | None = None,
     ) -> _RefT:
         """Instantiate the Ref, wiring owner_shape and parent_ref."""
         return self.ref_cls(  # type: ignore[call-arg]
@@ -64,7 +64,7 @@ class SlotDescriptor:
         self.name = name
         self.slot = slot
 
-    def __get__(self, obj: object, objtype: type[Shape] | None = None) -> _StructuredRef:
+    def __get__(self, obj: object, objtype: type[Shape] | None = None) -> StructuredRef:
         """Return a Ref rooted at objtype for this slot."""
         if objtype is None:
             raise TypeError("SlotDescriptor requires a Shape class")

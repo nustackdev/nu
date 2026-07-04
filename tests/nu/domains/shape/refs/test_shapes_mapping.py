@@ -38,7 +38,7 @@ def test_shapes_mapping_ref_child_shape_type_matches():
 def test_shapes_mapping_ref_child_parent_is_self():
     m = ShapesMappingRef("entries", item_shape_type=Entry)
     child = m["key1"]
-    assert child.parent_ref is m
+    assert child._parent is m
 
 
 def test_shapes_mapping_ref_item_shape_type_property():

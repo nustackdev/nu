@@ -1,6 +1,6 @@
 """MappingRef hierarchy — key-value container Ref + Form mixin tiers.
 
-    MappingRef         = shape.MappingForm + _StructuredRef
+    MappingRef         = shape.MappingForm + StructuredRef
     MutableMappingRef  = shape.MutableMappingForm + MappingRef
     ReactiveMappingRef = shape.ReactiveMappingForm + MutableMappingRef
 
@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from nu.domains.shape.forms.mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
 
-from .base import _StructuredRef
+from .base import StructuredRef
 from .item import ItemRef, MutableItemRef, ReactiveItemRef
 
 
@@ -37,7 +37,7 @@ __all__ = [
 ]
 
 
-class MappingRef(MappingForm, _StructuredRef):
+class MappingRef(MappingForm, StructuredRef):
     """Key-value container Ref.
 
     ``ref[key]`` returns an ItemRef (immutable view of the value at key).

@@ -40,7 +40,7 @@ def test_mapping_ref_subscript_key_is_address():
 def test_mapping_ref_child_has_self_as_parent():
     m = MappingRef("my_map")
     child = m["k"]
-    assert child.parent_ref is m
+    assert child._parent is m
 
 
 def test_mapping_ref_child_inherits_owner_shape():
@@ -61,7 +61,7 @@ def test_mapping_ref_same_key_produces_equal_structure():
     a1 = m["a"]
     a2 = m["a"]
     assert type(a1) is type(a2)
-    assert a1.parent_ref is a2.parent_ref
+    assert a1._parent is a2._parent
 
 
 # ---------------------------------------------------------------------------
@@ -101,7 +101,7 @@ def test_mutable_mapping_ref_subscript_returns_mutable_item_ref():
 
 def test_mutable_mapping_ref_child_parent_is_self():
     m = MutableMappingRef("my_map")
-    assert m["k"].parent_ref is m
+    assert m["k"]._parent is m
 
 
 def test_mutable_mapping_ref_has_store():
@@ -143,7 +143,7 @@ def test_reactive_mapping_ref_subscript_returns_reactive_item_ref():
 
 def test_reactive_mapping_ref_child_parent_is_self():
     m = ReactiveMappingRef("my_map")
-    assert m["k"].parent_ref is m
+    assert m["k"]._parent is m
 
 
 def test_reactive_mapping_ref_on_change_returns_on_change_action():

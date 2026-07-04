@@ -10,7 +10,7 @@ from nu.domains.shape.interactions import (
     MissingQuery,
     StoreCommand,
 )
-from nu.domains.shape.refs.base import _StructuredRef
+from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
 
 
@@ -19,7 +19,7 @@ class MyShape(Shape):
 
 
 def test_item_ref_is_structured_ref():
-    assert issubclass(ItemRef, _StructuredRef)
+    assert issubclass(ItemRef, StructuredRef)
 
 
 def test_item_ref_constructs_with_address():
@@ -29,7 +29,7 @@ def test_item_ref_constructs_with_address():
 
 def test_item_ref_parent_ref_none_by_default():
     ref = ItemRef("slot")
-    assert ref.parent_ref is None
+    assert ref._parent is None
 
 
 def test_item_ref_stores_owner_shape():
@@ -40,7 +40,7 @@ def test_item_ref_stores_owner_shape():
 def test_item_ref_stores_parent_ref():
     parent = ItemRef("parent")
     child = ItemRef("child", parent_ref=parent)
-    assert child.parent_ref is parent
+    assert child._parent is parent
     assert child.get_root_shape() is None  # parent has no owner_shape
 
 
@@ -157,5 +157,5 @@ def test_reactive_item_ref_inherits_store_erase():
 def test_reactive_item_ref_parent_chain_works():
     parent = ReactiveItemRef("root", owner_shape=MyShape)
     child = ReactiveItemRef("leaf", parent_ref=parent)
-    assert child.parent_ref is parent
+    assert child._parent is parent
     assert child.get_root_shape() is MyShape

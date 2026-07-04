@@ -1,6 +1,6 @@
 """ShapeRef hierarchy — structured container Ref with named-slot navigation.
 
-    ShapeRef         = shape.MappingForm + _StructuredRef
+    ShapeRef         = shape.MappingForm + StructuredRef
     MutableShapeRef  = shape.MutableMappingForm + ShapeRef
     ReactiveShapeRef = shape.ReactiveMappingForm + MutableShapeRef
 
@@ -36,7 +36,7 @@ from typing import TYPE_CHECKING
 
 from nu.domains.shape.forms.mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
 
-from .base import _StructuredRef
+from .base import StructuredRef
 
 
 if TYPE_CHECKING:
@@ -49,7 +49,7 @@ __all__ = [
 ]
 
 
-class ShapeRef(MappingForm, _StructuredRef):
+class ShapeRef(MappingForm, StructuredRef):
     """Structured container Ref; slot navigation via attribute or bracket access.
 
     API: full MappingForm surface — exists(), missing(), extract(), keys(),
@@ -63,7 +63,7 @@ class ShapeRef(MappingForm, _StructuredRef):
         address: object,
         *,
         shape_type: type[Shape],
-        parent_ref: _StructuredRef | None = None,
+        parent_ref: StructuredRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
@@ -82,7 +82,7 @@ class ShapeRef(MappingForm, _StructuredRef):
         """Pickle support — restore instance state without triggering __getattr__."""
         self.__dict__.update(state)
 
-    def __getitem__(self, key: object) -> _StructuredRef:
+    def __getitem__(self, key: object) -> StructuredRef:
         """Navigate into shape slots via bracket access — mirror of __getattr__."""
         if isinstance(key, str):
             shape_type = self._shape_type
@@ -94,7 +94,7 @@ class ShapeRef(MappingForm, _StructuredRef):
             f" (shape '{self._shape_type.__name__}' has no slot '{key}')"
         )
 
-    def __getattr__(self, name: str) -> _StructuredRef:
+    def __getattr__(self, name: str) -> StructuredRef:
         """Navigate into shape slots; falls through only when MRO lookup fails."""
         if name.startswith("_"):
             raise AttributeError(name)

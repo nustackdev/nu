@@ -39,14 +39,18 @@ def iter_effects(node: Nu) -> Iterator[tuple[Ref, Effect]]:
     """Walk the subtree yielding ``(ref_instance, effect)`` for every Ref child.
 
     Mirrors the effect synthesis (``nu.lang.attributes.effects``): a Ref
-    child in a mutation slot (declared via ``mutates``) binds as WRITE; any
-    other Ref child binds as READ. Pre-compilation tree walk -- no Program
-    needed.
+    child in a mutation slot (declared via ``mutates``) binds as WRITE; a Ref
+    child in a structural slot (declared via ``structural``) binds as nothing -
+    it is address structure, never evaluated; any other Ref child binds as
+    READ. The recursion still descends every child, so value reads nested
+    inside a structural subtree are collected. Pre-compilation tree walk -- no
+    Program needed.
     """
-    mutates_obj = type(node).attributes.get("mutates")
-    mutated_slots: frozenset[int] = getattr(mutates_obj, "value", frozenset())
+    attrs = type(node).attributes
+    mutated_slots: frozenset[int] = getattr(attrs.get("mutates"), "value", frozenset())
+    structural_slots: frozenset[int] = getattr(attrs.get("structural"), "value", frozenset())
     for slot, child in enumerate(node.children):
-        if isinstance(child, Ref):
+        if isinstance(child, Ref) and slot not in structural_slots:
             yield child, Effect.WRITE if slot in mutated_slots else Effect.READ
     for child in node.children:
         yield from iter_effects(child)

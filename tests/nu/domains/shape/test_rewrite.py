@@ -1,72 +1,18 @@
-"""Tests for domains.shape.rewrite: annotate_ref_loads and substrate optimizer helpers.
+"""Tests for domains.shape.rewrite substrate optimizer helpers.
 
-annotate_ref_loads wraps bare shape Refs with LoadQuery and is testable
-with the base nu tree. extract_static_address / walk_ref_chain /
-reconstruct_with_flat_ref are substrate optimizer helpers that require
-substrate-specific Ref attributes (_raw_address, parent as property); those
-are skipped here.
+extract_static_address / walk_ref_chain / reconstruct_with_flat_ref are the
+substrate inline-ref building blocks.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from nu.core import LiteralQuery
-from nu.domains.shape.interactions import LoadQuery
 from nu.domains.shape.refs.item import ItemRef
 from nu.domains.shape.rewrite import (
-    annotate_ref_loads,
     extract_static_address,
     walk_ref_chain,
 )
-
-
-# ---------------------------------------------------------------------------
-# annotate_ref_loads
-# ---------------------------------------------------------------------------
-
-
-def test_annotate_wraps_bare_shape_ref_child():
-    ref = ItemRef("slot")
-    # build a LoadQuery so we have a non-leaf node with a shape Ref child
-    # then use a LiteralQuery wrapping the ref as a proxy node
-    # Actually, let's use a LoadQuery wrapping the ref — its child IS the ref
-    # annotate_ref_loads skips nodes that are already LoadQuery, so use a proxy
-    from nu.domains.shape.interactions import ExistsQuery
-
-    node = ExistsQuery(ref)
-    result = annotate_ref_loads(node)
-    # The child ref should now be wrapped in LoadQuery
-    # ExistsQuery child[0] should be a LoadQuery wrapping the ItemRef
-    assert isinstance(result.children[0], LoadQuery)
-
-
-def test_annotate_does_not_double_wrap_load_query():
-    ref = ItemRef("slot")
-    already_wrapped = LoadQuery(ref)
-    result = annotate_ref_loads(already_wrapped)
-    # The LoadQuery itself should be unchanged
-    assert isinstance(result, LoadQuery)
-    # And its child should still be the ItemRef, not a double-wrapped LoadQuery
-    assert not isinstance(result.children[0], LoadQuery)
-
-
-def test_annotate_is_idempotent():
-    from nu.domains.shape.interactions import ExistsQuery
-
-    ref = ItemRef("slot")
-    node = ExistsQuery(ref)
-    once = annotate_ref_loads(node)
-    twice = annotate_ref_loads(once)
-    # After two passes, child should still be a single LoadQuery
-    assert isinstance(twice.children[0], LoadQuery)
-    assert not isinstance(twice.children[0].children[0], LoadQuery)
-
-
-def test_annotate_leaves_literal_children_untouched():
-    q = LiteralQuery(42)
-    result = annotate_ref_loads(q)
-    assert result is q
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +21,7 @@ def test_annotate_leaves_literal_children_untouched():
 
 
 def test_extract_static_address_returns_literal_for_string_key():
-    # _StructuredRef wraps plain Python literals as LiteralQuery via Nu.__init__
+    # StructuredRef wraps plain Python literals as LiteralQuery via Nu.__init__
     ref = ItemRef("my_slot")
     result = extract_static_address(ref)
     assert result == "my_slot"

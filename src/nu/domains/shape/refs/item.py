@@ -1,6 +1,6 @@
 """ItemRef hierarchy — leaf Ref + Form mixin tiers.
 
-    ItemRef         = ItemForm + _StructuredRef
+    ItemRef         = ItemForm + StructuredRef
     MutableItemRef  = MutableItemForm + ItemRef
     ReactiveItemRef = ReactiveItemForm + MutableItemRef
 
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from nu.domains.shape.forms.item import ItemForm, MutableItemForm, ReactiveItemForm
 
-from .base import _StructuredRef
+from .base import StructuredRef
 
 
 __all__ = [
@@ -25,7 +25,7 @@ __all__ = [
 ]
 
 
-class ItemRef(ItemForm, _StructuredRef):
+class ItemRef(ItemForm, StructuredRef):
     """Leaf Ref — single typed value, no child descent.
 
     API: exists(), missing() (from ItemForm).

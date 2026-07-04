@@ -28,7 +28,7 @@ def test_sequence_ref_subscript_returns_item_ref():
 def test_sequence_ref_child_has_self_as_parent():
     s = SequenceRef("my_seq")
     child = s[3]
-    assert child.parent_ref is s
+    assert child._parent is s
 
 
 def test_sequence_ref_child_inherits_owner_shape():
@@ -87,7 +87,7 @@ def test_mutable_sequence_ref_subscript_returns_mutable_item_ref():
 
 def test_mutable_sequence_ref_child_parent_is_self():
     s = MutableSequenceRef("my_seq")
-    assert s[0].parent_ref is s
+    assert s[0]._parent is s
 
 
 def test_mutable_sequence_ref_store_returns_store_command():

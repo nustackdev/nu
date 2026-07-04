@@ -68,7 +68,7 @@ class ShapeRef[T: Shape](ReactiveShapeRef, ViewRef[dict[str, object]]):
         parent_ref: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        # MutableShapeRef.__init__ wires the _StructuredRef path + shape_type;
+        # MutableShapeRef.__init__ wires the StructuredRef path + shape_type;
         # the ViewRef substrate attributes are set explicitly below since the
         # shape blueprint __init__ does not thread **kwargs to ViewRef.
         if view_type is None:

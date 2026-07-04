@@ -1,6 +1,6 @@
 """ShapesSequenceRef hierarchy — sequence-of-shapes Ref + Form mixin tiers.
 
-    ShapesSequenceRef         = shape.SequenceForm + _StructuredRef
+    ShapesSequenceRef         = shape.SequenceForm + StructuredRef
     MutableShapesSequenceRef  = shape.MutableSequenceForm + ShapesSequenceRef
     ReactiveShapesSequenceRef = shape.ReactiveSequenceForm + MutableShapesSequenceRef
 
@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING
 
 from nu.domains.shape.forms.sequence import MutableSequenceForm, ReactiveSequenceForm, SequenceForm
 
-from .base import _StructuredRef
+from .base import StructuredRef
 from .shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
 
 
@@ -40,7 +40,7 @@ __all__ = [
 ]
 
 
-class ShapesSequenceRef(SequenceForm, _StructuredRef):
+class ShapesSequenceRef(SequenceForm, StructuredRef):
     """Sequence-of-shapes Ref; subscript descent returns a ShapeRef."""
 
     def __init__(
@@ -48,7 +48,7 @@ class ShapesSequenceRef(SequenceForm, _StructuredRef):
         address: object,
         *,
         item_shape_type: type[Shape],
-        parent_ref: _StructuredRef | None = None,
+        parent_ref: StructuredRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)

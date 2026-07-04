@@ -18,7 +18,7 @@ a pre-resolved path tuple of ``(address, type_marker)`` segments.
 
 from __future__ import annotations
 
-from nu.domains.shape.refs.base import _StructuredRef
+from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.rewrite import reconstruct_with_flat_ref, walk_ref_chain
 from nu.tree import map_nodes
 from nu.virtuals.refs.base import PrimitiveRef, ViewRef
@@ -41,7 +41,7 @@ def _try_inline_ref(node: object) -> object:
         return _flatten(node)
 
     ref = getattr(node, "ref", None)
-    if ref is None or not isinstance(ref, _StructuredRef):
+    if ref is None or not isinstance(ref, StructuredRef):
         return node
     if not isinstance(ref, (ViewRef, PrimitiveRef)):
         return node
@@ -59,7 +59,7 @@ def _flatten(ref: ViewRef | PrimitiveRef) -> FlatRef:
     current: object = ref
     while current is not None:
         type_markers.append(getattr(current, "_type_marker", None))
-        current = current.parent_ref  # type: ignore[attr-defined]
+        current = current._parent  # type: ignore[attr-defined]
     type_markers.reverse()
 
     dynamic: list[tuple[int, object]] = [

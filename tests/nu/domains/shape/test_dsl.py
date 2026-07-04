@@ -48,7 +48,7 @@ def test_slot_create_ref_passes_owner_and_parent():
     slot.name = "x"
     ref = slot.create_ref(owner_shape=MyShape, parent_ref=parent)
     assert ref._owner_shape is MyShape
-    assert ref.parent_ref is parent
+    assert ref._parent is parent
 
 
 # ---------------------------------------------------------------------------

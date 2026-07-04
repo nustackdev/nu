@@ -1,15 +1,15 @@
 """Virtuals storage substrate refs — navigate the virtuals View hierarchy.
 
 ``ViewRef`` and ``PrimitiveRef`` are the two concrete substrates against the
-shape Ref seam (``_StructuredRef``): they fill the plug-points with virtuals
+shape Ref seam (``StructuredRef``): they fill the plug-points with virtuals
 View navigation, backed by a tkv snapshot / transaction resolved from the
 Context.
 
-A ref names one path segment — its address, held as ``children[0]`` and
-resolved through the runtime like any child. The parent chain (``_parent_ref``)
-supplies the segments above it; for the common shape-field case those are static
-slot names, read off each parent's stored ``(_segment, _type_marker)`` at compile
-time. The Navigator + storage context (snapshot/transaction) come from the
+A ref names one path segment — its address, held as ``children[1]`` and
+resolved through the runtime like any child. The parent chain lives on the tree
+at ``children[0]`` (walked via ``parent_ref``); for the common shape-field case
+those are static slot names, read off each parent's stored ``(_segment,
+_type_marker)`` at compile time. The Navigator + storage context (snapshot/transaction) come from the
 Context under ``(Navigator, root_shape)`` / ``(TransactionProtocol|SnapshotProtocol,
 root_shape)`` and are resolved with predicate routing (site + path).
 
@@ -31,7 +31,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING
 
 from nu import EMPTY
-from nu.domains.shape.refs.base import _StructuredRef
+from nu.domains.shape.refs.base import StructuredRef
 from nu.virtuals.paths import ViewPathSer
 from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
@@ -90,7 +90,7 @@ def _resolve_storage_ctx(rt: Runtime, scope: type | None, resolved_path: tuple) 
         return rt.ctx.get(SnapshotProtocol, *tags, site=site, path=resolved_path)
 
 
-class _VirtualsRefBase[T](_StructuredRef):
+class _VirtualsRefBase[T](StructuredRef):
     """Shared virtuals navigation: path building off the parent chain + Navigator.
 
     Each ref stores its raw static address as ``_segment`` and its type marker
@@ -113,25 +113,42 @@ class _VirtualsRefBase[T](_StructuredRef):
 
     # --- path building -------------------------------------------------------
 
-    def _parent_segments(self) -> tuple[tuple[object, type], ...]:
-        """Static ``(addr, marker)`` segments of the parent chain, root-first."""
+    def _resolve_path(self, rt: Runtime, nid: int) -> tuple[tuple[object, type], ...]:
+        """Full ``(addr, marker)`` path, root-first, resolving every level at runtime.
+
+        Walks the on-tree parent chain via ``rt.program.children`` (``[0]`` =
+        structural parent, ``[1]`` = this level's address), evaluating each
+        level's address child and reading its ``_type_marker`` off the term.
+        Because the parent lives on the tree, a *dynamic* parent key resolves
+        here like any other child - no static-segment shortcut needed.
+        """
         segs: list[tuple[object, type]] = []
-        ref = self._parent_ref
-        while ref is not None:
-            segs.append((ref._segment, ref._type_marker))  # type: ignore[attr-defined]
-            ref = ref._parent_ref
+        cur = nid
+        while True:
+            kids = rt.program.children[cur]
+            term = rt.program.terms[cur]
+            segs.append((rt.eval(kids[1]), term._type_marker))  # type: ignore[attr-defined]
+            parent = kids[0]
+            if not isinstance(rt.program.terms[parent], StructuredRef):
+                break  # parent is the ANCHOR -> chain root
+            cur = parent
         segs.reverse()
         return tuple(segs)
 
-    def _resolve_path(self, rt: Runtime, nid: int) -> tuple[tuple[object, type], ...]:
-        """Full ``(addr, marker)`` path for this ref, resolving own dynamic address."""
-        address = self.address(rt, nid)
-        return (*self._parent_segments(), (address, self._type_marker))
-
     async def _aresolve_path(self, rt: Runtime, nid: int) -> tuple[tuple[object, type], ...]:
         """Async sibling of :meth:`_resolve_path`."""
-        address = await self.aaddress(rt, nid)
-        return (*self._parent_segments(), (address, self._type_marker))
+        segs: list[tuple[object, type]] = []
+        cur = nid
+        while True:
+            kids = rt.program.children[cur]
+            term = rt.program.terms[cur]
+            segs.append((await rt.aeval(kids[1]), term._type_marker))  # type: ignore[attr-defined]
+            parent = kids[0]
+            if not isinstance(rt.program.terms[parent], StructuredRef):
+                break
+            cur = parent
+        segs.reverse()
+        return tuple(segs)
 
 
 class ViewRef[T](_VirtualsRefBase[T]):
@@ -242,7 +259,7 @@ class ViewRef[T](_VirtualsRefBase[T]):
         parent = self._fetch_parent_view(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
 
-    def erase(self, rt: Runtime, nid: int) -> None:
+    def _erase(self, rt: Runtime, nid: int) -> None:
         """Remove this ref's slot from its parent View, if present."""
         path = self._resolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)
@@ -252,7 +269,7 @@ class ViewRef[T](_VirtualsRefBase[T]):
         except (KeyError, IndexError):
             pass
 
-    async def aerase(self, rt: Runtime, nid: int) -> None:
+    async def _aerase(self, rt: Runtime, nid: int) -> None:
         """Async sibling of :meth:`erase`."""
         path = await self._aresolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)
@@ -356,7 +373,7 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
         parent = self._fetch_parent_view(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
 
-    def erase(self, rt: Runtime, nid: int) -> None:
+    def _erase(self, rt: Runtime, nid: int) -> None:
         """Remove this ref's leaf from its parent View, if present."""
         path = self._resolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)
@@ -366,7 +383,7 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
         except (KeyError, IndexError):
             pass
 
-    async def aerase(self, rt: Runtime, nid: int) -> None:
+    async def _aerase(self, rt: Runtime, nid: int) -> None:
         """Async sibling of :meth:`erase`."""
         path = await self._aresolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)

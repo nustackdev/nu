@@ -104,13 +104,13 @@ class AttrRef(_ContextRef):
         """Async sibling of :meth:`write`."""
         rt.ctx.attrs[await self.aaddress(rt, nid)] = value
 
-    def erase(self, rt: Runtime, nid: int) -> None:
+    def _erase(self, rt: Runtime, nid: int) -> None:
         """Remove this Ref's slot from the attrs fabric, if present."""
         address = self.address(rt, nid)
         if address in rt.ctx.attrs:
             del rt.ctx.attrs[address]
 
-    async def aerase(self, rt: Runtime, nid: int) -> None:
+    async def _aerase(self, rt: Runtime, nid: int) -> None:
         """Async sibling of :meth:`erase`."""
         address = await self.aaddress(rt, nid)
         if address in rt.ctx.attrs:

@@ -23,7 +23,7 @@ lives here so callers reach for one namespace regardless of what they hold.
                                   Ref; the query calls ``ref.afetch_parent``
                                   and ``ref.aaddress`` at runtime, so the
                                   substrate needs to implement those (any
-                                  ``_StructuredRef`` substrate that provides
+                                  ``StructuredRef`` substrate that provides
                                   navigation already does).
 
 Sentinel handling. If the underlying view resolves to ``EMPTY`` / ``INVALID``

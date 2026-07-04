@@ -1,17 +1,20 @@
-"""_StructuredRef: abstract base for all shape-fabric Refs.
+"""StructuredRef: abstract base for all shape-fabric Refs.
 
-A _StructuredRef encodes a hierarchical path into a shape fabric.
-Each Ref holds its address as children[0] (resolved via the runtime like any
-other child thunk) and a back-pointer to its parent Ref stored as
-``_parent_ref`` — NOT as tree children[1].
+A StructuredRef encodes a hierarchical path into a shape fabric. The parent
+lives IN the tree as ``children[0]`` (marked ``structural`` — address structure,
+never value-read); this Ref's own address is ``children[1]`` (a value, resolved
+through the runtime like any child). A chain's top Ref points ``children[0]`` at
+the shared :data:`ANCHOR`, a leaf Ref that terminates the chain at the fabric
+root.
 
-``address`` / ``aaddress`` mirror the context/refs.py pattern:
-    rt.eval(rt.program.children[nid][0])
+This replaces the old off-tree ``_parent_ref`` back-pointer. With the parent on
+the tree, every generic pass reaches the whole Ref uniformly: no ``walk_ref_chain``
+bridging two worlds, and inline becomes a plain fold.
 
-Substrate plug-points (``afetch_parent``, ``aresolve_address``) carry their
-signatures and raise NotImplementedError; substrate implementations
-extend concrete subclasses and override these. ``compile`` / ``acompile``
-are also left to substrate subclasses (or blueprint Refs used purely for
+``address`` / ``aaddress`` resolve ``children[1]`` through the runtime. Substrate
+plug-points (``afetch_parent``, ``aresolve_address``) carry their signatures and
+raise NotImplementedError; substrate subclasses override these. ``compile`` /
+``acompile`` are left to substrate subclasses (or blueprint Refs used purely for
 structural navigation).
 """
 
@@ -19,31 +22,62 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Ref
+from nu.engine import Declared
+from nu.lang import EMPTY, Ref
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from nu.domains.shape.dsl import Shape
     from nu.lang.runtime import Runtime
 
-__all__ = ["_StructuredRef"]
+__all__ = ["ANCHOR", "Anchor", "StructuredRef"]
 
 
-class _StructuredRef(Ref):
+class Anchor(Ref):
+    """Terminates a StructuredRef parent chain at the fabric root.
+
+    A structural leaf: no children, no address, ``structural`` empty (it is not
+    a StructuredRef). It is never value-read — it only marks where a chain's
+    parent walk bottoms out. Stateless, so one shared instance (:data:`ANCHOR`)
+    backs every chain root.
+    """
+
+    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        return lambda rt: EMPTY
+
+    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        async def athunk(rt: Runtime) -> object:
+            return EMPTY
+
+        return athunk
+
+    def __repr__(self) -> str:
+        return "<Anchor>"
+
+
+ANCHOR = Anchor()
+
+
+class StructuredRef(Ref):
     """Abstract base for shape-fabric Refs.
 
-    Address is children[0]; parent chain is ``_parent_ref``, not children[1].
+    ``children[0]`` = parent (a StructuredRef, or :data:`ANCHOR` at a chain
+    root), marked ``structural``. ``children[1]`` = this Ref's address (a value).
     """
+
+    structural = Declared(value=frozenset({0}))
 
     def __init__(
         self,
         address: object,
         *,
-        parent_ref: _StructuredRef | None = None,
+        parent_ref: StructuredRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
-        super().__init__(address)
-        self._parent_ref = parent_ref
+        parent = parent_ref if parent_ref is not None else ANCHOR
+        super().__init__(parent, address)
         self._owner_shape = owner_shape
         self._root_shape: type[Shape] | None = (
             parent_ref._root_shape if parent_ref is not None else owner_shape
@@ -51,17 +85,15 @@ class _StructuredRef(Ref):
 
     # --- construction --------------------------------------------------------
 
-    def with_children(self, *children: object):  # type: ignore[override]
-        """Rebuild with new children while preserving Ref identity state.
+    def with_children(self, *children: object) -> StructuredRef:  # type: ignore[override]
+        """Rebuild with new children while preserving Ref navigation metadata.
 
         The base :class:`Term.with_children` copies only ``children`` and
-        ``payload``. Shape Refs carry navigation state as instance attrs
-        (``_parent_ref``, ``_owner_shape``, ``_root_shape``, plus substrate
-        markers like ``_segment``, ``_value_type``, ``_type_marker``), so we
-        copy the full ``__dict__`` and then override ``children``. The tree
-        rewriter (:mod:`nu.tree.rewrite`) always routes through this method,
-        so the address child can still be rewritten while the identity chain
-        survives.
+        ``payload``. Shape Refs still carry non-structural navigation metadata as
+        instance attrs (``_owner_shape``, ``_root_shape``, plus substrate markers
+        like ``_segment``, ``_value_type``, ``_view_type``), so we copy the full
+        ``__dict__`` and then override ``children``. The *parent* is no longer
+        smuggled here — it lives in ``children[0]`` and rewrites like any child.
         """
         variant = object.__new__(type(self))
         variant.__dict__.update(self.__dict__)
@@ -71,9 +103,15 @@ class _StructuredRef(Ref):
     # --- navigation properties -----------------------------------------------
 
     @property
-    def parent_ref(self) -> _StructuredRef | None:
-        """Parent Ref in the navigation chain; None for root Refs."""
-        return self._parent_ref
+    def _parent(self) -> StructuredRef | None:
+        """Parent Ref in the navigation chain; None at a chain root (ANCHOR).
+
+        Private: core navigation machinery, not user-facing. Underscore also keeps
+        it clear of value-domain members like ``PurePath.parent`` that a typed leaf
+        Ref exposes on its public surface.
+        """
+        p = self.children[0]
+        return p if isinstance(p, StructuredRef) else None
 
     @property
     def owner_shape(self) -> type[Shape] | None:
@@ -87,12 +125,12 @@ class _StructuredRef(Ref):
     # --- address resolution --------------------------------------------------
 
     def address(self, rt: Runtime, nid: int) -> object:
-        """Resolve this Ref's address; nid is the Ref's own node id."""
-        return rt.eval(rt.program.children[nid][0])
+        """Resolve this Ref's own address (``children[1]``); nid is this node's id."""
+        return rt.eval(rt.program.children[nid][1])
 
     async def aaddress(self, rt: Runtime, nid: int) -> object:
         """Async sibling of :meth:`address`."""
-        return await rt.aeval(rt.program.children[nid][0])
+        return await rt.aeval(rt.program.children[nid][1])
 
     # --- substrate plug-points (deferred) ------------------------------------
 
@@ -144,8 +182,7 @@ class _StructuredRef(Ref):
     # --- repr ----------------------------------------------------------------
 
     def __repr__(self) -> str:
-        parent = self._parent_ref
-        addr = self.children[0] if self.children else None
-        if parent:
-            return f"<{type(self).__name__}: {parent!r} -> {addr!r}>"
+        addr = self.children[1] if len(self.children) > 1 else None
+        if self._parent is not None:
+            return f"<{type(self).__name__} -> {addr!r}>"
         return f"<{type(self).__name__}: {addr!r}>"

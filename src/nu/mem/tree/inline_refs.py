@@ -18,7 +18,7 @@ path tuple.
 
 from __future__ import annotations
 
-from nu.domains.shape.refs.base import _StructuredRef
+from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.rewrite import reconstruct_with_flat_ref, walk_ref_chain
 from nu.mem.refs.base import RefBase
 from nu.mem.refs.flat import FlatRef
@@ -52,7 +52,7 @@ def _try_inline_ref(node: object) -> object:
         return _flatten(node)  # type: ignore[arg-type]
 
     ref = getattr(node, "ref", None)
-    if ref is None or not isinstance(ref, _StructuredRef):
+    if ref is None or not isinstance(ref, StructuredRef):
         return node
     if not _flattenable(ref):
         return node

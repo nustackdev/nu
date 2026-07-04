@@ -1,6 +1,6 @@
 """ShapesMappingRef hierarchy — mapping-of-shapes Ref + Form mixin tiers.
 
-    ShapesMappingRef         = shape.MappingForm + _StructuredRef
+    ShapesMappingRef         = shape.MappingForm + StructuredRef
     MutableShapesMappingRef  = shape.MutableMappingForm + ShapesMappingRef
     ReactiveShapesMappingRef = shape.ReactiveMappingForm + MutableShapesMappingRef
 
@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING
 
 from nu.domains.shape.forms.mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
 
-from .base import _StructuredRef
+from .base import StructuredRef
 from .shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
 
 
@@ -40,7 +40,7 @@ __all__ = [
 ]
 
 
-class ShapesMappingRef(MappingForm, _StructuredRef):
+class ShapesMappingRef(MappingForm, StructuredRef):
     """Mapping-of-shapes Ref; subscript descent returns a ShapeRef."""
 
     def __init__(
@@ -48,7 +48,7 @@ class ShapesMappingRef(MappingForm, _StructuredRef):
         address: object,
         *,
         item_shape_type: type[Shape],
-        parent_ref: _StructuredRef | None = None,
+        parent_ref: StructuredRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)

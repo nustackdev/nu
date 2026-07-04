@@ -12,7 +12,7 @@ from nu.domains.shape.interactions import (
     MissingQuery,
     StoreCommand,
 )
-from nu.domains.shape.refs.base import _StructuredRef
+from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.refs.item import ItemRef
 from nu.domains.shape.refs.shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
 
@@ -37,7 +37,7 @@ def test_shape_ref_requires_shape_type():
 
 
 def test_shape_ref_is_structured_ref():
-    assert issubclass(ShapeRef, _StructuredRef)
+    assert issubclass(ShapeRef, StructuredRef)
 
 
 def test_shape_ref_shape_type_property():
@@ -53,13 +53,13 @@ def test_shape_ref_shape_type_property():
 def test_shape_ref_getattr_known_slot_returns_ref():
     ref = ShapeRef("loc", shape_type=Inner)
     child = ref.x
-    assert isinstance(child, _StructuredRef)
+    assert isinstance(child, StructuredRef)
 
 
 def test_shape_ref_getattr_child_parent_is_self():
     ref = ShapeRef("loc", shape_type=Inner)
     child = ref.x
-    assert child.parent_ref is ref
+    assert child._parent is ref
 
 
 def test_shape_ref_getattr_unknown_slot_raises():
@@ -136,7 +136,7 @@ def test_mutable_shape_ref_erase_returns_erase_command():
 def test_mutable_shape_ref_inherits_slot_navigation():
     ref = MutableShapeRef("loc", shape_type=Inner)
     child = ref.x
-    assert isinstance(child, _StructuredRef)
+    assert isinstance(child, StructuredRef)
 
 
 def test_mutable_shape_ref_inherits_exists_missing():
@@ -178,7 +178,7 @@ def test_reactive_shape_ref_inherits_store_erase():
 def test_reactive_shape_ref_inherits_slot_navigation():
     ref = ReactiveShapeRef("loc", shape_type=Inner)
     child = ref.x
-    assert isinstance(child, _StructuredRef)
+    assert isinstance(child, StructuredRef)
 
 
 # ---------------------------------------------------------------------------
@@ -201,13 +201,13 @@ def test_shape_ref_has_mapping_surface():
 def test_shape_ref_getitem_known_slot_returns_ref():
     ref = ShapeRef("loc", shape_type=Inner)
     child = ref["x"]
-    assert isinstance(child, _StructuredRef)
+    assert isinstance(child, StructuredRef)
 
 
 def test_shape_ref_getitem_child_parent_is_self():
     ref = ShapeRef("loc", shape_type=Inner)
     child = ref["y"]
-    assert child.parent_ref is ref
+    assert child._parent is ref
 
 
 def test_shape_ref_getitem_unknown_slot_raises_key_error():
@@ -224,8 +224,8 @@ def test_shape_ref_getattr_and_getitem_produce_equivalent_refs():
     by_item = ref["x"]
     # Both should be of the same type and share the same parent
     assert type(by_attr) is type(by_item)
-    assert by_attr.parent_ref is ref
-    assert by_item.parent_ref is ref
+    assert by_attr._parent is ref
+    assert by_item._parent is ref
 
 
 def test_mutable_shape_ref_has_mutable_mapping_surface():
@@ -240,5 +240,5 @@ def test_mutable_shape_ref_has_mutable_mapping_surface():
 def test_mutable_shape_ref_getitem_known_slot():
     ref = MutableShapeRef("loc", shape_type=Inner)
     child = ref["x"]
-    assert isinstance(child, _StructuredRef)
-    assert child.parent_ref is ref
+    assert isinstance(child, StructuredRef)
+    assert child._parent is ref

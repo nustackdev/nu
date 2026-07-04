@@ -9,7 +9,7 @@ Display Refs (server -> tab) override `store` / `append`. Input Refs
 (tab -> server) also override `acompile` to fetch the live value through
 `session.aread` (via `_aread`), and `changed` to register a Subscription.
 
-Built on `_StructuredRef`, the storage-agnostic shape-fabric Ref seam:
+Built on `StructuredRef`, the storage-agnostic shape-fabric Ref seam:
 it supplies the parent chain (`_parent_ref`), `owner_shape`, and
 `get_root_shape`; nudle fills the substrate plug-point `aresolve_address`
 (the wire path) and the async read path. nudle is async-only.
@@ -20,7 +20,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Self
 
 from nu.domains.shape import Slot
-from nu.domains.shape.refs.base import _StructuredRef
+from nu.domains.shape.refs.base import StructuredRef
 from nu.engine.structure import Declared
 
 
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 __all__ = ["NudleRef"]
 
 
-class NudleRef(_StructuredRef):
+class NudleRef(StructuredRef):
     """Base for Refs that live in a browser tab over ws. Async-only."""
 
     requires_async = Declared(value=True)
@@ -65,10 +65,10 @@ class NudleRef(_StructuredRef):
         # segments are static slot names read straight off the parent chain.
         leaf = await self.aaddress(rt, nid)
         segments: list[str] = [str(leaf)]
-        cur = self._parent_ref
+        cur = self._parent
         while cur is not None:
             segments.append(str(cur._segment))  # type: ignore[attr-defined]
-            cur = cur._parent_ref
+            cur = cur._parent
         segments.reverse()
 
         root = self.get_root_shape()

@@ -1,7 +1,7 @@
 """Shape-fabric Ref blueprints — 3-tier matrix.
 
 Re-exports all 21 Ref blueprints (7 families x 3 tiers) and the private
-abstract base ``_StructuredRef`` for substrate authors who extend it directly.
+abstract base ``StructuredRef`` for substrate authors who extend it directly.
 
 Families:
     Item          — leaf typed value
@@ -20,7 +20,7 @@ Tiers per family:
 
 from __future__ import annotations
 
-from .base import _StructuredRef as _StructuredRef  # re-export for substrate authors
+from .base import StructuredRef as StructuredRef  # re-export for substrate authors
 from .item import ItemRef, MutableItemRef, ReactiveItemRef
 from .mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
 from .sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
