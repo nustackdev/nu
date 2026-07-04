@@ -9,6 +9,7 @@ from nu.domains.shape import ReactiveSequenceRef, Slot
 
 from ._typemap import value_type_for
 from .base import ViewRef
+from .items import ItemRef
 
 
 if TYPE_CHECKING:
@@ -24,6 +25,16 @@ __all__ = [
 
 class ListRef[T](ReactiveSequenceRef, ViewRef[list[T]]):
     """Virtuals sequence reference — ordered container backed by a virtuals View."""
+
+    def __getitem__(self, index: object) -> ItemRef:
+        """Navigate to the element at ``index`` as a substrate-backed virtuals ItemRef."""
+        return ItemRef(
+            index,
+            value_type=self.item_type,
+            value_value_type=self.item_value_type,
+            parent_ref=self,
+            owner_shape=self._owner_shape,
+        )
 
     def result(self, op: Nu) -> ListForm[T]:
         """Wrap a sequence-level op result as a ListForm."""

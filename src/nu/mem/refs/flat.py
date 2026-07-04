@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import EMPTY, Nu
+from nu import EMPTY, Nu, Ref
 
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ __all__ = [
 ]
 
 
-class FlatRef(Nu):
+class FlatRef(Ref):
     """Flat, pre-resolved ref for the dict substrate.
 
     For all-static paths (the common case) this is a plain tuple lookup; for
@@ -53,6 +53,25 @@ class FlatRef(Nu):
         self._static_path = static_path
         self._root_shape = root_shape
         self._dynamic_segments = dynamic_segments
+
+    def with_children(self, *children: object):  # type: ignore[override]
+        """Rebuild with new children while preserving flat-path metadata.
+
+        The base :class:`Term.with_children` copies only ``children`` and
+        ``payload``. FlatRef carries the static path, root shape, and
+        dynamic-segment mapping as instance attrs, so we copy the full
+        ``__dict__`` and then override ``children``. The tree rewriter
+        always routes through this method, so the dynamic address children
+        can still be rewritten while the substrate state survives.
+        """
+        variant = object.__new__(type(self))
+        variant.__dict__.update(self.__dict__)
+        variant.children = children
+        return variant
+
+    def get_root_shape(self) -> type:
+        """Return the root shape for context lookup."""
+        return self._root_shape
 
     # --- path building -------------------------------------------------------
 
@@ -105,9 +124,23 @@ class FlatRef(Nu):
         container = self._vivify_parent(rt, path)
         container[path[-1]] = value  # type: ignore[index]
 
+    async def awrite(self, rt: Runtime, value: object, nid: int) -> None:
+        """Async sibling of :meth:`write`."""
+        path = self._resolve_path(await self._asegment_values(rt, nid))
+        container = self._vivify_parent(rt, path)
+        container[path[-1]] = value  # type: ignore[index]
+
     def erase(self, rt: Runtime, nid: int) -> None:
         """Remove this ref's slot from its parent container, if present."""
         path = self._resolve_path(self._segment_values(rt, nid))
+        container = self._vivify_parent(rt, path)
+        key = path[-1]
+        if isinstance(container, dict) and key in container:
+            del container[key]
+
+    async def aerase(self, rt: Runtime, nid: int) -> None:
+        """Async sibling of :meth:`erase`."""
+        path = self._resolve_path(await self._asegment_values(rt, nid))
         container = self._vivify_parent(rt, path)
         key = path[-1]
         if isinstance(container, dict) and key in container:
@@ -119,6 +152,13 @@ class FlatRef(Nu):
             return ()
         child_nids = rt.program.children[nid]
         return tuple(rt.eval(cn) for cn in child_nids)
+
+    async def _asegment_values(self, rt: Runtime, nid: int) -> tuple:
+        """Async sibling of :meth:`_segment_values`."""
+        if self._dynamic_segments is None:
+            return ()
+        child_nids = rt.program.children[nid]
+        return tuple([await rt.aeval(cn) for cn in child_nids])
 
     def _vivify_parent(self, rt: Runtime, path: tuple) -> object:
         """Navigate to the parent container, auto-creating intermediate dicts."""

@@ -44,11 +44,11 @@ from nu.mem.refs import (
     TimezoneRef,
     UUIDRef,
 )
+from nu.mem.tree import inline_refs
 
 
 # --- ported incrementally during the P2 v2 port ------------------------------
-# jqueue (deferred pass) and tree/inline_refs are re-added here as each lands on
-# the v2 substrate seam.
+# jqueue (deferred pass) is re-added here as it lands on the v2 substrate seam.
 
 
 __all__ = [
@@ -77,4 +77,5 @@ __all__ = [
     "TimedeltaRef",
     "TimezoneRef",
     "UUIDRef",
+    "inline_refs",
 ]

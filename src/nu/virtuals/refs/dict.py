@@ -16,6 +16,7 @@ from nu.domains.shape import ReactiveMappingRef, Slot
 
 from ._typemap import value_type_for
 from .base import ViewRef
+from .items import ItemRef
 
 
 if TYPE_CHECKING:
@@ -31,6 +32,16 @@ __all__ = [
 
 class DictRef[K, V](ReactiveMappingRef, ViewRef[dict[K, V]]):
     """Virtuals mapping reference — key-value container backed by a virtuals View."""
+
+    def __getitem__(self, key: object) -> ItemRef:
+        """Navigate to the value at ``key`` as a substrate-backed virtuals ItemRef."""
+        return ItemRef(
+            key,
+            value_type=self.value_type,
+            value_value_type=self.value_value_type,
+            parent_ref=self,
+            owner_shape=self._owner_shape,
+        )
 
     def result(self, op: Nu) -> DictForm[K, V]:
         """Wrap a mapping-level op result as a DictForm."""

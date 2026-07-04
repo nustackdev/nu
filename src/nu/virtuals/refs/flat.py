@@ -80,7 +80,7 @@ class FlatRef(Ref):
 
     # --- path building -------------------------------------------------------
 
-    def _resolve_path(self, segment_values: tuple) -> tuple[tuple[object, type], ...]:
+    def _apply_segments(self, segment_values: tuple) -> tuple[tuple[object, type], ...]:
         """Fill the static path's dynamic placeholders with resolved values."""
         if self._dynamic_segments is None:
             return self._static_path
@@ -89,6 +89,27 @@ class FlatRef(Ref):
             _old_addr, marker = path[idx]
             path[idx] = (value, marker)
         return tuple(path)
+
+    def _resolve_path(self, rt: Runtime, nid: int) -> tuple[tuple[object, type], ...]:
+        """Substrate protocol: fully-resolved path at runtime for FlatRef's own nid.
+
+        Mirrors ``_VirtualsRefBase._resolve_path(rt, nid)`` so op interactions
+        that hold a ref child (``ItemPrimitiveStoreCmd``, ``ItemPrimitiveGetUnsafe``,
+        etc.) route through this after ``inline_refs`` flattens their ref.
+        """
+        return self._apply_segments(self._segment_values(rt, nid))
+
+    async def _aresolve_path(self, rt: Runtime, nid: int) -> tuple[tuple[object, type], ...]:
+        """Async sibling of :meth:`_resolve_path`."""
+        return self._apply_segments(await self._asegment_values(rt, nid))
+
+    def address(self, rt: Runtime, nid: int) -> object:
+        """Substrate protocol: this ref's leaf address (the last path segment)."""
+        return self._resolve_path(rt, nid)[-1][0]
+
+    async def aaddress(self, rt: Runtime, nid: int) -> object:
+        """Async sibling of :meth:`address`."""
+        return (await self._aresolve_path(rt, nid))[-1][0]
 
     def _resolve_navigator(self, rt: Runtime, path: tuple) -> Navigator:
         scope = self._root_shape
@@ -138,21 +159,22 @@ class FlatRef(Ref):
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
-            path = self._resolve_path(tuple(c(rt) for c in children))
+            path = self._apply_segments(tuple(c(rt) for c in children))
             return self._read(rt, path)
 
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
-            path = self._resolve_path(tuple([await c(rt) for c in children]))
+            path = self._apply_segments(tuple([await c(rt) for c in children]))
             return self._read(rt, path)
 
         return athunk
 
     # --- write / erase -------------------------------------------------------
 
-    def _fetch_parent(self, rt: Runtime, path: tuple) -> object:
+    def _fetch_parent_view(self, rt: Runtime, path: tuple) -> object:
+        """Substrate protocol: parent View for a fully-resolved path."""
         nav = self._resolve_navigator(rt, path)
         storage_ctx = self._resolve_storage_ctx(rt, path)
         parent_path = path[:-1]
@@ -174,20 +196,20 @@ class FlatRef(Ref):
 
     def write(self, rt: Runtime, value: object, nid: int) -> None:
         """Write ``value`` at this ref's path through the parent View."""
-        path = self._resolve_path(self._segment_values(rt, nid))
-        parent = self._fetch_parent(rt, path)
+        path = self._resolve_path(rt, nid)
+        parent = self._fetch_parent_view(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
 
     async def awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`write`."""
-        path = self._resolve_path(await self._asegment_values(rt, nid))
-        parent = self._fetch_parent(rt, path)
+        path = await self._aresolve_path(rt, nid)
+        parent = self._fetch_parent_view(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
 
     def erase(self, rt: Runtime, nid: int) -> None:
         """Remove this ref's slot from its parent View, if present."""
-        path = self._resolve_path(self._segment_values(rt, nid))
-        parent = self._fetch_parent(rt, path)
+        path = self._resolve_path(rt, nid)
+        parent = self._fetch_parent_view(rt, path)
         key = path[-1][0]
         try:
             del parent[key]  # type: ignore[attr-defined]
@@ -196,8 +218,8 @@ class FlatRef(Ref):
 
     async def aerase(self, rt: Runtime, nid: int) -> None:
         """Async sibling of :meth:`erase`."""
-        path = self._resolve_path(await self._asegment_values(rt, nid))
-        parent = self._fetch_parent(rt, path)
+        path = await self._aresolve_path(rt, nid)
+        parent = self._fetch_parent_view(rt, path)
         key = path[-1][0]
         try:
             del parent[key]  # type: ignore[attr-defined]
