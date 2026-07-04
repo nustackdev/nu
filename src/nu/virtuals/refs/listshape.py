@@ -26,15 +26,15 @@ __all__ = [
 ]
 
 
-class ShapesListRef[T: Shape](ReactiveShapesSequenceRef, ViewRef[list[dict]]):
+class ShapesListRef[T: Shape](ReactiveShapesSequenceRef["ShapeRef"], ViewRef[list[dict]]):
     """Virtuals shapes list reference — sequence of homogeneous shapes."""
 
-    def __getitem__(self, index: object) -> ShapeRef:
-        """Navigate to the shape at ``index`` as a substrate-backed virtuals ShapeRef."""
+    def _wrap_item_ref(self, address: object) -> ShapeRef:
+        """Navigate to the shape at ``address`` as a substrate-backed virtuals ShapeRef."""
         from virtuals.views import DictView
 
         return ShapeRef(
-            index,
+            address,
             shape_type=self._item_shape_type,
             view_type=DictView,
             parent_ref=self,

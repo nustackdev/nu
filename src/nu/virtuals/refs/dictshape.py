@@ -34,15 +34,15 @@ __all__ = [
 ]
 
 
-class ShapesDictRef[K, T: Shape](ReactiveShapesMappingRef, ViewRef[dict[K, dict]]):
+class ShapesDictRef[K, T: Shape](ReactiveShapesMappingRef["ShapeRef"], ViewRef[dict[K, dict]]):
     """Virtuals shapes dict reference — mapping of homogeneous shapes."""
 
-    def __getitem__(self, key: object) -> ShapeRef:
-        """Navigate to the shape at ``key`` as a substrate-backed virtuals ShapeRef."""
+    def _wrap_item_ref(self, address: object) -> ShapeRef:
+        """Navigate to the shape at ``address`` as a substrate-backed virtuals ShapeRef."""
         from virtuals.views import DictView
 
         return ShapeRef(
-            key,
+            address,
             shape_type=self._item_shape_type,
             view_type=DictView,
             parent_ref=self,

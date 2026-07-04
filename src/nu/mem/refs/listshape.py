@@ -25,13 +25,13 @@ __all__ = [
 ]
 
 
-class ShapesListRef[T: Shape](MutableShapesSequenceRef, RefBase[list[dict]]):
+class ShapesListRef[T: Shape](MutableShapesSequenceRef["ShapeRef"], RefBase[list[dict]]):
     """Dict shapes list reference — sequence of homogeneous shapes."""
 
-    def __getitem__(self, index: object) -> ShapeRef:
-        """Navigate to the shape at ``index`` as a substrate-backed mem ShapeRef."""
+    def _wrap_item_ref(self, address: object) -> ShapeRef:
+        """Navigate to the shape at ``address`` as a substrate-backed mem ShapeRef."""
         return ShapeRef(
-            index,
+            address,
             shape_type=self._item_shape_type,
             parent_ref=self,
             owner_shape=self._owner_shape,

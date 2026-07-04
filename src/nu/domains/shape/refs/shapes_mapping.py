@@ -40,8 +40,13 @@ __all__ = [
 ]
 
 
-class ShapesMappingRef(MappingForm, StructuredRef):
-    """Mapping-of-shapes Ref; subscript descent returns a ShapeRef."""
+class ShapesMappingRef[ItemResultT](MappingForm, StructuredRef):
+    """Mapping-of-shapes Ref; subscript descent returns a ShapeRef.
+
+    Navigation is defined ONCE (``__getitem__``) and routes through
+    ``_wrap_item_ref``; each tier defaults to the matching-tier ShapeRef, and
+    substrates override it (binding ``ItemResultT``) to return their own ShapeRef.
+    """
 
     def __init__(
         self,
@@ -59,43 +64,45 @@ class ShapesMappingRef(MappingForm, StructuredRef):
         """Shape class for each value in this mapping (private: inner mechanics)."""
         return self.payload["item_shape_type"]  # type: ignore[return-value]
 
-    def __getitem__(self, key: object) -> ShapeRef:
-        """Return a ShapeRef at key, with self as parent."""
-        return ShapeRef(
-            key,
+    def _wrap_item_ref(self, address: object) -> ItemResultT:
+        """Build the child ShapeRef at ``address``, with self as parent."""
+        return ShapeRef(  # type: ignore[return-value]
+            address,
             shape_type=self._item_shape_type,
             parent_ref=self,
             owner_shape=self._owner_shape,
         )
 
+    def __getitem__(self, key: object) -> ItemResultT:
+        """Navigate to the child ShapeRef at ``key``, with self as parent."""
+        return self._wrap_item_ref(key)
 
-class MutableShapesMappingRef(MutableMappingForm, ShapesMappingRef):
+
+class MutableShapesMappingRef[ItemResultT](MutableMappingForm, ShapesMappingRef[ItemResultT]):
     """Mutable mapping-of-shapes Ref; subscript returns MutableShapeRef.
 
     Adds: set(k,v), delete(k), update(), ..., store(v), erase().
     """
 
-    def __getitem__(self, key: object) -> MutableShapeRef:
-        """Return a MutableShapeRef at key, with self as parent."""
-        return MutableShapeRef(
-            key,
+    def _wrap_item_ref(self, address: object) -> ItemResultT:
+        return MutableShapeRef(  # type: ignore[return-value]
+            address,
             shape_type=self._item_shape_type,
             parent_ref=self,
             owner_shape=self._owner_shape,
         )
 
 
-class ReactiveShapesMappingRef(ReactiveMappingForm, MutableShapesMappingRef):
+class ReactiveShapesMappingRef[ItemResultT](ReactiveMappingForm, MutableShapesMappingRef[ItemResultT]):
     """Reactive mapping-of-shapes Ref; subscript returns ReactiveShapeRef.
 
     Adds: on_change(), on_child_change(), on_children_change(),
     on_descendants_change().
     """
 
-    def __getitem__(self, key: object) -> ReactiveShapeRef:
-        """Return a ReactiveShapeRef at key, with self as parent."""
-        return ReactiveShapeRef(
-            key,
+    def _wrap_item_ref(self, address: object) -> ItemResultT:
+        return ReactiveShapeRef(  # type: ignore[return-value]
+            address,
             shape_type=self._item_shape_type,
             parent_ref=self,
             owner_shape=self._owner_shape,

@@ -16,6 +16,7 @@ from nu.domains.shape import MutableMappingRef, Slot
 
 from ._typemap import value_type_for
 from .base import RefBase
+from .items import ItemRef
 
 
 if TYPE_CHECKING:
@@ -28,8 +29,18 @@ __all__ = [
 ]
 
 
-class DictRef[K, V](MutableMappingRef, RefBase[dict[K, V]]):
+class DictRef[K, V](MutableMappingRef["ItemRef"], RefBase[dict[K, V]]):
     """Dict mapping reference — key-value container backed by nested dict."""
+
+    def _wrap_item_ref(self, address: object) -> ItemRef:
+        """Navigate to the value at ``address`` as a substrate-backed mem ItemRef."""
+        return ItemRef(
+            address,
+            value_type=self.payload["value_type"],
+            value_value_type=self.payload["value_value_type"],
+            parent_ref=self,
+            owner_shape=self._owner_shape,
+        )
 
     def result(self, op: Nu) -> DictForm[K, V]:
         """Wrap a mapping-level op result as a DictForm."""

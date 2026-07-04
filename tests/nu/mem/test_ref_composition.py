@@ -158,3 +158,36 @@ def test_inline_refs_is_identity(ctx):
 
     chain = Root.mids["m1"].inners["i1"].label
     assert nu_mem.inline_refs(chain) is chain
+
+
+# --- primitive dict/list navigation writes (D5: mem now provides _wrap_item_ref)
+
+
+def test_primitive_dict_navigation_store_read_roundtrip(ctx, data):
+    """Regression: mem DictRef navigation used to return a bare domain
+    MutableItemRef with no substrate ``_write`` (crash on store). D5 routes
+    ``[key]`` through ``_wrap_item_ref`` so mem builds its own item Ref."""
+    from nu.mem import DictRef
+
+    class Bag(Shape):
+        d = DictRef.slot(str, str)
+
+    bag_data: dict = {}
+    bag_ctx = Context().bind(dict, bag_data, Bag)
+    run(Bag.d["k"].store("v"), bag_ctx)
+    assert bag_data == {"d": {"k": "v"}}
+    assert run(Bag.d["k"], bag_ctx)[0] == "v"
+
+
+def test_primitive_list_navigation_store_read_roundtrip():
+    """Regression: same latent crash for mem ListRef element writes."""
+    from nu.mem import ListRef
+
+    class Bag(Shape):
+        xs = ListRef.slot(int)
+
+    bag_data = {"xs": [1, 2, 3]}
+    bag_ctx = Context().bind(dict, bag_data, Bag)
+    run(Bag.xs[0].store(9), bag_ctx)
+    assert bag_data["xs"] == [9, 2, 3]
+    assert run(Bag.xs[2], bag_ctx)[0] == 3

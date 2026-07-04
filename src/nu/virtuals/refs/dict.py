@@ -30,13 +30,13 @@ __all__ = [
 ]
 
 
-class DictRef[K, V](ReactiveMappingRef, ViewRef[dict[K, V]]):
+class DictRef[K, V](ReactiveMappingRef["ItemRef"], ViewRef[dict[K, V]]):
     """Virtuals mapping reference — key-value container backed by a virtuals View."""
 
-    def __getitem__(self, key: object) -> ItemRef:
-        """Navigate to the value at ``key`` as a substrate-backed virtuals ItemRef."""
+    def _wrap_item_ref(self, address: object) -> ItemRef:
+        """Navigate to the value at ``address`` as a substrate-backed virtuals ItemRef."""
         return ItemRef(
-            key,
+            address,
             value_type=self.payload["value_type"],
             value_value_type=self.payload["value_value_type"],
             parent_ref=self,

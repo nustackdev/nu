@@ -9,6 +9,7 @@ from nu.domains.shape import MutableSequenceRef, Slot
 
 from ._typemap import value_type_for
 from .base import RefBase
+from .items import ItemRef
 
 
 if TYPE_CHECKING:
@@ -21,8 +22,18 @@ __all__ = [
 ]
 
 
-class ListRef[T](MutableSequenceRef, RefBase[list[T]]):
+class ListRef[T](MutableSequenceRef["ItemRef"], RefBase[list[T]]):
     """Dict sequence reference — ordered container backed by nested list."""
+
+    def _wrap_item_ref(self, address: object) -> ItemRef:
+        """Navigate to the element at ``address`` as a substrate-backed mem ItemRef."""
+        return ItemRef(
+            address,
+            value_type=self.payload["item_type"],
+            value_value_type=self.payload["item_value_type"],
+            parent_ref=self,
+            owner_shape=self._owner_shape,
+        )
 
     def result(self, op: Nu) -> ListForm[T]:
         """Wrap a sequence-level op result as a ListForm."""

@@ -40,8 +40,13 @@ __all__ = [
 ]
 
 
-class ShapesSequenceRef(SequenceForm, StructuredRef):
-    """Sequence-of-shapes Ref; subscript descent returns a ShapeRef."""
+class ShapesSequenceRef[ItemResultT](SequenceForm, StructuredRef):
+    """Sequence-of-shapes Ref; subscript descent returns a ShapeRef.
+
+    Navigation is defined ONCE (``__getitem__``) and routes through
+    ``_wrap_item_ref``; each tier defaults to the matching-tier ShapeRef, and
+    substrates override it (binding ``ItemResultT``) to return their own ShapeRef.
+    """
 
     def __init__(
         self,
@@ -59,43 +64,45 @@ class ShapesSequenceRef(SequenceForm, StructuredRef):
         """Shape class for each element in this sequence (private: inner mechanics)."""
         return self.payload["item_shape_type"]  # type: ignore[return-value]
 
-    def __getitem__(self, index: object) -> ShapeRef:
-        """Return a ShapeRef at index, with self as parent."""
-        return ShapeRef(
-            index,
+    def _wrap_item_ref(self, address: object) -> ItemResultT:
+        """Build the child ShapeRef at ``address``, with self as parent."""
+        return ShapeRef(  # type: ignore[return-value]
+            address,
             shape_type=self._item_shape_type,
             parent_ref=self,
             owner_shape=self._owner_shape,
         )
 
+    def __getitem__(self, index: object) -> ItemResultT:
+        """Navigate to the child ShapeRef at ``index``, with self as parent."""
+        return self._wrap_item_ref(index)
 
-class MutableShapesSequenceRef(MutableSequenceForm, ShapesSequenceRef):
+
+class MutableShapesSequenceRef[ItemResultT](MutableSequenceForm, ShapesSequenceRef[ItemResultT]):
     """Mutable sequence-of-shapes Ref; subscript returns MutableShapeRef.
 
     Adds: append(v), extend(), insert(i,v), pop(), ..., store(v), erase().
     """
 
-    def __getitem__(self, index: object) -> MutableShapeRef:
-        """Return a MutableShapeRef at index, with self as parent."""
-        return MutableShapeRef(
-            index,
+    def _wrap_item_ref(self, address: object) -> ItemResultT:
+        return MutableShapeRef(  # type: ignore[return-value]
+            address,
             shape_type=self._item_shape_type,
             parent_ref=self,
             owner_shape=self._owner_shape,
         )
 
 
-class ReactiveShapesSequenceRef(ReactiveSequenceForm, MutableShapesSequenceRef):
+class ReactiveShapesSequenceRef[ItemResultT](ReactiveSequenceForm, MutableShapesSequenceRef[ItemResultT]):
     """Reactive sequence-of-shapes Ref; subscript returns ReactiveShapeRef.
 
     Adds: on_change(), on_child_change(), on_children_change(),
     on_descendants_change().
     """
 
-    def __getitem__(self, index: object) -> ReactiveShapeRef:
-        """Return a ReactiveShapeRef at index, with self as parent."""
-        return ReactiveShapeRef(
-            index,
+    def _wrap_item_ref(self, address: object) -> ItemResultT:
+        return ReactiveShapeRef(  # type: ignore[return-value]
+            address,
             shape_type=self._item_shape_type,
             parent_ref=self,
             owner_shape=self._owner_shape,

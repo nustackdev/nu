@@ -37,40 +37,41 @@ __all__ = [
 ]
 
 
-class SequenceRef(SequenceForm, StructuredRef):
-    """Ordered container Ref.
+class SequenceRef[ItemResultT](SequenceForm, StructuredRef):
+    """Ordered container Ref; ``ref[i]`` navigates to the element's child Ref.
 
-    ``ref[i]`` returns an ItemRef (immutable view of the element at index).
-    SequenceForm surface (len, first_elem, last_elem, exists, missing, ...) is
-    available; methods that require _wrap_* overrides raise NotImplementedError
-    on this blueprint.
+    Navigation is defined ONCE (``__getitem__``) and routes through
+    ``_wrap_item_ref`` — the child-Ref analogue of ``_wrap_element_result``. Each
+    tier supplies the matching domain item Ref as its default; substrates override
+    ``_wrap_item_ref`` to return their own item Ref and bind ``ItemResultT`` so
+    ``ref[i]`` is statically the correct child Ref type.
     """
 
-    def __getitem__(self, index: object) -> ItemRef:
-        """Return an ItemRef at index, with self as parent."""
-        return ItemRef(index, parent_ref=self, owner_shape=self._owner_shape)
+    def _wrap_item_ref(self, address: object) -> ItemResultT:
+        """Build the child item Ref at ``address``, with self as parent."""
+        return ItemRef(address, parent_ref=self, owner_shape=self._owner_shape)  # type: ignore[return-value]
+
+    def __getitem__(self, index: object) -> ItemResultT:
+        """Navigate to the child Ref at ``index``, with self as parent."""
+        return self._wrap_item_ref(index)
 
 
-class MutableSequenceRef(MutableSequenceForm, SequenceRef):
+class MutableSequenceRef[ItemResultT](MutableSequenceForm, SequenceRef[ItemResultT]):
     """Mutable ordered container Ref.
 
-    ``ref[i]`` returns a MutableItemRef.
     Adds: append(v), extend(), insert(i,v), pop(), ..., store(v), erase().
     """
 
-    def __getitem__(self, index: object) -> MutableItemRef:
-        """Return a MutableItemRef at index, with self as parent."""
-        return MutableItemRef(index, parent_ref=self, owner_shape=self._owner_shape)
+    def _wrap_item_ref(self, address: object) -> ItemResultT:
+        return MutableItemRef(address, parent_ref=self, owner_shape=self._owner_shape)  # type: ignore[return-value]
 
 
-class ReactiveSequenceRef(ReactiveSequenceForm, MutableSequenceRef):
+class ReactiveSequenceRef[ItemResultT](ReactiveSequenceForm, MutableSequenceRef[ItemResultT]):
     """Reactive ordered container Ref.
 
-    ``ref[i]`` returns a ReactiveItemRef.
     Adds: on_change(), on_child_change(), on_children_change(),
     on_descendants_change() on top of MutableSequenceRef.
     """
 
-    def __getitem__(self, index: object) -> ReactiveItemRef:
-        """Return a ReactiveItemRef at index, with self as parent."""
-        return ReactiveItemRef(index, parent_ref=self, owner_shape=self._owner_shape)
+    def _wrap_item_ref(self, address: object) -> ItemResultT:
+        return ReactiveItemRef(address, parent_ref=self, owner_shape=self._owner_shape)  # type: ignore[return-value]

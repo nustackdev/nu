@@ -23,13 +23,13 @@ __all__ = [
 ]
 
 
-class ListRef[T](ReactiveSequenceRef, ViewRef[list[T]]):
+class ListRef[T](ReactiveSequenceRef["ItemRef"], ViewRef[list[T]]):
     """Virtuals sequence reference — ordered container backed by a virtuals View."""
 
-    def __getitem__(self, index: object) -> ItemRef:
-        """Navigate to the element at ``index`` as a substrate-backed virtuals ItemRef."""
+    def _wrap_item_ref(self, address: object) -> ItemRef:
+        """Navigate to the element at ``address`` as a substrate-backed virtuals ItemRef."""
         return ItemRef(
-            index,
+            address,
             value_type=self.payload["item_type"],
             value_value_type=self.payload["item_value_type"],
             parent_ref=self,
