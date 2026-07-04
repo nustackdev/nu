@@ -47,8 +47,8 @@ class ListRef[T](MutableSequenceRef, RefBase[list[T]]):
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self.item_type = item_type
-        self.item_value_type = item_value_type
+        self.payload["item_type"] = item_type
+        self.payload["item_value_type"] = item_value_type
 
     @classmethod
     def slot[E](cls, item_type: type[E]) -> ListRef[E]:

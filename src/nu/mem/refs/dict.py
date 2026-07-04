@@ -68,10 +68,10 @@ class DictRef[K, V](MutableMappingRef, RefBase[dict[K, V]]):
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self.value_type = value_type
-        self.key_type = key_type
-        self.key_value_type = key_value_type
-        self.value_value_type = value_value_type
+        self.payload["value_type"] = value_type
+        self.payload["key_type"] = key_type
+        self.payload["key_value_type"] = key_value_type
+        self.payload["value_value_type"] = value_value_type
 
     @classmethod
     def slot[DK, DV](cls, value_type: type[DV], key_type: type[DK] = str) -> DictRef[DK, DV]:  # type: ignore[assignment]

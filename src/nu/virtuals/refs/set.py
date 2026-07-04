@@ -46,7 +46,7 @@ class SetRef[T](ReactiveSetRef, ViewRef[set[T]]):
         super().__init__(
             address, view_type=view_type, parent_ref=parent_ref, owner_shape=owner_shape
         )
-        self.item_type = item_type
+        self.payload["item_type"] = item_type
 
     @classmethod
     def slot[E](cls, item_type: type[E], view_type: type[MutableSetBase] | None = None) -> SetRef[E]:

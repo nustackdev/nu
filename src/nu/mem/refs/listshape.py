@@ -51,7 +51,7 @@ class ShapesListRef[T: Shape](MutableShapesSequenceRef, RefBase[list[dict]]):
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
-        self.item_type: type = dict
+        self.payload["item_type"] = dict
 
     @classmethod
     def slot[S: Shape](cls, shape_type: type[S]) -> ShapesListRef[S]:

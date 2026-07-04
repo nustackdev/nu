@@ -34,20 +34,20 @@ def test_item_ref_parent_ref_none_by_default():
 
 def test_item_ref_stores_owner_shape():
     ref = ItemRef("slot", owner_shape=MyShape)
-    assert ref.owner_shape is MyShape
+    assert ref._owner_shape is MyShape
 
 
 def test_item_ref_stores_parent_ref():
     parent = ItemRef("parent")
     child = ItemRef("child", parent_ref=parent)
     assert child._parent is parent
-    assert child.get_root_shape() is None  # parent has no owner_shape
+    assert child._root_shape is None  # parent has no owner_shape
 
 
 def test_item_ref_root_shape_from_parent():
     parent = ItemRef("root", owner_shape=MyShape)
     child = ItemRef("leaf", parent_ref=parent)
-    assert child.get_root_shape() is MyShape
+    assert child._root_shape is MyShape
 
 
 # ---------------------------------------------------------------------------
@@ -158,4 +158,4 @@ def test_reactive_item_ref_parent_chain_works():
     parent = ReactiveItemRef("root", owner_shape=MyShape)
     child = ReactiveItemRef("leaf", parent_ref=parent)
     assert child._parent is parent
-    assert child.get_root_shape() is MyShape
+    assert child._root_shape is MyShape

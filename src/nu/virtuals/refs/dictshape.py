@@ -19,7 +19,7 @@ from nu import (
 from nu.domains.shape import ReactiveShapesMappingRef, Slot
 
 from ._typemap import value_type_for
-from .base import Facet, ViewRef
+from .base import ViewRef
 from .shape import ShapeRef
 
 
@@ -92,12 +92,11 @@ class ShapesDictRef[K, T: Shape](ReactiveShapesMappingRef, ViewRef[dict[K, dict]
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
-        self._segment = address
-        self._view_type = view_type
-        self._facet = Facet.LAZY
-        self.value_type: type = dict
-        self.key_type = key_type
-        self.key_value_type = key_value_type
+        self.payload["segment"] = address
+        self.payload["view_type"] = view_type
+        self.payload["value_type"] = dict
+        self.payload["key_type"] = key_type
+        self.payload["key_value_type"] = key_value_type
 
     @classmethod
     def slot[DK, S: Shape](

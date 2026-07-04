@@ -67,12 +67,12 @@ class ShapeRef(MappingForm, StructuredRef):
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self._shape_type = shape_type
+        self.payload["shape_type"] = shape_type
 
     @property
-    def shape_type(self) -> type[Shape]:
-        """The Shape class at this Ref's location."""
-        return self._shape_type
+    def _shape_type(self) -> type[Shape]:
+        """The Shape class at this Ref's location (private: inner mechanics)."""
+        return self.payload["shape_type"]  # type: ignore[return-value]
 
     def __getstate__(self) -> dict:
         """Pickle support — return instance state."""

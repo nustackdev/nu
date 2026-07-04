@@ -84,9 +84,9 @@ class ShapesDictRef[K, T: Shape](MutableShapesMappingRef, RefBase[dict[K, dict]]
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
-        self.value_type: type = dict
-        self.key_type = key_type
-        self.key_value_type = key_value_type
+        self.payload["value_type"] = dict
+        self.payload["key_type"] = key_type
+        self.payload["key_value_type"] = key_value_type
 
     @classmethod
     def slot[DK, S: Shape](

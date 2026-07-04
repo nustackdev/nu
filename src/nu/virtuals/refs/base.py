@@ -25,7 +25,6 @@ decomposes / cleans up.
 
 from __future__ import annotations
 
-import copy
 from enum import Enum
 from logging import getLogger
 from typing import TYPE_CHECKING
@@ -109,7 +108,12 @@ class _VirtualsRefBase[T](StructuredRef):
         **kwargs: object,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
-        self._segment = address  # raw static segment, for parent-chain path building
+        # raw static segment, in payload so it rides base with_children
+        self.payload["segment"] = address
+
+    @property
+    def _segment(self) -> object:
+        return self.payload.get("segment")
 
     # --- path building -------------------------------------------------------
 
@@ -159,8 +163,6 @@ class ViewRef[T](_VirtualsRefBase[T]):
     virtuals View. Supports lazy/eager facets (default: lazy).
     """
 
-    _facet: Facet = Facet.LAZY
-
     def __init__(
         self,
         address: object,
@@ -173,36 +175,39 @@ class ViewRef[T](_VirtualsRefBase[T]):
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
         # ``view_type`` may be None when the shape-blueprint __init__ routes
         # through here without threading it; the concrete shape ref then sets
-        # ``_view_type`` itself right after super().__init__.
+        # ``payload["view_type"]`` itself right after super().__init__.
         if view_type is not None:
-            self._view_type = view_type
+            self.payload["view_type"] = view_type
 
     @property
-    def view_type(self) -> type[View]:
-        """The View class type at this location."""
-        return self._view_type
+    def _view_type(self) -> type[View]:
+        """The View class type at this location (private: inner mechanics)."""
+        return self.payload.get("view_type")  # type: ignore[return-value]
 
     @property
     def _type_marker(self) -> type:  # type: ignore[override]
         return self._view_type
 
     @property
+    def _facet(self) -> Facet:
+        return self.payload.get("facet", Facet.LAZY)  # type: ignore[return-value]
+
+    def _with_facet(self, facet: Facet) -> ViewRef[T]:
+        """A faceted variant: same tree, fresh payload with the facet overridden."""
+        variant = object.__new__(type(self))
+        variant.children = self.children
+        variant.payload = {**self.payload, "facet": facet}
+        return variant
+
+    @property
     def lazy(self) -> ViewRef[T]:
         """Return a lazy-faceted clone. No-op if already lazy."""
-        if self._facet is Facet.LAZY:
-            return self
-        clone = copy.copy(self)
-        clone._facet = Facet.LAZY
-        return clone
+        return self if self._facet is Facet.LAZY else self._with_facet(Facet.LAZY)
 
     @property
     def eager(self) -> ViewRef[T]:
         """Return an eager-faceted clone. Iteration extracts to Python objects."""
-        if self._facet is Facet.EAGER:
-            return self
-        clone = copy.copy(self)
-        clone._facet = Facet.EAGER
-        return clone
+        return self if self._facet is Facet.EAGER else self._with_facet(Facet.EAGER)
 
     def _apply_facet(self, view: object) -> object:
         """Apply the lazy/eager facet to a fetched view, when supported."""
@@ -215,7 +220,7 @@ class ViewRef[T](_VirtualsRefBase[T]):
     # --- read (the dual role) ------------------------------------------------
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        scope = self.get_root_shape()
+        scope = self._root_shape
 
         def thunk(rt: Runtime) -> object:
             path = self._resolve_path(rt, nid)
@@ -227,7 +232,7 @@ class ViewRef[T](_VirtualsRefBase[T]):
         return thunk
 
     def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        scope = self.get_root_shape()
+        scope = self._root_shape
 
         async def athunk(rt: Runtime) -> object:
             path = await self._aresolve_path(rt, nid)
@@ -241,8 +246,8 @@ class ViewRef[T](_VirtualsRefBase[T]):
     # --- write / erase (whole-view store via parent decomposition) -----------
 
     def _fetch_parent_view(self, rt: Runtime, path: tuple) -> object:
-        nav = _resolve_navigator(rt, self.get_root_shape(), path)
-        storage_ctx = _resolve_storage_ctx(rt, self.get_root_shape(), path)
+        nav = _resolve_navigator(rt, self._root_shape, path)
+        storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
         if len(path) <= 1:
             return nav.root(storage_ctx)
         return nav.open_at_path(ViewPathSer(path[:-1]), storage_ctx)
@@ -309,12 +314,12 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
         **kwargs: object,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
-        self._value_type = value_type
+        self.payload["value_type"] = value_type
 
     @property
-    def value_type(self) -> type[T]:
-        """The Python type of the value at this location."""
-        return self._value_type
+    def _value_type(self) -> type[T]:
+        """The Python type of the value at this location (private: inner mechanics)."""
+        return self.payload["value_type"]  # type: ignore[return-value]
 
     @property
     def _type_marker(self) -> type:  # type: ignore[override]
@@ -323,8 +328,8 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
     # --- read (the dual role) ------------------------------------------------
 
     def _read(self, rt: Runtime, path: tuple) -> object:
-        nav = _resolve_navigator(rt, self.get_root_shape(), path)
-        storage_ctx = _resolve_storage_ctx(rt, self.get_root_shape(), path)
+        nav = _resolve_navigator(rt, self._root_shape, path)
+        storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
         parent_path = path[:-1]
         key = path[-1][0]
         try:
@@ -356,8 +361,8 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
     # --- write / erase -------------------------------------------------------
 
     def _fetch_parent_view(self, rt: Runtime, path: tuple) -> object:
-        nav = _resolve_navigator(rt, self.get_root_shape(), path)
-        storage_ctx = _resolve_storage_ctx(rt, self.get_root_shape(), path)
+        nav = _resolve_navigator(rt, self._root_shape, path)
+        storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
         parent_path = path[:-1]
         if not parent_path:
             return nav.root(storage_ctx)

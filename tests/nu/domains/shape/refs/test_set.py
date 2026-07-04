@@ -37,7 +37,7 @@ def test_set_ref_parent_ref_none_by_default():
 
 def test_set_ref_stores_owner_shape():
     ref = SetRef("my_set", owner_shape=MyShape)
-    assert ref.owner_shape is MyShape
+    assert ref._owner_shape is MyShape
 
 
 def test_set_ref_has_no_subscript():

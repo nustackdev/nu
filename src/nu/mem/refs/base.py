@@ -49,7 +49,12 @@ class RefBase[T](StructuredRef):
         **kwargs: object,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self._segment = address  # raw static segment, for parent-chain path building
+        # raw static segment, in payload so it rides base with_children
+        self.payload["segment"] = address
+
+    @property
+    def _segment(self) -> object:
+        return self.payload.get("segment")
 
     # --- path building -------------------------------------------------------
 
@@ -65,7 +70,7 @@ class RefBase[T](StructuredRef):
 
     def _root_data(self, rt: Runtime) -> object:
         """The root dict bound in the Context, scoped to this ref's root shape."""
-        scope = self.get_root_shape()
+        scope = self._root_shape
         return rt.ctx.get(dict, scope) if scope is not None else rt.ctx.get(dict)
 
     def _resolve_path(self, rt: Runtime, nid: int) -> tuple:

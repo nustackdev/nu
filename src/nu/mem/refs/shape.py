@@ -71,8 +71,8 @@ class ShapeRef[T: Shape](MutableShapeRef, RefBase[dict[str, object]]):
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
-        self.key_type: type = str
-        self.value_type: type = object
+        self.payload["key_type"] = str
+        self.payload["value_type"] = object
 
     @classmethod
     def slot[S: Shape](cls, shape_type: type[S]) -> ShapeRef[S]:

@@ -26,16 +26,15 @@ from nu.virtuals import (
     Transaction,
     auto_flow_atomic,
 )
-from nu.virtuals.refs.flat import FlatRef
 
 
-def _flat_ref(root_shape: type) -> FlatRef:
-    """Build a minimal FlatRef rooted at the given shape for structural tests."""
-    return FlatRef(
-        static_path=(("slot", object),),
-        root_shape=root_shape,
-        is_primitive=False,
-    )
+def _flat_ref(root_shape: type):
+    """A real virtuals leaf ref rooted at the given shape (structural stand-in).
+
+    The wrapping pass only cares that this is a virtuals ref whose root shape
+    is ``root_shape``; any leaf slot on the shape works.
+    """
+    return root_shape.height if root_shape is LedgerShard else root_shape.balance
 
 
 # =============================================================================

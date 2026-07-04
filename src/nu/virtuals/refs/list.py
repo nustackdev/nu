@@ -62,8 +62,8 @@ class ListRef[T](ReactiveSequenceRef, ViewRef[list[T]]):
         super().__init__(
             address, view_type=view_type, parent_ref=parent_ref, owner_shape=owner_shape
         )
-        self.item_type = item_type
-        self.item_value_type = item_value_type
+        self.payload["item_type"] = item_type
+        self.payload["item_value_type"] = item_value_type
 
     @classmethod
     def slot[E](

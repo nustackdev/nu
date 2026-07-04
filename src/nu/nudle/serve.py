@@ -76,7 +76,7 @@ def _find_index(app: Nu) -> type[Index]:
     for node in preorder(app):
         if not isinstance(node, NudleRef):
             continue
-        root = node.get_root_shape()
+        root = node._root_shape
         if root is None:
             continue
         if issubclass(root, Index):

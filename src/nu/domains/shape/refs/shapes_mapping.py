@@ -52,12 +52,12 @@ class ShapesMappingRef(MappingForm, StructuredRef):
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self._item_shape_type = item_shape_type
+        self.payload["item_shape_type"] = item_shape_type
 
     @property
-    def item_shape_type(self) -> type[Shape]:
-        """Shape class for each value in this mapping."""
-        return self._item_shape_type
+    def _item_shape_type(self) -> type[Shape]:
+        """Shape class for each value in this mapping (private: inner mechanics)."""
+        return self.payload["item_shape_type"]  # type: ignore[return-value]
 
     def __getitem__(self, key: object) -> ShapeRef:
         """Return a ShapeRef at key, with self as parent."""

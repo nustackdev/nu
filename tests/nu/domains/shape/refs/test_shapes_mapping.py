@@ -43,7 +43,7 @@ def test_shapes_mapping_ref_child_parent_is_self():
 
 def test_shapes_mapping_ref_item_shape_type_property():
     m = ShapesMappingRef("entries", item_shape_type=Entry)
-    assert m.item_shape_type is Entry
+    assert m._item_shape_type is Entry
 
 
 def test_shapes_mapping_ref_different_keys_distinct():

@@ -43,7 +43,7 @@ def test_shapes_sequence_ref_child_parent_is_self():
 
 def test_shapes_sequence_ref_item_shape_type_property():
     s = ShapesSequenceRef("rows", item_shape_type=Row)
-    assert s.item_shape_type is Row
+    assert s._item_shape_type is Row
 
 
 def test_shapes_sequence_ref_different_indices_distinct():

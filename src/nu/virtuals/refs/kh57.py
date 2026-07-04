@@ -80,11 +80,11 @@ class Kh57Ref[V](ReactiveMappingRef, ViewRef[dict[int, V]]):
         super().__init__(
             address, view_type=view_type, parent_ref=parent_ref, owner_shape=owner_shape
         )
-        self.value_type = value_type
-        self.value_value_type = value_value_type
+        self.payload["value_type"] = value_type
+        self.payload["value_value_type"] = value_value_type
         # kh57 keys are always non-negative 57-bit ints.
-        self.key_type = int
-        self.key_value_type = value_type_for(int)
+        self.payload["key_type"] = int
+        self.payload["key_value_type"] = value_type_for(int)
 
     @classmethod
     def slot[DV](

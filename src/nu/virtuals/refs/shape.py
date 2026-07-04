@@ -20,7 +20,7 @@ from nu import (
 )
 from nu.domains.shape import ReactiveShapeRef, Slot
 
-from .base import Facet, ViewRef
+from .base import ViewRef
 
 
 if TYPE_CHECKING:
@@ -81,11 +81,10 @@ class ShapeRef[T: Shape](ReactiveShapeRef, ViewRef[dict[str, object]]):
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
-        self._segment = address
-        self._view_type = view_type
-        self._facet = Facet.LAZY
-        self.key_type: type = str
-        self.value_type: type = object
+        self.payload["segment"] = address
+        self.payload["view_type"] = view_type
+        self.payload["key_type"] = str
+        self.payload["value_type"] = object
 
     @classmethod
     def slot[S: Shape](

@@ -122,14 +122,9 @@ def _ref_label(node: Ref) -> str:
 
     # A structured (Shape) Ref carries its owning Shape, not a payload - surface
     # it as ``ItemRef[Order]`` so the tree shows which Shape a slot belongs to.
-    owner = getattr(node, "owner_shape", None)
+    owner = getattr(node, "_owner_shape", None)
     if owner is None:
-        get_root = getattr(node, "get_root_shape", None)
-        if callable(get_root):
-            try:
-                owner = get_root()
-            except Exception:
-                owner = None
+        owner = getattr(node, "_root_shape", None)
     if owner is not None:
         return f"{cls}[{getattr(owner, '__name__', owner)}]"
 

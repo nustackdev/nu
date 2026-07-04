@@ -78,29 +78,17 @@ class StructuredRef(Ref):
     ) -> None:
         parent = parent_ref if parent_ref is not None else ANCHOR
         super().__init__(parent, address)
-        self._owner_shape = owner_shape
-        self._root_shape: type[Shape] | None = (
+        # All navigation metadata rides in ``payload`` — part of the Term's
+        # ``(kind, children, payload)`` identity — so the base
+        # :class:`Term.with_children` (which shares ``payload``) carries it
+        # across a tree rewrite. No per-subclass ``with_children`` override, and
+        # nothing user-facing lives on ``__dict__``.
+        self.payload["owner_shape"] = owner_shape
+        self.payload["root_shape"] = (
             parent_ref._root_shape if parent_ref is not None else owner_shape
         )
 
-    # --- construction --------------------------------------------------------
-
-    def with_children(self, *children: object) -> StructuredRef:  # type: ignore[override]
-        """Rebuild with new children while preserving Ref navigation metadata.
-
-        The base :class:`Term.with_children` copies only ``children`` and
-        ``payload``. Shape Refs still carry non-structural navigation metadata as
-        instance attrs (``_owner_shape``, ``_root_shape``, plus substrate markers
-        like ``_segment``, ``_value_type``, ``_view_type``), so we copy the full
-        ``__dict__`` and then override ``children``. The *parent* is no longer
-        smuggled here — it lives in ``children[0]`` and rewrites like any child.
-        """
-        variant = object.__new__(type(self))
-        variant.__dict__.update(self.__dict__)
-        variant.children = children
-        return variant
-
-    # --- navigation properties -----------------------------------------------
+    # --- navigation (all private: inner mechanics, never user-facing) ---------
 
     @property
     def _parent(self) -> StructuredRef | None:
@@ -114,13 +102,14 @@ class StructuredRef(Ref):
         return p if isinstance(p, StructuredRef) else None
 
     @property
-    def owner_shape(self) -> type[Shape] | None:
+    def _owner_shape(self) -> type[Shape] | None:
         """Shape class that directly owns this slot."""
-        return self._owner_shape
+        return self.payload.get("owner_shape")  # type: ignore[return-value]
 
-    def get_root_shape(self) -> type[Shape] | None:
-        """Return the root Shape for this Ref chain (cached at construction)."""
-        return self._root_shape
+    @property
+    def _root_shape(self) -> type[Shape] | None:
+        """Root Shape for this Ref chain (resolved at construction)."""
+        return self.payload.get("root_shape")  # type: ignore[return-value]
 
     # --- address resolution --------------------------------------------------
 

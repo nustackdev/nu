@@ -22,7 +22,6 @@ from nu.lang import Flow
 
 from ..interactions.atomicity import Snapshot, Transaction
 from ..refs.base import PrimitiveRef, ViewRef
-from ..refs.flat import FlatRef
 
 
 if TYPE_CHECKING:
@@ -34,7 +33,7 @@ if TYPE_CHECKING:
 __all__ = ["auto_flow_atomic"]
 
 
-_VirtualsRef = (ViewRef, PrimitiveRef, FlatRef)
+_VirtualsRef = (ViewRef, PrimitiveRef)
 
 
 def _write_positions(node: object) -> frozenset[int]:
@@ -83,7 +82,7 @@ def _iter_uncovered(
             yield from _iter_uncovered(c, pass_scope, inner, _top=True)
         return
     if _top and isinstance(node, _VirtualsRef):
-        ref_scope = node.get_root_shape()
+        ref_scope = node._root_shape
         if _dominates(pass_scope, ref_scope) and not _covered_by_enclosing(
             enclosing, ref_scope
         ):
@@ -91,7 +90,7 @@ def _iter_uncovered(
     mutates = _write_positions(node)
     for slot, child in enumerate(node.children):
         if isinstance(child, _VirtualsRef):
-            ref_scope = child.get_root_shape()
+            ref_scope = child._root_shape
             if _dominates(pass_scope, ref_scope) and not _covered_by_enclosing(
                 enclosing, ref_scope
             ):

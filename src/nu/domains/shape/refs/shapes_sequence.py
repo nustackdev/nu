@@ -52,12 +52,12 @@ class ShapesSequenceRef(SequenceForm, StructuredRef):
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self._item_shape_type = item_shape_type
+        self.payload["item_shape_type"] = item_shape_type
 
     @property
-    def item_shape_type(self) -> type[Shape]:
-        """Shape class for each element in this sequence."""
-        return self._item_shape_type
+    def _item_shape_type(self) -> type[Shape]:
+        """Shape class for each element in this sequence (private: inner mechanics)."""
+        return self.payload["item_shape_type"]  # type: ignore[return-value]
 
     def __getitem__(self, index: object) -> ShapeRef:
         """Return a ShapeRef at index, with self as parent."""

@@ -35,7 +35,7 @@ def test_structured_ref_parent_ref_defaults_to_none():
 
 def test_structured_ref_owner_shape_defaults_to_none():
     ref = StructuredRef("key")
-    assert ref.owner_shape is None
+    assert ref._owner_shape is None
 
 
 # ---------------------------------------------------------------------------
@@ -51,23 +51,23 @@ def test_structured_ref_stores_parent_ref():
 
 def test_structured_ref_stores_owner_shape():
     ref = StructuredRef("key", owner_shape=SomeShape)
-    assert ref.owner_shape is SomeShape
+    assert ref._owner_shape is SomeShape
 
 
 def test_root_shape_is_owner_when_no_parent():
     ref = StructuredRef("key", owner_shape=SomeShape)
-    assert ref.get_root_shape() is SomeShape
+    assert ref._root_shape is SomeShape
 
 
 def test_root_shape_inherits_from_parent_chain():
     root = ItemRef("a", owner_shape=SomeShape)
     child = ItemRef("b", parent_ref=root)
-    assert child.get_root_shape() is SomeShape
+    assert child._root_shape is SomeShape
 
 
 def test_root_shape_is_none_when_no_owner_and_no_parent():
     ref = StructuredRef("x")
-    assert ref.get_root_shape() is None
+    assert ref._root_shape is None
 
 
 # ---------------------------------------------------------------------------

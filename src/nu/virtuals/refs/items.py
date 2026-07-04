@@ -51,7 +51,7 @@ class ItemRef(ReactiveItemRef, PrimitiveRef):
         super().__init__(
             address, value_type=value_type, parent_ref=parent_ref, owner_shape=owner_shape
         )
-        self._value_value_type = value_value_type
+        self.payload["value_value_type"] = value_value_type
 
     @classmethod
     def slot(cls, value_type: type, value_value_type: type) -> Self:

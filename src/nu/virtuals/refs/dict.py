@@ -83,10 +83,10 @@ class DictRef[K, V](ReactiveMappingRef, ViewRef[dict[K, V]]):
         super().__init__(
             address, view_type=view_type, parent_ref=parent_ref, owner_shape=owner_shape
         )
-        self.value_type = value_type
-        self.key_type = key_type
-        self.key_value_type = key_value_type
-        self.value_value_type = value_value_type
+        self.payload["value_type"] = value_type
+        self.payload["key_type"] = key_type
+        self.payload["key_value_type"] = key_value_type
+        self.payload["value_value_type"] = value_value_type
 
     @classmethod
     def slot[DK, DV](

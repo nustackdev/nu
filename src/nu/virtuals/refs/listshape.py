@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from nu import AnyForm, IteratorForm, ListForm
 from nu.domains.shape import ReactiveShapesSequenceRef, Slot
 
-from .base import Facet, ViewRef
+from .base import ViewRef
 from .shape import ShapeRef
 
 
@@ -73,10 +73,9 @@ class ShapesListRef[T: Shape](ReactiveShapesSequenceRef, ViewRef[list[dict]]):
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
-        self._segment = address
-        self._view_type = view_type
-        self._facet = Facet.LAZY
-        self.item_type: type = dict
+        self.payload["segment"] = address
+        self.payload["view_type"] = view_type
+        self.payload["item_type"] = dict
 
     @classmethod
     def slot[S: Shape](
