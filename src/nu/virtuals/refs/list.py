@@ -30,8 +30,8 @@ class ListRef[T](ReactiveSequenceRef, ViewRef[list[T]]):
         """Navigate to the element at ``index`` as a substrate-backed virtuals ItemRef."""
         return ItemRef(
             index,
-            value_type=self.item_type,
-            value_value_type=self.item_value_type,
+            value_type=self.payload["item_type"],
+            value_value_type=self.payload["item_value_type"],
             parent_ref=self,
             owner_shape=self._owner_shape,
         )

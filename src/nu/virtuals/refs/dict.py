@@ -37,8 +37,8 @@ class DictRef[K, V](ReactiveMappingRef, ViewRef[dict[K, V]]):
         """Navigate to the value at ``key`` as a substrate-backed virtuals ItemRef."""
         return ItemRef(
             key,
-            value_type=self.value_type,
-            value_value_type=self.value_value_type,
+            value_type=self.payload["value_type"],
+            value_value_type=self.payload["value_value_type"],
             parent_ref=self,
             owner_shape=self._owner_shape,
         )

@@ -135,3 +135,23 @@ def test_cross_fabric_mem_key_write_then_read(ctx):
     xctx = ctx.bind(dict, mem_data, MemBag)
     run(VRoot.mids[MemBag.current].note.store("written"), xctx)
     assert run(VRoot.mids["mintZ"].note, xctx)[0] == "written"
+
+
+# --- primitive collection navigation reads value_type off payload -----------
+
+
+def test_primitive_dict_and_list_navigation_reads_payload():
+    """Regression: virtuals DictRef/ListRef.__getitem__ builds the child ItemRef
+    from ``value_type`` in ``payload`` (the payload migration privatized the old
+    public ``value_type``/``item_type`` attrs, so a stale ``self.value_type``
+    read would AttributeError here)."""
+    from nu.virtuals import DictRef, ListRef
+
+    class V(Shape):
+        d = DictRef.slot(str, str)
+        rows = ListRef.slot(int)
+
+    di = V.d["k"]
+    li = V.rows[0]
+    assert di._value_type is str
+    assert li._value_type is int
