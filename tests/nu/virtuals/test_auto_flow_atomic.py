@@ -1,13 +1,16 @@
-"""Tests for auto_atomic deformation.
+"""Tests for auto_flow_atomic deformation.
 
-Focus: structural invariants of the rewrite (wrapping boundaries) without
-requiring live storage/navigator setup. Checks:
+Focus: structural invariants of the flow-based wrapping pass (which
+boundaries land where) without requiring live storage/navigator setup.
+Checks:
 
-- Scoped pass only wraps WRITE ops whose ref targets that scope.
-- Unscoped pass wraps everything not already covered.
-- Applying scoped(X) then unscoped produces the same tree as unscoped
-  then scoped(X) — order-independence. No redundant nested boundaries.
-- A WRITE op nested under a Transaction with compatible scope is not
+- Scoped pass only wraps Flow children whose subtree has an uncovered
+  WRITE through a virtuals ref matching that scope.
+- Unscoped pass wraps every Flow child not already covered.
+- Applying scoped(X) then unscoped produces a tree with the same
+  coverage as unscoped then scoped(X) — order-independence. No redundant
+  nested boundaries.
+- A WRITE nested under a Transaction with compatible scope is not
   re-wrapped (skip-already-covered).
 """
 
@@ -21,7 +24,7 @@ from nu.virtuals import (
     Snapshot,
     StrRef,
     Transaction,
-    auto_atomic,
+    auto_flow_atomic,
 )
 from nu.virtuals.refs.flat import FlatRef
 
@@ -118,7 +121,7 @@ def test_scoped_wraps_only_matching_writes() -> None:
         EnsureLayoutCmd(acct_ref),
     )
 
-    out = auto_atomic(tree, scope=LedgerShard)
+    out = auto_flow_atomic(tree, scope=LedgerShard)
 
     txns = _collect(out, Transaction)
     # exactly one Transaction, around the shard-targeted cmd
@@ -134,7 +137,7 @@ def test_unscoped_wraps_everything() -> None:
         EnsureLayoutCmd(acct_ref),
     )
 
-    out = auto_atomic(tree)
+    out = auto_flow_atomic(tree)
 
     txns = _collect(out, Transaction)
     assert len(txns) == 2
@@ -142,12 +145,16 @@ def test_unscoped_wraps_everything() -> None:
 
 
 def test_scoped_then_unscoped_no_double_wrap() -> None:
-    """Regression: unscoped pass after scoped pass must not re-wrap."""
-    shard_ref = _flat_ref(LedgerShard)
-    tree = EnsureLayoutCmd(shard_ref)
+    """Regression: unscoped pass after scoped pass must not re-wrap.
 
-    t1 = auto_atomic(tree, scope=LedgerShard)
-    t2 = auto_atomic(t1)
+    A bare cmd is not a Flow child on its own — the outer tree here is the
+    cmd itself. Neither pass finds a Flow at the root, so both are no-ops.
+    """
+    shard_ref = _flat_ref(LedgerShard)
+    tree = Seq(EnsureLayoutCmd(shard_ref))
+
+    t1 = auto_flow_atomic(tree, scope=LedgerShard)
+    t2 = auto_flow_atomic(t1)
 
     txns = _collect(t2, Transaction)
     assert len(txns) == 1
@@ -157,10 +164,10 @@ def test_scoped_then_unscoped_no_double_wrap() -> None:
 def test_unscoped_then_scoped_no_double_wrap() -> None:
     """Reverse order: scoped pass after unscoped must not re-wrap either."""
     shard_ref = _flat_ref(LedgerShard)
-    tree = EnsureLayoutCmd(shard_ref)
+    tree = Seq(EnsureLayoutCmd(shard_ref))
 
-    t1 = auto_atomic(tree)
-    t2 = auto_atomic(t1, scope=LedgerShard)
+    t1 = auto_flow_atomic(tree)
+    t2 = auto_flow_atomic(t1, scope=LedgerShard)
 
     txns = _collect(t2, Transaction)
     assert len(txns) == 1
@@ -183,8 +190,8 @@ def test_order_independence_mixed_scopes() -> None:
         EnsureLayoutCmd(acct_ref),
     )
 
-    a = auto_atomic(auto_atomic(tree, scope=LedgerShard))
-    b = auto_atomic(auto_atomic(tree), scope=LedgerShard)
+    a = auto_flow_atomic(auto_flow_atomic(tree, scope=LedgerShard))
+    b = auto_flow_atomic(auto_flow_atomic(tree), scope=LedgerShard)
 
     # Each order: exactly two Transactions (one per write), none nested.
     for label, t in (("a", a), ("b", b)):
@@ -199,9 +206,9 @@ def test_order_independence_mixed_scopes() -> None:
 def test_preexisting_transaction_covers_nested_write() -> None:
     """Manually-placed Transaction must prevent inner re-wrapping."""
     shard_ref = _flat_ref(LedgerShard)
-    tree = Transaction(EnsureLayoutCmd(shard_ref), scope=LedgerShard)
+    tree = Seq(Transaction(EnsureLayoutCmd(shard_ref), scope=LedgerShard))
 
-    out = auto_atomic(tree, scope=LedgerShard)
+    out = auto_flow_atomic(tree, scope=LedgerShard)
 
     txns = _collect(out, Transaction)
     assert len(txns) == 1
@@ -211,10 +218,47 @@ def test_preexisting_transaction_covers_nested_write() -> None:
 def test_unscoped_boundary_covers_scoped_pass() -> None:
     """Transaction(scope=None) already covers any ref — scoped pass must skip."""
     shard_ref = _flat_ref(LedgerShard)
-    tree = Transaction(EnsureLayoutCmd(shard_ref), scope=None)
+    tree = Seq(Transaction(EnsureLayoutCmd(shard_ref), scope=None))
 
-    out = auto_atomic(tree, scope=LedgerShard)
+    out = auto_flow_atomic(tree, scope=LedgerShard)
 
     txns = _collect(out, Transaction)
     assert len(txns) == 1
     assert txns[0].scope is None
+
+
+def test_bracket_over_bare_ref_with_mismatched_scope_gets_external_wrapped() -> None:
+    """A user-written ``Snapshot(bare_ref)`` whose scope does not cover the
+    ref's own shape must trigger an outer wrap under the covering scope.
+
+    Regression: an earlier iteration of ``_iter_uncovered`` only inspected
+    ``node.children`` and missed the case where the walked subtree IS a
+    virtuals Ref, so a bare-Ref-body inside a mismatched-scope bracket
+    silently escaped external-wrapping.
+    """
+    shard_ref = _flat_ref(LedgerShard)
+    # Snapshot claims Account scope but its body is a LedgerShard ref —
+    # nothing covers the ref, so the outer Seq's Flow-child rule must add
+    # a LedgerShard-covering wrap around the whole bracket.
+    tree = Seq(Snapshot(shard_ref, scope=Account))
+
+    out = auto_flow_atomic(tree, scope=LedgerShard)
+
+    snaps = _collect(out, Snapshot)
+    # two Snapshots: the original (Account) and the outer wrap (LedgerShard).
+    assert len(snaps) == 2
+    scopes = {s.scope for s in snaps}
+    assert scopes == {Account, LedgerShard}
+
+
+def test_bracket_over_bare_ref_matching_scope_left_alone() -> None:
+    """A user-written ``Snapshot(bare_ref, scope=S)`` where S matches the
+    ref's shape is fully covered and must not be re-wrapped."""
+    shard_ref = _flat_ref(LedgerShard)
+    tree = Seq(Snapshot(shard_ref, scope=LedgerShard))
+
+    out = auto_flow_atomic(tree, scope=LedgerShard)
+
+    snaps = _collect(out, Snapshot)
+    assert len(snaps) == 1
+    assert snaps[0].scope is LedgerShard

@@ -82,12 +82,12 @@ from nu.virtuals.refs import (
     UUIDRef,
     ViewRef,
 )
-from nu.virtuals.tree import auto_atomic, inline_refs
+from nu.virtuals.tree import auto_flow_atomic, inline_refs
 
 
 # --- deferred during the v2 port ---------------------------------------------
 # write-back views (views/writeback),
-# auto_flow_atomic / auto_total_atomic / optimize_primitive_reads|writes —
+# auto_total_atomic / optimize_primitive_reads|writes —
 # re-added as each lands on the v2 substrate seam.
 
 
@@ -110,7 +110,7 @@ __all__ = [  # noqa: RUF022
     "RetryOnConflict",
     "CONFLICT_ERRORS",
     # Tree
-    "auto_atomic",
+    "auto_flow_atomic",
     "inline_refs",
     # Paths
     "ValuePathSer",

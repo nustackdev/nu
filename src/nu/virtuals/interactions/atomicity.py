@@ -11,7 +11,7 @@ These subclass the v2 core brackets and override the lifecycle as a single
 transactions) live in the context-manager frame, captured by closure — never on
 ``self`` (a Term is immutable and shared across executions). The ``scope`` data
 attribute is the shape tag used for predicate routing / multi-navigator setups
-(read by ``auto_atomic`` and the structural tests), NOT the lifecycle method.
+(read by ``auto_flow_atomic`` and the structural tests), NOT the lifecycle method.
 """
 
 from __future__ import annotations
@@ -160,7 +160,21 @@ class Snapshot(_VirtualsBracketMixin, _CoreSnapshot):
 
     def __init__(self, *children: Nu, scope: Hashable | None = None) -> None:
         super().__init__(_wrap_body(children))
-        self.scope = scope
+        # Carry the scope tag in payload so Term.with_children (used by the
+        # bottom-up rewrite in auto_flow_atomic) preserves it across rebuilds.
+        # An instance attribute would be dropped, unshadowing the core
+        # `_LifecycleBracket.scope` method and leaking a bound method as
+        # the scope tag into the ctx.
+        self.payload = {"scope": scope}
+
+    @property
+    def scope(self) -> Hashable | None:  # type: ignore[override]
+        """Shape tag for atomic routing; overrides the core lifecycle method.
+
+        Safe because :class:`_VirtualsBracketMixin` overrides ``compile`` to
+        drive the boundary through ``_open`` instead of the core ``scope``.
+        """
+        return self.payload["scope"]
 
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[Context]:
@@ -204,7 +218,13 @@ class Transaction(_VirtualsBracketMixin, _CoreTransaction):
 
     def __init__(self, *children: Nu, scope: Hashable | None = None) -> None:
         super().__init__(_wrap_body(children))
-        self.scope = scope
+        # See Snapshot.__init__ for why scope lives in payload, not on self.
+        self.payload = {"scope": scope}
+
+    @property
+    def scope(self) -> Hashable | None:  # type: ignore[override]
+        """Shape tag for atomic routing; overrides the core lifecycle method."""
+        return self.payload["scope"]
 
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[Context]:
