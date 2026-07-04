@@ -60,7 +60,7 @@ class _StoreTabs(Command):
         async def athunk(rt: Runtime) -> None:
             session = rt.ctx.get(NudleSession)
             ref_nid = rt.program.children[nid][0]
-            path = await ref.aresolve_address(rt, ref_nid)
+            path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)
             if isinstance(value, list):
                 value = _normalize_tabs(value)
@@ -89,7 +89,7 @@ class _StoreActive(Command):
         async def athunk(rt: Runtime) -> None:
             session = rt.ctx.get(NudleSession)
             ref_nid = rt.program.children[nid][0]
-            path = await ref.aresolve_address(rt, ref_nid)
+            path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)
             payload = "" if value is None else str(value)
             await session.send(Frame("store_active", ref=path, payload=payload))
@@ -108,7 +108,7 @@ class _TabsMountRef(NudleRef):
         super().__init__(None, owner_shape=section_cls)
         self._section_cls = section_cls
 
-    async def aresolve_address(self, rt: Runtime, nid: int) -> str:
+    async def _aresolve_address(self, rt: Runtime, nid: int) -> str:
         mount = getattr(self._section_cls, "_nudle_mount", None)
         if mount is None:
             raise RuntimeError(

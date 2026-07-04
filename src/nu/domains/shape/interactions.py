@@ -202,7 +202,7 @@ class StoreCommand(Command):
             v = value(rt)
             if v is EMPTY or v is INVALID:
                 raise ValueError("cannot store sentinel value")
-            ref.write(rt, v, rt.program.children[nid][0])
+            ref._write(rt, v, rt.program.children[nid][0])
 
         return thunk
 
@@ -214,7 +214,7 @@ class StoreCommand(Command):
             v = await value(rt)
             if v is EMPTY or v is INVALID:
                 raise ValueError("cannot store sentinel value")
-            await ref.awrite(rt, v, rt.program.children[nid][0])
+            await ref._awrite(rt, v, rt.program.children[nid][0])
 
         return athunk
 

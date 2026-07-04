@@ -51,7 +51,7 @@ class Changed(ScalarQuery):
         async def athunk(rt: Runtime) -> Subscription:
             session = rt.ctx.get(NudleSession)
             ref_nid = rt.program.children[nid][0]
-            path = await ref.aresolve_address(rt, ref_nid)
+            path = await ref._aresolve_address(rt, ref_nid)
             return session.subscribe(path)
 
         return athunk

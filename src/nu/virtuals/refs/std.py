@@ -107,7 +107,7 @@ class DecimalRef(ItemRef, DecimalForm):
         """Declare a slot holding a Decimal value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> Decimal:
+    def _lift(self, raw: object) -> Decimal:
         """Parse the stored str back to a Decimal."""
         from decimal import Decimal as DecimalCls
 
@@ -142,7 +142,7 @@ class FractionRef(ItemRef, FractionForm):
         """Declare a slot holding a Fraction value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> Fraction:
+    def _lift(self, raw: object) -> Fraction:
         """Parse the stored str back to a Fraction."""
         from fractions import Fraction as FractionCls
 
@@ -177,7 +177,7 @@ class ComplexRef(ItemRef, ComplexForm):
         """Declare a slot holding a complex value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> complex:
+    def _lift(self, raw: object) -> complex:
         """Parse the stored str back to a complex."""
         return raw if isinstance(raw, complex) else complex(raw)  # type: ignore[arg-type]
 
@@ -210,7 +210,7 @@ class BasisPointRef(ItemRef, BasisPointForm):
         """Declare a slot holding a BasisPoint value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> PyBasisPoint:
+    def _lift(self, raw: object) -> PyBasisPoint:
         """Wrap the stored int back as a BasisPoint."""
         return raw if isinstance(raw, PyBasisPoint) else PyBasisPoint(int(raw))  # type: ignore[arg-type]
 
@@ -243,7 +243,7 @@ class PercentageRef(ItemRef, PercentageForm):
         """Declare a slot holding a Percentage value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> PyPercentage:
+    def _lift(self, raw: object) -> PyPercentage:
         """Wrap the stored float back as a Percentage."""
         return raw if isinstance(raw, PyPercentage) else PyPercentage(float(raw))  # type: ignore[arg-type]
 
@@ -281,7 +281,7 @@ class DateRef(ItemRef, DateForm):
         """Declare a slot holding a date value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> date:
+    def _lift(self, raw: object) -> date:
         """Parse the stored ISO str back to a date."""
         return raw if isinstance(raw, date) else date.fromisoformat(str(raw))
 
@@ -317,7 +317,7 @@ class DatetimeRef(ItemRef, DatetimeForm):
         """Declare a slot holding a datetime value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> datetime:
+    def _lift(self, raw: object) -> datetime:
         """Parse the stored ISO str (or epoch) back to a datetime."""
         from datetime import UTC
 
@@ -359,7 +359,7 @@ class TimeRef(ItemRef, TimeForm):
         """Declare a slot holding a time value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> time:
+    def _lift(self, raw: object) -> time:
         """Parse the stored ISO str back to a time."""
         return raw if isinstance(raw, time) else time.fromisoformat(str(raw))
 
@@ -395,7 +395,7 @@ class TimedeltaRef(ItemRef, TimedeltaForm):
         """Declare a slot holding a timedelta value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> timedelta:
+    def _lift(self, raw: object) -> timedelta:
         """Rebuild the timedelta from the stored total-seconds float."""
         return raw if isinstance(raw, timedelta) else timedelta(seconds=float(raw))  # type: ignore[arg-type]
 
@@ -433,7 +433,7 @@ class TimezoneRef(ItemRef, TimezoneForm):
         """Declare a slot holding a timezone value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> timezone:
+    def _lift(self, raw: object) -> timezone:
         """Parse the stored offset str back to a timezone."""
         return raw if isinstance(raw, timezone) else _parse_timezone(str(raw))
 
@@ -471,7 +471,7 @@ class PathRef(ItemRef, PathForm):
         """Declare a slot holding a Path value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> PurePath:
+    def _lift(self, raw: object) -> PurePath:
         """Parse the stored str back to a PurePath."""
         from pathlib import PurePath
 
@@ -506,7 +506,7 @@ class UUIDRef(ItemRef, UUIDForm):
         """Declare a slot holding a UUID value."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> UUID:
+    def _lift(self, raw: object) -> UUID:
         """Parse the stored str back to a UUID."""
         import uuid
 

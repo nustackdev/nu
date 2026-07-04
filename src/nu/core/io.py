@@ -151,11 +151,11 @@ class StdioRef(Ref):
 
         return athunk
 
-    def write(self, rt: Runtime, value: str, nid: int) -> None:
+    def _write(self, rt: Runtime, value: str, nid: int) -> None:
         """Write ``value`` to this stream (the fabric's WRITE half)."""
         self._resolve_stream(rt).write(value)
 
-    async def awrite(self, rt: Runtime, value: str, nid: int) -> None:
+    async def _awrite(self, rt: Runtime, value: str, nid: int) -> None:
         """Async sibling of :meth:`write` (the stream itself is sync)."""
         self._resolve_stream(rt).write(value)
 
@@ -197,7 +197,7 @@ class PrintCommand(Command):
                 if v is EMPTY or v is INVALID:
                     return
                 parts.append(str(v))
-            ref.write(rt, " ".join(parts) + "\n", rt.program.children[nid][0])
+            ref._write(rt, " ".join(parts) + "\n", rt.program.children[nid][0])
 
         return thunk
 
@@ -212,7 +212,7 @@ class PrintCommand(Command):
                 if v is EMPTY or v is INVALID:
                     return
                 parts.append(str(v))
-            await ref.awrite(rt, " ".join(parts) + "\n", rt.program.children[nid][0])
+            await ref._awrite(rt, " ".join(parts) + "\n", rt.program.children[nid][0])
 
         return athunk
 
@@ -246,7 +246,7 @@ class LogCommand(Command):
                     continue
                 parts.append(str(v))
             line = _format_log(str(level_thunk(rt)), str(logger_thunk(rt)), parts)
-            ref.write(rt, line, rt.program.children[nid][0])
+            ref._write(rt, line, rt.program.children[nid][0])
 
         return thunk
 
@@ -263,7 +263,7 @@ class LogCommand(Command):
                     continue
                 parts.append(str(v))
             line = _format_log(str(await level_thunk(rt)), str(await logger_thunk(rt)), parts)
-            await ref.awrite(rt, line, rt.program.children[nid][0])
+            await ref._awrite(rt, line, rt.program.children[nid][0])
 
         return athunk
 

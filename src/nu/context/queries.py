@@ -35,7 +35,7 @@ class AttrExistsQuery(ScalarQuery):
         ref = self.children[0]
 
         def thunk(rt: Runtime) -> object:
-            address = ref.address(rt, rt.program.children[nid][0])
+            address = ref._address(rt, rt.program.children[nid][0])
             return address in rt.ctx.attrs
 
         return thunk
@@ -44,7 +44,7 @@ class AttrExistsQuery(ScalarQuery):
         ref = self.children[0]
 
         async def athunk(rt: Runtime) -> object:
-            address = await ref.aaddress(rt, rt.program.children[nid][0])
+            address = await ref._aaddress(rt, rt.program.children[nid][0])
             return address in rt.ctx.attrs
 
         return athunk
@@ -57,7 +57,7 @@ class ServiceExistsQuery(ScalarQuery):
         ref = self.children[0]
 
         def thunk(rt: Runtime) -> object:
-            return rt.ctx.has(ref.address(rt, rt.program.children[nid][0]))
+            return rt.ctx.has(ref._address(rt, rt.program.children[nid][0]))
 
         return thunk
 
@@ -65,6 +65,6 @@ class ServiceExistsQuery(ScalarQuery):
         ref = self.children[0]
 
         async def athunk(rt: Runtime) -> object:
-            return rt.ctx.has(await ref.aaddress(rt, rt.program.children[nid][0]))
+            return rt.ctx.has(await ref._aaddress(rt, rt.program.children[nid][0]))
 
         return athunk

@@ -59,7 +59,7 @@ class PrimitiveListRef[T](ItemRef, ListForm[T]):
         """Declare a slot holding a whole-blob primitive list."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> list:
+    def _lift(self, raw: object) -> list:
         """Return the stored value as a plain list."""
         return raw if isinstance(raw, list) else list(raw)  # type: ignore[arg-type]
 
@@ -93,7 +93,7 @@ class PrimitiveDictRef[K, V](ItemRef, DictForm[K, V]):
         """Declare a slot holding a whole-blob primitive dict."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> dict:
+    def _lift(self, raw: object) -> dict:
         """Return the stored value as a plain dict."""
         return raw if isinstance(raw, dict) else dict(raw)  # type: ignore[arg-type]
 
@@ -127,7 +127,7 @@ class PrimitiveTupleRef(ItemRef, TupleForm):
         """Declare a slot holding a whole-blob primitive tuple."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> tuple:
+    def _lift(self, raw: object) -> tuple:
         """Return the stored value as a plain tuple."""
         return raw if isinstance(raw, tuple) else tuple(raw)  # type: ignore[arg-type]
 
@@ -161,7 +161,7 @@ class PrimitiveSetRef[T](ItemRef, SetForm[T]):
         """Declare a slot holding a whole-blob primitive set."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> set:
+    def _lift(self, raw: object) -> set:
         """Return the stored value as a plain set."""
         return raw if isinstance(raw, set) else set(raw)  # type: ignore[arg-type]
 
@@ -195,7 +195,7 @@ class PrimitiveFrozenSetRef[T](ItemRef, FrozenSetForm[T]):
         """Declare a slot holding a whole-blob primitive frozenset."""
         return Slot(cls)  # type: ignore[return-value]
 
-    def coerce(self, raw: object) -> frozenset:
+    def _lift(self, raw: object) -> frozenset:
         """Return the stored value as a plain frozenset."""
         return raw if isinstance(raw, frozenset) else frozenset(raw)  # type: ignore[arg-type]
 

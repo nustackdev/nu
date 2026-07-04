@@ -51,24 +51,27 @@ class NudleRef(StructuredRef):
 
     # --- wire-path resolution ------------------------------------------------
 
-    async def aresolve_address(self, rt: Runtime, nid: int) -> str:
+    async def _aresolve_address(self, rt: Runtime, nid: int) -> str:
         """Wire path for this Ref.
 
-        Walks the parent chain to collect segment addresses, then:
+        Resolves every level's address AT RUNTIME by walking the on-tree parent
+        chain (``rt.program.children``: ``[0]`` = structural parent, ``[1]`` =
+        address), so a dynamic parent key resolves like any other child. Then:
         - root is an Index: join segments alone ("title", "nav").
         - root is a Page: prefix "<PageShapeName>." and join.
         - root is a Section: look up the Section's mount point on a Page
           via `Section._nudle_mount` and prefix
           "<PageShapeName>.<section_slot_path>." then join segments.
         """
-        # Leaf address may be computed; resolve it through the runtime. Ancestor
-        # segments are static slot names read straight off the parent chain.
-        leaf = await self.aaddress(rt, nid)
-        segments: list[str] = [str(leaf)]
-        cur = self._parent
-        while cur is not None:
-            segments.append(str(cur._segment))  # type: ignore[attr-defined]
-            cur = cur._parent
+        segments: list[str] = []
+        cur = nid
+        while True:
+            kids = rt.program.children[cur]
+            segments.append(str(await rt.aeval(kids[1])))
+            parent = kids[0]
+            if not isinstance(rt.program.terms[parent], StructuredRef):
+                break  # parent is the ANCHOR -> chain root
+            cur = parent
         segments.reverse()
 
         root = self.get_root_shape()
@@ -106,8 +109,8 @@ class NudleRef(StructuredRef):
         from ..session import NudleSession
 
         session = rt.ctx.get(NudleSession)
-        path = await self.aresolve_address(rt, nid)
-        return self.coerce(await session.aread(path))
+        path = await self._aresolve_address(rt, nid)
+        return self._lift(await session.aread(path))
 
     # --- mount ---------------------------------------------------------------
 

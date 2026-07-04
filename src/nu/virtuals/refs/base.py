@@ -247,14 +247,16 @@ class ViewRef[T](_VirtualsRefBase[T]):
             return nav.root(storage_ctx)
         return nav.open_at_path(ViewPathSer(path[:-1]), storage_ctx)
 
-    def write(self, rt: Runtime, value: object, nid: int) -> None:
+    def _write(self, rt: Runtime, value: object, nid: int) -> None:
         """Store a whole container value through the parent View (decomposed)."""
+        value = self._lower(value)
         path = self._resolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
 
-    async def awrite(self, rt: Runtime, value: object, nid: int) -> None:
+    async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`write`."""
+        value = await self._alower(value)
         path = await self._aresolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
@@ -333,7 +335,7 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
                 val = parent_view[key]
                 if isinstance(val, StorageEmpty):
                     return EMPTY
-                return self.coerce(val)
+                return self._lift(val)
             msg = f"View {parent_view.__class__.__name__} is not subscriptable"
             raise TypeError(msg)
         except (KeyError, IndexError):
@@ -361,14 +363,16 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
             return nav.root(storage_ctx)
         return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
 
-    def write(self, rt: Runtime, value: object, nid: int) -> None:
+    def _write(self, rt: Runtime, value: object, nid: int) -> None:
         """Write a leaf value through the parent View."""
+        value = self._lower(value)
         path = self._resolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
 
-    async def awrite(self, rt: Runtime, value: object, nid: int) -> None:
+    async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`write`."""
+        value = await self._alower(value)
         path = await self._aresolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
@@ -399,6 +403,6 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
         """Return the parent view holding this leaf's slot (top-level -> root)."""
         return self._fetch_parent_view(rt, self._resolve_path(rt, nid))
 
-    async def afetch_parent(self, rt: Runtime, nid: int) -> object:
+    async def _afetch_parent(self, rt: Runtime, nid: int) -> object:
         """Async sibling of :meth:`fetch_parent`."""
         return self._fetch_parent_view(rt, await self._aresolve_path(rt, nid))

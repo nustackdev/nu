@@ -49,7 +49,7 @@ class Append(Command):
         async def athunk(rt: Runtime) -> None:
             session = rt.ctx.get(NudleSession)
             ref_nid = rt.program.children[nid][0]
-            path = await ref.aresolve_address(rt, ref_nid)
+            path = await ref._aresolve_address(rt, ref_nid)
             values = [await t(rt) for t in value_thunks]
             payload = values[0] if len(values) == 1 else values
             await session.send(Frame(self, ref=path, payload=payload))

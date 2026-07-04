@@ -45,7 +45,7 @@ class Write(Command):
         async def athunk(rt: Runtime) -> None:
             session = rt.ctx.get(NudleSession)
             ref_nid = rt.program.children[nid][0]
-            path = await ref.aresolve_address(rt, ref_nid)
+            path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)
             await session.send(Frame(self, ref=path, payload=value))
 

@@ -113,7 +113,7 @@ class RefBase[T](StructuredRef):
                     cur = cur[k]  # type: ignore[index]
             except (KeyError, IndexError, TypeError):
                 return EMPTY
-            return self.coerce(cur)
+            return self._lift(cur)
 
         return thunk
 
@@ -125,14 +125,15 @@ class RefBase[T](StructuredRef):
                     cur = cur[k]  # type: ignore[index]
             except (KeyError, IndexError, TypeError):
                 return EMPTY
-            return await self.acoerce(cur)
+            return await self._alift(cur)
 
         return athunk
 
     # --- write / erase -------------------------------------------------------
 
-    def write(self, rt: Runtime, value: object, nid: int) -> None:
+    def _write(self, rt: Runtime, value: object, nid: int) -> None:
         """Write ``value`` through this ref, vivifying intermediate dicts."""
+        value = self._lower(value)
         path = self._resolve_path(rt, nid)
         cur = self._root_data(rt)
         for k in path[:-1]:
@@ -141,8 +142,9 @@ class RefBase[T](StructuredRef):
             cur = cur[k]  # type: ignore[index]
         cur[path[-1]] = value  # type: ignore[index]
 
-    async def awrite(self, rt: Runtime, value: object, nid: int) -> None:
+    async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`write`."""
+        value = await self._alower(value)
         path = await self._aresolve_path(rt, nid)
         cur = self._root_data(rt)
         for k in path[:-1]:

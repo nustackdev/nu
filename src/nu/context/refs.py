@@ -61,11 +61,11 @@ class _ContextRef(Ref):
     ops can resolve the target through the Ref rather than reaching past it.
     """
 
-    def address(self, rt: Runtime, nid: int) -> object:
+    def _address(self, rt: Runtime, nid: int) -> object:
         """Resolve this Ref's address; ``nid`` is the Ref's own node id."""
         return rt.eval(rt.program.children[nid][0])
 
-    async def aaddress(self, rt: Runtime, nid: int) -> object:
+    async def _aaddress(self, rt: Runtime, nid: int) -> object:
         """Async sibling of :meth:`address`."""
         return await rt.aeval(rt.program.children[nid][0])
 
@@ -96,23 +96,23 @@ class AttrRef(_ContextRef):
 
         return athunk
 
-    def write(self, rt: Runtime, value: object, nid: int) -> None:
+    def _write(self, rt: Runtime, value: object, nid: int) -> None:
         """Write ``value`` to this Ref's slot in the attrs fabric."""
-        rt.ctx.attrs[self.address(rt, nid)] = value
+        rt.ctx.attrs[self._address(rt, nid)] = value
 
-    async def awrite(self, rt: Runtime, value: object, nid: int) -> None:
+    async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`write`."""
-        rt.ctx.attrs[await self.aaddress(rt, nid)] = value
+        rt.ctx.attrs[await self._aaddress(rt, nid)] = value
 
     def _erase(self, rt: Runtime, nid: int) -> None:
         """Remove this Ref's slot from the attrs fabric, if present."""
-        address = self.address(rt, nid)
+        address = self._address(rt, nid)
         if address in rt.ctx.attrs:
             del rt.ctx.attrs[address]
 
     async def _aerase(self, rt: Runtime, nid: int) -> None:
         """Async sibling of :meth:`erase`."""
-        address = await self.aaddress(rt, nid)
+        address = await self._aaddress(rt, nid)
         if address in rt.ctx.attrs:
             del rt.ctx.attrs[address]
 

@@ -48,6 +48,7 @@ class FlatRef(Ref):
         root_shape: type | None,
         is_primitive: bool,
         dynamic_segments: tuple[tuple[int, Nu], ...] | None = None,
+        lift: Callable[[object], object] | None = None,
     ) -> None:
         # Tree children: the dynamic Nu segments, in slot order.
         if dynamic_segments:
@@ -58,6 +59,9 @@ class FlatRef(Ref):
         self._root_shape = root_shape
         self._is_primitive = is_primitive
         self._dynamic_segments = dynamic_segments
+        # The flattened leaf's value boundary; guaranteed on the primitive read
+        # path so a flattened typed ref (DateRef, ...) still returns its domain type.
+        self._lift = lift if lift is not None else (lambda raw: raw)
 
     def with_children(self, *children: object):  # type: ignore[override]
         """Rebuild with new children while preserving flat-path metadata.
@@ -103,11 +107,11 @@ class FlatRef(Ref):
         """Async sibling of :meth:`_resolve_path`."""
         return self._apply_segments(await self._asegment_values(rt, nid))
 
-    def address(self, rt: Runtime, nid: int) -> object:
+    def _address(self, rt: Runtime, nid: int) -> object:
         """Substrate protocol: this ref's leaf address (the last path segment)."""
         return self._resolve_path(rt, nid)[-1][0]
 
-    async def aaddress(self, rt: Runtime, nid: int) -> object:
+    async def _aaddress(self, rt: Runtime, nid: int) -> object:
         """Async sibling of :meth:`address`."""
         return (await self._aresolve_path(rt, nid))[-1][0]
 
@@ -151,7 +155,7 @@ class FlatRef(Ref):
             )
             if isinstance(parent_view, Subscriptable):
                 val = parent_view[key]
-                return EMPTY if isinstance(val, StorageEmpty) else val
+                return EMPTY if isinstance(val, StorageEmpty) else self._lift(val)
             msg = f"View {parent_view.__class__.__name__} is not subscriptable"
             raise TypeError(msg)
         except (KeyError, IndexError):
@@ -194,13 +198,13 @@ class FlatRef(Ref):
         child_nids = rt.program.children[nid]
         return tuple([await rt.aeval(cn) for cn in child_nids])
 
-    def write(self, rt: Runtime, value: object, nid: int) -> None:
+    def _write(self, rt: Runtime, value: object, nid: int) -> None:
         """Write ``value`` at this ref's path through the parent View."""
         path = self._resolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
 
-    async def awrite(self, rt: Runtime, value: object, nid: int) -> None:
+    async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`write`."""
         path = await self._aresolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)

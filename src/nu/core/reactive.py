@@ -212,8 +212,8 @@ class OnPrimitiveChangeQuery(ScalarQuery):
     calls ``view.on_change()``) does not apply. The subscription happens on the
     *parent* view's child-change channel keyed by the leaf's own address.
 
-    Children: ``[ref]``. At runtime the query calls ``ref.afetch_parent(rt,
-    ref_nid)`` to obtain the parent view and ``ref.aaddress(rt, ref_nid)`` to
+    Children: ``[ref]``. At runtime the query calls ``ref._afetch_parent(rt,
+    ref_nid)`` to obtain the parent view and ``ref._aaddress(rt, ref_nid)`` to
     resolve the address, then returns ``parent.on_child_change(address)``.
 
     Every substrate whose Refs implement ``afetch_parent`` (all structured
@@ -234,7 +234,7 @@ class OnPrimitiveChangeQuery(ScalarQuery):
             parent = ref.fetch_parent(rt, ref_nid)
             if parent is EMPTY or parent is INVALID:
                 return INVALID
-            address = ref.address(rt, ref_nid)
+            address = ref._address(rt, ref_nid)
             if address is EMPTY or address is INVALID:
                 return INVALID
             return parent.on_child_change(address)
@@ -246,10 +246,10 @@ class OnPrimitiveChangeQuery(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             ref_nid = rt.program.children[nid][0]
-            parent = await ref.afetch_parent(rt, ref_nid)
+            parent = await ref._afetch_parent(rt, ref_nid)
             if parent is EMPTY or parent is INVALID:
                 return INVALID
-            address = await ref.aaddress(rt, ref_nid)
+            address = await ref._aaddress(rt, ref_nid)
             if address is EMPTY or address is INVALID:
                 return INVALID
             return parent.on_child_change(address)

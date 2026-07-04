@@ -131,7 +131,7 @@ class ItemPrimitiveGetUnsafe(ScalarQuery):
         def thunk(rt: Runtime) -> object:
             cnid = _child_nid(rt, nid, 0)
             parent = ref._fetch_parent_view(rt, ref._resolve_path(rt, cnid))
-            address = ref.address(rt, cnid)
+            address = ref._address(rt, cnid)
             value = parent._unsafe_primitive_read(address)
             return EMPTY if value is EMPTY or value is INVALID else value
 
@@ -143,7 +143,7 @@ class ItemPrimitiveGetUnsafe(ScalarQuery):
         async def athunk(rt: Runtime) -> object:
             cnid = _child_nid(rt, nid, 0)
             parent = ref._fetch_parent_view(rt, await ref._aresolve_path(rt, cnid))
-            address = await ref.aaddress(rt, cnid)
+            address = await ref._aaddress(rt, cnid)
             value = parent._unsafe_primitive_read(address)
             return EMPTY if value is EMPTY or value is INVALID else value
 
@@ -172,7 +172,7 @@ class _UnsafeSetBase(Command):
         def thunk(rt: Runtime) -> None:
             cnid = _child_nid(rt, nid, 0)
             parent = ref._fetch_parent_view(rt, ref._resolve_path(rt, cnid))
-            address = ref.address(rt, cnid)
+            address = ref._address(rt, cnid)
             value = value_thunk(rt)
             if value is EMPTY or value is INVALID:
                 raise ValueError("cannot store sentinel value")
@@ -188,7 +188,7 @@ class _UnsafeSetBase(Command):
         async def athunk(rt: Runtime) -> None:
             cnid = _child_nid(rt, nid, 0)
             parent = ref._fetch_parent_view(rt, await ref._aresolve_path(rt, cnid))
-            address = await ref.aaddress(rt, cnid)
+            address = await ref._aaddress(rt, cnid)
             value = await value_thunk(rt)
             if value is EMPTY or value is INVALID:
                 raise ValueError("cannot store sentinel value")
@@ -228,7 +228,7 @@ class ItemPrimitiveDeleteUnsafeCmd(Command):
         def thunk(rt: Runtime) -> None:
             cnid = _child_nid(rt, nid, 0)
             parent = ref._fetch_parent_view(rt, ref._resolve_path(rt, cnid))
-            parent._unsafe_primitive_delete(ref.address(rt, cnid))
+            parent._unsafe_primitive_delete(ref._address(rt, cnid))
 
         return thunk
 
@@ -238,7 +238,7 @@ class ItemPrimitiveDeleteUnsafeCmd(Command):
         async def athunk(rt: Runtime) -> None:
             cnid = _child_nid(rt, nid, 0)
             parent = ref._fetch_parent_view(rt, await ref._aresolve_path(rt, cnid))
-            parent._unsafe_primitive_delete(await ref.aaddress(rt, cnid))
+            parent._unsafe_primitive_delete(await ref._aaddress(rt, cnid))
 
         return athunk
 
@@ -266,7 +266,7 @@ class ItemPrimitiveStoreCmd(Command):
                 raise ValueError("cannot store sentinel value")
             cnid = _child_nid(rt, nid, 0)
             parent = ref._fetch_parent_view(rt, ref._resolve_path(rt, cnid))
-            parent._primitive_write(ref.address(rt, cnid), data)
+            parent._primitive_write(ref._address(rt, cnid), data)
 
         return thunk
 
@@ -280,7 +280,7 @@ class ItemPrimitiveStoreCmd(Command):
                 raise ValueError("cannot store sentinel value")
             cnid = _child_nid(rt, nid, 0)
             parent = ref._fetch_parent_view(rt, await ref._aresolve_path(rt, cnid))
-            parent._primitive_write(await ref.aaddress(rt, cnid), data)
+            parent._primitive_write(await ref._aaddress(rt, cnid), data)
 
         return athunk
 

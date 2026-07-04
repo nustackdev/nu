@@ -124,22 +124,22 @@ class StructuredRef(Ref):
 
     # --- address resolution --------------------------------------------------
 
-    def address(self, rt: Runtime, nid: int) -> object:
+    def _address(self, rt: Runtime, nid: int) -> object:
         """Resolve this Ref's own address (``children[1]``); nid is this node's id."""
         return rt.eval(rt.program.children[nid][1])
 
-    async def aaddress(self, rt: Runtime, nid: int) -> object:
+    async def _aaddress(self, rt: Runtime, nid: int) -> object:
         """Async sibling of :meth:`address`."""
         return await rt.aeval(rt.program.children[nid][1])
 
     # --- substrate plug-points (deferred) ------------------------------------
 
-    async def afetch_parent(self, rt: Runtime, nid: int) -> object:
+    async def _afetch_parent(self, rt: Runtime, nid: int) -> object:
         """Fetch the parent container holding this Ref's slot. Substrate-specific."""
         msg = f"{type(self).__name__}.afetch_parent is not implemented"
         raise NotImplementedError(msg)
 
-    async def aresolve_address(self, rt: Runtime, nid: int) -> object:
+    async def _aresolve_address(self, rt: Runtime, nid: int) -> object:
         """Resolve this segment's address against the runtime. Substrate-specific."""
         msg = f"{type(self).__name__}.aresolve_address is not implemented"
         raise NotImplementedError(msg)
@@ -159,25 +159,37 @@ class StructuredRef(Ref):
         msg = f"{type(self).__name__}._aprimitive_write is not implemented"
         raise NotImplementedError(msg)
 
-    # --- value coercion (storage → domain) -----------------------------------
+    # --- value boundary: lift (storage -> domain) / lower (domain -> storage) -
 
-    def coerce(self, raw: object) -> object:
-        """Convert a raw storage value to its domain type.
+    def _lift(self, raw: object) -> object:
+        """Raw storage value -> typed domain value.
 
-        Identity by default; substrates override when storage representation
-        differs from the domain type (e.g. ISO string → datetime).
-        Called in substrate ``fetch`` / ``afetch`` after reading the raw value.
+        Identity by default; substrates override when the storage representation
+        differs from the domain type (e.g. ISO string -> datetime). Guaranteed on
+        EVERY read path, including the inlined FlatRef.
         """
         return raw
 
-    async def acoerce(self, raw: object) -> object:
-        """Async sibling of :meth:`coerce`; delegates to it by default.
+    async def _alift(self, raw: object) -> object:
+        """Async sibling of :meth:`_lift`; reuses the sync form by default.
 
-        Coercion is pure storage->domain shaping, so the async path reuses the
-        sync ``coerce``. A ref overriding only ``coerce`` is therefore correct on
-        both read paths; override this too only for genuinely async coercion.
+        Lifting is pure storage->domain shaping, so a ref overriding only
+        ``_lift`` is correct on both read paths; override this too only for
+        genuinely async lifting.
         """
-        return self.coerce(raw)
+        return self._lift(raw)
+
+    def _lower(self, value: object) -> object:
+        """Typed domain value -> storage form. The inverse of :meth:`_lift`.
+
+        Identity by default; applied on every write path so ``store``/``write``
+        take one canonical typed input.
+        """
+        return value
+
+    async def _alower(self, value: object) -> object:
+        """Async sibling of :meth:`_lower`; reuses the sync form by default."""
+        return self._lower(value)
 
     # --- repr ----------------------------------------------------------------
 

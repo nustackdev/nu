@@ -44,6 +44,7 @@ class FlatRef(Ref):
         static_path: tuple[str | int | None, ...],
         root_shape: type,
         dynamic_segments: tuple[tuple[int, Nu], ...] | None = None,
+        lift: Callable[[object], object] | None = None,
     ) -> None:
         # Tree children: the dynamic Nu segments, in slot order.
         if dynamic_segments:
@@ -53,6 +54,9 @@ class FlatRef(Ref):
         self._static_path = static_path
         self._root_shape = root_shape
         self._dynamic_segments = dynamic_segments
+        # The flattened leaf's value boundary; guaranteed on the read path so a
+        # flattened typed ref (DateRef, ...) still returns its domain type.
+        self._lift = lift if lift is not None else (lambda raw: raw)
 
     def with_children(self, *children: object):  # type: ignore[override]
         """Rebuild with new children while preserving flat-path metadata.
@@ -99,7 +103,7 @@ class FlatRef(Ref):
                     cur = cur[k]  # type: ignore[index]
             except (KeyError, IndexError, TypeError):
                 return EMPTY
-            return cur
+            return self._lift(cur)
 
         return thunk
 
@@ -112,19 +116,19 @@ class FlatRef(Ref):
                     cur = cur[k]  # type: ignore[index]
             except (KeyError, IndexError, TypeError):
                 return EMPTY
-            return cur
+            return self._lift(cur)
 
         return athunk
 
     # --- write / erase -------------------------------------------------------
 
-    def write(self, rt: Runtime, value: object, nid: int) -> None:
+    def _write(self, rt: Runtime, value: object, nid: int) -> None:
         """Write ``value`` at this ref's path, vivifying intermediate dicts."""
         path = self._resolve_path(self._segment_values(rt, nid))
         container = self._vivify_parent(rt, path)
         container[path[-1]] = value  # type: ignore[index]
 
-    async def awrite(self, rt: Runtime, value: object, nid: int) -> None:
+    async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`write`."""
         path = self._resolve_path(await self._asegment_values(rt, nid))
         container = self._vivify_parent(rt, path)
