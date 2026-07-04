@@ -13,7 +13,8 @@ and emits a thunk.
   no `command.py` / `flow.py` / `span.py`.
 - **Fabrics live in their own dir.** A Fabric is an addressable space where
   Refs live. The Context fabric is `nu/context/`: its Ref (`AttrRef`) in
-  `refs.py`, its write interactions (`Set`, `Delete`) in `ops.py`. Other
+  `refs.py`, its write interactions (`SetCommand`, `DeleteCommand`) in
+  `interactions.py`. Other
   fabrics (virtuals, mem, substrate) follow the same shape. Anything that
   reads or writes a fabric belongs with that fabric, not in `core`.
 - **Refs are per-fabric. There is no fabric-less Ref.** The abstract `Ref`
@@ -71,7 +72,7 @@ class AttrRef(Ref):
     def _address(self, rt, nid): return rt.eval(rt.program.children[nid][0])
     def _write(self, rt, value, nid): rt.ctx.attrs[self._address(rt, nid)] = value
 
-# context/ops.py - the Command delegates to the ref, declares the slot.
+# context/interactions.py - the Command delegates to the ref, declares the slot.
 # It passes the ref's node id so the ref resolves its own address.
 class SetCommand(Command):
     mutates = Declared(value=frozenset({0}))
@@ -109,7 +110,7 @@ a stream child.
 | stream lens (item via child key) | `Map`, `Filter` | `core/transform.py` |
 | reduction (stream -> scalar) | `Sum`, `Collect` | `core/reduction.py` |
 | fabric Ref (read + write) | `AttrRef` | `context/refs.py` |
-| fabric command | `Set`, `Delete` | `context/ops.py` |
+| fabric command | `Set`, `Delete` | `context/interactions.py` |
 | host escape hatch | `Globals`, `Exec` | `core/dynamic.py` |
 
 ## Authoring recipe

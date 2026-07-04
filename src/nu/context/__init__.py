@@ -20,7 +20,7 @@ Nothing in ``nu.core`` touches a fabric - core is the pure Python builtins.
 from __future__ import annotations
 
 from .dispatch import MethodFactory, method_action, method_command, method_query
-from .ops import DeleteCommand, SetCommand
+from .interactions import DeleteCommand, SetCommand
 from .queries import AttrExistsQuery, ServiceExistsQuery
 from .refs import (
     AnyAttrRef,
