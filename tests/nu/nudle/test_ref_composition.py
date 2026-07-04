@@ -100,3 +100,61 @@ def test_store_wire_path_reflects_sibling_slot():
     ctx = Context().bind(NudleSession, sess)
     asyncio.run(nu.arun(HomePage.panel.title.store("T"), ctx))
     assert sess.frames[0].ref == "HomePage.panel.title"
+
+
+# --- nested sections + the Section-root / deep branches of _aresolve_address --
+
+
+class Toolbar(Row):
+    text = TextRef.slot()
+
+
+class NestedPage(Page):
+    panel = type("PanelWithToolbar", (Row,), {"toolbar": Toolbar.slot()}).slot()
+
+
+def test_section_root_wire_path_from_server_handle():
+    """`Toolbar.text` (a server-side handle rooted at a Section, not a Page)
+    resolves via the Section-root branch using `_nudle_mount`."""
+    sess = _RecordingSession()
+    ctx = Context().bind(NudleSession, sess)
+    asyncio.run(nu.arun(Toolbar.text.store("x"), ctx))
+    assert sess.frames[0].ref == "NestedPage.panel.toolbar.text"
+
+
+def test_deep_nested_page_path():
+    """Page -> section -> nested section -> widget resolves the full chain."""
+    sess = _RecordingSession()
+    ctx = Context().bind(NudleSession, sess)
+    asyncio.run(nu.arun(NestedPage.panel.toolbar.text.store("y"), ctx))
+    assert sess.frames[0].ref == "NestedPage.panel.toolbar.text"
+
+
+# --- input read path (tab -> server): _aread -> _aresolve_address + _lift ----
+
+
+def test_input_read_resolves_path_and_reads_session():
+    """Input Refs read the live browser value: `_aread` resolves the wire path
+    and calls `session.aread(path)`. Covers the read direction + `_lift`."""
+    from nu.nudle.refs.input import InputRef
+
+    class Form(Row):
+        name = InputRef.slot()
+
+    class FormPage(Page):
+        form = Form.slot()
+
+    class ReadSession(_RecordingSession):
+        def __init__(self) -> None:
+            super().__init__()
+            self.reads: list[str] = []
+
+        async def aread(self, path: str) -> object:
+            self.reads.append(path)
+            return "browser-value"
+
+    sess = ReadSession()
+    ctx = Context().bind(NudleSession, sess)
+    result = asyncio.run(nu.arun(FormPage.form.name, ctx))
+    assert sess.reads == ["FormPage.form.name"]
+    assert result[0] == "browser-value"
