@@ -28,7 +28,7 @@ class _FieldMountRef(NudleRef):
 
     def __init__(self, *, section_cls: type[Section]) -> None:
         super().__init__(address=None, owner_shape=section_cls)
-        self._section_cls = section_cls
+        self.payload["section_cls"] = section_cls
 
     async def aresolve_address(self, ctx: Context) -> str:
         mount = getattr(self._section_cls, "_nudle_mount", None)

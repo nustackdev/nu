@@ -47,21 +47,18 @@ class NudleRef(StructuredRef):
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self._segment = address  # raw static segment, for parent-chain path building
+        # State lives in ``payload`` (part of the Term identity) so the base
+        # ``Term.with_children`` carries it across a tree rewrite — no override.
+        self.payload["segment"] = address
 
-    def with_children(self, *children: object) -> "NudleRef":  # type: ignore[override]
-        """Preserve nudle Refs' instance state across a tree rewrite.
+    @property
+    def _segment(self) -> object:
+        return self.payload.get("segment")
 
-        The shape fabric keeps all Ref metadata in ``payload`` and uses the base
-        :class:`Term.with_children`. nudle still carries ``_segment`` /
-        ``_section_cls`` on ``__dict__`` and has no test harness yet, so it keeps
-        this ``__dict__``-copying override rather than being migrated blind. Move
-        nudle state into ``payload`` and drop this once a nudle harness exists.
-        """
-        variant = object.__new__(type(self))
-        variant.__dict__.update(self.__dict__)
-        variant.children = children
-        return variant
+    @property
+    def _section_cls(self) -> object:
+        """Section class bound to this Ref (mount/section Refs set it in payload)."""
+        return self.payload.get("section_cls")
 
     # --- wire-path resolution ------------------------------------------------
 

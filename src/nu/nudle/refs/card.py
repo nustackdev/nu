@@ -35,8 +35,16 @@ class _StoreSectionStr(Command):
 
     def __init__(self, section_cls: type[Section], op: str, value: Nu | Any) -> None:
         super().__init__(value)
-        self._section_cls = section_cls
-        self._op = op
+        self.payload["section_cls"] = section_cls
+        self.payload["op"] = op
+
+    @property
+    def _section_cls(self) -> type[Section]:
+        return self.payload["section_cls"]  # type: ignore[return-value]
+
+    @property
+    def _op(self) -> str:
+        return self.payload["op"]  # type: ignore[return-value]
 
     def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:

@@ -106,7 +106,7 @@ class _TabsMountRef(NudleRef):
 
     def __init__(self, *, section_cls: type[Section]) -> None:
         super().__init__(None, owner_shape=section_cls)
-        self._section_cls = section_cls
+        self.payload["section_cls"] = section_cls
 
     async def _aresolve_address(self, rt: Runtime, nid: int) -> str:
         mount = getattr(self._section_cls, "_nudle_mount", None)
