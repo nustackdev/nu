@@ -36,6 +36,8 @@ from nu.virtuals.interactions import (
     ItemPrimitiveSetUnsafeCmd,
     ItemPrimitiveSetUnsafeParentSkipCmd,
     ItemPrimitiveStoreCmd,
+    Kh57RangeQuery,
+    Kh57SampleQuery,
     RetryOnConflict,
     ScanPrimitivesUnsafe,
     Snapshot,
@@ -62,6 +64,7 @@ from nu.virtuals.refs import (
     FractionRef,
     IntRef,
     ItemRef,
+    Kh57Ref,
     ListRef,
     PathRef,
     PercentageRef,
@@ -103,6 +106,9 @@ __all__ = [  # noqa: RUF022
     # Interactions — Collection
     "ClearPrimitivesUnsafeCmd",
     "ScanPrimitivesUnsafe",
+    # Interactions — kh57
+    "Kh57SampleQuery",
+    "Kh57RangeQuery",
     # Interactions — Atomicity
     "Atomic",
     "Snapshot",
@@ -128,6 +134,7 @@ __all__ = [  # noqa: RUF022
     "FloatRef",
     "IntRef",
     "ItemRef",
+    "Kh57Ref",
     "ListRef",
     "PrimitiveRef",
     "SetRef",

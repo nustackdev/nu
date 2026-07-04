@@ -16,6 +16,7 @@ from .base import Facet, PrimitiveRef, ViewRef
 from .dict import DictRef
 from .dictshape import ShapesDictRef
 from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
+from .kh57 import Kh57Ref
 from .list import ListRef
 from .listshape import ShapesListRef
 from .primitives import (
@@ -57,6 +58,7 @@ __all__ = [
     "FractionRef",
     "IntRef",
     "ItemRef",
+    "Kh57Ref",
     "ListRef",
     "PathRef",
     "PercentageRef",

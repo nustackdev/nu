@@ -12,6 +12,7 @@ from virtuals.views import (
     FlatDictView,
     FlatListView,
     IndexedDictViewBase,
+    Kh57ViewBase,
     LightDictView,
     ListViewBase,
     SetView,
@@ -24,6 +25,10 @@ MutableMapping.register(DictViewBase)
 # IndexedDictViewBase covers both EagerIndexedDictView and LazyIndexedDictView
 # (IndexedDictViewBase is a separate hierarchy from DictViewBase)
 MutableMapping.register(IndexedDictViewBase)
+
+# Kh57ViewBase covers both EagerKh57View and LazyKh57View
+# (sparse int-keyed mapping with kh57-encoded layout for range sampling)
+MutableMapping.register(Kh57ViewBase)
 
 # Flat/Light dict views (primitives-only, no nesting)
 MutableMapping.register(FlatDictView)
