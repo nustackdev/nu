@@ -47,3 +47,6 @@ class LiteralQuery(ScalarQuery):
             return value
 
         return athunk
+
+    def __repr__(self) -> str:
+        return repr(self._payload["value"])

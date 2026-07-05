@@ -108,18 +108,6 @@ def test_repr_nests_children_inside_parens():
     assert repr(Node(Leaf(), Leaf())) == "Node(Leaf, Leaf)"
 
 
-def test_repr_prefers_a_payload_name():
-    term = Leaf()
-    term._payload["name"] = "foo"
-    assert repr(term) == "foo"
-
-
-def test_repr_prefers_a_payload_value():
-    term = Leaf()
-    term._payload["value"] = 42
-    assert repr(term) == "42"
-
-
 # --- Term: eval / aeval fallbacks -----------------------------------------
 
 

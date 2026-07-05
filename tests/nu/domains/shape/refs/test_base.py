@@ -96,10 +96,3 @@ def test_repr_root_ref():
     ref = StructuredRef("slot_name")
     r = repr(ref)
     assert "StructuredRef" in r
-
-
-def test_repr_chained_ref():
-    parent = ItemRef("parent_key")
-    child = StructuredRef("child_key", parent_ref=parent)
-    r = repr(child)
-    assert "->" in r

@@ -98,9 +98,6 @@ class Kh57SampleQuery(ScalarQuery):
 
         return athunk
 
-    def __repr__(self) -> str:
-        return f"Kh57SampleQuery({self._children[0]!r}, n={self._children[1]!r})"
-
 
 class Kh57RangeQuery(ScalarQuery):
     """Ordered materialization of a Kh57View sub-range.
@@ -145,6 +142,3 @@ class Kh57RangeQuery(ScalarQuery):
             return list(view.range(begin, end))
 
         return athunk
-
-    def __repr__(self) -> str:
-        return f"Kh57RangeQuery({self._children[0]!r}, {self._children[1]!r}, {self._children[2]!r})"

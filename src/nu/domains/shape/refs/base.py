@@ -53,9 +53,6 @@ class Anchor(Ref):
 
         return athunk
 
-    def __repr__(self) -> str:
-        return "<Anchor>"
-
 
 ANCHOR = Anchor()
 
@@ -179,11 +176,3 @@ class StructuredRef(Ref):
     async def _alower(self, value: object) -> object:
         """Async sibling of :meth:`_lower`; reuses the sync form by default."""
         return self._lower(value)
-
-    # --- repr ----------------------------------------------------------------
-
-    def __repr__(self) -> str:
-        addr = self._children[1] if len(self._children) > 1 else None
-        if self._parent is not None:
-            return f"<{type(self).__name__} -> {addr!r}>"
-        return f"<{type(self).__name__}: {addr!r}>"

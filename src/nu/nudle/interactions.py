@@ -58,9 +58,6 @@ class Write(Command):
 
         return athunk
 
-    def __repr__(self) -> str:
-        return f"Write({self._children[0]!r}, {self._children[1]!r})"
-
 
 class Append(Command):
     """Send an `append` frame on a nudle Ref -- push onto a sequence.
@@ -91,10 +88,6 @@ class Append(Command):
             await session.send(Frame(self, ref=path, payload=payload))
 
         return athunk
-
-    def __repr__(self) -> str:
-        parts = ", ".join(repr(c) for c in self._children[1:])
-        return f"Append({self._children[0]!r}, {parts})"
 
 
 class Changed(ScalarQuery):
@@ -128,6 +121,3 @@ class Changed(ScalarQuery):
             return session.subscribe(path)
 
         return athunk
-
-    def __repr__(self) -> str:
-        return f"Changed({self._children[0]!r})"

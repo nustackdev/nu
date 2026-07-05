@@ -204,10 +204,6 @@ class Snapshot(_VirtualsBracketMixin, _CoreSnapshot):
 
         return ctx.lazy(SnapshotProtocol, open_snap, *_scope_tags(self.scope), **preds)
 
-    def __repr__(self) -> str:
-        name = self.scope.__name__ if hasattr(self.scope, "__name__") else str(self.scope)
-        return f"Snapshot({name})"
-
 
 class Transaction(_VirtualsBracketMixin, _CoreTransaction):
     """Write transaction boundary for virtuals operations."""
@@ -257,10 +253,6 @@ class Transaction(_VirtualsBracketMixin, _CoreTransaction):
             return txn
 
         return ctx.lazy(TransactionProtocol, open_txn, *_scope_tags(self.scope), **preds)
-
-    def __repr__(self) -> str:
-        name = self.scope.__name__ if hasattr(self.scope, "__name__") else str(self.scope)
-        return f"Transaction({name})"
 
 
 def Atomic(  # noqa: N802 — factory mimics class spelling

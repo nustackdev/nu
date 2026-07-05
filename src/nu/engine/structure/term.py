@@ -196,10 +196,6 @@ class Term(Generic[R_contra, V_co], metaclass=TermMeta):  # noqa: UP046  # PEP 6
     # --- repr ---------------------------------------------------------------
 
     def __repr__(self) -> str:
-        if "name" in self._payload:
-            return str(self._payload["name"])
-        if "value" in self._payload:
-            return repr(self._payload["value"])
         if not self._children:
             return type(self).__name__
         inner = ", ".join(repr(child) for child in self._children)

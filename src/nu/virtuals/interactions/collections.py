@@ -59,9 +59,6 @@ class ScanPrimitivesUnsafe(ScalarQuery):
 
         return athunk
 
-    def __repr__(self) -> str:
-        return f"ScanPrimitivesUnsafe({self._children[0]!r})"
-
 
 class ClearPrimitivesUnsafeCmd(Command):
     """Clear all primitive children via ``_unsafe_primitive_clear``."""
@@ -85,6 +82,3 @@ class ClearPrimitivesUnsafeCmd(Command):
             view._unsafe_primitive_clear()
 
         return athunk
-
-    def __repr__(self) -> str:
-        return f"ClearPrimitivesUnsafeCmd({self._children[0]!r})"

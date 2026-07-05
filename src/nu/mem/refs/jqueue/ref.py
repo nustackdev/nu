@@ -106,7 +106,3 @@ class JQueueRef[T](RefBase[janus.Queue[T]], JQueueForm[T]):
     ) -> Self:
         """Declare a JQueueRef slot in a Shape with optional capacity/type."""
         return Slot(cls, capacity=capacity, item_type=item_type)  # type: ignore[return-value]
-
-    def __repr__(self) -> str:
-        cap = "inf" if self._capacity is None else self._capacity
-        return f"JQueueRef(item_type={self._item_type.__name__}, capacity={cap})"

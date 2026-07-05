@@ -238,9 +238,6 @@ class _StoreSectionStr(Command):
 
         return athunk
 
-    def __repr__(self) -> str:
-        return f"_StoreSectionStr({self._children[0]!r}, {self._op!r}, {self._children[1]!r})"
-
 
 class CardRef(Section):
     """Card-styled Section: title + subtitle + body slots + footer."""

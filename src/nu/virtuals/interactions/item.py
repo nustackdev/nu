@@ -77,9 +77,6 @@ class EnsureLayoutCmd(Command):
 
         return athunk
 
-    def __repr__(self) -> str:
-        return f"EnsureLayoutCmd({self._children[0]!r})"
-
 
 class InitItemCmd(Command):
     """Materialize the container chain for a ViewRef via ``fetch``."""
@@ -101,9 +98,6 @@ class InitItemCmd(Command):
             await ref._afetch(rt, _child_nid(rt, nid, 0))
 
         return athunk
-
-    def __repr__(self) -> str:
-        return f"InitItemCmd({self._children[0]!r})"
 
 
 class ItemPrimitiveGetUnsafe(ScalarQuery):
@@ -132,9 +126,6 @@ class ItemPrimitiveGetUnsafe(ScalarQuery):
             return EMPTY if value is EMPTY or value is INVALID else value
 
         return athunk
-
-    def __repr__(self) -> str:
-        return f"ItemPrimitiveGetUnsafe({self._children[0]!r})"
 
 
 class _UnsafeSetBase(Command):
@@ -175,9 +166,6 @@ class _UnsafeSetBase(Command):
 
         return athunk
 
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}({self._children[0]!r}, {self._children[1]!r})"
-
 
 class ItemPrimitiveSetUnsafeCmd(_UnsafeSetBase):
     """Write primitive via ``_unsafe_primitive_write(ensure_exists=True)``."""
@@ -216,9 +204,6 @@ class ItemPrimitiveDeleteUnsafeCmd(Command):
 
         return athunk
 
-    def __repr__(self) -> str:
-        return f"ItemPrimitiveDeleteUnsafeCmd({self._children[0]!r})"
-
 
 class ItemPrimitiveStoreCmd(Command):
     """Store a value via ``_primitive_write()``, bypassing container type checks."""
@@ -252,6 +237,3 @@ class ItemPrimitiveStoreCmd(Command):
             parent._primitive_write(await ref._aaddress(rt, cnid), data)
 
         return athunk
-
-    def __repr__(self) -> str:
-        return f"ItemPrimitiveStoreCmd({self._children[0]!r}, {self._children[1]!r})"
