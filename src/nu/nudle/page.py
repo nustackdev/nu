@@ -29,6 +29,10 @@ from .refs.layout import Section, SectionRef
 __all__ = ["Index", "Page", "Pages"]
 
 
+_REFS_PKG = f"{__name__.rsplit('.', 1)[0]}.refs."
+_REFS_BASE = f"{_REFS_PKG}base"
+
+
 def _wire_type(ref_or_section_cls: type) -> str:
     """Canonical (registered) class name for a Ref or Section.
 
@@ -40,9 +44,9 @@ def _wire_type(ref_or_section_cls: type) -> str:
     """
     for base in ref_or_section_cls.__mro__:
         mod = getattr(base, "__module__", "")
-        if not mod.startswith("nudle.refs."):
+        if not mod.startswith(_REFS_PKG):
             continue
-        if mod == "nudle.refs.base":
+        if mod == _REFS_BASE:
             continue
         return base.__name__
     return ref_or_section_cls.__name__

@@ -7,9 +7,8 @@ import threading
 
 import pytest
 
-from nu import Context, runtime
-from nu.mem import JQueueRef, QueueClosed
-from nu.shapes import Shape
+from nu import Context, Shape, arun, run
+from nu.mem.refs.jqueue import JQueueRef, QueueClosed
 
 
 class BufShape(Shape):
@@ -33,34 +32,34 @@ def unbounded_ctx() -> Context:
 
 def test_sync_round_trip(ctx: tuple[Context, dict]) -> None:
     c, _ = ctx
-    runtime.execute(BufShape.queue.put(1), c)
-    runtime.execute(BufShape.queue.put(2), c)
-    assert runtime.collect(BufShape.queue.qsize(), c) == [2]
-    assert runtime.collect(BufShape.queue.get(), c) == [1]
-    assert runtime.collect(BufShape.queue.get(), c) == [2]
-    assert runtime.collect(BufShape.queue.qsize(), c) == [0]
+    run(BufShape.queue.put(1), c)
+    run(BufShape.queue.put(2), c)
+    assert run(BufShape.queue.qsize(), c)[0] == 2
+    assert run(BufShape.queue.get(), c)[0] == 1
+    assert run(BufShape.queue.get(), c)[0] == 2
+    assert run(BufShape.queue.qsize(), c)[0] == 0
 
 
 async def test_async_round_trip(ctx: tuple[Context, dict]) -> None:
     c, _ = ctx
-    await runtime.aexecute(BufShape.queue.put(7), c)
-    await runtime.aexecute(BufShape.queue.put(8), c)
-    assert await runtime.acollect(BufShape.queue.get(), c) == [7]
-    assert await runtime.acollect(BufShape.queue.get(), c) == [8]
+    await arun(BufShape.queue.put(7), c)
+    await arun(BufShape.queue.put(8), c)
+    assert (await arun(BufShape.queue.get(), c))[0] == 7
+    assert (await arun(BufShape.queue.get(), c))[0] == 8
 
 
 def test_vivifies_in_backing_dict(ctx: tuple[Context, dict]) -> None:
     c, data = ctx
     assert "queue" not in data
-    runtime.execute(BufShape.queue.put(1), c)
+    run(BufShape.queue.put(1), c)
     assert "queue" in data
     assert type(data["queue"]).__name__ == "Queue"
 
 
 def test_unbounded_default(unbounded_ctx: Context) -> None:
     for i in range(50):
-        runtime.execute(UnboundedBuf.queue.put(i), unbounded_ctx)
-    assert runtime.collect(UnboundedBuf.queue.qsize(), unbounded_ctx) == [50]
+        run(UnboundedBuf.queue.put(i), unbounded_ctx)
+    assert run(UnboundedBuf.queue.qsize(), unbounded_ctx)[0] == 50
 
 
 async def test_async_producer_thread_consumer_backpressure(
@@ -73,7 +72,7 @@ async def test_async_producer_thread_consumer_backpressure(
     def consumer() -> None:
         while True:
             try:
-                x = runtime.collect(BufShape.queue.get(), c)[0]
+                x = run(BufShape.queue.get(), c)[0]
             except QueueClosed:
                 break
             received.append(x)
@@ -82,8 +81,8 @@ async def test_async_producer_thread_consumer_backpressure(
     th.start()
 
     for i in range(10):
-        await runtime.aexecute(BufShape.queue.put(i), c)
-    await runtime.aexecute(BufShape.queue.close(), c)
+        await arun(BufShape.queue.put(i), c)
+    await arun(BufShape.queue.close(), c)
 
     await asyncio.get_running_loop().run_in_executor(None, th.join, 5.0)
     assert received == list(range(10))
@@ -91,31 +90,31 @@ async def test_async_producer_thread_consumer_backpressure(
 
 def test_close_then_get_raises(ctx: tuple[Context, dict]) -> None:
     c, _ = ctx
-    runtime.execute(BufShape.queue.close(), c)
+    run(BufShape.queue.close(), c)
     with pytest.raises(QueueClosed):
-        runtime.collect(BufShape.queue.get(), c)
+        run(BufShape.queue.get(), c)
 
 
 def test_close_then_put_raises(ctx: tuple[Context, dict]) -> None:
     c, _ = ctx
-    runtime.execute(BufShape.queue.close(), c)
+    run(BufShape.queue.close(), c)
     with pytest.raises(QueueClosed):
-        runtime.execute(BufShape.queue.put(1), c)
+        run(BufShape.queue.put(1), c)
 
 
 async def test_close_then_aget_raises(ctx: tuple[Context, dict]) -> None:
     c, _ = ctx
-    await runtime.aexecute(BufShape.queue.close(), c)
+    await arun(BufShape.queue.close(), c)
     with pytest.raises(QueueClosed):
-        await runtime.acollect(BufShape.queue.get(), c)
+        await arun(BufShape.queue.get(), c)
 
 
 def test_close_drains_pending_then_raises(ctx: tuple[Context, dict]) -> None:
     c, _ = ctx
-    runtime.execute(BufShape.queue.put(7), c)
-    runtime.execute(BufShape.queue.put(8), c)
-    runtime.execute(BufShape.queue.close(), c)
-    assert runtime.collect(BufShape.queue.get(), c) == [7]
-    assert runtime.collect(BufShape.queue.get(), c) == [8]
+    run(BufShape.queue.put(7), c)
+    run(BufShape.queue.put(8), c)
+    run(BufShape.queue.close(), c)
+    assert run(BufShape.queue.get(), c)[0] == 7
+    assert run(BufShape.queue.get(), c)[0] == 8
     with pytest.raises(QueueClosed):
-        runtime.collect(BufShape.queue.get(), c)
+        run(BufShape.queue.get(), c)

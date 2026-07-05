@@ -191,11 +191,21 @@ class ViewRef[T](_VirtualsRefBase[T]):
         return self if self._payload.get("facet", Facet.LAZY) is Facet.EAGER else self._with_facet(Facet.EAGER)
 
     def _apply_facet(self, view: object) -> object:
-        """Apply the lazy/eager facet to a fetched view, when supported."""
+        """Apply the lazy/eager facet to a fetched view, when supported.
+
+        Support is checked against the ref's declared ``type_marker`` (a View
+        subclass), not the fetched instance. Instance ``hasattr`` on a remote
+        proxy triggers an RPC round-trip per read and logs an AttributeError
+        on the server for every view type without the facet (SetView, etc).
+        """
         facet = self._payload.get("facet", Facet.LAZY)
-        if facet is Facet.EAGER and hasattr(view, "eager"):
+        if facet is Facet.NONE:
+            return view
+        view_type = self._payload.get("type_marker")
+        probe: object = view_type if view_type is not None else view
+        if facet is Facet.EAGER and hasattr(probe, "eager"):
             return view.eager
-        if facet is Facet.LAZY and hasattr(view, "lazy"):
+        if facet is Facet.LAZY and hasattr(probe, "lazy"):
             return view.lazy
         return view
 

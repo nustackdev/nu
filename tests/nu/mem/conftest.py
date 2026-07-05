@@ -19,11 +19,6 @@ from nu.mem import (
 )
 
 
-# jqueue is a deferred v2 port (source commented out of refs, test still on the v1
-# `runtime` / `nu.shapes` API). Skip collection until it is ported + re-exported.
-collect_ignore = ["test_jqueue.py"]
-
-
 @pytest.fixture
 def data() -> dict:
     """Fresh root dict for each test."""

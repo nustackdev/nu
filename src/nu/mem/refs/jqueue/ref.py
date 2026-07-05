@@ -63,7 +63,7 @@ class JQueueRef[T](RefBase[janus.Queue[T]], JQueueForm[T]):
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync read thunk that vivifies and yields the queue."""
-        address = children[0]
+        address = children[1]
 
         def thunk(rt: Runtime) -> janus.Queue[T]:
             parent = self._fetch_parent(rt)
@@ -81,7 +81,7 @@ class JQueueRef[T](RefBase[janus.Queue[T]], JQueueForm[T]):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the async read thunk that vivifies and yields the queue."""
-        address = children[0]
+        address = children[1]
 
         async def athunk(rt: Runtime) -> janus.Queue[T]:
             parent = self._fetch_parent(rt)
