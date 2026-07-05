@@ -23,7 +23,7 @@ from typing import ClassVar
 from nu import Shape
 
 from .refs.base import NudleRef
-from .refs.section import Section, SectionRef
+from .refs.layout import Section, SectionRef
 
 
 __all__ = ["Index", "Page", "Pages"]

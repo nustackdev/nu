@@ -1,64 +1,75 @@
 """nudle Refs and Sections.
 
-Three kinds of Refs:
-- Display Refs (body): render into the visible tree. AreaChart, BadgeRef,
-  BarChart, ButtonRef, CheckboxRef, GaugeRef, HeadingRef, ImageRef, InputRef,
-  JsonViewerRef, LineChart, LinkRef, MarkdownRef, PieChart, ProgressRef,
-  SelectRef, SliderRef, Sparkline, TableRef, TextAreaRef, TextRef.
-- Structural Refs (Index-level): bound to non-store browser APIs.
-  TitleRef (document.title), NavRef (history+location).
+Grouped by kind, one module per group. See docs/nudle/interactions.md.
 
-Layout primitives are Sections (Shape-based), not Refs:
-- Row, Column, Container -- live in this package and are exported here
-  so the wire-type resolver (`_wire_type`) finds them via MRO.
+- structural: Index-level Refs bound to non-render browser APIs
+  (`window.history`, `document.title`). NavRef, TitleRef.
+- output:     server-owned Refs that render into the body as sinks
+  (server pushes via write/append; browser never reads back).
+  HeadingRef, TextRef, MarkdownRef, CodeBlockRef, ImageRef, LinkRef,
+  BadgeRef, AlertRef, DividerRef, StatRef, ProgressRef, GaugeRef,
+  JsonViewerRef, TableRef.
+- input:      tab-owned Refs; host reads on demand + subscribes to
+  `notify`. ButtonRef, InputRef, NumberInputRef, TextAreaRef,
+  CheckboxRef, SwitchRef, SliderRef, SelectRef, RadioGroupRef,
+  TagInputRef, DatePickerRef.
+- chart:      output sinks with chart-specific payload contracts.
+  LineChart, BarChart, AreaChart, PieChart, Sparkline.
+- layout:     Shape-based container Sections that mount other Refs.
+  Row, Column, Container, Card, Modal, Accordion, Tabs, Fieldset,
+  Form, Field.
+
+All names are re-exported flat here so the wire-type resolver
+(`_wire_type`) finds them via MRO.
 """
 
 from __future__ import annotations
 
-from .accordion import AccordionRef
-from .alert import AlertRef
-from .area_chart import AreaChart
-from .badge import BadgeRef
-from .bar_chart import BarChart
 from .base import NudleRef
-from .button import ButtonRef
-from .card import CardRef
-from .checkbox import CheckboxRef
-from .code_block import CodeBlockRef
-from .column import Column
-from .container import Container
-from .date_picker import DatePickerRef
-from .divider import DividerRef
-from .field import FieldRef
-from .fieldset import Fieldset
-from .form import Form
-from .gauge import GaugeRef
-from .heading import HeadingRef
-from .image import ImageRef
-from .input import InputRef
-from .json_viewer import JsonViewerRef
-from .line_chart import LineChart
-from .link import LinkRef
-from .markdown import MarkdownRef
-from .modal import Modal
-from .nav import NavRef
-from .number_input import NumberInputRef
-from .pie_chart import PieChart
-from .progress import ProgressRef
-from .radio_group import RadioGroupRef
-from .row import Row
-from .section import Section
-from .select import SelectRef
-from .slider import SliderRef
-from .sparkline import Sparkline
-from .stat import StatRef
-from .switch import SwitchRef
-from .table import TableRef
-from .tabs import TabsRef
-from .tag_input import TagInputRef
-from .text import TextRef
-from .text_area import TextAreaRef
-from .title import TitleRef
+from .chart import AreaChart, BarChart, LineChart, PieChart, Sparkline
+from .input import (
+    ButtonRef,
+    CheckboxRef,
+    DatePickerRef,
+    InputRef,
+    NumberInputRef,
+    RadioGroupRef,
+    SelectRef,
+    SliderRef,
+    SwitchRef,
+    TagInputRef,
+    TextAreaRef,
+)
+from .layout import (
+    AccordionRef,
+    CardRef,
+    Column,
+    Container,
+    FieldRef,
+    Fieldset,
+    Form,
+    Modal,
+    Row,
+    Section,
+    TabsRef,
+)
+from .output import (
+    AlertRef,
+    BadgeRef,
+    CodeBlockRef,
+    DividerRef,
+    GaugeRef,
+    HeadingRef,
+    ImageRef,
+    JsonViewerRef,
+    LinkRef,
+    MarkdownRef,
+    ProgressRef,
+    StatRef,
+    TableRef,
+    TextRef,
+)
+from .structural import NavRef, TitleRef
 
 
 __all__ = [

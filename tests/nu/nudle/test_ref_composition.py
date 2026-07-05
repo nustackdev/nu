@@ -23,9 +23,9 @@ import pytest
 import nu
 from nu import Context
 from nu.nudle.page import Page
-from nu.nudle.refs.row import Row
-from nu.nudle.refs.section import SectionRef
-from nu.nudle.refs.text import TextRef
+from nu.nudle.refs import Row
+from nu.nudle.refs.layout import SectionRef
+from nu.nudle.refs import TextRef
 from nu.nudle.session import NudleSession
 
 
@@ -136,7 +136,7 @@ def test_deep_nested_page_path():
 def test_input_read_resolves_path_and_reads_session():
     """Input Refs read the live browser value: `_aread` resolves the wire path
     and calls `session.aread(path)`. Covers the read direction + `_lift`."""
-    from nu.nudle.refs.input import InputRef
+    from nu.nudle.refs import InputRef
 
     class Form(Row):
         name = InputRef.slot()
@@ -170,8 +170,8 @@ def _leaf_widgets(*, needs_changed: bool = False):
     import inspect
     import os
 
-    from nu.nudle.refs.base import NudleRef
-    from nu.nudle.refs.section import SectionRef
+    from nu.nudle.refs import NudleRef
+    from nu.nudle.refs.layout import SectionRef
 
     root = os.path.dirname(importlib.import_module("nu.nudle.refs").__file__)
     out = []
@@ -236,7 +236,7 @@ def test_widget_sweep_is_non_empty():
 
 
 def test_tabs_store_active_emits_frame():
-    from nu.nudle.refs.tabs import TabsRef
+    from nu.nudle.refs import TabsRef
 
     class MyTabs(TabsRef):
         pass
@@ -255,7 +255,7 @@ def test_tabs_store_active_emits_frame():
 def test_card_store_title_emits_frame():
     """Card chrome store now works (was a pre-existing bug: `_StoreSectionStr`
     held no Ref; fixed by the `_CardMountRef` mount-ref pattern like tabs)."""
-    from nu.nudle.refs.card import CardRef
+    from nu.nudle.refs import CardRef
 
     class MyCard(CardRef):
         pass
@@ -272,7 +272,7 @@ def test_card_store_title_emits_frame():
 
 
 def test_table_append_emits_frame():
-    from nu.nudle.refs.table import TableRef
+    from nu.nudle.refs import TableRef
 
     class TSec(Row):
         t = TableRef.slot()
