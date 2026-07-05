@@ -56,7 +56,7 @@ class EvalQuery(ScalarQuery):
     operand (EMPTY or INVALID) collapses the result to INVALID.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
             args = []
             for ct in children:
@@ -68,7 +68,7 @@ class EvalQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
             args = []
             for ct in children:
@@ -90,7 +90,7 @@ class CompileQuery(ScalarQuery):
     sentinel operand (EMPTY or INVALID) collapses the result to INVALID.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
             args = []
             for ct in children:
@@ -102,7 +102,7 @@ class CompileQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
             args = []
             for ct in children:
@@ -131,13 +131,13 @@ class GlobalsQuery(ScalarQuery):
     entirely - host glue, not a Context read.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
             return globals()
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
             return globals()
 
@@ -151,13 +151,13 @@ class LocalsQuery(ScalarQuery):
     entirely - host glue, not a Context read.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
             return locals()
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
             return locals()
 
@@ -174,7 +174,7 @@ class ExecQuery(ScalarQuery):
     a Nu effect.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         namespace, source = children
 
         def thunk(rt: Runtime) -> object:
@@ -189,7 +189,7 @@ class ExecQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         namespace, source = children
 
         async def athunk(rt: Runtime) -> object:

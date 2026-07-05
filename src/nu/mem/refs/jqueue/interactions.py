@@ -60,12 +60,12 @@ class Put(Command):
     Children: ``[queue, value]``.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, queue: JQueueForm, value: object) -> None:
         super().__init__(queue, value)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync put thunk."""
 
         def thunk(rt: Runtime) -> None:
@@ -78,7 +78,7 @@ class Put(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the async put thunk."""
 
         async def athunk(rt: Runtime) -> None:
@@ -100,12 +100,12 @@ class Get(ScalarAction):
     declares ``mutates`` on slot 0.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, queue: JQueueForm) -> None:
         super().__init__(queue)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync get thunk."""
 
         def thunk(rt: Runtime) -> object:
@@ -117,7 +117,7 @@ class Get(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the async get thunk."""
 
         async def athunk(rt: Runtime) -> object:
@@ -139,7 +139,7 @@ class QSize(ScalarQuery):
     def __init__(self, queue: JQueueForm) -> None:
         super().__init__(queue)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync qsize thunk."""
 
         def thunk(rt: Runtime) -> int:
@@ -148,7 +148,7 @@ class QSize(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the async qsize thunk."""
 
         async def athunk(rt: Runtime) -> int:
@@ -167,12 +167,12 @@ class Close(Command):
     Children: ``[queue]``.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, queue: JQueueForm) -> None:
         super().__init__(queue)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync close thunk."""
 
         def thunk(rt: Runtime) -> None:
@@ -181,7 +181,7 @@ class Close(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the async close thunk."""
 
         async def athunk(rt: Runtime) -> None:

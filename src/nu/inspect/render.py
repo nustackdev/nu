@@ -108,7 +108,7 @@ def _category_color(node: Nu) -> str:
         return BRIGHT_RED
     if _is_literal(node):
         # Trivial leaf literal vs computed (children present).
-        return CYAN if not node.children else DIM_CYAN
+        return CYAN if not node._children else DIM_CYAN
     if _is_query(node):
         return GREEN
     return ""
@@ -128,7 +128,7 @@ def _ref_label(node: Ref) -> str:
     if owner is not None:
         return f"{cls}[{getattr(owner, '__name__', owner)}]"
 
-    payload = getattr(node, "payload", None) or {}
+    payload = getattr(node, "_payload", None) or {}
     if payload:
         hint = ", ".join(f"{k}={v!r}" for k, v in payload.items())
         return f"{cls}({hint})"
@@ -137,8 +137,8 @@ def _ref_label(node: Ref) -> str:
 
 def _literal_label(node: LiteralQuery) -> str:
     cls = type(node).__name__
-    if not node.children:
-        return f"{cls}({node.payload.get('value')!r})"
+    if not node._children:
+        return f"{cls}({node._payload.get('value')!r})"
     return cls
 
 
@@ -196,7 +196,7 @@ def _render(
         else:
             lines.append(f"{prefix}{_dim(connector, color=color)} {node_label}")
 
-        children = node.children
+        children = node._children
         last_idx = len(children) - 1
         for i, child in enumerate(children):
             is_last = i == last_idx

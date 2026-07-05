@@ -57,18 +57,13 @@ class ShapesMappingRef[ItemResultT](MappingForm, StructuredRef):
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self.payload["item_shape_type"] = item_shape_type
-
-    @property
-    def _item_shape_type(self) -> type[Shape]:
-        """Shape class for each value in this mapping (private: inner mechanics)."""
-        return self.payload["item_shape_type"]  # type: ignore[return-value]
+        self._payload["item_shape_type"] = item_shape_type
 
     def _wrap_item_ref(self, address: object) -> ItemResultT:
         """Build the child ShapeRef at ``address``, with self as parent."""
         return ShapeRef(  # type: ignore[return-value]
             address,
-            shape_type=self._item_shape_type,
+            shape_type=self._payload["item_shape_type"],
             parent_ref=self,
             owner_shape=self._owner_shape,
         )
@@ -87,7 +82,7 @@ class MutableShapesMappingRef[ItemResultT](MutableMappingForm, ShapesMappingRef[
     def _wrap_item_ref(self, address: object) -> ItemResultT:
         return MutableShapeRef(  # type: ignore[return-value]
             address,
-            shape_type=self._item_shape_type,
+            shape_type=self._payload["item_shape_type"],
             parent_ref=self,
             owner_shape=self._owner_shape,
         )
@@ -103,7 +98,7 @@ class ReactiveShapesMappingRef[ItemResultT](ReactiveMappingForm, MutableShapesMa
     def _wrap_item_ref(self, address: object) -> ItemResultT:
         return ReactiveShapeRef(  # type: ignore[return-value]
             address,
-            shape_type=self._item_shape_type,
+            shape_type=self._payload["item_shape_type"],
             parent_ref=self,
             owner_shape=self._owner_shape,
         )

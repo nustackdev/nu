@@ -6,7 +6,7 @@ refs (``IntRef``, ``StrRef``, ...) add the matching primitive Form so the value
 carries its full operator interface.
 
 Reactivity is uniform: ``ReactiveItemForm.on_change()`` -> ``nu.core.reactive
-.OnPrimitiveChangeQuery`` calls ``ref.afetch_parent`` + ``ref.aaddress`` on the
+.OnPrimitiveChangeQuery`` calls ``ref._afetch_parent`` + ``ref._aaddress`` on the
 leaf, and the virtuals ``PrimitiveRef`` implements both -- no substrate-side
 override needed.
 """
@@ -51,7 +51,7 @@ class ItemRef(ReactiveItemRef, PrimitiveRef):
         super().__init__(
             address, value_type=value_type, parent_ref=parent_ref, owner_shape=owner_shape
         )
-        self.payload["value_value_type"] = value_value_type
+        self._payload["value_value_type"] = value_value_type
 
     @classmethod
     def slot(cls, value_type: type, value_value_type: type) -> Self:

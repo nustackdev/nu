@@ -22,14 +22,14 @@ from nu.lang import Command, ScalarQuery
 class AsyncOnly(ScalarQuery):
     """A ScalarQuery that only runs async: requires the loop."""
 
-    requires_async = Declared(value=True)
+    _requires_async = Declared(value=True, name="requires_async")
 
 
 class AsyncCmd(Command):
     """A Command that only runs async. Slot 0 writes."""
 
-    requires_async = Declared(value=True)
-    mutates = Declared(value=frozenset({0}))
+    _requires_async = Declared(value=True, name="requires_async")
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
 
 class SyncOnly(ScalarQuery):
@@ -42,7 +42,7 @@ class SyncCmd(Command):
     """A Command with no async affinity. Slot 0 writes."""
 
     async_affinity = Declared(value=False)
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
 
 # --- async_atom_needs_loop ---------------------------------------------

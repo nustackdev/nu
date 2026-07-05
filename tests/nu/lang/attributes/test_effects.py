@@ -89,7 +89,7 @@ def test_composition_effects_same_class_collapses_to_one_fabric() -> None:
 
 def test_composition_effects_unannotated_ref_slot_defaults_to_read() -> None:
     class TwoSlotCmd(Command):
-        mutates = Declared(value=frozenset({0}))
+        _mutates = Declared(value=frozenset({0}), name="mutates")
 
     result = _composition_at_root(TwoSlotCmd(R(), R2()))
     assert result == frozenset({(R, Effect.WRITE), (R2, Effect.READ)})

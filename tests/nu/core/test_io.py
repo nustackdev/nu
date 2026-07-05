@@ -34,22 +34,22 @@ from nu.lang.attributes import Attr, Effect
 
 
 def test_print_is_a_command() -> None:
-    assert PrintCommand.sort.value is Sort.SCALAR_COMMAND
+    assert PrintCommand._sort.value is Sort.SCALAR_COMMAND
 
 
 def test_input_is_a_scalar_action() -> None:
-    assert InputAction.sort.value is Sort.SCALAR_ACTION
+    assert InputAction._sort.value is Sort.SCALAR_ACTION
 
 
 # --- cardinality ---------------------------------------------------------
 
 
 def test_print_yields_nothing() -> None:
-    assert PrintCommand.cardinality.value is Cardinality.VOID
+    assert PrintCommand._cardinality.value is Cardinality.VOID
 
 
 def test_input_yields_a_scalar() -> None:
-    assert InputAction.cardinality.value is Cardinality.SCALAR
+    assert InputAction._cardinality.value is Cardinality.SCALAR
 
 
 # --- effect attribution (the slot-0 fabric write) ------------------------
@@ -143,7 +143,7 @@ def test_log_defaults_are_info_and_nu() -> None:
 def test_log_targets_the_stderr_ref() -> None:
     cmd = nu_log("x")
     assert isinstance(cmd, LogCommand)
-    assert cmd.children[0] is STDERR
+    assert cmd._children[0] is STDERR
 
 
 def test_log_runs_on_async_path() -> None:

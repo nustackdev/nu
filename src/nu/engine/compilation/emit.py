@@ -31,7 +31,7 @@ def emit_thunks(program: Program) -> None:
         child_thunks = tuple(thunks[c] for c in child_nids)
         child_athunks = tuple(athunks[c] for c in child_nids)
         term = terms[nid]
-        thunks[nid] = term.compile(nid, child_thunks)
-        athunks[nid] = term.acompile(nid, child_athunks)
+        thunks[nid] = term._compile(nid, child_thunks)
+        athunks[nid] = term._acompile(nid, child_athunks)
     program.thunks = thunks
     program.athunks = athunks

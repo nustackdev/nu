@@ -13,7 +13,7 @@ from nu.tree import ancestors, bfs, leaves, postorder, preorder
 
 def _vals(nodes):
     """Leaf values in iteration order; branches collapse to 'S'."""
-    return [n.payload["value"] if isinstance(n, LiteralQuery) else "S" for n in nodes]
+    return [n._payload["value"] if isinstance(n, LiteralQuery) else "S" for n in nodes]
 
 
 def _tree():

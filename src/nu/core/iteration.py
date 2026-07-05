@@ -51,7 +51,7 @@ class IterQuery(StreamQuery):
     a scalar iterable into a stream. A stream atom's thunk returns an iterator.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (source,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -59,7 +59,7 @@ class IterQuery(StreamQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (source,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -76,7 +76,7 @@ class EnumerateQuery(StreamQuery):
     ``enumerate``.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         source = children[0]
         start = children[1] if len(children) > 1 else None
 
@@ -90,7 +90,7 @@ class EnumerateQuery(StreamQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         source = children[0]
         start = children[1] if len(children) > 1 else None
 
@@ -121,13 +121,13 @@ class ZipQuery(StreamQuery):
     with the shortest (Python's ``zip``).
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
             return zip(*(sync_iter(c(rt)) for c in children), strict=False)
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
             aiters = [aiter_any(await c(rt)) for c in children]
 
@@ -153,7 +153,7 @@ class ReversedQuery(StreamQuery):
     it materializes the source to walk it backwards.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (source,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -161,7 +161,7 @@ class ReversedQuery(StreamQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (source,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -189,4 +189,4 @@ class NextAction(ScalarAction):
     Action in core. Async twin ``anext`` follows with async sources.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")

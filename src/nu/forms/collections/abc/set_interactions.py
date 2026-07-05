@@ -92,7 +92,7 @@ def _as_set(value: object) -> object:
 class UnionQuery(ScalarQuery):
     """SetQuery union: left.union(right). Returns a new set."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -108,7 +108,7 @@ class UnionQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -128,7 +128,7 @@ class UnionQuery(ScalarQuery):
 class IntersectionQuery(ScalarQuery):
     """SetQuery intersection: left.intersection(right). Returns a new set."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -144,7 +144,7 @@ class IntersectionQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -164,7 +164,7 @@ class IntersectionQuery(ScalarQuery):
 class DifferenceQuery(ScalarQuery):
     """SetQuery difference: left.difference(right). Returns a new set."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -180,7 +180,7 @@ class DifferenceQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -200,7 +200,7 @@ class DifferenceQuery(ScalarQuery):
 class SymmetricDifferenceQuery(ScalarQuery):
     """SetQuery symmetric difference: left.symmetric_difference(right). Returns a new set."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -216,7 +216,7 @@ class SymmetricDifferenceQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -236,7 +236,7 @@ class SymmetricDifferenceQuery(ScalarQuery):
 class IsSubsetQuery(ScalarQuery):
     """Test if subset: left <= right. Returns a bool."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -252,7 +252,7 @@ class IsSubsetQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -272,7 +272,7 @@ class IsSubsetQuery(ScalarQuery):
 class IsSupersetQuery(ScalarQuery):
     """Test if superset: left >= right. Returns a bool."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -288,7 +288,7 @@ class IsSupersetQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -308,7 +308,7 @@ class IsSupersetQuery(ScalarQuery):
 class IsDisjointQuery(ScalarQuery):
     """Test if disjoint: left.isdisjoint(right). Returns a bool."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -324,7 +324,7 @@ class IsDisjointQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -344,7 +344,7 @@ class IsDisjointQuery(ScalarQuery):
 class CopyQuery(ScalarQuery):
     """Shallow copy: s.copy(). Returns a new set."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -357,7 +357,7 @@ class CopyQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -374,7 +374,7 @@ class CopyQuery(ScalarQuery):
 class SetOrQuery(ScalarQuery):
     """SetQuery union operator: left | right. Returns a new set."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -390,7 +390,7 @@ class SetOrQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -410,7 +410,7 @@ class SetOrQuery(ScalarQuery):
 class SetAndQuery(ScalarQuery):
     """SetQuery intersection operator: left & right. Returns a new set."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -426,7 +426,7 @@ class SetAndQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -446,7 +446,7 @@ class SetAndQuery(ScalarQuery):
 class SetSubQuery(ScalarQuery):
     """SetQuery difference operator: left - right. Returns a new set."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -462,7 +462,7 @@ class SetSubQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -482,7 +482,7 @@ class SetSubQuery(ScalarQuery):
 class SetXorQuery(ScalarQuery):
     """SetQuery symmetric difference operator: left ^ right. Returns a new set."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -498,7 +498,7 @@ class SetXorQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -523,9 +523,9 @@ class SetXorQuery(ScalarQuery):
 class AddCommand(Command):
     """AddQuery element to set: s.add(value). Mutates the set; returns nothing."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -539,7 +539,7 @@ class AddCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -560,9 +560,9 @@ class RemoveCommand(Command):
     Raises KeyError if the element is absent (Python parity).
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -576,7 +576,7 @@ class RemoveCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -597,9 +597,9 @@ class DiscardCommand(Command):
     No error if the element is absent (Python parity).
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -613,7 +613,7 @@ class DiscardCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -631,9 +631,9 @@ class DiscardCommand(Command):
 class SetUpdateCommand(Command):
     """Update set with elements from other: s.update(other). Mutates the set; returns nothing."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -647,7 +647,7 @@ class SetUpdateCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -668,9 +668,9 @@ class IntersectionUpdateCommand(Command):
     Mutates the set; returns nothing.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -684,7 +684,7 @@ class IntersectionUpdateCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -702,9 +702,9 @@ class IntersectionUpdateCommand(Command):
 class DifferenceUpdateCommand(Command):
     """Remove elements found in other: s.difference_update(other). Mutates the set; returns nothing."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -718,7 +718,7 @@ class DifferenceUpdateCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -739,9 +739,9 @@ class SymmetricDifferenceUpdateCommand(Command):
     Mutates the set; returns nothing.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -755,7 +755,7 @@ class SymmetricDifferenceUpdateCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -781,9 +781,9 @@ class SetPopAction(ScalarAction):
     Returns INVALID if the set is empty (Python raises KeyError).
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -799,7 +799,7 @@ class SetPopAction(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -819,9 +819,9 @@ class SetPopAction(ScalarAction):
 class SetIOrAction(ScalarAction):
     """In-place union: left |= right. Mutates the set; returns the set."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -836,7 +836,7 @@ class SetIOrAction(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -855,9 +855,9 @@ class SetIOrAction(ScalarAction):
 class SetIAndAction(ScalarAction):
     """In-place intersection: left &= right. Mutates the set; returns the set."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -872,7 +872,7 @@ class SetIAndAction(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -891,9 +891,9 @@ class SetIAndAction(ScalarAction):
 class SetISubAction(ScalarAction):
     """In-place difference: left -= right. Mutates the set; returns the set."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -908,7 +908,7 @@ class SetISubAction(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -927,9 +927,9 @@ class SetISubAction(ScalarAction):
 class SetIXorAction(ScalarAction):
     """In-place symmetric difference: left ^= right. Mutates the set; returns the set."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -944,7 +944,7 @@ class SetIXorAction(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> object:

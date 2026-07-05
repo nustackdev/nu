@@ -14,9 +14,9 @@ Context under ``(Navigator, root_shape)`` / ``(TransactionProtocol|SnapshotProto
 root_shape)`` and are resolved with predicate routing (site + path).
 
 Read is the Ref's dual role:
-- ``ViewRef.compile`` returns the navigate-and-fetch-the-view thunk (faceted
+- ``ViewRef._compile`` returns the navigate-and-fetch-the-view thunk (faceted
   lazy / eager), so collection ops run against a live virtuals View.
-- ``PrimitiveRef.compile`` navigates to the parent View and subscripts the leaf.
+- ``PrimitiveRef._compile`` navigates to the parent View and subscripts the leaf.
 
 ``write`` / ``erase`` resolve the address and mutate through the parent View
 (``parent[addr] = value`` / ``del parent[addr]``), which the virtuals library
@@ -92,12 +92,10 @@ def _resolve_storage_ctx(rt: Runtime, scope: type | None, resolved_path: tuple) 
 class _VirtualsRefBase[T](StructuredRef):
     """Shared virtuals navigation: path building off the parent chain + Navigator.
 
-    Each ref stores its raw static address as ``_segment`` and its type marker
-    as ``_type_marker`` (a View subclass for containers, a Python type for
-    leaves). The full path is ``((addr, marker), ...)`` root-first.
+    Each ref stores its raw static address in payload as ``"segment"`` and its
+    type marker as ``"type_marker"`` (a View subclass for containers, a Python
+    type for leaves). The full path is ``((addr, marker), ...)`` root-first.
     """
-
-    _type_marker: type
 
     def __init__(
         self,
@@ -109,11 +107,7 @@ class _VirtualsRefBase[T](StructuredRef):
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
         # raw static segment, in payload so it rides base with_children
-        self.payload["segment"] = address
-
-    @property
-    def _segment(self) -> object:
-        return self.payload.get("segment")
+        self._payload["segment"] = address
 
     # --- path building -------------------------------------------------------
 
@@ -122,16 +116,16 @@ class _VirtualsRefBase[T](StructuredRef):
 
         Walks the on-tree parent chain via ``rt.program.children`` (``[0]`` =
         structural parent, ``[1]`` = this level's address), evaluating each
-        level's address child and reading its ``_type_marker`` off the term.
-        Because the parent lives on the tree, a *dynamic* parent key resolves
-        here like any other child - no static-segment shortcut needed.
+        level's address child and reading its ``"type_marker"`` off the term
+        payload. Because the parent lives on the tree, a *dynamic* parent key
+        resolves here like any other child - no static-segment shortcut needed.
         """
         segs: list[tuple[object, type]] = []
         cur = nid
         while True:
             kids = rt.program.children[cur]
             term = rt.program.terms[cur]
-            segs.append((rt.eval(kids[1]), term._type_marker))  # type: ignore[attr-defined]
+            segs.append((rt.eval(kids[1]), term._payload["type_marker"]))  # type: ignore[attr-defined]
             parent = kids[0]
             if not isinstance(rt.program.terms[parent], StructuredRef):
                 break  # parent is the ANCHOR -> chain root
@@ -146,7 +140,7 @@ class _VirtualsRefBase[T](StructuredRef):
         while True:
             kids = rt.program.children[cur]
             term = rt.program.terms[cur]
-            segs.append((await rt.aeval(kids[1]), term._type_marker))  # type: ignore[attr-defined]
+            segs.append((await rt.aeval(kids[1]), term._payload["type_marker"]))  # type: ignore[attr-defined]
             parent = kids[0]
             if not isinstance(rt.program.terms[parent], StructuredRef):
                 break
@@ -175,51 +169,39 @@ class ViewRef[T](_VirtualsRefBase[T]):
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
         # ``view_type`` may be None when the shape-blueprint __init__ routes
         # through here without threading it; the concrete shape ref then sets
-        # ``payload["view_type"]`` itself right after super().__init__.
+        # ``payload["type_marker"]`` itself right after super().__init__.
         if view_type is not None:
-            self.payload["view_type"] = view_type
-
-    @property
-    def _view_type(self) -> type[View]:
-        """The View class type at this location (private: inner mechanics)."""
-        return self.payload.get("view_type")  # type: ignore[return-value]
-
-    @property
-    def _type_marker(self) -> type:  # type: ignore[override]
-        return self._view_type
-
-    @property
-    def _facet(self) -> Facet:
-        return self.payload.get("facet", Facet.LAZY)  # type: ignore[return-value]
+            self._payload["type_marker"] = view_type
 
     def _with_facet(self, facet: Facet) -> ViewRef[T]:
         """A faceted variant: same tree, fresh payload with the facet overridden."""
         variant = object.__new__(type(self))
-        variant.children = self.children
-        variant.payload = {**self.payload, "facet": facet}
+        variant._children = self._children
+        variant._payload = {**self._payload, "facet": facet}
         return variant
 
     @property
     def lazy(self) -> ViewRef[T]:
         """Return a lazy-faceted clone. No-op if already lazy."""
-        return self if self._facet is Facet.LAZY else self._with_facet(Facet.LAZY)
+        return self if self._payload.get("facet", Facet.LAZY) is Facet.LAZY else self._with_facet(Facet.LAZY)
 
     @property
     def eager(self) -> ViewRef[T]:
         """Return an eager-faceted clone. Iteration extracts to Python objects."""
-        return self if self._facet is Facet.EAGER else self._with_facet(Facet.EAGER)
+        return self if self._payload.get("facet", Facet.LAZY) is Facet.EAGER else self._with_facet(Facet.EAGER)
 
     def _apply_facet(self, view: object) -> object:
         """Apply the lazy/eager facet to a fetched view, when supported."""
-        if self._facet is Facet.EAGER and hasattr(view, "eager"):
+        facet = self._payload.get("facet", Facet.LAZY)
+        if facet is Facet.EAGER and hasattr(view, "eager"):
             return view.eager
-        if self._facet is Facet.LAZY and hasattr(view, "lazy"):
+        if facet is Facet.LAZY and hasattr(view, "lazy"):
             return view.lazy
         return view
 
     # --- read (the dual role) ------------------------------------------------
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         scope = self._root_shape
 
         def thunk(rt: Runtime) -> object:
@@ -231,7 +213,7 @@ class ViewRef[T](_VirtualsRefBase[T]):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         scope = self._root_shape
 
         async def athunk(rt: Runtime) -> object:
@@ -288,13 +270,13 @@ class ViewRef[T](_VirtualsRefBase[T]):
 
     # --- substrate plug-points (for unsafe ops / EnsureLayout) ---------------
 
-    def fetch(self, rt: Runtime, nid: int) -> object:
+    def _fetch(self, rt: Runtime, nid: int) -> object:
         """Navigate to and return the faceted View (sync)."""
-        return self.compile(nid, ())(rt)
+        return self._compile(nid, ())(rt)
 
-    async def afetch(self, rt: Runtime, nid: int) -> object:
-        """Async sibling of :meth:`fetch`."""
-        return await self.acompile(nid, ())(rt)
+    async def _afetch(self, rt: Runtime, nid: int) -> object:
+        """Async sibling of :meth:`_fetch`."""
+        return await self._acompile(nid, ())(rt)
 
 
 class PrimitiveRef[T](_VirtualsRefBase[T]):
@@ -314,16 +296,7 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
         **kwargs: object,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
-        self.payload["value_type"] = value_type
-
-    @property
-    def _value_type(self) -> type[T]:
-        """The Python type of the value at this location (private: inner mechanics)."""
-        return self.payload["value_type"]  # type: ignore[return-value]
-
-    @property
-    def _type_marker(self) -> type:  # type: ignore[override]
-        return self._value_type
+        self._payload["type_marker"] = value_type
 
     # --- read (the dual role) ------------------------------------------------
 
@@ -346,13 +319,13 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
         except (KeyError, IndexError):
             return EMPTY
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
             return self._read(rt, self._resolve_path(rt, nid))
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
             return self._read(rt, await self._aresolve_path(rt, nid))
 
@@ -402,12 +375,12 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
         except (KeyError, IndexError):
             pass
 
-    # --- fetch_parent (structured-ref plug-point; consumed by OnPrimitiveChangeQuery)
+    # --- _fetch_parent (structured-ref plug-point; consumed by OnPrimitiveChangeQuery)
 
-    def fetch_parent(self, rt: Runtime, nid: int) -> object:
+    def _fetch_parent(self, rt: Runtime, nid: int) -> object:
         """Return the parent view holding this leaf's slot (top-level -> root)."""
         return self._fetch_parent_view(rt, self._resolve_path(rt, nid))
 
     async def _afetch_parent(self, rt: Runtime, nid: int) -> object:
-        """Async sibling of :meth:`fetch_parent`."""
+        """Async sibling of :meth:`_fetch_parent`."""
         return self._fetch_parent_view(rt, await self._aresolve_path(rt, nid))

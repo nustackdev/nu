@@ -43,14 +43,14 @@ def test_react_forever_is_control():
 def test_react_constructs_with_change_only():
     change = ItemRef("sub")
     r = React(change)
-    assert r.children  # at least one child
+    assert r._children  # at least one child
 
 
 def test_react_constructs_with_body():
     change = ItemRef("sub")
     body = ItemRef("body")
     r = React(change, body)
-    assert len(r.children) >= 2
+    assert len(r._children) >= 2
 
 
 def test_react_changed_key_requires_body():
@@ -65,7 +65,7 @@ def test_react_while_constructs():
     cond = ItemRef("cond")
     body = ItemRef("body")
     r = ReactWhile(change, cond, body)
-    assert len(r.children) == 3
+    assert len(r._children) == 3
 
 
 def test_react_while_constructs_with_changed_key():
@@ -74,14 +74,14 @@ def test_react_while_constructs_with_changed_key():
     body = ItemRef("body")
     key = ItemRef("k")
     r = ReactWhile(change, cond, body, changed_key=key)
-    assert len(r.children) == 4
+    assert len(r._children) == 4
 
 
 def test_react_forever_constructs():
     change = ItemRef("sub")
     body = ItemRef("body")
     r = ReactForever(change, body)
-    assert len(r.children) == 2
+    assert len(r._children) == 2
 
 
 # ---------------------------------------------------------------------------
@@ -131,7 +131,7 @@ def test_react_sync_thunk_raises():
     """
     change = ItemRef("sub")
     r = React(change)
-    thunk = r.compile(0, ())
+    thunk = r._compile(0, ())
     with pytest.raises(RuntimeError, match="async"):
         thunk(None)
 
@@ -141,7 +141,7 @@ def test_react_while_sync_thunk_raises():
     cond = ItemRef("cond")
     body = ItemRef("body")
     r = ReactWhile(change, cond, body)
-    thunk = r.compile(0, ())
+    thunk = r._compile(0, ())
     with pytest.raises(RuntimeError, match="async"):
         thunk(None)
 
@@ -150,7 +150,7 @@ def test_react_forever_sync_thunk_raises():
     change = ItemRef("sub")
     body = ItemRef("body")
     r = ReactForever(change, body)
-    thunk = r.compile(0, ())
+    thunk = r._compile(0, ())
     with pytest.raises(RuntimeError, match="async"):
         thunk(None)
 

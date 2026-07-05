@@ -43,16 +43,8 @@ class ItemRef(MutableItemRef, RefBase):
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self.payload["value_type"] = value_type
-        self.payload["value_value_type"] = value_value_type
-
-    @property
-    def _value_type(self) -> type:
-        return self.payload["value_type"]  # type: ignore[return-value]
-
-    @property
-    def _value_value_type(self) -> type:
-        return self.payload["value_value_type"]  # type: ignore[return-value]
+        self._payload["value_type"] = value_type
+        self._payload["value_value_type"] = value_value_type
 
     @classmethod
     def slot(cls, value_type: type, value_value_type: type) -> Self:

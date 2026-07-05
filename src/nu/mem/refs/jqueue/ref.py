@@ -46,22 +46,22 @@ class JQueueRef[T](RefBase[janus.Queue[T]], JQueueForm[T]):
         item_type: type[T] = object,  # type: ignore[assignment]
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self.payload["capacity"] = capacity
-        self.payload["item_type"] = item_type
+        self._payload["capacity"] = capacity
+        self._payload["item_type"] = item_type
 
     @property
     def _capacity(self) -> int | None:
-        return self.payload.get("capacity")  # type: ignore[return-value]
+        return self._payload.get("capacity")  # type: ignore[return-value]
 
     @property
     def _item_type(self) -> type:
-        return self.payload.get("item_type", object)  # type: ignore[return-value]
+        return self._payload.get("item_type", object)  # type: ignore[return-value]
 
-    def result(self, op: Nu) -> JQueueForm[T]:
+    def _wrap_result(self, op: Nu) -> JQueueForm[T]:
         """Wrap an interaction node in the typed JQueueForm surface."""
         return JQueueForm(op)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync read thunk that vivifies and yields the queue."""
         address = children[0]
 
@@ -79,7 +79,7 @@ class JQueueRef[T](RefBase[janus.Queue[T]], JQueueForm[T]):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the async read thunk that vivifies and yields the queue."""
         address = children[0]
 

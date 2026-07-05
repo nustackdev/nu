@@ -2,7 +2,7 @@
 
 The generic metaprogramming toolkit (Layer 2): a top-level package built
 on ``lang``, domain-free. Every helper operates on the Term structure
-(``.children`` / ``.with_children``) and the ``lang`` kinds (Flow / Ref /
+(``._children`` / ``._with_children``) and the ``lang`` kinds (Flow / Ref /
 Effect) -- it knows no domain or fabric.
 
 Five modules:

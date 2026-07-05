@@ -20,8 +20,8 @@ lives here so callers reach for one namespace regardless of what they hold.
                                   value, not a view, so it subscribes on its
                                   *parent* view's child-change channel keyed by
                                   the leaf's own address. Slot 0 is the leaf
-                                  Ref; the query calls ``ref.afetch_parent``
-                                  and ``ref.aaddress`` at runtime, so the
+                                  Ref; the query calls ``ref._afetch_parent``
+                                  and ``ref._aaddress`` at runtime, so the
                                   substrate needs to implement those (any
                                   ``StructuredRef`` substrate that provides
                                   navigation already does).
@@ -67,7 +67,7 @@ class OnChangeQuery(ScalarQuery):
     Returns the ``Subscription`` handle yielded by ``view.on_change()``.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         view_thunk = children[0]
 
         def thunk(rt: Runtime) -> object:
@@ -78,7 +78,7 @@ class OnChangeQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         view_thunk = children[0]
 
         async def athunk(rt: Runtime) -> object:
@@ -98,7 +98,7 @@ class OnChildChangeQuery(ScalarQuery):
     the child address.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         view_thunk, address_thunk = children[0], children[1]
 
         def thunk(rt: Runtime) -> object:
@@ -112,7 +112,7 @@ class OnChildChangeQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         view_thunk, address_thunk = children[0], children[1]
 
         async def athunk(rt: Runtime) -> object:
@@ -133,7 +133,7 @@ class OnChildrenChangeQuery(ScalarQuery):
     Slot 0 must yield a view that supports ``on_children_change()``.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         view_thunk = children[0]
 
         def thunk(rt: Runtime) -> object:
@@ -144,7 +144,7 @@ class OnChildrenChangeQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         view_thunk = children[0]
 
         async def athunk(rt: Runtime) -> object:
@@ -164,7 +164,7 @@ class OnDescendantsChangeQuery(ScalarQuery):
     ``on_descendants_change(p0, p1, ...)``.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         view_thunk = children[0]
         pattern_thunks = children[1:]
 
@@ -184,7 +184,7 @@ class OnDescendantsChangeQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         view_thunk = children[0]
         pattern_thunks = children[1:]
 
@@ -216,7 +216,7 @@ class OnPrimitiveChangeQuery(ScalarQuery):
     ref_nid)`` to obtain the parent view and ``ref._aaddress(rt, ref_nid)`` to
     resolve the address, then returns ``parent.on_child_change(address)``.
 
-    Every substrate whose Refs implement ``afetch_parent`` (all structured
+    Every substrate whose Refs implement ``_afetch_parent`` (all structured
     refs) picks this up for free -- no per-substrate override needed.
     """
 
@@ -226,12 +226,12 @@ class OnPrimitiveChangeQuery(ScalarQuery):
         # nid.
         super().__init__(ref)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         def thunk(rt: Runtime) -> object:
             ref_nid = rt.program.children[nid][0]
-            parent = ref.fetch_parent(rt, ref_nid)
+            parent = ref._fetch_parent(rt, ref_nid)
             if parent is EMPTY or parent is INVALID:
                 return INVALID
             address = ref._address(rt, ref_nid)
@@ -241,8 +241,8 @@ class OnPrimitiveChangeQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         async def athunk(rt: Runtime) -> object:
             ref_nid = rt.program.children[nid][0]

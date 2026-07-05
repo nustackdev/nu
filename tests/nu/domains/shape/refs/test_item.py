@@ -24,7 +24,7 @@ def test_item_ref_is_structured_ref():
 
 def test_item_ref_constructs_with_address():
     ref = ItemRef("field_name")
-    assert ref.children  # address stored as children[0]
+    assert ref._children  # address stored as children[0]
 
 
 def test_item_ref_parent_ref_none_by_default():
@@ -78,7 +78,7 @@ def test_mutable_item_ref_is_subclass_of_item_ref():
 
 def test_mutable_item_ref_constructs():
     ref = MutableItemRef("field")
-    assert ref.children
+    assert ref._children
 
 
 def test_mutable_item_ref_has_store():
@@ -120,7 +120,7 @@ def test_reactive_item_ref_is_subclass_of_mutable_item_ref():
 
 def test_reactive_item_ref_constructs():
     ref = ReactiveItemRef("field")
-    assert ref.children
+    assert ref._children
 
 
 def test_reactive_item_ref_has_on_change():
@@ -142,10 +142,10 @@ def test_reactive_item_ref_on_change_carries_self_as_slot_zero():
     ref = ReactiveItemRef("field")
     result = ref.on_change()
     # OnPrimitiveChangeQuery carries the leaf ref as its sole child; at runtime
-    # ``ref.afetch_parent`` + ``ref.aaddress`` reconstruct the parent view and
+    # ``ref._afetch_parent`` + ``ref._aaddress`` reconstruct the parent view and
     # address, regardless of whether ``parent_ref`` is wired.
-    assert len(result.children) == 1
-    assert result.children[0] is ref
+    assert len(result._children) == 1
+    assert result._children[0] is ref
 
 
 def test_reactive_item_ref_inherits_store_erase():

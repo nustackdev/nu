@@ -54,7 +54,7 @@ class MapQuery(StreamQuery):
         key_node = key if isinstance(key, Term) else LiteralQuery(key)
         super().__init__(source, transform, key_node)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         source, transform, key_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -69,7 +69,7 @@ class MapQuery(StreamQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         source, transform, key_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -97,7 +97,7 @@ class FilterQuery(StreamQuery):
         key_node = key if isinstance(key, Term) else LiteralQuery(key)
         super().__init__(source, predicate, key_node)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         source, predicate, key_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -116,7 +116,7 @@ class FilterQuery(StreamQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         source, predicate, key_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -143,7 +143,7 @@ class SortedQuery(StreamQuery):
     output blocks until the whole source is drained and sorted.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (source,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -151,7 +151,7 @@ class SortedQuery(StreamQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (source,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -187,7 +187,7 @@ class SortByQuery(StreamQuery):
         item_node = item if isinstance(item, Term) else LiteralQuery(item)
         super().__init__(source, key, reverse_node, item_node)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         source, key_expr, reverse_t, item_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -202,7 +202,7 @@ class SortByQuery(StreamQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         source, key_expr, reverse_t, item_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -229,7 +229,7 @@ class FlattenQuery(StreamQuery):
     Children: ``[source]`` where each item of ``source`` is itself iterable.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (source,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -241,7 +241,7 @@ class FlattenQuery(StreamQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (source,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -261,7 +261,7 @@ class UniqueQuery(StreamQuery):
     Children: ``[source]``. Items must be hashable.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (source,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -276,7 +276,7 @@ class UniqueQuery(StreamQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (source,) = children
 
         async def athunk(rt: Runtime) -> object:

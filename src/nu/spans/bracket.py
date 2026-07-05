@@ -10,12 +10,12 @@ model-level shapes. Their lifecycle is a no-op here: a bare core bracket just
 runs its body. A fabric subclasses them and overrides the lifecycle to talk to a
 real store (see ``nu.virtuals.interactions.atomicity``).
 
-The lifecycle is one method, ``scope`` - a context manager. It opens the
+The lifecycle is one method, ``_open`` - a context manager. It opens the
 boundary, ``yield``s the scoped context the body runs under, then commits on a
 clean exit or rolls back on an exception:
 
     @contextmanager
-    def scope(self, ctx):
+    def _open(self, ctx):
         txns = [...open...]               # per-run handles, in the frame
         scoped = ctx.lazy(...)            # scope them into the context
         try:
@@ -81,13 +81,13 @@ class _LifecycleBracket(Bracket):
     """Shared lifecycle dispatch for the core brackets.
 
     Transparent: forwards the body (slot 0) in its own cardinality, running it
-    inside ``scope``. The core ``scope`` is a pass-through, so a bare bracket
-    runs its body unchanged; a fabric overrides ``scope`` to open and close a
+    inside ``_open``. The core ``_open`` is a pass-through, so a bare bracket
+    runs its body unchanged; a fabric overrides ``_open`` to open and close a
     real store.
     """
 
     @contextmanager
-    def scope(self, ctx: Context) -> Iterator[Context]:
+    def _open(self, ctx: Context) -> Iterator[Context]:
         """Open the boundary, yield the scoped ctx, commit / roll back on exit.
 
         Core default: a pass-through (no store, no commit). A fabric overrides
@@ -96,9 +96,9 @@ class _LifecycleBracket(Bracket):
         """
         yield ctx
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body = children[0]
-        scope = self.scope
+        scope = self._open
 
         def thunk(rt: Runtime) -> object:
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
@@ -113,9 +113,9 @@ class _LifecycleBracket(Bracket):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body = children[0]
-        scope = self.scope
+        scope = self._open
 
         async def athunk(rt: Runtime) -> object:
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
@@ -134,9 +134,9 @@ class _LifecycleBracket(Bracket):
 class Snapshot(_LifecycleBracket):
     """Read-only boundary: snapshot the body's reads, no commit on success.
 
-    Lightweight at the core level - ``scope`` is a pass-through, so a bare
+    Lightweight at the core level - ``_open`` is a pass-through, so a bare
     ``Snapshot(body)`` runs the body unchanged. A fabric-aware Snapshot
-    subclasses this and overrides ``scope`` to open and close a real read
+    subclasses this and overrides ``_open`` to open and close a real read
     snapshot.
     """
 
@@ -144,8 +144,8 @@ class Snapshot(_LifecycleBracket):
 class Transaction(_LifecycleBracket):
     """Atomic boundary: commit the body on success, roll back on failure.
 
-    Lightweight at the core level - ``scope`` is a pass-through, so a bare
+    Lightweight at the core level - ``_open`` is a pass-through, so a bare
     ``Transaction(body)`` runs the body unchanged. A fabric-aware Transaction
-    subclasses this and overrides ``scope`` to open a write transaction, commit
+    subclasses this and overrides ``_open`` to open a write transaction, commit
     on a clean exit, abort on an exception.
     """

@@ -33,7 +33,7 @@ class BrkScalar(Bracket):
     to SCALAR breaks the invariant whenever the body is not scalar.
     """
 
-    cardinality = Declared(value=Cardinality.SCALAR)
+    _cardinality = Declared(value=Cardinality.SCALAR, name="cardinality")
 
 
 # --- span_has_body -----------------------------------------------------

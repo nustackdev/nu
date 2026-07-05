@@ -89,11 +89,11 @@ class TypedNu(ScalarQuery[T_co], Generic[T_co]):  # noqa: UP046  # PEP 695 has n
         super().__init__(*children)
 
     @property
-    def source(self) -> Any:  # noqa: ANN401
+    def _source(self) -> Any:  # noqa: ANN401
         """The wrapped child Term, or None when there is no child."""
-        return self.children[0] if self.children else None
+        return self._children[0] if self._children else None
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -101,7 +101,7 @@ class TypedNu(ScalarQuery[T_co], Generic[T_co]):  # noqa: UP046  # PEP 695 has n
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:

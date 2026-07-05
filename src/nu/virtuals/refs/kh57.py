@@ -42,7 +42,7 @@ class Kh57Ref[V](ReactiveMappingRef, ViewRef[dict[int, V]]):
     `.range(begin, end)` beyond the standard mapping surface.
     """
 
-    def result(self, op: Nu) -> DictForm[int, V]:
+    def _wrap_result(self, op: Nu) -> DictForm[int, V]:
         """Wrap a mapping-level op result as a DictForm."""
         return DictForm(op)
 
@@ -80,11 +80,11 @@ class Kh57Ref[V](ReactiveMappingRef, ViewRef[dict[int, V]]):
         super().__init__(
             address, view_type=view_type, parent_ref=parent_ref, owner_shape=owner_shape
         )
-        self.payload["value_type"] = value_type
-        self.payload["value_value_type"] = value_value_type
+        self._payload["value_type"] = value_type
+        self._payload["value_value_type"] = value_value_type
         # kh57 keys are always non-negative 57-bit ints.
-        self.payload["key_type"] = int
-        self.payload["key_value_type"] = value_type_for(int)
+        self._payload["key_type"] = int
+        self._payload["key_value_type"] = value_type_for(int)
 
     @classmethod
     def slot[DV](

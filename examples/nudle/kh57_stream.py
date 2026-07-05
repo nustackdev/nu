@@ -69,7 +69,7 @@ app = (
             Dashboard.chart.store_points(
                 nu.CollectQuery(
                     nu.SortedQuery(
-                        Series.entries.sample(nu.IntQuery(Dashboard.n), 0, Series.height),
+                        Series.entries.sample(Dashboard.n, 0, Series.height),
                     ),
                 )
             )

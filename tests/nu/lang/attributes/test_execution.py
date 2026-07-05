@@ -21,7 +21,7 @@ from nu.lang.attributes import Attr, ExecOrder
 class AsyncOnly(ScalarQuery):
     """A ScalarQuery that only runs async."""
 
-    requires_async = Declared(value=True)
+    _requires_async = Declared(value=True, name="requires_async")
 
 
 class SyncOnly(ScalarQuery):
@@ -33,7 +33,7 @@ class SyncOnly(ScalarQuery):
 class FlowPar(Strategy):
     """A Strategy that runs its children in parallel."""
 
-    exec_order = Declared(value=ExecOrder.PARALLEL)
+    _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
 
 
 # --- helpers ------------------------------------------------------------

@@ -53,9 +53,9 @@ class React(Control):
     meaningless — so the body always sits at slot 1 when present.
     """
 
-    mutates = Declared(value=frozenset())
-    requires_async = Declared(value=True)
-    param_slots = Declared(value=frozenset({0, 2}))
+    _mutates = Declared(value=frozenset(), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
+    _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
 
     def __init__(
         self,
@@ -73,19 +73,19 @@ class React(Control):
         if changed_key is not None:
             children.append(changed_key)
         super().__init__(*children)
-        self.payload["has_body"] = body is not None
-        self.payload["has_changed_key"] = changed_key is not None
+        self._payload["has_body"] = body is not None
+        self._payload["has_changed_key"] = changed_key is not None
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> None:
             msg = "React requires an async runtime; use arun"
             raise RuntimeError(msg)
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        has_body = self.payload["has_body"]
-        ck_idx = 2 if self.payload["has_changed_key"] else None
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        has_body = self._payload["has_body"]
+        ck_idx = 2 if self._payload["has_changed_key"] else None
 
         async def athunk(rt: Runtime) -> None:
             changed_key_name = await children[ck_idx](rt) if ck_idx is not None else None
@@ -118,9 +118,9 @@ class ReactWhile(Control):
     consumed queries; slot 2 is the body that carries the writes.
     """
 
-    mutates = Declared(value=frozenset())
-    requires_async = Declared(value=True)
-    param_slots = Declared(value=frozenset({0, 1, 3}))
+    _mutates = Declared(value=frozenset(), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
+    _param_slots = Declared(value=frozenset({0, 1, 3}), name="param_slots")
 
     def __init__(
         self,
@@ -135,17 +135,17 @@ class ReactWhile(Control):
             super().__init__(change, condition, body, changed_key)
         else:
             super().__init__(change, condition, body)
-        self.payload["has_changed_key"] = has_changed_key
+        self._payload["has_changed_key"] = has_changed_key
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> None:
             msg = "ReactWhile requires an async runtime; use arun"
             raise RuntimeError(msg)
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        has_ck = self.payload["has_changed_key"]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        has_ck = self._payload["has_changed_key"]
 
         async def athunk(rt: Runtime) -> None:
             changed_key_name = await children[3](rt) if has_ck else None
@@ -180,9 +180,9 @@ class ReactForever(Control):
     body that carries the writes.
     """
 
-    mutates = Declared(value=frozenset())
-    requires_async = Declared(value=True)
-    param_slots = Declared(value=frozenset({0, 2}))
+    _mutates = Declared(value=frozenset(), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
+    _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
 
     def __init__(
         self,
@@ -196,17 +196,17 @@ class ReactForever(Control):
             super().__init__(change, body, changed_key)
         else:
             super().__init__(change, body)
-        self.payload["has_changed_key"] = has_changed_key
+        self._payload["has_changed_key"] = has_changed_key
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> None:
             msg = "ReactForever requires an async runtime; use arun"
             raise RuntimeError(msg)
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        has_ck = self.payload["has_changed_key"]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        has_ck = self._payload["has_changed_key"]
 
         async def athunk(rt: Runtime) -> None:
             loop = asyncio.get_running_loop()

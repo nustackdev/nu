@@ -72,7 +72,7 @@ class Schema:
         class wins where it overrides a default. Returns ``None`` if neither
         defines the attribute.
         """
-        per_class = kind.attributes.get(name)
+        per_class = kind._attributes.get(name)
         if per_class is not None:
             return per_class
         return self._registered.get(name)

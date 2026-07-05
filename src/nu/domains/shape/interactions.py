@@ -54,7 +54,7 @@ __all__ = [
 class LoadQuery(ScalarQuery):
     """Yield the value at the slot-0 Ref; EMPTY if the address is unbound."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         ref_thunk = children[0]
 
         def thunk(rt: Runtime) -> object:
@@ -62,7 +62,7 @@ class LoadQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         ref_thunk = children[0]
 
         async def athunk(rt: Runtime) -> object:
@@ -74,7 +74,7 @@ class LoadQuery(ScalarQuery):
 class ExistsQuery(ScalarQuery):
     """Yield True if the slot-0 Ref's address is bound (value is not a sentinel)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         ref_thunk = children[0]
 
         def thunk(rt: Runtime) -> bool:
@@ -83,7 +83,7 @@ class ExistsQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         ref_thunk = children[0]
 
         async def athunk(rt: Runtime) -> bool:
@@ -96,7 +96,7 @@ class ExistsQuery(ScalarQuery):
 class MissingQuery(ScalarQuery):
     """Yield True if the slot-0 Ref's address is unbound (value is a sentinel)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         ref_thunk = children[0]
 
         def thunk(rt: Runtime) -> bool:
@@ -105,7 +105,7 @@ class MissingQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         ref_thunk = children[0]
 
         async def athunk(rt: Runtime) -> bool:
@@ -124,7 +124,7 @@ class ExtractQuery(ScalarQuery):
     is unwrapped when present, matching ``CollectionExtract`` mechanics.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         ref_thunk = children[0]
 
         def thunk(rt: Runtime) -> object:
@@ -137,7 +137,7 @@ class ExtractQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         ref_thunk = children[0]
 
         async def athunk(rt: Runtime) -> object:
@@ -159,7 +159,7 @@ class AdvanceCursorQuery(ScalarQuery):
     from the beginning. Returns ``(log_key, actual_key)`` or ``None`` if exhausted.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         source_thunk, cursor_thunk = children[0], children[1]
 
         def thunk(rt: Runtime) -> object:
@@ -171,7 +171,7 @@ class AdvanceCursorQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         source_thunk, cursor_thunk = children[0], children[1]
 
         async def athunk(rt: Runtime) -> object:
@@ -192,10 +192,10 @@ class AdvanceCursorQuery(ScalarQuery):
 class StoreCommand(Command):
     """Write the slot-1 value to the slot-0 structured Ref's address."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
         value = children[1]
 
         def thunk(rt: Runtime) -> None:
@@ -206,8 +206,8 @@ class StoreCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
         value = children[1]
 
         async def athunk(rt: Runtime) -> None:
@@ -222,18 +222,18 @@ class StoreCommand(Command):
 class EraseCommand(Command):
     """Remove the slot-0 structured Ref from its fabric."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         def thunk(rt: Runtime) -> None:
             ref._erase(rt, rt.program.children[nid][0])
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:
             await ref._aerase(rt, rt.program.children[nid][0])
@@ -256,10 +256,10 @@ class PrimitiveStoreCommand(Command):
     ``_aprimitive_write`` (the abstract hook declared on ``StructuredRef``).
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
         value = children[1]
 
         def thunk(rt: Runtime) -> None:
@@ -270,8 +270,8 @@ class PrimitiveStoreCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
         value = children[1]
 
         async def athunk(rt: Runtime) -> None:

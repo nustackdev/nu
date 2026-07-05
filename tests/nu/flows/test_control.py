@@ -144,7 +144,7 @@ def test_forrange_honours_step_and_custom_index_name():
 def test_delay_is_childless_control():
     d = Delay(LiteralQuery(0.0))
     assert isinstance(d, Control)
-    assert len(d.children) == 1  # the delay param, no body
+    assert len(d._children) == 1  # the delay param, no body
 
 
 def test_delay_runs_and_yields_none():

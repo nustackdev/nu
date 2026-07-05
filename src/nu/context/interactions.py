@@ -31,10 +31,10 @@ __all__ = ["DeleteCommand", "SetCommand"]
 class SetCommand(Command):
     """Writes the value of slot 1 to the Ref in slot 0, through that Ref."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
         value = children[1]
 
         def thunk(rt: Runtime) -> None:
@@ -45,8 +45,8 @@ class SetCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
         value = children[1]
 
         async def athunk(rt: Runtime) -> None:
@@ -61,18 +61,18 @@ class SetCommand(Command):
 class DeleteCommand(Command):
     """Removes the Ref in slot 0 from its fabric, through that Ref."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         def thunk(rt: Runtime) -> None:
             ref._erase(rt, rt.program.children[nid][0])
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:
             await ref._aerase(rt, rt.program.children[nid][0])

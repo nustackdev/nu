@@ -134,18 +134,18 @@ class StdioRef(Ref):
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self.payload = {"stream": name}
+        self._payload = {"stream": name}
 
     def _resolve_stream(self, rt: Runtime) -> IO:
-        return _stream_for(rt.ctx, cast("str", self.payload["stream"]))
+        return _stream_for(rt.ctx, cast("str", self._payload["stream"]))
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> IO:
             return self._resolve_stream(rt)
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> IO:
             return self._resolve_stream(rt)
 
@@ -164,7 +164,7 @@ class StdioRef(Ref):
         return self._resolve_stream(rt).readline().rstrip("\n")
 
     def __repr__(self) -> str:
-        return f"StdioRef.{cast('str', self.payload['stream']).upper()}"
+        return f"StdioRef.{cast('str', self._payload['stream']).upper()}"
 
 
 STDOUT = StdioRef("stdout")
@@ -184,10 +184,10 @@ class PrintCommand(Command):
     newline - Python's default ``print`` shape.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = cast("StdioRef", self.children[0])
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = cast("StdioRef", self._children[0])
         value_thunks = children[1:]
 
         def thunk(rt: Runtime) -> None:
@@ -201,8 +201,8 @@ class PrintCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = cast("StdioRef", self.children[0])
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = cast("StdioRef", self._children[0])
         value_thunks = children[1:]
 
         async def athunk(rt: Runtime) -> None:
@@ -231,10 +231,10 @@ class LogCommand(Command):
     log line still emits when one of its interpolated attrs is absent.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = cast("StdioRef", self.children[0])
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = cast("StdioRef", self._children[0])
         level_thunk, logger_thunk = children[1], children[2]
         value_thunks = children[3:]
 
@@ -250,8 +250,8 @@ class LogCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = cast("StdioRef", self.children[0])
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = cast("StdioRef", self._children[0])
         level_thunk, logger_thunk = children[1], children[2]
         value_thunks = children[3:]
 
@@ -278,19 +278,19 @@ class InputAction(ScalarAction):
     effectful Action it is never a fold candidate anyway.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
     deterministic = Declared(value=False)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = cast("StdioRef", self.children[0])
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = cast("StdioRef", self._children[0])
 
         def thunk(rt: Runtime) -> str:
             return ref.readline(rt, rt.program.children[nid][0])
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = cast("StdioRef", self.children[0])
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = cast("StdioRef", self._children[0])
 
         async def athunk(rt: Runtime) -> str:
             return ref.readline(rt, rt.program.children[nid][0])

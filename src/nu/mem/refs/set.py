@@ -23,7 +23,7 @@ __all__ = [
 class SetRef[T](MutableSetRef, RefBase[set[T]]):
     """Dict set reference — unordered unique-element container."""
 
-    def result(self, op: Nu) -> SetForm[T]:
+    def _wrap_result(self, op: Nu) -> SetForm[T]:
         """Wrap a set-level op result as a SetForm."""
         return SetForm(op)
 
@@ -42,7 +42,7 @@ class SetRef[T](MutableSetRef, RefBase[set[T]]):
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self.payload["item_type"] = item_type
+        self._payload["item_type"] = item_type
 
     @classmethod
     def slot[E](cls, item_type: type[E]) -> SetRef[E]:

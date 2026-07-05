@@ -28,26 +28,26 @@ class FlakyAction(ScalarAction):
     Counts calls in ``ctx.attrs`` so it survives a retry loop's fresh re-runs.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, fail_times: int, name: str = "flaky") -> None:
         super().__init__()
-        self.payload["fail_times"] = fail_times
-        self.payload["name"] = name
+        self._payload["fail_times"] = fail_times
+        self._payload["name"] = name
 
     def _run(self, rt: Runtime) -> object:
-        key = f"__flaky_calls_{self.payload['name']}__"
+        key = f"__flaky_calls_{self._payload['name']}__"
         n = rt.ctx.attrs.get(key, 0)
         rt.ctx.attrs[key] = n + 1
-        if n < self.payload["fail_times"]:
+        if n < self._payload["fail_times"]:
             msg = f"flaky {n}"
             raise ValueError(msg)
-        return self.payload["name"]
+        return self._payload["name"]
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return self._run
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             return self._run(rt)
 
@@ -61,23 +61,23 @@ class RecordAction(ScalarAction):
     the log is external, not ctx.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, log: list, tag: str = "rec") -> None:
         super().__init__()
-        self.payload["log"] = log
-        self.payload["tag"] = tag
+        self._payload["log"] = log
+        self._payload["tag"] = tag
 
     def _run(self, rt: Runtime) -> object:
-        self.payload["log"].append(
-            (self.payload["tag"], rt.ctx.attrs.get("attempt"), rt.ctx.attrs.get("error")),
+        self._payload["log"].append(
+            (self._payload["tag"], rt.ctx.attrs.get("attempt"), rt.ctx.attrs.get("error")),
         )
         return None
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return self._run
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             return self._run(rt)
 
@@ -87,22 +87,22 @@ class RecordAction(ScalarAction):
 class CountAction(ScalarAction):
     """Increments ``ctx.attrs[key]`` each run; yields the new count."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, key: str = "count") -> None:
         super().__init__()
-        self.payload["key"] = key
+        self._payload["key"] = key
 
     def _run(self, rt: Runtime) -> object:
-        key = self.payload["key"]
+        key = self._payload["key"]
         n = rt.ctx.attrs.get(key, 0) + 1
         rt.ctx.attrs[key] = n
         return n
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return self._run
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             return self._run(rt)
 
@@ -116,15 +116,15 @@ class SlowAction(ScalarAction):
     async-only span).
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, seconds: float, name: str = "slow") -> None:
         super().__init__()
-        self.payload["seconds"] = seconds
-        self.payload["name"] = name
+        self._payload["seconds"] = seconds
+        self._payload["name"] = name
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self.payload["name"]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        name = self._payload["name"]
 
         def thunk(rt: Runtime) -> object:
             rt.ctx.attrs[name] = True
@@ -132,9 +132,9 @@ class SlowAction(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        seconds = self.payload["seconds"]
-        name = self.payload["name"]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        seconds = self._payload["seconds"]
+        name = self._payload["name"]
 
         async def athunk(rt: Runtime) -> object:
             await asyncio.sleep(seconds)
@@ -152,17 +152,17 @@ class FlakyStream(StreamQuery):
 
     def __init__(self, fail_times: int, items: object, name: str = "fs") -> None:
         super().__init__()
-        self.payload["fail_times"] = fail_times
-        self.payload["items"] = list(items)
-        self.payload["name"] = name
+        self._payload["fail_times"] = fail_times
+        self._payload["items"] = list(items)
+        self._payload["name"] = name
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
-            key = f"__fs_calls_{self.payload['name']}__"
+            key = f"__fs_calls_{self._payload['name']}__"
             n = rt.ctx.attrs.get(key, 0)
             rt.ctx.attrs[key] = n + 1
-            fail_times = self.payload["fail_times"]
-            items = self.payload["items"]
+            fail_times = self._payload["fail_times"]
+            items = self._payload["items"]
 
             def gen() -> object:
                 if n < fail_times:
@@ -174,13 +174,13 @@ class FlakyStream(StreamQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            key = f"__fs_calls_{self.payload['name']}__"
+            key = f"__fs_calls_{self._payload['name']}__"
             n = rt.ctx.attrs.get(key, 0)
             rt.ctx.attrs[key] = n + 1
-            fail_times = self.payload["fail_times"]
-            items = self.payload["items"]
+            fail_times = self._payload["fail_times"]
+            items = self._payload["items"]
 
             async def agen() -> object:
                 if n < fail_times:

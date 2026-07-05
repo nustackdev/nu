@@ -99,7 +99,7 @@ class ReactiveItemForm(MutableItemForm):
         A leaf yields a scalar, not a view, so the subscription happens on the
         *parent* view's child-change channel keyed by this leaf's address.
         ``OnPrimitiveChangeQuery`` carries only the leaf ref (self); at runtime
-        it calls ``ref.afetch_parent`` and ``ref.aaddress`` to resolve the
+        it calls ``ref._afetch_parent`` and ``ref._aaddress`` to resolve the
         parent view and address, then returns
         ``parent.on_child_change(address)`` -- one uniform path across
         substrates, no per-substrate override needed.

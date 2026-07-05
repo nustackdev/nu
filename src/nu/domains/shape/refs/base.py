@@ -12,7 +12,7 @@ the tree, every generic pass reaches the whole Ref uniformly: no ``walk_ref_chai
 bridging two worlds, and inline becomes a plain fold.
 
 ``address`` / ``aaddress`` resolve ``children[1]`` through the runtime. Substrate
-plug-points (``afetch_parent``, ``aresolve_address``) carry their signatures and
+plug-points (``_afetch_parent``, ``_aresolve_address``) carry their signatures and
 raise NotImplementedError; substrate subclasses override these. ``compile`` /
 ``acompile`` are left to substrate subclasses (or blueprint Refs used purely for
 structural navigation).
@@ -44,10 +44,10 @@ class Anchor(Ref):
     backs every chain root.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         return lambda rt: EMPTY
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
             return EMPTY
 
@@ -67,7 +67,7 @@ class StructuredRef(Ref):
     root), marked ``structural``. ``children[1]`` = this Ref's address (a value).
     """
 
-    structural = Declared(value=frozenset({0}))
+    _structural = Declared(value=frozenset({0}), name="structural")
 
     def __init__(
         self,
@@ -80,11 +80,11 @@ class StructuredRef(Ref):
         super().__init__(parent, address)
         # All navigation metadata rides in ``payload`` — part of the Term's
         # ``(kind, children, payload)`` identity — so the base
-        # :class:`Term.with_children` (which shares ``payload``) carries it
+        # :class:`Term._with_children` (which shares ``payload``) carries it
         # across a tree rewrite. No per-subclass ``with_children`` override, and
         # nothing user-facing lives on ``__dict__``.
-        self.payload["owner_shape"] = owner_shape
-        self.payload["root_shape"] = (
+        self._payload["owner_shape"] = owner_shape
+        self._payload["root_shape"] = (
             parent_ref._root_shape if parent_ref is not None else owner_shape
         )
 
@@ -98,18 +98,18 @@ class StructuredRef(Ref):
         it clear of value-domain members like ``PurePath.parent`` that a typed leaf
         Ref exposes on its public surface.
         """
-        p = self.children[0]
+        p = self._children[0]
         return p if isinstance(p, StructuredRef) else None
 
     @property
     def _owner_shape(self) -> type[Shape] | None:
         """Shape class that directly owns this slot."""
-        return self.payload.get("owner_shape")  # type: ignore[return-value]
+        return self._payload.get("owner_shape")  # type: ignore[return-value]
 
     @property
     def _root_shape(self) -> type[Shape] | None:
         """Root Shape for this Ref chain (resolved at construction)."""
-        return self.payload.get("root_shape")  # type: ignore[return-value]
+        return self._payload.get("root_shape")  # type: ignore[return-value]
 
     # --- address resolution --------------------------------------------------
 
@@ -125,12 +125,12 @@ class StructuredRef(Ref):
 
     async def _afetch_parent(self, rt: Runtime, nid: int) -> object:
         """Fetch the parent container holding this Ref's slot. Substrate-specific."""
-        msg = f"{type(self).__name__}.afetch_parent is not implemented"
+        msg = f"{type(self).__name__}._afetch_parent is not implemented"
         raise NotImplementedError(msg)
 
     async def _aresolve_address(self, rt: Runtime, nid: int) -> object:
         """Resolve this segment's address against the runtime. Substrate-specific."""
-        msg = f"{type(self).__name__}.aresolve_address is not implemented"
+        msg = f"{type(self).__name__}._aresolve_address is not implemented"
         raise NotImplementedError(msg)
 
     def _primitive_write(self, rt: Runtime, value: object, nid_self: int) -> None:
@@ -183,7 +183,7 @@ class StructuredRef(Ref):
     # --- repr ----------------------------------------------------------------
 
     def __repr__(self) -> str:
-        addr = self.children[1] if len(self.children) > 1 else None
+        addr = self._children[1] if len(self._children) > 1 else None
         if self._parent is not None:
             return f"<{type(self).__name__} -> {addr!r}>"
         return f"<{type(self).__name__}: {addr!r}>"

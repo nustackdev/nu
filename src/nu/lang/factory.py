@@ -136,14 +136,19 @@ def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a clas
 
     namespace: dict[str, object] = {}
     for attr_name, value in attributes.items():
-        namespace[attr_name] = value if isinstance(value, Attribute) else Declared(value=value)
+        if isinstance(value, Attribute):
+            if value.name is None:
+                value.name = attr_name
+            namespace[f"_{attr_name}"] = value
+        else:
+            namespace[f"_{attr_name}"] = Declared(value=value, name=attr_name)
 
     if is_async:
-        namespace["requires_async"] = Declared(value=True)
+        namespace["_requires_async"] = Declared(value=True, name="requires_async")
 
     def init_method(self: Nu, *args: object, **kwargs: object) -> None:
         Nu.__init__(self, *args, *kwargs.values())
-        self.payload = {"npos": len(args), "kwkeys": tuple(kwargs.keys())}
+        self._payload = {"npos": len(args), "kwkeys": tuple(kwargs.keys())}
 
     namespace["__init__"] = init_method
 
@@ -154,8 +159,8 @@ def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a clas
             nid: int,
             children: tuple[Callable[[Runtime], object], ...],
         ) -> Callable[[Runtime], object]:
-            npos = cast("int", self.payload.get("npos", len(children)))
-            kwkeys = cast("tuple[str, ...]", self.payload.get("kwkeys", ()))
+            npos = cast("int", self._payload.get("npos", len(children)))
+            kwkeys = cast("tuple[str, ...]", self._payload.get("kwkeys", ()))
             pos_ts = children[:npos]
             kw_ts = children[npos:]
 
@@ -177,15 +182,15 @@ def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a clas
 
             return thunk
 
-        namespace["compile"] = compile_method
+        namespace["_compile"] = compile_method
 
     def acompile_method(
         self: Nu,
         nid: int,
         children: tuple[Callable[[Runtime], object], ...],
     ) -> Callable[[Runtime], object]:
-        npos = cast("int", self.payload["npos"])
-        kwkeys = cast("tuple[str, ...]", self.payload["kwkeys"])
+        npos = cast("int", self._payload["npos"])
+        kwkeys = cast("tuple[str, ...]", self._payload["kwkeys"])
         pos_ts = children[:npos]
         kw_ts = children[npos:]
 
@@ -209,7 +214,7 @@ def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a clas
 
         return athunk
 
-    namespace["acompile"] = acompile_method
+    namespace["_acompile"] = acompile_method
     namespace["__doc__"] = f"Built atom calling {getattr(fn, '__qualname__', fn)!r}."
 
     return type(name, (base,), namespace)  # type: ignore[return-value]

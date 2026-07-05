@@ -32,7 +32,7 @@ def test_shapes_mapping_ref_subscript_returns_shape_ref():
 def test_shapes_mapping_ref_child_shape_type_matches():
     m = ShapesMappingRef("entries", item_shape_type=Entry)
     child = m["key1"]
-    assert child._shape_type is Entry
+    assert child._payload["shape_type"] is Entry
 
 
 def test_shapes_mapping_ref_child_parent_is_self():
@@ -43,7 +43,7 @@ def test_shapes_mapping_ref_child_parent_is_self():
 
 def test_shapes_mapping_ref_item_shape_type_property():
     m = ShapesMappingRef("entries", item_shape_type=Entry)
-    assert m._item_shape_type is Entry
+    assert m._payload["item_shape_type"] is Entry
 
 
 def test_shapes_mapping_ref_different_keys_distinct():
@@ -92,7 +92,7 @@ def test_mutable_shapes_mapping_ref_subscript_returns_mutable_shape_ref():
 
 def test_mutable_shapes_mapping_ref_child_shape_type_matches():
     m = MutableShapesMappingRef("entries", item_shape_type=Entry)
-    assert m["k"]._shape_type is Entry
+    assert m["k"]._payload["shape_type"] is Entry
 
 
 def test_mutable_shapes_mapping_ref_store_returns_store_command():

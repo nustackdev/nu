@@ -64,7 +64,7 @@ DictOf = ScalarQueryFactory("DictOf", dict)
 class KeysQuery(ScalarQuery):
     """Get keys view from mapping: mapping.keys()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -75,7 +75,7 @@ class KeysQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -90,7 +90,7 @@ class KeysQuery(ScalarQuery):
 class ValuesQuery(ScalarQuery):
     """Get values view from mapping: mapping.values()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -101,7 +101,7 @@ class ValuesQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -116,7 +116,7 @@ class ValuesQuery(ScalarQuery):
 class ItemsQuery(ScalarQuery):
     """Get items view from mapping: mapping.items()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -127,7 +127,7 @@ class ItemsQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -142,7 +142,7 @@ class ItemsQuery(ScalarQuery):
 class GetQuery(ScalarQuery):
     """Get value from mapping with optional default: mapping.get(key, default) or mapping[key]."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t, c_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -161,7 +161,7 @@ class GetQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t, c_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -184,7 +184,7 @@ class GetQuery(ScalarQuery):
 class ContainsKeyQuery(ScalarQuery):
     """Test key membership: key in mapping. Yields a bool."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, key_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -198,7 +198,7 @@ class ContainsKeyQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, key_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -216,7 +216,7 @@ class ContainsKeyQuery(ScalarQuery):
 class CopyQuery(ScalarQuery):
     """Shallow copy of the mapping: mapping.copy(). Yields a new dict."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -227,7 +227,7 @@ class CopyQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -242,7 +242,7 @@ class CopyQuery(ScalarQuery):
 class ReversedKeysQuery(StreamQuery):
     """Reverse-order keys: reversed(mapping). Yields keys in reverse insertion order."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -253,7 +253,7 @@ class ReversedKeysQuery(StreamQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -273,7 +273,7 @@ class ReversedKeysQuery(StreamQuery):
 class MergeQuery(ScalarQuery):
     """Merge two mappings into a new one: mapping | other. Yields a new dict."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -287,7 +287,7 @@ class MergeQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -310,9 +310,9 @@ class MergeQuery(ScalarQuery):
 class SetItemCommand(Command):
     """SetQuery value at key: mapping[key] = value. Mutates slot 0; returns nothing."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, key_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -329,7 +329,7 @@ class SetItemCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, key_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -350,9 +350,9 @@ class SetItemCommand(Command):
 class DeleteItemCommand(Command):
     """Delete entry by key: del mapping[key]. Mutates slot 0; returns nothing."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, key_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -366,7 +366,7 @@ class DeleteItemCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, key_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -384,9 +384,9 @@ class DeleteItemCommand(Command):
 class UpdateCommand(Command):
     """Update mapping with another: mapping.update(other). Mutates slot 0; returns nothing."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -400,7 +400,7 @@ class UpdateCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -427,9 +427,9 @@ class MergeUpdateAction(ScalarAction):
     mutates and yields -> Action.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -444,7 +444,7 @@ class MergeUpdateAction(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -466,9 +466,9 @@ class DictPopAction(ScalarAction):
     Mutates slot 0 (removes the entry) and yields the value or default.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t, c_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -490,7 +490,7 @@ class DictPopAction(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t, c_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -519,9 +519,9 @@ class PopItemAction(ScalarAction):
     Mutates slot 0 (removes the entry) and yields the (key, value) tuple.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -535,7 +535,7 @@ class PopItemAction(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -557,9 +557,9 @@ class SetDefaultAction(ScalarAction):
     value at the key.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t, c_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -576,7 +576,7 @@ class SetDefaultAction(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         a_t, b_t, c_t = children
 
         async def athunk(rt: Runtime) -> object:

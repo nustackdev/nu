@@ -33,7 +33,7 @@ def test_thunks_and_athunks_are_one_per_nid(schema):
 def test_default_compile_thunk_defers_to_eval_at_call_time(schema):
     schema.finalize()
     p = compile(Leaf(), schema)
-    with pytest.raises(NotImplementedError, match=r"Leaf\.eval"):
+    with pytest.raises(NotImplementedError, match=r"Leaf\._eval"):
         p.thunks[0](None)
 
 
@@ -44,7 +44,7 @@ def test_an_overridden_compile_captures_children_already_built():
     captured: dict[int, tuple] = {}
 
     class Recorder(Term):
-        def compile(self, nid, children):
+        def _compile(self, nid, children):
             captured[nid] = children
 
             def thunk(rt):
@@ -52,7 +52,7 @@ def test_an_overridden_compile_captures_children_already_built():
 
             return thunk
 
-        def acompile(self, nid, children):
+        def _acompile(self, nid, children):
             async def athunk(rt):
                 return nid
 
@@ -75,7 +75,7 @@ def test_an_overridden_compile_captures_children_already_built():
 
 async def test_an_overridden_acompile_yields_an_awaitable_thunk():
     class AsyncLeaf(Term):
-        def acompile(self, nid, children):
+        def _acompile(self, nid, children):
             async def athunk(rt):
                 return 42
 

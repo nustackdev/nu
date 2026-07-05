@@ -98,7 +98,7 @@ class Program:
 
         # The root Term of the description, held by reference. The DAG is
         # read off this on every walk; never copied.
-        # Example: _term is the Add node; _term.children -> (x, x).
+        # Example: _term is the Add node; _term._children -> (x, x).
         self._term = term
 
         # The finalized Schema this Program was compiled against. Read by

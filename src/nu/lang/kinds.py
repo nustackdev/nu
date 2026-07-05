@@ -6,7 +6,7 @@ A taxonomy of ``Nu`` subclasses. The leaves (``Ref``, ``ScalarQuery``,
 the sort and cardinality bindings concrete nodes use. The interiors
 (``Interaction``, ``Query``, ``Action``, ``Flow``, ``Span``) are abstract
 groupings for ``subsort`` queries and for the dispatch surface
-``Interaction.eval`` / ``aeval``.
+``Interaction._eval`` / ``_aeval``.
 
 "Kind" is the Python class of a Term (Ref, Interaction, ...); "sort" is the
 attribute concern naming the structural category. This module sits on top
@@ -65,28 +65,28 @@ class Ref(Nu[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance ma
     its concrete class, never a location name (which may not exist statically).
     """
 
-    sort = Declared(value=Sort.REF)
-    cardinality = Declared(value=Cardinality.SCALAR)
+    _sort = Declared(value=Sort.REF, name="sort")
+    _cardinality = Declared(value=Cardinality.SCALAR, name="cardinality")
 
 
 class Interaction(Nu[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """Abstract: a node that interacts with the Context. Never instantiated.
 
-    Concrete sub-kinds implement ``eval`` / ``aeval`` to drive execution.
+    Concrete sub-kinds implement ``_eval`` / ``_aeval`` to drive execution.
     Both receive the per-execution ``Runtime`` and the node's ``nid`` (its
     integer position in the attributed program); they recurse via
-    ``rt.eval(child_nid)`` and reach for ``self.children`` / ``self.payload``
+    ``rt.eval(child_nid)`` and reach for ``self._children`` / ``self._payload``
     directly. Attribute reads use ``rt.program.attrs[name][nid]``.
     """
 
-    def eval(self, rt: Runtime, nid: int) -> V_co:
+    def _eval(self, rt: Runtime, nid: int) -> V_co:
         """Evaluate this node synchronously; return its value or None."""
-        msg = f"{type(self).__name__}.eval is not implemented"
+        msg = f"{type(self).__name__}._eval is not implemented"
         raise NotImplementedError(msg)
 
-    async def aeval(self, rt: Runtime, nid: int) -> V_co:
+    async def _aeval(self, rt: Runtime, nid: int) -> V_co:
         """Evaluate this node asynchronously; return its value or None."""
-        msg = f"{type(self).__name__}.aeval is not implemented"
+        msg = f"{type(self).__name__}._aeval is not implemented"
         raise NotImplementedError(msg)
 
 
@@ -97,28 +97,28 @@ class Query(Interaction[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no 
 class ScalarQuery(Query[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """A Query that yields exactly one value."""
 
-    sort = Declared(value=Sort.SCALAR_QUERY)
-    cardinality = Declared(value=Cardinality.SCALAR)
+    _sort = Declared(value=Sort.SCALAR_QUERY, name="sort")
+    _cardinality = Declared(value=Cardinality.SCALAR, name="cardinality")
 
 
 class StreamQuery(Query[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """A Query that yields zero or more values."""
 
-    sort = Declared(value=Sort.STREAM_QUERY)
-    cardinality = Declared(value=Cardinality.STREAM)
+    _sort = Declared(value=Sort.STREAM_QUERY, name="sort")
+    _cardinality = Declared(value=Cardinality.STREAM, name="cardinality")
 
 
 class Reduction(ScalarQuery[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """A ScalarQuery that folds a stream child down to one value."""
 
-    sort = Declared(value=Sort.REDUCTION)
+    _sort = Declared(value=Sort.REDUCTION, name="sort")
 
 
 class Command(Interaction[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """A mutating Interaction. Yields nothing; its only sub-shape is scalar."""
 
-    sort = Declared(value=Sort.SCALAR_COMMAND)
-    cardinality = Declared(value=Cardinality.VOID)
+    _sort = Declared(value=Sort.SCALAR_COMMAND, name="sort")
+    _cardinality = Declared(value=Cardinality.VOID, name="cardinality")
 
 
 class Action(Interaction[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
@@ -128,8 +128,8 @@ class Action(Interaction[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no
 class ScalarAction(Action[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """An Action that mutates and yields exactly one value."""
 
-    sort = Declared(value=Sort.SCALAR_ACTION)
-    cardinality = Declared(value=Cardinality.SCALAR)
+    _sort = Declared(value=Sort.SCALAR_ACTION, name="sort")
+    _cardinality = Declared(value=Cardinality.SCALAR, name="cardinality")
 
 
 class StreamAction(Action[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
@@ -141,41 +141,41 @@ class StreamAction(Action[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has n
     that off ``cardinality`` alone, with no per-kind special case.
     """
 
-    sort = Declared(value=Sort.STREAM_ACTION)
-    cardinality = Declared(value=Cardinality.STREAM)
+    _sort = Declared(value=Sort.STREAM_ACTION, name="sort")
+    _cardinality = Declared(value=Cardinality.STREAM, name="cardinality")
 
 
 class Flow(Interaction[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """Abstract: a Command-composing Interaction. Yields nothing."""
 
-    cardinality = Declared(value=Cardinality.VOID)
+    _cardinality = Declared(value=Cardinality.VOID, name="cardinality")
 
 
 class Strategy(Flow[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """A Flow that composes Commands directly."""
 
-    sort = Declared(value=Sort.STRATEGY)
+    _sort = Declared(value=Sort.STRATEGY, name="sort")
 
 
 class Control(Flow[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """A Flow that composes Commands under Query parameters."""
 
-    sort = Declared(value=Sort.CONTROL)
+    _sort = Declared(value=Sort.CONTROL, name="sort")
 
 
 class Span(Interaction[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """Abstract: a transparent Interaction; yields what its body yields."""
 
-    cardinality = Declared(value=Cardinality.TRANSPARENT)
+    _cardinality = Declared(value=Cardinality.TRANSPARENT, name="cardinality")
 
 
 class Bracket(Span[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """A Span that governs a body's lifecycle."""
 
-    sort = Declared(value=Sort.BRACKET)
+    _sort = Declared(value=Sort.BRACKET, name="sort")
 
 
 class Policy(Span[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
     """A Span that governs a body's execution on failure."""
 
-    sort = Declared(value=Sort.POLICY)
+    _sort = Declared(value=Sort.POLICY, name="sort")

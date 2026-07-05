@@ -1,7 +1,7 @@
 """Tree walking -- traversal iterators over Term structures.
 
 All functions are lazy (generators) and non-mutating. Domain-free: they
-touch only ``.children`` and identity, so they work on any Term tree.
+touch only ``._children`` and identity, so they work on any Term tree.
 """
 
 from __future__ import annotations
@@ -28,13 +28,13 @@ __all__ = [
 def preorder(root: Nu) -> Iterator[Nu]:
     """Depth-first pre-order. Yields root before children."""
     yield root
-    for child in root.children:
+    for child in root._children:
         yield from preorder(child)
 
 
 def postorder(root: Nu) -> Iterator[Nu]:
     """Depth-first post-order. Yields children before root."""
-    for child in root.children:
+    for child in root._children:
         yield from postorder(child)
     yield root
 
@@ -45,15 +45,15 @@ def bfs(root: Nu) -> Iterator[Nu]:
     while queue:
         node = queue.popleft()
         yield node
-        queue.extend(node.children)
+        queue.extend(node._children)
 
 
 def leaves(root: Nu) -> Iterator[Nu]:
     """Yield only leaf nodes (no children)."""
-    if not root.children:
+    if not root._children:
         yield root
     else:
-        for child in root.children:
+        for child in root._children:
             yield from leaves(child)
 
 
@@ -64,7 +64,7 @@ def ancestors(target: Nu, root: Nu) -> list[Nu] | None:
     """
     if root is target:
         return []
-    for child in root.children:
+    for child in root._children:
         path = ancestors(target, child)
         if path is not None:
             return [root, *path]

@@ -1,7 +1,7 @@
 """Virtuals item interactions — unsafe leaf read/write/delete + container setup.
 
 EnsureLayoutCmd: Materialize view container layout (idempotent setup).
-InitItemCmd: Materialize container chain via fetch().
+InitItemCmd: Materialize container chain via _fetch().
 ItemPrimitiveGetUnsafe: Read — _unsafe_primitive_read() (single ctx.get).
 ItemPrimitiveSetUnsafeCmd: Write — _unsafe_primitive_write(ensure_exists=True).
 ItemPrimitiveSetUnsafeParentSkipCmd: Write — _unsafe_primitive_write() (full skip).
@@ -26,7 +26,6 @@ from nu.lang.sentinels import EMPTY, INVALID
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu import Nu
     from nu.lang.runtime import Runtime
 
 
@@ -52,18 +51,13 @@ class EnsureLayoutCmd(Command):
     ``_ensure_layout()`` (or ``ensure_created()``) to create internal containers.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    @property
-    def ref(self) -> Nu:
-        """The view Ref this command targets (slot 0)."""
-        return self.children[0]
-
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         def thunk(rt: Runtime) -> None:
-            view = ref.fetch(rt, _child_nid(rt, nid, 0))
+            view = ref._fetch(rt, _child_nid(rt, nid, 0))
             if hasattr(view, "_ensure_layout"):
                 view._ensure_layout()
             elif hasattr(view, "ensure_created"):
@@ -71,11 +65,11 @@ class EnsureLayoutCmd(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:
-            view = await ref.afetch(rt, _child_nid(rt, nid, 0))
+            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
             if hasattr(view, "_ensure_layout"):
                 view._ensure_layout()
             elif hasattr(view, "ensure_created"):
@@ -84,49 +78,39 @@ class EnsureLayoutCmd(Command):
         return athunk
 
     def __repr__(self) -> str:
-        return f"EnsureLayoutCmd({self.children[0]!r})"
+        return f"EnsureLayoutCmd({self._children[0]!r})"
 
 
 class InitItemCmd(Command):
     """Materialize the container chain for a ViewRef via ``fetch``."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    @property
-    def ref(self) -> Nu:
-        """The view Ref this command targets (slot 0)."""
-        return self.children[0]
-
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         def thunk(rt: Runtime) -> None:
-            ref.fetch(rt, _child_nid(rt, nid, 0))
+            ref._fetch(rt, _child_nid(rt, nid, 0))
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:
-            await ref.afetch(rt, _child_nid(rt, nid, 0))
+            await ref._afetch(rt, _child_nid(rt, nid, 0))
 
         return athunk
 
     def __repr__(self) -> str:
-        return f"InitItemCmd({self.children[0]!r})"
+        return f"InitItemCmd({self._children[0]!r})"
 
 
 class ItemPrimitiveGetUnsafe(ScalarQuery):
     """Read a primitive value via ``_unsafe_primitive_read`` (single ctx.get)."""
 
-    @property
-    def ref(self) -> Nu:
-        """The leaf Ref this query targets (slot 0)."""
-        return self.children[0]
-
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         def thunk(rt: Runtime) -> object:
             cnid = _child_nid(rt, nid, 0)
@@ -137,8 +121,8 @@ class ItemPrimitiveGetUnsafe(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         async def athunk(rt: Runtime) -> object:
             cnid = _child_nid(rt, nid, 0)
@@ -150,22 +134,17 @@ class ItemPrimitiveGetUnsafe(ScalarQuery):
         return athunk
 
     def __repr__(self) -> str:
-        return f"ItemPrimitiveGetUnsafe({self.children[0]!r})"
+        return f"ItemPrimitiveGetUnsafe({self._children[0]!r})"
 
 
 class _UnsafeSetBase(Command):
     """Shared base: resolve parent view + address + value, then unsafe-write."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
     _ensure_exists: bool = False
 
-    @property
-    def ref(self) -> Nu:
-        """The leaf Ref this command targets (slot 0)."""
-        return self.children[0]
-
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref = self._children[0]
         value_thunk = children[1]
         ensure = self._ensure_exists
 
@@ -180,8 +159,8 @@ class _UnsafeSetBase(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref = self._children[0]
         value_thunk = children[1]
         ensure = self._ensure_exists
 
@@ -197,7 +176,7 @@ class _UnsafeSetBase(Command):
         return athunk
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}({self.children[0]!r}, {self.children[1]!r})"
+        return f"{type(self).__name__}({self._children[0]!r}, {self._children[1]!r})"
 
 
 class ItemPrimitiveSetUnsafeCmd(_UnsafeSetBase):
@@ -215,15 +194,10 @@ class ItemPrimitiveSetUnsafeParentSkipCmd(_UnsafeSetBase):
 class ItemPrimitiveDeleteUnsafeCmd(Command):
     """Delete primitive via ``_unsafe_primitive_delete()``."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    @property
-    def ref(self) -> Nu:
-        """The leaf Ref this command targets (slot 0)."""
-        return self.children[0]
-
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         def thunk(rt: Runtime) -> None:
             cnid = _child_nid(rt, nid, 0)
@@ -232,8 +206,8 @@ class ItemPrimitiveDeleteUnsafeCmd(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:
             cnid = _child_nid(rt, nid, 0)
@@ -243,21 +217,16 @@ class ItemPrimitiveDeleteUnsafeCmd(Command):
         return athunk
 
     def __repr__(self) -> str:
-        return f"ItemPrimitiveDeleteUnsafeCmd({self.children[0]!r})"
+        return f"ItemPrimitiveDeleteUnsafeCmd({self._children[0]!r})"
 
 
 class ItemPrimitiveStoreCmd(Command):
     """Store a value via ``_primitive_write()``, bypassing container type checks."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    @property
-    def ref(self) -> Nu:
-        """The leaf Ref this command targets (slot 0)."""
-        return self.children[0]
-
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
         data_thunk = children[1]
 
         def thunk(rt: Runtime) -> None:
@@ -270,8 +239,8 @@ class ItemPrimitiveStoreCmd(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
         data_thunk = children[1]
 
         async def athunk(rt: Runtime) -> None:
@@ -285,4 +254,4 @@ class ItemPrimitiveStoreCmd(Command):
         return athunk
 
     def __repr__(self) -> str:
-        return f"ItemPrimitiveStoreCmd({self.children[0]!r}, {self.children[1]!r})"
+        return f"ItemPrimitiveStoreCmd({self._children[0]!r}, {self._children[1]!r})"

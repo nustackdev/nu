@@ -43,13 +43,13 @@ class ShapesDictRef[K, T: Shape](ReactiveShapesMappingRef["ShapeRef"], ViewRef[d
 
         return ShapeRef(
             address,
-            shape_type=self._item_shape_type,
+            shape_type=self._payload["item_shape_type"],
             view_type=DictView,
             parent_ref=self,
             owner_shape=self._owner_shape,
         )
 
-    def result(self, op: Nu) -> DictForm:
+    def _wrap_result(self, op: Nu) -> DictForm:
         """Wrap a mapping-level op result as a DictForm."""
         return DictForm(op)
 
@@ -92,11 +92,11 @@ class ShapesDictRef[K, T: Shape](ReactiveShapesMappingRef["ShapeRef"], ViewRef[d
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
-        self.payload["segment"] = address
-        self.payload["view_type"] = view_type
-        self.payload["value_type"] = dict
-        self.payload["key_type"] = key_type
-        self.payload["key_value_type"] = key_value_type
+        self._payload["segment"] = address
+        self._payload["type_marker"] = view_type
+        self._payload["value_type"] = dict
+        self._payload["key_type"] = key_type
+        self._payload["key_value_type"] = key_value_type
 
     @classmethod
     def slot[DK, S: Shape](

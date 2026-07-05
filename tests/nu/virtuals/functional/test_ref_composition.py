@@ -153,5 +153,5 @@ def test_primitive_dict_and_list_navigation_reads_payload():
 
     di = V.d["k"]
     li = V.rows[0]
-    assert di._value_type is str
-    assert li._value_type is int
+    assert di._payload["type_marker"] is str
+    assert li._payload["type_marker"] is int

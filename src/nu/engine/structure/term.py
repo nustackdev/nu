@@ -5,7 +5,7 @@ Terms, and an opaque payload. It is pure immutable construction data with
 no parent and no position; an application is a Term-rooted DAG.
 
 The :class:`TermMeta` metaclass collects :class:`Attribute` declarations off
-the class body, populating the per-class :attr:`Term.attributes` mapping.
+the class body, populating the per-class :attr:`Term._attributes` mapping.
 The compile phase consumes this together with the tree-wide
 :class:`~nu.engine.structure.schema.Schema`.
 
@@ -53,7 +53,7 @@ class TermMeta(type):
 
     For each class created, walks the MRO and assembles a flat mapping from
     attribute name to :class:`Attribute` instance, stored as the class
-    attribute ``attributes``. Class-body declarations that omit ``name``
+    attribute ``_attributes``. Class-body declarations that omit ``name``
     inherit it from the binding name.
     """
 
@@ -63,7 +63,7 @@ class TermMeta(type):
         bases: tuple[type, ...],
         namespace: dict[str, object],
     ) -> TermMeta:
-        """Build the class and populate its ``attributes`` mapping."""
+        """Build the class and populate its ``_attributes`` mapping."""
         cls = super().__new__(mcs, name, bases, namespace)
         attributes: dict[str, Declared] = {}
         for klass in reversed(cls.__mro__):
@@ -73,7 +73,7 @@ class TermMeta(type):
                 if value.name is None:
                     value.name = key
                 attributes[value.name] = value  # type: ignore[assignment]
-        cls.attributes = attributes  # type: ignore
+        cls._attributes = attributes  # type: ignore
         return cls
 
 
@@ -85,9 +85,9 @@ class Term(Generic[R_contra, V_co], metaclass=TermMeta):  # noqa: UP046  # PEP 6
     Attribute values and runtime thunks are produced later by the compile
     phase and live on the resulting Program.
 
-    Subclasses override :meth:`compile` (and :meth:`acompile` for the async
+    Subclasses override :meth:`_compile` (and :meth:`_acompile` for the async
     path) to emit a thunk that consumes precompiled child thunks. The
-    fallback default invokes :meth:`eval` / :meth:`aeval`, which raise
+    fallback default invokes :meth:`_eval` / :meth:`_aeval`, which raise
     ``NotImplementedError`` on the base Term -- a concrete kind must
     implement at least one of the two paths.
 
@@ -99,92 +99,108 @@ class Term(Generic[R_contra, V_co], metaclass=TermMeta):  # noqa: UP046  # PEP 6
       the bare :class:`Runtime` Protocol.
     - ``V_co`` -- the value type this Term yields. **Covariant** since
       ``V`` appears only in output positions. The sync thunk returned by
-      :meth:`compile` is ``(R) -> V``; the async thunk returned by
-      :meth:`acompile` is ``(R) -> Awaitable[V]``.
+      :meth:`_compile` is ``(R) -> V``; the async thunk returned by
+      :meth:`_acompile` is ``(R) -> Awaitable[V]``.
     """
 
-    attributes: ClassVar[dict[str, Declared]]
+    _attributes: ClassVar[dict[str, Declared]]
     """Per-class mapping ``name -> Declared``, populated by :class:`TermMeta`."""
 
     def __init__(self, *children: Term) -> None:
-        self.children: tuple[Term, ...] = children
-        self.payload: dict[str, object] = {}
+        self._children: tuple[Term, ...] = children
+        self._payload: dict[str, object] = {}
 
     # --- construction -------------------------------------------------------
 
-    def with_children(self, *children: Term) -> Self:
+    def _with_children(self, *children: Term) -> Self:
         """Return a variant of this Term with different children.
 
         The original is untouched; the variant shares the same payload.
         """
         variant = object.__new__(type(self))
-        variant.children = children
-        variant.payload = self.payload
+        variant._children = children
+        variant._payload = self._payload
         return variant
 
     # --- compile hooks ------------------------------------------------------
 
-    def compile(
+    def _compile(
         self, nid: int, children: tuple[Callable[[R_contra], object], ...]
     ) -> Callable[[R_contra], V_co]:
         """Build a sync thunk ``(rt) -> V`` for this Term at ``nid``.
 
         ``children`` is the tuple of precompiled child thunks. Atoms on the
         hot path override this to capture ``children`` and call them
-        directly, skipping the ``Runtime.eval`` / ``terms[nid].eval`` double
-        indirection. The default delegates to :meth:`eval`.
+        directly, skipping the ``Runtime.eval`` / ``terms[nid]._eval`` double
+        indirection. The default delegates to :meth:`_eval`.
         """
 
         def thunk(rt: R_contra) -> V_co:
-            return self.eval(rt, nid)
+            return self._eval(rt, nid)
 
         return thunk
 
-    def acompile(
+    def _acompile(
         self, nid: int, children: tuple[Callable[[R_contra], object], ...]
     ) -> Callable[[R_contra], Awaitable[V_co]]:
         """Build an async thunk ``(rt) -> Awaitable[V]`` for this Term at ``nid``.
 
         ``children`` is the tuple of precompiled async child thunks. Atoms
         on the hot path override this to capture ``children`` and call them
-        directly; the default delegates to :meth:`aeval`.
+        directly; the default delegates to :meth:`_aeval`.
         """
 
         async def athunk(rt: R_contra) -> V_co:
-            return await self.aeval(rt, nid)
+            return await self._aeval(rt, nid)
 
         return athunk
 
     # --- evaluation fallbacks ----------------------------------------------
 
-    def eval(self, rt: R_contra, nid: int) -> V_co:
-        """Synchronous evaluation hook for the default :meth:`compile` thunk.
+    def _eval(self, rt: R_contra, nid: int) -> V_co:
+        """Synchronous evaluation hook for the default :meth:`_compile` thunk.
 
-        Concrete Terms either override :meth:`compile` (typical, hot path)
+        Concrete Terms either override :meth:`_compile` (typical, hot path)
         or override this; the base raises so a missing implementation
         surfaces as a clear error rather than at thunk-call time with a
         cryptic attribute lookup.
         """
-        msg = f"{type(self).__name__}.eval is not implemented"
+        msg = f"{type(self).__name__}._eval is not implemented"
         raise NotImplementedError(msg)
 
-    async def aeval(self, rt: R_contra, nid: int) -> V_co:
-        """Asynchronous sibling of :meth:`eval`.
+    async def _aeval(self, rt: R_contra, nid: int) -> V_co:
+        """Asynchronous sibling of :meth:`_eval`.
 
-        Concrete Terms either override :meth:`acompile` or override this;
+        Concrete Terms either override :meth:`_acompile` or override this;
         the base raises.
         """
-        msg = f"{type(self).__name__}.aeval is not implemented"
+        msg = f"{type(self).__name__}._aeval is not implemented"
         raise NotImplementedError(msg)
+
+    # --- pickle -------------------------------------------------------------
+
+    def __getstate__(self) -> dict:
+        """Return instance state for pickle.
+
+        Subclasses that override ``__getattr__`` (e.g. ``ShapeRef``,
+        ``SectionRef``) would infinite-loop vanilla pickle since pickle
+        probes for ``__getstate__`` / ``__setstate__`` via ``__getattr__``.
+        Defining these on the base short-circuits that lookup.
+        """
+        return self.__dict__.copy()
+
+    def __setstate__(self, state: dict) -> None:
+        """Restore instance state from pickle without triggering ``__getattr__``."""
+        self.__dict__.update(state)
 
     # --- repr ---------------------------------------------------------------
 
     def __repr__(self) -> str:
-        if "name" in self.payload:
-            return str(self.payload["name"])
-        if "value" in self.payload:
-            return repr(self.payload["value"])
-        if not self.children:
+        if "name" in self._payload:
+            return str(self._payload["name"])
+        if "value" in self._payload:
+            return repr(self._payload["value"])
+        if not self._children:
             return type(self).__name__
-        inner = ", ".join(repr(child) for child in self.children)
+        inner = ", ".join(repr(child) for child in self._children)
         return f"{type(self).__name__}({inner})"

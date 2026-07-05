@@ -15,7 +15,7 @@ def _is_leaf(n):
 
 
 def _val(v):
-    return lambda n: isinstance(n, LiteralQuery) and n.payload["value"] == v
+    return lambda n: isinstance(n, LiteralQuery) and n._payload["value"] == v
 
 
 def _tree():
@@ -30,13 +30,13 @@ def _tree():
 def test_find_returns_all_matches_in_preorder():
     root = _tree()
     found = find(root, _is_leaf)
-    assert [n.payload["value"] for n in found] == [1, 2, 3, 4]
+    assert [n._payload["value"] for n in found] == [1, 2, 3, 4]
 
 
 def test_find_first_returns_first_preorder_match():
     root = _tree()
     node = find_first(root, _is_leaf)
-    assert node.payload["value"] == 1
+    assert node._payload["value"] == 1
 
 
 def test_find_first_returns_none_when_no_match():

@@ -30,13 +30,14 @@ class _FieldsetMountRef(NudleRef):
 
     def __init__(self, *, section_cls: type[Section]) -> None:
         super().__init__(address=None, owner_shape=section_cls)
-        self.payload["section_cls"] = section_cls
+        self._payload["section_cls"] = section_cls
 
     async def aresolve_address(self, ctx: Context) -> str:
-        mount = getattr(self._section_cls, "_nudle_mount", None)
+        section_cls = self._payload.get("section_cls")
+        mount = getattr(section_cls, "_nudle_mount", None)
         if mount is None:
             raise RuntimeError(
-                f"Fieldset {self._section_cls.__name__} has no mount point. "
+                f"Fieldset {section_cls.__name__} has no mount point. "
                 "Did you forget to declare it on a Page slot?",
             )
         page_cls, slot_path = mount

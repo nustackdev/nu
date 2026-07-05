@@ -20,7 +20,7 @@ from nu.lang import Command, Control, ScalarAction, ScalarQuery, Strategy, Strea
 class QWrite(ScalarQuery):
     """A ScalarQuery that wrongly declares a mutation slot."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
 
 class CmdNoWrite(Command):
@@ -42,7 +42,7 @@ class FlowCQ(Control):
 class FlowCParam(Control):
     """A Control whose slot 0 is a yielding param; slot 1+ is body."""
 
-    param_slots = Declared(value=frozenset({0}))
+    _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
 
 class FlowSDirect(Strategy):

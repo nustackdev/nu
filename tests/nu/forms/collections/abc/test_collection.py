@@ -34,4 +34,4 @@ def test_set_ref_extract_returns_extract_query():
 def test_extract_query_wraps_ref():
     ref = MappingRef("data")
     result = ref.extract()
-    assert result.children[0] is ref
+    assert result._children[0] is ref

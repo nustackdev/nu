@@ -54,7 +54,7 @@ class IfDo(Control):
     condition parameter; the body slots hold mutating children.
     """
 
-    param_slots = Declared(value=frozenset({0}))
+    _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
     def __init__(self, cond: object, then: object, else_: object = None) -> None:
         if else_ is not None:
@@ -62,7 +62,7 @@ class IfDo(Control):
         else:
             super().__init__(cond, then)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         cond = children[0]
 
         def thunk(rt: Runtime) -> None:
@@ -73,7 +73,7 @@ class IfDo(Control):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         cond = children[0]
 
         async def athunk(rt: Runtime) -> None:
@@ -92,9 +92,9 @@ class WhileDo(Control):
     each turn; slot 1 is the body.
     """
 
-    param_slots = Declared(value=frozenset({0}))
+    _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         cond, body = children
 
         def thunk(rt: Runtime) -> None:
@@ -103,7 +103,7 @@ class WhileDo(Control):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         cond, body = children
 
         async def athunk(rt: Runtime) -> None:
@@ -120,7 +120,7 @@ class ForeverDo(Control):
     empty default.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (body,) = children
 
         def thunk(rt: Runtime) -> None:
@@ -129,7 +129,7 @@ class ForeverDo(Control):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (body,) = children
 
         async def athunk(rt: Runtime) -> None:
@@ -148,12 +148,12 @@ class ForEachDo(Control):
     are parameters; slot 1 is the body.
     """
 
-    param_slots = Declared(value=frozenset({0, 2}))
+    _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
 
     def __init__(self, items: object, body: object, item: object = "item") -> None:
         super().__init__(items, body, item)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         items_t, body, key_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -164,7 +164,7 @@ class ForEachDo(Control):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         items_t, body, key_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -185,7 +185,7 @@ class ForRangeDo(Control):
     parameters; slot 3 is the body.
     """
 
-    param_slots = Declared(value=frozenset({0, 1, 2, 4}))
+    _param_slots = Declared(value=frozenset({0, 1, 2, 4}), name="param_slots")
 
     def __init__(
         self,
@@ -198,7 +198,7 @@ class ForRangeDo(Control):
     ) -> None:
         super().__init__(start, stop, step, body, index)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         start_t, stop_t, step_t, body, index_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -209,7 +209,7 @@ class ForRangeDo(Control):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         start_t, stop_t, step_t, body, index_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -230,9 +230,9 @@ class Delay(Control):
     For "wait, then run something", use ``DelayedDo`` or ``Delay(s) >> body``.
     """
 
-    param_slots = Declared(value=frozenset({0}))
+    _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (delay_t,) = children
 
         def thunk(rt: Runtime) -> None:
@@ -240,7 +240,7 @@ class Delay(Control):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (delay_t,) = children
 
         async def athunk(rt: Runtime) -> None:
@@ -257,9 +257,9 @@ class DelayedDo(Control):
     sugar for ``Delay(delay) >> body``; for a bare wait, use ``Delay``.
     """
 
-    param_slots = Declared(value=frozenset({0}))
+    _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         delay_t, body = children
 
         def thunk(rt: Runtime) -> None:
@@ -268,7 +268,7 @@ class DelayedDo(Control):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         delay_t, body = children
 
         async def athunk(rt: Runtime) -> None:
@@ -288,7 +288,7 @@ class SwitchDo(Control):
     runs its body; failing any match, the optional default runs.
     """
 
-    param_slots = Declared(value=frozenset({0}))
+    _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
     def __init__(
         self,
@@ -300,14 +300,14 @@ class SwitchDo(Control):
         if default is not None:
             bodies.append(default)
         super().__init__(selector, *bodies)
-        self.payload["keys"] = tuple(cases.keys())
-        self.payload["has_default"] = default is not None
+        self._payload["keys"] = tuple(cases.keys())
+        self._payload["has_default"] = default is not None
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         selector = children[0]
         bodies = children[1:]
-        keys = self.payload["keys"]
-        has_default = self.payload["has_default"]
+        keys = self._payload["keys"]
+        has_default = self._payload["has_default"]
 
         def thunk(rt: Runtime) -> None:
             value = selector(rt)
@@ -320,11 +320,11 @@ class SwitchDo(Control):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         selector = children[0]
         bodies = children[1:]
-        keys = self.payload["keys"]
-        has_default = self.payload["has_default"]
+        keys = self._payload["keys"]
+        has_default = self._payload["has_default"]
 
         async def athunk(rt: Runtime) -> None:
             value = await selector(rt)

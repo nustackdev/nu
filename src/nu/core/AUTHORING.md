@@ -75,7 +75,7 @@ class AttrRef(Ref):
 # context/interactions.py - the Command delegates to the ref, declares the slot.
 # It passes the ref's node id so the ref resolves its own address.
 class SetCommand(Command):
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
     def compile(self, nid, children):
         ref = self.children[0]; value = children[1]
         def thunk(rt):

@@ -39,7 +39,7 @@ def test_noop_is_an_empty_strategy() -> None:
     program = compile(Noop())
     assert program.attr(program.root, Attr.SORT) is Sort.STRATEGY
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.VOID
-    assert not Noop().children
+    assert not Noop()._children
 
 
 def test_noop_yields_none() -> None:

@@ -70,8 +70,8 @@ def _count(tree, cls, scope_sentinel=object()) -> int:  # noqa: B008
                 n += 1
             elif node.scope is scope_sentinel:
                 n += 1
-        if node.children:
-            stack.extend(node.children)
+        if node._children:
+            stack.extend(node._children)
     return n
 
 
@@ -83,9 +83,9 @@ def _collect(tree, cls):
         node = stack.pop()
         if isinstance(node, cls):
             out.append(node)
-        if node.children:
+        if node._children:
             # reverse to keep pre-order-ish
-            stack.extend(reversed(node.children))
+            stack.extend(reversed(node._children))
     return out
 
 
@@ -98,11 +98,11 @@ def _structure(tree) -> str:
     if isinstance(tree, (Transaction, Snapshot)):
         scope_name = tree.scope.__name__ if hasattr(tree.scope, "__name__") else repr(tree.scope)
         cls_name = type(tree).__name__
-        inner = ",".join(_structure(c) for c in tree.children if not isinstance(c, type(None)))
+        inner = ",".join(_structure(c) for c in tree._children if not isinstance(c, type(None)))
         return f"{cls_name}({scope_name}){{{inner}}}"
-    if not tree.children:
+    if not tree._children:
         return ""
-    parts = [_structure(c) for c in tree.children]
+    parts = [_structure(c) for c in tree._children]
     parts = [p for p in parts if p]
     return ",".join(parts)
 
@@ -231,7 +231,7 @@ def test_bracket_over_bare_ref_with_mismatched_scope_gets_external_wrapped() -> 
     ref's own shape must trigger an outer wrap under the covering scope.
 
     Regression: an earlier iteration of ``_iter_uncovered`` only inspected
-    ``node.children`` and missed the case where the walked subtree IS a
+    ``node._children`` and missed the case where the walked subtree IS a
     virtuals Ref, so a bare-Ref-body inside a mismatched-scope bracket
     silently escaped external-wrapping.
     """

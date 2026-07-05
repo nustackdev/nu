@@ -41,20 +41,20 @@ def _normalize_tabs(raw: object) -> list[dict[str, str]]:
 
 
 class _StoreTabs(Command):
-    mutates = Declared(value=frozenset({0}))
-    requires_async = Declared(value=True)
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, ref: NudleRef, value: Nu | Any) -> None:
         super().__init__(ref, value)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
             raise RuntimeError("nudle is async-only; use nu.arun")
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref: NudleRef = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: NudleRef = self._children[0]
         value_thunk = children[1]
 
         async def athunk(rt: Runtime) -> None:
@@ -70,20 +70,20 @@ class _StoreTabs(Command):
 
 
 class _StoreActive(Command):
-    mutates = Declared(value=frozenset({0}))
-    requires_async = Declared(value=True)
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, ref: NudleRef, value: Nu | Any) -> None:
         super().__init__(ref, value)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
             raise RuntimeError("nudle is async-only; use nu.arun")
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref: NudleRef = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: NudleRef = self._children[0]
         value_thunk = children[1]
 
         async def athunk(rt: Runtime) -> None:
@@ -106,13 +106,14 @@ class _TabsMountRef(NudleRef):
 
     def __init__(self, *, section_cls: type[Section]) -> None:
         super().__init__(None, owner_shape=section_cls)
-        self.payload["section_cls"] = section_cls
+        self._payload["section_cls"] = section_cls
 
     async def _aresolve_address(self, rt: Runtime, nid: int) -> str:
-        mount = getattr(self._section_cls, "_nudle_mount", None)
+        section_cls = self._payload.get("section_cls")
+        mount = getattr(section_cls, "_nudle_mount", None)
         if mount is None:
             raise RuntimeError(
-                f"TabsRef {self._section_cls.__name__} has no mount point. "
+                f"TabsRef {section_cls.__name__} has no mount point. "
                 "Did you forget to declare it on a Page slot?",
             )
         page_cls, slot_path = mount

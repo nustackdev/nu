@@ -34,19 +34,19 @@ __all__ = ["Changed"]
 class Changed(ScalarQuery):
     """Subscribe to browser-side change notifications on a nudle Ref."""
 
-    requires_async = Declared(value=True)
+    _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, ref: NudleRef) -> None:
         super().__init__(ref)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> Subscription:
             raise RuntimeError("nudle is async-only; use nu.arun")
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref: NudleRef = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: NudleRef = self._children[0]
 
         async def athunk(rt: Runtime) -> Subscription:
             session = rt.ctx.get(NudleSession)
@@ -57,4 +57,4 @@ class Changed(ScalarQuery):
         return athunk
 
     def __repr__(self) -> str:
-        return f"Changed({self.children[0]!r})"
+        return f"Changed({self._children[0]!r})"

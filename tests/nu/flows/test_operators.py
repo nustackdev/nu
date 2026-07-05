@@ -24,19 +24,19 @@ def _set(name: str, value: object) -> SetCommand:
 def test_rshift_builds_sequential() -> None:
     tree = _set("a", 1) >> _set("b", 2)
     assert isinstance(tree, Sequential)
-    assert len(tree.children) == 2
+    assert len(tree._children) == 2
 
 
 def test_or_builds_parallel() -> None:
     tree = _set("a", 1) | _set("b", 2)
     assert isinstance(tree, Parallel)
-    assert len(tree.children) == 2
+    assert len(tree._children) == 2
 
 
 def test_and_builds_race() -> None:
     tree = _set("a", 1) & _set("b", 2)
     assert isinstance(tree, Race)
-    assert len(tree.children) == 2
+    assert len(tree._children) == 2
 
 
 # --- chaining nests left-to-right -----------------------------------------
@@ -46,7 +46,7 @@ def test_rshift_chain_nests_left() -> None:
     # a >> b >> c == Sequential(Sequential(a, b), c)
     tree = _set("a", 1) >> _set("b", 2) >> _set("c", 3)
     assert isinstance(tree, Sequential)
-    left, right = tree.children
+    left, right = tree._children
     assert isinstance(left, Sequential)
     assert isinstance(right, SetCommand)
 

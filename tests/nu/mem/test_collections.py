@@ -57,7 +57,7 @@ class TestDictRefViewTypes:
         assert isinstance(items, DictItemsForm)
 
     def test_result_returns_dict_value(self):
-        result = PortfolioShape.metadata.result(LiteralQuery("dummy"))
+        result = PortfolioShape.metadata._wrap_result(LiteralQuery("dummy"))
         assert isinstance(result, DictForm)
 
 

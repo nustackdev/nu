@@ -34,7 +34,7 @@ def test_mapping_ref_subscript_key_is_address():
     m = MappingRef("my_map")
     child = m["abc"]
     # address is children[0] of the child ref
-    assert child.children  # non-empty
+    assert child._children  # non-empty
 
 
 def test_mapping_ref_child_has_self_as_parent():

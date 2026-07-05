@@ -69,18 +69,18 @@ def test_section_navigation_unknown_slot_raises():
 
 def test_with_children_preserves_section_state():
     ref = SectionRef("panel", section_cls=Panel, owner_shape=Panel)
-    variant = ref.with_children(*ref.children)
+    variant = ref._with_children(*ref._children)
     assert type(variant) is SectionRef
-    assert variant._segment == ref._segment
-    assert variant._section_cls is Panel
+    assert variant._payload["segment"] == ref._payload["segment"]
+    assert variant._payload["section_cls"] is Panel
     assert variant._owner_shape is Panel
 
 
 def test_with_children_preserves_leaf_segment():
     child = SectionRef("panel", section_cls=Panel, owner_shape=Panel).label
-    variant = child.with_children(*child.children)
+    variant = child._with_children(*child._children)
     assert type(variant) is TextRef
-    assert variant._segment == child._segment
+    assert variant._payload["segment"] == child._payload["segment"]
 
 
 # --- wire path resolution + frame emission (through a fake session) ---------

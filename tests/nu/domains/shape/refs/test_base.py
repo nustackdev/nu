@@ -1,7 +1,7 @@
 """Tests for StructuredRef: the abstract base for shape-fabric Refs.
 
 Covers construction, navigation properties (parent_ref, owner_shape, root_shape),
-and the deferred substrate contract (afetch_parent / aresolve_address raise
+and the deferred substrate contract (_afetch_parent / _aresolve_address raise
 NotImplementedError). Runtime-driven address resolution is skipped — substrate phase.
 """
 
@@ -25,7 +25,7 @@ class SomeShape(Shape):
 
 def test_structured_ref_constructs_with_address():
     ref = StructuredRef("mykey")
-    assert ref.children  # address is children[0]
+    assert ref._children  # address is children[0]
 
 
 def test_structured_ref_parent_ref_defaults_to_none():
@@ -78,13 +78,13 @@ def test_root_shape_is_none_when_no_owner_and_no_parent():
 @pytest.mark.skip(reason="substrate impl deferred — needs a real Runtime + nid")
 async def test_afetch_parent_raises():
     ref = StructuredRef("x")
-    await ref.afetch_parent(None, 0)  # type: ignore[arg-type]
+    await ref._afetch_parent(None, 0)  # type: ignore[arg-type]
 
 
 @pytest.mark.skip(reason="substrate impl deferred — needs a real Runtime + nid")
 async def test_aresolve_address_raises():
     ref = StructuredRef("x")
-    await ref.aresolve_address(None, 0)  # type: ignore[arg-type]
+    await ref._aresolve_address(None, 0)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------

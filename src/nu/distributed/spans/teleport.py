@@ -63,24 +63,24 @@ class Teleport(Policy):
             execution.
     """
 
-    requires_async = Declared(value=True)
+    _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, body: Nu, *, worker: object = 0, carry: bool = False) -> None:
         super().__init__(body)
-        self.payload["worker"] = worker
-        self.payload["carry"] = carry
+        self._payload["worker"] = worker
+        self._payload["carry"] = carry
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
             msg = "Teleport requires the async runtime; use arun / afirst / acollect"
             raise RuntimeError(msg)
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        body_term = self.children[0]
-        worker_tag = self.payload["worker"]
-        carry = self.payload["carry"]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        body_term = self._children[0]
+        worker_tag = self._payload["worker"]
+        carry = self._payload["carry"]
 
         async def athunk(rt: Runtime) -> object:
             from ..resources.worker import Worker
@@ -97,5 +97,5 @@ class Teleport(Policy):
         return athunk
 
     def __repr__(self) -> str:
-        carry = ", carry=True" if self.payload.get("carry") else ""
-        return f"Teleport(worker={self.payload.get('worker')!r}{carry})"
+        carry = ", carry=True" if self._payload.get("carry") else ""
+        return f"Teleport(worker={self._payload.get('worker')!r}{carry})"

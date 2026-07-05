@@ -35,13 +35,13 @@ class ShapesListRef[T: Shape](ReactiveShapesSequenceRef["ShapeRef"], ViewRef[lis
 
         return ShapeRef(
             address,
-            shape_type=self._item_shape_type,
+            shape_type=self._payload["item_shape_type"],
             view_type=DictView,
             parent_ref=self,
             owner_shape=self._owner_shape,
         )
 
-    def result(self, op: Nu) -> ListForm:
+    def _wrap_result(self, op: Nu) -> ListForm:
         """Wrap a sequence-level op result as a ListForm."""
         return ListForm(op)
 
@@ -73,9 +73,9 @@ class ShapesListRef[T: Shape](ReactiveShapesSequenceRef["ShapeRef"], ViewRef[lis
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
-        self.payload["segment"] = address
-        self.payload["view_type"] = view_type
-        self.payload["item_type"] = dict
+        self._payload["segment"] = address
+        self._payload["type_marker"] = view_type
+        self._payload["item_type"] = dict
 
     @classmethod
     def slot[S: Shape](

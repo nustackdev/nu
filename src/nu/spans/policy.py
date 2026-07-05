@@ -159,18 +159,18 @@ class TryCatch(Policy):
             finally_ if finally_ is not None else Noop(),
             error_key,
         )
-        self.payload["errors"] = errors
+        self._payload["errors"] = errors
 
     def _branches(self, children: tuple[Callable, ...]) -> tuple[Callable, Callable | None, Callable | None]:
         """Resolve ``(body, catch, finally_)`` thunks; ``Noop`` slots read None."""
-        catch = None if isinstance(self.children[1], Noop) else children[1]
-        finally_ = None if isinstance(self.children[2], Noop) else children[2]
+        catch = None if isinstance(self._children[1], Noop) else children[1]
+        finally_ = None if isinstance(self._children[2], Noop) else children[2]
         return children[0], catch, finally_
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         body, catch, finally_ = self._branches(children)
         error_key = children[3]
-        errors = self.payload["errors"]
+        errors = self._payload["errors"]
 
         if catch is None and finally_ is None:
             return body  # nothing to wrap: the body is the whole behaviour
@@ -216,10 +216,10 @@ class TryCatch(Policy):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         body, catch, finally_ = self._branches(children)
         error_key = children[3]
-        errors = self.payload["errors"]
+        errors = self._payload["errors"]
 
         if catch is None and finally_ is None:
             return body
@@ -330,19 +330,19 @@ class Retry(Policy):
             error_key,
             attempt_key,
         )
-        self.payload["errors"] = errors
+        self._payload["errors"] = errors
 
     def _hooks(self, children: tuple[Callable, ...]) -> tuple[Callable | None, Callable | None, Callable | None]:
         """Resolve ``(on_attempt_fail, on_success, on_fail)`` thunks; ``Noop`` slots read None."""
-        oaf = None if isinstance(self.children[5], Noop) else children[5]
-        osc = None if isinstance(self.children[6], Noop) else children[6]
-        ofl = None if isinstance(self.children[7], Noop) else children[7]
+        oaf = None if isinstance(self._children[5], Noop) else children[5]
+        osc = None if isinstance(self._children[6], Noop) else children[6]
+        ofl = None if isinstance(self._children[7], Noop) else children[7]
         return oaf, osc, ofl
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         body = children[0]
         max_attempts_q = children[1]
-        errors = self.payload["errors"]
+        errors = self._payload["errors"]
 
         def thunk(rt: Runtime) -> object:
             attempts = max(1, int(max_attempts_q(rt)))
@@ -361,12 +361,12 @@ class Retry(Policy):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         body = children[0]
         max_attempts_q, delay_q, backoff_q, jitter_q = children[1], children[2], children[3], children[4]
         oaf, osc, ofl = self._hooks(children)
         error_key, attempt_key = children[8], children[9]
-        errors = self.payload["errors"]
+        errors = self._payload["errors"]
 
         async def athunk(rt: Runtime) -> object:
             attempts = max(1, int(await max_attempts_q(rt)))
@@ -430,17 +430,17 @@ class Timeout(Policy):
     the thread.
     """
 
-    requires_async = Declared(value=True)
+    _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, timeout: FloatArg, body: Nu, on_timeout: Flow | Command | Span | None = None) -> None:
         super().__init__(body, timeout, on_timeout if on_timeout is not None else Noop())
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         return _async_backstop("Timeout")
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         body, timeout_q = children[0], children[1]
-        on_timeout = None if isinstance(self.children[2], Noop) else children[2]
+        on_timeout = None if isinstance(self._children[2], Noop) else children[2]
 
         async def athunk(rt: Runtime) -> object:
             timeout = float(await timeout_q(rt))
@@ -465,15 +465,15 @@ class Throttle(Policy):
     Meaningful only under repeated invocation (a loop / reactive).
     """
 
-    requires_async = Declared(value=True)
+    _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, interval: FloatArg, body: Nu) -> None:
         super().__init__(body, interval)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         return _async_backstop("Throttle")
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         body, interval_q = children[0], children[1]
         state_key = f"__throttle_last_{nid}__"
 
@@ -498,15 +498,15 @@ class Debounce(Policy):
     the body runs later, detached. Meaningful only under repeated invocation.
     """
 
-    requires_async = Declared(value=True)
+    _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, delay: FloatArg, body: Nu) -> None:
         super().__init__(body, delay)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         return _async_backstop("Debounce")
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         body, delay_q = children[0], children[1]
         state_key = f"__debounce_pending_{nid}__"
 

@@ -18,7 +18,7 @@ from nu.lang.helpers._guard import refuse_async_only
 class AsyncOnly(ScalarQuery):
     """An inline ScalarQuery declaring requires_async."""
 
-    requires_async = Declared(value=True)
+    _requires_async = Declared(value=True, name="requires_async")
 
 
 def test_refuse_async_only_passes_for_sync_program():

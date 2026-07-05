@@ -109,7 +109,7 @@ def test_shape_ref_slot_navigation():
 
     ref = Outer.inner
     assert isinstance(ref, ShapeRef)
-    assert ref._shape_type is Inner
+    assert ref._payload["shape_type"] is Inner
 
 
 # ---------------------------------------------------------------------------

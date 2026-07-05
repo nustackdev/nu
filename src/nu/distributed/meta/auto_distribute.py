@@ -49,21 +49,21 @@ def auto_distribute(
     def _rewrite(node: Nu) -> Nu:
         if not isinstance(node, _CONCURRENT_OPS):
             return node
-        if not node.children:
+        if not node._children:
             return node
 
         new_children: list = []
         changed = False
-        for i, child in enumerate(node.children):
+        for i, child in enumerate(node._children):
             if isinstance(child, Teleport):
                 new_children.append(child)
             else:
-                tag = strategy(i, len(node.children))
+                tag = strategy(i, len(node._children))
                 new_children.append(Teleport(child, worker=tag))
                 changed = True
 
         if not changed:
             return node
-        return node.with_children(*new_children)
+        return node._with_children(*new_children)
 
     return map_nodes(tree, _rewrite, order="bottom_up")

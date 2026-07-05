@@ -29,7 +29,7 @@ class CheckboxRef(NudleRef):
     def mount_props(cls) -> dict[str, object]:
         return {"label": cls.label, "checked": cls.checked}
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
             return await self._aread(rt, nid)
 

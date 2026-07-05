@@ -37,7 +37,7 @@ __all__ = ["NudleRef"]
 class NudleRef(StructuredRef):
     """Base for Refs that live in a browser tab over ws. Async-only."""
 
-    requires_async = Declared(value=True)
+    _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(
         self,
@@ -48,17 +48,8 @@ class NudleRef(StructuredRef):
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
         # State lives in ``payload`` (part of the Term identity) so the base
-        # ``Term.with_children`` carries it across a tree rewrite — no override.
-        self.payload["segment"] = address
-
-    @property
-    def _segment(self) -> object:
-        return self.payload.get("segment")
-
-    @property
-    def _section_cls(self) -> object:
-        """Section class bound to this Ref (mount/section Refs set it in payload)."""
-        return self.payload.get("section_cls")
+        # ``Term._with_children`` carries it across a tree rewrite — no override.
+        self._payload["segment"] = address
 
     # --- wire-path resolution ------------------------------------------------
 
@@ -101,13 +92,13 @@ class NudleRef(StructuredRef):
 
     # --- execution (async-only) ----------------------------------------------
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> Any:
             raise RuntimeError("nudle is async-only; use nu.arun")
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
             raise NotImplementedError(
                 f"{type(self).__name__} is display-only; reading is not supported",

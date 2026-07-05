@@ -65,19 +65,19 @@ class Red(Reduction):
 class Cmd(Command):
     """A bare Command. Slot 0 is the Ref it writes."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
 
 class Act(ScalarAction):
     """A bare ScalarAction. Slot 0 is the Ref it writes; yields a value."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
 
 class StreamAct(StreamAction):
     """A bare StreamAction. Slot 0 is the Ref it writes; yields a stream."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
 
 class FlowS(Strategy):
@@ -107,7 +107,7 @@ class R(Ref):
 
     def __init__(self, name: str = "x") -> None:
         super().__init__()
-        self.payload = {"name": name}
+        self._payload = {"name": name}
 
 
 class R2(Ref):
@@ -119,4 +119,4 @@ class R2(Ref):
 
     def __init__(self, name: str = "y") -> None:
         super().__init__()
-        self.payload = {"name": name}
+        self._payload = {"name": name}

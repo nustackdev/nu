@@ -71,7 +71,7 @@ def _stream(iterable: Arg[Iterable]) -> Nu:
     is opened with ``IterQuery``.
     """
     if isinstance(iterable, IteratorForm):
-        return cast("Nu", iterable.children[0])
+        return cast("Nu", iterable._children[0])
     return IterQuery(iterable)
 
 

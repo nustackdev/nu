@@ -52,11 +52,11 @@ class Stream(StreamQuery):
         change = OnChildrenChangeQuery(source)
         super().__init__(advance, change, body, key, log_key)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         msg = "Stream requires async runtime"
         raise NotImplementedError(msg)
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
             key = await children[3](rt)
             log_key = await children[4](rt)

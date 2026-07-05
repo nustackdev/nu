@@ -46,13 +46,13 @@ def iter_effects(node: Nu) -> Iterator[tuple[Ref, Effect]]:
     inside a structural subtree are collected. Pre-compilation tree walk -- no
     Program needed.
     """
-    attrs = type(node).attributes
+    attrs = type(node)._attributes
     mutated_slots: frozenset[int] = getattr(attrs.get("mutates"), "value", frozenset())
     structural_slots: frozenset[int] = getattr(attrs.get("structural"), "value", frozenset())
-    for slot, child in enumerate(node.children):
+    for slot, child in enumerate(node._children):
         if isinstance(child, Ref) and slot not in structural_slots:
             yield child, Effect.WRITE if slot in mutated_slots else Effect.READ
-    for child in node.children:
+    for child in node._children:
         yield from iter_effects(child)
 
 

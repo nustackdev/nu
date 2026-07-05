@@ -37,7 +37,7 @@ _VirtualsRef = (ViewRef, PrimitiveRef)
 
 
 def _write_positions(node: object) -> frozenset[int]:
-    attrs = getattr(type(node), "attributes", None)
+    attrs = getattr(type(node), "_attributes", None)
     if not attrs or "mutates" not in attrs:
         return frozenset()
     value = attrs["mutates"].value
@@ -78,7 +78,7 @@ def _iter_uncovered(
     """
     if isinstance(node, (Snapshot, Transaction)):
         inner = (*enclosing, node.scope)
-        for c in node.children:
+        for c in node._children:
             yield from _iter_uncovered(c, pass_scope, inner, _top=True)
         return
     if _top and isinstance(node, _VirtualsRef):
@@ -88,7 +88,7 @@ def _iter_uncovered(
         ):
             yield node, False
     mutates = _write_positions(node)
-    for slot, child in enumerate(node.children):
+    for slot, child in enumerate(node._children):
         if isinstance(child, _VirtualsRef):
             ref_scope = child._root_shape
             if _dominates(pass_scope, ref_scope) and not _covered_by_enclosing(
@@ -127,9 +127,9 @@ def _wrap_flow_child(
         # walk has already added internal wraps for anything the descent
         # found, so anything still uncovered here needs an outer wrap.
         inner = (*enclosing, child.scope)
-        if not _has_uncovered_ref(child.children[0], pass_scope, inner):
+        if not _has_uncovered_ref(child._children[0], pass_scope, inner):
             return child
-        if _has_uncovered_write(child.children[0], pass_scope, inner):
+        if _has_uncovered_write(child._children[0], pass_scope, inner):
             return Transaction(child, **_wrap_kwargs(pass_scope))
         return Snapshot(child, **_wrap_kwargs(pass_scope))
 
@@ -148,26 +148,26 @@ def _walk(
             # Brace covers everything the pass cares about — skip descent.
             return node
         inner = (*enclosing, node.scope)
-        new_children = tuple(_walk(c, pass_scope, inner) for c in node.children)
-        if all(n is o for n, o in zip(new_children, node.children, strict=True)):
+        new_children = tuple(_walk(c, pass_scope, inner) for c in node._children)
+        if all(n is o for n, o in zip(new_children, node._children, strict=True)):
             return node
-        return node.with_children(*new_children)
+        return node._with_children(*new_children)
 
-    if not node.children:
+    if not node._children:
         return node
 
-    new_children = tuple(_walk(c, pass_scope, enclosing) for c in node.children)
+    new_children = tuple(_walk(c, pass_scope, enclosing) for c in node._children)
     changed = any(
-        n is not o for n, o in zip(new_children, node.children, strict=True)
+        n is not o for n, o in zip(new_children, node._children, strict=True)
     )
-    new_node = node.with_children(*new_children) if changed else node
+    new_node = node._with_children(*new_children) if changed else node
 
     if isinstance(new_node, Flow):
         wrapped = tuple(
-            _wrap_flow_child(c, pass_scope, enclosing) for c in new_node.children
+            _wrap_flow_child(c, pass_scope, enclosing) for c in new_node._children
         )
-        if any(w is not c for w, c in zip(wrapped, new_node.children, strict=True)):
-            return new_node.with_children(*wrapped)
+        if any(w is not c for w, c in zip(wrapped, new_node._children, strict=True)):
+            return new_node._with_children(*wrapped)
 
     return new_node
 

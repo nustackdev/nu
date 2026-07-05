@@ -50,11 +50,7 @@ class RefBase[T](StructuredRef):
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
         # raw static segment, in payload so it rides base with_children
-        self.payload["segment"] = address
-
-    @property
-    def _segment(self) -> object:
-        return self.payload.get("segment")
+        self._payload["segment"] = address
 
     # --- path building -------------------------------------------------------
 
@@ -63,7 +59,7 @@ class RefBase[T](StructuredRef):
         segs: list[object] = []
         ref = self._parent
         while ref is not None:
-            segs.append(ref._segment)  # type: ignore[attr-defined]
+            segs.append(ref._payload.get("segment"))  # type: ignore[attr-defined]
             ref = ref._parent
         segs.reverse()
         return tuple(segs)
@@ -110,7 +106,7 @@ class RefBase[T](StructuredRef):
 
     # --- read (the dual role) ------------------------------------------------
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         def thunk(rt: Runtime) -> object:
             cur = self._root_data(rt)
             try:
@@ -122,7 +118,7 @@ class RefBase[T](StructuredRef):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         async def athunk(rt: Runtime) -> object:
             cur = self._root_data(rt)
             try:

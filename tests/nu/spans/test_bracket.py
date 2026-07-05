@@ -1,13 +1,13 @@
 """Tests for the Bracket span: Snapshot, Transaction (core lifecycle shells).
 
 A Bracket is a transparent Span (sort BRACKET): it runs the body inside a
-``scope`` context manager - open the boundary, yield the scoped ctx the body runs
+``_open`` context manager - open the boundary, yield the scoped ctx the body runs
 under, commit on a clean exit or roll back on an exception - forwarding the
-body's yield unchanged. At the core level ``scope`` is a pass-through, so a bare
+body's yield unchanged. At the core level ``_open`` is a pass-through, so a bare
 bracket is a pass-through; the suite pins that across void, scalar, and stream
-bodies, then drives a recording subclass to pin the lifecycle: scope opens before
+bodies, then drives a recording subclass to pin the lifecycle: _open opens before
 the body and closes after, success commits while failure rolls back and
-re-propagates, the per-run handle lives in the scope's frame (not on ``self``),
+re-propagates, the per-run handle lives in the boundary's frame (not on ``self``),
 the body runs under the scoped context which is restored after, and a stream
 boundary spans the whole drain (commit fires once, after exhaustion).
 """
@@ -49,7 +49,7 @@ def test_bracket_is_transparent_and_forwards_body_cardinality() -> None:
     assert stream.attr(stream.root, Attr.CHILD_CARDINALITY) is Cardinality.STREAM
 
 
-# --- pass-through (core no-op scope) --------------------------------------
+# --- pass-through (core no-op _open) --------------------------------------
 
 
 def test_snapshot_passes_through_scalar() -> None:
@@ -75,7 +75,7 @@ def test_transaction_commits_on_success() -> None:
 
     class Rec(Transaction):
         @contextmanager
-        def scope(self, ctx):
+        def _open(self, ctx):
             events.append("open")
             try:
                 yield ctx
@@ -95,7 +95,7 @@ def test_transaction_rolls_back_and_reraises_on_failure() -> None:
 
     class Rec(Transaction):
         @contextmanager
-        def scope(self, ctx):
+        def _open(self, ctx):
             events.append("open")
             try:
                 yield ctx
@@ -116,7 +116,7 @@ def test_per_run_handle_lives_in_the_scope_frame_not_self() -> None:
 
     class Rec(Transaction):
         @contextmanager
-        def scope(self, ctx):
+        def _open(self, ctx):
             handle = object()  # the per-run handle, captured by the frame
             opened.append(handle)
             try:
@@ -132,7 +132,7 @@ def test_per_run_handle_lives_in_the_scope_frame_not_self() -> None:
 def test_bracket_scopes_ctx_for_body_then_restores() -> None:
     class Scoped(Snapshot):
         @contextmanager
-        def scope(self, ctx):
+        def _open(self, ctx):
             scoped = ctx._copy()
             scoped.attrs["__scoped__"] = True
             yield scoped
@@ -147,7 +147,7 @@ def test_stream_boundary_spans_the_whole_drain() -> None:
 
     class Rec(Transaction):
         @contextmanager
-        def scope(self, ctx):
+        def _open(self, ctx):
             events.append("open")
             try:
                 yield ctx
@@ -170,7 +170,7 @@ async def test_transaction_commits_on_success_async() -> None:
 
     class Rec(Transaction):
         @contextmanager
-        def scope(self, ctx):
+        def _open(self, ctx):
             events.append("open")
             try:
                 yield ctx
@@ -190,7 +190,7 @@ async def test_transaction_rolls_back_on_failure_async() -> None:
 
     class Rec(Transaction):
         @contextmanager
-        def scope(self, ctx):
+        def _open(self, ctx):
             events.append("open")
             try:
                 yield ctx

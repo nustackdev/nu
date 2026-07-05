@@ -41,12 +41,12 @@ class ShapesDictRef[K, T: Shape](MutableShapesMappingRef["ShapeRef"], RefBase[di
         """Navigate to the shape at ``address`` as a substrate-backed mem ShapeRef."""
         return ShapeRef(
             address,
-            shape_type=self._item_shape_type,
+            shape_type=self._payload["item_shape_type"],
             parent_ref=self,
             owner_shape=self._owner_shape,
         )
 
-    def result(self, op: Nu) -> DictForm:
+    def _wrap_result(self, op: Nu) -> DictForm:
         """Wrap a mapping-level op result as a DictForm."""
         return DictForm(op)
 
@@ -84,9 +84,9 @@ class ShapesDictRef[K, T: Shape](MutableShapesMappingRef["ShapeRef"], RefBase[di
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
-        self.payload["value_type"] = dict
-        self.payload["key_type"] = key_type
-        self.payload["key_value_type"] = key_value_type
+        self._payload["value_type"] = dict
+        self._payload["key_type"] = key_type
+        self._payload["key_value_type"] = key_value_type
 
     @classmethod
     def slot[DK, S: Shape](

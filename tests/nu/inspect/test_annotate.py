@@ -40,14 +40,14 @@ def _prog() -> Sequential:
 
 def test_annotate_steps_wraps_each_child() -> None:
     ann = annotate_steps(_prog())
-    assert all(isinstance(c, _StepSpan) for c in ann.children)
+    assert all(isinstance(c, _StepSpan) for c in ann._children)
 
 
 def test_step_span_is_a_transparent_span() -> None:
     # the wrapper is a Span (Bracket), so it forwards the body and classifies
     # as a Span in the renderer
     ann = annotate_steps(_prog())
-    assert all(isinstance(c, Span) for c in ann.children)
+    assert all(isinstance(c, Span) for c in ann._children)
 
 
 def test_annotate_steps_renders_as_wrapped_box() -> None:
@@ -84,8 +84,8 @@ def test_annotate_steps_is_idempotent() -> None:
     once = annotate_steps(_prog())
     twice = annotate_steps(once)
     # no double-wrapping: still one _StepSpan per step
-    assert all(isinstance(c, _StepSpan) for c in twice.children)
-    assert all(not isinstance(c.children[0], _StepSpan) for c in twice.children)
+    assert all(isinstance(c, _StepSpan) for c in twice._children)
+    assert all(not isinstance(c._children[0], _StepSpan) for c in twice._children)
 
 
 def test_annotate_steps_logs_start_and_done() -> None:
@@ -157,8 +157,8 @@ def test_annotate_retries_injects_a_logcommand_hook() -> None:
     # Retry child slot 5 is on_attempt_fail; it must now hold our LogCommand,
     # while slot 7 (on_fail) stays a Noop so exhaustion still raises
     assert isinstance(ann, Retry)
-    assert isinstance(ann.children[5], LogCommand)
-    assert type(ann.children[7]).__name__ == "Noop"
+    assert isinstance(ann._children[5], LogCommand)
+    assert type(ann._children[7]).__name__ == "Noop"
 
 
 def test_annotate_retries_honors_custom_keys() -> None:

@@ -26,9 +26,9 @@ __all__ = [
 class ClearCommand(Command):
     """Clear all items: collection.clear(); mutates the collection, returns nothing."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (target_t,) = children
 
         def thunk(rt: Runtime) -> None:
@@ -43,7 +43,7 @@ class ClearCommand(Command):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (target_t,) = children
 
         async def athunk(rt: Runtime) -> None:

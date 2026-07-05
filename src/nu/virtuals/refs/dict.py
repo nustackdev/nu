@@ -36,14 +36,14 @@ class DictRef[K, V](ReactiveMappingRef["ItemRef"], ViewRef[dict[K, V]]):
     def _wrap_item_ref(self, address: object) -> ItemRef:
         """Navigate to the value at ``address`` as a substrate-backed virtuals ItemRef."""
         return ItemRef(
-            address,
-            value_type=self.payload["value_type"],
-            value_value_type=self.payload["value_value_type"],
+            address=address,
+            value_type=self._payload["value_type"],
+            value_value_type=self._payload["value_value_type"],
             parent_ref=self,
             owner_shape=self._owner_shape,
         )
 
-    def result(self, op: Nu) -> DictForm[K, V]:
+    def _wrap_result(self, op: Nu) -> DictForm[K, V]:
         """Wrap a mapping-level op result as a DictForm."""
         return DictForm(op)
 
@@ -83,10 +83,10 @@ class DictRef[K, V](ReactiveMappingRef["ItemRef"], ViewRef[dict[K, V]]):
         super().__init__(
             address, view_type=view_type, parent_ref=parent_ref, owner_shape=owner_shape
         )
-        self.payload["value_type"] = value_type
-        self.payload["key_type"] = key_type
-        self.payload["key_value_type"] = key_value_type
-        self.payload["value_value_type"] = value_value_type
+        self._payload["value_type"] = value_type
+        self._payload["key_type"] = key_type
+        self._payload["key_value_type"] = key_value_type
+        self._payload["value_value_type"] = value_value_type
 
     @classmethod
     def slot[DK, DV](

@@ -18,14 +18,14 @@ __all__ = ["HeavyNode", "Leaf", "Node"]
 class Leaf(Term):
     """Childless Term with a single declared ``sort``."""
 
-    sort = Declared(value="Leaf")
+    _sort = Declared(value="Leaf", name="sort")
 
 
 class Node(Term):
     """Two-attribute Term that accepts children. Used for child wiring and
     for attribute-override tests via :class:`HeavyNode`."""
 
-    sort = Declared(value="Node")
+    _sort = Declared(value="Node", name="sort")
     weight = Declared(value=1)
 
 

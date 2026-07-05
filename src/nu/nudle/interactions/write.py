@@ -26,20 +26,20 @@ __all__ = ["Write"]
 class Write(Command):
     """Send a `write` frame on a nudle Ref."""
 
-    mutates = Declared(value=frozenset({0}))
-    requires_async = Declared(value=True)
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, ref: NudleRef, value: Nu | Any) -> None:
         super().__init__(ref, value)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
             raise RuntimeError("nudle is async-only; use nu.arun")
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref: NudleRef = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: NudleRef = self._children[0]
         value_thunk = children[1]
 
         async def athunk(rt: Runtime) -> None:
@@ -52,4 +52,4 @@ class Write(Command):
         return athunk
 
     def __repr__(self) -> str:
-        return f"Write({self.children[0]!r}, {self.children[1]!r})"
+        return f"Write({self._children[0]!r}, {self._children[1]!r})"

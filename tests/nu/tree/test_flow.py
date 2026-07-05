@@ -29,7 +29,7 @@ from nu.tree import (
 class SimpleFlow(Control):
     """Minimal Flow with a body child."""
 
-    mutates = Declared(value=frozenset())
+    _mutates = Declared(value=frozenset(), name="mutates")
 
 
 # ---------------------------------------------------------------------------
@@ -91,7 +91,7 @@ def test_has_write_on_fabric_false_for_read_only_query():
 def _tag(node):
     """Wrap a node in a LiteralQuery to mark it was visited."""
     # We use with_children to produce a structural variant; we track by identity.
-    return node.with_children(*node.children)
+    return node._with_children(*node._children)
 
 
 def test_wrap_flows_calls_wrapper_on_outermost_flow():

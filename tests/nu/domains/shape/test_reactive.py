@@ -91,32 +91,32 @@ def test_all_reactive_queries_also_flat_on_nu_core():
 def test_on_change_query_constructs_with_ref():
     ref = ItemRef("slot")
     q = OnChangeQuery(ref)
-    assert q.children
+    assert q._children
 
 
 def test_on_child_change_query_constructs_with_two_children():
     ref = ItemRef("slot")
     address = ItemRef("addr")
     q = OnChildChangeQuery(ref, address)
-    assert len(q.children) == 2
+    assert len(q._children) == 2
 
 
 def test_on_children_change_query_constructs_with_ref():
     ref = ItemRef("slot")
     q = OnChildrenChangeQuery(ref)
-    assert q.children
+    assert q._children
 
 
 def test_on_descendants_change_query_constructs_with_ref_and_pattern():
     ref = ItemRef("slot")
     q = OnDescendantsChangeQuery(ref, ItemRef("pattern"))
-    assert len(q.children) == 2
+    assert len(q._children) == 2
 
 
 def test_on_primitive_change_query_constructs_with_ref():
     ref = ReactiveItemRef("slot")
     q = OnPrimitiveChangeQuery(ref)
-    assert q.children
+    assert q._children
 
 
 # ---------------------------------------------------------------------------
@@ -203,22 +203,22 @@ def test_reactive_collection_form_in_set_ref_mro():
 
 
 def test_on_change_query_has_no_mutates():
-    mutates = OnChangeQuery.attributes.get("mutates")
+    mutates = OnChangeQuery._attributes.get("mutates")
     assert mutates is None
 
 
 def test_on_child_change_query_has_no_mutates():
-    mutates = OnChildChangeQuery.attributes.get("mutates")
+    mutates = OnChildChangeQuery._attributes.get("mutates")
     assert mutates is None
 
 
 def test_on_children_change_query_has_no_mutates():
-    mutates = OnChildrenChangeQuery.attributes.get("mutates")
+    mutates = OnChildrenChangeQuery._attributes.get("mutates")
     assert mutates is None
 
 
 def test_on_primitive_change_query_has_no_mutates():
-    mutates = OnPrimitiveChangeQuery.attributes.get("mutates")
+    mutates = OnPrimitiveChangeQuery._attributes.get("mutates")
     assert mutates is None
 
 

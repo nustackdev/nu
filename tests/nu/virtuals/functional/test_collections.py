@@ -96,11 +96,11 @@ class TestFacets:
     """Facet switching on ViewRef."""
 
     def test_default_facet_is_lazy(self):
-        assert Portfolio.metadata._facet is Facet.LAZY
+        assert Portfolio.metadata._payload.get("facet", Facet.LAZY) is Facet.LAZY
 
     def test_eager_property(self):
         eager = Portfolio.metadata.eager
-        assert eager._facet is Facet.EAGER
+        assert eager._payload.get("facet", Facet.LAZY) is Facet.EAGER
 
     def test_lazy_property_noop(self):
         ref = Portfolio.metadata
@@ -109,18 +109,18 @@ class TestFacets:
 
     def test_eager_lazy_roundtrip(self):
         ref = Portfolio.metadata.eager.lazy
-        assert ref._facet is Facet.LAZY
+        assert ref._payload.get("facet", Facet.LAZY) is Facet.LAZY
 
     def test_lazy_eager_roundtrip(self):
         ref = Portfolio.metadata.lazy.eager
-        assert ref._facet is Facet.EAGER
+        assert ref._payload.get("facet", Facet.LAZY) is Facet.EAGER
 
     def test_eager_is_copy_not_same(self):
         ref = Portfolio.metadata
         eager = ref.eager
         assert eager is not ref
-        assert eager._facet is Facet.EAGER
-        assert ref._facet is Facet.LAZY
+        assert eager._payload.get("facet", Facet.LAZY) is Facet.EAGER
+        assert ref._payload.get("facet", Facet.LAZY) is Facet.LAZY
 
     def test_eager_eager_is_noop(self):
         eager1 = Portfolio.metadata.eager
@@ -128,12 +128,12 @@ class TestFacets:
         assert eager2 is eager1
 
     def test_facet_on_list_ref(self):
-        assert Portfolio.tags._facet is Facet.LAZY
-        assert Portfolio.tags.eager._facet is Facet.EAGER
+        assert Portfolio.tags._payload.get("facet", Facet.LAZY) is Facet.LAZY
+        assert Portfolio.tags.eager._payload.get("facet", Facet.LAZY) is Facet.EAGER
 
     def test_facet_on_set_ref(self):
-        assert Portfolio.members._facet is Facet.LAZY
-        assert Portfolio.members.eager._facet is Facet.EAGER
+        assert Portfolio.members._payload.get("facet", Facet.LAZY) is Facet.LAZY
+        assert Portfolio.members.eager._payload.get("facet", Facet.LAZY) is Facet.EAGER
 
 
 # ============================================================================
@@ -157,7 +157,7 @@ class TestDictRefWrapTypes:
         assert isinstance(items, DictItemsForm)
 
     def test_result_returns_dict_value(self):
-        result = Portfolio.metadata.result(LiteralQuery("x"))
+        result = Portfolio.metadata._wrap_result(LiteralQuery("x"))
         assert isinstance(result, DictForm)
 
 

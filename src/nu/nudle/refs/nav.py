@@ -41,7 +41,7 @@ __all__ = ["NavRef"]
 class NavRef(NudleRef):
     """Bound to window.history + window.location. Index-level structural Ref."""
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
             return await self._aread(rt, nid)
 

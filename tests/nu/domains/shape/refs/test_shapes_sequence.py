@@ -32,7 +32,7 @@ def test_shapes_sequence_ref_subscript_returns_shape_ref():
 def test_shapes_sequence_ref_child_shape_type_matches():
     s = ShapesSequenceRef("rows", item_shape_type=Row)
     child = s[0]
-    assert child._shape_type is Row
+    assert child._payload["shape_type"] is Row
 
 
 def test_shapes_sequence_ref_child_parent_is_self():
@@ -43,7 +43,7 @@ def test_shapes_sequence_ref_child_parent_is_self():
 
 def test_shapes_sequence_ref_item_shape_type_property():
     s = ShapesSequenceRef("rows", item_shape_type=Row)
-    assert s._item_shape_type is Row
+    assert s._payload["item_shape_type"] is Row
 
 
 def test_shapes_sequence_ref_different_indices_distinct():
@@ -92,7 +92,7 @@ def test_mutable_shapes_sequence_ref_subscript_returns_mutable_shape_ref():
 
 def test_mutable_shapes_sequence_ref_child_shape_type_matches():
     s = MutableShapesSequenceRef("rows", item_shape_type=Row)
-    assert s[0]._shape_type is Row
+    assert s[0]._payload["shape_type"] is Row
 
 
 def test_mutable_shapes_sequence_ref_store_returns_store_command():

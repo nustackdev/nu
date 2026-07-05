@@ -32,14 +32,14 @@ def test_stream_constructs_with_source_and_body():
     body = SequenceRef("body")
     s = Stream(source, body)
     # Stream builds advance + change + body + key + log_key = 5 children
-    assert len(s.children) == 5
+    assert len(s._children) == 5
 
 
 def test_stream_constructs_with_custom_keys():
     source = SequenceRef("items")
     body = SequenceRef("body")
     s = Stream(source, body, key="my_key", log_key="my_log_key")
-    assert len(s.children) == 5
+    assert len(s._children) == 5
 
 
 # ---------------------------------------------------------------------------
@@ -52,7 +52,7 @@ def test_stream_sync_compile_raises():
     body = SequenceRef("body")
     s = Stream(source, body)
     with pytest.raises(NotImplementedError, match="async"):
-        s.compile(0, ())
+        s._compile(0, ())
 
 
 # ---------------------------------------------------------------------------

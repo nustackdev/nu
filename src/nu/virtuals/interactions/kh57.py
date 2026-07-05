@@ -64,19 +64,14 @@ class Kh57SampleQuery(ScalarQuery):
         super().__init__(ref, n, begin, end)
         self._rng = rng
 
-    @property
-    def ref(self) -> Nu:
-        """The kh57 view Ref this query targets (slot 0)."""
-        return self.children[0]
-
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
         _ref_thunk, n_thunk, begin_thunk, end_thunk = children
         rng = self._rng
 
         def thunk(rt: Runtime) -> object:
             try:
-                view = ref.fetch(rt, _child_nid(rt, nid, 0))
+                view = ref._fetch(rt, _child_nid(rt, nid, 0))
             except (KeyError, IndexError):
                 return EMPTY
             n = n_thunk(rt)
@@ -86,14 +81,14 @@ class Kh57SampleQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
         _ref_thunk, n_thunk, begin_thunk, end_thunk = children
         rng = self._rng
 
         async def athunk(rt: Runtime) -> object:
             try:
-                view = await ref.afetch(rt, _child_nid(rt, nid, 0))
+                view = await ref._afetch(rt, _child_nid(rt, nid, 0))
             except (KeyError, IndexError):
                 return EMPTY
             n = await n_thunk(rt)
@@ -104,7 +99,7 @@ class Kh57SampleQuery(ScalarQuery):
         return athunk
 
     def __repr__(self) -> str:
-        return f"Kh57SampleQuery({self.children[0]!r}, n={self.children[1]!r})"
+        return f"Kh57SampleQuery({self._children[0]!r}, n={self._children[1]!r})"
 
 
 class Kh57RangeQuery(ScalarQuery):
@@ -121,18 +116,13 @@ class Kh57RangeQuery(ScalarQuery):
         2: end — exclusive upper bound
     """
 
-    @property
-    def ref(self) -> Nu:
-        """The kh57 view Ref this query targets (slot 0)."""
-        return self.children[0]
-
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
         _ref_thunk, begin_thunk, end_thunk = children
 
         def thunk(rt: Runtime) -> object:
             try:
-                view = ref.fetch(rt, _child_nid(rt, nid, 0))
+                view = ref._fetch(rt, _child_nid(rt, nid, 0))
             except (KeyError, IndexError):
                 return EMPTY
             begin = begin_thunk(rt)
@@ -141,13 +131,13 @@ class Kh57RangeQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
         _ref_thunk, begin_thunk, end_thunk = children
 
         async def athunk(rt: Runtime) -> object:
             try:
-                view = await ref.afetch(rt, _child_nid(rt, nid, 0))
+                view = await ref._afetch(rt, _child_nid(rt, nid, 0))
             except (KeyError, IndexError):
                 return EMPTY
             begin = await begin_thunk(rt)
@@ -157,4 +147,4 @@ class Kh57RangeQuery(ScalarQuery):
         return athunk
 
     def __repr__(self) -> str:
-        return f"Kh57RangeQuery({self.children[0]!r}, {self.children[1]!r}, {self.children[2]!r})"
+        return f"Kh57RangeQuery({self._children[0]!r}, {self._children[1]!r}, {self._children[2]!r})"

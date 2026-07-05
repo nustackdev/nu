@@ -53,13 +53,13 @@ class ReduceQuery(Reduction):
         item_node = item_key if isinstance(item_key, Term) else LiteralQuery(item_key)
         if initial is UNSET:
             super().__init__(source, function, acc_node, item_node)
-            self.payload = {"has_initial": False}
+            self._payload = {"has_initial": False}
         else:
             super().__init__(source, function, acc_node, item_node, initial)
-            self.payload = {"has_initial": True}
+            self._payload = {"has_initial": True}
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        has_initial = self.payload["has_initial"]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        has_initial = self._payload["has_initial"]
         source, function, acc_t, item_t = children[0], children[1], children[2], children[3]
         initial_t = children[4] if has_initial else None
 
@@ -92,8 +92,8 @@ class ReduceQuery(Reduction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        has_initial = self.payload["has_initial"]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        has_initial = self._payload["has_initial"]
         source, function, acc_t, item_t = children[0], children[1], children[2], children[3]
         initial_t = children[4] if has_initial else None
 

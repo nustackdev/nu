@@ -36,14 +36,14 @@ __all__ = ["AsyncOnlyAction", "BoomAction", "RunsAnywhereAction", "SyncOnlyActio
 class RunsAnywhereAction(ScalarAction):
     """Runs on whichever path it is placed on; records the thread, yields its name."""
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self.payload["name"] = name
+        self._payload["name"] = name
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self.payload["name"]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        name = self._payload["name"]
 
         def thunk(rt: Runtime) -> object:
             rt.ctx.attrs[name] = threading.current_thread().name
@@ -51,8 +51,8 @@ class RunsAnywhereAction(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self.payload["name"]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        name = self._payload["name"]
 
         async def athunk(rt: Runtime) -> object:
             rt.ctx.attrs[name] = threading.current_thread().name
@@ -64,22 +64,22 @@ class RunsAnywhereAction(ScalarAction):
 class AsyncOnlyAction(ScalarAction):
     """Needs a loop. Its sync thunk raises - it must never be placed off the loop."""
 
-    requires_async = Declared(value=True)
-    mutates = Declared(value=frozenset({0}))
+    _requires_async = Declared(value=True, name="requires_async")
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self.payload["name"] = name
+        self._payload["name"] = name
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             msg = "AsyncOnlyAction was placed on the sync path"
             raise RuntimeError(msg)
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self.payload["name"]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        name = self._payload["name"]
 
         async def athunk(rt: Runtime) -> object:
             await asyncio.sleep(0)  # genuinely touch the loop
@@ -95,22 +95,22 @@ class BoomAction(ScalarAction):
     For exception-propagation tests: a Flow over it must surface the error.
     """
 
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self.payload["name"] = name
+        self._payload["name"] = name
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self.payload["name"]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        name = self._payload["name"]
 
         def thunk(rt: Runtime) -> object:
             raise ValueError(name)
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self.payload["name"]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        name = self._payload["name"]
 
         async def athunk(rt: Runtime) -> object:
             raise ValueError(name)
@@ -122,14 +122,14 @@ class SyncOnlyAction(ScalarAction):
     """Harmed by a loop. Its async thunk raises - it must be offloaded to a thread."""
 
     async_affinity = Declared(value=False)
-    mutates = Declared(value=frozenset({0}))
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self.payload["name"] = name
+        self._payload["name"] = name
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self.payload["name"]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        name = self._payload["name"]
 
         def thunk(rt: Runtime) -> object:
             rt.ctx.attrs[name] = threading.current_thread().name
@@ -137,7 +137,7 @@ class SyncOnlyAction(ScalarAction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             msg = "SyncOnlyAction was placed on the async/loop path"
             raise RuntimeError(msg)

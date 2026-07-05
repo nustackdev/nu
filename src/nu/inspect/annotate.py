@@ -13,7 +13,7 @@ without touching its result:
 
 All logging goes through the stderr side of the stdio fabric (``nu.core.io``),
 so a bound ``StdioBackend`` captures it in a test exactly like ``print`` output.
-The step Bracket logs imperatively in its ``scope`` (it wraps a body, so it
+The step Bracket logs imperatively in its ``_open`` (it wraps a body, so it
 cannot delegate to a ``LogCommand`` child); the retry hooks are real
 ``LogCommand`` nodes that read the attempt / error the ``Retry`` writes into
 ``ctx.attrs``.
@@ -67,11 +67,11 @@ class _StepSpan(_LifecycleBracket):
 
     def __init__(self, child: Nu, step: int, total: int, path: str, logger: str = _STEP_LOGGER) -> None:
         super().__init__(child)
-        self.payload.update(step=step, total=total, path=path, logger=logger)
+        self._payload.update(step=step, total=total, path=path, logger=logger)
 
     @contextmanager
-    def scope(self, ctx: Context) -> Iterator[Context]:
-        p = self.payload
+    def _open(self, ctx: Context) -> Iterator[Context]:
+        p = self._payload
         logger = str(p["logger"])
         tag = f"[{p['path']}] step {p['step']}/{p['total']}"
         _emit_log(ctx, "info", logger, f"{tag} start")
@@ -97,7 +97,7 @@ def annotate_steps(tree: Nu, *, logger: str = _STEP_LOGGER) -> Nu:
     """
 
     def _walk(node: Nu, path: str) -> Nu:
-        children = cast("tuple[Nu, ...]", node.children)
+        children = cast("tuple[Nu, ...]", node._children)
         if isinstance(node, Sequential) and len(children) >= 2:
             seq_path = f"{path}{type(node).__name__}"
             total = len(children)
@@ -110,14 +110,14 @@ def annotate_steps(tree: Nu, *, logger: str = _STEP_LOGGER) -> Nu:
                     step += 1
                     walked = _walk(child, f"{seq_path}.{type(child).__name__}.")
                     new_children.append(_StepSpan(walked, step, total, seq_path, logger))
-            return node.with_children(*new_children)
+            return node._with_children(*new_children)
 
         if not children:
             return node
         walked_children = [_walk(child, path) for child in children]
         if all(new is old for new, old in zip(walked_children, children, strict=False)):
             return node
-        return node.with_children(*walked_children)
+        return node._with_children(*walked_children)
 
     return _walk(tree, "")
 
@@ -125,7 +125,7 @@ def annotate_steps(tree: Nu, *, logger: str = _STEP_LOGGER) -> Nu:
 def _literal_key(node: Nu, default: str) -> str:
     """The literal string a StrArg child carries, or ``default`` if it is dynamic."""
     if isinstance(node, LiteralQuery):
-        value = node.payload.get("value")
+        value = node._payload.get("value")
         if isinstance(value, str):
             return value
     return default
@@ -155,7 +155,7 @@ def annotate_retries(tree: Nu, *, logger: str = _RETRY_LOGGER) -> Nu:
         # [body, max_attempts, delay, backoff, jitter, on_attempt_fail,
         #  on_success, on_fail, error_key, attempt_key]. Guard so a future
         # reorder fails loudly here instead of silently mislabeling.
-        kids = cast("tuple[Nu, ...]", node.children)
+        kids = cast("tuple[Nu, ...]", node._children)
         if len(kids) != _RETRY_ARITY:
             msg = f"Retry child layout changed ({len(kids)} children); update annotate_retries"
             raise RuntimeError(msg)
@@ -172,7 +172,7 @@ def annotate_retries(tree: Nu, *, logger: str = _RETRY_LOGGER) -> Nu:
             delay=kids[2],
             backoff=kids[3],
             jitter=kids[4],
-            errors=cast("tuple[type[Exception], ...] | None", node.payload.get("errors")),
+            errors=cast("tuple[type[Exception], ...] | None", node._payload.get("errors")),
             on_attempt_fail=cast("Hook", on_attempt_fail),
             on_success=None if isinstance(existing_success, Noop) else cast("Hook", existing_success),
             on_fail=None if isinstance(existing_fail, Noop) else cast("Hook", existing_fail),
@@ -193,15 +193,15 @@ def set_logger_name(tree: Nu, name: str) -> Nu:
 
     def _rename(node: Nu) -> Nu:
         if isinstance(node, _StepSpan):
-            p = node.payload
-            body = cast("Nu", node.children[0])
+            p = node._payload
+            body = cast("Nu", node._children[0])
             return _StepSpan(body, cast("int", p["step"]), cast("int", p["total"]), str(p["path"]), name)
         if isinstance(node, LogCommand):
-            return node.with_children(
-                node.children[0],
-                node.children[1],
+            return node._with_children(
+                node._children[0],
+                node._children[1],
                 LiteralQuery(name),
-                *node.children[3:],
+                *node._children[3:],
             )
         return node
 

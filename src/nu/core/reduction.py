@@ -59,10 +59,10 @@ __all__ = [
 class SumQuery(Reduction):
     """The sum of every item in its stream child (``sum``)."""
 
-    commutative = Declared(value=True)
-    associative = Declared(value=True)
+    _commutative = Declared(value=True, name="commutative")
+    _associative = Declared(value=True, name="associative")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -75,7 +75,7 @@ class SumQuery(Reduction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -92,11 +92,11 @@ class SumQuery(Reduction):
 class MinQuery(Reduction):
     """The smallest item in its stream child (``min``); EMPTY if empty."""
 
-    commutative = Declared(value=True)
-    associative = Declared(value=True)
-    idempotent = Declared(value=True)
+    _commutative = Declared(value=True, name="commutative")
+    _associative = Declared(value=True, name="associative")
+    _idempotent = Declared(value=True, name="idempotent")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -109,7 +109,7 @@ class MinQuery(Reduction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -126,11 +126,11 @@ class MinQuery(Reduction):
 class MaxQuery(Reduction):
     """The largest item in its stream child (``max``); EMPTY if empty."""
 
-    commutative = Declared(value=True)
-    associative = Declared(value=True)
-    idempotent = Declared(value=True)
+    _commutative = Declared(value=True, name="commutative")
+    _associative = Declared(value=True, name="associative")
+    _idempotent = Declared(value=True, name="idempotent")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -143,7 +143,7 @@ class MaxQuery(Reduction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -160,11 +160,11 @@ class MaxQuery(Reduction):
 class AnyQuery(Reduction):
     """True if any item in its stream child is truthy (``any``)."""
 
-    commutative = Declared(value=True)
-    associative = Declared(value=True)
-    idempotent = Declared(value=True)
+    _commutative = Declared(value=True, name="commutative")
+    _associative = Declared(value=True, name="associative")
+    _idempotent = Declared(value=True, name="idempotent")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -177,7 +177,7 @@ class AnyQuery(Reduction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -194,11 +194,11 @@ class AnyQuery(Reduction):
 class AllQuery(Reduction):
     """True if every item in its stream child is truthy (``all``)."""
 
-    commutative = Declared(value=True)
-    associative = Declared(value=True)
-    idempotent = Declared(value=True)
+    _commutative = Declared(value=True, name="commutative")
+    _associative = Declared(value=True, name="associative")
+    _idempotent = Declared(value=True, name="idempotent")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -211,7 +211,7 @@ class AllQuery(Reduction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -228,10 +228,10 @@ class AllQuery(Reduction):
 class CountQuery(Reduction):
     """The number of items in its stream child (``len`` over a stream)."""
 
-    commutative = Declared(value=True)
-    associative = Declared(value=True)
+    _commutative = Declared(value=True, name="commutative")
+    _associative = Declared(value=True, name="associative")
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -244,7 +244,7 @@ class CountQuery(Reduction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -261,7 +261,7 @@ class CountQuery(Reduction):
 class FirstQuery(Reduction):
     """The first item of its stream child; EMPTY if the stream is empty."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -273,7 +273,7 @@ class FirstQuery(Reduction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -289,7 +289,7 @@ class FirstQuery(Reduction):
 class LastQuery(Reduction):
     """The last item of its stream child; EMPTY if the stream is empty."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -302,7 +302,7 @@ class LastQuery(Reduction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -319,7 +319,7 @@ class LastQuery(Reduction):
 class CollectQuery(Reduction):
     """Drain its stream child into one list value."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -332,7 +332,7 @@ class CollectQuery(Reduction):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (stream,) = children
 
         async def athunk(rt: Runtime) -> object:

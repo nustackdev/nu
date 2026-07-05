@@ -88,7 +88,7 @@ __all__ = [
 class DecodeQuery(ScalarQuery):
     """Decode bytes to string: bytes.decode(encoding)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -107,7 +107,7 @@ class DecodeQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -130,7 +130,7 @@ class DecodeQuery(ScalarQuery):
 class HexQuery(ScalarQuery):
     """Convert to hex string: bytes.hex()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -143,7 +143,7 @@ class HexQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -165,7 +165,7 @@ class HexQuery(ScalarQuery):
 class BytesUpperQuery(ScalarQuery):
     """Convert to uppercase: bytes.upper()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -178,7 +178,7 @@ class BytesUpperQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -195,7 +195,7 @@ class BytesUpperQuery(ScalarQuery):
 class BytesLowerQuery(ScalarQuery):
     """Convert to lowercase: bytes.lower()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -208,7 +208,7 @@ class BytesLowerQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -230,7 +230,7 @@ class BytesLowerQuery(ScalarQuery):
 class BytesStripQuery(ScalarQuery):
     """Strip bytes: bytes.strip(chars)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -248,7 +248,7 @@ class BytesStripQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -270,7 +270,7 @@ class BytesStripQuery(ScalarQuery):
 class BytesLStripQuery(ScalarQuery):
     """Strip leading bytes: bytes.lstrip(chars)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -288,7 +288,7 @@ class BytesLStripQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -310,7 +310,7 @@ class BytesLStripQuery(ScalarQuery):
 class BytesRStripQuery(ScalarQuery):
     """Strip trailing bytes: bytes.rstrip(chars)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -328,7 +328,7 @@ class BytesRStripQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -355,7 +355,7 @@ class BytesRStripQuery(ScalarQuery):
 class BytesSplitQuery(ScalarQuery):
     """Split bytes: bytes.split(sep, maxsplit)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         first_t, second_t, third_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -376,7 +376,7 @@ class BytesSplitQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         first_t, second_t, third_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -406,7 +406,7 @@ class BytesSplitQuery(ScalarQuery):
 class BytesFindQuery(ScalarQuery):
     """Find sub-bytes: bytes.find(sub, start, end)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         operand_t, sub_t, start_t, end_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -430,7 +430,7 @@ class BytesFindQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         operand_t, sub_t, start_t, end_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -458,7 +458,7 @@ class BytesFindQuery(ScalarQuery):
 class BytesCountQuery(ScalarQuery):
     """Count sub-bytes occurrences: bytes.count(sub)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -474,7 +474,7 @@ class BytesCountQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -499,7 +499,7 @@ class BytesCountQuery(ScalarQuery):
 class BytesStartsWithQuery(ScalarQuery):
     """Check if starts with prefix: bytes.startswith(prefix)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -515,7 +515,7 @@ class BytesStartsWithQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -535,7 +535,7 @@ class BytesStartsWithQuery(ScalarQuery):
 class BytesEndsWithQuery(ScalarQuery):
     """Check if ends with suffix: bytes.endswith(suffix)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -551,7 +551,7 @@ class BytesEndsWithQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -576,7 +576,7 @@ class BytesEndsWithQuery(ScalarQuery):
 class BytesReplaceQuery(ScalarQuery):
     """Replace sub-bytes: bytes.replace(old, new, count)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         operand_t, old_t, new_t, count_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -605,7 +605,7 @@ class BytesReplaceQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         operand_t, old_t, new_t, count_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -638,7 +638,7 @@ class BytesReplaceQuery(ScalarQuery):
 class BytesRemovePrefixQuery(ScalarQuery):
     """Remove a prefix: bytes.removeprefix(prefix)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -654,7 +654,7 @@ class BytesRemovePrefixQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -674,7 +674,7 @@ class BytesRemovePrefixQuery(ScalarQuery):
 class BytesRemoveSuffixQuery(ScalarQuery):
     """Remove a suffix: bytes.removesuffix(suffix)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -690,7 +690,7 @@ class BytesRemoveSuffixQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -710,7 +710,7 @@ class BytesRemoveSuffixQuery(ScalarQuery):
 class BytesTranslateQuery(ScalarQuery):
     """Translate via a 256-length table: bytes.translate(table, delete)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         operand_t, table_t, delete_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -736,7 +736,7 @@ class BytesTranslateQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         operand_t, table_t, delete_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -771,7 +771,7 @@ class BytesTranslateQuery(ScalarQuery):
 class BytesTitleQuery(ScalarQuery):
     """Titlecase bytes: bytes.title()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -784,7 +784,7 @@ class BytesTitleQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -801,7 +801,7 @@ class BytesTitleQuery(ScalarQuery):
 class BytesCapitalizeQuery(ScalarQuery):
     """Capitalize bytes: bytes.capitalize()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -814,7 +814,7 @@ class BytesCapitalizeQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -831,7 +831,7 @@ class BytesCapitalizeQuery(ScalarQuery):
 class BytesSwapCaseQuery(ScalarQuery):
     """Swap case of bytes: bytes.swapcase()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -844,7 +844,7 @@ class BytesSwapCaseQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -866,7 +866,7 @@ class BytesSwapCaseQuery(ScalarQuery):
 class BytesRSplitQuery(ScalarQuery):
     """Split bytes from the right: bytes.rsplit(sep, maxsplit)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         first_t, second_t, third_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -887,7 +887,7 @@ class BytesRSplitQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         first_t, second_t, third_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -912,7 +912,7 @@ class BytesRSplitQuery(ScalarQuery):
 class BytesSplitLinesQuery(ScalarQuery):
     """Split on line boundaries: bytes.splitlines(keepends)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -928,7 +928,7 @@ class BytesSplitLinesQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -948,7 +948,7 @@ class BytesSplitLinesQuery(ScalarQuery):
 class BytesPartitionQuery(ScalarQuery):
     """Partition on first occurrence: bytes.partition(sep)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -967,7 +967,7 @@ class BytesPartitionQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -990,7 +990,7 @@ class BytesPartitionQuery(ScalarQuery):
 class BytesRPartitionQuery(ScalarQuery):
     """Partition on last occurrence: bytes.rpartition(sep)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -1009,7 +1009,7 @@ class BytesRPartitionQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1037,7 +1037,7 @@ class BytesRPartitionQuery(ScalarQuery):
 class BytesRFindQuery(ScalarQuery):
     """Find sub-bytes from the right: bytes.rfind(sub, start, end)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         operand_t, sub_t, start_t, end_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -1061,7 +1061,7 @@ class BytesRFindQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         operand_t, sub_t, start_t, end_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1089,7 +1089,7 @@ class BytesRFindQuery(ScalarQuery):
 class BytesIndexQuery(ScalarQuery):
     """Index of sub-bytes (ValueError if absent): bytes.index(sub, start, end)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         operand_t, sub_t, start_t, end_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -1116,7 +1116,7 @@ class BytesIndexQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         operand_t, sub_t, start_t, end_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1147,7 +1147,7 @@ class BytesIndexQuery(ScalarQuery):
 class BytesRIndexQuery(ScalarQuery):
     """Index of sub-bytes from the right (ValueError if absent): bytes.rindex(sub, start, end)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         operand_t, sub_t, start_t, end_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -1174,7 +1174,7 @@ class BytesRIndexQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         operand_t, sub_t, start_t, end_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1210,7 +1210,7 @@ class BytesRIndexQuery(ScalarQuery):
 class BytesIsAsciiQuery(ScalarQuery):
     """Test all bytes are ASCII: bytes.isascii()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -1223,7 +1223,7 @@ class BytesIsAsciiQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1240,7 +1240,7 @@ class BytesIsAsciiQuery(ScalarQuery):
 class BytesIsDigitQuery(ScalarQuery):
     """Test all bytes are ASCII digits: bytes.isdigit()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -1253,7 +1253,7 @@ class BytesIsDigitQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1270,7 +1270,7 @@ class BytesIsDigitQuery(ScalarQuery):
 class BytesIsAlphaQuery(ScalarQuery):
     """Test all bytes are ASCII letters: bytes.isalpha()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -1283,7 +1283,7 @@ class BytesIsAlphaQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1300,7 +1300,7 @@ class BytesIsAlphaQuery(ScalarQuery):
 class BytesIsAlnumQuery(ScalarQuery):
     """Test all bytes are ASCII alphanumeric: bytes.isalnum()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -1313,7 +1313,7 @@ class BytesIsAlnumQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1330,7 +1330,7 @@ class BytesIsAlnumQuery(ScalarQuery):
 class BytesIsSpaceQuery(ScalarQuery):
     """Test all bytes are ASCII whitespace: bytes.isspace()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -1343,7 +1343,7 @@ class BytesIsSpaceQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1360,7 +1360,7 @@ class BytesIsSpaceQuery(ScalarQuery):
 class BytesIsTitleQuery(ScalarQuery):
     """Test bytes are titlecased: bytes.istitle()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -1373,7 +1373,7 @@ class BytesIsTitleQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1390,7 +1390,7 @@ class BytesIsTitleQuery(ScalarQuery):
 class BytesIsUpperQuery(ScalarQuery):
     """Test bytes are uppercase: bytes.isupper()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -1403,7 +1403,7 @@ class BytesIsUpperQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1420,7 +1420,7 @@ class BytesIsUpperQuery(ScalarQuery):
 class BytesIsLowerQuery(ScalarQuery):
     """Test bytes are lowercase: bytes.islower()."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -1433,7 +1433,7 @@ class BytesIsLowerQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1455,7 +1455,7 @@ class BytesIsLowerQuery(ScalarQuery):
 class BytesCenterQuery(ScalarQuery):
     """Center in width: bytes.center(width, fillbyte)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         first_t, second_t, third_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -1476,7 +1476,7 @@ class BytesCenterQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         first_t, second_t, third_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1501,7 +1501,7 @@ class BytesCenterQuery(ScalarQuery):
 class BytesLJustQuery(ScalarQuery):
     """Left justify: bytes.ljust(width, fillbyte)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         first_t, second_t, third_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -1522,7 +1522,7 @@ class BytesLJustQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         first_t, second_t, third_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1547,7 +1547,7 @@ class BytesLJustQuery(ScalarQuery):
 class BytesRJustQuery(ScalarQuery):
     """Right justify: bytes.rjust(width, fillbyte)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         first_t, second_t, third_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -1568,7 +1568,7 @@ class BytesRJustQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         first_t, second_t, third_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1593,7 +1593,7 @@ class BytesRJustQuery(ScalarQuery):
 class BytesZFillQuery(ScalarQuery):
     """Zero-fill: bytes.zfill(width)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -1609,7 +1609,7 @@ class BytesZFillQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1634,7 +1634,7 @@ class BytesZFillQuery(ScalarQuery):
 class BytesExpandTabsQuery(ScalarQuery):
     """Expand tabs to spaces: bytes.expandtabs(tabsize)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -1650,7 +1650,7 @@ class BytesExpandTabsQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -1675,7 +1675,7 @@ class BytesExpandTabsQuery(ScalarQuery):
 class BytesJoinQuery(ScalarQuery):
     """Join an iterable of bytes: sep.join(seq)."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -1694,7 +1694,7 @@ class BytesJoinQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         left_t, right_t = children
 
         async def athunk(rt: Runtime) -> object:

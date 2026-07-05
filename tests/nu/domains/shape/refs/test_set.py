@@ -27,7 +27,7 @@ def test_set_ref_is_structured_ref():
 
 def test_set_ref_constructs_with_address():
     ref = SetRef("my_set")
-    assert ref.children
+    assert ref._children
 
 
 def test_set_ref_parent_ref_none_by_default():
@@ -77,7 +77,7 @@ def test_mutable_set_ref_is_subclass_of_set_ref():
 
 def test_mutable_set_ref_constructs():
     ref = MutableSetRef("my_set")
-    assert ref.children
+    assert ref._children
 
 
 def test_mutable_set_ref_has_store():
@@ -118,7 +118,7 @@ def test_reactive_set_ref_is_subclass_of_mutable_set_ref():
 
 def test_reactive_set_ref_constructs():
     ref = ReactiveSetRef("my_set")
-    assert ref.children
+    assert ref._children
 
 
 def test_reactive_set_ref_on_change_returns_on_change_action():

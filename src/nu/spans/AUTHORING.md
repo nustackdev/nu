@@ -114,10 +114,10 @@ A Flow is `VOID` and owns no effects; its body slots carry the writes
   `eval_parallel` / `aeval_parallel` (join), `aeval_race` (first done),
   `aeval_any` (first success). Never build a thread pool or `gather` in an atom.
   Per-child sync/async placement is resolved off `Attr.ON_LOOP` inside the
-  runtime. `Race` / `AnyN` are async-only (`requires_async = Declared(value=True)`);
+  runtime. `Race` / `AnyN` are async-only (`_requires_async = Declared(value=True, name="requires_async")`);
   their sync thunks raise as a backstop.
 - **Control** runs bodies under Query params (a condition, an iterable). Declare
-  `param_slots = Declared(value=frozenset({...}))`; the rest are body slots.
+  `_param_slots = Declared(value=frozenset({...}), name="param_slots")`; the rest are body slots.
   Loop vars ride the attrs side-channel (`rt.ctx.attrs[name] = elem`), the same
   designated channel `Map` / `Filter` use.
 
@@ -156,7 +156,7 @@ thunk that already fits - the runtime should branch on data, never on shape.
 
 An atom that can only run on the event loop - it awaits an `asyncio` primitive
 (`wait_for`, `sleep`, cancellation, a race) - declares
-`requires_async = Declared(value=True)`. Then:
+`_requires_async = Declared(value=True, name="requires_async")`. Then:
 
 - its sync `compile` thunk is a **backstop that raises**; the sync entry
   (`run` / `first` / `collect`) refuses an async-only subtree first via

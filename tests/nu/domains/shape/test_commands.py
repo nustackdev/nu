@@ -36,13 +36,13 @@ def test_erase_command_is_command():
 def test_store_command_constructs_with_ref_and_value():
     ref = ItemRef("slot")
     cmd = StoreCommand(ref, LiteralQuery(42))
-    assert len(cmd.children) == 2
+    assert len(cmd._children) == 2
 
 
 def test_erase_command_constructs_with_ref():
     ref = ItemRef("slot")
     cmd = EraseCommand(ref)
-    assert cmd.children
+    assert cmd._children
 
 
 # ---------------------------------------------------------------------------
@@ -51,13 +51,13 @@ def test_erase_command_constructs_with_ref():
 
 
 def test_store_command_mutates_slot_zero():
-    mutates = StoreCommand.attributes.get("mutates")
+    mutates = StoreCommand._attributes.get("mutates")
     assert mutates is not None
     assert 0 in mutates.value
 
 
 def test_erase_command_mutates_slot_zero():
-    mutates = EraseCommand.attributes.get("mutates")
+    mutates = EraseCommand._attributes.get("mutates")
     assert mutates is not None
     assert 0 in mutates.value
 
@@ -92,7 +92,7 @@ def _make_thunk(value):
 def test_store_command_thunk_raises_on_empty():
     ref = ItemRef("slot")
     cmd = StoreCommand(ref, LiteralQuery(42))
-    thunk = cmd.compile(0, (_make_thunk(None), _make_thunk(EMPTY)))
+    thunk = cmd._compile(0, (_make_thunk(None), _make_thunk(EMPTY)))
     with pytest.raises(ValueError, match="sentinel"):
         thunk(None)
 
@@ -100,7 +100,7 @@ def test_store_command_thunk_raises_on_empty():
 def test_store_command_thunk_raises_on_invalid():
     ref = ItemRef("slot")
     cmd = StoreCommand(ref, LiteralQuery(42))
-    thunk = cmd.compile(0, (_make_thunk(None), _make_thunk(INVALID)))
+    thunk = cmd._compile(0, (_make_thunk(None), _make_thunk(INVALID)))
     with pytest.raises(ValueError, match="sentinel"):
         thunk(None)
 
@@ -117,11 +117,11 @@ def test_primitive_store_command_is_command():
 def test_primitive_store_command_constructs_with_ref_and_value():
     ref = ItemRef("slot")
     cmd = PrimitiveStoreCommand(ref, LiteralQuery({"a": 1}))
-    assert len(cmd.children) == 2
+    assert len(cmd._children) == 2
 
 
 def test_primitive_store_command_mutates_slot_zero():
-    mutates = PrimitiveStoreCommand.attributes.get("mutates")
+    mutates = PrimitiveStoreCommand._attributes.get("mutates")
     assert mutates is not None
     assert 0 in mutates.value
 
@@ -129,7 +129,7 @@ def test_primitive_store_command_mutates_slot_zero():
 def test_primitive_store_command_thunk_raises_on_empty():
     ref = ItemRef("slot")
     cmd = PrimitiveStoreCommand(ref, LiteralQuery(42))
-    thunk = cmd.compile(0, (_make_thunk(None), _make_thunk(EMPTY)))
+    thunk = cmd._compile(0, (_make_thunk(None), _make_thunk(EMPTY)))
     with pytest.raises(ValueError, match="sentinel"):
         thunk(None)
 
@@ -137,6 +137,6 @@ def test_primitive_store_command_thunk_raises_on_empty():
 def test_primitive_store_command_thunk_raises_on_invalid():
     ref = ItemRef("slot")
     cmd = PrimitiveStoreCommand(ref, LiteralQuery(42))
-    thunk = cmd.compile(0, (_make_thunk(None), _make_thunk(INVALID)))
+    thunk = cmd._compile(0, (_make_thunk(None), _make_thunk(INVALID)))
     with pytest.raises(ValueError, match="sentinel"):
         thunk(None)

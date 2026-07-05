@@ -65,7 +65,7 @@ def _wrap_body(children: tuple[Nu, ...]) -> Nu:
 
 def _node_write_positions(node: object) -> frozenset[int]:
     """Declared write positions on a node via its ``mutates`` attribute, or empty."""
-    attrs = getattr(type(node), "attributes", None)
+    attrs = getattr(type(node), "_attributes", None)
     if not attrs or "mutates" not in attrs:
         return frozenset()
     value = attrs["mutates"].value
@@ -79,8 +79,8 @@ def _has_virtuals_write(node: object) -> bool:
         cur = stack.pop()
         if _node_write_positions(cur):
             return True
-        children = getattr(cur, "children", ())
-        stack.extend(c for c in children if hasattr(c, "children"))
+        children = getattr(cur, "_children", ())
+        stack.extend(c for c in children if hasattr(c, "_children"))
     return False
 
 
@@ -111,12 +111,12 @@ class _VirtualsBracketMixin:
     """Shared lifecycle dispatch: run the body inside ``_open`` (a contextmanager).
 
     ``_open`` is the fabric lifecycle; subclasses fill in the open/commit/abort
-    body. ``scope`` is a plain data attribute (the shape tag), so it does not
-    clash with the core bracket's ``scope`` lifecycle method — this mixin
-    overrides ``compile`` / ``acompile`` to call ``self._open`` directly.
+    body. ``scope`` is a plain data attribute (the shape tag), living alongside
+    the core bracket's ``_open`` lifecycle method — this mixin overrides
+    ``compile`` / ``acompile`` to call ``self._open`` directly.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body = children[0]
         opener = self._open
 
@@ -133,7 +133,7 @@ class _VirtualsBracketMixin:
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body = children[0]
         opener = self._open
 
@@ -160,21 +160,17 @@ class Snapshot(_VirtualsBracketMixin, _CoreSnapshot):
 
     def __init__(self, *children: Nu, scope: Hashable | None = None) -> None:
         super().__init__(_wrap_body(children))
-        # Carry the scope tag in payload so Term.with_children (used by the
+        # Carry the scope tag in payload so Term._with_children (used by the
         # bottom-up rewrite in auto_flow_atomic) preserves it across rebuilds.
-        # An instance attribute would be dropped, unshadowing the core
-        # `_LifecycleBracket.scope` method and leaking a bound method as
-        # the scope tag into the ctx.
-        self.payload = {"scope": scope}
+        # An instance attribute on the base scope-property path would break
+        # payload propagation; keeping it in payload lets rewrites carry it
+        # cleanly (see `_LifecycleBracket._open` for the lifecycle method).
+        self._payload = {"scope": scope}
 
     @property
-    def scope(self) -> Hashable | None:  # type: ignore[override]
-        """Shape tag for atomic routing; overrides the core lifecycle method.
-
-        Safe because :class:`_VirtualsBracketMixin` overrides ``compile`` to
-        drive the boundary through ``_open`` instead of the core ``scope``.
-        """
-        return self.payload["scope"]
+    def scope(self) -> Hashable | None:
+        """Shape tag for atomic routing."""
+        return self._payload["scope"]
 
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[Context]:
@@ -219,12 +215,12 @@ class Transaction(_VirtualsBracketMixin, _CoreTransaction):
     def __init__(self, *children: Nu, scope: Hashable | None = None) -> None:
         super().__init__(_wrap_body(children))
         # See Snapshot.__init__ for why scope lives in payload, not on self.
-        self.payload = {"scope": scope}
+        self._payload = {"scope": scope}
 
     @property
-    def scope(self) -> Hashable | None:  # type: ignore[override]
-        """Shape tag for atomic routing; overrides the core lifecycle method."""
-        return self.payload["scope"]
+    def scope(self) -> Hashable | None:
+        """Shape tag for atomic routing."""
+        return self._payload["scope"]
 
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[Context]:

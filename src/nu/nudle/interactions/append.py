@@ -30,20 +30,20 @@ __all__ = ["Append"]
 class Append(Command):
     """Send an `append` frame on a nudle Ref."""
 
-    mutates = Declared(value=frozenset({0}))
-    requires_async = Declared(value=True)
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, ref: NudleRef, *values: Nu | Any) -> None:
         super().__init__(ref, *values)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
             raise RuntimeError("nudle is async-only; use nu.arun")
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref: NudleRef = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: NudleRef = self._children[0]
         value_thunks = children[1:]
 
         async def athunk(rt: Runtime) -> None:
@@ -57,5 +57,5 @@ class Append(Command):
         return athunk
 
     def __repr__(self) -> str:
-        parts = ", ".join(repr(c) for c in self.children[1:])
-        return f"Append({self.children[0]!r}, {parts})"
+        parts = ", ".join(repr(c) for c in self._children[1:])
+        return f"Append({self._children[0]!r}, {parts})"

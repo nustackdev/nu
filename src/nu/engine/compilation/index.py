@@ -45,7 +45,7 @@ def build_index(program: Program, root: Term) -> None:
         child_lists.append([])
         if parent_nid >= 0:
             child_lists[parent_nid].append(nid)
-        term_children = node.children
+        term_children = node._children
         for slot in range(len(term_children) - 1, -1, -1):
             stack.append((term_children[slot], (*path, slot), nid))
 

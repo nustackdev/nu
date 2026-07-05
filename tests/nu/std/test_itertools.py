@@ -48,13 +48,13 @@ from nu.std.itertools import (
 
 def mat(form: object) -> list:
     """Materialize an iterator Form to a list via the sync engine path."""
-    value, _ = run(CollectQuery(form.children[0]))  # type: ignore[attr-defined]
+    value, _ = run(CollectQuery(form._children[0]))  # type: ignore[attr-defined]
     return value
 
 
 async def amat(form: object) -> list:
     """Materialize an iterator Form to a list via the async engine path."""
-    value, _ = await arun(CollectQuery(form.children[0]))  # type: ignore[attr-defined]
+    value, _ = await arun(CollectQuery(form._children[0]))  # type: ignore[attr-defined]
     return value
 
 

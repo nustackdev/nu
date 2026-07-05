@@ -140,7 +140,7 @@ def test_facet_switch_returns_clone(ctx) -> None:
     ref = Ledger.entries
     eager = ref.eager
     lazy = ref.lazy
-    assert eager._facet is Facet.EAGER
-    assert lazy._facet is Facet.LAZY
+    assert eager._payload["facet"] is Facet.EAGER
+    assert lazy._payload.get("facet", Facet.LAZY) is Facet.LAZY
     # switching preserves the shape / address
-    assert eager._segment == ref._segment
+    assert eager._payload["segment"] == ref._payload["segment"]

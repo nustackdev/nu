@@ -28,16 +28,16 @@ from nu.lang.helpers import (
 class _AsyncOnly(StreamQuery):
     """An async-only stream stub (no sync path), to drive sync-refusal tests."""
 
-    requires_async = Declared(value=True)
+    _requires_async = Declared(value=True, name="requires_async")
 
 
 class _Src(StreamQuery):
     def __init__(self, items: tuple) -> None:
         super().__init__()
-        self.payload = {"items": tuple(items)}
+        self._payload = {"items": tuple(items)}
 
-    def compile(self, nid, children):
-        items = self.payload["items"]
+    def _compile(self, nid, children):
+        items = self._payload["items"]
 
         def thunk(rt):
             def gen():
@@ -47,8 +47,8 @@ class _Src(StreamQuery):
 
         return thunk
 
-    def acompile(self, nid, children):
-        items = self.payload["items"]
+    def _acompile(self, nid, children):
+        items = self._payload["items"]
 
         async def athunk(rt):
             async def agen():

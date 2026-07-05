@@ -42,7 +42,7 @@ class IfQuery(ScalarQuery):
     is evaluated.
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         cond, then_, else_ = children
 
         def thunk(rt: Runtime) -> object:
@@ -56,7 +56,7 @@ class IfQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         cond, then_, else_ = children
 
         async def athunk(rt: Runtime) -> object:
@@ -94,14 +94,14 @@ class SwitchQuery(ScalarQuery):
         if default is not None:
             values.append(default)
         super().__init__(selector, *values)
-        self.payload["keys"] = tuple(cases.keys())
-        self.payload["has_default"] = default is not None
+        self._payload["keys"] = tuple(cases.keys())
+        self._payload["has_default"] = default is not None
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         selector = children[0]
         values = children[1:]
-        keys = self.payload["keys"]
-        has_default = self.payload["has_default"]
+        keys = self._payload["keys"]
+        has_default = self._payload["has_default"]
 
         def thunk(rt: Runtime) -> object:
             s = selector(rt)
@@ -122,11 +122,11 @@ class SwitchQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         selector = children[0]
         values = children[1:]
-        keys = self.payload["keys"]
-        has_default = self.payload["has_default"]
+        keys = self._payload["keys"]
+        has_default = self._payload["has_default"]
 
         async def athunk(rt: Runtime) -> object:
             s = await selector(rt)

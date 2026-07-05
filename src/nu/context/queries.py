@@ -31,8 +31,8 @@ __all__ = ["AttrExistsQuery", "ServiceExistsQuery"]
 class AttrExistsQuery(ScalarQuery):
     """Yields whether the slot-0 ``AttrRef``'s address is bound in ``ctx.attrs``."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         def thunk(rt: Runtime) -> object:
             address = ref._address(rt, rt.program.children[nid][0])
@@ -40,8 +40,8 @@ class AttrExistsQuery(ScalarQuery):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         async def athunk(rt: Runtime) -> object:
             address = await ref._aaddress(rt, rt.program.children[nid][0])
@@ -53,16 +53,16 @@ class AttrExistsQuery(ScalarQuery):
 class ServiceExistsQuery(ScalarQuery):
     """Yields whether the slot-0 ``ServiceRef``'s service type is bound."""
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         def thunk(rt: Runtime) -> object:
             return rt.ctx.has(ref._address(rt, rt.program.children[nid][0]))
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self.children[0]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
 
         async def athunk(rt: Runtime) -> object:
             return rt.ctx.has(await ref._aaddress(rt, rt.program.children[nid][0]))

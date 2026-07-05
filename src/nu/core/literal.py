@@ -30,18 +30,18 @@ class LiteralQuery(ScalarQuery):
 
     def __init__(self, value: object) -> None:
         super().__init__()
-        self.payload = {"value": value}
+        self._payload = {"value": value}
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        value = self.payload["value"]
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        value = self._payload["value"]
 
         def thunk(rt: Runtime) -> object:
             return value
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        value = self.payload["value"]
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        value = self._payload["value"]
 
         async def athunk(rt: Runtime) -> object:
             return value

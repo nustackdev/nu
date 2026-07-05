@@ -19,7 +19,7 @@ from nu.lang.helpers import arun, run, run_in_loop
 class _AsyncOnly(StreamQuery):
     """An async-only stream stub (no sync path), to drive sync-refusal tests."""
 
-    requires_async = Declared(value=True)
+    _requires_async = Declared(value=True, name="requires_async")
 
 
 def test_run_returns_value_for_value_root():

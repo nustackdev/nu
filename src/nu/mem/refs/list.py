@@ -29,13 +29,13 @@ class ListRef[T](MutableSequenceRef["ItemRef"], RefBase[list[T]]):
         """Navigate to the element at ``address`` as a substrate-backed mem ItemRef."""
         return ItemRef(
             address,
-            value_type=self.payload["item_type"],
-            value_value_type=self.payload["item_value_type"],
+            value_type=self._payload["item_type"],
+            value_value_type=self._payload["item_value_type"],
             parent_ref=self,
             owner_shape=self._owner_shape,
         )
 
-    def result(self, op: Nu) -> ListForm[T]:
+    def _wrap_result(self, op: Nu) -> ListForm[T]:
         """Wrap a sequence-level op result as a ListForm."""
         return ListForm(op)
 
@@ -58,8 +58,8 @@ class ListRef[T](MutableSequenceRef["ItemRef"], RefBase[list[T]]):
         owner_shape: type[Shape] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self.payload["item_type"] = item_type
-        self.payload["item_value_type"] = item_value_type
+        self._payload["item_type"] = item_type
+        self._payload["item_value_type"] = item_value_type
 
     @classmethod
     def slot[E](cls, item_type: type[E]) -> ListRef[E]:

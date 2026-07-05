@@ -40,15 +40,15 @@ def test_declared_attribute_is_wrapped() -> None:
     AddQuery = InteractionFactory(
         ScalarQuery, "AddQuery", lambda *xs: sum(xs), commutative=True, associative=True
     )
-    assert "commutative" in AddQuery.attributes
-    assert "associative" in AddQuery.attributes
-    assert AddQuery.attributes["commutative"].value is True
+    assert "commutative" in AddQuery._attributes
+    assert "associative" in AddQuery._attributes
+    assert AddQuery._attributes["commutative"].value is True
 
 
 def test_pre_wrapped_attribute_passes_through() -> None:
     decl = Declared(value=True)
     Cls = InteractionFactory(ScalarQuery, "Cls", lambda: 0, commutative=decl)
-    assert Cls.commutative is decl
+    assert Cls._commutative is decl
 
 
 def test_rejects_unsupported_base() -> None:
@@ -115,7 +115,7 @@ def test_keyword_args_run_on_async_path() -> None:
 def test_scalar_query_factory_builds_scalar_query() -> None:
     Add = ScalarQueryFactory("Add", lambda a, b: a + b, commutative=True)
     assert issubclass(Add, ScalarQuery)
-    assert Add.attributes["commutative"].value is True
+    assert Add._attributes["commutative"].value is True
     value, _ = run(Add(2, 3))
     assert value == 5
 
@@ -170,9 +170,9 @@ def test_command_thunk_returns_none_and_calls_fn() -> None:
     # A Command must wrap a Ref in slot 0; for a unit check we drive the
     # built thunk directly. compile() gives us back a (rt) -> None thunk.
     instance = Touch.__new__(Touch)
-    instance.children = ()
-    instance.payload = {}
-    thunk = instance.compile(0, ())
+    instance._children = ()
+    instance._payload = {}
+    thunk = instance._compile(0, ())
     assert thunk(rt=None) is None
     assert calls == [()]
 
@@ -185,13 +185,13 @@ def test_command_short_circuits_to_none_on_sentinel() -> None:
 
     Touch = InteractionFactory(Command, "Touch", fn, mutates=frozenset({0}))
     instance = Touch.__new__(Touch)
-    instance.children = ()
-    instance.payload = {}
+    instance._children = ()
+    instance._payload = {}
 
     def child_thunk(rt: object) -> object:
         return EMPTY
 
-    thunk = instance.compile(0, (child_thunk,))
+    thunk = instance._compile(0, (child_thunk,))
     assert thunk(rt=None) is None
     assert calls == []  # fn never ran
 
@@ -204,8 +204,8 @@ def test_async_def_infers_requires_async() -> None:
         return x + 1
 
     Inc = InteractionFactory(ScalarQuery, "Inc", afn)
-    assert "requires_async" in Inc.attributes
-    assert Inc.attributes["requires_async"].value is True
+    assert "requires_async" in Inc._attributes
+    assert Inc._attributes["requires_async"].value is True
 
 
 def test_async_atom_runs_on_async_path() -> None:

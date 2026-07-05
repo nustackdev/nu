@@ -80,7 +80,7 @@ class AttrRef(_ContextRef):
     (a key read from another slot).
     """
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         address = children[0]
 
         def thunk(rt: Runtime) -> object:
@@ -88,7 +88,7 @@ class AttrRef(_ContextRef):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         address = children[0]
 
         async def athunk(rt: Runtime) -> object:
@@ -154,7 +154,7 @@ class ServiceRef(_ContextRef):
                 raise TypeError(msg)
         super().__init__(address)
 
-    def compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         service = children[0]
 
         def thunk(rt: Runtime) -> object:
@@ -163,7 +163,7 @@ class ServiceRef(_ContextRef):
 
         return thunk
 
-    def acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         service = children[0]
 
         async def athunk(rt: Runtime) -> object:

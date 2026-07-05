@@ -15,15 +15,15 @@ from nu.lang.sentinels import EMPTY, INVALID
 
 def test_int_child_is_wrapped() -> None:
     term = AddQuery(1, 2)
-    assert all(isinstance(c, LiteralQuery) for c in term.children)
-    assert [c.payload["value"] for c in term.children] == [1, 2]
+    assert all(isinstance(c, LiteralQuery) for c in term._children)
+    assert [c._payload["value"] for c in term._children] == [1, 2]
 
 
 def test_term_child_is_left_alone() -> None:
     inner = LiteralQuery(7)
     term = AddQuery(inner, 3)
-    assert term.children[0] is inner
-    assert isinstance(term.children[1], LiteralQuery)
+    assert term._children[0] is inner
+    assert isinstance(term._children[1], LiteralQuery)
 
 
 def test_autowrap_runs_end_to_end() -> None:
@@ -33,13 +33,13 @@ def test_autowrap_runs_end_to_end() -> None:
 
 def test_none_is_wrapped() -> None:
     term = AddQuery(None)
-    assert isinstance(term.children[0], LiteralQuery)
-    assert term.children[0].payload["value"] is None
+    assert isinstance(term._children[0], LiteralQuery)
+    assert term._children[0]._payload["value"] is None
 
 
 def test_string_is_wrapped() -> None:
     term = AddQuery("hi")
-    assert term.children[0].payload["value"] == "hi"
+    assert term._children[0]._payload["value"] == "hi"
 
 
 def test_callable_is_wrapped_as_value() -> None:
@@ -47,19 +47,19 @@ def test_callable_is_wrapped_as_value() -> None:
         return 1
 
     term = AddQuery(f)
-    assert term.children[0].payload["value"] is f
+    assert term._children[0]._payload["value"] is f
 
 
 def test_sentinels_are_wrapped() -> None:
     term = AddQuery(EMPTY, INVALID)
-    assert all(isinstance(c, LiteralQuery) for c in term.children)
-    assert term.children[0].payload["value"] is EMPTY
-    assert term.children[1].payload["value"] is INVALID
+    assert all(isinstance(c, LiteralQuery) for c in term._children)
+    assert term._children[0]._payload["value"] is EMPTY
+    assert term._children[1]._payload["value"] is INVALID
 
 
 def test_mixed_children_are_wrapped_individually() -> None:
     inner = LiteralQuery(10)
     term = AddQuery(inner, 5, inner)
-    assert term.children[0] is inner
-    assert isinstance(term.children[1], LiteralQuery)
-    assert term.children[2] is inner
+    assert term._children[0] is inner
+    assert isinstance(term._children[1], LiteralQuery)
+    assert term._children[2] is inner

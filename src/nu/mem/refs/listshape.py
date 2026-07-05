@@ -32,7 +32,7 @@ class ShapesListRef[T: Shape](MutableShapesSequenceRef["ShapeRef"], RefBase[list
         """Navigate to the shape at ``address`` as a substrate-backed mem ShapeRef."""
         return ShapeRef(
             address,
-            shape_type=self._item_shape_type,
+            shape_type=self._payload["item_shape_type"],
             parent_ref=self,
             owner_shape=self._owner_shape,
         )
@@ -51,7 +51,7 @@ class ShapesListRef[T: Shape](MutableShapesSequenceRef["ShapeRef"], RefBase[list
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
-        self.payload["item_type"] = dict
+        self._payload["item_type"] = dict
 
     @classmethod
     def slot[S: Shape](cls, shape_type: type[S]) -> ShapesListRef[S]:

@@ -31,12 +31,12 @@ class _BoomStream(StreamQuery):
 
     def __init__(self, n: int, name: str) -> None:
         super().__init__()
-        self.payload["n"] = n
-        self.payload["name"] = name
+        self._payload["n"] = n
+        self._payload["name"] = name
 
-    def compile(self, nid, children):
-        n = self.payload["n"]
-        name = self.payload["name"]
+    def _compile(self, nid, children):
+        n = self._payload["n"]
+        name = self._payload["name"]
 
         def thunk(rt):
             def gen():

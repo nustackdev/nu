@@ -35,7 +35,7 @@ __all__ = [
 class ShapeRef[T: Shape](MutableShapeRef, RefBase[dict[str, object]]):
     """Dict shape reference — structured container backed by nested dict."""
 
-    def result(self, op: Nu) -> DictForm[str, object]:
+    def _wrap_result(self, op: Nu) -> DictForm[str, object]:
         """Wrap a shape-level op result as a DictForm."""
         return DictForm(op)
 
@@ -71,8 +71,8 @@ class ShapeRef[T: Shape](MutableShapeRef, RefBase[dict[str, object]]):
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
-        self.payload["key_type"] = str
-        self.payload["value_type"] = object
+        self._payload["key_type"] = str
+        self._payload["value_type"] = object
 
     @classmethod
     def slot[S: Shape](cls, shape_type: type[S]) -> ShapeRef[S]:

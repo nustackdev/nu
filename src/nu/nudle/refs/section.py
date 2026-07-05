@@ -50,13 +50,13 @@ class SectionRef(NudleRef):
         owner_shape: type[Section] | None = None,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self.payload["section_cls"] = section_cls
+        self._payload["section_cls"] = section_cls
 
     def __getattr__(self, name: str) -> object:
         # Only called when normal attribute lookup fails. Map to a child
         # slot on the bound Section class. Read payload straight off __dict__ so
         # this never recurses back through __getattr__.
-        payload = self.__dict__.get("payload") or {}
+        payload = self.__dict__.get("_payload") or {}
         section_cls = payload.get("section_cls")
         if section_cls is None:
             raise AttributeError(name)
