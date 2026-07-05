@@ -10,9 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from nu import DictForm
 
-from ..interactions.append import Append
-from ..interactions.changed import Changed
-from ..interactions.write import Write
+from ..interactions import Append, Changed, Write
 from .base import NudleRef
 
 

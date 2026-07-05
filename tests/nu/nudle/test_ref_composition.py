@@ -219,7 +219,7 @@ def test_widget_store_emits_write_frame(widget_cls, mod):
 
 @pytest.mark.parametrize("widget_cls,mod", _CHANGED_WIDGETS, ids=[m for _, m in _CHANGED_WIDGETS])
 def test_input_widget_changed_returns_subscription(widget_cls, mod):
-    from nu.nudle.interactions.changed import Changed
+    from nu.nudle.interactions import Changed
 
     handle = _mount(widget_cls)
     assert isinstance(handle.changed(), Changed)

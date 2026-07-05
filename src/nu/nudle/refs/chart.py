@@ -12,8 +12,7 @@ from typing import TYPE_CHECKING, ClassVar, Literal
 
 from nu import DictForm
 
-from ..interactions.append import Append
-from ..interactions.write import Write
+from ..interactions import Append, Write
 from .base import NudleRef
 
 

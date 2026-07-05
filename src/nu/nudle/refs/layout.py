@@ -16,8 +16,7 @@ from nu.domains.shape import Slot
 from nu.engine.structure import Declared
 from nu.lang import Command
 
-from ..interactions.changed import Changed
-from ..interactions.write import Write
+from ..interactions import Changed, Write
 from ..protocol import Frame
 from ..session import NudleSession
 from .base import NudleRef
