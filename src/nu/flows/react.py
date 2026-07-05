@@ -28,6 +28,21 @@ if TYPE_CHECKING:
 __all__ = ["React", "ReactForever", "ReactWhile"]
 
 
+async def _adrain_body(rt: Runtime, body_thunk: Callable) -> None:
+    """Run a react body and drain any values it yields.
+
+    A body may be a Command (returns None) or a stream (returns an iterable /
+    async-iterable). Both shapes are fine — Commands carry writes and yield
+    nothing, streams carry values that must be pulled through to fire their
+    side effects.
+    """
+    result = await body_thunk(rt)
+    if result is None:
+        return
+    async for _ in aiter_any(result):
+        pass
+
+
 class React(Control):
     """Wait for one change event, run body once; yields nothing.
 
@@ -87,8 +102,7 @@ class React(Control):
                 if changed_key_name is not None:
                     rt.ctx.attrs[changed_key_name] = key
                 if has_body:
-                    async for _ in aiter_any(await children[1](rt)):
-                        pass
+                    await _adrain_body(rt, children[1])
             finally:
                 sub.unbind(on_change)
                 sub.close()
@@ -150,8 +164,7 @@ class ReactWhile(Control):
                         break
                     if changed_key_name is not None:
                         rt.ctx.attrs[changed_key_name] = key
-                    async for _ in aiter_any(await children[2](rt)):
-                        pass
+                    await _adrain_body(rt, children[2])
             finally:
                 sub.unbind(on_change)
                 sub.close()
@@ -210,8 +223,7 @@ class ReactForever(Control):
                     key = await queue.get()
                     if changed_key_name is not None:
                         rt.ctx.attrs[changed_key_name] = key
-                    async for _ in aiter_any(await children[1](rt)):
-                        pass
+                    await _adrain_body(rt, children[1])
             finally:
                 sub.unbind(on_change)
                 sub.close()

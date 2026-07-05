@@ -10,6 +10,11 @@ Or reach a subpackage by dot-access:
     import nu
     nu.forms.IntForm    nu.core.AddQuery    nu.flows.Sequential
     nu.spans.Retry      nu.shape.Shape      nu.tree.map_nodes
+    nu.mem.IntRef       nu.virtuals.presets.memory_storage
+    nu.nudle.Page       nu.std.uuid.UUID
+
+Short aliases: ``nu.m`` = ``nu.mem``, ``nu.nd`` = ``nu.nudle``, ``nu.v`` =
+``nu.virtuals``. Same modules, shorter to type.
 
 Flat at the root: forms, core interactions, flows, spans, the context fabric,
 and the language essentials (``Nu``, the kinds, the ``Arg`` aliases, the
@@ -21,6 +26,7 @@ the layer-0 engine (``nu.engine``) are namespace-only, never flat.
 from __future__ import annotations
 
 # Subpackage namespaces for dot-access.
+# Early group: pure layers with no dependency on the flat root surface.
 from . import context, core, engine, flows, forms, lang, spans, tree
 from .domains import shape
 
@@ -103,6 +109,16 @@ from .lang.helpers import (
     run,
     run_in_loop,
 )
+
+# Late subpackage namespaces: fabric adapters and higher layers that reach into
+# the flat root surface (e.g. ``from nu import Shape``). Imported last so their
+# init sees a fully-populated ``nu`` module.
+from . import mem, nudle, std, virtuals
+
+# Short aliases for the fabric adapters and UI layer.
+m = mem
+nd = nudle
+v = virtuals
 
 
 # __all__ is everything bound above: the subpackage namespaces, the flat

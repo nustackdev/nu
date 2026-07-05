@@ -1,5 +1,6 @@
 """nudle -- UI fabric for Nu."""
 
+from . import cli, interactions, page, protocol, refs, session
 from .interactions import Append, Changed, Write
 from .page import Index, Page, Pages
 from .protocol import Frame, decode, encode
@@ -54,6 +55,14 @@ from .session import NudleSession, Subscription
 
 
 __all__ = [
+    # Submodules
+    "cli",
+    "interactions",
+    "page",
+    "protocol",
+    "refs",
+    "session",
+    # Names
     "AccordionRef",
     "AlertRef",
     "Append",

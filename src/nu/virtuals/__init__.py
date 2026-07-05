@@ -25,6 +25,7 @@ try:
 except ImportError:
     pass
 
+from nu.virtuals import interactions, paths, presets, refs, tree, views
 from nu.virtuals.interactions import (
     CONFLICT_ERRORS,
     Atomic,
@@ -95,6 +96,13 @@ from nu.virtuals.tree import auto_flow_atomic, inline_refs
 
 
 __all__ = [  # noqa: RUF022
+    # Submodules
+    "interactions",
+    "paths",
+    "presets",
+    "refs",
+    "tree",
+    "views",
     # Interactions — Item
     "EnsureLayoutCmd",
     "InitItemCmd",

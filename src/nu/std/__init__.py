@@ -15,3 +15,36 @@ escape hatch - every op is a first-class term.
 """
 
 from __future__ import annotations
+
+from nu.std import (
+    asyncio,
+    cmath,
+    datetime,
+    decimal,
+    fin,
+    fractions,
+    functools,
+    itertools,
+    math,
+    pathlib,
+    random,
+    time,
+    uuid,
+)
+
+
+__all__ = [
+    "asyncio",
+    "cmath",
+    "datetime",
+    "decimal",
+    "fin",
+    "fractions",
+    "functools",
+    "itertools",
+    "math",
+    "pathlib",
+    "random",
+    "time",
+    "uuid",
+]
