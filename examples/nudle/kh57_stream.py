@@ -55,7 +55,7 @@ bg = nu.v.Transaction(
         Series.entries.set(Series.height, nurandom.randint(0, 100))
         >> Series.height.store(Series.height + 1),
     )
-    >> nu.Delay(0.01),
+    >> nu.Delay(0.001),
 )
 
 
