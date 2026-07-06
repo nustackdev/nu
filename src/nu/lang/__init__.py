@@ -91,7 +91,7 @@ from .sentinels import (
     is_invalid,
     is_sentinel,
 )
-from .typeinfo import TypeInfo
+from .typeinfo import TypeInfo, value_type_for
 
 
 if TYPE_CHECKING:
@@ -165,6 +165,7 @@ __all__ = [
     "predicate",
     "subsort",
     "validate",
+    "value_type_for",
 ]
 
 # The Nu schema, built and finalized once at import.

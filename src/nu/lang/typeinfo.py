@@ -50,7 +50,7 @@ if TYPE_CHECKING:
     from nu.lang.forms import Form
 
 
-__all__ = ["TypeInfo"]
+__all__ = ["TypeInfo", "value_type_for"]
 
 
 _NoneType = type(None)
@@ -238,3 +238,13 @@ def _form_for(py_type: object) -> type[Form]:
         tuple: TupleForm,
     }
     return mapping.get(py_type, AnyForm)  # type: ignore[arg-type]
+
+
+def value_type_for(python_type: object) -> type[Form]:
+    """Map a Python primitive type to its ``Form`` class (``AnyForm`` fallback).
+
+    Convenience wrapper over ``_form_for``: the sole dispatch source of truth
+    consolidating the earlier duplicated ``nu/mem/refs/_typemap.py`` and
+    ``nu/virtuals/refs/_typemap.py``.
+    """
+    return _form_for(python_type)

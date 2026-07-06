@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 from nu import AnyForm, IteratorForm, ListForm
 from nu.domains.shape import MutableSequenceRef, Slot
+from nu.lang.typeinfo import value_type_for
 
-from ._typemap import value_type_for
 from .base import RefBase
 from .items import ItemRef
 

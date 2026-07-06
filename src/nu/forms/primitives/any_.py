@@ -29,7 +29,7 @@ wrap it in the appropriate interaction.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from nu.lang import Form, Ref, TypedNu
 
@@ -46,12 +46,18 @@ __all__ = [
 ]
 
 
-class AnyForm(Form, TypedNu[object]):
+class AnyForm(Form, TypedNu[Any]):
     """Any/dynamic interface. Supports all interactions, results stay AnyForm.
 
     Absorbing under arithmetic + bitwise + subscript + attribute descent
     (result is another ``AnyForm``); comparison and logical ops yield
     ``BoolForm`` (well-typed decision even in the dynamic world).
+
+    Types as ``TypedNu[Any]`` (not ``TypedNu[object]``) so that AnyForm
+    can slot into any narrow ``Arg`` position (``IntArg``, ``StrArg``, ...) -
+    ``Any``'s special variance rules let ``Nu[Any]`` substitute for
+    ``Nu[int]`` / ``Nu[str]`` / etc. That is how ``intref + anyval``
+    lands as ``IntForm`` instead of degrading through ``__radd__``.
     """
 
     # =========================================================================

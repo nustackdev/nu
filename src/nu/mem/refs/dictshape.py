@@ -18,8 +18,8 @@ from nu import (
     IteratorForm,
 )
 from nu.domains.shape import MutableShapesMappingRef, Slot
+from nu.lang.typeinfo import value_type_for
 
-from ._typemap import value_type_for
 from .base import RefBase
 from .shape import ShapeRef
 

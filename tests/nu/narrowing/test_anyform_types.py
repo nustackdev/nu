@@ -204,3 +204,26 @@ assert_type((anyval[0] // 2).and_(1),    BoolForm)
 # Positive tests only. Negative tests (value-node mutation raises
 # TypeError at build time) live in ``test_negative_types.py`` since they
 # are runtime-error assertions, not type-narrowing checks.
+
+
+# --- AnyForm slots into any narrow Arg via Any variance --------------
+
+
+# Because AnyForm is ``TypedNu[Any]`` (not ``TypedNu[object]``), it
+# substitutes for ``Nu[int]`` / ``Nu[str]`` / ... via Python's Any
+# variance rules. Concrete-typed refs consuming an AnyForm keep their
+# narrow return type instead of degrading through ``__radd__``.
+
+class _S(nu.Shape):
+    n:     IntRef
+    label: nu.v.StrRef
+
+
+assert_type(_S.n + anyval,            IntForm)
+assert_type(_S.n - anyval,            IntForm)
+assert_type(_S.n * anyval,            IntForm)
+assert_type(_S.n // anyval,           IntForm)
+assert_type(_S.label + anyval,        StrForm)
+assert_type(anyval + _S.n,            AnyForm)   # __radd__ path stays AnyForm-first
+assert_type(_S.n > anyval,            BoolForm)
+assert_type(_S.label == anyval,       BoolForm)
