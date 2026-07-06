@@ -10,6 +10,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from nu import DictForm
+from nu.lang.args import BoolArg, FloatArg, ListArg, StrArg
+from nu.lang.sentinels import UNSET
 
 from ..interactions import Changed, Write
 from .base import NudleRef
@@ -34,7 +36,7 @@ class ButtonRef(NudleRef):
     icon: ClassVar[str | None] = None
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "label": cls.label,
             "variant": cls.variant,
@@ -45,28 +47,28 @@ class ButtonRef(NudleRef):
     def clicked(self) -> Changed:
         return Changed(self)
 
-    def store_label(self, text: Nu | str) -> Nu:
+    def store_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_variant(self, name: Nu | Variant | str) -> Nu:
+    def store_variant(self, name: Variant | StrArg) -> Nu:
         return Write(self, DictForm.of(variant=name))
 
-    def store_disabled(self, flag: Nu | bool) -> Nu:
+    def store_disabled(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(disabled=flag))
 
     def store(
         self,
-        label: Nu | str,
-        variant: Nu | Variant | str | None = None,
-        disabled: Nu | bool | None = None,
-        icon: Nu | str | None = None,
+        label: StrArg,
+        variant: Variant | StrArg = UNSET,
+        disabled: BoolArg = UNSET,
+        icon: StrArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"label": label}
-        if variant is not None:
+        if variant is not UNSET:
             payload["variant"] = variant
-        if disabled is not None:
+        if disabled is not UNSET:
             payload["disabled"] = disabled
-        if icon is not None:
+        if icon is not UNSET:
             payload["icon"] = icon
         return Write(self, DictForm.of(**payload))
 
@@ -78,7 +80,7 @@ class CheckboxRef(NudleRef):
     checked: ClassVar[bool] = False
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {"label": cls.label, "checked": cls.checked}
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -87,7 +89,7 @@ class CheckboxRef(NudleRef):
 
         return athunk
 
-    def store(self, value: Nu | bool) -> Nu:
+    def store(self, value: BoolArg) -> Nu:
         return Write(self, value)
 
     def changed(self) -> Changed:
@@ -104,7 +106,7 @@ class DatePickerRef(NudleRef):
     default: ClassVar[str] = ""
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "label": cls.label,
             "placeholder": cls.placeholder,
@@ -119,7 +121,7 @@ class DatePickerRef(NudleRef):
 
         return athunk
 
-    def store(self, value: Nu | str) -> Nu:
+    def store(self, value: StrArg) -> Nu:
         return Write(self, value)
 
     def changed(self) -> Changed:
@@ -139,7 +141,7 @@ class InputRef(NudleRef):
     max_length: ClassVar[int | None] = None
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "label": cls.label,
             "placeholder": cls.placeholder,
@@ -154,7 +156,7 @@ class InputRef(NudleRef):
 
         return athunk
 
-    def store(self, value: Nu | str) -> Nu:
+    def store(self, value: StrArg) -> Nu:
         return Write(self, value)
 
     def changed(self) -> Changed:
@@ -172,7 +174,7 @@ class NumberInputRef(NudleRef):
     default: ClassVar[float] = 0.0
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "label": cls.label,
             "placeholder": cls.placeholder,
@@ -188,40 +190,40 @@ class NumberInputRef(NudleRef):
 
         return athunk
 
-    def store_value(self, value: Nu | float | int) -> Nu:
+    def store_value(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(value=value))
 
-    def store_min(self, value: Nu | float | int | None) -> Nu:
+    def store_min(self, value: FloatArg | None) -> Nu:
         return Write(self, DictForm.of(min=value))
 
-    def store_max(self, value: Nu | float | int | None) -> Nu:
+    def store_max(self, value: FloatArg | None) -> Nu:
         return Write(self, DictForm.of(max=value))
 
-    def store_step(self, value: Nu | float | int) -> Nu:
+    def store_step(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(step=value))
 
-    def store_label(self, text: Nu | str) -> Nu:
+    def store_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
     def store(
         self,
-        value: Nu | float | int,
-        min: Nu | float | int | None = None,
-        max: Nu | float | int | None = None,
-        step: Nu | float | int | None = None,
-        label: Nu | str | None = None,
+        value: FloatArg,
+        min: FloatArg = UNSET,
+        max: FloatArg = UNSET,
+        step: FloatArg = UNSET,
+        label: StrArg = UNSET,
     ) -> Nu:
         # Scalar shortcut: just the number when no extra kwargs are passed.
-        if min is None and max is None and step is None and label is None:
+        if min is UNSET and max is UNSET and step is UNSET and label is UNSET:
             return Write(self, value)
         payload: dict[str, object] = {"value": value}
-        if min is not None:
+        if min is not UNSET:
             payload["min"] = min
-        if max is not None:
+        if max is not UNSET:
             payload["max"] = max
-        if step is not None:
+        if step is not UNSET:
             payload["step"] = step
-        if label is not None:
+        if label is not UNSET:
             payload["label"] = label
         return Write(self, DictForm.of(**payload))
 
@@ -252,7 +254,7 @@ class RadioGroupRef(NudleRef):
     orientation: ClassVar[str] = "vertical"
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "options": _normalize_options(cls.options),
             "selected": cls.selected,
@@ -265,10 +267,10 @@ class RadioGroupRef(NudleRef):
 
         return athunk
 
-    def store(self, value: Nu | str) -> Nu:
+    def store(self, value: StrArg) -> Nu:
         return Write(self, value)
 
-    def store_options(self, opts: Nu | list[str] | list[dict[str, str]]) -> Nu:
+    def store_options(self, opts: ListArg[str] | ListArg[dict[str, str]]) -> Nu:
         if isinstance(opts, list):
             payload: object = {"options": _normalize_options(opts)}
         else:
@@ -290,7 +292,7 @@ class SelectRef(NudleRef):
     placeholder: ClassVar[str] = ""
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "options": _normalize_options(cls.options),
             "selected": cls.selected,
@@ -303,10 +305,10 @@ class SelectRef(NudleRef):
 
         return athunk
 
-    def store(self, value: Nu | str) -> Nu:
+    def store(self, value: StrArg) -> Nu:
         return Write(self, value)
 
-    def store_options(self, opts: Nu | list[str] | list[dict[str, str]]) -> Nu:
+    def store_options(self, opts: ListArg[str] | ListArg[dict[str, str]]) -> Nu:
         if isinstance(opts, list):
             payload: object = {"options": _normalize_options(opts)}
         else:
@@ -328,7 +330,7 @@ class SliderRef(NudleRef):
     show_value: ClassVar[bool] = True
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "min": cls.min,
             "max": cls.max,
@@ -344,46 +346,46 @@ class SliderRef(NudleRef):
 
         return athunk
 
-    def store_value(self, value: Nu | float | int) -> Nu:
+    def store_value(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(value=value))
 
-    def store_min(self, value: Nu | float | int) -> Nu:
+    def store_min(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(min=value))
 
-    def store_max(self, value: Nu | float | int) -> Nu:
+    def store_max(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(max=value))
 
-    def store_step(self, value: Nu | float | int) -> Nu:
+    def store_step(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(step=value))
 
-    def store_label(self, text: Nu | str) -> Nu:
+    def store_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_show_value(self, flag: Nu | bool) -> Nu:
+    def store_show_value(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(show_value=flag))
 
     def store(
         self,
-        value: Nu | float | int,
-        min: Nu | float | int | None = None,
-        max: Nu | float | int | None = None,
-        step: Nu | float | int | None = None,
-        label: Nu | str | None = None,
-        show_value: Nu | bool | None = None,
+        value: FloatArg,
+        min: FloatArg = UNSET,
+        max: FloatArg = UNSET,
+        step: FloatArg = UNSET,
+        label: StrArg = UNSET,
+        show_value: BoolArg = UNSET,
     ) -> Nu:
         # Scalar shortcut: just the number when no extra kwargs are passed.
-        if min is None and max is None and step is None and label is None and show_value is None:
+        if all(x is UNSET for x in (min, max, step, label, show_value)):
             return Write(self, value)
         payload: dict[str, object] = {"value": value}
-        if min is not None:
+        if min is not UNSET:
             payload["min"] = min
-        if max is not None:
+        if max is not UNSET:
             payload["max"] = max
-        if step is not None:
+        if step is not UNSET:
             payload["step"] = step
-        if label is not None:
+        if label is not UNSET:
             payload["label"] = label
-        if show_value is not None:
+        if show_value is not UNSET:
             payload["show_value"] = show_value
         return Write(self, DictForm.of(**payload))
 
@@ -398,7 +400,7 @@ class SwitchRef(NudleRef):
     default: ClassVar[bool] = False
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {"label": cls.label, "checked": cls.default}
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -407,7 +409,7 @@ class SwitchRef(NudleRef):
 
         return athunk
 
-    def store(self, value: Nu | bool) -> Nu:
+    def store(self, value: BoolArg) -> Nu:
         return Write(self, value)
 
     def changed(self) -> Changed:
@@ -424,7 +426,7 @@ class TagInputRef(NudleRef):
     allow_duplicates: ClassVar[bool] = False
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "label": cls.label,
             "placeholder": cls.placeholder,
@@ -439,7 +441,7 @@ class TagInputRef(NudleRef):
 
         return athunk
 
-    def store(self, value: Nu | list[str]) -> Nu:
+    def store(self, value: ListArg[str]) -> Nu:
         return Write(self, value)
 
     def changed(self) -> Changed:
@@ -456,7 +458,7 @@ class TextAreaRef(NudleRef):
     auto_resize: ClassVar[bool] = False
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "value": cls.value,
             "placeholder": cls.placeholder,
@@ -471,7 +473,7 @@ class TextAreaRef(NudleRef):
 
         return athunk
 
-    def store(self, value: Nu | str) -> Nu:
+    def store(self, value: StrArg) -> Nu:
         return Write(self, value)
 
     def changed(self) -> Changed:

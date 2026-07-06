@@ -15,6 +15,8 @@ from nu import DictForm, Shape
 from nu.domains.shape import Slot
 from nu.engine.structure import Declared
 from nu.lang import Command
+from nu.lang.args import Arg, BoolArg, ListArg, StrArg
+from nu.lang.sentinels import UNSET
 
 from ..interactions import Changed, Write
 from ..protocol import Frame
@@ -88,7 +90,7 @@ class Section(Shape):
     _nudle_mount: ClassVar[tuple[type, tuple[str, ...]] | None] = None
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         """Class-level layout chrome shipped in the mount field entry."""
         return {}
 
@@ -149,7 +151,7 @@ class AccordionRef(Section):
     multi: ClassVar[bool] = True
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "sections": _normalize_sections(cls.sections),
             "open": _normalize_open(cls.open),
@@ -161,12 +163,12 @@ class AccordionRef(Section):
         return _AccordionMountRef(section_cls=cls)
 
     @classmethod
-    def store_sections(cls, items: Nu | list[dict[str, str]]) -> Nu:
+    def store_sections(cls, items: ListArg[dict[str, str]]) -> Nu:
         value = _normalize_sections(items) if isinstance(items, list) else items
         return Write(cls._mount_ref(), DictForm.of(sections=value))
 
     @classmethod
-    def store_open(cls, ids: Nu | list[str]) -> Nu:
+    def store_open(cls, ids: ListArg[str]) -> Nu:
         value = _normalize_open(ids) if isinstance(ids, list) else ids
         return Write(cls._mount_ref(), DictForm.of(open=value))
 
@@ -211,7 +213,7 @@ class _StoreSectionStr(Command):
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
 
-    def __init__(self, ref: NudleRef, op: str, value: Nu | Any) -> None:
+    def __init__(self, ref: NudleRef, op: str, value: Arg[Any]) -> None:
         super().__init__(ref, value)
         self._payload["op"] = op
 
@@ -247,7 +249,7 @@ class CardRef(Section):
     footer: ClassVar[str] = ""
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {"title": cls.title, "subtitle": cls.subtitle, "footer": cls.footer}
 
     @classmethod
@@ -255,15 +257,15 @@ class CardRef(Section):
         return _CardMountRef(section_cls=cls)
 
     @classmethod
-    def store_title(cls, text: Nu | str) -> Nu:
+    def store_title(cls, text: StrArg) -> Nu:
         return _StoreSectionStr(cls._mount_ref(), "store_title", text)
 
     @classmethod
-    def store_subtitle(cls, text: Nu | str) -> Nu:
+    def store_subtitle(cls, text: StrArg) -> Nu:
         return _StoreSectionStr(cls._mount_ref(), "store_subtitle", text)
 
     @classmethod
-    def store_footer(cls, text: Nu | str) -> Nu:
+    def store_footer(cls, text: StrArg) -> Nu:
         return _StoreSectionStr(cls._mount_ref(), "store_footer", text)
 
 
@@ -280,7 +282,7 @@ class Column(Section):
     padding: ClassVar[int] = 0
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "gap": cls.gap,
             "align": cls.align,
@@ -307,7 +309,7 @@ class Container(Section):
     gap: ClassVar[str] = "md"
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "title": cls.title,
             "padding": cls.padding,
@@ -360,7 +362,7 @@ class FieldRef(Section):
             )
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "label": cls.label,
             "help": cls.help,
@@ -373,19 +375,19 @@ class FieldRef(Section):
         return _FieldMountRef(section_cls=cls)
 
     @classmethod
-    def store_label(cls, text: Nu | str) -> Nu:
+    def store_label(cls, text: StrArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(label=text))
 
     @classmethod
-    def store_help(cls, text: Nu | str) -> Nu:
+    def store_help(cls, text: StrArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(help=text))
 
     @classmethod
-    def store_error(cls, text: Nu | str) -> Nu:
+    def store_error(cls, text: StrArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(error=text))
 
     @classmethod
-    def store_required(cls, flag: Nu | bool) -> Nu:
+    def store_required(cls, flag: BoolArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(required=flag))
 
 
@@ -423,7 +425,7 @@ class Fieldset(Section):
     disabled: ClassVar[bool] = False
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {"legend": cls.legend, "gap": cls.gap, "disabled": cls.disabled}
 
     @classmethod
@@ -431,15 +433,15 @@ class Fieldset(Section):
         return _FieldsetMountRef(section_cls=cls)
 
     @classmethod
-    def store_legend(cls, text: Nu | str) -> Nu:
+    def store_legend(cls, text: StrArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(legend=text))
 
     @classmethod
-    def store_gap(cls, value: Nu | Gap | str) -> Nu:
+    def store_gap(cls, value: Gap | StrArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(gap=value))
 
     @classmethod
-    def store_disabled(cls, flag: Nu | bool) -> Nu:
+    def store_disabled(cls, flag: BoolArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(disabled=flag))
 
 
@@ -452,7 +454,7 @@ class Form(Section):
     align: ClassVar[str] = "stretch"
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "title": cls.title,
             "gap": cls.gap,
@@ -464,17 +466,17 @@ class Form(Section):
 class ModalRef(SectionRef):
     """SectionRef backing a Modal slot. Carries Modal-only interaction methods."""
 
-    def store_open(self, flag: Nu | bool) -> Nu:
+    def store_open(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(open=flag))
 
-    def store_title(self, text: Nu | str) -> Nu:
+    def store_title(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(title=text))
 
-    def store(self, open: Nu | bool | None = None, title: Nu | str | None = None) -> Nu:
+    def store(self, open: BoolArg = UNSET, title: StrArg = UNSET) -> Nu:
         payload: dict[str, object] = {}
-        if open is not None:
+        if open is not UNSET:
             payload["open"] = open
-        if title is not None:
+        if title is not UNSET:
             payload["title"] = title
         return Write(self, DictForm.of(**payload))
 
@@ -490,7 +492,7 @@ class Modal(Section):
     dismissible: ClassVar[bool] = True
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "open": cls.open,
             "title": cls.title,
@@ -516,7 +518,7 @@ class Row(Section):
     padding: ClassVar[int] = 0
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "gap": cls.gap,
             "align": cls.align,
@@ -546,7 +548,7 @@ class _StoreTabs(Command):
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
 
-    def __init__(self, ref: NudleRef, value: Nu | Any) -> None:
+    def __init__(self, ref: NudleRef, value: Arg[Any]) -> None:
         super().__init__(ref, value)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -575,7 +577,7 @@ class _StoreActive(Command):
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
 
-    def __init__(self, ref: NudleRef, value: Nu | Any) -> None:
+    def __init__(self, ref: NudleRef, value: Arg[Any]) -> None:
         super().__init__(ref, value)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -629,7 +631,7 @@ class TabsRef(Section):
     active: ClassVar[str] = ""
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "tabs": _normalize_tabs(cls.tabs),
             "active": cls.active,
@@ -640,11 +642,11 @@ class TabsRef(Section):
         return _TabsMountRef(section_cls=cls)
 
     @classmethod
-    def store_tabs(cls, value: Nu | list[dict[str, str]]) -> Nu:
+    def store_tabs(cls, value: ListArg[dict[str, str]]) -> Nu:
         return _StoreTabs(cls._mount_ref(), value)
 
     @classmethod
-    def store_active(cls, value: Nu | str) -> Nu:
+    def store_active(cls, value: StrArg) -> Nu:
         return _StoreActive(cls._mount_ref(), value)
 
     @classmethod

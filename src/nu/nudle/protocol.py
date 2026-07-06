@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 import msgpack
+
 from nu.lang.sentinels import is_sentinel
 
 

@@ -103,7 +103,7 @@ def _build_fields(
                 "path": path,
                 "type": _wire_type(section_cls),
             }
-            props = section_cls.mount_props()
+            props = section_cls._mount_props()
             if props:
                 entry["props"] = props
             entry["fields"] = _build_fields(path, section_cls)
@@ -113,7 +113,7 @@ def _build_fields(
         if not issubclass(ref_cls, NudleRef):
             continue
         entry = {"path": path, "type": _wire_type(ref_cls)}
-        props = ref_cls.mount_props()
+        props = ref_cls._mount_props()
         if props:
             entry["props"] = props
         out.append(entry)
@@ -134,7 +134,7 @@ class Page(Shape):
                 _register_section_mounts(cls, section_cls, (name,))
 
     @classmethod
-    def mount_fields(cls) -> list[dict[str, object]]:
+    def _mount_fields(cls) -> list[dict[str, object]]:
         """Flatten Page slots into mount field entries.
 
         Paths are prefixed with the Page class name so wire paths are
@@ -179,7 +179,7 @@ class Index(Shape):
     pages: ClassVar[Pages] = Pages({})
 
     @classmethod
-    def structural_fields(cls) -> list[dict[str, object]]:
+    def _structural_fields(cls) -> list[dict[str, object]]:
         """Index-level slot list: structural Refs (title, nav, ...)."""
         out: list[dict[str, object]] = []
         for name, slot in cls._slots.items():
@@ -187,14 +187,14 @@ class Index(Shape):
             if not issubclass(ref_cls, NudleRef):
                 continue
             entry: dict[str, object] = {"path": name, "type": _wire_type(ref_cls)}
-            props = ref_cls.mount_props()
+            props = ref_cls._mount_props()
             if props:
                 entry["props"] = props
             out.append(entry)
         return out
 
     @classmethod
-    def pages_payload(cls) -> list[dict[str, object]]:
+    def _pages_payload(cls) -> list[dict[str, object]]:
         """Per-page mount info: route, shape name, fields list."""
         out: list[dict[str, object]] = []
         for route, page_cls in cls.pages.routes.items():
@@ -202,7 +202,7 @@ class Index(Shape):
                 {
                     "route": route,
                     "name": page_cls.__name__,
-                    "fields": page_cls.mount_fields(),
+                    "fields": page_cls._mount_fields(),
                 }
             )
         return out

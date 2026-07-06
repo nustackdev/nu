@@ -117,7 +117,7 @@ class NudleRef(StructuredRef):
     # --- mount ---------------------------------------------------------------
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         """Class-level defaults to ship in the mount field entry.
 
         Override on Refs whose slice should be seeded without an explicit

@@ -9,6 +9,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from nu import DictForm
+from nu.lang.args import Arg, BoolArg, DictArg, FloatArg, IntArg, ListArg, StrArg
+from nu.lang.sentinels import UNSET
 
 from ..interactions import Append, Changed, Write
 from .base import NudleRef
@@ -30,7 +32,7 @@ class AlertRef(NudleRef):
     dismissible: ClassVar[bool] = False
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "variant": cls.variant,
             "title": cls.title,
@@ -38,31 +40,31 @@ class AlertRef(NudleRef):
             "dismissible": cls.dismissible,
         }
 
-    def store_variant(self, name: Nu | Variant | str) -> Nu:
+    def store_variant(self, name: Variant | StrArg) -> Nu:
         return Write(self, DictForm.of(variant=name))
 
-    def store_title(self, text: Nu | str) -> Nu:
+    def store_title(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(title=text))
 
-    def store_body(self, text: Nu | str) -> Nu:
+    def store_body(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(body=text))
 
-    def store_dismissible(self, flag: Nu | bool) -> Nu:
+    def store_dismissible(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(dismissible=flag))
 
     def store(
         self,
-        title: Nu | str,
-        body: Nu | str | None = None,
-        variant: Nu | Variant | str | None = None,
-        dismissible: Nu | bool | None = None,
+        title: StrArg,
+        body: StrArg = UNSET,
+        variant: Variant | StrArg = UNSET,
+        dismissible: BoolArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"title": title}
-        if body is not None:
+        if body is not UNSET:
             payload["body"] = body
-        if variant is not None:
+        if variant is not UNSET:
             payload["variant"] = variant
-        if dismissible is not None:
+        if dismissible is not UNSET:
             payload["dismissible"] = dismissible
         return Write(self, DictForm.of(**payload))
 
@@ -80,35 +82,35 @@ class BadgeRef(NudleRef):
     variant: ClassVar[str] = "neutral"
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {"label": cls.label, "variant": cls.variant}
 
-    def store_label(self, text: Nu | str) -> Nu:
+    def store_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_variant(self, name: Nu | Variant | str) -> Nu:
+    def store_variant(self, name: Variant | StrArg) -> Nu:
         return Write(self, DictForm.of(variant=name))
 
     def store(
         self,
-        label: Nu | str,
-        variant: Nu | Variant | str | None = None,
+        label: StrArg,
+        variant: Variant | StrArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"label": label}
-        if variant is not None:
+        if variant is not UNSET:
             payload["variant"] = variant
         return Write(self, DictForm.of(**payload))
 
 
 class CodeBlockRef(NudleRef):
-    """Display-only code block. One `write` op carries a partial dict of {code, language, show_copy}."""
+    """Display-only code block. One `write` carries a partial dict {code, language, show_copy}."""
 
     code: ClassVar[str] = ""
     language: ClassVar[str] = ""
     show_copy: ClassVar[bool] = True
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         props: dict[str, object] = {}
         if cls.code != "":
             props["code"] = cls.code
@@ -120,20 +122,20 @@ class CodeBlockRef(NudleRef):
 
     def store(
         self,
-        code: Nu | str | None = None,
-        language: Nu | str | None = None,
+        code: StrArg = UNSET,
+        language: StrArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {}
-        if code is not None:
+        if code is not UNSET:
             payload["code"] = code
-        if language is not None:
+        if language is not UNSET:
             payload["language"] = language
         return Write(self, DictForm.of(**payload))
 
-    def store_code(self, code: Nu | str) -> Nu:
+    def store_code(self, code: StrArg) -> Nu:
         return Write(self, DictForm.of(code=code))
 
-    def store_language(self, language: Nu | str) -> Nu:
+    def store_language(self, language: StrArg) -> Nu:
         return Write(self, DictForm.of(language=language))
 
 
@@ -147,22 +149,22 @@ class DividerRef(NudleRef):
     align: ClassVar[str] = "center"
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {"label": cls.label, "align": cls.align}
 
-    def store_label(self, text: Nu | str) -> Nu:
+    def store_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_align(self, side: Nu | Align | str) -> Nu:
+    def store_align(self, side: Align | StrArg) -> Nu:
         return Write(self, DictForm.of(align=side))
 
     def store(
         self,
-        label: Nu | str,
-        align: Nu | Align | str | None = None,
+        label: StrArg,
+        align: Align | StrArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"label": label}
-        if align is not None:
+        if align is not UNSET:
             payload["align"] = align
         return Write(self, DictForm.of(**payload))
 
@@ -175,32 +177,32 @@ class GaugeRef(NudleRef):
     variant: ClassVar[str] = "neutral"
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "value": cls.value,
             "caption": cls.caption,
             "variant": cls.variant,
         }
 
-    def store_value(self, value: Nu | float) -> Nu:
+    def store_value(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(value=value))
 
-    def store_caption(self, text: Nu | str) -> Nu:
+    def store_caption(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(caption=text))
 
-    def store_variant(self, variant: Nu | str) -> Nu:
+    def store_variant(self, variant: StrArg) -> Nu:
         return Write(self, DictForm.of(variant=variant))
 
     def store(
         self,
-        value: Nu | float,
-        caption: Nu | str | None = None,
-        variant: Nu | str | None = None,
+        value: FloatArg,
+        caption: StrArg = UNSET,
+        variant: StrArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"value": value}
-        if caption is not None:
+        if caption is not UNSET:
             payload["caption"] = caption
-        if variant is not None:
+        if variant is not UNSET:
             payload["variant"] = variant
         return Write(self, DictForm.of(**payload))
 
@@ -216,28 +218,28 @@ class HeadingRef(NudleRef):
     align: ClassVar[str] = "left"
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {"label": cls.label, "level": cls.level, "align": cls.align}
 
-    def store_label(self, text: Nu | str) -> Nu:
+    def store_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_level(self, n: Nu | int) -> Nu:
+    def store_level(self, n: IntArg) -> Nu:
         return Write(self, DictForm.of(level=n))
 
-    def store_align(self, side: Nu | Align | str) -> Nu:
+    def store_align(self, side: Align | StrArg) -> Nu:
         return Write(self, DictForm.of(align=side))
 
     def store(
         self,
-        label: Nu | str,
-        level: Nu | int | None = None,
-        align: Nu | Align | str | None = None,
+        label: StrArg,
+        level: IntArg = UNSET,
+        align: Align | StrArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"label": label}
-        if level is not None:
+        if level is not UNSET:
             payload["level"] = level
-        if align is not None:
+        if align is not UNSET:
             payload["align"] = align
         return Write(self, DictForm.of(**payload))
 
@@ -256,7 +258,7 @@ class ImageRef(NudleRef):
     rounded: ClassVar[bool] = False
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         out: dict[str, object] = {}
         if cls.src != "":
             out["src"] = cls.src
@@ -272,44 +274,44 @@ class ImageRef(NudleRef):
             out["rounded"] = cls.rounded
         return out
 
-    def store_src(self, url: Nu | str) -> Nu:
+    def store_src(self, url: StrArg) -> Nu:
         return Write(self, DictForm.of(src=url))
 
-    def store_alt(self, text: Nu | str) -> Nu:
+    def store_alt(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(alt=text))
 
-    def store_fit(self, mode: Nu | Fit | str) -> Nu:
+    def store_fit(self, mode: Fit | StrArg) -> Nu:
         return Write(self, DictForm.of(fit=mode))
 
     def store_size(
         self,
-        width: Nu | int | None,
-        height: Nu | int | None,
+        width: IntArg | None,
+        height: IntArg | None,
     ) -> Nu:
         return Write(self, DictForm.of(width=width, height=height))
 
-    def store_rounded(self, flag: Nu | bool) -> Nu:
+    def store_rounded(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(rounded=flag))
 
     def store(
         self,
-        src: Nu | str,
-        alt: Nu | str | None = None,
-        fit: Nu | Fit | str | None = None,
-        width: Nu | int | None = None,
-        height: Nu | int | None = None,
-        rounded: Nu | bool | None = None,
+        src: StrArg,
+        alt: StrArg = UNSET,
+        fit: Fit | StrArg = UNSET,
+        width: IntArg = UNSET,
+        height: IntArg = UNSET,
+        rounded: BoolArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"src": src}
-        if alt is not None:
+        if alt is not UNSET:
             payload["alt"] = alt
-        if fit is not None:
+        if fit is not UNSET:
             payload["fit"] = fit
-        if width is not None:
+        if width is not UNSET:
             payload["width"] = width
-        if height is not None:
+        if height is not UNSET:
             payload["height"] = height
-        if rounded is not None:
+        if rounded is not UNSET:
             payload["rounded"] = rounded
         return Write(self, DictForm.of(**payload))
 
@@ -328,7 +330,7 @@ class JsonViewerRef(NudleRef):
     max_height: ClassVar[int | None] = None
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "value": cls.value,
             "expand_depth": cls.expand_depth,
@@ -338,50 +340,48 @@ class JsonViewerRef(NudleRef):
             "max_height": cls.max_height,
         }
 
-    def store_value(self, value: Nu | object) -> Nu:
+    def store_value(self, value: Arg[Any]) -> Nu:
         return Write(self, DictForm.of(value=value))
 
-    def store_expand_depth(self, depth: Nu | int) -> Nu:
+    def store_expand_depth(self, depth: IntArg) -> Nu:
         return Write(self, DictForm.of(expand_depth=depth))
 
-    def store_theme(self, name: Nu | Theme | str) -> Nu:
+    def store_theme(self, name: Theme | StrArg) -> Nu:
         return Write(self, DictForm.of(theme=name))
 
-    def store_copyable(self, flag: Nu | bool) -> Nu:
+    def store_copyable(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(copyable=flag))
 
-    def store_sortable(self, flag: Nu | bool) -> Nu:
+    def store_sortable(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(sortable=flag))
 
-    def store_max_height(self, px: Nu | int | None) -> Nu:
+    def store_max_height(self, px: IntArg | None) -> Nu:
         return Write(self, DictForm.of(max_height=px))
 
     def store(
         self,
-        value: Nu | object,
-        expand_depth: Nu | int | None = None,
-        theme: Nu | Theme | str | None = None,
-        copyable: Nu | bool | None = None,
-        sortable: Nu | bool | None = None,
-        max_height: Nu | int | None = None,
+        value: Arg[Any],
+        expand_depth: IntArg = UNSET,
+        theme: Theme | StrArg = UNSET,
+        copyable: BoolArg = UNSET,
+        sortable: BoolArg = UNSET,
+        max_height: IntArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"value": value}
-        if expand_depth is not None:
+        if expand_depth is not UNSET:
             payload["expand_depth"] = expand_depth
-        if theme is not None:
+        if theme is not UNSET:
             payload["theme"] = theme
-        if copyable is not None:
+        if copyable is not UNSET:
             payload["copyable"] = copyable
-        if sortable is not None:
+        if sortable is not UNSET:
             payload["sortable"] = sortable
-        if max_height is not None:
+        if max_height is not UNSET:
             payload["max_height"] = max_height
         return Write(self, DictForm.of(**payload))
 
 
 Target = Literal["_self", "_blank"]
-
-_UNSET: object = object()
 
 
 class LinkRef(NudleRef):
@@ -393,7 +393,7 @@ class LinkRef(NudleRef):
     external: ClassVar[bool | None] = None
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "href": cls.href,
             "label": cls.label,
@@ -401,35 +401,35 @@ class LinkRef(NudleRef):
             "external": cls.external,
         }
 
-    def store_href(self, url: Nu | str) -> Nu:
+    def store_href(self, url: StrArg) -> Nu:
         return Write(self, DictForm.of(href=url))
 
-    def store_label(self, text: Nu | str) -> Nu:
+    def store_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_target(self, name: Nu | Target | str) -> Nu:
+    def store_target(self, name: Target | StrArg) -> Nu:
         return Write(self, DictForm.of(target=name))
 
-    def store_external(self, flag: Nu | bool | None) -> Nu:
+    def store_external(self, flag: BoolArg | None) -> Nu:
         return Write(self, DictForm.of(external=flag))
 
     def store(
         self,
-        href: Nu | str | object = _UNSET,
-        label: Nu | str | object = _UNSET,
-        target: Nu | Target | str | object = _UNSET,
-        external: Nu | bool | None | object = _UNSET,
+        href: StrArg = UNSET,
+        label: StrArg = UNSET,
+        target: Target | StrArg = UNSET,
+        external: BoolArg | None = UNSET,
     ) -> Nu:
         # Sentinel-based kwargs so callers can pass `external=None` (auto)
         # without conflating it with "do not touch this field".
         payload: dict[str, object] = {}
-        if href is not _UNSET:
+        if href is not UNSET:
             payload["href"] = href
-        if label is not _UNSET:
+        if label is not UNSET:
             payload["label"] = label
-        if target is not _UNSET:
+        if target is not UNSET:
             payload["target"] = target
-        if external is not _UNSET:
+        if external is not UNSET:
             payload["external"] = external
         return Write(self, DictForm.of(**payload))
 
@@ -440,12 +440,12 @@ class MarkdownRef(NudleRef):
     value: ClassVar[str] = ""
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         if cls.value == "":
             return {}
         return {"value": cls.value}
 
-    def store(self, value: Nu | str) -> Nu:
+    def store(self, value: StrArg) -> Nu:
         return Write(self, value)
 
 
@@ -457,32 +457,32 @@ class ProgressRef(NudleRef):
     indeterminate: ClassVar[bool] = False
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "value": cls.value,
             "caption": cls.caption,
             "indeterminate": cls.indeterminate,
         }
 
-    def store_value(self, value: Nu | float) -> Nu:
+    def store_value(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(value=value))
 
-    def store_caption(self, text: Nu | str) -> Nu:
+    def store_caption(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(caption=text))
 
-    def store_indeterminate(self, flag: Nu | bool) -> Nu:
+    def store_indeterminate(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(indeterminate=flag))
 
     def store(
         self,
-        value: Nu | float,
-        caption: Nu | str | None = None,
-        indeterminate: Nu | bool | None = None,
+        value: FloatArg,
+        caption: StrArg = UNSET,
+        indeterminate: BoolArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"value": value}
-        if caption is not None:
+        if caption is not UNSET:
             payload["caption"] = caption
-        if indeterminate is not None:
+        if indeterminate is not UNSET:
             payload["indeterminate"] = indeterminate
         return Write(self, DictForm.of(**payload))
 
@@ -499,7 +499,7 @@ class StatRef(NudleRef):
     trend: ClassVar[str] = "flat"
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "label": cls.label,
             "value": cls.value,
@@ -507,16 +507,16 @@ class StatRef(NudleRef):
             "trend": cls.trend,
         }
 
-    def store_label(self, text: Nu | str) -> Nu:
+    def store_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_value(self, text: Nu | str) -> Nu:
+    def store_value(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(value=text))
 
-    def store_delta(self, text: Nu | str) -> Nu:
+    def store_delta(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(delta=text))
 
-    def store_trend(self, name: Nu | Trend | str) -> Nu:
+    def store_trend(self, name: Trend | StrArg) -> Nu:
         return Write(self, DictForm.of(trend=name))
 
 
@@ -532,7 +532,7 @@ class TableRef(NudleRef):
     clickable_rows: ClassVar[bool] = False
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         return {
             "columns": list(cls.columns),
             "striped": cls.striped,
@@ -543,16 +543,16 @@ class TableRef(NudleRef):
             "clickable_rows": cls.clickable_rows,
         }
 
-    def store(self, table: Nu | dict[str, Any]) -> Nu:
+    def store(self, table: DictArg[str, Any]) -> Nu:
         return Write(self, table)
 
     def clear(self) -> Nu:
         return Write(self, DictForm.of(rows=[]))
 
-    def append(self, row: Nu | list[Any]) -> Nu:
+    def append(self, row: ListArg[Any]) -> Nu:
         return Append(self, row)
 
-    def store_sort(self, column: Nu | str, direction: Nu | str) -> Nu:
+    def store_sort(self, column: StrArg, direction: StrArg) -> Nu:
         return Write(self, DictForm.of(sort_column=column, sort_direction=direction))
 
     def row_clicked(self) -> Changed:
@@ -565,12 +565,12 @@ class TextRef(NudleRef):
     value: ClassVar[str] = ""
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         if cls.value == "":
             return {}
         return {"value": cls.value}
 
-    def store(self, value: Nu | str) -> Nu:
+    def store(self, value: StrArg) -> Nu:
         return Write(self, value)
 
 

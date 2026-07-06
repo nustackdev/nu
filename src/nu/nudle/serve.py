@@ -12,12 +12,13 @@ import asyncio
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import nu
 import uvicorn
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
-from nu.tree.walk import preorder
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+import nu
+from nu.tree.walk import preorder
 
 from .page import Index, Page
 from .refs.base import NudleRef
@@ -131,8 +132,8 @@ def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
         session = NudleSession(ws)
         await session.mount(
             index_cls.__name__,
-            index_cls.structural_fields(),
-            index_cls.pages_payload(),
+            index_cls._structural_fields(),
+            index_cls._pages_payload(),
         )
         per_conn_ctx = ctx.bind(NudleSession, session)
         intake_task = asyncio.create_task(session.run_intake())

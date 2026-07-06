@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu import DictForm
+from nu.lang.args import StrArg
 
 from ..interactions import Changed, Write
 from .base import NudleRef
@@ -49,12 +50,12 @@ class NavRef(NudleRef):
 
         return athunk
 
-    def store(self, value: Nu | str) -> Nu:
+    def store(self, value: StrArg) -> Nu:
         # Bare-string push -- shorthand for {"action": "push", "uri": value}.
         # Kept as bare-string to preserve existing host code (multipage.py).
         return Write(self, value)
 
-    def replace(self, value: Nu | str) -> Nu:
+    def replace(self, value: StrArg) -> Nu:
         return Write(self, DictForm.of(action="replace", uri=value))
 
     def back(self) -> Nu:
@@ -80,10 +81,10 @@ class TitleRef(NudleRef):
     suffix: ClassVar[str] = ""
 
     @classmethod
-    def mount_props(cls) -> dict[str, object]:
+    def _mount_props(cls) -> dict[str, object]:
         if cls.default == "" and cls.suffix == "":
             return {}
         return {"default": cls.default, "suffix": cls.suffix}
 
-    def store(self, value: Nu | str) -> Nu:
+    def store(self, value: StrArg) -> Nu:
         return Write(self, value)

@@ -43,8 +43,9 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import nu
 import uvicorn
+
+import nu
 
 from .serve import build_fastapi_app
 
