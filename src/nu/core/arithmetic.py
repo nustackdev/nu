@@ -60,7 +60,7 @@ class AddQuery(ScalarQuery):
     _commutative = Declared(value=True, name="commutative")
     _associative = Declared(value=True, name="associative")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             s: object = 0  # additive identity for the no-children case
             for i, ct in enumerate(children):
@@ -74,7 +74,7 @@ class AddQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             s: object = 0  # additive identity for the no-children case
             for i, ct in enumerate(children):
@@ -93,7 +93,7 @@ class MulQuery(ScalarQuery):
     _commutative = Declared(value=True, name="commutative")
     _associative = Declared(value=True, name="associative")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             out: object = 1
             for ct in children:
@@ -105,7 +105,7 @@ class MulQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             out: object = 1
             for ct in children:
@@ -118,10 +118,42 @@ class MulQuery(ScalarQuery):
         return athunk
 
 
+class MatMulQuery(ScalarQuery):
+    """The matrix product of its two children (``a @ b``)."""
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        left, right = children
+
+        def thunk(rt: Runtime) -> object:
+            a = left(rt)
+            if a is EMPTY or a is INVALID:
+                return INVALID
+            b = right(rt)
+            if b is EMPTY or b is INVALID:
+                return INVALID
+            return a @ b
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        left, right = children
+
+        async def athunk(rt: Runtime) -> object:
+            a = await left(rt)
+            if a is EMPTY or a is INVALID:
+                return INVALID
+            b = await right(rt)
+            if b is EMPTY or b is INVALID:
+                return INVALID
+            return a @ b
+
+        return athunk
+
+
 class SubQuery(ScalarQuery):
     """The first child minus the second."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -135,7 +167,7 @@ class SubQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -153,7 +185,7 @@ class SubQuery(ScalarQuery):
 class DivQuery(ScalarQuery):
     """The first child divided by the second (true division)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -167,7 +199,7 @@ class DivQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -185,7 +217,7 @@ class DivQuery(ScalarQuery):
 class FloorDivQuery(ScalarQuery):
     """The first child floor-divided by the second."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -199,7 +231,7 @@ class FloorDivQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -217,7 +249,7 @@ class FloorDivQuery(ScalarQuery):
 class ModQuery(ScalarQuery):
     """The first child modulo the second."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -231,7 +263,7 @@ class ModQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -249,7 +281,7 @@ class ModQuery(ScalarQuery):
 class PowQuery(ScalarQuery):
     """The first child raised to the power of the second."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -263,7 +295,7 @@ class PowQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -281,7 +313,7 @@ class PowQuery(ScalarQuery):
 class NegQuery(ScalarQuery):
     """The arithmetic negation of its one child."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -292,7 +324,7 @@ class NegQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -307,7 +339,7 @@ class NegQuery(ScalarQuery):
 class PosQuery(ScalarQuery):
     """The unary plus of its one child."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -318,7 +350,7 @@ class PosQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -333,7 +365,7 @@ class PosQuery(ScalarQuery):
 class AbsQuery(ScalarQuery):
     """The absolute value of its one child."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -344,7 +376,7 @@ class AbsQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -359,7 +391,7 @@ class AbsQuery(ScalarQuery):
 class DivModQuery(ScalarQuery):
     """The ``(quotient, remainder)`` pair of its two children."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -373,7 +405,7 @@ class DivModQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -391,7 +423,7 @@ class DivModQuery(ScalarQuery):
 class RoundQuery(ScalarQuery):
     """The first child rounded, to the second child's digits when given."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
             (only,) = children
 
@@ -416,7 +448,7 @@ class RoundQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
             (only,) = children
 

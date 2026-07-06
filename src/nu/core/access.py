@@ -58,7 +58,7 @@ __all__ = [
 class GetItemQuery(ScalarQuery):
     """Subscript access: ``x[k]`` for child 0 indexed by child 1."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target, key = children
 
         def thunk(rt: Runtime) -> object:
@@ -72,7 +72,7 @@ class GetItemQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target, key = children
 
         async def athunk(rt: Runtime) -> object:
@@ -90,7 +90,7 @@ class GetItemQuery(ScalarQuery):
 class LenQuery(ScalarQuery):
     """Length: ``len(x)`` of its one child."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -101,7 +101,7 @@ class LenQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -116,7 +116,7 @@ class LenQuery(ScalarQuery):
 class ContainsQuery(ScalarQuery):
     """Containment: ``item in container`` for child 1 in child 0."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         container, item = children
 
         def thunk(rt: Runtime) -> object:
@@ -130,7 +130,7 @@ class ContainsQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         container, item = children
 
         async def athunk(rt: Runtime) -> object:
@@ -152,7 +152,7 @@ class SliceQuery(ScalarQuery):
     Used to drive subscript access like ``x[a:b:c]`` as ``GetItem(x, Slice(...))``.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         start, stop, step = children
 
         def thunk(rt: Runtime) -> object:
@@ -169,7 +169,7 @@ class SliceQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         start, stop, step = children
 
         async def athunk(rt: Runtime) -> object:
@@ -195,7 +195,7 @@ class GetAttrQuery(ScalarQuery):
     three-arg ``getattr`` builtin).
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         obj_t = children[0]
         name_t = children[1]
         default_t = children[2] if len(children) > 2 else None
@@ -216,7 +216,7 @@ class GetAttrQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         obj_t = children[0]
         name_t = children[1]
         default_t = children[2] if len(children) > 2 else None
@@ -241,7 +241,7 @@ class GetAttrQuery(ScalarQuery):
 class HasAttrQuery(ScalarQuery):
     """Attribute presence: ``hasattr(obj, name)`` for child 0 and child 1."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         obj_t, name_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -255,7 +255,7 @@ class HasAttrQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         obj_t, name_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -282,7 +282,7 @@ class SetItemCommand(Command):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target, key, value = children
 
         def thunk(rt: Runtime) -> None:
@@ -299,7 +299,7 @@ class SetItemCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target, key, value = children
 
         async def athunk(rt: Runtime) -> None:
@@ -325,7 +325,7 @@ class DelItemCommand(Command):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target, key = children
 
         def thunk(rt: Runtime) -> None:
@@ -339,7 +339,7 @@ class DelItemCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target, key = children
 
         async def athunk(rt: Runtime) -> None:
@@ -363,7 +363,7 @@ class SetAttrCommand(Command):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         obj_t, name_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -380,7 +380,7 @@ class SetAttrCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         obj_t, name_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -406,7 +406,7 @@ class DelAttrCommand(Command):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         obj_t, name_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -420,7 +420,7 @@ class DelAttrCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         obj_t, name_t = children
 
         async def athunk(rt: Runtime) -> None:
