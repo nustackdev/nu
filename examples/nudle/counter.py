@@ -24,24 +24,24 @@ if TYPE_CHECKING:
 class Counter(nu.Shape):
     """rocksdb-backed counter."""
 
-    value = nu.v.IntRef.slot()
+    value: nu.v.IntRef
 
 
 class Dashboard(nu.nd.Page):
     """The single page in this app. Display Refs only."""
 
-    heading = nu.nd.HeadingRef.slot()
-    count = nu.nd.TextRef.slot()
-    history = nu.nd.LineChart.slot()
-    name = nu.nd.InputRef.slot()
-    greet = nu.nd.ButtonRef.slot()
+    heading: nu.nd.HeadingRef
+    count:   nu.nd.TextRef
+    history: nu.nd.LineChart
+    name:    nu.nd.InputRef
+    greet:   nu.nd.ButtonRef
 
 
 class App(nu.nd.Index):
     """Browser entrypoint. Structural Refs + one page at /."""
 
-    title = nu.nd.TitleRef.slot()
-    nav = nu.nd.NavRef.slot()
+    title: nu.nd.TitleRef
+    nav:   nu.nd.NavRef
     pages = nu.nd.Pages({"/": Dashboard})
 
 

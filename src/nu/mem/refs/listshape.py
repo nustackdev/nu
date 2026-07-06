@@ -25,7 +25,7 @@ __all__ = [
 ]
 
 
-class ShapesListRef[T: Shape](MutableShapesSequenceRef["ShapeRef"], RefBase[list[dict]]):
+class ShapesListRef[T: Shape](MutableShapesSequenceRef[T], RefBase[list[dict]]):
     """Dict shapes list reference — sequence of homogeneous shapes."""
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
@@ -57,3 +57,9 @@ class ShapesListRef[T: Shape](MutableShapesSequenceRef["ShapeRef"], RefBase[list
     def slot[S: Shape](cls, shape_type: type[S]) -> ShapesListRef[S]:
         """Declare a slot holding a sequence of ``shape_type`` shapes."""
         return Slot(cls, shape_type=shape_type)  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """Derive slot kwargs from an annotation like ``ShapesListRef[S]``."""
+        (shape_type,) = args
+        return {"shape_type": shape_type}

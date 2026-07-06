@@ -91,6 +91,7 @@ from .sentinels import (
     is_invalid,
     is_sentinel,
 )
+from .typeinfo import TypeInfo
 
 
 if TYPE_CHECKING:
@@ -150,6 +151,7 @@ __all__ = [
     "StreamAction",
     "StreamQuery",
     "TupleArg",
+    "TypeInfo",
     "TypedNu",
     "Unset",
     "Violation",

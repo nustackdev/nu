@@ -69,3 +69,12 @@ class ListRef[T](MutableSequenceRef["ItemRef"], RefBase[list[T]]):
             item_type=item_type,
             item_value_type=value_type_for(item_type),
         )  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """Derive slot kwargs from an annotation like ``ListRef[T]``."""
+        (item_type,) = args
+        return {
+            "item_type": item_type,
+            "item_value_type": value_type_for(item_type),
+        }

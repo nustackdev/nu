@@ -75,6 +75,18 @@ class ShapeRef[T: Shape](MutableShapeRef, RefBase[dict[str, object]]):
         self._payload["value_type"] = object
 
     @classmethod
-    def slot[S: Shape](cls, shape_type: type[S]) -> ShapeRef[S]:
-        """Declare a slot holding a nested ``shape_type`` shape."""
+    def slot[S: Shape](cls, shape_type: type[S]) -> S:
+        """Declare a slot holding a nested ``shape_type`` shape.
+
+        Statically returns ``S`` (the shape class) so that the annotation
+        ``field: Order = ShapeRef.slot(Order)`` type-checks and dot-nav
+        autocompletes over ``Order``'s slots. Runtime returns a ``Slot`` -
+        replaced with a ``ShapeRef`` by ``ShapeMeta``.
+        """
         return Slot(cls, shape_type=shape_type)  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """Derive slot kwargs from an annotation like ``ShapeRef[Shape]``."""
+        (shape_type,) = args
+        return {"shape_type": shape_type}

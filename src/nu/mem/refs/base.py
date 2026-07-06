@@ -106,7 +106,7 @@ class RefBase[T](StructuredRef):
 
     # --- read (the dual role) ------------------------------------------------
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             cur = self._root_data(rt)
             try:
@@ -118,7 +118,7 @@ class RefBase[T](StructuredRef):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             cur = self._root_data(rt)
             try:

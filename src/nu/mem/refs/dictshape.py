@@ -34,7 +34,7 @@ __all__ = [
 ]
 
 
-class ShapesDictRef[K, T: Shape](MutableShapesMappingRef["ShapeRef"], RefBase[dict[K, dict]]):
+class ShapesDictRef[K, T: Shape](MutableShapesMappingRef[T], RefBase[dict[K, dict]]):
     """Dict shapes dict reference — mapping of homogeneous shapes."""
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
@@ -99,3 +99,13 @@ class ShapesDictRef[K, T: Shape](MutableShapesMappingRef["ShapeRef"], RefBase[di
             key_type=key_type,
             key_value_type=value_type_for(key_type),
         )  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """Derive slot kwargs from an annotation like ``ShapesDictRef[K, S]``."""
+        key_type, shape_type = args
+        return {
+            "shape_type": shape_type,
+            "key_type": key_type,
+            "key_value_type": value_type_for(key_type),
+        }

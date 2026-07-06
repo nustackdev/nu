@@ -59,6 +59,11 @@ class PrimitiveListRef[T](ItemRef, ListForm[T]):
         """Declare a slot holding a whole-blob primitive list."""
         return Slot(cls)  # type: ignore[return-value]
 
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """The elem type is purely for typing; no runtime kwargs needed."""
+        return {}
+
     def _lift(self, raw: object) -> list:
         """Return the stored value as a plain list."""
         return raw if isinstance(raw, list) else list(raw)  # type: ignore[arg-type]
@@ -92,6 +97,11 @@ class PrimitiveDictRef[K, V](ItemRef, DictForm[K, V]):
     def slot(cls) -> Self:  # type: ignore[override]
         """Declare a slot holding a whole-blob primitive dict."""
         return Slot(cls)  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """The elem type is purely for typing; no runtime kwargs needed."""
+        return {}
 
     def _lift(self, raw: object) -> dict:
         """Return the stored value as a plain dict."""
@@ -127,6 +137,11 @@ class PrimitiveTupleRef(ItemRef, TupleForm):
         """Declare a slot holding a whole-blob primitive tuple."""
         return Slot(cls)  # type: ignore[return-value]
 
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """The elem type is purely for typing; no runtime kwargs needed."""
+        return {}
+
     def _lift(self, raw: object) -> tuple:
         """Return the stored value as a plain tuple."""
         return raw if isinstance(raw, tuple) else tuple(raw)  # type: ignore[arg-type]
@@ -161,6 +176,11 @@ class PrimitiveSetRef[T](ItemRef, SetForm[T]):
         """Declare a slot holding a whole-blob primitive set."""
         return Slot(cls)  # type: ignore[return-value]
 
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """The elem type is purely for typing; no runtime kwargs needed."""
+        return {}
+
     def _lift(self, raw: object) -> set:
         """Return the stored value as a plain set."""
         return raw if isinstance(raw, set) else set(raw)  # type: ignore[arg-type]
@@ -194,6 +214,11 @@ class PrimitiveFrozenSetRef[T](ItemRef, FrozenSetForm[T]):
     def slot(cls) -> Self:  # type: ignore[override]
         """Declare a slot holding a whole-blob primitive frozenset."""
         return Slot(cls)  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """The elem type is purely for typing; no runtime kwargs needed."""
+        return {}
 
     def _lift(self, raw: object) -> frozenset:
         """Return the stored value as a plain frozenset."""

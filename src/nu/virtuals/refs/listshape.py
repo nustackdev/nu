@@ -26,7 +26,7 @@ __all__ = [
 ]
 
 
-class ShapesListRef[T: Shape](ReactiveShapesSequenceRef["ShapeRef"], ViewRef[list[dict]]):
+class ShapesListRef[T: Shape](ReactiveShapesSequenceRef[T], ViewRef[list[dict]]):
     """Virtuals shapes list reference — sequence of homogeneous shapes."""
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
@@ -85,3 +85,11 @@ class ShapesListRef[T: Shape](ReactiveShapesSequenceRef["ShapeRef"], ViewRef[lis
         from virtuals.views import ListView
 
         return Slot(cls, shape_type=shape_type, view_type=view_type or ListView)  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """Derive slot kwargs from an annotation like ``ShapesListRef[S]``."""
+        from virtuals.views import ListView
+
+        (shape_type,) = args
+        return {"shape_type": shape_type, "view_type": ListView}

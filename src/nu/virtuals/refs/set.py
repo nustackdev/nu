@@ -54,3 +54,11 @@ class SetRef[T](ReactiveSetRef, ViewRef[set[T]]):
         from virtuals.views import SetView
 
         return Slot(cls, item_type=item_type, view_type=view_type or SetView)  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """Derive slot kwargs from an annotation like ``SetRef[T]``."""
+        from virtuals.views import SetView
+
+        (item_type,) = args
+        return {"item_type": item_type, "view_type": SetView}

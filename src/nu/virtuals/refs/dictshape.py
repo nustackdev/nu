@@ -34,7 +34,7 @@ __all__ = [
 ]
 
 
-class ShapesDictRef[K, T: Shape](ReactiveShapesMappingRef["ShapeRef"], ViewRef[dict[K, dict]]):
+class ShapesDictRef[K, T: Shape](ReactiveShapesMappingRef[T], ViewRef[dict[K, dict]]):
     """Virtuals shapes dict reference — mapping of homogeneous shapes."""
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
@@ -115,3 +115,16 @@ class ShapesDictRef[K, T: Shape](ReactiveShapesMappingRef["ShapeRef"], ViewRef[d
             key_value_type=value_type_for(key_type),
             view_type=view_type or DictView,
         )  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """Derive slot kwargs from an annotation like ``ShapesDictRef[K, S]``."""
+        from virtuals.views import DictView
+
+        key_type, shape_type = args
+        return {
+            "shape_type": shape_type,
+            "key_type": key_type,
+            "key_value_type": value_type_for(key_type),
+            "view_type": DictView,
+        }

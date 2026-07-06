@@ -106,3 +106,17 @@ class DictRef[K, V](ReactiveMappingRef["ItemRef"], ViewRef[dict[K, V]]):
             value_value_type=value_type_for(value_type),
             view_type=view_type or DictView,
         )  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """Derive slot kwargs from an annotation like ``DictRef[K, V]``."""
+        from virtuals.views import DictView
+
+        key_type, value_type = args
+        return {
+            "value_type": value_type,
+            "key_type": key_type,
+            "key_value_type": value_type_for(key_type),
+            "value_value_type": value_type_for(value_type),
+            "view_type": DictView,
+        }

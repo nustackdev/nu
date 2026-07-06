@@ -102,6 +102,18 @@ class Kh57Ref[V](ReactiveMappingRef, ViewRef[dict[int, V]]):
             view_type=view_type or Kh57View,
         )  # type: ignore[return-value]
 
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """Derive slot kwargs from an annotation like ``Kh57Ref[V]`` (int keys)."""
+        from virtuals.views import Kh57View
+
+        (value_type,) = args
+        return {
+            "value_type": value_type,
+            "value_value_type": value_type_for(value_type),
+            "view_type": Kh57View,
+        }
+
     def sample(
         self,
         n: int | Nu,

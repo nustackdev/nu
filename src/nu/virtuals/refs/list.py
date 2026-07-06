@@ -78,3 +78,15 @@ class ListRef[T](ReactiveSequenceRef["ItemRef"], ViewRef[list[T]]):
             item_value_type=value_type_for(item_type),
             view_type=view_type or ListView,
         )  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """Derive slot kwargs from an annotation like ``ListRef[T]``."""
+        from virtuals.views import ListView
+
+        (item_type,) = args
+        return {
+            "item_type": item_type,
+            "item_value_type": value_type_for(item_type),
+            "view_type": ListView,
+        }

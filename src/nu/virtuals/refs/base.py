@@ -211,7 +211,7 @@ class ViewRef[T](_VirtualsRefBase[T]):
 
     # --- read (the dual role) ------------------------------------------------
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         scope = self._root_shape
 
         def thunk(rt: Runtime) -> object:
@@ -223,7 +223,7 @@ class ViewRef[T](_VirtualsRefBase[T]):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         scope = self._root_shape
 
         async def athunk(rt: Runtime) -> object:
@@ -329,13 +329,13 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
         except (KeyError, IndexError):
             return EMPTY
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             return self._read(rt, self._resolve_path(rt, nid))
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             return self._read(rt, await self._aresolve_path(rt, nid))
 

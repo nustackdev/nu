@@ -48,3 +48,9 @@ class SetRef[T](MutableSetRef, RefBase[set[T]]):
     def slot[E](cls, item_type: type[E]) -> SetRef[E]:
         """Declare a set slot holding elements of ``item_type``."""
         return Slot(cls, item_type=item_type)  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """Derive slot kwargs from an annotation like ``SetRef[T]``."""
+        (item_type,) = args
+        return {"item_type": item_type}

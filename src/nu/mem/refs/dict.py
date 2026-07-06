@@ -94,3 +94,14 @@ class DictRef[K, V](MutableMappingRef["ItemRef"], RefBase[dict[K, V]]):
             key_value_type=value_type_for(key_type),
             value_value_type=value_type_for(value_type),
         )  # type: ignore[return-value]
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """Derive slot kwargs from an annotation like ``DictRef[K, V]``."""
+        key_type, value_type = args
+        return {
+            "value_type": value_type,
+            "key_type": key_type,
+            "key_value_type": value_type_for(key_type),
+            "value_value_type": value_type_for(value_type),
+        }
