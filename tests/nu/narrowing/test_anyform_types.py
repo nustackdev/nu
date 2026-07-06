@@ -17,7 +17,7 @@ from typing import Any, assert_type
 
 import nu
 from nu.core import LiteralQuery
-from nu.forms import AnyForm, BoolForm, IntForm
+from nu.forms import AnyForm, BoolForm, IntForm, StrForm
 from nu.virtuals.refs import IntRef, PrimitiveListRef
 
 
@@ -72,19 +72,19 @@ class Blob(nu.Shape):
     count:  IntRef
 
 
-# Origins that produce AnyForm today (Phase 3 target).
-assert_type(Blob.tags[0],     AnyForm)  # FIXME(phase-3): -> StrForm
-assert_type(Blob.scores[0],   AnyForm)  # FIXME(phase-3): -> IntForm
+# Primitive-blob subscripts narrow through the payload type_info (Phase 3).
+assert_type(Blob.tags[0],     StrForm)
+assert_type(Blob.scores[0],   IntForm)
 
 
-# --- AnyForm-in / AnyForm-out arithmetic mixing well-typed operands --
+# --- Two narrow operands compose narrowly ------------------------------
 
 
-# An IntRef combined with an AnyForm degrades to AnyForm (AnyForm wins).
+# IntRef + IntForm (from narrowed subscript) -> IntForm.
 mixed = Blob.count + Blob.scores[0]
-assert_type(mixed, AnyForm)  # FIXME(phase-3): -> IntForm
+assert_type(mixed, IntForm)
 
-# But well-typed alone stays narrow.
+# Well-typed alone stays narrow.
 narrow = Blob.count + 1
 assert_type(narrow, IntForm)
 

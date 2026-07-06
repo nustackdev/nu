@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 from nu.lang import TypedNu
 
@@ -13,7 +13,14 @@ from .abc.mapping_interactions import DictCreate, DictOf
 if TYPE_CHECKING:
     from nu.lang import Arg, DictArg, Nu
 
-    from ..primitives import AnyForm, BoolForm
+    from ..primitives import (
+        AnyForm,
+        BoolForm,
+        BytesForm,
+        FloatForm,
+        IntForm,
+        StrForm,
+    )
     from .list_ import ListForm
     from .views import DictItemsForm, DictKeysForm, DictValuesForm
 
@@ -64,10 +71,42 @@ class DictForm[K, V](
         return DictItemsForm(operand)
 
     def _wrap_value_result(self, operand: Nu) -> AnyForm:
-        """Wrap operand as AnyForm value."""
+        """Wrap operand as a value-typed Form when known; AnyForm otherwise.
+
+        When the wrapping Form carries an annotation-derived ``TypeInfo`` on
+        its payload (a Ref like ``PrimitiveDictRef[str, int]``), dispatch the
+        value elem to its concrete Form (``IntForm`` here). Plain value-node
+        ``DictForm`` s (no payload) fall back to ``AnyForm`` - the honest
+        terminal for value-Form descent without narrowing context.
+        """
+        ti = self._payload.get("type_info")
+        if ti is not None and ti.elem is not None:
+            form_cls = ti.elem.to_form()
+            return form_cls(operand)  # type: ignore[return-value]
         from ..primitives import AnyForm
 
         return AnyForm(operand)
+
+    # ---- static overloads: narrow value type on subscript ---------------
+    #
+    # Runtime dispatch above; here we tell mypy which concrete Form to
+    # expect based on ``V``. Applies to any subclass (PrimitiveDictRef[K, V],
+    # nudle refs holding dicts, etc.) that specializes ``V``.
+
+    @overload
+    def __getitem__(self: DictForm[K, bool], key: Arg[K]) -> BoolForm: ...
+    @overload
+    def __getitem__(self: DictForm[K, int], key: Arg[K]) -> IntForm: ...
+    @overload
+    def __getitem__(self: DictForm[K, float], key: Arg[K]) -> FloatForm: ...
+    @overload
+    def __getitem__(self: DictForm[K, str], key: Arg[K]) -> StrForm: ...
+    @overload
+    def __getitem__(self: DictForm[K, bytes], key: Arg[K]) -> BytesForm: ...
+    @overload
+    def __getitem__(self, key: Arg[K]) -> AnyForm: ...
+    def __getitem__(self, key):  # type: ignore[no-untyped-def]
+        return super().__getitem__(key)
 
     def _wrap_mapping_result(self, operand: Nu) -> DictForm[K, V]:
         """Wrap operand as DictForm."""

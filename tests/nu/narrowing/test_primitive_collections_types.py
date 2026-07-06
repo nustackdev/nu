@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import assert_type
 
 import nu
-from nu.forms import AnyForm
+from nu.forms import IntForm, StrForm
 from nu.virtuals.refs import (
     PrimitiveDictRef,
     PrimitiveFrozenSetRef,
@@ -46,27 +46,27 @@ assert_type(Blob.frozen,    PrimitiveFrozenSetRef[int])
 assert_type(Blob.raw_tuple, PrimitiveTupleRef)
 
 
-# --- Subscript currently yields AnyForm (Phase 3 will narrow) ---------
+# --- Subscript narrows to the elem type (Phase 3) ---------------------
 
 
-# FIXME(phase-3): flip AnyForm -> StrForm once ListForm.__getitem__
-# propagates the elem type param T.
-assert_type(Blob.tags[0],       AnyForm)
-assert_type(Blob.scores[0],     AnyForm)  # FIXME(phase-3): -> IntForm
-assert_type(Blob.meta["k"],     AnyForm)  # FIXME(phase-3): -> IntForm
-assert_type(Blob.tags[-1],      AnyForm)
+# Static overloads on ListForm.__getitem__ + runtime dispatch via
+# _payload["type_info"] flip these from AnyForm to the elem's Form.
+assert_type(Blob.tags[0],       StrForm)
+assert_type(Blob.scores[0],     IntForm)
+assert_type(Blob.meta["k"],     IntForm)
+assert_type(Blob.tags[-1],      StrForm)
 
 
-# --- Downstream ops on AnyForm stay AnyForm (absorbing) ---------------
+# --- Downstream ops preserve the narrowed type ------------------------
 
 
-# The absorbing nature of AnyForm means arithmetic + concat keep flowing
-# without exploding, they just don't narrow. Phase 3 fixes the source.
-assert_type(Blob.scores[0] + 1,          AnyForm)  # FIXME(phase-3): -> IntForm
-assert_type(Blob.scores[0] // 2,         AnyForm)  # FIXME(phase-3): -> IntForm
-assert_type(Blob.tags[0] + "!",          AnyForm)  # FIXME(phase-3): -> StrForm
-assert_type(Blob.meta["k"] * 3,          AnyForm)  # FIXME(phase-3): -> IntForm
-assert_type((Blob.scores[0] + 1) * 2,    AnyForm)  # FIXME(phase-3): -> IntForm
+# Once subscript narrows correctly, arithmetic + concat flow with the
+# right Form all the way through.
+assert_type(Blob.scores[0] + 1,          IntForm)
+assert_type(Blob.scores[0] // 2,         IntForm)
+assert_type(Blob.tags[0] + "!",          StrForm)
+assert_type(Blob.meta["k"] * 3,          IntForm)
+assert_type((Blob.scores[0] + 1) * 2,    IntForm)
 
 
 # --- Store commands (whole-blob writes) --------------------------------

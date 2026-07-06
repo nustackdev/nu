@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, overload
 
 from nu.lang import TypedNu
 
@@ -13,7 +13,14 @@ from .abc.sequence_interactions import ListCreate
 if TYPE_CHECKING:
     from nu.lang import Arg, IntArg, ListArg, Nu
 
-    from ..primitives import AnyForm, BoolForm
+    from ..primitives import (
+        AnyForm,
+        BoolForm,
+        BytesForm,
+        FloatForm,
+        IntForm,
+        StrForm,
+    )
 
 
 __all__ = [
@@ -41,10 +48,44 @@ class ListForm[T](
         return ListForm(operand)
 
     def _wrap_element_result(self, operand: Nu) -> AnyForm:
-        """Wrap operand as AnyForm element."""
+        """Wrap operand as an elem-typed Form when known; AnyForm otherwise.
+
+        When the wrapping Form carries an annotation-derived ``TypeInfo`` on
+        its payload (i.e. it's a Ref like ``PrimitiveListRef[str]``), dispatch
+        the elem to its concrete Form (``StrForm`` here). Plain value-node
+        ``ListForm`` s (no payload) fall back to ``AnyForm`` - the honest
+        terminal for value-Form descent without narrowing context.
+        """
+        ti = self._payload.get("type_info")
+        if ti is not None and ti.elem is not None:
+            form_cls = ti.elem.to_form()
+            return form_cls(operand)  # type: ignore[return-value]
         from ..primitives import AnyForm
 
         return AnyForm(operand)
+
+    # ---- static overloads: narrow elem type on subscript ----------------
+    #
+    # Runtime dispatch above; here we tell mypy which concrete Form to
+    # expect based on ``T``. Applies to any subclass (PrimitiveListRef[T],
+    # nudle refs holding lists, etc.) that specializes ``T``.
+
+    @overload
+    def __getitem__(self: ListForm[bool], key: IntArg) -> BoolForm: ...
+    @overload
+    def __getitem__(self: ListForm[int], key: IntArg) -> IntForm: ...
+    @overload
+    def __getitem__(self: ListForm[float], key: IntArg) -> FloatForm: ...
+    @overload
+    def __getitem__(self: ListForm[str], key: IntArg) -> StrForm: ...
+    @overload
+    def __getitem__(self: ListForm[bytes], key: IntArg) -> BytesForm: ...
+    @overload
+    def __getitem__(self, key: slice) -> ListForm[T]: ...
+    @overload
+    def __getitem__(self, key: IntArg) -> AnyForm: ...
+    def __getitem__(self, key):  # type: ignore[no-untyped-def]
+        return super().__getitem__(key)
 
     # =========================================================================
     # ARITHMETIC (concatenation)

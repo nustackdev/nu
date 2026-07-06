@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import assert_type
 
 import nu
-from nu.forms import AnyForm, BoolForm, IntForm, StrForm
+from nu.forms import BoolForm, IntForm, StrForm
 from nu.virtuals.refs import (
     IntRef,
     StrRef,
@@ -100,11 +100,11 @@ assert_type(Store.profiles[Store.indexes[0]].name,      StrRef)
 assert_type(Store.profiles[Store.indexes[0]].score * 2, IntForm)
 
 
-# FIXME(phase-3): primitive-blob subscript degrades to AnyForm; downstream
-# arithmetic stays AnyForm. Explicitly-encoded so Phase 3 flips them.
-assert_type(Store.indexes[0],           AnyForm)  # FIXME(phase-3): -> IntForm
-assert_type(Store.indexes[Store.cache.curr], AnyForm)  # FIXME(phase-3): -> IntForm
-assert_type(Store.indexes[Store.cache.curr] // 2, AnyForm)  # FIXME(phase-3): -> IntForm
+# Primitive-blob subscript narrows to the elem's Form; downstream
+# arithmetic composes narrowly (Phase 3).
+assert_type(Store.indexes[0],                     IntForm)
+assert_type(Store.indexes[Store.cache.curr],      IntForm)
+assert_type(Store.indexes[Store.cache.curr] // 2, IntForm)
 
 
 # --- Multi-level dot-nav after subscript ------------------------------

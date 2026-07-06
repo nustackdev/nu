@@ -1,9 +1,8 @@
 """Task-119 typing showcase - level 4: computed keys, arithmetic, deep nesting.
 
 Ref-typed values compose end-to-end through subscripts, arithmetic, and
-string ops. The static type at each step follows the annotation. Runtime
-types converge once Phase 3 wrap unification lands - a few primitive-blob
-subscripts still yield ``AnyForm`` today (noted inline).
+string ops. The static type at each step follows the annotation and
+matches the runtime Form (Phase 3 wrap unification landed).
 """
 
 from __future__ import annotations
@@ -40,9 +39,7 @@ curr_profile_ref = Store.profiles[Store.cache.curr].name   # -> nu.v.StrRef
 greeting = Store.profiles[Store.cache.curr].name + ", hey!"    # -> StrForm
 
 # Arithmetic-computed key: (curr + 1) // 2 keys the primitive index list.
-# Currently static AnyForm (Phase 3 will flip primitive-blob subscript to
-# ``IntForm`` by propagating the elem type through ``ListForm.__getitem__``).
-mid_index = Store.indexes[(Store.cache.curr + 1) // 2]          # AnyForm (Phase 3 -> IntForm)
+mid_index = Store.indexes[(Store.cache.curr + 1) // 2]          # -> IntForm
 
 # Deeper: pick the next-cache profile and pull its scalar leaf.
 next_profile_name = Store.profiles[Store.cache.next].name       # -> nu.v.StrRef
@@ -64,7 +61,7 @@ top_by_id_ref  = Store.profiles[Store.indexes[0]]                # -> ShapeRef
 top_by_id_name = Store.profiles[Store.indexes[0]].name           # -> nu.v.StrRef
 
 # Nested primitive-list read used as a shapes-dict key, then floor-divided.
-computed_key    = Store.indexes[Store.cache.curr] // 2           # AnyForm (Phase 3 -> IntForm)
+computed_key    = Store.indexes[Store.cache.curr] // 2           # -> IntForm
 weird_profile   = Store.profiles[computed_key]                   # -> ShapeRef
 weird_greeting  = Store.profiles[computed_key].name + " ok"      # -> StrForm
 
