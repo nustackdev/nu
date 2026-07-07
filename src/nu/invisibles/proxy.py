@@ -78,12 +78,13 @@ class InvisiblesProxy(_LifecycleBracket):
         tag = self._payload["tag"]
         tags = (tag,) if tag is not None else ()
         kwargs = self._payload["client_kwargs"]
+        bind_as = getattr(target, "_nu_bind_as", None) or target
 
         client = InvisiblesClient(**kwargs)
         try:
             await client.asetup(ctx)
             scoped = ctx.bind(InvisiblesClient, client, *tags)
-            scoped = scoped.bind(target, client.root, *tags)
+            scoped = scoped.bind(bind_as, client.root, *tags)
             yield scoped
         finally:
             await client.acleanup()

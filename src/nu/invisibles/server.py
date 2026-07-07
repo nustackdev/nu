@@ -99,7 +99,8 @@ class InvisiblesServer:
 
     async def asetup(self, ctx: Context) -> None:
         tag = (self.target_tag,) if self.target_tag is not None else ()
-        root = ctx.get(self.target, *tag)
+        lookup_type = getattr(self.target, "_nu_bind_as", None) or self.target
+        root = ctx.get(lookup_type, *tag)
 
         config = ConnectionConfig(attrs=AttributeAccessConfig(allow_all_attrs=True))
         listener_factory = UnixSocketListener if self.transport == "unix" else TCPListener

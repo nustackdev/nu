@@ -20,7 +20,7 @@ reads its deps from ctx during its own setup.
 
 from __future__ import annotations
 
-from .lifecycle import Provide, ProvideDict, ProvideList
+from .lifecycle import Provide, ProvideDict, ProvideList, With
 from .protocol import Fabric, FabricLifecycle
 from .queries import FabricExistsQuery
 from .refs import FabricRef
@@ -34,4 +34,5 @@ __all__ = [
     "Provide",
     "ProvideDict",
     "ProvideList",
+    "With",
 ]

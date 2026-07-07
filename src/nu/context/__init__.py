@@ -52,6 +52,7 @@ from .fabric import (
     Provide,
     ProvideDict,
     ProvideList,
+    With,
 )
 
 
@@ -79,4 +80,5 @@ __all__ = [
     "SetCommand",
     "StrAttrRef",
     "TupleAttrRef",
+    "With",
 ]
