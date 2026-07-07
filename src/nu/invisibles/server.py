@@ -1,11 +1,11 @@
-"""``InvisiblesServer``: host a bound service over TCP / Unix socket.
+"""``InvisiblesServer``: host a bound fabric over TCP / Unix socket.
 
-FabricLifecycle. On ``asetup`` reads the root service from ctx by ``target``
+FabricLifecycle. On ``asetup`` reads the root fabric from ctx by ``target``
 type + tag, starts a background netkit server on ``address``, and serves it
 via the invisibles protocol. On ``acleanup`` stops the server.
 
 Pure transport - no new refs, no new interactions. The server just exposes
-whatever bound service you name.
+whatever bound fabric you name.
 
 Two orthogonal axes:
 - executor (netkit): how connections are accepted -- "simple" (one at a time),
@@ -67,7 +67,7 @@ def _framing_factory(transport: object) -> LengthPrefixedFraming:
 
 
 class InvisiblesServer:
-    """Serves the bound ``target`` service on ``address`` over invisibles."""
+    """Serves the bound ``target`` fabric on ``address`` over invisibles."""
 
     def __init__(
         self,

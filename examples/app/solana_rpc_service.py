@@ -1,18 +1,18 @@
-"""Solana JSON-RPC demo -- a service called from inside the Nu tree.
+"""Solana JSON-RPC demo -- a fabric called from inside the Nu tree.
 
-Shows the in-tree service dispatch surface:
+Shows the in-tree fabric dispatch surface:
 
 - ``SolanaClient`` is a bare-Python JSON-RPC client, bound on the Context via
   ``ctx.bind(SolanaClient, client)``.
-- ``Solana`` is a ``ServiceRef`` subclass naming that service (one fabric per
-  service), with each RPC method declared as a ``method_query`` descriptor.
+- ``Solana`` is a ``FabricRef`` subclass naming that fabric (one Ref per bound
+  fabric), with each RPC method declared as a ``method_query`` descriptor.
 - ``Solana.slot()`` builds a dispatch atom that resolves the client from the
   Context at run time and calls ``getSlot`` -- the RPC now happens *inside* the
   tree, and its yield is a typed Form that composes like any query.
 
 The methods are ``async def`` on the client (they await ``httpx``), so the tree
 runs under ``arun``; the async path awaits the call. Two calls to ``Solana``
-serialize (a WRITE on the one service fabric); against a different service they
+serialize (a WRITE on the one Solana fabric); against a different fabric they
 would stay independent.
 """
 
@@ -61,10 +61,10 @@ class SolanaClient:
 # =============================================================================
 
 
-class Solana(nu.ServiceRef):
-    """The SolanaClient as a Nu service: one fabric, methods declared inline."""
+class Solana(nu.FabricRef):
+    """The SolanaClient as a Nu fabric: one Ref, methods declared inline."""
 
-    service = SolanaClient
+    fabric = SolanaClient
 
     slot = nu.method_query(nu.IntForm, "getSlot")
     block_height = nu.method_query(nu.IntForm, "getBlockHeight")

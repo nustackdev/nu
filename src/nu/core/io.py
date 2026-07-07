@@ -26,7 +26,7 @@ separate fabrics (to parallelize a read against a write) is not worth it for a
 terminal. ``open`` / the filesystem fabric land later as their own fabric.
 
 Tests (and any host embedding) can redirect the streams by binding a
-``StdioBackend`` service on the Context; absent one, the atoms hit the real
+``StdioBackend`` fabric on the Context; absent one, the atoms hit the real
 ``sys`` streams.
 """
 
@@ -66,7 +66,7 @@ __all__ = [
 
 
 class StdioBackend:
-    """A Context service that overrides the real stdio streams.
+    """A Context fabric that overrides the real stdio streams.
 
     Bind one on the Context (``ctx.bind(StdioBackend, StdioBackend(stdout=buf))``)
     to capture or redirect a stream; any stream left ``None`` falls back to the

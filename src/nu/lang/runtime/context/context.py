@@ -3,11 +3,11 @@
 The runtime environment the runtime drives a Program against. Two axes:
 
 - ``ctx.attrs`` - flat key-value store. Refs read and write here.
-- ``bind`` / ``get`` - typed service bindings with scope tags and predicate
+- ``bind`` / ``get`` - typed fabric bindings with scope tags and predicate
   guards. Execution resources (storage, RPC clients, ...) live here.
 
 Bindings are immutable: every ``bind`` / ``lazy`` returns a new Context.
-Resolution matches by service type first, then scope tags with subset
+Resolution matches by fabric type first, then scope tags with subset
 fallback; predicate kwargs are evaluated against ``**data`` passed to ``get``.
 
 Usage:
@@ -122,8 +122,8 @@ class _GuardedEntry:
 class Context:
     """Tagged value store. The execution address space.
 
-    Bindings have a service type (primary key) and optional scope tags.
-    Resolution matches by service type, then scope tags with specificity
+    Bindings have a fabric type (primary key) and optional scope tags.
+    Resolution matches by fabric type, then scope tags with specificity
     fallback. Named predicate kwargs act as guards evaluated at lookup.
     """
 
@@ -147,7 +147,7 @@ class Context:
 
     def bind(
         self,
-        service_type: type[_T],
+        fabric_type: type[_T],
         value: _T,
         *tags: object,
         **predicates: Callable,
@@ -155,13 +155,13 @@ class Context:
         """Bind a value eagerly. Returns new Context.
 
         Args:
-            service_type: Primary key (type).
+            fabric_type: Primary key (type).
             value: The value to bind.
             *tags: Scope tags for specificity.
             **predicates: Named guard callables. Each receives **data from get().
         """
         return self._register(
-            service_type,
+            fabric_type,
             tags,
             predicates,
             _Entry.eager(value),
@@ -169,7 +169,7 @@ class Context:
 
     def lazy(
         self,
-        service_type: type[_T],
+        fabric_type: type[_T],
         factory: Callable[[], _T],
         *tags: object,
         **predicates: Callable,
@@ -177,13 +177,13 @@ class Context:
         """Bind a factory lazily. Called on first access, cached. Returns new Context.
 
         Args:
-            service_type: Primary key (type).
+            fabric_type: Primary key (type).
             factory: Zero-arg callable that creates the value.
             *tags: Scope tags for specificity.
             **predicates: Named guard callables.
         """
         return self._register(
-            service_type,
+            fabric_type,
             tags,
             predicates,
             _Entry.deferred(factory),
@@ -191,7 +191,7 @@ class Context:
 
     def _register(
         self,
-        service_type: type,
+        fabric_type: type,
         tags: tuple[object, ...],
         predicates: dict[str, Callable],
         entry: _Entry,
@@ -201,50 +201,50 @@ class Context:
         ctx = self._copy()
 
         if predicates:
-            ctx._guarded.setdefault(service_type, []).append(
+            ctx._guarded.setdefault(fabric_type, []).append(
                 _GuardedEntry(scope_tags, dict(predicates), entry),
             )
         else:
-            ctx._entries[(service_type, scope_tags)] = entry
+            ctx._entries[(fabric_type, scope_tags)] = entry
 
         return ctx
 
     # -- read API: type first, always ----------------------------------------
 
-    def get(self, service_type: type[_T], *tags: object, **data: object) -> _T:
-        """Resolve binding by service type + scope tags.
+    def get(self, fabric_type: type[_T], *tags: object, **data: object) -> _T:
+        """Resolve binding by fabric type + scope tags.
 
         Args:
-            service_type: Primary key (type).
+            fabric_type: Primary key (type).
             *tags: Scope tags to match against.
             **data: Passed as **kwargs to all predicates.
         """
-        return cast("_T", self._resolve(service_type, frozenset(tags), data))
+        return cast("_T", self._resolve(fabric_type, frozenset(tags), data))
 
-    def has(self, service_type: type, *tags: object) -> bool:
-        """Check if a binding exists for service type + optional scope tags."""
+    def has(self, fabric_type: type, *tags: object) -> bool:
+        """Check if a binding exists for fabric type + optional scope tags."""
         try:
-            self._resolve(service_type, frozenset(tags), {})
+            self._resolve(fabric_type, frozenset(tags), {})
         except LookupError:
             return False
         return True
 
-    def was_opened(self, service_type: type, *tags: object) -> bool:
+    def was_opened(self, fabric_type: type, *tags: object) -> bool:
         """Check if a lazy binding was materialized."""
-        entry = self._entries.get((service_type, frozenset(tags)))
+        entry = self._entries.get((fabric_type, frozenset(tags)))
         return entry is not None and entry.was_opened
 
     def get_predicates(
         self,
-        service_type: type,
+        fabric_type: type,
         *tags: object,
     ) -> list[tuple[dict, object]]:
-        """Get all predicate entries for a service type + tags.
+        """Get all predicate entries for a fabric type + tags.
 
         Returns list of (predicates_dict, value) for each guarded entry
         matching the exact tag set.
         """
-        guarded = self._guarded.get(service_type, [])
+        guarded = self._guarded.get(fabric_type, [])
         scope_tags = frozenset(tags)
         result: list[tuple[dict, object]] = []
         for g in guarded:
@@ -256,7 +256,7 @@ class Context:
 
     def _resolve(
         self,
-        service_type: type,
+        fabric_type: type,
         scope_tags: frozenset,
         data: dict,
     ) -> object:
@@ -266,7 +266,7 @@ class Context:
         2. Subset fallback: try progressively smaller scope tag sets.
         3. Empty scope fallback.
         """
-        entry = self._find(service_type, scope_tags, data)
+        entry = self._find(fabric_type, scope_tags, data)
         if entry is not None:
             return entry.resolve()
 
@@ -274,18 +274,18 @@ class Context:
             tags_list = sorted(scope_tags, key=id)
             for size in range(len(scope_tags) - 1, 0, -1):
                 for subset in _subsets_of_size(tags_list, size):
-                    entry = self._find(service_type, frozenset(subset), data)
+                    entry = self._find(fabric_type, frozenset(subset), data)
                     if entry is not None:
                         return entry.resolve()
 
         if scope_tags:
-            entry = self._find(service_type, frozenset(), data)
+            entry = self._find(fabric_type, frozenset(), data)
             if entry is not None:
                 return entry.resolve()
 
         tag_names = ", ".join(_name(t) for t in scope_tags)
         data_str = ", ".join(f"{k}={v!r}" for k, v in data.items())
-        parts = [_name(service_type)]
+        parts = [_name(fabric_type)]
         if tag_names:
             parts.append(f"[{tag_names}]")
         if data_str:
@@ -295,18 +295,18 @@ class Context:
 
     def _find(
         self,
-        service_type: type,
+        fabric_type: type,
         scope_tags: frozenset,
         data: dict,
     ) -> _Entry | None:
         """Find entry at exact scope level. Returns None if nothing found.
 
-        If guarded entries exist for this service_type with matching scope,
+        If guarded entries exist for this fabric_type with matching scope,
         predicates are evaluated. All predicates on an entry must pass (AND).
         At least one entry must fully match (OR across entries).
         No fallback to non-predicate bindings at same scope if guarded exist.
         """
-        guarded = self._guarded.get(service_type) if data else None
+        guarded = self._guarded.get(fabric_type) if data else None
         if guarded:
             candidates = [g for g in guarded if g.scope_tags == scope_tags]
             if candidates:
@@ -315,7 +315,7 @@ class Context:
                         return g.entry
                 return None
 
-        return self._entries.get((service_type, scope_tags))
+        return self._entries.get((fabric_type, scope_tags))
 
     # -- copy ----------------------------------------------------------------
 

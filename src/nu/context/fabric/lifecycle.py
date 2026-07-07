@@ -7,14 +7,26 @@ live while inner ones tear down.
 
 Three primitives, one per attach shape:
 
-    Provide(cls, kwargs, body, *, tag=None)
-        # bind ONE instance keyed by (cls, tag)
+    Provide(cls, kwargs, body, *, tag=None, tags=(), predicate=None)
+        # bind ONE instance keyed by (cls, *tags)
 
-    ProvideList(cls, [kwargs_a, kwargs_b, ...], body)
-        # bind N instances keyed by (cls, 0), (cls, 1), ...
+    ProvideList(cls, [kwargs_a, kwargs_b, ...], body,
+                *, base_tag=0, extra_tags=(), predicate=None)
+        # bind N instances at (cls, base_tag+0, *extra_tags), ...
 
-    ProvideDict(cls, {"k1": kwargs_a, "k2": kwargs_b}, body)
-        # bind N instances keyed by (cls, "k1"), (cls, "k2"), ...
+    ProvideDict(cls, {"k1": kwargs_a, ...}, body,
+                *, extra_tags=(), predicate=None)
+        # bind N instances at (cls, "k1", *extra_tags), ...
+
+Tag knobs (all optional, they compose):
+
+- ``tag=`` on ``Provide`` is sugar for a single-tag ``tags=(tag,)``.
+- ``tags=`` binds under an unordered set of tags; ``ctx.get(cls, t)`` matches
+  when ``t`` is a subset of the bound set (specificity fallback).
+- ``predicate=`` is a single guard callable forwarded into Context's guarded
+  registry: ``ctx.get(cls, *tags, **data)`` resolves this binding only when
+  ``predicate(**data)`` returns True. Useful for "bind a Navigator whose
+  shard covers this address" without pre-computing all shard tags.
 
 The ecosystem is open: ``ProvideSharded``, ``ProvideRoundRobin``,
 ``ProvideReplicated``, ``ProvideLazy``, etc. all follow the same shape - each
@@ -43,7 +55,7 @@ from nu.spans.bracket import _LifecycleBracket
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Iterator, Mapping, Sequence
+    from collections.abc import AsyncIterator, Callable, Iterator, Mapping, Sequence
 
     from nu.lang import Nu
     from nu.lang.runtime import Context
@@ -92,20 +104,43 @@ async def _ateardown(instances: Sequence[object]) -> None:
             inst.cleanup()
 
 
+def _merge_tags(tag: object, tags: Sequence[object]) -> tuple[object, ...]:
+    """Fold ``tag=`` sugar + ``tags=`` seq into one positional tuple."""
+    seq = tuple(tags)
+    return seq if tag is None else (tag, *seq)
+
+
+def _bind(
+    ctx: Context,
+    cls: type,
+    inst: object,
+    tags: Sequence[object],
+    predicate: Callable | None,
+) -> Context:
+    """Bind ``inst`` on ``ctx`` under ``cls`` + tags, optionally guarded."""
+    if predicate is None:
+        return ctx.bind(cls, inst, *tags)
+    return ctx.bind(cls, inst, *tags, predicate=predicate)
+
+
 # =========================================================================
 # Provide - one instance
 # =========================================================================
 
 
 class Provide(_LifecycleBracket):
-    """Construct ONE resource of ``cls(**kwargs)``, bind on ctx by tag.
+    """Construct ONE resource of ``cls(**kwargs)``, bind on ctx.
 
     On entry:
         - instance = cls(**kwargs)
         - if instance has setup / asetup, call it (async run prefers asetup)
-        - ctx.bind(cls, instance, tag) if tag given, else ctx.bind(cls, instance)
+        - ctx.bind(cls, instance, *tags [, predicate=predicate])
     On exit:
         - cleanup / acleanup (if defined)
+
+    ``tag=`` is single-tag sugar; ``tags=`` is a multi-tag sequence; both fold
+    into the same tag tuple. ``predicate=`` is one guard callable forwarded
+    into Context's guarded registry.
     """
 
     def __init__(
@@ -115,25 +150,28 @@ class Provide(_LifecycleBracket):
         body: Nu | None = None,
         *,
         tag: object = None,
+        tags: Sequence[object] = (),
+        predicate: Callable | None = None,
     ) -> None:
         super().__init__(body)
         self._payload["cls"] = cls
         self._payload["kwargs"] = dict(kwargs or {})
-        self._payload["tag"] = tag
+        self._payload["tags"] = _merge_tags(tag, tags)
+        self._payload["predicate"] = predicate
 
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[Context]:
         cls = self._payload["cls"]
         kwargs = self._payload["kwargs"]
-        tag = self._payload["tag"]
-        tags = (tag,) if tag is not None else ()
+        tags = self._payload["tags"]
+        predicate = self._payload["predicate"]
 
         instance = _construct(cls, kwargs)
         setup_done: list[object] = []
         try:
             _setup(instance, ctx)
             setup_done.append(instance)
-            yield ctx.bind(cls, instance, *tags)
+            yield _bind(ctx, cls, instance, tags, predicate)
         finally:
             _teardown(setup_done)
 
@@ -141,23 +179,28 @@ class Provide(_LifecycleBracket):
     async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
         cls = self._payload["cls"]
         kwargs = self._payload["kwargs"]
-        tag = self._payload["tag"]
-        tags = (tag,) if tag is not None else ()
+        tags = self._payload["tags"]
+        predicate = self._payload["predicate"]
 
         instance = _construct(cls, kwargs)
         setup_done: list[object] = []
         try:
             await _asetup(instance, ctx)
             setup_done.append(instance)
-            yield ctx.bind(cls, instance, *tags)
+            yield _bind(ctx, cls, instance, tags, predicate)
         finally:
             await _ateardown(setup_done)
 
     def __repr__(self) -> str:
         cls = self._payload["cls"]
-        tag = self._payload["tag"]
-        tag_str = f", tag={tag!r}" if tag is not None else ""
-        return f"Provide({cls.__name__}{tag_str})"
+        tags = self._payload["tags"]
+        pred = self._payload["predicate"]
+        parts = [cls.__name__]
+        if tags:
+            parts.append(f"tags={tags!r}")
+        if pred is not None:
+            parts.append(f"predicate={getattr(pred, '__name__', repr(pred))}")
+        return f"Provide({', '.join(parts)})"
 
 
 # =========================================================================
@@ -166,11 +209,15 @@ class Provide(_LifecycleBracket):
 
 
 class ProvideList(_LifecycleBracket):
-    """Construct N resources of ``cls``, bind each on ctx at index tags 0..N-1.
+    """Construct N resources of ``cls``, bind each on ctx at ``base_tag + i``.
 
     ``specs`` is a list of kwargs dicts, one per instance. Setup runs in
     order; teardown in reverse. If any setup raises, already-setup instances
     are torn down in reverse before propagating.
+
+    ``extra_tags=`` fold onto every element after its index tag (shared
+    across the fleet); ``predicate=`` fold onto every element as a shared
+    guard.
     """
 
     def __init__(
@@ -180,17 +227,23 @@ class ProvideList(_LifecycleBracket):
         body: Nu | None = None,
         *,
         base_tag: int = 0,
+        extra_tags: Sequence[object] = (),
+        predicate: Callable | None = None,
     ) -> None:
         super().__init__(body)
         self._payload["cls"] = cls
         self._payload["specs"] = [dict(s) for s in specs]
         self._payload["base_tag"] = base_tag
+        self._payload["extra_tags"] = tuple(extra_tags)
+        self._payload["predicate"] = predicate
 
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[Context]:
         cls = self._payload["cls"]
         specs = self._payload["specs"]
         base = self._payload["base_tag"]
+        extra = self._payload["extra_tags"]
+        predicate = self._payload["predicate"]
 
         setup_done: list[object] = []
         try:
@@ -198,7 +251,7 @@ class ProvideList(_LifecycleBracket):
                 inst = _construct(cls, kwargs)
                 _setup(inst, ctx)
                 setup_done.append(inst)
-                ctx = ctx.bind(cls, inst, base + i)
+                ctx = _bind(ctx, cls, inst, (base + i, *extra), predicate)
             yield ctx
         finally:
             _teardown(setup_done)
@@ -208,6 +261,8 @@ class ProvideList(_LifecycleBracket):
         cls = self._payload["cls"]
         specs = self._payload["specs"]
         base = self._payload["base_tag"]
+        extra = self._payload["extra_tags"]
+        predicate = self._payload["predicate"]
 
         setup_done: list[object] = []
         try:
@@ -215,7 +270,7 @@ class ProvideList(_LifecycleBracket):
                 inst = _construct(cls, kwargs)
                 await _asetup(inst, ctx)
                 setup_done.append(inst)
-                ctx = ctx.bind(cls, inst, base + i)
+                ctx = _bind(ctx, cls, inst, (base + i, *extra), predicate)
             yield ctx
         finally:
             await _ateardown(setup_done)
@@ -236,6 +291,9 @@ class ProvideDict(_LifecycleBracket):
 
     ``specs`` is a dict ``{key: kwargs}``. Setup runs in insertion order;
     teardown in reverse. Same failure semantics as :class:`ProvideList`.
+
+    ``extra_tags=`` fold onto every element after its key tag; ``predicate=``
+    fold onto every element as a shared guard.
     """
 
     def __init__(
@@ -243,15 +301,22 @@ class ProvideDict(_LifecycleBracket):
         cls: type,
         specs: Mapping[object, Mapping[str, object]],
         body: Nu | None = None,
+        *,
+        extra_tags: Sequence[object] = (),
+        predicate: Callable | None = None,
     ) -> None:
         super().__init__(body)
         self._payload["cls"] = cls
         self._payload["specs"] = {k: dict(v) for k, v in specs.items()}
+        self._payload["extra_tags"] = tuple(extra_tags)
+        self._payload["predicate"] = predicate
 
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[Context]:
         cls = self._payload["cls"]
         specs = self._payload["specs"]
+        extra = self._payload["extra_tags"]
+        predicate = self._payload["predicate"]
 
         setup_done: list[object] = []
         try:
@@ -259,7 +324,7 @@ class ProvideDict(_LifecycleBracket):
                 inst = _construct(cls, kwargs)
                 _setup(inst, ctx)
                 setup_done.append(inst)
-                ctx = ctx.bind(cls, inst, key)
+                ctx = _bind(ctx, cls, inst, (key, *extra), predicate)
             yield ctx
         finally:
             _teardown(setup_done)
@@ -268,6 +333,8 @@ class ProvideDict(_LifecycleBracket):
     async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
         cls = self._payload["cls"]
         specs = self._payload["specs"]
+        extra = self._payload["extra_tags"]
+        predicate = self._payload["predicate"]
 
         setup_done: list[object] = []
         try:
@@ -275,7 +342,7 @@ class ProvideDict(_LifecycleBracket):
                 inst = _construct(cls, kwargs)
                 await _asetup(inst, ctx)
                 setup_done.append(inst)
-                ctx = ctx.bind(cls, inst, key)
+                ctx = _bind(ctx, cls, inst, (key, *extra), predicate)
             yield ctx
         finally:
             await _ateardown(setup_done)

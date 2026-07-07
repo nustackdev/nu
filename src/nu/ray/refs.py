@@ -2,7 +2,7 @@
 
 Ray is a compute fabric: locations are actor processes, addresses are tags,
 interactions are ``Teleport`` (execute a tree there). Both refs subclass
-``ServiceRef`` so ``ctx.get`` is the resolution mechanism.
+``FabricRef`` so ``ctx.get`` is the resolution mechanism.
 
 - ``RayClusterRef`` reads the bound ``RayCluster`` on the Context. Singleton;
   no tag.
@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.context import ServiceRef
+from nu.context import FabricRef
 from nu.lang.sentinels import EMPTY, UNSET
 
 from .resources import RayCluster, RayService
@@ -32,13 +32,13 @@ if TYPE_CHECKING:
 __all__ = ["RayClusterRef", "RayServiceRef"]
 
 
-class RayClusterRef(ServiceRef):
+class RayClusterRef(FabricRef):
     """The bound ``RayCluster`` on ctx. Singleton."""
 
-    service = RayCluster
+    fabric = RayCluster
 
 
-class RayServiceRef(ServiceRef):
+class RayServiceRef(FabricRef):
     """A ``RayService`` bound at an arbitrary tag on ctx.
 
     ``tag`` is passed verbatim as a single positional to ``ctx.get`` -
@@ -54,7 +54,7 @@ class RayServiceRef(ServiceRef):
         RayServiceRef(("ledger", 0))    # -> ctx.get(RayService, ("ledger", 0))
     """
 
-    service = RayService
+    fabric = RayService
 
     def __init__(self, tag: object = UNSET) -> None:
         super().__init__()

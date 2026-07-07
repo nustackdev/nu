@@ -8,8 +8,8 @@ are tags, the interaction is ``Teleport`` (execute a Nu tree there).
 - ``RayService`` - one remote actor hosting a Nu ``Context`` + tree
   executor. Provisioned per-instance by ``Provide`` / ``ProvideList`` /
   ``ProvideDict``.
-- ``RayClusterRef`` / ``RayServiceRef`` - refs into the fabric. Service refs
-  take arbitrary hashable tags (``RayServiceRef("ledger-main")``,
+- ``RayClusterRef`` / ``RayServiceRef`` - fabric refs. ``RayServiceRef``
+  takes an arbitrary hashable tag (``RayServiceRef("ledger-main")``,
   ``RayServiceRef(("ledger", 0))``).
 - ``Teleport`` - the interaction; ships the body term to a tagged
   ``RayService`` and awaits its result.

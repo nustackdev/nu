@@ -3,10 +3,10 @@
 Two axes:
 
 - ``ctx.attrs`` - flat key-value store; Refs read and write here.
-- ``ctx.bind`` / ``ctx.get`` - typed service bindings with scope tags and
+- ``ctx.bind`` / ``ctx.get`` - typed fabric bindings with scope tags and
   optional predicate guards; execution resources live here.
 
-Typed Refs (AttrRef, ServiceRef and their Form-mixed variants) and their
+Typed Refs (AttrRef, FabricRef and their Form-mixed variants) and their
 ScalarQuery ops are deferred until the Form layer lands in nu.
 """
 

@@ -1,11 +1,11 @@
-"""Solana slot tracker -- in-tree service dispatch + virtuals + reactive output.
+"""Solana slot tracker -- in-tree fabric dispatch + virtuals + reactive output.
 
 Polls Solana mainnet for the current slot from *inside* the Nu tree, persists to
 virtuals storage, tracks poll stats, and reacts to slot changes on the terminal.
 
 Uses:
-  Solana(ServiceRef) -> the JSON-RPC client as a Nu service; ``Solana.slot()``
-                        calls ``getSlot`` in-tree and yields a typed IntForm
+  Solana(FabricRef) -> the JSON-RPC client as a Nu fabric; ``Solana.slot()``
+                       calls ``getSlot`` in-tree and yields a typed IntForm
   nu.virtuals        -> slot data (persistent, observable)
   nu.flows           -> Sequential, ForRangeDo, Race, Delay
   nu.core.io.print   -> stdio fabric writes
@@ -54,10 +54,10 @@ class SolanaClient:
         return rpc_call
 
 
-class Solana(nu.ServiceRef):
-    """The SolanaClient as a Nu service; ``Solana.slot()`` calls getSlot in-tree."""
+class Solana(nu.FabricRef):
+    """The SolanaClient as a Nu fabric; ``Solana.slot()`` calls getSlot in-tree."""
 
-    service = SolanaClient
+    fabric = SolanaClient
 
     slot = nu.method_query(nu.IntForm, "getSlot")
 

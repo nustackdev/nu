@@ -11,7 +11,7 @@ end-to-end for the hot path; the factory is for the rest.
   turning a pure function into a ``ScalarQuery`` atom.
 - **methods** - ``MethodFactory`` + the ``method_query`` / ``method_action``
   / ``method_command`` descriptors. Slot 0 is the receiver; the atom calls a
-  named method on it. Class-body sugar for ``ServiceRef`` subclasses (or any
+  named method on it. Class-body sugar for ``FabricRef`` subclasses (or any
   zero-arg-constructible Ref).
 - **host** - the ``@host`` decorator, minimum-ceremony over
   ``InteractionFactory``.

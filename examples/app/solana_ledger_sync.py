@@ -7,7 +7,7 @@ RocksDB. Resumable: skips already-synced slots on restart.
 
 Demonstrates:
   Shapes        -- Transaction, Ledger (persistent data topology)
-  ServiceRef    -- SolanaRpc bound on the Context, called from the driver
+  FabricRef     -- SolanaRpc bound on the Context, called from the driver
   Compositions  -- Sequential, IfDo, ForEachDo, Retry, TryCatch, log
   Spans         -- nu.virtuals.Transaction (atomic writes)
   Deformations  -- inline_refs (tree rewrites before execution)
@@ -20,7 +20,7 @@ Usage:
 
 FIXMEs (semantic gaps versus the pre-v2 example -- to be revisited):
   * The old typed method-descriptor system (``method(IntI, "get_slot")`` on a
-    ServiceRef subclass) is gone. RPC calls now run driver-side and their
+    FabricRef subclass) is gone. RPC calls now run driver-side and their
     results are funneled through ``ctx.attrs``.
   * The pre-v2 ``nu.ops.Pluck`` / ``Flatten`` / ``AtOp`` atoms don't exist
     yet; the ``--program`` filter is implemented as a plain-Python helper on

@@ -1,26 +1,27 @@
-"""The Context fabric: the in-memory ``ctx.attrs`` and service bindings.
+"""The Context fabric: the in-memory ``ctx.attrs`` and fabric bindings.
 
 A Fabric is an addressable space where Refs live; it resolves Refs and carries
-out the Interactions over them. The Context fabric has three axes:
+out the Interactions over them. The Context fabric has two axes:
 
 - **attrs** - a flat, name-keyed store (``ctx.attrs``) for short-lived
   primitives (loop counters, accumulators, markers). Ref: ``AttrRef``; writes:
   ``SetCommand`` / ``DeleteCommand``; existence: ``AttrExistsQuery``. The read
   is ``AttrRef`` itself.
-- **services** - typed bindings (``ctx.bind`` / ``ctx.get``) for execution
-  resources. Ref: ``ServiceRef`` (read-only, self-yields); existence:
-  ``ServiceExistsQuery``; in-tree method calls: the ``method`` descriptor /
-  ``MethodFactory`` (a service-flavored ``InteractionFactory``).
-- **fabric** - lifecycle interactions that provision fabrics into the
-  Context for a body's duration. Brackets: ``Provide`` / ``ProvideList`` /
-  ``ProvideDict``. Protocols: ``Fabric`` (empty marker; every ctx-bound
-  thing is a Fabric) and ``FabricLifecycle(Fabric)`` (Fabrics with
-  optional setup / cleanup - what ``Provide`` installs).
+- **fabric** - typed bindings (``ctx.bind`` / ``ctx.get``) for every other
+  ctx-bound thing: execution resources, storage handles, cluster handles,
+  compute actors. Ref: ``FabricRef`` (read-only, self-yields); existence:
+  ``FabricExistsQuery``; in-tree method calls: the ``method`` descriptor /
+  ``MethodFactory``. Provisioning brackets ``Provide`` / ``ProvideList`` /
+  ``ProvideDict`` install fabrics into the Context for a body's duration.
+  Protocols ``Fabric`` (empty marker; every ctx-bound thing satisfies it) and
+  ``FabricLifecycle(Fabric)`` (with optional setup / cleanup) describe the
+  contract.
 
-The read on either data axis is the Ref's dual role; only existence needs an
-explicit query. Other fabrics (virtuals, mem, ray, ...) follow the same shape
-in their own dirs: concrete Refs plus the interactions that touch that fabric.
-Nothing in ``nu.core`` touches a fabric - core is the pure Python builtins.
+The read on the attrs axis is the Ref's dual role; only existence needs an
+explicit query. Other concrete fabrics (virtuals, mem, ray, ...) follow the
+same shape in their own dirs: concrete Refs plus the interactions that touch
+that fabric. Nothing in ``nu.core`` touches a fabric - core is the pure Python
+builtins.
 """
 
 from __future__ import annotations
@@ -43,8 +44,15 @@ from .attrs import (
     StrAttrRef,
     TupleAttrRef,
 )
-from .fabric import Fabric, FabricLifecycle, Provide, ProvideDict, ProvideList
-from .services import ServiceExistsQuery, ServiceRef
+from .fabric import (
+    Fabric,
+    FabricExistsQuery,
+    FabricLifecycle,
+    FabricRef,
+    Provide,
+    ProvideDict,
+    ProvideList,
+)
 
 
 __all__ = [
@@ -56,7 +64,9 @@ __all__ = [
     "DeleteCommand",
     "DictAttrRef",
     "Fabric",
+    "FabricExistsQuery",
     "FabricLifecycle",
+    "FabricRef",
     "FloatAttrRef",
     "FrozenSetAttrRef",
     "IntAttrRef",
@@ -65,8 +75,6 @@ __all__ = [
     "Provide",
     "ProvideDict",
     "ProvideList",
-    "ServiceExistsQuery",
-    "ServiceRef",
     "SetAttrRef",
     "SetCommand",
     "StrAttrRef",

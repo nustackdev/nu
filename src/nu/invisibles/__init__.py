@@ -1,15 +1,15 @@
-"""nu.invisibles - transparent RPC transport for services.
+"""nu.invisibles - transparent RPC transport for fabrics.
 
 Pure transport. No new refs, no new interactions - method calls on a client
-proxy go over the wire and land on the server-side bound service. Same
-service dispatch (``ServiceRef`` + ``method_query`` / ``method_action`` /
+proxy go over the wire and land on the server-side bound fabric. Same
+fabric dispatch (``FabricRef`` + ``method_query`` / ``method_action`` /
 ``method_command``) that works locally works remotely.
 
-- ``InvisiblesServer`` - reads the root service from ctx (by type + optional
+- ``InvisiblesServer`` - reads the root fabric from ctx (by type + optional
   tag) and serves it over TCP / Unix socket.
 - ``InvisiblesClient`` - connects and exposes the remote root as ``.root``.
 - ``InvisiblesProxy`` - bracket sugar that provisions a client and binds its
-  ``.root`` under a caller-named service type in one step.
+  ``.root`` under a caller-named fabric type in one step.
 
 Typical topology, using ``feed_run``'s ledger-main pattern::
 

@@ -1,9 +1,9 @@
 """Shared base for Context-fabric Refs.
 
-Both ``AttrRef`` and ``ServiceRef`` are Refs whose sole child *is* their
+Both ``AttrRef`` and ``FabricRef`` are Refs whose sole child *is* their
 address: it is resolved through the runtime like any other child, and the read
 is the dual role. This base spells that pattern once. The concrete subclasses
-plug in what the address means (attr key / service type) and how the fabric
+plug in what the address means (attr key / fabric type) and how the fabric
 answers a read.
 """
 

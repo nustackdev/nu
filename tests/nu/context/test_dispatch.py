@@ -1,19 +1,19 @@
-"""Tests for service dispatch: MethodFactory and the ``method_*`` descriptors.
+"""Tests for fabric dispatch: MethodFactory and the ``method_*`` descriptors.
 
-A service is a typed Context binding named by a ``ServiceRef`` subclass (one
-fabric per service). ``MethodFactory`` builds an atom that resolves the bound
-service from slot 0 and calls a named method on it; the ``method_query`` /
-``method_action`` / ``method_command`` descriptors are the class-body sugar, one
-per base so the effect kind is always named. Coverage drives real calls over a
-stub service and pins the basis: kind, effect (READ vs WRITE), determinism,
-Form wrapping, sentinels, and per-service fabric isolation.
+A fabric is a typed Context binding named by a ``FabricRef`` subclass (one
+Ref per bound fabric). ``MethodFactory`` builds an atom that resolves the
+bound fabric from slot 0 and calls a named method on it; the ``method_query``
+/ ``method_action`` / ``method_command`` descriptors are the class-body sugar,
+one per base so the effect kind is always named. Coverage drives real calls
+over a stub fabric and pins the basis: kind, effect (READ vs WRITE),
+determinism, Form wrapping, sentinels, and per-fabric isolation.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from nu.context import ServiceRef
+from nu.context import FabricRef
 from nu.factory import MethodFactory, method_action, method_command, method_query
 from nu.forms.primitives import IntForm, StrForm
 from nu.lang import (
@@ -31,7 +31,7 @@ from nu.lang.helpers import arun, run
 
 
 class Wallet:
-    """A stub service: a read, a read with args, an action, a command, an async read."""
+    """A stub fabric: a read, a read with args, an action, a command, an async read."""
 
     def __init__(self) -> None:
         self.log: list[object] = []
@@ -53,10 +53,10 @@ class Wallet:
         return 7
 
 
-class WalletRef(ServiceRef):
-    """Typed service interface over ``Wallet``."""
+class WalletRef(FabricRef):
+    """Typed fabric interface over ``Wallet``."""
 
-    service = Wallet
+    fabric = Wallet
 
     balance = method_query(IntForm, "balance")
     plus = method_query(IntForm, "add")  # attr name differs from method name
@@ -77,22 +77,22 @@ def _effects(term: object) -> frozenset:
 # --- MethodFactory: base kind drives the effect --------------------------
 
 
-def test_query_base_reads_the_service_fabric():
+def test_query_base_reads_the_fabric():
     atom = MethodFactory(ScalarQuery, "Read", "balance")
     assert _effects(atom(WalletRef())) == frozenset({(WalletRef, Effect.READ)})
 
 
-def test_action_base_writes_the_service_fabric():
+def test_action_base_writes_the_fabric():
     atom = MethodFactory(ScalarAction, "Do", "send")
     assert _effects(atom(WalletRef(), "x")) == frozenset({(WalletRef, Effect.WRITE)})
 
 
-def test_command_base_writes_the_service_fabric():
+def test_command_base_writes_the_fabric():
     atom = MethodFactory(Command, "Fire", "ping")
     assert _effects(atom(WalletRef())) == frozenset({(WalletRef, Effect.WRITE)})
 
 
-def test_service_call_is_non_deterministic_by_default():
+def test_fabric_call_is_non_deterministic_by_default():
     program = compile(MethodFactory(ScalarQuery, "Read", "balance")(WalletRef()))
     assert program.attr(program.root, Attr.DETERMINISTIC) is False
 
@@ -184,7 +184,7 @@ async def test_query_awaits_an_async_method():
 # --- sentinels ------------------------------------------------------------
 
 
-def test_unbound_service_short_circuits():
+def test_unbound_fabric_short_circuits():
     value, _ = run(WalletRef.balance(), Context())
     assert value is INVALID
 
@@ -192,19 +192,19 @@ def test_unbound_service_short_circuits():
 # --- fabric isolation -----------------------------------------------------
 
 
-def test_distinct_services_are_distinct_fabrics():
-    class OtherRef(ServiceRef):
-        service = Wallet
+def test_distinct_refs_are_distinct_fabrics():
+    class OtherRef(FabricRef):
+        fabric = Wallet
 
         balance = method_query(IntForm, "balance")
 
-    # Same underlying service type, but keyed by the concrete Ref subclass.
+    # Same underlying fabric type, but keyed by the concrete Ref subclass.
     assert _effects(WalletRef.balance()) != _effects(OtherRef.balance())
 
 
 # --- construction ---------------------------------------------------------
 
 
-def test_serviceref_without_a_bound_service_raises():
-    with pytest.raises(TypeError, match="no bound service"):
-        ServiceRef()
+def test_fabricref_without_a_bound_fabric_raises():
+    with pytest.raises(TypeError, match="no bound fabric"):
+        FabricRef()

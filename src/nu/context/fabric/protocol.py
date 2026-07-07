@@ -1,9 +1,9 @@
 """``Fabric`` and ``FabricLifecycle``: the two protocol tiers.
 
-Every ctx-bound service is a **Fabric** - an addressable space that resolves
+Every ctx-bound thing is a **Fabric** - an addressable space that resolves
 its own Refs and carries out the Interactions over them. The Context fabric is
 the built-in one; Ray, Virtuals, Invisibles, Nudle, Mem, and every user
-service all satisfy the same base protocol.
+fabric all satisfy the same base protocol.
 
 - ``Fabric`` - empty marker Protocol. Every ctx-bound thing is a Fabric;
   ``isinstance(x, Fabric)`` is intentionally trivially true, the protocol just
@@ -19,7 +19,7 @@ service all satisfy the same base protocol.
     async def asetup(self, ctx): ... # async run (preferred when defined)
     async def acleanup(self): ...
 
-The two-tier split lets a service opt in gradually. A stateless codec bound
+The two-tier split lets a fabric opt in gradually. A stateless codec bound
 once is a plain ``Fabric`` - no lifecycle. A ray cluster, a rocksdb handle,
 a websocket connection are ``FabricLifecycle`` - they need setup and
 teardown. The distinction is documentation, not enforcement.
@@ -57,11 +57,11 @@ __all__ = ["Fabric", "FabricLifecycle"]
 
 @runtime_checkable
 class Fabric(Protocol):
-    """Empty marker Protocol - every ctx-bound service is a Fabric.
+    """Empty marker Protocol - every ctx-bound thing is a Fabric.
 
     An addressable space that hosts its own Refs and interactions. The empty
     protocol carries no methods; the type is documentation for tooling and
-    readers. Subclass or extend with ``FabricLifecycle`` when the service
+    readers. Subclass or extend with ``FabricLifecycle`` when the fabric
     needs setup / teardown.
     """
 
@@ -77,7 +77,14 @@ class FabricLifecycle(Fabric, Protocol):
     to the sync variants otherwise.
     """
 
-    def setup(self, ctx: Context) -> None: ...
-    def cleanup(self) -> None: ...
-    async def asetup(self, ctx: Context) -> None: ...
-    async def acleanup(self) -> None: ...
+    def setup(self, ctx: Context) -> None:
+        """Sync setup; sees the outer ``ctx``. Runs before body starts."""
+
+    def cleanup(self) -> None:
+        """Sync teardown; runs after body finishes (LIFO across nested Provides)."""
+
+    async def asetup(self, ctx: Context) -> None:
+        """Async setup; preferred over sync ``setup`` under the async runtime."""
+
+    async def acleanup(self) -> None:
+        """Async teardown; preferred over sync ``cleanup`` under the async runtime."""

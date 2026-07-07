@@ -1,13 +1,13 @@
 """``InvisiblesClient``: connect to an ``InvisiblesServer``, expose its root
-service as a transparent proxy.
+fabric as a transparent proxy.
 
 FabricLifecycle. On ``asetup`` connects with retry, fetches the remote root
-service handle, exposes it as ``.root``. On ``acleanup`` closes the
+fabric handle, exposes it as ``.root``. On ``acleanup`` closes the
 connection.
 
 Pure transport - method calls on ``.root`` go over the wire, sync from the
 caller's side (invisibles handles the framing). See ``InvisiblesProxy`` for
-the sugar bracket that binds the proxy under a target service type in one
+the sugar bracket that binds the proxy under a target fabric type in one
 step.
 """
 
@@ -104,7 +104,7 @@ class InvisiblesClient:
 
     @property
     def root(self) -> object:
-        """The remote root service, as a transparent proxy."""
+        """The remote root fabric, as a transparent proxy."""
         return self._root
 
     @staticmethod

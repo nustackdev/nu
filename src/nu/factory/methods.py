@@ -2,10 +2,10 @@
 
 Sibling of ``InteractionFactory`` for the "call this named method on the
 receiver" pattern. Works for any object with the named method - a bound
-service (the ``ServiceRef`` case), a proxy, a plain host value. Slot 0 is the
+fabric (the ``FabricRef`` case), a proxy, a plain host value. Slot 0 is the
 receiver; slots 1... are the call arguments.
 
-``MethodFactory`` sets service-flavored defaults: ``deterministic=False`` and,
+``MethodFactory`` sets fabric-flavored defaults: ``deterministic=False`` and,
 for a Command or Action base, ``mutates={0}``. Both are overridable through
 ``attributes`` when the caller wraps a pure host method that should fold.
 
@@ -17,7 +17,7 @@ atom with the receiver Ref in slot 0. Class access resolves the Ref from
 result in ``form``; a command variant (``form is None``) returns the raw
 Command.
 
-Any zero-arg-constructible Ref class works as the receiver - ``ServiceRef``
+Any zero-arg-constructible Ref class works as the receiver - ``FabricRef``
 subclasses are the common case, but nothing structural limits it.
 """
 
@@ -55,7 +55,7 @@ def MethodFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a class at 
 ) -> type[B]:
     """Build an atom class that calls ``method_name`` on the slot-0 receiver.
 
-    Thin service-flavored ``InteractionFactory``: the built callable is
+    Thin fabric-flavored ``InteractionFactory``: the built callable is
     ``getattr(receiver, method_name)(*args, **kwargs)``, with the receiver
     resolved from slot 0 and the call arguments from slots 1... ``base``
     carries the effect semantics (``ScalarQuery`` read, ``ScalarAction`` /
@@ -82,7 +82,7 @@ class _MethodDescriptor:
     names it, then on access returns a callable that instantiates the atom
     with the receiver Ref in slot 0. Class access (``Owner.slot()``) resolves
     the receiver from ``objtype()``; instance access (``ref.slot()``) targets
-    that Ref. Any zero-arg-constructible Ref class works - ``ServiceRef``
+    that Ref. Any zero-arg-constructible Ref class works - ``FabricRef``
     subclasses are the common case, but nothing structural limits it.
     """
 
