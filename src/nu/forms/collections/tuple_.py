@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING
 from nu.lang import TypedNu
 
 from .abc import SequenceForm
-from .abc.sequence_interactions import TupleCreate
+from .abc.sequence_interactions import TupleCreate, TupleOf
 
 
 if TYPE_CHECKING:
-    from nu.lang import IntArg, Nu, TupleArg
+    from nu.lang import Arg, IntArg, Nu, TupleArg
 
     from ..primitives import AnyForm, BoolForm
     from .list_ import ListForm
@@ -32,6 +32,17 @@ class TupleForm[*Ts](
     def create(cls) -> TupleForm[*Ts]:
         """Yield an empty tuple."""
         return cls(TupleCreate())
+
+    @classmethod
+    def of(cls, *items: Arg) -> TupleForm:
+        """Yield a tuple from positional item expressions.
+
+        ``TupleForm.of(x, y, z)`` evaluates each argument in the current
+        context and packs the results: ``(<x>, <y>, <z>)``. Sibling to
+        ``DictForm.of``. An item that resolves to a sentinel collapses the
+        whole result to Invalid.
+        """
+        return cls(TupleOf(*items))
 
     def _wrap_sliceable_result(self, operand: Nu) -> TupleForm:
         """Wrap operand as TupleForm for slice results."""
