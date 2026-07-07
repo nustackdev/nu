@@ -53,7 +53,211 @@ function Code({ src }: { src: string }) {
 }
 
 /* ============================================================================
- * Context showcase: three fabrics, before → after
+ * Fan-out visual: one move, three substrates
+ * ==========================================================================*/
+
+function Substrate({
+  kind, x, y, value, accent = false,
+}: {
+  kind: 'browser' | 'disk' | 'memory';
+  x: number;
+  y: number;
+  value: string;
+  accent?: boolean;
+}) {
+  const stroke = accent ? 'var(--nu-accent)' : 'var(--nu-rule)';
+  const sw = accent ? 1.6 : 1;
+  const valueFill = accent ? 'var(--nu-accent)' : 'var(--nu-ink-2)';
+  const valueWeight = accent ? 700 : 500;
+  const line = accent ? 'var(--nu-accent-line)' : 'var(--nu-rule)';
+  const dotFill = accent ? 'var(--nu-accent)' : 'var(--nu-ink-3)';
+  const valueOpacity = accent ? 1 : 0.75;
+
+  if (kind === 'browser') {
+    return (
+      <g>
+        <rect x={x} y={y} width={240} height={80} rx={6}
+          fill="var(--color-fd-background)" stroke={stroke} strokeWidth={sw} />
+        <circle cx={x + 18} cy={y + 16} r={3} fill={dotFill} opacity={0.6} />
+        <circle cx={x + 30} cy={y + 16} r={3} fill={dotFill} opacity={0.6} />
+        <circle cx={x + 42} cy={y + 16} r={3} fill={dotFill} opacity={0.6} />
+        <line x1={x + 58} y1={y + 16} x2={x + 226} y2={y + 16}
+          stroke={line} strokeWidth={0.75} />
+        <text x={x + 120} y={y + 58} textAnchor="middle"
+          fontFamily="ui-monospace, monospace" fontSize={19} fill="var(--nu-ink)"
+          opacity={valueOpacity}>
+          count:{' '}
+          <tspan fill={valueFill} fontWeight={valueWeight}>{value}</tspan>
+        </text>
+      </g>
+    );
+  }
+
+  if (kind === 'disk') {
+    const cx = x + 120;
+    const top = y + 16;
+    const bot = y + 62;
+    const rx = 92, ry = 8;
+    return (
+      <g>
+        {/* body fill */}
+        <rect x={cx - rx} y={top} width={2 * rx} height={bot - top}
+          fill="var(--color-fd-background)" stroke="none" />
+        {/* bottom bulge */}
+        <path d={`M ${cx - rx} ${bot} A ${rx} ${ry} 0 0 0 ${cx + rx} ${bot}`}
+          fill="var(--color-fd-background)" stroke={stroke} strokeWidth={sw} />
+        {/* sides */}
+        <line x1={cx - rx} y1={top} x2={cx - rx} y2={bot} stroke={stroke} strokeWidth={sw} />
+        <line x1={cx + rx} y1={top} x2={cx + rx} y2={bot} stroke={stroke} strokeWidth={sw} />
+        {/* top ellipse */}
+        <ellipse cx={cx} cy={top} rx={rx} ry={ry}
+          fill="var(--color-fd-background)" stroke={stroke} strokeWidth={sw} />
+        {/* platter groove */}
+        <path d={`M ${cx - rx} ${top + 14} A ${rx} ${ry} 0 0 0 ${cx + rx} ${top + 14}`}
+          fill="none" stroke={stroke} strokeWidth={0.6} opacity={0.5} />
+        {/* value */}
+        <text x={cx} y={y + 58} textAnchor="middle"
+          fontFamily="ui-monospace, monospace" fontSize={18} fill="var(--nu-ink)"
+          opacity={valueOpacity}>
+          count:{' '}
+          <tspan fill={valueFill} fontWeight={valueWeight}>{value}</tspan>
+        </text>
+      </g>
+    );
+  }
+
+  // memory
+  return (
+    <g>
+      <rect x={x} y={y} width={240} height={80} rx={6}
+        fill="var(--color-fd-background)" stroke={stroke} strokeWidth={sw} />
+      <text x={x + 120} y={y + 54} textAnchor="middle"
+        fontFamily="ui-monospace, monospace" fontSize={22} fill="var(--nu-ink)"
+        opacity={valueOpacity}>
+        {'{ count: '}
+        <tspan fill={valueFill} fontWeight={valueWeight}>{value}</tspan>
+        {' }'}
+      </text>
+    </g>
+  );
+}
+
+function SubstrateLabel({ x, y, text }: { x: number; y: number; text: string }) {
+  return (
+    <text x={x} y={y}
+      fontFamily="ui-monospace, monospace" fontSize={10}
+      letterSpacing="0.28em" fill="var(--nu-ink-3)">
+      {text}
+    </text>
+  );
+}
+
+function OperationLine({ y, code }: { y: number; code: string }) {
+  return (
+    <g>
+      <line
+        x1={260} y1={y} x2={740} y2={y}
+        stroke="var(--nu-ink-3)" strokeWidth={1}
+        strokeDasharray="4 3" opacity={0.55}
+      />
+      <rect
+        x={370} y={y - 18} width={260} height={36} rx={4}
+        fill="var(--color-fd-background)"
+        stroke="var(--nu-rule)" strokeWidth={1}
+      />
+      <text
+        x={500} y={y + 5} textAnchor="middle"
+        fontFamily="ui-monospace, monospace" fontSize={14}
+        fill="var(--nu-ink-2)"
+      >
+        {code}
+      </text>
+    </g>
+  );
+}
+
+function BeforeViz() {
+  return (
+    <svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg"
+      className={s.fanoutSvg} role="img"
+      aria-label="Today: each substrate has its own API to update a count.">
+      <SubstrateLabel x={20} y={13} text="BROWSER TAB" />
+      <SubstrateLabel x={20} y={118} text="ON DISK" />
+      <SubstrateLabel x={20} y={223} text="IN MEMORY" />
+
+      {/* row 1: browser */}
+      <Substrate kind="browser" x={20} y={20} value="0" />
+      <Substrate kind="browser" x={740} y={20} value="1" accent />
+      <OperationLine y={60} code={`input.value = 1`} />
+
+      {/* row 2: disk */}
+      <Substrate kind="disk" x={20} y={125} value="0" />
+      <Substrate kind="disk" x={740} y={125} value="1" accent />
+      <OperationLine y={165} code={`db.put("count", 1)`} />
+
+      {/* row 3: memory */}
+      <Substrate kind="memory" x={20} y={230} value="0" />
+      <Substrate kind="memory" x={740} y={230} value="1" accent />
+      <OperationLine y={270} code={`d["count"] = 1`} />
+    </svg>
+  );
+}
+
+function FanoutViz() {
+  const rowY = [60, 165, 270];
+  const midY = 165;
+  const mLeft = 400;
+  const mRight = 640;
+  return (
+    <svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg"
+      className={s.fanoutSvg} role="img"
+      aria-label="One interaction applied across three substrates: a browser tab, a value on disk, and a value in memory.">
+      {/* row labels (left) */}
+      <SubstrateLabel x={20} y={13} text="BROWSER TAB" />
+      <SubstrateLabel x={20} y={118} text="ON DISK" />
+      <SubstrateLabel x={20} y={223} text="IN MEMORY" />
+
+      {/* connectors */}
+      <g fill="none" stroke="var(--nu-accent)" strokeWidth={1.5} opacity={0.4}>
+        <path d={`M 260 ${rowY[0]} C 330 ${rowY[0]} 330 ${midY} ${mLeft} ${midY}`} />
+        <path d={`M 260 ${rowY[1]} L ${mLeft} ${midY}`} />
+        <path d={`M 260 ${rowY[2]} C 330 ${rowY[2]} 330 ${midY} ${mLeft} ${midY}`} />
+        <path d={`M ${mRight} ${midY} C 710 ${midY} 710 ${rowY[0]} 760 ${rowY[0]}`} />
+        <path d={`M ${mRight} ${midY} L 760 ${rowY[1]}`} />
+        <path d={`M ${mRight} ${midY} C 710 ${midY} 710 ${rowY[2]} 760 ${rowY[2]}`} />
+      </g>
+
+      {/* left substrates: initial */}
+      <Substrate kind="browser" x={20} y={20} value="0" />
+      <Substrate kind="disk" x={20} y={125} value="0" />
+      <Substrate kind="memory" x={20} y={230} value="0" />
+
+      {/* middle: the interaction */}
+      <g>
+        <rect x={mLeft} y={125} width={mRight - mLeft} height={80} rx={6}
+          fill="var(--nu-accent-soft)" stroke="var(--nu-accent)" strokeWidth={1.6} />
+        <text x={(mLeft + mRight) / 2} y={113} textAnchor="middle"
+          fontFamily="ui-monospace, monospace" fontSize={10}
+          letterSpacing="0.28em" fill="var(--nu-accent)">
+          ONE INTERACTION
+        </text>
+        <text x={(mLeft + mRight) / 2} y={175} textAnchor="middle"
+          fontFamily="ui-monospace, monospace" fontSize={20} fontWeight={700}
+          fill="var(--nu-accent)">
+          Add(CounterRef, 1)
+        </text>
+      </g>
+
+      {/* right substrates: updated */}
+      <Substrate kind="browser" x={760} y={20} value="1" accent />
+      <Substrate kind="disk" x={760} y={125} value="1" accent />
+      <Substrate kind="memory" x={760} y={230} value="1" accent />
+    </svg>
+  );
+}
+
+/* ============================================================================
+ * Deep-dive showcase: three fabrics, before → after
  * Each SVG is a "diff" between Context v0 and Context v1.
  * The mutated cell is the only element in the accent color.
  * ==========================================================================*/
@@ -529,113 +733,112 @@ export default function HomePage() {
 
         {/* ---------- hero ---------- */}
         <header className={s.hero}>
-          <div className={s.eyebrow}>the interaction model</div>
-          <h1 className={s.wordmark}>
-            <span>N</span>
-            <span className={s.wordmarkAccent}>U</span>
-          </h1>
-          <p className={s.lede}>
-            Write the program.<br />
-            <span className={s.ledeAccent}>Swap the world.</span>
-          </p>
-          <p className={s.subLede}>
-            Nu is a programming model built on two citizens — <b>Refs</b> and{' '}
-            <b>Interactions</b> — evaluated against a <b>Context</b>. One
-            program. Any world.
-          </p>
+          <div className={s.heroL}>
+            <h1 className={s.wordmark}>
+              <span>N</span>
+              <span className={s.wordmarkAccent}>U</span>
+            </h1>
+            <p className={s.lede}>
+              <span className={s.ledeAccent}>References</span>, and a way to{' '}
+              <span className={s.ledeAccent}>Interact</span> with them.
+            </p>
+            <p className={s.heroBody}>
+              A python library. The model, in pure python — <b>Refs</b>,{' '}
+              <b>Interactions</b>, and ready-made <b>Fabrics</b>. Not a
+              framework, not a DSL. One import.
+            </p>
+          </div>
+          <div className={s.heroR}>
+            <div className={s.heroRTop}>
+              <div className={s.installRow}>
+                <span className={s.installPrompt}>$</span>
+                <span className={s.installCmd}>pip install nu</span>
+              </div>
+              <div className={s.helloRow}>
+                <Code src={`nu.run(nu.print("hello"))`} />
+              </div>
+            </div>
+            <div className={s.actions}>
+              <a className={s.actionLink} href="#">
+                <span>open on github</span>
+                <span className={s.actionArrow} aria-hidden>→</span>
+              </a>
+              <Link className={s.actionLink} href="/docs">
+                <span>read the docs</span>
+                <span className={s.actionArrow} aria-hidden>→</span>
+              </Link>
+              <a className={s.actionLink} href="#">
+                <span>hello world on github</span>
+                <span className={s.actionArrow} aria-hidden>→</span>
+              </a>
+            </div>
+          </div>
         </header>
 
-        {/* ---------- interaction model ---------- */}
+        {/* ---------- the model ---------- */}
         <section className={s.modelSec} id="model">
           <div className={s.modelHead}>
             <span className={s.modelLabel}>the model</span>
-            <h2 className={s.modelTitle}>
-              A program is <span className={s.accent}>Refs</span> and{' '}
-              <span className={s.accent}>Interactions</span>. It runs against a{' '}
-              <span className={s.accent}>Context</span>.
+            <h2 className={s.modelThesis}>
+              Values, and a way to change them.
             </h2>
-            <p className={s.modelIntro}>
-              Two citizens describe every program: a <b>Ref</b> is an address
-              into the world, an <b>Interaction</b> is what you do with it.
-              Together they build a tree. A <b>Context</b> is the world that
-              tree runs against — the same tree can be evaluated against any
-              Context.
+          </div>
+
+          {/* today: three different APIs */}
+          <div className={s.compareBlock}>
+            <div className={s.compareHead}>
+              <span className={s.compareTag}>today</span>
+              <h3 className={s.compareTitle}>Every substrate — its own API.</h3>
+            </div>
+            <div className={s.fanoutWrap}>
+              <BeforeViz />
+            </div>
+          </div>
+
+          {/* with nu: one interaction */}
+          <div className={s.compareBlock}>
+            <div className={s.compareHead}>
+              <span className={`${s.compareTag} ${s.compareTagAccent}`}>with nu</span>
+              <h3 className={s.compareTitle}>One interaction — any substrate.</h3>
+            </div>
+            <div className={s.fanoutWrap}>
+              <FanoutViz />
+            </div>
+          </div>
+
+          <p className={s.modelCaption}>
+            A field on a browser tab, a value on disk, a number in memory —
+            <b> Nu updates all three with one move.</b>
+          </p>
+        </section>
+
+        {/* ---------- deep dive: fabrics ---------- */}
+        <section className={s.deepSec} id="fabrics">
+          <div className={s.deepHead}>
+            <span className={s.deepLabel}>the deep dive</span>
+            <h2 className={s.deepTitle}>
+              Three fabrics. Same shape.
+            </h2>
+            <p className={s.deepIntro}>
+              That move you just saw has a name: it&apos;s an{' '}
+              <b>Interaction</b>. The addresses it acts on are <b>Refs</b>. The
+              world they resolve inside is a <b>Fabric</b>. Same Refs, same
+              Interactions, three fabrics — watch the diff on the right.
             </p>
           </div>
-
-          {/* three citizen cards */}
-          <div className={s.citizens}>
-            <div className={s.citizen}>
-              <div className={s.citizenLabel}>Ref</div>
-              <p className={s.citizenVerb}>names.</p>
-              <p className={s.citizenBody}>
-                A pointer to a resource — a db row, a config key, a file path,
-                an api endpoint, a slot in a dict. Carries the address, not the
-                value at the address.
-              </p>
-            </div>
-            <div className={s.citizen}>
-              <div className={s.citizenLabel}>Interaction</div>
-              <p className={s.citizenVerb}>describes.</p>
-              <p className={s.citizenBody}>
-                What the program does with Refs: read, write, compute, branch,
-                iterate, compose. Every non-Ref node in the tree is one.
-              </p>
-            </div>
-            <div className={s.citizen}>
-              <div className={s.citizenLabel}>Context</div>
-              <p className={s.citizenVerb}>holds the world.</p>
-              <p className={s.citizenBody}>
-                The addressable space Refs resolve inside. Bind different
-                Contexts — memory, disk, browser — and the same tree touches
-                different worlds.
-              </p>
-            </div>
-          </div>
-
-          {/* mutation kernel */}
-          <div className={s.kernel}>
-            <span className={s.kernelTag}>the kernel</span>
-            <div className={s.kernelFormula}>
-              <span>Context v0</span>
-              <span className={s.arrow}>→</span>
-              <span><span className={s.accent}>Interaction(Ref)</span></span>
-              <span className={s.arrow}>→</span>
-              <span>Context v1</span>
-            </div>
-            <p className={s.kernelNote}>
-              A program mutates the Context. That&apos;s <b>all</b> the model
-              says. Everything else is derived from these three lines.
-            </p>
-          </div>
-
-          {/* showcase: three contexts, before → after */}
-          <div className={s.showcase}>
-            <div className={s.showcaseHead}>
-              <span className={s.showcaseLabel}>see the context change</span>
-              <h3 className={s.showcaseTitle}>
-                Three worlds. One pattern.
-              </h3>
-              <p className={s.showcaseIntro}>
-                The same tree runs against three different Contexts. Only the
-                <code> bind(...)</code> line differs — the interaction stays the
-                same. Watch what changes on the right.
-              </p>
-            </div>
-            <div className={s.showcaseRows}>
-              {CTX_ROWS.map((r) => (
-                <article key={r.name} className={s.ctxRow}>
-                  <div className={s.ctxRowHead}>
-                    <span className={s.ctxName}>{r.name}</span>
-                    <p className={s.ctxHint}>{r.hint}</p>
-                  </div>
-                  <div className={s.ctxCode}>
-                    <Code src={r.code} />
-                  </div>
-                  <div className={s.ctxViz}>{r.viz}</div>
-                </article>
-              ))}
-            </div>
+          <div className={s.showcaseRows}>
+            {CTX_ROWS.map((r) => (
+              <article key={r.name} className={s.ctxRow}>
+                <div className={s.ctxRowHead}>
+                  <span className={s.ctxName}>{r.name}</span>
+                  <p className={s.ctxHint}>{r.hint}</p>
+                </div>
+                <div className={s.ctxCode}>
+                  <Code src={r.code} />
+                </div>
+                <div className={s.ctxViz}>{r.viz}</div>
+              </article>
+            ))}
           </div>
         </section>
 
