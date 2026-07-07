@@ -56,7 +56,6 @@ from .attributes import (
     matrix_sort,
     subsort,
 )
-from .factory import InteractionFactory, ScalarQueryFactory
 from .forms import Form, TypedNu
 from .kinds import (
     Action,
@@ -126,7 +125,6 @@ __all__ = [
     "FrozenSetArg",
     "IntArg",
     "Interaction",
-    "InteractionFactory",
     "Invalid",
     "Law",
     "ListArg",
@@ -140,7 +138,6 @@ __all__ = [
     "Runtime",
     "ScalarAction",
     "ScalarQuery",
-    "ScalarQueryFactory",
     "Sentinel",
     "SetArg",
     "Severity",

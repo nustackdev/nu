@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import random
 
-from nu.lang import ScalarQueryFactory
+from nu.factory import ScalarQueryFactory
 
 
 __all__ = [

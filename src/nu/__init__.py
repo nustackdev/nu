@@ -27,7 +27,7 @@ from __future__ import annotations
 
 # Subpackage namespaces for dot-access.
 # Early group: pure layers with no dependency on the flat root surface.
-from . import context, core, engine, flows, forms, lang, spans, tree
+from . import context, core, engine, factory, flows, forms, lang, spans, tree
 from .domains import shape
 
 # Flat re-exports: the program-authoring surface.
@@ -65,7 +65,6 @@ from .lang import (
     FrozenSetArg,
     IntArg,
     Interaction,
-    InteractionFactory,
     Invalid,
     ListArg,
     NoneArg,
@@ -77,7 +76,6 @@ from .lang import (
     Runtime,
     ScalarAction,
     ScalarQuery,
-    ScalarQueryFactory,
     Sentinel,
     SetArg,
     Sort,
@@ -93,6 +91,17 @@ from .lang import (
     is_invalid,
     is_sentinel,
     validate,
+)
+
+# Atom builders (nu.factory subpackage): factories, method dispatch, @host.
+from .factory import (
+    InteractionFactory,
+    MethodFactory,
+    ScalarQueryFactory,
+    host,
+    method_action,
+    method_command,
+    method_query,
 )
 
 # Entry points.

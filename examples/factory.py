@@ -12,7 +12,8 @@ from __future__ import annotations
 import asyncio
 
 from nu.core import LiteralQuery
-from nu.lang import Command, Effect, InteractionFactory, ScalarQuery
+from nu.factory import InteractionFactory
+from nu.lang import Command, Effect, ScalarQuery
 from nu.lang.helpers import arun, run
 from nu.lang.sentinels import EMPTY, INVALID
 

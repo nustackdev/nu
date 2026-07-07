@@ -13,13 +13,8 @@ from __future__ import annotations
 
 import pytest
 
-from nu.context import (
-    MethodFactory,
-    ServiceRef,
-    method_action,
-    method_command,
-    method_query,
-)
+from nu.context import ServiceRef
+from nu.factory import MethodFactory, method_action, method_command, method_query
 from nu.forms.primitives import IntForm, StrForm
 from nu.lang import (
     INVALID,

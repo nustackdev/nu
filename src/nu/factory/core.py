@@ -1,21 +1,20 @@
-"""Build interaction atoms from Python callables.
+"""``InteractionFactory``: the generic mechanism for building atoms from callables.
 
 One mechanism, ``InteractionFactory``: pass a base kind, a name, and a callable,
-get back a real ``Nu`` subclass wired with sync/async thunks, sentinel handling,
-and declared attributes. It collapses the "resolve the children, call a Python
-function, return the result" boilerplate that most non-hot interactions are.
+get back a real ``Nu`` subclass wired with sync / async thunks, sentinel
+handling, and declared attributes. It collapses the "resolve the children, call
+a Python function, return the result" boilerplate that most non-hot
+interactions are.
 
-``nu.core`` atoms stay hand-written end-to-end (a clean thunk, no extra hop) for
-the hot path. The factory is for the rest - the ``nu.std`` library and anything
-else that just bridges to a host callable.
+``nu.core`` atoms stay hand-written end-to-end (a clean thunk, no extra hop)
+for the hot path. The factory is for the rest - the ``nu.std`` library and
+anything else that just bridges to a host callable.
 
-A method call needs no special support: an *unbound* method is a plain callable
-whose first argument is the receiver, so ``d.weekday()`` is ``date.weekday(d)``.
-Bind the unbound method and pass the receiver as the first child.
-
-``ScalarQueryFactory`` is the kind-fixed helper for the common case. Sibling
-helpers (``CommandFactory`` etc.) can be added the same way when a consumer
-needs them.
+A method call needs no special support here: an *unbound* method is a plain
+callable whose first argument is the receiver, so ``d.weekday()`` is
+``date.weekday(d)``. Bind the unbound method and pass the receiver as the
+first child. ``MethodFactory`` (in ``.methods``) is the sugar over that idiom
+when you want to name the method instead of writing a lambda.
 
 Supported base kinds: ``ScalarQuery``, ``Command``, ``ScalarAction``. Stream
 (query or action), reduction, flow, and span have non-trivial dispatch shapes
@@ -25,17 +24,17 @@ Yield semantics follow the base:
 - ``ScalarQuery`` / ``ScalarAction`` -- the function's return value is yielded.
 - ``Command`` -- the function runs for its side effect; the thunk returns ``None``.
 
-Arguments. Children passed positionally land as positional args to the callable;
-children passed by keyword land as keyword args. The split is recorded in the
-atom's payload so ``compile`` can rebuild the call::
+Arguments. Children passed positionally land as positional args to the
+callable; children passed by keyword land as keyword args. The split is
+recorded in the atom's payload so ``compile`` can rebuild the call::
 
     DateOf(2026, 6, 30)            -> date(2026, 6, 30)
     DatetimeReplace(dt, hour=9)    -> datetime.replace(dt, hour=9)
 
-Sync vs async is inferred from the callable. An ``async def`` produces a class
-whose ``compile`` falls back to the base (which raises) and whose ``acompile``
-awaits the function; the class also declares ``requires_async = True``. A plain
-``def`` produces both paths.
+Sync vs async is inferred from the callable. An ``async def`` produces a
+class whose ``compile`` falls back to the base (which raises) and whose
+``acompile`` awaits the function; the class also declares
+``requires_async = True``. A plain ``def`` produces both paths.
 
 Sentinel handling:
 - ``propagate_sentinels=True`` (default) -- a resolved child that is ``EMPTY``
@@ -57,9 +56,9 @@ Declared attributes are passed by keyword. Raw values are wrapped in
         mutates=frozenset({0}),
     )
 
-Note: IDEs and static type checkers see the return as ``type[B]`` where ``B`` is
-the base; they cannot show a docstring or signature specific to the synthesised
-class. Hand-write the class when IDE discoverability matters.
+Note: IDEs and static type checkers see the return as ``type[B]`` where ``B``
+is the base; they cannot show a docstring or signature specific to the
+synthesised class. Hand-write the class when IDE discoverability matters.
 """
 
 from __future__ import annotations
@@ -68,32 +67,20 @@ import inspect
 from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Attribute, Declared
+from nu.lang.kinds import Command
+from nu.lang.nu import Nu
+from nu.lang.sentinels import EMPTY, INVALID
 
-from .kinds import (
-    Command,
-    Flow,
-    Reduction,
-    ScalarAction,
-    ScalarQuery,
-    Span,
-    StreamAction,
-    StreamQuery,
-)
-from .nu import Nu
-from .sentinels import EMPTY, INVALID
+from .helpers import _ALLOWED_BASES, _REJECTED_BASES
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from .runtime import Runtime
+    from nu.lang.runtime import Runtime
 
 
-__all__ = ["InteractionFactory", "ScalarQueryFactory"]
-
-
-_ALLOWED_BASES: tuple[type, ...] = (ScalarQuery, Command, ScalarAction)
-_REJECTED_BASES: tuple[type, ...] = (StreamQuery, StreamAction, Reduction, Flow, Span)
+__all__ = ["InteractionFactory"]
 
 
 def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a class at the call site
@@ -218,20 +205,3 @@ def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a clas
     namespace["__doc__"] = f"Built atom calling {getattr(fn, '__qualname__', fn)!r}."
 
     return type(name, (base,), namespace)  # type: ignore[return-value]
-
-
-def ScalarQueryFactory(  # noqa: N802 -- a class factory; reads as a class at the call site
-    name: str,
-    fn: Callable[..., object],
-    *,
-    propagate_sentinels: bool = True,
-    **attributes: object,
-) -> type[ScalarQuery]:
-    """Build a ``ScalarQuery`` atom from a callable - the common-case helper.
-
-    Equivalent to ``InteractionFactory(ScalarQuery, name, fn, ...)``; fixes the
-    base kind, which is the easiest argument to get wrong.
-    """
-    return InteractionFactory(
-        ScalarQuery, name, fn, propagate_sentinels=propagate_sentinels, **attributes
-    )

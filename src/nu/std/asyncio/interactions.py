@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import asyncio
 
-from nu.lang import ScalarQueryFactory
+from nu.factory import ScalarQueryFactory
 
 
 __all__ = ["AsyncioSleep"]

@@ -20,7 +20,7 @@ from datetime import time as _time
 from datetime import timedelta as _timedelta
 from datetime import timezone as _timezone
 
-from nu.lang import ScalarQueryFactory
+from nu.factory import ScalarQueryFactory
 
 
 __all__ = [

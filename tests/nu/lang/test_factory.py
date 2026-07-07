@@ -14,12 +14,11 @@ import pytest
 
 from nu.core import LiteralQuery
 from nu.engine.structure import Declared
+from nu.factory import InteractionFactory, ScalarQueryFactory
 from nu.lang import (
     Command,
-    InteractionFactory,
     Reduction,
     ScalarQuery,
-    ScalarQueryFactory,
     Span,
     StreamQuery,
 )

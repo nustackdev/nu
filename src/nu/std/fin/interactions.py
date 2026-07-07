@@ -8,7 +8,7 @@ here - they reuse the core atoms.
 
 from __future__ import annotations
 
-from nu.lang import ScalarQueryFactory
+from nu.factory import ScalarQueryFactory
 from nu.std.fin.native import PyBasisPoint, PyPercentage
 
 

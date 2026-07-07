@@ -23,7 +23,8 @@ from collections.abc import Set as ABCSet
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.lang import Command, ScalarAction, ScalarQuery, ScalarQueryFactory
+from nu.factory import ScalarQueryFactory
+from nu.lang import Command, ScalarAction, ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
 
 

@@ -12,7 +12,8 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.lang import Command, ScalarAction, ScalarQuery, ScalarQueryFactory
+from nu.factory import ScalarQueryFactory
+from nu.lang import Command, ScalarAction, ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
 
 
@@ -41,6 +42,7 @@ __all__ = [
     "SetIndexCommand",
     "SortCommand",
     "TupleCreate",
+    "TupleOf",
 ]
 
 
@@ -53,6 +55,10 @@ __all__ = [
 ListCreate = ScalarQueryFactory("ListCreate", list)
 # Empty tuple: deterministic and immutable (sharing one () is fine).
 TupleCreate = ScalarQueryFactory("TupleCreate", tuple)
+# Tuple from positional items: TupleOf(a, b) evaluates each child expression and
+# packs the values into a fresh tuple. Sibling to DictOf. A sentinel item
+# short-circuits the whole tuple to INVALID (propagate_sentinels default).
+TupleOf = ScalarQueryFactory("TupleOf", lambda *items: items)
 
 
 # =============================================================================

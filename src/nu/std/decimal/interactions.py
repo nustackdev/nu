@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from decimal import Decimal as _Decimal
 
-from nu.lang import ScalarQueryFactory
+from nu.factory import ScalarQueryFactory
 
 
 __all__ = [

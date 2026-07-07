@@ -22,7 +22,7 @@ from __future__ import annotations
 import cmath
 from builtins import complex as _complex
 
-from nu.lang import ScalarQueryFactory
+from nu.factory import ScalarQueryFactory
 
 
 __all__ = [

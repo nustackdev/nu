@@ -17,7 +17,7 @@ from __future__ import annotations
 from pathlib import Path as _Path
 from pathlib import PurePath as _PurePath
 
-from nu.lang import ScalarQueryFactory
+from nu.factory import ScalarQueryFactory
 
 
 __all__ = [

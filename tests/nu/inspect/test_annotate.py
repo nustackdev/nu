@@ -18,7 +18,7 @@ from nu.flows import Sequential
 from nu.inspect import annotate_retries, annotate_steps, render_nu, set_logger_name
 from nu.inspect.annotate import _StepSpan
 from nu.lang import Span
-from nu.lang.factory import ScalarQueryFactory
+from nu.factory import ScalarQueryFactory
 from nu.spans.policy import Retry
 
 
