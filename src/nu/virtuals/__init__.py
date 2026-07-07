@@ -25,7 +25,7 @@ try:
 except ImportError:
     pass
 
-from nu.virtuals import interactions, paths, presets, refs, tree, views
+from nu.virtuals import fabrics, interactions, paths, presets, refs, tree, views
 from nu.virtuals.interactions import (
     CONFLICT_ERRORS,
     Atomic,

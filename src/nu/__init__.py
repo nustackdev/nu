@@ -122,7 +122,7 @@ from .lang.helpers import (
 # Late subpackage namespaces: fabric adapters and higher layers that reach into
 # the flat root surface (e.g. ``from nu import Shape``). Imported last so their
 # init sees a fully-populated ``nu`` module.
-from . import mem, nudle, std, virtuals
+from . import invisibles, mem, nudle, ray, std, virtuals
 
 # Short aliases for the fabric adapters and UI layer.
 m = mem
