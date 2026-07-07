@@ -1,14 +1,13 @@
-"""Write interactions over the Context attrs fabric.
+"""Attr-fabric interactions: ``SetCommand``, ``DeleteCommand``, ``AttrExistsQuery``.
 
-A Command names a target Ref in its mutation slot and the Fabric carries out
-the write. These delegate to the Ref (``ref._write`` / ``ref._erase``) so the
-write mechanism lives with the fabric (the Ref), not hardcoded here - the same
-``SetCommand`` works for any fabric whose Ref implements the write contract.
+The write ops (``SetCommand`` / ``DeleteCommand``) delegate to the Ref
+(``ref._write`` / ``ref._erase``) so the write mechanism lives with the fabric,
+not hardcoded here. ``AttrExistsQuery`` complements the dual-role read: an
+unbound read yields EMPTY, which a bound EMPTY would alias, so existence needs
+an explicit query.
 
-The mutation slot holds the Ref; every other slot is a read. ``mutates``
-declares slot 0 so the effect synthesis binds it as a WRITE. The Ref resolves
-its own address (static or dynamic), so the Command passes it the Ref's node id
-and never touches the address itself.
+Each holds its Ref in a mutation or read slot; effect synthesis binds it to the
+right effect on the attrs fabric.
 """
 
 from __future__ import annotations
@@ -16,7 +15,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.lang import Command
+from nu.lang import Command, ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
 
 
@@ -25,7 +24,8 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-__all__ = ["DeleteCommand", "SetCommand"]
+
+__all__ = ["AttrExistsQuery", "DeleteCommand", "SetCommand"]
 
 
 class SetCommand(Command):
@@ -76,5 +76,27 @@ class DeleteCommand(Command):
 
         async def athunk(rt: Runtime) -> None:
             await ref._aerase(rt, rt.program.children[nid][0])
+
+        return athunk
+
+
+class AttrExistsQuery(ScalarQuery):
+    """Yields whether the slot-0 ``AttrRef``'s address is bound in ``ctx.attrs``."""
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
+
+        def thunk(rt: Runtime) -> object:
+            address = ref._address(rt, rt.program.children[nid][0])
+            return address in rt.ctx.attrs
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        ref = self._children[0]
+
+        async def athunk(rt: Runtime) -> object:
+            address = await ref._aaddress(rt, rt.program.children[nid][0])
+            return address in rt.ctx.attrs
 
         return athunk

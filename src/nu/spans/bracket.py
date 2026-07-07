@@ -38,7 +38,7 @@ rollback) when it is exhausted, realizing the body's stream inside the boundary.
 
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING
 
 from nu.core._stream import aiter_any, sync_iter
@@ -65,11 +65,11 @@ def _guard(rt: Runtime, scope: Callable, body: Callable) -> Iterator:
         rt.ctx = saved
 
 
-async def _aguard(rt: Runtime, scope: Callable, body: Callable) -> AsyncIterator:
-    """Async sibling of :func:`_guard`."""
+async def _aguard(rt: Runtime, ascope: Callable, body: Callable) -> AsyncIterator:
+    """Async sibling of :func:`_guard`; ``ascope`` is an async context manager."""
     saved = rt.ctx
     try:
-        with scope(saved) as scoped:
+        async with ascope(saved) as scoped:
             rt.ctx = scoped
             async for v in aiter_any(await body(rt)):
                 yield v
@@ -81,20 +81,34 @@ class _LifecycleBracket(Bracket):
     """Shared lifecycle dispatch for the core brackets.
 
     Transparent: forwards the body (slot 0) in its own cardinality, running it
-    inside ``_open``. The core ``_open`` is a pass-through, so a bare bracket
-    runs its body unchanged; a fabric overrides ``_open`` to open and close a
-    real store.
+    inside ``_open`` (sync run) or ``_aopen`` (async run). The core defaults
+    are pass-throughs, so a bare bracket runs its body unchanged; a fabric
+    overrides ``_open`` and/or ``_aopen`` to open and close a real store.
+
+    Subclasses that only need sync lifecycle can override ``_open`` alone; the
+    default ``_aopen`` wraps it. Subclasses that need genuinely async lifecycle
+    (await a subprocess spawn, an RPC, etc.) override ``_aopen`` directly.
     """
 
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[Context]:
-        """Open the boundary, yield the scoped ctx, commit / roll back on exit.
+        """Open the boundary (sync), yield the scoped ctx, close on exit.
 
-        Core default: a pass-through (no store, no commit). A fabric overrides
-        this to open a snapshot or transaction, scope it into the context, and
-        commit on a clean exit or roll back on an exception.
+        Core default: pass-through. Fabrics override to open a snapshot /
+        transaction, scope it into the context, commit or roll back.
         """
         yield ctx
+
+    @asynccontextmanager
+    async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
+        """Open the boundary (async), yield the scoped ctx, close on exit.
+
+        Core default: delegate to the sync ``_open`` so any subclass overriding
+        only ``_open`` works in the async runtime for free. Override this
+        directly to await inside setup / teardown.
+        """
+        with self._open(ctx) as scoped:
+            yield scoped
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body = children[0]
@@ -115,14 +129,14 @@ class _LifecycleBracket(Bracket):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body = children[0]
-        scope = self._open
+        ascope = self._aopen
 
         async def athunk(rt: Runtime) -> object:
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
-                return _aguard(rt, scope, body)
+                return _aguard(rt, ascope, body)
             saved = rt.ctx
             try:
-                with scope(saved) as scoped:
+                async with ascope(saved) as scoped:
                     rt.ctx = scoped
                     return await body(rt)
             finally:
