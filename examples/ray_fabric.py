@@ -2,8 +2,8 @@
 
 The whole Ray topology is described as a Nu tree: cluster provisioning, worker
 fleet, remote execution. ``Provide`` / ``ProvideList`` / ``ProvideDict`` are
-the DI system - each ``Resource`` is constructed on entry, ``asetup`` runs,
-the resource binds on ctx, and teardown fires LIFO on exit.
+the DI system - each ``FabricLifecycle`` is constructed on entry, ``asetup``
+runs, it binds on ctx, and teardown fires LIFO on exit.
 
 Three shapes:
 

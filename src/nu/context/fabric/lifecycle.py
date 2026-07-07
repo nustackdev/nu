@@ -1,9 +1,9 @@
-"""``Provide`` brackets: construct + bind resources for the body's duration.
+"""``Provide`` brackets: construct + bind fabrics for the body's duration.
 
 The tree carries a *class* plus a *spec* (kwargs, list of kwargs, or dict of
-kwargs). On entry each bracket constructs its resource(s), runs setup, binds
-on ctx. On exit teardown fires in reverse (LIFO), so an outer resource is
-still live while inner ones tear down.
+kwargs). On entry each bracket constructs its fabric(s), runs setup, binds on
+ctx. On exit teardown fires in reverse (LIFO), so an outer fabric is still
+live while inner ones tear down.
 
 Three primitives, one per attach shape:
 
@@ -22,11 +22,11 @@ is a Bracket subclass; the engine sees them as regular lifecycle spans.
 
 Both sync and async runs are supported natively via the two open methods
 (``_open`` and ``_aopen``). Under the async runtime the bracket prefers
-``asetup`` / ``acleanup`` if the resource defines them, and falls back to
+``asetup`` / ``acleanup`` if the fabric defines them, and falls back to
 ``setup`` / ``cleanup`` otherwise. Under the sync runtime, only sync methods
-run - an async-only resource fails at setup with a clear error.
+run - an async-only fabric fails at setup with a clear error.
 
-Resource protocol (all methods optional, checked with ``hasattr``):
+``FabricLifecycle`` protocol (all methods optional, checked with ``hasattr``):
 
     def setup(self, ctx): ...        # sync run, or async fallback
     def cleanup(self): ...

@@ -3,8 +3,8 @@
 Ray reframes as a compute fabric: locations are actor processes, addresses
 are tags, the interaction is ``Teleport`` (execute a Nu tree there).
 
-- ``RayCluster`` - the cluster handle Resource. On asetup ensures ray is
-  initialized; on acleanup shuts down its own init (if any).
+- ``RayCluster`` - the cluster handle FabricLifecycle. On asetup ensures
+  ray is initialized; on acleanup shuts down its own init (if any).
 - ``RayService`` - one remote actor hosting a Nu ``Context`` + tree
   executor. Provisioned per-instance by ``Provide`` / ``ProvideList`` /
   ``ProvideDict``.

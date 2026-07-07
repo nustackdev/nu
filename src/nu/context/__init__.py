@@ -11,10 +11,11 @@ out the Interactions over them. The Context fabric has three axes:
   resources. Ref: ``ServiceRef`` (read-only, self-yields); existence:
   ``ServiceExistsQuery``; in-tree method calls: the ``method`` descriptor /
   ``MethodFactory`` (a service-flavored ``InteractionFactory``).
-- **fabric** - lifecycle interactions that provision resources into the
+- **fabric** - lifecycle interactions that provision fabrics into the
   Context for a body's duration. Brackets: ``Provide`` / ``ProvideList`` /
-  ``ProvideDict``. Protocols: ``Resource`` (setup / cleanup) and ``Fabric``
-  (a Resource that hosts its own Refs, e.g. Ray, Invisibles).
+  ``ProvideDict``. Protocols: ``Fabric`` (empty marker; every ctx-bound
+  thing is a Fabric) and ``FabricLifecycle(Fabric)`` (Fabrics with
+  optional setup / cleanup - what ``Provide`` installs).
 
 The read on either data axis is the Ref's dual role; only existence needs an
 explicit query. Other fabrics (virtuals, mem, ray, ...) follow the same shape
@@ -42,7 +43,7 @@ from .attrs import (
     StrAttrRef,
     TupleAttrRef,
 )
-from .fabric import Fabric, Provide, ProvideDict, ProvideList, Resource
+from .fabric import Fabric, FabricLifecycle, Provide, ProvideDict, ProvideList
 from .services import ServiceExistsQuery, ServiceRef
 
 
@@ -55,6 +56,7 @@ __all__ = [
     "DeleteCommand",
     "DictAttrRef",
     "Fabric",
+    "FabricLifecycle",
     "FloatAttrRef",
     "FrozenSetAttrRef",
     "IntAttrRef",
@@ -63,7 +65,6 @@ __all__ = [
     "Provide",
     "ProvideDict",
     "ProvideList",
-    "Resource",
     "ServiceExistsQuery",
     "ServiceRef",
     "SetAttrRef",
