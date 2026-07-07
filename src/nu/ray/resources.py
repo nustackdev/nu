@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
     from nu.lang.runtime import Context
+    from nu.spans.bracket import _LifecycleBracket
 
 
 __all__ = ["RayCluster", "RayService"]
@@ -75,14 +76,19 @@ class RayService:
     """A remote Nu execution service backed by a ``_RayServiceActor``.
 
     On ``asetup``: spawn a ray actor (optionally pinned to a named node with
-    resource / CPU / GPU constraints) and initialize its ``Context`` via
-    ``ctx_builder``. ``aexecute(tree, attrs=None)`` routes to the actor.
-    On ``acleanup``: graceful shutdown, then ``ray.kill``.
+    resource / CPU / GPU constraints) and initialize its ``Context`` from
+    ``init`` (a lifecycle bracket, typically ``With(...)``) or a legacy
+    ``ctx_builder`` callable. ``aexecute(tree, attrs=None)`` routes to the
+    actor. On ``acleanup``: graceful shutdown, then ``ray.kill``.
 
-    ``ctx_builder`` is a plain callable that returns a ``Context`` (or an
-    awaitable). It runs *inside* the actor process, so it may set up
-    per-worker storage, RPC clients, ``ctx.bind`` calls, etc. Passing
-    ``None`` gives the actor an empty ``Context``.
+    ``init`` is a ``_LifecycleBracket`` shipped to the actor. The actor
+    enters its ``_aopen(Context())`` on start and holds the resulting
+    Context live for the actor's lifetime; on shutdown the bracket tears
+    down LIFO. Use ``With(*brackets)`` to compose multiple ``Provide``
+    stacks.
+
+    ``ctx_builder`` is the legacy path: a callable returning a Context
+    (or an awaitable). Kept for now, but ``init`` is preferred.
 
     Actor options are pass-through: ``node``, ``actor_name``, ``num_cpus``,
     ``num_gpus``, ``max_restarts``, ``lifetime`` all forward to
@@ -93,6 +99,7 @@ class RayService:
         self,
         ctx_builder: Callable[[], Context | Awaitable[Context]] | None = None,
         *,
+        init: _LifecycleBracket | None = None,
         node: str | None = None,
         actor_name: str | None = None,
         num_cpus: float | None = None,
@@ -100,7 +107,10 @@ class RayService:
         max_restarts: int = 0,
         lifetime: str | None = None,
     ) -> None:
+        if init is not None and ctx_builder is not None:
+            raise TypeError("RayService accepts either init= or ctx_builder=, not both")
         self.ctx_builder = ctx_builder
+        self.init = init
         self.node = node
         self.actor_name = actor_name
         self.num_cpus = num_cpus
@@ -127,7 +137,7 @@ class RayService:
             options["lifetime"] = self.lifetime
 
         self._actor = _RayServiceActor.options(**options).remote()
-        await self._actor.start.remote(self.ctx_builder)
+        await self._actor.start.remote(self.init, self.ctx_builder)
 
     async def aexecute(self, tree: object, attrs: dict | None = None) -> object:
         """Ship ``tree`` to the actor and await its result."""

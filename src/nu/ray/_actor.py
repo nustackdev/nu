@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
     from nu.lang.runtime import Context
+    from nu.spans.bracket import _LifecycleBracket
 
 
 @ray.remote
@@ -38,17 +39,35 @@ class _RayServiceActor:
     def __init__(self) -> None:
         self._ctx: Context | None = None
         self._inflight: set[asyncio.Task] = set()
+        self._init_stack: contextlib.AsyncExitStack | None = None
 
-    async def start(self, ctx_builder: Callable[[], Context | Awaitable[Context]] | None) -> None:
-        """Build this actor's Context via the caller-supplied builder.
+    async def start(
+        self,
+        init: _LifecycleBracket | None,
+        ctx_builder: Callable[[], Context | Awaitable[Context]] | None,
+    ) -> None:
+        """Build this actor's Context.
 
-        ``ctx_builder`` is any callable that returns a ``Context`` (or an
-        awaitable that resolves to one). Passing ``None`` leaves ``self._ctx``
-        empty - the tree runs against a bare ``Context()`` at ``aexecute``.
+        Prefers ``init`` (a lifecycle bracket): enters its ``_aopen`` on a
+        fresh ``Context()``, saves the resulting Context, and keeps the exit
+        stack open so the bracket's resources stay live until ``shutdown``.
+
+        Falls back to ``ctx_builder`` (a legacy callable returning a Context
+        or awaitable). If both are ``None``, the actor gets a bare Context.
         """
-        if ctx_builder is None:
-            from nu.lang.runtime import Context
+        from nu.lang.runtime import Context
 
+        if init is not None:
+            stack = contextlib.AsyncExitStack()
+            await stack.__aenter__()
+            try:
+                self._ctx = await stack.enter_async_context(init._aopen(Context()))
+            except BaseException:
+                await stack.__aexit__(None, None, None)
+                raise
+            self._init_stack = stack
+            return
+        if ctx_builder is None:
             self._ctx = Context()
             return
         result = ctx_builder()
@@ -90,11 +109,15 @@ class _RayServiceActor:
                 self._inflight.discard(task)
 
     async def shutdown(self) -> None:
-        """Cancel in-flight executes and drop the Context."""
+        """Cancel in-flight executes, tear down init bracket, drop the Context."""
         for t in list(self._inflight):
             t.cancel()
         for t in list(self._inflight):
             with contextlib.suppress(asyncio.CancelledError, Exception):
                 await t
         self._inflight.clear()
+        if self._init_stack is not None:
+            with contextlib.suppress(Exception):
+                await self._init_stack.__aexit__(None, None, None)
+            self._init_stack = None
         self._ctx = None
