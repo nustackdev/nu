@@ -1,13 +1,6 @@
+import React from 'react';
 import Link from 'next/link';
-import {
-  ArrowRight,
-  BookOpen,
-  FileCode2,
-  Play,
-  Sparkles,
-  Terminal,
-} from 'lucide-react';
-import { CopyBtn } from './CopyBtn';
+import { ArrowRight } from 'lucide-react';
 import s from './landing.module.css';
 
 /* ----------------------------------------------------------------------------
@@ -91,151 +84,6 @@ function GutterCode({ src }: { src: string }) {
         </span>
       ))}
     </pre>
-  );
-}
-
-/* ============================================================================
- * Step sketches — one visual per quickstart step
- * ==========================================================================*/
-
-type TermLine = { prompt?: boolean; text: string; muted?: boolean };
-
-function TermSketch({ lines, label = 'terminal' }: { lines: TermLine[]; label?: string }) {
-  return (
-    <svg
-      viewBox="0 0 480 140"
-      xmlns="http://www.w3.org/2000/svg"
-      className={s.stepSketch}
-      role="img"
-      aria-label={label}
-    >
-      {/* window */}
-      <rect x={2} y={8} width={476} height={124} rx={6}
-        fill="var(--color-fd-background)" stroke="var(--nu-rule)" strokeWidth={1} />
-      {/* header divider */}
-      <line x1={2} y1={38} x2={478} y2={38} stroke="var(--nu-rule-2)" strokeWidth={1} />
-      {/* traffic dots */}
-      <circle cx={18} cy={23} r={3.5} fill="var(--nu-ink-4)" />
-      <circle cx={30} cy={23} r={3.5} fill="var(--nu-ink-4)" />
-      <circle cx={42} cy={23} r={3.5} fill="var(--nu-ink-4)" />
-      {/* header label */}
-      <text x={240} y={26} textAnchor="middle"
-        fontFamily="ui-monospace, monospace" fontSize={9}
-        letterSpacing="0.28em" fill="var(--nu-ink-3)">
-        {label.toUpperCase()}
-      </text>
-      {/* content */}
-      {lines.map((l, i) => (
-        <text key={i} x={22} y={74 + i * 24}
-          fontFamily="ui-monospace, monospace" fontSize={15}
-          fill={l.muted ? 'var(--nu-ink-2)' : 'var(--nu-ink)'}>
-          {l.prompt ? <tspan fill="var(--nu-accent)" fontWeight={700}>$ </tspan> : null}
-          {l.text}
-        </text>
-      ))}
-    </svg>
-  );
-}
-
-function FileSketch({
-  filename,
-  lang,
-  lines,
-}: {
-  filename: string;
-  lang: string;
-  lines: React.ReactNode[];
-}) {
-  return (
-    <svg
-      viewBox="0 0 480 176"
-      xmlns="http://www.w3.org/2000/svg"
-      className={s.stepSketch}
-      role="img"
-      aria-label={filename}
-    >
-      {/* window */}
-      <rect x={2} y={8} width={476} height={160} rx={6}
-        fill="var(--color-fd-background)" stroke="var(--nu-rule)" strokeWidth={1} />
-      {/* header divider */}
-      <line x1={2} y1={38} x2={478} y2={38} stroke="var(--nu-rule-2)" strokeWidth={1} />
-      {/* filename */}
-      <text x={20} y={26}
-        fontFamily="ui-monospace, monospace" fontSize={12}
-        fill="var(--nu-ink-2)">
-        {filename}
-      </text>
-      {/* lang tag */}
-      <text x={460} y={26} textAnchor="end"
-        fontFamily="ui-monospace, monospace" fontSize={9}
-        letterSpacing="0.28em" fill="var(--nu-accent)">
-        {lang.toUpperCase()}
-      </text>
-      {/* gutter */}
-      <line x1={44} y1={38} x2={44} y2={168}
-        stroke="var(--nu-rule-2)" strokeWidth={1} />
-      {/* lines */}
-      {lines.map((line, i) => (
-        <g key={i}>
-          <text x={34} y={70 + i * 26} textAnchor="end"
-            fontFamily="ui-monospace, monospace" fontSize={11}
-            fill="var(--nu-ink-4)">
-            {i + 1}
-          </text>
-          <text x={56} y={70 + i * 26}
-            fontFamily="ui-monospace, monospace" fontSize={14}
-            fill="var(--nu-ink)">
-            {line}
-          </text>
-        </g>
-      ))}
-    </svg>
-  );
-}
-
-/* ============================================================================
- * Quickstart step — one row in the hero right panel.
- * Two variants: `code` (default, renders copy-paste card) or `nav` (link row).
- * ==========================================================================*/
-
-type QsStepProps = {
-  num: string;
-  name: string;
-  icon: React.ReactNode;
-} & (
-  | { nav?: false; body: React.ReactNode; copy: string; tall?: boolean; href?: never; external?: never }
-  | { nav: true; href: string; external?: boolean; body?: never; copy?: never; tall?: never }
-);
-
-function QsStep(props: QsStepProps) {
-  const { num, name, icon } = props;
-  const head = (
-    <div className={s.qsStepHead}>
-      <span className={s.qsStepNum}>{num}</span>
-      {props.nav ? <span className={s.qsStepIcon}>{icon}</span> : null}
-      <span className={s.qsStepName}>{name}</span>
-      <span className={s.qsStepFill} />
-      {props.nav ? <ArrowRight size={15} className={s.qsStepArrow} aria-hidden /> : null}
-    </div>
-  );
-
-  if (props.nav) {
-    const cls = `${s.qsStep} ${s.qsStepNav}`;
-    return props.external ? (
-      <a className={cls} href={props.href}>{head}</a>
-    ) : (
-      <Link className={cls} href={props.href}>{head}</Link>
-    );
-  }
-
-  return (
-    <div className={s.qsStep}>
-      {head}
-      <div className={`${s.qsStepBody} ${props.tall ? s.qsStepBodyTall : ''}`}>
-        {props.body}
-        <CopyBtn text={props.copy} label={`copy ${name}`} />
-      </div>
-    </div>
   );
 }
 
@@ -1179,89 +1027,6 @@ nu.run(nu.v.auto_flow_atomic(app))`,
   },
 ];
 
-/* number badge — spec-drawing style, matches the model section language */
-function BeatNumBadge({ num }: { num: string }) {
-  return (
-    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"
-      className={s.watchBeatNumBadge} role="img" aria-label={`beat ${num}`}>
-      <rect x={2} y={2} width={44} height={44} rx={7}
-        fill="var(--nu-accent-soft)" stroke="var(--nu-accent)" strokeWidth={1.4} />
-      <CornerTicks x={2} y={2} w={44} h={44} size={5} color="var(--nu-accent)" />
-      <text x={24} y={32} textAnchor="middle"
-        fontFamily="ui-monospace, monospace" fontSize={19} fontWeight={800}
-        fill="var(--nu-accent)"
-        style={{ letterSpacing: '0.02em' }}>
-        {num}
-      </text>
-    </svg>
-  );
-}
-
-const ROMAN = ['i', 'ii', 'iii', 'iv', 'v'] as const;
-
-function Scene({
-  num,
-  kind,
-  title,
-  code,
-  children,
-  visual,
-}: {
-  num: string;
-  kind: string;
-  title: string;
-  code?: string;
-  visual?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <article className={s.scene} id={`scene-${num}`}>
-      <div className={s.sceneNum} aria-hidden>{num}</div>
-      <div className={s.sceneBody}>
-        <span className={s.sceneKind}>{kind}</span>
-        <h3 className={s.sceneTitle}>{title}</h3>
-        {code ? (
-          <div className={s.sceneCode}>
-            <Code src={code} />
-          </div>
-        ) : null}
-        {visual}
-        <p className={s.sceneProse}>{children}</p>
-      </div>
-    </article>
-  );
-}
-
-function Movement({
-  roman,
-  eyebrow,
-  title,
-  intro,
-  id,
-  children,
-}: {
-  roman: string;
-  eyebrow: string;
-  title: string;
-  intro?: React.ReactNode;
-  id?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className={s.movement} id={id}>
-      <header className={s.movementHead}>
-        <div className={s.movementRoman} aria-hidden>{roman}</div>
-        <span className={s.movementEyebrow}>{eyebrow}</span>
-        <h2 className={s.movementTitle}>{title}</h2>
-        {intro ? <p className={s.movementIntro}>{intro}</p> : null}
-      </header>
-      <div className={s.movementBody}>
-        {children}
-      </div>
-    </section>
-  );
-}
-
 /* ============================================================================
  * Pillars — "and by the way"
  * ==========================================================================*/
@@ -1330,117 +1095,117 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* ---------- the story: hero pours into three movements ---------- */}
-        <div className={s.story}>
-          <div className={s.storyRail} aria-hidden />
-
-          <Movement
-            id="watch"
-            roman={ROMAN[0]}
-            eyebrow="watch this example"
-            title="Thirty lines. One bracket."
-            intro={
-              <>
-                A persistent counter, a live browser dashboard.
-                <b> Same Refs, three Fabrics, one bracket.</b>
-              </>
-            }
-          >
+        {/* ---------- watch this example — vertical rows, code left / expl right ---------- */}
+        <section className={s.section} id="watch">
+          <div className={s.sectionLabel}>watch this example</div>
+          <h2 className={s.sectionTitle}>Thirty lines. One bracket.</h2>
+          <p className={s.sectionIntro}>
+            A persistent counter, a live browser dashboard.
+            <b> Same Refs, three Fabrics, one bracket.</b>
+          </p>
+          <div className={s.rowsWrap}>
             {WATCH_BEATS.map((b) => (
-              <Scene
-                key={b.num}
-                num={b.num}
-                kind={b.kind}
-                title={b.title}
-                code={b.code}
-              >
-                {b.body}
-              </Scene>
+              <div key={b.num} className={s.row}>
+                <div className={s.rowInner}>
+                  <div className={s.rowCode}>
+                    <Code src={b.code} />
+                  </div>
+                  <article className={s.rowExpl}>
+                    <span className={s.flatIndex}>[{b.num}]</span>
+                    <span className={s.flatKind}>{b.kind}</span>
+                    <h3 className={s.flatCellTitle}>{b.title}</h3>
+                    <p className={s.flatCellBody}>{b.body}</p>
+                  </article>
+                </div>
+              </div>
             ))}
-            <Scene
-              num="05"
-              kind="the result"
-              title="A live browser tab, updating every second."
-              visual={
-                <div className={s.sceneMock}>
+            <div className={s.row}>
+              <div className={`${s.rowInner} ${s.rowInnerSolo}`}>
+                <div className={s.rowMock}>
                   <DashboardMock />
                 </div>
-              }
-            >
-              <>The counter loop ticks in the background. Every mutation
-              lands on the tab as text and as a point on the chart. No
-              framework, no glue, no sockets. It just runs.</>
-            </Scene>
-          </Movement>
+              </div>
+            </div>
+            <div className={s.row}>
+              <div className={`${s.rowInner} ${s.rowInnerSolo}`}>
+                <article className={s.rowExpl}>
+                  <span className={s.flatIndex}>[05]</span>
+                  <span className={s.flatKind}>the result</span>
+                  <h3 className={s.flatCellTitle}>
+                    A live browser tab, updating every second.
+                  </h3>
+                  <p className={s.flatCellBody}>
+                    The counter loop ticks in the background. Every mutation
+                    lands on the tab as text and as a point on the chart. No
+                    framework, no glue, no sockets. It just runs.
+                  </p>
+                </article>
+              </div>
+            </div>
+          </div>
+        </section>
 
-          <Movement
-            id="model"
-            roman={ROMAN[1]}
-            eyebrow="the model"
-            title="Values, and a way to change them."
-            intro={
-              <>
-                A field on a browser tab, a value on disk, a number in memory.
-                <b> Nu updates all three with one move.</b>
-              </>
-            }
-          >
-            <div className={s.movementViz}>
+        {/* ---------- the model — single wide viz cell ---------- */}
+        <section className={s.section} id="model">
+          <div className={s.sectionLabel}>the model</div>
+          <h2 className={s.sectionTitle}>Values, and a way to change them.</h2>
+          <p className={s.sectionIntro}>
+            A field on a browser tab, a value on disk, a number in memory.
+            <b> Nu updates all three with one move.</b>
+          </p>
+          <div className={`${s.flatGrid} ${s.flatGridCols1}`}>
+            <div className={`${s.flatCell} ${s.flatCellViz}`}>
               <TransitionViz />
             </div>
-          </Movement>
-
-          <Movement
-            id="pillars"
-            roman={ROMAN[2]}
-            eyebrow="and by the way"
-            title="The same 30-line program is also…"
-          >
-            {PILLARS.map((p, i) => (
-              <Scene
-                key={p.name}
-                num={String(i + 1).padStart(2, '0')}
-                kind={p.name}
-                title={p.title}
-              >
-                {p.body}
-              </Scene>
-            ))}
-          </Movement>
-        </div>
-
-        {/* ---------- deep dive: fabrics ---------- */}
-        <section className={s.deepSec} id="fabrics">
-          <div className={s.deepHead}>
-            <span className={s.deepLabel}>the deep dive</span>
-            <h2 className={s.deepTitle}>
-              Three fabrics. Same shape.
-            </h2>
-            <p className={s.deepIntro}>
-              That move you just saw has a name: it&apos;s an{' '}
-              <b>Interaction</b>. The addresses it acts on are <b>Refs</b>. The
-              world they resolve inside is a <b>Fabric</b>. Same Refs, same
-              Interactions, three fabrics — watch the diff on the right.
-            </p>
           </div>
-          <div className={s.showcaseRows}>
-            {CTX_ROWS.map((r, i) => (
-              <article key={r.name} className={s.ctxRow}>
-                <div className={s.ctxRowHead}>
-                  <span className={s.ctxName}>{r.name}</span>
-                  <p className={s.ctxHint}>{r.hint}</p>
-                  <span className={s.ctxIndex}>fabric {String(i + 1).padStart(2, '0')} / 03</span>
-                </div>
-                <div className={s.ctxCode}>
-                  <Code src={r.code} />
-                </div>
-                <div className={s.ctxViz}>{r.viz}</div>
+        </section>
+
+        {/* ---------- and by the way — pillars ---------- */}
+        <section className={s.section} id="pillars">
+          <div className={s.sectionLabel}>and by the way</div>
+          <h2 className={s.sectionTitle}>The same 30-line program is also…</h2>
+          <div className={`${s.flatGrid} ${s.flatGridCols4}`}>
+            {PILLARS.map((p, i) => (
+              <article key={p.name} className={s.flatCell}>
+                <span className={s.flatIndex}>[{String(i + 1).padStart(2, '0')}]</span>
+                <span className={s.flatKind}>{p.name}</span>
+                <h3 className={s.flatCellTitle}>{p.title}</h3>
+                <p className={s.flatCellBody}>{p.body}</p>
               </article>
             ))}
           </div>
         </section>
 
-        {/* ---------- getting started — flat grid, hairline-only, no cards ---------- */}
+        {/* ---------- three fabrics — 3 rows × (name | code | viz) ---------- */}
+        <section className={s.section} id="fabrics">
+          <div className={s.sectionLabel}>three fabrics</div>
+          <h2 className={s.sectionTitle}>Three fabrics. Same shape.</h2>
+          <p className={s.sectionIntro}>
+            That move you just saw has a name: it&apos;s an <b>Interaction</b>.
+            The addresses it acts on are <b>Refs</b>. The world they resolve
+            inside is a <b>Fabric</b>. Same Refs, same Interactions, three
+            fabrics — watch the diff.
+          </p>
+          <div className={`${s.flatGrid} ${s.flatGridFabric}`}>
+            {CTX_ROWS.map((r, i) => (
+              <React.Fragment key={r.name}>
+                <div className={`${s.flatCell} ${s.flatCellName}`}>
+                  <span className={s.flatIndex}>
+                    fabric {String(i + 1).padStart(2, '0')} / 03
+                  </span>
+                  <span className={s.flatCellNameLabel}>{r.name}</span>
+                  <p className={s.flatCellBody}>{r.hint}</p>
+                </div>
+                <div className={`${s.flatCell} ${s.flatCellCodeSlot}`}>
+                  <Code src={r.code} />
+                </div>
+                <div className={`${s.flatCell} ${s.flatCellViz}`}>{r.viz}</div>
+              </React.Fragment>
+            ))}
+          </div>
+        </section>
+
+        {/* ---------- getting started — vertical rows, code left / twist right ---------- */}
         <section className={s.qsSec} id="start">
           <div className={s.qsHead}>
             <div>
@@ -1452,22 +1217,27 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className={s.qsGrid}>
+          <div className={s.rowsWrap}>
             {STEPS.map((st) => (
-              <article
-                key={st.n}
-                id={`step-${st.numeral}`}
-                className={s.qsCell}
-              >
-                <span className={s.qsIndex}>[{st.numeral}]</span>
-                <span className={s.qsKind}>{st.pin}</span>
-                <h3 className={s.qsCellTitle}>{st.title}</h3>
-                <GutterCode src={st.code} />
-                <p className={s.qsTwist}>
-                  <span className={s.qsTwistLead}>{st.twist}</span>{' '}
-                  {st.twistBody}
-                </p>
-              </article>
+              <div key={st.n} className={s.row}>
+                <div className={s.rowInner}>
+                  <div className={s.rowCode}>
+                    <GutterCode src={st.code} />
+                  </div>
+                  <article
+                    id={`step-${st.numeral}`}
+                    className={s.rowExpl}
+                  >
+                    <span className={s.flatIndex}>[{st.numeral}]</span>
+                    <span className={s.qsKind}>{st.pin}</span>
+                    <h3 className={s.qsCellTitle}>{st.title}</h3>
+                    <p className={s.qsTwist}>
+                      <span className={s.qsTwistLead}>{st.twist}</span>{' '}
+                      {st.twistBody}
+                    </p>
+                  </article>
+                </div>
+              </div>
             ))}
           </div>
         </section>
