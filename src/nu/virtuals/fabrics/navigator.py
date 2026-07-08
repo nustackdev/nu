@@ -49,10 +49,20 @@ class Navigator(_Navigator):
         self._root_view = root_view
         self._opened = False
 
-    async def asetup(self, ctx: Context) -> None:
+    def setup(self, ctx: Context) -> None:
+        """Read the storage from ctx (by storage_type + tags), init the parent."""
         storage = ctx.get(self._storage_type, *self._storage_tags)
         _Navigator.__init__(self, storage, self._root_view)
         self._opened = True
 
-    async def acleanup(self) -> None:
+    def cleanup(self) -> None:
+        """Mark closed. The storage teardown is handled by its own bracket."""
         self._opened = False
+
+    async def asetup(self, ctx: Context) -> None:
+        """Async shim: setup is sync work."""
+        self.setup(ctx)
+
+    async def acleanup(self) -> None:
+        """Async shim: cleanup is sync work."""
+        self.cleanup()

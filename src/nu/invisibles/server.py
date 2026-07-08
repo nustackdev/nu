@@ -97,7 +97,12 @@ class InvisiblesServer:
         self._server: SyncServer | None = None
         self._thread: threading.Thread | None = None
 
-    async def asetup(self, ctx: Context) -> None:
+    def setup(self, ctx: Context) -> None:
+        """Look up target on ctx, build SyncServer, boot in a background thread.
+
+        Pure sync work: no ``await`` on the hot path, so a sync ``nu.run`` tree
+        can install this bracket without an event loop.
+        """
         tag = (self.target_tag,) if self.target_tag is not None else ()
         lookup_type = getattr(self.target, "_nu_bind_as", None) or self.target
         root = ctx.get(lookup_type, *tag)
@@ -134,10 +139,19 @@ class InvisiblesServer:
         self._thread = threading.Thread(target=target, daemon=True, name="invisibles-server")
         self._thread.start()
 
-    async def acleanup(self) -> None:
+    def cleanup(self) -> None:
+        """Stop the SyncServer; the daemon thread exits when it returns."""
         if self._server is not None:
             self._server.stop(wait=False)
             self._server = None
+
+    async def asetup(self, ctx: Context) -> None:
+        """Async shim: setup is sync work."""
+        self.setup(ctx)
+
+    async def acleanup(self) -> None:
+        """Async shim: cleanup is sync work."""
+        self.cleanup()
 
     @staticmethod
     def _parse_tcp_address(address: str) -> tuple[str, int]:

@@ -30,13 +30,14 @@ from __future__ import annotations
 from .codec import Codec, binary_kwargs, msgpack_kwargs, noop_kwargs, text_kwargs
 from .navigator import Navigator
 from .observer import InMemoryObserver, RedisObserver
-from .storage import InMemoryStorage, RocksDBStorage, TextStorage
+from .storage import InMemoryStorage, LMDBStorage, RocksDBStorage, TextStorage
 
 
 __all__ = [
     "Codec",
     "InMemoryObserver",
     "InMemoryStorage",
+    "LMDBStorage",
     "Navigator",
     "RedisObserver",
     "RocksDBStorage",

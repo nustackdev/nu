@@ -27,22 +27,37 @@ class InMemoryObserver(_InMemoryObserver):
     """In-process, thread-safe observer. Reads ``Codec`` from ctx during setup."""
 
     def __init__(self) -> None:
-        # Defer parent init until asetup - Codec comes from ctx.
+        # Defer parent init until setup - Codec comes from ctx.
         pass
 
-    async def asetup(self, ctx: Context) -> None:
+    def setup(self, ctx: Context) -> None:
+        """Read Codec from ctx, init the parent, and connect."""
         codec = ctx.get(Codec)
         _InMemoryObserver.__init__(self, codec=codec)
         self.connect()
 
-    async def acleanup(self) -> None:
+    def cleanup(self) -> None:
+        """Disconnect the observer."""
         self.disconnect()
+
+    async def asetup(self, ctx: Context) -> None:
+        """Async shim: setup is sync work."""
+        self.setup(ctx)
+
+    async def acleanup(self) -> None:
+        """Async shim: cleanup is sync work."""
+        self.cleanup()
 
 
 class RedisObserver:
-    """Inter-process observer via Redis pub/sub. Lazy-loaded to avoid a hard
-    ``redis`` dep.
+    """Inter-process observer via Redis pub/sub; lazy-loaded to skip the hard dep.
+
+    ``_nu_async_only = True`` because a Redis connect + pub/sub subscribe is
+    real network IO that we don't want blocking a sync runtime. Use
+    ``nu.arun`` for any tree that includes this observer.
     """
+
+    _nu_async_only = True
 
     def __init__(
         self,

@@ -74,10 +74,38 @@ def _construct(cls: type, kwargs: Mapping[str, object]) -> object:
     return cls(**kwargs)
 
 
+def _refuse_async_only(cls: type) -> None:
+    """Sync path guard: refuse classes marked ``_nu_async_only``.
+
+    Called before instance construction so a mis-provisioned tree fails at
+    the leaf ``Provide`` with a clear message, instead of half-building an
+    instance whose ``asetup`` we can't drive.
+    """
+    if getattr(cls, "_nu_async_only", False):
+        msg = (
+            f"{cls.__name__} requires the async runner (nu.arun); "
+            "marked _nu_async_only"
+        )
+        raise RuntimeError(msg)
+
+
 def _setup(instance: object, ctx: Context) -> None:
-    """Call sync ``setup(ctx)`` if defined."""
+    """Call sync ``setup(ctx)``; raise if the fabric only defines ``asetup``.
+
+    Fabrics with neither ``setup`` nor ``asetup`` are lifecycle-free (e.g.
+    ``Codec``) and pass through. Fabrics with only ``asetup`` are async-only
+    in shape - previously a silent no-op, now a loud raise so misuse doesn't
+    corrupt the ctx binding.
+    """
     if hasattr(instance, "setup"):
         instance.setup(ctx)
+        return
+    if hasattr(instance, "asetup"):
+        msg = (
+            f"{type(instance).__name__} has no sync setup; "
+            "use nu.arun or add setup()"
+        )
+        raise RuntimeError(msg)
 
 
 async def _asetup(instance: object, ctx: Context) -> None:
@@ -164,6 +192,7 @@ class Provide(_LifecycleBracket):
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[Context]:
         cls = self._payload["cls"]
+        _refuse_async_only(cls)
         kwargs = self._payload["kwargs"]
         tags = self._payload["tags"]
         predicate = self._payload["predicate"]
@@ -246,6 +275,7 @@ class ProvideList(_LifecycleBracket):
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[Context]:
         cls = self._payload["cls"]
+        _refuse_async_only(cls)
         specs = self._payload["specs"]
         base = self._payload["base_tag"]
         extra = self._payload["extra_tags"]
@@ -331,6 +361,7 @@ class ProvideDict(_LifecycleBracket):
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[Context]:
         cls = self._payload["cls"]
+        _refuse_async_only(cls)
         specs = self._payload["specs"]
         extra = self._payload["extra_tags"]
         predicate = self._payload["predicate"]
