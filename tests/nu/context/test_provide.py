@@ -255,3 +255,70 @@ def test_inner_provide_reads_outer_binding_via_ctx_get():
     app = Provide(Codec, {"kind": "json"}, Provide(Storage, {}, FabricRef(Storage)))
     value, _ = run(app)
     assert isinstance(value, Storage) and value.codec_kind == "json"
+
+
+# --- async-only marker + sync-setup safety net ---------------------------
+
+
+def test_provide_refuses_async_only_marker_under_sync_open():
+    class AsyncOnly:
+        _nu_async_only = True
+
+        async def asetup(self, ctx: Context) -> None: ...
+        async def acleanup(self) -> None: ...
+
+    with pytest.raises(RuntimeError, match="_nu_async_only"):
+        run(Provide(AsyncOnly, {}, FabricRef(AsyncOnly)))
+
+
+async def test_provide_async_only_marker_does_not_gate_arun():
+    class AsyncOnly:
+        _nu_async_only = True
+        events: ClassVar[list[str]] = []
+
+        async def asetup(self, ctx: Context) -> None:
+            AsyncOnly.events.append("asetup")
+
+        async def acleanup(self) -> None:
+            AsyncOnly.events.append("acleanup")
+
+    AsyncOnly.events.clear()
+    await arun(Provide(AsyncOnly, {}, FabricRef(AsyncOnly)))
+    assert AsyncOnly.events == ["asetup", "acleanup"]
+
+
+def test_provide_raises_when_instance_has_only_asetup():
+    class HalfAsync:
+        async def asetup(self, ctx: Context) -> None: ...
+        async def acleanup(self) -> None: ...
+
+    with pytest.raises(RuntimeError, match="no sync setup"):
+        run(Provide(HalfAsync, {}, FabricRef(HalfAsync)))
+
+
+def test_provide_list_refuses_async_only_marker_under_sync_open():
+    class AsyncOnly:
+        _nu_async_only = True
+
+        def __init__(self, i: int) -> None:
+            self.i = i
+
+        async def asetup(self, ctx: Context) -> None: ...
+        async def acleanup(self) -> None: ...
+
+    with pytest.raises(RuntimeError, match="_nu_async_only"):
+        run(ProvideList(AsyncOnly, [{"i": 0}], FabricRef(AsyncOnly)))
+
+
+def test_provide_dict_refuses_async_only_marker_under_sync_open():
+    class AsyncOnly:
+        _nu_async_only = True
+
+        def __init__(self, k: str) -> None:
+            self.k = k
+
+        async def asetup(self, ctx: Context) -> None: ...
+        async def acleanup(self) -> None: ...
+
+    with pytest.raises(RuntimeError, match="_nu_async_only"):
+        run(ProvideDict(AsyncOnly, {"a": {"k": "a"}}, FabricRef(AsyncOnly)))
