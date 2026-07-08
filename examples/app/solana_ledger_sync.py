@@ -13,26 +13,24 @@ Demonstrates:
   Deformations  -- inline_refs (tree rewrites before execution)
   Context       -- storage + service binding
 
-Usage:
-    python examples/app/solana_ledger_sync.py --slot-from 335000000 --slots 100
-    python examples/app/solana_ledger_sync.py --slot-from 335000000 --slots 500 \\
-        --program 6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P
+Run: python examples/app/solana_ledger_sync.py
 
 FIXMEs (semantic gaps versus the pre-v2 example -- to be revisited):
-  * The old typed method-descriptor system (``method(IntI, "get_slot")`` on a
-    FabricRef subclass) is gone. RPC calls now run driver-side and their
-    results are funneled through ``ctx.attrs``.
-  * The pre-v2 ``nu.ops.Pluck`` / ``Flatten`` / ``AtOp`` atoms don't exist
-    yet; the ``--program`` filter is implemented as a plain-Python helper on
-    the parsed tx dict rather than as an in-tree condition.
+  * ``FabricRef`` + ``method_query`` (see ``solana_rpc_service.py``) is the
+    current in-tree RPC dispatch pattern, but it only fits simple typed
+    calls (``getSlot`` -> ``IntForm``). ``getBlock`` needs real Python-side
+    parsing (``_parse_block``) that doesn't have a typed in-tree equivalent
+    yet, so RPC here still runs driver-side and results are funneled
+    through ``ctx.attrs``.
+  * There's no ergonomic in-tree combinator for plucking/filtering fields
+    out of an ``AnyAttrRef``-held dict yet; the ``program`` filter is
+    implemented as a plain-Python helper on the parsed tx dict rather than
+    as an in-tree condition.
 """
 
 from __future__ import annotations
 
-import argparse
 import asyncio
-import tempfile
-from pathlib import Path
 
 import aiohttp
 
@@ -431,52 +429,46 @@ async def Retry_via_driver(  # noqa: N802
 # =============================================================================
 
 
-def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Solana ledger sync")
-    p.add_argument("--slot-from", type=int, required=True, help="Start slot (inclusive)")
-    p.add_argument("--slots", type=int, default=100, help="Number of slots to sync")
-    p.add_argument("--endpoint", default=MAINNET, help="Solana RPC endpoint")
-    p.add_argument("--program", default=None, help="Filter: only txs involving this program")
-    p.add_argument("--db-path", default=".db-ledger", help="RocksDB storage path")
-    return p.parse_args()
+SLOT_FROM = 335_000_000
+SLOTS = 100
+PROGRAM = ""
+DB_PATH = ".dbtest_ledger"
 
 
 async def main() -> None:
-    args = parse_args()
-    rpc = SolanaRpc(endpoint=args.endpoint)
+    rpc = SolanaRpc(endpoint=MAINNET)
 
     try:
-        with tempfile.TemporaryDirectory() as tmp:
-            db_path = args.db_path or str(Path(tmp) / "ledger")
-            with v.rocksdb_storage_inmemory(db_path) as storage:
-                nav = Navigator(storage)
-                with storage.transaction() as tx:
-                    ctx = (
-                        nu.Context()
-                        .bind(Navigator, nav)
-                        .bind(TransactionProtocol, tx)
-                        .bind(SolanaRpc, rpc)
-                    )
+        with v.rocksdb_storage_inmemory(DB_PATH) as storage:
+            nav = Navigator(storage)
+            with storage.transaction() as tx:
+                ctx = (
+                    nu.Context()
+                    .bind(Navigator, nav)
+                    .bind(TransactionProtocol, tx)
+                    .bind(SolanaRpc, rpc)
+                    .bind(dict, {}, _SlotScratch)
+                )
 
-                    slot_to = args.slot_from + args.slots
+                slot_to = SLOT_FROM + SLOTS
 
-                    # Seed the ledger sets once (idempotent -- init if missing).
-                    init = v.Transaction(
-                        nu.Sequential(
-                            nu.IfDo(Ledger.slots_synced.missing(), Ledger.slots_synced.store(set())),
-                            nu.IfDo(Ledger.slots_dropped.missing(), Ledger.slots_dropped.store(set())),
-                        ),
-                    )
-                    init = v.inline_refs(init)
-                    await nu.arun(init, ctx)
+                # Seed the ledger sets once (idempotent -- init if missing).
+                init = v.Transaction(
+                    nu.Sequential(
+                        nu.IfDo(Ledger.slots_synced.missing(), Ledger.slots_synced.store(set())),
+                        nu.IfDo(Ledger.slots_dropped.missing(), Ledger.slots_dropped.store(set())),
+                    ),
+                )
+                init = v.inline_refs(init)
+                await nu.arun(init, ctx)
 
-                    print(f"syncing slots {args.slot_from} -> {slot_to}")
-                    print(f"endpoint: {args.endpoint}")
-                    if args.program:
-                        print(f"filter: program {args.program}")
-                    print(f"db: {db_path}\n")
+                print(f"syncing slots {SLOT_FROM} -> {slot_to}")
+                print(f"endpoint: {MAINNET}")
+                if PROGRAM:
+                    print(f"filter: program {PROGRAM}")
+                print(f"db: {DB_PATH}\n")
 
-                    await sync_range(ctx, Ledger, args.slot_from, slot_to, args.program or "")
+                await sync_range(ctx, Ledger, SLOT_FROM, slot_to, PROGRAM)
     finally:
         await rpc.close()
 

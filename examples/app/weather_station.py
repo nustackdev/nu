@@ -11,8 +11,6 @@ flow, no body.
 from __future__ import annotations
 
 import asyncio
-import tempfile
-from pathlib import Path
 
 import nu
 import nu.virtuals as v
@@ -108,14 +106,15 @@ def build_tree() -> nu.Nu:
 
 
 async def main() -> None:
-    with tempfile.TemporaryDirectory() as tmp:
-        db_path = str(Path(tmp) / "weather")
-        with v.text_storage(db_path) as storage:
-            nav = Navigator(storage)
-            with storage.transaction() as tx:
-                ctx = nu.Context().bind(Navigator, nav).bind(TransactionProtocol, tx)
-                tree = v.auto_atomic(build_tree())
-                await nu.arun(tree, ctx)
+    # Ephemeral: every run reseeds Station/Dashboard from scratch, so no
+    # on-disk persistence is needed -- memory_storage keeps this on the
+    # virtuals substrate (real observer, real .on_change()) without a backend.
+    with v.memory_storage() as storage:
+        nav = Navigator(storage)
+        with storage.transaction() as tx:
+            ctx = nu.Context().bind(Navigator, nav).bind(TransactionProtocol, tx)
+            tree = v.tree.auto_flow_atomic(build_tree())
+            await nu.arun(tree, ctx)
 
 
 if __name__ == "__main__":

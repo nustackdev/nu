@@ -1,23 +1,24 @@
 """Solana slot tracker -- in-tree fabric dispatch + virtuals + reactive output.
 
-Polls Solana mainnet for the current slot from *inside* the Nu tree, persists to
-virtuals storage, tracks poll stats, and reacts to slot changes on the terminal.
+Polls Solana mainnet for the current slot from *inside* the Nu tree, tracks
+it on virtuals storage, tracks poll stats, and reacts to slot changes on the
+terminal.
 
 Uses:
   Solana(FabricRef) -> the JSON-RPC client as a Nu fabric; ``Solana.slot()``
                        calls ``getSlot`` in-tree and yields a typed IntForm
-  nu.virtuals        -> slot data (persistent, observable)
+  nu.virtuals        -> slot data (observable; ephemeral for this demo since
+                        every run reseeds it)
   nu.flows           -> Sequential, ForRangeDo, Race, Delay
   nu.core.io.print   -> stdio fabric writes
-  ReactWhile         -> reactive subscription (virtuals-side reactivity is
-                        deferred, so the react branch is a placeholder today)
+  ReactWhile         -> reactive subscription driven by
+                        ``SlotData.current.on_change()`` -- fires live off
+                        the virtuals observer each time the producer writes
 """
 
 from __future__ import annotations
 
 import asyncio
-import tempfile
-from pathlib import Path
 
 import httpx
 
@@ -92,7 +93,7 @@ POLL_INTERVAL = 2.0
 
 
 def build_tracker() -> object:
-    """Kept as a function so the module imports even when virtuals reactivity is off."""
+    """Kept as a function (not a module constant) so the module imports cleanly."""
     return nu.Sequential(
         # Seed
         SlotData.current.store(Solana.slot()),
@@ -112,9 +113,9 @@ def build_tracker() -> object:
                     Stats.polls.store(Stats.polls + 1),
                 ),
             ),
-            # Consumer: react to slot changes (see NOTE at top -- deferred)
+            # Consumer: react to slot changes
             nu.ReactWhile(
-                SlotData.current.on_change(),  # FIXME: virtuals reactivity deferred
+                SlotData.current.on_change(),
                 Stats.polls < N_POLLS,
                 nu.print(
                     "slot",
@@ -136,19 +137,20 @@ def build_tracker() -> object:
 async def main() -> None:
     client = SolanaClient()
 
-    with tempfile.TemporaryDirectory() as tmp:
-        db_path = str(Path(tmp) / "slots")
-        with v.text_storage(db_path) as storage:
-            nav = Navigator(storage)
-            with storage.transaction() as tx:
-                ctx = (
-                    nu.Context()
-                    .bind(Navigator, nav)
-                    .bind(TransactionProtocol, tx)
-                    .bind(SolanaClient, client)
-                )
-                tree = v.auto_atomic(build_tracker())
-                await nu.arun(tree, ctx)
+    # Ephemeral: every run reseeds SlotData/Stats from scratch, so no on-disk
+    # persistence is needed -- memory_storage keeps this on the virtuals
+    # substrate (real observer, real .on_change()) without a backend.
+    with v.memory_storage() as storage:
+        nav = Navigator(storage)
+        with storage.transaction() as tx:
+            ctx = (
+                nu.Context()
+                .bind(Navigator, nav)
+                .bind(TransactionProtocol, tx)
+                .bind(SolanaClient, client)
+            )
+            tree = v.tree.auto_flow_atomic(build_tracker())
+            await nu.arun(tree, ctx)
 
 
 if __name__ == "__main__":
