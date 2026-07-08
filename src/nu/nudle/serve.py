@@ -11,6 +11,7 @@ Called from ``NudleServer.asetup`` -- the bracket owns the uvicorn lifecycle.
 from __future__ import annotations
 
 import asyncio
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -38,12 +39,29 @@ def _bundled_static() -> Path | None:
 
     Returns None when the wheel is not installed -- the backend still boots
     (headless / dev / tests); the browser mount is just skipped.
+
+    If ``import nudle`` resolves to a plain ``.py`` file (e.g. a local script
+    on ``sys.path[0]`` shadowing the wheel) or to a package that lacks a
+    ``build/index.html``, emit a warning and return None -- otherwise the SPA
+    mount is silently dropped and every HTTP GET returns 404.
     """
     try:
         import nudle  # noqa: PLC0415 -- static bundle wheel; optional at runtime
     except ImportError:
         return None
-    return Path(nudle.__file__).parent / "build"
+    if not hasattr(nudle, "__path__"):
+        warnings.warn(
+            f"`import nudle` resolved to {nudle.__file__!r} (a module, not the "
+            "ui wheel package). SPA mount skipped; only /ws is exposed. Rename "
+            "the shadowing file or run from a directory that doesn't shadow "
+            "the `nudle` package.",
+            stacklevel=2,
+        )
+        return None
+    build = Path(nudle.__file__).parent / "build"
+    if not (build / "index.html").exists():
+        return None
+    return build
 
 
 class _SPAStatic(StaticFiles):
