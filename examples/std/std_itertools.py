@@ -31,7 +31,7 @@ from nu.std.itertools import (
 
 def show(label: str, form: object, expected: object) -> None:
     """Run a Form's stream to a list and print it beside the host result."""
-    value, _ = run(CollectQuery(form.children[0]))  # type: ignore[attr-defined]
+    value, _ = run(CollectQuery(form._children[0]))  # type: ignore[attr-defined]
     flag = "ok" if value == expected else "MISMATCH"
     print(f"{label:24} {value!r:38} {flag}")
 
