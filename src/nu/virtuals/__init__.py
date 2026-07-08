@@ -46,9 +46,14 @@ from nu.virtuals.interactions import (
 )
 from nu.virtuals.paths import ValuePathSer, ViewPathSer
 from nu.virtuals.presets import (
+    lmdb_navigator,
+    memory_navigator,
     memory_storage,
+    rocksdb_navigator,
+    rocksdb_navigator_inmemory,
     rocksdb_storage,
     rocksdb_storage_inmemory,
+    text_navigator,
     text_storage,
 )
 from nu.virtuals.refs import (
@@ -129,11 +134,17 @@ __all__ = [  # noqa: RUF022
     # Paths
     "ValuePathSer",
     "ViewPathSer",
-    # Presets
+    # Presets - imperative (context managers)
     "memory_storage",
     "rocksdb_storage",
     "rocksdb_storage_inmemory",
     "text_storage",
+    # Presets - bracket-form (drop into nu.With(...))
+    "lmdb_navigator",
+    "memory_navigator",
+    "rocksdb_navigator",
+    "rocksdb_navigator_inmemory",
+    "text_navigator",
     # Refs
     "Facet",
     "BoolRef",

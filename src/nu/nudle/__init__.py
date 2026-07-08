@@ -1,6 +1,6 @@
 """nudle -- UI fabric for Nu."""
 
-from . import cli, interactions, page, protocol, refs, session
+from . import cli, interactions, page, presets, protocol, refs, session
 from .fabric import NudleServer
 from .interactions import Append, Changed, Write
 from .page import Index, Page, Pages
@@ -117,6 +117,7 @@ __all__ = [
     "encode",
     "interactions",
     "page",
+    "presets",
     "protocol",
     "refs",
     "serve",
