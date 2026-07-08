@@ -122,49 +122,53 @@
   border-right: 1px solid var(--nu-ink-3);
 }
 
-/* top metadata bar over the wordmark */
-.heroMeta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 40px 0 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--nu-ink-3);
-}
-.heroMetaSep {
-  flex: 0 0 auto;
-  width: 14px;
-  height: 1px;
-  background: var(--nu-ink-4);
-}
-.heroMetaFill {
-  flex: 1 1 auto;
-  height: 1px;
-  background: var(--nu-ink-4);
-}
-.heroMetaDot {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--nu-accent);
-}
-.heroMetaDot::before {
-  content: "";
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--nu-accent);
-  box-shadow: 0 0 0 3px var(--nu-accent-soft);
-}
-
 /* wordmark block */
 .heroWordmarkWrap {
   flex: 1 1 auto;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(24px, 4vh, 40px);
   padding: clamp(24px, 6vh, 56px) 0 clamp(24px, 4vh, 40px);
+}
+
+/* ---- primary CTA under the wordmark ---- */
+.heroCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--nu-accent-soft);
+  border: 1px solid var(--nu-accent-line);
+  border-radius: 6px;
+  color: var(--nu-accent);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.005em;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+.heroCta:hover {
+  background: var(--nu-accent);
+  color: var(--color-fd-background);
+  border-color: var(--nu-accent);
+  transform: translateY(-1px);
+}
+.heroCtaIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.heroCtaLabel {
+  line-height: 1;
+}
+.heroCtaArrow {
+  transition: transform 0.18s ease;
+}
+.heroCta:hover .heroCtaArrow {
+  transform: translateX(4px);
 }
 .wordmark {
   position: relative;
@@ -182,17 +186,6 @@
 .wordmarkAccent {
   color: var(--nu-accent);
   position: relative;
-}
-/* subtle underline mark under the U */
-.wordmarkAccent::after {
-  content: "";
-  position: absolute;
-  left: 0; right: 0;
-  bottom: 6%;
-  height: 8px;
-  background: var(--nu-accent);
-  opacity: 0.14;
-  border-radius: 2px;
 }
 .wordmarkVer {
   align-self: flex-start;
@@ -231,176 +224,206 @@
 .heroBody b { color: var(--nu-ink); font-weight: 600; }
 
 /* =============================================================================
- * HERO RIGHT — terminal chrome + install + actions
+ * HERO RIGHT — quickstart panel (copy-paste zone) + actions block (nav zone)
  * ==========================================================================*/
 .heroR {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   min-height: 100%;
 }
-.heroRTop {
+
+/* ---- quickstart panel: lightly tinted, grows to fill ---- */
+.qsPanel {
+  position: relative;
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  background: var(--nu-code-bg-2);
 }
 
-/* install row */
-.installRow {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 20px var(--nu-pad-x);
-  background: var(--nu-code-bg);
-  border-bottom: 1px solid var(--nu-rule);
-  font-family: var(--font-mono);
-  font-size: clamp(14px, 1.3vw, 16px);
-}
-.installPrompt {
-  color: var(--nu-accent);
-  font-weight: 700;
-}
-.installCmd {
-  color: var(--nu-ink);
-  font-weight: 500;
-  letter-spacing: 0.01em;
-}
-.installTag {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--nu-ink-3);
-}
-
-/* terminal chrome for the hello-world snippet */
-.termWrap {
-  background: var(--nu-code-bg);
-  border-bottom: 1px solid var(--nu-rule);
-}
-.termChrome {
+/* ---- section header: table-header style, no icon badge ---- */
+.sectionHead {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px var(--nu-pad-x);
-  border-bottom: 1px solid var(--nu-rule-2);
+  padding: 12px var(--nu-pad-x);
+  border-bottom: 1px solid var(--nu-rule);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
+}
+.sectionHeadLabel {
+  flex: 1 1 auto;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--nu-ink-3);
 }
-.termDots {
-  display: inline-flex;
-  gap: 5px;
-  margin-right: 6px;
-}
-.termDots > i {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--nu-ink-4);
-  display: inline-block;
-}
-.termFile {
-  color: var(--nu-ink-2);
-  letter-spacing: 0.06em;
-  text-transform: none;
-  font-size: 12px;
-}
-.termLang {
-  margin-left: auto;
-  color: var(--nu-accent);
-  border: 1px solid var(--nu-accent-line);
-  padding: 2px 8px;
-  border-radius: 3px;
+.sectionHeadCount {
   font-size: 10px;
   letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--nu-ink-4);
+}
+/* ---- one step — a row in the inner grid ---- */
+.qsStep {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--nu-rule-2);
+}
+.qsStep:last-child { border-bottom: none; }
+
+/* nav variant (steps 04/05) — link row, fast color transition on hover */
+.qsStepNav {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.08s ease, color 0.08s ease;
+}
+.qsStepNav .qsStepHead {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+.qsStepNav:hover {
+  background: var(--nu-accent-wash);
+}
+.qsStepNav:hover .qsStepName {
+  color: var(--nu-accent);
+}
+.qsStepArrow {
+  color: var(--nu-ink-3);
+  transition: color 0.08s ease, transform 0.15s ease;
+}
+.qsStepNav:hover .qsStepArrow {
+  color: var(--nu-accent);
+  transform: translateX(4px);
 }
 
-.helloRow {
-  padding: 16px var(--nu-pad-x) 22px;
+/* step header row — table-row layout: [num] [icon] [name]  ...  [arrow] */
+.qsStepHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px var(--nu-pad-x);
+  font-family: var(--font-mono);
+}
+.qsStepNum {
+  flex: 0 0 auto;
+  min-width: 22px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: var(--nu-accent);
+  font-variant-numeric: tabular-nums;
+}
+.qsStepIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--nu-accent);
+  flex: 0 0 auto;
+}
+.qsStepName {
+  font-size: 13px;
+  color: var(--nu-ink);
+  letter-spacing: 0.02em;
+  font-weight: 500;
+}
+.qsStepFill {
+  flex: 1 1 auto;
+}
+.qsStepMeta {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--nu-ink-3);
+}
+
+/* step body — holds a single SVG sketch (terminal / file / terminal) */
+.qsStepBody {
   position: relative;
+  padding: 0 var(--nu-pad-x) 16px;
+  display: block;
 }
-.helloRow::before {
-  content: "";
-  position: absolute;
-  left: calc(var(--nu-pad-x) - 14px);
-  top: 22px; bottom: 22px;
-  width: 2px;
-  background: linear-gradient(
-    to bottom,
-    var(--nu-accent-line) 0%,
-    var(--nu-accent-line) 40%,
-    transparent 100%
-  );
-  opacity: 0.6;
+.qsStepBodyTall {
+  padding-bottom: 20px;
 }
-.helloRow .code {
+
+/* the sketch itself — spec-drawing style */
+.stepSketch {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+.qsStepBody :global(pre) {
   background: transparent;
   padding: 0;
   border-radius: 0;
   font-size: 13.5px;
   line-height: 1.7;
+  margin: 0;
 }
 
-/* action links list — merges into hero cell as flush rows */
-.actions {
-  display: flex;
-  flex-direction: column;
-  border-top: 1px solid var(--nu-rule);
+/* shell prompt / command */
+.qsPrompt {
+  color: var(--nu-accent);
+  font-weight: 700;
+  margin-right: 10px;
 }
-.actionLink {
+.qsCmd {
+  color: var(--nu-ink);
+  font-weight: 500;
+}
+.qsRunLine {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 20px var(--nu-pad-x);
-  border-bottom: 1px solid var(--nu-rule);
-  font-family: var(--font-display);
-  font-size: clamp(0.95rem, 1.3vw, 1.1rem);
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--nu-ink);
-  text-decoration: none;
-  transition: color 0.15s ease, background 0.15s ease;
+}
+.qsRunOut {
+  color: var(--nu-ink-2);
+  padding-left: 20px;
   position: relative;
 }
-.actionLink::before {
-  content: "";
+.qsRunOut::before {
+  content: "›";
   position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 2px;
-  background: var(--nu-accent);
-  transform: scaleY(0);
-  transform-origin: center;
-  transition: transform 0.18s ease;
+  left: 0;
+  color: var(--nu-ink-4);
 }
-.actionLink:last-child { border-bottom: none; }
-.actionLink:hover {
+
+/* copy button — sits in top-right of step body */
+.copyBtn {
+  position: absolute;
+  top: -34px;
+  right: var(--nu-pad-x);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 1px solid var(--nu-rule);
+  border-radius: 4px;
+  background: var(--color-fd-background);
+  color: var(--nu-ink-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.copyBtn:hover {
   color: var(--nu-accent);
+  border-color: var(--nu-accent-line);
   background: var(--nu-accent-wash);
 }
-.actionLink:hover::before { transform: scaleY(1); }
-.actionArrow {
-  color: var(--nu-ink-3);
-  font-family: var(--font-mono);
-  transition: transform 0.18s ease, color 0.18s ease;
-}
-.actionLink:hover .actionArrow {
+.copyBtn[data-copied="1"] {
   color: var(--nu-accent);
-  transform: translateX(6px);
+  border-color: var(--nu-accent-line);
 }
-.actionKey {
-  margin-right: auto;
-  padding-left: 0;
-  color: var(--nu-ink-3);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  min-width: 3ch;
-  padding-right: 18px;
+.copyBtnLabel {
+  line-height: 1;
 }
-.actionLabel { flex: 1 1 auto; }
 
 /* =============================================================================
  * MODEL section (thesis + fanout)
