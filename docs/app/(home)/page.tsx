@@ -383,82 +383,27 @@ function SubstrateLabel({ x, y, text }: { x: number; y: number; text: string }) 
   );
 }
 
-function OperationLine({ y, code }: { y: number; code: string }) {
-  return (
-    <g>
-      <line
-        x1={260} y1={y} x2={370} y2={y}
-        stroke="var(--nu-ink-3)" strokeWidth={1}
-        strokeDasharray="4 3" opacity={0.55}
-      />
-      <line
-        x1={630} y1={y} x2={740} y2={y}
-        stroke="var(--nu-ink-3)" strokeWidth={1}
-        strokeDasharray="4 3" opacity={0.55}
-      />
-      {/* arrow tip pointing at the right substrate */}
-      <polygon
-        points={`732,${y - 3.5} 740,${y} 732,${y + 3.5}`}
-        fill="var(--nu-ink-3)" opacity={0.7}
-      />
-      <rect
-        x={370} y={y - 18} width={260} height={36} rx={4}
-        fill="var(--color-fd-background)"
-        stroke="var(--nu-rule)" strokeWidth={1}
-      />
-      <text
-        x={500} y={y + 5} textAnchor="middle"
-        fontFamily="ui-monospace, monospace" fontSize={14}
-        fill="var(--nu-ink-2)"
-      >
-        {code}
-      </text>
-    </g>
-  );
-}
-
-function BeforeViz() {
-  return (
-    <svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg"
-      className={s.fanoutSvg} role="img"
-      aria-label="Today: each substrate has its own API to update a count.">
-      <SubstrateLabel x={20} y={13} text="BROWSER TAB" />
-      <SubstrateLabel x={20} y={118} text="ON DISK" />
-      <SubstrateLabel x={20} y={223} text="IN MEMORY" />
-
-      {/* row 1: browser */}
-      <Substrate kind="browser" x={20} y={20} value="0" />
-      <Substrate kind="browser" x={740} y={20} value="1" accent />
-      <OperationLine y={60} code={`input.value = 1`} />
-
-      {/* row 2: disk */}
-      <Substrate kind="disk" x={20} y={125} value="0" />
-      <Substrate kind="disk" x={740} y={125} value="1" accent />
-      <OperationLine y={165} code={`db.put("count", 1)`} />
-
-      {/* row 3: memory */}
-      <Substrate kind="memory" x={20} y={230} value="0" />
-      <Substrate kind="memory" x={740} y={230} value="1" accent />
-      <OperationLine y={270} code={`d["count"] = 1`} />
-    </svg>
-  );
-}
-
-function FanoutViz() {
-  const rowY = [60, 165, 270];
-  const midY = 165;
-  const mLeft = 400;
+function TransitionViz() {
+  const rowY = [90, 250, 410];
+  const midY = 250;
+  const mLeft = 440;
   const mRight = 640;
-  const arrowTip = (px: number, py: number, dir: 1 | -1 = 1) => (
+  const arrowTip = (px: number, py: number) => (
     <polygon
-      points={`${px - 6 * dir},${py - 4} ${px},${py} ${px - 6 * dir},${py + 4}`}
-      fill="var(--nu-accent)" opacity={0.6}
+      points={`${px - 6},${py - 4} ${px},${py} ${px - 6},${py + 4}`}
+      fill="var(--nu-accent)" opacity={0.7}
     />
   );
+  const oldApis = [
+    'input.value = 1',
+    'db.put("count", 1)',
+    'd["count"] = 1',
+  ];
   return (
-    <svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 1000 480" xmlns="http://www.w3.org/2000/svg"
       className={s.fanoutSvg} role="img"
-      aria-label="One interaction applied across three substrates: a browser tab, a value on disk, and a value in memory.">
+      aria-label="Three fragmented APIs today collapse into one Nu interaction that reaches all substrates."
+    >
       <defs>
         <radialGradient id="pillGlow" cx="50%" cy="50%" r="60%">
           <stop offset="0%" stopColor="var(--nu-accent)" stopOpacity="0.20" />
@@ -466,59 +411,79 @@ function FanoutViz() {
         </radialGradient>
       </defs>
 
-      {/* row labels (left) */}
-      <SubstrateLabel x={20} y={13} text="BROWSER TAB" />
-      <SubstrateLabel x={20} y={118} text="ON DISK" />
-      <SubstrateLabel x={20} y={223} text="IN MEMORY" />
+      {/* row labels */}
+      <SubstrateLabel x={20} y={43} text="BROWSER TAB" />
+      <SubstrateLabel x={20} y={203} text="ON DISK" />
+      <SubstrateLabel x={20} y={363} text="IN MEMORY" />
 
-      {/* connectors — inbound (left → middle) solid, outbound (middle → right) dashed */}
+      {/* left substrates (before: 0) */}
+      <Substrate kind="browser" x={20} y={50} value="0" />
+      <Substrate kind="disk" x={20} y={210} value="0" />
+      <Substrate kind="memory" x={20} y={370} value="0" />
+
+      {/* the collapse — 3 old APIs converge into the central node */}
       <g fill="none" stroke="var(--nu-accent)" strokeWidth={1.4} opacity={0.55}>
-        <path d={`M 260 ${rowY[0]} C 330 ${rowY[0]} 330 ${midY} ${mLeft} ${midY}`} />
+        <path d={`M 260 ${rowY[0]} C 340 ${rowY[0]} 360 ${midY} ${mLeft} ${midY}`} />
         <path d={`M 260 ${rowY[1]} L ${mLeft} ${midY}`} />
-        <path d={`M 260 ${rowY[2]} C 330 ${rowY[2]} 330 ${midY} ${mLeft} ${midY}`} />
+        <path d={`M 260 ${rowY[2]} C 340 ${rowY[2]} 360 ${midY} ${mLeft} ${midY}`} />
       </g>
-      <g fill="none" stroke="var(--nu-accent)" strokeWidth={1.4} opacity={0.55}
-         strokeDasharray="5 4">
-        <path d={`M ${mRight} ${midY} C 710 ${midY} 710 ${rowY[0]} 754 ${rowY[0]}`} />
-        <path d={`M ${mRight} ${midY} L 754 ${rowY[1]}`} />
-        <path d={`M ${mRight} ${midY} C 710 ${midY} 710 ${rowY[2]} 754 ${rowY[2]}`} />
-      </g>
-      {/* arrow tips landing on the right substrates */}
-      {arrowTip(760, rowY[0])}
-      {arrowTip(760, rowY[1])}
-      {arrowTip(760, rowY[2])}
 
-      {/* left substrates: initial */}
-      <Substrate kind="browser" x={20} y={20} value="0" />
-      <Substrate kind="disk" x={20} y={125} value="0" />
-      <Substrate kind="memory" x={20} y={230} value="0" />
+      {/* old API labels — anchored to end just before the central node.
+          rows 1/2 sit above their curve; row 3 below to clear the ascending curve. */}
+      {oldApis.map((api, i) => {
+        const y = i === 2 ? rowY[i] + 18 : rowY[i] - 10;
+        return (
+          <text
+            key={i}
+            x={mLeft - 20}
+            y={y}
+            textAnchor="end"
+            fontFamily="ui-monospace, monospace"
+            fontSize={12}
+            fill="var(--nu-ink-3)"
+            style={{ textDecoration: 'line-through' }}
+          >
+            {api}
+          </text>
+        );
+      })}
 
-      {/* middle: the interaction — dimensional treatment */}
+      {/* central node — where 3 APIs collapse into 1 Interaction */}
       <g>
         <ellipse cx={(mLeft + mRight) / 2} cy={midY + 8} rx={140} ry={70}
           fill="url(#pillGlow)" />
-        <rect x={mLeft} y={125} width={mRight - mLeft} height={80} rx={6}
+        <rect x={mLeft} y={210} width={mRight - mLeft} height={80} rx={6}
           fill="var(--nu-accent-soft)" stroke="var(--nu-accent)" strokeWidth={1.6} />
-        <CornerTicks x={mLeft} y={125} w={mRight - mLeft} h={80} size={7} />
-        <text x={(mLeft + mRight) / 2} y={112} textAnchor="middle"
+        <CornerTicks x={mLeft} y={210} w={mRight - mLeft} h={80} size={7} />
+        <text x={(mLeft + mRight) / 2} y={197} textAnchor="middle"
           fontFamily="ui-monospace, monospace" fontSize={10}
           letterSpacing="0.28em" fill="var(--nu-accent)">
           NU.RUN · ONE INTERACTION
         </text>
-        <text x={(mLeft + mRight) / 2} y={172} textAnchor="middle"
+        <text x={(mLeft + mRight) / 2} y={257} textAnchor="middle"
           fontFamily="ui-monospace, monospace" fontSize={20} fontWeight={700}
           fill="var(--nu-accent)">
           Add(CounterRef, 1)
         </text>
-        {/* underline */}
-        <line x1={mLeft + 40} y1={188} x2={mRight - 40} y2={188}
+        <line x1={mLeft + 40} y1={273} x2={mRight - 40} y2={273}
           stroke="var(--nu-accent-line)" strokeWidth={1} />
       </g>
 
-      {/* right substrates: updated */}
-      <Substrate kind="browser" x={760} y={20} value="1" accent />
-      <Substrate kind="disk" x={760} y={125} value="1" accent />
-      <Substrate kind="memory" x={760} y={230} value="1" accent />
+      {/* fan-out — one Interaction reaches all three substrates */}
+      <g fill="none" stroke="var(--nu-accent)" strokeWidth={1.4} opacity={0.55}
+         strokeDasharray="5 4">
+        <path d={`M ${mRight} ${midY} C 700 ${midY} 700 ${rowY[0]} 754 ${rowY[0]}`} />
+        <path d={`M ${mRight} ${midY} L 754 ${rowY[1]}`} />
+        <path d={`M ${mRight} ${midY} C 700 ${midY} 700 ${rowY[2]} 754 ${rowY[2]}`} />
+      </g>
+      {arrowTip(760, rowY[0])}
+      {arrowTip(760, rowY[1])}
+      {arrowTip(760, rowY[2])}
+
+      {/* right substrates (after: 1, accent) */}
+      <Substrate kind="browser" x={760} y={50} value="1" accent />
+      <Substrate kind="disk" x={760} y={210} value="1" accent />
+      <Substrate kind="memory" x={760} y={370} value="1" accent />
     </svg>
   );
 }
@@ -1002,6 +967,326 @@ print(render_nu(app))
 ];
 
 /* ============================================================================
+ * Watch this run — the 30-LOC live example
+ * ==========================================================================*/
+
+function DashboardMock() {
+  /* chart lives inside the HISTORY panel: x=170..440, y=110..190
+     usable interior with padding: x=182..428, y=128..182 */
+  const chartPoints: Array<[number, number]> = [
+    [182, 178], [200, 176], [218, 172], [236, 168], [254, 162],
+    [272, 158], [290, 152], [308, 146], [326, 141], [344, 138],
+    [362, 134], [380, 132], [398, 130], [416, 128], [428, 128],
+  ];
+  const pathD = chartPoints
+    .map((p, i) => (i === 0 ? `M ${p[0]} ${p[1]}` : `L ${p[0]} ${p[1]}`))
+    .join(' ');
+  const areaD = `${pathD} L 428 184 L 182 184 Z`;
+  return (
+    <svg viewBox="0 0 460 300" xmlns="http://www.w3.org/2000/svg"
+      className={s.watchMockSvg} role="img" aria-label="Live dashboard: counter and history chart">
+      <defs>
+        <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--nu-accent)" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="var(--nu-accent)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+
+      {/* browser chrome */}
+      <rect x={0} y={0} width={460} height={300} rx={8}
+        fill="var(--color-fd-background)" stroke="var(--nu-rule)" strokeWidth={1} />
+      <line x1={0} y1={36} x2={460} y2={36} stroke="var(--nu-rule)" strokeWidth={1} />
+      <circle cx={18} cy={18} r={3.5} fill="var(--nu-ink-4)" />
+      <circle cx={30} cy={18} r={3.5} fill="var(--nu-ink-4)" />
+      <circle cx={42} cy={18} r={3.5} fill="var(--nu-ink-4)" />
+      <rect x={70} y={9} width={340} height={18} rx={3}
+        fill="var(--nu-code-bg-2)" stroke="var(--nu-rule)" strokeWidth={0.5} />
+      <text x={80} y={22} fontFamily="ui-monospace, monospace" fontSize={10}
+        fill="var(--nu-ink-3)">
+        nu://counter
+      </text>
+
+      {/* title */}
+      <text x={20} y={60} fontFamily="ui-monospace, monospace" fontSize={10}
+        letterSpacing="0.24em" fill="var(--nu-ink-3)">
+        NUDLE BRACKET COUNTER
+      </text>
+
+      {/* heading */}
+      <text x={20} y={94}
+        fontFamily="ui-monospace, monospace" fontSize={18} fontWeight={700}
+        fill="var(--nu-accent)">
+        counter live
+      </text>
+
+      {/* big count value */}
+      <rect x={20} y={110} width={130} height={80} rx={6}
+        fill="var(--nu-accent-soft)" stroke="var(--nu-accent-line)" strokeWidth={1} />
+      <text x={35} y={128} fontFamily="ui-monospace, monospace" fontSize={9}
+        letterSpacing="0.24em" fill="var(--nu-accent)">
+        COUNT
+      </text>
+      <text x={85} y={172} textAnchor="middle"
+        fontFamily="ui-monospace, monospace" fontSize={38} fontWeight={800}
+        fill="var(--nu-accent)">
+        42
+      </text>
+
+      {/* chart panel */}
+      <rect x={170} y={110} width={270} height={80} rx={6}
+        fill="var(--nu-code-bg-2)" stroke="var(--nu-rule)" strokeWidth={1} />
+      <text x={185} y={128} fontFamily="ui-monospace, monospace" fontSize={9}
+        letterSpacing="0.24em" fill="var(--nu-ink-3)">
+        HISTORY
+      </text>
+      <path d={areaD} fill="url(#chartFill)" />
+      <path d={pathD} fill="none" stroke="var(--nu-accent)" strokeWidth={1.6} />
+      {chartPoints.filter((_, i) => i % 3 === 0).map((p, i) => (
+        <circle key={i} cx={p[0]} cy={p[1]} r={1.6} fill="var(--nu-accent)" />
+      ))}
+
+      {/* footer strip — subtle rule + tag */}
+      <line x1={20} y1={230} x2={440} y2={230} stroke="var(--nu-rule-2)" strokeWidth={1} />
+      <text x={20} y={252} fontFamily="ui-monospace, monospace" fontSize={10}
+        fill="var(--nu-ink-3)">
+        <tspan fill="var(--nu-accent)">●</tspan> live · rocksdb · 1s tick
+      </text>
+      <text x={440} y={252} textAnchor="end"
+        fontFamily="ui-monospace, monospace" fontSize={10}
+        letterSpacing="0.24em" fill="var(--nu-ink-4)">
+        NUDLE
+      </text>
+    </svg>
+  );
+}
+
+type WatchBeat = {
+  num: string;
+  kind: string;
+  lines: string;
+  title: string;
+  body: React.ReactNode;
+  code: string;
+};
+
+const WATCH_BEATS: WatchBeat[] = [
+  {
+    num: '01',
+    kind: 'shapes',
+    lines: 'L 1 – 15',
+    title: 'Declare the world.',
+    body: (
+      <>
+        <b>Counter</b> is one IntRef, headed for RocksDB. <b>Dashboard</b> is a
+        Page — heading, count, history — headed for a browser tab.
+      </>
+    ),
+    code: `import nu
+
+class Counter(nu.Shape):
+    value: nu.v.IntRef
+
+class Dashboard(nu.nd.Page):
+    heading: nu.nd.HeadingRef
+    count: nu.nd.TextRef
+    history: nu.nd.LineChart
+
+class App(nu.nd.Index):
+    title: nu.nd.TitleRef
+    nav: nu.nd.NavRef
+    pages = nu.nd.Pages({"/": Dashboard})`,
+  },
+  {
+    num: '02',
+    kind: 'the loop',
+    lines: 'L 17 – 20',
+    title: 'A forever bracket.',
+    body: (
+      <>
+        <b>IfDo</b> initializes on cold start. <b>ForeverDo</b> increments the
+        counter every second — for as long as the app runs.
+      </>
+    ),
+    code: `counter = (
+    nu.IfDo(Counter.value.missing(), Counter.value.store(0))
+    >> nu.ForeverDo(Counter.value.inc() >> nu.Delay(1.0))
+)`,
+  },
+  {
+    num: '03',
+    kind: 'reactivity',
+    lines: 'L 22 – 31',
+    title: 'A reactive mirror.',
+    body: (
+      <>
+        <b>ReactForever</b> watches <b>Counter.value</b>. Every change stores
+        into the dashboard&apos;s count and appends a point to the history
+        chart.
+      </>
+    ),
+    code: `ui = (
+    App.title.store("nudle bracket counter")
+    >> Dashboard.heading.store("counter live")
+    >> nu.ReactForever(
+        Counter.value.on_change(),
+        Dashboard.count.store(Counter.value)
+        | Dashboard.history.append(Counter.value, Counter.value),
+    )
+)`,
+  },
+  {
+    num: '04',
+    kind: 'the bind',
+    lines: 'L 33 – 40',
+    title: 'One bracket. Then run.',
+    body: (
+      <>
+        <b>nu.With</b> pins refs to fabrics: RocksDB for <b>Counter</b>, a
+        browser tab for <b>Dashboard</b>. The counter loop runs in the middle.
+        Then <b>nu.run</b>.
+      </>
+    ),
+    code: `app = nu.With(
+    nu.v.presets.rocksdb_navigator_inmemory(".dbtest"),
+    nu.nd.presets.server(ui),
+    body=counter,
+)
+
+nu.run(nu.v.auto_flow_atomic(app))`,
+  },
+];
+
+/* number badge — spec-drawing style, matches the model section language */
+function BeatNumBadge({ num }: { num: string }) {
+  return (
+    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"
+      className={s.watchBeatNumBadge} role="img" aria-label={`beat ${num}`}>
+      <rect x={2} y={2} width={44} height={44} rx={7}
+        fill="var(--nu-accent-soft)" stroke="var(--nu-accent)" strokeWidth={1.4} />
+      <CornerTicks x={2} y={2} w={44} h={44} size={5} color="var(--nu-accent)" />
+      <text x={24} y={32} textAnchor="middle"
+        fontFamily="ui-monospace, monospace" fontSize={19} fontWeight={800}
+        fill="var(--nu-accent)"
+        style={{ letterSpacing: '0.02em' }}>
+        {num}
+      </text>
+    </svg>
+  );
+}
+
+function WatchThisRun() {
+  return (
+    <section className={s.watchSec} id="watch">
+      <div className={s.watchHead}>
+        <h2 className={s.watchTitle}>Watch this example.</h2>
+        <p className={s.watchIntro}>
+          30 lines. Persistent counter, live browser dashboard —
+          <b> same Refs, three Fabrics, one bracket.</b>
+        </p>
+      </div>
+
+      <div className={s.watchStory}>
+        {WATCH_BEATS.map((b) => (
+          <div key={b.num} className={s.watchBeat}>
+            {/* Layer 1 — the code, ~70% wide, left */}
+            <div className={s.watchBeatCode}>
+              <div className={s.watchBeatCodeChrome}>
+                <span className={s.watchBeatCodeDots}>
+                  <i /><i /><i />
+                </span>
+                <span className={s.watchBeatCodeFile}>nudle_rocksdb.py</span>
+                <span className={s.watchBeatCodeRange}>{b.lines}</span>
+              </div>
+              <div className={s.watchBeatCodeBody}>
+                <Code src={b.code} />
+              </div>
+            </div>
+
+            {/* Layer 2 — the explanation, ~62% wide, right, floating with shadow */}
+            <article className={s.watchBeatExpl}>
+              <div className={s.watchBeatExplHead}>
+                <BeatNumBadge num={b.num} />
+                <div className={s.watchBeatExplHeadText}>
+                  <span className={s.watchBeatExplKind}>{b.kind}</span>
+                  <h3 className={s.watchBeatExplTitle}>{b.title}</h3>
+                </div>
+              </div>
+              <p className={s.watchBeatExplBody}>{b.body}</p>
+            </article>
+          </div>
+        ))}
+      </div>
+
+      {/* the result — dashboard mock as the payoff */}
+      <div className={s.watchResultWrap}>
+        <div className={s.watchResult}>
+          <div className={s.watchResultHead}>
+            <BeatNumBadge num="05" />
+            <div className={s.watchBeatExplHeadText}>
+              <span className={s.watchBeatExplKind}>the result</span>
+              <h3 className={s.watchBeatExplTitle}>A live browser tab, updating every second.</h3>
+            </div>
+          </div>
+          <div className={s.watchResultMock}>
+            <DashboardMock />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================================
+ * Pillars — "and by the way"
+ * ==========================================================================*/
+
+const PILLARS: Array<{ name: string; title: string; body: string }> = [
+  {
+    name: 'acid',
+    title: 'ACID by default.',
+    body: 'Any subtree can wrap in nv.Transaction. Retries and snapshots come free with the fabric.',
+  },
+  {
+    name: 'distributed',
+    title: 'One bracket, many machines.',
+    body: 'nu.ray binds Ray. The same program runs across a cluster with the same call.',
+  },
+  {
+    name: 'infinite',
+    title: 'Infinite streams, sampled.',
+    body: 'kh57 lets you append forever and read a fair sample. Charts stay bounded, data does not.',
+  },
+  {
+    name: 'no limits',
+    title: 'No framework. No DSL.',
+    body: 'Pure python semantics. Your editor, your types, your debugger. Nothing hidden.',
+  },
+];
+
+function PillarsSection() {
+  return (
+    <section className={s.pillarsSec} id="pillars">
+      <div className={s.pillarsHead}>
+        <span className={s.pillarsEyebrow}>and by the way —</span>
+        <h2 className={s.pillarsTitle}>
+          The same 30-line program is also…
+        </h2>
+      </div>
+      <div className={s.pillarsGrid}>
+        {PILLARS.map((p, i) => (
+          <article key={p.name} className={s.pillar}>
+            <span className={s.pillarIndex}>[{String(i + 1).padStart(2, '0')}]</span>
+            <span className={s.pillarName}>{p.name}</span>
+            <h3 className={s.pillarTitle}>{p.title}</h3>
+            <p className={s.pillarBody}>{p.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================================
  * Page
  * ==========================================================================*/
 
@@ -1010,112 +1295,40 @@ export default function HomePage() {
     <div className={s.root}>
       <div className={s.shell}>
 
-        {/* ---------- hero ---------- */}
+        {/* ---------- hero: centered wordmark on a glow, one CTA ---------- */}
         <header className={s.hero}>
-          <div className={s.heroL}>
-            <div className={s.heroWordmarkWrap}>
-              <h1 className={s.wordmark}>
-                <span>N</span>
-                <span className={s.wordmarkAccent}>U</span>
-                <span className={s.wordmarkVer}>0.1.0</span>
-              </h1>
-              <a className={s.heroCta} href="https://github.com/nustackdev/nu">
-                <span className={s.heroCtaIcon}><GithubMark size={17} /></span>
-                <span className={s.heroCtaLabel}>open on github</span>
-                <ArrowRight size={16} className={s.heroCtaArrow} aria-hidden />
-              </a>
+          <div className={s.heroGlow} aria-hidden />
+          <div className={s.heroCentered}>
+            <div className={s.heroEyebrow}>
+              <span className={s.heroEyebrowDot} />
+              <span>v0.1.0 · alpha · active · py 3.12+</span>
             </div>
-
-            <p className={s.lede}>
-              <span className={s.ledeAccent}>References</span>, and a way to{' '}
-              <span className={s.ledeAccent}>Interact</span> with them.
+            <h1 className={s.wordmark}>
+              <span>N</span>
+              <span className={s.wordmarkAccent}>U</span>
+            </h1>
+            <p className={s.tagline}>
+              Compose <span className={s.ledeAccent}>any tool</span> in pure
+              python.
             </p>
-            <p className={s.heroBody}>
-              A python library. The model, in pure python — <b>Refs</b>,{' '}
-              <b>Interactions</b>, and ready-made <b>Fabrics</b>. Not a
-              framework, not a DSL. One import.
+            <p className={s.subTagline}>
+              Nu turns any tool into a program of <b>Refs</b> and{' '}
+              <b>Interactions</b> you compose like data. Built on{' '}
+              <Link className={s.subTagLink} href="/docs/model">
+                the interaction model
+              </Link>
+              .
             </p>
-
-            <div className={s.heroLCropB} aria-hidden />
-          </div>
-
-          <div className={s.heroR}>
-            <div className={s.qsPanel}>
-            <div className={s.sectionHead}>
-              <span className={s.sectionHeadLabel}>quickstart</span>
-            </div>
-
-            <QsStep
-              num="01"
-              name="install"
-              icon={<Terminal size={14} strokeWidth={2} />}
-              copy="pip install nu"
-              body={
-                <TermSketch
-                  lines={[{ prompt: true, text: 'pip install nu' }]}
-                />
-              }
-            />
-
-            <QsStep
-              num="02"
-              name="hello.py"
-              icon={<FileCode2 size={14} strokeWidth={2} />}
-              copy={`import nu\n\nnu.run(nu.print("hello"))`}
-              body={
-                <FileSketch
-                  filename="hello.py"
-                  lang="py"
-                  lines={[
-                    <>
-                      <tspan fill="var(--nu-accent)" fontWeight={700}>import</tspan>
-                      {' nu'}
-                    </>,
-                    '',
-                    <>
-                      {'nu.run(nu.print('}
-                      <tspan fill="var(--nu-accent-2)">&quot;hello&quot;</tspan>
-                      {'))'}
-                    </>,
-                  ]}
-                />
-              }
-            />
-
-            <QsStep
-              num="03"
-              name="run"
-              icon={<Play size={14} strokeWidth={2} />}
-              copy="python hello.py"
-              body={
-                <TermSketch
-                  lines={[
-                    { prompt: true, text: 'python hello.py' },
-                    { text: 'hello', muted: true },
-                  ]}
-                />
-              }
-            />
-
-            <QsStep
-              nav
-              num="04"
-              name="read the docs"
-              icon={<BookOpen size={14} strokeWidth={2} />}
-              href="/docs"
-            />
-
-            <QsStep
-              nav
-              external
-              num="05"
-              name="hello world example"
-              icon={<Sparkles size={14} strokeWidth={2} />}
-              href="https://github.com/nustackdev/nu/tree/main/examples"
-            />
-            </div>{/* /qsPanel */}
+            <a className={s.heroCta} href="https://github.com/nustackdev/nu">
+              <span className={s.heroCtaIcon}><GithubMark size={17} /></span>
+              <span className={s.heroCtaLabel}>open on github</span>
+              <ArrowRight size={16} className={s.heroCtaArrow} aria-hidden />
+            </a>
           </div>
         </header>
+
+        {/* ---------- watch this example: the 30-LOC live example ---------- */}
+        <WatchThisRun />
 
         {/* ---------- the model ---------- */}
         <section className={s.modelSec} id="model">
@@ -1126,32 +1339,9 @@ export default function HomePage() {
             </h2>
           </div>
 
-          {/* today: three different APIs */}
-          <div className={s.compareBlock}>
-            <div className={s.compareHead}>
-              <div className={s.compareIndex}>
-                <span className={s.compareNum}>01</span>
-                <span className={s.compareTag}>today</span>
-              </div>
-              <h3 className={s.compareTitle}>Every substrate — its own API.</h3>
-            </div>
-            <div className={s.fanoutWrap}>
-              <BeforeViz />
-            </div>
-          </div>
-
-          {/* with nu: one interaction */}
-          <div className={s.compareBlock}>
-            <div className={`${s.compareHead}`}>
-              <div className={`${s.compareIndex} ${s.compareIndexAccent}`}>
-                <span className={s.compareNum}>02</span>
-                <span className={`${s.compareTag} ${s.compareTagAccent}`}>with nu</span>
-              </div>
-              <h3 className={s.compareTitle}>One interaction — any substrate.</h3>
-            </div>
-            <div className={s.fanoutWrap}>
-              <FanoutViz />
-            </div>
+          {/* unified: 3 old APIs collapse into 1 Interaction */}
+          <div className={s.fanoutWrap}>
+            <TransitionViz />
           </div>
 
           <p className={s.modelCaption}>
@@ -1159,6 +1349,9 @@ export default function HomePage() {
             <b> Nu updates all three with one move.</b>
           </p>
         </section>
+
+        {/* ---------- and by the way — the pillars ---------- */}
+        <PillarsSection />
 
         {/* ---------- deep dive: fabrics ---------- */}
         <section className={s.deepSec} id="fabrics">
