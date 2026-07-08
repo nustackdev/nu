@@ -1,9 +1,11 @@
-"""`nudle.serve` -- async host function that runs a Nu UI program over ws.
+"""FastAPI app builder for a nudle Nu program.
 
-Not a Nu. A plain async function that owns the ws listener, accepts
-connections, and for each one evaluates the user's Nu with a fresh
-NudleSession bound on Context. Inbound frames (notify, read replies)
-are drained by `session.run_intake` in parallel with the Nu evaluation.
+Not a Nu. A plain builder that takes a nudle app tree + Context and returns
+a `FastAPI` instance with `/ws` wired up: each connection gets a fresh
+`NudleSession` bound on ctx, and the user's Nu evaluates in parallel with
+`session.run_intake` draining inbound frames.
+
+Called from ``NudleServer.asetup`` -- the bracket owns the uvicorn lifecycle.
 """
 
 from __future__ import annotations
@@ -12,7 +14,6 @@ import asyncio
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import uvicorn
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -29,7 +30,7 @@ if TYPE_CHECKING:
     from nu import Context, Nu
 
 
-__all__ = ["build_fastapi_app", "serve"]
+__all__ = ["build_fastapi_app"]
 
 
 def _bundled_static() -> Path | None:
@@ -164,17 +165,3 @@ def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
             name="static",
         )
     return fastapi_app
-
-
-async def serve(
-    app: Nu,
-    ctx: Context,
-    *,
-    host: str = "127.0.0.1",
-    port: int = 8080,
-) -> None:
-    """Run a nudle UI program."""
-    fastapi_app = build_fastapi_app(app, ctx)
-    config = uvicorn.Config(fastapi_app, host=host, port=port, log_level="info")
-    server = uvicorn.Server(config)
-    await server.serve()

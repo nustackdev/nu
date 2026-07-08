@@ -70,9 +70,6 @@ all = [
     "nu[nudle]",
 ]
 
-[project.scripts]
-nudle = "nu.nudle.cli:main"
-
 [project.urls]
 Repository = "https://github.com/nustackdev/nu"
 
