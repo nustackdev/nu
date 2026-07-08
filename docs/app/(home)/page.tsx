@@ -78,6 +78,22 @@ function Code({ src }: { src: string }) {
   return <pre className={s.code}>{lines.map((l, i) => renderLine(l, i))}</pre>;
 }
 
+/* Terminal-style code with line-number gutter — used inside quickstart steps. */
+function GutterCode({ src }: { src: string }) {
+  const lines = src.replace(/\n$/, '').split('\n');
+  return (
+    <pre className={s.gutterCode}>
+      {lines.map((l, i) => (
+        <span key={i} className={s.gutterLine}>
+          <span className={s.gutterNum}>{String(i + 1).padStart(2, '0')}</span>
+          <span className={s.gutterSep}>│</span>
+          <span className={s.gutterText}>{renderLine(l, i)}</span>
+        </span>
+      ))}
+    </pre>
+  );
+}
+
 /* ============================================================================
  * Step sketches — one visual per quickstart step
  * ==========================================================================*/
@@ -771,6 +787,7 @@ nu.run(Dashboard.count.store(1), ctx)`,
 const STEPS: Array<{
   n: string;
   numeral: string;
+  file: string;
   pin: React.ReactNode;
   title: string;
   code: string;
@@ -780,6 +797,7 @@ const STEPS: Array<{
   {
     n: 'step 01',
     numeral: '01',
+    file: 'reads.py',
     pin: <><b>ref</b>&nbsp;·&nbsp;address</>,
     title: 'It reads.',
     code: `import nu
@@ -805,6 +823,7 @@ nu.run(Order.price, ctx)   # 185.5`,
   {
     n: 'step 02',
     numeral: '02',
+    file: 'computes.py',
     pin: <><b>tree</b>&nbsp;·&nbsp;defer</>,
     title: 'It computes.',
     code: `notional = Order.price * Order.qty
@@ -822,6 +841,7 @@ nu.run(notional, ctx)      # 1855.0`,
   {
     n: 'step 03',
     numeral: '03',
+    file: 'writes.py',
     pin: <><b>cmd</b>&nbsp;·&nbsp;write</>,
     title: 'It writes.',
     code: `nu.run(Order.price.store(200.0), ctx)
@@ -838,6 +858,7 @@ nu.run(Order.price, ctx)   # 200.0`,
   {
     n: 'step 04',
     numeral: '04',
+    file: 'persists.py',
     pin: <><b>swap</b>&nbsp;·&nbsp;disk</>,
     title: 'It persists.',
     code: `import nu.virtuals as nv     # ← the one change
@@ -860,6 +881,7 @@ class Order(nu.Shape):
   {
     n: 'step 05',
     numeral: '05',
+    file: 'composes.py',
     pin: <><b>&gt;&gt;</b>&nbsp;·&nbsp;<b>|</b></>,
     title: 'It composes.',
     code: `app = (
@@ -881,6 +903,7 @@ nu.run(app, ctx)           # notional 10000.0`,
   {
     n: 'step 06',
     numeral: '06',
+    file: 'ships.py',
     pin: <><b>ship</b>&nbsp;·&nbsp;prod</>,
     title: 'It ships.',
     code: `import nu
@@ -1174,63 +1197,66 @@ function BeatNumBadge({ num }: { num: string }) {
   );
 }
 
-function WatchThisRun() {
+const ROMAN = ['i', 'ii', 'iii', 'iv', 'v'] as const;
+
+function Scene({
+  num,
+  kind,
+  title,
+  code,
+  children,
+  visual,
+}: {
+  num: string;
+  kind: string;
+  title: string;
+  code?: string;
+  visual?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <section className={s.watchSec} id="watch">
-      <div className={s.watchHead}>
-        <h2 className={s.watchTitle}>Watch this example.</h2>
-        <p className={s.watchIntro}>
-          30 lines. Persistent counter, live browser dashboard —
-          <b> same Refs, three Fabrics, one bracket.</b>
-        </p>
+    <article className={s.scene} id={`scene-${num}`}>
+      <div className={s.sceneNum} aria-hidden>{num}</div>
+      <div className={s.sceneBody}>
+        <span className={s.sceneKind}>{kind}</span>
+        <h3 className={s.sceneTitle}>{title}</h3>
+        {code ? (
+          <div className={s.sceneCode}>
+            <Code src={code} />
+          </div>
+        ) : null}
+        {visual}
+        <p className={s.sceneProse}>{children}</p>
       </div>
+    </article>
+  );
+}
 
-      <div className={s.watchStory}>
-        {WATCH_BEATS.map((b) => (
-          <div key={b.num} className={s.watchBeat}>
-            {/* Layer 1 — the code, ~70% wide, left */}
-            <div className={s.watchBeatCode}>
-              <div className={s.watchBeatCodeChrome}>
-                <span className={s.watchBeatCodeDots}>
-                  <i /><i /><i />
-                </span>
-                <span className={s.watchBeatCodeFile}>nudle_rocksdb.py</span>
-                <span className={s.watchBeatCodeRange}>{b.lines}</span>
-              </div>
-              <div className={s.watchBeatCodeBody}>
-                <Code src={b.code} />
-              </div>
-            </div>
-
-            {/* Layer 2 — the explanation, ~62% wide, right, floating with shadow */}
-            <article className={s.watchBeatExpl}>
-              <div className={s.watchBeatExplHead}>
-                <BeatNumBadge num={b.num} />
-                <div className={s.watchBeatExplHeadText}>
-                  <span className={s.watchBeatExplKind}>{b.kind}</span>
-                  <h3 className={s.watchBeatExplTitle}>{b.title}</h3>
-                </div>
-              </div>
-              <p className={s.watchBeatExplBody}>{b.body}</p>
-            </article>
-          </div>
-        ))}
-      </div>
-
-      {/* the result — dashboard mock as the payoff */}
-      <div className={s.watchResultWrap}>
-        <div className={s.watchResult}>
-          <div className={s.watchResultHead}>
-            <BeatNumBadge num="05" />
-            <div className={s.watchBeatExplHeadText}>
-              <span className={s.watchBeatExplKind}>the result</span>
-              <h3 className={s.watchBeatExplTitle}>A live browser tab, updating every second.</h3>
-            </div>
-          </div>
-          <div className={s.watchResultMock}>
-            <DashboardMock />
-          </div>
-        </div>
+function Movement({
+  roman,
+  eyebrow,
+  title,
+  intro,
+  id,
+  children,
+}: {
+  roman: string;
+  eyebrow: string;
+  title: string;
+  intro?: React.ReactNode;
+  id?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={s.movement} id={id}>
+      <header className={s.movementHead}>
+        <div className={s.movementRoman} aria-hidden>{roman}</div>
+        <span className={s.movementEyebrow}>{eyebrow}</span>
+        <h2 className={s.movementTitle}>{title}</h2>
+        {intro ? <p className={s.movementIntro}>{intro}</p> : null}
+      </header>
+      <div className={s.movementBody}>
+        {children}
       </div>
     </section>
   );
@@ -1262,29 +1288,6 @@ const PILLARS: Array<{ name: string; title: string; body: string }> = [
     body: 'Pure python semantics. Your editor, your types, your debugger. Nothing hidden.',
   },
 ];
-
-function PillarsSection() {
-  return (
-    <section className={s.pillarsSec} id="pillars">
-      <div className={s.pillarsHead}>
-        <span className={s.pillarsEyebrow}>and by the way —</span>
-        <h2 className={s.pillarsTitle}>
-          The same 30-line program is also…
-        </h2>
-      </div>
-      <div className={s.pillarsGrid}>
-        {PILLARS.map((p, i) => (
-          <article key={p.name} className={s.pillar}>
-            <span className={s.pillarIndex}>[{String(i + 1).padStart(2, '0')}]</span>
-            <span className={s.pillarName}>{p.name}</span>
-            <h3 className={s.pillarTitle}>{p.title}</h3>
-            <p className={s.pillarBody}>{p.body}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 /* ============================================================================
  * Page
@@ -1327,31 +1330,84 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* ---------- watch this example: the 30-LOC live example ---------- */}
-        <WatchThisRun />
+        {/* ---------- the story: hero pours into three movements ---------- */}
+        <div className={s.story}>
+          <div className={s.storyRail} aria-hidden />
 
-        {/* ---------- the model ---------- */}
-        <section className={s.modelSec} id="model">
-          <div className={s.modelHead}>
-            <span className={s.modelLabel}>the model</span>
-            <h2 className={s.modelThesis}>
-              Values, and a way to change them.
-            </h2>
-          </div>
+          <Movement
+            id="watch"
+            roman={ROMAN[0]}
+            eyebrow="watch this example"
+            title="Thirty lines. One bracket."
+            intro={
+              <>
+                A persistent counter, a live browser dashboard.
+                <b> Same Refs, three Fabrics, one bracket.</b>
+              </>
+            }
+          >
+            {WATCH_BEATS.map((b) => (
+              <Scene
+                key={b.num}
+                num={b.num}
+                kind={b.kind}
+                title={b.title}
+                code={b.code}
+              >
+                {b.body}
+              </Scene>
+            ))}
+            <Scene
+              num="05"
+              kind="the result"
+              title="A live browser tab, updating every second."
+              visual={
+                <div className={s.sceneMock}>
+                  <DashboardMock />
+                </div>
+              }
+            >
+              <>The counter loop ticks in the background. Every mutation
+              lands on the tab as text and as a point on the chart. No
+              framework, no glue, no sockets. It just runs.</>
+            </Scene>
+          </Movement>
 
-          {/* unified: 3 old APIs collapse into 1 Interaction */}
-          <div className={s.fanoutWrap}>
-            <TransitionViz />
-          </div>
+          <Movement
+            id="model"
+            roman={ROMAN[1]}
+            eyebrow="the model"
+            title="Values, and a way to change them."
+            intro={
+              <>
+                A field on a browser tab, a value on disk, a number in memory.
+                <b> Nu updates all three with one move.</b>
+              </>
+            }
+          >
+            <div className={s.movementViz}>
+              <TransitionViz />
+            </div>
+          </Movement>
 
-          <p className={s.modelCaption}>
-            A field on a browser tab, a value on disk, a number in memory —
-            <b> Nu updates all three with one move.</b>
-          </p>
-        </section>
-
-        {/* ---------- and by the way — the pillars ---------- */}
-        <PillarsSection />
+          <Movement
+            id="pillars"
+            roman={ROMAN[2]}
+            eyebrow="and by the way"
+            title="The same 30-line program is also…"
+          >
+            {PILLARS.map((p, i) => (
+              <Scene
+                key={p.name}
+                num={String(i + 1).padStart(2, '0')}
+                kind={p.name}
+                title={p.title}
+              >
+                {p.body}
+              </Scene>
+            ))}
+          </Movement>
+        </div>
 
         {/* ---------- deep dive: fabrics ---------- */}
         <section className={s.deepSec} id="fabrics">
@@ -1384,36 +1440,33 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ---------- getting started ---------- */}
-        <section className={s.stepsSec} id="start">
-          <div className={s.stepsHead}>
+        {/* ---------- getting started — flat grid, hairline-only, no cards ---------- */}
+        <section className={s.qsSec} id="start">
+          <div className={s.qsHead}>
             <div>
-              <div className={s.stepsLabel}>getting started</div>
-              <h2 className={s.stepsTitle}>Six steps. All the way to a shipped app.</h2>
+              <div className={s.qsLabel}>getting started</div>
+              <h2 className={s.qsTitle}>Six steps. All the way to a shipped app.</h2>
             </div>
-            <div className={s.stepsProgress}>
+            <div className={s.qsMeta}>
               <b>06</b> steps · <b>~5</b> min read
             </div>
           </div>
-          <div className={s.stepsList}>
+
+          <div className={s.qsGrid}>
             {STEPS.map((st) => (
-              <article key={st.n} className={s.step}>
-                <div className={s.stepHead}>
-                  <span className={s.stepNumeral}>{st.numeral}</span>
-                  <div className={s.stepMeta}>
-                    <span className={s.stepN}>{st.n}</span>
-                    <h3 className={s.stepTitle}>{st.title}</h3>
-                  </div>
-                  <span className={s.stepPin}>{st.pin}</span>
-                </div>
-                <div className={s.stepBody}>
-                  <Code src={st.code} />
-                </div>
-                <div className={s.stepTwist}>
-                  <div className={s.twistLabel}>the twist</div>
-                  <p className={s.twistLine}>{st.twist}</p>
-                  <p className={s.twistBody}>{st.twistBody}</p>
-                </div>
+              <article
+                key={st.n}
+                id={`step-${st.numeral}`}
+                className={s.qsCell}
+              >
+                <span className={s.qsIndex}>[{st.numeral}]</span>
+                <span className={s.qsKind}>{st.pin}</span>
+                <h3 className={s.qsCellTitle}>{st.title}</h3>
+                <GutterCode src={st.code} />
+                <p className={s.qsTwist}>
+                  <span className={s.qsTwistLead}>{st.twist}</span>{' '}
+                  {st.twistBody}
+                </p>
               </article>
             ))}
           </div>

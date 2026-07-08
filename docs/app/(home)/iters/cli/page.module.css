@@ -1,0 +1,713 @@
+/* =============================================================================
+ * Nu landing (CLI iter) — terminal / man-page aesthetic
+ * ==========================================================================*/
+
+.root {
+  --nu-accent:       #5b21b6;
+  --nu-accent-2:     #7c3aed;
+  --nu-accent-soft:  rgba(91, 33, 182, 0.10);
+  --nu-accent-wash:  rgba(91, 33, 182, 0.045);
+  --nu-accent-line:  rgba(91, 33, 182, 0.28);
+  --nu-accent-glow:  rgba(91, 33, 182, 0.22);
+
+  --nu-code-bg:   color-mix(in oklab, var(--color-fd-muted) 70%, transparent);
+  --nu-code-bg-2: color-mix(in oklab, var(--color-fd-muted) 40%, transparent);
+  --nu-chrome-bg: color-mix(in oklab, var(--color-fd-muted) 55%, transparent);
+  --nu-rule:      var(--color-fd-border);
+  --nu-rule-2:    color-mix(in oklab, var(--color-fd-border) 55%, transparent);
+  --nu-ink:       var(--color-fd-foreground);
+  --nu-ink-2:     var(--color-fd-muted-foreground);
+  --nu-ink-3:     color-mix(in oklab, var(--color-fd-muted-foreground) 65%, transparent);
+  --nu-ink-4:     color-mix(in oklab, var(--color-fd-muted-foreground) 40%, transparent);
+
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas,
+               "Liberation Mono", monospace;
+
+  --pad-x: clamp(20px, 3.5vw, 48px);
+
+  color: var(--nu-ink);
+  background: var(--color-fd-background);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+:global(html.dark) .root {
+  --nu-accent:      #a78bfa;
+  --nu-accent-2:    #c4b5fd;
+  --nu-accent-soft: rgba(167, 139, 250, 0.14);
+  --nu-accent-wash: rgba(167, 139, 250, 0.06);
+  --nu-accent-line: rgba(167, 139, 250, 0.32);
+  --nu-accent-glow: rgba(167, 139, 250, 0.28);
+}
+
+.shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  border-left: 1px solid var(--nu-rule);
+  border-right: 1px solid var(--nu-rule);
+}
+
+/* Everything in this page has hard corners */
+.shell *,
+.shell *::before,
+.shell *::after {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* =============================================================================
+ * Blinking caret
+ * ==========================================================================*/
+@keyframes blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  vertical-align: text-bottom;
+  background: var(--nu-accent);
+  margin-left: 6px;
+  animation: blink 1s steps(1) infinite;
+}
+
+/* =============================================================================
+ * TOP BAR — tmux status strip
+ * ==========================================================================*/
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px var(--pad-x);
+  background: var(--nu-accent);
+  color: var(--color-fd-background);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--nu-rule);
+}
+.topBarCell {
+  padding: 0 8px;
+  white-space: nowrap;
+}
+.topBarSpacer {
+  flex: 1;
+}
+.topBarBlink {
+  animation: blink 1.4s steps(1) infinite;
+  font-weight: 700;
+}
+
+/* =============================================================================
+ * HERO — man page
+ * ==========================================================================*/
+.hero {
+  padding: 0 0 clamp(40px, 6vh, 72px);
+  border-bottom: 1px solid var(--nu-rule);
+}
+
+.manHeader {
+  display: flex;
+  justify-content: space-between;
+  padding: 24px var(--pad-x) 8px;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  color: var(--nu-ink-3);
+  border-bottom: 1px dashed var(--nu-rule-2);
+}
+
+.wordmark {
+  padding: 32px var(--pad-x) 12px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 1.9vw, 20px);
+  line-height: 1.05;
+  letter-spacing: 0;
+  color: var(--nu-accent);
+  white-space: pre;
+  overflow-x: auto;
+  font-weight: 800;
+}
+
+.heroManBlock {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 20px;
+  padding: 10px var(--pad-x);
+  border-top: 1px dashed var(--nu-rule-2);
+}
+
+.heroManLabel {
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: var(--nu-ink-3);
+  padding-top: 3px;
+}
+
+.heroManValue {
+  color: var(--nu-ink);
+  font-size: 16px;
+}
+
+.heroManValue b {
+  color: var(--nu-accent);
+  font-weight: 700;
+}
+
+.heroManLink {
+  color: var(--nu-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-style: dotted;
+}
+
+.heroTagline {
+  font-size: clamp(20px, 2.6vw, 30px);
+  font-weight: 700;
+  color: var(--nu-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.15;
+  flex-wrap: wrap;
+}
+
+.heroPrompt {
+  color: var(--nu-accent);
+  font-weight: 800;
+}
+
+.accent {
+  color: var(--nu-accent);
+  font-weight: 800;
+}
+
+.heroCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1.5px solid var(--nu-accent);
+  color: var(--nu-accent);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: background 120ms ease;
+}
+.heroCta:hover {
+  background: var(--nu-accent-soft);
+}
+.heroCtaBracket {
+  color: var(--nu-accent);
+  opacity: 0.7;
+  font-weight: 900;
+}
+.heroCtaArrow {
+  font-weight: 800;
+}
+
+.divider {
+  display: block;
+  margin: 20px 0 0;
+  padding: 0 var(--pad-x);
+  color: var(--nu-rule);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.dividerSm {
+  display: block;
+  margin: 12px 0;
+  padding: 0;
+  color: var(--nu-rule);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.dividerAscii {
+  display: block;
+  margin: 20px var(--pad-x);
+  color: var(--nu-ink-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.25;
+  overflow-x: auto;
+  white-space: pre;
+  user-select: none;
+}
+
+/* =============================================================================
+ * SECTIONS
+ * ==========================================================================*/
+.section {
+  padding: clamp(48px, 6vw, 80px) var(--pad-x);
+  border-bottom: 1px solid var(--nu-rule);
+}
+
+.sectionHead {
+  margin-bottom: 32px;
+}
+
+.sectionEyebrow {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  color: var(--nu-ink-3);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.sectionEyebrowDot {
+  color: var(--nu-accent);
+  opacity: 0.7;
+}
+
+.sectionTitle {
+  font-family: var(--font-mono);
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 800;
+  color: var(--nu-ink);
+  margin: 0 0 12px;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+
+.sectionHash {
+  color: var(--nu-accent);
+  font-weight: 800;
+  margin-right: 8px;
+}
+
+.sectionIntro {
+  color: var(--nu-ink-2);
+  font-size: 15px;
+  max-width: 780px;
+  margin: 0;
+}
+.sectionIntro b {
+  color: var(--nu-ink);
+  font-weight: 700;
+}
+
+/* =============================================================================
+ * TERM PANE — terminal window with tmux status
+ * ==========================================================================*/
+.term {
+  border: 1px solid var(--nu-rule);
+  background: var(--color-fd-background);
+  overflow: hidden;
+  font-family: var(--font-mono);
+}
+
+.termHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--nu-code-bg);
+  border-bottom: 1px solid var(--nu-rule);
+  font-size: 11px;
+  color: var(--nu-ink-3);
+  letter-spacing: 0.06em;
+}
+.termHeadPath {
+  color: var(--nu-ink-2);
+  padding-right: 8px;
+  border-right: 1px solid var(--nu-rule-2);
+}
+.termHeadSpacer {
+  flex: 1;
+}
+.termHeadTab {
+  color: var(--nu-accent);
+  font-weight: 700;
+  padding: 0 8px;
+  border-left: 1px solid var(--nu-rule-2);
+  border-right: 1px solid var(--nu-rule-2);
+}
+.termHeadRange {
+  color: var(--nu-ink-3);
+  padding-left: 8px;
+  letter-spacing: 0.18em;
+}
+
+.termBody {
+  padding: 14px 8px 14px 0;
+  overflow-x: auto;
+  background: var(--color-fd-background);
+}
+
+.termFoot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--nu-accent);
+  color: var(--color-fd-background);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: lowercase;
+  border-top: 1px solid var(--nu-rule);
+}
+.termFootSection {
+  padding: 0 6px;
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+}
+.termFootSection:last-child {
+  border-right: 0;
+}
+.termFootSpacer {
+  flex: 1;
+}
+
+/* =============================================================================
+ * CODE
+ * ==========================================================================*/
+.code {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--nu-ink);
+  background: transparent;
+  white-space: pre;
+  overflow-x: auto;
+}
+.codeLine {
+  display: block;
+  padding: 0;
+}
+.codeGutter {
+  display: inline-block;
+  width: 34px;
+  padding-right: 6px;
+  text-align: right;
+  color: var(--nu-ink-4);
+  user-select: none;
+}
+.codeSep {
+  display: inline-block;
+  width: 12px;
+  color: var(--nu-rule);
+  user-select: none;
+  padding-right: 8px;
+}
+.codeText {
+  display: inline;
+}
+.codeKw { color: var(--nu-accent); font-weight: 700; }
+.codeSt { color: var(--nu-ink-2); }
+.codeOp { color: var(--nu-accent); font-weight: 700; }
+.codeCm { color: var(--nu-ink-3); font-style: italic; }
+
+/* =============================================================================
+ * WATCH beats — code pane on top, man page on bottom (no floating cards)
+ * ==========================================================================*/
+.beats {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.beat {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .beat {
+    grid-template-columns: 1fr;
+  }
+}
+
+.manpage {
+  border-left: 2px solid var(--nu-accent);
+  padding: 4px 0 4px 18px;
+}
+
+.manpageHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.manpageBeat {
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: var(--nu-accent);
+  font-weight: 800;
+}
+
+.manpageSep {
+  color: var(--nu-rule);
+}
+
+.manpageKind {
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: var(--nu-ink-3);
+}
+
+.manpageEntry {
+  margin: 12px 0;
+}
+
+.manpageLabel {
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  color: var(--nu-ink-3);
+  margin-bottom: 4px;
+}
+
+.manpageValue {
+  font-size: 14.5px;
+  color: var(--nu-ink);
+  padding-left: 8px;
+}
+
+.manpageValue b {
+  color: var(--nu-accent);
+  font-weight: 700;
+}
+
+/* =============================================================================
+ * RESULT — ASCII dashboard
+ * ==========================================================================*/
+.result {
+  margin-top: 48px;
+}
+
+.resultLead {
+  margin-bottom: 12px;
+}
+
+.resultHead {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.resultTag {
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: var(--nu-accent);
+  font-weight: 800;
+}
+
+.resultKind {
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: var(--nu-ink-3);
+}
+
+.resultTitle {
+  font-family: var(--font-mono);
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 700;
+  color: var(--nu-ink);
+  margin: 0;
+}
+
+.asciiDashboard {
+  margin: 0;
+  padding: 24px 16px;
+  border: 1px solid var(--nu-rule);
+  background: var(--nu-code-bg-2);
+  color: var(--nu-ink);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.4;
+  white-space: pre;
+  overflow-x: auto;
+}
+.asciiAccent { color: var(--nu-accent); font-weight: 700; }
+.asciiAccentBold { color: var(--nu-accent); font-weight: 900; font-size: 1.15em; }
+.asciiDim { color: var(--nu-ink-3); }
+
+/* =============================================================================
+ * MODEL section
+ * ==========================================================================*/
+.modelWrap {
+  border: 1px solid var(--nu-rule);
+  background: var(--color-fd-background);
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.modelSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 780px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.modelCaption {
+  margin: 20px 0 0;
+  color: var(--nu-ink-2);
+  font-size: 15px;
+}
+.modelCaption b {
+  color: var(--nu-ink);
+  font-weight: 700;
+}
+
+/* =============================================================================
+ * PILLARS — shell-script listing
+ * ==========================================================================*/
+.pillarsEyebrow {
+  color: var(--nu-accent);
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  margin: 8px 0 4px;
+}
+
+.pillarsHeader {
+  display: block;
+  margin: 24px 0 4px;
+  padding: 0;
+  color: var(--nu-ink-3);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.pillarsRule {
+  display: block;
+  margin: 0;
+  color: var(--nu-rule);
+  font-size: 12px;
+  line-height: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.pillarsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pillar {
+  padding: 14px 0;
+  border-bottom: 1px dashed var(--nu-rule-2);
+}
+.pillar:last-child {
+  border-bottom: 0;
+}
+
+.pillarRow {
+  display: grid;
+  grid-template-columns: 60px 180px 1fr;
+  gap: 10px;
+  align-items: baseline;
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 700px) {
+  .pillarRow {
+    grid-template-columns: 60px 1fr;
+  }
+  .pillarRow > .pillarTitle {
+    grid-column: 1 / -1;
+    padding-left: 60px;
+  }
+}
+
+.pillarIdx {
+  color: var(--nu-ink-3);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.pillarName {
+  color: var(--nu-accent);
+  font-weight: 800;
+  font-size: 15px;
+  white-space: pre;
+}
+
+.pillarTitle {
+  color: var(--nu-ink);
+  font-weight: 700;
+  font-size: 15.5px;
+}
+
+.pillarBody {
+  padding-left: 60px;
+  margin-top: 6px;
+  color: var(--nu-ink-2);
+  font-size: 14px;
+}
+
+.pillarBodyLead {
+  color: var(--nu-rule);
+  font-weight: 800;
+}
+
+.pillarsFoot {
+  padding-top: 16px;
+  color: var(--nu-ink-2);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* =============================================================================
+ * FOOTER
+ * ==========================================================================*/
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  padding: 24px var(--pad-x);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--nu-ink-2);
+}
+.footerCell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.footerLabel {
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--nu-ink-3);
+}
+.footer a {
+  color: var(--nu-accent);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--nu-accent-line);
+}
+.footer a:hover {
+  color: var(--nu-accent-2);
+}
