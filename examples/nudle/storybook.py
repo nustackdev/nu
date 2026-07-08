@@ -13,8 +13,7 @@ from typing import ClassVar
 
 import nu
 import nu.virtuals as nv
-from nu import ReactForever
-from nu import nudle
+from nu import ReactForever, nudle
 
 
 # ---- Ref customizations -----------------------------------------------------
