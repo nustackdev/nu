@@ -1,35 +1,20 @@
-#!/usr/bin/env python3
 """Storybook -- one-page tour of every nudle component, with variations.
 
 One Index, one Page, sectioned by component family. Most cells are static
 (snapshotted once on mount) so the variations are easy to read. The live
 chart, sparkline, gauge, and the interactive section exercise the dynamic
 interactions.
-
-Run:
-    nudle run examples/storybook.py
-    # or, with hot reload:
-    nudle dev examples/storybook.py
-
-Then open http://127.0.0.1:8080.
 """
 
 from __future__ import annotations
 
-from contextlib import contextmanager
-from typing import TYPE_CHECKING, ClassVar
+import asyncio
+from typing import ClassVar
 
 import nu
 import nu.virtuals as nv
 from nu import ReactForever
-from nu.virtuals.presets import rocksdb_storage_inmemory
-from virtuals import Navigator
-
 from nu import nudle
-
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator
 
 
 # ---- Ref customizations -----------------------------------------------------
@@ -1013,7 +998,7 @@ on_form_submit = ReactForever(
 
 # ---- Compose ----------------------------------------------------------------
 
-app = (
+ui = (
     App.title.store("nudle storybook")
     >> showcase_snapshot
     >> options_snapshot
@@ -1031,9 +1016,12 @@ app = (
     )
 )
 
+tree = nu.With(
+    nu.v.presets.rocksdb_navigator_inmemory(".dbstorybook"),
+    nu.nd.presets.server(ui),
+    body=nu.ForeverDo(nu.Delay(3600)),  # everything above already ticks inside ui; just hold the server open
+)
 
-@contextmanager
-def context() -> Iterator[nu.Context]:
-    """Open rocksdb storage and yield a bound Context."""
-    with rocksdb_storage_inmemory(".dbstorybook") as storage:
-        yield nu.Context().bind(Navigator, Navigator(storage))
+
+if __name__ == "__main__":
+    asyncio.run(nu.arun(tree))
