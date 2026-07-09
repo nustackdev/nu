@@ -17,6 +17,7 @@ from .dict import DictRef
 from .dictshape import ShapesDictRef
 from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
 from .kh57 import Kh57Ref
+from .kh57shape import Kh57ShapesRef
 from .list import ListRef
 from .listshape import ShapesListRef
 from .primitives import (
@@ -59,6 +60,7 @@ __all__ = [
     "IntRef",
     "ItemRef",
     "Kh57Ref",
+    "Kh57ShapesRef",
     "ListRef",
     "PathRef",
     "PercentageRef",
