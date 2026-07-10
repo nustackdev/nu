@@ -1,0 +1,22 @@
+/* =============================================================================
+ * Shared micro-animations for inline SVG marks.
+ * Kept minimal: single subtle pulse. prefers-reduced-motion kills it.
+ * ==========================================================================*/
+@keyframes nuMarkPulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+.pulse {
+  animation: nuMarkPulse 3.2s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes nuMarkBlink {
+  0%, 60%, 100% { opacity: 1; }
+  70%, 90%      { opacity: 0.35; }
+}
+.blink {
+  animation: nuMarkBlink 2.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse, .blink { animation: none; }
+}

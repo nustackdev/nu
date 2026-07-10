@@ -1,11 +1,11 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import { appName, gitConfig } from './shared';
+import { NustackMark } from '@/components/marks/NustackMark';
+import { gitConfig } from './shared';
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      // JSX supported
-      title: appName,
+      title: <NustackMark />,
     },
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
   };

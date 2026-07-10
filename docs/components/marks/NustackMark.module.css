@@ -1,0 +1,16 @@
+.mark {
+  font: inherit;
+  letter-spacing: inherit;
+  white-space: nowrap;
+}
+.nu {
+  color: var(--nu-accent, #af78ff);
+  font-weight: inherit;
+}
+.stack {
+  color: var(--nu-ink, currentColor);
+  font-weight: inherit;
+}
+:global(html.dark) .nu {
+  color: var(--nu-accent, #c19eff);
+}

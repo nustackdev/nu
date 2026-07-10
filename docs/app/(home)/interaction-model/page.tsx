@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { NustackMark } from '@/components/marks/NustackMark';
 import s from '../nustack.module.css';
 
 export default function InteractionModelPage() {
@@ -11,23 +12,24 @@ export default function InteractionModelPage() {
           <div className={s.heroGrid} aria-hidden />
           <div className={s.heroGlow} aria-hidden />
 
-          <div className={s.heroBody}>
-            <div className={s.heroEyebrow}>
-              <span>the model · draft · wip</span>
-              <span className={s.heroCaret} aria-hidden />
+          <div className={s.heroInner}>
+            <div className={s.heroBody}>
+              <div className={s.heroEyebrow}>
+                <span>the model · draft · wip</span>
+              </div>
+              <h1 className={s.heroClaim}>
+                The <b>interaction model</b>.
+              </h1>
+              <p className={s.heroMission}>
+                A small theory of computation — Refs, Interactions, Fabrics — and
+                a way to compose them. This page will hold the full write-up.
+                For now, it&apos;s a stub. The material lives in{' '}
+                <code>nu/model/</code> and will be compiled here.
+              </p>
             </div>
-            <h1 className={s.heroClaim}>
-              The <b>interaction model</b>.
-            </h1>
-            <p className={s.heroMission}>
-              A small theory of computation — Refs, Interactions, Fabrics — and
-              a way to compose them. This page will hold the full write-up.
-              For now, it&apos;s a stub. The material lives in{' '}
-              <code>nu/model/</code> and will be compiled here.
-            </p>
-            <div className={s.heroActions}>
+            <div className={s.heroAside}>
               <Link href="/" className={s.heroCtaGhost}>
-                <span>back to nustack</span>
+                <span>back to <NustackMark /></span>
                 <ArrowRight size={13} aria-hidden />
               </Link>
               <Link href="/nu" className={s.heroCtaGhost}>

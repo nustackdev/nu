@@ -1,6 +1,13 @@
 import Link from 'next/link';
+import type { ComponentType } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { GithubMark } from '@/components/marks/GithubMark';
+import { NustackMark } from '@/components/marks/NustackMark';
+import { OneLineSvg } from '@/components/marks/variations/interaction/one-line';
+import { StackLayersSvg } from '@/components/marks/variations/apps/stack-layers';
+import { AppShelfSvg } from '@/components/marks/variations/apps/app-shelf';
+import { NulogMockSvg } from '@/components/marks/variations/apps/nulog-mock';
+import { NuspaceMockSvg } from '@/components/marks/NuspaceMock';
 import s from './nustack.module.css';
 
 type App = {
@@ -8,6 +15,7 @@ type App = {
   title: string;
   body: string;
   href: string;
+  Viz: ComponentType;
 };
 
 const APPS: App[] = [
@@ -16,12 +24,14 @@ const APPS: App[] = [
     title: 'Logging built on Nu shapes.',
     body: 'Structured logs as first-class Refs. One shape end-to-end — capture, query, ship.',
     href: '/nulog',
+    Viz: NulogMockSvg,
   },
   {
     name: 'nuspace',
     title: 'A workspace for building on Nu.',
     body: 'Apps, tabs, and data live under one roof. Nudle-native. Composable, inspectable.',
     href: '/nuspace',
+    Viz: NuspaceMockSvg,
   },
 ];
 
@@ -37,32 +47,43 @@ export default function HomePage() {
           <div className={s.heroGrid} aria-hidden />
           <div className={s.heroGlow} aria-hidden />
 
-          <div className={s.heroBody}>
-            <div className={s.heroEyebrow}>
-              <span>todo — iterate copy soon</span>
-              <span className={s.heroCaret} aria-hidden />
+          <div className={s.heroInner}>
+            <div className={s.heroBody}>
+              <div className={s.heroEyebrow}>
+                <span>todo — iterate copy soon</span>
+              </div>
+              <h1 className={s.heroClaim}>
+                <b>assemble</b> software, not write it.
+              </h1>
+              <p className={s.heroMission}>
+                Systems today are written line by line. We think they should be{' '}
+                <b>assembled</b> — from primitives that compose cleanly and
+                hold up under real load. The model is called the{' '}
+                <b>interaction model</b>, the implementation in Python is{' '}
+                <b>Nu</b>, apps compose from it.
+              </p>
             </div>
-            <h1 className={s.heroClaim}>
-              Rebuilding the <b>ground layer</b> of software.
-            </h1>
-            <p className={s.heroMission}>
-              Systems today are written line by line. We think they should be{' '}
-              <b>assembled</b> — from a small, honest set of pieces that
-              compose cleanly and hold up under real load. That work lives in
-              Nu, and in every product, tool, and fabric that grows on top of
-              it.
-            </p>
-            <div className={s.heroActions}>
+            <div className={s.heroAside}>
+              <div className={s.heroAsideViz} aria-hidden>
+                <StackLayersSvg />
+              </div>
               <Link href="/nu" className={s.heroCta}>
                 <span>meet Nu</span>
                 <ArrowRight size={14} className={s.heroCtaArrow} aria-hidden />
+              </Link>
+              <Link href="/interaction-model" className={s.heroCtaGhost}>
+                <span>the model</span>
+                <ArrowRight size={13} aria-hidden />
               </Link>
               <a
                 href="https://github.com/nustackdev"
                 className={s.heroCtaGhost}
               >
-                <GithubMark size={13} />
-                <span>github.com/nustackdev</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                  <GithubMark size={13} />
+                  github.com/nustackdev
+                </span>
+                <ArrowRight size={13} aria-hidden />
               </a>
             </div>
           </div>
@@ -70,54 +91,87 @@ export default function HomePage() {
 
         {/* ---------- interaction model ---------- */}
         <section className={s.section} id="interaction-model">
-          <div className={s.sectionLabel}>the model</div>
-          <h2 className={s.sectionTitle}>We build on the interaction model.</h2>
-          <p className={s.sectionIntro}>
-            A tiny theory of computation: <b>Refs</b> address values,{' '}
-            <b>Interactions</b> change them, <b>Fabrics</b> are the worlds
-            those addresses resolve inside. Everything else at nustack is a
-            faithful implementation of it.
-          </p>
-          <div className={s.modelActions}>
-            <Link href="/interaction-model" className={s.heroCtaGhost}>
-              <span>read the model</span>
-              <ArrowRight size={13} aria-hidden />
-            </Link>
+          <div className={s.sectionSplit}>
+            <div className={`${s.sectionCol}`}>
+              <div className={s.sectionLabel}>the model</div>
+              <h2 className={s.sectionTitle}>We build on the interaction model.</h2>
+              <p className={s.sectionIntro}>
+                A tiny theory of computation: <b>Refs</b> address values,{' '}
+                <b>Interactions</b> change them, <b>Fabrics</b> are the worlds
+                those addresses resolve inside. Everything else at{' '}
+                <NustackMark /> is a faithful implementation of it.
+              </p>
+              <div className={s.modelActions}>
+                <Link href="/interaction-model" className={s.heroCtaGhost}>
+                  <span>read the model</span>
+                  <ArrowRight size={13} aria-hidden />
+                </Link>
+              </div>
+            </div>
+            <aside className={s.sectionVisual} data-slot="interaction-model">
+              <OneLineSvg />
+            </aside>
           </div>
         </section>
 
         {/* ---------- Nu — implementation of the model ---------- */}
         <section className={s.section} id="nu">
-          <div className={s.sectionLabel}>the platform</div>
-          <h2 className={s.sectionTitle}>Nu — the interaction model, made real.</h2>
-          <p className={s.sectionIntro}>
-            Nu is our main tool. It ships the model in pure Python and grows
-            it into a small stack of <b>fabrics</b> ({FABRICS.join(' · ')}){' '}
-            — everything else we make stands on this.
-          </p>
-          <div className={s.modelActions}>
-            <Link href="/nu" className={s.heroCtaGhost}>
-              <span>meet Nu</span>
-              <ArrowRight size={13} aria-hidden />
-            </Link>
-            <Link href="/docs" className={s.heroCtaGhost}>
-              <span>the docs</span>
-              <ArrowRight size={13} aria-hidden />
-            </Link>
+          <div className={s.sectionSplit}>
+            <div className={`${s.sectionCol}`}>
+              <div className={s.sectionLabel}>the platform</div>
+              <h2 className={s.sectionTitle}>Nu — the interaction model, made real.</h2>
+              <p className={s.sectionIntro}>
+                Nu ships the model in pure Python and grows it into a small
+                stack of <b>fabrics</b> ({FABRICS.join(' · ')}) — everything
+                else we make stands on this.
+              </p>
+              <div className={s.modelActions}>
+                <Link href="/nu" className={s.heroCtaGhost}>
+                  <span>meet Nu</span>
+                  <ArrowRight size={13} aria-hidden />
+                </Link>
+                <Link href="/docs" className={s.heroCtaGhost}>
+                  <span>the docs</span>
+                  <ArrowRight size={13} aria-hidden />
+                </Link>
+              </div>
+            </div>
+            <aside className={s.sectionVisual}>
+              <div className={s.codeShell}>
+                <pre className={s.codeBlock}>
+<span className={s.cmt}>{'"""Basic Nu bracket-tree app: mem preset + tiny compute."""'}</span>
+{'\n\n'}
+<span className={s.kw}>from</span>{' __future__ '}<span className={s.kw}>import</span>{' annotations\n\n'}
+<span className={s.kw}>import</span>{' '}<span className={s.nu}>nu</span>{'\n\n\n'}
+<span className={s.kw}>class</span>{' Counter('}<span className={s.nu}>nu.Shape</span>{'):\n    value: '}<span className={s.nu}>nu.v.IntRef</span>{'\n\n\n'}
+{'tree = '}<span className={s.nu}>nu.With</span>{'(\n    '}<span className={s.nu}>nu.v.presets.memory_navigator</span>{'(),\n    body='}<span className={s.nu}>nu.v.Transaction</span>{'(Counter.value.store(0) >> Counter.value.store(Counter.value + 42))\n    >> '}<span className={s.nu}>nu.v.Snapshot</span>{'('}<span className={s.nu}>nu.print</span>{'(Counter.value)),\n)\n\n\n'}
+<span className={s.kw}>if</span>{' __name__ == '}<span className={s.str}>{"'__main__'"}</span>{':\n    '}<span className={s.nu}>nu.run</span>{'(tree)\n'}
+                </pre>
+                <div className={s.codeCaption}>examples/basic.py · 20 loc</div>
+              </div>
+            </aside>
           </div>
         </section>
 
         {/* ---------- apps ---------- */}
         <section className={s.section} id="apps">
-          <div className={s.sectionLabel}>apps</div>
-          <h2 className={s.sectionTitle}>Standalone apps built on Nu.</h2>
-          <p className={s.sectionIntro}>
-            The tools we ship for others. They share Nu&apos;s shape and
-            language — you learn one, you know them all.
-          </p>
+          <div className={`${s.sectionCol}`}>
+            <div className={s.sectionLabel}>apps</div>
+            <h2 className={s.sectionTitle}>Standalone apps built on Nu.</h2>
+            <p className={s.sectionIntro}>
+              The tools we ship for others. They share Nu&apos;s shape and
+              language — you learn one, you know them all.
+            </p>
+          </div>
+          <div className={s.sectionShelf} aria-hidden>
+            <AppShelfSvg />
+          </div>
           <div className={`${s.flatGrid} ${s.flatGridCols3}`}>
             {APPS.map((a) => (
               <Link key={a.name} href={a.href} className={s.flatCell}>
+                <div className={s.flatCellViz} aria-hidden>
+                  <a.Viz />
+                </div>
                 <span className={`${s.flatStatus} ${s.flatStatusLive}`}>live</span>
                 <span className={s.flatCellName}>{a.name}</span>
                 <h3 className={s.flatCellTitle}>{a.title}</h3>
@@ -146,9 +200,11 @@ export default function HomePage() {
           <div className={s.footerCell}>
             <span className={s.footerCellHead}>org</span>
             <span className={s.footerBrand}>
-              nu<em>stack</em>
+              <NustackMark />
             </span>
-            <span className={s.footerCellBody}>nustack © 2026</span>
+            <span className={s.footerCellBody}>
+              <NustackMark /> © 2026
+            </span>
           </div>
           <div className={s.footerCell}>
             <span className={s.footerCellHead}>explore</span>

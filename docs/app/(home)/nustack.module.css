@@ -78,18 +78,55 @@
   z-index: 1;
 }
 
-/* main body — single column, generous whitespace */
-.heroBody {
+/* inner — two-column at desktop: manifest left, actions right */
+.heroInner {
   position: relative;
   z-index: 2;
   padding: clamp(88px, 15vh, 168px) var(--nu-pad-x) clamp(80px, 13vh, 128px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.8fr);
+  gap: 56px;
+  align-items: end;
+}
+.heroBody {
   display: flex;
   flex-direction: column;
   gap: 28px;
-  max-width: 980px;
+  min-width: 0;
+}
+.heroAside {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: stretch;
+  min-width: 0;
+}
+.heroAsideViz {
+  width: 100%;
+  margin-bottom: 20px;
+  display: block;
+}
+.heroAsideViz svg { width: 100%; height: auto; display: block; }
+.heroAside .heroCta,
+.heroAside .heroCtaGhost {
+  justify-content: space-between;
+  margin-left: 0;
+  padding-left: 18px;
+  padding-right: 18px;
+  border: 1px solid var(--nu-rule);
+  border-radius: 2px;
+}
+.heroAside .heroCtaGhost { color: var(--nu-ink-2); }
+.heroAside .heroCtaGhost:hover { color: var(--nu-ink); border-color: var(--nu-ink-3); }
+@media (max-width: 900px) {
+  .heroInner {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    align-items: start;
+  }
 }
 
-/* eyebrow — mono tag with hairline lead + blinking caret */
+/* eyebrow — mono tag with hairline lead */
 .heroEyebrow {
   font-family: var(--font-mono);
   font-size: 11.5px;
@@ -106,16 +143,6 @@
   width: 22px;
   height: 1px;
   background: var(--nu-accent-2);
-}
-.heroCaret {
-  display: inline-block;
-  width: 7px;
-  height: 12px;
-  background: var(--nu-accent-2);
-  animation: nsBlink 1.05s step-end infinite;
-}
-@keyframes nsBlink {
-  50% { opacity: 0; }
 }
 
 /* the claim — the visual anchor */
@@ -258,6 +285,109 @@
 }
 
 /* =============================================================================
+ * SECTION SPLIT — left content column + right visual/code slot
+ * ==========================================================================*/
+.sectionSplit {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: stretch;
+}
+.sectionCol {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px var(--nu-pad-x);
+  min-width: 0;
+}
+.sectionCol .sectionLabel,
+.sectionCol .sectionTitle,
+.sectionCol .sectionIntro,
+.sectionCol .modelActions {
+  padding-left: 0;
+  padding-right: 0;
+}
+.sectionCol .sectionLabel { margin-bottom: 4px; }
+.sectionCol .sectionTitle { margin-bottom: 4px; }
+.sectionCol .sectionIntro { margin-bottom: 12px; }
+.sectionVisual {
+  padding: 28px var(--nu-pad-x);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  min-width: 0;
+  color: var(--nu-ink-3);
+  position: relative;
+}
+.sectionVisual svg { max-width: 100%; height: auto; display: block; }
+.sectionVisualPlaceholder {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--nu-ink-4);
+  border: 1px dashed var(--nu-rule);
+  padding: 40px 24px;
+  width: 100%;
+  text-align: center;
+}
+@media (max-width: 900px) {
+  .sectionSplit { grid-template-columns: 1fr; }
+  .sectionVisual { min-height: 240px; }
+}
+
+/* apps grid follows a split — breathing gap */
+.sectionSplit + .flatGrid { margin-top: clamp(40px, 6vh, 64px); }
+
+/* apps section — shelf viz below the section header */
+.sectionShelf {
+  padding: 8px var(--nu-pad-x) 0;
+  margin-bottom: clamp(32px, 5vh, 56px);
+}
+.sectionShelf svg { width: 100%; height: auto; max-width: 720px; display: block; margin: 0 auto; }
+
+/* =============================================================================
+ * CODE BLOCK — right-side Nu example
+ * ==========================================================================*/
+.codeBlock {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--nu-ink-2);
+  background: var(--nu-code-bg-2);
+  border: 1px solid var(--nu-rule);
+  border-radius: 2px;
+  padding: 20px 22px;
+  margin: 0;
+  overflow-x: auto;
+  width: 100%;
+  max-width: 460px;
+  white-space: pre;
+  tab-size: 4;
+}
+.codeBlock .kw { color: var(--nu-accent-2); }
+.codeBlock .nu { color: var(--nu-accent); }
+.codeBlock .str { color: var(--nu-ink-3); }
+.codeBlock .cmt { color: var(--nu-ink-4); font-style: italic; }
+.codeCaption {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--nu-ink-4);
+  margin-top: 12px;
+  text-align: right;
+}
+.codeShell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  max-width: 460px;
+}
+
+/* =============================================================================
  * FLAT GRID — same hairline seams pattern used across nu landing
  * ==========================================================================*/
 .flatGrid {
@@ -290,6 +420,13 @@
   color: inherit;
   transition: background .18s ease;
 }
+.flatCellViz {
+  margin: -8px -6px 6px;
+  border: 1px solid var(--nu-rule);
+  padding: 6px;
+  background: var(--color-fd-background);
+}
+.flatCellViz svg { width: 100%; height: auto; display: block; }
 a.flatCell:hover { background: var(--nu-accent-wash); }
 a.flatCell:hover .flatCellName { color: var(--nu-accent); }
 a.flatCell:hover .flatArrow { transform: translateX(2px); opacity: 1; }
@@ -436,10 +573,6 @@ a.flatCell:hover .flatArrow { transform: translateX(2px); opacity: 1; }
   display: flex;
   align-items: baseline;
   gap: 10px;
-}
-.footerBrand em {
-  font-style: normal;
-  color: var(--nu-accent);
 }
 @media (max-width: 720px) {
   .footer { grid-template-columns: 1fr; }
