@@ -1,0 +1,458 @@
+/* =============================================================================
+ * nustack landing — design tokens hoisted to ./_tokens.module.css
+ * Calm, org-oriented layout on top of the shared palette + flat-grid language.
+ * ==========================================================================*/
+.root {
+  composes: palette from './_tokens.module.css';
+  color: var(--nu-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  border-left: 1px solid var(--nu-rule);
+  border-right: 1px solid var(--nu-rule);
+}
+
+@keyframes nsFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero, .section { animation: nsFadeIn 0.6s ease-out both; }
+.section { animation-delay: 0.15s; }
+
+/* =============================================================================
+ * HERO — manifest: typography-driven, restrained, mostly empty
+ * ==========================================================================*/
+.hero {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  border-bottom: 1px solid var(--nu-rule);
+}
+
+/* fine line grid backdrop */
+.heroGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--nu-rule-2) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--nu-rule-2) 1px, transparent 1px);
+  background-size: 80px 80px;
+  background-position: -1px -1px;
+  mask-image: radial-gradient(ellipse 90% 100% at 22% 45%, black 8%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 100% at 22% 45%, black 8%, transparent 78%);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* accent glow — offset far right, keeps identity */
+.heroGlow {
+  position: absolute;
+  top: 32%;
+  right: -12%;
+  width: 62%;
+  aspect-ratio: 1 / 1;
+  background: radial-gradient(
+    circle,
+    var(--nu-accent-glow) 0%,
+    var(--nu-accent-soft) 22%,
+    transparent 60%
+  );
+  filter: blur(72px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.9;
+}
+
+/* soft fade top/bottom so grid + glow melt into the page */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, var(--color-fd-background) 0%, transparent 6%, transparent 94%, var(--color-fd-background) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* main body — single column, generous whitespace */
+.heroBody {
+  position: relative;
+  z-index: 2;
+  padding: clamp(88px, 15vh, 168px) var(--nu-pad-x) clamp(80px, 13vh, 128px);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 980px;
+}
+
+/* eyebrow — mono tag with hairline lead + blinking caret */
+.heroEyebrow {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--nu-accent-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  line-height: 1;
+}
+.heroEyebrow::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: var(--nu-accent-2);
+}
+.heroCaret {
+  display: inline-block;
+  width: 7px;
+  height: 12px;
+  background: var(--nu-accent-2);
+  animation: nsBlink 1.05s step-end infinite;
+}
+@keyframes nsBlink {
+  50% { opacity: 0; }
+}
+
+/* the claim — the visual anchor */
+.heroClaim {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.6rem, 6.5vw, 4.8rem);
+  line-height: 1.02;
+  letter-spacing: -0.048em;
+  margin: 0;
+  max-width: 18ch;
+  text-wrap: balance;
+  color: var(--nu-ink);
+}
+.heroClaim b {
+  color: var(--nu-accent);
+  font-weight: 700;
+  font-style: normal;
+}
+
+.heroMission {
+  font-family: var(--font-display);
+  font-size: clamp(15px, 1.35vw, 17px);
+  line-height: 1.65;
+  color: var(--nu-ink-2);
+  max-width: 60ch;
+  margin: 0;
+}
+.heroMission b { color: var(--nu-ink); font-weight: 600; }
+
+.heroActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 12px;
+}
+.heroCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px 13px 20px;
+  background: var(--nu-ink);
+  color: var(--color-fd-background);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  text-decoration: none;
+  border: 1px solid var(--nu-ink);
+  border-radius: 2px;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.heroCta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px -10px var(--nu-accent-glow);
+}
+.heroCtaArrow { transition: transform .2s ease; }
+.heroCta:hover .heroCtaArrow { transform: translateX(3px); }
+.heroCtaGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 6px;
+  color: var(--nu-ink-2);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  transition: color .18s ease, border-color .18s ease;
+  margin-left: 6px;
+}
+.heroCtaGhost:hover {
+  color: var(--nu-ink);
+  border-bottom-color: var(--nu-ink-3);
+}
+@media (max-width: 520px) {
+  .heroCtaGhost { margin-left: 0; }
+}
+
+/* =============================================================================
+ * SECTIONS — same rhythm as Nu landing
+ * ==========================================================================*/
+.section {
+  padding: clamp(56px, 8vh, 88px) 0;
+  border-top: 1px solid var(--nu-rule);
+}
+.sectionLabel {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--nu-accent-2);
+  margin: 0 0 12px;
+  padding: 0 var(--nu-pad-x);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sectionLabel::after {
+  content: "";
+  width: 40px;
+  height: 1px;
+  background: var(--nu-accent-2-line);
+}
+.sectionTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.4rem, 2.6vw, 1.95rem);
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+  line-height: 1.2;
+  color: var(--nu-ink);
+  max-width: 32ch;
+  text-wrap: balance;
+  padding: 0 var(--nu-pad-x);
+}
+.sectionIntro {
+  padding: 0 var(--nu-pad-x);
+  margin: 0 0 32px;
+  color: var(--nu-ink-2);
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  line-height: 1.6;
+  max-width: 68ch;
+}
+.sectionIntro b { color: var(--nu-ink); font-weight: 700; }
+
+/* interaction-model + Nu section — small calm action row */
+.modelActions {
+  padding: 0 var(--nu-pad-x);
+  margin-top: 8px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* =============================================================================
+ * FLAT GRID — same hairline seams pattern used across nu landing
+ * ==========================================================================*/
+.flatGrid {
+  display: grid;
+  gap: 1px;
+  background: var(--nu-rule);
+  border-top: 1px solid var(--nu-rule);
+  border-bottom: 1px solid var(--nu-rule);
+}
+.flatGridCols4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.flatGridCols3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1000px) {
+  .flatGridCols3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .flatGridCols4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .flatGridCols3,
+  .flatGridCols4 { grid-template-columns: 1fr; }
+}
+
+.flatCell {
+  background: var(--color-fd-background);
+  padding: 24px 22px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  transition: background .18s ease;
+}
+a.flatCell:hover { background: var(--nu-accent-wash); }
+a.flatCell:hover .flatCellName { color: var(--nu-accent); }
+a.flatCell:hover .flatArrow { transform: translateX(2px); opacity: 1; }
+.flatCellSoon { opacity: 0.6; }
+.flatCellSoon:hover { background: var(--color-fd-background); cursor: default; }
+.flatCellWide { grid-column: 1 / -1; }
+.flatCellSpan2 { grid-column: span 2; }
+@media (max-width: 640px) {
+  .flatCellSpan2 { grid-column: 1; }
+}
+
+.flatIndex {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  color: var(--nu-accent-2);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.flatStatus {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--nu-rule);
+  color: var(--nu-ink-3);
+  background: transparent;
+}
+.flatStatusLive {
+  color: var(--nu-accent-2);
+  border-color: var(--nu-accent-2-line);
+  background: var(--nu-accent-2-wash);
+}
+.flatCellName {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+  color: var(--nu-ink);
+  line-height: 1;
+  transition: color .18s ease;
+}
+.flatCellTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.005em;
+  margin: 0;
+  color: var(--nu-ink);
+  line-height: 1.3;
+  padding-right: 60px;
+}
+.flatCellBody {
+  color: var(--nu-ink-2);
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin: 0;
+}
+.flatCellBody b { color: var(--nu-accent); font-weight: 600; }
+.flatCellBody code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 1px 5px;
+  background: var(--nu-code-bg-2);
+  border-radius: 3px;
+}
+.flatArrow {
+  margin-top: auto;
+  padding-top: 4px;
+  color: var(--nu-ink-3);
+  opacity: 0.7;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: transform .18s ease, opacity .18s ease;
+}
+.flatArrowSoon {
+  margin-top: auto;
+  padding-top: 4px;
+  color: var(--nu-ink-4);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* =============================================================================
+ * FOOTER — same style as Nu landing
+ * ==========================================================================*/
+.footer {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--nu-rule);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--nu-ink-3);
+}
+.footerCell {
+  padding: 28px var(--nu-pad-x) 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-right: 1px solid var(--nu-rule);
+}
+.footerCell:last-child { border-right: none; }
+.footerCellHead {
+  font-size: 10.5px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--nu-ink-4);
+  margin-bottom: 4px;
+}
+.footerCellBody {
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  color: var(--nu-ink-2);
+  line-height: 1.5;
+}
+.footerCellBody a {
+  color: var(--nu-ink);
+  text-decoration: none;
+  transition: color .15s ease;
+}
+.footerCellBody a:hover { color: var(--nu-accent); }
+.footerBrand {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: -0.03em;
+  color: var(--nu-ink);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.footerBrand em {
+  font-style: normal;
+  color: var(--nu-accent);
+}
+@media (max-width: 720px) {
+  .footer { grid-template-columns: 1fr; }
+  .footerCell {
+    border-right: none;
+    border-bottom: 1px solid var(--nu-rule);
+  }
+  .footerCell:last-child { border-bottom: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root, .root * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

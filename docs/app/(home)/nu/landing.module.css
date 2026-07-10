@@ -1,54 +1,12 @@
 /* =============================================================================
- * Nu landing — design tokens
+ * Nu landing — design tokens hoisted to ../_tokens.module.css
  * ==========================================================================*/
 .root {
-  /* primary — purple. carries Nu's identity everywhere except the quickstart. */
-  --nu-accent:       #5b21b6;
-  --nu-accent-soft:  rgba(91, 33, 182, 0.10);
-  --nu-accent-wash:  rgba(91, 33, 182, 0.045);
-  --nu-accent-line:  rgba(91, 33, 182, 0.28);
-  --nu-accent-glow:  rgba(91, 33, 182, 0.22);
-
-  /* secondary — blue. section-local accent for "getting started" (quickstart). */
-  --nu-accent-2:      #1d4ed8;
-  --nu-accent-2-soft: rgba(29, 78, 216, 0.10);
-  --nu-accent-2-wash: rgba(29, 78, 216, 0.045);
-  --nu-accent-2-line: rgba(29, 78, 216, 0.28);
-  --nu-accent-2-glow: rgba(29, 78, 216, 0.22);
-
-  --nu-code-bg:   color-mix(in oklab, var(--color-fd-muted) 70%, transparent);
-  --nu-code-bg-2: color-mix(in oklab, var(--color-fd-muted) 40%, transparent);
-  --nu-chrome-bg: color-mix(in oklab, var(--color-fd-muted) 55%, transparent);
-  --nu-rule:      var(--color-fd-border);
-  --nu-rule-2:    color-mix(in oklab, var(--color-fd-border) 55%, transparent);
-  --nu-ink:       var(--color-fd-foreground);
-  --nu-ink-2:     var(--color-fd-muted-foreground);
-  --nu-ink-3:     color-mix(in oklab, var(--color-fd-muted-foreground) 65%, transparent);
-  --nu-ink-4:     color-mix(in oklab, var(--color-fd-muted-foreground) 40%, transparent);
-
-  --font-display: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --font-mono:    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
-
-  --nu-pad-x:     clamp(24px, 4vw, 56px);
-  --nu-tick:      10px;                  /* corner mark leg length */
-  --nu-dot-grid:  radial-gradient(circle at 1px 1px, var(--color-fd-border) 1.1px, transparent 1.4px);
-  --nu-dot-size:  22px 22px;
+  composes: palette from '../_tokens.module.css';
+  --nu-tick: 10px;                        /* corner mark leg length (Nu-only) */
 
   color: var(--nu-ink);
   font-variant-numeric: tabular-nums;
-}
-:global(html.dark) .root {
-  --nu-accent:      #a78bfa;
-  --nu-accent-soft: rgba(167, 139, 250, 0.14);
-  --nu-accent-wash: rgba(167, 139, 250, 0.06);
-  --nu-accent-line: rgba(167, 139, 250, 0.32);
-  --nu-accent-glow: rgba(167, 139, 250, 0.28);
-
-  --nu-accent-2:      #93c5fd;
-  --nu-accent-2-soft: rgba(147, 197, 253, 0.14);
-  --nu-accent-2-wash: rgba(147, 197, 253, 0.06);
-  --nu-accent-2-line: rgba(147, 197, 253, 0.32);
-  --nu-accent-2-glow: rgba(147, 197, 253, 0.28);
 }
 
 .shell {
@@ -1373,7 +1331,7 @@
   font-size: 12px;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--nu-accent);
+  color: var(--nu-accent-2);
   margin: 0 0 12px;
   padding: 0 var(--nu-pad-x);
   display: flex;
@@ -1384,7 +1342,7 @@
   content: "";
   width: 40px;
   height: 1px;
-  background: var(--nu-accent-line);
+  background: var(--nu-accent-2-line);
 }
 .sectionTitle {
   font-family: var(--font-display);
@@ -1457,8 +1415,9 @@
   font-family: var(--font-mono);
   font-size: 10.5px;
   letter-spacing: 0.22em;
-  color: var(--nu-ink-4);
+  color: var(--nu-accent-2);
   text-transform: uppercase;
+  font-weight: 600;
 }
 .flatKind {
   font-family: var(--font-mono);

@@ -1,4 +1,4 @@
-export const appName = 'Nu';
+export const appName = 'nustack';
 export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';

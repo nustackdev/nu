@@ -1,0 +1,49 @@
+/* =============================================================================
+ * Shared palette + typography tokens. Used by nustack landing, Nu landing, and
+ * the interaction-model page. Consumed via `composes:` in each module's .root.
+ * ==========================================================================*/
+.palette {
+  /* primary — purple. carries nustack identity everywhere. */
+  --nu-accent:       #af78ff;
+  --nu-accent-soft:  rgba(175, 120, 255, 0.13);
+  --nu-accent-wash:  rgba(175, 120, 255, 0.06);
+  --nu-accent-line:  rgba(175, 120, 255, 0.36);
+  --nu-accent-glow:  rgba(175, 120, 255, 0.28);
+
+  /* secondary — blue. section labels, indices, status pills. */
+  --nu-accent-2:      #4b9bff;
+  --nu-accent-2-soft: rgba(75, 155, 255, 0.13);
+  --nu-accent-2-wash: rgba(75, 155, 255, 0.05);
+  --nu-accent-2-line: rgba(75, 155, 255, 0.36);
+  --nu-accent-2-glow: rgba(75, 155, 255, 0.28);
+
+  --nu-code-bg:   color-mix(in oklab, var(--color-fd-muted) 70%, transparent);
+  --nu-code-bg-2: color-mix(in oklab, var(--color-fd-muted) 40%, transparent);
+  --nu-chrome-bg: color-mix(in oklab, var(--color-fd-muted) 55%, transparent);
+  --nu-rule:      var(--color-fd-border);
+  --nu-rule-2:    color-mix(in oklab, var(--color-fd-border) 55%, transparent);
+  --nu-ink:       var(--color-fd-foreground);
+  --nu-ink-2:     var(--color-fd-muted-foreground);
+  --nu-ink-3:     color-mix(in oklab, var(--color-fd-muted-foreground) 65%, transparent);
+  --nu-ink-4:     color-mix(in oklab, var(--color-fd-muted-foreground) 40%, transparent);
+
+  --font-display: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-mono:    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  --nu-pad-x:     clamp(24px, 4vw, 56px);
+  --nu-dot-grid:  radial-gradient(circle at 1px 1px, var(--color-fd-border) 1.1px, transparent 1.4px);
+  --nu-dot-size:  22px 22px;
+}
+:global(html.dark) .palette {
+  --nu-accent:      #c19eff;
+  --nu-accent-soft: rgba(193, 158, 255, 0.16);
+  --nu-accent-wash: rgba(193, 158, 255, 0.07);
+  --nu-accent-line: rgba(193, 158, 255, 0.38);
+  --nu-accent-glow: rgba(193, 158, 255, 0.32);
+
+  --nu-accent-2:      #4b9bff;
+  --nu-accent-2-soft: rgba(75, 155, 255, 0.16);
+  --nu-accent-2-wash: rgba(75, 155, 255, 0.07);
+  --nu-accent-2-line: rgba(75, 155, 255, 0.38);
+  --nu-accent-2-glow: rgba(75, 155, 255, 0.32);
+}
