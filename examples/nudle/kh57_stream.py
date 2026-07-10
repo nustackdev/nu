@@ -55,6 +55,7 @@ ui = (
                 )
             )
             | Dashboard.count.store(nu.StrQuery(Series.height)),
+            
         )
         >> nu.Delay(0.1),
     )
