@@ -6,7 +6,7 @@ const statusConfig = {
 	connecting: { label: "connecting", variant: "outline" as const },
 	connected: { label: "connected", variant: "default" as const },
 	reconnecting: { label: "reconnecting...", variant: "outline" as const },
-	disconnected: { label: "disconnected", variant: "destructive" as const },
+	disconnected: { label: "disconnected", variant: "danger" as const },
 };
 
 function App() {
