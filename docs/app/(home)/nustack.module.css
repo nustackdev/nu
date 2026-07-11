@@ -150,6 +150,7 @@
 .navBrand {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   color: var(--nu-ink);
   text-decoration: none;
   font-family: var(--font-display);
@@ -310,11 +311,23 @@
   line-height: 0.92;
   letter-spacing: -0.068em;
   color: var(--nu-ink);
-  margin: 0;
+  margin: 70px 0 0;
   text-transform: lowercase;
   position: relative;
   z-index: 3;
   isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18em;
+}
+.heroWordmarkLogo {
+  flex: none;
+  /* Align optical center of the mark with the visual midline of the
+     lowercase letters. Bold display type sits with ascenders top-heavy;
+     nudge the mark down by ~0.06em so its diagonal reads level with the
+     "nu" x-height rather than the ascender line. */
+  transform: translateY(0.06em);
+  stroke-width: 1.25;
 }
 
 .heroConcept {

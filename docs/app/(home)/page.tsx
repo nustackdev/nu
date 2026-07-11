@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ComponentType } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { NustackMark } from '@/components/marks/NustackMark';
+import { NustackLogo } from '@/components/marks/NustackLogo';
 import { HeroWordmark } from '@/components/marks/HeroWordmark';
 import { OneLineSvg } from '@/components/marks/variations/interaction/one-line';
 import { StackLayersSvg } from '@/components/marks/variations/apps/stack-layers';
@@ -56,6 +57,7 @@ export default function HomePage() {
         <header className={s.hero}>
           <div className={s.heroInner}>
             <div className={s.heroWordmark}>
+              <NustackLogo size="0.92em" className={s.heroWordmarkLogo} />
               <HeroWordmark />
             </div>
             <h1 className={s.heroClaim}>
