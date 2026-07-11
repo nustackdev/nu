@@ -10,16 +10,7 @@ Two npm packages ship from this workspace: `@nustackdev/ui-core` and `@nustackde
    - Expiration: pick a horizon (a year is fine, calendar it)
    - **Enable "Bypass 2FA"** so CI can publish unattended.
 2. Add the token as GitHub repo secret `NPM_TOKEN` at https://github.com/nustackdev/nu/settings/secrets/actions.
-3. That's it. CI workflows are in `.github/workflows/`.
-
-## Continuous checks
-
-`.github/workflows/ci.yml` runs on every PR and every push to `main` that touches `src/nu/ui/**`:
-
-- `npm ci`
-- `npm run typecheck` across all workspaces
-- `npm run check` (biome)
-- storybook build as smoke test
+3. That's it. Publish workflows are in `.github/workflows/`.
 
 ## Publishing
 
