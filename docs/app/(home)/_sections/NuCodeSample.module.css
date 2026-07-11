@@ -1,50 +1,110 @@
 /* =============================================================================
- * NuCodeSample — the syntax-highlighted example that lives on the visual side
- * of §2 (the Nu section). Kept dark and quiet so the surrounding card wash
- * carries the color; only tokens carry accent.
+ * Flat IDE-style code block.
+ *
+ * .ide            outer chrome — thin bordered card, single flat bg
+ * .ideTabs        tab strip at top: active-file tab + right-side meta
+ * .ideBody        two-column flex: sticky gutter + scrollable code column
+ * .ideGutter      line numbers, dim, right-aligned, tabular figures
+ * .ideCode        actual code, monospaced, line-by-line divs so gutter aligns
+ *
+ * Token colors:
+ *   .kw  keywords  → blue accent (--nu-accent-2)
+ *   .nu  nu API    → purple accent (--nu-accent)
+ *   .str strings   → silver ink
+ *   .cmt comments  → dim ink, italic
+ *
+ * The strict two-color rule holds: only blue + purple + silver inks.
  * ==========================================================================*/
 
-.codeShell {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0;
+.ide {
   width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
-  background:
-    linear-gradient(180deg, rgba(107, 168, 255, 0.05), rgba(255, 255, 255, 0.01)),
-    rgba(0, 0, 0, 0.35);
+  background: rgba(15, 15, 18, 0.72);
   overflow: hidden;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  font-family: var(--font-mono);
+  color: var(--nu-ink-2);
 }
 
-.codeBlock {
-  font-family: var(--font-mono);
+/* ---- tab strip ---- */
+.ideTabs {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.28);
+  min-height: 34px;
+}
+.ideTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: var(--nu-ink-3);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+.ideTabActive {
+  color: var(--nu-ink);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 -1px 0 var(--nu-accent);
+}
+.ideTabDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--nu-accent);
+  flex: none;
+}
+.ideMeta {
+  margin-left: auto;
+  padding: 0 18px;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: var(--nu-ink-4);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ---- body ---- */
+.ideBody {
+  display: flex;
+  align-items: stretch;
+  padding: 16px 0;
+  min-width: 0;
+}
+.ideGutter {
+  flex: none;
+  padding: 0 14px 0 20px;
+  text-align: right;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--nu-ink-4);
   font-size: 12.5px;
-  line-height: 1.65;
+  line-height: 1.7;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+.ideLineNo {
+  display: block;
+}
+.ideCode {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 20px;
+  font-size: 12.5px;
+  line-height: 1.7;
   color: var(--nu-ink-2);
-  background: transparent;
-  border: none;
-  padding: 22px 24px;
-  margin: 0;
   overflow-x: auto;
-  width: 100%;
+}
+.ideLine {
+  display: block;
+  min-height: 1.7em;
   white-space: pre;
   tab-size: 4;
 }
-.codeBlock .kw  { color: #6ba8ff; }
-.codeBlock .nu  { color: #c19eff; }
-.codeBlock .str { color: #a8c9ff; }
-.codeBlock .cmt { color: var(--nu-ink-4); font-style: italic; }
 
-.codeCaption {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--nu-ink-4);
-  padding: 8px 16px 10px;
-  text-align: right;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
+/* token colors — sourced from _tokens.module.css palette */
+.kw  { color: var(--nu-accent-2); }
+.nu  { color: var(--nu-accent); }
+.str { color: var(--nu-ink); }
+.cmt { color: var(--nu-ink-4); font-style: italic; }

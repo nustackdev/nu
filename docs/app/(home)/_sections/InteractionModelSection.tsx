@@ -32,11 +32,11 @@ export function InteractionModelSection() {
           </SectionIntro>
           <ActionRow>
             <Cta href="/docs">
-              <span>read the model</span>
+              <span>Read the model</span>
             </Cta>
             <CtaGhost href="https://github.com/nustackdev">
               <GithubMark size={14} />
-              <span>github</span>
+              <span>GitHub</span>
             </CtaGhost>
           </ActionRow>
         </SectionCol>

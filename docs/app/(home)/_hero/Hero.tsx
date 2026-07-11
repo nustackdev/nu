@@ -16,15 +16,13 @@ export function Hero() {
           <HeroWordmark />
         </div>
         <h1 className={s.heroClaim}>
-          <b>assemble</b> software, not write it.
+          Assemble software, not write it.
         </h1>
         <p className={s.heroMission}>
-          Systems today are written line by line. We think they should be{' '}
-          <b>assembled</b> — from primitives that compose cleanly and hold up
-          under real load. The model is called the{' '}
-          <span className={s.heroConcept}>interaction model</span>, the
-          implementation in Python is <span className={s.heroConcept}>Nu</span>,
-          apps compose from it.
+          Systems today are written line by line. We think they should be
+          assembled, from primitives that compose cleanly and hold up under real
+          load. The model is called the interaction model, the implementation in
+          Python is Nu, apps compose from it.
         </p>
         <div className={s.heroVizFrame} aria-hidden>
           <StackLayersSvg />

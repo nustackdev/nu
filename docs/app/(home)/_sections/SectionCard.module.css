@@ -28,35 +28,14 @@
   position: relative;
   padding: clamp(28px, 3vw, 44px);
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: linear-gradient(
-    180deg,
-    rgba(20, 20, 24, 0.72) 0%,
-    rgba(28, 28, 34, 0.62) 100%
-  );
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(22, 22, 26, 0.72);
   backdrop-filter: blur(14px) saturate(115%);
   -webkit-backdrop-filter: blur(14px) saturate(115%);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.03) inset,
     0 8px 24px -14px rgba(0, 0, 0, 0.5);
   overflow: hidden;
-}
-/* Section-hue bloom scoped inside the card. */
-.sectionCard::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(600px 400px at 8% 0%, var(--sec-wash), transparent 60%);
-  opacity: 0.9;
-}
-.section[data-hue="s2"] .sectionCard::before {
-  background: radial-gradient(600px 500px at 92% 0%, var(--sec-wash), transparent 60%);
-}
-.section[data-hue="s3"] .sectionCard::before {
-  background:
-    radial-gradient(700px 500px at 5% 100%, var(--sec-wash), transparent 60%),
-    radial-gradient(500px 400px at 95% 0%, rgba(193, 158, 255, 0.08), transparent 60%);
 }
 .sectionCard > * {
   position: relative;
@@ -113,12 +92,12 @@
 }
 .cta {
   color: var(--nu-ink);
-  border-color: var(--sec-line, var(--nu-accent-2-line));
-  background: var(--sec-wash, var(--nu-accent-2-wash));
+  border-color: var(--nu-accent-line);
+  background: var(--nu-accent-wash);
 }
 .cta:hover {
-  background: var(--sec-soft, var(--nu-accent-2-soft));
-  border-color: var(--sec-accent, var(--nu-accent-2));
+  background: var(--nu-accent-soft);
+  border-color: var(--nu-accent);
 }
 .ctaGhost {
   color: var(--nu-ink-2);
@@ -131,7 +110,7 @@
   background: rgba(255, 255, 255, 0.05);
 }
 .ctaArrow {
-  color: var(--sec-accent, var(--nu-accent-2));
+  color: var(--nu-accent);
   display: inline-flex;
   align-items: center;
 }

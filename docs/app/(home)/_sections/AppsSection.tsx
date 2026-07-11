@@ -35,11 +35,11 @@ export function AppsSection() {
           </SectionIntro>
           <ActionRow>
             <Cta href="#apps-grid">
-              <span>browse apps</span>
+              <span>Browse apps</span>
             </Cta>
             <CtaGhost href="https://github.com/nustackdev">
               <GithubMark size={14} />
-              <span>github</span>
+              <span>GitHub</span>
             </CtaGhost>
           </ActionRow>
         </SectionCol>
@@ -62,7 +62,7 @@ export function AppsSection() {
             <h3 className={s.flatCellTitle}>{a.title}</h3>
             <p className={s.flatCellBody}>{a.body}</p>
             <span className={s.flatArrow}>
-              <span>open</span>
+              <span>Open</span>
               <ArrowRight size={12} aria-hidden />
             </span>
           </Link>

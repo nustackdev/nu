@@ -28,10 +28,10 @@ export function FloatingNav() {
         <span className={s.navDivider} aria-hidden />
 
         <nav className={s.navLinks}>
-          <a href="#interaction-model">the model</a>
+          <a href="#interaction-model">The model</a>
           <a href="#nu">Nu</a>
-          <a href="#apps">apps</a>
-          <Link href="/docs">docs</Link>
+          <a href="#apps">Apps</a>
+          <Link href="/docs">Docs</Link>
         </nav>
 
         <div className={s.navRight}>
@@ -42,7 +42,7 @@ export function FloatingNav() {
             aria-label="search"
           >
             <Search size={13} aria-hidden />
-            <span className={s.navSearchLabel}>search</span>
+            <span className={s.navSearchLabel}>Search</span>
             <span className={s.navSearchKbd} aria-hidden>
               <kbd>{isMac ? '⌘' : 'Ctrl'}</kbd>
               <kbd>K</kbd>

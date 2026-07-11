@@ -50,21 +50,6 @@
   stroke-width: 1.25;
 }
 
-.heroConcept {
-  display: inline-block;
-  padding: 1px 10px 2px;
-  border: 1px solid var(--nu-accent-line);
-  border-radius: 3px;
-  background: var(--nu-accent-wash);
-  color: var(--nu-accent);
-  font-weight: 600;
-  font-family: var(--font-display);
-  font-size: 0.94em;
-  letter-spacing: -0.005em;
-  line-height: 1.2;
-  transform: translateY(-1px);
-}
-
 .heroVizFrame {
   position: relative;
   width: 100%;
@@ -101,12 +86,6 @@
   text-wrap: balance;
   color: var(--nu-ink);
 }
-.heroClaim b {
-  color: var(--nu-accent);
-  font-weight: 700;
-  font-style: normal;
-}
-
 .heroMission {
   font-family: var(--font-display);
   font-size: clamp(15.5px, 1.4vw, 18px);
@@ -116,7 +95,6 @@
   margin: 0 auto;
   text-align: center;
 }
-.heroMission b { color: var(--nu-ink); font-weight: 700; }
 
 .heroCtaGhost {
   display: inline-flex;
