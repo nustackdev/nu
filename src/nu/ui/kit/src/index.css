@@ -1,23 +1,99 @@
+/* =============================================================================
+ * Nustack UI kit tokens.
+ *
+ * Layer 1  primitives         raw 12-step hex scales (purple, blue, red,
+ *                             yellow, green, blue-info, gray)
+ * Layer 2  semantic (:root)   role tokens for LIGHT theme
+ * Layer 2  semantic (.dark)   same names remapped for DARK theme
+ * Layer 3  @theme inline      exposes semantic + typography + spacing +
+ *                             radius + motion tokens as Tailwind v4 utility
+ *                             names (bg-canvas, text-primary, ring, ...)
+ *
+ * Rule: every primitive imports via the Tailwind utility name generated from
+ * layer 3. Layer 1 hexes live here and nowhere else.
+ *
+ * Source docs (do not paraphrase without re-reading):
+ *   progress/tasks/task-123-nu-ui-reorg/design/palette.md
+ *   progress/tasks/task-123-nu-ui-reorg/design/typography.md
+ *   progress/tasks/task-123-nu-ui-reorg/design/space-radius.md
+ *   progress/tasks/task-123-nu-ui-reorg/design/motion.md
+ *   progress/tasks/task-123-nu-ui-reorg/design/a11y.md
+ * ==========================================================================*/
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
-/* =============================================================================
- * Nustack UI kit — token layers.
- *
- * L1  primitives          raw hex scales (purple, blue, neutral)
- * L2  semantic (:root)    role tokens (bg, text, border, accent) for LIGHT
- * L3  semantic (.dark)    same names remapped for DARK
- * L4  @theme inline       exposes semantic tokens as Tailwind v4 utilities
- *
- * Consumer rule: components reference L2/L4 names only (bg-canvas, text-primary,
- * accent). Never touch primitives directly outside this file.
+/* ============================== @font-face ================================
+ * Self-hosted WOFF2 sits under ./fonts/. Files from Inter 4.1
+ * (github.com/rsms/inter) and JetBrains Mono 2.304 (github.com/JetBrains/
+ * JetBrainsMono).
  * ==========================================================================*/
 
-/* ============================== L1: primitives ============================ */
+@font-face {
+	font-family: "Inter";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("./fonts/Inter-Regular.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Inter";
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url("./fonts/Inter-Medium.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Inter";
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url("./fonts/Inter-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Inter";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url("./fonts/Inter-Bold.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "JetBrains Mono";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("./fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "JetBrains Mono";
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url("./fonts/JetBrainsMono-Medium.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "JetBrains Mono";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url("./fonts/JetBrainsMono-Bold.woff2") format("woff2");
+}
+
+/* ============================== L1: primitives ============================
+ * 12-step scales. Anchor at step 500. Step 25 is included per palette.md but
+ * rarely referenced by hand (color-mix produces most washes).
+ * ==========================================================================*/
 :root {
-	/* purple — #7a4ce0 anchor */
+	/* purple: primary identity, anchor #7a4ce0 */
+	--purple-25:  #faf7ff;
 	--purple-50:  #f4efff;
 	--purple-100: #e6dbff;
 	--purple-200: #cdb6ff;
@@ -28,8 +104,10 @@
 	--purple-700: #5732a3;
 	--purple-800: #43277f;
 	--purple-900: #2b1857;
+	--purple-950: #180a3a;
 
-	/* blue — #3e72e7 anchor */
+	/* blue: secondary identity, anchor #3e72e7 */
+	--blue-25:  #f7faff;
 	--blue-50:  #eaf1fe;
 	--blue-100: #d0defc;
 	--blue-200: #a3befa;
@@ -40,137 +118,415 @@
 	--blue-700: #294fa4;
 	--blue-800: #1f3d80;
 	--blue-900: #142857;
+	--blue-950: #0a1735;
 
-	/* neutral — cool gray, tuned for both themes */
-	--gray-0:   #ffffff;
-	--gray-50:  #f7f7f9;
-	--gray-100: #eeeef2;
-	--gray-200: #d9d9e0;
-	--gray-300: #b3b3bf;
-	--gray-400: #8c8c99;
-	--gray-500: #666672;
-	--gray-600: #47474f;
-	--gray-700: #2d2d33;
-	--gray-800: #1c1c20;
-	--gray-900: #121216;
+	/* red: status danger, anchor #e5484d */
+	--red-25:  #fef7f7;
+	--red-50:  #fdecec;
+	--red-100: #fbd7d8;
+	--red-200: #f7a8a9;
+	--red-300: #f0797b;
+	--red-400: #e95d5f;
+	--red-500: #e5484d;
+	--red-600: #cf3438;
+	--red-700: #a82a2e;
+	--red-800: #7f2124;
+	--red-900: #4d1315;
+	--red-950: #2a090a;
+
+	/* yellow: status warning, anchor #f5b125 */
+	--yellow-25:  #fefaf0;
+	--yellow-50:  #fdf3d9;
+	--yellow-100: #fce4a6;
+	--yellow-200: #f9d072;
+	--yellow-300: #f7c04c;
+	--yellow-400: #f6b736;
+	--yellow-500: #f5b125;
+	--yellow-600: #d99716;
+	--yellow-700: #a97613;
+	--yellow-800: #7d5610;
+	--yellow-900: #4b3308;
+	--yellow-950: #291b04;
+
+	/* green: status ok, anchor #21d08b */
+	--green-25:  #f0fbf6;
+	--green-50:  #d3f5e5;
+	--green-100: #a3ecc9;
+	--green-200: #6fdead;
+	--green-300: #45d095;
+	--green-400: #2ac788;
+	--green-500: #21d08b;
+	--green-600: #1baa73;
+	--green-700: #17845c;
+	--green-800: #106044;
+	--green-900: #093a29;
+	--green-950: #051f16;
+
+	/* blue-info: status info, anchor #3b82f6 (split from accent-2) */
+	--blue-info-25:  #f5f9ff;
+	--blue-info-50:  #e7f0ff;
+	--blue-info-100: #cddffe;
+	--blue-info-200: #a4c2fd;
+	--blue-info-300: #7ba3fb;
+	--blue-info-400: #588cf7;
+	--blue-info-500: #3b82f6;
+	--blue-info-600: #2a6ee0;
+	--blue-info-700: #1f57b5;
+	--blue-info-800: #17418a;
+	--blue-info-900: #0f2b5a;
+	--blue-info-950: #071630;
+
+	/* gray: cool neutral, no single anchor */
+	--gray-0:    #ffffff;
+	--gray-50:   #f7f7f9;
+	--gray-100:  #eeeef2;
+	--gray-200:  #d9d9e0;
+	--gray-300:  #b3b3bf;
+	--gray-400:  #8c8c99;
+	--gray-500:  #666672;
+	--gray-600:  #47474f;
+	--gray-700:  #2d2d33;
+	--gray-800:  #1c1c20;
+	--gray-900:  #121216;
 	--gray-1000: #0a0a0d;
 }
 
-/* ============================== L2: semantic (light) ====================== */
+/* ============================== L2: semantic (light) ======================
+ * Role tokens. VSCode-shaped: role names describe intent, hex is per theme.
+ * ==========================================================================*/
 :root {
-	--radius:            0.5rem;
+	/* backgrounds */
+	--bg-canvas:              var(--gray-50);
+	--bg-surface:             var(--gray-0);
+	--bg-elevated:            var(--gray-0);
+	--bg-sunken:              var(--gray-100);
+	--bg-overlay:             rgba(15, 15, 20, 0.55);
 
-	--bg-canvas:         var(--gray-50);
-	--bg-surface:        var(--gray-0);
-	--bg-elevated:       var(--gray-0);
-	--bg-sunken:         var(--gray-100);
+	/* text; text-primary bumped brighter per palette.md §3 */
+	--text-primary:           var(--gray-900);
+	--text-secondary:         var(--gray-600);
+	--text-muted:             var(--gray-500);
+	--text-inverse:           var(--gray-0);
 
-	--text-primary:      var(--gray-900);
-	--text-secondary:    var(--gray-600);
-	--text-muted:        var(--gray-400);
-	--text-inverse:      var(--gray-0);
+	/* borders */
+	--border-subtle:          var(--gray-100);
+	--border-default:         var(--gray-200);
+	--border-strong:          var(--gray-300);
 
-	--border-subtle:     var(--gray-200);
-	--border-default:    var(--gray-300);
-	--border-strong:     var(--gray-400);
+	/* accent (purple primary) */
+	--accent:                 var(--purple-500);
+	--accent-fg:              var(--gray-0);
+	--accent-wash:            color-mix(in oklab, var(--purple-500) 8%,  transparent);
+	--accent-soft:            color-mix(in oklab, var(--purple-500) 18%, transparent);
+	--accent-line:            color-mix(in oklab, var(--purple-500) 42%, transparent);
+	--accent-hover:           var(--purple-600);
 
-	--accent:            var(--purple-500);
-	--accent-fg:         var(--gray-0);
-	--accent-wash:       color-mix(in oklab, var(--purple-500) 8%, transparent);
-	--accent-soft:       color-mix(in oklab, var(--purple-500) 18%, transparent);
-	--accent-line:       color-mix(in oklab, var(--purple-500) 42%, transparent);
-	--accent-hover:      var(--purple-600);
+	/* accent-2 (blue secondary) */
+	--accent-2:               var(--blue-500);
+	--accent-2-fg:            var(--gray-0);
+	--accent-2-wash:          color-mix(in oklab, var(--blue-500) 8%,  transparent);
+	--accent-2-soft:          color-mix(in oklab, var(--blue-500) 18%, transparent);
+	--accent-2-line:          color-mix(in oklab, var(--blue-500) 42%, transparent);
+	--accent-2-hover:         var(--blue-600);
 
-	--accent-2:          var(--blue-500);
-	--accent-2-fg:       var(--gray-0);
-	--accent-2-wash:     color-mix(in oklab, var(--blue-500) 8%, transparent);
-	--accent-2-soft:     color-mix(in oklab, var(--blue-500) 18%, transparent);
-	--accent-2-line:     color-mix(in oklab, var(--blue-500) 42%, transparent);
-	--accent-2-hover:    var(--blue-600);
+	/* status danger */
+	--status-danger:          var(--red-500);
+	--status-danger-fg:       var(--gray-0);
+	--status-danger-wash:     color-mix(in oklab, var(--red-500) 10%, transparent);
+	--status-danger-line:     color-mix(in oklab, var(--red-500) 40%, transparent);
 
-	--ring:              var(--purple-500);
+	/* status warn; dark ink on fill because yellow can't hold white text */
+	--status-warn:            var(--yellow-500);
+	--status-warn-fg:         var(--yellow-950);
+	--status-warn-wash:       color-mix(in oklab, var(--yellow-500) 10%, transparent);
+	--status-warn-line:       color-mix(in oklab, var(--yellow-500) 40%, transparent);
+
+	/* status ok; dark ink on fill for the same reason as warn */
+	--status-ok:              var(--green-500);
+	--status-ok-fg:           var(--green-950);
+	--status-ok-wash:         color-mix(in oklab, var(--green-500) 10%, transparent);
+	--status-ok-line:         color-mix(in oklab, var(--green-500) 40%, transparent);
+
+	/* status info */
+	--status-info:            var(--blue-info-500);
+	--status-info-fg:         var(--gray-0);
+	--status-info-wash:       color-mix(in oklab, var(--blue-info-500) 10%, transparent);
+	--status-info-line:       color-mix(in oklab, var(--blue-info-500) 40%, transparent);
+
+	/* focus ring */
+	--ring:                   var(--purple-500);
+
+	/* chart categorical palette (8 slots) picks from the anchors + tuned
+	 * extras. Ordered so the first 4 read as accent, accent-2, ok, warn for
+	 * the common up-to-4-series case. */
+	--chart-1: var(--purple-500);
+	--chart-2: var(--blue-500);
+	--chart-3: var(--green-500);
+	--chart-4: var(--yellow-500);
+	--chart-5: var(--red-500);
+	--chart-6: var(--blue-info-500);
+	--chart-7: #d946ef;
+	--chart-8: #14b8a6;
 }
 
-/* ============================== L3: semantic (dark) ======================= */
+/* ============================== L2: semantic (dark) =======================
+ * Same role names, per-theme hex. Alpha whites on borders so they compose
+ * over any elevated surface (Linear technique).
+ * ==========================================================================*/
 .dark {
-	--bg-canvas:         var(--gray-1000);
-	--bg-surface:        var(--gray-900);
-	--bg-elevated:       var(--gray-800);
-	--bg-sunken:         #06060a;
+	/* backgrounds */
+	--bg-canvas:              var(--gray-1000);
+	--bg-surface:             var(--gray-800);
+	--bg-elevated:            var(--gray-700);
+	--bg-sunken:              #06060a;
+	--bg-overlay:             rgba(0, 0, 0, 0.65);
 
-	--text-primary:      #f5f5f9;
-	--text-secondary:    var(--gray-300);
-	--text-muted:        var(--gray-400);
-	--text-inverse:      var(--gray-900);
+	/* text; primary bumped from #f5f5f9 to #f9fafc (18.85:1 on canvas) */
+	--text-primary:           #f9fafc;
+	--text-secondary:         #c2c4cd;
+	--text-muted:             #85878f;
+	--text-inverse:           var(--gray-900);
 
-	--border-subtle:     rgba(255, 255, 255, 0.06);
-	--border-default:    rgba(255, 255, 255, 0.10);
-	--border-strong:     rgba(255, 255, 255, 0.18);
+	/* borders */
+	--border-subtle:          rgba(255, 255, 255, 0.06);
+	--border-default:         rgba(255, 255, 255, 0.10);
+	--border-strong:          rgba(255, 255, 255, 0.18);
 
-	--accent:            #a684ff;
-	--accent-fg:         var(--gray-1000);
-	--accent-wash:       color-mix(in oklab, #a684ff 12%, transparent);
-	--accent-soft:       color-mix(in oklab, #a684ff 22%, transparent);
-	--accent-line:       color-mix(in oklab, #a684ff 44%, transparent);
-	--accent-hover:      #b89bff;
+	/* accent lifts to a tuned purple-400 sibling on dark canvas */
+	--accent:                 #a684ff;
+	--accent-fg:              var(--gray-1000);
+	--accent-wash:            color-mix(in oklab, #a684ff 12%, transparent);
+	--accent-soft:            color-mix(in oklab, #a684ff 22%, transparent);
+	--accent-line:            color-mix(in oklab, #a684ff 44%, transparent);
+	--accent-hover:           #b89bff;
 
-	--accent-2:          #6b96f2;
-	--accent-2-fg:       var(--gray-1000);
-	--accent-2-wash:     color-mix(in oklab, #6b96f2 12%, transparent);
-	--accent-2-soft:     color-mix(in oklab, #6b96f2 22%, transparent);
-	--accent-2-line:     color-mix(in oklab, #6b96f2 44%, transparent);
-	--accent-2-hover:    #85a8f5;
+	/* accent-2 lifts by the same amount */
+	--accent-2:               #6b96f2;
+	--accent-2-fg:            var(--gray-1000);
+	--accent-2-wash:          color-mix(in oklab, #6b96f2 12%, transparent);
+	--accent-2-soft:          color-mix(in oklab, #6b96f2 22%, transparent);
+	--accent-2-line:          color-mix(in oklab, #6b96f2 44%, transparent);
+	--accent-2-hover:         #85a8f5;
 
-	--ring:              #a684ff;
+	/* status: one step lighter for lift-on-canvas */
+	--status-danger:          var(--red-300);
+	--status-danger-fg:       var(--red-950);
+	--status-danger-wash:     color-mix(in oklab, var(--red-300) 12%, transparent);
+	--status-danger-line:     color-mix(in oklab, var(--red-300) 40%, transparent);
+
+	--status-warn:            var(--yellow-300);
+	--status-warn-fg:         var(--yellow-950);
+	--status-warn-wash:       color-mix(in oklab, var(--yellow-300) 12%, transparent);
+	--status-warn-line:       color-mix(in oklab, var(--yellow-300) 40%, transparent);
+
+	--status-ok:              var(--green-300);
+	--status-ok-fg:           var(--green-950);
+	--status-ok-wash:         color-mix(in oklab, var(--green-300) 12%, transparent);
+	--status-ok-line:         color-mix(in oklab, var(--green-300) 40%, transparent);
+
+	--status-info:            var(--blue-info-300);
+	--status-info-fg:         var(--blue-info-950);
+	--status-info-wash:       color-mix(in oklab, var(--blue-info-300) 12%, transparent);
+	--status-info-line:       color-mix(in oklab, var(--blue-info-300) 40%, transparent);
+
+	/* focus ring lifts with accent */
+	--ring:                   #a684ff;
+
+	/* chart palette: lift each slot one step for dark canvas legibility */
+	--chart-1: #a684ff;
+	--chart-2: #6b96f2;
+	--chart-3: var(--green-300);
+	--chart-4: var(--yellow-300);
+	--chart-5: var(--red-300);
+	--chart-6: var(--blue-info-300);
+	--chart-7: #e879f9;
+	--chart-8: #2dd4bf;
 }
 
-/* ============================== L4: Tailwind v4 utilities ================= */
+/* ============================== L3: Tailwind v4 =========================== */
 @theme inline {
-	/* map semantic tokens onto Tailwind color slots */
-	--color-canvas:          var(--bg-canvas);
-	--color-surface:         var(--bg-surface);
-	--color-elevated:        var(--bg-elevated);
-	--color-sunken:          var(--bg-sunken);
+	/* backgrounds */
+	--color-bg-canvas:            var(--bg-canvas);
+	--color-bg-surface:           var(--bg-surface);
+	--color-bg-elevated:          var(--bg-elevated);
+	--color-bg-sunken:            var(--bg-sunken);
+	--color-bg-overlay:           var(--bg-overlay);
 
-	--color-fg:              var(--text-primary);
-	--color-fg-secondary:    var(--text-secondary);
-	--color-fg-muted:        var(--text-muted);
-	--color-fg-inverse:      var(--text-inverse);
+	/* text */
+	--color-text-primary:         var(--text-primary);
+	--color-text-secondary:       var(--text-secondary);
+	--color-text-muted:           var(--text-muted);
+	--color-text-inverse:         var(--text-inverse);
 
-	--color-border-subtle:   var(--border-subtle);
-	--color-border-default:  var(--border-default);
-	--color-border-strong:   var(--border-strong);
+	/* borders */
+	--color-border-subtle:        var(--border-subtle);
+	--color-border-default:       var(--border-default);
+	--color-border-strong:        var(--border-strong);
 
-	--color-accent:          var(--accent);
-	--color-accent-fg:       var(--accent-fg);
-	--color-accent-wash:     var(--accent-wash);
-	--color-accent-soft:     var(--accent-soft);
-	--color-accent-line:     var(--accent-line);
-	--color-accent-hover:    var(--accent-hover);
+	/* accent (purple primary) */
+	--color-accent:               var(--accent);
+	--color-accent-fg:            var(--accent-fg);
+	--color-accent-wash:          var(--accent-wash);
+	--color-accent-soft:          var(--accent-soft);
+	--color-accent-line:          var(--accent-line);
+	--color-accent-hover:         var(--accent-hover);
 
-	--color-accent-2:        var(--accent-2);
-	--color-accent-2-fg:     var(--accent-2-fg);
-	--color-accent-2-wash:   var(--accent-2-wash);
-	--color-accent-2-soft:   var(--accent-2-soft);
-	--color-accent-2-line:   var(--accent-2-line);
-	--color-accent-2-hover:  var(--accent-2-hover);
+	/* accent-2 (blue secondary) */
+	--color-accent-2:             var(--accent-2);
+	--color-accent-2-fg:          var(--accent-2-fg);
+	--color-accent-2-wash:        var(--accent-2-wash);
+	--color-accent-2-soft:        var(--accent-2-soft);
+	--color-accent-2-line:        var(--accent-2-line);
+	--color-accent-2-hover:       var(--accent-2-hover);
 
-	--color-ring:            var(--ring);
+	/* status */
+	--color-status-danger:        var(--status-danger);
+	--color-status-danger-fg:     var(--status-danger-fg);
+	--color-status-danger-wash:   var(--status-danger-wash);
+	--color-status-danger-line:   var(--status-danger-line);
 
-	--radius-sm: calc(var(--radius) - 4px);
-	--radius-md: calc(var(--radius) - 2px);
-	--radius-lg: var(--radius);
-	--radius-xl: calc(var(--radius) + 4px);
+	--color-status-warn:          var(--status-warn);
+	--color-status-warn-fg:       var(--status-warn-fg);
+	--color-status-warn-wash:     var(--status-warn-wash);
+	--color-status-warn-line:     var(--status-warn-line);
 
-	--font-display: "Inter", "InterVariable", ui-sans-serif, system-ui,
-					-apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-	--font-mono:    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+	--color-status-ok:            var(--status-ok);
+	--color-status-ok-fg:         var(--status-ok-fg);
+	--color-status-ok-wash:       var(--status-ok-wash);
+	--color-status-ok-line:       var(--status-ok-line);
+
+	--color-status-info:          var(--status-info);
+	--color-status-info-fg:       var(--status-info-fg);
+	--color-status-info-wash:     var(--status-info-wash);
+	--color-status-info-line:     var(--status-info-line);
+
+	/* focus */
+	--color-ring:                 var(--ring);
+
+	/* chart categorical */
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+	--color-chart-6: var(--chart-6);
+	--color-chart-7: var(--chart-7);
+	--color-chart-8: var(--chart-8);
+
+	/* font stacks */
+	--font-display:
+		"Inter", "InterVariable",
+		ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+		"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--font-mono:
+		"JetBrains Mono",
+		ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas,
+		"Liberation Mono", "Courier New", monospace;
+
+	/* type scale: size, line-height, letter-spacing per step */
+	--text-xs:                 0.6875rem;
+	--text-xs--line-height:    1.45;
+	--text-xs--letter-spacing: 0.01em;
+
+	--text-sm:                 0.75rem;
+	--text-sm--line-height:    1.4;
+	--text-sm--letter-spacing: 0.005em;
+
+	--text-base:                 0.8125rem;
+	--text-base--line-height:    1.5;
+	--text-base--letter-spacing: 0;
+
+	--text-lg:                 0.875rem;
+	--text-lg--line-height:    1.45;
+	--text-lg--letter-spacing: -0.003em;
+
+	--text-xl:                 1rem;
+	--text-xl--line-height:    1.55;
+	--text-xl--letter-spacing: -0.006em;
+
+	--text-2xl:                 1.25rem;
+	--text-2xl--line-height:    1.4;
+	--text-2xl--letter-spacing: -0.01em;
+
+	--text-3xl:                 1.5rem;
+	--text-3xl--line-height:    1.3;
+	--text-3xl--letter-spacing: -0.015em;
+
+	--text-display:                 2rem;
+	--text-display--line-height:    1.2;
+	--text-display--letter-spacing: -0.02em;
+
+	/* weight scale */
+	--font-weight-regular:  400;
+	--font-weight-medium:   500;
+	--font-weight-semibold: 600;
+	--font-weight-bold:     700;
+
+	/* spacing base; Tailwind v4 generates p-*, m-*, gap-*, w-*, h-* off this */
+	--spacing: 0.25rem;
+
+	/* radius scale */
+	--radius-none: 0;
+	--radius-sm:   0.25rem;
+	--radius-md:   0.375rem;
+	--radius-lg:   0.5rem;
+	--radius-xl:   0.75rem;
+	--radius-2xl:  1rem;
+	--radius-full: 9999px;
+
+	/* container widths */
+	--container-prose:     40rem;
+	--container-form:      30rem;
+	--container-panel:     60rem;
+	--container-dashboard: 87.5rem;
+
+	/* motion durations */
+	--duration-instant: 0ms;
+	--duration-fast:    120ms;
+	--duration-base:    180ms;
+	--duration-slow:    280ms;
+
+	/* easings; one family, enter/exit/cross-fade/linear */
+	--ease-out:    cubic-bezier(0.2, 0, 0, 1);
+	--ease-in:     cubic-bezier(0.4, 0, 1, 1);
+	--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+	--ease-linear: linear;
 }
 
-/* ================================ base ==================================== */
+/* ============================== base ====================================== */
 body {
 	background: var(--bg-canvas);
 	color: var(--text-primary);
 	font-family: var(--font-display);
+	font-size: var(--text-base);
+	line-height: var(--text-base--line-height);
 	-webkit-font-smoothing: antialiased;
+}
+
+/* ============================== a11y: focus ring ==========================
+ * One ring recipe. Composed on interactive primitives via cn(). :focus-visible
+ * only, mouse clicks do not paint. See a11y.md §1.
+ * ==========================================================================*/
+.focus-ring:focus-visible,
+[data-nu-focus]:focus-visible {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
+	/* box-shadow floats the ring clear of a non-canvas surface */
+	box-shadow: 0 0 0 2px var(--bg-canvas);
+	border-radius: inherit;
+}
+
+/* ============================== a11y: reduced motion ======================
+ * 0.01ms (not 0) so transitionend still fires; Radix Presence needs it. See
+ * motion.md §4.
+ * ==========================================================================*/
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
 }
