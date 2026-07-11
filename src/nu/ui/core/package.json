@@ -1,6 +1,6 @@
 {
 	"name": "@nustackdev/ui-core",
-	"description": "Wire protocol for the nudle UI fabric: msgpack frames, mount payloads, op codes.",
+	"description": "Wire protocol for the Nu.",
 	"version": "0.1.0",
 	"type": "module",
 	"main": "./src/index.ts",

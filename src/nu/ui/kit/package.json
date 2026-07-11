@@ -1,6 +1,6 @@
 {
 	"name": "@nustackdev/ui-kit",
-	"description": "Nu design kit: tokens, primitives, refs machinery, and browser store for the nudle UI fabric.",
+	"description": "Nu design kit: tokens, primitives, refs machinery, and browser store for the UI fabric.",
 	"version": "0.1.0",
 	"type": "module",
 	"main": "./src/index.ts",
