@@ -28,12 +28,12 @@ counter = nu.IfDo(Counter.value.missing(), Counter.value.store(0)) >> nu.Forever
 )
 
 ui = (
-    App.title.store("nudle bracket counter")
-    >> Dashboard.heading.store("counter live")
+    App.title.set("nudle bracket counter")
+    >> Dashboard.heading.set("counter live")
     >> (
         nu.ReactForever(
             Counter.value.on_change(),
-            Dashboard.count.store(Counter.value)
+            Dashboard.count.set(Counter.value)
             | Dashboard.history.append(Counter.value, Counter.value),
         )
     )
