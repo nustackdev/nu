@@ -96,7 +96,7 @@
      * anchor  (x, y) = (600px, 100px)
      * radius (rx, ry) = 1400px × 1600px  */
     radial-gradient(
-      1400px 1600px at 1800px 0px,
+      1300px 1400px at 1800px 0px,
       var(--grad-dim) 0%,
       var(--grad-dim) 15%,
       transparent 75%
@@ -105,9 +105,9 @@
      * anchor  (x, y) = (1600px, 1200px)
      * radius (rx, ry) = 900px × 1800px  (narrow horizontally, tall vertically) */
     radial-gradient(
-      1000px 1000px at 2600px 700px,
-      var(--blue-dim) 20%,
-      transparent 75%
+      1400px 1400px at 2500px 500px,
+      var(--blue-dim) 10%,
+      transparent 55%
     );
 }
 
