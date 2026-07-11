@@ -18,17 +18,17 @@ class Series(nu.Shape):
     entries: nu.v.Kh57Ref[int]
 
 
-class Dashboard(nu.nd.Page):
-    heading: nu.nd.HeadingRef
-    count:   nu.nd.TextRef
-    chart:   nu.nd.LineChart
-    n:       nu.nd.NumberInputRef
+class Dashboard(nu.ui.Page):
+    heading: nu.ui.HeadingRef
+    count:   nu.ui.TextRef
+    chart:   nu.ui.LineChart
+    n:       nu.ui.NumberInputRef
 
 
-class App(nu.nd.Index):
-    title: nu.nd.TitleRef
-    nav:   nu.nd.NavRef
-    pages = nu.nd.Pages({"/": Dashboard})
+class App(nu.ui.Index):
+    title: nu.ui.TitleRef
+    nav:   nu.ui.NavRef
+    pages = nu.ui.Pages({"/": Dashboard})
 
 
 bg = nu.v.Transaction(
@@ -63,7 +63,7 @@ ui = (
 
 tree = nu.With(
     nu.v.presets.rocksdb_navigator_inmemory(".dbtest-kh57"),
-    nu.nd.presets.server(ui),
+    nu.ui.presets.server(ui),
     body=bg,
 )
 

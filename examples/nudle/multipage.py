@@ -11,22 +11,22 @@ class Counter(nu.Shape):
     value: nu.v.IntRef
 
 
-class HomePage(nu.nd.Page):
-    heading:  nu.nd.HeadingRef
-    count:    nu.nd.TextRef
-    go_feed:  nu.nd.ButtonRef
+class HomePage(nu.ui.Page):
+    heading:  nu.ui.HeadingRef
+    count:    nu.ui.TextRef
+    go_feed:  nu.ui.ButtonRef
 
 
-class FeedPage(nu.nd.Page):
-    heading:  nu.nd.HeadingRef
-    history:  nu.nd.LineChart
-    go_home:  nu.nd.ButtonRef
+class FeedPage(nu.ui.Page):
+    heading:  nu.ui.HeadingRef
+    history:  nu.ui.LineChart
+    go_home:  nu.ui.ButtonRef
 
 
-class App(nu.nd.Index):
-    title: nu.nd.TitleRef
-    nav:   nu.nd.NavRef
-    pages = nu.nd.Pages({"/": HomePage, "/feed": FeedPage})
+class App(nu.ui.Index):
+    title: nu.ui.TitleRef
+    nav:   nu.ui.NavRef
+    pages = nu.ui.Pages({"/": HomePage, "/feed": FeedPage})
 
 
 bg = nu.v.Transaction(
@@ -54,7 +54,7 @@ ui = (
 
 tree = nu.With(
     nu.v.presets.rocksdb_navigator_inmemory(".dbtest_mp"),
-    nu.nd.presets.server(ui),
+    nu.ui.presets.server(ui),
     body=bg,
 )
 

@@ -1,0 +1,176 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* =============================================================================
+ * Nustack UI kit — token layers.
+ *
+ * L1  primitives          raw hex scales (purple, blue, neutral)
+ * L2  semantic (:root)    role tokens (bg, text, border, accent) for LIGHT
+ * L3  semantic (.dark)    same names remapped for DARK
+ * L4  @theme inline       exposes semantic tokens as Tailwind v4 utilities
+ *
+ * Consumer rule: components reference L2/L4 names only (bg-canvas, text-primary,
+ * accent). Never touch primitives directly outside this file.
+ * ==========================================================================*/
+
+/* ============================== L1: primitives ============================ */
+:root {
+	/* purple — #7a4ce0 anchor */
+	--purple-50:  #f4efff;
+	--purple-100: #e6dbff;
+	--purple-200: #cdb6ff;
+	--purple-300: #b490ff;
+	--purple-400: #9a6dff;
+	--purple-500: #7a4ce0;
+	--purple-600: #6a3fc7;
+	--purple-700: #5732a3;
+	--purple-800: #43277f;
+	--purple-900: #2b1857;
+
+	/* blue — #3e72e7 anchor */
+	--blue-50:  #eaf1fe;
+	--blue-100: #d0defc;
+	--blue-200: #a3befa;
+	--blue-300: #769df3;
+	--blue-400: #557fed;
+	--blue-500: #3e72e7;
+	--blue-600: #3260c8;
+	--blue-700: #294fa4;
+	--blue-800: #1f3d80;
+	--blue-900: #142857;
+
+	/* neutral — cool gray, tuned for both themes */
+	--gray-0:   #ffffff;
+	--gray-50:  #f7f7f9;
+	--gray-100: #eeeef2;
+	--gray-200: #d9d9e0;
+	--gray-300: #b3b3bf;
+	--gray-400: #8c8c99;
+	--gray-500: #666672;
+	--gray-600: #47474f;
+	--gray-700: #2d2d33;
+	--gray-800: #1c1c20;
+	--gray-900: #121216;
+	--gray-1000: #0a0a0d;
+}
+
+/* ============================== L2: semantic (light) ====================== */
+:root {
+	--radius:            0.5rem;
+
+	--bg-canvas:         var(--gray-50);
+	--bg-surface:        var(--gray-0);
+	--bg-elevated:       var(--gray-0);
+	--bg-sunken:         var(--gray-100);
+
+	--text-primary:      var(--gray-900);
+	--text-secondary:    var(--gray-600);
+	--text-muted:        var(--gray-400);
+	--text-inverse:      var(--gray-0);
+
+	--border-subtle:     var(--gray-200);
+	--border-default:    var(--gray-300);
+	--border-strong:     var(--gray-400);
+
+	--accent:            var(--purple-500);
+	--accent-fg:         var(--gray-0);
+	--accent-wash:       color-mix(in oklab, var(--purple-500) 8%, transparent);
+	--accent-soft:       color-mix(in oklab, var(--purple-500) 18%, transparent);
+	--accent-line:       color-mix(in oklab, var(--purple-500) 42%, transparent);
+	--accent-hover:      var(--purple-600);
+
+	--accent-2:          var(--blue-500);
+	--accent-2-fg:       var(--gray-0);
+	--accent-2-wash:     color-mix(in oklab, var(--blue-500) 8%, transparent);
+	--accent-2-soft:     color-mix(in oklab, var(--blue-500) 18%, transparent);
+	--accent-2-line:     color-mix(in oklab, var(--blue-500) 42%, transparent);
+	--accent-2-hover:    var(--blue-600);
+
+	--ring:              var(--purple-500);
+}
+
+/* ============================== L3: semantic (dark) ======================= */
+.dark {
+	--bg-canvas:         var(--gray-1000);
+	--bg-surface:        var(--gray-900);
+	--bg-elevated:       var(--gray-800);
+	--bg-sunken:         #06060a;
+
+	--text-primary:      #f5f5f9;
+	--text-secondary:    var(--gray-300);
+	--text-muted:        var(--gray-400);
+	--text-inverse:      var(--gray-900);
+
+	--border-subtle:     rgba(255, 255, 255, 0.06);
+	--border-default:    rgba(255, 255, 255, 0.10);
+	--border-strong:     rgba(255, 255, 255, 0.18);
+
+	--accent:            #a684ff;
+	--accent-fg:         var(--gray-1000);
+	--accent-wash:       color-mix(in oklab, #a684ff 12%, transparent);
+	--accent-soft:       color-mix(in oklab, #a684ff 22%, transparent);
+	--accent-line:       color-mix(in oklab, #a684ff 44%, transparent);
+	--accent-hover:      #b89bff;
+
+	--accent-2:          #6b96f2;
+	--accent-2-fg:       var(--gray-1000);
+	--accent-2-wash:     color-mix(in oklab, #6b96f2 12%, transparent);
+	--accent-2-soft:     color-mix(in oklab, #6b96f2 22%, transparent);
+	--accent-2-line:     color-mix(in oklab, #6b96f2 44%, transparent);
+	--accent-2-hover:    #85a8f5;
+
+	--ring:              #a684ff;
+}
+
+/* ============================== L4: Tailwind v4 utilities ================= */
+@theme inline {
+	/* map semantic tokens onto Tailwind color slots */
+	--color-canvas:          var(--bg-canvas);
+	--color-surface:         var(--bg-surface);
+	--color-elevated:        var(--bg-elevated);
+	--color-sunken:          var(--bg-sunken);
+
+	--color-fg:              var(--text-primary);
+	--color-fg-secondary:    var(--text-secondary);
+	--color-fg-muted:        var(--text-muted);
+	--color-fg-inverse:      var(--text-inverse);
+
+	--color-border-subtle:   var(--border-subtle);
+	--color-border-default:  var(--border-default);
+	--color-border-strong:   var(--border-strong);
+
+	--color-accent:          var(--accent);
+	--color-accent-fg:       var(--accent-fg);
+	--color-accent-wash:     var(--accent-wash);
+	--color-accent-soft:     var(--accent-soft);
+	--color-accent-line:     var(--accent-line);
+	--color-accent-hover:    var(--accent-hover);
+
+	--color-accent-2:        var(--accent-2);
+	--color-accent-2-fg:     var(--accent-2-fg);
+	--color-accent-2-wash:   var(--accent-2-wash);
+	--color-accent-2-soft:   var(--accent-2-soft);
+	--color-accent-2-line:   var(--accent-2-line);
+	--color-accent-2-hover:  var(--accent-2-hover);
+
+	--color-ring:            var(--ring);
+
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+
+	--font-display: "Inter", "InterVariable", ui-sans-serif, system-ui,
+					-apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--font-mono:    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+/* ================================ base ==================================== */
+body {
+	background: var(--bg-canvas);
+	color: var(--text-primary);
+	font-family: var(--font-display);
+	-webkit-font-smoothing: antialiased;
+}

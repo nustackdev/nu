@@ -1,14 +1,17 @@
 # =============================================================================
 # nu — Term Programming platform
 # =============================================================================
-# One package: kernel, stdlib, fabrics (nu.virtuals / nu.mem / nu.nudle), and
+# One package: kernel, stdlib, fabrics (nu.virtuals / nu.mem / nu.ui), and
 # topologies (nu.distributed). Source lives under src/nu (src layout). Extras
 # are opt-in; the `local` dependency group pulls the full cluster dev closure
 # by default.
 #
-# The nu.nudle fabric backend lives in-tree at src/nu/nudle/; its compiled web
-# bundle ships as a sibling PyPI wheel named `nudle` (source at
-# src/nu/nudle/ui/), kept out of the main nu wheel to keep releases lean.
+# The nu.ui fabric backend (aka nudle) lives in-tree at src/nu/ui/. Its JS
+# side splits into three npm packages under src/nu/ui/: `core/` and `kit/`
+# publish to npm; `nudle/` is a private vite app. The compiled web bundle
+# ships as a sibling PyPI wheel named `nudle` (source at src/nu/ui/nudle/,
+# wheel packages the inner `nudle/` python package which symlinks build/ to
+# the vite dist/), kept out of the main nu wheel to keep releases lean.
 # =============================================================================
 
 [build-system]
@@ -36,7 +39,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-# Fabrics — accessed as nu.virtuals / nu.mem / nu.nudle (not exposed on the top-level nu namespace).
+# Fabrics — accessed as nu.virtuals / nu.mem / nu.ui (not exposed on the top-level nu namespace).
 virtuals = [
     "virtuals-py",
 ]
@@ -79,13 +82,18 @@ Repository = "https://github.com/nustackdev/nu"
 [tool.hatch.build.targets.wheel]
 packages = ["src/nu"]
 exclude = [
-    "src/nu/nudle/ui/**",
+    "src/nu/ui/core/**",
+    "src/nu/ui/kit/**",
+    "src/nu/ui/nudle/**",
+    "src/nu/ui/package.json",
+    "src/nu/ui/biome.json",
+    "src/nu/ui/.gitignore",
 ]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
-    "src/nu/nudle/ui/node_modules",
-    "src/nu/nudle/ui/dist",
+    "src/nu/ui/**/node_modules",
+    "src/nu/ui/**/dist",
 ]
 
 # =============================================================================
@@ -95,7 +103,7 @@ exclude = [
 virtuals-py = { path = "../virtuals", editable = true }
 composables = { path = "../composables", editable = true }
 invisibles = { path = "../invisibles", editable = true }
-nudle = { path = "./src/nu/nudle/ui", editable = true }
+nudle = { path = "./src/nu/ui/nudle", editable = true }
 
 [tool.uv]
 # Bare `uv sync` provisions the full dev env: the distributed stack + tooling.

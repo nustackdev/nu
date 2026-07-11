@@ -1,0 +1,40 @@
+{
+	"name": "nudle-web",
+	"private": true,
+	"description": "The nudle app: hosted web shell over the nudle UI fabric. Bundled by vite; served by nu.ui.serve.",
+	"version": "0.2.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc -b && vite build",
+		"preview": "vite preview",
+		"typecheck": "tsc --noEmit",
+		"check": "biome check .",
+		"check:fix": "biome check --write .",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"@nustackdev/ui-core": "*",
+		"@nustackdev/ui-kit": "*",
+		"react": "^19.2.0",
+		"react-dom": "^19.2.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.15",
+		"@tailwindcss/vite": "^4.1.18",
+		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/react": "^16.3.2",
+		"@types/node": "^24.10.1",
+		"@types/react": "^19.2.7",
+		"@types/react-dom": "^19.2.3",
+		"@vitejs/plugin-react": "^5.1.1",
+		"jsdom": "^27.0.1",
+		"shadcn": "^3.8.4",
+		"tailwindcss": "^4.1.18",
+		"tw-animate-css": "^1.4.0",
+		"typescript": "~5.9.3",
+		"vite": "^7.3.1",
+		"vitest": "^3.2.4"
+	}
+}

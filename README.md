@@ -59,7 +59,7 @@ A fabric is a Ref/Interaction implementation over one backend. Nu ships three in
 | -------------- | ----------------------------- | --------------------------------------------------------------------------- |
 | `nu.mem`       | plain Python dict             | zero-dependency, sync+async, ideal for tests, fixtures, in-process state    |
 | `nu.virtuals`  | [virtuals](https://github.com/nustackdev/virtuals) views over any storage (RocksDB, LMDB, in-memory, text) | durable and reactive: Refs read/write disk, `.on_change()` yields live subscriptions |
-| `nu.nudle`     | browser tab (websocket)       | UI fabric — Pages are Shapes, widgets are Refs, mutations become React state |
+| `nu.ui`        | browser tab (websocket)       | UI fabric — Pages are Shapes, widgets are Refs, mutations become React state |
 
 Each fabric ships its own typed Refs (`IntRef`, `StrRef`, `ListRef`, `ShapesListRef`, …) matching the same protocol; you swap the import to move a program between substrates.
 

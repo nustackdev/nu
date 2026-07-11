@@ -1,0 +1,15 @@
+{
+	"name": "nu-ui-workspace",
+	"private": true,
+	"description": "npm workspace root for @nustackdev/ui-core, @nustackdev/ui-kit, and the nudle app.",
+	"workspaces": [
+		"core",
+		"kit",
+		"nudle"
+	],
+	"scripts": {
+		"typecheck": "npm run typecheck --workspaces --if-present",
+		"build": "npm run build --workspaces --if-present",
+		"check": "npm run check --workspaces --if-present"
+	}
+}

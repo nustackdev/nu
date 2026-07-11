@@ -18,12 +18,12 @@ A Nu app is one tree that a runner evaluates. Every construct maps to a document
 - One tree per app. Shapes at the top of the module, sub-trees composed with `>>` / `|` / `&`, one `nu.With(...)` at the bottom, `nu.run(tree)` (sync) or `asyncio.run(nu.arun(tree))` (async).
 - App-shaped factories return **raw trees, unwrapped**. No `auto_flow_atomic` inside the factory. The deployer wraps once — it knows which shapes bind to which Navigators.
 - Wrap in a `build_tree`, not at construction. Wrapping = per-scope `auto_flow_atomic` + default pass. Order matters (see [Atomicity](#atomicity-scope-retry-wrapping)).
-- Call-site aliases at module top: `import nu` and use `nu.v` / `nu.m` / `nu.nd` — never `nu.virtuals` / `nu.mem` / `nu.nudle`.
+- Call-site aliases at module top: `import nu` and use `nu.v` / `nu.m` — never `nu.virtuals` / `nu.mem`. For the UI fabric, prefer `nu.ui.X` at call sites (`nu.nd` is retained as a backward-compat alias only).
 
 ## Presets stack
 
 - Every runtime dependency is a bracket. Stack them in one `nu.With(...)` head with `body=` last. Later brackets nest inside earlier ones and see their bindings.
-- `nu.v.presets.rocksdb_navigator_inmemory(path)` provides Codec + Observer + Storage + Navigator in one drop-in. `nu.nd.presets.server(ui, port=)` boots a nudle UI actor. `nu.ray.presets.cluster(...)` boots Ray. Each returns a `With(...)` / `Provide(...)`.
+- `nu.v.presets.rocksdb_navigator_inmemory(path)` provides Codec + Observer + Storage + Navigator in one drop-in. `nu.ui.presets.server(ui, port=)` boots a nudle UI actor. `nu.ray.presets.cluster(...)` boots Ray. Each returns a `With(...)` / `Provide(...)`.
 - Ship your own preset as a factory returning `With(...)` / `Provide(...)`. Users drop it in the same head, no glue.
 - Bracket **order matters**: a RO-secondary provider must land AFTER the primary it mirrors; the UI bracket opens LAST so the shard primaries it reads already exist.
 - Distributed: fabric providers get `tag=Shape` (or `tags=(Shape, shard_id)`) plus `predicate=` for shard routing. `nu.invisibles.InvisiblesProxy(nu.v.fabrics.Navigator, address=..., tag=S)` fans one primary to many workers. `nu.ProvideDict(nu.ray.RayService, {k: cfg, ...}, parallel=True)` parametrizes a service across `k`.
@@ -200,7 +200,7 @@ A Nu app is one tree that a runner evaluates. Every construct maps to a document
 - Boolean `and`/`or`/`not` on Nu terms — they short-circuit in Python and return the last Python operand, not a Nu tree. Use `.and_()` / `.or_()` / `.not_()`.
 - Building at construct time what needs to be fresh at run time. `ts_ms = int(time.time() * 1000)` at import, then `.store(ts_ms)`, bakes a stale constant into `ForeverDo` loops.
 - State on `self` in a custom atom. Terms are immutable and shared across runs; per-eval state lives in the `compile` thunk's closure.
-- Aliasing `nu.virtuals as nv` / `nu.nudle as nudle` / `nu.mem as m`. Use `nu.v` / `nu.nd` / `nu.m` at call sites, always.
+- Aliasing `nu.virtuals as nv` / `nu.ui as nudle` / `nu.mem as m`. Use `nu.v` / `nu.ui` / `nu.m` at call sites, always.
 - Splitting one write into "mint the id in Python, pass it as a kwarg to `entry(...)`, `entry` builds a Command that stores it." The id must be minted at eval time inside the tree — construct-time mint reuses one id per every eval of the same Command.
 - Pre-formatting a typed value before `.store()`. A Ref knows its type via `_lift` / `_lower`; `.store()` takes the typed input. `str(dt)` before `.store()` skips the value boundary.
 - Extracting every sub-expression into a helper `def`. Small inline reads faster than named fragments; helpers are for reuse and parametrization, not decoration.

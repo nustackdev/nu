@@ -20,19 +20,19 @@ class Stats(nu.Shape):
     count: nu.v.IntRef
 
 
-class Dashboard(nu.nd.Page):
-    heading: nu.nd.HeadingRef
-    tries:   nu.nd.TextRef
-    history: nu.nd.LineChart
-    wish:    nu.nd.InputRef
-    drop:    nu.nd.ButtonRef
-    clear:   nu.nd.ButtonRef
+class Dashboard(nu.ui.Page):
+    heading: nu.ui.HeadingRef
+    tries:   nu.ui.TextRef
+    history: nu.ui.LineChart
+    wish:    nu.ui.InputRef
+    drop:    nu.ui.ButtonRef
+    clear:   nu.ui.ButtonRef
 
 
-class App(nu.nd.Index):
-    title: nu.nd.TitleRef
-    nav:   nu.nd.NavRef
-    pages = nu.nd.Pages({"/": Dashboard})
+class App(nu.ui.Index):
+    title: nu.ui.TitleRef
+    nav:   nu.ui.NavRef
+    pages = nu.ui.Pages({"/": Dashboard})
 
 
 init = nu.v.Transaction(nu.IfDo(Stats.count.missing(), Stats.count.store(0)))
@@ -66,7 +66,7 @@ ui = init >> App.title.store("wish jar") >> hydrate >> (on_drop | on_clear)
 
 tree = nu.With(
     nu.v.presets.rocksdb_navigator_inmemory(".dbw"),
-    nu.nd.presets.server(ui),
+    nu.ui.presets.server(ui),
     body=nu.ForeverDo(nu.Delay(3600)),  # keep the server bracket open; jar is click-driven, no bg loop
 )
 

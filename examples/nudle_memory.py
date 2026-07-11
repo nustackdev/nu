@@ -11,18 +11,18 @@ class Counter(nu.Shape):
     value: nu.v.IntRef
 
 
-class Dashboard(nu.nd.Page):
-    heading: nu.nd.HeadingRef
-    count:   nu.nd.TextRef
-    history: nu.nd.LineChart
-    name:    nu.nd.InputRef
-    greet:   nu.nd.ButtonRef
+class Dashboard(nu.ui.Page):
+    heading: nu.ui.HeadingRef
+    count:   nu.ui.TextRef
+    history: nu.ui.LineChart
+    name:    nu.ui.InputRef
+    greet:   nu.ui.ButtonRef
 
 
-class App(nu.nd.Index):
-    title: nu.nd.TitleRef
-    nav:   nu.nd.NavRef
-    pages = nu.nd.Pages({"/": Dashboard})
+class App(nu.ui.Index):
+    title: nu.ui.TitleRef
+    nav:   nu.ui.NavRef
+    pages = nu.ui.Pages({"/": Dashboard})
 
 
 ui = (
@@ -51,7 +51,7 @@ bg = nu.v.Transaction(
 
 tree = nu.With(
     nu.v.presets.memory_navigator(),
-    nu.nd.presets.server(ui),
+    nu.ui.presets.server(ui),
     body=bg,
 )
 

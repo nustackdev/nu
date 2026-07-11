@@ -11,10 +11,11 @@ Or reach a subpackage by dot-access:
     nu.forms.IntForm    nu.core.AddQuery    nu.flows.Sequential
     nu.spans.Retry      nu.shape.Shape      nu.tree.map_nodes
     nu.mem.IntRef       nu.virtuals.presets.memory_storage
-    nu.nudle.Page       nu.std.uuid.UUID
+    nu.ui.Page          nu.std.uuid.UUID
 
-Short aliases: ``nu.m`` = ``nu.mem``, ``nu.nd`` = ``nu.nudle``, ``nu.v`` =
-``nu.virtuals``. Same modules, shorter to type.
+Short aliases: ``nu.m`` = ``nu.mem``, ``nu.nd`` = ``nu.ui``, ``nu.v`` =
+``nu.virtuals``. Same modules, shorter to type. ``nu.nd`` still says "nudle"
+because nudle is the standard web fabric; the module just lives at ``nu.ui``.
 
 Flat at the root: forms, core interactions, flows, spans, the context fabric,
 and the language essentials (``Nu``, the kinds, the ``Arg`` aliases, the
@@ -122,11 +123,11 @@ from .lang.helpers import (
 # Late subpackage namespaces: fabric adapters and higher layers that reach into
 # the flat root surface (e.g. ``from nu import Shape``). Imported last so their
 # init sees a fully-populated ``nu`` module.
-from . import invisibles, mem, nudle, ray, std, virtuals
+from . import invisibles, mem, ray, std, ui, virtuals
 
 # Short aliases for the fabric adapters and UI layer.
 m = mem
-nd = nudle
+nd = ui
 v = virtuals
 
 

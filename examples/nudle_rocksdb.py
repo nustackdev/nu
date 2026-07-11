@@ -11,16 +11,16 @@ class Counter(nu.Shape):
     value: nu.v.IntRef
 
 
-class Dashboard(nu.nd.Page):
-    heading: nu.nd.HeadingRef
-    count: nu.nd.TextRef
-    history: nu.nd.LineChart
+class Dashboard(nu.ui.Page):
+    heading: nu.ui.HeadingRef
+    count: nu.ui.TextRef
+    history: nu.ui.LineChart
 
 
-class App(nu.nd.Index):
-    title: nu.nd.TitleRef
-    nav: nu.nd.NavRef
-    pages = nu.nd.Pages({"/": Dashboard})
+class App(nu.ui.Index):
+    title: nu.ui.TitleRef
+    nav: nu.ui.NavRef
+    pages = nu.ui.Pages({"/": Dashboard})
 
 
 counter = nu.IfDo(Counter.value.missing(), Counter.value.store(0)) >> nu.ForeverDo(
@@ -41,7 +41,7 @@ ui = (
 
 app = nu.With(
     nu.v.presets.rocksdb_navigator_inmemory(".dbtest"),
-    nu.nd.presets.server(ui),
+    nu.ui.presets.server(ui),
     body=counter,
 )
 

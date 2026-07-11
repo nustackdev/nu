@@ -7,12 +7,12 @@ class Series(nu.Shape):
     height:  nu.v.IntRef
     entries: nu.v.Kh57Ref[float]
 
-class Dashboard(nu.nd.Page):
-    chart: nu.nd.LineChart
-    n:     nu.nd.NumberInputRef
+class Dashboard(nu.ui.Page):
+    chart: nu.ui.LineChart
+    n:     nu.ui.NumberInputRef
 
-class App(nu.nd.Index):
-    pages = nu.nd.Pages({"/": Dashboard})
+class App(nu.ui.Index):
+    pages = nu.ui.Pages({"/": Dashboard})
 
 bg = nu.v.Transaction(nu.IfDo(Series.height.missing(), Series.height.store(0))) >> nu.ForeverDo(
     nu.v.Transaction(Series.entries.set(Series.height, m.sin(Series.height * 0.05)) >> Series.height.inc())
@@ -25,6 +25,6 @@ ui = Dashboard.n.store(200, min=10, max=2000, step=10, label="sample size") >> n
     >> nu.Delay(0.1),
 )
 
-tree = nu.With(nu.v.presets.memory_navigator(), nu.nd.presets.server(ui), body=bg)
+tree = nu.With(nu.v.presets.memory_navigator(), nu.ui.presets.server(ui), body=bg)
 
 asyncio.run(nu.arun(tree))
