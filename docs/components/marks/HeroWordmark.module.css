@@ -1,0 +1,62 @@
+.mark {
+  font: inherit;
+  letter-spacing: inherit;
+  white-space: nowrap;
+  display: inline-block;
+
+  /* nu = violet aurora with a magenta highlight (gradient only, no glow) */
+  --wm-nu-grad: linear-gradient(
+    120deg,
+    #ff9ee1 0%,
+    #cba0ff 22%,
+    #a26bff 52%,
+    #6842dc 100%
+  );
+  /* stack = silvery metallic — dark → mid → dark with a highlight band.
+     All stops fully opaque (no alpha) so nothing bleeds through. */
+  --wm-stack-grad: linear-gradient(
+    180deg,
+    #eae8f4 0%,
+    #eae8f4 22%,
+    #b3b0c8 52%,
+    #d5d3e4 72%,
+    #eae8f4 100%
+  );
+}
+
+.nu {
+  font-weight: inherit;
+  background-image: var(--wm-nu-grad);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.stack {
+  font-weight: inherit;
+  background-image: var(--wm-stack-grad);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+:global(html.dark) .mark {
+  --wm-nu-grad: linear-gradient(
+    120deg,
+    #ffb5ec 0%,
+    #d9b1ff 22%,
+    #b487ff 52%,
+    #8358f2 100%
+  );
+  /* silver on dark: brighter highlight band, all opaque */
+  --wm-stack-grad: linear-gradient(
+    180deg,
+    #eae8f4 0%,
+    #eae8f4 22%,
+    #d5d3e4 50%,
+    #b3b0c8 72%,
+    #eae8f4 100%
+  );
+}

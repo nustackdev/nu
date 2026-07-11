@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import type { ComponentType } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { GithubMark } from '@/components/marks/GithubMark';
 import { NustackMark } from '@/components/marks/NustackMark';
+import { HeroWordmark } from '@/components/marks/HeroWordmark';
 import { OneLineSvg } from '@/components/marks/variations/interaction/one-line';
 import { StackLayersSvg } from '@/components/marks/variations/apps/stack-layers';
 import { AppShelfSvg } from '@/components/marks/variations/apps/app-shelf';
@@ -40,59 +40,46 @@ const FABRICS = ['shapes', 'mem', 'nudle', 'apps', 'lens'];
 export default function HomePage() {
   return (
     <div className={s.root}>
+      {/* Hero JB gradient plane — three stacked radials at 50% 22%. Verbatim. */}
+      <div className={s.heroBg} aria-hidden />
+
+      {/* PAGE BG — reserved layer for any future page-wide overlay. Empty
+          today; the hero JB gradient plane above carries all the color. */}
+      <div className={s.pageBg} aria-hidden />
+
+      {/* Full-page dot grain — fixed layer over EVERYTHING. */}
+      <div className={s.grain} aria-hidden />
+
       <div className={s.shell}>
 
-        {/* ---------- hero: manifest, typography-driven ---------- */}
+        {/* ---------- hero: single-column, wordmark-led ---------- */}
         <header className={s.hero}>
-          <div className={s.heroGrid} aria-hidden />
-          <div className={s.heroGlow} aria-hidden />
-
           <div className={s.heroInner}>
-            <div className={s.heroBody}>
-              <div className={s.heroEyebrow}>
-                <span>todo — iterate copy soon</span>
-              </div>
-              <h1 className={s.heroClaim}>
-                <b>assemble</b> software, not write it.
-              </h1>
-              <p className={s.heroMission}>
-                Systems today are written line by line. We think they should be{' '}
-                <b>assembled</b> — from primitives that compose cleanly and
-                hold up under real load. The model is called the{' '}
-                <b>interaction model</b>, the implementation in Python is{' '}
-                <b>Nu</b>, apps compose from it.
-              </p>
+            <div className={s.heroWordmark}>
+              <HeroWordmark />
             </div>
-            <div className={s.heroAside}>
-              <div className={s.heroAsideViz} aria-hidden>
-                <StackLayersSvg />
-              </div>
-              <Link href="/nu" className={s.heroCta}>
-                <span>meet Nu</span>
-                <ArrowRight size={14} className={s.heroCtaArrow} aria-hidden />
-              </Link>
-              <Link href="/interaction-model" className={s.heroCtaGhost}>
-                <span>the model</span>
-                <ArrowRight size={13} aria-hidden />
-              </Link>
-              <a
-                href="https://github.com/nustackdev"
-                className={s.heroCtaGhost}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                  <GithubMark size={13} />
-                  github.com/nustackdev
-                </span>
-                <ArrowRight size={13} aria-hidden />
-              </a>
+            <h1 className={s.heroClaim}>
+              <b>assemble</b> software, not write it.
+            </h1>
+            <p className={s.heroMission}>
+              Systems today are written line by line. We think they should be{' '}
+              <b>assembled</b> — from primitives that compose cleanly and
+              hold up under real load. The model is called the{' '}
+              <span className={s.heroConcept}>interaction model</span>, the
+              implementation in Python is <span className={s.heroConcept}>Nu</span>,
+              apps compose from it.
+            </p>
+            <div className={s.heroVizFrame} aria-hidden>
+              <StackLayersSvg />
             </div>
           </div>
         </header>
 
-        {/* ---------- interaction model ---------- */}
-        <section className={s.section} id="interaction-model">
-          <div className={s.sectionSplit}>
-            <div className={`${s.sectionCol}`}>
+        {/* ---------- §1 interaction model — bloom RIGHT (blue).
+                       Content sits on the LEFT column (darker side). ---------- */}
+        <section className={s.section} id="interaction-model" data-hue="s1">
+<div className={s.sectionSplit}>
+            <div className={s.sectionCol}>
               <div className={s.sectionLabel}>the model</div>
               <h2 className={s.sectionTitle}>We build on the interaction model.</h2>
               <p className={s.sectionIntro}>
@@ -109,15 +96,32 @@ export default function HomePage() {
               </div>
             </div>
             <aside className={s.sectionVisual} data-slot="interaction-model">
-              <OneLineSvg />
+              <div className={s.glassCard}>
+                <OneLineSvg />
+              </div>
             </aside>
           </div>
         </section>
 
-        {/* ---------- Nu — implementation of the model ---------- */}
-        <section className={s.section} id="nu">
-          <div className={s.sectionSplit}>
-            <div className={`${s.sectionCol}`}>
+        {/* ---------- §2 Nu — bloom LEFT (teal).
+                       Content sits on the RIGHT column (darker side). ---------- */}
+        <section className={s.section} id="nu" data-hue="s2">
+          <div className={`${s.sectionSplit} ${s.sectionSplitFlip}`}>
+            <aside className={s.sectionVisual}>
+              <div className={s.codeShell}>
+                <pre className={s.codeBlock}>
+<span className={s.cmt}>{'"""Basic Nu bracket-tree app: mem preset + tiny compute."""'}</span>
+{'\n\n'}
+<span className={s.kw}>from</span>{' __future__ '}<span className={s.kw}>import</span>{' annotations\n\n'}
+<span className={s.kw}>import</span>{' '}<span className={s.nu}>nu</span>{'\n\n\n'}
+<span className={s.kw}>class</span>{' Counter('}<span className={s.nu}>nu.Shape</span>{'):\n    value: '}<span className={s.nu}>nu.v.IntRef</span>{'\n\n\n'}
+{'tree = '}<span className={s.nu}>nu.With</span>{'(\n    '}<span className={s.nu}>nu.v.presets.memory_navigator</span>{'(),\n    body='}<span className={s.nu}>nu.v.Transaction</span>{'(Counter.value.store(0) >> Counter.value.store(Counter.value + 42))\n    >> '}<span className={s.nu}>nu.v.Snapshot</span>{'('}<span className={s.nu}>nu.print</span>{'(Counter.value)),\n)\n\n\n'}
+<span className={s.kw}>if</span>{' __name__ == '}<span className={s.str}>{"'__main__'"}</span>{':\n    '}<span className={s.nu}>nu.run</span>{'(tree)\n'}
+                </pre>
+                <div className={s.codeCaption}>examples/basic.py · 20 loc</div>
+              </div>
+            </aside>
+            <div className={s.sectionCol}>
               <div className={s.sectionLabel}>the platform</div>
               <h2 className={s.sectionTitle}>Nu — the interaction model, made real.</h2>
               <p className={s.sectionIntro}>
@@ -136,26 +140,13 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-            <aside className={s.sectionVisual}>
-              <div className={s.codeShell}>
-                <pre className={s.codeBlock}>
-<span className={s.cmt}>{'"""Basic Nu bracket-tree app: mem preset + tiny compute."""'}</span>
-{'\n\n'}
-<span className={s.kw}>from</span>{' __future__ '}<span className={s.kw}>import</span>{' annotations\n\n'}
-<span className={s.kw}>import</span>{' '}<span className={s.nu}>nu</span>{'\n\n\n'}
-<span className={s.kw}>class</span>{' Counter('}<span className={s.nu}>nu.Shape</span>{'):\n    value: '}<span className={s.nu}>nu.v.IntRef</span>{'\n\n\n'}
-{'tree = '}<span className={s.nu}>nu.With</span>{'(\n    '}<span className={s.nu}>nu.v.presets.memory_navigator</span>{'(),\n    body='}<span className={s.nu}>nu.v.Transaction</span>{'(Counter.value.store(0) >> Counter.value.store(Counter.value + 42))\n    >> '}<span className={s.nu}>nu.v.Snapshot</span>{'('}<span className={s.nu}>nu.print</span>{'(Counter.value)),\n)\n\n\n'}
-<span className={s.kw}>if</span>{' __name__ == '}<span className={s.str}>{"'__main__'"}</span>{':\n    '}<span className={s.nu}>nu.run</span>{'(tree)\n'}
-                </pre>
-                <div className={s.codeCaption}>examples/basic.py · 20 loc</div>
-              </div>
-            </aside>
           </div>
         </section>
 
-        {/* ---------- apps ---------- */}
-        <section className={s.section} id="apps">
-          <div className={`${s.sectionCol}`}>
+        {/* ---------- §3 apps — bloom BOTTOM-LEFT (magenta).
+                       Content sits at TOP (darker side). ---------- */}
+        <section className={s.section} id="apps" data-hue="s3">
+          <div className={s.sectionCol}>
             <div className={s.sectionLabel}>apps</div>
             <h2 className={s.sectionTitle}>Standalone apps built on Nu.</h2>
             <p className={s.sectionIntro}>
@@ -195,8 +186,9 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ---------- footer ---------- */}
-        <footer className={s.footer}>
+        {/* ---------- footer — bloom TOP-CENTER, low-intensity (bright blue).
+                       Soft close, fades into black. ---------- */}
+        <footer className={s.footer} data-hue="s4">
           <div className={s.footerCell}>
             <span className={s.footerCellHead}>org</span>
             <span className={s.footerBrand}>

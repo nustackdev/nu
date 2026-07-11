@@ -1,159 +1,364 @@
 /* =============================================================================
- * nustack landing — design tokens hoisted to ./_tokens.module.css
- * Calm, org-oriented layout on top of the shared palette + flat-grid language.
+ * v7 — the infinite JB scroll. Every section below the hero carries its own
+ * three-radial JB gradient (identical recipe to `.heroBg`) with:
+ *   (a) a different color per section
+ *   (b) a different `at X% Y%` anchor per section — bloom hangs from a
+ *       different edge each time (right → left → bottom → top).
+ *
+ * Content aligns to the DARKER side of each section. No filters, no goo,
+ * no animations. Pure CSS radial-gradient stacks; static, GPU-cheap.
+ *
+ * Palette progression:
+ *   hero    — purple      rgb(103,  31, 255)   0.80 / 0.20  center-top
+ *   §1      — blue        rgb(  0,  71, 253)   0.62 / 0.16  bloom RIGHT
+ *   §2      — teal        rgb(  8, 132, 132)   0.60 / 0.15  bloom LEFT
+ *   §3      — magenta     rgb(255,  46, 141)   0.58 / 0.15  bloom BOTTOM-LEFT
+ *   footer  — bright blue rgb(  0, 104, 253)   0.32 / 0.09  soft top fade
  * ==========================================================================*/
+
+:global(:root) {
+  color-scheme: dark;
+  --color-fd-background: rgb(25, 25, 28);
+  --color-fd-foreground: #eae8f4;
+  --color-fd-muted: rgba(255, 255, 255, 0.04);
+  --color-fd-muted-foreground: #b3b0c8;
+  --color-fd-border: rgba(255, 255, 255, 0.08);
+  --color-fd-card: rgba(255, 255, 255, 0.03);
+  --color-fd-card-foreground: #eae8f4;
+  --color-fd-popover: #0e0b1c;
+  --color-fd-popover-foreground: #eae8f4;
+  --color-fd-primary: #c19eff;
+  --color-fd-primary-foreground: rgb(25, 25, 28);
+  --color-fd-secondary: rgba(255, 255, 255, 0.05);
+  --color-fd-secondary-foreground: #eae8f4;
+  --color-fd-accent: rgba(255, 255, 255, 0.05);
+  --color-fd-accent-foreground: #eae8f4;
+  --color-fd-ring: #c19eff;
+}
+:global(body) {
+  background: rgb(25, 25, 28);
+}
+
 .root {
   composes: palette from './_tokens.module.css';
+  position: relative;
   color: var(--nu-ink);
   font-variant-numeric: tabular-nums;
-}
+  isolation: isolate;
+  background: #000;
+  overflow-x: clip;
 
-.shell {
-  max-width: 1200px;
-  margin: 0 auto;
-  border-left: 1px solid var(--nu-rule);
-  border-right: 1px solid var(--nu-rule);
+  --nu-ink:       #eae8f4;
+  --nu-ink-2:     #b3b0c8;
+  --nu-ink-3:     rgba(179, 176, 200, 0.62);
+  --nu-ink-4:     rgba(179, 176, 200, 0.36);
+  --nu-rule:      rgba(255, 255, 255, 0.08);
+  --nu-rule-2:    rgba(255, 255, 255, 0.04);
+  --nu-accent:      #c19eff;
+  --nu-accent-soft: rgba(193, 158, 255, 0.18);
+  --nu-accent-wash: rgba(193, 158, 255, 0.10);
+  --nu-accent-line: rgba(193, 158, 255, 0.45);
+  --nu-accent-glow: rgba(193, 158, 255, 0.42);
+  --nu-accent-2:      #6ba8ff;
+  --nu-accent-2-soft: rgba(107, 168, 255, 0.18);
+  --nu-accent-2-wash: rgba(107, 168, 255, 0.09);
+  --nu-accent-2-line: rgba(107, 168, 255, 0.44);
+  --nu-accent-2-glow: rgba(107, 168, 255, 0.36);
+  --nu-code-bg:   rgba(255, 255, 255, 0.03);
+  --nu-code-bg-2: rgba(255, 255, 255, 0.02);
 }
-
-@keyframes nsFadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.hero, .section { animation: nsFadeIn 0.6s ease-out both; }
-.section { animation-delay: 0.15s; }
 
 /* =============================================================================
- * HERO — manifest: typography-driven, restrained, mostly empty
+ * HERO GRADIENT — verbatim from home. The JB three-radial recipe.
+ * ==========================================================================*/
+.heroBg {
+  --grad-dim:   rgb(103 31 255 / 0.8);
+  --blue-dim:   rgb(0 71 253 / 0.72);
+
+  /* Fixed 2000 × 2000 pixel block. Horizontally centered on the page via
+   * `left: 50%; margin-left: -1000px` (half of the block width), and
+   * top-aligned to .root's top. Gradient anchors and radii are declared
+   * in PIXELS so the composition is structurally identical on every
+   * viewport — the bloom shape doesn't drift with screen width. On
+   * narrower viewports the sides of the block sit outside the shell and
+   * only the visible portion inside the viewport gets painted. */
+  position: absolute;
+  top: 0;
+  left: 50%;
+  margin-left: -2000px;
+  width: 4000px;
+  height: 1700px;
+  z-index: 0;
+  pointer-events: none;
+
+  background:
+    /* purple bloom — top-left area
+     * anchor  (x, y) = (600px, 100px)
+     * radius (rx, ry) = 1400px × 1600px  */
+    radial-gradient(
+      1400px 1600px at 1800px 0px,
+      var(--grad-dim) 0%,
+      var(--grad-dim) 15%,
+      transparent 75%
+    ),
+    /* blue bloom — bottom-right, long axis vertical
+     * anchor  (x, y) = (1600px, 1200px)
+     * radius (rx, ry) = 900px × 1800px  (narrow horizontally, tall vertically) */
+    radial-gradient(
+      1000px 1000px at 2600px 700px,
+      var(--blue-dim) 20%,
+      transparent 75%
+    );
+}
+
+/* =============================================================================
+ * FLOATING PILL NAV — replaces the default fumadocs top bar. Fixed to the
+ * viewport, centered horizontally, rounded pill with a translucent glass
+ * body sitting above the hero gradient.
+ * ==========================================================================*/
+.floatingNav {
+  position: fixed;
+  top: clamp(16px, 2.2vh, 28px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--nu-pad-x);
+  pointer-events: none;
+}
+.navPill {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(22px, 2.6vw, 34px);
+  padding: 10px 12px 10px 22px;
+  min-height: 52px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(12, 10, 20, 0.58);
+  backdrop-filter: blur(26px) saturate(170%);
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  box-shadow:
+    0 24px 60px -22px rgba(0, 0, 0, 0.7),
+    0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  letter-spacing: 0.02em;
+}
+.navBrand {
+  display: inline-flex;
+  align-items: center;
+  color: var(--nu-ink);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  padding: 2px 4px;
+}
+.navDivider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.10);
+}
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 2vw, 26px);
+}
+.navLinks a {
+  color: var(--nu-ink-2);
+  text-decoration: none;
+  transition: color .18s ease;
+  text-transform: lowercase;
+  padding: 4px 2px;
+}
+.navLinks a:hover { color: var(--nu-ink); }
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.navSearch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 8px 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--nu-ink-2);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  cursor: pointer;
+  transition: color .18s ease, background .18s ease, border-color .18s ease;
+}
+.navSearch:hover {
+  color: var(--nu-ink);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.navSearchLabel {
+  padding-right: 6px;
+}
+.navSearchKbd {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--nu-ink-3, rgba(179, 176, 200, 0.7));
+}
+.navSearchKbd kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.04);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--nu-ink-2);
+}
+.navGithub {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  color: var(--nu-ink-2);
+  transition: color .18s ease, background .18s ease;
+}
+.navGithub:hover {
+  color: var(--nu-ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 820px) {
+  .navSearchLabel, .navSearchKbd { display: none; }
+  .navSearch { padding: 0 10px; gap: 0; }
+}
+@media (max-width: 640px) {
+  .navLinks, .navDivider { display: none; }
+  .navPill { padding: 8px 10px 8px 18px; min-height: 48px; gap: 12px; }
+}
+
+/* =============================================================================
+ * GRAIN — dotted paper tooth over the WHOLE page. Fixed layer so it sits on
+ * top of every gradient plane and gives paint a textured surface. Very low
+ * alpha noise; reads as tooth, not stripes.
+ * ==========================================================================*/
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(rgba(0, 0, 0, 0.5) 1px, transparent 1px);
+  background-size: 3px 3px, 5px 5px;
+  background-position: 0 0, 1px 1px;
+}
+
+/* =============================================================================
+ * SHELL — 1200px column above the gradient planes + grain.
+ * ==========================================================================*/
+.shell {
+  position: relative;
+  z-index: 3;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* =============================================================================
+ * HERO — verbatim from home.
  * ==========================================================================*/
 .hero {
   position: relative;
   padding: 0;
-  overflow: hidden;
-  border-bottom: 1px solid var(--nu-rule);
+  background: transparent;
+  color: var(--nu-ink);
 }
 
-/* fine line grid backdrop */
-.heroGrid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right, var(--nu-rule-2) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--nu-rule-2) 1px, transparent 1px);
-  background-size: 80px 80px;
-  background-position: -1px -1px;
-  mask-image: radial-gradient(ellipse 90% 100% at 22% 45%, black 8%, transparent 78%);
-  -webkit-mask-image: radial-gradient(ellipse 90% 100% at 22% 45%, black 8%, transparent 78%);
-  opacity: 0.55;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* accent glow — offset far right, keeps identity */
-.heroGlow {
-  position: absolute;
-  top: 32%;
-  right: -12%;
-  width: 62%;
-  aspect-ratio: 1 / 1;
-  background: radial-gradient(
-    circle,
-    var(--nu-accent-glow) 0%,
-    var(--nu-accent-soft) 22%,
-    transparent 60%
-  );
-  filter: blur(72px);
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.9;
-}
-
-/* soft fade top/bottom so grid + glow melt into the page */
-.hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(to bottom, var(--color-fd-background) 0%, transparent 6%, transparent 94%, var(--color-fd-background) 100%);
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* inner — two-column at desktop: manifest left, actions right */
 .heroInner {
   position: relative;
   z-index: 2;
-  padding: clamp(88px, 15vh, 168px) var(--nu-pad-x) clamp(80px, 13vh, 128px);
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.8fr);
-  gap: 56px;
-  align-items: end;
-}
-.heroBody {
+  padding: clamp(88px, 14vh, 160px) var(--nu-pad-x) clamp(72px, 12vh, 128px);
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  min-width: 0;
-}
-.heroAside {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  align-items: stretch;
-  min-width: 0;
-}
-.heroAsideViz {
-  width: 100%;
-  margin-bottom: 20px;
-  display: block;
-}
-.heroAsideViz svg { width: 100%; height: auto; display: block; }
-.heroAside .heroCta,
-.heroAside .heroCtaGhost {
-  justify-content: space-between;
-  margin-left: 0;
-  padding-left: 18px;
-  padding-right: 18px;
-  border: 1px solid var(--nu-rule);
-  border-radius: 2px;
-}
-.heroAside .heroCtaGhost { color: var(--nu-ink-2); }
-.heroAside .heroCtaGhost:hover { color: var(--nu-ink); border-color: var(--nu-ink-3); }
-@media (max-width: 900px) {
-  .heroInner {
-    grid-template-columns: 1fr;
-    gap: 40px;
-    align-items: start;
-  }
-}
-
-/* eyebrow — mono tag with hairline lead */
-.heroEyebrow {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--nu-accent-2);
-  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  line-height: 1;
-}
-.heroEyebrow::before {
-  content: "";
-  width: 22px;
-  height: 1px;
-  background: var(--nu-accent-2);
+  text-align: center;
+  gap: clamp(20px, 3vh, 40px);
 }
 
-/* the claim — the visual anchor */
+.heroWordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(4.6rem, 13vw, 11rem);
+  line-height: 0.92;
+  letter-spacing: -0.068em;
+  color: var(--nu-ink);
+  margin: 0;
+  text-transform: lowercase;
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
+}
+
+.heroConcept {
+  display: inline-block;
+  padding: 1px 10px 2px;
+  border: 1px solid var(--nu-accent-line);
+  border-radius: 3px;
+  background: var(--nu-accent-wash);
+  color: var(--nu-accent);
+  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 0.94em;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  transform: translateY(-1px);
+}
+
+.heroVizFrame {
+  position: relative;
+  width: 100%;
+  max-width: 1080px;
+  margin-top: clamp(28px, 4vh, 56px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.022);
+  backdrop-filter: blur(52px) saturate(115%);
+  -webkit-backdrop-filter: blur(52px) saturate(115%);
+  padding: clamp(20px, 2.6vw, 36px);
+  box-shadow:
+    0 60px 140px -20px rgba(0, 0, 0, 0.85),
+    0 24px 60px -20px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+.heroVizFrame svg { width: 100%; height: auto; display: block; }
+
 .heroClaim {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(2.6rem, 6.5vw, 4.8rem);
-  line-height: 1.02;
-  letter-spacing: -0.048em;
+  font-size: clamp(1.9rem, 4.2vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -0.036em;
   margin: 0;
-  max-width: 18ch;
+  max-width: 26ch;
+  text-align: center;
   text-wrap: balance;
   color: var(--nu-ink);
 }
@@ -165,43 +370,15 @@
 
 .heroMission {
   font-family: var(--font-display);
-  font-size: clamp(15px, 1.35vw, 17px);
-  line-height: 1.65;
+  font-size: clamp(15.5px, 1.4vw, 18px);
+  line-height: 1.72;
   color: var(--nu-ink-2);
-  max-width: 60ch;
-  margin: 0;
+  max-width: 68ch;
+  margin: 0 auto;
+  text-align: center;
 }
-.heroMission b { color: var(--nu-ink); font-weight: 600; }
+.heroMission b { color: var(--nu-ink); font-weight: 700; }
 
-.heroActions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-top: 12px;
-}
-.heroCta {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 13px 18px 13px 20px;
-  background: var(--nu-ink);
-  color: var(--color-fd-background);
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  letter-spacing: 0.05em;
-  text-transform: lowercase;
-  text-decoration: none;
-  border: 1px solid var(--nu-ink);
-  border-radius: 2px;
-  transition: transform .2s ease, box-shadow .2s ease;
-}
-.heroCta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 28px -10px var(--nu-accent-glow);
-}
-.heroCtaArrow { transition: transform .2s ease; }
-.heroCta:hover .heroCtaArrow { transform: translateX(3px); }
 .heroCtaGhost {
   display: inline-flex;
   align-items: center;
@@ -228,18 +405,26 @@
 }
 
 /* =============================================================================
- * SECTIONS — same rhythm as Nu landing
+ * SECTIONS — content sits ON TOP of the gradient plane, aligned to the DARKER
+ * side of each section (opposite the bloom).
  * ==========================================================================*/
 .section {
-  padding: clamp(56px, 8vh, 88px) 0;
-  border-top: 1px solid var(--nu-rule);
+  position: relative;
+  padding: clamp(112px, 15vh, 180px) 0;
 }
+
+/* per-section accent tokens — the section label + rule inherit the bloom hue */
+.section[data-hue="s1"] { --sec-accent: #6ba8ff; }
+.section[data-hue="s2"] { --sec-accent: #4dd4c8; }
+.section[data-hue="s3"] { --sec-accent: #ff6ba8; }
+.section[data-hue="s4"] { --sec-accent: #6ba8ff; }
+
 .sectionLabel {
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--nu-accent-2);
+  color: var(--sec-accent, var(--nu-accent-2));
   margin: 0 0 12px;
   padding: 0 var(--nu-pad-x);
   display: flex;
@@ -250,17 +435,17 @@
   content: "";
   width: 40px;
   height: 1px;
-  background: var(--nu-accent-2-line);
+  background: color-mix(in oklab, var(--sec-accent, var(--nu-accent-2)) 55%, transparent);
 }
 .sectionTitle {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(1.4rem, 2.6vw, 1.95rem);
-  letter-spacing: -0.02em;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  letter-spacing: -0.028em;
   margin: 0 0 16px;
-  line-height: 1.2;
+  line-height: 1.14;
   color: var(--nu-ink);
-  max-width: 32ch;
+  max-width: 22ch;
   text-wrap: balance;
   padding: 0 var(--nu-pad-x);
 }
@@ -269,13 +454,12 @@
   margin: 0 0 32px;
   color: var(--nu-ink-2);
   font-family: var(--font-display);
-  font-size: 15.5px;
+  font-size: 16px;
   line-height: 1.6;
-  max-width: 68ch;
+  max-width: 60ch;
 }
 .sectionIntro b { color: var(--nu-ink); font-weight: 700; }
 
-/* interaction-model + Nu section — small calm action row */
 .modelActions {
   padding: 0 var(--nu-pad-x);
   margin-top: 8px;
@@ -285,14 +469,23 @@
 }
 
 /* =============================================================================
- * SECTION SPLIT — left content column + right visual/code slot
+ * SECTION SPLIT — 2-col grid inside a section. On sections with a side bloom,
+ * content sits on the darker column and the visual sits on the bloom side.
  * ==========================================================================*/
 .sectionSplit {
+  position: relative;
+  z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   align-items: stretch;
+  gap: clamp(24px, 4vw, 56px);
+}
+.sectionSplitFlip {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
 }
 .sectionCol {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -309,6 +502,7 @@
 .sectionCol .sectionLabel { margin-bottom: 4px; }
 .sectionCol .sectionTitle { margin-bottom: 4px; }
 .sectionCol .sectionIntro { margin-bottom: 12px; }
+
 .sectionVisual {
   padding: 28px var(--nu-pad-x);
   display: flex;
@@ -320,27 +514,34 @@
   position: relative;
 }
 .sectionVisual svg { max-width: 100%; height: auto; display: block; }
-.sectionVisualPlaceholder {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--nu-ink-4);
-  border: 1px dashed var(--nu-rule);
-  padding: 40px 24px;
-  width: 100%;
-  text-align: center;
-}
+
 @media (max-width: 900px) {
-  .sectionSplit { grid-template-columns: 1fr; }
+  .sectionSplit,
+  .sectionSplitFlip { grid-template-columns: 1fr; }
   .sectionVisual { min-height: 240px; }
 }
 
-/* apps grid follows a split — breathing gap */
-.sectionSplit + .flatGrid { margin-top: clamp(40px, 6vh, 64px); }
+/* Glass card — subtle translucent panel for content that overlays a bloom. */
+.glassCard {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  padding: 22px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(14, 12, 22, 0.42);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow:
+    0 30px 70px -30px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.glassCard svg { max-width: 100%; height: auto; display: block; }
 
 /* apps section — shelf viz below the section header */
 .sectionShelf {
+  position: relative;
+  z-index: 1;
   padding: 8px var(--nu-pad-x) 0;
   margin-bottom: clamp(32px, 5vh, 56px);
 }
@@ -354,20 +555,25 @@
   font-size: 12.5px;
   line-height: 1.65;
   color: var(--nu-ink-2);
-  background: var(--nu-code-bg-2);
-  border: 1px solid var(--nu-rule);
-  border-radius: 2px;
-  padding: 20px 22px;
+  background: rgba(10, 8, 20, 0.72);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  padding: 22px 24px;
   margin: 0;
   overflow-x: auto;
   width: 100%;
-  max-width: 460px;
+  max-width: 500px;
   white-space: pre;
   tab-size: 4;
+  box-shadow:
+    0 30px 70px -30px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
-.codeBlock .kw { color: var(--nu-accent-2); }
-.codeBlock .nu { color: var(--nu-accent); }
-.codeBlock .str { color: var(--nu-ink-3); }
+.codeBlock .kw { color: #6ba8ff; }
+.codeBlock .nu { color: #c19eff; }
+.codeBlock .str { color: #ffbd6b; }
 .codeBlock .cmt { color: var(--nu-ink-4); font-style: italic; }
 .codeCaption {
   font-family: var(--font-mono);
@@ -384,13 +590,15 @@
   align-items: stretch;
   gap: 0;
   width: 100%;
-  max-width: 460px;
+  max-width: 500px;
 }
 
 /* =============================================================================
- * FLAT GRID — same hairline seams pattern used across nu landing
+ * FLAT GRID — apps
  * ==========================================================================*/
 .flatGrid {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 1px;
   background: var(--nu-rule);
@@ -409,7 +617,9 @@
 }
 
 .flatCell {
-  background: var(--color-fd-background);
+  background: rgba(12, 10, 20, 0.72);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
   padding: 24px 22px 26px;
   display: flex;
   flex-direction: column;
@@ -424,35 +634,19 @@
   margin: -8px -6px 6px;
   border: 1px solid var(--nu-rule);
   padding: 6px;
-  background: var(--color-fd-background);
+  background: rgba(0, 0, 0, 0.42);
 }
 .flatCellViz svg { width: 100%; height: auto; display: block; }
-a.flatCell:hover { background: var(--nu-accent-wash); }
-a.flatCell:hover .flatCellName { color: var(--nu-accent); }
+a.flatCell:hover { background: rgba(255, 46, 141, 0.14); }
+a.flatCell:hover .flatCellName { color: #ff6ba8; }
 a.flatCell:hover .flatArrow { transform: translateX(2px); opacity: 1; }
 .flatCellSoon { opacity: 0.6; }
-.flatCellSoon:hover { background: var(--color-fd-background); cursor: default; }
-.flatCellWide { grid-column: 1 / -1; }
-.flatCellSpan2 { grid-column: span 2; }
-@media (max-width: 640px) {
-  .flatCellSpan2 { grid-column: 1; }
-}
+.flatCellSoon:hover { background: rgba(12, 10, 20, 0.72); cursor: default; }
 
-.flatIndex {
-  position: absolute;
-  top: 22px;
-  right: 22px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.22em;
-  color: var(--nu-accent-2);
-  text-transform: uppercase;
-  font-weight: 600;
-}
 .flatStatus {
   position: absolute;
   top: 22px;
-  right: 22px;
+  left: 22px;
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.22em;
@@ -464,9 +658,9 @@ a.flatCell:hover .flatArrow { transform: translateX(2px); opacity: 1; }
   background: transparent;
 }
 .flatStatusLive {
-  color: var(--nu-accent-2);
-  border-color: var(--nu-accent-2-line);
-  background: var(--nu-accent-2-wash);
+  color: #ffb0d4;
+  border-color: rgba(255, 176, 212, 0.45);
+  background: rgba(255, 176, 212, 0.1);
 }
 .flatCellName {
   font-family: var(--font-mono);
@@ -485,7 +679,6 @@ a.flatCell:hover .flatArrow { transform: translateX(2px); opacity: 1; }
   margin: 0;
   color: var(--nu-ink);
   line-height: 1.3;
-  padding-right: 60px;
 }
 .flatCellBody {
   color: var(--nu-ink-2);
@@ -493,14 +686,7 @@ a.flatCell:hover .flatArrow { transform: translateX(2px); opacity: 1; }
   line-height: 1.6;
   margin: 0;
 }
-.flatCellBody b { color: var(--nu-accent); font-weight: 600; }
-.flatCellBody code {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  padding: 1px 5px;
-  background: var(--nu-code-bg-2);
-  border-radius: 3px;
-}
+.flatCellBody b { color: #ff6ba8; font-weight: 600; }
 .flatArrow {
   margin-top: auto;
   padding-top: 4px;
@@ -526,18 +712,21 @@ a.flatCell:hover .flatArrow { transform: translateX(2px); opacity: 1; }
 }
 
 /* =============================================================================
- * FOOTER — same style as Nu landing
+ * FOOTER — sits on its own low-intensity top-center gradient.
  * ==========================================================================*/
 .footer {
+  position: relative;
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr;
   gap: 0;
-  border-top: 1px solid var(--nu-rule);
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--nu-ink-3);
+  padding: clamp(72px, 10vh, 120px) 0 clamp(80px, 12vh, 140px);
 }
 .footerCell {
+  position: relative;
+  z-index: 1;
   padding: 28px var(--nu-pad-x) 32px;
   display: flex;
   flex-direction: column;
@@ -563,7 +752,7 @@ a.flatCell:hover .flatArrow { transform: translateX(2px); opacity: 1; }
   text-decoration: none;
   transition: color .15s ease;
 }
-.footerCellBody a:hover { color: var(--nu-accent); }
+.footerCellBody a:hover { color: #6ba8ff; }
 .footerBrand {
   font-family: var(--font-display);
   font-weight: 800;
