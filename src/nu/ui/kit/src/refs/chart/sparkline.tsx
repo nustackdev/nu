@@ -1,11 +1,12 @@
-// Sparkline -- display-only inline trend line, recharts.
+// Sparkline -- display-only inline trend line.
 //
 // Server-owned. One `write` op carries every mutation (partial map);
 // one `append` op pushes a single [x, y] point. Class-level defaults
 // (color, height, max_points) ride in on the mount field `props` and
-// seed the slice. No axes, tooltip, grid, or legend.
+// seed the slice. Composes the kit Sparkline primitive; no axes, tooltip,
+// grid, or legend.
 
-import { Line, LineChart as RcLineChart, ResponsiveContainer } from "recharts";
+import { Sparkline as KitSparkline } from "../../components/ui/sparkline";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
@@ -13,7 +14,7 @@ type Point = [number, number | null];
 type SparklineValue = { points: Point[] };
 
 const DEFAULTS = {
-	color: "#2563eb",
+	color: "",
 	height: 32,
 	max_points: 100,
 };
@@ -38,8 +39,6 @@ function _height(n: unknown): number {
 	return v < 8 ? 8 : Math.floor(v);
 }
 
-// Accepts a [[x, y], ...] pairs list, a flat [y, y, ...] list (auto-x =
-// 0..n-1), or a {points: [...]} map. Anything else -> [].
 function _toPoints(v: unknown): Point[] {
 	if (v && typeof v === "object" && !Array.isArray(v) && "points" in v) {
 		return _toPoints((v as { points: unknown }).points);
@@ -74,12 +73,8 @@ const factory: SliceFactory = (path, ctx, props) => ({
 			if ("color" in p) {
 				if (typeof p.color === "string") slice.color = p.color;
 			}
-			if ("height" in p) {
-				slice.height = _height(p.height);
-			}
-			if ("max_points" in p) {
-				slice.max_points = _cap(p.max_points, DEFAULTS.max_points);
-			}
+			if ("height" in p) slice.height = _height(p.height);
+			if ("max_points" in p) slice.max_points = _cap(p.max_points, DEFAULTS.max_points);
 			const cap = (slice.max_points as number) ?? DEFAULTS.max_points;
 			if ("points" in p) {
 				slice.value = { points: _trim(_toPoints(p.points), cap) };
@@ -110,27 +105,9 @@ function SparklineView({ path }: { path: string }) {
 	const color = useStore((s) => (s.refs[path]?.color as string) ?? DEFAULTS.color);
 	const height = useStore((s) => (s.refs[path]?.height as number) ?? DEFAULTS.height);
 	const points = Array.isArray(value?.points) ? value.points : [];
-	const data = points.map((p, i) => ({
-		x: Array.isArray(p) ? _num(p[0], i) : i,
-		y: Array.isArray(p) ? _y(p[1]) : null,
-	}));
-	return (
-		<div style={{ height }} className="w-full">
-			<ResponsiveContainer width="100%" height="100%">
-				<RcLineChart data={data} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
-					<Line
-						type="monotone"
-						dataKey="y"
-						stroke={color}
-						dot={false}
-						isAnimationActive={false}
-						connectNulls={false}
-						strokeWidth={1.5}
-					/>
-				</RcLineChart>
-			</ResponsiveContainer>
-		</div>
-	);
+	// Kit Sparkline takes a bare number[]; null y renders as a gap via recharts.
+	const data = points.map((p) => (Array.isArray(p) ? _y(p[1]) ?? Number.NaN : Number.NaN));
+	return <KitSparkline data={data} color={color || undefined} height={height} />;
 }
 
 export const Sparkline: RefEntry = { factory, component: SparklineView };

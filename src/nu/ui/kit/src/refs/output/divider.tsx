@@ -2,8 +2,14 @@
 //
 // Server-owned. One `write` op carries every mutation; payload is a partial
 // map: missing keys leave the slice value untouched. Class-level defaults
-// come in on the mount field `props` and seed the slice.
+// come in on the mount field `props` and seed the slice. Composes the kit
+// Separator primitive, which owns the labeled layout when `label` is set.
+//
+// TODO(retune): Separator primitive centers the label; `align` (left/right)
+// asymmetric side widths from the old Ref are not yet supported by the
+// primitive. Left as-is until the primitive grows an align slot.
 
+import { Separator } from "../../components/ui/separator";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
@@ -35,24 +41,9 @@ const factory: SliceFactory = (path, ctx, props) => ({
 
 function DividerView({ path }: { path: string }) {
 	const label = useStore((s) => (s.refs[path]?.label as string) ?? "");
-	const align = useStore((s) => (s.refs[path]?.align as string) ?? "center");
-	if (label === "") {
-		return <hr className="my-4 border-t border-border" />;
-	}
-	let leftGrowCls = "flex-1";
-	let rightGrowCls = "flex-1";
-	if (align === "left") {
-		leftGrowCls = "w-4 flex-none";
-		rightGrowCls = "flex-1";
-	} else if (align === "right") {
-		leftGrowCls = "flex-1";
-		rightGrowCls = "w-4 flex-none";
-	}
 	return (
-		<div className="my-4 flex items-center gap-3 text-sm text-muted-foreground">
-			<span className={`h-px bg-border ${leftGrowCls}`} />
-			<span>{label}</span>
-			<span className={`h-px bg-border ${rightGrowCls}`} />
+		<div className="my-4 w-full">
+			<Separator label={label || undefined} />
 		</div>
 	);
 }

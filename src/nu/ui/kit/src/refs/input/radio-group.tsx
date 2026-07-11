@@ -4,9 +4,11 @@
 // Server write payload: a string overwrites `selected`; a map with an
 // `options` key overwrites `options`. Server-initiated read: answer with
 // the current selected value. Class-level defaults (options, selected,
-// orientation) seed the slice via mount props.
+// orientation) seed the slice via mount props. Composes the kit RadioGroup
+// primitive.
 
 import { OP_NOTIFY } from "@nustackdev/ui-core";
+import { RadioGroup, RadioGroupItem } from "../../components/ui/radio-group";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
@@ -62,30 +64,34 @@ function RadioGroupView({ path }: { path: string }) {
 	const options = useStore((s) => (s.refs[path]?.options as Option[]) ?? []);
 	const orientation = useStore((s) => (s.refs[path]?.orientation as Orientation) ?? "vertical");
 	const send = useStore((s) => s.send);
-	const name = `radio-${path}`;
-	const container = orientation === "horizontal" ? "flex flex-row gap-4" : "flex flex-col gap-2";
+	const listCls =
+		orientation === "horizontal"
+			? "flex flex-row flex-wrap gap-4"
+			: "flex flex-col gap-2";
 	return (
-		<div className={container}>
-			{options.map((o) => (
-				<label key={o.value} className="flex items-center gap-2 font-mono text-sm">
-					<input
-						type="radio"
-						name={name}
-						value={o.value}
-						checked={selected === o.value}
-						onChange={() => {
-							const next = o.value;
-							useStore.setState((draft) => {
-								const slice = draft.refs[path];
-								if (slice) slice.selected = next;
-							});
-							send({ op: OP_NOTIFY, ref: path, payload: null });
-						}}
-					/>
-					<span>{o.label}</span>
-				</label>
-			))}
-		</div>
+		<RadioGroup
+			value={selected}
+			onValueChange={(next) => {
+				useStore.setState((draft) => {
+					const slice = draft.refs[path];
+					if (slice) slice.selected = next;
+				});
+				send({ op: OP_NOTIFY, ref: path, payload: null });
+			}}
+			className={listCls}
+		>
+			{options.map((o) => {
+				const id = `radio-${path}-${o.value}`;
+				return (
+					<div key={o.value} className="flex items-center gap-2">
+						<RadioGroupItem value={o.value} id={id} />
+						<label htmlFor={id} className="text-base text-text-primary cursor-pointer">
+							{o.label}
+						</label>
+					</div>
+				);
+			})}
+		</RadioGroup>
 	);
 }
 

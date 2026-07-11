@@ -4,8 +4,12 @@
 // Server-initiated read: answer with current checked value.
 // Server-initiated write: replace the checked value (canonical / reset).
 // Class-level defaults (label, checked) seed the slice via mount props.
+// Composes the kit Checkbox primitive (Radix under the hood); local-first
+// flip pattern keeps keystroke response instant.
 
+import { useId } from "react";
 import { OP_NOTIFY } from "@nustackdev/ui-core";
+import { Checkbox } from "../../components/ui/checkbox";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
@@ -23,7 +27,6 @@ const factory: SliceFactory = (path, ctx, props) => ({
 			slice.checked = Boolean(v);
 		}),
 	get: () => {
-		// Live read from the store to avoid stale-closure on the slice.
 		const slice = useStore.getState().refs[path];
 		return Boolean(slice?.checked);
 	},
@@ -33,24 +36,27 @@ function CheckboxView({ path }: { path: string }) {
 	const checked = useStore((s) => Boolean(s.refs[path]?.checked));
 	const label = useStore((s) => (s.refs[path]?.label as string) ?? "");
 	const send = useStore((s) => s.send);
+	const id = useId();
 	return (
-		<label className="inline-flex items-center gap-2 text-sm">
-			<input
-				type="checkbox"
-				className="h-4 w-4 rounded border"
+		<div className="inline-flex items-center gap-2">
+			<Checkbox
+				id={id}
 				checked={checked}
-				onChange={(e) => {
-					const next = e.target.checked;
-					// Local-first flip; canonical checked field lives on the slice.
+				onCheckedChange={(next) => {
+					const nextBool = next === true;
 					useStore.setState((draft) => {
 						const slice = draft.refs[path];
-						if (slice) slice.checked = next;
+						if (slice) slice.checked = nextBool;
 					});
 					send({ op: OP_NOTIFY, ref: path, payload: null });
 				}}
 			/>
-			{label && <span>{label}</span>}
-		</label>
+			{label && (
+				<label htmlFor={id} className="text-base text-text-primary cursor-pointer">
+					{label}
+				</label>
+			)}
+		</div>
 	);
 }
 

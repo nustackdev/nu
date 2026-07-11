@@ -32,14 +32,14 @@ class NavRef(NudleRef):
     (link clicks, back/forward) ships a `notify` whose payload is the new URI.
 
     API for host code:
-        nav.store(uri)              -- push a new URI onto history
+        nav.set(uri)              -- push a new URI onto history
         nav.replace(uri)            -- replace the current entry (no back-stack growth)
         nav.back()                  -- history.back()
         nav.forward()               -- history.forward()
         nav.changed()               -- subscribe to user navigation events
         await nav.aread(...)        -- through session, fetch current URI
 
-    All four host writes compile to the existing `write` op. `store(uri)`
+    All four host writes compile to the existing `write` op. `set(uri)`
     ships a bare string for back-compat; the other three ship a tagged
     dict the browser slice dispatches on.
     """
@@ -50,7 +50,7 @@ class NavRef(NudleRef):
 
         return athunk
 
-    def store(self, value: StrArg) -> Nu:
+    def set(self, value: StrArg) -> Nu:
         # Bare-string push -- shorthand for {"action": "push", "uri": value}.
         # Kept as bare-string to preserve existing host code (multipage.py).
         return Write(self, value)
@@ -86,5 +86,5 @@ class TitleRef(NudleRef):
             return {}
         return {"default": cls.default, "suffix": cls.suffix}
 
-    def store(self, value: StrArg) -> Nu:
+    def set(self, value: StrArg) -> Nu:
         return Write(self, value)

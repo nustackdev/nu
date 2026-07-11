@@ -19,8 +19,8 @@ bg = nu.v.Transaction(nu.IfDo(Series.height.missing(), Series.height.store(0))) 
     >> nu.Delay(0.001),
 )
 
-ui = Dashboard.n.store(200, min=10, max=2000, step=10, label="sample size") >> nu.ForeverDo(
-    nu.v.Snapshot(Dashboard.chart.store_points(
+ui = Dashboard.n.set(200, min=10, max=2000, step=10, label="sample size") >> nu.ForeverDo(
+    nu.v.Snapshot(Dashboard.chart.set_points(
         nu.CollectQuery(nu.SortedQuery(Series.entries.sample(Dashboard.n, 0, Series.height)))))
     >> nu.Delay(0.1),
 )

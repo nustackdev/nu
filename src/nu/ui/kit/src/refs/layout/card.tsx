@@ -1,12 +1,21 @@
 // CardRef -- card-styled Section. Header (title + subtitle), body
 // (vertical stack of child Refs), footer (plain text). Display-only,
 // server-owned. Three dedicated ops carry chrome mutations:
-// `store_title`, `store_subtitle`, `store_footer`; each takes a string
+// `set_title`, `set_subtitle`, `set_footer`; each takes a string
 // (nil coerces to ""). Children are absolute wire paths supplied by the
 // mount walker; the renderer resolves each through the global slice
-// table and dispatches to its renderer.
+// table and dispatches to its renderer. Composes the kit Card primitive
+// family.
 
 import { ErrorBoundary } from "../../components/ErrorBoundary";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "../../components/ui/card";
 import { renderers } from "../../refs";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
@@ -22,19 +31,19 @@ const factory: SliceFactory = (path, ctx, props, children) => ({
 	subtitle: typeof props?.subtitle === "string" ? (props.subtitle as string) : "",
 	footer: typeof props?.footer === "string" ? (props.footer as string) : "",
 	children: Array.isArray(children) ? [...children] : [],
-	store_title: (v: unknown) =>
+	set_title: (v: unknown) =>
 		ctx.set((refs) => {
 			const slice = refs[path];
 			if (!slice) return;
 			slice.title = coerceStr(v);
 		}),
-	store_subtitle: (v: unknown) =>
+	set_subtitle: (v: unknown) =>
 		ctx.set((refs) => {
 			const slice = refs[path];
 			if (!slice) return;
 			slice.subtitle = coerceStr(v);
 		}),
-	store_footer: (v: unknown) =>
+	set_footer: (v: unknown) =>
 		ctx.set((refs) => {
 			const slice = refs[path];
 			if (!slice) return;
@@ -52,19 +61,19 @@ function CardView({ path }: { path: string }) {
 	const showHeader = title !== "" || subtitle !== "";
 
 	return (
-		<section className="rounded-md border bg-card text-card-foreground shadow-sm">
+		<Card>
 			{showHeader ? (
-				<header className="px-4 pt-4 pb-2">
-					{title !== "" ? <h3 className="text-sm font-semibold">{title}</h3> : null}
-					{subtitle !== "" ? <p className="text-xs text-muted-foreground">{subtitle}</p> : null}
-				</header>
+				<CardHeader>
+					{title !== "" ? <CardTitle>{title}</CardTitle> : null}
+					{subtitle !== "" ? <CardDescription>{subtitle}</CardDescription> : null}
+				</CardHeader>
 			) : null}
-			<div className="flex flex-col gap-3 px-4 py-3">
+			<CardContent className="flex flex-col gap-3 py-3">
 				{childPaths.map((cp) => {
 					const childSlice = refs[cp];
 					if (!childSlice) {
 						return (
-							<div key={cp} className="text-xs text-destructive font-mono">
+							<div key={cp} className="text-xs text-status-danger font-mono">
 								no ref at {cp}
 							</div>
 						);
@@ -72,7 +81,7 @@ function CardView({ path }: { path: string }) {
 					const Comp = renderers[childSlice.type];
 					if (!Comp) {
 						return (
-							<div key={cp} className="text-xs text-destructive font-mono">
+							<div key={cp} className="text-xs text-status-danger font-mono">
 								no renderer for {childSlice.type}
 							</div>
 						);
@@ -83,11 +92,13 @@ function CardView({ path }: { path: string }) {
 						</ErrorBoundary>
 					);
 				})}
-			</div>
+			</CardContent>
 			{footer !== "" ? (
-				<footer className="px-4 py-2 border-t text-xs text-muted-foreground">{footer}</footer>
+				<CardFooter className="border-t border-border-subtle pt-2 text-xs text-text-secondary">
+					{footer}
+				</CardFooter>
 			) : null}
-		</section>
+		</Card>
 	);
 }
 

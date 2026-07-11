@@ -3,17 +3,20 @@
 // Server-owned. One `write` op carries every mutation; payload is a partial
 // map: missing keys leave the slice value untouched. A bare string payload is
 // accepted as a legacy shorthand for `{label: <string>}`. Class-level defaults
-// come in on the mount field `props` and seed the slice.
+// come in on the mount field `props` and seed the slice. Composes the kit
+// Heading primitive: level maps to size, align to text-align utility.
 
+import { Heading } from "../../components/ui/heading";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
-const LEVEL_CLASSES: Record<number, string> = {
-	1: "text-3xl font-semibold mb-3",
-	2: "text-2xl font-semibold mb-2",
-	3: "text-xl font-medium mb-2",
-	4: "text-lg font-medium mb-1",
-};
+// Match level to typography ladder from primitives.md §Heading.
+const LEVEL_SIZES = {
+	1: "3xl",
+	2: "2xl",
+	3: "xl",
+	4: "lg",
+} as const;
 
 const ALIGN_CLASSES: Record<string, string> = {
 	left: "text-left",
@@ -21,12 +24,12 @@ const ALIGN_CLASSES: Record<string, string> = {
 	right: "text-right",
 };
 
-function clampLevel(n: unknown): number {
+function clampLevel(n: unknown): 1 | 2 | 3 | 4 {
 	const v = Number(n);
 	if (!Number.isInteger(v)) return 1;
 	if (v < 1) return 1;
 	if (v > 4) return 4;
-	return v;
+	return v as 1 | 2 | 3 | 4;
 }
 
 function normAlign(a: unknown): string {
@@ -63,21 +66,16 @@ const factory: SliceFactory = (path, ctx, props) => ({
 
 function HeadingView({ path }: { path: string }) {
 	const label = useStore((s) => (s.refs[path]?.label as string) ?? "");
-	const level = useStore((s) => (s.refs[path]?.level as number) ?? 1);
+	const level = useStore((s) => (s.refs[path]?.level as 1 | 2 | 3 | 4) ?? 1);
 	const align = useStore((s) => (s.refs[path]?.align as string) ?? "left");
-	const sizeCls = LEVEL_CLASSES[level] ?? LEVEL_CLASSES[1];
+	const size = LEVEL_SIZES[level] ?? LEVEL_SIZES[1];
 	const alignCls = ALIGN_CLASSES[align] ?? ALIGN_CLASSES.left;
-	const cls = `${sizeCls} ${alignCls}`;
-	switch (level) {
-		case 2:
-			return <h2 className={cls}>{label}</h2>;
-		case 3:
-			return <h3 className={cls}>{label}</h3>;
-		case 4:
-			return <h4 className={cls}>{label}</h4>;
-		default:
-			return <h1 className={cls}>{label}</h1>;
-	}
+	const as = `h${level}` as "h1" | "h2" | "h3" | "h4";
+	return (
+		<Heading as={as} size={size} className={alignCls}>
+			{label}
+		</Heading>
+	);
 }
 
 export const HeadingRef: RefEntry = { factory, component: HeadingView };

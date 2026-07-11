@@ -47,16 +47,16 @@ class ButtonRef(NudleRef):
     def clicked(self) -> Changed:
         return Changed(self)
 
-    def store_label(self, text: StrArg) -> Nu:
+    def set_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_variant(self, name: Variant | StrArg) -> Nu:
+    def set_variant(self, name: Variant | StrArg) -> Nu:
         return Write(self, DictForm.of(variant=name))
 
-    def store_disabled(self, flag: BoolArg) -> Nu:
+    def set_disabled(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(disabled=flag))
 
-    def store(
+    def set(
         self,
         label: StrArg,
         variant: Variant | StrArg = UNSET,
@@ -89,7 +89,7 @@ class CheckboxRef(NudleRef):
 
         return athunk
 
-    def store(self, value: BoolArg) -> Nu:
+    def set(self, value: BoolArg) -> Nu:
         return Write(self, value)
 
     def changed(self) -> Changed:
@@ -121,7 +121,7 @@ class DatePickerRef(NudleRef):
 
         return athunk
 
-    def store(self, value: StrArg) -> Nu:
+    def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
     def changed(self) -> Changed:
@@ -132,13 +132,18 @@ InputType = Literal["text", "password", "email", "number"]
 
 
 class InputRef(NudleRef):
-    """Text input whose value lives in the browser."""
+    """Text input whose value lives in the browser.
+
+    Default face is display (Inter); code-shaped fields opt into
+    JetBrains Mono via `mono=True` — flips `font-mono` at render time.
+    """
 
     label: ClassVar[str] = ""
     placeholder: ClassVar[str] = ""
     value: ClassVar[str] = ""
     type: ClassVar[str] = "text"
     max_length: ClassVar[int | None] = None
+    mono: ClassVar[bool] = False
 
     @classmethod
     def _mount_props(cls) -> dict[str, object]:
@@ -148,6 +153,7 @@ class InputRef(NudleRef):
             "value": cls.value,
             "type": cls.type,
             "max_length": cls.max_length,
+            "mono": cls.mono,
         }
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -156,7 +162,7 @@ class InputRef(NudleRef):
 
         return athunk
 
-    def store(self, value: StrArg) -> Nu:
+    def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
     def changed(self) -> Changed:
@@ -190,22 +196,22 @@ class NumberInputRef(NudleRef):
 
         return athunk
 
-    def store_value(self, value: FloatArg) -> Nu:
+    def set_value(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(value=value))
 
-    def store_min(self, value: FloatArg | None) -> Nu:
+    def set_min(self, value: FloatArg | None) -> Nu:
         return Write(self, DictForm.of(min=value))
 
-    def store_max(self, value: FloatArg | None) -> Nu:
+    def set_max(self, value: FloatArg | None) -> Nu:
         return Write(self, DictForm.of(max=value))
 
-    def store_step(self, value: FloatArg) -> Nu:
+    def set_step(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(step=value))
 
-    def store_label(self, text: StrArg) -> Nu:
+    def set_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store(
+    def set(
         self,
         value: FloatArg,
         min: FloatArg = UNSET,
@@ -267,10 +273,10 @@ class RadioGroupRef(NudleRef):
 
         return athunk
 
-    def store(self, value: StrArg) -> Nu:
+    def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
-    def store_options(self, opts: ListArg[str] | ListArg[dict[str, str]]) -> Nu:
+    def set_options(self, opts: ListArg[str] | ListArg[dict[str, str]]) -> Nu:
         if isinstance(opts, list):
             payload: object = {"options": _normalize_options(opts)}
         else:
@@ -305,10 +311,10 @@ class SelectRef(NudleRef):
 
         return athunk
 
-    def store(self, value: StrArg) -> Nu:
+    def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
-    def store_options(self, opts: ListArg[str] | ListArg[dict[str, str]]) -> Nu:
+    def set_options(self, opts: ListArg[str] | ListArg[dict[str, str]]) -> Nu:
         if isinstance(opts, list):
             payload: object = {"options": _normalize_options(opts)}
         else:
@@ -346,25 +352,25 @@ class SliderRef(NudleRef):
 
         return athunk
 
-    def store_value(self, value: FloatArg) -> Nu:
+    def set_value(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(value=value))
 
-    def store_min(self, value: FloatArg) -> Nu:
+    def set_min(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(min=value))
 
-    def store_max(self, value: FloatArg) -> Nu:
+    def set_max(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(max=value))
 
-    def store_step(self, value: FloatArg) -> Nu:
+    def set_step(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(step=value))
 
-    def store_label(self, text: StrArg) -> Nu:
+    def set_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_show_value(self, flag: BoolArg) -> Nu:
+    def set_show_value(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(show_value=flag))
 
-    def store(
+    def set(
         self,
         value: FloatArg,
         min: FloatArg = UNSET,
@@ -409,7 +415,7 @@ class SwitchRef(NudleRef):
 
         return athunk
 
-    def store(self, value: BoolArg) -> Nu:
+    def set(self, value: BoolArg) -> Nu:
         return Write(self, value)
 
     def changed(self) -> Changed:
@@ -441,7 +447,7 @@ class TagInputRef(NudleRef):
 
         return athunk
 
-    def store(self, value: ListArg[str]) -> Nu:
+    def set(self, value: ListArg[str]) -> Nu:
         return Write(self, value)
 
     def changed(self) -> Changed:
@@ -449,13 +455,19 @@ class TagInputRef(NudleRef):
 
 
 class TextAreaRef(NudleRef):
-    """Multi-line text input whose value lives in the browser."""
+    """Multi-line text input whose value lives in the browser.
+
+    `auto_resize=True` maps to the primitive's `field-sizing: content` mode.
+    Default face is display (Inter); set `mono=True` at class level for
+    code-shaped fields to flip `font-mono` at render.
+    """
 
     value: ClassVar[str] = ""
     placeholder: ClassVar[str] = ""
     rows: ClassVar[int] = 4
     max_length: ClassVar[int | None] = None
     auto_resize: ClassVar[bool] = False
+    mono: ClassVar[bool] = False
 
     @classmethod
     def _mount_props(cls) -> dict[str, object]:
@@ -465,6 +477,7 @@ class TextAreaRef(NudleRef):
             "rows": cls.rows,
             "max_length": cls.max_length,
             "auto_resize": cls.auto_resize,
+            "mono": cls.mono,
         }
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -473,7 +486,7 @@ class TextAreaRef(NudleRef):
 
         return athunk
 
-    def store(self, value: StrArg) -> Nu:
+    def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
     def changed(self) -> Changed:

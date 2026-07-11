@@ -86,19 +86,19 @@ def test_with_children_preserves_leaf_segment():
 # --- wire path resolution + frame emission (through a fake session) ---------
 
 
-def test_store_emits_frame_with_wire_path():
+def test_set_emits_frame_with_wire_path():
     sess = _RecordingSession()
     ctx = Context().bind(NudleSession, sess)
-    asyncio.run(nu.arun(HomePage.panel.label.store("hi"), ctx))
+    asyncio.run(nu.arun(HomePage.panel.label.set("hi"), ctx))
     assert len(sess.frames) == 1
     assert sess.frames[0].ref == "HomePage.panel.label"
     assert sess.frames[0].payload == "hi"
 
 
-def test_store_wire_path_reflects_sibling_slot():
+def test_set_wire_path_reflects_sibling_slot():
     sess = _RecordingSession()
     ctx = Context().bind(NudleSession, sess)
-    asyncio.run(nu.arun(HomePage.panel.title.store("T"), ctx))
+    asyncio.run(nu.arun(HomePage.panel.title.set("T"), ctx))
     assert sess.frames[0].ref == "HomePage.panel.title"
 
 
@@ -118,7 +118,7 @@ def test_section_root_wire_path_from_server_handle():
     resolves via the Section-root branch using `_nudle_mount`."""
     sess = _RecordingSession()
     ctx = Context().bind(NudleSession, sess)
-    asyncio.run(nu.arun(Toolbar.text.store("x"), ctx))
+    asyncio.run(nu.arun(Toolbar.text.set("x"), ctx))
     assert sess.frames[0].ref == "NestedPage.panel.toolbar.text"
 
 
@@ -126,7 +126,7 @@ def test_deep_nested_page_path():
     """Page -> section -> nested section -> widget resolves the full chain."""
     sess = _RecordingSession()
     ctx = Context().bind(NudleSession, sess)
-    asyncio.run(nu.arun(NestedPage.panel.toolbar.text.store("y"), ctx))
+    asyncio.run(nu.arun(NestedPage.panel.toolbar.text.set("y"), ctx))
     assert sess.frames[0].ref == "NestedPage.panel.toolbar.text"
 
 
@@ -164,7 +164,7 @@ def test_input_read_resolves_path_and_reads_session():
 
 
 def _leaf_widgets(*, needs_changed: bool = False):
-    """(ref_cls, module_name) for every NudleRef leaf widget with store()
+    """(ref_cls, module_name) for every NudleRef leaf widget with set()
     (optionally: only those exposing changed())."""
     import importlib
     import inspect
@@ -185,14 +185,14 @@ def _leaf_widgets(*, needs_changed: bool = False):
                 and not issubclass(cls, SectionRef)  # SectionRef-backed = container, not a leaf
                 and cls.__module__ == mod.__name__
                 and not name.startswith("_")
-                and callable(getattr(cls, "store", None))
+                and callable(getattr(cls, "set", None))
                 and (not needs_changed or callable(getattr(cls, "changed", None)))
             ):
                 out.append((cls, fname[:-3]))
     return out
 
 
-_STORE_WIDGETS = _leaf_widgets()
+_SET_WIDGETS = _leaf_widgets()
 _CHANGED_WIDGETS = _leaf_widgets(needs_changed=True)
 
 
@@ -203,15 +203,15 @@ def _mount(widget_cls):
     return page.sec.w
 
 
-@pytest.mark.parametrize("widget_cls,mod", _STORE_WIDGETS, ids=[m for _, m in _STORE_WIDGETS])
-def test_widget_store_emits_write_frame(widget_cls, mod):
+@pytest.mark.parametrize("widget_cls,mod", _SET_WIDGETS, ids=[m for _, m in _SET_WIDGETS])
+def test_widget_set_emits_write_frame(widget_cls, mod):
     # Widgets differ in payload shape (bare value vs a props dict), but every
     # one must resolve the same wire path and emit exactly one write frame —
     # that is the ref-layer contract this sweep pins.
     handle = _mount(widget_cls)
     sess = _RecordingSession()
     ctx = Context().bind(NudleSession, sess)
-    asyncio.run(nu.arun(handle.store("v"), ctx))
+    asyncio.run(nu.arun(handle.set("v"), ctx))
     assert len(sess.frames) == 1
     assert sess.frames[0].ref == "WPage.sec.w"
     assert sess.frames[0].op == "write"
@@ -228,14 +228,14 @@ def test_input_widget_changed_returns_subscription(widget_cls, mod):
 def test_widget_sweep_is_non_empty():
     # guard: if discovery silently returns nothing, the parametrized tests
     # would vacuously pass — pin that we actually cover a fleet of widgets.
-    assert len(_STORE_WIDGETS) >= 25
+    assert len(_SET_WIDGETS) >= 25
     assert len(_CHANGED_WIDGETS) >= 8
 
 
 # --- section-level chrome ops: tabs, card (mount-ref pattern) ----------------
 
 
-def test_tabs_store_active_emits_frame():
+def test_tabs_set_active_emits_frame():
     from nu.ui.refs import TabsRef
 
     class MyTabs(TabsRef):
@@ -246,14 +246,14 @@ def test_tabs_store_active_emits_frame():
 
     sess = _RecordingSession()
     ctx = Context().bind(NudleSession, sess)
-    asyncio.run(nu.arun(MyTabs.store_active("t1"), ctx))
+    asyncio.run(nu.arun(MyTabs.set_active("t1"), ctx))
     assert sess.frames[0].ref == "TabPage.tabs"
-    assert sess.frames[0].op == "store_active"
+    assert sess.frames[0].op == "set_active"
     assert sess.frames[0].payload == "t1"
 
 
-def test_card_store_title_emits_frame():
-    """Card chrome store now works (was a pre-existing bug: `_StoreSectionStr`
+def test_card_set_title_emits_frame():
+    """Card chrome set now works (was a pre-existing bug: `_SetSectionStr`
     held no Ref; fixed by the `_CardMountRef` mount-ref pattern like tabs)."""
     from nu.ui.refs import CardRef
 
@@ -265,9 +265,9 @@ def test_card_store_title_emits_frame():
 
     sess = _RecordingSession()
     ctx = Context().bind(NudleSession, sess)
-    asyncio.run(nu.arun(MyCard.store_title("hello"), ctx))
+    asyncio.run(nu.arun(MyCard.set_title("hello"), ctx))
     assert sess.frames[0].ref == "CardPage.card"
-    assert sess.frames[0].op == "store_title"
+    assert sess.frames[0].op == "set_title"
     assert sess.frames[0].payload == "hello"
 
 

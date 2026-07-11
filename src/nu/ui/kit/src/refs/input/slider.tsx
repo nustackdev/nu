@@ -1,12 +1,16 @@
 // SliderRef -- numeric slider with min/max/step. Browser is source of truth.
 //
 // User drags: local slice updates immediately (controlled input).
-// On release (pointerup / blur / Enter): notify server. Server-initiated read:
-// answer with current value. Server-initiated write: scalar form replaces
-// `value`; map form merges any subset of {value, min, max, step, label,
-// show_value}. Class-level defaults seed the slice via mount props.
+// On commit: notify server. Server-initiated read: answer with current value.
+// Server-initiated write: scalar form replaces `value`; map form merges any
+// subset of {value, min, max, step, label, show_value}. Class-level defaults
+// seed the slice via mount props. Composes the kit Slider primitive (Radix
+// Slider) so track/thumb/keyboard read through kit tokens. The primitive
+// takes an array value; we wrap our scalar accordingly.
 
 import { OP_NOTIFY } from "@nustackdev/ui-core";
+import { Slider } from "../../components/ui/slider";
+import { Text } from "../../components/ui/text";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
@@ -84,36 +88,27 @@ function SliderView({ path }: { path: string }) {
 	const commit = () => send({ op: OP_NOTIFY, ref: path, payload: null });
 
 	return (
-		<div className="w-full">
-			{label && <div className="mb-1 text-sm">{label}</div>}
-			<div className="flex items-center gap-2">
-				<input
-					type="range"
-					className="flex-1"
+		<div className="flex w-full flex-col gap-1">
+			{label && (
+				<Text as="span" size="sm" tone="secondary" weight="medium">
+					{label}
+				</Text>
+			)}
+			<div className="flex items-center gap-3">
+				<Slider
+					value={[value]}
 					min={min}
 					max={max}
 					step={step}
-					value={value}
-					onChange={(e) => setLocal(path, Number(e.target.value))}
-					onPointerUp={commit}
-					onKeyUp={(e) => {
-						if (
-							e.key === "ArrowLeft" ||
-							e.key === "ArrowRight" ||
-							e.key === "ArrowUp" ||
-							e.key === "ArrowDown" ||
-							e.key === "Home" ||
-							e.key === "End" ||
-							e.key === "PageUp" ||
-							e.key === "PageDown" ||
-							e.key === "Enter"
-						) {
-							commit();
-						}
-					}}
-					onBlur={commit}
+					onValueChange={(vals) => setLocal(path, vals[0] ?? 0)}
+					onValueCommit={commit}
+					className="flex-1"
 				/>
-				{showValue && <span className="font-mono text-sm tabular-nums">{value}</span>}
+				{showValue && (
+					<Text as="span" size="sm" tone="primary" mono className="tabular-nums shrink-0">
+						{value}
+					</Text>
+				)}
 			</div>
 		</div>
 	);

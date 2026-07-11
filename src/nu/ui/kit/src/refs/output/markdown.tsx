@@ -4,9 +4,11 @@
 // (Nu sentinel) maps to the empty string. Class-level default is seeded
 // from the mount field `props.value` when non-empty. No raw html passthrough:
 // react-markdown runs without rehype-raw so any <...> in the source renders
-// as literal text.
+// as literal text. Composes the kit Prose primitive; prose styles come from
+// tokens, not Tailwind Typography.
 
 import ReactMarkdown from "react-markdown";
+import { Prose } from "../../components/ui/prose";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
@@ -24,9 +26,9 @@ const factory: SliceFactory = (path, ctx, props) => ({
 function MarkdownView({ path }: { path: string }) {
 	const value = useStore((s) => (s.refs[path]?.value as string) ?? "");
 	return (
-		<div className="prose prose-sm max-w-none">
+		<Prose>
 			<ReactMarkdown>{value}</ReactMarkdown>
-		</div>
+		</Prose>
 	);
 }
 

@@ -163,12 +163,12 @@ class AccordionRef(Section):
         return _AccordionMountRef(section_cls=cls)
 
     @classmethod
-    def store_sections(cls, items: ListArg[dict[str, str]]) -> Nu:
+    def set_sections(cls, items: ListArg[dict[str, str]]) -> Nu:
         value = _normalize_sections(items) if isinstance(items, list) else items
         return Write(cls._mount_ref(), DictForm.of(sections=value))
 
     @classmethod
-    def store_open(cls, ids: ListArg[str]) -> Nu:
+    def set_open(cls, ids: ListArg[str]) -> Nu:
         value = _normalize_open(ids) if isinstance(ids, list) else ids
         return Write(cls._mount_ref(), DictForm.of(open=value))
 
@@ -202,12 +202,12 @@ class _CardMountRef(NudleRef):
         return ".".join([page_cls.__name__, *slot_path])
 
 
-class _StoreSectionStr(Command):
+class _SetSectionStr(Command):
     """Send a string-payload Frame to a Section by mount path.
 
     Slot 0 holds a mount Ref (``_CardMountRef``) so this is a well-formed
     ``mutates={0}`` Command; the wire op is supplied at construction (e.g.
-    "store_title") so one class serves all three card chrome ops.
+    "set_title") so one class serves all three card chrome ops.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -257,16 +257,16 @@ class CardRef(Section):
         return _CardMountRef(section_cls=cls)
 
     @classmethod
-    def store_title(cls, text: StrArg) -> Nu:
-        return _StoreSectionStr(cls._mount_ref(), "store_title", text)
+    def set_title(cls, text: StrArg) -> Nu:
+        return _SetSectionStr(cls._mount_ref(), "set_title", text)
 
     @classmethod
-    def store_subtitle(cls, text: StrArg) -> Nu:
-        return _StoreSectionStr(cls._mount_ref(), "store_subtitle", text)
+    def set_subtitle(cls, text: StrArg) -> Nu:
+        return _SetSectionStr(cls._mount_ref(), "set_subtitle", text)
 
     @classmethod
-    def store_footer(cls, text: StrArg) -> Nu:
-        return _StoreSectionStr(cls._mount_ref(), "store_footer", text)
+    def set_footer(cls, text: StrArg) -> Nu:
+        return _SetSectionStr(cls._mount_ref(), "set_footer", text)
 
 
 Align = Literal["start", "center", "end", "stretch"]
@@ -375,19 +375,19 @@ class FieldRef(Section):
         return _FieldMountRef(section_cls=cls)
 
     @classmethod
-    def store_label(cls, text: StrArg) -> Nu:
+    def set_label(cls, text: StrArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(label=text))
 
     @classmethod
-    def store_help(cls, text: StrArg) -> Nu:
+    def set_help(cls, text: StrArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(help=text))
 
     @classmethod
-    def store_error(cls, text: StrArg) -> Nu:
+    def set_error(cls, text: StrArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(error=text))
 
     @classmethod
-    def store_required(cls, flag: BoolArg) -> Nu:
+    def set_required(cls, flag: BoolArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(required=flag))
 
 
@@ -433,15 +433,15 @@ class Fieldset(Section):
         return _FieldsetMountRef(section_cls=cls)
 
     @classmethod
-    def store_legend(cls, text: StrArg) -> Nu:
+    def set_legend(cls, text: StrArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(legend=text))
 
     @classmethod
-    def store_gap(cls, value: Gap | StrArg) -> Nu:
+    def set_gap(cls, value: Gap | StrArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(gap=value))
 
     @classmethod
-    def store_disabled(cls, flag: BoolArg) -> Nu:
+    def set_disabled(cls, flag: BoolArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(disabled=flag))
 
 
@@ -466,13 +466,13 @@ class Form(Section):
 class ModalRef(SectionRef):
     """SectionRef backing a Modal slot. Carries Modal-only interaction methods."""
 
-    def store_open(self, flag: BoolArg) -> Nu:
+    def set_open(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(open=flag))
 
-    def store_title(self, text: StrArg) -> Nu:
+    def set_title(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(title=text))
 
-    def store(self, open: BoolArg = UNSET, title: StrArg = UNSET) -> Nu:
+    def set(self, open: BoolArg = UNSET, title: StrArg = UNSET) -> Nu:
         payload: dict[str, object] = {}
         if open is not UNSET:
             payload["open"] = open
@@ -544,7 +544,7 @@ def _normalize_tabs(raw: object) -> list[dict[str, str]]:
     return out
 
 
-class _StoreTabs(Command):
+class _SetTabs(Command):
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
 
@@ -568,12 +568,12 @@ class _StoreTabs(Command):
             value = await value_thunk(rt)
             if isinstance(value, list):
                 value = _normalize_tabs(value)
-            await session.send(Frame("store_tabs", ref=path, payload=value))
+            await session.send(Frame("set_tabs", ref=path, payload=value))
 
         return athunk
 
 
-class _StoreActive(Command):
+class _SetActive(Command):
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
 
@@ -596,7 +596,7 @@ class _StoreActive(Command):
             path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)
             payload = "" if value is None else str(value)
-            await session.send(Frame("store_active", ref=path, payload=payload))
+            await session.send(Frame("set_active", ref=path, payload=payload))
 
         return athunk
 
@@ -642,12 +642,12 @@ class TabsRef(Section):
         return _TabsMountRef(section_cls=cls)
 
     @classmethod
-    def store_tabs(cls, value: ListArg[dict[str, str]]) -> Nu:
-        return _StoreTabs(cls._mount_ref(), value)
+    def set_tabs(cls, value: ListArg[dict[str, str]]) -> Nu:
+        return _SetTabs(cls._mount_ref(), value)
 
     @classmethod
-    def store_active(cls, value: StrArg) -> Nu:
-        return _StoreActive(cls._mount_ref(), value)
+    def set_active(cls, value: StrArg) -> Nu:
+        return _SetActive(cls._mount_ref(), value)
 
     @classmethod
     def changed(cls) -> Changed:

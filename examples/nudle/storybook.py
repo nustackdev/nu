@@ -629,7 +629,7 @@ bodies stay mounted across switches, so local state is preserved.
 
 - click a header to switch
 - server gets a `notify` with the clicked id
-- server may confirm via `store_active`
+- server may confirm via `set_active`
 """
 
 ACCORDION_WHAT = (
@@ -652,48 +652,48 @@ ACCORDION_WHY = (
 
 showcase_snapshot = nv.Snapshot(
     # intro
-    Showcase.title.store("nudle component storybook")
-    | Showcase.intro.store(LONG_TEXT)
+    Showcase.title.set("nudle component storybook")
+    | Showcase.intro.set(LONG_TEXT)
     # text
-    | Showcase.section_text.store("text")
-    | Showcase.text_short.store("a short caption")
-    | Showcase.text_long.store(
+    | Showcase.section_text.set("text")
+    | Showcase.text_short.set("a short caption")
+    | Showcase.text_long.set(
         "a longer paragraph showing how TextRef wraps. text is a display ref, "
         "server-owned, one write op carries the new value.",
     )
     # markdown
-    | Showcase.section_markdown.store("markdown")
-    | Showcase.markdown_demo.store(MARKDOWN_BODY)
+    | Showcase.section_markdown.set("markdown")
+    | Showcase.markdown_demo.set(MARKDOWN_BODY)
     # badges
-    | Showcase.section_badges.store("badges")
-    | Showcase.badge_info.store_label("info")
-    | Showcase.badge_ok.store_label("ok")
-    | Showcase.badge_warn.store_label("warn")
-    | Showcase.badge_danger.store_label("danger")
-    | Showcase.badge_neutral.store_label("neutral")
+    | Showcase.section_badges.set("badges")
+    | Showcase.badge_info.set_label("info")
+    | Showcase.badge_ok.set_label("ok")
+    | Showcase.badge_warn.set_label("warn")
+    | Showcase.badge_danger.set_label("danger")
+    | Showcase.badge_neutral.set_label("neutral")
     # image
-    | Showcase.section_image.store("image")
-    | Showcase.image_demo.store(
+    | Showcase.section_image.set("image")
+    | Showcase.image_demo.set(
         "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=400",
     )
     # link
-    | Showcase.section_link.store("link")
-    | Showcase.link_internal.store(label="docs (internal)", href="/docs")
-    | Showcase.link_external.store(
+    | Showcase.section_link.set("link")
+    | Showcase.link_internal.set(label="docs (internal)", href="/docs")
+    | Showcase.link_external.set(
         label="example.com",
         href="https://example.com",
         target="_blank",
     )
     # progress
-    | Showcase.section_progress.store("progress")
-    | Showcase.progress_quarter.store(0.25, caption="25%")
-    | Showcase.progress_half.store(0.5, caption="50%")
-    | Showcase.progress_full.store(1.0, caption="done")
+    | Showcase.section_progress.set("progress")
+    | Showcase.progress_quarter.set(0.25, caption="25%")
+    | Showcase.progress_half.set(0.5, caption="50%")
+    | Showcase.progress_full.set(1.0, caption="done")
     # ---- charts group ----
-    | Showcase.section_charts.store("charts")
+    | Showcase.section_charts.set("charts")
     # line chart heading
-    | Showcase.section_chart.store("line chart (live, multi-series)")
-    | Showcase.chart_live.store(
+    | Showcase.section_chart.set("line chart (live, multi-series)")
+    | Showcase.chart_live.set(
         x_label="tick",
         y_label="value",
         show_legend=True,
@@ -704,8 +704,8 @@ showcase_snapshot = nv.Snapshot(
         ],
     )
     # area chart
-    | Showcase.section_area.store("area chart (live, sliding window)")
-    | Showcase.area_demo.store(
+    | Showcase.section_area.set("area chart (live, sliding window)")
+    | Showcase.area_demo.set(
         x_label="tick",
         y_label="value",
         series=["value"],
@@ -713,8 +713,8 @@ showcase_snapshot = nv.Snapshot(
         max_points=40,
     )
     # bar chart
-    | Showcase.section_bar.store("bar chart (categorical)")
-    | Showcase.bar_demo.store(
+    | Showcase.section_bar.set("bar chart (categorical)")
+    | Showcase.bar_demo.set(
         bars=[
             ["jan", 12],
             ["feb", 19],
@@ -727,8 +727,8 @@ showcase_snapshot = nv.Snapshot(
         color="#16a34a",
     )
     # pie chart
-    | Showcase.section_pie.store("pie chart")
-    | Showcase.pie_demo.store(
+    | Showcase.section_pie.set("pie chart")
+    | Showcase.pie_demo.set(
         slices=[
             ["rent", 1200],
             ["food", 450],
@@ -739,14 +739,14 @@ showcase_snapshot = nv.Snapshot(
         total_label="monthly",
     )
     # sparkline
-    | Showcase.section_sparkline.store("sparkline (live)")
-    | Showcase.sparkline_demo.store([], color="#dc2626", height=40, max_points=30)
+    | Showcase.section_sparkline.set("sparkline (live)")
+    | Showcase.sparkline_demo.set([], color="#dc2626", height=40, max_points=30)
     # gauge
-    | Showcase.section_gauge.store("gauge (live)")
-    | Showcase.gauge_demo.store(0.0, caption="tick %", variant="ok")
+    | Showcase.section_gauge.set("gauge (live)")
+    | Showcase.gauge_demo.set(0.0, caption="tick %", variant="ok")
     # table
-    | Showcase.section_table.store("table")
-    | Showcase.table_demo.store(
+    | Showcase.section_table.set("table")
+    | Showcase.table_demo.set(
         {
             "columns": ["component", "kind", "owner"],
             "rows": [
@@ -798,124 +798,124 @@ showcase_snapshot = nv.Snapshot(
         },
     )
     # json viewer
-    | Showcase.section_json.store("json viewer")
-    | Showcase.json_demo.store(
+    | Showcase.section_json.set("json viewer")
+    | Showcase.json_demo.set(
         DEMO_JSON,
         expand_depth=2,
         copyable=True,
     )
     # ---- display extras group ----
-    | Showcase.section_display.store("display extras")
+    | Showcase.section_display.set("display extras")
     # alerts
-    | Showcase.section_alerts.store("alerts")
+    | Showcase.section_alerts.set("alerts")
     # stats (row pinned below)
-    | Showcase.section_stats.store("stats")
-    | StatsRow.revenue.store_label("revenue")
-    | StatsRow.revenue.store_value("$42,108")
-    | StatsRow.revenue.store_delta("+12.4%")
-    | StatsRow.revenue.store_trend("up")
-    | StatsRow.churn.store_label("churn")
-    | StatsRow.churn.store_value("2.1%")
-    | StatsRow.churn.store_delta("-0.3pp")
-    | StatsRow.churn.store_trend("down")
-    | StatsRow.sessions.store_label("sessions")
-    | StatsRow.sessions.store_value("1,240")
-    | StatsRow.sessions.store_delta("flat")
-    | StatsRow.sessions.store_trend("flat")
+    | Showcase.section_stats.set("stats")
+    | StatsRow.revenue.set_label("revenue")
+    | StatsRow.revenue.set_value("$42,108")
+    | StatsRow.revenue.set_delta("+12.4%")
+    | StatsRow.revenue.set_trend("up")
+    | StatsRow.churn.set_label("churn")
+    | StatsRow.churn.set_value("2.1%")
+    | StatsRow.churn.set_delta("-0.3pp")
+    | StatsRow.churn.set_trend("down")
+    | StatsRow.sessions.set_label("sessions")
+    | StatsRow.sessions.set_value("1,240")
+    | StatsRow.sessions.set_delta("flat")
+    | StatsRow.sessions.set_trend("flat")
     # dividers
-    | Showcase.section_dividers.store("dividers")
-    | Showcase.divider_labelled.store("section break", align="center")
-    | Showcase.divider_plain.store("")
+    | Showcase.section_dividers.set("dividers")
+    | Showcase.divider_labelled.set("section break", align="center")
+    | Showcase.divider_plain.set("")
     # code block
-    | Showcase.section_code.store("code block")
-    | Showcase.code_demo.store({"code": CODE_SNIPPET, "language": "python"})
+    | Showcase.section_code.set("code block")
+    | Showcase.code_demo.set({"code": CODE_SNIPPET, "language": "python"})
     # ---- layout ----
-    | Showcase.section_layout.store("layout")
-    | Showcase.layout_intro.store(LAYOUT_INTRO)
+    | Showcase.section_layout.set("layout")
+    | Showcase.layout_intro.set(LAYOUT_INTRO)
     # 1. stat row
-    | Showcase.stat_layout_heading.store_label("1. row: label, value, badge")
-    | Showcase.stat_layout_heading.store_level(3)
-    | StatRow.stat_label.store("uptime")
-    | StatRow.stat_value.store("99.8%")
-    | StatRow.stat_badge.store_label("healthy")
+    | Showcase.stat_layout_heading.set_label("1. row: label, value, badge")
+    | Showcase.stat_layout_heading.set_level(3)
+    | StatRow.stat_label.set("uptime")
+    | StatRow.stat_value.set("99.8%")
+    | StatRow.stat_badge.set_label("healthy")
     # 2. badge row
-    | Showcase.badge_row_heading.store_label("2. row of badges")
-    | Showcase.badge_row_heading.store_level(3)
-    | BadgeRow.info.store_label("info")
-    | BadgeRow.ok.store_label("ok")
-    | BadgeRow.warn.store_label("warn")
-    | BadgeRow.danger.store_label("danger")
-    | BadgeRow.neutral.store_label("neutral")
+    | Showcase.badge_row_heading.set_label("2. row of badges")
+    | Showcase.badge_row_heading.set_level(3)
+    | BadgeRow.info.set_label("info")
+    | BadgeRow.ok.set_label("ok")
+    | BadgeRow.warn.set_label("warn")
+    | BadgeRow.danger.set_label("danger")
+    | BadgeRow.neutral.set_label("neutral")
     # 3. hero card
-    | Showcase.hero_heading.store_label("3. container with column inside")
-    | Showcase.hero_heading.store_level(3)
-    | FeatureColumn.feature_heading.store_label("composable refs")
-    | FeatureColumn.feature_heading.store_level(4)
-    | FeatureColumn.feature_text.store(
+    | Showcase.hero_heading.set_label("3. container with column inside")
+    | Showcase.hero_heading.set_level(3)
+    | FeatureColumn.feature_heading.set_label("composable refs")
+    | FeatureColumn.feature_heading.set_level(4)
+    | FeatureColumn.feature_text.set(
         "Subclass a Ref to pin defaults. The wire type the browser sees is "
         "the nearest packaged ancestor, so renderers resolve automatically.",
     )
-    | FeatureColumn.feature_badge.store_label("nu native")
+    | FeatureColumn.feature_badge.set_label("nu native")
     # 4. metrics card
-    | Showcase.metrics_heading.store_label("4. container with row of metrics")
-    | Showcase.metrics_heading.store_level(3)
-    | MetricsRow.uptime.store("uptime  99.8%")
-    | MetricsRow.latency.store("p95  12 ms")
-    | MetricsRow.qps.store("qps  1,240")
+    | Showcase.metrics_heading.set_label("4. container with row of metrics")
+    | Showcase.metrics_heading.set_level(3)
+    | MetricsRow.uptime.set("uptime  99.8%")
+    | MetricsRow.latency.set("p95  12 ms")
+    | MetricsRow.qps.set("qps  1,240")
     # 5. tabs
-    | Showcase.tabs_heading.store_label("5. tabs")
-    | Showcase.tabs_heading.store_level(3)
-    | DemoTabs.overview.store(TABS_OVERVIEW)
-    | DemoTabs.details.store(TABS_DETAILS_MD)
-    | DemoTabs.extras_badge.store_label("just a badge in here")
+    | Showcase.tabs_heading.set_label("5. tabs")
+    | Showcase.tabs_heading.set_level(3)
+    | DemoTabs.overview.set(TABS_OVERVIEW)
+    | DemoTabs.details.set(TABS_DETAILS_MD)
+    | DemoTabs.extras_badge.set_label("just a badge in here")
     # 6. accordion
-    | Showcase.accordion_heading.store_label("6. accordion")
-    | Showcase.accordion_heading.store_level(3)
-    | DemoAccordion.what.store(ACCORDION_WHAT)
-    | DemoAccordion.how.store(ACCORDION_HOW_MD)
-    | DemoAccordion.why.store(ACCORDION_WHY)
+    | Showcase.accordion_heading.set_label("6. accordion")
+    | Showcase.accordion_heading.set_level(3)
+    | DemoAccordion.what.set(ACCORDION_WHAT)
+    | DemoAccordion.how.set(ACCORDION_HOW_MD)
+    | DemoAccordion.why.set(ACCORDION_WHY)
     # 7. card
-    | Showcase.card_heading.store_label("7. card with title / subtitle / footer")
-    | Showcase.card_heading.store_level(3)
-    | CardBody.line1.store("a card wraps a body Section.")
-    | CardBody.line2.store(
+    | Showcase.card_heading.set_label("7. card with title / subtitle / footer")
+    | Showcase.card_heading.set_level(3)
+    | CardBody.line1.set("a card wraps a body Section.")
+    | CardBody.line2.set(
         "title, subtitle, and footer are plain strings on the CardRef itself.",
     )
-    | CardBody.badge.store_label("composable")
+    | CardBody.badge.set_label("composable")
     # 8. modal
-    | Showcase.modal_heading.store_label("8. modal")
-    | Showcase.modal_heading.store_level(3)
-    | Showcase.modal_open_button.store(label="open modal")
-    | DemoModal.body.store(
+    | Showcase.modal_heading.set_label("8. modal")
+    | Showcase.modal_heading.set_level(3)
+    | Showcase.modal_open_button.set(label="open modal")
+    | DemoModal.body.set(
         "this is a modal body. server controls visibility; tab notifies on "
         "user dismissal.",
     )
-    | DemoModal.close.store(label="close")
+    | DemoModal.close.set(label="close")
     # inputs
-    | Showcase.section_inputs.store("inputs")
-    | Showcase.input_name.store("world")
-    | Showcase.echo.store("type a name and press greet.")
+    | Showcase.section_inputs.set("inputs")
+    | Showcase.input_name.set("world")
+    | Showcase.echo.set("type a name and press greet.")
     # input extras
-    | Showcase.section_inputs_extra.store("inputs (extras)")
+    | Showcase.section_inputs_extra.set("inputs (extras)")
     # form
-    | Showcase.section_form.store("form")
-    | Showcase.form_demo.submit.store(label="submit")
-    | Showcase.form_echo.store("submit the form to see the values echoed here."),
+    | Showcase.section_form.set("form")
+    | Showcase.form_demo.submit.set(label="submit")
+    | Showcase.form_echo.set("submit the form to see the values echoed here."),
 )
 
 
 # Initialize SelectRef options + slider bounds + textarea via store calls.
 options_snapshot = nv.Snapshot(
-    Showcase.select_mode.store(
+    Showcase.select_mode.set(
         {"options": ["draft", "review", "published"], "selected": "draft"},
     )
-    | Showcase.slider_volume.store(
+    | Showcase.slider_volume.set(
         {"min": 0, "max": 100, "step": 5, "value": 40, "label": "volume"},
     )
-    | Showcase.textarea_note.store("")
+    | Showcase.textarea_note.set("")
     # form children defaults: name input and age number input
-    | FormNameField.input.store("ada")
-    | FormAgeField.input.store_value(30),
+    | FormNameField.input.set("ada")
+    | FormAgeField.input.set_value(30),
 )
 
 
@@ -954,7 +954,7 @@ tick_sparkline = nu.ForeverDo(
 
 # Gauge: tick % 100 / 100 -> [0, 1].
 tick_gauge = nu.ForeverDo(
-    nv.Snapshot(Showcase.gauge_demo.store_value((State.tick % 100) / 100.0))
+    nv.Snapshot(Showcase.gauge_demo.set_value((State.tick % 100) / 100.0))
     >> nu.Delay(1.0),
 )
 
@@ -963,26 +963,26 @@ tick_gauge = nu.ForeverDo(
 
 on_greet = ReactForever(
     Showcase.button_greet.clicked(),
-    nv.Snapshot(Showcase.echo.store(Showcase.input_name)),
+    nv.Snapshot(Showcase.echo.set(Showcase.input_name)),
 )
 
 
 on_reset = ReactForever(
     Showcase.button_reset.clicked(),
-    nv.Snapshot(Showcase.echo.store("(reset)")),
+    nv.Snapshot(Showcase.echo.set("(reset)")),
 )
 
 
 # Modal open / close
 on_modal_open = ReactForever(
     Showcase.modal_open_button.clicked(),
-    nv.Snapshot(Showcase.modal_demo.store_open(True)),
+    nv.Snapshot(Showcase.modal_demo.set_open(True)),
 )
 
 
 on_modal_close = ReactForever(
     DemoModal.close.clicked(),
-    nv.Snapshot(Showcase.modal_demo.store_open(False)),
+    nv.Snapshot(Showcase.modal_demo.set_open(False)),
 )
 
 
@@ -990,7 +990,7 @@ on_modal_close = ReactForever(
 on_form_submit = ReactForever(
     Showcase.form_demo.submit.clicked(),
     nv.Snapshot(
-        Showcase.form_echo.store(FormNameField.input),
+        Showcase.form_echo.set(FormNameField.input),
     ),
 )
 
@@ -998,7 +998,7 @@ on_form_submit = ReactForever(
 # ---- Compose ----------------------------------------------------------------
 
 ui = (
-    App.title.store("nudle storybook")
+    App.title.set("nudle storybook")
     >> showcase_snapshot
     >> options_snapshot
     >> (

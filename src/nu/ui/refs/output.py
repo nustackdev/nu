@@ -20,11 +20,17 @@ if TYPE_CHECKING:
     from nu import Nu
 
 
-Variant = Literal["info", "warn", "ok", "danger"]
+Variant = Literal["neutral", "info", "warn", "ok", "danger"]
 
 
 class AlertRef(NudleRef):
-    """Display banner ref. `write` carries partial updates; `notify` fires on user dismiss."""
+    """Display banner ref. `write` carries partial updates; `notify` fires on user dismiss.
+
+    Variant maps to the Alert primitive's `tone` (5 tones per kit): `neutral`
+    picks the plain elevated surface, the rest attach the matching status
+    wash / line / fg + auto icon. Default stays `info` to preserve wire
+    behavior; the renderer falls back to `neutral` for unmapped values.
+    """
 
     variant: ClassVar[str] = "info"
     title: ClassVar[str] = ""
@@ -40,19 +46,19 @@ class AlertRef(NudleRef):
             "dismissible": cls.dismissible,
         }
 
-    def store_variant(self, name: Variant | StrArg) -> Nu:
+    def set_variant(self, name: Variant | StrArg) -> Nu:
         return Write(self, DictForm.of(variant=name))
 
-    def store_title(self, text: StrArg) -> Nu:
+    def set_title(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(title=text))
 
-    def store_body(self, text: StrArg) -> Nu:
+    def set_body(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(body=text))
 
-    def store_dismissible(self, flag: BoolArg) -> Nu:
+    def set_dismissible(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(dismissible=flag))
 
-    def store(
+    def set(
         self,
         title: StrArg,
         body: StrArg = UNSET,
@@ -76,7 +82,12 @@ Variant = Literal["info", "warn", "ok", "danger", "neutral"]
 
 
 class BadgeRef(NudleRef):
-    """Display-only badge ref. One `write` op carries every mutation."""
+    """Display-only badge ref. One `write` op carries every mutation.
+
+    Variant maps to the Badge primitive's status tones; `neutral` becomes the
+    kit `outline` (transparent bg, muted border) — closest visual to the
+    previous gray chip.
+    """
 
     label: ClassVar[str] = ""
     variant: ClassVar[str] = "neutral"
@@ -85,13 +96,13 @@ class BadgeRef(NudleRef):
     def _mount_props(cls) -> dict[str, object]:
         return {"label": cls.label, "variant": cls.variant}
 
-    def store_label(self, text: StrArg) -> Nu:
+    def set_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_variant(self, name: Variant | StrArg) -> Nu:
+    def set_variant(self, name: Variant | StrArg) -> Nu:
         return Write(self, DictForm.of(variant=name))
 
-    def store(
+    def set(
         self,
         label: StrArg,
         variant: Variant | StrArg = UNSET,
@@ -120,7 +131,7 @@ class CodeBlockRef(NudleRef):
             props["show_copy"] = cls.show_copy
         return props
 
-    def store(
+    def set(
         self,
         code: StrArg = UNSET,
         language: StrArg = UNSET,
@@ -132,10 +143,10 @@ class CodeBlockRef(NudleRef):
             payload["language"] = language
         return Write(self, DictForm.of(**payload))
 
-    def store_code(self, code: StrArg) -> Nu:
+    def set_code(self, code: StrArg) -> Nu:
         return Write(self, DictForm.of(code=code))
 
-    def store_language(self, language: StrArg) -> Nu:
+    def set_language(self, language: StrArg) -> Nu:
         return Write(self, DictForm.of(language=language))
 
 
@@ -152,13 +163,13 @@ class DividerRef(NudleRef):
     def _mount_props(cls) -> dict[str, object]:
         return {"label": cls.label, "align": cls.align}
 
-    def store_label(self, text: StrArg) -> Nu:
+    def set_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_align(self, side: Align | StrArg) -> Nu:
+    def set_align(self, side: Align | StrArg) -> Nu:
         return Write(self, DictForm.of(align=side))
 
-    def store(
+    def set(
         self,
         label: StrArg,
         align: Align | StrArg = UNSET,
@@ -169,8 +180,15 @@ class DividerRef(NudleRef):
         return Write(self, DictForm.of(**payload))
 
 
+GaugeVariant = Literal["neutral", "ok", "warn", "danger"]
+
+
 class GaugeRef(NudleRef):
-    """Display-only gauge ref. One `write` op carries every mutation."""
+    """Display-only gauge ref. One `write` op carries every mutation.
+
+    Variant is the tone the arc reads with. `neutral` maps to the kit Gauge
+    `accent` tone (brand purple); the other three map 1:1 to status tokens.
+    """
 
     value: ClassVar[float] = 0.0
     caption: ClassVar[str] = ""
@@ -184,20 +202,20 @@ class GaugeRef(NudleRef):
             "variant": cls.variant,
         }
 
-    def store_value(self, value: FloatArg) -> Nu:
+    def set_value(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(value=value))
 
-    def store_caption(self, text: StrArg) -> Nu:
+    def set_caption(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(caption=text))
 
-    def store_variant(self, variant: StrArg) -> Nu:
+    def set_variant(self, variant: GaugeVariant | StrArg) -> Nu:
         return Write(self, DictForm.of(variant=variant))
 
-    def store(
+    def set(
         self,
         value: FloatArg,
         caption: StrArg = UNSET,
-        variant: StrArg = UNSET,
+        variant: GaugeVariant | StrArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"value": value}
         if caption is not UNSET:
@@ -221,16 +239,16 @@ class HeadingRef(NudleRef):
     def _mount_props(cls) -> dict[str, object]:
         return {"label": cls.label, "level": cls.level, "align": cls.align}
 
-    def store_label(self, text: StrArg) -> Nu:
+    def set_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_level(self, n: IntArg) -> Nu:
+    def set_level(self, n: IntArg) -> Nu:
         return Write(self, DictForm.of(level=n))
 
-    def store_align(self, side: Align | StrArg) -> Nu:
+    def set_align(self, side: Align | StrArg) -> Nu:
         return Write(self, DictForm.of(align=side))
 
-    def store(
+    def set(
         self,
         label: StrArg,
         level: IntArg = UNSET,
@@ -274,26 +292,26 @@ class ImageRef(NudleRef):
             out["rounded"] = cls.rounded
         return out
 
-    def store_src(self, url: StrArg) -> Nu:
+    def set_src(self, url: StrArg) -> Nu:
         return Write(self, DictForm.of(src=url))
 
-    def store_alt(self, text: StrArg) -> Nu:
+    def set_alt(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(alt=text))
 
-    def store_fit(self, mode: Fit | StrArg) -> Nu:
+    def set_fit(self, mode: Fit | StrArg) -> Nu:
         return Write(self, DictForm.of(fit=mode))
 
-    def store_size(
+    def set_size(
         self,
         width: IntArg | None,
         height: IntArg | None,
     ) -> Nu:
         return Write(self, DictForm.of(width=width, height=height))
 
-    def store_rounded(self, flag: BoolArg) -> Nu:
+    def set_rounded(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(rounded=flag))
 
-    def store(
+    def set(
         self,
         src: StrArg,
         alt: StrArg = UNSET,
@@ -340,25 +358,25 @@ class JsonViewerRef(NudleRef):
             "max_height": cls.max_height,
         }
 
-    def store_value(self, value: Arg[Any]) -> Nu:
+    def set_value(self, value: Arg[Any]) -> Nu:
         return Write(self, DictForm.of(value=value))
 
-    def store_expand_depth(self, depth: IntArg) -> Nu:
+    def set_expand_depth(self, depth: IntArg) -> Nu:
         return Write(self, DictForm.of(expand_depth=depth))
 
-    def store_theme(self, name: Theme | StrArg) -> Nu:
+    def set_theme(self, name: Theme | StrArg) -> Nu:
         return Write(self, DictForm.of(theme=name))
 
-    def store_copyable(self, flag: BoolArg) -> Nu:
+    def set_copyable(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(copyable=flag))
 
-    def store_sortable(self, flag: BoolArg) -> Nu:
+    def set_sortable(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(sortable=flag))
 
-    def store_max_height(self, px: IntArg | None) -> Nu:
+    def set_max_height(self, px: IntArg | None) -> Nu:
         return Write(self, DictForm.of(max_height=px))
 
-    def store(
+    def set(
         self,
         value: Arg[Any],
         expand_depth: IntArg = UNSET,
@@ -401,19 +419,19 @@ class LinkRef(NudleRef):
             "external": cls.external,
         }
 
-    def store_href(self, url: StrArg) -> Nu:
+    def set_href(self, url: StrArg) -> Nu:
         return Write(self, DictForm.of(href=url))
 
-    def store_label(self, text: StrArg) -> Nu:
+    def set_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_target(self, name: Target | StrArg) -> Nu:
+    def set_target(self, name: Target | StrArg) -> Nu:
         return Write(self, DictForm.of(target=name))
 
-    def store_external(self, flag: BoolArg | None) -> Nu:
+    def set_external(self, flag: BoolArg | None) -> Nu:
         return Write(self, DictForm.of(external=flag))
 
-    def store(
+    def set(
         self,
         href: StrArg = UNSET,
         label: StrArg = UNSET,
@@ -445,7 +463,7 @@ class MarkdownRef(NudleRef):
             return {}
         return {"value": cls.value}
 
-    def store(self, value: StrArg) -> Nu:
+    def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
 
@@ -464,16 +482,16 @@ class ProgressRef(NudleRef):
             "indeterminate": cls.indeterminate,
         }
 
-    def store_value(self, value: FloatArg) -> Nu:
+    def set_value(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(value=value))
 
-    def store_caption(self, text: StrArg) -> Nu:
+    def set_caption(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(caption=text))
 
-    def store_indeterminate(self, flag: BoolArg) -> Nu:
+    def set_indeterminate(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(indeterminate=flag))
 
-    def store(
+    def set(
         self,
         value: FloatArg,
         caption: StrArg = UNSET,
@@ -507,21 +525,28 @@ class StatRef(NudleRef):
             "trend": cls.trend,
         }
 
-    def store_label(self, text: StrArg) -> Nu:
+    def set_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
 
-    def store_value(self, text: StrArg) -> Nu:
+    def set_value(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(value=text))
 
-    def store_delta(self, text: StrArg) -> Nu:
+    def set_delta(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(delta=text))
 
-    def store_trend(self, name: Trend | StrArg) -> Nu:
+    def set_trend(self, name: Trend | StrArg) -> Nu:
         return Write(self, DictForm.of(trend=name))
 
 
+SortDirection = Literal["asc", "desc"]
+
+
 class TableRef(NudleRef):
-    """Tabular data; display by default, optional sortable headers and row click."""
+    """Tabular data; display by default, optional sortable headers and row click.
+
+    Composes the kit Table primitive family. `dense=True` maps to the
+    primitive's `compact` density; `striped=True` selects the `striped` variant.
+    """
 
     columns: ClassVar[list[str]] = []
     striped: ClassVar[bool] = True
@@ -543,7 +568,7 @@ class TableRef(NudleRef):
             "clickable_rows": cls.clickable_rows,
         }
 
-    def store(self, table: DictArg[str, Any]) -> Nu:
+    def set(self, table: DictArg[str, Any]) -> Nu:
         return Write(self, table)
 
     def clear(self) -> Nu:
@@ -552,7 +577,7 @@ class TableRef(NudleRef):
     def append(self, row: ListArg[Any]) -> Nu:
         return Append(self, row)
 
-    def store_sort(self, column: StrArg, direction: StrArg) -> Nu:
+    def set_sort(self, column: StrArg, direction: SortDirection | StrArg) -> Nu:
         return Write(self, DictForm.of(sort_column=column, sort_direction=direction))
 
     def row_clicked(self) -> Changed:
@@ -570,7 +595,7 @@ class TextRef(NudleRef):
             return {}
         return {"value": cls.value}
 
-    def store(self, value: StrArg) -> Nu:
+    def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
 

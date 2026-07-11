@@ -3,9 +3,12 @@
 // mutation (label, help, error, required); payload is a partial map.
 // The single child is an absolute wire path passed via the mount
 // `fields` list; the renderer resolves it through the global slice
-// table and dispatches to its renderer.
+// table and dispatches to its renderer. Wires aria-invalid /
+// aria-describedby per a11y.md §5.
 
+import { useId } from "react";
 import { ErrorBoundary } from "../../components/ErrorBoundary";
+import { Text } from "../../components/ui/text";
 import { renderers } from "../../refs";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
@@ -45,32 +48,53 @@ function FieldView({ path }: { path: string }) {
 	const refs = useStore((s) => s.refs);
 
 	const hasError = error.length > 0;
-	const tint = hasError ? "text-destructive" : "text-muted-foreground";
 	const childPath = childPaths.length === 1 ? childPaths[0] : undefined;
 	const childSlice = childPath ? refs[childPath] : null;
 	const Comp = childSlice ? renderers[childSlice.type] : null;
+	const helpId = useId();
+	const errorId = useId();
 	const showBottom = hasError || help.length > 0;
+	const describedBy = hasError ? errorId : help ? helpId : undefined;
 
 	return (
-		// biome-ignore lint/a11y/noLabelWithoutControl: child Ref renders the actual input.
-		<label className="flex flex-col gap-1">
+		<div className="flex flex-col gap-1">
 			{label ? (
-				<span className={`text-sm font-medium ${hasError ? "text-destructive" : ""}`}>
+				<Text
+					as="span"
+					size="sm"
+					tone={hasError ? "danger" : "secondary"}
+					weight="medium"
+				>
 					{label}
-					{required ? <span className="text-destructive ml-0.5">*</span> : null}
-				</span>
+					{required ? (
+						<span className="text-accent ml-0.5" aria-hidden>
+							*
+						</span>
+					) : null}
+				</Text>
 			) : null}
-			{Comp && childPath && childSlice ? (
-				<ErrorBoundary label={`${childPath} (${childSlice.type})`}>
-					<Comp path={childPath} />
-				</ErrorBoundary>
-			) : (
-				<div className="text-xs text-destructive font-mono">
-					no child at {childPath ?? "(unset)"}
-				</div>
-			)}
-			{showBottom ? <span className={`text-xs ${tint}`}>{hasError ? error : help}</span> : null}
-		</label>
+			<div aria-describedby={describedBy} aria-invalid={hasError || undefined}>
+				{Comp && childPath && childSlice ? (
+					<ErrorBoundary label={`${childPath} (${childSlice.type})`}>
+						<Comp path={childPath} />
+					</ErrorBoundary>
+				) : (
+					<Text size="xs" tone="danger" mono>
+						no child at {childPath ?? "(unset)"}
+					</Text>
+				)}
+			</div>
+			{showBottom ? (
+				<Text
+					id={hasError ? errorId : helpId}
+					as="span"
+					size="xs"
+					tone={hasError ? "danger" : "secondary"}
+				>
+					{hasError ? error : help}
+				</Text>
+			) : null}
+		</div>
 	);
 }
 

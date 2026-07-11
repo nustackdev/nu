@@ -3,17 +3,27 @@
 // Class-level defaults (label, variant, disabled, icon) seed the slice via
 // mount props. Server -> tab `write` is a partial merge: missing keys leave
 // the slice untouched. When the slice has no label, the path is shown so a
-// freshly mounted button stays locatable.
+// freshly mounted button stays locatable. Composes the kit Button primitive;
+// variant maps to Button variant.
+//
+// TODO(retune): `icon` prop is a raw string on the wire today. Kit Button
+// expects a React node for `leadingIcon`. A lucide-lookup shim in the kit is
+// needed to resolve names like "chevron-down" to the icon component; until
+// then we render the raw string in a span. Small visual regression on icon
+// buttons only; label + click behavior are unaffected.
 
 import { OP_NOTIFY } from "@nustackdev/ui-core";
+import { Button } from "../../components/ui/button";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
-const VARIANT_CLASSES: Record<string, string> = {
-	primary: "bg-primary text-primary-foreground hover:opacity-90",
-	secondary: "bg-secondary text-secondary-foreground hover:opacity-90",
-	ghost: "bg-transparent text-foreground hover:bg-muted",
-	danger: "bg-red-600 text-white hover:bg-red-700",
+type ButtonVariant = "default" | "secondary" | "ghost" | "destructive";
+
+const VARIANT_TO_KIT: Record<string, ButtonVariant> = {
+	primary: "default",
+	secondary: "secondary",
+	ghost: "ghost",
+	danger: "destructive",
 };
 
 const factory: SliceFactory = (path, ctx, props) => ({
@@ -54,21 +64,20 @@ function ButtonView({ path }: { path: string }) {
 	const disabled = useStore((s) => Boolean(s.refs[path]?.disabled));
 	const icon = useStore((s) => (s.refs[path]?.icon as string | null) ?? null);
 	const send = useStore((s) => s.send);
-	const cls = VARIANT_CLASSES[variant] ?? VARIANT_CLASSES.primary;
+	const kitVariant = VARIANT_TO_KIT[variant] ?? "default";
 	const text = label === "" ? path : label;
 	return (
-		<button
-			type="button"
+		<Button
+			variant={kitVariant}
 			disabled={disabled}
-			className={`rounded px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50 ${cls}`}
 			onClick={() => {
 				if (disabled) return;
 				send({ op: OP_NOTIFY, ref: path, payload: null });
 			}}
 		>
-			{icon && <span className="mr-1">{icon}</span>}
+			{icon && <span aria-hidden>{icon}</span>}
 			{text}
-		</button>
+		</Button>
 	);
 }
 

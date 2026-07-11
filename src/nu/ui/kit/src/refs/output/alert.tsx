@@ -3,16 +3,28 @@
 // Server-owned by default; `dismissible` flips on a notify-on-X path. The
 // `write` op is a partial merge: missing keys leave the slice value untouched.
 // Class-level defaults arrive on mount field `props` and seed the slice.
+// Composes the kit Alert primitive: variant maps to tone; the primitive owns
+// the icon/bg/border trio, we own the dismiss notify wiring.
 
+import { X } from "lucide-react";
 import { OP_NOTIFY } from "@nustackdev/ui-core";
+import {
+	Alert,
+	AlertDescription,
+	AlertIcon,
+	AlertTitle,
+} from "../../components/ui/alert";
+import { IconButton } from "../../components/ui/icon-button";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
-const VARIANT_CLASSES: Record<string, string> = {
-	info: "bg-blue-50 text-blue-900 border-blue-200",
-	warn: "bg-yellow-50 text-yellow-900 border-yellow-200",
-	ok: "bg-green-50 text-green-900 border-green-200",
-	danger: "bg-red-50 text-red-900 border-red-200",
+type Tone = "info" | "warn" | "ok" | "danger" | "neutral";
+
+const VARIANT_TO_TONE: Record<string, Tone> = {
+	info: "info",
+	warn: "warn",
+	ok: "ok",
+	danger: "danger",
 };
 
 const factory: SliceFactory = (path, ctx, props) => ({
@@ -53,24 +65,27 @@ function AlertView({ path }: { path: string }) {
 	const body = useStore((s) => (s.refs[path]?.body as string) ?? "");
 	const dismissible = useStore((s) => Boolean(s.refs[path]?.dismissible));
 	const send = useStore((s) => s.send);
-	const cls = VARIANT_CLASSES[variant] ?? VARIANT_CLASSES.info;
+	const tone = VARIANT_TO_TONE[variant] ?? "neutral";
 	return (
-		<div role="alert" className={`flex items-start gap-3 rounded border px-3 py-2 text-sm ${cls}`}>
+		<Alert tone={tone}>
+			<AlertIcon />
 			<div className="flex-1">
-				{title !== "" && <div className="font-semibold">{title}</div>}
-				{body !== "" && <p className="mt-0.5 whitespace-pre-wrap">{body}</p>}
+				{title !== "" && <AlertTitle>{title}</AlertTitle>}
+				{body !== "" && (
+					<AlertDescription className="whitespace-pre-wrap">{body}</AlertDescription>
+				)}
 			</div>
 			{dismissible && (
-				<button
-					type="button"
+				<IconButton
+					variant="ghost"
+					size="sm"
 					aria-label="dismiss"
-					className="ml-2 rounded px-1 text-current opacity-70 hover:opacity-100"
 					onClick={() => send({ op: OP_NOTIFY, ref: path, payload: null })}
 				>
-					×
-				</button>
+					<X />
+				</IconButton>
 			)}
-		</div>
+		</Alert>
 	);
 }
 

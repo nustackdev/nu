@@ -41,9 +41,9 @@ on_drop = nu.ReactForever(
     Dashboard.drop.clicked(),
     nu.v.Transaction(Stats.count.store(Stats.count + 1))
     >> nu.v.Snapshot(
-        Dashboard.tries.store(Stats.count)
+        Dashboard.tries.set(Stats.count)
         | Dashboard.history.append(Stats.count, Stats.count)
-        | Dashboard.heading.store(Dashboard.wish),
+        | Dashboard.heading.set(Dashboard.wish),
     ),
 )
 
@@ -51,18 +51,18 @@ on_clear = nu.ReactForever(
     Dashboard.clear.clicked(),
     nu.v.Transaction(Stats.count.store(0))
     >> (
-        Dashboard.tries.store(0)
-        | Dashboard.heading.store("the jar is empty")
-        | Dashboard.history.store({"points": []})
+        Dashboard.tries.set(0)
+        | Dashboard.heading.set("the jar is empty")
+        | Dashboard.history.set({"points": []})
     ),
 )
 
 hydrate = nu.v.Snapshot(
-    Dashboard.heading.store("drop a wish in the jar")
-    | Dashboard.tries.store(Stats.count),
+    Dashboard.heading.set("drop a wish in the jar")
+    | Dashboard.tries.set(Stats.count),
 )
 
-ui = init >> App.title.store("wish jar") >> hydrate >> (on_drop | on_clear)
+ui = init >> App.title.set("wish jar") >> hydrate >> (on_drop | on_clear)
 
 tree = nu.With(
     nu.v.presets.rocksdb_navigator_inmemory(".dbw"),

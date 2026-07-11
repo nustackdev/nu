@@ -2,17 +2,22 @@
 //
 // Server-owned. One `write` op carries every mutation; payload is a partial
 // map: missing keys leave the slice value untouched. Class-level defaults
-// come in on the mount field `props` and seed the slice.
+// come in on the mount field `props` and seed the slice. Composes the kit
+// Badge primitive; variant maps to Badge tone.
 
+import { Badge } from "../../components/ui/badge";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
-const VARIANT_CLASSES: Record<string, string> = {
-	info: "bg-blue-100 text-blue-800",
-	warn: "bg-yellow-100 text-yellow-800",
-	ok: "bg-green-100 text-green-800",
-	danger: "bg-red-100 text-red-800",
-	neutral: "bg-gray-100 text-gray-800",
+// Ref variants stay `neutral | info | warn | ok | danger` on the wire.
+// Badge primitive's tone slot is `default | secondary | outline | danger |
+// warn | ok | info`; `neutral` reads as `outline` (transparent bg, muted border).
+const VARIANT_TO_TONE: Record<string, "default" | "outline" | "danger" | "warn" | "ok" | "info"> = {
+	info: "info",
+	warn: "warn",
+	ok: "ok",
+	danger: "danger",
+	neutral: "outline",
 };
 
 const factory: SliceFactory = (path, ctx, props) => ({
@@ -37,14 +42,8 @@ const factory: SliceFactory = (path, ctx, props) => ({
 function BadgeView({ path }: { path: string }) {
 	const label = useStore((s) => (s.refs[path]?.label as string) ?? "");
 	const variant = useStore((s) => (s.refs[path]?.variant as string) ?? "neutral");
-	const cls = VARIANT_CLASSES[variant] ?? VARIANT_CLASSES.neutral;
-	return (
-		<span
-			className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}
-		>
-			{label}
-		</span>
-	);
+	const tone = VARIANT_TO_TONE[variant] ?? VARIANT_TO_TONE.neutral;
+	return <Badge variant={tone}>{label}</Badge>;
 }
 
 export const BadgeRef: RefEntry = { factory, component: BadgeView };

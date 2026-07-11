@@ -2,17 +2,20 @@
 //
 // Server-owned. One `write` op carries every mutation; payload is a partial
 // map: missing keys leave the slice value untouched. Class-level defaults
-// arrive on the mount field `props` and seed the slice.
+// arrive on the mount field `props` and seed the slice. Composes the kit
+// Image primitive; empty src renders the primitive's sunken placeholder.
 
 import type { CSSProperties } from "react";
+import { Image } from "../../components/ui/image";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
-const FIT_CLASSES: Record<string, string> = {
-	contain: "object-contain",
-	cover: "object-cover",
-	fill: "object-fill",
-};
+type Fit = "contain" | "cover" | "fill";
+
+function normFit(v: unknown): Fit {
+	if (v === "cover" || v === "contain" || v === "fill") return v;
+	return "contain";
+}
 
 function asNullableInt(v: unknown): number | null {
 	if (v == null) return null;
@@ -53,19 +56,22 @@ const factory: SliceFactory = (path, ctx, props) => ({
 function ImageView({ path }: { path: string }) {
 	const src = useStore((s) => (s.refs[path]?.src as string) ?? "");
 	const alt = useStore((s) => (s.refs[path]?.alt as string) ?? "");
-	const fit = useStore((s) => (s.refs[path]?.fit as string) ?? "contain");
+	const fit = useStore((s) => normFit(s.refs[path]?.fit));
 	const width = useStore((s) => (s.refs[path]?.width as number | null | undefined) ?? null);
 	const height = useStore((s) => (s.refs[path]?.height as number | null | undefined) ?? null);
 	const rounded = useStore((s) => (s.refs[path]?.rounded as boolean) ?? false);
-	const fitCls = FIT_CLASSES[fit] ?? FIT_CLASSES.contain;
-	const roundedCls = rounded ? "rounded-md" : "";
 	const style: CSSProperties = {};
 	if (width != null) style.width = `${width}px`;
 	if (height != null) style.height = `${height}px`;
-	if (!src) {
-		return <span className={`inline-block bg-gray-100 ${roundedCls}`} style={style} />;
-	}
-	return <img src={src} alt={alt} className={`${fitCls} ${roundedCls}`} style={style} />;
+	return (
+		<Image
+			src={src || undefined}
+			alt={alt}
+			fit={fit}
+			radius={rounded ? "md" : "none"}
+			style={style}
+		/>
+	);
 }
 
 export const ImageRef: RefEntry = { factory, component: ImageView };

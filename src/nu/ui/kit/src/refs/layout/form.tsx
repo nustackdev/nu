@@ -2,11 +2,43 @@
 // padding, and cross-axis alignment. Display-only, server-owned. The
 // onSubmit handler exists solely to block the browser's native reload on
 // Enter; submit logic lives on a child ButtonRef.
+//
+// TODO(retune): same dynamic-class concern as Column: numeric gap /
+// padding template raw Tailwind class names. We map the discrete step
+// ladder statically here so the JIT sees every candidate at build time.
+// A `Form` primitive with named tokens is the follow-up.
 
 import { ErrorBoundary } from "../../components/ErrorBoundary";
+import { Heading } from "../../components/ui/heading";
 import { renderers } from "../../refs";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
+
+const GAP_CLASSES: Record<number, string> = {
+	0: "gap-0",
+	1: "gap-1",
+	2: "gap-2",
+	3: "gap-3",
+	4: "gap-4",
+	5: "gap-5",
+	6: "gap-6",
+	8: "gap-8",
+	10: "gap-10",
+	12: "gap-12",
+};
+
+const PADDING_CLASSES: Record<number, string> = {
+	0: "p-0",
+	1: "p-1",
+	2: "p-2",
+	3: "p-3",
+	4: "p-4",
+	5: "p-5",
+	6: "p-6",
+	8: "p-8",
+	10: "p-10",
+	12: "p-12",
+};
 
 const ALIGN_CLASSES: Record<string, string> = {
 	start: "items-start",
@@ -58,17 +90,23 @@ function FormView({ path }: { path: string }) {
 	const childPaths = useStore((s) => (s.refs[path]?.children as string[]) ?? []);
 	const refs = useStore((s) => s.refs);
 
+	const gapCls = GAP_CLASSES[gap] ?? GAP_CLASSES[4];
+	const padCls = PADDING_CLASSES[padding] ?? PADDING_CLASSES[0];
 	const alignCls = ALIGN_CLASSES[align] ?? ALIGN_CLASSES.stretch;
-	const cls = `flex flex-col gap-${gap} p-${padding} ${alignCls}`;
+	const cls = `flex flex-col ${gapCls} ${padCls} ${alignCls}`;
 
 	return (
 		<form onSubmit={(e) => e.preventDefault()} className={cls}>
-			{title ? <h3 className="text-sm font-semibold mb-2">{title}</h3> : null}
+			{title ? (
+				<Heading as="h3" size="xl" className="mb-2">
+					{title}
+				</Heading>
+			) : null}
 			{childPaths.map((cp) => {
 				const childSlice = refs[cp];
 				if (!childSlice) {
 					return (
-						<div key={cp} className="text-xs text-destructive font-mono">
+						<div key={cp} className="text-xs text-status-danger font-mono">
 							no ref at {cp}
 						</div>
 					);
@@ -76,7 +114,7 @@ function FormView({ path }: { path: string }) {
 				const Comp = renderers[childSlice.type];
 				if (!Comp) {
 					return (
-						<div key={cp} className="text-xs text-destructive font-mono">
+						<div key={cp} className="text-xs text-status-danger font-mono">
 							no renderer for {childSlice.type}
 						</div>
 					);

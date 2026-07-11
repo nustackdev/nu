@@ -4,9 +4,13 @@
 // On blur or Enter: notify server. Server-initiated read: answer with current
 // value. Server-initiated write: replace the value (canonical / reset).
 // Class-level defaults (label, placeholder, value, type, max_length) seed the
-// slice via mount props.
+// slice via mount props. Composes the kit Input primitive. Default face is
+// display (Inter); code-shaped fields can opt into mono via a slice prop
+// (`mono: true` on the seed) which flips `font-mono` at render time.
 
+import { useId } from "react";
 import { OP_NOTIFY } from "@nustackdev/ui-core";
+import { Input } from "../../components/ui/input";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
@@ -17,6 +21,7 @@ const factory: SliceFactory = (path, ctx, props) => ({
 	placeholder: typeof props?.placeholder === "string" ? (props.placeholder as string) : "",
 	inputType: typeof props?.type === "string" ? (props.type as string) : "text",
 	maxLength: typeof props?.max_length === "number" ? (props.max_length as number) : null,
+	mono: typeof props?.mono === "boolean" ? (props.mono as boolean) : false,
 	write: (v) =>
 		ctx.set((refs) => {
 			const slice = refs[path];
@@ -26,8 +31,6 @@ const factory: SliceFactory = (path, ctx, props) => ({
 			slice.value = v == null ? "" : String(v);
 		}),
 	get: () => {
-		// Read the current value via a one-shot store inspection. Avoids
-		// React stale-closure issues that a closed-over `value` would have.
 		const slice = useStore.getState().refs[path];
 		return (slice?.value as string) ?? "";
 	},
@@ -39,18 +42,25 @@ function InputView({ path }: { path: string }) {
 	const placeholder = useStore((s) => (s.refs[path]?.placeholder as string) ?? "");
 	const inputType = useStore((s) => (s.refs[path]?.inputType as string) ?? "text");
 	const maxLength = useStore((s) => s.refs[path]?.maxLength as number | null | undefined);
+	const mono = useStore((s) => Boolean(s.refs[path]?.mono));
 	const setLocal = useStore((s) => s.setLocal);
 	const send = useStore((s) => s.send);
+	const id = useId();
 	const commit = () => send({ op: OP_NOTIFY, ref: path, payload: null });
 	return (
-		<label className="flex flex-col gap-1 text-sm">
-			{label && <span className="text-gray-700">{label}</span>}
-			<input
+		<div className="flex flex-col gap-1">
+			{label && (
+				<label htmlFor={id} className="text-sm font-medium text-text-secondary">
+					{label}
+				</label>
+			)}
+			<Input
+				id={id}
 				type={inputType}
 				placeholder={placeholder}
 				maxLength={maxLength ?? undefined}
-				className="w-full rounded border px-3 py-2 font-mono text-sm"
 				value={value}
+				className={mono ? "font-mono" : undefined}
 				onChange={(e) => setLocal(path, e.target.value)}
 				onBlur={commit}
 				onKeyDown={(e) => {
@@ -60,7 +70,7 @@ function InputView({ path }: { path: string }) {
 					}
 				}}
 			/>
-		</label>
+		</div>
 	);
 }
 

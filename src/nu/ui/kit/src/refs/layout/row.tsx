@@ -101,7 +101,7 @@ function RowView({ path }: { path: string }) {
 				const childSlice = refs[childPath];
 				if (!childSlice) {
 					return (
-						<div key={childPath} className="text-xs text-destructive font-mono">
+						<div key={childPath} className="text-xs text-status-danger font-mono">
 							no ref at {childPath}
 						</div>
 					);
@@ -109,7 +109,7 @@ function RowView({ path }: { path: string }) {
 				const Comp = renderers[childSlice.type];
 				if (!Comp) {
 					return (
-						<div key={childPath} className="text-xs text-destructive font-mono">
+						<div key={childPath} className="text-xs text-status-danger font-mono">
 							no renderer for {childSlice.type}
 						</div>
 					);

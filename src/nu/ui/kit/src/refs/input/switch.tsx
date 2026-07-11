@@ -1,13 +1,14 @@
 // SwitchRef -- boolean toggle (switch affordance). Browser is source of truth.
 //
-// Same wire shape as CheckboxRef, different renderer: shadcn `Switch`.
+// Same wire shape as CheckboxRef, different renderer: kit Switch primitive.
 // User toggles: local store flips immediately, notify ships to server.
 // Server-initiated read: answer with current checked value.
 // Server-initiated write: replace the checked value (canonical / reset).
 // Class-level defaults (label, checked) seed the slice via mount props.
 
-import { Switch } from "../../components/ui/switch";
+import { useId } from "react";
 import { OP_NOTIFY } from "@nustackdev/ui-core";
+import { Switch } from "../../components/ui/switch";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
@@ -25,7 +26,6 @@ const factory: SliceFactory = (path, ctx, props) => ({
 			slice.checked = Boolean(v);
 		}),
 	get: () => {
-		// Live read from the store to avoid stale-closure on the slice.
 		const slice = useStore.getState().refs[path];
 		return Boolean(slice?.checked);
 	},
@@ -35,12 +35,13 @@ function SwitchView({ path }: { path: string }) {
 	const checked = useStore((s) => Boolean(s.refs[path]?.checked));
 	const label = useStore((s) => (s.refs[path]?.label as string) ?? "");
 	const send = useStore((s) => s.send);
+	const id = useId();
 	return (
-		<div className="inline-flex items-center gap-2 text-sm">
+		<div className="inline-flex items-center gap-2">
 			<Switch
+				id={id}
 				checked={checked}
 				onCheckedChange={(next) => {
-					// Local-first flip; canonical checked field lives on the slice.
 					useStore.setState((draft) => {
 						const slice = draft.refs[path];
 						if (slice) slice.checked = next;
@@ -48,7 +49,11 @@ function SwitchView({ path }: { path: string }) {
 					send({ op: OP_NOTIFY, ref: path, payload: null });
 				}}
 			/>
-			{label && <span>{label}</span>}
+			{label && (
+				<label htmlFor={id} className="text-base text-text-primary cursor-pointer">
+					{label}
+				</label>
+			)}
 		</div>
 	);
 }

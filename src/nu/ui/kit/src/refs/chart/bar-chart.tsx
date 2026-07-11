@@ -1,25 +1,15 @@
-// BarChart -- display-only categorical bar chart, recharts.
+// BarChart -- display-only categorical bar chart.
 //
 // Server-owned. One `write` op carries every mutation (partial map);
 // one `append` op upserts a single [category, value] bar. Class-level
 // defaults (x_label, y_label, color, orientation, max_bars) ride in on
-// the mount field `props` and seed the slice.
+// the mount field `props` and seed the slice. Composes the kit BarChart
+// primitive; the primitive owns chrome via chart-shared tokens.
 
-import {
-	Bar,
-	CartesianGrid,
-	BarChart as RcBarChart,
-	ResponsiveContainer,
-	Tooltip,
-	XAxis,
-	YAxis,
-} from "recharts";
+import { BarChart as KitBarChart } from "../../components/ui/bar-chart";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
-// A bar's value may be null: the server resolved that sample to a Nu
-// sentinel (EMPTY / INVALID). null bars render as a gap (no bar drawn,
-// the category label stays).
 type Bar2 = [string, number | null];
 type BarChartValue = { bars: Bar2[] };
 type Orientation = "vertical" | "horizontal";
@@ -27,7 +17,7 @@ type Orientation = "vertical" | "horizontal";
 const DEFAULTS = {
 	x_label: "",
 	y_label: "",
-	color: "#2563eb",
+	color: "",
 	orientation: "vertical" as Orientation,
 	max_bars: 200,
 };
@@ -51,10 +41,6 @@ function _cat(v: unknown, i: number): string {
 	return String(v);
 }
 
-// Accepts a {bars: [...]} map, a [[category, value], ...] pairs list,
-// a list of {label, value} maps, or a flat [v0, v1, ...] list
-// (auto-category = "0".."n-1"). Anything else -> [].
-// On dup categories: last write wins (later entries replace earlier).
 function _toBars(v: unknown): Bar2[] {
 	if (v && typeof v === "object" && !Array.isArray(v) && "bars" in v) {
 		return _toBars((v as { bars: unknown }).bars);
@@ -81,7 +67,6 @@ function _toBars(v: unknown): Bar2[] {
 			});
 		}
 	}
-	// dedup by category, last wins, preserving last occurrence order.
 	const seen = new Map<string, number>();
 	pairs.forEach(([cat], idx) => {
 		seen.set(cat, idx);
@@ -111,21 +96,13 @@ const factory: SliceFactory = (path, ctx, props) => ({
 			const slice = refs[path];
 			if (!slice) return;
 			const p = (v ?? {}) as Record<string, unknown>;
-			if ("x_label" in p) {
-				slice.x_label = p.x_label == null ? "" : String(p.x_label);
-			}
-			if ("y_label" in p) {
-				slice.y_label = p.y_label == null ? "" : String(p.y_label);
-			}
+			if ("x_label" in p) slice.x_label = p.x_label == null ? "" : String(p.x_label);
+			if ("y_label" in p) slice.y_label = p.y_label == null ? "" : String(p.y_label);
 			if ("color" in p) {
 				if (typeof p.color === "string") slice.color = p.color;
 			}
-			if ("orientation" in p) {
-				slice.orientation = _orient(p.orientation);
-			}
-			if ("max_bars" in p) {
-				slice.max_bars = _cap(p.max_bars);
-			}
+			if ("orientation" in p) slice.orientation = _orient(p.orientation);
+			if ("max_bars" in p) slice.max_bars = _cap(p.max_bars);
 			if ("bars" in p) {
 				const cap = (slice.max_bars as number) ?? DEFAULTS.max_bars;
 				slice.value = { bars: _trim(_toBars(p.bars), cap) };
@@ -159,55 +136,16 @@ const factory: SliceFactory = (path, ctx, props) => ({
 
 function BarChartView({ path }: { path: string }) {
 	const value = useStore((s) => s.refs[path]?.value as BarChartValue | undefined);
-	const x_label = useStore((s) => (s.refs[path]?.x_label as string) ?? "");
-	const y_label = useStore((s) => (s.refs[path]?.y_label as string) ?? "");
 	const color = useStore((s) => (s.refs[path]?.color as string) ?? DEFAULTS.color);
-	const orientation = useStore(
-		(s) => (s.refs[path]?.orientation as Orientation) ?? DEFAULTS.orientation,
-	);
 	const bars = Array.isArray(value?.bars) ? value.bars : [];
-	const data = bars.map((b, i) => ({
-		x: Array.isArray(b) ? _cat(b[0], i) : String(i),
+	const data = bars.map((b) => ({
+		x: Array.isArray(b) ? _cat(b[0], 0) : "",
 		y: Array.isArray(b) ? _y(b[1]) : null,
 	}));
-	const isHorizontal = orientation === "horizontal";
-	const xLabelProp = x_label
-		? ({ value: x_label, position: "insideBottom", offset: -2 } as const)
-		: undefined;
-	const yLabelProp = y_label
-		? ({ value: y_label, angle: -90, position: "insideLeft" } as const)
-		: undefined;
-	return (
-		<div className="h-64 w-full">
-			<ResponsiveContainer width="100%" height="100%">
-				<RcBarChart
-					data={data}
-					layout={isHorizontal ? "vertical" : "horizontal"}
-					margin={{
-						top: 8,
-						right: 16,
-						bottom: x_label ? 20 : 8,
-						left: y_label ? 12 : 0,
-					}}
-				>
-					<CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
-					{isHorizontal ? (
-						<>
-							<XAxis type="number" label={xLabelProp as never} />
-							<YAxis type="category" dataKey="x" label={yLabelProp as never} />
-						</>
-					) : (
-						<>
-							<XAxis dataKey="x" type="category" label={xLabelProp as never} />
-							<YAxis type="number" label={yLabelProp as never} />
-						</>
-					)}
-					<Tooltip />
-					<Bar dataKey="y" fill={color} isAnimationActive={false} />
-				</RcBarChart>
-			</ResponsiveContainer>
-		</div>
-	);
+	const series = color
+		? [{ dataKey: "y", name: "value", color }]
+		: [{ dataKey: "y", name: "value" }];
+	return <KitBarChart data={data} series={series} xKey="x" height={256} showLegend={false} />;
 }
 
 export const BarChart: RefEntry = { factory, component: BarChartView };

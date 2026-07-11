@@ -3,14 +3,21 @@
 //
 // Server-owned tabs / active (with optimistic local active on click).
 // Two inbound ops:
-//   store_tabs   replace the tabs list wholesale
-//   store_active set the active tab id (server pin / confirmation)
+//   set_tabs   replace the tabs list wholesale
+//   set_active set the active tab id (server pin / confirmation)
 // One outbound notify on user click: payload is the clicked tab id. The
-// server may mirror it back via store_active. Inactive bodies stay mounted
-// (display: none) so leaf slices keep their local state.
+// server may mirror it back via set_active. Inactive bodies stay mounted
+// (via forceMount + `hidden`) so leaf slices keep their local state.
+// Composes the kit Tabs primitive family (Radix Tabs under the hood).
 
 import { ErrorBoundary } from "../../components/ErrorBoundary";
 import { OP_NOTIFY } from "@nustackdev/ui-core";
+import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "../../components/ui/tabs";
 import { renderers } from "../../refs";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
@@ -37,13 +44,13 @@ const factory: SliceFactory = (path, ctx, props, children) => ({
 	tabs: normalizeTabs(props?.tabs),
 	active: typeof props?.active === "string" ? (props.active as string) : "",
 	children: Array.isArray(children) ? [...children] : [],
-	store_tabs: (v: unknown) =>
+	set_tabs: (v: unknown) =>
 		ctx.set((refs) => {
 			const slice = refs[path];
 			if (!slice) return;
 			slice.tabs = normalizeTabs(v);
 		}),
-	store_active: (v: unknown) =>
+	set_active: (v: unknown) =>
 		ctx.set((refs) => {
 			const slice = refs[path];
 			if (!slice) return;
@@ -67,63 +74,57 @@ function TabsView({ path }: { path: string }) {
 	const activeId = active && tabs.some((t) => t.id === active) ? active : (tabs[0]?.id ?? "");
 	const n = Math.min(tabs.length, childPaths.length);
 
-	const onClick = (id: string) => {
-		const setter = useStore.getState().refs[path]?.setActive as ((id: string) => void) | undefined;
-		if (setter) setter(id);
-		send({ op: OP_NOTIFY, ref: path, payload: id });
+	const onValueChange = (next: string) => {
+		const setter = useStore.getState().refs[path]?.setActive as
+			| ((id: string) => void)
+			| undefined;
+		if (setter) setter(next);
+		send({ op: OP_NOTIFY, ref: path, payload: next });
 	};
 
+	if (n === 0) return null;
+
 	return (
-		<div className="flex flex-col">
-			<div role="tablist" className="flex gap-1 border-b">
-				{tabs.map((t) => (
-					<button
-						key={t.id}
-						type="button"
-						role="tab"
-						aria-selected={t.id === activeId}
-						onClick={() => onClick(t.id)}
-						className={
-							t.id === activeId
-								? "border-b-2 border-primary px-3 py-2 text-sm"
-								: "px-3 py-2 text-sm text-muted-foreground"
-						}
-					>
+		<Tabs value={activeId} onValueChange={onValueChange}>
+			<TabsList variant="line">
+				{tabs.slice(0, n).map((t) => (
+					<TabsTrigger key={t.id} value={t.id} variant="line">
 						{t.label}
-					</button>
+					</TabsTrigger>
 				))}
-			</div>
-			<div className="pt-3">
-				{Array.from({ length: n }).map((_, i) => {
-					const cp = childPaths[i];
-					const tid = tabs[i].id;
-					const childSlice = refs[cp];
-					const style = tid === activeId ? undefined : { display: "none" };
-					if (!childSlice) {
-						return (
-							<div key={cp} style={style} className="text-xs text-destructive font-mono">
-								no ref at {cp}
-							</div>
-						);
-					}
-					const Comp = renderers[childSlice.type];
-					if (!Comp) {
-						return (
-							<div key={cp} style={style} className="text-xs text-destructive font-mono">
+			</TabsList>
+			{Array.from({ length: n }).map((_, i) => {
+				const cp = childPaths[i];
+				const tab = tabs[i];
+				const childSlice = refs[cp];
+				return (
+					<TabsContent
+						// forceMount keeps inactive bodies rendered so leaf slice state
+						// survives across tab switches; Radix hides the panel via
+						// `data-state="inactive"` when it is not the current tab.
+						forceMount
+						key={cp}
+						value={tab.id}
+						hidden={tab.id !== activeId}
+					>
+						{!childSlice ? (
+							<div className="text-xs text-status-danger font-mono">no ref at {cp}</div>
+						) : !renderers[childSlice.type] ? (
+							<div className="text-xs text-status-danger font-mono">
 								no renderer for {childSlice.type}
 							</div>
-						);
-					}
-					return (
-						<div key={cp} style={style}>
+						) : (
 							<ErrorBoundary label={`${cp} (${childSlice.type})`}>
-								<Comp path={cp} />
+								{(() => {
+									const Comp = renderers[childSlice.type];
+									return <Comp path={cp} />;
+								})()}
 							</ErrorBoundary>
-						</div>
-					);
-				})}
-			</div>
-		</div>
+						)}
+					</TabsContent>
+				);
+			})}
+		</Tabs>
 	);
 }
 

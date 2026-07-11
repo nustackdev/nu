@@ -5,6 +5,8 @@
 // global slice table and dispatches to its renderer. The `disabled` flag
 // is visual-only -- we deliberately do not set the HTML `disabled`
 // attribute on `<fieldset>` because that would cascade to child inputs.
+// Uses semantic tokens (border-default, text-muted) instead of raw
+// opacity for the disabled treatment.
 
 import { ErrorBoundary } from "../../components/ErrorBoundary";
 import { renderers } from "../../refs";
@@ -43,19 +45,23 @@ function FieldsetView({ path }: { path: string }) {
 	const refs = useStore((s) => s.refs);
 
 	const gapCls = GAP_CLASSES[gap] ?? GAP_CLASSES.md;
-	const rootCls = ["border border-border rounded-md p-4", disabled ? "opacity-50" : ""]
-		.filter(Boolean)
-		.join(" ");
+	const borderCls = disabled ? "border-border-subtle" : "border-border-default";
+	const textCls = disabled ? "text-text-muted" : "text-text-primary";
 
 	return (
-		<fieldset className={rootCls}>
-			{legend ? <legend className="text-sm font-semibold px-1">{legend}</legend> : null}
+		<fieldset
+			className={`rounded-md border p-4 ${borderCls} ${textCls}`}
+			aria-disabled={disabled || undefined}
+		>
+			{legend ? (
+				<legend className="px-1 text-sm font-semibold text-text-secondary">{legend}</legend>
+			) : null}
 			<div className={`flex flex-col ${gapCls}`}>
 				{childPaths.map((cp) => {
 					const childSlice = refs[cp];
 					if (!childSlice) {
 						return (
-							<div key={cp} className="text-xs text-destructive font-mono">
+							<div key={cp} className="text-xs text-status-danger font-mono">
 								no ref at {cp}
 							</div>
 						);
@@ -63,7 +69,7 @@ function FieldsetView({ path }: { path: string }) {
 					const Comp = renderers[childSlice.type];
 					if (!Comp) {
 						return (
-							<div key={cp} className="text-xs text-destructive font-mono">
+							<div key={cp} className="text-xs text-status-danger font-mono">
 								no renderer for {childSlice.type}
 							</div>
 						);

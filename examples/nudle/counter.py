@@ -26,19 +26,19 @@ class App(nu.ui.Index):
 
 
 ui = (
-    App.title.store("nudle counter")
-    >> Dashboard.heading.store("counter live")
+    App.title.set("nudle counter")
+    >> Dashboard.heading.set("counter live")
     >> (
         nu.ForeverDo(
             nu.v.Snapshot(
-                Dashboard.count.store(Counter.value + 1)
+                Dashboard.count.set(Counter.value + 1)
                 | Dashboard.history.append(Counter.value, Counter.value),
             )
             >> nu.Delay(1.0),
         )
         | nu.ReactForever(
             Dashboard.greet.clicked(),
-            Dashboard.heading.store(Dashboard.name),
+            Dashboard.heading.set(Dashboard.name),
         )
     )
 )

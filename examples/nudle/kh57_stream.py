@@ -42,19 +42,19 @@ bg = nu.v.Transaction(
 )
 
 ui = (
-    App.title.store("kh57 sample stream")
-    >> Dashboard.heading.store("kh57 live sample")
-    >> Dashboard.n.store(200, min=10, max=2000, step=10, label="sample size")
+    App.title.set("kh57 sample stream")
+    >> Dashboard.heading.set("kh57 live sample")
+    >> Dashboard.n.set(200, min=10, max=2000, step=10, label="sample size")
     >> nu.ForeverDo(
         nu.v.Snapshot(
-            Dashboard.chart.store_points(
+            Dashboard.chart.set_points(
                 nu.CollectQuery(
                     nu.SortedQuery(
                         Series.entries.sample(Dashboard.n, 0, Series.height),
                     ),
                 )
             )
-            | Dashboard.count.store(nu.StrQuery(Series.height)),
+            | Dashboard.count.set(nu.StrQuery(Series.height)),
             
         )
         >> nu.Delay(0.1),

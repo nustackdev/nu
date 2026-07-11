@@ -5,8 +5,11 @@
 // map so missing keys leave the slice value untouched. Class-level defaults
 // come in on the mount field `props` and seed the slice. The `external` slot
 // is tri-state: true forces the indicator, false suppresses it, null means
-// "auto" (true when target is _blank or the href host differs).
+// "auto" (true when target is _blank or the href host differs). Composes the
+// kit NavLink primitive with a lucide ExternalLink glyph.
 
+import { ExternalLink } from "lucide-react";
+import { NavLink } from "../../components/ui/nav-link";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
@@ -73,19 +76,16 @@ function LinkView({ path }: { path: string }) {
 	const text = label !== "" ? label : href;
 	const rel = safeTarget === "_blank" ? "noopener noreferrer" : undefined;
 	return (
-		<a
+		<NavLink
+			variant="underline"
 			href={href || undefined}
 			target={safeTarget}
 			rel={rel}
-			className="text-blue-600 hover:underline"
+			className="text-accent-2 hover:text-accent-2-hover"
 		>
-			{text}
-			{showExternal ? (
-				<span aria-hidden="true" className="ml-0.5">
-					{"↗"}
-				</span>
-			) : null}
-		</a>
+			<span>{text}</span>
+			{showExternal ? <ExternalLink aria-hidden="true" className="size-3.5" /> : null}
+		</NavLink>
 	);
 }
 

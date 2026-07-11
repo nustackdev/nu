@@ -2,18 +2,25 @@
 //
 // Server-owned. One `write` op carries every mutation; payload is a partial
 // map: missing keys leave the slice value untouched. Class-level defaults
-// come in on the mount field `props` and seed the slice.
+// come in on the mount field `props` and seed the slice. Composes the kit
+// Gauge primitive: variant maps to tone; the primitive owns arc geometry and
+// value label; we add the optional caption below.
 
+import { Gauge } from "../../components/ui/gauge";
+import { Text } from "../../components/ui/text";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
-const VARIANTS = new Set(["neutral", "ok", "warn", "danger"]);
+type Variant = "neutral" | "ok" | "warn" | "danger";
+type Tone = "accent" | "ok" | "warn" | "danger";
 
-const COLORS: Record<string, string> = {
-	neutral: "#3b82f6",
-	ok: "#22c55e",
-	warn: "#eab308",
-	danger: "#ef4444",
+const VARIANTS = new Set<Variant>(["neutral", "ok", "warn", "danger"]);
+
+const VARIANT_TO_TONE: Record<Variant, Tone> = {
+	neutral: "accent",
+	ok: "ok",
+	warn: "warn",
+	danger: "danger",
 };
 
 function clamp01(n: unknown): number {
@@ -24,9 +31,9 @@ function clamp01(n: unknown): number {
 	return v;
 }
 
-function normalizeVariant(v: unknown): string {
+function normalizeVariant(v: unknown): Variant {
 	if (typeof v !== "string") return "neutral";
-	return VARIANTS.has(v) ? v : "neutral";
+	return VARIANTS.has(v as Variant) ? (v as Variant) : "neutral";
 }
 
 const factory: SliceFactory = (path, ctx, props) => ({
@@ -58,33 +65,25 @@ const factory: SliceFactory = (path, ctx, props) => ({
 function GaugeView({ path }: { path: string }) {
 	const value = useStore((s) => (s.refs[path]?.value as number) ?? 0);
 	const caption = useStore((s) => (s.refs[path]?.caption as string) ?? "");
-	const variant = useStore((s) => (s.refs[path]?.variant as string) ?? "neutral");
+	const variant = useStore((s) => normalizeVariant(s.refs[path]?.variant));
+	const tone = VARIANT_TO_TONE[variant];
 	const pct = Math.round(value * 100);
-	const r = 36;
-	const c = 2 * Math.PI * r;
-	const dash = `${value * c} ${c}`;
-	const color = COLORS[variant] ?? COLORS.neutral;
 	return (
-		<div className="flex flex-col items-center">
-			<div className="relative h-24 w-24">
-				<svg viewBox="0 0 100 100" className="h-24 w-24 -rotate-90" role="img" aria-label="gauge">
-					<circle cx="50" cy="50" r={r} fill="none" stroke="#e5e7eb" strokeWidth="8" />
-					<circle
-						cx="50"
-						cy="50"
-						r={r}
-						fill="none"
-						stroke={color}
-						strokeWidth="8"
-						strokeDasharray={dash}
-						strokeLinecap="round"
-					/>
-				</svg>
-				<div className="absolute inset-0 flex items-center justify-center text-sm tabular-nums">
-					{pct}%
-				</div>
-			</div>
-			{caption && <div className="mt-1 text-xs text-gray-600">{caption}</div>}
+		<div className="flex flex-col items-center gap-1">
+			<Gauge
+				value={pct}
+				min={0}
+				max={100}
+				tone={tone}
+				size="md"
+				formatValue={(n) => `${n}%`}
+				aria-label={caption || "gauge"}
+			/>
+			{caption && (
+				<Text as="span" size="xs" tone="secondary">
+					{caption}
+				</Text>
+			)}
 		</div>
 	);
 }

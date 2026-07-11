@@ -48,34 +48,34 @@ class AreaChart(NudleRef):
             "x_format": cls.x_format,
         }
 
-    def store_points(self, points: ListArg[Any]) -> Nu:
+    def set_points(self, points: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(points=points))
 
-    def store_series(self, names: ListArg[Any]) -> Nu:
+    def set_series(self, names: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(series=names))
 
-    def store_colors(self, colors: ListArg[Any]) -> Nu:
+    def set_colors(self, colors: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(colors=colors))
 
-    def store_stacked(self, flag: BoolArg) -> Nu:
+    def set_stacked(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(stacked=flag))
 
-    def store_x_label(self, text: StrArg) -> Nu:
+    def set_x_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(x_label=text))
 
-    def store_y_label(self, text: StrArg) -> Nu:
+    def set_y_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(y_label=text))
 
-    def store_max_points(self, value: IntArg) -> Nu:
+    def set_max_points(self, value: IntArg) -> Nu:
         return Write(self, DictForm.of(max_points=value))
 
-    def store_x_format(self, value: XFormat | StrArg) -> Nu:
+    def set_x_format(self, value: XFormat | StrArg) -> Nu:
         return Write(self, DictForm.of(x_format=value))
 
     def clear(self) -> Nu:
         return Write(self, DictForm.of(points=[]))
 
-    def store(
+    def set(
         self,
         points: ListArg[Any] = UNSET,
         series: ListArg[Any] = UNSET,
@@ -131,28 +131,28 @@ class BarChart(NudleRef):
             "max_bars": cls.max_bars,
         }
 
-    def store_bars(self, bars: ListArg[Any]) -> Nu:
+    def set_bars(self, bars: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(bars=bars))
 
-    def store_x_label(self, text: StrArg) -> Nu:
+    def set_x_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(x_label=text))
 
-    def store_y_label(self, text: StrArg) -> Nu:
+    def set_y_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(y_label=text))
 
-    def store_color(self, value: StrArg) -> Nu:
+    def set_color(self, value: StrArg) -> Nu:
         return Write(self, DictForm.of(color=value))
 
-    def store_orientation(self, value: Orientation | StrArg) -> Nu:
+    def set_orientation(self, value: Orientation | StrArg) -> Nu:
         return Write(self, DictForm.of(orientation=value))
 
-    def store_max_bars(self, value: IntArg) -> Nu:
+    def set_max_bars(self, value: IntArg) -> Nu:
         return Write(self, DictForm.of(max_bars=value))
 
     def clear(self) -> Nu:
         return Write(self, DictForm.of(bars=[]))
 
-    def store(
+    def set(
         self,
         bars: ListArg[Any] | DictArg[Any, Any] = UNSET,
         x_label: StrArg = UNSET,
@@ -208,40 +208,40 @@ class LineChart(NudleRef):
             "palette": list(cls.palette),
         }
 
-    def store_points(self, points: ListArg[Any]) -> Nu:
+    def set_points(self, points: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(points=points))
 
-    def store_series(self, series_list: ListArg[Any]) -> Nu:
+    def set_series(self, series_list: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(series=series_list))
 
-    def store_x_label(self, text: StrArg) -> Nu:
+    def set_x_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(x_label=text))
 
-    def store_y_label(self, text: StrArg) -> Nu:
+    def set_y_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(y_label=text))
 
-    def store_color(self, value: StrArg) -> Nu:
+    def set_color(self, value: StrArg) -> Nu:
         return Write(self, DictForm.of(color=value))
 
-    def store_max_points(self, value: IntArg) -> Nu:
+    def set_max_points(self, value: IntArg) -> Nu:
         return Write(self, DictForm.of(max_points=value))
 
-    def store_x_format(self, value: XFormat | StrArg) -> Nu:
+    def set_x_format(self, value: XFormat | StrArg) -> Nu:
         return Write(self, DictForm.of(x_format=value))
 
-    def store_show_legend(self, flag: BoolArg) -> Nu:
+    def set_show_legend(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(show_legend=flag))
 
-    def store_show_tooltip(self, flag: BoolArg) -> Nu:
+    def set_show_tooltip(self, flag: BoolArg) -> Nu:
         return Write(self, DictForm.of(show_tooltip=flag))
 
-    def store_palette(self, colors: ListArg[Any]) -> Nu:
+    def set_palette(self, colors: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(palette=colors))
 
     def clear(self) -> Nu:
         return Write(self, DictForm.of(points=[]))
 
-    def store(
+    def set(
         self,
         points: ListArg[Any] | DictArg[Any, Any] = UNSET,
         series: ListArg[Any] = UNSET,
@@ -256,7 +256,7 @@ class LineChart(NudleRef):
     ) -> Nu:
         payload: dict[str, object] = {}
         if points is not UNSET:
-            # legacy: store({"points": [...]}) keeps working.
+            # legacy: set({"points": [...]}) keeps working.
             if isinstance(points, dict) and "points" in points:
                 payload["points"] = points["points"]
             else:
@@ -322,28 +322,28 @@ class PieChart(NudleRef):
             "total_label": cls.total_label,
         }
 
-    def store_slices(self, slices: ListArg[Any]) -> Nu:
+    def set_slices(self, slices: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(slices=slices))
 
-    def store_colors(self, colors: ListArg[Any]) -> Nu:
+    def set_colors(self, colors: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(colors=colors))
 
-    def store_inner_radius(self, value: FloatArg) -> Nu:
+    def set_inner_radius(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(inner_radius=value))
 
-    def store_show_labels(self, value: BoolArg) -> Nu:
+    def set_show_labels(self, value: BoolArg) -> Nu:
         return Write(self, DictForm.of(show_labels=value))
 
-    def store_show_legend(self, value: BoolArg) -> Nu:
+    def set_show_legend(self, value: BoolArg) -> Nu:
         return Write(self, DictForm.of(show_legend=value))
 
-    def store_total_label(self, value: StrArg) -> Nu:
+    def set_total_label(self, value: StrArg) -> Nu:
         return Write(self, DictForm.of(total_label=value))
 
     def clear(self) -> Nu:
         return Write(self, DictForm.of(slices=[]))
 
-    def store(
+    def set(
         self,
         slices: ListArg[Any] | DictArg[Any, Any] = UNSET,
         colors: ListArg[Any] = UNSET,
@@ -354,7 +354,7 @@ class PieChart(NudleRef):
     ) -> Nu:
         payload: dict[str, object] = {}
         if slices is not UNSET:
-            # legacy: store({"slices": [...]}) keeps working.
+            # legacy: set({"slices": [...]}) keeps working.
             if isinstance(slices, dict) and "slices" in slices:
                 payload["slices"] = slices["slices"]
             else:
@@ -390,22 +390,22 @@ class Sparkline(NudleRef):
             "max_points": cls.max_points,
         }
 
-    def store_points(self, points: ListArg[Any]) -> Nu:
+    def set_points(self, points: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(points=points))
 
-    def store_color(self, value: StrArg) -> Nu:
+    def set_color(self, value: StrArg) -> Nu:
         return Write(self, DictForm.of(color=value))
 
-    def store_height(self, value: IntArg) -> Nu:
+    def set_height(self, value: IntArg) -> Nu:
         return Write(self, DictForm.of(height=value))
 
-    def store_max_points(self, value: IntArg) -> Nu:
+    def set_max_points(self, value: IntArg) -> Nu:
         return Write(self, DictForm.of(max_points=value))
 
     def clear(self) -> Nu:
         return Write(self, DictForm.of(points=[]))
 
-    def store(
+    def set(
         self,
         points: ListArg[Any] | DictArg[Any, Any] = UNSET,
         color: StrArg = UNSET,

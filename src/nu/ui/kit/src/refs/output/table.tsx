@@ -8,16 +8,30 @@
 //
 // Sort is server-driven: the browser shows arrows on the active column and
 // emits a notify {sort_column, sort_direction} when a header is clicked.
-// The server decides whether to re-sort and confirms via store_sort.
+// The server decides whether to re-sort and confirms via set_sort.
 //
 // When clickable_rows is true, body rows hover and emit a notify
 // {row_index} on click. The browser does not select or mutate locally.
+//
+// Composes the kit Table primitive family; density maps striped to
+// primitive's `striped` variant and dense to `compact`. Sort arrows are
+// lucide chevrons.
 
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { OP_NOTIFY } from "@nustackdev/ui-core";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "../../components/ui/table";
+import { Text } from "../../components/ui/text";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
-type Table = { columns: string[]; rows: unknown[][] };
+type TableValue = { columns: string[]; rows: unknown[][] };
 
 function _cell(v: unknown): string {
 	if (v == null) return "";
@@ -60,7 +74,7 @@ const factory: SliceFactory = (path, ctx, props) => {
 		typeof props?.clickable_rows === "boolean" ? (props.clickable_rows as boolean) : false;
 	return {
 		type: "TableRef",
-		value: { columns: initialColumns, rows: [] } as Table,
+		value: { columns: initialColumns, rows: [] } as TableValue,
 		striped,
 		dense,
 		maxRows,
@@ -77,8 +91,8 @@ const factory: SliceFactory = (path, ctx, props) => {
 					sort_column?: unknown;
 					sort_direction?: unknown;
 				};
-				const cur = slice.value as Table;
-				const next: Table = {
+				const cur = slice.value as TableValue;
+				const next: TableValue = {
 					columns: "columns" in p ? _strings(p.columns) : cur.columns,
 					rows: "rows" in p ? _cap(_rows(p.rows), slice.maxRows as number) : cur.rows,
 				};
@@ -95,7 +109,7 @@ const factory: SliceFactory = (path, ctx, props) => {
 				const slice = refs[path];
 				if (!slice) return;
 				if (!Array.isArray(v)) return;
-				const cur = slice.value as Table;
+				const cur = slice.value as TableValue;
 				const next = cur.rows.concat([v as unknown[]]);
 				slice.value = {
 					columns: cur.columns,
@@ -106,7 +120,7 @@ const factory: SliceFactory = (path, ctx, props) => {
 };
 
 function TableView({ path }: { path: string }) {
-	const value = useStore((s) => s.refs[path]?.value as Table | undefined);
+	const value = useStore((s) => s.refs[path]?.value as TableValue | undefined);
 	const striped = useStore((s) => (s.refs[path]?.striped as boolean) ?? true);
 	const dense = useStore((s) => (s.refs[path]?.dense as boolean) ?? false);
 	const sortColumn = useStore((s) => (s.refs[path]?.sortColumn as string) ?? "");
@@ -120,13 +134,17 @@ function TableView({ path }: { path: string }) {
 		cols = Array.from({ length: width }, (_, i) => `col_${i}`);
 	}
 	if (rows.length === 0 && cols.length === 0) {
-		return <div className="text-sm text-gray-500 italic">no rows</div>;
+		return (
+			<Text size="sm" tone="muted">
+				no rows
+			</Text>
+		);
 	}
-	const cellPad = dense ? "px-2 py-0.5" : "px-2 py-1";
+	const density = dense ? "compact" : "default";
+	const variant = striped ? "striped" : "default";
 	const colSlots = cols.map((c, i) => ({ id: `${i}:${c}`, label: c, idx: i }));
 
 	function onHeaderClick(col: string) {
-		// Toggle direction when re-clicking the active column; otherwise asc.
 		const nextDir = col === sortColumn && sortDirection === "asc" ? "desc" : "asc";
 		send({
 			op: OP_NOTIFY,
@@ -140,51 +158,56 @@ function TableView({ path }: { path: string }) {
 		send({ op: OP_NOTIFY, ref: path, payload: { row_index: i } });
 	}
 
-	function arrow(col: string): string {
-		if (col !== sortColumn || col === "") return "";
-		return sortDirection === "desc" ? " ↓" : " ↑";
-	}
-
 	return (
-		<div className="w-full overflow-auto">
-			<table className="w-full text-sm font-mono">
-				<thead>
-					<tr className="border-b border-gray-300 bg-gray-50 text-left">
-						{colSlots.map((c) => {
-							const active = c.label === sortColumn && c.label !== "";
-							const cls = `${cellPad} font-medium cursor-pointer select-none ${active ? "text-gray-900" : "text-gray-700"}`;
-							return (
-								<th key={c.id} className={cls} onClick={() => onHeaderClick(c.label)}>
-									{c.label}
-									{arrow(c.label)}
-								</th>
-							);
-						})}
-					</tr>
-				</thead>
-				<tbody>
-					{rows.map((r, i) => {
-						const row = Array.isArray(r) ? r : [];
-						const rowKey = `row-${i}`;
-						const zebra = striped && i % 2 === 1 ? "bg-gray-50/50" : "";
-						const hover = clickableRows ? "hover:bg-gray-100 cursor-pointer" : "";
+		<Table variant={variant} density={density}>
+			<TableHeader>
+				<TableRow>
+					{colSlots.map((c) => {
+						const active = c.label === sortColumn && c.label !== "";
 						return (
-							<tr
-								key={rowKey}
-								className={`border-b border-gray-100 ${zebra} ${hover}`}
-								onClick={() => onRowClick(i)}
+							<TableHead
+								key={c.id}
+								scope="col"
+								aria-sort={
+									active ? (sortDirection === "desc" ? "descending" : "ascending") : "none"
+								}
+								className="cursor-pointer select-none data-[active=true]:text-text-primary"
+								data-active={active || undefined}
+								onClick={() => onHeaderClick(c.label)}
 							>
-								{colSlots.map((c) => (
-									<td key={c.id} className={cellPad}>
-										{_cell(row[c.idx])}
-									</td>
-								))}
-							</tr>
+								<span className="inline-flex items-center gap-1">
+									{c.label}
+									{active ? (
+										sortDirection === "desc" ? (
+											<ChevronDown className="size-3.5" />
+										) : (
+											<ChevronUp className="size-3.5" />
+										)
+									) : null}
+								</span>
+							</TableHead>
 						);
 					})}
-				</tbody>
-			</table>
-		</div>
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				{rows.map((r, i) => {
+					const row = Array.isArray(r) ? r : [];
+					const rowKey = `row-${i}`;
+					return (
+						<TableRow
+							key={rowKey}
+							onClick={() => onRowClick(i)}
+							className={clickableRows ? "cursor-pointer" : undefined}
+						>
+							{colSlots.map((c) => (
+								<TableCell key={c.id}>{_cell(row[c.idx])}</TableCell>
+							))}
+						</TableRow>
+					);
+				})}
+			</TableBody>
+		</Table>
 	);
 }
 

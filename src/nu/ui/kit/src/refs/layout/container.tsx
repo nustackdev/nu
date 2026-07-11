@@ -4,36 +4,20 @@
 // (title, padding, border, background, shadow, gap); payload is a partial
 // map. Children are absolute wire paths in the same mount payload; the
 // renderer resolves each through the global slice table and dispatches to
-// its renderer.
+// its renderer. Composes the kit Panel primitive; the background/border
+// grid collapses onto Panel variants + semantic tone classes.
 
 import { ErrorBoundary } from "../../components/ErrorBoundary";
+import { Panel, PanelContent, PanelHeader, PanelTitle } from "../../components/ui/panel";
 import { renderers } from "../../refs";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
-const PADDING_CLASSES: Record<string, string> = {
-	none: "p-0",
-	sm: "p-2",
-	md: "p-4",
-	lg: "p-6",
-};
-
-const BORDER_CLASSES: Record<string, string> = {
-	none: "",
-	hairline: "border border-border",
-	card: "border border-border",
-};
-
-const BACKGROUND_CLASSES: Record<string, string> = {
-	none: "",
-	muted: "bg-muted",
-	accent: "bg-accent",
-};
-
-const SHADOW_CLASSES: Record<string, string> = {
-	none: "",
-	sm: "shadow-sm",
-	md: "shadow-md",
+const PADDING_TO_SIZE: Record<string, "sm" | "md" | "lg"> = {
+	none: "sm",
+	sm: "sm",
+	md: "md",
+	lg: "lg",
 };
 
 const GAP_CLASSES: Record<string, string> = {
@@ -41,6 +25,20 @@ const GAP_CLASSES: Record<string, string> = {
 	sm: "gap-2",
 	md: "gap-4",
 	lg: "gap-6",
+};
+
+// background maps: `accent` (previously a solid) reads better as the accent
+// wash, per palette.md §2.4; solid accents belong on interactive surfaces.
+const BACKGROUND_CLASSES: Record<string, string> = {
+	none: "",
+	muted: "bg-bg-sunken",
+	accent: "bg-accent-wash",
+};
+
+const SHADOW_CLASSES: Record<string, string> = {
+	none: "",
+	sm: "shadow-sm",
+	md: "shadow-md",
 };
 
 const factory: SliceFactory = (path, ctx, props, children) => ({
@@ -76,45 +74,49 @@ function ContainerView({ path }: { path: string }) {
 	const children = useStore((s) => (s.refs[path]?.children as string[]) ?? []);
 	const refs = useStore((s) => s.refs);
 
-	const padCls = PADDING_CLASSES[padding] ?? PADDING_CLASSES.md;
-	const borderCls = BORDER_CLASSES[border] ?? BORDER_CLASSES.hairline;
+	const size = PADDING_TO_SIZE[padding] ?? "md";
+	const gapCls = GAP_CLASSES[gap] ?? GAP_CLASSES.md;
 	const bgCls = BACKGROUND_CLASSES[background] ?? "";
 	// `card` border bumps the effective minimum shadow to `sm`.
 	const effectiveShadow = border === "card" && shadow === "none" ? "sm" : shadow;
 	const shadowCls = SHADOW_CLASSES[effectiveShadow] ?? "";
-	const gapCls = GAP_CLASSES[gap] ?? GAP_CLASSES.md;
-
-	const boxCls = ["rounded-md", padCls, borderCls, bgCls, shadowCls].filter(Boolean).join(" ");
+	const borderCls = border === "none" ? "border-none" : "";
 
 	return (
-		<section className={boxCls}>
-			{title ? <h3 className="text-sm font-semibold mb-2">{title}</h3> : null}
-			<div className={`flex flex-col ${gapCls}`}>
-				{children.map((childPath) => {
-					const childSlice = refs[childPath];
-					if (!childSlice) {
+		<Panel size={size} className={`${bgCls} ${shadowCls} ${borderCls}`.trim()}>
+			{title ? (
+				<PanelHeader>
+					<PanelTitle>{title}</PanelTitle>
+				</PanelHeader>
+			) : null}
+			<PanelContent>
+				<div className={`flex flex-col ${gapCls}`}>
+					{children.map((childPath) => {
+						const childSlice = refs[childPath];
+						if (!childSlice) {
+							return (
+								<div key={childPath} className="text-xs text-status-danger font-mono">
+									no ref at {childPath}
+								</div>
+							);
+						}
+						const Comp = renderers[childSlice.type];
+						if (!Comp) {
+							return (
+								<div key={childPath} className="text-xs text-status-danger font-mono">
+									no renderer for {childSlice.type}
+								</div>
+							);
+						}
 						return (
-							<div key={childPath} className="text-xs text-destructive font-mono">
-								no ref at {childPath}
-							</div>
+							<ErrorBoundary key={childPath} label={`${childPath} (${childSlice.type})`}>
+								<Comp path={childPath} />
+							</ErrorBoundary>
 						);
-					}
-					const Comp = renderers[childSlice.type];
-					if (!Comp) {
-						return (
-							<div key={childPath} className="text-xs text-destructive font-mono">
-								no renderer for {childSlice.type}
-							</div>
-						);
-					}
-					return (
-						<ErrorBoundary key={childPath} label={`${childPath} (${childSlice.type})`}>
-							<Comp path={childPath} />
-						</ErrorBoundary>
-					);
-				})}
-			</div>
-		</section>
+					})}
+				</div>
+			</PanelContent>
+		</Panel>
 	);
 }
 

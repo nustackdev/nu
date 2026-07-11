@@ -2,8 +2,11 @@
 //
 // Server-owned. One `write` op carries every mutation; payload is a partial
 // map: missing keys leave the slice value untouched. Class-level defaults
-// come in on the mount field `props` and seed the slice.
+// come in on the mount field `props` and seed the slice. Composes the kit
+// Progress primitive; indeterminate is signaled to Radix by passing null.
 
+import { Progress } from "../../components/ui/progress";
+import { Text } from "../../components/ui/text";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
@@ -48,15 +51,13 @@ function ProgressView({ path }: { path: string }) {
 	const indeterminate = useStore((s) => (s.refs[path]?.indeterminate as boolean) ?? false);
 	const pct = Math.round(value * 100);
 	return (
-		<div className="w-full">
-			<div className="h-2 w-full overflow-hidden rounded bg-gray-200">
-				{indeterminate ? (
-					<div className="h-full w-1/3 animate-pulse bg-blue-500" />
-				) : (
-					<div className="h-full bg-blue-500" style={{ width: `${pct}%` }} />
-				)}
-			</div>
-			{caption && <div className="mt-1 text-xs text-gray-600">{caption}</div>}
+		<div className="flex w-full flex-col gap-1">
+			<Progress value={indeterminate ? null : pct} max={100} />
+			{caption && (
+				<Text as="span" size="xs" tone="secondary">
+					{caption}
+				</Text>
+			)}
 		</div>
 	);
 }

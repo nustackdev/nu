@@ -3,11 +3,13 @@
 // Server-owned. One `write` op carries every mutation; payload is a partial
 // map over the config keys (value, expand_depth, theme, copyable, sortable,
 // max_height). Missing keys leave the slice untouched. Class-level defaults
-// come in on the mount field `props` and seed the slice.
+// come in on the mount field `props` and seed the slice. Composes the kit
+// JsonView primitive (which threads palette tokens through the underlying
+// library) plus a ghost IconButton for copy.
 
-import JsonView from "@uiw/react-json-view";
-import { darkTheme } from "@uiw/react-json-view/dark";
-import { lightTheme } from "@uiw/react-json-view/light";
+import { Copy } from "lucide-react";
+import { IconButton } from "../../components/ui/icon-button";
+import { JsonView } from "../../components/ui/json-view";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
@@ -45,51 +47,32 @@ const factory: SliceFactory = (path, ctx, props) => ({
 		}),
 });
 
-function CopyButton({ text }: { text: string }) {
-	return (
-		<button
-			type="button"
-			className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-600 hover:bg-gray-50"
-			onClick={() => {
-				void navigator.clipboard?.writeText(text);
-			}}
-		>
-			copy
-		</button>
-	);
-}
-
 function JsonViewerView({ path }: { path: string }) {
 	const value = useStore((s) => s.refs[path]?.value);
 	const depth = useStore((s) => (s.refs[path]?.expand_depth as number) ?? 2);
-	const theme = useStore((s) => (s.refs[path]?.theme as string) ?? "light");
 	const copyable = useStore((s) => (s.refs[path]?.copyable as boolean) ?? true);
 	const sortable = useStore((s) => (s.refs[path]?.sortable as boolean) ?? false);
 	const maxH = useStore((s) => (s.refs[path]?.max_height as number | null) ?? null);
 	const data = sortable ? sortKeys(value ?? {}) : (value ?? {});
-	const wrapperStyle: React.CSSProperties = {
-		maxHeight: maxH ?? undefined,
-		overflow: maxH ? "auto" : undefined,
-		padding: "8px 12px",
-		borderRadius: 6,
-		border: "1px solid #e5e7eb",
+	const copy = () => {
+		if (navigator.clipboard?.writeText) {
+			void navigator.clipboard.writeText(JSON.stringify(value, null, 2));
+		}
 	};
 	return (
-		<div className="space-y-2">
+		<div
+			className="rounded-md border border-border-default bg-bg-surface"
+			style={{ maxHeight: maxH ?? undefined, overflow: maxH ? "auto" : undefined }}
+		>
 			{copyable && (
-				<div className="flex justify-end">
-					<CopyButton text={JSON.stringify(value, null, 2)} />
+				<div className="flex justify-end p-1">
+					<IconButton variant="ghost" size="sm" aria-label="copy" onClick={copy}>
+						<Copy />
+					</IconButton>
 				</div>
 			)}
-			<div style={wrapperStyle}>
-				<JsonView
-					value={data as object}
-					collapsed={depth}
-					displayDataTypes={false}
-					displayObjectSize={true}
-					enableClipboard={false}
-					style={theme === "dark" ? darkTheme : lightTheme}
-				/>
+			<div className="px-3 pb-2">
+				<JsonView value={data} collapsed={depth} />
 			</div>
 		</div>
 	);

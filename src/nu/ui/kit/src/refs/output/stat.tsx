@@ -3,22 +3,18 @@
 // Server-owned. One `write` op carries a partial map: missing keys leave the
 // slice value untouched. Class-level defaults arrive on mount field `props`
 // and seed the slice. Nu sentinels decode to "" for string fields and "flat"
-// for trend.
+// for trend. Composes the kit Stat primitive family.
 
+import { Stat, StatDelta, StatLabel, StatValue } from "../../components/ui/stat";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
-const TREND_CLASSES: Record<string, string> = {
-	up: "text-green-600",
-	down: "text-red-600",
-	flat: "text-gray-500",
-};
+type Trend = "up" | "down" | "flat";
 
-const TREND_ARROW: Record<string, string> = {
-	up: "↑",
-	down: "↓",
-	flat: "→",
-};
+function normTrend(v: unknown): Trend {
+	if (v === "up" || v === "down" || v === "flat") return v;
+	return "flat";
+}
 
 const factory: SliceFactory = (path, ctx, props) => ({
 	type: "StatRef",
@@ -55,20 +51,13 @@ function StatView({ path }: { path: string }) {
 	const label = useStore((s) => (s.refs[path]?.label as string) ?? "");
 	const value = useStore((s) => (s.refs[path]?.value as string) ?? "");
 	const delta = useStore((s) => (s.refs[path]?.delta as string) ?? "");
-	const trend = useStore((s) => (s.refs[path]?.trend as string) ?? "flat");
-	const tcls = TREND_CLASSES[trend] ?? TREND_CLASSES.flat;
-	const arrow = TREND_ARROW[trend] ?? TREND_ARROW.flat;
+	const trend = useStore((s) => normTrend(s.refs[path]?.trend));
 	return (
-		<div className="flex flex-col gap-1">
-			{label && <div className="text-xs uppercase text-gray-500">{label}</div>}
-			<div className="text-3xl font-semibold tabular-nums">{value}</div>
-			{delta && (
-				<div className={`flex items-center gap-1 text-sm ${tcls}`}>
-					<span aria-hidden>{arrow}</span>
-					<span>{delta}</span>
-				</div>
-			)}
-		</div>
+		<Stat>
+			{label && <StatLabel>{label}</StatLabel>}
+			<StatValue>{value}</StatValue>
+			{delta && <StatDelta direction={trend}>{delta}</StatDelta>}
+		</Stat>
 	);
 }
 

@@ -7,9 +7,17 @@
 // User toggles update local `open` then ship a `notify` whose payload is
 // the post-toggle id list. Children are absolute wire paths from the
 // mount field entry's nested `fields`, aligned by index to `sections`.
+// Composes the kit Accordion primitive (Radix under the hood); the
+// primitive owns chevron rotate + keyboard model.
 
 import { ErrorBoundary } from "../../components/ErrorBoundary";
 import { OP_NOTIFY } from "@nustackdev/ui-core";
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "../../components/ui/accordion";
 import { renderers } from "../../refs";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
@@ -68,13 +76,6 @@ const factory: SliceFactory = (path, ctx, props, children) => {
 					slice.multi = Boolean(p.multi);
 				}
 			}),
-		notifyChanged: (next: string[]) => {
-			ctx.set((refs) => {
-				const slice = refs[path];
-				if (slice) slice.open = [...next];
-			});
-			ctx.send({ op: OP_NOTIFY, ref: path, payload: next });
-		},
 	};
 };
 
@@ -86,14 +87,7 @@ function AccordionView({ path }: { path: string }) {
 	const refs = useStore((s) => s.refs);
 	const send = useStore((s) => s.send);
 
-	const toggle = (id: string) => {
-		const isOpen = open.includes(id);
-		let next: string[];
-		if (multi) {
-			next = isOpen ? open.filter((x) => x !== id) : [...open, id];
-		} else {
-			next = isOpen ? [] : [id];
-		}
+	const notifyOpen = (next: string[]) => {
 		useStore.setState((draft) => {
 			const slice = draft.refs[path];
 			if (slice) slice.open = next;
@@ -101,41 +95,50 @@ function AccordionView({ path }: { path: string }) {
 		send({ op: OP_NOTIFY, ref: path, payload: next });
 	};
 
+	const rootProps = multi
+		? {
+				type: "multiple" as const,
+				value: open,
+				onValueChange: (next: string[]) => notifyOpen(next),
+			}
+		: {
+				type: "single" as const,
+				value: open[0] ?? "",
+				collapsible: true,
+				onValueChange: (next: string) => notifyOpen(next ? [next] : []),
+			};
+
 	return (
-		<div className="flex flex-col border border-border rounded-md divide-y divide-border">
+		<Accordion
+			{...rootProps}
+			className="rounded-md border border-border-default divide-y divide-border-subtle"
+		>
 			{sections.map((s, i) => {
-				const isOpen = open.includes(s.id);
 				const cp = childPaths[i];
 				return (
-					<div key={`${i}-${s.id}`} className="flex flex-col">
-						<button
-							type="button"
-							onClick={() => toggle(s.id)}
-							className="flex items-center justify-between px-3 py-2 text-sm font-medium text-left hover:bg-muted"
-							aria-expanded={isOpen}
-						>
-							<span>{s.label}</span>
-							<span className="font-mono text-xs">{isOpen ? "-" : "+"}</span>
-						</button>
-						{isOpen ? (
-							<div className="px-3 py-2">{cp ? <ChildSlot path={cp} refs={refs} /> : null}</div>
-						) : null}
-					</div>
+					<AccordionItem key={`${i}-${s.id}`} value={s.id} className="px-3">
+						<AccordionTrigger>{s.label}</AccordionTrigger>
+						<AccordionContent>
+							{cp ? <ChildSlot path={cp} refs={refs} /> : null}
+						</AccordionContent>
+					</AccordionItem>
 				);
 			})}
-		</div>
+		</Accordion>
 	);
 }
 
 function ChildSlot({ path, refs }: { path: string; refs: Record<string, { type: string }> }) {
 	const childSlice = refs[path];
 	if (!childSlice) {
-		return <div className="text-xs text-destructive font-mono">no ref at {path}</div>;
+		return <div className="text-xs text-status-danger font-mono">no ref at {path}</div>;
 	}
 	const Comp = renderers[childSlice.type];
 	if (!Comp) {
 		return (
-			<div className="text-xs text-destructive font-mono">no renderer for {childSlice.type}</div>
+			<div className="text-xs text-status-danger font-mono">
+				no renderer for {childSlice.type}
+			</div>
 		);
 	}
 	return (

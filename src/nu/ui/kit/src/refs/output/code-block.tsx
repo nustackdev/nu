@@ -4,9 +4,10 @@
 // show_copy}; missing keys leave slice fields alone. Nil on `code` /
 // `language` coerces to ""; nil on `show_copy` falls back to the class
 // default (true). No syntax highlighting in v1: the language label is
-// informational only. The copy button is a browser-only affordance and
-// does not emit a frame.
+// informational only. Composes the kit Code primitive in block mode; the
+// primitive owns the copy affordance when `copyable` is set.
 
+import { Code } from "../../components/ui/code";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
@@ -44,28 +45,10 @@ function CodeBlockView({ path }: { path: string }) {
 	const code = useStore((s) => (s.refs[path]?.code as string) ?? "");
 	const language = useStore((s) => (s.refs[path]?.language as string) ?? "");
 	const showCopy = useStore((s) => (s.refs[path]?.show_copy as boolean) ?? true);
-	const copy = () => {
-		if (navigator.clipboard?.writeText) {
-			navigator.clipboard.writeText(code).catch(() => {});
-		}
-	};
-	const showHeader = language !== "" || showCopy;
 	return (
-		<div className="rounded border bg-muted">
-			{showHeader && (
-				<div className="flex items-center justify-between px-3 py-1 text-xs text-muted-foreground">
-					<span>{language}</span>
-					{showCopy && (
-						<button type="button" onClick={copy} className="hover:text-foreground">
-							copy
-						</button>
-					)}
-				</div>
-			)}
-			<pre className="overflow-x-auto p-3 text-sm">
-				<code className="font-mono whitespace-pre">{code}</code>
-			</pre>
-		</div>
+		<Code block copyable={showCopy} language={language || undefined}>
+			{code}
+		</Code>
 	);
 }
 

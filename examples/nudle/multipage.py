@@ -37,18 +37,18 @@ bg = nu.v.Transaction(
 
 # Both pages tick continuously so nav never tears down state.
 tick_home = nu.ForeverDo(
-    nu.v.Snapshot(HomePage.count.store(Counter.value)) >> nu.Delay(1.0),
+    nu.v.Snapshot(HomePage.count.set(Counter.value)) >> nu.Delay(1.0),
 )
 tick_feed = nu.ForeverDo(
     nu.v.Snapshot(FeedPage.history.append(Counter.value, Counter.value)) >> nu.Delay(1.0),
 )
-nav_home = nu.ReactForever(HomePage.go_feed.clicked(), App.nav.store("/feed"))
-nav_feed = nu.ReactForever(FeedPage.go_home.clicked(), App.nav.store("/"))
+nav_home = nu.ReactForever(HomePage.go_feed.clicked(), App.nav.set("/feed"))
+nav_feed = nu.ReactForever(FeedPage.go_home.clicked(), App.nav.set("/"))
 
 ui = (
-    App.title.store("nudle multipage")
-    >> HomePage.heading.store("home")
-    >> FeedPage.heading.store("feed")
+    App.title.set("nudle multipage")
+    >> HomePage.heading.set("home")
+    >> FeedPage.heading.set("feed")
     >> (tick_home | tick_feed | nav_home | nav_feed)
 )
 

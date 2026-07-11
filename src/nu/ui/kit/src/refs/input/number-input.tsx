@@ -5,22 +5,18 @@
 // On commit (blur, Enter, stepper click): clamp to [min, max] if set and notify
 // server. Server-initiated read: answer with current value. Server-initiated
 // write: scalar form replaces `value`; map form merges any subset of
-// {value, min, max, step, label}.
+// {value, min, max, step, label}. Composes the kit NumberInput primitive;
+// the primitive owns steppers + keyboard model.
 
+import { useId } from "react";
 import { OP_NOTIFY } from "@nustackdev/ui-core";
+import { NumberInput } from "../../components/ui/number-input";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
 function toFiniteNumber(n: unknown, fallback: number): number {
 	const v = Number(n);
 	return Number.isFinite(v) ? v : fallback;
-}
-
-function clamp(v: number, min: number | null, max: number | null): number {
-	let out = v;
-	if (typeof min === "number" && out < min) out = min;
-	if (typeof max === "number" && out > max) out = max;
-	return out;
 }
 
 const factory: SliceFactory = (path, ctx, props) => {
@@ -86,63 +82,37 @@ function NumberInputView({ path }: { path: string }) {
 	const placeholder = useStore((s) => (s.refs[path]?.placeholder as string) ?? "");
 	const setLocal = useStore((s) => s.setLocal);
 	const send = useStore((s) => s.send);
+	const id = useId();
 
-	const commit = () => {
-		const slice = useStore.getState().refs[path];
-		const raw = typeof slice?.value === "number" ? (slice.value as number) : 0;
-		const lo = typeof slice?.min === "number" ? (slice.min as number) : null;
-		const hi = typeof slice?.max === "number" ? (slice.max as number) : null;
-		const clamped = clamp(raw, lo, hi);
-		if (clamped !== raw) setLocal(path, clamped);
-		send({ op: OP_NOTIFY, ref: path, payload: null });
-	};
-
-	const stepBy = (delta: number) => {
-		const slice = useStore.getState().refs[path];
-		const raw = typeof slice?.value === "number" ? (slice.value as number) : 0;
-		const lo = typeof slice?.min === "number" ? (slice.min as number) : null;
-		const hi = typeof slice?.max === "number" ? (slice.max as number) : null;
-		setLocal(path, clamp(raw + delta, lo, hi));
-		send({ op: OP_NOTIFY, ref: path, payload: null });
-	};
+	const commit = () => send({ op: OP_NOTIFY, ref: path, payload: null });
 
 	return (
-		<label className="flex flex-col gap-1 text-sm">
-			{label && <span className="text-gray-700">{label}</span>}
-			<div className="flex items-center gap-1">
-				<button
-					type="button"
-					className="rounded border px-2 py-1 font-mono text-sm hover:bg-gray-100"
-					onClick={() => stepBy(-step)}
-				>
-					-
-				</button>
-				<input
-					type="number"
-					placeholder={placeholder}
-					min={min ?? undefined}
-					max={max ?? undefined}
-					step={step}
-					className="w-full rounded border px-3 py-2 font-mono text-sm"
-					value={value}
-					onChange={(e) => setLocal(path, Number(e.target.value))}
-					onBlur={commit}
-					onKeyDown={(e) => {
-						if (e.key === "Enter") {
-							commit();
-							(e.target as HTMLInputElement).blur();
-						}
-					}}
-				/>
-				<button
-					type="button"
-					className="rounded border px-2 py-1 font-mono text-sm hover:bg-gray-100"
-					onClick={() => stepBy(step)}
-				>
-					+
-				</button>
-			</div>
-		</label>
+		<div className="flex flex-col gap-1">
+			{label && (
+				<label htmlFor={id} className="text-sm font-medium text-text-secondary">
+					{label}
+				</label>
+			)}
+			<NumberInput
+				id={id}
+				value={value}
+				placeholder={placeholder}
+				min={min ?? undefined}
+				max={max ?? undefined}
+				step={step}
+				onValueChange={(next) => {
+					setLocal(path, next ?? 0);
+					commit();
+				}}
+				onBlur={commit}
+				onKeyDown={(e) => {
+					if (e.key === "Enter") {
+						commit();
+						(e.target as HTMLInputElement).blur();
+					}
+				}}
+			/>
+		</div>
 	);
 }
 

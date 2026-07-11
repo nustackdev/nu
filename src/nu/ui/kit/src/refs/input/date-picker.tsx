@@ -1,14 +1,33 @@
-// DatePickerRef -- native single date input. Browser is source of truth.
+// DatePickerRef -- date input. Browser is source of truth.
 //
-// User picks a date: local store updates and notify fires on the native
-// `change` event (commit only, no per-keystroke notify). Server-initiated
+// User picks a date: local store updates and notify fires. Server-initiated
 // read: answer with current ISO value. Server-initiated write: replace.
 // Class-level defaults (label, placeholder, min, max, default) seed the
-// slice via mount props; `default` seeds `value`.
+// slice via mount props; `default` seeds `value`. Composes the kit
+// DatePicker primitive (Popover + react-day-picker) so the calendar is
+// consistent cross-browser and reads through kit tokens.
 
 import { OP_NOTIFY } from "@nustackdev/ui-core";
+import { DatePicker } from "../../components/ui/date-picker";
+import { Text } from "../../components/ui/text";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
+
+function toIso(d: Date | null): string {
+	if (!d) return "";
+	const y = d.getFullYear();
+	const m = String(d.getMonth() + 1).padStart(2, "0");
+	const day = String(d.getDate()).padStart(2, "0");
+	return `${y}-${m}-${day}`;
+}
+
+function fromIso(s: string): Date | null {
+	if (!s) return null;
+	// Interpret as local date to avoid off-by-one UTC shifts on formatting.
+	const [y, m, d] = s.split("-").map(Number);
+	if (!y || !m || !d) return null;
+	return new Date(y, m - 1, d);
+}
 
 const factory: SliceFactory = (path, ctx, props) => ({
 	type: "DatePickerRef",
@@ -38,21 +57,23 @@ function DatePickerView({ path }: { path: string }) {
 	const setLocal = useStore((s) => s.setLocal);
 	const send = useStore((s) => s.send);
 	return (
-		<label className="flex flex-col gap-1 text-sm">
-			{label && <span className="text-gray-700">{label}</span>}
-			<input
-				type="date"
-				placeholder={placeholder}
-				min={min || undefined}
-				max={max || undefined}
-				className="w-full rounded border px-3 py-2 font-mono text-sm"
-				value={value}
-				onChange={(e) => {
-					setLocal(path, e.target.value);
+		<div className="flex flex-col gap-1">
+			{label && (
+				<Text as="span" size="sm" tone="secondary" weight="medium">
+					{label}
+				</Text>
+			)}
+			<DatePicker
+				value={fromIso(value)}
+				min={fromIso(min) ?? undefined}
+				max={fromIso(max) ?? undefined}
+				placeholder={placeholder || undefined}
+				onValueChange={(next) => {
+					setLocal(path, toIso(next));
 					send({ op: OP_NOTIFY, ref: path, payload: null });
 				}}
 			/>
-		</label>
+		</div>
 	);
 }
 

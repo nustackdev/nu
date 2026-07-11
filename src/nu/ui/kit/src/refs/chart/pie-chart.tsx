@@ -1,30 +1,26 @@
-// PieChart -- display-only pie / donut chart, recharts.
+// PieChart -- display-only pie / donut chart.
 //
 // Server-owned. One `write` op carries every mutation (partial map);
 // one `append` op pushes a single [label, value] slice. Class-level
 // defaults (slices, colors, inner_radius, show_labels, show_legend,
 // total_label) ride in on the mount field `props` and seed the slice.
+// Composes the kit PieChart primitive; center label / total renders as an
+// overlay on top of the primitive for donut mode.
+//
+// TODO(retune): the primitive does not yet expose a centerLabel slot, so
+// we absolutely-position label + total over the chart. Follow-up: extend
+// kit PieChart with a `centerLabel` prop.
 
-import { Cell, Legend, Pie, PieChart as RcPieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Text } from "../../components/ui/text";
+import { PieChart as KitPieChart } from "../../components/ui/pie-chart";
 import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
 type Slice = { label: string; value: number };
 type PieChartValue = { slices: Slice[] };
 
-const DEFAULT_COLORS = [
-	"#2563eb",
-	"#16a34a",
-	"#f59e0b",
-	"#dc2626",
-	"#7c3aed",
-	"#0891b2",
-	"#db2777",
-	"#65a30d",
-];
-
 const DEFAULTS = {
-	colors: DEFAULT_COLORS,
+	colors: [] as string[],
 	inner_radius: 0,
 	show_labels: true,
 	show_legend: true,
@@ -50,13 +46,10 @@ function _bool(v: unknown, fallback: boolean): boolean {
 }
 
 function _colors(v: unknown): string[] {
-	if (!Array.isArray(v) || v.length === 0) return DEFAULT_COLORS;
-	const out = v.filter((c): c is string => typeof c === "string");
-	return out.length === 0 ? DEFAULT_COLORS : out;
+	if (!Array.isArray(v)) return [];
+	return v.filter((c): c is string => typeof c === "string");
 }
 
-// Accepts a {slices: [...]} map, a [[label, value], ...] pairs list, or a
-// flat [v0, v1, ...] list (auto-labeled "0".."n-1"). Anything else -> [].
 function _toSlices(v: unknown): Slice[] {
 	if (v && typeof v === "object" && !Array.isArray(v) && "slices" in v) {
 		return _toSlices((v as { slices: unknown }).slices);
@@ -87,21 +80,11 @@ const factory: SliceFactory = (path, ctx, props) => ({
 			const slice = refs[path];
 			if (!slice) return;
 			const p = (v ?? {}) as Record<string, unknown>;
-			if ("slices" in p) {
-				slice.value = { slices: _toSlices(p.slices) };
-			}
-			if ("colors" in p) {
-				slice.colors = _colors(p.colors);
-			}
-			if ("inner_radius" in p) {
-				slice.inner_radius = _radius(p.inner_radius);
-			}
-			if ("show_labels" in p) {
-				slice.show_labels = _bool(p.show_labels, DEFAULTS.show_labels);
-			}
-			if ("show_legend" in p) {
-				slice.show_legend = _bool(p.show_legend, DEFAULTS.show_legend);
-			}
+			if ("slices" in p) slice.value = { slices: _toSlices(p.slices) };
+			if ("colors" in p) slice.colors = _colors(p.colors);
+			if ("inner_radius" in p) slice.inner_radius = _radius(p.inner_radius);
+			if ("show_labels" in p) slice.show_labels = _bool(p.show_labels, DEFAULTS.show_labels);
+			if ("show_legend" in p) slice.show_legend = _bool(p.show_legend, DEFAULTS.show_legend);
 			if ("total_label" in p) {
 				if (typeof p.total_label === "string") slice.total_label = p.total_label;
 			}
@@ -118,79 +101,40 @@ const factory: SliceFactory = (path, ctx, props) => ({
 		}),
 });
 
-type LabelPayload = {
-	cx?: number;
-	cy?: number;
-	midAngle?: number;
-	innerRadius?: number;
-	outerRadius?: number;
-	label?: string;
-};
-
-function _renderLabel(props: LabelPayload): string {
-	return props.label ?? "";
-}
-
-function CenterText({ label, total }: { label: string; total: number }) {
-	return (
-		<g>
-			<text
-				x="50%"
-				y="50%"
-				dy={-6}
-				textAnchor="middle"
-				dominantBaseline="middle"
-				className="fill-current text-xs"
-			>
-				{label}
-			</text>
-			<text
-				x="50%"
-				y="50%"
-				dy={12}
-				textAnchor="middle"
-				dominantBaseline="middle"
-				className="fill-current text-sm font-medium"
-			>
-				{total}
-			</text>
-		</g>
-	);
-}
-
 function PieChartView({ path }: { path: string }) {
 	const value = useStore((s) => s.refs[path]?.value as PieChartValue | undefined);
-	const colors = useStore((s) => (s.refs[path]?.colors as string[]) ?? DEFAULT_COLORS);
+	const colors = useStore((s) => (s.refs[path]?.colors as string[]) ?? DEFAULTS.colors);
 	const inner_radius = useStore((s) => (s.refs[path]?.inner_radius as number) ?? 0);
-	const show_labels = useStore((s) => (s.refs[path]?.show_labels as boolean) ?? true);
 	const show_legend = useStore((s) => (s.refs[path]?.show_legend as boolean) ?? true);
 	const total_label = useStore((s) => (s.refs[path]?.total_label as string) ?? "");
 	const slices = Array.isArray(value?.slices) ? value.slices : [];
 	const total = slices.reduce((a, s) => a + (Number.isFinite(s.value) ? s.value : 0), 0);
-	const innerPct = `${Math.round(inner_radius * 80)}%`;
+	const data = slices.map((s, i) => {
+		const color = colors[i];
+		return color
+			? { name: s.label, value: s.value, color }
+			: { name: s.label, value: s.value };
+	});
+	const innerRadius = inner_radius > 0 ? `${Math.round(inner_radius * 80)}%` : 0;
 	const showCenter = inner_radius > 0 && total_label.length > 0;
 	return (
-		<div className="h-64 w-full">
-			<ResponsiveContainer width="100%" height="100%">
-				<RcPieChart>
-					<Pie
-						data={slices}
-						dataKey="value"
-						nameKey="label"
-						innerRadius={innerPct}
-						outerRadius="80%"
-						isAnimationActive={false}
-						label={show_labels ? (_renderLabel as never) : false}
-					>
-						{slices.map((s, i) => (
-							<Cell key={s.label || `slice-${i}`} fill={colors[i % colors.length]} />
-						))}
-					</Pie>
-					<Tooltip />
-					{show_legend && <Legend />}
-					{showCenter && <CenterText label={total_label} total={total} />}
-				</RcPieChart>
-			</ResponsiveContainer>
+		<div className="relative">
+			<KitPieChart
+				data={data}
+				height={256}
+				innerRadius={innerRadius}
+				showLegend={show_legend}
+			/>
+			{showCenter && (
+				<div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+					<Text as="span" size="sm" tone="secondary">
+						{total_label}
+					</Text>
+					<Text as="span" size="lg" tone="primary" weight="semibold">
+						{total}
+					</Text>
+				</div>
+			)}
 		</div>
 	);
 }
