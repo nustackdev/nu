@@ -42,7 +42,7 @@
   text-decoration: none;
   transition: color .15s ease;
 }
-.footerCellBody a:hover { color: #6ba8ff; }
+.footerCellBody a:hover { color: var(--nu-accent-2); }
 
 .footerBrand {
   font-family: var(--font-display);

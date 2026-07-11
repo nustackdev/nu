@@ -27,13 +27,13 @@
   --color-fd-card-foreground: #eae8f4;
   --color-fd-popover: #0e0b1c;
   --color-fd-popover-foreground: #eae8f4;
-  --color-fd-primary: #c19eff;
+  --color-fd-primary: #a684ff;
   --color-fd-primary-foreground: rgb(25, 25, 28);
   --color-fd-secondary: rgba(255, 255, 255, 0.05);
   --color-fd-secondary-foreground: #eae8f4;
   --color-fd-accent: rgba(255, 255, 255, 0.05);
   --color-fd-accent-foreground: #eae8f4;
-  --color-fd-ring: #c19eff;
+  --color-fd-ring: #a684ff;
 }
 :global(body) {
   background: rgb(25, 25, 28);
@@ -54,18 +54,11 @@
   --nu-ink-4:     rgba(179, 176, 200, 0.36);
   --nu-rule:      rgba(255, 255, 255, 0.08);
   --nu-rule-2:    rgba(255, 255, 255, 0.04);
-  --nu-accent:      #c19eff;
-  --nu-accent-soft: rgba(193, 158, 255, 0.18);
-  --nu-accent-wash: rgba(193, 158, 255, 0.10);
-  --nu-accent-line: rgba(193, 158, 255, 0.45);
-  --nu-accent-glow: rgba(193, 158, 255, 0.42);
-  --nu-accent-2:      #6ba8ff;
-  --nu-accent-2-soft: rgba(107, 168, 255, 0.18);
-  --nu-accent-2-wash: rgba(107, 168, 255, 0.09);
-  --nu-accent-2-line: rgba(107, 168, 255, 0.44);
-  --nu-accent-2-glow: rgba(107, 168, 255, 0.36);
   --nu-code-bg:   rgba(255, 255, 255, 0.03);
   --nu-code-bg-2: rgba(255, 255, 255, 0.02);
+  /* Accent tokens (--nu-accent*, --nu-accent-2*) intentionally not overridden
+     here — they flow through `composes: palette` and dark-mode kicks in via
+     :global(html.dark) .palette in _tokens.module.css. */
 }
 
 /* =============================================================================
@@ -75,8 +68,8 @@
  * middle of the block; anchors don't drift with width).
  * ==========================================================================*/
 .heroBg {
-  --grad-dim: rgb(103 31 255 / 0.8);
-  --blue-dim: rgb(0 71 253 / 0.72);
+  --grad-dim: rgb(122 76 224 / 0.78);
+  --blue-dim: rgb(62 114 231 / 0.66);
 
   position: absolute;
   top: 0;

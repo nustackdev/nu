@@ -4,7 +4,7 @@
   white-space: nowrap;
 }
 .nu {
-  color: var(--nu-accent, #af78ff);
+  color: var(--nu-accent, #7a4ce0);
   font-weight: inherit;
 }
 .stack {
@@ -12,5 +12,5 @@
   font-weight: inherit;
 }
 :global(html.dark) .nu {
-  color: var(--nu-accent, #c19eff);
+  color: var(--nu-accent, #a684ff);
 }

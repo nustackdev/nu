@@ -18,11 +18,22 @@
   padding: 0 var(--nu-pad-x);
 }
 
-/* per-section accent tokens — strict blue + purple + silver only. */
-.section[data-hue="s1"] { --sec-accent: #6ba8ff; --sec-wash: rgba(107, 168, 255, 0.10); --sec-line: rgba(107, 168, 255, 0.45); --sec-soft: rgba(107, 168, 255, 0.18); }
-.section[data-hue="s2"] { --sec-accent: #c19eff; --sec-wash: rgba(193, 158, 255, 0.10); --sec-line: rgba(193, 158, 255, 0.45); --sec-soft: rgba(193, 158, 255, 0.18); }
-.section[data-hue="s3"] { --sec-accent: #6ba8ff; --sec-wash: rgba(107, 168, 255, 0.10); --sec-line: rgba(107, 168, 255, 0.45); --sec-soft: rgba(107, 168, 255, 0.18); }
-.section[data-hue="s4"] { --sec-accent: #6ba8ff; --sec-wash: rgba(107, 168, 255, 0.10); --sec-line: rgba(107, 168, 255, 0.45); --sec-soft: rgba(107, 168, 255, 0.18); }
+/* per-section accent tokens — strict blue + purple + silver only.
+   All resolve to shared palette vars so the duo cascades. */
+.section[data-hue="s1"],
+.section[data-hue="s3"],
+.section[data-hue="s4"] {
+  --sec-accent: var(--nu-accent-2);
+  --sec-wash:   var(--nu-accent-2-wash);
+  --sec-line:   var(--nu-accent-2-line);
+  --sec-soft:   var(--nu-accent-2-soft);
+}
+.section[data-hue="s2"] {
+  --sec-accent: var(--nu-accent);
+  --sec-wash:   var(--nu-accent-wash);
+  --sec-line:   var(--nu-accent-line);
+  --sec-soft:   var(--nu-accent-soft);
+}
 
 .sectionCard {
   position: relative;

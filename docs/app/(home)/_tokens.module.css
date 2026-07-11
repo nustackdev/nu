@@ -4,18 +4,18 @@
  * ==========================================================================*/
 .palette {
   /* primary — purple. carries nustack identity everywhere. */
-  --nu-accent:       #af78ff;
-  --nu-accent-soft:  rgba(175, 120, 255, 0.13);
-  --nu-accent-wash:  rgba(175, 120, 255, 0.06);
-  --nu-accent-line:  rgba(175, 120, 255, 0.36);
-  --nu-accent-glow:  rgba(175, 120, 255, 0.28);
+  --nu-accent:       #7a4ce0;
+  --nu-accent-soft:  rgba(122, 76, 224, 0.16);
+  --nu-accent-wash:  rgba(122, 76, 224, 0.08);
+  --nu-accent-line:  rgba(122, 76, 224, 0.42);
+  --nu-accent-glow:  rgba(122, 76, 224, 0.30);
 
   /* secondary — blue. section labels, indices, status pills. */
-  --nu-accent-2:      #4b9bff;
-  --nu-accent-2-soft: rgba(75, 155, 255, 0.13);
-  --nu-accent-2-wash: rgba(75, 155, 255, 0.05);
-  --nu-accent-2-line: rgba(75, 155, 255, 0.36);
-  --nu-accent-2-glow: rgba(75, 155, 255, 0.28);
+  --nu-accent-2:      #3e72e7;
+  --nu-accent-2-soft: rgba(62, 114, 231, 0.16);
+  --nu-accent-2-wash: rgba(62, 114, 231, 0.06);
+  --nu-accent-2-line: rgba(62, 114, 231, 0.42);
+  --nu-accent-2-glow: rgba(62, 114, 231, 0.30);
 
   --nu-code-bg:   color-mix(in oklab, var(--color-fd-muted) 70%, transparent);
   --nu-code-bg-2: color-mix(in oklab, var(--color-fd-muted) 40%, transparent);
@@ -39,15 +39,17 @@
   --nu-dot-size:  22px 22px;
 }
 :global(html.dark) .palette {
-  --nu-accent:      #c19eff;
-  --nu-accent-soft: rgba(193, 158, 255, 0.16);
-  --nu-accent-wash: rgba(193, 158, 255, 0.07);
-  --nu-accent-line: rgba(193, 158, 255, 0.38);
-  --nu-accent-glow: rgba(193, 158, 255, 0.32);
+  /* Dark-mode purple/blue — lifted variants for legibility on dark backgrounds
+     while staying in the same hue family. */
+  --nu-accent:      #a684ff;
+  --nu-accent-soft: rgba(166, 132, 255, 0.18);
+  --nu-accent-wash: rgba(166, 132, 255, 0.09);
+  --nu-accent-line: rgba(166, 132, 255, 0.44);
+  --nu-accent-glow: rgba(166, 132, 255, 0.34);
 
-  --nu-accent-2:      #4b9bff;
-  --nu-accent-2-soft: rgba(75, 155, 255, 0.16);
-  --nu-accent-2-wash: rgba(75, 155, 255, 0.07);
-  --nu-accent-2-line: rgba(75, 155, 255, 0.38);
-  --nu-accent-2-glow: rgba(75, 155, 255, 0.32);
+  --nu-accent-2:      #6b96f2;
+  --nu-accent-2-soft: rgba(107, 150, 242, 0.18);
+  --nu-accent-2-wash: rgba(107, 150, 242, 0.08);
+  --nu-accent-2-line: rgba(107, 150, 242, 0.44);
+  --nu-accent-2-glow: rgba(107, 150, 242, 0.34);
 }
