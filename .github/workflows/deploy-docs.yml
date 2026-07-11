@@ -1,0 +1,66 @@
+# Builds the Next.js docs site under `docs/` as a static export and deploys
+# the result to GitHub Pages. Runs on push to main touching `docs/**` and via
+# manual dispatch from the Actions tab.
+#
+# Prereqs on the repo (one-time):
+#   Settings -> Pages -> Build and deployment -> Source = "GitHub Actions"
+#   Settings -> Pages -> Custom domain = nustack.dev (and matching CNAME on DNS)
+name: Deploy docs to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/deploy-docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: docs
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+
+      - name: install
+        run: npm ci
+
+      - name: build (static export)
+        run: npm run build
+
+      - name: upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/out
+
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
