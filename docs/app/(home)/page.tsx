@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ComponentType } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { GithubMark } from '@/components/marks/GithubMark';
 import { NustackMark } from '@/components/marks/NustackMark';
 import { NustackLogo } from '@/components/marks/NustackLogo';
 import { HeroWordmark } from '@/components/marks/HeroWordmark';
@@ -77,41 +78,50 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* ---------- §1 interaction model — bloom RIGHT (blue).
-                       Content sits on the LEFT column (darker side). ---------- */}
+        {/* ---------- §1 interaction model — text LEFT, visual RIGHT. ---------- */}
         <section className={s.section} id="interaction-model" data-hue="s1">
-<div className={s.sectionSplit}>
-            <div className={s.sectionCol}>
-              <div className={s.sectionLabel}>the model</div>
-              <h2 className={s.sectionTitle}>We build on the interaction model.</h2>
-              <p className={s.sectionIntro}>
-                A tiny theory of computation: <b>Refs</b> address values,{' '}
-                <b>Interactions</b> change them, <b>Fabrics</b> are the worlds
-                those addresses resolve inside. Everything else at{' '}
-                <NustackMark /> is a faithful implementation of it.
-              </p>
-              <div className={s.modelActions}>
-                <Link href="/interaction-model" className={s.heroCtaGhost}>
-                  <span>read the model</span>
-                  <ArrowRight size={13} aria-hidden />
-                </Link>
+          <div className={s.sectionCard}>
+            <div className={s.sectionSplit}>
+              <div className={s.sectionCol}>
+                <h2 className={s.sectionTitle}>We build on the interaction model.</h2>
+                <p className={s.sectionIntro}>
+                  A tiny theory of computation: <b>Refs</b> address values,{' '}
+                  <b>Interactions</b> change them, <b>Fabrics</b> are the worlds
+                  those addresses resolve inside. Everything else at{' '}
+                  <NustackMark /> is a faithful implementation of it.
+                </p>
+                <div className={s.modelActions}>
+                  <Link href="/interaction-model" className={s.cta}>
+                    <span>read the model</span>
+                    <ArrowRight size={13} aria-hidden className={s.ctaArrow} />
+                  </Link>
+                  <a
+                    href="https://github.com/nustackdev"
+                    target="_blank"
+                    rel="noreferrer"
+                    className={s.ctaGhost}
+                  >
+                    <GithubMark size={14} />
+                    <span>github</span>
+                  </a>
+                </div>
               </div>
+              <aside className={s.sectionVisual} data-slot="interaction-model">
+                <div className={s.vizFrame}>
+                  <OneLineSvg />
+                </div>
+              </aside>
             </div>
-            <aside className={s.sectionVisual} data-slot="interaction-model">
-              <div className={s.glassCard}>
-                <OneLineSvg />
-              </div>
-            </aside>
           </div>
         </section>
 
-        {/* ---------- §2 Nu — bloom LEFT (teal).
-                       Content sits on the RIGHT column (darker side). ---------- */}
+        {/* ---------- §2 Nu — code LEFT, text RIGHT. ---------- */}
         <section className={s.section} id="nu" data-hue="s2">
-          <div className={`${s.sectionSplit} ${s.sectionSplitFlip}`}>
-            <aside className={s.sectionVisual}>
-              <div className={s.codeShell}>
-                <pre className={s.codeBlock}>
+          <div className={s.sectionCard}>
+            <div className={`${s.sectionSplit} ${s.sectionSplitFlip}`}>
+              <aside className={s.sectionVisual}>
+                <div className={s.codeShell}>
+                  <pre className={s.codeBlock}>
 <span className={s.cmt}>{'"""Basic Nu bracket-tree app: mem preset + tiny compute."""'}</span>
 {'\n\n'}
 <span className={s.kw}>from</span>{' __future__ '}<span className={s.kw}>import</span>{' annotations\n\n'}
@@ -124,7 +134,6 @@ export default function HomePage() {
               </div>
             </aside>
             <div className={s.sectionCol}>
-              <div className={s.sectionLabel}>the platform</div>
               <h2 className={s.sectionTitle}>Nu — the interaction model, made real.</h2>
               <p className={s.sectionIntro}>
                 Nu ships the model in pure Python and grows it into a small
@@ -132,58 +141,74 @@ export default function HomePage() {
                 else we make stands on this.
               </p>
               <div className={s.modelActions}>
-                <Link href="/nu" className={s.heroCtaGhost}>
+                <Link href="/nu" className={s.cta}>
                   <span>meet Nu</span>
-                  <ArrowRight size={13} aria-hidden />
+                  <ArrowRight size={13} aria-hidden className={s.ctaArrow} />
                 </Link>
-                <Link href="/docs" className={s.heroCtaGhost}>
-                  <span>the docs</span>
-                  <ArrowRight size={13} aria-hidden />
-                </Link>
+                <a
+                  href="https://github.com/nustackdev/nu"
+                  target="_blank"
+                  rel="noreferrer"
+                  className={s.ctaGhost}
+                >
+                  <GithubMark size={14} />
+                  <span>github</span>
+                </a>
               </div>
+            </div>
             </div>
           </div>
         </section>
 
-        {/* ---------- §3 apps — bloom BOTTOM-LEFT (magenta).
-                       Content sits at TOP (darker side). ---------- */}
+        {/* ---------- §3 apps — text LEFT, shelf RIGHT, app grid below. ---------- */}
         <section className={s.section} id="apps" data-hue="s3">
-          <div className={s.sectionCol}>
-            <div className={s.sectionLabel}>apps</div>
-            <h2 className={s.sectionTitle}>Standalone apps built on Nu.</h2>
-            <p className={s.sectionIntro}>
-              The tools we ship for others. They share Nu&apos;s shape and
-              language — you learn one, you know them all.
-            </p>
-          </div>
-          <div className={s.sectionShelf} aria-hidden>
-            <AppShelfSvg />
-          </div>
-          <div className={`${s.flatGrid} ${s.flatGridCols3}`}>
-            {APPS.map((a) => (
-              <Link key={a.name} href={a.href} className={s.flatCell}>
-                <div className={s.flatCellViz} aria-hidden>
-                  <a.Viz />
+          <div className={s.sectionCard}>
+            <div className={s.sectionSplit}>
+              <div className={s.sectionCol}>
+                <h2 className={s.sectionTitle}>Standalone apps built on Nu.</h2>
+                <p className={s.sectionIntro}>
+                  The tools we ship for others. They share Nu&apos;s shape and
+                  language — you learn one, you know them all.
+                </p>
+                <div className={s.modelActions}>
+                  <Link href="#apps-grid" className={s.cta}>
+                    <span>browse apps</span>
+                    <ArrowRight size={13} aria-hidden className={s.ctaArrow} />
+                  </Link>
+                  <a
+                    href="https://github.com/nustackdev"
+                    target="_blank"
+                    rel="noreferrer"
+                    className={s.ctaGhost}
+                  >
+                    <GithubMark size={14} />
+                    <span>github</span>
+                  </a>
                 </div>
-                <span className={`${s.flatStatus} ${s.flatStatusLive}`}>live</span>
-                <span className={s.flatCellName}>{a.name}</span>
-                <h3 className={s.flatCellTitle}>{a.title}</h3>
-                <p className={s.flatCellBody}>{a.body}</p>
-                <span className={s.flatArrow}>
-                  <span>open</span>
-                  <ArrowRight size={12} aria-hidden />
-                </span>
-              </Link>
-            ))}
-            <div className={`${s.flatCell} ${s.flatCellSoon}`}>
-              <span className={s.flatStatus}>tbd</span>
-              <span className={s.flatCellName}>more</span>
-              <h3 className={s.flatCellTitle}>More to come.</h3>
-              <p className={s.flatCellBody}>
-                We keep the list honest — new apps land here when they ship,
-                not before.
-              </p>
-              <span className={s.flatArrowSoon}>—</span>
+              </div>
+              <aside className={s.sectionVisual} aria-hidden>
+                <div className={s.vizFrame}>
+                  <div className={s.sectionShelf}>
+                    <AppShelfSvg />
+                  </div>
+                </div>
+              </aside>
+            </div>
+            <div id="apps-grid" className={s.flatGrid}>
+              {APPS.map((a) => (
+                <Link key={a.name} href={a.href} className={s.flatCell}>
+                  <div className={s.flatCellViz} aria-hidden>
+                    <a.Viz />
+                  </div>
+                  <span className={s.flatCellName}>{a.name}</span>
+                  <h3 className={s.flatCellTitle}>{a.title}</h3>
+                  <p className={s.flatCellBody}>{a.body}</p>
+                  <span className={s.flatArrow}>
+                    <span>open</span>
+                    <ArrowRight size={12} aria-hidden />
+                  </span>
+                </Link>
+              ))}
             </div>
           </div>
         </section>

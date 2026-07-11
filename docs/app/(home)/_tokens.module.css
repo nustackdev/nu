@@ -27,7 +27,11 @@
   --nu-ink-3:     color-mix(in oklab, var(--color-fd-muted-foreground) 65%, transparent);
   --nu-ink-4:     color-mix(in oklab, var(--color-fd-muted-foreground) 40%, transparent);
 
-  --font-display: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  /* Primary type stack — clean sans (Inter, loaded via next/font on <html>).
+     Falls back to modern system stacks. Used everywhere except code + kbd. */
+  --font-display: "Inter", "InterVariable", ui-sans-serif, system-ui,
+                  -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+                  Arial, sans-serif;
   --font-mono:    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 
   --nu-pad-x:     clamp(24px, 4vw, 56px);
