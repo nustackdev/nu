@@ -1,20 +1,14 @@
-// Playground vite config. Serves src/playground/ locally so designers can
-// eyeball tokens + primitives with HMR. The kit itself is NOT bundled; the
-// npm package ships src/ and consumers pick up TypeScript directly.
-
 import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
+// Ladle picks this up automatically. The Tailwind v4 plugin is what turns the
+// `@theme inline` block in src/index.css into utility classes at build time.
 export default defineConfig({
-	plugins: [react(), tailwindcss()],
+	plugins: [tailwindcss()],
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "./src"),
 		},
-	},
-	server: {
-		port: 5174,
 	},
 });

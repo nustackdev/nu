@@ -1,0 +1,43 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Docs/Home" />
+
+<div className="mx-auto max-w-4xl px-8 py-16">
+
+<div className="mb-3 flex items-center gap-2">
+	<span className="inline-flex items-center rounded-sm border border-accent-line bg-accent-wash px-1.5 py-0.5 font-mono text-[10.5px] font-medium tracking-[0.01em] text-accent">
+		v0.1.0
+	</span>
+	<span className="font-mono text-xs text-text-muted">@nustackdev/ui-kit</span>
+</div>
+
+# Nu UI Kit
+
+IDE-flavored design system for building in-house tools, data viewers, control panels, dashboards. Dense, keyboard-first, calm on dark, polished on light. Reference set: VSCode, Fleet, Linear, Aim, Radix, shadcn.
+
+## Sections
+
+- **[Tokens](/?path=/docs/docs-tokens--docs)**: 3-layer palette. Primitives + semantic roles, both themes.
+- **[Typography](/?path=/docs/docs-typography--docs)**: Inter + JetBrains Mono. Scale, weights, tracking.
+- **[Space + Radius](/?path=/docs/docs-space--docs)**: 4px spacing base, radius ladder, container widths.
+- **[Motion](/?path=/docs/docs-motion--docs)**: Durations, easings, reduced-motion behavior.
+- **[Primitives](/?path=/docs/ui-button--matrix)**: 51 components. Every variant, size, state.
+
+## Direction
+
+Built for in-house tools, not marketing pages. Density and calm over spectacle. Every default reads tighter than shadcn's, closer to JetBrains Fleet or VSCode.
+
+## Reference set
+
+- **VSCode**: semantic token schema (`editor.foreground`, `editor.background`, activity bar tiers). Their theme JSON is the template.
+- **JetBrains Fleet**: dense/quiet, purple accent, spacing/typography rhythm.
+- **Linear**: calm dark canvas, subtle motion, restrained.
+- **Aim**: dashboards that feel IDE-native. Status hues + monospace choice.
+- **Radix Colors**: 12-step scale pattern for greys + status hues.
+- **shadcn/ui**: API shape for the primitives.
+
+## Theme toggle
+
+Use the theme control in the top bar to swap light and dark. Every token, primitive, and doc block re-renders with the new palette.
+
+</div>

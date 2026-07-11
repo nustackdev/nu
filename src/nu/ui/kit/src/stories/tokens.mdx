@@ -1,0 +1,75 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as TokensStories from "./tokens.stories";
+
+<Meta of={TokensStories} />
+
+# Tokens
+
+Three layers. L1 raw hex scales, L2 semantic role tokens (both themes), L3 Tailwind v4 `@theme inline` map. Every primitive reaches only for L2/L3 names. L1 lives in `kit/src/index.css` and nowhere else.
+
+Reference set:
+
+- **VSCode** semantic token JSON (`editor.background`, `editor.foreground`, `activityBar.background`). Their key names are the schema we mirror.
+- **JetBrains Fleet** for the accent tier (purple primary, blue secondary), the quiet border language, and the density of the elevated surfaces.
+- **Linear** for the dark canvas mood and the `-wash` / `-soft` accent tiers.
+- **Aim** for the status hues: success, warning, error, info anchors.
+- **Radix Colors** 12-step scale pattern.
+
+## L1 primitives
+
+Raw scales. Neutral gray runs `0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000` where `0` is pure white and `1000` is near-black canvas ink. Hue scales run `25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950`. Step `500` is the anchor.
+
+Anchors:
+
+- **purple 500**: `#7a4ce0` (primary identity, aim brand purple, close to Radix violet-9)
+- **blue 500**: `#3e72e7` (secondary identity, aim-borrowed, warmer than Radix blue-9)
+- **red 500**: `#e5484d` (aim `$error-color`, matches Radix red-9)
+- **yellow 500**: `#f5b125` (aim `$warning-color` shifted amber, still legible on both themes)
+- **green 500**: `#21d08b` (aim `$success-color`)
+- **blue-info 500**: `#3b82f6` (split from accent-2 to avoid identity collision)
+
+<Canvas of={TokensStories.Primitives} />
+
+## L2 semantic roles
+
+Both themes use the same role names. VSCode's theme JSON is the mental model: role names describe intent, the value is per-theme. Dark borders are alpha whites rather than gray steps so they compose over any elevated surface without a step mismatch (Linear technique).
+
+Groups:
+
+- **surface**: `bg-canvas` / `bg-surface` / `bg-elevated` / `bg-sunken` / `bg-overlay`
+- **text**: `text-primary` / `text-secondary` / `text-muted` / `text-inverse`
+- **border**: `border-subtle` / `border-default` / `border-strong`
+- **accent** (purple primary) and **accent-2** (blue secondary): `-fg`, `-wash`, `-soft`, `-line`, `-hover`
+- **status** (danger / warn / ok / info): `-fg`, `-wash`, `-line`
+- **chart categorical**: `chart-1` through `chart-8`
+- **ring** (focus)
+
+<Canvas of={TokensStories.Semantic} />
+
+## Text tier ladder
+
+The old kit set dark primary text at `#f5f5f9` (~17.5:1 contrast on `#0a0a0d`). That reads slightly dim next to Fleet or VSCode Dark+. We bumped it.
+
+Dark theme (`bg-canvas` `#0a0a0d`):
+
+- `text-primary`: `#f9fafc`, 18.85:1 (pushed brighter than old)
+- `text-secondary`: `#c2c4cd`, 11.34:1
+- `text-muted`: `#85878f`, 5.52:1 (still legible at 13px)
+
+Light theme (`bg-canvas` `#f7f7f9`):
+
+- `text-primary`: `#121216`, 17.43:1 (gray-900, ink-tier)
+- `text-secondary`: `#47474f`, 8.60:1
+- `text-muted`: `#666672`, 5.30:1 (bumped up from gray-400 which failed 4.5:1)
+
+Rationale for the primary bump: at monitor gamma the jump from `#f5f5f9` to `#f9fafc` is one perceptible step and the text reads as ink-on-glass rather than fogged. `#ffffff` was rejected because pure white on `#0a0a0d` shimmers at 13px on a lit monitor.
+
+## Focus ring
+
+Accent primary in both themes so keyboard focus reads as identity. 2px wide, 2px offset. See the `motion` and `a11y` docs for the interaction rules.
+
+## Notes worth flipping later
+
+- Dark `accent` uses `#a684ff` (a Fleet-style lift on purple-400 territory), not raw `purple-500` on `#0a0a0d`. Flip to strict step if the raw hue is preferred.
+- Info hue split from `accent-2` (`#3b82f6` vs `#3e72e7`) so status-info does not visually collide with the brand secondary.
+- Chart palette `1..6` uses purple/blue/green/yellow/red/blue-info; `7-8` are fuchsia/teal fillers for categorical breakouts.

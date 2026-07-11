@@ -1,0 +1,76 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as SpaceStories from "./space.stories";
+
+<Meta of={SpaceStories} />
+
+# Space and radius
+
+Spacing, radius, container widths, density rules. IDE feel is dense. Every default reads tighter than shadcn, closer to JetBrains Fleet or VSCode. Base grid is 4px. Everything snaps to it. No 3px, no 5px, no 7px.
+
+## Spacing scale
+
+4px base, Tailwind v4 default ladder. Values match Tailwind exactly so `p-2`, `gap-3`, `mx-4` behave the way anyone reading Tailwind docs expects.
+
+Typical uses:
+
+- `0.5` (2px): icon-to-label kbd padding, badge inner gap
+- `1` (4px): tightest token gap, chip pad-y
+- `1.5` (6px): input pad-y at `md`, table cell pad-y
+- `2` (8px): button pad-y at `md`, kbd pad-x
+- `3` (12px): button pad-x at `md`, card pad at `sm`, form row gap
+- `4` (16px): card pad at `md`, section inner gap, dialog pad
+- `6` (24px): card pad at `lg`, section gap, dialog body pad
+- `8` (32px): page gutter on tight layouts
+- `12` (48px): page gutter on standard layouts
+- `16` (64px): vertical rhythm between major sections
+
+<Canvas of={SpaceStories.Spacing} />
+
+### Density overrides
+
+The base scale is Tailwind's. What we override is *which step components pick by default*. Shadcn defaults tend to reach for `2` where we reach for `1.5`, and `3` where we reach for `2`. This is where the IDE feel lives.
+
+| Surface           | Shadcn default | Kit default  | Why                                    |
+|-------------------|----------------|--------------|----------------------------------------|
+| Input pad-y (md)  | `2` (8px)      | `1.5` (6px)  | tighter rows in tables and forms       |
+| Input pad-x (md)  | `3` (12px)     | `2.5` (10px) | matches Fleet input feel               |
+| Button pad-y (md) | `2` (8px)      | `1.5` (6px)  | keeps 32px row height                  |
+| Card pad (md)     | `6` (24px)     | `4` (16px)   | dashboards pack more per screen        |
+| Table cell pad-y  | `3` (12px)     | `1.5` (6px)  | data density over prose density        |
+
+## Radius scale
+
+Tuned for IDE feel: not pillowy, not sharp.
+
+- `radius-none` (0): table cells, dividers, code blocks that align to a grid.
+- `radius-sm` (4px): badges, kbd, small chips.
+- `radius-md` (6px): inputs, buttons (default), small popovers, tabs.
+- `radius-lg` (8px): cards (default), panels, dialogs.
+- `radius-xl` (12px): large surfaces (sheets, drawers, elevated cards).
+- `radius-2xl` (16px): hero surfaces, empty-state cards.
+- `radius-full` (9999px): pills, avatars, circular icon buttons.
+
+<Canvas of={SpaceStories.Radius} />
+
+Default per family:
+
+- **Buttons, inputs, selects, textareas**: `md` (6px)
+- **Badges, kbd, tags**: `sm` (4px)
+- **Cards, panels, dialogs, popovers**: `lg` (8px)
+- **Sheets, drawers**: `xl` (12px)
+- **Avatars, pills**: `full`
+
+## Container widths
+
+Named max-widths for common page layouts. Reach for `max-w-container-*` utilities from the `@theme` block; do not eyeball `max-w-[720px]` in a component.
+
+- `container-form` (480px): matches Fleet's settings pane width.
+- `container-prose` (640px): standard readable line length (60-80 chars at 14px).
+- `container-panel` (960px): side sheets, detail views, two-column controls.
+- `container-dashboard` (1400px): wide tools, multi-column dashboards, tables.
+
+<Canvas of={SpaceStories.Containers} />
+
+## Row heights
+
+Rows: 24 / 28 / 32 / 40 for `sm` / compact / `md` / `lg`. Table default density is `h-7` (28px). Everything else snaps to the same ladder so forms above tables read flush.

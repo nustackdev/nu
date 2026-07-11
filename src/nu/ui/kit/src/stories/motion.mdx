@@ -1,0 +1,70 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as MotionStories from "./motion.stories";
+
+<Meta of={MotionStories} />
+
+# Motion
+
+Short, calm, IDE-flavored. Nothing bouncy, nothing that draws attention to itself. If a user notices the animation, we picked wrong.
+
+Anchors:
+
+- **Linear**: micro interactions around 150ms, no springs, no overshoot.
+- **JetBrains Fleet**: panel and popover transitions around 200ms with a gentle spring-ish ease-out.
+- **VSCode**: hover cards and tooltips at 250ms fade, dialogs slower.
+- **Radix UI** defaults: reference for enter/exit split (data-state=open vs data-state=closed).
+
+Design rules: keep the number of durations small (4 buckets), keep the easing family single, kill everything on `prefers-reduced-motion`.
+
+## Duration scale
+
+Four buckets. Anything that does not fit gets rounded to the nearest bucket, not a new value.
+
+- **instant (0ms)**: state flips with no visible transition (checkbox check, radio select).
+- **fast (120ms)**: micro interactions. Button hover, focus ring, toggle thumb.
+- **base (180ms)**: default surface transitions. Dropdown, tooltip, popover, accordion.
+- **slow (280ms)**: larger surfaces. Dialog, sheet, full-screen overlay.
+
+Why these numbers:
+
+- **instant**: some state flips lie to the user if you animate them. A checkbox tick is a discrete truth.
+- **fast (120ms)**: Linear's micro interactions clock around 150ms; we go a hair tighter for IDE snap.
+- **base (180ms)**: Fleet popovers sit around 200ms; we shave 20ms because our surfaces are smaller.
+- **slow (280ms)**: bigger surface, more pixels moving. Anything longer than 300ms feels like the app is thinking.
+
+Deliberately no `duration-slower` at 500ms+. Nothing in an IDE kit needs half a second.
+
+<Canvas of={MotionStories.Durations} />
+
+## Easings
+
+One family. Enter, exit, cross-fade, linear. That is it.
+
+- **ease-out** `cubic-bezier(0.2, 0, 0, 1)`: enter transitions (opening, appearing). Same curve JetBrains Fleet uses.
+- **ease-in** `cubic-bezier(0.4, 0, 1, 1)`: exit transitions (closing, dismissing).
+- **ease-in-out** `cubic-bezier(0.4, 0, 0.2, 1)`: cross-fades, position changes, layout shifts.
+- **linear**: progress bars, skeleton pulses.
+
+Why one family: predictability. Every enter transition uses the same `ease-out`, so a user's brain calibrates once and every surface feels part of the same system.
+
+Deliberately avoided: spring physics, overshoot / bounce curves, and CSS default `ease` (`cubic-bezier(0.25, 0.1, 0.25, 1)`, which is vague and generic).
+
+<Canvas of={MotionStories.Easings} />
+
+## Property picks per surface
+
+Enter/exit patterns we settle on, so every overlay primitive uses the same shape:
+
+- **Fade + slight y-shift** (Popover, DropdownMenu, Combobox listbox, Toast): opacity 0 to 1, translateY(4px) to 0. Direction flips based on placement.
+- **Fade + micro scale** (Tooltip, ContextMenu, CommandPalette): opacity 0 to 1, scale 0.96 to 1, transform-origin at anchor.
+- **Fade + subtle scale** (Dialog): opacity 0 to 1, scale 0.98 to 1. Less scale delta than Tooltip because content is bigger.
+- **Slide** (Sheet): translateX or translateY(100%) to 0. No fade. Backdrop fades separately.
+- **Height + fade** (Accordion, Collapsible, Alert dismiss): height 0 to auto via Radix's `--radix-*-content-height` CSS var, opacity 0 to 1.
+
+## Reduced motion
+
+Users who set `prefers-reduced-motion` in their OS get zero motion. State changes still happen (a checkbox still checks); we just skip the animation.
+
+`0.01ms` (not `0ms`) because `0ms` on some browsers skips the `transitionend` event, which breaks Radix Presence. `0.01ms` is functionally instant but still fires the event.
+
+<Canvas of={MotionStories.ReducedMotion} />

@@ -1,0 +1,69 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as TypographyStories from "./typography.stories";
+
+<Meta of={TypographyStories} />
+
+# Typography
+
+Font stacks, type scale, weight scale, loading strategy.
+
+Reference set:
+
+- **VSCode**: default UI 13px (Segoe UI on Windows, SF Pro on macOS), editor 14px monospace. Command palette, sidebar, status bar all render at 13px. That is the density we want for tools.
+- **JetBrains Fleet**: UI runs 13px base, Inter as display face, JetBrains Mono for editor. Fleet is the tightest reference for keyboard-first tool density.
+- **Linear**: Inter at 14px body. Tighter than marketing, looser than IDEs.
+- **shadcn/ui**: 14px base by default. We deviate down to 13px because dashboards and control panels, not consumer surfaces.
+
+## Font stacks
+
+Both faces are self-hosted via `@font-face` from `kit/src/fonts/*.woff2`.
+
+**Display + UI: Inter** (weights 400, 500, 600, 700, no italic — weight carries emphasis in this system).
+
+**Code + mono: JetBrains Mono** (weights 400, 500, 700, no ligatures at the kit level).
+
+<Canvas of={TypographyStories.Families} />
+
+## Type scale
+
+Eight steps. Base is 13px. Everything below `xl` stays in IDE density range.
+
+- **11px xs**: matches Fleet's chip label size and VSCode's status bar text.
+- **13px base**: VSCode UI tier. Tables, forms, nav, menus. The money size.
+- **14px lg**: buttons and form inputs bump up one step so their hit target reads as an action.
+- **16px xl**: reserved for prose. Docs viewer, empty state descriptions, help text.
+- **20/24/32 headings**: tight but comfortable. Fleet's headings sit around 28/22/18; we go a notch bigger because our headings appear less often.
+- **Negative letter-spacing on 14px+**: Inter's default tracking loosens as size grows. Tightening keeps headings feeling architectural.
+- **Positive letter-spacing on xs/sm**: small Inter needs a nudge open.
+
+Line-height picks: body and prose land at 1.5 to 1.55; UI-tier text (sm, lg) at 1.4 to 1.45; headings 1.2 to 1.4.
+
+<Canvas of={TypographyStories.Scale} />
+
+## Weight scale
+
+Only four weights ship. Every other Inter weight is dead code from a kit consumer perspective.
+
+- **400 regular**: default body, secondary text, table cells, form labels.
+- **500 medium**: buttons, active nav items, primary text in dense UI.
+- **600 semibold**: table headers, section titles, dialog titles, h3/h4.
+- **700 bold**: h1/h2, hero, callouts. Rare in UI chrome.
+
+Rules: default body is 400. Buttons are 500 (shadcn/Linear/Fleet convention). Table headers 600 to anchor columns. h1/h2 stay 600 in app chrome; 700 only on landings/hero. Never 400+italic for emphasis: emphasis is a token role (accent color, medium weight), not italics.
+
+<Canvas of={TypographyStories.Weights} />
+
+## Text style rules
+
+Concrete recipes per primitive family:
+
+- **Body prose**: `base` (13px), 400, line 1.5, `text-primary`. Docs viewers can opt into `xl` for wider reading.
+- **Table cell**: `sm` (12px), 400, line 1.4. `text-primary` for values, `text-secondary` for metadata. `font-mono` for numeric/id/hash columns.
+- **Button**: 500 across all sizes. Line 1 (padding handles vertical rhythm). No uppercase.
+- **Form input**: `lg` (14px), 400. Labels above render at `sm` weight 500 `text-secondary`. Placeholder is `text-muted` at input size.
+- **Kbd**: `xs` (11px), 500, line 1, `font-mono`, `bg-elevated` with `border-strong` 1px. Modeled on Fleet's kbd chips.
+- **Badge**: `xs`, 500, letter-spacing `0.01em`, line 1. Uppercase is opt-in; default is sentence case.
+
+## Font loading
+
+Self-hosted WOFF2 under `kit/src/fonts/`. Consumers get them for free by importing `@nustackdev/ui-kit/styles`. No external font fetch, no CLS from swap.
