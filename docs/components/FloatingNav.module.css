@@ -1,0 +1,144 @@
+/* =============================================================================
+ * FloatingNav — the pill nav that replaces fumadocs' default top bar.
+ * Fixed to the viewport, centered horizontally, glass body sitting above
+ * the hero gradient.
+ * ==========================================================================*/
+
+.floatingNav {
+  position: fixed;
+  top: clamp(16px, 2.2vh, 28px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--nu-pad-x, clamp(24px, 4vw, 56px));
+  pointer-events: none;
+}
+.navPill {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(22px, 2.6vw, 34px);
+  padding: 10px 12px 10px 22px;
+  min-height: 52px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(12, 10, 20, 0.58);
+  backdrop-filter: blur(26px) saturate(170%);
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  box-shadow:
+    0 24px 60px -22px rgba(0, 0, 0, 0.7),
+    0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+}
+.navBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--nu-ink, #eae8f4);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  padding: 2px 4px;
+}
+.navDivider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.10);
+}
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 2vw, 26px);
+}
+.navLinks a {
+  color: var(--nu-ink-2, #b3b0c8);
+  text-decoration: none;
+  transition: color .18s ease;
+  text-transform: lowercase;
+  padding: 4px 2px;
+}
+.navLinks a:hover { color: var(--nu-ink, #eae8f4); }
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.navSearch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 8px 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--nu-ink-2, #b3b0c8);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  transition: color .18s ease, background .18s ease, border-color .18s ease;
+}
+.navSearch:hover {
+  color: var(--nu-ink, #eae8f4);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.navSearchLabel {
+  padding-right: 6px;
+}
+.navSearchKbd {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: rgba(179, 176, 200, 0.7);
+}
+.navSearchKbd kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.04);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--nu-ink-2, #b3b0c8);
+}
+.navGithub {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  color: var(--nu-ink-2, #b3b0c8);
+  transition: color .18s ease, background .18s ease;
+}
+.navGithub:hover {
+  color: var(--nu-ink, #eae8f4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 820px) {
+  .navSearchLabel, .navSearchKbd { display: none; }
+  .navSearch { padding: 0 10px; gap: 0; }
+}
+@media (max-width: 640px) {
+  .navLinks, .navDivider { display: none; }
+  .navPill { padding: 8px 10px 8px 18px; min-height: 48px; gap: 12px; }
+}

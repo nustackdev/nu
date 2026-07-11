@@ -7,7 +7,7 @@ import { useSearchContext } from 'fumadocs-ui/contexts/search';
 import { NustackMark } from '@/components/marks/NustackMark';
 import { NustackLogo } from '@/components/marks/NustackLogo';
 import { GithubMark } from '@/components/marks/GithubMark';
-import s from '@/app/(home)/nustack.module.css';
+import s from './FloatingNav.module.css';
 
 export function FloatingNav() {
   const { setOpenSearch } = useSearchContext();
@@ -29,7 +29,7 @@ export function FloatingNav() {
 
         <nav className={s.navLinks}>
           <a href="#interaction-model">the model</a>
-          <Link href="/nu">Nu</Link>
+          <a href="#nu">Nu</a>
           <a href="#apps">apps</a>
           <Link href="/docs">docs</Link>
         </nav>

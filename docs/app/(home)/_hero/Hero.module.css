@@ -1,0 +1,144 @@
+/* =============================================================================
+ * Hero — wordmark-led landing block.
+ *   heroInner: centered flex column, top-heavy padding
+ *   heroWordmark: display-800 mark (logo + "nustack")
+ *   heroClaim: h1 headline
+ *   heroMission: supporting paragraph
+ *   heroVizFrame: glassy pane that carries the stack-layers svg
+ * ==========================================================================*/
+
+.hero {
+  position: relative;
+  padding: 0;
+  background: transparent;
+  color: var(--nu-ink);
+}
+
+.heroInner {
+  position: relative;
+  z-index: 2;
+  padding: clamp(96px, 15vh, 176px) var(--nu-pad-x) clamp(24px, 3vh, 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: clamp(24px, 3vh, 40px);
+}
+
+.heroWordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(4.6rem, 13vw, 11rem);
+  line-height: 0.92;
+  letter-spacing: -0.068em;
+  color: var(--nu-ink);
+  margin: 0;
+  text-transform: lowercase;
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18em;
+}
+.heroWordmarkLogo {
+  flex: none;
+  /* Align optical center of the mark with the visual midline of the lowercase
+     letters — bold display sits ascender-heavy, nudge the mark down by
+     ~0.06em so the diagonal reads level with the "nu" x-height. */
+  transform: translateY(0.06em);
+  stroke-width: 1.25;
+}
+
+.heroConcept {
+  display: inline-block;
+  padding: 1px 10px 2px;
+  border: 1px solid var(--nu-accent-line);
+  border-radius: 3px;
+  background: var(--nu-accent-wash);
+  color: var(--nu-accent);
+  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 0.94em;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  transform: translateY(-1px);
+}
+
+.heroVizFrame {
+  position: relative;
+  width: 100%;
+  margin-top: clamp(16px, 2vh, 32px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.045) 45%,
+    rgba(255, 255, 255, 0.025) 100%
+  );
+  backdrop-filter: blur(64px) saturate(140%);
+  -webkit-backdrop-filter: blur(64px) saturate(140%);
+  padding: clamp(20px, 2.6vw, 36px);
+  box-shadow:
+    0 60px 140px -20px rgba(0, 0, 0, 0.85),
+    0 24px 60px -20px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 -20px 40px -20px rgba(0, 0, 0, 0.35);
+}
+.heroVizFrame svg { width: 100%; height: auto; display: block; }
+
+.heroClaim {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.9rem, 4.2vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -0.036em;
+  margin: 0;
+  max-width: 26ch;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--nu-ink);
+}
+.heroClaim b {
+  color: var(--nu-accent);
+  font-weight: 700;
+  font-style: normal;
+}
+
+.heroMission {
+  font-family: var(--font-display);
+  font-size: clamp(15.5px, 1.4vw, 18px);
+  line-height: 1.72;
+  color: var(--nu-ink-2);
+  max-width: 68ch;
+  margin: 0 auto;
+  text-align: center;
+}
+.heroMission b { color: var(--nu-ink); font-weight: 700; }
+
+.heroCtaGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 6px;
+  color: var(--nu-ink-2);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  transition: color .18s ease, border-color .18s ease;
+  margin-left: 6px;
+}
+.heroCtaGhost:hover {
+  color: var(--nu-ink);
+  border-bottom-color: var(--nu-ink-3);
+}
+@media (max-width: 520px) {
+  .heroCtaGhost { margin-left: 0; }
+}

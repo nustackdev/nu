@@ -1,4 +1,4 @@
-import s from '../../marks.module.css';
+import s from './marks.module.css';
 
 /**
  * nulog — running app mock.

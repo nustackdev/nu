@@ -1,0 +1,145 @@
+/* =============================================================================
+ * Backdrop — root paper + 3 layered planes + shell column.
+ *
+ * Structure (z-index low to high):
+ *   .root       page canvas (isolation context, rgb(6,6,8))
+ *   .heroBg     JB three-radial gradient plane (z 0)
+ *   .pageBg     reserved slot for page-wide overlays (z 1, empty by default)
+ *   .grain      fixed dot tooth (z 2, blend overlay)
+ *   .shell      max-width flex column (z 3)
+ *
+ * Palette progression (strict blue + purple + silver):
+ *   hero    — purple  rgb(103,  31, 255)  center-top
+ *   §1      — blue    rgb(  0,  71, 253)  bloom RIGHT
+ *   §2      — purple  rgb(103,  31, 255)  bloom LEFT
+ *   §3      — blue    rgb(  0,  71, 253)  bloom BOTTOM-LEFT
+ *   footer  — blue    soft top fade
+ * ==========================================================================*/
+
+:global(:root) {
+  color-scheme: dark;
+  --color-fd-background: rgb(25, 25, 28);
+  --color-fd-foreground: #eae8f4;
+  --color-fd-muted: rgba(255, 255, 255, 0.04);
+  --color-fd-muted-foreground: #b3b0c8;
+  --color-fd-border: rgba(255, 255, 255, 0.08);
+  --color-fd-card: rgba(255, 255, 255, 0.03);
+  --color-fd-card-foreground: #eae8f4;
+  --color-fd-popover: #0e0b1c;
+  --color-fd-popover-foreground: #eae8f4;
+  --color-fd-primary: #c19eff;
+  --color-fd-primary-foreground: rgb(25, 25, 28);
+  --color-fd-secondary: rgba(255, 255, 255, 0.05);
+  --color-fd-secondary-foreground: #eae8f4;
+  --color-fd-accent: rgba(255, 255, 255, 0.05);
+  --color-fd-accent-foreground: #eae8f4;
+  --color-fd-ring: #c19eff;
+}
+:global(body) {
+  background: rgb(25, 25, 28);
+}
+
+.root {
+  composes: palette from '../_tokens.module.css';
+  position: relative;
+  color: var(--nu-ink);
+  font-variant-numeric: tabular-nums;
+  isolation: isolate;
+  background: rgb(6, 6, 8);
+  overflow-x: clip;
+
+  --nu-ink:       #eae8f4;
+  --nu-ink-2:     #b3b0c8;
+  --nu-ink-3:     rgba(179, 176, 200, 0.62);
+  --nu-ink-4:     rgba(179, 176, 200, 0.36);
+  --nu-rule:      rgba(255, 255, 255, 0.08);
+  --nu-rule-2:    rgba(255, 255, 255, 0.04);
+  --nu-accent:      #c19eff;
+  --nu-accent-soft: rgba(193, 158, 255, 0.18);
+  --nu-accent-wash: rgba(193, 158, 255, 0.10);
+  --nu-accent-line: rgba(193, 158, 255, 0.45);
+  --nu-accent-glow: rgba(193, 158, 255, 0.42);
+  --nu-accent-2:      #6ba8ff;
+  --nu-accent-2-soft: rgba(107, 168, 255, 0.18);
+  --nu-accent-2-wash: rgba(107, 168, 255, 0.09);
+  --nu-accent-2-line: rgba(107, 168, 255, 0.44);
+  --nu-accent-2-glow: rgba(107, 168, 255, 0.36);
+  --nu-code-bg:   rgba(255, 255, 255, 0.03);
+  --nu-code-bg-2: rgba(255, 255, 255, 0.02);
+}
+
+/* =============================================================================
+ * Hero gradient — a fixed 4000×1700 pixel block, horizontally centered on
+ * .root. Gradient anchors are declared in PIXELS so the composition stays
+ * structurally identical on every viewport (narrower screens just see the
+ * middle of the block; anchors don't drift with width).
+ * ==========================================================================*/
+.heroBg {
+  --grad-dim: rgb(103 31 255 / 0.8);
+  --blue-dim: rgb(0 71 253 / 0.72);
+
+  position: absolute;
+  top: 0;
+  left: 50%;
+  margin-left: -2000px;
+  width: 4000px;
+  height: 1700px;
+  z-index: 0;
+  pointer-events: none;
+
+  background:
+    /* purple bloom — top-left */
+    radial-gradient(
+      1300px 1400px at 1800px 0px,
+      var(--grad-dim) 0%,
+      var(--grad-dim) 15%,
+      transparent 75%
+    ),
+    /* blue bloom — right, matches purple's radial curve for a smooth seam */
+    radial-gradient(
+      1400px 1400px at 2500px 500px,
+      var(--blue-dim) 10%,
+      transparent 55%
+    );
+}
+
+/* Reserved slot for any future page-wide overlay. Empty today. */
+.pageBg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Fixed dot tooth over EVERYTHING. Overlay blend, low alpha. */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(rgba(0, 0, 0, 0.5) 1px, transparent 1px);
+  background-size: 3px 3px, 5px 5px;
+  background-position: 0 0, 1px 1px;
+}
+
+/* Central column. Flex stack — one gap token controls section rhythm. */
+.shell {
+  position: relative;
+  z-index: 3;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(56px, 5.5vw, 72px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root, .root * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

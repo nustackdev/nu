@@ -1,4 +1,4 @@
-import s from '../../marks.module.css';
+import s from './marks.module.css';
 
 /**
  * Apps sit on the Nu substrate.

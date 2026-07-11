@@ -1,0 +1,50 @@
+/* =============================================================================
+ * NuCodeSample — the syntax-highlighted example that lives on the visual side
+ * of §2 (the Nu section). Kept dark and quiet so the surrounding card wash
+ * carries the color; only tokens carry accent.
+ * ==========================================================================*/
+
+.codeShell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(107, 168, 255, 0.05), rgba(255, 255, 255, 0.01)),
+    rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+}
+
+.codeBlock {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--nu-ink-2);
+  background: transparent;
+  border: none;
+  padding: 22px 24px;
+  margin: 0;
+  overflow-x: auto;
+  width: 100%;
+  white-space: pre;
+  tab-size: 4;
+}
+.codeBlock .kw  { color: #6ba8ff; }
+.codeBlock .nu  { color: #c19eff; }
+.codeBlock .str { color: #a8c9ff; }
+.codeBlock .cmt { color: var(--nu-ink-4); font-style: italic; }
+
+.codeCaption {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--nu-ink-4);
+  padding: 8px 16px 10px;
+  text-align: right;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
