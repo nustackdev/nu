@@ -1,0 +1,67 @@
+# Publishes @nustackdev/ui-core to npm on a tag push like `ui-core@0.2.1`.
+# Also usable via manual "Run workflow" dispatch from the Actions tab.
+#
+# Setup once:
+#   1. Generate a granular npm access token scoped to @nustackdev/*, with
+#      publish permission, bypass-2FA enabled.
+#   2. Add it as GitHub repo secret `NPM_TOKEN`.
+#
+# Release flow:
+#   1. Bump `src/nu/ui/core/package.json` version.
+#   2. Commit and push to main.
+#   3. `git tag ui-core@X.Y.Z && git push origin ui-core@X.Y.Z`.
+name: Publish @nustackdev/ui-core
+
+on:
+  push:
+    tags: ["ui-core@*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-ui-core
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: src/nu/ui
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/nu/ui/package-lock.json
+          registry-url: "https://registry.npmjs.org"
+
+      - name: install
+        run: npm ci
+
+      - name: typecheck
+        run: npm run typecheck --workspace @nustackdev/ui-core
+
+      # Guardrail: refuse to publish if the tag disagrees with package.json.
+      - name: verify tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/ui-core@')
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/ui-core@}"
+          PKG_VERSION=$(node -p "require('./core/package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "tag ui-core@$TAG_VERSION does not match core/package.json $PKG_VERSION"
+            exit 1
+          fi
+
+      # Provenance is off because the source repo is private on the free npm
+      # tier. Add `--provenance` back once the repo is public.
+      - name: publish
+        run: npm publish --workspace @nustackdev/ui-core --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

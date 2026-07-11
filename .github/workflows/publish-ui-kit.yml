@@ -1,0 +1,62 @@
+# Publishes @nustackdev/ui-kit to npm on a tag push like `ui-kit@0.2.1`.
+# Also usable via manual "Run workflow" dispatch from the Actions tab.
+#
+# Kit depends on @nustackdev/ui-core, so publish core first if the version of
+# core has changed. Otherwise kit consumers may install a mismatched core.
+name: Publish @nustackdev/ui-kit
+
+on:
+  push:
+    tags: ["ui-kit@*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-ui-kit
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: src/nu/ui
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/nu/ui/package-lock.json
+          registry-url: "https://registry.npmjs.org"
+
+      - name: install
+        run: npm ci
+
+      - name: typecheck
+        run: npm run typecheck --workspace @nustackdev/ui-kit
+
+      - name: storybook build (smoke)
+        run: npm run storybook:build --workspace @nustackdev/ui-kit
+
+      - name: verify tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/ui-kit@')
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/ui-kit@}"
+          PKG_VERSION=$(node -p "require('./kit/package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "tag ui-kit@$TAG_VERSION does not match kit/package.json $PKG_VERSION"
+            exit 1
+          fi
+
+      # Provenance is off because the source repo is private on the free npm
+      # tier. Add `--provenance` back once the repo is public.
+      - name: publish
+        run: npm publish --workspace @nustackdev/ui-kit --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

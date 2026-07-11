@@ -1,0 +1,48 @@
+# Runs on every PR and every push to main. Keeps @nustackdev/ui-core and
+# @nustackdev/ui-kit green: type checks, biome lint, storybook smoke build.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/nu/ui/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/nu/ui/**"
+      - ".github/workflows/ci.yml"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ui:
+    name: ui packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: src/nu/ui
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/nu/ui/package-lock.json
+
+      - name: install
+        run: npm ci
+
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: lint (biome)
+        run: npm run check
+
+      - name: storybook build
+        run: npm run storybook:build --workspace @nustackdev/ui-kit
