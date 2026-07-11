@@ -17,6 +17,7 @@ const navLinkVariants = cva(
 	[
 		"inline-flex items-center gap-2 whitespace-nowrap rounded-md",
 		"font-medium",
+		"cursor-pointer",
 		"transition-colors duration-fast ease-out",
 		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
 		"[&_svg]:pointer-events-none [&_svg]:shrink-0",

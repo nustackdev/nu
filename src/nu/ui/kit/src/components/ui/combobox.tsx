@@ -236,7 +236,7 @@ function ComboboxItem({
 				onSelect?.(picked);
 			}}
 			className={cn(
-				"relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-base outline-hidden",
+				"relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-base outline-hidden",
 				"text-text-primary",
 				"data-[selected=true]:bg-accent-wash",
 				"data-[highlighted=true]:bg-bg-elevated",

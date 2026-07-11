@@ -8,6 +8,7 @@ const radioGroupItemVariants = cva(
 	[
 		"aspect-square inline-flex shrink-0 items-center justify-center rounded-full",
 		"border border-border-default bg-bg-surface",
+		"cursor-pointer",
 		"transition-colors duration-fast ease-out",
 		"hover:border-border-strong",
 		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",

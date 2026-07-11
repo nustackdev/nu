@@ -182,7 +182,7 @@ function CommandItem({
 			data-slot="command-palette-item"
 			data-variant={variant}
 			className={cn(
-				"relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-2",
+				"relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-2",
 				"text-sm text-text-primary outline-hidden",
 				"data-[selected=true]:bg-accent-wash",
 				"data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",

@@ -75,6 +75,7 @@ export function BreadcrumbLink({
 			data-slot="breadcrumb-link"
 			className={cn(
 				"text-text-secondary transition-colors duration-fast ease-out",
+				"cursor-pointer",
 				"hover:text-accent",
 				"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas rounded-sm",
 				className,

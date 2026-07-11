@@ -56,9 +56,16 @@ function DialogTrigger({
 }
 
 function DialogClose({
+	className,
 	...props
 }: React.ComponentProps<typeof DialogPrimitive.Close>) {
-	return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
+	return (
+		<DialogPrimitive.Close
+			data-slot="dialog-close"
+			className={cn("cursor-pointer", className)}
+			{...props}
+		/>
+	);
 }
 
 function DialogPortal({
@@ -116,6 +123,7 @@ function DialogContent({
 						data-slot="dialog-close-icon"
 						className={cn(
 							"absolute right-4 top-4 rounded-sm text-text-secondary",
+							"cursor-pointer",
 							"transition-colors duration-fast ease-out",
 							"hover:text-text-primary",
 							"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated",

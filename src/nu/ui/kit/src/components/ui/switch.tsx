@@ -8,6 +8,7 @@ const switchVariants = cva(
 	[
 		"peer inline-flex shrink-0 items-center rounded-full",
 		"border border-transparent",
+		"cursor-pointer",
 		"transition-colors duration-fast ease-out",
 		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
 		"disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",

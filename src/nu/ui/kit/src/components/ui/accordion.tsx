@@ -57,6 +57,7 @@ export function AccordionTrigger({
 				className={cn(
 					"group flex flex-1 items-center justify-between gap-2",
 					"py-3 text-left text-base font-medium text-text-primary",
+					"cursor-pointer",
 					"transition-colors duration-fast ease-out",
 					"hover:bg-bg-elevated",
 					"disabled:pointer-events-none disabled:opacity-50",

@@ -2,4 +2,10 @@
 @import "tw-animate-css";
 @import "@nustackdev/ui-kit/styles";
 
+/* Tailwind v4 auto-scans nudle sources but not the kit workspace across the
+ * `@nustackdev/ui-kit` symlink. Point it explicitly so utility classes used
+ * inside kit primitives (bg-bg-canvas, text-text-primary, bg-accent, ...) end
+ * up in the final bundle. */
+@source "../../kit/src/**/*.{ts,tsx}";
+
 @custom-variant dark (&:is(.dark *));

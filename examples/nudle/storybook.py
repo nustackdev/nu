@@ -13,7 +13,7 @@ from typing import ClassVar
 
 import nu
 import nu.virtuals as nv
-from nu import ReactForever, nudle
+from nu import ReactForever
 
 
 # ---- Ref customizations -----------------------------------------------------
@@ -22,44 +22,44 @@ from nu import ReactForever, nudle
 # page._wire_type), so the renderer resolves automatically.
 
 
-class InfoBadge(nudle.BadgeRef):
+class InfoBadge(nu.ui.BadgeRef):
     """Info-variant badge."""
 
     variant: ClassVar[str] = "info"
 
 
-class OkBadge(nudle.BadgeRef):
+class OkBadge(nu.ui.BadgeRef):
     """Ok-variant badge."""
 
     variant: ClassVar[str] = "ok"
 
 
-class WarnBadge(nudle.BadgeRef):
+class WarnBadge(nu.ui.BadgeRef):
     """Warn-variant badge."""
 
     variant: ClassVar[str] = "warn"
 
 
-class DangerBadge(nudle.BadgeRef):
+class DangerBadge(nu.ui.BadgeRef):
     """Danger-variant badge."""
 
     variant: ClassVar[str] = "danger"
 
 
-class NeutralBadge(nudle.BadgeRef):
+class NeutralBadge(nu.ui.BadgeRef):
     """Neutral-variant badge."""
 
     variant: ClassVar[str] = "neutral"
 
 
-class SubscribeCheckbox(nudle.CheckboxRef):
+class SubscribeCheckbox(nu.ui.CheckboxRef):
     """Pre-checked checkbox with a label."""
 
     label: ClassVar[str] = "subscribe to weekly digest"
     checked: ClassVar[bool] = True
 
 
-class IndeterminateProgress(nudle.ProgressRef):
+class IndeterminateProgress(nu.ui.ProgressRef):
     """Indeterminate progress bar with a caption."""
 
     indeterminate: ClassVar[bool] = True
@@ -69,7 +69,7 @@ class IndeterminateProgress(nudle.ProgressRef):
 # ---- alert variants ---------------------------------------------------------
 
 
-class InfoAlert(nudle.AlertRef):
+class InfoAlert(nu.ui.AlertRef):
     """Info-variant alert."""
 
     variant: ClassVar[str] = "info"
@@ -77,7 +77,7 @@ class InfoAlert(nudle.AlertRef):
     body: ClassVar[str] = "this is an info banner. nothing on fire."
 
 
-class OkAlert(nudle.AlertRef):
+class OkAlert(nu.ui.AlertRef):
     """Ok-variant alert."""
 
     variant: ClassVar[str] = "ok"
@@ -85,7 +85,7 @@ class OkAlert(nudle.AlertRef):
     body: ClassVar[str] = "every job passed; no action needed."
 
 
-class WarnAlert(nudle.AlertRef):
+class WarnAlert(nu.ui.AlertRef):
     """Warn-variant alert."""
 
     variant: ClassVar[str] = "warn"
@@ -94,7 +94,7 @@ class WarnAlert(nudle.AlertRef):
     dismissible: ClassVar[bool] = True
 
 
-class DangerAlert(nudle.AlertRef):
+class DangerAlert(nu.ui.AlertRef):
     """Danger-variant alert."""
 
     variant: ClassVar[str] = "danger"
@@ -105,7 +105,7 @@ class DangerAlert(nudle.AlertRef):
 # ---- input defaults ---------------------------------------------------------
 
 
-class SizeRadioGroup(nudle.RadioGroupRef):
+class SizeRadioGroup(nu.ui.RadioGroupRef):
     """Size picker radio group."""
 
     options: ClassVar[list] = [
@@ -117,14 +117,14 @@ class SizeRadioGroup(nudle.RadioGroupRef):
     orientation: ClassVar[str] = "horizontal"
 
 
-class NotifySwitch(nudle.SwitchRef):
+class NotifySwitch(nu.ui.SwitchRef):
     """Notifications toggle."""
 
     label: ClassVar[str] = "notifications"
     default: ClassVar[bool] = True
 
 
-class QtyNumberInput(nudle.NumberInputRef):
+class QtyNumberInput(nu.ui.NumberInputRef):
     """Quantity number input with bounds."""
 
     label: ClassVar[str] = "quantity"
@@ -135,7 +135,7 @@ class QtyNumberInput(nudle.NumberInputRef):
     default: ClassVar[float] = 7.0
 
 
-class BirthdayDatePicker(nudle.DatePickerRef):
+class BirthdayDatePicker(nu.ui.DatePickerRef):
     """Date picker with a min/max."""
 
     label: ClassVar[str] = "birthday"
@@ -144,7 +144,7 @@ class BirthdayDatePicker(nudle.DatePickerRef):
     default: ClassVar[str] = "2000-01-01"
 
 
-class TagsInput(nudle.TagInputRef):
+class TagsInput(nu.ui.TagInputRef):
     """Tag input pre-seeded with two tags."""
 
     label: ClassVar[str] = "tags"
@@ -158,18 +158,18 @@ class TagsInput(nudle.TagInputRef):
 # Wire paths are: <PageName>.<section_slot>.<child_slot>
 
 
-class StatRow(nudle.Row):
+class StatRow(nu.ui.Row):
     """Inline strip: label, value, status badge."""
 
     gap: ClassVar[int] = 3
     align: ClassVar[str] = "center"
 
-    stat_label = nudle.TextRef.slot()
-    stat_value = nudle.TextRef.slot()
+    stat_label = nu.ui.TextRef.slot()
+    stat_value = nu.ui.TextRef.slot()
     stat_badge = OkBadge.slot()
 
 
-class BadgeRow(nudle.Row):
+class BadgeRow(nu.ui.Row):
     """Horizontal row of all five badge variants."""
 
     gap: ClassVar[int] = 2
@@ -183,17 +183,17 @@ class BadgeRow(nudle.Row):
     neutral = NeutralBadge.slot()
 
 
-class FeatureColumn(nudle.Column):
+class FeatureColumn(nu.ui.Column):
     """Tight vertical stack used inside the hero card."""
 
     gap: ClassVar[int] = 2
 
-    feature_heading = nudle.HeadingRef.slot()
-    feature_text = nudle.TextRef.slot()
+    feature_heading = nu.ui.HeadingRef.slot()
+    feature_text = nu.ui.TextRef.slot()
     feature_badge = InfoBadge.slot()
 
 
-class HeroCard(nudle.Container):
+class HeroCard(nu.ui.Container):
     """Card wrapping the FeatureColumn."""
 
     title: ClassVar[str] = "feature card"
@@ -204,18 +204,18 @@ class HeroCard(nudle.Container):
     feature_col = FeatureColumn.slot()
 
 
-class MetricsRow(nudle.Row):
+class MetricsRow(nu.ui.Row):
     """Three metric cells side by side."""
 
     gap: ClassVar[int] = 6
     align: ClassVar[str] = "center"
 
-    uptime = nudle.TextRef.slot()
-    latency = nudle.TextRef.slot()
-    qps = nudle.TextRef.slot()
+    uptime = nu.ui.TextRef.slot()
+    latency = nu.ui.TextRef.slot()
+    qps = nu.ui.TextRef.slot()
 
 
-class MetricsCard(nudle.Container):
+class MetricsCard(nu.ui.Container):
     """Card showing a row of metrics."""
 
     title: ClassVar[str] = "metrics"
@@ -229,7 +229,7 @@ class MetricsCard(nudle.Container):
 # ---- alerts column ----------------------------------------------------------
 
 
-class AlertColumn(nudle.Column):
+class AlertColumn(nu.ui.Column):
     """Vertical stack of all four alert variants."""
 
     gap: ClassVar[int] = 3
@@ -243,22 +243,22 @@ class AlertColumn(nudle.Column):
 # ---- stats row --------------------------------------------------------------
 
 
-class StatsRow(nudle.Row):
+class StatsRow(nu.ui.Row):
     """Three stat cells: up, down, flat."""
 
     gap: ClassVar[int] = 6
     align: ClassVar[str] = "center"
     wrap: ClassVar[bool] = True
 
-    revenue = nudle.StatRef.slot()
-    churn = nudle.StatRef.slot()
-    sessions = nudle.StatRef.slot()
+    revenue = nu.ui.StatRef.slot()
+    churn = nu.ui.StatRef.slot()
+    sessions = nu.ui.StatRef.slot()
 
 
 # ---- tabs section -----------------------------------------------------------
 
 
-class DemoTabs(nudle.TabsRef):
+class DemoTabs(nu.ui.TabsRef):
     """Three-tab strip showing different content."""
 
     tabs: ClassVar[list] = [
@@ -268,15 +268,15 @@ class DemoTabs(nudle.TabsRef):
     ]
     active: ClassVar[str] = "overview"
 
-    overview = nudle.TextRef.slot()
-    details = nudle.MarkdownRef.slot()
+    overview = nu.ui.TextRef.slot()
+    details = nu.ui.MarkdownRef.slot()
     extras_badge = InfoBadge.slot()
 
 
 # ---- accordion section ------------------------------------------------------
 
 
-class DemoAccordion(nudle.AccordionRef):
+class DemoAccordion(nu.ui.AccordionRef):
     """Three collapsible sections."""
 
     sections: ClassVar[list] = [
@@ -287,25 +287,25 @@ class DemoAccordion(nudle.AccordionRef):
     open: ClassVar[list[str]] = ["what"]
     multi: ClassVar[bool] = True
 
-    what = nudle.TextRef.slot()
-    how = nudle.MarkdownRef.slot()
-    why = nudle.TextRef.slot()
+    what = nu.ui.TextRef.slot()
+    how = nu.ui.MarkdownRef.slot()
+    why = nu.ui.TextRef.slot()
 
 
 # ---- card section -----------------------------------------------------------
 
 
-class CardBody(nudle.Column):
+class CardBody(nu.ui.Column):
     """Inner column inside the demo card."""
 
     gap: ClassVar[int] = 2
 
-    line1 = nudle.TextRef.slot()
-    line2 = nudle.TextRef.slot()
+    line1 = nu.ui.TextRef.slot()
+    line2 = nu.ui.TextRef.slot()
     badge = OkBadge.slot()
 
 
-class DemoCard(nudle.CardRef):
+class DemoCard(nu.ui.CardRef):
     """Card with title, subtitle, footer wrapping a column body."""
 
     title: ClassVar[str] = "release notes"
@@ -318,39 +318,39 @@ class DemoCard(nudle.CardRef):
 # ---- modal section ----------------------------------------------------------
 
 
-class DemoModal(nudle.Modal):
+class DemoModal(nu.ui.Modal):
     """Dialog with a body text and a close button."""
 
     title: ClassVar[str] = "hello from a modal"
     dismissible: ClassVar[bool] = True
 
-    body = nudle.TextRef.slot()
-    close = nudle.ButtonRef.slot()
+    body = nu.ui.TextRef.slot()
+    close = nu.ui.ButtonRef.slot()
 
 
 # ---- form section -----------------------------------------------------------
 
 
-class FormNameField(nudle.FieldRef):
+class FormNameField(nu.ui.FieldRef):
     """Name field wrapping a single input."""
 
     label: ClassVar[str] = "name"
     help: ClassVar[str] = "your full name"
     required: ClassVar[bool] = True
 
-    input = nudle.InputRef.slot()
+    input = nu.ui.InputRef.slot()
 
 
-class FormAgeField(nudle.FieldRef):
+class FormAgeField(nu.ui.FieldRef):
     """Age field wrapping a single number input."""
 
     label: ClassVar[str] = "age"
     help: ClassVar[str] = "years on this rock"
 
-    input = nudle.NumberInputRef.slot()
+    input = nu.ui.NumberInputRef.slot()
 
 
-class FormFieldset(nudle.Fieldset):
+class FormFieldset(nu.ui.Fieldset):
     """Group of two labelled fields."""
 
     legend: ClassVar[str] = "your details"
@@ -360,7 +360,7 @@ class FormFieldset(nudle.Fieldset):
     age_field = FormAgeField.slot()
 
 
-class DemoForm(nudle.Form):
+class DemoForm(nu.ui.Form):
     """Form wrapping a fieldset and a submit button."""
 
     title: ClassVar[str] = "sign up"
@@ -368,7 +368,7 @@ class DemoForm(nudle.Form):
     padding: ClassVar[int] = 0
 
     fields = FormFieldset.slot()
-    submit = nudle.ButtonRef.slot()
+    submit = nu.ui.ButtonRef.slot()
 
 
 # ---- State ------------------------------------------------------------------
@@ -383,24 +383,24 @@ class State(nu.Shape):
 # ---- Page -------------------------------------------------------------------
 
 
-class Showcase(nudle.Page):
+class Showcase(nu.ui.Page):
     """Every component, sectioned."""
 
     # intro
-    title = nudle.HeadingRef.slot()
-    intro = nudle.TextRef.slot()
+    title = nu.ui.HeadingRef.slot()
+    intro = nu.ui.TextRef.slot()
 
     # text
-    section_text = nudle.HeadingRef.slot()
-    text_short = nudle.TextRef.slot()
-    text_long = nudle.TextRef.slot()
+    section_text = nu.ui.HeadingRef.slot()
+    text_short = nu.ui.TextRef.slot()
+    text_long = nu.ui.TextRef.slot()
 
     # markdown
-    section_markdown = nudle.HeadingRef.slot()
-    markdown_demo = nudle.MarkdownRef.slot()
+    section_markdown = nu.ui.HeadingRef.slot()
+    markdown_demo = nu.ui.MarkdownRef.slot()
 
     # badges
-    section_badges = nudle.HeadingRef.slot()
+    section_badges = nu.ui.HeadingRef.slot()
     badge_info = InfoBadge.slot()
     badge_ok = OkBadge.slot()
     badge_warn = WarnBadge.slot()
@@ -408,140 +408,140 @@ class Showcase(nudle.Page):
     badge_neutral = NeutralBadge.slot()
 
     # image
-    section_image = nudle.HeadingRef.slot()
-    image_demo = nudle.ImageRef.slot()
+    section_image = nu.ui.HeadingRef.slot()
+    image_demo = nu.ui.ImageRef.slot()
 
     # link
-    section_link = nudle.HeadingRef.slot()
-    link_internal = nudle.LinkRef.slot()
-    link_external = nudle.LinkRef.slot()
+    section_link = nu.ui.HeadingRef.slot()
+    link_internal = nu.ui.LinkRef.slot()
+    link_external = nu.ui.LinkRef.slot()
 
     # progress
-    section_progress = nudle.HeadingRef.slot()
-    progress_quarter = nudle.ProgressRef.slot()
-    progress_half = nudle.ProgressRef.slot()
-    progress_full = nudle.ProgressRef.slot()
+    section_progress = nu.ui.HeadingRef.slot()
+    progress_quarter = nu.ui.ProgressRef.slot()
+    progress_half = nu.ui.ProgressRef.slot()
+    progress_full = nu.ui.ProgressRef.slot()
     progress_loading = IndeterminateProgress.slot()
 
     # ---- divider between groups ----
-    div_charts = nudle.DividerRef.slot()
+    div_charts = nu.ui.DividerRef.slot()
 
     # charts heading group
-    section_charts = nudle.HeadingRef.slot()
+    section_charts = nu.ui.HeadingRef.slot()
 
     # line chart (multi-series, live)
-    section_chart = nudle.HeadingRef.slot()
-    chart_live = nudle.LineChart.slot()
+    section_chart = nu.ui.HeadingRef.slot()
+    chart_live = nu.ui.LineChart.slot()
 
     # area chart (live, sliding window)
-    section_area = nudle.HeadingRef.slot()
-    area_demo = nudle.AreaChart.slot()
+    section_area = nu.ui.HeadingRef.slot()
+    area_demo = nu.ui.AreaChart.slot()
 
     # bar chart (categorical)
-    section_bar = nudle.HeadingRef.slot()
-    bar_demo = nudle.BarChart.slot()
+    section_bar = nu.ui.HeadingRef.slot()
+    bar_demo = nu.ui.BarChart.slot()
 
     # pie chart
-    section_pie = nudle.HeadingRef.slot()
-    pie_demo = nudle.PieChart.slot()
+    section_pie = nu.ui.HeadingRef.slot()
+    pie_demo = nu.ui.PieChart.slot()
 
     # sparkline (live, inline)
-    section_sparkline = nudle.HeadingRef.slot()
-    sparkline_demo = nudle.Sparkline.slot()
+    section_sparkline = nu.ui.HeadingRef.slot()
+    sparkline_demo = nu.ui.Sparkline.slot()
 
     # gauge (live)
-    section_gauge = nudle.HeadingRef.slot()
-    gauge_demo = nudle.GaugeRef.slot()
+    section_gauge = nu.ui.HeadingRef.slot()
+    gauge_demo = nu.ui.GaugeRef.slot()
 
     # ---- divider before tables / json ----
-    div_data = nudle.DividerRef.slot()
+    div_data = nu.ui.DividerRef.slot()
 
     # table
-    section_table = nudle.HeadingRef.slot()
-    table_demo = nudle.TableRef.slot()
+    section_table = nu.ui.HeadingRef.slot()
+    table_demo = nu.ui.TableRef.slot()
 
     # json viewer
-    section_json = nudle.HeadingRef.slot()
-    json_demo = nudle.JsonViewerRef.slot()
+    section_json = nu.ui.HeadingRef.slot()
+    json_demo = nu.ui.JsonViewerRef.slot()
 
     # ---- divider before display extras ----
-    div_display = nudle.DividerRef.slot()
+    div_display = nu.ui.DividerRef.slot()
 
     # display extras heading group
-    section_display = nudle.HeadingRef.slot()
+    section_display = nu.ui.HeadingRef.slot()
 
     # alerts
-    section_alerts = nudle.HeadingRef.slot()
+    section_alerts = nu.ui.HeadingRef.slot()
     alerts = AlertColumn.slot()
 
     # stats
-    section_stats = nudle.HeadingRef.slot()
+    section_stats = nu.ui.HeadingRef.slot()
     stats_row = StatsRow.slot()
 
     # dividers
-    section_dividers = nudle.HeadingRef.slot()
-    divider_labelled = nudle.DividerRef.slot()
-    divider_plain = nudle.DividerRef.slot()
+    section_dividers = nu.ui.HeadingRef.slot()
+    divider_labelled = nu.ui.DividerRef.slot()
+    divider_plain = nu.ui.DividerRef.slot()
 
     # code block
-    section_code = nudle.HeadingRef.slot()
-    code_demo = nudle.CodeBlockRef.slot()
+    section_code = nu.ui.HeadingRef.slot()
+    code_demo = nu.ui.CodeBlockRef.slot()
 
     # ---- divider before layout ----
-    div_layout = nudle.DividerRef.slot()
+    div_layout = nu.ui.DividerRef.slot()
 
     # ---- layout section ----
-    section_layout = nudle.HeadingRef.slot()
-    layout_intro = nudle.TextRef.slot()
+    section_layout = nu.ui.HeadingRef.slot()
+    layout_intro = nu.ui.TextRef.slot()
 
     # 1. inline strip: label + value + badge
-    stat_layout_heading = nudle.HeadingRef.slot()
+    stat_layout_heading = nu.ui.HeadingRef.slot()
     stat_row = StatRow.slot()
 
     # 2. all-badges horizontal row
-    badge_row_heading = nudle.HeadingRef.slot()
+    badge_row_heading = nu.ui.HeadingRef.slot()
     badge_row = BadgeRow.slot()
 
     # 3. card with inner column (feature card)
-    hero_heading = nudle.HeadingRef.slot()
+    hero_heading = nu.ui.HeadingRef.slot()
     hero = HeroCard.slot()
 
     # 4. card with inner row of metrics
-    metrics_heading = nudle.HeadingRef.slot()
+    metrics_heading = nu.ui.HeadingRef.slot()
     metrics_card = MetricsCard.slot()
 
     # 5. tabs
-    tabs_heading = nudle.HeadingRef.slot()
+    tabs_heading = nu.ui.HeadingRef.slot()
     tabs_demo = DemoTabs.slot()
 
     # 6. accordion
-    accordion_heading = nudle.HeadingRef.slot()
+    accordion_heading = nu.ui.HeadingRef.slot()
     accordion_demo = DemoAccordion.slot()
 
     # 7. card with title/subtitle/footer
-    card_heading = nudle.HeadingRef.slot()
+    card_heading = nu.ui.HeadingRef.slot()
     card_demo = DemoCard.slot()
 
     # 8. modal
-    modal_heading = nudle.HeadingRef.slot()
-    modal_open_button = nudle.ButtonRef.slot()
+    modal_heading = nu.ui.HeadingRef.slot()
+    modal_open_button = nu.ui.ButtonRef.slot()
     modal_demo = DemoModal.slot()
 
     # ---- divider before inputs ----
-    div_inputs = nudle.DividerRef.slot()
+    div_inputs = nu.ui.DividerRef.slot()
 
     # inputs
-    section_inputs = nudle.HeadingRef.slot()
-    input_name = nudle.InputRef.slot()
-    textarea_note = nudle.TextAreaRef.slot()
-    select_mode = nudle.SelectRef.slot()
-    slider_volume = nudle.SliderRef.slot()
+    section_inputs = nu.ui.HeadingRef.slot()
+    input_name = nu.ui.InputRef.slot()
+    textarea_note = nu.ui.TextAreaRef.slot()
+    select_mode = nu.ui.SelectRef.slot()
+    slider_volume = nu.ui.SliderRef.slot()
     checkbox_subscribe = SubscribeCheckbox.slot()
-    button_greet = nudle.ButtonRef.slot()
-    button_reset = nudle.ButtonRef.slot()
+    button_greet = nu.ui.ButtonRef.slot()
+    button_reset = nu.ui.ButtonRef.slot()
 
     # input extras
-    section_inputs_extra = nudle.HeadingRef.slot()
+    section_inputs_extra = nu.ui.HeadingRef.slot()
     radio_size = SizeRadioGroup.slot()
     switch_notify = NotifySwitch.slot()
     number_qty = QtyNumberInput.slot()
@@ -549,23 +549,23 @@ class Showcase(nudle.Page):
     tag_tags = TagsInput.slot()
 
     # ---- form ----
-    section_form = nudle.HeadingRef.slot()
+    section_form = nu.ui.HeadingRef.slot()
     form_demo = DemoForm.slot()
-    form_echo = nudle.TextRef.slot()
+    form_echo = nu.ui.TextRef.slot()
 
     # echo target for the interactive section
-    echo = nudle.TextRef.slot()
+    echo = nu.ui.TextRef.slot()
 
 
 # ---- Index ------------------------------------------------------------------
 
 
-class App(nudle.Index):
+class App(nu.ui.Index):
     """Browser entrypoint."""
 
-    title = nudle.TitleRef.slot()
-    nav = nudle.NavRef.slot()
-    pages = nudle.Pages({"/": Showcase})
+    title = nu.ui.TitleRef.slot()
+    nav = nu.ui.NavRef.slot()
+    pages = nu.ui.Pages({"/": Showcase})
 
 
 # ---- Static showcase --------------------------------------------------------
@@ -612,9 +612,9 @@ DEMO_JSON = {
 CODE_SNIPPET = """\
 from nu import nudle
 
-class Counter(nudle.Page):
-    n = nudle.TextRef.slot()
-    inc = nudle.ButtonRef.slot()
+class Counter(nu.ui.Page):
+    n = nu.ui.TextRef.slot()
+    inc = nu.ui.ButtonRef.slot()
 """
 
 TABS_OVERVIEW = (
@@ -646,8 +646,7 @@ ACCORDION_HOW_MD = """\
 """
 
 ACCORDION_WHY = (
-    "one source of truth. one rendering model. one place to look when "
-    "something goes weird."
+    "one source of truth. one rendering model. one place to look when something goes weird."
 )
 
 showcase_snapshot = nv.Snapshot(
@@ -887,8 +886,7 @@ showcase_snapshot = nv.Snapshot(
     | Showcase.modal_heading.set_level(3)
     | Showcase.modal_open_button.set(label="open modal")
     | DemoModal.body.set(
-        "this is a modal body. server controls visibility; tab notifies on "
-        "user dismissal.",
+        "this is a modal body. server controls visibility; tab notifies on user dismissal.",
     )
     | DemoModal.close.set(label="close")
     # inputs
@@ -947,15 +945,13 @@ tick_area = nu.ForeverDo(
 
 
 tick_sparkline = nu.ForeverDo(
-    nv.Snapshot(Showcase.sparkline_demo.append(State.tick, State.tick))
-    >> nu.Delay(1.0),
+    nv.Snapshot(Showcase.sparkline_demo.append(State.tick, State.tick)) >> nu.Delay(1.0),
 )
 
 
 # Gauge: tick % 100 / 100 -> [0, 1].
 tick_gauge = nu.ForeverDo(
-    nv.Snapshot(Showcase.gauge_demo.set_value((State.tick % 100) / 100.0))
-    >> nu.Delay(1.0),
+    nv.Snapshot(Showcase.gauge_demo.set_value((State.tick % 100) / 100.0)) >> nu.Delay(1.0),
 )
 
 
@@ -1018,7 +1014,9 @@ ui = (
 tree = nu.With(
     nu.v.presets.rocksdb_navigator_inmemory(".dbstorybook"),
     nu.ui.presets.server(ui),
-    body=nu.ForeverDo(nu.Delay(3600)),  # everything above already ticks inside ui; just hold the server open
+    body=nu.ForeverDo(
+        nu.Delay(3600)
+    ),  # everything above already ticks inside ui; just hold the server open
 )
 
 

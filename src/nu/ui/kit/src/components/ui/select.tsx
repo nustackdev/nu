@@ -13,6 +13,7 @@ import { cn } from "../../lib/utils";
 const selectTriggerVariants = cva(
 	[
 		"flex w-full items-center justify-between gap-2 rounded-md whitespace-nowrap",
+		"cursor-pointer",
 		"border transition-[border-color,box-shadow] duration-fast ease-out",
 		"placeholder:text-text-muted",
 		"focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
@@ -183,7 +184,7 @@ function SelectItem({
 		<SelectPrimitive.Item
 			data-slot="select-item"
 			className={cn(
-				"relative flex w-full cursor-default select-none items-center gap-2 rounded-sm py-1.5 pl-2 pr-8 text-base outline-hidden",
+				"relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm py-1.5 pl-2 pr-8 text-base outline-hidden",
 				"text-text-primary",
 				"focus:bg-accent-wash focus:text-text-primary",
 				"data-[highlighted]:bg-accent-wash data-[highlighted]:text-text-primary",
