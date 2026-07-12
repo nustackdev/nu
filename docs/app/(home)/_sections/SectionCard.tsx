@@ -106,5 +106,3 @@ export function CtaGhost({
     </Link>
   );
 }
-
-export const sectionShelfClass = s.sectionShelf;

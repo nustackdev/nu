@@ -29,11 +29,10 @@
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(4.6rem, 13vw, 11rem);
-  line-height: 0.92;
+  line-height: 1;
   letter-spacing: -0.035em;
   color: var(--nu-ink);
   margin: 0;
-  text-transform: lowercase;
   position: relative;
   z-index: 3;
   isolation: isolate;
@@ -43,10 +42,9 @@
 }
 .heroWordmarkLogo {
   flex: none;
-  /* Align optical center of the mark with the visual midline of the lowercase
-     letters — bold display sits ascender-heavy, nudge the mark down by
-     ~0.06em so the diagonal reads level with the "nu" x-height. */
-  transform: translateY(0.06em);
+  /* Cap-height align with the "Nu" — Inter's cap sits inside a taller EM
+     box, nudge the logo up so its optical center matches the cap midline. */
+  transform: translateY(-0.02em);
   stroke-width: 1.25;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
 }

@@ -182,10 +182,3 @@
   display: block;
 }
 
-/* ---- apps section shelf viz — same frame, single centered svg ---- */
-.sectionShelf {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-}
-.sectionShelf svg { width: 100%; height: auto; max-width: 720px; display: block; margin: 0 auto; }

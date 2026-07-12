@@ -1,73 +1,66 @@
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { GithubMark } from '@/components/marks/GithubMark';
-import { AppShelfSvg } from '@/components/marks/AppShelf';
 import {
-  ActionRow,
-  Cta,
-  CtaGhost,
   SectionCard,
   SectionCol,
   SectionIntro,
-  SectionSplit,
   SectionTitle,
-  SectionVisual,
-  VizFrame,
-  sectionShelfClass,
 } from './SectionCard';
 import { APPS } from './apps.data';
 import s from './AppsGrid.module.css';
 
 /**
  * §3 — apps built on Nu.
- * Header split (text-left + shelf-right) with a 2-tile app grid below.
- * Blue hue (s3).
+ * Same rhythm as FabricsSection: alternating vertical rows, silver-woven
+ * hero name per app, GitHub repo button in the action row, and a mock
+ * screenshot in the viz frame that auto-recolors from the row's hue tokens.
  */
 export function AppsSection() {
   return (
     <SectionCard hue="s3" id="apps">
-      <SectionSplit>
-        <SectionCol>
-          <SectionTitle>Standalone apps built on Nu.</SectionTitle>
-          <SectionIntro>
-            The tools we ship for others. They share Nu&apos;s shape and
-            language — you learn one, you know them all.
-          </SectionIntro>
-          <ActionRow>
-            <Cta href="#apps-grid">
-              <span>Browse apps</span>
-            </Cta>
-            <CtaGhost href="https://github.com/nustackdev">
-              <GithubMark size={14} />
-              <span>GitHub</span>
-            </CtaGhost>
-          </ActionRow>
-        </SectionCol>
-        <SectionVisual aria-hidden>
-          <VizFrame>
-            <div className={sectionShelfClass}>
-              <AppShelfSvg />
-            </div>
-          </VizFrame>
-        </SectionVisual>
-      </SectionSplit>
+      <SectionCol>
+        <SectionTitle>Standalone apps built on Nu.</SectionTitle>
+        <SectionIntro>
+          The tools we ship for others. They share Nu&apos;s shape and
+          language — you learn one, you know them all.
+        </SectionIntro>
 
-      <div id="apps-grid" className={s.flatGrid}>
-        {APPS.map((a) => (
-          <Link key={a.name} href={a.href} className={s.flatCell}>
-            <div className={s.flatCellViz} aria-hidden>
-              <a.Viz />
-            </div>
-            <span className={s.flatCellName}>{a.name}</span>
-            <h3 className={s.flatCellTitle}>{a.title}</h3>
-            <p className={s.flatCellBody}>{a.body}</p>
-            <span className={s.flatArrow}>
-              <span>Open</span>
-              <ArrowRight size={12} aria-hidden />
-            </span>
-          </Link>
-        ))}
-      </div>
+        <ol className={s.rows}>
+          {APPS.map((a, i) => {
+            const flip = i % 2 === 1;
+            return (
+              <li
+                key={a.name}
+                data-app={a.name}
+                className={`${s.row} ${flip ? s.rowFlip : ''}`}
+              >
+                <div className={s.text}>
+                  <span className={s.name}>{a.name}</span>
+                  <h3 className={s.rowTitle}>{a.title}</h3>
+                  <p className={s.body}>{a.body}</p>
+                  <div className={s.actions}>
+                    <a
+                      className={s.repoBtn}
+                      href={a.repo}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <GithubMark size={14} />
+                      <span>{a.repo.replace('https://github.com/', '')}</span>
+                      <ArrowUpRight size={13} aria-hidden className={s.repoArrow} />
+                    </a>
+                  </div>
+                </div>
+                <div className={s.viz} aria-hidden>
+                  <div className={s.vizFrame}>
+                    <a.Viz />
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </SectionCol>
     </SectionCard>
   );
 }
