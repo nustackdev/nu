@@ -12,20 +12,14 @@ import { FABRICS } from './fabrics.data';
 import s from './FabricsSection.module.css';
 
 /**
- * §2.5 — the fabrics. Vertical hero rows, hero-scale lowercase names.
- * Each fabric's name takes a distinct display-tuned hue (red, teal,
- * yellow, orange, pink — no green / blue / violet so this section stays
- * chromatically distinct from the site's primary duo). The h3 subtitle
- * stays plain ink so the giant name is the only anchor per row.
- * Reassign colors in FABRIC_NAME_GRAD.
+ * §2.5 — the fabrics. Vertical hero rows with silver-woven names: each
+ * fabric's giant name is a silver → hue gradient with ONE low-saturation
+ * endpoint. The same hue propagates to the row's backend chips and the
+ * glyph via row-scoped --nu-accent[-2] overrides in FabricsSection.module.css
+ * — FabricGlyphs reads those tokens directly, so no glyph duplication.
+ *
+ * Vibe: metallic + editorial. Color is a whisper, silver carries the row.
  */
-const FABRIC_NAME_GRAD: Record<string, string> = {
-  mem: 'gRed',
-  virtuals: 'gTeal',
-  invisibles: 'gYellow',
-  ray: 'gOrange',
-  ui: 'gPink',
-};
 export function FabricsSection() {
   return (
     <SectionCard hue="s2" id="fabrics">
@@ -40,21 +34,20 @@ export function FabricsSection() {
         <ol className={s.rows}>
           {FABRICS.map((f, i) => {
             const flip = i % 2 === 1;
-            const nameGrad =
-              s[FABRIC_NAME_GRAD[f.name] ?? 'gBlue'] ?? s.gBlue;
             return (
               <li
                 key={f.name}
+                data-fabric={f.name}
                 className={`${s.row} ${flip ? s.rowFlip : ''}`}
               >
                 <div className={s.text}>
-                  <span className={`${s.name} ${nameGrad}`}>{f.name}</span>
+                  <span className={s.name}>nu.{f.name}</span>
                   <h3 className={s.rowTitle}>{f.title}</h3>
                   <p className={s.body}>{f.body}</p>
                   {f.backends && (
                     <ul
                       className={s.chips}
-                      aria-label={`${f.name} backends`}
+                      aria-label={`nu.${f.name} backends`}
                     >
                       {f.backends.map((b) => (
                         <li key={b} className={s.chip}>

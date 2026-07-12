@@ -1,0 +1,98 @@
+/* =============================================================================
+ * SectionGroup — chapter label + card wrapper.
+ *
+ * A giant ghost-silver word (THEORY / NU / FABRICS / APPS) sits pixel-
+ * perfectly above each SectionCard, its bottom edge touching the card top.
+ *
+ * How the geometry works (single-knob, no ad-hoc pixel transforms):
+ *   1. .labelBox has height = --label-fs.
+ *   2. .labelBox has margin-bottom = -label-fs, so the card is pulled up
+ *      to fully overlap the labelBox — the labelBox occupies zero effective
+ *      layout space, its top edge coincides with the card's top edge.
+ *   3. Inside, the .label text is font-size: --label-fs + line-height: 1,
+ *      so it exactly fills the labelBox from top to bottom.
+ *   4. transform: translateY(-100%) then lifts the text by its own height,
+ *      landing its bottom baseline right on the card's top edge.
+ *
+ * Result: the label sits entirely above the card, touching it precisely.
+ * Change --label-fs and everything follows.
+ * ==========================================================================*/
+
+.group {
+  /* Single knob for label size. Height, font-size, and the lift all key
+     off this. */
+  --label-fs: clamp(64px, 12vw, 176px);
+
+  /* How far to lift the label out of the labelBox. -100% = bottom baseline
+     lands exactly on card top (fully above); values less than 100% leave
+     that fraction of the label overlapping into the card top. */
+  --label-lift: -70%;
+
+  /* Vertical air above the label. */
+  padding-top: clamp(66px, 8vw, 102px);
+}
+
+.labelBox {
+  height: var(--label-fs);
+  margin-bottom: calc(var(--label-fs) * -1);
+  overflow: visible;
+  position: relative;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.label {
+  display: block;
+  width: 100%;
+  padding: 0 var(--nu-pad-x);
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--label-fs);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  user-select: none;
+
+  /* Ghost-silver gradient fill — sits "close to background" per the
+     landing direction doc. */
+  color: transparent;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.06) 60%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+
+  /* Lift the text out of the labelBox by --label-lift. -100% lands bottom
+     baseline on card top; -88% (default) leaves 12% overlapping into the
+     card so the label reads slightly sunk-in, not floating. */
+  transform: translateY(var(--label-lift));
+}
+
+/* The card (any non-labelBox child) rides above the labelBox. */
+.group > :not(.labelBox) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Light mode: swap silver ghost for a black ghost, same alphas. */
+:global(html:not(.dark)) .label {
+  background-image: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.12) 0%,
+    rgba(0, 0, 0, 0.06) 60%,
+    rgba(0, 0, 0, 0.02) 100%
+  );
+}
+
+/* Mobile: shrink the label so it doesn't dominate on narrow viewports. */
+@media (max-width: 640px) {
+  .group {
+    --label-fs: clamp(44px, 14vw, 88px);
+    padding-top: clamp(16px, 3vw, 28px);
+  }
+}
