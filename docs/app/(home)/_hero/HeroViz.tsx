@@ -1,106 +1,128 @@
-import { Fragment, useId, type ReactNode, type CSSProperties } from 'react';
+import { useId, type ReactNode } from 'react';
 import s from './HeroViz.module.css';
 
 /**
- * HeroViz — the interaction-model visualization for the hero.
+ * HeroViz — hero interaction-model visualization.
  *
- * LEFT: nested colored Nu code containers, hints in a right gutter joined by
- *       dotted arrows. Every Nu primitive gets its own container + hint.
- *   Counter shape (state · virtuals · rocksdb)
- *   Dashboard shape (ui shape)
- *   app = nu.Parallel(...) — two flows, deep nesting:
- *     nu.ForeverDo( Counter.n.inc() >> nu.Delay(1.0) )
- *     nu.ReactForever( on_change, Dashboard.count.set(Counter.n) )
+ * LEFT: real DOM-nested containers (container inside container inside container).
+ *   Palette pulled from the silver-woven fabric hues:
+ *     sage   → virtuals (state)     — Counter shape, refs
+ *     teal   → ui                   — Dashboard shape, ui bind
+ *     plum   → invisibles           — ForeverDo, ReactForever, Delay
+ *     amber  → ray                  — nu.Parallel (the whole app)
  *
- * RIGHT: inline SVG — browser tab rendering Dashboard live (count = 42),
- *        wired into a 3-disk rocksdb persistence drum. Flat design, hairline
- *        borders, dot-grid body. Same style vocab as NuspaceMock.
+ * Every container has a hint that visually lives in a right-gutter column,
+ * connected to its container by a dotted arrow. Hints are absolutely
+ * positioned within `.tree` (which reserves the gutter as padding-right),
+ * so nested-container hints auto-align to the same right edge as top-level
+ * ones — their y is taken from static flow.
  *
- * `nu.Parallel(...)` is a stand-in for `tick | live` so parallel-ness gets
- * its own labeled container. Half-real, half-conceptual.
+ * RIGHT: inline SVG — Dashboard live in a browser tab (count = 42) wired
+ *        down into a 3-disk rocksdb persistence drum.
  */
 export function HeroViz() {
   return (
     <div className={s.wrap}>
       <div className={s.tree}>
-        {/* Counter shape (2 lines) */}
-        <Row role="state" depth={0} hint="virtuals fabric, backed by rocksdb">
-          <span className={s.kw2}>class</span>
-          {' '}
-          <span className={s.name}>Counter</span>
-          <span className={s.dim}>(nu.Shape):</span>
-          {'\n    '}
-          <span className={s.ident}>n</span>
-          <span className={s.dim}>: </span>
-          <span className={s.tagState}>nu.v.IntRef</span>
-        </Row>
+        {/* --- Counter shape --- */}
+        <Container role="virtuals" tag="virtuals" hint="state, rocksdb-backed">
+          <Line>
+            <span className={s.kw}>class</span>{' '}
+            <span className={s.tVirtuals}>Counter</span>
+            <span className={s.dim}>(nu.Shape):</span>
+          </Line>
+          <Line indent>
+            <span className={s.ident}>n</span>
+            <span className={s.dim}>: </span>
+            <span className={s.tVirtuals}>nu.v.IntRef</span>
+          </Line>
+        </Container>
 
-        {/* Dashboard shape (2 lines) */}
-        <Row role="ui" depth={0} hint="UI shape — refs ARE the widgets">
-          <span className={s.kw}>class</span>
-          {' '}
-          <span className={s.name}>Dashboard</span>
-          <span className={s.dim}>(nu.ui.Page):</span>
-          {'\n    '}
-          <span className={s.ident}>count</span>
-          <span className={s.dim}>: </span>
-          <span className={s.tagUi}>nu.ui.TextRef</span>
-        </Row>
+        {/* --- Dashboard shape --- */}
+        <Container role="ui" tag="ui" hint="refs ARE the widgets">
+          <Line>
+            <span className={s.kw}>class</span>{' '}
+            <span className={s.tUi}>Dashboard</span>
+            <span className={s.dim}>(nu.ui.Page):</span>
+          </Line>
+          <Line indent>
+            <span className={s.ident}>count</span>
+            <span className={s.dim}>: </span>
+            <span className={s.tUi}>nu.ui.TextRef</span>
+          </Line>
+        </Container>
 
-        {/* App outer — nu.Parallel */}
-        <Row role="flow" depth={0} hint="two flows in parallel — the whole app">
-          <span className={s.ident}>app</span>
-          <span className={s.dim}> = </span>
-          <span className={s.name}>nu.Parallel</span>
-          <span className={s.dim}>(</span>
-        </Row>
+        {/* --- App: nu.Parallel, deeply nested --- */}
+        <Container role="ray" tag="app" hint="two flows in parallel">
+          <Line>
+            <span className={s.ident}>app</span>
+            <span className={s.dim}> = </span>
+            <span className={s.tRay}>nu.Parallel</span>
+            <span className={s.dim}>(</span>
+          </Line>
 
-        {/* ForeverDo */}
-        <Row role="state" depth={1} hint="runs its child forever">
-          <span className={s.kw2}>nu.ForeverDo</span>
-          <span className={s.dim}>(</span>
-        </Row>
+          {/* tick flow */}
+          <Container role="invisibles" tag="tick" hint="loop forever">
+            <Line>
+              <span className={s.tInvisibles}>nu.ForeverDo</span>
+              <span className={s.dim}>(</span>
+            </Line>
 
-        {/* Inc leaf */}
-        <Row role="state" depth={2} hint="add 1 to state">
-          <span className={s.tagState}>Counter.n</span>
-          <span className={s.dim}>.inc()</span>
-        </Row>
+            <Container role="virtuals" tag="inc" hint="add 1 to state" tight>
+              <Line>
+                <span className={s.tVirtuals}>Counter.n</span>
+                <span className={s.dim}>.inc()</span>
+              </Line>
+            </Container>
 
-        <Op depth={2}>{'>>'}</Op>
+            <div className={s.op}>&gt;&gt;</div>
 
-        {/* Delay leaf */}
-        <Row role="state" depth={2} hint="wait 1 second">
-          <span className={s.kw2}>nu.Delay</span>
-          <span className={s.dim}>(</span>
-          <span className={s.num}>1.0</span>
-          <span className={s.dim}>)</span>
-        </Row>
+            <Container role="invisibles" tag="wait" hint="delay 1 second" tight>
+              <Line>
+                <span className={s.tInvisibles}>nu.Delay</span>
+                <span className={s.dim}>(</span>
+                <span className={s.num}>1.0</span>
+                <span className={s.dim}>)</span>
+              </Line>
+            </Container>
 
-        <Close depth={1}>{')'}</Close>
+            <Line>
+              <span className={s.dim}>)</span>
+            </Line>
+          </Container>
 
-        {/* ReactForever */}
-        <Row role="ui" depth={1} hint="wakes when the ref changes">
-          <span className={s.kw}>nu.ReactForever</span>
-          <span className={s.dim}>(</span>
-        </Row>
+          {/* live flow */}
+          <Container role="invisibles" tag="live" hint="wake on change, write ui">
+            <Line>
+              <span className={s.tInvisibles}>nu.ReactForever</span>
+              <span className={s.dim}>(</span>
+            </Line>
 
-        {/* Subscribe leaf */}
-        <Row role="state" depth={2} hint="the ref to subscribe to">
-          <span className={s.tagState}>Counter.n</span>
-          <span className={s.dim}>.on_change(),</span>
-        </Row>
+            <Container role="virtuals" tag="subscribe" hint="which ref" tight>
+              <Line>
+                <span className={s.tVirtuals}>Counter.n</span>
+                <span className={s.dim}>.on_change(),</span>
+              </Line>
+            </Container>
 
-        {/* Bind leaf (money line) */}
-        <Row role="ui" depth={2} hint="UI reads state, live">
-          <span className={s.tagUi}>Dashboard.count</span>
-          <span className={s.dim}>.set(</span>
-          <span className={s.tagState}>Counter.n</span>
-          <span className={s.dim}>)</span>
-        </Row>
+            <Container role="ui" tag="bind" hint="ui reads state, live" tight>
+              <Line>
+                <span className={s.tUi}>Dashboard.count</span>
+                <span className={s.dim}>.set(</span>
+                <span className={s.tVirtuals}>Counter.n</span>
+                <span className={s.dim}>)</span>
+              </Line>
+            </Container>
 
-        <Close depth={1}>{')'}</Close>
-        <Close depth={0}>{')'}</Close>
+            <Line>
+              <span className={s.dim}>)</span>
+            </Line>
+          </Container>
+
+          <Line>
+            <span className={s.dim}>)</span>
+          </Line>
+        </Container>
       </div>
 
       <RightScene />
@@ -109,51 +131,43 @@ export function HeroViz() {
 }
 
 /* ---------------------------------------------------------------------------
- * Row — one container + hint pair, occupies a single grid row.
+ * Container — one real DOM box.
+ *   role  → hue (border + wash + tag chip)
+ *   tag   → small chip in the header
+ *   hint  → absolutely positioned in `.tree`'s right gutter, dotted arrow
+ *
+ * The hint is the FIRST child so its static-flow y aligns with the top of
+ * the container. `position: absolute; right: 0` pins it to `.tree`'s right
+ * edge regardless of nesting depth.
  * -------------------------------------------------------------------------- */
-function Row({
+function Container({
   role,
-  depth,
+  tag,
   hint,
+  tight,
   children,
 }: {
-  role: 'state' | 'ui' | 'flow';
-  depth: number;
+  role: 'virtuals' | 'ui' | 'invisibles' | 'ray';
+  tag: string;
   hint: string;
+  tight?: boolean;
   children: ReactNode;
 }) {
-  const style = { '--depth': depth } as CSSProperties;
+  const cls = tight ? `${s.container} ${s.containerTight}` : s.container;
   return (
-    <Fragment>
-      <div className={s.body} data-role={role} style={style}>
-        <pre className={s.code}>{children}</pre>
-      </div>
-      <div className={s.hint} data-role={role}>
+    <div className={cls} data-role={role}>
+      <div className={s.hint}>
         <HintArrow />
+        <span className={s.tagChip}>{tag}</span>
         <span className={s.hintText}>{hint}</span>
       </div>
-    </Fragment>
+      <div className={s.body}>{children}</div>
+    </div>
   );
 }
 
-function Op({ depth, children }: { depth: number; children: ReactNode }) {
-  const style = { '--depth': depth } as CSSProperties;
-  return (
-    <Fragment>
-      <div className={s.op} style={style}>{children}</div>
-      <div className={s.spacer} />
-    </Fragment>
-  );
-}
-
-function Close({ depth, children }: { depth: number; children: ReactNode }) {
-  const style = { '--depth': depth } as CSSProperties;
-  return (
-    <Fragment>
-      <div className={s.close} style={style}>{children}</div>
-      <div className={s.spacer} />
-    </Fragment>
-  );
+function Line({ indent, children }: { indent?: boolean; children: ReactNode }) {
+  return <div className={indent ? s.lineIndent : s.line}>{children}</div>;
 }
 
 function HintArrow() {
@@ -184,7 +198,7 @@ function HintArrow() {
 }
 
 /* ============================================================================
- * RightScene — flat-design browser tab + 3-disk rocksdb drum.
+ * RightScene — flat-design browser tab + 3-disk rocksdb drum. (Unchanged.)
  * ==========================================================================*/
 function RightScene() {
   const gid = useId();
@@ -203,7 +217,7 @@ function RightScene() {
   const mono = 'var(--font-mono)';
 
   const W = 340;
-  const H = 520;
+  const H = 466;
 
   const bx = 8, by = 8, bw = W - 16, bh = 260;
 

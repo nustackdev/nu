@@ -1,12 +1,25 @@
 /* =============================================================================
- * Synth2 — hero visualization synthesis, v2.
+ * HeroViz — real-nested containers + right-gutter hints with dotted arrows.
  *
- * Difference from Synth1:
- *   - Hints moved OUT of containers into a right gutter, connected by dotted
- *     arrows. Containers get thinner vertically as a result.
- *   - Whole widget is a touch wider horizontally (extra hint column).
+ * Palette (silver-woven, matches FabricsSection):
+ *   virtuals   sage    #8ba894 / dark #a8c0af   — state
+ *   ui         teal    #7fb0b8 / dark #a3ced4   — UI
+ *   invisibles plum    #a68ab2 / dark #bda2c8   — loops, subscriptions, delays
+ *   ray        amber   #c8a26e / dark #dab88a   — nu.Parallel (the app)
+ *
+ * Right-gutter hints:
+ *   `.tree` has `padding-right: 240px` to carve out a gutter column and is
+ *   `position: relative` so all `.hint` absolutes anchor to its right edge.
+ *   Each container's `.hint` is `position: absolute; right: 0` and — since
+ *   `top` is auto — takes its static-flow y from its DOM position (the hint
+ *   is the FIRST child of the container). That means nested-container hints
+ *   automatically land at the same right x as top-level hints, at the y of
+ *   the container they annotate.
  * ==========================================================================*/
 
+/* -----------------------------------------------------------------------------
+ * Outer wrap — glass card, two columns (tree + right SVG scene)
+ * -------------------------------------------------------------------------- */
 .wrap {
   width: 100%;
   max-width: 1200px;
@@ -31,51 +44,131 @@
 }
 
 /* -----------------------------------------------------------------------------
- * LEFT column — flat grid, 2 tracks (code + hint), rows aligned 1:1
- *
- * Each Row emits two sibling grid items: `.body` (code container) and `.hint`.
- * Nesting is expressed by `--depth` on `.body` (margin-left indent).
- * Op / Close lines emit a `.op` / `.close` in col 1 and an empty spacer in col 2
- * to keep grid rows aligned.
+ * LEFT column — nested container tree + right-gutter hints
  * -------------------------------------------------------------------------- */
 .tree {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 220px;
-  column-gap: 24px;
-  row-gap: 6px;
+  position: relative;           /* positioning root for all .hint absolutes */
+  padding-right: 260px;          /* reserved gutter for hints */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Base container — code-only box, no chrome inside except border+bg */
+.container {
+  --role-hue:  var(--nu-ink-3);
+  --role-wash: rgba(255, 255, 255, 0.025);
+  --role-line: var(--nu-rule);
+  padding: 8px 12px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--role-line);
+  background: var(--role-wash);
+  min-width: 0;
+  /* NB: position stays static — do NOT make containers positioned, or hints
+     would anchor to the container instead of to `.tree`. */
+}
+.containerTight {
+  padding: 6px 10px 8px;
+}
+.container .container {
+  margin-top: 8px;
+}
+
+/* --- role → hue (light) --- */
+.container[data-role="virtuals"] {
+  --role-hue:  #8ba894;
+  --role-wash: rgba(139, 168, 148, 0.09);
+  --role-line: rgba(139, 168, 148, 0.40);
+}
+.container[data-role="ui"] {
+  --role-hue:  #7fb0b8;
+  --role-wash: rgba(127, 176, 184, 0.09);
+  --role-line: rgba(127, 176, 184, 0.40);
+}
+.container[data-role="invisibles"] {
+  --role-hue:  #a68ab2;
+  --role-wash: rgba(166, 138, 178, 0.09);
+  --role-line: rgba(166, 138, 178, 0.40);
+}
+.container[data-role="ray"] {
+  --role-hue:  #c8a26e;
+  --role-wash: rgba(200, 162, 110, 0.09);
+  --role-line: rgba(200, 162, 110, 0.40);
+}
+
+/* --- role → hue (dark, lifted) --- */
+:global(html.dark) .container[data-role="virtuals"] {
+  --role-hue:  #a8c0af;
+  --role-wash: rgba(168, 192, 175, 0.10);
+  --role-line: rgba(168, 192, 175, 0.42);
+}
+:global(html.dark) .container[data-role="ui"] {
+  --role-hue:  #a3ced4;
+  --role-wash: rgba(163, 206, 212, 0.10);
+  --role-line: rgba(163, 206, 212, 0.42);
+}
+:global(html.dark) .container[data-role="invisibles"] {
+  --role-hue:  #bda2c8;
+  --role-wash: rgba(189, 162, 200, 0.10);
+  --role-line: rgba(189, 162, 200, 0.42);
+}
+:global(html.dark) .container[data-role="ray"] {
+  --role-hue:  #dab88a;
+  --role-wash: rgba(218, 184, 138, 0.10);
+  --role-line: rgba(218, 184, 138, 0.42);
+}
+
+/* Tag chip — now lives inside the hint, colored by the container's role */
+.tagChip {
+  display: inline-flex;
   align-items: center;
-  min-width: 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--role-line);
+  background: var(--role-wash);
+  color: var(--role-hue);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex: none;
 }
 
-/* --- Container body (code) --- */
+/* --- Right-gutter hint (arrow + chip + text) --- */
+.hint {
+  position: absolute;
+  right: 0;
+  width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--role-hue);
+  pointer-events: none;
+  margin-top: 2px;   /* small nudge so arrow center aligns with the code line */
+}
+.arrow {
+  flex: none;
+  display: block;
+}
+.hintText {
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--nu-ink);
+  font-weight: 400;
+}
+
+/* Body wrapper (just for spacing/order — no visual chrome) */
 .body {
-  position: relative;
-  padding: 6px 12px 8px;
-  margin-left: calc(var(--depth, 0) * 22px);
-  border-radius: 5px;
-  border: 1px solid var(--nu-rule);
-  background: rgba(255, 255, 255, 0.025);
   min-width: 0;
-  overflow: hidden;
-}
-.body[data-role="state"] {
-  border-color: var(--nu-accent-2-line);
-  background: var(--nu-accent-2-wash);
-  color: var(--nu-accent-2);
-}
-.body[data-role="ui"] {
-  border-color: var(--nu-accent-line);
-  background: var(--nu-accent-wash);
-  color: var(--nu-accent);
-}
-.body[data-role="flow"] {
-  border-color: var(--nu-rule);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--nu-ink-2);
 }
 
-/* --- Code inside body --- */
-.code {
+/* --- Code lines --- */
+.line,
+.lineIndent {
   margin: 0;
   font-family: var(--font-mono);
   color: var(--nu-ink);
@@ -84,64 +177,40 @@
   font-size: 12px;
   line-height: 1.5;
 }
-.kw        { color: var(--nu-accent);   font-weight: 600; }
-.kw2       { color: var(--nu-accent-2); font-weight: 600; }
-.name      { color: var(--nu-ink);      font-weight: 700; }
-.ident     { color: var(--nu-ink);      font-weight: 600; }
-.dim       { color: var(--nu-ink-3); }
-.tagState  { color: var(--nu-accent-2); font-weight: 700; }
-.tagUi     { color: var(--nu-accent);   font-weight: 700; }
-.num       { color: var(--nu-ink-2); }
-
-/* --- Structural lines (>>, closing brackets) --- */
-.op,
-.close {
-  margin-left: calc(var(--depth, 0) * 22px);
-  padding: 2px 8px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 1.4;
-  min-width: 0;
+.lineIndent {
+  padding-left: 24px;
 }
+
+/* Operator glyph between siblings inside ForeverDo */
 .op {
-  color: var(--nu-accent-2);
+  margin: 4px 0 4px 12px;
+  font-family: var(--font-mono);
+  font-size: 14px;
   font-weight: 700;
-  font-size: 13px;
-}
-.close {
   color: var(--nu-ink-3);
+  letter-spacing: 0.02em;
 }
 
-/* Empty spacer for op/close rows so grid row-alignment is preserved */
-.spacer { }
+/* --- Token colors --- */
+.kw           { color: var(--nu-ink-2); font-weight: 600; }
+.name         { color: var(--nu-ink);   font-weight: 700; }
+.ident        { color: var(--nu-ink);   font-weight: 600; }
+.dim          { color: var(--nu-ink-3); }
+.num          { color: var(--nu-ink-2); }
 
-/* --- Right-side hint cell --- */
-.hint {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--nu-ink-4);
-  min-width: 0;
-}
-.hint[data-role="state"] { color: var(--nu-accent-2); }
-.hint[data-role="ui"]    { color: var(--nu-accent); }
-.hint[data-role="flow"]  { color: var(--nu-ink-2); }
+/* Fabric-tinted identifiers — same silver-woven palette as containers */
+.tVirtuals    { color: #8ba894; font-weight: 700; }
+.tUi          { color: #7fb0b8; font-weight: 700; }
+.tInvisibles  { color: #a68ab2; font-weight: 700; }
+.tRay         { color: #c8a26e; font-weight: 700; }
 
-.arrow {
-  flex: none;
-  display: block;
-}
-
-.hintText {
-  font-family: var(--font-display);
-  font-size: 12px;
-  line-height: 1.35;
-  color: var(--nu-ink);
-  font-weight: 400;
-}
+:global(html.dark) .tVirtuals   { color: #a8c0af; }
+:global(html.dark) .tUi         { color: #a3ced4; }
+:global(html.dark) .tInvisibles { color: #bda2c8; }
+:global(html.dark) .tRay        { color: #dab88a; }
 
 /* -----------------------------------------------------------------------------
- * RIGHT column — SVG scene (browser + 3-disk rocksdb drum)
+ * RIGHT column — SVG scene
  * -------------------------------------------------------------------------- */
 .right {
   min-width: 0;
@@ -154,9 +223,9 @@
   display: block;
 }
 .rightSvg .blink {
-  animation: synth2Blink 2.4s ease-in-out infinite;
+  animation: heroVizBlink 2.4s ease-in-out infinite;
 }
-@keyframes synth2Blink {
+@keyframes heroVizBlink {
   0%, 60%, 100% { opacity: 1; }
   70%, 90%      { opacity: 0.35; }
 }
@@ -164,8 +233,9 @@
   .rightSvg .blink { animation: none; }
 }
 
-/* Narrow viewports — stack columns */
+/* Narrow viewports — drop the hint gutter, stack the columns */
 @media (max-width: 900px) {
   .wrap { grid-template-columns: 1fr; }
-  .tree { grid-template-columns: minmax(0, 1fr) 180px; column-gap: 16px; }
+  .tree { padding-right: 0; }
+  .hint { display: none; }
 }
