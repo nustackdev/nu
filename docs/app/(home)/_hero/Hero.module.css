@@ -149,9 +149,6 @@
   );
   backdrop-filter: blur(14px) saturate(120%);
   -webkit-backdrop-filter: blur(14px) saturate(120%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 8px 24px -18px rgba(0, 0, 0, 0.55);
 }
 .audienceCard[data-audience="agents"] {
   --aud-accent: var(--nu-accent);
@@ -230,7 +227,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
-  margin-top: clamp(4px, 0.5vh, 10px);
+  margin-bottom: 12px;
 }
 .heroCta {
   display: inline-flex;

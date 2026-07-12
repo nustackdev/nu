@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { NustackLogo } from '@/components/marks/NustackLogo';
 import { HeroWordmark } from '@/components/marks/HeroWordmark';
+import { HeroViz } from './HeroViz';
 import s from './Hero.module.css';
 
 const TRAITS = [
@@ -54,45 +55,6 @@ export function Hero() {
           it line by line in imperative Python.
         </p>
 
-        <div className={s.heroAudienceGrid}>
-          <article className={s.audienceCard} data-audience="agents">
-            <header className={s.audienceHeader}>
-              <span className={s.audienceTag}>
-                <span className={s.audienceTagMark} aria-hidden />
-                for agents
-              </span>
-              <h3 className={s.audienceTitle}>Agentic-native runtime</h3>
-            </header>
-            <ul className={s.audienceList}>
-              <li>50× fewer tokens to drive real systems.</li>
-              <li>Safe runtime for agentic code execution.</li>
-              <li>
-                No MCP glue — Nu&apos;s runtime plugs into Nu Fabrics, giving
-                agents native access to the whole internet.
-              </li>
-              <li>Most granular access control in the space.</li>
-            </ul>
-          </article>
-
-          <article className={s.audienceCard} data-audience="humans">
-            <header className={s.audienceHeader}>
-              <span className={s.audienceTag}>
-                <span className={s.audienceTagMark} aria-hidden />
-                for humans
-              </span>
-              <h3 className={s.audienceTitle}>Structural, not imperative</h3>
-            </header>
-            <ul className={s.audienceList}>
-              <li>Write 50× less code for the same system.</li>
-              <li>
-                Stop thinking in imperative primitives. Assemble structural
-                blocks that already know how to hold state, react, and survive.
-              </li>
-              <li>Every block is inspectable and traceable by default.</li>
-            </ul>
-          </article>
-        </div>
-
         <div className={s.heroCtaRow}>
           <a
             className={s.heroCta}
@@ -117,6 +79,8 @@ export function Hero() {
             <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
           </Link>
         </div>
+
+        <HeroViz />
       </div>
     </header>
   );

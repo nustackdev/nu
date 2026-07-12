@@ -47,7 +47,7 @@
 .ideTabActive {
   color: var(--nu-ink);
   background: rgba(255, 255, 255, 0.03);
-  box-shadow: inset 0 -1px 0 var(--nu-accent);
+  border-bottom: 1px solid var(--nu-accent);
 }
 .ideTabDot {
   width: 6px;

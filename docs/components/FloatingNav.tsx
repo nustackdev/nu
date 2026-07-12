@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search } from 'lucide-react';
+import { Search, BookOpen } from 'lucide-react';
 import { useSearchContext } from 'fumadocs-ui/contexts/search';
 import { NustackMark } from '@/components/marks/NustackMark';
 import { NustackLogo } from '@/components/marks/NustackLogo';
@@ -11,11 +10,6 @@ import s from './FloatingNav.module.css';
 
 export function FloatingNav() {
   const { setOpenSearch } = useSearchContext();
-  const [isMac, setIsMac] = useState(true);
-
-  useEffect(() => {
-    setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.platform));
-  }, []);
 
   return (
     <header className={s.floatingNav}>
@@ -25,32 +19,22 @@ export function FloatingNav() {
           <NustackMark />
         </Link>
 
-        <span className={s.navDivider} aria-hidden />
-
-        <nav className={s.navLinks}>
-          <a href="#interaction-model">The model</a>
-          <a href="#nu">Nu</a>
-          <a href="#apps">Apps</a>
-          <Link href="/docs">Docs</Link>
-        </nav>
-
         <div className={s.navRight}>
           <button
             type="button"
-            className={s.navSearch}
+            className={s.navIcon}
             onClick={() => setOpenSearch(true)}
             aria-label="search"
           >
-            <Search size={13} aria-hidden />
-            <span className={s.navSearchLabel}>Search</span>
-            <span className={s.navSearchKbd} aria-hidden>
-              <kbd>{isMac ? '⌘' : 'Ctrl'}</kbd>
-              <kbd>K</kbd>
-            </span>
+            <Search size={16} aria-hidden />
           </button>
 
+          <Link href="/docs" className={s.navIcon} aria-label="docs">
+            <BookOpen size={16} aria-hidden />
+          </Link>
+
           <a
-            className={s.navGithub}
+            className={s.navIcon}
             href="https://github.com/nustackdev"
             target="_blank"
             rel="noreferrer"

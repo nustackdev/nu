@@ -1,0 +1,171 @@
+/* =============================================================================
+ * Synth2 — hero visualization synthesis, v2.
+ *
+ * Difference from Synth1:
+ *   - Hints moved OUT of containers into a right gutter, connected by dotted
+ *     arrows. Containers get thinner vertically as a result.
+ *   - Whole widget is a touch wider horizontally (extra hint column).
+ * ==========================================================================*/
+
+.wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(20px, 2.2vw, 32px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.035) 0%,
+    rgba(255, 255, 255, 0.015) 100%
+  );
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  text-align: left;
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+  gap: 32px;
+  align-items: start;
+  font-family: var(--font-mono);
+  color: var(--nu-ink);
+}
+
+/* -----------------------------------------------------------------------------
+ * LEFT column — flat grid, 2 tracks (code + hint), rows aligned 1:1
+ *
+ * Each Row emits two sibling grid items: `.body` (code container) and `.hint`.
+ * Nesting is expressed by `--depth` on `.body` (margin-left indent).
+ * Op / Close lines emit a `.op` / `.close` in col 1 and an empty spacer in col 2
+ * to keep grid rows aligned.
+ * -------------------------------------------------------------------------- */
+.tree {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  column-gap: 24px;
+  row-gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+/* --- Container body (code) --- */
+.body {
+  position: relative;
+  padding: 6px 12px 8px;
+  margin-left: calc(var(--depth, 0) * 22px);
+  border-radius: 5px;
+  border: 1px solid var(--nu-rule);
+  background: rgba(255, 255, 255, 0.025);
+  min-width: 0;
+  overflow: hidden;
+}
+.body[data-role="state"] {
+  border-color: var(--nu-accent-2-line);
+  background: var(--nu-accent-2-wash);
+  color: var(--nu-accent-2);
+}
+.body[data-role="ui"] {
+  border-color: var(--nu-accent-line);
+  background: var(--nu-accent-wash);
+  color: var(--nu-accent);
+}
+.body[data-role="flow"] {
+  border-color: var(--nu-rule);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--nu-ink-2);
+}
+
+/* --- Code inside body --- */
+.code {
+  margin: 0;
+  font-family: var(--font-mono);
+  color: var(--nu-ink);
+  white-space: pre;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.kw        { color: var(--nu-accent);   font-weight: 600; }
+.kw2       { color: var(--nu-accent-2); font-weight: 600; }
+.name      { color: var(--nu-ink);      font-weight: 700; }
+.ident     { color: var(--nu-ink);      font-weight: 600; }
+.dim       { color: var(--nu-ink-3); }
+.tagState  { color: var(--nu-accent-2); font-weight: 700; }
+.tagUi     { color: var(--nu-accent);   font-weight: 700; }
+.num       { color: var(--nu-ink-2); }
+
+/* --- Structural lines (>>, closing brackets) --- */
+.op,
+.close {
+  margin-left: calc(var(--depth, 0) * 22px);
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  min-width: 0;
+}
+.op {
+  color: var(--nu-accent-2);
+  font-weight: 700;
+  font-size: 13px;
+}
+.close {
+  color: var(--nu-ink-3);
+}
+
+/* Empty spacer for op/close rows so grid row-alignment is preserved */
+.spacer { }
+
+/* --- Right-side hint cell --- */
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--nu-ink-4);
+  min-width: 0;
+}
+.hint[data-role="state"] { color: var(--nu-accent-2); }
+.hint[data-role="ui"]    { color: var(--nu-accent); }
+.hint[data-role="flow"]  { color: var(--nu-ink-2); }
+
+.arrow {
+  flex: none;
+  display: block;
+}
+
+.hintText {
+  font-family: var(--font-display);
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--nu-ink);
+  font-weight: 400;
+}
+
+/* -----------------------------------------------------------------------------
+ * RIGHT column — SVG scene (browser + 3-disk rocksdb drum)
+ * -------------------------------------------------------------------------- */
+.right {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.rightSvg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.rightSvg .blink {
+  animation: synth2Blink 2.4s ease-in-out infinite;
+}
+@keyframes synth2Blink {
+  0%, 60%, 100% { opacity: 1; }
+  70%, 90%      { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rightSvg .blink { animation: none; }
+}
+
+/* Narrow viewports — stack columns */
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: 1fr; }
+  .tree { grid-template-columns: minmax(0, 1fr) 180px; column-gap: 16px; }
+}

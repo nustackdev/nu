@@ -307,7 +307,6 @@
     var(--nu-dot-grid);
   background-size: auto, var(--nu-dot-size);
   background-position: center, 0 0;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
   display: flex;
   align-items: center;
   justify-content: center;
