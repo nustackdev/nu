@@ -18,10 +18,12 @@
 /* Modular rhythm for the row block. One value drives the row's vertical
    padding and the column gap between text and viz. */
 .rows {
-  --step: clamp(32px, 4vw, 48px);
+  /* Matches the section card's own padding, so row-to-row rhythm reads as
+     the same beat as card-to-content padding. */
+  --step: clamp(28px, 3vw, 44px);
   list-style: none;
   padding: 0;
-  margin: var(--step) 0;
+  margin: var(--step) 0 0;
   display: flex;
   flex-direction: column;
 }
@@ -263,6 +265,12 @@
   --nu-accent-2-soft: var(--fab-hue-soft);
   --nu-accent-2-wash: var(--fab-hue-wash);
   --nu-accent-2-line: var(--fab-hue-line);
+}
+
+/* ---- per-row action ---- */
+.rowAction {
+  display: flex;
+  margin-top: 4px;
 }
 
 /* ---- backend chips ---- */

@@ -77,51 +77,60 @@
   flex-wrap: wrap;
 }
 
-/* ---- CTA buttons ----
-   .cta        primary, hue-tinted background + hue border
-   .ctaGhost   secondary, neutral silver ghost */
-.cta,
-.ctaGhost {
+/* ---- CTA button ----
+   Unified with hero CTA: neutral transparent-white bg, hairline border. */
+.cta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
   border-radius: 10px;
-  border: 1px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--nu-ink);
   font-family: var(--font-display);
   font-weight: 500;
   font-size: 13.5px;
   letter-spacing: 0.005em;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
-.cta {
-  color: var(--nu-ink);
+.cta:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+.cta > svg {
+  color: var(--nu-ink-2);
+  flex: none;
+}
+.ctaArrow {
+  color: var(--nu-ink-3);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Hue-tinted variant — reads --nu-accent-* from the surrounding row scope
+   (fabrics/apps override those tokens per row). */
+.ctaHueTinted {
   border-color: var(--nu-accent-line);
   background: var(--nu-accent-wash);
 }
-.cta:hover {
+.ctaHueTinted:hover {
   background: var(--nu-accent-soft);
   border-color: var(--nu-accent);
 }
-.ctaGhost {
-  color: var(--nu-ink-2);
-  border-color: rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.025);
-}
-.ctaGhost:hover {
-  color: var(--nu-ink);
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.05);
-}
-.ctaArrow {
+.ctaHueTinted > svg { color: var(--nu-accent); }
+.ctaArrowHue {
   color: var(--nu-accent);
   display: inline-flex;
   align-items: center;
 }
-.ctaGhost .ctaArrow {
-  color: var(--nu-ink-3);
+
+.ctaRepo {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0;
 }
 
 /* ---- 2-col split ---- */

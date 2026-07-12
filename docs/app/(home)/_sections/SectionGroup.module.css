@@ -26,7 +26,7 @@
   /* How far to lift the label out of the labelBox. -100% = bottom baseline
      lands exactly on card top (fully above); values less than 100% leave
      that fraction of the label overlapping into the card top. */
-  --label-lift: -70%;
+  --label-lift: -73%;
 
   /* Vertical air above the label. */
   padding-top: clamp(66px, 8vw, 102px);

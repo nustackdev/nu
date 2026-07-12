@@ -1,8 +1,6 @@
-import { GithubMark } from '@/components/marks/GithubMark';
+import { BookOpen } from 'lucide-react';
 import {
-  ActionRow,
   Cta,
-  CtaGhost,
   SectionCard,
   SectionCol,
   SectionIntro,
@@ -17,6 +15,9 @@ import s from './FabricsSection.module.css';
  * endpoint. The same hue propagates to the row's backend chips and the
  * glyph via row-scoped --nu-accent[-2] overrides in FabricsSection.module.css
  * — FabricGlyphs reads those tokens directly, so no glyph duplication.
+ *
+ * Each row carries its own "read the docs" CTA pointing at that fabric's
+ * page (see fabrics.data.ts docsHref).
  *
  * Vibe: metallic + editorial. Color is a whisper, silver carries the row.
  */
@@ -56,6 +57,12 @@ export function FabricsSection() {
                       ))}
                     </ul>
                   )}
+                  <div className={s.rowAction}>
+                    <Cta href={f.docsHref} variant="hueTinted">
+                      <BookOpen size={14} aria-hidden />
+                      <span>Read the docs</span>
+                    </Cta>
+                  </div>
                 </div>
                 <div className={s.viz} aria-hidden>
                   <div className={s.vizFrame}>
@@ -66,16 +73,6 @@ export function FabricsSection() {
             );
           })}
         </ol>
-
-        <ActionRow>
-          <Cta href="/docs">
-            <span>Read the fabrics</span>
-          </Cta>
-          <CtaGhost href="https://github.com/nustackdev">
-            <GithubMark size={14} />
-            <span>GitHub</span>
-          </CtaGhost>
-        </ActionRow>
       </SectionCol>
     </SectionCard>
   );

@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import s from './SectionCard.module.css';
 
 type Hue = 's1' | 's2' | 's3' | 's4';
@@ -61,48 +61,45 @@ export function ActionRow({ children }: { children: ReactNode }) {
 }
 
 /**
- * Cta — primary action. Uses next/link for internal hrefs, plain `<a>` for
- * external URLs. The arrow is appended automatically after children.
+ * Cta — unified action link, styled identically to the hero CTAs
+ * (neutral transparent-white bg, hairline border). Auto-detects internal vs
+ * external hrefs: internal uses next/link + ArrowRight; external uses <a>
+ * + ArrowUpRight (out-of-site glyph). Pass a leading icon/label as children.
+ *
+ * variant="hueTinted" reads --nu-accent-* tokens for border, bg, arrow color
+ * — use it inside a row that scopes those tokens (fabrics/apps rows do).
  */
 export function Cta({
-  href, children, external,
-}: { href: string; children: ReactNode; external?: boolean }) {
-  const arrow = <ArrowRight size={13} aria-hidden className={s.ctaArrow} />;
+  href, children, external, variant = 'neutral',
+}: {
+  href: string;
+  children: ReactNode;
+  external?: boolean;
+  variant?: 'neutral' | 'hueTinted';
+}) {
   const isExternal = external ?? /^https?:\/\//.test(href);
+  const arrowCls = variant === 'hueTinted' ? s.ctaArrowHue : s.ctaArrow;
+  const arrow = isExternal
+    ? <ArrowUpRight size={13} aria-hidden className={arrowCls} />
+    : <ArrowRight size={13} aria-hidden className={arrowCls} />;
+  const cls = variant === 'hueTinted' ? `${s.cta} ${s.ctaHueTinted}` : s.cta;
   if (isExternal) {
     return (
-      <a href={href} target="_blank" rel="noreferrer" className={s.cta}>
+      <a href={href} target="_blank" rel="noreferrer" className={cls}>
         {children}
         {arrow}
       </a>
     );
   }
   return (
-    <Link href={href} className={s.cta}>
+    <Link href={href} className={cls}>
       {children}
       {arrow}
     </Link>
   );
 }
 
-/**
- * CtaGhost — secondary silver ghost. No auto-appended arrow — pass leading
- * icons/labels as children.
- */
-export function CtaGhost({
-  href, children, external,
-}: { href: string; children: ReactNode; external?: boolean }) {
-  const isExternal = external ?? /^https?:\/\//.test(href);
-  if (isExternal) {
-    return (
-      <a href={href} target="_blank" rel="noreferrer" className={s.ctaGhost}>
-        {children}
-      </a>
-    );
-  }
-  return (
-    <Link href={href} className={s.ctaGhost}>
-      {children}
-    </Link>
-  );
+/** Mono org/repo label — use inside a Cta for GitHub repo links. */
+export function RepoName({ children }: { children: ReactNode }) {
+  return <span className={s.ctaRepo}>{children}</span>;
 }

@@ -1,10 +1,11 @@
+import { BookOpen } from 'lucide-react';
 import { NustackMark } from '@/components/marks/NustackMark';
 import { GithubMark } from '@/components/marks/GithubMark';
 import { OneLineSvg } from '@/components/marks/OneLine';
 import {
   ActionRow,
   Cta,
-  CtaGhost,
+  RepoName,
   SectionCard,
   SectionCol,
   SectionIntro,
@@ -32,12 +33,13 @@ export function InteractionModelSection() {
           </SectionIntro>
           <ActionRow>
             <Cta href="/docs">
+              <BookOpen size={14} aria-hidden />
               <span>Read the model</span>
             </Cta>
-            <CtaGhost href="https://github.com/nustackdev">
+            <Cta href="https://github.com/nustackdev/interaction-model">
               <GithubMark size={14} />
-              <span>GitHub</span>
-            </CtaGhost>
+              <RepoName>nustackdev/interaction-model</RepoName>
+            </Cta>
           </ActionRow>
         </SectionCol>
         <SectionVisual>

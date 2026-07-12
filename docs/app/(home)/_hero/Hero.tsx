@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, BookOpen } from 'lucide-react';
 import { NustackLogo } from '@/components/marks/NustackLogo';
 import { HeroWordmark } from '@/components/marks/HeroWordmark';
+import { GithubMark } from '@/components/marks/GithubMark';
 import { HeroViz } from './HeroViz';
 import s from './Hero.module.css';
 
@@ -58,23 +59,16 @@ export function Hero() {
         <div className={s.heroCtaRow}>
           <a
             className={s.heroCta}
-            href="https://github.com/nustackdev/interaction-model"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <span>Interaction model</span>
-            <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
-          </a>
-          <a
-            className={s.heroCta}
             href="https://github.com/nustackdev/nu"
             target="_blank"
             rel="noreferrer"
           >
-            <span>Nu repo</span>
+            <GithubMark size={14} />
+            <span className={s.heroCtaRepo}>nustackdev/nu</span>
             <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
           </a>
           <Link className={s.heroCta} href="/docs">
+            <BookOpen size={14} aria-hidden />
             <span>Nu docs</span>
             <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
           </Link>

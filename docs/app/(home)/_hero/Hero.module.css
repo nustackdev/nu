@@ -249,19 +249,17 @@
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.24);
 }
-.heroCtaPrimary {
-  border-color: var(--nu-accent-line);
-  background: var(--nu-accent-wash);
+.heroCta > svg {
+  color: var(--nu-ink-2);
+  flex: none;
 }
-.heroCtaPrimary:hover {
-  background: var(--nu-accent-soft);
-  border-color: var(--nu-accent);
+.heroCtaRepo {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0;
 }
 .heroCtaArrow {
   color: var(--nu-ink-3);
-}
-.heroCtaPrimary .heroCtaArrow {
-  color: var(--nu-accent);
 }
 
 .heroCtaGhost {

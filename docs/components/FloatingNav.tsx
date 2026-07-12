@@ -35,7 +35,7 @@ export function FloatingNav() {
 
           <a
             className={s.navIcon}
-            href="https://github.com/nustackdev"
+            href="https://github.com/nustackdev/nu"
             target="_blank"
             rel="noreferrer"
             aria-label="github"

@@ -25,7 +25,7 @@ export function HeroViz() {
     <div className={s.wrap}>
       <div className={s.tree}>
         {/* --- Counter shape --- */}
-        <Container role="virtuals" tag="virtuals" hint="state, rocksdb-backed">
+        <Container role="virtuals" tag="state" hint="eg rocksdb">
           <Line>
             <span className={s.kw}>class</span>{' '}
             <span className={s.tVirtuals}>Counter</span>
