@@ -100,7 +100,6 @@ exclude = [
 # UV — local sources + dev closure
 # =============================================================================
 [tool.uv.sources]
-virtuals-py = { path = "../virtuals", editable = true }
 composables = { path = "../composables", editable = true }
 invisibles = { path = "../invisibles", editable = true }
 nudle = { path = "./src/nu/ui/nudle", editable = true }
