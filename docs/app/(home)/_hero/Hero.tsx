@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { NustackLogo } from '@/components/marks/NustackLogo';
 import { HeroWordmark } from '@/components/marks/HeroWordmark';
-import { StackLayersSvg } from '@/components/marks/StackLayers';
 import s from './Hero.module.css';
 
 const TRAITS = [
@@ -16,7 +15,7 @@ const TRAITS = [
 
 /**
  * Hero — wordmark, claim, GitHub-style meta labels, mission, two audience
- * cards (agents / humans), primary CTAs, then the stack-layers viz frame.
+ * cards (agents / humans), primary CTAs.
  * The word "nustack" inside <HeroWordmark /> carries the silver→purple gradient.
  */
 export function Hero() {
@@ -117,10 +116,6 @@ export function Hero() {
             <span>Nu docs</span>
             <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
           </Link>
-        </div>
-
-        <div className={s.heroVizFrame} aria-hidden>
-          <StackLayersSvg />
         </div>
       </div>
     </header>

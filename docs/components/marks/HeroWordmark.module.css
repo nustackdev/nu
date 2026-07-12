@@ -3,6 +3,8 @@
   letter-spacing: inherit;
   white-space: nowrap;
   display: inline-block;
+  /* Same drop-shadow as the logo — matches .heroWordmarkLogo filter. */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
 
   /* nu = violet aurora with a magenta highlight (gradient only, no glow) */
   --wm-nu-grad: linear-gradient(
@@ -12,14 +14,13 @@
     #a26bff 52%,
     #6842dc 100%
   );
-  /* stack = silvery metallic — dark → mid → dark with a highlight band.
-     All stops fully opaque (no alpha) so nothing bleeds through. */
+  /* stack = silver on the same diagonal as nu — grey → light silver.
+     Matches nu's 120deg direction so both parts share the same "light
+     from top-left" logic instead of stack faking a 3D chrome band. */
   --wm-stack-grad: linear-gradient(
-    180deg,
-    #eae8f4 0%,
-    #eae8f4 22%,
-    #b3b0c8 52%,
-    #d5d3e4 72%,
+    120deg,
+    #a8a5c0 0%,
+    #cfccdf 55%,
     #eae8f4 100%
   );
 }
@@ -50,13 +51,11 @@
     #b487ff 52%,
     #8358f2 100%
   );
-  /* silver on dark: brighter highlight band, all opaque */
+  /* silver on dark: same 120deg direction, lifted stops for legibility */
   --wm-stack-grad: linear-gradient(
-    180deg,
-    #eae8f4 0%,
-    #eae8f4 22%,
-    #d5d3e4 50%,
-    #b3b0c8 72%,
+    120deg,
+    #b3b0c8 0%,
+    #d5d3e4 55%,
     #eae8f4 100%
   );
 }

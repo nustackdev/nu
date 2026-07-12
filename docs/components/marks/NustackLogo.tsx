@@ -1,14 +1,17 @@
 import { useId } from 'react';
 
 /**
- * NustackLogo — a square with a diagonal line crossing through it,
- * and a dot sitting exactly on the line. The concept: darts thrown
- * into a 2D space (the square). Landing on the line is possible,
- * but the probability is zero. Measure-zero, in one glyph.
+ * NustackLogo — rounded square (rx=5), a bold asymmetric chord contained
+ * inside it, and a dot sitting on the line midpoint. Measure-zero, in one
+ * glyph.
  *
- * Paints in the same silver metallic gradient used by the "stack"
- * portion of the hero wordmark so the mark reads coherent with the
- * type it sits beside.
+ * The rect + line + dot are welded into one continuous shape via a subtle
+ * gaussian goo filter (small blur + high-threshold alpha matrix), so the
+ * T-junctions where line meets square edge round out into small fillets
+ * while outer edges stay crisp.
+ *
+ * Paints in the same silver metallic gradient used by the "stack" portion
+ * of the hero wordmark so the mark reads coherent with the type next to it.
  */
 export function NustackLogo({
   size = 22,
@@ -19,6 +22,7 @@ export function NustackLogo({
 }) {
   const gid = useId();
   const gradId = `nustack-logo-silver-${gid}`;
+  const gooId = `nustack-logo-goo-${gid}`;
   const paint = `url(#${gradId})`;
   return (
     <svg
@@ -30,10 +34,6 @@ export function NustackLogo({
       aria-hidden
     >
       <defs>
-        {/* Silver metallic — matches --wm-stack-grad (dark theme) so the
-            mark reads coherent with the "stack" letters next to it. Uses
-            userSpaceOnUse so the gradient spans the whole SVG, giving
-            each shape the same tonal band based on its vertical position. */}
         <linearGradient
           id={gradId}
           gradientUnits="userSpaceOnUse"
@@ -48,46 +48,52 @@ export function NustackLogo({
           <stop offset="72%" stopColor="#b3b0c8" />
           <stop offset="100%" stopColor="#eae8f4" />
         </linearGradient>
+
+        <filter
+          id={gooId}
+          filterUnits="userSpaceOnUse"
+          x="-4"
+          y="-4"
+          width="32"
+          height="32"
+          colorInterpolationFilters="sRGB"
+        >
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="blur" />
+          <feColorMatrix
+            in="blur"
+            mode="matrix"
+            values="1 0 0 0 0
+                    0 1 0 0 0
+                    0 0 1 0 0
+                    0 0 0 32 -14"
+          />
+        </filter>
       </defs>
 
-      {/* square — the sample space. Subtle silver wash inside so the
-          mark reads as a filled tile rather than a hollow frame. */}
-      <rect
-        x="3"
-        y="3"
-        width="18"
-        height="18"
-        rx="2"
-        stroke={paint}
-        strokeWidth="2.25"
-        fill={paint}
-        fillOpacity="0.08"
-      />
-      {/* asymmetric diagonal — slope = -1/3, enters left edge of the
-          square at y=15 (2/3 down), exits right edge at y=9 (1/3 down).
-          20% longer than the square-inscribed version, so it visibly
-          "crosses" the square rather than nicking its edges.
-          Light bottom shadow so the line reads as sitting ON the square. */}
-      <line
-        x1="-0.6"
-        y1="16.2"
-        x2="24.6"
-        y2="7.8"
-        stroke={paint}
-        strokeWidth="2.25"
-        strokeLinecap="round"
-        style={{ filter: 'drop-shadow(0 1px 0.6px rgba(0, 0, 0, 0.22))' }}
-      />
-      {/* dot on the line — dart that landed exactly on it.
-          At the segment midpoint: ((-0.6+24.6)/2, (16.2+7.8)/2) = (12, 12).
-          Same light bottom shadow so the dot reads as sitting ON the line. */}
-      <circle
-        cx="12"
-        cy="12"
-        r="2.85"
-        fill={paint}
-        style={{ filter: 'drop-shadow(0 1.5px 1px rgba(0, 0, 0, 0.35))' }}
-      />
+      <g filter={`url(#${gooId})`}>
+        <rect
+          x="3"
+          y="3"
+          width="18"
+          height="18"
+          rx="5"
+          stroke={paint}
+          strokeWidth="3.2"
+          fill={paint}
+          fillOpacity="0.08"
+        />
+        <line
+          x1="4"
+          y1="16"
+          x2="20"
+          y2="7.5"
+          stroke={paint}
+          strokeWidth="3.2"
+          strokeLinecap="round"
+        />
+        {/* dot at line midpoint: (4 + 16·½, 16 − 8.5·½) */}
+        <circle cx="12" cy="11.75" r="3.6" fill={paint} />
+      </g>
     </svg>
   );
 }

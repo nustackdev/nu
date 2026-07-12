@@ -4,7 +4,6 @@
  *   heroWordmark: display-800 mark (logo + "nustack")
  *   heroClaim: h1 headline
  *   heroMission: supporting paragraph
- *   heroVizFrame: glassy pane that carries the stack-layers svg
  * ==========================================================================*/
 
 .hero {
@@ -13,6 +12,7 @@
   background: transparent;
   color: var(--nu-ink);
 }
+
 
 .heroInner {
   position: relative;
@@ -30,7 +30,7 @@
   font-weight: 800;
   font-size: clamp(4.6rem, 13vw, 11rem);
   line-height: 0.92;
-  letter-spacing: -0.068em;
+  letter-spacing: -0.035em;
   color: var(--nu-ink);
   margin: 0;
   text-transform: lowercase;
@@ -39,7 +39,7 @@
   isolation: isolate;
   display: inline-flex;
   align-items: center;
-  gap: 0.18em;
+  gap: 0.06em;
 }
 .heroWordmarkLogo {
   flex: none;
@@ -48,31 +48,8 @@
      ~0.06em so the diagonal reads level with the "nu" x-height. */
   transform: translateY(0.06em);
   stroke-width: 1.25;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
 }
-
-.heroVizFrame {
-  position: relative;
-  width: 100%;
-  margin-top: clamp(16px, 2vh, 32px);
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(255, 255, 255, 0.045) 45%,
-    rgba(255, 255, 255, 0.025) 100%
-  );
-  backdrop-filter: blur(64px) saturate(140%);
-  -webkit-backdrop-filter: blur(64px) saturate(140%);
-  padding: clamp(20px, 2.6vw, 36px);
-  box-shadow:
-    0 60px 140px -20px rgba(0, 0, 0, 0.85),
-    0 24px 60px -20px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
-    inset 0 -20px 40px -20px rgba(0, 0, 0, 0.35);
-}
-.heroVizFrame svg { width: 100%; height: auto; display: block; }
 
 .heroClaim {
   font-family: var(--font-display);
