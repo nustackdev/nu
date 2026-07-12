@@ -64,7 +64,6 @@ infra = [
 ]
 distributed = [
     "nu[infra]",
-    "composables",
     "invisibles-py",
     "ray>=2.0",
 ]
@@ -100,7 +99,6 @@ exclude = [
 # UV — local sources + dev closure
 # =============================================================================
 [tool.uv.sources]
-composables = { path = "../composables", editable = true }
 nudle = { path = "./src/nu/ui/nudle", editable = true }
 
 [tool.uv]
@@ -271,7 +269,7 @@ convention = "google"
 [tool.ruff.lint.isort]
 known-first-party = [
     "nu",
-    "virtuals", "composables", "invisibles",
+    "virtuals", "invisibles",
     ]
 force-single-line = false
 lines-after-imports = 2
