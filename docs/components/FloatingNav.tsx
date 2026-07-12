@@ -21,7 +21,7 @@ export function FloatingNav() {
     <header className={s.floatingNav}>
       <div className={s.navPill}>
         <Link href="/" className={s.navBrand} aria-label="nustack home">
-          <NustackLogo size={26} />
+          <NustackLogo size={18} />
           <NustackMark />
         </Link>
 

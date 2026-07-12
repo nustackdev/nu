@@ -23,7 +23,7 @@ export function Hero() {
     <header className={s.hero}>
       <div className={s.heroInner}>
         <div className={s.heroWordmark}>
-          <NustackLogo size="0.92em" className={s.heroWordmarkLogo} />
+          <NustackLogo className={s.heroWordmarkLogo} />
           <HeroWordmark />
         </div>
 

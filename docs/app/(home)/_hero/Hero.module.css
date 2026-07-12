@@ -28,24 +28,29 @@
 .heroWordmark {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(4.6rem, 13vw, 11rem);
+  font-size: clamp(3.31rem, 9.36vw, 7.92rem);
   line-height: 1;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.045em;
   color: var(--nu-ink);
   margin: 0;
   position: relative;
   z-index: 3;
   isolation: isolate;
   display: inline-flex;
-  align-items: center;
-  gap: 0.06em;
+  /* Baseline align: SVG's synthesized baseline is its bottom edge; text
+     baseline is the bottom of the caps. Since the logo is exactly 1cap tall
+     and its viewBox is trimmed to the visible stroked square, its top and
+     bottom coincide 1:1 with the caps' top and bottom. */
+  align-items: baseline;
+  gap: 0.08em;
 }
 .heroWordmarkLogo {
   flex: none;
-  /* Cap-height align with the "Nu" — Inter's cap sits inside a taller EM
-     box, nudge the logo up so its optical center matches the cap midline. */
-  transform: translateY(-0.02em);
-  stroke-width: 1.25;
+  /* Match capital letter height exactly. `cap` = font's cap-height in the
+     current font-size (Inter cap = ~0.72em). Overrides the SVG's width/height
+     attributes. */
+  width: 1cap;
+  height: 1cap;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
 }
 

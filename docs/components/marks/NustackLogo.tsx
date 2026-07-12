@@ -28,7 +28,8 @@ export function NustackLogo({
     <svg
       width={size}
       height={size}
-      viewBox="-2 -2 28 28"
+      viewBox="1.4 1.4 21.2 21.2"
+      overflow="visible"
       fill="none"
       className={className}
       aria-hidden
