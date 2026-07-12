@@ -95,6 +95,197 @@
   margin: 0 auto;
   text-align: center;
 }
+.heroMission b {
+  color: var(--nu-ink);
+  font-weight: 600;
+}
+.heroMissionSep {
+  color: var(--nu-ink-3);
+  padding: 0 0.15em;
+}
+
+/* ---- meta labels (GitHub-style key/value pills) ---- */
+.heroLabels {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.label {
+  display: inline-flex;
+  align-items: stretch;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+}
+.labelKey,
+.labelVal {
+  padding: 7px 10px;
+  display: inline-flex;
+  align-items: center;
+}
+.labelKey {
+  color: var(--nu-ink);
+  background: rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.16);
+  font-weight: 600;
+}
+.labelVal {
+  color: var(--nu-ink);
+  background: transparent;
+  font-weight: 600;
+}
+.labelValAccent {
+  color: var(--nu-accent);
+}
+
+/* ---- audience cards (agents / humans) ---- */
+.heroAudienceGrid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: clamp(8px, 1vh, 16px);
+}
+@media (max-width: 780px) {
+  .heroAudienceGrid { grid-template-columns: 1fr; }
+}
+.audienceCard {
+  position: relative;
+  text-align: left;
+  padding: clamp(18px, 1.8vw, 24px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.035) 0%,
+    rgba(255, 255, 255, 0.015) 100%
+  );
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 8px 24px -18px rgba(0, 0, 0, 0.55);
+}
+.audienceCard[data-audience="agents"] {
+  --aud-accent: var(--nu-accent);
+  --aud-accent-line: var(--nu-accent-line);
+}
+.audienceCard[data-audience="humans"] {
+  --aud-accent: var(--nu-accent-2);
+  --aud-accent-line: var(--nu-accent-2-line);
+}
+.audienceHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.audienceTag {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  color: var(--aud-accent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.audienceTagMark {
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--aud-accent);
+}
+.audienceTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(15.5px, 1.2vw, 17.5px);
+  letter-spacing: -0.012em;
+  color: var(--nu-ink);
+  line-height: 1.25;
+}
+.audienceList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.audienceList li {
+  position: relative;
+  padding-left: 18px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--nu-ink-2);
+}
+.audienceList li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--aud-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--aud-accent) 20%, transparent);
+}
+
+/* ---- CTA row ---- */
+.heroCtaRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: clamp(4px, 0.5vh, 10px);
+}
+.heroCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--nu-ink);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 13.5px;
+  letter-spacing: 0.005em;
+  text-decoration: none;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.heroCta:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+.heroCtaPrimary {
+  border-color: var(--nu-accent-line);
+  background: var(--nu-accent-wash);
+}
+.heroCtaPrimary:hover {
+  background: var(--nu-accent-soft);
+  border-color: var(--nu-accent);
+}
+.heroCtaArrow {
+  color: var(--nu-ink-3);
+}
+.heroCtaPrimary .heroCtaArrow {
+  color: var(--nu-accent);
+}
 
 .heroCtaGhost {
   display: inline-flex;
