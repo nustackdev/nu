@@ -29,11 +29,11 @@ from __future__ import annotations
 import threading
 from typing import TYPE_CHECKING
 
-from netkit import SyncConnection, SyncServer
-from netkit.executors import SimpleExecutor
-from netkit.executors.threaded import ThreadedExecutor
-from netkit.framing import LengthPrefixedFraming
-from netkit.transports import TCPListener, UnixSocketListener
+from invisibles.netkit import SyncConnection, SyncServer
+from invisibles.netkit.executors import SimpleExecutor
+from invisibles.netkit.executors.threaded import ThreadedExecutor
+from invisibles.netkit.framing import LengthPrefixedFraming
+from invisibles.netkit.transports import TCPListener, UnixSocketListener
 
 from invisibles import (
     AsyncDispatcher,

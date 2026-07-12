@@ -16,9 +16,9 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from netkit import SyncConnector
-from netkit.framing import LengthPrefixedFraming
-from netkit.transports import TCPTransport, UnixSocketTransport
+from invisibles.netkit import SyncConnector
+from invisibles.netkit.framing import LengthPrefixedFraming
+from invisibles.netkit.transports import TCPTransport, UnixSocketTransport
 
 from invisibles import BgServingThread, InvisiblesConnection, Protocol
 from invisibles.config import AttributeAccessConfig, ConnectionConfig

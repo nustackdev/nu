@@ -65,7 +65,7 @@ infra = [
 distributed = [
     "nu[infra]",
     "composables",
-    "invisibles",
+    "invisibles-py",
     "ray>=2.0",
 ]
 all = [
@@ -101,7 +101,6 @@ exclude = [
 # =============================================================================
 [tool.uv.sources]
 composables = { path = "../composables", editable = true }
-invisibles = { path = "../invisibles", editable = true }
 nudle = { path = "./src/nu/ui/nudle", editable = true }
 
 [tool.uv]
