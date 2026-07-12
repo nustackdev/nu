@@ -1,0 +1,313 @@
+/* =============================================================================
+ * FabricsSection — the fabrics as editorial vertical rows.
+ *
+ * The fabric name is the hero — display-scale, lowercase, gradient-clipped
+ * (purple / blue duo, same 4-stop recipe as CardTitle and HeroWordmark).
+ * Tagline sits under the name in a manifesto voice. Alternating flip keeps
+ * the eye moving.
+ * ==========================================================================*/
+
+/* Modular rhythm for the row block. One value drives the row's vertical
+   padding, the column gap between text and viz, and the outer bracket
+   margin. This is the single knob for the card's spatial harmony. */
+.rows {
+  --step: clamp(32px, 4vw, 48px);
+  list-style: none;
+  padding: 0;
+  margin: var(--step) 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--step);
+  padding: var(--step) 0;
+  border-top: 1px solid var(--nu-rule-2);
+}
+.row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.row:last-child {
+  padding-bottom: 0;
+}
+
+.rowFlip {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+}
+.rowFlip .text { order: 2; }
+.rowFlip .viz  { order: 1; }
+
+/* ---- text column ---- */
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+/* Shared gradient-clip primitive. Any element with `.gradInline` + a
+   gradient class (.gPurple / .gBlue) becomes gradient-filled text. Used
+   by the fabric name (hero-scale), each row's h3 title, and the top
+   SectionTitle span. */
+.gradInline {
+  display: inline-block;
+  max-width: 100%;
+  background-image: var(--fv-grad);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Hero-scale, lowercase fabric name. Uses .gradInline for the fill. */
+.name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(44px, 6vw, 76px);
+  letter-spacing: -0.04em;
+  margin: 0;
+  text-transform: lowercase;
+  display: inline-block;
+  max-width: 100%;
+  background-image: var(--fv-grad);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.rowTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.15rem, 1.75vw, 1.5rem);
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--nu-ink);
+  max-width: 22ch;
+  text-wrap: balance;
+}
+.body {
+  color: var(--nu-ink-2);
+  font-family: var(--font-display);
+  font-size: clamp(13.5px, 1vw, 15px);
+  margin: 0;
+  max-width: 46ch;
+}
+.body b { color: var(--nu-ink); font-weight: 600; }
+/* Gradients walk the kit's purple / blue 12-step scale (nu/ui/kit index.css).
+   Light: 200 → 300 → 500 (anchor) → 700.
+   Dark : lifted 100 → 200 → kit dark accent → 500. */
+.gPurple {
+  --fv-grad: linear-gradient(
+    120deg,
+    #cdb6ff 0%,   /* purple-200 */
+    #b490ff 22%,  /* purple-300 */
+    #7a4ce0 55%,  /* purple-500 (anchor) */
+    #5732a3 100%  /* purple-700 */
+  );
+}
+.gBlue {
+  --fv-grad: linear-gradient(
+    120deg,
+    #a3befa 0%,   /* blue-200 */
+    #769df3 22%,  /* blue-300 */
+    #3e72e7 55%,  /* blue-500 (anchor) */
+    #294fa4 100%  /* blue-700 */
+  );
+}
+:global(html.dark) .gPurple {
+  --fv-grad: linear-gradient(
+    120deg,
+    #e6dbff 0%,   /* purple-100 */
+    #cdb6ff 22%,  /* purple-200 */
+    #a684ff 55%,  /* kit --accent (dark) */
+    #7a4ce0 100%  /* purple-500 */
+  );
+}
+:global(html.dark) .gBlue {
+  --fv-grad: linear-gradient(
+    120deg,
+    #d0defc 0%,   /* blue-100 */
+    #a3befa 22%,  /* blue-200 */
+    #6b96f2 55%,  /* kit --accent-2 (dark) */
+    #3e72e7 100%  /* blue-500 */
+  );
+}
+
+/* ============================================================================
+ * Display-type palette for the fabric names.
+ *
+ * The kit's chart / status scales read muted at hero scale. These five pull
+ * from Tailwind's palette but shifted one step brighter (200 → 300 → 400 →
+ * 500 anchor, dark mode lifted 100 → 200 → 300 → 400). Warm-heavy set that
+ * pops against the dark canvas: red, teal, yellow, orange, pink. No green
+ * (too close to teal), no blue or violet (reserved for the site duo).
+ * ==========================================================================*/
+
+/* Red (bright coral-red, Tailwind red-400 anchor). */
+.gRed {
+  --fv-grad: linear-gradient(
+    120deg,
+    #fecaca 0%,   /* red-200 */
+    #fca5a5 22%,  /* red-300 */
+    #f87171 55%,  /* red-400 (anchor) */
+    #ef4444 100%  /* red-500 */
+  );
+}
+:global(html.dark) .gRed {
+  --fv-grad: linear-gradient(
+    120deg,
+    #fee2e2 0%,   /* red-100 */
+    #fecaca 22%,  /* red-200 */
+    #fca5a5 55%,  /* red-300 */
+    #f87171 100%  /* red-400 */
+  );
+}
+
+/* Yellow (Tailwind yellow-400 anchor, brighter than amber). */
+.gYellow {
+  --fv-grad: linear-gradient(
+    120deg,
+    #fef08a 0%,   /* yellow-200 */
+    #fde047 22%,  /* yellow-300 */
+    #facc15 55%,  /* yellow-400 (anchor) */
+    #eab308 100%  /* yellow-500 */
+  );
+}
+:global(html.dark) .gYellow {
+  --fv-grad: linear-gradient(
+    120deg,
+    #fef9c3 0%,   /* yellow-100 */
+    #fef08a 22%,  /* yellow-200 */
+    #fde047 55%,  /* yellow-300 */
+    #facc15 100%  /* yellow-400 */
+  );
+}
+
+/* Pink (Tailwind rose-400 anchor, bright warm magenta). */
+.gPink {
+  --fv-grad: linear-gradient(
+    120deg,
+    #fbcfe8 0%,   /* rose-200 */
+    #f9a8d4 22%,  /* rose-300 */
+    #f472b6 55%,  /* rose-400 (anchor) */
+    #ec4899 100%  /* rose-500 */
+  );
+}
+:global(html.dark) .gPink {
+  --fv-grad: linear-gradient(
+    120deg,
+    #fce7f3 0%,   /* rose-100 */
+    #fbcfe8 22%,  /* rose-200 */
+    #f9a8d4 55%,  /* rose-300 */
+    #f472b6 100%  /* rose-400 */
+  );
+}
+
+/* Teal (bright teal, Tailwind teal-400 anchor). */
+.gTeal {
+  --fv-grad: linear-gradient(
+    120deg,
+    #99f6e4 0%,   /* teal-200 */
+    #5eead4 22%,  /* teal-300 */
+    #2dd4bf 55%,  /* teal-400 (anchor) */
+    #14b8a6 100%  /* teal-500 */
+  );
+}
+:global(html.dark) .gTeal {
+  --fv-grad: linear-gradient(
+    120deg,
+    #ccfbf1 0%,   /* teal-100 */
+    #99f6e4 22%,  /* teal-200 */
+    #5eead4 55%,  /* teal-300 */
+    #2dd4bf 100%  /* teal-400 */
+  );
+}
+
+/* Orange (Tailwind orange-400 anchor, bright warm). */
+.gOrange {
+  --fv-grad: linear-gradient(
+    120deg,
+    #fed7aa 0%,   /* orange-200 */
+    #fdba74 22%,  /* orange-300 */
+    #fb923c 55%,  /* orange-400 (anchor) */
+    #f97316 100%  /* orange-500 */
+  );
+}
+:global(html.dark) .gOrange {
+  --fv-grad: linear-gradient(
+    120deg,
+    #ffedd5 0%,   /* orange-100 */
+    #fed7aa 22%,  /* orange-200 */
+    #fdba74 55%,  /* orange-300 */
+    #fb923c 100%  /* orange-400 */
+  );
+}
+
+/* ---- backend chips ---- */
+.chips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--nu-accent-2-line);
+  border-radius: 999px;
+  background: var(--nu-accent-2-wash);
+  color: var(--nu-accent-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+}
+
+/* ---- viz column ---- */
+.viz {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+.vizFrame {
+  position: relative;
+  width: 100%;
+  padding: clamp(18px, 1.8vw, 26px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005)),
+    var(--nu-dot-grid);
+  background-size: auto, var(--nu-dot-size);
+  background-position: center, 0 0;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.vizFrame svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .rows { --step: clamp(24px, 6vw, 32px); }
+  .row,
+  .rowFlip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rowFlip .text { order: 1; }
+  .rowFlip .viz  { order: 2; }
+  .name { font-size: clamp(40px, 10vw, 60px); }
+}
