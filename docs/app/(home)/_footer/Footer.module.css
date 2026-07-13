@@ -39,11 +39,12 @@
   letter-spacing: 0.06em;
 }
 
-/* Mobile: kill the shell gap AND our own top padding so the footer
-   sits flush against the last section's bottom edge. */
+/* Mobile: kill the shell gap that would otherwise push the footer far below
+   the last card, but keep the footer's own top padding symmetric with its
+   bottom so the content sits with breathing room on both sides. */
 @media (max-width: 720px) {
   .footer {
     margin-top: calc(-1 * clamp(80px, 7vw, 100px));
-    padding-top: 0;
+    padding-top: clamp(48px, 8vh, 96px);
   }
 }
