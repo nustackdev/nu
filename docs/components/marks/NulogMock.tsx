@@ -35,7 +35,7 @@ export function NulogMockSvg() {
       height="auto"
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label="nulog running: browser chrome, live pill, five log rows with structured payloads, footer identifying rocksdb + shape."
+      aria-label="nulog running: browser chrome, live pill, five log rows with structured payloads, built-on-nu footer."
     >
       {/* browser window (shared primitive) with URL bar */}
       <BrowserChrome
@@ -148,15 +148,7 @@ export function NulogMockSvg() {
         y={292}
         style={{ fill: accent, fontFamily: mono, fontSize: 10, letterSpacing: '0.22em' }}
       >
-        built on nu · shape=Log · fabric=rocksdb
-      </text>
-      <text
-        x={450}
-        y={292}
-        textAnchor="end"
-        style={{ fill: ink4, fontFamily: mono, fontSize: 9, letterSpacing: '0.24em' }}
-      >
-        one of the apps
+        built on nu
       </text>
     </svg>
   );

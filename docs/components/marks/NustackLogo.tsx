@@ -10,18 +10,29 @@ import { useId } from 'react';
  * T-junctions where line meets square edge round out into small fillets
  * while outer edges stay crisp.
  *
- * Paints in the same silver metallic gradient used by the "stack" portion
- * of the hero wordmark so the mark reads coherent with the type next to it.
+ * Two paint variants:
+ *   silver — default, silver metallic gradient matching the hero wordmark
+ *   accent — diagonal purple→blue (var(--nu-accent) top-left → var(--nu-accent-2)
+ *            bottom-right), for palette-tinted contexts like the floating nav
+ *
+ * `weight` scales the stroke width for the rect + chord (default 3.2). Bump
+ * it down slightly (~3.0) when the logo sits inside a compact chrome.
  */
+type NustackLogoVariant = 'silver' | 'accent';
+
 export function NustackLogo({
   size = 22,
   className,
+  variant = 'silver',
+  weight = 3.2,
 }: {
   size?: number | string;
   className?: string;
+  variant?: NustackLogoVariant;
+  weight?: number;
 }) {
   const gid = useId();
-  const gradId = `nustack-logo-silver-${gid}`;
+  const gradId = `nustack-logo-grad-${gid}`;
   const gooId = `nustack-logo-goo-${gid}`;
   const paint = `url(#${gradId})`;
   return (
@@ -35,20 +46,37 @@ export function NustackLogo({
       aria-hidden
     >
       <defs>
-        <linearGradient
-          id={gradId}
-          gradientUnits="userSpaceOnUse"
-          x1="12"
-          y1="-2"
-          x2="12"
-          y2="26"
-        >
-          <stop offset="0%" stopColor="#eae8f4" />
-          <stop offset="22%" stopColor="#eae8f4" />
-          <stop offset="50%" stopColor="#d5d3e4" />
-          <stop offset="72%" stopColor="#b3b0c8" />
-          <stop offset="100%" stopColor="#eae8f4" />
-        </linearGradient>
+        {variant === 'silver' ? (
+          <linearGradient
+            id={gradId}
+            gradientUnits="userSpaceOnUse"
+            x1="12"
+            y1="-2"
+            x2="12"
+            y2="26"
+          >
+            <stop offset="0%" stopColor="#eae8f4" />
+            <stop offset="22%" stopColor="#eae8f4" />
+            <stop offset="50%" stopColor="#d5d3e4" />
+            <stop offset="72%" stopColor="#b3b0c8" />
+            <stop offset="100%" stopColor="#eae8f4" />
+          </linearGradient>
+        ) : (
+          <linearGradient
+            id={gradId}
+            gradientUnits="userSpaceOnUse"
+            x1="3"
+            y1="3"
+            x2="21"
+            y2="21"
+          >
+            {/* Bright text-tuned purple → blue. Palette accents are
+                background-weight; on the dark nav pill we need higher-
+                luminance stops so the mark reads like foreground type. */}
+            <stop offset="0%" stopColor="#c8a8ff" />
+            <stop offset="100%" stopColor="#7fb0ff" />
+          </linearGradient>
+        )}
 
         <filter
           id={gooId}
@@ -79,7 +107,7 @@ export function NustackLogo({
           height="18"
           rx="5"
           stroke={paint}
-          strokeWidth="3.2"
+          strokeWidth={weight}
           fill={paint}
           fillOpacity="0.08"
         />
@@ -89,7 +117,7 @@ export function NustackLogo({
           x2="20"
           y2="7.5"
           stroke={paint}
-          strokeWidth="3.2"
+          strokeWidth={weight}
           strokeLinecap="round"
         />
         {/* dot at line midpoint: (4 + 16·½, 16 − 8.5·½) */}

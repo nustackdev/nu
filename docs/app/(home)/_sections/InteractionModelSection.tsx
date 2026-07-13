@@ -27,11 +27,10 @@ export function InteractionModelSection() {
           <SectionIntro>
             It is a tight programming model with two atoms:
             <br />
-            <br />
-            <b>Ref</b> - a pointer to any resource (kv key, RPC endpoint,
+            – <b>Ref</b> - a pointer to any resource (kv key, RPC endpoint,
             UI DOM node, anything).
             <br />
-            <b>Interaction</b> - what to do with the resource (read, mutate,
+            – <b>Interaction</b> - what to do with the resource (read, mutate,
             subscribe, etc).
             <br />
             <br />

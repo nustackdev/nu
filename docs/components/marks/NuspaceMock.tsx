@@ -154,7 +154,7 @@ export function NuspaceMockSvg() {
         y={292}
         style={{ fill: accent, fontFamily: mono, fontSize: 10, letterSpacing: '0.22em' }}
       >
-        built on nu · shape=Page · fabric=nudle
+        built on nu
       </text>
     </svg>
   );

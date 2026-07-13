@@ -50,7 +50,7 @@ function LeftTree() {
           <span className={s.dim}>(nu.Shape):</span>
         </Line>
         <Line indent>
-          <span className={s.ident}>n</span>
+          <span className={s.ident}>val</span>
           <span className={s.dim}>: </span>
           <span className={s.tVirtuals}>nu.v.IntRef</span>
         </Line>
@@ -88,7 +88,7 @@ function LeftTree() {
 
           <Container role="virtuals" tag="inc" hint="add 1 to state" tight>
             <Line>
-              <span className={s.tVirtuals}>Counter.n</span>
+              <span className={s.tVirtuals}>Counter.val</span>
               <span className={s.dim}>.inc()</span>
             </Line>
           </Container>
@@ -118,7 +118,7 @@ function LeftTree() {
 
           <Container role="virtuals" tag="subscribe" hint="which ref" tight>
             <Line>
-              <span className={s.tVirtuals}>Counter.n</span>
+              <span className={s.tVirtuals}>Counter.val</span>
               <span className={s.dim}>.on_change(),</span>
             </Line>
           </Container>
@@ -127,7 +127,7 @@ function LeftTree() {
             <Line>
               <span className={s.tUi}>Dashboard.count</span>
               <span className={s.dim}>.set(</span>
-              <span className={s.tVirtuals}>Counter.n</span>
+              <span className={s.tVirtuals}>Counter.val</span>
               <span className={s.dim}>)</span>
             </Line>
           </Container>
@@ -225,20 +225,24 @@ function RightScene() {
 
   const W = 340;
   /* H trimmed to end right below the last label so the SVG never adds
-     empty vertical space when scaled to column width. */
-  const H = 470;
+     empty vertical space when scaled to column width. Last label baseline
+     is at dBottomY + 44 = 426; +2 descender + ~17 breathing → 445. */
+  const H = 445;
 
   // Browser tab: 15% smaller than the previous baseline (bh 240→204, 42
   // fontSize 100→85, internal offsets scaled). Centered horizontally.
   const bw = 255, bh = 204;
   const bx = (W - bw) / 2, by = 20;
-  const wireY1 = by + bh + 16;    // 240
-  const wireY2 = 300;
+  const wireY1 = by + bh;         // 224 — anchored to the browser bottom edge
   const dCx = W / 2;
   const dTopY = 316;              // moved up so the bottom labels stay visible
   const platterGap = 22;
   const platters = 4;
   const dBottomY = dTopY + (platters - 1) * platterGap;
+  // n = 42 chip lives in the gap between platter[1] and platter[2].
+  // bodyCy = dTopY + (1 + 0.5) * platterGap. Chip height 22 (DiskStack default),
+  // so the top edge sits 11 above bodyCy — where the wire lands.
+  const chipTopY = dTopY + 1.5 * platterGap - 11;    // 338
 
   return (
     <svg
@@ -263,11 +267,24 @@ function RightScene() {
         dashboard.count
       </text>
 
-      {/* ===== Wire browser → disk ===== */}
-      <line x1={dCx} y1={wireY1} x2={dCx} y2={wireY2} stroke={ink4} strokeWidth={1} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
-      <text x={dCx + 10} y={(wireY1 + wireY2) / 2 + 3} style={{ fill: ink3, fontFamily: mono, fontSize: 9, letterSpacing: '0.22em' }}>
-        set
-      </text>
+      {/* ===== Wire browser → disk chip (n = 42) =====
+          Dotted accent line runs from just below the browser body straight
+          down to the top edge of the accent chip inside the disk stack.
+          Small anchor dots on both ends to mark the connection cleanly. */}
+      <circle cx={dCx} cy={wireY1} r={2} fill={accent} />
+      <line
+        x1={dCx}
+        y1={wireY1}
+        x2={dCx}
+        y2={chipTopY}
+        stroke={accent}
+        strokeWidth={1}
+        strokeDasharray="2 4"
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+        opacity={0.8}
+      />
+      <circle cx={dCx} cy={chipTopY} r={2} fill={accent} />
 
       {/* ===== Persistent disk (shared primitive, 4-platter stack) ===== */}
       <DiskStack
@@ -277,7 +294,7 @@ function RightScene() {
         platterGap={platterGap}
         rx={68}
         ry={13}
-        chip={{ text: 'n = 42', gap: 1 }}
+        chip={{ text: 'val = 42', gap: 1 }}
       />
 
       {/* Labels under drum */}

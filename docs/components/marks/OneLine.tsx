@@ -84,14 +84,6 @@ export function OneLineSvg({ className }: { className?: string }) {
         strokeWidth={1}
         vectorEffect="non-scaling-stroke"
       />
-      {/* inner corner ticks — the anatomy signature */}
-      <g fill="none" stroke={accent} strokeWidth={1} vectorEffect="non-scaling-stroke" opacity={0.55}>
-        <path d={`M ${panelX} ${panelY + 10} L ${panelX} ${panelY} L ${panelX + 10} ${panelY}`} />
-        <path d={`M ${panelX + panelW - 10} ${panelY} L ${panelX + panelW} ${panelY} L ${panelX + panelW} ${panelY + 10}`} />
-        <path d={`M ${panelX} ${panelBottomY - 10} L ${panelX} ${panelBottomY} L ${panelX + 10} ${panelBottomY}`} />
-        <path d={`M ${panelX + panelW - 10} ${panelBottomY} L ${panelX + panelW} ${panelBottomY} L ${panelX + panelW} ${panelBottomY - 10}`} />
-      </g>
-
       {/* ============ THE EXPRESSION ============ */}
       {/* counter_ref — Ref */}
       <text

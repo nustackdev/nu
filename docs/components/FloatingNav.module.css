@@ -2,6 +2,10 @@
  * FloatingNav — the pill nav that replaces fumadocs' default top bar.
  * Fixed to the viewport, centered horizontally, small iPhone-island body
  * with a dark tint + strong blur so it stays legible over any section.
+ *
+ * Every child sits in the same `.navIcon` slot (32×32 rounded button with
+ * the same hover treatment) — logo included — so the row reads as one
+ * consistent strip of icons with a single uniform gap.
  * ==========================================================================*/
 
 .floatingNav {
@@ -20,11 +24,10 @@
 }
 .navPill {
   pointer-events: auto;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 14px;
-  padding: 8px 10px 8px 18px;
-  min-height: 48px;
+  gap: 3px;
+  padding: 7px 13px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(25, 25, 28, 0.67);
@@ -42,36 +45,19 @@
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .navPill { background: rgba(25, 25, 28, 0.92); }
 }
-.navBrand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--nu-ink, #eae8f4);
-  text-decoration: none;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 17px;
-  letter-spacing: -0.02em;
-  padding: 2px 4px;
-}
 
-.navRight {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: auto;
-}
 .navIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 35px;
+  height: 35px;
   border-radius: 999px;
   border: 0;
   background: transparent;
   color: var(--nu-ink-2, #b3b0c8);
   cursor: pointer;
+  text-decoration: none;
   transition: color .18s ease, background .18s ease;
 }
 .navIcon:hover {

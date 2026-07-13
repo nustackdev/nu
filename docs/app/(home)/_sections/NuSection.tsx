@@ -36,6 +36,10 @@ export function NuSection() {
             <GithubMark size={14} />
             <RepoName>nustackdev/nu</RepoName>
           </Cta>
+          <Cta href="https://github.com/nustackdev/nu/tree/main/examples">
+            <GithubMark size={14} />
+            <span>See more examples</span>
+          </Cta>
         </ActionRow>
       </SectionCol>
     </SectionCard>
