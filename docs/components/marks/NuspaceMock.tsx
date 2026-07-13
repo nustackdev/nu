@@ -1,11 +1,11 @@
 import s from './marks.module.css';
+import { BrowserChrome } from './primitives/BrowserChrome';
 
 /**
  * nuspace — workspace mock, calm cut.
  *
- * Browser chrome, sidebar with two pages, page body with one live Ref pill
- * and a footer strip identifying the substrate. Kept deliberately quiet so
- * it reads as one glance, not a screenshot.
+ * BrowserChrome (shared) hosts a sidebar with two pages, a page body with
+ * one live Ref pill and a footer strip identifying the substrate.
  */
 export function NuspaceMockSvg() {
   const rule = 'var(--nu-rule)';
@@ -19,7 +19,6 @@ export function NuspaceMockSvg() {
   const accentLine = 'var(--nu-accent-line)';
   const accent2 = 'var(--nu-accent-2)';
   const mono = 'var(--font-mono)';
-  const bg = 'var(--color-fd-background)';
 
   return (
     <svg
@@ -30,40 +29,17 @@ export function NuspaceMockSvg() {
       role="img"
       aria-label="nuspace running: browser chrome, sidebar, a workspace page with one live Nu Ref pill in the body."
     >
-      {/* browser window */}
-      <rect
+      {/* browser window (shared primitive) with URL bar */}
+      <BrowserChrome
         x={16}
         y={16}
         width={448}
         height={288}
-        fill={bg}
-        stroke={rule}
-        strokeWidth={1}
-        vectorEffect="non-scaling-stroke"
+        chromeHeight={28}
+        url="nu://nuspace/q3-plan"
+        dotRadius={2.6}
+        dotSpacing={10}
       />
-      {/* chrome bar */}
-      <line x1={16} y1={44} x2={464} y2={44} stroke={rule} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-      {[0, 1, 2].map((i) => (
-        <circle key={i} cx={30 + i * 10} cy={30} r={2.6} fill={ink4} />
-      ))}
-      {/* address bar */}
-      <rect
-        x={80}
-        y={22}
-        width={368}
-        height={16}
-        fill="var(--nu-code-bg-2, transparent)"
-        stroke={ruleSoft}
-        strokeWidth={0.5}
-        vectorEffect="non-scaling-stroke"
-      />
-      <text
-        x={90}
-        y={34}
-        style={{ fill: ink3, fontFamily: mono, fontSize: 9.5, letterSpacing: '0.04em' }}
-      >
-        nu://nuspace/q3-plan
-      </text>
 
       {/* app name + live pill */}
       <text
@@ -104,6 +80,7 @@ export function NuspaceMockSvg() {
         y={136}
         width={94}
         height={18}
+        rx={3}
         fill={accentWash}
         stroke={accentLine}
         strokeWidth={1}
@@ -146,10 +123,10 @@ export function NuspaceMockSvg() {
         y={166}
         width={54}
         height={16}
-        rx={2}
+        rx={3}
         fill={accentWash}
         stroke={accentLine}
-        strokeWidth={0.8}
+        strokeWidth={1}
         vectorEffect="non-scaling-stroke"
       />
       <text
@@ -166,6 +143,7 @@ export function NuspaceMockSvg() {
         y={272}
         width={448}
         height={32}
+        rx={3}
         fill={accentWash}
         stroke={accentLine}
         strokeWidth={1}

@@ -111,6 +111,10 @@
 /* Silver stops kept close to Inter's neutral gray family. In light mode the
    silver is deeper so it contrasts against white; in dark mode it lifts. */
 
+/* Per-row `--fab-hue*` pulls from the shared silver-woven tokens
+   (declared once in _tokens.module.css). The `--fv-grad` silver → hue
+   name gradient stays local because its silver stops are only used here. */
+
 /* --- mem: steel-blue --- */
 .row[data-fabric="mem"] {
   --fv-grad: linear-gradient(
@@ -120,10 +124,10 @@
     #5a7699 55%,  /* steel-blue lightened */
     #3f5a80 100%  /* steel-blue anchor */
   );
-  --fab-hue:       #7a95b8;
-  --fab-hue-soft:  rgba(122, 149, 184, 0.16);
-  --fab-hue-wash:  rgba(122, 149, 184, 0.09);
-  --fab-hue-line:  rgba(122, 149, 184, 0.40);
+  --fab-hue:       var(--nu-fab-steel);
+  --fab-hue-soft:  var(--nu-fab-steel-soft);
+  --fab-hue-wash:  var(--nu-fab-steel-wash);
+  --fab-hue-line:  var(--nu-fab-steel-line);
 }
 
 /* --- virtuals: muted sage --- */
@@ -135,10 +139,10 @@
     #6a8971 55%,   /* sage lightened */
     #4d6b55 100%   /* sage anchor */
   );
-  --fab-hue:       #8ba894;
-  --fab-hue-soft:  rgba(139, 168, 148, 0.16);
-  --fab-hue-wash:  rgba(139, 168, 148, 0.09);
-  --fab-hue-line:  rgba(139, 168, 148, 0.40);
+  --fab-hue:       var(--nu-fab-sage);
+  --fab-hue-soft:  var(--nu-fab-sage-soft);
+  --fab-hue-wash:  var(--nu-fab-sage-wash);
+  --fab-hue-line:  var(--nu-fab-sage-line);
 }
 
 /* --- invisibles: soft plum --- */
@@ -150,10 +154,10 @@
     #7f5c8e 55%,   /* plum lightened */
     #5f4571 100%   /* plum anchor */
   );
-  --fab-hue:       #a68ab2;
-  --fab-hue-soft:  rgba(166, 138, 178, 0.16);
-  --fab-hue-wash:  rgba(166, 138, 178, 0.09);
-  --fab-hue-line:  rgba(166, 138, 178, 0.40);
+  --fab-hue:       var(--nu-fab-plum);
+  --fab-hue-soft:  var(--nu-fab-plum-soft);
+  --fab-hue-wash:  var(--nu-fab-plum-wash);
+  --fab-hue-line:  var(--nu-fab-plum-line);
 }
 
 /* --- ray: warm amber --- */
@@ -165,10 +169,10 @@
     #a68048 55%,   /* amber lightened */
     #86662f 100%   /* amber anchor */
   );
-  --fab-hue:       #c8a26e;
-  --fab-hue-soft:  rgba(200, 162, 110, 0.16);
-  --fab-hue-wash:  rgba(200, 162, 110, 0.09);
-  --fab-hue-line:  rgba(200, 162, 110, 0.40);
+  --fab-hue:       var(--nu-fab-amber);
+  --fab-hue-soft:  var(--nu-fab-amber-soft);
+  --fab-hue-wash:  var(--nu-fab-amber-wash);
+  --fab-hue-line:  var(--nu-fab-amber-line);
 }
 
 /* --- ui: muted teal --- */
@@ -180,77 +184,58 @@
     #5d97a0 55%,   /* teal lightened */
     #3d7880 100%   /* teal anchor */
   );
-  --fab-hue:       #7fb0b8;
-  --fab-hue-soft:  rgba(127, 176, 184, 0.16);
-  --fab-hue-wash:  rgba(127, 176, 184, 0.09);
-  --fab-hue-line:  rgba(127, 176, 184, 0.40);
+  --fab-hue:       var(--nu-fab-teal);
+  --fab-hue-soft:  var(--nu-fab-teal-soft);
+  --fab-hue-wash:  var(--nu-fab-teal-wash);
+  --fab-hue-line:  var(--nu-fab-teal-line);
 }
 
-/* Dark-mode: silver stops lift, hue stops shift up one step. */
+/* Dark-mode: only the silver gradients need per-row overrides
+   (the --fab-hue tokens already dark-flip inside _tokens.module.css). */
 :global(html.dark) .row[data-fabric="mem"] {
   --fv-grad: linear-gradient(
     120deg,
-    #dde1e8 0%,   /* silver highlight */
-    #bcc2ce 22%,  /* silver mid */
-    #9bb0d0 55%,  /* steel-blue lifted */
-    #7a95b8 100%  /* steel-blue */
+    #dde1e8 0%,
+    #bcc2ce 22%,
+    #9bb0d0 55%,
+    #7a95b8 100%
   );
-  --fab-hue:       #9bb0d0;
-  --fab-hue-soft:  rgba(155, 176, 208, 0.18);
-  --fab-hue-wash:  rgba(155, 176, 208, 0.10);
-  --fab-hue-line:  rgba(155, 176, 208, 0.42);
 }
 :global(html.dark) .row[data-fabric="virtuals"] {
   --fv-grad: linear-gradient(
     120deg,
     #dde1e8 0%,
     #bcc2ce 22%,
-    #a8c0af 55%,   /* sage lifted */
+    #a8c0af 55%,
     #8ba894 100%
   );
-  --fab-hue:       #a8c0af;
-  --fab-hue-soft:  rgba(168, 192, 175, 0.18);
-  --fab-hue-wash:  rgba(168, 192, 175, 0.10);
-  --fab-hue-line:  rgba(168, 192, 175, 0.42);
 }
 :global(html.dark) .row[data-fabric="invisibles"] {
   --fv-grad: linear-gradient(
     120deg,
     #dde1e8 0%,
     #bcc2ce 22%,
-    #bda2c8 55%,   /* plum lifted */
+    #bda2c8 55%,
     #a68ab2 100%
   );
-  --fab-hue:       #bda2c8;
-  --fab-hue-soft:  rgba(189, 162, 200, 0.18);
-  --fab-hue-wash:  rgba(189, 162, 200, 0.10);
-  --fab-hue-line:  rgba(189, 162, 200, 0.42);
 }
 :global(html.dark) .row[data-fabric="ray"] {
   --fv-grad: linear-gradient(
     120deg,
     #dde1e8 0%,
     #bcc2ce 22%,
-    #dab88a 55%,   /* amber lifted */
+    #dab88a 55%,
     #c8a26e 100%
   );
-  --fab-hue:       #dab88a;
-  --fab-hue-soft:  rgba(218, 184, 138, 0.18);
-  --fab-hue-wash:  rgba(218, 184, 138, 0.10);
-  --fab-hue-line:  rgba(218, 184, 138, 0.42);
 }
 :global(html.dark) .row[data-fabric="ui"] {
   --fv-grad: linear-gradient(
     120deg,
     #dde1e8 0%,
     #bcc2ce 22%,
-    #a3ced4 55%,   /* teal lifted */
+    #a3ced4 55%,
     #7fb0b8 100%
   );
-  --fab-hue:       #a3ced4;
-  --fab-hue-soft:  rgba(163, 206, 212, 0.18);
-  --fab-hue-wash:  rgba(163, 206, 212, 0.10);
-  --fab-hue-line:  rgba(163, 206, 212, 0.42);
 }
 
 /* Route the per-row fabric hue into every token the glyph + chips consume.

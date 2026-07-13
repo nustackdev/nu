@@ -1,4 +1,6 @@
 import { type ReactNode } from 'react';
+import { BrowserChrome } from '@/components/marks/primitives/BrowserChrome';
+import { DiskStack } from '@/components/marks/primitives/DiskStack';
 import s from './HeroViz.module.css';
 
 /**
@@ -207,71 +209,43 @@ function HintArrow() {
 }
 
 /* ============================================================================
- * RightScene — fabric-clean SVG. Browser chrome renders 42, dashed wire
- * connects down to a 3-disk rocksdb drum. Flat hairlines, no gradients,
- * one accent-wash surface on the n = 42 chip. Returns a bare <svg>; the
- * surrounding dark-dotted `.right` container is provided by the wrap.
- *
- * Note: the browser body is filled with `--color-fd-background` (solid
- * dark) so it stands out from the outer dotted substrate — reads as
- * "rendered content" inside a window.
+ * RightScene — fabric-clean SVG. Browser chrome (shared primitive) renders 42,
+ * dashed wire connects down to a rocksdb platter-stack (shared primitive).
+ * Flat hairlines, no gradients, single accent-wash on the n = 42 chip. Accent
+ * hue is silver-woven steel-blue (--nu-accent* is remapped to --nu-fab-steel
+ * on the wrap in HeroViz.module.css).
  * ==========================================================================*/
 function RightScene() {
   const ink = 'var(--nu-ink)';
   const ink3 = 'var(--nu-ink-3)';
   const ink4 = 'var(--nu-ink-4)';
-  const rule = 'var(--nu-rule)';
   const ruleSoft = 'var(--nu-rule-2)';
-  const accent2 = 'var(--nu-accent-2)';
-  const accent2Wash = 'var(--nu-accent-2-wash)';
-  const accent2Line = 'var(--nu-accent-2-line)';
-  const bg = 'var(--color-fd-background)';
+  const accent = 'var(--nu-accent)';
   const mono = 'var(--font-mono)';
 
   const W = 340;
-  /* H trimmed to end right below the last label ("persisted · survives
-     restart" baseline ≈ y 476). Trailing whitespace inside the viewBox would
-     stretch vertically when the svg scales to width — the padded outer
-     .right pane provides all the bottom air we need. */
-  const H = 486;
+  /* H trimmed to end right below the last label so the SVG never adds
+     empty vertical space when scaled to column width. */
+  const H = 470;
 
   const bx = 20, by = 20, bw = W - 40, bh = 240;
   const wireY1 = by + bh + 16;
   const wireY2 = 348;
   const dCx = W / 2;
-  const dRx = 68;
-  const dRy = 13;
-  const diskBody = 22;
-  const disks = 3;
   const dTopY = 366;
-  const dBottomY = dTopY + disks * diskBody;
+  const platterGap = 22;
+  const platters = 4;
+  const dBottomY = dTopY + (platters - 1) * platterGap;
 
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label="Dashboard rendered live in a browser tab showing 42, wired down into a 3-disk rocksdb persistence drum."
+      aria-label="Dashboard rendered live in a browser tab showing 42, wired down into a rocksdb persistence disk."
     >
-      {/* ===== Browser chrome ===== */}
-      <rect x={bx} y={by} width={bw} height={bh} rx={4} fill={bg} stroke={rule} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-      <line x1={bx} y1={by + 26} x2={bx + bw} y2={by + 26} stroke={rule} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-
-      {/* Traffic lights */}
-      {[0, 1, 2].map((i) => (
-        <circle key={i} cx={bx + 12 + i * 10} cy={by + 13} r={2.4} fill={ink4} />
-      ))}
-
-      {/* URL text */}
-      <text x={bx + 54} y={by + 17} style={{ fill: ink3, fontFamily: mono, fontSize: 9, letterSpacing: '0.08em' }}>
-        nu://dashboard
-      </text>
-
-      {/* Live dot */}
-      <circle cx={bx + bw - 34} cy={by + 13} r={2.4} fill={accent2} className={s.blink} />
-      <text x={bx + bw - 28} y={by + 16} style={{ fill: accent2, fontFamily: mono, fontSize: 8.5, letterSpacing: '0.24em' }}>
-        live
-      </text>
+      {/* ===== Browser chrome (shared primitive) ===== */}
+      <BrowserChrome x={bx} y={by} width={bw} height={bh} url="nu://dashboard" live />
 
       {/* Browser body content */}
       <text x={bx + 14} y={by + 52} style={{ fill: ink4, fontFamily: mono, fontSize: 9.5, letterSpacing: '0.24em' }}>
@@ -286,38 +260,25 @@ function RightScene() {
         dashboard.count
       </text>
 
-      {/* ===== Wire browser → drum ===== */}
+      {/* ===== Wire browser → disk ===== */}
       <line x1={dCx} y1={wireY1} x2={dCx} y2={wireY2} stroke={ink4} strokeWidth={1} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
       <text x={dCx + 10} y={(wireY1 + wireY2) / 2 + 3} style={{ fill: ink3, fontFamily: mono, fontSize: 9, letterSpacing: '0.22em' }}>
         set
       </text>
 
-      {/* ===== 3-disk drum: flat, hairline ===== */}
-      {Array.from({ length: disks }).map((_, i) => {
-        const y1 = dTopY + i * diskBody;
-        const y2 = y1 + diskBody;
-        return (
-          <g key={i}>
-            <path
-              d={`M ${dCx - dRx} ${y1} L ${dCx - dRx} ${y2} A ${dRx} ${dRy} 0 0 0 ${dCx + dRx} ${y2} L ${dCx + dRx} ${y1} Z`}
-              fill="none" stroke={ink3} strokeWidth={1} vectorEffect="non-scaling-stroke"
-            />
-            <ellipse cx={dCx} cy={y1} rx={dRx} ry={dRy} fill="none" stroke={ink3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-          </g>
-        );
-      })}
-
-      {/* n = 42 chip on middle disk face (the one accent-wash surface) */}
-      <rect
-        x={dCx - 34} y={dTopY + diskBody + diskBody / 2 - 11} width={68} height={22} rx={3}
-        fill={accent2Wash} stroke={accent2Line} strokeWidth={1} vectorEffect="non-scaling-stroke"
+      {/* ===== Rocksdb disk (shared primitive, 4-platter stack) ===== */}
+      <DiskStack
+        cx={dCx}
+        topY={dTopY}
+        platters={platters}
+        platterGap={platterGap}
+        rx={68}
+        ry={13}
+        chip={{ text: 'n = 42', gap: 1 }}
       />
-      <text x={dCx} y={dTopY + diskBody + diskBody / 2 + 4} textAnchor="middle" style={{ fill: accent2, fontFamily: mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em' }}>
-        n = 42
-      </text>
 
       {/* Labels under drum */}
-      <text x={dCx} y={dBottomY + 26} textAnchor="middle" style={{ fill: accent2, fontFamily: mono, fontSize: 10, letterSpacing: '0.28em', fontWeight: 700 }}>
+      <text x={dCx} y={dBottomY + 26} textAnchor="middle" style={{ fill: accent, fontFamily: mono, fontSize: 10, letterSpacing: '0.28em', fontWeight: 700 }}>
         rocksdb
       </text>
       <text x={dCx} y={dBottomY + 44} textAnchor="middle" style={{ fill: ink3, fontFamily: mono, fontSize: 10, letterSpacing: '0.02em' }}>

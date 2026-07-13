@@ -21,7 +21,7 @@ import {
  */
 export function InteractionModelSection() {
   return (
-    <SectionCard hue="s1" id="interaction-model">
+    <SectionCard hue="s1" vizHue="sage" id="interaction-model">
       <SectionSplit>
         <SectionCol>
           <SectionTitle>We build on the interaction model.</SectionTitle>

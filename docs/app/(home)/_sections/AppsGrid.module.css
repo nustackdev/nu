@@ -134,10 +134,10 @@
     #a68048 55%,
     #86662f 100%
   );
-  --app-hue:       #c8a26e;
-  --app-hue-soft:  rgba(200, 162, 110, 0.16);
-  --app-hue-wash:  rgba(200, 162, 110, 0.09);
-  --app-hue-line:  rgba(200, 162, 110, 0.40);
+  --app-hue:       var(--nu-fab-amber);
+  --app-hue-soft:  var(--nu-fab-amber-soft);
+  --app-hue-wash:  var(--nu-fab-amber-wash);
+  --app-hue-line:  var(--nu-fab-amber-line);
 }
 .row[data-app="nuspace"] {
   --fv-grad: linear-gradient(
@@ -147,12 +147,14 @@
     #7f5c8e 55%,
     #5f4571 100%
   );
-  --app-hue:       #a68ab2;
-  --app-hue-soft:  rgba(166, 138, 178, 0.16);
-  --app-hue-wash:  rgba(166, 138, 178, 0.09);
-  --app-hue-line:  rgba(166, 138, 178, 0.40);
+  --app-hue:       var(--nu-fab-plum);
+  --app-hue-soft:  var(--nu-fab-plum-soft);
+  --app-hue-wash:  var(--nu-fab-plum-wash);
+  --app-hue-line:  var(--nu-fab-plum-line);
 }
 
+/* Dark-mode: only the silver gradient stops need overriding
+   (--fab hues auto-flip via _tokens.module.css). */
 :global(html.dark) .row[data-app="nulog"] {
   --fv-grad: linear-gradient(
     120deg,
@@ -161,10 +163,6 @@
     #dab88a 55%,
     #c8a26e 100%
   );
-  --app-hue:       #dab88a;
-  --app-hue-soft:  rgba(218, 184, 138, 0.18);
-  --app-hue-wash:  rgba(218, 184, 138, 0.10);
-  --app-hue-line:  rgba(218, 184, 138, 0.42);
 }
 :global(html.dark) .row[data-app="nuspace"] {
   --fv-grad: linear-gradient(
@@ -174,10 +172,6 @@
     #bda2c8 55%,
     #a68ab2 100%
   );
-  --app-hue:       #bda2c8;
-  --app-hue-soft:  rgba(189, 162, 200, 0.18);
-  --app-hue-wash:  rgba(189, 162, 200, 0.10);
-  --app-hue-line:  rgba(189, 162, 200, 0.42);
 }
 
 /* Route per-row hue into every token the mock SVGs and repo button read. */

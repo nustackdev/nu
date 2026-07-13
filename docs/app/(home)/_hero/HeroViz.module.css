@@ -236,22 +236,26 @@
     var(--nu-dot-grid);
   background-size: auto, var(--nu-dot-size);
   background-position: center, 0 0;
+
+  /* Silver-woven hue for the right scene — remaps --nu-accent* to steel-blue
+     so the shared BrowserChrome + DiskStack primitives (which read those
+     tokens) auto-tint without any props. */
+  --nu-accent:      var(--nu-fab-steel);
+  --nu-accent-soft: var(--nu-fab-steel-soft);
+  --nu-accent-wash: var(--nu-fab-steel-wash);
+  --nu-accent-line: var(--nu-fab-steel-line);
+  --nu-accent-2:      var(--nu-fab-steel);
+  --nu-accent-2-soft: var(--nu-fab-steel-soft);
+  --nu-accent-2-wash: var(--nu-fab-steel-wash);
+  --nu-accent-2-line: var(--nu-fab-steel-line);
 }
 .right > svg {
   width: 100%;
   height: auto;
   display: block;
 }
-.right .blink {
-  animation: heroVizBlink 2.4s ease-in-out infinite;
-}
-@keyframes heroVizBlink {
-  0%, 60%, 100% { opacity: 1; }
-  70%, 90%      { opacity: 0.35; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .rightSvg .blink { animation: none; }
-}
+/* Blink animation lives in components/marks/marks.module.css (`.blink`) —
+   the shared BrowserChrome primitive already applies it. */
 
 /* Narrow viewports — drop the hint gutter, stack the columns */
 @media (max-width: 900px) {

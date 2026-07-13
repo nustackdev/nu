@@ -35,6 +35,53 @@
   --sec-soft:   var(--nu-accent-soft);
 }
 
+/* ============================================================================
+ * Viz-hue scope — remap --nu-accent[-2] to a silver-woven fabric hue for
+ * every shared primitive inside this section (BrowserChrome, DiskStack, etc).
+ * Fabric/apps rows override again at .row scope; this handles the sections
+ * that don't have per-row overrides.
+ * ==========================================================================*/
+.section[data-viz-hue="steel"]  { --nu-accent: var(--nu-fab-steel);
+                                  --nu-accent-soft: var(--nu-fab-steel-soft);
+                                  --nu-accent-wash: var(--nu-fab-steel-wash);
+                                  --nu-accent-line: var(--nu-fab-steel-line);
+                                  --nu-accent-2: var(--nu-fab-steel);
+                                  --nu-accent-2-soft: var(--nu-fab-steel-soft);
+                                  --nu-accent-2-wash: var(--nu-fab-steel-wash);
+                                  --nu-accent-2-line: var(--nu-fab-steel-line); }
+.section[data-viz-hue="sage"]   { --nu-accent: var(--nu-fab-sage);
+                                  --nu-accent-soft: var(--nu-fab-sage-soft);
+                                  --nu-accent-wash: var(--nu-fab-sage-wash);
+                                  --nu-accent-line: var(--nu-fab-sage-line);
+                                  --nu-accent-2: var(--nu-fab-steel);
+                                  --nu-accent-2-soft: var(--nu-fab-steel-soft);
+                                  --nu-accent-2-wash: var(--nu-fab-steel-wash);
+                                  --nu-accent-2-line: var(--nu-fab-steel-line); }
+.section[data-viz-hue="teal"]   { --nu-accent: var(--nu-fab-teal);
+                                  --nu-accent-soft: var(--nu-fab-teal-soft);
+                                  --nu-accent-wash: var(--nu-fab-teal-wash);
+                                  --nu-accent-line: var(--nu-fab-teal-line);
+                                  --nu-accent-2: var(--nu-fab-steel);
+                                  --nu-accent-2-soft: var(--nu-fab-steel-soft);
+                                  --nu-accent-2-wash: var(--nu-fab-steel-wash);
+                                  --nu-accent-2-line: var(--nu-fab-steel-line); }
+.section[data-viz-hue="plum"]   { --nu-accent: var(--nu-fab-plum);
+                                  --nu-accent-soft: var(--nu-fab-plum-soft);
+                                  --nu-accent-wash: var(--nu-fab-plum-wash);
+                                  --nu-accent-line: var(--nu-fab-plum-line);
+                                  --nu-accent-2: var(--nu-fab-plum);
+                                  --nu-accent-2-soft: var(--nu-fab-plum-soft);
+                                  --nu-accent-2-wash: var(--nu-fab-plum-wash);
+                                  --nu-accent-2-line: var(--nu-fab-plum-line); }
+.section[data-viz-hue="amber"]  { --nu-accent: var(--nu-fab-amber);
+                                  --nu-accent-soft: var(--nu-fab-amber-soft);
+                                  --nu-accent-wash: var(--nu-fab-amber-wash);
+                                  --nu-accent-line: var(--nu-fab-amber-line);
+                                  --nu-accent-2: var(--nu-fab-amber);
+                                  --nu-accent-2-soft: var(--nu-fab-amber-soft);
+                                  --nu-accent-2-wash: var(--nu-fab-amber-wash);
+                                  --nu-accent-2-line: var(--nu-fab-amber-line); }
+
 .sectionCard {
   position: relative;
   padding: clamp(28px, 3vw, 44px);

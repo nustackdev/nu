@@ -1,12 +1,15 @@
 import type { ReactNode } from 'react';
 import s from './marks.module.css';
+import { BrowserChrome } from './primitives/BrowserChrome';
+import { DiskStack } from './primitives/DiskStack';
 
 /**
  * FabricGlyphs — one small SVG per fabric surface.
  *
  * Each glyph is a 480x220 canvas so the rows line up in FabricsSection.
  * Deliberately quieter than app mocks — these advertise a substrate shape,
- * not a running screen. Same token palette as the other marks.
+ * not a running screen. Palette follows the row's silver-woven hue via
+ * --nu-accent[-2] scope override in FabricsSection.module.css.
  */
 
 const MONO = 'var(--font-mono)';
@@ -156,23 +159,16 @@ export function VirtualsGlyph() {
         substrate · shapes
       </text>
 
-      {/* disk stack */}
-      <g transform={`translate(${cx - 40} ${cy - 40})`}>
-        <ellipse cx={40} cy={6} rx={36} ry={7} fill="none" stroke={INK3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-        <line x1={4} y1={6} x2={4} y2={72} stroke={INK3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-        <line x1={76} y1={6} x2={76} y2={72} stroke={INK3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-        <ellipse cx={40} cy={30} rx={36} ry={7} fill="none" stroke={INK3} strokeWidth={1} opacity={0.7} vectorEffect="non-scaling-stroke" />
-        <ellipse cx={40} cy={54} rx={36} ry={7} fill="none" stroke={INK3} strokeWidth={1} opacity={0.55} vectorEffect="non-scaling-stroke" />
-        <ellipse cx={40} cy={72} rx={36} ry={7} fill="none" stroke={INK3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-        <text
-          x={40}
-          y={46}
-          textAnchor="middle"
-          style={{ fill: INK, fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, letterSpacing: '0.22em' }}
-        >
-          tkv
-        </text>
-      </g>
+      {/* disk stack (shared primitive) — 4 platters, tkv label in body */}
+      <DiskStack
+        cx={cx}
+        topY={cy - 34}
+        platters={4}
+        platterGap={22}
+        rx={36}
+        ry={7}
+        bodyLabel={{ text: 'tkv', fontSize: 13 }}
+      />
 
       {/* backend swap-plates */}
       {(['rocksdb', 'lmdb', 'acid-inmem', 'text'] as const).map((b, i) => {
@@ -185,11 +181,11 @@ export function VirtualsGlyph() {
               y={V.h - 46}
               width={92}
               height={26}
-              rx={4}
+              rx={3}
               fill={active ? ACCENT2_WASH : 'transparent'}
               stroke={active ? ACCENT2 : RULE_SOFT}
               strokeWidth={1}
-              strokeDasharray={active ? undefined : '2 3'}
+              strokeDasharray={active ? undefined : '3 3'}
               vectorEffect="non-scaling-stroke"
             />
             <text
@@ -238,6 +234,7 @@ export function InvisiblesGlyph() {
           y={y - 30}
           width={80}
           height={60}
+          rx={3}
           fill="none"
           stroke={INK3}
           strokeWidth={1}
@@ -268,6 +265,7 @@ export function InvisiblesGlyph() {
           y={y - 30}
           width={80}
           height={60}
+          rx={3}
           fill="none"
           stroke={INK3}
           strokeWidth={1}
@@ -299,7 +297,7 @@ export function InvisiblesGlyph() {
         y2={y}
         stroke={ACCENT2}
         strokeWidth={1}
-        strokeDasharray="4 5"
+        strokeDasharray="3 3"
         vectorEffect="non-scaling-stroke"
         opacity={0.75}
       />
@@ -310,7 +308,7 @@ export function InvisiblesGlyph() {
           y={y - 12}
           width={68}
           height={22}
-          rx={11}
+          rx={3}
           fill={ACCENT2_WASH}
           stroke={ACCENT2}
           strokeWidth={1}
@@ -393,7 +391,7 @@ export function RayGlyph() {
             y2={y0 + br * (size + gap) + size / 2}
             stroke={ACCENT2}
             strokeWidth={1}
-            strokeDasharray="2 4"
+            strokeDasharray="3 3"
             vectorEffect="non-scaling-stroke"
             opacity={0.55}
           />
@@ -422,29 +420,8 @@ export function UiGlyph() {
         rendering
       </text>
 
-      {/* browser window */}
-      <rect
-        x={wx}
-        y={wy}
-        width={ww}
-        height={wh}
-        fill="var(--color-fd-background)"
-        stroke={INK3}
-        strokeWidth={1}
-        vectorEffect="non-scaling-stroke"
-      />
-      <line
-        x1={wx}
-        y1={wy + 18}
-        x2={wx + ww}
-        y2={wy + 18}
-        stroke={RULE}
-        strokeWidth={1}
-        vectorEffect="non-scaling-stroke"
-      />
-      {[0, 1, 2].map((i) => (
-        <circle key={i} cx={wx + 10 + i * 6} cy={wy + 9} r={1.8} fill={INK4} />
-      ))}
+      {/* browser window (shared primitive) */}
+      <BrowserChrome x={wx} y={wy} width={ww} height={wh} />
 
       {/* live value */}
       <text
@@ -469,7 +446,7 @@ export function UiGlyph() {
           y={wy + wh / 2 + 18}
           width={88}
           height={20}
-          rx={10}
+          rx={3}
           fill={ACCENT_WASH}
           stroke={ACCENT}
           strokeWidth={1}

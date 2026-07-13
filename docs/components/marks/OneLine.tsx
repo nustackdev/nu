@@ -1,13 +1,18 @@
+import { BrowserChrome } from './primitives/BrowserChrome';
+import { DiskStack } from './primitives/DiskStack';
+
 const MONO = 'var(--font-mono)';
 
 /**
- * v2 — one-line-two-places, made informative (anatomy-panel edition).
- *   The code sits inside a wide accent-wash panel — like the interaction-anatomy
- *   variant — rather than a file card. Bigger expression, quieter chrome.
- *   Colour code:
- *     purple = Refs (identifiers + their hint chips)
- *     blue   = Interaction (.store call + its hint chip)
- *   v1 snapshot lives at `./one-line-v1.tsx`.
+ * OneLine — anatomy of one Nu interaction: `counter_ref.store(db_ref)`.
+ *
+ *   Two Ref chips (--nu-accent) drop from the two identifiers to a browser
+ *   tab and a rocksdb disk (shared primitives). One Interaction chip
+ *   (--nu-accent-2) drops from `.store(` between them.
+ *
+ * Palette is scoped at the section level (InteractionModelSection wraps in
+ * a hue-carrier that remaps --nu-accent → sage, --nu-accent-2 → steel), so
+ * this file stays semantic — it just says "Ref" and "Interaction".
  */
 export function OneLineSvg({ className }: { className?: string }) {
   const accent = 'var(--nu-accent)';
@@ -15,7 +20,6 @@ export function OneLineSvg({ className }: { className?: string }) {
   const accentLine = 'var(--nu-accent-line)';
   const accent2 = 'var(--nu-accent-2)';
   const accent2Wash = 'var(--nu-accent-2-wash)';
-  const rule = 'var(--nu-rule)';
   const ink = 'var(--nu-ink)';
   const ink3 = 'var(--nu-ink-3)';
 
@@ -65,7 +69,7 @@ export function OneLineSvg({ className }: { className?: string }) {
       height="auto"
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label="Anatomy of one Nu interaction — counter_ref.store(db_ref). Purple ui-ref/disk-ref chips label the Refs and drop to a browser tab and rocksdb disk; a blue leader drops from .store between them to an `interaction` chip below."
+      aria-label="Anatomy of one Nu interaction — counter_ref.store(db_ref). Ref chips label the identifiers and drop to a browser tab and rocksdb disk; an Interaction chip drops from .store between them."
       className={className}
     >
       {/* ============ EXPRESSION PANEL — anatomy-style accent wash ============ */}
@@ -74,7 +78,7 @@ export function OneLineSvg({ className }: { className?: string }) {
         y={panelY}
         width={panelW}
         height={panelH}
-        rx={4}
+        rx={3}
         fill={accentWash}
         stroke={accentLine}
         strokeWidth={1}
@@ -89,7 +93,7 @@ export function OneLineSvg({ className }: { className?: string }) {
       </g>
 
       {/* ============ THE EXPRESSION ============ */}
-      {/* counter_ref — purple (Ref) */}
+      {/* counter_ref — Ref */}
       <text
         x={seg.counterRef.x}
         y={codeBaselineY}
@@ -98,7 +102,7 @@ export function OneLineSvg({ className }: { className?: string }) {
       >
         counter_ref
       </text>
-      {/* .store( — blue (Interaction) */}
+      {/* .store( — Interaction */}
       <text
         x={seg.mid.x}
         y={codeBaselineY}
@@ -107,7 +111,7 @@ export function OneLineSvg({ className }: { className?: string }) {
       >
         .store(
       </text>
-      {/* db_ref — purple (Ref) */}
+      {/* db_ref — Ref */}
       <text
         x={seg.dbRef.x}
         y={codeBaselineY}
@@ -116,7 +120,7 @@ export function OneLineSvg({ className }: { className?: string }) {
       >
         db_ref
       </text>
-      {/* ) — blue (Interaction) */}
+      {/* ) — Interaction */}
       <text
         x={seg.tail.x}
         y={codeBaselineY}
@@ -126,7 +130,7 @@ export function OneLineSvg({ className }: { className?: string }) {
         )
       </text>
 
-      {/* ============ REF DROPS + CHIPS (purple) ============ */}
+      {/* ============ REF DROPS + CHIPS ============ */}
       {/* left drop — above chip */}
       <line
         x1={browserCx}
@@ -135,7 +139,7 @@ export function OneLineSvg({ className }: { className?: string }) {
         y2={refChipY}
         stroke={accent}
         strokeWidth={1}
-        strokeDasharray="2 4"
+        strokeDasharray="3 3"
         vectorEffect="non-scaling-stroke"
         opacity={0.85}
       />
@@ -147,7 +151,7 @@ export function OneLineSvg({ className }: { className?: string }) {
         y2={iconTopY}
         stroke={accent}
         strokeWidth={1}
-        strokeDasharray="2 4"
+        strokeDasharray="3 3"
         vectorEffect="non-scaling-stroke"
         opacity={0.85}
       />
@@ -157,7 +161,7 @@ export function OneLineSvg({ className }: { className?: string }) {
         y={refChipY}
         width={60}
         height={chipH}
-        rx={9}
+        rx={3}
         fill={accentWash}
         stroke={accent}
         strokeWidth={1}
@@ -180,7 +184,7 @@ export function OneLineSvg({ className }: { className?: string }) {
         y2={refChipY}
         stroke={accent}
         strokeWidth={1}
-        strokeDasharray="2 4"
+        strokeDasharray="3 3"
         vectorEffect="non-scaling-stroke"
         opacity={0.85}
       />
@@ -192,7 +196,7 @@ export function OneLineSvg({ className }: { className?: string }) {
         y2={iconTopY}
         stroke={accent}
         strokeWidth={1}
-        strokeDasharray="2 4"
+        strokeDasharray="3 3"
         vectorEffect="non-scaling-stroke"
         opacity={0.85}
       />
@@ -202,7 +206,7 @@ export function OneLineSvg({ className }: { className?: string }) {
         y={refChipY}
         width={72}
         height={chipH}
-        rx={9}
+        rx={3}
         fill={accentWash}
         stroke={accent}
         strokeWidth={1}
@@ -217,36 +221,20 @@ export function OneLineSvg({ className }: { className?: string }) {
         disk ref
       </text>
 
-      {/* anchor dots where the ref drops exit the panel (purple) */}
+      {/* anchor dots where the ref drops exit the panel */}
       <circle cx={browserCx} cy={panelBottomY} r={2} fill={accent} />
       <circle cx={diskCx}    cy={panelBottomY} r={2} fill={accent} />
 
-      {/* ============ LEFT — BROWSER TAB with counter ============ */}
-      <g transform={`translate(${browserCx - 62} ${iconTopY})`}>
-        <rect
-          x={0}
-          y={0}
-          width={124}
-          height={84}
-          rx={4}
-          fill="var(--color-fd-background)"
-          stroke={ink3}
-          strokeWidth={1}
-          vectorEffect="non-scaling-stroke"
-        />
-        <line x1={0} y1={16} x2={124} y2={16} stroke={rule} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-        <circle cx={7} cy={8} r={1.8} fill={ink3} opacity={0.6} />
-        <circle cx={13} cy={8} r={1.8} fill={ink3} opacity={0.6} />
-        <circle cx={19} cy={8} r={1.8} fill={ink3} opacity={0.6} />
-        <text
-          x={62}
-          y={60}
-          textAnchor="middle"
-          style={{ fill: ink, fontFamily: MONO, fontSize: 34, fontWeight: 700 }}
-        >
-          42
-        </text>
-      </g>
+      {/* ============ LEFT — BROWSER TAB (shared primitive) ============ */}
+      <BrowserChrome x={browserCx - 62} y={iconTopY} width={124} height={84} />
+      <text
+        x={browserCx}
+        y={iconTopY + 60}
+        textAnchor="middle"
+        style={{ fill: ink, fontFamily: MONO, fontSize: 34, fontWeight: 700 }}
+      >
+        42
+      </text>
       <text
         x={browserCx}
         y={iconLabelY}
@@ -256,23 +244,22 @@ export function OneLineSvg({ className }: { className?: string }) {
         browser tab
       </text>
 
-      {/* ============ RIGHT — ROCKSDB DISK ============ */}
-      <g transform={`translate(${diskCx - 40} ${iconTopY + 4})`}>
-        <ellipse cx={40} cy={6} rx={36} ry={7} fill="none" stroke={ink3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-        <line x1={4} y1={6} x2={4} y2={72} stroke={ink3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-        <line x1={76} y1={6} x2={76} y2={72} stroke={ink3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-        <ellipse cx={40} cy={30} rx={36} ry={7} fill="none" stroke={ink3} strokeWidth={1} opacity={0.7} vectorEffect="non-scaling-stroke" />
-        <ellipse cx={40} cy={54} rx={36} ry={7} fill="none" stroke={ink3} strokeWidth={1} opacity={0.55} vectorEffect="non-scaling-stroke" />
-        <ellipse cx={40} cy={72} rx={36} ry={7} fill="none" stroke={ink3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-        <text
-          x={40}
-          y={44}
-          textAnchor="middle"
-          style={{ fill: ink, fontFamily: MONO, fontSize: 22, fontWeight: 700 }}
-        >
-          42
-        </text>
-      </g>
+      {/* ============ RIGHT — ROCKSDB DISK (shared primitive) ============ */}
+      <DiskStack
+        cx={diskCx}
+        topY={iconTopY + 10}
+        platters={4}
+        platterGap={22}
+        rx={36}
+        ry={7}
+        bodyLabel={{
+          text: '42',
+          fill: ink,
+          fontSize: 22,
+          fontWeight: 700,
+          letterSpacing: '0.02em',
+        }}
+      />
       <text
         x={diskCx}
         y={iconLabelY}
@@ -282,7 +269,7 @@ export function OneLineSvg({ className }: { className?: string }) {
         rocksdb
       </text>
 
-      {/* ============ INTERACTION HINT — bottom, long blue leader ============ */}
+      {/* ============ INTERACTION HINT — bottom, long leader ============ */}
       <circle cx={iChipCx} cy={panelBottomY} r={2} fill={accent2} />
       <line
         x1={iChipCx}
@@ -291,7 +278,7 @@ export function OneLineSvg({ className }: { className?: string }) {
         y2={iChipY}
         stroke={accent2}
         strokeWidth={1}
-        strokeDasharray="2 4"
+        strokeDasharray="3 3"
         vectorEffect="non-scaling-stroke"
         opacity={0.85}
       />
@@ -300,7 +287,7 @@ export function OneLineSvg({ className }: { className?: string }) {
         y={iChipY}
         width={iChipW}
         height={iChipH}
-        rx={11}
+        rx={3}
         fill={accent2Wash}
         stroke={accent2}
         strokeWidth={1}

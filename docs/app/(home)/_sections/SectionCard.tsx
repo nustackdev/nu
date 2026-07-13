@@ -5,20 +5,34 @@ import s from './SectionCard.module.css';
 
 type Hue = 's1' | 's2' | 's3' | 's4';
 
+/** Silver-woven fabric hue keys — remap --nu-accent[-2] for every SVG
+    inside this section so shared primitives auto-tint. */
+type VizHue = 'steel' | 'sage' | 'teal' | 'plum' | 'amber';
+
 /**
  * SectionCard — the wrapper every deck-block section shares.
- * Sets the per-section hue (s1..s4) which drives accent tokens + bloom
- * anchor via `[data-hue]` selectors in SectionCard.module.css.
+ *   `hue`     drives section-chrome accent tokens (--sec-*) via [data-hue].
+ *   `vizHue`  scopes --nu-accent[-2] to a silver-woven fabric hue so any
+ *             visualization inside this card renders on that hue. Fabric &
+ *             app rows override --nu-accent[-2] again at row scope; sections
+ *             without per-row scope (hero, interaction-model, nu) rely on
+ *             this prop to pick their canonical viz hue.
  */
 export function SectionCard({
-  hue, id, children,
+  hue, vizHue, id, children,
 }: {
   hue: Hue;
+  vizHue?: VizHue;
   id?: string;
   children: ReactNode;
 }) {
   return (
-    <section className={s.section} id={id} data-hue={hue}>
+    <section
+      className={s.section}
+      id={id}
+      data-hue={hue}
+      data-viz-hue={vizHue}
+    >
       <div className={s.sectionCard}>{children}</div>
     </section>
   );

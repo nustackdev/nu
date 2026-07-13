@@ -8,12 +8,12 @@
  * .ideCode        actual code, monospaced, line-by-line divs so gutter aligns
  *
  * Token colors:
- *   .kw  keywords  → blue accent (--nu-accent-2)
- *   .nu  nu API    → purple accent (--nu-accent)
+ *   .kw  keywords  → --nu-accent-2 (silver-woven steel in NuSection scope)
+ *   .nu  nu API    → --nu-accent   (silver-woven teal  in NuSection scope)
  *   .str strings   → silver ink
  *   .cmt comments  → dim ink, italic
  *
- * The strict two-color rule holds: only blue + purple + silver inks.
+ * NuSection sets vizHue="teal" so --nu-accent[-2] remap to teal + steel.
  * ==========================================================================*/
 
 .ide {

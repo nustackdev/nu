@@ -20,7 +20,7 @@ const FABRICS = ['shapes', 'mem', 'nudle', 'apps', 'lens'];
  */
 export function NuSection() {
   return (
-    <SectionCard hue="s2" id="nu">
+    <SectionCard hue="s2" vizHue="teal" id="nu">
       <SectionCol>
         <SectionTitle>Nu, the interaction model made real.</SectionTitle>
         <SectionIntro>

@@ -1,16 +1,15 @@
 import s from './marks.module.css';
+import { BrowserChrome } from './primitives/BrowserChrome';
 
 /**
  * nulog — running app mock.
  *
- * A browser chrome tuned like a real product screen: title strip with
- * a pulsing `live` dot, five log rows with timestamp / level / message /
- * ref payload, and a footer strip that names the substrate. Communicates
- * "these are the apps, they run, they are yours to use."
+ * BrowserChrome (shared) hosts the app title strip with a pulsing `live`
+ * dot, five log rows with timestamp / level / message / ref payload, and
+ * a footer strip that names the substrate.
  */
 export function NulogMockSvg() {
   const rule = 'var(--nu-rule)';
-  const ruleSoft = 'var(--nu-rule-2)';
   const ink = 'var(--nu-ink)';
   const ink2 = 'var(--nu-ink-2)';
   const ink3 = 'var(--nu-ink-3)';
@@ -38,48 +37,17 @@ export function NulogMockSvg() {
       role="img"
       aria-label="nulog running: browser chrome, live pill, five log rows with structured payloads, footer identifying rocksdb + shape."
     >
-      {/* browser window */}
-      <rect
+      {/* browser window (shared primitive) with URL bar */}
+      <BrowserChrome
         x={16}
         y={16}
         width={448}
         height={288}
-        fill="var(--color-fd-background)"
-        stroke={rule}
-        strokeWidth={1}
-        vectorEffect="non-scaling-stroke"
+        chromeHeight={28}
+        url="nu://nulog"
+        dotRadius={2.6}
+        dotSpacing={10}
       />
-      {/* chrome bar */}
-      <line
-        x1={16}
-        y1={44}
-        x2={464}
-        y2={44}
-        stroke={rule}
-        strokeWidth={1}
-        vectorEffect="non-scaling-stroke"
-      />
-      {[0, 1, 2].map((i) => (
-        <circle key={i} cx={30 + i * 10} cy={30} r={2.6} fill={ink4} />
-      ))}
-      {/* address bar */}
-      <rect
-        x={80}
-        y={22}
-        width={368}
-        height={16}
-        fill="var(--nu-code-bg-2, transparent)"
-        stroke={ruleSoft}
-        strokeWidth={0.5}
-        vectorEffect="non-scaling-stroke"
-      />
-      <text
-        x={90}
-        y={34}
-        style={{ fill: ink3, fontFamily: mono, fontSize: 9.5, letterSpacing: '0.04em' }}
-      >
-        nu://nulog
-      </text>
 
       {/* title band */}
       <text
@@ -169,6 +137,7 @@ export function NulogMockSvg() {
         y={272}
         width={448}
         height={32}
+        rx={3}
         fill={accentWash}
         stroke={accentLine}
         strokeWidth={1}
