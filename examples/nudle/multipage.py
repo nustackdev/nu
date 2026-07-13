@@ -53,11 +53,11 @@ ui = (
 )
 
 tree = nu.With(
-    nu.v.presets.rocksdb_navigator_inmemory(".dbtest_mp"),
-    nu.ui.presets.server(ui),
+    nu.v.presets.rocksdb_navigator(".dbtest_mp"),
+    nu.ui.presets.server(nu.v.auto_flow_atomic(ui)),
     body=bg,
 )
 
 
 if __name__ == "__main__":
-    asyncio.run(nu.arun(tree))
+    asyncio.run(nu.arun(nu.v.auto_flow_atomic(tree)))

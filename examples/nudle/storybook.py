@@ -1012,8 +1012,8 @@ ui = (
 )
 
 tree = nu.With(
-    nu.v.presets.rocksdb_navigator_inmemory(".dbstorybook"),
-    nu.ui.presets.server(ui),
+    nu.v.presets.rocksdb_navigator(".dbstorybook"),
+    nu.ui.presets.server(nu.v.auto_flow_atomic(ui)),
     body=nu.ForeverDo(
         nu.Delay(3600)
     ),  # everything above already ticks inside ui; just hold the server open
@@ -1021,4 +1021,4 @@ tree = nu.With(
 
 
 if __name__ == "__main__":
-    asyncio.run(nu.arun(tree))
+    asyncio.run(nu.arun(nu.v.auto_flow_atomic(tree)))

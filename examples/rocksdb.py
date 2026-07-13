@@ -10,7 +10,7 @@ class Counter(nu.Shape):
 
 
 tree = nu.With(
-    nu.v.presets.rocksdb_navigator_inmemory(".dbtest"),
+    nu.v.presets.rocksdb_navigator(".dbtest"),
     body=(
         nu.v.Transaction(
             nu.IfDo(Counter.value.missing(), Counter.value.store(0))

@@ -2,11 +2,11 @@
 
 Two forms, both live and independent:
 
-- Imperative context managers (``memory_storage``, ``rocksdb_storage``,
-  ``rocksdb_storage_inmemory``, ``lmdb_storage``, ``text_storage``) yield a
+- Imperative context managers (``memory_storage``, ``rocksdb_storage_redis``,
+  ``rocksdb_storage``, ``lmdb_storage``, ``text_storage``) yield a
   ready ``StorageProtocol`` for hand-wired Contexts. Same as before.
-- Bracket factories (``memory_navigator``, ``rocksdb_navigator``,
-  ``rocksdb_navigator_inmemory``, ``text_navigator``) return a single
+- Bracket factories (``memory_navigator``, ``rocksdb_navigator_redis``,
+  ``rocksdb_navigator``, ``text_navigator``) return a single
   ``_LifecycleBracket`` that drops into a ``nu.With(...)`` tree and binds
   the whole Codec + Observer + Storage + Navigator stack on ctx. Internally
   they compose ``Provide`` peers under a ``With``, so ctx-bind order and
@@ -31,10 +31,10 @@ __all__ = [
     "lmdb_storage",
     "memory_navigator",
     "memory_storage",
+    "rocksdb_navigator_redis",
     "rocksdb_navigator",
-    "rocksdb_navigator_inmemory",
+    "rocksdb_storage_redis",
     "rocksdb_storage",
-    "rocksdb_storage_inmemory",
     "text_navigator",
     "text_storage",
 ]
@@ -148,7 +148,7 @@ def text_storage(path: str, read_only: bool = False) -> Generator[StorageProtoco
 
 
 @contextmanager
-def rocksdb_storage_inmemory(
+def rocksdb_storage(
     path: str,
     read_only: bool = False,
     secondary_path: str | None = None,
@@ -167,7 +167,7 @@ def rocksdb_storage_inmemory(
         Configured RocksDB storage instance
 
     Example:
-        >>> with rocksdb_storage_inmemory("/mnt/nvme4/.db_blocks_bin") as storage:
+        >>> with rocksdb_storage("/mnt/nvme4/.db_blocks_bin") as storage:
         ...     with storage.transaction() as txn:
         ...         txn.put(b"key", b"value")
     """
@@ -190,7 +190,7 @@ def rocksdb_storage_inmemory(
 
 
 @contextmanager
-def rocksdb_storage(
+def rocksdb_storage_redis(
     path: str,
     read_only: bool = False,
     secondary_path: str | None = None,
@@ -213,7 +213,7 @@ def rocksdb_storage(
         Configured RocksDB storage instance
 
     Example:
-        >>> with rocksdb_storage("/mnt/nvme4/.db_blocks_bin") as storage:
+        >>> with rocksdb_storage_redis("/mnt/nvme4/.db_blocks_bin") as storage:
         ...     with storage.transaction() as txn:
         ...         txn.put(b"key", b"value")
     """
@@ -293,7 +293,7 @@ def memory_navigator(
     )
 
 
-def rocksdb_navigator_inmemory(
+def rocksdb_navigator(
     path: str,
     *,
     tags: Sequence[object] = (),
@@ -321,7 +321,7 @@ def rocksdb_navigator_inmemory(
 
     Example:
         >>> nu.With(
-        ...     rocksdb_navigator_inmemory(".dbtest"),
+        ...     rocksdb_navigator(".dbtest"),
         ...     body=Counter.value.store(1),
         ... )
     """
@@ -358,7 +358,7 @@ def rocksdb_navigator_inmemory(
     )
 
 
-def rocksdb_navigator(
+def rocksdb_navigator_redis(
     path: str,
     *,
     tags: Sequence[object] = (),
@@ -372,7 +372,7 @@ def rocksdb_navigator(
 ) -> With:
     """RocksDB + Redis Observer + Navigator as one bracket.
 
-    Same as ``rocksdb_navigator_inmemory`` but with the Redis observer for
+    Same as ``rocksdb_navigator`` but with the Redis observer for
     cross-process change notifications. Requires a reachable Redis at
     ``redis_url`` at asetup time.
 

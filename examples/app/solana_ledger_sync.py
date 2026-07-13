@@ -439,7 +439,7 @@ async def main() -> None:
     rpc = SolanaRpc(endpoint=MAINNET)
 
     try:
-        with v.rocksdb_storage_inmemory(DB_PATH) as storage:
+        with v.rocksdb_storage(DB_PATH) as storage:
             nav = Navigator(storage)
             with storage.transaction() as tx:
                 ctx = (

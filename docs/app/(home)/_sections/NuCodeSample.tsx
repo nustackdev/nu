@@ -14,7 +14,7 @@ type Tok = { c?: 'kw' | 'nu' | 'str' | 'cmt'; t: string };
  * Lines are declared as arrays of tokens so the gutter aligns perfectly and
  * empty lines render at line-height.
  *
- * Source: nu/examples/persistent_counter_ui.py — a RocksDB + NudleServer bracket app,
+ * Source: nu/examples/nudle_rocksdb.py — a RocksDB + NudleServer bracket app,
  * a browser dashboard on a live counter. Verbatim minus the module docstring
  * and `from __future__ import annotations` (both pure noise on the landing).
  */
@@ -31,16 +31,20 @@ const LINES: Tok[][] = [
   [{ t: '    pages = ' }, { c: 'nu', t: 'nu.ui.Pages' }, { t: '({' }, { c: 'str', t: '"/"' }, { t: ': Dashboard})' }],
   [],
   [{ t: 'app = ' }, { c: 'nu', t: 'nu.With' }, { t: '(' }],
-  [{ t: '    ' }, { c: 'nu', t: 'nu.v.presets.rocksdb_navigator_inmemory' }, { t: '(' }, { c: 'str', t: '".dbtest"' }, { t: '),' }],
+  [{ t: '    ' }, { c: 'nu', t: 'nu.v.presets.rocksdb_navigator' }, { t: '(' }, { c: 'str', t: '".dbtest"' }, { t: '),' }],
   [{ t: '    ' }, { c: 'nu', t: 'nu.ui.presets.server' }, { t: '(' }],
-  [{ t: '        ' }, { c: 'nu', t: 'nu.ReactForever' }, { t: '(' }],
-  [{ t: '            Counter.value.on_change(),' }],
-  [{ t: '            Dashboard.count.set(Counter.value),' }],
+  [{ t: '        ' }, { c: 'nu', t: 'nu.v.auto_flow_atomic' }, { t: '(' }],
+  [{ t: '            ' }, { c: 'nu', t: 'nu.ReactForever' }, { t: '(' }],
+  [{ t: '                Counter.value.on_change(),' }],
+  [{ t: '                Dashboard.count.set(Counter.value),' }],
+  [{ t: '            ),' }],
   [{ t: '        ),' }],
   [{ t: '    ),' }],
-  [{ t: '    body=' }, { c: 'nu', t: 'nu.ForeverDo' }, { t: '(' }],
-  [{ t: '        Counter.value.inc()' }],
-  [{ t: '        >> ' }, { c: 'nu', t: 'nu.Delay' }, { t: '(1.0),' }],
+  [{ t: '    body=(' }],
+  [{ t: '        ' }, { c: 'nu', t: 'nu.IfDo' }, { t: '(Counter.value.missing(), Counter.value.store(0))' }],
+  [{ t: '        >> ' }, { c: 'nu', t: 'nu.ForeverDo' }, { t: '(' }],
+  [{ t: '            Counter.value.inc() >> ' }, { c: 'nu', t: 'nu.Delay' }, { t: '(1.0),' }],
+  [{ t: '        )' }],
   [{ t: '    ),' }],
   [{ t: ')' }],
   [],

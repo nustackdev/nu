@@ -51,7 +51,7 @@ class NudleServer:
 
     Example:
         >>> nu.With(
-        ...     nu.v.presets.rocksdb_navigator_inmemory(".db"),
+        ...     nu.v.presets.rocksdb_navigator(".db"),
         ...     nu.ui.presets.server(app, host="127.0.0.1", port=8080),
         ...     body=background_worker,
         ... )

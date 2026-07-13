@@ -51,10 +51,10 @@ bg = nu.v.Transaction(
 
 tree = nu.With(
     nu.v.presets.memory_navigator(),
-    nu.ui.presets.server(ui),
+    nu.ui.presets.server(nu.v.auto_flow_atomic(ui)),
     body=bg,
 )
 
 
 if __name__ == "__main__":
-    asyncio.run(nu.arun(tree))
+    asyncio.run(nu.arun(nu.v.auto_flow_atomic(tree)))

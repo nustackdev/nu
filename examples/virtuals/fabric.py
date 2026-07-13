@@ -1,7 +1,7 @@
 """nu-virtuals fabric: shapes over a real RocksDB store.
 
 The virtuals fabric backs shapes with the ``virtuals`` storage engine. A
-preset factory (here ``rocksdb_storage_inmemory``) opens the store, a
+preset factory (here ``rocksdb_storage``) opens the store, a
 ``Navigator`` reads the tree, and a transaction carries the writes. The
 context binds both, type-first, at the root and per shape.
 
@@ -27,7 +27,7 @@ from nu.virtuals import (
     ShapesListRef,
     StrRef,
 )
-from nu.virtuals.presets import rocksdb_storage_inmemory
+from nu.virtuals.presets import rocksdb_storage
 from virtuals import Navigator
 from virtuals.tkv.storage import TransactionProtocol
 
@@ -68,7 +68,7 @@ def scoped(nav: Navigator, tx: TransactionProtocol, shape: type[Shape]) -> Conte
 
 
 async def main() -> None:
-    with rocksdb_storage_inmemory(".dbtest_virtuals") as storage:
+    with rocksdb_storage(".dbtest_virtuals") as storage:
         nav = Navigator(storage)
         with storage.transaction() as tx:
             # --- Order: populate, then five expressions ---
