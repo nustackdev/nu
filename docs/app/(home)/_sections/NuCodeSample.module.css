@@ -65,6 +65,12 @@
   display: inline-flex;
   align-items: center;
 }
+.ideMetaShort { display: none; }
+
+@media (max-width: 720px) {
+  .ideMetaLong  { display: none; }
+  .ideMetaShort { display: inline; }
+}
 
 /* ---- body ---- */
 .ideBody {

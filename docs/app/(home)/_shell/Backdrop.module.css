@@ -127,7 +127,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: clamp(56px, 5.5vw, 72px);
+  gap: clamp(80px, 7vw, 100px);
 }
 
 @media (prefers-reduced-motion: reduce) {

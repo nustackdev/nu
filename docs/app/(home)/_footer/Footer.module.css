@@ -38,3 +38,12 @@
   font-weight: 700;
   letter-spacing: 0.06em;
 }
+
+/* Mobile: kill the shell gap AND our own top padding so the footer
+   sits flush against the last section's bottom edge. */
+@media (max-width: 720px) {
+  .footer {
+    margin-top: calc(-1 * clamp(80px, 7vw, 100px));
+    padding-top: 0;
+  }
+}

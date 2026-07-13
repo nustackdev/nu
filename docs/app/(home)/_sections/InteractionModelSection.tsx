@@ -12,9 +12,9 @@ import s from './InteractionModelSection.module.css';
 
 /**
  * §1 — the interaction model.
- * Merged prose + viz in a single body: horizontal left-to-right SVG tree.
- * Nu → {Ref, Interaction} → {Query, Command, Action, Span, Flow}, each with
- * a 5-word blurb. Bezier connectors, hues from the fabric palette.
+ * Desktop: horizontal SVG tree, Nu → {Ref, Interaction} → 5 leaves.
+ * Mobile:  vertical cascade outline, leaves indented under Interaction with a tree line.
+ * Same 8 atoms, same blurbs, only the layout switches at 720px.
  */
 export function InteractionModelSection() {
   return (
@@ -22,32 +22,61 @@ export function InteractionModelSection() {
       <div className={s.centered}>
         <SectionTitle>We build on the Interaction Model</SectionTitle>
 
-        <div className={s.tree}>
-        <svg
-          className={s.connectors}
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path d="M 13 50 C 22 50 22 28 30 28" />
-          <path d="M 13 50 C 22 50 22 72 30 72" />
-          <path d="M 54 72 C 61 72 61 10 68 10" />
-          <path d="M 54 72 C 61 72 61 30 68 30" />
-          <path d="M 54 72 C 61 72 61 50 68 50" />
-          <path d="M 54 72 C 61 72 61 70 68 70" />
-          <path d="M 54 72 C 61 72 61 90 68 90" />
-        </svg>
+        <div className={s.treeDesktop}>
+          <svg
+            className={s.connectors}
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <path d="M 13 50 C 22 50 22 28 30 28" />
+            <path d="M 13 50 C 22 50 22 72 30 72" />
+            <path d="M 54 72 C 61 72 61 10 68 10" />
+            <path d="M 54 72 C 61 72 61 30 68 30" />
+            <path d="M 54 72 C 61 72 61 50 68 50" />
+            <path d="M 54 72 C 61 72 61 70 68 70" />
+            <path d="M 54 72 C 61 72 61 90 68 90" />
+          </svg>
 
-        <Node atom={ROOT}        size="root"   left="2%"  top="50%" />
+          <Node atom={ROOT}        size="root"   left="2%"  top="50%" />
 
-        <Node atom={BRANCHES[0]} size="branch" left="31%" top="28%" />
-        <Node atom={BRANCHES[1]} size="branch" left="31%" top="72%" />
+          <Node atom={BRANCHES[0]} size="branch" left="31%" top="28%" />
+          <Node atom={BRANCHES[1]} size="branch" left="31%" top="72%" />
 
-        <Node atom={LEAVES[0]}   size="leaf"   left="70%" top="10%" />
-        <Node atom={LEAVES[1]}   size="leaf"   left="70%" top="30%" />
-        <Node atom={LEAVES[2]}   size="leaf"   left="70%" top="50%" />
-        <Node atom={LEAVES[3]}   size="leaf"   left="70%" top="70%" />
-        <Node atom={LEAVES[4]}   size="leaf"   left="70%" top="90%" />
+          <Node atom={LEAVES[0]}   size="leaf"   left="70%" top="10%" />
+          <Node atom={LEAVES[1]}   size="leaf"   left="70%" top="30%" />
+          <Node atom={LEAVES[2]}   size="leaf"   left="70%" top="50%" />
+          <Node atom={LEAVES[3]}   size="leaf"   left="70%" top="70%" />
+          <Node atom={LEAVES[4]}   size="leaf"   left="70%" top="90%" />
+        </div>
+
+        <div className={s.treeMobile}>
+          <div className={s.mRoot}>
+            <div className={s.mRootLabel} style={{ color: HUE_VAR[ROOT.hue] }}>
+              {ROOT.label}
+            </div>
+            <div className={s.mBlurb}>{ROOT.blurb}</div>
+          </div>
+
+          {BRANCHES.map((b) => (
+            <div key={b.label} className={s.mBranch}>
+              <div className={s.mBranchLabel} style={{ color: HUE_VAR[b.hue] }}>
+                {b.label}
+              </div>
+              <div className={s.mBlurb}>{b.blurb}</div>
+            </div>
+          ))}
+
+          <ul className={s.mLeaves}>
+            {LEAVES.map((l) => (
+              <li key={l.label} className={s.mLeaf}>
+                <div className={s.mLeafLabel} style={{ color: HUE_VAR[l.hue] }}>
+                  {l.label}
+                </div>
+                <div className={s.mBlurb}>{l.blurb}</div>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <ActionRow>

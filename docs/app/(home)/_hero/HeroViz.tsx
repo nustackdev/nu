@@ -17,6 +17,30 @@ export function HeroViz() {
   return (
     <div className={s.wrap}>
       <LeftTree />
+      <div className={s.bridge} aria-hidden>
+        <svg className={s.bridgeDesk} viewBox="0 0 20 50" preserveAspectRatio="none">
+          <polyline
+            points="2,2 18,25 2,48"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+        <svg className={s.bridgeMob} viewBox="0 0 50 20" preserveAspectRatio="none">
+          <polyline
+            points="2,2 25,18 48,2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+      </div>
       <div className={s.right}>
         <RightScene />
       </div>

@@ -75,7 +75,10 @@ export function NuCodeSample() {
           <span className={s.ideTabDot} aria-hidden />
           persistent_counter_ui.py
         </div>
-        <div className={s.ideMeta}>python · {LINES.length} loc</div>
+        <div className={s.ideMeta}>
+          <span className={s.ideMetaLong}>python · {LINES.length} loc</span>
+          <span className={s.ideMetaShort}>py</span>
+        </div>
       </div>
       <div className={s.ideBody}>
         <button
