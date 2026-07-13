@@ -1,4 +1,4 @@
 {
   "title": "Guides",
-  "pages": ["refs", "wrapping", "extending", "apps"]
+  "pages": ["apps", "wrapping", "extending"]
 }

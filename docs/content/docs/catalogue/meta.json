@@ -1,4 +1,4 @@
 {
   "title": "Catalogue",
-  "pages": ["index", "query", "command", "flow", "span", "forms", "meta"]
+  "pages": ["index", "query", "command", "flow", "span", "forms", "meta", "nudle"]
 }

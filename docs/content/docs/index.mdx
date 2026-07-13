@@ -3,14 +3,20 @@ title: Nu
 description: A programming model where everything is a Nu.
 ---
 
-**Everything is a Nu.**
+Nu is a programming model. You describe your program as an interaction over named resources; Nu evaluates it against a Context that binds those resources to concrete backends.
 
-There are two top-level kinds: **Ref** (an address) and **Interaction** (Query, Command, Flow, Span).
+Two citizens:
 
-## Where to go
+- **Ref**: a typed pointer to a resource. A db row, a config key, an in-memory slot, a browser DOM node, an RPC endpoint. Carries the address, not the value.
+- **Interaction**: what a program does with Refs and with other Interactions. Read, write, compute, branch, iterate, compose.
+
+A **Fabric** resolves Refs and carries out Interactions. The **Context** is the bag of Fabrics your program runs against. Same program, different Context, different world (test, staging, prod, another machine).
+
+## Start here
 
 <Cards>
+  <Card title="Getting started" href="/docs/getting-started/install" description="Install, run your first tree, learn the shape of the docs." />
+  <Card title="Learn" href="/docs/learn" description="The mental model, taught one concept at a time." />
   <Card title="Catalogue" href="/docs/catalogue" description="Every atom and Form, one-line meanings." />
-  <Card title="Guides" href="/docs/guides" description="Refs, wrapping, extending — how to build with Nu." />
-  <Card title="Nudle" href="/docs/nudle" description="The UI layer. Components and shapes." />
+  <Card title="Guides" href="/docs/guides" description="Playbook, wrapping, extending." />
 </Cards>
