@@ -1,89 +1,111 @@
 # Nu
 
-Nu is a programming model. You describe your program as an interaction over named resources; Nu evaluates it against a Context that binds those resources to concrete backends. Distribution, reactivity, durability, atomicity and observability fall out as tree transformations — not framework layers.
+Assemble software, don't write it.
 
-Two citizens make up every program:
+Nu program is an Interaction over Refs (named resources) composed as a tree. 
+Distribution, persistence, reactivity, atomicity, and observability come out as tree transformations, not framework layers.
 
-- **Ref** — a typed pointer to a resource: a db row, a config key, an in-memory slot, a browser DOM node, an RPC endpoint. Carries the address, not the value.
-- **Interaction** — what a program does with Refs (and with other Interactions): read, write, compute, branch, iterate, compose.
+50x less code for humans, 50x less tokens for agents, than writing it line by line in imperative Python.
 
-A **Fabric** is what actually resolves Refs and carries out Interactions (rocksdb, an in-memory dict, a websocket, ...). The **Context** is the bag of Fabrics your program runs against. Same program, different Context → different world (test, staging, prod, another machine).
+## The interaction model
 
-Full model: see [nustackdev/nu/docs](docs/) and the design space in Gor's Go.
+Nu, the one core atom, splits into two:
+
+- **Ref**: address to any resource.
+- **Interaction**: the work over Refs.
+
+Interaction has five kinds:
+
+- **Query**: pure evaluation, yields values.
+- **Command**: mutation, yields nothing.
+- **Action**: mutation, yields values.
+- **Span**: scope wrapping a body.
+- **Flow**: orchestration of mutations.
+
+Compose them into a tree. That is a Nu program.
+
+## Example
+
+A dashboard on a live counter that persists across restarts. One Nu tree, two Fabrics.
+
+```python
+import nu
+
+
+class Counter(nu.Shape):
+    value: nu.v.IntRef
+
+
+class Dashboard(nu.ui.Page):
+    count: nu.ui.TextRef
+
+
+class App(nu.ui.Index):
+    pages = nu.ui.Pages({"/": Dashboard})
+
+
+app = nu.With(
+    nu.v.presets.rocksdb_navigator(".dbtest"),
+    nu.ui.presets.server(
+        nu.v.auto_flow_atomic(
+            nu.ReactForever(
+                Counter.value.on_change(),
+                Dashboard.count.set(Counter.value),
+            ),
+        ),
+    ),
+    body=(
+        nu.IfDo(Counter.value.missing(), Counter.value.store(0))
+        >> nu.ForeverDo(
+            Counter.value.inc() >> nu.Delay(1.0),
+        )
+    ),
+)
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(nu.arun(nu.v.auto_flow_atomic(app)))
+```
+
+Run it, open the browser tab. The counter ticks once a second, the dashboard mirrors it live. Kill it, run again, it picks up where it left off.
+
+More examples in [`examples/`](examples/). Full walkthrough at [nustack.dev/docs](https://nustack.dev/docs).
+
+## Fabrics
+
+A Fabric implements Refs against one backend. Nu ships five in-tree.
+
+| Fabric | What |
+| --- | --- |
+| `nu.m` | In-process substrate. Zero-config default for tests, notebooks, cache. |
+| `nu.v` | Persistent substrate backed by `virtuals`. Virtual Python collections over RocksDB, LMDB, more. |
+| `nu.ui` | Refs on screen. Binds Nu Refs to a live browser tab. |
+| `nu.invisibles` | Location-independent Nus. Transparent RPC across processes and machines. |
+| `nu.ray` | Compute across the cluster. Scale Nu on Ray without leaving the model. |
+
+Swap the Fabric, keep the tree. Same program runs against different substrates.
 
 ## Install
 
 ```bash
-pip install nu[minimal]     # core language only
-pip install nu[default]     # + virtuals, RocksDB, type extensions
-pip install nu[nudle]       # + UI fabric (browser tab as a Ref surface)
-pip install nu[distributed] # + Ray + invisibles
+pip install nu[minimal]      # core language only
+pip install nu[default]      # + virtuals, RocksDB, types
+pip install nu[nudle]        # + UI fabric
+pip install nu[distributed]  # + Ray + invisibles
 ```
 
 Python 3.12+.
 
-## Example
+## Apps built on Nu
 
-```python
-import nu
-import nu.virtuals as v
-from virtuals import Navigator
-from virtuals.tkv.storage import TransactionProtocol
-
-class Order(nu.Shape):
-    symbol = v.StrRef.slot()
-    price  = v.FloatRef.slot()
-    qty    = v.IntRef.slot()
-
-program = nu.Sequential(
-    Order.symbol.store("AAPL"),
-    Order.price.store(185.5),
-    Order.qty.store(10),
-    nu.print("notional:", Order.price * Order.qty),
-)
-
-with v.text_storage("/tmp/orders") as storage:
-    nav = Navigator(storage)
-    with storage.transaction() as tx:
-        ctx = nu.Context().bind(Navigator, nav).bind(TransactionProtocol, tx)
-        await nu.arun(v.auto_atomic(program), ctx)
-```
-
-Same `program`, swap the Context and it runs against an in-memory dict, a browser tab, or a remote process — see the fabrics below. More end-to-end examples in [`examples/`](examples/).
-
-## Fabrics
-
-A fabric is a Ref/Interaction implementation over one backend. Nu ships three in-tree:
-
-| Fabric         | Backend                       | What                                                                        |
-| -------------- | ----------------------------- | --------------------------------------------------------------------------- |
-| `nu.mem`       | plain Python dict             | zero-dependency, sync+async, ideal for tests, fixtures, in-process state    |
-| `nu.virtuals`  | [virtuals](https://github.com/nustackdev/virtuals) views over any storage (RocksDB, LMDB, in-memory, text) | durable and reactive: Refs read/write disk, `.on_change()` yields live subscriptions |
-| `nu.ui`        | browser tab (websocket)       | UI fabric — Pages are Shapes, widgets are Refs, mutations become React state |
-
-Each fabric ships its own typed Refs (`IntRef`, `StrRef`, `ListRef`, `ShapesListRef`, …) matching the same protocol; you swap the import to move a program between substrates.
-
-## Infra
-
-Independent libraries Nu builds on. Each knows nothing about Nu; a small bridge in `nu.<fabric>` connects the two.
-
-| Lib                                                         | What                                                                   |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [virtuals](https://github.com/nustackdev/virtuals)          | virtual Python collections over any storage — the substrate for durable Shapes |
-| [invisibles](https://github.com/nustackdev/invisibles)      | transparent remote method invocation — sync stays sync, async stays async |
-| [composables](https://github.com/nustackdev/composables)    | async service composition and lifecycle — the runtime backbone that wires substrates, transports, coordinators together |
-
-`nu.distributed` composes all three to make Nus location-independent.
+- [nulog](https://github.com/nustackdev/nulog). Structured logging as a Nu app. Handles billions of entries, UI dashboard out of the box.
 
 ## Status
 
 v0.1.0. APIs will break, no backwards compatibility guarantees.
 
-Two production systems run on Nu today:
-
-- A financial platform processing thousands of distributed transactions per second across two machines
-- A reactive knowledge base with persistent state and a live UI
-
 ## License
 
-MIT
+Apache-2.0

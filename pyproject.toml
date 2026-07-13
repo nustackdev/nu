@@ -23,7 +23,7 @@ name = "nu"
 version = "0.1.0"
 description = "Term Programming platform — kernel, toolbox, and topologies"
 readme = "README.md"
-license = "MIT"
+license = "Apache-2.0"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.12"
 dependencies = [
@@ -32,7 +32,7 @@ dependencies = [
 keywords = ["term", "programming", "tree", "topology", "shape", "table", "graph"]
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
