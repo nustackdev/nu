@@ -18,27 +18,28 @@
  * ==========================================================================*/
 
 /* -----------------------------------------------------------------------------
- * Outer wrap — glass card, two columns (tree + right SVG scene)
+ * Outer wrap — fused asymmetric card.
+ *
+ * Two panes inside one glass border, split by a hairline divider:
+ *   LEFT  transparent light glass  — hosts the nested code tree
+ *   RIGHT dark-dotted substrate     — hosts the right-side SVG scene
+ *
+ * The right pane is a 25% black overlay on the shared page backdrop plus
+ * the standard --nu-dot-grid, giving a fabric-vizFrame look without going
+ * pitch black. Backdrop gradient still bleeds through the tint.
  * -------------------------------------------------------------------------- */
 .wrap {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: clamp(20px, 2.2vw, 32px);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.035) 0%,
-    rgba(255, 255, 255, 0.015) 100%
-  );
-  backdrop-filter: blur(14px) saturate(120%);
-  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  overflow: hidden;
   text-align: left;
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
-  gap: 32px;
-  align-items: start;
+  gap: 0;
+  align-items: stretch;
   font-family: var(--font-mono);
   color: var(--nu-ink);
 }
@@ -48,11 +49,20 @@
  * -------------------------------------------------------------------------- */
 .tree {
   position: relative;           /* positioning root for all .hint absolutes */
-  padding-right: 260px;          /* reserved gutter for hints */
+  padding: clamp(20px, 2.2vw, 32px);
+  padding-right: 260px;          /* reserved gutter for hints (overrides above) */
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.035) 0%,
+    rgba(255, 255, 255, 0.015) 100%
+  );
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
 }
 
 /* Base container — code-only box, no chrome inside except border+bg */
@@ -214,15 +224,25 @@
  * -------------------------------------------------------------------------- */
 .right {
   min-width: 0;
+  /* Match .tree's padding on top/right/bottom/left so the divider frames both
+     panes with equal air. */
+  padding: clamp(20px, 2.2vw, 32px);
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)),
+    var(--nu-dot-grid);
+  background-size: auto, var(--nu-dot-size);
+  background-position: center, 0 0;
 }
-.rightSvg {
+.right > svg {
   width: 100%;
   height: auto;
   display: block;
 }
-.rightSvg .blink {
+.right .blink {
   animation: heroVizBlink 2.4s ease-in-out infinite;
 }
 @keyframes heroVizBlink {
@@ -236,6 +256,10 @@
 /* Narrow viewports — drop the hint gutter, stack the columns */
 @media (max-width: 900px) {
   .wrap { grid-template-columns: 1fr; }
-  .tree { padding-right: 0; }
+  .tree {
+    padding-right: clamp(20px, 2.2vw, 32px);
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
   .hint { display: none; }
 }
