@@ -1,65 +1,40 @@
 /* =============================================================================
- * Footer — three equal-width columns (org / explore / elsewhere).
+ * Footer — one simple row (GitHub · Docs · nustack © 2026).
  * Sits at page bottom below the last section's shell gap.
  * ==========================================================================*/
 
 .footer {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
   font-family: var(--font-display);
   font-size: 13px;
-  color: var(--nu-ink-3);
-  padding: 0 0 clamp(64px, 10vh, 112px);
-}
-
-.footerCell {
-  position: relative;
-  z-index: 1;
-  padding: 28px var(--nu-pad-x) 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-right: 1px solid var(--nu-rule);
-}
-.footerCell:last-child { border-right: none; }
-
-.footerCellHead {
-  font-size: 11.5px;
-  letter-spacing: 0;
-  color: var(--nu-ink-4);
-  margin-bottom: 4px;
-}
-.footerCellBody {
-  font-size: 12.5px;
-  letter-spacing: 0.04em;
   color: var(--nu-ink-2);
-  line-height: 1.5;
+  padding: 32px var(--nu-pad-x) clamp(48px, 8vh, 96px);
 }
-.footerCellBody a {
+
+.footer a {
   color: var(--nu-ink);
   text-decoration: none;
   transition: color .15s ease;
 }
-.footerCellBody a:hover { color: var(--nu-accent-2); }
+.footer a:hover { color: var(--nu-accent-2); }
 
-.footerBrand {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.4rem;
-  letter-spacing: -0.03em;
-  color: var(--nu-ink);
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
+.footerSep {
+  color: var(--nu-ink-4);
 }
 
-@media (max-width: 720px) {
-  .footer { grid-template-columns: 1fr; }
-  .footerCell {
-    border-right: none;
-    border-bottom: 1px solid var(--nu-rule);
-  }
-  .footerCell:last-child { border-bottom: none; }
+.footerBrand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--nu-ink-2);
+}
+.footerBrandMark {
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.06em;
 }

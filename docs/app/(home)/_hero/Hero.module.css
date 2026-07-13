@@ -66,11 +66,17 @@
   text-wrap: balance;
   color: var(--nu-ink);
 }
+.heroMissionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
 .heroMission {
   font-family: var(--font-display);
   font-size: clamp(15.5px, 1.4vw, 18px);
   line-height: 1.72;
-  color: var(--nu-ink-2);
+  color: color-mix(in oklab, var(--nu-ink) 82%, var(--nu-ink-2) 18%);
   max-width: 68ch;
   margin: 0 auto;
   text-align: center;
@@ -82,6 +88,14 @@
 .heroMissionSep {
   color: var(--nu-ink-3);
   padding: 0 0.15em;
+}
+.heroMissionAccent {
+  color: var(--nu-accent);
+  font-weight: 700;
+}
+.heroMissionAccent2 {
+  color: var(--nu-accent-2);
+  font-weight: 700;
 }
 
 /* ---- meta labels (GitHub-style key/value pills) ---- */

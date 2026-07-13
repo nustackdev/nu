@@ -1,5 +1,4 @@
 import { BookOpen } from 'lucide-react';
-import { NustackMark } from '@/components/marks/NustackMark';
 import { GithubMark } from '@/components/marks/GithubMark';
 import { OneLineSvg } from '@/components/marks/OneLine';
 import {
@@ -26,10 +25,21 @@ export function InteractionModelSection() {
         <SectionCol>
           <SectionTitle>We build on the interaction model.</SectionTitle>
           <SectionIntro>
-            A tiny theory of computation: <b>Refs</b> address values,{' '}
-            <b>Interactions</b> change them, <b>Fabrics</b> are the worlds
-            those addresses resolve inside. Everything else at{' '}
-            <NustackMark /> is a faithful implementation of it.
+            It is a tight programming model with two atoms:
+            <br />
+            <br />
+            <b>Ref</b> - a pointer to any resource (kv key, RPC endpoint,
+            UI DOM node, anything).
+            <br />
+            <b>Interaction</b> - what to do with the resource (read, mutate,
+            subscribe, etc).
+            <br />
+            <br />
+            <b>Fabrics</b> are the worlds those addresses resolve inside,
+            adapting Refs to real backends.
+            <br />
+            <br />
+            Everything else at nustack is a faithful implementation of it.
           </SectionIntro>
           <ActionRow>
             <Cta href="/docs">

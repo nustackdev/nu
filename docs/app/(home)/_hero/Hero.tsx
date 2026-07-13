@@ -12,7 +12,6 @@ const TRAITS = [
   'reactive',
   'reload-proof',
   'inspectable',
-  'traceable',
 ];
 
 /**
@@ -35,7 +34,7 @@ export function Hero() {
 
         <div className={s.heroLabels} aria-label="project meta">
           <span className={s.label}>
-            <span className={s.labelKey}>license</span>
+            <span className={s.labelKey}>open-source</span>
             <span className={s.labelVal}>Apache-2.0</span>
           </span>
           <span className={s.label}>
@@ -44,19 +43,29 @@ export function Hero() {
           </span>
         </div>
 
-        <p className={s.heroMission}>
-          Assemble software that is{' '}
-          {TRAITS.map((t, i) => (
-            <span key={t}>
-              <b>{t}</b>
-              {i < TRAITS.length - 1 ? ', ' : ' '}
-            </span>
-          ))}
-          <span className={s.heroMissionSep}>—</span> 50× easier than writing
-          it line by line in imperative Python.
-        </p>
+        <div className={s.heroMissionGroup}>
+          <p className={s.heroMission}>
+            Assemble software that is{' '}
+            {TRAITS.map((t, i) => (
+              <span key={t}>
+                <b>{t}</b>
+                {i < TRAITS.length - 1 ? ', ' : '.'}
+              </span>
+            ))}
+          </p>
+          <p className={s.heroMission}>
+            <span className={s.heroMissionAccent}>50x less code</span> for
+            humans, <span className={s.heroMissionAccent2}>50x less tokens</span>{' '}
+            for agents than writing it line by line in imperative Python.
+          </p>
+        </div>
 
         <div className={s.heroCtaRow}>
+          <Link className={s.heroCta} href="/docs">
+            <BookOpen size={14} aria-hidden />
+            <span>Nu docs</span>
+            <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
+          </Link>
           <a
             className={s.heroCta}
             href="https://github.com/nustackdev/nu"
@@ -67,11 +76,6 @@ export function Hero() {
             <span className={s.heroCtaRepo}>nustackdev/nu</span>
             <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
           </a>
-          <Link className={s.heroCta} href="/docs">
-            <BookOpen size={14} aria-hidden />
-            <span>Nu docs</span>
-            <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
-          </Link>
         </div>
 
         <HeroViz />

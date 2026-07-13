@@ -4,11 +4,11 @@ import { DiskStack } from './primitives/DiskStack';
 const MONO = 'var(--font-mono)';
 
 /**
- * OneLine — anatomy of one Nu interaction: `counter_ref.store(db_ref)`.
+ * OneLine — anatomy of one Nu interaction: `counter_ref.set(db_ref)`.
  *
  *   Two Ref chips (--nu-accent) drop from the two identifiers to a browser
  *   tab and a rocksdb disk (shared primitives). One Interaction chip
- *   (--nu-accent-2) drops from `.store(` between them.
+ *   (--nu-accent-2) drops from `.set(` between them.
  *
  * Palette is scoped at the section level (InteractionModelSection wraps in
  * a hue-carrier that remaps --nu-accent → sage, --nu-accent-2 → steel), so
@@ -35,19 +35,19 @@ export function OneLineSvg({ className }: { className?: string }) {
   const panelBottomY = panelY + panelH; // 114
 
   // code segments — 22px mono, ~13.2px/char.
-  // `counter_ref.store(db_ref)` = 25 chars → ~330px.
+  // `counter_ref.set( db_ref )` = 25 chars (with 1-char pads around db_ref) → ~330px.
   const codeStartX = 76;                   // (W - 330) / 2 ≈ 75
   const seg = {
     counterRef: { x: codeStartX + 72  }, // "counter_ref"  → 148
-    mid:        { x: codeStartX + 192 }, // ".store("      → 268
-    dbRef:      { x: codeStartX + 273 }, // "db_ref"       → 349
-    tail:       { x: codeStartX + 322 }, // ")"            → 398
+    mid:        { x: codeStartX + 178 }, // ".set("        → 254
+    dbRef:      { x: codeStartX + 264 }, // "db_ref"       → 340
+    tail:       { x: codeStartX + 323 }, // ")"            → 399
   };
   const codeBaselineY = panelY + panelH / 2 + 8; // 80
 
   // icons align with the identifiers' centers → clean vertical drops
   const browserCx = seg.counterRef.x; // 148
-  const diskCx    = seg.dbRef.x;      // 349
+  const diskCx    = seg.dbRef.x;      // 340
   const iconTopY  = panelBottomY + 84; // 198
 
   // ref hint chips sit at the midpoint of each drop
@@ -56,8 +56,8 @@ export function OneLineSvg({ className }: { className?: string }) {
 
   const iconLabelY = iconTopY + 104; // 302
 
-  // interaction hint chip — long leader from `.store(` down between the icons
-  const iChipCx = seg.mid.x; // 268
+  // interaction hint chip — long leader from `.set(` down between the icons
+  const iChipCx = seg.mid.x; // 254
   const iChipW = 108;
   const iChipH = 22;
   const iChipY = H - 30;     // 350
@@ -69,7 +69,7 @@ export function OneLineSvg({ className }: { className?: string }) {
       height="auto"
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label="Anatomy of one Nu interaction — counter_ref.store(db_ref). Ref chips label the identifiers and drop to a browser tab and rocksdb disk; an Interaction chip drops from .store between them."
+      aria-label="Anatomy of one Nu interaction — counter_ref.set(db_ref). Ref chips label the identifiers and drop to a browser tab and rocksdb disk; an Interaction chip drops from .set between them."
       className={className}
     >
       {/* ============ EXPRESSION PANEL — anatomy-style accent wash ============ */}
@@ -102,14 +102,14 @@ export function OneLineSvg({ className }: { className?: string }) {
       >
         counter_ref
       </text>
-      {/* .store( — Interaction */}
+      {/* .set( — Interaction */}
       <text
         x={seg.mid.x}
         y={codeBaselineY}
         textAnchor="middle"
         style={{ fill: accent2, fontFamily: MONO, fontSize: 22, fontWeight: 700, letterSpacing: '0.02em' }}
       >
-        .store(
+        .set(
       </text>
       {/* db_ref — Ref */}
       <text
@@ -266,7 +266,7 @@ export function OneLineSvg({ className }: { className?: string }) {
         textAnchor="middle"
         style={{ fill: ink3, fontFamily: MONO, fontSize: 10, letterSpacing: '0.22em' }}
       >
-        rocksdb
+        kv storage
       </text>
 
       {/* ============ INTERACTION HINT — bottom, long leader ============ */}

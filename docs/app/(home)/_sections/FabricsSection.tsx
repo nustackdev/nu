@@ -27,9 +27,7 @@ export function FabricsSection() {
       <SectionCol>
         <SectionTitle>The current fabrics.</SectionTitle>
         <SectionIntro>
-          Each <b>Ref</b> resolves inside a <b>fabric</b>. Here are the ones
-          Nu speaks today, each a real surface your code writes and reads
-          against.
+          Here are the native ones Nu speaks today.
         </SectionIntro>
 
         <ol className={s.rows}>

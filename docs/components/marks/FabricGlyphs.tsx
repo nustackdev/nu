@@ -167,7 +167,7 @@ export function VirtualsGlyph() {
         platterGap={22}
         rx={36}
         ry={7}
-        bodyLabel={{ text: 'tkv', fontSize: 13 }}
+        bodyLabel={{ text: 'kv', fontSize: 13 }}
       />
 
       {/* backend swap-plates */}

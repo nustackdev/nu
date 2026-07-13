@@ -21,8 +21,7 @@ export function AppsSection() {
       <SectionCol>
         <SectionTitle>Standalone apps built on Nu.</SectionTitle>
         <SectionIntro>
-          The tools we ship for others. They share Nu&apos;s shape and
-          language — you learn one, you know them all.
+          Applications built on Nu today.
         </SectionIntro>
 
         <ol className={s.rows}>

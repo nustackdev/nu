@@ -11,10 +11,6 @@ type Tok = { c?: 'kw' | 'nu' | 'str' | 'cmt'; t: string };
  * empty lines render at line-height.
  */
 const LINES: Tok[][] = [
-  [{ c: 'cmt', t: '"""Basic Nu bracket-tree app: mem preset + tiny compute."""' }],
-  [],
-  [{ c: 'kw', t: 'from' }, { t: ' __future__ ' }, { c: 'kw', t: 'import' }, { t: ' annotations' }],
-  [],
   [{ c: 'kw', t: 'import' }, { t: ' ' }, { c: 'nu', t: 'nu' }],
   [],
   [],

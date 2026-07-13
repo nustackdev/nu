@@ -9,7 +9,7 @@ import s from './HeroViz.module.css';
  * Fused asymmetric card:
  *   LEFT   nested Nu code tree with right-gutter hints
  *   RIGHT  fabric-clean SVG scene — browser tab rendering 42, wired down
- *          into a 3-disk rocksdb drum
+ *          into a kv-storage platter stack
  *
  * The wrap, divider, and dotted right substrate all live in the CSS module.
  */
@@ -43,7 +43,7 @@ function LeftTree() {
   return (
     <div className={s.tree}>
       {/* --- Counter shape --- */}
-      <Container role="virtuals" tag="state" hint="eg rocksdb">
+      <Container role="virtuals" tag="state" hint="kv storage">
         <Line>
           <span className={s.kw}>class</span>{' '}
           <span className={s.tVirtuals}>Counter</span>
@@ -57,7 +57,7 @@ function LeftTree() {
       </Container>
 
       {/* --- Dashboard shape --- */}
-      <Container role="ui" tag="ui" hint="refs ARE the widgets">
+      <Container role="ui" tag="ui" hint="refs as widgets">
         <Line>
           <span className={s.kw}>class</span>{' '}
           <span className={s.tUi}>Dashboard</span>
@@ -110,7 +110,7 @@ function LeftTree() {
         </Container>
 
         {/* live flow */}
-        <Container role="invisibles" tag="live" hint="wake on change, write ui">
+        <Container role="invisibles" tag="live" hint="wake on change">
           <Line>
             <span className={s.tInvisibles}>nu.ReactForever</span>
             <span className={s.dim}>(</span>
@@ -123,7 +123,7 @@ function LeftTree() {
             </Line>
           </Container>
 
-          <Container role="ui" tag="bind" hint="ui reads state, live" tight>
+          <Container role="ui" tag="bind" hint="update ui state" tight>
             <Line>
               <span className={s.tUi}>Dashboard.count</span>
               <span className={s.dim}>.set(</span>
@@ -210,7 +210,7 @@ function HintArrow() {
 
 /* ============================================================================
  * RightScene — fabric-clean SVG. Browser chrome (shared primitive) renders 42,
- * dashed wire connects down to a rocksdb platter-stack (shared primitive).
+ * dashed wire connects down to a kv-storage platter-stack (shared primitive).
  * Flat hairlines, no gradients, single accent-wash on the n = 42 chip. Accent
  * hue is silver-woven steel-blue (--nu-accent* is remapped to --nu-fab-steel
  * on the wrap in HeroViz.module.css).
@@ -228,11 +228,14 @@ function RightScene() {
      empty vertical space when scaled to column width. */
   const H = 470;
 
-  const bx = 20, by = 20, bw = W - 40, bh = 240;
-  const wireY1 = by + bh + 16;
-  const wireY2 = 348;
+  // Browser tab: 15% smaller than the previous baseline (bh 240→204, 42
+  // fontSize 100→85, internal offsets scaled). Centered horizontally.
+  const bw = 255, bh = 204;
+  const bx = (W - bw) / 2, by = 20;
+  const wireY1 = by + bh + 16;    // 240
+  const wireY2 = 300;
   const dCx = W / 2;
-  const dTopY = 366;
+  const dTopY = 316;              // moved up so the bottom labels stay visible
   const platterGap = 22;
   const platters = 4;
   const dBottomY = dTopY + (platters - 1) * platterGap;
@@ -242,21 +245,21 @@ function RightScene() {
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label="Dashboard rendered live in a browser tab showing 42, wired down into a rocksdb persistence disk."
+      aria-label="Dashboard rendered in a browser tab showing 42, wired down into a kv-storage persistence disk."
     >
       {/* ===== Browser chrome (shared primitive) ===== */}
-      <BrowserChrome x={bx} y={by} width={bw} height={bh} url="nu://dashboard" live />
+      <BrowserChrome x={bx} y={by} width={bw} height={bh} url="nu://dashboard" />
 
       {/* Browser body content */}
-      <text x={bx + 14} y={by + 52} style={{ fill: ink4, fontFamily: mono, fontSize: 9.5, letterSpacing: '0.24em' }}>
+      <text x={bx + 12} y={by + 44} style={{ fill: ink4, fontFamily: mono, fontSize: 8, letterSpacing: '0.24em' }}>
         dashboard
       </text>
-      <line x1={bx + 14} y1={by + 58} x2={bx + bw - 14} y2={by + 58} stroke={ruleSoft} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+      <line x1={bx + 12} y1={by + 50} x2={bx + bw - 12} y2={by + 50} stroke={ruleSoft} strokeWidth={1} vectorEffect="non-scaling-stroke" />
 
-      <text x={dCx} y={by + 168} textAnchor="middle" style={{ fill: ink, fontFamily: 'var(--font-display)', fontSize: 100, fontWeight: 800, letterSpacing: '-0.04em' }}>
+      <text x={dCx} y={by + 143} textAnchor="middle" style={{ fill: ink, fontFamily: 'var(--font-display)', fontSize: 85, fontWeight: 800, letterSpacing: '-0.04em' }}>
         42
       </text>
-      <text x={dCx} y={by + 200} textAnchor="middle" style={{ fill: ink3, fontFamily: mono, fontSize: 10, letterSpacing: '0.02em' }}>
+      <text x={dCx} y={by + 170} textAnchor="middle" style={{ fill: ink3, fontFamily: mono, fontSize: 8.5, letterSpacing: '0.02em' }}>
         dashboard.count
       </text>
 
@@ -266,7 +269,7 @@ function RightScene() {
         set
       </text>
 
-      {/* ===== Rocksdb disk (shared primitive, 4-platter stack) ===== */}
+      {/* ===== Persistent disk (shared primitive, 4-platter stack) ===== */}
       <DiskStack
         cx={dCx}
         topY={dTopY}
@@ -279,7 +282,7 @@ function RightScene() {
 
       {/* Labels under drum */}
       <text x={dCx} y={dBottomY + 26} textAnchor="middle" style={{ fill: accent, fontFamily: mono, fontSize: 10, letterSpacing: '0.28em', fontWeight: 700 }}>
-        rocksdb
+        kv storage
       </text>
       <text x={dCx} y={dBottomY + 44} textAnchor="middle" style={{ fill: ink3, fontFamily: mono, fontSize: 10, letterSpacing: '0.02em' }}>
         persisted · survives restart
