@@ -45,7 +45,7 @@ if __name__ == "__main__":
     asyncio.run(nu.arun(nu.v.auto_flow_atomic(app)))
 ```
 
-Save as `counter.py`, install with `pip install nu[nudle]`, run `python counter.py`, open the browser tab that appears. The counter ticks once a second; the dashboard mirrors it live. Kill it, run again — it picks up where it left off.
+Set up Nu with the `nu.ui` Fabric first: see [Install](../how-to/install). Then save the code above as `counter.py`, run `python counter.py`, open the browser tab that appears. The counter ticks once a second; the dashboard mirrors it live. Kill it, run again, it picks up where it left off.
 
 ## What happened
 
