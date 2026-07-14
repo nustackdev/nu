@@ -9,7 +9,6 @@ without touching its result:
                          only - the sync ``Retry`` runs no hooks). Final
                          exhaustion is deliberately NOT logged, so the terminal
                          error still propagates unswallowed (see below).
-- ``set_logger_name``  - retarget the logger on every step span and log node.
 
 All logging routes through Python's ``logging`` module (via ``nu.std.logging``).
 Tests capture with ``pytest``'s ``caplog`` fixture (or an attached handler).
@@ -47,7 +46,6 @@ if TYPE_CHECKING:
 __all__ = [
     "annotate_retries",
     "annotate_steps",
-    "set_logger_name",
 ]
 
 _STEP_LOGGER = "nu.steps"
@@ -195,27 +193,3 @@ def annotate_retries(tree: Nu, *, logger: str = _RETRY_LOGGER) -> Nu:
         )
 
     return map_nodes(tree, _annotate, order="bottom_up")
-
-
-def set_logger_name(tree: Nu, name: str) -> Nu:
-    """Retarget the logger on every step span and ``LogCommand`` in the tree.
-
-    Renames the ``logger`` a step Bracket logs under and swaps the logger child
-    (slot 2) of every ``LogCommand`` - so a whole annotated tree logs under one
-    chosen name.
-    """
-
-    def _rename(node: Nu) -> Nu:
-        if isinstance(node, _StepSpan):
-            p = node._payload
-            body = cast("Nu", node._children[0])
-            return _StepSpan(body, cast("int", p["step"]), cast("int", p["total"]), str(p["path"]), name)
-        if isinstance(node, LogCommand):
-            # LogCommand children: [LOGGING, level, logger, msg, *args].
-            # Slot 2 is the logger name -- swap it, keep everything else.
-            new_children = list(node._children)
-            new_children[2] = LiteralQuery(name)
-            return node._with_children(*new_children)
-        return node
-
-    return map_nodes(tree, _rename, order="bottom_up")

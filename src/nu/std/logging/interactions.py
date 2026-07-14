@@ -112,12 +112,10 @@ class LogCommand(Command):
 
     Children: ``[LOGGING, level, logger, msg, *args]``. ``level`` is a name
     (``"info"``, ``"warning"``, ...) or an int (``logging.INFO``); ``logger``
-    is the logger name -- both children so a tree rewrite can retarget them
-    (that is how :func:`nu.inspect.set_logger_name` renames every log
-    node across a tree). ``msg`` is the format string and ``*args`` are the
-    ``%``-substitution values, resolved at eval time. Structured
-    ``extra`` fields ride in :attr:`_payload` (static Python values captured
-    at construction).
+    is the logger name -- both children so a tree rewrite can retarget them.
+    ``msg`` is the format string and ``*args`` are the ``%``-substitution
+    values, resolved at eval time. Structured ``extra`` fields ride in
+    :attr:`_payload` (static Python values captured at construction).
 
     A ``msg`` or ``arg`` that reads as an unbound sentinel drops the whole
     line -- the same skip-on-EMPTY guard :class:`PrintCommand` uses. That

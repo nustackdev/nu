@@ -19,7 +19,7 @@ from nu.core import LiteralQuery, PrintCommand
 from nu.core.io import STDOUT, StdioBackend
 from nu.factory import ScalarQueryFactory
 from nu.flows import Sequential
-from nu.inspect import annotate_retries, annotate_steps, render_nu, set_logger_name
+from nu.inspect import annotate_retries, annotate_steps, render_nu
 from nu.inspect.annotate import _StepSpan
 from nu.lang import Span
 from nu.spans.policy import Retry
@@ -207,22 +207,3 @@ def test_annotate_retries_preserves_the_raise_on_exhaustion() -> None:
         raise AssertionError("annotation must not swallow the terminal failure")
 
 
-# --- set_logger_name ---------------------------------------------------------
-
-
-def test_set_logger_name_retargets_step_spans(caplog: pytest.LogCaptureFixture) -> None:
-    ann = set_logger_name(annotate_steps(_prog()), "custom.log")
-    caplog.set_level(pylogging.DEBUG)  # capture across any logger
-    run(ann)
-    names = {r.name for r in caplog.records}
-    assert "custom.log" in names
-    assert "nu.steps" not in names
-
-
-def test_set_logger_name_retargets_log_commands(caplog: pytest.LogCaptureFixture) -> None:
-    flaky = _flaky(fail_times=1)
-    ann = set_logger_name(annotate_retries(Retry(flaky(), max_attempts=2, delay=0.0)), "svc")
-    caplog.set_level(pylogging.DEBUG, logger="svc")
-    asyncio.run(arun(ann))
-    records = [(r.levelname, r.name, r.getMessage()) for r in caplog.records]
-    assert ("WARNING", "svc", "retry attempt 1 failed: fail1") in records
