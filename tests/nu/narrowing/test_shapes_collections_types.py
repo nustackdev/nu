@@ -13,6 +13,8 @@ import nu
 from nu.forms import BoolForm, IntForm, StrForm
 from nu.virtuals.refs import (
     IntRef,
+    Kh57Ref,
+    Kh57ShapesRef,
     ShapesDictRef,
     ShapesListRef,
     StrRef,
@@ -137,3 +139,22 @@ assert_type(
     Season.matches[0].home.score - Season.matches[0].away.score,
     IntForm,
 )
+
+
+# --- Kh57Ref / Kh57ShapesRef ------------------------------------------
+
+
+class TickSeries(nu.Shape):
+    counters: nu.v.Kh57Ref[int]
+    points:   nu.v.Kh57ShapesRef[Profile]
+
+
+# Whole-container types
+assert_type(TickSeries.counters, Kh57Ref[int])
+assert_type(TickSeries.points,   Kh57ShapesRef[Profile])
+
+# Kh57ShapesRef subscript -> Shape; then field access
+assert_type(TickSeries.points[100],       Profile)
+assert_type(TickSeries.points[100].name,  StrRef)
+assert_type(TickSeries.points[100].age,   IntRef)
+assert_type(TickSeries.points[100].age + 1, IntForm)

@@ -1,28 +1,22 @@
 """Virtuals kh57 mapping reference — sparse int-keyed map with range sampling.
 
-Wraps a virtuals Kh57View: physical storage under kh57-encoded child segments
-so range reservoir sampling (`kh57.sample`) runs with low read amplification.
-Semantically a mutable mapping[int, V]; adds `.sample(n, begin, end)` and
-`.range(begin, end)` on top.
+Thin extension of :class:`DictRef` that pins keys to non-negative 57-bit ints,
+defaults the view to :class:`~virtuals.views.Kh57View`, and adds
+``.sample(n, begin, end)`` and ``.range(begin, end)`` on top of the standard
+mapping surface. Physical storage lives under kh57-encoded child segments so
+range reservoir sampling (``kh57.sample``) runs with low read amplification.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import (
-    AnyForm,
-    DictForm,
-    DictItemsForm,
-    DictKeysForm,
-    DictValuesForm,
-    IteratorForm,
-)
-from nu.domains.shape import ReactiveMappingRef, Slot
+from nu import AnyForm
+from nu.domains.shape import Slot
 from nu.lang.typeinfo import value_type_for
 
 from .base import ViewRef
-from .items import ItemRef
+from .dict import DictRef
 
 
 if TYPE_CHECKING:
@@ -36,47 +30,13 @@ __all__ = [
 ]
 
 
-class Kh57Ref[V](ReactiveMappingRef, ViewRef[dict[int, V]]):
-    """Virtuals kh57 mapping reference — sparse int-keyed map with sampling.
+class Kh57Ref[V](DictRef[int, V]):
+    """Sparse int-keyed mapping with kh57-encoded layout for range sampling.
 
-    Keys must be non-negative 57-bit ints. Adds `.sample(n, begin, end)` and
-    `.range(begin, end)` beyond the standard mapping surface.
+    Inherits all mapping semantics from :class:`DictRef`. Keys are always
+    non-negative 57-bit ints; the default view is :class:`Kh57View`. Adds
+    :meth:`sample` and :meth:`range` on top.
     """
-
-    def _wrap_item_ref(self, address: object) -> ItemRef:
-        """Navigate to the value at ``address`` as a substrate-backed virtuals ItemRef."""
-        return ItemRef(
-            address=address,
-            value_type=self._payload["value_type"],
-            value_value_type=self._payload["value_value_type"],
-            parent_ref=self,
-            owner_shape=self._owner_shape,
-        )
-
-    def _wrap_result(self, op: Nu) -> DictForm[int, V]:
-        """Wrap a mapping-level op result as a DictForm."""
-        return DictForm(op)
-
-    def _wrap_keys_result(self, operand: Nu) -> DictKeysForm:
-        return DictKeysForm(operand)
-
-    def _wrap_values_result(self, operand: Nu) -> DictValuesForm:
-        return DictValuesForm(operand)
-
-    def _wrap_items_result(self, operand: Nu) -> DictItemsForm:
-        return DictItemsForm(operand)
-
-    def _wrap_iterable_result(self, operand: Nu) -> IteratorForm:
-        return IteratorForm(operand)
-
-    def _wrap_value_result(self, operand: Nu) -> AnyForm:
-        return AnyForm(operand)
-
-    def _wrap_element_result(self, operand: Nu) -> AnyForm:
-        return AnyForm(operand)
-
-    def _wrap_mapping_result(self, operand: Nu) -> DictForm[int, V]:
-        return DictForm(operand)
 
     def __init__(
         self,
@@ -84,21 +44,25 @@ class Kh57Ref[V](ReactiveMappingRef, ViewRef[dict[int, V]]):
         *,
         value_type: type[V],
         value_value_type: type,
-        view_type: type[Kh57ViewBase],
+        view_type: type[Kh57ViewBase] | None = None,
         parent_ref: ViewRef | None = None,
         owner_shape: type[Shape] | None = None,
     ) -> None:
+        from virtuals.views import Kh57View
+
         super().__init__(
-            address, view_type=view_type, parent_ref=parent_ref, owner_shape=owner_shape
+            address,
+            value_type=value_type,
+            key_type=int,
+            key_value_type=value_type_for(int),
+            value_value_type=value_value_type,
+            view_type=view_type or Kh57View,
+            parent_ref=parent_ref,
+            owner_shape=owner_shape,
         )
-        self._payload["value_type"] = value_type
-        self._payload["value_value_type"] = value_value_type
-        # kh57 keys are always non-negative 57-bit ints.
-        self._payload["key_type"] = int
-        self._payload["key_value_type"] = value_type_for(int)
 
     @classmethod
-    def slot[DV](
+    def slot[DV](  # type: ignore[override]
         cls,
         value_type: type[DV],
         view_type: type[Kh57ViewBase] | None = None,

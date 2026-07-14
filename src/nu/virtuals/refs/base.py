@@ -245,18 +245,27 @@ class ViewRef[T](_VirtualsRefBase[T]):
         return nav.open_at_path(ViewPathSer(path[:-1]), storage_ctx)
 
     def _write(self, rt: Runtime, value: object, nid: int) -> None:
-        """Store a whole container value through the parent View (decomposed)."""
+        """Store a whole container value through the parent View (decomposed).
+
+        Uses ``set_child_container_as`` so the ref's declared view class
+        (``path[-1][1]``) drives the child layout, rather than the parent's
+        default type→view registry lookup — which would collapse every
+        ``dict``-valued ref onto ``DictView`` regardless of what the slot
+        declared (``Kh57View``, ``IndexedDictView``, …).
+        """
         value = self._lower(value)
         path = self._resolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)
-        parent[path[-1][0]] = value  # type: ignore[index]
+        key, view_class = path[-1]
+        parent.set_child_container_as(key, value, view_class)  # type: ignore[attr-defined]
 
     async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
-        """Async sibling of :meth:`write`."""
+        """Async sibling of :meth:`_write`."""
         value = await self._alower(value)
         path = await self._aresolve_path(rt, nid)
         parent = self._fetch_parent_view(rt, path)
-        parent[path[-1][0]] = value  # type: ignore[index]
+        key, view_class = path[-1]
+        parent.set_child_container_as(key, value, view_class)  # type: ignore[attr-defined]
 
     def _erase(self, rt: Runtime, nid: int) -> None:
         """Remove this ref's slot from its parent View, if present."""

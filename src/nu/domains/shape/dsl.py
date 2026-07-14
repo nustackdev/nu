@@ -39,8 +39,8 @@ Example::
         # bare Shape + explicit ``.slot()`` for fabric
         rel: Order = nm.ShapeRef.slot(Order)
 
-        # with config
-        top10: nv.Kh57Ref[int] = nv.Kh57Ref.slot(sample_size=10)
+        # with config (explicit .slot() picks a non-default view class)
+        events: nv.Kh57Ref[int] = nv.Kh57Ref.slot(int, view_type=nv.Kh57View)
 """
 
 from __future__ import annotations

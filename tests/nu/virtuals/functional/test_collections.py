@@ -35,6 +35,8 @@ from nu.virtuals import (
     DictRef,
     FloatRef,
     IntRef,
+    Kh57Ref,
+    Kh57ShapesRef,
     ListRef,
     SetRef,
     ShapesDictRef,
@@ -64,6 +66,8 @@ class Portfolio(Shape):
     members = SetRef.slot(str)
     orders = ShapesListRef.slot(Order)
     team = ShapesDictRef.slot(Order)
+    events = Kh57Ref.slot(str)
+    series = Kh57ShapesRef.slot(Order)
 
 
 # ============================================================================
@@ -347,6 +351,109 @@ class TestShapesDictRefExecution:
         )
         result = run(Portfolio.team["desk_a"].symbol, portfolio_ctx)[0]
         assert result == "AAPL"
+
+
+# ============================================================================
+# KH57 REF — sparse int-keyed map with range sampling
+# ============================================================================
+
+
+class TestKh57RefWrapTypes:
+    """Kh57Ref inherits DictRef wrapping — DictKeysForm/DictValuesForm/DictItemsForm."""
+
+    def test_keys_returns_dict_keys_value(self):
+        keys = Portfolio.events.keys()
+        assert isinstance(keys, DictKeysForm)
+
+    def test_values_returns_dict_values_value(self):
+        vals = Portfolio.events.values()
+        assert isinstance(vals, DictValuesForm)
+
+    def test_items_returns_dict_items_value(self):
+        items = Portfolio.events.items()
+        assert isinstance(items, DictItemsForm)
+
+    def test_result_returns_dict_value(self):
+        result = Portfolio.events._wrap_result(LiteralQuery("x"))
+        assert isinstance(result, DictForm)
+
+
+class TestKh57RefExecution:
+    """Kh57Ref operations through virtuals."""
+
+    def test_set_and_get(self, portfolio_ctx):
+        run(Portfolio.events.set(42, "open"), portfolio_ctx)
+        assert run(Portfolio.events.get(42), portfolio_ctx)[0] == "open"
+
+    def test_store_and_keys(self, portfolio_ctx):
+        store(Portfolio.events, {1: "a", 5: "b", 999: "c"}, portfolio_ctx)
+        result = run(Portfolio.events.keys(), portfolio_ctx)[0]
+        assert isinstance(result, KeysView)
+        assert set(result) == {1, 5, 999}
+
+    def test_store_and_values(self, portfolio_ctx):
+        store(Portfolio.events, {1: "a", 5: "b"}, portfolio_ctx)
+        result = run(Portfolio.events.values(), portfolio_ctx)[0]
+        assert set(result) == {"a", "b"}
+
+    def test_range_slice(self, portfolio_ctx):
+        store(Portfolio.events, {i: str(i) for i in range(20)}, portfolio_ctx)
+        result = run(Portfolio.events.range(5, 10), portfolio_ctx)[0]
+        assert result == [(i, str(i)) for i in range(5, 10)]
+
+    def test_sample_yields_up_to_n(self, portfolio_ctx):
+        store(Portfolio.events, {i: str(i) for i in range(100)}, portfolio_ctx)
+        result = run(Portfolio.events.sample(10), portfolio_ctx)[0]
+        assert len(result) == 10
+        for k, v in result:
+            assert 0 <= k < 100
+            assert v == str(k)
+
+
+# ============================================================================
+# KH57 SHAPES REF — mapping of shapes with range sampling
+# ============================================================================
+
+
+class TestKh57ShapesRefWrapTypes:
+    """Kh57ShapesRef inherits ShapesDictRef wrapping."""
+
+    def test_keys_returns_dict_keys_value(self):
+        keys = Portfolio.series.keys()
+        assert isinstance(keys, DictKeysForm)
+
+    def test_values_returns_dict_values_value(self):
+        vals = Portfolio.series.values()
+        assert isinstance(vals, DictValuesForm)
+
+    def test_items_returns_dict_items_value(self):
+        items = Portfolio.series.items()
+        assert isinstance(items, DictItemsForm)
+
+
+class TestKh57ShapesRefExecution:
+    """Kh57ShapesRef operations through virtuals."""
+
+    def test_store_and_keys(self, portfolio_ctx):
+        store(
+            Portfolio.series,
+            {
+                100: {"symbol": "AAPL", "price": 185.5, "qty": 10},
+                200: {"symbol": "GOOG", "price": 142.3, "qty": 5},
+            },
+            portfolio_ctx,
+        )
+        result = run(Portfolio.series.keys(), portfolio_ctx)[0]
+        assert set(result) == {100, 200}
+
+    def test_slot_navigation(self, portfolio_ctx):
+        store(
+            Portfolio.series,
+            {100: {"symbol": "AAPL", "price": 185.5, "qty": 10}},
+            portfolio_ctx,
+        )
+        assert run(Portfolio.series[100].symbol, portfolio_ctx)[0] == "AAPL"
+        assert run(Portfolio.series[100].price, portfolio_ctx)[0] == 185.5
 
 
 # ============================================================================

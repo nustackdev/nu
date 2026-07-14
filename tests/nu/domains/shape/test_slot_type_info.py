@@ -25,6 +25,8 @@ from nu.mem.refs import (
     StrRef,
 )
 from nu.virtuals.refs import (
+    Kh57Ref,
+    Kh57ShapesRef,
     PrimitiveDictRef,
     PrimitiveListRef,
 )
@@ -142,6 +144,36 @@ def test_shapes_list_ref_synthesizes_with_shape_kwarg() -> None:
 def test_shapes_list_ref_stamps_type_info_with_shape_elem() -> None:
     info = ShapesListHolder.rows._payload["type_info"]
     assert info == TypeInfo(ShapesListRef, elem=TypeInfo(LeafShape))
+
+
+class Kh57Holder(nu.Shape):
+    entries: Kh57Ref[int]
+
+
+def test_kh57_ref_synthesizes_with_derived_kwargs() -> None:
+    slot = Kh57Holder._slots["entries"]
+    assert slot.ref_cls is Kh57Ref
+    assert slot.kwargs["value_type"] is int
+
+
+def test_kh57_ref_stamps_recursive_type_info() -> None:
+    info = Kh57Holder.entries._payload["type_info"]
+    assert info == TypeInfo(Kh57Ref, elem=TypeInfo(int))
+
+
+class Kh57ShapesHolder(nu.Shape):
+    points: Kh57ShapesRef[LeafShape]
+
+
+def test_kh57_shapes_ref_synthesizes_with_shape_kwarg() -> None:
+    slot = Kh57ShapesHolder._slots["points"]
+    assert slot.ref_cls is Kh57ShapesRef
+    assert slot.kwargs["shape_type"] is LeafShape
+
+
+def test_kh57_shapes_ref_stamps_type_info_with_shape_elem() -> None:
+    info = Kh57ShapesHolder.points._payload["type_info"]
+    assert info == TypeInfo(Kh57ShapesRef, elem=TypeInfo(LeafShape))
 
 
 # --- bare Shape annotation (must have explicit .slot()) ------------------
