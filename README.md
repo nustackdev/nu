@@ -94,14 +94,7 @@ Swap the Fabric, keep the tree. Same program runs against different substrates.
 
 ## Install
 
-```bash
-pip install nu[minimal]      # core language only
-pip install nu[default]      # + virtuals, RocksDB, types
-pip install nu[nudle]        # + UI fabric
-pip install nu[distributed]  # + Ray + invisibles
-```
-
-Python 3.12+.
+From source. Python 3.12+. See [nustack.dev/docs/how-to/install](https://nustack.dev/docs/how-to/install) for the full guide (Python side, UI bundle, verify).
 
 ## Apps built on Nu
 
