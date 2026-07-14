@@ -11,8 +11,8 @@ without touching its result:
                          error still propagates unswallowed (see below).
 - ``set_logger_name``  - retarget the logger on every step span and log node.
 
-All logging goes through the stderr side of the stdio fabric (``nu.core.io``),
-so a bound ``StdioBackend`` captures it in a test exactly like ``print`` output.
+All logging routes through Python's ``logging`` module (via ``nu.std.logging``).
+Tests capture with ``pytest``'s ``caplog`` fixture (or an attached handler).
 The step Bracket logs imperatively in its ``_open`` (it wraps a body, so it
 cannot delegate to a ``LogCommand`` child); the retry hooks are real
 ``LogCommand`` nodes that read the attempt / error the ``Retry`` writes into
@@ -21,15 +21,17 @@ cannot delegate to a ``LogCommand`` child); the retry hooks are real
 
 from __future__ import annotations
 
+import logging as _pylogging
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, cast
 
 from nu.context import IntAttrRef, StrAttrRef
 from nu.core import LiteralQuery
-from nu.core.io import LogCommand, _emit_log, log
 from nu.flows import Noop, Sequential
 from nu.spans.bracket import _LifecycleBracket
 from nu.spans.policy import Retry
+from nu.std.logging import LogCommand
+from nu.std.logging.interactions import _to_level
 from nu.tree import map_nodes
 
 
@@ -53,6 +55,16 @@ _RETRY_LOGGER = "nu.retry"
 _RETRY_ARITY = 10  # Retry's fixed child count (nu.spans.policy.Retry)
 
 
+def _emit_log(level: str, logger: str, message: str) -> None:
+    """Write one log line via Python's ``logging`` module.
+
+    The imperative seam for code that logs outside the atom path -- notably
+    the step-tracking Bracket below, whose ``scope`` logs around a body and
+    so cannot delegate to a ``LogCommand`` child.
+    """
+    _pylogging.getLogger(logger).log(_to_level(level), message)
+
+
 # --- the step-tracking Bracket ----------------------------------------------
 
 
@@ -74,14 +86,14 @@ class _StepSpan(_LifecycleBracket):
         p = self._payload
         logger = str(p["logger"])
         tag = f"[{p['path']}] step {p['step']}/{p['total']}"
-        _emit_log(ctx, "info", logger, f"{tag} start")
+        _emit_log("info", logger, f"{tag} start")
         try:
             yield ctx
         except BaseException as exc:
-            _emit_log(ctx, "warning", logger, f"{tag} failed: {exc}")
+            _emit_log("warning", logger, f"{tag} failed: {exc}")
             raise
         else:
-            _emit_log(ctx, "info", logger, f"{tag} done")
+            _emit_log("info", logger, f"{tag} done")
 
 
 # --- rewrites ----------------------------------------------------------------
@@ -161,7 +173,9 @@ def annotate_retries(tree: Nu, *, logger: str = _RETRY_LOGGER) -> Nu:
             raise RuntimeError(msg)
         attempt = IntAttrRef(_literal_key(kids[9], "attempt"))
         error = StrAttrRef(_literal_key(kids[8], "error"))
-        log_af = log("retry attempt", attempt, "failed:", error, level="warning", logger=logger)
+        # Python-logging %-format: msg carries the template, attempt / error
+        # are the substitution args resolved at eval time.
+        log_af = LogCommand("warning", logger, "retry attempt %s failed: %s", attempt, error)
 
         existing_af, existing_success, existing_fail = kids[5], kids[6], kids[7]
         on_attempt_fail = log_af if isinstance(existing_af, Noop) else (log_af >> existing_af)
@@ -197,12 +211,11 @@ def set_logger_name(tree: Nu, name: str) -> Nu:
             body = cast("Nu", node._children[0])
             return _StepSpan(body, cast("int", p["step"]), cast("int", p["total"]), str(p["path"]), name)
         if isinstance(node, LogCommand):
-            return node._with_children(
-                node._children[0],
-                node._children[1],
-                LiteralQuery(name),
-                *node._children[3:],
-            )
+            # LogCommand children: [LOGGING, level, logger, msg, *args].
+            # Slot 2 is the logger name -- swap it, keep everything else.
+            new_children = list(node._children)
+            new_children[2] = LiteralQuery(name)
+            return node._with_children(*new_children)
         return node
 
     return map_nodes(tree, _rename, order="bottom_up")

@@ -24,7 +24,8 @@ family, crossing Query / Command / Action as the builtins do:
 - ``reduction`` - stream-to-scalar folds (SumQuery, MinQuery, MaxQuery, AnyQuery, AllQuery, CollectQuery)
 - ``reflection`` - introspection (TypeQuery, IsInstanceQuery, CallableQuery, IdQuery, HashQuery)
 - ``sentinel`` - the EMPTY / INVALID predicates (IsEmptyQuery, IsInvalidQuery)
-- ``io`` - console effects through the stdio fabric (PrintCommand, LogCommand, InputAction)
+- ``io`` - console effects through the stdio fabric (PrintCommand, InputAction).
+        Logging lives at ``nu.std.logging`` -- a Python ``logging`` module wrap.
 - ``dynamic`` - dynamic evaluation (EvalQuery, ExecQuery, CompileQuery, GlobalsQuery)
 
 Core is the pure Python builtins. The fabric interactions (writing through a
@@ -87,7 +88,7 @@ from nu.core.cast import (
 from nu.core.comparison import EqQuery, GeQuery, GtQuery, IsQuery, LeQuery, LtQuery, NeQuery
 from nu.core.conditional import IfQuery, SwitchQuery
 from nu.core.dynamic import CompileQuery, EvalQuery, ExecQuery, GlobalsQuery, LocalsQuery
-from nu.core.io import InputAction, LogCommand, PrintCommand, input, log, print
+from nu.core.io import InputAction, PrintCommand, input, print
 from nu.core.iteration import EnumerateQuery, IterQuery, NextAction, ReversedQuery, ZipQuery
 from nu.core.literal import LiteralQuery
 from nu.core.logical import AndQuery, BoolQuery, NotQuery, OrQuery
@@ -204,7 +205,6 @@ __all__ = [
     "ListQuery",
     "LiteralQuery",
     "LocalsQuery",
-    "LogCommand",
     "LtQuery",
     "MapQuery",
     "MatMulQuery",
@@ -249,6 +249,5 @@ __all__ = [
     "VarsQuery",
     "ZipQuery",
     "input",
-    "log",
     "print",
 ]

@@ -28,6 +28,10 @@ terminal. ``open`` / the filesystem fabric land later as their own fabric.
 Tests (and any host embedding) can redirect the streams by binding a
 ``StdioBackend`` fabric on the Context; absent one, the atoms hit the real
 ``sys`` streams.
+
+For logging use ``nu.std.logging`` -- it wraps Python's ``logging`` module 1-1
+(same handlers, formatters, and configuration surface), so log records don't
+share the stdio fabric.
 """
 
 from __future__ import annotations
@@ -52,12 +56,10 @@ __all__ = [
     "STDIN",
     "STDOUT",
     "InputAction",
-    "LogCommand",
     "PrintCommand",
     "StdioBackend",
     "StdioRef",
     "input",
-    "log",
     "print",
 ]
 
@@ -104,21 +106,6 @@ def _stream_for(ctx: Context, name: str) -> IO:
     return getattr(sys, name)
 
 
-def _format_log(level: str, logger: str, parts: list[str]) -> str:
-    """The one log-line shape shared by ``LogCommand`` and the annotate spans."""
-    return f"[{level.upper()}] {logger}: {' '.join(parts)}\n"
-
-
-def _emit_log(ctx: Context, level: str, logger: str, message: str) -> None:
-    """Write one formatted log line to the stderr stream (backend-aware).
-
-    The imperative seam for code that logs outside the atom path - notably the
-    step-tracking Bracket in ``nu.inspect``, whose ``scope`` logs around a body
-    and so cannot delegate to a ``LogCommand`` child.
-    """
-    _stream_for(ctx, "stderr").write(_format_log(level, logger, [message]))
-
-
 # --- the stdio fabric Ref ---------------------------------------------------
 
 
@@ -139,13 +126,13 @@ class StdioRef(Ref):
     def _resolve_stream(self, rt: Runtime) -> IO:
         return _stream_for(rt.ctx, cast("str", self._payload["stream"]))
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> IO:
             return self._resolve_stream(rt)
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> IO:
             return self._resolve_stream(rt)
 
@@ -176,19 +163,42 @@ STDIN = StdioRef("stdin")
 
 
 class PrintCommand(Command):
-    """Writes the values in slots 1.. to the stdout fabric Ref in slot 0.
+    r"""Writes the values in slots 1.. to the stdout fabric Ref in slot 0.
 
-    Python's ``print``. A Command: it mutates the stdout fabric and yields
-    nothing. Slot 0 is the IO Ref it writes through; every other slot binds in
-    read role. Values are stringified and joined with a space, with a trailing
-    newline - Python's default ``print`` shape.
+    Python's ``print`` -- signature-identical: ``print(*objects, sep=' ',
+    end='\n', flush=False)``. A Command: it mutates the stdout fabric and
+    yields nothing. Slot 0 is the IO Ref it writes through; every other slot
+    binds in read role. Values are stringified and joined with ``sep``, with
+    ``end`` appended. ``sep`` / ``end`` / ``flush`` are captured at
+    construction and ride in :attr:`_payload` -- static strings, not Nu
+    terms. ``file`` from Python's ``print`` maps to the ``StdioRef`` in slot
+    0 (default ``STDOUT``).
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def __init__(
+        self,
+        ref: StdioRef,
+        *values: object,
+        sep: str = " ",
+        end: str = "\n",
+        flush: bool = False,
+    ) -> None:
+        super().__init__(ref, *values)
+        # sep/end/flush are static Python values, carried in payload -- unlike
+        # values, they never resolve at eval time.
+        self._payload = dict(self._payload)
+        self._payload["sep"] = sep
+        self._payload["end"] = end
+        self._payload["flush"] = flush
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = cast("StdioRef", self._children[0])
         value_thunks = children[1:]
+        sep = str(self._payload["sep"])
+        end = str(self._payload["end"])
+        flush = bool(self._payload["flush"])
 
         def thunk(rt: Runtime) -> None:
             parts: list[str] = []
@@ -197,13 +207,19 @@ class PrintCommand(Command):
                 if v is EMPTY or v is INVALID:
                     return
                 parts.append(str(v))
-            ref._write(rt, " ".join(parts) + "\n", rt.program.children[nid][0])
+            stream = ref._resolve_stream(rt)
+            stream.write(sep.join(parts) + end)
+            if flush:
+                stream.flush()
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = cast("StdioRef", self._children[0])
         value_thunks = children[1:]
+        sep = str(self._payload["sep"])
+        end = str(self._payload["end"])
+        flush = bool(self._payload["flush"])
 
         async def athunk(rt: Runtime) -> None:
             parts: list[str] = []
@@ -212,58 +228,10 @@ class PrintCommand(Command):
                 if v is EMPTY or v is INVALID:
                     return
                 parts.append(str(v))
-            await ref._awrite(rt, " ".join(parts) + "\n", rt.program.children[nid][0])
-
-        return athunk
-
-
-class LogCommand(Command):
-    r"""Writes a leveled, named log line to the stderr fabric Ref in slot 0.
-
-    Children: ``[STDERR, level, logger, *values]``. Formats
-    ``"[LEVEL] logger: v1 v2 ...\n"`` and writes it through the stderr Ref
-    (slot 0), so it is a Command exactly like :class:`PrintCommand` - the effect
-    is a fabric WRITE, testable through a bound ``StdioBackend``. What sets it
-    apart from ``print`` is the ``level`` and ``logger`` name, both carried as
-    ``StrArg`` children (slots 1-2) so a tree rewrite can retarget them - that is
-    how ``nu.inspect.set_logger_name`` renames a logger across a whole tree. A
-    value slot reading a sentinel (an unbound attr) is skipped, not fatal, so a
-    log line still emits when one of its interpolated attrs is absent.
-    """
-
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = cast("StdioRef", self._children[0])
-        level_thunk, logger_thunk = children[1], children[2]
-        value_thunks = children[3:]
-
-        def thunk(rt: Runtime) -> None:
-            parts: list[str] = []
-            for vt in value_thunks:
-                v = vt(rt)
-                if v is EMPTY or v is INVALID:
-                    continue
-                parts.append(str(v))
-            line = _format_log(str(level_thunk(rt)), str(logger_thunk(rt)), parts)
-            ref._write(rt, line, rt.program.children[nid][0])
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = cast("StdioRef", self._children[0])
-        level_thunk, logger_thunk = children[1], children[2]
-        value_thunks = children[3:]
-
-        async def athunk(rt: Runtime) -> None:
-            parts: list[str] = []
-            for vt in value_thunks:
-                v = await vt(rt)
-                if v is EMPTY or v is INVALID:
-                    continue
-                parts.append(str(v))
-            line = _format_log(str(await level_thunk(rt)), str(await logger_thunk(rt)), parts)
-            await ref._awrite(rt, line, rt.program.children[nid][0])
+            stream = ref._resolve_stream(rt)
+            stream.write(sep.join(parts) + end)
+            if flush:
+                stream.flush()
 
         return athunk
 
@@ -281,7 +249,7 @@ class InputAction(ScalarAction):
     _mutates = Declared(value=frozenset({0}), name="mutates")
     deterministic = Declared(value=False)
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = cast("StdioRef", self._children[0])
 
         def thunk(rt: Runtime) -> str:
@@ -289,7 +257,7 @@ class InputAction(ScalarAction):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = cast("StdioRef", self._children[0])
 
         async def athunk(rt: Runtime) -> str:
@@ -301,25 +269,23 @@ class InputAction(ScalarAction):
 # --- wrappers (the user-facing surface; the Ref stays hidden) ---------------
 
 
-def print(*values: object) -> PrintCommand:  # shadowing the builtin is intended
-    """Write ``values`` to stdout, space-separated with a trailing newline.
+def print(  # shadowing the builtin is intended
+    *values: object,
+    sep: str = " ",
+    end: str = "\n",
+    file: StdioRef | None = None,
+    flush: bool = False,
+) -> PrintCommand:
+    r"""Write ``values`` to a stdio stream. Mirrors ``builtins.print``.
 
-    Nu's ``print``: mirrors the builtin's default shape. Returns the
-    ``PrintCommand`` atom (a Command yields nothing, so it is not Form-wrapped);
-    drive it with ``run`` / ``arun`` or compose it in a Flow.
+    ``print(*objects, sep=' ', end='\n', file=None, flush=False)`` -- the
+    same signature you know. ``file`` is a Nu ``StdioRef`` (default
+    :data:`STDOUT`) because the stdio fabric identifies streams by Ref, not
+    by raw Python IO objects; pass ``STDERR`` to write to stderr. Returns the
+    ``PrintCommand`` atom (a Command yields nothing, so it is not
+    Form-wrapped); drive it with ``run`` / ``arun`` or compose it in a Flow.
     """
-    return PrintCommand(STDOUT, *values)
-
-
-def log(*values: object, level: str = "info", logger: str = "nu") -> LogCommand:
-    """Write a leveled log line to stderr: ``[LEVEL] logger: values...``.
-
-    Nu's logging effect: like ``print`` but to stderr and tagged with a ``level``
-    and ``logger`` name (both plain strings, auto-wrapped as literals). Returns
-    the ``LogCommand`` atom (a Command yields nothing); drive it with ``run`` /
-    ``arun`` or compose it - e.g. as a ``Retry`` failure hook.
-    """
-    return LogCommand(STDERR, level, logger, *values)
+    return PrintCommand(file if file is not None else STDOUT, *values, sep=sep, end=end, flush=flush)
 
 
 def input() -> StrForm:  # shadowing the builtin is intended

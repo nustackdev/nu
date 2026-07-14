@@ -8,7 +8,8 @@ RocksDB. Resumable: skips already-synced slots on restart.
 Demonstrates:
   Shapes        -- Transaction, Ledger (persistent data topology)
   FabricRef     -- SolanaRpc bound on the Context, called from the driver
-  Compositions  -- Sequential, IfDo, ForEachDo, Retry, TryCatch, log
+  Compositions  -- Sequential, IfDo, ForEachDo, Retry, TryCatch
+  Logging       -- nu.std.logging (wraps Python's logging module 1-1)
   Spans         -- nu.virtuals.Transaction (atomic writes)
   Deformations  -- inline_refs (tree rewrites before execution)
   Context       -- storage + service binding
@@ -36,9 +37,13 @@ import aiohttp
 
 import nu
 import nu.mem as m
+import nu.std.logging as logging
 import nu.virtuals as v
 from virtuals import Navigator
 from virtuals.tkv.storage import TransactionProtocol
+
+
+log = logging.getLogger(__name__)
 
 
 # =============================================================================
@@ -349,7 +354,7 @@ async def _sync_one_slot(
             v.Transaction(ledger.slots_dropped.add(slot)),
             ctx,
         )
-        await nu.arun(nu.log("dropped slot", slot), ctx)
+        await nu.arun(log.info("dropped slot %s", slot), ctx)
         return
 
     if program_id:
@@ -370,7 +375,7 @@ async def _sync_one_slot(
             ledger.slots_synced.add(slot),
         ),
     )
-    await nu.arun(nu.log("slot", slot, ":", len(block_txs), "txs"), ctx)
+    await nu.arun(log.info("slot %s: %s txs", slot, len(block_txs)), ctx)
     await nu.arun(tree, ctx)
 
 
@@ -389,7 +394,7 @@ async def sync_range(
     rpc = ctx.get(SolanaRpc)
     slots = await rpc.get_blocks(slot_from, slot_to)
     await nu.arun(
-        nu.log("sync:", slot_from, "->", slot_to, "(", len(slots), "confirmed)"),
+        log.info("sync: %s -> %s (%s confirmed)", slot_from, slot_to, len(slots)),
         ctx,
     )
 
@@ -401,7 +406,7 @@ async def sync_range(
             continue
         await Retry_via_driver(ctx, ledger, slot, program_id)
 
-    await nu.arun(nu.log("sync complete"), ctx)
+    await nu.arun(log.info("sync complete"), ctx)
 
 
 async def Retry_via_driver(  # noqa: N802
@@ -418,10 +423,10 @@ async def Retry_via_driver(  # noqa: N802
             await _sync_one_slot(ctx, ledger, slot, program_id)
             return
         except Exception:
-            await nu.arun(nu.log("retry slot", slot, "attempt", attempt + 1), ctx)
+            await nu.arun(log.warning("retry slot %s attempt %s", slot, attempt + 1), ctx)
             await asyncio.sleep(delay)
             delay *= 1.5
-    await nu.arun(nu.log("giving up on slot", slot), ctx)
+    await nu.arun(log.error("giving up on slot %s", slot), ctx)
 
 
 # =============================================================================

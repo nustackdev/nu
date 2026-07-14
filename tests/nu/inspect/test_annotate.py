@@ -1,31 +1,39 @@
 """Tests for nu.inspect.annotate - the logging / step-tracking rewrites.
 
-All annotation logging goes to the stderr side of the stdio fabric, so we bind a
-``StdioBackend`` with a ``StringIO`` and assert on what was written. Sync covers
-the step spans; async covers the retry hooks (``Retry`` fires hooks only on the
-async path).
+All annotation logging routes through Python's ``logging`` module (via
+``nu.std.logging``). Tests use pytest's ``caplog`` fixture to assert on the
+records emitted -- the idiomatic Python way, same as any ``logging`` user.
+Print output still routes through the stdio fabric, so tests that also
+check ``print`` output still bind a ``StdioBackend``.
 """
 
 from __future__ import annotations
 
 import asyncio
 import io as _io
+import logging as pylogging
+from typing import TYPE_CHECKING
 
 from nu import Context, arun, run
 from nu.core import LiteralQuery, PrintCommand
-from nu.core.io import STDOUT, LogCommand, StdioBackend
+from nu.core.io import STDOUT, StdioBackend
+from nu.factory import ScalarQueryFactory
 from nu.flows import Sequential
 from nu.inspect import annotate_retries, annotate_steps, render_nu, set_logger_name
 from nu.inspect.annotate import _StepSpan
 from nu.lang import Span
-from nu.factory import ScalarQueryFactory
 from nu.spans.policy import Retry
+from nu.std.logging import LogCommand
 
 
-def _capture() -> tuple[Context, _io.StringIO, _io.StringIO]:
-    out, err = _io.StringIO(), _io.StringIO()
-    ctx = Context().bind(StdioBackend, StdioBackend(stdout=out, stderr=err))
-    return ctx, out, err
+if TYPE_CHECKING:
+    import pytest
+
+
+def _capture() -> tuple[Context, _io.StringIO]:
+    out = _io.StringIO()
+    ctx = Context().bind(StdioBackend, StdioBackend(stdout=out))
+    return ctx, out
 
 
 def _prog() -> Sequential:
@@ -66,17 +74,17 @@ def test_annotate_steps_renders_as_wrapped_box() -> None:
     ]
 
 
-def test_nested_sequential_logs_a_deeper_path() -> None:
+def test_nested_sequential_logs_a_deeper_path(caplog: pytest.LogCaptureFixture) -> None:
     inner = Sequential(PrintCommand(STDOUT, LiteralQuery("b1")), PrintCommand(STDOUT, LiteralQuery("b2")))
     outer = Sequential(PrintCommand(STDOUT, LiteralQuery("a")), inner)
-    ctx, _out, err = _capture()
-    run(annotate_steps(outer), ctx=ctx)
-    lines = err.getvalue().splitlines()
+    caplog.set_level(pylogging.DEBUG, logger="nu.steps")
+    run(annotate_steps(outer))
+    lines = [r.getMessage() for r in caplog.records]
     # outer steps log under [Sequential]; the inner sequence logs under a deeper
     # path, and its steps nest between the outer step-2 start and done
-    out_start = lines.index("[INFO] nu.steps: [Sequential] step 2/2 start")
-    out_done = lines.index("[INFO] nu.steps: [Sequential] step 2/2 done")
-    inner_start = lines.index("[INFO] nu.steps: [Sequential.Sequential.Sequential] step 1/2 start")
+    out_start = lines.index("[Sequential] step 2/2 start")
+    out_done = lines.index("[Sequential] step 2/2 done")
+    inner_start = lines.index("[Sequential.Sequential.Sequential] step 1/2 start")
     assert out_start < inner_start < out_done  # inner sequence runs inside outer step 2
 
 
@@ -88,36 +96,37 @@ def test_annotate_steps_is_idempotent() -> None:
     assert all(not isinstance(c._children[0], _StepSpan) for c in twice._children)
 
 
-def test_annotate_steps_logs_start_and_done() -> None:
-    ctx, _out, err = _capture()
-    run(annotate_steps(_prog()), ctx=ctx)
-    lines = err.getvalue().splitlines()
-    assert lines == [
-        "[INFO] nu.steps: [Sequential] step 1/2 start",
-        "[INFO] nu.steps: [Sequential] step 1/2 done",
-        "[INFO] nu.steps: [Sequential] step 2/2 start",
-        "[INFO] nu.steps: [Sequential] step 2/2 done",
+def test_annotate_steps_logs_start_and_done(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(pylogging.DEBUG, logger="nu.steps")
+    run(annotate_steps(_prog()))
+    records = [(r.levelname, r.name, r.getMessage()) for r in caplog.records]
+    assert records == [
+        ("INFO", "nu.steps", "[Sequential] step 1/2 start"),
+        ("INFO", "nu.steps", "[Sequential] step 1/2 done"),
+        ("INFO", "nu.steps", "[Sequential] step 2/2 start"),
+        ("INFO", "nu.steps", "[Sequential] step 2/2 done"),
     ]
 
 
-def test_annotate_steps_logs_failure_and_reraises() -> None:
+def test_annotate_steps_logs_failure_and_reraises(caplog: pytest.LogCaptureFixture) -> None:
     def boom() -> object:
         raise RuntimeError("kaboom")
 
     boom_q = ScalarQueryFactory("BoomQ", boom, deterministic=False)
     prog = Sequential(PrintCommand(STDOUT, LiteralQuery("ok")), PrintCommand(STDOUT, boom_q()))
-    ctx, _out, err = _capture()
+    caplog.set_level(pylogging.DEBUG, logger="nu.steps")
     try:
-        run(annotate_steps(prog), ctx=ctx)
+        run(annotate_steps(prog))
     except RuntimeError:
         pass
     else:
         raise AssertionError("expected the failure to propagate")
-    assert "[WARNING] nu.steps: [Sequential] step 2/2 failed: kaboom" in err.getvalue()
+    failure_lines = [(r.levelname, r.getMessage()) for r in caplog.records if "failed" in r.getMessage()]
+    assert ("WARNING", "[Sequential] step 2/2 failed: kaboom") in failure_lines
 
 
 def test_annotate_steps_forwards_result() -> None:
-    ctx, out, _err = _capture()
+    ctx, out = _capture()
     run(annotate_steps(_prog()), ctx=ctx)
     assert out.getvalue() == "a\nb\n"  # the body still runs, unchanged
 
@@ -137,17 +146,16 @@ def _flaky(fail_times: int) -> type:
     return ScalarQueryFactory("Flaky", body, deterministic=False)
 
 
-def test_annotate_retries_logs_each_failed_attempt() -> None:
+def test_annotate_retries_logs_each_failed_attempt(caplog: pytest.LogCaptureFixture) -> None:
     flaky = _flaky(fail_times=2)
     ann = annotate_retries(Retry(flaky(), max_attempts=3, delay=0.0))
-    err = _io.StringIO()
-    ctx = Context().bind(StdioBackend, StdioBackend(stderr=err))
-    value, _ = asyncio.run(arun(ann, ctx=ctx))
+    caplog.set_level(pylogging.DEBUG, logger="nu.retry")
+    value, _ = asyncio.run(arun(ann))
     assert value == "ok"
-    lines = err.getvalue().splitlines()
-    assert lines == [
-        "[WARNING] nu.retry: retry attempt 1 failed: fail1",
-        "[WARNING] nu.retry: retry attempt 2 failed: fail2",
+    records = [(r.levelname, r.name, r.getMessage()) for r in caplog.records]
+    assert records == [
+        ("WARNING", "nu.retry", "retry attempt 1 failed: fail1"),
+        ("WARNING", "nu.retry", "retry attempt 2 failed: fail2"),
     ]
 
 
@@ -161,40 +169,38 @@ def test_annotate_retries_injects_a_logcommand_hook() -> None:
     assert type(ann._children[7]).__name__ == "Noop"
 
 
-def test_annotate_retries_honors_custom_keys() -> None:
+def test_annotate_retries_honors_custom_keys(caplog: pytest.LogCaptureFixture) -> None:
     flaky = _flaky(fail_times=1)
     ann = annotate_retries(
         Retry(flaky(), max_attempts=2, delay=0.0, error_key="err", attempt_key="try"),
     )
-    err = _io.StringIO()
-    ctx = Context().bind(StdioBackend, StdioBackend(stderr=err))
+    caplog.set_level(pylogging.DEBUG, logger="nu.retry")
+    asyncio.run(arun(ann))
     # the hook must read the custom keys, so the attempt number and error show up
-    asyncio.run(arun(ann, ctx=ctx))
-    assert "retry attempt 1 failed: fail1" in err.getvalue()
+    assert any("retry attempt 1 failed: fail1" in r.getMessage() for r in caplog.records)
 
 
-def test_annotate_retries_chains_existing_hook() -> None:
+def test_annotate_retries_chains_existing_hook(caplog: pytest.LogCaptureFixture) -> None:
     marker = PrintCommand(STDOUT, LiteralQuery("HOOK"))
     flaky = _flaky(fail_times=1)
     ann = annotate_retries(
         Retry(flaky(), max_attempts=2, delay=0.0, on_attempt_fail=marker),
     )
-    out, err = _io.StringIO(), _io.StringIO()
-    ctx = Context().bind(StdioBackend, StdioBackend(stdout=out, stderr=err))
+    out = _io.StringIO()
+    ctx = Context().bind(StdioBackend, StdioBackend(stdout=out))
+    caplog.set_level(pylogging.DEBUG, logger="nu.retry")
     asyncio.run(arun(ann, ctx=ctx))
-    # log runs first (stderr), then the original hook (stdout) - both fire
-    assert "retry attempt 1 failed: fail1" in err.getvalue()
+    # log runs first, then the original hook -- both fire
+    assert any("retry attempt 1 failed: fail1" in r.getMessage() for r in caplog.records)
     assert out.getvalue() == "HOOK\n"
 
 
 def test_annotate_retries_preserves_the_raise_on_exhaustion() -> None:
     always = _flaky(fail_times=99)
     ann = annotate_retries(Retry(always(), max_attempts=2, delay=0.0))
-    err = _io.StringIO()
-    ctx = Context().bind(StdioBackend, StdioBackend(stderr=err))
     # on_fail is NOT hijacked, so exhaustion still raises rather than returning None
     try:
-        asyncio.run(arun(ann, ctx=ctx))
+        asyncio.run(arun(ann))
     except ValueError:
         pass
     else:
@@ -204,18 +210,19 @@ def test_annotate_retries_preserves_the_raise_on_exhaustion() -> None:
 # --- set_logger_name ---------------------------------------------------------
 
 
-def test_set_logger_name_retargets_step_spans() -> None:
+def test_set_logger_name_retargets_step_spans(caplog: pytest.LogCaptureFixture) -> None:
     ann = set_logger_name(annotate_steps(_prog()), "custom.log")
-    ctx, _out, err = _capture()
-    run(ann, ctx=ctx)
-    assert "custom.log" in err.getvalue()
-    assert "nu.steps" not in err.getvalue()
+    caplog.set_level(pylogging.DEBUG)  # capture across any logger
+    run(ann)
+    names = {r.name for r in caplog.records}
+    assert "custom.log" in names
+    assert "nu.steps" not in names
 
 
-def test_set_logger_name_retargets_log_commands() -> None:
+def test_set_logger_name_retargets_log_commands(caplog: pytest.LogCaptureFixture) -> None:
     flaky = _flaky(fail_times=1)
     ann = set_logger_name(annotate_retries(Retry(flaky(), max_attempts=2, delay=0.0)), "svc")
-    err = _io.StringIO()
-    ctx = Context().bind(StdioBackend, StdioBackend(stderr=err))
-    asyncio.run(arun(ann, ctx=ctx))
-    assert "[WARNING] svc: retry attempt 1 failed: fail1" in err.getvalue()
+    caplog.set_level(pylogging.DEBUG, logger="svc")
+    asyncio.run(arun(ann))
+    records = [(r.levelname, r.name, r.getMessage()) for r in caplog.records]
+    assert ("WARNING", "svc", "retry attempt 1 failed: fail1") in records
