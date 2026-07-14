@@ -100,6 +100,9 @@ exclude = [
 # =============================================================================
 [tool.uv.sources]
 nudle = { path = "./src/nu/ui/nudle", editable = true }
+virtuals-py = { path = "../virtuals", editable = true }
+invisibles-py = { path = "../invisibles", editable = true }
+kh57 = { path = "../kh57", editable = true }
 
 [tool.uv]
 # Bare `uv sync` provisions the full dev env: the distributed stack + tooling.
