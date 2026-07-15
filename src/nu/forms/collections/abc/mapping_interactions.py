@@ -240,8 +240,14 @@ class CopyQuery(ScalarQuery):
         return athunk
 
 
-class ReversedKeysQuery(StreamQuery):
-    """Reverse-order keys: reversed(mapping). Yields keys in reverse insertion order."""
+class ReversedKeysQuery(ScalarQuery):
+    """Reverse-order keys: reversed(mapping). Yields keys in reverse insertion order.
+
+    Scalar-shaped like :class:`KeysQuery` -- the thunk returns one iterator
+    handle (Python's ``reversed(obj)`` object). Downstream ``IterQuery``
+    opens that handle into a stream lazily, so ``islice(m.reversed_keys(),
+    n)`` reads only ``n`` items regardless of stream size.
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         (operand,) = children
