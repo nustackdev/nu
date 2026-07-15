@@ -1,11 +1,11 @@
 """itertools module-level functions.
 
 Mirrors Python's ``itertools`` 1-1. Each function presents Python's argument
-order and returns the Form that matches the host shape:
+order and returns the shape that matches the host:
 
-- every iterator-producing member -> ``IteratorForm`` (materialize with a
-  ``CollectQuery`` over the stream; stream-aware ``.to_list()`` is a pending
-  core wiring - see the package note)
+- every iterator-producing member -> the raw ``StreamQuery`` atom (compose
+  with ``CollectQuery`` / ``MapQuery`` / another itertools call; cardinality
+  laws line up because the atom honestly declares STREAM)
 - ``tee`` -> ``AnyForm`` (it returns a *tuple* of iterators, not a stream)
 
 This is a gap-fill: members Nu core already covers (``map`` / ``filter`` /
@@ -13,13 +13,13 @@ This is a gap-fill: members Nu core already covers (``map`` / ``filter`` /
 re-implemented here.
 
 Each function builds its interaction atom (lazily imported, like ``nu.std.math``)
-and wraps it. Iterable arguments are lifted into a stream child with
-``IterQuery`` so the atom's source child carries STREAM cardinality, the way
-core stream atoms compose. Higher-order members (``takewhile`` / ``dropwhile`` /
-``filterfalse`` / ``accumulate`` / ``starmap`` / ``groupby``) take their
-predicate/function as a Nu term that reads the current item via an
-``AttrRef("item")`` (and the running value via ``AttrRef("acc")`` for
-``accumulate``).
+and returns it. Iterable arguments are lifted into a stream child with
+``IterQuery`` (a scalar iterable), passed through when already a stream atom,
+or unwrapped when they're the legacy ``IteratorForm`` wrapper. Higher-order
+members (``takewhile`` / ``dropwhile`` / ``filterfalse`` / ``accumulate`` /
+``starmap`` / ``groupby``) take their predicate/function as a Nu term that
+reads the current item via an ``AttrRef("item")`` (and the running value via
+``AttrRef("acc")`` for ``accumulate``).
 """
 
 from __future__ import annotations
@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, cast
 
 from nu import AnyForm, IteratorForm
 from nu.core import IterQuery
+from nu.lang import StreamQuery
 
 
 if TYPE_CHECKING:
@@ -64,12 +65,14 @@ __all__ = [
 def _stream(iterable: Arg[Iterable]) -> Nu:
     """Lift an iterable argument into a STREAM child.
 
-    An ``IteratorForm`` (the result of another itertools/core stream member) is
-    already a stream wrapper, so its inner ``StreamQuery`` child is reused
-    directly - wrapping it in another ``IterQuery`` would feed a stream to a
-    scalar consumer. Any other iterable (a list, range, ``ListForm``, raw value)
-    is opened with ``IterQuery``.
+    A ``StreamQuery`` atom (another itertools result, ``IterQuery``, ``MapQuery``,
+    ...) is already stream-shaped, so it's reused directly - wrapping it in
+    another ``IterQuery`` would feed a stream to a scalar consumer. An
+    ``IteratorForm`` legacy wrapper is unwrapped to its stream child. Any other
+    iterable (a list, range, ``ListForm``, raw value) is opened with ``IterQuery``.
     """
+    if isinstance(iterable, StreamQuery):
+        return cast("Nu", iterable)
     if isinstance(iterable, IteratorForm):
         return cast("Nu", iterable._children[0])
     return IterQuery(iterable)
@@ -78,151 +81,151 @@ def _stream(iterable: Arg[Iterable]) -> Nu:
 # --- infinite sources -------------------------------------------------------
 
 
-def count(start: IntArg = 0, step: IntArg = 1) -> IteratorForm:
+def count(start: IntArg = 0, step: IntArg = 1) -> Nu:
     """Count from ``start`` by ``step`` forever: mirrors ``itertools.count()``.
 
     Infinite - bound it with ``islice`` (or another short consumer).
     """
     from .interactions import Count
 
-    return IteratorForm(Count(start, step))
+    return Count(start, step)
 
 
-def cycle(iterable: Arg[Iterable]) -> IteratorForm:
+def cycle(iterable: Arg[Iterable]) -> Nu:
     """Repeat ``iterable`` endlessly: mirrors ``itertools.cycle()``."""
     from .interactions import Cycle
 
-    return IteratorForm(Cycle(_stream(iterable)))
+    return Cycle(_stream(iterable))
 
 
-def repeat(elem: object, times: IntArg | None = None) -> IteratorForm:
+def repeat(elem: object, times: IntArg | None = None) -> Nu:
     """Yield ``elem`` ``times`` times, or forever: mirrors ``itertools.repeat()``."""
     from .interactions import Repeat
 
     if times is None:
-        return IteratorForm(Repeat(elem))
-    return IteratorForm(Repeat(elem, times))
+        return Repeat(elem)
+    return Repeat(elem, times)
 
 
 # --- pure combinators -------------------------------------------------------
 
 
-def chain(*iterables: Arg[Iterable]) -> IteratorForm:
+def chain(*iterables: Arg[Iterable]) -> Nu:
     """Concatenate ``iterables`` end to end: mirrors ``itertools.chain()``."""
     from .interactions import Chain
 
-    return IteratorForm(Chain(*(_stream(it) for it in iterables)))
+    return Chain(*(_stream(it) for it in iterables))
 
 
-def chain_from_iterable(iterable: Arg[Iterable]) -> IteratorForm:
+def chain_from_iterable(iterable: Arg[Iterable]) -> Nu:
     """Flatten an iterable of iterables one level: ``itertools.chain.from_iterable()``."""
     from .interactions import ChainFromIterable
 
-    return IteratorForm(ChainFromIterable(_stream(iterable)))
+    return ChainFromIterable(_stream(iterable))
 
 
-def islice(iterable: Arg[Iterable], *args: IntArg) -> IteratorForm:
+def islice(iterable: Arg[Iterable], *args: IntArg) -> Nu:
     """Slice ``iterable`` lazily: mirrors ``itertools.islice()``.
 
     ``args`` is 1-3 ints: ``stop`` | ``start, stop`` | ``start, stop, step``.
     """
     from .interactions import Islice
 
-    return IteratorForm(Islice(_stream(iterable), *args))
+    return Islice(_stream(iterable), *args)
 
 
-def compress(data: Arg[Iterable], selectors: Arg[Iterable]) -> IteratorForm:
+def compress(data: Arg[Iterable], selectors: Arg[Iterable]) -> Nu:
     """Keep ``data`` items where ``selectors`` is truthy: ``itertools.compress()``."""
     from .interactions import Compress
 
-    return IteratorForm(Compress(_stream(data), _stream(selectors)))
+    return Compress(_stream(data), _stream(selectors))
 
 
-def pairwise(iterable: Arg[Iterable]) -> IteratorForm:
+def pairwise(iterable: Arg[Iterable]) -> Nu:
     """Yield overlapping consecutive pairs: mirrors ``itertools.pairwise()``."""
     from .interactions import Pairwise
 
-    return IteratorForm(Pairwise(_stream(iterable)))
+    return Pairwise(_stream(iterable))
 
 
-def batched(iterable: Arg[Iterable], n: IntArg) -> IteratorForm:
+def batched(iterable: Arg[Iterable], n: IntArg) -> Nu:
     """Yield tuples of up to ``n`` items: mirrors ``itertools.batched()``."""
     from .interactions import Batched
 
-    return IteratorForm(Batched(_stream(iterable), n))
+    return Batched(_stream(iterable), n)
 
 
-def zip_longest(*iterables: Arg[Iterable], fillvalue: object = None) -> IteratorForm:
+def zip_longest(*iterables: Arg[Iterable], fillvalue: object = None) -> Nu:
     """Zip to the longest, padding with ``fillvalue``: ``itertools.zip_longest()``."""
     from .interactions import ZipLongest
 
-    return IteratorForm(ZipLongest(*(_stream(it) for it in iterables), fillvalue))
+    return ZipLongest(*(_stream(it) for it in iterables), fillvalue)
 
 
-def product(*iterables: Arg[Iterable], repeat: IntArg = 1) -> IteratorForm:
+def product(*iterables: Arg[Iterable], repeat: IntArg = 1) -> Nu:
     """The cartesian product of ``iterables``: mirrors ``itertools.product()``."""
     from .interactions import Product
 
-    return IteratorForm(Product(*(_stream(it) for it in iterables), repeat))
+    return Product(*(_stream(it) for it in iterables), repeat)
 
 
-def permutations(iterable: Arg[Iterable], r: IntArg | None = None) -> IteratorForm:
+def permutations(iterable: Arg[Iterable], r: IntArg | None = None) -> Nu:
     """``r``-length ordered arrangements: mirrors ``itertools.permutations()``."""
     from .interactions import Permutations
 
     if r is None:
-        return IteratorForm(Permutations(_stream(iterable)))
-    return IteratorForm(Permutations(_stream(iterable), r))
+        return Permutations(_stream(iterable))
+    return Permutations(_stream(iterable), r)
 
 
-def combinations(iterable: Arg[Iterable], r: IntArg) -> IteratorForm:
+def combinations(iterable: Arg[Iterable], r: IntArg) -> Nu:
     """``r``-length sorted subsequences: mirrors ``itertools.combinations()``."""
     from .interactions import Combinations
 
-    return IteratorForm(Combinations(_stream(iterable), r))
+    return Combinations(_stream(iterable), r)
 
 
-def combinations_with_replacement(iterable: Arg[Iterable], r: IntArg) -> IteratorForm:
+def combinations_with_replacement(iterable: Arg[Iterable], r: IntArg) -> Nu:
     """``r``-length subsequences allowing repeats: ``combinations_with_replacement()``."""
     from .interactions import CombinationsWithReplacement
 
-    return IteratorForm(CombinationsWithReplacement(_stream(iterable), r))
+    return CombinationsWithReplacement(_stream(iterable), r)
 
 
 # --- higher-order -----------------------------------------------------------
 
 
-def takewhile(predicate: Nu, iterable: Arg[Iterable]) -> IteratorForm:
+def takewhile(predicate: Nu, iterable: Arg[Iterable]) -> Nu:
     """Yield while ``predicate`` holds, stop at the first falsy: ``itertools.takewhile()``.
 
     ``predicate`` reads the current item via ``AttrRef("item")``.
     """
     from .interactions import TakeWhile
 
-    return IteratorForm(TakeWhile(_stream(iterable), predicate))
+    return TakeWhile(_stream(iterable), predicate)
 
 
-def dropwhile(predicate: Nu, iterable: Arg[Iterable]) -> IteratorForm:
+def dropwhile(predicate: Nu, iterable: Arg[Iterable]) -> Nu:
     """Skip while ``predicate`` holds, then yield the rest: ``itertools.dropwhile()``.
 
     ``predicate`` reads the current item via ``AttrRef("item")``.
     """
     from .interactions import DropWhile
 
-    return IteratorForm(DropWhile(_stream(iterable), predicate))
+    return DropWhile(_stream(iterable), predicate)
 
 
-def filterfalse(predicate: Nu, iterable: Arg[Iterable]) -> IteratorForm:
+def filterfalse(predicate: Nu, iterable: Arg[Iterable]) -> Nu:
     """Keep items where ``predicate`` is falsy: mirrors ``itertools.filterfalse()``.
 
     ``predicate`` reads the current item via ``AttrRef("item")``.
     """
     from .interactions import FilterFalse
 
-    return IteratorForm(FilterFalse(_stream(iterable), predicate))
+    return FilterFalse(_stream(iterable), predicate)
 
 
-def accumulate(iterable: Arg[Iterable], func: Nu | None = None) -> IteratorForm:
+def accumulate(iterable: Arg[Iterable], func: Nu | None = None) -> Nu:
     """Running accumulation: mirrors ``itertools.accumulate()``.
 
     Without ``func`` it is a running sum. With ``func`` (a Nu term) each step
@@ -232,11 +235,11 @@ def accumulate(iterable: Arg[Iterable], func: Nu | None = None) -> IteratorForm:
     from .interactions import Accumulate
 
     if func is None:
-        return IteratorForm(Accumulate(_stream(iterable)))
-    return IteratorForm(Accumulate(_stream(iterable), func))
+        return Accumulate(_stream(iterable))
+    return Accumulate(_stream(iterable), func)
 
 
-def starmap(function: Nu, iterable: Arg[Iterable]) -> IteratorForm:
+def starmap(function: Nu, iterable: Arg[Iterable]) -> Nu:
     """Apply ``function`` to unpacked items: mirrors ``itertools.starmap()``.
 
     Each item is a tuple; ``function`` reads its parts via
@@ -244,10 +247,10 @@ def starmap(function: Nu, iterable: Arg[Iterable]) -> IteratorForm:
     """
     from .interactions import StarMap
 
-    return IteratorForm(StarMap(_stream(iterable), function))
+    return StarMap(_stream(iterable), function)
 
 
-def groupby(iterable: Arg[Iterable], key: Nu | None = None) -> IteratorForm:
+def groupby(iterable: Arg[Iterable], key: Nu | None = None) -> Nu:
     """Group consecutive items by ``key``: mirrors ``itertools.groupby()``.
 
     Yields ``(key_value, tuple(group))`` pairs. With ``key`` (a Nu term) the key
@@ -256,8 +259,8 @@ def groupby(iterable: Arg[Iterable], key: Nu | None = None) -> IteratorForm:
     from .interactions import GroupBy
 
     if key is None:
-        return IteratorForm(GroupBy(_stream(iterable)))
-    return IteratorForm(GroupBy(_stream(iterable), key))
+        return GroupBy(_stream(iterable))
+    return GroupBy(_stream(iterable), key)
 
 
 # --- tee --------------------------------------------------------------------

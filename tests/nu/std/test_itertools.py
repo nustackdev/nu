@@ -1,11 +1,12 @@
 """Functional tests for ``nu.std.itertools`` - drive the atoms through the engine.
 
 Every member is asserted against the real ``itertools`` result. Iterator
-results are materialized with a ``CollectQuery`` over the Form's stream child
-(``IteratorForm.to_list()`` is not yet wired through the cardinality laws, so it
-is not exercised here). Higher-order members build their predicate / function
-from a typed ``AttrRef`` over core atoms - ``AnyAttrRef("item")``,
-``AnyAttrRef("acc")``, ``TupleAttrRef("item")[i]``.
+results are materialized with a ``CollectQuery`` over the returned stream atom
+(each function returns the raw ``StreamQuery`` -- no ``IteratorForm`` wrapping,
+so cardinality lines up and ``CollectQuery`` accepts the stream directly).
+Higher-order members build their predicate / function from a typed ``AttrRef``
+over core atoms - ``AnyAttrRef("item")``, ``AnyAttrRef("acc")``,
+``TupleAttrRef("item")[i]``.
 
 Both paths are covered: ``run`` (sync) for every member, ``arun`` (async) for a
 representative spread including the higher-order and combinatoric atoms.
@@ -46,15 +47,15 @@ from nu.std.itertools import (
 )
 
 
-def mat(form: object) -> list:
-    """Materialize an iterator Form to a list via the sync engine path."""
-    value, _ = run(CollectQuery(form._children[0]))  # type: ignore[attr-defined]
+def mat(stream: object) -> list:
+    """Materialize a stream atom to a list via the sync engine path."""
+    value, _ = run(CollectQuery(stream))
     return value
 
 
-async def amat(form: object) -> list:
-    """Materialize an iterator Form to a list via the async engine path."""
-    value, _ = await arun(CollectQuery(form._children[0]))  # type: ignore[attr-defined]
+async def amat(stream: object) -> list:
+    """Materialize a stream atom to a list via the async engine path."""
+    value, _ = await arun(CollectQuery(stream))
     return value
 
 
