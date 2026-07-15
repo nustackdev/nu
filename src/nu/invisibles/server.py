@@ -96,6 +96,7 @@ class InvisiblesServer:
         self.dispatcher = dispatcher
         self._server: SyncServer | None = None
         self._thread: threading.Thread | None = None
+        self._dispatcher: object | None = None
 
     def setup(self, ctx: Context) -> None:
         """Look up target on ctx, build SyncServer, boot in a background thread.
@@ -118,8 +119,13 @@ class InvisiblesServer:
             executor=executor_cls(),
         )
 
+        # One dispatcher per server, shared across all connections. Required
+        # for SharedDispatcher's cross-connection RLock to actually serialize;
+        # the other dispatchers are safe to share (stateless / pool / loop).
+        dispatcher = dispatcher_cls()
+        self._dispatcher = dispatcher
+
         def handle_connection(netkit_conn: SyncConnection) -> None:
-            dispatcher = dispatcher_cls()
             protocol = Protocol(config, root, dispatcher=dispatcher)
             conn = InvisiblesConnection(netkit_conn, protocol)
             while netkit_conn.is_connected():
@@ -144,6 +150,9 @@ class InvisiblesServer:
         if self._server is not None:
             self._server.stop(wait=False)
             self._server = None
+        if self._dispatcher is not None:
+            self._dispatcher.shutdown()
+            self._dispatcher = None
 
     async def asetup(self, ctx: Context) -> None:
         """Async shim: setup is sync work."""
