@@ -90,6 +90,11 @@ def _find_index(app: Nu) -> type[Index]:
     Refs in the tree can root on either the Index (structural Refs) or on
     a Page subclass registered in some Index's `pages` map. We accept either
     and resolve back to the unique Index.
+
+    A Page may be registered in more than one Index (e.g. a library-provided
+    embeddable Page owned by its own default Index AND mounted by a host
+    app's Index). When that happens, prefer an Index we already saw via
+    structural refs -- the app's own Index -- over the library default.
     """
     seen_indexes: set[type[Index]] = set()
     seen_pages: set[type[Page]] = set()
@@ -103,8 +108,12 @@ def _find_index(app: Nu) -> type[Index]:
             seen_indexes.add(root)
         elif issubclass(root, Page):
             seen_pages.add(root)
-    # Resolve pages back to their Index.
+    # Resolve pages back to their Index. Skip pages already covered by an
+    # Index we've seen structurally -- otherwise a library default Index
+    # that also registers the page would falsely get added and conflict.
     for page_cls in seen_pages:
+        if any(page_cls in idx.pages.routes.values() for idx in seen_indexes):
+            continue
         for idx_cls in _all_index_subclasses():
             if page_cls in idx_cls.pages.routes.values():
                 seen_indexes.add(idx_cls)
