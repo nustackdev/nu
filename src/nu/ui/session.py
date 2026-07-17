@@ -86,10 +86,14 @@ class NudleSession:
         name: str,
         fields: list[dict[str, object]],
         pages: list[dict[str, object]] | None = None,
+        *,
+        sidebar: bool = False,
     ) -> None:
         payload: dict[str, object] = {"name": name, "fields": fields}
         if pages is not None:
             payload["pages"] = pages
+        if sidebar:
+            payload["sidebar"] = True
         await self.send(Frame(OP_MOUNT, ref="", payload=payload))
 
     async def aread(self, path: str) -> Any:

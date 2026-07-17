@@ -162,6 +162,7 @@ def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
             index_cls.__name__,
             index_cls._structural_fields(),
             index_cls._pages_payload(),
+            sidebar=index_cls._sidebar_enabled(),
         )
         per_conn_ctx = ctx.bind(NudleSession, session)
         intake_task = asyncio.create_task(session.run_intake())

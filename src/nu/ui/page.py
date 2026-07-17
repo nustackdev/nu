@@ -125,6 +125,11 @@ class Page(Shape):
 
     _is_nudle_page: ClassVar[bool] = True
 
+    # Optional human label used by the built-in sidebar. When None, the
+    # sidebar falls back to the route slug (leading '/' stripped, or "home"
+    # for the root route).
+    nav_label: ClassVar[str | None] = None
+
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
         # Register mount points for every Section slot on this Page.
@@ -178,6 +183,10 @@ class Index(Shape):
 
     pages: ClassVar[Pages] = Pages({})
 
+    # Opt-out for the built-in left sidebar. Off automatically when there
+    # is only one page; setting False suppresses it even with multiple pages.
+    sidebar: ClassVar[bool] = True
+
     @classmethod
     def _structural_fields(cls) -> list[dict[str, object]]:
         """Index-level slot list: structural Refs (title, nav, ...)."""
@@ -195,14 +204,22 @@ class Index(Shape):
 
     @classmethod
     def _pages_payload(cls) -> list[dict[str, object]]:
-        """Per-page mount info: route, shape name, fields list."""
+        """Per-page mount info: route, shape name, label, fields list."""
         out: list[dict[str, object]] = []
         for route, page_cls in cls.pages.routes.items():
             out.append(
                 {
                     "route": route,
                     "name": page_cls.__name__,
+                    "label": page_cls.nav_label or route.lstrip("/") or "home",
                     "fields": page_cls._mount_fields(),
                 }
             )
         return out
+
+    @classmethod
+    def _sidebar_enabled(cls) -> bool:
+        """Built-in left sidebar is on when there is more than one page and
+        the Index has not opted out via `sidebar = False`.
+        """
+        return cls.sidebar and len(cls.pages.routes) > 1

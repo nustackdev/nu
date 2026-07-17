@@ -27,13 +27,23 @@ export type MountField = {
 	// walks the tree recursively to register slices for every leaf.
 	fields?: MountField[];
 };
-export type MountPage = { route: string; name: string; fields: MountField[] };
+export type MountPage = {
+	route: string;
+	name: string;
+	// Human label used by the built-in sidebar. Server derives it from the
+	// Page's `nav_label` class attr or the route slug.
+	label: string;
+	fields: MountField[];
+};
 // `name` is the Index class name; `fields` are Index-level structural
 // slots (TitleRef, NavRef, ...); `pages` lists Page subtrees by route.
+// `sidebar` toggles the built-in left rail; server sets it only when the
+// Index has multiple pages and hasn't opted out.
 export type MountPayload = {
 	name: string;
 	fields: MountField[];
 	pages?: MountPage[];
+	sidebar?: boolean;
 };
 
 export type ErrorCode =
