@@ -62,12 +62,15 @@ class Kh57SampleQuery(ScalarQuery):
         rng: random.Random | None = None,
     ) -> None:
         super().__init__(ref, n, begin, end)
-        self._rng = rng
+        # rng rides in _payload so Term._with_children (which shares payload
+        # across a tree rewrite) carries it. Storing on __dict__ would lose
+        # it on the first inline_refs / auto_flow_atomic pass.
+        self._payload["rng"] = rng
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         ref = self._children[0]
         _ref_thunk, n_thunk, begin_thunk, end_thunk = children
-        rng = self._rng
+        rng = self._payload.get("rng")
 
         def thunk(rt: Runtime) -> object:
             try:
@@ -84,7 +87,7 @@ class Kh57SampleQuery(ScalarQuery):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
         ref = self._children[0]
         _ref_thunk, n_thunk, begin_thunk, end_thunk = children
-        rng = self._rng
+        rng = self._payload.get("rng")
 
         async def athunk(rt: Runtime) -> object:
             try:
