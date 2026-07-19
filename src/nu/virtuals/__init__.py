@@ -45,10 +45,12 @@ from nu.virtuals.interactions import (
 )
 from nu.virtuals.paths import ValuePathSer, ViewPathSer
 from nu.virtuals.presets import (
+    inmem_observer,
     lmdb_navigator,
     lmdb_navigator_redis,
     memory_navigator,
     memory_storage,
+    redis_observer,
     rocksdb_navigator,
     rocksdb_navigator_redis,
     rocksdb_storage,
@@ -140,9 +142,11 @@ __all__ = [  # noqa: RUF022
     "rocksdb_storage",
     "text_storage",
     # Presets - bracket-form (drop into nu.With(...))
+    "inmem_observer",
     "lmdb_navigator",
     "lmdb_navigator_redis",
     "memory_navigator",
+    "redis_observer",
     "rocksdb_navigator_redis",
     "rocksdb_navigator",
     "text_navigator",

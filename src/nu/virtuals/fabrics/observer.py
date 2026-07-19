@@ -1,10 +1,20 @@
-"""Nu fabrics wrapping virtuals observers.
+"""Nu fabrics wrapping virtuals *read-side* observers.
 
-Observers receive change notifications from Storage writes. All observers are
-``FabricLifecycle`` - ``asetup`` connects, ``acleanup`` disconnects.
+Observers subscribe local callbacks against filters, listen on a shared
+transport for inbound keys, match against a per-process
+``SubscriptionRegistry``, and fan out to bound callbacks. They live at
+process scope and know nothing about local writes.
 
-DI convention: ``asetup`` reads its ``Codec`` from ctx. Provision a ``Codec``
-in an outer ``Provide`` and the observer picks it up.
+All observer fabrics bind their instance under ``ObserverProtocol`` via
+``_nu_bind_as`` so ``nu.core.reactive`` queries can find "the observer"
+without knowing which backend is active.
+
+Observer backends:
+
+- ``InMemoryObserver`` -- takes an ``InMemoryTransport`` from ctx and
+  registers a listener on it.
+- ``RedisObserver`` -- async-only. Owns the registry HASH mutations,
+  cluster control-channel PUBLISH, cleanup sweep, and pubsub listener.
 """
 
 from __future__ import annotations
@@ -12,8 +22,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from virtuals._backends.observers.mem import InMemoryObserver as _InMemoryObserver
+from virtuals.tkv.observer import ObserverProtocol
 
-from .codec import Codec
+from .transport import InMemoryTransport
 
 
 if TYPE_CHECKING:
@@ -24,16 +35,22 @@ __all__ = ["InMemoryObserver", "RedisObserver"]
 
 
 class InMemoryObserver(_InMemoryObserver):
-    """In-process, thread-safe observer. Reads ``Codec`` from ctx during setup."""
+    """In-process observer. Reads the shared ``InMemoryTransport`` from ctx.
+
+    Binds under ``ObserverProtocol`` so ``nu.core.reactive`` queries can
+    resolve "the observer" without knowing the backend.
+    """
+
+    _nu_bind_as = ObserverProtocol
 
     def __init__(self) -> None:
-        # Defer parent init until setup - Codec comes from ctx.
+        # Defer parent init until setup - InMemoryTransport comes from ctx.
         pass
 
     def setup(self, ctx: Context) -> None:
-        """Read Codec from ctx, init the parent, and connect."""
-        codec = ctx.get(Codec)
-        _InMemoryObserver.__init__(self, codec=codec)
+        """Read the transport from ctx, init the parent, connect."""
+        transport = ctx.get(InMemoryTransport)
+        _InMemoryObserver.__init__(self, transport=transport)
         self.connect()
 
     def cleanup(self) -> None:
@@ -50,40 +67,42 @@ class InMemoryObserver(_InMemoryObserver):
 
 
 class RedisObserver:
-    """Inter-process observer via Redis pub/sub; lazy-loaded to skip the hard dep.
+    """Inter-process observer via Redis pub/sub. Lazy-imports ``redis``.
 
-    ``_nu_async_only = True`` because a Redis connect + pub/sub subscribe is
-    real network IO that we don't want blocking a sync runtime. Use
+    ``_nu_async_only = True`` because a Redis connect + pub/sub subscribe
+    is real network IO we don't want blocking a sync runtime. Use
     ``nu.arun`` for any tree that includes this observer.
+
+    Binds under ``ObserverProtocol`` so ``nu.core.reactive`` queries can
+    resolve "the observer" without knowing the backend.
     """
 
     _nu_async_only = True
+    _nu_bind_as = ObserverProtocol
 
     def __init__(
         self,
         *,
         redis_url: str = "redis://localhost:6379",
         channel_prefix: str = "everyshape",
-        notify_self: bool = True,
     ) -> None:
         self.redis_url = redis_url
         self.channel_prefix = channel_prefix
-        self.notify_self = notify_self
-        self._backing = None
+        self._backing: object | None = None
 
     async def asetup(self, ctx: Context) -> None:
+        """Lazy-import the backing class, construct, connect."""
+        del ctx
         from virtuals._backends.observers.redis_pubsub import RedisObserver as _RedisObserver
 
-        codec = ctx.get(Codec)
         self._backing = _RedisObserver(
-            codec=codec,
             redis_url=self.redis_url,
             channel_prefix=self.channel_prefix,
-            notify_self=self.notify_self,
         )
         self._backing.connect()
 
     async def acleanup(self) -> None:
+        """Disconnect the backing observer and drop the reference."""
         if self._backing is not None:
             self._backing.disconnect()
             self._backing = None

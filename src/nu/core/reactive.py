@@ -26,10 +26,20 @@ lives here so callers reach for one namespace regardless of what they hold.
                                   ``StructuredRef`` substrate that provides
                                   navigation already does).
 
+Post-split (virtuals publisher/observer split): view methods return
+``SubscriptionOptions`` -- pure filter descriptors, no observer coupling.
+Each query resolves the process-scope ``ObserverProtocol`` from ctx and
+calls ``observer.subscribe(options)`` to obtain the ``Subscription``.
+
 Sentinel handling. If the underlying view resolves to ``EMPTY`` / ``INVALID``
 (the address is unbound, the intermediate container is missing), the
 subscription cannot be created and the query yields ``INVALID`` -- consistent
 with the rest of ``nu.core``.
+
+Sync path. Building a real subscription requires calling into an Observer,
+which is a lifecycle-managed resource that lives inside an async runtime.
+The sync ``_compile`` paths raise ``RuntimeError`` to make the boundary
+loud rather than silently returning stale ``SubscriptionOptions``.
 
 Naming. v1 called these ``OnChange`` / ``OnChildChange`` / ``OnChildrenChange``
 / ``OnDescendantsChange`` / ``OnPrimitiveChangeOp``; v2 adds the ``Query``
@@ -43,6 +53,7 @@ from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
+from virtuals.tkv.observer import ObserverProtocol
 
 
 if TYPE_CHECKING:
@@ -60,32 +71,40 @@ __all__ = [
 ]
 
 
+_SYNC_UNSUPPORTED = (
+    "Reactive subscription queries require an async runtime "
+    "(the process-scope Observer is async-lifecycle managed). "
+    "Use nu.arun(...) instead of nu.run(...)."
+)
+
+
 class OnChangeQuery(ScalarQuery):
     """Subscribe to any change on the slot-0 Ref's view.
 
     Slot 0 must yield an observable view (a collection- or view-tier Ref).
-    Returns the ``Subscription`` handle yielded by ``view.on_change()``.
+    Returns the ``Subscription`` handle from ``observer.subscribe(options)``.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        view_thunk = children[0]
+        del nid, children
 
         def thunk(rt: Runtime) -> object:
-            view = view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
-            return view.on_change()
+            del rt
+            raise RuntimeError(_SYNC_UNSUPPORTED)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        del nid
         view_thunk = children[0]
 
         async def athunk(rt: Runtime) -> object:
             view = await view_thunk(rt)
             if view is EMPTY or view is INVALID:
                 return INVALID
-            return view.on_change()
+            options = view.on_change()
+            observer = rt.ctx.get(ObserverProtocol)
+            return observer.subscribe(options)
 
         return athunk
 
@@ -99,20 +118,16 @@ class OnChildChangeQuery(ScalarQuery):
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        view_thunk, address_thunk = children[0], children[1]
+        del nid, children
 
         def thunk(rt: Runtime) -> object:
-            view = view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
-            address = address_thunk(rt)
-            if address is EMPTY or address is INVALID:
-                return INVALID
-            return view.on_child_change(address)
+            del rt
+            raise RuntimeError(_SYNC_UNSUPPORTED)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        del nid
         view_thunk, address_thunk = children[0], children[1]
 
         async def athunk(rt: Runtime) -> object:
@@ -122,7 +137,9 @@ class OnChildChangeQuery(ScalarQuery):
             address = await address_thunk(rt)
             if address is EMPTY or address is INVALID:
                 return INVALID
-            return view.on_child_change(address)
+            options = view.on_child_change(address)
+            observer = rt.ctx.get(ObserverProtocol)
+            return observer.subscribe(options)
 
         return athunk
 
@@ -134,24 +151,25 @@ class OnChildrenChangeQuery(ScalarQuery):
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        view_thunk = children[0]
+        del nid, children
 
         def thunk(rt: Runtime) -> object:
-            view = view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
-            return view.on_children_change()
+            del rt
+            raise RuntimeError(_SYNC_UNSUPPORTED)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        del nid
         view_thunk = children[0]
 
         async def athunk(rt: Runtime) -> object:
             view = await view_thunk(rt)
             if view is EMPTY or view is INVALID:
                 return INVALID
-            return view.on_children_change()
+            options = view.on_children_change()
+            observer = rt.ctx.get(ObserverProtocol)
+            return observer.subscribe(options)
 
         return athunk
 
@@ -165,26 +183,16 @@ class OnDescendantsChangeQuery(ScalarQuery):
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        view_thunk = children[0]
-        pattern_thunks = children[1:]
+        del nid, children
 
         def thunk(rt: Runtime) -> object:
-            view = view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
-            if not pattern_thunks:
-                raise ValueError("Pattern cannot be empty for on_descendants_change")
-            pattern = []
-            for pt in pattern_thunks:
-                p = pt(rt)
-                if p is EMPTY or p is INVALID:
-                    return INVALID
-                pattern.append(p)
-            return view.on_descendants_change(pattern[0], *pattern[1:])
+            del rt
+            raise RuntimeError(_SYNC_UNSUPPORTED)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+        del nid
         view_thunk = children[0]
         pattern_thunks = children[1:]
 
@@ -200,7 +208,9 @@ class OnDescendantsChangeQuery(ScalarQuery):
                 if p is EMPTY or p is INVALID:
                     return INVALID
                 pattern.append(p)
-            return view.on_descendants_change(pattern[0], *pattern[1:])
+            options = view.on_descendants_change(pattern[0], *pattern[1:])
+            observer = rt.ctx.get(ObserverProtocol)
+            return observer.subscribe(options)
 
         return athunk
 
@@ -214,7 +224,7 @@ class OnPrimitiveChangeQuery(ScalarQuery):
 
     Children: ``[ref]``. At runtime the query calls ``ref._afetch_parent(rt,
     ref_nid)`` to obtain the parent view and ``ref._aaddress(rt, ref_nid)`` to
-    resolve the address, then returns ``parent.on_child_change(address)``.
+    resolve the address, then returns ``observer.subscribe(options)``.
 
     Every substrate whose Refs implement ``_afetch_parent`` (all structured
     refs) picks this up for free -- no per-substrate override needed.
@@ -227,17 +237,11 @@ class OnPrimitiveChangeQuery(ScalarQuery):
         super().__init__(ref)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self._children[0]
+        del nid, children
 
         def thunk(rt: Runtime) -> object:
-            ref_nid = rt.program.children[nid][0]
-            parent = ref._fetch_parent(rt, ref_nid)
-            if parent is EMPTY or parent is INVALID:
-                return INVALID
-            address = ref._address(rt, ref_nid)
-            if address is EMPTY or address is INVALID:
-                return INVALID
-            return parent.on_child_change(address)
+            del rt
+            raise RuntimeError(_SYNC_UNSUPPORTED)
 
         return thunk
 
@@ -252,6 +256,8 @@ class OnPrimitiveChangeQuery(ScalarQuery):
             address = await ref._aaddress(rt, ref_nid)
             if address is EMPTY or address is INVALID:
                 return INVALID
-            return parent.on_child_change(address)
+            options = parent.on_child_change(address)
+            observer = rt.ctx.get(ObserverProtocol)
+            return observer.subscribe(options)
 
         return athunk

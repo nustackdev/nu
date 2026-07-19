@@ -4,10 +4,16 @@ Each sync-capable wrapper gets a sync-path and an async-path lifecycle
 test that builds the instance in isolation, wires the minimum ctx
 dependencies, drives setup + a smoke check + cleanup. Purpose:
 regression-lock the shim symmetry introduced with the Fabric protocol
-sync/async duality (commit 05045a73).
+sync/async duality.
 
-``RedisObserver`` is async-only by design (network IO); only its marker
-is asserted here since exercising it would need a live Redis.
+Post publisher/observer split: minimum wiring for a storage is
+``Codec + InMemoryTransport + InMemoryPublisher``. The Observer is only
+needed when subscriptions are exercised (not here); it's included in
+``_pub_ctx`` for symmetry with real actor topologies.
+
+``RedisObserver`` / ``RedisPublisher`` are async-only by design (network
+IO); only their markers are asserted here since exercising them would
+need a live Redis.
 """
 
 from __future__ import annotations
@@ -20,52 +26,123 @@ from nu.lang import Context
 from nu.virtuals.fabrics import (
     Codec,
     InMemoryObserver,
+    InMemoryPublisher,
     InMemoryStorage,
+    InMemoryTransport,
     LMDBStorage,
     Navigator,
     RedisObserver,
+    RedisPublisher,
     RocksDBStorage,
     TextStorage,
     binary_kwargs,
     text_kwargs,
 )
+from virtuals.tkv.observer import ObserverProtocol
 
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
+def _pub_ctx(codec_kwargs: dict) -> Context:
+    """Codec + connected InMemoryTransport + InMemoryPublisher (+ Observer).
+
+    Enough context to construct a storage that publishes changes and to
+    subscribe on the process-scope Observer.
+    """
+    ctx = Context().bind(Codec, Codec(**codec_kwargs))
+    transport = InMemoryTransport()
+    transport.setup(ctx)
+    ctx = ctx.bind(InMemoryTransport, transport)
+    publisher = InMemoryPublisher()
+    publisher.setup(ctx)
+    ctx = ctx.bind(InMemoryPublisher, publisher)
+    observer = InMemoryObserver()
+    observer.setup(ctx)
+    return ctx.bind(ObserverProtocol, observer)
+
+
 def _mem_ctx() -> Context:
-    """Binary Codec + connected InMemoryObserver. Base for binary storages."""
-    ctx = Context().bind(Codec, Codec(**binary_kwargs()))
-    obs = InMemoryObserver()
-    obs.setup(ctx)
-    return ctx.bind(InMemoryObserver, obs)
+    """Binary Codec + Transport + Publisher (+ Observer). Base for binary storages."""
+    return _pub_ctx(binary_kwargs())
 
 
 def _text_ctx() -> Context:
-    """Text Codec + connected InMemoryObserver. Base for TextStorage."""
-    ctx = Context().bind(Codec, Codec(**text_kwargs()))
-    obs = InMemoryObserver()
-    obs.setup(ctx)
-    return ctx.bind(InMemoryObserver, obs)
+    """Text Codec + Transport + Publisher (+ Observer). Base for TextStorage."""
+    return _pub_ctx(text_kwargs())
+
+
+# --- InMemoryTransport ---------------------------------------------------
+
+
+def test_inmemory_transport_sync_lifecycle():
+    ctx = Context()
+    t = InMemoryTransport()
+    t.setup(ctx)
+    t.cleanup()
+
+
+async def test_inmemory_transport_async_lifecycle():
+    ctx = Context()
+    t = InMemoryTransport()
+    await t.asetup(ctx)
+    await t.acleanup()
+
+
+# --- InMemoryPublisher ---------------------------------------------------
+
+
+def test_inmemory_publisher_sync_lifecycle():
+    ctx = Context()
+    transport = InMemoryTransport()
+    transport.setup(ctx)
+    ctx = ctx.bind(InMemoryTransport, transport)
+    pub = InMemoryPublisher()
+    pub.setup(ctx)
+    pub.cleanup()
+
+
+async def test_inmemory_publisher_async_lifecycle():
+    ctx = Context()
+    transport = InMemoryTransport()
+    await transport.asetup(ctx)
+    ctx = ctx.bind(InMemoryTransport, transport)
+    pub = InMemoryPublisher()
+    await pub.asetup(ctx)
+    await pub.acleanup()
 
 
 # --- InMemoryObserver ----------------------------------------------------
 
 
 def test_inmemory_observer_sync_lifecycle():
-    ctx = Context().bind(Codec, Codec(**binary_kwargs()))
+    ctx = Context()
+    transport = InMemoryTransport()
+    transport.setup(ctx)
+    ctx = ctx.bind(InMemoryTransport, transport)
     obs = InMemoryObserver()
     obs.setup(ctx)
     obs.cleanup()
 
 
 async def test_inmemory_observer_async_lifecycle():
-    ctx = Context().bind(Codec, Codec(**binary_kwargs()))
+    ctx = Context()
+    transport = InMemoryTransport()
+    await transport.asetup(ctx)
+    ctx = ctx.bind(InMemoryTransport, transport)
     obs = InMemoryObserver()
     await obs.asetup(ctx)
     await obs.acleanup()
+
+
+def test_inmemory_observer_binds_under_observer_protocol():
+    """Observer fabrics carry ``_nu_bind_as = ObserverProtocol`` so
+    ``nu.core.reactive`` queries can resolve "the observer" without
+    knowing which backend is active.
+    """
+    assert InMemoryObserver._nu_bind_as is ObserverProtocol
+    assert RedisObserver._nu_bind_as is ObserverProtocol
 
 
 # --- InMemoryStorage -----------------------------------------------------
@@ -87,6 +164,16 @@ async def test_inmemory_storage_async_lifecycle():
     with storage.transaction():
         pass
     await storage.acleanup()
+
+
+def test_inmemory_storage_publisher_none():
+    """publisher_type=None -> RO/silent storage, no publisher resolution."""
+    ctx = Context().bind(Codec, Codec(**binary_kwargs()))
+    storage = InMemoryStorage(publisher_type=None)
+    storage.setup(ctx)
+    with storage.transaction():
+        pass
+    storage.cleanup()
 
 
 # --- RocksDBStorage ------------------------------------------------------
@@ -181,8 +268,12 @@ async def test_navigator_async_lifecycle():
     await storage.acleanup()
 
 
-# --- Async-only marker ---------------------------------------------------
+# --- Async-only markers --------------------------------------------------
 
 
 def test_redis_observer_has_async_only_marker():
     assert RedisObserver._nu_async_only is True
+
+
+def test_redis_publisher_has_async_only_marker():
+    assert RedisPublisher._nu_async_only is True

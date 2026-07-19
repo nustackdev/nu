@@ -4,13 +4,24 @@ Two forms, both live and independent:
 
 - Imperative context managers (``memory_storage``, ``rocksdb_storage_redis``,
   ``rocksdb_storage``, ``lmdb_storage``, ``text_storage``) yield a
-  ready ``StorageProtocol`` for hand-wired Contexts. Same as before.
+  ready ``StorageProtocol`` for hand-wired Contexts.
 - Bracket factories (``memory_navigator``, ``rocksdb_navigator_redis``,
-  ``rocksdb_navigator``, ``text_navigator``) return a single
-  ``_LifecycleBracket`` that drops into a ``nu.With(...)`` tree and binds
-  the whole Codec + Observer + Storage + Navigator stack on ctx. Internally
+  ``rocksdb_navigator``, ``text_navigator``, ``inmem_observer``,
+  ``redis_observer``) return a single ``_LifecycleBracket`` that drops
+  into a ``nu.With(...)`` tree and binds the whole Codec + Transport +
+  Publisher + Observer + Storage + Navigator stack on ctx. Internally
   they compose ``Provide`` peers under a ``With``, so ctx-bind order and
   LIFO teardown come for free.
+
+Post publisher/observer split: every navigator preset binds the triple
+(Transport + Publisher + Observer) plus Storage (with matching
+``publisher_type=``) plus Navigator. Redis presets bind Redis Publisher +
+Redis Observer alongside the InMemoryTransport (LMDB envs living in the
+same actor may still resolve their default in-mem publisher).
+
+Standalone observer presets (``inmem_observer``, ``redis_observer``) exist
+for read-only actors that consume notifications without owning a
+publishing storage.
 """
 
 from __future__ import annotations
@@ -27,11 +38,13 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "inmem_observer",
     "lmdb_navigator",
     "lmdb_navigator_redis",
     "lmdb_storage",
     "memory_navigator",
     "memory_storage",
+    "redis_observer",
     "rocksdb_navigator_redis",
     "rocksdb_navigator",
     "rocksdb_storage_redis",
@@ -43,28 +56,25 @@ __all__ = [
 
 @contextmanager
 def memory_storage() -> Generator[StorageProtocol, None, None]:
-    """Create in-memory storage with no-op codec and in-memory observer.
+    """Create in-memory storage with no-op codec and in-memory publisher.
 
     No persistence, no serialization — Python objects stored as-is.
     Useful for testing, prototyping, and ephemeral service handles.
 
     Yields:
         Configured in-memory storage instance
-
-    Example:
-        >>> with memory_storage() as storage:
-        ...     with storage.transaction() as txn:
-        ...         txn.put("key", value)
     """
     from virtuals.codecs import NoOpCodec
-    from virtuals.observers.mem import InMemoryObserver
+    from virtuals.publishers.mem import InMemoryPublisher
     from virtuals.storages.mem import InMemoryStorage
+    from virtuals.tkv.transport import InMemoryTransport
 
+    transport = InMemoryTransport()
     with (
-        InMemoryObserver(codec=NoOpCodec()) as observer,
+        InMemoryPublisher(transport=transport) as publisher,
         InMemoryStorage(
             codec=NoOpCodec(),
-            observer=observer,
+            publisher=publisher,
         ) as storage,
     ):
         yield storage
@@ -79,7 +89,7 @@ def lmdb_storage(
     subdir: bool = True,
     sync: bool = True,
 ) -> Generator[StorageProtocol, None, None]:
-    """Create LMDB storage with binary codec and in-memory observer.
+    """Create LMDB storage with binary codec and in-memory publisher.
 
     Args:
         path: Path to LMDB env (directory if subdir=True, file otherwise).
@@ -91,22 +101,19 @@ def lmdb_storage(
 
     Yields:
         Configured LMDB storage instance.
-
-    Example:
-        >>> with lmdb_storage("/mnt/nvme4/.db_blocks_lmdb") as storage:
-        ...     with storage.transaction() as txn:
-        ...         txn.put(b"key", b"value")
     """
     from virtuals.codecs import BinaryCodec
-    from virtuals.observers.mem import InMemoryObserver
+    from virtuals.publishers.mem import InMemoryPublisher
     from virtuals.storages.lmdb import LMDBStorage
+    from virtuals.tkv.transport import InMemoryTransport
 
+    transport = InMemoryTransport()
     with (
-        InMemoryObserver(codec=BinaryCodec()) as observer,
+        InMemoryPublisher(transport=transport) as publisher,
         LMDBStorage(
             path=path,
             codec=BinaryCodec(),
-            observer=observer,
+            publisher=publisher,
             read_only=read_only,
             map_size=map_size,
             max_readers=max_readers,
@@ -118,31 +125,27 @@ def lmdb_storage(
 
 
 @contextmanager
-def text_storage(path: str, read_only: bool = False) -> Generator[StorageProtocol, None, None]:
-    """Create text storage with text codec and in-memory observer.
+def text_storage(path: str) -> Generator[StorageProtocol, None, None]:
+    """Create text storage with text codec and in-memory publisher.
 
     Args:
         path: Path for text storage directory
-        read_only: Permissions
 
     Yields:
         Configured text storage instance
-
-    Example:
-        >>> with text_storage("/tmp/data") as storage:
-        ...     with storage.transaction() as txn:
-        ...         txn.put("key", "value")
     """
     from virtuals.codecs import TextCodec
-    from virtuals.observers.mem import InMemoryObserver
+    from virtuals.publishers.mem import InMemoryPublisher
     from virtuals.storages.textdb import TextStorage
+    from virtuals.tkv.transport import InMemoryTransport
 
+    transport = InMemoryTransport()
     with (
-        InMemoryObserver(codec=TextCodec()) as observer,
+        InMemoryPublisher(transport=transport) as publisher,
         TextStorage(
             path=path,
             codec=TextCodec(),
-            observer=observer,
+            publisher=publisher,
         ) as storage,
     ):
         yield storage
@@ -155,7 +158,7 @@ def rocksdb_storage(
     secondary_path: str | None = None,
     secondary_refresh_interval: float | None = 0.01,
 ) -> Generator[StorageProtocol, None, None]:
-    """Create RocksDB storage with binary codec and in-memory observer.
+    """Create RocksDB storage with binary codec and in-memory publisher.
 
     Args:
         path: Path to RocksDB database directory
@@ -166,22 +169,19 @@ def rocksdb_storage(
 
     Yields:
         Configured RocksDB storage instance
-
-    Example:
-        >>> with rocksdb_storage("/mnt/nvme4/.db_blocks_bin") as storage:
-        ...     with storage.transaction() as txn:
-        ...         txn.put(b"key", b"value")
     """
     from virtuals.codecs import BinaryCodec
-    from virtuals.observers.mem import InMemoryObserver
+    from virtuals.publishers.mem import InMemoryPublisher
     from virtuals.storages.rocksdb import RocksDBStorage
+    from virtuals.tkv.transport import InMemoryTransport
 
+    transport = InMemoryTransport()
     with (
-        InMemoryObserver(codec=BinaryCodec()) as observer,
+        InMemoryPublisher(transport=transport) as publisher,
         RocksDBStorage(
             path=path,
             codec=BinaryCodec(),
-            observer=observer,
+            publisher=publisher,
             read_only=read_only,
             secondary_path=secondary_path,
             secondary_refresh_interval=secondary_refresh_interval,
@@ -199,7 +199,7 @@ def rocksdb_storage_redis(
     redis_url: str = "redis://localhost:6379",
     channel_prefix: str = "__every__",
 ) -> Generator[StorageProtocol, None, None]:
-    """Create RocksDB storage with binary codec and in-memory observer.
+    """Create RocksDB storage with binary codec and Redis publisher.
 
     Args:
         path: Path to RocksDB database directory
@@ -212,26 +212,20 @@ def rocksdb_storage_redis(
 
     Yields:
         Configured RocksDB storage instance
-
-    Example:
-        >>> with rocksdb_storage_redis("/mnt/nvme4/.db_blocks_bin") as storage:
-        ...     with storage.transaction() as txn:
-        ...         txn.put(b"key", b"value")
     """
-    from virtuals.codecs import BinaryCodec, TextCodec
-    from virtuals.observers.redis_pubsub import RedisObserver
+    from virtuals.codecs import BinaryCodec
+    from virtuals.publishers.redis_pubsub import RedisPublisher
     from virtuals.storages.rocksdb import RocksDBStorage
 
     with (
-        RedisObserver(
-            codec=TextCodec(),
+        RedisPublisher(
             redis_url=redis_url,
             channel_prefix=channel_prefix,
-        ) as observer,
+        ) as publisher,
         RocksDBStorage(
             path=path,
             codec=BinaryCodec(),
-            observer=observer,
+            publisher=publisher,
             read_only=read_only,
             secondary_path=secondary_path,
             secondary_refresh_interval=secondary_refresh_interval,
@@ -244,9 +238,9 @@ def rocksdb_storage_redis(
 # Bracket-form presets: drop into a ``nu.With(...)`` tree.
 #
 # Each factory returns a single ``With`` bracket that peers ``Provide``s the
-# whole Codec + Observer + Storage (+ Navigator) stack. Same order and LIFO
-# teardown as a hand-written ``With(Provide(Codec, ...), Provide(Observer, ...),
-# Provide(Storage, ...), Provide(Navigator, ...))``.
+# whole Codec + Transport + Publisher + Observer + Storage (+ Navigator)
+# stack. Same order and LIFO teardown as a hand-written
+# ``With(Provide(Codec, ...), Provide(InMemoryTransport, ...), ...)``.
 #
 # ``tags=`` folds onto both the Storage and Navigator bindings so a shard
 # picks its storage via ``storage_tags=`` and binds the Navigator under the
@@ -258,25 +252,21 @@ def memory_navigator(
     *,
     tags: Sequence[object] = (),
 ) -> With:
-    """In-memory Codec + Observer + Storage + Navigator as one bracket.
+    """In-mem Codec + Transport + Publisher + Observer + Storage + Navigator as one bracket.
 
     No persistence, no serialization -- Python objects go through NoOpCodec.
     Useful for tests, examples, and ephemeral service handles.
 
     Args:
         tags: fold onto the Storage and Navigator bindings.
-
-    Example:
-        >>> nu.With(
-        ...     memory_navigator(),
-        ...     body=Counter.value.store(1),
-        ... )
     """
     from nu.context.fabric import Provide, With
     from nu.virtuals.fabrics import (
         Codec,
         InMemoryObserver,
+        InMemoryPublisher,
         InMemoryStorage,
+        InMemoryTransport,
         Navigator,
         noop_kwargs,
     )
@@ -284,6 +274,8 @@ def memory_navigator(
     tags = tuple(tags)
     return With(
         Provide(Codec, noop_kwargs()),
+        Provide(InMemoryTransport, {}),
+        Provide(InMemoryPublisher, {}),
         Provide(InMemoryObserver, {}),
         Provide(InMemoryStorage, {}, tags=tags),
         Provide(
@@ -304,32 +296,18 @@ def rocksdb_navigator(
     disable_wal: bool = False,
     options: dict | None = None,
 ) -> With:
-    """RocksDB + in-memory Observer + Navigator as one bracket.
+    """RocksDB + in-mem Transport/Publisher/Observer + Navigator as one bracket.
 
-    Binary codec, in-process observer, transactional persistence. The 99%
-    site for a per-shard rocksdb stack when you don't need cross-process
-    change notifications.
-
-    Args:
-        path: RocksDB database directory.
-        tags: fold onto the Storage and Navigator bindings.
-        read_only: open the database in read-only mode.
-        secondary_path: open as a secondary rocksdb instance.
-        secondary_refresh_interval: seconds between background
-            try_catch_up_with_primary on secondary DBs. None disables.
-        disable_wal: skip the write-ahead log; faster but less durable.
-        options: extra RocksDB options dict.
-
-    Example:
-        >>> nu.With(
-        ...     rocksdb_navigator(".dbtest"),
-        ...     body=Counter.value.store(1),
-        ... )
+    Binary codec, in-process publisher/observer, transactional persistence.
+    The 99% site for a per-shard rocksdb stack when you don't need
+    cross-process change notifications.
     """
     from nu.context.fabric import Provide, With
     from nu.virtuals.fabrics import (
         Codec,
         InMemoryObserver,
+        InMemoryPublisher,
+        InMemoryTransport,
         Navigator,
         RocksDBStorage,
         binary_kwargs,
@@ -338,6 +316,8 @@ def rocksdb_navigator(
     tags = tuple(tags)
     return With(
         Provide(Codec, binary_kwargs()),
+        Provide(InMemoryTransport, {}),
+        Provide(InMemoryPublisher, {}),
         Provide(InMemoryObserver, {}),
         Provide(
             RocksDBStorage,
@@ -371,29 +351,18 @@ def rocksdb_navigator_redis(
     redis_url: str = "redis://localhost:6379",
     channel_prefix: str = "__every__",
 ) -> With:
-    """RocksDB + Redis Observer + Navigator as one bracket.
+    """RocksDB + Redis Publisher/Observer + Navigator as one bracket.
 
-    Same as ``rocksdb_navigator`` but with the Redis observer for
-    cross-process change notifications. Requires a reachable Redis at
+    Same as ``rocksdb_navigator`` but with the Redis publisher/observer pair
+    for cross-process change notifications. Requires a reachable Redis at
     ``redis_url`` at asetup time.
-
-    Args:
-        path: RocksDB database directory.
-        tags: fold onto the Storage and Navigator bindings.
-        read_only: open the database in read-only mode.
-        secondary_path: open as a secondary rocksdb instance.
-        secondary_refresh_interval: seconds between background
-            try_catch_up_with_primary on secondary DBs. None disables.
-        disable_wal: skip the write-ahead log; faster but less durable.
-        options: extra RocksDB options dict.
-        redis_url: Redis service URL for the observer.
-        channel_prefix: Redis channel prefix for change events.
     """
     from nu.context.fabric import Provide, With
     from nu.virtuals.fabrics import (
         Codec,
         Navigator,
         RedisObserver,
+        RedisPublisher,
         RocksDBStorage,
         binary_kwargs,
     )
@@ -402,6 +371,10 @@ def rocksdb_navigator_redis(
     return With(
         Provide(Codec, binary_kwargs()),
         Provide(
+            RedisPublisher,
+            {"redis_url": redis_url, "channel_prefix": channel_prefix},
+        ),
+        Provide(
             RedisObserver,
             {"redis_url": redis_url, "channel_prefix": channel_prefix},
         ),
@@ -409,7 +382,7 @@ def rocksdb_navigator_redis(
             RocksDBStorage,
             {
                 "path": path,
-                "observer_type": RedisObserver,
+                "publisher_type": RedisPublisher,
                 "read_only": read_only,
                 "secondary_path": secondary_path,
                 "secondary_refresh_interval": secondary_refresh_interval,
@@ -433,21 +406,13 @@ def text_navigator(
     read_only: bool = False,
     log_operations: bool = False,
 ) -> With:
-    """Text (JSON) storage + in-memory Observer + Navigator as one bracket.
-
-    Human-readable JSON on disk. For debugging, learning, or tiny
-    hand-inspectable stores.
-
-    Args:
-        path: text storage directory.
-        tags: fold onto the Storage and Navigator bindings.
-        read_only: open the storage in read-only mode.
-        log_operations: log each read / write to the storage (debug aid).
-    """
+    """Text (JSON) storage + in-mem Transport/Publisher/Observer + Navigator as one bracket."""
     from nu.context.fabric import Provide, With
     from nu.virtuals.fabrics import (
         Codec,
         InMemoryObserver,
+        InMemoryPublisher,
+        InMemoryTransport,
         Navigator,
         TextStorage,
         text_kwargs,
@@ -456,6 +421,8 @@ def text_navigator(
     tags = tuple(tags)
     return With(
         Provide(Codec, text_kwargs()),
+        Provide(InMemoryTransport, {}),
+        Provide(InMemoryPublisher, {}),
         Provide(InMemoryObserver, {}),
         Provide(
             TextStorage,
@@ -484,31 +451,13 @@ def lmdb_navigator(
     subdir: bool = True,
     sync: bool = True,
 ) -> With:
-    """LMDB + in-memory Observer + Navigator as one bracket.
-
-    Binary codec, in-process observer, single-writer memory-mapped LMDB env.
-    Kwargs mirror the imperative ``lmdb_storage`` CM. For cross-process
-    notifs use ``lmdb_navigator_redis``.
-
-    Args:
-        path: LMDB env path (directory when ``subdir=True``, file otherwise).
-        tags: fold onto the Storage and Navigator bindings.
-        read_only: open the env read-only.
-        map_size: maximum on-disk size in bytes. Default 10 GiB.
-        max_readers: maximum concurrent reader slots.
-        subdir: if True, treat ``path`` as a directory; if False, as the env file.
-        sync: if True, fsync data pages after each commit.
-
-    Example:
-        >>> nu.With(
-        ...     lmdb_navigator("/mnt/nvme4/.db"),
-        ...     body=Counter.value.store(1),
-        ... )
-    """
+    """LMDB + in-mem Transport/Publisher/Observer + Navigator as one bracket."""
     from nu.context.fabric import Provide, With
     from nu.virtuals.fabrics import (
         Codec,
         InMemoryObserver,
+        InMemoryPublisher,
+        InMemoryTransport,
         LMDBStorage,
         Navigator,
         binary_kwargs,
@@ -517,6 +466,8 @@ def lmdb_navigator(
     tags = tuple(tags)
     return With(
         Provide(Codec, binary_kwargs()),
+        Provide(InMemoryTransport, {}),
+        Provide(InMemoryPublisher, {}),
         Provide(InMemoryObserver, {}),
         Provide(
             LMDBStorage,
@@ -550,24 +501,24 @@ def lmdb_navigator_redis(
     redis_url: str = "redis://localhost:6379",
     channel_prefix: str = "everyshape",
 ) -> With:
-    """LMDB + Redis Observer + Navigator as one bracket.
-
-    Same as ``lmdb_navigator`` but with the Redis observer so LMDB writes
-    broadcast on the shared pub/sub prefix. Requires a reachable Redis at
-    ``redis_url`` at asetup time.
-    """
+    """LMDB + Redis Publisher/Observer + Navigator as one bracket."""
     from nu.context.fabric import Provide, With
     from nu.virtuals.fabrics import (
         Codec,
         LMDBStorage,
         Navigator,
         RedisObserver,
+        RedisPublisher,
         binary_kwargs,
     )
 
     tags = tuple(tags)
     return With(
         Provide(Codec, binary_kwargs()),
+        Provide(
+            RedisPublisher,
+            {"redis_url": redis_url, "channel_prefix": channel_prefix},
+        ),
         Provide(
             RedisObserver,
             {"redis_url": redis_url, "channel_prefix": channel_prefix},
@@ -576,7 +527,7 @@ def lmdb_navigator_redis(
             LMDBStorage,
             {
                 "path": path,
-                "observer_type": RedisObserver,
+                "publisher_type": RedisPublisher,
                 "read_only": read_only,
                 "map_size": map_size,
                 "max_readers": max_readers,
@@ -589,5 +540,48 @@ def lmdb_navigator_redis(
             Navigator,
             {"storage_type": LMDBStorage, "storage_tags": tags},
             tags=tags,
+        ),
+    )
+
+
+# =========================================================================
+# Standalone Observer presets: read-only actors that consume notifications
+# without owning a publishing storage.
+# =========================================================================
+
+
+def inmem_observer() -> With:
+    """In-process Transport + Observer as one bracket.
+
+    Provides the transport + observer without a Publisher or Storage. Bind
+    at process scope in an actor that only consumes notifications from
+    same-process publishers (rare -- Redis is the usual cross-process case).
+    """
+    from nu.context.fabric import Provide, With
+    from nu.virtuals.fabrics import InMemoryObserver, InMemoryTransport
+
+    return With(
+        Provide(InMemoryTransport, {}),
+        Provide(InMemoryObserver, {}),
+    )
+
+
+def redis_observer(
+    redis_url: str = "redis://localhost:6379",
+    channel_prefix: str = "everyshape",
+) -> With:
+    """Redis Observer as one bracket.
+
+    Read-only cross-process subscriber. Actors that don't write to any
+    storage but need to react to cluster-wide changes (e.g. reactive
+    counters, notification handlers) bind this at process scope.
+    """
+    from nu.context.fabric import Provide, With
+    from nu.virtuals.fabrics import RedisObserver
+
+    return With(
+        Provide(
+            RedisObserver,
+            {"redis_url": redis_url, "channel_prefix": channel_prefix},
         ),
     )

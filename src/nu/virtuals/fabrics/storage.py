@@ -1,17 +1,17 @@
 """Nu fabrics wrapping virtuals storage backends.
 
 ``FabricLifecycle`` classes over the virtuals storage backends: parent
-``__init__`` deferred to ``asetup`` so ``Codec`` and Observer come from ctx.
-``acleanup`` runs the storage's ``close``.
+``__init__`` deferred to ``asetup`` so ``Codec`` and Publisher come from
+ctx. ``acleanup`` runs the storage's ``close``.
 
-Three backends:
-- ``InMemoryStorage`` - ephemeral, fast, no persistence.
-- ``RocksDBStorage`` - persistent, transactional, production.
-- ``TextStorage`` - human-readable JSON, for debugging and learning.
+Backends: ``InMemoryStorage`` (ephemeral), ``RocksDBStorage`` (persistent,
+transactional), ``LMDBStorage`` (memory-mapped, MVCC), ``TextStorage``
+(human-readable JSON).
 
-DI convention: each storage looks up ``Codec`` under its type. Observer is
-looked up by the class passed as ``observer_type`` (default:
-``InMemoryObserver``).
+DI convention: each storage looks up ``Codec`` under its type. The
+publisher is looked up by the class passed as ``publisher_type`` (default:
+``InMemoryPublisher``). Pass ``publisher_type=None`` on a read-only
+storage that shouldn't publish notifications.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from virtuals.storages.rocksdb import RocksDBStorage as _RocksDBStorage
 from virtuals.storages.textdb import TextStorage as _TextStorage
 
 from .codec import Codec
-from .observer import InMemoryObserver
+from .publisher import InMemoryPublisher
 
 
 if TYPE_CHECKING:
@@ -34,21 +34,34 @@ if TYPE_CHECKING:
 __all__ = ["InMemoryStorage", "LMDBStorage", "RocksDBStorage", "TextStorage"]
 
 
+def _resolve_publisher(ctx: Context, publisher_type: type | None) -> object | None:
+    """Look up the publisher instance in ctx by its fabric class.
+
+    ``publisher_type=None`` means "no publisher" (RO storage / silent
+    writes). Anything else is looked up in ctx; missing bindings raise
+    a clear error via ``ctx.get``.
+    """
+    if publisher_type is None:
+        return None
+    return ctx.get(publisher_type)
+
+
 class InMemoryStorage(_InMemoryStorage):
     """FabricLifecycle wrapper over ``virtuals.InMemoryStorage``.
 
-    Deps read from ctx at setup: ``Codec`` and an observer of
-    ``observer_type`` (default ``InMemoryObserver``).
+    Deps read from ctx at setup: ``Codec`` and a publisher of
+    ``publisher_type`` (default ``InMemoryPublisher``). Pass
+    ``publisher_type=None`` for silent writes.
     """
 
-    def __init__(self, *, observer_type: type = InMemoryObserver) -> None:
-        self._observer_type = observer_type
+    def __init__(self, *, publisher_type: type | None = InMemoryPublisher) -> None:
+        self._publisher_type = publisher_type
 
     def setup(self, ctx: Context) -> None:
         """Read deps from ctx, run the parent constructor, open the store."""
         codec = ctx.get(Codec)
-        observer = ctx.get(self._observer_type)
-        _InMemoryStorage.__init__(self, codec=codec, observer=observer)
+        publisher = _resolve_publisher(ctx, self._publisher_type)
+        _InMemoryStorage.__init__(self, codec=codec, publisher=publisher)
         self.open()
 
     def cleanup(self) -> None:
@@ -69,7 +82,7 @@ class RocksDBStorage(_RocksDBStorage):
 
     Config kwargs (``path``, ``read_only``, ``secondary_path``,
     ``secondary_refresh_interval``, ``disable_wal``, ``options``) go to the
-    parent constructor at ``asetup`` time. Deps (``Codec``, observer) come
+    parent constructor at ``asetup`` time. Deps (``Codec``, publisher) come
     from ctx.
     """
 
@@ -77,7 +90,7 @@ class RocksDBStorage(_RocksDBStorage):
         self,
         *,
         path: str,
-        observer_type: type = InMemoryObserver,
+        publisher_type: type | None = InMemoryPublisher,
         read_only: bool = False,
         secondary_path: str | None = None,
         secondary_refresh_interval: float | None = 0.01,
@@ -85,7 +98,7 @@ class RocksDBStorage(_RocksDBStorage):
         options: dict | None = None,
     ) -> None:
         self._path = path
-        self._observer_type = observer_type
+        self._publisher_type = publisher_type
         self._read_only = read_only
         self._secondary_path = secondary_path
         self._secondary_refresh_interval = secondary_refresh_interval
@@ -95,12 +108,12 @@ class RocksDBStorage(_RocksDBStorage):
     def setup(self, ctx: Context) -> None:
         """Read deps from ctx, run the parent constructor, open the store."""
         codec = ctx.get(Codec)
-        observer = ctx.get(self._observer_type)
+        publisher = _resolve_publisher(ctx, self._publisher_type)
         _RocksDBStorage.__init__(
             self,
             path=Path(self._path),
             codec=codec,
-            observer=observer,
+            publisher=publisher,
             read_only=self._read_only,
             secondary_path=Path(self._secondary_path) if self._secondary_path else None,
             secondary_refresh_interval=self._secondary_refresh_interval,
@@ -127,20 +140,20 @@ class LMDBStorage:
     """FabricLifecycle wrapper over ``virtuals.storages.lmdb.LMDBStorage``.
 
     Lazy-loaded to avoid a hard ``lmdb`` dep at import time (same shape as
-    ``RedisObserver``). The backing storage is constructed inside ``asetup``
+    ``RedisPublisher``). The backing storage is constructed inside ``asetup``
     so importing ``nu.virtuals.fabrics`` never touches the ``lmdb`` module.
     Instance attribute access delegates to the backing storage once open.
 
     Config kwargs mirror the imperative ``lmdb_storage`` CM: ``path``,
     ``read_only``, ``map_size``, ``max_readers``, ``subdir``, ``sync``.
-    Deps (``Codec``, observer) come from ctx.
+    Deps (``Codec``, publisher) come from ctx.
     """
 
     def __init__(
         self,
         *,
         path: str,
-        observer_type: type = InMemoryObserver,
+        publisher_type: type | None = InMemoryPublisher,
         read_only: bool = False,
         map_size: int = 10 * 1024 * 1024 * 1024,
         max_readers: int = 126,
@@ -148,7 +161,7 @@ class LMDBStorage:
         sync: bool = True,
     ) -> None:
         self._path = path
-        self._observer_type = observer_type
+        self._publisher_type = publisher_type
         self._read_only = read_only
         self._map_size = map_size
         self._max_readers = max_readers
@@ -161,11 +174,11 @@ class LMDBStorage:
         from virtuals.storages.lmdb import LMDBStorage as _LMDBStorage
 
         codec = ctx.get(Codec)
-        observer = ctx.get(self._observer_type)
+        publisher = _resolve_publisher(ctx, self._publisher_type)
         self._backing = _LMDBStorage(
             path=Path(self._path),
             codec=codec,
-            observer=observer,
+            publisher=publisher,
             read_only=self._read_only,
             map_size=self._map_size,
             max_readers=self._max_readers,
@@ -208,24 +221,24 @@ class TextStorage(_TextStorage):
         self,
         *,
         path: str,
-        observer_type: type = InMemoryObserver,
+        publisher_type: type | None = InMemoryPublisher,
         read_only: bool = False,
         log_operations: bool = False,
     ) -> None:
         self._path = path
-        self._observer_type = observer_type
+        self._publisher_type = publisher_type
         self._read_only = read_only
         self._log_operations = log_operations
 
     def setup(self, ctx: Context) -> None:
         """Read deps from ctx, run the parent constructor, open the store."""
         codec = ctx.get(Codec)
-        observer = ctx.get(self._observer_type)
+        publisher = _resolve_publisher(ctx, self._publisher_type)
         _TextStorage.__init__(
             self,
             path=Path(self._path),
             codec=codec,
-            observer=observer,
+            publisher=publisher,
             log_operations=self._log_operations,
             read_only=self._read_only,
         )
