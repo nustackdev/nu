@@ -30,7 +30,6 @@ from nu.virtuals.interactions import (
     CONFLICT_ERRORS,
     Atomic,
     ClearPrimitivesUnsafeCmd,
-    EnsureLayoutCmd,
     InitItemCmd,
     ItemPrimitiveDeleteUnsafeCmd,
     ItemPrimitiveGetUnsafe,
@@ -111,7 +110,6 @@ __all__ = [  # noqa: RUF022
     "tree",
     "views",
     # Interactions — Item
-    "EnsureLayoutCmd",
     "InitItemCmd",
     "ItemPrimitiveGetUnsafe",
     "ItemPrimitiveSetUnsafeCmd",

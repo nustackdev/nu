@@ -238,11 +238,39 @@ class ViewRef[T](_VirtualsRefBase[T]):
     # --- write / erase (whole-view store via parent decomposition) -----------
 
     def _fetch_parent_view(self, rt: Runtime, path: tuple) -> object:
+        """Read-side parent open -- pure navigation, no side effects.
+
+        Safe on read-only storage contexts (snapshots, RO secondaries).
+        Callers that intend to WRITE via the returned view should use
+        ``_fetch_and_ensure_parent_view`` instead so every ancestor along
+        the path is materialized with its declared view type before the
+        leaf write can auto-create it with the container layer's default
+        marker.
+        """
         nav = _resolve_navigator(rt, self._root_shape, path)
         storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
         if len(path) <= 1:
             return nav.root(storage_ctx)
         return nav.open_at_path(ViewPathSer(path[:-1]), storage_ctx)
+
+    def _fetch_and_ensure_parent_view(self, rt: Runtime, path: tuple) -> object:
+        """Write-side parent open -- walks the path and ensures each level
+        is materialized with its declared view type.
+
+        Same shape as ``_fetch_parent_view`` but uses
+        ``open_at_path_and_ensure`` so every intermediate container gets
+        stamped with the correct marker (via ``ensure_created`` at each
+        level, which also runs ``_ensure_internal_layout`` on views like
+        ``LogIndexedDictView`` that carry a custom sub-layout). Only call
+        on a write-capable context.
+        """
+        nav = _resolve_navigator(rt, self._root_shape, path)
+        storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
+        if len(path) <= 1:
+            root = nav.root(storage_ctx)
+            root.ensure_created()
+            return root
+        return nav.open_at_path_and_ensure(ViewPathSer(path[:-1]), storage_ctx)
 
     def _write(self, rt: Runtime, value: object, nid: int) -> None:
         """Store a whole container value through the parent View (decomposed).
@@ -255,7 +283,7 @@ class ViewRef[T](_VirtualsRefBase[T]):
         """
         value = self._lower(value)
         path = self._resolve_path(rt, nid)
-        parent = self._fetch_parent_view(rt, path)
+        parent = self._fetch_and_ensure_parent_view(rt, path)
         key, view_class = path[-1]
         parent.set_child_container_as(key, value, view_class)  # type: ignore[attr-defined]
 
@@ -263,7 +291,7 @@ class ViewRef[T](_VirtualsRefBase[T]):
         """Async sibling of :meth:`_write`."""
         value = await self._alower(value)
         path = await self._aresolve_path(rt, nid)
-        parent = self._fetch_parent_view(rt, path)
+        parent = self._fetch_and_ensure_parent_view(rt, path)
         key, view_class = path[-1]
         parent.set_child_container_as(key, value, view_class)  # type: ignore[attr-defined]
 
@@ -287,7 +315,7 @@ class ViewRef[T](_VirtualsRefBase[T]):
         except (KeyError, IndexError):
             pass
 
-    # --- substrate plug-points (for unsafe ops / EnsureLayout) ---------------
+    # --- substrate plug-points (for unsafe ops) ------------------------------
 
     def _fetch(self, rt: Runtime, nid: int) -> object:
         """Navigate to and return the faceted View (sync)."""
@@ -353,6 +381,9 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
     # --- write / erase -------------------------------------------------------
 
     def _fetch_parent_view(self, rt: Runtime, path: tuple) -> object:
+        """Read-side parent open -- pure navigation, no side effects. See
+        the sibling method on ``ViewRef`` for the rationale on the
+        read/write split."""
         nav = _resolve_navigator(rt, self._root_shape, path)
         storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
         parent_path = path[:-1]
@@ -360,18 +391,31 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
             return nav.root(storage_ctx)
         return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
 
+    def _fetch_and_ensure_parent_view(self, rt: Runtime, path: tuple) -> object:
+        """Write-side parent open -- ensures each level of the path is
+        materialized with its declared view type. See the sibling method
+        on ``ViewRef``."""
+        nav = _resolve_navigator(rt, self._root_shape, path)
+        storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
+        parent_path = path[:-1]
+        if not parent_path:
+            root = nav.root(storage_ctx)
+            root.ensure_created()
+            return root
+        return nav.open_at_path_and_ensure(ViewPathSer(parent_path), storage_ctx)
+
     def _write(self, rt: Runtime, value: object, nid: int) -> None:
         """Write a leaf value through the parent View."""
         value = self._lower(value)
         path = self._resolve_path(rt, nid)
-        parent = self._fetch_parent_view(rt, path)
+        parent = self._fetch_and_ensure_parent_view(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
 
     async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`write`."""
         value = await self._alower(value)
         path = await self._aresolve_path(rt, nid)
-        parent = self._fetch_parent_view(rt, path)
+        parent = self._fetch_and_ensure_parent_view(rt, path)
         parent[path[-1][0]] = value  # type: ignore[index]
 
     def _erase(self, rt: Runtime, nid: int) -> None:

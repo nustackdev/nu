@@ -16,7 +16,6 @@ from .atomicity import (
 )
 from .collections import ClearPrimitivesUnsafeCmd, ScanPrimitivesUnsafe
 from .item import (
-    EnsureLayoutCmd,
     InitItemCmd,
     ItemPrimitiveDeleteUnsafeCmd,
     ItemPrimitiveGetUnsafe,
@@ -31,7 +30,6 @@ __all__ = [
     "CONFLICT_ERRORS",
     "Atomic",
     "ClearPrimitivesUnsafeCmd",
-    "EnsureLayoutCmd",
     "InitItemCmd",
     "ItemPrimitiveDeleteUnsafeCmd",
     "ItemPrimitiveGetUnsafe",

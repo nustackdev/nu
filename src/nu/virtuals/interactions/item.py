@@ -1,6 +1,5 @@
-"""Virtuals item interactions — unsafe leaf read/write/delete + container setup.
+"""Virtuals item interactions — unsafe leaf read/write/delete.
 
-EnsureLayoutCmd: Materialize view container layout (idempotent setup).
 InitItemCmd: Materialize container chain via _fetch().
 ItemPrimitiveGetUnsafe: Read — _unsafe_primitive_read() (single ctx.get).
 ItemPrimitiveSetUnsafeCmd: Write — _unsafe_primitive_write(ensure_exists=True).
@@ -30,7 +29,6 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "EnsureLayoutCmd",
     "InitItemCmd",
     "ItemPrimitiveDeleteUnsafeCmd",
     "ItemPrimitiveGetUnsafe",
@@ -42,40 +40,6 @@ __all__ = [
 
 def _child_nid(rt: Runtime, nid: int, slot: int) -> int:
     return rt.program.children[nid][slot]
-
-
-class EnsureLayoutCmd(Command):
-    """Ensure a view container and its internal layout exist in storage.
-
-    Navigates to the view via the ref's ``fetch`` thunk, then calls
-    ``_ensure_layout()`` (or ``ensure_created()``) to create internal containers.
-    """
-
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self._children[0]
-
-        def thunk(rt: Runtime) -> None:
-            view = ref._fetch(rt, _child_nid(rt, nid, 0))
-            if hasattr(view, "_ensure_layout"):
-                view._ensure_layout()
-            elif hasattr(view, "ensure_created"):
-                view.ensure_created()
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
-        ref = self._children[0]
-
-        async def athunk(rt: Runtime) -> None:
-            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
-            if hasattr(view, "_ensure_layout"):
-                view._ensure_layout()
-            elif hasattr(view, "ensure_created"):
-                view.ensure_created()
-
-        return athunk
 
 
 class InitItemCmd(Command):

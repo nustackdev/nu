@@ -19,13 +19,20 @@ from __future__ import annotations
 from nu.domains.shape import Shape
 from nu.flows import Sequential as Seq
 from nu.virtuals import (
-    EnsureLayoutCmd,
     IntRef,
     Snapshot,
     StrRef,
     Transaction,
     auto_flow_atomic,
 )
+
+
+def _write_cmd(ref):
+    """A stand-in write Command for tests -- any Command with ``_mutates``
+    that wraps ``ref`` at ``_children[0]`` works for the flow-wrapping
+    passes under test. ``.store(0)`` compiles to a ``StoreCommand`` whose
+    first child is the ref, which is what the deformer keys on."""
+    return ref.store(0)
 
 
 def _flat_ref(root_shape: type):
@@ -116,8 +123,8 @@ def test_scoped_wraps_only_matching_writes() -> None:
     shard_ref = _flat_ref(LedgerShard)
     acct_ref = _flat_ref(Account)
     tree = Seq(
-        EnsureLayoutCmd(shard_ref),
-        EnsureLayoutCmd(acct_ref),
+        _write_cmd(shard_ref),
+        _write_cmd(acct_ref),
     )
 
     out = auto_flow_atomic(tree, scope=LedgerShard)
@@ -132,8 +139,8 @@ def test_unscoped_wraps_everything() -> None:
     shard_ref = _flat_ref(LedgerShard)
     acct_ref = _flat_ref(Account)
     tree = Seq(
-        EnsureLayoutCmd(shard_ref),
-        EnsureLayoutCmd(acct_ref),
+        _write_cmd(shard_ref),
+        _write_cmd(acct_ref),
     )
 
     out = auto_flow_atomic(tree)
@@ -150,7 +157,7 @@ def test_scoped_then_unscoped_no_double_wrap() -> None:
     cmd itself. Neither pass finds a Flow at the root, so both are no-ops.
     """
     shard_ref = _flat_ref(LedgerShard)
-    tree = Seq(EnsureLayoutCmd(shard_ref))
+    tree = Seq(_write_cmd(shard_ref))
 
     t1 = auto_flow_atomic(tree, scope=LedgerShard)
     t2 = auto_flow_atomic(t1)
@@ -163,7 +170,7 @@ def test_scoped_then_unscoped_no_double_wrap() -> None:
 def test_unscoped_then_scoped_no_double_wrap() -> None:
     """Reverse order: scoped pass after unscoped must not re-wrap either."""
     shard_ref = _flat_ref(LedgerShard)
-    tree = Seq(EnsureLayoutCmd(shard_ref))
+    tree = Seq(_write_cmd(shard_ref))
 
     t1 = auto_flow_atomic(tree)
     t2 = auto_flow_atomic(t1, scope=LedgerShard)
@@ -185,8 +192,8 @@ def test_order_independence_mixed_scopes() -> None:
     shard_ref = _flat_ref(LedgerShard)
     acct_ref = _flat_ref(Account)
     tree = Seq(
-        EnsureLayoutCmd(shard_ref),
-        EnsureLayoutCmd(acct_ref),
+        _write_cmd(shard_ref),
+        _write_cmd(acct_ref),
     )
 
     a = auto_flow_atomic(auto_flow_atomic(tree, scope=LedgerShard))
@@ -205,7 +212,7 @@ def test_order_independence_mixed_scopes() -> None:
 def test_preexisting_transaction_covers_nested_write() -> None:
     """Manually-placed Transaction must prevent inner re-wrapping."""
     shard_ref = _flat_ref(LedgerShard)
-    tree = Seq(Transaction(EnsureLayoutCmd(shard_ref), scope=LedgerShard))
+    tree = Seq(Transaction(_write_cmd(shard_ref), scope=LedgerShard))
 
     out = auto_flow_atomic(tree, scope=LedgerShard)
 
@@ -217,7 +224,7 @@ def test_preexisting_transaction_covers_nested_write() -> None:
 def test_unscoped_boundary_covers_scoped_pass() -> None:
     """Transaction(scope=None) already covers any ref — scoped pass must skip."""
     shard_ref = _flat_ref(LedgerShard)
-    tree = Seq(Transaction(EnsureLayoutCmd(shard_ref), scope=None))
+    tree = Seq(Transaction(_write_cmd(shard_ref), scope=None))
 
     out = auto_flow_atomic(tree, scope=LedgerShard)
 
