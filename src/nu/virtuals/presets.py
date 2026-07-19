@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "lmdb_navigator",
+    "lmdb_navigator_redis",
     "lmdb_storage",
     "memory_navigator",
     "memory_storage",
@@ -486,8 +487,8 @@ def lmdb_navigator(
     """LMDB + in-memory Observer + Navigator as one bracket.
 
     Binary codec, in-process observer, single-writer memory-mapped LMDB env.
-    Kwargs mirror the imperative ``lmdb_storage`` CM. LMDB is single-process
-    so there's no Redis-observer sibling here; use rocksdb for that shape.
+    Kwargs mirror the imperative ``lmdb_storage`` CM. For cross-process
+    notifs use ``lmdb_navigator_redis``.
 
     Args:
         path: LMDB env path (directory when ``subdir=True``, file otherwise).
@@ -521,6 +522,61 @@ def lmdb_navigator(
             LMDBStorage,
             {
                 "path": path,
+                "read_only": read_only,
+                "map_size": map_size,
+                "max_readers": max_readers,
+                "subdir": subdir,
+                "sync": sync,
+            },
+            tags=tags,
+        ),
+        Provide(
+            Navigator,
+            {"storage_type": LMDBStorage, "storage_tags": tags},
+            tags=tags,
+        ),
+    )
+
+
+def lmdb_navigator_redis(
+    path: str,
+    *,
+    tags: Sequence[object] = (),
+    read_only: bool = False,
+    map_size: int = 10 * 1024 * 1024 * 1024,
+    max_readers: int = 126,
+    subdir: bool = True,
+    sync: bool = True,
+    redis_url: str = "redis://localhost:6379",
+    channel_prefix: str = "everyshape",
+) -> With:
+    """LMDB + Redis Observer + Navigator as one bracket.
+
+    Same as ``lmdb_navigator`` but with the Redis observer so LMDB writes
+    broadcast on the shared pub/sub prefix. Requires a reachable Redis at
+    ``redis_url`` at asetup time.
+    """
+    from nu.context.fabric import Provide, With
+    from nu.virtuals.fabrics import (
+        Codec,
+        LMDBStorage,
+        Navigator,
+        RedisObserver,
+        binary_kwargs,
+    )
+
+    tags = tuple(tags)
+    return With(
+        Provide(Codec, binary_kwargs()),
+        Provide(
+            RedisObserver,
+            {"redis_url": redis_url, "channel_prefix": channel_prefix},
+        ),
+        Provide(
+            LMDBStorage,
+            {
+                "path": path,
+                "observer_type": RedisObserver,
                 "read_only": read_only,
                 "map_size": map_size,
                 "max_readers": max_readers,
