@@ -27,6 +27,7 @@ Layout:
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import queue as _queue
 from typing import TYPE_CHECKING
 
@@ -49,18 +50,36 @@ __all__ = ["Runtime"]
 
 _DONE = object()
 
+# Per-asyncio-task Context storage. Backed by ContextVar so brackets can
+# `rt.ctx = scoped` around an `await` without contaminating sibling branches
+# running under the same Runtime -- each asyncio.Task inherits a copy-on-write
+# view when spawned, and `.set()` inside the task is local to that task.
+# Prior impl used a plain instance attribute, which raced across parallel
+# branches and surfaced as `StorageClosedError` when one branch's committed
+# Transaction context bled into another branch's lazy Ref reads.
+_RT_CTX: contextvars.ContextVar[Context] = contextvars.ContextVar("nu_rt_ctx")
+
 
 class Runtime:
-    """Per-drive Runtime. Owns a Program, a Context, and a Budget."""
+    """Per-drive Runtime. Owns a Program, a per-task Context, and a Budget."""
 
-    __slots__ = ("budget", "ctx", "program")
+    __slots__ = ("budget", "program")
 
     def __init__(self, program: Program, ctx: Context, *, budget: Budget | None = None) -> None:
         from nu.lang.runtime.utils.budget import Budget as _Budget
 
         self.program = program
-        self.ctx = ctx
+        _RT_CTX.set(ctx)
         self.budget = budget if budget is not None else _Budget()
+
+    @property
+    def ctx(self) -> Context:
+        """The current asyncio-task-local Context."""
+        return _RT_CTX.get()
+
+    @ctx.setter
+    def ctx(self, value: Context) -> None:
+        _RT_CTX.set(value)
 
     # --- dispatch -----------------------------------------------------------
 
