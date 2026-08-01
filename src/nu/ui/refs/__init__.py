@@ -25,7 +25,8 @@ All names are re-exported flat here so the wire-type resolver
 
 from __future__ import annotations
 
-from .base import NudleRef
+from nu.ui.core import Ref, Section, SectionRef
+
 from .chart import AreaChart, BarChart, LineChart, PieChart, Sparkline
 from .input import (
     ButtonRef,
@@ -50,7 +51,6 @@ from .layout import (
     Form,
     Modal,
     Row,
-    Section,
     TabsRef,
 )
 from .output import (
@@ -99,13 +99,14 @@ __all__ = [
     "MarkdownRef",
     "Modal",
     "NavRef",
-    "NudleRef",
     "NumberInputRef",
     "PieChart",
     "ProgressRef",
     "RadioGroupRef",
+    "Ref",
     "Row",
     "Section",
+    "SectionRef",
     "SelectRef",
     "SliderRef",
     "Sparkline",

@@ -265,6 +265,11 @@ convention = "google"
     "N811",   # std Forms (UUID) aliased as *Form to not shadow the stdlib type
     "N812",   # std Forms (date, complex, ...) aliased as *Form for the same reason
 ]
+"src/nu/ui/core/**/*.py" = [
+    "D102",     # short docstring per abstract method / one-liner setter is ceremony
+    "D103",     # module-level encode/decode are self-evident
+    "ANN401",   # _acompile athunks legitimately return Any (host-lifted primitive)
+]
 "src/nu/ui/refs/**/*.py" = [
     "D102",     # widget setters are intentionally one-liners; docstring per method is ceremony
     "ANN401",   # _acompile athunks legitimately return Any (host-lifted primitive)

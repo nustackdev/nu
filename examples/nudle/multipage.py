@@ -54,7 +54,7 @@ ui = (
 
 tree = nu.With(
     nu.v.presets.rocksdb_navigator(".dbtest_mp"),
-    nu.ui.presets.server(nu.v.auto_flow_atomic(ui)),
+    nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
     body=bg,
 )
 

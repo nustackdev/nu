@@ -1,16 +1,16 @@
-"""``NudleServer``: fabric that runs a nudle UI over ws for a body's duration.
+"""``NudleServer`` -- fabric that runs a nudle UI over ws for a body's duration.
 
-Additive shape over ``serve.serve`` -- same FastAPI + uvicorn stack, wrapped
-as a plain FabricLifecycle so it drops into any ``Provide`` bracket. ``asetup``
-builds the FastAPI app against the current ctx and boots uvicorn on a
-background task, waiting until it's serving. ``acleanup`` signals uvicorn to
-exit and awaits the task with a bounded timeout, falling back to cancel.
+Additive shape over ``build_fastapi_app`` -- same FastAPI + uvicorn stack,
+wrapped as a plain FabricLifecycle so it drops into any ``Provide`` bracket.
+``asetup`` builds the FastAPI app against the current ctx and boots uvicorn
+on a background task, waiting until it's serving. ``acleanup`` signals
+uvicorn to exit and awaits the task with a bounded timeout, falling back
+to cancel.
 
-Per-connection ctx binding (``NudleSession`` on ws) stays inside
-``ws_endpoint`` -- unchanged from ``build_fastapi_app``.
+Per-connection ctx binding (``Session`` on ws) stays inside ``ws_endpoint``.
 
-Typical use goes through ``nu.ui.presets.server(app, ...)`` which wraps a
-``Provide(NudleServer, {...})`` for you.
+Typical use goes through ``server(app, ...)`` (defined here) which wraps
+a ``Provide(NudleServer, {...})`` for you.
 """
 
 from __future__ import annotations
@@ -20,6 +20,8 @@ from typing import TYPE_CHECKING
 
 import uvicorn
 
+from nu.context.fabric import Provide
+
 from .serve import build_fastapi_app
 
 
@@ -28,7 +30,7 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Context
 
 
-__all__ = ["NudleServer"]
+__all__ = ["NudleServer", "server"]
 
 
 class NudleServer:
@@ -52,7 +54,7 @@ class NudleServer:
     Example:
         >>> nu.With(
         ...     nu.v.presets.rocksdb_navigator(".db"),
-        ...     nu.ui.presets.server(app, host="127.0.0.1", port=8080),
+        ...     nu.ui.nudle.server(app, host="127.0.0.1", port=8080),
         ...     body=background_worker,
         ... )
     """
@@ -134,3 +136,44 @@ class NudleServer:
 
     def __repr__(self) -> str:
         return f"NudleServer(host={self._host!r}, port={self._port!r})"
+
+
+def server(
+    app: Nu,
+    *,
+    host: str = "127.0.0.1",
+    port: int = 8080,
+    log_level: str = "info",
+    ready_timeout: float = 10.0,
+    shutdown_timeout: float = 5.0,
+) -> Provide:
+    """Boot a nudle ws server around a body: ``Provide(NudleServer, {...})``.
+
+    Args:
+        app: the nudle Nu program (Index + Refs + reactive flow).
+        host: uvicorn bind host.
+        port: uvicorn bind port.
+        log_level: uvicorn log level.
+        ready_timeout: how long ``asetup`` waits for uvicorn to signal
+            ``started`` before giving up.
+        shutdown_timeout: how long ``acleanup`` waits for graceful exit
+            before cancelling the task.
+
+    Example:
+        >>> nu.With(
+        ...     nu.v.presets.rocksdb_navigator(".db"),
+        ...     nu.ui.nudle.server(app, host="127.0.0.1", port=8080),
+        ...     body=background_worker,
+        ... )
+    """
+    return Provide(
+        NudleServer,
+        {
+            "app": app,
+            "host": host,
+            "port": port,
+            "log_level": log_level,
+            "ready_timeout": ready_timeout,
+            "shutdown_timeout": shutdown_timeout,
+        },
+    )

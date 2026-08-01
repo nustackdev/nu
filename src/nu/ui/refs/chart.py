@@ -12,9 +12,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from nu import DictForm
 from nu.lang.sentinels import UNSET
-from nu.ui.nudle.interactions import Append, Write
-
-from .base import NudleRef
+from nu.ui.core import Append, Ref, Write
 
 
 if TYPE_CHECKING:
@@ -25,7 +23,7 @@ if TYPE_CHECKING:
 XFormat = Literal["number", "time"]
 
 
-class AreaChart(NudleRef):
+class AreaChart(Ref):
     """Display-only area chart. `write` (partial) and `append` (one row)."""
 
     x_label: ClassVar[str] = ""
@@ -112,7 +110,7 @@ class AreaChart(NudleRef):
 Orientation = Literal["vertical", "horizontal"]
 
 
-class BarChart(NudleRef):
+class BarChart(Ref):
     """Display-only chart ref. `write` (partial) and `append` (one bar)."""
 
     x_label: ClassVar[str] = ""
@@ -183,7 +181,7 @@ class BarChart(NudleRef):
         return Append(self, category, value)
 
 
-class LineChart(NudleRef):
+class LineChart(Ref):
     """Display-only chart ref. `write` (partial) and `append` (one point or one series row)."""
 
     x_label: ClassVar[str] = ""
@@ -301,7 +299,7 @@ DEFAULT_COLORS: list[str] = [
 ]
 
 
-class PieChart(NudleRef):
+class PieChart(Ref):
     """Display-only pie chart ref. `write` (partial) and `append` (one slice)."""
 
     slices: ClassVar[list] = []
@@ -375,7 +373,7 @@ class PieChart(NudleRef):
         return Append(self, label, value)
 
 
-class Sparkline(NudleRef):
+class Sparkline(Ref):
     """Display-only inline trend line. `write` (partial) and `append` (one point)."""
 
     color: ClassVar[str] = "#2563eb"

@@ -10,9 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from nu import DictForm
 from nu.lang.sentinels import UNSET
-from nu.ui.nudle.interactions import Append, Changed, Write
-
-from .base import NudleRef
+from nu.ui.core import Append, Changed, Ref, Write
 
 
 if TYPE_CHECKING:
@@ -23,7 +21,7 @@ if TYPE_CHECKING:
 Variant = Literal["neutral", "info", "warn", "ok", "danger"]
 
 
-class AlertRef(NudleRef):
+class AlertRef(Ref):
     """Display banner ref. `write` carries partial updates; `notify` fires on user dismiss.
 
     Variant maps to the Alert primitive's `tone` (5 tones per kit): `neutral`
@@ -81,7 +79,7 @@ class AlertRef(NudleRef):
 Variant = Literal["info", "warn", "ok", "danger", "neutral"]
 
 
-class BadgeRef(NudleRef):
+class BadgeRef(Ref):
     """Display-only badge ref. One `write` op carries every mutation.
 
     Variant maps to the Badge primitive's status tones; `neutral` becomes the
@@ -113,7 +111,7 @@ class BadgeRef(NudleRef):
         return Write(self, DictForm.of(**payload))
 
 
-class CodeBlockRef(NudleRef):
+class CodeBlockRef(Ref):
     """Display-only code block. One `write` carries a partial dict {code, language, show_copy}."""
 
     code: ClassVar[str] = ""
@@ -153,7 +151,7 @@ class CodeBlockRef(NudleRef):
 Align = Literal["left", "center", "right"]
 
 
-class DividerRef(NudleRef):
+class DividerRef(Ref):
     """Display-only divider ref. One `write` op carries every mutation."""
 
     label: ClassVar[str] = ""
@@ -183,7 +181,7 @@ class DividerRef(NudleRef):
 GaugeVariant = Literal["neutral", "ok", "warn", "danger"]
 
 
-class GaugeRef(NudleRef):
+class GaugeRef(Ref):
     """Display-only gauge ref. One `write` op carries every mutation.
 
     Variant is the tone the arc reads with. `neutral` maps to the kit Gauge
@@ -228,7 +226,7 @@ class GaugeRef(NudleRef):
 Align = Literal["left", "center", "right"]
 
 
-class HeadingRef(NudleRef):
+class HeadingRef(Ref):
     """Display-only heading ref. One `write` op carries every mutation."""
 
     label: ClassVar[str] = ""
@@ -265,7 +263,7 @@ class HeadingRef(NudleRef):
 Fit = Literal["contain", "cover", "fill"]
 
 
-class ImageRef(NudleRef):
+class ImageRef(Ref):
     """Display-only image ref. One `write` op carries every mutation."""
 
     src: ClassVar[str] = ""
@@ -337,7 +335,7 @@ class ImageRef(NudleRef):
 Theme = Literal["light", "dark"]
 
 
-class JsonViewerRef(NudleRef):
+class JsonViewerRef(Ref):
     """Display-only json viewer ref. One `write` op carries every mutation via partial-merge."""
 
     value: ClassVar[object] = None
@@ -402,7 +400,7 @@ class JsonViewerRef(NudleRef):
 Target = Literal["_self", "_blank"]
 
 
-class LinkRef(NudleRef):
+class LinkRef(Ref):
     """Display-only link ref. One `write` op carries every mutation."""
 
     href: ClassVar[str] = ""
@@ -452,7 +450,7 @@ class LinkRef(NudleRef):
         return Write(self, DictForm.of(**payload))
 
 
-class MarkdownRef(NudleRef):
+class MarkdownRef(Ref):
     """Display-only markdown ref. Source string rendered as commonmark."""
 
     value: ClassVar[str] = ""
@@ -467,7 +465,7 @@ class MarkdownRef(NudleRef):
         return Write(self, value)
 
 
-class ProgressRef(NudleRef):
+class ProgressRef(Ref):
     """Display-only progress ref. One `write` op carries every mutation."""
 
     value: ClassVar[float] = 0.0
@@ -508,7 +506,7 @@ class ProgressRef(NudleRef):
 Trend = Literal["up", "down", "flat"]
 
 
-class StatRef(NudleRef):
+class StatRef(Ref):
     """Display-only stat ref. Server-owned, single `write` op carries partial updates."""
 
     label: ClassVar[str] = ""
@@ -541,7 +539,7 @@ class StatRef(NudleRef):
 SortDirection = Literal["asc", "desc"]
 
 
-class TableRef(NudleRef):
+class TableRef(Ref):
     """Tabular data; display by default, optional sortable headers and row click.
 
     Composes the kit Table primitive family. `dense=True` maps to the
@@ -584,7 +582,7 @@ class TableRef(NudleRef):
         return Changed(self)
 
 
-class TextRef(NudleRef):
+class TextRef(Ref):
     """Display-only string ref. Body copy."""
 
     value: ClassVar[str] = ""

@@ -487,7 +487,7 @@ ui = init >> App.title.set("movies") >> hydrate >> on_add
 
 tree = nu.With(
     nu.v.presets.rocksdb_navigator(".dbmovies"),
-    nu.ui.presets.server(nu.v.auto_flow_atomic(ui)),
+    nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
     body=nu.ForeverDo(nu.Delay(3600)),  # click-driven; hold the server open
 )
 

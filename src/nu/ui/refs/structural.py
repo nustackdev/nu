@@ -9,9 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu import DictForm
-from nu.ui.nudle.interactions import Changed, Write
-
-from .base import NudleRef
+from nu.ui.core import Changed, Ref, Write
 
 
 if TYPE_CHECKING:
@@ -25,7 +23,7 @@ if TYPE_CHECKING:
 __all__ = ["NavRef", "TitleRef"]
 
 
-class NavRef(NudleRef):
+class NavRef(Ref):
     """Bound to window.history + window.location. Index-level structural Ref.
 
     Bidirectional: host writes manipulate window.history; user navigation
@@ -68,7 +66,7 @@ class NavRef(NudleRef):
         return Changed(self)
 
 
-class TitleRef(NudleRef):
+class TitleRef(Ref):
     """Bound to document.title. Index-level structural Ref.
 
     Write-only from host. The browser-side slice writes assignments

@@ -22,11 +22,10 @@ import pytest
 
 import nu
 from nu import Context
-from nu.ui.page import Page
-from nu.ui.refs import Row
-from nu.ui.refs.layout import SectionRef
-from nu.ui.refs import TextRef
-from nu.ui.session import NudleSession
+from nu.ui import Session
+from nu.ui.core import SectionRef
+from nu.ui.nudle import Page
+from nu.ui.refs import Row, TextRef
 
 
 class Panel(Row):
@@ -88,7 +87,7 @@ def test_with_children_preserves_leaf_segment():
 
 def test_set_emits_frame_with_wire_path():
     sess = _RecordingSession()
-    ctx = Context().bind(NudleSession, sess)
+    ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(HomePage.panel.label.set("hi"), ctx))
     assert len(sess.frames) == 1
     assert sess.frames[0].ref == "HomePage.panel.label"
@@ -97,7 +96,7 @@ def test_set_emits_frame_with_wire_path():
 
 def test_set_wire_path_reflects_sibling_slot():
     sess = _RecordingSession()
-    ctx = Context().bind(NudleSession, sess)
+    ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(HomePage.panel.title.set("T"), ctx))
     assert sess.frames[0].ref == "HomePage.panel.title"
 
@@ -117,7 +116,7 @@ def test_section_root_wire_path_from_server_handle():
     """`Toolbar.text` (a server-side handle rooted at a Section, not a Page)
     resolves via the Section-root branch using `_nudle_mount`."""
     sess = _RecordingSession()
-    ctx = Context().bind(NudleSession, sess)
+    ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(Toolbar.text.set("x"), ctx))
     assert sess.frames[0].ref == "NestedPage.panel.toolbar.text"
 
@@ -125,7 +124,7 @@ def test_section_root_wire_path_from_server_handle():
 def test_deep_nested_page_path():
     """Page -> section -> nested section -> widget resolves the full chain."""
     sess = _RecordingSession()
-    ctx = Context().bind(NudleSession, sess)
+    ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(NestedPage.panel.toolbar.text.set("y"), ctx))
     assert sess.frames[0].ref == "NestedPage.panel.toolbar.text"
 
@@ -154,7 +153,7 @@ def test_input_read_resolves_path_and_reads_session():
             return "browser-value"
 
     sess = ReadSession()
-    ctx = Context().bind(NudleSession, sess)
+    ctx = Context().bind(Session, sess)
     result = asyncio.run(nu.arun(FormPage.form.name, ctx))
     assert sess.reads == ["FormPage.form.name"]
     assert result[0] == "browser-value"
@@ -164,24 +163,24 @@ def test_input_read_resolves_path_and_reads_session():
 
 
 def _leaf_widgets(*, needs_changed: bool = False):
-    """(ref_cls, module_name) for every NudleRef leaf widget with set()
+    """(ref_cls, module_name) for every Ref leaf widget with set()
     (optionally: only those exposing changed())."""
     import importlib
     import inspect
-    import os
+    from pathlib import Path
 
-    from nu.ui.refs import NudleRef
-    from nu.ui.refs.layout import SectionRef
+    from nu.ui.core import Ref, SectionRef
 
-    root = os.path.dirname(importlib.import_module("nu.ui.refs").__file__)
+    root = Path(importlib.import_module("nu.ui.refs").__file__).parent
     out = []
-    for fname in sorted(os.listdir(root)):
+    for entry in sorted(root.iterdir()):
+        fname = entry.name
         if not fname.endswith(".py") or fname.startswith("_"):
             continue
         mod = importlib.import_module("nu.ui.refs." + fname[:-3])
         for name, cls in inspect.getmembers(mod, inspect.isclass):
             if (
-                issubclass(cls, NudleRef)
+                issubclass(cls, Ref)
                 and not issubclass(cls, SectionRef)  # SectionRef-backed = container, not a leaf
                 and cls.__module__ == mod.__name__
                 and not name.startswith("_")
@@ -210,7 +209,7 @@ def test_widget_set_emits_write_frame(widget_cls, mod):
     # that is the ref-layer contract this sweep pins.
     handle = _mount(widget_cls)
     sess = _RecordingSession()
-    ctx = Context().bind(NudleSession, sess)
+    ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(handle.set("v"), ctx))
     assert len(sess.frames) == 1
     assert sess.frames[0].ref == "WPage.sec.w"
@@ -219,7 +218,7 @@ def test_widget_set_emits_write_frame(widget_cls, mod):
 
 @pytest.mark.parametrize("widget_cls,mod", _CHANGED_WIDGETS, ids=[m for _, m in _CHANGED_WIDGETS])
 def test_input_widget_changed_returns_subscription(widget_cls, mod):
-    from nu.ui.interactions import Changed
+    from nu.ui.core import Changed
 
     handle = _mount(widget_cls)
     assert isinstance(handle.changed(), Changed)
@@ -245,7 +244,7 @@ def test_tabs_set_active_emits_frame():
         tabs = MyTabs.slot()
 
     sess = _RecordingSession()
-    ctx = Context().bind(NudleSession, sess)
+    ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(MyTabs.set_active("t1"), ctx))
     assert sess.frames[0].ref == "TabPage.tabs"
     assert sess.frames[0].op == "set_active"
@@ -264,7 +263,7 @@ def test_card_set_title_emits_frame():
         card = MyCard.slot()
 
     sess = _RecordingSession()
-    ctx = Context().bind(NudleSession, sess)
+    ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(MyCard.set_title("hello"), ctx))
     assert sess.frames[0].ref == "CardPage.card"
     assert sess.frames[0].op == "set_title"
@@ -281,6 +280,6 @@ def test_table_append_emits_frame():
         sec = TSec.slot()
 
     sess = _RecordingSession()
-    ctx = Context().bind(NudleSession, sess)
+    ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(TablePage.sec.t.append(["a", "b"]), ctx))
     assert sess.frames[0].ref == "TablePage.sec.t"

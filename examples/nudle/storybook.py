@@ -1013,7 +1013,7 @@ ui = (
 
 tree = nu.With(
     nu.v.presets.rocksdb_navigator(".dbstorybook"),
-    nu.ui.presets.server(nu.v.auto_flow_atomic(ui)),
+    nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
     body=nu.ForeverDo(
         nu.Delay(3600)
     ),  # everything above already ticks inside ui; just hold the server open

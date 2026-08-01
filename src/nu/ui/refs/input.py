@@ -11,9 +11,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from nu import DictForm
 from nu.lang.sentinels import UNSET
-from nu.ui.nudle.interactions import Changed, Write
-
-from .base import NudleRef
+from nu.ui.core import Changed, Ref, Write
 
 
 if TYPE_CHECKING:
@@ -27,7 +25,7 @@ if TYPE_CHECKING:
 Variant = Literal["primary", "secondary", "ghost", "danger"]
 
 
-class ButtonRef(NudleRef):
+class ButtonRef(Ref):
     """Click trigger; subscribe via `.clicked()`."""
 
     label: ClassVar[str] = ""
@@ -73,7 +71,7 @@ class ButtonRef(NudleRef):
         return Write(self, DictForm.of(**payload))
 
 
-class CheckboxRef(NudleRef):
+class CheckboxRef(Ref):
     """Boolean toggle whose checked state lives in the browser."""
 
     label: ClassVar[str] = ""
@@ -96,7 +94,7 @@ class CheckboxRef(NudleRef):
         return Changed(self)
 
 
-class DatePickerRef(NudleRef):
+class DatePickerRef(Ref):
     """Date input whose ISO yyyy-mm-dd value lives in the browser."""
 
     label: ClassVar[str] = ""
@@ -131,7 +129,7 @@ class DatePickerRef(NudleRef):
 InputType = Literal["text", "password", "email", "number"]
 
 
-class InputRef(NudleRef):
+class InputRef(Ref):
     """Text input whose value lives in the browser.
 
     Default face is display (Inter); code-shaped fields opt into
@@ -169,7 +167,7 @@ class InputRef(NudleRef):
         return Changed(self)
 
 
-class NumberInputRef(NudleRef):
+class NumberInputRef(Ref):
     """Numeric input whose value lives in the browser."""
 
     label: ClassVar[str] = ""
@@ -252,7 +250,7 @@ def _normalize_options(opts: object) -> list[dict[str, str]]:
     return out
 
 
-class RadioGroupRef(NudleRef):
+class RadioGroupRef(Ref):
     """Single-choice radio group whose value lives in the browser."""
 
     options: ClassVar[list[Any]] = []
@@ -290,7 +288,7 @@ class RadioGroupRef(NudleRef):
 OptionInput = "list[str] | list[dict[str, str]]"
 
 
-class SelectRef(NudleRef):
+class SelectRef(Ref):
     """Dropdown single-select whose value lives in the browser."""
 
     options: ClassVar[list[Any]] = []
@@ -325,7 +323,7 @@ class SelectRef(NudleRef):
         return Changed(self)
 
 
-class SliderRef(NudleRef):
+class SliderRef(Ref):
     """Numeric slider whose value lives in the browser."""
 
     min: ClassVar[float] = 0.0
@@ -399,7 +397,7 @@ class SliderRef(NudleRef):
         return Changed(self)
 
 
-class SwitchRef(NudleRef):
+class SwitchRef(Ref):
     """On/off switch whose checked state lives in the browser."""
 
     label: ClassVar[str] = ""
@@ -422,7 +420,7 @@ class SwitchRef(NudleRef):
         return Changed(self)
 
 
-class TagInputRef(NudleRef):
+class TagInputRef(Ref):
     """Multi-tag entry field whose committed list lives in the browser."""
 
     label: ClassVar[str] = ""
@@ -454,7 +452,7 @@ class TagInputRef(NudleRef):
         return Changed(self)
 
 
-class TextAreaRef(NudleRef):
+class TextAreaRef(Ref):
     """Multi-line text input whose value lives in the browser.
 
     `auto_resize=True` maps to the primitive's `field-sizing: content` mode.

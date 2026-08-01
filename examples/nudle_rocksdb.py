@@ -15,7 +15,7 @@ class App(nu.ui.Index):
 
 app = nu.With(
     nu.v.presets.rocksdb_navigator(".dbtest"),
-    nu.ui.presets.server(
+    nu.ui.nudle.server(
         nu.v.auto_flow_atomic(
             nu.ReactForever(
                 Counter.value.on_change(),

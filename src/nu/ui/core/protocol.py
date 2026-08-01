@@ -1,4 +1,4 @@
-"""Wire protocol between a nudle server and a nudle browser tab.
+"""Wire protocol between a nu.ui server and a browser tab.
 
 See projects/nu/stack/nudle/protocol.md in the Go space for the spec.
 
@@ -7,6 +7,9 @@ Frame can be built two ways:
 - `Frame(interaction_instance, ref=path, payload=v)` for interactions; the
   op name is the lowercased class name of the interaction. Interactions
   don't declare their own op; the wire name follows the class.
+
+Wire format is transport-agnostic -- ships bytes; hosts (nudle, others)
+choose the concrete channel (ws, sse, etc).
 """
 
 from __future__ import annotations
@@ -78,8 +81,7 @@ def _msgpack_default(obj: object) -> Any:
     one when its address is absent or an operation didn't apply. The wire
     carries Nu values, so the display layer maps them to msgpack nil (which
     decodes to None / null on the browser) rather than crashing the
-    connection. The browser decides what nil looks like per Ref type (a
-    blank cell, a gap in a chart).
+    connection.
     """
     if is_sentinel(obj):
         return None

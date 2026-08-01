@@ -1,11 +1,11 @@
-"""Per-connection session handle.
+"""NudleSession -- Session implementation over a FastAPI websocket.
 
-Bound on Context for the lifetime of one ws connection. The session owns
-the ws, the observer registry, and the pending-read futures. Interactions
-build Frames and call `send`; the session does no per-op work.
+Bound on Context for the lifetime of one ws connection. Owns the ws,
+the observer registry, and the pending-read futures. Interactions build
+Frames and call `send`; the session does no per-op work.
 
-Analogous to a Navigator in nu-virtuals: the "storage" handle nudle Refs
-resolve through. Here the storage is a ws and a browser tab.
+Concrete implementation of ``nu.ui.core.session.Session`` -- the abstract
+transport interface widgets and interactions target.
 """
 
 from __future__ import annotations
@@ -16,7 +16,17 @@ from collections import defaultdict
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from .protocol import OP_ERROR, OP_MOUNT, OP_NOTIFY, OP_READ, OP_UNMOUNT, Frame, decode, encode
+from nu.ui.core.protocol import (
+    OP_ERROR,
+    OP_MOUNT,
+    OP_NOTIFY,
+    OP_READ,
+    OP_UNMOUNT,
+    Frame,
+    decode,
+    encode,
+)
+from nu.ui.core.session import Session
 
 
 if TYPE_CHECKING:
@@ -30,11 +40,11 @@ Callback = Callable[[object], None]
 
 
 class Subscription:
-    """Observer handle returned by `session.subscribe(path)`.
+    """Observer handle returned by ``session.subscribe(path)``.
 
-    Same shape as nu-virtuals' subscription handle: `bind`, `unbind`,
-    `close`. Wired so React/ReactForever can subscribe to ref notifications
-    coming from the browser.
+    Concrete implementation of ``nu.ui.core.session.Subscription``.
+    React / ReactForever bind callbacks on it; the session fires them
+    when a ``notify`` frame lands for the subscribed path.
     """
 
     def __init__(self, session: NudleSession, path: str) -> None:
@@ -67,7 +77,7 @@ class Subscription:
             cb(payload)
 
 
-class NudleSession:
+class NudleSession(Session):
     """One ws connection, one mounted page."""
 
     def __init__(self, ws: WebSocket) -> None:
@@ -97,7 +107,7 @@ class NudleSession:
         await self.send(Frame(OP_MOUNT, ref="", payload=payload))
 
     async def aread(self, path: str) -> Any:
-        """Round-trip read: ship a read frame, await the browser's reply."""
+        """Round-trip read: ship a read frame, await the client's reply."""
         rid = uuid.uuid4().hex
         loop = asyncio.get_running_loop()
         fut: asyncio.Future[Any] = loop.create_future()
@@ -116,7 +126,7 @@ class NudleSession:
     # ---- intake -------------------------------------------------------------
 
     async def run_intake(self) -> None:
-        """Drive the ws read loop, dispatch browser->server frames."""
+        """Drive the ws read loop, dispatch client->server frames."""
         from fastapi import WebSocketDisconnect
 
         try:
@@ -141,7 +151,7 @@ class NudleSession:
                 fut.set_result(frame.payload)
             return
         if frame.op in (OP_MOUNT, OP_UNMOUNT, OP_ERROR):
-            # Browser may emit error frames; ignore for v0.1.0.
+            # Client may emit error frames; ignore for v0.1.0.
             return
         # Unknown inbound op: ignored for v0.1.0.
 

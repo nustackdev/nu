@@ -37,7 +37,7 @@ ui = Dashboard.n.set(200, min=10, max=2000, step=10, label="sample size") >> nu.
 )
 
 tree = nu.With(
-    nu.v.presets.memory_navigator(), nu.ui.presets.server(nu.v.auto_flow_atomic(ui)), body=bg
+    nu.v.presets.memory_navigator(), nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)), body=bg
 )
 
 asyncio.run(nu.arun(nu.v.auto_flow_atomic(tree)))

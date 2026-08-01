@@ -21,7 +21,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import nu
 from nu.tree.walk import preorder
-from nu.ui.refs.base import NudleRef
+from nu.ui.core import Ref, Session
 
 from .page import Index, Page
 from .session import NudleSession
@@ -99,7 +99,7 @@ def _find_index(app: Nu) -> type[Index]:
     seen_indexes: set[type[Index]] = set()
     seen_pages: set[type[Page]] = set()
     for node in preorder(app):
-        if not isinstance(node, NudleRef):
+        if not isinstance(node, Ref):
             continue
         root = node._root_shape
         if root is None:
@@ -164,7 +164,7 @@ def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
             index_cls._pages_payload(),
             sidebar=index_cls._sidebar_enabled(),
         )
-        per_conn_ctx = ctx.bind(NudleSession, session)
+        per_conn_ctx = ctx.bind(Session, session)
         intake_task = asyncio.create_task(session.run_intake())
         eval_task = asyncio.create_task(nu.arun(app, per_conn_ctx))
         try:

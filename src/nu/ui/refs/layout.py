@@ -1,102 +1,63 @@
 """Layout Sections -- Shape-based containers that wrap other Refs.
 
-Most of these are `Section` subclasses (not Refs) — Shape-based
+Most of these are `Section` subclasses (not Refs) -- Shape-based
 composition primitives that mount other Refs and Sections. Section
-is the base class defined here alongside its subclasses (Row, Column,
-Card, Tabs, etc.) and the SectionRef substrate ref backing them.
-See docs/nudle/interactions.md.
+and SectionRef come from ``nu.ui.core``; this module defines the
+concrete layout primitives (Row, Column, Card, Tabs, Modal, Field,
+Fieldset, Form, Accordion) that build on them, plus the chrome
+interactions those primitives expose.
+
+The chrome commands (`_SetSectionStr`, `_SetTabs`, `_SetActive`) target
+the abstract ``Session`` from core -- so this module is host-agnostic;
+any host that implements ``Session`` runs it. Address resolution for
+section-scoped chrome writes goes through ``_SectionMountRef``, which
+asks the section's own ``_wire_prefix()`` classmethod (stamped by the
+host, e.g. nudle's Page) for its wire path.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Self
 
-from nu import DictForm, Shape
+from nu import DictForm
 from nu.domains.shape import Slot
 from nu.engine.structure import Declared
 from nu.lang import Command
 from nu.lang.sentinels import UNSET
-from nu.ui.nudle.interactions import Changed, Write
-from nu.ui.nudle.protocol import Frame
-from nu.ui.nudle.session import NudleSession
-
-from .base import NudleRef
+from nu.ui.core import Frame, Ref, Section, SectionRef, Session
+from nu.ui.core.interactions import Changed, Write
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu import Context, Nu
+    from nu import Nu
     from nu.lang.args import Arg, BoolArg, ListArg, StrArg
     from nu.lang.runtime import Runtime
 
 
-class SectionRef(NudleRef):
-    """Internal Ref backing a Section slot.
+class _SectionMountRef(Ref):
+    """Ref that resolves to a Section's mount path directly (no segment walk).
 
-    Instances are created by `Section.slot()` and exposed at Page or
-    parent-Section class level (e.g. `HomePage.toolbar`). The instance
-    carries `section_cls`; attribute access on it (e.g. `.text`) returns
-    a child Ref whose `parent` is this SectionRef.
+    Used by Section subclasses whose chrome interactions (title, tabs, ...)
+    target the section's OWN wire path rather than a child slot. Reads
+    ``_wire_prefix()`` classmethod stamped by the host onto the section
+    subclass at mount registration time.
     """
 
-    def __init__(
-        self,
-        address: object,
-        *,
-        section_cls: type[Section],
-        parent_ref: NudleRef | None = None,
-        owner_shape: type[Section] | None = None,
-    ) -> None:
-        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
+    def __init__(self, *, section_cls: type[Section]) -> None:
+        super().__init__(None, owner_shape=section_cls)
         self._payload["section_cls"] = section_cls
 
-    def __getattr__(self, name: str) -> object:
-        # Only called when normal attribute lookup fails. Map to a child
-        # slot on the bound Section class. Read payload straight off __dict__ so
-        # this never recurses back through __getattr__.
-        payload = self.__dict__.get("_payload") or {}
-        section_cls = payload.get("section_cls")
-        if section_cls is None:
-            raise AttributeError(name)
-        slots = getattr(section_cls, "_slots", {})
-        if name in slots:
-            slot = slots[name]
-            return slot.create_ref(owner_shape=section_cls, parent_ref=self)
-        raise AttributeError(
-            f"'{type(self).__name__}' object has no attribute '{name}'"
-            f" (section '{section_cls.__name__}' has no slot '{name}')"
-        )
-
-
-class Section(Shape):
-    """Base for Shape-based layout primitives.
-
-    Subclass `Row`, `Column`, `Container` (defined in `nudle.refs`). User
-    code subclasses those to pin chrome defaults and declare child slots:
-
-        class Toolbar(nudle.Row):
-            gap = 3
-            text = nudle.TextRef.slot()
-            btn = nudle.ButtonRef.slot()
-    """
-
-    _is_nudle_section: ClassVar[bool] = True
-    # Filled in by the enclosing Page (or parent Section) at class
-    # creation time. Tuple of slot-path segments from the owning Page
-    # down to (but not including) this section.
-    # Example: HomePage.toolbar -> ("toolbar",)
-    # Example: HomePage.panel.toolbar -> ("panel", "toolbar")
-    _nudle_mount: ClassVar[tuple[type, tuple[str, ...]] | None] = None
-
-    @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        """Class-level layout chrome shipped in the mount field entry."""
-        return {}
-
-    @classmethod
-    def slot(cls) -> Self:
-        return Slot(SectionRef, section_cls=cls)  # type: ignore[return-value]
+    async def _aresolve_address(self, rt: Runtime, nid: int) -> str:
+        section_cls = self._payload["section_cls"]
+        prefix = getattr(section_cls, "_wire_prefix", None)
+        if prefix is None:
+            raise RuntimeError(
+                f"Section {section_cls.__name__} has no mount point. "
+                "Declare it as a Slot on a Page before driving it.",
+            )
+        return ".".join(prefix())
 
 
 def _normalize_sections(items: object) -> list[dict[str, str]]:
@@ -124,25 +85,6 @@ def _normalize_open(ids: object) -> list[str]:
     return [str(x) for x in ids if x is not None]
 
 
-class _AccordionMountRef(NudleRef):
-    """Internal Ref bound to an AccordionRef subclass's mount point."""
-
-    def __init__(self, *, section_cls: type[Section]) -> None:
-        super().__init__(address=None, owner_shape=section_cls)
-        self._payload["section_cls"] = section_cls
-
-    async def aresolve_address(self, ctx: Context) -> str:
-        section_cls = self._payload.get("section_cls")
-        mount = getattr(section_cls, "_nudle_mount", None)
-        if mount is None:
-            raise RuntimeError(
-                f"AccordionRef {section_cls.__name__} has no mount point. "
-                "Did you forget to declare it on a Page slot?",
-            )
-        page_cls, slot_path = mount
-        return ".".join([page_cls.__name__, *slot_path])
-
-
 class AccordionRef(Section):
     """Stack of collapsible sections. Tab owns open state, server owns the section list."""
 
@@ -159,8 +101,8 @@ class AccordionRef(Section):
         }
 
     @classmethod
-    def _mount_ref(cls) -> _AccordionMountRef:
-        return _AccordionMountRef(section_cls=cls)
+    def _mount_ref(cls) -> _SectionMountRef:
+        return _SectionMountRef(section_cls=cls)
 
     @classmethod
     def set_sections(cls, items: ListArg[dict[str, str]]) -> Nu:
@@ -177,35 +119,10 @@ class AccordionRef(Section):
         return Changed(cls._mount_ref())
 
 
-class _CardMountRef(NudleRef):
-    """Internal Ref bound to a CardRef subclass's mount point.
-
-    Resolves directly via ``Section._nudle_mount`` so chrome interactions
-    (title/subtitle/footer) target the card's own wire path, not a child slot.
-    Mirrors ``_TabsMountRef`` — the shared "drive a Section by its mount path"
-    shape (the mount-ref family is a candidate for later unification).
-    """
-
-    def __init__(self, *, section_cls: type[Section]) -> None:
-        super().__init__(None, owner_shape=section_cls)
-        self._payload["section_cls"] = section_cls
-
-    async def _aresolve_address(self, rt: Runtime, nid: int) -> str:
-        section_cls = self._payload.get("section_cls")
-        mount = getattr(section_cls, "_nudle_mount", None)
-        if mount is None:
-            raise RuntimeError(
-                f"Card {section_cls.__name__} has no mount point. "
-                "Declare it as a Slot on a Page before driving it.",
-            )
-        page_cls, slot_path = mount
-        return ".".join([page_cls.__name__, *slot_path])
-
-
 class _SetSectionStr(Command):
     """Send a string-payload Frame to a Section by mount path.
 
-    Slot 0 holds a mount Ref (``_CardMountRef``) so this is a well-formed
+    Slot 0 holds a mount Ref (``_SectionMountRef``) so this is a well-formed
     ``mutates={0}`` Command; the wire op is supplied at construction (e.g.
     "set_title") so one class serves all three card chrome ops.
     """
@@ -213,7 +130,7 @@ class _SetSectionStr(Command):
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
 
-    def __init__(self, ref: NudleRef, op: str, value: Arg[Any]) -> None:
+    def __init__(self, ref: Ref, op: str, value: Arg[Any]) -> None:
         super().__init__(ref, value)
         self._payload["op"] = op
 
@@ -223,16 +140,16 @@ class _SetSectionStr(Command):
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
-            raise RuntimeError("nudle is async-only; use nu.arun")
+            raise RuntimeError("nu.ui is async-only; use nu.arun")
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref: NudleRef = self._children[0]
+        ref: Ref = self._children[0]
         value_thunk = children[1]
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.get(NudleSession)
+            session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)
@@ -253,8 +170,8 @@ class CardRef(Section):
         return {"title": cls.title, "subtitle": cls.subtitle, "footer": cls.footer}
 
     @classmethod
-    def _mount_ref(cls) -> _CardMountRef:
-        return _CardMountRef(section_cls=cls)
+    def _mount_ref(cls) -> _SectionMountRef:
+        return _SectionMountRef(section_cls=cls)
 
     @classmethod
     def set_title(cls, text: StrArg) -> Nu:
@@ -320,30 +237,6 @@ class Container(Section):
         }
 
 
-class _FieldMountRef(NudleRef):
-    """Internal Ref bound to a FieldRef subclass's mount point.
-
-    Resolves directly via ``Section._nudle_mount`` so chrome writes (label,
-    help, error, required) target the section's own wire path -- not the
-    wrapped child.
-    """
-
-    def __init__(self, *, section_cls: type[Section]) -> None:
-        super().__init__(address=None, owner_shape=section_cls)
-        self._payload["section_cls"] = section_cls
-
-    async def aresolve_address(self, ctx: Context) -> str:
-        section_cls = self._payload.get("section_cls")
-        mount = getattr(section_cls, "_nudle_mount", None)
-        if mount is None:
-            raise RuntimeError(
-                f"FieldRef {section_cls.__name__} has no mount point. "
-                "Did you forget to declare it on a Page slot?",
-            )
-        page_cls, slot_path = mount
-        return ".".join([page_cls.__name__, *slot_path])
-
-
 class FieldRef(Section):
     """Label + child input + help / error text. Exactly one child slot."""
 
@@ -371,8 +264,8 @@ class FieldRef(Section):
         }
 
     @classmethod
-    def _mount_ref(cls) -> _FieldMountRef:
-        return _FieldMountRef(section_cls=cls)
+    def _mount_ref(cls) -> _SectionMountRef:
+        return _SectionMountRef(section_cls=cls)
 
     @classmethod
     def set_label(cls, text: StrArg) -> Nu:
@@ -391,30 +284,7 @@ class FieldRef(Section):
         return Write(cls._mount_ref(), DictForm.of(required=flag))
 
 
-Gap = Literal["sm", "md", "lg"]
-
-
-class _FieldsetMountRef(NudleRef):
-    """Internal Ref bound to a Fieldset subclass's mount point.
-
-    Resolves directly via ``Section._nudle_mount`` so chrome writes (legend,
-    gap, disabled) target the section's own wire path -- not a child.
-    """
-
-    def __init__(self, *, section_cls: type[Section]) -> None:
-        super().__init__(address=None, owner_shape=section_cls)
-        self._payload["section_cls"] = section_cls
-
-    async def aresolve_address(self, ctx: Context) -> str:
-        section_cls = self._payload.get("section_cls")
-        mount = getattr(section_cls, "_nudle_mount", None)
-        if mount is None:
-            raise RuntimeError(
-                f"Fieldset {section_cls.__name__} has no mount point. "
-                "Did you forget to declare it on a Page slot?",
-            )
-        page_cls, slot_path = mount
-        return ".".join([page_cls.__name__, *slot_path])
+FieldsetGap = Literal["sm", "md", "lg"]
 
 
 class Fieldset(Section):
@@ -429,15 +299,15 @@ class Fieldset(Section):
         return {"legend": cls.legend, "gap": cls.gap, "disabled": cls.disabled}
 
     @classmethod
-    def _mount_ref(cls) -> _FieldsetMountRef:
-        return _FieldsetMountRef(section_cls=cls)
+    def _mount_ref(cls) -> _SectionMountRef:
+        return _SectionMountRef(section_cls=cls)
 
     @classmethod
     def set_legend(cls, text: StrArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(legend=text))
 
     @classmethod
-    def set_gap(cls, value: Gap | StrArg) -> Nu:
+    def set_gap(cls, value: FieldsetGap | StrArg) -> Nu:
         return Write(cls._mount_ref(), DictForm.of(gap=value))
 
     @classmethod
@@ -504,8 +374,8 @@ class Modal(Section):
         return Slot(ModalRef, section_cls=cls)  # type: ignore[return-value]
 
 
-Align = Literal["start", "center", "end", "stretch", "baseline"]
-Justify = Literal["start", "center", "end", "between", "around", "evenly"]
+RowAlign = Literal["start", "center", "end", "stretch", "baseline"]
+RowJustify = Literal["start", "center", "end", "between", "around", "evenly"]
 
 
 class Row(Section):
@@ -548,21 +418,21 @@ class _SetTabs(Command):
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
 
-    def __init__(self, ref: NudleRef, value: Arg[Any]) -> None:
+    def __init__(self, ref: Ref, value: Arg[Any]) -> None:
         super().__init__(ref, value)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
-            raise RuntimeError("nudle is async-only; use nu.arun")
+            raise RuntimeError("nu.ui is async-only; use nu.arun")
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref: NudleRef = self._children[0]
+        ref: Ref = self._children[0]
         value_thunk = children[1]
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.get(NudleSession)
+            session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)
@@ -577,21 +447,21 @@ class _SetActive(Command):
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
 
-    def __init__(self, ref: NudleRef, value: Arg[Any]) -> None:
+    def __init__(self, ref: Ref, value: Arg[Any]) -> None:
         super().__init__(ref, value)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
-            raise RuntimeError("nudle is async-only; use nu.arun")
+            raise RuntimeError("nu.ui is async-only; use nu.arun")
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref: NudleRef = self._children[0]
+        ref: Ref = self._children[0]
         value_thunk = children[1]
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.get(NudleSession)
+            session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)
@@ -599,29 +469,6 @@ class _SetActive(Command):
             await session.send(Frame("set_active", ref=path, payload=payload))
 
         return athunk
-
-
-class _TabsMountRef(NudleRef):
-    """Internal Ref bound to a TabsRef subclass's mount point.
-
-    Resolves directly via Section._nudle_mount so interactions target the
-    section's own wire path (not a child slot).
-    """
-
-    def __init__(self, *, section_cls: type[Section]) -> None:
-        super().__init__(None, owner_shape=section_cls)
-        self._payload["section_cls"] = section_cls
-
-    async def _aresolve_address(self, rt: Runtime, nid: int) -> str:
-        section_cls = self._payload.get("section_cls")
-        mount = getattr(section_cls, "_nudle_mount", None)
-        if mount is None:
-            raise RuntimeError(
-                f"TabsRef {section_cls.__name__} has no mount point. "
-                "Did you forget to declare it on a Page slot?",
-            )
-        page_cls, slot_path = mount
-        return ".".join([page_cls.__name__, *slot_path])
 
 
 class TabsRef(Section):
@@ -638,8 +485,8 @@ class TabsRef(Section):
         }
 
     @classmethod
-    def _mount_ref(cls) -> _TabsMountRef:
-        return _TabsMountRef(section_cls=cls)
+    def _mount_ref(cls) -> _SectionMountRef:
+        return _SectionMountRef(section_cls=cls)
 
     @classmethod
     def set_tabs(cls, value: ListArg[dict[str, str]]) -> Nu:
@@ -665,6 +512,5 @@ __all__ = [
     "Modal",
     "ModalRef",
     "Row",
-    "Section",
     "TabsRef",
 ]

@@ -65,7 +65,7 @@ ui = init >> App.title.set("wish jar") >> hydrate >> (on_drop | on_clear)
 
 tree = nu.With(
     nu.v.presets.rocksdb_navigator(".dbw"),
-    nu.ui.presets.server(nu.v.auto_flow_atomic(ui)),
+    nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
     body=nu.ForeverDo(
         nu.Delay(3600)
     ),  # keep the server bracket open; jar is click-driven, no bg loop
