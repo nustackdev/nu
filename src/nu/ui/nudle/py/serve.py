@@ -21,7 +21,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import nu
 from nu.tree.walk import preorder
-from nu.ui.refs.base import NudleRef
+from nu.ui.py.refs.base import NudleRef
 
 from .page import Index, Page
 from .session import NudleSession

@@ -1,7 +1,7 @@
 """nudle python host: serve + session + page + presets.
 
 Import surface preserved on `nu.ui` for backwards compatibility -- new code
-should target `nu.nudle.py` (or the shorter aliases if we settle on one).
+should target `nu.ui.nudle.py` (or the shorter aliases if we settle on one).
 """
 
 from . import interactions, presets, protocol, session

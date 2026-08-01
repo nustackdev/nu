@@ -1,20 +1,24 @@
 """nu.ui -- component fabric.
 
-Host-specific bits (serve, session, Page/Pages/Index, presets, wire protocol)
-moved to `nu.nudle.py` in the layer/language reorg. This module re-exports
-them here so existing `import nu.ui as nu_ui` code keeps working. Prefer
-`from nu.nudle.py import ...` in new code.
+Layout under ``src/nu/ui/``:
+
+- ``py/`` -- python side of the fabric (widget kit under ``py/refs``)
+- ``ts/`` -- typescript side (npm packages: ``core``, ``kit``)
+- ``nudle/`` -- the nudle dashboard app that hosts the fabric (its own
+  ``py/`` host + ``ts/`` SPA)
+
+Public entry stays at ``nu.ui``: this ``__init__`` re-exports the widget
+kit + host names so existing ``import nu.ui as nu_ui`` code keeps working.
 """
 
-from nu.nudle.py import interactions, presets, protocol, session
-from nu.nudle.py.fabric import NudleServer
-from nu.nudle.py.interactions import Append, Changed, Write
-from nu.nudle.py.page import Index, Page, Pages
-from nu.nudle.py.protocol import Frame, decode, encode
-from nu.nudle.py.session import NudleSession, Subscription
-
-from . import refs
-from .refs import (
+from .nudle.py import interactions, presets, protocol, session
+from .nudle.py.fabric import NudleServer
+from .nudle.py.interactions import Append, Changed, Write
+from .nudle.py.page import Index, Page, Pages
+from .nudle.py.protocol import Frame, decode, encode
+from .nudle.py.session import NudleSession, Subscription
+from .py import refs
+from .py.refs import (
     AccordionRef,
     AlertRef,
     AreaChart,

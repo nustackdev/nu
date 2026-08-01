@@ -3,9 +3,9 @@
 	"private": true,
 	"description": "npm workspace root for @nustackdev/ui-core, @nustackdev/ui-kit, and the nudle app.",
 	"workspaces": [
-		"core",
-		"kit",
-		"nudle"
+		"ts/core",
+		"ts/kit",
+		"nudle/ts"
 	],
 	"scripts": {
 		"typecheck": "npm run typecheck --workspaces --if-present",

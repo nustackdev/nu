@@ -16,9 +16,9 @@ from nu.domains.shape import Slot
 from nu.engine.structure import Declared
 from nu.lang import Command
 from nu.lang.sentinels import UNSET
-from nu.nudle.py.interactions import Changed, Write
-from nu.nudle.py.protocol import Frame
-from nu.nudle.py.session import NudleSession
+from nu.ui.nudle.py.interactions import Changed, Write
+from nu.ui.nudle.py.protocol import Frame
+from nu.ui.nudle.py.session import NudleSession
 
 from .base import NudleRef
 
