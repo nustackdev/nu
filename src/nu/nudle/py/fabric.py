@@ -86,7 +86,10 @@ class NudleServer:
         """
         fastapi_app = build_fastapi_app(self._app, ctx)
         config = uvicorn.Config(
-            fastapi_app, host=self._host, port=self._port, log_level=self._log_level,
+            fastapi_app,
+            host=self._host,
+            port=self._port,
+            log_level=self._log_level,
         )
         server = uvicorn.Server(config)
         task = asyncio.create_task(server.serve())
@@ -98,7 +101,7 @@ class NudleServer:
                 task.cancel()
                 try:
                     await task
-                except (asyncio.CancelledError, Exception):  # noqa: S110 - teardown swallow
+                except (asyncio.CancelledError, Exception):
                     pass
                 msg = f"NudleServer failed to start within {self._ready_timeout}s"
                 raise TimeoutError(msg)
@@ -124,7 +127,7 @@ class NudleServer:
                 task.cancel()
                 try:
                     await task
-                except (asyncio.CancelledError, Exception):  # noqa: S110 - teardown swallow
+                except (asyncio.CancelledError, Exception):
                     pass
         self._server = None
         self._task = None

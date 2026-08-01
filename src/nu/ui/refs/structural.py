@@ -9,9 +9,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu import DictForm
-from nu.lang.args import StrArg
+from nu.nudle.py.interactions import Changed, Write
 
-from ..interactions import Changed, Write
 from .base import NudleRef
 
 
@@ -19,6 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu import Nu
+    from nu.lang.args import StrArg
     from nu.lang.runtime import Runtime
 
 

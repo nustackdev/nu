@@ -13,7 +13,7 @@ EXT_DIRS := ext/nu-virtuals ext/nu-dict ext/nu-datetime ext/nu-fin ext/nu-math e
 ALL_SRC := $(CORE) $(addsuffix /src,$(EXT_DIRS))
 
 UI_ROOT := src/nu/ui
-NUDLE_APP := src/nu/ui/nudle
+NUDLE_APP := src/nu/nudle/ts
 
 # =============================================================================
 # Help

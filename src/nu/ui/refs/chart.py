@@ -11,15 +11,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from nu import DictForm
-from nu.lang.args import BoolArg, DictArg, FloatArg, IntArg, ListArg, StrArg
 from nu.lang.sentinels import UNSET
+from nu.nudle.py.interactions import Append, Write
 
-from ..interactions import Append, Write
 from .base import NudleRef
 
 
 if TYPE_CHECKING:
     from nu import Nu
+    from nu.lang.args import BoolArg, DictArg, FloatArg, IntArg, ListArg, StrArg
 
 
 XFormat = Literal["number", "time"]

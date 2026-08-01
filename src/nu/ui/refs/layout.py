@@ -15,12 +15,11 @@ from nu import DictForm, Shape
 from nu.domains.shape import Slot
 from nu.engine.structure import Declared
 from nu.lang import Command
-from nu.lang.args import Arg, BoolArg, ListArg, StrArg
 from nu.lang.sentinels import UNSET
+from nu.nudle.py.interactions import Changed, Write
+from nu.nudle.py.protocol import Frame
+from nu.nudle.py.session import NudleSession
 
-from ..interactions import Changed, Write
-from ..protocol import Frame
-from ..session import NudleSession
 from .base import NudleRef
 
 
@@ -28,6 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu import Context, Nu
+    from nu.lang.args import Arg, BoolArg, ListArg, StrArg
     from nu.lang.runtime import Runtime
 
 

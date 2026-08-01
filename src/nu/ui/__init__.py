@@ -1,10 +1,19 @@
-"""nudle -- UI fabric for Nu."""
+"""nu.ui -- component fabric.
 
-from . import interactions, page, presets, protocol, refs, session
-from .fabric import NudleServer
-from .interactions import Append, Changed, Write
-from .page import Index, Page, Pages
-from .protocol import Frame, decode, encode
+Host-specific bits (serve, session, Page/Pages/Index, presets, wire protocol)
+moved to `nu.nudle.py` in the layer/language reorg. This module re-exports
+them here so existing `import nu.ui as nu_ui` code keeps working. Prefer
+`from nu.nudle.py import ...` in new code.
+"""
+
+from nu.nudle.py import interactions, presets, protocol, session
+from nu.nudle.py.fabric import NudleServer
+from nu.nudle.py.interactions import Append, Changed, Write
+from nu.nudle.py.page import Index, Page, Pages
+from nu.nudle.py.protocol import Frame, decode, encode
+from nu.nudle.py.session import NudleSession, Subscription
+
+from . import refs
 from .refs import (
     AccordionRef,
     AlertRef,
@@ -51,7 +60,6 @@ from .refs import (
     TextRef,
     TitleRef,
 )
-from .session import NudleSession, Subscription
 
 
 __all__ = [

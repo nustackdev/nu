@@ -108,7 +108,7 @@ class NudleRef(StructuredRef):
 
     async def _aread(self, rt: Runtime, nid: int) -> Any:
         """Round-trip read of the live browser value (input Refs override acompile)."""
-        from ..session import NudleSession
+        from nu.nudle.py.session import NudleSession
 
         session = rt.ctx.get(NudleSession)
         path = await self._aresolve_address(rt, nid)

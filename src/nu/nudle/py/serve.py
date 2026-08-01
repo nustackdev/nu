@@ -21,9 +21,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import nu
 from nu.tree.walk import preorder
+from nu.ui.refs.base import NudleRef
 
 from .page import Index, Page
-from .refs.base import NudleRef
 from .session import NudleSession
 
 
@@ -46,7 +46,7 @@ def _bundled_static() -> Path | None:
     mount is silently dropped and every HTTP GET returns 404.
     """
     try:
-        import nudle  # noqa: PLC0415 -- static bundle wheel; optional at runtime
+        import nudle
     except ImportError:
         return None
     if not hasattr(nudle, "__path__"):

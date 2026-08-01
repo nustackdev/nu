@@ -6,12 +6,14 @@
 # are opt-in; the `local` dependency group pulls the full cluster dev closure
 # by default.
 #
-# The nu.ui fabric backend (aka nudle) lives in-tree at src/nu/ui/. Its JS
-# side splits into three npm packages under src/nu/ui/: `core/` and `kit/`
-# publish to npm; `nudle/` is a private vite app. The compiled web bundle
-# ships as a sibling PyPI wheel named `nudle` (source at src/nu/ui/nudle/,
-# wheel packages the inner `nudle/` python package which symlinks build/ to
-# the vite dist/), kept out of the main nu wheel to keep releases lean.
+# Layer/language split:
+# - `nu.ui`        -- the component fabric (Refs). JS: `src/nu/ui/{core,kit}/`
+#                     npm packages. Python: `src/nu/ui/refs/`.
+# - `nu.nudle`     -- one host app on top of ui. Python host in
+#                     `src/nu/nudle/py/` (serve, session, Page, presets).
+#                     TS SPA + PyPI wheel in `src/nu/nudle/ts/` -- the wheel
+#                     ships the compiled bundle (name: `nudle`) sibling to
+#                     the main `nu` wheel so releases stay lean.
 # =============================================================================
 
 [build-system]
@@ -83,7 +85,7 @@ packages = ["src/nu"]
 exclude = [
     "src/nu/ui/core/**",
     "src/nu/ui/kit/**",
-    "src/nu/ui/nudle/**",
+    "src/nu/nudle/ts/**",
     "src/nu/ui/package.json",
     "src/nu/ui/biome.json",
     "src/nu/ui/.gitignore",
@@ -93,13 +95,15 @@ exclude = [
 exclude = [
     "src/nu/ui/**/node_modules",
     "src/nu/ui/**/dist",
+    "src/nu/nudle/ts/**/node_modules",
+    "src/nu/nudle/ts/**/dist",
 ]
 
 # =============================================================================
 # UV — local sources + dev closure
 # =============================================================================
 [tool.uv.sources]
-nudle = { path = "./src/nu/ui/nudle", editable = true }
+nudle = { path = "./src/nu/nudle/ts", editable = true }
 virtuals-py = { path = "../virtuals", editable = true }
 invisibles-py = { path = "../invisibles", editable = true }
 kh57 = { path = "../kh57", editable = true }
@@ -267,6 +271,17 @@ convention = "google"
 "**/refs/std.py" = [
     "N811",   # std Forms (UUID) aliased as *Form to not shadow the stdlib type
     "N812",   # std Forms (date, complex, ...) aliased as *Form for the same reason
+]
+"src/nu/ui/refs/**/*.py" = [
+    "D102",     # widget setters are intentionally one-liners; docstring per method is ceremony
+    "ANN401",   # _acompile athunks legitimately return Any (host-lifted primitive)
+]
+"src/nu/nudle/py/**/*.py" = [
+    "D102",     # tolerated pre-existing on the host code before the reorg move
+    "D103",
+    "D205",
+    "ANN401",
+    "S110",
 ]
 
 [tool.ruff.lint.isort]
