@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from nu import DictForm
-from nu.ui.nudle.py.interactions import Changed, Write
+from nu.ui.nudle.interactions import Changed, Write
 
 from .base import NudleRef
 

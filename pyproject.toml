@@ -7,12 +7,13 @@
 # by default.
 #
 # Layout under `src/nu/ui/`:
-# - `py/`      -- python side of the fabric (widget kit under `py/refs/`)
-# - `ts/`      -- ts side (npm packages: `core`, `kit`)
-# - `nudle/`   -- the nudle dashboard app hosting the fabric. Own py/ + ts/
-#                 split; `nudle/ts` also contains the sibling PyPI wheel
-#                 (name: `nudle`) that ships the compiled SPA -- kept out of
-#                 the main `nu` wheel so releases stay lean.
+# - `refs/`   -- python widget kit
+# - `nudle/`  -- python nudle host (serve, session, Page, presets, ...)
+# - `web/`    -- everything for the browser: one npm workspace containing
+#                `core` (ts primitives), `kit` (ts components), and
+#                `nudle` (Vite SPA). `web/nudle` also carries the sibling
+#                PyPI wheel that ships the compiled SPA -- kept out of the
+#                main `nu` wheel so releases stay lean.
 # =============================================================================
 
 [build-system]
@@ -82,11 +83,7 @@ Repository = "https://github.com/nustackdev/nu"
 [tool.hatch.build.targets.wheel]
 packages = ["src/nu"]
 exclude = [
-    "src/nu/ui/ts/**",
-    "src/nu/ui/nudle/ts/**",
-    "src/nu/ui/package.json",
-    "src/nu/ui/biome.json",
-    "src/nu/ui/.gitignore",
+    "src/nu/ui/web/**",
 ]
 
 [tool.hatch.build.targets.sdist]
@@ -99,7 +96,7 @@ exclude = [
 # UV — local sources + dev closure
 # =============================================================================
 [tool.uv.sources]
-nudle = { path = "./src/nu/ui/nudle/ts", editable = true }
+nudle = { path = "./src/nu/ui/web/nudle", editable = true }
 virtuals-py = { path = "../virtuals", editable = true }
 invisibles-py = { path = "../invisibles", editable = true }
 kh57 = { path = "../kh57", editable = true }
@@ -268,11 +265,11 @@ convention = "google"
     "N811",   # std Forms (UUID) aliased as *Form to not shadow the stdlib type
     "N812",   # std Forms (date, complex, ...) aliased as *Form for the same reason
 ]
-"src/nu/ui/py/refs/**/*.py" = [
+"src/nu/ui/refs/**/*.py" = [
     "D102",     # widget setters are intentionally one-liners; docstring per method is ceremony
     "ANN401",   # _acompile athunks legitimately return Any (host-lifted primitive)
 ]
-"src/nu/ui/nudle/py/**/*.py" = [
+"src/nu/ui/nudle/**/*.py" = [
     "D102",     # tolerated pre-existing on the host code before the reorg move
     "D103",
     "D205",

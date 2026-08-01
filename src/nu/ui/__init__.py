@@ -2,23 +2,24 @@
 
 Layout under ``src/nu/ui/``:
 
-- ``py/`` -- python side of the fabric (widget kit under ``py/refs``)
-- ``ts/`` -- typescript side (npm packages: ``core``, ``kit``)
-- ``nudle/`` -- the nudle dashboard app that hosts the fabric (its own
-  ``py/`` host + ``ts/`` SPA)
+- ``refs/``   -- python widget kit
+- ``nudle/``  -- python nudle host (serve, session, Page, presets, ...)
+- ``web/``    -- everything for the browser: npm workspace with ``core``,
+                 ``kit``, and the ``nudle`` Vite SPA (also the pypi wheel
+                 that ships the compiled SPA).
 
 Public entry stays at ``nu.ui``: this ``__init__`` re-exports the widget
 kit + host names so existing ``import nu.ui as nu_ui`` code keeps working.
 """
 
-from .nudle.py import interactions, presets, protocol, session
-from .nudle.py.fabric import NudleServer
-from .nudle.py.interactions import Append, Changed, Write
-from .nudle.py.page import Index, Page, Pages
-from .nudle.py.protocol import Frame, decode, encode
-from .nudle.py.session import NudleSession, Subscription
-from .py import refs
-from .py.refs import (
+from . import refs
+from .nudle import interactions, presets, protocol, session
+from .nudle.fabric import NudleServer
+from .nudle.interactions import Append, Changed, Write
+from .nudle.page import Index, Page, Pages
+from .nudle.protocol import Frame, decode, encode
+from .nudle.session import NudleSession, Subscription
+from .refs import (
     AccordionRef,
     AlertRef,
     AreaChart,

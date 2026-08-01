@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from nu import DictForm
 from nu.lang.sentinels import UNSET
-from nu.ui.nudle.py.interactions import Append, Changed, Write
+from nu.ui.nudle.interactions import Append, Changed, Write
 
 from .base import NudleRef
 

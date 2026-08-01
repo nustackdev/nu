@@ -21,8 +21,8 @@ from __future__ import annotations
 from typing import ClassVar
 
 from nu import Shape
-from nu.ui.py.refs.base import NudleRef
-from nu.ui.py.refs.layout import Section, SectionRef
+from nu.ui.refs.base import NudleRef
+from nu.ui.refs.layout import Section, SectionRef
 
 
 __all__ = ["Index", "Page", "Pages"]

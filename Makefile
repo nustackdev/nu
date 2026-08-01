@@ -12,8 +12,8 @@ CORE := src
 EXT_DIRS := ext/nu-virtuals ext/nu-dict ext/nu-datetime ext/nu-fin ext/nu-math ext/nu-path ext/nu-uuid ext/nu-shape-lens ext/nu-tree-view
 ALL_SRC := $(CORE) $(addsuffix /src,$(EXT_DIRS))
 
-UI_ROOT := src/nu/ui
-NUDLE_APP := src/nu/ui/nudle/ts
+UI_ROOT := src/nu/ui/web
+NUDLE_APP := src/nu/ui/web/nudle
 
 # =============================================================================
 # Help
