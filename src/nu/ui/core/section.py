@@ -83,5 +83,5 @@ class Section(Shape):
         return {}
 
     @classmethod
-    def slot(cls) -> Self:
-        return Slot(SectionRef, section_cls=cls)  # type: ignore[return-value]
+    def slot(cls, **props: object) -> Self:
+        return Slot(SectionRef, props=props, section_cls=cls)  # type: ignore[return-value]

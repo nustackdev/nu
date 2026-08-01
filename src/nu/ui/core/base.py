@@ -113,5 +113,5 @@ class Ref(StructuredRef):
         return {}
 
     @classmethod
-    def slot(cls) -> Self:
-        return Slot(cls)  # type: ignore[return-value]
+    def slot(cls, **props: object) -> Self:
+        return Slot(cls, props=props)  # type: ignore[return-value]

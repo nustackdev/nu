@@ -116,7 +116,7 @@ def _build_fields(
                 "path": path,
                 "type": _wire_type(section_cls),
             }
-            props = section_cls._mount_props()
+            props = {**section_cls._mount_props(), **slot.props}
             if props:
                 entry["props"] = props
             entry["fields"] = _build_fields(path, section_cls)
@@ -126,7 +126,7 @@ def _build_fields(
         if not issubclass(ref_cls, Ref):
             continue
         entry = {"path": path, "type": _wire_type(ref_cls)}
-        props = ref_cls._mount_props()
+        props = {**ref_cls._mount_props(), **slot.props}
         if props:
             entry["props"] = props
         out.append(entry)
@@ -213,7 +213,7 @@ class Index(Shape):
             if not issubclass(ref_cls, Ref):
                 continue
             entry: dict[str, object] = {"path": name, "type": _wire_type(ref_cls)}
-            props = ref_cls._mount_props()
+            props = {**ref_cls._mount_props(), **slot.props}
             if props:
                 entry["props"] = props
             out.append(entry)

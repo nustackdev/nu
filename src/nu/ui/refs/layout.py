@@ -17,7 +17,7 @@ host, e.g. nudle's Page) for its wire path.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, Self
+from typing import TYPE_CHECKING, Any, Literal, Self
 
 from nu import DictForm
 from nu.domains.shape import Slot
@@ -88,17 +88,19 @@ def _normalize_open(ids: object) -> list[str]:
 class AccordionRef(Section):
     """Stack of collapsible sections. Tab owns open state, server owns the section list."""
 
-    sections: ClassVar[list[dict[str, str]]] = []
-    open: ClassVar[list[str]] = []
-    multi: ClassVar[bool] = True
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "sections": _normalize_sections(cls.sections),
-            "open": _normalize_open(cls.open),
-            "multi": bool(cls.multi),
-        }
+    def slot(
+        cls,
+        *,
+        sections: list[dict[str, str]] | None = None,
+        open: list[str] | None = None,
+        multi: bool = True,
+    ) -> Self:
+        return super().slot(
+            sections=_normalize_sections(sections or []),
+            open=_normalize_open(open or []),
+            multi=bool(multi),
+        )
 
     @classmethod
     def _mount_ref(cls) -> _SectionMountRef:
@@ -161,13 +163,9 @@ class _SetSectionStr(Command):
 class CardRef(Section):
     """Card-styled Section: title + subtitle + body slots + footer."""
 
-    title: ClassVar[str] = ""
-    subtitle: ClassVar[str] = ""
-    footer: ClassVar[str] = ""
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {"title": cls.title, "subtitle": cls.subtitle, "footer": cls.footer}
+    def slot(cls, *, title: str = "", subtitle: str = "", footer: str = "") -> Self:
+        return super().slot(title=title, subtitle=subtitle, footer=footer)
 
     @classmethod
     def _mount_ref(cls) -> _SectionMountRef:
@@ -191,21 +189,18 @@ Justify = Literal["start", "center", "end", "between", "around"]
 
 
 class Column(Section):
-    """Vertical flex layout. Pin chrome on the subclass."""
-
-    gap: ClassVar[int] = 4
-    align: ClassVar[str] = "stretch"
-    justify: ClassVar[str] = "start"
-    padding: ClassVar[int] = 0
+    """Vertical flex layout. Pin chrome on the slot()."""
 
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "gap": cls.gap,
-            "align": cls.align,
-            "justify": cls.justify,
-            "padding": cls.padding,
-        }
+    def slot(
+        cls,
+        *,
+        gap: int = 4,
+        align: Align = "stretch",
+        justify: Justify = "start",
+        padding: int = 0,
+    ) -> Self:
+        return super().slot(gap=gap, align=align, justify=justify, padding=padding)
 
 
 Padding = Literal["none", "sm", "md", "lg"]
@@ -216,34 +211,31 @@ Gap = Literal["none", "sm", "md", "lg"]
 
 
 class Container(Section):
-    """Styled card-like box. Pin chrome on the subclass."""
-
-    title: ClassVar[str] = ""
-    padding: ClassVar[str] = "md"
-    border: ClassVar[str] = "hairline"
-    background: ClassVar[str] = "none"
-    shadow: ClassVar[str] = "none"
-    gap: ClassVar[str] = "md"
+    """Styled card-like box. Pin chrome on slot()."""
 
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "title": cls.title,
-            "padding": cls.padding,
-            "border": cls.border,
-            "background": cls.background,
-            "shadow": cls.shadow,
-            "gap": cls.gap,
-        }
+    def slot(
+        cls,
+        *,
+        title: str = "",
+        padding: Padding = "md",
+        border: Border = "hairline",
+        background: Background = "none",
+        shadow: Shadow = "none",
+        gap: Gap = "md",
+    ) -> Self:
+        return super().slot(
+            title=title,
+            padding=padding,
+            border=border,
+            background=background,
+            shadow=shadow,
+            gap=gap,
+        )
 
 
 class FieldRef(Section):
     """Label + child input + help / error text. Exactly one child slot."""
-
-    label: ClassVar[str] = ""
-    help: ClassVar[str] = ""
-    error: ClassVar[str] = ""
-    required: ClassVar[bool] = False
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
@@ -255,13 +247,15 @@ class FieldRef(Section):
             )
 
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "label": cls.label,
-            "help": cls.help,
-            "error": cls.error,
-            "required": cls.required,
-        }
+    def slot(
+        cls,
+        *,
+        label: str = "",
+        help: str = "",
+        error: str = "",
+        required: bool = False,
+    ) -> Self:
+        return super().slot(label=label, help=help, error=error, required=required)
 
     @classmethod
     def _mount_ref(cls) -> _SectionMountRef:
@@ -290,13 +284,15 @@ FieldsetGap = Literal["sm", "md", "lg"]
 class Fieldset(Section):
     """Grouped fields with a legend. Display-only, server-owned."""
 
-    legend: ClassVar[str] = ""
-    gap: ClassVar[str] = "md"
-    disabled: ClassVar[bool] = False
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {"legend": cls.legend, "gap": cls.gap, "disabled": cls.disabled}
+    def slot(
+        cls,
+        *,
+        legend: str = "",
+        gap: FieldsetGap = "md",
+        disabled: bool = False,
+    ) -> Self:
+        return super().slot(legend=legend, gap=gap, disabled=disabled)
 
     @classmethod
     def _mount_ref(cls) -> _SectionMountRef:
@@ -316,21 +312,18 @@ class Fieldset(Section):
 
 
 class Form(Section):
-    """Semantic form wrapper. Pin chrome on the subclass; submit lives on a child ButtonRef."""
-
-    title: ClassVar[str] = ""
-    gap: ClassVar[int] = 4
-    padding: ClassVar[int] = 0
-    align: ClassVar[str] = "stretch"
+    """Semantic form wrapper. Pin chrome on slot(); submit lives on a child ButtonRef."""
 
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "title": cls.title,
-            "gap": cls.gap,
-            "padding": cls.padding,
-            "align": cls.align,
-        }
+    def slot(
+        cls,
+        *,
+        title: str = "",
+        gap: int = 4,
+        padding: int = 0,
+        align: Align = "stretch",
+    ) -> Self:
+        return super().slot(title=title, gap=gap, padding=padding, align=align)
 
 
 class ModalRef(SectionRef):
@@ -355,23 +348,21 @@ class ModalRef(SectionRef):
 
 
 class Modal(Section):
-    """Dialog overlay. Pin chrome on the subclass; declare body Refs as slots."""
-
-    open: ClassVar[bool] = False
-    title: ClassVar[str] = ""
-    dismissible: ClassVar[bool] = True
+    """Dialog overlay. Pin chrome on slot(); declare body Refs as slots."""
 
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "open": cls.open,
-            "title": cls.title,
-            "dismissible": cls.dismissible,
-        }
-
-    @classmethod
-    def slot(cls) -> Self:
-        return Slot(ModalRef, section_cls=cls)  # type: ignore[return-value]
+    def slot(
+        cls,
+        *,
+        open: bool = False,
+        title: str = "",
+        dismissible: bool = True,
+    ) -> Self:
+        return Slot(  # type: ignore[return-value]
+            ModalRef,
+            props={"open": open, "title": title, "dismissible": dismissible},
+            section_cls=cls,
+        )
 
 
 RowAlign = Literal["start", "center", "end", "stretch", "baseline"]
@@ -379,23 +370,19 @@ RowJustify = Literal["start", "center", "end", "between", "around", "evenly"]
 
 
 class Row(Section):
-    """Horizontal flex layout. Pin chrome on the subclass."""
-
-    gap: ClassVar[int] = 4
-    align: ClassVar[str] = "center"
-    justify: ClassVar[str] = "start"
-    wrap: ClassVar[bool] = False
-    padding: ClassVar[int] = 0
+    """Horizontal flex layout. Pin chrome on slot()."""
 
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "gap": cls.gap,
-            "align": cls.align,
-            "justify": cls.justify,
-            "wrap": cls.wrap,
-            "padding": cls.padding,
-        }
+    def slot(
+        cls,
+        *,
+        gap: int = 4,
+        align: RowAlign = "center",
+        justify: RowJustify = "start",
+        wrap: bool = False,
+        padding: int = 0,
+    ) -> Self:
+        return super().slot(gap=gap, align=align, justify=justify, wrap=wrap, padding=padding)
 
 
 def _normalize_tabs(raw: object) -> list[dict[str, str]]:
@@ -474,15 +461,14 @@ class _SetActive(Command):
 class TabsRef(Section):
     """Tab strip plus active body. Subclass and declare one child slot per tab body."""
 
-    tabs: ClassVar[list[dict[str, str]]] = []
-    active: ClassVar[str] = ""
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "tabs": _normalize_tabs(cls.tabs),
-            "active": cls.active,
-        }
+    def slot(
+        cls,
+        *,
+        tabs: list[dict[str, str]] | None = None,
+        active: str = "",
+    ) -> Self:
+        return super().slot(tabs=_normalize_tabs(tabs or []), active=active)
 
     @classmethod
     def _mount_ref(cls) -> _SectionMountRef:

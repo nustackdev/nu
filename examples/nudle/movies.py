@@ -1,9 +1,11 @@
 """Movies -- personal movie tracker.
 
-This example exists as a DX benchmark for the upcoming nu.ui polish pass.
-It is written in the current idiom on purpose: every knob is a ClassVar on
-its own subclass because `slot()` takes no kwargs. Read the `PAIN:` notes
-before touching the model -- they mark the places we want to fix.
+Post slot-props refactor: preset-per-widget subclasses collapse into inline
+`.slot(**props)` at the usage site. Layout chrome (gap, align, wrap, title)
+and widget knobs (variant, label, min/max, options, ...) ride on the slot
+call instead of a subclass. Small structural wrappers (Fieldsets, Cards,
+Rows, FieldRefs) remain -- they exist only to declare child slots that
+the widget kit can't inline yet.
 
 Flow: log a movie via the form; the row lands in the table and stats update.
 Click a row in the table to remove it. Filters redraw the visible rows.
@@ -12,270 +14,132 @@ Click a row in the table to remove it. Filters redraw the visible rows.
 from __future__ import annotations
 
 import asyncio
-from typing import ClassVar
 
 import nu
 import nu.virtuals as nv
 
 
-# ---- Ref presets ------------------------------------------------------------
-# PAIN: five almost-identical Refs, each a subclass because a `variant` /
-# `label` / `default` on `.slot()` isn't a thing.
+_GENRES = [
+    {"value": "action", "label": "action"},
+    {"value": "drama", "label": "drama"},
+    {"value": "scifi", "label": "sci-fi"},
+    {"value": "doc", "label": "documentary"},
+    {"value": "anim", "label": "animation"},
+]
 
-
-class OkBadge(nu.ui.BadgeRef):
-    variant: ClassVar[str] = "ok"
-
-
-class WarnBadge(nu.ui.BadgeRef):
-    variant: ClassVar[str] = "warn"
-
-
-class NeutralBadge(nu.ui.BadgeRef):
-    variant: ClassVar[str] = "neutral"
-
-
-class RatingInput(nu.ui.NumberInputRef):
-    """Form rating slot: 1-10, half steps, default 7."""
-
-    label: ClassVar[str] = "rating (1-10)"
-    min: ClassVar[float] = 1.0
-    max: ClassVar[float] = 10.0
-    step: ClassVar[float] = 0.5
-    default: ClassVar[float] = 7.0
-
-
-class MinRatingInput(nu.ui.NumberInputRef):
-    """Filter rating slot -- same knobs as RatingInput but a different label,
-    so it needs its own class."""
-
-    label: ClassVar[str] = "min rating"
-    min: ClassVar[float] = 1.0
-    max: ClassVar[float] = 10.0
-    step: ClassVar[float] = 0.5
-    default: ClassVar[float] = 1.0
-
-
-class YearInput(nu.ui.NumberInputRef):
-    label: ClassVar[str] = "year"
-    min: ClassVar[float] = 1900.0
-    max: ClassVar[float] = 2100.0
-    step: ClassVar[float] = 1.0
-    default: ClassVar[float] = 2020.0
-
-
-class WatchedOnlySwitch(nu.ui.SwitchRef):
-    label: ClassVar[str] = "watched only"
-    default: ClassVar[bool] = False
-
-
-class WatchedSwitch(nu.ui.SwitchRef):
-    label: ClassVar[str] = "watched?"
-    default: ClassVar[bool] = True
-
-
-class TitleInput(nu.ui.InputRef):
-    label: ClassVar[str] = "title"
-    placeholder: ClassVar[str] = "e.g. Arrival"
-
-
-class NotesInput(nu.ui.TextAreaRef):
-    placeholder: ClassVar[str] = "quick thoughts..."
-    rows: ClassVar[int] = 2
-
-
-# PAIN: two SelectRefs with the same options list, differing only in whether
-# they include an "any" sentinel. Two subclasses.
-
-
-class FormGenreSelect(nu.ui.SelectRef):
-    options: ClassVar[list] = [
-        {"value": "action", "label": "action"},
-        {"value": "drama", "label": "drama"},
-        {"value": "scifi", "label": "sci-fi"},
-        {"value": "doc", "label": "documentary"},
-        {"value": "anim", "label": "animation"},
-    ]
-    selected: ClassVar[str] = "drama"
-
-
-class FilterGenreSelect(nu.ui.SelectRef):
-    options: ClassVar[list] = [
-        {"value": "", "label": "any genre"},
-        {"value": "action", "label": "action"},
-        {"value": "drama", "label": "drama"},
-        {"value": "scifi", "label": "sci-fi"},
-        {"value": "doc", "label": "documentary"},
-        {"value": "anim", "label": "animation"},
-    ]
-    selected: ClassVar[str] = ""
-
-
-# PAIN: TableRef subclassed only to pin columns + striped + dense +
-# clickable_rows. `TableRef.slot(columns=[...], striped=True)` would erase
-# this class.
-
-
-class MoviesTable(nu.ui.TableRef):
-    columns: ClassVar[list[str]] = [
-        "title",
-        "year",
-        "genre",
-        "rating",
-        "watched",
-        "notes",
-    ]
-    striped: ClassVar[bool] = True
-    dense: ClassVar[bool] = True
-    clickable_rows: ClassVar[bool] = True
-    max_rows: ClassVar[int] = 200
-
-
-class SubmitButton(nu.ui.ButtonRef):
-    label: ClassVar[str] = "log it"
-    variant: ClassVar[str] = "primary"
-
-
-class ApplyButton(nu.ui.ButtonRef):
-    label: ClassVar[str] = "apply"
-    variant: ClassVar[str] = "secondary"
-
-
-class ClearButton(nu.ui.ButtonRef):
-    label: ClassVar[str] = "clear"
-    variant: ClassVar[str] = "ghost"
-
-
-class OkAlert(nu.ui.AlertRef):
-    variant: ClassVar[str] = "ok"
-    title: ClassVar[str] = ""
-    body: ClassVar[str] = ""
-    dismissible: ClassVar[bool] = True
+_GENRES_WITH_ANY = [{"value": "", "label": "any genre"}, *_GENRES]
 
 
 # ---- Form fields ------------------------------------------------------------
-# PAIN: six FieldRef subclasses that carry nothing but a label, a help string,
-# and the inner input Ref. Genuinely one-shot config, encoded as classes.
+# FieldRef requires exactly one structural child slot, so we keep a small
+# wrapper per input kind. Inner-input knobs ride on the inner slot() call;
+# label / help / required move to slot-props at the usage site.
 
 
-class TitleFormField(nu.ui.FieldRef):
-    label: ClassVar[str] = "title"
-    help: ClassVar[str] = "movie title"
-    required: ClassVar[bool] = True
-    input = TitleInput.slot()
+class TitleField(nu.ui.FieldRef):
+    input = nu.ui.InputRef.slot(label="title", placeholder="e.g. Arrival")
 
 
-class YearFormField(nu.ui.FieldRef):
-    label: ClassVar[str] = "year"
-    input = YearInput.slot()
+class TextAreaField(nu.ui.FieldRef):
+    input = nu.ui.TextAreaRef.slot(placeholder="quick thoughts...", rows=2)
 
 
-class GenreFormField(nu.ui.FieldRef):
-    label: ClassVar[str] = "genre"
-    input = FormGenreSelect.slot()
+class YearField(nu.ui.FieldRef):
+    input = nu.ui.NumberInputRef.slot(
+        label="year",
+        min=1900.0,
+        max=2100.0,
+        step=1.0,
+        default=2020.0,
+    )
 
 
-class RatingFormField(nu.ui.FieldRef):
-    label: ClassVar[str] = "rating"
-    help: ClassVar[str] = "how much you liked it"
-    input = RatingInput.slot()
+class RatingField(nu.ui.FieldRef):
+    input = nu.ui.NumberInputRef.slot(
+        label="rating (1-10)",
+        min=1.0,
+        max=10.0,
+        step=0.5,
+        default=7.0,
+    )
 
 
-class WatchedFormField(nu.ui.FieldRef):
-    label: ClassVar[str] = "watched?"
-    help: ClassVar[str] = "off means still on the pile"
-    input = WatchedSwitch.slot()
+class GenreField(nu.ui.FieldRef):
+    input = nu.ui.SelectRef.slot(options=_GENRES, selected="drama")
 
 
-class NotesFormField(nu.ui.FieldRef):
-    label: ClassVar[str] = "notes"
-    input = NotesInput.slot()
+class SwitchField(nu.ui.FieldRef):
+    input = nu.ui.SwitchRef.slot(label="watched?", default=True)
 
 
 # ---- Composites -------------------------------------------------------------
-# PAIN: layout knobs (gap, align, wrap) are ClassVars, so every distinct
-# Row/Column shape becomes its own subclass even when the only thing that
-# varies is the children.
 
 
 class DetailsFieldset(nu.ui.Fieldset):
-    legend: ClassVar[str] = "movie"
-    gap: ClassVar[str] = "md"
-
-    title = TitleFormField.slot()
-    year = YearFormField.slot()
-    genre = GenreFormField.slot()
+    title = TitleField.slot(label="title", help="movie title", required=True)
+    year = YearField.slot(label="year")
+    genre = GenreField.slot(label="genre")
 
 
 class ScoreFieldset(nu.ui.Fieldset):
-    legend: ClassVar[str] = "your take"
-    gap: ClassVar[str] = "md"
-
-    rating = RatingFormField.slot()
-    watched = WatchedFormField.slot()
-    notes = NotesFormField.slot()
+    rating = RatingField.slot(label="rating", help="how much you liked it")
+    watched = SwitchField.slot(label="watched?", help="off means still on the pile")
+    notes = TextAreaField.slot(label="notes")
 
 
 class AddMovieForm(nu.ui.Form):
-    title: ClassVar[str] = "log a movie"
-    gap: ClassVar[int] = 4
-    padding: ClassVar[int] = 4
-
-    details = DetailsFieldset.slot()
-    score = ScoreFieldset.slot()
-    submit = SubmitButton.slot()
-    feedback = OkAlert.slot()
+    details = DetailsFieldset.slot(legend="movie", gap="md")
+    score = ScoreFieldset.slot(legend="your take", gap="md")
+    submit = nu.ui.ButtonRef.slot(label="log it", variant="primary")
+    feedback = nu.ui.AlertRef.slot(variant="ok", dismissible=True)
 
 
 class FilterRow(nu.ui.Row):
-    gap: ClassVar[int] = 3
-    align: ClassVar[str] = "center"
-    wrap: ClassVar[bool] = True
-
-    min_rating = MinRatingInput.slot()
-    genre = FilterGenreSelect.slot()
-    watched_only = WatchedOnlySwitch.slot()
-    apply = ApplyButton.slot()
-    clear = ClearButton.slot()
+    min_rating = nu.ui.NumberInputRef.slot(
+        label="min rating",
+        min=1.0,
+        max=10.0,
+        step=0.5,
+        default=1.0,
+    )
+    genre = nu.ui.SelectRef.slot(options=_GENRES_WITH_ANY, selected="")
+    watched_only = nu.ui.SwitchRef.slot(label="watched only", default=False)
+    apply = nu.ui.ButtonRef.slot(label="apply", variant="secondary")
+    clear = nu.ui.ButtonRef.slot(label="clear", variant="ghost")
 
 
 class FilterCard(nu.ui.CardRef):
-    title: ClassVar[str] = "filter"
-    body = FilterRow.slot()
+    body = FilterRow.slot(gap=3, align="center", wrap=True)
 
 
 class StatsRow(nu.ui.Row):
-    gap: ClassVar[int] = 6
-    align: ClassVar[str] = "center"
-    wrap: ClassVar[bool] = True
-
     total = nu.ui.StatRef.slot()
     watched = nu.ui.StatRef.slot()
     unseen = nu.ui.StatRef.slot()
     latest = nu.ui.TextRef.slot()
-    health = OkBadge.slot()
+    health = nu.ui.BadgeRef.slot(variant="ok")
 
 
 class StatsCard(nu.ui.CardRef):
-    title: ClassVar[str] = "your shelf"
-    body = StatsRow.slot()
+    body = StatsRow.slot(gap=6, align="center", wrap=True)
 
 
 class TableBody(nu.ui.Column):
-    gap: ClassVar[int] = 3
-
-    table = MoviesTable.slot()
+    table = nu.ui.TableRef.slot(
+        columns=["title", "year", "genre", "rating", "watched", "notes"],
+        striped=True,
+        dense=True,
+        clickable_rows=True,
+        max_rows=200,
+    )
     empty = nu.ui.AlertRef.slot()
 
 
 class TableCard(nu.ui.CardRef):
-    title: ClassVar[str] = "movies"
-    body = TableBody.slot()
+    body = TableBody.slot(gap=3)
 
 
 # ---- State ------------------------------------------------------------------
-# Rows land in `movies` as positional lists matching MoviesTable.columns.
-# Parallel counters keep stats math trivial (avoid ListForm reductions).
 
 
 class State(nu.Shape):
@@ -292,10 +156,10 @@ class Movies(nu.ui.Page):
     heading = nu.ui.HeadingRef.slot()
     intro = nu.ui.TextRef.slot()
 
-    stats = StatsCard.slot()
-    form = AddMovieForm.slot()
-    filters = FilterCard.slot()
-    shelf = TableCard.slot()
+    stats = StatsCard.slot(title="your shelf")
+    form = AddMovieForm.slot(title="log a movie", gap=4, padding=4)
+    filters = FilterCard.slot(title="filter")
+    shelf = TableCard.slot(title="movies")
 
 
 class App(nu.ui.Index):

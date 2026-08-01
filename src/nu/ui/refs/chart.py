@@ -8,7 +8,7 @@ See docs/nudle/interactions.md.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, Literal, Self
 
 from nu import DictForm
 from nu.lang.sentinels import UNSET
@@ -26,25 +26,27 @@ XFormat = Literal["number", "time"]
 class AreaChart(Ref):
     """Display-only area chart. `write` (partial) and `append` (one row)."""
 
-    x_label: ClassVar[str] = ""
-    y_label: ClassVar[str] = ""
-    series: ClassVar[list[str]] = ["value"]
-    colors: ClassVar[list[str]] = ["#2563eb"]
-    stacked: ClassVar[bool] = False
-    max_points: ClassVar[int] = 500
-    x_format: ClassVar[str] = "number"
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "x_label": cls.x_label,
-            "y_label": cls.y_label,
-            "series": list(cls.series),
-            "colors": list(cls.colors),
-            "stacked": cls.stacked,
-            "max_points": cls.max_points,
-            "x_format": cls.x_format,
-        }
+    def slot(
+        cls,
+        *,
+        x_label: str = "",
+        y_label: str = "",
+        series: list[str] | None = None,
+        colors: list[str] | None = None,
+        stacked: bool = False,
+        max_points: int = 500,
+        x_format: XFormat = "number",
+    ) -> Self:
+        return super().slot(
+            x_label=x_label,
+            y_label=y_label,
+            series=list(series or ["value"]),
+            colors=list(colors or ["#2563eb"]),
+            stacked=stacked,
+            max_points=max_points,
+            x_format=x_format,
+        )
 
     def set_points(self, points: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(points=points))
@@ -113,21 +115,23 @@ Orientation = Literal["vertical", "horizontal"]
 class BarChart(Ref):
     """Display-only chart ref. `write` (partial) and `append` (one bar)."""
 
-    x_label: ClassVar[str] = ""
-    y_label: ClassVar[str] = ""
-    color: ClassVar[str] = "#2563eb"
-    orientation: ClassVar[str] = "vertical"
-    max_bars: ClassVar[int] = 200
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "x_label": cls.x_label,
-            "y_label": cls.y_label,
-            "color": cls.color,
-            "orientation": cls.orientation,
-            "max_bars": cls.max_bars,
-        }
+    def slot(
+        cls,
+        *,
+        x_label: str = "",
+        y_label: str = "",
+        color: str = "#2563eb",
+        orientation: Orientation = "vertical",
+        max_bars: int = 200,
+    ) -> Self:
+        return super().slot(
+            x_label=x_label,
+            y_label=y_label,
+            color=color,
+            orientation=orientation,
+            max_bars=max_bars,
+        )
 
     def set_bars(self, bars: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(bars=bars))
@@ -184,27 +188,29 @@ class BarChart(Ref):
 class LineChart(Ref):
     """Display-only chart ref. `write` (partial) and `append` (one point or one series row)."""
 
-    x_label: ClassVar[str] = ""
-    y_label: ClassVar[str] = ""
-    color: ClassVar[str] = "#2563eb"
-    max_points: ClassVar[int] = 500
-    x_format: ClassVar[str] = "number"
-    show_legend: ClassVar[bool] = False
-    show_tooltip: ClassVar[bool] = True
-    palette: ClassVar[list[str]] = []
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "x_label": cls.x_label,
-            "y_label": cls.y_label,
-            "color": cls.color,
-            "max_points": cls.max_points,
-            "x_format": cls.x_format,
-            "show_legend": cls.show_legend,
-            "show_tooltip": cls.show_tooltip,
-            "palette": list(cls.palette),
-        }
+    def slot(
+        cls,
+        *,
+        x_label: str = "",
+        y_label: str = "",
+        color: str = "#2563eb",
+        max_points: int = 500,
+        x_format: XFormat = "number",
+        show_legend: bool = False,
+        show_tooltip: bool = True,
+        palette: list[str] | None = None,
+    ) -> Self:
+        return super().slot(
+            x_label=x_label,
+            y_label=y_label,
+            color=color,
+            max_points=max_points,
+            x_format=x_format,
+            show_legend=show_legend,
+            show_tooltip=show_tooltip,
+            palette=list(palette or []),
+        )
 
     def set_points(self, points: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(points=points))
@@ -302,23 +308,25 @@ DEFAULT_COLORS: list[str] = [
 class PieChart(Ref):
     """Display-only pie chart ref. `write` (partial) and `append` (one slice)."""
 
-    slices: ClassVar[list] = []
-    colors: ClassVar[list[str]] = DEFAULT_COLORS
-    inner_radius: ClassVar[float] = 0.0
-    show_labels: ClassVar[bool] = True
-    show_legend: ClassVar[bool] = True
-    total_label: ClassVar[str] = ""
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "slices": list(cls.slices),
-            "colors": list(cls.colors),
-            "inner_radius": cls.inner_radius,
-            "show_labels": cls.show_labels,
-            "show_legend": cls.show_legend,
-            "total_label": cls.total_label,
-        }
+    def slot(
+        cls,
+        *,
+        slices: list | None = None,
+        colors: list[str] | None = None,
+        inner_radius: float = 0.0,
+        show_labels: bool = True,
+        show_legend: bool = True,
+        total_label: str = "",
+    ) -> Self:
+        return super().slot(
+            slices=list(slices or []),
+            colors=list(colors or DEFAULT_COLORS),
+            inner_radius=inner_radius,
+            show_labels=show_labels,
+            show_legend=show_legend,
+            total_label=total_label,
+        )
 
     def set_slices(self, slices: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(slices=slices))
@@ -376,17 +384,15 @@ class PieChart(Ref):
 class Sparkline(Ref):
     """Display-only inline trend line. `write` (partial) and `append` (one point)."""
 
-    color: ClassVar[str] = "#2563eb"
-    height: ClassVar[int] = 32
-    max_points: ClassVar[int] = 100
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "color": cls.color,
-            "height": cls.height,
-            "max_points": cls.max_points,
-        }
+    def slot(
+        cls,
+        *,
+        color: str = "#2563eb",
+        height: int = 32,
+        max_points: int = 100,
+    ) -> Self:
+        return super().slot(color=color, height=height, max_points=max_points)
 
     def set_points(self, points: ListArg[Any]) -> Nu:
         return Write(self, DictForm.of(points=points))

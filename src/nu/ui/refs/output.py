@@ -6,7 +6,7 @@ never reads back. See docs/nudle/interactions.md.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, Literal, Self
 
 from nu import DictForm
 from nu.lang.sentinels import UNSET
@@ -30,19 +30,16 @@ class AlertRef(Ref):
     behavior; the renderer falls back to `neutral` for unmapped values.
     """
 
-    variant: ClassVar[str] = "info"
-    title: ClassVar[str] = ""
-    body: ClassVar[str] = ""
-    dismissible: ClassVar[bool] = False
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "variant": cls.variant,
-            "title": cls.title,
-            "body": cls.body,
-            "dismissible": cls.dismissible,
-        }
+    def slot(
+        cls,
+        *,
+        variant: Variant = "info",
+        title: str = "",
+        body: str = "",
+        dismissible: bool = False,
+    ) -> Self:
+        return super().slot(variant=variant, title=title, body=body, dismissible=dismissible)
 
     def set_variant(self, name: Variant | StrArg) -> Nu:
         return Write(self, DictForm.of(variant=name))
@@ -87,12 +84,9 @@ class BadgeRef(Ref):
     previous gray chip.
     """
 
-    label: ClassVar[str] = ""
-    variant: ClassVar[str] = "neutral"
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {"label": cls.label, "variant": cls.variant}
+    def slot(cls, *, label: str = "", variant: Variant = "neutral") -> Self:
+        return super().slot(label=label, variant=variant)
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
@@ -114,20 +108,15 @@ class BadgeRef(Ref):
 class CodeBlockRef(Ref):
     """Display-only code block. One `write` carries a partial dict {code, language, show_copy}."""
 
-    code: ClassVar[str] = ""
-    language: ClassVar[str] = ""
-    show_copy: ClassVar[bool] = True
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        props: dict[str, object] = {}
-        if cls.code != "":
-            props["code"] = cls.code
-        if cls.language != "":
-            props["language"] = cls.language
-        if cls.show_copy is not True:
-            props["show_copy"] = cls.show_copy
-        return props
+    def slot(
+        cls,
+        *,
+        code: str = "",
+        language: str = "",
+        show_copy: bool = True,
+    ) -> Self:
+        return super().slot(code=code, language=language, show_copy=show_copy)
 
     def set(
         self,
@@ -154,12 +143,9 @@ Align = Literal["left", "center", "right"]
 class DividerRef(Ref):
     """Display-only divider ref. One `write` op carries every mutation."""
 
-    label: ClassVar[str] = ""
-    align: ClassVar[str] = "center"
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {"label": cls.label, "align": cls.align}
+    def slot(cls, *, label: str = "", align: Align = "center") -> Self:
+        return super().slot(label=label, align=align)
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
@@ -188,17 +174,15 @@ class GaugeRef(Ref):
     `accent` tone (brand purple); the other three map 1:1 to status tokens.
     """
 
-    value: ClassVar[float] = 0.0
-    caption: ClassVar[str] = ""
-    variant: ClassVar[str] = "neutral"
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "value": cls.value,
-            "caption": cls.caption,
-            "variant": cls.variant,
-        }
+    def slot(
+        cls,
+        *,
+        value: float = 0.0,
+        caption: str = "",
+        variant: GaugeVariant = "neutral",
+    ) -> Self:
+        return super().slot(value=value, caption=caption, variant=variant)
 
     def set_value(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(value=value))
@@ -229,13 +213,9 @@ Align = Literal["left", "center", "right"]
 class HeadingRef(Ref):
     """Display-only heading ref. One `write` op carries every mutation."""
 
-    label: ClassVar[str] = ""
-    level: ClassVar[int] = 1
-    align: ClassVar[str] = "left"
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {"label": cls.label, "level": cls.level, "align": cls.align}
+    def slot(cls, *, label: str = "", level: int = 1, align: Align = "left") -> Self:
+        return super().slot(label=label, level=level, align=align)
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
@@ -266,29 +246,25 @@ Fit = Literal["contain", "cover", "fill"]
 class ImageRef(Ref):
     """Display-only image ref. One `write` op carries every mutation."""
 
-    src: ClassVar[str] = ""
-    alt: ClassVar[str] = ""
-    fit: ClassVar[str] = "contain"
-    width: ClassVar[int | None] = None
-    height: ClassVar[int | None] = None
-    rounded: ClassVar[bool] = False
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        out: dict[str, object] = {}
-        if cls.src != "":
-            out["src"] = cls.src
-        if cls.alt != "":
-            out["alt"] = cls.alt
-        if cls.fit != "contain":
-            out["fit"] = cls.fit
-        if cls.width is not None:
-            out["width"] = cls.width
-        if cls.height is not None:
-            out["height"] = cls.height
-        if cls.rounded:
-            out["rounded"] = cls.rounded
-        return out
+    def slot(
+        cls,
+        *,
+        src: str = "",
+        alt: str = "",
+        fit: Fit = "contain",
+        width: int | None = None,
+        height: int | None = None,
+        rounded: bool = False,
+    ) -> Self:
+        return super().slot(
+            src=src,
+            alt=alt,
+            fit=fit,
+            width=width,
+            height=height,
+            rounded=rounded,
+        )
 
     def set_src(self, url: StrArg) -> Nu:
         return Write(self, DictForm.of(src=url))
@@ -338,23 +314,25 @@ Theme = Literal["light", "dark"]
 class JsonViewerRef(Ref):
     """Display-only json viewer ref. One `write` op carries every mutation via partial-merge."""
 
-    value: ClassVar[object] = None
-    expand_depth: ClassVar[int] = 1
-    theme: ClassVar[str] = "light"
-    copyable: ClassVar[bool] = False
-    sortable: ClassVar[bool] = False
-    max_height: ClassVar[int | None] = None
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "value": cls.value,
-            "expand_depth": cls.expand_depth,
-            "theme": cls.theme,
-            "copyable": cls.copyable,
-            "sortable": cls.sortable,
-            "max_height": cls.max_height,
-        }
+    def slot(
+        cls,
+        *,
+        value: object = None,
+        expand_depth: int = 1,
+        theme: Theme = "light",
+        copyable: bool = False,
+        sortable: bool = False,
+        max_height: int | None = None,
+    ) -> Self:
+        return super().slot(
+            value=value,
+            expand_depth=expand_depth,
+            theme=theme,
+            copyable=copyable,
+            sortable=sortable,
+            max_height=max_height,
+        )
 
     def set_value(self, value: Arg[Any]) -> Nu:
         return Write(self, DictForm.of(value=value))
@@ -403,19 +381,16 @@ Target = Literal["_self", "_blank"]
 class LinkRef(Ref):
     """Display-only link ref. One `write` op carries every mutation."""
 
-    href: ClassVar[str] = ""
-    label: ClassVar[str] = ""
-    target: ClassVar[str] = "_self"
-    external: ClassVar[bool | None] = None
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "href": cls.href,
-            "label": cls.label,
-            "target": cls.target,
-            "external": cls.external,
-        }
+    def slot(
+        cls,
+        *,
+        href: str = "",
+        label: str = "",
+        target: Target = "_self",
+        external: bool | None = None,
+    ) -> Self:
+        return super().slot(href=href, label=label, target=target, external=external)
 
     def set_href(self, url: StrArg) -> Nu:
         return Write(self, DictForm.of(href=url))
@@ -453,13 +428,9 @@ class LinkRef(Ref):
 class MarkdownRef(Ref):
     """Display-only markdown ref. Source string rendered as commonmark."""
 
-    value: ClassVar[str] = ""
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        if cls.value == "":
-            return {}
-        return {"value": cls.value}
+    def slot(cls, *, value: str = "") -> Self:
+        return super().slot(value=value)
 
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
@@ -468,17 +439,15 @@ class MarkdownRef(Ref):
 class ProgressRef(Ref):
     """Display-only progress ref. One `write` op carries every mutation."""
 
-    value: ClassVar[float] = 0.0
-    caption: ClassVar[str] = ""
-    indeterminate: ClassVar[bool] = False
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "value": cls.value,
-            "caption": cls.caption,
-            "indeterminate": cls.indeterminate,
-        }
+    def slot(
+        cls,
+        *,
+        value: float = 0.0,
+        caption: str = "",
+        indeterminate: bool = False,
+    ) -> Self:
+        return super().slot(value=value, caption=caption, indeterminate=indeterminate)
 
     def set_value(self, value: FloatArg) -> Nu:
         return Write(self, DictForm.of(value=value))
@@ -509,19 +478,16 @@ Trend = Literal["up", "down", "flat"]
 class StatRef(Ref):
     """Display-only stat ref. Server-owned, single `write` op carries partial updates."""
 
-    label: ClassVar[str] = ""
-    value: ClassVar[str] = ""
-    delta: ClassVar[str] = ""
-    trend: ClassVar[str] = "flat"
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "label": cls.label,
-            "value": cls.value,
-            "delta": cls.delta,
-            "trend": cls.trend,
-        }
+    def slot(
+        cls,
+        *,
+        label: str = "",
+        value: str = "",
+        delta: str = "",
+        trend: Trend = "flat",
+    ) -> Self:
+        return super().slot(label=label, value=value, delta=delta, trend=trend)
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, DictForm.of(label=text))
@@ -546,25 +512,27 @@ class TableRef(Ref):
     primitive's `compact` density; `striped=True` selects the `striped` variant.
     """
 
-    columns: ClassVar[list[str]] = []
-    striped: ClassVar[bool] = True
-    dense: ClassVar[bool] = False
-    max_rows: ClassVar[int] = 0
-    sort_column: ClassVar[str] = ""
-    sort_direction: ClassVar[str] = "asc"
-    clickable_rows: ClassVar[bool] = False
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "columns": list(cls.columns),
-            "striped": cls.striped,
-            "dense": cls.dense,
-            "max_rows": cls.max_rows,
-            "sort_column": cls.sort_column,
-            "sort_direction": cls.sort_direction,
-            "clickable_rows": cls.clickable_rows,
-        }
+    def slot(
+        cls,
+        *,
+        columns: list[str] | None = None,
+        striped: bool = True,
+        dense: bool = False,
+        max_rows: int = 0,
+        sort_column: str = "",
+        sort_direction: SortDirection = "asc",
+        clickable_rows: bool = False,
+    ) -> Self:
+        return super().slot(
+            columns=list(columns or []),
+            striped=striped,
+            dense=dense,
+            max_rows=max_rows,
+            sort_column=sort_column,
+            sort_direction=sort_direction,
+            clickable_rows=clickable_rows,
+        )
 
     def set(self, table: DictArg[str, Any]) -> Nu:
         return Write(self, table)
@@ -585,13 +553,9 @@ class TableRef(Ref):
 class TextRef(Ref):
     """Display-only string ref. Body copy."""
 
-    value: ClassVar[str] = ""
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        if cls.value == "":
-            return {}
-        return {"value": cls.value}
+    def slot(cls, *, value: str = "") -> Self:
+        return super().slot(value=value)
 
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)

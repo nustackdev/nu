@@ -7,7 +7,7 @@ See docs/nudle/interactions.md.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, Literal, Self
 
 from nu import DictForm
 from nu.lang.sentinels import UNSET
@@ -28,19 +28,16 @@ Variant = Literal["primary", "secondary", "ghost", "danger"]
 class ButtonRef(Ref):
     """Click trigger; subscribe via `.clicked()`."""
 
-    label: ClassVar[str] = ""
-    variant: ClassVar[str] = "primary"
-    disabled: ClassVar[bool] = False
-    icon: ClassVar[str | None] = None
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "label": cls.label,
-            "variant": cls.variant,
-            "disabled": cls.disabled,
-            "icon": cls.icon,
-        }
+    def slot(
+        cls,
+        *,
+        label: str = "",
+        variant: Variant = "primary",
+        disabled: bool = False,
+        icon: str | None = None,
+    ) -> Self:
+        return super().slot(label=label, variant=variant, disabled=disabled, icon=icon)
 
     def clicked(self) -> Changed:
         return Changed(self)
@@ -74,12 +71,9 @@ class ButtonRef(Ref):
 class CheckboxRef(Ref):
     """Boolean toggle whose checked state lives in the browser."""
 
-    label: ClassVar[str] = ""
-    checked: ClassVar[bool] = False
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {"label": cls.label, "checked": cls.checked}
+    def slot(cls, *, label: str = "", checked: bool = False) -> Self:
+        return super().slot(label=label, checked=checked)
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
@@ -97,21 +91,23 @@ class CheckboxRef(Ref):
 class DatePickerRef(Ref):
     """Date input whose ISO yyyy-mm-dd value lives in the browser."""
 
-    label: ClassVar[str] = ""
-    placeholder: ClassVar[str] = ""
-    min: ClassVar[str] = ""
-    max: ClassVar[str] = ""
-    default: ClassVar[str] = ""
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "label": cls.label,
-            "placeholder": cls.placeholder,
-            "min": cls.min,
-            "max": cls.max,
-            "default": cls.default,
-        }
+    def slot(
+        cls,
+        *,
+        label: str = "",
+        placeholder: str = "",
+        min: str = "",
+        max: str = "",
+        default: str = "",
+    ) -> Self:
+        return super().slot(
+            label=label,
+            placeholder=placeholder,
+            min=min,
+            max=max,
+            default=default,
+        )
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
@@ -136,23 +132,25 @@ class InputRef(Ref):
     JetBrains Mono via `mono=True` — flips `font-mono` at render time.
     """
 
-    label: ClassVar[str] = ""
-    placeholder: ClassVar[str] = ""
-    value: ClassVar[str] = ""
-    type: ClassVar[str] = "text"
-    max_length: ClassVar[int | None] = None
-    mono: ClassVar[bool] = False
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "label": cls.label,
-            "placeholder": cls.placeholder,
-            "value": cls.value,
-            "type": cls.type,
-            "max_length": cls.max_length,
-            "mono": cls.mono,
-        }
+    def slot(
+        cls,
+        *,
+        label: str = "",
+        placeholder: str = "",
+        value: str = "",
+        type: InputType = "text",
+        max_length: int | None = None,
+        mono: bool = False,
+    ) -> Self:
+        return super().slot(
+            label=label,
+            placeholder=placeholder,
+            value=value,
+            type=type,
+            max_length=max_length,
+            mono=mono,
+        )
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
@@ -170,23 +168,25 @@ class InputRef(Ref):
 class NumberInputRef(Ref):
     """Numeric input whose value lives in the browser."""
 
-    label: ClassVar[str] = ""
-    placeholder: ClassVar[str] = ""
-    min: ClassVar[float | None] = None
-    max: ClassVar[float | None] = None
-    step: ClassVar[float] = 1.0
-    default: ClassVar[float] = 0.0
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "label": cls.label,
-            "placeholder": cls.placeholder,
-            "min": cls.min,
-            "max": cls.max,
-            "step": cls.step,
-            "default": cls.default,
-        }
+    def slot(
+        cls,
+        *,
+        label: str = "",
+        placeholder: str = "",
+        min: float | None = None,
+        max: float | None = None,
+        step: float = 1.0,
+        default: float = 0.0,
+    ) -> Self:
+        return super().slot(
+            label=label,
+            placeholder=placeholder,
+            min=min,
+            max=max,
+            step=step,
+            default=default,
+        )
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
@@ -250,20 +250,25 @@ def _normalize_options(opts: object) -> list[dict[str, str]]:
     return out
 
 
+Orientation = Literal["vertical", "horizontal"]
+
+
 class RadioGroupRef(Ref):
     """Single-choice radio group whose value lives in the browser."""
 
-    options: ClassVar[list[Any]] = []
-    selected: ClassVar[str] = ""
-    orientation: ClassVar[str] = "vertical"
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "options": _normalize_options(cls.options),
-            "selected": cls.selected,
-            "orientation": cls.orientation,
-        }
+    def slot(
+        cls,
+        *,
+        options: list[str] | list[dict[str, str]] | None = None,
+        selected: str = "",
+        orientation: Orientation = "vertical",
+    ) -> Self:
+        return super().slot(
+            options=_normalize_options(options or []),
+            selected=selected,
+            orientation=orientation,
+        )
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
@@ -291,17 +296,19 @@ OptionInput = "list[str] | list[dict[str, str]]"
 class SelectRef(Ref):
     """Dropdown single-select whose value lives in the browser."""
 
-    options: ClassVar[list[Any]] = []
-    selected: ClassVar[str] = ""
-    placeholder: ClassVar[str] = ""
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "options": _normalize_options(cls.options),
-            "selected": cls.selected,
-            "placeholder": cls.placeholder,
-        }
+    def slot(
+        cls,
+        *,
+        options: list[str] | list[dict[str, str]] | None = None,
+        selected: str = "",
+        placeholder: str = "",
+    ) -> Self:
+        return super().slot(
+            options=_normalize_options(options or []),
+            selected=selected,
+            placeholder=placeholder,
+        )
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
@@ -326,23 +333,25 @@ class SelectRef(Ref):
 class SliderRef(Ref):
     """Numeric slider whose value lives in the browser."""
 
-    min: ClassVar[float] = 0.0
-    max: ClassVar[float] = 100.0
-    step: ClassVar[float] = 1.0
-    value: ClassVar[float] = 0.0
-    label: ClassVar[str] = ""
-    show_value: ClassVar[bool] = True
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "min": cls.min,
-            "max": cls.max,
-            "step": cls.step,
-            "value": cls.value,
-            "label": cls.label,
-            "show_value": cls.show_value,
-        }
+    def slot(
+        cls,
+        *,
+        min: float = 0.0,
+        max: float = 100.0,
+        step: float = 1.0,
+        value: float = 0.0,
+        label: str = "",
+        show_value: bool = True,
+    ) -> Self:
+        return super().slot(
+            min=min,
+            max=max,
+            step=step,
+            value=value,
+            label=label,
+            show_value=show_value,
+        )
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
@@ -400,12 +409,9 @@ class SliderRef(Ref):
 class SwitchRef(Ref):
     """On/off switch whose checked state lives in the browser."""
 
-    label: ClassVar[str] = ""
-    default: ClassVar[bool] = False
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {"label": cls.label, "checked": cls.default}
+    def slot(cls, *, label: str = "", default: bool = False) -> Self:
+        return super().slot(label=label, checked=default)
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
@@ -423,21 +429,23 @@ class SwitchRef(Ref):
 class TagInputRef(Ref):
     """Multi-tag entry field whose committed list lives in the browser."""
 
-    label: ClassVar[str] = ""
-    placeholder: ClassVar[str] = ""
-    value: ClassVar[list[str]] = []
-    max_tags: ClassVar[int | None] = None
-    allow_duplicates: ClassVar[bool] = False
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "label": cls.label,
-            "placeholder": cls.placeholder,
-            "value": list(cls.value),
-            "max_tags": cls.max_tags,
-            "allow_duplicates": cls.allow_duplicates,
-        }
+    def slot(
+        cls,
+        *,
+        label: str = "",
+        placeholder: str = "",
+        value: list[str] | None = None,
+        max_tags: int | None = None,
+        allow_duplicates: bool = False,
+    ) -> Self:
+        return super().slot(
+            label=label,
+            placeholder=placeholder,
+            value=list(value or []),
+            max_tags=max_tags,
+            allow_duplicates=allow_duplicates,
+        )
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
@@ -460,23 +468,25 @@ class TextAreaRef(Ref):
     code-shaped fields to flip `font-mono` at render.
     """
 
-    value: ClassVar[str] = ""
-    placeholder: ClassVar[str] = ""
-    rows: ClassVar[int] = 4
-    max_length: ClassVar[int | None] = None
-    auto_resize: ClassVar[bool] = False
-    mono: ClassVar[bool] = False
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        return {
-            "value": cls.value,
-            "placeholder": cls.placeholder,
-            "rows": cls.rows,
-            "max_length": cls.max_length,
-            "auto_resize": cls.auto_resize,
-            "mono": cls.mono,
-        }
+    def slot(
+        cls,
+        *,
+        value: str = "",
+        placeholder: str = "",
+        rows: int = 4,
+        max_length: int | None = None,
+        auto_resize: bool = False,
+        mono: bool = False,
+    ) -> Self:
+        return super().slot(
+            value=value,
+            placeholder=placeholder,
+            rows=rows,
+            max_length=max_length,
+            auto_resize=auto_resize,
+            mono=mono,
+        )
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:

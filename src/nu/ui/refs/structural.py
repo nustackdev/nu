@@ -6,7 +6,7 @@ document.title), not the visible body tree. See docs/nudle/interactions.md.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, Self
 
 from nu import DictForm
 from nu.ui.core import Changed, Ref, Write
@@ -71,18 +71,13 @@ class TitleRef(Ref):
 
     Write-only from host. The browser-side slice writes assignments
     directly to document.title; it is not a body slot and is not
-    rendered into the visible tree. Class-level `default` and `suffix`
+    rendered into the visible tree. Slot-level `default` and `suffix`
     seed the browser on mount.
     """
 
-    default: ClassVar[str] = ""
-    suffix: ClassVar[str] = ""
-
     @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        if cls.default == "" and cls.suffix == "":
-            return {}
-        return {"default": cls.default, "suffix": cls.suffix}
+    def slot(cls, *, default: str = "", suffix: str = "") -> Self:
+        return super().slot(default=default, suffix=suffix)
 
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)

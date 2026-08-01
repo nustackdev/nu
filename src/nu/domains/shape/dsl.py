@@ -69,10 +69,16 @@ _RefT = TypeVar("_RefT")
 class Slot(Generic[_RefT]):  # noqa: UP046
     """Factory carrying a Ref class and kwargs; create_ref produces the Ref."""
 
-    def __init__(self, ref_cls: type[_RefT], **kwargs: object) -> None:
+    def __init__(
+        self,
+        ref_cls: type[_RefT],
+        props: dict[str, object] | None = None,
+        **kwargs: object,
+    ) -> None:
         self.name: str | None = None
         self.ref_cls = ref_cls
         self.kwargs = kwargs
+        self.props: dict[str, object] = props or {}
         self._owner_cls: type | None = None
         self._type_info_cache: TypeInfo | None = None
 
