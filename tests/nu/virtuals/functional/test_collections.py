@@ -10,6 +10,7 @@ Verifies:
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import ItemsView, KeysView, ValuesView
 
 import pytest
@@ -87,8 +88,8 @@ def portfolio_ctx(nav, tx):
     )
 
 
-def store(ref, value, ctx):
-    run(ref.store(value), ctx)
+def set(ref, value, ctx):
+    run(ref.set(value), ctx)
 
 
 # ============================================================================
@@ -169,34 +170,34 @@ class TestDictRefExecution:
     """DictRef operations produce correct results through virtuals."""
 
     @pytest.mark.asyncio
-    async def test_store_and_keys(self, portfolio_ctx):
+    async def test_set_and_keys(self, portfolio_ctx):
         # kept async: representative round-trip test for the async path
-        store(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
+        set(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
         result = (await arun(Portfolio.metadata.keys(), portfolio_ctx))[0]
         assert isinstance(result, KeysView)
-        assert set(result) == {"strategy", "risk"}
+        assert builtins.set(result) == {"strategy", "risk"}
 
-    def test_store_and_values(self, portfolio_ctx):
-        store(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
+    def test_set_and_values(self, portfolio_ctx):
+        set(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
         result = run(Portfolio.metadata.values(), portfolio_ctx)[0]
         assert isinstance(result, ValuesView)
-        assert set(result) == {"momentum", "medium"}
+        assert builtins.set(result) == {"momentum", "medium"}
 
-    def test_store_and_items(self, portfolio_ctx):
-        store(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
+    def test_set_and_items(self, portfolio_ctx):
+        set(Portfolio.metadata, {"strategy": "momentum", "risk": "medium"}, portfolio_ctx)
         result = run(Portfolio.metadata.items(), portfolio_ctx)[0]
         assert isinstance(result, ItemsView)
-        assert set(result) == {("strategy", "momentum"), ("risk", "medium")}
+        assert builtins.set(result) == {("strategy", "momentum"), ("risk", "medium")}
 
     def test_get(self, portfolio_ctx):
-        store(Portfolio.metadata, {"key": "value"}, portfolio_ctx)
-        result = run(Portfolio.metadata.get("key"), portfolio_ctx)[0]
+        set(Portfolio.metadata, {"key": "value"}, portfolio_ctx)
+        result = run(Portfolio.metadata.get_item("key"), portfolio_ctx)[0]
         assert result == "value"
 
     def test_set_item(self, portfolio_ctx):
-        store(Portfolio.metadata, {}, portfolio_ctx)
-        run(Portfolio.metadata.set("new_key", "new_val"), portfolio_ctx)
-        result = run(Portfolio.metadata.get("new_key"), portfolio_ctx)[0]
+        set(Portfolio.metadata, {}, portfolio_ctx)
+        run(Portfolio.metadata.set_item("new_key", "new_val"), portfolio_ctx)
+        result = run(Portfolio.metadata.get_item("new_key"), portfolio_ctx)[0]
         assert result == "new_val"
 
 
@@ -221,24 +222,24 @@ class TestListRefExecution:
     """ListRef operations through virtuals."""
 
     @pytest.mark.asyncio
-    async def test_store_and_first(self, portfolio_ctx):
+    async def test_set_and_first(self, portfolio_ctx):
         # kept async: representative round-trip test for the async path
-        store(Portfolio.tags, ["alpha", "beta", "gamma"], portfolio_ctx)
+        set(Portfolio.tags, ["alpha", "beta", "gamma"], portfolio_ctx)
         result = (await arun(Portfolio.tags.first_elem(), portfolio_ctx))[0]
         assert result == "alpha"
 
-    def test_store_and_last(self, portfolio_ctx):
-        store(Portfolio.tags, ["alpha", "beta", "gamma"], portfolio_ctx)
+    def test_set_and_last(self, portfolio_ctx):
+        set(Portfolio.tags, ["alpha", "beta", "gamma"], portfolio_ctx)
         result = run(Portfolio.tags.last_elem(), portfolio_ctx)[0]
         assert result == "gamma"
 
-    def test_store_and_slice(self, portfolio_ctx):
-        store(Portfolio.tags, ["a", "b", "c", "d", "e"], portfolio_ctx)
+    def test_set_and_slice(self, portfolio_ctx):
+        set(Portfolio.tags, ["a", "b", "c", "d", "e"], portfolio_ctx)
         result = run(Portfolio.tags.slice(1, 3), portfolio_ctx)[0]
         assert list(result) == ["b", "c"]
 
     def test_append(self, portfolio_ctx):
-        store(Portfolio.tags, ["x"], portfolio_ctx)
+        set(Portfolio.tags, ["x"], portfolio_ctx)
         run(Portfolio.tags.append("y"), portfolio_ctx)
         result = run(Portfolio.tags, portfolio_ctx)[0]
         assert list(result) == ["x", "y"]
@@ -260,14 +261,14 @@ class TestSetRefWrapTypes:
 class TestSetRefExecution:
     """SetRef operations through virtuals."""
 
-    def test_store_and_add(self, portfolio_ctx):
-        store(Portfolio.members, {"alice"}, portfolio_ctx)
+    def test_set_and_add(self, portfolio_ctx):
+        set(Portfolio.members, {"alice"}, portfolio_ctx)
         run(Portfolio.members.add("bob"), portfolio_ctx)
         result = run(Portfolio.members, portfolio_ctx)[0]
-        assert set(result) == {"alice", "bob"}
+        assert builtins.set(result) == {"alice", "bob"}
 
     def test_union(self, portfolio_ctx):
-        store(Portfolio.members, {"alice", "bob"}, portfolio_ctx)
+        set(Portfolio.members, {"alice", "bob"}, portfolio_ctx)
         result = run(Portfolio.members.union({"bob", "charlie"}), portfolio_ctx)[0]
         assert result == {"alice", "bob", "charlie"}
 
@@ -280,8 +281,8 @@ class TestSetRefExecution:
 class TestShapesListRefExecution:
     """ShapesListRef operations through virtuals."""
 
-    def test_store_and_navigate(self, portfolio_ctx):
-        store(
+    def test_set_and_navigate(self, portfolio_ctx):
+        set(
             Portfolio.orders,
             [
                 {"symbol": "AAPL", "price": 185.5, "qty": 10},
@@ -292,8 +293,8 @@ class TestShapesListRefExecution:
         result = run(Portfolio.orders[0].symbol, portfolio_ctx)[0]
         assert result == "AAPL"
 
-    def test_store_and_second_element(self, portfolio_ctx):
-        store(
+    def test_set_and_second_element(self, portfolio_ctx):
+        set(
             Portfolio.orders,
             [
                 {"symbol": "AAPL", "price": 185.5, "qty": 10},
@@ -329,8 +330,8 @@ class TestShapesDictRefWrapTypes:
 class TestShapesDictRefExecution:
     """ShapesDictRef operations through virtuals."""
 
-    def test_store_and_keys(self, portfolio_ctx):
-        store(
+    def test_set_and_keys(self, portfolio_ctx):
+        set(
             Portfolio.team,
             {
                 "desk_a": {"symbol": "AAPL", "price": 185.5, "qty": 10},
@@ -339,10 +340,10 @@ class TestShapesDictRefExecution:
             portfolio_ctx,
         )
         result = run(Portfolio.team.keys(), portfolio_ctx)[0]
-        assert set(result) == {"desk_a", "desk_b"}
+        assert builtins.set(result) == {"desk_a", "desk_b"}
 
     def test_slot_navigation(self, portfolio_ctx):
-        store(
+        set(
             Portfolio.team,
             {
                 "desk_a": {"symbol": "AAPL", "price": 185.5, "qty": 10},
@@ -382,27 +383,27 @@ class TestKh57RefExecution:
     """Kh57Ref operations through virtuals."""
 
     def test_set_and_get(self, portfolio_ctx):
-        run(Portfolio.events.set(42, "open"), portfolio_ctx)
-        assert run(Portfolio.events.get(42), portfolio_ctx)[0] == "open"
+        run(Portfolio.events.set_item(42, "open"), portfolio_ctx)
+        assert run(Portfolio.events.get_item(42), portfolio_ctx)[0] == "open"
 
-    def test_store_and_keys(self, portfolio_ctx):
-        store(Portfolio.events, {1: "a", 5: "b", 999: "c"}, portfolio_ctx)
+    def test_set_and_keys(self, portfolio_ctx):
+        set(Portfolio.events, {1: "a", 5: "b", 999: "c"}, portfolio_ctx)
         result = run(Portfolio.events.keys(), portfolio_ctx)[0]
         assert isinstance(result, KeysView)
-        assert set(result) == {1, 5, 999}
+        assert builtins.set(result) == {1, 5, 999}
 
-    def test_store_and_values(self, portfolio_ctx):
-        store(Portfolio.events, {1: "a", 5: "b"}, portfolio_ctx)
+    def test_set_and_values(self, portfolio_ctx):
+        set(Portfolio.events, {1: "a", 5: "b"}, portfolio_ctx)
         result = run(Portfolio.events.values(), portfolio_ctx)[0]
-        assert set(result) == {"a", "b"}
+        assert builtins.set(result) == {"a", "b"}
 
     def test_range_slice(self, portfolio_ctx):
-        store(Portfolio.events, {i: str(i) for i in range(20)}, portfolio_ctx)
+        set(Portfolio.events, {i: str(i) for i in range(20)}, portfolio_ctx)
         result = run(Portfolio.events.range(5, 10), portfolio_ctx)[0]
         assert result == [(i, str(i)) for i in range(5, 10)]
 
     def test_sample_yields_up_to_n(self, portfolio_ctx):
-        store(Portfolio.events, {i: str(i) for i in range(100)}, portfolio_ctx)
+        set(Portfolio.events, {i: str(i) for i in range(100)}, portfolio_ctx)
         result = run(Portfolio.events.sample(10), portfolio_ctx)[0]
         assert len(result) == 10
         for k, v in result:
@@ -434,8 +435,8 @@ class TestKh57ShapesRefWrapTypes:
 class TestKh57ShapesRefExecution:
     """Kh57ShapesRef operations through virtuals."""
 
-    def test_store_and_keys(self, portfolio_ctx):
-        store(
+    def test_set_and_keys(self, portfolio_ctx):
+        set(
             Portfolio.series,
             {
                 100: {"symbol": "AAPL", "price": 185.5, "qty": 10},
@@ -444,10 +445,10 @@ class TestKh57ShapesRefExecution:
             portfolio_ctx,
         )
         result = run(Portfolio.series.keys(), portfolio_ctx)[0]
-        assert set(result) == {100, 200}
+        assert builtins.set(result) == {100, 200}
 
     def test_slot_navigation(self, portfolio_ctx):
-        store(
+        set(
             Portfolio.series,
             {100: {"symbol": "AAPL", "price": 185.5, "qty": 10}},
             portfolio_ctx,
@@ -465,7 +466,7 @@ class TestTermComposition:
     """Nu arithmetic across refs."""
 
     def test_multiply(self, portfolio_ctx):
-        store(
+        set(
             Portfolio.orders,
             [{"symbol": "AAPL", "price": 185.5, "qty": 10}],
             portfolio_ctx,
@@ -475,7 +476,7 @@ class TestTermComposition:
         assert result == 1855.0
 
     def test_subtract(self, portfolio_ctx):
-        store(
+        set(
             Portfolio.orders,
             [
                 {"symbol": "AAPL", "price": 185.5, "qty": 10},
@@ -498,27 +499,27 @@ class TestLazyTake:
     """Take(keys, n) lazily slices collections via itertools.islice."""
 
     def test_take_keys(self, portfolio_ctx):
-        store(Portfolio.metadata, {f"k{i}": f"v{i}" for i in range(50)}, portfolio_ctx)
+        set(Portfolio.metadata, {f"k{i}": f"v{i}" for i in range(50)}, portfolio_ctx)
         result = run(Take(Portfolio.metadata.keys(), 5).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert len(result) == 5
 
     def test_take_values(self, portfolio_ctx):
-        store(Portfolio.metadata, {f"k{i}": f"v{i}" for i in range(50)}, portfolio_ctx)
+        set(Portfolio.metadata, {f"k{i}": f"v{i}" for i in range(50)}, portfolio_ctx)
         result = run(Take(Portfolio.metadata.values(), 3).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert len(result) == 3
 
     def test_take_items(self, portfolio_ctx):
-        store(Portfolio.metadata, {"a": "1", "b": "2", "c": "3"}, portfolio_ctx)
+        set(Portfolio.metadata, {"a": "1", "b": "2", "c": "3"}, portfolio_ctx)
         result = run(Take(Portfolio.metadata.items(), 2).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert len(result) == 2
 
     def test_take_list(self, portfolio_ctx):
-        store(Portfolio.tags, ["a", "b", "c", "d", "e"], portfolio_ctx)
+        set(Portfolio.tags, ["a", "b", "c", "d", "e"], portfolio_ctx)
         result = run(Take(Portfolio.tags, 3).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert result == ["a", "b", "c"]
 
     def test_take_more_than_available(self, portfolio_ctx):
-        store(Portfolio.metadata, {"a": "1", "b": "2"}, portfolio_ctx)
+        set(Portfolio.metadata, {"a": "1", "b": "2"}, portfolio_ctx)
         result = run(Take(Portfolio.metadata.keys(), 100).to_list(), portfolio_ctx)[0]  # noqa: F821
         assert sorted(result) == ["a", "b"]
 
@@ -540,13 +541,11 @@ class TestEndToEnd:
         ctx = portfolio_ctx
 
         # --- populate ---
-        store(Portfolio.name, "Main Portfolio", ctx)
-        store(Portfolio.tags, ["alpha", "beta", "gamma", "delta", "epsilon"], ctx)
-        store(
-            Portfolio.metadata, {"strategy": "momentum", "risk": "medium", "horizon": "long"}, ctx
-        )
-        store(Portfolio.members, {"alice", "bob", "charlie"}, ctx)
-        store(
+        set(Portfolio.name, "Main Portfolio", ctx)
+        set(Portfolio.tags, ["alpha", "beta", "gamma", "delta", "epsilon"], ctx)
+        set(Portfolio.metadata, {"strategy": "momentum", "risk": "medium", "horizon": "long"}, ctx)
+        set(Portfolio.members, {"alice", "bob", "charlie"}, ctx)
+        set(
             Portfolio.orders,
             [
                 {"symbol": "AAPL", "price": 185.5, "qty": 10},
@@ -561,10 +560,10 @@ class TestEndToEnd:
 
         # --- dict keys iteration ---
         keys = (await arun(Portfolio.metadata.keys(), ctx))[0]
-        assert set(keys) == {"strategy", "risk", "horizon"}
+        assert builtins.set(keys) == {"strategy", "risk", "horizon"}
 
         # --- dict get ---
-        assert (await arun(Portfolio.metadata.get("strategy"), ctx))[0] == "momentum"
+        assert (await arun(Portfolio.metadata.get_item("strategy"), ctx))[0] == "momentum"
 
         # (lazy Take over keys covered in TestLazyTake — skipped until TakeQuery lands)
 
@@ -588,8 +587,8 @@ class TestEndToEnd:
         assert abs((await arun(spread, ctx))[0] - (-59.5)) < 0.01
 
         # --- dict mutation ---
-        await arun(Portfolio.metadata.set("sector", "tech"), ctx)
-        assert (await arun(Portfolio.metadata.get("sector"), ctx))[0] == "tech"
+        await arun(Portfolio.metadata.set_item("sector", "tech"), ctx)
+        assert (await arun(Portfolio.metadata.get_item("sector"), ctx))[0] == "tech"
 
         # --- list mutation ---
         await arun(Portfolio.tags.append("zeta"), ctx)
@@ -598,7 +597,7 @@ class TestEndToEnd:
         # --- set mutation ---
         await arun(Portfolio.members.add("eve"), ctx)
         result = (await arun(Portfolio.members, ctx))[0]
-        assert "eve" in set(result)
+        assert "eve" in builtins.set(result)
 
         # --- fn combinators ---
         # SortedQuery is a StreamQuery — arun yields a stream; materialize it.

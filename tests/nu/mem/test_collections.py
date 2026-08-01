@@ -86,12 +86,12 @@ class TestDictRefExecution:
 
     def test_get_execute(self, data, portfolio_ctx):
         data["metadata"] = {"strategy": "momentum"}
-        result = run(PortfolioShape.metadata.get("strategy"), portfolio_ctx)[0]
+        result = run(PortfolioShape.metadata.get_item("strategy"), portfolio_ctx)[0]
         assert result == "momentum"
 
     def test_set_and_get(self, data, portfolio_ctx):
         data["metadata"] = {}
-        run(PortfolioShape.metadata.set("key", "value"), portfolio_ctx)
+        run(PortfolioShape.metadata.set_item("key", "value"), portfolio_ctx)
         assert data["metadata"]["key"] == "value"
 
 
@@ -456,10 +456,10 @@ class TestEndToEnd:
         assert union == {"alice", "bob", "charlie", "dave"}
 
         # --- dict mutation ---
-        run(PortfolioShape.metadata.set("sector", "tech"), e2e_ctx)
+        run(PortfolioShape.metadata.set_item("sector", "tech"), e2e_ctx)
         assert d["metadata"]["sector"] == "tech"
 
-        sector = run(PortfolioShape.metadata.get("sector"), e2e_ctx)[0]
+        sector = run(PortfolioShape.metadata.get_item("sector"), e2e_ctx)[0]
         assert sector == "tech"
 
         # --- list mutation ---

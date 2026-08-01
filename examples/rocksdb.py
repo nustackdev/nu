@@ -13,8 +13,8 @@ tree = nu.With(
     nu.v.presets.rocksdb_navigator(".dbtest"),
     body=(
         nu.v.Transaction(
-            nu.IfDo(Counter.value.missing(), Counter.value.store(0))
-            >> Counter.value.store(Counter.value + 1),
+            nu.IfDo(Counter.value.missing(), Counter.value.set(0))
+            >> Counter.value.set(Counter.value + 1),
         )
         >> nu.v.Snapshot(nu.print(Counter.value))
     ),

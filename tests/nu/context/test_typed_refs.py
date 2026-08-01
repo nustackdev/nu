@@ -202,5 +202,5 @@ def test_list_attr_ref_mul_composes_to_list_form():
 
 
 def test_dict_attr_ref_composes_get_key():
-    result = DictAttrRef("d").get("k")
+    result = DictAttrRef("d").get_item("k")
     assert isinstance(result, AnyForm)

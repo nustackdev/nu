@@ -29,7 +29,7 @@ Four nu methods compile to the same wire op with different payload subsets:
 - `store_label(text)` -> `write {"label": text}`
 - `store_level(n)` -> `write {"level": n}`
 - `store_align(side)` -> `write {"align": side}`
-- `store(label, level=..., align=...)` -> `write {"label": label, ...}` with optional keys included only when passed.
+- `set(label, level=..., align=...)` -> `write {"label": label, ...}` with optional keys included only when passed.
 
 A bare string payload (`write "some heading"`) is accepted as a legacy shorthand equivalent to `{"label": "some heading"}`. New callers should use the dict form.
 

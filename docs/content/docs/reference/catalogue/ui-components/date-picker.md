@@ -28,7 +28,7 @@ Class attributes on the python `DatePickerRef`. Shipped on `mount` under the fie
 | `read`   | server -> tab  | request `null`; resp `str`       | (via `aeval`) | request/response, correlated by `id`. resolves the live value.         |
 | `notify` | tab -> server  | `null`                           | `changed`     | emitted when the user picks a new date (native `change` event).        |
 
-`DatePickerRef.aeval` ships a `read` via `session.aread` and returns the ISO string (`""` if no date is selected). `DatePickerRef.store(value)` compiles to `write`. `DatePickerRef.changed()` is the standard `Changed` subscription.
+`DatePickerRef.aeval` ships a `read` via `session.aread` and returns the ISO string (`""` if no date is selected). `DatePickerRef.set(value)` compiles to `write`. `DatePickerRef.changed()` is the standard `Changed` subscription.
 
 ## wire payloads
 

@@ -31,7 +31,7 @@ Mutators compile to the same `write` op with different payload subsets:
 - `store_label(text)` -> `write {"label": text}`
 - `store_variant(name)` -> `write {"variant": name}`
 - `store_disabled(flag)` -> `write {"disabled": flag}`
-- `store(label, variant=..., disabled=..., icon=...)` -> `write {...}` with only the keys passed
+- `set(label, variant=..., disabled=..., icon=...)` -> `write {...}` with only the keys passed
 - `clicked()` -> `Changed` subscription on `notify`
 
 ## wire payloads

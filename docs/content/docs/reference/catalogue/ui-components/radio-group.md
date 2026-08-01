@@ -29,7 +29,7 @@ Class attributes on the python `RadioGroupRef`. Shipped on `mount` under the fie
 Nu methods:
 
 - `RadioGroupRef.aeval` ships a `read` via `session.aread`, returns the selected value as `str`.
-- `RadioGroupRef.store(value)` compiles to `write` with a bare string payload.
+- `RadioGroupRef.set(value)` compiles to `write` with a bare string payload.
 - `RadioGroupRef.store_options(opts)` compiles to `write` with `{"options": [...]}`. Accepts strings or dicts; normalized server-side.
 - `RadioGroupRef.changed()` returns a `Changed` subscription driven by inbound `notify` frames.
 

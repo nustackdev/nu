@@ -99,22 +99,22 @@ def _validate(term: object) -> None:
 
 
 def test_react_validates_with_mutating_body():
-    _validate(React(_Sensor.n.on_change(), _Sensor.n.store(_Sensor.n + 1)))
+    _validate(React(_Sensor.n.on_change(), _Sensor.n.set(_Sensor.n + 1)))
 
 
 def test_react_while_validates_with_mutating_body():
-    _validate(ReactWhile(_Sensor.n.on_change(), _Sensor.n < 10, _Sensor.n.store(_Sensor.n + 1)))
+    _validate(ReactWhile(_Sensor.n.on_change(), _Sensor.n < 10, _Sensor.n.set(_Sensor.n + 1)))
 
 
 def test_react_forever_validates_with_mutating_body():
-    _validate(ReactForever(_Sensor.n.on_change(), _Sensor.n.store(_Sensor.n + 1)))
+    _validate(ReactForever(_Sensor.n.on_change(), _Sensor.n.set(_Sensor.n + 1)))
 
 
 def test_react_while_composes_in_race():
     """The reason for the refactor: a reactive branch is now WORK, so a Strategy holds it."""
-    producer = _Sensor.n.store(0)
-    consumer_a = ReactWhile(_Sensor.n.on_change(), _Sensor.n < 10, _Sensor.n.store(_Sensor.n + 1))
-    consumer_b = ReactForever(_Sensor.n.on_change(), _Sensor.n.store(_Sensor.n + 1))
+    producer = _Sensor.n.set(0)
+    consumer_a = ReactWhile(_Sensor.n.on_change(), _Sensor.n < 10, _Sensor.n.set(_Sensor.n + 1))
+    consumer_b = ReactForever(_Sensor.n.on_change(), _Sensor.n.set(_Sensor.n + 1))
     _validate(Race(producer, consumer_a, consumer_b))
 
 

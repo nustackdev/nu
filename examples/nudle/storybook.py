@@ -920,12 +920,12 @@ options_snapshot = nv.Snapshot(
 # ---- Live tickers -----------------------------------------------------------
 
 init_state = nv.Transaction(
-    nu.IfDo(State.tick.missing(), State.tick.store(0)),
+    nu.IfDo(State.tick.missing(), State.tick.set(0)),
 )
 
 
 ticker_bg = init_state >> nu.ForeverDo(
-    nv.Transaction(State.tick.store(State.tick + 1)) >> nu.Delay(1.0),
+    nv.Transaction(State.tick.set(State.tick + 1)) >> nu.Delay(1.0),
 )
 
 

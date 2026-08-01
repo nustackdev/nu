@@ -33,9 +33,9 @@ from nu.virtuals.interactions import (
     InitItemCmd,
     ItemPrimitiveDeleteUnsafeCmd,
     ItemPrimitiveGetUnsafe,
+    ItemPrimitiveSetCmd,
     ItemPrimitiveSetUnsafeCmd,
     ItemPrimitiveSetUnsafeParentSkipCmd,
-    ItemPrimitiveStoreCmd,
     Kh57RangeQuery,
     Kh57SampleQuery,
     RetryOnConflict,
@@ -105,6 +105,7 @@ from nu.virtuals.tree import auto_flow_atomic, inline_refs
 
 __all__ = [  # noqa: RUF022
     # Submodules
+    "fabrics",
     "interactions",
     "paths",
     "presets",
@@ -117,7 +118,7 @@ __all__ = [  # noqa: RUF022
     "ItemPrimitiveSetUnsafeCmd",
     "ItemPrimitiveSetUnsafeParentSkipCmd",
     "ItemPrimitiveDeleteUnsafeCmd",
-    "ItemPrimitiveStoreCmd",
+    "ItemPrimitiveSetCmd",
     # Interactions — Collection
     "ClearPrimitivesUnsafeCmd",
     "ScanPrimitivesUnsafe",

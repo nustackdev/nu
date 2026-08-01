@@ -25,7 +25,7 @@ Class attributes on the python `CheckboxRef`. Shipped on `mount` under the field
 | `read`   | server -> tab  | request `null`; resp `bool` | (via `aeval`) | request/response, correlated by `id`. resolves the live value.  |
 | `notify` | tab -> server  | `null`                      | `changed`  | emitted on every user toggle of the box or its label.              |
 
-`CheckboxRef.aeval` ships a `read` via `session.aread` and returns the bool. `CheckboxRef.store(value)` compiles to `write`. `CheckboxRef.changed()` is the standard `Changed` subscription.
+`CheckboxRef.aeval` ships a `read` via `session.aread` and returns the bool. `CheckboxRef.set(value)` compiles to `write`. `CheckboxRef.changed()` is the standard `Changed` subscription.
 
 ## wire payloads
 

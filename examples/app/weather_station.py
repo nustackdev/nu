@@ -57,15 +57,15 @@ def build_tree() -> nu.Nu:
         nu.Race(
             # Producer: seed + generate sensor data
             nu.Sequential(
-                Station.temperature.store(18.0),
-                Station.wind_speed.store(10.0),
-                Dashboard.warnings.store(0),
+                Station.temperature.set(18.0),
+                Station.wind_speed.set(10.0),
+                Dashboard.warnings.set(0),
                 nu.ForRangeDo(
                     0,
                     N_READINGS,
                     nu.Sequential(
-                        Station.temperature.store(Station.temperature + TEMP_DRIFT),
-                        Station.wind_speed.store(Station.wind_speed + WIND_DRIFT),
+                        Station.temperature.set(Station.temperature + TEMP_DRIFT),
+                        Station.wind_speed.set(Station.wind_speed + WIND_DRIFT),
                         nu.Delay(0.02),
                     ),
                 ),
@@ -77,7 +77,7 @@ def build_tree() -> nu.Nu:
                 nu.IfDo(
                     Station.temperature > TEMP_WARN,
                     nu.Sequential(
-                        Dashboard.warnings.store(Dashboard.warnings + 1),
+                        Dashboard.warnings.set(Dashboard.warnings + 1),
                         nu.print("TEMP", Station.temperature),
                     ),
                 ),
@@ -89,7 +89,7 @@ def build_tree() -> nu.Nu:
                 nu.IfDo(
                     Station.wind_speed > WIND_WARN,
                     nu.Sequential(
-                        Dashboard.warnings.store(Dashboard.warnings + 1),
+                        Dashboard.warnings.set(Dashboard.warnings + 1),
                         nu.print("WIND", Station.wind_speed),
                     ),
                 ),

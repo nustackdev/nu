@@ -10,7 +10,7 @@ from nu.domains.shape.interactions import (
     EraseCommand,
     ExistsQuery,
     MissingQuery,
-    StoreCommand,
+    SetCommand,
 )
 from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.refs.item import ItemRef
@@ -123,9 +123,9 @@ def test_mutable_shape_ref_constructs():
     assert ref._payload["shape_type"] is Inner
 
 
-def test_mutable_shape_ref_store_returns_store_command():
+def test_mutable_shape_ref_set_returns_set_command():
     ref = MutableShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.store({"x": 1}), StoreCommand)
+    assert isinstance(ref.set({"x": 1}), SetCommand)
 
 
 def test_mutable_shape_ref_erase_returns_erase_command():
@@ -169,9 +169,9 @@ def test_reactive_shape_ref_on_child_change_returns_action():
     assert isinstance(ref.on_child_change("x"), OnChildChangeQuery)
 
 
-def test_reactive_shape_ref_inherits_store_erase():
+def test_reactive_shape_ref_inherits_set_erase():
     ref = ReactiveShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.store({}), StoreCommand)
+    assert isinstance(ref.set({}), SetCommand)
     assert isinstance(ref.erase(), EraseCommand)
 
 
@@ -230,7 +230,7 @@ def test_shape_ref_getattr_and_getitem_produce_equivalent_refs():
 
 def test_mutable_shape_ref_has_mutable_mapping_surface():
     ref = MutableShapeRef("loc", shape_type=Inner)
-    assert hasattr(ref, "store")
+    assert hasattr(ref, "set")
     assert hasattr(ref, "erase")
     assert hasattr(ref, "keys")
     assert hasattr(ref, "values")

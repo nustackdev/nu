@@ -96,9 +96,9 @@ def build_tracker() -> object:
     """Kept as a function (not a module constant) so the module imports cleanly."""
     return nu.Sequential(
         # Seed
-        SlotData.current.store(Solana.slot()),
-        SlotData.previous.store(SlotData.current),
-        Stats.polls.store(1),
+        SlotData.current.set(Solana.slot()),
+        SlotData.previous.set(SlotData.current),
+        Stats.polls.set(1),
         nu.print("start slot", SlotData.current),
         # Poll + react
         nu.Race(
@@ -108,9 +108,9 @@ def build_tracker() -> object:
                 N_POLLS - 1,
                 nu.Sequential(
                     nu.Delay(POLL_INTERVAL),
-                    SlotData.previous.store(SlotData.current),
-                    SlotData.current.store(Solana.slot()),
-                    Stats.polls.store(Stats.polls + 1),
+                    SlotData.previous.set(SlotData.current),
+                    SlotData.current.set(Solana.slot()),
+                    Stats.polls.set(Stats.polls + 1),
                 ),
             ),
             # Consumer: react to slot changes

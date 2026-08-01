@@ -38,7 +38,7 @@ from .flows import *
 from .forms import *
 from .spans import *
 
-# Shape DSL only; fabric atoms (LoadQuery, StoreCommand, ...) stay at nu.shape.*.
+# Shape DSL only; fabric atoms (LoadQuery, SetCommand, ...) stay at nu.shape.*.
 from .domains.shape import Shape, Slot
 
 # Language essentials (curated; internals stay at nu.lang.*).

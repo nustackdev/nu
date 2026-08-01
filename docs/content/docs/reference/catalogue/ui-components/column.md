@@ -40,7 +40,7 @@ class HomePage(nudle.Page):
 
 
 # server-side handles
-Toolbar.title.store("home")     # writes HomePage.toolbar.title
+Toolbar.title.set("home")     # writes HomePage.toolbar.title
 Toolbar.status.store_label("ok")
 ```
 

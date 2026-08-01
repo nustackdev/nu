@@ -324,8 +324,8 @@ def _persist_tx(ledger: type[Ledger], slot_expr: object) -> object:
     # FIXME: no AtOp/GetItem on AnyAttrRef today; block_index is fed via attrs
     # by the driver before persistence rather than pulled from the tx dict here.
     return nu.Sequential(
-        sc.tx_id.store(slot_expr * TX_ID_MULTIPLIER + nu.IntAttrRef("tx_block_index")),
-        ledger.txs[sc.tx_id].store(tx_ref),
+        sc.tx_id.set(slot_expr * TX_ID_MULTIPLIER + nu.IntAttrRef("tx_block_index")),
+        ledger.txs[sc.tx_id].set(tx_ref),
     )
 
 
@@ -460,8 +460,8 @@ async def main() -> None:
                 # Seed the ledger sets once (idempotent -- init if missing).
                 init = v.Transaction(
                     nu.Sequential(
-                        nu.IfDo(Ledger.slots_synced.missing(), Ledger.slots_synced.store(set())),
-                        nu.IfDo(Ledger.slots_dropped.missing(), Ledger.slots_dropped.store(set())),
+                        nu.IfDo(Ledger.slots_synced.missing(), Ledger.slots_synced.set(set())),
+                        nu.IfDo(Ledger.slots_dropped.missing(), Ledger.slots_dropped.set(set())),
                     ),
                 )
                 init = v.inline_refs(init)

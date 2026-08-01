@@ -40,7 +40,7 @@ Nu methods compile to the same wire ops with different payload subsets:
 - `store_x_label(t)` / `store_y_label(t)` -> `write {"x_label" | "y_label": t}`
 - `store_max_points(n)` -> `write {"max_points": n}`
 - `store_x_format(name)` -> `write {"x_format": name}`
-- `store(points=..., series=..., colors=..., stacked=..., x_label=..., y_label=..., max_points=..., x_format=...)` -> `write` of the present keys
+- `set(points=..., series=..., colors=..., stacked=..., x_label=..., y_label=..., max_points=..., x_format=...)` -> `write` of the present keys
 - `clear()` -> `write {"points": []}`
 - `append(x, *ys)` -> `append [x, *ys]`
 

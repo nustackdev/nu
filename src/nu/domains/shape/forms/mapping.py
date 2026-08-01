@@ -6,7 +6,7 @@ ReactiveMappingForm = generic ReactiveMappingForm + shape MutableMappingForm
                       + shape ReactiveCollectionForm
 
 Each tier composes the matching generic tier with the matching shape tier so the
-Ref sees both the full Python-mapping surface AND the shape existence/store/erase
+Ref sees both the full Python-mapping surface AND the shape existence/set/erase
 surface via a single base class, with no ItemForm needed in the MRO.
 
 The Reactive tier brings together:
@@ -35,7 +35,7 @@ class MappingForm(_MappingForm, CollectionForm):
 
 
 class MutableMappingForm(_MutableMappingForm, MutableCollectionForm):
-    """Mutable shape mapping — key-value ops + exists/missing/extract + store/erase."""
+    """Mutable shape mapping — key-value ops + exists/missing/extract + set/erase."""
 
 
 class ReactiveMappingForm(_ReactiveMappingForm, MutableMappingForm, ReactiveCollectionForm):

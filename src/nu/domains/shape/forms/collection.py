@@ -8,7 +8,7 @@ Three tiers:
 
 These are pure Form mixins — no Ref or substrate knowledge. They sit BETWEEN
 the generic collection forms and the concrete Refs, adding shape-domain ops
-(existence checks, fabric-level store/erase, tree-aware observation) on top of
+(existence checks, fabric-level set/erase, tree-aware observation) on top of
 whatever generic collection surface the Ref already exposes.
 
 ``on_change()`` (observe self) is deliberately absent here — it is generic and
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
         ExistsQuery,
         ExtractQuery,
         MissingQuery,
-        StoreCommand,
+        SetCommand,
     )
 
 
@@ -73,11 +73,11 @@ class CollectionForm(Form):
 class MutableCollectionForm(CollectionForm):
     """Mutable shape collection — read + store + erase."""
 
-    def store(self, value: object) -> StoreCommand:
-        """Return a StoreCommand — write ``value`` to this collection slot."""
-        from nu.domains.shape.interactions import StoreCommand
+    def set(self, value: object) -> SetCommand:
+        """Return a SetCommand — write ``value`` to this collection slot."""
+        from nu.domains.shape.interactions import SetCommand
 
-        return StoreCommand(self, value)
+        return SetCommand(self, value)
 
     def erase(self) -> EraseCommand:
         """Return an EraseCommand — remove this collection slot from the fabric."""

@@ -14,29 +14,29 @@ import nu.std.random as nurandom
 
 
 class Series(nu.Shape):
-    height:  nu.v.IntRef
+    height: nu.v.IntRef
     entries: nu.v.Kh57Ref[int]
 
 
 class Dashboard(nu.ui.Page):
     heading: nu.ui.HeadingRef
-    count:   nu.ui.TextRef
-    chart:   nu.ui.LineChart
-    n:       nu.ui.NumberInputRef
+    count: nu.ui.TextRef
+    chart: nu.ui.LineChart
+    n: nu.ui.NumberInputRef
 
 
 class App(nu.ui.Index):
     title: nu.ui.TitleRef
-    nav:   nu.ui.NavRef
+    nav: nu.ui.NavRef
     pages = nu.ui.Pages({"/": Dashboard})
 
 
 bg = nu.v.Transaction(
-    nu.IfDo(Series.height.missing(), Series.height.store(0)),
+    nu.IfDo(Series.height.missing(), Series.height.set(0)),
 ) >> nu.ForeverDo(
     nu.v.Transaction(
-        Series.entries.set(Series.height, nurandom.randint(0, 100))
-        >> Series.height.store(Series.height + 1),
+        Series.entries.set_item(Series.height, nurandom.randint(0, 100))
+        >> Series.height.set(Series.height + 1),
     )
     >> nu.Delay(0.001),
 )
@@ -55,7 +55,6 @@ ui = (
                 )
             )
             | Dashboard.count.set(nu.StrQuery(Series.height)),
-            
         )
         >> nu.Delay(0.1),
     )

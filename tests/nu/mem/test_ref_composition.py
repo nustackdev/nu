@@ -67,29 +67,29 @@ def test_three_deep_read_sibling_leaf(ctx, data):
 
 
 def test_three_deep_vivification_into_empty(ctx, data):
-    run(Root.mids["m1"].inners["i1"].label.store("deep"), ctx)
+    run(Root.mids["m1"].inners["i1"].label.set("deep"), ctx)
     assert data == {"mids": {"m1": {"inners": {"i1": {"label": "deep"}}}}}
 
 
 def test_three_deep_write_then_read(ctx):
-    run(Root.mids["m1"].inners["i1"].label.store("roundtrip"), ctx)
+    run(Root.mids["m1"].inners["i1"].label.set("roundtrip"), ctx)
     assert run(Root.mids["m1"].inners["i1"].label, ctx)[0] == "roundtrip"
 
 
 def test_write_two_siblings_shares_parent(ctx, data):
-    run(Root.mids["m1"].inners["i1"].label.store("L"), ctx)
-    run(Root.mids["m1"].inners["i1"].count.store(3), ctx)
+    run(Root.mids["m1"].inners["i1"].label.set("L"), ctx)
+    run(Root.mids["m1"].inners["i1"].count.set(3), ctx)
     assert data["mids"]["m1"]["inners"]["i1"] == {"label": "L", "count": 3}
 
 
 def test_leaf_overwrite(ctx):
-    run(Root.mids["m1"].note.store("first"), ctx)
-    run(Root.mids["m1"].note.store("second"), ctx)
+    run(Root.mids["m1"].note.set("first"), ctx)
+    run(Root.mids["m1"].note.set("second"), ctx)
     assert run(Root.mids["m1"].note, ctx)[0] == "second"
 
 
 def test_leaf_erase(ctx, data):
-    run(Root.mids["m1"].note.store("x"), ctx)
+    run(Root.mids["m1"].note.set("x"), ctx)
     run(Root.mids["m1"].note.erase(), ctx)
     assert "note" not in data["mids"]["m1"]
 
@@ -98,7 +98,7 @@ def test_leaf_erase(ctx, data):
 
 
 def test_shape_ref_navigation_roundtrip(ctx):
-    run(Root.info.label.store("via-shape"), ctx)
+    run(Root.info.label.set("via-shape"), ctx)
     assert run(Root.info.label, ctx)[0] == "via-shape"
 
 
@@ -145,7 +145,7 @@ def test_ref_key_on_deep_path(ctx, data):
 
 def test_ref_key_deep_write_then_read(ctx, data):
     data["active"] = "mX"
-    run(Root.mids[Root.active].inners["i1"].label.store("w"), ctx)
+    run(Root.mids[Root.active].inners["i1"].label.set("w"), ctx)
     assert data["mids"]["mX"]["inners"]["i1"]["label"] == "w"
     assert run(Root.mids[Root.active].inners["i1"].label, ctx)[0] == "w"
 
@@ -174,7 +174,7 @@ def test_primitive_dict_navigation_store_read_roundtrip(ctx, data):
 
     bag_data: dict = {}
     bag_ctx = Context().bind(dict, bag_data, Bag)
-    run(Bag.d["k"].store("v"), bag_ctx)
+    run(Bag.d["k"].set("v"), bag_ctx)
     assert bag_data == {"d": {"k": "v"}}
     assert run(Bag.d["k"], bag_ctx)[0] == "v"
 
@@ -188,6 +188,6 @@ def test_primitive_list_navigation_store_read_roundtrip():
 
     bag_data = {"xs": [1, 2, 3]}
     bag_ctx = Context().bind(dict, bag_data, Bag)
-    run(Bag.xs[0].store(9), bag_ctx)
+    run(Bag.xs[0].set(9), bag_ctx)
     assert bag_data["xs"] == [9, 2, 3]
     assert run(Bag.xs[2], bag_ctx)[0] == 3

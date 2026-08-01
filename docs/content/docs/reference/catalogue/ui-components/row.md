@@ -43,7 +43,7 @@ class HomePage(nudle.Page):
 
 
 # server-side handles
-Toolbar.greeting.store("hello")     # writes HomePage.toolbar.greeting
+Toolbar.greeting.set("hello")     # writes HomePage.toolbar.greeting
 HomePage.toolbar.submit.clicked()   # listens on HomePage.toolbar.submit
 ```
 

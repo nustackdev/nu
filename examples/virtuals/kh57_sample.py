@@ -51,7 +51,7 @@ def main() -> None:
             # Load 100_000 entries.
             print("loading 100k entries...")
             for k in range(100_000):
-                run(Ledger.entries.set(k, k * 2), ctx)
+                run(Ledger.entries.set_item(k, k * 2), ctx)
 
             print(f"len = {run(Ledger.entries.len(), ctx)[0]}")
 

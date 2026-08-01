@@ -31,7 +31,7 @@ if TYPE_CHECKING:
         EraseCommand,
         ExistsQuery,
         MissingQuery,
-        StoreCommand,
+        SetCommand,
     )
 
 
@@ -67,17 +67,17 @@ class MutableItemForm(ItemForm):
     """Slot-level write surface — read + store + erase.
 
     Provides (in addition to ItemForm):
-        store(value) → StoreCommand — write value to this slot.
+        store(value) → SetCommand — write value to this slot.
         erase()      → EraseCommand — remove this slot from the fabric.
 
     ``init()`` is absent: IfDo control flow is not yet available.
     """
 
-    def store(self, value: object) -> StoreCommand:
-        """Return a StoreCommand — write ``value`` to this slot."""
-        from nu.domains.shape.interactions import StoreCommand
+    def set(self, value: object) -> SetCommand:
+        """Return a SetCommand — write ``value`` to this slot."""
+        from nu.domains.shape.interactions import SetCommand
 
-        return StoreCommand(self, value)
+        return SetCommand(self, value)
 
     def erase(self) -> EraseCommand:
         """Return an EraseCommand — remove this slot from the fabric."""

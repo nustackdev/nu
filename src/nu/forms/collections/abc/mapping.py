@@ -1,7 +1,7 @@
 """Mapping collection — bases + mutations.
 
-MappingForm = Collection + keys/values/items/get
-MutableMappingForm = Mapping + set/delete/update/pop/popitem/setdefault/clear
+MappingForm = Collection + keys/values/items/get_item
+MutableMappingForm = Mapping + set_item/del_item/update/pop/popitem/setdefault/clear
 
 Follows Python's collections.abc.Mapping / MutableMapping pattern.
 
@@ -12,7 +12,7 @@ Type Parameters:
     CollectionResultT: Wrapped result for collection-level interactions
         (keys, values, items, update)
     ValueResultT: Wrapped result for value-level interactions
-        (get, key_at)
+        (get_item, key_at)
 """
 
 from __future__ import annotations
@@ -99,7 +99,7 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
         return cast("CollectionResultT", self._wrap_items_result(ItemsQuery(self)))
 
-    def get(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
+    def get_item(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Get value with default."""
         from .mapping_interactions import GetQuery
 
@@ -137,13 +137,13 @@ class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
         ValueResultT: Result for value-level interactions (get, pop, setdefault)
     """
 
-    def set(self, key: Arg[KeyT], value: Arg[ValueT]) -> Any:  # noqa: ANN401
+    def set_item(self, key: Arg[KeyT], value: Arg[ValueT]) -> Any:  # noqa: ANN401
         """SetQuery value at key. Mutating Command; returns nothing."""
         from .mapping_interactions import SetItemCommand
 
         return SetItemCommand(self, key, value)
 
-    def delete(self, key: Arg[KeyT]) -> Any:  # noqa: ANN401
+    def del_item(self, key: Arg[KeyT]) -> Any:  # noqa: ANN401
         """Delete entry by key. Mutating Command; returns nothing."""
         from .mapping_interactions import DeleteItemCommand
 

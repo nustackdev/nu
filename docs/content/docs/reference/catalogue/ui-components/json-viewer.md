@@ -35,7 +35,7 @@ Nu method -> wire payload subset:
 - `store_copyable(b)` -> `write {"copyable": b}`
 - `store_sortable(b)` -> `write {"sortable": b}`
 - `store_max_height(px)` -> `write {"max_height": px}` (pass `None` to remove the cap)
-- `store(value, **opts)` -> `write` with `{"value": value}` plus any opt keys explicitly passed
+- `set(value, **opts)` -> `write` with `{"value": value}` plus any opt keys explicitly passed
 
 ## wire payloads
 

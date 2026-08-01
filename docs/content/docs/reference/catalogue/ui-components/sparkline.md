@@ -31,11 +31,11 @@ Nu methods compile to the same wire ops with different payload subsets:
 - `store_color(c)` -> `write {"color": c}`
 - `store_height(n)` -> `write {"height": n}`
 - `store_max_points(n)` -> `write {"max_points": n}`
-- `store(points, color=..., height=..., max_points=...)` -> `write` of the present keys
+- `set(points, color=..., height=..., max_points=...)` -> `write` of the present keys
 - `clear()` -> `write {"points": []}` (convenience; not a new op)
 - `append(x, y)` -> `append [x, y]`
 
-Legacy: `store({"points": [...]})` (first positional arg a dict) still works; the dict is unwrapped to `{"points": ...}`. Flat `[y0, y1, ...]` on `points` is accepted and auto-x'd to `0..n-1`.
+Legacy: `set({"points": [...]})` (first positional arg a dict) still works; the dict is unwrapped to `{"points": ...}`. Flat `[y0, y1, ...]` on `points` is accepted and auto-x'd to `0..n-1`.
 
 ## wire payloads
 

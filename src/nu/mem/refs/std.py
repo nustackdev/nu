@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Self
 
 from nu import FloatForm, IntForm, Nu, StrForm
 from nu.core import FloatQuery, IntQuery, StrQuery
-from nu.domains.shape import Slot, StoreCommand
+from nu.domains.shape import SetCommand, Slot
 from nu.std.cmath import complex as ComplexForm
 from nu.std.datetime import date as DateForm
 from nu.std.datetime import datetime as DatetimeForm
@@ -113,10 +113,10 @@ class DecimalRef(ItemRef, DecimalForm):
 
         return raw if isinstance(raw, DecimalCls) else DecimalCls(raw)  # type: ignore[arg-type]
 
-    def store(self, value: Arg[Decimal | str]) -> StoreCommand:
+    def set(self, value: Arg[Decimal | str]) -> SetCommand:
         """Serialize the Decimal to str, then write it."""
         val = StrQuery(value) if isinstance(value, Nu) else str(value)
-        return StoreCommand(self, val)
+        return SetCommand(self, val)
 
 
 class FractionRef(ItemRef, FractionForm):
@@ -148,10 +148,10 @@ class FractionRef(ItemRef, FractionForm):
 
         return raw if isinstance(raw, FractionCls) else FractionCls(raw)  # type: ignore[arg-type]
 
-    def store(self, value: Arg[Fraction | str]) -> StoreCommand:
+    def set(self, value: Arg[Fraction | str]) -> SetCommand:
         """Serialize the Fraction to str, then write it."""
         val = StrQuery(value) if isinstance(value, Nu) else str(value)
-        return StoreCommand(self, val)
+        return SetCommand(self, val)
 
 
 class ComplexRef(ItemRef, ComplexForm):
@@ -181,10 +181,10 @@ class ComplexRef(ItemRef, ComplexForm):
         """Parse the stored str back to a complex."""
         return raw if isinstance(raw, complex) else complex(raw)  # type: ignore[arg-type]
 
-    def store(self, value: Arg[complex | str]) -> StoreCommand:
+    def set(self, value: Arg[complex | str]) -> SetCommand:
         """Serialize the complex to str, then write it."""
         val = StrQuery(value) if isinstance(value, Nu) else str(value)
-        return StoreCommand(self, val)
+        return SetCommand(self, val)
 
 
 class BasisPointRef(ItemRef, BasisPointForm):
@@ -214,10 +214,10 @@ class BasisPointRef(ItemRef, BasisPointForm):
         """Wrap the stored int back as a BasisPoint."""
         return raw if isinstance(raw, PyBasisPoint) else PyBasisPoint(int(raw))  # type: ignore[arg-type]
 
-    def store(self, value: Arg[PyBasisPoint | int]) -> StoreCommand:
+    def set(self, value: Arg[PyBasisPoint | int]) -> SetCommand:
         """Serialize the BasisPoint to int, then write it."""
         val = IntQuery(value) if isinstance(value, Nu) else int(value)
-        return StoreCommand(self, val)
+        return SetCommand(self, val)
 
 
 class PercentageRef(ItemRef, PercentageForm):
@@ -247,10 +247,10 @@ class PercentageRef(ItemRef, PercentageForm):
         """Wrap the stored float back as a Percentage."""
         return raw if isinstance(raw, PyPercentage) else PyPercentage(float(raw))  # type: ignore[arg-type]
 
-    def store(self, value: Arg[PyPercentage | float]) -> StoreCommand:
+    def set(self, value: Arg[PyPercentage | float]) -> SetCommand:
         """Serialize the Percentage to float, then write it."""
         val = FloatQuery(value) if isinstance(value, Nu) else float(value)
-        return StoreCommand(self, val)
+        return SetCommand(self, val)
 
 
 # =============================================================================
@@ -285,13 +285,13 @@ class DateRef(ItemRef, DateForm):
         """Parse the stored ISO str back to a date."""
         return raw if isinstance(raw, date) else date.fromisoformat(str(raw))
 
-    def store(self, value: Arg[date | str]) -> StoreCommand:
+    def set(self, value: Arg[date | str]) -> SetCommand:
         """Serialize the date to an ISO str, then write it."""
         if isinstance(value, Nu):
             val = StrQuery(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return StoreCommand(self, val)
+        return SetCommand(self, val)
 
 
 class DatetimeRef(ItemRef, DatetimeForm):
@@ -327,13 +327,13 @@ class DatetimeRef(ItemRef, DatetimeForm):
             return datetime.fromtimestamp(raw, tz=UTC)
         return datetime.fromisoformat(str(raw))
 
-    def store(self, value: Arg[datetime | str]) -> StoreCommand:
+    def set(self, value: Arg[datetime | str]) -> SetCommand:
         """Serialize the datetime to an ISO str, then write it."""
         if isinstance(value, Nu):
             val = StrQuery(value)
         else:
             val = value.isoformat() if isinstance(value, datetime) else str(value)
-        return StoreCommand(self, val)
+        return SetCommand(self, val)
 
 
 class TimeRef(ItemRef, TimeForm):
@@ -363,13 +363,13 @@ class TimeRef(ItemRef, TimeForm):
         """Parse the stored ISO str back to a time."""
         return raw if isinstance(raw, time) else time.fromisoformat(str(raw))
 
-    def store(self, value: Arg[time | str]) -> StoreCommand:
+    def set(self, value: Arg[time | str]) -> SetCommand:
         """Serialize the time to an ISO str, then write it."""
         if isinstance(value, Nu):
             val = StrQuery(value)
         else:
             val = value.isoformat() if isinstance(value, time) else str(value)
-        return StoreCommand(self, val)
+        return SetCommand(self, val)
 
 
 class TimedeltaRef(ItemRef, TimedeltaForm):
@@ -399,7 +399,7 @@ class TimedeltaRef(ItemRef, TimedeltaForm):
         """Rebuild the timedelta from the stored total-seconds float."""
         return raw if isinstance(raw, timedelta) else timedelta(seconds=float(raw))  # type: ignore[arg-type]
 
-    def store(self, value: Arg[timedelta | float]) -> StoreCommand:
+    def set(self, value: Arg[timedelta | float]) -> SetCommand:
         """Serialize the timedelta to total-seconds float, then write it."""
         if isinstance(value, Nu):
             val = TimedeltaTotalSeconds(value)
@@ -407,7 +407,7 @@ class TimedeltaRef(ItemRef, TimedeltaForm):
             val = value.total_seconds()
         else:
             val = float(value)
-        return StoreCommand(self, val)
+        return SetCommand(self, val)
 
 
 class TimezoneRef(ItemRef, TimezoneForm):
@@ -437,10 +437,10 @@ class TimezoneRef(ItemRef, TimezoneForm):
         """Parse the stored offset str back to a timezone."""
         return raw if isinstance(raw, timezone) else _parse_timezone(str(raw))
 
-    def store(self, value: Arg[timezone | str]) -> StoreCommand:
+    def set(self, value: Arg[timezone | str]) -> SetCommand:
         """Serialize the timezone to its offset str, then write it."""
         val = StrQuery(value) if isinstance(value, Nu) else str(value)
-        return StoreCommand(self, val)
+        return SetCommand(self, val)
 
 
 # =============================================================================
@@ -477,10 +477,10 @@ class PathRef(ItemRef, PathForm):
 
         return raw if isinstance(raw, PurePath) else PurePath(str(raw))
 
-    def store(self, value: Arg[PurePath | str]) -> StoreCommand:
+    def set(self, value: Arg[PurePath | str]) -> SetCommand:
         """Serialize the Path to str, then write it."""
         val = StrQuery(value) if isinstance(value, Nu) else str(value)
-        return StoreCommand(self, val)
+        return SetCommand(self, val)
 
 
 class UUIDRef(ItemRef, UUIDForm):
@@ -512,7 +512,7 @@ class UUIDRef(ItemRef, UUIDForm):
 
         return raw if isinstance(raw, uuid.UUID) else uuid.UUID(str(raw))
 
-    def store(self, value: Arg[UUID | str]) -> StoreCommand:
+    def set(self, value: Arg[UUID | str]) -> SetCommand:
         """Serialize the UUID to str, then write it."""
         val = StrQuery(value) if isinstance(value, Nu) else str(value)
-        return StoreCommand(self, val)
+        return SetCommand(self, val)

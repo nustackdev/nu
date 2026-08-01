@@ -13,7 +13,7 @@ from nu.domains.shape.interactions import (
     EraseCommand,
     ExistsQuery,
     MissingQuery,
-    StoreCommand,
+    SetCommand,
 )
 from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
 from nu.domains.shape.refs.mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
@@ -104,14 +104,14 @@ def test_mutable_mapping_ref_child_parent_is_self():
     assert m["k"]._parent is m
 
 
-def test_mutable_mapping_ref_has_store():
+def test_mutable_mapping_ref_has_set():
     m = MutableMappingRef("my_map")
-    assert hasattr(m, "store")
+    assert hasattr(m, "set")
 
 
-def test_mutable_mapping_ref_store_returns_store_command():
+def test_mutable_mapping_ref_set_returns_set_command():
     m = MutableMappingRef("my_map")
-    assert isinstance(m.store({"a": 1}), StoreCommand)
+    assert isinstance(m.set({"a": 1}), SetCommand)
 
 
 def test_mutable_mapping_ref_erase_returns_erase_command():
@@ -166,7 +166,7 @@ def test_reactive_mapping_ref_on_descendants_change_returns_action():
     assert isinstance(m.on_descendants_change("a", "b"), OnDescendantsChangeQuery)
 
 
-def test_reactive_mapping_ref_inherits_store_erase():
+def test_reactive_mapping_ref_inherits_set_erase():
     m = ReactiveMappingRef("my_map")
-    assert isinstance(m.store({}), StoreCommand)
+    assert isinstance(m.set({}), SetCommand)
     assert isinstance(m.erase(), EraseCommand)

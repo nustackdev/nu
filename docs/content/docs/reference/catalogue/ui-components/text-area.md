@@ -28,7 +28,7 @@ Class attributes on the python `TextAreaRef`. Shipped on `mount` under the field
 | `read`   | server -> tab  | request `null`; resp `str` | (via `aeval`) | request/response, correlated by `id`. resolves the live value.           |
 | `notify` | tab -> server  | `null`                     | `changed`     | emitted on commit only: blur or cmd-enter / ctrl-enter.                  |
 
-`TextAreaRef.aeval` ships a `read` via `session.aread` and returns the string. `TextAreaRef.store(value)` compiles to `write`. `TextAreaRef.changed()` is the standard `Changed` subscription.
+`TextAreaRef.aeval` ships a `read` via `session.aread` and returns the string. `TextAreaRef.set(value)` compiles to `write`. `TextAreaRef.changed()` is the standard `Changed` subscription.
 
 ## wire payloads
 

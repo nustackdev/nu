@@ -60,7 +60,7 @@ def bag_ctx() -> Context:
 
 
 def _roundtrip(ref, value, ctx):
-    run(ref.store(value), ctx)
+    run(ref.set(value), ctx)
     return run(ref, ctx)[0]
 
 
@@ -163,19 +163,19 @@ def test_uuid_from_string(bag_ctx) -> None:
 
 
 def test_decimal_form_op_through_ref(bag_ctx) -> None:
-    run(Bag.dec.store(Decimal("123.456789")), bag_ctx)
+    run(Bag.dec.set(Decimal("123.456789")), bag_ctx)
     got = run(Bag.dec.quantize(Decimal("0.01")), bag_ctx)[0]
     assert got == Decimal("123.46")
 
 
 def test_basis_point_apply_through_ref(bag_ctx) -> None:
-    run(Bag.bps.store(PyBasisPoint(500)), bag_ctx)
+    run(Bag.bps.set(PyBasisPoint(500)), bag_ctx)
     assert run(Bag.bps.apply(1000), bag_ctx)[0] == 50.0
 
 
 def test_uuid_hex_through_ref(bag_ctx) -> None:
     s = "12345678-1234-5678-1234-567812345678"
-    run(Bag.uid.store(UUID(s)), bag_ctx)
+    run(Bag.uid.set(UUID(s)), bag_ctx)
     assert run(Bag.uid.hex(), bag_ctx)[0] == "12345678123456781234567812345678"
 
 
@@ -183,8 +183,8 @@ def test_uuid_hex_through_ref(bag_ctx) -> None:
 
 
 def test_store_computed_term(bag_ctx) -> None:
-    run(Bag.dec.store(Decimal("100")), bag_ctx)
-    run(Bag.dec.store(Bag.dec + Decimal("1")), bag_ctx)
+    run(Bag.dec.set(Decimal("100")), bag_ctx)
+    run(Bag.dec.set(Bag.dec + Decimal("1")), bag_ctx)
     assert run(Bag.dec, bag_ctx)[0] == Decimal("101")
 
 
@@ -192,9 +192,9 @@ def test_store_computed_term(bag_ctx) -> None:
 
 
 def test_stored_values_are_serialized_primitives(bag_ctx) -> None:
-    run(Bag.dec.store(Decimal("1.5")), bag_ctx)
-    run(Bag.bps.store(PyBasisPoint(500)), bag_ctx)
-    run(Bag.pct.store(PyPercentage(2.5)), bag_ctx)
+    run(Bag.dec.set(Decimal("1.5")), bag_ctx)
+    run(Bag.bps.set(PyBasisPoint(500)), bag_ctx)
+    run(Bag.pct.set(PyPercentage(2.5)), bag_ctx)
     raw = run(Bag.dec, bag_ctx)[1].get(dict, Bag)
     assert raw["dec"] == "1.5"
     assert raw["bps"] == 500
@@ -206,7 +206,7 @@ def test_stored_values_are_serialized_primitives(bag_ctx) -> None:
 
 async def test_async_read_coerces(bag_ctx) -> None:
     dt = datetime(2026, 7, 2, 12, 30, tzinfo=UTC)
-    await arun(Bag.dt.store(dt), bag_ctx)
+    await arun(Bag.dt.set(dt), bag_ctx)
     got = (await arun(Bag.dt, bag_ctx))[0]
     assert got == dt
     assert isinstance(got, datetime)

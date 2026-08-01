@@ -28,7 +28,7 @@ class App(nudle.Index):
         suffix = " | nudle"
 ```
 
-On mount the browser sets `document.title = "home | nudle"`. A later `App.title.store("feed")` sets `document.title = "feed | nudle"`.
+On mount the browser sets `document.title = "home | nudle"`. A later `App.title.set("feed")` sets `document.title = "feed | nudle"`.
 
 ## interactions
 
@@ -77,7 +77,7 @@ Seeded from `props.default` (or `""`) and `props.suffix` (or `""`). `write` coer
 
 - `default` and `suffix` both empty: `mount_props` returns `{}`; no `props` ship; slice seeds as `("", "")`; `document.title` is not touched until a host `write`.
 - `default` non-empty, `suffix` empty: on mount, `document.title = default`.
-- `default` empty, `suffix` non-empty: the auto-seed is skipped, so the title bar does not read like `" | nudle"`. A later `store("home")` produces `"home | nudle"`.
+- `default` empty, `suffix` non-empty: the auto-seed is skipped, so the title bar does not read like `" | nudle"`. A later `set("home")` produces `"home | nudle"`.
 - payload nil on `write`: base becomes `""`. Result: `document.title = suffix` (or `""` when suffix is empty).
 - multi-tab: each tab owns its own slice and its own `document.title`. No cross-tab coordination.
 - re-mount: `dispose` runs; the next mount re-seeds from the new `props`. If the new `default` is empty, the previous `document.title` is left in place.
@@ -85,7 +85,7 @@ Seeded from `props.default` (or `""`) and `props.suffix` (or `""`). `write` coer
 ## non-goals
 
 - no `append`, no `read`, no `notify`. Title is host-owned.
-- no per-page titles via TitleRef itself. TitleRef is structural and lives on Index. A host pattern is to call `App.title.store(...)` on nav changes.
+- no per-page titles via TitleRef itself. TitleRef is structural and lives on Index. A host pattern is to call `App.title.set(...)` on nav changes.
 - no favicon, no head meta. Future structural Refs.
 - no html escaping. `document.title` is text already.
 - no mutation observer on `document.title` in this revision. The `dispose` slot is reserved.

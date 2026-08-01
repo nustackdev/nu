@@ -84,11 +84,11 @@ class IntRef(ItemRef, IntForm):
 
     def inc(self, step: int | Nu = 1) -> NoneForm:
         """Increment in place."""
-        return self.store(self + step)
+        return self.set(self + step)
 
     def dec(self, step: int | Nu = 1) -> NoneForm:
         """Decrement in place."""
-        return self.store(self - step)
+        return self.set(self - step)
 
     @classmethod
     def slot(cls) -> Self:  # type: ignore[override]

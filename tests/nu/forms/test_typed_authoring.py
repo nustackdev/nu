@@ -298,15 +298,15 @@ def test_list_mul_evaluates():
 
 
 def test_dict_get_narrows_to_any_form():
-    assert isinstance(DictAttrRef("d").get("k"), AnyForm)
+    assert isinstance(DictAttrRef("d").get_item("k"), AnyForm)
 
 
 def test_dict_get_evaluates():
-    assert val(DictAttrRef("d").get("x"), ctx(d={"x": 1, "y": 2})) == 1
+    assert val(DictAttrRef("d").get_item("x"), ctx(d={"x": 1, "y": 2})) == 1
 
 
 def test_dict_get_default_evaluates():
-    assert val(DictAttrRef("d").get("z", 99), ctx(d={"x": 1})) == 99
+    assert val(DictAttrRef("d").get_item("z", 99), ctx(d={"x": 1})) == 99
 
 
 def test_dict_keys_evaluates():

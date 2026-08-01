@@ -32,7 +32,7 @@ Four nu methods compile to the same wire op with different payload subsets:
 - `store_delta(text)` -> `write {"delta": text}`
 - `store_trend(name)` -> `write {"trend": name}`
 
-No combined `store(...)` in v1. Atomic multi-field updates can issue multiple frames in order; adding `store(...)` later is non-breaking (same wire op).
+No combined `set(...)` in v1. Atomic multi-field updates can issue multiple frames in order; adding `set(...)` later is non-breaking (same wire op).
 
 ## wire payloads
 
@@ -93,4 +93,4 @@ The protocol-level `value: null` marker is dropped; the domain `value` field tak
 - no auto-derivation of `trend` from `delta`'s sign. Server decides.
 - no icon slot beyond the trend arrow; no per-instance colour overrides.
 - no number / currency formatting on the browser. Server formats.
-- no combined `store(...)` method in v1.
+- no combined `set(...)` method in v1.

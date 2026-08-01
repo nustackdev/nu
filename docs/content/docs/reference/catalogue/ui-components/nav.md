@@ -24,7 +24,7 @@ none. on mount the browser slice seeds `value` from `window.location`. no `mount
 
 Four nu methods compile to the same wire op with different payload shapes:
 
-- `store(uri)` -> `write "<uri>"`. Pushes onto history (bare string shorthand).
+- `set(uri)` -> `write "<uri>"`. Pushes onto history (bare string shorthand).
 - `replace(uri)` -> `write {"action": "replace", "uri": "<uri>"}`. Uses `history.replaceState` -- URL bar updates without growing the back-button stack.
 - `back()` -> `write {"action": "back"}`. Calls `window.history.back()`. The browser will fire `popstate` if the navigation succeeds, which round-trips to the server as a `notify`.
 - `forward()` -> `write {"action": "forward"}`. Calls `window.history.forward()`. Same notify behavior as `back()`.

@@ -12,27 +12,27 @@ class Counter(nu.Shape):
 
 
 class HomePage(nu.ui.Page):
-    heading:  nu.ui.HeadingRef
-    count:    nu.ui.TextRef
-    go_feed:  nu.ui.ButtonRef
+    heading: nu.ui.HeadingRef
+    count: nu.ui.TextRef
+    go_feed: nu.ui.ButtonRef
 
 
 class FeedPage(nu.ui.Page):
-    heading:  nu.ui.HeadingRef
-    history:  nu.ui.LineChart
-    go_home:  nu.ui.ButtonRef
+    heading: nu.ui.HeadingRef
+    history: nu.ui.LineChart
+    go_home: nu.ui.ButtonRef
 
 
 class App(nu.ui.Index):
     title: nu.ui.TitleRef
-    nav:   nu.ui.NavRef
+    nav: nu.ui.NavRef
     pages = nu.ui.Pages({"/": HomePage, "/feed": FeedPage})
 
 
 bg = nu.v.Transaction(
-    nu.IfDo(Counter.value.missing(), Counter.value.store(0)),
+    nu.IfDo(Counter.value.missing(), Counter.value.set(0)),
 ) >> nu.ForeverDo(
-    nu.v.Transaction(Counter.value.store(Counter.value + 1)) >> nu.Delay(1.0),
+    nu.v.Transaction(Counter.value.set(Counter.value + 1)) >> nu.Delay(1.0),
 )
 
 # Both pages tick continuously so nav never tears down state.

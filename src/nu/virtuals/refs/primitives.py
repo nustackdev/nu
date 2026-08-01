@@ -2,7 +2,7 @@
 
 Unlike the decomposing container refs (``ListRef`` / ``DictRef`` / ``SetRef``,
 which fan a container out into per-element storage), these write the whole
-container as one opaque value via ``ItemPrimitiveStoreCmd`` and read it back as
+container as one opaque value via ``ItemPrimitiveSetCmd`` and read it back as
 a plain Python object. Each mixes in the matching collection Form, so the value
 still carries the full list / dict / tuple / set interface.
 
@@ -68,11 +68,11 @@ class PrimitiveListRef[T](ItemRef, ListForm[T]):
         """Return the stored value as a plain list."""
         return raw if isinstance(raw, list) else list(raw)  # type: ignore[arg-type]
 
-    def store(self, value: Arg[list[T]]) -> object:
+    def set(self, value: Arg[list[T]]) -> object:
         """Write the whole list as one primitive blob (no per-index decomposition)."""
-        from ..interactions import ItemPrimitiveStoreCmd
+        from ..interactions import ItemPrimitiveSetCmd
 
-        return ItemPrimitiveStoreCmd(self, value)
+        return ItemPrimitiveSetCmd(self, value)
 
 
 class PrimitiveDictRef[K, V](ItemRef, DictForm[K, V]):
@@ -107,11 +107,11 @@ class PrimitiveDictRef[K, V](ItemRef, DictForm[K, V]):
         """Return the stored value as a plain dict."""
         return raw if isinstance(raw, dict) else dict(raw)  # type: ignore[arg-type]
 
-    def store(self, value: Arg[dict[K, V]]) -> object:
+    def set(self, value: Arg[dict[K, V]]) -> object:
         """Write the whole dict as one primitive blob (no per-key decomposition)."""
-        from ..interactions import ItemPrimitiveStoreCmd
+        from ..interactions import ItemPrimitiveSetCmd
 
-        return ItemPrimitiveStoreCmd(self, value)
+        return ItemPrimitiveSetCmd(self, value)
 
 
 class PrimitiveTupleRef(ItemRef, TupleForm):
@@ -146,11 +146,11 @@ class PrimitiveTupleRef(ItemRef, TupleForm):
         """Return the stored value as a plain tuple."""
         return raw if isinstance(raw, tuple) else tuple(raw)  # type: ignore[arg-type]
 
-    def store(self, value: Arg[tuple]) -> object:
+    def set(self, value: Arg[tuple]) -> object:
         """Write the whole tuple as one primitive blob."""
-        from ..interactions import ItemPrimitiveStoreCmd
+        from ..interactions import ItemPrimitiveSetCmd
 
-        return ItemPrimitiveStoreCmd(self, value)
+        return ItemPrimitiveSetCmd(self, value)
 
 
 class PrimitiveSetRef[T](ItemRef, SetForm[T]):
@@ -185,11 +185,11 @@ class PrimitiveSetRef[T](ItemRef, SetForm[T]):
         """Return the stored value as a plain set."""
         return raw if isinstance(raw, set) else set(raw)  # type: ignore[arg-type]
 
-    def store(self, value: Arg[set[T]]) -> object:
+    def set(self, value: Arg[set[T]]) -> object:
         """Write the whole set as one primitive blob."""
-        from ..interactions import ItemPrimitiveStoreCmd
+        from ..interactions import ItemPrimitiveSetCmd
 
-        return ItemPrimitiveStoreCmd(self, value)
+        return ItemPrimitiveSetCmd(self, value)
 
 
 class PrimitiveFrozenSetRef[T](ItemRef, FrozenSetForm[T]):
@@ -224,8 +224,8 @@ class PrimitiveFrozenSetRef[T](ItemRef, FrozenSetForm[T]):
         """Return the stored value as a plain frozenset."""
         return raw if isinstance(raw, frozenset) else frozenset(raw)  # type: ignore[arg-type]
 
-    def store(self, value: Arg[frozenset[T]]) -> object:
+    def set(self, value: Arg[frozenset[T]]) -> object:
         """Write the whole frozenset as one primitive blob."""
-        from ..interactions import ItemPrimitiveStoreCmd
+        from ..interactions import ItemPrimitiveSetCmd
 
-        return ItemPrimitiveStoreCmd(self, value)
+        return ItemPrimitiveSetCmd(self, value)

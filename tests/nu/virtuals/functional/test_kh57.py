@@ -30,21 +30,21 @@ class Ledger(Shape):
 
 
 def test_put_get(ctx) -> None:
-    run(Ledger.entries.set(42, 100), ctx)
-    assert run(Ledger.entries.get(42), ctx)[0] == 100
+    run(Ledger.entries.set_item(42, 100), ctx)
+    assert run(Ledger.entries.get_item(42), ctx)[0] == 100
 
 
 def test_delete(ctx) -> None:
-    run(Ledger.entries.set(7, 700), ctx)
-    assert run(Ledger.entries.get(7), ctx)[0] == 700
-    run(Ledger.entries.delete(7), ctx)
-    got = run(Ledger.entries.get(7, LiteralQuery(-1)), ctx)[0]
+    run(Ledger.entries.set_item(7, 700), ctx)
+    assert run(Ledger.entries.get_item(7), ctx)[0] == 700
+    run(Ledger.entries.del_item(7), ctx)
+    got = run(Ledger.entries.get_item(7, LiteralQuery(-1)), ctx)[0]
     assert got == -1
 
 
 def test_len_contains(ctx) -> None:
     for k in (1, 42, 999, 8000):
-        run(Ledger.entries.set(k, k * 10), ctx)
+        run(Ledger.entries.set_item(k, k * 10), ctx)
     assert run(Ledger.entries.len(), ctx)[0] == 4
     assert run(Ledger.entries.contains(42), ctx)[0] is True
     assert run(Ledger.entries.contains(3), ctx)[0] is False
@@ -58,7 +58,7 @@ def test_len_contains(ctx) -> None:
 def test_iteration_original_order(ctx) -> None:
     # Insert in scrambled order; iteration should yield ascending int keys.
     for k in (999, 42, 7, 8000, 100):
-        run(Ledger.entries.set(k, str(k)), ctx)
+        run(Ledger.entries.set_item(k, str(k)), ctx)
     keys = list(run(Ledger.entries.keys(), ctx)[0])
     assert keys == [7, 42, 100, 999, 8000]
 
@@ -70,7 +70,7 @@ def test_iteration_original_order(ctx) -> None:
 
 def _load_range(ctx, keys) -> None:
     for k in keys:
-        run(Ledger.entries.set(k, k * 2), ctx)
+        run(Ledger.entries.set_item(k, k * 2), ctx)
 
 
 def test_sample_returns_n(ctx) -> None:
@@ -108,7 +108,7 @@ def test_sample_stability_under_out_of_range_append(ctx) -> None:
     s1 = run(q1, ctx)[0]
     # Append keys outside the queried range [1000, 2000).
     for k in range(10_001, 20_001):
-        run(Ledger.entries.set(k, k * 2), ctx)
+        run(Ledger.entries.set_item(k, k * 2), ctx)
     q2 = Kh57SampleQuery(Ledger.entries, 50, 1_000, 2_000, rng=random.Random(0))
     s2 = run(q2, ctx)[0]
     assert set(s1) == set(s2)

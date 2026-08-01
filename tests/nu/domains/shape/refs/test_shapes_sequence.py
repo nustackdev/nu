@@ -8,7 +8,7 @@ from nu.domains.shape.interactions import (
     EraseCommand,
     ExistsQuery,
     MissingQuery,
-    StoreCommand,
+    SetCommand,
 )
 from nu.domains.shape.refs.item import ItemRef
 from nu.domains.shape.refs.shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
@@ -95,9 +95,9 @@ def test_mutable_shapes_sequence_ref_child_shape_type_matches():
     assert s[0]._payload["shape_type"] is Row
 
 
-def test_mutable_shapes_sequence_ref_store_returns_store_command():
+def test_mutable_shapes_sequence_ref_set_returns_set_command():
     s = MutableShapesSequenceRef("rows", item_shape_type=Row)
-    assert isinstance(s.store([]), StoreCommand)
+    assert isinstance(s.set([]), SetCommand)
 
 
 def test_mutable_shapes_sequence_ref_erase_returns_erase_command():
@@ -130,7 +130,7 @@ def test_reactive_shapes_sequence_ref_on_children_change_returns_action():
     assert isinstance(s.on_children_change(), OnChildrenChangeQuery)
 
 
-def test_reactive_shapes_sequence_ref_inherits_store_erase():
+def test_reactive_shapes_sequence_ref_inherits_set_erase():
     s = ReactiveShapesSequenceRef("rows", item_shape_type=Row)
-    assert isinstance(s.store([]), StoreCommand)
+    assert isinstance(s.set([]), SetCommand)
     assert isinstance(s.erase(), EraseCommand)

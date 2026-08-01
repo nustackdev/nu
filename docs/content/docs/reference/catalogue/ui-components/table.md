@@ -32,7 +32,7 @@ Declared as plain class attributes on the python `TableRef`. They ship once on `
 
 Nu methods compile to wire ops:
 
-- `store(table)` -> `write table` -- `table` is `{"columns"?: [...], "rows"?: [[...], ...]}`.
+- `set(table)` -> `write table` -- `table` is `{"columns"?: [...], "rows"?: [[...], ...]}`.
 - `clear()` -> `write {"rows": []}` -- empties the rows buffer; keeps the current columns.
 - `append(row)` -> `append row` -- row is a list of cells aligned to current columns.
 - `store_sort(column, direction)` -> `write {"sort_column": column, "sort_direction": direction}` -- confirm the active sort on the browser (does not re-sort data; the server is expected to issue a fresh `store` with sorted rows if it wants the data reordered).
@@ -96,10 +96,10 @@ Seeded from `field.props` on mount. `write` merges incoming partial payloads int
 ## sort flow (server is the source of truth)
 
 1. Server mounts the table with `sort_column=""` (or some default) and `sort_direction="asc"`.
-2. Server issues `store(table)` with rows in whatever order it likes.
+2. Server issues `set(table)` with rows in whatever order it likes.
 3. User clicks a header. Browser emits a notify `{sort_column, sort_direction}`. No local data is reordered.
 4. Server receives the notify (via a subscription, e.g. `Changed(table)` or a `row_clicked()` callback that branches on payload shape).
-5. Server decides whether to honor the request. If yes, it issues a fresh `store(table_sorted)` with reordered rows, then `store_sort(column, direction)` to confirm the active state on the browser (or fold both into one write payload that carries `rows`, `sort_column`, `sort_direction` together).
+5. Server decides whether to honor the request. If yes, it issues a fresh `set(table_sorted)` with reordered rows, then `store_sort(column, direction)` to confirm the active state on the browser (or fold both into one write payload that carries `rows`, `sort_column`, `sort_direction` together).
 
 ## edge cases
 

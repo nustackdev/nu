@@ -29,7 +29,7 @@ Four nu methods compile to the same wire op with different payload subsets:
 - `store_value(v)` -> `write {"value": v}`
 - `store_caption(t)` -> `write {"caption": t}`
 - `store_indeterminate(flag)` -> `write {"indeterminate": flag}`
-- `store(value, caption=..., indeterminate=...)` -> `write {"value": value, ...}` (omitted kwargs left out)
+- `set(value, caption=..., indeterminate=...)` -> `write {"value": value, ...}` (omitted kwargs left out)
 
 ## wire payloads
 

@@ -56,7 +56,7 @@ async def test_noop_yields_none_async() -> None:
 
 
 def test_noop_fits_strategy_child() -> None:
-    _validate(Sequential(_S.n.store(1), Noop(), _S.n.store(2)))
+    _validate(Sequential(_S.n.set(1), Noop(), _S.n.set(2)))
 
 
 def test_noop_fits_control_body() -> None:
@@ -79,4 +79,4 @@ def test_noop_rejected_in_value_slot() -> None:
 
 
 def test_noop_rejected_in_control_param() -> None:
-    _rejects(IfDo(Noop(), _S.n.store(1)))
+    _rejects(IfDo(Noop(), _S.n.set(1)))

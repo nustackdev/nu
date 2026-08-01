@@ -132,7 +132,7 @@ print(value_first)  # 3
 
 
 # ---------------------------------------------------------------------------
-# 7. Dict typed ref: .get() and .keys()
+# 7. Dict typed ref: .get_item() and .keys()
 # ---------------------------------------------------------------------------
 
 ctx = Context()
@@ -140,8 +140,8 @@ ctx.attrs["d"] = {"x": 1, "y": 2, "z": 3}
 
 d = DictAttrRef("d")
 
-# .get("x") returns AnyForm wrapping GetQuery(d, "x").
-value_get, _ = run(d.get("x"), ctx)
+# .get_item("x") returns AnyForm wrapping GetQuery(d, "x").
+value_get, _ = run(d.get_item("x"), ctx)
 assert value_get == 1
 print(value_get)  # 1
 

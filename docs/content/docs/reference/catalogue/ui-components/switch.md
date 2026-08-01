@@ -25,7 +25,7 @@ Class attributes on the python `SwitchRef`. The python class uses `default` (not
 | `read`   | server -> tab  | request `null`; resp `bool` | (via `aeval`) | request/response, correlated by `id`; resolves the live value.     |
 | `notify` | tab -> server  | `null`                      | `changed`     | emitted on every user toggle of the switch.                        |
 
-`SwitchRef.aeval` ships a `read` via `session.aread` and returns the bool. `SwitchRef.store(value)` compiles to `write`. `SwitchRef.changed()` is the standard `Changed` subscription.
+`SwitchRef.aeval` ships a `read` via `session.aread` and returns the bool. `SwitchRef.set(value)` compiles to `write`. `SwitchRef.changed()` is the standard `Changed` subscription.
 
 ## wire payloads
 

@@ -27,7 +27,7 @@ Three nu methods compile to the same wire op with different payload subsets:
 
 - `store_label(text)` -> `write {"label": text}`
 - `store_align(side)` -> `write {"align": side}`
-- `store(label, align=...)` -> `write {"label": label, ...}` with `align` included only when passed.
+- `set(label, align=...)` -> `write {"label": label, ...}` with `align` included only when passed.
 
 ## wire payloads
 

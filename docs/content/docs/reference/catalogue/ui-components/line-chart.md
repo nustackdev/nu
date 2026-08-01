@@ -41,12 +41,12 @@ Nu methods compile to the same wire ops with different payload subsets:
 - `store_show_legend(flag)` -> `write {"show_legend": flag}`
 - `store_show_tooltip(flag)` -> `write {"show_tooltip": flag}`
 - `store_palette(colors)` -> `write {"palette": colors}`
-- `store(points=..., series=..., x_label=..., y_label=..., color=..., max_points=..., x_format=..., show_legend=..., show_tooltip=..., palette=...)` -> `write` of the present keys
+- `set(points=..., series=..., x_label=..., y_label=..., color=..., max_points=..., x_format=..., show_legend=..., show_tooltip=..., palette=...)` -> `write` of the present keys
 - `clear()` -> `write {"points": []}` (convenience; not a new op)
 - `append(x, y)` -> `append [x, y]` (single-series)
 - `append_series(name, x, y)` -> `append {"name": name, "x": x, "y": y}` (multi-series)
 
-Legacy: `store({"points": [...]})` (first positional arg a dict) still works; the dict is unwrapped to `{"points": ...}`. Flat `[y0, y1, ...]` on `points` is accepted and auto-x'd to `0..n-1`. Single-series payload (`points`) stays valid -- the chart is backwards compatible.
+Legacy: `set({"points": [...]})` (first positional arg a dict) still works; the dict is unwrapped to `{"points": ...}`. Flat `[y0, y1, ...]` on `points` is accepted and auto-x'd to `0..n-1`. Single-series payload (`points`) stays valid -- the chart is backwards compatible.
 
 ## wire payloads
 

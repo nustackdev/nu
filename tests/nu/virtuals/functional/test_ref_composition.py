@@ -9,8 +9,6 @@ the path resolved at runtime, that key evaluates like any other child.
 
 from __future__ import annotations
 
-import pytest
-
 from nu import EMPTY, Shape, run
 from nu.mem import StrRef as MemStrRef
 from nu.virtuals import IntRef, ShapeRef, ShapesDictRef, ShapesListRef, StrRef
@@ -44,7 +42,7 @@ class MemBag(Shape):
 
 
 def _rt(ref, value, ctx):
-    run(ref.store(value), ctx)
+    run(ref.set(value), ctx)
     return run(ref, ctx)[0]
 
 
@@ -52,31 +50,31 @@ def _rt(ref, value, ctx):
 
 
 def test_three_deep_write_then_read(ctx):
-    run(VRoot.mids["m1"].inners["i1"].label.store("deep"), ctx)
+    run(VRoot.mids["m1"].inners["i1"].label.set("deep"), ctx)
     assert run(VRoot.mids["m1"].inners["i1"].label, ctx)[0] == "deep"
 
 
 def test_three_deep_vivifies_intermediate(ctx):
     # Writing a leaf under empty storage must create the whole chain.
-    run(VRoot.mids["m1"].inners["i1"].count.store(42), ctx)
+    run(VRoot.mids["m1"].inners["i1"].count.set(42), ctx)
     assert run(VRoot.mids["m1"].inners["i1"].count, ctx)[0] == 42
 
 
 def test_sibling_leaves_share_parent(ctx):
-    run(VRoot.mids["m1"].inners["i1"].label.store("L"), ctx)
-    run(VRoot.mids["m1"].inners["i1"].count.store(3), ctx)
+    run(VRoot.mids["m1"].inners["i1"].label.set("L"), ctx)
+    run(VRoot.mids["m1"].inners["i1"].count.set(3), ctx)
     assert run(VRoot.mids["m1"].inners["i1"].label, ctx)[0] == "L"
     assert run(VRoot.mids["m1"].inners["i1"].count, ctx)[0] == 3
 
 
 def test_leaf_overwrite(ctx):
-    run(VRoot.mids["m1"].note.store("first"), ctx)
-    run(VRoot.mids["m1"].note.store("second"), ctx)
+    run(VRoot.mids["m1"].note.set("first"), ctx)
+    run(VRoot.mids["m1"].note.set("second"), ctx)
     assert run(VRoot.mids["m1"].note, ctx)[0] == "second"
 
 
 def test_leaf_erase(ctx):
-    run(VRoot.mids["m1"].note.store("x"), ctx)
+    run(VRoot.mids["m1"].note.set("x"), ctx)
     run(VRoot.mids["m1"].note.erase(), ctx)
     assert run(VRoot.mids["m1"].note, ctx)[0] == EMPTY
 
@@ -92,23 +90,23 @@ def test_shape_ref_navigation_roundtrip(ctx):
 
 
 def test_dynamic_key_from_virtuals_ref(ctx):
-    run(VRoot.active.store("m1"), ctx)
-    run(VRoot.mids["m1"].note.store("found"), ctx)
+    run(VRoot.active.set("m1"), ctx)
+    run(VRoot.mids["m1"].note.set("found"), ctx)
     assert run(VRoot.mids[VRoot.active].note, ctx)[0] == "found"
 
 
 def test_dynamic_key_reflects_updated_source(ctx):
-    run(VRoot.mids["m1"].note.store("one"), ctx)
-    run(VRoot.mids["m2"].note.store("two"), ctx)
-    run(VRoot.active.store("m1"), ctx)
+    run(VRoot.mids["m1"].note.set("one"), ctx)
+    run(VRoot.mids["m2"].note.set("two"), ctx)
+    run(VRoot.active.set("m1"), ctx)
     assert run(VRoot.mids[VRoot.active].note, ctx)[0] == "one"
-    run(VRoot.active.store("m2"), ctx)
+    run(VRoot.active.set("m2"), ctx)
     assert run(VRoot.mids[VRoot.active].note, ctx)[0] == "two"
 
 
 def test_dynamic_key_on_deep_path(ctx):
-    run(VRoot.active.store("m1"), ctx)
-    run(VRoot.mids["m1"].inners["i1"].label.store("nested-dyn"), ctx)
+    run(VRoot.active.set("m1"), ctx)
+    run(VRoot.mids["m1"].inners["i1"].label.set("nested-dyn"), ctx)
     assert run(VRoot.mids[VRoot.active].inners["i1"].label, ctx)[0] == "nested-dyn"
 
 
@@ -118,7 +116,7 @@ def test_dynamic_key_on_deep_path(ctx):
 def test_cross_fabric_mem_ref_as_virtuals_key(ctx):
     mem_data = {"current": "mint1"}
     xctx = ctx.bind(dict, mem_data, MemBag)
-    run(VRoot.mids["mint1"].note.store("creatorX"), xctx)
+    run(VRoot.mids["mint1"].note.set("creatorX"), xctx)
     # The key `MemBag.current` is a *mem* ref inside a *virtuals* chain.
     assert run(VRoot.mids[MemBag.current].note, xctx)[0] == "creatorX"
 
@@ -126,14 +124,14 @@ def test_cross_fabric_mem_ref_as_virtuals_key(ctx):
 def test_cross_fabric_mem_key_on_deep_path(ctx):
     mem_data = {"current": "mint1"}
     xctx = ctx.bind(dict, mem_data, MemBag)
-    run(VRoot.mids["mint1"].inners["i1"].label.store("cc"), xctx)
+    run(VRoot.mids["mint1"].inners["i1"].label.set("cc"), xctx)
     assert run(VRoot.mids[MemBag.current].inners["i1"].label, xctx)[0] == "cc"
 
 
 def test_cross_fabric_mem_key_write_then_read(ctx):
     mem_data = {"current": "mintZ"}
     xctx = ctx.bind(dict, mem_data, MemBag)
-    run(VRoot.mids[MemBag.current].note.store("written"), xctx)
+    run(VRoot.mids[MemBag.current].note.set("written"), xctx)
     assert run(VRoot.mids["mintZ"].note, xctx)[0] == "written"
 
 

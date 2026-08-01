@@ -11,7 +11,7 @@ class Counter(nu.Shape):
 
 tree = nu.With(
     nu.v.presets.memory_navigator(),
-    body=nu.v.Transaction(Counter.value.store(0) >> Counter.value.store(Counter.value + 42))
+    body=nu.v.Transaction(Counter.value.set(0) >> Counter.value.set(Counter.value + 42))
     >> nu.v.Snapshot(nu.print(Counter.value)),
 )
 

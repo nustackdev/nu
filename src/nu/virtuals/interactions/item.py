@@ -5,7 +5,7 @@ ItemPrimitiveGetUnsafe: Read — _unsafe_primitive_read() (single ctx.get).
 ItemPrimitiveSetUnsafeCmd: Write — _unsafe_primitive_write(ensure_exists=True).
 ItemPrimitiveSetUnsafeParentSkipCmd: Write — _unsafe_primitive_write() (full skip).
 ItemPrimitiveDeleteUnsafeCmd: Delete — _unsafe_primitive_delete().
-ItemPrimitiveStoreCmd: Store value via _primitive_write() — bypasses container check.
+ItemPrimitiveSetCmd: Store value via _primitive_write() — bypasses container check.
 
 All named explicitly Unsafe — optimization internals for tree deformers, not
 user-facing APIs. They require virtuals views with UnsafePrimitiveOpsBase in MRO.
@@ -32,9 +32,9 @@ __all__ = [
     "InitItemCmd",
     "ItemPrimitiveDeleteUnsafeCmd",
     "ItemPrimitiveGetUnsafe",
+    "ItemPrimitiveSetCmd",
     "ItemPrimitiveSetUnsafeCmd",
     "ItemPrimitiveSetUnsafeParentSkipCmd",
-    "ItemPrimitiveStoreCmd",
 ]
 
 
@@ -47,7 +47,7 @@ class InitItemCmd(Command):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         def thunk(rt: Runtime) -> None:
@@ -55,7 +55,7 @@ class InitItemCmd(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:
@@ -67,7 +67,7 @@ class InitItemCmd(Command):
 class ItemPrimitiveGetUnsafe(ScalarQuery):
     """Read a primitive value via ``_unsafe_primitive_read`` (single ctx.get)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         def thunk(rt: Runtime) -> object:
@@ -79,7 +79,7 @@ class ItemPrimitiveGetUnsafe(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         async def athunk(rt: Runtime) -> object:
@@ -148,7 +148,7 @@ class ItemPrimitiveDeleteUnsafeCmd(Command):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         def thunk(rt: Runtime) -> None:
@@ -158,7 +158,7 @@ class ItemPrimitiveDeleteUnsafeCmd(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:
@@ -169,12 +169,12 @@ class ItemPrimitiveDeleteUnsafeCmd(Command):
         return athunk
 
 
-class ItemPrimitiveStoreCmd(Command):
+class ItemPrimitiveSetCmd(Command):
     """Store a value via ``_primitive_write()``, bypassing container type checks."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         data_thunk = children[1]
 
@@ -188,7 +188,7 @@ class ItemPrimitiveStoreCmd(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         data_thunk = children[1]
 

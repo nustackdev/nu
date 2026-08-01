@@ -29,7 +29,7 @@ Class attributes on the python `SelectRef`. Shipped on `mount` under the field e
 Nu methods:
 
 - `SelectRef.aeval` ships a `read` via `session.aread`, returns the selected value as `str`.
-- `SelectRef.store(value)` compiles to `write` with a bare string payload.
+- `SelectRef.set(value)` compiles to `write` with a bare string payload.
 - `SelectRef.store_options(opts)` compiles to `write` with `{"options": [...]}`. Accepts strings or dicts; normalized server-side.
 - `SelectRef.changed()` returns a `Changed` subscription driven by inbound `notify` frames.
 

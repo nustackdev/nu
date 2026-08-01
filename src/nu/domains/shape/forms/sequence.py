@@ -31,7 +31,7 @@ class SequenceForm(_SequenceForm, CollectionForm):
 
 
 class MutableSequenceForm(_MutableSequenceForm, MutableCollectionForm):
-    """Mutable shape sequence — ordered-element ops + exists/missing/extract + store/erase."""
+    """Mutable shape sequence — ordered-element ops + exists/missing/extract + set/erase."""
 
 
 class ReactiveSequenceForm(_ReactiveSequenceForm, MutableSequenceForm, ReactiveCollectionForm):

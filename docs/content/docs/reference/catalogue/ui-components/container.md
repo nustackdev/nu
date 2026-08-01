@@ -77,8 +77,8 @@ class HomePage(nudle.Page):
 
 
 # server-side handles
-Panel.status_text.store("ok")   # writes HomePage.panel.status_text
-Panel.progress.store(0.5)
+Panel.status_text.set("ok")   # writes HomePage.panel.status_text
+Panel.progress.set(0.5)
 ```
 
 ## renderer

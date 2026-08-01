@@ -41,7 +41,7 @@ const LINES: Tok[][] = [
   [{ t: '        ),' }],
   [{ t: '    ),' }],
   [{ t: '    body=(' }],
-  [{ t: '        ' }, { c: 'nu', t: 'nu.IfDo' }, { t: '(Counter.value.missing(), Counter.value.store(0))' }],
+  [{ t: '        ' }, { c: 'nu', t: 'nu.IfDo' }, { t: '(Counter.value.missing(), Counter.value.set(0))' }],
   [{ t: '        >> ' }, { c: 'nu', t: 'nu.ForeverDo' }, { t: '(' }],
   [{ t: '            Counter.value.inc() >> ' }, { c: 'nu', t: 'nu.Delay' }, { t: '(1.0),' }],
   [{ t: '        )' }],

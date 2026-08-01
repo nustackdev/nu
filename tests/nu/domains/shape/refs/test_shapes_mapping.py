@@ -8,7 +8,7 @@ from nu.domains.shape.interactions import (
     EraseCommand,
     ExistsQuery,
     MissingQuery,
-    StoreCommand,
+    SetCommand,
 )
 from nu.domains.shape.refs.item import ItemRef
 from nu.domains.shape.refs.shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
@@ -95,9 +95,9 @@ def test_mutable_shapes_mapping_ref_child_shape_type_matches():
     assert m["k"]._payload["shape_type"] is Entry
 
 
-def test_mutable_shapes_mapping_ref_store_returns_store_command():
+def test_mutable_shapes_mapping_ref_set_returns_set_command():
     m = MutableShapesMappingRef("entries", item_shape_type=Entry)
-    assert isinstance(m.store({}), StoreCommand)
+    assert isinstance(m.set({}), SetCommand)
 
 
 def test_mutable_shapes_mapping_ref_erase_returns_erase_command():
@@ -130,7 +130,7 @@ def test_reactive_shapes_mapping_ref_on_child_change_returns_action():
     assert isinstance(m.on_child_change("k"), OnChildChangeQuery)
 
 
-def test_reactive_shapes_mapping_ref_inherits_store_erase():
+def test_reactive_shapes_mapping_ref_inherits_set_erase():
     m = ReactiveShapesMappingRef("entries", item_shape_type=Entry)
-    assert isinstance(m.store({}), StoreCommand)
+    assert isinstance(m.set({}), SetCommand)
     assert isinstance(m.erase(), EraseCommand)

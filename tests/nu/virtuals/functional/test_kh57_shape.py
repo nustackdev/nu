@@ -34,7 +34,7 @@ class Series(Shape):
 
 
 def test_store_and_field_descent(ctx) -> None:
-    run(Series.points.store({100: {"ts_us": 100, "value": 1.5, "label": "a"}}), ctx)
+    run(Series.points.set({100: {"ts_us": 100, "value": 1.5, "label": "a"}}), ctx)
     assert run(Series.points[100].value, ctx)[0] == 1.5
     assert run(Series.points[100].label, ctx)[0] == "a"
     assert run(Series.points[100].ts_us, ctx)[0] == 100
@@ -42,7 +42,7 @@ def test_store_and_field_descent(ctx) -> None:
 
 def test_multiple_shapes_navigate_independently(ctx) -> None:
     run(
-        Series.points.store(
+        Series.points.set(
             {
                 10: {"ts_us": 10, "value": 0.1, "label": "x"},
                 20: {"ts_us": 20, "value": 0.2, "label": "y"},
@@ -56,8 +56,8 @@ def test_multiple_shapes_navigate_independently(ctx) -> None:
 
 
 def test_field_write_updates_persistently(ctx) -> None:
-    run(Series.points.store({42: {"ts_us": 42, "value": 0.0, "label": "orig"}}), ctx)
-    run(Series.points[42].label.store("mutated"), ctx)
+    run(Series.points.set({42: {"ts_us": 42, "value": 0.0, "label": "orig"}}), ctx)
+    run(Series.points[42].label.set("mutated"), ctx)
     assert run(Series.points[42].label, ctx)[0] == "mutated"
     assert run(Series.points[42].ts_us, ctx)[0] == 42
 
@@ -69,10 +69,9 @@ def test_field_write_updates_persistently(ctx) -> None:
 
 def test_keys_yield_original_int_order(ctx) -> None:
     payload = {
-        k: {"ts_us": k, "value": float(k), "label": f"n{k}"}
-        for k in (999, 42, 7, 8000, 100)
+        k: {"ts_us": k, "value": float(k), "label": f"n{k}"} for k in (999, 42, 7, 8000, 100)
     }
-    run(Series.points.store(payload), ctx)
+    run(Series.points.set(payload), ctx)
     keys = list(run(Series.points.keys(), ctx)[0])
     assert keys == [7, 42, 100, 999, 8000]
 
@@ -84,7 +83,7 @@ def test_keys_yield_original_int_order(ctx) -> None:
 
 def _load_series(ctx, keys) -> None:
     payload = {k: {"ts_us": k, "value": float(k), "label": f"n{k}"} for k in keys}
-    run(Series.points.store(payload), ctx)
+    run(Series.points.set(payload), ctx)
 
 
 def test_sample_returns_n_shape_rows(ctx) -> None:

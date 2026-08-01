@@ -28,7 +28,7 @@ Class attributes on the python `InputRef`. Shipped on `mount` under the field en
 | `read`   | server -> tab  | request `null`; resp `str`    | (via `aeval`) | request/response, correlated by `id`. resolves the live value.         |
 | `notify` | tab -> server  | `null`                        | `changed`     | emitted when the user commits a change (blur or Enter).                |
 
-`InputRef.aeval` ships a `read` via `session.aread` and returns the string. `InputRef.store(value)` compiles to `write`. `InputRef.changed()` is the standard `Changed` subscription.
+`InputRef.aeval` ships a `read` via `session.aread` and returns the string. `InputRef.set(value)` compiles to `write`. `InputRef.changed()` is the standard `Changed` subscription.
 
 ## wire payloads
 

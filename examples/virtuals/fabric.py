@@ -6,7 +6,7 @@ preset factory (here ``rocksdb_storage``) opens the store, a
 context binds both, type-first, at the root and per shape.
 
 Values land on disk through the binary codec, so reads go through async
-views: ``arun`` drives the whole thing. Writes use the ``.store(...)``
+views: ``arun`` drives the whole thing. Writes use the ``.set(...)``
 command. Two shapes below, five expressions each. Every entry prints the
 run result, the term type, and the expression itself - so you can see each
 one is a typed Nu term, not a bare value.
@@ -73,9 +73,9 @@ async def main() -> None:
         with storage.transaction() as tx:
             # --- Order: populate, then five expressions ---
             order = scoped(nav, tx, Order)
-            await arun(Order.symbol.store("AAPL"), order)
-            await arun(Order.price.store(185.5), order)
-            await arun(Order.qty.store(10), order)
+            await arun(Order.symbol.set("AAPL"), order)
+            await arun(Order.price.set(185.5), order)
+            await arun(Order.qty.set(10), order)
 
             # 1. Read a primitive back through a view.
             e1 = Order.symbol
@@ -93,18 +93,18 @@ async def main() -> None:
             e4 = Order.qty + 5
             print((await arun(e4, order))[0], type(e4), e4)
 
-            # 5. A store command - now a typed StoreCommand, not a bare object.
-            e5 = Order.symbol.store("MSFT")
+            # 5. A store command - now a typed SetCommand, not a bare object.
+            e5 = Order.symbol.set("MSFT")
             print((await arun(e5, order))[0], type(e5), e5)
 
             # --- Portfolio: populate, then five expressions ---
             pf = scoped(nav, tx, Portfolio)
-            await arun(Portfolio.name.store("Main"), pf)
-            await arun(Portfolio.tags.store(["alpha", "beta", "gamma"]), pf)
-            await arun(Portfolio.metadata.store({"strategy": "momentum", "risk": "medium"}), pf)
-            await arun(Portfolio.members.store({"alice", "bob"}), pf)
+            await arun(Portfolio.name.set("Main"), pf)
+            await arun(Portfolio.tags.set(["alpha", "beta", "gamma"]), pf)
+            await arun(Portfolio.metadata.set({"strategy": "momentum", "risk": "medium"}), pf)
+            await arun(Portfolio.members.set({"alice", "bob"}), pf)
             await arun(
-                Portfolio.orders.store(
+                Portfolio.orders.set(
                     [
                         {"symbol": "AAPL", "price": 185.5, "qty": 10},
                         {"symbol": "GOOG", "price": 142.3, "qty": 5},
@@ -118,7 +118,7 @@ async def main() -> None:
             print((await arun(p1, pf))[0], type(p1), p1)
 
             # 2. Look a value up in a dict ref by key.
-            p2 = Portfolio.metadata.get("strategy")
+            p2 = Portfolio.metadata.get_item("strategy")
             print((await arun(p2, pf))[0], type(p2), p2)
 
             # 3. Set ref union against a plain set.

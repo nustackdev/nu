@@ -94,8 +94,8 @@ def test_dict_reads():
     assert val(DictForm({"a": 1, "b": 2}).keys()) == {"a", "b"} or list(
         val(DictForm({"a": 1, "b": 2}).keys())
     ) == ["a", "b"]
-    assert val(DictForm({"a": 1}).get("a")) == 1
-    assert val(DictForm({"a": 1}).get("z", 9)) == 9
+    assert val(DictForm({"a": 1}).get_item("a")) == 1
+    assert val(DictForm({"a": 1}).get_item("z", 9)) == 9
     assert val(DictForm({"a": 1}).setdefault("b", 5)) == 5
 
 
@@ -122,9 +122,9 @@ def test_list_mutation_commands_yield_nothing():
 
 
 def test_dict_mutation_commands_yield_nothing():
-    # set/delete/update are Commands; they yield nothing.
-    assert val(DictForm({"a": 1}).set("b", 2)) is None
-    assert val(DictForm({"a": 1, "b": 2}).delete("a")) is None
+    # set_item/del_item/update are Commands; they yield nothing.
+    assert val(DictForm({"a": 1}).set_item("b", 2)) is None
+    assert val(DictForm({"a": 1, "b": 2}).del_item("a")) is None
     assert val(DictForm({"a": 1}).update(LiteralQuery({"b": 2}))) is None
     # pop is an Action: it yields the popped value.
     assert val(DictForm({"a": 1, "b": 2}).pop("a")) == 1
@@ -157,7 +157,7 @@ def test_async_mirrors_sync():
         assert await aval(StrForm("hi").upper()) == "HI"
         # append is a Command: yields nothing (None) on the async path too.
         assert await aval(ListForm([1, 2]).append(3)) is None
-        assert await aval(DictForm({"a": 1}).get("a")) == 1
+        assert await aval(DictForm({"a": 1}).get_item("a")) == 1
         assert await aval(SetForm({1, 2}).union(LiteralQuery({3}))) == {1, 2, 3}
 
     asyncio.run(go())

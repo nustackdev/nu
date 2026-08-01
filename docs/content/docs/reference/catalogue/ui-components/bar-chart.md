@@ -34,11 +34,11 @@ Nu methods compile to the same wire ops with different payload subsets:
 - `store_color(c)` -> `write {"color": c}`
 - `store_orientation(name)` -> `write {"orientation": name}`
 - `store_max_bars(n)` -> `write {"max_bars": n}`
-- `store(bars, x_label=..., y_label=..., color=..., orientation=..., max_bars=...)` -> `write` of the present keys
+- `set(bars, x_label=..., y_label=..., color=..., orientation=..., max_bars=...)` -> `write` of the present keys
 - `clear()` -> `write {"bars": []}` (convenience; not a new op)
 - `append(category, value)` -> `append [category, value]`
 
-Legacy / shape tolerance on `bars`: `store({"bars": [...]})` (first positional arg a dict) still works; the dict is unwrapped. A flat list of values `[v0, v1, ...]` is accepted and auto-categorised to `"0".."n-1"`. A list of `{label, value}` maps is also accepted.
+Legacy / shape tolerance on `bars`: `set({"bars": [...]})` (first positional arg a dict) still works; the dict is unwrapped. A flat list of values `[v0, v1, ...]` is accepted and auto-categorised to `"0".."n-1"`. A list of `{label, value}` maps is also accepted.
 
 ## wire payloads
 

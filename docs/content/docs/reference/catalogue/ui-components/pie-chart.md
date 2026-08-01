@@ -38,11 +38,11 @@ Nu methods compile to the same wire ops with different payload subsets:
 - `store_inner_radius(f)` -> `write {"inner_radius": f}`
 - `store_show_labels(b)` / `store_show_legend(b)` -> `write {"show_labels" | "show_legend": b}`
 - `store_total_label(t)` -> `write {"total_label": t}`
-- `store(slices=..., colors=..., inner_radius=..., show_labels=..., show_legend=..., total_label=...)` -> `write` of the present keys
+- `set(slices=..., colors=..., inner_radius=..., show_labels=..., show_legend=..., total_label=...)` -> `write` of the present keys
 - `clear()` -> `write {"slices": []}` (convenience; not a new op)
 - `append(label, value)` -> `append [label, value]`
 
-Legacy parity with LineChart: `store({"slices": [...]})` (first positional arg a dict containing `slices`) unwraps to `{"slices": ...}`. A flat `[v0, v1, ...]` on `slices` is accepted and auto-labeled to `"0".."n-1"` strings.
+Legacy parity with LineChart: `set({"slices": [...]})` (first positional arg a dict containing `slices`) unwraps to `{"slices": ...}`. A flat `[v0, v1, ...]` on `slices` is accepted and auto-labeled to `"0".."n-1"` strings.
 
 ## wire payloads
 

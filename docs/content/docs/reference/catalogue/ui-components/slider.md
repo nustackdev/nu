@@ -29,7 +29,7 @@ Class attributes on the python `SliderRef`. Shipped on `mount` under the field e
 | `read`   | server -> tab  | request `null`; resp `float`  | (via `aeval`)        | request/response correlated by `id`. resolves the live value.      |
 | `notify` | tab -> server  | `null`                        | `changed`            | emitted on slider release (pointerup, blur, Enter, arrow keyup).   |
 
-`SliderRef.aeval` ships a `read` via `session.aread` and returns the number. `SliderRef.store(value)` compiles to `write` (scalar form when only `value` is passed, map form otherwise). `SliderRef.changed()` is the standard `Changed` subscription.
+`SliderRef.aeval` ships a `read` via `session.aread` and returns the number. `SliderRef.set(value)` compiles to `write` (scalar form when only `value` is passed, map form otherwise). `SliderRef.changed()` is the standard `Changed` subscription.
 
 ## wire payloads
 

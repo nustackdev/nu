@@ -27,7 +27,7 @@ Three nu methods compile to the same wire op with different payload subsets:
 
 - `store_label(text)` -> `write {"label": text}`
 - `store_variant(name)` -> `write {"variant": name}`
-- `store(label, variant=...)` -> `write {"label": label, "variant": variant}` (variant omitted if not passed)
+- `set(label, variant=...)` -> `write {"label": label, "variant": variant}` (variant omitted if not passed)
 
 ## wire payloads
 

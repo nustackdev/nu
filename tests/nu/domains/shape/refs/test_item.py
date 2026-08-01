@@ -8,7 +8,7 @@ from nu.domains.shape.interactions import (
     EraseCommand,
     ExistsQuery,
     MissingQuery,
-    StoreCommand,
+    SetCommand,
 )
 from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
@@ -81,15 +81,15 @@ def test_mutable_item_ref_constructs():
     assert ref._children
 
 
-def test_mutable_item_ref_has_store():
+def test_mutable_item_ref_has_set():
     ref = MutableItemRef("field")
-    assert hasattr(ref, "store")
+    assert hasattr(ref, "set")
 
 
-def test_mutable_item_ref_store_returns_store_command():
+def test_mutable_item_ref_set_returns_set_command():
     ref = MutableItemRef("field")
-    result = ref.store(42)
-    assert isinstance(result, StoreCommand)
+    result = ref.set(42)
+    assert isinstance(result, SetCommand)
 
 
 def test_mutable_item_ref_has_erase():
@@ -148,9 +148,9 @@ def test_reactive_item_ref_on_change_carries_self_as_slot_zero():
     assert result._children[0] is ref
 
 
-def test_reactive_item_ref_inherits_store_erase():
+def test_reactive_item_ref_inherits_set_erase():
     ref = ReactiveItemRef("field")
-    assert isinstance(ref.store("v"), StoreCommand)
+    assert isinstance(ref.set("v"), SetCommand)
     assert isinstance(ref.erase(), EraseCommand)
 
 

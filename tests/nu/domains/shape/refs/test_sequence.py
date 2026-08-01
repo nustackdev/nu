@@ -8,7 +8,7 @@ from nu.domains.shape.interactions import (
     EraseCommand,
     ExistsQuery,
     MissingQuery,
-    StoreCommand,
+    SetCommand,
 )
 from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
 from nu.domains.shape.refs.sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
@@ -90,9 +90,9 @@ def test_mutable_sequence_ref_child_parent_is_self():
     assert s[0]._parent is s
 
 
-def test_mutable_sequence_ref_store_returns_store_command():
+def test_mutable_sequence_ref_set_returns_set_command():
     s = MutableSequenceRef("my_seq")
-    assert isinstance(s.store([1, 2, 3]), StoreCommand)
+    assert isinstance(s.set([1, 2, 3]), SetCommand)
 
 
 def test_mutable_sequence_ref_erase_returns_erase_command():
@@ -135,7 +135,7 @@ def test_reactive_sequence_ref_on_children_change_returns_action():
     assert isinstance(s.on_children_change(), OnChildrenChangeQuery)
 
 
-def test_reactive_sequence_ref_inherits_store_erase():
+def test_reactive_sequence_ref_inherits_set_erase():
     s = ReactiveSequenceRef("my_seq")
-    assert isinstance(s.store([]), StoreCommand)
+    assert isinstance(s.set([]), SetCommand)
     assert isinstance(s.erase(), EraseCommand)

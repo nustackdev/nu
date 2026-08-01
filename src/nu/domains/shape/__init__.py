@@ -3,7 +3,7 @@
 Public surface:
 - ``Shape``, ``ShapeMeta``, ``Slot``, ``SlotDescriptor`` — the DSL.
 - 21 Ref blueprints for structural navigation and substrate extension (7 families x 3 tiers).
-- ``StoreCommand``, ``EraseCommand`` — slot-level write commands.
+- ``SetCommand``, ``EraseCommand`` — slot-level write commands.
 - ``LoadQuery``, ``ExistsQuery``, ``MissingQuery``, ``ExtractQuery``,
   ``AdvanceCursorQuery`` — slot-level read queries.
 
@@ -23,8 +23,8 @@ from .interactions import (
     ExtractQuery,
     LoadQuery,
     MissingQuery,
-    PrimitiveStoreCommand,
-    StoreCommand,
+    PrimitiveSetCommand,
+    SetCommand,
 )
 from .refs import (
     ItemRef,
@@ -76,7 +76,7 @@ __all__ = [
     "MutableShapesMappingRef",
     # ShapesSequence Refs
     "MutableShapesSequenceRef",
-    "PrimitiveStoreCommand",
+    "PrimitiveSetCommand",
     "ReactiveItemRef",
     "ReactiveMappingRef",
     "ReactiveSequenceRef",
@@ -85,6 +85,7 @@ __all__ = [
     "ReactiveShapesMappingRef",
     "ReactiveShapesSequenceRef",
     "SequenceRef",
+    "SetCommand",
     "SetRef",
     # DSL
     "Shape",
@@ -94,5 +95,4 @@ __all__ = [
     "ShapesSequenceRef",
     "Slot",
     "SlotDescriptor",
-    "StoreCommand",
 ]

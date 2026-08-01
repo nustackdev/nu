@@ -13,15 +13,15 @@ class Counter(nu.Shape):
 
 class Dashboard(nu.ui.Page):
     heading: nu.ui.HeadingRef
-    count:   nu.ui.TextRef
+    count: nu.ui.TextRef
     history: nu.ui.LineChart
-    name:    nu.ui.InputRef
-    greet:   nu.ui.ButtonRef
+    name: nu.ui.InputRef
+    greet: nu.ui.ButtonRef
 
 
 class App(nu.ui.Index):
     title: nu.ui.TitleRef
-    nav:   nu.ui.NavRef
+    nav: nu.ui.NavRef
     pages = nu.ui.Pages({"/": Dashboard})
 
 
@@ -44,9 +44,9 @@ ui = (
 )
 
 bg = nu.v.Transaction(
-    nu.IfDo(Counter.value.missing(), Counter.value.store(0)),
+    nu.IfDo(Counter.value.missing(), Counter.value.set(0)),
 ) >> nu.ForeverDo(
-    nu.v.Transaction(Counter.value.store(Counter.value + 1)) >> nu.Delay(1.0),
+    nu.v.Transaction(Counter.value.set(Counter.value + 1)) >> nu.Delay(1.0),
 )
 
 tree = nu.With(

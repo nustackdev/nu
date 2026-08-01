@@ -28,7 +28,7 @@ Class attributes on `TagInputRef`. Shipped in `mount_props()` under the field en
 | `read`   | server -> tab  | request `null`, response `list[str]` | (via `aeval`) | request/response, correlated by `id`. returns the committed list.      |
 | `notify` | tab -> server  | `null`                               | `changed`     | fires whenever the committed list changes (commit, x-click, backspace).|
 
-`TagInputRef.aeval` ships a `read` via `session.aread`. `TagInputRef.store(value)` compiles to `write`. `TagInputRef.changed()` is the standard `Changed` subscription.
+`TagInputRef.aeval` ships a `read` via `session.aread`. `TagInputRef.set(value)` compiles to `write`. `TagInputRef.changed()` is the standard `Changed` subscription.
 
 ## wire payloads
 

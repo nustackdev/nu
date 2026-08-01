@@ -31,7 +31,7 @@ class SetLikeForm(_SetLikeForm, CollectionForm):
 
 
 class MutableSetForm(_MutableSetForm, MutableCollectionForm):
-    """Mutable shape set — set ops + exists/missing/extract + store/erase."""
+    """Mutable shape set — set ops + exists/missing/extract + set/erase."""
 
 
 class ReactiveSetForm(_ReactiveSetForm, MutableSetForm, ReactiveCollectionForm):

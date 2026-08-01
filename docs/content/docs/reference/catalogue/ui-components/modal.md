@@ -33,7 +33,7 @@ Mutators compile to the same `write` op with different payload subsets:
 
 - `store_open(flag)` -> `write {"open": flag}`
 - `store_title(text)` -> `write {"title": text}`
-- `store(open=..., title=...)` -> `write {...}` with only keys passed
+- `set(open=..., title=...)` -> `write {...}` with only keys passed
 - `changed()` -> `Changed` subscription on `notify`
 
 `dismissible` is mount-time only; not editable at runtime in v0.1.0. The

@@ -19,9 +19,9 @@ from .item import (
     InitItemCmd,
     ItemPrimitiveDeleteUnsafeCmd,
     ItemPrimitiveGetUnsafe,
+    ItemPrimitiveSetCmd,
     ItemPrimitiveSetUnsafeCmd,
     ItemPrimitiveSetUnsafeParentSkipCmd,
-    ItemPrimitiveStoreCmd,
 )
 from .kh57 import Kh57RangeQuery, Kh57SampleQuery
 
@@ -33,9 +33,9 @@ __all__ = [
     "InitItemCmd",
     "ItemPrimitiveDeleteUnsafeCmd",
     "ItemPrimitiveGetUnsafe",
+    "ItemPrimitiveSetCmd",
     "ItemPrimitiveSetUnsafeCmd",
     "ItemPrimitiveSetUnsafeParentSkipCmd",
-    "ItemPrimitiveStoreCmd",
     "Kh57RangeQuery",
     "Kh57SampleQuery",
     "RetryOnConflict",

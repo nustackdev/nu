@@ -32,7 +32,7 @@ Nu methods compile to the same `write` op with different payload subsets:
 - `store_title(text)` -> `write {"title": text}`
 - `store_body(text)` -> `write {"body": text}`
 - `store_dismissible(flag)` -> `write {"dismissible": flag}`
-- `store(title, body=..., variant=..., dismissible=...)` -> `write {...}` with only keys passed
+- `set(title, body=..., variant=..., dismissible=...)` -> `write {...}` with only keys passed
 - `dismissed()` -> `Changed` subscription on `notify`
 
 ## wire payloads

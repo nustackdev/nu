@@ -34,7 +34,7 @@ Nu methods compile to the same wire op with different payload subsets:
 - `store_fit(mode)` -> `write {"fit": mode}`
 - `store_size(width, height)` -> `write {"width": width, "height": height}`
 - `store_rounded(flag)` -> `write {"rounded": flag}`
-- `store(src, alt=..., fit=..., width=..., height=..., rounded=...)` -> `write` with all non-`None` kwargs
+- `set(src, alt=..., fit=..., width=..., height=..., rounded=...)` -> `write` with all non-`None` kwargs
 
 ## wire payloads
 

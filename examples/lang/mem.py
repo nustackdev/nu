@@ -56,8 +56,8 @@ print(run(e3, order_ctx)[0], type(e3), e3)
 e4 = Order.qty + 5
 print(run(e4, order_ctx)[0], type(e4), e4)
 
-# 5. A store command - now a typed StoreCommand, not a bare object.
-e5 = Order.symbol.store("MSFT")
+# 5. A store command - now a typed SetCommand, not a bare object.
+e5 = Order.symbol.set("MSFT")
 print(run(e5, order_ctx)[0], type(e5), e5)
 
 
@@ -91,7 +91,7 @@ p1 = Portfolio.tags.first_elem()
 print(run(p1, portfolio_ctx)[0], type(p1), p1)
 
 # 2. Look a value up in a dict ref by key.
-p2 = Portfolio.metadata.get("strategy")
+p2 = Portfolio.metadata.get_item("strategy")
 print(run(p2, portfolio_ctx)[0], type(p2), p2)
 
 # 3. Set ref union against a plain set.

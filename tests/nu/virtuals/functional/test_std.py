@@ -52,7 +52,7 @@ class Bag(Shape):
 
 
 def _roundtrip(ref, value, ctx):
-    run(ref.store(value), ctx)
+    run(ref.set(value), ctx)
     return run(ref, ctx)[0]
 
 
@@ -155,19 +155,19 @@ def test_uuid_from_string(ctx) -> None:
 
 
 def test_decimal_form_op_through_ref(ctx) -> None:
-    run(Bag.dec.store(Decimal("123.456789")), ctx)
+    run(Bag.dec.set(Decimal("123.456789")), ctx)
     got = run(Bag.dec.quantize(Decimal("0.01")), ctx)[0]
     assert got == Decimal("123.46")
 
 
 def test_basis_point_apply_through_ref(ctx) -> None:
-    run(Bag.bps.store(PyBasisPoint(500)), ctx)
+    run(Bag.bps.set(PyBasisPoint(500)), ctx)
     assert run(Bag.bps.apply(1000), ctx)[0] == 50.0
 
 
 def test_uuid_hex_through_ref(ctx) -> None:
     s = "12345678-1234-5678-1234-567812345678"
-    run(Bag.uid.store(UUID(s)), ctx)
+    run(Bag.uid.set(UUID(s)), ctx)
     assert run(Bag.uid.hex(), ctx)[0] == "12345678123456781234567812345678"
 
 
@@ -175,8 +175,8 @@ def test_uuid_hex_through_ref(ctx) -> None:
 
 
 def test_store_computed_term(ctx) -> None:
-    run(Bag.dec.store(Decimal("100")), ctx)
-    run(Bag.dec.store(Bag.dec + Decimal("1")), ctx)
+    run(Bag.dec.set(Decimal("100")), ctx)
+    run(Bag.dec.set(Bag.dec + Decimal("1")), ctx)
     assert run(Bag.dec, ctx)[0] == Decimal("101")
 
 
@@ -185,7 +185,7 @@ def test_store_computed_term(ctx) -> None:
 
 async def test_async_read_coerces(ctx) -> None:
     dt = datetime(2026, 7, 2, 12, 30, tzinfo=UTC)
-    await arun(Bag.dt.store(dt), ctx)
+    await arun(Bag.dt.set(dt), ctx)
     got = (await arun(Bag.dt, ctx))[0]
     assert got == dt
     assert isinstance(got, datetime)

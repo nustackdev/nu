@@ -60,7 +60,7 @@ app = nu.With(
         ),
     ),
     body=(
-        nu.IfDo(Counter.value.missing(), Counter.value.store(0))
+        nu.IfDo(Counter.value.missing(), Counter.value.set(0))
         >> nu.ForeverDo(
             Counter.value.inc() >> nu.Delay(1.0),
         )

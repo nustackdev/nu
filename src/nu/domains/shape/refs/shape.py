@@ -7,7 +7,7 @@
 A Shape is structurally a mapping (dict[str, object]).  Using the shape-domain
 ``MappingForm`` (which already weaves generic MappingForm + shape CollectionForm)
 gives all 3 tiers the full mapping surface (keys/values/items/extract/__getitem__,
-len, contains) PLUS shape ops (exists/missing/store/erase), without a separate
+len, contains) PLUS shape ops (exists/missing/set/erase), without a separate
 ItemForm in the MRO.
 
 Slot navigation is available two ways:

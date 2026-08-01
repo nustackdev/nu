@@ -44,10 +44,10 @@ class Anchor(Ref):
     backs every chain root.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return lambda rt: EMPTY
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             return EMPTY
 
@@ -135,7 +135,7 @@ class StructuredRef(Ref):
 
         Override in substrates that support primitive-blob storage
         (e.g. PrimitiveDictRef, PrimitiveListRef, PrimitiveSetRef).
-        Called by ``PrimitiveStoreCommand``.
+        Called by ``PrimitiveSetCommand``.
         """
         msg = f"{type(self).__name__}._primitive_write is not implemented"
         raise NotImplementedError(msg)

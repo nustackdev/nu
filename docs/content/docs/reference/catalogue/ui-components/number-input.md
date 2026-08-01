@@ -29,7 +29,7 @@ Class attributes on the python `NumberInputRef`. Shipped on `mount` under the fi
 | `read`   | server -> tab  | request `null`; resp `float`  | (via `aeval`)  | request/response correlated by `id`.                                   |
 | `notify` | tab -> server  | `null`                        | `changed`      | emitted on commit (blur, Enter, stepper click).                        |
 
-`NumberInputRef.aeval` ships a `read` via `session.aread` and returns the number. `NumberInputRef.store(value)` compiles to `write` (scalar form when only `value` is passed, map form when other kwargs are present). `NumberInputRef.changed()` is the standard `Changed` subscription.
+`NumberInputRef.aeval` ships a `read` via `session.aread` and returns the number. `NumberInputRef.set(value)` compiles to `write` (scalar form when only `value` is passed, map form when other kwargs are present). `NumberInputRef.changed()` is the standard `Changed` subscription.
 
 ## wire payloads
 

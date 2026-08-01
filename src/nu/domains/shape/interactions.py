@@ -8,7 +8,7 @@ Read queries (polymorphic on Ref class):
 - ``AdvanceCursorQuery`` - read the next key after the cursor on an ordered view.
 
 Write commands (polymorphic on Ref class):
-- ``StoreCommand`` - write the slot-1 value to the slot-0 Ref's address.
+- ``SetCommand`` - write the slot-1 value to the slot-0 Ref's address.
 - ``EraseCommand``  - remove the slot-0 Ref from its fabric.
 
 The Item/Collection split is dropped; the substrate optimizer matches on
@@ -41,8 +41,8 @@ __all__ = [
     "ExtractQuery",
     "LoadQuery",
     "MissingQuery",
-    "PrimitiveStoreCommand",
-    "StoreCommand",
+    "PrimitiveSetCommand",
+    "SetCommand",
 ]
 
 
@@ -54,7 +54,7 @@ __all__ = [
 class LoadQuery(ScalarQuery):
     """Yield the value at the slot-0 Ref; EMPTY if the address is unbound."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref_thunk = children[0]
 
         def thunk(rt: Runtime) -> object:
@@ -62,7 +62,7 @@ class LoadQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref_thunk = children[0]
 
         async def athunk(rt: Runtime) -> object:
@@ -74,7 +74,7 @@ class LoadQuery(ScalarQuery):
 class ExistsQuery(ScalarQuery):
     """Yield True if the slot-0 Ref's address is bound (value is not a sentinel)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref_thunk = children[0]
 
         def thunk(rt: Runtime) -> bool:
@@ -83,7 +83,7 @@ class ExistsQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref_thunk = children[0]
 
         async def athunk(rt: Runtime) -> bool:
@@ -96,7 +96,7 @@ class ExistsQuery(ScalarQuery):
 class MissingQuery(ScalarQuery):
     """Yield True if the slot-0 Ref's address is unbound (value is a sentinel)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref_thunk = children[0]
 
         def thunk(rt: Runtime) -> bool:
@@ -105,7 +105,7 @@ class MissingQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref_thunk = children[0]
 
         async def athunk(rt: Runtime) -> bool:
@@ -124,7 +124,7 @@ class ExtractQuery(ScalarQuery):
     is unwrapped when present, matching ``CollectionExtract`` mechanics.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref_thunk = children[0]
 
         def thunk(rt: Runtime) -> object:
@@ -137,7 +137,7 @@ class ExtractQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref_thunk = children[0]
 
         async def athunk(rt: Runtime) -> object:
@@ -159,7 +159,7 @@ class AdvanceCursorQuery(ScalarQuery):
     from the beginning. Returns ``(log_key, actual_key)`` or ``None`` if exhausted.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source_thunk, cursor_thunk = children[0], children[1]
 
         def thunk(rt: Runtime) -> object:
@@ -171,7 +171,7 @@ class AdvanceCursorQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source_thunk, cursor_thunk = children[0], children[1]
 
         async def athunk(rt: Runtime) -> object:
@@ -189,12 +189,12 @@ class AdvanceCursorQuery(ScalarQuery):
 # ---------------------------------------------------------------------------
 
 
-class StoreCommand(Command):
+class SetCommand(Command):
     """Write the slot-1 value to the slot-0 structured Ref's address."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         value = children[1]
 
@@ -206,7 +206,7 @@ class StoreCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         value = children[1]
 
@@ -224,7 +224,7 @@ class EraseCommand(Command):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         def thunk(rt: Runtime) -> None:
@@ -232,7 +232,7 @@ class EraseCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:
@@ -241,16 +241,16 @@ class EraseCommand(Command):
         return athunk
 
 
-class PrimitiveStoreCommand(Command):
+class PrimitiveSetCommand(Command):
     """Write the slot-1 value to the slot-0 Ref via ``_primitive_write``.
 
-    Bypasses the compound-value decomposition of ``StoreCommand`` (which
+    Bypasses the compound-value decomposition of ``SetCommand`` (which
     recurses into containers).  Use for Refs that store compound values as a
     single opaque blob (e.g. ``PrimitiveDictRef``, ``PrimitiveListRef``,
     ``PrimitiveSetRef`` substrates).
 
     Raises ``ValueError`` when the value slot evaluates to a sentinel,
-    matching ``ItemPrimitiveStoreCmd`` mechanics.
+    matching ``ItemPrimitiveSetCmd`` mechanics.
 
     Requires the parent view to support ``_primitive_write`` /
     ``_aprimitive_write`` (the abstract hook declared on ``StructuredRef``).
@@ -258,7 +258,7 @@ class PrimitiveStoreCommand(Command):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         value = children[1]
 
@@ -270,7 +270,7 @@ class PrimitiveStoreCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         value = children[1]
 
@@ -281,5 +281,3 @@ class PrimitiveStoreCommand(Command):
             await ref._aprimitive_write(rt, v, rt.program.children[nid][0])  # type: ignore[attr-defined]
 
         return athunk
-
-

@@ -62,7 +62,7 @@ Wire paths: `HomePage.form.name`, `HomePage.form.email`,
 
 | op      | dir           | payload                                                          | nu method              | notes                                                  |
 | ------- | ------------- | ---------------------------------------------------------------- | ---------------------- | ------------------------------------------------------ |
-| `write` | server -> tab | `{"title"?: str, "gap"?: int, "padding"?: int, "align"?: str}`   | `store(...)` (partial) | partial chrome update. missing keys leave slice as is. |
+| `write` | server -> tab | `{"title"?: str, "gap"?: int, "padding"?: int, "align"?: str}`   | `set(...)` (partial) | partial chrome update. missing keys leave slice as is. |
 
 No `notify`, no `read`. The form itself owns no value.
 

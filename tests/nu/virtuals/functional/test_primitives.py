@@ -1,7 +1,7 @@
 """Functional tests for the whole-blob compound refs (``primitives``).
 
 Each ref stores a container (list / dict / tuple / set / frozenset) as one
-opaque blob via ``ItemPrimitiveStoreCmd`` rather than decomposing it into
+opaque blob via ``ItemPrimitiveSetCmd`` rather than decomposing it into
 per-element storage. These tests round-trip a value through a real virtuals
 transaction (the ``ctx`` fixture) and assert it comes back whole, as its true
 domain type.
@@ -28,7 +28,7 @@ class Bag(Shape):
 
 
 def _roundtrip(ref, value, ctx):
-    run(ref.store(value), ctx)
+    run(ref.set(value), ctx)
     return run(ref, ctx)[0]
 
 

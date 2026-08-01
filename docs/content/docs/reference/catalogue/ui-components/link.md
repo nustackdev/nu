@@ -31,7 +31,7 @@ Five nu methods compile to the same wire op with different payload subsets:
 - `store_label(text)` -> `write {"label": text}`
 - `store_target(name)` -> `write {"target": name}`
 - `store_external(flag)` -> `write {"external": flag}` (flag may be `True`, `False`, or `None`)
-- `store(href=..., label=..., target=..., external=...)` -> `write` with only the kwargs explicitly passed. Implemented via a private `_UNSET` sentinel so callers can pass `external=None` to reset to auto without it being confused with "do not touch".
+- `set(href=..., label=..., target=..., external=...)` -> `write` with only the kwargs explicitly passed. Implemented via a private `_UNSET` sentinel so callers can pass `external=None` to reset to auto without it being confused with "do not touch".
 
 ## wire payloads
 
