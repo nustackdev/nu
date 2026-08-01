@@ -173,13 +173,12 @@ class App(nu.ui.Index):
 # PAIN: TableRef rows must be positional lists, but no ListForm.of(a, b, c)
 # exists to build one from Nu expressions. Every consumer host-lifts the
 # same Python lambda -- see legolas/uis/shell.py:RowAsList.
-#
-# PAIN: storing rows as `list[list]` in a ListRef backfires -- elements come
-# back as EagerListView / LazyListView and msgpack rejects both. Every
-# consumer stores dicts (or a keyed Shape) and materializes positional rows
-# on the fly via a MapQuery + RowAsList transform.
 
 _RowAsList = nu.host(lambda *xs: list(xs), name="MovieRow")
+
+# Splice one item out of a list by index. Read through `.eager` first so the
+# list lands as plain dicts (not LazyDictView) and re-encodes on write-back.
+_SpliceAt = nu.host(lambda xs, i: [*list(xs)[:i], *list(xs)[i + 1 :]], name="SpliceAt")
 
 
 _SEED_MOVIES: list[dict] = [
@@ -264,16 +263,10 @@ def _rows_form() -> nu.Nu:
 
 
 init = nu.v.Transaction(
-    nu.IfDo(State.total.missing(), State.total.set(len(_SEED_MOVIES))),
-    nu.IfDo(
-        State.watched.missing(),
-        State.watched.set(sum(1 for m in _SEED_MOVIES if m["watched"] == "yes")),
-    ),
-    nu.IfDo(
-        State.latest_title.missing(),
-        State.latest_title.set(_SEED_MOVIES[-1]["title"]),
-    ),
-    nu.IfDo(State.movies.missing(), State.movies.set(_SEED_MOVIES)),
+    State.total.set(len(_SEED_MOVIES))
+    | State.watched.set(sum(1 for m in _SEED_MOVIES if m["watched"] == "yes"))
+    | State.latest_title.set(_SEED_MOVIES[-1]["title"])
+    | State.movies.set(_SEED_MOVIES),
 )
 
 
@@ -306,12 +299,12 @@ hydrate = nu.v.Snapshot(
 on_add = nu.ReactForever(
     AddMovieForm.submit.clicked(),
     nu.v.Transaction(
-        State.movies.append(_row_from_form()),
-        State.total.set(State.total + 1),
-        State.watched.set(
+        State.movies.append(_row_from_form())
+        | State.total.set(State.total + 1)
+        | State.watched.set(
             State.watched + nu.IfQuery(nu.BoolForm(AddMovieForm.score.watched.input), 1, 0),
-        ),
-        State.latest_title.set(nu.StrForm(AddMovieForm.details.title.input)),
+        )
+        | State.latest_title.set(nu.StrForm(AddMovieForm.details.title.input)),
     )
     >> nu.v.Snapshot(
         Movies.shelf.body.table.set(_rows_form())
@@ -327,26 +320,30 @@ on_add = nu.ReactForever(
 )
 
 
-# PAIN (row-click delete deferred):
-#
-# The natural implementation -- read the clicked row index, splice it out of
-# `State.movies` via two slice reads and a concat, then `.set(...)` the whole
-# ListRef back -- explodes at storage time:
-#
-#     StorageOperationError: Failed to encode key/value for ('/', 'movies', 0):
-#     no default __reduce__ due to non-trivial __cinit__
-#
-# Reads from a ListRef yield view objects (LazyListView / EagerListView),
-# and RocksDB can't re-encode a "list of views" back into itself. Legolas
-# never uses this shape -- it keys items in a `DictRef[id]` (or a Shape) and
-# deletes by key, sidestepping the whole problem.
-#
-# So click-to-delete would require reshaping `State.movies` from
-# `ListRef[dict]` to `DictRef[str, dict]` + an auto-incremented id. Real
-# fix for the polish pass, not for this demo file.
+# row_clicked() delivers the raw notify payload: {"row_index": int} for row
+# clicks, {"sort_column": ..., "sort_direction": ...} for header clicks. Both
+# share the channel; branch on shape to skip header clicks.
+_click = nu.DictAttrRef("row_click")
+
+on_row_click = nu.ReactForever(
+    Movies.shelf.body.table.row_clicked(),
+    nu.IfDo(
+        nu.ContainsQuery(_click, "row_index"),
+        nu.v.Transaction(
+            State.movies.set(_SpliceAt(State.movies.eager, _click["row_index"]))
+            >> State.total.set(nu.LenQuery(State.movies)),
+        )
+        >> nu.v.Snapshot(
+            Movies.shelf.body.table.set(_rows_form())
+            | Movies.stats.body.total.set_value(_s(State.total))
+            | Movies.stats.body.unseen.set_value(_s(State.total - State.watched))
+        ),
+    ),
+    changed_key="row_click",
+)
 
 
-ui = init >> App.title.set("movies") >> hydrate >> on_add
+ui = init >> App.title.set("movies") >> hydrate >> (on_add | on_row_click)
 
 
 tree = nu.With(

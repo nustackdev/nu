@@ -46,6 +46,24 @@ def test_shapes_sequence_ref_item_shape_type_property():
     assert s._payload["item_shape_type"] is Row
 
 
+def test_shapes_sequence_ref_slice_routes_to_slice_op():
+    # Same guard as SequenceRef: slice subscript must not build a bogus ShapeRef.
+    from nu.core import GetItemQuery, SliceQuery
+
+    sentinel = object()
+
+    class StubShapesSeq(ShapesSequenceRef):
+        def _wrap_sliceable_result(self, operand):
+            return (sentinel, operand)
+
+    s = StubShapesSeq("rows", item_shape_type=Row)
+    result = s[1:4]
+    assert isinstance(result, tuple) and result[0] is sentinel
+    getitem = result[1]
+    assert isinstance(getitem, GetItemQuery)
+    assert isinstance(getitem._children[1], SliceQuery)
+
+
 def test_shapes_sequence_ref_different_indices_distinct():
     s = ShapesSequenceRef("rows", item_shape_type=Row)
     a = s[0]

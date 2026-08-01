@@ -69,7 +69,9 @@ class ShapesSequenceRef[ItemResultT](SequenceForm, StructuredRef):
         )
 
     def __getitem__(self, index: object) -> ItemResultT:
-        """Navigate to the child ShapeRef at ``index``, with self as parent."""
+        """Int index navigates to the child ShapeRef; slice routes to the form-level slice op."""
+        if isinstance(index, slice):
+            return self.slice(index.start, index.stop, index.step)  # type: ignore[return-value]
         return self._wrap_item_ref(index)
 
 
@@ -88,7 +90,9 @@ class MutableShapesSequenceRef[ItemResultT](MutableSequenceForm, ShapesSequenceR
         )
 
 
-class ReactiveShapesSequenceRef[ItemResultT](ReactiveSequenceForm, MutableShapesSequenceRef[ItemResultT]):
+class ReactiveShapesSequenceRef[ItemResultT](
+    ReactiveSequenceForm, MutableShapesSequenceRef[ItemResultT]
+):
     """Reactive sequence-of-shapes Ref; subscript returns ReactiveShapeRef.
 
     Adds: on_change(), on_child_change(), on_children_change(),

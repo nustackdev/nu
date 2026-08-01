@@ -52,7 +52,9 @@ class SequenceRef[ItemResultT](SequenceForm, StructuredRef):
         return ItemRef(address, parent_ref=self, owner_shape=self._owner_shape)  # type: ignore[return-value]
 
     def __getitem__(self, index: object) -> ItemResultT:
-        """Navigate to the child Ref at ``index``, with self as parent."""
+        """Int index navigates to the child Ref; slice routes to the form-level slice op."""
+        if isinstance(index, slice):
+            return self.slice(index.start, index.stop, index.step)  # type: ignore[return-value]
         return self._wrap_item_ref(index)
 
 

@@ -51,6 +51,26 @@ def test_sequence_ref_string_index_is_accepted():
     assert isinstance(child, ItemRef)
 
 
+def test_sequence_ref_slice_routes_to_slice_op():
+    # Slice subscript goes through SliceableForm.slice(), not _wrap_item_ref.
+    # Without the slice guard, ref[:2] would return an ItemRef addressed by
+    # a `slice` object, which is nonsense.
+    from nu.core import GetItemQuery, SliceQuery
+
+    sentinel = object()
+
+    class StubSeq(SequenceRef):
+        def _wrap_sliceable_result(self, operand):
+            return (sentinel, operand)
+
+    s = StubSeq("my_seq")
+    result = s[1:4]
+    assert isinstance(result, tuple) and result[0] is sentinel
+    getitem = result[1]
+    assert isinstance(getitem, GetItemQuery)
+    assert isinstance(getitem._children[1], SliceQuery)
+
+
 # ---------------------------------------------------------------------------
 # SequenceRef Form surface (exists / missing / len)
 # ---------------------------------------------------------------------------
