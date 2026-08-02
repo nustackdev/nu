@@ -1,12 +1,9 @@
 """Movies - personal movie tracker.
 
 Flow: log a movie via the form; the row lands in the table and stats update.
-Click a row in the table to remove it. Filters redraw the visible rows.
+Click a row to open its detail page; delete from there. Filters redraw the
+visible rows.
 """
-
-from __future__ import annotations
-
-import asyncio
 
 import nu
 
@@ -20,6 +17,9 @@ _GENRES = [
 ]
 
 _GENRES_WITH_ANY = [{"value": "", "label": "any genre"}, *_GENRES]
+
+
+# ---- UI ---------------------------------------------------------------------
 
 
 class TitleField(nu.ui.Field):
@@ -54,9 +54,6 @@ class GenreField(nu.ui.Field):
 
 class SwitchField(nu.ui.Field):
     input = nu.ui.SwitchRef.slot(default=True)
-
-
-# ---- Composites -------------------------------------------------------------
 
 
 class DetailsFieldset(nu.ui.Fieldset):
@@ -127,17 +124,7 @@ class TableCard(nu.ui.Card):
     body = TableBody.slot(gap=3)
 
 
-# ---- State ------------------------------------------------------------------
-
-
-class State(nu.Shape):
-    movies = nu.v.ListRef.slot(object)
-    total = nu.v.IntRef.slot()
-    watched = nu.v.IntRef.slot()
-    latest_title = nu.v.StrRef.slot()
-
-
-# ---- Page -------------------------------------------------------------------
+# ---- Pages ------------------------------------------------------------------
 
 
 class Movies(nu.ui.Page):
@@ -152,10 +139,53 @@ class Movies(nu.ui.Page):
     shelf = TableCard.slot(title="movies")
 
 
+class DetailRow(nu.ui.Row):
+    year = nu.ui.StatRef.slot(label="year")
+    genre = nu.ui.StatRef.slot(label="genre")
+    rating = nu.ui.StatRef.slot(label="rating")
+    watched = nu.ui.BadgeRef.slot(label="watched", variant="ok")
+
+
+class DetailCard(nu.ui.Card):
+    meta = DetailRow.slot(gap=6, align="center", wrap=True)
+    notes = nu.ui.TextRef.slot()
+
+
+class DetailActions(nu.ui.Row):
+    back = nu.ui.ButtonRef.slot(label="back", variant="ghost")
+    remove = nu.ui.ButtonRef.slot(label="delete", variant="danger")
+
+
+class MovieDetail(nu.ui.Page):
+    heading = nu.ui.HeadingRef.slot()
+    card = DetailCard.slot(title="details")
+    actions = DetailActions.slot(gap=3, align="center")
+
+
 class App(nu.ui.Index):
     title: nu.ui.TitleRef
     nav: nu.ui.NavRef
-    pages = nu.ui.Pages({"/": Movies})
+    pages = nu.ui.Pages({"/": Movies, "/detail": MovieDetail})
+
+
+# ---- State ------------------------------------------------------------------
+
+
+class Movie(nu.Shape):
+    title = nu.v.StrRef.slot()
+    year = nu.v.IntRef.slot()
+    genre = nu.v.StrRef.slot()
+    rating = nu.v.FloatRef.slot()
+    watched = nu.v.BoolRef.slot()
+    notes = nu.v.StrRef.slot()
+
+
+class State(nu.Shape):
+    movies = nu.v.ShapesListRef.slot(Movie)
+    total = nu.v.IntRef.slot()
+    watched = nu.v.IntRef.slot()
+    latest_title = nu.v.StrRef.slot()
+    selected = nu.v.IntRef.slot()  # index of the movie open in MovieDetail
 
 
 # ---- Seed ------------------------------------------------------------------
@@ -166,7 +196,7 @@ _SEED_MOVIES: list[dict] = [
         "year": 2016,
         "genre": "scifi",
         "rating": 8.5,
-        "watched": "yes",
+        "watched": True,
         "notes": "linguists save the world",
     },
     {
@@ -174,7 +204,7 @@ _SEED_MOVIES: list[dict] = [
         "year": 2024,
         "genre": "scifi",
         "rating": 9.0,
-        "watched": "yes",
+        "watched": True,
         "notes": "worm ride > sequel",
     },
     {
@@ -182,7 +212,7 @@ _SEED_MOVIES: list[dict] = [
         "year": 2022,
         "genre": "drama",
         "rating": 7.0,
-        "watched": "yes",
+        "watched": True,
         "notes": "eat the rich, literally",
     },
     {
@@ -190,10 +220,13 @@ _SEED_MOVIES: list[dict] = [
         "year": 2023,
         "genre": "drama",
         "rating": 8.0,
-        "watched": "no",
+        "watched": False,
         "notes": "tokyo, tapes, toilets",
     },
 ]
+
+
+# ---- Wire -------------------------------------------------------------------
 
 
 def _rows_form() -> nu.Nu:
@@ -207,7 +240,7 @@ def _rows_form() -> nu.Nu:
                     nu.DictAttrRef("r")["year"],
                     nu.DictAttrRef("r")["genre"],
                     nu.DictAttrRef("r")["rating"],
-                    nu.DictAttrRef("r")["watched"],
+                    nu.If(nu.DictAttrRef("r")["watched"], "yes", "no"),
                     nu.DictAttrRef("r")["notes"],
                 ),
                 key="r",
@@ -216,14 +249,12 @@ def _rows_form() -> nu.Nu:
     )
 
 
-# ---- Wire -------------------------------------------------------------------
-
-
 init = nu.v.Transaction(
     State.total.set(len(_SEED_MOVIES))
-    | State.watched.set(sum(1 for m in _SEED_MOVIES if m["watched"] == "yes"))
+    | State.watched.set(sum(1 for m in _SEED_MOVIES if m["watched"]))
     | State.latest_title.set(_SEED_MOVIES[-1]["title"])
-    | State.movies.set(_SEED_MOVIES),
+    | State.movies.set(_SEED_MOVIES)
+    | State.selected.set(0),
 )
 
 
@@ -245,7 +276,7 @@ on_add = nu.ReactForever(
                 year=nu.Int(AddMovieForm.details.year.input),
                 genre=nu.Str(AddMovieForm.details.genre.input),
                 rating=nu.Float(AddMovieForm.score.rating.input),
-                watched=nu.If(nu.Bool(AddMovieForm.score.watched.input), "yes", "no"),
+                watched=nu.Bool(AddMovieForm.score.watched.input),
                 notes=nu.Str(AddMovieForm.score.notes.input),
             ),
         )
@@ -269,28 +300,45 @@ on_add = nu.ReactForever(
 )
 
 
-# row_clicked() delivers the raw notify payload: {"row_index": int} for row
-# clicks, {"sort_column": ..., "sort_direction": ...} for header clicks. Both
-# share the channel; branch on shape to skip header clicks.
 on_row_click = nu.ReactForever(
     Movies.shelf.body.table.row_clicked(),
     nu.IfDo(
         nu.Contains(nu.DictAttrRef("row_click"), "row_index"),
-        nu.v.Transaction(
-            State.movies.pop(nu.DictAttrRef("row_click")["row_index"])
-            >> State.total.set(nu.Len(State.movies)),
-        )
+        nu.v.Transaction(State.selected.set(nu.DictAttrRef("row_click")["row_index"]))
         >> nu.v.Snapshot(
-            Movies.shelf.body.table.set(_rows_form())
-            | Movies.stats.body.total.set_value(nu.str(State.total))
-            | Movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
-        ),
+            MovieDetail.heading.set(State.movies[State.selected].title)
+            | MovieDetail.card.meta.year.set_value(nu.str(State.movies[State.selected].year))
+            | MovieDetail.card.meta.genre.set_value(State.movies[State.selected].genre)
+            | MovieDetail.card.meta.rating.set_value(nu.str(State.movies[State.selected].rating))
+            | MovieDetail.card.meta.watched.set(
+                label=nu.If(State.movies[State.selected].watched, "watched", "unseen"),
+            )
+            | MovieDetail.card.notes.set(State.movies[State.selected].notes)
+        )
+        >> App.nav.set("/detail"),
     ),
     changed_key="row_click",
 )
 
 
-ui = init >> App.title.set("movies") >> hydrate >> (on_add | on_row_click)
+on_delete = nu.ReactForever(
+    MovieDetail.actions.remove.clicked(),
+    nu.v.Transaction(
+        State.movies.del_at(State.selected) >> State.total.set(nu.Len(State.movies)),
+    )
+    >> nu.v.Snapshot(
+        Movies.shelf.body.table.set(_rows_form())
+        | Movies.stats.body.total.set_value(nu.str(State.total))
+        | Movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
+    )
+    >> App.nav.set("/"),
+)
+
+
+on_back = nu.ReactForever(MovieDetail.actions.back.clicked(), App.nav.set("/"))
+
+
+ui = init >> App.title.set("movies") >> hydrate >> (on_add | on_row_click | on_delete | on_back)
 
 
 tree = nu.With(
@@ -301,4 +349,6 @@ tree = nu.With(
 
 
 if __name__ == "__main__":
+    import asyncio
+
     asyncio.run(nu.arun(nu.v.auto_flow_atomic(tree)))

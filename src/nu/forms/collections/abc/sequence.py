@@ -138,6 +138,16 @@ class MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResul
 
         return cast("ElementResultT", self._wrap_element_result(Pop(self, index)))
 
+    def del_at(self, index: IntArg) -> Any:  # noqa: ANN401
+        """Remove item at index. Mutates in place; yields nothing (Command).
+
+        Python's ``del seq[i]``. Use when you want a Command, not the Action
+        that ``pop`` yields.
+        """
+        from .sequence_interactions import DelIndex
+
+        return DelIndex(self, index)
+
     def remove(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Remove first occurrence of value. Mutates in place; yields nothing (Command)."""
         from .sequence_interactions import RemoveValue
