@@ -258,7 +258,7 @@ class StatsRow(nu.ui.Row):
 # ---- tabs section -----------------------------------------------------------
 
 
-class DemoTabs(nu.ui.TabsRef):
+class DemoTabs(nu.ui.Tabs):
     """Three-tab strip showing different content."""
 
     tabs: ClassVar[list] = [
@@ -276,7 +276,7 @@ class DemoTabs(nu.ui.TabsRef):
 # ---- accordion section ------------------------------------------------------
 
 
-class DemoAccordion(nu.ui.AccordionRef):
+class DemoAccordion(nu.ui.Accordion):
     """Three collapsible sections."""
 
     sections: ClassVar[list] = [
@@ -305,7 +305,7 @@ class CardBody(nu.ui.Column):
     badge = OkBadge.slot()
 
 
-class DemoCard(nu.ui.CardRef):
+class DemoCard(nu.ui.Card):
     """Card with title, subtitle, footer wrapping a column body."""
 
     title: ClassVar[str] = "release notes"
@@ -331,7 +331,7 @@ class DemoModal(nu.ui.Modal):
 # ---- form section -----------------------------------------------------------
 
 
-class FormNameField(nu.ui.FieldRef):
+class FormNameField(nu.ui.Field):
     """Name field wrapping a single input."""
 
     label: ClassVar[str] = "name"
@@ -341,7 +341,7 @@ class FormNameField(nu.ui.FieldRef):
     input = nu.ui.InputRef.slot()
 
 
-class FormAgeField(nu.ui.FieldRef):
+class FormAgeField(nu.ui.Field):
     """Age field wrapping a single number input."""
 
     label: ClassVar[str] = "age"
@@ -578,7 +578,7 @@ LONG_TEXT = (
 
 LAYOUT_INTRO = (
     "Layout sections are Shape subclasses (Row, Column, Container, Card, "
-    "Tabs, Accordion, Modal, Form, Fieldset, FieldRef). Child slots live "
+    "Tabs, Accordion, Modal, Form, Fieldset, Field). Child slots live "
     "inside the section body. The mount payload is recursive: each section "
     "ships its own fields list, and the renderer walks the tree."
 )
@@ -782,13 +782,13 @@ showcase_snapshot = nv.Snapshot(
                 ["Column", "section", "-"],
                 ["Row", "section", "-"],
                 ["Container", "section", "-"],
-                ["CardRef", "section", "-"],
-                ["TabsRef", "section", "-"],
-                ["AccordionRef", "section", "-"],
+                ["Card", "section", "-"],
+                ["Tabs", "section", "-"],
+                ["Accordion", "section", "-"],
                 ["Modal", "section", "-"],
                 ["Form", "section", "-"],
                 ["Fieldset", "section", "-"],
-                ["FieldRef", "section", "-"],
+                ["Field", "section", "-"],
                 ["TitleRef", "structural", "browser"],
                 ["NavRef", "structural", "browser"],
             ],
@@ -878,7 +878,7 @@ showcase_snapshot = nv.Snapshot(
     | Showcase.card_heading.set_level(3)
     | CardBody.line1.set("a card wraps a body Section.")
     | CardBody.line2.set(
-        "title, subtitle, and footer are plain strings on the CardRef itself.",
+        "title, subtitle, and footer are plain strings on the Card itself.",
     )
     | CardBody.badge.set_label("composable")
     # 8. modal

@@ -1,4 +1,4 @@
-// FieldRef -- labelled form-field wrapper. Display-only chrome around
+// Field -- labelled form-field wrapper. Display-only chrome around
 // exactly one child input Ref. One `write` op carries every chrome
 // mutation (label, help, error, required); payload is a partial map.
 // The single child is an absolute wire path passed via the mount
@@ -14,7 +14,7 @@ import { useStore } from "../../store";
 import type { RefEntry, SliceFactory } from "../types";
 
 const factory: SliceFactory = (path, ctx, props, children) => ({
-	type: "FieldRef",
+	type: "Field",
 	value: null,
 	label: typeof props?.label === "string" ? (props.label as string) : "",
 	help: typeof props?.help === "string" ? (props.help as string) : "",
@@ -98,4 +98,4 @@ function FieldView({ path }: { path: string }) {
 	);
 }
 
-export const FieldRef: RefEntry = { factory, component: FieldView };
+export const Field: RefEntry = { factory, component: FieldView };

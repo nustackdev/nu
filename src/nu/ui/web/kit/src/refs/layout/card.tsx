@@ -1,4 +1,4 @@
-// CardRef -- card-styled Section. Header (title + subtitle), body
+// Card -- card-styled Section. Header (title + subtitle), body
 // (vertical stack of child Refs), footer (plain text). Display-only,
 // server-owned. Three dedicated ops carry chrome mutations:
 // `set_title`, `set_subtitle`, `set_footer`; each takes a string
@@ -9,7 +9,7 @@
 
 import { ErrorBoundary } from "../../components/ErrorBoundary";
 import {
-	Card,
+	Card as CardPrimitive,
 	CardContent,
 	CardDescription,
 	CardFooter,
@@ -25,7 +25,7 @@ function coerceStr(v: unknown): string {
 }
 
 const factory: SliceFactory = (path, ctx, props, children) => ({
-	type: "CardRef",
+	type: "Card",
 	value: null,
 	title: typeof props?.title === "string" ? (props.title as string) : "",
 	subtitle: typeof props?.subtitle === "string" ? (props.subtitle as string) : "",
@@ -61,7 +61,7 @@ function CardView({ path }: { path: string }) {
 	const showHeader = title !== "" || subtitle !== "";
 
 	return (
-		<Card>
+		<CardPrimitive>
 			{showHeader ? (
 				<CardHeader>
 					{title !== "" ? <CardTitle>{title}</CardTitle> : null}
@@ -98,8 +98,8 @@ function CardView({ path }: { path: string }) {
 					{footer}
 				</CardFooter>
 			) : null}
-		</Card>
+		</CardPrimitive>
 	);
 }
 
-export const CardRef: RefEntry = { factory, component: CardView };
+export const Card: RefEntry = { factory, component: CardView };

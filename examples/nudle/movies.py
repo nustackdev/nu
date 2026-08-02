@@ -1,11 +1,4 @@
-"""Movies -- personal movie tracker.
-
-Post slot-props refactor: preset-per-widget subclasses collapse into inline
-`.slot(**props)` at the usage site. Layout chrome (gap, align, wrap, title)
-and widget knobs (variant, label, min/max, options, ...) ride on the slot
-call instead of a subclass. Small structural wrappers (Fieldsets, Cards,
-Rows, FieldRefs) remain -- they exist only to declare child slots that
-the widget kit can't inline yet.
+"""Movies - personal movie tracker.
 
 Flow: log a movie via the form; the row lands in the table and stats update.
 Click a row in the table to remove it. Filters redraw the visible rows.
@@ -16,7 +9,6 @@ from __future__ import annotations
 import asyncio
 
 import nu
-import nu.virtuals as nv
 
 
 _GENRES = [
@@ -30,23 +22,16 @@ _GENRES = [
 _GENRES_WITH_ANY = [{"value": "", "label": "any genre"}, *_GENRES]
 
 
-# ---- Form fields ------------------------------------------------------------
-# FieldRef requires exactly one structural child slot, so we keep a small
-# wrapper per input kind. Inner-input knobs ride on the inner slot() call;
-# label / help / required move to slot-props at the usage site.
+class TitleField(nu.ui.Field):
+    input = nu.ui.InputRef.slot(placeholder="e.g. Arrival")
 
 
-class TitleField(nu.ui.FieldRef):
-    input = nu.ui.InputRef.slot(label="title", placeholder="e.g. Arrival")
-
-
-class TextAreaField(nu.ui.FieldRef):
+class TextAreaField(nu.ui.Field):
     input = nu.ui.TextAreaRef.slot(placeholder="quick thoughts...", rows=2)
 
 
-class YearField(nu.ui.FieldRef):
+class YearField(nu.ui.Field):
     input = nu.ui.NumberInputRef.slot(
-        label="year",
         min=1900.0,
         max=2100.0,
         step=1.0,
@@ -54,9 +39,8 @@ class YearField(nu.ui.FieldRef):
     )
 
 
-class RatingField(nu.ui.FieldRef):
+class RatingField(nu.ui.Field):
     input = nu.ui.NumberInputRef.slot(
-        label="rating (1-10)",
         min=1.0,
         max=10.0,
         step=0.5,
@@ -64,12 +48,12 @@ class RatingField(nu.ui.FieldRef):
     )
 
 
-class GenreField(nu.ui.FieldRef):
+class GenreField(nu.ui.Field):
     input = nu.ui.SelectRef.slot(options=_GENRES, selected="drama")
 
 
-class SwitchField(nu.ui.FieldRef):
-    input = nu.ui.SwitchRef.slot(label="watched?", default=True)
+class SwitchField(nu.ui.Field):
+    input = nu.ui.SwitchRef.slot(default=True)
 
 
 # ---- Composites -------------------------------------------------------------
@@ -108,7 +92,7 @@ class FilterRow(nu.ui.Row):
     clear = nu.ui.ButtonRef.slot(label="clear", variant="ghost")
 
 
-class FilterCard(nu.ui.CardRef):
+class FilterCard(nu.ui.Card):
     body = FilterRow.slot(gap=3, align="center", wrap=True)
 
 
@@ -120,7 +104,7 @@ class StatsRow(nu.ui.Row):
     health = nu.ui.BadgeRef.slot(label="fresh", variant="ok")
 
 
-class StatsCard(nu.ui.CardRef):
+class StatsCard(nu.ui.Card):
     body = StatsRow.slot(gap=6, align="center", wrap=True)
 
 
@@ -139,7 +123,7 @@ class TableBody(nu.ui.Column):
     )
 
 
-class TableCard(nu.ui.CardRef):
+class TableCard(nu.ui.Card):
     body = TableBody.slot(gap=3)
 
 
@@ -147,10 +131,10 @@ class TableCard(nu.ui.CardRef):
 
 
 class State(nu.Shape):
-    movies = nv.ListRef.slot(object)
-    total = nv.IntRef.slot()
-    watched = nv.IntRef.slot()
-    latest_title = nv.StrRef.slot()
+    movies = nu.v.ListRef.slot(object)
+    total = nu.v.IntRef.slot()
+    watched = nu.v.IntRef.slot()
+    latest_title = nu.v.StrRef.slot()
 
 
 # ---- Page -------------------------------------------------------------------

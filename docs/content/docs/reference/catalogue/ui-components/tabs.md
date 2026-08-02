@@ -1,8 +1,8 @@
 ---
-title: TabsRef
+title: Tabs
 ---
 
-Tab strip plus active tab body. `TabsRef` is a Shape (Section), not a leaf
+Tab strip plus active tab body. `Tabs` is a Shape (Section), not a leaf
 Ref. Children declared as slots on the subclass become the per-tab bodies,
 paired with the `tabs` list **by index**.
 
@@ -43,7 +43,7 @@ mount entry (Section-style, nested `fields`):
 ```
 {
   "path": "HomePage.sections",
-  "type": "TabsRef",
+  "type": "Tabs",
   "props": {
     "tabs":   [{"id": "overview", "label": "Overview"}, {"id": "details", "label": "Details"}],
     "active": "overview"
@@ -76,7 +76,7 @@ nil -> the entry is dropped from the strip.
 Example:
 
 ```python
-class HomeTabs(nudle.TabsRef):
+class HomeTabs(nudle.Tabs):
     tabs = [{"id": "overview", "label": "Overview"},
             {"id": "details",  "label": "Details"}]
     active = "overview"
@@ -107,7 +107,7 @@ local state across tab switches.
 
 ```
 {
-  type: "TabsRef",
+  type: "Tabs",
   value: null,
   tabs: { id: string; label: string }[],
   active: string,

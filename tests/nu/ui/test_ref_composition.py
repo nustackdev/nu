@@ -235,9 +235,9 @@ def test_widget_sweep_is_non_empty():
 
 
 def test_tabs_set_active_emits_frame():
-    from nu.ui.refs import TabsRef
+    from nu.ui.refs import Tabs
 
-    class MyTabs(TabsRef):
+    class MyTabs(Tabs):
         pass
 
     class TabPage(Page):
@@ -254,9 +254,9 @@ def test_tabs_set_active_emits_frame():
 def test_card_set_title_emits_frame():
     """Card chrome set now works (was a pre-existing bug: `_SetSectionStr`
     held no Ref; fixed by the `_CardMountRef` mount-ref pattern like tabs)."""
-    from nu.ui.refs import CardRef
+    from nu.ui.refs import Card
 
-    class MyCard(CardRef):
+    class MyCard(Card):
         pass
 
     class CardPage(Page):

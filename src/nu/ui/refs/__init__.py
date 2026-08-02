@@ -42,16 +42,16 @@ from .input import (
     TextAreaRef,
 )
 from .layout import (
-    AccordionRef,
-    CardRef,
+    Accordion,
+    Card,
     Column,
     Container,
-    FieldRef,
+    Field,
     Fieldset,
     Form,
     Modal,
     Row,
-    TabsRef,
+    Tabs,
 )
 from .output import (
     AlertRef,
@@ -73,20 +73,20 @@ from .structural import NavRef, TitleRef
 
 
 __all__ = [
-    "AccordionRef",
+    "Accordion",
     "AlertRef",
     "AreaChart",
     "BadgeRef",
     "BarChart",
     "ButtonRef",
-    "CardRef",
+    "Card",
     "CheckboxRef",
     "CodeBlockRef",
     "Column",
     "Container",
     "DatePickerRef",
     "DividerRef",
-    "FieldRef",
+    "Field",
     "Fieldset",
     "Form",
     "GaugeRef",
@@ -113,7 +113,7 @@ __all__ = [
     "StatRef",
     "SwitchRef",
     "TableRef",
-    "TabsRef",
+    "Tabs",
     "TagInputRef",
     "TextAreaRef",
     "TextRef",

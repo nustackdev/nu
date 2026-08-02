@@ -1,8 +1,8 @@
 ---
-title: FieldRef
+title: Field
 ---
 
-Label + child input + help / error text. A `FieldRef` is a Shape (Section), not a Ref, that wraps exactly one input Ref in a labelled form-field box. Display-only, server-owned.
+Label + child input + help / error text. A `Field` is a Shape (Section), not a Ref, that wraps exactly one input Ref in a labelled form-field box. Display-only, server-owned.
 
 ## kind
 
@@ -27,7 +27,7 @@ The single child is declared as one ordinary Ref slot on the Section body. Decla
 | --- | --- | --- | --- | --- |
 | `write` | server -> tab | `{"label"?: str, "help"?: str, "error"?: str, "required"?: bool}` | `store_label(str)`, `store_help(str)`, `store_error(str)`, `store_required(bool)` | partial chrome update. each nu method compiles to a `write` frame whose payload contains just that one key. |
 
-No tab -> server ops. The FieldRef carries no value of its own; the child Ref owns user input and notifies on its own path.
+No tab -> server ops. The Field carries no value of its own; the child Ref owns user input and notifies on its own path.
 
 ## wire payloads
 
@@ -35,7 +35,7 @@ No tab -> server ops. The FieldRef carries no value of its own; the child Ref ow
 // mount field entry, recursive (one nested field, exactly)
 {
   "path": "SignupPage.name_field",
-  "type": "FieldRef",
+  "type": "Field",
   "props": {"label": "Name", "help": "your full name", "error": "", "required": true},
   "fields": [
     {"path": "SignupPage.name_field.input", "type": "InputRef", "props": {...}}
@@ -63,7 +63,7 @@ Payload is a msgpack map. Missing keys mean "keep current slice value". Nu senti
 Example:
 
 ```python
-class NameField(nudle.FieldRef):
+class NameField(nudle.Field):
     label = "Name"
     help = "your full name"
     required = True
@@ -89,7 +89,7 @@ NameField.store_error("")              # clears, restores prior help
 
 ```
 {
-  type: "FieldRef",
+  type: "Field",
   value: null,
   label: string,
   help: string,
@@ -118,5 +118,5 @@ Server-owned. Seeded from `field.props` and the single-entry `fields` list on mo
 - no inline icons / adornments in the label row.
 - no tooltip variant of help text.
 - no label position option (always above the child for v0.1.0).
-- no `notify`, no `read`. FieldRef carries no user-owned value.
+- no `notify`, no `read`. Field carries no user-owned value.
 - no styling props (padding, gap, border): the wrapper is fixed chrome. Use a `Container` outside for box styling.

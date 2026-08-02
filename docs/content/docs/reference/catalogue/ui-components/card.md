@@ -3,7 +3,7 @@ title: Card
 ---
 
 Card-styled box wrapping child slots. Optional title, subtitle, and footer
-strings on the Section. `CardRef` is a Shape (Section), not a Ref.
+strings on the Section. `Card` is a Shape (Section), not a Ref.
 Display-only, server-owned.
 
 ## kind
@@ -38,7 +38,7 @@ No tab -> server traffic. Card is display-only.
 // mount field entry, recursive
 {
   "path": "HomePage.hero",
-  "type": "CardRef",
+  "type": "Card",
   "props": {"title": "Stats", "subtitle": "last 24h", "footer": ""},
   "fields": [
     {"path": "HomePage.hero.count", "type": "StatRef", "props": {...}},
@@ -55,7 +55,7 @@ No tab -> server traffic. Card is display-only.
 Example:
 
 ```python
-class Hero(nudle.CardRef):
+class Hero(nudle.Card):
     title = "Stats"
     subtitle = "last 24h"
     footer = ""
@@ -92,7 +92,7 @@ destructive-colored line and continues.
 
 ```
 {
-  type: "CardRef",
+  type: "Card",
   value: null,
   title: string,
   subtitle: string,
@@ -116,7 +116,7 @@ slice field.
 - non-string payload: coerced via `String(v)`.
 - empty `children` list: body `<div>` renders empty (still padded).
 - child slice missing from the registry: skipped with a small inline error line; siblings render normally.
-- nested CardRef as a child: supported; the mount walker recurses through Section entries identically.
+- nested Card as a child: supported; the mount walker recurses through Section entries identically.
 
 ## non-goals
 

@@ -85,7 +85,7 @@ def _normalize_open(ids: object) -> list[str]:
     return [str(x) for x in ids if x is not None]
 
 
-class AccordionRef(Section):
+class Accordion(Section):
     """Stack of collapsible sections. Tab owns open state, server owns the section list."""
 
     @classmethod
@@ -160,7 +160,7 @@ class _SetSectionStr(Command):
         return athunk
 
 
-class CardRef(Section):
+class Card(Section):
     """Card-styled Section: title + subtitle + body slots + footer."""
 
     @classmethod
@@ -234,7 +234,7 @@ class Container(Section):
         )
 
 
-class FieldRef(Section):
+class Field(Section):
     """Label + child input + help / error text. Exactly one child slot."""
 
     def __init_subclass__(cls, **kwargs: object) -> None:
@@ -242,8 +242,8 @@ class FieldRef(Section):
         slot_count = len(getattr(cls, "_slots", {}))
         if slot_count != 1:
             raise RuntimeError(
-                f"FieldRef {cls.__name__} declares {slot_count} child slots; "
-                "FieldRef requires exactly one.",
+                f"Field {cls.__name__} declares {slot_count} child slots; "
+                "Field requires exactly one.",
             )
 
     @classmethod
@@ -458,7 +458,7 @@ class _SetActive(Command):
         return athunk
 
 
-class TabsRef(Section):
+class Tabs(Section):
     """Tab strip plus active body. Subclass and declare one child slot per tab body."""
 
     @classmethod
@@ -488,15 +488,15 @@ class TabsRef(Section):
 
 
 __all__ = [
-    "AccordionRef",
-    "CardRef",
+    "Accordion",
+    "Card",
     "Column",
     "Container",
-    "FieldRef",
+    "Field",
     "Fieldset",
     "Form",
     "Modal",
     "ModalRef",
     "Row",
-    "TabsRef",
+    "Tabs",
 ]

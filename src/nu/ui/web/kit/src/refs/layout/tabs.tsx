@@ -1,4 +1,4 @@
-// TabsRef -- tab strip plus active body. Section-shaped: children come from
+// Tabs -- tab strip plus active body. Section-shaped: children come from
 // the mount entry's nested `fields` and pair with `tabs[i]` by index.
 //
 // Server-owned tabs / active (with optimistic local active on click).
@@ -13,7 +13,7 @@
 import { ErrorBoundary } from "../../components/ErrorBoundary";
 import { OP_NOTIFY } from "@nustackdev/ui-core";
 import {
-	Tabs,
+	Tabs as TabsPrimitive,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
@@ -39,7 +39,7 @@ function normalizeTabs(raw: unknown): Tab[] {
 }
 
 const factory: SliceFactory = (path, ctx, props, children) => ({
-	type: "TabsRef",
+	type: "Tabs",
 	value: null,
 	tabs: normalizeTabs(props?.tabs),
 	active: typeof props?.active === "string" ? (props.active as string) : "",
@@ -85,7 +85,7 @@ function TabsView({ path }: { path: string }) {
 	if (n === 0) return null;
 
 	return (
-		<Tabs value={activeId} onValueChange={onValueChange}>
+		<TabsPrimitive value={activeId} onValueChange={onValueChange}>
 			<TabsList variant="line">
 				{tabs.slice(0, n).map((t) => (
 					<TabsTrigger key={t.id} value={t.id} variant="line">
@@ -124,8 +124,8 @@ function TabsView({ path }: { path: string }) {
 					</TabsContent>
 				);
 			})}
-		</Tabs>
+		</TabsPrimitive>
 	);
 }
 
-export const TabsRef: RefEntry = { factory, component: TabsView };
+export const Tabs: RefEntry = { factory, component: TabsView };

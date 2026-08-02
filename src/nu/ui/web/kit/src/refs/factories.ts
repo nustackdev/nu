@@ -20,16 +20,16 @@ import { SliderRef } from "./input/slider";
 import { SwitchRef } from "./input/switch";
 import { TagInputRef } from "./input/tag-input";
 import { TextAreaRef } from "./input/text-area";
-import { AccordionRef } from "./layout/accordion";
-import { CardRef } from "./layout/card";
+import { Accordion } from "./layout/accordion";
+import { Card } from "./layout/card";
 import { Column } from "./layout/column";
 import { Container } from "./layout/container";
-import { FieldRef } from "./layout/field";
+import { Field } from "./layout/field";
 import { Fieldset } from "./layout/fieldset";
 import { Form } from "./layout/form";
 import { Modal } from "./layout/modal";
 import { Row } from "./layout/row";
-import { TabsRef } from "./layout/tabs";
+import { Tabs } from "./layout/tabs";
 import { AlertRef } from "./output/alert";
 import { BadgeRef } from "./output/badge";
 import { CodeBlockRef } from "./output/code-block";
@@ -92,10 +92,10 @@ export const entries: Record<string, RefEntry> = {
 	Container,
 	Form,
 	Fieldset,
-	FieldRef,
-	CardRef,
-	TabsRef,
-	AccordionRef,
+	Field,
+	Card,
+	Tabs,
+	Accordion,
 	Modal,
 };
 

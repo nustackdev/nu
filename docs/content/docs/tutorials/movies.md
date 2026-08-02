@@ -87,7 +87,7 @@ class StatsRow(nu.ui.Row):
     unseen = nu.ui.StatRef.slot()
 
 
-class StatsCard(nu.ui.CardRef):
+class StatsCard(nu.ui.Card):
     body = StatsRow.slot(gap=6, align="center", wrap=True)
 
 
@@ -151,20 +151,20 @@ The `body` at the bottom holds the server open. Nothing to loop yet, so it sleep
 
 Add a form. Submit appends a row and updates the stats live.
 
-**Form and Fieldset.** `nu.ui.Form` groups inputs and a submit button. `nu.ui.Fieldset` groups a subset under a legend. `nu.ui.FieldRef` wraps one input with a label and help slot. Widget knobs ride on `.slot(**props)` at the declaration site.
+**Form and Fieldset.** `nu.ui.Form` groups inputs and a submit button. `nu.ui.Fieldset` groups a subset under a legend. `nu.ui.Field` wraps one input with a label and help slot. Widget knobs ride on `.slot(**props)` at the declaration site.
 
 **Transaction and Snapshot.** A `nu.v.Transaction(...)` collects writes into one atomic commit. A `nu.v.Snapshot(...)` collects reads into one atomic view. Wire the React body as `Transaction(...) >> Snapshot(...)`: commit new state, then hydrate the UI from it.
 
 Add three form-input wrappers, a fieldset, and the form. Widget knobs ride on `.slot(**props)`:
 
 ```python
-class TitleField(nu.ui.FieldRef):
+class TitleField(nu.ui.Field):
     input = nu.ui.InputRef.slot(label="title", placeholder="e.g. Arrival")
 
-class RatingField(nu.ui.FieldRef):
+class RatingField(nu.ui.Field):
     input = nu.ui.NumberInputRef.slot(label="rating", min=1.0, max=10.0, step=0.5, default=7.0)
 
-class SwitchField(nu.ui.FieldRef):
+class SwitchField(nu.ui.Field):
     input = nu.ui.SwitchRef.slot(label="watched?", default=True)
 
 class DetailsFieldset(nu.ui.Fieldset):
@@ -249,13 +249,13 @@ class State(nu.Shape):
     watched = nv.IntRef.slot()
 
 
-class TitleField(nu.ui.FieldRef):
+class TitleField(nu.ui.Field):
     input = nu.ui.InputRef.slot(label="title", placeholder="e.g. Arrival")
 
-class RatingField(nu.ui.FieldRef):
+class RatingField(nu.ui.Field):
     input = nu.ui.NumberInputRef.slot(label="rating", min=1.0, max=10.0, step=0.5, default=7.0)
 
-class SwitchField(nu.ui.FieldRef):
+class SwitchField(nu.ui.Field):
     input = nu.ui.SwitchRef.slot(label="watched?", default=True)
 
 class DetailsFieldset(nu.ui.Fieldset):
@@ -274,7 +274,7 @@ class StatsRow(nu.ui.Row):
     watched = nu.ui.StatRef.slot()
     unseen = nu.ui.StatRef.slot()
 
-class StatsCard(nu.ui.CardRef):
+class StatsCard(nu.ui.Card):
     body = StatsRow.slot(gap=6, align="center", wrap=True)
 
 
@@ -282,7 +282,7 @@ class TableBody(nu.ui.Column):
     table = nu.ui.TableRef.slot(columns=["title", "rating", "watched"],
                                 striped=True, dense=True, max_rows=200)
 
-class TableCard(nu.ui.CardRef):
+class TableCard(nu.ui.Card):
     body = TableBody.slot(gap=3)
 
 

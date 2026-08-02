@@ -1,4 +1,4 @@
-// AccordionRef -- stack of collapsible sections, each wrapping a child Ref.
+// Accordion -- stack of collapsible sections, each wrapping a child Ref.
 //
 // Tab owns `open` (toggle locally first, then notify); server owns the
 // section list. One `write` op multiplexes chrome updates by payload key:
@@ -13,7 +13,7 @@
 import { ErrorBoundary } from "../../components/ErrorBoundary";
 import { OP_NOTIFY } from "@nustackdev/ui-core";
 import {
-	Accordion,
+	Accordion as AccordionPrimitive,
 	AccordionContent,
 	AccordionItem,
 	AccordionTrigger,
@@ -52,7 +52,7 @@ const factory: SliceFactory = (path, ctx, props, children) => {
 		!initialMulti && initialOpenRaw.length > 1 ? [initialOpenRaw[0]] : initialOpenRaw;
 
 	return {
-		type: "AccordionRef",
+		type: "Accordion",
 		value: null,
 		sections: initialSections,
 		open: initialOpen,
@@ -109,7 +109,7 @@ function AccordionView({ path }: { path: string }) {
 			};
 
 	return (
-		<Accordion
+		<AccordionPrimitive
 			{...rootProps}
 			className="rounded-md border border-border-default divide-y divide-border-subtle"
 		>
@@ -124,7 +124,7 @@ function AccordionView({ path }: { path: string }) {
 					</AccordionItem>
 				);
 			})}
-		</Accordion>
+		</AccordionPrimitive>
 	);
 }
 
@@ -148,4 +148,4 @@ function ChildSlot({ path, refs }: { path: string; refs: Record<string, { type: 
 	);
 }
 
-export const AccordionRef: RefEntry = { factory, component: AccordionView };
+export const Accordion: RefEntry = { factory, component: AccordionView };

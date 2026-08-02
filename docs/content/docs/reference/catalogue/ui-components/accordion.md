@@ -1,9 +1,9 @@
 ---
-title: AccordionRef
+title: Accordion
 ---
 
 Stack of collapsible sections, each wrapping a child Ref. An
-`AccordionRef` is a Shape (Section), not a Ref. Tab owns the open state,
+`Accordion` is a Shape (Section), not a Ref. Tab owns the open state,
 server owns the section list.
 
 ## kind
@@ -39,7 +39,7 @@ on this; there is no `read` op.
 // mount field entry, recursive
 {
   "path": "HomePage.faq",
-  "type": "AccordionRef",
+  "type": "Accordion",
   "props": {
     "sections": [
       {"id": "a", "label": "what is nu"},
@@ -74,7 +74,7 @@ slot order.
 Example:
 
 ```python
-class FAQ(nudle.AccordionRef):
+class FAQ(nudle.Accordion):
     sections = [{"id": "a", "label": "what is nu"}, {"id": "b", "label": "install"}]
     open = ["a"]
     multi = True
@@ -112,7 +112,7 @@ iterate the same way as `column.tsx` / `fieldset.tsx`: lookup
 
 ```
 {
-  type: "AccordionRef",
+  type: "Accordion",
   value: null,
   sections: {id: string, label: string}[],
   open: string[],
@@ -156,5 +156,5 @@ local then send `notify`.
   with no special-casing).
 - no `read`: server does not pull the open list, it relies on `changed`.
 - no reordering of sections from the tab side.
-- no instance multiplexing: one `AccordionRef` subclass = one mount
+- no instance multiplexing: one `Accordion` subclass = one mount
   point.
