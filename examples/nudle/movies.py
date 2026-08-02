@@ -75,16 +75,22 @@ class AddMovieForm(nu.ui.Form):
     feedback = nu.ui.AlertRef.slot(variant="ok", dismissible=True)
 
 
+class MinRatingField(nu.ui.Field):
+    input = nu.ui.NumberInputRef.slot(min=1.0, max=10.0, step=0.5, default=1.0)
+
+
+class FilterGenreField(nu.ui.Field):
+    input = nu.ui.SelectRef.slot(options=_GENRES_WITH_ANY, selected="")
+
+
+class WatchedOnlyField(nu.ui.Field):
+    input = nu.ui.SwitchRef.slot(default=False)
+
+
 class FilterRow(nu.ui.Row):
-    min_rating = nu.ui.NumberInputRef.slot(
-        label="min rating",
-        min=1.0,
-        max=10.0,
-        step=0.5,
-        default=1.0,
-    )
-    genre = nu.ui.SelectRef.slot(options=_GENRES_WITH_ANY, selected="")
-    watched_only = nu.ui.SwitchRef.slot(label="watched only", default=False)
+    min_rating = MinRatingField.slot(label="min rating")
+    genre = FilterGenreField.slot(label="genre")
+    watched_only = WatchedOnlyField.slot(label="already watched")
     apply = nu.ui.ButtonRef.slot(label="apply", variant="secondary")
     clear = nu.ui.ButtonRef.slot(label="clear", variant="ghost")
 
@@ -146,9 +152,12 @@ class DetailRow(nu.ui.Row):
     watched = nu.ui.BadgeRef.slot(label="watched", variant="ok")
 
 
-class DetailCard(nu.ui.Card):
+class MetaCard(nu.ui.Card):
     meta = DetailRow.slot(gap=6, align="center", wrap=True)
-    notes = nu.ui.TextRef.slot()
+
+
+class NotesCard(nu.ui.Card):
+    body = nu.ui.MarkdownRef.slot()
 
 
 class DetailActions(nu.ui.Row):
@@ -158,7 +167,8 @@ class DetailActions(nu.ui.Row):
 
 class MovieDetail(nu.ui.Page):
     heading = nu.ui.HeadingRef.slot()
-    card = DetailCard.slot(title="details")
+    meta = MetaCard.slot(title="details")
+    notes = NotesCard.slot(title="notes")
     actions = DetailActions.slot(gap=3, align="center")
 
 
@@ -229,20 +239,40 @@ _SEED_MOVIES: list[dict] = [
 # ---- Wire -------------------------------------------------------------------
 
 
+_ROW_TRANSFORM = nu.List.of(
+    nu.DictAttrRef("r")["title"],
+    nu.DictAttrRef("r")["year"],
+    nu.DictAttrRef("r")["genre"],
+    nu.DictAttrRef("r")["rating"],
+    nu.If(nu.DictAttrRef("r")["watched"], "yes", "no"),
+    nu.DictAttrRef("r")["notes"],
+)
+
+
 def _rows_form() -> nu.Nu:
     """Map each stored movie dict into a positional row TableRef expects."""
     return nu.Dict.of(
         rows=nu.Collect(
+            nu.Map(nu.Iter(State.movies), transform=_ROW_TRANSFORM, key="r"),
+        ),
+    )
+
+
+def _rows_filtered() -> nu.Nu:
+    """Same shape as _rows_form, but honors the current FilterRow inputs."""
+    min_r = nu.Float(FilterRow.min_rating.input)
+    genre = nu.Str(FilterRow.genre.input)
+    watched_only = nu.Bool(FilterRow.watched_only.input)
+    predicate = nu.And(
+        nu.Ge(nu.DictAttrRef("r")["rating"], min_r),
+        nu.Or(nu.Eq(genre, ""), nu.Eq(nu.DictAttrRef("r")["genre"], genre)),
+        nu.Or(nu.Not(watched_only), nu.DictAttrRef("r")["watched"]),
+    )
+    return nu.Dict.of(
+        rows=nu.Collect(
             nu.Map(
-                nu.Iter(State.movies),
-                transform=nu.List.of(
-                    nu.DictAttrRef("r")["title"],
-                    nu.DictAttrRef("r")["year"],
-                    nu.DictAttrRef("r")["genre"],
-                    nu.DictAttrRef("r")["rating"],
-                    nu.If(nu.DictAttrRef("r")["watched"], "yes", "no"),
-                    nu.DictAttrRef("r")["notes"],
-                ),
+                nu.Filter(nu.Iter(State.movies), predicate=predicate, key="r"),
+                transform=_ROW_TRANSFORM,
                 key="r",
             ),
         ),
@@ -307,13 +337,13 @@ on_row_click = nu.ReactForever(
         nu.v.Transaction(State.selected.set(nu.DictAttrRef("row_click")["row_index"]))
         >> nu.v.Snapshot(
             MovieDetail.heading.set(State.movies[State.selected].title)
-            | MovieDetail.card.meta.year.set_value(nu.str(State.movies[State.selected].year))
-            | MovieDetail.card.meta.genre.set_value(State.movies[State.selected].genre)
-            | MovieDetail.card.meta.rating.set_value(nu.str(State.movies[State.selected].rating))
-            | MovieDetail.card.meta.watched.set(
+            | MovieDetail.meta.meta.year.set_value(nu.str(State.movies[State.selected].year))
+            | MovieDetail.meta.meta.genre.set_value(State.movies[State.selected].genre)
+            | MovieDetail.meta.meta.rating.set_value(nu.str(State.movies[State.selected].rating))
+            | MovieDetail.meta.meta.watched.set(
                 label=nu.If(State.movies[State.selected].watched, "watched", "unseen"),
             )
-            | MovieDetail.card.notes.set(State.movies[State.selected].notes)
+            | MovieDetail.notes.body.set(State.movies[State.selected].notes)
         )
         >> App.nav.set("/detail"),
     ),
@@ -338,13 +368,34 @@ on_delete = nu.ReactForever(
 on_back = nu.ReactForever(MovieDetail.actions.back.clicked(), App.nav.set("/"))
 
 
-ui = init >> App.title.set("movies") >> hydrate >> (on_add | on_row_click | on_delete | on_back)
+on_filter_apply = nu.ReactForever(
+    FilterRow.apply.clicked(),
+    nu.v.Snapshot(Movies.shelf.body.table.set(_rows_filtered())),
+)
+
+
+on_filter_clear = nu.ReactForever(
+    FilterRow.clear.clicked(),
+    nu.v.Snapshot(
+        FilterRow.min_rating.input.set(1.0)
+        | FilterRow.genre.input.set("")
+        | FilterRow.watched_only.input.set(False)
+        | Movies.shelf.body.table.set(_rows_form())
+    ),
+)
+
+
+ui = (
+    App.title.set("movies")
+    >> hydrate
+    >> (on_add | on_row_click | on_delete | on_back | on_filter_apply | on_filter_clear)
+)
 
 
 tree = nu.With(
     nu.v.presets.rocksdb_navigator(".dbmovies"),
     nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
-    body=nu.ForeverDo(nu.Delay(3600)),  # click-driven; hold the server open
+    body=init >> nu.ForeverDo(nu.Delay(3600)),  # click-driven; hold the server open
 )
 
 
