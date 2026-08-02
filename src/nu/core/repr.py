@@ -4,9 +4,9 @@ Maps Python's builtins that render a value to text or to an alternate numeric
 notation onto Nu ScalarQueries. Pure compute; no Context effect of their own.
 
 Builtins to cover (Python -> Nu):
-- text: ``repr`` -> ``ReprQuery``, ``ascii`` -> ``AsciiQuery``, ``format`` -> ``FormatQuery``
-- numeric notation: ``bin`` -> ``BinQuery``, ``hex`` -> ``HexQuery``, ``oct`` -> ``OctQuery``
-- code points: ``ord`` -> ``OrdQuery``, ``chr`` -> ``ChrQuery``
+- text: ``repr`` -> ``Repr``, ``ascii`` -> ``Ascii``, ``format`` -> ``Format``
+- numeric notation: ``bin`` -> ``Bin``, ``hex`` -> ``Hex``, ``oct`` -> ``Oct``
+- code points: ``ord`` -> ``Ord``, ``chr`` -> ``Chr``
 
 Sorts: all ScalarQuery (Q).
 
@@ -16,7 +16,7 @@ child thunks, so recursion skips the ``Runtime.eval`` / ``Runtime.aeval``
 dispatch hop per child. Sentinel propagation is inlined: an EMPTY or INVALID
 operand collapses the result to INVALID without further compute.
 
-Most atoms are unary over one child. ``FormatQuery`` mirrors Python's
+Most atoms are unary over one child. ``Format`` mirrors Python's
 ``format(value[, format_spec])`` and branches on child count: one child
 applies the empty format spec, two children apply the second child as the
 spec.
@@ -43,21 +43,21 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 __all__ = [
-    "AsciiQuery",
-    "BinQuery",
-    "ChrQuery",
-    "FormatQuery",
-    "HexQuery",
-    "OctQuery",
-    "OrdQuery",
-    "ReprQuery",
+    "Ascii",
+    "Bin",
+    "Chr",
+    "Format",
+    "Hex",
+    "Oct",
+    "Ord",
+    "Repr",
 ]
 
 
-class ReprQuery(ScalarQuery):
+class Repr(ScalarQuery):
     """The ``repr`` string of its one child."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -68,7 +68,7 @@ class ReprQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -80,10 +80,10 @@ class ReprQuery(ScalarQuery):
         return athunk
 
 
-class AsciiQuery(ScalarQuery):
+class Ascii(ScalarQuery):
     """The ``ascii`` string of its one child (non-ASCII escaped)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -94,7 +94,7 @@ class AsciiQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -106,14 +106,14 @@ class AsciiQuery(ScalarQuery):
         return athunk
 
 
-class FormatQuery(ScalarQuery):
+class Format(ScalarQuery):
     """The ``format`` of a value under an optional format spec.
 
     One child applies the empty spec (``format(value)``); two children apply
     the second child as the format spec (``format(value, spec)``).
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
             (only,) = children
 
@@ -138,7 +138,7 @@ class FormatQuery(ScalarQuery):
 
         return thunk_spec
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
             (only,) = children
 
@@ -164,10 +164,10 @@ class FormatQuery(ScalarQuery):
         return athunk_spec
 
 
-class BinQuery(ScalarQuery):
+class Bin(ScalarQuery):
     """The binary string (``0b...``) of its one integer child."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -178,7 +178,7 @@ class BinQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -190,10 +190,10 @@ class BinQuery(ScalarQuery):
         return athunk
 
 
-class HexQuery(ScalarQuery):
+class Hex(ScalarQuery):
     """The hexadecimal string (``0x...``) of its one integer child."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -204,7 +204,7 @@ class HexQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -216,10 +216,10 @@ class HexQuery(ScalarQuery):
         return athunk
 
 
-class OctQuery(ScalarQuery):
+class Oct(ScalarQuery):
     """The octal string (``0o...``) of its one integer child."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -230,7 +230,7 @@ class OctQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -242,10 +242,10 @@ class OctQuery(ScalarQuery):
         return athunk
 
 
-class OrdQuery(ScalarQuery):
+class Ord(ScalarQuery):
     """The Unicode code point of its one single-character child."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -256,7 +256,7 @@ class OrdQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -268,10 +268,10 @@ class OrdQuery(ScalarQuery):
         return athunk
 
 
-class ChrQuery(ScalarQuery):
+class Chr(ScalarQuery):
     """The character for its one integer code-point child."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -282,7 +282,7 @@ class ChrQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:

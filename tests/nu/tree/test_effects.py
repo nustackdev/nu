@@ -6,8 +6,8 @@ iter_effects, is_pure, reads, writes, fabrics. The fabric predicates
 
 from __future__ import annotations
 
-from nu.context import AttrRef, SetCommand
-from nu.core import LiteralQuery
+from nu.context import AttrRef, SetCmd
+from nu.core import Literal
 from nu.flows import Sequential
 from nu.tree import fabrics, is_pure, reads, writes
 
@@ -17,18 +17,18 @@ def _read_ref():
 
 
 def _write_tree():
-    """SetCommand writes AttrRef('y'); also reads AttrRef('x')."""
+    """SetCmd writes AttrRef('y'); also reads AttrRef('x')."""
     target = AttrRef("y")
     source = AttrRef("x")
-    return SetCommand(target, source), target, source
+    return SetCmd(target, source), target, source
 
 
 def test_pure_tree_has_no_effects():
-    assert is_pure(Sequential(LiteralQuery(1), LiteralQuery(2)))
+    assert is_pure(Sequential(Literal(1), Literal(2)))
 
 
 def test_tree_with_a_ref_is_not_pure():
-    assert not is_pure(Sequential(_read_ref(), LiteralQuery(1)))
+    assert not is_pure(Sequential(_read_ref(), Literal(1)))
 
 
 def test_reads_collects_read_refs():

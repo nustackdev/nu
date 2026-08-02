@@ -9,11 +9,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import AnyForm
-from nu.core import IterQuery
+from nu import Any
+from nu.core import Iter
 from nu.lang.sentinels import UNSET
 
-from .interactions import ReduceQuery
+from .interactions import Reduce
 
 
 if TYPE_CHECKING:
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 __all__ = ["reduce"]
 
 
-def reduce(function: Nu, iterable: Arg[Iterable], initializer: object = UNSET) -> AnyForm:
+def reduce(function: Nu, iterable: Arg[Iterable], initializer: object = UNSET) -> Any:
     """Fold ``iterable`` left-to-right with ``function`` (``functools.reduce``).
 
     ``function`` is a Nu query that reads the accumulator and the current item
@@ -33,7 +33,7 @@ def reduce(function: Nu, iterable: Arg[Iterable], initializer: object = UNSET) -
     sum is ``reduce(IntAttrRef("acc") + IntAttrRef("item"), xs)``. With
     ``initializer`` the accumulator starts there; otherwise at the first item.
     """
-    # A Reduction requires a stream source; IterQuery lifts the iterable to one.
+    # A Reduction requires a stream source; Iter lifts the iterable to one.
     if initializer is UNSET:
-        return AnyForm(ReduceQuery(IterQuery(iterable), function))
-    return AnyForm(ReduceQuery(IterQuery(iterable), function, initial=initializer))
+        return Any(Reduce(Iter(iterable), function))
+    return Any(Reduce(Iter(iterable), function, initial=initializer))

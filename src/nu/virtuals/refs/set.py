@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import AnyForm, SetForm
+from nu import Any, Set
 from nu.domains.shape import ReactiveSetRef, Slot
 
 from .base import ViewRef
@@ -24,15 +24,15 @@ __all__ = [
 class SetRef[T](ReactiveSetRef, ViewRef[set[T]]):
     """Virtuals set reference — unordered unique-element container backed by a View."""
 
-    def _wrap_result(self, op: Nu) -> SetForm[T]:
-        """Wrap a set-level op result as a SetForm."""
-        return SetForm(op)
+    def _wrap_result(self, op: Nu) -> Set[T]:
+        """Wrap a set-level op result as a Set."""
+        return Set(op)
 
-    def _wrap_set_result(self, operand: Nu) -> SetForm[T]:
-        return SetForm(operand)
+    def _wrap_set_result(self, operand: Nu) -> Set[T]:
+        return Set(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> AnyForm:
-        return AnyForm(operand)
+    def _wrap_element_result(self, operand: Nu) -> Any:
+        return Any(operand)
 
     def __init__(
         self,
@@ -49,7 +49,9 @@ class SetRef[T](ReactiveSetRef, ViewRef[set[T]]):
         self._payload["item_type"] = item_type
 
     @classmethod
-    def slot[E](cls, item_type: type[E], view_type: type[MutableSetBase] | None = None) -> SetRef[E]:
+    def slot[E](
+        cls, item_type: type[E], view_type: type[MutableSetBase] | None = None
+    ) -> SetRef[E]:
         """Declare a set slot holding elements of ``item_type``."""
         from virtuals.views import SetView
 

@@ -24,9 +24,9 @@ from nu.context import (
     StrAttrRef,
     TupleAttrRef,
 )
-from nu.core import LiteralQuery
-from nu.forms.collections import ListForm, TupleForm
-from nu.forms.primitives import AnyForm, BoolForm, BytesForm, FloatForm, IntForm, StrForm
+from nu.core import Literal
+from nu.forms.collections import List, Tuple
+from nu.forms.primitives import Any, Bool, Bytes, Float, Int, Str
 from nu.lang import Context
 from nu.lang.helpers import run
 
@@ -56,7 +56,7 @@ def val(expr: object, c: Context | None = None) -> object:
 
 def test_int_add_int_narrows_to_int_form():
     n = IntAttrRef("n")
-    assert isinstance(n + 3, IntForm)
+    assert isinstance(n + 3, Int)
 
 
 def test_int_add_int_evaluates():
@@ -65,7 +65,7 @@ def test_int_add_int_evaluates():
 
 def test_int_mul_int_narrows_to_int_form():
     n = IntAttrRef("n")
-    assert isinstance(n * 2, IntForm)
+    assert isinstance(n * 2, Int)
 
 
 def test_int_mul_int_evaluates():
@@ -74,7 +74,7 @@ def test_int_mul_int_evaluates():
 
 def test_int_add_float_promotes_to_float_form():
     n = IntAttrRef("n")
-    assert isinstance(n + 1.5, FloatForm)
+    assert isinstance(n + 1.5, Float)
 
 
 def test_int_add_float_evaluates():
@@ -95,7 +95,7 @@ def test_int_pow_evaluates():
 
 
 def test_int_gt_narrows_to_bool_form():
-    assert isinstance(IntAttrRef("n") > 5, BoolForm)
+    assert isinstance(IntAttrRef("n") > 5, Bool)
 
 
 def test_int_gt_evaluates_true():
@@ -107,7 +107,7 @@ def test_int_gt_evaluates_false():
 
 
 def test_int_eq_narrows_to_bool_form():
-    assert isinstance(IntAttrRef("n") == 10, BoolForm)
+    assert isinstance(IntAttrRef("n") == 10, Bool)
 
 
 def test_int_lt_evaluates():
@@ -115,7 +115,7 @@ def test_int_lt_evaluates():
 
 
 def test_bool_and_narrows_to_bool_form():
-    assert isinstance(BoolAttrRef("f").and_(True), BoolForm)
+    assert isinstance(BoolAttrRef("f").and_(True), Bool)
 
 
 def test_bool_and_evaluates():
@@ -141,7 +141,7 @@ def test_chained_and_gt_evaluates():
 
 
 def test_str_upper_narrows_to_str_form():
-    assert isinstance(StrAttrRef("s").upper(), StrForm)
+    assert isinstance(StrAttrRef("s").upper(), Str)
 
 
 def test_str_upper_evaluates():
@@ -153,7 +153,7 @@ def test_str_lower_evaluates():
 
 
 def test_str_add_narrows_to_str_form():
-    assert isinstance(StrAttrRef("s") + "_x", StrForm)
+    assert isinstance(StrAttrRef("s") + "_x", Str)
 
 
 def test_str_add_evaluates():
@@ -161,7 +161,7 @@ def test_str_add_evaluates():
 
 
 def test_str_slice_narrows_to_str_form():
-    assert isinstance(StrAttrRef("s")[0:3], StrForm)
+    assert isinstance(StrAttrRef("s")[0:3], Str)
 
 
 def test_str_slice_evaluates():
@@ -169,7 +169,7 @@ def test_str_slice_evaluates():
 
 
 def test_str_startswith_narrows_to_bool_form():
-    assert isinstance(StrAttrRef("s").startswith("he"), BoolForm)
+    assert isinstance(StrAttrRef("s").startswith("he"), Bool)
 
 
 def test_str_startswith_evaluates():
@@ -186,7 +186,7 @@ def test_str_endswith_evaluates():
 
 
 def test_bytes_upper_narrows_to_bytes_form():
-    assert isinstance(BytesAttrRef("b").upper(), BytesForm)
+    assert isinstance(BytesAttrRef("b").upper(), Bytes)
 
 
 def test_bytes_upper_evaluates():
@@ -194,7 +194,7 @@ def test_bytes_upper_evaluates():
 
 
 def test_bytes_slice_narrows_to_bytes_form():
-    assert isinstance(BytesAttrRef("b")[0:3], BytesForm)
+    assert isinstance(BytesAttrRef("b")[0:3], Bytes)
 
 
 def test_bytes_slice_evaluates():
@@ -202,7 +202,7 @@ def test_bytes_slice_evaluates():
 
 
 def test_bytes_hex_narrows_to_str_form():
-    assert isinstance(BytesAttrRef("b").hex_(), StrForm)
+    assert isinstance(BytesAttrRef("b").hex_(), Str)
 
 
 def test_bytes_hex_evaluates():
@@ -210,7 +210,7 @@ def test_bytes_hex_evaluates():
 
 
 def test_bytes_startswith_narrows_to_bool_form():
-    assert isinstance(BytesAttrRef("b").startswith(b"Hi"), BoolForm)
+    assert isinstance(BytesAttrRef("b").startswith(b"Hi"), Bool)
 
 
 def test_bytes_startswith_evaluates():
@@ -223,7 +223,7 @@ def test_bytes_startswith_evaluates():
 
 
 def test_any_add_narrows_to_any_form():
-    assert isinstance(AnyAttrRef("x") + 1, AnyForm)
+    assert isinstance(AnyAttrRef("x") + 1, Any)
 
 
 def test_any_add_evaluates():
@@ -231,7 +231,7 @@ def test_any_add_evaluates():
 
 
 def test_any_gt_narrows_to_bool_form():
-    assert isinstance(AnyAttrRef("x") > 0, BoolForm)
+    assert isinstance(AnyAttrRef("x") > 0, Bool)
 
 
 def test_any_gt_evaluates():
@@ -244,7 +244,7 @@ def test_any_gt_evaluates():
 
 
 def test_none_not_narrows_to_bool_form():
-    assert isinstance(NoneAttrRef("z").not_(), BoolForm)
+    assert isinstance(NoneAttrRef("z").not_(), Bool)
 
 
 def test_none_not_evaluates():
@@ -261,7 +261,7 @@ def test_none_or_evaluates():
 
 
 def test_list_first_elem_narrows_to_any_form():
-    assert isinstance(ListAttrRef("xs").first_elem(), AnyForm)
+    assert isinstance(ListAttrRef("xs").first_elem(), Any)
 
 
 def test_list_first_elem_evaluates():
@@ -269,7 +269,7 @@ def test_list_first_elem_evaluates():
 
 
 def test_list_getitem_index_narrows_to_any_form():
-    assert isinstance(ListAttrRef("xs")[0], AnyForm)
+    assert isinstance(ListAttrRef("xs")[0], Any)
 
 
 def test_list_getitem_evaluates():
@@ -277,7 +277,7 @@ def test_list_getitem_evaluates():
 
 
 def test_list_slice_narrows_to_list_form():
-    assert isinstance(ListAttrRef("xs")[0:2], ListForm)
+    assert isinstance(ListAttrRef("xs")[0:2], List)
 
 
 def test_list_slice_evaluates():
@@ -285,7 +285,7 @@ def test_list_slice_evaluates():
 
 
 def test_list_mul_narrows_to_list_form():
-    assert isinstance(ListAttrRef("xs") * 2, ListForm)
+    assert isinstance(ListAttrRef("xs") * 2, List)
 
 
 def test_list_mul_evaluates():
@@ -298,7 +298,7 @@ def test_list_mul_evaluates():
 
 
 def test_dict_get_narrows_to_any_form():
-    assert isinstance(DictAttrRef("d").get_item("k"), AnyForm)
+    assert isinstance(DictAttrRef("d").get_item("k"), Any)
 
 
 def test_dict_get_evaluates():
@@ -325,31 +325,31 @@ def test_dict_copy_evaluates():
 
 def test_set_union_evaluates():
     st = SetAttrRef("st")
-    assert val(st.union(LiteralQuery({4, 5})), ctx(st={1, 2, 3})) == {1, 2, 3, 4, 5}
+    assert val(st.union(Literal({4, 5})), ctx(st={1, 2, 3})) == {1, 2, 3, 4, 5}
 
 
 def test_set_intersection_evaluates():
     st = SetAttrRef("st")
-    assert val(st.intersection(LiteralQuery({2, 3, 4})), ctx(st={1, 2, 3})) == {2, 3}
+    assert val(st.intersection(Literal({2, 3, 4})), ctx(st={1, 2, 3})) == {2, 3}
 
 
 def test_set_issubset_narrows_to_bool_form():
-    assert isinstance(SetAttrRef("st").issubset(LiteralQuery({1, 2, 3})), BoolForm)
+    assert isinstance(SetAttrRef("st").issubset(Literal({1, 2, 3})), Bool)
 
 
 def test_set_issubset_evaluates():
-    assert val(SetAttrRef("st").issubset(LiteralQuery({1, 2, 3, 4})), ctx(st={1, 2})) is True
+    assert val(SetAttrRef("st").issubset(Literal({1, 2, 3, 4})), ctx(st={1, 2})) is True
 
 
 def test_frozenset_union_evaluates():
     fs = FrozenSetAttrRef("fs")
-    result = val(fs.union(LiteralQuery(frozenset({40}))), ctx(fs=frozenset({10, 20})))
+    result = val(fs.union(Literal(frozenset({40}))), ctx(fs=frozenset({10, 20})))
     assert result == frozenset({10, 20, 40})
 
 
 def test_frozenset_isdisjoint_evaluates():
     fs = FrozenSetAttrRef("fs")
-    assert val(fs.isdisjoint(LiteralQuery(frozenset({99}))), ctx(fs=frozenset({1, 2}))) is True
+    assert val(fs.isdisjoint(Literal(frozenset({99}))), ctx(fs=frozenset({1, 2}))) is True
 
 
 # ---------------------------------------------------------------------------
@@ -358,7 +358,7 @@ def test_frozenset_isdisjoint_evaluates():
 
 
 def test_tuple_getitem_narrows_to_any_form():
-    assert isinstance(TupleAttrRef("tp")[0], AnyForm)
+    assert isinstance(TupleAttrRef("tp")[0], Any)
 
 
 def test_tuple_getitem_evaluates():
@@ -370,7 +370,7 @@ def test_tuple_first_elem_evaluates():
 
 
 def test_tuple_slice_narrows_to_tuple_form():
-    assert isinstance(TupleAttrRef("tp")[0:2], TupleForm)
+    assert isinstance(TupleAttrRef("tp")[0:2], Tuple)
 
 
 def test_tuple_slice_evaluates():
@@ -383,7 +383,7 @@ def test_tuple_slice_evaluates():
 
 
 def test_missing_ref_is_empty_narrows_to_bool_form():
-    assert isinstance(IntAttrRef("missing").is_empty(), BoolForm)
+    assert isinstance(IntAttrRef("missing").is_empty(), Bool)
 
 
 def test_missing_ref_is_empty_evaluates_true():
@@ -404,24 +404,24 @@ def test_bound_ref_not_empty_evaluates_true():
 
 # ---------------------------------------------------------------------------
 # Convoluted 1: chained promotion + comparison
-# (n + 1.5) * 2 > 20 -> BoolForm; value = (10 + 1.5) * 2 = 23.0 > 20
+# (n + 1.5) * 2 > 20 -> Bool; value = (10 + 1.5) * 2 = 23.0 > 20
 # ---------------------------------------------------------------------------
 
 
 def test_convo1_intermediate_types():
     n = IntAttrRef("n")
     step1 = n + 1.5
-    assert isinstance(step1, FloatForm)
+    assert isinstance(step1, Float)
     step2 = step1 * 2
-    assert isinstance(step2, FloatForm)
+    assert isinstance(step2, Float)
     convo1 = step2 > 20
-    assert isinstance(convo1, BoolForm)
+    assert isinstance(convo1, Bool)
 
 
 def test_convo1_evaluates():
     n = IntAttrRef("n")
     expr = (n + 1.5) * 2 > 20
-    assert isinstance(expr, BoolForm)
+    assert isinstance(expr, Bool)
     assert val(expr, ctx(n=10)) is True
 
 
@@ -433,7 +433,7 @@ def test_convo1_evaluates_false_below_threshold():
 
 # ---------------------------------------------------------------------------
 # Convoluted 2: two int refs + comparison + and_ with bool ref
-# (a + b > 10).and_(flag) -> BoolForm
+# (a + b > 10).and_(flag) -> Bool
 # ---------------------------------------------------------------------------
 
 
@@ -441,7 +441,7 @@ def test_convo2_narrows_to_bool_form():
     a = IntAttrRef("a")
     b = IntAttrRef("b")
     flag = BoolAttrRef("flag")
-    assert isinstance((a + b > 10).and_(flag), BoolForm)
+    assert isinstance((a + b > 10).and_(flag), Bool)
 
 
 def test_convo2_evaluates_true():
@@ -467,13 +467,13 @@ def test_convo2_evaluates_false_when_flag_false():
 
 # ---------------------------------------------------------------------------
 # Convoluted 3: string build + predicate
-# (s.upper() + "!").startswith("HELLO") -> BoolForm
+# (s.upper() + "!").startswith("HELLO") -> Bool
 # ---------------------------------------------------------------------------
 
 
 def test_convo3_narrows_to_bool_form():
     s = StrAttrRef("s")
-    assert isinstance((s.upper() + "!").startswith("HELLO"), BoolForm)
+    assert isinstance((s.upper() + "!").startswith("HELLO"), Bool)
 
 
 def test_convo3_evaluates_true():
@@ -489,20 +489,20 @@ def test_convo3_evaluates_false():
 def test_convo3_intermediate_str_forms():
     s = StrAttrRef("s")
     upper_expr = s.upper()
-    assert isinstance(upper_expr, StrForm)
+    assert isinstance(upper_expr, Str)
     cat_expr = upper_expr + "!"
-    assert isinstance(cat_expr, StrForm)
+    assert isinstance(cat_expr, Str)
 
 
 # ---------------------------------------------------------------------------
 # Convoluted 4: list first_elem used in arithmetic
-# xs.first_elem() + 3 -> AnyForm; value = 5 + 3 = 8
+# xs.first_elem() + 3 -> Any; value = 5 + 3 = 8
 # ---------------------------------------------------------------------------
 
 
 def test_convo4_narrows_to_any_form():
     xs = ListAttrRef("xs")
-    assert isinstance(xs.first_elem() + 3, AnyForm)
+    assert isinstance(xs.first_elem() + 3, Any)
 
 
 def test_convo4_evaluates():
@@ -517,19 +517,19 @@ def test_convo4_different_list():
 
 # ---------------------------------------------------------------------------
 # Convoluted 5: comparison of two arithmetic subtrees
-# (n * 2) == (n + n) -> BoolForm; always True
+# (n * 2) == (n + n) -> Bool; always True
 # ---------------------------------------------------------------------------
 
 
 def test_convo5_narrows_to_bool_form():
     n = IntAttrRef("n")
-    assert isinstance(n * 2 == n + n, BoolForm)
+    assert isinstance(n * 2 == n + n, Bool)
 
 
 def test_convo5_lhs_rhs_are_int_forms():
     n = IntAttrRef("n")
-    assert isinstance(n * 2, IntForm)
-    assert isinstance(n + n, IntForm)
+    assert isinstance(n * 2, Int)
+    assert isinstance(n + n, Int)
 
 
 def test_convo5_evaluates_true():

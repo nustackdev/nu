@@ -2,12 +2,12 @@
 
 compose, apply, map_children, map_nodes, replace, wrap, unwrap, graft,
 prune, conditional_wrap. Pure structural -- built on Sequential branches +
-LiteralQuery leaves, never compiled.
+Literal leaves, never compiled.
 """
 
 from __future__ import annotations
 
-from nu.core import LiteralQuery
+from nu.core import Literal
 from nu.flows import Sequential
 from nu.tree import (
     apply,
@@ -25,7 +25,7 @@ from nu.tree import (
 
 
 def _vals(nodes):
-    return [n._payload["value"] for n in nodes if isinstance(n, LiteralQuery)]
+    return [n._payload["value"] for n in nodes if isinstance(n, Literal)]
 
 
 def _is_seq(n):
@@ -33,15 +33,15 @@ def _is_seq(n):
 
 
 def _leaf_is(v):
-    return lambda n: isinstance(n, LiteralQuery) and n._payload["value"] == v
+    return lambda n: isinstance(n, Literal) and n._payload["value"] == v
 
 
 def _tree():
     """root[ 1, mid[ 2, 3 ], 4 ]."""
     return Sequential(
-        LiteralQuery(1),
-        Sequential(LiteralQuery(2), LiteralQuery(3)),
-        LiteralQuery(4),
+        Literal(1),
+        Sequential(Literal(2), Literal(3)),
+        Literal(4),
     )
 
 
@@ -53,7 +53,7 @@ def test_map_nodes_bottom_up_visits_children_first():
     log: list = []
 
     def visit(n):
-        log.append(n._payload["value"] if isinstance(n, LiteralQuery) else "S")
+        log.append(n._payload["value"] if isinstance(n, Literal) else "S")
         return n
 
     map_nodes(root, visit, order="bottom_up")
@@ -65,7 +65,7 @@ def test_map_nodes_top_down_visits_parent_first():
     log: list = []
 
     def visit(n):
-        log.append(n._payload["value"] if isinstance(n, LiteralQuery) else "S")
+        log.append(n._payload["value"] if isinstance(n, Literal) else "S")
         return n
 
     map_nodes(root, visit, order="top_down")
@@ -89,8 +89,8 @@ def test_map_children_is_shallow():
 
 def test_replace_swaps_matching_leaves():
     root = _tree()
-    out = replace(root, _leaf_is(2), lambda _: LiteralQuery(20))
-    assert sorted(_vals(find(out, lambda n: isinstance(n, LiteralQuery)))) == [1, 3, 4, 20]
+    out = replace(root, _leaf_is(2), lambda _: Literal(20))
+    assert sorted(_vals(find(out, lambda n: isinstance(n, Literal)))) == [1, 3, 4, 20]
 
 
 def test_wrap_wraps_matching_node():
@@ -103,7 +103,7 @@ def test_wrap_wraps_matching_node():
 
 
 def test_unwrap_splices_single_child_wrappers():
-    root = Sequential(Sequential(LiteralQuery(5)), LiteralQuery(6))
+    root = Sequential(Sequential(Literal(5)), Literal(6))
     out = unwrap(root, _is_seq)
     # the inner single-child Sequential is gone; its child is spliced up
     assert _vals(out._children) == [5, 6]
@@ -113,20 +113,20 @@ def test_unwrap_splices_single_child_wrappers():
 
 
 def test_graft_replaces_target_by_identity():
-    a = LiteralQuery(1)
-    root = Sequential(a, LiteralQuery(2))
-    out = graft(root, a, LiteralQuery(100))
+    a = Literal(1)
+    root = Sequential(a, Literal(2))
+    out = graft(root, a, Literal(100))
     assert _vals(out._children) == [100, 2]
 
 
 def test_prune_removes_matching_subtrees():
     root = _tree()
     out = prune(root, _leaf_is(2))
-    assert sorted(_vals(find(out, lambda n: isinstance(n, LiteralQuery)))) == [1, 3, 4]
+    assert sorted(_vals(find(out, lambda n: isinstance(n, Literal)))) == [1, 3, 4]
 
 
 def test_prune_returns_none_when_root_matches():
-    assert prune(LiteralQuery(1), _leaf_is(1)) is None
+    assert prune(Literal(1), _leaf_is(1)) is None
 
 
 def test_prune_preserves_identity_when_nothing_matches():
@@ -158,20 +158,20 @@ def test_compose_runs_left_to_right():
     root = _tree()
 
     def f(r):
-        return replace(r, _leaf_is(1), lambda _: LiteralQuery(10))
+        return replace(r, _leaf_is(1), lambda _: Literal(10))
 
     def g(r):
-        return replace(r, _leaf_is(4), lambda _: LiteralQuery(40))
+        return replace(r, _leaf_is(4), lambda _: Literal(40))
 
     out = compose(f, g)(root)
-    assert sorted(_vals(find(out, lambda n: isinstance(n, LiteralQuery)))) == [2, 3, 10, 40]
+    assert sorted(_vals(find(out, lambda n: isinstance(n, Literal)))) == [2, 3, 10, 40]
 
 
 def test_apply_threads_transforms_in_order():
     root = _tree()
     out = apply(
         root,
-        lambda r: replace(r, _leaf_is(1), lambda _: LiteralQuery(10)),
-        lambda r: replace(r, _leaf_is(10), lambda _: LiteralQuery(11)),
+        lambda r: replace(r, _leaf_is(1), lambda _: Literal(10)),
+        lambda r: replace(r, _leaf_is(10), lambda _: Literal(11)),
     )
-    assert sorted(_vals(find(out, lambda n: isinstance(n, LiteralQuery)))) == [2, 3, 4, 11]
+    assert sorted(_vals(find(out, lambda n: isinstance(n, Literal)))) == [2, 3, 4, 11]

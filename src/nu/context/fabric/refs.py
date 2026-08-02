@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-    from .queries import FabricExistsQuery
+    from .queries import FabricExists
 
 
 __all__ = ["FabricRef"]
@@ -38,7 +38,7 @@ class FabricRef(_ContextRef):
 
         class Solana(FabricRef):
             fabric = SolanaClient
-            slot = method_query(IntForm, "getSlot")
+            slot = method_query(Int, "getSlot")
 
     ``Solana()`` then resolves ``SolanaClient`` from the Context, and its
     methods (built by the ``method_*`` descriptors / ``MethodFactory``)
@@ -75,8 +75,8 @@ class FabricRef(_ContextRef):
 
         return athunk
 
-    def exists(self) -> FabricExistsQuery:
+    def exists(self) -> FabricExists:
         """A Query yielding whether this Ref's fabric type is bound."""
-        from .queries import FabricExistsQuery
+        from .queries import FabricExists
 
-        return FabricExistsQuery(self)
+        return FabricExists(self)

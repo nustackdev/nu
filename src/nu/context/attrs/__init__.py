@@ -2,13 +2,13 @@
 
 ``ctx.attrs`` is a flat, name-keyed dict for loop counters, accumulators,
 markers, and other short-lived primitives. ``AttrRef`` names a slot; the write
-ops (``SetCommand`` / ``DeleteCommand``) and existence query
-(``AttrExistsQuery``) are the interactions.
+ops (``SetCmd`` / ``Delete``) and existence query
+(``AttrExists``) are the interactions.
 """
 
 from __future__ import annotations
 
-from .interactions import AttrExistsQuery, DeleteCommand, SetCommand
+from .interactions import AttrExists, Delete, SetCmd
 from .refs import (
     AnyAttrRef,
     AttrRef,
@@ -28,11 +28,11 @@ from .refs import (
 
 __all__ = [
     "AnyAttrRef",
-    "AttrExistsQuery",
+    "AttrExists",
     "AttrRef",
     "BoolAttrRef",
     "BytesAttrRef",
-    "DeleteCommand",
+    "Delete",
     "DictAttrRef",
     "FloatAttrRef",
     "FrozenSetAttrRef",
@@ -40,7 +40,7 @@ __all__ = [
     "ListAttrRef",
     "NoneAttrRef",
     "SetAttrRef",
-    "SetCommand",
+    "SetCmd",
     "StrAttrRef",
     "TupleAttrRef",
 ]

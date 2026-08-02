@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 
-from nu.core import LiteralQuery
+from nu.core import Literal
 from nu.factory import InteractionFactory
 from nu.lang import Command, Effect, ScalarQuery
 from nu.lang.helpers import arun, run
@@ -46,7 +46,7 @@ def _track(x: object) -> object:
 
 
 Track = InteractionFactory(ScalarQuery, "Track", _track)
-value, _ = run(Track(LiteralQuery(EMPTY)))
+value, _ = run(Track(Literal(EMPTY)))
 assert value is INVALID
 assert calls == []  # function never ran
 print(value)
@@ -58,7 +58,7 @@ def keep(a: object, b: object) -> object:
 
 
 Pair = InteractionFactory(ScalarQuery, "Pair", keep, propagate_sentinels=False)
-value, _ = run(Pair(LiteralQuery(EMPTY), LiteralQuery(INVALID)))
+value, _ = run(Pair(Literal(EMPTY), Literal(INVALID)))
 assert value == (EMPTY, INVALID)
 print(value)
 

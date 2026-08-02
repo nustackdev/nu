@@ -3,12 +3,12 @@
 
 Two ways to import. Grab what you need flat from the root:
 
-    from nu import IntForm, Sequential, Retry, AttrRef, Nu, run
+    from nu import Int, Sequential, Retry, AttrRef, Nu, run
 
 Or reach a subpackage by dot-access:
 
     import nu
-    nu.forms.IntForm    nu.core.AddQuery    nu.flows.Sequential
+    nu.forms.Int    nu.core.Add    nu.flows.Sequential
     nu.spans.Retry      nu.shape.Shape      nu.tree.map_nodes
     nu.mem.IntRef       nu.virtuals.presets.memory_storage
     nu.ui.Page          nu.std.uuid.UUID
@@ -38,7 +38,7 @@ from .flows import *
 from .forms import *
 from .spans import *
 
-# Shape DSL only; fabric atoms (LoadQuery, SetCommand, ...) stay at nu.shape.*.
+# Shape DSL only; fabric atoms (Load, SetCmd, ...) stay at nu.shape.*.
 from .domains.shape import Shape, Slot
 
 # Language essentials (curated; internals stay at nu.lang.*).

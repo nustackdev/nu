@@ -11,11 +11,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import AnyForm
+from nu import Any
 from nu.domains.shape import Slot
 from nu.lang.typeinfo import value_type_for
 
-from .base import ViewRef
 from .dict import DictRef
 
 
@@ -23,6 +22,8 @@ if TYPE_CHECKING:
     from nu import Nu
     from nu.domains.shape.dsl import Shape
     from virtuals.views import Kh57ViewBase
+
+    from .base import ViewRef
 
 
 __all__ = [
@@ -94,23 +95,23 @@ class Kh57Ref[V](DictRef[int, V]):
         n: int | Nu,
         begin: int | Nu | None = None,
         end: int | Nu | None = None,
-    ) -> AnyForm:
+    ) -> Any:
         """Range reservoir sample - return up to ``n`` (key, value) pairs.
 
         Yields a list of ``(int_key, value)`` tuples from the sub-range
         ``[begin, end)``. Deterministic given a seeded backend salt;
         stable under appends outside the queried range.
         """
-        from nu.virtuals.interactions.kh57 import Kh57SampleQuery
+        from nu.virtuals.interactions.kh57 import Kh57Sample
 
-        return AnyForm(Kh57SampleQuery(self, n, begin, end))
+        return Any(Kh57Sample(self, n, begin, end))
 
     def range(
         self,
         begin: int | Nu,
         end: int | Nu,
-    ) -> AnyForm:
+    ) -> Any:
         """List of ``(int_key, value)`` pairs in ``[begin, end)``, key-ordered."""
-        from nu.virtuals.interactions.kh57 import Kh57RangeQuery
+        from nu.virtuals.interactions.kh57 import Kh57Range
 
-        return AnyForm(Kh57RangeQuery(self, begin, end))
+        return Any(Kh57Range(self, begin, end))

@@ -3,7 +3,7 @@
 ``math`` is a function module: no central class, just free functions over
 floats and ints. Core can't compute ``sqrt``/``sin``/etc., so each one is a new
 atom bound straight to the ``math.*`` callable. Constants (``pi``, ``e``, ...)
-are plain values, so they need no atom - they ride on ``LiteralQuery`` in
+are plain values, so they need no atom - they ride on ``Literal`` in
 ``functions``.
 
 Every binding here is pure (no clock, no randomness), so a future

@@ -5,7 +5,7 @@ The name is ``Fraction`` to mirror ``from fractions import Fraction``, backed by
 the typed access surface for the stdlib type:
 
 - **property reads** (``.numerator``, ``.denominator``) reuse core
-  ``GetAttrQuery`` - a component is just an attribute read.
+  ``GetAttr`` - a component is just an attribute read.
 - **method calls** (``limit_denominator``, ``as_integer_ratio``) are named
   ``ScalarQueryFactory`` atoms in ``interactions`` (each binds the unbound
   ``Fraction`` method).
@@ -29,8 +29,8 @@ from nu.lang import Form, TypedNu
 if TYPE_CHECKING:
     from decimal import Decimal as _Decimal
 
-    from nu.forms.collections import TupleForm
-    from nu.forms.primitives import BoolForm, IntForm
+    from nu.forms.collections import Tuple
+    from nu.forms.primitives import Bool, Int
     from nu.lang import Arg, FloatArg, IntArg, StrArg
 
     type FractionArg = Arg[_Fraction]
@@ -82,22 +82,22 @@ class Fraction(Form, TypedNu[_Fraction]):
         return Fraction(FractionFromStr(value))
 
     # =========================================================================
-    # COMPONENT READS (reuse core GetAttrQuery)
+    # COMPONENT READS (reuse core GetAttr)
     # =========================================================================
 
-    def numerator(self) -> IntForm:
+    def numerator(self) -> Int:
         """The numerator (in lowest terms)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "numerator"))
+        return Int(GetAttr(self, "numerator"))
 
-    def denominator(self) -> IntForm:
+    def denominator(self) -> Int:
         """The denominator (in lowest terms, always positive)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "denominator"))
+        return Int(GetAttr(self, "denominator"))
 
     # =========================================================================
     # METHODS (factory atoms over unbound methods)
@@ -109,106 +109,106 @@ class Fraction(Form, TypedNu[_Fraction]):
 
         return Fraction(FractionLimitDenominator(self, max_denominator))
 
-    def as_integer_ratio(self) -> TupleForm:
+    def as_integer_ratio(self) -> Tuple:
         """The ``(numerator, denominator)`` pair as a tuple."""
-        from nu import TupleForm
+        from nu import Tuple
 
         from .interactions import FractionAsIntegerRatio
 
-        return TupleForm(FractionAsIntegerRatio(self))
+        return Tuple(FractionAsIntegerRatio(self))
 
     # =========================================================================
     # ARITHMETIC (reuse core atoms; Python does the real op)
     # =========================================================================
 
     def __add__(self, other: FractionArg | IntArg) -> Fraction:
-        from nu.core import AddQuery
+        from nu.core import Add
 
-        return Fraction(AddQuery(self, other))
+        return Fraction(Add(self, other))
 
     def __sub__(self, other: FractionArg | IntArg) -> Fraction:
-        from nu.core import SubQuery
+        from nu.core import Sub
 
-        return Fraction(SubQuery(self, other))
+        return Fraction(Sub(self, other))
 
     def __mul__(self, other: FractionArg | IntArg) -> Fraction:
-        from nu.core import MulQuery
+        from nu.core import Mul
 
-        return Fraction(MulQuery(self, other))
+        return Fraction(Mul(self, other))
 
     def __truediv__(self, other: FractionArg | IntArg) -> Fraction:
-        from nu.core import DivQuery
+        from nu.core import Div
 
-        return Fraction(DivQuery(self, other))
+        return Fraction(Div(self, other))
 
     def __floordiv__(self, other: FractionArg | IntArg) -> Fraction:
-        from nu.core import FloorDivQuery
+        from nu.core import FloorDiv
 
-        return Fraction(FloorDivQuery(self, other))
+        return Fraction(FloorDiv(self, other))
 
     def __mod__(self, other: FractionArg | IntArg) -> Fraction:
-        from nu.core import ModQuery
+        from nu.core import Mod
 
-        return Fraction(ModQuery(self, other))
+        return Fraction(Mod(self, other))
 
     def __pow__(self, other: IntArg) -> Fraction:
-        from nu.core import PowQuery
+        from nu.core import Pow
 
-        return Fraction(PowQuery(self, other))
+        return Fraction(Pow(self, other))
 
     def __neg__(self) -> Fraction:
-        from nu.core import NegQuery
+        from nu.core import Neg
 
-        return Fraction(NegQuery(self))
+        return Fraction(Neg(self))
 
     def __abs__(self) -> Fraction:
-        from nu.core import AbsQuery
+        from nu.core import Abs
 
-        return Fraction(AbsQuery(self))
+        return Fraction(Abs(self))
 
     def __pos__(self) -> Fraction:
-        from nu.core import PosQuery
+        from nu.core import Pos
 
-        return Fraction(PosQuery(self))
+        return Fraction(Pos(self))
 
     # =========================================================================
     # COMPARISON (reuse core comparison atoms)
     # =========================================================================
 
-    def __gt__(self, other: FractionArg | IntArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GtQuery
+    def __gt__(self, other: FractionArg | IntArg) -> Bool:
+        from nu import Bool
+        from nu.core import Gt
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: FractionArg | IntArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LtQuery
+    def __lt__(self, other: FractionArg | IntArg) -> Bool:
+        from nu import Bool
+        from nu.core import Lt
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: FractionArg | IntArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GeQuery
+    def __ge__(self, other: FractionArg | IntArg) -> Bool:
+        from nu import Bool
+        from nu.core import Ge
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: FractionArg | IntArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LeQuery
+    def __le__(self, other: FractionArg | IntArg) -> Bool:
+        from nu import Bool
+        from nu.core import Le
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
-    def eq(self, other: FractionArg | IntArg) -> BoolForm:
+    def eq(self, other: FractionArg | IntArg) -> Bool:
         """Whether two fractions are equal."""
-        from nu import BoolForm
-        from nu.core import EqQuery
+        from nu import Bool
+        from nu.core import Eq
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def ne(self, other: FractionArg | IntArg) -> BoolForm:
+    def ne(self, other: FractionArg | IntArg) -> Bool:
         """Whether two fractions differ."""
-        from nu import BoolForm
-        from nu.core import NeQuery
+        from nu import Bool
+        from nu.core import Ne
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))

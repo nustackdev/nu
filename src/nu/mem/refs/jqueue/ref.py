@@ -14,7 +14,7 @@ import janus
 from nu.domains.shape import Slot
 
 from ..base import RefBase
-from .form import JQueueForm
+from .form import JQueue
 
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 __all__ = ["JQueueRef"]
 
 
-class JQueueRef[T](RefBase[janus.Queue[T]], JQueueForm[T]):
+class JQueueRef[T](RefBase[janus.Queue[T]], JQueue[T]):
     """Leaf ref to a janus.Queue stored at a slot in nu-mem state.
 
     Vivifies the queue on first fetch, then returns the same instance.
@@ -57,9 +57,9 @@ class JQueueRef[T](RefBase[janus.Queue[T]], JQueueForm[T]):
     def _item_type(self) -> type:
         return self._payload.get("item_type", object)  # type: ignore[return-value]
 
-    def _wrap_result(self, op: Nu) -> JQueueForm[T]:
-        """Wrap an interaction node in the typed JQueueForm surface."""
-        return JQueueForm(op)
+    def _wrap_result(self, op: Nu) -> JQueue[T]:
+        """Wrap an interaction node in the typed JQueue surface."""
+        return JQueue(op)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync read thunk that vivifies and yields the queue."""

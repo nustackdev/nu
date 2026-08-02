@@ -1,7 +1,7 @@
 """Tests for the Strategy flows: Sequential, Parallel, Race, Gather, AnyN.
 
 Strategy flows compose mutating atoms directly. Coverage builds real programs
-of ``SetCommand`` bodies and runs them through ``run`` / ``arun``, asserting the
+of ``SetCmd`` bodies and runs them through ``run`` / ``arun``, asserting the
 writes landed. Class-hierarchy and declared-attribute checks pin the basis.
 """
 
@@ -9,16 +9,16 @@ from __future__ import annotations
 
 import pytest
 
-from nu.context import AttrRef, SetCommand
-from nu.core import LiteralQuery
+from nu.context import AttrRef, SetCmd
+from nu.core import Literal
 from nu.flows.strategy import AnyN, Gather, Parallel, Race, Sequential
 from nu.lang import Attr, Cardinality, Strategy, compile
 from nu.lang.attributes.execution import ExecOrder
 from nu.lang.helpers import arun, run
 
 
-def _set(name: str, value: object) -> SetCommand:
-    return SetCommand(AttrRef(name), LiteralQuery(value))
+def _set(name: str, value: object) -> SetCmd:
+    return SetCmd(AttrRef(name), Literal(value))
 
 
 # --- basis ----------------------------------------------------------------

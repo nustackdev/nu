@@ -3,7 +3,7 @@
 SequenceForm = Collection + Sliceable + first/last/index/count/reversed
 MutableSequenceForm = Sequence + append/insert/pop/extend/remove/reverse
 
-Sorted/ReversedQuery are standalone functions in ``abc.fn``.
+Sorted/Reversed are standalone functions in ``abc.fn``.
 
 Follows Python's collections.abc.Sequence / MutableSequence pattern.
 
@@ -27,7 +27,7 @@ from .sliceable import SliceableForm
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from nu.forms.primitives import IntForm
+    from nu.forms.primitives import Int
     from nu.lang import Arg, IntArg
 
 
@@ -56,50 +56,50 @@ class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     @overload
     def __getitem__(self, key: slice) -> CollectionResultT: ...
     def __getitem__(self, key: IntArg | slice) -> ElementResultT | CollectionResultT:
-        """Index → element via At; slice → subsequence via SliceQuery."""
-        from nu.core import GetItemQuery as At
-        from nu.core import SliceQuery
+        """Index → element via At; slice → subsequence via Slice."""
+        from nu.core import GetItem as At
+        from nu.core import Slice
 
         if isinstance(key, slice):
             return cast(
                 "CollectionResultT",
-                self._wrap_sliceable_result(At(self, SliceQuery(key.start, key.stop, key.step))),
+                self._wrap_sliceable_result(At(self, Slice(key.start, key.stop, key.step))),
             )
         return cast("ElementResultT", self._wrap_element_result(At(self, key)))
 
     def first_elem(self) -> ElementResultT:
         """Get first element."""
-        from .sequence_interactions import FirstQuery
+        from .sequence_interactions import First
 
-        return cast("ElementResultT", self._wrap_element_result(FirstQuery(self)))
+        return cast("ElementResultT", self._wrap_element_result(First(self)))
 
     def last_elem(self) -> ElementResultT:
         """Get last element."""
-        from .sequence_interactions import LastQuery
+        from .sequence_interactions import Last
 
-        return cast("ElementResultT", self._wrap_element_result(LastQuery(self)))
+        return cast("ElementResultT", self._wrap_element_result(Last(self)))
 
-    def index(self, value: Arg[ElementT]) -> IntForm:
+    def index(self, value: Arg[ElementT]) -> Int:
         """Find index of value."""
-        from nu.forms.primitives import IntForm
+        from nu.forms.primitives import Int
 
-        from .sequence_interactions import IndexOfQuery
+        from .sequence_interactions import IndexOf
 
-        return IntForm(IndexOfQuery(self, value))
+        return Int(IndexOf(self, value))
 
-    def count(self, value: Arg[ElementT]) -> IntForm:
+    def count(self, value: Arg[ElementT]) -> Int:
         """Count occurrences."""
-        from nu.forms.primitives import IntForm
+        from nu.forms.primitives import Int
 
-        from .sequence_interactions import CountQuery
+        from .sequence_interactions import Count
 
-        return IntForm(CountQuery(self, value))
+        return Int(Count(self, value))
 
     def reversed(self) -> CollectionResultT:
-        """ReversedQuery copy of this sequence."""
-        from nu.core import ReversedQuery
+        """Reversed copy of this sequence."""
+        from nu.core import Reversed
 
-        return cast("CollectionResultT", self._wrap_iterable_result(ReversedQuery(self)))
+        return cast("CollectionResultT", self._wrap_iterable_result(Reversed(self)))
 
 
 class MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
@@ -116,57 +116,57 @@ class MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResul
 
     def append(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Append item to end of sequence. Mutates in place; yields nothing (Command)."""
-        from .sequence_interactions import AppendCommand
+        from .sequence_interactions import Append
 
-        return AppendCommand(self, value)
+        return Append(self, value)
 
     def extend(self, other: Arg[Iterable[ElementT]]) -> Any:  # noqa: ANN401
         """Extend sequence with elements from iterable. Mutates in place; yields nothing (Command)."""
-        from .sequence_interactions import ExtendCommand
+        from .sequence_interactions import Extend
 
-        return ExtendCommand(self, other)
+        return Extend(self, other)
 
     def insert(self, index: IntArg, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Insert item at index. Mutates in place; yields nothing (Command)."""
-        from .sequence_interactions import InsertCommand
+        from .sequence_interactions import Insert
 
-        return InsertCommand(self, index, value)
+        return Insert(self, index, value)
 
     def pop(self, index: IntArg = -1) -> ElementResultT:
         """Remove and return item at index (default: last). Mutates and yields (Action)."""
-        from .sequence_interactions import PopAction
+        from .sequence_interactions import Pop
 
-        return cast("ElementResultT", self._wrap_element_result(PopAction(self, index)))
+        return cast("ElementResultT", self._wrap_element_result(Pop(self, index)))
 
     def remove(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Remove first occurrence of value. Mutates in place; yields nothing (Command)."""
-        from .sequence_interactions import RemoveValueCommand
+        from .sequence_interactions import RemoveValue
 
-        return RemoveValueCommand(self, value)
+        return RemoveValue(self, value)
 
     def reverse(self) -> Any:  # noqa: ANN401
         """Reverse sequence in-place. Mutates in place; yields nothing (Command)."""
-        from .sequence_interactions import ReverseCommand
+        from .sequence_interactions import Reverse
 
-        return ReverseCommand(self)
+        return Reverse(self)
 
     def sort(self) -> Any:  # noqa: ANN401
         """Sort sequence in-place (no key). Mutates in place; yields nothing (Command)."""
-        from .sequence_interactions import SortCommand
+        from .sequence_interactions import Sort
 
-        return SortCommand(self)
+        return Sort(self)
 
     def copy(self) -> CollectionResultT:
         """Shallow copy: new sequence with the same elements (Query)."""
-        from .sequence_interactions import CopyQuery
+        from .sequence_interactions import Copy
 
-        return cast("CollectionResultT", self._wrap_sliceable_result(CopyQuery(self)))
+        return cast("CollectionResultT", self._wrap_sliceable_result(Copy(self)))
 
     def clear(self) -> Any:  # noqa: ANN401
         """Remove all items. Mutates in place; yields nothing (Command)."""
-        from .shared_interactions import ClearCommand
+        from .shared_interactions import Clear
 
-        return ClearCommand(self)
+        return Clear(self)
 
 
 class ReactiveSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
@@ -175,7 +175,7 @@ class ReactiveSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResu
     """Reactive sequence — adds on_change() for any-change observation.
 
     Provides (in addition to MutableSequenceForm):
-        on_change() → OnChangeQuery
+        on_change() → OnChange
 
     The three tree-aware methods (on_child_change, on_children_change,
     on_descendants_change) are shape-domain and live on
@@ -184,6 +184,6 @@ class ReactiveSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResu
 
     def on_change(self) -> object:
         """Subscribe to any change on this sequence slot."""
-        from nu.core.reactive import OnChangeQuery
+        from nu.core.reactive import OnChange
 
-        return OnChangeQuery(self)
+        return OnChange(self)

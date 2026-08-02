@@ -15,7 +15,7 @@ import pytest
 
 from nu.context import FabricRef
 from nu.factory import MethodFactory, method_action, method_command, method_query
-from nu.forms.primitives import IntForm, StrForm
+from nu.forms.primitives import Int, Str
 from nu.lang import (
     INVALID,
     Attr,
@@ -58,11 +58,11 @@ class WalletRef(FabricRef):
 
     fabric = Wallet
 
-    balance = method_query(IntForm, "balance")
-    plus = method_query(IntForm, "add")  # attr name differs from method name
-    send = method_action(StrForm, "send")
+    balance = method_query(Int, "balance")
+    plus = method_query(Int, "add")  # attr name differs from method name
+    send = method_action(Str, "send")
     ping = method_command("ping")
-    slot = method_query(IntForm, "aslot")
+    slot = method_query(Int, "aslot")
 
 
 def _bound() -> Context:
@@ -104,7 +104,7 @@ def test_determinism_is_overridable():
 
 
 def test_method_factory_atom_runs_standalone():
-    value, _ = run(IntForm(MethodFactory(ScalarQuery, "Read", "balance")(WalletRef())), _bound())
+    value, _ = run(Int(MethodFactory(ScalarQuery, "Read", "balance")(WalletRef())), _bound())
     assert value == 100
 
 
@@ -196,7 +196,7 @@ def test_distinct_refs_are_distinct_fabrics():
     class OtherRef(FabricRef):
         fabric = Wallet
 
-        balance = method_query(IntForm, "balance")
+        balance = method_query(Int, "balance")
 
     # Same underlying fabric type, but keyed by the concrete Ref subclass.
     assert _effects(WalletRef.balance()) != _effects(OtherRef.balance())

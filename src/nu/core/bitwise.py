@@ -4,13 +4,13 @@ Maps Python's bitwise operators onto Nu ScalarQueries over integers. Pure
 compute; no Context effect of their own.
 
 Operators to cover (Python -> Nu):
-- ``&`` -> ``BitAndQuery``, ``|`` -> ``BitOrQuery``, ``^`` -> ``BitXorQuery``
-- ``~`` -> ``BitNotQuery`` (unary)
-- ``<<`` -> ``LShiftQuery``, ``>>`` -> ``RShiftQuery``
+- ``&`` -> ``BitAnd``, ``|`` -> ``BitOr``, ``^`` -> ``BitXor``
+- ``~`` -> ``BitNot`` (unary)
+- ``<<`` -> ``LShift``, ``>>`` -> ``RShift``
 
-Sorts: all ScalarQuery (Q). ``BitAndQuery`` / ``BitOrQuery`` / ``BitXorQuery`` are commutative
+Sorts: all ScalarQuery (Q). ``BitAnd`` / ``BitOr`` / ``BitXor`` are commutative
 + associative and fold over their children (identity ``-1`` for AND, ``0`` for
-OR / XOR); the shifts are binary and ``BitNotQuery`` is unary, neither commutative
+OR / XOR); the shifts are binary and ``BitNot`` is unary, neither commutative
 nor associative. Each atom defines ``compile`` (sync hot path) and ``acompile``
 (async hot path), both returning a thunk that captures the precompiled child
 thunks. Sentinel propagation is inlined: an EMPTY or INVALID operand collapses
@@ -31,16 +31,16 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-__all__ = ["BitAndQuery", "BitNotQuery", "BitOrQuery", "BitXorQuery", "LShiftQuery", "RShiftQuery"]
+__all__ = ["BitAnd", "BitNot", "BitOr", "BitXor", "LShift", "RShift"]
 
 
-class BitAndQuery(ScalarQuery):
+class BitAnd(ScalarQuery):
     """The bitwise AND of its scalar children."""
 
     _commutative = Declared(value=True, name="commutative")
     _associative = Declared(value=True, name="associative")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             out: object = -1
             for ct in children:
@@ -52,7 +52,7 @@ class BitAndQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             out: object = -1
             for ct in children:
@@ -65,13 +65,13 @@ class BitAndQuery(ScalarQuery):
         return athunk
 
 
-class BitOrQuery(ScalarQuery):
+class BitOr(ScalarQuery):
     """The bitwise OR of its scalar children."""
 
     _commutative = Declared(value=True, name="commutative")
     _associative = Declared(value=True, name="associative")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             out: object = 0
             for ct in children:
@@ -83,7 +83,7 @@ class BitOrQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             out: object = 0
             for ct in children:
@@ -96,13 +96,13 @@ class BitOrQuery(ScalarQuery):
         return athunk
 
 
-class BitXorQuery(ScalarQuery):
+class BitXor(ScalarQuery):
     """The bitwise XOR of its scalar children."""
 
     _commutative = Declared(value=True, name="commutative")
     _associative = Declared(value=True, name="associative")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             out: object = 0
             for ct in children:
@@ -114,7 +114,7 @@ class BitXorQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             out: object = 0
             for ct in children:
@@ -127,10 +127,10 @@ class BitXorQuery(ScalarQuery):
         return athunk
 
 
-class BitNotQuery(ScalarQuery):
+class BitNot(ScalarQuery):
     """The bitwise NOT of its one child."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -141,7 +141,7 @@ class BitNotQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -153,10 +153,10 @@ class BitNotQuery(ScalarQuery):
         return athunk
 
 
-class LShiftQuery(ScalarQuery):
+class LShift(ScalarQuery):
     """The first child shifted left by the second."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -170,7 +170,7 @@ class LShiftQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -185,10 +185,10 @@ class LShiftQuery(ScalarQuery):
         return athunk
 
 
-class RShiftQuery(ScalarQuery):
+class RShift(ScalarQuery):
     """The first child shifted right by the second."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -202,7 +202,7 @@ class RShiftQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:

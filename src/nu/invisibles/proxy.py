@@ -1,5 +1,7 @@
-"""``InvisiblesProxy``: bracket that provisions an ``InvisiblesClient`` and
-binds its ``.root`` proxy under a caller-named fabric type.
+"""``InvisiblesProxy``: bracket for a client-bound remote fabric.
+
+Provisions an ``InvisiblesClient`` and binds its ``.root`` proxy under a
+caller-named fabric type.
 
 The common pattern is "connect to an invisibles-hosted Navigator and let the
 rest of the tree talk to it as a plain ``Navigator``". Without this bracket a

@@ -1,4 +1,4 @@
-"""LiteralQuery: the constant-yielding ScalarQuery.
+"""Literal: the constant-yielding ScalarQuery.
 
 The trivial Query - an irreducible leaf that carries a value in its payload
 and yields it once, pure (no effects). Most non-Ref leaves in a Nu program are
@@ -22,17 +22,17 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-__all__ = ["LiteralQuery"]
+__all__ = ["Literal"]
 
 
-class LiteralQuery(ScalarQuery):
+class Literal(ScalarQuery):
     """A ScalarQuery that yields a constant value carried in its payload."""
 
     def __init__(self, value: object) -> None:
         super().__init__()
         self._payload = {"value": value}
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         value = self._payload["value"]
 
         def thunk(rt: Runtime) -> object:
@@ -40,7 +40,7 @@ class LiteralQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         value = self._payload["value"]
 
         async def athunk(rt: Runtime) -> object:

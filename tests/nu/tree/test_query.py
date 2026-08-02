@@ -5,25 +5,25 @@ find, find_first, count, size, depth.
 
 from __future__ import annotations
 
-from nu.core import LiteralQuery
+from nu.core import Literal
 from nu.flows import Sequential
 from nu.tree import count, depth, find, find_first, size
 
 
 def _is_leaf(n):
-    return isinstance(n, LiteralQuery)
+    return isinstance(n, Literal)
 
 
 def _val(v):
-    return lambda n: isinstance(n, LiteralQuery) and n._payload["value"] == v
+    return lambda n: isinstance(n, Literal) and n._payload["value"] == v
 
 
 def _tree():
     """root[ 1, mid[ 2, 3 ], 4 ] -- 6 nodes, depth 2."""
     return Sequential(
-        LiteralQuery(1),
-        Sequential(LiteralQuery(2), LiteralQuery(3)),
-        LiteralQuery(4),
+        Literal(1),
+        Sequential(Literal(2), Literal(3)),
+        Literal(4),
     )
 
 
@@ -60,7 +60,7 @@ def test_size_is_total_node_count():
 
 
 def test_depth_of_leaf_is_zero():
-    assert depth(LiteralQuery(1)) == 0
+    assert depth(Literal(1)) == 0
 
 
 def test_depth_counts_deepest_path():

@@ -1,9 +1,9 @@
-"""AnyForm - dynamic/unknown type interface.
+"""Any - dynamic/unknown type interface.
 
 The honest terminal for value-Form descent: genuinely-unknown or dynamically
-typed values live here. Every operation on an ``AnyForm`` is absorbing -
+typed values live here. Every operation on an ``Any`` is absorbing -
 arithmetic, bitwise, subscript, and attribute access all yield another
-``AnyForm``; comparison and logical ops yield ``BoolForm``.
+``Any``; comparison and logical ops yield ``Bool``.
 
 Reserved at the ``Nu`` base and deliberately NOT overridden here:
 
@@ -35,294 +35,293 @@ from nu.lang import Form, Ref, TypedNu
 
 
 if TYPE_CHECKING:
-
-    from ..collections.iterator_ import IteratorForm
-    from .bool_ import BoolForm
-    from .int_ import IntForm
+    from ..collections.iterator_ import Iterator
+    from .bool_ import Bool
+    from .int_ import Int
 
 
 __all__ = [
-    "AnyForm",
+    "Any",
 ]
 
 
-class AnyForm(Form, TypedNu[Any]):
-    """Any/dynamic interface. Supports all interactions, results stay AnyForm.
+class Any(Form, TypedNu[Any]):
+    """Any/dynamic interface. Supports all interactions, results stay Any.
 
     Absorbing under arithmetic + bitwise + subscript + attribute descent
-    (result is another ``AnyForm``); comparison and logical ops yield
-    ``BoolForm`` (well-typed decision even in the dynamic world).
+    (result is another ``Any``); comparison and logical ops yield
+    ``Bool`` (well-typed decision even in the dynamic world).
 
-    Types as ``TypedNu[Any]`` (not ``TypedNu[object]``) so that AnyForm
+    Types as ``TypedNu[Any]`` (not ``TypedNu[object]``) so that Any
     can slot into any narrow ``Arg`` position (``IntArg``, ``StrArg``, ...) -
     ``Any``'s special variance rules let ``Nu[Any]`` substitute for
     ``Nu[int]`` / ``Nu[str]`` / etc. That is how ``intref + anyval``
-    lands as ``IntForm`` instead of degrading through ``__radd__``.
+    lands as ``Int`` instead of degrading through ``__radd__``.
     """
 
     # =========================================================================
     # ARITHMETIC
     # =========================================================================
 
-    def __add__(self, other: object) -> AnyForm:
-        from nu.core import AddQuery
+    def __add__(self, other: object) -> Any:
+        from nu.core import Add
 
-        return AnyForm(AddQuery(self, other))
+        return Any(Add(self, other))
 
-    def __radd__(self, other: object) -> AnyForm:
-        from nu.core import AddQuery
+    def __radd__(self, other: object) -> Any:
+        from nu.core import Add
 
-        return AnyForm(AddQuery(other, self))
+        return Any(Add(other, self))
 
-    def __sub__(self, other: object) -> AnyForm:
-        from nu.core import SubQuery
+    def __sub__(self, other: object) -> Any:
+        from nu.core import Sub
 
-        return AnyForm(SubQuery(self, other))
+        return Any(Sub(self, other))
 
-    def __rsub__(self, other: object) -> AnyForm:
-        from nu.core import SubQuery
+    def __rsub__(self, other: object) -> Any:
+        from nu.core import Sub
 
-        return AnyForm(SubQuery(other, self))
+        return Any(Sub(other, self))
 
-    def __mul__(self, other: object) -> AnyForm:
-        from nu.core import MulQuery
+    def __mul__(self, other: object) -> Any:
+        from nu.core import Mul
 
-        return AnyForm(MulQuery(self, other))
+        return Any(Mul(self, other))
 
-    def __rmul__(self, other: object) -> AnyForm:
-        from nu.core import MulQuery
+    def __rmul__(self, other: object) -> Any:
+        from nu.core import Mul
 
-        return AnyForm(MulQuery(other, self))
+        return Any(Mul(other, self))
 
-    def __matmul__(self, other: object) -> AnyForm:
-        from nu.core import MatMulQuery
+    def __matmul__(self, other: object) -> Any:
+        from nu.core import MatMul
 
-        return AnyForm(MatMulQuery(self, other))
+        return Any(MatMul(self, other))
 
-    def __rmatmul__(self, other: object) -> AnyForm:
-        from nu.core import MatMulQuery
+    def __rmatmul__(self, other: object) -> Any:
+        from nu.core import MatMul
 
-        return AnyForm(MatMulQuery(other, self))
+        return Any(MatMul(other, self))
 
-    def __truediv__(self, other: object) -> AnyForm:
-        from nu.core import DivQuery
+    def __truediv__(self, other: object) -> Any:
+        from nu.core import Div
 
-        return AnyForm(DivQuery(self, other))
+        return Any(Div(self, other))
 
-    def __rtruediv__(self, other: object) -> AnyForm:
-        from nu.core import DivQuery
+    def __rtruediv__(self, other: object) -> Any:
+        from nu.core import Div
 
-        return AnyForm(DivQuery(other, self))
+        return Any(Div(other, self))
 
-    def __floordiv__(self, other: object) -> AnyForm:
-        from nu.core import FloorDivQuery
+    def __floordiv__(self, other: object) -> Any:
+        from nu.core import FloorDiv
 
-        return AnyForm(FloorDivQuery(self, other))
+        return Any(FloorDiv(self, other))
 
-    def __rfloordiv__(self, other: object) -> AnyForm:
-        from nu.core import FloorDivQuery
+    def __rfloordiv__(self, other: object) -> Any:
+        from nu.core import FloorDiv
 
-        return AnyForm(FloorDivQuery(other, self))
+        return Any(FloorDiv(other, self))
 
-    def __mod__(self, other: object) -> AnyForm:
-        from nu.core import ModQuery
+    def __mod__(self, other: object) -> Any:
+        from nu.core import Mod
 
-        return AnyForm(ModQuery(self, other))
+        return Any(Mod(self, other))
 
-    def __rmod__(self, other: object) -> AnyForm:
-        from nu.core import ModQuery
+    def __rmod__(self, other: object) -> Any:
+        from nu.core import Mod
 
-        return AnyForm(ModQuery(other, self))
+        return Any(Mod(other, self))
 
-    def __pow__(self, other: object) -> AnyForm:
-        from nu.core import PowQuery
+    def __pow__(self, other: object) -> Any:
+        from nu.core import Pow
 
-        return AnyForm(PowQuery(self, other))
+        return Any(Pow(self, other))
 
-    def __rpow__(self, other: object) -> AnyForm:
-        from nu.core import PowQuery
+    def __rpow__(self, other: object) -> Any:
+        from nu.core import Pow
 
-        return AnyForm(PowQuery(other, self))
+        return Any(Pow(other, self))
 
-    def __neg__(self) -> AnyForm:
-        from nu.core import NegQuery
+    def __neg__(self) -> Any:
+        from nu.core import Neg
 
-        return AnyForm(NegQuery(self))
+        return Any(Neg(self))
 
-    def __pos__(self) -> AnyForm:
-        from nu.core import PosQuery
+    def __pos__(self) -> Any:
+        from nu.core import Pos
 
-        return AnyForm(PosQuery(self))
+        return Any(Pos(self))
 
-    def __abs__(self) -> AnyForm:
-        from nu.core import AbsQuery
+    def __abs__(self) -> Any:
+        from nu.core import Abs
 
-        return AnyForm(AbsQuery(self))
+        return Any(Abs(self))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: object) -> BoolForm:
-        from nu.core import GtQuery
+    def __gt__(self, other: object) -> Bool:
+        from nu.core import Gt
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: object) -> BoolForm:
-        from nu.core import LtQuery
+    def __lt__(self, other: object) -> Bool:
+        from nu.core import Lt
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: object) -> BoolForm:
-        from nu.core import GeQuery
+    def __ge__(self, other: object) -> Bool:
+        from nu.core import Ge
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: object) -> BoolForm:
-        from nu.core import LeQuery
+    def __le__(self, other: object) -> Bool:
+        from nu.core import Le
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
     __hash__ = object.__hash__
 
-    def __eq__(self, other: object) -> BoolForm:  # type: ignore[override]
-        from nu.core import EqQuery
+    def __eq__(self, other: object) -> Bool:  # type: ignore[override]
+        from nu.core import Eq
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def __ne__(self, other: object) -> BoolForm:  # type: ignore[override]
-        from nu.core import NeQuery
+    def __ne__(self, other: object) -> Bool:  # type: ignore[override]
+        from nu.core import Ne
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))
 
-    def is_(self, other: object) -> BoolForm:
+    def is_(self, other: object) -> Bool:
         """Identity comparison: self is other."""
-        from nu.core import IsQuery
+        from nu.core import Is
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(IsQuery(self, other))
+        return Bool(Is(self, other))
 
     # =========================================================================
     # LOGICAL (named methods; ``&`` / ``|`` are reserved for flow)
     # =========================================================================
 
-    def and_(self, other: object) -> BoolForm:
+    def and_(self, other: object) -> Bool:
         """Logical AND: self AND other."""
-        from nu.core import AndQuery
+        from nu.core import And
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(AndQuery(self, other))
+        return Bool(And(self, other))
 
-    def or_(self, other: object) -> BoolForm:
+    def or_(self, other: object) -> Bool:
         """Logical OR: self OR other."""
-        from nu.core import OrQuery
+        from nu.core import Or
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(OrQuery(self, other))
+        return Bool(Or(self, other))
 
-    def not_(self) -> BoolForm:
+    def not_(self) -> Bool:
         """Logical NOT: NOT self."""
-        from nu.core import NotQuery
+        from nu.core import Not
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(NotQuery(self))
+        return Bool(Not(self))
 
-    def bool_(self) -> BoolForm:
+    def bool_(self) -> Bool:
         """Convert to boolean."""
-        from nu.core import BoolQuery
+        from nu.core import ToBool
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(BoolQuery(self))
+        return Bool(ToBool(self))
 
     # =========================================================================
     # BITWISE
     # =========================================================================
 
-    def bitand(self, other: object) -> AnyForm:
+    def bitand(self, other: object) -> Any:
         """Bitwise AND: ``self & other`` (``&`` is reserved for ``Race``)."""
-        from nu.core import BitAndQuery
+        from nu.core import BitAnd
 
-        return AnyForm(BitAndQuery(self, other))
+        return Any(BitAnd(self, other))
 
-    def bitor(self, other: object) -> AnyForm:
+    def bitor(self, other: object) -> Any:
         """Bitwise OR: ``self | other`` (``|`` is reserved for ``Parallel``)."""
-        from nu.core import BitOrQuery
+        from nu.core import BitOr
 
-        return AnyForm(BitOrQuery(self, other))
+        return Any(BitOr(self, other))
 
-    def bitnot(self) -> AnyForm:
+    def bitnot(self) -> Any:
         """Bitwise NOT: ``~self`` (named form)."""
-        from nu.core import BitNotQuery
+        from nu.core import BitNot
 
-        return AnyForm(BitNotQuery(self))
+        return Any(BitNot(self))
 
-    def __invert__(self) -> AnyForm:
-        from nu.core import BitNotQuery
+    def __invert__(self) -> Any:
+        from nu.core import BitNot
 
-        return AnyForm(BitNotQuery(self))
+        return Any(BitNot(self))
 
-    def __xor__(self, other: object) -> AnyForm:
-        from nu.core import BitXorQuery
+    def __xor__(self, other: object) -> Any:
+        from nu.core import BitXor
 
-        return AnyForm(BitXorQuery(self, other))
+        return Any(BitXor(self, other))
 
-    def __rxor__(self, other: object) -> AnyForm:
-        from nu.core import BitXorQuery
+    def __rxor__(self, other: object) -> Any:
+        from nu.core import BitXor
 
-        return AnyForm(BitXorQuery(other, self))
+        return Any(BitXor(other, self))
 
-    def __lshift__(self, other: object) -> AnyForm:
-        from nu.core import LShiftQuery
+    def __lshift__(self, other: object) -> Any:
+        from nu.core import LShift
 
-        return AnyForm(LShiftQuery(self, other))
+        return Any(LShift(self, other))
 
-    def __rlshift__(self, other: object) -> AnyForm:
-        from nu.core import LShiftQuery
+    def __rlshift__(self, other: object) -> Any:
+        from nu.core import LShift
 
-        return AnyForm(LShiftQuery(other, self))
+        return Any(LShift(other, self))
 
-    def __rshift__(self, other: object) -> AnyForm:
-        from nu.core import RShiftQuery
+    def __rshift__(self, other: object) -> Any:
+        from nu.core import RShift
 
-        return AnyForm(RShiftQuery(self, other))
+        return Any(RShift(self, other))
 
-    def __rrshift__(self, other: object) -> AnyForm:
-        from nu.core import RShiftQuery
+    def __rrshift__(self, other: object) -> Any:
+        from nu.core import RShift
 
-        return AnyForm(RShiftQuery(other, self))
+        return Any(RShift(other, self))
 
     # =========================================================================
     # DYNAMIC DESCENT (subscript + attribute)
     # =========================================================================
 
-    def __getitem__(self, key: object) -> AnyForm:
+    def __getitem__(self, key: object) -> Any:
         """Subscript access: ``self[key]``.
 
-        For slice keys ``a:b:c``, the slice is threaded through ``SliceQuery``
+        For slice keys ``a:b:c``, the slice is threaded through ``Slice``
         so the whole thing stays symbolic.
         """
-        from nu.core import GetItemQuery, SliceQuery
+        from nu.core import GetItem, Slice
 
         if isinstance(key, slice):
-            key = SliceQuery(key.start, key.stop, key.step)
-        return AnyForm(GetItemQuery(self, key))
+            key = Slice(key.start, key.stop, key.step)
+        return Any(GetItem(self, key))
 
     def __setitem__(self, key: object, value: object) -> object:
         """Subscript write: ``self[key] = value``.
@@ -333,18 +332,18 @@ class AnyForm(Form, TypedNu[Any]):
         clearly instead of building an invalid tree.
         """
         _require_ref_source(self, "__setitem__")
-        from nu.core import SetItemCommand
+        from nu.core import SetItem
 
-        return SetItemCommand(self, key, value)
+        return SetItem(self, key, value)
 
     def __delitem__(self, key: object) -> object:
         """Subscript delete: ``del self[key]``. Ref-gated (see ``__setitem__``)."""
         _require_ref_source(self, "__delitem__")
-        from nu.core import DelItemCommand
+        from nu.core import DelItem
 
-        return DelItemCommand(self, key)
+        return DelItem(self, key)
 
-    def __getattr__(self, name: str) -> AnyForm:
+    def __getattr__(self, name: str) -> Any:
         """Attribute read: ``self.name`` -> ``GetAttr(self, name)``.
 
         Attributes starting with ``_`` are considered internal machinery and
@@ -354,13 +353,11 @@ class AnyForm(Form, TypedNu[Any]):
         safe from accidental capture as tree nodes.
         """
         if name.startswith("_"):
-            msg = (
-                f"{type(self).__name__!r} object has no attribute {name!r}"
-            )
+            msg = f"{type(self).__name__!r} object has no attribute {name!r}"
             raise AttributeError(msg)
-        from nu.core import GetAttrQuery
+        from nu.core import GetAttr
 
-        return AnyForm(GetAttrQuery(self, name))
+        return Any(GetAttr(self, name))
 
     # =========================================================================
     # NAMED METHODS FOR PROTOCOL DUNDERS
@@ -370,50 +367,50 @@ class AnyForm(Form, TypedNu[Any]):
     # Nu tree. Expose the tree-shaped equivalents as named methods instead.
     # =========================================================================
 
-    def len_(self) -> IntForm:
-        """Length: ``len(self)`` as an ``IntForm`` in the tree."""
-        from nu.core import LenQuery
+    def len_(self) -> Int:
+        """Length: ``len(self)`` as an ``Int`` in the tree."""
+        from nu.core import Len
 
-        from .int_ import IntForm
+        from .int_ import Int
 
-        return IntForm(LenQuery(self))
+        return Int(Len(self))
 
-    def contains(self, item: object) -> BoolForm:
-        """Membership: ``item in self`` as a ``BoolForm`` in the tree."""
-        from nu.core import ContainsQuery
+    def contains(self, item: object) -> Bool:
+        """Membership: ``item in self`` as a ``Bool`` in the tree."""
+        from nu.core import Contains
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(ContainsQuery(self, item))
+        return Bool(Contains(self, item))
 
-    def iter_(self) -> IteratorForm:
-        """Iteration: ``iter(self)`` as an ``IteratorForm``."""
-        from nu.core import IterQuery
+    def iter_(self) -> Iterator:
+        """Iteration: ``iter(self)`` as an ``Iterator``."""
+        from nu.core import Iter
 
-        from ..collections.iterator_ import IteratorForm
+        from ..collections.iterator_ import Iterator
 
-        return IteratorForm(IterQuery(self))
+        return Iterator(Iter(self))
 
-    def has_attr(self, name: object) -> BoolForm:
-        """Attribute presence: ``hasattr(self, name)`` as a ``BoolForm``."""
-        from nu.core import HasAttrQuery
+    def has_attr(self, name: object) -> Bool:
+        """Attribute presence: ``hasattr(self, name)`` as a ``Bool``."""
+        from nu.core import HasAttr
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(HasAttrQuery(self, name))
+        return Bool(HasAttr(self, name))
 
 
-def _require_ref_source(form: AnyForm, op: str) -> None:
+def _require_ref_source(form: Any, op: str) -> None:
     """Guard: the wrapped source of ``form`` must be a ``Ref``.
 
     Python's ``x[k] = v`` / ``del x[k]`` syntax discards the return value of
-    ``__setitem__`` / ``__delitem__``, so a value-node ``AnyForm`` returning
+    ``__setitem__`` / ``__delitem__``, so a value-node ``Any`` returning
     a ``Command`` would leave the mutation orphaned. Raise clearly instead.
     """
     source = form._source
     if not isinstance(source, Ref):
         msg = (
-            f"AnyForm.{op}: cannot mutate through a value-node - the "
+            f"Any.{op}: cannot mutate through a value-node - the "
             f"wrapped source must be a Ref (a fabric-writable location). "
             f"Got: {type(source).__name__ if source is not None else 'None'}."
         )

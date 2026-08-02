@@ -8,7 +8,7 @@ Filesystem I/O (``exists``, ``read_text``, ``iterdir`` ...) is deferred.
 The operations split the two ways the model intends:
 
 - **property reads** (``.name``, ``.suffix``, ``.parent`` ...) reuse core
-  ``GetAttrQuery`` - a path component is just an attribute read.
+  ``GetAttr`` - a path component is just an attribute read.
 - **method calls** (``with_suffix``, ``joinpath``, ``as_posix`` ...) are named
   ``ScalarQueryFactory`` atoms in ``interactions`` (each binds the unbound
   ``PurePath`` method).
@@ -32,8 +32,8 @@ from nu.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu.forms.collections import ListForm, TupleForm
-    from nu.forms.primitives import BoolForm, StrForm
+    from nu.forms.collections import List, Tuple
+    from nu.forms.primitives import Bool, Str
     from nu.lang import Arg, StrArg
 
     type PathArg = Arg[_PurePath]
@@ -77,70 +77,70 @@ class Path(Form, TypedNu[_PurePath]):
         return Path(PathHome())
 
     # =========================================================================
-    # COMPONENT READS (reuse core GetAttrQuery)
+    # COMPONENT READS (reuse core GetAttr)
     # =========================================================================
 
-    def name(self) -> StrForm:
+    def name(self) -> Str:
         """The final component (filename)."""
-        from nu import StrForm
-        from nu.core import GetAttrQuery
+        from nu import Str
+        from nu.core import GetAttr
 
-        return StrForm(GetAttrQuery(self, "name"))
+        return Str(GetAttr(self, "name"))
 
-    def stem(self) -> StrForm:
+    def stem(self) -> Str:
         """The final component without its suffix."""
-        from nu import StrForm
-        from nu.core import GetAttrQuery
+        from nu import Str
+        from nu.core import GetAttr
 
-        return StrForm(GetAttrQuery(self, "stem"))
+        return Str(GetAttr(self, "stem"))
 
-    def suffix(self) -> StrForm:
+    def suffix(self) -> Str:
         """The file extension of the final component (including the dot)."""
-        from nu import StrForm
-        from nu.core import GetAttrQuery
+        from nu import Str
+        from nu.core import GetAttr
 
-        return StrForm(GetAttrQuery(self, "suffix"))
+        return Str(GetAttr(self, "suffix"))
 
-    def suffixes(self) -> ListForm:
+    def suffixes(self) -> List:
         """All file extensions of the final component."""
-        from nu import ListForm
-        from nu.core import GetAttrQuery
+        from nu import List
+        from nu.core import GetAttr
 
-        return ListForm(GetAttrQuery(self, "suffixes"))
+        return List(GetAttr(self, "suffixes"))
 
-    def parts(self) -> TupleForm:
+    def parts(self) -> Tuple:
         """The path's components as a tuple."""
-        from nu import TupleForm
-        from nu.core import GetAttrQuery
+        from nu import Tuple
+        from nu.core import GetAttr
 
-        return TupleForm(GetAttrQuery(self, "parts"))
+        return Tuple(GetAttr(self, "parts"))
 
     def parent(self) -> Path:
         """The logical parent of the path."""
-        from nu.core import GetAttrQuery
+        from nu.core import GetAttr
 
-        return Path(GetAttrQuery(self, "parent"))
+        return Path(GetAttr(self, "parent"))
 
-    def root(self) -> StrForm:
+    def root(self) -> Str:
         """The root (e.g. ``/`` on POSIX)."""
-        from nu import StrForm
-        from nu.core import GetAttrQuery
+        from nu import Str
+        from nu.core import GetAttr
 
-        return StrForm(GetAttrQuery(self, "root"))
+        return Str(GetAttr(self, "root"))
 
-    def anchor(self) -> StrForm:
+    def anchor(self) -> Str:
         """The concatenation of drive and root."""
-        from nu import StrForm
-        from nu.core import GetAttrQuery
+        from nu import Str
+        from nu.core import GetAttr
 
-        return StrForm(GetAttrQuery(self, "anchor"))
+        return Str(GetAttr(self, "anchor"))
 
-    def drive(self) -> StrForm:
+    def drive(self) -> Str:
         """The drive (empty on POSIX)."""
-        from nu import StrForm
-        from nu.core import GetAttrQuery
+        from nu import Str
+        from nu.core import GetAttr
 
-        return StrForm(GetAttrQuery(self, "drive"))
+        return Str(GetAttr(self, "drive"))
 
     # =========================================================================
     # PATH-RETURNING METHODS (factory atoms over unbound methods)
@@ -186,88 +186,88 @@ class Path(Form, TypedNu[_PurePath]):
     # STRING CONVERSIONS (factory atoms)
     # =========================================================================
 
-    def as_posix(self) -> StrForm:
+    def as_posix(self) -> Str:
         """The path as a string with forward slashes."""
-        from nu import StrForm
+        from nu import Str
 
         from .interactions import PathAsPosix
 
-        return StrForm(PathAsPosix(self))
+        return Str(PathAsPosix(self))
 
-    def as_uri(self) -> StrForm:
+    def as_uri(self) -> Str:
         """The path as a ``file://`` URI (requires an absolute path)."""
-        from nu import StrForm
+        from nu import Str
 
         from .interactions import PathAsUri
 
-        return StrForm(PathAsUri(self))
+        return Str(PathAsUri(self))
 
     # =========================================================================
     # PREDICATES (factory atoms)
     # =========================================================================
 
-    def match(self, pattern: StrArg) -> BoolForm:
+    def match(self, pattern: StrArg) -> Bool:
         """Whether the path matches a glob pattern."""
-        from nu import BoolForm
+        from nu import Bool
 
         from .interactions import PathMatch
 
-        return BoolForm(PathMatch(self, pattern))
+        return Bool(PathMatch(self, pattern))
 
-    def is_absolute(self) -> BoolForm:
+    def is_absolute(self) -> Bool:
         """Whether the path is absolute."""
-        from nu import BoolForm
+        from nu import Bool
 
         from .interactions import PathIsAbsolute
 
-        return BoolForm(PathIsAbsolute(self))
+        return Bool(PathIsAbsolute(self))
 
-    def is_relative_to(self, other: StrArg | PathArg) -> BoolForm:
+    def is_relative_to(self, other: StrArg | PathArg) -> Bool:
         """Whether the path is relative to ``other``."""
-        from nu import BoolForm
+        from nu import Bool
 
         from .interactions import PathIsRelativeTo
 
-        return BoolForm(PathIsRelativeTo(self, other))
+        return Bool(PathIsRelativeTo(self, other))
 
     # =========================================================================
     # COMPARISON (reuse core comparison atoms)
     # =========================================================================
 
-    def __gt__(self, other: PathArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GtQuery
+    def __gt__(self, other: PathArg) -> Bool:
+        from nu import Bool
+        from nu.core import Gt
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: PathArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LtQuery
+    def __lt__(self, other: PathArg) -> Bool:
+        from nu import Bool
+        from nu.core import Lt
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: PathArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GeQuery
+    def __ge__(self, other: PathArg) -> Bool:
+        from nu import Bool
+        from nu.core import Ge
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: PathArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LeQuery
+    def __le__(self, other: PathArg) -> Bool:
+        from nu import Bool
+        from nu.core import Le
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
-    def eq(self, other: PathArg) -> BoolForm:
+    def eq(self, other: PathArg) -> Bool:
         """Whether two paths are equal."""
-        from nu import BoolForm
-        from nu.core import EqQuery
+        from nu import Bool
+        from nu.core import Eq
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def ne(self, other: PathArg) -> BoolForm:
+    def ne(self, other: PathArg) -> Bool:
         """Whether two paths differ."""
-        from nu import BoolForm
-        from nu.core import NeQuery
+        from nu import Bool
+        from nu.core import Ne
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))

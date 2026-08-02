@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import AnyForm, SetForm
+from nu import Any, Set
 from nu.domains.shape import MutableSetRef, Slot
 
 from .base import RefBase
@@ -23,15 +23,15 @@ __all__ = [
 class SetRef[T](MutableSetRef, RefBase[set[T]]):
     """Dict set reference — unordered unique-element container."""
 
-    def _wrap_result(self, op: Nu) -> SetForm[T]:
-        """Wrap a set-level op result as a SetForm."""
-        return SetForm(op)
+    def _wrap_result(self, op: Nu) -> Set[T]:
+        """Wrap a set-level op result as a Set."""
+        return Set(op)
 
-    def _wrap_set_result(self, operand: Nu) -> SetForm[T]:
-        return SetForm(operand)
+    def _wrap_set_result(self, operand: Nu) -> Set[T]:
+        return Set(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> AnyForm:
-        return AnyForm(operand)
+    def _wrap_element_result(self, operand: Nu) -> Any:
+        return Any(operand)
 
     def __init__(
         self,

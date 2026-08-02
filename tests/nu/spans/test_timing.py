@@ -13,16 +13,16 @@ import asyncio
 import pytest
 from _support.policy_atoms import CountAction, RecordAction, SlowAction
 
-from nu.context import AttrRef, SetCommand
-from nu.core import LiteralQuery
+from nu.context import AttrRef, SetCmd
+from nu.core import Literal
 from nu.lang import Policy, Span
 from nu.lang.helpers import arun, run
 from nu.lang.runtime.context.context import Context
 from nu.spans import Debounce, Throttle, Timeout
 
 
-def _set(name: str, value: object) -> SetCommand:
-    return SetCommand(AttrRef(name), LiteralQuery(value))
+def _set(name: str, value: object) -> SetCmd:
+    return SetCmd(AttrRef(name), Literal(value))
 
 
 # --- basis ----------------------------------------------------------------

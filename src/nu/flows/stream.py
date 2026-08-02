@@ -15,8 +15,8 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from nu.core._stream import aiter_any
-from nu.core.reactive import OnChildrenChangeQuery
-from nu.domains.shape.interactions import AdvanceCursorQuery
+from nu.core.reactive import OnChildrenChange
+from nu.domains.shape.interactions import AdvanceCursor
 from nu.lang import StreamQuery
 from nu.lang.sentinels import EMPTY
 
@@ -48,15 +48,15 @@ class Stream(StreamQuery):
         from nu.context import AttrRef
 
         cursor_ref = AttrRef(log_key)
-        advance = AdvanceCursorQuery(source, cursor_ref)
-        change = OnChildrenChangeQuery(source)
+        advance = AdvanceCursor(source, cursor_ref)
+        change = OnChildrenChange(source)
         super().__init__(advance, change, body, key, log_key)
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         msg = "Stream requires async runtime"
         raise NotImplementedError(msg)
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             key = await children[3](rt)
             log_key = await children[4](rt)

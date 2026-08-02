@@ -3,7 +3,7 @@
 Imported like the stdlib: ``from nu.std.uuid import UUID, uuid4`` (or
 ``import nu.std.uuid as uuid``). ``UUID`` is the access surface; constructors
 are new atoms (core can't build a UUID); accessors and comparisons reuse core
-interactions (GetAttrQuery, EqQuery, ...). No FuncCall escape hatch. Each entry
+interactions (GetAttr, Eq, ...). No FuncCall escape hatch. Each entry
 prints run result, term type, and the expression.
 """
 
@@ -22,15 +22,15 @@ NS = "12345678-1234-5678-1234-567812345678"
 e1 = UUID.from_str(NS)
 print(run(e1, ctx)[0], type(e1), e1)
 
-# 2. Read a component back (a v5 UUID has a real version) - reuses GetAttrQuery.
+# 2. Read a component back (a v5 UUID has a real version) - reuses GetAttr.
 e2 = uuid5(UUID.from_str(NS), "nu").version()
 print(run(e2, ctx)[0], type(e2), e2)
 
-# 3. Convert to a hex string - also GetAttrQuery, wrapped as a StrForm.
+# 3. Convert to a hex string - also GetAttr, wrapped as a Str.
 e3 = UUID.from_str(NS).hex()
 print(run(e3, ctx)[0], type(e3), e3)
 
-# 4. Compare two UUIDs - reuses the core EqQuery atom.
+# 4. Compare two UUIDs - reuses the core Eq atom.
 e4 = UUID.from_str(NS).eq(UUID.from_str(NS))
 print(run(e4, ctx)[0], type(e4), e4)
 

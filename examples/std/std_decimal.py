@@ -18,7 +18,7 @@ ctx = Context()
 e1 = Decimal.of("3.14")
 print(run(e1, ctx)[0], type(e1), e1)
 
-# 2. Exact addition: 0.1 + 0.2 == 0.3, not 0.30000000000000004 (core AddQuery).
+# 2. Exact addition: 0.1 + 0.2 == 0.3, not 0.30000000000000004 (core Add).
 e2 = Decimal.of("0.1") + Decimal.of("0.2")
 print(run(e2, ctx)[0], type(e2), e2)
 
@@ -30,7 +30,7 @@ print(run(e3, ctx)[0], type(e3), e3)
 e4 = Decimal.of("2").sqrt()
 print(run(e4, ctx)[0], type(e4), e4)
 
-# 5. Comparison via the < operator (core LtQuery).
+# 5. Comparison via the < operator (core Lt).
 e5 = Decimal.of("1.5") < Decimal.of("2.5")
 print(run(e5, ctx)[0], type(e5), e5)
 

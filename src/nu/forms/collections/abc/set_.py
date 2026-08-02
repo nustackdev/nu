@@ -1,10 +1,10 @@
-"""SetQuery collection — bases + mutations.
+"""Set collection — bases + mutations.
 
 SetLikeForm = Collection + union/intersection/difference/symmetric_difference/issubset/issuperset/isdisjoint
     + copy + __or__/__and__/__sub__/__xor__
 MutableSetForm = SetLike + add/remove/discard/pop/clear/update/*_update + __ior__/__iand__/__isub__/__ixor__
 
-Follows Python's collections.abc.SetQuery / MutableSet pattern.
+Follows Python's collections.abc.Set / MutableSet pattern.
 
 Type Parameters:
     CollectionT: Native Python collection type (set[int], frozenset[str], etc.)
@@ -23,7 +23,7 @@ from .collection import CollectionForm
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import BoolForm
+    from nu.forms.primitives import Bool
     from nu.lang import Arg, Nu
 
 
@@ -37,7 +37,7 @@ __all__ = [
 class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     CollectionForm[ElementT, CollectionResultT, ElementResultT],
 ):
-    """Base for set values — like collections.abc.SetQuery.
+    """Base for set values — like collections.abc.Set.
 
     Subclasses must override:
         _wrap_set_result(operand): Wrap set interaction result.
@@ -54,86 +54,84 @@ class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         raise NotImplementedError()
 
     def union(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """SetQuery union."""
-        from .set_interactions import UnionQuery
+        """Set union."""
+        from .set_interactions import Union
 
-        return cast("CollectionResultT", self._wrap_set_result(UnionQuery(self, other)))
+        return cast("CollectionResultT", self._wrap_set_result(Union(self, other)))
 
     def intersection(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """SetQuery intersection."""
-        from .set_interactions import IntersectionQuery
+        """Set intersection."""
+        from .set_interactions import Intersection
 
-        return cast("CollectionResultT", self._wrap_set_result(IntersectionQuery(self, other)))
+        return cast("CollectionResultT", self._wrap_set_result(Intersection(self, other)))
 
     def difference(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """SetQuery difference."""
-        from .set_interactions import DifferenceQuery
+        """Set difference."""
+        from .set_interactions import Difference
 
-        return cast("CollectionResultT", self._wrap_set_result(DifferenceQuery(self, other)))
+        return cast("CollectionResultT", self._wrap_set_result(Difference(self, other)))
 
     def symmetric_difference(
         self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> CollectionResultT:
-        """SetQuery symmetric difference."""
-        from .set_interactions import SymmetricDifferenceQuery
+        """Set symmetric difference."""
+        from .set_interactions import SymmetricDifference
 
-        return cast(
-            "CollectionResultT", self._wrap_set_result(SymmetricDifferenceQuery(self, other))
-        )
+        return cast("CollectionResultT", self._wrap_set_result(SymmetricDifference(self, other)))
 
-    def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolForm:
+    def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
         """Check if subset."""
-        from nu.forms.primitives import BoolForm
+        from nu.forms.primitives import Bool
 
-        from .set_interactions import IsSubsetQuery
+        from .set_interactions import IsSubset
 
-        return BoolForm(IsSubsetQuery(self, other))
+        return Bool(IsSubset(self, other))
 
-    def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolForm:
+    def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
         """Check if superset."""
-        from nu.forms.primitives import BoolForm
+        from nu.forms.primitives import Bool
 
-        from .set_interactions import IsSupersetQuery
+        from .set_interactions import IsSuperset
 
-        return BoolForm(IsSupersetQuery(self, other))
+        return Bool(IsSuperset(self, other))
 
-    def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> BoolForm:
+    def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
         """Check if disjoint."""
-        from nu.forms.primitives import BoolForm
+        from nu.forms.primitives import Bool
 
-        from .set_interactions import IsDisjointQuery
+        from .set_interactions import IsDisjoint
 
-        return BoolForm(IsDisjointQuery(self, other))
+        return Bool(IsDisjoint(self, other))
 
     def copy(self) -> CollectionResultT:
         """Shallow copy. Returns a new set."""
-        from .set_interactions import CopyQuery
+        from .set_interactions import Copy
 
-        return cast("CollectionResultT", self._wrap_set_result(CopyQuery(self)))
+        return cast("CollectionResultT", self._wrap_set_result(Copy(self)))
 
     def __or__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """SetQuery union operator: self | other. Returns a new set."""
-        from .set_interactions import SetOrQuery
+        """Set union operator: self | other. Returns a new set."""
+        from .set_interactions import SetOr
 
-        return cast("CollectionResultT", self._wrap_set_result(SetOrQuery(self, other)))
+        return cast("CollectionResultT", self._wrap_set_result(SetOr(self, other)))
 
     def __and__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """SetQuery intersection operator: self & other. Returns a new set."""
-        from .set_interactions import SetAndQuery
+        """Set intersection operator: self & other. Returns a new set."""
+        from .set_interactions import SetAnd
 
-        return cast("CollectionResultT", self._wrap_set_result(SetAndQuery(self, other)))
+        return cast("CollectionResultT", self._wrap_set_result(SetAnd(self, other)))
 
     def __sub__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """SetQuery difference operator: self - other. Returns a new set."""
-        from .set_interactions import SetSubQuery
+        """Set difference operator: self - other. Returns a new set."""
+        from .set_interactions import SetSub
 
-        return cast("CollectionResultT", self._wrap_set_result(SetSubQuery(self, other)))
+        return cast("CollectionResultT", self._wrap_set_result(SetSub(self, other)))
 
     def __xor__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """SetQuery symmetric difference operator: self ^ other. Returns a new set."""
-        from .set_interactions import SetXorQuery
+        """Set symmetric difference operator: self ^ other. Returns a new set."""
+        from .set_interactions import SetXor
 
-        return cast("CollectionResultT", self._wrap_set_result(SetXorQuery(self, other)))
+        return cast("CollectionResultT", self._wrap_set_result(SetXor(self, other)))
 
 
 class MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
@@ -149,82 +147,82 @@ class MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     """
 
     def add(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
-        """AddQuery element to set. Mutates the set; returns nothing."""
-        from .set_interactions import AddCommand
+        """Add element to set. Mutates the set; returns nothing."""
+        from .set_interactions import AddCmd
 
-        return AddCommand(self, value)
+        return AddCmd(self, value)
 
     def remove(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Remove element from set. Mutates the set; returns nothing (KeyError if absent)."""
-        from .set_interactions import RemoveCommand
+        from .set_interactions import Remove
 
-        return RemoveCommand(self, value)
+        return Remove(self, value)
 
     def discard(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Remove element if present (no error if absent). Mutates the set; returns nothing."""
-        from .set_interactions import DiscardCommand
+        from .set_interactions import Discard
 
-        return DiscardCommand(self, value)
+        return Discard(self, value)
 
     def pop(self) -> ElementResultT:
         """Remove and return arbitrary element. Mutates the set; returns the element."""
-        from .set_interactions import SetPopAction
+        from .set_interactions import SetPop
 
-        return cast("ElementResultT", self._wrap_element_result(SetPopAction(self)))
+        return cast("ElementResultT", self._wrap_element_result(SetPop(self)))
 
     def clear(self) -> Any:  # noqa: ANN401
         """Remove all items. Mutates the set; returns nothing."""
-        from .shared_interactions import ClearCommand
+        from .shared_interactions import Clear
 
-        return ClearCommand(self)
+        return Clear(self)
 
     def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
-        """AddQuery all elements from other. Mutates the set; returns nothing."""
-        from .set_interactions import SetUpdateCommand
+        """Add all elements from other. Mutates the set; returns nothing."""
+        from .set_interactions import SetUpdate
 
-        return SetUpdateCommand(self, other)
+        return SetUpdate(self, other)
 
     def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
         """Keep only elements found in both. Mutates the set; returns nothing."""
-        from .set_interactions import IntersectionUpdateCommand
+        from .set_interactions import IntersectionUpdate
 
-        return IntersectionUpdateCommand(self, other)
+        return IntersectionUpdate(self, other)
 
     def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
         """Remove all elements found in other. Mutates the set; returns nothing."""
-        from .set_interactions import DifferenceUpdateCommand
+        from .set_interactions import DifferenceUpdate
 
-        return DifferenceUpdateCommand(self, other)
+        return DifferenceUpdate(self, other)
 
     def symmetric_difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
         """Keep elements in either set but not both. Mutates the set; returns nothing."""
-        from .set_interactions import SymmetricDifferenceUpdateCommand
+        from .set_interactions import SymmetricDifferenceUpdate
 
-        return SymmetricDifferenceUpdateCommand(self, other)
+        return SymmetricDifferenceUpdate(self, other)
 
     def __ior__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
         """In-place union: self |= other. Mutates the set; returns the set."""
-        from .set_interactions import SetIOrAction
+        from .set_interactions import SetIOr
 
-        return cast("CollectionResultT", self._wrap_set_result(SetIOrAction(self, other)))
+        return cast("CollectionResultT", self._wrap_set_result(SetIOr(self, other)))
 
     def __iand__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
         """In-place intersection: self &= other. Mutates the set; returns the set."""
-        from .set_interactions import SetIAndAction
+        from .set_interactions import SetIAnd
 
-        return cast("CollectionResultT", self._wrap_set_result(SetIAndAction(self, other)))
+        return cast("CollectionResultT", self._wrap_set_result(SetIAnd(self, other)))
 
     def __isub__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
         """In-place difference: self -= other. Mutates the set; returns the set."""
-        from .set_interactions import SetISubAction
+        from .set_interactions import SetISub
 
-        return cast("CollectionResultT", self._wrap_set_result(SetISubAction(self, other)))
+        return cast("CollectionResultT", self._wrap_set_result(SetISub(self, other)))
 
     def __ixor__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
         """In-place symmetric difference: self ^= other. Mutates the set; returns the set."""
-        from .set_interactions import SetIXorAction
+        from .set_interactions import SetIXor
 
-        return cast("CollectionResultT", self._wrap_set_result(SetIXorAction(self, other)))
+        return cast("CollectionResultT", self._wrap_set_result(SetIXor(self, other)))
 
 
 class ReactiveSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
@@ -233,7 +231,7 @@ class ReactiveSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     """Reactive set — adds on_change() for any-change observation.
 
     Provides (in addition to MutableSetForm):
-        on_change() → OnChangeQuery
+        on_change() → OnChange
 
     The three tree-aware methods (on_child_change, on_children_change,
     on_descendants_change) are shape-domain and live on
@@ -242,6 +240,6 @@ class ReactiveSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
 
     def on_change(self) -> object:
         """Subscribe to any change on this set slot."""
-        from nu.core.reactive import OnChangeQuery
+        from nu.core.reactive import OnChange
 
-        return OnChangeQuery(self)
+        return OnChange(self)

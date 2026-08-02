@@ -3,9 +3,9 @@
 A ``UUID`` is a Nu term that carries a ``uuid.UUID``. Its operations split
 the two ways the model intends:
 
-- **accessors** (version, hex, bytes, ...) reuse the core ``GetAttrQuery`` atom -
+- **accessors** (version, hex, bytes, ...) reuse the core ``GetAttr`` atom -
   a UUID component is just an attribute read, and core already models that.
-- **comparisons** reuse the core comparison atoms (``GtQuery`` ...).
+- **comparisons** reuse the core comparison atoms (``Gt`` ...).
 - **constructors** are the one thing core can't do, so they wrap the new atoms
   from ``interactions``.
 
@@ -22,7 +22,7 @@ from nu.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import BoolForm, BytesForm, IntForm, StrForm
+    from nu.forms.primitives import Bool, Bytes, Int, Str
     from nu.lang import Arg, BytesArg, IntArg, StrArg
 
     type UUIDArg = Arg[_UUID]
@@ -67,121 +67,121 @@ class UUID(Form, TypedNu[_UUID]):
         return UUID(UuidFromIntQuery(value))
 
     # =========================================================================
-    # COMPONENT ACCESSORS (reuse core GetAttrQuery)
+    # COMPONENT ACCESSORS (reuse core GetAttr)
     # =========================================================================
 
-    def version(self) -> IntForm:
+    def version(self) -> Int:
         """The version number (1, 3, 4, or 5)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "version"))
+        return Int(GetAttr(self, "version"))
 
-    def variant(self) -> StrForm:
+    def variant(self) -> Str:
         """The variant."""
-        from nu import StrForm
-        from nu.core import GetAttrQuery
+        from nu import Str
+        from nu.core import GetAttr
 
-        return StrForm(GetAttrQuery(self, "variant"))
+        return Str(GetAttr(self, "variant"))
 
-    def time(self) -> IntForm:
+    def time(self) -> Int:
         """The 60-bit timestamp (version 1)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "time"))
+        return Int(GetAttr(self, "time"))
 
-    def clock_seq(self) -> IntForm:
+    def clock_seq(self) -> Int:
         """The 14-bit clock sequence (version 1)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "clock_seq"))
+        return Int(GetAttr(self, "clock_seq"))
 
-    def node(self) -> IntForm:
+    def node(self) -> Int:
         """The 48-bit node (version 1)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "node"))
+        return Int(GetAttr(self, "node"))
 
     # =========================================================================
-    # CONVERSIONS (reuse core GetAttrQuery)
+    # CONVERSIONS (reuse core GetAttr)
     # =========================================================================
 
-    def hex(self) -> StrForm:
+    def hex(self) -> Str:
         """The UUID as a 32-character hex string."""
-        from nu import StrForm
-        from nu.core import GetAttrQuery
+        from nu import Str
+        from nu.core import GetAttr
 
-        return StrForm(GetAttrQuery(self, "hex"))
+        return Str(GetAttr(self, "hex"))
 
-    def urn(self) -> StrForm:
+    def urn(self) -> Str:
         """The UUID as a URN (``urn:uuid:...``)."""
-        from nu import StrForm
-        from nu.core import GetAttrQuery
+        from nu import Str
+        from nu.core import GetAttr
 
-        return StrForm(GetAttrQuery(self, "urn"))
+        return Str(GetAttr(self, "urn"))
 
-    def bytes(self) -> BytesForm:
+    def bytes(self) -> Bytes:
         """The UUID as 16 bytes."""
-        from nu import BytesForm
-        from nu.core import GetAttrQuery
+        from nu import Bytes
+        from nu.core import GetAttr
 
-        return BytesForm(GetAttrQuery(self, "bytes"))
+        return Bytes(GetAttr(self, "bytes"))
 
-    def bytes_le(self) -> BytesForm:
+    def bytes_le(self) -> Bytes:
         """The UUID as 16 bytes, little-endian."""
-        from nu import BytesForm
-        from nu.core import GetAttrQuery
+        from nu import Bytes
+        from nu.core import GetAttr
 
-        return BytesForm(GetAttrQuery(self, "bytes_le"))
+        return Bytes(GetAttr(self, "bytes_le"))
 
-    def int_(self) -> IntForm:
+    def int_(self) -> Int:
         """The UUID as a 128-bit integer."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "int"))
+        return Int(GetAttr(self, "int"))
 
     # =========================================================================
     # COMPARISON (reuse core comparison atoms)
     # =========================================================================
 
-    def __gt__(self, other: UUIDArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GtQuery
+    def __gt__(self, other: UUIDArg) -> Bool:
+        from nu import Bool
+        from nu.core import Gt
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: UUIDArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LtQuery
+    def __lt__(self, other: UUIDArg) -> Bool:
+        from nu import Bool
+        from nu.core import Lt
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: UUIDArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GeQuery
+    def __ge__(self, other: UUIDArg) -> Bool:
+        from nu import Bool
+        from nu.core import Ge
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: UUIDArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LeQuery
+    def __le__(self, other: UUIDArg) -> Bool:
+        from nu import Bool
+        from nu.core import Le
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
-    def eq(self, other: UUIDArg) -> BoolForm:
+    def eq(self, other: UUIDArg) -> Bool:
         """Whether two UUIDs are equal."""
-        from nu import BoolForm
-        from nu.core import EqQuery
+        from nu import Bool
+        from nu.core import Eq
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def ne(self, other: UUIDArg) -> BoolForm:
+    def ne(self, other: UUIDArg) -> Bool:
         """Whether two UUIDs differ."""
-        from nu import BoolForm
-        from nu.core import NeQuery
+        from nu import Bool
+        from nu.core import Ne
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))

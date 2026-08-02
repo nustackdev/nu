@@ -83,14 +83,14 @@ class Teleport(Policy):
         self._payload["target"] = target
         self._payload["carry"] = carry
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             msg = "Teleport requires the async runtime; use arun / afirst / acollect"
             raise RuntimeError(msg)
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body_term = self._children[0]
         target = self._payload["target"]
         carry = self._payload["carry"]

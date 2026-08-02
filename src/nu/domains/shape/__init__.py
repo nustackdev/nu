@@ -3,13 +3,13 @@
 Public surface:
 - ``Shape``, ``ShapeMeta``, ``Slot``, ``SlotDescriptor`` — the DSL.
 - 21 Ref blueprints for structural navigation and substrate extension (7 families x 3 tiers).
-- ``SetCommand``, ``EraseCommand`` — slot-level write commands.
-- ``LoadQuery``, ``ExistsQuery``, ``MissingQuery``, ``ExtractQuery``,
-  ``AdvanceCursorQuery`` — slot-level read queries.
+- ``SetCmd``, ``Erase`` — slot-level write commands.
+- ``Load``, ``Exists``, ``Missing``, ``Extract``,
+  ``AdvanceCursor`` — slot-level read queries.
 
-Reactive queries (``OnChangeQuery`` / ``OnChildChangeQuery`` /
-``OnChildrenChangeQuery`` / ``OnDescendantsChangeQuery`` /
-``OnPrimitiveChangeQuery``) live in ``nu.core.reactive`` -- one unified
+Reactive queries (``OnChange`` / ``OnChildChange`` /
+``OnChildrenChange`` / ``OnDescendantsChange`` /
+``OnPrimitiveChange``) live in ``nu.core.reactive`` -- one unified
 interface for every substrate, reached through the shape Form mixins.
 """
 
@@ -17,14 +17,14 @@ from __future__ import annotations
 
 from .dsl import Shape, ShapeMeta, Slot, SlotDescriptor
 from .interactions import (
-    AdvanceCursorQuery,
-    EraseCommand,
-    ExistsQuery,
-    ExtractQuery,
-    LoadQuery,
-    MissingQuery,
-    PrimitiveSetCommand,
-    SetCommand,
+    AdvanceCursor,
+    Erase,
+    Exists,
+    Extract,
+    Load,
+    Missing,
+    PrimitiveSet,
+    SetCmd,
 )
 from .refs import (
     ItemRef,
@@ -53,17 +53,17 @@ from .refs import (
 
 __all__ = [
     # Queries
-    "AdvanceCursorQuery",
+    "AdvanceCursor",
     # Commands
-    "EraseCommand",
-    "ExistsQuery",
-    "ExtractQuery",
+    "Erase",
+    "Exists",
+    "Extract",
     # Item Refs
     "ItemRef",
-    "LoadQuery",
+    "Load",
     # Mapping Refs
     "MappingRef",
-    "MissingQuery",
+    "Missing",
     "MutableItemRef",
     "MutableMappingRef",
     # Sequence Refs
@@ -76,7 +76,7 @@ __all__ = [
     "MutableShapesMappingRef",
     # ShapesSequence Refs
     "MutableShapesSequenceRef",
-    "PrimitiveSetCommand",
+    "PrimitiveSet",
     "ReactiveItemRef",
     "ReactiveMappingRef",
     "ReactiveSequenceRef",
@@ -85,7 +85,7 @@ __all__ = [
     "ReactiveShapesMappingRef",
     "ReactiveShapesSequenceRef",
     "SequenceRef",
-    "SetCommand",
+    "SetCmd",
     "SetRef",
     # DSL
     "Shape",

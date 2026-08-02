@@ -12,17 +12,19 @@ import typing
 from typing import Any, ClassVar, ForwardRef, Optional, Union
 
 from nu.forms import (
-    AnyForm,
-    BoolForm,
-    BytesForm,
-    DictForm,
-    FloatForm,
-    FrozenSetForm,
-    IntForm,
-    ListForm,
-    SetForm,
-    StrForm,
-    TupleForm,
+    Any as AnyForm,
+)
+from nu.forms import (
+    Bool,
+    Bytes,
+    Dict,
+    Float,
+    FrozenSet,
+    Int,
+    List,
+    Set,
+    Str,
+    Tuple,
 )
 from nu.lang import TypeInfo
 from nu.mem.refs import (
@@ -103,16 +105,12 @@ def test_primitive_list_ref_records_elem_type() -> None:
 
 def test_primitive_dict_ref_records_key_and_elem() -> None:
     info = TypeInfo.from_annotation(PrimitiveDictRef[str, int])
-    assert info == TypeInfo(
-        PrimitiveDictRef, key=TypeInfo(str), elem=TypeInfo(int)
-    )
+    assert info == TypeInfo(PrimitiveDictRef, key=TypeInfo(str), elem=TypeInfo(int))
 
 
 def test_shapes_dict_ref_records_key_and_shape_elem() -> None:
     info = TypeInfo.from_annotation(ShapesDictRef[int, _StubShape])
-    assert info == TypeInfo(
-        ShapesDictRef, key=TypeInfo(int), elem=TypeInfo(_StubShape)
-    )
+    assert info == TypeInfo(ShapesDictRef, key=TypeInfo(int), elem=TypeInfo(_StubShape))
     assert info.is_ref
     assert info.elem is not None and info.elem.is_shape
 
@@ -158,21 +156,15 @@ def test_dict_generic_recurses_key_and_elem() -> None:
 
 
 def test_list_generic_recurses_elem() -> None:
-    assert TypeInfo.from_annotation(list[int]) == TypeInfo(
-        list, elem=TypeInfo(int)
-    )
+    assert TypeInfo.from_annotation(list[int]) == TypeInfo(list, elem=TypeInfo(int))
 
 
 def test_bare_container_class_fills_any_children() -> None:
-    assert TypeInfo.from_annotation(dict) == TypeInfo(
-        dict, key=TypeInfo(Any), elem=TypeInfo(Any)
-    )
+    assert TypeInfo.from_annotation(dict) == TypeInfo(dict, key=TypeInfo(Any), elem=TypeInfo(Any))
     assert TypeInfo.from_annotation(list) == TypeInfo(list, elem=TypeInfo(Any))
     assert TypeInfo.from_annotation(tuple) == TypeInfo(tuple, elem=TypeInfo(Any))
     assert TypeInfo.from_annotation(set) == TypeInfo(set, elem=TypeInfo(Any))
-    assert TypeInfo.from_annotation(frozenset) == TypeInfo(
-        frozenset, elem=TypeInfo(Any)
-    )
+    assert TypeInfo.from_annotation(frozenset) == TypeInfo(frozenset, elem=TypeInfo(Any))
 
 
 # --- deep recursion ------------------------------------------------------
@@ -209,9 +201,7 @@ def test_non_trivial_union_becomes_any() -> None:
 
 
 def test_union_nested_in_container_becomes_any_elem() -> None:
-    assert TypeInfo.from_annotation(list[int | str]) == TypeInfo(
-        list, elem=TypeInfo(Any)
-    )
+    assert TypeInfo.from_annotation(list[int | str]) == TypeInfo(list, elem=TypeInfo(Any))
 
 
 # --- forward refs --------------------------------------------------------
@@ -251,9 +241,7 @@ def test_get_type_hints_pipeline() -> None:
 
     hints = typing.get_type_hints(Owner)
     info = TypeInfo.from_annotation(hints["field"])
-    assert info == TypeInfo(
-        dict, key=TypeInfo(str), elem=TypeInfo(list, elem=TypeInfo(int))
-    )
+    assert info == TypeInfo(dict, key=TypeInfo(str), elem=TypeInfo(list, elem=TypeInfo(int)))
 
 
 # --- to_form dispatch ----------------------------------------------------
@@ -261,11 +249,11 @@ def test_get_type_hints_pipeline() -> None:
 
 def test_to_form_maps_primitive_leaves() -> None:
     pairs = [
-        (bool, BoolForm),
-        (int, IntForm),
-        (float, FloatForm),
-        (str, StrForm),
-        (bytes, BytesForm),
+        (bool, Bool),
+        (int, Int),
+        (float, Float),
+        (str, Str),
+        (bytes, Bytes),
     ]
     for py, form in pairs:
         assert TypeInfo(py).to_form() is form
@@ -273,11 +261,11 @@ def test_to_form_maps_primitive_leaves() -> None:
 
 def test_to_form_maps_container_leaves() -> None:
     pairs = [
-        (list, ListForm),
-        (dict, DictForm),
-        (set, SetForm),
-        (frozenset, FrozenSetForm),
-        (tuple, TupleForm),
+        (list, List),
+        (dict, Dict),
+        (set, Set),
+        (frozenset, FrozenSet),
+        (tuple, Tuple),
     ]
     for py, form in pairs:
         assert TypeInfo(py).to_form() is form
@@ -289,7 +277,7 @@ def test_to_form_any_yields_any_form() -> None:
 
 def test_to_form_ref_class_falls_back_to_any_form() -> None:
     # Ref-typed nodes are handled by the wrapper's ref descent, not to_form.
-    # to_form on them defaults to AnyForm.
+    # to_form on them defaults to Any.
     assert TypeInfo(StrRef).to_form() is AnyForm
 
 
@@ -298,7 +286,7 @@ def test_to_form_shape_class_falls_back_to_any_form() -> None:
 
 
 def test_to_form_ignores_tier_arg() -> None:
-    assert TypeInfo(int).to_form(tier="anything") is IntForm
+    assert TypeInfo(int).to_form(tier="anything") is Int
 
 
 # --- accessors ------------------------------------------------------------

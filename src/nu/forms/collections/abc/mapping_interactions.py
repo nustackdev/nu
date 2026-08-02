@@ -1,10 +1,10 @@
 """Mapping interactions.
 
-Reads (Query): KeysQuery, ValuesQuery, ItemsQuery, GetQuery, ContainsKeyQuery,
-    CopyQuery, ReversedKeysQuery, MergeQuery
-Mutate, yield nothing (Command): SetItemCommand, DeleteItemCommand, UpdateCommand
-Mutate and yield a value (Action): DictPopAction, PopItemAction, SetDefaultAction,
-    MergeUpdateAction
+Reads (Query): Keys, Values, Items, Get, ContainsKey,
+    Copy, ReversedKeys, Merge
+Mutate, yield nothing (Command): DeleteItem, Update (SetItem lives in nu.core.access)
+Mutate and yield a value (Action): DictPop, PopItem, SetDefault,
+    MergeUpdate
 """
 
 from __future__ import annotations
@@ -24,23 +24,22 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "ContainsKeyQuery",
-    "CopyQuery",
-    "DeleteItemCommand",
+    "ContainsKey",
+    "Copy",
+    "DeleteItem",
     "DictCreate",
     "DictOf",
-    "DictPopAction",
-    "GetQuery",
-    "ItemsQuery",
-    "KeysQuery",
-    "MergeQuery",
-    "MergeUpdateAction",
-    "PopItemAction",
-    "ReversedKeysQuery",
-    "SetDefaultAction",
-    "SetItemCommand",
-    "UpdateCommand",
-    "ValuesQuery",
+    "DictPop",
+    "Get",
+    "Items",
+    "Keys",
+    "Merge",
+    "MergeUpdate",
+    "PopItem",
+    "ReversedKeys",
+    "SetDefault",
+    "Update",
+    "Values",
 ]
 
 
@@ -62,7 +61,7 @@ DictOf = ScalarQueryFactory("DictOf", dict)
 # =============================================================================
 
 
-class KeysQuery(ScalarQuery):
+class Keys(ScalarQuery):
     """Get keys view from mapping: mapping.keys()."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -88,7 +87,7 @@ class KeysQuery(ScalarQuery):
         return athunk
 
 
-class ValuesQuery(ScalarQuery):
+class Values(ScalarQuery):
     """Get values view from mapping: mapping.values()."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -114,7 +113,7 @@ class ValuesQuery(ScalarQuery):
         return athunk
 
 
-class ItemsQuery(ScalarQuery):
+class Items(ScalarQuery):
     """Get items view from mapping: mapping.items()."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -140,7 +139,7 @@ class ItemsQuery(ScalarQuery):
         return athunk
 
 
-class GetQuery(ScalarQuery):
+class Get(ScalarQuery):
     """Get value from mapping with optional default: mapping.get_item(key, default) or mapping[key]."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -182,7 +181,7 @@ class GetQuery(ScalarQuery):
         return athunk
 
 
-class ContainsKeyQuery(ScalarQuery):
+class ContainsKey(ScalarQuery):
     """Test key membership: key in mapping. Yields a bool."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -214,7 +213,7 @@ class ContainsKeyQuery(ScalarQuery):
         return athunk
 
 
-class CopyQuery(ScalarQuery):
+class Copy(ScalarQuery):
     """Shallow copy of the mapping: mapping.copy(). Yields a new dict."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -240,11 +239,11 @@ class CopyQuery(ScalarQuery):
         return athunk
 
 
-class ReversedKeysQuery(ScalarQuery):
+class ReversedKeys(ScalarQuery):
     """Reverse-order keys: reversed(mapping). Yields keys in reverse insertion order.
 
-    Scalar-shaped like :class:`KeysQuery` -- the thunk returns one iterator
-    handle (Python's ``reversed(obj)`` object). Downstream ``IterQuery``
+    Scalar-shaped like :class:`Keys` -- the thunk returns one iterator
+    handle (Python's ``reversed(obj)`` object). Downstream ``Iter``
     opens that handle into a stream lazily, so ``islice(m.reversed_keys(),
     n)`` reads only ``n`` items regardless of stream size.
     """
@@ -277,7 +276,7 @@ class ReversedKeysQuery(ScalarQuery):
         return athunk
 
 
-class MergeQuery(ScalarQuery):
+class Merge(ScalarQuery):
     """Merge two mappings into a new one: mapping | other. Yields a new dict."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -314,47 +313,7 @@ class MergeQuery(ScalarQuery):
 # =============================================================================
 
 
-class SetItemCommand(Command):
-    """SetQuery value at key: mapping[key] = value. Mutates slot 0; returns nothing."""
-
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, key_t, value_t = children
-
-        def thunk(rt: Runtime) -> None:
-            target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
-            key = key_t(rt)
-            if key is EMPTY or key is INVALID:
-                return
-            value = value_t(rt)
-            if value is EMPTY or value is INVALID:
-                return
-            target[key] = value
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, key_t, value_t = children
-
-        async def athunk(rt: Runtime) -> None:
-            target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
-            key = await key_t(rt)
-            if key is EMPTY or key is INVALID:
-                return
-            value = await value_t(rt)
-            if value is EMPTY or value is INVALID:
-                return
-            target[key] = value
-
-        return athunk
-
-
-class DeleteItemCommand(Command):
+class DeleteItem(Command):
     """Delete entry by key: del mapping[key]. Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -388,7 +347,7 @@ class DeleteItemCommand(Command):
         return athunk
 
 
-class UpdateCommand(Command):
+class Update(Command):
     """Update mapping with another: mapping.update(other). Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -427,7 +386,7 @@ class UpdateCommand(Command):
 # =============================================================================
 
 
-class MergeUpdateAction(ScalarAction):
+class MergeUpdate(ScalarAction):
     """In-place merge: mapping |= other. Mutates slot 0 and yields the mapping.
 
     Python's ``dict.__ior__`` updates in place and returns ``self``, so it both
@@ -467,7 +426,7 @@ class MergeUpdateAction(ScalarAction):
         return athunk
 
 
-class DictPopAction(ScalarAction):
+class DictPop(ScalarAction):
     """Pop value by key with optional default: mapping.pop(key, default).
 
     Mutates slot 0 (removes the entry) and yields the value or default.
@@ -520,7 +479,7 @@ class DictPopAction(ScalarAction):
         return athunk
 
 
-class PopItemAction(ScalarAction):
+class PopItem(ScalarAction):
     """Pop arbitrary item: mapping.popitem().
 
     Mutates slot 0 (removes the entry) and yields the (key, value) tuple.
@@ -557,8 +516,8 @@ class PopItemAction(ScalarAction):
         return athunk
 
 
-class SetDefaultAction(ScalarAction):
-    """SetQuery default value if key missing: mapping.setdefault(key, default).
+class SetDefault(ScalarAction):
+    """Set default value if key missing: mapping.setdefault(key, default).
 
     Mutates slot 0 (inserts the entry when the key is missing) and yields the
     value at the key.

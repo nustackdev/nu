@@ -1,9 +1,9 @@
 """Sequence interactions.
 
-Reads (Query): FirstQuery, LastQuery, IndexOfQuery, CountQuery, CopyQuery
-Mutators returning nothing (Command): AppendCommand, ExtendCommand, InsertCommand,
-    RemoveValueCommand, ReverseCommand, SortCommand, SetIndexCommand, DelIndexCommand
-Mutators returning a value (Action): PopAction, IAddAction, IMulAction
+Reads (Query): First, Last, IndexOf, Count, Copy
+Mutators returning nothing (Command): Append, Extend, Insert,
+    RemoveValue, Reverse, Sort, SetIndex, DelIndex
+Mutators returning a value (Action): Pop, IAdd, IMul
 """
 
 from __future__ import annotations
@@ -24,23 +24,23 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "AppendCommand",
-    "CopyQuery",
-    "CountQuery",
-    "DelIndexCommand",
-    "ExtendCommand",
-    "FirstQuery",
-    "IAddAction",
-    "IMulAction",
-    "IndexOfQuery",
-    "InsertCommand",
-    "LastQuery",
+    "Append",
+    "Copy",
+    "Count",
+    "DelIndex",
+    "Extend",
+    "First",
+    "IAdd",
+    "IMul",
+    "IndexOf",
+    "Insert",
+    "Last",
     "ListCreate",
-    "PopAction",
-    "RemoveValueCommand",
-    "ReverseCommand",
-    "SetIndexCommand",
-    "SortCommand",
+    "Pop",
+    "RemoveValue",
+    "Reverse",
+    "SetIndex",
+    "Sort",
     "TupleCreate",
     "TupleOf",
 ]
@@ -66,10 +66,10 @@ TupleOf = ScalarQueryFactory("TupleOf", lambda *items: items)
 # =============================================================================
 
 
-class FirstQuery(ScalarQuery):
+class First(ScalarQuery):
     """First element: seq[0]. Returns Invalid if empty."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -84,7 +84,7 @@ class FirstQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -100,10 +100,10 @@ class FirstQuery(ScalarQuery):
         return athunk
 
 
-class LastQuery(ScalarQuery):
+class Last(ScalarQuery):
     """Last element: seq[-1]. Returns Invalid if empty."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -118,7 +118,7 @@ class LastQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -134,10 +134,10 @@ class LastQuery(ScalarQuery):
         return athunk
 
 
-class IndexOfQuery(ScalarQuery):
+class IndexOf(ScalarQuery):
     """Find index of value: seq.index(value). Returns Invalid if not found."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -156,7 +156,7 @@ class IndexOfQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -176,10 +176,10 @@ class IndexOfQuery(ScalarQuery):
         return athunk
 
 
-class CountQuery(ScalarQuery):
+class Count(ScalarQuery):
     """Count occurrences: seq.count(value)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -195,7 +195,7 @@ class CountQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -212,10 +212,10 @@ class CountQuery(ScalarQuery):
         return athunk
 
 
-class CopyQuery(ScalarQuery):
+class Copy(ScalarQuery):
     """Shallow copy: list.copy(). Returns a new list; does not mutate."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (target_t,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -226,7 +226,7 @@ class CopyQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (target_t,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -243,12 +243,12 @@ class CopyQuery(ScalarQuery):
 # =============================================================================
 
 
-class AppendCommand(Command):
+class Append(Command):
     """Append item to end: seq.append(value). Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -262,7 +262,7 @@ class AppendCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -277,12 +277,12 @@ class AppendCommand(Command):
         return athunk
 
 
-class InsertCommand(Command):
+class Insert(Command):
     """Insert item at index: seq.insert(index, value). Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, index_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -301,7 +301,7 @@ class InsertCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, index_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -321,12 +321,12 @@ class InsertCommand(Command):
         return athunk
 
 
-class ExtendCommand(Command):
+class Extend(Command):
     """Extend sequence with iterable: seq.extend(other). Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -340,7 +340,7 @@ class ExtendCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -355,12 +355,12 @@ class ExtendCommand(Command):
         return athunk
 
 
-class RemoveValueCommand(Command):
+class RemoveValue(Command):
     """Remove first occurrence of value: seq.remove(value). Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -374,7 +374,7 @@ class RemoveValueCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -389,12 +389,12 @@ class RemoveValueCommand(Command):
         return athunk
 
 
-class ReverseCommand(Command):
+class Reverse(Command):
     """Reverse sequence in-place: seq.reverse(). Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (target_t,) = children
 
         def thunk(rt: Runtime) -> None:
@@ -405,7 +405,7 @@ class ReverseCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (target_t,) = children
 
         async def athunk(rt: Runtime) -> None:
@@ -417,7 +417,7 @@ class ReverseCommand(Command):
         return athunk
 
 
-class SortCommand(Command):
+class Sort(Command):
     """Sort sequence in-place: list.sort(). Mutates slot 0; returns nothing.
 
     No-key variant only (key= injection is deferred).
@@ -425,7 +425,7 @@ class SortCommand(Command):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (target_t,) = children
 
         def thunk(rt: Runtime) -> None:
@@ -436,7 +436,7 @@ class SortCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (target_t,) = children
 
         async def athunk(rt: Runtime) -> None:
@@ -448,12 +448,12 @@ class SortCommand(Command):
         return athunk
 
 
-class SetIndexCommand(Command):
+class SetIndex(Command):
     """Subscript write: seq[index] = value. Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, index_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -470,7 +470,7 @@ class SetIndexCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, index_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -488,12 +488,12 @@ class SetIndexCommand(Command):
         return athunk
 
 
-class DelIndexCommand(Command):
+class DelIndex(Command):
     """Subscript delete: del seq[index]. Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, index_t = children
 
         def thunk(rt: Runtime) -> None:
@@ -507,7 +507,7 @@ class DelIndexCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, index_t = children
 
         async def athunk(rt: Runtime) -> None:
@@ -527,7 +527,7 @@ class DelIndexCommand(Command):
 # =============================================================================
 
 
-class PopAction(ScalarAction):
+class Pop(ScalarAction):
     """Pop item at index: seq.pop(index). Mutates slot 0 and returns the popped value.
 
     Default index is -1 (last item).
@@ -535,7 +535,7 @@ class PopAction(ScalarAction):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -554,7 +554,7 @@ class PopAction(ScalarAction):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         a_t, b_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -574,12 +574,12 @@ class PopAction(ScalarAction):
         return athunk
 
 
-class IAddAction(ScalarAction):
+class IAdd(ScalarAction):
     """In-place concat: seq += other. Mutates slot 0 and returns it (Python __iadd__)."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -594,7 +594,7 @@ class IAddAction(ScalarAction):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -610,12 +610,12 @@ class IAddAction(ScalarAction):
         return athunk
 
 
-class IMulAction(ScalarAction):
+class IMul(ScalarAction):
     """In-place repeat: seq *= n. Mutates slot 0 and returns it (Python __imul__)."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, n_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -630,7 +630,7 @@ class IMulAction(ScalarAction):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, n_t = children
 
         async def athunk(rt: Runtime) -> object:

@@ -1,5 +1,6 @@
-"""``InvisiblesClient``: connect to an ``InvisiblesServer``, expose its root
-fabric as a transparent proxy.
+"""``InvisiblesClient``: connect to an ``InvisiblesServer``.
+
+Exposes its root fabric as a transparent proxy.
 
 FabricLifecycle. On ``asetup`` connects with retry, fetches the remote root
 fabric handle, exposes it as ``.root``. On ``acleanup`` closes the
@@ -16,13 +17,12 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from invisibles.netkit import SyncConnector
-from invisibles.netkit.framing import LengthPrefixedFraming
-from invisibles.netkit.transports import TCPTransport, UnixSocketTransport
-
 from invisibles import BgServingThread, InvisiblesConnection, Protocol
 from invisibles.config import AttributeAccessConfig, ConnectionConfig
 from invisibles.core.consts import HANDLE_GET_ROOT
+from invisibles.netkit import SyncConnector
+from invisibles.netkit.framing import LengthPrefixedFraming
+from invisibles.netkit.transports import TCPTransport, UnixSocketTransport
 
 
 if TYPE_CHECKING:
@@ -58,7 +58,7 @@ class InvisiblesClient:
         self._root: object = None
         self._bg: BgServingThread | None = None
 
-    async def asetup(self, ctx: Context) -> None:
+    async def asetup(self, ctx: Context) -> None:  # noqa: D102
         config = ConnectionConfig(
             attrs=AttributeAccessConfig(allow_all_attrs=True),
             buffered_iteration=self.buffered_iteration,
@@ -93,7 +93,7 @@ class InvisiblesClient:
         if self.bg_serve:
             self._bg = BgServingThread(self._connection)
 
-    async def acleanup(self) -> None:
+    async def acleanup(self) -> None:  # noqa: D102
         if self._bg is not None:
             self._bg.stop()
             self._bg = None

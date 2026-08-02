@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from nu import DictForm, FrozenSetForm, ListForm, Nu, SetForm, TupleForm
+from nu import Dict, FrozenSet, List, Nu, Set, Tuple
 from nu.domains.shape import Slot
 
 from .items import ItemRef
@@ -36,7 +36,7 @@ __all__ = [
 ]
 
 
-class PrimitiveListRef[T](ItemRef, ListForm[T]):
+class PrimitiveListRef[T](ItemRef, List[T]):
     """virtuals list stored as a single primitive blob."""
 
     def __init__(
@@ -49,7 +49,7 @@ class PrimitiveListRef[T](ItemRef, ListForm[T]):
         super().__init__(
             address,
             value_type=list,
-            value_value_type=ListForm,
+            value_value_type=List,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -75,7 +75,7 @@ class PrimitiveListRef[T](ItemRef, ListForm[T]):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveDictRef[K, V](ItemRef, DictForm[K, V]):
+class PrimitiveDictRef[K, V](ItemRef, Dict[K, V]):
     """virtuals dict stored as a single primitive blob."""
 
     def __init__(
@@ -88,7 +88,7 @@ class PrimitiveDictRef[K, V](ItemRef, DictForm[K, V]):
         super().__init__(
             address,
             value_type=dict,
-            value_value_type=DictForm,
+            value_value_type=Dict,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -114,7 +114,7 @@ class PrimitiveDictRef[K, V](ItemRef, DictForm[K, V]):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveTupleRef(ItemRef, TupleForm):
+class PrimitiveTupleRef(ItemRef, Tuple):
     """virtuals tuple stored as a single primitive blob."""
 
     def __init__(
@@ -127,7 +127,7 @@ class PrimitiveTupleRef(ItemRef, TupleForm):
         super().__init__(
             address,
             value_type=tuple,
-            value_value_type=TupleForm,
+            value_value_type=Tuple,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -153,7 +153,7 @@ class PrimitiveTupleRef(ItemRef, TupleForm):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveSetRef[T](ItemRef, SetForm[T]):
+class PrimitiveSetRef[T](ItemRef, Set[T]):
     """virtuals set stored as a single primitive blob."""
 
     def __init__(
@@ -166,7 +166,7 @@ class PrimitiveSetRef[T](ItemRef, SetForm[T]):
         super().__init__(
             address,
             value_type=set,
-            value_value_type=SetForm,
+            value_value_type=Set,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -192,7 +192,7 @@ class PrimitiveSetRef[T](ItemRef, SetForm[T]):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveFrozenSetRef[T](ItemRef, FrozenSetForm[T]):
+class PrimitiveFrozenSetRef[T](ItemRef, FrozenSet[T]):
     """virtuals frozenset stored as a single primitive blob."""
 
     def __init__(
@@ -205,7 +205,7 @@ class PrimitiveFrozenSetRef[T](ItemRef, FrozenSetForm[T]):
         super().__init__(
             address,
             value_type=frozenset,
-            value_value_type=FrozenSetForm,
+            value_value_type=FrozenSet,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )

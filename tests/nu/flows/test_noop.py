@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu.core import AddQuery
+from nu.core import Add
 from nu.domains.shape import Shape
 from nu.engine.validation import ValidationError
 from nu.flows import DelayedDo, IfDo, Noop, Sequential
@@ -75,7 +75,7 @@ def test_bare_noop_validates() -> None:
 
 
 def test_noop_rejected_in_value_slot() -> None:
-    _rejects(AddQuery(Noop(), 3))
+    _rejects(Add(Noop(), 3))
 
 
 def test_noop_rejected_in_control_param() -> None:

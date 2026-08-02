@@ -1,4 +1,4 @@
-"""Interactions for JQueueRef / JQueueForm.
+"""Interactions for JQueueRef / JQueue.
 
 - Put   — Command, blocks when full → back-pressure.
 - Get   — ScalarAction, blocks when empty, yields one item (mutating producer).
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-    from .form import JQueueForm
+    from .form import JQueue
 
 
 __all__ = [
@@ -62,7 +62,7 @@ class Put(Command):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def __init__(self, queue: JQueueForm, value: object) -> None:
+    def __init__(self, queue: JQueue, value: object) -> None:
         super().__init__(queue, value)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -102,7 +102,7 @@ class Get(ScalarAction):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def __init__(self, queue: JQueueForm) -> None:
+    def __init__(self, queue: JQueue) -> None:
         super().__init__(queue)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -136,7 +136,7 @@ class QSize(ScalarQuery):
     Children: ``[queue]``. Yields an int.
     """
 
-    def __init__(self, queue: JQueueForm) -> None:
+    def __init__(self, queue: JQueue) -> None:
         super().__init__(queue)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -169,7 +169,7 @@ class Close(Command):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def __init__(self, queue: JQueueForm) -> None:
+    def __init__(self, queue: JQueue) -> None:
         super().__init__(queue)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

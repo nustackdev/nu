@@ -16,7 +16,7 @@ Usage::
         queue = JQueueRef.slot(capacity=16, item_type=int)
 """
 
-from .form import JQueueForm
+from .form import JQueue
 from .interactions import Close, Get, Put, QSize, QueueClosed
 from .ref import JQueueRef
 
@@ -24,7 +24,7 @@ from .ref import JQueueRef
 __all__ = [
     "Close",
     "Get",
-    "JQueueForm",
+    "JQueue",
     "JQueueRef",
     "Put",
     "QSize",

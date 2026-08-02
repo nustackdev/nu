@@ -12,11 +12,11 @@ from __future__ import annotations
 import pytest
 
 from nu.core.reactive import (
-    OnChangeQuery,
-    OnChildChangeQuery,
-    OnChildrenChangeQuery,
-    OnDescendantsChangeQuery,
-    OnPrimitiveChangeQuery,
+    OnChange,
+    OnChildChange,
+    OnChildrenChange,
+    OnDescendantsChange,
+    OnPrimitiveChange,
 )
 from nu.domains.shape.refs.item import ItemRef, ReactiveItemRef
 from nu.domains.shape.refs.mapping import ReactiveMappingRef
@@ -31,23 +31,23 @@ from nu.lang import ScalarQuery
 
 
 def test_on_change_query_is_scalar_query():
-    assert issubclass(OnChangeQuery, ScalarQuery)
+    assert issubclass(OnChange, ScalarQuery)
 
 
 def test_on_child_change_query_is_scalar_query():
-    assert issubclass(OnChildChangeQuery, ScalarQuery)
+    assert issubclass(OnChildChange, ScalarQuery)
 
 
 def test_on_children_change_query_is_scalar_query():
-    assert issubclass(OnChildrenChangeQuery, ScalarQuery)
+    assert issubclass(OnChildrenChange, ScalarQuery)
 
 
 def test_on_descendants_change_query_is_scalar_query():
-    assert issubclass(OnDescendantsChangeQuery, ScalarQuery)
+    assert issubclass(OnDescendantsChange, ScalarQuery)
 
 
 def test_on_primitive_change_query_is_scalar_query():
-    assert issubclass(OnPrimitiveChangeQuery, ScalarQuery)
+    assert issubclass(OnPrimitiveChange, ScalarQuery)
 
 
 # ---------------------------------------------------------------------------
@@ -60,11 +60,11 @@ def test_all_reactive_queries_exported_from_core():
     import nu.core.reactive as core_reactive
 
     for name in (
-        "OnChangeQuery",
-        "OnChildChangeQuery",
-        "OnChildrenChangeQuery",
-        "OnDescendantsChangeQuery",
-        "OnPrimitiveChangeQuery",
+        "OnChange",
+        "OnChildChange",
+        "OnChildrenChange",
+        "OnDescendantsChange",
+        "OnPrimitiveChange",
     ):
         assert hasattr(core_reactive, name)
 
@@ -74,11 +74,11 @@ def test_all_reactive_queries_also_flat_on_nu_core():
     import nu.core as core
 
     for name in (
-        "OnChangeQuery",
-        "OnChildChangeQuery",
-        "OnChildrenChangeQuery",
-        "OnDescendantsChangeQuery",
-        "OnPrimitiveChangeQuery",
+        "OnChange",
+        "OnChildChange",
+        "OnChildrenChange",
+        "OnDescendantsChange",
+        "OnPrimitiveChange",
     ):
         assert hasattr(core, name)
 
@@ -90,32 +90,32 @@ def test_all_reactive_queries_also_flat_on_nu_core():
 
 def test_on_change_query_constructs_with_ref():
     ref = ItemRef("slot")
-    q = OnChangeQuery(ref)
+    q = OnChange(ref)
     assert q._children
 
 
 def test_on_child_change_query_constructs_with_two_children():
     ref = ItemRef("slot")
     address = ItemRef("addr")
-    q = OnChildChangeQuery(ref, address)
+    q = OnChildChange(ref, address)
     assert len(q._children) == 2
 
 
 def test_on_children_change_query_constructs_with_ref():
     ref = ItemRef("slot")
-    q = OnChildrenChangeQuery(ref)
+    q = OnChildrenChange(ref)
     assert q._children
 
 
 def test_on_descendants_change_query_constructs_with_ref_and_pattern():
     ref = ItemRef("slot")
-    q = OnDescendantsChangeQuery(ref, ItemRef("pattern"))
+    q = OnDescendantsChange(ref, ItemRef("pattern"))
     assert len(q._children) == 2
 
 
 def test_on_primitive_change_query_constructs_with_ref():
     ref = ReactiveItemRef("slot")
-    q = OnPrimitiveChangeQuery(ref)
+    q = OnPrimitiveChange(ref)
     assert q._children
 
 
@@ -126,52 +126,52 @@ def test_on_primitive_change_query_constructs_with_ref():
 
 def test_reactive_mapping_ref_on_child_change_returns_shape_query():
     r = ReactiveMappingRef("m")
-    assert isinstance(r.on_child_change("k"), OnChildChangeQuery)
+    assert isinstance(r.on_child_change("k"), OnChildChange)
 
 
 def test_reactive_mapping_ref_on_children_change_returns_shape_query():
     r = ReactiveMappingRef("m")
-    assert isinstance(r.on_children_change(), OnChildrenChangeQuery)
+    assert isinstance(r.on_children_change(), OnChildrenChange)
 
 
 def test_reactive_mapping_ref_on_descendants_change_returns_shape_query():
     r = ReactiveMappingRef("m")
-    assert isinstance(r.on_descendants_change("a"), OnDescendantsChangeQuery)
+    assert isinstance(r.on_descendants_change("a"), OnDescendantsChange)
 
 
 def test_reactive_mapping_ref_on_change_returns_generic_query():
     r = ReactiveMappingRef("m")
-    assert isinstance(r.on_change(), OnChangeQuery)
+    assert isinstance(r.on_change(), OnChange)
 
 
 def test_reactive_sequence_ref_on_child_change_returns_shape_query():
     s = ReactiveSequenceRef("s")
-    assert isinstance(s.on_child_change(0), OnChildChangeQuery)
+    assert isinstance(s.on_child_change(0), OnChildChange)
 
 
 def test_reactive_sequence_ref_on_children_change_returns_shape_query():
     s = ReactiveSequenceRef("s")
-    assert isinstance(s.on_children_change(), OnChildrenChangeQuery)
+    assert isinstance(s.on_children_change(), OnChildrenChange)
 
 
 def test_reactive_sequence_ref_on_change_returns_generic_query():
     s = ReactiveSequenceRef("s")
-    assert isinstance(s.on_change(), OnChangeQuery)
+    assert isinstance(s.on_change(), OnChange)
 
 
 def test_reactive_set_ref_on_children_change_returns_shape_query():
     r = ReactiveSetRef("s")
-    assert isinstance(r.on_children_change(), OnChildrenChangeQuery)
+    assert isinstance(r.on_children_change(), OnChildrenChange)
 
 
 def test_reactive_set_ref_on_change_returns_generic_query():
     r = ReactiveSetRef("s")
-    assert isinstance(r.on_change(), OnChangeQuery)
+    assert isinstance(r.on_change(), OnChange)
 
 
 def test_reactive_item_ref_on_change_returns_primitive_query():
     r = ReactiveItemRef("slot")
-    assert isinstance(r.on_change(), OnPrimitiveChangeQuery)
+    assert isinstance(r.on_change(), OnPrimitiveChange)
 
 
 # ---------------------------------------------------------------------------
@@ -203,22 +203,22 @@ def test_reactive_collection_form_in_set_ref_mro():
 
 
 def test_on_change_query_has_no_mutates():
-    mutates = OnChangeQuery._attributes.get("mutates")
+    mutates = OnChange._attributes.get("mutates")
     assert mutates is None
 
 
 def test_on_child_change_query_has_no_mutates():
-    mutates = OnChildChangeQuery._attributes.get("mutates")
+    mutates = OnChildChange._attributes.get("mutates")
     assert mutates is None
 
 
 def test_on_children_change_query_has_no_mutates():
-    mutates = OnChildrenChangeQuery._attributes.get("mutates")
+    mutates = OnChildrenChange._attributes.get("mutates")
     assert mutates is None
 
 
 def test_on_primitive_change_query_has_no_mutates():
-    mutates = OnPrimitiveChangeQuery._attributes.get("mutates")
+    mutates = OnPrimitiveChange._attributes.get("mutates")
     assert mutates is None
 
 

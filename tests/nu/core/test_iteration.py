@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import pytest
 
-from nu.core.iteration import EnumerateQuery, IterQuery, NextAction, ReversedQuery, ZipQuery
+from nu.core.iteration import Enumerate, Iter, Next, Reversed, Zip
 from nu.lang import LAWS, Attr, Cardinality, Effect, Ref, Sort, compile, gate, validate
 
 
-_SOURCES = (IterQuery, EnumerateQuery, ZipQuery, ReversedQuery)
+_SOURCES = (Iter, Enumerate, Zip, Reversed)
 
 
 # --- sort ----------------------------------------------------------------
@@ -28,7 +28,7 @@ def test_a_source_is_a_stream_query(source):
 
 
 def test_next_is_a_scalar_action():
-    program = compile(NextAction(Ref("it")))
+    program = compile(Next(Ref("it")))
     assert program.attr(program.root, Attr.SORT) is Sort.SCALAR_ACTION
 
 
@@ -42,7 +42,7 @@ def test_a_source_yields_a_stream(source):
 
 
 def test_next_yields_a_scalar():
-    program = compile(NextAction(Ref("it")))
+    program = compile(Next(Ref("it")))
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.SCALAR
 
 
@@ -51,14 +51,14 @@ def test_next_yields_a_scalar():
 
 def test_next_declares_a_write_on_its_iterator():
     # Slot 0 is the mutation slot, so a Ref there binds as a WRITE.
-    program = compile(NextAction(Ref()))
+    program = compile(Next(Ref()))
     assert program.attr(program.root, Attr.MUTATES) == frozenset({0})
     assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset({(Ref, Effect.WRITE)})
 
 
 def test_a_source_only_reads_its_children():
     # A StreamQuery source declares no mutation, so a Ref child is a READ.
-    program = compile(IterQuery(Ref()))
+    program = compile(Iter(Ref()))
     assert program.attr(program.root, Attr.MUTATES) == frozenset()
     assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset({(Ref, Effect.READ)})
 
@@ -73,74 +73,68 @@ def test_a_source_validates(source):
 
 
 def test_next_validates():
-    program = compile(NextAction(Ref("it")))
+    program = compile(Next(Ref("it")))
     assert validate(program, *LAWS) is program
 
 
 def test_an_action_yields_so_it_fits_a_query_slot():
-    # NextAction is a dual-citizen: it mutates AND yields, so unlike a void Command
+    # Next is a dual-citizen: it mutates AND yields, so unlike a void Command
     # it composes inside a Query. A Command in the same slot would be refused.
-    from nu.context import SetCommand
-    from nu.core import AddQuery, LiteralQuery
+    from nu.context import SetCmd
+    from nu.core import Add, Literal
 
-    assert gate(compile(AddQuery(NextAction(Ref("it")), LiteralQuery(1))), *LAWS) == []
-    verdict = gate(compile(AddQuery(SetCommand(Ref("x"), LiteralQuery(1)), LiteralQuery(2))), *LAWS)
+    assert gate(compile(Add(Next(Ref("it")), Literal(1))), *LAWS) == []
+    verdict = gate(compile(Add(SetCmd(Ref("x"), Literal(1)), Literal(2))), *LAWS)
     assert any(v.law == "composition" for v in verdict)
 
 
-# --- evaluation (IterQuery) ---------------------------------------------------
+# --- evaluation (Iter) ---------------------------------------------------
 
 
 def test_iter_streams_a_scalar_iterable():
-    from nu.core import CollectQuery, LiteralQuery
+    from nu.core import Collect, Literal
     from nu.lang.helpers import run
 
-    value, _ = run(CollectQuery(IterQuery(LiteralQuery([1, 2, 3]))))
+    value, _ = run(Collect(Iter(Literal([1, 2, 3]))))
     assert value == [1, 2, 3]
 
 
 def test_iter_lifts_a_range_value_into_a_stream():
-    # range is a Python value (a type), not a Nu stream atom; IterQuery lifts it.
-    from nu.core import CollectQuery, LiteralQuery
+    # range is a Python value (a type), not a Nu stream atom; Iter lifts it.
+    from nu.core import Collect, Literal
     from nu.lang.helpers import run
 
-    value, _ = run(CollectQuery(IterQuery(LiteralQuery(range(0, 4)))))
+    value, _ = run(Collect(Iter(Literal(range(0, 4)))))
     assert value == [0, 1, 2, 3]
 
 
 def test_enumerate_pairs_index_and_item():
-    from nu.core import CollectQuery, LiteralQuery
+    from nu.core import Collect, Literal
     from nu.lang.helpers import run
 
-    value, _ = run(CollectQuery(EnumerateQuery(IterQuery(LiteralQuery(["a", "b", "c"])))))
+    value, _ = run(Collect(Enumerate(Iter(Literal(["a", "b", "c"])))))
     assert value == [(0, "a"), (1, "b"), (2, "c")]
 
 
 def test_enumerate_honors_a_start():
-    from nu.core import CollectQuery, LiteralQuery
+    from nu.core import Collect, Literal
     from nu.lang.helpers import run
 
-    value, _ = run(
-        CollectQuery(EnumerateQuery(IterQuery(LiteralQuery(["a", "b"])), LiteralQuery(1)))
-    )
+    value, _ = run(Collect(Enumerate(Iter(Literal(["a", "b"])), Literal(1))))
     assert value == [(1, "a"), (2, "b")]
 
 
 def test_zip_threads_sources_to_shortest():
-    from nu.core import CollectQuery, LiteralQuery
+    from nu.core import Collect, Literal
     from nu.lang.helpers import run
 
-    value, _ = run(
-        CollectQuery(
-            ZipQuery(IterQuery(LiteralQuery([1, 2, 3])), IterQuery(LiteralQuery(["a", "b"])))
-        )
-    )
+    value, _ = run(Collect(Zip(Iter(Literal([1, 2, 3])), Iter(Literal(["a", "b"])))))
     assert value == [(1, "a"), (2, "b")]
 
 
 def test_reversed_walks_a_source_backwards():
-    from nu.core import CollectQuery, LiteralQuery
+    from nu.core import Collect, Literal
     from nu.lang.helpers import run
 
-    value, _ = run(CollectQuery(ReversedQuery(IterQuery(LiteralQuery([1, 2, 3])))))
+    value, _ = run(Collect(Reversed(Iter(Literal([1, 2, 3])))))
     assert value == [3, 2, 1]

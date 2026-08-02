@@ -19,7 +19,7 @@ Run: python examples/app/solana_ledger_sync.py
 FIXMEs (semantic gaps versus the pre-v2 example -- to be revisited):
   * ``FabricRef`` + ``method_query`` (see ``solana_rpc_service.py``) is the
     current in-tree RPC dispatch pattern, but it only fits simple typed
-    calls (``getSlot`` -> ``IntForm``). ``getBlock`` needs real Python-side
+    calls (``getSlot`` -> ``Int``). ``getBlock`` needs real Python-side
     parsing (``_parse_block``) that doesn't have a typed in-tree equivalent
     yet, so RPC here still runs driver-side and results are funneled
     through ``ctx.attrs``.

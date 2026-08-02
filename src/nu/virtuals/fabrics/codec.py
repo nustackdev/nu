@@ -30,8 +30,10 @@ __all__ = [
 
 
 class Codec(_Codec):
-    """Nu-fabric codec. Same as ``virtuals.tkv.codec.Codec`` with an explicit
-    constructor for use with ``Provide``.
+    """Nu-fabric codec.
+
+    Same as ``virtuals.tkv.codec.Codec`` with an explicit constructor for
+    use with ``Provide``.
     """
 
     def __init__(self, key_codec_cls: type, value_codec_cls: type) -> None:
@@ -40,16 +42,18 @@ class Codec(_Codec):
 
 def binary_kwargs() -> dict[str, type]:
     """BinaryKeyCodec + PickleCodec. Binary keys, pickled values."""
-    from virtuals.codecs.pickle import PickleCodec
     from virtuals_binary_codec import BinaryKeyCodec
+
+    from virtuals.codecs.pickle import PickleCodec
 
     return {"key_codec_cls": BinaryKeyCodec, "value_codec_cls": PickleCodec}
 
 
 def noop_kwargs() -> dict[str, type]:
     """BinaryKeyCodec + PassthroughCodec. No value serialization."""
-    from virtuals.codecs.passthrough import PassthroughCodec
     from virtuals_binary_codec import BinaryKeyCodec
+
+    from virtuals.codecs.passthrough import PassthroughCodec
 
     return {"key_codec_cls": BinaryKeyCodec, "value_codec_cls": PassthroughCodec}
 
@@ -64,7 +68,8 @@ def text_kwargs() -> dict[str, type]:
 
 def msgpack_kwargs() -> dict[str, type]:
     """BinaryKeyCodec + MessagePackCodec. Compact binary serialization."""
-    from virtuals.codecs.msgpack import MessagePackCodec
     from virtuals_binary_codec import BinaryKeyCodec
+
+    from virtuals.codecs.msgpack import MessagePackCodec
 
     return {"key_codec_cls": BinaryKeyCodec, "value_codec_cls": MessagePackCodec}

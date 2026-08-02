@@ -32,10 +32,10 @@ __all__ = ["Noop"]
 class Noop(Strategy[None]):
     """The empty Flow: composes nothing, the identity of flow composition."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return lambda rt: None
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> None:
             return None
 

@@ -13,7 +13,7 @@ whatever generic collection surface the Ref already exposes.
 
 ``on_change()`` (observe self) is deliberately absent here — it is generic and
 lives on the generic ``ReactiveXxxForm`` tiers in ``nu.forms.collections.abc``,
-returning ``nu.core.reactive.OnChangeQuery``. ``ReactiveCollectionForm``
+returning ``nu.core.reactive.OnChange``. ``ReactiveCollectionForm``
 provides only the three tree-aware methods, which reach for the shape-tier
 counterparts in ``nu.core.reactive`` too — one unified location for every
 reactive query.
@@ -28,16 +28,16 @@ from nu.lang import Form
 
 if TYPE_CHECKING:
     from nu.core.reactive import (
-        OnChildChangeQuery,
-        OnChildrenChangeQuery,
-        OnDescendantsChangeQuery,
+        OnChildChange,
+        OnChildrenChange,
+        OnDescendantsChange,
     )
     from nu.domains.shape.interactions import (
-        EraseCommand,
-        ExistsQuery,
-        ExtractQuery,
-        MissingQuery,
-        SetCommand,
+        Erase,
+        Exists,
+        Extract,
+        Missing,
+        SetCmd,
     )
 
 
@@ -51,67 +51,67 @@ __all__ = [
 class CollectionForm(Form):
     """Shape collection — can check existence and extract its subtree."""
 
-    def exists(self) -> ExistsQuery:
-        """Return an ExistsQuery — True if this collection slot is bound."""
-        from nu.domains.shape.interactions import ExistsQuery
+    def exists(self) -> Exists:
+        """Return an Exists — True if this collection slot is bound."""
+        from nu.domains.shape.interactions import Exists
 
-        return ExistsQuery(self)
+        return Exists(self)
 
-    def missing(self) -> MissingQuery:
-        """Return a MissingQuery — True if this collection slot is unbound."""
-        from nu.domains.shape.interactions import MissingQuery
+    def missing(self) -> Missing:
+        """Return a Missing — True if this collection slot is unbound."""
+        from nu.domains.shape.interactions import Missing
 
-        return MissingQuery(self)
+        return Missing(self)
 
-    def extract(self) -> ExtractQuery:
-        """Materialise the full subtree rooted at this slot via ExtractQuery."""
-        from nu.domains.shape.interactions import ExtractQuery
+    def extract(self) -> Extract:
+        """Materialise the full subtree rooted at this slot via Extract."""
+        from nu.domains.shape.interactions import Extract
 
-        return ExtractQuery(self)
+        return Extract(self)
 
 
 class MutableCollectionForm(CollectionForm):
     """Mutable shape collection — read + store + erase."""
 
-    def set(self, value: object) -> SetCommand:
-        """Return a SetCommand — write ``value`` to this collection slot."""
-        from nu.domains.shape.interactions import SetCommand
+    def set(self, value: object) -> SetCmd:
+        """Return a SetCmd — write ``value`` to this collection slot."""
+        from nu.domains.shape.interactions import SetCmd
 
-        return SetCommand(self, value)
+        return SetCmd(self, value)
 
-    def erase(self) -> EraseCommand:
-        """Return an EraseCommand — remove this collection slot from the fabric."""
-        from nu.domains.shape.interactions import EraseCommand
+    def erase(self) -> Erase:
+        """Return an Erase — remove this collection slot from the fabric."""
+        from nu.domains.shape.interactions import Erase
 
-        return EraseCommand(self)
+        return Erase(self)
 
 
 class ReactiveCollectionForm(MutableCollectionForm):
     """Shape-domain reactive collection — adds tree-aware observation methods.
 
     Provides (in addition to MutableCollectionForm):
-        on_child_change(address)         → OnChildChangeQuery
-        on_children_change()             → OnChildrenChangeQuery
-        on_descendants_change(*pattern)  → OnDescendantsChangeQuery
+        on_child_change(address)         → OnChildChange
+        on_children_change()             → OnChildrenChange
+        on_descendants_change(*pattern)  → OnDescendantsChange
 
     ``on_change()`` (observe self) is intentionally absent — it is generic and
     supplied by the generic ``ReactiveXxxForm`` tier via MRO.
     """
 
-    def on_child_change(self, address: object) -> OnChildChangeQuery:
-        """Return an OnChildChangeQuery — subscribe to changes on the child at ``address``."""
-        from nu.core.reactive import OnChildChangeQuery
+    def on_child_change(self, address: object) -> OnChildChange:
+        """Return an OnChildChange — subscribe to changes on the child at ``address``."""
+        from nu.core.reactive import OnChildChange
 
-        return OnChildChangeQuery(self, address)
+        return OnChildChange(self, address)
 
-    def on_children_change(self) -> OnChildrenChangeQuery:
-        """Return an OnChildrenChangeQuery — subscribe to changes on any immediate child."""
-        from nu.core.reactive import OnChildrenChangeQuery
+    def on_children_change(self) -> OnChildrenChange:
+        """Return an OnChildrenChange — subscribe to changes on any immediate child."""
+        from nu.core.reactive import OnChildrenChange
 
-        return OnChildrenChangeQuery(self)
+        return OnChildrenChange(self)
 
-    def on_descendants_change(self, *pattern: object) -> OnDescendantsChangeQuery:
-        """Return an OnDescendantsChangeQuery — subscribe to descendants matching ``pattern``."""
-        from nu.core.reactive import OnDescendantsChangeQuery
+    def on_descendants_change(self, *pattern: object) -> OnDescendantsChange:
+        """Return an OnDescendantsChange — subscribe to descendants matching ``pattern``."""
+        from nu.core.reactive import OnDescendantsChange
 
-        return OnDescendantsChangeQuery(self, *pattern)
+        return OnDescendantsChange(self, *pattern)

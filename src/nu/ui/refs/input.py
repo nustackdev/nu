@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Literal, Self
 
-from nu import DictForm
+from nu import Dict
 from nu.lang.sentinels import UNSET
 from nu.ui.core import Changed, Ref, Write
 
@@ -43,13 +43,13 @@ class ButtonRef(Ref):
         return Changed(self)
 
     def set_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(label=text))
+        return Write(self, Dict.of(label=text))
 
     def set_variant(self, name: Variant | StrArg) -> Nu:
-        return Write(self, DictForm.of(variant=name))
+        return Write(self, Dict.of(variant=name))
 
     def set_disabled(self, flag: BoolArg) -> Nu:
-        return Write(self, DictForm.of(disabled=flag))
+        return Write(self, Dict.of(disabled=flag))
 
     def set(
         self,
@@ -65,7 +65,7 @@ class ButtonRef(Ref):
             payload["disabled"] = disabled
         if icon is not UNSET:
             payload["icon"] = icon
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
 
 class CheckboxRef(Ref):
@@ -195,19 +195,19 @@ class NumberInputRef(Ref):
         return athunk
 
     def set_value(self, value: FloatArg) -> Nu:
-        return Write(self, DictForm.of(value=value))
+        return Write(self, Dict.of(value=value))
 
     def set_min(self, value: FloatArg | None) -> Nu:
-        return Write(self, DictForm.of(min=value))
+        return Write(self, Dict.of(min=value))
 
     def set_max(self, value: FloatArg | None) -> Nu:
-        return Write(self, DictForm.of(max=value))
+        return Write(self, Dict.of(max=value))
 
     def set_step(self, value: FloatArg) -> Nu:
-        return Write(self, DictForm.of(step=value))
+        return Write(self, Dict.of(step=value))
 
     def set_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(label=text))
+        return Write(self, Dict.of(label=text))
 
     def set(
         self,
@@ -229,7 +229,7 @@ class NumberInputRef(Ref):
             payload["step"] = step
         if label is not UNSET:
             payload["label"] = label
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
     def changed(self) -> Changed:
         return Changed(self)
@@ -284,7 +284,7 @@ class RadioGroupRef(Ref):
             payload: object = {"options": _normalize_options(opts)}
         else:
             payload = {"options": opts}
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
     def changed(self) -> Changed:
         return Changed(self)
@@ -324,7 +324,7 @@ class SelectRef(Ref):
             payload: object = {"options": _normalize_options(opts)}
         else:
             payload = {"options": opts}
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
     def changed(self) -> Changed:
         return Changed(self)
@@ -360,22 +360,22 @@ class SliderRef(Ref):
         return athunk
 
     def set_value(self, value: FloatArg) -> Nu:
-        return Write(self, DictForm.of(value=value))
+        return Write(self, Dict.of(value=value))
 
     def set_min(self, value: FloatArg) -> Nu:
-        return Write(self, DictForm.of(min=value))
+        return Write(self, Dict.of(min=value))
 
     def set_max(self, value: FloatArg) -> Nu:
-        return Write(self, DictForm.of(max=value))
+        return Write(self, Dict.of(max=value))
 
     def set_step(self, value: FloatArg) -> Nu:
-        return Write(self, DictForm.of(step=value))
+        return Write(self, Dict.of(step=value))
 
     def set_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(label=text))
+        return Write(self, Dict.of(label=text))
 
     def set_show_value(self, flag: BoolArg) -> Nu:
-        return Write(self, DictForm.of(show_value=flag))
+        return Write(self, Dict.of(show_value=flag))
 
     def set(
         self,
@@ -400,7 +400,7 @@ class SliderRef(Ref):
             payload["label"] = label
         if show_value is not UNSET:
             payload["show_value"] = show_value
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
     def changed(self) -> Changed:
         return Changed(self)

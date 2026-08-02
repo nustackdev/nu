@@ -1,4 +1,4 @@
-"""TupleForm - tuple interface."""
+"""Tuple - tuple interface."""
 
 from __future__ import annotations
 
@@ -13,133 +13,133 @@ from .abc.sequence_interactions import TupleCreate, TupleOf
 if TYPE_CHECKING:
     from nu.lang import Arg, IntArg, Nu, TupleArg
 
-    from ..primitives import AnyForm, BoolForm
-    from .list_ import ListForm
+    from ..primitives import Any, Bool
+    from .list_ import List
 
 
 __all__ = [
-    "TupleForm",
+    "Tuple",
 ]
 
 
-class TupleForm[*Ts](
-    SequenceForm[tuple[*Ts], object, "ListForm[object]", "AnyForm"],
+class Tuple[*Ts](
+    SequenceForm[tuple[*Ts], object, "List[object]", "Any"],
     TypedNu[tuple[*Ts]],
 ):
-    """TupleQuery interface. Immutable sequence + comparable."""
+    """Tuple interface. Immutable sequence + comparable."""
 
     @classmethod
-    def create(cls) -> TupleForm[*Ts]:
+    def create(cls) -> Tuple[*Ts]:
         """Yield an empty tuple."""
         return cls(TupleCreate())
 
     @classmethod
-    def of(cls, *items: Arg) -> TupleForm:
+    def of(cls, *items: Arg) -> Tuple:
         """Yield a tuple from positional item expressions.
 
-        ``TupleForm.of(x, y, z)`` evaluates each argument in the current
+        ``Tuple.of(x, y, z)`` evaluates each argument in the current
         context and packs the results: ``(<x>, <y>, <z>)``. Sibling to
-        ``DictForm.of``. An item that resolves to a sentinel collapses the
+        ``Dict.of``. An item that resolves to a sentinel collapses the
         whole result to Invalid.
         """
         return cls(TupleOf(*items))
 
-    def _wrap_sliceable_result(self, operand: Nu) -> TupleForm:
-        """Wrap operand as TupleForm for slice results."""
-        return TupleForm(operand)
+    def _wrap_sliceable_result(self, operand: Nu) -> Tuple:
+        """Wrap operand as Tuple for slice results."""
+        return Tuple(operand)
 
-    def _wrap_iterable_result(self, operand: Nu) -> ListForm:
-        """Wrap operand as ListForm."""
-        from .list_ import ListForm
+    def _wrap_iterable_result(self, operand: Nu) -> List:
+        """Wrap operand as List."""
+        from .list_ import List
 
-        return ListForm(operand)
+        return List(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> AnyForm:
-        """Wrap operand as AnyForm element."""
-        from ..primitives import AnyForm
+    def _wrap_element_result(self, operand: Nu) -> Any:
+        """Wrap operand as Any element."""
+        from ..primitives import Any
 
-        return AnyForm(operand)
+        return Any(operand)
 
     # =========================================================================
     # ARITHMETIC (concatenation / repeat) — new value, no mutation
     # =========================================================================
 
-    def __add__(self, other: TupleArg[*Ts]) -> TupleForm:
+    def __add__(self, other: TupleArg[*Ts]) -> Tuple:
         """Concat: self + other -> new tuple (Query)."""
-        from nu.core import AddQuery
+        from nu.core import Add
 
-        return TupleForm(AddQuery(self, other))
+        return Tuple(Add(self, other))
 
-    def __radd__(self, other: TupleArg[*Ts]) -> TupleForm:
+    def __radd__(self, other: TupleArg[*Ts]) -> Tuple:
         """Concat: other + self -> new tuple (Query)."""
-        from nu.core import AddQuery
+        from nu.core import Add
 
-        return TupleForm(AddQuery(other, self))
+        return Tuple(Add(other, self))
 
-    def __mul__(self, n: IntArg) -> TupleForm:
+    def __mul__(self, n: IntArg) -> Tuple:
         """Repeat: self * n -> new tuple (Query)."""
-        from nu.core import MulQuery
+        from nu.core import Mul
 
-        return TupleForm(MulQuery(self, n))
+        return Tuple(Mul(self, n))
 
-    def __rmul__(self, n: IntArg) -> TupleForm:
+    def __rmul__(self, n: IntArg) -> Tuple:
         """Repeat: n * self -> new tuple (Query)."""
-        from nu.core import MulQuery
+        from nu.core import Mul
 
-        return TupleForm(MulQuery(n, self))
+        return Tuple(Mul(n, self))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: TupleArg[*Ts]) -> BoolForm:
-        from nu.core import GtQuery
+    def __gt__(self, other: TupleArg[*Ts]) -> Bool:
+        from nu.core import Gt
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: TupleArg[*Ts]) -> BoolForm:
-        from nu.core import LtQuery
+    def __lt__(self, other: TupleArg[*Ts]) -> Bool:
+        from nu.core import Lt
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: TupleArg[*Ts]) -> BoolForm:
-        from nu.core import GeQuery
+    def __ge__(self, other: TupleArg[*Ts]) -> Bool:
+        from nu.core import Ge
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: TupleArg[*Ts]) -> BoolForm:
-        from nu.core import LeQuery
+    def __le__(self, other: TupleArg[*Ts]) -> Bool:
+        from nu.core import Le
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
     __hash__ = object.__hash__
 
-    def __eq__(self, other: TupleArg[*Ts]) -> BoolForm:  # type: ignore[override]
-        from nu.core import EqQuery
+    def __eq__(self, other: TupleArg[*Ts]) -> Bool:  # type: ignore[override]
+        from nu.core import Eq
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def __ne__(self, other: TupleArg[*Ts]) -> BoolForm:  # type: ignore[override]
-        from nu.core import NeQuery
+    def __ne__(self, other: TupleArg[*Ts]) -> Bool:  # type: ignore[override]
+        from nu.core import Ne
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))
 
-    def is_(self, other: TupleArg[*Ts]) -> BoolForm:
+    def is_(self, other: TupleArg[*Ts]) -> Bool:
         """Identity comparison: self is other."""
-        from nu.core import IsQuery
+        from nu.core import Is
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(IsQuery(self, other))
+        return Bool(Is(self, other))

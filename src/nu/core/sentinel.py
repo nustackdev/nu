@@ -1,6 +1,6 @@
 """Sentinel atoms: the predicates that observe EMPTY / INVALID.
 
-The one core family that is not a Python builtin: ``IsEmptyQuery`` / ``IsInvalidQuery``
+The one core family that is not a Python builtin: ``IsEmpty`` / ``IsInvalid``
 (and their negations) ask whether a value IS one of Nu's sentinels. Every other
 atom propagates a sentinel operand; these observe it, so they are the only core
 atoms that do **not** guard - the compile thunk runs the predicate on the raw
@@ -24,17 +24,17 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 __all__ = [
-    "IsEmptyQuery",
-    "IsInvalidQuery",
-    "NotEmptyQuery",
-    "NotInvalidQuery",
+    "IsEmpty",
+    "IsInvalid",
+    "NotEmpty",
+    "NotInvalid",
 ]
 
 
-class IsEmptyQuery(ScalarQuery):
+class IsEmpty(ScalarQuery):
     """True if its one child yields the EMPTY sentinel (accepts sentinels)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -42,7 +42,7 @@ class IsEmptyQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -51,10 +51,10 @@ class IsEmptyQuery(ScalarQuery):
         return athunk
 
 
-class NotEmptyQuery(ScalarQuery):
+class NotEmpty(ScalarQuery):
     """True if its one child does not yield EMPTY (accepts sentinels)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -62,7 +62,7 @@ class NotEmptyQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -71,10 +71,10 @@ class NotEmptyQuery(ScalarQuery):
         return athunk
 
 
-class IsInvalidQuery(ScalarQuery):
+class IsInvalid(ScalarQuery):
     """True if its one child yields the INVALID sentinel (accepts sentinels)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -82,7 +82,7 @@ class IsInvalidQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -91,10 +91,10 @@ class IsInvalidQuery(ScalarQuery):
         return athunk
 
 
-class NotInvalidQuery(ScalarQuery):
+class NotInvalid(ScalarQuery):
     """True if its one child does not yield INVALID (accepts sentinels)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -102,7 +102,7 @@ class NotInvalidQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:

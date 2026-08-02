@@ -93,7 +93,7 @@ async def main() -> None:
             e4 = Order.qty + 5
             print((await arun(e4, order))[0], type(e4), e4)
 
-            # 5. A store command - now a typed SetCommand, not a bare object.
+            # 5. A store command - now a typed SetCmd, not a bare object.
             e5 = Order.symbol.set("MSFT")
             print((await arun(e5, order))[0], type(e5), e5)
 

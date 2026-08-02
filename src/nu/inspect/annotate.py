@@ -13,8 +13,8 @@ without touching its result:
 All logging routes through Python's ``logging`` module (via ``nu.std.logging``).
 Tests capture with ``pytest``'s ``caplog`` fixture (or an attached handler).
 The step Bracket logs imperatively in its ``_open`` (it wraps a body, so it
-cannot delegate to a ``LogCommand`` child); the retry hooks are real
-``LogCommand`` nodes that read the attempt / error the ``Retry`` writes into
+cannot delegate to a ``Log`` child); the retry hooks are real
+``Log`` nodes that read the attempt / error the ``Retry`` writes into
 ``ctx.attrs``.
 """
 
@@ -25,11 +25,11 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING, cast
 
 from nu.context import IntAttrRef, StrAttrRef
-from nu.core import LiteralQuery
+from nu.core import Literal
 from nu.flows import Noop, Sequential
 from nu.spans.bracket import _LifecycleBracket
 from nu.spans.policy import Retry
-from nu.std.logging import LogCommand
+from nu.std.logging import Log
 from nu.std.logging.interactions import _to_level
 from nu.tree import map_nodes
 
@@ -58,7 +58,7 @@ def _emit_log(level: str, logger: str, message: str) -> None:
 
     The imperative seam for code that logs outside the atom path -- notably
     the step-tracking Bracket below, whose ``scope`` logs around a body and
-    so cannot delegate to a ``LogCommand`` child.
+    so cannot delegate to a ``Log`` child.
     """
     _pylogging.getLogger(logger).log(_to_level(level), message)
 
@@ -75,7 +75,9 @@ class _StepSpan(_LifecycleBracket):
     which ``with_children`` carries across a rewrite untouched.
     """
 
-    def __init__(self, child: Nu, step: int, total: int, path: str, logger: str = _STEP_LOGGER) -> None:
+    def __init__(
+        self, child: Nu, step: int, total: int, path: str, logger: str = _STEP_LOGGER
+    ) -> None:
         super().__init__(child)
         self._payload.update(step=step, total=total, path=path, logger=logger)
 
@@ -134,7 +136,7 @@ def annotate_steps(tree: Nu, *, logger: str = _STEP_LOGGER) -> Nu:
 
 def _literal_key(node: Nu, default: str) -> str:
     """The literal string a StrArg child carries, or ``default`` if it is dynamic."""
-    if isinstance(node, LiteralQuery):
+    if isinstance(node, Literal):
         value = node._payload.get("value")
         if isinstance(value, str):
             return value
@@ -173,7 +175,7 @@ def annotate_retries(tree: Nu, *, logger: str = _RETRY_LOGGER) -> Nu:
         error = StrAttrRef(_literal_key(kids[8], "error"))
         # Python-logging %-format: msg carries the template, attempt / error
         # are the substitution args resolved at eval time.
-        log_af = LogCommand("warning", logger, "retry attempt %s failed: %s", attempt, error)
+        log_af = Log("warning", logger, "retry attempt %s failed: %s", attempt, error)
 
         existing_af, existing_success, existing_fail = kids[5], kids[6], kids[7]
         on_attempt_fail = log_af if isinstance(existing_af, Noop) else (log_af >> existing_af)
@@ -186,7 +188,9 @@ def annotate_retries(tree: Nu, *, logger: str = _RETRY_LOGGER) -> Nu:
             jitter=kids[4],
             errors=cast("tuple[type[Exception], ...] | None", node._payload.get("errors")),
             on_attempt_fail=cast("Hook", on_attempt_fail),
-            on_success=None if isinstance(existing_success, Noop) else cast("Hook", existing_success),
+            on_success=None
+            if isinstance(existing_success, Noop)
+            else cast("Hook", existing_success),
             on_fail=None if isinstance(existing_fail, Noop) else cast("Hook", existing_fail),
             error_key=kids[8],
             attempt_key=kids[9],

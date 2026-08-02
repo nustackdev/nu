@@ -1,7 +1,7 @@
 """Functional tests for ``nu.std.datetime`` - drive the Forms through the engine.
 
 Covers every modeling path across the five classes: constructors and method
-calls (factory atoms), property reads (core ``GetAttrQuery``), arithmetic and
+calls (factory atoms), property reads (core ``GetAttr``), arithmetic and
 comparison (core atoms), kwargs (``replace``), and the async path.
 """
 
@@ -14,7 +14,7 @@ from nu.lang.helpers import arun, run
 from nu.std.datetime import date, datetime, time, timedelta, timezone
 
 
-# --- property reads (core GetAttrQuery) ---------------------------------
+# --- property reads (core GetAttr) ---------------------------------
 
 
 def test_date_property() -> None:

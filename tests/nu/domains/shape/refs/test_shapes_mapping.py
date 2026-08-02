@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from nu.core.reactive import OnChangeQuery, OnChildChangeQuery
+from nu.core.reactive import OnChange, OnChildChange
 from nu.domains.shape.dsl import Shape, Slot
 from nu.domains.shape.interactions import (
-    EraseCommand,
-    ExistsQuery,
-    MissingQuery,
-    SetCommand,
+    Erase,
+    Exists,
+    Missing,
+    SetCmd,
 )
 from nu.domains.shape.refs.item import ItemRef
 from nu.domains.shape.refs.shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
@@ -67,12 +67,12 @@ def test_shapes_mapping_ref_child_can_navigate_slots():
 
 def test_shapes_mapping_ref_exists_returns_exists_query():
     m = ShapesMappingRef("entries", item_shape_type=Entry)
-    assert isinstance(m.exists(), ExistsQuery)
+    assert isinstance(m.exists(), Exists)
 
 
 def test_shapes_mapping_ref_missing_returns_missing_query():
     m = ShapesMappingRef("entries", item_shape_type=Entry)
-    assert isinstance(m.missing(), MissingQuery)
+    assert isinstance(m.missing(), Missing)
 
 
 # ---------------------------------------------------------------------------
@@ -97,12 +97,12 @@ def test_mutable_shapes_mapping_ref_child_shape_type_matches():
 
 def test_mutable_shapes_mapping_ref_set_returns_set_command():
     m = MutableShapesMappingRef("entries", item_shape_type=Entry)
-    assert isinstance(m.set({}), SetCommand)
+    assert isinstance(m.set({}), SetCmd)
 
 
 def test_mutable_shapes_mapping_ref_erase_returns_erase_command():
     m = MutableShapesMappingRef("entries", item_shape_type=Entry)
-    assert isinstance(m.erase(), EraseCommand)
+    assert isinstance(m.erase(), Erase)
 
 
 # ---------------------------------------------------------------------------
@@ -122,15 +122,15 @@ def test_reactive_shapes_mapping_ref_subscript_returns_reactive_shape_ref():
 
 def test_reactive_shapes_mapping_ref_on_change_returns_on_change_action():
     m = ReactiveShapesMappingRef("entries", item_shape_type=Entry)
-    assert isinstance(m.on_change(), OnChangeQuery)
+    assert isinstance(m.on_change(), OnChange)
 
 
 def test_reactive_shapes_mapping_ref_on_child_change_returns_action():
     m = ReactiveShapesMappingRef("entries", item_shape_type=Entry)
-    assert isinstance(m.on_child_change("k"), OnChildChangeQuery)
+    assert isinstance(m.on_child_change("k"), OnChildChange)
 
 
 def test_reactive_shapes_mapping_ref_inherits_set_erase():
     m = ReactiveShapesMappingRef("entries", item_shape_type=Entry)
-    assert isinstance(m.set({}), SetCommand)
-    assert isinstance(m.erase(), EraseCommand)
+    assert isinstance(m.set({}), SetCmd)
+    assert isinstance(m.erase(), Erase)

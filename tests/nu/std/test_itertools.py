@@ -1,9 +1,9 @@
 """Functional tests for ``nu.std.itertools`` - drive the atoms through the engine.
 
 Every member is asserted against the real ``itertools`` result. Iterator
-results are materialized with a ``CollectQuery`` over the returned stream atom
-(each function returns the raw ``StreamQuery`` -- no ``IteratorForm`` wrapping,
-so cardinality lines up and ``CollectQuery`` accepts the stream directly).
+results are materialized with a ``Collect`` over the returned stream atom
+(each function returns the raw ``StreamQuery`` -- no ``Iterator`` wrapping,
+so cardinality lines up and ``Collect`` accepts the stream directly).
 Higher-order members build their predicate / function from a typed ``AttrRef``
 over core atoms - ``AnyAttrRef("item")``, ``AnyAttrRef("acc")``,
 ``TupleAttrRef("item")[i]``.
@@ -20,7 +20,7 @@ import operator
 
 from nu import AnyAttrRef
 from nu.context import TupleAttrRef
-from nu.core import CollectQuery
+from nu.core import Collect
 from nu.lang.helpers import arun, run
 from nu.std.itertools import (
     accumulate,
@@ -49,13 +49,13 @@ from nu.std.itertools import (
 
 def mat(stream: object) -> list:
     """Materialize a stream atom to a list via the sync engine path."""
-    value, _ = run(CollectQuery(stream))
+    value, _ = run(Collect(stream))
     return value
 
 
 async def amat(stream: object) -> list:
     """Materialize a stream atom to a list via the async engine path."""
-    value, _ = await arun(CollectQuery(stream))
+    value, _ = await arun(Collect(stream))
     return value
 
 

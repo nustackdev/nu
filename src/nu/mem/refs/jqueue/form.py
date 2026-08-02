@@ -1,4 +1,4 @@
-"""JQueueForm — typed surface for janus-backed queue refs.
+"""JQueue — typed surface for janus-backed queue refs.
 
 Pure TypedNu wrapper. Holds no state; methods build interaction trees
 against the wrapped Nu (typically a JQueueRef).
@@ -17,10 +17,10 @@ if TYPE_CHECKING:
     from .interactions import Close, Get, Put, QSize
 
 
-__all__ = ["JQueueForm"]
+__all__ = ["JQueue"]
 
 
-class JQueueForm[T](Form, TypedNu[janus.Queue[T]]):
+class JQueue[T](Form, TypedNu[janus.Queue[T]]):
     """Typed surface for a janus.Queue handle.
 
     Wraps a Nu child (typically a JQueueRef). Method calls produce

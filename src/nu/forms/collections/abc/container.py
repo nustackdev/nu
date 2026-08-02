@@ -13,7 +13,7 @@ from nu.lang import Form
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import BoolForm
+    from nu.forms.primitives import Bool
 
 
 __all__ = [
@@ -27,12 +27,12 @@ class ContainerForm(Form):
     Note: Python's ``in`` operator coerces the result of ``__contains__`` to
     ``bool`` at the C level, which would discard the Nu tree and yield a
     constant ``True`` for any Form instance. We expose ``.contains(item)``
-    instead, returning a real ``BoolForm`` tree node.
+    instead, returning a real ``Bool`` tree node.
     """
 
-    def contains(self, item: object) -> BoolForm:
-        """Check if item is in this collection. Returns a BoolForm tree."""
-        from nu.core import ContainsQuery
-        from nu.forms.primitives import BoolForm
+    def contains(self, item: object) -> Bool:
+        """Check if item is in this collection. Returns a Bool tree."""
+        from nu.core import Contains
+        from nu.forms.primitives import Bool
 
-        return BoolForm(ContainsQuery(self, item))
+        return Bool(Contains(self, item))

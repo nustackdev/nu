@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Self
 
-from nu import DictForm
+from nu import Dict
 from nu.ui.core import Changed, Ref, Write
 
 
@@ -54,13 +54,13 @@ class NavRef(Ref):
         return Write(self, value)
 
     def replace(self, value: StrArg) -> Nu:
-        return Write(self, DictForm.of(action="replace", uri=value))
+        return Write(self, Dict.of(action="replace", uri=value))
 
     def back(self) -> Nu:
-        return Write(self, DictForm.of(action="back"))
+        return Write(self, Dict.of(action="back"))
 
     def forward(self) -> Nu:
-        return Write(self, DictForm.of(action="forward"))
+        return Write(self, Dict.of(action="forward"))
 
     def changed(self) -> Changed:
         return Changed(self)

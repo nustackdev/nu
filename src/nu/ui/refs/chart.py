@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Literal, Self
 
-from nu import DictForm
+from nu import Dict
 from nu.lang.sentinels import UNSET
 from nu.ui.core import Append, Ref, Write
 
@@ -49,31 +49,31 @@ class AreaChart(Ref):
         )
 
     def set_points(self, points: ListArg[Any]) -> Nu:
-        return Write(self, DictForm.of(points=points))
+        return Write(self, Dict.of(points=points))
 
     def set_series(self, names: ListArg[Any]) -> Nu:
-        return Write(self, DictForm.of(series=names))
+        return Write(self, Dict.of(series=names))
 
     def set_colors(self, colors: ListArg[Any]) -> Nu:
-        return Write(self, DictForm.of(colors=colors))
+        return Write(self, Dict.of(colors=colors))
 
     def set_stacked(self, flag: BoolArg) -> Nu:
-        return Write(self, DictForm.of(stacked=flag))
+        return Write(self, Dict.of(stacked=flag))
 
     def set_x_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(x_label=text))
+        return Write(self, Dict.of(x_label=text))
 
     def set_y_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(y_label=text))
+        return Write(self, Dict.of(y_label=text))
 
     def set_max_points(self, value: IntArg) -> Nu:
-        return Write(self, DictForm.of(max_points=value))
+        return Write(self, Dict.of(max_points=value))
 
     def set_x_format(self, value: XFormat | StrArg) -> Nu:
-        return Write(self, DictForm.of(x_format=value))
+        return Write(self, Dict.of(x_format=value))
 
     def clear(self) -> Nu:
-        return Write(self, DictForm.of(points=[]))
+        return Write(self, Dict.of(points=[]))
 
     def set(
         self,
@@ -103,7 +103,7 @@ class AreaChart(Ref):
             payload["max_points"] = max_points
         if x_format is not UNSET:
             payload["x_format"] = x_format
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
     def append(self, x: FloatArg, *ys: FloatArg) -> Nu:
         return Append(self, x, *ys)
@@ -134,25 +134,25 @@ class BarChart(Ref):
         )
 
     def set_bars(self, bars: ListArg[Any]) -> Nu:
-        return Write(self, DictForm.of(bars=bars))
+        return Write(self, Dict.of(bars=bars))
 
     def set_x_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(x_label=text))
+        return Write(self, Dict.of(x_label=text))
 
     def set_y_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(y_label=text))
+        return Write(self, Dict.of(y_label=text))
 
     def set_color(self, value: StrArg) -> Nu:
-        return Write(self, DictForm.of(color=value))
+        return Write(self, Dict.of(color=value))
 
     def set_orientation(self, value: Orientation | StrArg) -> Nu:
-        return Write(self, DictForm.of(orientation=value))
+        return Write(self, Dict.of(orientation=value))
 
     def set_max_bars(self, value: IntArg) -> Nu:
-        return Write(self, DictForm.of(max_bars=value))
+        return Write(self, Dict.of(max_bars=value))
 
     def clear(self) -> Nu:
-        return Write(self, DictForm.of(bars=[]))
+        return Write(self, Dict.of(bars=[]))
 
     def set(
         self,
@@ -179,7 +179,7 @@ class BarChart(Ref):
             payload["orientation"] = orientation
         if max_bars is not UNSET:
             payload["max_bars"] = max_bars
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
     def append(self, category: StrArg, value: FloatArg) -> Nu:
         return Append(self, category, value)
@@ -213,37 +213,37 @@ class LineChart(Ref):
         )
 
     def set_points(self, points: ListArg[Any]) -> Nu:
-        return Write(self, DictForm.of(points=points))
+        return Write(self, Dict.of(points=points))
 
     def set_series(self, series_list: ListArg[Any]) -> Nu:
-        return Write(self, DictForm.of(series=series_list))
+        return Write(self, Dict.of(series=series_list))
 
     def set_x_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(x_label=text))
+        return Write(self, Dict.of(x_label=text))
 
     def set_y_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(y_label=text))
+        return Write(self, Dict.of(y_label=text))
 
     def set_color(self, value: StrArg) -> Nu:
-        return Write(self, DictForm.of(color=value))
+        return Write(self, Dict.of(color=value))
 
     def set_max_points(self, value: IntArg) -> Nu:
-        return Write(self, DictForm.of(max_points=value))
+        return Write(self, Dict.of(max_points=value))
 
     def set_x_format(self, value: XFormat | StrArg) -> Nu:
-        return Write(self, DictForm.of(x_format=value))
+        return Write(self, Dict.of(x_format=value))
 
     def set_show_legend(self, flag: BoolArg) -> Nu:
-        return Write(self, DictForm.of(show_legend=flag))
+        return Write(self, Dict.of(show_legend=flag))
 
     def set_show_tooltip(self, flag: BoolArg) -> Nu:
-        return Write(self, DictForm.of(show_tooltip=flag))
+        return Write(self, Dict.of(show_tooltip=flag))
 
     def set_palette(self, colors: ListArg[Any]) -> Nu:
-        return Write(self, DictForm.of(palette=colors))
+        return Write(self, Dict.of(palette=colors))
 
     def clear(self) -> Nu:
-        return Write(self, DictForm.of(points=[]))
+        return Write(self, Dict.of(points=[]))
 
     def set(
         self,
@@ -283,14 +283,14 @@ class LineChart(Ref):
             payload["show_tooltip"] = show_tooltip
         if palette is not UNSET:
             payload["palette"] = palette
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
     def append(self, x: FloatArg, y: FloatArg) -> Nu:
         return Append(self, x, y)
 
     def append_series(self, name: StrArg, x: FloatArg, y: FloatArg) -> Nu:
         # single dict payload so the renderer can disambiguate from the single-series [x, y] form.
-        return Append(self, DictForm.of(name=name, x=x, y=y))
+        return Append(self, Dict.of(name=name, x=x, y=y))
 
 
 DEFAULT_COLORS: list[str] = [
@@ -329,25 +329,25 @@ class PieChart(Ref):
         )
 
     def set_slices(self, slices: ListArg[Any]) -> Nu:
-        return Write(self, DictForm.of(slices=slices))
+        return Write(self, Dict.of(slices=slices))
 
     def set_colors(self, colors: ListArg[Any]) -> Nu:
-        return Write(self, DictForm.of(colors=colors))
+        return Write(self, Dict.of(colors=colors))
 
     def set_inner_radius(self, value: FloatArg) -> Nu:
-        return Write(self, DictForm.of(inner_radius=value))
+        return Write(self, Dict.of(inner_radius=value))
 
     def set_show_labels(self, value: BoolArg) -> Nu:
-        return Write(self, DictForm.of(show_labels=value))
+        return Write(self, Dict.of(show_labels=value))
 
     def set_show_legend(self, value: BoolArg) -> Nu:
-        return Write(self, DictForm.of(show_legend=value))
+        return Write(self, Dict.of(show_legend=value))
 
     def set_total_label(self, value: StrArg) -> Nu:
-        return Write(self, DictForm.of(total_label=value))
+        return Write(self, Dict.of(total_label=value))
 
     def clear(self) -> Nu:
-        return Write(self, DictForm.of(slices=[]))
+        return Write(self, Dict.of(slices=[]))
 
     def set(
         self,
@@ -375,7 +375,7 @@ class PieChart(Ref):
             payload["show_legend"] = show_legend
         if total_label is not UNSET:
             payload["total_label"] = total_label
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
     def append(self, label: StrArg, value: FloatArg) -> Nu:
         return Append(self, label, value)
@@ -395,19 +395,19 @@ class Sparkline(Ref):
         return super().slot(color=color, height=height, max_points=max_points)
 
     def set_points(self, points: ListArg[Any]) -> Nu:
-        return Write(self, DictForm.of(points=points))
+        return Write(self, Dict.of(points=points))
 
     def set_color(self, value: StrArg) -> Nu:
-        return Write(self, DictForm.of(color=value))
+        return Write(self, Dict.of(color=value))
 
     def set_height(self, value: IntArg) -> Nu:
-        return Write(self, DictForm.of(height=value))
+        return Write(self, Dict.of(height=value))
 
     def set_max_points(self, value: IntArg) -> Nu:
-        return Write(self, DictForm.of(max_points=value))
+        return Write(self, Dict.of(max_points=value))
 
     def clear(self) -> Nu:
-        return Write(self, DictForm.of(points=[]))
+        return Write(self, Dict.of(points=[]))
 
     def set(
         self,
@@ -428,7 +428,7 @@ class Sparkline(Ref):
             payload["height"] = height
         if max_points is not UNSET:
             payload["max_points"] = max_points
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
     def append(self, x: FloatArg, y: FloatArg) -> Nu:
         return Append(self, x, y)

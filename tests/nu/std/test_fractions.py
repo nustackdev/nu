@@ -1,7 +1,7 @@
 """Functional tests for ``nu.std.fractions`` - drive the Form through the engine.
 
 Covers every modeling path: constructors and method calls (factory atoms),
-property reads (core ``GetAttrQuery``), arithmetic and comparison (core atoms;
+property reads (core ``GetAttr``), arithmetic and comparison (core atoms;
 Python does the real rational op), and the async path. Results are asserted
 against the real ``fractions.Fraction`` for exact equality.
 """
@@ -41,7 +41,7 @@ def test_from_decimal() -> None:
     )
 
 
-# --- property reads (core GetAttrQuery) ---------------------------------
+# --- property reads (core GetAttr) ---------------------------------
 
 
 def test_numerator() -> None:

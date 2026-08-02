@@ -113,11 +113,11 @@ class FilterCard(nu.ui.CardRef):
 
 
 class StatsRow(nu.ui.Row):
-    total = nu.ui.StatRef.slot()
-    watched = nu.ui.StatRef.slot()
-    unseen = nu.ui.StatRef.slot()
+    total = nu.ui.StatRef.slot(label="total")
+    watched = nu.ui.StatRef.slot(label="watched")
+    unseen = nu.ui.StatRef.slot(label="unseen")
     latest = nu.ui.TextRef.slot()
-    health = nu.ui.BadgeRef.slot(variant="ok")
+    health = nu.ui.BadgeRef.slot(label="fresh", variant="ok")
 
 
 class StatsCard(nu.ui.CardRef):
@@ -132,7 +132,11 @@ class TableBody(nu.ui.Column):
         clickable_rows=True,
         max_rows=200,
     )
-    empty = nu.ui.AlertRef.slot()
+    empty = nu.ui.AlertRef.slot(
+        variant="info",
+        body="no movies match",
+        dismissible=False,
+    )
 
 
 class TableCard(nu.ui.CardRef):
@@ -153,8 +157,10 @@ class State(nu.Shape):
 
 
 class Movies(nu.ui.Page):
-    heading = nu.ui.HeadingRef.slot()
-    intro = nu.ui.TextRef.slot()
+    heading = nu.ui.HeadingRef.slot(label="your movies")
+    intro = nu.ui.TextRef.slot(
+        value="log what you watch. new entries land at the top of the table.",
+    )
 
     stats = StatsCard.slot(title="your shelf")
     form = AddMovieForm.slot(title="log a movie", gap=4, padding=4)
@@ -170,7 +176,7 @@ class App(nu.ui.Index):
 
 # ---- Seed + helpers ---------------------------------------------------------
 #
-# PAIN: TableRef rows must be positional lists, but no ListForm.of(a, b, c)
+# PAIN: TableRef rows must be positional lists, but no List.of(a, b, c)
 # exists to build one from Nu expressions. Every consumer host-lifts the
 # same Python lambda -- see legolas/uis/shell.py:RowAsList.
 
@@ -225,13 +231,13 @@ def _row_from_form() -> nu.Nu:
     rating_input = AddMovieForm.score.rating.input
     watched_input = AddMovieForm.score.watched.input
     notes_input = AddMovieForm.score.notes.input
-    return nu.DictForm.of(
-        title=nu.StrForm(title_input),
-        year=nu.IntForm(year_input),
-        genre=nu.StrForm(genre_input),
-        rating=nu.FloatForm(rating_input),
-        watched=nu.IfQuery(nu.BoolForm(watched_input), "yes", "no"),
-        notes=nu.StrForm(notes_input),
+    return nu.Dict.of(
+        title=nu.Str(title_input),
+        year=nu.Int(year_input),
+        genre=nu.Str(genre_input),
+        rating=nu.Float(rating_input),
+        watched=nu.If(nu.Bool(watched_input), "yes", "no"),
+        notes=nu.Str(notes_input),
     )
 
 
@@ -248,10 +254,10 @@ _movie_cells = _RowAsList(
 
 def _rows_form() -> nu.Nu:
     """Map each stored movie dict into a positional row TableRef expects."""
-    return nu.DictForm.of(
-        rows=nu.CollectQuery(
-            nu.MapQuery(
-                nu.IterQuery(State.movies),
+    return nu.Dict.of(
+        rows=nu.Collect(
+            nu.Map(
+                nu.Iter(State.movies),
                 transform=_movie_cells,
                 key="r",
             ),
@@ -272,27 +278,15 @@ init = nu.v.Transaction(
 
 def _s(n: nu.Nu) -> nu.Nu:
     """Format an int Ref as a display string for StatRef."""
-    return nu.StrForm(nu.StrQuery(n))
+    return nu.Str(nu.ToStr(n))
 
 
 hydrate = nu.v.Snapshot(
-    Movies.heading.set("your movies")
-    | Movies.intro.set("log what you watch. new entries land at the top of the table.")
-    | Movies.stats.body.total.set_label("total")
-    | Movies.stats.body.total.set_value(_s(State.total))
-    | Movies.stats.body.watched.set_label("watched")
+    Movies.stats.body.total.set_value(_s(State.total))
     | Movies.stats.body.watched.set_value(_s(State.watched))
-    | Movies.stats.body.unseen.set_label("unseen")
     | Movies.stats.body.unseen.set_value(_s(State.total - State.watched))
     | Movies.stats.body.latest.set(State.latest_title)
-    | Movies.stats.body.health.set_label("fresh")
     | Movies.shelf.body.table.set(_rows_form())
-    | Movies.shelf.body.empty.set(
-        variant="info",
-        title="",
-        body="no movies match",
-        dismissible=False,
-    )
 )
 
 
@@ -302,9 +296,9 @@ on_add = nu.ReactForever(
         State.movies.append(_row_from_form())
         | State.total.set(State.total + 1)
         | State.watched.set(
-            State.watched + nu.IfQuery(nu.BoolForm(AddMovieForm.score.watched.input), 1, 0),
+            State.watched + nu.If(nu.Bool(AddMovieForm.score.watched.input), 1, 0),
         )
-        | State.latest_title.set(nu.StrForm(AddMovieForm.details.title.input)),
+        | State.latest_title.set(nu.Str(AddMovieForm.details.title.input)),
     )
     >> nu.v.Snapshot(
         Movies.shelf.body.table.set(_rows_form())
@@ -314,7 +308,7 @@ on_add = nu.ReactForever(
         | Movies.stats.body.latest.set(State.latest_title)
         | Movies.form.feedback.set(
             title="logged",
-            body="added " + nu.StrForm(AddMovieForm.details.title.input),
+            body="added " + nu.Str(AddMovieForm.details.title.input),
         )
     ),
 )
@@ -328,10 +322,10 @@ _click = nu.DictAttrRef("row_click")
 on_row_click = nu.ReactForever(
     Movies.shelf.body.table.row_clicked(),
     nu.IfDo(
-        nu.ContainsQuery(_click, "row_index"),
+        nu.Contains(_click, "row_index"),
         nu.v.Transaction(
             State.movies.set(_SpliceAt(State.movies.eager, _click["row_index"]))
-            >> State.total.set(nu.LenQuery(State.movies)),
+            >> State.total.set(nu.Len(State.movies)),
         )
         >> nu.v.Snapshot(
             Movies.shelf.body.table.set(_rows_form())

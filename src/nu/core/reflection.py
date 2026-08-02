@@ -4,13 +4,13 @@ Maps Python's builtins that inspect a value's type, identity, or shape onto Nu
 ScalarQueries. Pure compute; no Context effect of their own.
 
 Builtins covered (Python -> Nu):
-- type / class: ``type`` -> ``TypeQuery``, ``isinstance`` -> ``IsInstanceQuery``,
-  ``issubclass`` -> ``IsSubclassQuery``, ``callable`` -> ``CallableQuery``
-- identity / value: ``id`` -> ``IdQuery``, ``hash`` -> ``HashQuery``
-- namespace: ``dir`` -> ``DirQuery``, ``vars`` -> ``VarsQuery``
+- type / class: ``type`` -> ``Type``, ``isinstance`` -> ``IsInstance``,
+  ``issubclass`` -> ``IsSubclass``, ``callable`` -> ``Callable``
+- identity / value: ``id`` -> ``Id``, ``hash`` -> ``Hash``
+- namespace: ``dir`` -> ``Dir``, ``vars`` -> ``Vars``
 
-Sorts: all ScalarQuery (Q). ``TypeQuery`` / ``CallableQuery`` / ``IdQuery`` / ``HashQuery`` /
-``DirQuery`` / ``VarsQuery`` are unary; ``IsInstanceQuery`` / ``IsSubclassQuery`` are binary (value,
+Sorts: all ScalarQuery (Q). ``Type`` / ``Callable`` / ``Id`` / ``Hash`` /
+``Dir`` / ``Vars`` are unary; ``IsInstance`` / ``IsSubclass`` are binary (value,
 class). ``Dir`` / ``Vars`` yield a collection but are scalar builders (one list /
 dict), not streams.
 
@@ -42,21 +42,21 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 __all__ = [
-    "CallableQuery",
-    "DirQuery",
-    "HashQuery",
-    "IdQuery",
-    "IsInstanceQuery",
-    "IsSubclassQuery",
-    "TypeQuery",
-    "VarsQuery",
+    "Callable",
+    "Dir",
+    "Hash",
+    "Id",
+    "IsInstance",
+    "IsSubclass",
+    "Type",
+    "Vars",
 ]
 
 
-class TypeQuery(ScalarQuery):
+class Type(ScalarQuery):
     """The type of its one child (``type``)."""
 
-    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -67,7 +67,7 @@ class TypeQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -79,10 +79,10 @@ class TypeQuery(ScalarQuery):
         return athunk
 
 
-class IsInstanceQuery(ScalarQuery):
+class IsInstance(ScalarQuery):
     """Whether the first child is an instance of the second (``isinstance``)."""
 
-    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         value, klass = children
 
         def thunk(rt: Runtime) -> object:
@@ -96,7 +96,7 @@ class IsInstanceQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         value, klass = children
 
         async def athunk(rt: Runtime) -> object:
@@ -111,10 +111,10 @@ class IsInstanceQuery(ScalarQuery):
         return athunk
 
 
-class IsSubclassQuery(ScalarQuery):
+class IsSubclass(ScalarQuery):
     """Whether the first child is a subclass of the second (``issubclass``)."""
 
-    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         cls, klass = children
 
         def thunk(rt: Runtime) -> object:
@@ -128,7 +128,7 @@ class IsSubclassQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         cls, klass = children
 
         async def athunk(rt: Runtime) -> object:
@@ -143,10 +143,10 @@ class IsSubclassQuery(ScalarQuery):
         return athunk
 
 
-class CallableQuery(ScalarQuery):
+class Callable(ScalarQuery):
     """Whether its one child appears callable (``callable``)."""
 
-    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -157,7 +157,7 @@ class CallableQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -169,10 +169,10 @@ class CallableQuery(ScalarQuery):
         return athunk
 
 
-class IdQuery(ScalarQuery):
+class Id(ScalarQuery):
     """The identity of its one child (``id``)."""
 
-    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -183,7 +183,7 @@ class IdQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -195,10 +195,10 @@ class IdQuery(ScalarQuery):
         return athunk
 
 
-class HashQuery(ScalarQuery):
+class Hash(ScalarQuery):
     """The hash of its one child (``hash``)."""
 
-    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -209,7 +209,7 @@ class HashQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -221,10 +221,10 @@ class HashQuery(ScalarQuery):
         return athunk
 
 
-class DirQuery(ScalarQuery):
+class Dir(ScalarQuery):
     """The sorted attribute-name list of its one child (``dir``)."""
 
-    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -235,7 +235,7 @@ class DirQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -247,10 +247,10 @@ class DirQuery(ScalarQuery):
         return athunk
 
 
-class VarsQuery(ScalarQuery):
+class Vars(ScalarQuery):
     """The ``__dict__`` of its one child (``vars``)."""
 
-    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -261,7 +261,7 @@ class VarsQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:

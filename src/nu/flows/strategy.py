@@ -51,14 +51,14 @@ class Sequential(Strategy):
 
     _associative = Declared(value=True, name="associative")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
             for child in children:
                 child(rt)
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> None:
             for child in children:
                 await child(rt)
@@ -79,13 +79,13 @@ class Parallel(Strategy):
     _commutative = Declared(value=True, name="commutative")
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
             rt.eval_parallel(rt.program.children[nid])
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> None:
             await rt.aeval_parallel(rt.program.children[nid])
 
@@ -106,14 +106,14 @@ class Race(Strategy):
     _requires_async = Declared(value=True, name="requires_async")
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
             msg = "Race requires an async runtime; use arun"
             raise RuntimeError(msg)
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> None:
             await rt.aeval_race(rt.program.children[nid])
 
@@ -148,14 +148,14 @@ class AnyN(Strategy):
     _requires_async = Declared(value=True, name="requires_async")
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
             msg = "AnyN requires an async runtime; use arun"
             raise RuntimeError(msg)
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> None:
             await rt.aeval_any(rt.program.children[nid])
 

@@ -3,8 +3,8 @@
 Builds a few itertools pipelines as Nu Forms and runs them through the engine,
 printing the materialized result next to the value Python's ``itertools`` gives.
 
-Iterator results are materialized with a ``CollectQuery`` over the Form's stream
-child (``IteratorForm.to_list()`` is not yet wired through the cardinality laws).
+Iterator results are materialized with a ``Collect`` over the Form's stream
+child (``Iterator.to_list()`` is not yet wired through the cardinality laws).
 Higher-order members read the current item via ``AttrRef("item")`` built up with
 core comparison / arithmetic atoms.
 """
@@ -14,7 +14,7 @@ from __future__ import annotations
 import itertools as pit
 
 from nu import AnyAttrRef
-from nu.core import CollectQuery
+from nu.core import Collect
 from nu.lang.helpers import run
 from nu.std.itertools import (
     accumulate,
@@ -31,7 +31,7 @@ from nu.std.itertools import (
 
 def show(label: str, form: object, expected: object) -> None:
     """Run a Form's stream to a list and print it beside the host result."""
-    value, _ = run(CollectQuery(form._children[0]))  # type: ignore[attr-defined]
+    value, _ = run(Collect(form._children[0]))  # type: ignore[attr-defined]
     flag = "ok" if value == expected else "MISMATCH"
     print(f"{label:24} {value!r:38} {flag}")
 

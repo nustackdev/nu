@@ -6,7 +6,7 @@ refs (``IntRef``, ``StrRef``, ...) add the matching primitive Form so the value
 carries its full operator interface.
 
 Reactivity is uniform: ``ReactiveItemForm.on_change()`` -> ``nu.core.reactive
-.OnPrimitiveChangeQuery`` calls ``ref._afetch_parent`` + ``ref._aaddress`` on the
+.OnPrimitiveChange`` calls ``ref._afetch_parent`` + ``ref._aaddress`` on the
 leaf, and the virtuals ``PrimitiveRef`` implements both -- no substrate-side
 override needed.
 """
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from nu import BoolForm, BytesForm, FloatForm, IntForm, NoneForm, StrForm
+from nu import Bool, Bytes, Float, Int, None_, Str
 from nu.domains.shape import ReactiveItemRef, Slot
 
 from .base import PrimitiveRef
@@ -64,7 +64,7 @@ class ItemRef(ReactiveItemRef, PrimitiveRef):
 # =============================================================================
 
 
-class IntRef(ItemRef, IntForm):
+class IntRef(ItemRef, Int):
     """Virtuals integer reference with full numeric interface."""
 
     def __init__(
@@ -77,16 +77,16 @@ class IntRef(ItemRef, IntForm):
         super().__init__(
             address,
             value_type=int,
-            value_value_type=IntForm,
+            value_value_type=Int,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
 
-    def inc(self, step: int | Nu = 1) -> NoneForm:
+    def inc(self, step: int | Nu = 1) -> None_:
         """Increment in place."""
         return self.set(self + step)
 
-    def dec(self, step: int | Nu = 1) -> NoneForm:
+    def dec(self, step: int | Nu = 1) -> None_:
         """Decrement in place."""
         return self.set(self - step)
 
@@ -96,7 +96,7 @@ class IntRef(ItemRef, IntForm):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class StrRef(ItemRef, StrForm):
+class StrRef(ItemRef, Str):
     """Virtuals string reference with full string interface."""
 
     def __init__(
@@ -109,7 +109,7 @@ class StrRef(ItemRef, StrForm):
         super().__init__(
             address,
             value_type=str,
-            value_value_type=StrForm,
+            value_value_type=Str,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -120,7 +120,7 @@ class StrRef(ItemRef, StrForm):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class FloatRef(ItemRef, FloatForm):
+class FloatRef(ItemRef, Float):
     """Virtuals float reference with full numeric interface."""
 
     def __init__(
@@ -133,7 +133,7 @@ class FloatRef(ItemRef, FloatForm):
         super().__init__(
             address,
             value_type=float,
-            value_value_type=FloatForm,
+            value_value_type=Float,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -144,7 +144,7 @@ class FloatRef(ItemRef, FloatForm):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class BoolRef(ItemRef, BoolForm):
+class BoolRef(ItemRef, Bool):
     """Virtuals boolean reference with full logical interface."""
 
     def __init__(
@@ -157,7 +157,7 @@ class BoolRef(ItemRef, BoolForm):
         super().__init__(
             address,
             value_type=bool,
-            value_value_type=BoolForm,
+            value_value_type=Bool,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -168,7 +168,7 @@ class BoolRef(ItemRef, BoolForm):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class BytesRef(ItemRef, BytesForm):
+class BytesRef(ItemRef, Bytes):
     """Virtuals bytes reference with full bytes interface."""
 
     def __init__(
@@ -181,7 +181,7 @@ class BytesRef(ItemRef, BytesForm):
         super().__init__(
             address,
             value_type=bytes,
-            value_value_type=BytesForm,
+            value_value_type=Bytes,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )

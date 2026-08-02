@@ -9,11 +9,11 @@ from __future__ import annotations
 import pytest
 
 from nu.domains.shape.interactions import (
-    AdvanceCursorQuery,
-    ExistsQuery,
-    ExtractQuery,
-    LoadQuery,
-    MissingQuery,
+    AdvanceCursor,
+    Exists,
+    Extract,
+    Load,
+    Missing,
 )
 from nu.domains.shape.refs.item import ItemRef
 from nu.lang import ScalarQuery
@@ -26,23 +26,23 @@ from nu.lang.sentinels import EMPTY, INVALID
 
 
 def test_load_query_is_scalar_query():
-    assert issubclass(LoadQuery, ScalarQuery)
+    assert issubclass(Load, ScalarQuery)
 
 
 def test_exists_query_is_scalar_query():
-    assert issubclass(ExistsQuery, ScalarQuery)
+    assert issubclass(Exists, ScalarQuery)
 
 
 def test_missing_query_is_scalar_query():
-    assert issubclass(MissingQuery, ScalarQuery)
+    assert issubclass(Missing, ScalarQuery)
 
 
 def test_extract_query_is_scalar_query():
-    assert issubclass(ExtractQuery, ScalarQuery)
+    assert issubclass(Extract, ScalarQuery)
 
 
 def test_advance_cursor_query_is_scalar_query():
-    assert issubclass(AdvanceCursorQuery, ScalarQuery)
+    assert issubclass(AdvanceCursor, ScalarQuery)
 
 
 # ---------------------------------------------------------------------------
@@ -52,32 +52,32 @@ def test_advance_cursor_query_is_scalar_query():
 
 def test_load_query_constructs_with_ref():
     ref = ItemRef("slot")
-    q = LoadQuery(ref)
+    q = Load(ref)
     assert q._children
 
 
 def test_exists_query_constructs_with_ref():
     ref = ItemRef("slot")
-    q = ExistsQuery(ref)
+    q = Exists(ref)
     assert q._children
 
 
 def test_missing_query_constructs_with_ref():
     ref = ItemRef("slot")
-    q = MissingQuery(ref)
+    q = Missing(ref)
     assert q._children
 
 
 def test_extract_query_constructs_with_ref():
     ref = ItemRef("slot")
-    q = ExtractQuery(ref)
+    q = Extract(ref)
     assert q._children
 
 
 def test_advance_cursor_query_constructs_with_two_children():
     source = ItemRef("src")
     cursor = ItemRef("cur")
-    q = AdvanceCursorQuery(source, cursor)
+    q = AdvanceCursor(source, cursor)
     assert len(q._children) == 2
 
 
@@ -96,55 +96,55 @@ def _make_thunk(value):
 
 
 def test_exists_thunk_true_for_real_value():
-    q = ExistsQuery(ItemRef("x"))
+    q = Exists(ItemRef("x"))
     thunk = q._compile(0, (_make_thunk(42),))
     assert thunk(None) is True
 
 
 def test_exists_thunk_false_for_empty():
-    q = ExistsQuery(ItemRef("x"))
+    q = Exists(ItemRef("x"))
     thunk = q._compile(0, (_make_thunk(EMPTY),))
     assert thunk(None) is False
 
 
 def test_exists_thunk_false_for_invalid():
-    q = ExistsQuery(ItemRef("x"))
+    q = Exists(ItemRef("x"))
     thunk = q._compile(0, (_make_thunk(INVALID),))
     assert thunk(None) is False
 
 
 def test_missing_thunk_true_for_empty():
-    q = MissingQuery(ItemRef("x"))
+    q = Missing(ItemRef("x"))
     thunk = q._compile(0, (_make_thunk(EMPTY),))
     assert thunk(None) is True
 
 
 def test_missing_thunk_false_for_real_value():
-    q = MissingQuery(ItemRef("x"))
+    q = Missing(ItemRef("x"))
     thunk = q._compile(0, (_make_thunk("hello"),))
     assert thunk(None) is False
 
 
 def test_load_thunk_passes_through_value():
-    q = LoadQuery(ItemRef("x"))
+    q = Load(ItemRef("x"))
     thunk = q._compile(0, (_make_thunk("result"),))
     assert thunk(None) == "result"
 
 
-@pytest.mark.skip(reason="substrate impl deferred — ExtractQuery needs view.extract()")
+@pytest.mark.skip(reason="substrate impl deferred — Extract needs view.extract()")
 def test_extract_thunk_calls_extract():
     pass
 
 
 # ---------------------------------------------------------------------------
-# ExtractQuery sentinel identity (#9 — v1 parity)
+# Extract sentinel identity (#9 — v1 parity)
 # ---------------------------------------------------------------------------
 
 
 def test_extract_thunk_returns_empty_for_empty_view():
     from nu.lang.sentinels import EMPTY
 
-    q = ExtractQuery(ItemRef("x"))
+    q = Extract(ItemRef("x"))
     thunk = q._compile(0, (_make_thunk(EMPTY),))
     result = thunk(None)
     # v1 parity: preserve the sentinel identity — EMPTY stays EMPTY, not INVALID
@@ -154,12 +154,12 @@ def test_extract_thunk_returns_empty_for_empty_view():
 def test_extract_thunk_returns_invalid_for_invalid_view():
     from nu.lang.sentinels import INVALID
 
-    q = ExtractQuery(ItemRef("x"))
+    q = Extract(ItemRef("x"))
     thunk = q._compile(0, (_make_thunk(INVALID),))
     result = thunk(None)
     assert result is INVALID
 
 
-@pytest.mark.skip(reason="substrate impl deferred — AdvanceCursorQuery needs view.next_key_after()")
+@pytest.mark.skip(reason="substrate impl deferred — AdvanceCursor needs view.next_key_after()")
 def test_advance_cursor_thunk_reads_next_key():
     pass

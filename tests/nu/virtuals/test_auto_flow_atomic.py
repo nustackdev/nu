@@ -30,7 +30,7 @@ from nu.virtuals import (
 def _write_cmd(ref):
     """A stand-in write Command for tests -- any Command with ``_mutates``
     that wraps ``ref`` at ``_children[0]`` works for the flow-wrapping
-    passes under test. ``.set(0)`` compiles to a ``SetCommand`` whose
+    passes under test. ``.set(0)`` compiles to a ``SetCmd`` whose
     first child is the ref, which is what the deformer keys on."""
     return ref.set(0)
 

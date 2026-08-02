@@ -5,10 +5,10 @@ that mirror ``random.random`` / ``random.randint`` / ``random.choice`` 1-1. Each
 wrapper builds its interaction atom (lazily imported, like ``nu.std.math``) and
 returns the Form that matches the host return type:
 
-- reals (``random``, ``uniform``, ``gauss``, ...) -> ``FloatForm``
-- ints (``randint``, ``randrange``, ``getrandbits``) -> ``IntForm``
-- ``choice`` -> ``AnyForm`` (one element of the population)
-- ``choices`` / ``sample`` -> ``ListForm``
+- reals (``random``, ``uniform``, ``gauss``, ...) -> ``Float``
+- ints (``randint``, ``randrange``, ``getrandbits``) -> ``Int``
+- ``choice`` -> ``Any`` (one element of the population)
+- ``choices`` / ``sample`` -> ``List``
 
 Every function here is NON-DETERMINISTIC: it reads the global RNG, so its atom
 declares ``deterministic=False`` and must not be constant-folded (see
@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import AnyForm, FloatForm, IntForm, ListForm
+from nu import Any, Float, Int, List
 
 
 if TYPE_CHECKING:
@@ -48,91 +48,91 @@ __all__ = [
 # --- uniform reals and ints -------------------------------------------------
 
 
-def random() -> FloatForm:
+def random() -> Float:
     """A random float in ``[0.0, 1.0)``: mirrors ``random.random()``. Non-deterministic."""
     from .interactions import RandomRandom
 
-    return FloatForm(RandomRandom())
+    return Float(RandomRandom())
 
 
-def uniform(a: FloatArg, b: FloatArg) -> FloatForm:
+def uniform(a: FloatArg, b: FloatArg) -> Float:
     """A random float in ``[a, b]``: mirrors ``random.uniform()``. Non-deterministic."""
     from .interactions import RandomUniform
 
-    return FloatForm(RandomUniform(a, b))
+    return Float(RandomUniform(a, b))
 
 
-def randint(a: IntArg, b: IntArg) -> IntForm:
+def randint(a: IntArg, b: IntArg) -> Int:
     """A random int ``N`` with ``a <= N <= b``: mirrors ``random.randint()``. Non-deterministic."""
     from .interactions import RandomRandint
 
-    return IntForm(RandomRandint(a, b))
+    return Int(RandomRandint(a, b))
 
 
-def randrange(start: IntArg, stop: IntArg) -> IntForm:
+def randrange(start: IntArg, stop: IntArg) -> Int:
     """A random int in ``range(start, stop)``: mirrors ``random.randrange()``. Non-deterministic."""
     from .interactions import RandomRandrange
 
-    return IntForm(RandomRandrange(start, stop))
+    return Int(RandomRandrange(start, stop))
 
 
-def getrandbits(k: IntArg) -> IntForm:
+def getrandbits(k: IntArg) -> Int:
     """A non-negative int with ``k`` random bits: mirrors ``random.getrandbits()``. Non-deterministic."""
     from .interactions import RandomGetrandbits
 
-    return IntForm(RandomGetrandbits(k))
+    return Int(RandomGetrandbits(k))
 
 
 # --- sequence draws ---------------------------------------------------------
 
 
-def choice(seq: ListArg[object]) -> AnyForm:
+def choice(seq: ListArg[object]) -> Any:
     """A random element of ``seq``: mirrors ``random.choice()``. Non-deterministic."""
     from .interactions import RandomChoice
 
-    return AnyForm(RandomChoice(seq))
+    return Any(RandomChoice(seq))
 
 
-def choices(population: ListArg[object], k: IntArg) -> ListForm:
+def choices(population: ListArg[object], k: IntArg) -> List:
     """A ``k``-sized list drawn with replacement: mirrors ``random.choices()``. Non-deterministic."""
     from .interactions import RandomChoices
 
-    return ListForm(RandomChoices(population, k))
+    return List(RandomChoices(population, k))
 
 
-def sample(population: ListArg[object], k: IntArg) -> ListForm:
+def sample(population: ListArg[object], k: IntArg) -> List:
     """A ``k``-sized list drawn without replacement: mirrors ``random.sample()``. Non-deterministic."""
     from .interactions import RandomSample
 
-    return ListForm(RandomSample(population, k))
+    return List(RandomSample(population, k))
 
 
 # --- continuous distributions -----------------------------------------------
 
 
-def gauss(mu: FloatArg, sigma: FloatArg) -> FloatForm:
+def gauss(mu: FloatArg, sigma: FloatArg) -> Float:
     """A Gaussian draw with mean ``mu`` and stdev ``sigma``: mirrors ``random.gauss()``. Non-deterministic."""
     from .interactions import RandomGauss
 
-    return FloatForm(RandomGauss(mu, sigma))
+    return Float(RandomGauss(mu, sigma))
 
 
-def normalvariate(mu: FloatArg, sigma: FloatArg) -> FloatForm:
+def normalvariate(mu: FloatArg, sigma: FloatArg) -> Float:
     """A normal draw with mean ``mu`` and stdev ``sigma``: mirrors ``random.normalvariate()``. Non-deterministic."""
     from .interactions import RandomNormalvariate
 
-    return FloatForm(RandomNormalvariate(mu, sigma))
+    return Float(RandomNormalvariate(mu, sigma))
 
 
-def expovariate(lambd: FloatArg) -> FloatForm:
+def expovariate(lambd: FloatArg) -> Float:
     """An exponential draw with rate ``lambd``: mirrors ``random.expovariate()``. Non-deterministic."""
     from .interactions import RandomExpovariate
 
-    return FloatForm(RandomExpovariate(lambd))
+    return Float(RandomExpovariate(lambd))
 
 
-def triangular(low: FloatArg, high: FloatArg) -> FloatForm:
+def triangular(low: FloatArg, high: FloatArg) -> Float:
     """A triangular draw between ``low`` and ``high``: mirrors ``random.triangular()``. Non-deterministic."""
     from .interactions import RandomTriangular
 
-    return FloatForm(RandomTriangular(low, high))
+    return Float(RandomTriangular(low, high))

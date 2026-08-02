@@ -4,7 +4,7 @@ async-only flows refuse the sync path.
 Complements the per-atom tests (``test_strategy.py`` / ``test_control.py``,
 which pin construction and basic effects) and the placement e2e
 (``test_eval_modes_e2e.py``). Here the focus is behaviour under sync vs async
-drive and error propagation, using real ``SetCommand`` bodies and the raising
+drive and error propagation, using real ``SetCmd`` bodies and the raising
 ``BoomAction`` support atom.
 """
 
@@ -13,14 +13,14 @@ from __future__ import annotations
 import pytest
 from _support.async_atoms import BoomAction
 
-from nu.context import AttrRef, SetCommand
-from nu.core import LiteralQuery
+from nu.context import AttrRef, SetCmd
+from nu.core import Literal
 from nu.flows import AnyN, Parallel, Race, Sequential
 from nu.lang.helpers import arun, run
 
 
-def _set(name: str, value: object) -> SetCommand:
-    return SetCommand(AttrRef(name), LiteralQuery(value))
+def _set(name: str, value: object) -> SetCmd:
+    return SetCmd(AttrRef(name), Literal(value))
 
 
 # --- exception propagation: Sequential ------------------------------------

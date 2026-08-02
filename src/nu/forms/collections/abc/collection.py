@@ -39,7 +39,7 @@ class CollectionForm[ElementT, CollectionResultT, ElementResultT](
     """
 
     def extract(self) -> object:
-        """Materialise the full subtree rooted at this Ref via ExtractQuery."""
-        from nu.domains.shape.interactions import ExtractQuery
+        """Materialise the full subtree rooted at this Ref via Extract."""
+        from nu.domains.shape.interactions import Extract
 
-        return ExtractQuery(self)
+        return Extract(self)

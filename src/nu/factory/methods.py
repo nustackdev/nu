@@ -125,7 +125,7 @@ def method_query(
     Builds a ``ScalarQuery`` (slot 0 READ) that yields the method's return
     value wrapped in ``form`` - reading external state without mutating the
     receiver fabric; non-determinism is carried by ``deterministic=False``,
-    not by faking a write. Usage: ``slot = method_query(IntForm, "getSlot")``.
+    not by faking a write. Usage: ``slot = method_query(Int, "getSlot")``.
     """
     return _MethodDescriptor(ScalarQuery, form, name, **attributes)
 
@@ -138,7 +138,7 @@ def method_action(
     Builds a ``ScalarAction`` (slot 0 WRITE) that mutates the receiver
     fabric and yields the method's return value wrapped in ``form``; calls
     to one receiver serialize.
-    Usage: ``send = method_action(StrForm, "sendTransaction")``.
+    Usage: ``send = method_action(Str, "sendTransaction")``.
     """
     return _MethodDescriptor(ScalarAction, form, name, **attributes)
 

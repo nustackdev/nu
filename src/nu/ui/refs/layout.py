@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Literal, Self
 
-from nu import DictForm
+from nu import Dict
 from nu.domains.shape import Slot
 from nu.engine.structure import Declared
 from nu.lang import Command
@@ -109,12 +109,12 @@ class AccordionRef(Section):
     @classmethod
     def set_sections(cls, items: ListArg[dict[str, str]]) -> Nu:
         value = _normalize_sections(items) if isinstance(items, list) else items
-        return Write(cls._mount_ref(), DictForm.of(sections=value))
+        return Write(cls._mount_ref(), Dict.of(sections=value))
 
     @classmethod
     def set_open(cls, ids: ListArg[str]) -> Nu:
         value = _normalize_open(ids) if isinstance(ids, list) else ids
-        return Write(cls._mount_ref(), DictForm.of(open=value))
+        return Write(cls._mount_ref(), Dict.of(open=value))
 
     @classmethod
     def changed(cls) -> Changed:
@@ -263,19 +263,19 @@ class FieldRef(Section):
 
     @classmethod
     def set_label(cls, text: StrArg) -> Nu:
-        return Write(cls._mount_ref(), DictForm.of(label=text))
+        return Write(cls._mount_ref(), Dict.of(label=text))
 
     @classmethod
     def set_help(cls, text: StrArg) -> Nu:
-        return Write(cls._mount_ref(), DictForm.of(help=text))
+        return Write(cls._mount_ref(), Dict.of(help=text))
 
     @classmethod
     def set_error(cls, text: StrArg) -> Nu:
-        return Write(cls._mount_ref(), DictForm.of(error=text))
+        return Write(cls._mount_ref(), Dict.of(error=text))
 
     @classmethod
     def set_required(cls, flag: BoolArg) -> Nu:
-        return Write(cls._mount_ref(), DictForm.of(required=flag))
+        return Write(cls._mount_ref(), Dict.of(required=flag))
 
 
 FieldsetGap = Literal["sm", "md", "lg"]
@@ -300,15 +300,15 @@ class Fieldset(Section):
 
     @classmethod
     def set_legend(cls, text: StrArg) -> Nu:
-        return Write(cls._mount_ref(), DictForm.of(legend=text))
+        return Write(cls._mount_ref(), Dict.of(legend=text))
 
     @classmethod
     def set_gap(cls, value: FieldsetGap | StrArg) -> Nu:
-        return Write(cls._mount_ref(), DictForm.of(gap=value))
+        return Write(cls._mount_ref(), Dict.of(gap=value))
 
     @classmethod
     def set_disabled(cls, flag: BoolArg) -> Nu:
-        return Write(cls._mount_ref(), DictForm.of(disabled=flag))
+        return Write(cls._mount_ref(), Dict.of(disabled=flag))
 
 
 class Form(Section):
@@ -330,10 +330,10 @@ class ModalRef(SectionRef):
     """SectionRef backing a Modal slot. Carries Modal-only interaction methods."""
 
     def set_open(self, flag: BoolArg) -> Nu:
-        return Write(self, DictForm.of(open=flag))
+        return Write(self, Dict.of(open=flag))
 
     def set_title(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(title=text))
+        return Write(self, Dict.of(title=text))
 
     def set(self, open: BoolArg = UNSET, title: StrArg = UNSET) -> Nu:
         payload: dict[str, object] = {}
@@ -341,7 +341,7 @@ class ModalRef(SectionRef):
             payload["open"] = open
         if title is not UNSET:
             payload["title"] = title
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
     def changed(self) -> Changed:
         return Changed(self)

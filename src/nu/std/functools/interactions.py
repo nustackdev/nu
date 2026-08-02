@@ -2,7 +2,7 @@
 
 ``reduce`` is the one ``functools`` member that is a runtime value operation, so
 it is the only atom here. It is a ``Reduction`` (scalar-over-stream), hand-written
-e2e like core's folds (``SumQuery`` ...) since folds are a hot path.
+e2e like core's folds (``Sum`` ...) since folds are a hot path.
 
 It is higher-order: the reducer is a Nu query child. Each step binds the
 accumulator and the current item into the loop-var side-channel (the same
@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.core import LiteralQuery
+from nu.core import Literal
 from nu.core._stream import aiter_any, sync_iter
 from nu.engine import Term
 from nu.lang import Reduction
@@ -28,10 +28,10 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
-__all__ = ["ReduceQuery"]
+__all__ = ["Reduce"]
 
 
-class ReduceQuery(Reduction):
+class Reduce(Reduction):
     """``functools.reduce(function, iterable[, initializer])``.
 
     Children: ``[source, function, acc_key, item_key, (initial)]``. Folds the
@@ -49,8 +49,8 @@ class ReduceQuery(Reduction):
         acc_key: StrArg = "acc",
         item_key: StrArg = "item",
     ) -> None:
-        acc_node = acc_key if isinstance(acc_key, Term) else LiteralQuery(acc_key)
-        item_node = item_key if isinstance(item_key, Term) else LiteralQuery(item_key)
+        acc_node = acc_key if isinstance(acc_key, Term) else Literal(acc_key)
+        item_node = item_key if isinstance(item_key, Term) else Literal(item_key)
         if initial is UNSET:
             super().__init__(source, function, acc_node, item_node)
             self._payload = {"has_initial": False}
@@ -58,7 +58,7 @@ class ReduceQuery(Reduction):
             super().__init__(source, function, acc_node, item_node, initial)
             self._payload = {"has_initial": True}
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         has_initial = self._payload["has_initial"]
         source, function, acc_t, item_t = children[0], children[1], children[2], children[3]
         initial_t = children[4] if has_initial else None
@@ -92,7 +92,7 @@ class ReduceQuery(Reduction):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         has_initial = self._payload["has_initial"]
         source, function, acc_t, item_t = children[0], children[1], children[2], children[3]
         initial_t = children[4] if has_initial else None

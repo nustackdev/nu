@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.forms.collections import DictForm, FrozenSetForm, ListForm, SetForm, TupleForm
-from nu.forms.primitives import AnyForm, BoolForm, BytesForm, FloatForm, IntForm, NoneForm, StrForm
+from nu.forms.collections import Dict, FrozenSet, List, Set, Tuple
+from nu.forms.primitives import Any, Bool, Bytes, Float, Int, None_, Str
 from nu.lang.sentinels import EMPTY
 
 from .._refs import _ContextRef
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-    from .interactions import AttrExistsQuery
+    from .interactions import AttrExists
 
 
 __all__ = [
@@ -52,7 +52,7 @@ class AttrRef(_ContextRef):
     (a key read from another slot).
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         address = children[0]
 
         def thunk(rt: Runtime) -> object:
@@ -60,7 +60,7 @@ class AttrRef(_ContextRef):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         address = children[0]
 
         async def athunk(rt: Runtime) -> object:
@@ -88,11 +88,11 @@ class AttrRef(_ContextRef):
         if address in rt.ctx.attrs:
             del rt.ctx.attrs[address]
 
-    def exists(self) -> AttrExistsQuery:
+    def exists(self) -> AttrExists:
         """A Query yielding whether this Ref's address is bound in ``ctx.attrs``."""
-        from .interactions import AttrExistsQuery
+        from .interactions import AttrExists
 
-        return AttrExistsQuery(self)
+        return AttrExists(self)
 
 
 # =========================================================================
@@ -100,31 +100,31 @@ class AttrRef(_ContextRef):
 # =========================================================================
 
 
-class IntAttrRef(AttrRef, IntForm):
+class IntAttrRef(AttrRef, Int):
     """An AttrRef with the full integer interface."""
 
 
-class FloatAttrRef(AttrRef, FloatForm):
+class FloatAttrRef(AttrRef, Float):
     """An AttrRef with the full float interface."""
 
 
-class StrAttrRef(AttrRef, StrForm):
+class StrAttrRef(AttrRef, Str):
     """An AttrRef with the full string interface."""
 
 
-class BoolAttrRef(AttrRef, BoolForm):
+class BoolAttrRef(AttrRef, Bool):
     """An AttrRef with the full boolean interface."""
 
 
-class BytesAttrRef(AttrRef, BytesForm):
+class BytesAttrRef(AttrRef, Bytes):
     """An AttrRef with the full bytes interface."""
 
 
-class AnyAttrRef(AttrRef, AnyForm):
+class AnyAttrRef(AttrRef, Any):
     """An AttrRef with the dynamic any interface."""
 
 
-class NoneAttrRef(AttrRef, NoneForm):
+class NoneAttrRef(AttrRef, None_):
     """An AttrRef with the none interface."""
 
 
@@ -133,21 +133,21 @@ class NoneAttrRef(AttrRef, NoneForm):
 # =========================================================================
 
 
-class ListAttrRef(AttrRef, ListForm):
+class ListAttrRef(AttrRef, List):
     """An AttrRef with the full list interface."""
 
 
-class DictAttrRef(AttrRef, DictForm):
+class DictAttrRef(AttrRef, Dict):
     """An AttrRef with the full dict interface."""
 
 
-class SetAttrRef(AttrRef, SetForm):
+class SetAttrRef(AttrRef, Set):
     """An AttrRef with the full set interface."""
 
 
-class FrozenSetAttrRef(AttrRef, FrozenSetForm):
+class FrozenSetAttrRef(AttrRef, FrozenSet):
     """An AttrRef with the full frozenset interface."""
 
 
-class TupleAttrRef(AttrRef, TupleForm):
+class TupleAttrRef(AttrRef, Tuple):
     """An AttrRef with the full tuple interface."""

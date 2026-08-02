@@ -66,8 +66,8 @@ class Solana(nu.FabricRef):
 
     fabric = SolanaClient
 
-    slot = nu.method_query(nu.IntForm, "getSlot")
-    block_height = nu.method_query(nu.IntForm, "getBlockHeight")
+    slot = nu.method_query(nu.Int, "getSlot")
+    block_height = nu.method_query(nu.Int, "getBlockHeight")
 
 
 # =============================================================================

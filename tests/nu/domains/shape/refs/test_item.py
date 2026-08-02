@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from nu.core.reactive import OnPrimitiveChangeQuery
+from nu.core.reactive import OnPrimitiveChange
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
-    EraseCommand,
-    ExistsQuery,
-    MissingQuery,
-    SetCommand,
+    Erase,
+    Exists,
+    Missing,
+    SetCmd,
 )
 from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
@@ -58,13 +58,13 @@ def test_item_ref_root_shape_from_parent():
 def test_item_ref_exists_returns_exists_query():
     ref = ItemRef("field")
     result = ref.exists()
-    assert isinstance(result, ExistsQuery)
+    assert isinstance(result, Exists)
 
 
 def test_item_ref_missing_returns_missing_query():
     ref = ItemRef("field")
     result = ref.missing()
-    assert isinstance(result, MissingQuery)
+    assert isinstance(result, Missing)
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +89,7 @@ def test_mutable_item_ref_has_set():
 def test_mutable_item_ref_set_returns_set_command():
     ref = MutableItemRef("field")
     result = ref.set(42)
-    assert isinstance(result, SetCommand)
+    assert isinstance(result, SetCmd)
 
 
 def test_mutable_item_ref_has_erase():
@@ -100,13 +100,13 @@ def test_mutable_item_ref_has_erase():
 def test_mutable_item_ref_erase_returns_erase_command():
     ref = MutableItemRef("field")
     result = ref.erase()
-    assert isinstance(result, EraseCommand)
+    assert isinstance(result, Erase)
 
 
 def test_mutable_item_ref_inherits_exists_missing():
     ref = MutableItemRef("field")
-    assert isinstance(ref.exists(), ExistsQuery)
-    assert isinstance(ref.missing(), MissingQuery)
+    assert isinstance(ref.exists(), Exists)
+    assert isinstance(ref.missing(), Missing)
 
 
 # ---------------------------------------------------------------------------
@@ -131,17 +131,17 @@ def test_reactive_item_ref_has_on_change():
 def test_reactive_item_ref_on_change_returns_on_primitive_change_query():
     # v1 parity: on_change() on a leaf subscribes on the PARENT's child-change
     # channel for this item's address. In v2 this is expressed as a
-    # substrate-uniform OnPrimitiveChangeQuery -- the query carries the leaf
+    # substrate-uniform OnPrimitiveChange -- the query carries the leaf
     # ref (slot 0) and resolves parent + address at runtime.
     ref = ReactiveItemRef("field")
     result = ref.on_change()
-    assert isinstance(result, OnPrimitiveChangeQuery)
+    assert isinstance(result, OnPrimitiveChange)
 
 
 def test_reactive_item_ref_on_change_carries_self_as_slot_zero():
     ref = ReactiveItemRef("field")
     result = ref.on_change()
-    # OnPrimitiveChangeQuery carries the leaf ref as its sole child; at runtime
+    # OnPrimitiveChange carries the leaf ref as its sole child; at runtime
     # ``ref._afetch_parent`` + ``ref._aaddress`` reconstruct the parent view and
     # address, regardless of whether ``parent_ref`` is wired.
     assert len(result._children) == 1
@@ -150,8 +150,8 @@ def test_reactive_item_ref_on_change_carries_self_as_slot_zero():
 
 def test_reactive_item_ref_inherits_set_erase():
     ref = ReactiveItemRef("field")
-    assert isinstance(ref.set("v"), SetCommand)
-    assert isinstance(ref.erase(), EraseCommand)
+    assert isinstance(ref.set("v"), SetCmd)
+    assert isinstance(ref.erase(), Erase)
 
 
 def test_reactive_item_ref_parent_chain_works():

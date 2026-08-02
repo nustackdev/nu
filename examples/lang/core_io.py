@@ -19,11 +19,11 @@ from nu import Context, run
 out = _io.StringIO()
 ctx = Context().bind(io.StdioBackend, io.StdioBackend(stdout=out, stdin=_io.StringIO("Gor\n")))
 
-# 1. Print two values - a PrintCommand (writes "hello 42\n", yields None).
+# 1. Print two values - a Print (writes "hello 42\n", yields None).
 e1 = io.print("hello", 42)
 print(run(e1, ctx)[0], type(e1), e1)
 
-# 2. Read a line - an InputAction wrapped in a StrForm (yields "Gor").
+# 2. Read a line - an Input wrapped in a Str (yields "Gor").
 e2 = io.input()
 print(run(e2, ctx)[0], type(e2), e2)
 

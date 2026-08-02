@@ -1,6 +1,6 @@
 """Tests for ``nu.std.logging`` -- Python's ``logging`` module, wrapped as Nu.
 
-Every ``log.info(...)`` / ``logging.info(...)`` call returns a ``LogCommand``
+Every ``log.info(...)`` / ``logging.info(...)`` call returns a ``Log``
 tree that, when driven, calls into Python's ``logging`` machinery. Tests use
 pytest's ``caplog`` fixture -- the idiomatic Python way to assert on log
 records -- so we exercise the same handlers/formatters the user would.
@@ -16,7 +16,7 @@ from nu import Context, arun, run
 from nu.lang import Cardinality, Sort, compile
 from nu.lang.attributes import Attr, Effect
 from nu.std import logging
-from nu.std.logging import LOGGING, LogCommand, LoggingRef
+from nu.std.logging import LOGGING, Log, LoggingRef
 
 
 if TYPE_CHECKING:
@@ -49,35 +49,35 @@ def test_level_constants_match_stdlib() -> None:
 
 def test_logger_methods_return_log_commands() -> None:
     log = logging.getLogger("nu.test")
-    assert isinstance(log.debug("x"), LogCommand)
-    assert isinstance(log.info("x"), LogCommand)
-    assert isinstance(log.warning("x"), LogCommand)
-    assert isinstance(log.warn("x"), LogCommand)  # stdlib alias
-    assert isinstance(log.error("x"), LogCommand)
-    assert isinstance(log.critical("x"), LogCommand)
-    assert isinstance(log.fatal("x"), LogCommand)  # stdlib alias
-    assert isinstance(log.log(pylogging.INFO, "x"), LogCommand)
+    assert isinstance(log.debug("x"), Log)
+    assert isinstance(log.info("x"), Log)
+    assert isinstance(log.warning("x"), Log)
+    assert isinstance(log.warn("x"), Log)  # stdlib alias
+    assert isinstance(log.error("x"), Log)
+    assert isinstance(log.critical("x"), Log)
+    assert isinstance(log.fatal("x"), Log)  # stdlib alias
+    assert isinstance(log.log(pylogging.INFO, "x"), Log)
 
 
 def test_module_level_shortcuts_return_log_commands() -> None:
-    assert isinstance(logging.debug("x"), LogCommand)
-    assert isinstance(logging.info("x"), LogCommand)
-    assert isinstance(logging.warning("x"), LogCommand)
-    assert isinstance(logging.warn("x"), LogCommand)
-    assert isinstance(logging.error("x"), LogCommand)
-    assert isinstance(logging.critical("x"), LogCommand)
-    assert isinstance(logging.log(pylogging.INFO, "x"), LogCommand)
+    assert isinstance(logging.debug("x"), Log)
+    assert isinstance(logging.info("x"), Log)
+    assert isinstance(logging.warning("x"), Log)
+    assert isinstance(logging.warn("x"), Log)
+    assert isinstance(logging.error("x"), Log)
+    assert isinstance(logging.critical("x"), Log)
+    assert isinstance(logging.log(pylogging.INFO, "x"), Log)
 
 
 # --- structure & sorts -------------------------------------------------------
 
 
 def test_log_command_is_a_command() -> None:
-    assert LogCommand._sort.value is Sort.SCALAR_COMMAND
+    assert Log._sort.value is Sort.SCALAR_COMMAND
 
 
 def test_log_command_yields_nothing() -> None:
-    assert LogCommand._cardinality.value is Cardinality.VOID
+    assert Log._cardinality.value is Cardinality.VOID
 
 
 def test_log_command_slots_hold_the_fabric_ref() -> None:
@@ -141,10 +141,10 @@ def test_each_level_routes_to_its_python_level(caplog: pytest.LogCaptureFixture)
 
 
 def test_string_level_names_are_accepted(caplog: pytest.LogCaptureFixture) -> None:
-    # LogCommand normalizes str level names to Python ints -- so a rewrite
+    # Log normalizes str level names to Python ints -- so a rewrite
     # that carries level names as literals still routes to the right level.
     caplog.set_level(pylogging.DEBUG, logger="nu.test")
-    run(LogCommand("warning", "nu.test", "hello"))
+    run(Log("warning", "nu.test", "hello"))
     assert caplog.records[0].levelno == pylogging.WARNING
 
 
@@ -163,7 +163,7 @@ def test_module_level_info_uses_root_logger(caplog: pytest.LogCaptureFixture) ->
 
 
 def test_msg_can_be_a_nu_term(caplog: pytest.LogCaptureFixture) -> None:
-    # LogCommand accepts Nu terms in the msg + args slots; refs resolve at
+    # Log accepts Nu terms in the msg + args slots; refs resolve at
     # eval time. Uses a bound AttrRef for a real test.
     from nu.context import StrAttrRef
 

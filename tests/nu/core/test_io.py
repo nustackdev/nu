@@ -19,8 +19,8 @@ from nu.core.io import (
     STDERR,
     STDIN,
     STDOUT,
-    InputAction,
-    PrintCommand,
+    Input,
+    Print,
     StdioBackend,
     StdioRef,
 )
@@ -34,22 +34,22 @@ from nu.lang.attributes import Attr, Effect
 
 
 def test_print_is_a_command() -> None:
-    assert PrintCommand._sort.value is Sort.SCALAR_COMMAND
+    assert Print._sort.value is Sort.SCALAR_COMMAND
 
 
 def test_input_is_a_scalar_action() -> None:
-    assert InputAction._sort.value is Sort.SCALAR_ACTION
+    assert Input._sort.value is Sort.SCALAR_ACTION
 
 
 # --- cardinality ---------------------------------------------------------
 
 
 def test_print_yields_nothing() -> None:
-    assert PrintCommand._cardinality.value is Cardinality.VOID
+    assert Print._cardinality.value is Cardinality.VOID
 
 
 def test_input_yields_a_scalar() -> None:
-    assert InputAction._cardinality.value is Cardinality.SCALAR
+    assert Input._cardinality.value is Cardinality.SCALAR
 
 
 # --- effect attribution (the slot-0 fabric write) ------------------------
@@ -63,7 +63,7 @@ def test_print_declares_a_write_through_its_fabric_ref() -> None:
 
 
 def test_input_declares_a_write_through_its_fabric_ref() -> None:
-    # Wrapped in a StrForm; the WRITE propagates up the subtree.
+    # Wrapped in a Str; the WRITE propagates up the subtree.
     program = compile(nu_input())
     effects = program.attr((), Attr.COMPOSITION_EFFECTS)
     assert (StdioRef, Effect.WRITE) in effects

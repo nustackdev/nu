@@ -135,7 +135,7 @@ class StructuredRef(Ref):
 
         Override in substrates that support primitive-blob storage
         (e.g. PrimitiveDictRef, PrimitiveListRef, PrimitiveSetRef).
-        Called by ``PrimitiveSetCommand``.
+        Called by ``PrimitiveSet``.
         """
         msg = f"{type(self).__name__}._primitive_write is not implemented"
         raise NotImplementedError(msg)

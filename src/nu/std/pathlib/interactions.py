@@ -4,7 +4,7 @@ Constructors bind the class / its classmethods; methods bind the *unbound*
 method (a plain callable whose first argument is the receiver, so
 ``p.with_suffix(s)`` is ``PurePath.with_suffix(p, s)``). Property reads
 (``.name``, ``.suffix``, ``.parent`` ...) are not here - they reuse core
-``GetAttrQuery`` from the Form. Comparison reuses the core atoms.
+``GetAttr`` from the Form. Comparison reuses the core atoms.
 
 Everything is backed by ``PurePath`` - the pure (no filesystem I/O) half of
 ``pathlib``. ``cwd`` / ``home`` are the two exceptions: they read the process

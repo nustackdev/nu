@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import random
 
-from nu import LiteralQuery, Shape, run
+from nu import Literal, Shape, run
 from nu.virtuals import IntRef, Kh57Ref
 from nu.virtuals.refs.base import Facet
 
@@ -38,7 +38,7 @@ def test_delete(ctx) -> None:
     run(Ledger.entries.set_item(7, 700), ctx)
     assert run(Ledger.entries.get_item(7), ctx)[0] == 700
     run(Ledger.entries.del_item(7), ctx)
-    got = run(Ledger.entries.get_item(7, LiteralQuery(-1)), ctx)[0]
+    got = run(Ledger.entries.get_item(7, Literal(-1)), ctx)[0]
     assert got == -1
 
 
@@ -90,10 +90,10 @@ def test_sample_respects_range(ctx) -> None:
 
 def test_sample_deterministic_with_seeded_rng(ctx) -> None:
     _load_range(ctx, range(5_000))
-    from nu.virtuals.interactions.kh57 import Kh57SampleQuery
+    from nu.virtuals.interactions.kh57 import Kh57Sample
 
-    q1 = Kh57SampleQuery(Ledger.entries, 100, 0, 5_000, rng=random.Random(42))
-    q2 = Kh57SampleQuery(Ledger.entries, 100, 0, 5_000, rng=random.Random(42))
+    q1 = Kh57Sample(Ledger.entries, 100, 0, 5_000, rng=random.Random(42))
+    q2 = Kh57Sample(Ledger.entries, 100, 0, 5_000, rng=random.Random(42))
     s1 = run(q1, ctx)[0]
     s2 = run(q2, ctx)[0]
     assert s1 == s2
@@ -101,15 +101,15 @@ def test_sample_deterministic_with_seeded_rng(ctx) -> None:
 
 def test_sample_stability_under_out_of_range_append(ctx) -> None:
     _load_range(ctx, range(1, 10_001))
-    from nu.virtuals.interactions.kh57 import Kh57SampleQuery
+    from nu.virtuals.interactions.kh57 import Kh57Sample
 
     # Fresh seeded rng per run so the rng state does not drift.
-    q1 = Kh57SampleQuery(Ledger.entries, 50, 1_000, 2_000, rng=random.Random(0))
+    q1 = Kh57Sample(Ledger.entries, 50, 1_000, 2_000, rng=random.Random(0))
     s1 = run(q1, ctx)[0]
     # Append keys outside the queried range [1000, 2000).
     for k in range(10_001, 20_001):
         run(Ledger.entries.set_item(k, k * 2), ctx)
-    q2 = Kh57SampleQuery(Ledger.entries, 50, 1_000, 2_000, rng=random.Random(0))
+    q2 = Kh57Sample(Ledger.entries, 50, 1_000, 2_000, rng=random.Random(0))
     s2 = run(q2, ctx)[0]
     assert set(s1) == set(s2)
 

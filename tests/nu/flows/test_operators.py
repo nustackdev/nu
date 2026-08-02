@@ -1,21 +1,21 @@
 """Tests for the composition operators on the Nu base: ``>>`` / ``|`` / ``&``.
 
 These are sugar for the Strategy flows. Every atom inherits them from ``Nu``, so
-the operators are exercised on plain ``SetCommand`` bodies. Coverage pins the
+the operators are exercised on plain ``SetCmd`` bodies. Coverage pins the
 type each operator builds, that chains nest left-to-right, and that a built tree
 runs the same as the explicit constructor.
 """
 
 from __future__ import annotations
 
-from nu.context import AttrRef, SetCommand
-from nu.core import LiteralQuery
+from nu.context import AttrRef, SetCmd
+from nu.core import Literal
 from nu.flows import Parallel, Race, Sequential
 from nu.lang.helpers import arun, run
 
 
-def _set(name: str, value: object) -> SetCommand:
-    return SetCommand(AttrRef(name), LiteralQuery(value))
+def _set(name: str, value: object) -> SetCmd:
+    return SetCmd(AttrRef(name), Literal(value))
 
 
 # --- each operator builds its Strategy ------------------------------------
@@ -48,7 +48,7 @@ def test_rshift_chain_nests_left() -> None:
     assert isinstance(tree, Sequential)
     left, right = tree._children
     assert isinstance(left, Sequential)
-    assert isinstance(right, SetCommand)
+    assert isinstance(right, SetCmd)
 
 
 # --- built tree runs the same as the explicit constructor -----------------

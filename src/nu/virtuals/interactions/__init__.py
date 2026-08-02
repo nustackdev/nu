@@ -23,7 +23,7 @@ from .item import (
     ItemPrimitiveSetUnsafeCmd,
     ItemPrimitiveSetUnsafeParentSkipCmd,
 )
-from .kh57 import Kh57RangeQuery, Kh57SampleQuery
+from .kh57 import Kh57Range, Kh57Sample
 
 
 __all__ = [
@@ -36,8 +36,8 @@ __all__ = [
     "ItemPrimitiveSetCmd",
     "ItemPrimitiveSetUnsafeCmd",
     "ItemPrimitiveSetUnsafeParentSkipCmd",
-    "Kh57RangeQuery",
-    "Kh57SampleQuery",
+    "Kh57Range",
+    "Kh57Sample",
     "RetryOnConflict",
     "ScanPrimitivesUnsafe",
     "Snapshot",

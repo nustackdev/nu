@@ -1,27 +1,27 @@
 """Tests for nu.tree.walk: lazy traversal iterators.
 
 preorder, postorder, bfs, leaves, ancestors. Pure structural -- built on
-Sequential branches + LiteralQuery leaves, never compiled.
+Sequential branches + Literal leaves, never compiled.
 """
 
 from __future__ import annotations
 
-from nu.core import LiteralQuery
+from nu.core import Literal
 from nu.flows import Sequential
 from nu.tree import ancestors, bfs, leaves, postorder, preorder
 
 
 def _vals(nodes):
     """Leaf values in iteration order; branches collapse to 'S'."""
-    return [n._payload["value"] if isinstance(n, LiteralQuery) else "S" for n in nodes]
+    return [n._payload["value"] if isinstance(n, Literal) else "S" for n in nodes]
 
 
 def _tree():
     """root[ 1, mid[ 2, 3 ], 4 ]."""
-    a = LiteralQuery(1)
-    b = LiteralQuery(2)
-    c = LiteralQuery(3)
-    d = LiteralQuery(4)
+    a = Literal(1)
+    b = Literal(2)
+    c = Literal(3)
+    d = Literal(4)
     mid = Sequential(b, c)
     root = Sequential(a, mid, d)
     return root, mid, b
@@ -48,7 +48,7 @@ def test_leaves_only():
 
 
 def test_leaves_of_a_single_leaf_is_itself():
-    leaf = LiteralQuery(7)
+    leaf = Literal(7)
     assert list(leaves(leaf)) == [leaf]
 
 
@@ -64,4 +64,4 @@ def test_ancestors_of_root_is_empty():
 
 def test_ancestors_returns_none_when_not_found():
     root, _, _ = _tree()
-    assert ancestors(LiteralQuery(99), root) is None
+    assert ancestors(Literal(99), root) is None

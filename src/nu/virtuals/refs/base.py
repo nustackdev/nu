@@ -183,12 +183,20 @@ class ViewRef[T](_VirtualsRefBase[T]):
     @property
     def lazy(self) -> ViewRef[T]:
         """Return a lazy-faceted clone. No-op if already lazy."""
-        return self if self._payload.get("facet", Facet.LAZY) is Facet.LAZY else self._with_facet(Facet.LAZY)
+        return (
+            self
+            if self._payload.get("facet", Facet.LAZY) is Facet.LAZY
+            else self._with_facet(Facet.LAZY)
+        )
 
     @property
     def eager(self) -> ViewRef[T]:
         """Return an eager-faceted clone. Iteration extracts to Python objects."""
-        return self if self._payload.get("facet", Facet.LAZY) is Facet.EAGER else self._with_facet(Facet.EAGER)
+        return (
+            self
+            if self._payload.get("facet", Facet.LAZY) is Facet.EAGER
+            else self._with_facet(Facet.EAGER)
+        )
 
     def _apply_facet(self, view: object) -> object:
         """Apply the lazy/eager facet to a fetched view, when supported.
@@ -254,8 +262,10 @@ class ViewRef[T](_VirtualsRefBase[T]):
         return nav.open_at_path(ViewPathSer(path[:-1]), storage_ctx)
 
     def _fetch_and_ensure_parent_view(self, rt: Runtime, path: tuple) -> object:
-        """Write-side parent open -- walks the path and ensures each level
-        is materialized with its declared view type.
+        """Write-side parent open.
+
+        Walks the path and ensures each level is materialized with its
+        declared view type.
 
         Same shape as ``_fetch_parent_view`` but uses
         ``open_at_path_and_ensure`` so every intermediate container gets
@@ -353,8 +363,10 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
         parent_path = path[:-1]
         key = path[-1][0]
         try:
-            parent_view = nav.root(storage_ctx) if not parent_path else nav.open_at_path(
-                ViewPathSer(parent_path), storage_ctx
+            parent_view = (
+                nav.root(storage_ctx)
+                if not parent_path
+                else nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
             )
             if isinstance(parent_view, Subscriptable):
                 val = parent_view[key]
@@ -381,9 +393,11 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
     # --- write / erase -------------------------------------------------------
 
     def _fetch_parent_view(self, rt: Runtime, path: tuple) -> object:
-        """Read-side parent open -- pure navigation, no side effects. See
-        the sibling method on ``ViewRef`` for the rationale on the
-        read/write split."""
+        """Read-side parent open -- pure navigation, no side effects.
+
+        See the sibling method on ``ViewRef`` for the rationale on the
+        read/write split.
+        """
         nav = _resolve_navigator(rt, self._root_shape, path)
         storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
         parent_path = path[:-1]
@@ -392,9 +406,10 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
         return nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
 
     def _fetch_and_ensure_parent_view(self, rt: Runtime, path: tuple) -> object:
-        """Write-side parent open -- ensures each level of the path is
-        materialized with its declared view type. See the sibling method
-        on ``ViewRef``."""
+        """Write-side parent open -- ensures each level materializes.
+
+        See the sibling method on ``ViewRef``.
+        """
         nav = _resolve_navigator(rt, self._root_shape, path)
         storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
         parent_path = path[:-1]
@@ -438,7 +453,7 @@ class PrimitiveRef[T](_VirtualsRefBase[T]):
         except (KeyError, IndexError):
             pass
 
-    # --- _fetch_parent (structured-ref plug-point; consumed by OnPrimitiveChangeQuery)
+    # --- _fetch_parent (structured-ref plug-point; consumed by OnPrimitiveChange)
 
     def _fetch_parent(self, rt: Runtime, nid: int) -> object:
         """Return the parent view holding this leaf's slot (top-level -> root)."""

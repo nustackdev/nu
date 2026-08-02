@@ -1,22 +1,22 @@
 """Shape fabric queries and commands — all shape interactions in one place.
 
 Read queries (polymorphic on Ref class):
-- ``LoadQuery``          - yield the value at the slot-0 Ref (EMPTY if absent).
-- ``ExistsQuery``        - True if the slot-0 Ref's address is bound.
-- ``MissingQuery``       - True if the slot-0 Ref's address is unbound.
-- ``ExtractQuery``       - materialise the full subtree rooted at the Ref.
-- ``AdvanceCursorQuery`` - read the next key after the cursor on an ordered view.
+- ``Load``          - yield the value at the slot-0 Ref (EMPTY if absent).
+- ``Exists``        - True if the slot-0 Ref's address is bound.
+- ``Missing``       - True if the slot-0 Ref's address is unbound.
+- ``Extract``       - materialise the full subtree rooted at the Ref.
+- ``AdvanceCursor`` - read the next key after the cursor on an ordered view.
 
 Write commands (polymorphic on Ref class):
-- ``SetCommand`` - write the slot-1 value to the slot-0 Ref's address.
-- ``EraseCommand``  - remove the slot-0 Ref from its fabric.
+- ``SetCmd`` - write the slot-1 value to the slot-0 Ref's address.
+- ``Erase``  - remove the slot-0 Ref from its fabric.
 
 The Item/Collection split is dropped; the substrate optimizer matches on
 the concrete Ref class. ``*Cmd`` suffix dropped by naming convention.
 
-Reactive queries (``OnChangeQuery``, ``OnChildChangeQuery``,
-``OnChildrenChangeQuery``, ``OnDescendantsChangeQuery``,
-``OnPrimitiveChangeQuery``) live in ``nu.core.reactive`` -- one unified
+Reactive queries (``OnChange``, ``OnChildChange``,
+``OnChildrenChange``, ``OnDescendantsChange``,
+``OnPrimitiveChange``) live in ``nu.core.reactive`` -- one unified
 interface for all substrates, reached through the shape Form mixins.
 """
 
@@ -35,14 +35,14 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 __all__ = [
-    "AdvanceCursorQuery",
-    "EraseCommand",
-    "ExistsQuery",
-    "ExtractQuery",
-    "LoadQuery",
-    "MissingQuery",
-    "PrimitiveSetCommand",
-    "SetCommand",
+    "AdvanceCursor",
+    "Erase",
+    "Exists",
+    "Extract",
+    "Load",
+    "Missing",
+    "PrimitiveSet",
+    "SetCmd",
 ]
 
 
@@ -51,7 +51,7 @@ __all__ = [
 # ---------------------------------------------------------------------------
 
 
-class LoadQuery(ScalarQuery):
+class Load(ScalarQuery):
     """Yield the value at the slot-0 Ref; EMPTY if the address is unbound."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -71,7 +71,7 @@ class LoadQuery(ScalarQuery):
         return athunk
 
 
-class ExistsQuery(ScalarQuery):
+class Exists(ScalarQuery):
     """Yield True if the slot-0 Ref's address is bound (value is not a sentinel)."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -93,7 +93,7 @@ class ExistsQuery(ScalarQuery):
         return athunk
 
 
-class MissingQuery(ScalarQuery):
+class Missing(ScalarQuery):
     """Yield True if the slot-0 Ref's address is unbound (value is a sentinel)."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -115,11 +115,11 @@ class MissingQuery(ScalarQuery):
         return athunk
 
 
-class ExtractQuery(ScalarQuery):
+class Extract(ScalarQuery):
     """Materialise the full subtree at the slot-0 Ref via ``view.extract()``.
 
-    Distinct from ``LoadQuery``: LoadQuery yields the value at the Ref's
-    address; ExtractQuery recursively materialises the subtree into a plain
+    Distinct from ``Load``: Load yields the value at the Ref's
+    address; Extract recursively materialises the subtree into a plain
     Python value (dict / list / nested mix). The view may be lazy; ``.eager``
     is unwrapped when present, matching ``CollectionExtract`` mechanics.
     """
@@ -151,7 +151,7 @@ class ExtractQuery(ScalarQuery):
         return athunk
 
 
-class AdvanceCursorQuery(ScalarQuery):
+class AdvanceCursor(ScalarQuery):
     """Read the next key after the cursor on an ordered view.
 
     Children: ``[source_ref, cursor_ref]``. Calls ``view.next_key_after(cursor)``
@@ -189,7 +189,7 @@ class AdvanceCursorQuery(ScalarQuery):
 # ---------------------------------------------------------------------------
 
 
-class SetCommand(Command):
+class SetCmd(Command):
     """Write the slot-1 value to the slot-0 structured Ref's address."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -219,7 +219,7 @@ class SetCommand(Command):
         return athunk
 
 
-class EraseCommand(Command):
+class Erase(Command):
     """Remove the slot-0 structured Ref from its fabric."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -241,10 +241,10 @@ class EraseCommand(Command):
         return athunk
 
 
-class PrimitiveSetCommand(Command):
+class PrimitiveSet(Command):
     """Write the slot-1 value to the slot-0 Ref via ``_primitive_write``.
 
-    Bypasses the compound-value decomposition of ``SetCommand`` (which
+    Bypasses the compound-value decomposition of ``SetCmd`` (which
     recurses into containers).  Use for Refs that store compound values as a
     single opaque blob (e.g. ``PrimitiveDictRef``, ``PrimitiveListRef``,
     ``PrimitiveSetRef`` substrates).

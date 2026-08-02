@@ -36,8 +36,8 @@ from nu.virtuals.interactions import (
     ItemPrimitiveSetCmd,
     ItemPrimitiveSetUnsafeCmd,
     ItemPrimitiveSetUnsafeParentSkipCmd,
-    Kh57RangeQuery,
-    Kh57SampleQuery,
+    Kh57Range,
+    Kh57Sample,
     RetryOnConflict,
     ScanPrimitivesUnsafe,
     Snapshot,
@@ -123,8 +123,8 @@ __all__ = [  # noqa: RUF022
     "ClearPrimitivesUnsafeCmd",
     "ScanPrimitivesUnsafe",
     # Interactions — kh57
-    "Kh57SampleQuery",
-    "Kh57RangeQuery",
+    "Kh57Sample",
+    "Kh57Range",
     # Interactions — Atomicity
     "Atomic",
     "Snapshot",

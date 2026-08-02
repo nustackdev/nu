@@ -5,9 +5,9 @@ StreamQuery sources; ``next`` is the odd one - it advances an iterator (mutates
 its state) and yields the item, so it is an Action.
 
 Builtins to cover (Python -> Nu):
-- sources (Q-stream): ``iter`` -> ``IterQuery``, ``enumerate`` -> ``EnumerateQuery``,
-  ``zip`` -> ``ZipQuery``, ``reversed`` -> ``ReversedQuery``
-- stepping (A): ``next`` -> ``NextAction`` (advance + yield; mutate-and-yield)
+- sources (Q-stream): ``iter`` -> ``Iter``, ``enumerate`` -> ``Enumerate``,
+  ``zip`` -> ``Zip``, ``reversed`` -> ``Reversed``
+- stepping (A): ``next`` -> ``Next`` (advance + yield; mutate-and-yield)
 
 Sorts: StreamQuery (Q) for the sources, ScalarAction (A) for ``Next``. Each
 source returns an iterator from its thunk (the stream contract); the async twin
@@ -15,7 +15,7 @@ returns an async iterator. Lazy lenses (map / filter) live in ``transform``;
 folds in ``reduction``.
 
 ``range`` is a Python type, not a stream function, so it is a Form (a later
-pass), not an atom here; stream a range with ``IterQuery(<range value>)``. ``NextAction``
+pass), not an atom here; stream a range with ``Iter(<range value>)``. ``Next``
 steps a ref-held iterator, so it stays a structural stub until the iterator
 fabric lands.
 """
@@ -36,22 +36,22 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-__all__ = ["EnumerateQuery", "IterQuery", "NextAction", "ReversedQuery", "ZipQuery"]
+__all__ = ["Enumerate", "Iter", "Next", "Reversed", "Zip"]
 
 
 # --- sources (StreamQuery) -----------------------------------------------
 
 
-class IterQuery(StreamQuery):
+class Iter(StreamQuery):
     """Lifts a scalar iterable child into a stream of its elements.
 
     Children: ``[source]``. ``source`` is any ScalarQuery whose value is
     iterable (list, tuple, range, generator, dict, set, ...). The inverse of
-    a Reduction: where a Reduction folds a stream to a scalar, ``IterQuery`` opens
+    a Reduction: where a Reduction folds a stream to a scalar, ``Iter`` opens
     a scalar iterable into a stream. A stream atom's thunk returns an iterator.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (source,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -59,7 +59,7 @@ class IterQuery(StreamQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (source,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -68,7 +68,7 @@ class IterQuery(StreamQuery):
         return athunk
 
 
-class EnumerateQuery(StreamQuery):
+class Enumerate(StreamQuery):
     """Pairs each item of a source child with its running index.
 
     Children: ``[source]`` or ``[source, start]``. Yields ``(index, item)``
@@ -76,7 +76,7 @@ class EnumerateQuery(StreamQuery):
     ``enumerate``.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source = children[0]
         start = children[1] if len(children) > 1 else None
 
@@ -90,7 +90,7 @@ class EnumerateQuery(StreamQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source = children[0]
         start = children[1] if len(children) > 1 else None
 
@@ -114,20 +114,20 @@ class EnumerateQuery(StreamQuery):
         return athunk
 
 
-class ZipQuery(StreamQuery):
+class Zip(StreamQuery):
     """Threads several source children together item by item.
 
     Children: ``[*sources]``. Yields tuples of one item per source, stopping
     with the shortest (Python's ``zip``).
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             return zip(*(sync_iter(c(rt)) for c in children), strict=False)
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             aiters = [aiter_any(await c(rt)) for c in children]
 
@@ -146,14 +146,14 @@ class ZipQuery(StreamQuery):
         return athunk
 
 
-class ReversedQuery(StreamQuery):
+class Reversed(StreamQuery):
     """Yields the items of a source child in reverse order.
 
     Children: ``[source]``. The stream-shaped twin of Python's ``reversed``;
     it materializes the source to walk it backwards.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (source,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -161,7 +161,7 @@ class ReversedQuery(StreamQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (source,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -179,11 +179,11 @@ class ReversedQuery(StreamQuery):
 # --- stepping (ScalarAction) ---------------------------------------------
 
 
-class NextAction(ScalarAction):
+class Next(ScalarAction):
     """Advances an iterator child and yields the next item.
 
     Children: ``[iterator]`` where slot 0 holds the Ref to an iterator in the
-    Context. Stepping mutates that iterator's position, so ``NextAction`` is an
+    Context. Stepping mutates that iterator's position, so ``Next`` is an
     Action, not a Query: it both writes (slot 0) and yields the item it
     pulled. The dual-citizen twin of Python's ``next``; the first concrete
     Action in core. Async twin ``anext`` follows with async sources.

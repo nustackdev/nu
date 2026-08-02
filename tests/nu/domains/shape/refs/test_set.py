@@ -4,17 +4,17 @@ from __future__ import annotations
 
 import pytest
 
-from nu.core.reactive import OnChangeQuery, OnChildrenChangeQuery
+from nu.core.reactive import OnChange, OnChildrenChange
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
-    EraseCommand,
-    ExistsQuery,
-    MissingQuery,
-    SetCommand,
+    Erase,
+    Exists,
+    Missing,
+    SetCmd,
 )
 from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.refs.set_ import MutableSetRef, ReactiveSetRef, SetRef
-from nu.forms.primitives import IntForm
+from nu.forms.primitives import Int
 
 
 class MyShape(Shape):
@@ -53,17 +53,17 @@ def test_set_ref_has_no_subscript():
 
 def test_set_ref_exists_returns_exists_query():
     ref = SetRef("my_set")
-    assert isinstance(ref.exists(), ExistsQuery)
+    assert isinstance(ref.exists(), Exists)
 
 
 def test_set_ref_missing_returns_missing_query():
     ref = SetRef("my_set")
-    assert isinstance(ref.missing(), MissingQuery)
+    assert isinstance(ref.missing(), Missing)
 
 
 def test_set_ref_len_returns_int_form():
     ref = SetRef("my_set")
-    assert isinstance(ref.len(), IntForm)
+    assert isinstance(ref.len(), Int)
 
 
 # ---------------------------------------------------------------------------
@@ -87,18 +87,18 @@ def test_mutable_set_ref_has_set():
 
 def test_mutable_set_ref_set_returns_set_command():
     ref = MutableSetRef("my_set")
-    assert isinstance(ref.set({1, 2, 3}), SetCommand)
+    assert isinstance(ref.set({1, 2, 3}), SetCmd)
 
 
 def test_mutable_set_ref_erase_returns_erase_command():
     ref = MutableSetRef("my_set")
-    assert isinstance(ref.erase(), EraseCommand)
+    assert isinstance(ref.erase(), Erase)
 
 
 def test_mutable_set_ref_inherits_exists_missing():
     ref = MutableSetRef("my_set")
-    assert isinstance(ref.exists(), ExistsQuery)
-    assert isinstance(ref.missing(), MissingQuery)
+    assert isinstance(ref.exists(), Exists)
+    assert isinstance(ref.missing(), Missing)
 
 
 def test_mutable_set_ref_has_no_subscript():
@@ -123,15 +123,15 @@ def test_reactive_set_ref_constructs():
 
 def test_reactive_set_ref_on_change_returns_on_change_action():
     ref = ReactiveSetRef("my_set")
-    assert isinstance(ref.on_change(), OnChangeQuery)
+    assert isinstance(ref.on_change(), OnChange)
 
 
 def test_reactive_set_ref_on_children_change_returns_action():
     ref = ReactiveSetRef("my_set")
-    assert isinstance(ref.on_children_change(), OnChildrenChangeQuery)
+    assert isinstance(ref.on_children_change(), OnChildrenChange)
 
 
 def test_reactive_set_ref_inherits_set_erase():
     ref = ReactiveSetRef("my_set")
-    assert isinstance(ref.set(set()), SetCommand)
-    assert isinstance(ref.erase(), EraseCommand)
+    assert isinstance(ref.set(set()), SetCmd)
+    assert isinstance(ref.erase(), Erase)

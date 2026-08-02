@@ -16,18 +16,18 @@ from collections.abc import ItemsView, KeysView, ValuesView
 import pytest
 
 from nu import (
-    ContainsQuery,
+    Contains,
     Context,
-    DictForm,
-    DictItemsForm,
-    DictKeysForm,
-    DictValuesForm,
-    IteratorForm,
-    LenQuery,
-    ListForm,
-    LiteralQuery,
-    SetForm,
-    SortedQuery,
+    Dict,
+    DictItems,
+    DictKeys,
+    DictValues,
+    Iterator,
+    Len,
+    List,
+    Literal,
+    Set,
+    Sorted,
     arun,
     run,
 )
@@ -147,23 +147,23 @@ class TestFacets:
 
 
 class TestDictRefWrapTypes:
-    """DictRef returns DictKeysForm/DictValuesForm/DictItemsForm."""
+    """DictRef returns DictKeys/DictValues/DictItems."""
 
     def test_keys_returns_dict_keys_value(self):
         keys = Portfolio.metadata.keys()
-        assert isinstance(keys, DictKeysForm)
+        assert isinstance(keys, DictKeys)
 
     def test_values_returns_dict_values_value(self):
         vals = Portfolio.metadata.values()
-        assert isinstance(vals, DictValuesForm)
+        assert isinstance(vals, DictValues)
 
     def test_items_returns_dict_items_value(self):
         items = Portfolio.metadata.items()
-        assert isinstance(items, DictItemsForm)
+        assert isinstance(items, DictItems)
 
     def test_result_returns_dict_value(self):
-        result = Portfolio.metadata._wrap_result(LiteralQuery("x"))
-        assert isinstance(result, DictForm)
+        result = Portfolio.metadata._wrap_result(Literal("x"))
+        assert isinstance(result, Dict)
 
 
 class TestDictRefExecution:
@@ -210,12 +210,12 @@ class TestListRefWrapTypes:
     """ListRef wrapping types."""
 
     def test_iterable_is_iterator_value(self):
-        wrapped = Portfolio.tags._wrap_iterable_result(LiteralQuery("x"))
-        assert isinstance(wrapped, IteratorForm)
+        wrapped = Portfolio.tags._wrap_iterable_result(Literal("x"))
+        assert isinstance(wrapped, Iterator)
 
     def test_sliceable_is_list_value(self):
-        wrapped = Portfolio.tags._wrap_sliceable_result(LiteralQuery("x"))
-        assert isinstance(wrapped, ListForm)
+        wrapped = Portfolio.tags._wrap_sliceable_result(Literal("x"))
+        assert isinstance(wrapped, List)
 
 
 class TestListRefExecution:
@@ -254,8 +254,8 @@ class TestSetRefWrapTypes:
     """SetRef wrapping types."""
 
     def test_set_result_is_set_value(self):
-        wrapped = Portfolio.members._wrap_set_result(LiteralQuery("x"))
-        assert isinstance(wrapped, SetForm)
+        wrapped = Portfolio.members._wrap_set_result(Literal("x"))
+        assert isinstance(wrapped, Set)
 
 
 class TestSetRefExecution:
@@ -312,19 +312,19 @@ class TestShapesListRefExecution:
 
 
 class TestShapesDictRefWrapTypes:
-    """ShapesDictRef returns DictKeysForm/DictValuesForm/DictItemsForm."""
+    """ShapesDictRef returns DictKeys/DictValues/DictItems."""
 
     def test_keys_returns_dict_keys_value(self):
         keys = Portfolio.team.keys()
-        assert isinstance(keys, DictKeysForm)
+        assert isinstance(keys, DictKeys)
 
     def test_values_returns_dict_values_value(self):
         vals = Portfolio.team.values()
-        assert isinstance(vals, DictValuesForm)
+        assert isinstance(vals, DictValues)
 
     def test_items_returns_dict_items_value(self):
         items = Portfolio.team.items()
-        assert isinstance(items, DictItemsForm)
+        assert isinstance(items, DictItems)
 
 
 class TestShapesDictRefExecution:
@@ -360,23 +360,23 @@ class TestShapesDictRefExecution:
 
 
 class TestKh57RefWrapTypes:
-    """Kh57Ref inherits DictRef wrapping — DictKeysForm/DictValuesForm/DictItemsForm."""
+    """Kh57Ref inherits DictRef wrapping — DictKeys/DictValues/DictItems."""
 
     def test_keys_returns_dict_keys_value(self):
         keys = Portfolio.events.keys()
-        assert isinstance(keys, DictKeysForm)
+        assert isinstance(keys, DictKeys)
 
     def test_values_returns_dict_values_value(self):
         vals = Portfolio.events.values()
-        assert isinstance(vals, DictValuesForm)
+        assert isinstance(vals, DictValues)
 
     def test_items_returns_dict_items_value(self):
         items = Portfolio.events.items()
-        assert isinstance(items, DictItemsForm)
+        assert isinstance(items, DictItems)
 
     def test_result_returns_dict_value(self):
-        result = Portfolio.events._wrap_result(LiteralQuery("x"))
-        assert isinstance(result, DictForm)
+        result = Portfolio.events._wrap_result(Literal("x"))
+        assert isinstance(result, Dict)
 
 
 class TestKh57RefExecution:
@@ -421,15 +421,15 @@ class TestKh57ShapesRefWrapTypes:
 
     def test_keys_returns_dict_keys_value(self):
         keys = Portfolio.series.keys()
-        assert isinstance(keys, DictKeysForm)
+        assert isinstance(keys, DictKeys)
 
     def test_values_returns_dict_values_value(self):
         vals = Portfolio.series.values()
-        assert isinstance(vals, DictValuesForm)
+        assert isinstance(vals, DictValues)
 
     def test_items_returns_dict_items_value(self):
         items = Portfolio.series.items()
-        assert isinstance(items, DictItemsForm)
+        assert isinstance(items, DictItems)
 
 
 class TestKh57ShapesRefExecution:
@@ -525,7 +525,7 @@ class TestLazyTake:
 
     def test_take_returns_iterator_value(self):
         term = Take(Portfolio.metadata.keys(), 10)  # noqa: F821
-        assert isinstance(term, IteratorForm)
+        assert isinstance(term, Iterator)
 
 
 # ============================================================================
@@ -600,16 +600,16 @@ class TestEndToEnd:
         assert "eve" in builtins.set(result)
 
         # --- fn combinators ---
-        # SortedQuery is a StreamQuery — arun yields a stream; materialize it.
-        sorted_stream = (await arun(SortedQuery(Portfolio.metadata.keys()), ctx))[0]
+        # Sorted is a StreamQuery — arun yields a stream; materialize it.
+        sorted_stream = (await arun(Sorted(Portfolio.metadata.keys()), ctx))[0]
         sorted_keys = [k async for k in sorted_stream]
         assert sorted_keys == ["horizon", "risk", "sector", "strategy"]
 
-        key_count = (await arun(LenQuery(Portfolio.metadata.keys()), ctx))[0]
+        key_count = (await arun(Len(Portfolio.metadata.keys()), ctx))[0]
         assert key_count == 4
 
-        has_risk = (await arun(ContainsQuery(Portfolio.metadata.keys(), "risk"), ctx))[0]
+        has_risk = (await arun(Contains(Portfolio.metadata.keys(), "risk"), ctx))[0]
         assert has_risk is True
 
-        has_fake = (await arun(ContainsQuery(Portfolio.metadata.keys(), "fake"), ctx))[0]
+        has_fake = (await arun(Contains(Portfolio.metadata.keys(), "fake"), ctx))[0]
         assert has_fake is False

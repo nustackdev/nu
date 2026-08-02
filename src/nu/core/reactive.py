@@ -4,19 +4,19 @@ Five queries, one place. Every reactive subscription in Nu -- generic Form
 observation, tree-aware shape observation, and substrate-leaf observation --
 lives here so callers reach for one namespace regardless of what they hold.
 
-- ``OnChangeQuery``            -- ``view.on_change()``. Subscribe to any change
+- ``OnChange``            -- ``view.on_change()``. Subscribe to any change
                                   on the slot-0 Ref's view (collection- and
                                   view-tier Refs; the Ref must yield an
                                   observable view).
-- ``OnChildChangeQuery``       -- ``view.on_child_change(address)``. Subscribe
+- ``OnChildChange``       -- ``view.on_child_change(address)``. Subscribe
                                   to changes on one specific child of the
                                   slot-0 Ref's view. Slot 1 is the address.
-- ``OnChildrenChangeQuery``    -- ``view.on_children_change()``. Subscribe to
+- ``OnChildrenChange``    -- ``view.on_children_change()``. Subscribe to
                                   changes on all immediate children.
-- ``OnDescendantsChangeQuery`` -- ``view.on_descendants_change(*pattern)``.
+- ``OnDescendantsChange`` -- ``view.on_descendants_change(*pattern)``.
                                   Subscribe to descendants matching a pattern.
                                   Slots 1.. are the pattern segments.
-- ``OnPrimitiveChangeQuery``   -- leaf variant. A leaf Ref yields a scalar
+- ``OnPrimitiveChange``   -- leaf variant. A leaf Ref yields a scalar
                                   value, not a view, so it subscribes on its
                                   *parent* view's child-change channel keyed by
                                   the leaf's own address. Slot 0 is the leaf
@@ -63,11 +63,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "OnChangeQuery",
-    "OnChildChangeQuery",
-    "OnChildrenChangeQuery",
-    "OnDescendantsChangeQuery",
-    "OnPrimitiveChangeQuery",
+    "OnChange",
+    "OnChildChange",
+    "OnChildrenChange",
+    "OnDescendantsChange",
+    "OnPrimitiveChange",
 ]
 
 
@@ -78,14 +78,14 @@ _SYNC_UNSUPPORTED = (
 )
 
 
-class OnChangeQuery(ScalarQuery):
+class OnChange(ScalarQuery):
     """Subscribe to any change on the slot-0 Ref's view.
 
     Slot 0 must yield an observable view (a collection- or view-tier Ref).
     Returns the ``Subscription`` handle from ``observer.subscribe(options)``.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         del nid, children
 
         def thunk(rt: Runtime) -> object:
@@ -94,7 +94,7 @@ class OnChangeQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         del nid
         view_thunk = children[0]
 
@@ -109,7 +109,7 @@ class OnChangeQuery(ScalarQuery):
         return athunk
 
 
-class OnChildChangeQuery(ScalarQuery):
+class OnChildChange(ScalarQuery):
     """Subscribe to changes on one specific child of the slot-0 Ref's view.
 
     Children: ``[ref, address]``. Slot 0 must yield a view that supports
@@ -117,7 +117,7 @@ class OnChildChangeQuery(ScalarQuery):
     the child address.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         del nid, children
 
         def thunk(rt: Runtime) -> object:
@@ -126,7 +126,7 @@ class OnChildChangeQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         del nid
         view_thunk, address_thunk = children[0], children[1]
 
@@ -144,13 +144,13 @@ class OnChildChangeQuery(ScalarQuery):
         return athunk
 
 
-class OnChildrenChangeQuery(ScalarQuery):
+class OnChildrenChange(ScalarQuery):
     """Subscribe to changes on all immediate children of the slot-0 Ref's view.
 
     Slot 0 must yield a view that supports ``on_children_change()``.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         del nid, children
 
         def thunk(rt: Runtime) -> object:
@@ -159,7 +159,7 @@ class OnChildrenChangeQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         del nid
         view_thunk = children[0]
 
@@ -174,7 +174,7 @@ class OnChildrenChangeQuery(ScalarQuery):
         return athunk
 
 
-class OnDescendantsChangeQuery(ScalarQuery):
+class OnDescendantsChange(ScalarQuery):
     """Subscribe to descendants matching a pattern on the slot-0 Ref's view.
 
     Children: ``[ref, pattern_0, pattern_1, ...]``. At least one pattern child
@@ -182,7 +182,7 @@ class OnDescendantsChangeQuery(ScalarQuery):
     ``on_descendants_change(p0, p1, ...)``.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         del nid, children
 
         def thunk(rt: Runtime) -> object:
@@ -191,7 +191,7 @@ class OnDescendantsChangeQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         del nid
         view_thunk = children[0]
         pattern_thunks = children[1:]
@@ -215,10 +215,10 @@ class OnDescendantsChangeQuery(ScalarQuery):
         return athunk
 
 
-class OnPrimitiveChangeQuery(ScalarQuery):
+class OnPrimitiveChange(ScalarQuery):
     """Subscribe to changes at a leaf Ref's address within its parent view.
 
-    A leaf Ref yields a scalar value, not a view, so ``OnChangeQuery`` (which
+    A leaf Ref yields a scalar value, not a view, so ``OnChange`` (which
     calls ``view.on_change()``) does not apply. The subscription happens on the
     *parent* view's child-change channel keyed by the leaf's own address.
 
@@ -236,7 +236,7 @@ class OnPrimitiveChangeQuery(ScalarQuery):
         # nid.
         super().__init__(ref)
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         del nid, children
 
         def thunk(rt: Runtime) -> object:
@@ -245,7 +245,7 @@ class OnPrimitiveChangeQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         async def athunk(rt: Runtime) -> object:

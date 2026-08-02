@@ -13,7 +13,7 @@ and emits a thunk.
   no `command.py` / `flow.py` / `span.py`.
 - **Fabrics live in their own dir.** A Fabric is an addressable space where
   Refs live. The Context fabric is `nu/context/`: its Ref (`AttrRef`) in
-  `refs.py`, its write interactions (`SetCommand`, `DeleteCommand`) in
+  `refs.py`, its write interactions (`SetCmd`, `Delete`) in
   `interactions.py`. Other
   fabrics (virtuals, mem, substrate) follow the same shape. Anything that
   reads or writes a fabric belongs with that fabric, not in `core`.
@@ -74,7 +74,7 @@ class AttrRef(Ref):
 
 # context/interactions.py - the Command delegates to the ref, declares the slot.
 # It passes the ref's node id so the ref resolves its own address.
-class SetCommand(Command):
+class SetCmd(Command):
     _mutates = Declared(value=frozenset({0}), name="mutates")
     def compile(self, nid, children):
         ref = self.children[0]; value = children[1]

@@ -3,21 +3,21 @@
 from __future__ import annotations
 
 from nu.core.reactive import (
-    OnChangeQuery,
-    OnChildChangeQuery,
-    OnChildrenChangeQuery,
-    OnDescendantsChangeQuery,
+    OnChange,
+    OnChildChange,
+    OnChildrenChange,
+    OnDescendantsChange,
 )
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
-    EraseCommand,
-    ExistsQuery,
-    MissingQuery,
-    SetCommand,
+    Erase,
+    Exists,
+    Missing,
+    SetCmd,
 )
 from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
 from nu.domains.shape.refs.mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
-from nu.forms.primitives import IntForm
+from nu.forms.primitives import Int
 
 
 class MyShape(Shape):
@@ -71,17 +71,17 @@ def test_mapping_ref_same_key_produces_equal_structure():
 
 def test_mapping_ref_exists_returns_exists_query():
     m = MappingRef("my_map")
-    assert isinstance(m.exists(), ExistsQuery)
+    assert isinstance(m.exists(), Exists)
 
 
 def test_mapping_ref_missing_returns_missing_query():
     m = MappingRef("my_map")
-    assert isinstance(m.missing(), MissingQuery)
+    assert isinstance(m.missing(), Missing)
 
 
 def test_mapping_ref_len_returns_int_form():
     m = MappingRef("my_map")
-    assert isinstance(m.len(), IntForm)
+    assert isinstance(m.len(), Int)
 
 
 # ---------------------------------------------------------------------------
@@ -111,19 +111,19 @@ def test_mutable_mapping_ref_has_set():
 
 def test_mutable_mapping_ref_set_returns_set_command():
     m = MutableMappingRef("my_map")
-    assert isinstance(m.set({"a": 1}), SetCommand)
+    assert isinstance(m.set({"a": 1}), SetCmd)
 
 
 def test_mutable_mapping_ref_erase_returns_erase_command():
     m = MutableMappingRef("my_map")
-    assert isinstance(m.erase(), EraseCommand)
+    assert isinstance(m.erase(), Erase)
 
 
 def test_mutable_mapping_ref_inherits_exists_missing_len():
     m = MutableMappingRef("my_map")
-    assert isinstance(m.exists(), ExistsQuery)
-    assert isinstance(m.missing(), MissingQuery)
-    assert isinstance(m.len(), IntForm)
+    assert isinstance(m.exists(), Exists)
+    assert isinstance(m.missing(), Missing)
+    assert isinstance(m.len(), Int)
 
 
 # ---------------------------------------------------------------------------
@@ -148,25 +148,25 @@ def test_reactive_mapping_ref_child_parent_is_self():
 
 def test_reactive_mapping_ref_on_change_returns_on_change_action():
     m = ReactiveMappingRef("my_map")
-    assert isinstance(m.on_change(), OnChangeQuery)
+    assert isinstance(m.on_change(), OnChange)
 
 
 def test_reactive_mapping_ref_on_child_change_returns_action():
     m = ReactiveMappingRef("my_map")
-    assert isinstance(m.on_child_change("key"), OnChildChangeQuery)
+    assert isinstance(m.on_child_change("key"), OnChildChange)
 
 
 def test_reactive_mapping_ref_on_children_change_returns_action():
     m = ReactiveMappingRef("my_map")
-    assert isinstance(m.on_children_change(), OnChildrenChangeQuery)
+    assert isinstance(m.on_children_change(), OnChildrenChange)
 
 
 def test_reactive_mapping_ref_on_descendants_change_returns_action():
     m = ReactiveMappingRef("my_map")
-    assert isinstance(m.on_descendants_change("a", "b"), OnDescendantsChangeQuery)
+    assert isinstance(m.on_descendants_change("a", "b"), OnDescendantsChange)
 
 
 def test_reactive_mapping_ref_inherits_set_erase():
     m = ReactiveMappingRef("my_map")
-    assert isinstance(m.set({}), SetCommand)
-    assert isinstance(m.erase(), EraseCommand)
+    assert isinstance(m.set({}), SetCmd)
+    assert isinstance(m.erase(), Erase)

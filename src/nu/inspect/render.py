@@ -33,7 +33,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 from typing import Literal as TLiteral
 
-from nu.core.literal import LiteralQuery
+from nu.core.literal import Literal
 from nu.lang import Action, Command, Flow, Query, Ref, Span
 
 
@@ -68,7 +68,7 @@ VALUE_DOT = f"{GREEN}●{RESET}"
 
 
 def _is_literal(node: Nu) -> bool:
-    return isinstance(node, LiteralQuery)
+    return isinstance(node, Literal)
 
 
 def _is_ref(node: Nu) -> bool:
@@ -135,7 +135,7 @@ def _ref_label(node: Ref) -> str:
     return cls
 
 
-def _literal_label(node: LiteralQuery) -> str:
+def _literal_label(node: Literal) -> str:
     cls = type(node).__name__
     if not node._children:
         return f"{cls}({node._payload.get('value')!r})"
@@ -145,7 +145,7 @@ def _literal_label(node: LiteralQuery) -> str:
 def _default_label(node: Nu, *, color: bool = True) -> str:
     if isinstance(node, Ref):
         text = _ref_label(node)
-    elif isinstance(node, LiteralQuery):
+    elif isinstance(node, Literal):
         text = _literal_label(node)
     else:
         text = type(node).__name__

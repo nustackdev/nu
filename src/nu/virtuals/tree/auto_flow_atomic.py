@@ -44,9 +44,11 @@ def _write_positions(node: object) -> frozenset[int]:
     return value if isinstance(value, frozenset) else frozenset(value)
 
 
-def _dominates(broader: "Hashable | None", specific: "Hashable | None") -> bool:
-    """True iff ``broader`` (a brace scope or the pass scope) covers
-    everything ``specific`` (a ref's root shape or the pass scope) refers to.
+def _dominates(broader: Hashable | None, specific: Hashable | None) -> bool:
+    """True iff ``broader`` covers everything ``specific`` refers to.
+
+    ``broader`` is a brace scope or the pass scope; ``specific`` is a
+    ref's root shape or the pass scope.
 
     A universal scope (``None``) dominates any specific scope; a concrete
     scope dominates only itself.
@@ -54,18 +56,19 @@ def _dominates(broader: "Hashable | None", specific: "Hashable | None") -> bool:
     return broader is None or broader is specific
 
 
-def _covered_by_enclosing(enclosing: tuple, ref_scope: "Hashable") -> bool:
+def _covered_by_enclosing(enclosing: tuple, ref_scope: Hashable) -> bool:
     return any(_dominates(s, ref_scope) for s in enclosing)
 
 
 def _iter_uncovered(
     node: object,
-    pass_scope: "Hashable | None",
+    pass_scope: Hashable | None,
     enclosing: tuple,
     _top: bool = True,
-) -> "Iterator[tuple[object, bool]]":
-    """Yield ``(ref, is_write)`` for each virtuals ref in the subtree that
-    the pass cares about and no enclosing brace covers.
+) -> Iterator[tuple[object, bool]]:
+    """Yield ``(ref, is_write)`` for uncovered virtuals refs in a subtree.
+
+    Only refs the pass cares about, that no enclosing brace covers.
 
     Refs are classified WRITE iff they sit in a mutation slot of an
     enclosing op. A top-level Ref (a subtree that IS a Ref — e.g. the
@@ -83,9 +86,7 @@ def _iter_uncovered(
         return
     if _top and isinstance(node, _VirtualsRef):
         ref_scope = node._root_shape
-        if _dominates(pass_scope, ref_scope) and not _covered_by_enclosing(
-            enclosing, ref_scope
-        ):
+        if _dominates(pass_scope, ref_scope) and not _covered_by_enclosing(enclosing, ref_scope):
             yield node, False
     mutates = _write_positions(node)
     for slot, child in enumerate(node._children):
@@ -98,25 +99,19 @@ def _iter_uncovered(
         yield from _iter_uncovered(child, pass_scope, enclosing, _top=False)
 
 
-def _has_uncovered_ref(
-    node: object, pass_scope: "Hashable | None", enclosing: tuple
-) -> bool:
+def _has_uncovered_ref(node: object, pass_scope: Hashable | None, enclosing: tuple) -> bool:
     return next(_iter_uncovered(node, pass_scope, enclosing), None) is not None
 
 
-def _has_uncovered_write(
-    node: object, pass_scope: "Hashable | None", enclosing: tuple
-) -> bool:
+def _has_uncovered_write(node: object, pass_scope: Hashable | None, enclosing: tuple) -> bool:
     return any(is_w for _, is_w in _iter_uncovered(node, pass_scope, enclosing))
 
 
-def _wrap_kwargs(pass_scope: "Hashable | None") -> dict:
+def _wrap_kwargs(pass_scope: Hashable | None) -> dict:
     return {"scope": pass_scope} if pass_scope is not None else {}
 
 
-def _wrap_flow_child(
-    child: "Nu", pass_scope: "Hashable | None", enclosing: tuple
-) -> "Nu":
+def _wrap_flow_child(child: Nu, pass_scope: Hashable | None, enclosing: tuple) -> Nu:
     """Decide how a Flow's direct child gets wrapped."""
     if isinstance(child, Flow):
         # Flow child handles its own children via the recursive walk.
@@ -140,9 +135,7 @@ def _wrap_flow_child(
     return Snapshot(child, **_wrap_kwargs(pass_scope))
 
 
-def _walk(
-    node: "Nu", pass_scope: "Hashable | None", enclosing: tuple
-) -> "Nu":
+def _walk(node: Nu, pass_scope: Hashable | None, enclosing: tuple) -> Nu:
     if isinstance(node, (Snapshot, Transaction)):
         if _dominates(node.scope, pass_scope):
             # Brace covers everything the pass cares about — skip descent.
@@ -157,22 +150,18 @@ def _walk(
         return node
 
     new_children = tuple(_walk(c, pass_scope, enclosing) for c in node._children)
-    changed = any(
-        n is not o for n, o in zip(new_children, node._children, strict=True)
-    )
+    changed = any(n is not o for n, o in zip(new_children, node._children, strict=True))
     new_node = node._with_children(*new_children) if changed else node
 
     if isinstance(new_node, Flow):
-        wrapped = tuple(
-            _wrap_flow_child(c, pass_scope, enclosing) for c in new_node._children
-        )
+        wrapped = tuple(_wrap_flow_child(c, pass_scope, enclosing) for c in new_node._children)
         if any(w is not c for w, c in zip(wrapped, new_node._children, strict=True)):
             return new_node._with_children(*wrapped)
 
     return new_node
 
 
-def auto_flow_atomic(tree: "Nu", scope: "Hashable | None" = None) -> "Nu":
+def auto_flow_atomic(tree: Nu, scope: Hashable | None = None) -> Nu:
     """Wrap virtuals-touching Flow branches with Snapshot / Transaction.
 
     Walks bottom-up. At each Flow, replaces every non-Flow direct child by:

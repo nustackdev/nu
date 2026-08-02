@@ -36,7 +36,7 @@ from .std import (
 
 
 # --- deferred ----------------------------------------------------------------
-# from .jqueue import JQueueForm, JQueueRef, QueueClosed   # deferred pass
+# from .jqueue import JQueue, JQueueRef, QueueClosed   # deferred pass
 
 
 __all__ = [

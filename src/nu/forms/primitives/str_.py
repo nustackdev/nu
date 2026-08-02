@@ -1,4 +1,4 @@
-"""StrForm - string interface."""
+"""Str - string interface."""
 
 from __future__ import annotations
 
@@ -10,473 +10,473 @@ from nu.lang import Form, TypedNu
 if TYPE_CHECKING:
     from nu.lang import BoolArg, DictArg, IntArg, StrArg
 
-    from ..collections.list_ import ListForm
-    from ..collections.tuple_ import TupleForm
-    from .bool_ import BoolForm
-    from .bytes_ import BytesForm
-    from .int_ import IntForm
+    from ..collections.list_ import List
+    from ..collections.tuple_ import Tuple
+    from .bool_ import Bool
+    from .bytes_ import Bytes
+    from .int_ import Int
 
 
 __all__ = [
-    "StrForm",
+    "Str",
 ]
 
 
-class StrForm(Form, TypedNu[str]):
+class Str(Form, TypedNu[str]):
     """String interface. Addable + sliceable + comparable + logical + string methods."""
 
     # =========================================================================
     # ARITHMETIC (concatenation)
     # =========================================================================
 
-    def __add__(self, other: StrArg) -> StrForm:
-        from nu.core import AddQuery
+    def __add__(self, other: StrArg) -> Str:
+        from nu.core import Add
 
-        return StrForm(AddQuery(self, other))
+        return Str(Add(self, other))
 
-    def __radd__(self, other: StrArg) -> StrForm:
-        from nu.core import AddQuery
+    def __radd__(self, other: StrArg) -> Str:
+        from nu.core import Add
 
-        return StrForm(AddQuery(other, self))
+        return Str(Add(other, self))
 
     # =========================================================================
     # INDEXING / SLICING
     # =========================================================================
 
     @overload
-    def __getitem__(self, key: IntArg) -> StrForm: ...
+    def __getitem__(self, key: IntArg) -> Str: ...
     @overload
-    def __getitem__(self, key: slice) -> StrForm: ...
-    def __getitem__(self, key: IntArg | slice) -> StrForm:
-        from nu.core import GetItemQuery, SliceQuery
+    def __getitem__(self, key: slice) -> Str: ...
+    def __getitem__(self, key: IntArg | slice) -> Str:
+        from nu.core import GetItem, Slice
 
         if isinstance(key, slice):
-            return StrForm(GetItemQuery(self, SliceQuery(key.start, key.stop, key.step)))
-        return StrForm(GetItemQuery(self, key))
+            return Str(GetItem(self, Slice(key.start, key.stop, key.step)))
+        return Str(GetItem(self, key))
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: StrArg) -> BoolForm:
-        from nu.core import GtQuery
+    def __gt__(self, other: StrArg) -> Bool:
+        from nu.core import Gt
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: StrArg) -> BoolForm:
-        from nu.core import LtQuery
+    def __lt__(self, other: StrArg) -> Bool:
+        from nu.core import Lt
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: StrArg) -> BoolForm:
-        from nu.core import GeQuery
+    def __ge__(self, other: StrArg) -> Bool:
+        from nu.core import Ge
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: StrArg) -> BoolForm:
-        from nu.core import LeQuery
+    def __le__(self, other: StrArg) -> Bool:
+        from nu.core import Le
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
     __hash__ = object.__hash__
 
-    def __eq__(self, other: StrArg) -> BoolForm:  # type: ignore[override]
-        from nu.core import EqQuery
+    def __eq__(self, other: StrArg) -> Bool:  # type: ignore[override]
+        from nu.core import Eq
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def __ne__(self, other: StrArg) -> BoolForm:  # type: ignore[override]
-        from nu.core import NeQuery
+    def __ne__(self, other: StrArg) -> Bool:  # type: ignore[override]
+        from nu.core import Ne
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))
 
-    def is_(self, other: StrArg) -> BoolForm:
+    def is_(self, other: StrArg) -> Bool:
         """Identity comparison: self is other."""
-        from nu.core import IsQuery
+        from nu.core import Is
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(IsQuery(self, other))
+        return Bool(Is(self, other))
 
     # =========================================================================
     # LOGICAL
     # =========================================================================
 
-    def and_(self, other: StrArg) -> BoolForm:
+    def and_(self, other: StrArg) -> Bool:
         """Logical AND: self AND other."""
-        from nu.core import AndQuery
+        from nu.core import And
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(AndQuery(self, other))
+        return Bool(And(self, other))
 
-    def or_(self, other: StrArg) -> BoolForm:
+    def or_(self, other: StrArg) -> Bool:
         """Logical OR: self OR other."""
-        from nu.core import OrQuery
+        from nu.core import Or
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(OrQuery(self, other))
+        return Bool(Or(self, other))
 
-    def not_(self) -> BoolForm:
+    def not_(self) -> Bool:
         """Logical NOT: NOT self."""
-        from nu.core import NotQuery
+        from nu.core import Not
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(NotQuery(self))
+        return Bool(Not(self))
 
-    def bool_(self) -> BoolForm:
+    def bool_(self) -> Bool:
         """Convert to boolean."""
-        from nu.core import BoolQuery
+        from nu.core import ToBool
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(BoolQuery(self))
+        return Bool(ToBool(self))
 
     # =========================================================================
     # CASE TRANSFORMATION
     # =========================================================================
 
-    def upper(self) -> StrForm:
+    def upper(self) -> Str:
         """Convert to uppercase."""
-        from .str_interactions import UpperQuery
+        from .str_interactions import Upper
 
-        return StrForm(UpperQuery(self))
+        return Str(Upper(self))
 
-    def lower(self) -> StrForm:
+    def lower(self) -> Str:
         """Convert to lowercase."""
-        from .str_interactions import LowerQuery
+        from .str_interactions import Lower
 
-        return StrForm(LowerQuery(self))
+        return Str(Lower(self))
 
-    def title(self) -> StrForm:
+    def title(self) -> Str:
         """Convert to title case."""
-        from .str_interactions import TitleQuery
+        from .str_interactions import Title
 
-        return StrForm(TitleQuery(self))
+        return Str(Title(self))
 
-    def capitalize(self) -> StrForm:
+    def capitalize(self) -> Str:
         """Capitalize first character."""
-        from .str_interactions import CapitalizeQuery
+        from .str_interactions import Capitalize
 
-        return StrForm(CapitalizeQuery(self))
+        return Str(Capitalize(self))
 
-    def swapcase(self) -> StrForm:
+    def swapcase(self) -> Str:
         """Swap case of all characters."""
-        from .str_interactions import SwapCaseQuery
+        from .str_interactions import SwapCase
 
-        return StrForm(SwapCaseQuery(self))
+        return Str(SwapCase(self))
 
-    def casefold(self) -> StrForm:
+    def casefold(self) -> Str:
         """Casefold for caseless matching."""
-        from .str_interactions import CasefoldQuery
+        from .str_interactions import Casefold
 
-        return StrForm(CasefoldQuery(self))
+        return Str(Casefold(self))
 
     # =========================================================================
     # STRIPPING
     # =========================================================================
 
-    def strip(self, chars: StrArg | None = None) -> StrForm:
+    def strip(self, chars: StrArg | None = None) -> Str:
         """Strip leading and trailing whitespace or chars."""
-        from .str_interactions import StripQuery
+        from .str_interactions import Strip
 
-        return StrForm(StripQuery(self, chars))
+        return Str(Strip(self, chars))
 
-    def lstrip(self, chars: StrArg | None = None) -> StrForm:
+    def lstrip(self, chars: StrArg | None = None) -> Str:
         """Strip leading whitespace or chars."""
-        from .str_interactions import LStripQuery
+        from .str_interactions import LStrip
 
-        return StrForm(LStripQuery(self, chars))
+        return Str(LStrip(self, chars))
 
-    def rstrip(self, chars: StrArg | None = None) -> StrForm:
+    def rstrip(self, chars: StrArg | None = None) -> Str:
         """Strip trailing whitespace or chars."""
-        from .str_interactions import RStripQuery
+        from .str_interactions import RStrip
 
-        return StrForm(RStripQuery(self, chars))
+        return Str(RStrip(self, chars))
 
     # =========================================================================
     # SPLITTING
     # =========================================================================
 
-    def split(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListForm:
+    def split(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> List:
         """Split string into list on sep."""
-        from ..collections.list_ import ListForm
-        from .str_interactions import SplitQuery
+        from ..collections.list_ import List
+        from .str_interactions import Split
 
-        return ListForm(SplitQuery(self, sep, maxsplit))
+        return List(Split(self, sep, maxsplit))
 
-    def rsplit(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> ListForm:
+    def rsplit(self, sep: StrArg | None = None, maxsplit: IntArg = -1) -> List:
         """Right-split string into list on sep."""
-        from ..collections.list_ import ListForm
-        from .str_interactions import RSplitQuery
+        from ..collections.list_ import List
+        from .str_interactions import RSplit
 
-        return ListForm(RSplitQuery(self, sep, maxsplit))
+        return List(RSplit(self, sep, maxsplit))
 
-    def splitlines(self, keepends: BoolArg = False) -> ListForm:
+    def splitlines(self, keepends: BoolArg = False) -> List:
         """Split at line boundaries into a list."""
-        from ..collections.list_ import ListForm
-        from .str_interactions import SplitLinesQuery
+        from ..collections.list_ import List
+        from .str_interactions import SplitLines
 
-        return ListForm(SplitLinesQuery(self, keepends))
+        return List(SplitLines(self, keepends))
 
-    def partition(self, sep: StrArg) -> TupleForm:
+    def partition(self, sep: StrArg) -> Tuple:
         """Split around first occurrence of sep into a 3-tuple."""
-        from ..collections.tuple_ import TupleForm
-        from .str_interactions import PartitionQuery
+        from ..collections.tuple_ import Tuple
+        from .str_interactions import Partition
 
-        return TupleForm(PartitionQuery(self, sep))
+        return Tuple(Partition(self, sep))
 
-    def rpartition(self, sep: StrArg) -> TupleForm:
+    def rpartition(self, sep: StrArg) -> Tuple:
         """Split around last occurrence of sep into a 3-tuple."""
-        from ..collections.tuple_ import TupleForm
-        from .str_interactions import RPartitionQuery
+        from ..collections.tuple_ import Tuple
+        from .str_interactions import RPartition
 
-        return TupleForm(RPartitionQuery(self, sep))
+        return Tuple(RPartition(self, sep))
 
     # =========================================================================
     # SEARCHING
     # =========================================================================
 
-    def find(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntForm:
+    def find(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> Int:
         """Find substring index: str.find(sub, start, end)."""
-        from .int_ import IntForm
-        from .str_interactions import FindQuery
+        from .int_ import Int
+        from .str_interactions import Find
 
-        return IntForm(FindQuery(self, sub, start, end))
+        return Int(Find(self, sub, start, end))
 
-    def rfind(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntForm:
+    def rfind(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> Int:
         """Find substring index from right: str.rfind(sub, start, end)."""
-        from .int_ import IntForm
-        from .str_interactions import RFindQuery
+        from .int_ import Int
+        from .str_interactions import RFind
 
-        return IntForm(RFindQuery(self, sub, start, end))
+        return Int(RFind(self, sub, start, end))
 
-    def index(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntForm:
+    def index(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> Int:
         """Find substring index, error if absent: str.index(sub, start, end)."""
-        from .int_ import IntForm
-        from .str_interactions import IndexQuery
+        from .int_ import Int
+        from .str_interactions import Index
 
-        return IntForm(IndexQuery(self, sub, start, end))
+        return Int(Index(self, sub, start, end))
 
-    def rindex(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> IntForm:
+    def rindex(self, sub: StrArg, start: IntArg = 0, end: IntArg | None = None) -> Int:
         """Find substring index from right, error if absent: str.rindex(sub, start, end)."""
-        from .int_ import IntForm
-        from .str_interactions import RIndexQuery
+        from .int_ import Int
+        from .str_interactions import RIndex
 
-        return IntForm(RIndexQuery(self, sub, start, end))
+        return Int(RIndex(self, sub, start, end))
 
-    def count_substring(self, sub: StrArg) -> IntForm:
+    def count_substring(self, sub: StrArg) -> Int:
         """Count non-overlapping occurrences of sub."""
-        from .int_ import IntForm
-        from .str_interactions import CountSubstringQuery
+        from .int_ import Int
+        from .str_interactions import CountSubstring
 
-        return IntForm(CountSubstringQuery(self, sub))
+        return Int(CountSubstring(self, sub))
 
     # =========================================================================
     # TESTING
     # =========================================================================
 
-    def startswith(self, prefix: StrArg) -> BoolForm:
+    def startswith(self, prefix: StrArg) -> Bool:
         """Check if string starts with prefix."""
-        from .bool_ import BoolForm
-        from .str_interactions import StartsWithQuery
+        from .bool_ import Bool
+        from .str_interactions import StartsWith
 
-        return BoolForm(StartsWithQuery(self, prefix))
+        return Bool(StartsWith(self, prefix))
 
-    def endswith(self, suffix: StrArg) -> BoolForm:
+    def endswith(self, suffix: StrArg) -> Bool:
         """Check if string ends with suffix."""
-        from .bool_ import BoolForm
-        from .str_interactions import EndsWithQuery
+        from .bool_ import Bool
+        from .str_interactions import EndsWith
 
-        return BoolForm(EndsWithQuery(self, suffix))
+        return Bool(EndsWith(self, suffix))
 
-    def isdigit(self) -> BoolForm:
+    def isdigit(self) -> Bool:
         """Check if all characters are digits."""
-        from .bool_ import BoolForm
-        from .str_interactions import IsDigitQuery
+        from .bool_ import Bool
+        from .str_interactions import IsDigit
 
-        return BoolForm(IsDigitQuery(self))
+        return Bool(IsDigit(self))
 
-    def isalpha(self) -> BoolForm:
+    def isalpha(self) -> Bool:
         """Check if all characters are alphabetic."""
-        from .bool_ import BoolForm
-        from .str_interactions import IsAlphaQuery
+        from .bool_ import Bool
+        from .str_interactions import IsAlpha
 
-        return BoolForm(IsAlphaQuery(self))
+        return Bool(IsAlpha(self))
 
-    def isalnum(self) -> BoolForm:
+    def isalnum(self) -> Bool:
         """Check if all characters are alphanumeric."""
-        from .bool_ import BoolForm
-        from .str_interactions import IsAlnumQuery
+        from .bool_ import Bool
+        from .str_interactions import IsAlnum
 
-        return BoolForm(IsAlnumQuery(self))
+        return Bool(IsAlnum(self))
 
-    def isspace(self) -> BoolForm:
+    def isspace(self) -> Bool:
         """Check if all characters are whitespace."""
-        from .bool_ import BoolForm
-        from .str_interactions import IsSpaceQuery
+        from .bool_ import Bool
+        from .str_interactions import IsSpace
 
-        return BoolForm(IsSpaceQuery(self))
+        return Bool(IsSpace(self))
 
-    def isnumeric(self) -> BoolForm:
+    def isnumeric(self) -> Bool:
         """Check if all characters are numeric."""
-        from .bool_ import BoolForm
-        from .str_interactions import IsNumericQuery
+        from .bool_ import Bool
+        from .str_interactions import IsNumeric
 
-        return BoolForm(IsNumericQuery(self))
+        return Bool(IsNumeric(self))
 
-    def isdecimal(self) -> BoolForm:
+    def isdecimal(self) -> Bool:
         """Check if all characters are decimal."""
-        from .bool_ import BoolForm
-        from .str_interactions import IsDecimalQuery
+        from .bool_ import Bool
+        from .str_interactions import IsDecimal
 
-        return BoolForm(IsDecimalQuery(self))
+        return Bool(IsDecimal(self))
 
-    def isidentifier(self) -> BoolForm:
+    def isidentifier(self) -> Bool:
         """Check if string is a valid identifier."""
-        from .bool_ import BoolForm
-        from .str_interactions import IsIdentifierQuery
+        from .bool_ import Bool
+        from .str_interactions import IsIdentifier
 
-        return BoolForm(IsIdentifierQuery(self))
+        return Bool(IsIdentifier(self))
 
-    def isprintable(self) -> BoolForm:
+    def isprintable(self) -> Bool:
         """Check if all characters are printable."""
-        from .bool_ import BoolForm
-        from .str_interactions import IsPrintableQuery
+        from .bool_ import Bool
+        from .str_interactions import IsPrintable
 
-        return BoolForm(IsPrintableQuery(self))
+        return Bool(IsPrintable(self))
 
-    def istitle(self) -> BoolForm:
+    def istitle(self) -> Bool:
         """Check if string is titlecased."""
-        from .bool_ import BoolForm
-        from .str_interactions import IsTitleQuery
+        from .bool_ import Bool
+        from .str_interactions import IsTitle
 
-        return BoolForm(IsTitleQuery(self))
+        return Bool(IsTitle(self))
 
-    def isupper(self) -> BoolForm:
+    def isupper(self) -> Bool:
         """Check if all cased characters are uppercase."""
-        from .bool_ import BoolForm
-        from .str_interactions import IsUpperQuery
+        from .bool_ import Bool
+        from .str_interactions import IsUpper
 
-        return BoolForm(IsUpperQuery(self))
+        return Bool(IsUpper(self))
 
-    def islower(self) -> BoolForm:
+    def islower(self) -> Bool:
         """Check if all cased characters are lowercase."""
-        from .bool_ import BoolForm
-        from .str_interactions import IsLowerQuery
+        from .bool_ import Bool
+        from .str_interactions import IsLower
 
-        return BoolForm(IsLowerQuery(self))
+        return Bool(IsLower(self))
 
-    def isascii(self) -> BoolForm:
+    def isascii(self) -> Bool:
         """Check if all characters are ASCII (empty string is True)."""
-        from .bool_ import BoolForm
-        from .str_interactions import IsAsciiQuery
+        from .bool_ import Bool
+        from .str_interactions import IsAscii
 
-        return BoolForm(IsAsciiQuery(self))
+        return Bool(IsAscii(self))
 
     # =========================================================================
     # PADDING
     # =========================================================================
 
-    def center(self, width: IntArg, fillchar: StrArg = " ") -> StrForm:
+    def center(self, width: IntArg, fillchar: StrArg = " ") -> Str:
         """Center string in field of given width."""
-        from .str_interactions import CenterQuery
+        from .str_interactions import Center
 
-        return StrForm(CenterQuery(self, width, fillchar))
+        return Str(Center(self, width, fillchar))
 
-    def ljust(self, width: IntArg, fillchar: StrArg = " ") -> StrForm:
+    def ljust(self, width: IntArg, fillchar: StrArg = " ") -> Str:
         """Left-justify string in field of given width."""
-        from .str_interactions import LJustQuery
+        from .str_interactions import LJust
 
-        return StrForm(LJustQuery(self, width, fillchar))
+        return Str(LJust(self, width, fillchar))
 
-    def rjust(self, width: IntArg, fillchar: StrArg = " ") -> StrForm:
+    def rjust(self, width: IntArg, fillchar: StrArg = " ") -> Str:
         """Right-justify string in field of given width."""
-        from .str_interactions import RJustQuery
+        from .str_interactions import RJust
 
-        return StrForm(RJustQuery(self, width, fillchar))
+        return Str(RJust(self, width, fillchar))
 
-    def zfill(self, width: IntArg) -> StrForm:
+    def zfill(self, width: IntArg) -> Str:
         """Zero-fill string to given width."""
-        from .str_interactions import ZFillQuery
+        from .str_interactions import ZFill
 
-        return StrForm(ZFillQuery(self, width))
+        return Str(ZFill(self, width))
 
-    def expandtabs(self, tabsize: IntArg = 8) -> StrForm:
+    def expandtabs(self, tabsize: IntArg = 8) -> Str:
         """Expand tabs to spaces using the given tab size."""
-        from .str_interactions import ExpandTabsQuery
+        from .str_interactions import ExpandTabs
 
-        return StrForm(ExpandTabsQuery(self, tabsize))
+        return Str(ExpandTabs(self, tabsize))
 
     # =========================================================================
     # REPLACING
     # =========================================================================
 
-    def replace(self, old: StrArg, new: StrArg, count: IntArg = -1) -> StrForm:
+    def replace(self, old: StrArg, new: StrArg, count: IntArg = -1) -> Str:
         """Replace occurrences of old with new."""
-        from .str_interactions import ReplaceQuery
+        from .str_interactions import Replace
 
-        return StrForm(ReplaceQuery(self, old, new, count))
+        return Str(Replace(self, old, new, count))
 
-    def removeprefix(self, prefix: StrArg) -> StrForm:
+    def removeprefix(self, prefix: StrArg) -> Str:
         """Remove the given prefix if present."""
-        from .str_interactions import RemovePrefixQuery
+        from .str_interactions import RemovePrefix
 
-        return StrForm(RemovePrefixQuery(self, prefix))
+        return Str(RemovePrefix(self, prefix))
 
-    def removesuffix(self, suffix: StrArg) -> StrForm:
+    def removesuffix(self, suffix: StrArg) -> Str:
         """Remove the given suffix if present."""
-        from .str_interactions import RemoveSuffixQuery
+        from .str_interactions import RemoveSuffix
 
-        return StrForm(RemoveSuffixQuery(self, suffix))
+        return Str(RemoveSuffix(self, suffix))
 
-    def translate(self, table: DictArg) -> StrForm:
-        """MapQuery characters through a translation table."""
-        from .str_interactions import TranslateQuery
+    def translate(self, table: DictArg) -> Str:
+        """Map characters through a translation table."""
+        from .str_interactions import Translate
 
-        return StrForm(TranslateQuery(self, table))
+        return Str(Translate(self, table))
 
     # =========================================================================
     # FORMATTING
     # =========================================================================
 
-    def format_map(self, mapping: DictArg) -> StrForm:
+    def format_map(self, mapping: DictArg) -> Str:
         """Format the string using a mapping of field values."""
-        from .str_interactions import FormatMapQuery
+        from .str_interactions import FormatMap
 
-        return StrForm(FormatMapQuery(self, mapping))
+        return Str(FormatMap(self, mapping))
 
     # =========================================================================
     # ENCODING
     # =========================================================================
 
-    def encode(self, encoding: StrArg = "utf-8") -> BytesForm:
+    def encode(self, encoding: StrArg = "utf-8") -> Bytes:
         """Encode string to bytes."""
-        from .bytes_ import BytesForm
-        from .str_interactions import EncodeQuery
+        from .bytes_ import Bytes
+        from .str_interactions import Encode
 
-        return BytesForm(EncodeQuery(self, encoding))
+        return Bytes(Encode(self, encoding))
 
     # =========================================================================
     # JOINING
     # =========================================================================
 
-    def join(self, iterable: object) -> StrForm:
+    def join(self, iterable: object) -> Str:
         """Join iterable elements with this string as separator."""
-        from .str_interactions import JoinQuery
+        from .str_interactions import Join
 
-        return StrForm(JoinQuery(self, iterable))
+        return Str(Join(self, iterable))

@@ -1,78 +1,68 @@
 """Tests for the transform atoms (stream-to-stream lenses).
 
-MapQuery and FilterQuery bind each item under a name (a child, default "item") and
-evaluate a Nu child against it, read via AttrRef. SortedQuery / FlattenQuery / UniqueQuery are
+Map and Filter bind each item under a name (a child, default "item") and
+evaluate a Nu child against it, read via AttrRef. Sorted / Flatten / Unique are
 single-source lenses. Coverage runs real programs through ``run``.
 """
 
 from __future__ import annotations
 
 from nu.context import AttrRef
-from nu.core import CollectQuery, FilterQuery, IterQuery, LiteralQuery, LtQuery, MapQuery, MulQuery
-from nu.core.transform import FlattenQuery, SortedQuery, UniqueQuery
+from nu.core import Collect, Filter, Iter, Literal, Lt, Map, Mul
+from nu.core.transform import Flatten, Sorted, Unique
 from nu.lang import LAWS, Attr, Cardinality, compile, validate
 from nu.lang.helpers import run
 
 
-# --- single-source lenses (SortedQuery / FlattenQuery / UniqueQuery) --------------------
+# --- single-source lenses (Sorted / Flatten / Unique) --------------------
 
 
 def test_sorted_orders_its_source():
-    value, _ = run(CollectQuery(SortedQuery(IterQuery(LiteralQuery([3, 1, 2])))))
+    value, _ = run(Collect(Sorted(Iter(Literal([3, 1, 2])))))
     assert value == [1, 2, 3]
 
 
 def test_flatten_concatenates_one_level():
-    value, _ = run(CollectQuery(FlattenQuery(IterQuery(LiteralQuery([[1, 2], [3], [4, 5]])))))
+    value, _ = run(Collect(Flatten(Iter(Literal([[1, 2], [3], [4, 5]])))))
     assert value == [1, 2, 3, 4, 5]
 
 
 def test_unique_drops_repeats_first_seen_order():
-    value, _ = run(CollectQuery(UniqueQuery(IterQuery(LiteralQuery([1, 2, 1, 3, 2])))))
+    value, _ = run(Collect(Unique(Iter(Literal([1, 2, 1, 3, 2])))))
     assert value == [1, 2, 3]
 
 
 def test_a_single_source_lens_is_a_stream_and_validates():
-    program = compile(SortedQuery(LiteralQuery([3, 1, 2])))
+    program = compile(Sorted(Literal([3, 1, 2])))
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.STREAM
     assert validate(program, *LAWS) is program
 
 
-# --- MapQuery -----------------------------------------------------------------
+# --- Map -----------------------------------------------------------------
 
 
 def test_map_is_a_stream():
-    program = compile(
-        MapQuery(IterQuery(LiteralQuery([1, 2, 3])), MulQuery(AttrRef("item"), LiteralQuery(10)))
-    )
+    program = compile(Map(Iter(Literal([1, 2, 3])), Mul(AttrRef("item"), Literal(10))))
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.STREAM
 
 
 def test_map_applies_its_transform_per_item():
-    tree = CollectQuery(
-        MapQuery(IterQuery(LiteralQuery([1, 2, 3])), MulQuery(AttrRef("item"), LiteralQuery(10)))
-    )
+    tree = Collect(Map(Iter(Literal([1, 2, 3])), Mul(AttrRef("item"), Literal(10))))
     value, _ = run(tree)
     assert value == [10, 20, 30]
 
 
 def test_map_honors_a_custom_item_name():
-    tree = CollectQuery(
-        MapQuery(IterQuery(LiteralQuery([1, 2])), MulQuery(AttrRef("x"), LiteralQuery(2)), key="x")
-    )
+    tree = Collect(Map(Iter(Literal([1, 2])), Mul(AttrRef("x"), Literal(2)), key="x"))
     value, _ = run(tree)
     assert value == [2, 4]
 
 
-# --- FilterQuery --------------------------------------------------------------
+# --- Filter --------------------------------------------------------------
 
 
 def test_filter_keeps_matching_items():
-    tree = CollectQuery(
-        FilterQuery(
-            IterQuery(LiteralQuery([1, 2, 3, 4])), LtQuery(AttrRef("item"), LiteralQuery(3))
-        )
-    )
+    tree = Collect(Filter(Iter(Literal([1, 2, 3, 4])), Lt(AttrRef("item"), Literal(3))))
     value, _ = run(tree)
     assert value == [1, 2]
 
@@ -81,12 +71,10 @@ def test_filter_keeps_matching_items():
 
 
 def test_a_lens_chain_stays_a_stream_and_evaluates():
-    tree = CollectQuery(
-        FilterQuery(
-            MapQuery(
-                IterQuery(LiteralQuery([1, 2, 3])), MulQuery(AttrRef("item"), LiteralQuery(10))
-            ),
-            LtQuery(AttrRef("item"), LiteralQuery(25)),
+    tree = Collect(
+        Filter(
+            Map(Iter(Literal([1, 2, 3])), Mul(AttrRef("item"), Literal(10))),
+            Lt(AttrRef("item"), Literal(25)),
         )
     )
     program = compile(tree)

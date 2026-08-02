@@ -4,8 +4,8 @@ Maps Python's console builtins onto Nu. This file crosses sorts: a write that
 yields nothing is a Command, a read that yields a value is an Action (effect +
 yield in one atom).
 
-- ``print`` -> ``PrintCommand`` (write to stdout, yields nothing -> Command)
-- ``input`` -> ``InputAction`` (read a line, consume stdin + yield -> Action)
+- ``print`` -> ``Print`` (write to stdout, yields nothing -> Command)
+- ``input`` -> ``Input`` (read a line, consume stdin + yield -> Action)
 
 Both go **through a Ref** on the stdio fabric, exactly like any Context write:
 slot 0 holds the ``StdioRef`` (``STDOUT`` / ``STDIN``), declared in ``mutates``,
@@ -15,9 +15,9 @@ engine could fold or parallelize it, which for real IO is wrong.
 
 The ergonomics: the ``print`` / ``input`` wrapper functions inject the singleton
 Ref, so a caller never imports or passes it - ``io.print("hi")``, not
-``PrintCommand(STDOUT, ...)``. ``print`` returns the ``PrintCommand`` atom
+``Print(STDOUT, ...)``. ``print`` returns the ``Print`` atom
 directly (a Form is a scalar-query and cannot hold a Command); ``input`` returns
-a ``StrForm`` so the read line carries the full string interface.
+a ``Str`` so the read line carries the full string interface.
 
 Everything is one console fabric (one ``StdioRef`` class): the effect system
 identifies a fabric by the concrete Ref class, so stdout and stdin share it and
@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import IO
 
-    from nu.forms.primitives import StrForm
+    from nu.forms.primitives import Str
     from nu.lang.runtime import Context, Runtime
 
 
@@ -55,8 +55,8 @@ __all__ = [
     "STDERR",
     "STDIN",
     "STDOUT",
-    "InputAction",
-    "PrintCommand",
+    "Input",
+    "Print",
     "StdioBackend",
     "StdioRef",
     "input",
@@ -162,7 +162,7 @@ STDIN = StdioRef("stdin")
 # --- atoms ------------------------------------------------------------------
 
 
-class PrintCommand(Command):
+class Print(Command):
     r"""Writes the values in slots 1.. to the stdout fabric Ref in slot 0.
 
     Python's ``print`` -- signature-identical: ``print(*objects, sep=' ',
@@ -236,7 +236,7 @@ class PrintCommand(Command):
         return athunk
 
 
-class InputAction(ScalarAction):
+class Input(ScalarAction):
     """Reads one line from the stdin fabric Ref in slot 0 and yields it.
 
     Python's ``input`` (no prompt - that would be a second, stdout write; deferred
@@ -275,25 +275,25 @@ def print(  # shadowing the builtin is intended
     end: str = "\n",
     file: StdioRef | None = None,
     flush: bool = False,
-) -> PrintCommand:
+) -> Print:
     r"""Write ``values`` to a stdio stream. Mirrors ``builtins.print``.
 
     ``print(*objects, sep=' ', end='\n', file=None, flush=False)`` -- the
     same signature you know. ``file`` is a Nu ``StdioRef`` (default
     :data:`STDOUT`) because the stdio fabric identifies streams by Ref, not
     by raw Python IO objects; pass ``STDERR`` to write to stderr. Returns the
-    ``PrintCommand`` atom (a Command yields nothing, so it is not
+    ``Print`` atom (a Command yields nothing, so it is not
     Form-wrapped); drive it with ``run`` / ``arun`` or compose it in a Flow.
     """
-    return PrintCommand(file if file is not None else STDOUT, *values, sep=sep, end=end, flush=flush)
+    return Print(file if file is not None else STDOUT, *values, sep=sep, end=end, flush=flush)
 
 
-def input() -> StrForm:  # shadowing the builtin is intended
-    """Read one line from stdin (newline stripped) and yield it as a ``StrForm``.
+def input() -> Str:  # shadowing the builtin is intended
+    """Read one line from stdin (newline stripped) and yield it as a ``Str``.
 
-    Nu's ``input`` (no prompt argument yet). The ``StrForm`` carries the full
+    Nu's ``input`` (no prompt argument yet). The ``Str`` carries the full
     string interface, so the read line composes like any other string term.
     """
-    from nu.forms.primitives import StrForm
+    from nu.forms.primitives import Str
 
-    return StrForm(InputAction(STDIN))
+    return Str(Input(STDIN))

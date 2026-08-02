@@ -3,7 +3,7 @@
 Each ref is a typed slot in the nested-dict substrate whose stored form differs
 from its domain type, so it overrides ``store`` (domain -> storage) and
 ``coerce`` (storage -> domain). The value interface comes from mixing in the
-matching ``nu.std`` Form, exactly as ``IntRef`` mixes in ``IntForm``.
+matching ``nu.std`` Form, exactly as ``IntRef`` mixes in ``Int``.
 
 Storage formats:
 - Decimal / Fraction / complex / Path / UUID: ``str``
@@ -18,9 +18,9 @@ from __future__ import annotations
 from datetime import UTC, date, datetime, time, timedelta, timezone
 from typing import TYPE_CHECKING, Self
 
-from nu import FloatForm, IntForm, Nu, StrForm
-from nu.core import FloatQuery, IntQuery, StrQuery
-from nu.domains.shape import SetCommand, Slot
+from nu import Float, Int, Nu, Str
+from nu.core import ToFloat, ToInt, ToStr
+from nu.domains.shape import SetCmd, Slot
 from nu.std.cmath import complex as ComplexForm
 from nu.std.datetime import date as DateForm
 from nu.std.datetime import datetime as DatetimeForm
@@ -97,7 +97,7 @@ class DecimalRef(ItemRef, DecimalForm):
         super().__init__(
             address,
             value_type=str,
-            value_value_type=StrForm,
+            value_value_type=Str,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -113,10 +113,10 @@ class DecimalRef(ItemRef, DecimalForm):
 
         return raw if isinstance(raw, DecimalCls) else DecimalCls(raw)  # type: ignore[arg-type]
 
-    def set(self, value: Arg[Decimal | str]) -> SetCommand:
+    def set(self, value: Arg[Decimal | str]) -> SetCmd:
         """Serialize the Decimal to str, then write it."""
-        val = StrQuery(value) if isinstance(value, Nu) else str(value)
-        return SetCommand(self, val)
+        val = ToStr(value) if isinstance(value, Nu) else str(value)
+        return SetCmd(self, val)
 
 
 class FractionRef(ItemRef, FractionForm):
@@ -132,7 +132,7 @@ class FractionRef(ItemRef, FractionForm):
         super().__init__(
             address,
             value_type=str,
-            value_value_type=StrForm,
+            value_value_type=Str,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -148,10 +148,10 @@ class FractionRef(ItemRef, FractionForm):
 
         return raw if isinstance(raw, FractionCls) else FractionCls(raw)  # type: ignore[arg-type]
 
-    def set(self, value: Arg[Fraction | str]) -> SetCommand:
+    def set(self, value: Arg[Fraction | str]) -> SetCmd:
         """Serialize the Fraction to str, then write it."""
-        val = StrQuery(value) if isinstance(value, Nu) else str(value)
-        return SetCommand(self, val)
+        val = ToStr(value) if isinstance(value, Nu) else str(value)
+        return SetCmd(self, val)
 
 
 class ComplexRef(ItemRef, ComplexForm):
@@ -167,7 +167,7 @@ class ComplexRef(ItemRef, ComplexForm):
         super().__init__(
             address,
             value_type=str,
-            value_value_type=StrForm,
+            value_value_type=Str,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -181,10 +181,10 @@ class ComplexRef(ItemRef, ComplexForm):
         """Parse the stored str back to a complex."""
         return raw if isinstance(raw, complex) else complex(raw)  # type: ignore[arg-type]
 
-    def set(self, value: Arg[complex | str]) -> SetCommand:
+    def set(self, value: Arg[complex | str]) -> SetCmd:
         """Serialize the complex to str, then write it."""
-        val = StrQuery(value) if isinstance(value, Nu) else str(value)
-        return SetCommand(self, val)
+        val = ToStr(value) if isinstance(value, Nu) else str(value)
+        return SetCmd(self, val)
 
 
 class BasisPointRef(ItemRef, BasisPointForm):
@@ -200,7 +200,7 @@ class BasisPointRef(ItemRef, BasisPointForm):
         super().__init__(
             address,
             value_type=int,
-            value_value_type=IntForm,
+            value_value_type=Int,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -214,10 +214,10 @@ class BasisPointRef(ItemRef, BasisPointForm):
         """Wrap the stored int back as a BasisPoint."""
         return raw if isinstance(raw, PyBasisPoint) else PyBasisPoint(int(raw))  # type: ignore[arg-type]
 
-    def set(self, value: Arg[PyBasisPoint | int]) -> SetCommand:
+    def set(self, value: Arg[PyBasisPoint | int]) -> SetCmd:
         """Serialize the BasisPoint to int, then write it."""
-        val = IntQuery(value) if isinstance(value, Nu) else int(value)
-        return SetCommand(self, val)
+        val = ToInt(value) if isinstance(value, Nu) else int(value)
+        return SetCmd(self, val)
 
 
 class PercentageRef(ItemRef, PercentageForm):
@@ -233,7 +233,7 @@ class PercentageRef(ItemRef, PercentageForm):
         super().__init__(
             address,
             value_type=float,
-            value_value_type=FloatForm,
+            value_value_type=Float,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -247,10 +247,10 @@ class PercentageRef(ItemRef, PercentageForm):
         """Wrap the stored float back as a Percentage."""
         return raw if isinstance(raw, PyPercentage) else PyPercentage(float(raw))  # type: ignore[arg-type]
 
-    def set(self, value: Arg[PyPercentage | float]) -> SetCommand:
+    def set(self, value: Arg[PyPercentage | float]) -> SetCmd:
         """Serialize the Percentage to float, then write it."""
-        val = FloatQuery(value) if isinstance(value, Nu) else float(value)
-        return SetCommand(self, val)
+        val = ToFloat(value) if isinstance(value, Nu) else float(value)
+        return SetCmd(self, val)
 
 
 # =============================================================================
@@ -271,7 +271,7 @@ class DateRef(ItemRef, DateForm):
         super().__init__(
             address,
             value_type=str,
-            value_value_type=StrForm,
+            value_value_type=Str,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -285,13 +285,13 @@ class DateRef(ItemRef, DateForm):
         """Parse the stored ISO str back to a date."""
         return raw if isinstance(raw, date) else date.fromisoformat(str(raw))
 
-    def set(self, value: Arg[date | str]) -> SetCommand:
+    def set(self, value: Arg[date | str]) -> SetCmd:
         """Serialize the date to an ISO str, then write it."""
         if isinstance(value, Nu):
-            val = StrQuery(value)
+            val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, date) else str(value)
-        return SetCommand(self, val)
+        return SetCmd(self, val)
 
 
 class DatetimeRef(ItemRef, DatetimeForm):
@@ -307,7 +307,7 @@ class DatetimeRef(ItemRef, DatetimeForm):
         super().__init__(
             address,
             value_type=str,
-            value_value_type=StrForm,
+            value_value_type=Str,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -327,13 +327,13 @@ class DatetimeRef(ItemRef, DatetimeForm):
             return datetime.fromtimestamp(raw, tz=UTC)
         return datetime.fromisoformat(str(raw))
 
-    def set(self, value: Arg[datetime | str]) -> SetCommand:
+    def set(self, value: Arg[datetime | str]) -> SetCmd:
         """Serialize the datetime to an ISO str, then write it."""
         if isinstance(value, Nu):
-            val = StrQuery(value)
+            val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, datetime) else str(value)
-        return SetCommand(self, val)
+        return SetCmd(self, val)
 
 
 class TimeRef(ItemRef, TimeForm):
@@ -349,7 +349,7 @@ class TimeRef(ItemRef, TimeForm):
         super().__init__(
             address,
             value_type=str,
-            value_value_type=StrForm,
+            value_value_type=Str,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -363,13 +363,13 @@ class TimeRef(ItemRef, TimeForm):
         """Parse the stored ISO str back to a time."""
         return raw if isinstance(raw, time) else time.fromisoformat(str(raw))
 
-    def set(self, value: Arg[time | str]) -> SetCommand:
+    def set(self, value: Arg[time | str]) -> SetCmd:
         """Serialize the time to an ISO str, then write it."""
         if isinstance(value, Nu):
-            val = StrQuery(value)
+            val = ToStr(value)
         else:
             val = value.isoformat() if isinstance(value, time) else str(value)
-        return SetCommand(self, val)
+        return SetCmd(self, val)
 
 
 class TimedeltaRef(ItemRef, TimedeltaForm):
@@ -385,7 +385,7 @@ class TimedeltaRef(ItemRef, TimedeltaForm):
         super().__init__(
             address,
             value_type=float,
-            value_value_type=FloatForm,
+            value_value_type=Float,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -399,7 +399,7 @@ class TimedeltaRef(ItemRef, TimedeltaForm):
         """Rebuild the timedelta from the stored total-seconds float."""
         return raw if isinstance(raw, timedelta) else timedelta(seconds=float(raw))  # type: ignore[arg-type]
 
-    def set(self, value: Arg[timedelta | float]) -> SetCommand:
+    def set(self, value: Arg[timedelta | float]) -> SetCmd:
         """Serialize the timedelta to total-seconds float, then write it."""
         if isinstance(value, Nu):
             val = TimedeltaTotalSeconds(value)
@@ -407,7 +407,7 @@ class TimedeltaRef(ItemRef, TimedeltaForm):
             val = value.total_seconds()
         else:
             val = float(value)
-        return SetCommand(self, val)
+        return SetCmd(self, val)
 
 
 class TimezoneRef(ItemRef, TimezoneForm):
@@ -423,7 +423,7 @@ class TimezoneRef(ItemRef, TimezoneForm):
         super().__init__(
             address,
             value_type=str,
-            value_value_type=StrForm,
+            value_value_type=Str,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -437,10 +437,10 @@ class TimezoneRef(ItemRef, TimezoneForm):
         """Parse the stored offset str back to a timezone."""
         return raw if isinstance(raw, timezone) else _parse_timezone(str(raw))
 
-    def set(self, value: Arg[timezone | str]) -> SetCommand:
+    def set(self, value: Arg[timezone | str]) -> SetCmd:
         """Serialize the timezone to its offset str, then write it."""
-        val = StrQuery(value) if isinstance(value, Nu) else str(value)
-        return SetCommand(self, val)
+        val = ToStr(value) if isinstance(value, Nu) else str(value)
+        return SetCmd(self, val)
 
 
 # =============================================================================
@@ -461,7 +461,7 @@ class PathRef(ItemRef, PathForm):
         super().__init__(
             address,
             value_type=str,
-            value_value_type=StrForm,
+            value_value_type=Str,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -477,10 +477,10 @@ class PathRef(ItemRef, PathForm):
 
         return raw if isinstance(raw, PurePath) else PurePath(str(raw))
 
-    def set(self, value: Arg[PurePath | str]) -> SetCommand:
+    def set(self, value: Arg[PurePath | str]) -> SetCmd:
         """Serialize the Path to str, then write it."""
-        val = StrQuery(value) if isinstance(value, Nu) else str(value)
-        return SetCommand(self, val)
+        val = ToStr(value) if isinstance(value, Nu) else str(value)
+        return SetCmd(self, val)
 
 
 class UUIDRef(ItemRef, UUIDForm):
@@ -496,7 +496,7 @@ class UUIDRef(ItemRef, UUIDForm):
         super().__init__(
             address,
             value_type=str,
-            value_value_type=StrForm,
+            value_value_type=Str,
             parent_ref=parent_ref,
             owner_shape=owner_shape,
         )
@@ -512,7 +512,7 @@ class UUIDRef(ItemRef, UUIDForm):
 
         return raw if isinstance(raw, uuid.UUID) else uuid.UUID(str(raw))
 
-    def set(self, value: Arg[UUID | str]) -> SetCommand:
+    def set(self, value: Arg[UUID | str]) -> SetCmd:
         """Serialize the UUID to str, then write it."""
-        val = StrQuery(value) if isinstance(value, Nu) else str(value)
-        return SetCommand(self, val)
+        val = ToStr(value) if isinstance(value, Nu) else str(value)
+        return SetCmd(self, val)

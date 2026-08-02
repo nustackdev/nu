@@ -1,4 +1,4 @@
-"""NoneForm - none interface."""
+"""None_ - none interface."""
 
 from __future__ import annotations
 
@@ -10,15 +10,15 @@ from nu.lang import Form, TypedNu
 if TYPE_CHECKING:
     from nu.lang import NoneArg
 
-    from .bool_ import BoolForm
+    from .bool_ import Bool
 
 
 __all__ = [
-    "NoneForm",
+    "None_",
 ]
 
 
-class NoneForm(Form, TypedNu[None]):
+class None_(Form, TypedNu[None]):  # noqa: N801
     """None interface. Logical only."""
 
     def __init__(self, source: object = None) -> None:
@@ -29,34 +29,34 @@ class NoneForm(Form, TypedNu[None]):
     # LOGICAL
     # =========================================================================
 
-    def and_(self, other: NoneArg) -> BoolForm:
+    def and_(self, other: NoneArg) -> Bool:
         """Logical AND: self AND other."""
-        from nu.core import AndQuery
+        from nu.core import And
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(AndQuery(self, other))
+        return Bool(And(self, other))
 
-    def or_(self, other: NoneArg) -> BoolForm:
+    def or_(self, other: NoneArg) -> Bool:
         """Logical OR: self OR other."""
-        from nu.core import OrQuery
+        from nu.core import Or
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(OrQuery(self, other))
+        return Bool(Or(self, other))
 
-    def not_(self) -> BoolForm:
+    def not_(self) -> Bool:
         """Logical NOT: NOT self."""
-        from nu.core import NotQuery
+        from nu.core import Not
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(NotQuery(self))
+        return Bool(Not(self))
 
-    def bool_(self) -> BoolForm:
+    def bool_(self) -> Bool:
         """Convert to boolean."""
-        from nu.core import BoolQuery
+        from nu.core import ToBool
 
-        from .bool_ import BoolForm
+        from .bool_ import Bool
 
-        return BoolForm(BoolQuery(self))
+        return Bool(ToBool(self))

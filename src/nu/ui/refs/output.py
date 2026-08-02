@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Literal, Self
 
-from nu import DictForm
+from nu import Dict
 from nu.lang.sentinels import UNSET
 from nu.ui.core import Append, Changed, Ref, Write
 
@@ -42,16 +42,16 @@ class AlertRef(Ref):
         return super().slot(variant=variant, title=title, body=body, dismissible=dismissible)
 
     def set_variant(self, name: Variant | StrArg) -> Nu:
-        return Write(self, DictForm.of(variant=name))
+        return Write(self, Dict.of(variant=name))
 
     def set_title(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(title=text))
+        return Write(self, Dict.of(title=text))
 
     def set_body(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(body=text))
+        return Write(self, Dict.of(body=text))
 
     def set_dismissible(self, flag: BoolArg) -> Nu:
-        return Write(self, DictForm.of(dismissible=flag))
+        return Write(self, Dict.of(dismissible=flag))
 
     def set(
         self,
@@ -67,7 +67,7 @@ class AlertRef(Ref):
             payload["variant"] = variant
         if dismissible is not UNSET:
             payload["dismissible"] = dismissible
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
     def dismissed(self) -> Changed:
         return Changed(self)
@@ -89,10 +89,10 @@ class BadgeRef(Ref):
         return super().slot(label=label, variant=variant)
 
     def set_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(label=text))
+        return Write(self, Dict.of(label=text))
 
     def set_variant(self, name: Variant | StrArg) -> Nu:
-        return Write(self, DictForm.of(variant=name))
+        return Write(self, Dict.of(variant=name))
 
     def set(
         self,
@@ -102,7 +102,7 @@ class BadgeRef(Ref):
         payload: dict[str, object] = {"label": label}
         if variant is not UNSET:
             payload["variant"] = variant
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
 
 class CodeBlockRef(Ref):
@@ -128,13 +128,13 @@ class CodeBlockRef(Ref):
             payload["code"] = code
         if language is not UNSET:
             payload["language"] = language
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
     def set_code(self, code: StrArg) -> Nu:
-        return Write(self, DictForm.of(code=code))
+        return Write(self, Dict.of(code=code))
 
     def set_language(self, language: StrArg) -> Nu:
-        return Write(self, DictForm.of(language=language))
+        return Write(self, Dict.of(language=language))
 
 
 Align = Literal["left", "center", "right"]
@@ -148,10 +148,10 @@ class DividerRef(Ref):
         return super().slot(label=label, align=align)
 
     def set_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(label=text))
+        return Write(self, Dict.of(label=text))
 
     def set_align(self, side: Align | StrArg) -> Nu:
-        return Write(self, DictForm.of(align=side))
+        return Write(self, Dict.of(align=side))
 
     def set(
         self,
@@ -161,7 +161,7 @@ class DividerRef(Ref):
         payload: dict[str, object] = {"label": label}
         if align is not UNSET:
             payload["align"] = align
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
 
 GaugeVariant = Literal["neutral", "ok", "warn", "danger"]
@@ -185,13 +185,13 @@ class GaugeRef(Ref):
         return super().slot(value=value, caption=caption, variant=variant)
 
     def set_value(self, value: FloatArg) -> Nu:
-        return Write(self, DictForm.of(value=value))
+        return Write(self, Dict.of(value=value))
 
     def set_caption(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(caption=text))
+        return Write(self, Dict.of(caption=text))
 
     def set_variant(self, variant: GaugeVariant | StrArg) -> Nu:
-        return Write(self, DictForm.of(variant=variant))
+        return Write(self, Dict.of(variant=variant))
 
     def set(
         self,
@@ -204,7 +204,7 @@ class GaugeRef(Ref):
             payload["caption"] = caption
         if variant is not UNSET:
             payload["variant"] = variant
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
 
 Align = Literal["left", "center", "right"]
@@ -218,13 +218,13 @@ class HeadingRef(Ref):
         return super().slot(label=label, level=level, align=align)
 
     def set_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(label=text))
+        return Write(self, Dict.of(label=text))
 
     def set_level(self, n: IntArg) -> Nu:
-        return Write(self, DictForm.of(level=n))
+        return Write(self, Dict.of(level=n))
 
     def set_align(self, side: Align | StrArg) -> Nu:
-        return Write(self, DictForm.of(align=side))
+        return Write(self, Dict.of(align=side))
 
     def set(
         self,
@@ -237,7 +237,7 @@ class HeadingRef(Ref):
             payload["level"] = level
         if align is not UNSET:
             payload["align"] = align
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
 
 Fit = Literal["contain", "cover", "fill"]
@@ -267,23 +267,23 @@ class ImageRef(Ref):
         )
 
     def set_src(self, url: StrArg) -> Nu:
-        return Write(self, DictForm.of(src=url))
+        return Write(self, Dict.of(src=url))
 
     def set_alt(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(alt=text))
+        return Write(self, Dict.of(alt=text))
 
     def set_fit(self, mode: Fit | StrArg) -> Nu:
-        return Write(self, DictForm.of(fit=mode))
+        return Write(self, Dict.of(fit=mode))
 
     def set_size(
         self,
         width: IntArg | None,
         height: IntArg | None,
     ) -> Nu:
-        return Write(self, DictForm.of(width=width, height=height))
+        return Write(self, Dict.of(width=width, height=height))
 
     def set_rounded(self, flag: BoolArg) -> Nu:
-        return Write(self, DictForm.of(rounded=flag))
+        return Write(self, Dict.of(rounded=flag))
 
     def set(
         self,
@@ -305,7 +305,7 @@ class ImageRef(Ref):
             payload["height"] = height
         if rounded is not UNSET:
             payload["rounded"] = rounded
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
 
 Theme = Literal["light", "dark"]
@@ -335,22 +335,22 @@ class JsonViewerRef(Ref):
         )
 
     def set_value(self, value: Arg[Any]) -> Nu:
-        return Write(self, DictForm.of(value=value))
+        return Write(self, Dict.of(value=value))
 
     def set_expand_depth(self, depth: IntArg) -> Nu:
-        return Write(self, DictForm.of(expand_depth=depth))
+        return Write(self, Dict.of(expand_depth=depth))
 
     def set_theme(self, name: Theme | StrArg) -> Nu:
-        return Write(self, DictForm.of(theme=name))
+        return Write(self, Dict.of(theme=name))
 
     def set_copyable(self, flag: BoolArg) -> Nu:
-        return Write(self, DictForm.of(copyable=flag))
+        return Write(self, Dict.of(copyable=flag))
 
     def set_sortable(self, flag: BoolArg) -> Nu:
-        return Write(self, DictForm.of(sortable=flag))
+        return Write(self, Dict.of(sortable=flag))
 
     def set_max_height(self, px: IntArg | None) -> Nu:
-        return Write(self, DictForm.of(max_height=px))
+        return Write(self, Dict.of(max_height=px))
 
     def set(
         self,
@@ -372,7 +372,7 @@ class JsonViewerRef(Ref):
             payload["sortable"] = sortable
         if max_height is not UNSET:
             payload["max_height"] = max_height
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
 
 Target = Literal["_self", "_blank"]
@@ -393,16 +393,16 @@ class LinkRef(Ref):
         return super().slot(href=href, label=label, target=target, external=external)
 
     def set_href(self, url: StrArg) -> Nu:
-        return Write(self, DictForm.of(href=url))
+        return Write(self, Dict.of(href=url))
 
     def set_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(label=text))
+        return Write(self, Dict.of(label=text))
 
     def set_target(self, name: Target | StrArg) -> Nu:
-        return Write(self, DictForm.of(target=name))
+        return Write(self, Dict.of(target=name))
 
     def set_external(self, flag: BoolArg | None) -> Nu:
-        return Write(self, DictForm.of(external=flag))
+        return Write(self, Dict.of(external=flag))
 
     def set(
         self,
@@ -422,7 +422,7 @@ class LinkRef(Ref):
             payload["target"] = target
         if external is not UNSET:
             payload["external"] = external
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
 
 class MarkdownRef(Ref):
@@ -450,13 +450,13 @@ class ProgressRef(Ref):
         return super().slot(value=value, caption=caption, indeterminate=indeterminate)
 
     def set_value(self, value: FloatArg) -> Nu:
-        return Write(self, DictForm.of(value=value))
+        return Write(self, Dict.of(value=value))
 
     def set_caption(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(caption=text))
+        return Write(self, Dict.of(caption=text))
 
     def set_indeterminate(self, flag: BoolArg) -> Nu:
-        return Write(self, DictForm.of(indeterminate=flag))
+        return Write(self, Dict.of(indeterminate=flag))
 
     def set(
         self,
@@ -469,7 +469,7 @@ class ProgressRef(Ref):
             payload["caption"] = caption
         if indeterminate is not UNSET:
             payload["indeterminate"] = indeterminate
-        return Write(self, DictForm.of(**payload))
+        return Write(self, Dict.of(**payload))
 
 
 Trend = Literal["up", "down", "flat"]
@@ -490,16 +490,16 @@ class StatRef(Ref):
         return super().slot(label=label, value=value, delta=delta, trend=trend)
 
     def set_label(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(label=text))
+        return Write(self, Dict.of(label=text))
 
     def set_value(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(value=text))
+        return Write(self, Dict.of(value=text))
 
     def set_delta(self, text: StrArg) -> Nu:
-        return Write(self, DictForm.of(delta=text))
+        return Write(self, Dict.of(delta=text))
 
     def set_trend(self, name: Trend | StrArg) -> Nu:
-        return Write(self, DictForm.of(trend=name))
+        return Write(self, Dict.of(trend=name))
 
 
 SortDirection = Literal["asc", "desc"]
@@ -538,13 +538,13 @@ class TableRef(Ref):
         return Write(self, table)
 
     def clear(self) -> Nu:
-        return Write(self, DictForm.of(rows=[]))
+        return Write(self, Dict.of(rows=[]))
 
     def append(self, row: ListArg[Any]) -> Nu:
         return Append(self, row)
 
     def set_sort(self, column: StrArg, direction: SortDirection | StrArg) -> Nu:
-        return Write(self, DictForm.of(sort_column=column, sort_direction=direction))
+        return Write(self, Dict.of(sort_column=column, sort_direction=direction))
 
     def row_clicked(self) -> Changed:
         return Changed(self)

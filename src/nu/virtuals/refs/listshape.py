@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import AnyForm, IteratorForm, ListForm
+from nu import Any, Iterator, List
 from nu.domains.shape import ReactiveShapesSequenceRef, Slot
 
 from .base import ViewRef
@@ -41,18 +41,18 @@ class ShapesListRef[T: Shape](ReactiveShapesSequenceRef[T], ViewRef[list[dict]])
             owner_shape=self._owner_shape,
         )
 
-    def _wrap_result(self, op: Nu) -> ListForm:
-        """Wrap a sequence-level op result as a ListForm."""
-        return ListForm(op)
+    def _wrap_result(self, op: Nu) -> List:
+        """Wrap a sequence-level op result as a List."""
+        return List(op)
 
-    def _wrap_iterable_result(self, operand: Nu) -> IteratorForm:
-        return IteratorForm(operand)
+    def _wrap_iterable_result(self, operand: Nu) -> Iterator:
+        return Iterator(operand)
 
-    def _wrap_sliceable_result(self, operand: Nu) -> ListForm:
-        return ListForm(operand)  # slices stay materialized
+    def _wrap_sliceable_result(self, operand: Nu) -> List:
+        return List(operand)  # slices stay materialized
 
-    def _wrap_element_result(self, operand: Nu) -> AnyForm:
-        return AnyForm(operand)
+    def _wrap_element_result(self, operand: Nu) -> Any:
+        return Any(operand)
 
     def __init__(
         self,

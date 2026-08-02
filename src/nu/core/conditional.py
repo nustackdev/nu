@@ -10,7 +10,7 @@ mutate nothing.
 Sorts: all ScalarQuery (Q).
 
 Short-circuit: only the taken branch is evaluated - matches Python's
-conditional expression, and lets ``IfQuery(cond, safe, unsafe)`` guard the
+conditional expression, and lets ``If(cond, safe, unsafe)`` guard the
 ``unsafe`` branch from firing when ``cond`` is truthy.
 
 Sentinels: an ``EMPTY`` or ``INVALID`` selector/condition collapses to
@@ -32,17 +32,17 @@ if TYPE_CHECKING:
     from nu.engine import Term
     from nu.lang.runtime import Runtime
 
-__all__ = ["IfQuery", "SwitchQuery"]
+__all__ = ["If", "Switch"]
 
 
-class IfQuery(ScalarQuery):
-    """``IfQuery(cond, then, else_)`` - yield ``then`` if ``cond`` truthy, else ``else_``.
+class If(ScalarQuery):
+    """``If(cond, then, else_)`` - yield ``then`` if ``cond`` truthy, else ``else_``.
 
     Children: ``[cond, then, else_]``. Short-circuits: only the taken branch
     is evaluated.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         cond, then_, else_ = children
 
         def thunk(rt: Runtime) -> object:
@@ -56,7 +56,7 @@ class IfQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         cond, then_, else_ = children
 
         async def athunk(rt: Runtime) -> object:
@@ -71,8 +71,8 @@ class IfQuery(ScalarQuery):
         return athunk
 
 
-class SwitchQuery(ScalarQuery):
-    """``SwitchQuery(selector, cases, default=None)`` - yield the value for the matching key.
+class Switch(ScalarQuery):
+    """``Switch(selector, cases, default=None)`` - yield the value for the matching key.
 
     Children: ``[selector, *case_values, default?]``. The match keys are
     intrinsic constants kept in ``payload`` (so they survive
@@ -97,7 +97,7 @@ class SwitchQuery(ScalarQuery):
         self._payload["keys"] = tuple(cases.keys())
         self._payload["has_default"] = default is not None
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         selector = children[0]
         values = children[1:]
         keys = self._payload["keys"]
@@ -122,7 +122,7 @@ class SwitchQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         selector = children[0]
         values = children[1:]
         keys = self._payload["keys"]

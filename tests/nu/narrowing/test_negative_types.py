@@ -14,7 +14,7 @@ mypy still descends into the function body and verifies each ignore.
 from __future__ import annotations
 
 import nu
-from nu.forms import IntForm, StrForm
+from nu.forms import Int, Str
 from nu.virtuals.refs import IntRef, ShapesDictRef, StrRef
 
 
@@ -23,7 +23,7 @@ from nu.virtuals.refs import IntRef, ShapesDictRef, StrRef
 
 class Profile(nu.Shape):
     name: StrRef
-    age:  IntRef
+    age: IntRef
 
 
 class Address(nu.Shape):
@@ -57,16 +57,16 @@ def _type_checks_only() -> None:
     #    Profile, not Other.
     _wrong_subscript: Other = Store.profiles[42]  # type: ignore[assignment]
 
-    # 3. IntForm from arithmetic is not StrForm.
-    _wrong_arithmetic: StrForm = Profile.age + 1  # type: ignore[assignment]
+    # 3. Int from arithmetic is not Str.
+    _wrong_arithmetic: Str = Profile.age + 1  # type: ignore[assignment]
 
-    # 4. StrForm from concat is not IntForm.
-    _wrong_concat: IntForm = Profile.name + "!"  # type: ignore[assignment]
+    # 4. Str from concat is not Int.
+    _wrong_concat: Int = Profile.name + "!"  # type: ignore[assignment]
 
-    # 5. BoolForm from a comparison is not IntForm.
-    _wrong_cmp: IntForm = Profile.age > 18  # type: ignore[assignment]
+    # 5. Bool from a comparison is not Int.
+    _wrong_cmp: Int = Profile.age > 18  # type: ignore[assignment]
 
-    # 6. StrForm.__add__ takes str-like; adding an int is a type error.
+    # 6. Str.__add__ takes str-like; adding an int is a type error.
     _bad_add = Profile.name + 5  # type: ignore[operator]
 
     # 7. Profile is not Address; assignment fails.
@@ -75,7 +75,7 @@ def _type_checks_only() -> None:
     # 8. Profile has no slot ``nonexistent``; attribute-error at type-check.
     _bad_attr = WithMembers.members[1].nonexistent  # type: ignore[attr-defined]
 
-    # 9. BoolForm.and_ takes BoolArg (bool | Nu[bool] | Sentinel);
+    # 9. Bool.and_ takes BoolArg (bool | Nu[bool] | Sentinel);
     #    a float literal is none of those.
     _bad_and = (Profile.age > 18).and_(1.5)  # type: ignore[arg-type]
 

@@ -29,7 +29,7 @@ The hard rule that shapes these atoms. **Anything Nu-computable is a child;
   `catch_slot` / `has_else` bookkeeping in payload. (`TryCatch` slots:
   `[body, catch, finally_, error_key]`.)
 - **Names / keys are string-yielding children (`StrArg`), not strings in
-  payload.** `Nu.__init__` auto-wraps a bare `"error"` into a `LiteralQuery`, so
+  payload.** `Nu.__init__` auto-wraps a bare `"error"` into a `Literal`, so
   a default reads naturally and a caller can pass any `Nu[str]`. Execute it in
   the thunk to get the name.
 - **Only genuinely non-Nu config stays in payload.** `TryCatch.errors` is a

@@ -53,9 +53,6 @@ from nu.mem.tree import inline_refs
 
 
 __all__ = [
-    # Submodules
-    "refs",
-    "tree",
     # Refs
     "BasisPointRef",
     "BoolRef",
@@ -83,4 +80,7 @@ __all__ = [
     "TimezoneRef",
     "UUIDRef",
     "inline_refs",
+    # Submodules
+    "refs",
+    "tree",
 ]

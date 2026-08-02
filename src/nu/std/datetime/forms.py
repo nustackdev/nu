@@ -3,7 +3,7 @@
 Class names are lowercase to mirror ``from datetime import date, timedelta``
 (hence ``# noqa: N801``). Each is the typed access surface for its stdlib type:
 
-- **property reads** (``.year``, ``.hour``, ``.days`` ...) reuse core ``GetAttrQuery``.
+- **property reads** (``.year``, ``.hour``, ``.days`` ...) reuse core ``GetAttr``.
 - **method calls** (``weekday()``, ``isoformat()``, ``total_seconds()``,
   ``replace(...)`` ...) are named ``ScalarQueryFactory`` atoms in ``interactions``
   (each binds the unbound method).
@@ -32,7 +32,7 @@ from nu.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import BoolForm, FloatForm, IntForm, NoneForm, StrForm
+    from nu.forms.primitives import Bool, Float, Int, None_, Str
     from nu.lang import Arg, FloatArg, IntArg, StrArg
 
     type DateArg = Arg[_date]
@@ -68,125 +68,125 @@ class timedelta(Form, TypedNu[_timedelta]):  # noqa: N801
             TimedeltaOf(days, seconds, microseconds, milliseconds, minutes, hours, weeks)
         )
 
-    def days(self) -> IntForm:
+    def days(self) -> Int:
         """The whole-days component."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "days"))
+        return Int(GetAttr(self, "days"))
 
-    def seconds(self) -> IntForm:
+    def seconds(self) -> Int:
         """The seconds component (0..86399)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "seconds"))
+        return Int(GetAttr(self, "seconds"))
 
-    def microseconds(self) -> IntForm:
+    def microseconds(self) -> Int:
         """The microseconds component (0..999999)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "microseconds"))
+        return Int(GetAttr(self, "microseconds"))
 
-    def total_seconds(self) -> FloatForm:
+    def total_seconds(self) -> Float:
         """The total duration in seconds."""
-        from nu import FloatForm
+        from nu import Float
 
         from .interactions import TimedeltaTotalSeconds
 
-        return FloatForm(TimedeltaTotalSeconds(self))
+        return Float(TimedeltaTotalSeconds(self))
 
     def __add__(self, other: TimedeltaArg) -> timedelta:
-        from nu.core import AddQuery
+        from nu.core import Add
 
-        return timedelta(AddQuery(self, other))
+        return timedelta(Add(self, other))
 
     def __sub__(self, other: TimedeltaArg) -> timedelta:
-        from nu.core import SubQuery
+        from nu.core import Sub
 
-        return timedelta(SubQuery(self, other))
+        return timedelta(Sub(self, other))
 
     def __mul__(self, factor: IntArg | FloatArg) -> timedelta:
-        from nu.core import MulQuery
+        from nu.core import Mul
 
-        return timedelta(MulQuery(self, factor))
+        return timedelta(Mul(self, factor))
 
     @overload
-    def __truediv__(self, other: timedelta | _timedelta) -> FloatForm: ...
+    def __truediv__(self, other: timedelta | _timedelta) -> Float: ...
     @overload
     def __truediv__(self, other: IntArg | FloatArg) -> timedelta: ...
-    def __truediv__(self, other: TimedeltaArg | IntArg | FloatArg) -> timedelta | FloatForm:
-        from nu.core import DivQuery
+    def __truediv__(self, other: TimedeltaArg | IntArg | FloatArg) -> timedelta | Float:
+        from nu.core import Div
 
         if isinstance(other, (timedelta, _timedelta)):
-            from nu import FloatForm
+            from nu import Float
 
-            return FloatForm(DivQuery(self, other))
-        return timedelta(DivQuery(self, other))
+            return Float(Div(self, other))
+        return timedelta(Div(self, other))
 
     def __floordiv__(self, other: IntArg) -> timedelta:
-        from nu.core import FloorDivQuery
+        from nu.core import FloorDiv
 
-        return timedelta(FloorDivQuery(self, other))
+        return timedelta(FloorDiv(self, other))
 
     def __mod__(self, other: TimedeltaArg) -> timedelta:
-        from nu.core import ModQuery
+        from nu.core import Mod
 
-        return timedelta(ModQuery(self, other))
+        return timedelta(Mod(self, other))
 
     def __neg__(self) -> timedelta:
-        from nu.core import NegQuery
+        from nu.core import Neg
 
-        return timedelta(NegQuery(self))
+        return timedelta(Neg(self))
 
     def __abs__(self) -> timedelta:
-        from nu.core import AbsQuery
+        from nu.core import Abs
 
-        return timedelta(AbsQuery(self))
+        return timedelta(Abs(self))
 
     def __pos__(self) -> timedelta:
-        from nu.core import PosQuery
+        from nu.core import Pos
 
-        return timedelta(PosQuery(self))
+        return timedelta(Pos(self))
 
-    def __gt__(self, other: TimedeltaArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GtQuery
+    def __gt__(self, other: TimedeltaArg) -> Bool:
+        from nu import Bool
+        from nu.core import Gt
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: TimedeltaArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LtQuery
+    def __lt__(self, other: TimedeltaArg) -> Bool:
+        from nu import Bool
+        from nu.core import Lt
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: TimedeltaArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GeQuery
+    def __ge__(self, other: TimedeltaArg) -> Bool:
+        from nu import Bool
+        from nu.core import Ge
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: TimedeltaArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LeQuery
+    def __le__(self, other: TimedeltaArg) -> Bool:
+        from nu import Bool
+        from nu.core import Le
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
-    def eq(self, other: TimedeltaArg) -> BoolForm:
+    def eq(self, other: TimedeltaArg) -> Bool:
         """Whether two spans are equal."""
-        from nu import BoolForm
-        from nu.core import EqQuery
+        from nu import Bool
+        from nu.core import Eq
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def ne(self, other: TimedeltaArg) -> BoolForm:
+    def ne(self, other: TimedeltaArg) -> Bool:
         """Whether two spans differ."""
-        from nu import BoolForm
-        from nu.core import NeQuery
+        from nu import Bool
+        from nu.core import Ne
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))
 
 
 class time(Form, TypedNu[_time]):  # noqa: N801
@@ -212,49 +212,49 @@ class time(Form, TypedNu[_time]):  # noqa: N801
 
         return time(TimeFromIso(value))
 
-    def hour(self) -> IntForm:
+    def hour(self) -> Int:
         """The hour (0..23)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "hour"))
+        return Int(GetAttr(self, "hour"))
 
-    def minute(self) -> IntForm:
+    def minute(self) -> Int:
         """The minute (0..59)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "minute"))
+        return Int(GetAttr(self, "minute"))
 
-    def second(self) -> IntForm:
+    def second(self) -> Int:
         """The second (0..59)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "second"))
+        return Int(GetAttr(self, "second"))
 
-    def microsecond(self) -> IntForm:
+    def microsecond(self) -> Int:
         """The microsecond (0..999999)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "microsecond"))
+        return Int(GetAttr(self, "microsecond"))
 
-    def isoformat(self) -> StrForm:
+    def isoformat(self) -> Str:
         """The time as an ISO string."""
-        from nu import StrForm
+        from nu import Str
 
         from .interactions import TimeIsoformat
 
-        return StrForm(TimeIsoformat(self))
+        return Str(TimeIsoformat(self))
 
-    def strftime(self, fmt: StrArg) -> StrForm:
+    def strftime(self, fmt: StrArg) -> Str:
         """Format the time with a strftime pattern."""
-        from nu import StrForm
+        from nu import Str
 
         from .interactions import TimeStrftime
 
-        return StrForm(TimeStrftime(self, fmt))
+        return Str(TimeStrftime(self, fmt))
 
     def replace(
         self,
@@ -278,43 +278,43 @@ class time(Form, TypedNu[_time]):  # noqa: N801
             kw["microsecond"] = microsecond
         return time(TimeReplace(self, **kw))
 
-    def __gt__(self, other: TimeArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GtQuery
+    def __gt__(self, other: TimeArg) -> Bool:
+        from nu import Bool
+        from nu.core import Gt
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: TimeArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LtQuery
+    def __lt__(self, other: TimeArg) -> Bool:
+        from nu import Bool
+        from nu.core import Lt
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: TimeArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GeQuery
+    def __ge__(self, other: TimeArg) -> Bool:
+        from nu import Bool
+        from nu.core import Ge
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: TimeArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LeQuery
+    def __le__(self, other: TimeArg) -> Bool:
+        from nu import Bool
+        from nu.core import Le
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
-    def eq(self, other: TimeArg) -> BoolForm:
+    def eq(self, other: TimeArg) -> Bool:
         """Whether two times are equal."""
-        from nu import BoolForm
-        from nu.core import EqQuery
+        from nu import Bool
+        from nu.core import Eq
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def ne(self, other: TimeArg) -> BoolForm:
+    def ne(self, other: TimeArg) -> Bool:
         """Whether two times differ."""
-        from nu import BoolForm
-        from nu.core import NeQuery
+        from nu import Bool
+        from nu.core import Ne
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))
 
 
 class date(Form, TypedNu[_date]):  # noqa: N801
@@ -355,74 +355,74 @@ class date(Form, TypedNu[_date]):  # noqa: N801
 
         return date(DateFromTimestamp(value))
 
-    def year(self) -> IntForm:
+    def year(self) -> Int:
         """The year."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "year"))
+        return Int(GetAttr(self, "year"))
 
-    def month(self) -> IntForm:
+    def month(self) -> Int:
         """The month (1..12)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "month"))
+        return Int(GetAttr(self, "month"))
 
-    def day(self) -> IntForm:
+    def day(self) -> Int:
         """The day of the month (1..31)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "day"))
+        return Int(GetAttr(self, "day"))
 
-    def weekday(self) -> IntForm:
+    def weekday(self) -> Int:
         """The day of week, Monday=0."""
-        from nu import IntForm
+        from nu import Int
 
         from .interactions import DateWeekday
 
-        return IntForm(DateWeekday(self))
+        return Int(DateWeekday(self))
 
-    def isoweekday(self) -> IntForm:
+    def isoweekday(self) -> Int:
         """The day of week, Monday=1."""
-        from nu import IntForm
+        from nu import Int
 
         from .interactions import DateIsoweekday
 
-        return IntForm(DateIsoweekday(self))
+        return Int(DateIsoweekday(self))
 
-    def toordinal(self) -> IntForm:
+    def toordinal(self) -> Int:
         """The proleptic Gregorian ordinal."""
-        from nu import IntForm
+        from nu import Int
 
         from .interactions import DateToordinal
 
-        return IntForm(DateToordinal(self))
+        return Int(DateToordinal(self))
 
-    def isoformat(self) -> StrForm:
+    def isoformat(self) -> Str:
         """The date as an ISO string (YYYY-MM-DD)."""
-        from nu import StrForm
+        from nu import Str
 
         from .interactions import DateIsoformat
 
-        return StrForm(DateIsoformat(self))
+        return Str(DateIsoformat(self))
 
-    def ctime(self) -> StrForm:
+    def ctime(self) -> Str:
         """The date as a C-style string."""
-        from nu import StrForm
+        from nu import Str
 
         from .interactions import DateCtime
 
-        return StrForm(DateCtime(self))
+        return Str(DateCtime(self))
 
-    def strftime(self, fmt: StrArg) -> StrForm:
+    def strftime(self, fmt: StrArg) -> Str:
         """Format the date with a strftime pattern."""
-        from nu import StrForm
+        from nu import Str
 
         from .interactions import DateStrftime
 
-        return StrForm(DateStrftime(self, fmt))
+        return Str(DateStrftime(self, fmt))
 
     def replace(
         self,
@@ -444,58 +444,58 @@ class date(Form, TypedNu[_date]):  # noqa: N801
         return date(DateReplace(self, **kw))
 
     def __add__(self, other: TimedeltaArg) -> date:
-        from nu.core import AddQuery
+        from nu.core import Add
 
-        return date(AddQuery(self, other))
+        return date(Add(self, other))
 
     @overload
     def __sub__(self, other: date | _date) -> timedelta: ...
     @overload
     def __sub__(self, other: timedelta | _timedelta) -> date: ...
     def __sub__(self, other: DateArg | TimedeltaArg) -> date | timedelta:
-        from nu.core import SubQuery
+        from nu.core import Sub
 
         if isinstance(other, (date, _date)):
-            return timedelta(SubQuery(self, other))
-        return date(SubQuery(self, other))
+            return timedelta(Sub(self, other))
+        return date(Sub(self, other))
 
-    def __gt__(self, other: DateArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GtQuery
+    def __gt__(self, other: DateArg) -> Bool:
+        from nu import Bool
+        from nu.core import Gt
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: DateArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LtQuery
+    def __lt__(self, other: DateArg) -> Bool:
+        from nu import Bool
+        from nu.core import Lt
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: DateArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GeQuery
+    def __ge__(self, other: DateArg) -> Bool:
+        from nu import Bool
+        from nu.core import Ge
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: DateArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LeQuery
+    def __le__(self, other: DateArg) -> Bool:
+        from nu import Bool
+        from nu.core import Le
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
-    def eq(self, other: DateArg) -> BoolForm:
+    def eq(self, other: DateArg) -> Bool:
         """Whether two dates are equal."""
-        from nu import BoolForm
-        from nu.core import EqQuery
+        from nu import Bool
+        from nu.core import Eq
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def ne(self, other: DateArg) -> BoolForm:
+    def ne(self, other: DateArg) -> Bool:
         """Whether two dates differ."""
-        from nu import BoolForm
-        from nu.core import NeQuery
+        from nu import Bool
+        from nu.core import Ne
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))
 
 
 class datetime(Form, TypedNu[_datetime]):  # noqa: N801
@@ -549,94 +549,94 @@ class datetime(Form, TypedNu[_datetime]):  # noqa: N801
 
         return datetime(DatetimeCombine(date_value, time_value))
 
-    def year(self) -> IntForm:
+    def year(self) -> Int:
         """The year."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "year"))
+        return Int(GetAttr(self, "year"))
 
-    def month(self) -> IntForm:
+    def month(self) -> Int:
         """The month (1..12)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "month"))
+        return Int(GetAttr(self, "month"))
 
-    def day(self) -> IntForm:
+    def day(self) -> Int:
         """The day of the month (1..31)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "day"))
+        return Int(GetAttr(self, "day"))
 
-    def hour(self) -> IntForm:
+    def hour(self) -> Int:
         """The hour (0..23)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "hour"))
+        return Int(GetAttr(self, "hour"))
 
-    def minute(self) -> IntForm:
+    def minute(self) -> Int:
         """The minute (0..59)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "minute"))
+        return Int(GetAttr(self, "minute"))
 
-    def second(self) -> IntForm:
+    def second(self) -> Int:
         """The second (0..59)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "second"))
+        return Int(GetAttr(self, "second"))
 
-    def microsecond(self) -> IntForm:
+    def microsecond(self) -> Int:
         """The microsecond (0..999999)."""
-        from nu import IntForm
-        from nu.core import GetAttrQuery
+        from nu import Int
+        from nu.core import GetAttr
 
-        return IntForm(GetAttrQuery(self, "microsecond"))
+        return Int(GetAttr(self, "microsecond"))
 
-    def weekday(self) -> IntForm:
+    def weekday(self) -> Int:
         """The day of week, Monday=0."""
-        from nu import IntForm
+        from nu import Int
 
         from .interactions import DatetimeWeekday
 
-        return IntForm(DatetimeWeekday(self))
+        return Int(DatetimeWeekday(self))
 
-    def isoweekday(self) -> IntForm:
+    def isoweekday(self) -> Int:
         """The day of week, Monday=1."""
-        from nu import IntForm
+        from nu import Int
 
         from .interactions import DatetimeIsoweekday
 
-        return IntForm(DatetimeIsoweekday(self))
+        return Int(DatetimeIsoweekday(self))
 
-    def timestamp(self) -> FloatForm:
+    def timestamp(self) -> Float:
         """The POSIX timestamp."""
-        from nu import FloatForm
+        from nu import Float
 
         from .interactions import DatetimeTimestamp
 
-        return FloatForm(DatetimeTimestamp(self))
+        return Float(DatetimeTimestamp(self))
 
-    def isoformat(self) -> StrForm:
+    def isoformat(self) -> Str:
         """The datetime as an ISO string."""
-        from nu import StrForm
+        from nu import Str
 
         from .interactions import DatetimeIsoformat
 
-        return StrForm(DatetimeIsoformat(self))
+        return Str(DatetimeIsoformat(self))
 
-    def strftime(self, fmt: StrArg) -> StrForm:
+    def strftime(self, fmt: StrArg) -> Str:
         """Format the datetime with a strftime pattern."""
-        from nu import StrForm
+        from nu import Str
 
         from .interactions import DatetimeStrftime
 
-        return StrForm(DatetimeStrftime(self, fmt))
+        return Str(DatetimeStrftime(self, fmt))
 
     def date(self) -> date:
         """The date part."""
@@ -679,58 +679,58 @@ class datetime(Form, TypedNu[_datetime]):  # noqa: N801
         return datetime(DatetimeReplace(self, **kw))
 
     def __add__(self, other: TimedeltaArg) -> datetime:
-        from nu.core import AddQuery
+        from nu.core import Add
 
-        return datetime(AddQuery(self, other))
+        return datetime(Add(self, other))
 
     @overload
     def __sub__(self, other: datetime | _datetime) -> timedelta: ...
     @overload
     def __sub__(self, other: timedelta | _timedelta) -> datetime: ...
     def __sub__(self, other: DatetimeArg | TimedeltaArg) -> datetime | timedelta:
-        from nu.core import SubQuery
+        from nu.core import Sub
 
         if isinstance(other, (datetime, _datetime)):
-            return timedelta(SubQuery(self, other))
-        return datetime(SubQuery(self, other))
+            return timedelta(Sub(self, other))
+        return datetime(Sub(self, other))
 
-    def __gt__(self, other: DatetimeArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GtQuery
+    def __gt__(self, other: DatetimeArg) -> Bool:
+        from nu import Bool
+        from nu.core import Gt
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: DatetimeArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LtQuery
+    def __lt__(self, other: DatetimeArg) -> Bool:
+        from nu import Bool
+        from nu.core import Lt
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: DatetimeArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GeQuery
+    def __ge__(self, other: DatetimeArg) -> Bool:
+        from nu import Bool
+        from nu.core import Ge
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: DatetimeArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LeQuery
+    def __le__(self, other: DatetimeArg) -> Bool:
+        from nu import Bool
+        from nu.core import Le
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
-    def eq(self, other: DatetimeArg) -> BoolForm:
+    def eq(self, other: DatetimeArg) -> Bool:
         """Whether two datetimes are equal."""
-        from nu import BoolForm
-        from nu.core import EqQuery
+        from nu import Bool
+        from nu.core import Eq
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def ne(self, other: DatetimeArg) -> BoolForm:
+    def ne(self, other: DatetimeArg) -> Bool:
         """Whether two datetimes differ."""
-        from nu import BoolForm
-        from nu.core import NeQuery
+        from nu import Bool
+        from nu.core import Ne
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))
 
 
 class timezone(Form, TypedNu[_timezone]):  # noqa: N801
@@ -758,32 +758,32 @@ class timezone(Form, TypedNu[_timezone]):  # noqa: N801
 
         return timedelta(TimezoneUtcoffset(self, dt))
 
-    def tzname(self, dt: DatetimeArg | None = None) -> StrForm:
+    def tzname(self, dt: DatetimeArg | None = None) -> Str:
         """The zone's name."""
-        from nu import StrForm
+        from nu import Str
 
         from .interactions import TimezoneTzname
 
-        return StrForm(TimezoneTzname(self, dt))
+        return Str(TimezoneTzname(self, dt))
 
-    def dst(self, dt: DatetimeArg | None = None) -> NoneForm:
+    def dst(self, dt: DatetimeArg | None = None) -> None_:
         """Daylight-saving adjustment (always None for a fixed offset)."""
-        from nu import NoneForm
+        from nu import None_
 
         from .interactions import TimezoneDst
 
-        return NoneForm(TimezoneDst(self, dt))
+        return None_(TimezoneDst(self, dt))
 
-    def eq(self, other: TimezoneArg) -> BoolForm:
+    def eq(self, other: TimezoneArg) -> Bool:
         """Whether two zones are equal."""
-        from nu import BoolForm
-        from nu.core import EqQuery
+        from nu import Bool
+        from nu.core import Eq
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def ne(self, other: TimezoneArg) -> BoolForm:
+    def ne(self, other: TimezoneArg) -> Bool:
         """Whether two zones differ."""
-        from nu import BoolForm
-        from nu.core import NeQuery
+        from nu import Bool
+        from nu.core import Ne
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))

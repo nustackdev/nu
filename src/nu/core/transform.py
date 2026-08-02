@@ -5,19 +5,19 @@ StreamQueries (lazy lenses - pulled per item, no materialization). Pure shape
 over their source; effects only ride in through Ref children.
 
 Builtins to cover (Python -> Nu):
-- ``map`` -> ``MapQuery``, ``filter`` -> ``FilterQuery``, ``sorted`` -> ``SortedQuery``
+- ``map`` -> ``Map``, ``filter`` -> ``Filter``, ``sorted`` -> ``Sorted``
 
-Plus two transforms kept as core: ``FlattenQuery`` (one-level concat) and
-``UniqueQuery`` (drop already-seen, order preserved).
+Plus two transforms kept as core: ``Flatten`` (one-level concat) and
+``Unique`` (drop already-seen, order preserved).
 
-``MapQuery`` and ``FilterQuery`` bind each item into the attrs side-channel under a name
+``Map`` and ``Filter`` bind each item into the attrs side-channel under a name
 and evaluate a Nu child against it. The name is a **child** (a Query yielding
 the name), so it can be a ``Literal`` or a Ref computed elsewhere - never an
 opaque payload. The body reads the item with ``AttrRef(<name>)``. The per-item
 binding writes ``ctx.attrs`` directly - the model's side-channel for loop
 variables, not a tracked fabric write.
 
-Sorts: all StreamQuery (Q). ``SortedQuery`` / ``FlattenQuery`` / ``UniqueQuery`` stay
+Sorts: all StreamQuery (Q). ``Sorted`` / ``Flatten`` / ``Unique`` stay
 structural stubs (no ``compile``) until they are filled.
 """
 
@@ -30,7 +30,7 @@ from nu.lang import StreamQuery
 from nu.lang.sentinels import EMPTY, INVALID
 
 from ._stream import aiter_any, sync_iter
-from .literal import LiteralQuery
+from .literal import Literal
 
 
 if TYPE_CHECKING:
@@ -39,10 +39,10 @@ if TYPE_CHECKING:
     from nu.lang import Arg, Nu, StrArg
     from nu.lang.runtime import Runtime
 
-__all__ = ["FilterQuery", "FlattenQuery", "MapQuery", "SortByQuery", "SortedQuery", "UniqueQuery"]
+__all__ = ["Filter", "Flatten", "Map", "SortBy", "Sorted", "Unique"]
 
 
-class MapQuery(StreamQuery):
+class Map(StreamQuery):
     """Applies a query child to every item of its stream child (lazy).
 
     Children: ``[source, transform, key]``. Each item of ``source`` is bound
@@ -51,10 +51,10 @@ class MapQuery(StreamQuery):
     """
 
     def __init__(self, source: Arg[Iterable], transform: Nu, key: StrArg = "item") -> None:
-        key_node = key if isinstance(key, Term) else LiteralQuery(key)
+        key_node = key if isinstance(key, Term) else Literal(key)
         super().__init__(source, transform, key_node)
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, transform, key_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -69,7 +69,7 @@ class MapQuery(StreamQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, transform, key_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -85,7 +85,7 @@ class MapQuery(StreamQuery):
         return athunk
 
 
-class FilterQuery(StreamQuery):
+class Filter(StreamQuery):
     """Keeps the items of its stream child for which a predicate holds (lazy).
 
     Children: ``[source, predicate, key]``. Each item is bound under the name
@@ -94,10 +94,10 @@ class FilterQuery(StreamQuery):
     """
 
     def __init__(self, source: Arg[Iterable], predicate: Nu, key: StrArg = "item") -> None:
-        key_node = key if isinstance(key, Term) else LiteralQuery(key)
+        key_node = key if isinstance(key, Term) else Literal(key)
         super().__init__(source, predicate, key_node)
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, predicate, key_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -116,7 +116,7 @@ class FilterQuery(StreamQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, predicate, key_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -136,14 +136,14 @@ class FilterQuery(StreamQuery):
         return athunk
 
 
-class SortedQuery(StreamQuery):
+class Sorted(StreamQuery):
     """Its source child, ordered. Eager: drains the source, then yields.
 
     Children: ``[source]``. The one barrier among these lenses - a pull on its
     output blocks until the whole source is drained and sorted.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (source,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -151,7 +151,7 @@ class SortedQuery(StreamQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (source,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -166,14 +166,14 @@ class SortedQuery(StreamQuery):
         return athunk
 
 
-class SortByQuery(StreamQuery):
+class SortBy(StreamQuery):
     """Its source child, ordered by a per-item key expression. Eager: drains, sorts, yields.
 
     Children: ``[source, key, reverse, key_name]``. Each item of ``source``
     is bound under the name ``key_name`` yields, then ``key`` is evaluated
     to produce the sort key. ``reverse`` (a bool child) flips the order. The
     key expression reads the item via ``AttrRef(<name>)`` - same
-    side-channel :class:`MapQuery` / :class:`FilterQuery` use.
+    side-channel :class:`Map` / :class:`Filter` use.
     """
 
     def __init__(
@@ -183,11 +183,11 @@ class SortByQuery(StreamQuery):
         reverse: Arg[bool] = False,
         item: StrArg = "item",
     ) -> None:
-        reverse_node = reverse if isinstance(reverse, Term) else LiteralQuery(reverse)
-        item_node = item if isinstance(item, Term) else LiteralQuery(item)
+        reverse_node = reverse if isinstance(reverse, Term) else Literal(reverse)
+        item_node = item if isinstance(item, Term) else Literal(item)
         super().__init__(source, key, reverse_node, item_node)
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, key_expr, reverse_t, item_t = children
 
         def thunk(rt: Runtime) -> object:
@@ -202,7 +202,7 @@ class SortByQuery(StreamQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, key_expr, reverse_t, item_t = children
 
         async def athunk(rt: Runtime) -> object:
@@ -223,13 +223,13 @@ class SortByQuery(StreamQuery):
         return athunk
 
 
-class FlattenQuery(StreamQuery):
+class Flatten(StreamQuery):
     """Concatenates a source of iterables one level into a flat stream (lazy).
 
     Children: ``[source]`` where each item of ``source`` is itself iterable.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (source,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -241,7 +241,7 @@ class FlattenQuery(StreamQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (source,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -255,13 +255,13 @@ class FlattenQuery(StreamQuery):
         return athunk
 
 
-class UniqueQuery(StreamQuery):
+class Unique(StreamQuery):
     """Yields each item of its source child once, first-seen order (lazy).
 
     Children: ``[source]``. Items must be hashable.
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (source,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -276,7 +276,7 @@ class UniqueQuery(StreamQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (source,) = children
 
         async def athunk(rt: Runtime) -> object:

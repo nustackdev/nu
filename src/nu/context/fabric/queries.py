@@ -2,7 +2,7 @@
 
 The dual-role read of a ``FabricRef`` yields the bound fabric or ``EMPTY``.
 That aliases a bound ``EMPTY``, so existence needs an explicit query.
-``FabricExistsQuery`` holds a ``FabricRef`` in a read slot and answers
+``FabricExists`` holds a ``FabricRef`` in a read slot and answers
 whether its fabric type is bound on the Context.
 """
 
@@ -19,10 +19,10 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
-__all__ = ["FabricExistsQuery"]
+__all__ = ["FabricExists"]
 
 
-class FabricExistsQuery(ScalarQuery):
+class FabricExists(ScalarQuery):
     """Yields whether the slot-0 ``FabricRef``'s fabric type is bound."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

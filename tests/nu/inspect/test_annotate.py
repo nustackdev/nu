@@ -15,7 +15,7 @@ import logging as pylogging
 from typing import TYPE_CHECKING
 
 from nu import Context, arun, run
-from nu.core import LiteralQuery, PrintCommand
+from nu.core import Literal, Print
 from nu.core.io import STDOUT, StdioBackend
 from nu.factory import ScalarQueryFactory
 from nu.flows import Sequential
@@ -23,7 +23,7 @@ from nu.inspect import annotate_retries, annotate_steps, render_nu
 from nu.inspect.annotate import _StepSpan
 from nu.lang import Span
 from nu.spans.policy import Retry
-from nu.std.logging import LogCommand
+from nu.std.logging import Log
 
 
 if TYPE_CHECKING:
@@ -38,8 +38,8 @@ def _capture() -> tuple[Context, _io.StringIO]:
 
 def _prog() -> Sequential:
     return Sequential(
-        PrintCommand(STDOUT, LiteralQuery("a")),
-        PrintCommand(STDOUT, LiteralQuery("b")),
+        Print(STDOUT, Literal("a")),
+        Print(STDOUT, Literal("b")),
     )
 
 
@@ -64,19 +64,19 @@ def test_annotate_steps_renders_as_wrapped_box() -> None:
     assert render_nu(ann, as_="plain").splitlines() == [
         "Sequential",
         "├── _StepSpan",
-        "│  └── PrintCommand",
+        "│  └── Print",
         "│     ├── StdioRef(stream='stdout')",
-        "│     └── LiteralQuery('a')",
+        "│     └── Literal('a')",
         "└── _StepSpan",
-        "   └── PrintCommand",
+        "   └── Print",
         "      ├── StdioRef(stream='stdout')",
-        "      └── LiteralQuery('b')",
+        "      └── Literal('b')",
     ]
 
 
 def test_nested_sequential_logs_a_deeper_path(caplog: pytest.LogCaptureFixture) -> None:
-    inner = Sequential(PrintCommand(STDOUT, LiteralQuery("b1")), PrintCommand(STDOUT, LiteralQuery("b2")))
-    outer = Sequential(PrintCommand(STDOUT, LiteralQuery("a")), inner)
+    inner = Sequential(Print(STDOUT, Literal("b1")), Print(STDOUT, Literal("b2")))
+    outer = Sequential(Print(STDOUT, Literal("a")), inner)
     caplog.set_level(pylogging.DEBUG, logger="nu.steps")
     run(annotate_steps(outer))
     lines = [r.getMessage() for r in caplog.records]
@@ -113,7 +113,7 @@ def test_annotate_steps_logs_failure_and_reraises(caplog: pytest.LogCaptureFixtu
         raise RuntimeError("kaboom")
 
     boom_q = ScalarQueryFactory("BoomQ", boom, deterministic=False)
-    prog = Sequential(PrintCommand(STDOUT, LiteralQuery("ok")), PrintCommand(STDOUT, boom_q()))
+    prog = Sequential(Print(STDOUT, Literal("ok")), Print(STDOUT, boom_q()))
     caplog.set_level(pylogging.DEBUG, logger="nu.steps")
     try:
         run(annotate_steps(prog))
@@ -121,7 +121,9 @@ def test_annotate_steps_logs_failure_and_reraises(caplog: pytest.LogCaptureFixtu
         pass
     else:
         raise AssertionError("expected the failure to propagate")
-    failure_lines = [(r.levelname, r.getMessage()) for r in caplog.records if "failed" in r.getMessage()]
+    failure_lines = [
+        (r.levelname, r.getMessage()) for r in caplog.records if "failed" in r.getMessage()
+    ]
     assert ("WARNING", "[Sequential] step 2/2 failed: kaboom") in failure_lines
 
 
@@ -162,10 +164,10 @@ def test_annotate_retries_logs_each_failed_attempt(caplog: pytest.LogCaptureFixt
 def test_annotate_retries_injects_a_logcommand_hook() -> None:
     flaky = _flaky(fail_times=1)
     ann = annotate_retries(Retry(flaky(), max_attempts=2, delay=0.0))
-    # Retry child slot 5 is on_attempt_fail; it must now hold our LogCommand,
+    # Retry child slot 5 is on_attempt_fail; it must now hold our Log,
     # while slot 7 (on_fail) stays a Noop so exhaustion still raises
     assert isinstance(ann, Retry)
-    assert isinstance(ann._children[5], LogCommand)
+    assert isinstance(ann._children[5], Log)
     assert type(ann._children[7]).__name__ == "Noop"
 
 
@@ -181,7 +183,7 @@ def test_annotate_retries_honors_custom_keys(caplog: pytest.LogCaptureFixture) -
 
 
 def test_annotate_retries_chains_existing_hook(caplog: pytest.LogCaptureFixture) -> None:
-    marker = PrintCommand(STDOUT, LiteralQuery("HOOK"))
+    marker = Print(STDOUT, Literal("HOOK"))
     flaky = _flaky(fail_times=1)
     ann = annotate_retries(
         Retry(flaky(), max_attempts=2, delay=0.0, on_attempt_fail=marker),
@@ -205,5 +207,3 @@ def test_annotate_retries_preserves_the_raise_on_exhaustion() -> None:
         pass
     else:
         raise AssertionError("annotation must not swallow the terminal failure")
-
-

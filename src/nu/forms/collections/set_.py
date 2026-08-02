@@ -1,4 +1,4 @@
-"""SetForm, FrozenSetForm - set interfaces."""
+"""Set, FrozenSet - set interfaces."""
 
 from __future__ import annotations
 
@@ -13,179 +13,179 @@ from .abc.set_interactions import FrozenSetCreate, SetCreate
 if TYPE_CHECKING:
     from nu.lang import FrozenSetArg, Nu, SetArg
 
-    from ..primitives import AnyForm, BoolForm
-    from .list_ import ListForm
+    from ..primitives import Any, Bool
+    from .list_ import List
 
 
 __all__ = [
-    "FrozenSetForm",
-    "SetForm",
+    "FrozenSet",
+    "Set",
 ]
 
 
-class SetForm[T](
-    MutableSetForm[set[T], T, "SetForm[T]", "AnyForm"],
+class Set[T](
+    MutableSetForm[set[T], T, "Set[T]", "Any"],
     TypedNu[set[T]],
 ):
-    """SetQuery interface. Mutable set + comparable."""
+    """Set interface. Mutable set + comparable."""
 
     @classmethod
-    def create(cls) -> SetForm[T]:
+    def create(cls) -> Set[T]:
         """Yield a fresh empty set."""
         return cls(SetCreate())
 
-    def _wrap_set_result(self, operand: Nu) -> SetForm[T]:
-        """Wrap operand as SetForm."""
-        return SetForm(operand)
+    def _wrap_set_result(self, operand: Nu) -> Set[T]:
+        """Wrap operand as Set."""
+        return Set(operand)
 
-    def _wrap_iterable_result(self, operand: Nu) -> ListForm:
-        """Wrap operand as ListForm."""
-        from .list_ import ListForm
+    def _wrap_iterable_result(self, operand: Nu) -> List:
+        """Wrap operand as List."""
+        from .list_ import List
 
-        return ListForm(operand)
+        return List(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> AnyForm:
-        """Wrap operand as AnyForm element."""
-        from ..primitives import AnyForm
+    def _wrap_element_result(self, operand: Nu) -> Any:
+        """Wrap operand as Any element."""
+        from ..primitives import Any
 
-        return AnyForm(operand)
+        return Any(operand)
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: SetArg[T]) -> BoolForm:
-        from nu.core import GtQuery
+    def __gt__(self, other: SetArg[T]) -> Bool:
+        from nu.core import Gt
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: SetArg[T]) -> BoolForm:
-        from nu.core import LtQuery
+    def __lt__(self, other: SetArg[T]) -> Bool:
+        from nu.core import Lt
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: SetArg[T]) -> BoolForm:
-        from nu.core import GeQuery
+    def __ge__(self, other: SetArg[T]) -> Bool:
+        from nu.core import Ge
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: SetArg[T]) -> BoolForm:
-        from nu.core import LeQuery
+    def __le__(self, other: SetArg[T]) -> Bool:
+        from nu.core import Le
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
     __hash__ = object.__hash__
 
-    def __eq__(self, other: SetArg[T]) -> BoolForm:  # type: ignore[override]
-        from nu.core import EqQuery
+    def __eq__(self, other: SetArg[T]) -> Bool:  # type: ignore[override]
+        from nu.core import Eq
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def __ne__(self, other: SetArg[T]) -> BoolForm:  # type: ignore[override]
-        from nu.core import NeQuery
+    def __ne__(self, other: SetArg[T]) -> Bool:  # type: ignore[override]
+        from nu.core import Ne
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))
 
-    def is_(self, other: SetArg[T]) -> BoolForm:
+    def is_(self, other: SetArg[T]) -> Bool:
         """Identity comparison: self is other."""
-        from nu.core import IsQuery
+        from nu.core import Is
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(IsQuery(self, other))
+        return Bool(Is(self, other))
 
 
-class FrozenSetForm[T](
-    SetLikeForm[frozenset[T], T, "FrozenSetForm[T]", "AnyForm"],
+class FrozenSet[T](
+    SetLikeForm[frozenset[T], T, "FrozenSet[T]", "Any"],
     TypedNu[frozenset[T]],
 ):
     """FrozenSet interface. Immutable set + comparable."""
 
     @classmethod
-    def create(cls) -> FrozenSetForm[T]:
+    def create(cls) -> FrozenSet[T]:
         """Yield an empty frozenset."""
         return cls(FrozenSetCreate())
 
-    def _wrap_set_result(self, operand: Nu) -> FrozenSetForm[T]:
-        """Wrap operand as FrozenSetForm."""
-        return FrozenSetForm(operand)
+    def _wrap_set_result(self, operand: Nu) -> FrozenSet[T]:
+        """Wrap operand as FrozenSet."""
+        return FrozenSet(operand)
 
-    def _wrap_iterable_result(self, operand: Nu) -> ListForm:
-        """Wrap operand as ListForm."""
-        from .list_ import ListForm
+    def _wrap_iterable_result(self, operand: Nu) -> List:
+        """Wrap operand as List."""
+        from .list_ import List
 
-        return ListForm(operand)
+        return List(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> AnyForm:
-        """Wrap operand as AnyForm element."""
-        from ..primitives import AnyForm
+    def _wrap_element_result(self, operand: Nu) -> Any:
+        """Wrap operand as Any element."""
+        from ..primitives import Any
 
-        return AnyForm(operand)
+        return Any(operand)
 
     # =========================================================================
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: FrozenSetArg[T]) -> BoolForm:
-        from nu.core import GtQuery
+    def __gt__(self, other: FrozenSetArg[T]) -> Bool:
+        from nu.core import Gt
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: FrozenSetArg[T]) -> BoolForm:
-        from nu.core import LtQuery
+    def __lt__(self, other: FrozenSetArg[T]) -> Bool:
+        from nu.core import Lt
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: FrozenSetArg[T]) -> BoolForm:
-        from nu.core import GeQuery
+    def __ge__(self, other: FrozenSetArg[T]) -> Bool:
+        from nu.core import Ge
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: FrozenSetArg[T]) -> BoolForm:
-        from nu.core import LeQuery
+    def __le__(self, other: FrozenSetArg[T]) -> Bool:
+        from nu.core import Le
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
     __hash__ = object.__hash__
 
-    def __eq__(self, other: FrozenSetArg[T]) -> BoolForm:  # type: ignore[override]
-        from nu.core import EqQuery
+    def __eq__(self, other: FrozenSetArg[T]) -> Bool:  # type: ignore[override]
+        from nu.core import Eq
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def __ne__(self, other: FrozenSetArg[T]) -> BoolForm:  # type: ignore[override]
-        from nu.core import NeQuery
+    def __ne__(self, other: FrozenSetArg[T]) -> Bool:  # type: ignore[override]
+        from nu.core import Ne
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))
 
-    def is_(self, other: FrozenSetArg[T]) -> BoolForm:
+    def is_(self, other: FrozenSetArg[T]) -> Bool:
         """Identity comparison: self is other."""
-        from nu.core import IsQuery
+        from nu.core import Is
 
-        from ..primitives import BoolForm
+        from ..primitives import Bool
 
-        return BoolForm(IsQuery(self, other))
+        return Bool(Is(self, other))

@@ -7,7 +7,7 @@
   ``EMPTY`` when nothing is bound. Subclass and set ``fabric = SomeFabric``
   to name a typed binding; add ``method_query`` / ``method_action`` /
   ``method_command`` descriptors for in-tree dispatch.
-- ``FabricExistsQuery`` - explicit existence check, since a bound ``EMPTY``
+- ``FabricExists`` - explicit existence check, since a bound ``EMPTY``
   aliases "unbound" under the dual-role read.
 - ``Provide`` / ``ProvideList`` / ``ProvideDict`` - Brackets that construct
   a fabric on entry, bind it on ctx, and tear down in reverse on exit.
@@ -22,13 +22,13 @@ from __future__ import annotations
 
 from .lifecycle import Provide, ProvideDict, ProvideList, With
 from .protocol import Fabric, FabricLifecycle
-from .queries import FabricExistsQuery
+from .queries import FabricExists
 from .refs import FabricRef
 
 
 __all__ = [
     "Fabric",
-    "FabricExistsQuery",
+    "FabricExists",
     "FabricLifecycle",
     "FabricRef",
     "Provide",

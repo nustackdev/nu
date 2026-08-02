@@ -35,7 +35,7 @@ def _child_nid(rt: Runtime, nid: int, slot: int) -> int:
 class ScanPrimitivesUnsafe(ScalarQuery):
     """Scan all direct primitive child values via ``_unsafe_primitive_scan_values``."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         def thunk(rt: Runtime) -> object:
@@ -47,7 +47,7 @@ class ScanPrimitivesUnsafe(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         async def athunk(rt: Runtime) -> object:
@@ -65,7 +65,7 @@ class ClearPrimitivesUnsafeCmd(Command):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         def thunk(rt: Runtime) -> None:
@@ -74,7 +74,7 @@ class ClearPrimitivesUnsafeCmd(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:

@@ -1,4 +1,4 @@
 {
   "title": "Tutorials",
-  "pages": ["your-first-app"]
+  "pages": ["hello", "counter", "movies"]
 }

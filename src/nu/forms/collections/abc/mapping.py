@@ -77,51 +77,51 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 
     def __getitem__(self, key: Arg[KeyT]) -> ValueResultT:
         """Key → value via At."""
-        from nu.core import GetItemQuery as At
+        from nu.core import GetItem as At
 
         return cast("ValueResultT", self._wrap_value_result(At(self, key)))
 
     def keys(self) -> CollectionResultT:
         """Get all keys."""
-        from .mapping_interactions import KeysQuery
+        from .mapping_interactions import Keys
 
-        return cast("CollectionResultT", self._wrap_keys_result(KeysQuery(self)))
+        return cast("CollectionResultT", self._wrap_keys_result(Keys(self)))
 
     def values(self) -> CollectionResultT:
         """Get all values."""
-        from .mapping_interactions import ValuesQuery
+        from .mapping_interactions import Values
 
-        return cast("CollectionResultT", self._wrap_values_result(ValuesQuery(self)))
+        return cast("CollectionResultT", self._wrap_values_result(Values(self)))
 
     def items(self) -> CollectionResultT:
         """Get all key-value pairs."""
-        from .mapping_interactions import ItemsQuery
+        from .mapping_interactions import Items
 
-        return cast("CollectionResultT", self._wrap_items_result(ItemsQuery(self)))
+        return cast("CollectionResultT", self._wrap_items_result(Items(self)))
 
     def get_item(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Get value with default."""
-        from .mapping_interactions import GetQuery
+        from .mapping_interactions import Get
 
-        return cast("ValueResultT", self._wrap_value_result(GetQuery(self, key, default)))
+        return cast("ValueResultT", self._wrap_value_result(Get(self, key, default)))
 
     def copy(self) -> CollectionResultT:
         """Shallow copy: mapping.copy(). Query yielding a new mapping."""
-        from .mapping_interactions import CopyQuery
+        from .mapping_interactions import Copy
 
-        return cast("CollectionResultT", self._wrap_mapping_result(CopyQuery(self)))
+        return cast("CollectionResultT", self._wrap_mapping_result(Copy(self)))
 
     def reversed_keys(self) -> CollectionResultT:
         """Keys in reverse insertion order: reversed(mapping). Query (3.8+)."""
-        from .mapping_interactions import ReversedKeysQuery
+        from .mapping_interactions import ReversedKeys
 
-        return cast("CollectionResultT", self._wrap_keys_result(ReversedKeysQuery(self)))
+        return cast("CollectionResultT", self._wrap_keys_result(ReversedKeys(self)))
 
     def merge(self, other: Arg[Mapping[KeyT, ValueT]]) -> CollectionResultT:
         """Merge into a new mapping: mapping | other. Query yielding a new mapping."""
-        from .mapping_interactions import MergeQuery
+        from .mapping_interactions import Merge
 
-        return cast("CollectionResultT", self._wrap_mapping_result(MergeQuery(self, other)))
+        return cast("CollectionResultT", self._wrap_mapping_result(Merge(self, other)))
 
 
 class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
@@ -138,52 +138,52 @@ class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
     """
 
     def set_item(self, key: Arg[KeyT], value: Arg[ValueT]) -> Any:  # noqa: ANN401
-        """SetQuery value at key. Mutating Command; returns nothing."""
-        from .mapping_interactions import SetItemCommand
+        """Set value at key. Mutating Command; returns nothing."""
+        from nu.core.access import SetItem
 
-        return SetItemCommand(self, key, value)
+        return SetItem(self, key, value)
 
     def del_item(self, key: Arg[KeyT]) -> Any:  # noqa: ANN401
         """Delete entry by key. Mutating Command; returns nothing."""
-        from .mapping_interactions import DeleteItemCommand
+        from .mapping_interactions import DeleteItem
 
-        return DeleteItemCommand(self, key)
+        return DeleteItem(self, key)
 
     def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> Any:  # noqa: ANN401
         """Update mapping with another mapping. Mutating Command; returns nothing."""
-        from .mapping_interactions import UpdateCommand
+        from .mapping_interactions import Update
 
-        return UpdateCommand(self, other)
+        return Update(self, other)
 
     def pop(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Remove key and return value, or default if missing."""
-        from .mapping_interactions import DictPopAction
+        from .mapping_interactions import DictPop
 
-        return cast("ValueResultT", self._wrap_value_result(DictPopAction(self, key, default)))
+        return cast("ValueResultT", self._wrap_value_result(DictPop(self, key, default)))
 
     def popitem(self) -> ValueResultT:
         """Remove and return arbitrary (key, value) pair."""
-        from .mapping_interactions import PopItemAction
+        from .mapping_interactions import PopItem
 
-        return cast("ValueResultT", self._wrap_value_result(PopItemAction(self)))
+        return cast("ValueResultT", self._wrap_value_result(PopItem(self)))
 
     def setdefault(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
         """Get value at key, setting it to default if missing."""
-        from .mapping_interactions import SetDefaultAction
+        from .mapping_interactions import SetDefault
 
-        return cast("ValueResultT", self._wrap_value_result(SetDefaultAction(self, key, default)))
+        return cast("ValueResultT", self._wrap_value_result(SetDefault(self, key, default)))
 
     def merge_update(self, other: Arg[Mapping[KeyT, ValueT]]) -> CollectionResultT:
         """In-place merge: mapping |= other. Mutating Action; yields the mapping."""
-        from .mapping_interactions import MergeUpdateAction
+        from .mapping_interactions import MergeUpdate
 
-        return cast("CollectionResultT", self._wrap_mapping_result(MergeUpdateAction(self, other)))
+        return cast("CollectionResultT", self._wrap_mapping_result(MergeUpdate(self, other)))
 
     def clear(self) -> Any:  # noqa: ANN401
         """Remove all items."""
-        from .shared_interactions import ClearCommand
+        from .shared_interactions import Clear
 
-        return ClearCommand(self)
+        return Clear(self)
 
 
 class ReactiveMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
@@ -192,7 +192,7 @@ class ReactiveMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueRes
     """Reactive mapping — adds on_change() for any-change observation.
 
     Provides (in addition to MutableMappingForm):
-        on_change() → OnChangeQuery
+        on_change() → OnChange
 
     The three tree-aware methods (on_child_change, on_children_change,
     on_descendants_change) are shape-domain and live on
@@ -201,6 +201,6 @@ class ReactiveMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueRes
 
     def on_change(self) -> object:
         """Subscribe to any change on this mapping slot."""
-        from nu.core.reactive import OnChangeQuery
+        from nu.core.reactive import OnChange
 
-        return OnChangeQuery(self)
+        return OnChange(self)

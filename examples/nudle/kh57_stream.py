@@ -48,13 +48,13 @@ ui = (
     >> nu.ForeverDo(
         nu.v.Snapshot(
             Dashboard.chart.set_points(
-                nu.CollectQuery(
-                    nu.SortedQuery(
+                nu.Collect(
+                    nu.Sorted(
                         Series.entries.sample(Dashboard.n, 0, Series.height),
                     ),
                 )
             )
-            | Dashboard.count.set(nu.StrQuery(Series.height)),
+            | Dashboard.count.set(nu.ToStr(Series.height)),
         )
         >> nu.Delay(0.1),
     )

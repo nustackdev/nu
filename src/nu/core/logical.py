@@ -4,19 +4,19 @@ Maps Python's boolean operations onto Nu ScalarQueries. Pure compute; no
 Context effect of their own.
 
 Builtins / operators to cover (Python -> Nu):
-- ``and`` -> ``AndQuery``, ``or`` -> ``OrQuery``, ``not`` -> ``NotQuery``
-- ``bool`` (truthiness) -> ``BoolQuery``
+- ``and`` -> ``And``, ``or`` -> ``Or``, ``not`` -> ``Not``
+- ``bool`` (truthiness) -> ``ToBool``
 
-Sorts: all ScalarQuery (Q). ``AndQuery`` / ``OrQuery`` are commutative + associative +
-idempotent and variadic; ``NotQuery`` and ``BoolQuery`` are unary. ``logical`` owns
-``BoolQuery``; ``cast`` does not define it.
+Sorts: all ScalarQuery (Q). ``And`` / ``Or`` are commutative + associative +
+idempotent and variadic; ``Not`` and ``ToBool`` are unary. ``logical`` owns
+``ToBool``; ``cast`` does not define it.
 
-AndQuery / OrQuery semantics: Python's ``and`` / ``or`` short-circuit and return an
+And / Or semantics: Python's ``and`` / ``or`` short-circuit and return an
 operand (not a bool). Nu does not mirror that: these atoms coerce to ``bool``
 and fold every operand eagerly,
-so a Nu ``AndQuery`` / ``OrQuery`` always yields a plain boolean and sentinel
-propagation gets the chance to fire on any branch. ``AndQuery`` yields ``True``
-over no operands, ``OrQuery`` yields ``False``.
+so a Nu ``And`` / ``Or`` always yields a plain boolean and sentinel
+propagation gets the chance to fire on any branch. ``And`` yields ``True``
+over no operands, ``Or`` yields ``False``.
 
 Sentinels: each operand is checked; an ``EMPTY`` or ``INVALID`` operand
 collapses the whole query to ``INVALID`` (per ``nu.lang.sentinels``).
@@ -36,17 +36,17 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-__all__ = ["AndQuery", "BoolQuery", "NotQuery", "OrQuery"]
+__all__ = ["And", "Not", "Or", "ToBool"]
 
 
-class AndQuery(ScalarQuery):
+class And(ScalarQuery):
     """The conjunction of its boolean children. Yields ``True`` if empty."""
 
     _commutative = Declared(value=True, name="commutative")
     _associative = Declared(value=True, name="associative")
     _idempotent = Declared(value=True, name="idempotent")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             out = True
             for ct in children:
@@ -58,7 +58,7 @@ class AndQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             out = True
             for ct in children:
@@ -71,14 +71,14 @@ class AndQuery(ScalarQuery):
         return athunk
 
 
-class OrQuery(ScalarQuery):
+class Or(ScalarQuery):
     """The disjunction of its boolean children. Yields ``False`` if empty."""
 
     _commutative = Declared(value=True, name="commutative")
     _associative = Declared(value=True, name="associative")
     _idempotent = Declared(value=True, name="idempotent")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             out = False
             for ct in children:
@@ -90,7 +90,7 @@ class OrQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             out = False
             for ct in children:
@@ -103,10 +103,10 @@ class OrQuery(ScalarQuery):
         return athunk
 
 
-class NotQuery(ScalarQuery):
+class Not(ScalarQuery):
     """The negation of its one boolean child."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -117,7 +117,7 @@ class NotQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -129,10 +129,10 @@ class NotQuery(ScalarQuery):
         return athunk
 
 
-class BoolQuery(ScalarQuery):
+class ToBool(ScalarQuery):
     """The truthiness of its one child as a plain ``bool``."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -143,7 +143,7 @@ class BoolQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:

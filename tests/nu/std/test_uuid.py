@@ -1,7 +1,7 @@
 """Functional tests for ``nu.std.uuid`` - drive the Forms through the engine.
 
 Covers the three modeling paths: constructors (factory atoms), attribute reads
-(core ``GetAttrQuery``), and comparison (core atoms), sync and async.
+(core ``GetAttr``), and comparison (core atoms), sync and async.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ def test_from_int() -> None:
 
 
 def test_version_accessor() -> None:
-    # a v5 UUID has a real version; accessor reuses core GetAttrQuery
+    # a v5 UUID has a real version; accessor reuses core GetAttr
     value, _ = run(uuid5(UUID.from_str(NS), "nu").version())
     assert value == 5
 

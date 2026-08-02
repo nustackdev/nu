@@ -56,7 +56,7 @@ print(run(e3, order_ctx)[0], type(e3), e3)
 e4 = Order.qty + 5
 print(run(e4, order_ctx)[0], type(e4), e4)
 
-# 5. A store command - now a typed SetCommand, not a bare object.
+# 5. A store command - now a typed SetCmd, not a bare object.
 e5 = Order.symbol.set("MSFT")
 print(run(e5, order_ctx)[0], type(e5), e5)
 

@@ -23,13 +23,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang.kinds import ScalarQuery
-from nu.lang.nu import Nu
 
 from .core import InteractionFactory
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from nu.lang.nu import Nu
 
 
 __all__ = ["host"]

@@ -29,8 +29,8 @@ from nu.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu.forms.collections import TupleForm
-    from nu.forms.primitives import BoolForm, IntForm
+    from nu.forms.collections import Tuple
+    from nu.forms.primitives import Bool, Int
     from nu.lang import Arg, FloatArg, IntArg, StrArg
 
     type DecimalArg = Arg[_Decimal]
@@ -72,54 +72,54 @@ class Decimal(Form, TypedNu[_Decimal]):
     # =========================================================================
 
     def __add__(self, other: DecimalArg) -> Decimal:
-        from nu.core import AddQuery
+        from nu.core import Add
 
-        return Decimal(AddQuery(self, other))
+        return Decimal(Add(self, other))
 
     def __sub__(self, other: DecimalArg) -> Decimal:
-        from nu.core import SubQuery
+        from nu.core import Sub
 
-        return Decimal(SubQuery(self, other))
+        return Decimal(Sub(self, other))
 
     def __mul__(self, other: DecimalArg) -> Decimal:
-        from nu.core import MulQuery
+        from nu.core import Mul
 
-        return Decimal(MulQuery(self, other))
+        return Decimal(Mul(self, other))
 
     def __truediv__(self, other: DecimalArg) -> Decimal:
-        from nu.core import DivQuery
+        from nu.core import Div
 
-        return Decimal(DivQuery(self, other))
+        return Decimal(Div(self, other))
 
     def __floordiv__(self, other: DecimalArg) -> Decimal:
-        from nu.core import FloorDivQuery
+        from nu.core import FloorDiv
 
-        return Decimal(FloorDivQuery(self, other))
+        return Decimal(FloorDiv(self, other))
 
     def __mod__(self, other: DecimalArg) -> Decimal:
-        from nu.core import ModQuery
+        from nu.core import Mod
 
-        return Decimal(ModQuery(self, other))
+        return Decimal(Mod(self, other))
 
     def __pow__(self, other: DecimalArg | IntArg) -> Decimal:
-        from nu.core import PowQuery
+        from nu.core import Pow
 
-        return Decimal(PowQuery(self, other))
+        return Decimal(Pow(self, other))
 
     def __neg__(self) -> Decimal:
-        from nu.core import NegQuery
+        from nu.core import Neg
 
-        return Decimal(NegQuery(self))
+        return Decimal(Neg(self))
 
     def __abs__(self) -> Decimal:
-        from nu.core import AbsQuery
+        from nu.core import Abs
 
-        return Decimal(AbsQuery(self))
+        return Decimal(Abs(self))
 
     def __pos__(self) -> Decimal:
-        from nu.core import PosQuery
+        from nu.core import Pos
 
-        return Decimal(PosQuery(self))
+        return Decimal(Pos(self))
 
     # =========================================================================
     # DECIMAL-RETURNING METHODS (factory atoms over unbound methods)
@@ -189,104 +189,104 @@ class Decimal(Form, TypedNu[_Decimal]):
     # OTHER-TYPED METHODS (factory atoms)
     # =========================================================================
 
-    def adjusted(self) -> IntForm:
+    def adjusted(self) -> Int:
         """The adjusted exponent after shifting out the coefficient's digits."""
-        from nu import IntForm
+        from nu import Int
 
         from .interactions import DecimalAdjusted
 
-        return IntForm(DecimalAdjusted(self))
+        return Int(DecimalAdjusted(self))
 
-    def as_integer_ratio(self) -> TupleForm:
+    def as_integer_ratio(self) -> Tuple:
         """The exact value as a ``(numerator, denominator)`` pair of ints."""
-        from nu import TupleForm
+        from nu import Tuple
 
         from .interactions import DecimalAsIntegerRatio
 
-        return TupleForm(DecimalAsIntegerRatio(self))
+        return Tuple(DecimalAsIntegerRatio(self))
 
     # =========================================================================
     # PREDICATES (factory atoms)
     # =========================================================================
 
-    def is_finite(self) -> BoolForm:
+    def is_finite(self) -> Bool:
         """Whether the value is finite (not infinite, not NaN)."""
-        from nu import BoolForm
+        from nu import Bool
 
         from .interactions import DecimalIsFinite
 
-        return BoolForm(DecimalIsFinite(self))
+        return Bool(DecimalIsFinite(self))
 
-    def is_infinite(self) -> BoolForm:
+    def is_infinite(self) -> Bool:
         """Whether the value is positive or negative infinity."""
-        from nu import BoolForm
+        from nu import Bool
 
         from .interactions import DecimalIsInfinite
 
-        return BoolForm(DecimalIsInfinite(self))
+        return Bool(DecimalIsInfinite(self))
 
-    def is_nan(self) -> BoolForm:
+    def is_nan(self) -> Bool:
         """Whether the value is a NaN (quiet or signaling)."""
-        from nu import BoolForm
+        from nu import Bool
 
         from .interactions import DecimalIsNan
 
-        return BoolForm(DecimalIsNan(self))
+        return Bool(DecimalIsNan(self))
 
-    def is_zero(self) -> BoolForm:
+    def is_zero(self) -> Bool:
         """Whether the value is zero (positive or negative)."""
-        from nu import BoolForm
+        from nu import Bool
 
         from .interactions import DecimalIsZero
 
-        return BoolForm(DecimalIsZero(self))
+        return Bool(DecimalIsZero(self))
 
-    def is_signed(self) -> BoolForm:
+    def is_signed(self) -> Bool:
         """Whether the sign bit is set (negative, including ``-0``)."""
-        from nu import BoolForm
+        from nu import Bool
 
         from .interactions import DecimalIsSigned
 
-        return BoolForm(DecimalIsSigned(self))
+        return Bool(DecimalIsSigned(self))
 
     # =========================================================================
     # COMPARISON (reuse core comparison atoms)
     # =========================================================================
 
-    def __gt__(self, other: DecimalArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GtQuery
+    def __gt__(self, other: DecimalArg) -> Bool:
+        from nu import Bool
+        from nu.core import Gt
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: DecimalArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LtQuery
+    def __lt__(self, other: DecimalArg) -> Bool:
+        from nu import Bool
+        from nu.core import Lt
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: DecimalArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GeQuery
+    def __ge__(self, other: DecimalArg) -> Bool:
+        from nu import Bool
+        from nu.core import Ge
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: DecimalArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LeQuery
+    def __le__(self, other: DecimalArg) -> Bool:
+        from nu import Bool
+        from nu.core import Le
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
-    def eq(self, other: DecimalArg) -> BoolForm:
+    def eq(self, other: DecimalArg) -> Bool:
         """Whether two decimals are equal in value."""
-        from nu import BoolForm
-        from nu.core import EqQuery
+        from nu import Bool
+        from nu.core import Eq
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def ne(self, other: DecimalArg) -> BoolForm:
+    def ne(self, other: DecimalArg) -> Bool:
         """Whether two decimals differ in value."""
-        from nu import BoolForm
-        from nu.core import NeQuery
+        from nu import Bool
+        from nu.core import Ne
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))

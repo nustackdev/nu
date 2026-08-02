@@ -18,6 +18,6 @@ from nu.std.asyncio import sleep
 
 ctx = Context()
 
-# 1. Suspend for 10ms without blocking the loop - a NoneForm (AsyncioSleep atom).
+# 1. Suspend for 10ms without blocking the loop - a None_ (AsyncioSleep atom).
 e1 = sleep(0.01)
 print(_asyncio.run(arun(e1, ctx))[0], type(e1), e1)

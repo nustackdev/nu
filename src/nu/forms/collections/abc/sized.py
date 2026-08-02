@@ -13,7 +13,7 @@ from nu.lang import Form
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import IntForm
+    from nu.forms.primitives import Int
 
 
 __all__ = [
@@ -24,9 +24,9 @@ __all__ = [
 class SizedForm(Form):
     """Base for values that have a length - like collections.abc.Sized."""
 
-    def len(self) -> IntForm:
+    def len(self) -> Int:
         """Length of this collection."""
-        from nu.core import LenQuery
-        from nu.forms.primitives import IntForm
+        from nu.core import Len
+        from nu.forms.primitives import Int
 
-        return IntForm(LenQuery(self))
+        return Int(Len(self))

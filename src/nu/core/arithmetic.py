@@ -5,16 +5,16 @@ ScalarQueries. None touch the Context on their own - effects only ride in
 through Ref children.
 
 Builtins / operators to cover (Python -> Nu):
-- ``+`` -> ``AddQuery``, ``-`` -> ``SubQuery``, ``*`` -> ``MulQuery``, ``/`` -> ``DivQuery``
-- ``//`` -> ``FloorDivQuery``, ``%`` -> ``ModQuery``, ``**`` / ``pow`` -> ``PowQuery``
-- unary ``-`` -> ``NegQuery``, unary ``+`` -> ``PosQuery``, ``abs`` -> ``AbsQuery``
-- ``divmod`` -> ``DivModQuery``, ``round`` -> ``RoundQuery``
+- ``+`` -> ``Add``, ``-`` -> ``Sub``, ``*`` -> ``Mul``, ``/`` -> ``Div``
+- ``//`` -> ``FloorDiv``, ``%`` -> ``Mod``, ``**`` / ``pow`` -> ``Pow``
+- unary ``-`` -> ``Neg``, unary ``+`` -> ``Pos``, ``abs`` -> ``Abs``
+- ``divmod`` -> ``DivMod``, ``round`` -> ``Round``
 
-Sorts: all ScalarQuery (Q). ``AddQuery`` and ``MulQuery`` are commutative + associative
-and fold a variadic child list; the rest are neither. ``SubQuery``, ``DivQuery``,
-``FloorDivQuery``, ``ModQuery``, ``PowQuery`` and ``DivModQuery`` are binary. ``NegQuery``, ``PosQuery`` and
-``AbsQuery`` are unary. ``RoundQuery`` takes one child (value) or two (value, ndigits).
-``DivModQuery`` yields the ``(quotient, remainder)`` pair as its single scalar.
+Sorts: all ScalarQuery (Q). ``Add`` and ``Mul`` are commutative + associative
+and fold a variadic child list; the rest are neither. ``Sub``, ``Div``,
+``FloorDiv``, ``Mod``, ``Pow`` and ``DivMod`` are binary. ``Neg``, ``Pos`` and
+``Abs`` are unary. ``Round`` takes one child (value) or two (value, ndigits).
+``DivMod`` yields the ``(quotient, remainder)`` pair as its single scalar.
 
 Each atom defines ``compile`` (sync hot path) and ``acompile`` (async hot
 path). Both return a thunk ``(rt) -> value`` (sync) or ``(rt) -> awaitable``
@@ -39,22 +39,22 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 __all__ = [
-    "AbsQuery",
-    "AddQuery",
-    "DivModQuery",
-    "DivQuery",
-    "FloorDivQuery",
-    "ModQuery",
-    "MulQuery",
-    "NegQuery",
-    "PosQuery",
-    "PowQuery",
-    "RoundQuery",
-    "SubQuery",
+    "Abs",
+    "Add",
+    "Div",
+    "DivMod",
+    "FloorDiv",
+    "Mod",
+    "Mul",
+    "Neg",
+    "Pos",
+    "Pow",
+    "Round",
+    "Sub",
 ]
 
 
-class AddQuery(ScalarQuery):
+class Add(ScalarQuery):
     """The sum of its scalar children."""
 
     _commutative = Declared(value=True, name="commutative")
@@ -87,7 +87,7 @@ class AddQuery(ScalarQuery):
         return athunk
 
 
-class MulQuery(ScalarQuery):
+class Mul(ScalarQuery):
     """The product of its scalar children."""
 
     _commutative = Declared(value=True, name="commutative")
@@ -118,7 +118,7 @@ class MulQuery(ScalarQuery):
         return athunk
 
 
-class MatMulQuery(ScalarQuery):
+class MatMul(ScalarQuery):
     """The matrix product of its two children (``a @ b``)."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -150,7 +150,7 @@ class MatMulQuery(ScalarQuery):
         return athunk
 
 
-class SubQuery(ScalarQuery):
+class Sub(ScalarQuery):
     """The first child minus the second."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -182,7 +182,7 @@ class SubQuery(ScalarQuery):
         return athunk
 
 
-class DivQuery(ScalarQuery):
+class Div(ScalarQuery):
     """The first child divided by the second (true division)."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -214,7 +214,7 @@ class DivQuery(ScalarQuery):
         return athunk
 
 
-class FloorDivQuery(ScalarQuery):
+class FloorDiv(ScalarQuery):
     """The first child floor-divided by the second."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -246,7 +246,7 @@ class FloorDivQuery(ScalarQuery):
         return athunk
 
 
-class ModQuery(ScalarQuery):
+class Mod(ScalarQuery):
     """The first child modulo the second."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -278,7 +278,7 @@ class ModQuery(ScalarQuery):
         return athunk
 
 
-class PowQuery(ScalarQuery):
+class Pow(ScalarQuery):
     """The first child raised to the power of the second."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -310,7 +310,7 @@ class PowQuery(ScalarQuery):
         return athunk
 
 
-class NegQuery(ScalarQuery):
+class Neg(ScalarQuery):
     """The arithmetic negation of its one child."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -336,7 +336,7 @@ class NegQuery(ScalarQuery):
         return athunk
 
 
-class PosQuery(ScalarQuery):
+class Pos(ScalarQuery):
     """The unary plus of its one child."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -362,7 +362,7 @@ class PosQuery(ScalarQuery):
         return athunk
 
 
-class AbsQuery(ScalarQuery):
+class Abs(ScalarQuery):
     """The absolute value of its one child."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -388,7 +388,7 @@ class AbsQuery(ScalarQuery):
         return athunk
 
 
-class DivModQuery(ScalarQuery):
+class DivMod(ScalarQuery):
     """The ``(quotient, remainder)`` pair of its two children."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -420,7 +420,7 @@ class DivModQuery(ScalarQuery):
         return athunk
 
 
-class RoundQuery(ScalarQuery):
+class Round(ScalarQuery):
     """The first child rounded, to the second child's digits when given."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

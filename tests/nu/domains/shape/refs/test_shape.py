@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from nu.core.reactive import OnChangeQuery, OnChildChangeQuery
+from nu.core.reactive import OnChange, OnChildChange
 from nu.domains.shape.dsl import Shape, Slot
 from nu.domains.shape.interactions import (
-    EraseCommand,
-    ExistsQuery,
-    MissingQuery,
-    SetCommand,
+    Erase,
+    Exists,
+    Missing,
+    SetCmd,
 )
 from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.refs.item import ItemRef
@@ -101,12 +101,12 @@ def test_shape_ref_getstate_setstate_roundtrip():
 
 def test_shape_ref_exists_returns_exists_query():
     ref = ShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.exists(), ExistsQuery)
+    assert isinstance(ref.exists(), Exists)
 
 
 def test_shape_ref_missing_returns_missing_query():
     ref = ShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.missing(), MissingQuery)
+    assert isinstance(ref.missing(), Missing)
 
 
 # ---------------------------------------------------------------------------
@@ -125,12 +125,12 @@ def test_mutable_shape_ref_constructs():
 
 def test_mutable_shape_ref_set_returns_set_command():
     ref = MutableShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.set({"x": 1}), SetCommand)
+    assert isinstance(ref.set({"x": 1}), SetCmd)
 
 
 def test_mutable_shape_ref_erase_returns_erase_command():
     ref = MutableShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.erase(), EraseCommand)
+    assert isinstance(ref.erase(), Erase)
 
 
 def test_mutable_shape_ref_inherits_slot_navigation():
@@ -141,8 +141,8 @@ def test_mutable_shape_ref_inherits_slot_navigation():
 
 def test_mutable_shape_ref_inherits_exists_missing():
     ref = MutableShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.exists(), ExistsQuery)
-    assert isinstance(ref.missing(), MissingQuery)
+    assert isinstance(ref.exists(), Exists)
+    assert isinstance(ref.missing(), Missing)
 
 
 # ---------------------------------------------------------------------------
@@ -161,18 +161,18 @@ def test_reactive_shape_ref_constructs():
 
 def test_reactive_shape_ref_on_change_returns_on_change_action():
     ref = ReactiveShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.on_change(), OnChangeQuery)
+    assert isinstance(ref.on_change(), OnChange)
 
 
 def test_reactive_shape_ref_on_child_change_returns_action():
     ref = ReactiveShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.on_child_change("x"), OnChildChangeQuery)
+    assert isinstance(ref.on_child_change("x"), OnChildChange)
 
 
 def test_reactive_shape_ref_inherits_set_erase():
     ref = ReactiveShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.set({}), SetCommand)
-    assert isinstance(ref.erase(), EraseCommand)
+    assert isinstance(ref.set({}), SetCmd)
+    assert isinstance(ref.erase(), Erase)
 
 
 def test_reactive_shape_ref_inherits_slot_navigation():

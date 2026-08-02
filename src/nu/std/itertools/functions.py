@@ -4,9 +4,9 @@ Mirrors Python's ``itertools`` 1-1. Each function presents Python's argument
 order and returns the shape that matches the host:
 
 - every iterator-producing member -> the raw ``StreamQuery`` atom (compose
-  with ``CollectQuery`` / ``MapQuery`` / another itertools call; cardinality
+  with ``Collect`` / ``Map`` / another itertools call; cardinality
   laws line up because the atom honestly declares STREAM)
-- ``tee`` -> ``AnyForm`` (it returns a *tuple* of iterators, not a stream)
+- ``tee`` -> ``Any`` (it returns a *tuple* of iterators, not a stream)
 
 This is a gap-fill: members Nu core already covers (``map`` / ``filter`` /
 ``zip`` / ``sorted`` / ``enumerate`` / ``reversed`` / sums and folds) are not
@@ -14,8 +14,8 @@ re-implemented here.
 
 Each function builds its interaction atom (lazily imported, like ``nu.std.math``)
 and returns it. Iterable arguments are lifted into a stream child with
-``IterQuery`` (a scalar iterable), passed through when already a stream atom,
-or unwrapped when they're the legacy ``IteratorForm`` wrapper. Higher-order
+``Iter`` (a scalar iterable), passed through when already a stream atom,
+or unwrapped when they're the legacy ``Iterator`` wrapper. Higher-order
 members (``takewhile`` / ``dropwhile`` / ``filterfalse`` / ``accumulate`` /
 ``starmap`` / ``groupby``) take their predicate/function as a Nu term that
 reads the current item via an ``AttrRef("item")`` (and the running value via
@@ -26,8 +26,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from nu import AnyForm, IteratorForm
-from nu.core import IterQuery
+from nu import Any, Iterator
+from nu.core import Iter
 from nu.lang import StreamQuery
 
 
@@ -65,17 +65,17 @@ __all__ = [
 def _stream(iterable: Arg[Iterable]) -> Nu:
     """Lift an iterable argument into a STREAM child.
 
-    A ``StreamQuery`` atom (another itertools result, ``IterQuery``, ``MapQuery``,
+    A ``StreamQuery`` atom (another itertools result, ``Iter``, ``Map``,
     ...) is already stream-shaped, so it's reused directly - wrapping it in
-    another ``IterQuery`` would feed a stream to a scalar consumer. An
-    ``IteratorForm`` legacy wrapper is unwrapped to its stream child. Any other
-    iterable (a list, range, ``ListForm``, raw value) is opened with ``IterQuery``.
+    another ``Iter`` would feed a stream to a scalar consumer. An
+    ``Iterator`` legacy wrapper is unwrapped to its stream child. Any other
+    iterable (a list, range, ``List``, raw value) is opened with ``Iter``.
     """
     if isinstance(iterable, StreamQuery):
         return cast("Nu", iterable)
-    if isinstance(iterable, IteratorForm):
+    if isinstance(iterable, Iterator):
         return cast("Nu", iterable._children[0])
-    return IterQuery(iterable)
+    return Iter(iterable)
 
 
 # --- infinite sources -------------------------------------------------------
@@ -266,14 +266,14 @@ def groupby(iterable: Arg[Iterable], key: Nu | None = None) -> Nu:
 # --- tee --------------------------------------------------------------------
 
 
-def tee(iterable: Arg[Iterable], n: IntArg = 2) -> AnyForm:
+def tee(iterable: Arg[Iterable], n: IntArg = 2) -> Any:
     """Split ``iterable`` into ``n`` independent iterators: ``itertools.tee()``.
 
-    Returns an ``AnyForm`` holding a *tuple* of ``n`` iterators (not a stream),
+    Returns an ``Any`` holding a *tuple* of ``n`` iterators (not a stream),
     so it is the one member here backed by a ``ScalarQuery``. Its source rides
     as a scalar child (a ``ScalarQuery`` may not hold a stream), and the atom
     materializes it with ``sync_iter`` before splitting.
     """
     from .interactions import Tee
 
-    return AnyForm(Tee(iterable, n))
+    return Any(Tee(iterable, n))

@@ -1,7 +1,7 @@
 """Functional tests for ``nu.std.pathlib`` - drive the Forms through the engine.
 
 Covers every pure modeling path: constructors and method calls (factory atoms),
-property reads (core ``GetAttrQuery``), the ``/`` operator, comparison (core
+property reads (core ``GetAttr``), the ``/`` operator, comparison (core
 atoms), and the async path. Results are asserted against real ``pathlib``.
 """
 
@@ -14,7 +14,7 @@ from nu.lang.helpers import arun, run
 from nu.std.pathlib import Path
 
 
-# --- property reads (core GetAttrQuery) ---------------------------------
+# --- property reads (core GetAttr) ---------------------------------
 
 
 def test_path_name() -> None:

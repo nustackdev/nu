@@ -1,9 +1,9 @@
 """Native Form layer.
 
-A Form is what a fabric location holds (an Int, a Str, a Dict, a ListQuery) and the
+A Form is what a fabric location holds (an Int, a Str, a Dict, a ToList) and the
 fluent typed surface for building Nu over it. The base mixin ``Form`` and the
 passthrough ``TypedNu`` live in ``nu.lang`` (re-exported here for convenience);
-the sentinel predicates (``IsEmptyQuery`` / ``IsInvalidQuery``) live in ``nu.core``.
+the sentinel predicates (``IsEmpty`` / ``IsInvalid``) live in ``nu.core``.
 
 Concrete primitive Forms live in ``primitives/``, concrete collection Forms in
 ``collections/`` (with abstract contracts in ``collections/abc/``).
@@ -12,50 +12,50 @@ Concrete primitive Forms live in ``primitives/``, concrete collection Forms in
 from nu.lang import Form, TypedNu
 
 from .collections import (
-    DictForm,
-    DictItemsForm,
-    DictKeysForm,
-    DictValuesForm,
-    FrozenSetForm,
-    IteratorForm,
-    ListForm,
-    SetForm,
-    TupleForm,
+    Dict,
+    DictItems,
+    DictKeys,
+    DictValues,
+    FrozenSet,
+    Iterator,
+    List,
+    Set,
+    Tuple,
 )
 from .primitives import (
-    AnyForm,
-    BoolForm,
-    BytesForm,
+    Any,
+    Bool,
+    Bytes,
     EmptyForm,
-    FloatForm,
-    IntForm,
+    Float,
+    Int,
     InvalidForm,
-    NoneForm,
+    None_,
     SentinelForm,
-    StrForm,
+    Str,
 )
 
 
 __all__ = [
-    "AnyForm",
-    "BoolForm",
-    "BytesForm",
-    "DictForm",
-    "DictItemsForm",
-    "DictKeysForm",
-    "DictValuesForm",
+    "Any",
+    "Bool",
+    "Bytes",
+    "Dict",
+    "DictItems",
+    "DictKeys",
+    "DictValues",
     "EmptyForm",
-    "FloatForm",
+    "Float",
     "Form",
-    "FrozenSetForm",
-    "IntForm",
+    "FrozenSet",
+    "Int",
     "InvalidForm",
-    "IteratorForm",
-    "ListForm",
-    "NoneForm",
+    "Iterator",
+    "List",
+    "None_",
     "SentinelForm",
-    "SetForm",
-    "StrForm",
-    "TupleForm",
+    "Set",
+    "Str",
+    "Tuple",
     "TypedNu",
 ]

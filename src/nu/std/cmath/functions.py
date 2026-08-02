@@ -7,12 +7,12 @@ constants. Each wrapper builds its interaction atom (lazily imported, like
 ``nu.std.math``) and returns the Form that matches the host return type:
 
 - most functions -> ``complex`` (the Form for the builtin)
-- ``phase`` -> ``FloatForm``
-- ``polar`` -> ``TupleForm`` (the ``(r, phi)`` pair)
-- ``isnan`` / ``isinf`` / ``isfinite`` / ``isclose`` -> ``BoolForm``
+- ``phase`` -> ``Float``
+- ``polar`` -> ``Tuple`` (the ``(r, phi)`` pair)
+- ``isnan`` / ``isinf`` / ``isfinite`` / ``isclose`` -> ``Bool``
 - ``rect(r, phi)`` -> ``complex``
 
-Constants are plain values, so they ride on ``LiteralQuery`` instead of an atom.
+Constants are plain values, so they ride on ``Literal`` instead of an atom.
 ``pi`` / ``e`` / ``tau`` / ``inf`` / ``nan`` are floats; ``infj`` / ``nanj`` are
 complex, so they are wrapped in the ``complex`` Form.
 """
@@ -22,8 +22,8 @@ from __future__ import annotations
 import cmath
 from typing import TYPE_CHECKING
 
-from nu import BoolForm, FloatForm, TupleForm
-from nu.core import LiteralQuery
+from nu import Bool, Float, Tuple
+from nu.core import Literal
 
 from .forms import complex
 
@@ -67,13 +67,13 @@ __all__ = [
 
 # --- constants --------------------------------------------------------------
 
-pi = FloatForm(LiteralQuery(cmath.pi))
-e = FloatForm(LiteralQuery(cmath.e))
-tau = FloatForm(LiteralQuery(cmath.tau))
-inf = FloatForm(LiteralQuery(cmath.inf))
-nan = FloatForm(LiteralQuery(cmath.nan))
-infj = complex(LiteralQuery(cmath.infj))
-nanj = complex(LiteralQuery(cmath.nanj))
+pi = Float(Literal(cmath.pi))
+e = Float(Literal(cmath.e))
+tau = Float(Literal(cmath.tau))
+inf = Float(Literal(cmath.inf))
+nan = Float(Literal(cmath.nan))
+infj = complex(Literal(cmath.infj))
+nanj = complex(Literal(cmath.nanj))
 
 
 # --- powers and roots -------------------------------------------------------
@@ -181,18 +181,18 @@ def tanh(x: ComplexArg) -> complex:
 # --- polar conversions ------------------------------------------------------
 
 
-def phase(x: ComplexArg) -> FloatForm:
+def phase(x: ComplexArg) -> Float:
     """The phase angle of ``x``, in radians: mirrors ``cmath.phase()``."""
     from .interactions import CmathPhase
 
-    return FloatForm(CmathPhase(x))
+    return Float(CmathPhase(x))
 
 
-def polar(x: ComplexArg) -> TupleForm:
+def polar(x: ComplexArg) -> Tuple:
     """``x`` as the polar pair ``(r, phi)``: mirrors ``cmath.polar()``."""
     from .interactions import CmathPolar
 
-    return TupleForm(CmathPolar(x))
+    return Tuple(CmathPolar(x))
 
 
 def rect(r: FloatArg, phi: FloatArg) -> complex:
@@ -205,29 +205,29 @@ def rect(r: FloatArg, phi: FloatArg) -> complex:
 # --- classification ---------------------------------------------------------
 
 
-def isnan(x: ComplexArg) -> BoolForm:
+def isnan(x: ComplexArg) -> Bool:
     """Whether ``x`` has a NaN component: mirrors ``cmath.isnan()``."""
     from .interactions import CmathIsnan
 
-    return BoolForm(CmathIsnan(x))
+    return Bool(CmathIsnan(x))
 
 
-def isinf(x: ComplexArg) -> BoolForm:
+def isinf(x: ComplexArg) -> Bool:
     """Whether ``x`` has an infinite component: mirrors ``cmath.isinf()``."""
     from .interactions import CmathIsinf
 
-    return BoolForm(CmathIsinf(x))
+    return Bool(CmathIsinf(x))
 
 
-def isfinite(x: ComplexArg) -> BoolForm:
+def isfinite(x: ComplexArg) -> Bool:
     """Whether both components of ``x`` are finite: mirrors ``cmath.isfinite()``."""
     from .interactions import CmathIsfinite
 
-    return BoolForm(CmathIsfinite(x))
+    return Bool(CmathIsfinite(x))
 
 
-def isclose(a: ComplexArg, b: ComplexArg) -> BoolForm:
+def isclose(a: ComplexArg, b: ComplexArg) -> Bool:
     """Whether ``a`` and ``b`` are close: mirrors ``cmath.isclose()``."""
     from .interactions import CmathIsclose
 
-    return BoolForm(CmathIsclose(a, b))
+    return Bool(CmathIsclose(a, b))

@@ -45,10 +45,10 @@ __all__ = [
     "memory_navigator",
     "memory_storage",
     "redis_observer",
-    "rocksdb_navigator_redis",
     "rocksdb_navigator",
-    "rocksdb_storage_redis",
+    "rocksdb_navigator_redis",
     "rocksdb_storage",
+    "rocksdb_storage_redis",
     "text_navigator",
     "text_storage",
 ]

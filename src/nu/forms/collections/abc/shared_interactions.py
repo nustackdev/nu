@@ -1,6 +1,6 @@
 """Shared collection mutation commands.
 
-ClearCommand: clear all items from a mutable collection; mutates, returns nothing.
+Clear: clear all items from a mutable collection; mutates, returns nothing.
 """
 
 from __future__ import annotations
@@ -19,16 +19,16 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "ClearCommand",
+    "Clear",
 ]
 
 
-class ClearCommand(Command):
+class Clear(Command):
     """Clear all items: collection.clear(); mutates the collection, returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (target_t,) = children
 
         def thunk(rt: Runtime) -> None:
@@ -43,7 +43,7 @@ class ClearCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (target_t,) = children
 
         async def athunk(rt: Runtime) -> None:

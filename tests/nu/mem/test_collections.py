@@ -2,7 +2,7 @@
 
 Verifies:
 - Correct Value types returned from _wrap_* methods
-- keys/values/items produce DictKeysForm/DictValuesForm/DictItemsForm
+- keys/values/items produce DictKeys/DictValues/DictItems
 - Execution produces correct Python results
 - View operations (to_list, set operations on keys/items) work
 - Lazy Take over keys (islice semantics)
@@ -17,18 +17,18 @@ from collections.abc import ItemsView, KeysView, ValuesView
 import pytest
 
 from nu import (
-    AnyForm,
-    ContainsQuery,
-    DictForm,
-    DictItemsForm,
-    DictKeysForm,
-    DictValuesForm,
-    IteratorForm,
-    LenQuery,
-    ListForm,
-    LiteralQuery,
-    SetForm,
-    SortedQuery,
+    Any,
+    Contains,
+    Dict,
+    DictItems,
+    DictKeys,
+    DictValues,
+    Iterator,
+    Len,
+    List,
+    Literal,
+    Set,
+    Sorted,
     arun,
     run,
 )
@@ -42,23 +42,23 @@ from .conftest import PortfolioShape, TeamShape, UserShape
 
 
 class TestDictRefViewTypes:
-    """DictRef.keys/values/items return DictKeysForm/DictValuesForm/DictItemsForm."""
+    """DictRef.keys/values/items return DictKeys/DictValues/DictItems."""
 
     def test_keys_returns_dict_keys_value(self):
         keys = PortfolioShape.metadata.keys()
-        assert isinstance(keys, DictKeysForm)
+        assert isinstance(keys, DictKeys)
 
     def test_values_returns_dict_values_value(self):
         vals = PortfolioShape.metadata.values()
-        assert isinstance(vals, DictValuesForm)
+        assert isinstance(vals, DictValues)
 
     def test_items_returns_dict_items_value(self):
         items = PortfolioShape.metadata.items()
-        assert isinstance(items, DictItemsForm)
+        assert isinstance(items, DictItems)
 
     def test_result_returns_dict_value(self):
-        result = PortfolioShape.metadata._wrap_result(LiteralQuery("dummy"))
-        assert isinstance(result, DictForm)
+        result = PortfolioShape.metadata._wrap_result(Literal("dummy"))
+        assert isinstance(result, Dict)
 
 
 class TestDictRefExecution:
@@ -96,7 +96,7 @@ class TestDictRefExecution:
 
 
 class TestDictRefViewOperations:
-    """DictKeysForm supports set-like operations, DictValuesForm supports materialization."""
+    """DictKeys supports set-like operations, DictValues supports materialization."""
 
     def test_keys_to_list(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1, "b": 2, "c": 3}
@@ -149,18 +149,18 @@ class TestListRefTypes:
 
     def test_iterable_result_is_iterator_value(self):
         ref = PortfolioShape.tags
-        wrapped = ref._wrap_iterable_result(LiteralQuery("dummy"))
-        assert isinstance(wrapped, IteratorForm)
+        wrapped = ref._wrap_iterable_result(Literal("dummy"))
+        assert isinstance(wrapped, Iterator)
 
     def test_sliceable_result_is_list_value(self):
         ref = PortfolioShape.tags
-        wrapped = ref._wrap_sliceable_result(LiteralQuery("dummy"))
-        assert isinstance(wrapped, ListForm)
+        wrapped = ref._wrap_sliceable_result(Literal("dummy"))
+        assert isinstance(wrapped, List)
 
     def test_element_result_is_any_value(self):
         ref = PortfolioShape.tags
-        wrapped = ref._wrap_element_result(LiteralQuery("dummy"))
-        assert isinstance(wrapped, AnyForm)
+        wrapped = ref._wrap_element_result(Literal("dummy"))
+        assert isinstance(wrapped, Any)
 
 
 class TestListRefExecution:
@@ -199,13 +199,13 @@ class TestSetRefTypes:
 
     def test_set_result_is_set_value(self):
         ref = PortfolioShape.members
-        wrapped = ref._wrap_set_result(LiteralQuery("dummy"))
-        assert isinstance(wrapped, SetForm)
+        wrapped = ref._wrap_set_result(Literal("dummy"))
+        assert isinstance(wrapped, Set)
 
     def test_element_result_is_any_value(self):
         ref = PortfolioShape.members
-        wrapped = ref._wrap_element_result(LiteralQuery("dummy"))
-        assert isinstance(wrapped, AnyForm)
+        wrapped = ref._wrap_element_result(Literal("dummy"))
+        assert isinstance(wrapped, Any)
 
 
 class TestSetRefExecution:
@@ -233,17 +233,17 @@ class TestShapeRefViewTypes:
     def test_keys_returns_dict_keys_value(self):
         info_ref = TeamShape.info
         keys = info_ref.keys()
-        assert isinstance(keys, DictKeysForm)
+        assert isinstance(keys, DictKeys)
 
     def test_values_returns_dict_values_value(self):
         info_ref = TeamShape.info
         vals = info_ref.values()
-        assert isinstance(vals, DictValuesForm)
+        assert isinstance(vals, DictValues)
 
     def test_items_returns_dict_items_value(self):
         info_ref = TeamShape.info
         items = info_ref.items()
-        assert isinstance(items, DictItemsForm)
+        assert isinstance(items, DictItems)
 
 
 class TestShapeRefExecution:
@@ -280,15 +280,15 @@ class TestShapesDictRefViewTypes:
 
     def test_keys_returns_dict_keys_value(self):
         keys = TeamShape.members.keys()
-        assert isinstance(keys, DictKeysForm)
+        assert isinstance(keys, DictKeys)
 
     def test_values_returns_dict_values_value(self):
         vals = TeamShape.members.values()
-        assert isinstance(vals, DictValuesForm)
+        assert isinstance(vals, DictValues)
 
     def test_items_returns_dict_items_value(self):
         items = TeamShape.members.items()
-        assert isinstance(items, DictItemsForm)
+        assert isinstance(items, DictItems)
 
 
 class TestShapesDictRefExecution:
@@ -372,7 +372,7 @@ class TestLazyTake:
 
     def test_take_returns_iterator_value(self):
         term = Take(PortfolioShape.metadata.keys(), 10)  # noqa: F821
-        assert isinstance(term, IteratorForm)
+        assert isinstance(term, Iterator)
 
 
 # ============================================================================
@@ -407,7 +407,7 @@ class TestEndToEnd:
         title = run(PortfolioShape.title, e2e_ctx)[0]
         assert title == "Main Portfolio"
 
-        # --- dict keys view (DictKeysForm) ---
+        # --- dict keys view (DictKeys) ---
         keys = run(PortfolioShape.metadata.keys(), e2e_ctx)[0]
         assert isinstance(keys, KeysView)
         assert set(keys) == {"strategy", "risk", "horizon"}
@@ -471,16 +471,16 @@ class TestEndToEnd:
         assert "eve" in d["members"]
 
         # --- fn combinators ---
-        sorted_keys = run(SortedQuery(PortfolioShape.metadata.keys()), e2e_ctx)[0]
+        sorted_keys = run(Sorted(PortfolioShape.metadata.keys()), e2e_ctx)[0]
         assert sorted_keys == ["horizon", "risk", "sector", "strategy"]
 
-        key_count = run(LenQuery(PortfolioShape.metadata.keys()), e2e_ctx)[0]
+        key_count = run(Len(PortfolioShape.metadata.keys()), e2e_ctx)[0]
         assert key_count == 4
 
-        has_risk = run(ContainsQuery(PortfolioShape.metadata.keys(), "risk"), e2e_ctx)[0]
+        has_risk = run(Contains(PortfolioShape.metadata.keys(), "risk"), e2e_ctx)[0]
         assert has_risk is True
 
-        has_fake = run(ContainsQuery(PortfolioShape.metadata.keys(), "fake"), e2e_ctx)[0]
+        has_fake = run(Contains(PortfolioShape.metadata.keys(), "fake"), e2e_ctx)[0]
         assert has_fake is False
 
 

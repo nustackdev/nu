@@ -4,7 +4,7 @@ Constructors bind the class / its classmethods; methods bind the *unbound*
 method (a plain callable whose first argument is the receiver, so
 ``f.limit_denominator(n)`` is ``Fraction.limit_denominator(f, n)``). Property
 reads (``.numerator``, ``.denominator``) are not here - they reuse core
-``GetAttrQuery`` from the Form. Arithmetic and comparison reuse the core atoms.
+``GetAttr`` from the Form. Arithmetic and comparison reuse the core atoms.
 
 ``FractionOf`` and ``FractionFromStr`` both bind the ``Fraction`` constructor:
 ``Fraction(num, den)`` (the two-argument literal) and ``Fraction(s)`` (a single

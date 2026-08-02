@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from nu.core.reactive import OnChangeQuery, OnChildrenChangeQuery
+from nu.core.reactive import OnChange, OnChildrenChange
 from nu.domains.shape.dsl import Shape, Slot
 from nu.domains.shape.interactions import (
-    EraseCommand,
-    ExistsQuery,
-    MissingQuery,
-    SetCommand,
+    Erase,
+    Exists,
+    Missing,
+    SetCmd,
 )
 from nu.domains.shape.refs.item import ItemRef
 from nu.domains.shape.refs.shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
@@ -48,7 +48,7 @@ def test_shapes_sequence_ref_item_shape_type_property():
 
 def test_shapes_sequence_ref_slice_routes_to_slice_op():
     # Same guard as SequenceRef: slice subscript must not build a bogus ShapeRef.
-    from nu.core import GetItemQuery, SliceQuery
+    from nu.core import GetItem, Slice
 
     sentinel = object()
 
@@ -60,8 +60,8 @@ def test_shapes_sequence_ref_slice_routes_to_slice_op():
     result = s[1:4]
     assert isinstance(result, tuple) and result[0] is sentinel
     getitem = result[1]
-    assert isinstance(getitem, GetItemQuery)
-    assert isinstance(getitem._children[1], SliceQuery)
+    assert isinstance(getitem, GetItem)
+    assert isinstance(getitem._children[1], Slice)
 
 
 def test_shapes_sequence_ref_different_indices_distinct():
@@ -85,12 +85,12 @@ def test_shapes_sequence_ref_child_can_navigate_slots():
 
 def test_shapes_sequence_ref_exists_returns_exists_query():
     s = ShapesSequenceRef("rows", item_shape_type=Row)
-    assert isinstance(s.exists(), ExistsQuery)
+    assert isinstance(s.exists(), Exists)
 
 
 def test_shapes_sequence_ref_missing_returns_missing_query():
     s = ShapesSequenceRef("rows", item_shape_type=Row)
-    assert isinstance(s.missing(), MissingQuery)
+    assert isinstance(s.missing(), Missing)
 
 
 # ---------------------------------------------------------------------------
@@ -115,12 +115,12 @@ def test_mutable_shapes_sequence_ref_child_shape_type_matches():
 
 def test_mutable_shapes_sequence_ref_set_returns_set_command():
     s = MutableShapesSequenceRef("rows", item_shape_type=Row)
-    assert isinstance(s.set([]), SetCommand)
+    assert isinstance(s.set([]), SetCmd)
 
 
 def test_mutable_shapes_sequence_ref_erase_returns_erase_command():
     s = MutableShapesSequenceRef("rows", item_shape_type=Row)
-    assert isinstance(s.erase(), EraseCommand)
+    assert isinstance(s.erase(), Erase)
 
 
 # ---------------------------------------------------------------------------
@@ -140,15 +140,15 @@ def test_reactive_shapes_sequence_ref_subscript_returns_reactive_shape_ref():
 
 def test_reactive_shapes_sequence_ref_on_change_returns_on_change_action():
     s = ReactiveShapesSequenceRef("rows", item_shape_type=Row)
-    assert isinstance(s.on_change(), OnChangeQuery)
+    assert isinstance(s.on_change(), OnChange)
 
 
 def test_reactive_shapes_sequence_ref_on_children_change_returns_action():
     s = ReactiveShapesSequenceRef("rows", item_shape_type=Row)
-    assert isinstance(s.on_children_change(), OnChildrenChangeQuery)
+    assert isinstance(s.on_children_change(), OnChildrenChange)
 
 
 def test_reactive_shapes_sequence_ref_inherits_set_erase():
     s = ReactiveShapesSequenceRef("rows", item_shape_type=Row)
-    assert isinstance(s.set([]), SetCommand)
-    assert isinstance(s.erase(), EraseCommand)
+    assert isinstance(s.set([]), SetCmd)
+    assert isinstance(s.erase(), Erase)

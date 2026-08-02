@@ -1,21 +1,34 @@
 ---
 title: Nu
-description: A programming model where everything is a Nu.
+description: "A Python programming model for live software: persistent state, reactive UI, background loops."
 ---
 
-Nu is a programming model. You describe your program as an interaction over named resources; Nu evaluates it against a Context that binds those resources to concrete backends.
+Assemble software, don't write it. Nu is a Python programming model for live software: persistent state, reactive UI, and background loops that keep running while people use the app.
 
-Two citizens:
+Here is a complete Nu program:
 
-- **Ref**: a typed pointer to a resource. A db row, a config key, an in-memory slot, a browser DOM node, an RPC endpoint. Carries the address, not the value.
-- **Interaction**: what a program does with Refs and with other Interactions. Read, write, compute, branch, iterate, compose.
+```python
+import nu, asyncio
 
-A **Fabric** resolves Refs and carries out Interactions. The **Context** is the bag of Fabrics your program runs against. Same program, different Context, different world (test, staging, prod, another machine).
+tree = nu.ForeverDo(nu.print("tick") >> nu.Delay(1.0))
+asyncio.run(nu.arun(tree))
+```
+
+You described a tree of what to do. Nu ran it. Every second it prints `tick`, forever, until you stop it.
+
+## What you get
+
+- [Persistent state](/docs/tutorials/counter) that survives restarts, no database code to write.
+- [Reactive UI](/docs/tutorials/movies) wired to that state, updates without a refresh.
+- [Background loops](/docs/tutorials/hello) composed with `>>` and `|`, not with threads and queues.
+- [One tree, many backends](/docs/tutorials/movies): swap memory for disk, local for distributed, same program.
+- [Inspectable](/docs/tutorials/hello) end to end, every step of the tree is a value you can print.
 
 ## Start here
 
 <Cards>
-  <Card title="Tutorials" href="/docs/tutorials/your-first-app" description="Build your first Nu app end-to-end." />
-  <Card title="How-to" href="/docs/how-to/install" description="Install, ship an app, extend Nu." />
-  <Card title="Reference" href="/docs/reference/catalogue" description="Look up atoms, Forms, and Fabric interfaces." />
+  <Card title="5-minute tour" href="/docs/tutorials/hello" description="Run your first Nu tree." />
+  <Card title="Add state, reactivity, UI" href="/docs/tutorials/counter" description="Build a counter that persists and reacts." />
+  <Card title="Build a real app" href="/docs/tutorials/movies" description="Ship a full app end to end." />
+  <Card title="Install Nu" href="/docs/how-to/install" description="Get Nu on your machine." />
 </Cards>

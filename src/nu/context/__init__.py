@@ -5,12 +5,12 @@ out the Interactions over them. The Context fabric has two axes:
 
 - **attrs** - a flat, name-keyed store (``ctx.attrs``) for short-lived
   primitives (loop counters, accumulators, markers). Ref: ``AttrRef``; writes:
-  ``SetCommand`` / ``DeleteCommand``; existence: ``AttrExistsQuery``. The read
+  ``SetCmd`` / ``Delete``; existence: ``AttrExists``. The read
   is ``AttrRef`` itself.
 - **fabric** - typed bindings (``ctx.bind`` / ``ctx.get``) for every other
   ctx-bound thing: execution resources, storage handles, cluster handles,
   compute actors. Ref: ``FabricRef`` (read-only, self-yields); existence:
-  ``FabricExistsQuery``; in-tree method calls: the ``method`` descriptor /
+  ``FabricExists``; in-tree method calls: the ``method`` descriptor /
   ``MethodFactory``. Provisioning brackets ``Provide`` / ``ProvideList`` /
   ``ProvideDict`` install fabrics into the Context for a body's duration.
   Protocols ``Fabric`` (empty marker; every ctx-bound thing satisfies it) and
@@ -28,11 +28,11 @@ from __future__ import annotations
 
 from .attrs import (
     AnyAttrRef,
-    AttrExistsQuery,
+    AttrExists,
     AttrRef,
     BoolAttrRef,
     BytesAttrRef,
-    DeleteCommand,
+    Delete,
     DictAttrRef,
     FloatAttrRef,
     FrozenSetAttrRef,
@@ -40,13 +40,13 @@ from .attrs import (
     ListAttrRef,
     NoneAttrRef,
     SetAttrRef,
-    SetCommand,
+    SetCmd,
     StrAttrRef,
     TupleAttrRef,
 )
 from .fabric import (
     Fabric,
-    FabricExistsQuery,
+    FabricExists,
     FabricLifecycle,
     FabricRef,
     Provide,
@@ -58,14 +58,14 @@ from .fabric import (
 
 __all__ = [
     "AnyAttrRef",
-    "AttrExistsQuery",
+    "AttrExists",
     "AttrRef",
     "BoolAttrRef",
     "BytesAttrRef",
-    "DeleteCommand",
+    "Delete",
     "DictAttrRef",
     "Fabric",
-    "FabricExistsQuery",
+    "FabricExists",
     "FabricLifecycle",
     "FabricRef",
     "FloatAttrRef",
@@ -77,7 +77,7 @@ __all__ = [
     "ProvideDict",
     "ProvideList",
     "SetAttrRef",
-    "SetCommand",
+    "SetCmd",
     "StrAttrRef",
     "TupleAttrRef",
     "With",

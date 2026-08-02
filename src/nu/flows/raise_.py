@@ -42,8 +42,10 @@ __all__ = ["Raise", "raise_"]
 
 
 class Raise(Control):
-    """Raise ``exc_cls(msg)`` at run time. A leaf Control -- one param slot
-    (the msg), no body slots."""
+    """Raise ``exc_cls(msg)`` at run time.
+
+    A leaf Control -- one param slot (the msg), no body slots.
+    """
 
     _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
@@ -51,7 +53,7 @@ class Raise(Control):
         super().__init__(msg)
         self._payload["exc_cls"] = exc_cls
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (msg_t,) = children
         exc_cls: type[BaseException] = self._payload["exc_cls"]
 
@@ -63,7 +65,7 @@ class Raise(Control):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (msg_t,) = children
         exc_cls: type[BaseException] = self._payload["exc_cls"]
 
@@ -80,7 +82,7 @@ def raise_(exc_cls: type[BaseException], msg: object) -> Raise:
     """Raise ``exc_cls(msg)`` at run time. Wrap in ``IfDo`` to gate.
 
     ``msg`` is any Nu expression yielding a value (typically a str). Use with
-    a string literal, a ``StrForm(...)``, string concat, or a formatting host
+    a string literal, a ``Str(...)``, string concat, or a formatting host
     callable.
     """
     return Raise(msg, exc_cls=exc_cls)

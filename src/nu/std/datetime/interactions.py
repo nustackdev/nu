@@ -3,7 +3,7 @@
 Constructors bind a class / classmethod; methods bind the *unbound* method (a
 plain callable whose first argument is the receiver, so ``d.weekday()`` is
 ``date.weekday(d)``). Property reads (``.year``, ``.hour``, ``.days`` ...) are
-not here - they reuse core ``GetAttrQuery`` from the Form. Arithmetic and
+not here - they reuse core ``GetAttr`` from the Form. Arithmetic and
 comparison reuse the core atoms.
 
 ``DateToday`` / ``DatetimeNow`` read the clock, so they declare

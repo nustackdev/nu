@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from nu.core import AddQuery, AndQuery, LiteralQuery, MulQuery, SubQuery
+from nu.core import Add, And, Literal, Mul, Sub
 from nu.lang import compile
 from nu.lang.attributes import Attr
 from nu.lang.runtime import Budget, Context, Runtime
@@ -43,7 +43,7 @@ def _fake_program(
 
 
 def test_construction_binds_program_ctx_and_budget() -> None:
-    program = compile(LiteralQuery(1))
+    program = compile(Literal(1))
     ctx = Context()
     budget = Budget()
     rt = Runtime(program, ctx, budget=budget)
@@ -53,7 +53,7 @@ def test_construction_binds_program_ctx_and_budget() -> None:
 
 
 def test_construction_default_budget_is_sequential() -> None:
-    program = compile(LiteralQuery(1))
+    program = compile(Literal(1))
     rt = Runtime(program, Context())
     assert isinstance(rt.budget, Budget)
     assert rt.budget.max_parallel == 1
@@ -63,25 +63,21 @@ def test_construction_default_budget_is_sequential() -> None:
 
 
 def test_eval_returns_leaf_value() -> None:
-    program = compile(LiteralQuery(5))
+    program = compile(Literal(5))
     with Budget() as budget:
         rt = Runtime(program, Context(), budget=budget)
         assert rt.eval() == 5
 
 
 def test_eval_recurses_on_arithmetic() -> None:
-    program = compile(AddQuery(LiteralQuery(1), LiteralQuery(2)))
+    program = compile(Add(Literal(1), Literal(2)))
     with Budget() as budget:
         rt = Runtime(program, Context(), budget=budget)
         assert rt.eval() == 3
 
 
 def test_eval_nested_arithmetic() -> None:
-    program = compile(
-        AddQuery(
-            MulQuery(LiteralQuery(2), LiteralQuery(3)), SubQuery(LiteralQuery(10), LiteralQuery(4))
-        )
-    )
+    program = compile(Add(Mul(Literal(2), Literal(3)), Sub(Literal(10), Literal(4))))
     with Budget() as budget:
         rt = Runtime(program, Context(), budget=budget)
         assert rt.eval() == 12
@@ -91,21 +87,21 @@ def test_eval_nested_arithmetic() -> None:
 
 
 async def test_aeval_returns_leaf_value() -> None:
-    program = compile(LiteralQuery(7))
+    program = compile(Literal(7))
     with Budget(async_mode=True) as budget:
         rt = Runtime(program, Context(), budget=budget)
         assert await rt.aeval() == 7
 
 
 async def test_aeval_recurses_on_arithmetic() -> None:
-    program = compile(MulQuery(LiteralQuery(3), LiteralQuery(4)))
+    program = compile(Mul(Literal(3), Literal(4)))
     with Budget(async_mode=True) as budget:
         rt = Runtime(program, Context(), budget=budget)
         assert await rt.aeval() == 12
 
 
 async def test_aeval_matches_eval() -> None:
-    program = compile(AndQuery(LiteralQuery(True), LiteralQuery(True)))
+    program = compile(And(Literal(True), Literal(True)))
     with Budget(async_mode=True) as budget:
         rt = Runtime(program, Context(), budget=budget)
         assert await rt.aeval() is True
@@ -115,14 +111,14 @@ async def test_aeval_matches_eval() -> None:
 
 
 def test_empty_operand_collapses_to_invalid() -> None:
-    program = compile(AddQuery(LiteralQuery(EMPTY), LiteralQuery(1)))
+    program = compile(Add(Literal(EMPTY), Literal(1)))
     with Budget() as budget:
         rt = Runtime(program, Context(), budget=budget)
         assert rt.eval() is INVALID
 
 
 def test_invalid_operand_collapses_to_invalid() -> None:
-    program = compile(MulQuery(LiteralQuery(2), LiteralQuery(INVALID)))
+    program = compile(Mul(Literal(2), Literal(INVALID)))
     with Budget() as budget:
         rt = Runtime(program, Context(), budget=budget)
         assert rt.eval() is INVALID
@@ -506,7 +502,7 @@ async def test_amerge_rejects_non_async_budget() -> None:
 
 
 def test_ctx_attrs_writes_are_visible_through_runtime() -> None:
-    program = compile(LiteralQuery(1))
+    program = compile(Literal(1))
     ctx = Context()
     ctx.attrs["x"] = 42
     with Budget() as budget:
@@ -520,7 +516,7 @@ def test_ctx_attrs_writes_are_visible_through_runtime() -> None:
 
 
 def test_budget_close_after_runtime_drive() -> None:
-    program = compile(LiteralQuery(1))
+    program = compile(Literal(1))
     budget = Budget(max_parallel=2)
     rt = Runtime(program, Context(), budget=budget)
     assert rt.eval() == 1

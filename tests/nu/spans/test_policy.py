@@ -14,16 +14,16 @@ from __future__ import annotations
 import pytest
 from _support.async_atoms import BoomAction
 
-from nu.context import AttrRef, SetCommand
-from nu.core import LiteralQuery
-from nu.core.iteration import IterQuery
+from nu.context import AttrRef, SetCmd
+from nu.core import Literal
+from nu.core.iteration import Iter
 from nu.lang import Attr, Cardinality, Policy, Span, StreamQuery, compile
 from nu.lang.helpers import arun, collect, run
 from nu.spans import TryCatch
 
 
-def _set(name: str, value: object) -> SetCommand:
-    return SetCommand(AttrRef(name), LiteralQuery(value))
+def _set(name: str, value: object) -> SetCmd:
+    return SetCmd(AttrRef(name), Literal(value))
 
 
 class _BoomStream(StreamQuery):
@@ -57,11 +57,11 @@ def test_trycatch_is_a_policy_span() -> None:
 
 
 def test_trycatch_is_transparent_and_forwards_body_cardinality() -> None:
-    program = compile(TryCatch(LiteralQuery(5)))
+    program = compile(TryCatch(Literal(5)))
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.TRANSPARENT
     assert program.attr(program.root, Attr.CHILD_CARDINALITY) is Cardinality.SCALAR
 
-    stream = compile(TryCatch(IterQuery(LiteralQuery([1, 2]))))
+    stream = compile(TryCatch(Iter(Literal([1, 2]))))
     assert stream.attr(stream.root, Attr.CHILD_CARDINALITY) is Cardinality.STREAM
 
 
@@ -69,12 +69,12 @@ def test_trycatch_is_transparent_and_forwards_body_cardinality() -> None:
 
 
 def test_scalar_success_forwards_the_body_value() -> None:
-    value, _ = run(TryCatch(LiteralQuery(5)))
+    value, _ = run(TryCatch(Literal(5)))
     assert value == 5
 
 
 def test_scalar_failure_runs_the_catch_in_place() -> None:
-    value, _ = run(TryCatch(BoomAction("boom"), LiteralQuery(9)))
+    value, _ = run(TryCatch(BoomAction("boom"), Literal(9)))
     assert value == 9
 
 
@@ -87,7 +87,7 @@ def test_catch_can_read_the_error_from_its_isolated_context() -> None:
 
 def test_catch_context_is_isolated_so_error_does_not_leak_to_the_parent() -> None:
     # ``error`` lives on the catch's copy, not the live context.
-    _, ctx = run(TryCatch(BoomAction("boom"), LiteralQuery(9)))
+    _, ctx = run(TryCatch(BoomAction("boom"), Literal(9)))
     assert "error" not in ctx.attrs
 
 
@@ -107,11 +107,11 @@ def test_failure_without_a_catch_propagates() -> None:
 
 def test_error_outside_the_filter_propagates_unretried() -> None:
     with pytest.raises(ValueError, match="boom"):
-        run(TryCatch(BoomAction("boom"), LiteralQuery(9), errors=KeyError))
+        run(TryCatch(BoomAction("boom"), Literal(9), errors=KeyError))
 
 
 def test_error_inside_the_filter_is_caught() -> None:
-    value, _ = run(TryCatch(BoomAction("boom"), LiteralQuery(9), errors=ValueError))
+    value, _ = run(TryCatch(BoomAction("boom"), Literal(9), errors=ValueError))
     assert value == 9
 
 
@@ -119,13 +119,13 @@ def test_error_inside_the_filter_is_caught() -> None:
 
 
 def test_finally_runs_on_success_and_persists() -> None:
-    value, ctx = run(TryCatch(LiteralQuery(5), finally_=_set("done", True)))
+    value, ctx = run(TryCatch(Literal(5), finally_=_set("done", True)))
     assert value == 5
     assert ctx.attrs["done"] is True
 
 
 def test_finally_runs_after_a_caught_failure() -> None:
-    value, ctx = run(TryCatch(BoomAction("boom"), LiteralQuery(9), _set("done", True)))
+    value, ctx = run(TryCatch(BoomAction("boom"), Literal(9), _set("done", True)))
     assert value == 9
     assert ctx.attrs["done"] is True
 
@@ -154,19 +154,19 @@ def test_void_success_forwards_nothing_and_the_body_effect_lands() -> None:
 
 
 def test_stream_success_forwards_the_whole_stream() -> None:
-    items, _ = collect(compile(TryCatch(IterQuery(LiteralQuery([1, 2, 3])))))
+    items, _ = collect(compile(TryCatch(Iter(Literal([1, 2, 3])))))
     assert items == [1, 2, 3]
 
 
 def test_stream_failure_mid_drain_appends_the_catch_stream() -> None:
     # The body emits its prefix, then fails; the fallback stream follows it.
-    tree = TryCatch(_BoomStream(2, "mid"), IterQuery(LiteralQuery([9])))
+    tree = TryCatch(_BoomStream(2, "mid"), Iter(Literal([9])))
     items, _ = collect(compile(tree))
     assert items == [0, 1, 9]
 
 
 def test_stream_finally_runs_after_the_stream_drains() -> None:
-    tree = TryCatch(IterQuery(LiteralQuery([1, 2])), finally_=_set("done", True))
+    tree = TryCatch(Iter(Literal([1, 2])), finally_=_set("done", True))
     items, ctx = collect(compile(tree))
     assert items == [1, 2]
     assert ctx.attrs["done"] is True
@@ -176,7 +176,7 @@ def test_stream_finally_runs_after_the_stream_drains() -> None:
 
 
 async def test_async_scalar_failure_runs_the_catch() -> None:
-    value, _ = await arun(TryCatch(BoomAction("boom"), LiteralQuery(9)))
+    value, _ = await arun(TryCatch(BoomAction("boom"), Literal(9)))
     assert value == 9
 
 

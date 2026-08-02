@@ -6,10 +6,10 @@ builds its interaction atom (lazily imported, like ``nu.std.math``) and returns
 the Form that matches the host return type:
 
 - clock reads in seconds (``time``, ``monotonic``, ``perf_counter``,
-  ``process_time``) -> ``FloatForm``
+  ``process_time``) -> ``Float``
 - clock reads in nanoseconds (``time_ns``, ``monotonic_ns``, ``perf_counter_ns``)
-  -> ``IntForm``
-- ``sleep`` -> ``NoneForm`` (an effect-only ScalarQuery; it yields ``None``, it
+  -> ``Int``
+- ``sleep`` -> ``None_`` (an effect-only ScalarQuery; it yields ``None``, it
   just blocks)
 
 Every clock read is NON-DETERMINISTIC (it reads the clock), so its atom declares
@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import FloatForm, IntForm, NoneForm
+from nu import Float, Int, None_
 
 
 if TYPE_CHECKING:
@@ -48,63 +48,63 @@ __all__ = [
 # --- clock reads (float seconds) --------------------------------------------
 
 
-def time() -> FloatForm:
+def time() -> Float:
     """Seconds since the epoch as a float: mirrors ``time.time()``. Non-deterministic."""
     from .interactions import TimeTime
 
-    return FloatForm(TimeTime())
+    return Float(TimeTime())
 
 
-def monotonic() -> FloatForm:
+def monotonic() -> Float:
     """A monotonic clock in seconds: mirrors ``time.monotonic()``. Non-deterministic."""
     from .interactions import TimeMonotonic
 
-    return FloatForm(TimeMonotonic())
+    return Float(TimeMonotonic())
 
 
-def perf_counter() -> FloatForm:
+def perf_counter() -> Float:
     """The highest-resolution timer in seconds: mirrors ``time.perf_counter()``. Non-deterministic."""
     from .interactions import TimePerfCounter
 
-    return FloatForm(TimePerfCounter())
+    return Float(TimePerfCounter())
 
 
-def process_time() -> FloatForm:
+def process_time() -> Float:
     """Process CPU time in seconds: mirrors ``time.process_time()``. Non-deterministic."""
     from .interactions import TimeProcessTime
 
-    return FloatForm(TimeProcessTime())
+    return Float(TimeProcessTime())
 
 
 # --- clock reads (int nanoseconds) ------------------------------------------
 
 
-def time_ns() -> IntForm:
+def time_ns() -> Int:
     """Nanoseconds since the epoch as an int: mirrors ``time.time_ns()``. Non-deterministic."""
     from .interactions import TimeTimeNs
 
-    return IntForm(TimeTimeNs())
+    return Int(TimeTimeNs())
 
 
-def monotonic_ns() -> IntForm:
+def monotonic_ns() -> Int:
     """A monotonic clock in nanoseconds: mirrors ``time.monotonic_ns()``. Non-deterministic."""
     from .interactions import TimeMonotonicNs
 
-    return IntForm(TimeMonotonicNs())
+    return Int(TimeMonotonicNs())
 
 
-def perf_counter_ns() -> IntForm:
+def perf_counter_ns() -> Int:
     """The highest-resolution timer in nanoseconds: mirrors ``time.perf_counter_ns()``. Non-deterministic."""
     from .interactions import TimePerfCounterNs
 
-    return IntForm(TimePerfCounterNs())
+    return Int(TimePerfCounterNs())
 
 
 # --- blocking sleep ---------------------------------------------------------
 
 
-def sleep(secs: FloatArg) -> NoneForm:
+def sleep(secs: FloatArg) -> None_:
     """Block for ``secs`` seconds, yielding ``None``: mirrors ``time.sleep()``. Sync-only, effect-only."""
     from .interactions import TimeSleep
 
-    return NoneForm(TimeSleep(secs))
+    return None_(TimeSleep(secs))

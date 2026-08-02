@@ -60,7 +60,7 @@ class RayServiceRef(FabricRef):
         super().__init__()
         self._payload["tag"] = tag
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         service = children[0]
         raw = self._payload["tag"]
         tag: tuple[object, ...] = () if raw is UNSET else (raw,)
@@ -71,7 +71,7 @@ class RayServiceRef(FabricRef):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         service = children[0]
         raw = self._payload["tag"]
         tag: tuple[object, ...] = () if raw is UNSET else (raw,)

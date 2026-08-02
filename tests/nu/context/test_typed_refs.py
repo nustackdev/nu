@@ -23,8 +23,8 @@ from nu.context import (
     StrAttrRef,
     TupleAttrRef,
 )
-from nu.forms.collections import DictForm, FrozenSetForm, ListForm, SetForm, TupleForm
-from nu.forms.primitives import AnyForm, BoolForm, BytesForm, FloatForm, IntForm, NoneForm, StrForm
+from nu.forms.collections import Dict, FrozenSet, List, Set, Tuple
+from nu.forms.primitives import Any, Bool, Bytes, Float, Int, None_, Str
 from nu.lang import INVALID, Attr, Context, Sort, compile
 from nu.lang.helpers import run
 
@@ -84,51 +84,51 @@ def test_tuple_attr_ref_is_an_attr_ref():
 
 
 def test_int_attr_ref_is_an_int_form():
-    assert isinstance(IntAttrRef("x"), IntForm)
+    assert isinstance(IntAttrRef("x"), Int)
 
 
 def test_float_attr_ref_is_a_float_form():
-    assert isinstance(FloatAttrRef("x"), FloatForm)
+    assert isinstance(FloatAttrRef("x"), Float)
 
 
 def test_str_attr_ref_is_a_str_form():
-    assert isinstance(StrAttrRef("x"), StrForm)
+    assert isinstance(StrAttrRef("x"), Str)
 
 
 def test_bool_attr_ref_is_a_bool_form():
-    assert isinstance(BoolAttrRef("x"), BoolForm)
+    assert isinstance(BoolAttrRef("x"), Bool)
 
 
 def test_bytes_attr_ref_is_a_bytes_form():
-    assert isinstance(BytesAttrRef("x"), BytesForm)
+    assert isinstance(BytesAttrRef("x"), Bytes)
 
 
 def test_any_attr_ref_is_an_any_form():
-    assert isinstance(AnyAttrRef("x"), AnyForm)
+    assert isinstance(AnyAttrRef("x"), Any)
 
 
 def test_none_attr_ref_is_a_none_form():
-    assert isinstance(NoneAttrRef("x"), NoneForm)
+    assert isinstance(NoneAttrRef("x"), None_)
 
 
 def test_list_attr_ref_is_a_list_form():
-    assert isinstance(ListAttrRef("xs"), ListForm)
+    assert isinstance(ListAttrRef("xs"), List)
 
 
 def test_dict_attr_ref_is_a_dict_form():
-    assert isinstance(DictAttrRef("d"), DictForm)
+    assert isinstance(DictAttrRef("d"), Dict)
 
 
 def test_set_attr_ref_is_a_set_form():
-    assert isinstance(SetAttrRef("s"), SetForm)
+    assert isinstance(SetAttrRef("s"), Set)
 
 
 def test_frozenset_attr_ref_is_a_frozenset_form():
-    assert isinstance(FrozenSetAttrRef("fs"), FrozenSetForm)
+    assert isinstance(FrozenSetAttrRef("fs"), FrozenSet)
 
 
 def test_tuple_attr_ref_is_a_tuple_form():
-    assert isinstance(TupleAttrRef("t"), TupleForm)
+    assert isinstance(TupleAttrRef("t"), Tuple)
 
 
 # --- sort resolves to REF ------------------------------------------------
@@ -154,7 +154,7 @@ def test_dict_attr_ref_sort_is_ref():
 
 def test_int_attr_ref_add_composes_to_int_form():
     result = IntAttrRef("x") + 3
-    assert isinstance(result, IntForm)
+    assert isinstance(result, Int)
 
 
 def test_int_attr_ref_add_evaluates_correctly():
@@ -174,7 +174,7 @@ def test_int_attr_ref_unbound_propagates_invalid():
 
 def test_float_attr_ref_mul_composes_to_float_form():
     result = FloatAttrRef("f") * 2.0
-    assert isinstance(result, FloatForm)
+    assert isinstance(result, Float)
 
 
 # --- str authoring -------------------------------------------------------
@@ -182,7 +182,7 @@ def test_float_attr_ref_mul_composes_to_float_form():
 
 def test_str_attr_ref_add_composes_to_str_form():
     result = StrAttrRef("s") + "_suffix"
-    assert isinstance(result, StrForm)
+    assert isinstance(result, Str)
 
 
 # --- collection: list authoring ------------------------------------------
@@ -190,12 +190,12 @@ def test_str_attr_ref_add_composes_to_str_form():
 
 def test_list_attr_ref_first_elem_builds():
     result = ListAttrRef("xs").first_elem()
-    assert isinstance(result, AnyForm)
+    assert isinstance(result, Any)
 
 
 def test_list_attr_ref_mul_composes_to_list_form():
     result = ListAttrRef("xs") * 2
-    assert isinstance(result, ListForm)
+    assert isinstance(result, List)
 
 
 # --- collection: dict authoring ------------------------------------------
@@ -203,4 +203,4 @@ def test_list_attr_ref_mul_composes_to_list_form():
 
 def test_dict_attr_ref_composes_get_key():
     result = DictAttrRef("d").get_item("k")
-    assert isinstance(result, AnyForm)
+    assert isinstance(result, Any)

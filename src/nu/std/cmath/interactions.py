@@ -5,13 +5,13 @@ Two groups, both bound straight to a host callable:
 - the ``complex`` value type: its constructor (``ComplexOf`` binds the
   ``complex`` builtin) and the ``conjugate`` method (binds the *unbound* method,
   a plain callable whose first argument is the receiver). Property reads
-  (``.real`` / ``.imag``) reuse core ``GetAttrQuery``; arithmetic and equality
+  (``.real`` / ``.imag``) reuse core ``GetAttr``; arithmetic and equality
   reuse the core atoms - none of those are here.
 - the ``cmath`` free functions (``sqrt``, ``exp``, ``phase``, ``polar`` ...),
   each bound straight to the ``cmath.*`` callable, exactly like ``nu.std.math``.
 
 Constants (``pi``, ``e``, ``infj`` ...) are plain values, so they need no atom -
-they ride on ``LiteralQuery`` in ``functions``.
+they ride on ``Literal`` in ``functions``.
 
 Every binding here is pure (no clock, no randomness), so a future
 constant-folding pass may fold any of them freely.

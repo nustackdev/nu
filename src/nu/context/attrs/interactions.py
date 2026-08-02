@@ -1,8 +1,8 @@
-"""Attr-fabric interactions: ``SetCommand``, ``DeleteCommand``, ``AttrExistsQuery``.
+"""Attr-fabric interactions: ``SetCmd``, ``Delete``, ``AttrExists``.
 
-The write ops (``SetCommand`` / ``DeleteCommand``) delegate to the Ref
+The write ops (``SetCmd`` / ``Delete``) delegate to the Ref
 (``ref._write`` / ``ref._erase``) so the write mechanism lives with the fabric,
-not hardcoded here. ``AttrExistsQuery`` complements the dual-role read: an
+not hardcoded here. ``AttrExists`` complements the dual-role read: an
 unbound read yields EMPTY, which a bound EMPTY would alias, so existence needs
 an explicit query.
 
@@ -25,15 +25,15 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
-__all__ = ["AttrExistsQuery", "DeleteCommand", "SetCommand"]
+__all__ = ["AttrExists", "Delete", "SetCmd"]
 
 
-class SetCommand(Command):
+class SetCmd(Command):
     """Writes the value of slot 1 to the Ref in slot 0, through that Ref."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         value = children[1]
 
@@ -45,7 +45,7 @@ class SetCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         value = children[1]
 
@@ -58,12 +58,12 @@ class SetCommand(Command):
         return athunk
 
 
-class DeleteCommand(Command):
+class Delete(Command):
     """Removes the Ref in slot 0 from its fabric, through that Ref."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         def thunk(rt: Runtime) -> None:
@@ -71,7 +71,7 @@ class DeleteCommand(Command):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:
@@ -80,10 +80,10 @@ class DeleteCommand(Command):
         return athunk
 
 
-class AttrExistsQuery(ScalarQuery):
+class AttrExists(ScalarQuery):
     """Yields whether the slot-0 ``AttrRef``'s address is bound in ``ctx.attrs``."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         def thunk(rt: Runtime) -> object:
@@ -92,7 +92,7 @@ class AttrExistsQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
 
         async def athunk(rt: Runtime) -> object:

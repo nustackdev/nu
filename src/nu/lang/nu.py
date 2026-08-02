@@ -54,9 +54,9 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no v
         if all(isinstance(c, Nu) for c in children):
             wrapped = cast("tuple[Nu, ...]", children)
         else:
-            from nu.core import LiteralQuery
+            from nu.core import Literal
 
-            wrapped = tuple(c if isinstance(c, Nu) else LiteralQuery(c) for c in children)
+            wrapped = tuple(c if isinstance(c, Nu) else Literal(c) for c in children)
         super().__init__(*wrapped)
 
     # --- composition operators ------------------------------------------

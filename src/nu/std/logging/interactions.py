@@ -1,6 +1,6 @@
-"""The ``LogCommand`` atom -- one write through Python's ``logging`` module.
+"""The ``Log`` atom -- one write through Python's ``logging`` module.
 
-Every log statement in a Nu program compiles to a ``LogCommand``. The Command
+Every log statement in a Nu program compiles to a ``Log``. The Command
 mutates the log fabric (a single ``LoggingRef`` singleton, :data:`LOGGING`) and
 at eval time hands the resolved record to ``logging.getLogger(name).log(...)``.
 Python's ``logging`` module IS the sink -- its handlers, formatters, filters,
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "LOGGING",
-    "LogCommand",
+    "Log",
     "LoggingRef",
 ]
 
@@ -68,7 +68,7 @@ class LoggingRef(Ref):
     Fixed singleton (:data:`LOGGING`). Unlike ``StdioRef`` there is no
     swappable backend: ``logging`` is a Python module-level singleton whose
     handlers are the real configuration surface. This Ref exists so
-    ``LogCommand`` can declare a slot-0 WRITE against a concrete fabric class,
+    ``Log`` can declare a slot-0 WRITE against a concrete fabric class,
     which is what the engine uses to order log statements against each other.
     """
 
@@ -104,10 +104,10 @@ class LoggingRef(Ref):
 LOGGING = LoggingRef()
 
 
-# --- the LogCommand ---------------------------------------------------------
+# --- the Log ---------------------------------------------------------
 
 
-class LogCommand(Command):
+class Log(Command):
     r"""Writes one leveled record through Python's ``logging`` module.
 
     Children: ``[LOGGING, level, logger, msg, *args]``. ``level`` is a name
@@ -118,7 +118,7 @@ class LogCommand(Command):
     :attr:`_payload` (static Python values captured at construction).
 
     A ``msg`` or ``arg`` that reads as an unbound sentinel drops the whole
-    line -- the same skip-on-EMPTY guard :class:`PrintCommand` uses. That
+    line -- the same skip-on-EMPTY guard :class:`Print` uses. That
     keeps a log call safe against attrs that may not be populated on every
     branch.
     """

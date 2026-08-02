@@ -7,7 +7,7 @@ set of functions, so the two co-locate here. This file is the value-type half:
 The class name is lowercase ``complex`` to mirror the builtin (hence
 ``# noqa: N801``), backed by ``from builtins import complex as _complex``.
 
-- **property reads** (``.real``, ``.imag``) reuse core ``GetAttrQuery``.
+- **property reads** (``.real``, ``.imag``) reuse core ``GetAttr``.
 - **the constructor** is a ``ScalarQueryFactory`` atom in ``interactions``; the
   literal constructor is ``.of(...)`` since ``__init__`` wraps a Nu term.
 - **``conjugate()``** is a ``ScalarQueryFactory`` atom over the unbound method.
@@ -27,7 +27,7 @@ from nu.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import BoolForm, FloatForm
+    from nu.forms.primitives import Bool, Float
     from nu.lang import Arg, FloatArg
 
     type ComplexArg = Arg[_complex]
@@ -51,19 +51,19 @@ class complex(Form, TypedNu[_complex]):  # noqa: N801
 
         return complex(ComplexOf(real, imag))
 
-    def real(self) -> FloatForm:
+    def real(self) -> Float:
         """The real part."""
-        from nu import FloatForm
-        from nu.core import GetAttrQuery
+        from nu import Float
+        from nu.core import GetAttr
 
-        return FloatForm(GetAttrQuery(self, "real"))
+        return Float(GetAttr(self, "real"))
 
-    def imag(self) -> FloatForm:
+    def imag(self) -> Float:
         """The imaginary part."""
-        from nu import FloatForm
-        from nu.core import GetAttrQuery
+        from nu import Float
+        from nu.core import GetAttr
 
-        return FloatForm(GetAttrQuery(self, "imag"))
+        return Float(GetAttr(self, "imag"))
 
     def conjugate(self) -> complex:
         """The complex conjugate (negates the imaginary part)."""
@@ -72,56 +72,56 @@ class complex(Form, TypedNu[_complex]):  # noqa: N801
         return complex(ComplexConjugate(self))
 
     def __add__(self, other: ComplexArg) -> complex:
-        from nu.core import AddQuery
+        from nu.core import Add
 
-        return complex(AddQuery(self, other))
+        return complex(Add(self, other))
 
     def __sub__(self, other: ComplexArg) -> complex:
-        from nu.core import SubQuery
+        from nu.core import Sub
 
-        return complex(SubQuery(self, other))
+        return complex(Sub(self, other))
 
     def __mul__(self, other: ComplexArg) -> complex:
-        from nu.core import MulQuery
+        from nu.core import Mul
 
-        return complex(MulQuery(self, other))
+        return complex(Mul(self, other))
 
     def __truediv__(self, other: ComplexArg) -> complex:
-        from nu.core import DivQuery
+        from nu.core import Div
 
-        return complex(DivQuery(self, other))
+        return complex(Div(self, other))
 
     def __pow__(self, other: ComplexArg) -> complex:
-        from nu.core import PowQuery
+        from nu.core import Pow
 
-        return complex(PowQuery(self, other))
+        return complex(Pow(self, other))
 
     def __neg__(self) -> complex:
-        from nu.core import NegQuery
+        from nu.core import Neg
 
-        return complex(NegQuery(self))
+        return complex(Neg(self))
 
     def __pos__(self) -> complex:
-        from nu.core import PosQuery
+        from nu.core import Pos
 
-        return complex(PosQuery(self))
+        return complex(Pos(self))
 
-    def __abs__(self) -> FloatForm:
-        from nu import FloatForm
-        from nu.core import AbsQuery
+    def __abs__(self) -> Float:
+        from nu import Float
+        from nu.core import Abs
 
-        return FloatForm(AbsQuery(self))
+        return Float(Abs(self))
 
-    def eq(self, other: ComplexArg) -> BoolForm:
+    def eq(self, other: ComplexArg) -> Bool:
         """Whether two complex numbers are equal."""
-        from nu import BoolForm
-        from nu.core import EqQuery
+        from nu import Bool
+        from nu.core import Eq
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def ne(self, other: ComplexArg) -> BoolForm:
+    def ne(self, other: ComplexArg) -> Bool:
         """Whether two complex numbers differ."""
-        from nu import BoolForm
-        from nu.core import NeQuery
+        from nu import Bool
+        from nu.core import Ne
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))

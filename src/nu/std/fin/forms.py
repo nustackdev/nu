@@ -22,7 +22,7 @@ from nu.std.fin.native import PyBasisPoint, PyPercentage
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import BoolForm, FloatForm, IntForm
+    from nu.forms.primitives import Bool, Float, Int
     from nu.lang import Arg, FloatArg, IntArg
 
     type PercentageArg = Arg[PyPercentage] | FloatArg
@@ -72,65 +72,65 @@ class Percentage(Form, TypedNu[PyPercentage]):
 
     # --- conversions ---------------------------------------------------------
 
-    def to_dec(self) -> FloatForm:
+    def to_dec(self) -> Float:
         """The decimal ratio (75.5% -> ``0.755``)."""
-        from nu import FloatForm
+        from nu import Float
 
         from .interactions import PercentageToDec
 
-        return FloatForm(PercentageToDec(self))
+        return Float(PercentageToDec(self))
 
-    def to_bps(self) -> IntForm:
+    def to_bps(self) -> Int:
         """The basis points (75.5% -> ``7550``)."""
-        from nu import IntForm
+        from nu import Int
 
         from .interactions import PercentageToBps
 
-        return IntForm(PercentageToBps(self))
+        return Int(PercentageToBps(self))
 
-    def to_float(self) -> FloatForm:
+    def to_float(self) -> Float:
         """The raw percentage value."""
-        from nu import FloatForm
+        from nu import Float
 
         from .interactions import PercentageToFloat
 
-        return FloatForm(PercentageToFloat(self))
+        return Float(PercentageToFloat(self))
 
     # --- application ---------------------------------------------------------
 
-    def apply(self, amount: FloatArg) -> FloatForm:
+    def apply(self, amount: FloatArg) -> Float:
         """This percentage of ``amount``."""
-        from nu import FloatForm
+        from nu import Float
 
         from .interactions import PercentageApply
 
-        return FloatForm(PercentageApply(self, amount))
+        return Float(PercentageApply(self, amount))
 
-    def add_to(self, amount: FloatArg) -> FloatForm:
+    def add_to(self, amount: FloatArg) -> Float:
         """``amount`` grown by this percentage."""
-        from nu import FloatForm
+        from nu import Float
 
         from .interactions import PercentageAddTo
 
-        return FloatForm(PercentageAddTo(self, amount))
+        return Float(PercentageAddTo(self, amount))
 
-    def sub_from(self, amount: FloatArg) -> FloatForm:
+    def sub_from(self, amount: FloatArg) -> Float:
         """``amount`` reduced by this percentage."""
-        from nu import FloatForm
+        from nu import Float
 
         from .interactions import PercentageSubFrom
 
-        return FloatForm(PercentageSubFrom(self, amount))
+        return Float(PercentageSubFrom(self, amount))
 
     # --- validation ----------------------------------------------------------
 
-    def is_valid(self, min_val: float = 0.0, max_val: float = 100.0) -> BoolForm:
+    def is_valid(self, min_val: float = 0.0, max_val: float = 100.0) -> Bool:
         """Whether the value falls within ``[min_val, max_val]``."""
-        from nu import BoolForm
+        from nu import Bool
 
         from .interactions import PercentageIsValid
 
-        return BoolForm(PercentageIsValid(self, min_val, max_val))
+        return Bool(PercentageIsValid(self, min_val, max_val))
 
     def clamp(self, min_val: float = 0.0, max_val: float = 100.0) -> Percentage:
         """This percentage clamped to ``[min_val, max_val]``."""
@@ -141,69 +141,69 @@ class Percentage(Form, TypedNu[PyPercentage]):
     # --- arithmetic (reuse core atoms) ---------------------------------------
 
     def __add__(self, other: PercentageArg) -> Percentage:
-        from nu.core import AddQuery
+        from nu.core import Add
 
-        return Percentage(AddQuery(self, other))
+        return Percentage(Add(self, other))
 
     def __sub__(self, other: PercentageArg) -> Percentage:
-        from nu.core import SubQuery
+        from nu.core import Sub
 
-        return Percentage(SubQuery(self, other))
+        return Percentage(Sub(self, other))
 
     def __mul__(self, factor: FloatArg) -> Percentage:
-        from nu.core import MulQuery
+        from nu.core import Mul
 
-        return Percentage(MulQuery(self, factor))
+        return Percentage(Mul(self, factor))
 
     def __truediv__(self, divisor: FloatArg) -> Percentage:
-        from nu.core import DivQuery
+        from nu.core import Div
 
-        return Percentage(DivQuery(self, divisor))
+        return Percentage(Div(self, divisor))
 
     def __neg__(self) -> Percentage:
-        from nu.core import NegQuery
+        from nu.core import Neg
 
-        return Percentage(NegQuery(self))
+        return Percentage(Neg(self))
 
     # --- comparison (reuse core atoms) ---------------------------------------
 
-    def __gt__(self, other: PercentageArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GtQuery
+    def __gt__(self, other: PercentageArg) -> Bool:
+        from nu import Bool
+        from nu.core import Gt
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: PercentageArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LtQuery
+    def __lt__(self, other: PercentageArg) -> Bool:
+        from nu import Bool
+        from nu.core import Lt
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: PercentageArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GeQuery
+    def __ge__(self, other: PercentageArg) -> Bool:
+        from nu import Bool
+        from nu.core import Ge
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: PercentageArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LeQuery
+    def __le__(self, other: PercentageArg) -> Bool:
+        from nu import Bool
+        from nu.core import Le
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
-    def eq(self, other: PercentageArg) -> BoolForm:
+    def eq(self, other: PercentageArg) -> Bool:
         """Whether two percentages are equal."""
-        from nu import BoolForm
-        from nu.core import EqQuery
+        from nu import Bool
+        from nu.core import Eq
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def ne(self, other: PercentageArg) -> BoolForm:
+    def ne(self, other: PercentageArg) -> Bool:
         """Whether two percentages differ."""
-        from nu import BoolForm
-        from nu.core import NeQuery
+        from nu import Bool
+        from nu.core import Ne
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))
 
 
 class BasisPoint(Form, TypedNu[PyBasisPoint]):
@@ -239,119 +239,119 @@ class BasisPoint(Form, TypedNu[PyBasisPoint]):
 
     # --- conversions ---------------------------------------------------------
 
-    def to_pct(self) -> FloatForm:
+    def to_pct(self) -> Float:
         """The percentage (500 bps -> ``5.0``)."""
-        from nu import FloatForm
+        from nu import Float
 
         from .interactions import BasisPointToPct
 
-        return FloatForm(BasisPointToPct(self))
+        return Float(BasisPointToPct(self))
 
-    def to_dec(self) -> FloatForm:
+    def to_dec(self) -> Float:
         """The decimal ratio (500 bps -> ``0.05``)."""
-        from nu import FloatForm
+        from nu import Float
 
         from .interactions import BasisPointToDec
 
-        return FloatForm(BasisPointToDec(self))
+        return Float(BasisPointToDec(self))
 
-    def to_int(self) -> IntForm:
+    def to_int(self) -> Int:
         """The raw basis-point count."""
-        from nu import IntForm
+        from nu import Int
 
         from .interactions import BasisPointToInt
 
-        return IntForm(BasisPointToInt(self))
+        return Int(BasisPointToInt(self))
 
     # --- application ---------------------------------------------------------
 
-    def apply(self, amount: FloatArg) -> FloatForm:
+    def apply(self, amount: FloatArg) -> Float:
         """This many basis points of ``amount``."""
-        from nu import FloatForm
+        from nu import Float
 
         from .interactions import BasisPointApply
 
-        return FloatForm(BasisPointApply(self, amount))
+        return Float(BasisPointApply(self, amount))
 
-    def add_to(self, amount: FloatArg) -> FloatForm:
+    def add_to(self, amount: FloatArg) -> Float:
         """``amount`` grown by these basis points."""
-        from nu import FloatForm
+        from nu import Float
 
         from .interactions import BasisPointAddTo
 
-        return FloatForm(BasisPointAddTo(self, amount))
+        return Float(BasisPointAddTo(self, amount))
 
-    def sub_from(self, amount: FloatArg) -> FloatForm:
+    def sub_from(self, amount: FloatArg) -> Float:
         """``amount`` reduced by these basis points."""
-        from nu import FloatForm
+        from nu import Float
 
         from .interactions import BasisPointSubFrom
 
-        return FloatForm(BasisPointSubFrom(self, amount))
+        return Float(BasisPointSubFrom(self, amount))
 
     # --- arithmetic (reuse core atoms) ---------------------------------------
 
     def __add__(self, other: BasisPointArg) -> BasisPoint:
-        from nu.core import AddQuery
+        from nu.core import Add
 
-        return BasisPoint(AddQuery(self, other))
+        return BasisPoint(Add(self, other))
 
     def __sub__(self, other: BasisPointArg) -> BasisPoint:
-        from nu.core import SubQuery
+        from nu.core import Sub
 
-        return BasisPoint(SubQuery(self, other))
+        return BasisPoint(Sub(self, other))
 
     def __mul__(self, factor: FloatArg) -> BasisPoint:
-        from nu.core import MulQuery
+        from nu.core import Mul
 
-        return BasisPoint(MulQuery(self, factor))
+        return BasisPoint(Mul(self, factor))
 
     def __truediv__(self, divisor: FloatArg) -> BasisPoint:
-        from nu.core import DivQuery
+        from nu.core import Div
 
-        return BasisPoint(DivQuery(self, divisor))
+        return BasisPoint(Div(self, divisor))
 
     def __floordiv__(self, divisor: IntArg) -> BasisPoint:
-        from nu.core import FloorDivQuery
+        from nu.core import FloorDiv
 
-        return BasisPoint(FloorDivQuery(self, divisor))
+        return BasisPoint(FloorDiv(self, divisor))
 
     # --- comparison (reuse core atoms) ---------------------------------------
 
-    def __gt__(self, other: BasisPointArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GtQuery
+    def __gt__(self, other: BasisPointArg) -> Bool:
+        from nu import Bool
+        from nu.core import Gt
 
-        return BoolForm(GtQuery(self, other))
+        return Bool(Gt(self, other))
 
-    def __lt__(self, other: BasisPointArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LtQuery
+    def __lt__(self, other: BasisPointArg) -> Bool:
+        from nu import Bool
+        from nu.core import Lt
 
-        return BoolForm(LtQuery(self, other))
+        return Bool(Lt(self, other))
 
-    def __ge__(self, other: BasisPointArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import GeQuery
+    def __ge__(self, other: BasisPointArg) -> Bool:
+        from nu import Bool
+        from nu.core import Ge
 
-        return BoolForm(GeQuery(self, other))
+        return Bool(Ge(self, other))
 
-    def __le__(self, other: BasisPointArg) -> BoolForm:
-        from nu import BoolForm
-        from nu.core import LeQuery
+    def __le__(self, other: BasisPointArg) -> Bool:
+        from nu import Bool
+        from nu.core import Le
 
-        return BoolForm(LeQuery(self, other))
+        return Bool(Le(self, other))
 
-    def eq(self, other: BasisPointArg) -> BoolForm:
+    def eq(self, other: BasisPointArg) -> Bool:
         """Whether two basis-point counts are equal."""
-        from nu import BoolForm
-        from nu.core import EqQuery
+        from nu import Bool
+        from nu.core import Eq
 
-        return BoolForm(EqQuery(self, other))
+        return Bool(Eq(self, other))
 
-    def ne(self, other: BasisPointArg) -> BoolForm:
+    def ne(self, other: BasisPointArg) -> Bool:
         """Whether two basis-point counts differ."""
-        from nu import BoolForm
-        from nu.core import NeQuery
+        from nu import Bool
+        from nu.core import Ne
 
-        return BoolForm(NeQuery(self, other))
+        return Bool(Ne(self, other))

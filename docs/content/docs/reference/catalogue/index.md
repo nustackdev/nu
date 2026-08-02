@@ -8,14 +8,16 @@ A flat catalog of every atom and Form, with one-line meanings.
 
 ## Pages
 
-| Doc                          | What                                                |
-| ---------------------------- | --------------------------------------------------- |
-| [query.md](query.md)         | Value-producing atoms - ScalarQuery, StreamQuery    |
-| [command.md](command.md)     | Mutating atoms - ScalarCommand                      |
-| [flow.md](flow.md)           | Command composers - Strategy, Control               |
-| [span.md](span.md)           | Transparent wrappers - Bracket, Policy              |
-| [forms.md](forms.md)         | Forms - primitives, collections                     |
-| [meta.md](meta.md)           | Tree meta-programming - walk, query, rewrite        |
+| Doc                     | Module      | What                                                |
+| ----------------------- | ----------- | --------------------------------------------------- |
+| [core.md](core.md)     | `nu.core`   | Atom interactions on host values - arithmetic, logical, comparison, cast, reduction, transform, iteration, access, reflection, repr, sentinel, conditional, dynamic, reactive, io, bitwise, literal |
+| [forms.md](forms.md)   | `nu.forms`  | Typed value interfaces - primitives, collections    |
+| [flows.md](flows.md)   | `nu.flows`  | Command composers - Sequential, Parallel, Race, IfDo, WhileDo, ForEachDo, Stream |
+| [spans.md](spans.md)   | `nu.spans`  | Transparent wrappers - Snapshot, Transaction, Retry, TryCatch, Timeout, Throttle, Debounce |
+| [context.md](context.md) | `nu.context` | The Context fabric - attrs, fabric               |
+| [shape.md](shape.md)   | `nu.shape`  | Shape DSL - Shape, Slot, and fabric atoms           |
+| [mem.md](mem.md)       | `nu.mem`    | In-process fabric refs and interactions             |
+| [std.md](std.md)       | `nu.std`    | Standard library wrappers - itertools, functools, math, uuid, decimal, fractions, datetime, pathlib, asyncio, random, time, logging, cmath, fin |
 
 ## Spine
 

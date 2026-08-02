@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import assert_type
 
 import nu
-from nu.forms import BoolForm, IntForm, StrForm
+from nu.forms import Bool, Int, Str
 from nu.virtuals.refs import (
     IntRef,
     StrRef,
@@ -21,9 +21,9 @@ from nu.virtuals.refs import (
 
 
 class Profile(nu.Shape):
-    name:  StrRef
+    name: StrRef
     score: IntRef
-    age:   IntRef
+    age: IntRef
 
 
 class ShapeCache(nu.Shape):
@@ -33,28 +33,28 @@ class ShapeCache(nu.Shape):
 
 class Store(nu.Shape):
     profiles: nu.v.ShapesDictRef[int, Profile]
-    ranks:    nu.v.ShapesListRef[Profile]
-    indexes:  nu.v.PrimitiveListRef[int]
-    cache:    ShapeCache = nu.v.ShapeRef.slot(ShapeCache)
+    ranks: nu.v.ShapesListRef[Profile]
+    indexes: nu.v.PrimitiveListRef[int]
+    cache: ShapeCache = nu.v.ShapeRef.slot(ShapeCache)
 
 
 # --- Ref-typed keys ---------------------------------------------------
 
 
-assert_type(Store.profiles[Store.cache.curr],           Profile)
-assert_type(Store.profiles[Store.cache.next],           Profile)
-assert_type(Store.profiles[Store.cache.curr].name,      StrRef)
-assert_type(Store.profiles[Store.cache.curr].score,     IntRef)
-assert_type(Store.profiles[Store.cache.curr].age,       IntRef)
+assert_type(Store.profiles[Store.cache.curr], Profile)
+assert_type(Store.profiles[Store.cache.next], Profile)
+assert_type(Store.profiles[Store.cache.curr].name, StrRef)
+assert_type(Store.profiles[Store.cache.curr].score, IntRef)
+assert_type(Store.profiles[Store.cache.curr].age, IntRef)
 
 
 # --- Arithmetic-computed keys -----------------------------------------
 
 
-assert_type(Store.profiles[Store.cache.curr + 1],       Profile)
-assert_type(Store.profiles[(Store.cache.curr + 1) // 2],Profile)
-assert_type(Store.profiles[Store.cache.curr * 2],       Profile)
-assert_type(Store.profiles[Store.cache.next - 1],       Profile)
+assert_type(Store.profiles[Store.cache.curr + 1], Profile)
+assert_type(Store.profiles[(Store.cache.curr + 1) // 2], Profile)
+assert_type(Store.profiles[Store.cache.curr * 2], Profile)
+assert_type(Store.profiles[Store.cache.next - 1], Profile)
 
 
 # --- Deep concat across multiple navigations --------------------------
@@ -65,7 +65,7 @@ assert_type(
     + Store.profiles[Store.cache.curr].name
     + " next="
     + Store.profiles[Store.cache.next].name,
-    StrForm,
+    Str,
 )
 
 
@@ -73,38 +73,35 @@ assert_type(
 
 
 assert_type(
-    Store.profiles[Store.cache.next].score
-    - Store.profiles[Store.cache.curr].score,
-    IntForm,
+    Store.profiles[Store.cache.next].score - Store.profiles[Store.cache.curr].score,
+    Int,
 )
 assert_type(
-    Store.profiles[Store.cache.next].score
-    > Store.profiles[Store.cache.curr].score,
-    BoolForm,
+    Store.profiles[Store.cache.next].score > Store.profiles[Store.cache.curr].score,
+    Bool,
 )
 assert_type(
-    Store.profiles[Store.cache.next].age
-    + Store.profiles[Store.cache.curr].age,
-    IntForm,
+    Store.profiles[Store.cache.next].age + Store.profiles[Store.cache.curr].age,
+    Int,
 )
 
 
 # --- Chained subscripts through parametric refs -----------------------
 
 
-# Store.indexes[0] is currently AnyForm (Phase 3 gap). Using it as a key
+# Store.indexes[0] is currently Any (Phase 3 gap). Using it as a key
 # into shape-decomposed profiles still returns Profile via the
 # ShapesDictRef binding.
-assert_type(Store.profiles[Store.indexes[0]],           Profile)
-assert_type(Store.profiles[Store.indexes[0]].name,      StrRef)
-assert_type(Store.profiles[Store.indexes[0]].score * 2, IntForm)
+assert_type(Store.profiles[Store.indexes[0]], Profile)
+assert_type(Store.profiles[Store.indexes[0]].name, StrRef)
+assert_type(Store.profiles[Store.indexes[0]].score * 2, Int)
 
 
 # Primitive-blob subscript narrows to the elem's Form; downstream
 # arithmetic composes narrowly (Phase 3).
-assert_type(Store.indexes[0],                     IntForm)
-assert_type(Store.indexes[Store.cache.curr],      IntForm)
-assert_type(Store.indexes[Store.cache.curr] // 2, IntForm)
+assert_type(Store.indexes[0], Int)
+assert_type(Store.indexes[Store.cache.curr], Int)
+assert_type(Store.indexes[Store.cache.curr] // 2, Int)
 
 
 # --- Multi-level dot-nav after subscript ------------------------------
@@ -115,23 +112,22 @@ class Team(nu.Shape):
 
 
 class League(nu.Shape):
-    teams:   nu.v.ShapesListRef[Team]
+    teams: nu.v.ShapesListRef[Team]
     winners: nu.v.ShapesDictRef[str, Team]
 
 
-assert_type(League.teams[0],                       Team)
-assert_type(League.teams[0].captain,               Profile)
-assert_type(League.teams[0].captain.name,          StrRef)
-assert_type(League.teams[0].captain.score,         IntRef)
-assert_type(League.teams[0].captain.score + 10,    IntForm)
+assert_type(League.teams[0], Team)
+assert_type(League.teams[0].captain, Profile)
+assert_type(League.teams[0].captain.name, StrRef)
+assert_type(League.teams[0].captain.score, IntRef)
+assert_type(League.teams[0].captain.score + 10, Int)
 
-assert_type(League.winners["gold"],                 Team)
-assert_type(League.winners["gold"].captain,         Profile)
-assert_type(League.winners["gold"].captain.name,    StrRef)
+assert_type(League.winners["gold"], Team)
+assert_type(League.winners["gold"].captain, Profile)
+assert_type(League.winners["gold"].captain.name, StrRef)
 assert_type(
-    League.winners["gold"].captain.name
-    + " (from gold team)",
-    StrForm,
+    League.winners["gold"].captain.name + " (from gold team)",
+    Str,
 )
 
 
@@ -139,12 +135,10 @@ assert_type(
 
 
 assert_type(
-    League.teams[0].captain.score
-    > League.teams[1].captain.score,
-    BoolForm,
+    League.teams[0].captain.score > League.teams[1].captain.score,
+    Bool,
 )
 assert_type(
-    (League.teams[0].captain.score > 50)
-    .and_(League.teams[1].captain.score < 80),
-    BoolForm,
+    (League.teams[0].captain.score > 50).and_(League.teams[1].captain.score < 80),
+    Bool,
 )

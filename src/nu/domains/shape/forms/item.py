@@ -26,12 +26,12 @@ from nu.lang import Form
 
 
 if TYPE_CHECKING:
-    from nu.core.reactive import OnPrimitiveChangeQuery
+    from nu.core.reactive import OnPrimitiveChange
     from nu.domains.shape.interactions import (
-        EraseCommand,
-        ExistsQuery,
-        MissingQuery,
-        SetCommand,
+        Erase,
+        Exists,
+        Missing,
+        SetCmd,
     )
 
 
@@ -46,64 +46,64 @@ class ItemForm(Form):
     """Slot-level read surface for a leaf value in the shape fabric.
 
     Provides:
-        exists()  → ExistsQuery  — True if the slot is bound.
-        missing() → MissingQuery — True if the slot is unbound.
+        exists()  → Exists  — True if the slot is bound.
+        missing() → Missing — True if the slot is unbound.
     """
 
-    def exists(self) -> ExistsQuery:
-        """Return an ExistsQuery — True if this slot is bound."""
-        from nu.domains.shape.interactions import ExistsQuery
+    def exists(self) -> Exists:
+        """Return an Exists — True if this slot is bound."""
+        from nu.domains.shape.interactions import Exists
 
-        return ExistsQuery(self)
+        return Exists(self)
 
-    def missing(self) -> MissingQuery:
-        """Return a MissingQuery — True if this slot is unbound."""
-        from nu.domains.shape.interactions import MissingQuery
+    def missing(self) -> Missing:
+        """Return a Missing — True if this slot is unbound."""
+        from nu.domains.shape.interactions import Missing
 
-        return MissingQuery(self)
+        return Missing(self)
 
 
 class MutableItemForm(ItemForm):
     """Slot-level write surface — read + store + erase.
 
     Provides (in addition to ItemForm):
-        store(value) → SetCommand — write value to this slot.
-        erase()      → EraseCommand — remove this slot from the fabric.
+        store(value) → SetCmd — write value to this slot.
+        erase()      → Erase — remove this slot from the fabric.
 
     ``init()`` is absent: IfDo control flow is not yet available.
     """
 
-    def set(self, value: object) -> SetCommand:
-        """Return a SetCommand — write ``value`` to this slot."""
-        from nu.domains.shape.interactions import SetCommand
+    def set(self, value: object) -> SetCmd:
+        """Return a SetCmd — write ``value`` to this slot."""
+        from nu.domains.shape.interactions import SetCmd
 
-        return SetCommand(self, value)
+        return SetCmd(self, value)
 
-    def erase(self) -> EraseCommand:
-        """Return an EraseCommand — remove this slot from the fabric."""
-        from nu.domains.shape.interactions import EraseCommand
+    def erase(self) -> Erase:
+        """Return an Erase — remove this slot from the fabric."""
+        from nu.domains.shape.interactions import Erase
 
-        return EraseCommand(self)
+        return Erase(self)
 
 
 class ReactiveItemForm(MutableItemForm):
     """Slot-level reactive surface — read + write + change observation.
 
     Provides (in addition to MutableItemForm):
-        on_change() → OnPrimitiveChangeQuery — subscribe to changes on this slot.
+        on_change() → OnPrimitiveChange — subscribe to changes on this slot.
     """
 
-    def on_change(self) -> OnPrimitiveChangeQuery:
-        """Return an ``OnPrimitiveChangeQuery`` -- subscribe to changes on this leaf.
+    def on_change(self) -> OnPrimitiveChange:
+        """Return an ``OnPrimitiveChange`` -- subscribe to changes on this leaf.
 
         A leaf yields a scalar, not a view, so the subscription happens on the
         *parent* view's child-change channel keyed by this leaf's address.
-        ``OnPrimitiveChangeQuery`` carries only the leaf ref (self); at runtime
+        ``OnPrimitiveChange`` carries only the leaf ref (self); at runtime
         it calls ``ref._afetch_parent`` and ``ref._aaddress`` to resolve the
         parent view and address, then returns
         ``parent.on_child_change(address)`` -- one uniform path across
         substrates, no per-substrate override needed.
         """
-        from nu.core.reactive import OnPrimitiveChangeQuery
+        from nu.core.reactive import OnPrimitiveChange
 
-        return OnPrimitiveChangeQuery(self)
+        return OnPrimitiveChange(self)

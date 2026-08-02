@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu.core import AddQuery, LiteralQuery
+from nu.core import Add, Literal
 from nu.engine.structure import Declared
 from nu.lang import Context, StreamQuery, compile
 from nu.lang.helpers import (
@@ -64,14 +64,14 @@ class _Src(StreamQuery):
 
 
 def test_eval_returns_value_and_context():
-    prog = compile(AddQuery(LiteralQuery(1), LiteralQuery(2)))
+    prog = compile(Add(Literal(1), Literal(2)))
     value, ctx = eval(prog)
     assert value == 3
     assert isinstance(ctx, Context)
 
 
 def test_eval_uses_provided_context():
-    prog = compile(LiteralQuery(9))
+    prog = compile(Literal(9))
     ctx_in = Context()
     _, ctx_out = eval(prog, ctx_in)
     assert ctx_out is ctx_in
@@ -90,20 +90,20 @@ def test_eval_refusal_points_to_aeval():
 
 
 async def test_aeval_returns_value_and_context():
-    prog = compile(AddQuery(LiteralQuery(4), LiteralQuery(5)))
+    prog = compile(Add(Literal(4), Literal(5)))
     value, ctx = await aeval(prog)
     assert value == 9
     assert isinstance(ctx, Context)
 
 
 async def test_aeval_runs_async_only_program():
-    prog = compile(AddQuery(_AsyncOnly(), LiteralQuery(0)))
+    prog = compile(Add(_AsyncOnly(), Literal(0)))
     with pytest.raises(Exception):  # noqa: B017
         await aeval(prog)
 
 
 def test_eval_in_loop_drives_value_program():
-    prog = compile(AddQuery(LiteralQuery(1), LiteralQuery(1)))
+    prog = compile(Add(Literal(1), Literal(1)))
     value, ctx = eval_in_loop(prog)
     assert value == 2
     assert isinstance(ctx, Context)

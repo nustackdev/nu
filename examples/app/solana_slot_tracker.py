@@ -6,7 +6,7 @@ terminal.
 
 Uses:
   Solana(FabricRef) -> the JSON-RPC client as a Nu fabric; ``Solana.slot()``
-                       calls ``getSlot`` in-tree and yields a typed IntForm
+                       calls ``getSlot`` in-tree and yields a typed Int
   nu.virtuals        -> slot data (observable; ephemeral for this demo since
                         every run reseeds it)
   nu.flows           -> Sequential, ForRangeDo, Race, Delay
@@ -60,7 +60,7 @@ class Solana(nu.FabricRef):
 
     fabric = SolanaClient
 
-    slot = nu.method_query(nu.IntForm, "getSlot")
+    slot = nu.method_query(nu.Int, "getSlot")
 
 
 # ---- Shapes ----

@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 from _support.policy_atoms import FlakyAction, FlakyStream, RecordAction
 
-from nu.core import LiteralQuery
+from nu.core import Literal
 from nu.lang import Attr, Cardinality, Policy, Span, compile
 from nu.lang.helpers import acollect, arun, collect, run
 from nu.spans import Retry
@@ -23,7 +23,7 @@ from nu.spans import Retry
 def test_retry_is_a_policy_span() -> None:
     assert issubclass(Retry, Policy)
     assert issubclass(Retry, Span)
-    program = compile(Retry(LiteralQuery(5)))
+    program = compile(Retry(Literal(5)))
     assert program.attr(program.root, Attr.CHILD_CARDINALITY) is Cardinality.SCALAR
 
 
@@ -31,7 +31,7 @@ def test_retry_is_a_policy_span() -> None:
 
 
 def test_sync_success_first_try() -> None:
-    value, _ = run(Retry(LiteralQuery(5)))
+    value, _ = run(Retry(Literal(5)))
     assert value == 5
 
 

@@ -76,14 +76,14 @@ class React(Control):
         self._payload["has_body"] = body is not None
         self._payload["has_changed_key"] = changed_key is not None
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
             msg = "React requires an async runtime; use arun"
             raise RuntimeError(msg)
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         has_body = self._payload["has_body"]
         ck_idx = 2 if self._payload["has_changed_key"] else None
 
@@ -137,14 +137,14 @@ class ReactWhile(Control):
             super().__init__(change, condition, body)
         self._payload["has_changed_key"] = has_changed_key
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
             msg = "ReactWhile requires an async runtime; use arun"
             raise RuntimeError(msg)
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         has_ck = self._payload["has_changed_key"]
 
         async def athunk(rt: Runtime) -> None:
@@ -198,14 +198,14 @@ class ReactForever(Control):
             super().__init__(change, body)
         self._payload["has_changed_key"] = has_changed_key
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
             msg = "ReactForever requires an async runtime; use arun"
             raise RuntimeError(msg)
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         has_ck = self._payload["has_changed_key"]
 
         async def athunk(rt: Runtime) -> None:

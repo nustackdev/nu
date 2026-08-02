@@ -1,6 +1,6 @@
-"""Tests for the Context fabric: AttrRef read, SetCommand / DeleteCommand write.
+"""Tests for the Context fabric: AttrRef read, SetCmd / Delete write.
 
-AttrRef reads its slot in ``ctx.attrs``; SetCommand and DeleteCommand write it through the
+AttrRef reads its slot in ``ctx.attrs``; SetCmd and Delete write it through the
 Ref. Together they are the keystone state path: a value written under an address
 is read back under that address. The write goes through ``ref.write`` /
 ``ref.erase``, never by the Command touching ``ctx.attrs`` itself.
@@ -12,8 +12,8 @@ write, and delete all resolve the address through the runtime.
 
 from __future__ import annotations
 
-from nu.context import AttrExistsQuery, AttrRef, DeleteCommand, SetCommand
-from nu.core import AddQuery, LiteralQuery
+from nu.context import AttrExists, AttrRef, Delete, SetCmd
+from nu.core import Add, Literal
 from nu.lang import INVALID, Attr, Context, Effect, compile
 from nu.lang.helpers import arun, run
 
@@ -24,50 +24,50 @@ from nu.lang.helpers import arun, run
 def test_attrref_reads_a_bound_slot():
     ctx = Context()
     ctx.attrs["x"] = 7
-    value, _ = run(AddQuery(AttrRef("x"), LiteralQuery(1)), ctx)
+    value, _ = run(Add(AttrRef("x"), Literal(1)), ctx)
     assert value == 8
 
 
 def test_attrref_on_an_unbound_address_is_empty_and_propagates():
-    value, _ = run(AddQuery(AttrRef("missing"), LiteralQuery(1)))
+    value, _ = run(Add(AttrRef("missing"), Literal(1)))
     assert value is INVALID
 
 
-# --- SetCommand -----------------------------------------------------------------
+# --- SetCmd -----------------------------------------------------------------
 
 
 def test_set_writes_through_the_ref():
     ctx = Context()
-    _, ctx = run(SetCommand(AttrRef("total"), LiteralQuery(5)), ctx)
+    _, ctx = run(SetCmd(AttrRef("total"), Literal(5)), ctx)
     assert ctx.attrs["total"] == 5
 
 
 def test_set_reads_then_writes_the_same_slot():
     ctx = Context()
     ctx.attrs["total"] = 10
-    run(SetCommand(AttrRef("total"), AddQuery(AttrRef("total"), LiteralQuery(1))), ctx)
+    run(SetCmd(AttrRef("total"), Add(AttrRef("total"), Literal(1))), ctx)
     assert ctx.attrs["total"] == 11
 
 
 def test_set_does_not_store_a_sentinel():
     ctx = Context()
-    run(SetCommand(AttrRef("y"), AddQuery(AttrRef("missing"), LiteralQuery(1))), ctx)
+    run(SetCmd(AttrRef("y"), Add(AttrRef("missing"), Literal(1))), ctx)
     assert "y" not in ctx.attrs
 
 
-# --- DeleteCommand --------------------------------------------------------------
+# --- Delete --------------------------------------------------------------
 
 
 def test_delete_removes_a_bound_slot():
     ctx = Context()
     ctx.attrs["k"] = "v"
-    run(DeleteCommand(AttrRef("k")), ctx)
+    run(Delete(AttrRef("k")), ctx)
     assert "k" not in ctx.attrs
 
 
 def test_delete_of_an_unbound_address_is_a_noop():
     ctx = Context()
-    run(DeleteCommand(AttrRef("absent")), ctx)
+    run(Delete(AttrRef("absent")), ctx)
     assert "absent" not in ctx.attrs
 
 
@@ -79,14 +79,14 @@ def test_attrref_reads_a_computed_address_slot():
     ctx.attrs["key"] = "total"
     ctx.attrs["total"] = 5
     # AttrRef(AttrRef("key")) reads ctx.attrs[ctx.attrs["key"]] == ctx.attrs["total"].
-    value, _ = run(AddQuery(AttrRef(AttrRef("key")), LiteralQuery(1)), ctx)
+    value, _ = run(Add(AttrRef(AttrRef("key")), Literal(1)), ctx)
     assert value == 6
 
 
 def test_set_writes_through_a_computed_address():
     ctx = Context()
     ctx.attrs["key"] = "total"
-    _, ctx = run(SetCommand(AttrRef(AttrRef("key")), LiteralQuery(9)), ctx)
+    _, ctx = run(SetCmd(AttrRef(AttrRef("key")), Literal(9)), ctx)
     assert ctx.attrs["total"] == 9
 
 
@@ -94,29 +94,29 @@ def test_delete_removes_a_computed_address_slot():
     ctx = Context()
     ctx.attrs["key"] = "total"
     ctx.attrs["total"] = 5
-    run(DeleteCommand(AttrRef(AttrRef("key"))), ctx)
+    run(Delete(AttrRef(AttrRef("key"))), ctx)
     assert "total" not in ctx.attrs
 
 
 async def test_computed_address_resolves_on_the_async_path():
     ctx = Context()
     ctx.attrs["key"] = "total"
-    _, ctx = await arun(SetCommand(AttrRef(AttrRef("key")), LiteralQuery(4)), ctx)
+    _, ctx = await arun(SetCmd(AttrRef(AttrRef("key")), Literal(4)), ctx)
     assert ctx.attrs["total"] == 4
 
 
-# --- AttrExistsQuery ----------------------------------------------------------
+# --- AttrExists ----------------------------------------------------------
 
 
 def test_attr_exists_is_true_for_a_bound_address():
     ctx = Context()
     ctx.attrs["total"] = 0
-    value, _ = run(AttrExistsQuery(AttrRef("total")), ctx)
+    value, _ = run(AttrExists(AttrRef("total")), ctx)
     assert value is True
 
 
 def test_attr_exists_is_false_for_an_unbound_address():
-    value, _ = run(AttrExistsQuery(AttrRef("missing")))
+    value, _ = run(AttrExists(AttrRef("missing")))
     assert value is False
 
 
@@ -132,7 +132,7 @@ def test_attr_exists_distinguishes_a_bound_empty_from_missing():
 
 
 def test_attr_exists_reads_its_ref_fabric():
-    program = compile(AttrExistsQuery(AttrRef("total")))
+    program = compile(AttrExists(AttrRef("total")))
     assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
         {(AttrRef, Effect.READ)}
     )

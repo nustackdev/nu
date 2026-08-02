@@ -4,11 +4,11 @@ Maps Python's comparison operators onto Nu ScalarQueries yielding a bool. Pure
 compute over their operands; no Context effect of their own.
 
 Operators to cover (Python -> Nu):
-- ``==`` -> ``EqQuery``, ``!=`` -> ``NeQuery``
-- ``<`` -> ``LtQuery``, ``>`` -> ``GtQuery``, ``<=`` -> ``LeQuery``, ``>=`` -> ``GeQuery``
-- ``is`` / ``is not`` -> ``IsQuery`` (identity)
+- ``==`` -> ``Eq``, ``!=`` -> ``Ne``
+- ``<`` -> ``Lt``, ``>`` -> ``Gt``, ``<=`` -> ``Le``, ``>=`` -> ``Ge``
+- ``is`` / ``is not`` -> ``Is`` (identity)
 
-Sorts: all ScalarQuery (Q). ``EqQuery`` / ``NeQuery`` / ``IsQuery`` are commutative; the
+Sorts: all ScalarQuery (Q). ``Eq`` / ``Ne`` / ``Is`` are commutative; the
 orderings are not. Membership (``in``) lives in ``access`` as ``Contains``.
 
 Each atom is binary and defines ``compile`` (sync hot path) and ``acompile``
@@ -33,15 +33,15 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-__all__ = ["EqQuery", "GeQuery", "GtQuery", "IsQuery", "LeQuery", "LtQuery", "NeQuery"]
+__all__ = ["Eq", "Ge", "Gt", "Is", "Le", "Lt", "Ne"]
 
 
-class EqQuery(ScalarQuery):
+class Eq(ScalarQuery):
     """Whether its two children are equal (``==``)."""
 
     _commutative = Declared(value=True, name="commutative")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -55,7 +55,7 @@ class EqQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -70,12 +70,12 @@ class EqQuery(ScalarQuery):
         return athunk
 
 
-class NeQuery(ScalarQuery):
+class Ne(ScalarQuery):
     """Whether its two children are unequal (``!=``)."""
 
     _commutative = Declared(value=True, name="commutative")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -89,7 +89,7 @@ class NeQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -104,10 +104,10 @@ class NeQuery(ScalarQuery):
         return athunk
 
 
-class LtQuery(ScalarQuery):
+class Lt(ScalarQuery):
     """Whether the first child is less than the second (``<``)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -121,7 +121,7 @@ class LtQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -136,10 +136,10 @@ class LtQuery(ScalarQuery):
         return athunk
 
 
-class GtQuery(ScalarQuery):
+class Gt(ScalarQuery):
     """Whether the first child is greater than the second (``>``)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -153,7 +153,7 @@ class GtQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -168,10 +168,10 @@ class GtQuery(ScalarQuery):
         return athunk
 
 
-class LeQuery(ScalarQuery):
+class Le(ScalarQuery):
     """Whether the first child is less than or equal to the second (``<=``)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -185,7 +185,7 @@ class LeQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -200,10 +200,10 @@ class LeQuery(ScalarQuery):
         return athunk
 
 
-class GeQuery(ScalarQuery):
+class Ge(ScalarQuery):
     """Whether the first child is greater than or equal to the second (``>=``)."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -217,7 +217,7 @@ class GeQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:
@@ -232,12 +232,12 @@ class GeQuery(ScalarQuery):
         return athunk
 
 
-class IsQuery(ScalarQuery):
+class Is(ScalarQuery):
     """Whether its two children are the same object (``is``)."""
 
     _commutative = Declared(value=True, name="commutative")
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         def thunk(rt: Runtime) -> object:
@@ -251,7 +251,7 @@ class IsQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
 
         async def athunk(rt: Runtime) -> object:

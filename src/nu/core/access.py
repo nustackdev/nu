@@ -39,23 +39,23 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 __all__ = [
-    "ContainsQuery",
-    "DelAttrCommand",
-    "DelItemCommand",
-    "GetAttrQuery",
-    "GetItemQuery",
-    "HasAttrQuery",
-    "LenQuery",
-    "SetAttrCommand",
-    "SetItemCommand",
-    "SliceQuery",
+    "Contains",
+    "DelAttr",
+    "DelItem",
+    "GetAttr",
+    "GetItem",
+    "HasAttr",
+    "Len",
+    "SetAttr",
+    "SetItem",
+    "Slice",
 ]
 
 
 # --- reads (ScalarQuery, evaluable) --------------------------------------
 
 
-class GetItemQuery(ScalarQuery):
+class GetItem(ScalarQuery):
     """Subscript access: ``x[k]`` for child 0 indexed by child 1."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -87,7 +87,7 @@ class GetItemQuery(ScalarQuery):
         return athunk
 
 
-class LenQuery(ScalarQuery):
+class Len(ScalarQuery):
     """Length: ``len(x)`` of its one child."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -113,7 +113,7 @@ class LenQuery(ScalarQuery):
         return athunk
 
 
-class ContainsQuery(ScalarQuery):
+class Contains(ScalarQuery):
     """Containment: ``item in container`` for child 1 in child 0."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -145,7 +145,7 @@ class ContainsQuery(ScalarQuery):
         return athunk
 
 
-class SliceQuery(ScalarQuery):
+class Slice(ScalarQuery):
     """The ``slice(...)`` builtin: builds a slice object from its children.
 
     Children are ``start, stop, step`` (mirroring ``slice(start, stop, step)``).
@@ -187,7 +187,7 @@ class SliceQuery(ScalarQuery):
         return athunk
 
 
-class GetAttrQuery(ScalarQuery):
+class GetAttr(ScalarQuery):
     """Attribute read: ``getattr(obj, name[, default])``.
 
     Child 0 is the object, child 1 the attribute name. An optional child 2
@@ -238,7 +238,7 @@ class GetAttrQuery(ScalarQuery):
         return athunk
 
 
-class HasAttrQuery(ScalarQuery):
+class HasAttr(ScalarQuery):
     """Attribute presence: ``hasattr(obj, name)`` for child 0 and child 1."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -273,7 +273,7 @@ class HasAttrQuery(ScalarQuery):
 # --- writes (ScalarQuery, local Python mutation) -------------------------
 
 
-class SetItemCommand(Command):
+class SetItem(Command):
     """Subscript write: ``x[k] = v`` for child 0 keyed by child 1.
 
     Slots: 0 container, 1 key, 2 value. Mutates the container in place; returns
@@ -317,7 +317,7 @@ class SetItemCommand(Command):
         return athunk
 
 
-class DelItemCommand(Command):
+class DelItem(Command):
     """Subscript delete: ``del x[k]`` for child 0 keyed by child 1.
 
     Slots: 0 container, 1 key. Mutates the container in place; returns nothing.
@@ -354,7 +354,7 @@ class DelItemCommand(Command):
         return athunk
 
 
-class SetAttrCommand(Command):
+class SetAttr(Command):
     """Attribute write: ``setattr(obj, name, value)``.
 
     Slots: 0 object, 1 name, 2 value. Mutates the object in place; returns
@@ -398,7 +398,7 @@ class SetAttrCommand(Command):
         return athunk
 
 
-class DelAttrCommand(Command):
+class DelAttr(Command):
     """Attribute delete: ``delattr(obj, name)``.
 
     Slots: 0 object, 1 name. Mutates the object in place; returns nothing.

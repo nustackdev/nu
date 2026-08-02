@@ -1,13 +1,13 @@
 """Virtuals kh57 interactions — range reservoir sampling atoms.
 
-Kh57SampleQuery: scalar query, yields a list of ``(int_key, value)`` samples
+Kh57Sample: scalar query, yields a list of ``(int_key, value)`` samples
 from a Kh57View's sub-range via ``kh57.sample`` (range reservoir sampling).
 
-Kh57RangeQuery: stream query, yields ``(int_key, value)`` pairs from a
+Kh57Range: stream query, yields ``(int_key, value)`` pairs from a
 Kh57View's sub-range in original int-key order.
 
 Both hold the container view Ref at ``children[0]``; parameters (n, begin,
-end) live at slots 1..3 and are auto-wrapped as LiteralQuery when passed as
+end) live at slots 1..3 and are auto-wrapped as Literal when passed as
 raw values. Both are deterministic — same view state + same seeded rng
 gives the same result.
 """
@@ -29,8 +29,8 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Kh57RangeQuery",
-    "Kh57SampleQuery",
+    "Kh57Range",
+    "Kh57Sample",
 ]
 
 
@@ -38,7 +38,7 @@ def _child_nid(rt: Runtime, nid: int, slot: int) -> int:
     return rt.program.children[nid][slot]
 
 
-class Kh57SampleQuery(ScalarQuery):
+class Kh57Sample(ScalarQuery):
     """Range reservoir sample from a Kh57View.
 
     Yields a list of ``(int_key, value)`` pairs from the sub-range
@@ -67,7 +67,7 @@ class Kh57SampleQuery(ScalarQuery):
         # it on the first inline_refs / auto_flow_atomic pass.
         self._payload["rng"] = rng
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         _ref_thunk, n_thunk, begin_thunk, end_thunk = children
         rng = self._payload.get("rng")
@@ -84,7 +84,7 @@ class Kh57SampleQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         _ref_thunk, n_thunk, begin_thunk, end_thunk = children
         rng = self._payload.get("rng")
@@ -102,7 +102,7 @@ class Kh57SampleQuery(ScalarQuery):
         return athunk
 
 
-class Kh57RangeQuery(ScalarQuery):
+class Kh57Range(ScalarQuery):
     """Ordered materialization of a Kh57View sub-range.
 
     Yields a list of ``(int_key, value)`` pairs with ``begin <= int_key < end``,
@@ -116,7 +116,7 @@ class Kh57RangeQuery(ScalarQuery):
         2: end — exclusive upper bound
     """
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         _ref_thunk, begin_thunk, end_thunk = children
 
@@ -131,7 +131,7 @@ class Kh57RangeQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         _ref_thunk, begin_thunk, end_thunk = children
 

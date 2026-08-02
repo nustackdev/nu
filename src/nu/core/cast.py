@@ -8,17 +8,17 @@ The split follows one rule - what the constructor consumes:
 
 - scalar casts take a scalar operand and compute a scalar, so they are pure
   ScalarQueries with ``compile`` / ``acompile`` thunks (sentinel-aware, like
-  ``arithmetic``): ``int`` -> ``IntQuery``, ``float`` -> ``FloatQuery``,
-  ``complex`` -> ``ComplexQuery``, ``str`` -> ``StrQuery``, ``bytes`` -> ``BytesQuery``,
-  ``bytearray`` -> ``ByteArrayQuery``. ``IntQuery``, ``BytesQuery`` and ``ByteArrayQuery`` take an
+  ``arithmetic``): ``int`` -> ``ToInt``, ``float`` -> ``ToFloat``,
+  ``complex`` -> ``ToComplex``, ``str`` -> ``ToStr``, ``bytes`` -> ``ToBytes``,
+  ``bytearray`` -> ``ToByteArray``. ``ToInt``, ``ToBytes`` and ``ToByteArray`` take an
   optional second operand (base / encoding) where Python does, branched on
   child count like ``arithmetic.Round``.
 - collection constructors consume an iterable child and fold it to one
   container (Scalar over Stream, a Reduction in spirit), so they need the
   stream/fabric runtime that is not wired yet. They are declared
   structurally - ScalarQuery subclasses with no ``compile`` - and
-  evaluate once the fabric lands: ``list`` -> ``ListQuery``, ``tuple`` -> ``TupleQuery``,
-  ``set`` -> ``SetQuery``, ``frozenset`` -> ``FrozenSetQuery``, ``dict`` -> ``DictQuery``.
+  evaluate once the fabric lands: ``list`` -> ``ToList``, ``tuple`` -> ``ToTuple``,
+  ``set`` -> ``ToSet``, ``frozenset`` -> ``ToFrozenSet``, ``dict`` -> ``ToDict``.
 
 ``Bool`` truthiness lives in ``logical``; it is intentionally not defined here.
 """
@@ -37,27 +37,27 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 __all__ = [
-    "ByteArrayQuery",
-    "BytesQuery",
-    "ComplexQuery",
-    "DictQuery",
-    "FloatQuery",
-    "FrozenSetQuery",
-    "IntQuery",
-    "ListQuery",
-    "SetQuery",
-    "StrQuery",
-    "TupleQuery",
+    "ToByteArray",
+    "ToBytes",
+    "ToComplex",
+    "ToDict",
+    "ToFloat",
+    "ToFrozenSet",
+    "ToInt",
+    "ToList",
+    "ToSet",
+    "ToStr",
+    "ToTuple",
 ]
 
 
 # --- scalar casts: evaluable ScalarQueries -------------------------------
 
 
-class IntQuery(ScalarQuery):
+class ToInt(ScalarQuery):
     """The operand cast to ``int``; with a second child, parsed in that base."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
             (only,) = children
 
@@ -82,7 +82,7 @@ class IntQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
             (only,) = children
 
@@ -108,10 +108,10 @@ class IntQuery(ScalarQuery):
         return athunk
 
 
-class FloatQuery(ScalarQuery):
+class ToFloat(ScalarQuery):
     """The operand cast to ``float``."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -122,7 +122,7 @@ class FloatQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -134,10 +134,10 @@ class FloatQuery(ScalarQuery):
         return athunk
 
 
-class ComplexQuery(ScalarQuery):
+class ToComplex(ScalarQuery):
     """The operand cast to ``complex``; with a second child, the imaginary part."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
             (only,) = children
 
@@ -162,7 +162,7 @@ class ComplexQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
             (only,) = children
 
@@ -188,10 +188,10 @@ class ComplexQuery(ScalarQuery):
         return athunk
 
 
-class StrQuery(ScalarQuery):
+class ToStr(ScalarQuery):
     """The operand cast to ``str``."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -202,7 +202,7 @@ class StrQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -214,10 +214,10 @@ class StrQuery(ScalarQuery):
         return athunk
 
 
-class BytesQuery(ScalarQuery):
+class ToBytes(ScalarQuery):
     """The operand cast to ``bytes``; with a second child, encoded in it."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
             (only,) = children
 
@@ -242,7 +242,7 @@ class BytesQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
             (only,) = children
 
@@ -268,10 +268,10 @@ class BytesQuery(ScalarQuery):
         return athunk
 
 
-class ByteArrayQuery(ScalarQuery):
+class ToByteArray(ScalarQuery):
     """The operand cast to ``bytearray``; with a second child, encoded in it."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
             (only,) = children
 
@@ -296,7 +296,7 @@ class ByteArrayQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
             (only,) = children
 
@@ -330,10 +330,10 @@ class ByteArrayQuery(ScalarQuery):
 # scalar/stream law is satisfied.
 
 
-class ListQuery(ScalarQuery):
+class ToList(ScalarQuery):
     """The iterable child collected into a ``list``."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -344,7 +344,7 @@ class ListQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -356,10 +356,10 @@ class ListQuery(ScalarQuery):
         return athunk
 
 
-class TupleQuery(ScalarQuery):
+class ToTuple(ScalarQuery):
     """The iterable child collected into a ``tuple``."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -370,7 +370,7 @@ class TupleQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -382,10 +382,10 @@ class TupleQuery(ScalarQuery):
         return athunk
 
 
-class SetQuery(ScalarQuery):
+class ToSet(ScalarQuery):
     """The iterable child collected into a ``set``."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -396,7 +396,7 @@ class SetQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -408,10 +408,10 @@ class SetQuery(ScalarQuery):
         return athunk
 
 
-class FrozenSetQuery(ScalarQuery):
+class ToFrozenSet(ScalarQuery):
     """The iterable child collected into a ``frozenset``."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -422,7 +422,7 @@ class FrozenSetQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
@@ -434,10 +434,10 @@ class FrozenSetQuery(ScalarQuery):
         return athunk
 
 
-class DictQuery(ScalarQuery):
+class ToDict(ScalarQuery):
     """The key/value pairs of the iterable child collected into a ``dict``."""
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         def thunk(rt: Runtime) -> object:
@@ -448,7 +448,7 @@ class DictQuery(ScalarQuery):
 
         return thunk
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:  # noqa: D102
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:

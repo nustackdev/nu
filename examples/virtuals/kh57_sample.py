@@ -19,7 +19,7 @@ import random
 from nu import Context, run
 from nu.domains.shape import Shape
 from nu.virtuals import IntRef, Kh57Ref
-from nu.virtuals.interactions.kh57 import Kh57SampleQuery
+from nu.virtuals.interactions.kh57 import Kh57Sample
 from nu.virtuals.presets import memory_storage
 from virtuals import Navigator
 from virtuals.tkv.storage import TransactionProtocol
@@ -56,7 +56,7 @@ def main() -> None:
             print(f"len = {run(Ledger.entries.len(), ctx)[0]}")
 
             # Sample 500 uniformly from [10_000, 20_000).
-            sample_q = Kh57SampleQuery(
+            sample_q = Kh57Sample(
                 Ledger.entries,
                 500,
                 10_000,

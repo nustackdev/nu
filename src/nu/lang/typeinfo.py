@@ -30,7 +30,7 @@ The primitive is:
 - ``TypeInfo.to_form(tier=None)`` dispatches ``py_type`` to a concrete
   ``Form`` class - meaningful at primitive-leaf yield positions. Ref-typed
   or Shape-typed levels are handled by the wrapper directly (it descends
-  into the ref/shape instead of yielding a value-Form). ``AnyForm`` is the
+  into the ref/shape instead of yielding a value-Form). ``Any`` is the
   fallback.
 
 Phase 1 of task-119 - foundation only, no consumers yet.
@@ -81,9 +81,7 @@ class TypeInfo:
         return cls(Any)
 
     @classmethod
-    def from_annotation(
-        cls, ann: object, hints: dict[str, object] | None = None
-    ) -> TypeInfo:
+    def from_annotation(cls, ann: object, hints: dict[str, object] | None = None) -> TypeInfo:
         """Normalize an annotation into a recursive ``TypeInfo``."""
         return _normalize(ann, hints or {})
 
@@ -117,7 +115,7 @@ class TypeInfo:
         return self.py_type is Any
 
     def to_form(self, tier: object | None = None) -> type[Form]:
-        """Dispatch ``py_type`` to its ``Form`` class (``AnyForm`` fallback).
+        """Dispatch ``py_type`` to its ``Form`` class (``Any`` fallback).
 
         Meaningful only at primitive-leaf positions (inside
         ``Primitive*Ref`` type args). Ref-typed or Shape-typed levels are
@@ -158,9 +156,7 @@ def _normalize(ann: object, hints: dict[str, object]) -> TypeInfo:
 
     if origin is dict:
         k, v = (*args, Any, Any)[:2]
-        return TypeInfo(
-            dict, key=_normalize(k, hints), elem=_normalize(v, hints)
-        )
+        return TypeInfo(dict, key=_normalize(k, hints), elem=_normalize(v, hints))
     if origin is list:
         elem = args[0] if args else Any
         return TypeInfo(list, elem=_normalize(elem, hints))
@@ -191,9 +187,7 @@ def _normalize(ann: object, hints: dict[str, object]) -> TypeInfo:
     return TypeInfo(Any)
 
 
-def _parametric_ref(
-    ref_cls: type, args: tuple, hints: dict[str, object]
-) -> TypeInfo:
+def _parametric_ref(ref_cls: type, args: tuple, hints: dict[str, object]) -> TypeInfo:
     """Build a ``TypeInfo`` for a parametric Ref like ``PrimitiveListRef[str]``.
 
     Arity-based placement: two args -> ``(key, elem)``; one arg -> ``elem``.
@@ -212,36 +206,38 @@ def _parametric_ref(
 
 def _form_for(py_type: object) -> type[Form]:
     from nu.forms import (
-        AnyForm,
-        BoolForm,
-        BytesForm,
-        DictForm,
-        FloatForm,
-        FrozenSetForm,
-        IntForm,
-        ListForm,
-        SetForm,
-        StrForm,
-        TupleForm,
+        Any as AnyForm,
+    )
+    from nu.forms import (
+        Bool,
+        Bytes,
+        Dict,
+        Float,
+        FrozenSet,
+        Int,
+        List,
+        Set,
+        Str,
+        Tuple,
     )
 
     mapping: dict[Any, type[Form]] = {
-        bool: BoolForm,
-        int: IntForm,
-        float: FloatForm,
-        str: StrForm,
-        bytes: BytesForm,
-        list: ListForm,
-        dict: DictForm,
-        set: SetForm,
-        frozenset: FrozenSetForm,
-        tuple: TupleForm,
+        bool: Bool,
+        int: Int,
+        float: Float,
+        str: Str,
+        bytes: Bytes,
+        list: List,
+        dict: Dict,
+        set: Set,
+        frozenset: FrozenSet,
+        tuple: Tuple,
     }
     return mapping.get(py_type, AnyForm)  # type: ignore[arg-type]
 
 
 def value_type_for(python_type: object) -> type[Form]:
-    """Map a Python primitive type to its ``Form`` class (``AnyForm`` fallback).
+    """Map a Python primitive type to its ``Form`` class (``Any`` fallback).
 
     Convenience wrapper over ``_form_for``: the sole dispatch source of truth
     consolidating the earlier duplicated ``nu/mem/refs/_typemap.py`` and

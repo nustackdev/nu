@@ -29,12 +29,6 @@ from __future__ import annotations
 import threading
 from typing import TYPE_CHECKING
 
-from invisibles.netkit import SyncConnection, SyncServer
-from invisibles.netkit.executors import SimpleExecutor
-from invisibles.netkit.executors.threaded import ThreadedExecutor
-from invisibles.netkit.framing import LengthPrefixedFraming
-from invisibles.netkit.transports import TCPListener, UnixSocketListener
-
 from invisibles import (
     AsyncDispatcher,
     InlineDispatcher,
@@ -44,6 +38,11 @@ from invisibles import (
     ThreadedDispatcher,
 )
 from invisibles.config import AttributeAccessConfig, ConnectionConfig
+from invisibles.netkit import SyncConnection, SyncServer
+from invisibles.netkit.executors import SimpleExecutor
+from invisibles.netkit.executors.threaded import ThreadedExecutor
+from invisibles.netkit.framing import LengthPrefixedFraming
+from invisibles.netkit.transports import TCPListener, UnixSocketListener
 
 
 if TYPE_CHECKING:
@@ -135,10 +134,12 @@ class InvisiblesServer:
         self._server = server
 
         if self.transport == "unix":
+
             def target() -> None:
                 server.start(self.address)
         else:
             host, port = self._parse_tcp_address(self.address)
+
             def target() -> None:
                 server.start(host, port)
 

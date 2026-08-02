@@ -4,7 +4,7 @@
 from :func:`getLogger`, plus module-level shortcuts (``debug`` / ``info`` /
 ``warning`` / ``error`` / ``critical``) that fire against the root logger.
 The Nu surface mirrors that shape 1-1 -- call sites read identically to
-Python -- but every call returns a Nu ``LogCommand`` tree instead of firing
+Python -- but every call returns a Nu ``Log`` tree instead of firing
 immediately. Compose it into any bigger program::
 
     from nu.std import logging
@@ -25,7 +25,7 @@ or attached handlers exactly the way any Python program does. That gives
 free interop with the whole Python ecosystem: journald, syslog, structlog,
 sentry, rotating files, ...
 
-Two layers behind the public surface: ``interactions`` (the :class:`LogCommand`
+Two layers behind the public surface: ``interactions`` (the :class:`Log`
 atom and its :class:`LoggingRef` fabric) and ``functions`` (the :class:`Logger`
 class and the module-level shortcuts). Import the way you would the stdlib::
 
@@ -54,7 +54,7 @@ from nu.std.logging.functions import (
     warn,
     warning,
 )
-from nu.std.logging.interactions import LOGGING, LogCommand, LoggingRef
+from nu.std.logging.interactions import LOGGING, Log, LoggingRef
 
 
 __all__ = [
@@ -67,7 +67,7 @@ __all__ = [
     "NOTSET",
     "WARN",
     "WARNING",
-    "LogCommand",
+    "Log",
     "Logger",
     "LoggingRef",
     "critical",

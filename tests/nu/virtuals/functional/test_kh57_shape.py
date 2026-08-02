@@ -107,10 +107,10 @@ def test_sample_respects_range(ctx) -> None:
 
 def test_sample_deterministic_with_seeded_rng(ctx) -> None:
     _load_series(ctx, range(1_000))
-    from nu.virtuals.interactions.kh57 import Kh57SampleQuery
+    from nu.virtuals.interactions.kh57 import Kh57Sample
 
-    q1 = Kh57SampleQuery(Series.points, 25, 0, 1_000, rng=random.Random(7))
-    q2 = Kh57SampleQuery(Series.points, 25, 0, 1_000, rng=random.Random(7))
+    q1 = Kh57Sample(Series.points, 25, 0, 1_000, rng=random.Random(7))
+    q2 = Kh57Sample(Series.points, 25, 0, 1_000, rng=random.Random(7))
     s1 = run(q1, ctx)[0]
     s2 = run(q2, ctx)[0]
     assert [k for k, _ in s1] == [k for k, _ in s2]

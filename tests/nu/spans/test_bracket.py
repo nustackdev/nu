@@ -19,16 +19,16 @@ from contextlib import contextmanager
 import pytest
 from _support.async_atoms import BoomAction
 
-from nu.context import AttrRef, SetCommand
-from nu.core import LiteralQuery
-from nu.core.iteration import IterQuery
+from nu.context import AttrRef, SetCmd
+from nu.core import Literal
+from nu.core.iteration import Iter
 from nu.lang import Attr, Bracket, Cardinality, Span, compile
 from nu.lang.helpers import arun, collect, run
 from nu.spans import Snapshot, Transaction
 
 
-def _set(name: str, value: object) -> SetCommand:
-    return SetCommand(AttrRef(name), LiteralQuery(value))
+def _set(name: str, value: object) -> SetCmd:
+    return SetCmd(AttrRef(name), Literal(value))
 
 
 # --- basis ----------------------------------------------------------------
@@ -41,11 +41,11 @@ def test_snapshot_and_transaction_are_bracket_spans() -> None:
 
 
 def test_bracket_is_transparent_and_forwards_body_cardinality() -> None:
-    program = compile(Snapshot(LiteralQuery(5)))
+    program = compile(Snapshot(Literal(5)))
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.TRANSPARENT
     assert program.attr(program.root, Attr.CHILD_CARDINALITY) is Cardinality.SCALAR
 
-    stream = compile(Transaction(IterQuery(LiteralQuery([1, 2]))))
+    stream = compile(Transaction(Iter(Literal([1, 2]))))
     assert stream.attr(stream.root, Attr.CHILD_CARDINALITY) is Cardinality.STREAM
 
 
@@ -53,7 +53,7 @@ def test_bracket_is_transparent_and_forwards_body_cardinality() -> None:
 
 
 def test_snapshot_passes_through_scalar() -> None:
-    value, _ = run(Snapshot(LiteralQuery(5)))
+    value, _ = run(Snapshot(Literal(5)))
     assert value == 5
 
 
@@ -63,7 +63,7 @@ def test_transaction_passes_through_void() -> None:
 
 
 def test_bracket_passes_through_stream() -> None:
-    items, _ = collect(compile(Snapshot(IterQuery(LiteralQuery([1, 2, 3])))))
+    items, _ = collect(compile(Snapshot(Iter(Literal([1, 2, 3])))))
     assert items == [1, 2, 3]
 
 
@@ -85,7 +85,7 @@ def test_transaction_commits_on_success() -> None:
             else:
                 events.append("commit")
 
-    value, _ = run(Rec(LiteralQuery(7)))
+    value, _ = run(Rec(Literal(7)))
     assert value == 7
     assert events == ["open", "commit"]
 
@@ -124,7 +124,7 @@ def test_per_run_handle_lives_in_the_scope_frame_not_self() -> None:
             finally:
                 closed.append(handle)
 
-    run(Rec(LiteralQuery(1)))
+    run(Rec(Literal(1)))
     assert len(opened) == 1
     assert closed == opened
 
@@ -157,7 +157,7 @@ def test_stream_boundary_spans_the_whole_drain() -> None:
             else:
                 events.append("commit")
 
-    items, _ = collect(compile(Rec(IterQuery(LiteralQuery([1, 2, 3])))))
+    items, _ = collect(compile(Rec(Iter(Literal([1, 2, 3])))))
     assert items == [1, 2, 3]
     assert events == ["open", "commit"]  # one boundary, committed after exhaustion
 
@@ -180,7 +180,7 @@ async def test_transaction_commits_on_success_async() -> None:
             else:
                 events.append("commit")
 
-    value, _ = await arun(Rec(LiteralQuery(7)))
+    value, _ = await arun(Rec(Literal(7)))
     assert value == 7
     assert events == ["open", "commit"]
 

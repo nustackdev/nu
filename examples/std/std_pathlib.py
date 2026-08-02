@@ -2,7 +2,7 @@
 
 Imported like the stdlib: ``from nu.std.pathlib import Path``. Backed by
 ``PurePath``, so only the pure (no filesystem I/O) operations are modeled.
-Property reads reuse core GetAttrQuery; method calls bind the unbound PurePath
+Property reads reuse core GetAttr; method calls bind the unbound PurePath
 methods; comparison reuses the core atoms. Each entry prints run result, term
 type, and the expression.
 """
@@ -15,11 +15,11 @@ from nu.std.pathlib import Path
 
 ctx = Context()
 
-# 1. Build a path from segments (PathOf), then read its name (GetAttrQuery).
+# 1. Build a path from segments (PathOf), then read its name (GetAttr).
 e1 = Path.of("usr", "local", "bin").name()
 print(run(e1, ctx)[0], type(e1), e1)
 
-# 2. Read the suffix property (GetAttrQuery).
+# 2. Read the suffix property (GetAttr).
 e2 = Path.of("archive.tar.gz").suffix()
 print(run(e2, ctx)[0], type(e2), e2)
 
@@ -31,7 +31,7 @@ print(run(e3, ctx)[0], type(e3), e3)
 e4 = (Path.of("etc") / "nginx" / "nginx.conf").as_posix()
 print(run(e4, ctx)[0], type(e4), e4)
 
-# 5. The parent directory (GetAttrQuery returning a path Form), then as_posix.
+# 5. The parent directory (GetAttr returning a path Form), then as_posix.
 e5 = Path.of("a", "b", "c").parent().as_posix()
 print(run(e5, ctx)[0], type(e5), e5)
 
@@ -39,6 +39,6 @@ print(run(e5, ctx)[0], type(e5), e5)
 e6 = Path.of("var", "log", "syslog").as_posix()
 print(run(e6, ctx)[0], type(e6), e6)
 
-# 7. Comparison via the < operator (core LtQuery).
+# 7. Comparison via the < operator (core Lt).
 e7 = Path.of("a") < Path.of("b")
 print(run(e7, ctx)[0], type(e7), e7)
