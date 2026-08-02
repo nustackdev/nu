@@ -9,14 +9,14 @@ import nu
 
 
 _GENRES = [
-    {"value": "action", "label": "action"},
-    {"value": "drama", "label": "drama"},
-    {"value": "scifi", "label": "sci-fi"},
-    {"value": "doc", "label": "documentary"},
-    {"value": "anim", "label": "animation"},
+    {"value": "action", "label": "Action"},
+    {"value": "drama", "label": "Drama"},
+    {"value": "scifi", "label": "Sci-fi"},
+    {"value": "doc", "label": "Documentary"},
+    {"value": "anim", "label": "Animation"},
 ]
 
-_GENRES_WITH_ANY = [{"value": "", "label": "any genre"}, *_GENRES]
+_GENRES_WITH_ANY = [{"value": "", "label": "Any genre"}, *_GENRES]
 
 
 # ---- UI ---------------------------------------------------------------------
@@ -27,7 +27,7 @@ class TitleField(nu.ui.Field):
 
 
 class TextAreaField(nu.ui.Field):
-    input = nu.ui.TextAreaRef.slot(placeholder="quick thoughts...", rows=2)
+    input = nu.ui.TextAreaRef.slot(placeholder="Quick thoughts...", rows=2)
 
 
 class YearField(nu.ui.Field):
@@ -57,21 +57,21 @@ class SwitchField(nu.ui.Field):
 
 
 class DetailsFieldset(nu.ui.Fieldset):
-    title = TitleField.slot(label="title", help="movie title", required=True)
-    year = YearField.slot(label="year")
-    genre = GenreField.slot(label="genre")
+    title = TitleField.slot(label="Title", help="Movie title", required=True)
+    year = YearField.slot(label="Year")
+    genre = GenreField.slot(label="Genre")
 
 
 class ScoreFieldset(nu.ui.Fieldset):
-    rating = RatingField.slot(label="rating", help="how much you liked it")
-    watched = SwitchField.slot(label="watched?", help="off means still on the pile")
-    notes = TextAreaField.slot(label="notes")
+    rating = RatingField.slot(label="Rating", help="How much you liked it")
+    watched = SwitchField.slot(label="Watched?", help="Off means still on the pile")
+    notes = TextAreaField.slot(label="Notes")
 
 
 class AddMovieForm(nu.ui.Form):
-    details = DetailsFieldset.slot(legend="movie", gap="md")
-    score = ScoreFieldset.slot(legend="your take", gap="md")
-    submit = nu.ui.ButtonRef.slot(label="log it", variant="primary")
+    details = DetailsFieldset.slot(legend="Movie", gap="md")
+    score = ScoreFieldset.slot(legend="Your take", gap="md")
+    submit = nu.ui.ButtonRef.slot(label="Log it", variant="primary")
     feedback = nu.ui.AlertRef.slot(variant="ok", dismissible=True)
 
 
@@ -88,11 +88,11 @@ class WatchedOnlyField(nu.ui.Field):
 
 
 class FilterRow(nu.ui.Row):
-    min_rating = MinRatingField.slot(label="min rating")
-    genre = FilterGenreField.slot(label="genre")
-    watched_only = WatchedOnlyField.slot(label="already watched")
-    apply = nu.ui.ButtonRef.slot(label="apply", variant="secondary")
-    clear = nu.ui.ButtonRef.slot(label="clear", variant="ghost")
+    min_rating = MinRatingField.slot(label="Min rating")
+    genre = FilterGenreField.slot(label="Genre")
+    watched_only = WatchedOnlyField.slot(label="Already watched")
+    apply = nu.ui.ButtonRef.slot(label="Apply", variant="secondary")
+    clear = nu.ui.ButtonRef.slot(label="Clear", variant="ghost")
 
 
 class FilterCard(nu.ui.Card):
@@ -100,11 +100,11 @@ class FilterCard(nu.ui.Card):
 
 
 class StatsRow(nu.ui.Row):
-    total = nu.ui.StatRef.slot(label="total")
-    watched = nu.ui.StatRef.slot(label="watched")
-    unseen = nu.ui.StatRef.slot(label="unseen")
+    total = nu.ui.StatRef.slot(label="Total")
+    watched = nu.ui.StatRef.slot(label="Watched")
+    unseen = nu.ui.StatRef.slot(label="Unseen")
     latest = nu.ui.TextRef.slot()
-    health = nu.ui.BadgeRef.slot(label="fresh", variant="ok")
+    health = nu.ui.BadgeRef.slot(label="Fresh", variant="ok")
 
 
 class StatsCard(nu.ui.Card):
@@ -121,7 +121,7 @@ class TableBody(nu.ui.Column):
     )
     empty = nu.ui.AlertRef.slot(
         variant="info",
-        body="no movies match",
+        body="No movies match",
         dismissible=False,
     )
 
@@ -134,22 +134,22 @@ class TableCard(nu.ui.Card):
 
 
 class Movies(nu.ui.Page):
-    heading = nu.ui.HeadingRef.slot(label="your movies")
+    heading = nu.ui.HeadingRef.slot(label="Your movies")
     intro = nu.ui.TextRef.slot(
-        value="log what you watch. new entries land at the top of the table.",
+        value="Log what you watch. New entries land at the top of the table.",
     )
 
-    stats = StatsCard.slot(title="your shelf")
-    form = AddMovieForm.slot(title="log a movie", gap=4, padding=4)
-    filters = FilterCard.slot(title="filter")
-    shelf = TableCard.slot(title="movies")
+    stats = StatsCard.slot(title="Your shelf")
+    form = AddMovieForm.slot(title="Log a movie", gap=4, padding=4)
+    filters = FilterCard.slot(title="Filter")
+    shelf = TableCard.slot(title="Movies")
 
 
 class DetailRow(nu.ui.Row):
-    year = nu.ui.StatRef.slot(label="year")
-    genre = nu.ui.StatRef.slot(label="genre")
-    rating = nu.ui.StatRef.slot(label="rating")
-    watched = nu.ui.BadgeRef.slot(label="watched", variant="ok")
+    year = nu.ui.StatRef.slot(label="Year")
+    genre = nu.ui.StatRef.slot(label="Genre")
+    rating = nu.ui.StatRef.slot(label="Rating")
+    watched = nu.ui.BadgeRef.slot(label="Watched", variant="ok")
 
 
 class MetaCard(nu.ui.Card):
@@ -161,14 +161,14 @@ class NotesCard(nu.ui.Card):
 
 
 class DetailActions(nu.ui.Row):
-    back = nu.ui.ButtonRef.slot(label="back", variant="ghost")
-    remove = nu.ui.ButtonRef.slot(label="delete", variant="danger")
+    back = nu.ui.ButtonRef.slot(label="Back", variant="ghost")
+    remove = nu.ui.ButtonRef.slot(label="Delete", variant="danger")
 
 
 class MovieDetail(nu.ui.Page):
     heading = nu.ui.HeadingRef.slot()
-    meta = MetaCard.slot(title="details")
-    notes = NotesCard.slot(title="notes")
+    meta = MetaCard.slot(title="Details")
+    notes = NotesCard.slot(title="Notes")
     actions = DetailActions.slot(gap=3, align="center")
 
 
@@ -323,8 +323,8 @@ on_add = nu.ReactForever(
         | Movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
         | Movies.stats.body.latest.set(State.latest_title)
         | Movies.form.feedback.set(
-            title="logged",
-            body="added " + nu.Str(AddMovieForm.details.title.input),
+            title="Logged",
+            body="Added " + nu.Str(AddMovieForm.details.title.input),
         )
     ),
 )
@@ -341,7 +341,7 @@ on_row_click = nu.ReactForever(
             | MovieDetail.meta.meta.genre.set_value(State.movies[State.selected].genre)
             | MovieDetail.meta.meta.rating.set_value(nu.str(State.movies[State.selected].rating))
             | MovieDetail.meta.meta.watched.set(
-                label=nu.If(State.movies[State.selected].watched, "watched", "unseen"),
+                label=nu.If(State.movies[State.selected].watched, "Watched", "Unseen"),
             )
             | MovieDetail.notes.body.set(State.movies[State.selected].notes)
         )
@@ -386,7 +386,7 @@ on_filter_clear = nu.ReactForever(
 
 
 ui = (
-    App.title.set("movies")
+    App.title.set("Movies")
     >> hydrate
     >> (on_add | on_row_click | on_delete | on_back | on_filter_apply | on_filter_clear)
 )
