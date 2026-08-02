@@ -84,6 +84,14 @@ from nu.core.cast import (
     ToSet,
     ToStr,
     ToTuple,
+    dict,
+    float,
+    frozenset,
+    int,
+    list,
+    set,
+    str,
+    tuple,
 )
 from nu.core.comparison import Eq, Ge, Gt, Is, Le, Lt, Ne
 from nu.core.conditional import If, Switch
@@ -91,7 +99,7 @@ from nu.core.dynamic import Compile, Eval, Exec, Globals, Locals
 from nu.core.io import Input, Print, input, print
 from nu.core.iteration import Enumerate, Iter, Next, Reversed, Zip
 from nu.core.literal import Literal
-from nu.core.logical import And, Not, Or, ToBool
+from nu.core.logical import And, Not, Or, ToBool, bool
 from nu.core.reactive import (
     OnChange,
     OnChildChange,
@@ -248,6 +256,15 @@ __all__ = [
     "Unique",
     "Vars",
     "Zip",
+    "bool",
+    "dict",
+    "float",
+    "frozenset",
     "input",
+    "int",
+    "list",
     "print",
+    "set",
+    "str",
+    "tuple",
 ]

@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING
 from nu.lang import TypedNu
 
 from .abc import MutableSetForm, SetLikeForm
-from .abc.set_interactions import FrozenSetCreate, SetCreate
+from .abc.set_interactions import FrozenSetCreate, FrozenSetOf, SetCreate, SetOf
 
 
 if TYPE_CHECKING:
-    from nu.lang import FrozenSetArg, Nu, SetArg
+    from nu.lang import Arg, FrozenSetArg, Nu, SetArg
 
     from ..primitives import Any, Bool
     from .list_ import List
@@ -33,6 +33,16 @@ class Set[T](
     def create(cls) -> Set[T]:
         """Yield a fresh empty set."""
         return cls(SetCreate())
+
+    @classmethod
+    def of(cls, *items: Arg) -> Set:
+        """Yield a set from positional item expressions.
+
+        ``Set.of(x, y, z)`` evaluates each argument in the current context
+        and folds the results into a fresh set. Sibling to ``List.of`` /
+        ``Tuple.of``. A sentinel item collapses the whole result to Invalid.
+        """
+        return cls(SetOf(*items))
 
     def _wrap_set_result(self, operand: Nu) -> Set[T]:
         """Wrap operand as Set."""
@@ -117,6 +127,16 @@ class FrozenSet[T](
     def create(cls) -> FrozenSet[T]:
         """Yield an empty frozenset."""
         return cls(FrozenSetCreate())
+
+    @classmethod
+    def of(cls, *items: Arg) -> FrozenSet:
+        """Yield a frozenset from positional item expressions.
+
+        ``FrozenSet.of(x, y, z)`` evaluates each argument in the current
+        context and folds the results into an immutable frozenset. Sibling
+        to ``Set.of``. A sentinel item collapses the whole result to Invalid.
+        """
+        return cls(FrozenSetOf(*items))
 
     def _wrap_set_result(self, operand: Nu) -> FrozenSet[T]:
         """Wrap operand as FrozenSet."""

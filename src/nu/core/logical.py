@@ -24,6 +24,7 @@ collapses the whole query to ``INVALID`` (per ``nu.lang.sentinels``).
 
 from __future__ import annotations
 
+import builtins
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-__all__ = ["And", "Not", "Or", "ToBool"]
+__all__ = ["And", "Not", "Or", "ToBool", "bool"]
 
 
 class And(ScalarQuery):
@@ -53,7 +54,7 @@ class And(ScalarQuery):
                 v = ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out and bool(v)
+                out = out and builtins.bool(v)
             return out
 
         return thunk
@@ -65,7 +66,7 @@ class And(ScalarQuery):
                 v = await ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out and bool(v)
+                out = out and builtins.bool(v)
             return out
 
         return athunk
@@ -85,7 +86,7 @@ class Or(ScalarQuery):
                 v = ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out or bool(v)
+                out = out or builtins.bool(v)
             return out
 
         return thunk
@@ -97,7 +98,7 @@ class Or(ScalarQuery):
                 v = await ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out or bool(v)
+                out = out or builtins.bool(v)
             return out
 
         return athunk
@@ -139,7 +140,7 @@ class ToBool(ScalarQuery):
             v = only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return bool(v)
+            return builtins.bool(v)
 
         return thunk
 
@@ -150,6 +151,16 @@ class ToBool(ScalarQuery):
             v = await only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return bool(v)
+            return builtins.bool(v)
 
         return athunk
+
+
+# --- wrappers: coerce + tag as a Form (the user-facing surface) ------------
+
+
+def bool(x: object) -> object:  # shadowing the builtin is intended
+    """Coerce ``x`` to a Nu ``Bool`` term. ``Bool(ToBool(x))`` in one call."""
+    from nu.forms.primitives import Bool
+
+    return Bool(ToBool(x))

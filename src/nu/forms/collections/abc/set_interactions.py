@@ -41,6 +41,7 @@ __all__ = [
     "DifferenceUpdate",
     "Discard",
     "FrozenSetCreate",
+    "FrozenSetOf",
     "Intersection",
     "IntersectionUpdate",
     "IsDisjoint",
@@ -53,6 +54,7 @@ __all__ = [
     "SetIOr",
     "SetISub",
     "SetIXor",
+    "SetOf",
     "SetOr",
     "SetPop",
     "SetSub",
@@ -73,6 +75,9 @@ __all__ = [
 SetCreate = ScalarQueryFactory("SetCreate", set)
 # Empty frozenset: deterministic and immutable (sharing one frozenset() is fine).
 FrozenSetCreate = ScalarQueryFactory("FrozenSetCreate", frozenset)
+# Set / FrozenSet from positional items: siblings to TupleOf / ListOf.
+SetOf = ScalarQueryFactory("SetOf", lambda *items: set(items))
+FrozenSetOf = ScalarQueryFactory("FrozenSetOf", lambda *items: frozenset(items))
 
 
 def _as_set(value: object) -> object:

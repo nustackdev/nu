@@ -36,6 +36,7 @@ __all__ = [
     "Insert",
     "Last",
     "ListCreate",
+    "ListOf",
     "Pop",
     "RemoveValue",
     "Reverse",
@@ -59,6 +60,9 @@ TupleCreate = ScalarQueryFactory("TupleCreate", tuple)
 # packs the values into a fresh tuple. Sibling to DictOf. A sentinel item
 # short-circuits the whole tuple to INVALID (propagate_sentinels default).
 TupleOf = ScalarQueryFactory("TupleOf", lambda *items: items)
+# List from positional items: sibling to TupleOf; each eval yields a fresh
+# mutable list.
+ListOf = ScalarQueryFactory("ListOf", lambda *items: list(items))
 
 
 # =============================================================================

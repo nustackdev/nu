@@ -159,12 +159,6 @@ class App(nu.ui.Index):
 
 
 # ---- Seed + helpers ---------------------------------------------------------
-#
-# PAIN: TableRef rows must be positional lists, but no List.of(a, b, c)
-# exists to build one from Nu expressions. Every consumer host-lifts the
-# same Python lambda -- see legolas/uis/shell.py:RowAsList.
-
-_RowAsList = nu.host(lambda *xs: list(xs), name="MovieRow")
 
 # Splice one item out of a list by index. Read through `.eager` first so the
 # list lands as plain dicts (not LazyDictView) and re-encodes on write-back.
@@ -226,7 +220,7 @@ def _row_from_form() -> nu.Nu:
 
 
 _r = nu.AnyAttrRef("r")
-_movie_cells = _RowAsList(
+_movie_cells = nu.List.of(
     _r["title"],
     _r["year"],
     _r["genre"],
@@ -260,15 +254,10 @@ init = nu.v.Transaction(
 )
 
 
-def _s(n: nu.Nu) -> nu.Nu:
-    """Format an int Ref as a display string for StatRef."""
-    return nu.Str(nu.ToStr(n))
-
-
 hydrate = nu.v.Snapshot(
-    Movies.stats.body.total.set_value(_s(State.total))
-    | Movies.stats.body.watched.set_value(_s(State.watched))
-    | Movies.stats.body.unseen.set_value(_s(State.total - State.watched))
+    Movies.stats.body.total.set_value(nu.str(State.total))
+    | Movies.stats.body.watched.set_value(nu.str(State.watched))
+    | Movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
     | Movies.stats.body.latest.set(State.latest_title)
     | Movies.shelf.body.table.set(_rows_form())
 )
@@ -286,9 +275,9 @@ on_add = nu.ReactForever(
     )
     >> nu.v.Snapshot(
         Movies.shelf.body.table.set(_rows_form())
-        | Movies.stats.body.total.set_value(_s(State.total))
-        | Movies.stats.body.watched.set_value(_s(State.watched))
-        | Movies.stats.body.unseen.set_value(_s(State.total - State.watched))
+        | Movies.stats.body.total.set_value(nu.str(State.total))
+        | Movies.stats.body.watched.set_value(nu.str(State.watched))
+        | Movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
         | Movies.stats.body.latest.set(State.latest_title)
         | Movies.form.feedback.set(
             title="logged",
@@ -313,8 +302,8 @@ on_row_click = nu.ReactForever(
         )
         >> nu.v.Snapshot(
             Movies.shelf.body.table.set(_rows_form())
-            | Movies.stats.body.total.set_value(_s(State.total))
-            | Movies.stats.body.unseen.set_value(_s(State.total - State.watched))
+            | Movies.stats.body.total.set_value(nu.str(State.total))
+            | Movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
         ),
     ),
     changed_key="row_click",

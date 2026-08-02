@@ -25,6 +25,7 @@ The split follows one rule - what the constructor consumes:
 
 from __future__ import annotations
 
+import builtins
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
@@ -48,6 +49,14 @@ __all__ = [
     "ToSet",
     "ToStr",
     "ToTuple",
+    "dict",
+    "float",
+    "frozenset",
+    "int",
+    "list",
+    "set",
+    "str",
+    "tuple",
 ]
 
 
@@ -65,7 +74,7 @@ class ToInt(ScalarQuery):
                 v = only(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                return int(v)
+                return builtins.int(v)
 
             return thunk_value
 
@@ -78,7 +87,7 @@ class ToInt(ScalarQuery):
             b = base(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            return int(v, b)
+            return builtins.int(v, b)
 
         return thunk
 
@@ -90,7 +99,7 @@ class ToInt(ScalarQuery):
                 v = await only(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                return int(v)
+                return builtins.int(v)
 
             return athunk_value
 
@@ -103,7 +112,7 @@ class ToInt(ScalarQuery):
             b = await base(rt)
             if b is EMPTY or b is INVALID:
                 return INVALID
-            return int(v, b)
+            return builtins.int(v, b)
 
         return athunk
 
@@ -118,7 +127,7 @@ class ToFloat(ScalarQuery):
             v = only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return float(v)
+            return builtins.float(v)
 
         return thunk
 
@@ -129,7 +138,7 @@ class ToFloat(ScalarQuery):
             v = await only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return float(v)
+            return builtins.float(v)
 
         return athunk
 
@@ -198,7 +207,7 @@ class ToStr(ScalarQuery):
             v = only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return str(v)
+            return builtins.str(v)
 
         return thunk
 
@@ -209,7 +218,7 @@ class ToStr(ScalarQuery):
             v = await only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return str(v)
+            return builtins.str(v)
 
         return athunk
 
@@ -340,7 +349,7 @@ class ToList(ScalarQuery):
             v = only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return list(v)
+            return builtins.list(v)
 
         return thunk
 
@@ -351,7 +360,7 @@ class ToList(ScalarQuery):
             v = await only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return list(v)
+            return builtins.list(v)
 
         return athunk
 
@@ -366,7 +375,7 @@ class ToTuple(ScalarQuery):
             v = only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return tuple(v)
+            return builtins.tuple(v)
 
         return thunk
 
@@ -377,7 +386,7 @@ class ToTuple(ScalarQuery):
             v = await only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return tuple(v)
+            return builtins.tuple(v)
 
         return athunk
 
@@ -392,7 +401,7 @@ class ToSet(ScalarQuery):
             v = only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return set(v)
+            return builtins.set(v)
 
         return thunk
 
@@ -403,7 +412,7 @@ class ToSet(ScalarQuery):
             v = await only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return set(v)
+            return builtins.set(v)
 
         return athunk
 
@@ -418,7 +427,7 @@ class ToFrozenSet(ScalarQuery):
             v = only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return frozenset(v)
+            return builtins.frozenset(v)
 
         return thunk
 
@@ -429,7 +438,7 @@ class ToFrozenSet(ScalarQuery):
             v = await only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return frozenset(v)
+            return builtins.frozenset(v)
 
         return athunk
 
@@ -444,7 +453,7 @@ class ToDict(ScalarQuery):
             v = only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return dict(v)
+            return builtins.dict(v)
 
         return thunk
 
@@ -455,6 +464,81 @@ class ToDict(ScalarQuery):
             v = await only(rt)
             if v is EMPTY or v is INVALID:
                 return INVALID
-            return dict(v)
+            return builtins.dict(v)
 
         return athunk
+
+
+# --- wrappers: coerce + tag as a Form (the user-facing surface) ------------
+
+
+def str(x: object) -> object:  # shadowing the builtin is intended
+    """Coerce ``x`` to a Nu ``Str`` term. ``Str(ToStr(x))`` in one call."""
+    from nu.forms.primitives import Str
+
+    return Str(ToStr(x))
+
+
+def int(x: object) -> object:  # shadowing the builtin is intended
+    """Coerce ``x`` to a Nu ``Int`` term. ``Int(ToInt(x))`` in one call."""
+    from nu.forms.primitives import Int
+
+    return Int(ToInt(x))
+
+
+def float(x: object) -> object:  # shadowing the builtin is intended
+    """Coerce ``x`` to a Nu ``Float`` term. ``Float(ToFloat(x))`` in one call."""
+    from nu.forms.primitives import Float
+
+    return Float(ToFloat(x))
+
+
+def list(x: object) -> object:  # shadowing the builtin is intended
+    """Coerce ``x`` to a Nu ``List`` term. ``List(ToList(x))`` in one call.
+
+    For building a list from positional Nu expressions, use ``nu.List.of(...)``.
+    """
+    from nu.forms.collections import List
+
+    return List(ToList(x))
+
+
+def tuple(x: object) -> object:  # shadowing the builtin is intended
+    """Coerce ``x`` to a Nu ``Tuple`` term. ``Tuple(ToTuple(x))`` in one call.
+
+    For building a tuple from positional Nu expressions, use ``nu.Tuple.of(...)``.
+    """
+    from nu.forms.collections import Tuple
+
+    return Tuple(ToTuple(x))
+
+
+def set(x: object) -> object:  # shadowing the builtin is intended
+    """Coerce ``x`` to a Nu ``Set`` term. ``Set(ToSet(x))`` in one call.
+
+    For building a set from positional Nu expressions, use ``nu.Set.of(...)``.
+    """
+    from nu.forms.collections import Set
+
+    return Set(ToSet(x))
+
+
+def frozenset(x: object) -> object:  # shadowing the builtin is intended
+    """Coerce ``x`` to a Nu ``FrozenSet`` term. ``FrozenSet(ToFrozenSet(x))`` in one call.
+
+    For building a frozenset from positional Nu expressions, use
+    ``nu.FrozenSet.of(...)``.
+    """
+    from nu.forms.collections import FrozenSet
+
+    return FrozenSet(ToFrozenSet(x))
+
+
+def dict(x: object) -> object:  # shadowing the builtin is intended
+    """Coerce ``x`` to a Nu ``Dict`` term. ``Dict(ToDict(x))`` in one call.
+
+    For building a dict from named Nu expressions, use ``nu.Dict.of(...)``.
+    """
+    from nu.forms.collections import Dict
+
+    return Dict(ToDict(x))

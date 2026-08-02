@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, overload
 from nu.lang import TypedNu
 
 from .abc import MutableSequenceForm
-from .abc.sequence_interactions import ListCreate
+from .abc.sequence_interactions import ListCreate, ListOf
 
 
 if TYPE_CHECKING:
@@ -40,6 +40,17 @@ class List[T](
     def create(cls) -> List[T]:
         """Yield a fresh empty list."""
         return cls(ListCreate())
+
+    @classmethod
+    def of(cls, *items: Arg) -> List:
+        """Yield a list from positional item expressions.
+
+        ``List.of(x, y, z)`` evaluates each argument in the current
+        context and packs the results into a fresh list: ``[<x>, <y>, <z>]``.
+        Sibling to ``Tuple.of``. An item that resolves to a sentinel
+        collapses the whole result to Invalid.
+        """
+        return cls(ListOf(*items))
 
     def _wrap_iterable_result(self, operand: Nu) -> List:
         """Wrap operand as List."""
