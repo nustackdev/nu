@@ -1,11 +1,11 @@
-"""Virtuals storage substrate refs — navigate the virtuals View hierarchy.
+"""Virtuals storage substrate refs: navigate the virtuals View hierarchy.
 
 ``ViewRef`` and ``PrimitiveRef`` are the two concrete substrates against the
 shape Ref seam (``StructuredRef``): they fill the plug-points with virtuals
 View navigation, backed by a tkv snapshot / transaction resolved from the
 Context.
 
-A ref names one path segment — its address, held as ``children[1]`` and
+A ref names one path segment: its address, held as ``children[1]`` and
 resolved through the runtime like any child. The parent chain lives on the tree
 at ``children[0]`` (walked via ``parent_ref``); for the common shape-field case
 those are static slot names, read off each parent's stored ``(_segment,
@@ -57,7 +57,7 @@ logger = getLogger(__name__)
 
 
 class Facet(Enum):
-    """View facet — none (default), lazy, or eager."""
+    """View facet: none (default), lazy, or eager."""
 
     NONE = "none"
     LAZY = "lazy"
@@ -287,7 +287,7 @@ class ViewRef[T](_VirtualsRefBase[T]):
 
         Uses ``set_child_container_as`` so the ref's declared view class
         (``path[-1][1]``) drives the child layout, rather than the parent's
-        default type→view registry lookup — which would collapse every
+        default type→view registry lookup, which would collapse every
         ``dict``-valued ref onto ``DictView`` regardless of what the slot
         declared (``Kh57View``, ``IndexedDictView``, …).
         """

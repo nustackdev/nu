@@ -1,4 +1,4 @@
-"""ShapesSequenceRef hierarchy — sequence-of-shapes Ref + Form mixin tiers.
+"""ShapesSequenceRef hierarchy: sequence-of-shapes Ref + Form mixin tiers.
 
     ShapesSequenceRef         = shape.SequenceForm + StructuredRef
     MutableShapesSequenceRef  = shape.MutableSequenceForm + ShapesSequenceRef

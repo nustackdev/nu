@@ -1,16 +1,16 @@
-"""The ``Log`` atom -- one write through Python's ``logging`` module.
+"""The ``Log`` atom. One write through Python's ``logging`` module.
 
 Every log statement in a Nu program compiles to a ``Log``. The Command
 mutates the log fabric (a single ``LoggingRef`` singleton, :data:`LOGGING`) and
 at eval time hands the resolved record to ``logging.getLogger(name).log(...)``.
-Python's ``logging`` module IS the sink -- its handlers, formatters, filters,
+Python's ``logging`` module IS the sink. Its handlers, formatters, filters,
 and hierarchy are the configuration surface. There is no separate Nu backend
 to bind: users configure via ``logging.basicConfig(...)`` or attached handlers
 exactly the way any Python program does.
 
 Slot layout is ``[LOGGING, level, logger, msg, *args]`` with the structured
 ``extra`` dict carried in ``_payload``. Slot 0 is declared WRITE, so effect
-tracking preserves order across log statements -- two logs in a Sequential
+tracking preserves order across log statements. Two logs in a Sequential
 emit in order rather than getting parallelized as pure Queries. ``*args`` are
 Nu-interpolable; they participate in the ``%`` formatting of ``msg`` at
 eval time, mirroring ``logging.Logger.log(level, msg, *args)``.
@@ -63,7 +63,7 @@ def _to_level(raw: object) -> int:
 
 
 class LoggingRef(Ref):
-    """A Ref naming Python's ``logging`` module -- the sink for the log fabric.
+    """A Ref naming Python's ``logging`` module. The sink for the log fabric.
 
     Fixed singleton (:data:`LOGGING`). Unlike ``StdioRef`` there is no
     swappable backend: ``logging`` is a Python module-level singleton whose
@@ -93,7 +93,7 @@ class LoggingRef(Ref):
         logging.getLogger(logger_name).log(level, msg, *args, extra=extra or None)
 
     async def _awrite(self, rt: Runtime, record: tuple, nid: int) -> None:
-        """Async sibling of :meth:`_write` -- ``logging`` is sync so same call."""
+        """Async sibling of :meth:`_write`. ``logging`` is sync so same call."""
         level, logger_name, msg, args, extra = record
         logging.getLogger(logger_name).log(level, msg, *args, extra=extra or None)
 
@@ -112,13 +112,13 @@ class Log(Command):
 
     Children: ``[LOGGING, level, logger, msg, *args]``. ``level`` is a name
     (``"info"``, ``"warning"``, ...) or an int (``logging.INFO``); ``logger``
-    is the logger name -- both children so a tree rewrite can retarget them.
+    is the logger name; both are children so a tree rewrite can retarget them.
     ``msg`` is the format string and ``*args`` are the ``%``-substitution
     values, resolved at eval time. Structured ``extra`` fields ride in
     :attr:`_payload` (static Python values captured at construction).
 
     A ``msg`` or ``arg`` that reads as an unbound sentinel drops the whole
-    line -- the same skip-on-EMPTY guard :class:`Print` uses. That
+    line, the same skip-on-EMPTY guard :class:`Print` uses. That
     keeps a log call safe against attrs that may not be populated on every
     branch.
     """

@@ -6,9 +6,8 @@ side spawns one of these actors, tells it to build its context, and later
 routes tree execution to it through ``aexecute``.
 
 An in-flight ``aexecute`` is tracked so shutdown can cancel and drain it
-before the actor tears down its context. This is the same guard the current
-distributed ``WorkerProcess`` uses to avoid a use-after-free when closing
-storage under a live query.
+before the actor tears down its context. This avoids a use-after-free when
+closing storage under a live query.
 """
 
 from __future__ import annotations
@@ -52,8 +51,8 @@ class _RayServiceActor:
         fresh ``Context()``, saves the resulting Context, and keeps the exit
         stack open so the bracket's resources stay live until ``shutdown``.
 
-        Falls back to ``ctx_builder`` (a legacy callable returning a Context
-        or awaitable). If both are ``None``, the actor gets a bare Context.
+        Falls back to ``ctx_builder`` (a callable returning a Context or
+        awaitable). If both are ``None``, the actor gets a bare Context.
         """
         from nu.lang.runtime import Context
 

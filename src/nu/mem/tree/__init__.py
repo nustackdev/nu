@@ -1,4 +1,4 @@
-"""nu-mem tree meta-passes — ref inlining."""
+"""nu-mem tree meta-passes: ref inlining."""
 
 from .inline_refs import inline_refs
 

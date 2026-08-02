@@ -7,7 +7,7 @@ Items:
     ItemRef         generic typed value holder
     IntRef, StrRef, FloatRef, BoolRef, BytesRef   typed item refs
 
-Collections (ported incrementally during the P2 v2 port):
+Collections:
     ShapeRef, DictRef, ListRef, SetRef, ShapesListRef, ShapesDictRef
 """
 
@@ -33,10 +33,6 @@ from .std import (
     TimezoneRef,
     UUIDRef,
 )
-
-
-# --- deferred ----------------------------------------------------------------
-# from .jqueue import JQueue, JQueueRef, QueueClosed   # deferred pass
 
 
 __all__ = [

@@ -68,7 +68,7 @@ class Add(ScalarQuery):
                 if v is EMPTY or v is INVALID:
                     return INVALID
                 # Fold from the first operand so `+` works for any type that
-                # supports it (str / list / tuple concat), not just numbers.
+                # supports it (str / list / tuple concat), not only numbers.
                 s = v if i == 0 else s + v
             return s
 

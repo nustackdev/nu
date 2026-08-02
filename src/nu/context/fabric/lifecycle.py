@@ -82,10 +82,7 @@ def _refuse_async_only(cls: type) -> None:
     instance whose ``asetup`` we can't drive.
     """
     if getattr(cls, "_nu_async_only", False):
-        msg = (
-            f"{cls.__name__} requires the async runner (nu.arun); "
-            "marked _nu_async_only"
-        )
+        msg = f"{cls.__name__} requires the async runner (nu.arun); marked _nu_async_only"
         raise RuntimeError(msg)
 
 
@@ -94,17 +91,13 @@ def _setup(instance: object, ctx: Context) -> None:
 
     Fabrics with neither ``setup`` nor ``asetup`` are lifecycle-free (e.g.
     ``Codec``) and pass through. Fabrics with only ``asetup`` are async-only
-    in shape - previously a silent no-op, now a loud raise so misuse doesn't
-    corrupt the ctx binding.
+    in shape and raise here so misuse doesn't corrupt the ctx binding.
     """
     if hasattr(instance, "setup"):
         instance.setup(ctx)
         return
     if hasattr(instance, "asetup"):
-        msg = (
-            f"{type(instance).__name__} has no sync setup; "
-            "use nu.arun or add setup()"
-        )
+        msg = f"{type(instance).__name__} has no sync setup; use nu.arun or add setup()"
         raise RuntimeError(msg)
 
 
@@ -421,7 +414,7 @@ class ProvideDict(_LifecycleBracket):
 class With(_LifecycleBracket):
     """Sequence N lifecycle brackets: enter in order, LIFO teardown.
 
-    Same shape as Python's ``with A, B, C: body`` -- each bracket's ``_open``
+    Same shape as Python's ``with A, B, C: body``: each bracket's ``_open``
     is entered in order, ctx accumulates across them, ``body`` runs against
     the final ctx, teardown fires in reverse on exit. If any bracket's setup
     raises, already-entered brackets tear down in reverse before propagating.
@@ -439,7 +432,7 @@ class With(_LifecycleBracket):
 
     Composes any ``_LifecycleBracket``: ``Provide``, ``ProvideList``,
     ``ProvideDict``, ``InvisiblesProxy``, ... Each bracket is used as a SPEC
-    (its own ``body`` slot is ignored -- ``With`` re-enters its ``_open`` /
+    (its own ``body`` slot is ignored, ``With`` re-enters its ``_open`` /
     ``_aopen`` to accumulate ctx).
     """
 
@@ -466,4 +459,3 @@ class With(_LifecycleBracket):
             for b in brackets:
                 ctx = await stack.enter_async_context(b._aopen(ctx))
             yield ctx
-

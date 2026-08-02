@@ -4,26 +4,25 @@ Metaclass-driven DSL for declaring hierarchical document structures.
 Slot is the factory; ShapeMeta collects slots at class-definition time;
 SlotDescriptor exposes them as Refs on class access.
 
-Under the task-119 typing discipline, a Shape slot annotation IS the ref
-class (parametric or bare). The metaclass reads the annotation, synthesizes
-a ``Slot`` when none is assigned, and stamps a recursive ``TypeInfo`` onto
-each created Ref's ``_payload["type_info"]``.
+A Shape slot annotation IS the ref class (parametric or bare). The
+metaclass reads the annotation, synthesizes a ``Slot`` when none is
+assigned, and stamps a recursive ``TypeInfo`` onto each created Ref's
+``_payload["type_info"]``.
 
 Recognised annotation forms:
 
-- **Bare ref class** (``nm.StrRef``, ``nd.HeadingRef``) - synthesizes
+- **Bare ref class** (``nm.StrRef``, ``nd.HeadingRef``): synthesizes
   ``Slot(<ref_cls>)``. Explicit ``= <ref_cls>.slot()`` is optional.
 - **Parametric ref class** (``nv.PrimitiveListRef[str]``,
-  ``nm.ShapesDictRef[int, Order]``) - synthesizes
+  ``nm.ShapesDictRef[int, Order]``): synthesizes
   ``Slot(<origin>, **kwargs)`` where kwargs come from the origin's
   ``_slot_kwargs_from_type_args`` classmethod.
-- **Bare Shape subclass** (``Order``) - shorthand for a ``ShapeRef``
+- **Bare Shape subclass** (``Order``): shorthand for a ``ShapeRef``
   navigating that shape. Requires an explicit ``= <fabric>.ShapeRef.slot(...)``
   because the annotation alone cannot name the fabric. Bare Shape without
   an assignment is a hard error.
 - **Anything else** (primitives, native container generics, ``Any``, ...):
-  no synthesis. Legacy ``= <Ref>.slot(T)`` continues to work; the
-  annotation still stamps a ``TypeInfo`` on the payload.
+  no synthesis. The annotation still stamps a ``TypeInfo`` on the payload.
 
 Example::
 
@@ -139,7 +138,7 @@ class SlotDescriptor:
     def __set__(self, obj: object, value: object) -> None:
         """Slots are read-only structure definitions."""
         raise AttributeError(
-            f"Cannot set slot '{self.name}' — slots are read-only structure definitions"
+            f"Cannot set slot '{self.name}': slots are read-only structure definitions"
         )
 
 

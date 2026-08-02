@@ -1,4 +1,4 @@
-"""Virtuals item refs — typed leaf-value holders backed by virtuals storage.
+"""Virtuals item refs: typed leaf-value holders backed by virtuals storage.
 
 ``ItemRef`` combines the shape ``ReactiveItemRef`` blueprint (slot-level CRUD +
 change observation) with ``PrimitiveRef`` (virtuals leaf navigation). Typed

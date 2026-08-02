@@ -1,4 +1,4 @@
-"""auto_flow_atomic — flow-based bottom-up wrapping for virtuals refs.
+"""auto_flow_atomic: flow-based bottom-up wrapping for virtuals refs.
 
 Walks the tree bottom-up. At each Flow, wraps every non-Flow direct child
 by its tracked effects on virtuals refs whose ``root_shape`` matches
@@ -71,12 +71,12 @@ def _iter_uncovered(
     Only refs the pass cares about, that no enclosing brace covers.
 
     Refs are classified WRITE iff they sit in a mutation slot of an
-    enclosing op. A top-level Ref (a subtree that IS a Ref — e.g. the
+    enclosing op. A top-level Ref (a subtree that IS a Ref, e.g. the
     body of ``Snapshot(view_ref)``) has no enclosing slot context and
     counts as READ.
 
     Descends into Snapshot / Transaction bodies with the brace's scope
-    added to ``enclosing`` — refs the brace covers are pruned. The
+    added to ``enclosing``: refs the brace covers are pruned. The
     body is re-entered as a fresh top-level subtree.
     """
     if isinstance(node, (Snapshot, Transaction)):
@@ -138,7 +138,7 @@ def _wrap_flow_child(child: Nu, pass_scope: Hashable | None, enclosing: tuple) -
 def _walk(node: Nu, pass_scope: Hashable | None, enclosing: tuple) -> Nu:
     if isinstance(node, (Snapshot, Transaction)):
         if _dominates(node.scope, pass_scope):
-            # Brace covers everything the pass cares about — skip descent.
+            # Brace covers everything the pass cares about, skip descent.
             return node
         inner = (*enclosing, node.scope)
         new_children = tuple(_walk(c, pass_scope, inner) for c in node._children)

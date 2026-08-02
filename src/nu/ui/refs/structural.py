@@ -37,9 +37,8 @@ class NavRef(Ref):
         nav.changed()               -- subscribe to user navigation events
         await nav.aread(...)        -- through session, fetch current URI
 
-    All four host writes compile to the existing `write` op. `set(uri)`
-    ships a bare string for back-compat; the other three ship a tagged
-    dict the browser slice dispatches on.
+    All four host writes compile to the `write` op. `set(uri)` ships a bare
+    string; the other three ship a tagged dict the browser slice dispatches on.
     """
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -50,7 +49,6 @@ class NavRef(Ref):
 
     def set(self, value: StrArg) -> Nu:
         # Bare-string push -- shorthand for {"action": "push", "uri": value}.
-        # Kept as bare-string to preserve existing host code (multipage.py).
         return Write(self, value)
 
     def replace(self, value: StrArg) -> Nu:

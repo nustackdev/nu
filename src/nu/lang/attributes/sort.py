@@ -122,7 +122,7 @@ def matrix_sort(sort: Sort) -> Sort | None:
 # dual citizen, in both cardinalities: a ScalarAction or StreamAction yields (so
 # joins _VALUE) and mutates Context (so joins _WORK alongside Command). A
 # StreamAction yielding into a scalar slot is gated by the cardinality law, not
-# here -- the same way a StreamQuery sits in _VALUE yet a scalar consumer must
+# here, the same way a StreamQuery sits in _VALUE yet a scalar consumer must
 # reduce it.
 _VALUE = frozenset(
     {

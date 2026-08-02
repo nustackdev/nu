@@ -1,4 +1,4 @@
-"""Virtuals mapping reference — key-value container backed by a virtuals View."""
+"""Virtuals mapping reference: key-value container backed by a virtuals View."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ __all__ = [
 
 
 class DictRef[K, V](ReactiveMappingRef["ItemRef"], ViewRef[dict[K, V]]):
-    """Virtuals mapping reference — key-value container backed by a virtuals View."""
+    """Virtuals mapping reference: key-value container backed by a virtuals View."""
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
         """Navigate to the value at ``address`` as a substrate-backed virtuals ItemRef."""

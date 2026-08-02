@@ -91,7 +91,7 @@ def _as_set(value: object) -> object:
 
 
 # =============================================================================
-# SET READS (Query) — return new sets / bools, no mutation
+# SET READS (Query): return new sets / bools, no mutation
 # =============================================================================
 
 
@@ -522,7 +522,7 @@ class SetXor(ScalarQuery):
 
 
 # =============================================================================
-# SET MUTATIONS — return nothing (Command)
+# SET MUTATIONS: return nothing (Command)
 # =============================================================================
 
 
@@ -777,7 +777,7 @@ class SymmetricDifferenceUpdate(Command):
 
 
 # =============================================================================
-# SET MUTATIONS — mutate AND return a value (Action)
+# SET MUTATIONS: mutate AND return a value (Action)
 # =============================================================================
 
 

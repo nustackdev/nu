@@ -1,4 +1,4 @@
-"""nu.mem — Nu Shapes fabric adapter for in-memory state.
+"""nu.mem: Nu Shapes fabric adapter for in-memory state.
 
 Plain nested Python dicts as the data bag. No storage backend, no views,
 no reactivity. Just dicts.
@@ -46,10 +46,6 @@ from nu.mem.refs import (
     UUIDRef,
 )
 from nu.mem.tree import inline_refs
-
-
-# --- ported incrementally during the P2 v2 port ------------------------------
-# jqueue (deferred pass) is re-added here as it lands on the v2 substrate seam.
 
 
 __all__ = [

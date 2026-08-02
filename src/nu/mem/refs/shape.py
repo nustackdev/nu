@@ -1,4 +1,4 @@
-"""Dict shape reference — structured container backed by nested dict.
+"""Dict shape reference: structured container backed by nested dict.
 
 Field descent (``ShapeRef.field``) is the blueprint's ``__getattr__``: it
 resolves the slot to the field's own mem ref (``StrRef``, ``IntRef``, ...) with
@@ -33,7 +33,7 @@ __all__ = [
 
 
 class ShapeRef[T: Shape](MutableShapeRef, RefBase[dict[str, object]]):
-    """Dict shape reference — structured container backed by nested dict."""
+    """Dict shape reference: structured container backed by nested dict."""
 
     def _wrap_result(self, op: Nu) -> Dict[str, object]:
         """Wrap a shape-level op result as a Dict."""

@@ -6,22 +6,22 @@ and parallel dispatch helpers, stream pumps, sentinel propagation, and
 the hybrid sync/async fan-in that reads ``Attr.ON_LOOP``.
 
 Hot-path contract: dispatch is one indexed call into the precompiled thunk
-column -- ``program.thunks[nid](rt)`` (sync) or ``program.athunks[nid](rt)``
+column: ``program.thunks[nid](rt)`` (sync) or ``program.athunks[nid](rt)``
 (async). Each thunk closes over its child thunks, so the inner recursion
 runs closure-to-closure with no method lookup.
 
 Layout:
 
-- construction         -- program / ctx / budget binding
-- dispatch             -- ``eval`` / ``aeval``
-- sequential           -- ``eval_each`` / ``aeval_each``
-- parallel values      -- ``eval_parallel`` / ``aeval_parallel`` / ``aeval_race`` / ``aeval_any``
-- parallel streams     -- ``merge`` / ``amerge``
-- streams              -- ``iter`` / ``aiter`` / ``collect`` / ``acollect``
-- boundary             -- ``in_thread`` / ``a_in_thread``
-- sentinel propagation -- ``*_or_short`` family
-- placement            -- ``_drive_async`` (reads ``Attr.ON_LOOP``); the async value
-                          combinators and ``amerge`` share it
+- construction:         program / ctx / budget binding
+- dispatch:             ``eval`` / ``aeval``
+- sequential:           ``eval_each`` / ``aeval_each``
+- parallel values:      ``eval_parallel`` / ``aeval_parallel`` / ``aeval_race`` / ``aeval_any``
+- parallel streams:     ``merge`` / ``amerge``
+- streams:              ``iter`` / ``aiter`` / ``collect`` / ``acollect``
+- boundary:             ``in_thread`` / ``a_in_thread``
+- sentinel propagation: ``*_or_short`` family
+- placement:            ``_drive_async`` (reads ``Attr.ON_LOOP``); the async value
+                        combinators and ``amerge`` share it
 """
 
 from __future__ import annotations
@@ -52,11 +52,8 @@ _DONE = object()
 
 # Per-asyncio-task Context storage. Backed by ContextVar so brackets can
 # `rt.ctx = scoped` around an `await` without contaminating sibling branches
-# running under the same Runtime -- each asyncio.Task inherits a copy-on-write
+# running under the same Runtime: each asyncio.Task inherits a copy-on-write
 # view when spawned, and `.set()` inside the task is local to that task.
-# Prior impl used a plain instance attribute, which raced across parallel
-# branches and surfaced as `StorageClosedError` when one branch's committed
-# Transaction context bled into another branch's lazy Ref reads.
 _RT_CTX: contextvars.ContextVar[Context] = contextvars.ContextVar("nu_rt_ctx")
 
 

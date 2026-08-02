@@ -1,7 +1,7 @@
-"""Stream flow — drain-then-follow over ordered collections.
+"""Stream flow: drain-then-follow over ordered collections.
 
 The ``cat file; tail -f`` of Nu. One declaration that handles batch
-catch-up, live follow, and the seamless transition between them.
+catch-up, live follow, and the transition between them.
 
 Stream is ``StreamQuery``: it observes an ordered collection via a cursor and
 a reactive subscription, yielding body results. The cursor writes to
@@ -34,7 +34,7 @@ class Stream(StreamQuery):
 
     Children: [advance, change, body, key, log_key].
     Iterates existing items (drain), then subscribes and follows new items
-    (react). Transition is seamless.
+    (react).
     """
 
     def __init__(

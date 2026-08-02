@@ -1,4 +1,4 @@
-"""Virtuals shapes dict reference — mapping of homogeneous shapes.
+"""Virtuals shapes dict reference: mapping of homogeneous shapes.
 
 Key descent (``ref[k]``) is overridden to return a substrate-backed virtuals
 ``ShapeRef`` at the key, with this ref as ``parent_ref``.
@@ -35,7 +35,7 @@ __all__ = [
 
 
 class ShapesDictRef[K, T: Shape](ReactiveShapesMappingRef[T], ViewRef[dict[K, dict]]):
-    """Virtuals shapes dict reference — mapping of homogeneous shapes."""
+    """Virtuals shapes dict reference: mapping of homogeneous shapes."""
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
         """Navigate to the shape at ``address`` as a substrate-backed virtuals ShapeRef."""

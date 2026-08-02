@@ -1,4 +1,4 @@
-"""nu.virtuals — virtuals (polymorphic views) KV-storage fabric for Nu Shapes.
+"""nu.virtuals: virtuals (polymorphic views) KV-storage fabric for Nu Shapes.
 
 Refs over virtuals views backed by a tkv snapshot / transaction.
 
@@ -13,7 +13,7 @@ Usage::
         age = IntRef.slot()
 """
 
-import nu.virtuals._compat  # noqa: F401  — register virtuals view ABCs
+import nu.virtuals._compat  # noqa: F401  (register virtuals view ABCs)
 
 
 # Register path types as invisibles value types so they serialize by value.
@@ -97,12 +97,6 @@ from nu.virtuals.refs import (
 from nu.virtuals.tree import auto_flow_atomic, inline_refs
 
 
-# --- deferred during the v2 port ---------------------------------------------
-# write-back views (views/writeback),
-# auto_total_atomic / optimize_primitive_reads|writes —
-# re-added as each lands on the v2 substrate seam.
-
-
 __all__ = [  # noqa: RUF022
     # Submodules
     "fabrics",
@@ -112,20 +106,20 @@ __all__ = [  # noqa: RUF022
     "refs",
     "tree",
     "views",
-    # Interactions — Item
+    # Interactions: Item
     "InitItemCmd",
     "ItemPrimitiveGetUnsafe",
     "ItemPrimitiveSetUnsafeCmd",
     "ItemPrimitiveSetUnsafeParentSkipCmd",
     "ItemPrimitiveDeleteUnsafeCmd",
     "ItemPrimitiveSetCmd",
-    # Interactions — Collection
+    # Interactions: Collection
     "ClearPrimitivesUnsafeCmd",
     "ScanPrimitivesUnsafe",
-    # Interactions — kh57
+    # Interactions: kh57
     "Kh57Sample",
     "Kh57Range",
-    # Interactions — Atomicity
+    # Interactions: Atomicity
     "Atomic",
     "Snapshot",
     "Transaction",
@@ -169,7 +163,7 @@ __all__ = [  # noqa: RUF022
     "ShapesListRef",
     "StrRef",
     "ViewRef",
-    # Refs — stdlib-typed (std)
+    # Refs: stdlib-typed (std)
     "BasisPointRef",
     "ComplexRef",
     "DateRef",
@@ -182,7 +176,7 @@ __all__ = [  # noqa: RUF022
     "TimedeltaRef",
     "TimezoneRef",
     "UUIDRef",
-    # Refs — whole-blob compound (primitives)
+    # Refs: whole-blob compound (primitives)
     "PrimitiveDictRef",
     "PrimitiveFrozenSetRef",
     "PrimitiveListRef",

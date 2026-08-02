@@ -1,12 +1,9 @@
 """All-in-one entries: compile, validate, drive in one call.
 
 Take a Term, compile it against the Nu schema, validate against the Nu
-law set, then drive. Three phases in one call -- what app code usually
+law set, then drive. Three phases in one call, what app code usually
 wants. The standalone pieces stay available via ``nu.lang`` for callers
 that want a Program in hand (e.g. for static inspection).
-
-Currently value-root only. Stream-root siblings (``run_stream`` and
-friends) land here when needed.
 """
 
 from __future__ import annotations
@@ -25,7 +22,7 @@ if TYPE_CHECKING:
 V = TypeVar("V")
 
 
-def run(  # noqa: UP047  # legacy TypeVar to match the kind-chain V_co convention
+def run(  # noqa: UP047  # TypeVar matches the kind-chain V_co convention
     term: Nu[V],
     ctx: Context | None = None,
     *,
@@ -56,7 +53,7 @@ def run(  # noqa: UP047  # legacy TypeVar to match the kind-chain V_co conventio
     return cast("V", value), ctx
 
 
-async def arun(  # noqa: UP047  # legacy TypeVar to match the kind-chain V_co convention
+async def arun(  # noqa: UP047  # TypeVar matches the kind-chain V_co convention
     term: Nu[V],
     ctx: Context | None = None,
     *,
@@ -72,7 +69,7 @@ async def arun(  # noqa: UP047  # legacy TypeVar to match the kind-chain V_co co
     return cast("V", value), ctx
 
 
-def run_in_loop(  # noqa: UP047  # legacy TypeVar to match the kind-chain V_co convention
+def run_in_loop(  # noqa: UP047  # TypeVar matches the kind-chain V_co convention
     term: Nu[V],
     ctx: Context | None = None,
     *,

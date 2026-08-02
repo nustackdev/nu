@@ -1,4 +1,4 @@
-"""Dict sequence reference — ordered container backed by nested list."""
+"""Dict sequence reference: ordered container backed by nested list."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ __all__ = [
 
 
 class ListRef[T](MutableSequenceRef["ItemRef"], RefBase[list[T]]):
-    """Dict sequence reference — ordered container backed by nested list."""
+    """Dict sequence reference: ordered container backed by nested list."""
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
         """Navigate to the element at ``address`` as a substrate-backed mem ItemRef."""

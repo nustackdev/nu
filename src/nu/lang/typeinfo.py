@@ -4,36 +4,34 @@
 it on their payload; wrappers read it to pick the child ref/form on subscript
 or attribute descent.
 
-Under the task-119 typing discipline, a Shape slot annotation is one of:
+A Shape slot annotation is one of:
 
-- **Bare ref class** (``nm.StrRef``, ``nd.HeadingRef``) - a ``Ref`` subclass
+- **Bare ref class** (``nm.StrRef``, ``nd.HeadingRef``): a ``Ref`` subclass
   with no generic parameters. Represented as ``TypeInfo(<ref_cls>)``.
 - **Parametric ref class** (``nv.PrimitiveListRef[str]``,
-  ``nm.ShapesDictRef[int, Order]``) - a ``Ref`` subclass with generic params.
+  ``nm.ShapesDictRef[int, Order]``): a ``Ref`` subclass with generic params.
   Represented as ``TypeInfo(<ref_origin>, key=..., elem=...)`` where key/elem
   recurse.
-- **Bare Shape subclass** (``Order``) - a shorthand for a ``ShapeRef``
+- **Bare Shape subclass** (``Order``): a shorthand for a ``ShapeRef``
   navigating that shape. Represented as ``TypeInfo(<shape_cls>)``.
-- **Python primitive** (``str``, ``int``, ...) - only appears as an inner
+- **Python primitive** (``str``, ``int``, ...): only appears as an inner
   type arg of a ``Primitive*Ref`` (blob-stored collection). Represented as
   ``TypeInfo(<primitive_cls>)``.
-- **``Any``** - the fallback (non-trivial union, unresolvable forward ref,
+- **``Any``**: the fallback (non-trivial union, unresolvable forward ref,
   unknown type).
 
 The primitive is:
 
 - ``TypeInfo.from_annotation(ann, hints)`` normalizes any annotation into a
-  recursive ``TypeInfo`` - resolves ``T | None`` to ``T``, folds non-trivial
+  recursive ``TypeInfo``: resolves ``T | None`` to ``T``, folds non-trivial
   unions to ``Any``, recognises Ref subclasses (bare + parametric), Shape
-  subclasses, primitives, native container generics (backcompat), and
+  subclasses, primitives, native container generics, and
   ``ForwardRef`` / string annotations via ``hints``.
 - ``TypeInfo.to_form(tier=None)`` dispatches ``py_type`` to a concrete
-  ``Form`` class - meaningful at primitive-leaf yield positions. Ref-typed
+  ``Form`` class, meaningful at primitive-leaf yield positions. Ref-typed
   or Shape-typed levels are handled by the wrapper directly (it descends
   into the ref/shape instead of yielding a value-Form). ``Any`` is the
   fallback.
-
-Phase 1 of task-119 - foundation only, no consumers yet.
 """
 
 from __future__ import annotations
@@ -66,7 +64,7 @@ class TypeInfo:
 
     ``py_type`` is the resolved outer type (a ``Ref`` subclass, a ``Shape``
     subclass, a Python primitive, or ``Any``). ``key`` and ``elem`` are
-    optional child ``TypeInfo`` s - populated for mapping-like containers
+    optional child ``TypeInfo`` s: populated for mapping-like containers
     (``key`` + ``elem``) and sequence/set-like containers (``elem`` only),
     otherwise ``None``.
     """
@@ -77,7 +75,7 @@ class TypeInfo:
 
     @classmethod
     def any(cls) -> TypeInfo:
-        """The honest-terminal ``TypeInfo`` - genuinely unknown."""
+        """The honest-terminal ``TypeInfo``: genuinely unknown."""
         return cls(Any)
 
     @classmethod
@@ -119,10 +117,10 @@ class TypeInfo:
 
         Meaningful only at primitive-leaf positions (inside
         ``Primitive*Ref`` type args). Ref-typed or Shape-typed levels are
-        handled by the wrapper directly - it descends into the ref/shape
+        handled by the wrapper directly: it descends into the ref/shape
         instead of yielding a value-Form.
 
-        ``tier`` is reserved for Phase 3 (structured-ref tier ladder).
+        ``tier`` is reserved for the structured-ref tier ladder.
         """
         del tier
         return _form_for(self.py_type)
@@ -239,8 +237,6 @@ def _form_for(py_type: object) -> type[Form]:
 def value_type_for(python_type: object) -> type[Form]:
     """Map a Python primitive type to its ``Form`` class (``Any`` fallback).
 
-    Convenience wrapper over ``_form_for``: the sole dispatch source of truth
-    consolidating the earlier duplicated ``nu/mem/refs/_typemap.py`` and
-    ``nu/virtuals/refs/_typemap.py``.
+    Convenience wrapper over ``_form_for``: the sole dispatch source of truth.
     """
     return _form_for(python_type)

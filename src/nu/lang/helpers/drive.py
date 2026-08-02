@@ -2,13 +2,13 @@
 
 Two families, by what the root yields:
 
-- value root: ``eval``, ``aeval``, ``eval_in_loop`` -- return ``(value, ctx)``.
-- stream root: ``first``, ``collect``, ``afirst``, ``alast``, ``acollect``
-  -- iterate the root and return either a single item or a list, with the
+- value root: ``eval``, ``aeval``, ``eval_in_loop``: return ``(value, ctx)``.
+- stream root: ``first``, ``collect``, ``afirst``, ``alast``, ``acollect``:
+  iterate the root and return either a single item or a list, with the
   Context after execution.
 
 Each opens a fresh ``Budget`` sized by ``max_parallel`` and closes it on
-exit. Sync entries refuse a Program with an async-only subtree -- callers
+exit. Sync entries refuse a Program with an async-only subtree; callers
 must use the async sibling, or ``eval_in_loop`` as the deliberate bridge.
 Stream entries wrap iteration in ``safely_(a)closing`` so a short-circuit
 (``first``, partial ``collect``) still finalizes the underlying generator.

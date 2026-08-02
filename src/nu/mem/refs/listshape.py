@@ -1,4 +1,4 @@
-"""Dict shapes list reference — sequence of homogeneous shapes.
+"""Dict shapes list reference: sequence of homogeneous shapes.
 
 Index descent (``ref[i]``) is the blueprint's ``__getitem__``: it returns a
 ``ShapeRef`` at the index with this ref as ``parent_ref``. The element shape type
@@ -26,7 +26,7 @@ __all__ = [
 
 
 class ShapesListRef[T: Shape](MutableShapesSequenceRef[T], RefBase[list[dict]]):
-    """Dict shapes list reference — sequence of homogeneous shapes."""
+    """Dict shapes list reference: sequence of homogeneous shapes."""
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
         """Navigate to the shape at ``address`` as a substrate-backed mem ShapeRef."""

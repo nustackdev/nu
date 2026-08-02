@@ -3,10 +3,8 @@
 Transforms are ``Nu -> Nu`` functions that change tree shape. All
 operations are non-mutating (return new trees) and domain-free -- they
 touch only ``._children`` and ``._with_children``, so they apply to any
-Term tree.
-
-Key design: child reconstruction goes through ``with_children`` -- no
-type dispatch.
+Term tree. Child reconstruction goes through ``with_children``, so
+there is no type dispatch.
 """
 
 from __future__ import annotations

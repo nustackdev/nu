@@ -260,7 +260,6 @@ class LineChart(Ref):
     ) -> Nu:
         payload: dict[str, object] = {}
         if points is not UNSET:
-            # legacy: set({"points": [...]}) keeps working.
             if isinstance(points, dict) and "points" in points:
                 payload["points"] = points["points"]
             else:
@@ -360,7 +359,6 @@ class PieChart(Ref):
     ) -> Nu:
         payload: dict[str, object] = {}
         if slices is not UNSET:
-            # legacy: set({"slices": [...]}) keeps working.
             if isinstance(slices, dict) and "slices" in slices:
                 payload["slices"] = slices["slices"]
             else:

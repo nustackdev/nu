@@ -1,7 +1,7 @@
-"""Virtuals collection interactions — unsafe scan / clear of primitive children.
+"""Virtuals collection interactions: unsafe scan / clear of primitive children.
 
-ScanPrimitivesUnsafe: Scan all primitive children — _unsafe_primitive_scan_values().
-ClearPrimitivesUnsafeCmd: Clear all primitive children — _unsafe_primitive_clear().
+ScanPrimitivesUnsafe: scan primitive children via _unsafe_primitive_scan_values().
+ClearPrimitivesUnsafeCmd: clear primitive children via _unsafe_primitive_clear().
 
 Require virtuals views with UnsafePrimitiveOpsBase in MRO. The container view Ref
 is held as ``children[0]``; its ``fetch`` substrate method takes ``(rt, nid)``.

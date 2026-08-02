@@ -1,4 +1,4 @@
-"""Dict shapes dict reference — mapping of homogeneous shapes.
+"""Dict shapes dict reference: mapping of homogeneous shapes.
 
 Key descent (``ref[k]``) is the blueprint's ``__getitem__``: it returns a
 ``ShapeRef`` at the key with this ref as ``parent_ref``. The value shape type is
@@ -35,7 +35,7 @@ __all__ = [
 
 
 class ShapesDictRef[K, T: Shape](MutableShapesMappingRef[T], RefBase[dict[K, dict]]):
-    """Dict shapes dict reference — mapping of homogeneous shapes."""
+    """Dict shapes dict reference: mapping of homogeneous shapes."""
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
         """Navigate to the shape at ``address`` as a substrate-backed mem ShapeRef."""

@@ -1,4 +1,4 @@
-"""Virtuals shape reference — structured container backed by a virtuals View.
+"""Virtuals shape reference: structured container backed by a virtuals View.
 
 Field descent (``ref.field`` / ``ref["field"]``) is the blueprint's
 ``__getattr__`` / ``__getitem__``: it resolves the slot to the field's own
@@ -35,7 +35,7 @@ __all__ = [
 
 
 class ShapeRef[T: Shape](ReactiveShapeRef, ViewRef[dict[str, object]]):
-    """Virtuals shape reference — structured container backed by a virtuals View."""
+    """Virtuals shape reference: structured container backed by a virtuals View."""
 
     def _wrap_result(self, op: Nu) -> Dict[str, object]:
         """Wrap a shape-level op result as a Dict."""

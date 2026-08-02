@@ -38,7 +38,7 @@ async def aiter_any(value: object) -> AsyncIterator:
     class, so a naive ``hasattr`` check would try async iteration even for
     sync-only remote targets (``dict.values()`` etc) and trigger a server
     round-trip that raises ``AttributeError``. We check ``value.__class__``
-    instead — for netrefs that's a descriptor returning the *remote* class,
+    instead: for netrefs that's a descriptor returning the *remote* class,
     so the presence of ``__aiter__`` on the actual target is what decides.
     """
     if value is EMPTY or value is INVALID:

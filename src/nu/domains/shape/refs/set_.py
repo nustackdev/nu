@@ -1,4 +1,4 @@
-"""SetRef hierarchy — unordered unique-element container Ref + Form mixin tiers.
+"""SetRef hierarchy: unordered unique-element container Ref + Form mixin tiers.
 
     SetRef         = shape.SetLikeForm + StructuredRef
     MutableSetRef  = shape.MutableSetForm + SetRef
@@ -19,7 +19,7 @@ Form composition provides:
                 on_descendants_change() (shape-domain)
 
 The ``_wrap_*`` abstract methods from SetLikeForm are left un-overridden
-(raise NotImplementedError) in these blueprints — substrate subclasses fill
+(raise NotImplementedError) in these blueprints. Substrate subclasses fill
 them in.
 """
 

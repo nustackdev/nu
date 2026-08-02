@@ -74,10 +74,7 @@ def writes(node: Nu) -> frozenset[Ref]:
 def fabrics(node: Nu) -> frozenset[type]:
     """Fold the subtree's Refs to the set of fabric identities they touch.
 
-    Stub: a Ref's fabric identity is its type. The real fabric
-    model (a Ref carrying its bound fabric) lands with the fabric phase;
-    callers that group by fabric should go through this so the swap is
-    one place.
+    A Ref's fabric identity is its type.
     """
     return frozenset(type(ref) for ref, _ in iter_effects(node))
 

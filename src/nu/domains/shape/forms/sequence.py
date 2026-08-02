@@ -1,4 +1,4 @@
-"""Shape-domain Sequence Form glue — tier-by-tier composition.
+"""Shape-domain Sequence Form glue: tier-by-tier composition.
 
 SequenceForm         = generic SequenceForm + shape CollectionForm
 MutableSequenceForm  = generic MutableSequenceForm + shape MutableCollectionForm
@@ -27,15 +27,15 @@ __all__ = [
 
 
 class SequenceForm(_SequenceForm, CollectionForm):
-    """Shape sequence — ordered-element ops + exists/missing/extract."""
+    """Shape sequence: ordered-element ops + exists/missing/extract."""
 
 
 class MutableSequenceForm(_MutableSequenceForm, MutableCollectionForm):
-    """Mutable shape sequence — ordered-element ops + exists/missing/extract + set/erase."""
+    """Mutable shape sequence: ordered-element ops + exists/missing/extract + set/erase."""
 
 
 class ReactiveSequenceForm(_ReactiveSequenceForm, MutableSequenceForm, ReactiveCollectionForm):
-    """Reactive shape sequence — adds on_change + tree-aware on_child_change* family.
+    """Reactive shape sequence. Adds on_change + tree-aware on_child_change* family.
 
     MRO provides:
         on_change()               from generic ReactiveSequenceForm

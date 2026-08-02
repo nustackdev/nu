@@ -1,4 +1,4 @@
-"""ShapesMappingRef hierarchy — mapping-of-shapes Ref + Form mixin tiers.
+"""ShapesMappingRef hierarchy: mapping-of-shapes Ref + Form mixin tiers.
 
     ShapesMappingRef         = shape.MappingForm + StructuredRef
     MutableShapesMappingRef  = shape.MutableMappingForm + ShapesMappingRef
@@ -88,7 +88,9 @@ class MutableShapesMappingRef[ItemResultT](MutableMappingForm, ShapesMappingRef[
         )
 
 
-class ReactiveShapesMappingRef[ItemResultT](ReactiveMappingForm, MutableShapesMappingRef[ItemResultT]):
+class ReactiveShapesMappingRef[ItemResultT](
+    ReactiveMappingForm, MutableShapesMappingRef[ItemResultT]
+):
     """Reactive mapping-of-shapes Ref; subscript returns ReactiveShapeRef.
 
     Adds: on_change(), on_child_change(), on_children_change(),

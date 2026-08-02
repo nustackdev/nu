@@ -1,4 +1,4 @@
-"""Dict mapping reference — key-value container backed by nested dict."""
+"""Dict mapping reference: key-value container backed by nested dict."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ __all__ = [
 
 
 class DictRef[K, V](MutableMappingRef["ItemRef"], RefBase[dict[K, V]]):
-    """Dict mapping reference — key-value container backed by nested dict."""
+    """Dict mapping reference: key-value container backed by nested dict."""
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
         """Navigate to the value at ``address`` as a substrate-backed mem ItemRef."""

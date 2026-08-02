@@ -1,4 +1,4 @@
-"""Virtuals kh57 shapes reference — sparse int-keyed map of homogeneous shapes.
+"""Virtuals kh57 shapes reference: sparse int-keyed map of homogeneous shapes.
 
 Thin extension of :class:`ShapesDictRef` that pins keys to non-negative 57-bit
 ints and defaults the view to :class:`~virtuals.views.Kh57View`, plus adds

@@ -1,22 +1,21 @@
-"""Shape fabric queries and commands — all shape interactions in one place.
+"""Shape fabric queries and commands: all shape interactions in one place.
 
 Read queries (polymorphic on Ref class):
-- ``Load``          - yield the value at the slot-0 Ref (EMPTY if absent).
-- ``Exists``        - True if the slot-0 Ref's address is bound.
-- ``Missing``       - True if the slot-0 Ref's address is unbound.
-- ``Extract``       - materialise the full subtree rooted at the Ref.
-- ``AdvanceCursor`` - read the next key after the cursor on an ordered view.
+- ``Load``: yield the value at the slot-0 Ref (EMPTY if absent).
+- ``Exists``: True if the slot-0 Ref's address is bound.
+- ``Missing``: True if the slot-0 Ref's address is unbound.
+- ``Extract``: materialise the full subtree rooted at the Ref.
+- ``AdvanceCursor``: read the next key after the cursor on an ordered view.
 
 Write commands (polymorphic on Ref class):
-- ``SetCmd`` - write the slot-1 value to the slot-0 Ref's address.
-- ``Erase``  - remove the slot-0 Ref from its fabric.
+- ``SetCmd``: write the slot-1 value to the slot-0 Ref's address.
+- ``Erase``: remove the slot-0 Ref from its fabric.
 
-The Item/Collection split is dropped; the substrate optimizer matches on
-the concrete Ref class. ``*Cmd`` suffix dropped by naming convention.
+The substrate optimizer matches on the concrete Ref class.
 
 Reactive queries (``OnChange``, ``OnChildChange``,
 ``OnChildrenChange``, ``OnDescendantsChange``,
-``OnPrimitiveChange``) live in ``nu.core.reactive`` -- one unified
+``OnPrimitiveChange``) live in ``nu.core.reactive``: one unified
 interface for all substrates, reached through the shape Form mixins.
 """
 

@@ -8,7 +8,7 @@ RetryOnConflict: Retry preset scoped to the virtuals storage conflict errors.
 
 These subclass the v2 core brackets and override the lifecycle as a single
 ``@contextmanager`` (``_open``). The per-run handles (open snapshots /
-transactions) live in the context-manager frame, captured by closure — never on
+transactions) live in the context-manager frame, captured by closure, never on
 ``self`` (a Term is immutable and shared across executions). The ``scope`` data
 attribute is the shape tag used for predicate routing / multi-navigator setups
 (read by ``auto_flow_atomic`` and the structural tests), NOT the lifecycle method.
@@ -112,7 +112,7 @@ class _VirtualsBracketMixin:
 
     ``_open`` is the fabric lifecycle; subclasses fill in the open/commit/abort
     body. ``scope`` is a plain data attribute (the shape tag), living alongside
-    the core bracket's ``_open`` lifecycle method — this mixin overrides
+    the core bracket's ``_open`` lifecycle method. This mixin overrides
     ``compile`` / ``acompile`` to call ``self._open`` directly.
     """
 
@@ -194,9 +194,7 @@ class Snapshot(_VirtualsBracketMixin, _CoreSnapshot):
             for snap in snaps:
                 snap.close()
 
-    def _scope_lazy(
-        self, ctx: Context, nav: Navigator, snaps: list, preds: dict
-    ) -> Context:
+    def _scope_lazy(self, ctx: Context, nav: Navigator, snaps: list, preds: dict) -> Context:
         def open_snap() -> SnapshotProtocol:
             snap = nav.storage.begin_snapshot()
             snaps.append(snap)
@@ -244,9 +242,7 @@ class Transaction(_VirtualsBracketMixin, _CoreTransaction):
             for txn in txns:
                 txn.commit()
 
-    def _scope_lazy(
-        self, ctx: Context, nav: Navigator, txns: list, preds: dict
-    ) -> Context:
+    def _scope_lazy(self, ctx: Context, nav: Navigator, txns: list, preds: dict) -> Context:
         def open_txn() -> TransactionProtocol:
             txn = nav.storage.begin_transaction()
             txns.append(txn)
@@ -255,7 +251,7 @@ class Transaction(_VirtualsBracketMixin, _CoreTransaction):
         return ctx.lazy(TransactionProtocol, open_txn, *_scope_tags(self.scope), **preds)
 
 
-def Atomic(  # noqa: N802 — factory mimics class spelling
+def Atomic(  # noqa: N802 (factory mimics class spelling)
     *children: Nu,
     scope: Hashable | None = None,
 ) -> Snapshot | Transaction:
@@ -286,7 +282,7 @@ class RetryOnConflict(Retry):
     """Retry preset for virtuals storage conflicts.
 
     Targets ``StorageTransactionConflictError`` and ``StorageLockTimeoutError``
-    only — non-conflict exceptions propagate immediately. Defaults are tuned for
+    only. Non-conflict exceptions propagate immediately. Defaults are tuned for
     hot-key contention under N concurrent writers. Override any kwarg to tune.
     """
 

@@ -6,7 +6,7 @@
   resources and lifecycle helpers.
 
 Sentinels (``EMPTY`` / ``INVALID`` / ``Sentinel``) live one level up as
-``nu.lang.sentinels`` -- they are value-space vocabulary, not runtime
+``nu.lang.sentinels``: they are value-space vocabulary, not runtime
 mechanics. Top-level entry points (``run``, ``eval``, ``aeval``, ...) live
 in ``nu.lang.helpers``.
 """

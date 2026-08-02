@@ -1,21 +1,21 @@
-"""Shape-fabric Ref blueprints — 3-tier matrix.
+"""Shape-fabric Ref blueprints: 3-tier matrix.
 
 Re-exports all 21 Ref blueprints (7 families x 3 tiers) and the private
 abstract base ``StructuredRef`` for substrate authors who extend it directly.
 
 Families:
-    Item          — leaf typed value
-    Mapping       — key-value container
-    Sequence      — ordered element container
-    Set           — unordered unique-element container
-    Shape         — structured named-slot container
-    ShapesMapping — mapping whose values are shapes
-    ShapesSequence — sequence whose elements are shapes
+    Item          : leaf typed value
+    Mapping       : key-value container
+    Sequence      : ordered element container
+    Set           : unordered unique-element container
+    Shape         : structured named-slot container
+    ShapesMapping : mapping whose values are shapes
+    ShapesSequence: sequence whose elements are shapes
 
 Tiers per family:
-    Base      — read + exists/missing
-    Mutable   — + write/erase + collection mutations
-    Reactive  — + on_change family
+    Base      : read + exists/missing
+    Mutable   : + write/erase + collection mutations
+    Reactive  : + on_change family
 """
 
 from __future__ import annotations

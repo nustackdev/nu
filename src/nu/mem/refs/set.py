@@ -1,4 +1,4 @@
-"""Dict set reference — unordered unique-element container."""
+"""Dict set reference: unordered unique-element container."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ __all__ = [
 
 
 class SetRef[T](MutableSetRef, RefBase[set[T]]):
-    """Dict set reference — unordered unique-element container."""
+    """Dict set reference: unordered unique-element container."""
 
     def _wrap_result(self, op: Nu) -> Set[T]:
         """Wrap a set-level op result as a Set."""

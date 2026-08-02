@@ -1,4 +1,4 @@
-"""Virtuals set reference — unordered unique-element container backed by a View."""
+"""Virtuals set reference: unordered unique-element container backed by a View."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ __all__ = [
 
 
 class SetRef[T](ReactiveSetRef, ViewRef[set[T]]):
-    """Virtuals set reference — unordered unique-element container backed by a View."""
+    """Virtuals set reference: unordered unique-element container backed by a View."""
 
     def _wrap_result(self, op: Nu) -> Set[T]:
         """Wrap a set-level op result as a Set."""

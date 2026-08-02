@@ -1,4 +1,4 @@
-"""Dict substrate item refs — typed value holders in nested dicts.
+"""Dict substrate item refs: typed value holders in nested dicts.
 
 ``ItemRef`` combines the shape ``MutableItemRef`` blueprint (slot-level CRUD)
 with ``RefBase`` (dict navigation). Typed refs (``IntRef``, ``StrRef``, ...) add

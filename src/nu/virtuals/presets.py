@@ -13,11 +13,11 @@ Two forms, both live and independent:
   they compose ``Provide`` peers under a ``With``, so ctx-bind order and
   LIFO teardown come for free.
 
-Post publisher/observer split: every navigator preset binds the triple
-(Transport + Publisher + Observer) plus Storage (with matching
-``publisher_type=``) plus Navigator. Redis presets bind Redis Publisher +
-Redis Observer alongside the InMemoryTransport (LMDB envs living in the
-same actor may still resolve their default in-mem publisher).
+Every navigator preset binds the triple (Transport + Publisher + Observer)
+plus Storage (with matching ``publisher_type=``) plus Navigator. Redis presets
+bind Redis Publisher + Redis Observer alongside the InMemoryTransport (LMDB
+envs living in the same actor may still resolve their default in-mem
+publisher).
 
 Standalone observer presets (``inmem_observer``, ``redis_observer``) exist
 for read-only actors that consume notifications without owning a
@@ -58,7 +58,7 @@ __all__ = [
 def memory_storage() -> Generator[StorageProtocol, None, None]:
     """Create in-memory storage with no-op codec and in-memory publisher.
 
-    No persistence, no serialization — Python objects stored as-is.
+    No persistence, no serialization: Python objects stored as-is.
     Useful for testing, prototyping, and ephemeral service handles.
 
     Yields:

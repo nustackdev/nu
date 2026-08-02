@@ -1,4 +1,4 @@
-"""Sequence collection — bases + mutations.
+"""Sequence collection: bases + mutations.
 
 SequenceForm = Collection + Sliceable + first/last/index/count/reversed
 MutableSequenceForm = Sequence + append/insert/pop/extend/remove/reverse
@@ -42,7 +42,7 @@ class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     CollectionForm[ElementT, CollectionResultT, ElementResultT],
     SliceableForm[CollectionResultT],
 ):
-    """Base for sequence values — like collections.abc.Sequence.
+    """Base for sequence values, like collections.abc.Sequence.
 
     Type Parameters:
         CollectionT: Native Python collection type (list[int], tuple[str, ...])
@@ -105,7 +105,7 @@ class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
 class MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
-    """Base for mutable sequence values — like collections.abc.MutableSequence.
+    """Base for mutable sequence values, like collections.abc.MutableSequence.
 
     Type Parameters:
         CollectionT: Native Python collection type
@@ -182,7 +182,7 @@ class MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResul
 class ReactiveSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
-    """Reactive sequence — adds on_change() for any-change observation.
+    """Reactive sequence. Adds on_change() for any-change observation.
 
     Provides (in addition to MutableSequenceForm):
         on_change() → OnChange

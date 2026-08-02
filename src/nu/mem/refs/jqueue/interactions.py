@@ -1,12 +1,12 @@
 """Interactions for JQueueRef / JQueue.
 
-- Put   — Command, blocks when full → back-pressure.
-- Get   — ScalarAction, blocks when empty, yields one item (mutating producer).
-- QSize — ScalarQuery, snapshot count.
-- Close — Command, shuts down both halves.
+- Put: Command, blocks when full for back-pressure.
+- Get: ScalarAction, blocks when empty, yields one item (mutating producer).
+- QSize: ScalarQuery, snapshot count.
+- Close: Command, shuts down both halves.
 
-Get mutates the underlying janus.Queue while yielding the popped item, so in v2
-it is a ScalarAction (effect + yield) rather than a ScalarQuery, and declares
+Get mutates the underlying janus.Queue while yielding the popped item, so it
+is a ScalarAction (effect + yield) rather than a ScalarQuery, and declares
 ``mutates`` on slot 0. QSize is a pure read: the queue ref in its read slot
 yields READ automatically, so it needs no ``mutates``.
 """
@@ -55,7 +55,7 @@ def _normalize_shutdown(exc: BaseException) -> QueueClosed:
 
 
 class Put(Command):
-    """Put a value into a JQueueRef. Blocks when full → back-pressure.
+    """Put a value into a JQueueRef. Blocks when full for back-pressure.
 
     Children: ``[queue, value]``.
     """

@@ -1,4 +1,4 @@
-"""Module-level surface for ``nu.std.logging`` -- mirrors ``logging`` 1-1.
+"""Module-level surface for ``nu.std.logging``. Mirrors ``logging`` 1-1.
 
 Two layers: the :class:`Logger` class (returned by :func:`getLogger`) and the
 module-level shortcuts (:func:`debug`, :func:`info`, :func:`warning`,
@@ -78,10 +78,15 @@ class Logger:
     ``log.warning(...)`` / ``log.error(...)`` at call sites. Each method
     returns a Nu ``Log`` tree carrying the bound logger name.
 
-    Not itself a ``logging.Logger`` -- users who want to configure the
+    Not itself a ``logging.Logger``. Users who want to configure the
     underlying Python logger (add a handler, set a level) reach for
     ``logging.getLogger(name)`` on the Python side. This is the *call*
     surface only.
+
+    Level shortcuts ``debug`` / ``info`` / ``warning`` / ``error`` /
+    ``critical`` build a ``Log`` at the matching level; ``log(level, ...)``
+    takes the level as an argument. ``warn`` aliases ``warning``, ``fatal``
+    aliases ``critical`` (stdlib parity).
     """
 
     __slots__ = ("_name",)
@@ -101,30 +106,30 @@ class Logger:
         *args: object,
         extra: dict[str, object] | None = None,
     ) -> Log:
-        """Build a ``Log`` at ``level``. Mirrors ``Logger.log``."""
+        """Build a ``Log`` at ``level``."""
         return Log(level, self._name, msg, *args, extra=extra)
 
     def debug(self, msg: object, *args: object, extra: dict[str, object] | None = None) -> Log:
-        """Build a ``Log`` at DEBUG. Mirrors ``Logger.debug``."""
+        """Build a ``Log`` at DEBUG."""
         return Log(DEBUG, self._name, msg, *args, extra=extra)
 
     def info(self, msg: object, *args: object, extra: dict[str, object] | None = None) -> Log:
-        """Build a ``Log`` at INFO. Mirrors ``Logger.info``."""
+        """Build a ``Log`` at INFO."""
         return Log(INFO, self._name, msg, *args, extra=extra)
 
     def warning(self, msg: object, *args: object, extra: dict[str, object] | None = None) -> Log:
-        """Build a ``Log`` at WARNING. Mirrors ``Logger.warning``."""
+        """Build a ``Log`` at WARNING."""
         return Log(WARNING, self._name, msg, *args, extra=extra)
 
     # `warn` is the stdlib alias (deprecated in stdlib but universally used).
     warn = warning
 
     def error(self, msg: object, *args: object, extra: dict[str, object] | None = None) -> Log:
-        """Build a ``Log`` at ERROR. Mirrors ``Logger.error``."""
+        """Build a ``Log`` at ERROR."""
         return Log(ERROR, self._name, msg, *args, extra=extra)
 
     def critical(self, msg: object, *args: object, extra: dict[str, object] | None = None) -> Log:
-        """Build a ``Log`` at CRITICAL. Mirrors ``Logger.critical``."""
+        """Build a ``Log`` at CRITICAL."""
         return Log(CRITICAL, self._name, msg, *args, extra=extra)
 
     # `fatal` is stdlib's alias.
@@ -152,17 +157,17 @@ _root = Logger("root")
 
 
 def debug(msg: object, *args: object, extra: dict[str, object] | None = None) -> Log:
-    """Root-logger DEBUG record. Mirrors ``logging.debug``."""
+    """Root-logger DEBUG shortcut."""
     return _root.debug(msg, *args, extra=extra)
 
 
 def info(msg: object, *args: object, extra: dict[str, object] | None = None) -> Log:
-    """Root-logger INFO record. Mirrors ``logging.info``."""
+    """Root-logger INFO shortcut."""
     return _root.info(msg, *args, extra=extra)
 
 
 def warning(msg: object, *args: object, extra: dict[str, object] | None = None) -> Log:
-    """Root-logger WARNING record. Mirrors ``logging.warning``."""
+    """Root-logger WARNING shortcut."""
     return _root.warning(msg, *args, extra=extra)
 
 
@@ -170,17 +175,17 @@ warn = warning  # stdlib alias
 
 
 def error(msg: object, *args: object, extra: dict[str, object] | None = None) -> Log:
-    """Root-logger ERROR record. Mirrors ``logging.error``."""
+    """Root-logger ERROR shortcut."""
     return _root.error(msg, *args, extra=extra)
 
 
 def critical(msg: object, *args: object, extra: dict[str, object] | None = None) -> Log:
-    """Root-logger CRITICAL record. Mirrors ``logging.critical``."""
+    """Root-logger CRITICAL shortcut."""
     return _root.critical(msg, *args, extra=extra)
 
 
 def log(
     level: int | str, msg: object, *args: object, extra: dict[str, object] | None = None
 ) -> Log:
-    """Root-logger record at ``level``. Mirrors ``logging.log``."""
+    """Root-logger shortcut at ``level``."""
     return _root.log(level, msg, *args, extra=extra)

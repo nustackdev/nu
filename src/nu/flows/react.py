@@ -1,8 +1,8 @@
-"""Reactive control flows — React, ReactWhile, ReactForever.
+"""Reactive control flows: React, ReactWhile, ReactForever.
 
 Subscribe to change events and run a body in response. All three are ``Control``
 flows: they drive a mutating body under query parameters (a change
-subscription, a condition) and **yield nothing** — the body carries the writes,
+subscription, a condition) and **yield nothing**. The body carries the writes,
 exactly like ``WhileDo`` / ``ForeverDo``. A change notification is bridged into
 async via ``asyncio.Queue`` (one wake per notification, no collapsing).
 
@@ -32,7 +32,7 @@ async def _adrain_body(rt: Runtime, body_thunk: Callable) -> None:
     """Run a react body and drain any values it yields.
 
     A body may be a Command (returns None) or a stream (returns an iterable /
-    async-iterable). Both shapes are fine — Commands carry writes and yield
+    async-iterable). Both shapes are fine: Commands carry writes and yield
     nothing, streams carry values that must be pulled through to fire their
     side effects.
     """
@@ -49,8 +49,8 @@ class React(Control):
     Children ``[change, body?, changed_key?]``: slot 0 is the change
     subscription (param), the optional body slot carries the writes, and an
     optional ``changed_key`` name (last slot, param) captures the changed key.
-    A ``changed_key`` requires a body — capturing the key with nothing to run is
-    meaningless — so the body always sits at slot 1 when present.
+    A ``changed_key`` requires a body (capturing the key with nothing to run is
+    meaningless), so the body always sits at slot 1 when present.
     """
 
     _mutates = Declared(value=frozenset(), name="mutates")

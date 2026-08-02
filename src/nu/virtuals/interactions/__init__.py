@@ -1,4 +1,4 @@
-"""Virtuals interactions — split by domain (item / collections / atomicity).
+"""Virtuals interactions, split by domain (item / collections / atomicity).
 
 - ``item``: leaf-level unsafe primitive read/write/delete + container setup
   (load + store optimization internals for tree deformers).

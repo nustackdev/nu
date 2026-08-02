@@ -1,13 +1,13 @@
-"""Virtuals item interactions — unsafe leaf read/write/delete.
+"""Virtuals item interactions: unsafe leaf read/write/delete.
 
-InitItemCmd: Materialize container chain via _fetch().
-ItemPrimitiveGetUnsafe: Read — _unsafe_primitive_read() (single ctx.get).
-ItemPrimitiveSetUnsafeCmd: Write — _unsafe_primitive_write(ensure_exists=True).
-ItemPrimitiveSetUnsafeParentSkipCmd: Write — _unsafe_primitive_write() (full skip).
-ItemPrimitiveDeleteUnsafeCmd: Delete — _unsafe_primitive_delete().
-ItemPrimitiveSetCmd: Store value via _primitive_write() — bypasses container check.
+InitItemCmd: materialize container chain via _fetch().
+ItemPrimitiveGetUnsafe: read via _unsafe_primitive_read() (single ctx.get).
+ItemPrimitiveSetUnsafeCmd: write via _unsafe_primitive_write(ensure_exists=True).
+ItemPrimitiveSetUnsafeParentSkipCmd: write via _unsafe_primitive_write() (full skip).
+ItemPrimitiveDeleteUnsafeCmd: delete via _unsafe_primitive_delete().
+ItemPrimitiveSetCmd: store value via _primitive_write(), bypasses container check.
 
-All named explicitly Unsafe — optimization internals for tree deformers, not
+All named explicitly Unsafe: optimization internals for tree deformers, not
 user-facing APIs. They require virtuals views with UnsafePrimitiveOpsBase in MRO.
 The leaf ref is held as ``children[0]`` (a virtuals Ref / FlatRef), so its
 substrate methods take ``(rt, nid)``.
@@ -138,7 +138,7 @@ class ItemPrimitiveSetUnsafeCmd(_UnsafeSetBase):
 
 
 class ItemPrimitiveSetUnsafeParentSkipCmd(_UnsafeSetBase):
-    """Write primitive via ``_unsafe_primitive_write()`` — full skip."""
+    """Write primitive via ``_unsafe_primitive_write()`` (full skip)."""
 
     _ensure_exists = False
 

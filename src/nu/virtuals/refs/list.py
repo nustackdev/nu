@@ -1,4 +1,4 @@
-"""Virtuals sequence reference — ordered container backed by a virtuals View."""
+"""Virtuals sequence reference: ordered container backed by a virtuals View."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ __all__ = [
 
 
 class ListRef[T](ReactiveSequenceRef["ItemRef"], ViewRef[list[T]]):
-    """Virtuals sequence reference — ordered container backed by a virtuals View."""
+    """Virtuals sequence reference: ordered container backed by a virtuals View."""
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
         """Navigate to the element at ``address`` as a substrate-backed virtuals ItemRef."""

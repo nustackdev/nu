@@ -1,4 +1,4 @@
-"""Virtuals kh57 mapping reference — sparse int-keyed map with range sampling.
+"""Virtuals kh57 mapping reference: sparse int-keyed map with range sampling.
 
 Thin extension of :class:`DictRef` that pins keys to non-negative 57-bit ints,
 defaults the view to :class:`~virtuals.views.Kh57View`, and adds

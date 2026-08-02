@@ -15,7 +15,7 @@ re-implemented here.
 Each function builds its interaction atom (lazily imported, like ``nu.std.math``)
 and returns it. Iterable arguments are lifted into a stream child with
 ``Iter`` (a scalar iterable), passed through when already a stream atom,
-or unwrapped when they're the legacy ``Iterator`` wrapper. Higher-order
+or unwrapped when they're an ``Iterator`` wrapper. Higher-order
 members (``takewhile`` / ``dropwhile`` / ``filterfalse`` / ``accumulate`` /
 ``starmap`` / ``groupby``) take their predicate/function as a Nu term that
 reads the current item via an ``AttrRef("item")`` (and the running value via
@@ -68,7 +68,7 @@ def _stream(iterable: Arg[Iterable]) -> Nu:
     A ``StreamQuery`` atom (another itertools result, ``Iter``, ``Map``,
     ...) is already stream-shaped, so it's reused directly - wrapping it in
     another ``Iter`` would feed a stream to a scalar consumer. An
-    ``Iterator`` legacy wrapper is unwrapped to its stream child. Any other
+    ``Iterator`` wrapper is unwrapped to its stream child. Any other
     iterable (a list, range, ``List``, raw value) is opened with ``Iter``.
     """
     if isinstance(iterable, StreamQuery):

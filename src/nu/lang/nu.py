@@ -41,7 +41,7 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no v
     """The user-facing base for every Nu construct.
 
     A tagged ``Term`` carrying the language's ``Runtime`` binding and a
-    yield type ``V_co``. Abstract -- concrete sorts declare the structural,
+    yield type ``V_co``. Abstract: concrete sorts declare the structural,
     effect, cardinality, async, and algebra attributes the engine requires.
     """
 

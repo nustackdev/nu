@@ -1,4 +1,4 @@
-"""JQueue — typed surface for janus-backed queue refs.
+"""JQueue: typed surface for janus-backed queue refs.
 
 Pure TypedNu wrapper. Holds no state; methods build interaction trees
 against the wrapped Nu (typically a JQueueRef).

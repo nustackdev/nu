@@ -1,4 +1,4 @@
-"""Virtuals shapes list reference — sequence of homogeneous shapes.
+"""Virtuals shapes list reference: sequence of homogeneous shapes.
 
 Index descent (``ref[i]``) is overridden to return a substrate-backed virtuals
 ``ShapeRef`` at the index, with this ref as ``parent_ref``.
@@ -27,7 +27,7 @@ __all__ = [
 
 
 class ShapesListRef[T: Shape](ReactiveShapesSequenceRef[T], ViewRef[list[dict]]):
-    """Virtuals shapes list reference — sequence of homogeneous shapes."""
+    """Virtuals shapes list reference: sequence of homogeneous shapes."""
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
         """Navigate to the shape at ``address`` as a substrate-backed virtuals ShapeRef."""

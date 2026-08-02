@@ -1,4 +1,4 @@
-"""Virtuals kh57 interactions — range reservoir sampling atoms.
+"""Virtuals kh57 interactions: range reservoir sampling atoms.
 
 Kh57Sample: scalar query, yields a list of ``(int_key, value)`` samples
 from a Kh57View's sub-range via ``kh57.sample`` (range reservoir sampling).
@@ -8,7 +8,7 @@ Kh57View's sub-range in original int-key order.
 
 Both hold the container view Ref at ``children[0]``; parameters (n, begin,
 end) live at slots 1..3 and are auto-wrapped as Literal when passed as
-raw values. Both are deterministic — same view state + same seeded rng
+raw values. Both are deterministic: same view state + same seeded rng
 gives the same result.
 """
 
@@ -47,9 +47,9 @@ class Kh57Sample(ScalarQuery):
 
     Children:
         0: kh57 view Ref
-        1: n — number of samples requested
-        2: begin — inclusive lower bound (None means unbounded)
-        3: end — exclusive upper bound (None means unbounded)
+        1: n, number of samples requested
+        2: begin, inclusive lower bound (None means unbounded)
+        3: end, exclusive upper bound (None means unbounded)
     """
 
     def __init__(
@@ -112,8 +112,8 @@ class Kh57Range(ScalarQuery):
 
     Children:
         0: kh57 view Ref
-        1: begin — inclusive lower bound
-        2: end — exclusive upper bound
+        1: begin, inclusive lower bound
+        2: end, exclusive upper bound
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

@@ -1,4 +1,4 @@
-"""Mapping collection — bases + mutations.
+"""Mapping collection: bases + mutations.
 
 MappingForm = Collection + keys/values/items/get_item
 MutableMappingForm = Mapping + set_item/del_item/update/pop/popitem/setdefault/clear
@@ -38,7 +38,7 @@ __all__ = [
 class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
     CollectionForm[KeyT, CollectionResultT, ValueResultT],
 ):
-    """Base for mapping values — like collections.abc.Mapping.
+    """Base for mapping values, like collections.abc.Mapping.
 
     Subclasses must override:
         _wrap_keys_result(operand): Wrap keys query result.
@@ -127,7 +127,7 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
 class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
     MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
-    """Base for mutable mapping values — like collections.abc.MutableMapping.
+    """Base for mutable mapping values, like collections.abc.MutableMapping.
 
     Type Parameters:
         CollectionT: Native Python collection type
@@ -189,7 +189,7 @@ class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
 class ReactiveMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
     MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
-    """Reactive mapping — adds on_change() for any-change observation.
+    """Reactive mapping. Adds on_change() for any-change observation.
 
     Provides (in addition to MutableMappingForm):
         on_change() → OnChange

@@ -26,8 +26,8 @@ class AlertRef(Ref):
 
     Variant maps to the Alert primitive's `tone` (5 tones per kit): `neutral`
     picks the plain elevated surface, the rest attach the matching status
-    wash / line / fg + auto icon. Default stays `info` to preserve wire
-    behavior; the renderer falls back to `neutral` for unmapped values.
+    wash / line / fg + auto icon. The renderer falls back to `neutral` for
+    unmapped values.
     """
 
     @classmethod
@@ -80,8 +80,7 @@ class BadgeRef(Ref):
     """Display-only badge ref. One `write` op carries every mutation.
 
     Variant maps to the Badge primitive's status tones; `neutral` becomes the
-    kit `outline` (transparent bg, muted border) — closest visual to the
-    previous gray chip.
+    kit `outline` (transparent bg, muted border).
     """
 
     @classmethod

@@ -1,4 +1,4 @@
-"""ShapeRef hierarchy — structured container Ref with named-slot navigation.
+"""ShapeRef hierarchy: structured container Ref with named-slot navigation.
 
     ShapeRef         = shape.MappingForm + StructuredRef
     MutableShapeRef  = shape.MutableMappingForm + ShapeRef
@@ -11,8 +11,8 @@ len, contains) PLUS shape ops (exists/missing/set/erase), without a separate
 ItemForm in the MRO.
 
 Slot navigation is available two ways:
-  - Attribute:  ``ref.field``   — via ``__getattr__`` (MRO fallback)
-  - Bracket:    ``ref["field"]`` — via ``__getitem__`` override
+  - Attribute:  ``ref.field``   via ``__getattr__`` (MRO fallback)
+  - Bracket:    ``ref["field"]`` via ``__getitem__`` override
 
 Both produce a correctly-typed child Ref from the slot definition.
 
@@ -27,7 +27,7 @@ Notes:
 - MutableShapeRef / ReactiveShapeRef are included.
 - ReactiveShapeRef composes with shape.ReactiveMappingForm (shape IS a mapping).
 - _wrap_* abstract methods from MappingForm raise NotImplementedError on the
-  blueprint — substrate subclasses fill them in (consistent with MappingRef etc.).
+  blueprint. Substrate subclasses fill them in (consistent with MappingRef etc.).
 """
 
 from __future__ import annotations
@@ -52,8 +52,8 @@ __all__ = [
 class ShapeRef(MappingForm, StructuredRef):
     """Structured container Ref; slot navigation via attribute or bracket access.
 
-    API: full MappingForm surface — exists(), missing(), extract(), keys(),
-    values(), items(), len(), contains(), [key], .attr — from shape MappingForm.
+    API: full MappingForm surface: exists(), missing(), extract(), keys(),
+    values(), items(), len(), contains(), [key], .attr from shape MappingForm.
     ``_wrap_*`` methods raise NotImplementedError on the blueprint; substrate
     subclasses override them.
     """
@@ -70,7 +70,7 @@ class ShapeRef(MappingForm, StructuredRef):
         self._payload["shape_type"] = shape_type
 
     def __getitem__(self, key: object) -> StructuredRef:
-        """Navigate into shape slots via bracket access — mirror of __getattr__."""
+        """Navigate into shape slots via bracket access; mirror of __getattr__."""
         if isinstance(key, str):
             shape_type = self._payload["shape_type"]
             if hasattr(shape_type, "_slots") and key in shape_type._slots:

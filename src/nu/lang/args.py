@@ -1,6 +1,6 @@
 """Argument type aliases for Nu kind class signatures.
 
-A kind that takes a python ``int`` -- or a Nu that yields one -- declares
+A kind that takes a python ``int`` (or a Nu that yields one) declares
 its slot type as ``IntArg`` rather than spelling ``int | Nu | Sentinel``
 each time. The aliases keep concrete kind signatures short and readable
 while still admitting the full algebraic surface (a raw python value, a
@@ -19,7 +19,7 @@ Import note: ``Any`` lives in ``nu.forms`` which imports from
 ``nu.lang``, so a runtime import here would cycle. PEP 695 ``type`` aliases
 evaluate their RHS lazily (``TypeAliasType.__value__`` is only touched by
 mypy or explicit introspection), so a ``TYPE_CHECKING``-only import is
-sufficient - mypy sees the name, runtime never does.
+sufficient: mypy sees the name, runtime never does.
 """
 
 from __future__ import annotations

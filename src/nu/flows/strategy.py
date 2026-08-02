@@ -13,7 +13,7 @@ fan-in primitives keyed on child node ids: ``eval_parallel`` / ``aeval_parallel`
 (join on all) and ``aeval_race`` (first to complete wins). Each falls through to
 sequential when ``max_parallel == 1``, and the async variants are semaphore-
 gated; per-child sync/async placement is resolved off ``Attr.ON_LOOP`` inside
-the Runtime. So a Strategy thunk just hands the child nids
+the Runtime. So a Strategy thunk hands the child nids
 (``rt.program.children[nid]``) to the matching primitive - no thread pools or
 ``gather`` here. The Term stays immutable; all behaviour lives in the thunk.
 
@@ -124,9 +124,9 @@ class Gather(Strategy):
     """Runs its children concurrently and joins on all.
 
     The yield-collecting twin of ``Parallel``: it will hand back the children's
-    yields once Flow-level yield collection is wired. A Flow yields nothing
-    today, so for now it dispatches exactly like ``Parallel`` - through the same
-    Runtime fan-in primitives.
+    yields once Flow-level yield collection is wired. A Flow yields nothing, so
+    it dispatches exactly like ``Parallel`` - through the same Runtime fan-in
+    primitives.
     """
 
     _associative = Declared(value=True, name="associative")

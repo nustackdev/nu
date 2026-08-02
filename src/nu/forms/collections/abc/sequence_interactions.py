@@ -243,7 +243,7 @@ class Copy(ScalarQuery):
 
 
 # =============================================================================
-# SEQUENCE MUTATIONS — Command (mutate, return nothing)
+# SEQUENCE MUTATIONS: Command (mutate, return nothing)
 # =============================================================================
 
 
@@ -527,7 +527,7 @@ class DelIndex(Command):
 
 
 # =============================================================================
-# SEQUENCE MUTATIONS — Action (mutate AND return a value)
+# SEQUENCE MUTATIONS: Action (mutate AND return a value)
 # =============================================================================
 
 

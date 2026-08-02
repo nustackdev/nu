@@ -1,4 +1,4 @@
-"""SequenceRef hierarchy — ordered container Ref + Form mixin tiers.
+"""SequenceRef hierarchy: ordered container Ref + Form mixin tiers.
 
     SequenceRef         = shape.SequenceForm + StructuredRef
     MutableSequenceRef  = shape.MutableSequenceForm + SequenceRef
@@ -18,7 +18,7 @@ Form composition provides:
                 on_descendants_change() (shape-domain)
 
 The ``_wrap_*`` abstract methods from SequenceForm are left un-overridden
-(raise NotImplementedError) in these blueprints — substrate subclasses fill
+(raise NotImplementedError) in these blueprints. Substrate subclasses fill
 them in.
 """
 
@@ -41,7 +41,7 @@ class SequenceRef[ItemResultT](SequenceForm, StructuredRef):
     """Ordered container Ref; ``ref[i]`` navigates to the element's child Ref.
 
     Navigation is defined ONCE (``__getitem__``) and routes through
-    ``_wrap_item_ref`` — the child-Ref analogue of ``_wrap_element_result``. Each
+    ``_wrap_item_ref``: the child-Ref analogue of ``_wrap_element_result``. Each
     tier supplies the matching domain item Ref as its default; substrates override
     ``_wrap_item_ref`` to return their own item Ref and bind ``ItemResultT`` so
     ``ref[i]`` is statically the correct child Ref type.

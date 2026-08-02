@@ -1,4 +1,4 @@
-"""Set collection — bases + mutations.
+"""Set collection: bases + mutations.
 
 SetLikeForm = Collection + union/intersection/difference/symmetric_difference/issubset/issuperset/isdisjoint
     + copy + __or__/__and__/__sub__/__xor__
@@ -37,7 +37,10 @@ __all__ = [
 class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     CollectionForm[ElementT, CollectionResultT, ElementResultT],
 ):
-    """Base for set values — like collections.abc.Set.
+    """Base for set values, like collections.abc.Set.
+
+    Ops: union, intersection, difference, symmetric_difference, issubset,
+    issuperset, isdisjoint, copy, and operators | & - ^.
 
     Subclasses must override:
         _wrap_set_result(operand): Wrap set interaction result.
@@ -54,19 +57,19 @@ class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         raise NotImplementedError()
 
     def union(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set union."""
+        """Union with ``other``."""
         from .set_interactions import Union
 
         return cast("CollectionResultT", self._wrap_set_result(Union(self, other)))
 
     def intersection(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set intersection."""
+        """Intersection with ``other``."""
         from .set_interactions import Intersection
 
         return cast("CollectionResultT", self._wrap_set_result(Intersection(self, other)))
 
     def difference(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set difference."""
+        """Difference with ``other``."""
         from .set_interactions import Difference
 
         return cast("CollectionResultT", self._wrap_set_result(Difference(self, other)))
@@ -74,13 +77,13 @@ class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     def symmetric_difference(
         self, other: Arg[set[ElementT] | frozenset[ElementT]]
     ) -> CollectionResultT:
-        """Set symmetric difference."""
+        """Symmetric difference with ``other``."""
         from .set_interactions import SymmetricDifference
 
         return cast("CollectionResultT", self._wrap_set_result(SymmetricDifference(self, other)))
 
     def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
-        """Check if subset."""
+        """True if every element is in ``other``."""
         from nu.forms.primitives import Bool
 
         from .set_interactions import IsSubset
@@ -88,7 +91,7 @@ class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return Bool(IsSubset(self, other))
 
     def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
-        """Check if superset."""
+        """True if every element of ``other`` is in this set."""
         from nu.forms.primitives import Bool
 
         from .set_interactions import IsSuperset
@@ -96,7 +99,7 @@ class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return Bool(IsSuperset(self, other))
 
     def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
-        """Check if disjoint."""
+        """True if no elements are shared with ``other``."""
         from nu.forms.primitives import Bool
 
         from .set_interactions import IsDisjoint
@@ -110,25 +113,21 @@ class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return cast("CollectionResultT", self._wrap_set_result(Copy(self)))
 
     def __or__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set union operator: self | other. Returns a new set."""
         from .set_interactions import SetOr
 
         return cast("CollectionResultT", self._wrap_set_result(SetOr(self, other)))
 
     def __and__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set intersection operator: self & other. Returns a new set."""
         from .set_interactions import SetAnd
 
         return cast("CollectionResultT", self._wrap_set_result(SetAnd(self, other)))
 
     def __sub__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set difference operator: self - other. Returns a new set."""
         from .set_interactions import SetSub
 
         return cast("CollectionResultT", self._wrap_set_result(SetSub(self, other)))
 
     def __xor__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Set symmetric difference operator: self ^ other. Returns a new set."""
         from .set_interactions import SetXor
 
         return cast("CollectionResultT", self._wrap_set_result(SetXor(self, other)))
@@ -137,7 +136,7 @@ class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
 class MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
-    """Base for mutable set values — like collections.abc.MutableSet.
+    """Base for mutable set values, like collections.abc.MutableSet.
 
     Type Parameters:
         CollectionT: Native Python collection type
@@ -228,7 +227,7 @@ class MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
 class ReactiveSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
     MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
-    """Reactive set — adds on_change() for any-change observation.
+    """Reactive set. Adds on_change() for any-change observation.
 
     Provides (in addition to MutableSetForm):
         on_change() → OnChange

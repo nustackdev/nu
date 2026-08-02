@@ -2,7 +2,7 @@
 
 Generic, semantically-aware tools for injecting wrappers (Brackets,
 Policies, instrumentation) at the natural unit of mutation: the Flow.
-No fabric or boundary knowledge — wrappers and predicates are
+No fabric or boundary knowledge. Wrappers and predicates are
 caller-provided. Effect analysis (which Refs a subtree touches) lives
 in the sibling ``effects`` module.
 """
@@ -41,7 +41,7 @@ def wrap_flows(
     """Wrap outermost Flow nodes with ``wrapper(flow)``.
 
     Walks top-down. When a Flow (matching ``predicate`` if given) is
-    found, calls ``wrapper(flow)`` and does not recurse inside — that
+    found, calls ``wrapper(flow)`` and does not recurse inside. That
     subtree is claimed whole. Non-matching nodes are recursed into.
 
     Use this to inject one boundary per outermost unit of mutation,
@@ -73,12 +73,12 @@ def wrap_flow_children(
     by the time the outer Flow is reached, its inner Flow children
     already carry their per-branch wraps.
 
-    The Flow node itself is unchanged in shape — only its children are
+    The Flow node itself is unchanged in shape. Only its children are
     swapped. Use this when the boundary unit is the Flow's branch, not
     the Flow as a whole.
 
     ``descend``: optional predicate. If it returns ``False`` for a node,
-    that subtree is treated as opaque — recursion stops there. Use this
+    that subtree is treated as opaque and recursion stops there. Use this
     to keep existing wrappers (e.g. Brackets) intact while still letting
     the outer Flow wrap them as a whole.
     """

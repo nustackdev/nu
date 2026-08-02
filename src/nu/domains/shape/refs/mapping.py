@@ -1,11 +1,11 @@
-"""MappingRef hierarchy — key-value container Ref + Form mixin tiers.
+"""MappingRef hierarchy: key-value container Ref + Form mixin tiers.
 
     MappingRef         = shape.MappingForm + StructuredRef
     MutableMappingRef  = shape.MutableMappingForm + MappingRef
     ReactiveMappingRef = shape.ReactiveMappingForm + MutableMappingRef
 
 Navigation (``ref[key]``) is defined ONCE here and routes through the
-``_wrap_item_ref`` hook — the child-Ref analogue of ``_wrap_value_result`` /
+``_wrap_item_ref`` hook: the child-Ref analogue of ``_wrap_value_result`` /
 ``_wrap_keys_result``. Each substrate provides ``_wrap_item_ref`` (building its
 own item Ref) instead of re-overriding ``__getitem__``, and binds the
 ``ItemResultT`` type parameter so ``ref[key]`` is statically the correct child
@@ -33,7 +33,7 @@ class MappingRef[ItemResultT](MappingForm, StructuredRef):
     """Key-value container Ref; ``ref[key]`` navigates to the value's child Ref.
 
     Navigation is defined ONCE (``__getitem__``) and routes through
-    ``_wrap_item_ref`` — the child-Ref analogue of ``_wrap_value_result``. Each
+    ``_wrap_item_ref``: the child-Ref analogue of ``_wrap_value_result``. Each
     tier supplies the matching domain item Ref as its default; substrates override
     ``_wrap_item_ref`` to return their own substrate-backed item Ref and bind
     ``ItemResultT`` so ``ref[key]`` is statically the correct child Ref type.

@@ -61,7 +61,7 @@ class Tuple[*Ts](
         return Any(operand)
 
     # =========================================================================
-    # ARITHMETIC (concatenation / repeat) — new value, no mutation
+    # ARITHMETIC (concatenation / repeat): new value, no mutation
     # =========================================================================
 
     def __add__(self, other: TupleArg[*Ts]) -> Tuple:

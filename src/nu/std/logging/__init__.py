@@ -3,8 +3,8 @@
 ``logging`` is a class-and-functions module: a :class:`Logger` class you get
 from :func:`getLogger`, plus module-level shortcuts (``debug`` / ``info`` /
 ``warning`` / ``error`` / ``critical``) that fire against the root logger.
-The Nu surface mirrors that shape 1-1 -- call sites read identically to
-Python -- but every call returns a Nu ``Log`` tree instead of firing
+The Nu surface mirrors that shape 1-1. Call sites read identically to
+Python, but every call returns a Nu ``Log`` tree instead of firing
 immediately. Compose it into any bigger program::
 
     from nu.std import logging
@@ -18,7 +18,7 @@ immediately. Compose it into any bigger program::
     )
     nu.run(tree)
 
-The sink is Python's ``logging`` module itself -- its handlers, formatters,
+The sink is Python's ``logging`` module itself. Its handlers, formatters,
 filters, and logger hierarchy are the configuration surface. There is no
 separate Nu backend to bind; users configure via ``logging.basicConfig(...)``
 or attached handlers exactly the way any Python program does. That gives

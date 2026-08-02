@@ -1,4 +1,4 @@
-"""JQueueRef — janus-backed queue ref in the nu-mem fabric.
+"""JQueueRef: janus-backed queue ref in the nu-mem fabric.
 
 A leaf ref: occupies a slot in a Shape, holds metadata (capacity,
 item_type), and on first fetch vivifies a ``janus.Queue`` at the slot's
@@ -32,7 +32,7 @@ class JQueueRef[T](RefBase[janus.Queue[T]], JQueue[T]):
     """Leaf ref to a janus.Queue stored at a slot in nu-mem state.
 
     Vivifies the queue on first fetch, then returns the same instance.
-    The held item type is metadata only — janus.Queue does not enforce
+    The held item type is metadata only; janus.Queue does not enforce
     element types at runtime.
     """
 

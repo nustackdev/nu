@@ -1,9 +1,9 @@
-"""Dict substrate refs — navigate nested Python dicts under the v2 runtime.
+"""Dict substrate refs: navigate nested Python dicts under the runtime.
 
 ``RefBase`` is the first concrete substrate against the shape Ref seam
 (``StructuredRef``): it fills the plug-points with nested-dict navigation.
 
-A ref names one path segment - its address, held as ``children[1]`` and resolved
+A ref names one path segment, its address, held as ``children[1]`` and resolved
 through the runtime like any child. The parent chain lives on the tree at
 ``children[0]`` (walked via ``parent_ref``); for the common shape-field case
 those are static slot names, read off each parent's stored segment at compile
@@ -13,7 +13,7 @@ fetched with ``rt.ctx.get(dict, scope)``.
 Read is the Ref's dual role (``compile`` returns the navigate-and-fetch thunk);
 ``write`` / ``erase`` resolve the address and mutate the parent container,
 auto-creating intermediate dicts. Dynamic parent keys (a computed segment above
-the leaf) are deferred to the FlatRef / inline-refs pass.
+the leaf) resolve through the FlatRef / inline-refs pass.
 """
 
 from __future__ import annotations

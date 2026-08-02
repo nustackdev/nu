@@ -92,15 +92,14 @@ class RayService:
     On ``setup`` / ``asetup``: spawn a ray actor (optionally pinned to a
     named node with resource / CPU / GPU constraints) and initialize its
     ``Context`` from ``init`` (a lifecycle bracket, typically ``With(...)``)
-    or a legacy ``ctx_builder`` callable. ``aexecute(tree, attrs=None)``
-    routes to the actor. On ``cleanup`` / ``acleanup``: graceful shutdown,
-    then ``ray.kill``.
+    or ``ctx_builder`` (a callable). ``aexecute(tree, attrs=None)`` routes
+    to the actor. On ``cleanup`` / ``acleanup``: graceful shutdown, then
+    ``ray.kill``.
 
     Sync and async both supported. The sync path uses ``ray.get(ref)`` to
     resolve actor ObjectRefs (blocking); the async path keeps ``await ref``
-    so drivers can do other work while the actor future is in flight (real
-    concurrency benefit -- fleets can boot in parallel via
-    ``ProvideDict(..., parallel=True)``).
+    so drivers can do other work while the actor future is in flight.
+    Fleets can boot in parallel via ``ProvideDict(..., parallel=True)``.
 
     ``init`` is a ``_LifecycleBracket`` shipped to the actor. The actor
     enters its ``_aopen(Context())`` on start and holds the resulting
@@ -108,8 +107,8 @@ class RayService:
     down LIFO. Use ``With(*brackets)`` to compose multiple ``Provide``
     stacks.
 
-    ``ctx_builder`` is the legacy path: a callable returning a Context
-    (or an awaitable). Kept for now, but ``init`` is preferred.
+    ``ctx_builder`` is an alternative: a callable returning a Context (or
+    an awaitable). Pass exactly one of ``init`` or ``ctx_builder``.
 
     Actor options are pass-through: ``node``, ``actor_name``, ``num_cpus``,
     ``num_gpus``, ``max_restarts``, ``lifetime`` all forward to

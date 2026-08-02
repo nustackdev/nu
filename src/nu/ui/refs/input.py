@@ -129,7 +129,7 @@ class InputRef(Ref):
     """Text input whose value lives in the browser.
 
     Default face is display (Inter); code-shaped fields opt into
-    JetBrains Mono via `mono=True` — flips `font-mono` at render time.
+    JetBrains Mono via `mono=True`, which flips `font-mono` at render time.
     """
 
     @classmethod

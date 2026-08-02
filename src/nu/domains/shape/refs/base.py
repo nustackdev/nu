@@ -1,15 +1,14 @@
 """StructuredRef: abstract base for all shape-fabric Refs.
 
 A StructuredRef encodes a hierarchical path into a shape fabric. The parent
-lives IN the tree as ``children[0]`` (marked ``structural`` — address structure,
+lives IN the tree as ``children[0]`` (marked ``structural``: address structure,
 never value-read); this Ref's own address is ``children[1]`` (a value, resolved
 through the runtime like any child). A chain's top Ref points ``children[0]`` at
 the shared :data:`ANCHOR`, a leaf Ref that terminates the chain at the fabric
 root.
 
-This replaces the old off-tree ``_parent_ref`` back-pointer. With the parent on
-the tree, every generic pass reaches the whole Ref uniformly: no ``walk_ref_chain``
-bridging two worlds, and inline becomes a plain fold.
+With the parent on the tree, every generic pass reaches the whole Ref uniformly:
+no ``walk_ref_chain`` bridging two worlds, and inline becomes a plain fold.
 
 ``address`` / ``aaddress`` resolve ``children[1]`` through the runtime. Substrate
 plug-points (``_afetch_parent``, ``_aresolve_address``) carry their signatures and
@@ -39,7 +38,7 @@ class Anchor(Ref):
     """Terminates a StructuredRef parent chain at the fabric root.
 
     A structural leaf: no children, no address, ``structural`` empty (it is not
-    a StructuredRef). It is never value-read — it only marks where a chain's
+    a StructuredRef). It is never value-read: it only marks where a chain's
     parent walk bottoms out. Stateless, so one shared instance (:data:`ANCHOR`)
     backs every chain root.
     """
@@ -75,8 +74,8 @@ class StructuredRef(Ref):
     ) -> None:
         parent = parent_ref if parent_ref is not None else ANCHOR
         super().__init__(parent, address)
-        # All navigation metadata rides in ``payload`` — part of the Term's
-        # ``(kind, children, payload)`` identity — so the base
+        # All navigation metadata rides in ``payload``: part of the Term's
+        # ``(kind, children, payload)`` identity, so the base
         # :class:`Term._with_children` (which shares ``payload``) carries it
         # across a tree rewrite. No per-subclass ``with_children`` override, and
         # nothing user-facing lives on ``__dict__``.

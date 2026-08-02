@@ -1,11 +1,11 @@
 """Nu shape fabric: DSL + Ref blueprints (3-tier matrix) + queries/commands.
 
 Public surface:
-- ``Shape``, ``ShapeMeta``, ``Slot``, ``SlotDescriptor`` — the DSL.
+- ``Shape``, ``ShapeMeta``, ``Slot``, ``SlotDescriptor``: the DSL.
 - 21 Ref blueprints for structural navigation and substrate extension (7 families x 3 tiers).
-- ``SetCmd``, ``Erase`` — slot-level write commands.
+- ``SetCmd``, ``Erase``: slot-level write commands.
 - ``Load``, ``Exists``, ``Missing``, ``Extract``,
-  ``AdvanceCursor`` — slot-level read queries.
+  ``AdvanceCursor``: slot-level read queries.
 
 Reactive queries (``OnChange`` / ``OnChildChange`` /
 ``OnChildrenChange`` / ``OnDescendantsChange`` /

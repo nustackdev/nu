@@ -1,4 +1,4 @@
-"""Shape-domain Mapping Form glue — tier-by-tier composition.
+"""Shape-domain Mapping Form glue: tier-by-tier composition.
 
 MappingForm         = generic MappingForm + shape CollectionForm
 MutableMappingForm  = generic MutableMappingForm + shape MutableCollectionForm
@@ -31,15 +31,15 @@ __all__ = [
 
 
 class MappingForm(_MappingForm, CollectionForm):
-    """Shape mapping — key-value ops + exists/missing/extract."""
+    """Shape mapping: key-value ops + exists/missing/extract."""
 
 
 class MutableMappingForm(_MutableMappingForm, MutableCollectionForm):
-    """Mutable shape mapping — key-value ops + exists/missing/extract + set/erase."""
+    """Mutable shape mapping: key-value ops + exists/missing/extract + set/erase."""
 
 
 class ReactiveMappingForm(_ReactiveMappingForm, MutableMappingForm, ReactiveCollectionForm):
-    """Reactive shape mapping — adds on_change + tree-aware on_child_change* family.
+    """Reactive shape mapping. Adds on_change + tree-aware on_child_change* family.
 
     MRO provides:
         on_change()               from generic ReactiveMappingForm

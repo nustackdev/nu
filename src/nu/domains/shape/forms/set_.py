@@ -1,4 +1,4 @@
-"""Shape-domain Set Form glue — tier-by-tier composition.
+"""Shape-domain Set Form glue: tier-by-tier composition.
 
 SetLikeForm     = generic SetLikeForm + shape CollectionForm
 MutableSetForm  = generic MutableSetForm + shape MutableCollectionForm
@@ -27,15 +27,15 @@ __all__ = [
 
 
 class SetLikeForm(_SetLikeForm, CollectionForm):
-    """Shape set — unordered-unique-element ops + exists/missing/extract."""
+    """Shape set: unordered-unique-element ops + exists/missing/extract."""
 
 
 class MutableSetForm(_MutableSetForm, MutableCollectionForm):
-    """Mutable shape set — set ops + exists/missing/extract + set/erase."""
+    """Mutable shape set: set ops + exists/missing/extract + set/erase."""
 
 
 class ReactiveSetForm(_ReactiveSetForm, MutableSetForm, ReactiveCollectionForm):
-    """Reactive shape set — adds on_change + tree-aware on_child_change* family.
+    """Reactive shape set. Adds on_change + tree-aware on_child_change* family.
 
     MRO provides:
         on_change()               from generic ReactiveSetForm

@@ -119,7 +119,7 @@ class Compile(ScalarQuery):
 #
 # Globals / Locals / Exec reach the live Python interpreter directly, not the
 # Context. They are escape hatches for host glue, not Nu interactions in the
-# usual sense - a Nu program built only from these is just wrapped Python.
+# usual sense: a Nu program built only from these is wrapped Python.
 # Kept thin and explicit so their use is obvious; under review whether they
 # belong in core at all.
 
