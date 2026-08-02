@@ -392,14 +392,14 @@ ui = (
 )
 
 
-tree = nu.With(
+app = nu.With(
     nu.v.presets.rocksdb_navigator(".dbmovies"),
     nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
-    body=init >> nu.ForeverDo(nu.Delay(3600)),  # click-driven; hold the server open
+    body=nu.v.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
 )
 
 
 if __name__ == "__main__":
     import asyncio
 
-    asyncio.run(nu.arun(nu.v.auto_flow_atomic(tree)))
+    asyncio.run(nu.arun(app))
