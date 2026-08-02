@@ -158,12 +158,7 @@ class App(nu.ui.Index):
     pages = nu.ui.Pages({"/": Movies})
 
 
-# ---- Seed + helpers ---------------------------------------------------------
-
-# Splice one item out of a list by index. Read through `.eager` first so the
-# list lands as plain dicts (not LazyDictView) and re-encodes on write-back.
-_SpliceAt = nu.host(lambda xs, i: [*list(xs)[:i], *list(xs)[i + 1 :]], name="SpliceAt")
-
+# ---- Seed ------------------------------------------------------------------
 
 _SEED_MOVIES: list[dict] = [
     {
@@ -201,42 +196,20 @@ _SEED_MOVIES: list[dict] = [
 ]
 
 
-def _row_from_form() -> nu.Nu:
-    """Dict row read from the live form inputs."""
-    title_input = AddMovieForm.details.title.input
-    year_input = AddMovieForm.details.year.input
-    genre_input = AddMovieForm.details.genre.input
-    rating_input = AddMovieForm.score.rating.input
-    watched_input = AddMovieForm.score.watched.input
-    notes_input = AddMovieForm.score.notes.input
-    return nu.Dict.of(
-        title=nu.Str(title_input),
-        year=nu.Int(year_input),
-        genre=nu.Str(genre_input),
-        rating=nu.Float(rating_input),
-        watched=nu.If(nu.Bool(watched_input), "yes", "no"),
-        notes=nu.Str(notes_input),
-    )
-
-
-_r = nu.AnyAttrRef("r")
-_movie_cells = nu.List.of(
-    _r["title"],
-    _r["year"],
-    _r["genre"],
-    _r["rating"],
-    _r["watched"],
-    _r["notes"],
-)
-
-
 def _rows_form() -> nu.Nu:
     """Map each stored movie dict into a positional row TableRef expects."""
     return nu.Dict.of(
         rows=nu.Collect(
             nu.Map(
                 nu.Iter(State.movies),
-                transform=_movie_cells,
+                transform=nu.List.of(
+                    nu.DictAttrRef("r")["title"],
+                    nu.DictAttrRef("r")["year"],
+                    nu.DictAttrRef("r")["genre"],
+                    nu.DictAttrRef("r")["rating"],
+                    nu.DictAttrRef("r")["watched"],
+                    nu.DictAttrRef("r")["notes"],
+                ),
                 key="r",
             ),
         ),
@@ -266,7 +239,16 @@ hydrate = nu.v.Snapshot(
 on_add = nu.ReactForever(
     AddMovieForm.submit.clicked(),
     nu.v.Transaction(
-        State.movies.append(_row_from_form())
+        State.movies.append(
+            nu.Dict.of(
+                title=nu.Str(AddMovieForm.details.title.input),
+                year=nu.Int(AddMovieForm.details.year.input),
+                genre=nu.Str(AddMovieForm.details.genre.input),
+                rating=nu.Float(AddMovieForm.score.rating.input),
+                watched=nu.If(nu.Bool(AddMovieForm.score.watched.input), "yes", "no"),
+                notes=nu.Str(AddMovieForm.score.notes.input),
+            ),
+        )
         | State.total.set(State.total + 1)
         | State.watched.set(
             State.watched + nu.If(nu.Bool(AddMovieForm.score.watched.input), 1, 0),
@@ -290,14 +272,12 @@ on_add = nu.ReactForever(
 # row_clicked() delivers the raw notify payload: {"row_index": int} for row
 # clicks, {"sort_column": ..., "sort_direction": ...} for header clicks. Both
 # share the channel; branch on shape to skip header clicks.
-_click = nu.DictAttrRef("row_click")
-
 on_row_click = nu.ReactForever(
     Movies.shelf.body.table.row_clicked(),
     nu.IfDo(
-        nu.Contains(_click, "row_index"),
+        nu.Contains(nu.DictAttrRef("row_click"), "row_index"),
         nu.v.Transaction(
-            State.movies.set(_SpliceAt(State.movies.eager, _click["row_index"]))
+            State.movies.pop(nu.DictAttrRef("row_click")["row_index"])
             >> State.total.set(nu.Len(State.movies)),
         )
         >> nu.v.Snapshot(
