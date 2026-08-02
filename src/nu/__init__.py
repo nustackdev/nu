@@ -1,5 +1,5 @@
 # ruff: noqa
-"""Nu: the term programming platform.
+"""Nu: assemble software, don't write it.
 
 Two ways to import. Grab what you need flat from the root:
 

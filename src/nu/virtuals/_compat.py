@@ -1,6 +1,6 @@
 """Register virtuals view types with Python ABCs.
 
-This allows everybase core ops (KeysOp, ValuesOp, SetItemCmd, etc.)
+This allows Nu core ops (KeysOp, ValuesOp, SetItemCmd, etc.)
 to recognize virtuals views via isinstance() checks against
 collections.abc.Mapping, MutableMapping, etc.
 """

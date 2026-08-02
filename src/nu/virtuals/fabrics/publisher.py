@@ -69,7 +69,7 @@ class RedisPublisher:
         self,
         *,
         redis_url: str = "redis://localhost:6379",
-        channel_prefix: str = "everyshape",
+        channel_prefix: str = "nu",
     ) -> None:
         self.redis_url = redis_url
         self.channel_prefix = channel_prefix

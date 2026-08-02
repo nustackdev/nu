@@ -499,7 +499,7 @@ def lmdb_navigator_redis(
     subdir: bool = True,
     sync: bool = True,
     redis_url: str = "redis://localhost:6379",
-    channel_prefix: str = "everyshape",
+    channel_prefix: str = "nu",
 ) -> With:
     """LMDB + Redis Publisher/Observer + Navigator as one bracket."""
     from nu.context.fabric import Provide, With
@@ -568,7 +568,7 @@ def inmem_observer() -> With:
 
 def redis_observer(
     redis_url: str = "redis://localhost:6379",
-    channel_prefix: str = "everyshape",
+    channel_prefix: str = "nu",
 ) -> With:
     """Redis Observer as one bracket.
 

@@ -145,7 +145,7 @@ list:
 
 build:
 ifndef PKG
-	$(error PKG not set. Usage: make build PKG=everybase)
+	$(error PKG not set. Usage: make build PKG=nu)
 endif
 	@echo "$(BLUE)Building $(PKG)...$(NC)"
 	cd $(PKG) && uv build
