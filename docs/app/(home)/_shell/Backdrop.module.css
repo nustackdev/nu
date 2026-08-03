@@ -16,8 +16,18 @@
  *   footer  — blue    soft top fade
  * ==========================================================================*/
 
-:global(:root) {
+.root {
+  composes: palette from '../_tokens.module.css';
+  position: relative;
+  color: var(--nu-ink);
+  font-variant-numeric: tabular-nums;
+  isolation: isolate;
+  overflow-x: clip;
+  background: rgb(6, 6, 8);
   color-scheme: dark;
+
+  /* Fumadocs token overrides — scoped to the home shell so they never leak
+     into /docs, which owns its own theme via the fumadocs preset + toggle. */
   --color-fd-background: rgb(25, 25, 28);
   --color-fd-foreground: #eae8f4;
   --color-fd-muted: rgba(255, 255, 255, 0.04);
@@ -34,19 +44,6 @@
   --color-fd-accent: rgba(255, 255, 255, 0.05);
   --color-fd-accent-foreground: #eae8f4;
   --color-fd-ring: #a684ff;
-}
-:global(body) {
-  background: rgb(25, 25, 28);
-}
-
-.root {
-  composes: palette from '../_tokens.module.css';
-  position: relative;
-  color: var(--nu-ink);
-  font-variant-numeric: tabular-nums;
-  isolation: isolate;
-  overflow-x: clip;
-  background: rgb(6, 6, 8);
 
   --nu-ink:       #eae8f4;
   --nu-ink-2:     #b3b0c8;

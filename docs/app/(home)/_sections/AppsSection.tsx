@@ -38,16 +38,24 @@ export function AppsSection() {
                   <h3 className={s.rowTitle}>{a.title}</h3>
                   <p className={s.body}>{a.body}</p>
                   <div className={s.actions}>
-                    <a
-                      className={s.repoBtn}
-                      href={a.repo}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <GithubMark size={14} />
-                      <span>{a.repo.replace('https://github.com/', '')}</span>
-                      <ArrowUpRight size={13} aria-hidden className={s.repoArrow} />
-                    </a>
+                    {a.comingSoon ? (
+                      <span className={s.ghostBtn} aria-disabled="true">
+                        Coming soon
+                      </span>
+                    ) : (
+                      a.repo && (
+                        <a
+                          className={s.repoBtn}
+                          href={a.repo}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <GithubMark size={14} />
+                          <span>{a.repo.replace('https://github.com/', '')}</span>
+                          <ArrowUpRight size={13} aria-hidden className={s.repoArrow} />
+                        </a>
+                      )
+                    )}
                   </div>
                 </div>
                 <div className={s.viz} aria-hidden>

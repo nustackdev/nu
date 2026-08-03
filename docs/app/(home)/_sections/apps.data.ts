@@ -7,7 +7,8 @@ export type App = {
   title: string;
   body: string;
   href: string;
-  repo: string;
+  repo?: string;
+  comingSoon?: boolean;
   Viz: ComponentType;
 };
 
@@ -25,7 +26,7 @@ export const APPS: App[] = [
     title: 'A workspace for building on Nu.',
     body: 'The Nu programming model scaled into a knowledge base. Your everything base.',
     href: '/nuspace',
-    repo: 'https://github.com/nustackdev/nuspace',
+    comingSoon: true,
     Viz: NuspaceMockSvg,
   },
 ];

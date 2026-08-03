@@ -25,9 +25,9 @@ export function FabricsSection() {
   return (
     <SectionCard hue="s2" id="fabrics">
       <SectionCol>
-        <SectionTitle>The current fabrics.</SectionTitle>
+        <SectionTitle>Fabrics.</SectionTitle>
         <SectionIntro>
-          Here are the native ones Nu speaks today.
+          Fabrics are the tissue between Refs and the real world: memory, kv stores, UI, a compute cluster. These are the ones Nu ships with today.
         </SectionIntro>
 
         <ol className={s.rows}>

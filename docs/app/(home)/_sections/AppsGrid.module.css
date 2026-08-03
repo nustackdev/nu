@@ -118,6 +118,20 @@
 .repoArrow {
   color: var(--nu-accent);
 }
+.ghostBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px dashed var(--nu-rule-2);
+  background: transparent;
+  color: var(--nu-ink-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: not-allowed;
+}
 
 /* ============================================================================
  * Per-app palette scope. Two apps → two hues from the silver-woven family.
