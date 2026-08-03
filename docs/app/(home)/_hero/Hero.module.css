@@ -8,20 +8,78 @@
 .hero {
   position: relative;
   display: grid;
-  grid-template-columns: 65% 35%;
+  grid-template-columns: minmax(0, 1fr) 400px;
   column-gap: 0;
   row-gap: clamp(28px, 3.6vw, 44px);
-  padding: clamp(96px, 15vh, 176px) 0 clamp(24px, 3vh, 48px);
+  padding: clamp(132px, 20.7vh, 243px) 0 clamp(33px, 4.14vh, 67px);
   color: var(--nu-ink);
   align-items: start;
   font-feature-settings: 'ss01', 'ss02', 'liga', 'calt';
 }
 
-@media (max-width: 840px) {
+.mobileTitle { display: none; }
+.sloganLine {
+  font-size: clamp(68px, 9.12vw, 133px);
+  color: var(--nu-ink);
+  display: block;
+}
+
+@media (max-width: 900px) {
   .hero {
     grid-template-columns: 1fr;
     row-gap: 36px;
+    padding-top: 120px;
+    padding-bottom: clamp(20px, 3vh, 40px);
+    justify-items: center;
+    text-align: center;
   }
+  .colLeft,
+  .colRight {
+    align-items: center;
+    justify-items: center;
+    text-align: center;
+  }
+  .stack {
+    align-items: center;
+  }
+  .tagline,
+  .useCasesKicker,
+  .useCasesList,
+  .metaLine {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .heroCtaRow {
+    justify-content: center;
+  }
+  .ghost,
+  .desktopOnly {
+    display: none;
+  }
+  .mobileTitle {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(8px, 1.6vw, 14px);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(28px, 4.6vw, 36px);
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    color: var(--nu-ink);
+    text-wrap: balance;
+  }
+  .inlineLogo {
+    width: 1.1em;
+    height: 1.1em;
+    flex: none;
+    transform: translateY(0.15em);
+  }
+}
+
+@media (max-width: 500px) {
+  .inlineLogo { display: none; }
 }
 
 /* ---- left col — ghost logo + stacked display slogan -----------------------
@@ -43,14 +101,14 @@
   transform: translate(-38%, -50%);
   height: clamp(624px, 110%, 984px);
   width: auto;
-  opacity: 0.55;
+  opacity: 0.7;
   pointer-events: none;
   z-index: 0;
   mix-blend-mode: screen;
 }
 :global(html.light) .colLeft .ghost {
   mix-blend-mode: multiply;
-  opacity: 0.5;
+  opacity: 0.7;
 }
 
 .stack {
@@ -64,30 +122,9 @@
   font-weight: 700;
   letter-spacing: -0.045em;
 }
-.line1 {
-  display: flex;
-  align-items: baseline;
-  gap: clamp(14px, 1.6vw, 28px);
-}
-.wordNu,
-.sloganLine {
-  font-size: clamp(72px, 9.6vw, 140px);
-  color: var(--nu-ink);
-  display: block;
-}
-.sep {
-  font-size: clamp(56px, 7.2vw, 106px);
-  color: var(--nu-ink-2);
-  line-height: 1;
-  transform: translateY(-0.08em);
-  font-weight: 400;
-}
 .slogan {
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(2px, 0.4vw, 6px);
 }
 .srOnly {
   position: absolute;
@@ -102,8 +139,7 @@
 }
 
 @media (max-width: 900px) {
-  .wordNu, .sloganLine { font-size: clamp(64px, 12vw, 120px); }
-  .sep { font-size: clamp(48px, 9vw, 92px); }
+  .sloganLine { font-size: clamp(64px, 12vw, 120px); }
   .ghost {
     height: clamp(480px, 108%, 744px);
     transform: translate(-42%, -50%);
@@ -206,6 +242,9 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 4px;
+}
+.heroCtaRow + .heroCtaRow {
+  margin-top: -14px;
 }
 .heroCta {
   display: inline-flex;

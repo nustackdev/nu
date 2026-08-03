@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowUpRight, BookOpen } from 'lucide-react';
 import { GithubMark } from '@/components/marks/GithubMark';
+import { NuLogo } from '@/components/marks/NuLogo';
 import s from './Hero.module.css';
 
 function XMark({ size = 13 }: { size?: number }) {
@@ -61,18 +62,18 @@ export function Hero() {
           </g>
         </svg>
 
-        <div className={s.stack}>
-          <div className={s.line1} aria-hidden>
-            <span className={s.wordNu}>Nu</span>
-            <span className={s.sep}>&mdash;</span>
-          </div>
-          <h1 id="hero-title" className={s.slogan}>
-            <span className={s.srOnly}>Nu — the interaction primitive.</span>
-            <span aria-hidden className={s.sloganLine}>the</span>
-            <span aria-hidden className={s.sloganLine}>interaction</span>
-            <span aria-hidden className={s.sloganLine}>primitive.</span>
-          </h1>
-        </div>
+        <h1 id="hero-title" className={`${s.stack} ${s.slogan}`}>
+          <span className={s.srOnly}>Nu — the interaction primitive.</span>
+          <span aria-hidden className={`${s.sloganLine} ${s.desktopOnly}`}>Nu &mdash;</span>
+          <span aria-hidden className={`${s.sloganLine} ${s.desktopOnly}`}>the</span>
+          <span aria-hidden className={`${s.sloganLine} ${s.desktopOnly}`}>interaction</span>
+          <span aria-hidden className={`${s.sloganLine} ${s.desktopOnly}`}>primitive.</span>
+
+          <span aria-hidden className={s.mobileTitle}>
+            <NuLogo className={s.inlineLogo} />
+            <span>Nu &mdash; the interaction primitive.</span>
+          </span>
+        </h1>
       </div>
 
       <aside className={s.colRight} aria-label="project details">
@@ -111,6 +112,8 @@ export function Hero() {
             <span className={s.heroCtaRepo}>nustackdev/nu</span>
             <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
           </a>
+        </div>
+        <div className={s.heroCtaRow}>
           <a
             className={s.heroCta}
             href="https://discord.gg/tCa8YE7XVr"

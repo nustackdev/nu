@@ -15,8 +15,18 @@ import s from './HeroViz.module.css';
  */
 export function HeroViz() {
   return (
-    <div className={s.wrap}>
-      <LeftTree />
+    <section className={s.section}>
+      <div className={s.wrap}>
+        <div className={s.lede}>
+          <p className={s.ledeProse}>
+            Every app is a set of interactions between systems &mdash;{' '}
+            <em>a database, a UI, AI agents, services.</em> Nu makes interaction
+            the primitive: <b>Refs</b> name what you touch. <b>Interactions</b>{' '}
+            describe what to do with them. Persistence, reactivity, atomicity,
+            observability, and scalability are inherent &mdash; not bolted on.
+          </p>
+        </div>
+        <LeftTree />
       <div className={s.bridge} aria-hidden>
         <svg className={s.bridgeDesk} viewBox="0 0 20 50" preserveAspectRatio="none">
           <polyline
@@ -44,7 +54,8 @@ export function HeroViz() {
       <div className={s.right}>
         <RightScene />
       </div>
-    </div>
+      </div>
+    </section>
   );
 }
 
@@ -160,6 +171,10 @@ function LeftTree() {
             <span className={s.dim}>)</span>
           </Line>
         </Container>
+
+        <Line>
+          <span className={s.dim}>)</span>
+        </Line>
       </Container>
     </div>
   );

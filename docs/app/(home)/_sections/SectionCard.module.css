@@ -15,7 +15,6 @@
 
 .section {
   position: relative;
-  padding: 0 var(--nu-pad-x);
 }
 
 /* per-section accent tokens — strict blue + purple + silver only.
@@ -236,4 +235,3 @@
   height: auto;
   display: block;
 }
-
