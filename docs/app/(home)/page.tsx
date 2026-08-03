@@ -1,5 +1,6 @@
 import { Backdrop } from './_shell/Backdrop';
 import { Hero } from './_hero/Hero';
+import { HeroViz } from './_hero/HeroViz';
 import { SectionGroup } from './_sections/SectionGroup';
 import { InteractionModelSection } from './_sections/InteractionModelSection';
 import { NuSection } from './_sections/NuSection';
@@ -11,6 +12,7 @@ export default function HomePage() {
   return (
     <Backdrop>
       <Hero />
+      <HeroViz />
       <SectionGroup label="theory">
         <InteractionModelSection />
       </SectionGroup>

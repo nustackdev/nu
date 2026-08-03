@@ -46,7 +46,6 @@
   font-variant-numeric: tabular-nums;
   isolation: isolate;
   background: rgb(6, 6, 8);
-  overflow-x: clip;
 
   --nu-ink:       #eae8f4;
   --nu-ink-2:     #b3b0c8;

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Search, BookOpen } from 'lucide-react';
 import { useSearchContext } from 'fumadocs-ui/contexts/search';
-import { NustackLogo } from '@/components/marks/NustackLogo';
+import { NuLogo } from '@/components/marks/NuLogo';
 import { GithubMark } from '@/components/marks/GithubMark';
 import s from './FloatingNav.module.css';
 
@@ -14,7 +14,7 @@ export function FloatingNav() {
     <header className={s.floatingNav}>
       <div className={s.navPill}>
         <Link href="/" className={s.navIcon} aria-label="nustack home">
-          <NustackLogo size={19} variant="accent" weight={2.75} />
+          <NuLogo size={18} />
         </Link>
 
         <button

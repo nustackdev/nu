@@ -4,6 +4,8 @@
 
 html {
   scrollbar-gutter: stable;
+  overflow-x: clip;
+  font-optical-sizing: auto;
 }
 
 html > body[data-scroll-locked] {

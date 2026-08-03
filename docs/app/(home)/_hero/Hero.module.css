@@ -1,247 +1,225 @@
-/* =============================================================================
- * Hero — wordmark-led landing block.
- *   heroInner: centered flex column, top-heavy padding
- *   heroWordmark: display-800 mark (logo + "nustack")
- *   heroClaim: h1 headline
- *   heroMission: supporting paragraph
+/* ============================================================================
+ * Hero — editorial 2-col landing block.
+ *   folio + rule span both columns
+ *   left col:  wordmark, display slogan, byline
+ *   right col: kicker/tagline, use cases, meta rows, CTA row
  * ==========================================================================*/
 
 .hero {
   position: relative;
-  padding: 0;
-  background: transparent;
-  color: var(--nu-ink);
-}
-
-
-.heroInner {
-  position: relative;
-  z-index: 2;
-  padding: clamp(96px, 15vh, 176px) var(--nu-pad-x) clamp(24px, 3vh, 48px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: clamp(24px, 3vh, 40px);
-}
-
-.heroWordmark {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(3.31rem, 9.36vw, 7.92rem);
-  line-height: 1;
-  letter-spacing: -0.045em;
-  color: var(--nu-ink);
-  margin: 0;
-  position: relative;
-  z-index: 3;
-  isolation: isolate;
-  display: inline-flex;
-  /* Baseline align: SVG's synthesized baseline is its bottom edge; text
-     baseline is the bottom of the caps. Since the logo is exactly 1cap tall
-     and its viewBox is trimmed to the visible stroked square, its top and
-     bottom coincide 1:1 with the caps' top and bottom. */
-  align-items: baseline;
-  gap: 0.08em;
-}
-.heroWordmarkLogo {
-  flex: none;
-  /* Match capital letter height exactly. `cap` = font's cap-height in the
-     current font-size (Inter cap = ~0.72em). Overrides the SVG's width/height
-     attributes. */
-  width: 1cap;
-  height: 1cap;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
-}
-
-.heroClaim {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(1.9rem, 4.2vw, 3rem);
-  line-height: 1.08;
-  letter-spacing: -0.036em;
-  margin: 0;
-  max-width: 26ch;
-  text-align: center;
-  text-wrap: balance;
-  color: var(--nu-ink);
-}
-.heroMissionGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: center;
-}
-.heroMission {
-  font-family: var(--font-display);
-  font-size: clamp(15.5px, 1.4vw, 18px);
-  line-height: 1.72;
-  color: color-mix(in oklab, var(--nu-ink) 82%, var(--nu-ink-2) 18%);
-  max-width: 68ch;
-  margin: 0 auto;
-  text-align: center;
-}
-.heroMission b {
-  color: var(--nu-ink);
-  font-weight: 600;
-}
-.heroMissionSep {
-  color: var(--nu-ink-3);
-  padding: 0 0.15em;
-}
-.heroMissionAccent {
-  color: var(--nu-accent);
-  font-weight: 700;
-}
-.heroMissionAccent2 {
-  color: var(--nu-accent-2);
-  font-weight: 700;
-}
-
-/* ---- meta labels (GitHub-style key/value pills) ---- */
-.heroLabels {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-}
-.label {
-  display: inline-flex;
-  align-items: stretch;
-  overflow: hidden;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.04);
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  text-transform: lowercase;
-}
-.labelKey,
-.labelVal {
-  padding: 7px 10px;
-  display: inline-flex;
-  align-items: center;
-}
-.labelKey {
-  color: var(--nu-ink);
-  background: rgba(255, 255, 255, 0.06);
-  border-right: 1px solid rgba(255, 255, 255, 0.16);
-  font-weight: 600;
-}
-.labelVal {
-  color: var(--nu-ink);
-  background: transparent;
-  font-weight: 600;
-}
-.labelValAccent {
-  color: var(--nu-accent);
-}
-
-/* ---- audience cards (agents / humans) ---- */
-.heroAudienceGrid {
-  width: 100%;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: clamp(8px, 1vh, 16px);
+  grid-template-columns: 65% 35%;
+  column-gap: 0;
+  row-gap: clamp(28px, 3.6vw, 44px);
+  padding: clamp(96px, 15vh, 176px) 0 clamp(24px, 3vh, 48px);
+  color: var(--nu-ink);
+  align-items: start;
+  font-feature-settings: 'ss01', 'ss02', 'liga', 'calt';
 }
-@media (max-width: 780px) {
-  .heroAudienceGrid { grid-template-columns: 1fr; }
+
+@media (max-width: 840px) {
+  .hero {
+    grid-template-columns: 1fr;
+    row-gap: 36px;
+  }
 }
-.audienceCard {
+
+/* ---- left col — ghost logo + stacked display slogan -----------------------
+ * The NuLogo is inlined as a stroke-only outline that bleeds off the left
+ * edge and sits BEHIND a 4-line stack: Nu · / The / Interaction / Primitive.
+ * Text always wins the composition; ghost supports, never competes.
+ * ==========================================================================*/
+.colLeft {
   position: relative;
-  text-align: left;
-  padding: clamp(18px, 1.8vw, 24px);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.035) 0%,
-    rgba(255, 255, 255, 0.015) 100%
-  );
-  backdrop-filter: blur(14px) saturate(120%);
-  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  isolation: isolate;
+  min-width: 0;
+  padding-left: 0;
 }
-.audienceCard[data-audience="agents"] {
-  --aud-accent: var(--nu-accent);
-  --aud-accent-line: var(--nu-accent-line);
+
+.ghost {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translate(-38%, -50%);
+  height: clamp(624px, 110%, 984px);
+  width: auto;
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: screen;
 }
-.audienceCard[data-audience="humans"] {
-  --aud-accent: var(--nu-accent-2);
-  --aud-accent-line: var(--nu-accent-2-line);
+:global(html.light) .colLeft .ghost {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
 }
-.audienceHeader {
+
+.stack {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: clamp(2px, 0.4vw, 6px);
+  line-height: 0.92;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.045em;
 }
-.audienceTag {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0;
-  color: var(--aud-accent);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+.line1 {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(14px, 1.6vw, 28px);
+}
+.wordNu,
+.sloganLine {
+  font-size: clamp(72px, 9.6vw, 148px);
+  color: var(--nu-ink);
+  display: block;
+}
+.sep {
+  font-size: clamp(56px, 7.2vw, 112px);
+  color: var(--nu-ink-2);
   line-height: 1;
+  transform: translateY(-0.08em);
+  font-weight: 400;
 }
-.audienceTagMark {
-  width: 22px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--aud-accent);
+.slogan {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.4vw, 6px);
 }
-.audienceTitle {
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 900px) {
+  .wordNu, .sloganLine { font-size: clamp(64px, 12vw, 120px); }
+  .sep { font-size: clamp(48px, 9vw, 92px); }
+  .ghost {
+    height: clamp(480px, 108%, 744px);
+    transform: translate(-42%, -50%);
+    opacity: 0.5;
+  }
+  :global(html.light) .colLeft .ghost { opacity: 0.45; }
+}
+/* ---- right col — pitch + use cases + meta + actions ---------------------- */
+.colRight {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(24px, 2.6vw, 34px);
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.tagline {
   margin: 0;
   font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(15.5px, 1.15vw, 17.5px);
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: color-mix(in oklab, var(--nu-ink) 88%, var(--nu-ink-2) 12%);
+  text-wrap: pretty;
+  max-width: 36ch;
+}
+.taglineAccent {
+  font-style: normal;
   font-weight: 600;
-  font-size: clamp(15.5px, 1.2vw, 17.5px);
-  letter-spacing: -0.012em;
   color: var(--nu-ink);
-  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--nu-accent) 92%, white 8%),
+    color-mix(in oklab, var(--nu-accent-2) 92%, white 8%)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.005em;
 }
-.audienceList {
-  margin: 0;
-  padding: 0;
+@media (max-width: 620px) {
+  .tagline br { display: none; }
+}
+
+/* ---- use cases ------------------------------------------------------------ */
+.useCasesList {
+  max-width: 36ch;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  margin: 0;
+  padding: 12px 0 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  border-top: 1px solid var(--nu-rule);
 }
-.audienceList li {
-  position: relative;
-  padding-left: 18px;
+.useCasesItem {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  align-items: baseline;
+  gap: 10px;
   font-family: var(--font-display);
   font-size: 14px;
-  line-height: 1.55;
-  color: var(--nu-ink-2);
+  line-height: 1.45;
+  color: color-mix(in oklab, var(--nu-ink) 92%, var(--nu-ink-2) 8%);
 }
-.audienceList li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.55em;
-  width: 6px;
-  height: 6px;
+.useCasesItem::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
   border-radius: 999px;
-  background: var(--aud-accent);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--aud-accent) 20%, transparent);
+  background: color-mix(in oklab, var(--nu-accent) 55%, var(--nu-accent-2) 45%);
+  transform: translateY(-2px);
+  justify-self: center;
 }
 
-/* ---- CTA row ---- */
+/* ---- meta ---------------------------------------------------------------- */
+.meta {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--nu-rule);
+  max-width: 36ch;
+}
+.metaRow {
+  display: grid;
+  grid-template-columns: 5.5em 1fr;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--nu-rule);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.metaKey {
+  margin: 0;
+  color: var(--nu-ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.metaVal { margin: 0; color: var(--nu-ink); font-weight: 500; }
+
+/* ---- CTA row (common site buttons) --------------------------------------- */
 .heroCtaRow {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-top: 4px;
 }
 .heroCta {
   display: inline-flex;
@@ -272,31 +250,4 @@
   font-size: 12.5px;
   letter-spacing: 0;
 }
-.heroCtaArrow {
-  color: var(--nu-ink-3);
-}
-
-.heroCtaGhost {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 13px 6px;
-  color: var(--nu-ink-2);
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.005em;
-  text-decoration: none;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid transparent;
-  transition: color .18s ease, border-color .18s ease;
-  margin-left: 6px;
-}
-.heroCtaGhost:hover {
-  color: var(--nu-ink);
-  border-bottom-color: var(--nu-ink-3);
-}
-@media (max-width: 520px) {
-  .heroCtaGhost { margin-left: 0; }
-}
+.heroCtaArrow { color: var(--nu-ink-3); }
