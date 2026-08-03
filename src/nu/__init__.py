@@ -13,9 +13,8 @@ Or reach a subpackage by dot-access:
     nu.mem.IntRef       nu.virtuals.presets.memory_storage
     nu.ui.Page          nu.std.uuid.UUID
 
-Short aliases: ``nu.m`` = ``nu.mem``, ``nu.nd`` = ``nu.ui``, ``nu.v`` =
-``nu.virtuals``. Same modules, shorter to type. ``nu.nd`` still says "nudle"
-because nudle is the standard web fabric; the module just lives at ``nu.ui``.
+Short aliases: ``nu.m`` = ``nu.mem``, ``nu.v`` = ``nu.virtuals``.
+Same modules, shorter to type.
 
 Flat at the root: forms, core interactions, flows, spans, the context fabric,
 and the language essentials (``Nu``, the kinds, the ``Arg`` aliases, the
@@ -127,7 +126,6 @@ from . import invisibles, mem, ray, std, ui, virtuals
 
 # Short aliases for the fabric adapters and UI layer.
 m = mem
-nd = ui
 v = virtuals
 
 
