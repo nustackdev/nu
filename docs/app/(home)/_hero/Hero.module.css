@@ -101,14 +101,14 @@
   transform: translate(-38%, -50%);
   height: clamp(624px, 110%, 984px);
   width: auto;
-  opacity: 0.7;
+  opacity: 0.5;
   pointer-events: none;
   z-index: 0;
   mix-blend-mode: screen;
 }
 :global(html.light) .colLeft .ghost {
   mix-blend-mode: multiply;
-  opacity: 0.7;
+  opacity: 0.5;
 }
 
 .stack {

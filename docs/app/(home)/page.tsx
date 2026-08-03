@@ -13,7 +13,7 @@ export default function HomePage() {
     <Backdrop>
       <Hero />
       <HeroViz />
-      <SectionGroup label="theory">
+      <SectionGroup label="model">
         <InteractionModelSection />
       </SectionGroup>
       <SectionGroup label="nu">
