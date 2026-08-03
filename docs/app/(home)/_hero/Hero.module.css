@@ -71,12 +71,12 @@
 }
 .wordNu,
 .sloganLine {
-  font-size: clamp(72px, 9.6vw, 148px);
+  font-size: clamp(72px, 9.6vw, 140px);
   color: var(--nu-ink);
   display: block;
 }
 .sep {
-  font-size: clamp(56px, 7.2vw, 112px);
+  font-size: clamp(56px, 7.2vw, 106px);
   color: var(--nu-ink-2);
   line-height: 1;
   transform: translateY(-0.08em);
@@ -118,6 +118,7 @@
   gap: clamp(24px, 2.6vw, 34px);
   min-width: 0;
   padding-top: 4px;
+  align-self: center;
 }
 
 .tagline {
@@ -151,68 +152,53 @@
   .tagline br { display: none; }
 }
 
-/* ---- use cases ------------------------------------------------------------ */
-.useCasesList {
+/* ---- use cases — editorial numbered index --------------------------------- */
+.useCasesKicker {
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--nu-ink-3);
   max-width: 36ch;
+}
+.useCasesList {
   list-style: none;
-  margin: 0;
-  padding: 12px 0 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 6px;
-  border-top: 1px solid var(--nu-rule);
-}
-.useCasesItem {
-  display: grid;
-  grid-template-columns: 14px 1fr;
-  align-items: baseline;
-  gap: 10px;
-  font-family: var(--font-display);
-  font-size: 14px;
-  line-height: 1.45;
-  color: color-mix(in oklab, var(--nu-ink) 92%, var(--nu-ink-2) 8%);
-}
-.useCasesItem::before {
-  content: '';
-  display: inline-block;
-  width: 4px;
-  height: 4px;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--nu-accent) 55%, var(--nu-accent-2) 45%);
-  transform: translateY(-2px);
-  justify-self: center;
-}
-
-/* ---- meta ---------------------------------------------------------------- */
-.meta {
-  margin: 0;
+  margin: calc(-1 * clamp(15px, 1.65vw, 21px)) 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--nu-rule);
   max-width: 36ch;
 }
-.metaRow {
+.useCasesItem {
   display: grid;
-  grid-template-columns: 5.5em 1fr;
+  grid-template-columns: 2.4em 1fr;
   align-items: baseline;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--nu-rule);
+  padding: 5px 0;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: color-mix(in oklab, var(--nu-ink) 94%, var(--nu-ink-2) 6%);
+}
+.useCasesNum {
   font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 1.2;
-  letter-spacing: 0.02em;
+  font-size: 11px;
+  color: var(--nu-ink-3);
+  letter-spacing: 0.1em;
   font-variant-numeric: tabular-nums;
 }
-.metaKey {
-  margin: 0;
-  color: var(--nu-ink-3);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
+
+/* ---- meta strip — colophon-style fine print below CTAs ------------------- */
+.metaLine {
+  margin: 6px 0 0;
+  font-family: var(--font-mono);
   font-size: 10.5px;
-  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--nu-ink-3);
+  font-variant-numeric: tabular-nums;
 }
-.metaVal { margin: 0; color: var(--nu-ink); font-weight: 500; }
+.metaLine span { color: var(--nu-ink-4); padding: 0 8px; }
 
 /* ---- CTA row (common site buttons) --------------------------------------- */
 .heroCtaRow {
@@ -251,3 +237,36 @@
   letter-spacing: 0;
 }
 .heroCtaArrow { color: var(--nu-ink-3); }
+
+/* ---- primary CTA variants — solid brand fills --------------------------- */
+.heroCtaPurple {
+  background: color-mix(in oklab, var(--nu-accent) 85%, black 15%);
+  border-color: color-mix(in oklab, var(--nu-accent) 40%, black 60%);
+  color: white;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
+              0 6px 18px -8px var(--nu-accent-glow);
+}
+.heroCtaPurple:hover {
+  background: color-mix(in oklab, var(--nu-accent) 92%, black 8%);
+  border-color: color-mix(in oklab, var(--nu-accent) 35%, black 65%);
+}
+.heroCtaPurple > svg,
+.heroCtaPurple .heroCtaArrow {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.heroCtaBlue {
+  background: color-mix(in oklab, var(--nu-accent-2) 85%, black 15%);
+  border-color: color-mix(in oklab, var(--nu-accent-2) 40%, black 60%);
+  color: white;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
+              0 6px 18px -8px var(--nu-accent-2-glow);
+}
+.heroCtaBlue:hover {
+  background: color-mix(in oklab, var(--nu-accent-2) 92%, black 8%);
+  border-color: color-mix(in oklab, var(--nu-accent-2) 35%, black 65%);
+}
+.heroCtaBlue > svg,
+.heroCtaBlue .heroCtaArrow {
+  color: rgba(255, 255, 255, 0.85);
+}
