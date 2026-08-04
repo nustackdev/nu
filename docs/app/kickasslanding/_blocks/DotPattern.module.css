@@ -1,0 +1,15 @@
+/* Same tooth as (home)/_shell/Backdrop.module.css .grain. */
+.root {
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: var(--kal-dot-opacity, 0.35);
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(rgba(0, 0, 0, 0.5) 1px, transparent 1px);
+  background-size: 3px 3px, 5px 5px;
+  background-position: 0 0, 1px 1px;
+}
+
+.fixed    { position: fixed; }
+.absolute { position: absolute; }

@@ -1,0 +1,4 @@
+.root {
+  min-width: 0;
+  grid-column: span var(--kal-cell-span, 1);
+}

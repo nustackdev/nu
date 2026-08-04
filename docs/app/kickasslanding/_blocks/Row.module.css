@@ -1,0 +1,27 @@
+.root {
+  display: grid;
+  grid-template-columns: var(--kal-row-template, 1fr);
+  width: 100%;
+}
+
+/* Outer borders — one class per side + style. */
+.btSolid  { border-top: 1px solid var(--kal-border); }
+.btDashed { border-top: 1px dashed var(--kal-border); }
+.btDotted { border-top: 1px dotted var(--kal-border); }
+
+.bbSolid  { border-bottom: 1px solid var(--kal-border); }
+.bbDashed { border-bottom: 1px dashed var(--kal-border); }
+.bbDotted { border-bottom: 1px dotted var(--kal-border); }
+
+.blSolid  { border-left: 1px solid var(--kal-border); }
+.blDashed { border-left: 1px dashed var(--kal-border); }
+.blDotted { border-left: 1px dotted var(--kal-border); }
+
+.brSolid  { border-right: 1px solid var(--kal-border); }
+.brDashed { border-right: 1px dashed var(--kal-border); }
+.brDotted { border-right: 1px dotted var(--kal-border); }
+
+/* Vertical inter-cell dividers — apply as left border on all cells except the first. */
+.divSolid  > *:not(:first-child) { border-left: 1px solid var(--kal-divider); }
+.divDashed > *:not(:first-child) { border-left: 1px dashed var(--kal-divider); }
+.divDotted > *:not(:first-child) { border-left: 1px dotted var(--kal-divider); }
