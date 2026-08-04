@@ -240,46 +240,6 @@
   margin: 0 0 16px;
 }
 
-.cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: var(--nu-r-sm);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-  text-decoration: none;
-  border: 1px solid transparent;
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.06);
-  transition: background var(--nu-t), border-color var(--nu-t), color var(--nu-t);
-}
-.cta:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-.ctaPurple {
-  background: #a684ff;
-  color: #0a0a0d;
-  border-color: transparent;
-}
-.ctaPurple:hover {
-  background: #b89aff;
-  color: #0a0a0d;
-}
-
-.ctaBlue {
-  background: transparent;
-  color: #6b96f2;
-  border-color: rgba(107, 150, 242, 0.4);
-}
-.ctaBlue:hover {
-  background: rgba(107, 150, 242, 0.08);
-  color: #6b96f2;
-}
-
 /* -- SVG placeholders ----------------------------------------------------- */
 
 .svgPlaceholder {
