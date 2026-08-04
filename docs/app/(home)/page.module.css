@@ -237,7 +237,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin: 0 0 16px;
+  margin: 24px 0 0;
 }
 
 /* -- SVG placeholders ----------------------------------------------------- */
@@ -342,4 +342,17 @@
   --nu-accent-2-soft: var(--nu-hue-amber-soft);
   --nu-accent-2-wash: var(--nu-hue-amber-wash);
   --nu-accent-2-line: var(--nu-hue-amber-line);
+}
+
+/* Code sample scope: dual silver-woven hues — teal for nu API tokens,
+ * steel for keywords (matches old_home NuSection). */
+.hueCode {
+  --nu-accent:        var(--nu-hue-teal);
+  --nu-accent-soft:   var(--nu-hue-teal-soft);
+  --nu-accent-wash:   var(--nu-hue-teal-wash);
+  --nu-accent-line:   var(--nu-hue-teal-line);
+  --nu-accent-2:      var(--nu-hue-steel);
+  --nu-accent-2-soft: var(--nu-hue-steel-soft);
+  --nu-accent-2-wash: var(--nu-hue-steel-wash);
+  --nu-accent-2-line: var(--nu-hue-steel-line);
 }

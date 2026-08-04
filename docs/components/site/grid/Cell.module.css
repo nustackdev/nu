@@ -1,4 +1,16 @@
 .root {
   min-width: 0;
   grid-column: span var(--kal-cell-span, 1);
+  display: flex;
+  flex-direction: column;
 }
+
+/* Horizontal alignment (cross-axis in a column flex).
+ * Default 'left' keeps align-items: stretch so block children (like CellContent)
+ * still fill the cell width, and text stays left-aligned by default. */
+.root[data-xalign="center"] { align-items: center; }
+.root[data-xalign="right"]  { align-items: flex-end; }
+
+/* Vertical alignment (main-axis). Default 'top' = flex-start (implicit). */
+.root[data-yalign="middle"] { justify-content: center; }
+.root[data-yalign="bottom"] { justify-content: flex-end; }

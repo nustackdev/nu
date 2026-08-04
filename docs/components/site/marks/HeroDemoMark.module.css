@@ -1,0 +1,164 @@
+/* =============================================================================
+ * HeroDemoMark — self-contained composition:
+ *   tree  → nested Nu code containers with right-gutter hints
+ *   bridge → chevron between tree and scene (right-pointing desk, down-pointing mob)
+ *   scene → glass VizFrame holding the browser+disk runtime scene
+ *
+ * Lifted verbatim from app/old_home/_hero/HeroViz.module.css minus the outer
+ * page-level lede/section blocks (those are the caller's responsibility now).
+ * ==========================================================================*/
+
+.wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(28px, 3vw, 44px);
+  border-radius: var(--nu-r-lg);
+  border: 1px solid var(--nu-border);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.035) 0%,
+    rgba(255, 255, 255, 0.015) 100%
+  );
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  overflow: hidden;
+  text-align: left;
+  color: var(--nu-ink);
+  font-family: var(--font-mono);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) auto minmax(260px, 1fr);
+  column-gap: 10px;
+  row-gap: clamp(20px, 2vw, 32px);
+  align-items: stretch;
+}
+
+/* Bridge column */
+.bridge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--nu-ink-2);
+  min-width: 20px;
+}
+.bridgeDesk { display: block; width: 20px; height: 50px; }
+.bridgeMob  { display: none;  width: 50px; height: 20px; }
+
+/* LEFT column — nested container tree + right-gutter hints */
+.tree {
+  position: relative;
+  padding-right: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.container {
+  --role-hue:  var(--nu-ink-3);
+  --role-wash: rgba(255, 255, 255, 0.025);
+  --role-line: var(--nu-rule);
+  --chip-hue:  var(--role-hue);
+  --chip-wash: var(--role-wash);
+  --chip-line: var(--role-line);
+  padding: 8px 12px 10px;
+  border-radius: var(--nu-r-sm);
+  border: 1px solid var(--role-line);
+  background: var(--role-wash);
+  min-width: 0;
+}
+.containerTight { padding: 6px 10px 8px; }
+.container .container { margin-top: 8px; }
+
+.container[data-role="virtuals"] {
+  --role-hue:  var(--nu-hue-sage);
+  --role-wash: var(--nu-hue-sage-wash);
+  --role-line: var(--nu-hue-sage-line);
+}
+.container[data-role="ui"] {
+  --role-hue:  var(--nu-hue-teal);
+  --role-wash: var(--nu-hue-teal-wash);
+  --role-line: var(--nu-hue-teal-line);
+}
+.container[data-role="invisibles"] {
+  --role-hue:  var(--nu-hue-plum);
+  --role-wash: var(--nu-hue-plum-wash);
+  --role-line: var(--nu-hue-plum-line);
+}
+.container[data-role="ray"] {
+  --role-hue:  var(--nu-hue-amber);
+  --role-wash: var(--nu-hue-amber-wash);
+  --role-line: var(--nu-hue-amber-line);
+}
+
+.hint {
+  position: absolute;
+  right: 0;
+  width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--role-hue);
+  pointer-events: none;
+  margin-top: 2px;
+}
+.arrow { flex: none; display: block; }
+.hintText {
+  font-family: var(--font-display);
+  font-size: var(--nu-fs-1);
+  line-height: 1.35;
+  color: var(--nu-ink);
+  font-weight: 400;
+}
+
+.body { min-width: 0; }
+
+.line, .lineIndent {
+  margin: 0;
+  font-family: var(--font-mono);
+  color: var(--nu-ink);
+  white-space: pre;
+  overflow-x: auto;
+  font-size: var(--nu-fs-2);
+  line-height: 1.5;
+}
+.lineIndent { padding-left: 24px; }
+
+.op {
+  margin: 4px 0 4px 12px;
+  font-family: var(--font-mono);
+  font-size: var(--nu-fs-3);
+  font-weight: 700;
+  color: var(--nu-ink-3);
+  letter-spacing: 0.02em;
+}
+
+.kw           { color: var(--nu-ink-2); font-weight: 600; }
+.name         { color: var(--nu-ink);   font-weight: 700; }
+.ident        { color: var(--nu-ink);   font-weight: 600; }
+.dim          { color: var(--nu-ink-3); }
+.num          { color: var(--nu-ink-2); }
+
+.tVirtuals    { color: var(--nu-hue-sage);  font-weight: 700; }
+.tUi          { color: var(--nu-hue-teal);  font-weight: 700; }
+.tInvisibles  { color: var(--nu-hue-plum);  font-weight: 700; }
+.tRay         { color: var(--nu-hue-amber); font-weight: 700; }
+
+.right {
+  position: relative;
+  min-width: 0;
+}
+
+@media (max-width: 1000px) {
+  .wrap { grid-template-columns: 1fr; }
+  .tree { padding-right: 0; }
+  .hint { display: none; }
+  .bridge { padding: 4px 0; }
+  .bridgeDesk { display: none; }
+  .bridgeMob  { display: block; }
+}
+
+@media (min-width: 501px) and (max-width: 1000px) {
+  .right, .bridge { display: none; }
+}

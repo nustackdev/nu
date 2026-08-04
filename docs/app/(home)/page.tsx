@@ -19,6 +19,10 @@ import {
 } from '@/components/site/marks/FabricGlyphs';
 import { NulogMockSvg } from '@/components/site/marks/NulogMock';
 import { NuspaceMockSvg } from '@/components/site/marks/NuspaceMock';
+import { HeroDemoMark } from '@/components/site/marks/HeroDemoMark';
+import { InteractionModelDiagram } from '@/components/site/marks/InteractionModelDiagram';
+import { CodeSample } from '@/components/site/CodeSample';
+import { NU_SAMPLE_LINES } from './nu.sample.data';
 import s from './page.module.css';
 
 export default function KickAssLanding() {
@@ -91,15 +95,10 @@ export default function KickAssLanding() {
             </CellContent>
           </Cell>
         </Row>
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
+        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="code tree" aria-hidden />
-            </CellContent>
-          </Cell>
-          <Cell>
-            <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="runtime scene" aria-hidden />
+              <HeroDemoMark />
             </CellContent>
           </Cell>
         </Row>
@@ -135,7 +134,7 @@ export default function KickAssLanding() {
           </Cell>
           <Cell>
             <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="tree svg" aria-hidden />
+              <InteractionModelDiagram />
             </CellContent>
           </Cell>
         </Row>
@@ -156,25 +155,10 @@ export default function KickAssLanding() {
             </CellContent>
           </Cell>
         </Row>
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
+        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueCode}>
           <Cell>
             <CellContent pad="lg">
-              <p className={s.tagline}>The interaction primitive.</p>
-              <p className={s.description}>
-                Every app is a set of interactions between systems: a database,
-                a UI, AI agents, and services. Nu makes interaction the
-                primitive: Refs name what you touch (a UI widget, an LLM
-                endpoint, a memory slot, a KV slot), Interactions describe what
-                to do with them (read, write, branch, iterate, compose).
-                Persistence, reactivity, atomicity, observability, and
-                scalability are inherent, not bolted on.
-              </p>
-              <ol className={s.useCases}>
-                <li>AI agentic systems</li>
-                <li>Personal apps</li>
-                <li>Data-intensive apps</li>
-                <li>Enterprise in-house tools</li>
-              </ol>
+              <CodeSample filename="persistent_counter_ui.py" lines={NU_SAMPLE_LINES} />
               <div className={s.ctaRow}>
                 <SiteButton href="/docs">Meet Nu</SiteButton>
                 <SiteButton href="https://github.com/nustackdev/nu">
@@ -184,11 +168,6 @@ export default function KickAssLanding() {
                   See more examples
                 </SiteButton>
               </div>
-            </CellContent>
-          </Cell>
-          <Cell>
-            <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="code sample svg" aria-hidden />
             </CellContent>
           </Cell>
         </Row>
