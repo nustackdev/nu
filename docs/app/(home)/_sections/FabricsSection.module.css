@@ -1,11 +1,11 @@
 /* =============================================================================
  * FabricsSection — silver-woven palette.
  *
- * Metallic + editorial. Each fabric name is a silver-forward gradient with
- * ONE low-saturation hue as the endpoint — the color is a whisper, not a
- * shout. That same hue propagates onto the row's backend chips (tinted
- * border/wash) and the glyph's accent tokens (via per-row CSS custom-prop
- * scoping), so every row reads as one unified whisper of color.
+ * Metallic + editorial. Each fabric name is a silver-forward gradient
+ * (owned by the shared <SilverWovenName> primitive). The row's low-sat hue
+ * also propagates onto the row's backend chips (shared <Chip>) and the glyph
+ * (which reads --nu-accent[-2] directly). Row scope sets --nu-accent[-2] to
+ * the fabric's hue so glyphs auto-tint without any props.
  *
  * Hues (well-separated on the dark card rgba(22,22,26,0.72)):
  *   mem         steel-blue   #7a95b8 / dark #9bb0d0
@@ -15,11 +15,8 @@
  *   ui          muted teal   #7fb0b8 / dark #a3ced4
  * ==========================================================================*/
 
-/* Modular rhythm for the row block. One value drives the row's vertical
-   padding and the column gap between text and viz. */
+/* Modular rhythm for the row block. */
 .rows {
-  /* Matches the section card's own padding, so row-to-row rhythm reads as
-     the same beat as card-to-content padding. */
   --step: clamp(28px, 3vw, 44px);
   list-style: none;
   padding: 0;
@@ -59,23 +56,6 @@
   line-height: 1.2;
 }
 
-/* Hero-scale lowercase fabric name. Uses --fv-grad which each per-fabric
-   block sets to a silver → hue ramp. */
-.name {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(44px, 6vw, 76px);
-  letter-spacing: -0.04em;
-  margin: 0;
-  text-transform: lowercase;
-  display: inline-block;
-  max-width: 100%;
-  background-image: var(--fv-grad);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
 .rowTitle {
   font-family: var(--font-display);
   font-weight: 700;
@@ -96,151 +76,42 @@
 .body b { color: var(--nu-ink); font-weight: 600; }
 
 /* ============================================================================
- * Per-fabric palette scope.
- *
- * Each .row[data-fabric="X"] block does two jobs:
- *   1. Sets --fv-grad — the silver → hue name gradient (light mode).
- *   2. Overrides --nu-accent[-2] and their wash/line variants at row scope,
- *      so backend chips AND the FabricGlyphs SVG (which reads those tokens
- *      directly) pick up the same low-sat hue automatically. Zero glyph dup.
- *
- * Dark-mode overrides live in the :global(html.dark) block below (lifted
- * silver + lifted hue).
+ * Per-fabric hue scope — routes the row's silver-woven hue into every token
+ * the glyph + chips consume. FabricGlyphs reads --nu-accent[-2] directly;
+ * Chip falls back to --nu-accent-2* when --chip-* isn't set.
  * ==========================================================================*/
 
-/* Silver stops kept close to Inter's neutral gray family. In light mode the
-   silver is deeper so it contrasts against white; in dark mode it lifts. */
-
-/* Per-row `--fab-hue*` pulls from the shared silver-woven tokens
-   (declared once in _tokens.module.css). The `--fv-grad` silver → hue
-   name gradient stays local because its silver stops are only used here. */
-
-/* --- mem: steel-blue --- */
 .row[data-fabric="mem"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #9aa1af 0%,   /* silver mid */
-    #7d8494 22%,  /* silver deep */
-    #5a7699 55%,  /* steel-blue lightened */
-    #3f5a80 100%  /* steel-blue anchor */
-  );
-  --fab-hue:       var(--nu-fab-steel);
-  --fab-hue-soft:  var(--nu-fab-steel-soft);
-  --fab-hue-wash:  var(--nu-fab-steel-wash);
-  --fab-hue-line:  var(--nu-fab-steel-line);
+  --fab-hue:       var(--nu-hue-steel);
+  --fab-hue-soft:  var(--nu-hue-steel-soft);
+  --fab-hue-wash:  var(--nu-hue-steel-wash);
+  --fab-hue-line:  var(--nu-hue-steel-line);
 }
-
-/* --- virtuals: muted sage --- */
 .row[data-fabric="virtuals"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #9aa1af 0%,
-    #7d8494 22%,
-    #6a8971 55%,   /* sage lightened */
-    #4d6b55 100%   /* sage anchor */
-  );
-  --fab-hue:       var(--nu-fab-sage);
-  --fab-hue-soft:  var(--nu-fab-sage-soft);
-  --fab-hue-wash:  var(--nu-fab-sage-wash);
-  --fab-hue-line:  var(--nu-fab-sage-line);
+  --fab-hue:       var(--nu-hue-sage);
+  --fab-hue-soft:  var(--nu-hue-sage-soft);
+  --fab-hue-wash:  var(--nu-hue-sage-wash);
+  --fab-hue-line:  var(--nu-hue-sage-line);
 }
-
-/* --- invisibles: soft plum --- */
 .row[data-fabric="invisibles"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #9aa1af 0%,
-    #7d8494 22%,
-    #7f5c8e 55%,   /* plum lightened */
-    #5f4571 100%   /* plum anchor */
-  );
-  --fab-hue:       var(--nu-fab-plum);
-  --fab-hue-soft:  var(--nu-fab-plum-soft);
-  --fab-hue-wash:  var(--nu-fab-plum-wash);
-  --fab-hue-line:  var(--nu-fab-plum-line);
+  --fab-hue:       var(--nu-hue-plum);
+  --fab-hue-soft:  var(--nu-hue-plum-soft);
+  --fab-hue-wash:  var(--nu-hue-plum-wash);
+  --fab-hue-line:  var(--nu-hue-plum-line);
 }
-
-/* --- ray: warm amber --- */
 .row[data-fabric="ray"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #9aa1af 0%,
-    #7d8494 22%,
-    #a68048 55%,   /* amber lightened */
-    #86662f 100%   /* amber anchor */
-  );
-  --fab-hue:       var(--nu-fab-amber);
-  --fab-hue-soft:  var(--nu-fab-amber-soft);
-  --fab-hue-wash:  var(--nu-fab-amber-wash);
-  --fab-hue-line:  var(--nu-fab-amber-line);
+  --fab-hue:       var(--nu-hue-amber);
+  --fab-hue-soft:  var(--nu-hue-amber-soft);
+  --fab-hue-wash:  var(--nu-hue-amber-wash);
+  --fab-hue-line:  var(--nu-hue-amber-line);
 }
-
-/* --- ui: muted teal --- */
 .row[data-fabric="ui"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #9aa1af 0%,
-    #7d8494 22%,
-    #5d97a0 55%,   /* teal lightened */
-    #3d7880 100%   /* teal anchor */
-  );
-  --fab-hue:       var(--nu-fab-teal);
-  --fab-hue-soft:  var(--nu-fab-teal-soft);
-  --fab-hue-wash:  var(--nu-fab-teal-wash);
-  --fab-hue-line:  var(--nu-fab-teal-line);
+  --fab-hue:       var(--nu-hue-teal);
+  --fab-hue-soft:  var(--nu-hue-teal-soft);
+  --fab-hue-wash:  var(--nu-hue-teal-wash);
+  --fab-hue-line:  var(--nu-hue-teal-line);
 }
 
-/* Dark-mode: only the silver gradients need per-row overrides
-   (the --fab-hue tokens already dark-flip inside _tokens.module.css). */
-:global(html.dark) .row[data-fabric="mem"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #dde1e8 0%,
-    #bcc2ce 22%,
-    #9bb0d0 55%,
-    #7a95b8 100%
-  );
-}
-:global(html.dark) .row[data-fabric="virtuals"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #dde1e8 0%,
-    #bcc2ce 22%,
-    #a8c0af 55%,
-    #8ba894 100%
-  );
-}
-:global(html.dark) .row[data-fabric="invisibles"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #dde1e8 0%,
-    #bcc2ce 22%,
-    #bda2c8 55%,
-    #a68ab2 100%
-  );
-}
-:global(html.dark) .row[data-fabric="ray"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #dde1e8 0%,
-    #bcc2ce 22%,
-    #dab88a 55%,
-    #c8a26e 100%
-  );
-}
-:global(html.dark) .row[data-fabric="ui"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #dde1e8 0%,
-    #bcc2ce 22%,
-    #a3ced4 55%,
-    #7fb0b8 100%
-  );
-}
-
-/* Route the per-row fabric hue into every token the glyph + chips consume.
-   FabricGlyphs reads both --nu-accent and --nu-accent-2. Overriding all
-   four keeps the glyph on-hue without touching FabricGlyphs.tsx. */
 .row {
   --nu-accent:        var(--fab-hue);
   --nu-accent-soft:   var(--fab-hue-soft);
@@ -258,7 +129,7 @@
   margin-top: 4px;
 }
 
-/* ---- backend chips ---- */
+/* ---- backend chips (visual owned by <Chip size="md">) ---- */
 .chips {
   list-style: none;
   padding: 0;
@@ -267,20 +138,6 @@
   gap: 8px;
   flex-wrap: wrap;
 }
-.chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border: 1px solid var(--nu-accent-2-line);
-  border-radius: 999px;
-  background: var(--nu-accent-2-wash);
-  color: var(--nu-accent-2);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  white-space: nowrap;
-}
 
 /* ---- viz column ---- */
 .viz {
@@ -288,26 +145,6 @@
   align-items: center;
   justify-content: center;
   min-width: 0;
-}
-.vizFrame {
-  position: relative;
-  width: 100%;
-  padding: clamp(18px, 1.8vw, 26px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005)),
-    var(--nu-dot-grid);
-  background-size: auto, var(--nu-dot-size);
-  background-position: center, 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.vizFrame svg {
-  width: 100%;
-  height: auto;
-  display: block;
 }
 
 @media (max-width: 900px) {
@@ -318,5 +155,4 @@
   }
   .rowFlip .text { order: 1; }
   .rowFlip .viz  { order: 2; }
-  .name { font-size: clamp(40px, 10vw, 60px); }
 }

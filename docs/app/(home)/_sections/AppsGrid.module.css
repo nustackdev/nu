@@ -1,20 +1,12 @@
 /* =============================================================================
  * AppsSection — silver-woven rows, same spirit as FabricsSection.
  *
- * Each app gets:
- *   - a giant silver → hue name (silver-woven palette, one hue per app)
- *   - title + body
- *   - a GitHub repo button that inherits the row's hue
- *   - a mock viz on the other side, in a dot-grid frame
- *
- * Rows alternate text/viz sides. Per-row hue tokens override --nu-accent[-2]
- * at the row scope so the mock's inline "built on nu" wash + accent text
- * auto-recolor without touching the mock SVGs.
+ * Silver-woven name is owned by <SilverWovenName>; row hue routing feeds
+ * shared primitives (SiteButton variant="repo", app mock SVGs) via
+ * --nu-accent[-2] overrides at row scope.
  * ==========================================================================*/
 
 .rows {
-  /* Matches the section card's own padding, so row-to-row rhythm reads as
-     the same beat as card-to-content padding. */
   --step: clamp(28px, 3vw, 44px);
   list-style: none;
   padding: 0;
@@ -54,21 +46,6 @@
   line-height: 1.2;
 }
 
-.name {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(44px, 6vw, 76px);
-  letter-spacing: -0.04em;
-  margin: 0;
-  text-transform: lowercase;
-  display: inline-block;
-  max-width: 100%;
-  background-image: var(--fv-grad);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
 .rowTitle {
   font-family: var(--font-display);
   font-weight: 700;
@@ -88,107 +65,33 @@
 }
 .body b { color: var(--nu-ink); font-weight: 600; }
 
-/* ---- action row + repo button ---- */
+/* ---- action row ---- */
 .actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 4px;
 }
-.repoBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 14px;
-  border-radius: 10px;
-  border: 1px solid var(--nu-accent-line);
-  background: var(--nu-accent-wash);
-  color: var(--nu-ink);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-decoration: none;
-  transition: background 0.16s ease, border-color 0.16s ease;
-}
-.repoBtn:hover {
-  background: var(--nu-accent-soft);
-  border-color: var(--nu-accent);
-}
-.repoArrow {
-  color: var(--nu-accent);
-}
-.ghostBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: 9px 14px;
-  border-radius: 10px;
-  border: 1px dashed var(--nu-rule-2);
-  background: transparent;
-  color: var(--nu-ink-3);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  cursor: not-allowed;
-}
 
 /* ============================================================================
- * Per-app palette scope. Two apps → two hues from the silver-woven family.
+ * Per-app hue scope. Two apps → two silver-woven hues.
  *   nulog     warm amber
  *   nuspace   soft plum
- * Silver stops match FabricsSection so the whole page reads as one family.
  * ==========================================================================*/
 
 .row[data-app="nulog"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #9aa1af 0%,
-    #7d8494 22%,
-    #a68048 55%,
-    #86662f 100%
-  );
-  --app-hue:       var(--nu-fab-amber);
-  --app-hue-soft:  var(--nu-fab-amber-soft);
-  --app-hue-wash:  var(--nu-fab-amber-wash);
-  --app-hue-line:  var(--nu-fab-amber-line);
+  --app-hue:       var(--nu-hue-amber);
+  --app-hue-soft:  var(--nu-hue-amber-soft);
+  --app-hue-wash:  var(--nu-hue-amber-wash);
+  --app-hue-line:  var(--nu-hue-amber-line);
 }
 .row[data-app="nuspace"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #9aa1af 0%,
-    #7d8494 22%,
-    #7f5c8e 55%,
-    #5f4571 100%
-  );
-  --app-hue:       var(--nu-fab-plum);
-  --app-hue-soft:  var(--nu-fab-plum-soft);
-  --app-hue-wash:  var(--nu-fab-plum-wash);
-  --app-hue-line:  var(--nu-fab-plum-line);
+  --app-hue:       var(--nu-hue-plum);
+  --app-hue-soft:  var(--nu-hue-plum-soft);
+  --app-hue-wash:  var(--nu-hue-plum-wash);
+  --app-hue-line:  var(--nu-hue-plum-line);
 }
 
-/* Dark-mode: only the silver gradient stops need overriding
-   (--fab hues auto-flip via _tokens.module.css). */
-:global(html.dark) .row[data-app="nulog"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #dde1e8 0%,
-    #bcc2ce 22%,
-    #dab88a 55%,
-    #c8a26e 100%
-  );
-}
-:global(html.dark) .row[data-app="nuspace"] {
-  --fv-grad: linear-gradient(
-    120deg,
-    #dde1e8 0%,
-    #bcc2ce 22%,
-    #bda2c8 55%,
-    #a68ab2 100%
-  );
-}
-
-/* Route per-row hue into every token the mock SVGs and repo button read. */
 .row {
   --nu-accent:        var(--app-hue);
   --nu-accent-soft:   var(--app-hue-soft);
@@ -207,26 +110,6 @@
   justify-content: center;
   min-width: 0;
 }
-.vizFrame {
-  position: relative;
-  width: 100%;
-  padding: clamp(18px, 1.8vw, 26px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005)),
-    var(--nu-dot-grid);
-  background-size: auto, var(--nu-dot-size);
-  background-position: center, 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.vizFrame svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
 
 @media (max-width: 900px) {
   .rows { --step: clamp(24px, 6vw, 32px); }
@@ -236,5 +119,4 @@
   }
   .rowFlip .text { order: 1; }
   .rowFlip .viz  { order: 2; }
-  .name { font-size: clamp(40px, 10vw, 60px); }
 }

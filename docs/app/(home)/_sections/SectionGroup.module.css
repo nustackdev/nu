@@ -79,16 +79,6 @@
   z-index: 1;
 }
 
-/* Light mode: swap silver ghost for a black ghost, same alphas. */
-:global(html:not(.dark)) .label {
-  background-image: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.12) 0%,
-    rgba(0, 0, 0, 0.06) 60%,
-    rgba(0, 0, 0, 0.02) 100%
-  );
-}
-
 /* Mobile: shrink the label so it doesn't dominate on narrow viewports. */
 @media (max-width: 640px) {
   .group {

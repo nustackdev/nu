@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { NustackMark } from '@/components/site/marks/NustackMark';
+import { Meta } from '@/components/site/Meta';
 import s from './Footer.module.css';
 
 /**
@@ -8,13 +9,16 @@ import s from './Footer.module.css';
 export function Footer() {
   return (
     <footer className={s.footer} data-hue="s4">
-      <Link href="/docs">Docs</Link>
-      <span className={s.footerSep}>·</span>
-      <a href="https://github.com/nustackdev">GitHub</a>
-      <span className={s.footerSep}>·</span>
-      <span className={s.footerBrand}>
-        <NustackMark className={s.footerBrandMark} /> © 2026
-      </span>
+      <Meta
+        sepClassName={s.footerSep}
+        items={[
+          <Link key="docs" href="/docs">Docs</Link>,
+          <a key="gh" href="https://github.com/nustackdev">GitHub</a>,
+          <span key="brand" className={s.footerBrand}>
+            <NustackMark className={s.footerBrandMark} /> © 2026
+          </span>,
+        ]}
+      />
     </footer>
   );
 }

@@ -1,0 +1,94 @@
+/* =============================================================================
+ * VizFrame — bordered dot-grid canvas that holds a viz SVG.
+ * Two surface variants (byte-for-byte parity with the pre-refactor duplicates):
+ *   solid  — sits on a solid section card; subtle white wash on the dot grid.
+ *   glass  — sits on a translucent glass card; darker inner surface so the
+ *            SVG has its own contrast against the page backdrop.
+ * Optional `hue` remaps --nu-accent[-2] to a silver-woven fabric hue so any
+ * shared primitive inside (BrowserChrome, DiskStack, etc) auto-tints.
+ * ==========================================================================*/
+
+.frame {
+  position: relative;
+  width: 100%;
+  padding: clamp(18px, 1.8vw, 26px);
+  border: 1px solid var(--nu-border);
+  border-radius: var(--nu-r-md);
+  background-size: auto, var(--nu-dot-size);
+  background-position: center, 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.frame > svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.solid {
+  composes: frame;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005)),
+    var(--nu-dot-grid);
+}
+
+.glass {
+  composes: frame;
+  background:
+    linear-gradient(180deg, rgba(22, 22, 26, 0.55), rgba(22, 22, 26, 0.45)),
+    var(--nu-dot-grid);
+}
+
+/* --- hue remap for shared primitives inside the frame --------------------- */
+.frame[data-hue="steel"] {
+  --nu-accent: var(--nu-hue-steel);
+  --nu-accent-soft: var(--nu-hue-steel-soft);
+  --nu-accent-wash: var(--nu-hue-steel-wash);
+  --nu-accent-line: var(--nu-hue-steel-line);
+  --nu-accent-2: var(--nu-hue-steel);
+  --nu-accent-2-soft: var(--nu-hue-steel-soft);
+  --nu-accent-2-wash: var(--nu-hue-steel-wash);
+  --nu-accent-2-line: var(--nu-hue-steel-line);
+}
+.frame[data-hue="sage"] {
+  --nu-accent: var(--nu-hue-sage);
+  --nu-accent-soft: var(--nu-hue-sage-soft);
+  --nu-accent-wash: var(--nu-hue-sage-wash);
+  --nu-accent-line: var(--nu-hue-sage-line);
+  --nu-accent-2: var(--nu-hue-sage);
+  --nu-accent-2-soft: var(--nu-hue-sage-soft);
+  --nu-accent-2-wash: var(--nu-hue-sage-wash);
+  --nu-accent-2-line: var(--nu-hue-sage-line);
+}
+.frame[data-hue="teal"] {
+  --nu-accent: var(--nu-hue-teal);
+  --nu-accent-soft: var(--nu-hue-teal-soft);
+  --nu-accent-wash: var(--nu-hue-teal-wash);
+  --nu-accent-line: var(--nu-hue-teal-line);
+  --nu-accent-2: var(--nu-hue-teal);
+  --nu-accent-2-soft: var(--nu-hue-teal-soft);
+  --nu-accent-2-wash: var(--nu-hue-teal-wash);
+  --nu-accent-2-line: var(--nu-hue-teal-line);
+}
+.frame[data-hue="plum"] {
+  --nu-accent: var(--nu-hue-plum);
+  --nu-accent-soft: var(--nu-hue-plum-soft);
+  --nu-accent-wash: var(--nu-hue-plum-wash);
+  --nu-accent-line: var(--nu-hue-plum-line);
+  --nu-accent-2: var(--nu-hue-plum);
+  --nu-accent-2-soft: var(--nu-hue-plum-soft);
+  --nu-accent-2-wash: var(--nu-hue-plum-wash);
+  --nu-accent-2-line: var(--nu-hue-plum-line);
+}
+.frame[data-hue="amber"] {
+  --nu-accent: var(--nu-hue-amber);
+  --nu-accent-soft: var(--nu-hue-amber-soft);
+  --nu-accent-wash: var(--nu-hue-amber-wash);
+  --nu-accent-line: var(--nu-hue-amber-line);
+  --nu-accent-2: var(--nu-hue-amber);
+  --nu-accent-2-soft: var(--nu-hue-amber-soft);
+  --nu-accent-2-wash: var(--nu-hue-amber-wash);
+  --nu-accent-2-line: var(--nu-hue-amber-line);
+}

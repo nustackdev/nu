@@ -1,9 +1,8 @@
 import { BookOpen } from 'lucide-react';
 import { GithubMark } from '@/components/site/marks/GithubMark';
+import { SiteButton, SiteButtonRepoLabel } from '@/components/site/SiteButton';
 import {
   ActionRow,
-  Cta,
-  RepoName,
   SectionCard,
   SectionCol,
   SectionIntro,
@@ -28,18 +27,18 @@ export function NuSection() {
         </SectionIntro>
         <NuCodeSample />
         <ActionRow>
-          <Cta href="/docs">
+          <SiteButton href="/docs">
             <BookOpen size={14} aria-hidden />
             <span>Meet Nu</span>
-          </Cta>
-          <Cta href="https://github.com/nustackdev/nu">
+          </SiteButton>
+          <SiteButton href="https://github.com/nustackdev/nu">
             <GithubMark size={14} />
-            <RepoName>nustackdev/nu</RepoName>
-          </Cta>
-          <Cta href="https://github.com/nustackdev/nu/tree/main/examples">
+            <SiteButtonRepoLabel>nustackdev/nu</SiteButtonRepoLabel>
+          </SiteButton>
+          <SiteButton href="https://github.com/nustackdev/nu/tree/main/examples">
             <GithubMark size={14} />
             <span>See more examples</span>
-          </Cta>
+          </SiteButton>
         </ActionRow>
       </SectionCol>
     </SectionCard>

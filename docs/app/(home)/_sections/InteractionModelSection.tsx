@@ -1,9 +1,8 @@
 import { BookOpen } from 'lucide-react';
 import { GithubMark } from '@/components/site/marks/GithubMark';
+import { SiteButton, SiteButtonRepoLabel } from '@/components/site/SiteButton';
 import {
   ActionRow,
-  Cta,
-  RepoName,
   SectionCard,
   SectionTitle,
 } from './SectionCard';
@@ -80,14 +79,14 @@ export function InteractionModelSection() {
         </div>
 
         <ActionRow>
-          <Cta href="/docs">
+          <SiteButton href="/docs">
             <BookOpen size={14} aria-hidden />
             <span>Read the model</span>
-          </Cta>
-          <Cta href="https://github.com/nustackdev/interaction-model">
+          </SiteButton>
+          <SiteButton href="https://github.com/nustackdev/interaction-model">
             <GithubMark size={14} />
-            <RepoName>nustackdev/interaction-model</RepoName>
-          </Cta>
+            <SiteButtonRepoLabel>nustackdev/interaction-model</SiteButtonRepoLabel>
+          </SiteButton>
         </ActionRow>
       </div>
     </SectionCard>

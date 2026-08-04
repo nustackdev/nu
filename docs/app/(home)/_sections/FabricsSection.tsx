@@ -1,13 +1,25 @@
 import { BookOpen } from 'lucide-react';
 import {
-  Cta,
   SectionCard,
   SectionCol,
   SectionIntro,
   SectionTitle,
 } from './SectionCard';
+import { SiteButton } from '@/components/site/SiteButton';
+import { Chip } from '@/components/site/Chip';
+import { SilverWovenName, type SilverWovenHue } from '@/components/site/SilverWovenName';
+import { VizFrame } from '@/components/site/VizFrame';
 import { FABRICS } from './fabrics.data';
 import s from './FabricsSection.module.css';
+
+/** Map fabric name → silver-woven hue key. */
+const FABRIC_HUE: Record<string, SilverWovenHue> = {
+  mem: 'steel',
+  virtuals: 'sage',
+  invisibles: 'plum',
+  ray: 'amber',
+  ui: 'teal',
+};
 
 /**
  * §2.5 — the fabrics. Vertical hero rows with silver-woven names: each
@@ -40,7 +52,9 @@ export function FabricsSection() {
                 className={`${s.row} ${flip ? s.rowFlip : ''}`}
               >
                 <div className={s.text}>
-                  <span className={s.name}>nu.{f.name}</span>
+                  <SilverWovenName hue={FABRIC_HUE[f.name]}>
+                    nu.{f.name}
+                  </SilverWovenName>
                   <h3 className={s.rowTitle}>{f.title}</h3>
                   <p className={s.body}>{f.body}</p>
                   {f.backends && (
@@ -49,23 +63,23 @@ export function FabricsSection() {
                       aria-label={`nu.${f.name} backends`}
                     >
                       {f.backends.map((b) => (
-                        <li key={b} className={s.chip}>
-                          {b}
+                        <li key={b}>
+                          <Chip size="md">{b}</Chip>
                         </li>
                       ))}
                     </ul>
                   )}
                   <div className={s.rowAction}>
-                    <Cta href={f.docsHref} variant="hueTinted">
+                    <SiteButton href={f.docsHref} variant="hueTinted">
                       <BookOpen size={14} aria-hidden />
                       <span>Read the docs</span>
-                    </Cta>
+                    </SiteButton>
                   </div>
                 </div>
                 <div className={s.viz} aria-hidden>
-                  <div className={s.vizFrame}>
+                  <VizFrame>
                     <f.Viz />
-                  </div>
+                  </VizFrame>
                 </div>
               </li>
             );

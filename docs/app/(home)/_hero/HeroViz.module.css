@@ -75,8 +75,8 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: clamp(28px, 3vw, 44px);
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--nu-r-lg);
+  border: 1px solid var(--nu-border);
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.035) 0%,
@@ -138,8 +138,13 @@
   --role-hue:  var(--nu-ink-3);
   --role-wash: rgba(255, 255, 255, 0.025);
   --role-line: var(--nu-rule);
+  /* Route the role hue through the shared Chip primitive (which reads
+     --chip-hue/--chip-wash/--chip-line, falling back to --nu-accent-2*). */
+  --chip-hue:  var(--role-hue);
+  --chip-wash: var(--role-wash);
+  --chip-line: var(--role-line);
   padding: 8px 12px 10px;
-  border-radius: 8px;
+  border-radius: var(--nu-r-sm);
   border: 1px solid var(--role-line);
   background: var(--role-wash);
   min-width: 0;
@@ -153,67 +158,30 @@
   margin-top: 8px;
 }
 
-/* --- role → hue (light) --- */
+/* --- role → hue (silver-woven, dark) --- */
 .container[data-role="virtuals"] {
-  --role-hue:  #8ba894;
-  --role-wash: rgba(139, 168, 148, 0.09);
-  --role-line: rgba(139, 168, 148, 0.40);
+  --role-hue:  var(--nu-hue-sage);
+  --role-wash: var(--nu-hue-sage-wash);
+  --role-line: var(--nu-hue-sage-line);
 }
 .container[data-role="ui"] {
-  --role-hue:  #7fb0b8;
-  --role-wash: rgba(127, 176, 184, 0.09);
-  --role-line: rgba(127, 176, 184, 0.40);
+  --role-hue:  var(--nu-hue-teal);
+  --role-wash: var(--nu-hue-teal-wash);
+  --role-line: var(--nu-hue-teal-line);
 }
 .container[data-role="invisibles"] {
-  --role-hue:  #a68ab2;
-  --role-wash: rgba(166, 138, 178, 0.09);
-  --role-line: rgba(166, 138, 178, 0.40);
+  --role-hue:  var(--nu-hue-plum);
+  --role-wash: var(--nu-hue-plum-wash);
+  --role-line: var(--nu-hue-plum-line);
 }
 .container[data-role="ray"] {
-  --role-hue:  #c8a26e;
-  --role-wash: rgba(200, 162, 110, 0.09);
-  --role-line: rgba(200, 162, 110, 0.40);
+  --role-hue:  var(--nu-hue-amber);
+  --role-wash: var(--nu-hue-amber-wash);
+  --role-line: var(--nu-hue-amber-line);
 }
 
-/* --- role → hue (dark, lifted) --- */
-:global(html.dark) .container[data-role="virtuals"] {
-  --role-hue:  #a8c0af;
-  --role-wash: rgba(168, 192, 175, 0.10);
-  --role-line: rgba(168, 192, 175, 0.42);
-}
-:global(html.dark) .container[data-role="ui"] {
-  --role-hue:  #a3ced4;
-  --role-wash: rgba(163, 206, 212, 0.10);
-  --role-line: rgba(163, 206, 212, 0.42);
-}
-:global(html.dark) .container[data-role="invisibles"] {
-  --role-hue:  #bda2c8;
-  --role-wash: rgba(189, 162, 200, 0.10);
-  --role-line: rgba(189, 162, 200, 0.42);
-}
-:global(html.dark) .container[data-role="ray"] {
-  --role-hue:  #dab88a;
-  --role-wash: rgba(218, 184, 138, 0.10);
-  --role-line: rgba(218, 184, 138, 0.42);
-}
-
-/* Tag chip — now lives inside the hint, colored by the container's role */
-.tagChip {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 7px;
-  border-radius: 999px;
-  border: 1px solid var(--role-line);
-  background: var(--role-wash);
-  color: var(--role-hue);
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  flex: none;
-}
+/* Tag chip is now the shared <Chip size="sm"> primitive; hue is routed
+   through --chip-hue/--chip-wash/--chip-line on `.container`. */
 
 /* --- Right-gutter hint (arrow + chip + text) --- */
 .hint {
@@ -233,7 +201,7 @@
 }
 .hintText {
   font-family: var(--font-display);
-  font-size: 10.5px;
+  font-size: var(--nu-fs-1);
   line-height: 1.35;
   color: var(--nu-ink);
   font-weight: 400;
@@ -252,7 +220,7 @@
   color: var(--nu-ink);
   white-space: pre;
   overflow-x: auto;
-  font-size: 11px;
+  font-size: var(--nu-fs-2);
   line-height: 1.5;
 }
 .lineIndent {
@@ -263,7 +231,7 @@
 .op {
   margin: 4px 0 4px 12px;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--nu-fs-3);
   font-weight: 700;
   color: var(--nu-ink-3);
   letter-spacing: 0.02em;
@@ -277,52 +245,18 @@
 .num          { color: var(--nu-ink-2); }
 
 /* Fabric-tinted identifiers — same silver-woven palette as containers */
-.tVirtuals    { color: #8ba894; font-weight: 700; }
-.tUi          { color: #7fb0b8; font-weight: 700; }
-.tInvisibles  { color: #a68ab2; font-weight: 700; }
-.tRay         { color: #c8a26e; font-weight: 700; }
+.tVirtuals    { color: var(--nu-hue-sage);  font-weight: 700; }
+.tUi          { color: var(--nu-hue-teal);  font-weight: 700; }
+.tInvisibles  { color: var(--nu-hue-plum);  font-weight: 700; }
+.tRay         { color: var(--nu-hue-amber); font-weight: 700; }
 
-:global(html.dark) .tVirtuals   { color: #a8c0af; }
-:global(html.dark) .tUi         { color: #a3ced4; }
-:global(html.dark) .tInvisibles { color: #bda2c8; }
-:global(html.dark) .tRay        { color: #dab88a; }
-
-/* -----------------------------------------------------------------------------
- * RIGHT column — vizFrame-style nested card holding the SVG.
- * Same recipe as SectionCard's .vizFrame: thin border, subtle white gradient
- * + dot-grid backdrop, comfortable padding, rounded corners.
- * -------------------------------------------------------------------------- */
+/* RIGHT column — the shared <VizFrame surface="glass" hue="steel"> primitive
+   owns the border + dot-grid backdrop + accent remap. `.right` remains as a
+   thin position/min-width wrapper so the grid math (auto-column between tree
+   and viz) still works. */
 .right {
   position: relative;
   min-width: 0;
-  padding: clamp(18px, 1.8vw, 26px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  background:
-    linear-gradient(180deg, rgba(22, 22, 26, 0.55), rgba(22, 22, 26, 0.45)),
-    var(--nu-dot-grid);
-  background-size: auto, var(--nu-dot-size);
-  background-position: center, 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  /* Silver-woven hue for the right scene — remaps --nu-accent* to steel-blue
-     so the shared BrowserChrome + DiskStack primitives (which read those
-     tokens) auto-tint without any props. */
-  --nu-accent:      var(--nu-fab-steel);
-  --nu-accent-soft: var(--nu-fab-steel-soft);
-  --nu-accent-wash: var(--nu-fab-steel-wash);
-  --nu-accent-line: var(--nu-fab-steel-line);
-  --nu-accent-2:      var(--nu-fab-steel);
-  --nu-accent-2-soft: var(--nu-fab-steel-soft);
-  --nu-accent-2-wash: var(--nu-fab-steel-wash);
-  --nu-accent-2-line: var(--nu-fab-steel-line);
-}
-.right > svg {
-  width: 100%;
-  height: auto;
-  display: block;
 }
 /* Blink animation lives in components/marks/marks.module.css (`.blink`) —
    the shared BrowserChrome primitive already applies it. */

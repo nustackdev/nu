@@ -1,0 +1,21 @@
+/* =============================================================================
+ * MonoKicker — uppercase mono micro-label. Fixed 3-way size scale.
+ *   xs  10.5px   sm  11px   md  12px
+ * Tracking: wide = 0.14em (default), wider = 0.22em.
+ * ==========================================================================*/
+
+.kicker {
+  display: inline-block;
+  margin: 0;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  color: var(--nu-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.xs { composes: kicker; font-size: var(--nu-fs-1); }
+.sm { composes: kicker; font-size: var(--nu-fs-2); }
+.md { composes: kicker; font-size: var(--nu-fs-3); }
+
+.wide  { letter-spacing: var(--nu-tr-wide); }
+.wider { letter-spacing: var(--nu-tr-wider); }

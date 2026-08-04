@@ -1,0 +1,81 @@
+/* =============================================================================
+ * SilverWovenName — hero-scale silver-to-hue gradient title. Dark-only.
+ * Silver stops come from tokens (--nu-silver-1 / --nu-silver-2). Hue stops are
+ * inlined per data-hue — well-separated on the dark card so each fabric/app
+ * row still reads distinctly.
+ * ==========================================================================*/
+
+.name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(44px, 6vw, 76px);
+  letter-spacing: -0.04em;
+  margin: 0;
+  text-transform: lowercase;
+  display: inline-block;
+  max-width: 100%;
+  background-image: var(--swn-grad);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* --- steel-blue --- */
+.name[data-hue="steel"] {
+  --swn-grad: linear-gradient(
+    120deg,
+    var(--nu-silver-1) 0%,
+    var(--nu-silver-2) 22%,
+    #9bb0d0 55%,
+    #7a95b8 100%
+  );
+}
+
+/* --- muted sage --- */
+.name[data-hue="sage"] {
+  --swn-grad: linear-gradient(
+    120deg,
+    var(--nu-silver-1) 0%,
+    var(--nu-silver-2) 22%,
+    #a8c0af 55%,
+    #8ba894 100%
+  );
+}
+
+/* --- soft plum --- */
+.name[data-hue="plum"] {
+  --swn-grad: linear-gradient(
+    120deg,
+    var(--nu-silver-1) 0%,
+    var(--nu-silver-2) 22%,
+    #bda2c8 55%,
+    #a68ab2 100%
+  );
+}
+
+/* --- warm amber --- */
+.name[data-hue="amber"] {
+  --swn-grad: linear-gradient(
+    120deg,
+    var(--nu-silver-1) 0%,
+    var(--nu-silver-2) 22%,
+    #dab88a 55%,
+    #c8a26e 100%
+  );
+}
+
+/* --- muted teal --- */
+.name[data-hue="teal"] {
+  --swn-grad: linear-gradient(
+    120deg,
+    var(--nu-silver-1) 0%,
+    var(--nu-silver-2) 22%,
+    #a3ced4 55%,
+    #7fb0b8 100%
+  );
+}
+
+@media (max-width: 900px) {
+  .name { font-size: clamp(40px, 10vw, 60px); }
+}

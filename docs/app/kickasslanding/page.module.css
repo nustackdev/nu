@@ -5,11 +5,13 @@
  * ==========================================================================*/
 
 .pageRoot {
+  composes: tokens from '@/components/site/tokens.module.css';
   position: relative;
   isolation: isolate;
   background: #0a0a0d;
   color: rgba(255, 255, 255, 0.92);
   overflow-x: hidden;
+  color-scheme: dark;
 
   /* Two design knobs. Tune at breakpoints. */
   --hero-h: 650px;   /* fixed hero row height; heroWrap + logo layer both use this */
@@ -110,7 +112,7 @@
   font-family: var(--font-display, ui-serif, Georgia, serif);
   font-size: clamp(40px, 5.6vw, 72px);
   line-height: 1.02;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--nu-tr-tight);
   margin: 0 0 24px;
   color: #fff;
 }
@@ -125,7 +127,7 @@
 
 .builtForKicker {
   display: block;
-  font-size: 12px;
+  font-size: var(--nu-fs-3);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.52);
@@ -138,7 +140,7 @@
   margin: 0 0 32px;
   display: grid;
   gap: 6px;
-  font-size: 15px;
+  font-size: var(--nu-fs-8);
   color: rgba(255, 255, 255, 0.86);
 }
 .builtForList li {
@@ -146,7 +148,7 @@
 }
 
 .meta {
-  font-size: 12px;
+  font-size: var(--nu-fs-3);
   color: rgba(255, 255, 255, 0.5);
   margin: 20px 0 0;
   letter-spacing: 0.02em;
@@ -166,9 +168,9 @@
 
 .sectionLabel {
   display: block;
-  font-size: 12px;
+  font-size: var(--nu-fs-3);
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--nu-tr-wide);
   color: rgba(255, 255, 255, 0.5);
   margin: 0 0 12px;
 }
@@ -199,7 +201,7 @@
 }
 
 .description {
-  font-size: 15px;
+  font-size: var(--nu-fs-8);
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.76);
   margin: 0 0 20px;
@@ -213,17 +215,17 @@
   display: grid;
   gap: 4px;
   color: rgba(255, 255, 255, 0.82);
-  font-size: 15px;
+  font-size: var(--nu-fs-8);
 }
 
 .backends {
-  font-size: 13px;
+  font-size: var(--nu-fs-5);
   color: rgba(255, 255, 255, 0.55);
   margin: 0 0 20px;
   letter-spacing: 0.02em;
 }
 .status {
-  font-size: 13px;
+  font-size: var(--nu-fs-5);
   color: rgba(255, 255, 255, 0.55);
   margin: 0 0 20px;
   letter-spacing: 0.02em;
@@ -243,7 +245,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 18px;
-  border-radius: 8px;
+  border-radius: var(--nu-r-sm);
   font-size: 14px;
   font-weight: 500;
   line-height: 1;
@@ -251,7 +253,7 @@
   border: 1px solid transparent;
   color: rgba(255, 255, 255, 0.9);
   background: rgba(255, 255, 255, 0.06);
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background var(--nu-t), border-color var(--nu-t), color var(--nu-t);
 }
 .cta:hover {
   background: rgba(255, 255, 255, 0.1);
@@ -284,7 +286,7 @@
   position: relative;
   min-height: 260px;
   height: 100%;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border: 1px dashed var(--nu-border-strong);
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.015);
 }
@@ -293,7 +295,7 @@
   position: absolute;
   top: 10px;
   left: 12px;
-  font-size: 11px;
+  font-size: var(--nu-fs-2);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.28);
@@ -307,14 +309,14 @@
   justify-content: center;
   align-items: center;
   gap: 14px;
-  font-size: 13px;
+  font-size: var(--nu-fs-5);
   color: rgba(255, 255, 255, 0.55);
   padding: 24px 0;
 }
 .footer a {
   color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: color var(--nu-t);
 }
 .footer a:hover { color: #a684ff; }
 

@@ -11,7 +11,7 @@
   align-items: center;
   gap: 14px;
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: var(--nu-fs-5);
   color: var(--nu-ink-2);
   padding: 32px var(--nu-pad-x) clamp(48px, 8vh, 96px);
 }
@@ -19,7 +19,7 @@
 .footer a {
   color: var(--nu-ink);
   text-decoration: none;
-  transition: color .15s ease;
+  transition: color var(--nu-t);
 }
 .footer a:hover { color: var(--nu-accent-2); }
 

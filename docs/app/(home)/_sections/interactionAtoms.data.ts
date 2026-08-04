@@ -30,9 +30,9 @@ export const LEAVES: Atom[] = [
 export const HUE_VAR: Record<Hue, string> = {
   ink:   'var(--nu-ink)',
   ink2:  'var(--nu-ink-2)',
-  sage:  'var(--nu-fab-sage)',
-  teal:  'var(--nu-fab-teal)',
-  plum:  'var(--nu-fab-plum)',
-  amber: 'var(--nu-fab-amber)',
-  steel: 'var(--nu-fab-steel)',
+  sage:  'var(--nu-hue-sage)',
+  teal:  'var(--nu-hue-teal)',
+  plum:  'var(--nu-hue-plum)',
+  amber: 'var(--nu-hue-amber)',
+  steel: 'var(--nu-hue-steel)',
 };

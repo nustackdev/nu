@@ -58,7 +58,7 @@
 .blurb {
   color: var(--nu-ink-3);
   font-weight: 400;
-  font-size: 13px;
+  font-size: var(--nu-fs-5);
   line-height: 1.35;
   letter-spacing: 0;
 }
@@ -68,8 +68,8 @@
 .sizeLeaf .label   { font-size: clamp(19px, 1.8vw, 22px); }
 
 .sizeRoot .blurb   { font-size: 14px; margin-top: 4px; }
-.sizeBranch .blurb { font-size: 13px; }
-.sizeLeaf .blurb   { font-size: 12.5px; }
+.sizeBranch .blurb { font-size: var(--nu-fs-5); }
+.sizeLeaf .blurb   { font-size: var(--nu-fs-4); }
 
 /* ---- Mobile: cascade outline (hidden on desktop, shown < 720px) ---- */
 
@@ -108,7 +108,7 @@
 .mBlurb {
   color: var(--nu-ink-3);
   font-weight: 400;
-  font-size: 12.5px;
+  font-size: var(--nu-fs-4);
   line-height: 1.35;
 }
 
@@ -149,7 +149,7 @@
 }
 
 .mLeaf .mBlurb {
-  font-size: 12px;
+  font-size: var(--nu-fs-3);
 }
 
 @media (max-width: 720px) {

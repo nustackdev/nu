@@ -43,9 +43,9 @@
     align-items: center;
   }
   .tagline,
-  .useCasesKicker,
-  .useCasesList,
-  .metaLine {
+  .useCasesKickerBox,
+  .useCasesListBox,
+  .metaLineBox {
     margin-left: auto;
     margin-right: auto;
   }
@@ -106,10 +106,6 @@
   z-index: 0;
   mix-blend-mode: screen;
 }
-:global(html.light) .colLeft .ghost {
-  mix-blend-mode: multiply;
-  opacity: 0.5;
-}
 
 .stack {
   position: relative;
@@ -145,7 +141,6 @@
     transform: translate(-42%, -50%);
     opacity: 0.5;
   }
-  :global(html.light) .colLeft .ghost { opacity: 0.45; }
 }
 /* ---- right col — pitch + use cases + meta + actions ---------------------- */
 .colRight {
@@ -188,55 +183,24 @@
   .tagline br { display: none; }
 }
 
-/* ---- use cases — editorial numbered index --------------------------------- */
-.useCasesKicker {
+/* ---- use cases — editorial numbered index (layout wrappers only; type +
+ *      list mechanics live in MonoKicker / NumberedList) ------------------- */
+.useCasesKickerBox {
   margin: 4px 0 0;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  color: var(--nu-ink-3);
   max-width: 36ch;
 }
-.useCasesList {
-  list-style: none;
-  margin: calc(-1 * clamp(15px, 1.65vw, 21px)) 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  max-width: 36ch;
-}
-.useCasesItem {
-  display: grid;
-  grid-template-columns: 2.4em 1fr;
-  align-items: baseline;
-  padding: 5px 0;
-  font-family: var(--font-display);
-  font-size: 14.5px;
-  line-height: 1.45;
-  color: color-mix(in oklab, var(--nu-ink) 94%, var(--nu-ink-2) 6%);
-}
-.useCasesNum {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--nu-ink-3);
-  letter-spacing: 0.1em;
-  font-variant-numeric: tabular-nums;
+.useCasesListBox {
+  /* Negative top-margin pulls the list snug under the kicker. */
+  margin-top: calc(-1 * clamp(15px, 1.65vw, 21px));
 }
 
-/* ---- meta strip — colophon-style fine print below CTAs ------------------- */
-.metaLine {
+/* ---- meta strip — colophon-style fine print below CTAs (layout wrapper;
+ *      type lives in MonoKicker, `·` sep in Meta) ------------------------- */
+.metaLineBox {
   margin: 6px 0 0;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--nu-ink-3);
-  font-variant-numeric: tabular-nums;
 }
-.metaLine span { color: var(--nu-ink-4); padding: 0 8px; }
 
-/* ---- CTA row (common site buttons) --------------------------------------- */
+/* ---- CTA row (button visuals live in SiteButton) ------------------------- */
 .heroCtaRow {
   display: flex;
   flex-wrap: wrap;
@@ -245,67 +209,4 @@
 }
 .heroCtaRow + .heroCtaRow {
   margin-top: -14px;
-}
-.heroCta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--nu-ink);
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 13.5px;
-  letter-spacing: 0.005em;
-  text-decoration: none;
-  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
-}
-.heroCta:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.24);
-}
-.heroCta > svg {
-  color: var(--nu-ink-2);
-  flex: none;
-}
-.heroCtaRepo {
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  letter-spacing: 0;
-}
-.heroCtaArrow { color: var(--nu-ink-3); }
-
-/* ---- primary CTA variants — solid brand fills --------------------------- */
-.heroCtaPurple {
-  background: color-mix(in oklab, var(--nu-accent) 85%, black 15%);
-  border-color: color-mix(in oklab, var(--nu-accent) 40%, black 60%);
-  color: white;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
-              0 6px 18px -8px var(--nu-accent-glow);
-}
-.heroCtaPurple:hover {
-  background: color-mix(in oklab, var(--nu-accent) 92%, black 8%);
-  border-color: color-mix(in oklab, var(--nu-accent) 35%, black 65%);
-}
-.heroCtaPurple > svg,
-.heroCtaPurple .heroCtaArrow {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.heroCtaBlue {
-  background: color-mix(in oklab, var(--nu-accent-2) 85%, black 15%);
-  border-color: color-mix(in oklab, var(--nu-accent-2) 40%, black 60%);
-  color: white;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
-              0 6px 18px -8px var(--nu-accent-2-glow);
-}
-.heroCtaBlue:hover {
-  background: color-mix(in oklab, var(--nu-accent-2) 92%, black 8%);
-  border-color: color-mix(in oklab, var(--nu-accent-2) 35%, black 65%);
-}
-.heroCtaBlue > svg,
-.heroCtaBlue .heroCtaArrow {
-  color: rgba(255, 255, 255, 0.85);
 }

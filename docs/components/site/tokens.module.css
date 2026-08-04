@@ -1,0 +1,119 @@
+/* =============================================================================
+ * Site design tokens — single source of truth. Dark-only.
+ *
+ * Consumed via `composes: tokens from '@/components/site/tokens.module.css'`
+ * on the top-level shell class of each site route (home Backdrop.root and
+ * kickasslanding pageRoot). All descendants inherit these vars.
+ * ==========================================================================*/
+
+.tokens {
+  /* --- Color: ink & rule ------------------------------------------------- */
+  --nu-ink:    #eae8f4;
+  --nu-ink-2:  #b3b0c8;
+  --nu-ink-3:  rgba(179, 176, 200, 0.82);
+  --nu-ink-4:  rgba(179, 176, 200, 0.55);
+  --nu-rule:   rgba(255, 255, 255, 0.08);
+  --nu-rule-2: rgba(255, 255, 255, 0.04);
+
+  /* --- Color: surface & border ------------------------------------------ */
+  --nu-surface:   rgb(22, 22, 26);
+  --nu-surface-2: rgba(15, 15, 18, 0.72);
+  --nu-wash:      rgba(255, 255, 255, 0.03);
+  --nu-border:          rgba(255, 255, 255, 0.08);
+  --nu-border-strong:   rgba(255, 255, 255, 0.12);
+  --nu-border-stronger: rgba(255, 255, 255, 0.24);
+
+  /* --- Color: accents (brand) ------------------------------------------- */
+  /* primary — purple. carries nustack identity everywhere. */
+  --nu-accent:      #a684ff;
+  --nu-accent-soft: rgba(166, 132, 255, 0.18);
+  --nu-accent-wash: rgba(166, 132, 255, 0.09);
+  --nu-accent-line: rgba(166, 132, 255, 0.44);
+  --nu-accent-glow: rgba(166, 132, 255, 0.34);
+
+  /* secondary — blue. section labels, indices, status pills. */
+  --nu-accent-2:      #6b96f2;
+  --nu-accent-2-soft: rgba(107, 150, 242, 0.18);
+  --nu-accent-2-wash: rgba(107, 150, 242, 0.08);
+  --nu-accent-2-line: rgba(107, 150, 242, 0.44);
+  --nu-accent-2-glow: rgba(107, 150, 242, 0.34);
+
+  /* --- Color: hue palette (silver-woven) -------------------------------- */
+  /* Every visualization on the landing pulls its accent from this set.
+     Sections/rows re-map --nu-accent[-2] to one of these hues at scope,
+     so shared primitives auto-recolor. */
+  --nu-hue-steel:      #9bb0d0;
+  --nu-hue-steel-soft: rgba(155, 176, 208, 0.18);
+  --nu-hue-steel-wash: rgba(155, 176, 208, 0.10);
+  --nu-hue-steel-line: rgba(155, 176, 208, 0.42);
+
+  --nu-hue-sage:       #a8c0af;
+  --nu-hue-sage-soft:  rgba(168, 192, 175, 0.18);
+  --nu-hue-sage-wash:  rgba(168, 192, 175, 0.10);
+  --nu-hue-sage-line:  rgba(168, 192, 175, 0.42);
+
+  --nu-hue-plum:       #bda2c8;
+  --nu-hue-plum-soft:  rgba(189, 162, 200, 0.18);
+  --nu-hue-plum-wash:  rgba(189, 162, 200, 0.10);
+  --nu-hue-plum-line:  rgba(189, 162, 200, 0.42);
+
+  --nu-hue-amber:      #dab88a;
+  --nu-hue-amber-soft: rgba(218, 184, 138, 0.18);
+  --nu-hue-amber-wash: rgba(218, 184, 138, 0.10);
+  --nu-hue-amber-line: rgba(218, 184, 138, 0.42);
+
+  --nu-hue-teal:       #a3ced4;
+  --nu-hue-teal-soft:  rgba(163, 206, 212, 0.18);
+  --nu-hue-teal-wash:  rgba(163, 206, 212, 0.10);
+  --nu-hue-teal-line:  rgba(163, 206, 212, 0.42);
+
+  --nu-silver-1: #dde1e8;
+  --nu-silver-2: #bcc2ce;
+
+  /* --- Color: code & chrome --------------------------------------------- */
+  --nu-code-bg:   rgba(255, 255, 255, 0.03);
+  --nu-code-bg-2: rgba(255, 255, 255, 0.02);
+  --nu-chrome-bg: color-mix(in oklab, var(--color-fd-muted) 55%, transparent);
+
+  /* --- Type: families --------------------------------------------------- */
+  --font-display: "Inter", "InterVariable", ui-sans-serif, system-ui,
+                  -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+                  Arial, sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  /* --- Type: size scale (8 steps covering all repeated site sizes) ------ */
+  --nu-fs-1: 10.5px;  /* micro caps  (Chip.sm, MonoKicker.xs, HeroViz hint, ideMeta) */
+  --nu-fs-2: 11px;    /* small mono  (MonoKicker.sm, Chip.md, HeroViz code, NumberedList.num) */
+  --nu-fs-3: 12px;    /* mono base   (MonoKicker.md, SiteButton ghost/repo, ideTab) */
+  --nu-fs-4: 12.5px;  /* small copy  (SiteButton repoLabel, ideGutter, ideCode) */
+  --nu-fs-5: 13px;    /* footer, blurbs */
+  --nu-fs-6: 13.5px;  /* SiteButton base, FloatingNav */
+  --nu-fs-7: 14.5px;  /* NumberedList item */
+  --nu-fs-8: 15px;    /* body text (AppsGrid/FabricsSection body max) */
+
+  /* --- Type: tracking scale --------------------------------------------- */
+  --nu-tr-tight:  -0.02em;
+  --nu-tr-normal: 0;
+  --nu-tr-wide:   0.14em;
+  --nu-tr-wider:  0.22em;
+
+  /* --- Type: weights (only what's actually used) ------------------------ */
+  --nu-fw-normal:   400;
+  --nu-fw-medium:   500;
+  --nu-fw-semibold: 600;
+  --nu-fw-bold:     700;
+  --nu-fw-black:    800;
+
+  /* --- Space: padding & gap --------------------------------------------- */
+  --nu-pad-x: clamp(24px, 4vw, 56px);
+
+  /* --- Shape ------------------------------------------------------------ */
+  --nu-r-sm: 8px;
+  --nu-r-md: 10px;
+  --nu-r-lg: 14px;
+  --nu-t:    0.15s ease;
+
+  /* --- Patterns --------------------------------------------------------- */
+  --nu-dot-grid: radial-gradient(circle at 1px 1px, var(--color-fd-border) 1.1px, transparent 1.4px);
+  --nu-dot-size: 22px 22px;
+}

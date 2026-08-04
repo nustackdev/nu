@@ -1,0 +1,13 @@
+/* =============================================================================
+ * Meta — inline items separated by `·`. Bring your own typography (wrap in
+ * MonoKicker for the hero-style variant, or apply your own container styles).
+ * ==========================================================================*/
+
+.meta {
+  display: inline;
+}
+
+.sep {
+  color: var(--nu-ink-4);
+  padding: 0 8px;
+}

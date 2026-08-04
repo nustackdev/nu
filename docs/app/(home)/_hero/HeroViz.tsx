@@ -1,6 +1,8 @@
 import { type ReactNode } from 'react';
 import { BrowserChrome } from '@/components/site/marks/primitives/BrowserChrome';
 import { DiskStack } from '@/components/site/marks/primitives/DiskStack';
+import { Chip } from '@/components/site/Chip';
+import { VizFrame } from '@/components/site/VizFrame';
 import s from './HeroViz.module.css';
 
 /**
@@ -51,9 +53,9 @@ export function HeroViz() {
           />
         </svg>
       </div>
-      <div className={s.right}>
+      <VizFrame surface="glass" hue="steel" className={s.right}>
         <RightScene />
-      </div>
+      </VizFrame>
       </div>
     </section>
   );
@@ -208,7 +210,7 @@ function Container({
     <div className={cls} data-role={role}>
       <div className={s.hint}>
         <HintArrow />
-        <span className={s.tagChip}>{tag}</span>
+        <Chip size="sm">{tag}</Chip>
         <span className={s.hintText}>{hint}</span>
       </div>
       <div className={s.body}>{children}</div>
@@ -251,7 +253,7 @@ function HintArrow() {
  * RightScene — fabric-clean SVG. Browser chrome (shared primitive) renders 42,
  * dashed wire connects down to a kv-storage platter-stack (shared primitive).
  * Flat hairlines, no gradients, single accent-wash on the n = 42 chip. Accent
- * hue is silver-woven steel-blue (--nu-accent* is remapped to --nu-fab-steel
+ * hue is silver-woven steel-blue (--nu-accent* is remapped to --nu-hue-steel
  * on the wrap in HeroViz.module.css).
  * ==========================================================================*/
 function RightScene() {

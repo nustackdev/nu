@@ -18,9 +18,9 @@
 
 .ide {
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  background: rgba(15, 15, 18, 0.72);
+  border: 1px solid var(--nu-border);
+  border-radius: var(--nu-r-md);
+  background: var(--nu-surface-2);
   overflow: hidden;
   font-family: var(--font-mono);
   color: var(--nu-ink-2);
@@ -39,14 +39,14 @@
   align-items: center;
   gap: 8px;
   padding: 0 16px;
-  font-size: 12px;
+  font-size: var(--nu-fs-3);
   letter-spacing: 0.01em;
   color: var(--nu-ink-3);
   border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 .ideTabActive {
   color: var(--nu-ink);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--nu-wash);
   border-bottom: 1px solid var(--nu-accent);
 }
 .ideTabDot {
@@ -59,7 +59,7 @@
 .ideMeta {
   margin-left: auto;
   padding: 0 18px;
-  font-size: 10.5px;
+  font-size: var(--nu-fs-1);
   letter-spacing: 0.16em;
   color: var(--nu-ink-4);
   display: inline-flex;
@@ -95,10 +95,10 @@
   height: 28px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--nu-wash);
   color: var(--nu-ink-3);
   cursor: pointer;
-  transition: color .15s ease, background .15s ease, border-color .15s ease;
+  transition: color var(--nu-t), background var(--nu-t), border-color var(--nu-t);
 }
 .ideCopy:hover {
   color: var(--nu-ink);
@@ -115,7 +115,7 @@
   text-align: right;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   color: var(--nu-ink-4);
-  font-size: 12.5px;
+  font-size: var(--nu-fs-4);
   line-height: 1.7;
   user-select: none;
   font-variant-numeric: tabular-nums;
@@ -127,7 +127,7 @@
   flex: 1 1 auto;
   min-width: 0;
   padding: 0 20px;
-  font-size: 12.5px;
+  font-size: var(--nu-fs-4);
   line-height: 1.7;
   color: var(--nu-ink-2);
   overflow-x: auto;
@@ -139,7 +139,7 @@
   tab-size: 4;
 }
 
-/* token colors — sourced from _tokens.module.css palette */
+/* token colors — sourced from site tokens (--nu-accent[-2] hue scope) */
 .kw  { color: var(--nu-accent-2); }
 .nu  { color: var(--nu-accent); }
 .str { color: var(--nu-ink); }

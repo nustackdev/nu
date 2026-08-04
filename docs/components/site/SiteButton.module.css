@@ -1,0 +1,144 @@
+/* =============================================================================
+ * SiteButton — every landing CTA/button collapses here.
+ * Variants:
+ *   neutral        transparent-white bg, hairline border (hero CTAs, section CTAs)
+ *   hueTinted      reads --nu-accent-* from surrounding hue scope (fabric docs btn)
+ *   primaryPurple  solid purple fill (hero quickstart)
+ *   primaryBlue    solid blue fill (hero github)
+ *   ghost          dashed, disabled ("coming soon")
+ *   repo           hue-tinted, mono type (apps repo link)
+ * ==========================================================================*/
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--nu-r-md);
+  border: 1px solid var(--nu-border-strong);
+  background: var(--nu-wash);
+  color: var(--nu-ink);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--nu-fs-6);
+  letter-spacing: 0.005em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--nu-t), border-color var(--nu-t), color var(--nu-t);
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--nu-border-stronger);
+}
+
+.btn > svg {
+  color: var(--nu-ink-2);
+  flex: none;
+}
+
+.arrow {
+  color: var(--nu-ink-3);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ---- hueTinted — pulls from surrounding --nu-accent-* row scope ---------- */
+.hueTinted {
+  composes: btn;
+  border-color: var(--nu-accent-line);
+  background: var(--nu-accent-wash);
+}
+.hueTinted:hover {
+  background: var(--nu-accent-soft);
+  border-color: var(--nu-accent);
+}
+.hueTinted > svg { color: var(--nu-accent); }
+.arrowHue {
+  color: var(--nu-accent);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ---- primary — solid brand fill ------------------------------------------ */
+.primaryPurple {
+  composes: btn;
+  background: color-mix(in oklab, var(--nu-accent) 85%, black 15%);
+  border-color: color-mix(in oklab, var(--nu-accent) 40%, black 60%);
+  color: white;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
+              0 6px 18px -8px var(--nu-accent-glow);
+}
+.primaryPurple:hover {
+  background: color-mix(in oklab, var(--nu-accent) 92%, black 8%);
+  border-color: color-mix(in oklab, var(--nu-accent) 35%, black 65%);
+}
+.primaryPurple > svg,
+.primaryPurple .arrow {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.primaryBlue {
+  composes: btn;
+  background: color-mix(in oklab, var(--nu-accent-2) 85%, black 15%);
+  border-color: color-mix(in oklab, var(--nu-accent-2) 40%, black 60%);
+  color: white;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
+              0 6px 18px -8px var(--nu-accent-2-glow);
+}
+.primaryBlue:hover {
+  background: color-mix(in oklab, var(--nu-accent-2) 92%, black 8%);
+  border-color: color-mix(in oklab, var(--nu-accent-2) 35%, black 65%);
+}
+.primaryBlue > svg,
+.primaryBlue .arrow {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* ---- ghost — dashed, disabled ("coming soon") ---------------------------- */
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-radius: var(--nu-r-md);
+  border: 1px dashed var(--nu-rule-2);
+  background: transparent;
+  color: var(--nu-ink-3);
+  font-family: var(--font-mono);
+  font-size: var(--nu-fs-3);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: not-allowed;
+}
+
+/* ---- repo — hue-tinted, mono type (apps repo link) ----------------------- */
+.repo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: var(--nu-r-md);
+  border: 1px solid var(--nu-accent-line);
+  background: var(--nu-accent-wash);
+  color: var(--nu-ink);
+  font-family: var(--font-mono);
+  font-size: var(--nu-fs-3);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: background var(--nu-t), border-color var(--nu-t);
+}
+.repo:hover {
+  background: var(--nu-accent-soft);
+  border-color: var(--nu-accent);
+}
+.arrowRepo {
+  color: var(--nu-accent);
+}
+
+/* ---- mono repo label used inside neutral CTAs ---------------------------- */
+.repoLabel {
+  font-family: var(--font-mono);
+  font-size: var(--nu-fs-4);
+  letter-spacing: 0;
+}

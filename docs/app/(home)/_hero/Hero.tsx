@@ -1,7 +1,10 @@
-import Link from 'next/link';
-import { ArrowUpRight, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { GithubMark } from '@/components/site/marks/GithubMark';
 import { NuLogo } from '@/components/site/marks/NuLogo';
+import { SiteButton, SiteButtonRepoLabel } from '@/components/site/SiteButton';
+import { MonoKicker } from '@/components/site/MonoKicker';
+import { Meta } from '@/components/site/Meta';
+import { NumberedList } from '@/components/site/NumberedList';
 import s from './Hero.module.css';
 
 function XMark({ size = 13 }: { size?: number }) {
@@ -86,59 +89,35 @@ export function Hero() {
           <em className={s.taglineAccent}>50&times; less code.</em>
         </p>
 
-        <p className={s.useCasesKicker}>Built for</p>
-        <ol className={s.useCasesList}>
-          {USE_CASES.map((label, i) => (
-            <li key={label} className={s.useCasesItem}>
-              <span className={s.useCasesNum}>{String(i + 1).padStart(2, '0')}</span>
-              <span>{label}</span>
-            </li>
-          ))}
-        </ol>
+        <MonoKicker as="p" size="xs" tracking="wider" className={s.useCasesKickerBox}>
+          Built for
+        </MonoKicker>
+        <NumberedList items={USE_CASES} className={s.useCasesListBox} />
 
         <div className={s.heroCtaRow}>
-          <Link className={`${s.heroCta} ${s.heroCtaPurple}`} href="/docs">
+          <SiteButton variant="primaryPurple" href="/docs">
             <BookOpen size={14} aria-hidden />
             <span>Quickstart</span>
-            <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
-          </Link>
-          <a
-            className={`${s.heroCta} ${s.heroCtaBlue}`}
-            href="https://github.com/nustackdev/nu"
-            target="_blank"
-            rel="noreferrer"
-          >
+          </SiteButton>
+          <SiteButton variant="primaryBlue" href="https://github.com/nustackdev/nu">
             <GithubMark size={14} />
-            <span className={s.heroCtaRepo}>nustackdev/nu</span>
-            <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
-          </a>
+            <SiteButtonRepoLabel>nustackdev/nu</SiteButtonRepoLabel>
+          </SiteButton>
         </div>
         <div className={s.heroCtaRow}>
-          <a
-            className={s.heroCta}
-            href="https://discord.gg/tCa8YE7XVr"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <SiteButton href="https://discord.gg/tCa8YE7XVr">
             <DiscordMark size={14} />
             <span>Discord</span>
-            <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
-          </a>
-          <a
-            className={s.heroCta}
-            href="https://twitter.com/nustackdev"
-            target="_blank"
-            rel="noreferrer"
-          >
+          </SiteButton>
+          <SiteButton href="https://twitter.com/nustackdev">
             <XMark size={13} />
             <span>Follow</span>
-            <ArrowUpRight size={13} aria-hidden className={s.heroCtaArrow} />
-          </a>
+          </SiteButton>
         </div>
 
-        <p className={s.metaLine} aria-label="project meta">
-          Apache&#8209;2.0 <span>·</span> Python 3.12+
-        </p>
+        <MonoKicker as="p" size="xs" tracking="wide" className={s.metaLineBox}>
+          <Meta items={[<>Apache&#8209;2.0</>, 'Python 3.12+']} />
+        </MonoKicker>
       </aside>
     </header>
   );

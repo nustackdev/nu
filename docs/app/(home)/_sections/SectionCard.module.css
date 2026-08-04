@@ -40,53 +40,53 @@
  * Fabric/apps rows override again at .row scope; this handles the sections
  * that don't have per-row overrides.
  * ==========================================================================*/
-.section[data-viz-hue="steel"]  { --nu-accent: var(--nu-fab-steel);
-                                  --nu-accent-soft: var(--nu-fab-steel-soft);
-                                  --nu-accent-wash: var(--nu-fab-steel-wash);
-                                  --nu-accent-line: var(--nu-fab-steel-line);
-                                  --nu-accent-2: var(--nu-fab-steel);
-                                  --nu-accent-2-soft: var(--nu-fab-steel-soft);
-                                  --nu-accent-2-wash: var(--nu-fab-steel-wash);
-                                  --nu-accent-2-line: var(--nu-fab-steel-line); }
-.section[data-viz-hue="sage"]   { --nu-accent: var(--nu-fab-sage);
-                                  --nu-accent-soft: var(--nu-fab-sage-soft);
-                                  --nu-accent-wash: var(--nu-fab-sage-wash);
-                                  --nu-accent-line: var(--nu-fab-sage-line);
-                                  --nu-accent-2: var(--nu-fab-steel);
-                                  --nu-accent-2-soft: var(--nu-fab-steel-soft);
-                                  --nu-accent-2-wash: var(--nu-fab-steel-wash);
-                                  --nu-accent-2-line: var(--nu-fab-steel-line); }
-.section[data-viz-hue="teal"]   { --nu-accent: var(--nu-fab-teal);
-                                  --nu-accent-soft: var(--nu-fab-teal-soft);
-                                  --nu-accent-wash: var(--nu-fab-teal-wash);
-                                  --nu-accent-line: var(--nu-fab-teal-line);
-                                  --nu-accent-2: var(--nu-fab-steel);
-                                  --nu-accent-2-soft: var(--nu-fab-steel-soft);
-                                  --nu-accent-2-wash: var(--nu-fab-steel-wash);
-                                  --nu-accent-2-line: var(--nu-fab-steel-line); }
-.section[data-viz-hue="plum"]   { --nu-accent: var(--nu-fab-plum);
-                                  --nu-accent-soft: var(--nu-fab-plum-soft);
-                                  --nu-accent-wash: var(--nu-fab-plum-wash);
-                                  --nu-accent-line: var(--nu-fab-plum-line);
-                                  --nu-accent-2: var(--nu-fab-plum);
-                                  --nu-accent-2-soft: var(--nu-fab-plum-soft);
-                                  --nu-accent-2-wash: var(--nu-fab-plum-wash);
-                                  --nu-accent-2-line: var(--nu-fab-plum-line); }
-.section[data-viz-hue="amber"]  { --nu-accent: var(--nu-fab-amber);
-                                  --nu-accent-soft: var(--nu-fab-amber-soft);
-                                  --nu-accent-wash: var(--nu-fab-amber-wash);
-                                  --nu-accent-line: var(--nu-fab-amber-line);
-                                  --nu-accent-2: var(--nu-fab-amber);
-                                  --nu-accent-2-soft: var(--nu-fab-amber-soft);
-                                  --nu-accent-2-wash: var(--nu-fab-amber-wash);
-                                  --nu-accent-2-line: var(--nu-fab-amber-line); }
+.section[data-viz-hue="steel"]  { --nu-accent: var(--nu-hue-steel);
+                                  --nu-accent-soft: var(--nu-hue-steel-soft);
+                                  --nu-accent-wash: var(--nu-hue-steel-wash);
+                                  --nu-accent-line: var(--nu-hue-steel-line);
+                                  --nu-accent-2: var(--nu-hue-steel);
+                                  --nu-accent-2-soft: var(--nu-hue-steel-soft);
+                                  --nu-accent-2-wash: var(--nu-hue-steel-wash);
+                                  --nu-accent-2-line: var(--nu-hue-steel-line); }
+.section[data-viz-hue="sage"]   { --nu-accent: var(--nu-hue-sage);
+                                  --nu-accent-soft: var(--nu-hue-sage-soft);
+                                  --nu-accent-wash: var(--nu-hue-sage-wash);
+                                  --nu-accent-line: var(--nu-hue-sage-line);
+                                  --nu-accent-2: var(--nu-hue-steel);
+                                  --nu-accent-2-soft: var(--nu-hue-steel-soft);
+                                  --nu-accent-2-wash: var(--nu-hue-steel-wash);
+                                  --nu-accent-2-line: var(--nu-hue-steel-line); }
+.section[data-viz-hue="teal"]   { --nu-accent: var(--nu-hue-teal);
+                                  --nu-accent-soft: var(--nu-hue-teal-soft);
+                                  --nu-accent-wash: var(--nu-hue-teal-wash);
+                                  --nu-accent-line: var(--nu-hue-teal-line);
+                                  --nu-accent-2: var(--nu-hue-steel);
+                                  --nu-accent-2-soft: var(--nu-hue-steel-soft);
+                                  --nu-accent-2-wash: var(--nu-hue-steel-wash);
+                                  --nu-accent-2-line: var(--nu-hue-steel-line); }
+.section[data-viz-hue="plum"]   { --nu-accent: var(--nu-hue-plum);
+                                  --nu-accent-soft: var(--nu-hue-plum-soft);
+                                  --nu-accent-wash: var(--nu-hue-plum-wash);
+                                  --nu-accent-line: var(--nu-hue-plum-line);
+                                  --nu-accent-2: var(--nu-hue-plum);
+                                  --nu-accent-2-soft: var(--nu-hue-plum-soft);
+                                  --nu-accent-2-wash: var(--nu-hue-plum-wash);
+                                  --nu-accent-2-line: var(--nu-hue-plum-line); }
+.section[data-viz-hue="amber"]  { --nu-accent: var(--nu-hue-amber);
+                                  --nu-accent-soft: var(--nu-hue-amber-soft);
+                                  --nu-accent-wash: var(--nu-hue-amber-wash);
+                                  --nu-accent-line: var(--nu-hue-amber-line);
+                                  --nu-accent-2: var(--nu-hue-amber);
+                                  --nu-accent-2-soft: var(--nu-hue-amber-soft);
+                                  --nu-accent-2-wash: var(--nu-hue-amber-wash);
+                                  --nu-accent-2-line: var(--nu-hue-amber-line); }
 
 .sectionCard {
   position: relative;
   padding: clamp(28px, 3vw, 44px);
-  border-radius: 14px;
+  border-radius: var(--nu-r-lg);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgb(22, 22, 26);
+  background: var(--nu-surface);
   overflow: hidden;
 }
 .sectionCard > * {
@@ -123,61 +123,9 @@
   flex-wrap: wrap;
 }
 
-/* ---- CTA button ----
-   Unified with hero CTA: neutral transparent-white bg, hairline border. */
-.cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--nu-ink);
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 13.5px;
-  letter-spacing: 0.005em;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
-}
-.cta:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.24);
-}
-.cta > svg {
-  color: var(--nu-ink-2);
-  flex: none;
-}
-.ctaArrow {
-  color: var(--nu-ink-3);
-  display: inline-flex;
-  align-items: center;
-}
-
-/* Hue-tinted variant — reads --nu-accent-* from the surrounding row scope
-   (fabrics/apps override those tokens per row). */
-.ctaHueTinted {
-  border-color: var(--nu-accent-line);
-  background: var(--nu-accent-wash);
-}
-.ctaHueTinted:hover {
-  background: var(--nu-accent-soft);
-  border-color: var(--nu-accent);
-}
-.ctaHueTinted > svg { color: var(--nu-accent); }
-.ctaArrowHue {
-  color: var(--nu-accent);
-  display: inline-flex;
-  align-items: center;
-}
-
-.ctaRepo {
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  letter-spacing: 0;
-}
+/* CTA button visuals are now owned by <SiteButton> in components/site.
+   Cta/RepoName in SectionCard.tsx are dead exports pending SectionCard's
+   full replacement by the components/site/grid primitives. */
 
 /* ---- 2-col split ---- */
 .sectionSplit {
@@ -214,24 +162,6 @@
   .sectionSplitFlip { grid-template-columns: 1fr; }
 }
 
-/* ---- viz frame: SVGs on dotted canvas inside a thin bordered box ---- */
-.vizFrame {
-  position: relative;
-  width: 100%;
-  padding: clamp(18px, 1.8vw, 26px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005)),
-    var(--nu-dot-grid);
-  background-size: auto, var(--nu-dot-size);
-  background-position: center, 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.vizFrame svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
+/* VizFrame visuals are now owned by <VizFrame> in components/site.
+   The VizFrame export in SectionCard.tsx is dead pending SectionCard's
+   replacement by the components/site/grid primitives. */

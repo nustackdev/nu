@@ -1,5 +1,7 @@
-import { ArrowUpRight } from 'lucide-react';
 import { GithubMark } from '@/components/site/marks/GithubMark';
+import { SiteButton } from '@/components/site/SiteButton';
+import { SilverWovenName, type SilverWovenHue } from '@/components/site/SilverWovenName';
+import { VizFrame } from '@/components/site/VizFrame';
 import {
   SectionCard,
   SectionCol,
@@ -8,6 +10,12 @@ import {
 } from './SectionCard';
 import { APPS } from './apps.data';
 import s from './AppsGrid.module.css';
+
+/** Map app name → silver-woven hue key. */
+const APP_HUE: Record<string, SilverWovenHue> = {
+  nulog: 'amber',
+  nuspace: 'plum',
+};
 
 /**
  * §3 — apps built on Nu.
@@ -34,34 +42,26 @@ export function AppsSection() {
                 className={`${s.row} ${flip ? s.rowFlip : ''}`}
               >
                 <div className={s.text}>
-                  <span className={s.name}>{a.name}</span>
+                  <SilverWovenName hue={APP_HUE[a.name]}>{a.name}</SilverWovenName>
                   <h3 className={s.rowTitle}>{a.title}</h3>
                   <p className={s.body}>{a.body}</p>
                   <div className={s.actions}>
                     {a.comingSoon ? (
-                      <span className={s.ghostBtn} aria-disabled="true">
-                        Coming soon
-                      </span>
+                      <SiteButton variant="ghost">Coming soon</SiteButton>
                     ) : (
                       a.repo && (
-                        <a
-                          className={s.repoBtn}
-                          href={a.repo}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
+                        <SiteButton variant="repo" href={a.repo}>
                           <GithubMark size={14} />
                           <span>{a.repo.replace('https://github.com/', '')}</span>
-                          <ArrowUpRight size={13} aria-hidden className={s.repoArrow} />
-                        </a>
+                        </SiteButton>
                       )
                     )}
                   </div>
                 </div>
                 <div className={s.viz} aria-hidden>
-                  <div className={s.vizFrame}>
+                  <VizFrame>
                     <a.Viz />
-                  </div>
+                  </VizFrame>
                 </div>
               </li>
             );
