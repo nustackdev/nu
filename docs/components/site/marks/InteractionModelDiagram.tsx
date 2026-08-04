@@ -25,7 +25,7 @@ const BRANCHES: Atom[] = [
 ];
 
 const LEAVES: Atom[] = [
-  { label: 'Query',   blurb: 'pure evaluation, yields values', hue: 'teal'  },
+  { label: 'Query',   blurb: 'pure eval, yields values',       hue: 'teal'  },
   { label: 'Command', blurb: 'mutation, yields nothing',       hue: 'plum'  },
   { label: 'Action',  blurb: 'mutation, yields values',        hue: 'amber' },
   { label: 'Span',    blurb: 'scope wrapping a body',          hue: 'steel' },

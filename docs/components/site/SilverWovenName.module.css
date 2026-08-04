@@ -8,7 +8,7 @@
 .name {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(44px, 6vw, 76px);
+  font-size: var(--nu-fs-14);
   letter-spacing: -0.04em;
   margin: 0;
   text-transform: lowercase;
@@ -76,6 +76,9 @@
   );
 }
 
-@media (max-width: 900px) {
-  .name { font-size: clamp(40px, 10vw, 60px); }
+@media (max-width: 1280px) {
+  .name { font-size: var(--nu-fs-13); }
+}
+@media (max-width: 640px) {
+  .name { font-size: var(--nu-fs-12); }
 }

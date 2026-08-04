@@ -19,6 +19,10 @@
   --hero-top: var(--nu-space-8);  /* top gap before hero; logoLayer + heroRow share it */
 }
 
+@media (max-width: 1280px) {
+  .pageRoot { --hero-top: var(--nu-space-4); }
+}
+
 /* Stacking: gradient (0) < logo (1) < dots (2) < content (3). */
 .gradientLayer { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .dotLayer      { z-index: 2; }
@@ -142,7 +146,7 @@
   text-align: center;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(96px, 16vw, 220px);
+  font-size: var(--nu-fs-17);
   line-height: 0.9;
   letter-spacing: -0.03em;
   text-transform: uppercase;
@@ -165,8 +169,11 @@
   z-index: 0;
 }
 
+@media (max-width: 1280px) {
+  .chapterPeek { font-size: var(--nu-fs-16); }
+}
 @media (max-width: 640px) {
-  .chapterPeek { font-size: clamp(64px, 18vw, 120px); }
+  .chapterPeek { font-size: var(--nu-fs-15); }
 }
 
 /* -- Typography ------------------------------------------------------------ */
@@ -184,11 +191,14 @@
   display: block;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(68px, 9.12vw, 133px);
+  font-size: var(--nu-fs-16);
   line-height: 0.92;
   letter-spacing: -0.045em;
   color: #fff;
 }
+@media (max-width: 1280px) { .sloganWord { font-size: var(--nu-fs-15); } }
+@media (max-width: 900px)  { .sloganWord { font-size: var(--nu-fs-14); } }
+@media (max-width: 560px)  { .sloganWord { font-size: var(--nu-fs-13); } }
 
 /* -- Hero right column: layout wrappers (kit components handle type/mechanics) -- */
 
@@ -203,7 +213,7 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(15.5px, 1.15vw, 17.5px);
+  font-size: var(--nu-fs-9);
   line-height: 1.5;
   letter-spacing: -0.005em;
   color: color-mix(in oklab, var(--nu-ink) 88%, var(--nu-ink-2) 12%);
@@ -254,7 +264,7 @@
 /* -- Section-wide tagline (used by fabrics/apps/etc.) ---------------------- */
 
 .tagline {
-  font-size: clamp(16px, 1.4vw, 20px);
+  font-size: var(--nu-fs-10);
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.78);
   margin: 0 0 32px;
@@ -262,7 +272,7 @@
 }
 
 .lede {
-  font-size: clamp(16px, 1.35vw, 19px);
+  font-size: var(--nu-fs-10);
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.82);
   margin: 0;
@@ -284,15 +294,18 @@
 
 .sectionTitle {
   font-family: var(--font-display, ui-serif, Georgia, serif);
-  font-size: clamp(28px, 3.4vw, 44px);
+  font-size: var(--nu-fs-13);
   line-height: 1.08;
   letter-spacing: -0.015em;
   margin: 0;
   color: #fff;
 }
+@media (max-width: 640px) {
+  .sectionTitle { font-size: var(--nu-fs-12); }
+}
 
 .sectionIntro {
-  font-size: clamp(15px, 1.15vw, 17px);
+  font-size: var(--nu-fs-9);
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.72);
   margin: 16px 0 0;
@@ -301,7 +314,7 @@
 
 .entryName {
   font-family: var(--font-display, ui-serif, Georgia, serif);
-  font-size: clamp(22px, 2.2vw, 30px);
+  font-size: var(--nu-fs-11);
   letter-spacing: -0.01em;
   margin: 0 0 8px;
   color: #fff;
@@ -345,6 +358,17 @@
   flex-wrap: wrap;
   gap: 12px;
   margin: 24px 0 0;
+}
+
+/* -- Responsive: tighten inter-line spacing inside cards ≤ 1280px --------- */
+@media (max-width: 1280px) {
+  .tagline      { margin-bottom: var(--nu-space-2); }  /* 32 → 20 */
+  .description  { margin-bottom: var(--nu-space-1); }  /* 20 → 10 */
+  .backends     { margin-bottom: var(--nu-space-1); }  /* 20 → 10 */
+  .status       { margin-bottom: var(--nu-space-1); }  /* 20 → 10 */
+  .useCases     { margin-bottom: var(--nu-space-2); }  /* 24 → 20 */
+  .sectionIntro { margin-top:    var(--nu-space-1); }  /* 16 → 10 */
+  .ctaRow       { margin-top:    var(--nu-space-2); }  /* 24 → 20 */
 }
 
 /* -- SVG placeholders ----------------------------------------------------- */

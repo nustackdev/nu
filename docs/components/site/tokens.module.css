@@ -100,6 +100,15 @@
   --nu-fs-6: 13.5px;  /* SiteButton base, FloatingNav */
   --nu-fs-7: 14.5px;  /* NumberedList item */
   --nu-fs-8: 15px;    /* body text (AppsGrid/FabricsSection body max) */
+  --nu-fs-9:  17px;   /* body-lg  (heroTagline, sectionIntro) */
+  --nu-fs-10: 20px;   /* lede     (.tagline, .lede) */
+  --nu-fs-11: 24px;   /* h4       (entryName) */
+  --nu-fs-12: 32px;   /* h3       (sectionTitle) */
+  --nu-fs-13: 48px;   /* h2 */
+  --nu-fs-14: 64px;   /* h1 / slogan mobile */
+  --nu-fs-15: 88px;   /* display-sm / slogan tablet */
+  --nu-fs-16: 120px;  /* display  / slogan desktop */
+  --nu-fs-17: 200px;  /* watermark (chapterPeek) */
 
   /* --- Type: tracking scale --------------------------------------------- */
   --nu-tr-tight:  -0.02em;

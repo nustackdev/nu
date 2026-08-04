@@ -368,8 +368,7 @@ export default function KickAssLanding() {
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="amber">nulog</SilverWovenName>
               <p className={s.tagline}>
-                Pure-Python, serverless logger and metrics store. Billions of
-                entries, live UI.
+                Pure-Python, serverless logger and metrics store.
               </p>
               <p className={s.description}>
                 Log messages and observe metrics from any Python code. Entries
@@ -396,7 +395,7 @@ export default function KickAssLanding() {
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="plum">nuspace</SilverWovenName>
               <p className={s.tagline}>
-                A space where humans, code, and agents write to one tree.
+                A programmable knowledge base.
               </p>
               <p className={s.description}>
                 nuspace is Nu made touchable: blocks and pages are Refs, UI

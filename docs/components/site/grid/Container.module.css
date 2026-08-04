@@ -12,8 +12,17 @@
   padding-inline: var(--nu-space-4);
 }
 
+@media (max-width: 1280px) {
+  /* Halve the grid unit so every CellContent pad (sm/md/lg) shrinks with it. */
+  .root { --kal-u: clamp(14px, 1.6vw, 20px); }
+}
+
 @media (max-width: 640px) {
-  .root { padding-inline: var(--nu-space-2); }
+  .root {
+    padding-inline: var(--nu-space-2);
+    /* Step kal-u down again so CellContent paddings shrink for mobile. */
+    --kal-u: clamp(10px, 1.2vw, 14px);
+  }
 }
 
 .full {
