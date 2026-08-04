@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BookOpen } from 'lucide-react';
 import { NustackMark } from '@/components/site/marks/NustackMark';
 import { HeroLogo } from './_blocks/HeroLogo';
 import { DotPattern } from '@/components/site/bg/DotPattern';
@@ -10,6 +11,9 @@ import { Row } from '@/components/site/grid/Row';
 import { SiteButton, SiteButtonRepoLabel } from '@/components/site/SiteButton';
 import { SilverWovenName } from '@/components/site/SilverWovenName';
 import { VizFrame } from '@/components/site/VizFrame';
+import { MonoKicker } from '@/components/site/MonoKicker';
+import { Meta } from '@/components/site/Meta';
+import { NumberedList } from '@/components/site/NumberedList';
 import {
   MemGlyph,
   VirtualsGlyph,
@@ -21,9 +25,20 @@ import { NulogMockSvg } from '@/components/site/marks/NulogMock';
 import { NuspaceMockSvg } from '@/components/site/marks/NuspaceMock';
 import { HeroDemoMark } from '@/components/site/marks/HeroDemoMark';
 import { InteractionModelDiagram } from '@/components/site/marks/InteractionModelDiagram';
+import { GithubMark } from '@/components/site/marks/GithubMark';
+import { DiscordMark } from '@/components/site/marks/DiscordMark';
+import { XMark } from '@/components/site/marks/XMark';
 import { CodeSample } from '@/components/site/CodeSample';
 import { NU_SAMPLE_LINES } from './nu.sample.data';
 import s from './page.module.css';
+
+const USE_CASES = [
+  'AI agentic systems',
+  'Personal apps',
+  'Data-intensive apps',
+  'Enterprise in-house tools',
+  'Observability dashboards',
+];
 
 export default function KickAssLanding() {
   return (
@@ -43,39 +58,59 @@ export default function KickAssLanding() {
       {/* Layer 4: everything else */}
       <Container full className={s.contentLayer}>
         {/* 1. Hero */}
-        <Row cols="2:1" divider={false} className={s.heroRow}>
-            <Cell>
+        <Row template="minmax(0, 3fr) minmax(0, 2fr)" divider={false} className={s.heroRow}>
+            <Cell yalign="middle">
               <CellContent pad="lg">
-                <h1 className={s.slogan}>Nu - the interaction primitive.</h1>
+                <h1 className={s.sloganStack} aria-label="Nu the interaction primitive">
+                  <span className={s.sloganWord} aria-hidden>Nu</span>
+                  <span className={s.sloganWord} aria-hidden>the</span>
+                  <span className={s.sloganWord} aria-hidden>interaction</span>
+                  <span className={s.sloganWord} aria-hidden>primitive.</span>
+                </h1>
               </CellContent>
             </Cell>
-            <Cell>
+            <Cell yalign="middle">
               <CellContent pad="lg">
-                <p className={s.tagline}>
-                  Build apps in one primitive that spans your whole stack -
-                  databases, UIs, AI agents, and services. No glue. 50x less
-                  code.
-                </p>
-                <span className={s.builtForKicker}>Built for</span>
-                <ol className={s.builtForList}>
-                  <li>01. AI agentic systems</li>
-                  <li>02. Personal apps</li>
-                  <li>03. Data-intensive apps</li>
-                  <li>4. Enterprise in-house tools</li>
-                </ol>
+                <div className={s.heroRight}>
+                  <p className={s.heroTagline}>
+                    Build apps in one primitive that spans your
+                    <br />
+                    whole stack &mdash; databases, UIs, AI agents,
+                    <br />
+                    and services. No glue.{' '}
+                    <em className={s.taglineAccent}>50&times; less code.</em>
+                  </p>
 
-                <div className={s.ctaRow}>
-                  <SiteButton variant="primaryPurple" href="/docs">
-                    Quickstart
-                  </SiteButton>
-                  <SiteButton variant="primaryBlue" href="https://github.com/nustackdev/nu">
-                    <SiteButtonRepoLabel>nustackdev/nu</SiteButtonRepoLabel>
-                  </SiteButton>
-                  <SiteButton href="https://discord.gg/tCa8YE7XVr">Discord</SiteButton>
-                  <SiteButton href="https://twitter.com/nustackdev">Follow (X)</SiteButton>
+                  <MonoKicker as="p" size="xs" tracking="wider" className={s.useCasesKickerBox}>
+                    Built for
+                  </MonoKicker>
+                  <NumberedList items={USE_CASES} className={s.useCasesListBox} />
+
+                  <div className={s.heroCtaRow}>
+                    <SiteButton variant="primaryPurple" href="/docs">
+                      <BookOpen size={14} aria-hidden />
+                      <span>Quickstart</span>
+                    </SiteButton>
+                    <SiteButton variant="primaryBlue" href="https://github.com/nustackdev/nu">
+                      <GithubMark size={14} />
+                      <SiteButtonRepoLabel>nustackdev/nu</SiteButtonRepoLabel>
+                    </SiteButton>
+                  </div>
+                  <div className={s.heroCtaRow}>
+                    <SiteButton href="https://discord.gg/tCa8YE7XVr">
+                      <DiscordMark size={14} />
+                      <span>Discord</span>
+                    </SiteButton>
+                    <SiteButton href="https://twitter.com/nustackdev">
+                      <XMark size={13} />
+                      <span>Follow</span>
+                    </SiteButton>
+                  </div>
+
+                  <MonoKicker as="p" size="xs" tracking="wide" className={s.metaLineBox}>
+                    <Meta items={[<>Apache&#8209;2.0</>, 'Python 3.12+']} />
+                  </MonoKicker>
                 </div>
-
-                <p className={s.meta}>Apache-2.0 · Python 3.12+</p>
               </CellContent>
             </Cell>
         </Row>
@@ -125,8 +160,9 @@ export default function KickAssLanding() {
                 anyone can implement.
               </p>
               <div className={s.ctaRow}>
-                <SiteButton href="/docs">Read the model</SiteButton>
+                <SiteButton href="/docs"><BookOpen size={14} aria-hidden /><span>Read the model</span></SiteButton>
                 <SiteButton href="https://github.com/nustackdev/interaction-model">
+                  <GithubMark size={14} />
                   <SiteButtonRepoLabel>nustackdev/interaction-model</SiteButtonRepoLabel>
                 </SiteButton>
               </div>
@@ -160,12 +196,14 @@ export default function KickAssLanding() {
             <CellContent pad="lg">
               <CodeSample filename="persistent_counter_ui.py" lines={NU_SAMPLE_LINES} />
               <div className={s.ctaRow}>
-                <SiteButton href="/docs">Meet Nu</SiteButton>
+                <SiteButton href="/docs"><BookOpen size={14} aria-hidden /><span>Meet Nu</span></SiteButton>
                 <SiteButton href="https://github.com/nustackdev/nu">
+                  <GithubMark size={14} />
                   <SiteButtonRepoLabel>nustackdev/nu</SiteButtonRepoLabel>
                 </SiteButton>
                 <SiteButton href="https://github.com/nustackdev/nu/tree/main/examples">
-                  See more examples
+                  <GithubMark size={14} />
+                  <span>See more examples</span>
                 </SiteButton>
               </div>
             </CellContent>
@@ -198,7 +236,8 @@ export default function KickAssLanding() {
               </p>
               <div className={s.ctaRow}>
                 <SiteButton href="/docs/fabrics/mem" variant="hueTinted">
-                  Read the docs
+                  <BookOpen size={14} aria-hidden />
+                  <span>Read the docs</span>
                 </SiteButton>
               </div>
             </CellContent>
@@ -222,7 +261,8 @@ export default function KickAssLanding() {
               <p className={s.backends}>Backends: rocksdb, lmdb</p>
               <div className={s.ctaRow}>
                 <SiteButton href="/docs/fabrics/virtuals" variant="hueTinted">
-                  Read the docs
+                  <BookOpen size={14} aria-hidden />
+                  <span>Read the docs</span>
                 </SiteButton>
               </div>
             </CellContent>
@@ -246,7 +286,8 @@ export default function KickAssLanding() {
               </p>
               <div className={s.ctaRow}>
                 <SiteButton href="/docs/fabrics/ui" variant="hueTinted">
-                  Read the docs
+                  <BookOpen size={14} aria-hidden />
+                  <span>Read the docs</span>
                 </SiteButton>
               </div>
             </CellContent>
@@ -270,7 +311,8 @@ export default function KickAssLanding() {
               </p>
               <div className={s.ctaRow}>
                 <SiteButton href="/docs/fabrics/invisibles" variant="hueTinted">
-                  Read the docs
+                  <BookOpen size={14} aria-hidden />
+                  <span>Read the docs</span>
                 </SiteButton>
               </div>
             </CellContent>
@@ -294,7 +336,8 @@ export default function KickAssLanding() {
               </p>
               <div className={s.ctaRow}>
                 <SiteButton href="/docs/fabrics/ray" variant="hueTinted">
-                  Read the docs
+                  <BookOpen size={14} aria-hidden />
+                  <span>Read the docs</span>
                 </SiteButton>
               </div>
             </CellContent>
@@ -335,8 +378,9 @@ export default function KickAssLanding() {
                 notifications for free.
               </p>
               <div className={s.ctaRow}>
-                <SiteButton href="/docs/virtuals">Read the docs</SiteButton>
+                <SiteButton href="/docs/virtuals"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
                 <SiteButton href="https://github.com/nustackdev/virtuals">
+                  <GithubMark size={14} />
                   <SiteButtonRepoLabel>nustackdev/virtuals</SiteButtonRepoLabel>
                 </SiteButton>
               </div>
@@ -354,8 +398,9 @@ export default function KickAssLanding() {
                 async.
               </p>
               <div className={s.ctaRow}>
-                <SiteButton href="/docs/invisibles">Read the docs</SiteButton>
+                <SiteButton href="/docs/invisibles"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
                 <SiteButton href="https://github.com/nustackdev/invisibles">
+                  <GithubMark size={14} />
                   <SiteButtonRepoLabel>nustackdev/invisibles</SiteButtonRepoLabel>
                 </SiteButton>
               </div>
@@ -376,8 +421,9 @@ export default function KickAssLanding() {
                 required. Import, open a DB, put/get/iterate.
               </p>
               <div className={s.ctaRow}>
-                <SiteButton href="/docs/rdbpy">Read the docs</SiteButton>
+                <SiteButton href="/docs/rdbpy"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
                 <SiteButton href="https://github.com/nustackdev/rdbpy">
+                  <GithubMark size={14} />
                   <SiteButtonRepoLabel>nustackdev/rdbpy</SiteButtonRepoLabel>
                 </SiteButton>
               </div>
@@ -397,8 +443,9 @@ export default function KickAssLanding() {
                 level. Any sorted KV store works as a backend.
               </p>
               <div className={s.ctaRow}>
-                <SiteButton href="/docs/kh57">Read the docs</SiteButton>
+                <SiteButton href="/docs/kh57"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
                 <SiteButton href="https://github.com/nustackdev/kh57">
+                  <GithubMark size={14} />
                   <SiteButtonRepoLabel>nustackdev/kh57</SiteButtonRepoLabel>
                 </SiteButton>
               </div>
@@ -434,6 +481,7 @@ export default function KickAssLanding() {
               </p>
               <div className={s.ctaRow}>
                 <SiteButton variant="repo" href="https://github.com/nustackdev/nulog">
+                  <GithubMark size={14} />
                   <SiteButtonRepoLabel>nustackdev/nulog</SiteButtonRepoLabel>
                 </SiteButton>
               </div>

@@ -108,14 +108,87 @@
 
 /* -- Typography ------------------------------------------------------------ */
 
-.slogan {
-  font-family: var(--font-display, ui-serif, Georgia, serif);
-  font-size: clamp(40px, 5.6vw, 72px);
+/* -- Hero left column: word-per-line slogan --------------------------------- */
+
+.sloganStack {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+.sloganWord {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(44px, 6vw, 76px);
   line-height: 1.02;
-  letter-spacing: var(--nu-tr-tight);
-  margin: 0 0 24px;
+  letter-spacing: -0.04em;
   color: #fff;
 }
+
+/* -- Hero right column: layout wrappers (kit components handle type/mechanics) -- */
+
+.heroRight {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(24px, 2.6vw, 34px);
+  min-width: 0;
+}
+
+.heroTagline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(15.5px, 1.15vw, 17.5px);
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: color-mix(in oklab, var(--nu-ink) 88%, var(--nu-ink-2) 12%);
+  text-wrap: pretty;
+  max-width: 36ch;
+}
+.taglineAccent {
+  font-style: normal;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--nu-accent) 92%, white 8%),
+    color-mix(in oklab, var(--nu-accent-2) 92%, white 8%)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.005em;
+}
+@media (max-width: 620px) {
+  .heroTagline br { display: none; }
+}
+
+.useCasesKickerBox {
+  margin: 4px 0 0;
+  max-width: 36ch;
+}
+.useCasesListBox {
+  margin-top: calc(-1 * clamp(15px, 1.65vw, 21px));
+}
+
+.metaLineBox {
+  margin: 6px 0 0;
+}
+
+.heroCtaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+.heroCtaRow + .heroCtaRow {
+  margin-top: -14px;
+}
+
+/* -- Section-wide tagline (used by fabrics/apps/etc.) ---------------------- */
 
 .tagline {
   font-size: clamp(16px, 1.4vw, 20px);
@@ -123,35 +196,6 @@
   color: rgba(255, 255, 255, 0.78);
   margin: 0 0 32px;
   max-width: 44ch;
-}
-
-.builtForKicker {
-  display: block;
-  font-size: var(--nu-fs-3);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.52);
-  margin: 0 0 12px;
-}
-
-.builtForList {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 32px;
-  display: grid;
-  gap: 6px;
-  font-size: var(--nu-fs-8);
-  color: rgba(255, 255, 255, 0.86);
-}
-.builtForList li {
-  font-variant-numeric: tabular-nums;
-}
-
-.meta {
-  font-size: var(--nu-fs-3);
-  color: rgba(255, 255, 255, 0.5);
-  margin: 20px 0 0;
-  letter-spacing: 0.02em;
 }
 
 .lede {
