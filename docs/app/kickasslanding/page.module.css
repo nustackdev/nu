@@ -1,0 +1,275 @@
+/* =============================================================================
+ * kickasslanding — page-level typography and CTA styles.
+ * Sits on top of the block primitives (Container/Row/Cell/CellContent).
+ * Dark-only. Accent colors match projects/nu/positioning/locked.md dark values.
+ * ==========================================================================*/
+
+.pageRoot {
+  position: relative;
+  isolation: isolate;
+  background: #0a0a0d;
+  color: rgba(255, 255, 255, 0.92);
+  overflow-x: hidden;
+
+  /* Two design knobs. Tune at breakpoints. */
+  --hero-h: 650px;   /* fixed hero row height; heroWrap + logo layer both use this */
+  --logo-w: 450px;   /* logo render width */
+}
+
+/* Stacking: gradient (0) < logo (1) < dots (2) < content (3). */
+.gradientLayer { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.dotLayer      { z-index: 2; }
+.contentLayer  { position: relative; z-index: 3; }
+
+/* Logo layer: mirrors Container's max-width + centering so `left: 0` on the
+   aligner = Container's left edge = hero grid's left border. */
+.logoLayer {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1360px;
+  height: var(--hero-h);
+  z-index: 1;
+  pointer-events: none;
+}
+/* Pixel offset — tuned by eye against the current --logo-w. Retune when logo size changes. */
+.logoAlign {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  margin-left: -130px;
+}
+.logo {
+  display: block;
+  width: var(--logo-w);
+  height: auto;
+}
+
+.heroRow {
+  height: var(--hero-h);
+}
+
+/* -- Typography ------------------------------------------------------------ */
+
+.slogan {
+  font-family: var(--font-display, ui-serif, Georgia, serif);
+  font-size: clamp(40px, 5.6vw, 72px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 0 0 24px;
+  color: #fff;
+}
+
+.tagline {
+  font-size: clamp(16px, 1.4vw, 20px);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+  margin: 0 0 32px;
+  max-width: 44ch;
+}
+
+.builtForKicker {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.52);
+  margin: 0 0 12px;
+}
+
+.builtForList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px;
+  display: grid;
+  gap: 6px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.86);
+}
+.builtForList li {
+  font-variant-numeric: tabular-nums;
+}
+
+.meta {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 20px 0 0;
+  letter-spacing: 0.02em;
+}
+
+.lede {
+  font-size: clamp(16px, 1.35vw, 19px);
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0;
+  max-width: 78ch;
+}
+.lede strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.sectionLabel {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 12px;
+}
+
+.sectionTitle {
+  font-family: var(--font-display, ui-serif, Georgia, serif);
+  font-size: clamp(28px, 3.4vw, 44px);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  margin: 0;
+  color: #fff;
+}
+
+.sectionIntro {
+  font-size: clamp(15px, 1.15vw, 17px);
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 16px 0 0;
+  max-width: 68ch;
+}
+
+.entryName {
+  font-family: var(--font-display, ui-serif, Georgia, serif);
+  font-size: clamp(22px, 2.2vw, 30px);
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+  color: #fff;
+}
+
+.description {
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.76);
+  margin: 0 0 20px;
+  max-width: 58ch;
+}
+
+.useCases {
+  list-style: decimal;
+  padding-left: 20px;
+  margin: 0 0 24px;
+  display: grid;
+  gap: 4px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+}
+
+.backends {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 20px;
+  letter-spacing: 0.02em;
+}
+.status {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 20px;
+  letter-spacing: 0.02em;
+}
+
+/* -- CTAs ----------------------------------------------------------------- */
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  border: 1px solid transparent;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.cta:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.ctaPurple {
+  background: #a684ff;
+  color: #0a0a0d;
+  border-color: transparent;
+}
+.ctaPurple:hover {
+  background: #b89aff;
+  color: #0a0a0d;
+}
+
+.ctaBlue {
+  background: transparent;
+  color: #6b96f2;
+  border-color: rgba(107, 150, 242, 0.4);
+}
+.ctaBlue:hover {
+  background: rgba(107, 150, 242, 0.08);
+  color: #6b96f2;
+}
+
+/* -- SVG placeholders ----------------------------------------------------- */
+
+.svgPlaceholder {
+  position: relative;
+  min-height: 260px;
+  height: 100%;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.015);
+}
+.svgPlaceholder::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+/* -- Footer --------------------------------------------------------------- */
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  padding: 24px 0;
+}
+.footer a {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.footer a:hover { color: #a684ff; }
+
+.footerSep { color: rgba(255, 255, 255, 0.28); }
+
+.footerBrand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.6);
+}
