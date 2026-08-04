@@ -140,9 +140,9 @@ export default function KickAssLanding() {
 
         {/* 3. Foundations — interaction-model */}
         <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
+          <Cell className={s.chapterCell}>
+            <span className={s.chapterPeek} aria-hidden>model</span>
             <CellContent pad="lg">
-              <span className={s.sectionLabel}>model</span>
               <h2 className={s.sectionTitle}>
                 We build on the Interaction Model.
               </h2>
@@ -177,9 +177,9 @@ export default function KickAssLanding() {
 
         {/* 4. Foundations — nu */}
         <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
+          <Cell className={s.chapterCell}>
+            <span className={s.chapterPeek} aria-hidden>nu</span>
             <CellContent pad="lg">
-              <span className={s.sectionLabel}>nu</span>
               <h2 className={s.sectionTitle}>
                 Nu - the interaction model made real in Python.
               </h2>
@@ -212,9 +212,9 @@ export default function KickAssLanding() {
 
         {/* 5. Fabrics */}
         <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
+          <Cell className={s.chapterCell}>
+            <span className={s.chapterPeek} aria-hidden>fabrics</span>
             <CellContent pad="lg">
-              <span className={s.sectionLabel}>fabrics</span>
               <h2 className={s.sectionTitle}>Fabrics.</h2>
               <p className={s.sectionIntro}>
                 Fabrics are the tissue between Refs and the real world: memory,
@@ -349,11 +349,75 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        {/* 6. Infra */}
+        {/* 6. Apps */}
         <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
+          <Cell className={s.chapterCell}>
+            <span className={s.chapterPeek} aria-hidden>apps</span>
+            <CellContent pad="lg">
+              <h2 className={s.sectionTitle}>Standalone apps built on Nu.</h2>
+              <p className={s.sectionIntro}>
+                Applications built on Nu today.
+              </p>
+            </CellContent>
+          </Cell>
+        </Row>
+
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueAmber}>
           <Cell>
             <CellContent pad="lg">
-              <span className={s.sectionLabel}>infra</span>
+              <SilverWovenName as="h3" hue="amber">nulog</SilverWovenName>
+              <p className={s.tagline}>
+                Pure-Python, serverless logger and metrics store. Billions of
+                entries, live UI.
+              </p>
+              <p className={s.description}>
+                Log messages and observe metrics from any Python code. Entries
+                persist to an embedded KV store (RocksDB, LMDB) and scale to
+                billions, all in-process. One line boots a live viewer.
+              </p>
+              <div className={s.ctaRow}>
+                <SiteButton variant="repo" href="https://github.com/nustackdev/nulog">
+                  <GithubMark size={14} />
+                  <SiteButtonRepoLabel>nustackdev/nulog</SiteButtonRepoLabel>
+                </SiteButton>
+              </div>
+            </CellContent>
+          </Cell>
+          <Cell>
+            <CellContent pad="lg">
+              <VizFrame><NulogMockSvg /></VizFrame>
+            </CellContent>
+          </Cell>
+        </Row>
+
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.huePlum}>
+          <Cell>
+            <CellContent pad="lg">
+              <SilverWovenName as="h3" hue="plum">nuspace</SilverWovenName>
+              <p className={s.tagline}>
+                A space where humans, code, and agents write to one tree.
+              </p>
+              <p className={s.description}>
+                nuspace is Nu made touchable: blocks and pages are Refs, UI
+                edits are Interactions, automations and saved views are trees.
+                Data, UI, and computation live in the same context, and the
+                human and the code meet at a block&apos;s name.
+              </p>
+              <p className={s.status}>Status: Coming soon.</p>
+            </CellContent>
+          </Cell>
+          <Cell>
+            <CellContent pad="lg">
+              <VizFrame><NuspaceMockSvg /></VizFrame>
+            </CellContent>
+          </Cell>
+        </Row>
+
+        {/* 7. Infra */}
+        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
+          <Cell className={s.chapterCell}>
+            <span className={s.chapterPeek} aria-hidden>infra</span>
+            <CellContent pad="lg">
               <h2 className={s.sectionTitle}>Infra. The tools that power Nu fabrics.</h2>
               <p className={s.sectionIntro}>
                 Standalone Python libraries the fabrics build on. Each is
@@ -449,70 +513,6 @@ export default function KickAssLanding() {
                   <SiteButtonRepoLabel>nustackdev/kh57</SiteButtonRepoLabel>
                 </SiteButton>
               </div>
-            </CellContent>
-          </Cell>
-        </Row>
-
-        {/* 7. Apps */}
-        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
-            <CellContent pad="lg">
-              <span className={s.sectionLabel}>apps</span>
-              <h2 className={s.sectionTitle}>Standalone apps built on Nu.</h2>
-              <p className={s.sectionIntro}>
-                Applications built on Nu today.
-              </p>
-            </CellContent>
-          </Cell>
-        </Row>
-
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueAmber}>
-          <Cell>
-            <CellContent pad="lg">
-              <SilverWovenName as="h3" hue="amber">nulog</SilverWovenName>
-              <p className={s.tagline}>
-                Pure-Python, serverless logger and metrics store. Billions of
-                entries, live UI.
-              </p>
-              <p className={s.description}>
-                Log messages and observe metrics from any Python code. Entries
-                persist to an embedded KV store (RocksDB, LMDB) and scale to
-                billions, all in-process. One line boots a live viewer.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton variant="repo" href="https://github.com/nustackdev/nulog">
-                  <GithubMark size={14} />
-                  <SiteButtonRepoLabel>nustackdev/nulog</SiteButtonRepoLabel>
-                </SiteButton>
-              </div>
-            </CellContent>
-          </Cell>
-          <Cell>
-            <CellContent pad="lg">
-              <VizFrame><NulogMockSvg /></VizFrame>
-            </CellContent>
-          </Cell>
-        </Row>
-
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.huePlum}>
-          <Cell>
-            <CellContent pad="lg">
-              <SilverWovenName as="h3" hue="plum">nuspace</SilverWovenName>
-              <p className={s.tagline}>
-                A space where humans, code, and agents write to one tree.
-              </p>
-              <p className={s.description}>
-                nuspace is Nu made touchable: blocks and pages are Refs, UI
-                edits are Interactions, automations and saved views are trees.
-                Data, UI, and computation live in the same context, and the
-                human and the code meet at a block&apos;s name.
-              </p>
-              <p className={s.status}>Status: Coming soon.</p>
-            </CellContent>
-          </Cell>
-          <Cell>
-            <CellContent pad="lg">
-              <VizFrame><NuspaceMockSvg /></VizFrame>
             </CellContent>
           </Cell>
         </Row>

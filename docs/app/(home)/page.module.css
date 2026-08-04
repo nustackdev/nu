@@ -107,6 +107,63 @@
   z-index: 1;
 }
 
+/* -- Section header: giant peeking chapter word ---------------------------
+ * Sits behind the section header content, its top half rising above the
+ * row's top edge. Fills use a dark-dimmed gradient so where the bg blob
+ * blooms bright the word darkens through it (embedded / inset feel), and
+ * where the bg is near-black the word blends. No shadow, on purpose.
+ * ==========================================================================*/
+
+/* .chapterCell + .chapterPeek: Cell becomes the positioning context and
+ * clipping frame; the peek word is a bottom-anchored, centered background
+ * layer of the Cell, translated down 20% so it's cut off at the bottom.
+ * CellContent flows on top normally via z-index. */
+.chapterCell {
+  position: relative;
+  overflow: hidden;
+}
+.chapterCell > :not(.chapterPeek) {
+  position: relative;
+  z-index: 1;
+}
+.chapterPeek {
+  pointer-events: none;
+  user-select: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: translateY(25%);
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(96px, 16vw, 220px);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: transparent;
+  /* Silver-woven watermark: bright hint at top (peeks behind header), fades
+   * into a whisper of the brand blues by mid-word. Text-mask on top softens
+   * the cut into a fade, so the bottom edge feels embedded, not clipped. */
+  background-image: linear-gradient(
+    172deg,
+    color-mix(in oklab, var(--nu-silver-1) 7%, transparent) 0%,
+    color-mix(in oklab, var(--nu-silver-2) 4%, transparent) 40%,
+    color-mix(in oklab, var(--nu-silver-2) 2%, transparent) 70%,
+    #0a0a0d 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  z-index: 0;
+}
+
+@media (max-width: 640px) {
+  .chapterPeek { font-size: clamp(64px, 18vw, 120px); }
+}
+
 /* -- Typography ------------------------------------------------------------ */
 
 /* -- Hero left column: word-per-line slogan --------------------------------- */
