@@ -12,11 +12,17 @@ export const metadata = {
   description: 'A programming model where everything is a Nu.',
 };
 
+export const viewport = {
+  themeColor: '#0f1117',
+};
+
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
+    <html lang="en" className={`${inter.className} dark`} suppressHydrationWarning>
       <body className="flex flex-col min-h-screen">
-        <RootProvider>{children}</RootProvider>
+        <RootProvider theme={{ defaultTheme: 'dark', enabled: false }}>
+          {children}
+        </RootProvider>
       </body>
     </html>
   );

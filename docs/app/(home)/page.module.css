@@ -244,7 +244,7 @@
   }
   .heroRow::before,
   .heroRow::after { display: none; }
-  .heroLeftCell   { display: none; }
+  .heroRow .heroLeftCell { display: none; }
   .sloganInline   { display: block; }
   /* Content shifted to the left column — push the giant floating logo to the
    * right of the hero layer to fill the empty side. */

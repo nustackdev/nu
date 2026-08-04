@@ -2,6 +2,10 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
+html, body {
+  background: #0f1117;
+}
+
 html {
   scrollbar-gutter: stable;
   overflow-x: clip;
