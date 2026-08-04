@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { Search, BookOpen } from 'lucide-react';
 import { useSearchContext } from 'fumadocs-ui/contexts/search';
-import { NuLogo } from '@/components/marks/NuLogo';
-import { GithubMark } from '@/components/marks/GithubMark';
+import { NuLogo } from '@/components/site/marks/NuLogo';
+import { GithubMark } from '@/components/site/marks/GithubMark';
 import s from './FloatingNav.module.css';
 
 export function FloatingNav() {

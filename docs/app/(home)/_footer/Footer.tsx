@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { NustackMark } from '@/components/marks/NustackMark';
+import { NustackMark } from '@/components/site/marks/NustackMark';
 import s from './Footer.module.css';
 
 /**

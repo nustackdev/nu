@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
-import { NulogMockSvg } from '@/components/marks/NulogMock';
-import { NuspaceMockSvg } from '@/components/marks/NuspaceMock';
+import { NulogMockSvg } from '@/components/site/marks/NulogMock';
+import { NuspaceMockSvg } from '@/components/site/marks/NuspaceMock';
 
 export type App = {
   name: string;

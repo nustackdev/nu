@@ -1,5 +1,5 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import { NustackMark } from '@/components/marks/NustackMark';
+import { NustackMark } from '@/components/site/marks/NustackMark';
 import { gitConfig } from './shared';
 
 export function baseOptions(): BaseLayoutProps {

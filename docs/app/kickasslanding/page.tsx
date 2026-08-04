@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { NustackMark } from '@/components/marks/NustackMark';
+import { NustackMark } from '@/components/site/marks/NustackMark';
 import { HeroLogo } from './_blocks/HeroLogo';
-import { Cell } from './_blocks/Cell';
-import { CellContent } from './_blocks/CellContent';
-import { Container } from './_blocks/Container';
-import { DotPattern } from './_blocks/DotPattern';
-import { GradientBlobs, HERO_BLOBS } from './_blocks/GradientBlobs';
-import { Row } from './_blocks/Row';
+import { DotPattern } from '@/components/site/bg/DotPattern';
+import { GradientBlobs, HERO_BLOBS } from '@/components/site/bg/GradientBlobs';
+import { Cell } from '@/components/site/grid/Cell';
+import { CellContent } from '@/components/site/grid/CellContent';
+import { Container } from '@/components/site/grid/Container';
+import { Row } from '@/components/site/grid/Row';
 import s from './page.module.css';
 
 export default function KickAssLanding() {

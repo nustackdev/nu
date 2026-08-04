@@ -5,7 +5,7 @@ import {
   InvisiblesGlyph,
   RayGlyph,
   UiGlyph,
-} from '@/components/marks/FabricGlyphs';
+} from '@/components/site/marks/FabricGlyphs';
 
 export type Fabric = {
   name: string;

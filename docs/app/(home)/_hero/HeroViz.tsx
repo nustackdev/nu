@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
-import { BrowserChrome } from '@/components/marks/primitives/BrowserChrome';
-import { DiskStack } from '@/components/marks/primitives/DiskStack';
+import { BrowserChrome } from '@/components/site/marks/primitives/BrowserChrome';
+import { DiskStack } from '@/components/site/marks/primitives/DiskStack';
 import s from './HeroViz.module.css';
 
 /**

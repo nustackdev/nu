@@ -1,5 +1,5 @@
 import { BookOpen } from 'lucide-react';
-import { GithubMark } from '@/components/marks/GithubMark';
+import { GithubMark } from '@/components/site/marks/GithubMark';
 import {
   ActionRow,
   Cta,
