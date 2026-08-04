@@ -1,8 +1,8 @@
 .root {
   /* Grid unit + border tokens for all kickasslanding descendants. */
   --kal-u: clamp(28px, 3.2vw, 40px);
-  --kal-border: rgba(255, 255, 255, 0.14);
-  --kal-divider: rgba(255, 255, 255, 0.10);
+  --kal-border: rgba(255, 255, 255, 0.2);
+  --kal-divider: rgba(255, 255, 255, 0.2);
 
   position: relative;
   width: 100%;

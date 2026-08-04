@@ -27,7 +27,7 @@ export default function KickAssLanding() {
       {/* Layer 4: everything else */}
       <Container full className={s.contentLayer}>
         {/* 1. Hero */}
-        <Row cols="2:1" borderBottom="dashed" className={s.heroRow}>
+        <Row cols="2:1" divider={false} className={s.heroRow}>
             <Cell>
               <CellContent pad="lg">
                 <h1 className={s.slogan}>Nu - the interaction primitive.</h1>
@@ -68,7 +68,7 @@ export default function KickAssLanding() {
         </Row>
 
         {/* 2. Hero demo — lede + code-tree/runtime-scene */}
-        <Row cols={1} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={1} borderBottom="solid" className={s.section2Row}>
           <Cell>
             <CellContent pad="lg">
               <p className={s.lede}>
@@ -82,7 +82,7 @@ export default function KickAssLanding() {
             </CellContent>
           </Cell>
         </Row>
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <div className={s.svgPlaceholder} data-label="code tree" aria-hidden />
@@ -96,7 +96,7 @@ export default function KickAssLanding() {
         </Row>
 
         {/* 3. Foundations — interaction-model */}
-        <Row cols={1} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <span className={s.sectionLabel}>model</span>
@@ -106,7 +106,7 @@ export default function KickAssLanding() {
             </CellContent>
           </Cell>
         </Row>
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <p className={s.tagline}>The interaction model.</p>
@@ -137,7 +137,7 @@ export default function KickAssLanding() {
         </Row>
 
         {/* 4. Foundations — nu */}
-        <Row cols={1} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <span className={s.sectionLabel}>nu</span>
@@ -152,7 +152,7 @@ export default function KickAssLanding() {
             </CellContent>
           </Cell>
         </Row>
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <p className={s.tagline}>The interaction primitive.</p>
@@ -198,7 +198,7 @@ export default function KickAssLanding() {
         </Row>
 
         {/* 5. Infra */}
-        <Row cols={1} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <span className={s.sectionLabel}>infra</span>
@@ -211,7 +211,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>virtuals</h3>
@@ -245,7 +245,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>invisibles</h3>
@@ -277,7 +277,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>rdbpy</h3>
@@ -309,7 +309,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>kh57</h3>
@@ -344,7 +344,7 @@ export default function KickAssLanding() {
         </Row>
 
         {/* 6. Fabrics */}
-        <Row cols={1} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <span className={s.sectionLabel}>fabrics</span>
@@ -358,7 +358,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>nu.mem (nu.m)</h3>
@@ -381,7 +381,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>nu.virtuals (nu.v)</h3>
@@ -405,7 +405,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>nu.ui</h3>
@@ -429,7 +429,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>nu.invisibles</h3>
@@ -453,7 +453,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>nu.ray</h3>
@@ -478,7 +478,7 @@ export default function KickAssLanding() {
         </Row>
 
         {/* 7. Apps */}
-        <Row cols={1} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <span className={s.sectionLabel}>apps</span>
@@ -490,7 +490,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>nulog</h3>
@@ -520,7 +520,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="dashed" borderLeft="dashed" borderRight="dashed">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>nuspace</h3>
@@ -544,7 +544,7 @@ export default function KickAssLanding() {
         </Row>
 
         {/* 8. Footer */}
-        <Row cols={1} borderLeft="dashed" borderRight="dashed">
+        <Row cols={1} borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="md">
               <div className={s.footer}>

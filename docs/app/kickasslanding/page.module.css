@@ -25,7 +25,7 @@
    aligner = Container's left edge = hero grid's left border. */
 .logoLayer {
   position: absolute;
-  top: 0;
+  top: -1.5px;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -39,7 +39,7 @@
   position: absolute;
   left: 0;
   bottom: 0;
-  margin-left: -130px;
+  margin-left: -128.5px;
 }
 .logo {
   display: block;
@@ -49,6 +49,47 @@
 
 .heroRow {
   height: var(--hero-h);
+  position: relative;
+}
+/* Hero bottom spark: white at left (u letter's corner), fades to transparent at right. */
+.heroRow::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0) 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Section 2 left spark: white at top (continuing from u corner), fades to 0.2 downward. */
+.section2Row {
+  position: relative;
+}
+.section2Row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,0.2));
+  pointer-events: none;
+  z-index: 1;
+}
+/* Section 2 right border: emerges from transparent at top, resolves to 0.2 white at bottom. */
+.section2Row::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.2));
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* -- Typography ------------------------------------------------------------ */

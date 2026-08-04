@@ -34,6 +34,8 @@ export function HeroLogo({
   const gradId = `hero-logo-grad-${gid}`;
   const leftGradId = `hero-logo-u-left-${gid}`;
   const bottomGradId = `hero-logo-u-bottom-${gid}`;
+  const sparkId = `hero-logo-u-spark-${gid}`;
+  const clipId = `hero-logo-u-clip-${gid}`;
 
   // u letter outer edges in viewBox coords (viewBox "140 144 271 263"). Tune by eye.
   const U_LEFT_X = 218; // outer left edge of u (path x 2180)
@@ -103,6 +105,19 @@ export function HeroLogo({
           <stop offset="0" stopColor="#fff" stopOpacity="1" />
           <stop offset="1" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
+
+        {/* Spark: tight, softly bright core, long gentle falloff. */}
+        <radialGradient id={sparkId}>
+          <stop offset="0"    stopColor="#fff" stopOpacity="0.75" />
+          <stop offset="0.05" stopColor="#fff" stopOpacity="0.4" />
+          <stop offset="0.35" stopColor="#fff" stopOpacity="0.12" />
+          <stop offset="1"    stopColor="#fff" stopOpacity="0" />
+        </radialGradient>
+
+        {/* Clip to u letter — spark only shows inside the letter fill. */}
+        <clipPath id={clipId}>
+          <path d={uPath} transform="translate(0,552) scale(0.1,-0.1)" />
+        </clipPath>
       </defs>
 
       {/* Fills — the visible nu letters */}
@@ -115,6 +130,12 @@ export function HeroLogo({
         <path d="M2121 4065 c-376 -82 -653 -368 -711 -735 -6 -41 -10 -402 -10 -972 l0 -908 190 0 190 0 0 878 c0 968 -1 941 64 1070 19 37 51 86 71 110 54 62 155 130 238 161 l72 26 363 3 362 3 0 -681 0 -681 143 3 c132 3 145 5 172 26 68 53 64 1 65 900 l0 812 -572 -1 c-449 0 -587 -4 -637 -14z" />
         {/* u fill */}
         <path d={uPath} />
+      </g>
+
+      {/* Spark bloom at u's outer corner, clipped to letter — visible portion
+          extends up (along left stroke) and right (along bottom stroke). */}
+      <g clipPath={`url(#${clipId})`}>
+        <circle cx={U_LEFT_X} cy={U_BOTTOM_Y} r="55" fill={`url(#${sparkId})`} />
       </g>
 
       {/* Outline overlays — open paths tracing only the u's outer left + bottom edges. */}
