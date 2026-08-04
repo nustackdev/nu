@@ -58,11 +58,11 @@ export default function KickAssLanding() {
       {/* Layer 4: everything else */}
       <Container full className={s.contentLayer}>
         {/* 1. Hero */}
-        <Row template="minmax(0, 3fr) minmax(0, 2fr)" divider={false} className={s.heroRow}>
+        <Row template="minmax(0, 55fr) minmax(0, 45fr)" divider={false} className={s.heroRow}>
             <Cell yalign="middle">
               <CellContent pad="lg">
                 <h1 className={s.sloganStack} aria-label="Nu the interaction primitive">
-                  <span className={s.sloganWord} aria-hidden>Nu</span>
+                  <span className={s.sloganWord} aria-hidden>Nu &mdash;</span>
                   <span className={s.sloganWord} aria-hidden>the</span>
                   <span className={s.sloganWord} aria-hidden>interaction</span>
                   <span className={s.sloganWord} aria-hidden>primitive.</span>

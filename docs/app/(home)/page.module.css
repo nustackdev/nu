@@ -15,7 +15,7 @@
 
   /* Two design knobs. Tune at breakpoints. */
   --hero-h: 650px;   /* fixed hero row height; heroWrap + logo layer both use this */
-  --logo-w: 450px;   /* logo render width */
+  --logo-w: 608px;   /* logo render width */
 }
 
 /* Stacking: gradient (0) < logo (1) < dots (2) < content (3). */
@@ -41,12 +41,13 @@
   position: absolute;
   left: 0;
   bottom: 0;
-  margin-left: -128.5px;
+  margin-left: -174px;
 }
 .logo {
   display: block;
   width: var(--logo-w);
   height: auto;
+  opacity: 0.5;
 }
 
 .heroRow {
@@ -121,9 +122,9 @@
   display: block;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(44px, 6vw, 76px);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
+  font-size: clamp(68px, 9.12vw, 133px);
+  line-height: 0.92;
+  letter-spacing: -0.045em;
   color: #fff;
 }
 
