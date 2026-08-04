@@ -288,3 +288,58 @@
   gap: 6px;
   color: rgba(255, 255, 255, 0.6);
 }
+
+/* -- Fabric hue scopes ---------------------------------------------------- */
+/* Each fabric cell remaps --nu-accent-* to a silver-woven hue, so its
+ * SiteButton (variant="hueTinted") auto-picks the row's color. */
+
+.hueSteel {
+  --nu-accent:        var(--nu-hue-steel);
+  --nu-accent-soft:   var(--nu-hue-steel-soft);
+  --nu-accent-wash:   var(--nu-hue-steel-wash);
+  --nu-accent-line:   var(--nu-hue-steel-line);
+  --nu-accent-2:      var(--nu-hue-steel);
+  --nu-accent-2-soft: var(--nu-hue-steel-soft);
+  --nu-accent-2-wash: var(--nu-hue-steel-wash);
+  --nu-accent-2-line: var(--nu-hue-steel-line);
+}
+.hueSage {
+  --nu-accent:        var(--nu-hue-sage);
+  --nu-accent-soft:   var(--nu-hue-sage-soft);
+  --nu-accent-wash:   var(--nu-hue-sage-wash);
+  --nu-accent-line:   var(--nu-hue-sage-line);
+  --nu-accent-2:      var(--nu-hue-sage);
+  --nu-accent-2-soft: var(--nu-hue-sage-soft);
+  --nu-accent-2-wash: var(--nu-hue-sage-wash);
+  --nu-accent-2-line: var(--nu-hue-sage-line);
+}
+.hueTeal {
+  --nu-accent:        var(--nu-hue-teal);
+  --nu-accent-soft:   var(--nu-hue-teal-soft);
+  --nu-accent-wash:   var(--nu-hue-teal-wash);
+  --nu-accent-line:   var(--nu-hue-teal-line);
+  --nu-accent-2:      var(--nu-hue-teal);
+  --nu-accent-2-soft: var(--nu-hue-teal-soft);
+  --nu-accent-2-wash: var(--nu-hue-teal-wash);
+  --nu-accent-2-line: var(--nu-hue-teal-line);
+}
+.huePlum {
+  --nu-accent:        var(--nu-hue-plum);
+  --nu-accent-soft:   var(--nu-hue-plum-soft);
+  --nu-accent-wash:   var(--nu-hue-plum-wash);
+  --nu-accent-line:   var(--nu-hue-plum-line);
+  --nu-accent-2:      var(--nu-hue-plum);
+  --nu-accent-2-soft: var(--nu-hue-plum-soft);
+  --nu-accent-2-wash: var(--nu-hue-plum-wash);
+  --nu-accent-2-line: var(--nu-hue-plum-line);
+}
+.hueAmber {
+  --nu-accent:        var(--nu-hue-amber);
+  --nu-accent-soft:   var(--nu-hue-amber-soft);
+  --nu-accent-wash:   var(--nu-hue-amber-wash);
+  --nu-accent-line:   var(--nu-hue-amber-line);
+  --nu-accent-2:      var(--nu-hue-amber);
+  --nu-accent-2-soft: var(--nu-hue-amber-soft);
+  --nu-accent-2-wash: var(--nu-hue-amber-wash);
+  --nu-accent-2-line: var(--nu-hue-amber-line);
+}

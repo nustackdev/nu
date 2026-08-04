@@ -8,6 +8,17 @@ import { CellContent } from '@/components/site/grid/CellContent';
 import { Container } from '@/components/site/grid/Container';
 import { Row } from '@/components/site/grid/Row';
 import { SiteButton, SiteButtonRepoLabel } from '@/components/site/SiteButton';
+import { SilverWovenName } from '@/components/site/SilverWovenName';
+import { VizFrame } from '@/components/site/VizFrame';
+import {
+  MemGlyph,
+  VirtualsGlyph,
+  UiGlyph,
+  InvisiblesGlyph,
+  RayGlyph,
+} from '@/components/site/marks/FabricGlyphs';
+import { NulogMockSvg } from '@/components/site/marks/NulogMock';
+import { NuspaceMockSvg } from '@/components/site/marks/NuspaceMock';
 import s from './page.module.css';
 
 export default function KickAssLanding() {
@@ -182,12 +193,146 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        {/* 5. Infra */}
+        {/* 5. Fabrics */}
+        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
+          <Cell>
+            <CellContent pad="lg">
+              <span className={s.sectionLabel}>fabrics</span>
+              <h2 className={s.sectionTitle}>Fabrics.</h2>
+              <p className={s.sectionIntro}>
+                Fabrics are the tissue between Refs and the real world: memory,
+                kv stores, UI, network, cluster. These are the ones Nu ships
+                with today.
+              </p>
+            </CellContent>
+          </Cell>
+        </Row>
+
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueSteel}>
+          <Cell>
+            <CellContent pad="lg">
+              <SilverWovenName as="h3" hue="steel">nu.mem</SilverWovenName>
+              <p className={s.tagline}>In-memory state fabric.</p>
+              <p className={s.description}>
+                In-memory state on plain dicts. Perfect for cache, hot state,
+                and in-process coordination.
+              </p>
+              <div className={s.ctaRow}>
+                <SiteButton href="/docs/fabrics/mem" variant="hueTinted">
+                  Read the docs
+                </SiteButton>
+              </div>
+            </CellContent>
+          </Cell>
+          <Cell>
+            <CellContent pad="lg">
+              <VizFrame><MemGlyph /></VizFrame>
+            </CellContent>
+          </Cell>
+        </Row>
+
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueSage}>
+          <Cell>
+            <CellContent pad="lg">
+              <SilverWovenName as="h3" hue="sage">nu.virtuals</SilverWovenName>
+              <p className={s.tagline}>Persistent state fabric.</p>
+              <p className={s.description}>
+                Refs over a KV backend (RocksDB, LMDB). Transactions,
+                snapshots, and change notifications, built in.
+              </p>
+              <p className={s.backends}>Backends: rocksdb, lmdb</p>
+              <div className={s.ctaRow}>
+                <SiteButton href="/docs/fabrics/virtuals" variant="hueTinted">
+                  Read the docs
+                </SiteButton>
+              </div>
+            </CellContent>
+          </Cell>
+          <Cell>
+            <CellContent pad="lg">
+              <VizFrame><VirtualsGlyph /></VizFrame>
+            </CellContent>
+          </Cell>
+        </Row>
+
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueTeal}>
+          <Cell>
+            <CellContent pad="lg">
+              <SilverWovenName as="h3" hue="teal">nu.ui</SilverWovenName>
+              <p className={s.tagline}>Web UI fabric.</p>
+              <p className={s.description}>
+                Same fabric shape as the others, but the Refs are widgets:
+                text, buttons, tables. The fabric renders them in the browser
+                and live-updates them as your state changes.
+              </p>
+              <div className={s.ctaRow}>
+                <SiteButton href="/docs/fabrics/ui" variant="hueTinted">
+                  Read the docs
+                </SiteButton>
+              </div>
+            </CellContent>
+          </Cell>
+          <Cell>
+            <CellContent pad="lg">
+              <VizFrame><UiGlyph /></VizFrame>
+            </CellContent>
+          </Cell>
+        </Row>
+
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.huePlum}>
+          <Cell>
+            <CellContent pad="lg">
+              <SilverWovenName as="h3" hue="plum">nu.invisibles</SilverWovenName>
+              <p className={s.tagline}>Network fabric.</p>
+              <p className={s.description}>
+                A Nu fabric that puts other fabrics on the network. Bind a
+                fabric in one process, use it from another; same Refs, same
+                interactions, over TCP or Unix socket.
+              </p>
+              <div className={s.ctaRow}>
+                <SiteButton href="/docs/fabrics/invisibles" variant="hueTinted">
+                  Read the docs
+                </SiteButton>
+              </div>
+            </CellContent>
+          </Cell>
+          <Cell>
+            <CellContent pad="lg">
+              <VizFrame><InvisiblesGlyph /></VizFrame>
+            </CellContent>
+          </Cell>
+        </Row>
+
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueAmber}>
+          <Cell>
+            <CellContent pad="lg">
+              <SilverWovenName as="h3" hue="amber">nu.ray</SilverWovenName>
+              <p className={s.tagline}>Cluster compute fabric.</p>
+              <p className={s.description}>
+                A Nu fabric for cluster compute. Teleport a Nu tree to any
+                worker in your Ray cluster; it runs there and returns the
+                result.
+              </p>
+              <div className={s.ctaRow}>
+                <SiteButton href="/docs/fabrics/ray" variant="hueTinted">
+                  Read the docs
+                </SiteButton>
+              </div>
+            </CellContent>
+          </Cell>
+          <Cell>
+            <CellContent pad="lg">
+              <VizFrame><RayGlyph /></VizFrame>
+            </CellContent>
+          </Cell>
+        </Row>
+
+        {/* 6. Infra */}
         <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
           <Cell>
             <CellContent pad="lg">
               <span className={s.sectionLabel}>infra</span>
-              <h2 className={s.sectionTitle}>Infra.</h2>
+              <h2 className={s.sectionTitle}>Infra. The tools that power Nu fabrics.</h2>
               <p className={s.sectionIntro}>
                 Standalone Python libraries the fabrics build on. Each is
                 useful on its own; together they form the substrate under Nu.
@@ -220,14 +365,6 @@ export default function KickAssLanding() {
           </Cell>
           <Cell>
             <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="virtuals svg" aria-hidden />
-            </CellContent>
-          </Cell>
-        </Row>
-
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
-            <CellContent pad="lg">
               <h3 className={s.entryName}>invisibles</h3>
               <p className={s.tagline}>Transparent remote objects for Python.</p>
               <p className={s.description}>
@@ -243,11 +380,6 @@ export default function KickAssLanding() {
                   <SiteButtonRepoLabel>nustackdev/invisibles</SiteButtonRepoLabel>
                 </SiteButton>
               </div>
-            </CellContent>
-          </Cell>
-          <Cell>
-            <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="invisibles svg" aria-hidden />
             </CellContent>
           </Cell>
         </Row>
@@ -274,14 +406,6 @@ export default function KickAssLanding() {
           </Cell>
           <Cell>
             <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="rdbpy svg" aria-hidden />
-            </CellContent>
-          </Cell>
-        </Row>
-
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
-            <CellContent pad="lg">
               <h3 className={s.entryName}>kh57</h3>
               <p className={s.tagline}>
                 Deterministic, stable, range-friendly reservoir sampling.
@@ -301,145 +425,6 @@ export default function KickAssLanding() {
               </div>
             </CellContent>
           </Cell>
-          <Cell>
-            <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="kh57 svg" aria-hidden />
-            </CellContent>
-          </Cell>
-        </Row>
-
-        {/* 6. Fabrics */}
-        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
-            <CellContent pad="lg">
-              <span className={s.sectionLabel}>fabrics</span>
-              <h2 className={s.sectionTitle}>Fabrics.</h2>
-              <p className={s.sectionIntro}>
-                Fabrics are the tissue between Refs and the real world: memory,
-                kv stores, UI, network, cluster. These are the ones Nu ships
-                with today.
-              </p>
-            </CellContent>
-          </Cell>
-        </Row>
-
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
-            <CellContent pad="lg">
-              <h3 className={s.entryName}>nu.mem (nu.m)</h3>
-              <p className={s.tagline}>In-memory state fabric.</p>
-              <p className={s.description}>
-                In-memory state on plain dicts. Perfect for cache, hot state,
-                and in-process coordination.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/fabrics/mem" variant="hueTinted">
-                  Read the docs
-                </SiteButton>
-              </div>
-            </CellContent>
-          </Cell>
-          <Cell>
-            <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="nu.mem svg" aria-hidden />
-            </CellContent>
-          </Cell>
-        </Row>
-
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
-            <CellContent pad="lg">
-              <h3 className={s.entryName}>nu.virtuals (nu.v)</h3>
-              <p className={s.tagline}>Persistent state fabric.</p>
-              <p className={s.description}>
-                Refs over a KV backend (RocksDB, LMDB). Transactions,
-                snapshots, and change notifications, built in.
-              </p>
-              <p className={s.backends}>Backends: rocksdb, lmdb</p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/fabrics/virtuals" variant="hueTinted">
-                  Read the docs
-                </SiteButton>
-              </div>
-            </CellContent>
-          </Cell>
-          <Cell>
-            <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="nu.virtuals svg" aria-hidden />
-            </CellContent>
-          </Cell>
-        </Row>
-
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
-            <CellContent pad="lg">
-              <h3 className={s.entryName}>nu.ui</h3>
-              <p className={s.tagline}>Web UI fabric.</p>
-              <p className={s.description}>
-                Same fabric shape as the others, but the Refs are widgets:
-                text, buttons, tables. The fabric renders them in the browser
-                and live-updates them as your state changes.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/fabrics/ui" variant="hueTinted">
-                  Read the docs
-                </SiteButton>
-              </div>
-            </CellContent>
-          </Cell>
-          <Cell>
-            <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="nu.ui svg" aria-hidden />
-            </CellContent>
-          </Cell>
-        </Row>
-
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
-            <CellContent pad="lg">
-              <h3 className={s.entryName}>nu.invisibles</h3>
-              <p className={s.tagline}>Network fabric.</p>
-              <p className={s.description}>
-                A Nu fabric that puts other fabrics on the network. Bind a
-                fabric in one process, use it from another; same Refs, same
-                interactions, over TCP or Unix socket.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/fabrics/invisibles" variant="hueTinted">
-                  Read the docs
-                </SiteButton>
-              </div>
-            </CellContent>
-          </Cell>
-          <Cell>
-            <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="nu.invisibles svg" aria-hidden />
-            </CellContent>
-          </Cell>
-        </Row>
-
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
-            <CellContent pad="lg">
-              <h3 className={s.entryName}>nu.ray</h3>
-              <p className={s.tagline}>Cluster compute fabric.</p>
-              <p className={s.description}>
-                A Nu fabric for cluster compute. Teleport a Nu tree to any
-                worker in your Ray cluster; it runs there and returns the
-                result.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/fabrics/ray" variant="hueTinted">
-                  Read the docs
-                </SiteButton>
-              </div>
-            </CellContent>
-          </Cell>
-          <Cell>
-            <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="nu.ray svg" aria-hidden />
-            </CellContent>
-          </Cell>
         </Row>
 
         {/* 7. Apps */}
@@ -455,10 +440,10 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueAmber}>
           <Cell>
             <CellContent pad="lg">
-              <h3 className={s.entryName}>nulog</h3>
+              <SilverWovenName as="h3" hue="amber">nulog</SilverWovenName>
               <p className={s.tagline}>
                 Pure-Python, serverless logger and metrics store. Billions of
                 entries, live UI.
@@ -477,15 +462,15 @@ export default function KickAssLanding() {
           </Cell>
           <Cell>
             <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="nulog svg" aria-hidden />
+              <VizFrame><NulogMockSvg /></VizFrame>
             </CellContent>
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.huePlum}>
           <Cell>
             <CellContent pad="lg">
-              <h3 className={s.entryName}>nuspace</h3>
+              <SilverWovenName as="h3" hue="plum">nuspace</SilverWovenName>
               <p className={s.tagline}>
                 A space where humans, code, and agents write to one tree.
               </p>
@@ -500,7 +485,7 @@ export default function KickAssLanding() {
           </Cell>
           <Cell>
             <CellContent pad="lg">
-              <div className={s.svgPlaceholder} data-label="nuspace svg" aria-hidden />
+              <VizFrame><NuspaceMockSvg /></VizFrame>
             </CellContent>
           </Cell>
         </Row>
