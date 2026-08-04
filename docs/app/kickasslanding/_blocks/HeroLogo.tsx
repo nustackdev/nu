@@ -132,31 +132,17 @@ export function HeroLogo({
         <path d={uPath} />
       </g>
 
-      {/* Spark bloom at u's outer corner, clipped to letter — visible portion
-          extends up (along left stroke) and right (along bottom stroke). */}
+      {/* Spark bloom at u's outer corner, clipped to letter — only glow, outlines stay hidden. */}
       <g clipPath={`url(#${clipId})`}>
         <circle cx={U_LEFT_X} cy={U_BOTTOM_Y} r="55" fill={`url(#${sparkId})`} />
       </g>
 
-      {/* Outline overlays — open paths tracing only the u's outer left + bottom edges. */}
+      {/* HIDDEN — outer outline overlays.
       <g transform="translate(0,552) scale(0.1,-0.1)">
-        <path
-          d={uLeftEdge}
-          fill="none"
-          stroke={`url(#${leftGradId})`}
-          strokeWidth="3"
-          vectorEffect="non-scaling-stroke"
-          strokeLinecap="round"
-        />
-        <path
-          d={uBottomEdge}
-          fill="none"
-          stroke={`url(#${bottomGradId})`}
-          strokeWidth="3"
-          vectorEffect="non-scaling-stroke"
-          strokeLinecap="round"
-        />
+        <path d={uLeftEdge}   fill="none" stroke={`url(#${leftGradId})`}   strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+        <path d={uBottomEdge} fill="none" stroke={`url(#${bottomGradId})`} strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
       </g>
+      */}
     </svg>
   );
 }
