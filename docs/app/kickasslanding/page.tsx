@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { NustackMark } from '@/components/marks/NustackMark';
-import { NuLogo } from '@/components/marks/NuLogo';
+import { HeroLogo } from './_blocks/HeroLogo';
 import { Cell } from './_blocks/Cell';
 import { CellContent } from './_blocks/CellContent';
 import { Container } from './_blocks/Container';
@@ -19,7 +19,7 @@ export default function KickAssLanding() {
       {/* Layer 2: nu logo — pinned to hero grid's bottom-left */}
       <div className={s.logoLayer} aria-hidden>
         <div className={s.logoAlign}>
-          <NuLogo className={s.logo} />
+          <HeroLogo className={s.logo} />
         </div>
       </div>
       {/* Layer 3: dotted pattern */}
