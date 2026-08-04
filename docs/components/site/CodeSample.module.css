@@ -30,7 +30,7 @@
 .ideTabs {
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--nu-border-subtle);
   background: rgba(0, 0, 0, 0.28);
   min-height: 34px;
 }
@@ -42,7 +42,7 @@
   font-size: var(--nu-fs-3);
   letter-spacing: 0.01em;
   color: var(--nu-ink-3);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid var(--nu-border-subtle);
 }
 .ideTabActive {
   color: var(--nu-ink);
@@ -93,7 +93,7 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--nu-border-subtle);
   border-radius: 6px;
   background: var(--nu-wash);
   color: var(--nu-ink-3);
@@ -103,7 +103,7 @@
 .ideCopy:hover {
   color: var(--nu-ink);
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.10);
+  border-color: var(--nu-border);
 }
 .ideCopy:focus-visible {
   outline: 2px solid var(--nu-accent);
@@ -113,7 +113,7 @@
   flex: none;
   padding: 0 14px 0 20px;
   text-align: right;
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid var(--nu-border-subtle);
   color: var(--nu-ink-4);
   font-size: var(--nu-fs-4);
   line-height: 1.7;

@@ -14,7 +14,7 @@ export interface RowProps {
   borderBottom?: RowBorder;
   borderLeft?: RowBorder;
   borderRight?: RowBorder;
-  /** Vertical rule style between cells. Default 'dashed'. */
+  /** Vertical rule style between cells. Default 'solid'. */
   divider?: RowBorder;
   className?: string;
   style?: CSSProperties;
@@ -56,7 +56,7 @@ export function Row({
   borderBottom = false,
   borderLeft = false,
   borderRight = false,
-  divider = 'dashed',
+  divider = 'solid',
   className,
   style,
 }: RowProps) {

@@ -8,7 +8,7 @@
   composes: tokens from '@/components/site/tokens.module.css';
   position: relative;
   isolation: isolate;
-  background: #0a0a0d;
+  background: var(--nu-bg);
   color: rgba(255, 255, 255, 0.92);
   overflow-x: hidden;
   color-scheme: dark;
@@ -151,7 +151,7 @@
     color-mix(in oklab, var(--nu-silver-1) 7%, transparent) 0%,
     color-mix(in oklab, var(--nu-silver-2) 4%, transparent) 40%,
     color-mix(in oklab, var(--nu-silver-2) 2%, transparent) 70%,
-    #0a0a0d 100%
+    var(--nu-bg) 100%
   );
   background-clip: text;
   -webkit-background-clip: text;
@@ -372,23 +372,28 @@
   align-items: center;
   gap: 14px;
   font-size: var(--nu-fs-5);
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--nu-ink-4);
   padding: 24px 0;
 }
 .footer a {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--nu-ink-2);
   text-decoration: none;
   transition: color var(--nu-t);
 }
-.footer a:hover { color: #a684ff; }
+.footer a:hover { color: var(--nu-accent); }
 
-.footerSep { color: rgba(255, 255, 255, 0.28); }
+.footerSep { color: var(--nu-border-stronger); }
 
 .footerBrand {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--nu-ink);
+}
+.footerLogo {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
 }
 
 /* -- Fabric hue scopes ---------------------------------------------------- */

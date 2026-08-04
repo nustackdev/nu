@@ -9,6 +9,7 @@
  * ==========================================================================*/
 
 .floatingNav {
+  composes: tokens from '@/components/site/tokens.module.css';
   position: fixed;
   top: clamp(16px, 2.2vh, 28px);
   left: 0;
@@ -30,7 +31,7 @@
   padding: 7px 13px;
   border-radius: 999px;
   border: 1px solid var(--nu-border);
-  background: rgba(25, 25, 28, 0.67);
+  background: color-mix(in oklab, var(--nu-bg-overlay) 72%, transparent);
   -webkit-backdrop-filter: blur(30px);
   backdrop-filter: blur(30px);
   /* Force a dedicated compositor layer — fixes desktop Chrome/Safari where
@@ -43,7 +44,7 @@
   letter-spacing: 0.005em;
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .navPill { background: rgba(25, 25, 28, 0.92); }
+  .navPill { background: var(--nu-bg-overlay); }
 }
 
 .navIcon {
@@ -55,12 +56,12 @@
   border-radius: 999px;
   border: 0;
   background: transparent;
-  color: var(--nu-ink-2, #b3b0c8);
+  color: var(--nu-ink-2);
   cursor: pointer;
   text-decoration: none;
   transition: color .18s ease, background .18s ease;
 }
 .navIcon:hover {
-  color: var(--nu-ink, #eae8f4);
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--nu-ink);
+  background: var(--nu-wash-2);
 }

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BookOpen } from 'lucide-react';
 import { NustackMark } from '@/components/site/marks/NustackMark';
+import { NuLogo } from '@/components/site/marks/NuLogo';
 import { HeroLogo } from './_blocks/HeroLogo';
 import { DotPattern } from '@/components/site/bg/DotPattern';
 import { GradientBlobs, HERO_BLOBS } from '@/components/site/bg/GradientBlobs';
@@ -527,7 +528,8 @@ export default function KickAssLanding() {
                 <a href="https://github.com/nustackdev">GitHub</a>
                 <span className={s.footerSep}>·</span>
                 <span className={s.footerBrand}>
-                  <NustackMark /> © 2026
+                  <NuLogo size={14} className={s.footerLogo} />
+                  <NustackMark mono /> © 2026
                 </span>
               </div>
             </CellContent>

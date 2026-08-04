@@ -15,10 +15,20 @@
   --nu-rule:   rgba(255, 255, 255, 0.08);
   --nu-rule-2: rgba(255, 255, 255, 0.04);
 
+  /* --- Color: page backgrounds ------------------------------------------ */
+  /* Opaque dark blue-black scale. Elevation reads top-to-bottom:
+     sunken < bg (page) < raised < overlay. */
+  --nu-bg:         #0f1117;
+  --nu-bg-raised:  #161923;
+  --nu-bg-sunken:  #0a0b10;
+  --nu-bg-overlay: #1c1f2a;
+
   /* --- Color: surface & border ------------------------------------------ */
-  --nu-surface:   rgb(22, 22, 26);
-  --nu-surface-2: rgba(15, 15, 18, 0.72);
+  --nu-surface:   var(--nu-bg-raised);
+  --nu-surface-2: var(--nu-bg-overlay);
   --nu-wash:      rgba(255, 255, 255, 0.03);
+  --nu-wash-2:    rgba(255, 255, 255, 0.06);
+  --nu-border-subtle:   rgba(255, 255, 255, 0.05);
   --nu-border:          rgba(255, 255, 255, 0.08);
   --nu-border-strong:   rgba(255, 255, 255, 0.12);
   --nu-border-stronger: rgba(255, 255, 255, 0.24);
