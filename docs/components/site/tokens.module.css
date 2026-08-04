@@ -114,6 +114,13 @@
   --nu-fw-bold:     700;
   --nu-fw-black:    800;
 
+  /* --- Space: minimalist gap ladder ------------------------------------- */
+  /* Everything on the site should pick from this: 4× 2× × 0.5×. */
+  --nu-space-1: 10px;
+  --nu-space-2: 20px;
+  --nu-space-4: 40px;
+  --nu-space-8: 80px;
+
   /* --- Space: padding & gap --------------------------------------------- */
   --nu-pad-x: clamp(24px, 4vw, 56px);
 

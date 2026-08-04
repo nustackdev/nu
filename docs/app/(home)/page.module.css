@@ -16,6 +16,7 @@
   /* Two design knobs. Tune at breakpoints. */
   --hero-h: 650px;   /* fixed hero row height; heroWrap + logo layer both use this */
   --logo-w: 608px;   /* logo render width */
+  --hero-top: var(--nu-space-8);  /* top gap before hero; logoLayer + heroRow share it */
 }
 
 /* Stacking: gradient (0) < logo (1) < dots (2) < content (3). */
@@ -27,7 +28,7 @@
    aligner = Container's left edge = hero grid's left border. */
 .logoLayer {
   position: absolute;
-  top: 0px;
+  top: var(--hero-top);
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -41,7 +42,7 @@
   position: absolute;
   left: 0;
   bottom: 0;
-  margin-left: -174px;
+  margin-left: -134px;
 }
 .logo {
   display: block;
@@ -52,6 +53,7 @@
 
 .heroRow {
   height: var(--hero-h);
+  margin-top: var(--hero-top);
   position: relative;
 }
 /* Hero left border: white at bottom (u letter's corner), fades to transparent going up. */
@@ -125,6 +127,9 @@
 .chapterCell > :not(.chapterPeek) {
   position: relative;
   z-index: 1;
+  /* Header cells: top matches left/right (from CellContent pad="lg" = 2·kal-u),
+   * bottom is half. Hugs what comes next. */
+  padding-block: calc(2 * var(--kal-u)) calc(1 * var(--kal-u));
 }
 .chapterPeek {
   pointer-events: none;

@@ -8,6 +8,12 @@
   width: 100%;
   margin-inline: auto;
   max-width: var(--kal-max-width, 1360px);
+  /* Horizontal breathing room so grid borders don't kiss the viewport edge. */
+  padding-inline: var(--nu-space-4);
+}
+
+@media (max-width: 640px) {
+  .root { padding-inline: var(--nu-space-2); }
 }
 
 .full {
