@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import s from './CellContent.module.css';
 
-export type CellPad = 'sm' | 'md' | 'lg';
+export type CellPad = 'none' | 'sm' | 'md' | 'lg';
 
 export interface CellContentProps {
   children?: ReactNode;

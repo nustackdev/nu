@@ -22,6 +22,11 @@
 @media (max-width: 1280px) {
   .pageRoot { --hero-top: var(--nu-space-4); }
 }
+/* At ≤1024 the giant logo is hidden and the FloatingNav sits closer to the
+ * inline slogan; give the hero a bigger top gap so they don't collide. */
+@media (max-width: 1024px) {
+  .pageRoot { --hero-top: var(--nu-space-8); }
+}
 
 /* Stacking: gradient (0) < logo (1) < dots (2) < content (3). */
 .gradientLayer { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
@@ -113,6 +118,14 @@
   z-index: 1;
 }
 
+/* ≤1024: the hero u-corner spark is hidden, so the section-2 left border
+ * shouldn't start from opaque white anymore — match the right border. */
+@media (max-width: 1024px) {
+  .section2Row::before {
+    background: linear-gradient(to bottom, rgba(255,255,255,0) 20%, rgba(255,255,255,0.2));
+  }
+}
+
 /* -- Section header: giant peeking chapter word ---------------------------
  * Sits behind the section header content, its top half rising above the
  * row's top edge. Fills use a dark-dimmed gradient so where the bg blob
@@ -199,6 +212,60 @@
 @media (max-width: 1280px) { .sloganWord { font-size: var(--nu-fs-15); } }
 @media (max-width: 900px)  { .sloganWord { font-size: var(--nu-fs-14); } }
 @media (max-width: 560px)  { .sloganWord { font-size: var(--nu-fs-13); } }
+
+/* Inline single-line slogan — hidden on desktop, replaces stacked slogan
+ * on mobile+tablet where the hero collapses to a regular vertical layout. */
+.sloganInline {
+  display: none;
+  margin: 0 0 var(--nu-space-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--nu-fs-13);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+.sloganLogo { display: none; }
+@media (max-width: 640px) {
+  .sloganInline { font-size: var(--nu-fs-13); }
+  .sloganLogo   {
+    display: inline-block;
+    vertical-align: -0.12em;
+    margin-right: 0.24em;
+  }
+}
+
+/* -- ≤1024: collapse hero to regular single-column layout ---------------- */
+@media (max-width: 1024px) {
+  /* Kill fixed height, single column, drop fancy decoration. */
+  .heroRow {
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .heroRow::before,
+  .heroRow::after { display: none; }
+  .heroLeftCell   { display: none; }
+  .sloganInline   { display: block; }
+  /* Content shifted to the left column — push the giant floating logo to the
+   * right of the hero layer to fill the empty side. */
+  .pageRoot { --logo-w: 304px; }  /* halve the logo at this breakpoint */
+  .logoAlign {
+    left: auto;
+    right: 0;
+    top: 50%;
+    bottom: auto;
+    margin-left: 0;
+    margin-right: -67px;
+    transform: translateY(-50%);
+  }
+  /* At this breakpoint the logo is decorative-only — kill the white spark. */
+  .logo [data-hero-spark] { display: none; }
+}
+
+/* Mobile: drop the giant logo entirely. */
+@media (max-width: 640px) {
+  .logoLayer { display: none; }
+}
 
 /* -- Hero right column: layout wrappers (kit components handle type/mechanics) -- */
 
@@ -491,4 +558,13 @@
   --nu-accent-2-soft: var(--nu-hue-steel-soft);
   --nu-accent-2-wash: var(--nu-hue-steel-wash);
   --nu-accent-2-line: var(--nu-hue-steel-line);
+}
+
+
+/* Interaction-model row: between ~700 and 1075 the SVG does not fit;
+   drop the right cell and cap the left content at 65% width. */
+@media (min-width: 701px) and (max-width: 1075px) {
+  .imRow { grid-template-columns: minmax(0, 1fr); }
+  .imRight { display: none; }
+  .imLeft > * { max-width: 65%; }
 }

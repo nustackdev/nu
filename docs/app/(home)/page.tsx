@@ -38,7 +38,6 @@ const USE_CASES = [
   'Personal apps',
   'Data-intensive apps',
   'Enterprise in-house tools',
-  'Observability dashboards',
 ];
 
 export default function KickAssLanding() {
@@ -60,7 +59,7 @@ export default function KickAssLanding() {
       <Container full className={s.contentLayer}>
         {/* 1. Hero */}
         <Row template="minmax(0, 55fr) minmax(0, 45fr)" divider={false} className={s.heroRow}>
-            <Cell yalign="middle">
+            <Cell yalign="middle" className={s.heroLeftCell}>
               <CellContent pad="lg">
                 <h1 className={s.sloganStack} aria-label="Nu the interaction primitive">
                   <span className={s.sloganWord} aria-hidden>Nu &mdash;</span>
@@ -73,6 +72,10 @@ export default function KickAssLanding() {
             <Cell yalign="middle">
               <CellContent pad="lg">
                 <div className={s.heroRight}>
+                  <h1 className={s.sloganInline}>
+                    <NuLogo size="1em" className={s.sloganLogo} />
+                    Nu &mdash; the interaction primitive.
+                  </h1>
                   <p className={s.heroTagline}>
                     Build apps in one primitive that spans your
                     <br />
@@ -150,8 +153,8 @@ export default function KickAssLanding() {
             </CellContent>
           </Cell>
         </Row>
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.imRow}>
+          <Cell className={s.imLeft}>
             <CellContent pad="lg">
               <p className={s.tagline}>The interaction model.</p>
               <p className={s.description}>
@@ -169,7 +172,7 @@ export default function KickAssLanding() {
               </div>
             </CellContent>
           </Cell>
-          <Cell>
+          <Cell className={s.imRight}>
             <CellContent pad="lg">
               <InteractionModelDiagram />
             </CellContent>

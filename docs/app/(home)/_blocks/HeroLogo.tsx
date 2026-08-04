@@ -133,7 +133,7 @@ export function HeroLogo({
       </g>
 
       {/* Spark bloom at u's outer corner, clipped to letter — only glow, outlines stay hidden. */}
-      <g clipPath={`url(#${clipId})`}>
+      <g data-hero-spark clipPath={`url(#${clipId})`}>
         <circle cx={U_LEFT_X} cy={U_BOTTOM_Y} r="55" fill={`url(#${sparkId})`} />
       </g>
 
