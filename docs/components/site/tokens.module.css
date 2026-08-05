@@ -110,6 +110,18 @@
   --nu-fs-16: 120px;  /* display  / slogan desktop */
   --nu-fs-17: 200px;  /* watermark (chapterPeek) */
 
+  /* --- Type: role scale (semantic, resolves to atomic --nu-fs-N) --------
+   * Each role carries its own responsive story via @media reassignments
+   * below. Consumers pick a role by intent; the role owns the breakpoints.
+   * Sizes only — line-height/weight/tracking stay with the consumer. */
+  --nu-fs-display:   var(--nu-fs-16);  /* hero slogan, one per page */
+  --nu-fs-heading-1: var(--nu-fs-13);  /* section titles (h2) */
+  --nu-fs-heading-2: var(--nu-fs-11);  /* subsection titles (h3) */
+  --nu-fs-tagline:   var(--nu-fs-10);  /* accent phrase above a description */
+  --nu-fs-lede:      var(--nu-fs-10);  /* oversized intro paragraph */
+  --nu-fs-body:      var(--nu-fs-8);   /* default paragraph */
+  --nu-fs-label:     var(--nu-fs-5);   /* meta rows, captions, footer */
+
   /* --- Type: tracking scale --------------------------------------------- */
   --nu-tr-tight:  -0.02em;
   --nu-tr-normal: 0;
@@ -142,4 +154,31 @@
   /* --- Patterns --------------------------------------------------------- */
   --nu-dot-grid: radial-gradient(circle at 1px 1px, var(--color-fd-border) 1.1px, transparent 1.4px);
   --nu-dot-size: 22px 22px;
+}
+
+/* =============================================================================
+ * Role-token responsive story. Each @media block reassigns one or more role
+ * tokens to a smaller atomic step at the given breakpoint. All consumers
+ * that adopt these roles inherit the responsive behavior for free.
+ * ==========================================================================*/
+
+/* Display: 120 → 88 (from sloganWord's 1280 override). */
+@media (max-width: 1280px) {
+  .tokens { --nu-fs-display: var(--nu-fs-15); }
+}
+/* Lede: 20 → 17 (from .lede's 1024 override). */
+@media (max-width: 1024px) {
+  .tokens { --nu-fs-lede: var(--nu-fs-9); }
+}
+/* Display: 88 → 64 (from sloganWord's 900 override). */
+@media (max-width: 900px) {
+  .tokens { --nu-fs-display: var(--nu-fs-14); }
+}
+/* Heading-1: 48 → 32 (from .sectionTitle's 640 override). */
+@media (max-width: 640px) {
+  .tokens { --nu-fs-heading-1: var(--nu-fs-12); }
+}
+/* Display: 64 → 48 (from sloganWord's 560 override). */
+@media (max-width: 560px) {
+  .tokens { --nu-fs-display: var(--nu-fs-13); }
 }

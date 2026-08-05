@@ -204,14 +204,11 @@
   display: block;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--nu-fs-16);
+  font-size: var(--nu-fs-display);
   line-height: 0.92;
   letter-spacing: -0.045em;
   color: #fff;
 }
-@media (max-width: 1280px) { .sloganWord { font-size: var(--nu-fs-15); } }
-@media (max-width: 900px)  { .sloganWord { font-size: var(--nu-fs-14); } }
-@media (max-width: 560px)  { .sloganWord { font-size: var(--nu-fs-13); } }
 
 /* Inline single-line slogan — hidden on desktop, replaces stacked slogan
  * on mobile+tablet where the hero collapses to a regular vertical layout. */
@@ -227,7 +224,6 @@
 }
 .sloganLogo { display: none; }
 @media (max-width: 640px) {
-  .sloganInline { font-size: var(--nu-fs-13); }
   .sloganLogo   {
     display: inline-block;
     vertical-align: -0.12em;
@@ -331,7 +327,7 @@
 /* -- Section-wide tagline (used by fabrics/apps/etc.) ---------------------- */
 
 .tagline {
-  font-size: var(--nu-fs-10);
+  font-size: var(--nu-fs-tagline);
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.78);
   margin: 0 0 32px;
@@ -339,7 +335,7 @@
 }
 
 .lede {
-  font-size: var(--nu-fs-10);
+  font-size: var(--nu-fs-lede);
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.82);
   margin: 0;
@@ -348,9 +344,6 @@
 .lede strong {
   color: #fff;
   font-weight: 600;
-}
-@media (max-width: 1024px) {
-  .lede { font-size: var(--nu-fs-9); }
 }
 
 .sectionLabel {
@@ -364,14 +357,11 @@
 
 .sectionTitle {
   font-family: var(--font-display, ui-serif, Georgia, serif);
-  font-size: var(--nu-fs-13);
+  font-size: var(--nu-fs-heading-1);
   line-height: 1.08;
   letter-spacing: -0.015em;
   margin: 0;
   color: #fff;
-}
-@media (max-width: 640px) {
-  .sectionTitle { font-size: var(--nu-fs-12); }
 }
 
 .sectionIntro {
@@ -384,14 +374,14 @@
 
 .entryName {
   font-family: var(--font-display, ui-serif, Georgia, serif);
-  font-size: var(--nu-fs-11);
+  font-size: var(--nu-fs-heading-2);
   letter-spacing: -0.01em;
   margin: 0 0 8px;
   color: #fff;
 }
 
 .description {
-  font-size: var(--nu-fs-8);
+  font-size: var(--nu-fs-body);
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.76);
   margin: 0 0 20px;
@@ -405,17 +395,17 @@
   display: grid;
   gap: 4px;
   color: rgba(255, 255, 255, 0.82);
-  font-size: var(--nu-fs-8);
+  font-size: var(--nu-fs-body);
 }
 
 .backends {
-  font-size: var(--nu-fs-5);
+  font-size: var(--nu-fs-label);
   color: rgba(255, 255, 255, 0.55);
   margin: 0 0 20px;
   letter-spacing: 0.02em;
 }
 .status {
-  font-size: var(--nu-fs-5);
+  font-size: var(--nu-fs-label);
   color: rgba(255, 255, 255, 0.55);
   margin: 0 0 20px;
   letter-spacing: 0.02em;
@@ -470,7 +460,7 @@
   justify-content: center;
   align-items: center;
   gap: 14px;
-  font-size: var(--nu-fs-5);
+  font-size: var(--nu-fs-label);
   color: var(--nu-ink-4);
   padding: 24px 0;
 }
