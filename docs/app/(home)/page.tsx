@@ -172,7 +172,6 @@ export default function Home() {
                   anyone can implement.
                 </Description>
                 <CtaRow>
-                  <SiteButton href="/docs"><BookOpen size={14} aria-hidden /><span>Read the model</span></SiteButton>
                   <SiteButton href="https://github.com/nustackdev/interaction-model">
                     <GithubMark size={14} />
                     <SiteButtonRepoLabel>nustackdev/interaction-model</SiteButtonRepoLabel>
@@ -472,7 +471,6 @@ export default function Home() {
                   the bytes stay on disk and stream in on access.
                 </Description>
                 <CtaRow>
-                  <SiteButton href="/docs/virtuals"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
                   <SiteButton href="https://github.com/nustackdev/virtuals">
                     <GithubMark size={14} />
                     <SiteButtonRepoLabel>nustackdev/virtuals</SiteButtonRepoLabel>
@@ -493,7 +491,6 @@ export default function Home() {
                   doesn&apos;t change. Sync stays sync, async stays async.
                 </Description>
                 <CtaRow>
-                  <SiteButton href="/docs/invisibles"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
                   <SiteButton href="https://github.com/nustackdev/invisibles">
                     <GithubMark size={14} />
                     <SiteButtonRepoLabel>nustackdev/invisibles</SiteButtonRepoLabel>
@@ -518,7 +515,6 @@ export default function Home() {
                   put/get/iterate.
                 </Description>
                 <CtaRow>
-                  <SiteButton href="/docs/rdbpy"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
                   <SiteButton href="https://github.com/nustackdev/rdbpy">
                     <GithubMark size={14} />
                     <SiteButtonRepoLabel>nustackdev/rdbpy</SiteButtonRepoLabel>
@@ -540,7 +536,6 @@ export default function Home() {
                   sorted KV store works as a backend.
                 </Description>
                 <CtaRow>
-                  <SiteButton href="/docs/kh57"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
                   <SiteButton href="https://github.com/nustackdev/kh57">
                     <GithubMark size={14} />
                     <SiteButtonRepoLabel>nustackdev/kh57</SiteButtonRepoLabel>

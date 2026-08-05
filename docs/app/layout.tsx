@@ -7,9 +7,31 @@ const inter = Inter({
   axes: ['opsz'],
 });
 
+const SITE_URL = 'https://nustack.dev';
+const OG_IMAGE = 'https://nustack.dev/og.png';
+const TITLE = 'Nu — the interaction primitive';
+const DESCRIPTION = 'Build apps in one primitive that spans your whole stack: databases, UIs, AI agents, services. No glue. 50x less code.';
+
 export const metadata = {
-  title: 'Nu',
-  description: 'A programming model where everything is a Nu.',
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    type: 'website',
+    url: SITE_URL,
+    siteName: 'Nu',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'Nu — the interaction primitive' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@nustackdev',
+    creator: '@nustackdev',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [OG_IMAGE],
+  },
 };
 
 export const viewport = {

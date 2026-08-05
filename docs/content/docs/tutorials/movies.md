@@ -128,18 +128,20 @@ hydrate = nu.v.Snapshot(
     | Movies.stats.body.unseen.set_value(_s(State.total - State.watched))
 )
 
-ui = init >> App.title.set("movies") >> hydrate
+ui = App.title.set("movies") >> hydrate
 
 tree = nu.With(
     nu.v.presets.rocksdb_navigator(".dbmovies"),
     nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
-    body=nu.ForeverDo(nu.Delay(3600)),
+    body=nu.v.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
 )
 
 
 if __name__ == "__main__":
-    asyncio.run(nu.arun(nu.v.auto_flow_atomic(tree)))
+    asyncio.run(nu.arun(tree))
 ```
+
+`init` lives on `body`, not in `ui`. Anything under `ui` re-runs on every browser session; seeding state belongs to the app's lifecycle, so it goes on `body` where it fires once.
 
 Run again. A browser tab opens. Heading up top, a stats card with three numbers.
 
@@ -220,7 +222,7 @@ on_add = nu.ReactForever(
 Extend the `ui`:
 
 ```python
-ui = init >> App.title.set("movies") >> hydrate >> on_add
+ui = App.title.set("movies") >> hydrate >> on_add
 ```
 
 Run. Fill in a title, hit "log it". Stats bump. A green alert says "logged: added <title>".
@@ -367,17 +369,17 @@ on_add = nu.ReactForever(
 )
 
 
-ui = init >> App.title.set("movies") >> hydrate >> on_add
+ui = App.title.set("movies") >> hydrate >> on_add
 
 tree = nu.With(
     nu.v.presets.rocksdb_navigator(".dbmovies"),
     nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
-    body=nu.ForeverDo(nu.Delay(3600)),
+    body=nu.v.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
 )
 
 
 if __name__ == "__main__":
-    asyncio.run(nu.arun(nu.v.auto_flow_atomic(tree)))
+    asyncio.run(nu.arun(tree))
 ```
 
 Run. The table shows the seed. Log a new movie. It lands in the table, stats bump, alert fires.

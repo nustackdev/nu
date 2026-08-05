@@ -2,15 +2,29 @@
 title: Install
 ---
 
-Install Nu from source. PyPI packages come later.
-
 ## Prerequisites
 
 - Python 3.12 or later.
-- [uv](https://docs.astral.sh/uv/) for the Python side. `make sync` installs it if missing.
-- Node.js 20 or later with npm, for the `nu.ui` Fabric. Skip if you only need the core, `nu.m`, or `nu.v`.
 
-## Install the Python side
+## Install from PyPI
+
+The everything-included install:
+
+```bash
+pip install "nustack-py[all]"
+```
+
+Verify:
+
+```bash
+python -c "import nu"
+```
+
+For a lean install, pick the groups you need instead of `[all]`, e.g. `pip install "nustack-py[nudle]"`.
+
+## Install from source (advanced)
+
+For hacking on Nu itself, or picking up unreleased changes.
 
 Clone and sync:
 
@@ -36,9 +50,9 @@ Verify:
 uv run python -c "import nu; print(nu.__version__)"
 ```
 
-## Build the UI bundle
+### Build the UI bundle
 
-Needed for the `nu.ui` Fabric. Skip if you are not using UI.
+Needed for the `nu.ui` Fabric if you are working from source. Skip if you are not using UI.
 
 ```bash
 make web-install
@@ -55,7 +69,7 @@ make web-dev
 
 Vite serves the app on `http://localhost:5173`, proxies `/ws` to the FastAPI backend on `:8080`, and hot-reloads on file changes.
 
-## Verify end-to-end
+### Verify from source
 
 Run the counter dashboard example:
 
@@ -69,6 +83,6 @@ Open the browser tab that appears. The counter ticks once a second; the dashboar
 
 **`uv: command not found` after `make sync`.** `make install` puts uv at `~/.local/bin/uv`. Add that to your `PATH`, or open a new shell.
 
-**Browser shows 404 on `/`.** The web bundle is not built. Run `make web-build`.
+**Browser shows 404 on `/`.** The web bundle is not built (source install only). Run `make web-build`.
 
 **Warning: `import nudle` resolves to a module, not the ui wheel package.** A local `nudle.py` on `sys.path` shadows the package. Rename that file, or run from a directory that does not shadow it.

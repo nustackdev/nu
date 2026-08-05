@@ -94,7 +94,13 @@ Swap the Fabric, keep the tree. Same program runs against different substrates.
 
 ## Install
 
-From source. Python 3.12+. See [nustack.dev/docs/how-to/install](https://nustack.dev/docs/how-to/install) for the full guide (Python side, UI bundle, verify).
+Python 3.12+.
+
+```bash
+pip install "nustack-py[all]"
+```
+
+See [nustack.dev/docs/how-to/install](https://nustack.dev/docs/how-to/install) for lean installs and source builds.
 
 ## Apps built on Nu
 
@@ -102,7 +108,7 @@ From source. Python 3.12+. See [nustack.dev/docs/how-to/install](https://nustack
 
 ## Status
 
-v0.1.0. APIs will break, no backwards compatibility guarantees.
+Alpha. APIs will break.
 
 ## License
 
