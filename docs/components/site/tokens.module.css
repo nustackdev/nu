@@ -107,7 +107,7 @@
   --nu-fs-13: 48px;   /* h2 */
   --nu-fs-14: 64px;   /* h1 / slogan mobile */
   --nu-fs-15: 88px;   /* display-sm / slogan tablet */
-  --nu-fs-16: 120px;  /* display  / slogan desktop */
+  --nu-fs-16: 114px;  /* display  / slogan desktop */
   --nu-fs-17: 200px;  /* watermark (chapterPeek) */
 
   /* --- Type: role scale (semantic, resolves to atomic --nu-fs-N) --------
@@ -182,7 +182,6 @@
  * .backends, .status, .useCases, .sectionIntro, .ctaRow). */
 @media (max-width: 1280px) {
   .tokens {
-    --nu-fs-display: var(--nu-fs-15);
     --nu-gap-normal: var(--nu-space-1);
     --nu-gap-loose:  var(--nu-space-2);
     --nu-gap-xloose: var(--nu-space-4);

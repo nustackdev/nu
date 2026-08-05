@@ -85,7 +85,7 @@
   right: 0;
   bottom: 0;
   height: 1px;
-  background: linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0) 50%);
+  background: linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0) 20%);
   pointer-events: none;
   z-index: 1;
 }
@@ -327,8 +327,9 @@
   gap: 10px;
   margin-top: 4px;
 }
+/* Second CTA row hugs the first — fixed 6px visual gap regardless of parent gap. */
 .heroCtaRow + .heroCtaRow {
-  margin-top: -14px;
+  margin-top: calc(6px - var(--nu-gap-loose));
 }
 
 /* -- Section intro (below section titles) ---------------------------------
