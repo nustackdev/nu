@@ -1,5 +1,5 @@
 # =============================================================================
-# nu — assemble software, don't write it
+# nu — the interaction primitive
 # =============================================================================
 # One package: kernel, stdlib, fabrics (nu.virtuals / nu.mem / nu.ui), and
 # topologies (nu.distributed). Source lives under src/nu (src layout). Extras
@@ -23,7 +23,7 @@ build-backend = "hatchling.build"
 [project]
 name = "nu"
 version = "0.1.0"
-description = "Assemble software, don't write it. Nu is the interaction-model runtime for Python."
+description = "The interaction primitive. Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]

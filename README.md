@@ -1,16 +1,16 @@
 # Nu
 
-Assemble software, don't write it.
+The interaction primitive.
 
-Nu program is an Interaction over Refs composed as a tree:
+Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code.
 
-- **Ref** names any resource. A KV item, a UI widget, a remote endpoint, a memory slot.
-- **Interaction** is the work over Refs. Read, write, compute, branch, iterate, compose.
-- **Fabric** implements Refs against a concrete backend. Swap Fabrics, keep the tree.
+Every app is a set of interactions between systems: a database, a UI, AI agents, and services. Nu makes interaction the primitive:
 
-Distribution, persistence, reactivity, atomicity, and observability come out as tree transformations.
+- **Ref** names what you touch. A KV slot, a UI widget, an LLM endpoint, a memory slot, a remote object.
+- **Interaction** describes what to do with it. Read, write, branch, iterate, compose.
+- **Fabric** binds Refs to a real backend. Swap the Fabric, keep the tree.
 
-50x less code for humans, 50x less tokens for agents, than writing it line by line in imperative Python.
+Persistence, reactivity, atomicity, observability, and scalability are inherent, not bolted on.
 
 ## The interaction model
 

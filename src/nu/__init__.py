@@ -1,5 +1,8 @@
 # ruff: noqa
-"""Nu: assemble software, don't write it.
+"""Nu: the interaction primitive.
+
+Build apps in one primitive that spans your whole stack (databases, UIs,
+AI agents, and services). No glue. 50x less code.
 
 Two ways to import. Grab what you need flat from the root:
 

@@ -1,0 +1,4 @@
+{
+  "title": "Std",
+  "pages": ["index", "asyncio", "cmath", "datetime", "decimal", "fin", "fractions", "functools", "itertools", "logging", "math", "pathlib", "random", "time", "uuid"]
+}

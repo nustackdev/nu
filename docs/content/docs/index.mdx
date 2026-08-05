@@ -1,9 +1,11 @@
 ---
 title: Nu
-description: "A Python programming model for live software: persistent state, reactive UI, background loops."
+description: "The interaction primitive. Build apps in one primitive that spans your whole stack: databases, UIs, AI agents, services. No glue. 50x less code."
 ---
 
-Assemble software, don't write it. Nu is a Python programming model for live software: persistent state, reactive UI, and background loops that keep running while people use the app.
+The interaction primitive. Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code.
+
+Every app is a set of interactions between systems. Nu makes interaction the primitive: **Refs** name what you touch (a UI widget, an LLM endpoint, a memory slot, a KV slot), **Interactions** describe what to do with them (read, write, branch, iterate, compose). Persistence, reactivity, atomicity, observability, and scalability are inherent, not bolted on.
 
 Here is a complete Nu program:
 
@@ -18,11 +20,20 @@ You described a tree of what to do. Nu ran it. Every second it prints `tick`, fo
 
 ## What you get
 
-- [Persistent state](/docs/tutorials/counter) that survives restarts, no database code to write.
-- [Reactive UI](/docs/tutorials/movies) wired to that state, updates without a refresh.
-- [Background loops](/docs/tutorials/hello) composed with `>>` and `|`, not with threads and queues.
-- [One tree, many backends](/docs/tutorials/movies): swap memory for disk, local for distributed, same program.
-- [Inspectable](/docs/tutorials/hello) end to end, every step of the tree is a value you can print.
+Inherent to the model, not bolted on:
+
+- **Persistence.** State survives restarts, no database code.
+- **Reactivity.** Reads recompute, UI updates.
+- **Atomicity.** Any subtree runs as a transaction.
+- **Observability.** Every node is a value you can print.
+- **Scalability.** Swap the Fabric, same tree runs local or distributed.
+
+## Use cases
+
+- **AI agentic systems.** Refs for tools, memory, LLMs; Interactions for the loop.
+- **Personal apps.** Persistent state, live UI, background loop, in a handful of lines.
+- **Data-intensive apps.** Billions of entries in-process, reactive and atomic by default.
+- **Enterprise in-house tools.** Dashboards and workflows over existing systems, same program from prototype to scale.
 
 ## Start here
 

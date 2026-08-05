@@ -251,7 +251,7 @@ export default function Home() {
                   and in-process coordination.
                 </Description>
                 <CtaRow>
-                  <SiteButton href="/docs/fabrics/mem" variant="hueTinted">
+                  <SiteButton href="/docs/reference/fabrics/mem" variant="hueTinted">
                     <BookOpen size={14} aria-hidden />
                     <span>Read the docs</span>
                   </SiteButton>
@@ -278,7 +278,7 @@ export default function Home() {
                 </Description>
                 <Label>Backends: rocksdb, lmdb</Label>
                 <CtaRow>
-                  <SiteButton href="/docs/fabrics/virtuals" variant="hueTinted">
+                  <SiteButton href="/docs/reference/fabrics/virtuals" variant="hueTinted">
                     <BookOpen size={14} aria-hidden />
                     <span>Read the docs</span>
                   </SiteButton>
@@ -305,7 +305,7 @@ export default function Home() {
                   and live-updates them as your state changes.
                 </Description>
                 <CtaRow>
-                  <SiteButton href="/docs/fabrics/ui" variant="hueTinted">
+                  <SiteButton href="/docs/reference/fabrics/ui" variant="hueTinted">
                     <BookOpen size={14} aria-hidden />
                     <span>Read the docs</span>
                   </SiteButton>
@@ -332,7 +332,7 @@ export default function Home() {
                   interactions, over TCP or Unix socket.
                 </Description>
                 <CtaRow>
-                  <SiteButton href="/docs/fabrics/invisibles" variant="hueTinted">
+                  <SiteButton href="/docs/reference/fabrics/invisibles" variant="hueTinted">
                     <BookOpen size={14} aria-hidden />
                     <span>Read the docs</span>
                   </SiteButton>
@@ -359,7 +359,7 @@ export default function Home() {
                   result.
                 </Description>
                 <CtaRow>
-                  <SiteButton href="/docs/fabrics/ray" variant="hueTinted">
+                  <SiteButton href="/docs/reference/fabrics/ray" variant="hueTinted">
                     <BookOpen size={14} aria-hidden />
                     <span>Read the docs</span>
                   </SiteButton>

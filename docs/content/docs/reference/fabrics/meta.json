@@ -1,4 +1,4 @@
 {
   "title": "Fabrics",
-  "pages": []
+  "pages": ["index", "mem", "virtuals", "ui", "ray", "invisibles"]
 }
