@@ -81,9 +81,12 @@
   --site-silver-2: #bcc2ce;
 
   /* --- Color: code & chrome --------------------------------------------- */
+  /* Site owns its own palette (dark-only). Never reach into --color-fd-*
+   * from here — docs/ needs theming, site/ stays dark independently. */
   --site-code-bg:   rgba(255, 255, 255, 0.03);
   --site-code-bg-2: rgba(255, 255, 255, 0.02);
-  --site-chrome-bg: color-mix(in oklab, var(--color-fd-muted) 55%, transparent);
+  --site-chrome-bg: rgba(255, 255, 255, 0.04);
+  --site-surface:   #121212;
 
   /* --- Type: families --------------------------------------------------- */
   --font-display: "Inter", "InterVariable", ui-sans-serif, system-ui,
@@ -166,7 +169,7 @@
   --site-t:    0.15s ease;
 
   /* --- Patterns --------------------------------------------------------- */
-  --site-dot-grid: radial-gradient(circle at 1px 1px, var(--color-fd-border) 1.1px, transparent 1.4px);
+  --site-dot-grid: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1.1px, transparent 1.4px);
   --site-dot-size: 22px 22px;
 }
 
