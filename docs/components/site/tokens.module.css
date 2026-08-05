@@ -142,6 +142,20 @@
   --nu-space-4: 40px;
   --nu-space-8: 80px;
 
+  /* --- Space: rhythm scale (semantic, resolves to atomic --nu-space-N) ---
+   * Sized tiers, not role-paired. Consumers pick a tier by feel:
+   *   tight  — descriptor→CTA, tightly-related lines
+   *   normal — tagline→description, adjacent paragraphs
+   *   loose  — between distinct blocks/groups inside a Cell
+   *   xloose — outermost separations
+   * Each carries its own responsive story via @media reassignments below.
+   * Only rhythm/gap between text blocks — padding inside cells stays
+   * `calc(N * var(--kal-u))` per the existing convention. */
+  --nu-gap-tight:  var(--nu-space-1);
+  --nu-gap-normal: var(--nu-space-2);
+  --nu-gap-loose:  var(--nu-space-4);
+  --nu-gap-xloose: var(--nu-space-8);
+
   /* --- Space: padding & gap --------------------------------------------- */
   --nu-pad-x: clamp(24px, 4vw, 56px);
 
@@ -162,9 +176,17 @@
  * that adopt these roles inherit the responsive behavior for free.
  * ==========================================================================*/
 
-/* Display: 120 → 88 (from sloganWord's 1280 override). */
+/* Display: 120 → 88 (from sloganWord's 1280 override).
+ * Rhythm: loose 40→20, normal 20→10, xloose 80→40 — folds every rhythm
+ * @media that used to live on landing consumers (.tagline, .description,
+ * .backends, .status, .useCases, .sectionIntro, .ctaRow). */
 @media (max-width: 1280px) {
-  .tokens { --nu-fs-display: var(--nu-fs-15); }
+  .tokens {
+    --nu-fs-display: var(--nu-fs-15);
+    --nu-gap-normal: var(--nu-space-1);
+    --nu-gap-loose:  var(--nu-space-2);
+    --nu-gap-xloose: var(--nu-space-4);
+  }
 }
 /* Lede: 20 → 17 (from .lede's 1024 override). */
 @media (max-width: 1024px) {
