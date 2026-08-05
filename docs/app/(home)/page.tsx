@@ -15,6 +15,9 @@ import { VizFrame } from '@/components/site/VizFrame';
 import { MonoKicker } from '@/components/site/MonoKicker';
 import { Meta } from '@/components/site/Meta';
 import { NumberedList } from '@/components/site/NumberedList';
+import { Heading, Tagline, Lede, Description, Label } from '@/components/site/text';
+import { Stack } from '@/components/site/layout/Stack';
+import { CtaRow } from '@/components/site/layout/CtaRow';
 import {
   MemGlyph,
   VirtualsGlyph,
@@ -123,14 +126,14 @@ export default function KickAssLanding() {
         <Row cols={1} borderBottom="solid" className={s.section2Row}>
           <Cell>
             <CellContent pad="lg">
-              <p className={s.lede}>
+              <Lede>
                 Every app is a set of interactions between systems - a
                 database, a UI, AI agents, services. Nu makes interaction the
                 primitive: <strong>Refs</strong> name what you touch.{' '}
                 <strong>Interactions</strong> describe what to do with them.
                 Persistence, reactivity, atomicity, observability, and
                 scalability are inherent - not bolted on.
-              </p>
+              </Lede>
             </CellContent>
           </Cell>
         </Row>
@@ -147,29 +150,33 @@ export default function KickAssLanding() {
           <Cell className={s.chapterCell}>
             <span className={s.chapterPeek} aria-hidden>model</span>
             <CellContent pad="lg">
-              <h2 className={s.sectionTitle}>
+              <Heading level={1}>
                 We build on the Interaction Model.
-              </h2>
+              </Heading>
+              <p className={s.sectionIntro}>
+                A language-agnostic specification the whole stack stands on.
+              </p>
             </CellContent>
           </Cell>
         </Row>
         <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm" className={s.imRow}>
           <Cell className={s.imLeft}>
             <CellContent pad="lg">
-              <p className={s.tagline}>The interaction model.</p>
-              <p className={s.description}>
-                The interaction-model defines what an interaction is, how Refs
-                name locations, how Interactions compose into programs.
-                Language-agnostic, implementation-agnostic. A specification
-                anyone can implement.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs"><BookOpen size={14} aria-hidden /><span>Read the model</span></SiteButton>
-                <SiteButton href="https://github.com/nustackdev/interaction-model">
-                  <GithubMark size={14} />
-                  <SiteButtonRepoLabel>nustackdev/interaction-model</SiteButtonRepoLabel>
-                </SiteButton>
-              </div>
+              <Stack gap="normal">
+                <Description>
+                  The interaction-model defines what an interaction is, how Refs
+                  name locations, how Interactions compose into programs.
+                  Language-agnostic, implementation-agnostic. A specification
+                  anyone can implement.
+                </Description>
+                <CtaRow>
+                  <SiteButton href="/docs"><BookOpen size={14} aria-hidden /><span>Read the model</span></SiteButton>
+                  <SiteButton href="https://github.com/nustackdev/interaction-model">
+                    <GithubMark size={14} />
+                    <SiteButtonRepoLabel>nustackdev/interaction-model</SiteButtonRepoLabel>
+                  </SiteButton>
+                </CtaRow>
+              </Stack>
             </CellContent>
           </Cell>
           <Cell className={s.imRight}>
@@ -184,9 +191,9 @@ export default function KickAssLanding() {
           <Cell className={s.chapterCell}>
             <span className={s.chapterPeek} aria-hidden>nu</span>
             <CellContent pad="lg">
-              <h2 className={s.sectionTitle}>
+              <Heading level={1}>
                 Nu - the interaction model made real in Python.
-              </h2>
+              </Heading>
               <p className={s.sectionIntro}>
                 Nu ships the model in pure Python. Batteries included:{' '}
                 <strong>fabrics</strong> for the everyday jobs - in-memory
@@ -198,18 +205,20 @@ export default function KickAssLanding() {
         <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueCode}>
           <Cell>
             <CellContent pad="lg">
-              <CodeSample filename="persistent_counter_ui.py" lines={NU_SAMPLE_LINES} />
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs"><BookOpen size={14} aria-hidden /><span>Meet Nu</span></SiteButton>
-                <SiteButton href="https://github.com/nustackdev/nu">
-                  <GithubMark size={14} />
-                  <SiteButtonRepoLabel>nustackdev/nu</SiteButtonRepoLabel>
-                </SiteButton>
-                <SiteButton href="https://github.com/nustackdev/nu/tree/main/examples">
-                  <GithubMark size={14} />
-                  <span>See more examples</span>
-                </SiteButton>
-              </div>
+              <Stack gap="normal">
+                <CodeSample filename="persistent_counter_ui.py" lines={NU_SAMPLE_LINES} />
+                <CtaRow>
+                  <SiteButton href="/docs"><BookOpen size={14} aria-hidden /><span>Meet Nu</span></SiteButton>
+                  <SiteButton href="https://github.com/nustackdev/nu">
+                    <GithubMark size={14} />
+                    <SiteButtonRepoLabel>nustackdev/nu</SiteButtonRepoLabel>
+                  </SiteButton>
+                  <SiteButton href="https://github.com/nustackdev/nu/tree/main/examples">
+                    <GithubMark size={14} />
+                    <span>See more examples</span>
+                  </SiteButton>
+                </CtaRow>
+              </Stack>
             </CellContent>
           </Cell>
         </Row>
@@ -219,7 +228,7 @@ export default function KickAssLanding() {
           <Cell className={s.chapterCell}>
             <span className={s.chapterPeek} aria-hidden>fabrics</span>
             <CellContent pad="lg">
-              <h2 className={s.sectionTitle}>Fabrics.</h2>
+              <Heading level={1}>Fabrics.</Heading>
               <p className={s.sectionIntro}>
                 Fabrics are the tissue between Refs and the real world: memory,
                 kv stores, UI, network, cluster. These are the ones Nu ships
@@ -233,17 +242,19 @@ export default function KickAssLanding() {
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="steel">nu.mem</SilverWovenName>
-              <p className={s.tagline}>In-memory state fabric.</p>
-              <p className={s.description}>
-                In-memory state on plain dicts. Perfect for cache, hot state,
-                and in-process coordination.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/fabrics/mem" variant="hueTinted">
-                  <BookOpen size={14} aria-hidden />
-                  <span>Read the docs</span>
-                </SiteButton>
-              </div>
+              <Stack gap="normal">
+                <Tagline>In-memory state fabric.</Tagline>
+                <Description>
+                  In-memory state on plain dicts. Perfect for cache, hot state,
+                  and in-process coordination.
+                </Description>
+                <CtaRow>
+                  <SiteButton href="/docs/fabrics/mem" variant="hueTinted">
+                    <BookOpen size={14} aria-hidden />
+                    <span>Read the docs</span>
+                  </SiteButton>
+                </CtaRow>
+              </Stack>
             </CellContent>
           </Cell>
           <Cell>
@@ -257,18 +268,20 @@ export default function KickAssLanding() {
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="sage">nu.virtuals</SilverWovenName>
-              <p className={s.tagline}>Persistent state fabric.</p>
-              <p className={s.description}>
-                Refs over a KV backend (RocksDB, LMDB). Transactions,
-                snapshots, and change notifications, built in.
-              </p>
-              <p className={s.backends}>Backends: rocksdb, lmdb</p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/fabrics/virtuals" variant="hueTinted">
-                  <BookOpen size={14} aria-hidden />
-                  <span>Read the docs</span>
-                </SiteButton>
-              </div>
+              <Stack gap="normal">
+                <Tagline>Persistent state fabric.</Tagline>
+                <Description>
+                  Refs over a KV backend (RocksDB, LMDB). Transactions,
+                  snapshots, and change notifications, built in.
+                </Description>
+                <Label>Backends: rocksdb, lmdb</Label>
+                <CtaRow>
+                  <SiteButton href="/docs/fabrics/virtuals" variant="hueTinted">
+                    <BookOpen size={14} aria-hidden />
+                    <span>Read the docs</span>
+                  </SiteButton>
+                </CtaRow>
+              </Stack>
             </CellContent>
           </Cell>
           <Cell>
@@ -282,18 +295,20 @@ export default function KickAssLanding() {
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="teal">nu.ui</SilverWovenName>
-              <p className={s.tagline}>Web UI fabric.</p>
-              <p className={s.description}>
-                Same fabric shape as the others, but the Refs are widgets:
-                text, buttons, tables. The fabric renders them in the browser
-                and live-updates them as your state changes.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/fabrics/ui" variant="hueTinted">
-                  <BookOpen size={14} aria-hidden />
-                  <span>Read the docs</span>
-                </SiteButton>
-              </div>
+              <Stack gap="normal">
+                <Tagline>Web UI fabric.</Tagline>
+                <Description>
+                  Same fabric shape as the others, but the Refs are widgets:
+                  text, buttons, tables. The fabric renders them in the browser
+                  and live-updates them as your state changes.
+                </Description>
+                <CtaRow>
+                  <SiteButton href="/docs/fabrics/ui" variant="hueTinted">
+                    <BookOpen size={14} aria-hidden />
+                    <span>Read the docs</span>
+                  </SiteButton>
+                </CtaRow>
+              </Stack>
             </CellContent>
           </Cell>
           <Cell>
@@ -307,18 +322,20 @@ export default function KickAssLanding() {
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="plum">nu.invisibles</SilverWovenName>
-              <p className={s.tagline}>Network fabric.</p>
-              <p className={s.description}>
-                A Nu fabric that puts other fabrics on the network. Bind a
-                fabric in one process, use it from another; same Refs, same
-                interactions, over TCP or Unix socket.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/fabrics/invisibles" variant="hueTinted">
-                  <BookOpen size={14} aria-hidden />
-                  <span>Read the docs</span>
-                </SiteButton>
-              </div>
+              <Stack gap="normal">
+                <Tagline>Network fabric.</Tagline>
+                <Description>
+                  A Nu fabric that puts other fabrics on the network. Bind a
+                  fabric in one process, use it from another; same Refs, same
+                  interactions, over TCP or Unix socket.
+                </Description>
+                <CtaRow>
+                  <SiteButton href="/docs/fabrics/invisibles" variant="hueTinted">
+                    <BookOpen size={14} aria-hidden />
+                    <span>Read the docs</span>
+                  </SiteButton>
+                </CtaRow>
+              </Stack>
             </CellContent>
           </Cell>
           <Cell>
@@ -332,18 +349,20 @@ export default function KickAssLanding() {
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="amber">nu.ray</SilverWovenName>
-              <p className={s.tagline}>Cluster compute fabric.</p>
-              <p className={s.description}>
-                A Nu fabric for cluster compute. Teleport a Nu tree to any
-                worker in your Ray cluster; it runs there and returns the
-                result.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/fabrics/ray" variant="hueTinted">
-                  <BookOpen size={14} aria-hidden />
-                  <span>Read the docs</span>
-                </SiteButton>
-              </div>
+              <Stack gap="normal">
+                <Tagline>Cluster compute fabric.</Tagline>
+                <Description>
+                  A Nu fabric for cluster compute. Teleport a Nu tree to any
+                  worker in your Ray cluster; it runs there and returns the
+                  result.
+                </Description>
+                <CtaRow>
+                  <SiteButton href="/docs/fabrics/ray" variant="hueTinted">
+                    <BookOpen size={14} aria-hidden />
+                    <span>Read the docs</span>
+                  </SiteButton>
+                </CtaRow>
+              </Stack>
             </CellContent>
           </Cell>
           <Cell>
@@ -358,7 +377,7 @@ export default function KickAssLanding() {
           <Cell className={s.chapterCell}>
             <span className={s.chapterPeek} aria-hidden>apps</span>
             <CellContent pad="lg">
-              <h2 className={s.sectionTitle}>Standalone apps built on Nu.</h2>
+              <Heading level={1}>Standalone apps built on Nu.</Heading>
               <p className={s.sectionIntro}>
                 Applications built on Nu today.
               </p>
@@ -370,20 +389,22 @@ export default function KickAssLanding() {
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="amber">nulog</SilverWovenName>
-              <p className={s.tagline}>
-                Pure-Python, serverless logger and metrics store.
-              </p>
-              <p className={s.description}>
-                Log messages and observe metrics from any Python code. Entries
-                persist to an embedded KV store (RocksDB, LMDB) and scale to
-                billions, all in-process. One line boots a live viewer.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton variant="repo" href="https://github.com/nustackdev/nulog">
-                  <GithubMark size={14} />
-                  <SiteButtonRepoLabel>nustackdev/nulog</SiteButtonRepoLabel>
-                </SiteButton>
-              </div>
+              <Stack gap="normal">
+                <Tagline>
+                  Pure-Python, serverless logger and metrics store.
+                </Tagline>
+                <Description>
+                  Log messages and observe metrics from any Python code. Entries
+                  persist to an embedded KV store (RocksDB, LMDB) and scale to
+                  billions, all in-process. One line boots a live viewer.
+                </Description>
+                <CtaRow>
+                  <SiteButton variant="repo" href="https://github.com/nustackdev/nulog">
+                    <GithubMark size={14} />
+                    <SiteButtonRepoLabel>nustackdev/nulog</SiteButtonRepoLabel>
+                  </SiteButton>
+                </CtaRow>
+              </Stack>
             </CellContent>
           </Cell>
           <Cell>
@@ -397,16 +418,18 @@ export default function KickAssLanding() {
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="plum">nuspace</SilverWovenName>
-              <p className={s.tagline}>
-                A programmable knowledge base.
-              </p>
-              <p className={s.description}>
-                nuspace is Nu made touchable: blocks and pages are Refs, UI
-                edits are Interactions, automations and saved views are trees.
-                Data, UI, and computation live in the same context, and the
-                human and the code meet at a block&apos;s name.
-              </p>
-              <p className={s.status}>Status: Coming soon.</p>
+              <Stack gap="normal">
+                <Tagline>
+                  A programmable knowledge base.
+                </Tagline>
+                <Description>
+                  nuspace is Nu made touchable: blocks and pages are Refs, UI
+                  edits are Interactions, automations and saved views are trees.
+                  Data, UI, and computation live in the same context, and the
+                  human and the code meet at a block&apos;s name.
+                </Description>
+                <Label>Status: Coming soon.</Label>
+              </Stack>
             </CellContent>
           </Cell>
           <Cell>
@@ -421,7 +444,7 @@ export default function KickAssLanding() {
           <Cell className={s.chapterCell}>
             <span className={s.chapterPeek} aria-hidden>infra</span>
             <CellContent pad="lg">
-              <h2 className={s.sectionTitle}>Infra. The tools that power Nu fabrics.</h2>
+              <Heading level={1}>Infra. The tools that power Nu fabrics.</Heading>
               <p className={s.sectionIntro}>
                 Standalone Python libraries the fabrics build on. Each is
                 useful on its own; together they form the substrate under Nu.
@@ -433,44 +456,52 @@ export default function KickAssLanding() {
         <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm">
           <Cell>
             <CellContent pad="lg">
-              <h3 className={s.entryName}>virtuals</h3>
-              <p className={s.tagline}>
-                Virtual Python collections over any KV storage.
-              </p>
-              <p className={s.description}>
-                Virtuals gives you native-feeling Python collections that
-                don&apos;t physically exist in memory. They&apos;re lazy views
-                over tuple-key KV storage: define your structure, plug in a
-                backend (RocksDB, LMDB, in-memory), get transactions and change
-                notifications for free.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/virtuals"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
-                <SiteButton href="https://github.com/nustackdev/virtuals">
-                  <GithubMark size={14} />
-                  <SiteButtonRepoLabel>nustackdev/virtuals</SiteButtonRepoLabel>
-                </SiteButton>
-              </div>
+              <Stack gap="normal">
+                <Stack gap="tight">
+                  <Heading level={2}>virtuals</Heading>
+                  <Tagline>
+                    Virtual Python collections over any KV storage.
+                  </Tagline>
+                </Stack>
+                <Description>
+                  Virtuals gives you native-feeling Python collections that
+                  don&apos;t physically exist in memory. They&apos;re lazy views
+                  over tuple-key KV storage: define your structure, plug in a
+                  backend (RocksDB, LMDB, in-memory), get transactions and change
+                  notifications for free.
+                </Description>
+                <CtaRow>
+                  <SiteButton href="/docs/virtuals"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
+                  <SiteButton href="https://github.com/nustackdev/virtuals">
+                    <GithubMark size={14} />
+                    <SiteButtonRepoLabel>nustackdev/virtuals</SiteButtonRepoLabel>
+                  </SiteButton>
+                </CtaRow>
+              </Stack>
             </CellContent>
           </Cell>
           <Cell>
             <CellContent pad="lg">
-              <h3 className={s.entryName}>invisibles</h3>
-              <p className={s.tagline}>Transparent remote objects for Python.</p>
-              <p className={s.description}>
-                You have an object. You move it to another process or node. The
-                code that uses it doesn&apos;t change. Invisibles handles
-                boxing, dispatch, and proxying so remote calls read exactly
-                like local ones. Sync methods stay sync, async methods stay
-                async.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/invisibles"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
-                <SiteButton href="https://github.com/nustackdev/invisibles">
-                  <GithubMark size={14} />
-                  <SiteButtonRepoLabel>nustackdev/invisibles</SiteButtonRepoLabel>
-                </SiteButton>
-              </div>
+              <Stack gap="normal">
+                <Stack gap="tight">
+                  <Heading level={2}>invisibles</Heading>
+                  <Tagline>Transparent remote objects for Python.</Tagline>
+                </Stack>
+                <Description>
+                  You have an object. You move it to another process or node. The
+                  code that uses it doesn&apos;t change. Invisibles handles
+                  boxing, dispatch, and proxying so remote calls read exactly
+                  like local ones. Sync methods stay sync, async methods stay
+                  async.
+                </Description>
+                <CtaRow>
+                  <SiteButton href="/docs/invisibles"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
+                  <SiteButton href="https://github.com/nustackdev/invisibles">
+                    <GithubMark size={14} />
+                    <SiteButtonRepoLabel>nustackdev/invisibles</SiteButtonRepoLabel>
+                  </SiteButton>
+                </CtaRow>
+              </Stack>
             </CellContent>
           </Cell>
         </Row>
@@ -478,44 +509,52 @@ export default function KickAssLanding() {
         <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm">
           <Cell>
             <CellContent pad="lg">
-              <h3 className={s.entryName}>rdbpy</h3>
-              <p className={s.tagline}>
-                RocksDB bindings for Python, with transactions.
-              </p>
-              <p className={s.description}>
-                rdbpy bundles RocksDB and its compression libs into the wheel
-                for Linux and macOS (Intel + Apple Silicon). No system install
-                required. Import, open a DB, put/get/iterate.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/rdbpy"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
-                <SiteButton href="https://github.com/nustackdev/rdbpy">
-                  <GithubMark size={14} />
-                  <SiteButtonRepoLabel>nustackdev/rdbpy</SiteButtonRepoLabel>
-                </SiteButton>
-              </div>
+              <Stack gap="normal">
+                <Stack gap="tight">
+                  <Heading level={2}>rdbpy</Heading>
+                  <Tagline>
+                    RocksDB bindings for Python, with transactions.
+                  </Tagline>
+                </Stack>
+                <Description>
+                  rdbpy bundles RocksDB and its compression libs into the wheel
+                  for Linux and macOS (Intel + Apple Silicon). No system install
+                  required. Import, open a DB, put/get/iterate.
+                </Description>
+                <CtaRow>
+                  <SiteButton href="/docs/rdbpy"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
+                  <SiteButton href="https://github.com/nustackdev/rdbpy">
+                    <GithubMark size={14} />
+                    <SiteButtonRepoLabel>nustackdev/rdbpy</SiteButtonRepoLabel>
+                  </SiteButton>
+                </CtaRow>
+              </Stack>
             </CellContent>
           </Cell>
           <Cell>
             <CellContent pad="lg">
-              <h3 className={s.entryName}>kh57</h3>
-              <p className={s.tagline}>
-                Deterministic, stable, range-friendly reservoir sampling.
-              </p>
-              <p className={s.description}>
-                You have trillions of sorted-by-key items on disk. You want{' '}
-                <code>n</code> uniform samples from a sub-range without pulling
-                the whole thing. kh57 hashes each key into a level, stores
-                under a compound sort key, and reservoir-samples the boundary
-                level. Any sorted KV store works as a backend.
-              </p>
-              <div className={s.ctaRow}>
-                <SiteButton href="/docs/kh57"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
-                <SiteButton href="https://github.com/nustackdev/kh57">
-                  <GithubMark size={14} />
-                  <SiteButtonRepoLabel>nustackdev/kh57</SiteButtonRepoLabel>
-                </SiteButton>
-              </div>
+              <Stack gap="normal">
+                <Stack gap="tight">
+                  <Heading level={2}>kh57</Heading>
+                  <Tagline>
+                    Deterministic, stable, range-friendly reservoir sampling.
+                  </Tagline>
+                </Stack>
+                <Description>
+                  You have trillions of sorted-by-key items on disk. You want{' '}
+                  <code>n</code> uniform samples from a sub-range without pulling
+                  the whole thing. kh57 hashes each key into a level, stores
+                  under a compound sort key, and reservoir-samples the boundary
+                  level. Any sorted KV store works as a backend.
+                </Description>
+                <CtaRow>
+                  <SiteButton href="/docs/kh57"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
+                  <SiteButton href="https://github.com/nustackdev/kh57">
+                    <GithubMark size={14} />
+                    <SiteButtonRepoLabel>nustackdev/kh57</SiteButtonRepoLabel>
+                  </SiteButton>
+                </CtaRow>
+              </Stack>
             </CellContent>
           </Cell>
         </Row>

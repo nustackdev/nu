@@ -331,45 +331,8 @@
   margin-top: -14px;
 }
 
-/* -- Section-wide tagline (used by fabrics/apps/etc.) ---------------------- */
-
-.tagline {
-  font-size: var(--nu-fs-tagline);
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.78);
-  margin: 0 0 var(--nu-gap-loose);
-  max-width: 44ch;
-}
-
-.lede {
-  font-size: var(--nu-fs-lede);
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.82);
-  margin: 0;
-  max-width: 78ch;
-}
-.lede strong {
-  color: #fff;
-  font-weight: 600;
-}
-
-.sectionLabel {
-  display: block;
-  font-size: var(--nu-fs-3);
-  text-transform: uppercase;
-  letter-spacing: var(--nu-tr-wide);
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0 0 var(--nu-gap-tight);
-}
-
-.sectionTitle {
-  font-family: var(--font-display, ui-serif, Georgia, serif);
-  font-size: var(--nu-fs-heading-1);
-  line-height: 1.08;
-  letter-spacing: -0.015em;
-  margin: 0;
-  color: #fff;
-}
+/* -- Section intro (below section titles) ---------------------------------
+ * Kept here (not extracted) because it uses raw --nu-fs-9 with no role token. */
 
 .sectionIntro {
   font-size: var(--nu-fs-9);
@@ -377,75 +340,6 @@
   color: rgba(255, 255, 255, 0.72);
   margin: var(--nu-gap-normal) 0 0;
   max-width: 68ch;
-}
-
-.entryName {
-  font-family: var(--font-display, ui-serif, Georgia, serif);
-  font-size: var(--nu-fs-heading-2);
-  letter-spacing: -0.01em;
-  margin: 0 0 var(--nu-gap-tight);
-  color: #fff;
-}
-
-.description {
-  font-size: var(--nu-fs-body);
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.76);
-  margin: 0 0 var(--nu-gap-normal);
-  max-width: 58ch;
-}
-
-.useCases {
-  list-style: decimal;
-  padding-left: 20px;
-  margin: 0 0 var(--nu-gap-normal);
-  display: grid;
-  gap: 4px;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: var(--nu-fs-body);
-}
-
-.backends {
-  font-size: var(--nu-fs-label);
-  color: rgba(255, 255, 255, 0.55);
-  margin: 0 0 var(--nu-gap-normal);
-  letter-spacing: 0.02em;
-}
-.status {
-  font-size: var(--nu-fs-label);
-  color: rgba(255, 255, 255, 0.55);
-  margin: 0 0 var(--nu-gap-normal);
-  letter-spacing: 0.02em;
-}
-
-/* -- CTAs ----------------------------------------------------------------- */
-
-.ctaRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: var(--nu-gap-normal) 0 0;
-}
-
-/* -- SVG placeholders ----------------------------------------------------- */
-
-.svgPlaceholder {
-  position: relative;
-  min-height: 260px;
-  height: 100%;
-  border: 1px dashed var(--nu-border-strong);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.015);
-}
-.svgPlaceholder::after {
-  content: attr(data-label);
-  position: absolute;
-  top: 10px;
-  left: 12px;
-  font-size: var(--nu-fs-2);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.28);
 }
 
 /* -- Footer --------------------------------------------------------------- */
@@ -562,7 +456,7 @@
 /* Mobile: 2x more padding on header (chapter) cells. */
 @media (max-width: 640px) {
   .chapterCell > :not(.chapterPeek) {
-    padding-block: calc(4 * var(--kal-u)) calc(2 * var(--kal-u));
+    padding-block: calc(4 * var(--kal-u)) 0;
   }
   .chapterPeek { display: none; }
 }

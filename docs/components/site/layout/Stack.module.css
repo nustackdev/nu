@@ -1,0 +1,12 @@
+/* Stack — flex container that owns rhythm via a semantic gap token. */
+.stack {
+  display: flex;
+  min-width: 0;
+}
+.column { flex-direction: column; }
+.row    { flex-direction: row; flex-wrap: wrap; }
+
+.tight  { gap: var(--nu-gap-tight); }
+.normal { gap: var(--nu-gap-normal); }
+.loose  { gap: var(--nu-gap-loose); }
+.xloose { gap: var(--nu-gap-xloose); }
