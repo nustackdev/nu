@@ -35,4 +35,9 @@
   .divDashed > *:not(:first-child),
   .divDotted > *:not(:first-child) { border-left: 0; }
   .root > *:not(:first-child) > * { padding-top: 0; }
+  /* Kill all outer borders on mobile — grid reads as a plain vertical stack. */
+  .btSolid, .btDashed, .btDotted,
+  .bbSolid, .bbDashed, .bbDotted,
+  .blSolid, .blDashed, .blDotted,
+  .brSolid, .brDashed, .brDotted { border: 0; }
 }

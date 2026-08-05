@@ -349,6 +349,9 @@
   color: #fff;
   font-weight: 600;
 }
+@media (max-width: 1024px) {
+  .lede { font-size: var(--nu-fs-9); }
+}
 
 .sectionLabel {
   display: block;
@@ -567,4 +570,13 @@
   .imRow { grid-template-columns: minmax(0, 1fr); }
   .imRight { display: none; }
   .imLeft > * { max-width: 65%; }
+}
+
+
+/* Mobile: 2x more padding on header (chapter) cells. */
+@media (max-width: 640px) {
+  .chapterCell > :not(.chapterPeek) {
+    padding-block: calc(4 * var(--kal-u)) calc(2 * var(--kal-u));
+  }
+  .chapterPeek { display: none; }
 }

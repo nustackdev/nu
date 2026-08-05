@@ -12,16 +12,6 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: clamp(28px, 3vw, 44px);
-  border-radius: var(--nu-r-lg);
-  border: 1px solid var(--nu-border);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.035) 0%,
-    rgba(255, 255, 255, 0.015) 100%
-  );
-  backdrop-filter: blur(14px) saturate(120%);
-  -webkit-backdrop-filter: blur(14px) saturate(120%);
   overflow: hidden;
   text-align: left;
   color: var(--nu-ink);
