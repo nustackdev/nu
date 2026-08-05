@@ -27,7 +27,7 @@ from ..refs.base import PrimitiveRef, ViewRef
 if TYPE_CHECKING:
     from collections.abc import Hashable, Iterator
 
-    from nu import Nu
+    from nu.lang import Nu
 
 
 __all__ = ["auto_flow_atomic"]

@@ -37,7 +37,7 @@ from virtuals.tkv.storage import (
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable, Hashable, Iterator
 
-    from nu import FloatArg, IntArg, Nu
+    from nu.lang import FloatArg, IntArg, Nu
     from nu.lang.runtime import Context, Runtime
 
 

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     import random
     from collections.abc import Callable
 
-    from nu import Nu
+    from nu.lang import Nu
     from nu.lang.runtime import Runtime
 
 

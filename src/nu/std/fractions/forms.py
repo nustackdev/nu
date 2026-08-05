@@ -87,15 +87,15 @@ class Fraction(Form, TypedNu[_Fraction]):
 
     def numerator(self) -> Int:
         """The numerator (in lowest terms)."""
-        from nu import Int
         from nu.core import GetAttr
+        from nu.forms import Int
 
         return Int(GetAttr(self, "numerator"))
 
     def denominator(self) -> Int:
         """The denominator (in lowest terms, always positive)."""
-        from nu import Int
         from nu.core import GetAttr
+        from nu.forms import Int
 
         return Int(GetAttr(self, "denominator"))
 
@@ -111,7 +111,7 @@ class Fraction(Form, TypedNu[_Fraction]):
 
     def as_integer_ratio(self) -> Tuple:
         """The ``(numerator, denominator)`` pair as a tuple."""
-        from nu import Tuple
+        from nu.forms import Tuple
 
         from .interactions import FractionAsIntegerRatio
 
@@ -176,39 +176,39 @@ class Fraction(Form, TypedNu[_Fraction]):
     # =========================================================================
 
     def __gt__(self, other: FractionArg | IntArg) -> Bool:
-        from nu import Bool
         from nu.core import Gt
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
     def __lt__(self, other: FractionArg | IntArg) -> Bool:
-        from nu import Bool
         from nu.core import Lt
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
     def __ge__(self, other: FractionArg | IntArg) -> Bool:
-        from nu import Bool
         from nu.core import Ge
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
     def __le__(self, other: FractionArg | IntArg) -> Bool:
-        from nu import Bool
         from nu.core import Le
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
     def eq(self, other: FractionArg | IntArg) -> Bool:
         """Whether two fractions are equal."""
-        from nu import Bool
         from nu.core import Eq
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
     def ne(self, other: FractionArg | IntArg) -> Bool:
         """Whether two fractions differ."""
-        from nu import Bool
         from nu.core import Ne
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))

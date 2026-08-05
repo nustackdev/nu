@@ -17,8 +17,7 @@ from __future__ import annotations
 
 from typing import Self
 
-from nu import Shape
-from nu.domains.shape import Slot
+from nu.domains.shape import Shape, Slot
 
 from .base import Ref
 

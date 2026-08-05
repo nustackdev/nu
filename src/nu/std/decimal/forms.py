@@ -191,7 +191,7 @@ class Decimal(Form, TypedNu[_Decimal]):
 
     def adjusted(self) -> Int:
         """The adjusted exponent after shifting out the coefficient's digits."""
-        from nu import Int
+        from nu.forms import Int
 
         from .interactions import DecimalAdjusted
 
@@ -199,7 +199,7 @@ class Decimal(Form, TypedNu[_Decimal]):
 
     def as_integer_ratio(self) -> Tuple:
         """The exact value as a ``(numerator, denominator)`` pair of ints."""
-        from nu import Tuple
+        from nu.forms import Tuple
 
         from .interactions import DecimalAsIntegerRatio
 
@@ -211,7 +211,7 @@ class Decimal(Form, TypedNu[_Decimal]):
 
     def is_finite(self) -> Bool:
         """Whether the value is finite (not infinite, not NaN)."""
-        from nu import Bool
+        from nu.forms import Bool
 
         from .interactions import DecimalIsFinite
 
@@ -219,7 +219,7 @@ class Decimal(Form, TypedNu[_Decimal]):
 
     def is_infinite(self) -> Bool:
         """Whether the value is positive or negative infinity."""
-        from nu import Bool
+        from nu.forms import Bool
 
         from .interactions import DecimalIsInfinite
 
@@ -227,7 +227,7 @@ class Decimal(Form, TypedNu[_Decimal]):
 
     def is_nan(self) -> Bool:
         """Whether the value is a NaN (quiet or signaling)."""
-        from nu import Bool
+        from nu.forms import Bool
 
         from .interactions import DecimalIsNan
 
@@ -235,7 +235,7 @@ class Decimal(Form, TypedNu[_Decimal]):
 
     def is_zero(self) -> Bool:
         """Whether the value is zero (positive or negative)."""
-        from nu import Bool
+        from nu.forms import Bool
 
         from .interactions import DecimalIsZero
 
@@ -243,7 +243,7 @@ class Decimal(Form, TypedNu[_Decimal]):
 
     def is_signed(self) -> Bool:
         """Whether the sign bit is set (negative, including ``-0``)."""
-        from nu import Bool
+        from nu.forms import Bool
 
         from .interactions import DecimalIsSigned
 
@@ -254,39 +254,39 @@ class Decimal(Form, TypedNu[_Decimal]):
     # =========================================================================
 
     def __gt__(self, other: DecimalArg) -> Bool:
-        from nu import Bool
         from nu.core import Gt
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
     def __lt__(self, other: DecimalArg) -> Bool:
-        from nu import Bool
         from nu.core import Lt
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
     def __ge__(self, other: DecimalArg) -> Bool:
-        from nu import Bool
         from nu.core import Ge
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
     def __le__(self, other: DecimalArg) -> Bool:
-        from nu import Bool
         from nu.core import Le
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
     def eq(self, other: DecimalArg) -> Bool:
         """Whether two decimals are equal in value."""
-        from nu import Bool
         from nu.core import Eq
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
     def ne(self, other: DecimalArg) -> Bool:
         """Whether two decimals differ in value."""
-        from nu import Bool
         from nu.core import Ne
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))

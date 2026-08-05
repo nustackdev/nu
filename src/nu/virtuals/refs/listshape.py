@@ -8,16 +8,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Any, Iterator, List
 from nu.domains.shape import ReactiveShapesSequenceRef, Slot
+from nu.forms import Any, Iterator, List
 
 from .base import ViewRef
 from .shape import ShapeRef
 
 
 if TYPE_CHECKING:
-    from nu import Nu
     from nu.domains.shape.dsl import Shape
+    from nu.lang import Nu
     from virtuals.collections import MutableSequenceBase
 
 

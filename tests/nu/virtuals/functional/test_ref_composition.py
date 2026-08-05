@@ -9,7 +9,8 @@ the path resolved at runtime, that key evaluates like any other child.
 
 from __future__ import annotations
 
-from nu import EMPTY, Shape, run
+from nu import Shape, run
+from nu.lang import EMPTY
 from nu.mem import StrRef as MemStrRef
 from nu.virtuals import IntRef, ShapeRef, ShapesDictRef, ShapesListRef, StrRef
 

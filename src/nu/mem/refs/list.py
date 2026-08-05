@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Any, Iterator, List
 from nu.domains.shape import MutableSequenceRef, Slot
+from nu.forms import Any, Iterator, List
 from nu.lang.typeinfo import value_type_for
 
 from .base import RefBase
@@ -13,8 +13,8 @@ from .items import ItemRef
 
 
 if TYPE_CHECKING:
-    from nu import Nu
     from nu.domains.shape.dsl import Shape
+    from nu.lang import Nu
 
 
 __all__ = [

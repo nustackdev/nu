@@ -82,36 +82,36 @@ class Path(Form, TypedNu[_PurePath]):
 
     def name(self) -> Str:
         """The final component (filename)."""
-        from nu import Str
         from nu.core import GetAttr
+        from nu.forms import Str
 
         return Str(GetAttr(self, "name"))
 
     def stem(self) -> Str:
         """The final component without its suffix."""
-        from nu import Str
         from nu.core import GetAttr
+        from nu.forms import Str
 
         return Str(GetAttr(self, "stem"))
 
     def suffix(self) -> Str:
         """The file extension of the final component (including the dot)."""
-        from nu import Str
         from nu.core import GetAttr
+        from nu.forms import Str
 
         return Str(GetAttr(self, "suffix"))
 
     def suffixes(self) -> List:
         """All file extensions of the final component."""
-        from nu import List
         from nu.core import GetAttr
+        from nu.forms import List
 
         return List(GetAttr(self, "suffixes"))
 
     def parts(self) -> Tuple:
         """The path's components as a tuple."""
-        from nu import Tuple
         from nu.core import GetAttr
+        from nu.forms import Tuple
 
         return Tuple(GetAttr(self, "parts"))
 
@@ -123,22 +123,22 @@ class Path(Form, TypedNu[_PurePath]):
 
     def root(self) -> Str:
         """The root (e.g. ``/`` on POSIX)."""
-        from nu import Str
         from nu.core import GetAttr
+        from nu.forms import Str
 
         return Str(GetAttr(self, "root"))
 
     def anchor(self) -> Str:
         """The concatenation of drive and root."""
-        from nu import Str
         from nu.core import GetAttr
+        from nu.forms import Str
 
         return Str(GetAttr(self, "anchor"))
 
     def drive(self) -> Str:
         """The drive (empty on POSIX)."""
-        from nu import Str
         from nu.core import GetAttr
+        from nu.forms import Str
 
         return Str(GetAttr(self, "drive"))
 
@@ -188,7 +188,7 @@ class Path(Form, TypedNu[_PurePath]):
 
     def as_posix(self) -> Str:
         """The path as a string with forward slashes."""
-        from nu import Str
+        from nu.forms import Str
 
         from .interactions import PathAsPosix
 
@@ -196,7 +196,7 @@ class Path(Form, TypedNu[_PurePath]):
 
     def as_uri(self) -> Str:
         """The path as a ``file://`` URI (requires an absolute path)."""
-        from nu import Str
+        from nu.forms import Str
 
         from .interactions import PathAsUri
 
@@ -208,7 +208,7 @@ class Path(Form, TypedNu[_PurePath]):
 
     def match(self, pattern: StrArg) -> Bool:
         """Whether the path matches a glob pattern."""
-        from nu import Bool
+        from nu.forms import Bool
 
         from .interactions import PathMatch
 
@@ -216,7 +216,7 @@ class Path(Form, TypedNu[_PurePath]):
 
     def is_absolute(self) -> Bool:
         """Whether the path is absolute."""
-        from nu import Bool
+        from nu.forms import Bool
 
         from .interactions import PathIsAbsolute
 
@@ -224,7 +224,7 @@ class Path(Form, TypedNu[_PurePath]):
 
     def is_relative_to(self, other: StrArg | PathArg) -> Bool:
         """Whether the path is relative to ``other``."""
-        from nu import Bool
+        from nu.forms import Bool
 
         from .interactions import PathIsRelativeTo
 
@@ -235,39 +235,39 @@ class Path(Form, TypedNu[_PurePath]):
     # =========================================================================
 
     def __gt__(self, other: PathArg) -> Bool:
-        from nu import Bool
         from nu.core import Gt
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
     def __lt__(self, other: PathArg) -> Bool:
-        from nu import Bool
         from nu.core import Lt
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
     def __ge__(self, other: PathArg) -> Bool:
-        from nu import Bool
         from nu.core import Ge
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
     def __le__(self, other: PathArg) -> Bool:
-        from nu import Bool
         from nu.core import Le
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
     def eq(self, other: PathArg) -> Bool:
         """Whether two paths are equal."""
-        from nu import Bool
         from nu.core import Eq
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
     def ne(self, other: PathArg) -> Bool:
         """Whether two paths differ."""
-        from nu import Bool
         from nu.core import Ne
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))

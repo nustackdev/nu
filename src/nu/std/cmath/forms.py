@@ -53,15 +53,15 @@ class complex(Form, TypedNu[_complex]):  # noqa: N801
 
     def real(self) -> Float:
         """The real part."""
-        from nu import Float
         from nu.core import GetAttr
+        from nu.forms import Float
 
         return Float(GetAttr(self, "real"))
 
     def imag(self) -> Float:
         """The imaginary part."""
-        from nu import Float
         from nu.core import GetAttr
+        from nu.forms import Float
 
         return Float(GetAttr(self, "imag"))
 
@@ -107,21 +107,21 @@ class complex(Form, TypedNu[_complex]):  # noqa: N801
         return complex(Pos(self))
 
     def __abs__(self) -> Float:
-        from nu import Float
         from nu.core import Abs
+        from nu.forms import Float
 
         return Float(Abs(self))
 
     def eq(self, other: ComplexArg) -> Bool:
         """Whether two complex numbers are equal."""
-        from nu import Bool
         from nu.core import Eq
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
     def ne(self, other: ComplexArg) -> Bool:
         """Whether two complex numbers differ."""
-        from nu import Bool
         from nu.core import Ne
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Literal, Self
 
-from nu import Dict
+from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nu.ui.core import Changed, Ref, Write
 
@@ -17,7 +17,7 @@ from nu.ui.core import Changed, Ref, Write
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu import Nu
+    from nu.lang import Nu
     from nu.lang.args import BoolArg, FloatArg, ListArg, StrArg
     from nu.lang.runtime import Runtime
 

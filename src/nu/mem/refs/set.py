@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Any, Set
 from nu.domains.shape import MutableSetRef, Slot
+from nu.forms import Any, Set
 
 from .base import RefBase
 
 
 if TYPE_CHECKING:
-    from nu import Nu
     from nu.domains.shape.dsl import Shape
+    from nu.lang import Nu
 
 
 __all__ = [

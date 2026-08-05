@@ -16,8 +16,8 @@ from .shape import ShapeRef
 
 
 if TYPE_CHECKING:
-    from nu import Nu
     from nu.domains.shape.dsl import Shape
+    from nu.lang import Nu
 
 
 __all__ = [

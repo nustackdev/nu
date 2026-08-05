@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Any
 from nu.core import Iter
+from nu.forms import Any
 from nu.lang.sentinels import UNSET
 
 from .interactions import Reduce

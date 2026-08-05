@@ -17,8 +17,8 @@ from typing import TYPE_CHECKING
 
 import janus
 
-from nu import Command, ScalarAction, ScalarQuery
 from nu.engine.structure import Declared
+from nu.lang import Command, ScalarAction, ScalarQuery
 
 
 if TYPE_CHECKING:

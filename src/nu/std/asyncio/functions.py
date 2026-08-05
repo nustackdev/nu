@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import None_
+from nu.forms import None_
 
 
 if TYPE_CHECKING:

@@ -14,15 +14,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from nu import Dict, FrozenSet, List, Nu, Set, Tuple
 from nu.domains.shape import Slot
+from nu.forms import Dict, FrozenSet, List, Set, Tuple
 
 from .items import ItemRef
 
 
 if TYPE_CHECKING:
-    from nu import Shape
-    from nu.lang import Arg
+    from nu.domains.shape import Shape
+    from nu.lang import Arg, Nu
 
     from .base import PrimitiveRef
 

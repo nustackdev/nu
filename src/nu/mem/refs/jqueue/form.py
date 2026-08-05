@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import janus
 
-from nu import Form, TypedNu
+from nu.forms import Form, TypedNu
 
 
 if TYPE_CHECKING:

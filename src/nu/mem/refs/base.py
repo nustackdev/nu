@@ -20,8 +20,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import EMPTY
 from nu.domains.shape.refs.base import StructuredRef
+from nu.lang import EMPTY
 
 
 if TYPE_CHECKING:

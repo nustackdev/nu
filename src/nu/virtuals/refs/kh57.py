@@ -11,16 +11,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Any
 from nu.domains.shape import Slot
+from nu.forms import Any
 from nu.lang.typeinfo import value_type_for
 
 from .dict import DictRef
 
 
 if TYPE_CHECKING:
-    from nu import Nu
     from nu.domains.shape.dsl import Shape
+    from nu.lang import Nu
     from virtuals.views import Kh57ViewBase
 
     from .base import ViewRef

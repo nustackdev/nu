@@ -29,8 +29,8 @@ from enum import Enum
 from logging import getLogger
 from typing import TYPE_CHECKING
 
-from nu import EMPTY
 from nu.domains.shape.refs.base import StructuredRef
+from nu.lang import EMPTY
 from nu.virtuals.paths import ViewPathSer
 from virtuals import Empty as StorageEmpty
 from virtuals import Navigator

@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import Float, Int, None_
+from nu.forms import Float, Int, None_
 
 
 if TYPE_CHECKING:

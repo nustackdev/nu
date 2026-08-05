@@ -26,8 +26,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from nu import Any, Iterator
 from nu.core import Iter
+from nu.forms import Any, Iterator
 from nu.lang import StreamQuery
 
 

@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu import Shape
+from nu.domains.shape import Shape
 from nu.ui.core import Ref, SectionRef
 
 

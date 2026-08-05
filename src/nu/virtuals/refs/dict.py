@@ -4,15 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu import (
-    Any,
-    Dict,
-    DictItems,
-    DictKeys,
-    DictValues,
-    Iterator,
-)
 from nu.domains.shape import ReactiveMappingRef, Slot
+from nu.forms import Any, Dict, DictItems, DictKeys, DictValues, Iterator
 from nu.lang.typeinfo import value_type_for
 
 from .base import ViewRef
@@ -20,8 +13,8 @@ from .items import ItemRef
 
 
 if TYPE_CHECKING:
-    from nu import Nu
     from nu.domains.shape.dsl import Shape
+    from nu.lang import Nu
     from virtuals.collections import MutableMappingBase
 
 

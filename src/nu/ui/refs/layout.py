@@ -19,9 +19,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Literal, Self
 
-from nu import Dict
 from nu.domains.shape import Slot
 from nu.engine.structure import Declared
+from nu.forms import Dict
 from nu.lang import Command
 from nu.lang.sentinels import UNSET
 from nu.ui.core import Frame, Ref, Section, SectionRef, Session
@@ -31,7 +31,7 @@ from nu.ui.core.interactions import Changed, Write
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu import Nu
+    from nu.lang import Nu
     from nu.lang.args import Arg, BoolArg, ListArg, StrArg
     from nu.lang.runtime import Runtime
 

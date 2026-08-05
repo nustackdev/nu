@@ -20,8 +20,8 @@ from .form import JQueue
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu import Nu
     from nu.domains.shape import Shape
+    from nu.lang import Nu
     from nu.lang.runtime import Runtime
 
 

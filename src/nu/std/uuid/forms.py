@@ -72,36 +72,36 @@ class UUID(Form, TypedNu[_UUID]):
 
     def version(self) -> Int:
         """The version number (1, 3, 4, or 5)."""
-        from nu import Int
         from nu.core import GetAttr
+        from nu.forms import Int
 
         return Int(GetAttr(self, "version"))
 
     def variant(self) -> Str:
         """The variant."""
-        from nu import Str
         from nu.core import GetAttr
+        from nu.forms import Str
 
         return Str(GetAttr(self, "variant"))
 
     def time(self) -> Int:
         """The 60-bit timestamp (version 1)."""
-        from nu import Int
         from nu.core import GetAttr
+        from nu.forms import Int
 
         return Int(GetAttr(self, "time"))
 
     def clock_seq(self) -> Int:
         """The 14-bit clock sequence (version 1)."""
-        from nu import Int
         from nu.core import GetAttr
+        from nu.forms import Int
 
         return Int(GetAttr(self, "clock_seq"))
 
     def node(self) -> Int:
         """The 48-bit node (version 1)."""
-        from nu import Int
         from nu.core import GetAttr
+        from nu.forms import Int
 
         return Int(GetAttr(self, "node"))
 
@@ -111,36 +111,36 @@ class UUID(Form, TypedNu[_UUID]):
 
     def hex(self) -> Str:
         """The UUID as a 32-character hex string."""
-        from nu import Str
         from nu.core import GetAttr
+        from nu.forms import Str
 
         return Str(GetAttr(self, "hex"))
 
     def urn(self) -> Str:
         """The UUID as a URN (``urn:uuid:...``)."""
-        from nu import Str
         from nu.core import GetAttr
+        from nu.forms import Str
 
         return Str(GetAttr(self, "urn"))
 
     def bytes(self) -> Bytes:
         """The UUID as 16 bytes."""
-        from nu import Bytes
         from nu.core import GetAttr
+        from nu.forms import Bytes
 
         return Bytes(GetAttr(self, "bytes"))
 
     def bytes_le(self) -> Bytes:
         """The UUID as 16 bytes, little-endian."""
-        from nu import Bytes
         from nu.core import GetAttr
+        from nu.forms import Bytes
 
         return Bytes(GetAttr(self, "bytes_le"))
 
     def int_(self) -> Int:
         """The UUID as a 128-bit integer."""
-        from nu import Int
         from nu.core import GetAttr
+        from nu.forms import Int
 
         return Int(GetAttr(self, "int"))
 
@@ -149,39 +149,39 @@ class UUID(Form, TypedNu[_UUID]):
     # =========================================================================
 
     def __gt__(self, other: UUIDArg) -> Bool:
-        from nu import Bool
         from nu.core import Gt
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
     def __lt__(self, other: UUIDArg) -> Bool:
-        from nu import Bool
         from nu.core import Lt
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
     def __ge__(self, other: UUIDArg) -> Bool:
-        from nu import Bool
         from nu.core import Ge
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
     def __le__(self, other: UUIDArg) -> Bool:
-        from nu import Bool
         from nu.core import Le
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
     def eq(self, other: UUIDArg) -> Bool:
         """Whether two UUIDs are equal."""
-        from nu import Bool
         from nu.core import Eq
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
     def ne(self, other: UUIDArg) -> Bool:
         """Whether two UUIDs differ."""
-        from nu import Bool
         from nu.core import Ne
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))

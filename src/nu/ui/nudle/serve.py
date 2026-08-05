@@ -19,7 +19,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-import nu
+from nu.lang.helpers import arun
 from nu.tree.walk import preorder
 from nu.ui.core import Ref, Session
 
@@ -28,7 +28,7 @@ from .session import NudleSession
 
 
 if TYPE_CHECKING:
-    from nu import Context, Nu
+    from nu.lang import Context, Nu
 
 
 __all__ = ["build_fastapi_app"]
@@ -166,7 +166,7 @@ def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
         )
         per_conn_ctx = ctx.bind(Session, session)
         intake_task = asyncio.create_task(session.run_intake())
-        eval_task = asyncio.create_task(nu.arun(app, per_conn_ctx))
+        eval_task = asyncio.create_task(arun(app, per_conn_ctx))
         try:
             done, _ = await asyncio.wait(
                 {intake_task, eval_task},

@@ -74,7 +74,7 @@ class Percentage(Form, TypedNu[PyPercentage]):
 
     def to_dec(self) -> Float:
         """The decimal ratio (75.5% -> ``0.755``)."""
-        from nu import Float
+        from nu.forms import Float
 
         from .interactions import PercentageToDec
 
@@ -82,7 +82,7 @@ class Percentage(Form, TypedNu[PyPercentage]):
 
     def to_bps(self) -> Int:
         """The basis points (75.5% -> ``7550``)."""
-        from nu import Int
+        from nu.forms import Int
 
         from .interactions import PercentageToBps
 
@@ -90,7 +90,7 @@ class Percentage(Form, TypedNu[PyPercentage]):
 
     def to_float(self) -> Float:
         """The raw percentage value."""
-        from nu import Float
+        from nu.forms import Float
 
         from .interactions import PercentageToFloat
 
@@ -100,7 +100,7 @@ class Percentage(Form, TypedNu[PyPercentage]):
 
     def apply(self, amount: FloatArg) -> Float:
         """This percentage of ``amount``."""
-        from nu import Float
+        from nu.forms import Float
 
         from .interactions import PercentageApply
 
@@ -108,7 +108,7 @@ class Percentage(Form, TypedNu[PyPercentage]):
 
     def add_to(self, amount: FloatArg) -> Float:
         """``amount`` grown by this percentage."""
-        from nu import Float
+        from nu.forms import Float
 
         from .interactions import PercentageAddTo
 
@@ -116,7 +116,7 @@ class Percentage(Form, TypedNu[PyPercentage]):
 
     def sub_from(self, amount: FloatArg) -> Float:
         """``amount`` reduced by this percentage."""
-        from nu import Float
+        from nu.forms import Float
 
         from .interactions import PercentageSubFrom
 
@@ -126,7 +126,7 @@ class Percentage(Form, TypedNu[PyPercentage]):
 
     def is_valid(self, min_val: float = 0.0, max_val: float = 100.0) -> Bool:
         """Whether the value falls within ``[min_val, max_val]``."""
-        from nu import Bool
+        from nu.forms import Bool
 
         from .interactions import PercentageIsValid
 
@@ -168,40 +168,40 @@ class Percentage(Form, TypedNu[PyPercentage]):
     # --- comparison (reuse core atoms) ---------------------------------------
 
     def __gt__(self, other: PercentageArg) -> Bool:
-        from nu import Bool
         from nu.core import Gt
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
     def __lt__(self, other: PercentageArg) -> Bool:
-        from nu import Bool
         from nu.core import Lt
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
     def __ge__(self, other: PercentageArg) -> Bool:
-        from nu import Bool
         from nu.core import Ge
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
     def __le__(self, other: PercentageArg) -> Bool:
-        from nu import Bool
         from nu.core import Le
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
     def eq(self, other: PercentageArg) -> Bool:
         """Whether two percentages are equal."""
-        from nu import Bool
         from nu.core import Eq
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
     def ne(self, other: PercentageArg) -> Bool:
         """Whether two percentages differ."""
-        from nu import Bool
         from nu.core import Ne
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
 
@@ -241,7 +241,7 @@ class BasisPoint(Form, TypedNu[PyBasisPoint]):
 
     def to_pct(self) -> Float:
         """The percentage (500 bps -> ``5.0``)."""
-        from nu import Float
+        from nu.forms import Float
 
         from .interactions import BasisPointToPct
 
@@ -249,7 +249,7 @@ class BasisPoint(Form, TypedNu[PyBasisPoint]):
 
     def to_dec(self) -> Float:
         """The decimal ratio (500 bps -> ``0.05``)."""
-        from nu import Float
+        from nu.forms import Float
 
         from .interactions import BasisPointToDec
 
@@ -257,7 +257,7 @@ class BasisPoint(Form, TypedNu[PyBasisPoint]):
 
     def to_int(self) -> Int:
         """The raw basis-point count."""
-        from nu import Int
+        from nu.forms import Int
 
         from .interactions import BasisPointToInt
 
@@ -267,7 +267,7 @@ class BasisPoint(Form, TypedNu[PyBasisPoint]):
 
     def apply(self, amount: FloatArg) -> Float:
         """This many basis points of ``amount``."""
-        from nu import Float
+        from nu.forms import Float
 
         from .interactions import BasisPointApply
 
@@ -275,7 +275,7 @@ class BasisPoint(Form, TypedNu[PyBasisPoint]):
 
     def add_to(self, amount: FloatArg) -> Float:
         """``amount`` grown by these basis points."""
-        from nu import Float
+        from nu.forms import Float
 
         from .interactions import BasisPointAddTo
 
@@ -283,7 +283,7 @@ class BasisPoint(Form, TypedNu[PyBasisPoint]):
 
     def sub_from(self, amount: FloatArg) -> Float:
         """``amount`` reduced by these basis points."""
-        from nu import Float
+        from nu.forms import Float
 
         from .interactions import BasisPointSubFrom
 
@@ -319,39 +319,39 @@ class BasisPoint(Form, TypedNu[PyBasisPoint]):
     # --- comparison (reuse core atoms) ---------------------------------------
 
     def __gt__(self, other: BasisPointArg) -> Bool:
-        from nu import Bool
         from nu.core import Gt
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
     def __lt__(self, other: BasisPointArg) -> Bool:
-        from nu import Bool
         from nu.core import Lt
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
     def __ge__(self, other: BasisPointArg) -> Bool:
-        from nu import Bool
         from nu.core import Ge
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
     def __le__(self, other: BasisPointArg) -> Bool:
-        from nu import Bool
         from nu.core import Le
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
     def eq(self, other: BasisPointArg) -> Bool:
         """Whether two basis-point counts are equal."""
-        from nu import Bool
         from nu.core import Eq
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
     def ne(self, other: BasisPointArg) -> Bool:
         """Whether two basis-point counts differ."""
-        from nu import Bool
         from nu.core import Ne
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))

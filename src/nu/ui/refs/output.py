@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Literal, Self
 
-from nu import Dict
+from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nu.ui.core import Append, Changed, Ref, Write
 
 
 if TYPE_CHECKING:
-    from nu import Nu
+    from nu.lang import Nu
     from nu.lang.args import Arg, BoolArg, DictArg, FloatArg, IntArg, ListArg, StrArg
 
 

@@ -22,8 +22,8 @@ from __future__ import annotations
 import cmath
 from typing import TYPE_CHECKING
 
-from nu import Bool, Float, Tuple
 from nu.core import Literal
+from nu.forms import Bool, Float, Tuple
 
 from .forms import complex
 

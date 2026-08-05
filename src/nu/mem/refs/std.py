@@ -18,9 +18,10 @@ from __future__ import annotations
 from datetime import UTC, date, datetime, time, timedelta, timezone
 from typing import TYPE_CHECKING, Self
 
-from nu import Float, Int, Nu, Str
 from nu.core import ToFloat, ToInt, ToStr
 from nu.domains.shape import SetCmd, Slot
+from nu.forms import Float, Int, Str
+from nu.lang import Nu
 from nu.std.cmath import complex as ComplexForm
 from nu.std.datetime import date as DateForm
 from nu.std.datetime import datetime as DatetimeForm
@@ -45,7 +46,7 @@ if TYPE_CHECKING:
     from pathlib import PurePath
     from uuid import UUID
 
-    from nu import Shape
+    from nu.domains.shape import Shape
     from nu.lang import Arg
 
     from .base import RefBase

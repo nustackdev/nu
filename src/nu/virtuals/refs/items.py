@@ -15,15 +15,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from nu import Bool, Bytes, Float, Int, None_, Str
 from nu.domains.shape import ReactiveItemRef, Slot
+from nu.forms import Bool, Bytes, Float, Int, None_, Str
 
 from .base import PrimitiveRef
 
 
 if TYPE_CHECKING:
-    from nu import Nu
     from nu.domains.shape.dsl import Shape
+    from nu.lang import Nu
 
 
 __all__ = [
