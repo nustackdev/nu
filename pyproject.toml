@@ -21,7 +21,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "nu"
+name = "nustack-py"
 version = "0.1.0"
 description = "The interaction primitive. Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code."
 readme = "README.md"
@@ -53,7 +53,7 @@ nudle = [
     "uvicorn[standard]>=0.30.0",
     "msgpack>=1.1.2",
     "watchfiles>=0.24.0",
-    "nudle==0.2.0",
+    "nudle==0.1.0",
 ]
 default = [
     "nu[virtuals]",

@@ -1,0 +1,73 @@
+# Publishes the `nu` wheel to PyPI on a tag push like `nu@0.1.0`.
+# Manual "Run workflow" dispatch builds but does NOT publish.
+#
+# `nu` tags own release semantics for the whole stack -- this workflow also
+# creates a GitHub Release attached to the tag. Sibling wheels (nudle) and
+# npm packages (ui-core, ui-kit) have their own tags but do not cut releases.
+#
+# Setup once (PyPI trusted publisher / OIDC, no secrets):
+#   pypi.org -> account -> Publishing -> Add pending publisher
+#     PyPI project name: nustack-py
+#     Owner: nustackdev
+#     Repository name: nu
+#     Workflow name: publish-nu.yml
+#     Environment name: (leave blank)
+#
+# Release flow:
+#   1. Bump `version` in `pyproject.toml`.
+#   2. Commit and push to main.
+#   3. `git tag nu@X.Y.Z && git push origin nu@X.Y.Z`.
+name: Publish nu to PyPI
+
+on:
+  push:
+    tags: ["nu@*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to create the GitHub Release on tag push
+  id-token: write   # needed for PyPI trusted publishing (OIDC)
+
+concurrency:
+  group: publish-nu
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: install build backend
+        run: python -m pip install --upgrade build
+
+      - name: verify tag matches pyproject.toml version
+        if: startsWith(github.ref, 'refs/tags/nu@')
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/nu@}"
+          PKG_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "tag nu@$TAG_VERSION does not match pyproject.toml version $PKG_VERSION"
+            exit 1
+          fi
+
+      - name: build
+        run: python -m build
+
+      - name: publish
+        if: startsWith(github.ref, 'refs/tags/nu@')
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: create github release
+        if: startsWith(github.ref, 'refs/tags/nu@')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: nu ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            dist/*

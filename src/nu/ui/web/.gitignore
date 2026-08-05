@@ -15,6 +15,9 @@ node_modules
 **/dist
 !**/dist/.gitkeep
 dist-ssr
+
+# python wheel output (nudle wheel build)
+**/wheel-dist
 *.local
 
 # Editor

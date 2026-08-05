@@ -1,5 +1,5 @@
 # Publishes @nustackdev/ui-core to npm on a tag push like `ui-core@0.2.1`.
-# Also usable via manual "Run workflow" dispatch from the Actions tab.
+# Manual "Run workflow" dispatch builds and typechecks but does NOT publish.
 #
 # Setup once:
 #   1. Generate a granular npm access token scoped to @nustackdev/*, with
@@ -7,7 +7,7 @@
 #   2. Add it as GitHub repo secret `NPM_TOKEN`.
 #
 # Release flow:
-#   1. Bump `src/nu/ui/core/package.json` version.
+#   1. Bump `src/nu/ui/web/core/package.json` version.
 #   2. Commit and push to main.
 #   3. `git tag ui-core@X.Y.Z && git push origin ui-core@X.Y.Z`.
 name: Publish @nustackdev/ui-core
@@ -31,7 +31,7 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: src/nu/ui
+        working-directory: src/nu/ui/web
     steps:
       - uses: actions/checkout@v4
 
@@ -39,7 +39,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: src/nu/ui/package-lock.json
+          cache-dependency-path: src/nu/ui/web/package-lock.json
           registry-url: "https://registry.npmjs.org"
 
       - name: install
@@ -62,6 +62,7 @@ jobs:
       # Provenance is off because the source repo is private on the free npm
       # tier. Add `--provenance` back once the repo is public.
       - name: publish
+        if: startsWith(github.ref, 'refs/tags/ui-core@')
         run: npm publish --workspace @nustackdev/ui-core --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

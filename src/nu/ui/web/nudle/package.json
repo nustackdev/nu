@@ -2,7 +2,7 @@
 	"name": "nudle-web",
 	"private": true,
 	"description": "The nudle app: hosted web shell over the nudle UI fabric. Bundled by vite; served by nu.ui.serve.",
-	"version": "0.2.0",
+	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
