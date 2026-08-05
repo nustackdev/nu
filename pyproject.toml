@@ -22,7 +22,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nustack-py"
-version = "0.1.1"
+version = "0.1.2"
 description = "The interaction primitive. Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code."
 readme = "README.md"
 license = "Apache-2.0"
@@ -43,7 +43,7 @@ classifiers = [
 [project.optional-dependencies]
 # Fabrics — accessed as nu.virtuals / nu.mem / nu.ui (not exposed on the top-level nu namespace).
 virtuals = [
-    "virtuals-py",
+    "virtuals-py>=0.1.2",
 ]
 mem = [
     "janus>=2.0.0",
@@ -61,7 +61,7 @@ default = [
 ]
 infra = [
     "nustack-py[default]",
-    "virtuals-py[rocksdb]",
+    "virtuals-py[rocksdb]>=0.1.2",
     "redis",
 ]
 distributed = [
