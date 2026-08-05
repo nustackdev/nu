@@ -22,7 +22,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nustack-py"
-version = "0.1.0"
+version = "0.1.1"
 description = "The interaction primitive. Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code."
 readme = "README.md"
 license = "Apache-2.0"
@@ -56,22 +56,22 @@ nudle = [
     "nudle==0.1.0",
 ]
 default = [
-    "nu[virtuals]",
-    "nu[mem]",
+    "nustack-py[virtuals]",
+    "nustack-py[mem]",
 ]
 infra = [
-    "nu[default]",
+    "nustack-py[default]",
     "virtuals-py[rocksdb]",
     "redis",
 ]
 distributed = [
-    "nu[infra]",
+    "nustack-py[infra]",
     "invisibles-py",
     "ray>=2.0",
 ]
 all = [
-    "nu[distributed]",
-    "nu[nudle]",
+    "nustack-py[distributed]",
+    "nustack-py[nudle]",
 ]
 
 [project.urls]
@@ -122,8 +122,8 @@ examples = [
     "aiohttp",
 ]
 local = [
-    "nu[distributed]",
-    "nu[nudle]",
+    "nustack-py[distributed]",
+    "nustack-py[nudle]",
 ]
 
 # =============================================================================
