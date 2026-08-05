@@ -1,6 +1,6 @@
-# Nu
+<img width="1600" height="333" alt="image" src="https://github.com/user-attachments/assets/a98f0916-8867-4824-9459-bb70f16a85b6" />
 
-The interaction primitive.
+# Nu – the interaction primitive.
 
 Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code.
 
@@ -18,14 +18,6 @@ Nu, the one core atom, splits into two:
 
 - **Ref**: address to any resource.
 - **Interaction**: the work over Refs.
-
-Interaction has five kinds:
-
-- **Query**: pure evaluation, yields values.
-- **Command**: mutation, yields nothing.
-- **Action**: mutation, yields values.
-- **Span**: scope wrapping a body.
-- **Flow**: orchestration of mutations.
 
 Compose them into a tree. That is a Nu program.
 
