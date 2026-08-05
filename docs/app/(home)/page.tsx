@@ -58,7 +58,7 @@ export default function KickAssLanding() {
       {/* Layer 4: everything else */}
       <Container full className={s.contentLayer}>
         {/* 1. Hero */}
-        <Row template="minmax(0, 55fr) minmax(0, 45fr)" divider={false} className={s.heroRow}>
+        <Row template="minmax(0, 55fr) minmax(0, 45fr)" divider={false} stackAt="sm" className={s.heroRow}>
             <Cell yalign="middle" className={s.heroLeftCell}>
               <CellContent pad="lg">
                 <h1 className={s.sloganStack} aria-label="Nu the interaction primitive">
@@ -153,7 +153,7 @@ export default function KickAssLanding() {
             </CellContent>
           </Cell>
         </Row>
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.imRow}>
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm" className={s.imRow}>
           <Cell className={s.imLeft}>
             <CellContent pad="lg">
               <p className={s.tagline}>The interaction model.</p>
@@ -229,7 +229,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueSteel}>
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm" className={s.hueSteel}>
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="steel">nu.mem</SilverWovenName>
@@ -253,7 +253,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueSage}>
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm" className={s.hueSage}>
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="sage">nu.virtuals</SilverWovenName>
@@ -278,7 +278,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueTeal}>
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm" className={s.hueTeal}>
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="teal">nu.ui</SilverWovenName>
@@ -303,7 +303,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.huePlum}>
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm" className={s.huePlum}>
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="plum">nu.invisibles</SilverWovenName>
@@ -328,7 +328,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueAmber}>
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm" className={s.hueAmber}>
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="amber">nu.ray</SilverWovenName>
@@ -366,7 +366,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueAmber}>
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm" className={s.hueAmber}>
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="amber">nulog</SilverWovenName>
@@ -393,7 +393,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.huePlum}>
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm" className={s.huePlum}>
           <Cell>
             <CellContent pad="lg">
               <SilverWovenName as="h3" hue="plum">nuspace</SilverWovenName>
@@ -430,7 +430,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>virtuals</h3>
@@ -475,7 +475,7 @@ export default function KickAssLanding() {
           </Cell>
         </Row>
 
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid">
+        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm">
           <Cell>
             <CellContent pad="lg">
               <h3 className={s.entryName}>rdbpy</h3>
