@@ -43,7 +43,7 @@ const USE_CASES = [
   'Enterprise in-house tools',
 ];
 
-export default function KickAssLanding() {
+export default function Home() {
   return (
     <div className={s.pageRoot}>
       {/* Layer 1: gradient (bottom) */}

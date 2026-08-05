@@ -3,7 +3,7 @@
  *
  * Consumed via `composes: tokens from '@/components/site/tokens.module.css'`
  * on the top-level shell class of each site route (home Backdrop.root and
- * kickasslanding pageRoot). All descendants inherit these vars.
+ * home pageRoot). All descendants inherit these vars.
  * ==========================================================================*/
 
 .tokens {

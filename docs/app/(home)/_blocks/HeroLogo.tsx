@@ -1,7 +1,7 @@
 import { useId } from 'react';
 
 /**
- * HeroLogo — kickasslanding-exclusive fork of NuLogo.
+ * HeroLogo — home-page-exclusive fork of NuLogo.
  *
  * Current deviations from NuLogo:
  *   - u letter carries a partial white outline hugging ONLY its outer
@@ -34,14 +34,20 @@ export function HeroLogo({
   const gradId = `hero-logo-grad-${gid}`;
   const leftGradId = `hero-logo-u-left-${gid}`;
   const bottomGradId = `hero-logo-u-bottom-${gid}`;
-  const sparkId = `hero-logo-u-spark-${gid}`;
-  const clipId = `hero-logo-u-clip-${gid}`;
+  const nTopGradId = `hero-logo-n-top-${gid}`;
+  const nRightGradId = `hero-logo-n-right-${gid}`;
 
   // u letter outer edges in viewBox coords (viewBox "140 144 271 263"). Tune by eye.
   const U_LEFT_X = 218; // outer left edge of u (path x 2180)
   const U_BOTTOM_Y = 407; // outer bottom edge of u (path y 1450)
   const U_TOP_Y = 241; // where left outline ends (just below top curvature) — fade fully transparent here
   const U_RIGHT_X = 337; // where bottom outline ends (just before right curvature) — fade fully transparent here
+
+  // n letter outer edges — mirror of u, hugging top-right corner.
+  const N_RIGHT_X = 333; // outer right edge of n (path x 3330)
+  const N_TOP_Y = 144; // outer top edge of n (path y 4080)
+  const N_TOP_LEFT_END_X = 276; // where top outline starts (just past the left shoulder curve) — fade fully transparent here
+  const N_RIGHT_BOTTOM_END_Y = 195; // where right outline ends — fade fully transparent here
 
   // viewBox → path space (inverse of translate(0,552) scale(0.1,-0.1)).
   const px = (vx: number) => vx * 10;
@@ -57,6 +63,14 @@ export function HeroLogo({
   // Outer BOTTOM edge of u, trimmed to stop before the sharp right curvature:
   // bottom-left corner (2180,1450) → along the bottom, ending at (3366,1461).
   const uBottomEdge = 'M2180 1450 l563 0 c350 0 586 4 623 11';
+
+  // Outer TOP edge of n, trimmed to skip the top-left shoulder curvature:
+  // just past the shoulder (2758,4079) → straight across to top-right corner (3330,4080).
+  const nTopEdge = 'M2758 4079 l572 1';
+
+  // Outer RIGHT edge of n, trimmed to stop before the bottom-right curvature:
+  // top-right corner (3330,4080) → straight down to (3330,3268).
+  const nRightEdge = 'M3330 4080 l0 -812';
 
   return (
     <svg
@@ -90,7 +104,7 @@ export function HeroLogo({
           y2={py(U_BOTTOM_Y)}
         >
           <stop offset="0" stopColor="#fff" stopOpacity="0" />
-          <stop offset="1" stopColor="#fff" stopOpacity="1" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0.5" />
         </linearGradient>
 
         {/* Bottom edge fade: opaque at left (U_LEFT_X) → transparent at right (U_RIGHT_X). */}
@@ -106,18 +120,32 @@ export function HeroLogo({
           <stop offset="1" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
 
-        {/* Spark: tight, softly bright core, long gentle falloff. */}
-        <radialGradient id={sparkId}>
-          <stop offset="0"    stopColor="#fff" stopOpacity="0.75" />
-          <stop offset="0.05" stopColor="#fff" stopOpacity="0.4" />
-          <stop offset="0.35" stopColor="#fff" stopOpacity="0.12" />
-          <stop offset="1"    stopColor="#fff" stopOpacity="0" />
-        </radialGradient>
+        {/* Top edge fade: transparent at left (N_TOP_LEFT_END_X) → opaque at right (N_RIGHT_X, corner). */}
+        <linearGradient
+          id={nTopGradId}
+          gradientUnits="userSpaceOnUse"
+          x1={px(N_TOP_LEFT_END_X)}
+          y1="0"
+          x2={px(N_RIGHT_X)}
+          y2="0"
+        >
+          <stop offset="0" stopColor="#fff" stopOpacity="0" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0.5" />
+        </linearGradient>
 
-        {/* Clip to u letter — spark only shows inside the letter fill. */}
-        <clipPath id={clipId}>
-          <path d={uPath} transform="translate(0,552) scale(0.1,-0.1)" />
-        </clipPath>
+        {/* Right edge fade: opaque at top (N_TOP_Y, corner) → transparent at bottom (N_RIGHT_BOTTOM_END_Y). */}
+        <linearGradient
+          id={nRightGradId}
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          y1={py(N_TOP_Y)}
+          x2="0"
+          y2={py(N_RIGHT_BOTTOM_END_Y)}
+        >
+          <stop offset="0" stopColor="#fff" stopOpacity="0.5" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+
       </defs>
 
       {/* Fills — the visible nu letters */}
@@ -132,17 +160,15 @@ export function HeroLogo({
         <path d={uPath} />
       </g>
 
-      {/* Spark bloom at u's outer corner, clipped to letter — only glow, outlines stay hidden. */}
-      <g data-hero-spark clipPath={`url(#${clipId})`}>
-        <circle cx={U_LEFT_X} cy={U_BOTTOM_Y} r="55" fill={`url(#${sparkId})`} />
-      </g>
-
-      {/* HIDDEN — outer outline overlays.
-      <g transform="translate(0,552) scale(0.1,-0.1)">
+      {/* Outer outline overlays — fading gradient on n's top-right. */}
+      <g data-hero-outline transform="translate(0,552) scale(0.1,-0.1)">
+        {/* HIDDEN — u's bottom-left fading outline.
         <path d={uLeftEdge}   fill="none" stroke={`url(#${leftGradId})`}   strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
         <path d={uBottomEdge} fill="none" stroke={`url(#${bottomGradId})`} strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+        */}
+        <path d={nTopEdge}    fill="none" stroke={`url(#${nTopGradId})`}   strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+        <path d={nRightEdge}  fill="none" stroke={`url(#${nRightGradId})`} strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
       </g>
-      */}
     </svg>
   );
 }

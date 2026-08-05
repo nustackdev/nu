@@ -1,5 +1,5 @@
 .root {
-  /* Grid unit + border tokens for all kickasslanding descendants. */
+  /* Grid unit + border tokens for all site page descendants. */
   --kal-u: clamp(28px, 3.2vw, 40px);
   --kal-border: var(--nu-border-stronger);
   --kal-divider: var(--nu-border-stronger);

@@ -12,7 +12,7 @@ export interface ContainerProps {
 }
 
 /**
- * Container — outer wrapper for a kickasslanding page.
+ * Container — outer wrapper for a site page.
  * Owns the layout tokens (--kal-u, --kal-border, --kal-divider) that all
  * descendants read.
  */

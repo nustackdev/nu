@@ -1,5 +1,5 @@
 /* =============================================================================
- * kickasslanding — page-level typography and CTA styles.
+ * home — page-level typography and CTA styles.
  * Sits on top of the block primitives (Container/Row/Cell/CellContent).
  * Dark-only. Accent colors match projects/nu/positioning/locked.md dark values.
  * ==========================================================================*/
@@ -50,7 +50,7 @@
 .logoAlign {
   position: absolute;
   left: 0;
-  bottom: 0;
+  bottom: 1px;
   margin-left: -134px;
 }
 .logo {
@@ -73,7 +73,7 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0) 45%);
+  background: linear-gradient(to top, rgba(255,255,255,0.5), rgba(255,255,255,0) 45%);
   pointer-events: none;
   z-index: 1;
 }
@@ -85,7 +85,8 @@
   right: 0;
   bottom: 0;
   height: 1px;
-  background: linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0) 20%);
+  margin-left: 1px;
+  background: linear-gradient(to right, rgba(255,255,255,0.5), rgba(255,255,255,0) 20%);
   pointer-events: none;
   z-index: 1;
 }
@@ -101,7 +102,7 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,0.2));
+  background: linear-gradient(to bottom, rgba(255,255,255,0.5), rgba(255,255,255,0.2));
   pointer-events: none;
   z-index: 1;
 }
@@ -261,8 +262,8 @@
     margin-right: -67px;
     transform: translateY(-50%);
   }
-  /* At this breakpoint the logo is decorative-only — kill the white spark. */
-  .logo [data-hero-spark] { display: none; }
+  /* At this breakpoint the logo is decorative-only — kill the outline overlay. */
+  .logo [data-hero-outline] { display: none; }
 }
 
 /* Mobile: drop the giant logo entirely. */
