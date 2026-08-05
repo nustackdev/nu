@@ -6,7 +6,7 @@ Build a personal movie tracker. Stats up top, a form to log what you watched, a 
 
 You finished [Your first app](./your-first-app), so you know Shape, Ref, `ReactForever`, `nu.With`, and `nu.ui.Page`. Everything new gets introduced as you meet it.
 
-The final program lives at `examples/nudle/movies.py`. You build it in four stages. Each stage runs and shows something.
+The final program lives at `examples/movies.py`. You build it in four stages. Each stage runs and shows something.
 
 ## Stage 1: the shape of the data
 
@@ -384,7 +384,7 @@ Run. The table shows the seed. Log a new movie. It lands in the table, stats bum
 
 Read `_movie_cells` as a tiny sub-tree bound to the name `"r"`. `Map` streams movies through it and rebinds `r` for each one. `Collect` gathers the results into a list the table can render.
 
-> **Row-click deletion is deferred.** `TableRef` emits row clicks, but the clean write-back path needs `.eager` reads through msgpack plus a host splice. It works in `examples/nudle/movies.py`; the mechanics are ugly enough to keep out of your first real app. Read that file when you want the pattern.
+> **Row-click deletion is deferred.** `TableRef` emits row clicks, but the clean write-back path needs `.eager` reads through msgpack plus a host splice. It works in `examples/movies.py`; the mechanics are ugly enough to keep out of your first real app. Read that file when you want the pattern.
 
 ## What you built
 
@@ -392,6 +392,6 @@ A persistent movie tracker: seeded state, a form that commits atomically, a stat
 
 ## Try it yourself
 
-Add a filter row: min rating, genre select, watched-only switch, apply and clear. The full reference lives in `examples/nudle/movies.py`.
+Add a filter row: min rating, genre select, watched-only switch, apply and clear. The full reference lives in `examples/movies.py`.
 
 If you still need to install anything for this tutorial, see [Install](../how-to/install).

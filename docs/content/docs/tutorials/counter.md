@@ -2,7 +2,7 @@
 title: Counter
 ---
 
-Build a counter that ticks forever, survives restarts, mirrors to a browser, and reacts to clicks. Three stages, one new concept per stage.
+Build a counter that ticks forever, survives restarts, and mirrors to a browser. Two stages, one new concept per stage.
 
 Before you start: finish the [hello tutorial](/docs/tutorials/hello) and set up the `nu.ui` Fabric per [Install](/docs/how-to/install).
 
@@ -110,76 +110,10 @@ A **Fabric** is a backend Nu talks to. Storage is one Fabric (RocksDB, in-memory
 
 That tree uses **reactivity**. `nu.ReactForever(source, body)` subscribes to a change source and re-runs the body every time it fires. `Counter.value.on_change()` is a change source that fires every time the int at `Counter.value` is written. The body copies the current value into the UI Ref: `Dashboard.count.set(Counter.value)`. That is what makes the browser mirror the tick.
 
-## Stage 3: A click that changes the label
-
-Add a heading, an input, and a button. Type a name, click the button, watch the heading change.
-
-Replace `counter.py` with:
-
-```python
-import asyncio
-
-import nu
-
-
-class Counter(nu.Shape):
-    value: nu.v.IntRef
-
-
-class Dashboard(nu.ui.Page):
-    heading: nu.ui.HeadingRef
-    count: nu.ui.TextRef
-    name: nu.ui.InputRef
-    greet: nu.ui.ButtonRef
-
-
-class App(nu.ui.Index):
-    title: nu.ui.TitleRef
-    pages = nu.ui.Pages({"/": Dashboard})
-
-
-ui = (
-    App.title.set("counter")
-    >> Dashboard.heading.set("counter live")
-    >> (
-        nu.ReactForever(
-            Counter.value.on_change(),
-            Dashboard.count.set(Counter.value),
-        )
-        | nu.ReactForever(
-            Dashboard.greet.clicked(),
-            Dashboard.heading.set(Dashboard.name),
-        )
-    )
-)
-
-tree = nu.With(
-    nu.v.presets.rocksdb_navigator(".dbtest"),
-    nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
-    body=(
-        nu.IfDo(Counter.value.missing(), Counter.value.set(0))
-        >> nu.ForeverDo(
-            Counter.value.inc() >> nu.Delay(1.0),
-        )
-    ),
-)
-
-
-if __name__ == "__main__":
-    asyncio.run(nu.arun(nu.v.auto_flow_atomic(tree)))
-```
-
-Run it. Type your name in the input, click the button, the heading swaps to what you typed. The counter keeps ticking.
-
-### The new concept
-
-Every read you have done so far, like `Counter.value` inside `Dashboard.count.set(...)`, is a **Query**: it materializes a value. Every write, like `.set(...)` or `.inc()`, is a **Command**: it changes state. The click reactor is two Commands, driven by a change source: on click, read `Dashboard.name` (Query), write it into `Dashboard.heading` (Command). `|` runs the two `ReactForever` branches in parallel, so ticks and clicks do not block each other.
-
 ## What you built
 
 - A persistent int on a RocksDB Fabric.
 - A browser dashboard that mirrors it live through a `ReactForever`.
-- A click handler that rewrites a heading from an input.
 
 ## Next
 

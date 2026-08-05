@@ -60,7 +60,7 @@ Vite serves the app on `http://localhost:5173`, proxies `/ws` to the FastAPI bac
 Run the counter dashboard example:
 
 ```bash
-uv run python examples/nudle_memory.py
+uv run python examples/counter.py
 ```
 
 Open the browser tab that appears. The counter ticks once a second; the dashboard mirrors it live.
