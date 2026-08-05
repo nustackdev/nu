@@ -1,4 +1,10 @@
 allowBuilds:
+  core-js: false
   esbuild: true
   sharp: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@posthog/browser-common@0.4.0'
+  - '@posthog/core@1.46.8'
+  - '@posthog/types@1.402.1'
+  - posthog-js@1.413.2
