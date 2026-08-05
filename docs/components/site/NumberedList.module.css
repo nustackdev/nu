@@ -18,15 +18,15 @@
   align-items: baseline;
   padding: 5px 0;
   font-family: var(--font-display);
-  font-size: var(--nu-fs-7);
+  font-size: var(--site-fs-7);
   line-height: 1.45;
-  color: color-mix(in oklab, var(--nu-ink) 94%, var(--nu-ink-2) 6%);
+  color: color-mix(in oklab, var(--site-ink) 94%, var(--site-ink-2) 6%);
 }
 
 .num {
   font-family: var(--font-mono);
-  font-size: var(--nu-fs-2);
-  color: var(--nu-ink-3);
+  font-size: var(--site-fs-2);
+  color: var(--site-ink-3);
   letter-spacing: 0.1em;
   font-variant-numeric: tabular-nums;
 }

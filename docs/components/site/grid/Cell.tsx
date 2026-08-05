@@ -31,7 +31,7 @@ export function Cell({
       className={cls}
       data-xalign={xalign}
       data-yalign={yalign}
-      style={{ ['--kal-cell-span' as string]: String(span), ...style }}
+      style={{ ['--site-kal-cell-span' as string]: String(span), ...style }}
     >
       {children}
     </div>

@@ -8,7 +8,7 @@
   composes: tokens from '@/components/site/tokens.module.css';
   position: relative;
   isolation: isolate;
-  background: var(--nu-bg);
+  background: var(--site-bg);
   color: rgba(255, 255, 255, 0.92);
   overflow-x: hidden;
   color-scheme: dark;
@@ -16,16 +16,16 @@
   /* Two design knobs. Tune at breakpoints. */
   --hero-h: 650px;   /* fixed hero row height; heroWrap + logo layer both use this */
   --logo-w: 608px;   /* logo render width */
-  --hero-top: var(--nu-space-8);  /* top gap before hero; logoLayer + heroRow share it */
+  --hero-top: var(--site-space-8);  /* top gap before hero; logoLayer + heroRow share it */
 }
 
 @media (max-width: 1280px) {
-  .pageRoot { --hero-top: var(--nu-space-4); }
+  .pageRoot { --hero-top: var(--site-space-4); }
 }
 /* At ≤1024 the giant logo is hidden and the FloatingNav sits closer to the
  * inline slogan; give the hero a bigger top gap so they don't collide. */
 @media (max-width: 1024px) {
-  .pageRoot { --hero-top: var(--nu-space-8); }
+  .pageRoot { --hero-top: var(--site-space-8); }
 }
 
 /* Stacking: gradient (0) < logo (1) < dots (2) < content (3). */
@@ -154,7 +154,7 @@
   z-index: 1;
   /* Header cells: top matches left/right (from CellContent pad="lg" = 2·kal-u),
    * bottom is half. Hugs what comes next. */
-  padding-block: calc(2 * var(--kal-u)) calc(1 * var(--kal-u));
+  padding-block: calc(2 * var(--site-kal-u)) calc(1 * var(--site-kal-u));
 }
 .chapterPeek {
   pointer-events: none;
@@ -167,7 +167,7 @@
   text-align: center;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: var(--nu-fs-17);
+  font-size: var(--site-fs-17);
   line-height: 0.9;
   letter-spacing: -0.03em;
   text-transform: uppercase;
@@ -178,10 +178,10 @@
    * the cut into a fade, so the bottom edge feels embedded, not clipped. */
   background-image: linear-gradient(
     172deg,
-    color-mix(in oklab, var(--nu-silver-1) 7%, transparent) 0%,
-    color-mix(in oklab, var(--nu-silver-2) 4%, transparent) 40%,
-    color-mix(in oklab, var(--nu-silver-2) 2%, transparent) 70%,
-    var(--nu-bg) 100%
+    color-mix(in oklab, var(--site-silver-1) 7%, transparent) 0%,
+    color-mix(in oklab, var(--site-silver-2) 4%, transparent) 40%,
+    color-mix(in oklab, var(--site-silver-2) 2%, transparent) 70%,
+    var(--site-bg) 100%
   );
   background-clip: text;
   -webkit-background-clip: text;
@@ -191,10 +191,10 @@
 }
 
 @media (max-width: 1280px) {
-  .chapterPeek { font-size: var(--nu-fs-16); }
+  .chapterPeek { font-size: var(--site-fs-16); }
 }
 @media (max-width: 640px) {
-  .chapterPeek { font-size: var(--nu-fs-15); }
+  .chapterPeek { font-size: var(--site-fs-15); }
 }
 
 /* -- Typography ------------------------------------------------------------ */
@@ -212,7 +212,7 @@
   display: block;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--nu-fs-display);
+  font-size: var(--site-fs-display);
   line-height: 0.92;
   letter-spacing: -0.045em;
   color: #fff;
@@ -222,10 +222,10 @@
  * on mobile+tablet where the hero collapses to a regular vertical layout. */
 .sloganInline {
   display: none;
-  margin: 0 0 var(--nu-gap-loose);
+  margin: 0 0 var(--site-gap-loose);
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--nu-fs-13);
+  font-size: var(--site-fs-13);
   line-height: 1.05;
   letter-spacing: -0.03em;
   color: #fff;
@@ -276,7 +276,7 @@
 .heroRight {
   display: flex;
   flex-direction: column;
-  gap: var(--nu-gap-loose);
+  gap: var(--site-gap-loose);
   min-width: 0;
 }
 
@@ -284,10 +284,10 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: var(--nu-fs-9);
+  font-size: var(--site-fs-9);
   line-height: 1.5;
   letter-spacing: -0.005em;
-  color: color-mix(in oklab, var(--nu-ink) 88%, var(--nu-ink-2) 12%);
+  color: color-mix(in oklab, var(--site-ink) 88%, var(--site-ink-2) 12%);
   text-wrap: pretty;
   max-width: 36ch;
 }
@@ -297,8 +297,8 @@
   font-variant-numeric: tabular-nums;
   background: linear-gradient(
     to right,
-    color-mix(in oklab, var(--nu-accent) 92%, white 8%),
-    color-mix(in oklab, var(--nu-accent-2) 92%, white 8%)
+    color-mix(in oklab, var(--site-accent) 92%, white 8%),
+    color-mix(in oklab, var(--site-accent-2) 92%, white 8%)
   );
   background-clip: text;
   -webkit-background-clip: text;
@@ -330,17 +330,17 @@
 }
 /* Second CTA row hugs the first — fixed 6px visual gap regardless of parent gap. */
 .heroCtaRow + .heroCtaRow {
-  margin-top: calc(6px - var(--nu-gap-loose));
+  margin-top: calc(6px - var(--site-gap-loose));
 }
 
 /* -- Section intro (below section titles) ---------------------------------
- * Kept here (not extracted) because it uses raw --nu-fs-9 with no role token. */
+ * Kept here (not extracted) because it uses raw --site-fs-9 with no role token. */
 
 .sectionIntro {
-  font-size: var(--nu-fs-9);
+  font-size: var(--site-fs-9);
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.72);
-  margin: var(--nu-gap-normal) 0 0;
+  margin: var(--site-gap-normal) 0 0;
   max-width: 68ch;
 }
 
@@ -352,24 +352,24 @@
   justify-content: center;
   align-items: center;
   gap: 14px;
-  font-size: var(--nu-fs-label);
-  color: var(--nu-ink-4);
+  font-size: var(--site-fs-label);
+  color: var(--site-ink-4);
   padding: 24px 0;
 }
 .footer a {
-  color: var(--nu-ink-2);
+  color: var(--site-ink-2);
   text-decoration: none;
-  transition: color var(--nu-t);
+  transition: color var(--site-t);
 }
-.footer a:hover { color: var(--nu-accent); }
+.footer a:hover { color: var(--site-accent); }
 
-.footerSep { color: var(--nu-border-stronger); }
+.footerSep { color: var(--site-border-stronger); }
 
 .footerBrand {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--nu-ink);
+  color: var(--site-ink);
 }
 .footerLogo {
   display: inline-block;
@@ -378,71 +378,71 @@
 }
 
 /* -- Fabric hue scopes ---------------------------------------------------- */
-/* Each fabric cell remaps --nu-accent-* to a silver-woven hue, so its
+/* Each fabric cell remaps --site-accent-* to a silver-woven hue, so its
  * SiteButton (variant="hueTinted") auto-picks the row's color. */
 
 .hueSteel {
-  --nu-accent:        var(--nu-hue-steel);
-  --nu-accent-soft:   var(--nu-hue-steel-soft);
-  --nu-accent-wash:   var(--nu-hue-steel-wash);
-  --nu-accent-line:   var(--nu-hue-steel-line);
-  --nu-accent-2:      var(--nu-hue-steel);
-  --nu-accent-2-soft: var(--nu-hue-steel-soft);
-  --nu-accent-2-wash: var(--nu-hue-steel-wash);
-  --nu-accent-2-line: var(--nu-hue-steel-line);
+  --site-accent:        var(--site-hue-steel);
+  --site-accent-soft:   var(--site-hue-steel-soft);
+  --site-accent-wash:   var(--site-hue-steel-wash);
+  --site-accent-line:   var(--site-hue-steel-line);
+  --site-accent-2:      var(--site-hue-steel);
+  --site-accent-2-soft: var(--site-hue-steel-soft);
+  --site-accent-2-wash: var(--site-hue-steel-wash);
+  --site-accent-2-line: var(--site-hue-steel-line);
 }
 .hueSage {
-  --nu-accent:        var(--nu-hue-sage);
-  --nu-accent-soft:   var(--nu-hue-sage-soft);
-  --nu-accent-wash:   var(--nu-hue-sage-wash);
-  --nu-accent-line:   var(--nu-hue-sage-line);
-  --nu-accent-2:      var(--nu-hue-sage);
-  --nu-accent-2-soft: var(--nu-hue-sage-soft);
-  --nu-accent-2-wash: var(--nu-hue-sage-wash);
-  --nu-accent-2-line: var(--nu-hue-sage-line);
+  --site-accent:        var(--site-hue-sage);
+  --site-accent-soft:   var(--site-hue-sage-soft);
+  --site-accent-wash:   var(--site-hue-sage-wash);
+  --site-accent-line:   var(--site-hue-sage-line);
+  --site-accent-2:      var(--site-hue-sage);
+  --site-accent-2-soft: var(--site-hue-sage-soft);
+  --site-accent-2-wash: var(--site-hue-sage-wash);
+  --site-accent-2-line: var(--site-hue-sage-line);
 }
 .hueTeal {
-  --nu-accent:        var(--nu-hue-teal);
-  --nu-accent-soft:   var(--nu-hue-teal-soft);
-  --nu-accent-wash:   var(--nu-hue-teal-wash);
-  --nu-accent-line:   var(--nu-hue-teal-line);
-  --nu-accent-2:      var(--nu-hue-teal);
-  --nu-accent-2-soft: var(--nu-hue-teal-soft);
-  --nu-accent-2-wash: var(--nu-hue-teal-wash);
-  --nu-accent-2-line: var(--nu-hue-teal-line);
+  --site-accent:        var(--site-hue-teal);
+  --site-accent-soft:   var(--site-hue-teal-soft);
+  --site-accent-wash:   var(--site-hue-teal-wash);
+  --site-accent-line:   var(--site-hue-teal-line);
+  --site-accent-2:      var(--site-hue-teal);
+  --site-accent-2-soft: var(--site-hue-teal-soft);
+  --site-accent-2-wash: var(--site-hue-teal-wash);
+  --site-accent-2-line: var(--site-hue-teal-line);
 }
 .huePlum {
-  --nu-accent:        var(--nu-hue-plum);
-  --nu-accent-soft:   var(--nu-hue-plum-soft);
-  --nu-accent-wash:   var(--nu-hue-plum-wash);
-  --nu-accent-line:   var(--nu-hue-plum-line);
-  --nu-accent-2:      var(--nu-hue-plum);
-  --nu-accent-2-soft: var(--nu-hue-plum-soft);
-  --nu-accent-2-wash: var(--nu-hue-plum-wash);
-  --nu-accent-2-line: var(--nu-hue-plum-line);
+  --site-accent:        var(--site-hue-plum);
+  --site-accent-soft:   var(--site-hue-plum-soft);
+  --site-accent-wash:   var(--site-hue-plum-wash);
+  --site-accent-line:   var(--site-hue-plum-line);
+  --site-accent-2:      var(--site-hue-plum);
+  --site-accent-2-soft: var(--site-hue-plum-soft);
+  --site-accent-2-wash: var(--site-hue-plum-wash);
+  --site-accent-2-line: var(--site-hue-plum-line);
 }
 .hueAmber {
-  --nu-accent:        var(--nu-hue-amber);
-  --nu-accent-soft:   var(--nu-hue-amber-soft);
-  --nu-accent-wash:   var(--nu-hue-amber-wash);
-  --nu-accent-line:   var(--nu-hue-amber-line);
-  --nu-accent-2:      var(--nu-hue-amber);
-  --nu-accent-2-soft: var(--nu-hue-amber-soft);
-  --nu-accent-2-wash: var(--nu-hue-amber-wash);
-  --nu-accent-2-line: var(--nu-hue-amber-line);
+  --site-accent:        var(--site-hue-amber);
+  --site-accent-soft:   var(--site-hue-amber-soft);
+  --site-accent-wash:   var(--site-hue-amber-wash);
+  --site-accent-line:   var(--site-hue-amber-line);
+  --site-accent-2:      var(--site-hue-amber);
+  --site-accent-2-soft: var(--site-hue-amber-soft);
+  --site-accent-2-wash: var(--site-hue-amber-wash);
+  --site-accent-2-line: var(--site-hue-amber-line);
 }
 
 /* Code sample scope: dual silver-woven hues — teal for nu API tokens,
  * steel for keywords (matches old_home NuSection). */
 .hueCode {
-  --nu-accent:        var(--nu-hue-teal);
-  --nu-accent-soft:   var(--nu-hue-teal-soft);
-  --nu-accent-wash:   var(--nu-hue-teal-wash);
-  --nu-accent-line:   var(--nu-hue-teal-line);
-  --nu-accent-2:      var(--nu-hue-steel);
-  --nu-accent-2-soft: var(--nu-hue-steel-soft);
-  --nu-accent-2-wash: var(--nu-hue-steel-wash);
-  --nu-accent-2-line: var(--nu-hue-steel-line);
+  --site-accent:        var(--site-hue-teal);
+  --site-accent-soft:   var(--site-hue-teal-soft);
+  --site-accent-wash:   var(--site-hue-teal-wash);
+  --site-accent-line:   var(--site-hue-teal-line);
+  --site-accent-2:      var(--site-hue-steel);
+  --site-accent-2-soft: var(--site-hue-steel-soft);
+  --site-accent-2-wash: var(--site-hue-steel-wash);
+  --site-accent-2-line: var(--site-hue-steel-line);
 }
 
 
@@ -458,7 +458,7 @@
 /* Mobile: 2x more padding on header (chapter) cells. */
 @media (max-width: 640px) {
   .chapterCell > :not(.chapterPeek) {
-    padding-block: calc(4 * var(--kal-u)) 0;
+    padding-block: calc(4 * var(--site-kal-u)) 0;
   }
   .chapterPeek { display: none; }
 }

@@ -22,7 +22,7 @@ interface Props {
 
 /**
  * CodeSample — flat IDE-style code block. Tab strip, gutter, tokens.
- * Token colors follow --nu-accent / --nu-accent-2 from the surrounding hue
+ * Token colors follow --site-accent / --site-accent-2 from the surrounding hue
  * scope (e.g. wrap in a class that remaps to silver-woven teal + steel).
  */
 export function CodeSample({

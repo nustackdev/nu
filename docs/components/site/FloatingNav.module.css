@@ -17,7 +17,7 @@
   z-index: 40;
   display: flex;
   justify-content: center;
-  padding: 0 var(--nu-pad-x, clamp(24px, 4vw, 56px));
+  padding: 0 var(--site-pad-x, clamp(24px, 4vw, 56px));
   pointer-events: none;
   /* Own stacking context so backdrop-filter samples the true backdrop
      even when the page has mix-blend-mode / isolate layers below (grain). */
@@ -30,8 +30,8 @@
   gap: 3px;
   padding: 7px 13px;
   border-radius: 999px;
-  border: 1px solid var(--nu-border);
-  background: color-mix(in oklab, var(--nu-bg-overlay) 72%, transparent);
+  border: 1px solid var(--site-border);
+  background: color-mix(in oklab, var(--site-bg-overlay) 72%, transparent);
   -webkit-backdrop-filter: blur(30px);
   backdrop-filter: blur(30px);
   /* Force a dedicated compositor layer — fixes desktop Chrome/Safari where
@@ -39,12 +39,12 @@
   transform: translateZ(0);
   will-change: backdrop-filter;
   font-family: var(--font-display);
-  font-size: var(--nu-fs-6);
+  font-size: var(--site-fs-6);
   font-weight: 500;
   letter-spacing: 0.005em;
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .navPill { background: var(--nu-bg-overlay); }
+  .navPill { background: var(--site-bg-overlay); }
 }
 
 .navIcon {
@@ -56,12 +56,12 @@
   border-radius: 999px;
   border: 0;
   background: transparent;
-  color: var(--nu-ink-2);
+  color: var(--site-ink-2);
   cursor: pointer;
   text-decoration: none;
   transition: color .18s ease, background .18s ease;
 }
 .navIcon:hover {
-  color: var(--nu-ink);
-  background: var(--nu-wash-2);
+  color: var(--site-ink);
+  background: var(--site-wash-2);
 }

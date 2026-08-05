@@ -8,16 +8,16 @@ import { BrowserChrome } from './primitives/BrowserChrome';
  * one live Ref pill and a footer strip identifying the substrate.
  */
 export function NuspaceMockSvg() {
-  const rule = 'var(--nu-rule)';
-  const ruleSoft = 'var(--nu-rule-2)';
-  const ink = 'var(--nu-ink)';
-  const ink2 = 'var(--nu-ink-2)';
-  const ink3 = 'var(--nu-ink-3)';
-  const ink4 = 'var(--nu-ink-4)';
-  const accent = 'var(--nu-accent)';
-  const accentWash = 'var(--nu-accent-wash)';
-  const accentLine = 'var(--nu-accent-line)';
-  const accent2 = 'var(--nu-accent-2)';
+  const rule = 'var(--site-rule)';
+  const ruleSoft = 'var(--site-rule-2)';
+  const ink = 'var(--site-ink)';
+  const ink2 = 'var(--site-ink-2)';
+  const ink3 = 'var(--site-ink-3)';
+  const ink4 = 'var(--site-ink-4)';
+  const accent = 'var(--site-accent)';
+  const accentWash = 'var(--site-accent-wash)';
+  const accentLine = 'var(--site-accent-line)';
+  const accent2 = 'var(--site-accent-2)';
   const mono = 'var(--font-mono)';
 
   return (

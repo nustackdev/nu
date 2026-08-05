@@ -5,7 +5,7 @@ export type CellPad = 'none' | 'sm' | 'md' | 'lg';
 
 export interface CellContentProps {
   children?: ReactNode;
-  /** Padding scale in units of --kal-u. Default 'md'. */
+  /** Padding scale in units of --site-kal-u. Default 'md'. */
   pad?: CellPad;
   className?: string;
   style?: CSSProperties;

@@ -4,7 +4,7 @@
 
 .h1 {
   font-family: var(--font-display, ui-serif, Georgia, serif);
-  font-size: var(--nu-fs-heading-1);
+  font-size: var(--site-fs-heading-1);
   line-height: 1.08;
   letter-spacing: -0.015em;
   margin: 0;
@@ -13,7 +13,7 @@
 
 .h2 {
   font-family: var(--font-display, ui-serif, Georgia, serif);
-  font-size: var(--nu-fs-heading-2);
+  font-size: var(--site-fs-heading-2);
   letter-spacing: -0.01em;
   margin: 0;
   color: #fff;

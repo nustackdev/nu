@@ -13,7 +13,7 @@ export interface ContainerProps {
 
 /**
  * Container — outer wrapper for a site page.
- * Owns the layout tokens (--kal-u, --kal-border, --kal-divider) that all
+ * Owns the layout tokens (--site-kal-u, --site-kal-border, --site-kal-divider) that all
  * descendants read.
  */
 export function Container({
@@ -27,7 +27,7 @@ export function Container({
   return (
     <div
       className={cls}
-      style={{ ['--kal-max-width' as string]: `${maxWidth}px`, ...style }}
+      style={{ ['--site-kal-max-width' as string]: `${maxWidth}px`, ...style }}
     >
       {children}
     </div>

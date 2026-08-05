@@ -24,7 +24,7 @@ export function DotPattern({
     <div
       aria-hidden
       className={cls}
-      style={{ ['--kal-dot-opacity' as string]: String(opacity), ...style }}
+      style={{ ['--site-kal-dot-opacity' as string]: String(opacity), ...style }}
     />
   );
 }

@@ -7,7 +7,7 @@ interface Props {
   size: 'sm' | 'md';
   /** Optional hue tag — surfaced as a data-attr for parent-scope styling.
    *  The chip itself reads `--chip-hue / --chip-wash / --chip-line` (falling
-   *  back to `--nu-accent-2*`), which parent rows/containers already set. */
+   *  back to `--site-accent-2*`), which parent rows/containers already set. */
   hue?: ChipHue;
   className?: string;
   children: ReactNode;

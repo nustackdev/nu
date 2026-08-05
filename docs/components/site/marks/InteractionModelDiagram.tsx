@@ -33,13 +33,13 @@ const LEAVES: Atom[] = [
 ];
 
 const HUE_VAR: Record<Hue, string> = {
-  ink:   'var(--nu-ink)',
-  ink2:  'var(--nu-ink-2)',
-  sage:  'var(--nu-hue-sage)',
-  teal:  'var(--nu-hue-teal)',
-  plum:  'var(--nu-hue-plum)',
-  amber: 'var(--nu-hue-amber)',
-  steel: 'var(--nu-hue-steel)',
+  ink:   'var(--site-ink)',
+  ink2:  'var(--site-ink-2)',
+  sage:  'var(--site-hue-sage)',
+  teal:  'var(--site-hue-teal)',
+  plum:  'var(--site-hue-plum)',
+  amber: 'var(--site-hue-amber)',
+  steel: 'var(--site-hue-steel)',
 };
 
 export function InteractionModelDiagram({ className }: { className?: string }) {

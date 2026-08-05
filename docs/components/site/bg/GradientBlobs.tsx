@@ -62,7 +62,7 @@ export function GradientBlobs({
       aria-hidden
       className={[s.root, className].filter(Boolean).join(' ')}
       style={{
-        ['--kal-blobs-height' as string]: height,
+        ['--site-kal-blobs-height' as string]: height,
         background,
         ...style,
       }}

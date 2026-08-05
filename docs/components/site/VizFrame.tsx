@@ -8,7 +8,7 @@ interface Props {
   /** `solid` (default) — sits on a solid section card, subtle white wash.
    *  `glass`           — sits on a translucent glass card, darker inner bg. */
   surface?: 'solid' | 'glass';
-  /** Remaps --nu-accent[-2] to a silver-woven fabric hue so any shared SVG
+  /** Remaps --site-accent[-2] to a silver-woven fabric hue so any shared SVG
    *  primitive inside (BrowserChrome, DiskStack, …) auto-tints. */
   hue?: VizFrameHue;
   className?: string;

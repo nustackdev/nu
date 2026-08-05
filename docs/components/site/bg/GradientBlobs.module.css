@@ -7,7 +7,7 @@
   left: 50%;
   margin-left: -2000px;
   width: 4000px;
-  height: var(--kal-blobs-height, 1700px);
+  height: var(--site-kal-blobs-height, 1700px);
   z-index: 0;
   pointer-events: none;
 }

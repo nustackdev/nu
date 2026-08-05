@@ -1,6 +1,6 @@
 /* =============================================================================
  * SilverWovenName — hero-scale silver-to-hue gradient title. Dark-only.
- * Silver stops come from tokens (--nu-silver-1 / --nu-silver-2). Hue stops are
+ * Silver stops come from tokens (--site-silver-1 / --site-silver-2). Hue stops are
  * inlined per data-hue — well-separated on the dark card so each fabric/app
  * row still reads distinctly.
  * ==========================================================================*/
@@ -8,7 +8,7 @@
 .name {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--nu-fs-14);
+  font-size: var(--site-fs-14);
   letter-spacing: -0.04em;
   margin: 0;
   text-transform: lowercase;
@@ -25,8 +25,8 @@
 .name[data-hue="steel"] {
   --swn-grad: linear-gradient(
     120deg,
-    var(--nu-silver-1) 0%,
-    var(--nu-silver-2) 22%,
+    var(--site-silver-1) 0%,
+    var(--site-silver-2) 22%,
     #9bb0d0 55%,
     #7a95b8 100%
   );
@@ -36,8 +36,8 @@
 .name[data-hue="sage"] {
   --swn-grad: linear-gradient(
     120deg,
-    var(--nu-silver-1) 0%,
-    var(--nu-silver-2) 22%,
+    var(--site-silver-1) 0%,
+    var(--site-silver-2) 22%,
     #a8c0af 55%,
     #8ba894 100%
   );
@@ -47,8 +47,8 @@
 .name[data-hue="plum"] {
   --swn-grad: linear-gradient(
     120deg,
-    var(--nu-silver-1) 0%,
-    var(--nu-silver-2) 22%,
+    var(--site-silver-1) 0%,
+    var(--site-silver-2) 22%,
     #bda2c8 55%,
     #a68ab2 100%
   );
@@ -58,8 +58,8 @@
 .name[data-hue="amber"] {
   --swn-grad: linear-gradient(
     120deg,
-    var(--nu-silver-1) 0%,
-    var(--nu-silver-2) 22%,
+    var(--site-silver-1) 0%,
+    var(--site-silver-2) 22%,
     #dab88a 55%,
     #c8a26e 100%
   );
@@ -69,16 +69,16 @@
 .name[data-hue="teal"] {
   --swn-grad: linear-gradient(
     120deg,
-    var(--nu-silver-1) 0%,
-    var(--nu-silver-2) 22%,
+    var(--site-silver-1) 0%,
+    var(--site-silver-2) 22%,
     #a3ced4 55%,
     #7fb0b8 100%
   );
 }
 
 @media (max-width: 1280px) {
-  .name { font-size: var(--nu-fs-13); }
+  .name { font-size: var(--site-fs-13); }
 }
 @media (max-width: 640px) {
-  .name { font-size: var(--nu-fs-12); }
+  .name { font-size: var(--site-fs-12); }
 }

@@ -111,7 +111,7 @@ export function Row({
   return (
     <div
       className={cls}
-      style={{ ['--kal-row-template' as string]: gridTemplate, ...style }}
+      style={{ ['--site-kal-row-template' as string]: gridTemplate, ...style }}
     >
       {children}
     </div>

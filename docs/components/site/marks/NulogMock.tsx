@@ -9,15 +9,15 @@ import { BrowserChrome } from './primitives/BrowserChrome';
  * a footer strip that names the substrate.
  */
 export function NulogMockSvg() {
-  const rule = 'var(--nu-rule)';
-  const ink = 'var(--nu-ink)';
-  const ink2 = 'var(--nu-ink-2)';
-  const ink3 = 'var(--nu-ink-3)';
-  const ink4 = 'var(--nu-ink-4)';
-  const accent = 'var(--nu-accent)';
-  const accentWash = 'var(--nu-accent-wash)';
-  const accentLine = 'var(--nu-accent-line)';
-  const accent2 = 'var(--nu-accent-2)';
+  const rule = 'var(--site-rule)';
+  const ink = 'var(--site-ink)';
+  const ink2 = 'var(--site-ink-2)';
+  const ink3 = 'var(--site-ink-3)';
+  const ink4 = 'var(--site-ink-4)';
+  const accent = 'var(--site-accent)';
+  const accentWash = 'var(--site-accent-wash)';
+  const accentLine = 'var(--site-accent-line)';
+  const accent2 = 'var(--site-accent-2)';
   const mono = 'var(--font-mono)';
 
   const rows: Array<{ t: string; level: 'info' | 'warn'; msg: string; payload: string }> = [

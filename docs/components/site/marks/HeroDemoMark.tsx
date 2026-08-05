@@ -216,11 +216,11 @@ function HintArrow() {
  * kv-storage platter stack. Accent = steel-blue (via VizFrame hue="steel").
  * ==========================================================================*/
 function RightScene() {
-  const ink = 'var(--nu-ink)';
-  const ink3 = 'var(--nu-ink-3)';
-  const ink4 = 'var(--nu-ink-4)';
-  const ruleSoft = 'var(--nu-rule-2)';
-  const accent = 'var(--nu-accent)';
+  const ink = 'var(--site-ink)';
+  const ink3 = 'var(--site-ink-3)';
+  const ink4 = 'var(--site-ink-4)';
+  const ruleSoft = 'var(--site-rule-2)';
+  const accent = 'var(--site-accent)';
   const mono = 'var(--font-mono)';
 
   const W = 340;

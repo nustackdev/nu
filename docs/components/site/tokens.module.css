@@ -8,82 +8,82 @@
 
 .tokens {
   /* --- Color: ink & rule ------------------------------------------------- */
-  --nu-ink:    #eae8f4;
-  --nu-ink-2:  #b3b0c8;
-  --nu-ink-3:  rgba(179, 176, 200, 0.82);
-  --nu-ink-4:  rgba(179, 176, 200, 0.55);
-  --nu-rule:   rgba(255, 255, 255, 0.08);
-  --nu-rule-2: rgba(255, 255, 255, 0.04);
+  --site-ink:    #eae8f4;
+  --site-ink-2:  #b3b0c8;
+  --site-ink-3:  rgba(179, 176, 200, 0.82);
+  --site-ink-4:  rgba(179, 176, 200, 0.55);
+  --site-rule:   rgba(255, 255, 255, 0.08);
+  --site-rule-2: rgba(255, 255, 255, 0.04);
 
   /* --- Color: page backgrounds ------------------------------------------ */
   /* Opaque dark blue-black scale. Elevation reads top-to-bottom:
      sunken < bg (page) < raised < overlay. */
-  --nu-bg:         #0f1117;
-  --nu-bg-raised:  #161923;
-  --nu-bg-sunken:  #0a0b10;
-  --nu-bg-overlay: #1c1f2a;
+  --site-bg:         #0f1117;
+  --site-bg-raised:  #161923;
+  --site-bg-sunken:  #0a0b10;
+  --site-bg-overlay: #1c1f2a;
 
   /* --- Color: surface & border ------------------------------------------ */
-  --nu-surface:   var(--nu-bg-raised);
-  --nu-surface-2: var(--nu-bg-overlay);
-  --nu-wash:      rgba(255, 255, 255, 0.03);
-  --nu-wash-2:    rgba(255, 255, 255, 0.06);
-  --nu-border-subtle:   rgba(255, 255, 255, 0.05);
-  --nu-border:          rgba(255, 255, 255, 0.08);
-  --nu-border-strong:   rgba(255, 255, 255, 0.12);
-  --nu-border-stronger: rgba(255, 255, 255, 0.24);
+  --site-surface:   var(--site-bg-raised);
+  --site-surface-2: var(--site-bg-overlay);
+  --site-wash:      rgba(255, 255, 255, 0.03);
+  --site-wash-2:    rgba(255, 255, 255, 0.06);
+  --site-border-subtle:   rgba(255, 255, 255, 0.05);
+  --site-border:          rgba(255, 255, 255, 0.08);
+  --site-border-strong:   rgba(255, 255, 255, 0.12);
+  --site-border-stronger: rgba(255, 255, 255, 0.24);
 
   /* --- Color: accents (brand) ------------------------------------------- */
   /* primary — purple. carries nustack identity everywhere. */
-  --nu-accent:      #a684ff;
-  --nu-accent-soft: rgba(166, 132, 255, 0.18);
-  --nu-accent-wash: rgba(166, 132, 255, 0.09);
-  --nu-accent-line: rgba(166, 132, 255, 0.44);
-  --nu-accent-glow: rgba(166, 132, 255, 0.34);
+  --site-accent:      #a684ff;
+  --site-accent-soft: rgba(166, 132, 255, 0.18);
+  --site-accent-wash: rgba(166, 132, 255, 0.09);
+  --site-accent-line: rgba(166, 132, 255, 0.44);
+  --site-accent-glow: rgba(166, 132, 255, 0.34);
 
   /* secondary — blue. section labels, indices, status pills. */
-  --nu-accent-2:      #6b96f2;
-  --nu-accent-2-soft: rgba(107, 150, 242, 0.18);
-  --nu-accent-2-wash: rgba(107, 150, 242, 0.08);
-  --nu-accent-2-line: rgba(107, 150, 242, 0.44);
-  --nu-accent-2-glow: rgba(107, 150, 242, 0.34);
+  --site-accent-2:      #6b96f2;
+  --site-accent-2-soft: rgba(107, 150, 242, 0.18);
+  --site-accent-2-wash: rgba(107, 150, 242, 0.08);
+  --site-accent-2-line: rgba(107, 150, 242, 0.44);
+  --site-accent-2-glow: rgba(107, 150, 242, 0.34);
 
   /* --- Color: hue palette (silver-woven) -------------------------------- */
   /* Every visualization on the landing pulls its accent from this set.
-     Sections/rows re-map --nu-accent[-2] to one of these hues at scope,
+     Sections/rows re-map --site-accent[-2] to one of these hues at scope,
      so shared primitives auto-recolor. */
-  --nu-hue-steel:      #9bb0d0;
-  --nu-hue-steel-soft: rgba(155, 176, 208, 0.18);
-  --nu-hue-steel-wash: rgba(155, 176, 208, 0.10);
-  --nu-hue-steel-line: rgba(155, 176, 208, 0.42);
+  --site-hue-steel:      #9bb0d0;
+  --site-hue-steel-soft: rgba(155, 176, 208, 0.18);
+  --site-hue-steel-wash: rgba(155, 176, 208, 0.10);
+  --site-hue-steel-line: rgba(155, 176, 208, 0.42);
 
-  --nu-hue-sage:       #a8c0af;
-  --nu-hue-sage-soft:  rgba(168, 192, 175, 0.18);
-  --nu-hue-sage-wash:  rgba(168, 192, 175, 0.10);
-  --nu-hue-sage-line:  rgba(168, 192, 175, 0.42);
+  --site-hue-sage:       #a8c0af;
+  --site-hue-sage-soft:  rgba(168, 192, 175, 0.18);
+  --site-hue-sage-wash:  rgba(168, 192, 175, 0.10);
+  --site-hue-sage-line:  rgba(168, 192, 175, 0.42);
 
-  --nu-hue-plum:       #bda2c8;
-  --nu-hue-plum-soft:  rgba(189, 162, 200, 0.18);
-  --nu-hue-plum-wash:  rgba(189, 162, 200, 0.10);
-  --nu-hue-plum-line:  rgba(189, 162, 200, 0.42);
+  --site-hue-plum:       #bda2c8;
+  --site-hue-plum-soft:  rgba(189, 162, 200, 0.18);
+  --site-hue-plum-wash:  rgba(189, 162, 200, 0.10);
+  --site-hue-plum-line:  rgba(189, 162, 200, 0.42);
 
-  --nu-hue-amber:      #dab88a;
-  --nu-hue-amber-soft: rgba(218, 184, 138, 0.18);
-  --nu-hue-amber-wash: rgba(218, 184, 138, 0.10);
-  --nu-hue-amber-line: rgba(218, 184, 138, 0.42);
+  --site-hue-amber:      #dab88a;
+  --site-hue-amber-soft: rgba(218, 184, 138, 0.18);
+  --site-hue-amber-wash: rgba(218, 184, 138, 0.10);
+  --site-hue-amber-line: rgba(218, 184, 138, 0.42);
 
-  --nu-hue-teal:       #a3ced4;
-  --nu-hue-teal-soft:  rgba(163, 206, 212, 0.18);
-  --nu-hue-teal-wash:  rgba(163, 206, 212, 0.10);
-  --nu-hue-teal-line:  rgba(163, 206, 212, 0.42);
+  --site-hue-teal:       #a3ced4;
+  --site-hue-teal-soft:  rgba(163, 206, 212, 0.18);
+  --site-hue-teal-wash:  rgba(163, 206, 212, 0.10);
+  --site-hue-teal-line:  rgba(163, 206, 212, 0.42);
 
-  --nu-silver-1: #dde1e8;
-  --nu-silver-2: #bcc2ce;
+  --site-silver-1: #dde1e8;
+  --site-silver-2: #bcc2ce;
 
   /* --- Color: code & chrome --------------------------------------------- */
-  --nu-code-bg:   rgba(255, 255, 255, 0.03);
-  --nu-code-bg-2: rgba(255, 255, 255, 0.02);
-  --nu-chrome-bg: color-mix(in oklab, var(--color-fd-muted) 55%, transparent);
+  --site-code-bg:   rgba(255, 255, 255, 0.03);
+  --site-code-bg-2: rgba(255, 255, 255, 0.02);
+  --site-chrome-bg: color-mix(in oklab, var(--color-fd-muted) 55%, transparent);
 
   /* --- Type: families --------------------------------------------------- */
   --font-display: "Inter", "InterVariable", ui-sans-serif, system-ui,
@@ -92,57 +92,57 @@
   --font-mono:    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 
   /* --- Type: size scale (8 steps covering all repeated site sizes) ------ */
-  --nu-fs-1: 10.5px;  /* micro caps  (Chip.sm, MonoKicker.xs, HeroViz hint, ideMeta) */
-  --nu-fs-2: 11px;    /* small mono  (MonoKicker.sm, Chip.md, HeroViz code, NumberedList.num) */
-  --nu-fs-3: 12px;    /* mono base   (MonoKicker.md, SiteButton ghost/repo, ideTab) */
-  --nu-fs-4: 12.5px;  /* small copy  (SiteButton repoLabel, ideGutter, ideCode) */
-  --nu-fs-5: 13px;    /* footer, blurbs */
-  --nu-fs-6: 13.5px;  /* SiteButton base, FloatingNav */
-  --nu-fs-7: 14.5px;  /* NumberedList item */
-  --nu-fs-8: 15px;    /* body text (AppsGrid/FabricsSection body max) */
-  --nu-fs-9:  17px;   /* body-lg  (heroTagline, sectionIntro) */
-  --nu-fs-10: 20px;   /* lede     (.tagline, .lede) */
-  --nu-fs-11: 24px;   /* h4       (entryName) */
-  --nu-fs-12: 32px;   /* h3       (sectionTitle) */
-  --nu-fs-13: 48px;   /* h2 */
-  --nu-fs-14: 64px;   /* h1 / slogan mobile */
-  --nu-fs-15: 88px;   /* display-sm / slogan tablet */
-  --nu-fs-16: 114px;  /* display  / slogan desktop */
-  --nu-fs-17: 200px;  /* watermark (chapterPeek) */
+  --site-fs-1: 10.5px;  /* micro caps  (Chip.sm, MonoKicker.xs, HeroViz hint, ideMeta) */
+  --site-fs-2: 11px;    /* small mono  (MonoKicker.sm, Chip.md, HeroViz code, NumberedList.num) */
+  --site-fs-3: 12px;    /* mono base   (MonoKicker.md, SiteButton ghost/repo, ideTab) */
+  --site-fs-4: 12.5px;  /* small copy  (SiteButton repoLabel, ideGutter, ideCode) */
+  --site-fs-5: 13px;    /* footer, blurbs */
+  --site-fs-6: 13.5px;  /* SiteButton base, FloatingNav */
+  --site-fs-7: 14.5px;  /* NumberedList item */
+  --site-fs-8: 15px;    /* body text (AppsGrid/FabricsSection body max) */
+  --site-fs-9:  17px;   /* body-lg  (heroTagline, sectionIntro) */
+  --site-fs-10: 20px;   /* lede     (.tagline, .lede) */
+  --site-fs-11: 24px;   /* h4       (entryName) */
+  --site-fs-12: 32px;   /* h3       (sectionTitle) */
+  --site-fs-13: 48px;   /* h2 */
+  --site-fs-14: 64px;   /* h1 / slogan mobile */
+  --site-fs-15: 88px;   /* display-sm / slogan tablet */
+  --site-fs-16: 114px;  /* display  / slogan desktop */
+  --site-fs-17: 200px;  /* watermark (chapterPeek) */
 
-  /* --- Type: role scale (semantic, resolves to atomic --nu-fs-N) --------
+  /* --- Type: role scale (semantic, resolves to atomic --site-fs-N) --------
    * Each role carries its own responsive story via @media reassignments
    * below. Consumers pick a role by intent; the role owns the breakpoints.
    * Sizes only — line-height/weight/tracking stay with the consumer. */
-  --nu-fs-display:   var(--nu-fs-16);  /* hero slogan, one per page */
-  --nu-fs-heading-1: var(--nu-fs-13);  /* section titles (h2) */
-  --nu-fs-heading-2: var(--nu-fs-11);  /* subsection titles (h3) */
-  --nu-fs-tagline:   var(--nu-fs-10);  /* accent phrase above a description */
-  --nu-fs-lede:      var(--nu-fs-10);  /* oversized intro paragraph */
-  --nu-fs-body:      var(--nu-fs-8);   /* default paragraph */
-  --nu-fs-label:     var(--nu-fs-5);   /* meta rows, captions, footer */
+  --site-fs-display:   var(--site-fs-16);  /* hero slogan, one per page */
+  --site-fs-heading-1: var(--site-fs-13);  /* section titles (h2) */
+  --site-fs-heading-2: var(--site-fs-11);  /* subsection titles (h3) */
+  --site-fs-tagline:   var(--site-fs-10);  /* accent phrase above a description */
+  --site-fs-lede:      var(--site-fs-10);  /* oversized intro paragraph */
+  --site-fs-body:      var(--site-fs-8);   /* default paragraph */
+  --site-fs-label:     var(--site-fs-5);   /* meta rows, captions, footer */
 
   /* --- Type: tracking scale --------------------------------------------- */
-  --nu-tr-tight:  -0.02em;
-  --nu-tr-normal: 0;
-  --nu-tr-wide:   0.14em;
-  --nu-tr-wider:  0.22em;
+  --site-tr-tight:  -0.02em;
+  --site-tr-normal: 0;
+  --site-tr-wide:   0.14em;
+  --site-tr-wider:  0.22em;
 
   /* --- Type: weights (only what's actually used) ------------------------ */
-  --nu-fw-normal:   400;
-  --nu-fw-medium:   500;
-  --nu-fw-semibold: 600;
-  --nu-fw-bold:     700;
-  --nu-fw-black:    800;
+  --site-fw-normal:   400;
+  --site-fw-medium:   500;
+  --site-fw-semibold: 600;
+  --site-fw-bold:     700;
+  --site-fw-black:    800;
 
   /* --- Space: minimalist gap ladder ------------------------------------- */
   /* Everything on the site should pick from this: 4× 2× × 0.5×. */
-  --nu-space-1: 10px;
-  --nu-space-2: 20px;
-  --nu-space-4: 40px;
-  --nu-space-8: 80px;
+  --site-space-1: 10px;
+  --site-space-2: 20px;
+  --site-space-4: 40px;
+  --site-space-8: 80px;
 
-  /* --- Space: rhythm scale (semantic, resolves to atomic --nu-space-N) ---
+  /* --- Space: rhythm scale (semantic, resolves to atomic --site-space-N) ---
    * Sized tiers, not role-paired. Consumers pick a tier by feel:
    *   tight  — descriptor→CTA, tightly-related lines
    *   normal — tagline→description, adjacent paragraphs
@@ -150,24 +150,24 @@
    *   xloose — outermost separations
    * Each carries its own responsive story via @media reassignments below.
    * Only rhythm/gap between text blocks — padding inside cells stays
-   * `calc(N * var(--kal-u))` per the existing convention. */
-  --nu-gap-tight:  var(--nu-space-1);
-  --nu-gap-normal: var(--nu-space-2);
-  --nu-gap-loose:  var(--nu-space-4);
-  --nu-gap-xloose: var(--nu-space-8);
+   * `calc(N * var(--site-kal-u))` per the existing convention. */
+  --site-gap-tight:  var(--site-space-1);
+  --site-gap-normal: var(--site-space-2);
+  --site-gap-loose:  var(--site-space-4);
+  --site-gap-xloose: var(--site-space-8);
 
   /* --- Space: padding & gap --------------------------------------------- */
-  --nu-pad-x: clamp(24px, 4vw, 56px);
+  --site-pad-x: clamp(24px, 4vw, 56px);
 
   /* --- Shape ------------------------------------------------------------ */
-  --nu-r-sm: 8px;
-  --nu-r-md: 10px;
-  --nu-r-lg: 14px;
-  --nu-t:    0.15s ease;
+  --site-r-sm: 8px;
+  --site-r-md: 10px;
+  --site-r-lg: 14px;
+  --site-t:    0.15s ease;
 
   /* --- Patterns --------------------------------------------------------- */
-  --nu-dot-grid: radial-gradient(circle at 1px 1px, var(--color-fd-border) 1.1px, transparent 1.4px);
-  --nu-dot-size: 22px 22px;
+  --site-dot-grid: radial-gradient(circle at 1px 1px, var(--color-fd-border) 1.1px, transparent 1.4px);
+  --site-dot-size: 22px 22px;
 }
 
 /* =============================================================================
@@ -182,24 +182,24 @@
  * .backends, .status, .useCases, .sectionIntro, .ctaRow). */
 @media (max-width: 1280px) {
   .tokens {
-    --nu-gap-normal: var(--nu-space-1);
-    --nu-gap-loose:  var(--nu-space-2);
-    --nu-gap-xloose: var(--nu-space-4);
+    --site-gap-normal: var(--site-space-1);
+    --site-gap-loose:  var(--site-space-2);
+    --site-gap-xloose: var(--site-space-4);
   }
 }
 /* Lede: 20 → 17 (from .lede's 1024 override). */
 @media (max-width: 1024px) {
-  .tokens { --nu-fs-lede: var(--nu-fs-9); }
+  .tokens { --site-fs-lede: var(--site-fs-9); }
 }
 /* Display: 88 → 64 (from sloganWord's 900 override). */
 @media (max-width: 900px) {
-  .tokens { --nu-fs-display: var(--nu-fs-14); }
+  .tokens { --site-fs-display: var(--site-fs-14); }
 }
 /* Heading-1: 48 → 32 (from .sectionTitle's 640 override). */
 @media (max-width: 640px) {
-  .tokens { --nu-fs-heading-1: var(--nu-fs-12); }
+  .tokens { --site-fs-heading-1: var(--site-fs-12); }
 }
 /* Display: 64 → 48 (from sloganWord's 560 override). */
 @media (max-width: 560px) {
-  .tokens { --nu-fs-display: var(--nu-fs-13); }
+  .tokens { --site-fs-display: var(--site-fs-13); }
 }

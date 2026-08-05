@@ -9,19 +9,19 @@ import { DiskStack } from './primitives/DiskStack';
  * Each glyph is a 480x220 canvas so the rows line up in FabricsSection.
  * Deliberately quieter than app mocks — these advertise a substrate shape,
  * not a running screen. Palette follows the row's silver-woven hue via
- * --nu-accent[-2] scope override in FabricsSection.module.css.
+ * --site-accent[-2] scope override in FabricsSection.module.css.
  */
 
 const MONO = 'var(--font-mono)';
-const RULE = 'var(--nu-rule)';
-const RULE_SOFT = 'var(--nu-rule-2)';
-const INK = 'var(--nu-ink)';
-const INK3 = 'var(--nu-ink-3)';
-const INK4 = 'var(--nu-ink-4)';
-const ACCENT = 'var(--nu-accent)';
-const ACCENT_WASH = 'var(--nu-accent-wash)';
-const ACCENT2 = 'var(--nu-accent-2)';
-const ACCENT2_WASH = 'var(--nu-accent-2-wash)';
+const RULE = 'var(--site-rule)';
+const RULE_SOFT = 'var(--site-rule-2)';
+const INK = 'var(--site-ink)';
+const INK3 = 'var(--site-ink-3)';
+const INK4 = 'var(--site-ink-4)';
+const ACCENT = 'var(--site-accent)';
+const ACCENT_WASH = 'var(--site-accent-wash)';
+const ACCENT2 = 'var(--site-accent-2)';
+const ACCENT2_WASH = 'var(--site-accent-2-wash)';
 
 const V = { w: 480, h: 220 } as const;
 

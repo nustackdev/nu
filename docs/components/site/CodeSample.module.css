@@ -8,29 +8,29 @@
  * .ideCode        actual code, monospaced, line-by-line divs so gutter aligns
  *
  * Token colors:
- *   .kw  keywords  → --nu-accent-2 (silver-woven steel in NuSection scope)
- *   .nu  nu API    → --nu-accent   (silver-woven teal  in NuSection scope)
+ *   .kw  keywords  → --site-accent-2 (silver-woven steel in NuSection scope)
+ *   .nu  nu API    → --site-accent   (silver-woven teal  in NuSection scope)
  *   .str strings   → silver ink
  *   .cmt comments  → dim ink, italic
  *
- * NuSection sets vizHue="teal" so --nu-accent[-2] remap to teal + steel.
+ * NuSection sets vizHue="teal" so --site-accent[-2] remap to teal + steel.
  * ==========================================================================*/
 
 .ide {
   width: 100%;
-  border: 1px solid var(--nu-border);
-  border-radius: var(--nu-r-md);
-  background: var(--nu-surface-2);
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-r-md);
+  background: var(--site-surface-2);
   overflow: hidden;
   font-family: var(--font-mono);
-  color: var(--nu-ink-2);
+  color: var(--site-ink-2);
 }
 
 /* ---- tab strip ---- */
 .ideTabs {
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid var(--nu-border-subtle);
+  border-bottom: 1px solid var(--site-border-subtle);
   background: rgba(0, 0, 0, 0.28);
   min-height: 34px;
 }
@@ -39,29 +39,29 @@
   align-items: center;
   gap: 8px;
   padding: 0 16px;
-  font-size: var(--nu-fs-3);
+  font-size: var(--site-fs-3);
   letter-spacing: 0.01em;
-  color: var(--nu-ink-3);
-  border-right: 1px solid var(--nu-border-subtle);
+  color: var(--site-ink-3);
+  border-right: 1px solid var(--site-border-subtle);
 }
 .ideTabActive {
-  color: var(--nu-ink);
-  background: var(--nu-wash);
-  border-bottom: 1px solid var(--nu-accent);
+  color: var(--site-ink);
+  background: var(--site-wash);
+  border-bottom: 1px solid var(--site-accent);
 }
 .ideTabDot {
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: var(--nu-accent);
+  background: var(--site-accent);
   flex: none;
 }
 .ideMeta {
   margin-left: auto;
   padding: 0 18px;
-  font-size: var(--nu-fs-1);
+  font-size: var(--site-fs-1);
   letter-spacing: 0.16em;
-  color: var(--nu-ink-4);
+  color: var(--site-ink-4);
   display: inline-flex;
   align-items: center;
 }
@@ -93,29 +93,29 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border: 1px solid var(--nu-border-subtle);
+  border: 1px solid var(--site-border-subtle);
   border-radius: 6px;
-  background: var(--nu-wash);
-  color: var(--nu-ink-3);
+  background: var(--site-wash);
+  color: var(--site-ink-3);
   cursor: pointer;
-  transition: color var(--nu-t), background var(--nu-t), border-color var(--nu-t);
+  transition: color var(--site-t), background var(--site-t), border-color var(--site-t);
 }
 .ideCopy:hover {
-  color: var(--nu-ink);
+  color: var(--site-ink);
   background: rgba(255, 255, 255, 0.06);
-  border-color: var(--nu-border);
+  border-color: var(--site-border);
 }
 .ideCopy:focus-visible {
-  outline: 2px solid var(--nu-accent);
+  outline: 2px solid var(--site-accent);
   outline-offset: 2px;
 }
 .ideGutter {
   flex: none;
   padding: 0 14px 0 20px;
   text-align: right;
-  border-right: 1px solid var(--nu-border-subtle);
-  color: var(--nu-ink-4);
-  font-size: var(--nu-fs-4);
+  border-right: 1px solid var(--site-border-subtle);
+  color: var(--site-ink-4);
+  font-size: var(--site-fs-4);
   line-height: 1.7;
   user-select: none;
   font-variant-numeric: tabular-nums;
@@ -127,9 +127,9 @@
   flex: 1 1 auto;
   min-width: 0;
   padding: 0 20px;
-  font-size: var(--nu-fs-4);
+  font-size: var(--site-fs-4);
   line-height: 1.7;
-  color: var(--nu-ink-2);
+  color: var(--site-ink-2);
   overflow-x: auto;
 }
 .ideLine {
@@ -139,8 +139,8 @@
   tab-size: 4;
 }
 
-/* token colors — sourced from site tokens (--nu-accent[-2] hue scope) */
-.kw  { color: var(--nu-accent-2); }
-.nu  { color: var(--nu-accent); }
-.str { color: var(--nu-ink); }
-.cmt { color: var(--nu-ink-4); font-style: italic; }
+/* token colors — sourced from site tokens (--site-accent[-2] hue scope) */
+.kw  { color: var(--site-accent-2); }
+.nu  { color: var(--site-accent); }
+.str { color: var(--site-ink); }
+.cmt { color: var(--site-ink-4); font-style: italic; }

@@ -31,7 +31,7 @@
 }
 .connectors path {
   fill: none;
-  stroke: var(--nu-ink-4);
+  stroke: var(--site-ink-4);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
@@ -52,9 +52,9 @@
   letter-spacing: -0.028em;
 }
 .blurb {
-  color: var(--nu-ink-3);
+  color: var(--site-ink-3);
   font-weight: 400;
-  font-size: var(--nu-fs-5);
+  font-size: var(--site-fs-5);
   line-height: 1.35;
   letter-spacing: 0;
 }
@@ -64,8 +64,8 @@
 .sizeLeaf .label   { font-size: clamp(19px, 1.8vw, 22px); }
 
 .sizeRoot .blurb   { font-size: 14px; margin-top: 4px; }
-.sizeBranch .blurb { font-size: var(--nu-fs-5); }
-.sizeLeaf .blurb   { font-size: var(--nu-fs-4); }
+.sizeBranch .blurb { font-size: var(--site-fs-5); }
+.sizeLeaf .blurb   { font-size: var(--site-fs-4); }
 
 /* ---- Mobile: cascade outline ---- */
 .treeMobile {
@@ -98,9 +98,9 @@
   letter-spacing: -0.028em;
 }
 .mBlurb {
-  color: var(--nu-ink-3);
+  color: var(--site-ink-3);
   font-weight: 400;
-  font-size: var(--nu-fs-4);
+  font-size: var(--site-fs-4);
   line-height: 1.35;
 }
 
@@ -109,7 +109,7 @@
   list-style: none;
   margin: 2px 0 0 28px;
   padding: 6px 0 6px 30px;
-  border-left: 1px solid var(--nu-ink-4);
+  border-left: 1px solid var(--site-ink-4);
   display: flex;
   flex-direction: column;
   gap: 11px;
@@ -128,7 +128,7 @@
   top: 11px;
   width: 20px;
   height: 1px;
-  background: var(--nu-ink-4);
+  background: var(--site-ink-4);
 }
 .mLeafLabel {
   font-size: 18px;
@@ -136,7 +136,7 @@
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
-.mLeaf .mBlurb { font-size: var(--nu-fs-3); }
+.mLeaf .mBlurb { font-size: var(--site-fs-3); }
 
 @media (max-width: 720px) {
   .treeDesktop { display: none; }

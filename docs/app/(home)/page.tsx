@@ -127,12 +127,14 @@ export default function Home() {
           <Cell>
             <CellContent pad="lg">
               <Lede>
-                Every app is a set of interactions between systems - a
-                database, a UI, AI agents, services. Nu makes interaction the
-                primitive: <strong>Refs</strong> name what you touch.{' '}
-                <strong>Interactions</strong> describe what to do with them.
-                Persistence, reactivity, atomicity, observability, and
-                scalability are inherent - not bolted on.
+                Every app is a set of interactions between systems: a database,
+                a UI, AI agents, and services. Nu makes interaction the
+                primitive: <strong>Refs</strong> name what you touch (a UI
+                widget, an LLM endpoint, a memory slot, a KV slot),{' '}
+                <strong>Interactions</strong> describe what to do with them
+                (read, write, branch, iterate, compose). Persistence,
+                reactivity, atomicity, observability, and scalability are
+                inherent, not bolted on.
               </Lede>
             </CellContent>
           </Cell>
@@ -391,12 +393,13 @@ export default function Home() {
               <SilverWovenName as="h3" hue="amber">nulog</SilverWovenName>
               <Stack gap="normal">
                 <Tagline>
-                  Pure-Python, serverless logger and metrics store.
+                  Pure-Python, serverless logger and metrics store. Billions of
+                  entries, live UI.
                 </Tagline>
                 <Description>
                   Log messages and observe metrics from any Python code. Entries
-                  persist to an embedded KV store (RocksDB, LMDB) and scale to
-                  billions, all in-process. One line boots a live viewer.
+                  persist to an embedded KV store and scale to billions,
+                  in-process. One line boots a live viewer.
                 </Description>
                 <CtaRow>
                   <SiteButton variant="repo" href="https://github.com/nustackdev/nulog">
@@ -423,10 +426,10 @@ export default function Home() {
                   A programmable knowledge base.
                 </Tagline>
                 <Description>
-                  nuspace is Nu made touchable: blocks and pages are Refs, UI
-                  edits are Interactions, automations and saved views are trees.
-                  Data, UI, and computation live in the same context, and the
-                  human and the code meet at a block&apos;s name.
+                  A knowledge base whose pages hold both writing, data and code
+                  as first-class citizens. Blocks store markdown, live metrics,
+                  saved searches, or automation rules, all in the same tree,
+                  all inspectable and composable.
                 </Description>
                 <Label>Status: Coming soon.</Label>
               </Stack>
@@ -464,11 +467,9 @@ export default function Home() {
                   </Tagline>
                 </Stack>
                 <Description>
-                  Virtuals gives you native-feeling Python collections that
-                  don&apos;t physically exist in memory. They&apos;re lazy views
-                  over tuple-key KV storage: define your structure, plug in a
-                  backend (RocksDB, LMDB, in-memory), get transactions and change
-                  notifications for free.
+                  Native-shaped Python collections that are thin views over an
+                  ordered KV store. Same API as a built-in dict or list, but
+                  the bytes stay on disk and stream in on access.
                 </Description>
                 <CtaRow>
                   <SiteButton href="/docs/virtuals"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
@@ -488,11 +489,8 @@ export default function Home() {
                   <Tagline>Transparent remote objects for Python.</Tagline>
                 </Stack>
                 <Description>
-                  You have an object. You move it to another process or node. The
-                  code that uses it doesn&apos;t change. Invisibles handles
-                  boxing, dispatch, and proxying so remote calls read exactly
-                  like local ones. Sync methods stay sync, async methods stay
-                  async.
+                  Move an object to another process or node; the calling code
+                  doesn&apos;t change. Sync stays sync, async stays async.
                 </Description>
                 <CtaRow>
                   <SiteButton href="/docs/invisibles"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
@@ -512,14 +510,12 @@ export default function Home() {
               <Stack gap="normal">
                 <Stack gap="tight">
                   <Heading level={2}>rdbpy</Heading>
-                  <Tagline>
-                    RocksDB bindings for Python, with transactions.
-                  </Tagline>
+                  <Tagline>RocksDB for Python, with transactions.</Tagline>
                 </Stack>
                 <Description>
-                  rdbpy bundles RocksDB and its compression libs into the wheel
-                  for Linux and macOS (Intel + Apple Silicon). No system install
-                  required. Import, open a DB, put/get/iterate.
+                  RocksDB and its compression libs bundled into the wheel for
+                  Linux and macOS. No system install. Open a DB and
+                  put/get/iterate.
                 </Description>
                 <CtaRow>
                   <SiteButton href="/docs/rdbpy"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>
@@ -536,16 +532,12 @@ export default function Home() {
               <Stack gap="normal">
                 <Stack gap="tight">
                   <Heading level={2}>kh57</Heading>
-                  <Tagline>
-                    Deterministic, stable, range-friendly reservoir sampling.
-                  </Tagline>
+                  <Tagline>Deterministic range reservoir sampling.</Tagline>
                 </Stack>
                 <Description>
-                  You have trillions of sorted-by-key items on disk. You want{' '}
-                  <code>n</code> uniform samples from a sub-range without pulling
-                  the whole thing. kh57 hashes each key into a level, stores
-                  under a compound sort key, and reservoir-samples the boundary
-                  level. Any sorted KV store works as a backend.
+                  Draw <code>n</code> uniform samples from a sub-range of a
+                  massive (billions) sorted KV dataset without scanning it. Any
+                  sorted KV store works as a backend.
                 </Description>
                 <CtaRow>
                   <SiteButton href="/docs/kh57"><BookOpen size={14} aria-hidden /><span>Read the docs</span></SiteButton>

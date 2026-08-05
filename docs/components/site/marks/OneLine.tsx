@@ -6,22 +6,22 @@ const MONO = 'var(--font-mono)';
 /**
  * OneLine — anatomy of one Nu interaction: `counter_ref.set(db_ref)`.
  *
- *   Two Ref chips (--nu-accent) drop from the two identifiers to a browser
+ *   Two Ref chips (--site-accent) drop from the two identifiers to a browser
  *   tab and a rocksdb disk (shared primitives). One Interaction chip
- *   (--nu-accent-2) drops from `.set(` between them.
+ *   (--site-accent-2) drops from `.set(` between them.
  *
  * Palette is scoped at the section level (InteractionModelSection wraps in
- * a hue-carrier that remaps --nu-accent → sage, --nu-accent-2 → steel), so
+ * a hue-carrier that remaps --site-accent → sage, --site-accent-2 → steel), so
  * this file stays semantic — it just says "Ref" and "Interaction".
  */
 export function OneLineSvg({ className }: { className?: string }) {
-  const accent = 'var(--nu-accent)';
-  const accentWash = 'var(--nu-accent-wash)';
-  const accentLine = 'var(--nu-accent-line)';
-  const accent2 = 'var(--nu-accent-2)';
-  const accent2Wash = 'var(--nu-accent-2-wash)';
-  const ink = 'var(--nu-ink)';
-  const ink3 = 'var(--nu-ink-3)';
+  const accent = 'var(--site-accent)';
+  const accentWash = 'var(--site-accent-wash)';
+  const accentLine = 'var(--site-accent-line)';
+  const accent2 = 'var(--site-accent-2)';
+  const accent2Wash = 'var(--site-accent-2-wash)';
+  const ink = 'var(--site-ink)';
+  const ink3 = 'var(--site-ink-3)';
 
   // canvas
   const W = 480;

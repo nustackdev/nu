@@ -9,13 +9,13 @@
   margin: 0;
   font-family: var(--font-mono);
   text-transform: uppercase;
-  color: var(--nu-ink-3);
+  color: var(--site-ink-3);
   font-variant-numeric: tabular-nums;
 }
 
-.xs { composes: kicker; font-size: var(--nu-fs-1); }
-.sm { composes: kicker; font-size: var(--nu-fs-2); }
-.md { composes: kicker; font-size: var(--nu-fs-3); }
+.xs { composes: kicker; font-size: var(--site-fs-1); }
+.sm { composes: kicker; font-size: var(--site-fs-2); }
+.md { composes: kicker; font-size: var(--site-fs-3); }
 
-.wide  { letter-spacing: var(--nu-tr-wide); }
-.wider { letter-spacing: var(--nu-tr-wider); }
+.wide  { letter-spacing: var(--site-tr-wide); }
+.wider { letter-spacing: var(--site-tr-wider); }

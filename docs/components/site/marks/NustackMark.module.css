@@ -4,11 +4,11 @@
   white-space: nowrap;
 }
 .nu {
-  color: var(--nu-accent, #a684ff);
+  color: var(--site-accent, #a684ff);
   font-weight: inherit;
 }
 .stack {
-  color: var(--nu-ink, currentColor);
+  color: var(--site-ink, currentColor);
   font-weight: inherit;
 }
 .mono .nu,

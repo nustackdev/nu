@@ -15,7 +15,7 @@
  *
  * Colors read from CSS custom properties — pass a `stroke` override for
  * fixed inks. The optional `chip` renders a small accent-wash pill on
- * the second-to-top platter face (--nu-accent* tokens).
+ * the second-to-top platter face (--site-accent* tokens).
  */
 export interface DiskStackProps {
   /** Horizontal center of the stack. */
@@ -30,7 +30,7 @@ export interface DiskStackProps {
   rx?: number;
   /** Ellipse half-height. Default 7. */
   ry?: number;
-  /** Stroke color for every element. Default var(--nu-ink-3). */
+  /** Stroke color for every element. Default var(--site-ink-3). */
   stroke?: string;
   /** Bare text label centered in the body between platter[1] and platter[2]. */
   bodyLabel?: {
@@ -60,7 +60,7 @@ export function DiskStack({
   platterGap = 22,
   rx = 36,
   ry = 7,
-  stroke = 'var(--nu-ink-3)',
+  stroke = 'var(--site-ink-3)',
   bodyLabel,
   chip,
 }: DiskStackProps) {
@@ -78,9 +78,9 @@ export function DiskStack({
     return 0.7 - 0.15 * (i - 1) * (1 / Math.max(1, middleCount));
   };
 
-  const accent = 'var(--nu-accent)';
-  const accentWash = 'var(--nu-accent-wash)';
-  const accentLine = 'var(--nu-accent-line)';
+  const accent = 'var(--site-accent)';
+  const accentWash = 'var(--site-accent-wash)';
+  const accentLine = 'var(--site-accent-line)';
 
   // Body chip / label center — sits in the gap between platter[gap] and
   // platter[gap+1].
@@ -125,7 +125,7 @@ export function DiskStack({
         />
       ))}
 
-      {/* body chip — accent-wash pill (--nu-accent* tokens) */}
+      {/* body chip — accent-wash pill (--site-accent* tokens) */}
       {chip && (
         <>
           <rect
@@ -163,7 +163,7 @@ export function DiskStack({
           y={bodyCy + (bodyLabel.fontSize ?? 13) / 3}
           textAnchor="middle"
           style={{
-            fill: bodyLabel.fill ?? 'var(--nu-ink)',
+            fill: bodyLabel.fill ?? 'var(--site-ink)',
             fontFamily: bodyLabel.fontFamily ?? MONO,
             fontSize: bodyLabel.fontSize ?? 13,
             fontWeight: bodyLabel.fontWeight ?? 700,

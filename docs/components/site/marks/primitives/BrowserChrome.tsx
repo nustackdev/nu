@@ -17,7 +17,7 @@ import s from '../marks.module.css';
  * (x + pad, y + chromeHeight + pad).
  *
  * All colors read from CSS custom properties, so the chrome auto-recolors
- * when a parent section overrides --nu-accent[-2] (fabric/apps rows do this
+ * when a parent section overrides --site-accent[-2] (fabric/apps rows do this
  * per-row; hero/interaction-model do it at the section wrap).
  */
 export interface BrowserChromeProps {
@@ -52,11 +52,11 @@ export function BrowserChrome({
   dotRadius = 2.2,
   dotSpacing = 8,
 }: BrowserChromeProps) {
-  const ink3 = 'var(--nu-ink-3)';
-  const ink4 = 'var(--nu-ink-4)';
-  const rule = 'var(--nu-rule)';
-  const ruleSoft = 'var(--nu-rule-2)';
-  const accent = 'var(--nu-accent)';
+  const ink3 = 'var(--site-ink-3)';
+  const ink4 = 'var(--site-ink-4)';
+  const rule = 'var(--site-rule)';
+  const ruleSoft = 'var(--site-rule-2)';
+  const accent = 'var(--site-accent)';
   const bg = 'var(--color-fd-background)';
   const mono = 'var(--font-mono)';
 
@@ -119,7 +119,7 @@ export function BrowserChrome({
             width={addressBarW}
             height={addressBarH}
             rx={2}
-            fill="var(--nu-code-bg-2)"
+            fill="var(--site-code-bg-2)"
             stroke={ruleSoft}
             strokeWidth={1}
             vectorEffect="non-scaling-stroke"

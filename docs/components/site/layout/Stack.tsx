@@ -13,7 +13,7 @@ interface Props {
 }
 
 /** Stack — flex container that owns rhythm.
- *  gap resolves to var(--nu-gap-{gap}). Defaults: column, normal. */
+ *  gap resolves to var(--site-gap-{gap}). Defaults: column, normal. */
 export function Stack({
   direction = 'column',
   gap = 'normal',

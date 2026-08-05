@@ -1,6 +1,6 @@
 /* Label — meta rows, backend/status lines, captions. Zero margin. */
 .label {
-  font-size: var(--nu-fs-label);
+  font-size: var(--site-fs-label);
   color: rgba(255, 255, 255, 0.55);
   margin: 0;
   letter-spacing: 0.02em;

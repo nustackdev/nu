@@ -5,7 +5,7 @@ import { gitConfig } from './shared';
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      title: <NustackMark />,
+      title: <NustackMark mono />,
     },
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
   };

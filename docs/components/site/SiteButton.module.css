@@ -2,7 +2,7 @@
  * SiteButton — every landing CTA/button collapses here.
  * Variants:
  *   neutral        transparent-white bg, hairline border (hero CTAs, section CTAs)
- *   hueTinted      reads --nu-accent-* from surrounding hue scope (fabric docs btn)
+ *   hueTinted      reads --site-accent-* from surrounding hue scope (fabric docs btn)
  *   primaryPurple  solid purple fill (hero quickstart)
  *   primaryBlue    solid blue fill (hero github)
  *   ghost          dashed, disabled ("coming soon")
@@ -14,48 +14,48 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  border-radius: var(--nu-r-md);
-  border: 1px solid var(--nu-border-strong);
-  background: var(--nu-wash);
-  color: var(--nu-ink);
+  border-radius: var(--site-r-md);
+  border: 1px solid var(--site-border-strong);
+  background: var(--site-wash);
+  color: var(--site-ink);
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: var(--nu-fs-6);
+  font-size: var(--site-fs-6);
   letter-spacing: 0.005em;
   text-decoration: none;
   cursor: pointer;
-  transition: background var(--nu-t), border-color var(--nu-t), color var(--nu-t);
+  transition: background var(--site-t), border-color var(--site-t), color var(--site-t);
 }
 
 .btn:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: var(--nu-border-stronger);
+  border-color: var(--site-border-stronger);
 }
 
 .btn > svg {
-  color: var(--nu-ink-2);
+  color: var(--site-ink-2);
   flex: none;
 }
 
 .arrow {
-  color: var(--nu-ink-3);
+  color: var(--site-ink-3);
   display: inline-flex;
   align-items: center;
 }
 
-/* ---- hueTinted — pulls from surrounding --nu-accent-* row scope ---------- */
+/* ---- hueTinted — pulls from surrounding --site-accent-* row scope ---------- */
 .hueTinted {
   composes: btn;
-  border-color: var(--nu-accent-line);
-  background: var(--nu-accent-wash);
+  border-color: var(--site-accent-line);
+  background: var(--site-accent-wash);
 }
 .hueTinted:hover {
-  background: var(--nu-accent-soft);
-  border-color: var(--nu-accent);
+  background: var(--site-accent-soft);
+  border-color: var(--site-accent);
 }
-.hueTinted > svg { color: var(--nu-accent); }
+.hueTinted > svg { color: var(--site-accent); }
 .arrowHue {
-  color: var(--nu-accent);
+  color: var(--site-accent);
   display: inline-flex;
   align-items: center;
 }
@@ -63,15 +63,15 @@
 /* ---- primary — solid brand fill ------------------------------------------ */
 .primaryPurple {
   composes: btn;
-  background: color-mix(in oklab, var(--nu-accent) 85%, black 15%);
-  border-color: color-mix(in oklab, var(--nu-accent) 40%, black 60%);
+  background: color-mix(in oklab, var(--site-accent) 85%, black 15%);
+  border-color: color-mix(in oklab, var(--site-accent) 40%, black 60%);
   color: white;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
-              0 6px 18px -8px var(--nu-accent-glow);
+              0 6px 18px -8px var(--site-accent-glow);
 }
 .primaryPurple:hover {
-  background: color-mix(in oklab, var(--nu-accent) 92%, black 8%);
-  border-color: color-mix(in oklab, var(--nu-accent) 35%, black 65%);
+  background: color-mix(in oklab, var(--site-accent) 92%, black 8%);
+  border-color: color-mix(in oklab, var(--site-accent) 35%, black 65%);
 }
 .primaryPurple > svg,
 .primaryPurple .arrow {
@@ -80,15 +80,15 @@
 
 .primaryBlue {
   composes: btn;
-  background: color-mix(in oklab, var(--nu-accent-2) 85%, black 15%);
-  border-color: color-mix(in oklab, var(--nu-accent-2) 40%, black 60%);
+  background: color-mix(in oklab, var(--site-accent-2) 85%, black 15%);
+  border-color: color-mix(in oklab, var(--site-accent-2) 40%, black 60%);
   color: white;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
-              0 6px 18px -8px var(--nu-accent-2-glow);
+              0 6px 18px -8px var(--site-accent-2-glow);
 }
 .primaryBlue:hover {
-  background: color-mix(in oklab, var(--nu-accent-2) 92%, black 8%);
-  border-color: color-mix(in oklab, var(--nu-accent-2) 35%, black 65%);
+  background: color-mix(in oklab, var(--site-accent-2) 92%, black 8%);
+  border-color: color-mix(in oklab, var(--site-accent-2) 35%, black 65%);
 }
 .primaryBlue > svg,
 .primaryBlue .arrow {
@@ -100,12 +100,12 @@
   display: inline-flex;
   align-items: center;
   padding: 9px 14px;
-  border-radius: var(--nu-r-md);
-  border: 1px dashed var(--nu-rule-2);
+  border-radius: var(--site-r-md);
+  border: 1px dashed var(--site-rule-2);
   background: transparent;
-  color: var(--nu-ink-3);
+  color: var(--site-ink-3);
   font-family: var(--font-mono);
-  font-size: var(--nu-fs-3);
+  font-size: var(--site-fs-3);
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: not-allowed;
@@ -117,28 +117,28 @@
   align-items: center;
   gap: 8px;
   padding: 9px 14px;
-  border-radius: var(--nu-r-md);
-  border: 1px solid var(--nu-accent-line);
-  background: var(--nu-accent-wash);
-  color: var(--nu-ink);
+  border-radius: var(--site-r-md);
+  border: 1px solid var(--site-accent-line);
+  background: var(--site-accent-wash);
+  color: var(--site-ink);
   font-family: var(--font-mono);
-  font-size: var(--nu-fs-3);
+  font-size: var(--site-fs-3);
   font-weight: 600;
   letter-spacing: 0.02em;
   text-decoration: none;
-  transition: background var(--nu-t), border-color var(--nu-t);
+  transition: background var(--site-t), border-color var(--site-t);
 }
 .repo:hover {
-  background: var(--nu-accent-soft);
-  border-color: var(--nu-accent);
+  background: var(--site-accent-soft);
+  border-color: var(--site-accent);
 }
 .arrowRepo {
-  color: var(--nu-accent);
+  color: var(--site-accent);
 }
 
 /* ---- mono repo label used inside neutral CTAs ---------------------------- */
 .repoLabel {
   font-family: var(--font-mono);
-  font-size: var(--nu-fs-4);
+  font-size: var(--site-fs-4);
   letter-spacing: 0;
 }
