@@ -16,8 +16,8 @@ class App(nu.ui.Index):
 
 
 app = nu.With(
-    nu.v.presets.rocksdb_navigator(".dbcounter"),
-    nu.ui.nudle.server(
+    nu.v.rocksdb_navigator(".dbcounter"),
+    nu.ui.server(
         nu.v.auto_flow_atomic(
             nu.ReactForever(
                 Counter.value.on_change(),
@@ -27,10 +27,11 @@ app = nu.With(
     ),
     body=nu.v.auto_flow_atomic(
         nu.IfDo(Counter.value.missing(), Counter.value.set(0))
-        >> nu.ForeverDo(Counter.value.inc() >> nu.Delay(1.0))
+        >> nu.ForeverDo(
+            Counter.value.inc() >> nu.Delay(1.0),
+        )
     ),
 )
-
 
 if __name__ == "__main__":
     import asyncio

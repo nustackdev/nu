@@ -23,8 +23,8 @@ class Counter(nu.Shape):
 
 
 tree = nu.With(
-    nu.v.presets.rocksdb_navigator(".dbtest"),
-    body=(
+    nu.v.rocksdb_navigator(".dbcounter"),
+    body=nu.v.auto_flow_atomic(
         nu.IfDo(Counter.value.missing(), Counter.value.set(0))
         >> nu.ForeverDo(
             Counter.value.inc() >> nu.print(Counter.value) >> nu.Delay(1.0),
@@ -34,7 +34,7 @@ tree = nu.With(
 
 
 if __name__ == "__main__":
-    asyncio.run(nu.arun(nu.v.auto_flow_atomic(tree)))
+    asyncio.run(nu.arun(tree))
 ```
 
 Run it:
@@ -43,7 +43,7 @@ Run it:
 python counter.py
 ```
 
-You see `1`, `2`, `3`, ... one per second. Stop it with Ctrl-C. Run again. It resumes: `12`, `13`, `14`. The number lived through the restart, in a RocksDB directory called `.dbtest` next to your script.
+You see `1`, `2`, `3`, ... one per second. Stop it with Ctrl-C. Run again. It resumes: `12`, `13`, `14`. The number lived through the restart, in a RocksDB directory called `.dbcounter` next to your script.
 
 ### The new concepts
 
@@ -51,7 +51,7 @@ A **Shape** is a class that declares the data your program has. `Counter` has on
 
 A **Ref** is a typed address for a piece of data. `Counter.value` is not an integer; it is a handle that points at where the integer lives. To read it, some atom in the tree reads through it. To write it, some atom writes through it. `Counter.value.inc()` is a Command that reads-and-writes through the Ref.
 
-`nu.With` binds Fabrics for the tree it wraps. Here it binds the RocksDB Navigator to the path `.dbtest`, and the tree in `body=` runs against it. `nu.IfDo(Counter.value.missing(), Counter.value.set(0))` seeds the counter to 0 the first time it runs, and does nothing on later runs.
+`nu.With` binds Fabrics for the tree it wraps. Here it binds the RocksDB Navigator to the path `.dbcounter`, and the tree in `body=` runs against it. `nu.IfDo(Counter.value.missing(), Counter.value.set(0))` seeds the counter to 0 the first time it runs, and does nothing on later runs.
 
 Ignore `nu.v.auto_flow_atomic` for now. It wraps writes in the transactions the storage Fabric needs. You will meet it properly later.
 
@@ -85,9 +85,9 @@ ui = nu.ReactForever(
 )
 
 tree = nu.With(
-    nu.v.presets.rocksdb_navigator(".dbtest"),
-    nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
-    body=(
+    nu.v.rocksdb_navigator(".dbcounter"),
+    nu.ui.server(nu.v.auto_flow_atomic(ui)),
+    body=nu.v.auto_flow_atomic(
         nu.IfDo(Counter.value.missing(), Counter.value.set(0))
         >> nu.ForeverDo(
             Counter.value.inc() >> nu.Delay(1.0),
@@ -97,7 +97,7 @@ tree = nu.With(
 
 
 if __name__ == "__main__":
-    asyncio.run(nu.arun(nu.v.auto_flow_atomic(tree)))
+    asyncio.run(nu.arun(tree))
 ```
 
 Run it. A browser tab opens on `http://localhost:8080`. The page shows the counter, ticking once a second. Kill the process, restart it, refresh the tab: same live mirror.
@@ -106,7 +106,7 @@ Run it. A browser tab opens on `http://localhost:8080`. The page shows the count
 
 A **Fabric** is a backend Nu talks to. Storage is one Fabric (RocksDB, in-memory). The browser UI is another. Each has its own Shapes: `nu.Shape` and `nu.v.IntRef` live on the storage Fabric; `nu.ui.Page` and `nu.ui.TextRef` live on the UI Fabric. Same declaration style, different Fabric. `App` is the site index, and `nu.ui.Pages({"/": Dashboard})` mounts `Dashboard` at `/`.
 
-`nu.With` now binds two Fabrics: the RocksDB Navigator and the `nudle` UI server. The server takes a tree to run whenever it needs to update the UI.
+`nu.With` now binds two Fabrics: the RocksDB Navigator and the UI server. The server takes a tree to run whenever it needs to update the UI.
 
 That tree uses **reactivity**. `nu.ReactForever(source, body)` subscribes to a change source and re-runs the body every time it fires. `Counter.value.on_change()` is a change source that fires every time the int at `Counter.value` is written. The body copies the current value into the UI Ref: `Dashboard.count.set(Counter.value)`. That is what makes the browser mirror the tick.
 

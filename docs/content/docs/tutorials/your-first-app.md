@@ -21,8 +21,8 @@ class App(nu.ui.Index):
 
 
 app = nu.With(
-    nu.v.presets.rocksdb_navigator(".dbtest"),
-    nu.ui.presets.server(
+    nu.v.rocksdb_navigator(".dbcounter"),
+    nu.ui.server(
         nu.v.auto_flow_atomic(
             nu.ReactForever(
                 Counter.value.on_change(),
@@ -30,7 +30,7 @@ app = nu.With(
             ),
         ),
     ),
-    body=(
+    body=nu.v.auto_flow_atomic(
         nu.IfDo(Counter.value.missing(), Counter.value.set(0))
         >> nu.ForeverDo(
             Counter.value.inc() >> nu.Delay(1.0),
@@ -42,7 +42,7 @@ app = nu.With(
 if __name__ == "__main__":
     import asyncio
 
-    asyncio.run(nu.arun(nu.v.auto_flow_atomic(app)))
+    asyncio.run(nu.arun(app))
 ```
 
 Set up Nu with the `nu.ui` Fabric first: see [Install](../how-to/install). Then save the code above as `counter.py`, run `python counter.py`, open the browser tab that appears. The counter ticks once a second; the dashboard mirrors it live. Kill it, run again, it picks up where it left off.
@@ -51,10 +51,10 @@ Set up Nu with the `nu.ui` Fabric first: see [Install](../how-to/install). Then 
 
 **Two Shapes, two Fabrics.** `Counter` holds one int on the virtuals Fabric. `Dashboard` holds one text label on the UI Fabric. `App` is the site index with one page mounted at `/`. Same declaration style, different Fabric.
 
-**One tree, two presets.** `nu.With` binds a RocksDB-backed virtuals Navigator and a UI server. The server runs `ReactForever` — wake on `Counter.value` change, mirror it into `Dashboard.count`. The `body` seeds the counter if missing, then ticks it forever, one second between beats.
+**One tree, two Fabrics.** `nu.With` binds a RocksDB-backed virtuals Navigator and a UI server. The server runs `ReactForever` — wake on `Counter.value` change, mirror it into `Dashboard.count`. The `body` seeds the counter if missing, then ticks it forever, one second between beats.
 
 **Composition.** `>>` runs children left-to-right. `ForeverDo` loops its body forever. `ReactForever` subscribes to a change source and re-runs on every fire. `auto_flow_atomic` wraps writes in the minimum atomic region so you get transactions without spelling them out.
 
 ## One tree, two Fabrics
 
-Same operators, same brackets, same loops. The Fabric changes; the composition doesn't. Swap `rocksdb_navigator(".dbtest")` for `memory_navigator()` and the counter resets on every restart. Drop the UI preset and it becomes a headless script.
+Same operators, same brackets, same loops. The Fabric changes; the composition doesn't. Swap `rocksdb_navigator(".dbcounter")` for `memory_navigator()` and the counter resets on every restart. Drop the UI server and it becomes a headless script.

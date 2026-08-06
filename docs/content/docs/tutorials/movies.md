@@ -42,7 +42,7 @@ seed = nu.v.Transaction(
 
 
 tree = nu.With(
-    nu.v.presets.memory_navigator(),
+    nu.v.memory_navigator(),
     body=seed >> nu.v.Snapshot(nu.print(State.movies, State.total, State.watched)),
 )
 
@@ -131,8 +131,8 @@ hydrate = nu.v.Snapshot(
 ui = App.title.set("movies") >> hydrate
 
 tree = nu.With(
-    nu.v.presets.rocksdb_navigator(".dbmovies"),
-    nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
+    nu.v.rocksdb_navigator(".dbmovies"),
+    nu.ui.server(nu.v.auto_flow_atomic(ui)),
     body=nu.v.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
 )
 
@@ -372,8 +372,8 @@ on_add = nu.ReactForever(
 ui = App.title.set("movies") >> hydrate >> on_add
 
 tree = nu.With(
-    nu.v.presets.rocksdb_navigator(".dbmovies"),
-    nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
+    nu.v.rocksdb_navigator(".dbmovies"),
+    nu.ui.server(nu.v.auto_flow_atomic(ui)),
     body=nu.v.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
 )
 

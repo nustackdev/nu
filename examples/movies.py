@@ -393,8 +393,8 @@ ui = (
 
 
 app = nu.With(
-    nu.v.presets.rocksdb_navigator(".dbmovies"),
-    nu.ui.nudle.server(nu.v.auto_flow_atomic(ui)),
+    nu.v.rocksdb_navigator(".dbmovies"),
+    nu.ui.server(nu.v.auto_flow_atomic(ui)),
     body=nu.v.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
 )
 
