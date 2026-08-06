@@ -1,10 +1,59 @@
-<img width="1600" height="333" alt="image" src="https://github.com/user-attachments/assets/a98f0916-8867-4824-9459-bb70f16a85b6" />
+<div align="center">
+  <table>
+    <tbody>
+      <tr>
+        <td>Drop a star to support Nu ⭐</td>
+        <td>
+          <a href="https://discord.gg/tCa8YE7XVr">Join the Nu Discord community</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
-# Nu – the interaction primitive.
+<div align="center">
+  <img width="1600" alt="Nu" src="https://github.com/user-attachments/assets/a98f0916-8867-4824-9459-bb70f16a85b6" />
+  <h3>
+    Nu – the interaction primitive
+  </h3>
+  Build apps in one primitive that spans your whole stack — databases, UIs, AI agents, and services. No glue. 50x less code.
+</div>
 
-Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code.
+<br/>
 
-Every app is a set of interactions between systems: a database, a UI, AI agents, and services. Nu makes interaction the primitive:
+<div align="center">
+
+  [![Discord](https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/tCa8YE7XVr)
+  [![Twitter Follow](https://img.shields.io/twitter/follow/nustackdev?style=social)](https://twitter.com/nustackdev)
+
+  [![Platform Support](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-blue)]()
+  [![PyPI - Python Version](https://img.shields.io/badge/python-%3E%3D%203.12-blue)](https://pypi.org/project/nustack-py/)
+  [![PyPI Package](https://img.shields.io/pypi/v/nustack-py?color=yellow)](https://pypi.org/project/nustack-py/)
+  [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0)
+  [![PyPI Downloads](https://img.shields.io/pypi/dw/nustack-py?color=green)](https://pypi.org/project/nustack-py/)
+
+</div>
+
+<br/>
+
+---
+
+<h3 align="center">
+  <a href="#ℹ️-about"><b>About</b></a> &bull;
+  <a href="#-ecosystem"><b>Ecosystem</b></a> &bull;
+  <a href="#-quick-start"><b>Quick Start</b></a> &bull;
+  <a href="https://github.com/nustackdev/nu/tree/main/examples"><b>Examples</b></a> &bull;
+  <a href="https://nustack.dev/docs"><b>Documentation</b></a> &bull;
+  <a href="#-community"><b>Community</b></a>
+</h3>
+
+---
+
+# ℹ️ About
+
+Nu is a Python programming model that makes **interaction** the primitive.
+
+Every app is a set of interactions between systems: a database, a UI, AI agents, services. Nu names those interactions directly:
 
 - **Ref** names what you touch. A KV slot, a UI widget, an LLM endpoint, a memory slot, a remote object.
 - **Interaction** describes what to do with it. Read, write, branch, iterate, compose.
@@ -53,23 +102,41 @@ if __name__ == "__main__":
 
 Run it, open the browser tab. The counter ticks once a second, the dashboard mirrors it live. Kill it, run again, it picks up where it left off.
 
-More examples in [`examples/`](examples/). Full walkthrough at [nustack.dev/docs](https://nustack.dev/docs).
+More in [`examples/`](examples/). Full walkthrough at [nustack.dev/docs](https://nustack.dev/docs).
 
-## Fabrics
+# 🌍 Ecosystem
 
-A Fabric implements Refs against one backend. Nu ships five in-tree.
+Nu is built as a stack. In-tree fabrics ship with Nu; the infra libraries and apps live in their own repos.
+
+## Fabrics (in-tree)
+
+Each fabric binds Refs to a real backend. Swap the fabric, keep the tree.
 
 | Fabric | What |
 | --- | --- |
-| `nu.m` | In-process substrate. Zero-config default for tests, notebooks, cache. |
-| `nu.v` | Persistent substrate backed by `virtuals`. Virtual Python collections over RocksDB, LMDB, more. |
-| `nu.ui` | Refs on screen. Binds Nu Refs to a live browser tab. |
-| `nu.invisibles` | Location-independent Nus. Transparent RPC across processes and machines. |
-| `nu.ray` | Compute across the cluster. Scale Nu on Ray without leaving the model. |
+| [`nu.mem`](https://nustack.dev/docs/reference/fabrics/mem) | In-memory state on plain dicts. Zero-config default for tests, notebooks, cache. |
+| [`nu.v`](https://nustack.dev/docs/reference/fabrics/virtuals) | Persistent state over RocksDB / LMDB. Transactions, snapshots, change notifications. |
+| [`nu.ui`](https://nustack.dev/docs/reference/fabrics/ui) | Refs on screen. Binds Nu Refs to a live browser tab. |
+| [`nu.invisibles`](https://nustack.dev/docs/reference/fabrics/invisibles) | Location-independent Nus. Transparent RPC across processes and machines. |
+| [`nu.ray`](https://nustack.dev/docs/reference/fabrics/ray) | Cluster compute. Teleport a Nu tree to any Ray worker. |
 
-Swap the Fabric, keep the tree. Same program runs against different substrates.
+## Apps built on Nu
 
-## Install
+End-user tools written as Nu programs.
+
+| Repo | What |
+| --- | --- |
+| [nustackdev/nulog](https://github.com/nustackdev/nulog) | Pure-Python, serverless logger + metrics store. Billions of entries, live UI. |
+
+## Spec
+
+| Repo | What |
+| --- | --- |
+| [nustackdev/interaction-model](https://github.com/nustackdev/interaction-model) | Language-agnostic specification of the interaction primitive. |
+
+# 🏁 Quick Start
+
+## 1. Install
 
 Python 3.12+.
 
@@ -77,16 +144,48 @@ Python 3.12+.
 pip install "nustack-py[all]"
 ```
 
-See [nustack.dev/docs/how-to/install](https://nustack.dev/docs/how-to/install) for lean installs and source builds.
+For lean installs and source builds see [nustack.dev/docs/how-to/install](https://nustack.dev/docs/how-to/install).
 
-## Apps built on Nu
+## 2. Write a Nu app
 
-- [nulog](https://github.com/nustackdev/nulog). Structured logging as a Nu app. Handles billions of entries, UI dashboard out of the box.
+```python
+import nu
 
-## Status
+nu.run(nu.print("Hello, Nu!"))
+```
 
-Alpha. APIs will break.
+## 3. Run it
 
-## License
+```shell
+python my_app.py
+```
+
+# 🛣️ Roadmap
+
+TODO.
+
+# 👥 Community
+
+## Nu README badge
+
+Add a Nu badge to your README if you're building on Nu:
+
+[![Nu](https://img.shields.io/badge/built%20with-Nu-%237A4CE0)](https://github.com/nustackdev/nu)
+
+```
+[![Nu](https://img.shields.io/badge/built%20with-Nu-%237A4CE0)](https://github.com/nustackdev/nu)
+```
+
+## Contributing to Nu
+
+Considering contributing to Nu? Start by opening an issue or a PR — the codebase is small and readable, and the model is stable enough to build on.
+
+## More questions?
+
+1. [Read the docs](https://nustack.dev/docs)
+2. [Open a feature request or report a bug](https://github.com/nustackdev/nu/issues)
+3. [Join the Discord community](https://discord.gg/tCa8YE7XVr)
+
+# License
 
 Apache-2.0
