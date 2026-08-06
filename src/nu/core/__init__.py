@@ -84,6 +84,8 @@ from nu.core.cast import (
     ToSet,
     ToStr,
     ToTuple,
+)
+from nu.core.cast_fns import (
     dict,
     float,
     frozenset,
