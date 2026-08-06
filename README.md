@@ -12,15 +12,6 @@ Every app is a set of interactions between systems: a database, a UI, AI agents,
 
 Persistence, reactivity, atomicity, observability, and scalability are inherent, not bolted on.
 
-## The interaction model
-
-Nu, the one core atom, splits into two:
-
-- **Ref**: address to any resource.
-- **Interaction**: the work over Refs.
-
-Compose them into a tree. That is a Nu program.
-
 ## Example
 
 A dashboard on a live counter that persists across restarts. One Nu tree, two Fabrics.
