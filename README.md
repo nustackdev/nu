@@ -56,7 +56,7 @@ Every app is a set of interactions between systems: a database, a UI, AI agents,
 
 - **Ref** names what you touch. A KV slot, a UI widget, an LLM endpoint, a memory slot, a remote object.
 - **Interaction** describes what to do with it. Read, write, branch, iterate, compose.
-- **Fabric** binds Refs to a real backend. Swap the Fabric, keep the tree.
+- **Fabric** binds Refs to a real backend.
 
 Persistence, reactivity, atomicity, observability, and scalability are inherent, not bolted on.
 
