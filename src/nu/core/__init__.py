@@ -102,13 +102,6 @@ from nu.core.io import Input, Print, input, print
 from nu.core.iteration import Enumerate, Iter, Next, Reversed, Zip
 from nu.core.literal import Literal
 from nu.core.logical import And, Not, Or, ToBool, bool
-from nu.core.reactive import (
-    OnChange,
-    OnChildChange,
-    OnChildrenChange,
-    OnDescendantsChange,
-    OnPrimitiveChange,
-)
 from nu.core.reduction import (
     AllOf,
     AnyOf,
@@ -148,6 +141,13 @@ from nu.core.transform import (
     SortBy,
     Sorted,
     Unique,
+)
+from nu.reactive.interactions import (
+    OnChange,
+    OnChildChange,
+    OnChildrenChange,
+    OnDescendantsChange,
+    OnPrimitiveChange,
 )
 
 

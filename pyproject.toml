@@ -22,7 +22,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nustack-py"
-version = "0.1.4"
+version = "0.1.5"
 description = "The interaction primitive. Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code."
 readme = "README.md"
 license = "Apache-2.0"
@@ -43,37 +43,40 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-# Fabrics — accessed as nu.virtuals / nu.mem / nu.ui (not exposed on the top-level nu namespace).
+# One extra per fabric; the name matches the ``nu.<fabric>`` import path.
+# Bare install (no extras) has no third-party deps -- ``import nu`` works,
+# and touching a fabric you did not install raises ImportError telling you
+# which extra to add.
 virtuals = [
     "virtuals-py>=0.1.2",
 ]
 mem = [
     "janus>=2.0.0",
 ]
-nudle = [
+ui = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.30.0",
     "msgpack>=1.1.2",
     "watchfiles>=0.24.0",
     "nudle>=0.1.1",
 ]
-default = [
-    "nustack-py[virtuals]",
-    "nustack-py[mem]",
-]
-infra = [
-    "nustack-py[default]",
-    "virtuals-py[rocksdb]>=0.1.2",
-    "redis",
-]
-distributed = [
-    "nustack-py[infra]",
-    "invisibles-py",
+ray = [
     "ray>=2.0",
 ]
+invisibles = [
+    "invisibles-py",
+]
+# Everything, including the RocksDB storage backend (pulled through virtuals).
+# rdbpython ships wheels for cp39-cp314 on macOS (x86_64/arm64) and manylinux
+# x86_64; Windows and linux-aarch64 users hit a source build. If that becomes
+# a support burden, gate the rocksdb line with environment markers.
 all = [
-    "nustack-py[distributed]",
-    "nustack-py[nudle]",
+    "nustack-py[virtuals]",
+    "nustack-py[mem]",
+    "nustack-py[ui]",
+    "nustack-py[ray]",
+    "nustack-py[invisibles]",
+    "virtuals-py[rocksdb]>=0.1.2",
 ]
 
 [project.urls]
@@ -124,8 +127,11 @@ examples = [
     "aiohttp",
 ]
 local = [
-    "nustack-py[distributed]",
-    "nustack-py[nudle]",
+    "nustack-py[all]",
+    # virtuals eager-imports its RedisPublisher backend; pull redis here so
+    # dev tests can collect. Not needed by any nu extra -- upstream should
+    # lazy-import that backend, at which point this line can go.
+    "redis",
 ]
 
 # =============================================================================

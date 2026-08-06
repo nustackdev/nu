@@ -248,6 +248,6 @@ class ReactiveSetForm(
 
     def on_change(self) -> object:
         """Subscribe to any change on this set slot."""
-        from nu.core.reactive import OnChange
+        from nu.reactive import OnChange
 
         return OnChange(self)

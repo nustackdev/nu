@@ -26,13 +26,13 @@ from nu.lang import Form
 
 
 if TYPE_CHECKING:
-    from nu.core.reactive import OnPrimitiveChange
     from nu.domains.shape.interactions import (
         Erase,
         Exists,
         Missing,
         SetCmd,
     )
+    from nu.reactive import OnPrimitiveChange
 
 
 __all__ = [
@@ -88,6 +88,6 @@ class ReactiveItemForm(MutableItemForm):
         ``parent.on_child_change(address)``: one uniform path across
         substrates, no per-substrate override needed.
         """
-        from nu.core.reactive import OnPrimitiveChange
+        from nu.reactive import OnPrimitiveChange
 
         return OnPrimitiveChange(self)

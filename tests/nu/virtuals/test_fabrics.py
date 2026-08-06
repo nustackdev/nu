@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from nu.lang import Context
+from nu.reactive import ObserverProtocol
 from nu.virtuals.fabrics import (
     Codec,
     InMemoryObserver,
@@ -38,7 +39,6 @@ from nu.virtuals.fabrics import (
     binary_kwargs,
     text_kwargs,
 )
-from virtuals.tkv.observer import ObserverProtocol
 
 
 if TYPE_CHECKING:
@@ -138,7 +138,7 @@ async def test_inmemory_observer_async_lifecycle():
 
 def test_inmemory_observer_binds_under_observer_protocol():
     """Observer fabrics carry ``_nu_bind_as = ObserverProtocol`` so
-    ``nu.core.reactive`` queries can resolve "the observer" without
+    ``nu.reactive`` queries can resolve "the observer" without
     knowing which backend is active.
     """
     assert InMemoryObserver._nu_bind_as is ObserverProtocol

@@ -15,10 +15,10 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from nu.core._stream import aiter_any
-from nu.core.reactive import OnChildrenChange
 from nu.domains.shape.interactions import AdvanceCursor
 from nu.lang import StreamQuery
 from nu.lang.sentinels import EMPTY
+from nu.reactive import OnChildrenChange
 
 
 if TYPE_CHECKING:

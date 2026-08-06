@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from nu.core.reactive import OnChange, OnChildChange, OnChildrenChange
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     Erase,
@@ -13,6 +12,7 @@ from nu.domains.shape.interactions import (
 from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
 from nu.domains.shape.refs.sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
 from nu.forms.primitives import Int
+from nu.reactive import OnChange, OnChildChange, OnChildrenChange
 
 
 class MyShape(Shape):

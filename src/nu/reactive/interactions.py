@@ -1,4 +1,4 @@
-"""Reactive change subscriptions -- unified core interface.
+"""Reactive change subscriptions -- unified interaction atoms.
 
 Five queries, one place. Every reactive subscription in Nu -- generic Form
 observation, tree-aware shape observation, and substrate-leaf observation --
@@ -26,10 +26,9 @@ lives here so callers reach for one namespace regardless of what they hold.
                                   ``StructuredRef`` substrate that provides
                                   navigation already does).
 
-Post-split (virtuals publisher/observer split): view methods return
-``SubscriptionOptions`` -- pure filter descriptors, no observer coupling.
-Each query resolves the process-scope ``ObserverProtocol`` from ctx and
-calls ``observer.subscribe(options)`` to obtain the ``Subscription``.
+View methods return an opaque ``options`` value -- a pure filter descriptor,
+no observer coupling. Each query resolves the process-scope
+``ObserverProtocol`` from ctx and calls ``observer.subscribe(options)``.
 
 Sentinel handling. If the underlying view resolves to ``EMPTY`` / ``INVALID``
 (the address is unbound, the intermediate container is missing), the
@@ -39,12 +38,7 @@ with the rest of ``nu.core``.
 Sync path. Building a real subscription requires calling into an Observer,
 which is a lifecycle-managed resource that lives inside an async runtime.
 The sync ``_compile`` paths raise ``RuntimeError`` to make the boundary
-loud rather than silently returning stale ``SubscriptionOptions``.
-
-Naming. v1 called these ``OnChange`` / ``OnChildChange`` / ``OnChildrenChange``
-/ ``OnDescendantsChange`` / ``OnPrimitiveChangeOp``; v2 adds the ``Query``
-suffix for the atom-class convention. The interface (arity, method call, yield
-value) is unchanged.
+loud rather than silently returning stale options.
 """
 
 from __future__ import annotations
@@ -53,7 +47,7 @@ from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
-from virtuals.tkv.observer import ObserverProtocol
+from nu.reactive.protocol import ObserverProtocol
 
 
 if TYPE_CHECKING:

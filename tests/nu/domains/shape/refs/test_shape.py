@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-from nu.core.reactive import OnChange, OnChildChange
 from nu.domains.shape.dsl import Shape, Slot
 from nu.domains.shape.interactions import (
     Erase,
@@ -15,6 +14,7 @@ from nu.domains.shape.interactions import (
 from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.refs.item import ItemRef
 from nu.domains.shape.refs.shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
+from nu.reactive import OnChange, OnChildChange
 
 
 class Inner(Shape):

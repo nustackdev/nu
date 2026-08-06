@@ -5,7 +5,7 @@ change observation) with ``PrimitiveRef`` (virtuals leaf navigation). Typed
 refs (``IntRef``, ``StrRef``, ...) add the matching primitive Form so the value
 carries its full operator interface.
 
-Reactivity is uniform: ``ReactiveItemForm.on_change()`` -> ``nu.core.reactive
+Reactivity is uniform: ``ReactiveItemForm.on_change()`` -> ``nu.reactive
 .OnPrimitiveChange`` calls ``ref._afetch_parent`` + ``ref._aaddress`` on the
 leaf, and the virtuals ``PrimitiveRef`` implements both -- no substrate-side
 override needed.

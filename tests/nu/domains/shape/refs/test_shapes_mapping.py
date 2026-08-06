@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from nu.core.reactive import OnChange, OnChildChange
 from nu.domains.shape.dsl import Shape, Slot
 from nu.domains.shape.interactions import (
     Erase,
@@ -17,6 +16,7 @@ from nu.domains.shape.refs.shapes_mapping import (
     ReactiveShapesMappingRef,
     ShapesMappingRef,
 )
+from nu.reactive import OnChange, OnChildChange
 
 
 class Entry(Shape):

@@ -13,9 +13,9 @@ whatever generic collection surface the Ref already exposes.
 
 ``on_change()`` (observe self) is deliberately absent here. It is generic and
 lives on the generic ``ReactiveXxxForm`` tiers in ``nu.forms.collections.abc``,
-returning ``nu.core.reactive.OnChange``. ``ReactiveCollectionForm``
+returning ``nu.reactive.OnChange``. ``ReactiveCollectionForm``
 provides only the three tree-aware methods, which reach for the shape-tier
-counterparts in ``nu.core.reactive`` too: one unified location for every
+counterparts in ``nu.reactive`` too: one unified location for every
 reactive query.
 """
 
@@ -27,17 +27,17 @@ from nu.lang import Form
 
 
 if TYPE_CHECKING:
-    from nu.core.reactive import (
-        OnChildChange,
-        OnChildrenChange,
-        OnDescendantsChange,
-    )
     from nu.domains.shape.interactions import (
         Erase,
         Exists,
         Extract,
         Missing,
         SetCmd,
+    )
+    from nu.reactive import (
+        OnChildChange,
+        OnChildrenChange,
+        OnDescendantsChange,
     )
 
 
@@ -100,18 +100,18 @@ class ReactiveCollectionForm(MutableCollectionForm):
 
     def on_child_change(self, address: object) -> OnChildChange:
         """Observe changes at a specific child address."""
-        from nu.core.reactive import OnChildChange
+        from nu.reactive import OnChildChange
 
         return OnChildChange(self, address)
 
     def on_children_change(self) -> OnChildrenChange:
         """Observe changes across all direct children."""
-        from nu.core.reactive import OnChildrenChange
+        from nu.reactive import OnChildrenChange
 
         return OnChildrenChange(self)
 
     def on_descendants_change(self, *pattern: object) -> OnDescendantsChange:
         """Observe changes across descendants matching ``pattern``."""
-        from nu.core.reactive import OnDescendantsChange
+        from nu.reactive import OnDescendantsChange
 
         return OnDescendantsChange(self, *pattern)

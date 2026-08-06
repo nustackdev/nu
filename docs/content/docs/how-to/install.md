@@ -20,7 +20,7 @@ Verify:
 python -c "import nu"
 ```
 
-For a lean install, pick the groups you need instead of `[all]`, e.g. `pip install "nustack-py[nudle]"`.
+For a lean install, pick the extras you need instead of `[all]`. One extra per fabric, name matches the import path: `[virtuals]`, `[mem]`, `[ui]`, `[ray]`, `[invisibles]`. e.g. `pip install "nustack-py[mem,ui]"`.
 
 ## Install from source (advanced)
 

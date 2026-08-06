@@ -15,7 +15,7 @@ The substrate optimizer matches on the concrete Ref class.
 
 Reactive queries (``OnChange``, ``OnChildChange``,
 ``OnChildrenChange``, ``OnDescendantsChange``,
-``OnPrimitiveChange``) live in ``nu.core.reactive``: one unified
+``OnPrimitiveChange``) live in ``nu.reactive``: one unified
 interface for all substrates, reached through the shape Form mixins.
 """
 

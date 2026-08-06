@@ -3,7 +3,7 @@
 Covers class hierarchy, construction, and domain placement. Full subscription
 (view.on_change() with a real substrate) is deferred to substrate integration.
 
-Reactive queries all live in ``nu.core.reactive`` -- unified interface across
+Reactive queries all live in ``nu.reactive`` -- unified interface across
 substrates. Shape Form mixins reach into that module.
 """
 
@@ -11,18 +11,18 @@ from __future__ import annotations
 
 import pytest
 
-from nu.core.reactive import (
+from nu.domains.shape.refs.item import ItemRef, ReactiveItemRef
+from nu.domains.shape.refs.mapping import ReactiveMappingRef
+from nu.domains.shape.refs.sequence import ReactiveSequenceRef
+from nu.domains.shape.refs.set_ import ReactiveSetRef
+from nu.lang import ScalarQuery
+from nu.reactive import (
     OnChange,
     OnChildChange,
     OnChildrenChange,
     OnDescendantsChange,
     OnPrimitiveChange,
 )
-from nu.domains.shape.refs.item import ItemRef, ReactiveItemRef
-from nu.domains.shape.refs.mapping import ReactiveMappingRef
-from nu.domains.shape.refs.sequence import ReactiveSequenceRef
-from nu.domains.shape.refs.set_ import ReactiveSetRef
-from nu.lang import ScalarQuery
 
 
 # ---------------------------------------------------------------------------
@@ -51,13 +51,13 @@ def test_on_primitive_change_query_is_scalar_query():
 
 
 # ---------------------------------------------------------------------------
-# Domain placement: all reactive queries live in nu.core.reactive
+# Domain placement: all reactive queries live in nu.reactive
 # ---------------------------------------------------------------------------
 
 
 def test_all_reactive_queries_exported_from_core():
-    """Every reactive query is reachable via ``nu.core.reactive`` (one namespace)."""
-    import nu.core.reactive as core_reactive
+    """Every reactive query is reachable via ``nu.reactive`` (one namespace)."""
+    import nu.reactive as core_reactive
 
     for name in (
         "OnChange",
