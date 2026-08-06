@@ -40,8 +40,9 @@
 
 <h3 align="center">
   <a href="#ℹ️-about"><b>About</b></a> &bull;
-  <a href="#-ecosystem"><b>Ecosystem</b></a> &bull;
   <a href="#-quick-start"><b>Quick Start</b></a> &bull;
+  <a href="#-ecosystem"><b>Ecosystem</b></a> &bull;
+  <a href="#-spec"><b>Spec</b></a> &bull;
   <a href="https://github.com/nustackdev/nu/tree/main/examples"><b>Examples</b></a> &bull;
   <a href="https://nustack.dev/docs"><b>Documentation</b></a> &bull;
   <a href="#-community"><b>Community</b></a>
@@ -61,9 +62,11 @@ Every app is a set of interactions between systems: a database, a UI, AI agents,
 
 Persistence, reactivity, atomicity, observability, and scalability are inherent, not bolted on.
 
-## Example
+# 🏁 Quick Start
 
-A dashboard on a live counter that persists across restarts. One Nu tree, two Fabrics.
+They say a good example is worth 100 pages of API documentation, a million directives, or a thousand words.
+
+Well, "they" probably lie... but here's an example anyway:
 
 ```python
 import nu
@@ -100,43 +103,9 @@ if __name__ == "__main__":
     asyncio.run(nu.arun(app))
 ```
 
-Run it, open the browser tab. The counter ticks once a second, the dashboard mirrors it live. Kill it, run again, it picks up where it left off.
+A dashboard on a live counter that persists across restarts. One Nu tree, two Fabrics. Kill it, run again, it picks up where it left off.
 
-More in [`examples/`](examples/). Full walkthrough at [nustack.dev/docs](https://nustack.dev/docs).
-
-# 🌍 Ecosystem
-
-Nu is built as a stack. In-tree fabrics ship with Nu; the infra libraries and apps live in their own repos.
-
-## Fabrics (in-tree)
-
-Each fabric binds Refs to a real backend. Swap the fabric, keep the tree.
-
-| Fabric | What |
-| --- | --- |
-| [`nu.mem`](https://nustack.dev/docs/reference/fabrics/mem) | In-memory state on plain dicts. Zero-config default for tests, notebooks, cache. |
-| [`nu.v`](https://nustack.dev/docs/reference/fabrics/virtuals) | Persistent state over RocksDB / LMDB. Transactions, snapshots, change notifications. |
-| [`nu.ui`](https://nustack.dev/docs/reference/fabrics/ui) | Refs on screen. Binds Nu Refs to a live browser tab. |
-| [`nu.invisibles`](https://nustack.dev/docs/reference/fabrics/invisibles) | Location-independent Nus. Transparent RPC across processes and machines. |
-| [`nu.ray`](https://nustack.dev/docs/reference/fabrics/ray) | Cluster compute. Teleport a Nu tree to any Ray worker. |
-
-## Apps built on Nu
-
-End-user tools written as Nu programs.
-
-| Repo | What |
-| --- | --- |
-| [nustackdev/nulog](https://github.com/nustackdev/nulog) | Pure-Python, serverless logger + metrics store. Billions of entries, live UI. |
-
-## Spec
-
-| Repo | What |
-| --- | --- |
-| [nustackdev/interaction-model](https://github.com/nustackdev/interaction-model) | Language-agnostic specification of the interaction primitive. |
-
-# 🏁 Quick Start
-
-## 1. Install
+## Install
 
 Python 3.12+.
 
@@ -146,19 +115,46 @@ pip install "nustack-py[all]"
 
 For lean installs and source builds see [nustack.dev/docs/how-to/install](https://nustack.dev/docs/how-to/install).
 
-## 2. Write a Nu app
+## Run
 
-```python
-import nu
+Save the snippet above as `app.py`, then:
 
-nu.run(nu.print("Hello, Nu!"))
+```bash
+python app.py
 ```
 
-## 3. Run it
+Open the browser tab that pops up — the counter ticks once a second, the dashboard mirrors it live.
 
-```shell
-python my_app.py
-```
+More in [`examples/`](examples/). Full walkthrough at [nustack.dev/docs](https://nustack.dev/docs).
+
+# 🌍 Ecosystem
+
+
+## Fabrics
+
+Each fabric binds Refs to a real backend and unlocks a new capability.
+
+| Fabric | What |
+| --- | --- |
+| [`nu.mem`](https://nustack.dev/docs/reference/fabrics/mem) | In-memory state fabric. Perfect for cache, hot state, and in-process coordination. |
+| [`nu.v`](https://nustack.dev/docs/reference/fabrics/virtuals) | Persistent state fabric. Refs over a KV backend (RocksDB, LMDB); transactions, snapshots, and change notifications, built in. |
+| [`nu.ui`](https://nustack.dev/docs/reference/fabrics/ui) | Web UI fabric. Same fabric shape as the others, but the Refs are widgets — text, buttons, tables — rendered in the browser and live-updated as your state changes. |
+| [`nu.invisibles`](https://nustack.dev/docs/reference/fabrics/invisibles) | Network fabric. Puts other fabrics on the network — bind a fabric in one process, use it from another; same Refs, same interactions, over TCP or Unix socket. |
+| [`nu.ray`](https://nustack.dev/docs/reference/fabrics/ray) | Cluster compute fabric. Teleport a Nu tree to any worker in your Ray cluster; it runs there and returns the result. |
+
+## Apps built on Nu
+
+End-user tools written as Nu programs.
+
+| Repo | What |
+| --- | --- |
+| [nustackdev/nulog](https://github.com/nustackdev/nulog) | Pure-Python, serverless logger and metrics store. Log and observe metrics from any Python code; entries persist to an embedded KV store and scale to billions, in-process. One line boots a live viewer. |
+
+# 📐 Spec
+
+Nu is a reference implementation of the interaction model — a language-agnostic specification of what an interaction is, how Refs name locations, and how Interactions compose into programs.
+
+[nustackdev/interaction-model](https://github.com/nustackdev/interaction-model)
 
 # 🛣️ Roadmap
 
