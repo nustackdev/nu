@@ -4,11 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nudle"
-version = "0.1.0"
+version = "0.1.1"
 description = "nudle web bundle -- compiled UI assets for the nu.ui fabric"
 license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 
 [project.urls]
 Repository = "https://github.com/nustackdev/nu"
