@@ -64,7 +64,7 @@ synthesised class. Hand-write the class when IDE discoverability matters.
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from nu.engine.structure import Attribute, Declared
 from nu.lang.kinds import Command
@@ -82,8 +82,10 @@ if TYPE_CHECKING:
 
 __all__ = ["InteractionFactory"]
 
+B = TypeVar("B", bound="Nu")
 
-def InteractionFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a class at the call site
+
+def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at the call site
     base: type[B],
     name: str,
     fn: Callable[..., object],

@@ -15,7 +15,7 @@ core wherever it already expresses the op.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 from uuid import UUID as _UUID
 
 from nu.lang import Form, TypedNu
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from nu.forms.primitives import Bool, Bytes, Int, Str
     from nu.lang import Arg, BytesArg, IntArg, StrArg
 
-    type UUIDArg = Arg[_UUID]
+    UUIDArg: TypeAlias = "Arg[_UUID]"
 
 
 __all__ = ["UUID"]

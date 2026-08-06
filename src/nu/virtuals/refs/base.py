@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from enum import Enum
 from logging import getLogger
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape.refs.base import StructuredRef
 from nu.lang import EMPTY
@@ -54,6 +54,9 @@ __all__ = [
 
 
 logger = getLogger(__name__)
+
+
+T = TypeVar("T")
 
 
 class Facet(Enum):
@@ -89,7 +92,7 @@ def _resolve_storage_ctx(rt: Runtime, scope: type | None, resolved_path: tuple) 
         return rt.ctx.get(SnapshotProtocol, *tags, site=site, path=resolved_path)
 
 
-class _VirtualsRefBase[T](StructuredRef):
+class _VirtualsRefBase(StructuredRef, Generic[T]):
     """Shared virtuals navigation: path building off the parent chain + Navigator.
 
     Each ref stores its raw static address in payload as ``"segment"`` and its
@@ -149,7 +152,7 @@ class _VirtualsRefBase[T](StructuredRef):
         return tuple(segs)
 
 
-class ViewRef[T](_VirtualsRefBase[T]):
+class ViewRef(_VirtualsRefBase[T], Generic[T]):
     """Virtuals ref to a container view (dict / list / set / shape).
 
     ``compile`` navigates to and returns the faceted View itself, so the
@@ -336,7 +339,7 @@ class ViewRef[T](_VirtualsRefBase[T]):
         return await self._acompile(nid, ())(rt)
 
 
-class PrimitiveRef[T](_VirtualsRefBase[T]):
+class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
     """Virtuals ref to a primitive / leaf value.
 
     ``compile`` navigates to the parent View and subscripts to read the value;

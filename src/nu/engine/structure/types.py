@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 
 if TYPE_CHECKING:
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 __all__ = ["RuleFn"]
 
 
-type RuleFn = Callable[..., object]
+RuleFn: TypeAlias = "Callable[..., object]"
 """The signature of an attribute rule.
 
 Computed attributes (``Synthesized``, ``Inherited``) carry rules that the

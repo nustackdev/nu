@@ -15,8 +15,27 @@ attribute; the law itself stays a flat predicate over one node.
 
 from __future__ import annotations
 
-from enum import StrEnum
-from typing import TYPE_CHECKING, NamedTuple
+import sys as _sys
+
+
+if _sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum as _Enum
+
+    class StrEnum(str, _Enum):
+        """Backport of enum.StrEnum for Python 3.10."""
+
+        def __new__(cls, value: str) -> StrEnum:
+            member = str.__new__(cls, value)
+            member._value_ = value
+            return member
+
+        def __str__(self) -> str:
+            return str.__str__(self)
+
+
+from typing import TYPE_CHECKING, NamedTuple, TypeAlias
 
 
 if TYPE_CHECKING:
@@ -36,7 +55,7 @@ __all__ = [
     "validate",
 ]
 
-type Message = str | Callable[["Program", "Path"], str]
+Message: TypeAlias = "str | Callable[[Program, Path], str]"
 
 
 class Severity(StrEnum):

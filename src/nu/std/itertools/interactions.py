@@ -42,6 +42,13 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
+def _batched(iterable: object, n: int) -> object:
+    """Local backport of ``itertools.batched`` (added in Python 3.12)."""
+    it = iter(iterable)  # type: ignore[call-overload]
+    while batch := tuple(_it.islice(it, n)):
+        yield batch
+
+
 __all__ = [
     "Accumulate",
     "Batched",
@@ -377,7 +384,7 @@ class Batched(StreamQuery):
             n = n_t(rt)
 
             def gen() -> object:
-                yield from _it.batched(sync_iter(source(rt)), n)
+                yield from _batched(sync_iter(source(rt)), n)
 
             return gen()
 
@@ -391,7 +398,7 @@ class Batched(StreamQuery):
             items = [x async for x in aiter_any(await source(rt))]
 
             async def agen() -> object:
-                for x in _it.batched(items, n):
+                for x in _batched(items, n):
                     yield x
 
             return agen()
@@ -426,7 +433,10 @@ class ZipLongest(StreamQuery):
 
         async def athunk(rt: Runtime) -> object:
             fill = await fill_t(rt)
-            cols = [[x async for x in aiter_any(await s(rt))] for s in sources]
+            cols = []
+            for s in sources:
+                col = [x async for x in aiter_any(await s(rt))]
+                cols.append(col)
 
             async def agen() -> object:
                 for x in _it.zip_longest(*cols, fillvalue=fill):
@@ -465,7 +475,10 @@ class Product(StreamQuery):
 
         async def athunk(rt: Runtime) -> object:
             repeat = await repeat_t(rt)
-            pools = [[x async for x in aiter_any(await s(rt))] for s in sources]
+            pools = []
+            for s in sources:
+                pool = [x async for x in aiter_any(await s(rt))]
+                pools.append(pool)
 
             async def agen() -> object:
                 for x in _it.product(*pools, repeat=repeat):

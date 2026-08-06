@@ -26,7 +26,7 @@ from datetime import datetime as _datetime
 from datetime import time as _time
 from datetime import timedelta as _timedelta
 from datetime import timezone as _timezone
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, TypeAlias, overload
 
 from nu.lang import Form, TypedNu
 
@@ -35,11 +35,11 @@ if TYPE_CHECKING:
     from nu.forms.primitives import Bool, Float, Int, None_, Str
     from nu.lang import Arg, FloatArg, IntArg, StrArg
 
-    type DateArg = Arg[_date]
-    type DatetimeArg = Arg[_datetime]
-    type TimeArg = Arg[_time]
-    type TimedeltaArg = Arg[_timedelta]
-    type TimezoneArg = Arg[_timezone]
+    DateArg: TypeAlias = "Arg[_date]"
+    DatetimeArg: TypeAlias = "Arg[_datetime]"
+    TimeArg: TypeAlias = "Arg[_time]"
+    TimedeltaArg: TypeAlias = "Arg[_timedelta]"
+    TimezoneArg: TypeAlias = "Arg[_timezone]"
 
 
 __all__ = ["date", "datetime", "time", "timedelta", "timezone"]

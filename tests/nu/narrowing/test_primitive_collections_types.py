@@ -10,7 +10,7 @@ target. Tests below encode BOTH the current state (Any) and the intent
 
 from __future__ import annotations
 
-from typing import assert_type
+from typing_extensions import assert_type
 
 import nu
 from nu.forms import Int, Str

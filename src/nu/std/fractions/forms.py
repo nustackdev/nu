@@ -21,7 +21,7 @@ the typed access surface for the stdlib type:
 from __future__ import annotations
 
 from fractions import Fraction as _Fraction
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 from nu.lang import Form, TypedNu
 
@@ -33,8 +33,8 @@ if TYPE_CHECKING:
     from nu.forms.primitives import Bool, Int
     from nu.lang import Arg, FloatArg, IntArg, StrArg
 
-    type FractionArg = Arg[_Fraction]
-    type DecimalArg = Arg[_Decimal]
+    FractionArg: TypeAlias = "Arg[_Fraction]"
+    DecimalArg: TypeAlias = "Arg[_Decimal]"
 
 
 __all__ = ["Fraction"]

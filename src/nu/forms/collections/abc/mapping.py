@@ -17,7 +17,7 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from .collection import CollectionForm
 
@@ -35,8 +35,16 @@ __all__ = [
 ]
 
 
-class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
+CollectionT = TypeVar("CollectionT")
+KeyT = TypeVar("KeyT")
+ValueT = TypeVar("ValueT")
+CollectionResultT = TypeVar("CollectionResultT")
+ValueResultT = TypeVar("ValueResultT")
+
+
+class MappingForm(
     CollectionForm[KeyT, CollectionResultT, ValueResultT],
+    Generic[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
     """Base for mapping values, like collections.abc.Mapping.
 
@@ -124,8 +132,9 @@ class MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
         return cast("CollectionResultT", self._wrap_mapping_result(Merge(self, other)))
 
 
-class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
+class MutableMappingForm(
     MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+    Generic[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
     """Base for mutable mapping values, like collections.abc.MutableMapping.
 
@@ -186,8 +195,9 @@ class MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResu
         return Clear(self)
 
 
-class ReactiveMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT](
+class ReactiveMappingForm(
     MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+    Generic[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
     """Reactive mapping. Adds on_change() for any-change observation.
 

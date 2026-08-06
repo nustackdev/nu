@@ -8,7 +8,7 @@ under pytest. Run via ``tests/nu/narrowing/test_mypy_runner.py``.
 
 from __future__ import annotations
 
-from typing import assert_type
+from typing_extensions import assert_type
 
 import nu
 from nu.forms import Bool, Bytes, Float, Int, Str

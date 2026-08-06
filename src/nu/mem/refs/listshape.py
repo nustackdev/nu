@@ -7,7 +7,7 @@ is passed to the blueprint as ``item_shape_type``.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import MutableShapesSequenceRef, Slot
 
@@ -25,7 +25,13 @@ __all__ = [
 ]
 
 
-class ShapesListRef[T: Shape](MutableShapesSequenceRef[T], RefBase[list[dict]]):
+T = TypeVar("T", bound="Shape")
+
+
+S = TypeVar("S", bound="Shape")
+
+
+class ShapesListRef(MutableShapesSequenceRef[T], RefBase[list[dict]], Generic[T]):
     """Dict shapes list reference: sequence of homogeneous shapes."""
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
@@ -54,7 +60,7 @@ class ShapesListRef[T: Shape](MutableShapesSequenceRef[T], RefBase[list[dict]]):
         self._payload["item_type"] = dict
 
     @classmethod
-    def slot[S: Shape](cls, shape_type: type[S]) -> ShapesListRef[S]:
+    def slot(cls, shape_type: type[S]) -> ShapesListRef[S]:
         """Declare a slot holding a sequence of ``shape_type`` shapes."""
         return Slot(cls, shape_type=shape_type)  # type: ignore[return-value]
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import ReactiveSetRef, Slot
 from nu.forms import Any, Set
@@ -21,7 +21,13 @@ __all__ = [
 ]
 
 
-class SetRef[T](ReactiveSetRef, ViewRef[set[T]]):
+T = TypeVar("T")
+
+
+E = TypeVar("E")
+
+
+class SetRef(ReactiveSetRef, ViewRef[set[T]], Generic[T]):
     """Virtuals set reference: unordered unique-element container backed by a View."""
 
     def _wrap_result(self, op: Nu) -> Set[T]:
@@ -49,9 +55,7 @@ class SetRef[T](ReactiveSetRef, ViewRef[set[T]]):
         self._payload["item_type"] = item_type
 
     @classmethod
-    def slot[E](
-        cls, item_type: type[E], view_type: type[MutableSetBase] | None = None
-    ) -> SetRef[E]:
+    def slot(cls, item_type: type[E], view_type: type[MutableSetBase] | None = None) -> SetRef[E]:
         """Declare a set slot holding elements of ``item_type``."""
         from virtuals.views import SetView
 

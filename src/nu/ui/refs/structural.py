@@ -6,7 +6,9 @@ document.title), not the visible body tree. See docs/nudle/interactions.md.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any
+
+from typing_extensions import Self
 
 from nu.forms import Dict
 from nu.ui.core import Changed, Ref, Write

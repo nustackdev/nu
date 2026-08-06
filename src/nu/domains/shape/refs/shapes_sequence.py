@@ -22,7 +22,7 @@ Form composition provides:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape.forms.sequence import MutableSequenceForm, ReactiveSequenceForm, SequenceForm
 
@@ -40,7 +40,10 @@ __all__ = [
 ]
 
 
-class ShapesSequenceRef[ItemResultT](SequenceForm, StructuredRef):
+ItemResultT = TypeVar("ItemResultT")
+
+
+class ShapesSequenceRef(SequenceForm, StructuredRef, Generic[ItemResultT]):
     """Sequence-of-shapes Ref; subscript descent returns a ShapeRef.
 
     Navigation is defined ONCE (``__getitem__``) and routes through
@@ -75,7 +78,9 @@ class ShapesSequenceRef[ItemResultT](SequenceForm, StructuredRef):
         return self._wrap_item_ref(index)
 
 
-class MutableShapesSequenceRef[ItemResultT](MutableSequenceForm, ShapesSequenceRef[ItemResultT]):
+class MutableShapesSequenceRef(
+    MutableSequenceForm, ShapesSequenceRef[ItemResultT], Generic[ItemResultT]
+):
     """Mutable sequence-of-shapes Ref; subscript returns MutableShapeRef.
 
     Adds: append(v), extend(), insert(i,v), pop(), ..., store(v), erase().
@@ -90,8 +95,10 @@ class MutableShapesSequenceRef[ItemResultT](MutableSequenceForm, ShapesSequenceR
         )
 
 
-class ReactiveShapesSequenceRef[ItemResultT](
-    ReactiveSequenceForm, MutableShapesSequenceRef[ItemResultT]
+class ReactiveShapesSequenceRef(
+    ReactiveSequenceForm,
+    MutableShapesSequenceRef[ItemResultT],
+    Generic[ItemResultT],
 ):
     """Reactive sequence-of-shapes Ref; subscript returns ReactiveShapeRef.
 

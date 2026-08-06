@@ -9,7 +9,7 @@ there is no type dispatch.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, TypeAlias
 
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from nu.lang import Nu
 
 
-type Transform = "Callable[[Nu], Nu]"
+Transform: TypeAlias = "Callable[[Nu], Nu]"
 """A tree transform: takes a node tree and returns a new node tree."""
 
 __all__ = [

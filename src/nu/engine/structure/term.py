@@ -37,7 +37,9 @@ from .attribute import Attribute, Declared
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
-    from typing import ClassVar, Self
+    from typing import ClassVar
+
+    from typing_extensions import Self
 
     from nu.engine.evaluation import Runtime
 
@@ -77,7 +79,7 @@ class TermMeta(type):
         return cls
 
 
-class Term(Generic[R_contra, V_co], metaclass=TermMeta):  # noqa: UP046  # PEP 695 has no variance markers
+class Term(Generic[R_contra, V_co], metaclass=TermMeta):  # PEP 695 has no variance markers
     """Pure immutable construction data: a kind, children, and a payload.
 
     A description is a DAG of Terms. Constructing one builds a nested

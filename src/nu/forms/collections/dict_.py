@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
 from nu.lang import TypedNu
 
@@ -30,9 +30,14 @@ __all__ = [
 ]
 
 
-class Dict[K, V](
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+class Dict(
     MutableMappingForm[dict[K, V], K, V, "Dict[K, V]", "Any"],
     TypedNu[dict[K, V]],
+    Generic[K, V],
 ):
     """Dict interface. Mutable mapping + comparable."""
 

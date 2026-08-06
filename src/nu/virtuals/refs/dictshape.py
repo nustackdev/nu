@@ -6,7 +6,7 @@ Key descent (``ref[k]``) is overridden to return a substrate-backed virtuals
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import ReactiveShapesMappingRef, Slot
 from nu.forms import Any, Dict, DictItems, DictKeys, DictValues, Iterator
@@ -27,7 +27,15 @@ __all__ = [
 ]
 
 
-class ShapesDictRef[K, T: Shape](ReactiveShapesMappingRef[T], ViewRef[dict[K, dict]]):
+K = TypeVar("K")
+T = TypeVar("T", bound="Shape")
+
+
+DK = TypeVar("DK")
+S = TypeVar("S", bound="Shape")
+
+
+class ShapesDictRef(ReactiveShapesMappingRef[T], ViewRef[dict[K, dict]], Generic[K, T]):
     """Virtuals shapes dict reference: mapping of homogeneous shapes."""
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
@@ -92,7 +100,7 @@ class ShapesDictRef[K, T: Shape](ReactiveShapesMappingRef[T], ViewRef[dict[K, di
         self._payload["key_value_type"] = key_value_type
 
     @classmethod
-    def slot[DK, S: Shape](
+    def slot(
         cls,
         shape_type: type[S],
         view_type: type[MutableMappingBase] | None = None,

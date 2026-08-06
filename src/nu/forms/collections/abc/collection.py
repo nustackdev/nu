@@ -12,6 +12,8 @@ Type Parameters:
 
 from __future__ import annotations
 
+from typing import Generic, TypeVar
+
 from .container import ContainerForm
 from .iterable import IterableForm
 from .sized import SizedForm
@@ -22,10 +24,16 @@ __all__ = [
 ]
 
 
-class CollectionForm[ElementT, CollectionResultT, ElementResultT](
+ElementT = TypeVar("ElementT")
+CollectionResultT = TypeVar("CollectionResultT")
+ElementResultT = TypeVar("ElementResultT")
+
+
+class CollectionForm(
     SizedForm,
     IterableForm[ElementT, CollectionResultT, ElementResultT],
     ContainerForm,
+    Generic[ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for collection values - like collections.abc.Collection.
 

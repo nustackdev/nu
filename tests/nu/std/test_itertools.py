@@ -124,7 +124,8 @@ def test_pairwise_short() -> None:
 
 
 def test_batched() -> None:
-    assert mat(batched(range(7), 3)) == list(pit.batched(range(7), 3))
+    expected = [(0, 1, 2), (3, 4, 5), (6,)]
+    assert mat(batched(range(7), 3)) == expected
 
 
 def test_zip_longest_default_fill() -> None:

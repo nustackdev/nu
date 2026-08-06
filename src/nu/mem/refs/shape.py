@@ -7,7 +7,7 @@ this ref as ``parent_ref``, so navigation rides the substrate automatically.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import MutableShapeRef, Slot
 from nu.forms import Any, Dict, DictItems, DictKeys, DictValues, Iterator
@@ -25,7 +25,13 @@ __all__ = [
 ]
 
 
-class ShapeRef[T: Shape](MutableShapeRef, RefBase[dict[str, object]]):
+T = TypeVar("T", bound="Shape")
+
+
+S = TypeVar("S", bound="Shape")
+
+
+class ShapeRef(MutableShapeRef, RefBase[dict[str, object]], Generic[T]):
     """Dict shape reference: structured container backed by nested dict."""
 
     def _wrap_result(self, op: Nu) -> Dict[str, object]:
@@ -68,7 +74,7 @@ class ShapeRef[T: Shape](MutableShapeRef, RefBase[dict[str, object]]):
         self._payload["value_type"] = object
 
     @classmethod
-    def slot[S: Shape](cls, shape_type: type[S]) -> S:
+    def slot(cls, shape_type: type[S]) -> S:
         """Declare a slot holding a nested ``shape_type`` shape.
 
         Statically returns ``S`` (the shape class) so that the annotation

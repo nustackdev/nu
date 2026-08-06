@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, overload
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 
 from nu.lang import TypedNu
 
@@ -30,9 +30,13 @@ __all__ = [
 ]
 
 
-class List[T](
+T = TypeVar("T")
+
+
+class List(
     MutableSequenceForm[list[T], T, "List[T]", "AnyForm"],
     TypedNu[list[T]],
+    Generic[T],
 ):
     """List interface. Mutable sequence + comparable."""
 

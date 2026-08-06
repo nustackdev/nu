@@ -49,7 +49,7 @@ __all__ = [
 ]
 
 
-class Ref(Nu[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Ref(Nu[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A name for a location in a Fabric: the abstract Ref kind.
 
     A Ref is the only atom that touches Context, but it touches it through a
@@ -69,7 +69,7 @@ class Ref(Nu[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance ma
     _cardinality = Declared(value=Cardinality.SCALAR, name="cardinality")
 
 
-class Interaction(Nu[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Interaction(Nu[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """Abstract: a node that interacts with the Context. Never instantiated.
 
     Concrete sub-kinds implement ``_eval`` / ``_aeval`` to drive execution.
@@ -90,49 +90,49 @@ class Interaction(Nu[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no var
         raise NotImplementedError(msg)
 
 
-class Query(Interaction[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Query(Interaction[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """Abstract: a value-producing Interaction."""
 
 
-class ScalarQuery(Query[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class ScalarQuery(Query[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A Query that yields exactly one value."""
 
     _sort = Declared(value=Sort.SCALAR_QUERY, name="sort")
     _cardinality = Declared(value=Cardinality.SCALAR, name="cardinality")
 
 
-class StreamQuery(Query[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class StreamQuery(Query[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A Query that yields zero or more values."""
 
     _sort = Declared(value=Sort.STREAM_QUERY, name="sort")
     _cardinality = Declared(value=Cardinality.STREAM, name="cardinality")
 
 
-class Reduction(ScalarQuery[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Reduction(ScalarQuery[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A ScalarQuery that folds a stream child down to one value."""
 
     _sort = Declared(value=Sort.REDUCTION, name="sort")
 
 
-class Command(Interaction[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Command(Interaction[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A mutating Interaction. Yields nothing; its only sub-shape is scalar."""
 
     _sort = Declared(value=Sort.SCALAR_COMMAND, name="sort")
     _cardinality = Declared(value=Cardinality.VOID, name="cardinality")
 
 
-class Action(Interaction[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Action(Interaction[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """Abstract: a dual-citizen Interaction. Mutates Context and yields a value."""
 
 
-class ScalarAction(Action[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class ScalarAction(Action[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """An Action that mutates and yields exactly one value."""
 
     _sort = Declared(value=Sort.SCALAR_ACTION, name="sort")
     _cardinality = Declared(value=Cardinality.SCALAR, name="cardinality")
 
 
-class StreamAction(Action[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class StreamAction(Action[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """An Action that mutates and yields zero or more values.
 
     The stream-shaped twin of ScalarAction: one atomic mutate-and-yield-many
@@ -145,37 +145,37 @@ class StreamAction(Action[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has n
     _cardinality = Declared(value=Cardinality.STREAM, name="cardinality")
 
 
-class Flow(Interaction[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Flow(Interaction[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """Abstract: a Command-composing Interaction. Yields nothing."""
 
     _cardinality = Declared(value=Cardinality.VOID, name="cardinality")
 
 
-class Strategy(Flow[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Strategy(Flow[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A Flow that composes Commands directly."""
 
     _sort = Declared(value=Sort.STRATEGY, name="sort")
 
 
-class Control(Flow[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Control(Flow[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A Flow that composes Commands under Query parameters."""
 
     _sort = Declared(value=Sort.CONTROL, name="sort")
 
 
-class Span(Interaction[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Span(Interaction[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """Abstract: a transparent Interaction; yields what its body yields."""
 
     _cardinality = Declared(value=Cardinality.TRANSPARENT, name="cardinality")
 
 
-class Bracket(Span[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Bracket(Span[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A Span that governs a body's lifecycle."""
 
     _sort = Declared(value=Sort.BRACKET, name="sort")
 
 
-class Policy(Span[V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Policy(Span[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A Span that governs a body's execution on failure."""
 
     _sort = Declared(value=Sort.POLICY, name="sort")

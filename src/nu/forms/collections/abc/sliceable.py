@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 from nu.lang import Form
 
@@ -16,7 +16,10 @@ __all__ = [
 ]
 
 
-class SliceableForm[ResultT](Form):
+ResultT = TypeVar("ResultT")
+
+
+class SliceableForm(Form, Generic[ResultT]):
     """Base for values that support slicing."""
 
     def _wrap_sliceable_result(self, operand: Nu) -> Nu:

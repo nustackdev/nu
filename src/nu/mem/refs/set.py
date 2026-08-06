@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import MutableSetRef, Slot
 from nu.forms import Any, Set
@@ -20,7 +20,13 @@ __all__ = [
 ]
 
 
-class SetRef[T](MutableSetRef, RefBase[set[T]]):
+T = TypeVar("T")
+
+
+E = TypeVar("E")
+
+
+class SetRef(MutableSetRef, RefBase[set[T]], Generic[T]):
     """Dict set reference: unordered unique-element container."""
 
     def _wrap_result(self, op: Nu) -> Set[T]:
@@ -45,7 +51,7 @@ class SetRef[T](MutableSetRef, RefBase[set[T]]):
         self._payload["item_type"] = item_type
 
     @classmethod
-    def slot[E](cls, item_type: type[E]) -> SetRef[E]:
+    def slot(cls, item_type: type[E]) -> SetRef[E]:
         """Declare a set slot holding elements of ``item_type``."""
         return Slot(cls, item_type=item_type)  # type: ignore[return-value]
 

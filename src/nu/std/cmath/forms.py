@@ -21,7 +21,7 @@ The class name is lowercase ``complex`` to mirror the builtin (hence
 from __future__ import annotations
 
 from builtins import complex as _complex
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 from nu.lang import Form, TypedNu
 
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from nu.forms.primitives import Bool, Float
     from nu.lang import Arg, FloatArg
 
-    type ComplexArg = Arg[_complex]
+    ComplexArg: TypeAlias = "Arg[_complex]"
 
 
 __all__ = ["complex"]

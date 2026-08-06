@@ -22,7 +22,7 @@ Form composition provides:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape.forms.mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
 
@@ -40,7 +40,10 @@ __all__ = [
 ]
 
 
-class ShapesMappingRef[ItemResultT](MappingForm, StructuredRef):
+ItemResultT = TypeVar("ItemResultT")
+
+
+class ShapesMappingRef(MappingForm, StructuredRef, Generic[ItemResultT]):
     """Mapping-of-shapes Ref; subscript descent returns a ShapeRef.
 
     Navigation is defined ONCE (``__getitem__``) and routes through
@@ -73,7 +76,9 @@ class ShapesMappingRef[ItemResultT](MappingForm, StructuredRef):
         return self._wrap_item_ref(key)
 
 
-class MutableShapesMappingRef[ItemResultT](MutableMappingForm, ShapesMappingRef[ItemResultT]):
+class MutableShapesMappingRef(
+    MutableMappingForm, ShapesMappingRef[ItemResultT], Generic[ItemResultT]
+):
     """Mutable mapping-of-shapes Ref; subscript returns MutableShapeRef.
 
     Adds: set(k,v), delete(k), update(), ..., store(v), erase().
@@ -88,8 +93,10 @@ class MutableShapesMappingRef[ItemResultT](MutableMappingForm, ShapesMappingRef[
         )
 
 
-class ReactiveShapesMappingRef[ItemResultT](
-    ReactiveMappingForm, MutableShapesMappingRef[ItemResultT]
+class ReactiveShapesMappingRef(
+    ReactiveMappingForm,
+    MutableShapesMappingRef[ItemResultT],
+    Generic[ItemResultT],
 ):
     """Reactive mapping-of-shapes Ref; subscript returns ReactiveShapeRef.
 

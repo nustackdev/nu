@@ -52,7 +52,7 @@ Other conventions
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, TypeAlias
 
 
 if TYPE_CHECKING:
@@ -62,7 +62,7 @@ if TYPE_CHECKING:
 
 __all__ = ["Path", "Program", "UnknownAttributeError"]
 
-type Path = tuple[int, ...]
+Path: TypeAlias = "tuple[int, ...]"
 """A node's identity: the slot indices along the descent from the root.
 
 Each element is the slot of one descent step (which child of the parent):

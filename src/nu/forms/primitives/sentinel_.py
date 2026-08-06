@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Generic, TypeVar
+
 from nu.lang import EMPTY, INVALID, Empty, Form, Invalid, Sentinel, TypedNu
 
 
@@ -12,7 +14,10 @@ __all__ = [
 ]
 
 
-class SentinelForm[T: Sentinel](Form, TypedNu[T]):
+T = TypeVar("T", bound="Sentinel")
+
+
+class SentinelForm(Form, TypedNu[T], Generic[T]):
     """Base for sentinel interfaces (Empty, Invalid)."""
 
 

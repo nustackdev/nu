@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.lang import TypedNu
 
@@ -23,9 +23,13 @@ __all__ = [
 ]
 
 
-class Set[T](
+T = TypeVar("T")
+
+
+class Set(
     MutableSetForm[set[T], T, "Set[T]", "Any"],
     TypedNu[set[T]],
+    Generic[T],
 ):
     """Set interface. Mutable set + comparable."""
 
@@ -117,9 +121,10 @@ class Set[T](
         return Bool(Is(self, other))
 
 
-class FrozenSet[T](
+class FrozenSet(
     SetLikeForm[frozenset[T], T, "FrozenSet[T]", "Any"],
     TypedNu[frozenset[T]],
+    Generic[T],
 ):
     """FrozenSet interface. Immutable set + comparable."""
 

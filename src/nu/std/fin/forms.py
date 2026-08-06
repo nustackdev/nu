@@ -15,7 +15,7 @@ Each Form is the typed access surface over its native dataclass
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 from nu.lang import Form, TypedNu
 from nu.std.fin.native import PyBasisPoint, PyPercentage
@@ -25,8 +25,8 @@ if TYPE_CHECKING:
     from nu.forms.primitives import Bool, Float, Int
     from nu.lang import Arg, FloatArg, IntArg
 
-    type PercentageArg = Arg[PyPercentage] | FloatArg
-    type BasisPointArg = Arg[PyBasisPoint] | IntArg
+    PercentageArg: TypeAlias = "Arg[PyPercentage] | FloatArg"
+    BasisPointArg: TypeAlias = "Arg[PyBasisPoint] | IntArg"
 
 
 __all__ = ["BasisPoint", "Percentage"]

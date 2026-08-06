@@ -7,7 +7,7 @@ passed to the blueprint as ``item_shape_type``.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import MutableShapesMappingRef, Slot
 from nu.forms import Any, Dict, DictItems, DictKeys, DictValues, Iterator
@@ -27,7 +27,15 @@ __all__ = [
 ]
 
 
-class ShapesDictRef[K, T: Shape](MutableShapesMappingRef[T], RefBase[dict[K, dict]]):
+K = TypeVar("K")
+T = TypeVar("T", bound="Shape")
+
+
+DK = TypeVar("DK")
+S = TypeVar("S", bound="Shape")
+
+
+class ShapesDictRef(MutableShapesMappingRef[T], RefBase[dict[K, dict]], Generic[K, T]):
     """Dict shapes dict reference: mapping of homogeneous shapes."""
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
@@ -82,9 +90,7 @@ class ShapesDictRef[K, T: Shape](MutableShapesMappingRef[T], RefBase[dict[K, dic
         self._payload["key_value_type"] = key_value_type
 
     @classmethod
-    def slot[DK, S: Shape](
-        cls, shape_type: type[S], key_type: type[DK] = str
-    ) -> ShapesDictRef[DK, S]:  # type: ignore[assignment]
+    def slot(cls, shape_type: type[S], key_type: type[DK] = str) -> ShapesDictRef[DK, S]:  # type: ignore[assignment]
         """Declare a mapping slot whose values are ``shape_type`` shapes."""
         return Slot(
             cls,

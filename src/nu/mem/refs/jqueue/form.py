@@ -6,7 +6,7 @@ against the wrapped Nu (typically a JQueueRef).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 import janus
 
@@ -20,7 +20,10 @@ if TYPE_CHECKING:
 __all__ = ["JQueue"]
 
 
-class JQueue[T](Form, TypedNu[janus.Queue[T]]):
+T = TypeVar("T")
+
+
+class JQueue(Form, TypedNu[janus.Queue[T]], Generic[T]):
     """Typed surface for a janus.Queue handle.
 
     Wraps a Nu child (typically a JQueueRef). Method calls produce

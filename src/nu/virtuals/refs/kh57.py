@@ -9,7 +9,7 @@ range reservoir sampling (``kh57.sample``) runs with low read amplification.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import Slot
 from nu.forms import Any
@@ -31,7 +31,11 @@ __all__ = [
 ]
 
 
-class Kh57Ref[V](DictRef[int, V]):
+V = TypeVar("V")
+DV = TypeVar("DV")
+
+
+class Kh57Ref(DictRef[int, V], Generic[V]):
     """Sparse int-keyed mapping with kh57-encoded layout for range sampling.
 
     Inherits all mapping semantics from :class:`DictRef`. Keys are always
@@ -63,7 +67,7 @@ class Kh57Ref[V](DictRef[int, V]):
         )
 
     @classmethod
-    def slot[DV](  # type: ignore[override]
+    def slot(  # type: ignore[override]
         cls,
         value_type: type[DV],
         view_type: type[Kh57ViewBase] | None = None,

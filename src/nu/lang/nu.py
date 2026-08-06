@@ -37,7 +37,7 @@ __all__ = ["Nu"]
 V_co = TypeVar("V_co", covariant=True)
 
 
-class Nu(Term[Runtime, V_co], Generic[V_co]):  # noqa: UP046  # PEP 695 has no variance markers
+class Nu(Term[Runtime, V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """The user-facing base for every Nu construct.
 
     A tagged ``Term`` carrying the language's ``Runtime`` binding and a

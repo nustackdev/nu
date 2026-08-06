@@ -17,7 +17,9 @@ host, e.g. nudle's Page) for its wire path.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, Self
+from typing import TYPE_CHECKING, Any, Literal
+
+from typing_extensions import Self
 
 from nu.domains.shape import Slot
 from nu.engine.structure import Declared

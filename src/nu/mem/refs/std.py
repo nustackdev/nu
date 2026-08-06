@@ -15,8 +15,10 @@ Storage formats:
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, time, timedelta, timezone
-from typing import TYPE_CHECKING, Self
+from datetime import date, datetime, time, timedelta, timezone
+from typing import TYPE_CHECKING
+
+from typing_extensions import Self
 
 from nu.core import ToFloat, ToInt, ToStr
 from nu.domains.shape import SetCmd, Slot
@@ -38,6 +40,9 @@ from nu.std.pathlib import Path as PathForm
 from nu.std.uuid import UUID as UUIDForm
 
 from .items import ItemRef
+
+
+UTC = timezone.utc
 
 
 if TYPE_CHECKING:
@@ -320,8 +325,6 @@ class DatetimeRef(ItemRef, DatetimeForm):
 
     def _lift(self, raw: object) -> datetime:
         """Parse the stored ISO str (or epoch) back to a datetime."""
-        from datetime import UTC
-
         if isinstance(raw, datetime):
             return raw
         if isinstance(raw, (int, float)):

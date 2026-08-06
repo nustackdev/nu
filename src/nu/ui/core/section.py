@@ -15,7 +15,7 @@ section's child slots.
 
 from __future__ import annotations
 
-from typing import Self
+from typing_extensions import Self
 
 from nu.domains.shape import Shape, Slot
 

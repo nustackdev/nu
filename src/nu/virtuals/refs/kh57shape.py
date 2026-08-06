@@ -10,7 +10,7 @@ at the int key, so callers can descend into per-point sub-fields
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import Slot
 from nu.forms import Any
@@ -32,7 +32,11 @@ __all__ = [
 ]
 
 
-class Kh57ShapesRef[T: Shape](ShapesDictRef[int, T]):
+T = TypeVar("T", bound="Shape")
+S = TypeVar("S", bound="Shape")
+
+
+class Kh57ShapesRef(ShapesDictRef[int, T], Generic[T]):
     """Sparse int-keyed mapping of homogeneous shapes with kh57 sampling.
 
     Inherits shape-descent semantics from :class:`ShapesDictRef`. Keys are
@@ -62,7 +66,7 @@ class Kh57ShapesRef[T: Shape](ShapesDictRef[int, T]):
         )
 
     @classmethod
-    def slot[S: Shape](  # type: ignore[override]
+    def slot(  # type: ignore[override]
         cls,
         shape_type: type[S],
         view_type: type[Kh57ViewBase] | None = None,

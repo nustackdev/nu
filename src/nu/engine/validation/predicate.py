@@ -16,7 +16,7 @@ algebra. Predicates are the building block for ``Law.scope`` and
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 __all__ = ["Predicate", "Test", "predicate"]
 
-type Test = Callable[["Program", "Path"], bool]
+Test: TypeAlias = "Callable[[Program, Path], bool]"
 
 
 class Predicate:

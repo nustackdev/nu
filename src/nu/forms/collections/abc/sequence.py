@@ -18,7 +18,7 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast, overload
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast, overload
 
 from .collection import CollectionForm
 from .sliceable import SliceableForm
@@ -38,9 +38,16 @@ __all__ = [
 ]
 
 
-class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
+CollectionT = TypeVar("CollectionT")
+ElementT = TypeVar("ElementT")
+CollectionResultT = TypeVar("CollectionResultT")
+ElementResultT = TypeVar("ElementResultT")
+
+
+class SequenceForm(
     CollectionForm[ElementT, CollectionResultT, ElementResultT],
     SliceableForm[CollectionResultT],
+    Generic[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for sequence values, like collections.abc.Sequence.
 
@@ -102,8 +109,9 @@ class SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return cast("CollectionResultT", self._wrap_iterable_result(Reversed(self)))
 
 
-class MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
+class MutableSequenceForm(
     SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
+    Generic[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for mutable sequence values, like collections.abc.MutableSequence.
 
@@ -179,8 +187,9 @@ class MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResul
         return Clear(self)
 
 
-class ReactiveSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
+class ReactiveSequenceForm(
     MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
+    Generic[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Reactive sequence. Adds on_change() for any-change observation.
 

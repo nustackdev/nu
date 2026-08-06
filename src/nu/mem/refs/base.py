@@ -18,7 +18,7 @@ the leaf) resolve through the FlatRef / inline-refs pass.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape.refs.base import StructuredRef
 from nu.lang import EMPTY
@@ -34,7 +34,10 @@ if TYPE_CHECKING:
 __all__ = ["RefBase"]
 
 
-class RefBase[T](StructuredRef):
+T = TypeVar("T")
+
+
+class RefBase(StructuredRef, Generic[T]):
     """Base for all dict-substrate refs: nested-dict navigation, no backend.
 
     The root dict comes from the Context via ``rt.ctx.get(dict, root_shape)``.

@@ -65,7 +65,7 @@ __all__ = [
 _RefT = TypeVar("_RefT")
 
 
-class Slot(Generic[_RefT]):  # noqa: UP046
+class Slot(Generic[_RefT]):
     """Factory carrying a Ref class and kwargs; create_ref produces the Ref."""
 
     def __init__(

@@ -13,7 +13,6 @@ take an explicit timestamp, so they are deterministic functions of their args.
 
 from __future__ import annotations
 
-from datetime import UTC
 from datetime import date as _date
 from datetime import datetime as _datetime
 from datetime import time as _time
@@ -21,6 +20,9 @@ from datetime import timedelta as _timedelta
 from datetime import timezone as _timezone
 
 from nu.factory import ScalarQueryFactory
+
+
+UTC = _timezone.utc
 
 
 __all__ = [

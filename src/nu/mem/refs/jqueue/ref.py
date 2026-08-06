@@ -7,9 +7,10 @@ path in the backing dict. Subsequent fetches return the same live queue.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 import janus
+from typing_extensions import Self
 
 from nu.domains.shape import Slot
 
@@ -28,7 +29,10 @@ if TYPE_CHECKING:
 __all__ = ["JQueueRef"]
 
 
-class JQueueRef[T](RefBase[janus.Queue[T]], JQueue[T]):
+T = TypeVar("T")
+
+
+class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
     """Leaf ref to a janus.Queue stored at a slot in nu-mem state.
 
     Vivifies the queue on first fetch, then returns the same instance.

@@ -23,10 +23,9 @@ subclasses are the common case, but nothing structural limits it.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from nu.lang.kinds import Action, Command, ScalarAction, ScalarQuery
-from nu.lang.nu import Nu
 
 from .core import InteractionFactory
 
@@ -35,6 +34,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.forms import Form
+    from nu.lang.nu import Nu
 
 
 __all__ = [
@@ -45,7 +45,10 @@ __all__ = [
 ]
 
 
-def MethodFactory[B: Nu](  # noqa: N802 -- a class factory; reads as a class at the call site
+B = TypeVar("B", bound="Nu")
+
+
+def MethodFactory(  # noqa: N802 -- a class factory; reads as a class at the call site
     base: type[B],
     name: str,
     method_name: str,

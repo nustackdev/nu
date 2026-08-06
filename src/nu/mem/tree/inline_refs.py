@@ -14,10 +14,15 @@ run; drop the calls at leisure.
 
 from __future__ import annotations
 
+from typing import TypeVar
+
 
 __all__ = ["inline_refs"]
 
 
-def inline_refs[N](tree: N) -> N:
+N = TypeVar("N")
+
+
+def inline_refs(tree: N) -> N:
     """Identity: ref flattening is retired (runtime resolution handles chains)."""
     return tree

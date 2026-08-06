@@ -28,7 +28,7 @@ repos:
 
 # Configuration
 default_language_version:
-  python: python3.12
+  python: python3.10
 
 ci:
   autofix_commit_msg: |

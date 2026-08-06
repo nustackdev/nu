@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import MutableSequenceRef, Slot
 from nu.forms import Any, Iterator, List
@@ -22,7 +22,13 @@ __all__ = [
 ]
 
 
-class ListRef[T](MutableSequenceRef["ItemRef"], RefBase[list[T]]):
+T = TypeVar("T")
+
+
+E = TypeVar("E")
+
+
+class ListRef(MutableSequenceRef["ItemRef"], RefBase[list[T]], Generic[T]):
     """Dict sequence reference: ordered container backed by nested list."""
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
@@ -62,7 +68,7 @@ class ListRef[T](MutableSequenceRef["ItemRef"], RefBase[list[T]]):
         self._payload["item_value_type"] = item_value_type
 
     @classmethod
-    def slot[E](cls, item_type: type[E]) -> ListRef[E]:
+    def slot(cls, item_type: type[E]) -> ListRef[E]:
         """Declare a list slot holding elements of ``item_type``."""
         return Slot(
             cls,

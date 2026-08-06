@@ -23,7 +23,7 @@ Module-level helpers and contexts (``getcontext``, ``localcontext``,
 from __future__ import annotations
 
 from decimal import Decimal as _Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 from nu.lang import Form, TypedNu
 
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from nu.forms.primitives import Bool, Int
     from nu.lang import Arg, FloatArg, IntArg, StrArg
 
-    type DecimalArg = Arg[_Decimal]
+    DecimalArg: TypeAlias = "Arg[_Decimal]"
 
 
 __all__ = ["Decimal"]

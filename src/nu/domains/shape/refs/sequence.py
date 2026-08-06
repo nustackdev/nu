@@ -24,6 +24,8 @@ them in.
 
 from __future__ import annotations
 
+from typing import Generic, TypeVar
+
 from nu.domains.shape.forms.sequence import MutableSequenceForm, ReactiveSequenceForm, SequenceForm
 
 from .base import StructuredRef
@@ -37,7 +39,10 @@ __all__ = [
 ]
 
 
-class SequenceRef[ItemResultT](SequenceForm, StructuredRef):
+ItemResultT = TypeVar("ItemResultT")
+
+
+class SequenceRef(SequenceForm, StructuredRef, Generic[ItemResultT]):
     """Ordered container Ref; ``ref[i]`` navigates to the element's child Ref.
 
     Navigation is defined ONCE (``__getitem__``) and routes through
@@ -58,7 +63,7 @@ class SequenceRef[ItemResultT](SequenceForm, StructuredRef):
         return self._wrap_item_ref(index)
 
 
-class MutableSequenceRef[ItemResultT](MutableSequenceForm, SequenceRef[ItemResultT]):
+class MutableSequenceRef(MutableSequenceForm, SequenceRef[ItemResultT], Generic[ItemResultT]):
     """Mutable ordered container Ref.
 
     Adds: append(v), extend(), insert(i,v), pop(), ..., store(v), erase().
@@ -68,7 +73,9 @@ class MutableSequenceRef[ItemResultT](MutableSequenceForm, SequenceRef[ItemResul
         return MutableItemRef(address, parent_ref=self, owner_shape=self._owner_shape)  # type: ignore[return-value]
 
 
-class ReactiveSequenceRef[ItemResultT](ReactiveSequenceForm, MutableSequenceRef[ItemResultT]):
+class ReactiveSequenceRef(
+    ReactiveSequenceForm, MutableSequenceRef[ItemResultT], Generic[ItemResultT]
+):
     """Reactive ordered container Ref.
 
     Adds: on_change(), on_child_change(), on_children_change(),

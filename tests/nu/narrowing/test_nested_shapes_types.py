@@ -7,7 +7,7 @@ shows the Shape (dot-nav autocompletes over its slots); runtime returns a
 
 from __future__ import annotations
 
-from typing import assert_type
+from typing_extensions import assert_type
 
 import nu
 from nu.forms import Bool, Int, Str

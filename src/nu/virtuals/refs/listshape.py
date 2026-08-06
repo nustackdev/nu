@@ -6,7 +6,7 @@ Index descent (``ref[i]``) is overridden to return a substrate-backed virtuals
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import ReactiveShapesSequenceRef, Slot
 from nu.forms import Any, Iterator, List
@@ -26,7 +26,13 @@ __all__ = [
 ]
 
 
-class ShapesListRef[T: Shape](ReactiveShapesSequenceRef[T], ViewRef[list[dict]]):
+T = TypeVar("T", bound="Shape")
+
+
+S = TypeVar("S", bound="Shape")
+
+
+class ShapesListRef(ReactiveShapesSequenceRef[T], ViewRef[list[dict]], Generic[T]):
     """Virtuals shapes list reference: sequence of homogeneous shapes."""
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
@@ -78,7 +84,7 @@ class ShapesListRef[T: Shape](ReactiveShapesSequenceRef[T], ViewRef[list[dict]])
         self._payload["item_type"] = dict
 
     @classmethod
-    def slot[S: Shape](
+    def slot(
         cls, shape_type: type[S], view_type: type[MutableSequenceBase] | None = None
     ) -> ShapesListRef[S]:
         """Declare a slot holding a sequence of ``shape_type`` shapes."""

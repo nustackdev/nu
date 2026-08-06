@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager, contextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 
 if TYPE_CHECKING:
@@ -34,7 +34,10 @@ if TYPE_CHECKING:
 __all__ = ["into_loop", "safely_aclosing", "safely_closing"]
 
 
-def into_loop[T](coro: Awaitable[T] | Coroutine[object, object, T]) -> T:
+T = TypeVar("T")
+
+
+def into_loop(coro: Awaitable[T] | Coroutine[object, object, T]) -> T:
     """Run a coroutine to completion from sync code.
 
     Spins a fresh loop with ``asyncio.run`` when no loop is running. Raises
@@ -49,13 +52,13 @@ def into_loop[T](coro: Awaitable[T] | Coroutine[object, object, T]) -> T:
     raise RuntimeError(msg)
 
 
-async def _as_coro[T](awaitable: Awaitable[T]) -> T:
+async def _as_coro(awaitable: Awaitable[T]) -> T:
     """Adapt a bare Awaitable to a Coroutine for ``asyncio.run``."""
     return await awaitable
 
 
 @contextmanager
-def safely_closing[T](it: Iterable[T]) -> Iterator[Iterable[T]]:
+def safely_closing(it: Iterable[T]) -> Iterator[Iterable[T]]:
     """Yield ``it``; on exit call ``close()`` if it has one, else no-op.
 
     Use to wrap iteration when the iterable's concrete type is unknown -
@@ -71,7 +74,7 @@ def safely_closing[T](it: Iterable[T]) -> Iterator[Iterable[T]]:
 
 
 @asynccontextmanager
-async def safely_aclosing[T](ait: AsyncIterable[T]) -> AsyncIterator[AsyncIterable[T]]:
+async def safely_aclosing(ait: AsyncIterable[T]) -> AsyncIterator[AsyncIterable[T]]:
     """Async sibling of ``safely_closing``: ``aclose`` on exit if present.
 
     Critical inside async generators that may short-circuit. Without this,

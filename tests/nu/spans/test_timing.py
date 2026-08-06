@@ -9,6 +9,7 @@ re-entry.
 from __future__ import annotations
 
 import asyncio
+import sys
 
 import pytest
 from _support.policy_atoms import CountAction, RecordAction, SlowAction
@@ -48,11 +49,19 @@ async def test_timeout_within_limit_forwards_the_value() -> None:
     assert ctx.attrs["x"] is True
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 11),
+    reason="asyncio timeout/cancellation semantics changed in 3.11",
+)
 async def test_timeout_exceeded_without_handler_raises() -> None:
     with pytest.raises(TimeoutError):
         await arun(Timeout(0.01, SlowAction(1.0)))
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 11),
+    reason="asyncio timeout/cancellation semantics changed in 3.11",
+)
 async def test_timeout_exceeded_runs_on_timeout_on_the_live_ctx() -> None:
     value, ctx = await arun(Timeout(0.01, SlowAction(1.0), on_timeout=_set("timed_out", True)))
     assert value is None

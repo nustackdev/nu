@@ -366,7 +366,8 @@ def _field(
     elif kind == "shape":
         st = slot.kwargs.get("shape_type")
         if not _is_mapping(data) or st is None:
-            lines.append(f"{prefix}{cn} {fn} {tt}{co} {_dim('\u2205', c)}")
+            _empty = _dim("\u2205", c)
+            lines.append(f"{prefix}{cn} {fn} {tt}{co} {_empty}")
         else:
             lines.append(f"{prefix}{cn} {fn}{co} {_shape_hdr(st, c)}")
             _slots(st, data, lines, cp, depth + 1, c, mi, md, ms)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import ReactiveSequenceRef, Slot
 from nu.forms import Any, Iterator, List
@@ -23,7 +23,13 @@ __all__ = [
 ]
 
 
-class ListRef[T](ReactiveSequenceRef["ItemRef"], ViewRef[list[T]]):
+T = TypeVar("T")
+
+
+E = TypeVar("E")
+
+
+class ListRef(ReactiveSequenceRef["ItemRef"], ViewRef[list[T]], Generic[T]):
     """Virtuals sequence reference: ordered container backed by a virtuals View."""
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
@@ -66,7 +72,7 @@ class ListRef[T](ReactiveSequenceRef["ItemRef"], ViewRef[list[T]]):
         self._payload["item_value_type"] = item_value_type
 
     @classmethod
-    def slot[E](
+    def slot(
         cls, item_type: type[E], view_type: type[MutableSequenceBase] | None = None
     ) -> ListRef[E]:
         """Declare a list slot holding elements of ``item_type``."""

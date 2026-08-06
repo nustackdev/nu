@@ -13,7 +13,9 @@ override needed.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
+
+from typing_extensions import Self
 
 from nu.domains.shape import ReactiveItemRef, Slot
 from nu.forms import Bool, Bytes, Float, Int, None_, Str

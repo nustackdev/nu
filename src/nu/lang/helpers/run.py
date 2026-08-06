@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 V = TypeVar("V")
 
 
-def run(  # noqa: UP047  # TypeVar matches the kind-chain V_co convention
+def run(  # TypeVar matches the kind-chain V_co convention
     term: Nu[V],
     ctx: Context | None = None,
     *,
@@ -53,7 +53,7 @@ def run(  # noqa: UP047  # TypeVar matches the kind-chain V_co convention
     return cast("V", value), ctx
 
 
-async def arun(  # noqa: UP047  # TypeVar matches the kind-chain V_co convention
+async def arun(  # TypeVar matches the kind-chain V_co convention
     term: Nu[V],
     ctx: Context | None = None,
     *,
@@ -69,7 +69,7 @@ async def arun(  # noqa: UP047  # TypeVar matches the kind-chain V_co convention
     return cast("V", value), ctx
 
 
-def run_in_loop(  # noqa: UP047  # TypeVar matches the kind-chain V_co convention
+def run_in_loop(  # TypeVar matches the kind-chain V_co convention
     term: Nu[V],
     ctx: Context | None = None,
     *,

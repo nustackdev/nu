@@ -17,7 +17,7 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from .collection import CollectionForm
 
@@ -34,8 +34,15 @@ __all__ = [
 ]
 
 
-class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
+CollectionT = TypeVar("CollectionT")
+ElementT = TypeVar("ElementT")
+CollectionResultT = TypeVar("CollectionResultT")
+ElementResultT = TypeVar("ElementResultT")
+
+
+class SetLikeForm(
     CollectionForm[ElementT, CollectionResultT, ElementResultT],
+    Generic[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for set values, like collections.abc.Set.
 
@@ -133,8 +140,9 @@ class SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return cast("CollectionResultT", self._wrap_set_result(SetXor(self, other)))
 
 
-class MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
+class MutableSetForm(
     SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
+    Generic[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for mutable set values, like collections.abc.MutableSet.
 
@@ -224,8 +232,9 @@ class MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
         return cast("CollectionResultT", self._wrap_set_result(SetIXor(self, other)))
 
 
-class ReactiveSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT](
+class ReactiveSetForm(
     MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
+    Generic[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Reactive set. Adds on_change() for any-change observation.
 

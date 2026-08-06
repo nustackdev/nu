@@ -12,7 +12,7 @@ async read path (``acoerce``).
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 from fractions import Fraction
 from pathlib import PurePath
@@ -36,6 +36,9 @@ from nu.mem import (
     UUIDRef,
 )
 from nu.std.fin import PyBasisPoint, PyPercentage
+
+
+UTC = timezone.utc
 
 
 class Bag(Shape):

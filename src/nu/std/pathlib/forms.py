@@ -26,7 +26,7 @@ plus the pure ``is_reserved`` / ``parents`` sequence.
 from __future__ import annotations
 
 from pathlib import PurePath as _PurePath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 from nu.lang import Form, TypedNu
 
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from nu.forms.primitives import Bool, Str
     from nu.lang import Arg, StrArg
 
-    type PathArg = Arg[_PurePath]
+    PathArg: TypeAlias = "Arg[_PurePath]"
 
 
 __all__ = ["Path"]

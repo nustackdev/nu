@@ -15,7 +15,7 @@ Type Parameters:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.lang import Form
 
@@ -30,7 +30,12 @@ __all__ = [
 ]
 
 
-class IterableForm[ElementT, CollectionResultT, ElementResultT](Form):
+ElementT = TypeVar("ElementT")
+CollectionResultT = TypeVar("CollectionResultT")
+ElementResultT = TypeVar("ElementResultT")
+
+
+class IterableForm(Form, Generic[ElementT, CollectionResultT, ElementResultT]):
     """Base for values that support iteration.
 
     Provides wrapping infrastructure used by subclass traits

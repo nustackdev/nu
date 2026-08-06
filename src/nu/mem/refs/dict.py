@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import MutableMappingRef, Slot
 from nu.forms import Any, Dict, DictItems, DictKeys, DictValues, Iterator
@@ -22,7 +22,15 @@ __all__ = [
 ]
 
 
-class DictRef[K, V](MutableMappingRef["ItemRef"], RefBase[dict[K, V]]):
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+DK = TypeVar("DK")
+DV = TypeVar("DV")
+
+
+class DictRef(MutableMappingRef["ItemRef"], RefBase[dict[K, V]], Generic[K, V]):
     """Dict mapping reference: key-value container backed by nested dict."""
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
@@ -78,7 +86,7 @@ class DictRef[K, V](MutableMappingRef["ItemRef"], RefBase[dict[K, V]]):
         self._payload["value_value_type"] = value_value_type
 
     @classmethod
-    def slot[DK, DV](cls, value_type: type[DV], key_type: type[DK] = str) -> DictRef[DK, DV]:  # type: ignore[assignment]
+    def slot(cls, value_type: type[DV], key_type: type[DK] = str) -> DictRef[DK, DV]:  # type: ignore[assignment]
         """Declare a mapping slot with ``value_type`` values and ``key_type`` keys."""
         return Slot(
             cls,

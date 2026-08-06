@@ -20,8 +20,27 @@ fact, not an attribute: ``composition_effects`` is empty.
 
 from __future__ import annotations
 
-from enum import StrEnum
-from typing import TYPE_CHECKING
+import sys as _sys
+
+
+if _sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum as _Enum
+
+    class StrEnum(str, _Enum):
+        """Backport of enum.StrEnum for Python 3.10."""
+
+        def __new__(cls, value: str) -> StrEnum:
+            member = str.__new__(cls, value)
+            member._value_ = value
+            return member
+
+        def __str__(self) -> str:
+            return str.__str__(self)
+
+
+from typing import TYPE_CHECKING, TypeAlias
 
 from nu.engine import Attribute, Declared, Synthesized
 
@@ -43,7 +62,7 @@ class Effect(StrEnum):
     WRITE = "write"
 
 
-type EffectSet = frozenset[tuple[type[Ref], Effect]]
+EffectSet: TypeAlias = "frozenset[tuple[type[Ref], Effect]]"
 
 
 def _tracked_effects(program: Program, path: Path) -> EffectSet:

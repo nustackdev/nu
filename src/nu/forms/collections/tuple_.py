@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic
+
+from typing_extensions import TypeVarTuple, Unpack
 
 from nu.lang import TypedNu
 
@@ -22,14 +24,18 @@ __all__ = [
 ]
 
 
-class Tuple[*Ts](
-    SequenceForm[tuple[*Ts], object, "List[object]", "Any"],
-    TypedNu[tuple[*Ts]],
+Ts = TypeVarTuple("Ts")
+
+
+class Tuple(
+    SequenceForm[tuple[Unpack[Ts]], object, "List[object]", "Any"],
+    TypedNu[tuple[Unpack[Ts]]],
+    Generic[Unpack[Ts]],
 ):
     """Tuple interface. Immutable sequence + comparable."""
 
     @classmethod
-    def create(cls) -> Tuple[*Ts]:
+    def create(cls) -> Tuple[Unpack[Ts]]:
         """Yield an empty tuple."""
         return cls(TupleCreate())
 
@@ -64,13 +70,13 @@ class Tuple[*Ts](
     # ARITHMETIC (concatenation / repeat): new value, no mutation
     # =========================================================================
 
-    def __add__(self, other: TupleArg[*Ts]) -> Tuple:
+    def __add__(self, other: TupleArg[Unpack[Ts]]) -> Tuple:
         """Concat: self + other -> new tuple (Query)."""
         from nu.core import Add
 
         return Tuple(Add(self, other))
 
-    def __radd__(self, other: TupleArg[*Ts]) -> Tuple:
+    def __radd__(self, other: TupleArg[Unpack[Ts]]) -> Tuple:
         """Concat: other + self -> new tuple (Query)."""
         from nu.core import Add
 
@@ -92,28 +98,28 @@ class Tuple[*Ts](
     # COMPARISON
     # =========================================================================
 
-    def __gt__(self, other: TupleArg[*Ts]) -> Bool:
+    def __gt__(self, other: TupleArg[Unpack[Ts]]) -> Bool:
         from nu.core import Gt
 
         from ..primitives import Bool
 
         return Bool(Gt(self, other))
 
-    def __lt__(self, other: TupleArg[*Ts]) -> Bool:
+    def __lt__(self, other: TupleArg[Unpack[Ts]]) -> Bool:
         from nu.core import Lt
 
         from ..primitives import Bool
 
         return Bool(Lt(self, other))
 
-    def __ge__(self, other: TupleArg[*Ts]) -> Bool:
+    def __ge__(self, other: TupleArg[Unpack[Ts]]) -> Bool:
         from nu.core import Ge
 
         from ..primitives import Bool
 
         return Bool(Ge(self, other))
 
-    def __le__(self, other: TupleArg[*Ts]) -> Bool:
+    def __le__(self, other: TupleArg[Unpack[Ts]]) -> Bool:
         from nu.core import Le
 
         from ..primitives import Bool
@@ -122,21 +128,21 @@ class Tuple[*Ts](
 
     __hash__ = object.__hash__
 
-    def __eq__(self, other: TupleArg[*Ts]) -> Bool:  # type: ignore[override]
+    def __eq__(self, other: TupleArg[Unpack[Ts]]) -> Bool:  # type: ignore[override]
         from nu.core import Eq
 
         from ..primitives import Bool
 
         return Bool(Eq(self, other))
 
-    def __ne__(self, other: TupleArg[*Ts]) -> Bool:  # type: ignore[override]
+    def __ne__(self, other: TupleArg[Unpack[Ts]]) -> Bool:  # type: ignore[override]
         from nu.core import Ne
 
         from ..primitives import Bool
 
         return Bool(Ne(self, other))
 
-    def is_(self, other: TupleArg[*Ts]) -> Bool:
+    def is_(self, other: TupleArg[Unpack[Ts]]) -> Bool:
         """Identity comparison: self is other."""
         from nu.core import Is
 

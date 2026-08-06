@@ -8,7 +8,9 @@ See docs/nudle/interactions.md.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, Self
+from typing import TYPE_CHECKING, Any, Literal
+
+from typing_extensions import Self
 
 from nu.forms import Dict
 from nu.lang.sentinels import UNSET

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.lang import Form, TypedNu
 
@@ -21,7 +21,10 @@ __all__ = [
 ]
 
 
-class Iterator[T](Form, TypedNu[Iterator[T]]):
+T = TypeVar("T")
+
+
+class Iterator(Form, TypedNu[Iterator[T]], Generic[T]):
     """Lazy iterator interface. Materializes via to_list/to_set/to_tuple."""
 
     def __iter__(self) -> Iterator[T]:

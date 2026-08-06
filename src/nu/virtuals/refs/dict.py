@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import ReactiveMappingRef, Slot
 from nu.forms import Any, Dict, DictItems, DictKeys, DictValues, Iterator
@@ -23,7 +23,15 @@ __all__ = [
 ]
 
 
-class DictRef[K, V](ReactiveMappingRef["ItemRef"], ViewRef[dict[K, V]]):
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+DK = TypeVar("DK")
+DV = TypeVar("DV")
+
+
+class DictRef(ReactiveMappingRef["ItemRef"], ViewRef[dict[K, V]], Generic[K, V]):
     """Virtuals mapping reference: key-value container backed by a virtuals View."""
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
@@ -82,7 +90,7 @@ class DictRef[K, V](ReactiveMappingRef["ItemRef"], ViewRef[dict[K, V]]):
         self._payload["value_value_type"] = value_value_type
 
     @classmethod
-    def slot[DK, DV](
+    def slot(
         cls,
         value_type: type[DV],
         view_type: type[MutableMappingBase] | None = None,

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import ItemsView, KeysView, ValuesView
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.lang import TypedNu
 
@@ -26,9 +26,14 @@ __all__ = [
 ]
 
 
-class DictKeys[K](
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+class DictKeys(
     SetLikeForm[KeysView[K], K, "Set[K]", "Any"],
     TypedNu[KeysView[K]],
+    Generic[K],
 ):
     """Dict key view interface - set-like, lazy, live."""
 
@@ -67,9 +72,10 @@ class DictKeys[K](
         return Set(ToSet(self))
 
 
-class DictValues[V](
+class DictValues(
     CollectionForm[V, "List[V]", "Any"],
     TypedNu[ValuesView[V]],
+    Generic[V],
 ):
     """Dict value view interface - iterable, sized, containment."""
 
@@ -102,9 +108,10 @@ class DictValues[V](
         return Set(ToSet(self))
 
 
-class DictItems[K, V](
+class DictItems(
     SetLikeForm[ItemsView[K, V], tuple[K, V], "Set[tuple[K, V]]", "Any"],
     TypedNu[ItemsView[K, V]],
+    Generic[K, V],
 ):
     """Dict item view interface - set-like, lazy, live."""
 

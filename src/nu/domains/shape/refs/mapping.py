@@ -16,6 +16,8 @@ silently broken domain Ref.
 
 from __future__ import annotations
 
+from typing import Generic, TypeVar
+
 from nu.domains.shape.forms.mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
 
 from .base import StructuredRef
@@ -29,7 +31,10 @@ __all__ = [
 ]
 
 
-class MappingRef[ItemResultT](MappingForm, StructuredRef):
+ItemResultT = TypeVar("ItemResultT")
+
+
+class MappingRef(MappingForm, StructuredRef, Generic[ItemResultT]):
     """Key-value container Ref; ``ref[key]`` navigates to the value's child Ref.
 
     Navigation is defined ONCE (``__getitem__``) and routes through
@@ -48,7 +53,7 @@ class MappingRef[ItemResultT](MappingForm, StructuredRef):
         return self._wrap_item_ref(key)
 
 
-class MutableMappingRef[ItemResultT](MutableMappingForm, MappingRef[ItemResultT]):
+class MutableMappingRef(MutableMappingForm, MappingRef[ItemResultT], Generic[ItemResultT]):
     """Mutable key-value container Ref.
 
     Adds: set(k,v), delete(k), update(), store(v), erase() on top of MappingRef.
@@ -58,7 +63,7 @@ class MutableMappingRef[ItemResultT](MutableMappingForm, MappingRef[ItemResultT]
         return MutableItemRef(address, parent_ref=self, owner_shape=self._owner_shape)  # type: ignore[return-value]
 
 
-class ReactiveMappingRef[ItemResultT](ReactiveMappingForm, MutableMappingRef[ItemResultT]):
+class ReactiveMappingRef(ReactiveMappingForm, MutableMappingRef[ItemResultT], Generic[ItemResultT]):
     """Reactive key-value container Ref.
 
     Adds: on_change() (generic), on_child_change(), on_children_change(),

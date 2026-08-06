@@ -12,7 +12,9 @@ than shape-decompose (log lines, raw account blobs, balance arrays, ...).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Generic, TypeVar
+
+from typing_extensions import Self
 
 from nu.domains.shape import Slot
 from nu.forms import Dict, FrozenSet, List, Set, Tuple
@@ -36,7 +38,12 @@ __all__ = [
 ]
 
 
-class PrimitiveListRef[T](ItemRef, List[T]):
+T = TypeVar("T")
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+class PrimitiveListRef(ItemRef, List[T], Generic[T]):
     """virtuals list stored as a single primitive blob."""
 
     def __init__(
@@ -75,7 +82,7 @@ class PrimitiveListRef[T](ItemRef, List[T]):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveDictRef[K, V](ItemRef, Dict[K, V]):
+class PrimitiveDictRef(ItemRef, Dict[K, V], Generic[K, V]):
     """virtuals dict stored as a single primitive blob."""
 
     def __init__(
@@ -153,7 +160,7 @@ class PrimitiveTupleRef(ItemRef, Tuple):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveSetRef[T](ItemRef, Set[T]):
+class PrimitiveSetRef(ItemRef, Set[T], Generic[T]):
     """virtuals set stored as a single primitive blob."""
 
     def __init__(
@@ -192,7 +199,7 @@ class PrimitiveSetRef[T](ItemRef, Set[T]):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveFrozenSetRef[T](ItemRef, FrozenSet[T]):
+class PrimitiveFrozenSetRef(ItemRef, FrozenSet[T], Generic[T]):
     """virtuals frozenset stored as a single primitive blob."""
 
     def __init__(
