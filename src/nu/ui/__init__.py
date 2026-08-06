@@ -21,7 +21,7 @@ nu_ui`` code keeps working.
 from . import core, nudle, refs
 from .core import Frame, Ref, Section, SectionRef, Session, Subscription
 from .core.interactions import Append, Changed, Write
-from .nudle.fabric import NudleServer
+from .nudle.fabric import NudleServer, server
 from .nudle.page import Index, Page, Pages
 from .nudle.session import NudleSession
 from .refs import (
@@ -132,4 +132,6 @@ __all__ = [
     "core",
     "nudle",
     "refs",
+    # Presets
+    "server",
 ]
