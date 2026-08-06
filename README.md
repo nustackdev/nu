@@ -52,8 +52,6 @@
 
 # ℹ️ About
 
-Nu is a Python programming model that makes **interaction** the primitive.
-
 Every app is a set of interactions between systems: a database, a UI, AI agents, services. Nu names those interactions directly:
 
 - **Ref** names what you touch. A KV slot, a UI widget, an LLM endpoint, a memory slot, a remote object.
