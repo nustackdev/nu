@@ -1,21 +1,3 @@
-# =============================================================================
-# nu — the interaction primitive
-# =============================================================================
-# One package: kernel, stdlib, fabrics (nu.virtuals / nu.mem / nu.ui), and
-# topologies (nu.distributed). Source lives under src/nu (src layout). Extras
-# are opt-in; the `local` dependency group pulls the full cluster dev closure
-# by default.
-#
-# Layout under `src/nu/ui/`:
-# - `refs/`   -- python widget kit
-# - `nudle/`  -- python nudle host (serve, session, Page, presets, ...)
-# - `web/`    -- everything for the browser: one npm workspace containing
-#                `core` (ts primitives), `kit` (ts components), and
-#                `nudle` (Vite SPA). `web/nudle` also carries the sibling
-#                PyPI wheel that ships the compiled SPA -- kept out of the
-#                main `nu` wheel so releases stay lean.
-# =============================================================================
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -42,11 +24,8 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
+# One extra per fabric; name matches the `nu.<fabric>` import path.
 [project.optional-dependencies]
-# One extra per fabric; the name matches the ``nu.<fabric>`` import path.
-# Bare install (no extras) has no third-party deps -- ``import nu`` works,
-# and touching a fabric you did not install raises ImportError telling you
-# which extra to add.
 virtuals = [
     "virtuals-py>=0.1.2",
 ]
@@ -66,10 +45,6 @@ ray = [
 invisibles = [
     "invisibles-py",
 ]
-# Everything, including the RocksDB storage backend (pulled through virtuals).
-# rdbpython ships wheels for cp39-cp314 on macOS (x86_64/arm64) and manylinux
-# x86_64; Windows and linux-aarch64 users hit a source build. If that becomes
-# a support burden, gate the rocksdb line with environment markers.
 all = [
     "nustack-py[virtuals]",
     "nustack-py[mem]",
@@ -82,9 +57,6 @@ all = [
 [project.urls]
 Repository = "https://github.com/nustackdev/nu"
 
-# =============================================================================
-# Hatch — src layout; frontend subtree excluded (packaged as sibling `nudle` wheel)
-# =============================================================================
 [tool.hatch.build.targets.wheel]
 packages = ["src/nu"]
 exclude = [
@@ -97,20 +69,10 @@ exclude = [
     "src/nu/ui/**/dist",
 ]
 
-# =============================================================================
-# UV — local sources + dev closure
-# =============================================================================
 [tool.uv.sources]
 nudle = { path = "./src/nu/ui/web/nudle", editable = true }
-virtuals-py = { path = "../virtuals", editable = true }
-invisibles-py = { path = "../invisibles", editable = true }
-kh57 = { path = "../kh57", editable = true }
 
 [tool.uv]
-# Bare `uv sync` = lean dev install (base deps + tooling), no path-editable
-# sibling repos required. Cluster contributors with `../virtuals`,
-# `../invisibles`, `../kh57` cloned run `uv sync --group local` to pull
-# `[all]` + the editable siblings. `--group examples` adds aiohttp.
 default-groups = ["dev"]
 
 [dependency-groups]
@@ -125,27 +87,12 @@ dev = [
     "hypothesis>=6.0.0",
     "pytest-asyncio>=1.3.0",
 ]
-examples = [
-    "aiohttp",
-]
-local = [
-    "nustack-py[all]",
-    # virtuals eager-imports its RedisPublisher backend; pull redis here so
-    # dev tests can collect. Not needed by any nu extra -- upstream should
-    # lazy-import that backend, at which point this line can go.
-    "redis",
-]
 
-# =============================================================================
-# Pytest
-# =============================================================================
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
 ]
-# Make the nu test-support package importable as `_support.<module>` from any
-# test file under tests/nu/. The leading underscore keeps pytest from
-# auto-collecting it as tests.
+# Underscore prefix on `_support` keeps pytest from auto-collecting it as tests.
 pythonpath = [
     "tests/nu",
 ]
@@ -164,9 +111,6 @@ markers = [
     "text: storage-backend parametrization — text/debug tkv",
 ]
 
-# =============================================================================
-# Coverage
-# =============================================================================
 [tool.coverage.run]
 source = [
     "src/nu",
@@ -195,9 +139,6 @@ skip_covered = true
 [tool.coverage.html]
 directory = "reports/coverage"
 
-# =============================================================================
-# Ruff
-# =============================================================================
 [tool.ruff]
 line-length = 100
 target-version = "py310"
@@ -226,9 +167,9 @@ select = [
     "PTH",    # flake8-pathlib
 ]
 ignore = [
-    "E501",   # Line too long (handled by formatter)
-    "D105",   # Missing docstring in magic method
-    "D107",   # Missing docstring in __init__ (covered by class docstring)
+    "E501",   # handled by formatter
+    "D105",   # docstring in magic method
+    "D107",   # docstring in __init__ (covered by class docstring)
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -236,60 +177,33 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**/*.py" = [
-    "S101",   # assert allowed in tests
-    "S108",   # /tmp usage allowed in tests
-    "T20",    # print allowed in tests
-    "D",      # docstrings not required in tests
-    "E711",
-    "E712",
-    "ANN",    # type annotations not required in tests
-    "N806",   # disable variable name checks
+    "S101", "S108", "T20", "D", "E711", "E712", "ANN", "N806",
 ]
 "**/testing/**/*.py" = [
-    "S101",
-    "T20",
-    "D",
-    "E711",
-    "E712",
-    "ANN",
-    "N806",
-    "B017",
+    "S101", "T20", "D", "E711", "E712", "ANN", "N806", "B017",
 ]
 "examples/**/*.py" = [
-    "S101",
-    "T20",
-    "D",
-    "ANN",
+    "S101", "T20", "D", "ANN",
 ]
 "benchmarks/**/*.py" = [
-    "S101",
-    "T20",
-    "D",
-    "ANN",
-    "B007",
+    "S101", "T20", "D", "ANN", "B007",
 ]
 "**/ops/control/**/*.py" = [
-    "ANN401",  # Any type needed for polymorphic control op parameters
+    "ANN401",  # Any needed for polymorphic control op parameters
 ]
 "**/refs/std.py" = [
-    "N811",   # std Forms (UUID) aliased as *Form to not shadow the stdlib type
-    "N812",   # std Forms (date, complex, ...) aliased as *Form for the same reason
+    "N811", "N812",  # std Forms (UUID, date, ...) aliased as *Form to not shadow stdlib types
 ]
 "src/nu/ui/core/**/*.py" = [
-    "D102",     # short docstring per abstract method / one-liner setter is ceremony
-    "D103",     # module-level encode/decode are self-evident
-    "ANN401",   # _acompile athunks legitimately return Any (host-lifted primitive)
+    "D102", "D103",
+    "ANN401",  # _acompile athunks legitimately return Any (host-lifted primitive)
 ]
 "src/nu/ui/refs/**/*.py" = [
-    "D102",     # widget setters are intentionally one-liners; docstring per method is ceremony
-    "ANN401",   # _acompile athunks legitimately return Any (host-lifted primitive)
+    "D102",    # widget setters are one-liners; docstring per method is ceremony
+    "ANN401",
 ]
 "src/nu/ui/nudle/**/*.py" = [
-    "D102",     # tolerated pre-existing on the host code before the reorg move
-    "D103",
-    "D205",
-    "ANN401",
-    "S110",
+    "D102", "D103", "D205", "ANN401", "S110",
 ]
 
 [tool.ruff.lint.isort]
@@ -304,9 +218,6 @@ lines-after-imports = 2
 quote-style = "double"
 indent-style = "space"
 
-# =============================================================================
-# Mypy
-# =============================================================================
 [tool.mypy]
 python_version = "3.10"
 warn_return_any = true
@@ -319,8 +230,5 @@ exclude = [
     ".venv/",
 ]
 
-# ============================================================================
-# Security
-# ============================================================================
 [tool.bandit]
 exclude_dirs = ["examples/", "docs/"]

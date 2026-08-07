@@ -67,7 +67,7 @@ install:
 
 sync: install
 	@echo "$(BLUE)Syncing workspace...$(NC)"
-	uv sync
+	uv sync --all-extras
 	@echo "$(GREEN)Workspace synced$(NC)"
 
 dev: sync

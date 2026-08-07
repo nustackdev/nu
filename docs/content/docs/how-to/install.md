@@ -2,7 +2,7 @@
 title: Install
 ---
 
-Install Nu from PyPI. For hacking on Nu itself, see [Install from source](install-from-source).
+Install Nu from PyPI. For hacking on Nu itself, see [Install from source](install-from-source). For editable dev across the full nustack (nu + virtuals + invisibles), see [Cross-repo dev](cross-repo-dev).
 
 ## Prerequisites
 

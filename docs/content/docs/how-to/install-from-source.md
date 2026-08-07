@@ -2,7 +2,7 @@
 title: Install from source
 ---
 
-Clone Nu and work off the tree. For a normal install, see [Install](install).
+Clone Nu and work off the tree. For a normal install, see [Install](install). For editable dev across nu + virtuals + invisibles together, see [Cross-repo dev](cross-repo-dev); this page covers hacking on nu alone.
 
 ## Prerequisites
 
@@ -25,21 +25,6 @@ Two options, pick either:
 
 - **`uv run <cmd>`.** Uses `.venv/` automatically, no activation needed.
 - **`source .venv/bin/activate`.** Activates the venv in your shell; then run `python`, `pytest`, etc. directly.
-
-## Pull the full stack as editable siblings
-
-If you want `nu.v` (virtuals + RocksDB), `nu.invisibles`, and the rest of the fabrics as editable installs from sibling repos, clone them next to `nu/` and add `--group local`:
-
-```bash
-cd ..
-git clone https://github.com/nustackdev/virtuals
-git clone https://github.com/nustackdev/invisibles
-git clone https://github.com/nustackdev/kh57
-cd nu
-uv sync --group local
-```
-
-Without the siblings, `--group local` fails with `Distribution not found at: file:///.../virtuals`. Drop the flag for the lean install, or clone the missing repos.
 
 ## Build the UI bundle
 
@@ -77,8 +62,6 @@ Open the browser tab that appears. The counter ticks once a second; the dashboar
 ## Common errors
 
 **`uv: command not found` after `make sync`.** `make install` puts uv at `~/.local/bin/uv`. Add that to your `PATH`, or open a new shell.
-
-**`Distribution not found at: file:///.../virtuals` on `uv sync --group local`.** The `local` group pulls the full stack as editable installs from sibling repos. Clone `virtuals`, `invisibles`, and `kh57` as siblings of `nu/` (see [Pull the full stack](#pull-the-full-stack-as-editable-siblings)), or drop `--group local`.
 
 **Browser shows 404 on `/`.** The web bundle is not built. Run `make web-build`.
 
