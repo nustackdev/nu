@@ -34,7 +34,20 @@ cd nu
 make sync
 ```
 
-`make sync` runs `uv sync`, which provisions `.venv/` with the full stack: core, `nu.m`, `nu.v` (virtuals + RocksDB), `nu.ui` bindings, `nu.invisibles`, and `nu.ray`. For a lean install without the distributed groups, run `uv sync --no-group local`.
+`make sync` runs `uv sync` and gives you a lean dev env: base deps + tooling (ruff, pytest, pre-commit). Nothing outside this repo is required.
+
+For the full stack (core, `nu.m`, `nu.v` with RocksDB, `nu.ui`, `nu.invisibles`, `nu.ray`) as editable path installs, clone the sibling repos next to `nu/` and add `--group local`:
+
+```bash
+cd ..
+git clone https://github.com/nustackdev/virtuals
+git clone https://github.com/nustackdev/invisibles
+git clone https://github.com/nustackdev/kh57
+cd nu
+uv sync --group local
+```
+
+Without the siblings, `--group local` fails with `Distribution not found at: file:///.../virtuals` — that group resolves those names from editable paths one directory up.
 
 Activate the venv:
 
@@ -86,3 +99,5 @@ Open the browser tab that appears. The counter ticks once a second; the dashboar
 **Browser shows 404 on `/`.** The web bundle is not built (source install only). Run `make web-build`.
 
 **Warning: `import nudle` resolves to a module, not the ui wheel package.** A local `nudle.py` on `sys.path` shadows the package. Rename that file, or run from a directory that does not shadow it.
+
+**`Distribution not found at: file:///.../virtuals` on `uv sync --group local`.** The `local` group pulls the full stack as editable installs from sibling repos. Clone `virtuals`, `invisibles`, and `kh57` as siblings of `nu/` (see "Install from source" above), or drop `--group local` for the lean dev install.

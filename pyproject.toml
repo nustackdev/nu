@@ -107,9 +107,11 @@ invisibles-py = { path = "../invisibles", editable = true }
 kh57 = { path = "../kh57", editable = true }
 
 [tool.uv]
-# Bare `uv sync` provisions the full dev env: the distributed stack + tooling.
-# Use `--no-group local` for a lean install, `--group examples` for aiohttp.
-default-groups = ["dev", "local"]
+# Bare `uv sync` = lean dev install (base deps + tooling), no path-editable
+# sibling repos required. Cluster contributors with `../virtuals`,
+# `../invisibles`, `../kh57` cloned run `uv sync --group local` to pull
+# `[all]` + the editable siblings. `--group examples` adds aiohttp.
+default-groups = ["dev"]
 
 [dependency-groups]
 dev = [
