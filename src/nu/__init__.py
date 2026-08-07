@@ -18,17 +18,18 @@ Or reach a subpackage by dot-access:
 
 Short aliases: ``nu.m`` = ``nu.mem``, ``nu.v`` = ``nu.virtuals``.
 Same modules, shorter to type.
-
-Flat at the root: forms, core interactions, flows, spans, the context fabric,
-and the language essentials (``Nu``, the kinds, the ``Arg`` aliases, the
-sentinels, the entry points). The shape DSL (``Shape`` / ``Slot``) is flat; its
-fabric atoms stay at ``nu.shape.*``. The generic tree toolkit (``nu.tree``) and
-the layer-0 engine (``nu.engine``) are namespace-only, never flat.
 """
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version as _version
 from typing import TYPE_CHECKING
+
+try:
+    __version__ = _version("nu")
+except PackageNotFoundError:
+    __version__ = "0.0.0+dev"
+del _version, PackageNotFoundError
 
 # Subpackage namespaces for dot-access.
 # Early group: pure layers with no dependency on the flat root surface.
