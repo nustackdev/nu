@@ -206,5 +206,6 @@ lib*.so.*
 
 # nudle UI (vite / node)
 node_modules/
-src/nu/nudle/ui/dist/*
-!src/nu/nudle/ui/dist/.gitkeep
+!src/nu/ui/web/nudle/dist/
+src/nu/ui/web/nudle/dist/*
+!src/nu/ui/web/nudle/dist/.gitkeep

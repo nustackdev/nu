@@ -12,7 +12,7 @@ node_modules
 **/node_modules
 
 # vite build outputs (nudle/dist)
-**/dist
+**/dist/*
 !**/dist/.gitkeep
 dist-ssr
 
