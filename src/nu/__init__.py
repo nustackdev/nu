@@ -26,7 +26,7 @@ from importlib.metadata import PackageNotFoundError, version as _version
 from typing import TYPE_CHECKING
 
 try:
-    __version__ = _version("nu")
+    __version__ = _version("nustack-py")
 except PackageNotFoundError:
     __version__ = "0.0.0+dev"
 del _version, PackageNotFoundError
