@@ -53,7 +53,7 @@ class NudleServer:
 
     Example:
         >>> nu.With(
-        ...     nu.v.presets.rocksdb_navigator(".db"),
+        ...     nu.kv.presets.rocksdb_navigator(".db"),
         ...     nu.ui.nudle.server(app, host="127.0.0.1", port=8080),
         ...     body=background_worker,
         ... )
@@ -161,7 +161,7 @@ def server(
 
     Example:
         >>> nu.With(
-        ...     nu.v.presets.rocksdb_navigator(".db"),
+        ...     nu.kv.presets.rocksdb_navigator(".db"),
         ...     nu.ui.nudle.server(app, host="127.0.0.1", port=8080),
         ...     body=background_worker,
         ... )

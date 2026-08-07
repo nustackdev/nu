@@ -65,7 +65,7 @@ function LeftTree() {
         <Line indent>
           <span className={s.ident}>val</span>
           <span className={s.dim}>: </span>
-          <span className={s.tVirtuals}>nu.v.IntRef</span>
+          <span className={s.tVirtuals}>nu.kv.IntRef</span>
         </Line>
       </Container>
 

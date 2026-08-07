@@ -32,10 +32,10 @@ class ShapeCache(nu.Shape):
 
 
 class Store(nu.Shape):
-    profiles: nu.v.ShapesDictRef[int, Profile]
-    ranks: nu.v.ShapesListRef[Profile]
-    indexes: nu.v.PrimitiveListRef[int]
-    cache: ShapeCache = nu.v.ShapeRef.slot(ShapeCache)
+    profiles: nu.kv.ShapesDictRef[int, Profile]
+    ranks: nu.kv.ShapesListRef[Profile]
+    indexes: nu.kv.PrimitiveListRef[int]
+    cache: ShapeCache = nu.kv.ShapeRef.slot(ShapeCache)
 
 
 # --- Ref-typed keys ---------------------------------------------------
@@ -108,12 +108,12 @@ assert_type(Store.indexes[Store.cache.curr] // 2, Int)
 
 
 class Team(nu.Shape):
-    captain: Profile = nu.v.ShapeRef.slot(Profile)
+    captain: Profile = nu.kv.ShapeRef.slot(Profile)
 
 
 class League(nu.Shape):
-    teams: nu.v.ShapesListRef[Team]
-    winners: nu.v.ShapesDictRef[str, Team]
+    teams: nu.kv.ShapesListRef[Team]
+    winners: nu.kv.ShapesDictRef[str, Team]
 
 
 assert_type(League.teams[0], Team)

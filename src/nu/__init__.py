@@ -16,8 +16,7 @@ Or reach a subpackage by dot-access:
     nu.mem.IntRef       nu.virtuals.presets.memory_storage
     nu.ui.Page          nu.std.uuid.UUID
 
-Short aliases: ``nu.m`` = ``nu.mem``, ``nu.v`` = ``nu.virtuals``.
-Same modules, shorter to type.
+Short alias: ``nu.kv`` = ``nu.virtuals`` (the KV-storage fabric).
 """
 
 from __future__ import annotations
@@ -125,9 +124,8 @@ from .lang.helpers import (
 if TYPE_CHECKING:
     from . import invisibles, mem, ray, std, ui, virtuals
 
-    # Short aliases for the fabric adapters.
-    m = mem
-    v = virtuals
+    # Short alias for the KV storage fabric.
+    kv = virtuals
 
 # NOTE: several flat re-exports above shadow Python builtins at module scope
 # — coercion atoms (``set``/``frozenset``/``tuple``/``list``/``dict``/``int``/
@@ -137,7 +135,7 @@ if TYPE_CHECKING:
 # don't get their builtins silently swapped. Any set/dict-builder logic in
 # THIS file must use literals (``{...}``) — never the shadowed callables.
 _LAZY = {"invisibles", "mem", "ray", "std", "ui", "virtuals"}
-_LAZY_ALIASES = {"m": "mem", "v": "virtuals"}
+_LAZY_ALIASES = {"kv": "virtuals"}
 
 
 def __getattr__(name):

@@ -4,7 +4,7 @@ import nu
 
 
 class Counter(nu.Shape):
-    value: nu.v.IntRef
+    value: nu.kv.IntRef
 
 
 class Dashboard(nu.ui.Page):
@@ -16,16 +16,16 @@ class App(nu.ui.Index):
 
 
 app = nu.With(
-    nu.v.rocksdb_navigator(".dbcounter"),
+    nu.kv.rocksdb_navigator(".dbcounter"),
     nu.ui.server(
-        nu.v.auto_flow_atomic(
+        nu.kv.auto_flow_atomic(
             nu.ReactForever(
                 Counter.value.on_change(),
                 Dashboard.count.set(Counter.value),
             ),
         ),
     ),
-    body=nu.v.auto_flow_atomic(
+    body=nu.kv.auto_flow_atomic(
         nu.IfDo(Counter.value.missing(), Counter.value.set(0))
         >> nu.ForeverDo(
             Counter.value.inc() >> nu.Delay(1.0),

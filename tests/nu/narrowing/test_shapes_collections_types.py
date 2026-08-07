@@ -31,12 +31,12 @@ class Profile(nu.Shape):
 
 
 class Team(nu.Shape):
-    members: nu.v.ShapesDictRef[int, Profile]
-    ranks: nu.v.ShapesListRef[Profile]
+    members: nu.kv.ShapesDictRef[int, Profile]
+    ranks: nu.kv.ShapesListRef[Profile]
 
 
 class Org(nu.Shape):
-    teams: nu.v.ShapesDictRef[str, Team]
+    teams: nu.kv.ShapesDictRef[str, Team]
 
 
 # --- Whole-container access -------------------------------------------
@@ -77,8 +77,8 @@ class Cache(nu.Shape):
 
 
 class Root(nu.Shape):
-    cache: Cache = nu.v.ShapeRef.slot(Cache)
-    members: nu.v.ShapesDictRef[int, Profile]
+    cache: Cache = nu.kv.ShapeRef.slot(Cache)
+    members: nu.kv.ShapesDictRef[int, Profile]
 
 
 # Subscript with an IntRef (Nu-typed key) still returns Profile.
@@ -123,12 +123,12 @@ assert_type(
 
 
 class Match(nu.Shape):
-    home: Profile = nu.v.ShapeRef.slot(Profile)
-    away: Profile = nu.v.ShapeRef.slot(Profile)
+    home: Profile = nu.kv.ShapeRef.slot(Profile)
+    away: Profile = nu.kv.ShapeRef.slot(Profile)
 
 
 class Season(nu.Shape):
-    matches: nu.v.ShapesListRef[Match]
+    matches: nu.kv.ShapesListRef[Match]
 
 
 assert_type(Season.matches[0], Match)
@@ -145,8 +145,8 @@ assert_type(
 
 
 class TickSeries(nu.Shape):
-    counters: nu.v.Kh57Ref[int]
-    points: nu.v.Kh57ShapesRef[Profile]
+    counters: nu.kv.Kh57Ref[int]
+    points: nu.kv.Kh57ShapesRef[Profile]
 
 
 # Whole-container types

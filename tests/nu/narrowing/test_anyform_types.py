@@ -219,7 +219,7 @@ assert_type((anyval[0] // 2).and_(1), Bool)
 
 class _S(nu.Shape):
     n: IntRef
-    label: nu.v.StrRef
+    label: nu.kv.StrRef
 
 
 assert_type(_S.n + anyval, Int)

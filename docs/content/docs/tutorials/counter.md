@@ -19,12 +19,12 @@ import nu
 
 
 class Counter(nu.Shape):
-    value: nu.v.IntRef
+    value: nu.kv.IntRef
 
 
 tree = nu.With(
-    nu.v.rocksdb_navigator(".dbcounter"),
-    body=nu.v.auto_flow_atomic(
+    nu.kv.rocksdb_navigator(".dbcounter"),
+    body=nu.kv.auto_flow_atomic(
         nu.IfDo(Counter.value.missing(), Counter.value.set(0))
         >> nu.ForeverDo(
             Counter.value.inc() >> nu.print(Counter.value) >> nu.Delay(1.0),
@@ -47,13 +47,13 @@ You see `1`, `2`, `3`, ... one per second. Stop it with Ctrl-C. Run again. It re
 
 ### The new concepts
 
-A **Shape** is a class that declares the data your program has. `Counter` has one **Slot** named `value`, and that slot holds a `nu.v.IntRef`.
+A **Shape** is a class that declares the data your program has. `Counter` has one **Slot** named `value`, and that slot holds a `nu.kv.IntRef`.
 
 A **Ref** is a typed address for a piece of data. `Counter.value` is not an integer; it is a handle that points at where the integer lives. To read it, some atom in the tree reads through it. To write it, some atom writes through it. `Counter.value.inc()` is a Command that reads-and-writes through the Ref.
 
 `nu.With` binds Fabrics for the tree it wraps. Here it binds the RocksDB Navigator to the path `.dbcounter`, and the tree in `body=` runs against it. `nu.IfDo(Counter.value.missing(), Counter.value.set(0))` seeds the counter to 0 the first time it runs, and does nothing on later runs.
 
-Ignore `nu.v.auto_flow_atomic` for now. It wraps writes in the transactions the storage Fabric needs. You will meet it properly later.
+Ignore `nu.kv.auto_flow_atomic` for now. It wraps writes in the transactions the storage Fabric needs. You will meet it properly later.
 
 ## Stage 2: Mirror the counter in a browser, live
 
@@ -68,7 +68,7 @@ import nu
 
 
 class Counter(nu.Shape):
-    value: nu.v.IntRef
+    value: nu.kv.IntRef
 
 
 class Dashboard(nu.ui.Page):
@@ -85,9 +85,9 @@ ui = nu.ReactForever(
 )
 
 tree = nu.With(
-    nu.v.rocksdb_navigator(".dbcounter"),
-    nu.ui.server(nu.v.auto_flow_atomic(ui)),
-    body=nu.v.auto_flow_atomic(
+    nu.kv.rocksdb_navigator(".dbcounter"),
+    nu.ui.server(nu.kv.auto_flow_atomic(ui)),
+    body=nu.kv.auto_flow_atomic(
         nu.IfDo(Counter.value.missing(), Counter.value.set(0))
         >> nu.ForeverDo(
             Counter.value.inc() >> nu.Delay(1.0),
@@ -104,7 +104,7 @@ Run it. A browser tab opens on `http://localhost:8080`. The page shows the count
 
 ### The new concepts
 
-A **Fabric** is a backend Nu talks to. Storage is one Fabric (RocksDB, in-memory). The browser UI is another. Each has its own Shapes: `nu.Shape` and `nu.v.IntRef` live on the storage Fabric; `nu.ui.Page` and `nu.ui.TextRef` live on the UI Fabric. Same declaration style, different Fabric. `App` is the site index, and `nu.ui.Pages({"/": Dashboard})` mounts `Dashboard` at `/`.
+A **Fabric** is a backend Nu talks to. Storage is one Fabric (RocksDB, in-memory). The browser UI is another. Each has its own Shapes: `nu.Shape` and `nu.kv.IntRef` live on the storage Fabric; `nu.ui.Page` and `nu.ui.TextRef` live on the UI Fabric. Same declaration style, different Fabric. `App` is the site index, and `nu.ui.Pages({"/": Dashboard})` mounts `Dashboard` at `/`.
 
 `nu.With` now binds two Fabrics: the RocksDB Navigator and the UI server. The server takes a tree to run whenever it needs to update the UI.
 

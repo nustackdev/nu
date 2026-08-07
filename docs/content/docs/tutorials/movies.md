@@ -34,7 +34,7 @@ SEED = [
 ]
 
 
-seed = nu.v.Transaction(
+seed = nu.kv.Transaction(
     State.movies.set(SEED),
     State.total.set(len(SEED)),
     State.watched.set(sum(1 for m in SEED if m["watched"] == "yes")),
@@ -42,8 +42,8 @@ seed = nu.v.Transaction(
 
 
 tree = nu.With(
-    nu.v.memory_navigator(),
-    body=seed >> nu.v.Snapshot(nu.print(State.movies, State.total, State.watched)),
+    nu.kv.memory_navigator(),
+    body=seed >> nu.kv.Snapshot(nu.print(State.movies, State.total, State.watched)),
 )
 
 
@@ -107,7 +107,7 @@ SEED = [
     {"title": "Dune: Part Two", "rating": 9.0, "watched": "yes"},
 ]
 
-init = nu.v.Transaction(
+init = nu.kv.Transaction(
     nu.IfDo(State.movies.missing(), State.movies.set(SEED)),
     nu.IfDo(State.total.missing(), State.total.set(len(SEED))),
     nu.IfDo(State.watched.missing(),
@@ -118,7 +118,7 @@ init = nu.v.Transaction(
 def _s(n): return nu.Str(nu.ToStr(n))
 
 
-hydrate = nu.v.Snapshot(
+hydrate = nu.kv.Snapshot(
     Movies.heading.set("your movies")
     | Movies.stats.body.total.set_label("total")
     | Movies.stats.body.total.set_value(_s(State.total))
@@ -131,9 +131,9 @@ hydrate = nu.v.Snapshot(
 ui = App.title.set("movies") >> hydrate
 
 tree = nu.With(
-    nu.v.rocksdb_navigator(".dbmovies"),
-    nu.ui.server(nu.v.auto_flow_atomic(ui)),
-    body=nu.v.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
+    nu.kv.rocksdb_navigator(".dbmovies"),
+    nu.ui.server(nu.kv.auto_flow_atomic(ui)),
+    body=nu.kv.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
 )
 
 
@@ -155,7 +155,7 @@ Add a form. Submit appends a row and updates the stats live.
 
 **Form and Fieldset.** `nu.ui.Form` groups inputs and a submit button. `nu.ui.Fieldset` groups a subset under a legend. `nu.ui.Field` wraps one input with a label and help slot. Widget knobs ride on `.slot(**props)` at the declaration site.
 
-**Transaction and Snapshot.** A `nu.v.Transaction(...)` collects writes into one atomic commit. A `nu.v.Snapshot(...)` collects reads into one atomic view. Wire the React body as `Transaction(...) >> Snapshot(...)`: commit new state, then hydrate the UI from it.
+**Transaction and Snapshot.** A `nu.kv.Transaction(...)` collects writes into one atomic commit. A `nu.kv.Snapshot(...)` collects reads into one atomic view. Wire the React body as `Transaction(...) >> Snapshot(...)`: commit new state, then hydrate the UI from it.
 
 Add three form-input wrappers, a fieldset, and the form. Widget knobs ride on `.slot(**props)`:
 
@@ -203,13 +203,13 @@ React on submit: commit new state in a Transaction, then rehydrate the stats and
 ```python
 on_add = nu.ReactForever(
     AddMovieForm.submit.clicked(),
-    nu.v.Transaction(
+    nu.kv.Transaction(
         State.movies.append(_row_from_form()),
         State.total.set(State.total + 1),
         State.watched.set(State.watched
                           + nu.If(nu.Bool(AddMovieForm.details.watched.input), 1, 0)),
     )
-    >> nu.v.Snapshot(
+    >> nu.kv.Snapshot(
         Movies.stats.body.total.set_value(_s(State.total))
         | Movies.stats.body.watched.set_value(_s(State.watched))
         | Movies.stats.body.unseen.set_value(_s(State.total - State.watched))
@@ -318,7 +318,7 @@ def _rows_form():
     )
 
 
-init = nu.v.Transaction(
+init = nu.kv.Transaction(
     nu.IfDo(State.movies.missing(), State.movies.set(SEED)),
     nu.IfDo(State.total.missing(), State.total.set(len(SEED))),
     nu.IfDo(State.watched.missing(),
@@ -338,7 +338,7 @@ def _row_from_form():
     )
 
 
-hydrate = nu.v.Snapshot(
+hydrate = nu.kv.Snapshot(
     Movies.heading.set("your movies")
     | Movies.stats.body.total.set_label("total")
     | Movies.stats.body.total.set_value(_s(State.total))
@@ -352,13 +352,13 @@ hydrate = nu.v.Snapshot(
 
 on_add = nu.ReactForever(
     AddMovieForm.submit.clicked(),
-    nu.v.Transaction(
+    nu.kv.Transaction(
         State.movies.append(_row_from_form()),
         State.total.set(State.total + 1),
         State.watched.set(State.watched
                           + nu.If(nu.Bool(AddMovieForm.details.watched.input), 1, 0)),
     )
-    >> nu.v.Snapshot(
+    >> nu.kv.Snapshot(
         Movies.shelf.body.table.set(_rows_form())
         | Movies.stats.body.total.set_value(_s(State.total))
         | Movies.stats.body.watched.set_value(_s(State.watched))
@@ -372,9 +372,9 @@ on_add = nu.ReactForever(
 ui = App.title.set("movies") >> hydrate >> on_add
 
 tree = nu.With(
-    nu.v.rocksdb_navigator(".dbmovies"),
-    nu.ui.server(nu.v.auto_flow_atomic(ui)),
-    body=nu.v.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
+    nu.kv.rocksdb_navigator(".dbmovies"),
+    nu.ui.server(nu.kv.auto_flow_atomic(ui)),
+    body=nu.kv.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
 )
 
 

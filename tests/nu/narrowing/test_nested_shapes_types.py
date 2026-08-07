@@ -28,18 +28,18 @@ class ZipCode(nu.Shape):
 class Address(nu.Shape):
     street: StrRef
     city: StrRef
-    zipcode: ZipCode = nu.v.ShapeRef.slot(ZipCode)
+    zipcode: ZipCode = nu.kv.ShapeRef.slot(ZipCode)
 
 
 class Profile(nu.Shape):
     name: StrRef
     age: IntRef
-    address: Address = nu.v.ShapeRef.slot(Address)
+    address: Address = nu.kv.ShapeRef.slot(Address)
 
 
 class User(nu.Shape):
     handle: StrRef
-    profile: Profile = nu.v.ShapeRef.slot(Profile)
+    profile: Profile = nu.kv.ShapeRef.slot(Profile)
 
 
 # --- One-hop dot-nav ---------------------------------------------------
@@ -100,7 +100,7 @@ assert_type(
 
 
 # Using ShapeRef directly (not via annotation lie) still resolves.
-direct = nu.v.ShapeRef.slot(Profile)
+direct = nu.kv.ShapeRef.slot(Profile)
 assert_type(direct, Profile)  # slot returns S (annotation lie)
 
 

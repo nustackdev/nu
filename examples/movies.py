@@ -182,20 +182,20 @@ class App(nu.ui.Index):
 
 
 class Movie(nu.Shape):
-    title = nu.v.StrRef.slot()
-    year = nu.v.IntRef.slot()
-    genre = nu.v.StrRef.slot()
-    rating = nu.v.FloatRef.slot()
-    watched = nu.v.BoolRef.slot()
-    notes = nu.v.StrRef.slot()
+    title = nu.kv.StrRef.slot()
+    year = nu.kv.IntRef.slot()
+    genre = nu.kv.StrRef.slot()
+    rating = nu.kv.FloatRef.slot()
+    watched = nu.kv.BoolRef.slot()
+    notes = nu.kv.StrRef.slot()
 
 
 class State(nu.Shape):
-    movies = nu.v.ShapesListRef.slot(Movie)
-    total = nu.v.IntRef.slot()
-    watched = nu.v.IntRef.slot()
-    latest_title = nu.v.StrRef.slot()
-    selected = nu.v.IntRef.slot()  # index of the movie open in MovieDetail
+    movies = nu.kv.ShapesListRef.slot(Movie)
+    total = nu.kv.IntRef.slot()
+    watched = nu.kv.IntRef.slot()
+    latest_title = nu.kv.StrRef.slot()
+    selected = nu.kv.IntRef.slot()  # index of the movie open in MovieDetail
 
 
 # ---- Seed ------------------------------------------------------------------
@@ -279,7 +279,7 @@ def _rows_filtered() -> nu.Nu:
     )
 
 
-init = nu.v.Transaction(
+init = nu.kv.Transaction(
     State.total.set(len(_SEED_MOVIES))
     | State.watched.set(sum(1 for m in _SEED_MOVIES if m["watched"]))
     | State.latest_title.set(_SEED_MOVIES[-1]["title"])
@@ -288,7 +288,7 @@ init = nu.v.Transaction(
 )
 
 
-hydrate = nu.v.Snapshot(
+hydrate = nu.kv.Snapshot(
     Movies.stats.body.total.set_value(nu.str(State.total))
     | Movies.stats.body.watched.set_value(nu.str(State.watched))
     | Movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
@@ -299,7 +299,7 @@ hydrate = nu.v.Snapshot(
 
 on_add = nu.ReactForever(
     AddMovieForm.submit.clicked(),
-    nu.v.Transaction(
+    nu.kv.Transaction(
         State.movies.append(
             nu.Dict.of(
                 title=nu.Str(AddMovieForm.details.title.input),
@@ -316,7 +316,7 @@ on_add = nu.ReactForever(
         )
         | State.latest_title.set(nu.Str(AddMovieForm.details.title.input)),
     )
-    >> nu.v.Snapshot(
+    >> nu.kv.Snapshot(
         Movies.shelf.body.table.set(_rows_form())
         | Movies.stats.body.total.set_value(nu.str(State.total))
         | Movies.stats.body.watched.set_value(nu.str(State.watched))
@@ -334,8 +334,8 @@ on_row_click = nu.ReactForever(
     Movies.shelf.body.table.row_clicked(),
     nu.IfDo(
         nu.Contains(nu.DictAttrRef("row_click"), "row_index"),
-        nu.v.Transaction(State.selected.set(nu.DictAttrRef("row_click")["row_index"]))
-        >> nu.v.Snapshot(
+        nu.kv.Transaction(State.selected.set(nu.DictAttrRef("row_click")["row_index"]))
+        >> nu.kv.Snapshot(
             MovieDetail.heading.set(State.movies[State.selected].title)
             | MovieDetail.meta.meta.year.set_value(nu.str(State.movies[State.selected].year))
             | MovieDetail.meta.meta.genre.set_value(State.movies[State.selected].genre)
@@ -353,10 +353,10 @@ on_row_click = nu.ReactForever(
 
 on_delete = nu.ReactForever(
     MovieDetail.actions.remove.clicked(),
-    nu.v.Transaction(
+    nu.kv.Transaction(
         State.movies.del_at(State.selected) >> State.total.set(nu.Len(State.movies)),
     )
-    >> nu.v.Snapshot(
+    >> nu.kv.Snapshot(
         Movies.shelf.body.table.set(_rows_form())
         | Movies.stats.body.total.set_value(nu.str(State.total))
         | Movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
@@ -370,13 +370,13 @@ on_back = nu.ReactForever(MovieDetail.actions.back.clicked(), App.nav.set("/"))
 
 on_filter_apply = nu.ReactForever(
     FilterRow.apply.clicked(),
-    nu.v.Snapshot(Movies.shelf.body.table.set(_rows_filtered())),
+    nu.kv.Snapshot(Movies.shelf.body.table.set(_rows_filtered())),
 )
 
 
 on_filter_clear = nu.ReactForever(
     FilterRow.clear.clicked(),
-    nu.v.Snapshot(
+    nu.kv.Snapshot(
         FilterRow.min_rating.input.set(1.0)
         | FilterRow.genre.input.set("")
         | FilterRow.watched_only.input.set(False)
@@ -393,9 +393,9 @@ ui = (
 
 
 app = nu.With(
-    nu.v.rocksdb_navigator(".dbmovies"),
-    nu.ui.server(nu.v.auto_flow_atomic(ui)),
-    body=nu.v.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
+    nu.kv.rocksdb_navigator(".dbmovies"),
+    nu.ui.server(nu.kv.auto_flow_atomic(ui)),
+    body=nu.kv.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
 )
 
 

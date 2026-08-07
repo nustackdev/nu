@@ -70,7 +70,7 @@ Well, "they" probably lie... but here's an example anyway:
 import nu
 
 class Counter(nu.Shape):
-    value: nu.v.IntRef
+    value: nu.kv.IntRef
 
 class Dashboard(nu.ui.Page):
     count: nu.ui.TextRef
@@ -79,16 +79,16 @@ class App(nu.ui.Index):
     pages = nu.ui.Pages({"/": Dashboard})
 
 app = nu.With(
-    nu.v.rocksdb_navigator(".dbcounter"),
+    nu.kv.rocksdb_navigator(".dbcounter"),
     nu.ui.server(
-        nu.v.auto_flow_atomic(
+        nu.kv.auto_flow_atomic(
             nu.ReactForever(
                 Counter.value.on_change(),
                 Dashboard.count.set(Counter.value),
             ),
         ),
     ),
-    body=nu.v.auto_flow_atomic(
+    body=nu.kv.auto_flow_atomic(
         nu.IfDo(Counter.value.missing(), Counter.value.set(0))
         >> nu.ForeverDo(
             Counter.value.inc() >> nu.Delay(1.0),
@@ -135,7 +135,7 @@ Each fabric binds Refs to a real backend and unlocks a new capability.
 | Fabric | What |
 | --- | --- |
 | [`nu.mem`](https://nustack.dev/docs/reference/fabrics/mem) | In-memory state fabric. Perfect for cache, hot state, and in-process coordination. |
-| [`nu.v`](https://nustack.dev/docs/reference/fabrics/virtuals) | Persistent state fabric. Refs over a KV backend (RocksDB, LMDB); transactions, snapshots, and change notifications, built in. |
+| [`nu.kv`](https://nustack.dev/docs/reference/fabrics/virtuals) | Persistent state fabric. Refs over a KV backend (RocksDB, LMDB); transactions, snapshots, and change notifications, built in. |
 | [`nu.ui`](https://nustack.dev/docs/reference/fabrics/ui) | Web UI fabric. Same fabric shape as the others, but the Refs are widgets — text, buttons, tables — rendered in the browser and live-updated as your state changes. |
 | [`nu.invisibles`](https://nustack.dev/docs/reference/fabrics/invisibles) | Network fabric. Puts other fabrics on the network — bind a fabric in one process, use it from another; same Refs, same interactions, over TCP or Unix socket. |
 | [`nu.ray`](https://nustack.dev/docs/reference/fabrics/ray) | Cluster compute fabric. Teleport a Nu tree to any worker in your Ray cluster; it runs there and returns the result. |

@@ -2,11 +2,11 @@
 title: nu.virtuals
 ---
 
-KV-storage fabric adapter: virtual collections layered over any tkv backend (in-memory, LMDB, RocksDB, text). Views decompose containers into per-element storage; refs navigate the view hierarchy against a snapshot or transaction resolved from the Context. Persistent, paged, composable through view types. Aliased as `nu.v`.
+KV-storage fabric adapter: virtual collections layered over any tkv backend (in-memory, LMDB, RocksDB, text). Views decompose containers into per-element storage; refs navigate the view hierarchy against a snapshot or transaction resolved from the Context. Persistent, paged, composable through view types. Aliased as `nu.kv`.
 
 ## Base
 
-`from nu.v import ViewRef, PrimitiveRef, Facet`
+`from nu.kv import ViewRef, PrimitiveRef, Facet`
 
 | Name         | Sort  | Signature                                                                     | Effect     | Meaning                                                                    |
 | ------------ | ----- | ------------------------------------------------------------------------------ | ---------- | -------------------------------------------------------------------------- |
@@ -16,7 +16,7 @@ KV-storage fabric adapter: virtual collections layered over any tkv backend (in-
 
 ## Items
 
-`from nu.v import ItemRef, IntRef, StrRef, FloatRef, BoolRef, BytesRef`
+`from nu.kv import ItemRef, IntRef, StrRef, FloatRef, BoolRef, BytesRef`
 
 | Name     | Sort  | Signature                                                                                          | Effect     | Meaning                                                                          |
 | -------- | ----- | --------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------- |
@@ -29,7 +29,7 @@ KV-storage fabric adapter: virtual collections layered over any tkv backend (in-
 
 ## Dict
 
-`from nu.v import DictRef`
+`from nu.kv import DictRef`
 
 | Name    | Sort  | Signature                                                                                                              | Effect     | Meaning                                                             |
 | ------- | ----- | ----------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------- |
@@ -37,7 +37,7 @@ KV-storage fabric adapter: virtual collections layered over any tkv backend (in-
 
 ## Dict Shapes
 
-`from nu.v import ShapesDictRef`
+`from nu.kv import ShapesDictRef`
 
 | Name          | Sort  | Signature                                                                                                             | Effect     | Meaning                                                                       |
 | ------------- | ----- | ---------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------- |
@@ -45,7 +45,7 @@ KV-storage fabric adapter: virtual collections layered over any tkv backend (in-
 
 ## List
 
-`from nu.v import ListRef`
+`from nu.kv import ListRef`
 
 | Name    | Sort  | Signature                                                                                        | Effect     | Meaning                                                          |
 | ------- | ----- | ------------------------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------- |
@@ -53,7 +53,7 @@ KV-storage fabric adapter: virtual collections layered over any tkv backend (in-
 
 ## List Shapes
 
-`from nu.v import ShapesListRef`
+`from nu.kv import ShapesListRef`
 
 | Name          | Sort  | Signature                                                                                     | Effect     | Meaning                                                                            |
 | ------------- | ----- | ---------------------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------- |
@@ -61,7 +61,7 @@ KV-storage fabric adapter: virtual collections layered over any tkv backend (in-
 
 ## Set
 
-`from nu.v import SetRef`
+`from nu.kv import SetRef`
 
 | Name   | Sort  | Signature                                                                          | Effect     | Meaning                                                                |
 | ------ | ----- | ----------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------- |
@@ -69,7 +69,7 @@ KV-storage fabric adapter: virtual collections layered over any tkv backend (in-
 
 ## Shape
 
-`from nu.v import ShapeRef`
+`from nu.kv import ShapeRef`
 
 | Name     | Sort  | Signature                                                                                       | Effect     | Meaning                                                                                          |
 | -------- | ----- | ------------------------------------------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------ |
@@ -77,7 +77,7 @@ KV-storage fabric adapter: virtual collections layered over any tkv backend (in-
 
 ## Kh57
 
-`from nu.v import Kh57Ref, Kh57ShapesRef`
+`from nu.kv import Kh57Ref, Kh57ShapesRef`
 
 Sparse int-keyed maps laid out under kh57-encoded child segments so range reservoir sampling runs with low read amplification. Keys are non-negative 57-bit ints; default view is `Kh57View`. Both add `.sample(n, begin, end)` and `.range(begin, end)` on top of the standard mapping surface.
 
@@ -88,7 +88,7 @@ Sparse int-keyed maps laid out under kh57-encoded child segments so range reserv
 
 ## Stdlib
 
-`from nu.v import BasisPointRef, ComplexRef, DateRef, DatetimeRef, DecimalRef, FractionRef, PathRef, PercentageRef, TimeRef, TimedeltaRef, TimezoneRef, UUIDRef`
+`from nu.kv import BasisPointRef, ComplexRef, DateRef, DatetimeRef, DecimalRef, FractionRef, PathRef, PercentageRef, TimeRef, TimedeltaRef, TimezoneRef, UUIDRef`
 
 Typed leaf refs for standard-library value types. Each overrides `_lift` / `set` to convert between the domain value and its on-disk form, and mixes in the matching `nu.std` Form for its operator interface, same pattern as `IntRef`.
 
@@ -109,7 +109,7 @@ Typed leaf refs for standard-library value types. Each overrides `_lift` / `set`
 
 ## Primitive blobs
 
-`from nu.v import PrimitiveDictRef, PrimitiveListRef, PrimitiveSetRef, PrimitiveFrozenSetRef, PrimitiveTupleRef`
+`from nu.kv import PrimitiveDictRef, PrimitiveListRef, PrimitiveSetRef, PrimitiveFrozenSetRef, PrimitiveTupleRef`
 
 Whole-blob compound refs: the container is written as one opaque value via `ItemPrimitiveSetCmd` and read back as a plain Python object. Use for heterogeneous or opaque containers that should round-trip whole rather than shape-decompose. Each mixes in the matching collection Form so the value still carries its full interface.
 
@@ -123,7 +123,7 @@ Whole-blob compound refs: the container is written as one opaque value via `Item
 
 ## Atomicity
 
-`from nu.v import Atomic, Snapshot, Transaction, RetryOnConflict, CONFLICT_ERRORS`
+`from nu.kv import Atomic, Snapshot, Transaction, RetryOnConflict, CONFLICT_ERRORS`
 
 Bracket the body to open a read-only snapshot or a write transaction on the resolved Navigator, scoped into the ctx for the body's duration. Snapshots close on exit; transactions commit on clean exit, abort on error.
 
@@ -137,7 +137,7 @@ Bracket the body to open a read-only snapshot or a write transaction on the reso
 
 ## Item interactions
 
-`from nu.v import InitItemCmd, ItemPrimitiveGetUnsafe, ItemPrimitiveSetCmd, ItemPrimitiveSetUnsafeCmd, ItemPrimitiveSetUnsafeParentSkipCmd, ItemPrimitiveDeleteUnsafeCmd`
+`from nu.kv import InitItemCmd, ItemPrimitiveGetUnsafe, ItemPrimitiveSetCmd, ItemPrimitiveSetUnsafeCmd, ItemPrimitiveSetUnsafeParentSkipCmd, ItemPrimitiveDeleteUnsafeCmd`
 
 Optimization internals for tree deformers, not user-facing APIs. The `Unsafe` variants require virtuals views with `UnsafePrimitiveOpsBase` in MRO. The leaf ref rides at `children[0]`.
 
@@ -152,7 +152,7 @@ Optimization internals for tree deformers, not user-facing APIs. The `Unsafe` va
 
 ## Collection interactions
 
-`from nu.v import ScanPrimitivesUnsafe, ClearPrimitivesUnsafeCmd`
+`from nu.kv import ScanPrimitivesUnsafe, ClearPrimitivesUnsafeCmd`
 
 Optimization internals for container views with `UnsafePrimitiveOpsBase` in MRO. The container view ref rides at `children[0]`.
 
@@ -163,7 +163,7 @@ Optimization internals for container views with `UnsafePrimitiveOpsBase` in MRO.
 
 ## Kh57 interactions
 
-`from nu.v import Kh57Sample, Kh57Range`
+`from nu.kv import Kh57Sample, Kh57Range`
 
 Range reservoir sampling atoms over a `Kh57View`. Both are deterministic given the view's salt and a seeded rng. The container view ref rides at `children[0]`; parameters live at slots 1..3.
 
@@ -174,7 +174,7 @@ Range reservoir sampling atoms over a `Kh57View`. Both are deterministic given t
 
 ## Storage presets (imperative)
 
-`from nu.v import memory_storage, rocksdb_storage, rocksdb_storage_redis, text_storage`
+`from nu.kv import memory_storage, rocksdb_storage, rocksdb_storage_redis, text_storage`
 
 Context managers that yield a ready `StorageProtocol` for hand-wired Contexts. Persistence and codec picked per preset; each pairs a matching publisher.
 
@@ -187,7 +187,7 @@ Context managers that yield a ready `StorageProtocol` for hand-wired Contexts. P
 
 ## Navigator presets (bracket-form)
 
-`from nu.v import memory_navigator, lmdb_navigator, lmdb_navigator_redis, rocksdb_navigator, rocksdb_navigator_redis, text_navigator, inmem_observer, redis_observer`
+`from nu.kv import memory_navigator, lmdb_navigator, lmdb_navigator_redis, rocksdb_navigator, rocksdb_navigator_redis, text_navigator, inmem_observer, redis_observer`
 
 Each factory returns a single `With(...)` bracket that peers `Provide`s the whole Codec + Transport + Publisher + Observer + Storage + Navigator stack. `tags=` folds onto Storage and Navigator bindings so a shard can pick its storage.
 
@@ -204,7 +204,7 @@ Each factory returns a single `With(...)` bracket that peers `Provide`s the whol
 
 ## Paths
 
-`from nu.v import ViewPathSer, ValuePathSer`
+`from nu.kv import ViewPathSer, ValuePathSer`
 
 Tuple subclasses used as serializable navigation paths, registered as invisibles value types so paths pickle by value rather than proxy element-by-element.
 
@@ -215,7 +215,7 @@ Tuple subclasses used as serializable navigation paths, registered as invisibles
 
 ## Tree passes
 
-`from nu.v import auto_flow_atomic, inline_refs`
+`from nu.kv import auto_flow_atomic, inline_refs`
 
 | Name             | Sort | Signature                       | Effect | Meaning                                                                                          |
 | ---------------- | ---- | -------------------------------- | ------ | ------------------------------------------------------------------------------------------------ |
