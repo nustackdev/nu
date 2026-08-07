@@ -27,7 +27,7 @@
   [![Twitter Follow](https://img.shields.io/twitter/follow/nustackdev?style=social)](https://twitter.com/nustackdev)
 
   [![Platform Support](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-blue)]()
-  [![PyPI - Python Version](https://img.shields.io/badge/python-%3E%3D%203.12-blue)](https://pypi.org/project/nustack-py/)
+  [![PyPI - Python Version](https://img.shields.io/badge/python-%3E%3D%203.10-blue)](https://pypi.org/project/nustack-py/)
   [![PyPI Package](https://img.shields.io/pypi/v/nustack-py?color=yellow)](https://pypi.org/project/nustack-py/)
   [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0)
   [![PyPI Downloads](https://img.shields.io/pypi/dw/nustack-py?color=green)](https://pypi.org/project/nustack-py/)
@@ -105,7 +105,7 @@ A dashboard on a live counter that persists across restarts. One Nu tree, two Fa
 
 ## Install
 
-Python 3.12+.
+Python 3.10+.
 
 ```bash
 pip install "nustack-py[all]"

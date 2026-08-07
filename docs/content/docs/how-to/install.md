@@ -4,7 +4,7 @@ title: Install
 
 ## Prerequisites
 
-- Python 3.12 or later.
+- Python 3.10 or later.
 
 ## Install from PyPI
 

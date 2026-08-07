@@ -115,7 +115,7 @@ export default function Home() {
                   </div>
 
                   <MonoKicker as="p" size="xs" tracking="wide" className={s.metaLineBox}>
-                    <Meta items={[<>Apache&#8209;2.0</>, 'Python 3.12+']} />
+                    <Meta items={[<>Apache&#8209;2.0</>, 'Python 3.10+']} />
                   </MonoKicker>
                 </div>
               </CellContent>
