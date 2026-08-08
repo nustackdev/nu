@@ -26,77 +26,47 @@
 .divDashed > *:not(:first-child) { border-left: 1px dashed var(--site-kal-divider); }
 .divDotted > *:not(:first-child) { border-left: 1px dotted var(--site-kal-divider); }
 
-/* Collapse-to-single-column mixin (applied by @media blocks below):
- *  - single column
- *  - kill inter-cell divider (was a left border)
- *  - eat top padding of trailing cells so the stack reads as one continuous block
- *  - kill outer borders — the stack reads as a plain vertical strip
- */
+/* Collapse-to-single-column mixin. Cells stack vertically; the inter-cell
+ * divider flips from a left border (side-by-side) to a top border (stacked)
+ * so it still reads as a divider. Outer borders on the Row itself stay put
+ * — the Chapter card keeps its outline on every viewport size. */
 
-/* Global safety net: collapse EVERY Row on phones. Kept as an implicit default
- * because most rows want this. Explicit `stackAt` on a Row lets consumers
- * collapse earlier (md/lg/xl) — anything ≤640 stays covered here regardless. */
+/* Global safety net: collapse EVERY Row on phones. */
 @media (max-width: 640px) {
   .root { grid-template-columns: minmax(0, 1fr); }
-  .divSolid  > *:not(:first-child),
-  .divDashed > *:not(:first-child),
-  .divDotted > *:not(:first-child) { border-left: 0; }
-  .root > *:not(:first-child) > * { padding-top: 0; }
-  .btSolid, .btDashed, .btDotted,
-  .bbSolid, .bbDashed, .bbDotted,
-  .blSolid, .blDashed, .blDotted,
-  .brSolid, .brDashed, .brDotted { border: 0; }
+  .divSolid  > *:not(:first-child) { border-left: 0; border-top: 1px solid  var(--site-kal-divider); }
+  .divDashed > *:not(:first-child) { border-left: 0; border-top: 1px dashed var(--site-kal-divider); }
+  .divDotted > *:not(:first-child) { border-left: 0; border-top: 1px dotted var(--site-kal-divider); }
 }
 
-/* stackAt="sm" — 640px. Redundant with the global safety net above, but
- * defined for API symmetry / future-proofing if the safety net is dropped. */
+/* stackAt="sm" — 640px. */
 @media (max-width: 640px) {
   .stackSm.root { grid-template-columns: minmax(0, 1fr); }
-  .stackSm.divSolid  > *:not(:first-child),
-  .stackSm.divDashed > *:not(:first-child),
-  .stackSm.divDotted > *:not(:first-child) { border-left: 0; }
-  .stackSm.root > *:not(:first-child) > * { padding-top: 0; }
-  .stackSm.btSolid, .stackSm.btDashed, .stackSm.btDotted,
-  .stackSm.bbSolid, .stackSm.bbDashed, .stackSm.bbDotted,
-  .stackSm.blSolid, .stackSm.blDashed, .stackSm.blDotted,
-  .stackSm.brSolid, .stackSm.brDashed, .stackSm.brDotted { border: 0; }
+  .stackSm.divSolid  > *:not(:first-child) { border-left: 0; border-top: 1px solid  var(--site-kal-divider); }
+  .stackSm.divDashed > *:not(:first-child) { border-left: 0; border-top: 1px dashed var(--site-kal-divider); }
+  .stackSm.divDotted > *:not(:first-child) { border-left: 0; border-top: 1px dotted var(--site-kal-divider); }
 }
 
 /* stackAt="md" — 900px. */
 @media (max-width: 900px) {
   .stackMd.root { grid-template-columns: minmax(0, 1fr); }
-  .stackMd.divSolid  > *:not(:first-child),
-  .stackMd.divDashed > *:not(:first-child),
-  .stackMd.divDotted > *:not(:first-child) { border-left: 0; }
-  .stackMd.root > *:not(:first-child) > * { padding-top: 0; }
-  .stackMd.btSolid, .stackMd.btDashed, .stackMd.btDotted,
-  .stackMd.bbSolid, .stackMd.bbDashed, .stackMd.bbDotted,
-  .stackMd.blSolid, .stackMd.blDashed, .stackMd.blDotted,
-  .stackMd.brSolid, .stackMd.brDashed, .stackMd.brDotted { border: 0; }
+  .stackMd.divSolid  > *:not(:first-child) { border-left: 0; border-top: 1px solid  var(--site-kal-divider); }
+  .stackMd.divDashed > *:not(:first-child) { border-left: 0; border-top: 1px dashed var(--site-kal-divider); }
+  .stackMd.divDotted > *:not(:first-child) { border-left: 0; border-top: 1px dotted var(--site-kal-divider); }
 }
 
 /* stackAt="lg" — 1024px. */
 @media (max-width: 1024px) {
   .stackLg.root { grid-template-columns: minmax(0, 1fr); }
-  .stackLg.divSolid  > *:not(:first-child),
-  .stackLg.divDashed > *:not(:first-child),
-  .stackLg.divDotted > *:not(:first-child) { border-left: 0; }
-  .stackLg.root > *:not(:first-child) > * { padding-top: 0; }
-  .stackLg.btSolid, .stackLg.btDashed, .stackLg.btDotted,
-  .stackLg.bbSolid, .stackLg.bbDashed, .stackLg.bbDotted,
-  .stackLg.blSolid, .stackLg.blDashed, .stackLg.blDotted,
-  .stackLg.brSolid, .stackLg.brDashed, .stackLg.brDotted { border: 0; }
+  .stackLg.divSolid  > *:not(:first-child) { border-left: 0; border-top: 1px solid  var(--site-kal-divider); }
+  .stackLg.divDashed > *:not(:first-child) { border-left: 0; border-top: 1px dashed var(--site-kal-divider); }
+  .stackLg.divDotted > *:not(:first-child) { border-left: 0; border-top: 1px dotted var(--site-kal-divider); }
 }
 
 /* stackAt="xl" — 1280px. */
 @media (max-width: 1280px) {
   .stackXl.root { grid-template-columns: minmax(0, 1fr); }
-  .stackXl.divSolid  > *:not(:first-child),
-  .stackXl.divDashed > *:not(:first-child),
-  .stackXl.divDotted > *:not(:first-child) { border-left: 0; }
-  .stackXl.root > *:not(:first-child) > * { padding-top: 0; }
-  .stackXl.btSolid, .stackXl.btDashed, .stackXl.btDotted,
-  .stackXl.bbSolid, .stackXl.bbDashed, .stackXl.bbDotted,
-  .stackXl.blSolid, .stackXl.blDashed, .stackXl.blDotted,
-  .stackXl.brSolid, .stackXl.brDashed, .stackXl.brDotted { border: 0; }
+  .stackXl.divSolid  > *:not(:first-child) { border-left: 0; border-top: 1px solid  var(--site-kal-divider); }
+  .stackXl.divDashed > *:not(:first-child) { border-left: 0; border-top: 1px dashed var(--site-kal-divider); }
+  .stackXl.divDotted > *:not(:first-child) { border-left: 0; border-top: 1px dotted var(--site-kal-divider); }
 }

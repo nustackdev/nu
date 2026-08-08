@@ -19,7 +19,7 @@
 
 @media (max-width: 640px) {
   .root {
-    padding-inline: 0;
+    padding-inline: 10px;
     /* Step kal-u down again so CellContent paddings shrink for mobile. */
     --site-kal-u: clamp(10px, 1.2vw, 14px);
   }

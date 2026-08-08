@@ -1,40 +1,10 @@
 /* =============================================================================
- * landing — page-specific typography, hero layout, and background logo pin.
+ * landing — page-specific typography and hero layout.
  * Sits on top of PageShell / PageHero / PageBody / Section primitives.
- * Dark-only. Accent colors match projects/nu/positioning/locked.md dark values.
- * Reusable page-level styles (pageRoot layering, section hue scopes, section
- * head watermark, footer) live in components/site/page/.
+ * Dark-only.
  * ==========================================================================*/
 
-/* Landing-only design knobs. */
-.landingRoot {
-  --logo-w: 608px;   /* logo render width */
-  --logo-h: 600px;   /* logo layer height slot */
-}
-
-/* Logo layer: a centered slot behind the hero. No pixel-tuned alignment;
- * the logo just sits in the middle of a ~600px zone mirroring the
- * container's max-width so its horizontal center matches content. */
-.logoLayer {
-  position: absolute;
-  top: 50px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 1360px;
-  height: var(--logo-h);
-  display: flex;
-  align-items: center;      /* vertical center in the slot */
-  justify-content: flex-start;
-  pointer-events: none;
-}
-.logo {
-  display: block;
-  width: var(--logo-w);
-  height: auto;
-  opacity: 0.5;
-  margin-left: -134px;  /* bleed past the container's left edge, matching the old alignment */
-}
+.landingRoot {}
 
 .heroRow {
   position: relative;
@@ -52,13 +22,20 @@
   gap: 0;
 }
 .sloganWord {
-  display: block;
+  display: flex;
+  align-items: baseline;
   font-family: var(--font-display);
   font-weight: 700;
   font-size: var(--site-fs-display);
   line-height: 0.92;
   letter-spacing: -0.045em;
   color: #fff;
+}
+.sloganMark {
+  display: inline-block;
+  vertical-align: -0.1em;
+  margin-right: 0.18em;
+  flex: 0 0 auto;
 }
 
 /* Inline single-line slogan — hidden on desktop, replaces stacked slogan
@@ -87,16 +64,6 @@
   .heroRow            { grid-template-columns: minmax(0, 1fr); }
   .heroRow .heroLeftCell { display: none; }
   .sloganInline       { display: block; }
-  /* Halve the floating logo. Content shifts to the left column, so push
-   * the logo to the right side of the layer to fill the empty side. */
-  .landingRoot        { --logo-w: 304px; }
-  .logoLayer          { justify-content: flex-end; }
-  .logo               { margin-left: 0; margin-right: -67px; }
-}
-
-/* Mobile: drop the giant logo entirely. */
-@media (max-width: 640px) {
-  .logoLayer { display: none; }
 }
 
 /* -- Hero right column: layout wrappers (kit components handle type/mechanics) -- */
@@ -167,4 +134,31 @@
   .imRow { grid-template-columns: minmax(0, 1fr); }
   .imRight { display: none; }
   .imLeft > * { max-width: 65%; }
+}
+
+/* -- Fabrics / Apps item layout ------------------------------------------
+ * Each fabric or app is one Section (single Cell). Inside that cell the
+ * item's body (title + tagline + description + CTAs) and its illustration
+ * sit side-by-side; below 720 they stack.
+ * ---------------------------------------------------------------------- */
+.itemRow {
+  display: grid;
+  grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);
+  gap: var(--site-gap-loose);
+  align-items: center;
+}
+.itemBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--site-gap-normal);
+  min-width: 0;
+}
+.itemViz {
+  min-width: 0;
+}
+@media (max-width: 720px) {
+  .itemRow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--site-gap-normal);
+  }
 }

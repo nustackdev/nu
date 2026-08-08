@@ -8,8 +8,8 @@
 .name {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--site-fs-14);
-  letter-spacing: -0.04em;
+  font-size: var(--site-fs-12);
+  letter-spacing: -0.03em;
   margin: 0;
   text-transform: lowercase;
   display: inline-block;
@@ -76,9 +76,6 @@
   );
 }
 
-@media (max-width: 1280px) {
-  .name { font-size: var(--site-fs-13); }
-}
 @media (max-width: 640px) {
-  .name { font-size: var(--site-fs-12); }
+  .name { font-size: var(--site-fs-11); }
 }

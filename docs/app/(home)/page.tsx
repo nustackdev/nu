@@ -1,6 +1,5 @@
 import { BookOpen } from 'lucide-react';
 import { NuLogo } from '@/components/site/marks/NuLogo';
-import { HeroLogo } from './_blocks/HeroLogo';
 import { Cell } from '@/components/site/grid/Cell';
 import { CellContent } from '@/components/site/grid/CellContent';
 import { Row } from '@/components/site/grid/Row';
@@ -48,14 +47,7 @@ const USE_CASES = [
 
 export default function Home() {
   return (
-    <PageShell
-      className={s.landingRoot}
-      decorations={
-        <div className={s.logoLayer}>
-          <HeroLogo className={s.logo} />
-        </div>
-      }
-    >
+    <PageShell className={s.landingRoot}>
       <Page>
       {/* 1. Hero */}
       <PageHero>
@@ -63,7 +55,10 @@ export default function Home() {
           <Cell yalign="middle" className={s.heroLeftCell}>
             <CellContent pad="lg">
               <h1 className={s.sloganStack} aria-label="Nu the interaction primitive">
-                <span className={s.sloganWord} aria-hidden>Nu &mdash;</span>
+                <span className={s.sloganWord} aria-hidden>
+                  <NuLogo size="0.9em" className={s.sloganMark} />
+                  Nu &mdash;
+                </span>
                 <span className={s.sloganWord} aria-hidden>the</span>
                 <span className={s.sloganWord} aria-hidden>interaction</span>
                 <span className={s.sloganWord} aria-hidden>primitive.</span>
@@ -138,10 +133,10 @@ export default function Home() {
           }
         />
 
-        <Section split="1/1" hue="steel">
-          <SectionCell>
-            <SilverWovenName as="h3" hue="steel">nu.mem</SilverWovenName>
-            <Stack gap="normal">
+        <Section hue="steel">
+          <div className={s.itemRow}>
+            <div className={s.itemBody}>
+              <SilverWovenName as="h3" hue="steel">nu.mem</SilverWovenName>
               <Tagline>In-memory state fabric.</Tagline>
               <Description>
                 In-memory state on plain dicts. Perfect for cache, hot state,
@@ -153,17 +148,17 @@ export default function Home() {
                   <span>Read the docs</span>
                 </SiteButton>
               </CtaRow>
-            </Stack>
-          </SectionCell>
-          <SectionCell>
-            <VizFrame><MemGlyph /></VizFrame>
-          </SectionCell>
+            </div>
+            <div className={s.itemViz}>
+              <VizFrame><MemGlyph /></VizFrame>
+            </div>
+          </div>
         </Section>
 
-        <Section split="1/1" hue="sage">
-          <SectionCell>
-            <SilverWovenName as="h3" hue="sage">nu.virtuals</SilverWovenName>
-            <Stack gap="normal">
+        <Section hue="sage">
+          <div className={s.itemRow}>
+            <div className={s.itemBody}>
+              <SilverWovenName as="h3" hue="sage">nu.virtuals</SilverWovenName>
               <Tagline>Persistent state fabric.</Tagline>
               <Description>
                 Refs over a KV backend (RocksDB, LMDB). Transactions,
@@ -176,17 +171,17 @@ export default function Home() {
                   <span>Read the docs</span>
                 </SiteButton>
               </CtaRow>
-            </Stack>
-          </SectionCell>
-          <SectionCell>
-            <VizFrame><VirtualsGlyph /></VizFrame>
-          </SectionCell>
+            </div>
+            <div className={s.itemViz}>
+              <VizFrame><VirtualsGlyph /></VizFrame>
+            </div>
+          </div>
         </Section>
 
-        <Section split="1/1" hue="teal">
-          <SectionCell>
-            <SilverWovenName as="h3" hue="teal">nu.ui</SilverWovenName>
-            <Stack gap="normal">
+        <Section hue="teal">
+          <div className={s.itemRow}>
+            <div className={s.itemBody}>
+              <SilverWovenName as="h3" hue="teal">nu.ui</SilverWovenName>
               <Tagline>Web UI fabric.</Tagline>
               <Description>
                 Same fabric shape as the others, but the Refs are widgets:
@@ -199,17 +194,17 @@ export default function Home() {
                   <span>Read the docs</span>
                 </SiteButton>
               </CtaRow>
-            </Stack>
-          </SectionCell>
-          <SectionCell>
-            <VizFrame><UiGlyph /></VizFrame>
-          </SectionCell>
+            </div>
+            <div className={s.itemViz}>
+              <VizFrame><UiGlyph /></VizFrame>
+            </div>
+          </div>
         </Section>
 
-        <Section split="1/1" hue="plum">
-          <SectionCell>
-            <SilverWovenName as="h3" hue="plum">nu.invisibles</SilverWovenName>
-            <Stack gap="normal">
+        <Section hue="plum">
+          <div className={s.itemRow}>
+            <div className={s.itemBody}>
+              <SilverWovenName as="h3" hue="plum">nu.invisibles</SilverWovenName>
               <Tagline>Network fabric.</Tagline>
               <Description>
                 A Nu fabric that puts other fabrics on the network. Bind a
@@ -222,17 +217,17 @@ export default function Home() {
                   <span>Read the docs</span>
                 </SiteButton>
               </CtaRow>
-            </Stack>
-          </SectionCell>
-          <SectionCell>
-            <VizFrame><InvisiblesGlyph /></VizFrame>
-          </SectionCell>
+            </div>
+            <div className={s.itemViz}>
+              <VizFrame><InvisiblesGlyph /></VizFrame>
+            </div>
+          </div>
         </Section>
 
-        <Section split="1/1" hue="amber">
-          <SectionCell>
-            <SilverWovenName as="h3" hue="amber">nu.ray</SilverWovenName>
-            <Stack gap="normal">
+        <Section hue="amber">
+          <div className={s.itemRow}>
+            <div className={s.itemBody}>
+              <SilverWovenName as="h3" hue="amber">nu.ray</SilverWovenName>
               <Tagline>Cluster compute fabric.</Tagline>
               <Description>
                 A Nu fabric for cluster compute. Teleport a Nu tree to any
@@ -245,11 +240,11 @@ export default function Home() {
                   <span>Read the docs</span>
                 </SiteButton>
               </CtaRow>
-            </Stack>
-          </SectionCell>
-          <SectionCell>
-            <VizFrame><RayGlyph /></VizFrame>
-          </SectionCell>
+            </div>
+            <div className={s.itemViz}>
+              <VizFrame><RayGlyph /></VizFrame>
+            </div>
+          </div>
         </Section>
         </Chapter>
 
@@ -260,10 +255,10 @@ export default function Home() {
           lede="Applications built on Nu today."
         />
 
-        <Section split="1/1" hue="amber">
-          <SectionCell>
-            <SilverWovenName as="h3" hue="amber">nulog</SilverWovenName>
-            <Stack gap="normal">
+        <Section hue="amber">
+          <div className={s.itemRow}>
+            <div className={s.itemBody}>
+              <SilverWovenName as="h3" hue="amber">nulog</SilverWovenName>
               <Tagline>
                 Pure-Python, serverless logger and metrics store. Billions of
                 entries, live UI.
@@ -279,17 +274,17 @@ export default function Home() {
                   <SiteButtonRepoLabel>nustackdev/nulog</SiteButtonRepoLabel>
                 </SiteButton>
               </CtaRow>
-            </Stack>
-          </SectionCell>
-          <SectionCell>
-            <VizFrame><NulogMockSvg /></VizFrame>
-          </SectionCell>
+            </div>
+            <div className={s.itemViz}>
+              <VizFrame><NulogMockSvg /></VizFrame>
+            </div>
+          </div>
         </Section>
 
-        <Section split="1/1" hue="plum">
-          <SectionCell>
-            <SilverWovenName as="h3" hue="plum">nuspace</SilverWovenName>
-            <Stack gap="normal">
+        <Section hue="plum">
+          <div className={s.itemRow}>
+            <div className={s.itemBody}>
+              <SilverWovenName as="h3" hue="plum">nuspace</SilverWovenName>
               <Tagline>
                 A programmable knowledge base.
               </Tagline>
@@ -300,11 +295,11 @@ export default function Home() {
                 all inspectable and composable.
               </Description>
               <Label>Status: Coming soon.</Label>
-            </Stack>
-          </SectionCell>
-          <SectionCell>
-            <VizFrame><NuspaceMockSvg /></VizFrame>
-          </SectionCell>
+            </div>
+            <div className={s.itemViz}>
+              <VizFrame><NuspaceMockSvg /></VizFrame>
+            </div>
+          </div>
         </Section>
         </Chapter>
 

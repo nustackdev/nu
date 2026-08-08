@@ -4,5 +4,6 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: var(--site-gap-loose);
+  gap: var(--site-gap-xloose);
+  margin-top: var(--site-gap-xloose);
 }
