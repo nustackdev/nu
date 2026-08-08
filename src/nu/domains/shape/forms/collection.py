@@ -34,6 +34,7 @@ if TYPE_CHECKING:
         Missing,
         SetCmd,
     )
+    from nu.flows.control import IfDo
     from nu.reactive import (
         OnChildChange,
         OnChildrenChange,
@@ -84,6 +85,12 @@ class MutableCollectionForm(CollectionForm):
         from nu.domains.shape.interactions import Erase
 
         return Erase(self)
+
+    def init(self, value: object) -> IfDo:
+        """Set ``value`` iff the collection is currently missing."""
+        from nu.flows.control import IfDo
+
+        return IfDo(self.missing(), self.set(value))
 
 
 class ReactiveCollectionForm(MutableCollectionForm):
