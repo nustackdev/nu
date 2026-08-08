@@ -41,7 +41,8 @@
 <h3 align="center">
   <a href="#ℹ️-about"><b>About</b></a> &bull;
   <a href="#-quick-start"><b>Quick Start</b></a> &bull;
-  <a href="#-ecosystem"><b>Ecosystem</b></a> &bull;
+  <a href="#-fabrics"><b>Fabrics</b></a> &bull;
+  <a href="#-apps-built-on-nu"><b>Apps</b></a> &bull;
   <a href="#-spec"><b>Spec</b></a> &bull;
   <a href="https://github.com/nustackdev/nu/tree/main/examples"><b>Examples</b></a> &bull;
   <a href="https://nustack.dev/docs"><b>Documentation</b></a> &bull;
@@ -52,83 +53,77 @@
 
 # ℹ️ About
 
-Every app is a set of interactions between systems: a database, a UI, AI agents, services. Nu names those interactions directly:
+A tiny program is a joy to write. Three lines, one substrate:
 
-- **Ref** names what you touch. A KV slot, a UI widget, an LLM endpoint, a memory slot, a remote object.
-- **Interaction** describes what to do with it. Read, write, branch, iterate, compose.
-- **Fabric** binds Refs to a real backend.
+```python
+a = 2
+b = 5
+print(a + b)
+```
 
-Persistence, reactivity, atomicity, observability, and scalability are inherent, not bolted on.
+Real apps don't stay here. `a` moves into a database. `b` comes from a form submission. The result renders in a browser. A background job reruns it when either input changes. Three lines become three hundred: an ORM, a request handler, a template, a websocket, a queue. Almost none of it is about `a + b` anymore — it's all interaction between substrates.
+
+**Nu makes interaction the primitive.**
+
+- **Ref** — a name for a value, wherever it lives. A KV slot, a UI widget, an LLM endpoint, a remote object.
+- **Interaction** — what you do with a Ref. Read, write, branch, iterate, compose.
+- **Fabric** — binds Refs to a real backend.
+
+Same program, `a` and `b` persisted in a KV store:
+
+```python
+class DB(nu.Shape):
+    a: nu.kv.IntRef
+    b: nu.kv.IntRef
+
+DB.a.set(2) >> DB.b.set(5) >> nu.print(DB.a + DB.b)
+```
+
+Same program, result rendered in a live browser dashboard:
+
+```python
+class DB(nu.Shape):
+    a: nu.kv.IntRef
+    b: nu.kv.IntRef
+
+class Dashboard(nu.Shape):
+    out: nu.ui.TextRef
+
+DB.a.set(2) >> DB.b.set(5) >> Dashboard.out.set(DB.a + DB.b)
+```
+
+> **Same primitive, different substrate.** One Ref for any resource, one Interaction for any op. Nu doesn't care what the backend is.
+
+Persistence, reactivity, atomicity, observability, distribution — not features Nu has. What falls out of naming interactions instead of executing them:
+
+- **Persist across restarts** — the KV slot is already durable.
+- **Re-render live on input changes** — wrap in a `React` interaction.
+- **Handle terabytes** — shard the KV Fabric; the Refs don't notice.
+- **Run distributed across a cluster** — bind through `nu.ray`; the Refs don't notice.
+
+Full walkthrough at [nustack.dev](https://nustack.dev).
 
 # 🏁 Quick Start
 
-They say a good example is worth 100 pages of API documentation, a million directives, or a thousand words.
+Three steps to a live counter on a browser dashboard, persisted across restarts.
 
-Well, "they" probably lie... but here's an example anyway:
-
-```python
-import nu
-
-class Counter(nu.Shape):
-    value: nu.kv.IntRef
-
-class Dashboard(nu.ui.Page):
-    count: nu.ui.TextRef
-
-class App(nu.ui.Index):
-    pages = nu.ui.Pages({"/": Dashboard})
-
-app = nu.With(
-    nu.kv.rocksdb_navigator(".dbcounter"),
-    nu.ui.server(
-        nu.kv.auto_flow_atomic(
-            nu.ReactForever(
-                Counter.value.on_change(),
-                Dashboard.count.set(Counter.value),
-            ),
-        ),
-    ),
-    body=nu.kv.auto_flow_atomic(
-        nu.IfDo(Counter.value.missing(), Counter.value.set(0))
-        >> nu.ForeverDo(
-            Counter.value.inc() >> nu.Delay(1.0),
-        )
-    ),
-)
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(nu.arun(app))
-```
-
-A dashboard on a live counter that persists across restarts. One Nu tree, two Fabrics. Kill it, run again, it picks up where it left off.
-
-## Install
-
-Python 3.10+.
+**1. Install** (Python 3.10+):
 
 ```bash
 pip install "nustack-py[all]"
 ```
 
-For lean installs and source builds see [nustack.dev/docs/how-to/install](https://nustack.dev/docs/how-to/install).
-
-## Run
-
-Save the snippet above as `app.py`, then:
+**2. Run the bundled demo:**
 
 ```bash
-python app.py
+nu demo run counter
 ```
 
-Open the browser tab that pops up — the counter ticks once a second, the dashboard mirrors it live.
+**3. Open the browser tab** that pops up — the counter ticks once a second, the dashboard mirrors it live. Kill it, run again, it picks up where it left off.
 
-More in [`examples/`](examples/). Full walkthrough at [nustack.dev/docs](https://nustack.dev/docs).
+More demos: `nu demo list`. Full walkthrough at [nustack.dev/docs](https://nustack.dev/docs). Source in [`examples/`](examples/). For lean installs and source builds see [nustack.dev/docs/how-to/install](https://nustack.dev/docs/how-to/install).
 
-# 🌍 Ecosystem
-
-
-## Fabrics
+# 🧵 Fabrics
 
 Each fabric binds Refs to a real backend and unlocks a new capability.
 
@@ -140,7 +135,7 @@ Each fabric binds Refs to a real backend and unlocks a new capability.
 | [`nu.invisibles`](https://nustack.dev/docs/reference/fabrics/invisibles) | Network fabric. Puts other fabrics on the network — bind a fabric in one process, use it from another; same Refs, same interactions, over TCP or Unix socket. |
 | [`nu.ray`](https://nustack.dev/docs/reference/fabrics/ray) | Cluster compute fabric. Teleport a Nu tree to any worker in your Ray cluster; it runs there and returns the result. |
 
-## Apps built on Nu
+# 📦 Apps built on Nu
 
 End-user tools written as Nu programs.
 
