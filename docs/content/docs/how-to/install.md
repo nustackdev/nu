@@ -24,6 +24,18 @@ pip install "nustack-py[mem,ui]"
 
 ## Verify
 
+Check the install:
+
 ```bash
 python -c "import nu; print(nu.__version__)"
 ```
+
+Run the bundled counter demo. A live counter renders in a browser dashboard and persists across restarts:
+
+```bash
+nu demo run counter
+```
+
+Open the browser tab that pops up. Kill the process, run it again, it picks up where it left off. `nu demo list` shows all bundled demos.
+
+Next: [Hello, Nu](../tutorials/hello) for your first program, or [Your first app](../tutorials/your-first-app) for a full walkthrough.

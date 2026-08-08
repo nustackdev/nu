@@ -1,45 +1,95 @@
 ---
 title: Nu
-description: "The interaction primitive. Build apps in one primitive that spans your whole stack: databases, UIs, AI agents, services. No glue. 50x less code."
+description: "Docs for Nu, the interaction primitive. Install, learn, and look up."
 ---
 
-The interaction primitive. Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code.
+Every app is a set of interactions between systems: a database, a UI, AI agents, and services. Nu makes interaction the primitive: **Refs** name what you touch (a UI widget, an LLM endpoint, a memory slot, a KV slot), **Interactions** describe what to do with them (read, write, branch, iterate, compose). Persistence, reactivity, atomicity, observability, and scalability are inherent, not bolted on.
 
-Every app is a set of interactions between systems. Nu makes interaction the primitive: **Refs** name what you touch (a UI widget, an LLM endpoint, a memory slot, a KV slot), **Interactions** describe what to do with them (read, write, branch, iterate, compose). Persistence, reactivity, atomicity, observability, and scalability are inherent, not bolted on.
-
-Here is a complete Nu program:
-
-```python
-import nu, asyncio
-
-tree = nu.ForeverDo(nu.print("tick") >> nu.Delay(1.0))
-asyncio.run(nu.arun(tree))
-```
-
-You described a tree of what to do. Nu ran it. Every second it prints `tick`, forever, until you stop it.
-
-## What you get
-
-Inherent to the model, not bolted on:
-
-- **Persistence.** State survives restarts, no database code.
-- **Reactivity.** Reads recompute, UI updates.
-- **Atomicity.** Any subtree runs as a transaction.
-- **Observability.** Every node is a value you can print.
-- **Scalability.** Swap the Fabric, same tree runs local or distributed.
-
-## Use cases
-
-- **AI agentic systems.** Refs for tools, memory, LLMs; Interactions for the loop.
-- **Personal apps.** Persistent state, live UI, background loop, in a handful of lines.
-- **Data-intensive apps.** Billions of entries in-process, reactive and atomic by default.
-- **Enterprise in-house tools.** Dashboards and workflows over existing systems, same program from prototype to scale.
-
-## Start here
+## Get started
 
 <Cards>
-  <Card title="5-minute tour" href="/docs/tutorials/hello" description="Run your first Nu tree." />
-  <Card title="Add state, reactivity, UI" href="/docs/tutorials/counter" description="Build a counter that persists and reacts." />
-  <Card title="Build a real app" href="/docs/tutorials/movies" description="Ship a full app end to end." />
-  <Card title="Install Nu" href="/docs/how-to/install" description="Get Nu on your machine." />
+  <Card title="Install" href="/docs/how-to/install" description="pip install and run the bundled demo. 2 min." />
+  <Card title="Hello, Nu" href="/docs/tutorials/hello" description="Your first Nu program. 5 min." />
+  <Card title="Your first app" href="/docs/tutorials/your-first-app" description="Build a counter dashboard end to end. 15 min." />
+</Cards>
+
+## The idea
+
+A tiny program is a joy to write:
+
+```python
+a = 2
+b = 5
+print(a + b)
+```
+
+Three lines, one substrate.
+
+Real apps do not stay here. `a` moves into a database. `b` comes from a form submission. The result renders in a browser. A background job reruns it when either input changes. Three lines become three hundred: an ORM, a request handler, a template, a websocket, a queue. Almost none of it is about `a + b` anymore. It is all interaction between substrates.
+
+**Nu makes interaction the primitive.**
+
+- **Ref.** A name for a value, wherever it lives. A KV slot, a UI widget, an LLM endpoint, a remote object.
+- **Interaction.** What you do with a Ref. Read, write, branch, iterate, compose.
+- **Fabric.** Binds Refs to a real backend.
+
+Here is the same program with `a` and `b` persisted in a KV store:
+
+```python
+class DB(nu.Shape):
+    a: nu.kv.IntRef
+    b: nu.kv.IntRef
+
+DB.a.set(2) >> DB.b.set(5) >> nu.print(DB.a + DB.b)
+```
+
+`>>` chains interactions in order. Kill the process, run it again, the values are still there.
+
+Same program, but the result lands in a live browser dashboard:
+
+```python
+class DB(nu.Shape):
+    a: nu.kv.IntRef
+    b: nu.kv.IntRef
+
+class Dashboard(nu.Shape):
+    out: nu.ui.TextRef
+
+DB.a.set(2) >> DB.b.set(5) >> Dashboard.out.set(DB.a + DB.b)
+```
+
+`Dashboard.out` is a Ref. `DB.a` is a Ref. One lives in RocksDB, the other in a browser tab. `.set(...)` on either is the same interaction.
+
+> **Same primitive, different substrate.** One Ref for any resource, one Interaction for any op. Nu doesn't care what the backend is.
+
+### What falls out
+
+Because Refs are just names and Interactions are just descriptions, the runtime is free to persist them, replay them, ship them across the network, batch them into a transaction, run them on another machine. Persistence, reactivity, atomicity, observability, and distribution are not features Nu has. They are what falls out of naming interactions instead of executing them.
+
+The same lines that put `a + b` on a dashboard can, without changing shape:
+
+- **Persist across restarts.** The KV slot is already durable.
+- **Re-render live on input changes.** Wrap in a `React` interaction.
+- **Handle terabytes.** Shard the KV Fabric. The Refs do not notice.
+- **Run distributed across a cluster.** Bind through `nu.ray`. The Refs do not notice.
+
+For the algebra underneath (atoms, kinds, forms), see the [Explanation](/docs/reference/fabrics) section once it lands. For now, pick a card above and start building.
+
+## Fabrics
+
+Each fabric binds Refs to a real backend and unlocks a new capability.
+
+| Fabric | What |
+| --- | --- |
+| [`nu.mem`](/docs/reference/fabrics/mem) | In-memory state fabric. Perfect for cache, hot state, and in-process coordination. |
+| [`nu.kv`](/docs/reference/fabrics/virtuals) | Persistent state fabric. Refs over a KV backend (RocksDB, LMDB); transactions, snapshots, and change notifications, built in. |
+| [`nu.ui`](/docs/reference/fabrics/ui) | Web UI fabric. Same fabric shape as the others, but the Refs are widgets (text, buttons, tables) rendered in the browser and live-updated as your state changes. |
+| [`nu.invisibles`](/docs/reference/fabrics/invisibles) | Network fabric. Puts other fabrics on the network. Bind a fabric in one process, use it from another; same Refs, same interactions, over TCP or Unix socket. |
+| [`nu.ray`](/docs/reference/fabrics/ray) | Cluster compute fabric. Teleport a Nu tree to any worker in your Ray cluster; it runs there and returns the result. |
+
+## Go deeper
+
+<Cards>
+  <Card title="How-to" href="/docs/how-to/install" description="Recipes for common tasks. Install, cross-repo dev, more coming." />
+  <Card title="Reference" href="/docs/reference/fabrics" description="API surface. Fabrics, core, standard library." />
 </Cards>
