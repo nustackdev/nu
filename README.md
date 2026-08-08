@@ -72,24 +72,56 @@ Real apps don't stay here. `a` moves into a database. `b` comes from a form subm
 Same program, `a` and `b` persisted in a KV store:
 
 ```python
-class DB(nu.Shape):
-    a: nu.kv.IntRef
-    b: nu.kv.IntRef
+import nu
 
-DB.a.set(2) >> DB.b.set(5) >> nu.print(DB.a + DB.b)
+
+class DB(nu.Shape):
+    a = nu.kv.IntRef.slot()
+    b = nu.kv.IntRef.slot()
+
+
+# compute a + b and print it
+compute = DB.a.set(2) >> DB.b.set(5) >> nu.print(DB.a + DB.b)
+
+# assemble: rocksdb-backed
+app = nu.With(
+    nu.kv.rocksdb_navigator(".dbsum"),
+    body=nu.kv.auto_flow_atomic(compute),
+)
+
+nu.run(app)
 ```
 
 Same program, result rendered in a live browser dashboard:
 
 ```python
+import asyncio
+import nu
+
+
 class DB(nu.Shape):
-    a: nu.kv.IntRef
-    b: nu.kv.IntRef
+    a = nu.kv.IntRef.slot()
+    b = nu.kv.IntRef.slot()
 
-class Dashboard(nu.Shape):
-    out: nu.ui.TextRef
 
-DB.a.set(2) >> DB.b.set(5) >> Dashboard.out.set(DB.a + DB.b)
+class Dashboard(nu.ui.Page):
+    out = nu.ui.TextRef.slot()
+
+
+class App(nu.ui.Index):
+    pages = nu.ui.Pages({"/": Dashboard})
+
+
+# compute a + b and render into the dashboard text block
+compute = DB.a.set(2) >> DB.b.set(5) >> Dashboard.out.set(DB.a + DB.b)
+
+# assemble: rocksdb-backed, served over the browser
+app = nu.With(
+    nu.kv.rocksdb_navigator(".dbsum"),
+    nu.ui.server(nu.kv.auto_flow_atomic(compute)),
+)
+
+asyncio.run(nu.arun(app))
 ```
 
 > **Same primitive, different substrate.** One Ref for any resource, one Interaction for any op. Nu doesn't care what the backend is.

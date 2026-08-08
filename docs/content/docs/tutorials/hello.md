@@ -2,17 +2,14 @@
 title: Hello, Nu
 ---
 
-Run your first Nu program: a tree that prints "hello" once a second.
+Run your first Nu program: a tree that prints "Hello, Nu!" once.
 
 Install Nu first: see [Install](../how-to/install).
 
 ```python
-import asyncio
 import nu
 
-tree = nu.ForeverDo(nu.print("hello") >> nu.Delay(1.0))
-
-asyncio.run(nu.arun(tree))
+nu.run(nu.print("Hello, Nu!"))
 ```
 
 Save as `hello.py`, then run:
@@ -21,19 +18,15 @@ Save as `hello.py`, then run:
 python hello.py
 ```
 
-You see "hello" print once a second, forever. Press Ctrl+C to stop.
+You see:
 
 ```
-hello
-hello
-hello
+Hello, Nu!
 ```
 
 ## What just happened
 
-You built a tree of three Nu operations: `ForeverDo` loops its body, `print` writes a line, `Delay` waits. Nothing ran while you built it. `nu.arun` executed the tree.
-
-`>>` composes left to right. So each loop iteration prints, then waits a second, then goes again.
+You built a tree of one Nu operation: `nu.print("Hello, Nu!")` describes a print. Nothing ran while you built it. `nu.run` executed the tree.
 
 That is the whole Nu model in miniature. You describe a tree, Nu runs it.
 

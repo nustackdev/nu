@@ -18,23 +18,49 @@ export const INTRO_PLAIN_LINES: CodeTok[][] = [
   [{ c: 'kw', t: 'print' }, { t: '(a + b)' }],
 ];
 
-/** Beat 2 — same program, a and b persisted in a KV store. */
+/** Beat 2 — same program, a and b persisted in a KV store. Runnable. */
 export const INTRO_KV_LINES: CodeTok[][] = [
-  [{ c: 'kw', t: 'class' }, { t: ' DB(' }, { c: 'nu', t: 'nu.Shape' }, { t: '):' }],
-  [{ t: '    a: ' }, { c: 'nu', t: 'nu.kv.IntRef' }],
-  [{ t: '    b: ' }, { c: 'nu', t: 'nu.kv.IntRef' }],
+  [{ c: 'kw', t: 'import' }, { t: ' nu' }],
   [],
-  [{ t: 'DB.a.set(' }, { c: 'str', t: '2' }, { t: ') >> DB.b.set(' }, { c: 'str', t: '5' }, { t: ') >> ' }, { c: 'nu', t: 'nu.print' }, { t: '(DB.a + DB.b)' }],
+  [{ c: 'kw', t: 'class' }, { t: ' DB(' }, { c: 'nu', t: 'nu.Shape' }, { t: '):' }],
+  [{ t: '    a = ' }, { c: 'nu', t: 'nu.kv.IntRef' }, { t: '.slot()' }],
+  [{ t: '    b = ' }, { c: 'nu', t: 'nu.kv.IntRef' }, { t: '.slot()' }],
+  [],
+  [{ c: 'cmt', t: '# compute a + b and print it' }],
+  [{ t: 'compute = DB.a.set(' }, { c: 'str', t: '2' }, { t: ') >> DB.b.set(' }, { c: 'str', t: '5' }, { t: ') >> ' }, { c: 'nu', t: 'nu.print' }, { t: '(DB.a + DB.b)' }],
+  [],
+  [{ c: 'cmt', t: '# assemble: rocksdb-backed' }],
+  [{ t: 'app = ' }, { c: 'nu', t: 'nu.With' }, { t: '(' }],
+  [{ t: '    ' }, { c: 'nu', t: 'nu.kv.rocksdb_navigator' }, { t: '(' }, { c: 'str', t: '".dbsum"' }, { t: '),' }],
+  [{ t: '    body=' }, { c: 'nu', t: 'nu.kv.auto_flow_atomic' }, { t: '(compute),' }],
+  [{ t: ')' }],
+  [],
+  [{ c: 'nu', t: 'nu.run' }, { t: '(app)' }],
 ];
 
-/** Beat 3 — same program, result rendered in a live browser dashboard. */
+/** Beat 3 — same program, result rendered in a live browser dashboard. Runnable. */
 export const INTRO_UI_LINES: CodeTok[][] = [
+  [{ c: 'kw', t: 'import' }, { t: ' asyncio' }],
+  [{ c: 'kw', t: 'import' }, { t: ' nu' }],
+  [],
   [{ c: 'kw', t: 'class' }, { t: ' DB(' }, { c: 'nu', t: 'nu.Shape' }, { t: '):' }],
-  [{ t: '    a: ' }, { c: 'nu', t: 'nu.kv.IntRef' }],
-  [{ t: '    b: ' }, { c: 'nu', t: 'nu.kv.IntRef' }],
+  [{ t: '    a = ' }, { c: 'nu', t: 'nu.kv.IntRef' }, { t: '.slot()' }],
+  [{ t: '    b = ' }, { c: 'nu', t: 'nu.kv.IntRef' }, { t: '.slot()' }],
   [],
-  [{ c: 'kw', t: 'class' }, { t: ' Dashboard(' }, { c: 'nu', t: 'nu.Shape' }, { t: '):' }],
-  [{ t: '    out: ' }, { c: 'nu', t: 'nu.ui.TextRef' }],
+  [{ c: 'kw', t: 'class' }, { t: ' Dashboard(' }, { c: 'nu', t: 'nu.ui.Page' }, { t: '):' }],
+  [{ t: '    out = ' }, { c: 'nu', t: 'nu.ui.TextRef' }, { t: '.slot()' }],
   [],
-  [{ t: 'DB.a.set(' }, { c: 'str', t: '2' }, { t: ') >> DB.b.set(' }, { c: 'str', t: '5' }, { t: ') >> Dashboard.out.set(DB.a + DB.b)' }],
+  [{ c: 'kw', t: 'class' }, { t: ' App(' }, { c: 'nu', t: 'nu.ui.Index' }, { t: '):' }],
+  [{ t: '    pages = ' }, { c: 'nu', t: 'nu.ui.Pages' }, { t: '({' }, { c: 'str', t: '"/"' }, { t: ': Dashboard})' }],
+  [],
+  [{ c: 'cmt', t: '# compute a + b and render into the dashboard text block' }],
+  [{ t: 'compute = DB.a.set(' }, { c: 'str', t: '2' }, { t: ') >> DB.b.set(' }, { c: 'str', t: '5' }, { t: ') >> Dashboard.out.set(DB.a + DB.b)' }],
+  [],
+  [{ c: 'cmt', t: '# assemble: rocksdb-backed, served over the browser' }],
+  [{ t: 'app = ' }, { c: 'nu', t: 'nu.With' }, { t: '(' }],
+  [{ t: '    ' }, { c: 'nu', t: 'nu.kv.rocksdb_navigator' }, { t: '(' }, { c: 'str', t: '".dbsum"' }, { t: '),' }],
+  [{ t: '    ' }, { c: 'nu', t: 'nu.ui.server' }, { t: '(' }, { c: 'nu', t: 'nu.kv.auto_flow_atomic' }, { t: '(compute)),' }],
+  [{ t: ')' }],
+  [],
+  [{ t: 'asyncio.run(' }, { c: 'nu', t: 'nu.arun' }, { t: '(app))' }],
 ];
