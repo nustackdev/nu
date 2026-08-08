@@ -1,5 +1,7 @@
 export { PageShell } from './PageShell';
 export type { PageShellProps } from './PageShell';
+export { Page } from './Page';
+export type { PageProps } from './Page';
 export { PageHero } from './PageHero';
 export type { PageHeroProps } from './PageHero';
 export { PageBody } from './PageBody';

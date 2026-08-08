@@ -1,0 +1,5 @@
+/* Page — content container inside PageShell. Adds top clearance so page
+ * content sits below the fixed FloatingNav (nav top ≈ 16-28px + 35px tall). */
+.root {
+  padding-top: var(--site-space-8);
+}

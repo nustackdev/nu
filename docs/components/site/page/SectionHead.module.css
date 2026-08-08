@@ -1,75 +1,11 @@
-/* SectionHead — chapter title row with a giant "peek" watermark.
- * The Cell becomes the positioning context and clipping frame; the peek
- * word is a bottom-anchored, centered background layer, translated down
- * so it's cut off at the bottom. Head content flows on top via z-index.
- * Moved verbatim from the old app/(home)/page.module.css .chapterCell /
- * .chapterPeek / .sectionIntro rules. */
+/* SectionHead — chapter title row. Peek watermark removed (was noise).
+ * Now renders as a plain 1- or 2-col Row; only the lede paragraph needs
+ * its own text style. */
 
-.headCell {
-  position: relative;
-  overflow: hidden;
-}
-.headCell > :not(.peek) {
-  position: relative;
-  z-index: 1;
-  /* Header cells: top matches left/right (from CellContent pad="lg" = 2·kal-u),
-   * bottom is half. Hugs what comes next. */
-  padding-block: calc(2 * var(--site-kal-u)) calc(1 * var(--site-kal-u));
-}
-.peek {
-  pointer-events: none;
-  user-select: none;
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  transform: translateY(25%);
-  text-align: center;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: var(--site-fs-17);
-  line-height: 0.9;
-  letter-spacing: -0.03em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: transparent;
-  /* Silver-woven watermark: bright hint at top (peeks behind header), fades
-   * into a whisper of the brand blues by mid-word. Text-mask on top softens
-   * the cut into a fade, so the bottom edge feels embedded, not clipped. */
-  background-image: linear-gradient(
-    172deg,
-    color-mix(in oklab, var(--site-silver-1) 7%, transparent) 0%,
-    color-mix(in oklab, var(--site-silver-2) 4%, transparent) 40%,
-    color-mix(in oklab, var(--site-silver-2) 2%, transparent) 70%,
-    var(--site-bg) 100%
-  );
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
-          mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
-  z-index: 0;
-}
-
-@media (max-width: 1280px) {
-  .peek { font-size: var(--site-fs-16); }
-}
-@media (max-width: 640px) {
-  .peek { font-size: var(--site-fs-15); }
-}
-
-/* Section intro (lede) below the head title. */
 .lede {
   font-size: var(--site-fs-9);
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.72);
   margin: var(--site-gap-normal) 0 0;
   max-width: 68ch;
-}
-
-/* Mobile: 2x more padding on head cells; hide the peek watermark. */
-@media (max-width: 640px) {
-  .headCell > :not(.peek) {
-    padding-block: calc(4 * var(--site-kal-u)) 0;
-  }
-  .peek { display: none; }
 }

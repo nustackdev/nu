@@ -6,24 +6,20 @@ import { Heading } from '@/components/site/text';
 import s from './SectionHead.module.css';
 
 export interface SectionHeadProps {
-  /** Giant background watermark word ("intro", "fabrics", "apps"…). */
-  peek?: string;
   /** Head title, rendered as a Heading. */
   title: ReactNode;
   /** Optional lede paragraph shown under the title. */
   lede?: ReactNode;
-  /** Heading level. Default 1 (renders <h2> — see Heading). */
+  /** Heading level. Default 1. */
   level?: 1 | 2;
   className?: string;
 }
 
 /**
- * SectionHead — chapter header row. Bakes the peek watermark + Heading +
- * lede pattern that opens each landing chapter. Rendered as its own
- * bordered Row so it stacks flush with the Sections below.
+ * SectionHead — chapter title row: heading with an optional lede beneath.
+ * Peek watermark removed (was noise).
  */
 export function SectionHead({
-  peek,
   title,
   lede,
   level = 1,
@@ -31,8 +27,7 @@ export function SectionHead({
 }: SectionHeadProps) {
   return (
     <Row cols={1} className={className}>
-      <Cell className={s.headCell}>
-        {peek ? <span className={s.peek} aria-hidden>{peek}</span> : null}
+      <Cell>
         <CellContent pad="lg">
           <Heading level={level}>{title}</Heading>
           {lede ? <p className={s.lede}>{lede}</p> : null}

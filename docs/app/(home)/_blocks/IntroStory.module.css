@@ -9,7 +9,7 @@
 /* Every beat: two-column split — explanation left, demonstration right. */
 .beat {
   display: grid;
-  grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 2.25rem;
   align-items: start;
 }
@@ -35,14 +35,22 @@
   border-radius: 3px;
 }
 
-/* Pull-quote landmarks — full width, hue accent. */
+/* CodeSample scope inside intro — two distinct hues so tokens actually read
+ * as tokens (silvers were both too close to white, everything mushed). Uses
+ * the same teal + steel pairing as Section hue="code". */
+.codeScope {
+  --site-accent:   var(--site-hue-teal);
+  --site-accent-2: var(--site-hue-steel);
+}
+
+/* Pull-quote landmarks — full width, hue accent per landmark. */
 .pullQuote {
   font-size: clamp(1.25rem, 2vw, 1.6rem);
   line-height: 1.4;
   font-weight: 500;
   letter-spacing: -0.005em;
   color: #fff;
-  border-left: 2px solid var(--site-accent, #7a4ce0);
+  border-left: 2px solid var(--pq-hue, var(--site-hue-teal));
   padding: 0.1rem 0 0.1rem 1.15rem;
   margin: 0.25rem 0;
   max-width: 72ch;
@@ -50,10 +58,15 @@
 
 .pullQuote em {
   font-style: normal;
-  color: var(--site-accent, #7a4ce0);
+  color: var(--pq-hue, var(--site-hue-teal));
 }
 
 .pullQuote code { color: inherit; }
+
+/* Palette-1: the "same primitive" payoff (after WHAT beats). */
+.pullQuoteTeal  { --pq-hue: var(--site-hue-teal); }
+/* Palette-2: the "not features, falls out" payoff (after HOW beat). */
+.pullQuoteAmber { --pq-hue: var(--site-hue-amber); }
 
 /* Vocabulary card (Beat 2 right) — Ref / Interaction / Fabric definitions. */
 .vocab {
@@ -72,7 +85,7 @@
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 0.82rem;
   letter-spacing: 0.02em;
-  color: var(--site-accent, #7a4ce0);
+  color: var(--site-hue-steel);
   text-transform: none;
   margin: 0;
 }
@@ -111,7 +124,7 @@
 .fabricRow dt code {
   background: transparent;
   padding: 0;
-  color: var(--site-accent, #7a4ce0);
+  color: var(--site-hue-sage);
   font-size: 0.92rem;
 }
 
@@ -146,7 +159,7 @@
   top: 0.72em;
   width: 0.5rem;
   height: 1px;
-  background: var(--site-accent, #7a4ce0);
+  background: var(--site-hue-plum);
 }
 
 .consequences li strong { color: #fff; font-weight: 600; }

@@ -24,7 +24,6 @@ export function IntroStory() {
     <Chapter>
       {/* Chapter header */}
       <SectionHead
-        peek="intro"
         title="Meet Nu."
         lede={<>What Nu is, how it works, why it matters &mdash; in one read.</>}
       />
@@ -41,7 +40,7 @@ export function IntroStory() {
                 substrate, no ceremony.
               </Description>
             </div>
-            <div className={s.beatRight}>
+            <div className={`${s.beatRight} ${s.codeScope}`}>
               <CodeSample filename="tiny.py" lines={INTRO_PLAIN_LINES} />
             </div>
           </section>
@@ -98,7 +97,7 @@ export function IntroStory() {
                 the process, run it again, the values are still there.
               </Description>
             </div>
-            <div className={s.beatRight}>
+            <div className={`${s.beatRight} ${s.codeScope}`}>
               <CodeSample filename="kv.py" lines={INTRO_KV_LINES} />
             </div>
           </section>
@@ -114,13 +113,13 @@ export function IntroStory() {
                 text block is the same interaction as setting a KV slot.
               </Description>
             </div>
-            <div className={s.beatRight}>
+            <div className={`${s.beatRight} ${s.codeScope}`}>
               <CodeSample filename="ui.py" lines={INTRO_UI_LINES} />
             </div>
           </section>
 
           {/* Pull-quote landmark */}
-          <p className={s.pullQuote}>
+          <p className={`${s.pullQuote} ${s.pullQuoteTeal}`}>
             <em>Same primitive, different substrate.</em> The shape of the
             program didn&apos;t change when the substrates did. That is
             the point of Nu.
@@ -165,7 +164,7 @@ export function IntroStory() {
           </section>
 
           {/* Pull-quote landmark */}
-          <p className={s.pullQuote}>
+          <p className={`${s.pullQuote} ${s.pullQuoteAmber}`}>
             Persistence, reactivity, atomicity, observability,
             distribution &mdash; <em>not features Nu has,</em> but what
             falls out of naming interactions instead of executing them.

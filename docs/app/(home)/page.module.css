@@ -11,17 +11,12 @@
   /* Two design knobs. Tune at breakpoints. */
   --hero-h: 650px;   /* fixed hero row height; heroWrap + logo layer both use this */
   --logo-w: 608px;   /* logo render width */
-  --hero-top: var(--site-space-8);  /* top gap before hero; logoLayer + heroRow share it */
+  --hero-top: 0;  /* top clearance now owned by Page (padding-top); logoLayer + heroRow still share this var */
 }
 
-@media (max-width: 1280px) {
-  .landingRoot { --hero-top: var(--site-space-4); }
-}
-/* At ≤1024 the giant logo is hidden and the FloatingNav sits closer to the
- * inline slogan; give the hero a bigger top gap so they don't collide. */
-@media (max-width: 1024px) {
-  .landingRoot { --hero-top: var(--site-space-8); }
-}
+/* --hero-top overrides removed — Page now owns nav clearance uniformly.
+ * If a breakpoint needs extra hero-specific spacing (e.g. the ≤1024 case
+ * where the giant logo is hidden), add it back here. */
 
 /* Logo layer: mirrors Container's max-width + centering so `left: 0` on the
    aligner = Container's left edge = hero grid's left border. */

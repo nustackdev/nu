@@ -27,6 +27,7 @@ import { DiscordMark } from '@/components/site/marks/DiscordMark';
 import { XMark } from '@/components/site/marks/XMark';
 import {
   PageShell,
+  Page,
   PageHero,
   PageBody,
   Chapter,
@@ -57,6 +58,7 @@ export default function Home() {
         </div>
       }
     >
+      <Page>
       {/* 1. Hero */}
       <PageHero>
         <Row template="minmax(0, 55fr) minmax(0, 45fr)" divider={false} stackAt="sm" className={s.heroRow}>
@@ -128,7 +130,6 @@ export default function Home() {
         {/* 5. Fabrics */}
         <Chapter>
         <SectionHead
-          peek="fabrics"
           title="Fabrics."
           lede={
             <>
@@ -257,7 +258,6 @@ export default function Home() {
         {/* 6. Apps */}
         <Chapter>
         <SectionHead
-          peek="apps"
           title="Standalone apps built on Nu."
           lede="Applications built on Nu today."
         />
@@ -313,7 +313,6 @@ export default function Home() {
         {/* 7. Infra */}
         <Chapter>
         <SectionHead
-          peek="infra"
           title="Infra. The tools that power Nu fabrics."
           lede={
             <>
@@ -410,6 +409,7 @@ export default function Home() {
 
       {/* 8. Footer */}
       <PageFooter />
+      </Page>
     </PageShell>
   );
 }
