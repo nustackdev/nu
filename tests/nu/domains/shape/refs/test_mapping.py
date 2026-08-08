@@ -11,6 +11,7 @@ from nu.domains.shape.interactions import (
 )
 from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
 from nu.domains.shape.refs.mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
+from nu.flows.control import IfDo
 from nu.forms.primitives import Int
 from nu.reactive import (
     OnChange,
@@ -124,6 +125,15 @@ def test_mutable_mapping_ref_inherits_exists_missing_len():
     assert isinstance(m.exists(), Exists)
     assert isinstance(m.missing(), Missing)
     assert isinstance(m.len(), Int)
+
+
+def test_mutable_mapping_ref_init_returns_ifdo_of_missing_and_set():
+    m = MutableMappingRef("my_map")
+    result = m.init({})
+    assert isinstance(result, IfDo)
+    cond, body = result._children
+    assert isinstance(cond, Missing)
+    assert isinstance(body, SetCmd)
 
 
 # ---------------------------------------------------------------------------

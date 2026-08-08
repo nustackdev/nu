@@ -11,6 +11,7 @@ from nu.domains.shape.interactions import (
 )
 from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
 from nu.domains.shape.refs.sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
+from nu.flows.control import IfDo
 from nu.forms.primitives import Int
 from nu.reactive import OnChange, OnChildChange, OnChildrenChange
 
@@ -124,6 +125,15 @@ def test_mutable_sequence_ref_inherits_exists_missing():
     s = MutableSequenceRef("my_seq")
     assert isinstance(s.exists(), Exists)
     assert isinstance(s.missing(), Missing)
+
+
+def test_mutable_sequence_ref_init_returns_ifdo_of_missing_and_set():
+    s = MutableSequenceRef("my_seq")
+    result = s.init([])
+    assert isinstance(result, IfDo)
+    cond, body = result._children
+    assert isinstance(cond, Missing)
+    assert isinstance(body, SetCmd)
 
 
 # ---------------------------------------------------------------------------

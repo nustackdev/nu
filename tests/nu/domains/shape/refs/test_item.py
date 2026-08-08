@@ -11,6 +11,7 @@ from nu.domains.shape.interactions import (
 )
 from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
+from nu.flows.control import IfDo
 from nu.reactive import OnPrimitiveChange
 
 
@@ -107,6 +108,15 @@ def test_mutable_item_ref_inherits_exists_missing():
     ref = MutableItemRef("field")
     assert isinstance(ref.exists(), Exists)
     assert isinstance(ref.missing(), Missing)
+
+
+def test_mutable_item_ref_init_returns_ifdo_of_missing_and_set():
+    ref = MutableItemRef("field")
+    result = ref.init(42)
+    assert isinstance(result, IfDo)
+    cond, body = result._children
+    assert isinstance(cond, Missing)
+    assert isinstance(body, SetCmd)
 
 
 # ---------------------------------------------------------------------------
