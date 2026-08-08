@@ -12,6 +12,7 @@ authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.10"
 dependencies = [
     "typing-extensions>=4.7.0",
+    "click>=8.1",
 ]
 keywords = ["term", "programming", "tree", "topology", "shape", "table", "graph"]
 classifiers = [
@@ -57,6 +58,9 @@ all = [
 
 [project.urls]
 Repository = "https://github.com/nustackdev/nu"
+
+[project.scripts]
+nu = "nu.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nu"]
