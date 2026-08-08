@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nudle"
-version = "0.1.1"
+version = "0.1.2"
 description = "nudle web bundle -- compiled UI assets for the nu.ui fabric"
 license = "MIT"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
