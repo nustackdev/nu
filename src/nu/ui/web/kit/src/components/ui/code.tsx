@@ -2,13 +2,16 @@
 //
 // Inline <code> by default. `block` opts into a <pre><code> fence with copy
 // affordance in the top-right corner. Font is JetBrains Mono; size follows
-// typography.md §4 code recipes.
+// typography.md §4 code recipes. When `block` + `language` are set, Shiki
+// highlights the fence with dual light/dark themes driven by the `.dark`
+// class; unknown languages fall back to plain text.
 
 import { Check, Copy } from "lucide-react";
 import type * as React from "react";
 import { useCallback, useState } from "react";
 
 import { cn } from "../../lib/utils";
+import { useShikiHtml } from "../../lib/shiki";
 
 export interface CodeProps extends React.HTMLAttributes<HTMLElement> {
 	block?: boolean;
@@ -26,6 +29,8 @@ function Code({
 	...props
 }: CodeProps) {
 	const [copied, setCopied] = useState(false);
+	const source = typeof children === "string" ? children : "";
+	const highlighted = useShikiHtml(source, block && source ? language : undefined);
 
 	const handleCopy = useCallback(() => {
 		if (typeof children !== "string") return;
@@ -43,12 +48,21 @@ function Code({
 				data-language={language}
 				className={cn(
 					"relative w-full rounded-md bg-bg-sunken border border-border-subtle",
+					"[&_.shiki]:overflow-x-auto [&_.shiki]:p-3 [&_.shiki]:text-sm [&_.shiki]:font-mono",
+					"[&_.shiki]:whitespace-pre [&_.shiki]:bg-transparent",
+					"[&_.shiki,_.shiki_span]:!text-[var(--shiki-light)]",
+					"dark:[&_.shiki,_.shiki_span]:!text-[var(--shiki-dark)]",
 					className,
 				)}
 			>
-				<pre className="overflow-x-auto p-3 text-sm font-mono text-text-primary whitespace-pre">
-					<code {...props}>{children}</code>
-				</pre>
+				{highlighted ? (
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: shiki output is trusted HTML built from user text.
+					<div dangerouslySetInnerHTML={{ __html: highlighted }} />
+				) : (
+					<pre className="overflow-x-auto p-3 text-sm font-mono text-text-primary whitespace-pre">
+						<code {...props}>{children}</code>
+					</pre>
+				)}
 				{copyable && (
 					<button
 						type="button"

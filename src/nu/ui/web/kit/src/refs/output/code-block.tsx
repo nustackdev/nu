@@ -3,9 +3,10 @@
 // Server-owned. One `write` op carries a partial dict of {code, language,
 // show_copy}; missing keys leave slice fields alone. Nil on `code` /
 // `language` coerces to ""; nil on `show_copy` falls back to the class
-// default (true). No syntax highlighting in v1: the language label is
-// informational only. Composes the kit Code primitive in block mode; the
-// primitive owns the copy affordance when `copyable` is set.
+// default (true). `language`, when set to a Shiki-supported grammar,
+// drives syntax highlighting inside the primitive; unknown languages
+// render as plain text. Composes the kit Code primitive in block mode;
+// the primitive owns the copy affordance when `copyable` is set.
 
 import { Code } from "../../components/ui/code";
 import { useStore } from "../../store";
