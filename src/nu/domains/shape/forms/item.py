@@ -15,7 +15,6 @@ document model has no pure-Python collection equivalent).
 Notes:
 - No generic type params (T, InterfaceT); Refs are unparameterised.
 - No value_type / interface_cls properties; substrate concern, not Form.
-- ``init()`` is not implemented: no IfDo control flow yet.
 """
 
 from __future__ import annotations
@@ -32,6 +31,7 @@ if TYPE_CHECKING:
         Missing,
         SetCmd,
     )
+    from nu.flows.control import IfDo
     from nu.reactive import OnPrimitiveChange
 
 
@@ -72,6 +72,12 @@ class MutableItemForm(ItemForm):
         from nu.domains.shape.interactions import Erase
 
         return Erase(self)
+
+    def init(self, value: object) -> IfDo:
+        """Set ``value`` iff the leaf is currently missing."""
+        from nu.flows.control import IfDo
+
+        return IfDo(self.missing(), self.set(value))
 
 
 class ReactiveItemForm(MutableItemForm):
