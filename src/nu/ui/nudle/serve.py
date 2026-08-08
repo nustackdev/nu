@@ -23,7 +23,7 @@ from nu.lang.helpers import arun
 from nu.tree.walk import preorder
 from nu.ui.core import Ref, Session
 
-from .page import Index, Page
+from .page import Index, Page, _wire_type
 from .session import NudleSession
 
 
@@ -84,25 +84,29 @@ class _SPAStatic(StaticFiles):
         return response
 
 
-def _find_index(app: Nu) -> type[Index]:
-    """Walk the Nu tree, find the Index whose structural Refs / pages it touches.
+def _resolve_mount(app: Nu) -> tuple[str, list[dict[str, object]], list[dict[str, object]], bool]:
+    """Return ``(name, structural_fields, pages_payload, sidebar)`` for ``session.mount``.
 
-    Refs in the tree can root on either the Index (structural Refs) or on
-    a Page subclass registered in some Index's `pages` map. We accept either
-    and resolve back to the unique Index.
+    Two paths, chosen by what the tree contains:
 
-    A Page may be registered in more than one Index (e.g. a library-provided
-    embeddable Page owned by its own default Index AND mounted by a host
-    app's Index). When that happens, prefer an Index we already saw via
-    structural refs -- the app's own Index -- over the library default.
+    - **Shape path**: at least one UI Ref roots on an ``Index`` or ``Page``.
+      Resolves back to the unique Index (synthesizing one for a Page not
+      registered anywhere) and returns its mount payload.
+    - **Orphan path**: every UI Ref has ``_root_shape=None`` (shape-less
+      refs like ``nu.ui.TextRef("count")``). Synthesizes a single-page
+      ``_AutoIndex`` / ``_AutoPage`` mount from those refs' addresses.
     """
     seen_indexes: set[type[Index]] = set()
     seen_pages: set[type[Page]] = set()
+    orphan_refs: dict[str, type[Ref]] = {}
     for node in preorder(app):
         if not isinstance(node, Ref):
             continue
         root = node._root_shape
         if root is None:
+            addr = node._payload.get("segment")
+            if isinstance(addr, str):
+                orphan_refs.setdefault(addr, type(node))
             continue
         if issubclass(root, Index):
             seen_indexes.add(root)
@@ -111,6 +115,9 @@ def _find_index(app: Nu) -> type[Index]:
     # Resolve pages back to their Index. Skip pages already covered by an
     # Index we've seen structurally -- otherwise a library default Index
     # that also registers the page would falsely get added and conflict.
+    # A Page not registered in any Index is auto-mounted at "/" -- its
+    # payload is emitted directly below, no synthesized Index class.
+    auto_pages: list[type[Page]] = []
     for page_cls in seen_pages:
         if any(page_cls in idx.pages.routes.values() for idx in seen_indexes):
             continue
@@ -119,15 +126,54 @@ def _find_index(app: Nu) -> type[Index]:
                 seen_indexes.add(idx_cls)
                 break
         else:
+            auto_pages.append(page_cls)
+    if (seen_indexes or auto_pages) and orphan_refs:
+        addrs = ", ".join(sorted(orphan_refs))
+        raise RuntimeError(
+            f"shape-less UI Refs ({addrs}) coexist with shape-rooted Refs; "
+            "either wrap them in a Page or drop the shapes",
+        )
+    if seen_indexes and auto_pages:
+        names = ", ".join(p.__name__ for p in auto_pages)
+        raise RuntimeError(
+            f"unmounted Page(s) ({names}) alongside an Index; register them or drop the Index",
+        )
+    if seen_indexes:
+        if len(seen_indexes) > 1:
+            names = ", ".join(i.__name__ for i in seen_indexes)
+            raise RuntimeError(f"multiple Index shapes found ({names}); one per app")
+        idx_cls = next(iter(seen_indexes))
+        return (
+            idx_cls.__name__,
+            idx_cls._structural_fields(),
+            idx_cls._pages_payload(),
+            idx_cls._sidebar_enabled(),
+        )
+    if auto_pages:
+        if len(auto_pages) > 1:
+            names = ", ".join(p.__name__ for p in auto_pages)
             raise RuntimeError(
-                f"Page {page_cls.__name__} is used but not registered in any Index.pages",
+                f"multiple unmounted Pages ({names}); wrap them in an Index",
             )
-    if not seen_indexes:
-        raise RuntimeError("no nudle.Index found in Nu tree")
-    if len(seen_indexes) > 1:
-        names = ", ".join(i.__name__ for i in seen_indexes)
-        raise RuntimeError(f"multiple Index shapes found ({names}); one per app")
-    return next(iter(seen_indexes))
+        (page_cls,) = auto_pages
+        pages_payload = [
+            {
+                "route": "/",
+                "name": page_cls.__name__,
+                "label": page_cls.nav_label or "home",
+                "fields": page_cls._mount_fields(),
+            },
+        ]
+        return ("_AutoIndex", [], pages_payload, False)
+    if orphan_refs:
+        fields: list[dict[str, object]] = [
+            {"path": addr, "type": _wire_type(ref_cls)} for addr, ref_cls in orphan_refs.items()
+        ]
+        pages_payload = [
+            {"route": "/", "name": "_AutoPage", "label": "home", "fields": fields},
+        ]
+        return ("_AutoIndex", [], pages_payload, False)
+    raise RuntimeError("no nudle.Index, Page, or UI Ref found in Nu tree")
 
 
 def _all_index_subclasses() -> list[type[Index]]:
@@ -151,7 +197,7 @@ def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
     (or its build/ directory is empty), the static mount is skipped and only
     `/ws` is exposed -- run vite separately for the frontend in that case.
     """
-    index_cls = _find_index(app)
+    index_name, structural_fields, pages_payload, sidebar = _resolve_mount(app)
     fastapi_app = FastAPI(title="nudle")
 
     @fastapi_app.websocket("/ws")
@@ -159,10 +205,10 @@ def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
         await ws.accept()
         session = NudleSession(ws)
         await session.mount(
-            index_cls.__name__,
-            index_cls._structural_fields(),
-            index_cls._pages_payload(),
-            sidebar=index_cls._sidebar_enabled(),
+            index_name,
+            structural_fields,
+            pages_payload,
+            sidebar=sidebar,
         )
         per_conn_ctx = ctx.bind(Session, session)
         intake_task = asyncio.create_task(session.run_intake())
