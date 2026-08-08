@@ -52,9 +52,7 @@ export default function Home() {
       className={s.landingRoot}
       decorations={
         <div className={s.logoLayer}>
-          <div className={s.logoAlign}>
-            <HeroLogo className={s.logo} />
-          </div>
+          <HeroLogo className={s.logo} />
         </div>
       }
     >

@@ -6,47 +6,37 @@
  * head watermark, footer) live in components/site/page/.
  * ==========================================================================*/
 
-/* Landing-only design knobs, layered on top of PageShell's pageRoot. */
+/* Landing-only design knobs. */
 .landingRoot {
-  /* Two design knobs. Tune at breakpoints. */
-  --hero-h: 650px;   /* fixed hero row height; heroWrap + logo layer both use this */
   --logo-w: 608px;   /* logo render width */
-  --hero-top: 0;  /* top clearance now owned by Page (padding-top); logoLayer + heroRow still share this var */
+  --logo-h: 600px;   /* logo layer height slot */
 }
 
-/* --hero-top overrides removed — Page now owns nav clearance uniformly.
- * If a breakpoint needs extra hero-specific spacing (e.g. the ≤1024 case
- * where the giant logo is hidden), add it back here. */
-
-/* Logo layer: mirrors Container's max-width + centering so `left: 0` on the
-   aligner = Container's left edge = hero grid's left border. */
+/* Logo layer: a centered slot behind the hero. No pixel-tuned alignment;
+ * the logo just sits in the middle of a ~600px zone mirroring the
+ * container's max-width so its horizontal center matches content. */
 .logoLayer {
   position: absolute;
-  top: var(--hero-top);
+  top: 50px;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
   max-width: 1360px;
-  height: var(--hero-h);
+  height: var(--logo-h);
+  display: flex;
+  align-items: center;      /* vertical center in the slot */
+  justify-content: flex-start;
   pointer-events: none;
-}
-/* Pixel offset — tuned by eye against the current --logo-w. Retune when logo size changes. */
-.logoAlign {
-  position: absolute;
-  left: 0;
-  bottom: 1px;
-  margin-left: -134px;
 }
 .logo {
   display: block;
   width: var(--logo-w);
   height: auto;
   opacity: 0.5;
+  margin-left: -134px;  /* bleed past the container's left edge, matching the old alignment */
 }
 
 .heroRow {
-  height: var(--hero-h);
-  margin-top: var(--hero-top);
   position: relative;
 }
 
@@ -92,31 +82,16 @@
   }
 }
 
-/* -- ≤1024: collapse hero to regular single-column layout ---------------- */
+/* -- ≤1024: collapse hero to single-column layout ------------------------ */
 @media (max-width: 1024px) {
-  /* Kill fixed height, single column, drop fancy decoration. */
-  .heroRow {
-    height: auto;
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .heroRow::before,
-  .heroRow::after { display: none; }
+  .heroRow            { grid-template-columns: minmax(0, 1fr); }
   .heroRow .heroLeftCell { display: none; }
-  .sloganInline   { display: block; }
-  /* Content shifted to the left column — push the giant floating logo to the
-   * right of the hero layer to fill the empty side. */
-  .landingRoot { --logo-w: 304px; }  /* halve the logo at this breakpoint */
-  .logoAlign {
-    left: auto;
-    right: 0;
-    top: 50%;
-    bottom: auto;
-    margin-left: 0;
-    margin-right: -67px;
-    transform: translateY(-50%);
-  }
-  /* At this breakpoint the logo is decorative-only — kill the outline overlay. */
-  .logo [data-hero-outline] { display: none; }
+  .sloganInline       { display: block; }
+  /* Halve the floating logo. Content shifts to the left column, so push
+   * the logo to the right side of the layer to fill the empty side. */
+  .landingRoot        { --logo-w: 304px; }
+  .logoLayer          { justify-content: flex-end; }
+  .logo               { margin-left: 0; margin-right: -67px; }
 }
 
 /* Mobile: drop the giant logo entirely. */
