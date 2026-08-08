@@ -15,7 +15,7 @@ import { VizFrame } from '@/components/site/VizFrame';
 import { MonoKicker } from '@/components/site/MonoKicker';
 import { Meta } from '@/components/site/Meta';
 import { NumberedList } from '@/components/site/NumberedList';
-import { Heading, Tagline, Lede, Description, Label } from '@/components/site/text';
+import { Heading, Tagline, Description, Label } from '@/components/site/text';
 import { Stack } from '@/components/site/layout/Stack';
 import { CtaRow } from '@/components/site/layout/CtaRow';
 import {
@@ -27,13 +27,10 @@ import {
 } from '@/components/site/marks/FabricGlyphs';
 import { NulogMockSvg } from '@/components/site/marks/NulogMock';
 import { NuspaceMockSvg } from '@/components/site/marks/NuspaceMock';
-import { HeroDemoMark } from '@/components/site/marks/HeroDemoMark';
-import { InteractionModelDiagram } from '@/components/site/marks/InteractionModelDiagram';
 import { GithubMark } from '@/components/site/marks/GithubMark';
 import { DiscordMark } from '@/components/site/marks/DiscordMark';
 import { XMark } from '@/components/site/marks/XMark';
-import { CodeSample } from '@/components/site/CodeSample';
-import { NU_SAMPLE_LINES } from './nu.sample.data';
+import { IntroStory } from './_blocks/IntroStory';
 import s from './page.module.css';
 
 const USE_CASES = [
@@ -122,107 +119,8 @@ export default function Home() {
             </Cell>
         </Row>
 
-        {/* 2. Hero demo — lede + code-tree/runtime-scene */}
-        <Row cols={1} borderBottom="solid" className={s.section2Row}>
-          <Cell>
-            <CellContent pad="lg">
-              <Lede>
-                Every app is a set of interactions between systems: a database,
-                a UI, AI agents, and services. Nu makes interaction the
-                primitive: <strong>Refs</strong> name what you touch (a UI
-                widget, an LLM endpoint, a memory slot, a KV slot),{' '}
-                <strong>Interactions</strong> describe what to do with them
-                (read, write, branch, iterate, compose). Persistence,
-                reactivity, atomicity, observability, and scalability are
-                inherent, not bolted on.
-              </Lede>
-            </CellContent>
-          </Cell>
-        </Row>
-        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell>
-            <CellContent pad="lg">
-              <HeroDemoMark />
-            </CellContent>
-          </Cell>
-        </Row>
-
-        {/* 3. Foundations — interaction-model */}
-        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell className={s.chapterCell}>
-            <span className={s.chapterPeek} aria-hidden>model</span>
-            <CellContent pad="lg">
-              <Heading level={1}>
-                We build on the Interaction Model.
-              </Heading>
-              <p className={s.sectionIntro}>
-                A language-agnostic specification the whole stack stands on.
-              </p>
-            </CellContent>
-          </Cell>
-        </Row>
-        <Row cols={2} borderBottom="solid" borderLeft="solid" borderRight="solid" stackAt="sm" className={s.imRow}>
-          <Cell className={s.imLeft}>
-            <CellContent pad="lg">
-              <Stack gap="normal">
-                <Description>
-                  The interaction-model defines what an interaction is, how Refs
-                  name locations, how Interactions compose into programs.
-                  Language-agnostic, implementation-agnostic. A specification
-                  anyone can implement.
-                </Description>
-                <CtaRow>
-                  <SiteButton href="https://github.com/nustackdev/interaction-model">
-                    <GithubMark size={14} />
-                    <SiteButtonRepoLabel>nustackdev/interaction-model</SiteButtonRepoLabel>
-                  </SiteButton>
-                </CtaRow>
-              </Stack>
-            </CellContent>
-          </Cell>
-          <Cell className={s.imRight}>
-            <CellContent pad="lg">
-              <InteractionModelDiagram />
-            </CellContent>
-          </Cell>
-        </Row>
-
-        {/* 4. Foundations — nu */}
-        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
-          <Cell className={s.chapterCell}>
-            <span className={s.chapterPeek} aria-hidden>nu</span>
-            <CellContent pad="lg">
-              <Heading level={1}>
-                Nu - the interaction model made real in Python.
-              </Heading>
-              <p className={s.sectionIntro}>
-                Nu ships the model in pure Python. Batteries included:{' '}
-                <strong>fabrics</strong> for the everyday jobs - in-memory
-                state, kv-based state, Ray-distributed compute, UI building.
-              </p>
-            </CellContent>
-          </Cell>
-        </Row>
-        <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid" className={s.hueCode}>
-          <Cell>
-            <CellContent pad="lg">
-              <Stack gap="normal">
-                <CodeSample filename="persistent_counter_ui.py" lines={NU_SAMPLE_LINES} />
-                <CtaRow>
-                  <SiteButton href="/docs"><BookOpen size={14} aria-hidden /><span>Meet Nu</span></SiteButton>
-                  <SiteButton href="https://github.com/nustackdev/nu">
-                    <GithubMark size={14} />
-                    <SiteButtonRepoLabel>nustackdev/nu</SiteButtonRepoLabel>
-                  </SiteButton>
-                  <SiteButton href="https://github.com/nustackdev/nu/tree/main/examples">
-                    <GithubMark size={14} />
-                    <span>See more examples</span>
-                  </SiteButton>
-                </CtaRow>
-              </Stack>
-            </CellContent>
-          </Cell>
-        </Row>
+        {/* 2. Intro story — what / how / why, plus theory + impl closer */}
+        <IntroStory />
 
         {/* 5. Fabrics */}
         <Row cols={1} borderBottom="solid" borderLeft="solid" borderRight="solid">
