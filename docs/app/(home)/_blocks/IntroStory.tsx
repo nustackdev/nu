@@ -25,7 +25,7 @@ export function IntroStory() {
       {/* Chapter header */}
       <SectionHead
         title="Meet Nu."
-        lede={<>What Nu is, how it works, why it matters &mdash; in one read.</>}
+        lede={<>What Nu is, how it works, why it matters.</>}
       />
 
       {/* Body */}
@@ -37,7 +37,7 @@ export function IntroStory() {
             <div className={s.beatLeft}>
               <Description>
                 A tiny program is a joy to write. Three lines, one
-                substrate, no ceremony.
+                substrate.
               </Description>
             </div>
             <div className={`${s.beatRight} ${s.codeScope}`}>
@@ -120,9 +120,9 @@ export function IntroStory() {
 
           {/* Pull-quote landmark */}
           <p className={`${s.pullQuote} ${s.pullQuoteTeal}`}>
-            <em>Same primitive, different substrate.</em> The shape of the
-            program didn&apos;t change when the substrates did. That is
-            the point of Nu.
+            <em>Same primitive, different substrate.</em>{' '}One Ref for any
+            resource, one Interaction for any op. Nu doesn&apos;t care
+            what the backend is.
           </p>
 
           {/* Beat 5 — HOW: Fabrics */}
@@ -189,15 +189,19 @@ export function IntroStory() {
             <div className={s.beatRight}>
               <ul className={s.consequences}>
                 <li>
-                  <strong>Persist across restarts</strong> &mdash; the KV
+                  {' '}<strong>Persist across restarts</strong> &mdash; the KV
                   slot is already durable.
                 </li>
                 <li>
-                  <strong>Re-render live on input changes</strong> &mdash;
+                  {' '}<strong>Re-render live on input changes</strong> &mdash;
                   wrap in a <code>React</code> interaction.
                 </li>
                 <li>
-                  <strong>Run partitioned across a cluster</strong>{' '}
+                  {' '}<strong>Handle terabytes</strong> &mdash; shard the KV
+                  Fabric; the Refs don&apos;t notice.
+                </li>
+                <li>
+                  {' '}<strong>Run distributed across a cluster</strong>{' '}
                   &mdash; bind through <code>nu.ray</code>; the Refs
                   don&apos;t notice.
                 </li>
