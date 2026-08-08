@@ -1,0 +1,22 @@
+/* =============================================================================
+ * PageShell — the reusable outer page skeleton.
+ * Layered composition: gradient (z=0), decorations slot (z=1),
+ * dot pattern (z=2), content Container (z=3).
+ * Dark-only. Owns pageRoot tokens.
+ * ==========================================================================*/
+
+.pageRoot {
+  composes: tokens from '@/components/site/tokens.module.css';
+  position: relative;
+  isolation: isolate;
+  background: var(--site-bg);
+  color: rgba(255, 255, 255, 0.92);
+  overflow-x: hidden;
+  color-scheme: dark;
+}
+
+/* Stacking: gradient (0) < decorations (1) < dots (2) < content (3). */
+.gradientLayer     { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.decorationsLayer  { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.dotLayer          { z-index: 2; }
+.contentLayer      { position: relative; z-index: 3; }

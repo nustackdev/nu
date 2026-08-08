@@ -1,0 +1,31 @@
+/* PageFooter — site footer strip. Bottom-anchored links + brand mark. */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  font-size: var(--site-fs-label);
+  color: var(--site-ink-4);
+  padding: 24px 0;
+}
+.footer a {
+  color: var(--site-ink-2);
+  text-decoration: none;
+  transition: color var(--site-t);
+}
+.footer a:hover { color: var(--site-accent); }
+
+.sep   { color: var(--site-border-stronger); }
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--site-ink);
+}
+.logo {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+}

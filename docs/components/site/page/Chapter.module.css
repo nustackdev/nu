@@ -1,0 +1,18 @@
+/* Chapter — one grouping card inside PageBody. Border/bg/radius live here;
+ * PageBody just spaces siblings out with a vertical gap. */
+.root {
+  display: block;
+  background: var(--site-bg-raised);
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-r-lg);
+  overflow: hidden;
+  /* Normalize grid lines inside the card so vertical inter-cell dividers
+   * match the horizontal inter-row dividers. */
+  --site-kal-border:  var(--site-border);
+  --site-kal-divider: var(--site-border);
+}
+
+/* Horizontal divider between consecutive rows within the card. */
+.root > * + * {
+  border-top: 1px solid var(--site-border);
+}

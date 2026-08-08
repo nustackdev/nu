@@ -1,0 +1,66 @@
+/* Section hue scopes — remap --site-accent-* to a silver-woven hue so any
+ * SiteButton (variant="hueTinted") or SilverWovenName inside auto-picks
+ * the row's color. Mirrors the old .hue* classes from page.module.css. */
+
+.hueSteel {
+  --site-accent:        var(--site-hue-steel);
+  --site-accent-soft:   var(--site-hue-steel-soft);
+  --site-accent-wash:   var(--site-hue-steel-wash);
+  --site-accent-line:   var(--site-hue-steel-line);
+  --site-accent-2:      var(--site-hue-steel);
+  --site-accent-2-soft: var(--site-hue-steel-soft);
+  --site-accent-2-wash: var(--site-hue-steel-wash);
+  --site-accent-2-line: var(--site-hue-steel-line);
+}
+.hueSage {
+  --site-accent:        var(--site-hue-sage);
+  --site-accent-soft:   var(--site-hue-sage-soft);
+  --site-accent-wash:   var(--site-hue-sage-wash);
+  --site-accent-line:   var(--site-hue-sage-line);
+  --site-accent-2:      var(--site-hue-sage);
+  --site-accent-2-soft: var(--site-hue-sage-soft);
+  --site-accent-2-wash: var(--site-hue-sage-wash);
+  --site-accent-2-line: var(--site-hue-sage-line);
+}
+.hueTeal {
+  --site-accent:        var(--site-hue-teal);
+  --site-accent-soft:   var(--site-hue-teal-soft);
+  --site-accent-wash:   var(--site-hue-teal-wash);
+  --site-accent-line:   var(--site-hue-teal-line);
+  --site-accent-2:      var(--site-hue-teal);
+  --site-accent-2-soft: var(--site-hue-teal-soft);
+  --site-accent-2-wash: var(--site-hue-teal-wash);
+  --site-accent-2-line: var(--site-hue-teal-line);
+}
+.huePlum {
+  --site-accent:        var(--site-hue-plum);
+  --site-accent-soft:   var(--site-hue-plum-soft);
+  --site-accent-wash:   var(--site-hue-plum-wash);
+  --site-accent-line:   var(--site-hue-plum-line);
+  --site-accent-2:      var(--site-hue-plum);
+  --site-accent-2-soft: var(--site-hue-plum-soft);
+  --site-accent-2-wash: var(--site-hue-plum-wash);
+  --site-accent-2-line: var(--site-hue-plum-line);
+}
+.hueAmber {
+  --site-accent:        var(--site-hue-amber);
+  --site-accent-soft:   var(--site-hue-amber-soft);
+  --site-accent-wash:   var(--site-hue-amber-wash);
+  --site-accent-line:   var(--site-hue-amber-line);
+  --site-accent-2:      var(--site-hue-amber);
+  --site-accent-2-soft: var(--site-hue-amber-soft);
+  --site-accent-2-wash: var(--site-hue-amber-wash);
+  --site-accent-2-line: var(--site-hue-amber-line);
+}
+/* Code sample scope: dual silver-woven hues — teal for nu API tokens,
+ * steel for keywords. */
+.hueCode {
+  --site-accent:        var(--site-hue-teal);
+  --site-accent-soft:   var(--site-hue-teal-soft);
+  --site-accent-wash:   var(--site-hue-teal-wash);
+  --site-accent-line:   var(--site-hue-teal-line);
+  --site-accent-2:      var(--site-hue-steel);
+  --site-accent-2-soft: var(--site-hue-steel-soft);
+  --site-accent-2-wash: var(--site-hue-steel-wash);
+  --site-accent-2-line: var(--site-hue-steel-line);
+}

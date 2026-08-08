@@ -1,18 +1,13 @@
 /* =============================================================================
- * home — page-level typography and CTA styles.
- * Sits on top of the block primitives (Container/Row/Cell/CellContent).
+ * landing — page-specific typography, hero layout, and background logo pin.
+ * Sits on top of PageShell / PageHero / PageBody / Section primitives.
  * Dark-only. Accent colors match projects/nu/positioning/locked.md dark values.
+ * Reusable page-level styles (pageRoot layering, section hue scopes, section
+ * head watermark, footer) live in components/site/page/.
  * ==========================================================================*/
 
-.pageRoot {
-  composes: tokens from '@/components/site/tokens.module.css';
-  position: relative;
-  isolation: isolate;
-  background: var(--site-bg);
-  color: rgba(255, 255, 255, 0.92);
-  overflow-x: hidden;
-  color-scheme: dark;
-
+/* Landing-only design knobs, layered on top of PageShell's pageRoot. */
+.landingRoot {
   /* Two design knobs. Tune at breakpoints. */
   --hero-h: 650px;   /* fixed hero row height; heroWrap + logo layer both use this */
   --logo-w: 608px;   /* logo render width */
@@ -20,18 +15,13 @@
 }
 
 @media (max-width: 1280px) {
-  .pageRoot { --hero-top: var(--site-space-4); }
+  .landingRoot { --hero-top: var(--site-space-4); }
 }
 /* At ≤1024 the giant logo is hidden and the FloatingNav sits closer to the
  * inline slogan; give the hero a bigger top gap so they don't collide. */
 @media (max-width: 1024px) {
-  .pageRoot { --hero-top: var(--site-space-8); }
+  .landingRoot { --hero-top: var(--site-space-8); }
 }
-
-/* Stacking: gradient (0) < logo (1) < dots (2) < content (3). */
-.gradientLayer { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.dotLayer      { z-index: 2; }
-.contentLayer  { position: relative; z-index: 3; }
 
 /* Logo layer: mirrors Container's max-width + centering so `left: 0` on the
    aligner = Container's left edge = hero grid's left border. */
@@ -43,7 +33,6 @@
   width: 100%;
   max-width: 1360px;
   height: var(--hero-h);
-  z-index: 1;
   pointer-events: none;
 }
 /* Pixel offset — tuned by eye against the current --logo-w. Retune when logo size changes. */
@@ -65,139 +54,8 @@
   margin-top: var(--hero-top);
   position: relative;
 }
-/* Hero left border: white at bottom (u letter's corner), fades to transparent going up. */
-.heroRow::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: linear-gradient(to top, rgba(255,255,255,0.5), rgba(255,255,255,0) 45%);
-  pointer-events: none;
-  z-index: 1;
-}
-/* Hero bottom spark: white at left (u letter's corner), fades to transparent at right. */
-.heroRow::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  margin-left: 1px;
-  background: linear-gradient(to right, rgba(255,255,255,0.5), rgba(255,255,255,0) 20%);
-  pointer-events: none;
-  z-index: 1;
-}
 
-/* Section 2 left spark: white at top (continuing from u corner), fades to 0.2 downward. */
-.section2Row {
-  position: relative;
-}
-.section2Row::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.5), rgba(255,255,255,0.2));
-  pointer-events: none;
-  z-index: 1;
-}
-/* Section 2 right border: emerges from transparent at top, resolves to 0.2 white at bottom. */
-.section2Row::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: linear-gradient(to bottom, rgba(255,255,255,0) 20%, rgba(255,255,255,0.2));
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* ≤1024: the hero u-corner spark is hidden, so the section-2 left border
- * shouldn't start from opaque white anymore — match the right border. */
-@media (max-width: 1024px) {
-  .section2Row::before {
-    background: linear-gradient(to bottom, rgba(255,255,255,0) 20%, rgba(255,255,255,0.2));
-  }
-}
-
-/* Mobile: outer grid borders are dropped — hide the section-2 gradient side
- * borders too so nothing dangles. */
-@media (max-width: 640px) {
-  .section2Row::before,
-  .section2Row::after { display: none; }
-}
-
-/* -- Section header: giant peeking chapter word ---------------------------
- * Sits behind the section header content, its top half rising above the
- * row's top edge. Fills use a dark-dimmed gradient so where the bg blob
- * blooms bright the word darkens through it (embedded / inset feel), and
- * where the bg is near-black the word blends. No shadow, on purpose.
- * ==========================================================================*/
-
-/* .chapterCell + .chapterPeek: Cell becomes the positioning context and
- * clipping frame; the peek word is a bottom-anchored, centered background
- * layer of the Cell, translated down 20% so it's cut off at the bottom.
- * CellContent flows on top normally via z-index. */
-.chapterCell {
-  position: relative;
-  overflow: hidden;
-}
-.chapterCell > :not(.chapterPeek) {
-  position: relative;
-  z-index: 1;
-  /* Header cells: top matches left/right (from CellContent pad="lg" = 2·kal-u),
-   * bottom is half. Hugs what comes next. */
-  padding-block: calc(2 * var(--site-kal-u)) calc(1 * var(--site-kal-u));
-}
-.chapterPeek {
-  pointer-events: none;
-  user-select: none;
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  transform: translateY(25%);
-  text-align: center;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: var(--site-fs-17);
-  line-height: 0.9;
-  letter-spacing: -0.03em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: transparent;
-  /* Silver-woven watermark: bright hint at top (peeks behind header), fades
-   * into a whisper of the brand blues by mid-word. Text-mask on top softens
-   * the cut into a fade, so the bottom edge feels embedded, not clipped. */
-  background-image: linear-gradient(
-    172deg,
-    color-mix(in oklab, var(--site-silver-1) 7%, transparent) 0%,
-    color-mix(in oklab, var(--site-silver-2) 4%, transparent) 40%,
-    color-mix(in oklab, var(--site-silver-2) 2%, transparent) 70%,
-    var(--site-bg) 100%
-  );
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
-          mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
-  z-index: 0;
-}
-
-@media (max-width: 1280px) {
-  .chapterPeek { font-size: var(--site-fs-16); }
-}
-@media (max-width: 640px) {
-  .chapterPeek { font-size: var(--site-fs-15); }
-}
-
-/* -- Typography ------------------------------------------------------------ */
+/* -- Typography ----------------------------------------------------------- */
 
 /* -- Hero left column: word-per-line slogan --------------------------------- */
 
@@ -252,7 +110,7 @@
   .sloganInline   { display: block; }
   /* Content shifted to the left column — push the giant floating logo to the
    * right of the hero layer to fill the empty side. */
-  .pageRoot { --logo-w: 304px; }  /* halve the logo at this breakpoint */
+  .landingRoot { --logo-w: 304px; }  /* halve the logo at this breakpoint */
   .logoAlign {
     left: auto;
     right: 0;
@@ -333,132 +191,10 @@
   margin-top: calc(6px - var(--site-gap-loose));
 }
 
-/* -- Section intro (below section titles) ---------------------------------
- * Kept here (not extracted) because it uses raw --site-fs-9 with no role token. */
-
-.sectionIntro {
-  font-size: var(--site-fs-9);
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.72);
-  margin: var(--site-gap-normal) 0 0;
-  max-width: 68ch;
-}
-
-/* -- Footer --------------------------------------------------------------- */
-
-.footer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 14px;
-  font-size: var(--site-fs-label);
-  color: var(--site-ink-4);
-  padding: 24px 0;
-}
-.footer a {
-  color: var(--site-ink-2);
-  text-decoration: none;
-  transition: color var(--site-t);
-}
-.footer a:hover { color: var(--site-accent); }
-
-.footerSep { color: var(--site-border-stronger); }
-
-.footerBrand {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--site-ink);
-}
-.footerLogo {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-}
-
-/* -- Fabric hue scopes ---------------------------------------------------- */
-/* Each fabric cell remaps --site-accent-* to a silver-woven hue, so its
- * SiteButton (variant="hueTinted") auto-picks the row's color. */
-
-.hueSteel {
-  --site-accent:        var(--site-hue-steel);
-  --site-accent-soft:   var(--site-hue-steel-soft);
-  --site-accent-wash:   var(--site-hue-steel-wash);
-  --site-accent-line:   var(--site-hue-steel-line);
-  --site-accent-2:      var(--site-hue-steel);
-  --site-accent-2-soft: var(--site-hue-steel-soft);
-  --site-accent-2-wash: var(--site-hue-steel-wash);
-  --site-accent-2-line: var(--site-hue-steel-line);
-}
-.hueSage {
-  --site-accent:        var(--site-hue-sage);
-  --site-accent-soft:   var(--site-hue-sage-soft);
-  --site-accent-wash:   var(--site-hue-sage-wash);
-  --site-accent-line:   var(--site-hue-sage-line);
-  --site-accent-2:      var(--site-hue-sage);
-  --site-accent-2-soft: var(--site-hue-sage-soft);
-  --site-accent-2-wash: var(--site-hue-sage-wash);
-  --site-accent-2-line: var(--site-hue-sage-line);
-}
-.hueTeal {
-  --site-accent:        var(--site-hue-teal);
-  --site-accent-soft:   var(--site-hue-teal-soft);
-  --site-accent-wash:   var(--site-hue-teal-wash);
-  --site-accent-line:   var(--site-hue-teal-line);
-  --site-accent-2:      var(--site-hue-teal);
-  --site-accent-2-soft: var(--site-hue-teal-soft);
-  --site-accent-2-wash: var(--site-hue-teal-wash);
-  --site-accent-2-line: var(--site-hue-teal-line);
-}
-.huePlum {
-  --site-accent:        var(--site-hue-plum);
-  --site-accent-soft:   var(--site-hue-plum-soft);
-  --site-accent-wash:   var(--site-hue-plum-wash);
-  --site-accent-line:   var(--site-hue-plum-line);
-  --site-accent-2:      var(--site-hue-plum);
-  --site-accent-2-soft: var(--site-hue-plum-soft);
-  --site-accent-2-wash: var(--site-hue-plum-wash);
-  --site-accent-2-line: var(--site-hue-plum-line);
-}
-.hueAmber {
-  --site-accent:        var(--site-hue-amber);
-  --site-accent-soft:   var(--site-hue-amber-soft);
-  --site-accent-wash:   var(--site-hue-amber-wash);
-  --site-accent-line:   var(--site-hue-amber-line);
-  --site-accent-2:      var(--site-hue-amber);
-  --site-accent-2-soft: var(--site-hue-amber-soft);
-  --site-accent-2-wash: var(--site-hue-amber-wash);
-  --site-accent-2-line: var(--site-hue-amber-line);
-}
-
-/* Code sample scope: dual silver-woven hues — teal for nu API tokens,
- * steel for keywords (matches old_home NuSection). */
-.hueCode {
-  --site-accent:        var(--site-hue-teal);
-  --site-accent-soft:   var(--site-hue-teal-soft);
-  --site-accent-wash:   var(--site-hue-teal-wash);
-  --site-accent-line:   var(--site-hue-teal-line);
-  --site-accent-2:      var(--site-hue-steel);
-  --site-accent-2-soft: var(--site-hue-steel-soft);
-  --site-accent-2-wash: var(--site-hue-steel-wash);
-  --site-accent-2-line: var(--site-hue-steel-line);
-}
-
-
 /* Interaction-model row: between ~700 and 1075 the SVG does not fit;
    drop the right cell and cap the left content at 65% width. */
 @media (min-width: 701px) and (max-width: 1075px) {
   .imRow { grid-template-columns: minmax(0, 1fr); }
   .imRight { display: none; }
   .imLeft > * { max-width: 65%; }
-}
-
-
-/* Mobile: 2x more padding on header (chapter) cells. */
-@media (max-width: 640px) {
-  .chapterCell > :not(.chapterPeek) {
-    padding-block: calc(4 * var(--site-kal-u)) 0;
-  }
-  .chapterPeek { display: none; }
 }
