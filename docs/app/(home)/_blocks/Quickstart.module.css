@@ -1,0 +1,36 @@
+/* Quickstart — two-column: framing left, terminal right. */
+
+.wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2.25rem;
+  align-items: start;
+}
+
+.left,
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .wrap { grid-template-columns: 1fr; gap: 1.5rem; }
+}
+
+/* Inline <code> — match IntroStory's inline code look. */
+.left code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.92em;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.05em 0.32em;
+  border-radius: 3px;
+}
+
+/* CodeSample scope — same amber+steel pairing used elsewhere for shell-ish
+ * blocks so the terminal reads as a distinct step from python beats above. */
+.codeScope {
+  --site-accent:   var(--site-hue-amber);
+  --site-accent-2: var(--site-hue-steel);
+}

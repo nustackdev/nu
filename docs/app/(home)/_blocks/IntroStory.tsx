@@ -55,11 +55,11 @@ export function IntroStory() {
                 reruns it when either input changes. Now the three lines
                 are three hundred: an ORM, a request handler, a template,
                 a websocket, a queue. Almost none of it is about{' '}
-                <code>a + b</code> anymore. It is about ferrying values
-                across substrates.
+                <code>a + b</code> anymore. It is all interaction between
+                substrates.
               </Description>
               <Description>
-                <strong>Nu makes the ferrying the primitive.</strong>
+                <strong>Nu makes interaction the primitive.</strong>
               </Description>
             </div>
             <div className={s.beatRight}>

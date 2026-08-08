@@ -36,6 +36,7 @@ import {
   SectionHead,
 } from '@/components/site/page';
 import { IntroStory } from './_blocks/IntroStory';
+import { Quickstart } from './_blocks/Quickstart';
 import s from './page.module.css';
 
 const USE_CASES = [
@@ -119,6 +120,9 @@ export default function Home() {
       <PageBody>
         {/* 2. Intro story — what / how / why, plus theory + impl closer */}
         <IntroStory />
+
+        {/* 3. Quickstart — mirrors README quickstart */}
+        <Quickstart />
 
         {/* 5. Fabrics */}
         <Chapter>
