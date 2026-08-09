@@ -27,7 +27,10 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-_TOKEN = os.environ.get("NU_POSTHOG_TOKEN", "")
+# PostHog Project API key -- public write-only token, safe to embed
+# (same one baked into the docs site's client bundle). Env var overrides
+# for local testing against a different PostHog project.
+_TOKEN = os.environ.get("NU_POSTHOG_TOKEN", "phc_yRpWfpoMeeRM8sKMPGPEsGy8ygNHJTpsGwrsikfpRfFz")
 _HOST = os.environ.get("NU_POSTHOG_HOST", "https://t.nustack.dev").rstrip("/")
 
 
