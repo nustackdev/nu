@@ -30,21 +30,30 @@ except PackageNotFoundError:
     __version__ = "0.0.0+dev"
 del _version, PackageNotFoundError
 
-# First-touch bootstrap. Hot path is a single ``exists()`` syscall -- if
-# ``~/.nu/config.json`` is there, we skip the config and telemetry modules
-# entirely, so nothing loads on every import. On the very first import
-# (or CLI invocation) we create the file with defaults and fire the
-# one-shot ``nu_first_run`` event. Silent on any failure.
+# First-touch bootstrap. Hot path is two ``exists()`` syscalls -- if the
+# config exists AND the first-run marker exists, we skip the config and
+# telemetry modules entirely. Otherwise: create config on first ever
+# import, and (re)fire ``nu_first_run`` on every import until the POST
+# gets a 2xx and drops the marker. That covers short-lived commands
+# (``nu --help``, ``python -c "import nu"``) where a daemon POST would
+# otherwise be killed on process exit. Silent on any failure.
 try:
-    from ._config import CONFIG_PATH as _CONFIG_PATH
+    from ._config import CONFIG_PATH as _CONFIG_PATH, HOME as _HOME
 
+    _first_run_marker = _HOME / "first_run.sent"
     if not _CONFIG_PATH.exists():
         from ._config.config import create_default as _create_default
         from ._config.telemetry import capture_first_run as _capture_first_run
 
         _capture_first_run(_create_default())
         del _create_default, _capture_first_run
-    del _CONFIG_PATH
+    elif not _first_run_marker.exists():
+        from ._config.config import distinct_id as _distinct_id
+        from ._config.telemetry import capture_first_run as _capture_first_run
+
+        _capture_first_run(_distinct_id())
+        del _distinct_id, _capture_first_run
+    del _CONFIG_PATH, _HOME, _first_run_marker
 except Exception:  # noqa: BLE001
     pass
 

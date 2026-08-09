@@ -45,28 +45,46 @@ def _base_properties() -> dict[str, Any]:
     }
 
 
-def _post(payload: dict[str, Any]) -> None:
+FIRST_RUN_MARKER = _config.HOME / "first_run.sent"
+
+
+def _post(payload: dict[str, Any], on_success: object = None) -> None:
+    from nu import __version__
+
     req = urllib.request.Request(  # noqa: S310
         f"{_HOST}/i/v0/e/",
         data=json.dumps(payload).encode(),
-        headers={"Content-Type": "application/json"},
+        # Explicit User-Agent: Cloudflare's default bot rules block
+        # ``Python-urllib/x.y`` with error 1010, dropping every POST.
+        headers={"Content-Type": "application/json", "User-Agent": f"nu-py/{__version__}"},
         method="POST",
     )
     try:
         with urllib.request.urlopen(req, timeout=3) as resp:  # noqa: S310
             resp.read()
-    except Exception:  # noqa: S110
-        pass
+            status = getattr(resp, "status", 200)
+    except Exception:
+        return
+    if 200 <= status < 300 and callable(on_success):
+        try:
+            on_success()
+        except Exception:  # noqa: S110
+            pass
 
 
-def _fire(event: str, distinct_id: str, properties: dict[str, Any] | None = None) -> None:
+def _fire(
+    event: str,
+    distinct_id: str,
+    properties: dict[str, Any] | None = None,
+    on_success: object = None,
+) -> None:
     payload = {
         "api_key": _TOKEN,
         "event": event,
         "distinct_id": distinct_id,
         "properties": {**_base_properties(), **(properties or {})},
     }
-    threading.Thread(target=_post, args=(payload,), daemon=True).start()
+    threading.Thread(target=_post, args=(payload, on_success), daemon=True).start()
 
 
 def capture(event: str, properties: dict[str, Any] | None = None) -> None:
@@ -79,12 +97,28 @@ def capture(event: str, properties: dict[str, Any] | None = None) -> None:
         pass
 
 
+def _mark_first_run_sent() -> None:
+    """Drop the empty marker file that stops future retries."""
+    try:
+        _config.HOME.mkdir(parents=True, exist_ok=True)
+        FIRST_RUN_MARKER.touch()
+    except Exception:  # noqa: S110
+        pass
+
+
 def capture_first_run(distinct_id: str) -> None:
-    """Fire ``nu_first_run`` without re-reading config -- caller just wrote it."""
+    """Fire ``nu_first_run``; retried on future imports until PostHog acks.
+
+    Daemon thread, so short-lived processes (``nu --help``,
+    ``python -c "import nu"``) may drop the POST. The bootstrap in
+    ``nu/__init__.py`` re-calls this on every import until the marker
+    file at :data:`FIRST_RUN_MARKER` exists -- written only after a
+    successful 2xx response.
+    """
     try:
         if not _TOKEN or _config.is_dev_install():
             return
-        _fire("nu_first_run", distinct_id)
+        _fire("nu_first_run", distinct_id, on_success=_mark_first_run_sent)
     except Exception:  # noqa: S110
         pass
 
