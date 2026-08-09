@@ -14,16 +14,11 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from .constants import CONFIG_DEFAULTS, CONFIG_PATH, HOME
+
 
 if TYPE_CHECKING:
     from typing import Any
-
-
-HOME = Path.home() / ".nu"
-CONFIG_PATH = HOME / "config.json"
-DEMOS_DIR = HOME / "demos"
-
-_DEFAULTS = {"telemetry": True}
 
 
 def load() -> dict[str, Any]:
@@ -49,7 +44,7 @@ def create_default() -> str:
     this always writes.
     """
     did = str(uuid.uuid4())
-    save({**_DEFAULTS, "distinct_id": did})
+    save({**CONFIG_DEFAULTS, "distinct_id": did})
     return did
 
 
@@ -60,7 +55,7 @@ def telemetry_enabled() -> bool:
 
 def set_telemetry(on: bool) -> None:
     """Flip the telemetry flag, preserving the rest of the config."""
-    cfg = load() or {**_DEFAULTS, "distinct_id": str(uuid.uuid4())}
+    cfg = load() or {**CONFIG_DEFAULTS, "distinct_id": str(uuid.uuid4())}
     cfg["telemetry"] = bool(on)
     save(cfg)
 

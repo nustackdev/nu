@@ -13,25 +13,40 @@ editable install (dev mode), or no PostHog token is configured. See
 from __future__ import annotations
 
 import json
-import os
 import platform
+import ssl
 import sys
 import threading
 import urllib.request
 from typing import TYPE_CHECKING
 
 from . import config as _config
+from .constants import (
+    FIRST_RUN_EVENT,
+    FIRST_RUN_MARKER_PATH,
+    HOME,
+    HTTP_TIMEOUT_SECONDS,
+    POSTHOG_CAPTURE_PATH,
+    POSTHOG_HOST,
+    POSTHOG_TOKEN,
+)
 
 
 if TYPE_CHECKING:
     from typing import Any
 
 
-# PostHog Project API key -- public write-only token, safe to embed
-# (same one baked into the docs site's client bundle). Env var overrides
-# for local testing against a different PostHog project.
-_TOKEN = os.environ.get("NU_POSTHOG_TOKEN", "phc_yRpWfpoMeeRM8sKMPGPEsGy8ygNHJTpsGwrsikfpRfFz")
-_HOST = os.environ.get("NU_POSTHOG_HOST", "https://t.nustack.dev").rstrip("/")
+def _ssl_context() -> ssl.SSLContext:
+    # python.org macOS installers ship without a system CA bundle, so
+    # the default context has zero trust roots and every HTTPS POST
+    # fails CERTIFICATE_VERIFY_FAILED. Prefer certifi's bundle when it
+    # is importable; fall back to the platform default otherwise.
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
 
 
 def _base_properties() -> dict[str, Any]:
@@ -45,14 +60,11 @@ def _base_properties() -> dict[str, Any]:
     }
 
 
-FIRST_RUN_MARKER = _config.HOME / "first_run.sent"
-
-
 def _post(payload: dict[str, Any], on_success: object = None) -> None:
     from nu import __version__
 
     req = urllib.request.Request(  # noqa: S310
-        f"{_HOST}/i/v0/e/",
+        f"{POSTHOG_HOST}{POSTHOG_CAPTURE_PATH}",
         data=json.dumps(payload).encode(),
         # Explicit User-Agent: Cloudflare's default bot rules block
         # ``Python-urllib/x.y`` with error 1010, dropping every POST.
@@ -60,7 +72,9 @@ def _post(payload: dict[str, Any], on_success: object = None) -> None:
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=3) as resp:  # noqa: S310
+        with urllib.request.urlopen(  # noqa: S310
+            req, timeout=HTTP_TIMEOUT_SECONDS, context=_ssl_context()
+        ) as resp:
             resp.read()
             status = getattr(resp, "status", 200)
     except Exception:
@@ -79,7 +93,7 @@ def _fire(
     on_success: object = None,
 ) -> None:
     payload = {
-        "api_key": _TOKEN,
+        "api_key": POSTHOG_TOKEN,
         "event": event,
         "distinct_id": distinct_id,
         "properties": {**_base_properties(), **(properties or {})},
@@ -90,7 +104,7 @@ def _fire(
 def capture(event: str, properties: dict[str, Any] | None = None) -> None:
     """Queue a PostHog event. Loads config to check opt-out. Never raises."""
     try:
-        if not _TOKEN or _config.is_dev_install() or not _config.telemetry_enabled():
+        if not POSTHOG_TOKEN or _config.is_dev_install() or not _config.telemetry_enabled():
             return
         _fire(event, _config.distinct_id(), properties)
     except Exception:  # noqa: S110
@@ -100,36 +114,36 @@ def capture(event: str, properties: dict[str, Any] | None = None) -> None:
 def _mark_first_run_sent() -> None:
     """Drop the empty marker file that stops future retries."""
     try:
-        _config.HOME.mkdir(parents=True, exist_ok=True)
-        FIRST_RUN_MARKER.touch()
+        HOME.mkdir(parents=True, exist_ok=True)
+        FIRST_RUN_MARKER_PATH.touch()
     except Exception:  # noqa: S110
         pass
 
 
 def capture_first_run(distinct_id: str) -> None:
-    """Fire ``nu_first_run``; retried on future imports until PostHog acks.
+    """Fire the first-run event; retried on future imports until PostHog acks.
 
     Daemon thread, so short-lived processes (``nu --help``,
     ``python -c "import nu"``) may drop the POST. The bootstrap in
-    ``nu/__init__.py`` re-calls this on every import until the marker
-    file at :data:`FIRST_RUN_MARKER` exists -- written only after a
-    successful 2xx response.
+    :mod:`nu._config` re-calls this on every import until the marker
+    file at :data:`FIRST_RUN_MARKER_PATH` exists -- written only after
+    a successful 2xx response.
     """
     try:
-        if not _TOKEN or _config.is_dev_install():
+        if not POSTHOG_TOKEN or _config.is_dev_install():
             return
-        _fire("nu_first_run", distinct_id, on_success=_mark_first_run_sent)
+        _fire(FIRST_RUN_EVENT, distinct_id, on_success=_mark_first_run_sent)
     except Exception:  # noqa: S110
         pass
 
 
 def config_for_browser() -> dict[str, Any]:
     """Payload for the nudle ``/api/telemetry-config`` endpoint."""
-    enabled = bool(_TOKEN) and _config.telemetry_enabled() and not _config.is_dev_install()
+    enabled = bool(POSTHOG_TOKEN) and _config.telemetry_enabled() and not _config.is_dev_install()
     return {
         "enabled": enabled,
         "distinct_id": _config.distinct_id(),
-        "posthog_token": _TOKEN if enabled else "",
-        "posthog_host": _HOST,
+        "posthog_token": POSTHOG_TOKEN if enabled else "",
+        "posthog_host": POSTHOG_HOST,
         **_base_properties(),
     }
