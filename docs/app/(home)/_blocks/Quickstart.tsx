@@ -29,7 +29,7 @@ export function Quickstart() {
               wheel &mdash; RocksDB, the UI server, the CLI.
             </Description>
             <Description>
-              <code>nu demo list</code> shows all bundled demos.
+              <code>nu demo</code> shows all bundled demos.
             </Description>
             <CtaRow>
               <SiteButton href="/docs" variant="hueTinted">

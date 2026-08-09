@@ -148,12 +148,12 @@ pip install "nustack-py[all]"
 **2. Run the bundled demo:**
 
 ```bash
-nu demo run counter
+nu demo counter
 ```
 
 **3. Open the browser tab** that pops up — the counter ticks once a second, the dashboard mirrors it live. Kill it, run again, it picks up where it left off.
 
-More demos: `nu demo list`. Full walkthrough at [nustack.dev/docs](https://nustack.dev/docs). Source in [`examples/`](examples/). For lean installs and source builds see [nustack.dev/docs/how-to/install](https://nustack.dev/docs/how-to/install).
+More demos: `nu demo`. Full walkthrough at [nustack.dev/docs](https://nustack.dev/docs). Source in [`examples/`](examples/). For lean installs and source builds see [nustack.dev/docs/how-to/install](https://nustack.dev/docs/how-to/install).
 
 # 🧵 Fabrics
 

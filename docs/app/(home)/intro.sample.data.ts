@@ -6,7 +6,7 @@ export const QUICKSTART_TERMINAL_LINES: CodeTok[][] = [
   [{ t: 'pip install ' }, { c: 'str', t: '"nustack-py[all]"' }],
   [],
   [{ c: 'cmt', t: '# 2. run the bundled demo' }],
-  [{ t: 'nu demo run counter' }],
+  [{ t: 'nu demo counter' }],
   [],
   [{ c: 'cmt', t: '# 3. open the browser tab that pops up' }],
 ];

@@ -1,4 +1,4 @@
-"""`nu demo` — list and run bundled demos."""
+"""`nu demo` — list bundled demos, or run one by name."""
 
 from __future__ import annotations
 
@@ -26,18 +26,7 @@ def _description(path: Path) -> str:
     return doc.strip().splitlines()[0] if doc else ""
 
 
-@click.group(invoke_without_command=True, help="List or run a bundled demo.")
-@click.pass_context
-def demo(ctx: click.Context) -> None:
-    """List or run a bundled demo."""
-    if ctx.invoked_subcommand is None:
-        ctx.invoke(list_)
-
-
-@demo.command("list", help="List available demos with a one-line description.")
-def list_() -> None:
-    """List available demos with a one-line description."""
-    found = demos()
+def _list(found: dict[str, Path]) -> None:
     if not found:
         click.echo("no demos found")
         sys.exit(1)
@@ -45,14 +34,17 @@ def list_() -> None:
     click.echo("demos:")
     for name, path in found.items():
         click.echo(f"  {click.style(name.ljust(width), bold=True)}  {_description(path)}")
-    click.echo("\nrun with: nu demo run <name>")
+    click.echo("\nrun with: nu demo <name>")
 
 
-@demo.command("run", help="Run a demo by name.")
-@click.argument("name")
-def run(name: str) -> None:
-    """Run a demo by name."""
+@click.command(help="List bundled demos, or run one by name (nu demo <name>).")
+@click.argument("name", required=False)
+def demo(name: str | None) -> None:
+    """No arg -> list; name -> run that demo."""
     found = demos()
+    if name is None:
+        _list(found)
+        return
     if name not in found:
         click.echo(f"unknown demo: {name}", err=True)
         click.echo(f"available: {', '.join(found) or '(none)'}", err=True)
