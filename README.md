@@ -40,7 +40,7 @@
 
 <h3 align="center">
   <a href="#ℹ️-about"><b>About</b></a> &bull;
-  <a href="#-quick-start"><b>Quick Start</b></a> &bull;
+  <a href="#-quickstart"><b>Quickstart</b></a> &bull;
   <a href="#-fabrics"><b>Fabrics</b></a> &bull;
   <a href="#-apps-built-on-nu"><b>Apps</b></a> &bull;
   <a href="#-spec"><b>Spec</b></a> &bull;
@@ -135,25 +135,56 @@ Persistence, reactivity, atomicity, observability, distribution — not features
 
 Full walkthrough at [nustack.dev](https://nustack.dev).
 
-# 🏁 Quick Start
+# 🏁 Quickstart
 
-Three steps to a live counter on a browser dashboard, persisted across restarts.
+Three steps: install, pick a demo, keep going.
 
-**1. Install** (Python 3.10+):
+### 01 · Install
+
+Python 3.10+ &middot; everything ships in the wheel.
 
 ```bash
 pip install "nustack-py[all]"
 ```
 
-**2. Run the bundled demo:**
+### 02 · Pick a demo
+
+Each one boots a live browser dashboard and picks up where it left off on restart. `nu demo` lists them all.
+
+#### counter
+
+<img width="1200" alt="counter demo" src="docs/public/demos/counter.png" />
+
+A live counter, persistent across restarts.
 
 ```bash
 nu demo counter
 ```
 
-**3. Open the browser tab** that pops up — the counter ticks once a second, the dashboard mirrors it live. Kill it, run again, it picks up where it left off.
+#### sampled
 
-More demos: `nu demo`. Full walkthrough at [nustack.dev/docs](https://nustack.dev/docs). Source in [`examples/`](examples/). For lean installs and source builds see [nustack.dev/docs/how-to/install](https://nustack.dev/docs/how-to/install).
+<img width="1200" alt="sampled demo" src="docs/public/demos/sampled.png" />
+
+An infinite series, live-sampled into a fixed-size chart.
+
+```bash
+nu demo sampled
+```
+
+#### movies
+
+<img width="1200" alt="movies demo" src="docs/public/demos/movies.png" />
+
+A movie tracker: form, filterable table, detail pages.
+
+```bash
+nu demo movies
+```
+
+### 03 · Keep going
+
+- **[Read the docs](https://nustack.dev/docs)** — tutorials, how-tos, and the fabric reference.
+- **[Browse examples](https://github.com/nustackdev/nu/tree/main/examples)** — full source for every demo, plus more programs to steal from.
 
 # 🧵 Fabrics
 
