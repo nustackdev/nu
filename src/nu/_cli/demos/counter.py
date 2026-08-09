@@ -33,7 +33,7 @@ class Dashboard(nu.ui.Page):
     """Live counter page with description and source."""
 
     heading = nu.ui.HeadingRef.slot(label="Persistent counter, live")
-    count = nu.ui.TextRef.slot()
+    count = nu.ui.StatRef.slot(label="Count")
     about_heading = nu.ui.HeadingRef.slot(label="How it works")
     about = nu.ui.MarkdownRef.slot(
         value=(
@@ -71,7 +71,7 @@ app = nu.With(
         nu.kv.auto_flow_atomic(
             nu.ReactForever(
                 Counter.value.on_change(),
-                Dashboard.count.set(Counter.value),
+                Dashboard.count.set_value(nu.str(Counter.value)),
             ),
         ),
     ),

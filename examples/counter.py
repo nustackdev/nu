@@ -8,7 +8,7 @@ class Counter(nu.Shape):
 
 
 class Dashboard(nu.ui.Page):
-    count = nu.ui.TextRef.slot()
+    count = nu.ui.StatRef.slot(label="Count")
 
 
 class App(nu.ui.Index):
@@ -18,7 +18,7 @@ class App(nu.ui.Index):
 # reactive wire: whenever `value` changes, mirror it into `count`
 ui = nu.ReactForever(
     Counter.value.on_change(),
-    Dashboard.count.set(Counter.value),
+    Dashboard.count.set_value(nu.str(Counter.value)),
 )
 
 # updater: tick `value` up once a second, forever
