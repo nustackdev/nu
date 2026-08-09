@@ -19,12 +19,17 @@ import asyncio
 import webbrowser
 from typing import TYPE_CHECKING
 
-import click
 import uvicorn
+from rich.console import Console
+from rich.text import Text
 
+from nu._branding import BLUE, PURPLE, render_header
 from nu.context.fabric import Provide
 
 from .serve import build_fastapi_app
+
+
+_console = Console()
 
 
 if TYPE_CHECKING:
@@ -151,21 +156,19 @@ class NudleServer:
         return f"http://{host}:{self._port}"
 
     def _print_ready(self) -> None:
-        dot = click.style("●", fg="green", bold=True)
-        title = click.style("Nu UI server running", bold=True)
-        arrow = click.style("→", fg="green")
-        url = click.style(self._url(), fg="cyan", underline=True)
-        hint = click.style("Ctrl+C to stop", dim=True)
-        click.echo(f"{dot} {title}")
-        click.echo(f"{arrow} visit {url}")
-        click.echo(hint)
-        click.echo()
+        render_header(_console)
+        _console.print(
+            Text.assemble(
+                ("● ", f"bold {PURPLE}"),
+                ("Nu UI server running at ", "bold"),
+                (self._url(), f"{BLUE} underline"),
+            ),
+        )
+        _console.print("[dim]Ctrl+C to stop[/dim]")
 
     def _print_stopped(self) -> None:
-        dot = click.style("●", fg="yellow", bold=True)
-        msg = click.style("Nu UI server stopped", bold=True)
-        click.echo()
-        click.echo(f"{dot} {msg}")
+        _console.print()
+        _console.print(Text("Nu UI server stopped", style="bold"))
 
     def __repr__(self) -> str:
         return f"NudleServer(host={self._host!r}, port={self._port!r})"
