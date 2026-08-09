@@ -16,8 +16,10 @@ a ``Provide(NudleServer, {...})`` for you.
 from __future__ import annotations
 
 import asyncio
+import webbrowser
 from typing import TYPE_CHECKING
 
+import click
 import uvicorn
 
 from nu.context.fabric import Provide
@@ -44,8 +46,11 @@ class NudleServer:
         app: the nudle Nu program (Index + Refs + reactive flow).
         host: uvicorn bind host.
         port: uvicorn bind port.
-        log_level: uvicorn log level. ``"warning"`` is a good default for
-            examples / tests; ``"info"`` matches ``serve.serve``.
+        log_level: uvicorn log level. Defaults to ``"warning"`` -- we print
+            our own ready/stopped banner, so uvicorn's info chatter and
+            per-request access log are silenced by default.
+        open_browser: open the bound URL in the default browser once the
+            server signals ready.
         ready_timeout: how long ``asetup`` waits for uvicorn to signal
             ``started`` before giving up.
         shutdown_timeout: how long ``acleanup`` waits for graceful exit
@@ -67,7 +72,8 @@ class NudleServer:
         *,
         host: str = "127.0.0.1",
         port: int = 8080,
-        log_level: str = "info",
+        log_level: str = "warning",
+        open_browser: bool = True,
         ready_timeout: float = 10.0,
         shutdown_timeout: float = 5.0,
     ) -> None:
@@ -75,6 +81,7 @@ class NudleServer:
         self._host = host
         self._port = port
         self._log_level = log_level
+        self._open_browser = open_browser
         self._ready_timeout = ready_timeout
         self._shutdown_timeout = shutdown_timeout
         self._server: uvicorn.Server | None = None
@@ -92,6 +99,7 @@ class NudleServer:
             host=self._host,
             port=self._port,
             log_level=self._log_level,
+            access_log=False,
         )
         server = uvicorn.Server(config)
         task = asyncio.create_task(server.serve())
@@ -114,6 +122,9 @@ class NudleServer:
                 raise exc
         self._server = server
         self._task = task
+        self._print_ready()
+        if self._open_browser:
+            webbrowser.open(self._url())
 
     async def acleanup(self) -> None:
         """Signal ``should_exit``, await graceful stop, fall back to cancel."""
@@ -133,6 +144,28 @@ class NudleServer:
                     pass
         self._server = None
         self._task = None
+        self._print_stopped()
+
+    def _url(self) -> str:
+        host = "localhost" if self._host in ("0.0.0.0", "127.0.0.1") else self._host  # noqa: S104
+        return f"http://{host}:{self._port}"
+
+    def _print_ready(self) -> None:
+        dot = click.style("●", fg="green", bold=True)
+        title = click.style("Nu UI server running", bold=True)
+        arrow = click.style("→", fg="green")
+        url = click.style(self._url(), fg="cyan", underline=True)
+        hint = click.style("Ctrl+C to stop", dim=True)
+        click.echo(f"{dot} {title}")
+        click.echo(f"{arrow} visit {url}")
+        click.echo(hint)
+        click.echo()
+
+    def _print_stopped(self) -> None:
+        dot = click.style("●", fg="yellow", bold=True)
+        msg = click.style("Nu UI server stopped", bold=True)
+        click.echo()
+        click.echo(f"{dot} {msg}")
 
     def __repr__(self) -> str:
         return f"NudleServer(host={self._host!r}, port={self._port!r})"
@@ -143,7 +176,8 @@ def server(
     *,
     host: str = "127.0.0.1",
     port: int = 8080,
-    log_level: str = "info",
+    log_level: str = "warning",
+    open_browser: bool = True,
     ready_timeout: float = 10.0,
     shutdown_timeout: float = 5.0,
 ) -> Provide:
@@ -153,7 +187,9 @@ def server(
         app: the nudle Nu program (Index + Refs + reactive flow).
         host: uvicorn bind host.
         port: uvicorn bind port.
-        log_level: uvicorn log level.
+        log_level: uvicorn log level. Default silences uvicorn's info chatter
+            so only nudle's own ready/stopped banner is printed.
+        open_browser: open the bound URL in the default browser once ready.
         ready_timeout: how long ``asetup`` waits for uvicorn to signal
             ``started`` before giving up.
         shutdown_timeout: how long ``acleanup`` waits for graceful exit
@@ -173,6 +209,7 @@ def server(
             "host": host,
             "port": port,
             "log_level": log_level,
+            "open_browser": open_browser,
             "ready_timeout": ready_timeout,
             "shutdown_timeout": shutdown_timeout,
         },
