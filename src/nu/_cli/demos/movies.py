@@ -1,4 +1,4 @@
-"""Movies: personal movie tracker — form, filterable table, detail pages, all persisted."""
+"""Movies: personal tracker. Form, filterable table, detail pages, all persisted."""
 
 from pathlib import Path
 
@@ -131,19 +131,68 @@ class TableCard(nu.ui.Card):
     body = TableBody.slot(gap=3)
 
 
+class Links(nu.ui.Row):
+    docs = nu.ui.LinkRef.slot(
+        label="Read the docs", href="https://nustack.dev/docs", target="_blank"
+    )
+    github = nu.ui.LinkRef.slot(
+        label="Star on GitHub", href="https://github.com/nustackdev/nu", target="_blank"
+    )
+    examples = nu.ui.LinkRef.slot(
+        label="Browse more demos",
+        href="https://github.com/nustackdev/nu/tree/main/examples",
+        target="_blank",
+    )
+
+
 # ---- Pages ------------------------------------------------------------------
+
+
+class TopBar(nu.ui.Row):
+    about = nu.ui.ButtonRef.slot(label="About this demo", variant="ghost")
 
 
 class Movies(nu.ui.Page):
     heading = nu.ui.HeadingRef.slot(label="Your movies")
     intro = nu.ui.TextRef.slot(
-        value="Log what you watch. New entries land at the top of the table.",
+        value="Log what you watch. Filter the shelf, click a row for details.",
     )
+    topbar = TopBar.slot(gap=3, align="center")
 
     stats = StatsCard.slot(title="Your shelf")
     form = AddMovieForm.slot(title="Log a movie", gap=4, padding=4)
     filters = FilterCard.slot(title="Filter")
     shelf = TableCard.slot(title="Movies")
+
+
+class AboutActions(nu.ui.Row):
+    back = nu.ui.ButtonRef.slot(label="Back to app", variant="ghost")
+
+
+class About(nu.ui.Page):
+    heading = nu.ui.HeadingRef.slot(label="How it works")
+    about = nu.ui.MarkdownRef.slot(
+        value=(
+            "- Real app: form, filterable table, stats row, per-item detail page.\n"
+            "- Every row lives in rocksdb. Restart, everything is still there.\n"
+            "- Same Ref system used for storage, form inputs, table, and navigation.\n"
+            "- Same Interactions handle add, delete, filter, and page routing.\n"
+        ),
+    )
+    links_heading = nu.ui.HeadingRef.slot(label="Try Nu yourself")
+    links_intro = nu.ui.TextRef.slot(
+        value="Full apps, forms, routing, no glue. See how far the primitive goes.",
+    )
+    links = Links.slot(gap=4, align="center", wrap=True)
+    source_heading = nu.ui.HeadingRef.slot(label="Source")
+    source_intro = nu.ui.TextRef.slot(
+        value="The whole app, one file. Storage, UI, and the wires between them.",
+    )
+    source = nu.ui.CodeBlockRef.slot(
+        code=Path(__file__).read_text(),
+        language="python",
+    )
+    actions = AboutActions.slot(gap=3, align="center")
 
 
 class DetailRow(nu.ui.Row):
@@ -176,7 +225,7 @@ class MovieDetail(nu.ui.Page):
 class App(nu.ui.Index):
     title: nu.ui.TitleRef
     nav: nu.ui.NavRef
-    pages = nu.ui.Pages({"/": Movies, "/detail": MovieDetail})
+    pages = nu.ui.Pages({"/": Movies, "/detail": MovieDetail, "/about": About})
 
 
 # ---- State ------------------------------------------------------------------
@@ -369,6 +418,12 @@ on_delete = nu.ReactForever(
 on_back = nu.ReactForever(MovieDetail.actions.back.clicked(), App.nav.set("/"))
 
 
+on_about_open = nu.ReactForever(Movies.topbar.about.clicked(), App.nav.set("/about"))
+
+
+on_about_back = nu.ReactForever(About.actions.back.clicked(), App.nav.set("/"))
+
+
 on_filter_apply = nu.ReactForever(
     FilterRow.apply.clicked(),
     nu.kv.Snapshot(Movies.shelf.body.table.set(_rows_filtered())),
@@ -389,7 +444,16 @@ on_filter_clear = nu.ReactForever(
 ui = (
     App.title.set("Movies")
     >> hydrate
-    >> (on_add | on_row_click | on_delete | on_back | on_filter_apply | on_filter_clear)
+    >> (
+        on_add
+        | on_row_click
+        | on_delete
+        | on_back
+        | on_filter_apply
+        | on_filter_clear
+        | on_about_open
+        | on_about_back
+    )
 )
 
 

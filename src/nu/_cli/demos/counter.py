@@ -9,29 +9,50 @@ _DB = Path.home() / ".nu" / "demos" / "counter"
 _DB.parent.mkdir(parents=True, exist_ok=True)
 
 
-_ABOUT = """\
-- A single `IntRef` (`Counter.value`) lives in **rocksdb** at `~/.nu/demos/counter`.
-- The body loop increments it every second (`Counter.value.inc() >> Delay(1.0)`).
-- A `ReactForever` subscribes to changes on that value and pushes them into
-  the dashboard's text ref — the browser updates without polling.
-- State is persistent: stop and restart the demo, the counter picks up where it left off.
-"""
-
-
 class Counter(nu.Shape):
     """Persistent counter state."""
 
     value: nu.kv.IntRef
 
 
+class Links(nu.ui.Row):
+    docs = nu.ui.LinkRef.slot(
+        label="Read the docs", href="https://nustack.dev/docs", target="_blank"
+    )
+    github = nu.ui.LinkRef.slot(
+        label="Star on GitHub", href="https://github.com/nustackdev/nu", target="_blank"
+    )
+    examples = nu.ui.LinkRef.slot(
+        label="Browse more demos",
+        href="https://github.com/nustackdev/nu/tree/main/examples",
+        target="_blank",
+    )
+
+
 class Dashboard(nu.ui.Page):
     """Live counter page with description and source."""
 
-    heading = nu.ui.HeadingRef.slot(label="Rocksdb-backed counter, ticking live")
+    heading = nu.ui.HeadingRef.slot(label="Persistent counter, live")
     count = nu.ui.TextRef.slot()
-    about_heading = nu.ui.HeadingRef.slot(label="What's happening")
-    about = nu.ui.MarkdownRef.slot(value=_ABOUT)
+    about_heading = nu.ui.HeadingRef.slot(label="How it works")
+    about = nu.ui.MarkdownRef.slot(
+        value=(
+            "- Stores counter value in rocksdb.\n"
+            "- App increments the counter once a second.\n"
+            "- `ReactForever` pushes every change to the browser.\n"
+            "- Same Ref system used for rocksdb and UI.\n"
+            "- Same Interactions used to orchestrate storage and UI update.\n"
+        ),
+    )
+    links_heading = nu.ui.HeadingRef.slot(label="Try Nu yourself")
+    links_intro = nu.ui.TextRef.slot(
+        value="Persistent state, live browser, no glue. See how far the primitive goes.",
+    )
+    links = Links.slot(gap=4, align="center", wrap=True)
     source_heading = nu.ui.HeadingRef.slot(label="Source")
+    source_intro = nu.ui.TextRef.slot(
+        value="The whole app, one file. Storage, UI, and the wires between them.",
+    )
     source = nu.ui.CodeBlockRef.slot(
         code=Path(__file__).read_text(),
         language="python",

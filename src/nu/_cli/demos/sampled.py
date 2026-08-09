@@ -9,16 +9,6 @@ _DB = Path.home() / ".nu" / "demos" / "sampled"
 _DB.parent.mkdir(parents=True, exist_ok=True)
 
 
-_ABOUT = """\
-- `nums` is a **kh57-backed** series growing at 50 Hz — a new integer every 20 ms.
-- `cursor` tracks the write position; each tick writes `nums[cursor] = cursor` and increments it.
-- The chart repaints from a **200-point reservoir sample** of `nums` — the cost is the same
-  whether the series holds 1k or 1B rows.
-- `ReactForever` fires the resample on every change.
-- Persistent: stop and restart, `cursor` and `nums` carry over from `~/.nu/demos/sampled`.
-"""
-
-
 class State(nu.Shape):
     """Persistent series and write cursor."""
 
@@ -26,14 +16,44 @@ class State(nu.Shape):
     cursor = nu.kv.IntRef.slot()
 
 
+class Links(nu.ui.Row):
+    docs = nu.ui.LinkRef.slot(
+        label="Read the docs", href="https://nustack.dev/docs", target="_blank"
+    )
+    github = nu.ui.LinkRef.slot(
+        label="Star on GitHub", href="https://github.com/nustackdev/nu", target="_blank"
+    )
+    examples = nu.ui.LinkRef.slot(
+        label="Browse more demos",
+        href="https://github.com/nustackdev/nu/tree/main/examples",
+        target="_blank",
+    )
+
+
 class Dashboard(nu.ui.Page):
     """Live chart page with description and source."""
 
-    heading = nu.ui.HeadingRef.slot(label="Infinite series, live-sampled")
+    heading = nu.ui.HeadingRef.slot(label="Unbounded series, instant chart")
     chart = nu.ui.LineChart.slot()
-    about_heading = nu.ui.HeadingRef.slot(label="What's happening")
-    about = nu.ui.MarkdownRef.slot(value=_ABOUT)
+    about_heading = nu.ui.HeadingRef.slot(label="How it works")
+    about = nu.ui.MarkdownRef.slot(
+        value=(
+            "- Writes 50 numbers a second into a **kh57-backed** series. Grows without limit.\n"
+            "- Chart repaints from a 200-point reservoir sample. Same cost at 1k rows or 1B.\n"
+            "- `ReactForever` triggers the resample on every write.\n"
+            "- Same Ref system used for storage, sampling, and chart.\n"
+            "- Same Interactions used to orchestrate the feed and the redraw.\n"
+        ),
+    )
+    links_heading = nu.ui.HeadingRef.slot(label="Try Nu yourself")
+    links_intro = nu.ui.TextRef.slot(
+        value="Billion-row backends, live UIs, no glue. See how far the primitive goes.",
+    )
+    links = Links.slot(gap=4, align="center", wrap=True)
     source_heading = nu.ui.HeadingRef.slot(label="Source")
+    source_intro = nu.ui.TextRef.slot(
+        value="The whole app, one file. Storage, UI, and the wires between them.",
+    )
     source = nu.ui.CodeBlockRef.slot(
         code=Path(__file__).read_text(),
         language="python",
