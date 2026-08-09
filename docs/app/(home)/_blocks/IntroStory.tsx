@@ -215,7 +215,7 @@ export function IntroStory() {
       {/* Closer — theory + implementation */}
       <Section split="1/1">
         <SectionCell>
-          <Stack gap="normal">
+          <Stack gap="normal" pushLast>
             <div className={s.closerCardTitle}>
               <Heading level={2}>interaction-model</Heading>
               <MonoKicker as="span" size="xs" tracking="wide">
@@ -237,7 +237,7 @@ export function IntroStory() {
           </Stack>
         </SectionCell>
         <SectionCell>
-          <Stack gap="normal">
+          <Stack gap="normal" pushLast>
             <div className={s.closerCardTitle}>
               <Heading level={2}>nu</Heading>
               <MonoKicker as="span" size="xs" tracking="wide">

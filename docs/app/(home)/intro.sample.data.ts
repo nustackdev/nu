@@ -1,16 +1,5 @@
 import type { CodeTok } from '@/components/site/CodeSample';
 
-/** Quickstart — install, run the bundled counter demo, open the browser. */
-export const QUICKSTART_TERMINAL_LINES: CodeTok[][] = [
-  [{ c: 'cmt', t: '# 1. install' }],
-  [{ t: 'pip install ' }, { c: 'str', t: '"nustack-py[all]"' }],
-  [],
-  [{ c: 'cmt', t: '# 2. run the bundled demo' }],
-  [{ t: 'nu demo counter' }],
-  [],
-  [{ c: 'cmt', t: '# 3. open the browser tab that pops up' }],
-];
-
 /** Beat 1 — the joyful three-liner. Plain Python, no Nu. */
 export const INTRO_PLAIN_LINES: CodeTok[][] = [
   [{ t: 'a = ' }, { c: 'str', t: '2' }],

@@ -10,6 +10,8 @@ import { MonoKicker } from '@/components/site/MonoKicker';
 import { Meta } from '@/components/site/Meta';
 import { NumberedList } from '@/components/site/NumberedList';
 import { Heading, Tagline, Description, Label } from '@/components/site/text';
+import { CommandLine } from '@/components/site/CommandLine';
+import { LinkCard } from '@/components/site/LinkCard';
 import { Stack } from '@/components/site/layout/Stack';
 import { CtaRow } from '@/components/site/layout/CtaRow';
 import {
@@ -36,7 +38,6 @@ import {
   SectionHead,
 } from '@/components/site/page';
 import { IntroStory } from './_blocks/IntroStory';
-import { Quickstart } from './_blocks/Quickstart';
 import s from './page.module.css';
 
 const USE_CASES = [
@@ -121,8 +122,82 @@ export default function Home() {
         {/* 2. Intro story — what / how / why, plus theory + impl closer */}
         <IntroStory />
 
-        {/* 3. Quickstart — mirrors README quickstart */}
-        <Quickstart />
+        {/* 3. Quickstart — three steps: install, run a demo, learn */}
+        <Chapter>
+        <SectionHead
+          title="Quickstart."
+          lede={<>Three steps: install, pick a demo, keep going.</>}
+        />
+
+        {/* Step 1 — install */}
+        <Section>
+          <Stack gap="normal">
+            <MonoKicker as="p" size="xs" tracking="wider" className={s.stepLabel}>
+              <strong>01</strong> Install
+            </MonoKicker>
+            <MonoKicker as="p" size="xs" tracking="wide">
+              Python 3.10+ &middot; everything ships in the wheel
+            </MonoKicker>
+            <CommandLine command='pip install "nustack-py[all]"' />
+          </Stack>
+        </Section>
+
+        {/* Step 2 — pick a demo */}
+        <Section>
+          <Stack gap="normal">
+            <MonoKicker as="p" size="xs" tracking="wider" className={s.stepLabel}>
+              <strong>02</strong> Pick a demo
+            </MonoKicker>
+            <div className={s.demoGrid}>
+              <div className={s.demoCard} data-hue="teal">
+                <VizFrame hue="teal">
+                  <img className={s.demoCover} src="/demos/counter.png" alt="counter demo" />
+                </VizFrame>
+                <SilverWovenName as="h3" hue="teal" className={s.demoName}>counter</SilverWovenName>
+                <Description>A live counter, persistent across restarts.</Description>
+                <CommandLine command="nu demo counter" />
+              </div>
+              <div className={s.demoCard} data-hue="sage">
+                <VizFrame hue="sage">
+                  <img className={s.demoCover} src="/demos/sampled.png" alt="sampled demo" />
+                </VizFrame>
+                <SilverWovenName as="h3" hue="sage" className={s.demoName}>sampled</SilverWovenName>
+                <Description>An infinite series, live-sampled into a fixed-size chart.</Description>
+                <CommandLine command="nu demo sampled" />
+              </div>
+              <div className={s.demoCard} data-hue="plum">
+                <VizFrame hue="plum">
+                  <img className={s.demoCover} src="/demos/movies.png" alt="movies demo" />
+                </VizFrame>
+                <SilverWovenName as="h3" hue="plum" className={s.demoName}>movies</SilverWovenName>
+                <Description>A movie tracker: form, filterable table, detail pages.</Description>
+                <CommandLine command="nu demo movies" />
+              </div>
+            </div>
+          </Stack>
+        </Section>
+
+        {/* Step 3 — learn */}
+        <Section>
+          <Stack gap="normal">
+            <MonoKicker as="p" size="xs" tracking="wider" className={s.stepLabel}>
+              <strong>03</strong> Keep going
+            </MonoKicker>
+            <div className={s.learnGrid}>
+              <LinkCard href="/docs" icon={<BookOpen size={14} />} title="Read the docs">
+                Tutorials, how-tos, and the fabric reference.
+              </LinkCard>
+              <LinkCard
+                href="https://github.com/nustackdev/nu/tree/main/examples"
+                icon={<GithubMark size={14} />}
+                title="Browse examples"
+              >
+                Full source for every demo, plus more programs to steal from.
+              </LinkCard>
+            </div>
+          </Stack>
+        </Section>
+        </Chapter>
 
         {/* 5. Fabrics */}
         <Chapter>
@@ -321,7 +396,7 @@ export default function Home() {
 
         <Section split="1/1">
           <SectionCell>
-            <Stack gap="normal">
+            <Stack gap="normal" pushLast>
               <Stack gap="tight">
                 <Heading level={2}>virtuals</Heading>
                 <Tagline>
@@ -342,7 +417,7 @@ export default function Home() {
             </Stack>
           </SectionCell>
           <SectionCell>
-            <Stack gap="normal">
+            <Stack gap="normal" pushLast>
               <Stack gap="tight">
                 <Heading level={2}>invisibles</Heading>
                 <Tagline>Transparent remote objects for Python.</Tagline>
@@ -363,7 +438,7 @@ export default function Home() {
 
         <Section split="1/1">
           <SectionCell>
-            <Stack gap="normal">
+            <Stack gap="normal" pushLast>
               <Stack gap="tight">
                 <Heading level={2}>rdbpy</Heading>
                 <Tagline>RocksDB for Python, with transactions.</Tagline>
@@ -382,7 +457,7 @@ export default function Home() {
             </Stack>
           </SectionCell>
           <SectionCell>
-            <Stack gap="normal">
+            <Stack gap="normal" pushLast>
               <Stack gap="tight">
                 <Heading level={2}>kh57</Heading>
                 <Tagline>Deterministic range reservoir sampling.</Tagline>

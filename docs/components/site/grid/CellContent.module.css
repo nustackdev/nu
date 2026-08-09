@@ -1,3 +1,18 @@
+/* CellContent — the padded box that lives inside a Cell.
+ *
+ * Every variant is a flex column that fills its parent Cell's height.
+ * Cell is itself a flex column grid-item, so it stretches to the tallest
+ * cell in its row; propagating that height down here lets Stack children
+ * with `pushLast` pin their last item to the card floor.
+ * For single-cell rows there's no imposed height, so `flex: 1` is a no-op
+ * — nothing visually changes. */
+.none, .sm, .md, .lg {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
 .none { padding: 0; }
 .sm { padding: calc(0.5 * var(--site-kal-u)) calc(0.75 * var(--site-kal-u)); }
 .md { padding: calc(0.85 * var(--site-kal-u)) calc(1.1 * var(--site-kal-u)); }

@@ -162,3 +162,76 @@
     gap: var(--site-gap-normal);
   }
 }
+
+/* One demo cell: cover on top, silver-woven name, one-line description, command.
+ * `data-hue` scopes --site-accent so CommandLine's prompt picks up the hue.
+ * Cards stretch to the tallest cell in the row (grid default), and the last
+ * child (the command) is pushed to the bottom so copy buttons align across
+ * cards no matter how long each description runs. */
+.demoCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--site-gap-normal);
+  min-width: 0;
+  height: 100%;
+}
+.demoCard > :last-child {
+  margin-top: auto;
+}
+
+.demoCard[data-hue="steel"] { --site-accent: var(--site-hue-steel); }
+.demoCard[data-hue="sage"]  { --site-accent: var(--site-hue-sage); }
+.demoCard[data-hue="teal"]  { --site-accent: var(--site-hue-teal); }
+.demoCard[data-hue="plum"]  { --site-accent: var(--site-hue-plum); }
+.demoCard[data-hue="amber"] { --site-accent: var(--site-hue-amber); }
+
+/* Shrink SilverWovenName from hero-scale (fs-12) to card-scale. */
+.demoName {
+  font-size: var(--site-fs-heading-2);
+  letter-spacing: -0.02em;
+}
+
+/* Demo cover: fills the VizFrame with a screenshot. */
+.demoCover {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* Step label: small mono kicker above each Quickstart step. */
+.stepLabel {
+  color: var(--site-ink-3);
+}
+.stepLabel strong {
+  color: var(--site-accent);
+  font-weight: 600;
+  margin-right: 0.4em;
+}
+
+/* Grid of demo cards inside the Step 2 section. Collapses to 1-col ≤720px. */
+.demoGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--site-gap-loose);
+  min-width: 0;
+}
+@media (max-width: 720px) {
+  .demoGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--site-gap-normal);
+  }
+}
+
+/* Learn row: two link cards side-by-side inside Step 3. */
+.learnGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--site-gap-normal);
+  min-width: 0;
+}
+@media (max-width: 720px) {
+  .learnGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
