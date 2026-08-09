@@ -151,31 +151,11 @@ pip install "nustack-py[all]"
 
 Each one boots a live browser dashboard and picks up where it left off on restart. `nu demo` lists them all.
 
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <img alt="counter demo" src="docs/public/demos/counter.png" />
-      <br /><br />
-      <strong>counter</strong> — a live counter, persistent across restarts.
-      <pre>nu demo counter</pre>
-    </td>
-    <td width="50%" valign="top">
-      <img alt="sampled demo" src="docs/public/demos/sampled.png" />
-      <br /><br />
-      <strong>sampled</strong> — an infinite series, live-sampled into a fixed-size chart.
-      <pre>nu demo sampled</pre>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <img alt="movies demo" src="docs/public/demos/movies.png" />
-      <br /><br />
-      <strong>movies</strong> — a movie tracker: form, filterable table, detail pages.
-      <pre>nu demo movies</pre>
-    </td>
-    <td width="50%">&nbsp;</td>
-  </tr>
-</table>
+| counter | sampled |
+| :--- | :--- |
+| ![counter demo](docs/public/demos/counter.png) A live counter, persistent across restarts. <br> `nu demo counter` | ![sampled demo](docs/public/demos/sampled.png) An infinite series, live-sampled into a line-chart. <br> `nu demo sampled` |
+| **movies** |   |
+| ![movies demo](docs/public/demos/movies.png) A movie tracker: form, filterable table, detail pages. <br> `nu demo movies` |   |
 
 ### 03 · Explore Nu
 
