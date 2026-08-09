@@ -7,6 +7,7 @@ import click
 from nu.cli._meta import nu_version
 from nu.cli.commands.demo import demo
 from nu.cli.commands.doctor import doctor
+from nu.cli.commands.telemetry import telemetry
 
 
 @click.group(
@@ -20,6 +21,7 @@ def cli() -> None:
 
 cli.add_command(demo)
 cli.add_command(doctor)
+cli.add_command(telemetry)
 
 
 def main() -> None:

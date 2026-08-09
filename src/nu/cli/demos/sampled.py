@@ -5,7 +5,7 @@ from pathlib import Path
 import nu
 
 
-_DB = Path.home() / ".cache" / "nu" / "demos" / "sampled"
+_DB = Path.home() / ".nu" / "demos" / "sampled"
 _DB.parent.mkdir(parents=True, exist_ok=True)
 
 
@@ -15,7 +15,7 @@ _ABOUT = """\
 - The chart repaints from a **200-point reservoir sample** of `nums` — the cost is the same
   whether the series holds 1k or 1B rows.
 - `ReactForever` fires the resample on every change.
-- Persistent: stop and restart, `cursor` and `nums` carry over from `~/.cache/nu/demos/sampled`.
+- Persistent: stop and restart, `cursor` and `nums` carry over from `~/.nu/demos/sampled`.
 """
 
 

@@ -5,12 +5,12 @@ from pathlib import Path
 import nu
 
 
-_DB = Path.home() / ".cache" / "nu" / "demos" / "counter"
+_DB = Path.home() / ".nu" / "demos" / "counter"
 _DB.parent.mkdir(parents=True, exist_ok=True)
 
 
 _ABOUT = """\
-- A single `IntRef` (`Counter.value`) lives in **rocksdb** at `~/.cache/nu/demos/counter`.
+- A single `IntRef` (`Counter.value`) lives in **rocksdb** at `~/.nu/demos/counter`.
 - The body loop increments it every second (`Counter.value.inc() >> Delay(1.0)`).
 - A `ReactForever` subscribes to changes on that value and pushes them into
   the dashboard's text ref — the browser updates without polling.

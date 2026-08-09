@@ -30,6 +30,24 @@ except PackageNotFoundError:
     __version__ = "0.0.0+dev"
 del _version, PackageNotFoundError
 
+# First-touch bootstrap. Hot path is a single ``exists()`` syscall -- if
+# ``~/.nu/config.json`` is there, we skip the config and telemetry modules
+# entirely, so nothing loads on every import. On the very first import
+# (or CLI invocation) we create the file with defaults and fire the
+# one-shot ``nu_first_run`` event. Silent on any failure.
+try:
+    from ._config import CONFIG_PATH as _CONFIG_PATH
+
+    if not _CONFIG_PATH.exists():
+        from ._config.config import create_default as _create_default
+        from ._config.telemetry import capture_first_run as _capture_first_run
+
+        _capture_first_run(_create_default())
+        del _create_default, _capture_first_run
+    del _CONFIG_PATH
+except Exception:  # noqa: BLE001
+    pass
+
 # Subpackage namespaces for dot-access.
 # Early group: pure layers with no dependency on the flat root surface.
 from . import context, core, engine, factory, flows, forms, lang, spans, tree

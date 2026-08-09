@@ -231,6 +231,12 @@ def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
                     except (asyncio.CancelledError, Exception):
                         pass
 
+    @fastapi_app.get("/api/telemetry-config")
+    async def telemetry_config() -> dict[str, object]:
+        from nu._config.telemetry import config_for_browser
+
+        return config_for_browser()
+
     static_dir = _bundled_static()
     if static_dir is not None and static_dir.exists():
         fastapi_app.mount(
