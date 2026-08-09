@@ -219,7 +219,13 @@
 @media (max-width: 720px) {
   .demoGrid {
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--site-gap-normal);
+    gap: var(--site-gap-loose);
+  }
+  /* Vertical stack: subtle divider above each card except the first, so the
+   * boundary reads as a real break rather than adjacent cards touching. */
+  .demoGrid > * + * {
+    padding-top: var(--site-gap-loose);
+    border-top: 1px solid var(--site-border);
   }
 }
 
@@ -233,5 +239,6 @@
 @media (max-width: 720px) {
   .learnGrid {
     grid-template-columns: minmax(0, 1fr);
+    gap: var(--site-gap-loose);
   }
 }

@@ -126,7 +126,7 @@ export default function Home() {
         <Chapter>
         <SectionHead
           title="Quickstart."
-          lede={<>Three steps: install, pick a demo, keep going.</>}
+          lede={<>Three steps: install, run a demo, explore Nu.</>}
         />
 
         {/* Step 1 — install */}
@@ -146,7 +146,7 @@ export default function Home() {
         <Section>
           <Stack gap="normal">
             <MonoKicker as="p" size="xs" tracking="wider" className={s.stepLabel}>
-              <strong>02</strong> Pick a demo
+              <strong>02</strong> Run a demo
             </MonoKicker>
             <div className={s.demoGrid}>
               <div className={s.demoCard} data-hue="teal">
@@ -181,7 +181,7 @@ export default function Home() {
         <Section>
           <Stack gap="normal">
             <MonoKicker as="p" size="xs" tracking="wider" className={s.stepLabel}>
-              <strong>03</strong> Keep going
+              <strong>03</strong> Explore Nu
             </MonoKicker>
             <div className={s.learnGrid}>
               <LinkCard href="/docs" icon={<BookOpen size={14} />} title="Read the docs">

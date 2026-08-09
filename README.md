@@ -137,7 +137,7 @@ Full walkthrough at [nustack.dev](https://nustack.dev).
 
 # 🏁 Quickstart
 
-Three steps: install, pick a demo, keep going.
+Three steps: install, run a demo, explore Nu.
 
 ### 01 · Install
 
@@ -147,41 +147,37 @@ Python 3.10+ &middot; everything ships in the wheel.
 pip install "nustack-py[all]"
 ```
 
-### 02 · Pick a demo
+### 02 · Run a demo
 
 Each one boots a live browser dashboard and picks up where it left off on restart. `nu demo` lists them all.
 
-#### counter
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img alt="counter demo" src="docs/public/demos/counter.png" />
+      <br /><br />
+      <strong>counter</strong> — a live counter, persistent across restarts.
+      <pre>nu demo counter</pre>
+    </td>
+    <td width="50%" valign="top">
+      <img alt="sampled demo" src="docs/public/demos/sampled.png" />
+      <br /><br />
+      <strong>sampled</strong> — an infinite series, live-sampled into a fixed-size chart.
+      <pre>nu demo sampled</pre>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img alt="movies demo" src="docs/public/demos/movies.png" />
+      <br /><br />
+      <strong>movies</strong> — a movie tracker: form, filterable table, detail pages.
+      <pre>nu demo movies</pre>
+    </td>
+    <td width="50%">&nbsp;</td>
+  </tr>
+</table>
 
-<img width="1200" alt="counter demo" src="docs/public/demos/counter.png" />
-
-A live counter, persistent across restarts.
-
-```bash
-nu demo counter
-```
-
-#### sampled
-
-<img width="1200" alt="sampled demo" src="docs/public/demos/sampled.png" />
-
-An infinite series, live-sampled into a fixed-size chart.
-
-```bash
-nu demo sampled
-```
-
-#### movies
-
-<img width="1200" alt="movies demo" src="docs/public/demos/movies.png" />
-
-A movie tracker: form, filterable table, detail pages.
-
-```bash
-nu demo movies
-```
-
-### 03 · Keep going
+### 03 · Explore Nu
 
 - **[Read the docs](https://nustack.dev/docs)** — tutorials, how-tos, and the fabric reference.
 - **[Browse examples](https://github.com/nustackdev/nu/tree/main/examples)** — full source for every demo, plus more programs to steal from.
