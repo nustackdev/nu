@@ -153,9 +153,9 @@ Each one boots a live browser dashboard and picks up where it left off on restar
 
 | counter | sampled |
 | :--- | :--- |
-| ![counter demo](docs/public/demos/counter.png) A live counter, persistent across restarts. <br> `nu demo counter` | ![sampled demo](docs/public/demos/sampled.png) An infinite series, live-sampled into a line-chart. <br> `nu demo sampled` |
+| ![counter demo](https://github.com/user-attachments/assets/fbeb4ea6-a2cc-4bb8-8bd6-35d05ec3fcc9) A live counter, persistent across restarts. <br> `nu demo counter` | ![sampled demo](https://github.com/user-attachments/assets/22e0ce72-47a2-47dd-9d2a-701645f10eea) An infinite series, live-sampled into a line-chart. <br> `nu demo sampled` |
 | **movies** |   |
-| ![movies demo](docs/public/demos/movies.png) A movie tracker: form, filterable table, detail pages. <br> `nu demo movies` |   |
+| ![movies demo](https://github.com/user-attachments/assets/8c67838d-d327-4866-996f-65999e3a05be) A movie tracker: form, filterable table, detail pages. <br> `nu demo movies` |   |
 
 ### 03 · Explore Nu
 
