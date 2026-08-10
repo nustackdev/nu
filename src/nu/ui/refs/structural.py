@@ -1,7 +1,7 @@
 """Structural Refs -- bound to non-render browser APIs.
 
 Index-level Refs whose side effects live on the platform (window.history,
-document.title), not the visible body tree. See docs/nudle/interactions.md.
+document.title), not the visible body tree.
 """
 
 from __future__ import annotations

@@ -3,7 +3,6 @@
 Same directionality as other output Refs (server pushes points via
 `write` / `append`; browser only renders). Grouped by shape rather
 than by semantics because the payload contract is chart-specific.
-See docs/nudle/interactions.md.
 """
 
 from __future__ import annotations

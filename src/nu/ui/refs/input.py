@@ -2,7 +2,6 @@
 
 The browser owns the live value. Host reads via `Ref` (round-trip
 through session), subscribes to changes via `.changed()` / `.clicked()`.
-See docs/nudle/interactions.md.
 """
 
 from __future__ import annotations

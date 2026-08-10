@@ -1,8 +1,0 @@
-/* CtaRow — non-hero CTA button row. Zero external margin; parent Stack
- * owns rhythm. Internal 12px gap between buttons preserved from the
- * former .ctaRow rule in page.module.css. */
-.ctaRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}

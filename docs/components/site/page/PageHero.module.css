@@ -1,4 +1,0 @@
-/* PageHero — top-of-page hero slot. Purely semantic today; a hook for future
- * hero-scoped styling. Renders as a plain block so descendant Rows layout
- * as if they were direct Container children. */
-.root { display: block; }

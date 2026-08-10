@@ -1,7 +1,7 @@
 """Display / output Refs -- server-owned sinks that render into the body.
 
 Server pushes values via `write` / `append`; the browser only renders,
-never reads back. See docs/nudle/interactions.md.
+never reads back.
 """
 
 from __future__ import annotations

@@ -238,4 +238,4 @@ exclude = [
 ]
 
 [tool.bandit]
-exclude_dirs = ["examples/", "docs/"]
+exclude_dirs = ["examples/"]

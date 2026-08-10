@@ -1,8 +1,8 @@
 """Nu mark rendered as terminal braille glyphs.
 
-Compact 2x4 sub-pixel braille packing of the SVG mark from
-``docs/components/site/marks/NuLogo.tsx`` -- two interlocking glyphs,
-purple top-left and blue bottom-right matching the SVG gradient stops.
+Compact 2x4 sub-pixel braille packing of the SVG mark -- two interlocking
+glyphs, purple top-left and blue bottom-right matching the SVG gradient
+stops.
 
 Baked once from the source PNG so this module has zero runtime deps beyond
 rich + stdlib.

@@ -1,9 +1,0 @@
-/* PageBody — vertical stack of Chapter cards.
- * No border/bg of its own; each Chapter owns its card treatment.
- * PageBody's only job is to separate chapters with a vertical gap. */
-.root {
-  display: flex;
-  flex-direction: column;
-  gap: var(--site-gap-xloose);
-  margin-top: var(--site-gap-xloose);
-}

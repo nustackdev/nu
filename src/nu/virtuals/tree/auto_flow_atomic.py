@@ -10,8 +10,7 @@ by its tracked effects on virtuals refs whose ``root_shape`` matches
 
 Flow children of a Flow are left as-is: the bottom-up walk has already
 wrapped their own direct children. Existing Snapshot / Transaction
-brackets are respected by the ``(scope_pass, scope_brace)`` matrix
-documented in ``nu/docs/guides/wrapping.md``.
+brackets are respected by the ``(scope_pass, scope_brace)`` matrix.
 """
 
 from __future__ import annotations
@@ -175,9 +174,9 @@ def auto_flow_atomic(tree: Nu, scope: Hashable | None = None) -> Nu:
     their own direct children (per-branch, not the whole Flow).
 
     Existing brackets are respected by the ``(scope_pass, scope_brace)``
-    matrix from ``nu/docs/guides/wrapping.md``: a brace that covers ``scope``
-    is left alone; a brace with a different scope is descended into and its
-    coverage subtracts from the walker's care set.
+    matrix: a brace that covers ``scope`` is left alone; a brace with a
+    different scope is descended into and its coverage subtracts from the
+    walker's care set.
 
     ``scope=None`` (default) treats every virtuals ref as in scope; the
     resulting wrapper tag is unscoped.

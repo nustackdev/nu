@@ -1,6 +1,6 @@
 """nudle Refs and Sections.
 
-Grouped by kind, one module per group. See docs/nudle/interactions.md.
+Grouped by kind, one module per group.
 
 - structural: Index-level Refs bound to non-render browser APIs
   (`window.history`, `document.title`). NavRef, TitleRef.
