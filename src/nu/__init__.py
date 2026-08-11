@@ -38,7 +38,7 @@ del _bootstrap
 # Subpackage namespaces for dot-access.
 # Early group: pure layers with no dependency on the flat root surface.
 from . import context, core, engine, factory, flows, forms, lang, spans, tree
-from .domains import service, shape
+from .domains import shape
 
 # Flat re-exports: the program-authoring surface.
 from .context import *
@@ -123,7 +123,7 @@ from .lang.helpers import (
 # ``TYPE_CHECKING`` block gives IDEs and type-checkers the real modules so
 # ``nu.mem.IntRef`` etc. resolve statically with full completion / go-to-def.
 if TYPE_CHECKING:
-    from . import http, invisibles, mem, ray, std, ui, virtuals
+    from . import http, invisibles, mem, ray, service, std, ui, virtuals
 
     # Short alias for the KV storage fabric.
     kv = virtuals
@@ -135,7 +135,7 @@ if TYPE_CHECKING:
 # ``from nu import *`` skips them (see ``_SHADOWS_BUILTIN`` below) so callers
 # don't get their builtins silently swapped. Any set/dict-builder logic in
 # THIS file must use literals (``{...}``) — never the shadowed callables.
-_LAZY = {"http", "invisibles", "mem", "ray", "std", "ui", "virtuals"}
+_LAZY = {"http", "invisibles", "mem", "ray", "service", "std", "ui", "virtuals"}
 _LAZY_ALIASES = {"kv": "virtuals"}
 
 
