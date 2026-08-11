@@ -14,17 +14,6 @@ Usage::
 """
 
 import nu.kv._compat  # noqa: F401  (register virtuals view ABCs)
-
-
-# Register path types as invisibles value types so they serialize by value.
-try:
-    from invisibles.core.boxing import register_value_type
-    from nu.kv.paths import ValuePathSer, ViewPathSer
-
-    register_value_type(ViewPathSer, ValuePathSer)
-except ImportError:
-    pass
-
 from nu.kv import fabrics, interactions, paths, presets, refs, tree, views
 from nu.kv.interactions import (
     CONFLICT_ERRORS,

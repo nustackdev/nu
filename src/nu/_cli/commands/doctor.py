@@ -20,7 +20,7 @@ _FABRICS: dict[str, str] = {
     "mem": "janus",
     "ui": "nudle",
     "ray": "ray",
-    "invisibles": "invisibles",
+    "proxy": "invisibles",
 }
 
 

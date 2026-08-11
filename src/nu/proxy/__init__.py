@@ -1,4 +1,4 @@
-"""nu.invisibles - transparent RPC transport for fabrics.
+"""nu.proxy - transparent RPC transport for fabrics.
 
 Pure transport. No new refs, no new interactions - method calls on a client
 proxy go over the wire and land on the server-side bound fabric. Same
@@ -30,9 +30,20 @@ Typical topology, using ``feed_run``'s ledger-main pattern::
 
 from __future__ import annotations
 
+from invisibles.core.boxing import register_value_type
+
 from .client import InvisiblesClient
 from .proxy import InvisiblesProxy
 from .server import InvisiblesServer
+
+
+# Register nu.kv path types as invisibles value types so they serialize by value.
+try:
+    from nu.kv.paths import ValuePathSer, ViewPathSer
+
+    register_value_type(ViewPathSer, ValuePathSer)
+except ImportError:
+    pass
 
 
 __all__ = ["InvisiblesClient", "InvisiblesProxy", "InvisiblesServer"]

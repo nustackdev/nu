@@ -46,7 +46,7 @@ ray = [
     "ray>=2.50; sys_platform != 'darwin' or platform_machine == 'arm64'",
     "ray>=2.0,<2.50; sys_platform == 'darwin' and platform_machine != 'arm64'",
 ]
-invisibles = [
+proxy = [
     "invisibles-py",
 ]
 http = [
@@ -57,7 +57,7 @@ all = [
     "nustack-py[mem]",
     "nustack-py[ui]",
     "nustack-py[ray]",
-    "nustack-py[invisibles]",
+    "nustack-py[proxy]",
     "nustack-py[http]",
     "virtuals-py[rocksdb]>=0.1.2",
 ]
