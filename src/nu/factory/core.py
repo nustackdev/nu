@@ -13,8 +13,7 @@ anything else that just bridges to a host callable.
 A method call needs no special support here: an *unbound* method is a plain
 callable whose first argument is the receiver, so ``d.weekday()`` is
 ``date.weekday(d)``. Bind the unbound method and pass the receiver as the
-first child. ``MethodFactory`` (in ``.methods``) is the sugar over that idiom
-when you want to name the method instead of writing a lambda.
+first child.
 
 Supported base kinds: ``ScalarQuery``, ``Command``, ``ScalarAction``. Stream
 (query or action), reduction, flow, and span have non-trivial dispatch shapes

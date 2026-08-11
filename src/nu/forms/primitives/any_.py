@@ -22,9 +22,9 @@ would silently discard the resulting ``Command`` node and produce an
 invalid tree. A clear ``TypeError`` fires at build time in that case.
 
 There is deliberately no ``__call__`` here - Nu programs run through
-interactions (built via ``ScalarQueryFactory`` / ``MethodFactory``), not
-raw Python callable dispatch. If you have a callable value in a Nu tree,
-wrap it in the appropriate interaction.
+interactions (built via ``ScalarQueryFactory`` or hand-written), not raw
+Python callable dispatch. If you have a callable value in a Nu tree, wrap
+it in the appropriate interaction.
 """
 
 from __future__ import annotations

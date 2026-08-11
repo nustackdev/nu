@@ -2,8 +2,7 @@
 
 Pure transport. No new refs, no new interactions - method calls on a client
 proxy go over the wire and land on the server-side bound fabric. Same
-fabric dispatch (``FabricRef`` + ``method_query`` / ``method_action`` /
-``method_command``) that works locally works remotely.
+fabric dispatch (``FabricRef``) that works locally works remotely.
 
 - ``InvisiblesServer`` - reads the root fabric from ctx (by type + optional
   tag) and serves it over TCP / Unix socket.

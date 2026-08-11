@@ -10,8 +10,7 @@ out the Interactions over them. The Context fabric has two axes:
 - **fabric** - typed bindings (``ctx.bind`` / ``ctx.get``) for every other
   ctx-bound thing: execution resources, storage handles, cluster handles,
   compute actors. Ref: ``FabricRef`` (read-only, self-yields); existence:
-  ``FabricExists``; in-tree method calls: the ``method`` descriptor /
-  ``MethodFactory``. Provisioning brackets ``Provide`` / ``ProvideList`` /
+  ``FabricExists``. Provisioning brackets ``Provide`` / ``ProvideList`` /
   ``ProvideDict`` install fabrics into the Context for a body's duration.
   Protocols ``Fabric`` (empty marker; every ctx-bound thing satisfies it) and
   ``FabricLifecycle(Fabric)`` (with optional setup / cleanup) describe the

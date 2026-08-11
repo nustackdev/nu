@@ -5,8 +5,7 @@
   (sync + async, all optional). What ``Provide`` installs into ctx.
 - ``FabricRef`` - Ref that self-yields a Fabric bound on the Context, or
   ``EMPTY`` when nothing is bound. Subclass and set ``fabric = SomeFabric``
-  to name a typed binding; add ``method_query`` / ``method_action`` /
-  ``method_command`` descriptors for in-tree dispatch.
+  to name a typed binding.
 - ``FabricExists`` - explicit existence check, since a bound ``EMPTY``
   aliases "unbound" under the dual-role read.
 - ``Provide`` / ``ProvideList`` / ``ProvideDict`` - Brackets that construct

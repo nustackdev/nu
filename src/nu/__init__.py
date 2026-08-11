@@ -95,15 +95,11 @@ from .lang import (
     TypedNu,
 )
 
-# Atom builders (nu.factory subpackage): factories, method dispatch, @host.
+# Atom builders (nu.factory subpackage): factories + @host.
 from .factory import (
     InteractionFactory,
-    MethodFactory,
     ScalarQueryFactory,
     host,
-    method_action,
-    method_command,
-    method_query,
 )
 
 # Entry points.

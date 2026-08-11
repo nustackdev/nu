@@ -38,13 +38,9 @@ class FabricRef(_ContextRef):
 
         class Solana(FabricRef):
             fabric = SolanaClient
-            slot = method_query(Int, "getSlot")
 
-    ``Solana()`` then resolves ``SolanaClient`` from the Context, and its
-    methods (built by the ``method_*`` descriptors / ``MethodFactory``)
-    serialize against each other while staying independent of any other
-    fabric. A bare ``FabricRef(SolanaClient)`` still works for the untyped,
-    one-off read.
+    ``Solana()`` then resolves ``SolanaClient`` from the Context. A bare
+    ``FabricRef(SolanaClient)`` still works for the untyped, one-off read.
     """
 
     fabric: ClassVar[type | None] = None
