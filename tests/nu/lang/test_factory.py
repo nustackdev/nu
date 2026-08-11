@@ -14,7 +14,7 @@ import pytest
 
 from nu.core import Literal
 from nu.engine.structure import Declared
-from nu.factory import InteractionFactory, ScalarQueryFactory
+from nu.factory import InteractionFactory, host
 from nu.lang import (
     Command,
     Reduction,
@@ -108,11 +108,11 @@ def test_keyword_args_run_on_async_path() -> None:
     assert value == 6
 
 
-# --- ScalarQueryFactory helper ------------------------------------------
+# --- host helper ------------------------------------------
 
 
 def test_scalar_query_factory_builds_scalar_query() -> None:
-    Add = ScalarQueryFactory("Add", lambda a, b: a + b, commutative=True)
+    Add = host(lambda a, b: a + b, name="Add", commutative=True)
     assert issubclass(Add, ScalarQuery)
     assert Add._attributes["commutative"].value is True
     value, _ = run(Add(2, 3))
@@ -121,7 +121,7 @@ def test_scalar_query_factory_builds_scalar_query() -> None:
 
 def test_scalar_query_factory_binds_an_unbound_method() -> None:
     # an unbound method is a plain callable whose first arg is the receiver
-    Upper = ScalarQueryFactory("Upper", str.upper)
+    Upper = host(str.upper, name="Upper")
     value, _ = run(Upper("nu"))
     assert value == "NU"
 

@@ -7,21 +7,18 @@ the factory is for the rest.
 
 - **core** - ``InteractionFactory``, the generic mechanism everything else
   builds on. Takes any callable + base kind.
-- **functions** - ``ScalarQueryFactory``, the kind-fixed convenience for
-  turning a pure function into a ``ScalarQuery`` atom.
 - **host** - the ``@host`` decorator, minimum-ceremony over
-  ``InteractionFactory``.
+  ``InteractionFactory``. Defaults the base kind to ``ScalarQuery`` so
+  wrapping a pure function is a one-liner.
 """
 
 from __future__ import annotations
 
 from .core import InteractionFactory
-from .functions import ScalarQueryFactory
 from .host import host
 
 
 __all__ = [
     "InteractionFactory",
-    "ScalarQueryFactory",
     "host",
 ]

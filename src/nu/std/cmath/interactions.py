@@ -1,4 +1,4 @@
-"""cmath interactions - one ``ScalarQueryFactory`` binding per host call.
+"""cmath interactions - one ``host`` binding per host call.
 
 Two groups, both bound straight to a host callable:
 
@@ -22,7 +22,7 @@ from __future__ import annotations
 import cmath
 from builtins import complex as _complex
 
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 
 
 __all__ = [
@@ -53,40 +53,40 @@ __all__ = [
 
 # --- the complex value type -------------------------------------------------
 
-ComplexOf = ScalarQueryFactory("ComplexOf", _complex)
-ComplexConjugate = ScalarQueryFactory("ComplexConjugate", _complex.conjugate)
+ComplexOf = host(_complex, name="ComplexOf")
+ComplexConjugate = host(_complex.conjugate, name="ComplexConjugate")
 
 # --- powers and roots -------------------------------------------------------
 
-CmathSqrt = ScalarQueryFactory("CmathSqrt", cmath.sqrt)
-CmathExp = ScalarQueryFactory("CmathExp", cmath.exp)
+CmathSqrt = host(cmath.sqrt, name="CmathSqrt")
+CmathExp = host(cmath.exp, name="CmathExp")
 
 # --- logarithms -------------------------------------------------------------
 
-CmathLog = ScalarQueryFactory("CmathLog", cmath.log)
-CmathLog10 = ScalarQueryFactory("CmathLog10", cmath.log10)
+CmathLog = host(cmath.log, name="CmathLog")
+CmathLog10 = host(cmath.log10, name="CmathLog10")
 
 # --- trigonometry -----------------------------------------------------------
 
-CmathSin = ScalarQueryFactory("CmathSin", cmath.sin)
-CmathCos = ScalarQueryFactory("CmathCos", cmath.cos)
-CmathTan = ScalarQueryFactory("CmathTan", cmath.tan)
-CmathAsin = ScalarQueryFactory("CmathAsin", cmath.asin)
-CmathAcos = ScalarQueryFactory("CmathAcos", cmath.acos)
-CmathAtan = ScalarQueryFactory("CmathAtan", cmath.atan)
-CmathSinh = ScalarQueryFactory("CmathSinh", cmath.sinh)
-CmathCosh = ScalarQueryFactory("CmathCosh", cmath.cosh)
-CmathTanh = ScalarQueryFactory("CmathTanh", cmath.tanh)
+CmathSin = host(cmath.sin, name="CmathSin")
+CmathCos = host(cmath.cos, name="CmathCos")
+CmathTan = host(cmath.tan, name="CmathTan")
+CmathAsin = host(cmath.asin, name="CmathAsin")
+CmathAcos = host(cmath.acos, name="CmathAcos")
+CmathAtan = host(cmath.atan, name="CmathAtan")
+CmathSinh = host(cmath.sinh, name="CmathSinh")
+CmathCosh = host(cmath.cosh, name="CmathCosh")
+CmathTanh = host(cmath.tanh, name="CmathTanh")
 
 # --- polar conversions ------------------------------------------------------
 
-CmathPhase = ScalarQueryFactory("CmathPhase", cmath.phase)
-CmathPolar = ScalarQueryFactory("CmathPolar", cmath.polar)
-CmathRect = ScalarQueryFactory("CmathRect", cmath.rect)
+CmathPhase = host(cmath.phase, name="CmathPhase")
+CmathPolar = host(cmath.polar, name="CmathPolar")
+CmathRect = host(cmath.rect, name="CmathRect")
 
 # --- classification ---------------------------------------------------------
 
-CmathIsnan = ScalarQueryFactory("CmathIsnan", cmath.isnan)
-CmathIsinf = ScalarQueryFactory("CmathIsinf", cmath.isinf)
-CmathIsfinite = ScalarQueryFactory("CmathIsfinite", cmath.isfinite)
-CmathIsclose = ScalarQueryFactory("CmathIsclose", cmath.isclose)
+CmathIsnan = host(cmath.isnan, name="CmathIsnan")
+CmathIsinf = host(cmath.isinf, name="CmathIsinf")
+CmathIsfinite = host(cmath.isfinite, name="CmathIsfinite")
+CmathIsclose = host(cmath.isclose, name="CmathIsclose")

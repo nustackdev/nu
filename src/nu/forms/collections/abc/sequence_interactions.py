@@ -12,7 +12,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 from nu.lang import Command, ScalarAction, ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
 
@@ -53,16 +53,16 @@ __all__ = [
 
 # Empty list: deterministic (always []), but each eval must yield a *fresh*
 # mutable object - a future fold/CSE pass must not alias two ListCreate results.
-ListCreate = ScalarQueryFactory("ListCreate", list)
+ListCreate = host(list, name="ListCreate")
 # Empty tuple: deterministic and immutable (sharing one () is fine).
-TupleCreate = ScalarQueryFactory("TupleCreate", tuple)
+TupleCreate = host(tuple, name="TupleCreate")
 # Tuple from positional items: TupleOf(a, b) evaluates each child expression and
 # packs the values into a fresh tuple. Sibling to DictOf. A sentinel item
 # short-circuits the whole tuple to INVALID (propagate_sentinels default).
-TupleOf = ScalarQueryFactory("TupleOf", lambda *items: items)
+TupleOf = host(lambda *items: items, name="TupleOf")
 # List from positional items: sibling to TupleOf; each eval yields a fresh
 # mutable list.
-ListOf = ScalarQueryFactory("ListOf", lambda *items: list(items))
+ListOf = host(lambda *items: list(items), name="ListOf")
 
 
 # =============================================================================

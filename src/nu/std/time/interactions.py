@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import time as _time
 
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 
 
 __all__ = [
@@ -43,19 +43,17 @@ __all__ = [
 
 # --- clock reads (float seconds) --------------------------------------------
 
-TimeTime = ScalarQueryFactory("TimeTime", _time.time, deterministic=False)
-TimeMonotonic = ScalarQueryFactory("TimeMonotonic", _time.monotonic, deterministic=False)
-TimePerfCounter = ScalarQueryFactory("TimePerfCounter", _time.perf_counter, deterministic=False)
-TimeProcessTime = ScalarQueryFactory("TimeProcessTime", _time.process_time, deterministic=False)
+TimeTime = host(_time.time, name="TimeTime", deterministic=False)
+TimeMonotonic = host(_time.monotonic, name="TimeMonotonic", deterministic=False)
+TimePerfCounter = host(_time.perf_counter, name="TimePerfCounter", deterministic=False)
+TimeProcessTime = host(_time.process_time, name="TimeProcessTime", deterministic=False)
 
 # --- clock reads (int nanoseconds) ------------------------------------------
 
-TimeTimeNs = ScalarQueryFactory("TimeTimeNs", _time.time_ns, deterministic=False)
-TimeMonotonicNs = ScalarQueryFactory("TimeMonotonicNs", _time.monotonic_ns, deterministic=False)
-TimePerfCounterNs = ScalarQueryFactory(
-    "TimePerfCounterNs", _time.perf_counter_ns, deterministic=False
-)
+TimeTimeNs = host(_time.time_ns, name="TimeTimeNs", deterministic=False)
+TimeMonotonicNs = host(_time.monotonic_ns, name="TimeMonotonicNs", deterministic=False)
+TimePerfCounterNs = host(_time.perf_counter_ns, name="TimePerfCounterNs", deterministic=False)
 
 # --- blocking sleep (sync-only, effect-only) --------------------------------
 
-TimeSleep = ScalarQueryFactory("TimeSleep", _time.sleep, async_affinity=False, deterministic=False)
+TimeSleep = host(_time.sleep, name="TimeSleep", async_affinity=False, deterministic=False)

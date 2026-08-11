@@ -1,4 +1,4 @@
-"""UUID constructor interactions - one ``ScalarQueryFactory`` binding each.
+"""UUID constructor interactions - one ``host`` binding each.
 
 Core can't build a ``uuid.UUID``, so the constructors are the only atoms this
 module adds. Everything else a UUID does (attribute reads, comparison) reuses
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from uuid import UUID, uuid1, uuid3, uuid4, uuid5
 
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 
 
 __all__ = [
@@ -27,10 +27,10 @@ __all__ = [
 ]
 
 
-Uuid4Query = ScalarQueryFactory("Uuid4Query", uuid4, deterministic=False)
-Uuid1Query = ScalarQueryFactory("Uuid1Query", uuid1, deterministic=False)
-Uuid3Query = ScalarQueryFactory("Uuid3Query", uuid3)
-Uuid5Query = ScalarQueryFactory("Uuid5Query", uuid5)
-UuidFromStrQuery = ScalarQueryFactory("UuidFromStrQuery", lambda v: UUID(str(v)))
-UuidFromBytesQuery = ScalarQueryFactory("UuidFromBytesQuery", lambda b: UUID(bytes=b))
-UuidFromIntQuery = ScalarQueryFactory("UuidFromIntQuery", lambda i: UUID(int=int(i)))
+Uuid4Query = host(uuid4, name="Uuid4Query", deterministic=False)
+Uuid1Query = host(uuid1, name="Uuid1Query", deterministic=False)
+Uuid3Query = host(uuid3, name="Uuid3Query")
+Uuid5Query = host(uuid5, name="Uuid5Query")
+UuidFromStrQuery = host(lambda v: UUID(str(v)), name="UuidFromStrQuery")
+UuidFromBytesQuery = host(lambda b: UUID(bytes=b), name="UuidFromBytesQuery")
+UuidFromIntQuery = host(lambda i: UUID(int=int(i)), name="UuidFromIntQuery")

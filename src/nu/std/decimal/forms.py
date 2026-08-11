@@ -4,7 +4,7 @@ The name is ``Decimal`` (capitalized) to mirror ``from decimal import Decimal``;
 it is backed by ``decimal.Decimal`` (``from decimal import Decimal as _Decimal``)
 and is the typed access surface for that type:
 
-- **constructors** are ``ScalarQueryFactory`` atoms in ``interactions``; the
+- **constructors** are ``host`` atoms in ``interactions``; the
   literal constructor is ``.of(...)`` since ``__init__`` wraps a Nu term.
   ``of`` coerces its argument through ``str`` so the value is exact (``of("0.1")``
   is ``Decimal('0.1')``, never the binary float ``0.1``).
@@ -13,7 +13,7 @@ and is the typed access surface for that type:
   the resolved values, so precision is preserved.
 - **comparison** reuses the core comparison atoms.
 - **method calls** (``quantize``, ``sqrt``, ``compare`` ...) are named
-  ``ScalarQueryFactory`` atoms in ``interactions`` (each binds the unbound
+  ``host`` atoms in ``interactions`` (each binds the unbound
   ``Decimal`` method) and return the right Form.
 
 Module-level helpers and contexts (``getcontext``, ``localcontext``,

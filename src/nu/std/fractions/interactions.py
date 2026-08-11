@@ -1,4 +1,4 @@
-"""fractions interactions - one ``ScalarQueryFactory`` binding per host call.
+"""fractions interactions - one ``host`` binding per host call.
 
 Constructors bind the class / its classmethods; methods bind the *unbound*
 method (a plain callable whose first argument is the receiver, so
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from fractions import Fraction as _Fraction
 
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 
 
 __all__ = [
@@ -30,14 +30,12 @@ __all__ = [
 
 # --- constructors -----------------------------------------------------------
 
-FractionOf = ScalarQueryFactory("FractionOf", _Fraction)
-FractionFromStr = ScalarQueryFactory("FractionFromStr", _Fraction)
-FractionFromFloat = ScalarQueryFactory("FractionFromFloat", _Fraction.from_float)
-FractionFromDecimal = ScalarQueryFactory("FractionFromDecimal", _Fraction.from_decimal)
+FractionOf = host(_Fraction, name="FractionOf")
+FractionFromStr = host(_Fraction, name="FractionFromStr")
+FractionFromFloat = host(_Fraction.from_float, name="FractionFromFloat")
+FractionFromDecimal = host(_Fraction.from_decimal, name="FractionFromDecimal")
 
 # --- methods ----------------------------------------------------------------
 
-FractionLimitDenominator = ScalarQueryFactory(
-    "FractionLimitDenominator", _Fraction.limit_denominator
-)
-FractionAsIntegerRatio = ScalarQueryFactory("FractionAsIntegerRatio", _Fraction.as_integer_ratio)
+FractionLimitDenominator = host(_Fraction.limit_denominator, name="FractionLimitDenominator")
+FractionAsIntegerRatio = host(_Fraction.as_integer_ratio, name="FractionAsIntegerRatio")

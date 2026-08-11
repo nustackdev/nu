@@ -10,12 +10,12 @@ The operations split the two ways the model intends:
 - **property reads** (``.name``, ``.suffix``, ``.parent`` ...) reuse core
   ``GetAttr`` - a path component is just an attribute read.
 - **method calls** (``with_suffix``, ``joinpath``, ``as_posix`` ...) are named
-  ``ScalarQueryFactory`` atoms in ``interactions`` (each binds the unbound
+  ``host`` atoms in ``interactions`` (each binds the unbound
   ``PurePath`` method).
 - **the ``/`` operator** is sugar for ``joinpath``.
 - **comparison** reuses the core comparison atoms (``PurePath`` is orderable and
   equatable).
-- **constructors** are ``ScalarQueryFactory`` atoms in ``interactions``; the
+- **constructors** are ``host`` atoms in ``interactions``; the
   literal constructor is ``.of(...)`` since ``__init__`` wraps a Nu term.
 
 Deferred (filesystem I/O, same template when added): ``exists``, ``is_file``,

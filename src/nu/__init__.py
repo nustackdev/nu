@@ -98,7 +98,6 @@ from .lang import (
 # Atom builders (nu.factory subpackage): factories + @host.
 from .factory import (
     InteractionFactory,
-    ScalarQueryFactory,
     host,
 )
 

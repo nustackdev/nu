@@ -21,10 +21,10 @@ from __future__ import annotations
 
 import asyncio
 
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 
 
 __all__ = ["AsyncioSleep"]
 
 
-AsyncioSleep = ScalarQueryFactory("AsyncioSleep", asyncio.sleep, deterministic=False)
+AsyncioSleep = host(asyncio.sleep, name="AsyncioSleep", requires_async=True, deterministic=False)

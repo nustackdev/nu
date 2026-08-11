@@ -23,7 +23,7 @@ from collections.abc import Set as ABCSet
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 from nu.lang import Command, ScalarAction, ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
 
@@ -72,12 +72,12 @@ __all__ = [
 
 # Empty set: deterministic (always set()), but each eval must yield a *fresh*
 # mutable object - a future fold/CSE pass must not alias two SetCreate results.
-SetCreate = ScalarQueryFactory("SetCreate", set)
+SetCreate = host(set, name="SetCreate")
 # Empty frozenset: deterministic and immutable (sharing one frozenset() is fine).
-FrozenSetCreate = ScalarQueryFactory("FrozenSetCreate", frozenset)
+FrozenSetCreate = host(frozenset, name="FrozenSetCreate")
 # Set / FrozenSet from positional items: siblings to TupleOf / ListOf.
-SetOf = ScalarQueryFactory("SetOf", lambda *items: set(items))
-FrozenSetOf = ScalarQueryFactory("FrozenSetOf", lambda *items: frozenset(items))
+SetOf = host(lambda *items: set(items), name="SetOf")
+FrozenSetOf = host(lambda *items: frozenset(items), name="FrozenSetOf")
 
 
 def _as_set(value: object) -> object:

@@ -5,12 +5,12 @@ Class names are lowercase to mirror ``from datetime import date, timedelta``
 
 - **property reads** (``.year``, ``.hour``, ``.days`` ...) reuse core ``GetAttr``.
 - **method calls** (``weekday()``, ``isoformat()``, ``total_seconds()``,
-  ``replace(...)`` ...) are named ``ScalarQueryFactory`` atoms in ``interactions``
+  ``replace(...)`` ...) are named ``host`` atoms in ``interactions``
   (each binds the unbound method).
 - **arithmetic** (``date + timedelta``, ``timedelta * n`` ...) reuses the core
   arithmetic atoms - Python performs the real op on the resolved values.
 - **comparison** reuses the core comparison atoms.
-- **constructors** are ``ScalarQueryFactory`` atoms in ``interactions``; the
+- **constructors** are ``host`` atoms in ``interactions``; the
   literal constructor is ``.of(...)`` since ``__init__`` wraps a Nu term.
 
 Classes are ordered so each is defined before another references it.

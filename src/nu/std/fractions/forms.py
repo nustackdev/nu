@@ -7,14 +7,14 @@ the typed access surface for the stdlib type:
 - **property reads** (``.numerator``, ``.denominator``) reuse core
   ``GetAttr`` - a component is just an attribute read.
 - **method calls** (``limit_denominator``, ``as_integer_ratio``) are named
-  ``ScalarQueryFactory`` atoms in ``interactions`` (each binds the unbound
+  ``host`` atoms in ``interactions`` (each binds the unbound
   ``Fraction`` method).
 - **arithmetic** (``+`` ``-`` ``*`` ``/`` ``//`` ``%`` ``**`` and the unary
   ``-`` ``abs`` ``+``) reuses the core arithmetic atoms - Python performs the
   real rational op on the resolved values, the result is rewrapped as a
   ``Fraction``.
 - **comparison** reuses the core comparison atoms.
-- **constructors** are ``ScalarQueryFactory`` atoms in ``interactions``; the
+- **constructors** are ``host`` atoms in ``interactions``; the
   literal constructor is ``.of(...)`` since ``__init__`` wraps a Nu term.
 """
 

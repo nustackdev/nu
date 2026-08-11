@@ -8,9 +8,9 @@ The class name is lowercase ``complex`` to mirror the builtin (hence
 ``# noqa: N801``), backed by ``from builtins import complex as _complex``.
 
 - **property reads** (``.real``, ``.imag``) reuse core ``GetAttr``.
-- **the constructor** is a ``ScalarQueryFactory`` atom in ``interactions``; the
+- **the constructor** is a ``host`` atom in ``interactions``; the
   literal constructor is ``.of(...)`` since ``__init__`` wraps a Nu term.
-- **``conjugate()``** is a ``ScalarQueryFactory`` atom over the unbound method.
+- **``conjugate()``** is a ``host`` atom over the unbound method.
 - **arithmetic** (``+ - * / ** -x +x abs``) reuses the core arithmetic atoms -
   Python performs the real op on the resolved values. ``abs`` is the magnitude
   (a float); the rest stay ``complex``.

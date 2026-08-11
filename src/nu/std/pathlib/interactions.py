@@ -1,4 +1,4 @@
-"""pathlib interactions - one ``ScalarQueryFactory`` binding per host call.
+"""pathlib interactions - one ``host`` binding per host call.
 
 Constructors bind the class / its classmethods; methods bind the *unbound*
 method (a plain callable whose first argument is the receiver, so
@@ -17,7 +17,7 @@ from __future__ import annotations
 from pathlib import Path as _Path
 from pathlib import PurePath as _PurePath
 
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 
 
 __all__ = [
@@ -39,25 +39,25 @@ __all__ = [
 
 # --- constructors -----------------------------------------------------------
 
-PathOf = ScalarQueryFactory("PathOf", _PurePath)
-PathCwd = ScalarQueryFactory("PathCwd", _Path.cwd, deterministic=False)
-PathHome = ScalarQueryFactory("PathHome", _Path.home, deterministic=False)
+PathOf = host(_PurePath, name="PathOf")
+PathCwd = host(_Path.cwd, name="PathCwd", deterministic=False)
+PathHome = host(_Path.home, name="PathHome", deterministic=False)
 
 # --- path-returning methods -------------------------------------------------
 
-PathWithName = ScalarQueryFactory("PathWithName", _PurePath.with_name)
-PathWithStem = ScalarQueryFactory("PathWithStem", _PurePath.with_stem)
-PathWithSuffix = ScalarQueryFactory("PathWithSuffix", _PurePath.with_suffix)
-PathJoinpath = ScalarQueryFactory("PathJoinpath", _PurePath.joinpath)
-PathRelativeTo = ScalarQueryFactory("PathRelativeTo", _PurePath.relative_to)
+PathWithName = host(_PurePath.with_name, name="PathWithName")
+PathWithStem = host(_PurePath.with_stem, name="PathWithStem")
+PathWithSuffix = host(_PurePath.with_suffix, name="PathWithSuffix")
+PathJoinpath = host(_PurePath.joinpath, name="PathJoinpath")
+PathRelativeTo = host(_PurePath.relative_to, name="PathRelativeTo")
 
 # --- string conversions -----------------------------------------------------
 
-PathAsPosix = ScalarQueryFactory("PathAsPosix", _PurePath.as_posix)
-PathAsUri = ScalarQueryFactory("PathAsUri", _PurePath.as_uri)
+PathAsPosix = host(_PurePath.as_posix, name="PathAsPosix")
+PathAsUri = host(_PurePath.as_uri, name="PathAsUri")
 
 # --- predicate methods ------------------------------------------------------
 
-PathMatch = ScalarQueryFactory("PathMatch", _PurePath.match)
-PathIsAbsolute = ScalarQueryFactory("PathIsAbsolute", _PurePath.is_absolute)
-PathIsRelativeTo = ScalarQueryFactory("PathIsRelativeTo", _PurePath.is_relative_to)
+PathMatch = host(_PurePath.match, name="PathMatch")
+PathIsAbsolute = host(_PurePath.is_absolute, name="PathIsAbsolute")
+PathIsRelativeTo = host(_PurePath.is_relative_to, name="PathIsRelativeTo")

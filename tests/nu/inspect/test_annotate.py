@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from nu import Context, arun, run
 from nu.core import Literal, Print
 from nu.core.io import STDOUT, StdioBackend
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 from nu.flows import Sequential
 from nu.inspect import annotate_retries, annotate_steps, render_nu
 from nu.inspect.annotate import _StepSpan
@@ -112,7 +112,7 @@ def test_annotate_steps_logs_failure_and_reraises(caplog: pytest.LogCaptureFixtu
     def boom() -> object:
         raise RuntimeError("kaboom")
 
-    boom_q = ScalarQueryFactory("BoomQ", boom, deterministic=False)
+    boom_q = host(boom, name="BoomQ", deterministic=False)
     prog = Sequential(Print(STDOUT, Literal("ok")), Print(STDOUT, boom_q()))
     caplog.set_level(pylogging.DEBUG, logger="nu.steps")
     try:
@@ -145,7 +145,7 @@ def _flaky(fail_times: int) -> type:
             raise ValueError(f"fail{state['n']}")
         return "ok"
 
-    return ScalarQueryFactory("Flaky", body, deterministic=False)
+    return host(body, name="Flaky", deterministic=False)
 
 
 def test_annotate_retries_logs_each_failed_attempt(caplog: pytest.LogCaptureFixture) -> None:

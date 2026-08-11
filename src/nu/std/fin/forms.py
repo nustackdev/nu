@@ -3,7 +3,7 @@
 Each Form is the typed access surface over its native dataclass
 (``nu.std.fin.native``), the same way ``Fraction`` wraps ``fractions.Fraction``:
 
-- **constructors** are ``ScalarQueryFactory`` atoms in ``interactions``; the
+- **constructors** are ``host`` atoms in ``interactions``; the
   literal constructor is ``.of(...)`` since ``__init__`` wraps a Nu term.
 - **conversions / application** (``to_dec``, ``apply``, ``add_to`` ...) are
   factory atoms binding the unbound native methods.

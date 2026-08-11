@@ -1,4 +1,4 @@
-"""fin interactions - one ``ScalarQueryFactory`` binding per host call.
+"""fin interactions - one ``host`` binding per host call.
 
 Constructors bind the native class / its classmethods; methods bind the
 *unbound* method (a plain callable whose first argument is the receiver, so
@@ -8,7 +8,7 @@ here - they reuse the core atoms.
 
 from __future__ import annotations
 
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 from nu.std.fin.native import PyBasisPoint, PyPercentage
 
 
@@ -39,39 +39,39 @@ __all__ = [
 
 # --- percentage constructors ------------------------------------------------
 
-PercentageOf = ScalarQueryFactory("PercentageOf", PyPercentage)
-PercentageFromDec = ScalarQueryFactory("PercentageFromDec", PyPercentage.from_dec)
-PercentageFromBps = ScalarQueryFactory("PercentageFromBps", PyPercentage.from_bps)
-PercentageFromRatio = ScalarQueryFactory("PercentageFromRatio", PyPercentage.from_ratio)
+PercentageOf = host(PyPercentage, name="PercentageOf")
+PercentageFromDec = host(PyPercentage.from_dec, name="PercentageFromDec")
+PercentageFromBps = host(PyPercentage.from_bps, name="PercentageFromBps")
+PercentageFromRatio = host(PyPercentage.from_ratio, name="PercentageFromRatio")
 
 # --- percentage conversions -------------------------------------------------
 
-PercentageToDec = ScalarQueryFactory("PercentageToDec", PyPercentage.to_dec)
-PercentageToBps = ScalarQueryFactory("PercentageToBps", PyPercentage.to_bps)
-PercentageToFloat = ScalarQueryFactory("PercentageToFloat", PyPercentage.to_float)
+PercentageToDec = host(PyPercentage.to_dec, name="PercentageToDec")
+PercentageToBps = host(PyPercentage.to_bps, name="PercentageToBps")
+PercentageToFloat = host(PyPercentage.to_float, name="PercentageToFloat")
 
 # --- percentage application + validation ------------------------------------
 
-PercentageApply = ScalarQueryFactory("PercentageApply", PyPercentage.apply)
-PercentageAddTo = ScalarQueryFactory("PercentageAddTo", PyPercentage.add_to)
-PercentageSubFrom = ScalarQueryFactory("PercentageSubFrom", PyPercentage.sub_from)
-PercentageIsValid = ScalarQueryFactory("PercentageIsValid", PyPercentage.is_valid)
-PercentageClamp = ScalarQueryFactory("PercentageClamp", PyPercentage.clamp)
+PercentageApply = host(PyPercentage.apply, name="PercentageApply")
+PercentageAddTo = host(PyPercentage.add_to, name="PercentageAddTo")
+PercentageSubFrom = host(PyPercentage.sub_from, name="PercentageSubFrom")
+PercentageIsValid = host(PyPercentage.is_valid, name="PercentageIsValid")
+PercentageClamp = host(PyPercentage.clamp, name="PercentageClamp")
 
 # --- basis point constructors -----------------------------------------------
 
-BasisPointOf = ScalarQueryFactory("BasisPointOf", PyBasisPoint)
-BasisPointFromPct = ScalarQueryFactory("BasisPointFromPct", PyBasisPoint.from_pct)
-BasisPointFromDec = ScalarQueryFactory("BasisPointFromDec", PyBasisPoint.from_dec)
+BasisPointOf = host(PyBasisPoint, name="BasisPointOf")
+BasisPointFromPct = host(PyBasisPoint.from_pct, name="BasisPointFromPct")
+BasisPointFromDec = host(PyBasisPoint.from_dec, name="BasisPointFromDec")
 
 # --- basis point conversions ------------------------------------------------
 
-BasisPointToPct = ScalarQueryFactory("BasisPointToPct", PyBasisPoint.to_pct)
-BasisPointToDec = ScalarQueryFactory("BasisPointToDec", PyBasisPoint.to_dec)
-BasisPointToInt = ScalarQueryFactory("BasisPointToInt", PyBasisPoint.to_int)
+BasisPointToPct = host(PyBasisPoint.to_pct, name="BasisPointToPct")
+BasisPointToDec = host(PyBasisPoint.to_dec, name="BasisPointToDec")
+BasisPointToInt = host(PyBasisPoint.to_int, name="BasisPointToInt")
 
 # --- basis point application ------------------------------------------------
 
-BasisPointApply = ScalarQueryFactory("BasisPointApply", PyBasisPoint.apply)
-BasisPointAddTo = ScalarQueryFactory("BasisPointAddTo", PyBasisPoint.add_to)
-BasisPointSubFrom = ScalarQueryFactory("BasisPointSubFrom", PyBasisPoint.sub_from)
+BasisPointApply = host(PyBasisPoint.apply, name="BasisPointApply")
+BasisPointAddTo = host(PyBasisPoint.add_to, name="BasisPointAddTo")
+BasisPointSubFrom = host(PyBasisPoint.sub_from, name="BasisPointSubFrom")

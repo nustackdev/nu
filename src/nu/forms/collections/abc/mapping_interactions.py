@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 from nu.lang import Command, ScalarAction, ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
 
@@ -49,11 +49,11 @@ __all__ = [
 
 # Empty dict: deterministic (always {}), but each eval must yield a *fresh*
 # mutable object - a future fold/CSE pass must not alias two DictCreate results.
-DictCreate = ScalarQueryFactory("DictCreate", dict)
+DictCreate = host(dict, name="DictCreate")
 # Dict from named fields: DictOf(a=x, b=y) evaluates each field expression and
 # zips names back into a fresh dict. A sentinel field short-circuits the whole
 # record to INVALID (propagate_sentinels default).
-DictOf = ScalarQueryFactory("DictOf", dict)
+DictOf = host(dict, name="DictOf")
 
 
 # =============================================================================

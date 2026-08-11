@@ -1,4 +1,4 @@
-"""random interactions - one ``ScalarQueryFactory`` binding per host call.
+"""random interactions - one ``host`` binding per host call.
 
 ``random`` is a function module: no central class, just free functions over
 the global RNG. Core can't draw random numbers, so each one is a new atom bound
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import random
 
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 
 
 __all__ = [
@@ -36,29 +36,27 @@ __all__ = [
 
 # --- uniform reals and ints -------------------------------------------------
 
-RandomRandom = ScalarQueryFactory("RandomRandom", random.random, deterministic=False)
-RandomUniform = ScalarQueryFactory("RandomUniform", random.uniform, deterministic=False)
-RandomRandint = ScalarQueryFactory("RandomRandint", random.randint, deterministic=False)
-RandomRandrange = ScalarQueryFactory("RandomRandrange", random.randrange, deterministic=False)
-RandomGetrandbits = ScalarQueryFactory("RandomGetrandbits", random.getrandbits, deterministic=False)
+RandomRandom = host(random.random, name="RandomRandom", deterministic=False)
+RandomUniform = host(random.uniform, name="RandomUniform", deterministic=False)
+RandomRandint = host(random.randint, name="RandomRandint", deterministic=False)
+RandomRandrange = host(random.randrange, name="RandomRandrange", deterministic=False)
+RandomGetrandbits = host(random.getrandbits, name="RandomGetrandbits", deterministic=False)
 
 # --- sequence draws ---------------------------------------------------------
 
-RandomChoice = ScalarQueryFactory("RandomChoice", random.choice, deterministic=False)
+RandomChoice = host(random.choice, name="RandomChoice", deterministic=False)
 # ``random.choices`` takes ``k`` keyword-only; wrap so the atom can pass it
 # positionally (factory atoms type-check as their base ScalarQuery init).
-RandomChoices = ScalarQueryFactory(
-    "RandomChoices",
+RandomChoices = host(
     lambda population, k: random.choices(population, k=k),  # noqa: S311 -- general RNG, not crypto
+    name="RandomChoices",
     deterministic=False,
 )
-RandomSample = ScalarQueryFactory("RandomSample", random.sample, deterministic=False)
+RandomSample = host(random.sample, name="RandomSample", deterministic=False)
 
 # --- continuous distributions -----------------------------------------------
 
-RandomGauss = ScalarQueryFactory("RandomGauss", random.gauss, deterministic=False)
-RandomNormalvariate = ScalarQueryFactory(
-    "RandomNormalvariate", random.normalvariate, deterministic=False
-)
-RandomExpovariate = ScalarQueryFactory("RandomExpovariate", random.expovariate, deterministic=False)
-RandomTriangular = ScalarQueryFactory("RandomTriangular", random.triangular, deterministic=False)
+RandomGauss = host(random.gauss, name="RandomGauss", deterministic=False)
+RandomNormalvariate = host(random.normalvariate, name="RandomNormalvariate", deterministic=False)
+RandomExpovariate = host(random.expovariate, name="RandomExpovariate", deterministic=False)
+RandomTriangular = host(random.triangular, name="RandomTriangular", deterministic=False)

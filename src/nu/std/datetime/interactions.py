@@ -1,4 +1,4 @@
-"""datetime interactions - one ``ScalarQueryFactory`` binding per host call.
+"""datetime interactions - one ``host`` binding per host call.
 
 Constructors bind a class / classmethod; methods bind the *unbound* method (a
 plain callable whose first argument is the receiver, so ``d.weekday()`` is
@@ -19,7 +19,7 @@ from datetime import time as _time
 from datetime import timedelta as _timedelta
 from datetime import timezone as _timezone
 
-from nu.factory import ScalarQueryFactory
+from nu.factory import host
 
 
 UTC = _timezone.utc
@@ -67,52 +67,52 @@ __all__ = [
 
 # --- date -------------------------------------------------------------------
 
-DateOf = ScalarQueryFactory("DateOf", _date)
-DateToday = ScalarQueryFactory("DateToday", _date.today, deterministic=False)
-DateFromIso = ScalarQueryFactory("DateFromIso", _date.fromisoformat)
-DateFromOrdinal = ScalarQueryFactory("DateFromOrdinal", _date.fromordinal)
-DateFromTimestamp = ScalarQueryFactory("DateFromTimestamp", _date.fromtimestamp)
-DateWeekday = ScalarQueryFactory("DateWeekday", _date.weekday)
-DateIsoweekday = ScalarQueryFactory("DateIsoweekday", _date.isoweekday)
-DateToordinal = ScalarQueryFactory("DateToordinal", _date.toordinal)
-DateIsoformat = ScalarQueryFactory("DateIsoformat", _date.isoformat)
-DateCtime = ScalarQueryFactory("DateCtime", _date.ctime)
-DateStrftime = ScalarQueryFactory("DateStrftime", _date.strftime)
-DateReplace = ScalarQueryFactory("DateReplace", _date.replace)
+DateOf = host(_date, name="DateOf")
+DateToday = host(_date.today, name="DateToday", deterministic=False)
+DateFromIso = host(_date.fromisoformat, name="DateFromIso")
+DateFromOrdinal = host(_date.fromordinal, name="DateFromOrdinal")
+DateFromTimestamp = host(_date.fromtimestamp, name="DateFromTimestamp")
+DateWeekday = host(_date.weekday, name="DateWeekday")
+DateIsoweekday = host(_date.isoweekday, name="DateIsoweekday")
+DateToordinal = host(_date.toordinal, name="DateToordinal")
+DateIsoformat = host(_date.isoformat, name="DateIsoformat")
+DateCtime = host(_date.ctime, name="DateCtime")
+DateStrftime = host(_date.strftime, name="DateStrftime")
+DateReplace = host(_date.replace, name="DateReplace")
 
 # --- time -------------------------------------------------------------------
 
-TimeOf = ScalarQueryFactory("TimeOf", _time)
-TimeFromIso = ScalarQueryFactory("TimeFromIso", _time.fromisoformat)
-TimeIsoformat = ScalarQueryFactory("TimeIsoformat", _time.isoformat)
-TimeStrftime = ScalarQueryFactory("TimeStrftime", _time.strftime)
-TimeReplace = ScalarQueryFactory("TimeReplace", _time.replace)
+TimeOf = host(_time, name="TimeOf")
+TimeFromIso = host(_time.fromisoformat, name="TimeFromIso")
+TimeIsoformat = host(_time.isoformat, name="TimeIsoformat")
+TimeStrftime = host(_time.strftime, name="TimeStrftime")
+TimeReplace = host(_time.replace, name="TimeReplace")
 
 # --- datetime ---------------------------------------------------------------
 
-DatetimeOf = ScalarQueryFactory("DatetimeOf", _datetime)
-DatetimeNow = ScalarQueryFactory("DatetimeNow", _datetime.now, deterministic=False)
-DatetimeFromIso = ScalarQueryFactory("DatetimeFromIso", _datetime.fromisoformat)
-DatetimeFromTimestamp = ScalarQueryFactory("DatetimeFromTimestamp", _datetime.fromtimestamp)
-DatetimeCombine = ScalarQueryFactory("DatetimeCombine", _datetime.combine)
-DatetimeWeekday = ScalarQueryFactory("DatetimeWeekday", _datetime.weekday)
-DatetimeIsoweekday = ScalarQueryFactory("DatetimeIsoweekday", _datetime.isoweekday)
-DatetimeTimestamp = ScalarQueryFactory("DatetimeTimestamp", _datetime.timestamp)
-DatetimeIsoformat = ScalarQueryFactory("DatetimeIsoformat", _datetime.isoformat)
-DatetimeStrftime = ScalarQueryFactory("DatetimeStrftime", _datetime.strftime)
-DatetimeDate = ScalarQueryFactory("DatetimeDate", _datetime.date)
-DatetimeTime = ScalarQueryFactory("DatetimeTime", _datetime.time)
-DatetimeReplace = ScalarQueryFactory("DatetimeReplace", _datetime.replace)
+DatetimeOf = host(_datetime, name="DatetimeOf")
+DatetimeNow = host(_datetime.now, name="DatetimeNow", deterministic=False)
+DatetimeFromIso = host(_datetime.fromisoformat, name="DatetimeFromIso")
+DatetimeFromTimestamp = host(_datetime.fromtimestamp, name="DatetimeFromTimestamp")
+DatetimeCombine = host(_datetime.combine, name="DatetimeCombine")
+DatetimeWeekday = host(_datetime.weekday, name="DatetimeWeekday")
+DatetimeIsoweekday = host(_datetime.isoweekday, name="DatetimeIsoweekday")
+DatetimeTimestamp = host(_datetime.timestamp, name="DatetimeTimestamp")
+DatetimeIsoformat = host(_datetime.isoformat, name="DatetimeIsoformat")
+DatetimeStrftime = host(_datetime.strftime, name="DatetimeStrftime")
+DatetimeDate = host(_datetime.date, name="DatetimeDate")
+DatetimeTime = host(_datetime.time, name="DatetimeTime")
+DatetimeReplace = host(_datetime.replace, name="DatetimeReplace")
 
 # --- timedelta --------------------------------------------------------------
 
-TimedeltaOf = ScalarQueryFactory("TimedeltaOf", _timedelta)
-TimedeltaTotalSeconds = ScalarQueryFactory("TimedeltaTotalSeconds", _timedelta.total_seconds)
+TimedeltaOf = host(_timedelta, name="TimedeltaOf")
+TimedeltaTotalSeconds = host(_timedelta.total_seconds, name="TimedeltaTotalSeconds")
 
 # --- timezone ---------------------------------------------------------------
 
-TimezoneOf = ScalarQueryFactory("TimezoneOf", _timezone)
-TimezoneUtc = ScalarQueryFactory("TimezoneUtc", lambda: UTC)
-TimezoneUtcoffset = ScalarQueryFactory("TimezoneUtcoffset", _timezone.utcoffset)
-TimezoneTzname = ScalarQueryFactory("TimezoneTzname", _timezone.tzname)
-TimezoneDst = ScalarQueryFactory("TimezoneDst", _timezone.dst)
+TimezoneOf = host(_timezone, name="TimezoneOf")
+TimezoneUtc = host(lambda: UTC, name="TimezoneUtc")
+TimezoneUtcoffset = host(_timezone.utcoffset, name="TimezoneUtcoffset")
+TimezoneTzname = host(_timezone.tzname, name="TimezoneTzname")
+TimezoneDst = host(_timezone.dst, name="TimezoneDst")
