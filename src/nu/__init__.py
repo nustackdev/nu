@@ -13,10 +13,8 @@ Or reach a subpackage by dot-access:
     import nu
     nu.forms.Int    nu.core.Add    nu.flows.Sequential
     nu.spans.Retry      nu.shape.Shape      nu.tree.map_nodes
-    nu.mem.IntRef       nu.virtuals.presets.memory_storage
+    nu.mem.IntRef       nu.kv.presets.memory_storage
     nu.ui.Page          nu.std.uuid.UUID
-
-Short alias: ``nu.kv`` = ``nu.virtuals`` (the KV-storage fabric).
 """
 
 from __future__ import annotations
@@ -123,10 +121,7 @@ from .lang.helpers import (
 # ``TYPE_CHECKING`` block gives IDEs and type-checkers the real modules so
 # ``nu.mem.IntRef`` etc. resolve statically with full completion / go-to-def.
 if TYPE_CHECKING:
-    from . import http, invisibles, mem, ray, service, std, ui, virtuals
-
-    # Short alias for the KV storage fabric.
-    kv = virtuals
+    from . import http, invisibles, kv, mem, ray, service, std, ui
 
 # NOTE: several flat re-exports above shadow Python builtins at module scope
 # — coercion atoms (``set``/``frozenset``/``tuple``/``list``/``dict``/``int``/
@@ -135,26 +130,21 @@ if TYPE_CHECKING:
 # ``from nu import *`` skips them (see ``_SHADOWS_BUILTIN`` below) so callers
 # don't get their builtins silently swapped. Any set/dict-builder logic in
 # THIS file must use literals (``{...}``) — never the shadowed callables.
-_LAZY = {"http", "invisibles", "mem", "ray", "service", "std", "ui", "virtuals"}
-_LAZY_ALIASES = {"kv": "virtuals"}
+_LAZY = {"http", "invisibles", "kv", "mem", "ray", "service", "std", "ui"}
 
 
 def __getattr__(name):
     import importlib
 
-    if name in _LAZY_ALIASES:
-        target = _LAZY_ALIASES[name]
-    elif name in _LAZY:
-        target = name
-    else:
+    if name not in _LAZY:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    mod = importlib.import_module(f".{target}", __name__)
+    mod = importlib.import_module(f".{name}", __name__)
     globals()[name] = mod
     return mod
 
 
 def __dir__():
-    return sorted({*globals(), *_LAZY, *_LAZY_ALIASES})
+    return sorted({*globals(), *_LAZY})
 
 
 # __all__ = every name bound above (minus privates, the ``__future__`` shim,
@@ -170,7 +160,6 @@ _HIDDEN = {"annotations", "TYPE_CHECKING", "domains"}
 _SHADOWS_BUILTIN = {n for n in dir(_builtins) if not n.startswith("_")}
 _names = dir()
 __all__ = sorted(
-    ({*_names, *_LAZY, *_LAZY_ALIASES} - _HIDDEN - _SHADOWS_BUILTIN)
-    - {n for n in _names if n.startswith("_")}
+    ({*_names, *_LAZY} - _HIDDEN - _SHADOWS_BUILTIN) - {n for n in _names if n.startswith("_")}
 )
 del _builtins, _names

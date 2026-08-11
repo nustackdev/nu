@@ -1,10 +1,10 @@
-"""nu.virtuals: virtuals (polymorphic views) KV-storage fabric for Nu Shapes.
+"""nu.kv: virtuals (polymorphic views) KV-storage fabric for Nu Shapes.
 
 Refs over virtuals views backed by a tkv snapshot / transaction.
 
 Usage::
 
-    from nu.virtuals import IntRef, StrRef, ShapeRef, Atomic
+    from nu.kv import IntRef, StrRef, ShapeRef, Atomic
     from nu import Context
     from nu.domains.shape import Shape
 
@@ -13,20 +13,20 @@ Usage::
         age = IntRef.slot()
 """
 
-import nu.virtuals._compat  # noqa: F401  (register virtuals view ABCs)
+import nu.kv._compat  # noqa: F401  (register virtuals view ABCs)
 
 
 # Register path types as invisibles value types so they serialize by value.
 try:
     from invisibles.core.boxing import register_value_type
-    from nu.virtuals.paths import ValuePathSer, ViewPathSer
+    from nu.kv.paths import ValuePathSer, ViewPathSer
 
     register_value_type(ViewPathSer, ValuePathSer)
 except ImportError:
     pass
 
-from nu.virtuals import fabrics, interactions, paths, presets, refs, tree, views
-from nu.virtuals.interactions import (
+from nu.kv import fabrics, interactions, paths, presets, refs, tree, views
+from nu.kv.interactions import (
     CONFLICT_ERRORS,
     Atomic,
     ClearPrimitivesUnsafeCmd,
@@ -43,8 +43,8 @@ from nu.virtuals.interactions import (
     Snapshot,
     Transaction,
 )
-from nu.virtuals.paths import ValuePathSer, ViewPathSer
-from nu.virtuals.presets import (
+from nu.kv.paths import ValuePathSer, ViewPathSer
+from nu.kv.presets import (
     inmem_observer,
     lmdb_navigator,
     lmdb_navigator_redis,
@@ -58,7 +58,7 @@ from nu.virtuals.presets import (
     text_navigator,
     text_storage,
 )
-from nu.virtuals.refs import (
+from nu.kv.refs import (
     BasisPointRef,
     BoolRef,
     BytesRef,
@@ -94,7 +94,7 @@ from nu.virtuals.refs import (
     UUIDRef,
     ViewRef,
 )
-from nu.virtuals.tree import auto_flow_atomic, inline_refs
+from nu.kv.tree import auto_flow_atomic, inline_refs
 
 
 __all__ = [  # noqa: RUF022

@@ -4,7 +4,7 @@ Owns the reactive contract (``ObserverProtocol`` + ``Subscription``) and the
 interaction atoms (``OnChange`` / ``OnChildChange`` / ``OnChildrenChange`` /
 ``OnDescendantsChange`` / ``OnPrimitiveChange``).
 
-Nu defines the standard; fabrics (nu.virtuals, and any future backend) bind
+Nu defines the standard; fabrics (nu.kv, and any future backend) bind
 their observer under ``ObserverProtocol`` in ctx and match its structural
 shape. Nu never depends on a concrete reactive backend.
 """

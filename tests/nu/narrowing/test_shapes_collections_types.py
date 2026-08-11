@@ -11,7 +11,7 @@ from typing_extensions import assert_type
 
 import nu
 from nu.forms import Bool, Int, Str
-from nu.virtuals.refs import (
+from nu.kv.refs import (
     IntRef,
     Kh57Ref,
     Kh57ShapesRef,

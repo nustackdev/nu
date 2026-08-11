@@ -10,7 +10,7 @@ domain type.
 from __future__ import annotations
 
 from nu import Shape, run
-from nu.virtuals import (
+from nu.kv import (
     PrimitiveDictRef,
     PrimitiveFrozenSetRef,
     PrimitiveListRef,

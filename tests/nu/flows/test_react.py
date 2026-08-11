@@ -14,8 +14,8 @@ from nu.domains.shape import Shape
 from nu.domains.shape.refs.item import ItemRef
 from nu.flows import Race
 from nu.flows.react import React, ReactForever, ReactWhile
+from nu.kv import IntRef
 from nu.lang import LAWS, Control, compile, validate
-from nu.virtuals import IntRef
 
 
 # ---------------------------------------------------------------------------

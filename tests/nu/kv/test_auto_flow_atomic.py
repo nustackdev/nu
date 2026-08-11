@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from nu.domains.shape import Shape
 from nu.flows import Sequential as Seq
-from nu.virtuals import (
+from nu.kv import (
     IntRef,
     Snapshot,
     StrRef,

@@ -141,7 +141,7 @@ class LMDBStorage:
 
     Lazy-loaded to avoid a hard ``lmdb`` dep at import time (same shape as
     ``RedisPublisher``). The backing storage is constructed inside ``asetup``
-    so importing ``nu.virtuals.fabrics`` never touches the ``lmdb`` module.
+    so importing ``nu.kv.fabrics`` never touches the ``lmdb`` module.
     Instance attribute access delegates to the backing storage once open.
 
     Config kwargs mirror the imperative ``lmdb_storage`` CM: ``path``,

@@ -10,9 +10,9 @@ the path resolved at runtime, that key evaluates like any other child.
 from __future__ import annotations
 
 from nu import Shape, run
+from nu.kv import IntRef, ShapeRef, ShapesDictRef, ShapesListRef, StrRef
 from nu.lang import EMPTY
 from nu.mem import StrRef as MemStrRef
-from nu.virtuals import IntRef, ShapeRef, ShapesDictRef, ShapesListRef, StrRef
 
 
 # --- virtuals shapes: a 3-level hierarchy -----------------------------------
@@ -144,7 +144,7 @@ def test_primitive_dict_and_list_navigation_reads_payload():
     from ``value_type`` in ``payload`` (the payload migration privatized the old
     public ``value_type``/``item_type`` attrs, so a stale ``self.value_type``
     read would AttributeError here)."""
-    from nu.virtuals import DictRef, ListRef
+    from nu.kv import DictRef, ListRef
 
     class V(Shape):
         d = DictRef.slot(str, str)

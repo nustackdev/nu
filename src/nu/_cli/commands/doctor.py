@@ -16,7 +16,7 @@ from nu._cli._meta import nu_version
 
 # Fabric extras (as declared in pyproject) and the import that proves they resolve.
 _FABRICS: dict[str, str] = {
-    "virtuals": "virtuals",
+    "kv": "virtuals",
     "mem": "janus",
     "ui": "nudle",
     "ray": "ray",

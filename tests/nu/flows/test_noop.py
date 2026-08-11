@@ -14,10 +14,10 @@ from nu.core import Add
 from nu.domains.shape import Shape
 from nu.engine.validation import ValidationError
 from nu.flows import DelayedDo, IfDo, Noop, Sequential
+from nu.kv import IntRef
 from nu.lang import LAWS, Attr, Cardinality, Flow, Sort, Strategy, compile, validate
 from nu.lang.helpers import arun, run
 from nu.spans import Retry
-from nu.virtuals import IntRef
 
 
 class _S(Shape):

@@ -12,15 +12,15 @@ from typing_extensions import assert_type
 
 import nu
 from nu.forms import Bool, Bytes, Float, Int, Str
-from nu.mem.refs import IntRef as MemIntRef
-from nu.mem.refs import StrRef as MemStrRef
-from nu.virtuals.refs import (
+from nu.kv.refs import (
     BoolRef,
     BytesRef,
     FloatRef,
     IntRef,
     StrRef,
 )
+from nu.mem.refs import IntRef as MemIntRef
+from nu.mem.refs import StrRef as MemStrRef
 
 
 # --- Shapes -------------------------------------------------------------

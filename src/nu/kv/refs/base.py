@@ -30,8 +30,8 @@ from logging import getLogger
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape.refs.base import StructuredRef
+from nu.kv.paths import ViewPathSer
 from nu.lang import EMPTY
-from nu.virtuals.paths import ViewPathSer
 from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
 from virtuals.collections import Subscriptable

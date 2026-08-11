@@ -103,7 +103,7 @@ class Kh57ShapesRef(ShapesDictRef[int, T], Generic[T]):
         ``[begin, end)``. Deterministic given a seeded backend salt; stable
         under appends outside the queried range.
         """
-        from nu.virtuals.interactions.kh57 import Kh57Sample
+        from nu.kv.interactions.kh57 import Kh57Sample
 
         return Any(Kh57Sample(self, n, begin, end))
 
@@ -113,6 +113,6 @@ class Kh57ShapesRef(ShapesDictRef[int, T], Generic[T]):
         end: int | Nu,
     ) -> Any:
         """List of ``(int_key, shape_view)`` pairs in ``[begin, end)``, key-ordered."""
-        from nu.virtuals.interactions.kh57 import Kh57Range
+        from nu.kv.interactions.kh57 import Kh57Range
 
         return Any(Kh57Range(self, begin, end))

@@ -10,7 +10,7 @@ from __future__ import annotations
 import random
 
 from nu import Shape, run
-from nu.virtuals import FloatRef, IntRef, Kh57ShapesRef, StrRef
+from nu.kv import FloatRef, IntRef, Kh57ShapesRef, StrRef
 
 
 class Point(Shape):
@@ -107,7 +107,7 @@ def test_sample_respects_range(ctx) -> None:
 
 def test_sample_deterministic_with_seeded_rng(ctx) -> None:
     _load_series(ctx, range(1_000))
-    from nu.virtuals.interactions.kh57 import Kh57Sample
+    from nu.kv.interactions.kh57 import Kh57Sample
 
     q1 = Kh57Sample(Series.points, 25, 0, 1_000, rng=random.Random(7))
     q2 = Kh57Sample(Series.points, 25, 0, 1_000, rng=random.Random(7))

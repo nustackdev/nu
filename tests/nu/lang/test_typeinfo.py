@@ -26,6 +26,10 @@ from nu.forms import (
     Str,
     Tuple,
 )
+from nu.kv.refs import (
+    PrimitiveDictRef,
+    PrimitiveListRef,
+)
 from nu.lang import TypeInfo
 from nu.mem.refs import (
     DictRef,
@@ -35,10 +39,6 @@ from nu.mem.refs import (
     ShapesDictRef,
     ShapesListRef,
     StrRef,
-)
-from nu.virtuals.refs import (
-    PrimitiveDictRef,
-    PrimitiveListRef,
 )
 
 

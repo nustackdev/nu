@@ -28,7 +28,7 @@ __all__ = ["Session", "Subscription"]
 class Subscription(Protocol):
     """Observer handle returned by `session.subscribe(path)`.
 
-    Same shape as nu-virtuals' subscription handle. React / ReactForever
+    Same shape as nu-kv' subscription handle. React / ReactForever
     bind callbacks on it; the session fires them when a `notify` frame
     lands from the browser for the subscribed path.
     """

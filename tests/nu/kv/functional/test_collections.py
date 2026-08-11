@@ -1,4 +1,4 @@
-"""Tests for nu-virtuals collection refs — DictRef, ListRef, SetRef, ShapeRef.
+"""Tests for nu-kv collection refs — DictRef, ListRef, SetRef, ShapeRef.
 
 Verifies:
 - Correct Value types from _wrap_* methods
@@ -32,7 +32,7 @@ from nu import (
     run,
 )
 from nu.domains.shape import Shape
-from nu.virtuals import (
+from nu.kv import (
     DictRef,
     FloatRef,
     IntRef,
@@ -44,7 +44,7 @@ from nu.virtuals import (
     ShapesListRef,
     StrRef,
 )
-from nu.virtuals.refs.base import Facet
+from nu.kv.refs.base import Facet
 from virtuals import Navigator
 from virtuals.tkv.storage import TransactionProtocol
 

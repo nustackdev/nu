@@ -22,9 +22,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from nu.lang import Context
-from nu.reactive import ObserverProtocol
-from nu.virtuals.fabrics import (
+from nu.kv.fabrics import (
     Codec,
     InMemoryObserver,
     InMemoryPublisher,
@@ -39,6 +37,8 @@ from nu.virtuals.fabrics import (
     binary_kwargs,
     text_kwargs,
 )
+from nu.lang import Context
+from nu.reactive import ObserverProtocol
 
 
 if TYPE_CHECKING:

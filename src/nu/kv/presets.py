@@ -261,7 +261,7 @@ def memory_navigator(
         tags: fold onto the Storage and Navigator bindings.
     """
     from nu.context.fabric import Provide, With
-    from nu.virtuals.fabrics import (
+    from nu.kv.fabrics import (
         Codec,
         InMemoryObserver,
         InMemoryPublisher,
@@ -303,7 +303,7 @@ def rocksdb_navigator(
     cross-process change notifications.
     """
     from nu.context.fabric import Provide, With
-    from nu.virtuals.fabrics import (
+    from nu.kv.fabrics import (
         Codec,
         InMemoryObserver,
         InMemoryPublisher,
@@ -358,7 +358,7 @@ def rocksdb_navigator_redis(
     ``redis_url`` at asetup time.
     """
     from nu.context.fabric import Provide, With
-    from nu.virtuals.fabrics import (
+    from nu.kv.fabrics import (
         Codec,
         Navigator,
         RedisObserver,
@@ -408,7 +408,7 @@ def text_navigator(
 ) -> With:
     """Text (JSON) storage + in-mem Transport/Publisher/Observer + Navigator as one bracket."""
     from nu.context.fabric import Provide, With
-    from nu.virtuals.fabrics import (
+    from nu.kv.fabrics import (
         Codec,
         InMemoryObserver,
         InMemoryPublisher,
@@ -453,7 +453,7 @@ def lmdb_navigator(
 ) -> With:
     """LMDB + in-mem Transport/Publisher/Observer + Navigator as one bracket."""
     from nu.context.fabric import Provide, With
-    from nu.virtuals.fabrics import (
+    from nu.kv.fabrics import (
         Codec,
         InMemoryObserver,
         InMemoryPublisher,
@@ -503,7 +503,7 @@ def lmdb_navigator_redis(
 ) -> With:
     """LMDB + Redis Publisher/Observer + Navigator as one bracket."""
     from nu.context.fabric import Provide, With
-    from nu.virtuals.fabrics import (
+    from nu.kv.fabrics import (
         Codec,
         LMDBStorage,
         Navigator,
@@ -558,7 +558,7 @@ def inmem_observer() -> With:
     same-process publishers (rare -- Redis is the usual cross-process case).
     """
     from nu.context.fabric import Provide, With
-    from nu.virtuals.fabrics import InMemoryObserver, InMemoryTransport
+    from nu.kv.fabrics import InMemoryObserver, InMemoryTransport
 
     return With(
         Provide(InMemoryTransport, {}),
@@ -577,7 +577,7 @@ def redis_observer(
     counters, notification handlers) bind this at process scope.
     """
     from nu.context.fabric import Provide, With
-    from nu.virtuals.fabrics import RedisObserver
+    from nu.kv.fabrics import RedisObserver
 
     return With(
         Provide(

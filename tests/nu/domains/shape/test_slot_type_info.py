@@ -15,6 +15,12 @@ from typing import Any
 import pytest
 
 import nu
+from nu.kv.refs import (
+    Kh57Ref,
+    Kh57ShapesRef,
+    PrimitiveDictRef,
+    PrimitiveListRef,
+)
 from nu.lang import TypeInfo
 from nu.mem.refs import (
     IntRef,
@@ -23,12 +29,6 @@ from nu.mem.refs import (
     ShapesDictRef,
     ShapesListRef,
     StrRef,
-)
-from nu.virtuals.refs import (
-    Kh57Ref,
-    Kh57ShapesRef,
-    PrimitiveDictRef,
-    PrimitiveListRef,
 )
 
 
@@ -86,9 +86,7 @@ def test_primitive_list_ref_synthesizes_with_no_kwargs() -> None:
 
 def test_primitive_list_ref_stamps_recursive_type_info() -> None:
     ref = ListHolder.tags
-    assert ref._payload["type_info"] == TypeInfo(
-        PrimitiveListRef, elem=TypeInfo(str)
-    )
+    assert ref._payload["type_info"] == TypeInfo(PrimitiveListRef, elem=TypeInfo(str))
 
 
 class DictHolder(nu.Shape):
@@ -126,9 +124,7 @@ def test_shapes_dict_ref_synthesizes_with_derived_kwargs() -> None:
 
 def test_shapes_dict_ref_stamps_recursive_type_info() -> None:
     info = ShapesDictHolder.by_id._payload["type_info"]
-    assert info == TypeInfo(
-        ShapesDictRef, key=TypeInfo(int), elem=TypeInfo(LeafShape)
-    )
+    assert info == TypeInfo(ShapesDictRef, key=TypeInfo(int), elem=TypeInfo(LeafShape))
 
 
 class ShapesListHolder(nu.Shape):

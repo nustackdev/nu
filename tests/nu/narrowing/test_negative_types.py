@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import nu
 from nu.forms import Int, Str
-from nu.virtuals.refs import IntRef, ShapesDictRef, StrRef
+from nu.kv.refs import IntRef, ShapesDictRef, StrRef
 
 
 # --- Shapes (used across the negative cases) ---------------------------

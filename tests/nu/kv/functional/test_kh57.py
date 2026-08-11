@@ -15,8 +15,8 @@ from __future__ import annotations
 import random
 
 from nu import Literal, Shape, run
-from nu.virtuals import IntRef, Kh57Ref
-from nu.virtuals.refs.base import Facet
+from nu.kv import IntRef, Kh57Ref
+from nu.kv.refs.base import Facet
 
 
 class Ledger(Shape):
@@ -90,7 +90,7 @@ def test_sample_respects_range(ctx) -> None:
 
 def test_sample_deterministic_with_seeded_rng(ctx) -> None:
     _load_range(ctx, range(5_000))
-    from nu.virtuals.interactions.kh57 import Kh57Sample
+    from nu.kv.interactions.kh57 import Kh57Sample
 
     q1 = Kh57Sample(Ledger.entries, 100, 0, 5_000, rng=random.Random(42))
     q2 = Kh57Sample(Ledger.entries, 100, 0, 5_000, rng=random.Random(42))
@@ -101,7 +101,7 @@ def test_sample_deterministic_with_seeded_rng(ctx) -> None:
 
 def test_sample_stability_under_out_of_range_append(ctx) -> None:
     _load_range(ctx, range(1, 10_001))
-    from nu.virtuals.interactions.kh57 import Kh57Sample
+    from nu.kv.interactions.kh57 import Kh57Sample
 
     # Fresh seeded rng per run so the rng state does not drift.
     q1 = Kh57Sample(Ledger.entries, 50, 1_000, 2_000, rng=random.Random(0))

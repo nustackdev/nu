@@ -23,7 +23,7 @@ from typing_extensions import assert_type
 import nu
 from nu.core import Literal
 from nu.forms import Any, Bool, Int, Str
-from nu.virtuals.refs import IntRef, PrimitiveListRef
+from nu.kv.refs import IntRef, PrimitiveListRef
 
 
 # --- Constructing an Any ------------------------------------------

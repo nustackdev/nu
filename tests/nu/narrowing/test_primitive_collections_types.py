@@ -14,7 +14,7 @@ from typing_extensions import assert_type
 
 import nu
 from nu.forms import Int, Str
-from nu.virtuals.refs import (
+from nu.kv.refs import (
     PrimitiveDictRef,
     PrimitiveFrozenSetRef,
     PrimitiveListRef,

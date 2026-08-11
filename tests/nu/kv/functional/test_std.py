@@ -19,8 +19,7 @@ from pathlib import PurePath
 from uuid import UUID, uuid4
 
 from nu import Shape, arun, run
-from nu.std.fin import PyBasisPoint, PyPercentage
-from nu.virtuals import (
+from nu.kv import (
     BasisPointRef,
     ComplexRef,
     DateRef,
@@ -34,6 +33,7 @@ from nu.virtuals import (
     TimezoneRef,
     UUIDRef,
 )
+from nu.std.fin import PyBasisPoint, PyPercentage
 
 
 UTC = timezone.utc
