@@ -66,11 +66,18 @@ import inspect
 from typing import TYPE_CHECKING, TypeVar, cast
 
 from nu.engine.structure import Attribute, Declared
-from nu.lang.kinds import Command
+from nu.lang.kinds import (
+    Command,
+    Flow,
+    Reduction,
+    ScalarAction,
+    ScalarQuery,
+    Span,
+    StreamAction,
+    StreamQuery,
+)
 from nu.lang.nu import Nu
 from nu.lang.sentinels import EMPTY, INVALID
-
-from .helpers import _ALLOWED_BASES, _REJECTED_BASES
 
 
 if TYPE_CHECKING:
@@ -82,6 +89,9 @@ if TYPE_CHECKING:
 __all__ = ["InteractionFactory"]
 
 B = TypeVar("B", bound="Nu")
+
+_ALLOWED_BASES: tuple[type, ...] = (ScalarQuery, Command, ScalarAction)
+_REJECTED_BASES: tuple[type, ...] = (StreamQuery, StreamAction, Reduction, Flow, Span)
 
 
 def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at the call site
