@@ -38,7 +38,7 @@ del _bootstrap
 # Subpackage namespaces for dot-access.
 # Early group: pure layers with no dependency on the flat root surface.
 from . import context, core, engine, factory, flows, forms, lang, spans, tree
-from .domains import shape
+from .domains import service, shape
 
 # Flat re-exports: the program-authoring surface.
 from .context import *
@@ -49,6 +49,7 @@ from .spans import *
 
 # Shape DSL only; fabric atoms (Load, SetCmd, ...) stay at nu.shape.*.
 from .domains.shape import Shape, Slot
+from .domains.service import Method, Service
 
 # Language essentials, curated to the building blocks of a Nu program:
 #   - the root kind (``Nu``, ``TypedNu``);
