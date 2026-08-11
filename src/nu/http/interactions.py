@@ -2,6 +2,10 @@
 
 GET is a ScalarQuery (safe verb, no mutation attribution).
 POST / PUT / PATCH / DELETE are ScalarActions (mutate, still yield the response body).
+
+Each class inlines its own `_mutates` (mutating verbs) + `_compile` / `_acompile`.
+Shared wire logic lives in `nu.http.core`. Repetition across the 4 mutating verbs
+is intentional: this is declaration-style code, read straight through.
 """
 
 from __future__ import annotations
@@ -11,13 +15,12 @@ from typing import TYPE_CHECKING
 from nu.engine.structure import Declared
 from nu.lang import ScalarAction, ScalarQuery
 
-from .fabric import HttpFabric
+from .core import acompile_call, compile_call
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu.lang.runtime import Runtime
 
 __all__ = [
     "HttpDelete",
@@ -25,98 +28,62 @@ __all__ = [
     "HttpPatch",
     "HttpPost",
     "HttpPut",
-    "verb_to_cls",
 ]
 
 
-def _format_path(path: str, kwargs: dict) -> tuple[str, dict]:
-    """Substitute {name} placeholders from kwargs; return (path, remaining kwargs)."""
-    remaining = dict(kwargs)
-    formatted = path
-    for key in list(remaining):
-        placeholder = "{" + key + "}"
-        if placeholder in formatted:
-            formatted = formatted.replace(placeholder, str(remaining.pop(key)))
-    return formatted, remaining
-
-
-def _split_kwargs(verb: str, path: str, kwargs: dict) -> tuple[str, dict]:
-    """Format path, then route remaining kwargs to params (GET/DELETE) or json body."""
-    formatted, remaining = _format_path(path, kwargs)
-    if verb in ("GET", "DELETE"):
-        return formatted, {"params": remaining}
-    return formatted, {"json": remaining}
-
-
-class _HttpCall:
-    """Shared compile logic for the 5 verbs. children = (endpoint_ref, args_literal)."""
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref_thunk, args_thunk = children
-
-        def thunk(rt: Runtime) -> object:
-            payload = ref_thunk(rt)
-            args = args_thunk(rt)
-            verb = payload["verb"]
-            path, wire = _split_kwargs(verb, payload["path"], args)
-            fabric = rt.ctx.get(HttpFabric, payload["owner_service"])
-            return fabric.request(verb, path, **wire)
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref_thunk, args_thunk = children
-
-        async def athunk(rt: Runtime) -> object:
-            payload = await ref_thunk(rt)
-            args = await args_thunk(rt)
-            verb = payload["verb"]
-            path, wire = _split_kwargs(verb, payload["path"], args)
-            fabric = rt.ctx.get(HttpFabric, payload["owner_service"])
-            return await fabric.arequest(verb, path, **wire)
-
-        return athunk
-
-
-class HttpGet(_HttpCall, ScalarQuery):
+class HttpGet(ScalarQuery):
     """GET: safe read, yields parsed JSON."""
 
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return compile_call(children)
 
-class _HttpMutation(_HttpCall, ScalarAction):
-    """Mutating verbs share slot-0 (endpoint ref) as the mutation attribution."""
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return acompile_call(children)
+
+
+class HttpPost(ScalarAction):
+    """POST: creates, yields parsed JSON response."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return compile_call(children)
 
-class HttpPost(_HttpMutation):
-    """POST: creates, yields parsed JSON response."""
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return acompile_call(children)
 
 
-class HttpPut(_HttpMutation):
+class HttpPut(ScalarAction):
     """PUT: replaces, yields parsed JSON response."""
 
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-class HttpPatch(_HttpMutation):
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return compile_call(children)
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return acompile_call(children)
+
+
+class HttpPatch(ScalarAction):
     """PATCH: partial update, yields parsed JSON response."""
 
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-class HttpDelete(_HttpMutation):
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return compile_call(children)
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return acompile_call(children)
+
+
+class HttpDelete(ScalarAction):
     """DELETE: yields parsed JSON response (empty dict on 204)."""
 
+    _mutates = Declared(value=frozenset({0}), name="mutates")
 
-_VERBS = {
-    "GET": HttpGet,
-    "POST": HttpPost,
-    "PUT": HttpPut,
-    "PATCH": HttpPatch,
-    "DELETE": HttpDelete,
-}
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return compile_call(children)
 
-
-def verb_to_cls(verb: str) -> type:
-    """Pick the interaction class for an HTTP verb."""
-    try:
-        return _VERBS[verb]
-    except KeyError as e:
-        msg = f"unknown HTTP verb {verb!r}; expected one of {sorted(_VERBS)}"
-        raise ValueError(msg) from e
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return acompile_call(children)

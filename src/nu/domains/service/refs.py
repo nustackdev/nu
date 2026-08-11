@@ -1,4 +1,4 @@
-"""MethodRef: leaf Ref naming a Method on a Service."""
+"""MethodRef: leaf Ref addressing a Method on a Service."""
 
 from __future__ import annotations
 
@@ -11,6 +11,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.lang.runtime import Runtime
+
+    from .dsl import Method
 
 __all__ = ["MethodRef"]
 
@@ -30,6 +32,13 @@ class MethodRef(Ref):
         self._payload["owner_service"] = owner_service
         for k, v in payload.items():
             self._payload[k] = v
+
+    @classmethod
+    def method(cls, **kwargs: object) -> Method:
+        """Package this MethodRef class + config as a Method declaration."""
+        from .dsl import Method
+
+        return Method(cls, **kwargs)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Evaluate to a snapshot of _payload."""

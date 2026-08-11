@@ -2,18 +2,23 @@
 
 Flat/capability sibling of Shape. A Service class collects Methods at
 class-definition time; each Method exposes as a MethodRef when accessed
-on the Service class.
+on the Service class. Mirrors Shape's Slot / Ref split:
+
+    Shape:   Slot   (decl) -> <Type>Ref  (leaf)
+    Service: Method (decl) -> MethodRef  (leaf)
 
 No Interactions here. Concrete dialects (nu.http, later others) subclass
-MethodRef and add call semantics.
+MethodRef and expose their own `.method(...)` factory that packages the
+subclass + config as a `Method` declaration.
 
-Example::
+Example (using nu.http)::
 
-    class SolanaRPC(Service):
-        get_balance = Method(pubkey=Str)
-        get_slot = Method()
+    class GH(Service):
+        get_repo    = nu.http.GETRef.method("/repos/{owner}/{name}")
+        list_issues = nu.http.GETRef.method("/repos/{owner}/{name}/issues")
 
-    SolanaRPC.get_balance   # -> MethodRef
+    GH.get_repo   # -> GETRef  (descriptor unwraps the Method declaration)
+    GH.get_repo(owner="nu", name="core")  # -> HttpGet interaction
 """
 
 from __future__ import annotations
@@ -28,7 +33,7 @@ __all__ = ["Method", "MethodDescriptor", "Service", "ServiceMeta"]
 
 
 class Method:
-    """Factory carrying a MethodRef class and its payload kwargs."""
+    """Declaration factory: a MethodRef class + its payload kwargs."""
 
     def __init__(
         self,
@@ -49,7 +54,7 @@ class Method:
 
 
 class MethodDescriptor:
-    """Returns a fresh MethodRef when a method name is accessed on a Service class."""
+    """Returns a fresh MethodRef when a name is accessed on a Service class."""
 
     def __init__(self, name: str, method: Method) -> None:
         self.name = name
