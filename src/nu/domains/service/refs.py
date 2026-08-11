@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from nu.lang import Ref
 
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from nu.lang.runtime import Runtime
 
 __all__ = ["MethodRef"]
 
@@ -23,3 +30,21 @@ class MethodRef(Ref):
         self._payload["owner_service"] = owner_service
         for k, v in payload.items():
             self._payload[k] = v
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Evaluate to a snapshot of _payload."""
+        snapshot = dict(self._payload)
+
+        def thunk(rt: Runtime) -> dict:
+            return snapshot
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Async sibling of _compile."""
+        snapshot = dict(self._payload)
+
+        async def athunk(rt: Runtime) -> dict:
+            return snapshot
+
+        return athunk

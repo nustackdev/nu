@@ -49,12 +49,16 @@ ray = [
 invisibles = [
     "invisibles-py",
 ]
+http = [
+    "httpx>=0.27",
+]
 all = [
     "nustack-py[virtuals]",
     "nustack-py[mem]",
     "nustack-py[ui]",
     "nustack-py[ray]",
     "nustack-py[invisibles]",
+    "nustack-py[http]",
     "virtuals-py[rocksdb]>=0.1.2",
 ]
 
@@ -211,6 +215,9 @@ convention = "google"
 ]
 "src/nu/ui/nudle/**/*.py" = [
     "D102", "D103", "D205", "ANN401", "S110",
+]
+"src/nu/http/methods.py" = [
+    "N802",  # GET/POST/PUT/PATCH/DELETE mirror HTTP verbs
 ]
 
 [tool.ruff.lint.isort]
