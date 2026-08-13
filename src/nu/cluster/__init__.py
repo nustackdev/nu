@@ -1,4 +1,4 @@
-"""nu.ray - the ray compute fabric.
+"""nu.cluster - the ray compute fabric.
 
 Ray reframes as a compute fabric: locations are actor processes, addresses
 are tags, the interaction is ``Teleport`` (execute a Nu tree there).

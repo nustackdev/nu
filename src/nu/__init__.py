@@ -130,7 +130,7 @@ if TYPE_CHECKING:
 # ``from nu import *`` skips them (see ``_SHADOWS_BUILTIN`` below) so callers
 # don't get their builtins silently swapped. Any set/dict-builder logic in
 # THIS file must use literals (``{...}``) — never the shadowed callables.
-_LAZY = {"http", "kv", "mem", "proxy", "ray", "service", "std", "ui"}
+_LAZY = {"cluster", "http", "kv", "mem", "proxy", "service", "std", "ui"}
 
 
 def __getattr__(name):

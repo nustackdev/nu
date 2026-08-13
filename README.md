@@ -131,7 +131,7 @@ Persistence, reactivity, atomicity, observability, distribution — not features
 - **Persist across restarts** — the KV slot is already durable.
 - **Re-render live on input changes** — wrap in a `React` interaction.
 - **Handle terabytes** — shard the KV Fabric; the Refs don't notice.
-- **Run distributed across a cluster** — bind through `nu.ray`; the Refs don't notice.
+- **Run distributed across a cluster** — bind through `nu.cluster`; the Refs don't notice.
 
 Full walkthrough at [nustack.dev](https://nustack.dev).
 
@@ -172,7 +172,7 @@ Each fabric binds Refs to a real backend and unlocks a new capability.
 | [`nu.kv`](https://nustack.dev/docs/reference/fabrics/virtuals) | Persistent state fabric. Refs over a KV backend (RocksDB, LMDB); transactions, snapshots, and change notifications, built in. |
 | [`nu.ui`](https://nustack.dev/docs/reference/fabrics/ui) | Web UI fabric. Same fabric shape as the others, but the Refs are widgets — text, buttons, tables — rendered in the browser and live-updated as your state changes. |
 | [`nu.proxy`](https://nustack.dev/docs/reference/fabrics/proxy) | Network fabric. Puts other fabrics on the network — bind a fabric in one process, use it from another; same Refs, same interactions, over TCP or Unix socket. |
-| [`nu.ray`](https://nustack.dev/docs/reference/fabrics/ray) | Cluster compute fabric. Teleport a Nu tree to any worker in your Ray cluster; it runs there and returns the result. |
+| [`nu.cluster`](https://nustack.dev/docs/reference/fabrics/ray) | Cluster compute fabric. Teleport a Nu tree to any worker in your Ray cluster; it runs there and returns the result. |
 
 # 📦 Apps built on Nu
 
