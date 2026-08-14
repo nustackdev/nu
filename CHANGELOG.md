@@ -1,0 +1,1557 @@
+# Changelog
+
+## Packages shipped from this repo
+
+- **nu** — 0.1.13
+- **nudle** — 0.1.3
+- **ui-core** — 0.1.0
+- **ui-kit** — 0.1.1
+
+Below is the changelog for **nu** - the full commit stream. Newest first.
+
+## Unreleased
+
+- Add nu.llm: OpenAI-compat chat/completions fabric (ChatRef + presets)
+- Add nu.cc: Claude Code fabric (PromptRef + Session bracket)
+- Add nu.mp: multiprocessing compute fabric (MpWorker + Teleport)
+- Add telegram echo example
+- Rename nu.ray fabric to nu.cluster
+- Rename nu.invisibles fabric to nu.proxy; move nu.kv path registration to nu.proxy
+- Rename nu.virtuals fabric to nu.kv
+- Add tests for service DSL, in-process fabric, and http fabric
+- Add nu.service: ServiceFabric + 5 Refs / interactions + bind + Calculator example
+- Remove ScalarQueryFactory, replace with host
+- Remove unnecessary helpers module
+- Remove nu.factory.methods: Service DSL supersedes it
+- Restructure nu.http: per-verb Refs, inline interactions, solana_rpc example
+- Add nu.http: HttpFabric + HttpMethodRef + 5 verb interactions + factories + bind
+- Add service DSL: Service, Method, MethodDescriptor, MethodRef
+- Update demo screenshots
+- Remove docs/: site moved to nustackdev/nustack.dev
+
+## 0.1.13 — 2026-08-09
+
+- Bump nu to 0.1.13
+- README: switch demos section to markdown table with names as row headers
+- Demos section polish: cover images, refreshed wording, mobile dividers, README 2x2 table
+- Counter demo: switch count widget to StatRef
+- Demos: punchier copy, About page, CTAs, docs/repo links
+- README: mirror three-step Quickstart from landing
+- Landing: three-step Quickstart, CommandLine + LinkCard, gradient + CTA-align fixes
+- Add movies demo bundled with the wheel
+- Nu CLI + branding: rich-click, brand palette + logo header, private _cli/_branding packages
+- Nudle server: quiet uvicorn, print ready/stopped banner, auto-open browser
+- Config: extract constants module, fix telemetry SSL on python.org installs, move bootstrap into _config
+
+## 0.1.12 — 2026-08-09
+
+- Config: retry first-run signal until delivery is confirmed; bump nu to 0.1.12
+
+## 0.1.11 — 2026-08-09
+
+- Bake default posthog token into config; bump nu to 0.1.11
+- Bump nudle to 0.1.3
+
+## 0.1.10 — 2026-08-09
+
+- Bump nu to 0.1.10
+- CLI: flatten `nu demo run <name>` to `nu demo <name>`, update docs
+- Nudle: use 256x256 logo as favicon + apple-touch-icon
+- Add `~/.nu` user config with CLI, move demos cache under it
+
+## 0.1.9 — 2026-08-09
+
+- Bump nu to 0.1.9
+- Landing/README/docs: runnable code snippets with decomposed logic + assembly
+- Docs: rewrite index around Get started + The idea + Fabrics; verify install via `nu demo`
+- README: mirror landing intro, split Fabrics + Apps, quickstart via `nu demo`
+- Landing: reframe intro on 'interaction', add Quickstart chapter
+- Landing: refine intro copy, sharpen pull-quote, split sharding vs distributed exec
+- Landing: harmony pass — inline hero mark, tighter padding, item rows
+- Landing: simplify hero geometry, drop logo outlines
+- Landing: Page wrapper, drop peek, 5-hue intro accents
+- Landing: page shell + Chapter cards
+- Landing: replace lede + model + nu chapters with intro story
+- Bump ui-kit to 0.1.1, nudle to 0.1.2
+- nu.ui code block: highlight with Shiki
+- Test `init(v)` sugar on item and collection refs
+- Collection forms: add `init(v)` sugar for set-if-missing
+- Examples: decompose counter into ui/tick/app; add sampled (kh57 + line chart)
+- Item forms: add `init(v)` sugar for set-if-missing
+- Nudle: auto-mount for shape-less UI refs and unmounted Pages
+- Add `nu` CLI with `demo` and `doctor` commands
+
+## 0.1.8 — 2026-08-07
+
+- Bump nu to 0.1.8
+- Rename `nu.v` alias to `nu.kv` and drop `nu.m`
+- Split ray dep by platform and track empty nudle dist dir
+- Remove sibling path sources and add cross-repo dev docs
+- Split install docs into PyPI and from-source how-tos
+- Make bare `uv sync` lean; gate sibling-repo path deps behind `--group local`
+
+## 0.1.7 — 2026-08-07
+
+- Bump nu to 0.1.7
+- Fix `__version__` dist name (nustack-py, not nu)
+- Add `__version__` read from installed metadata
+- Restore deploy-docs workflow; bump minimum Python to 3.10 in docs
+- Remove deploy-docs workflow (temp, to clear ghost run)
+- Deploy docs: cancel-in-progress on pages concurrency
+- Simplify fabrics description in readme
+- Update readme
+- Restructure README: merge example into Quick Start, split Spec, align fabric copy with identity
+- Update README to enhance structure and add community links
+- Sync examples and docs to top-level fabric presets
+
+## 0.1.6 — 2026-08-06
+
+- Bump to 0.1.6
+- Export `nu.ui.server` preset at package top level
+
+## 0.1.5 — 2026-08-06
+
+- Extract `nu.reactive`; rework extras per fabric; bump to 0.1.5
+
+## 0.1.4 — 2026-08-06
+
+- Bump to 0.1.4; require nudle>=0.1.1
+- Bump nudle to 0.1.1; lower minimum Python to 3.10
+- Fix duplicate 'nu' prefix in GitHub release title
+
+## 0.1.3 — 2026-08-06
+
+- Bump to 0.1.3
+- Split cast wrappers into `cast_fns`
+- Support Python 3.10
+- Remove interaction model section from README
+- Add cover image to README
+- Post-release polish: hide broken docs links, pip install, OG meta, movies init fix
+
+## 0.1.2 — 2026-08-06
+
+- Pin virtuals-py>=0.1.2, bump to 0.1.2
+
+## 0.1.1 — 2026-08-06
+
+- Fix self-refs in nustack-py extras, bump to 0.1.1
+
+## 0.1.0 — 2026-08-06
+
+First public release. `nu.mem`, `nu.kv`, `nu.ui`, `nu.proxy`, `nu.ray` shipped as one primitive across the stack.
+
+## Pre-0.1.0 — 2025-01-17 → 2026-08-06
+
+Full development history leading up to the first public release, newest first. 1411 commits.
+
+- Set up nu + nudle PyPI publishing, fix ui-core/ui-kit CI paths
+- Wire fumadocs search for static export (staticGET + client static mode)
+- Decouple site tokens from fumadocs theme; force dark on (home) segment
+- Add PostHog analytics to docs site
+- Add hello/counter/movies examples; refresh tutorials and install doc
+- Remove stale examples
+- Lazy-load fabrics from nu root; curate lang re-exports; retarget in-tree from-nu imports to source subpackages
+- Restructure reference docs (fabrics/core/std), refresh Nu identity across README/init/pyproject/landing
+- Rename site tokens to --site-* prefix; enable fumadocs theming for docs; sync home copy with identity.md
+- Rename kickasslanding to home; delete app/old_home; add BulletList; add fading n top-right outline (hidden below 1024); soften border gradients to 0.5
+- Tune hero: 114px slogan, keep display size until 900; fix 6px gap between hero CTA rows; hide section-2 side borders on mobile; swap favicon to m15; add apple-icon
+- Extract Heading/Tagline/Lede/Description/Label/Stack/CtaRow primitives; migrate landing, delete dead .sectionLabel/.svgPlaceholder/.useCases
+- Add semantic gap tokens (tight/normal/loose/xloose); refactor landing rhythm, remove per-breakpoint margin overrides
+- Add role-based type tokens (display/heading/tagline/lede/body/label); refactor consumers
+- Add Row stackAt prop for per-instance responsive stacking; migrate landing rows to explicit stackAt
+- Mobile grid: drop all borders + container padding, 2x header pad, hide chapter peeks; remove hero demo card frame; shrink lede at 1024
+- Force dark theme + dark root bg + themeColor meta; fix heroLeftCell specificity so mobile slogan doesn't duplicate
+- Add hero mobile restructure at 1024/640; interaction-model row single-cell between 701-1075; CellContent pad='none' variant
+- Add display-tier fs tokens + responsive scale-downs at 1280/640; mobile Row single-col + card-margin tighten; edit nulog/nuspace taglines; shorten Query blurb
+- Add space ladder tokens; Container inner padding; hero top gap; header cell 2:1 pad ratio
+- Add bg/border tokens; tokenize footer + FloatingNav; solid dividers default; NustackMark mono variant; footer gets NuLogo
+- Add giant peek chapter labels behind section headers; swap apps/infra order; drop small section tags
+- Tune home hero: 55/45 split, bigger stacked slogan, larger dimmed bg logo
+- Polish home hero (60/40 split, stacked slogan, right-column layout); add icons to all docs/social CTAs; extract DiscordMark + XMark
+- Add CodeSample + hero-demo/interaction-model marks; center nu section on code example; add Cell xalign/yalign
+- Wire fabric+app rows to silver-woven hues with real glyphs
+- Swap home page CTAs to SiteButton kit with old_home variants
+- Extract landing kit into components/site and consolidate design tokens
+- Restructure components: group all site-only pieces under components/site/
+- Edit hero borders to gradient sparks; hide HeroLogo outer outline overlays
+- Edit landing borders: solid white .2, spark gradients on hero+section 2, spark bloom inside u letter
+- Add HeroLogo with partial white outline on u letter's outer left+bottom
+- Add landing page: hero + sections scaffold with logo layer
+- Add landing building blocks: Container, Row, Cell, CellContent, DotPattern, GradientBlobs
+- Refine landing: fabric copy, coming-soon nuspace, footer mark, scope home tokens
+- Soften hero ghost logo to 0.5 opacity; rename first chapter label to `model`
+- Polish landing hero + HeroViz: tighter type, responsive stack, shared card width
+- Polish landing hero right column: numbered use cases, primary/secondary CTAs, colophon meta, lifted ink-3
+- Restyle hero: NuLogo ghost behind stacked slogan, 2-col editorial layout
+- Remove nu.nd alias
+- Update Nu tagline and channel_prefix defaults
+- Polish Nu docstrings and comments across src/
+- Move auto flow wrapper inside With block in movies.py example
+- Movies example: capitalize user-facing strings
+- Movies example: wire filter, label filter fields, markdown notes
+- Add MovieDetail page and Movie shape; add MutableSequence.del_at
+- Simplify movies example: inline helpers, drop SpliceAt for .pop
+- Add lowercase coerce helpers and List.of / Set.of / FrozenSet.of
+- Rename Section-based Refs to bare nouns (Card/Tabs/Accordion/Field)
+- Drop Query/Command/Action/Form suffixes from interaction names
+- Route SequenceRef[a:b] to slice op; wire movies row-click delete
+- Add typed slot(**props) to nu.ui widgets; drop ClassVar chrome
+- Extract nu.ui.core: Ref, Section, Session, Frame, interactions
+- Flatten nu.ui: refs/ + nudle/ (py) + web/ (all ts)
+- Group nu.ui by language + host: ui/{py,ts} + ui/nudle/{py,ts}
+- Split nudle out of nu.ui into nu.nudle (py + ts sides)
+- Add movies example: personal tracker as nudle DX benchmark
+- Rename ref store() to set(); rename mapping per-key ops to set_item/get_item/del_item
+- Make Runtime.ctx per-asyncio-task via ContextVar
+- Rewire fabrics and presets to virtuals Publisher/Observer split
+- Route ref writes through navigate_and_ensure; drop EnsureLayoutCmd
+- Add lmdb_navigator_redis preset
+- Fix kh query interaction - move rng into payload
+- Add built-in sidebar to nu.ui for multi-page apps
+- Unwrap stream atoms in nu.std.itertools; return raw StreamQuery
+- Fix ReversedKeysQuery kind: StreamQuery -> ScalarQuery
+- Prefer already-seen Index in ui _find_index
+- Skip async iter path for netrefs whose remote class is sync-only
+- Share invisibles dispatcher instance across connections
+- Remove set_logger_name rewrite
+- Add nu.std.logging wrapping Python logging; remove nu.log from core/io
+- Add editable sources for virtuals-py, invisibles-py, kh57
+- Refactor Kh57Ref/Kh57ShapesRef onto dict variants; route writes explicitly
+- Point README install to the docs guide
+- Rewrite install guide as from-source; add gradient favicon to nudle and docs
+- Restore mobile footer top padding so content isn't flush against the last card
+- Move refs guide out of public docs; keep fabrics scaffold empty
+- Edit README intro: fold Ref/Interaction/Fabric bullets in above the fold
+- Rewrite README around interaction model + nudle_rocksdb example; relicense to Apache-2.0
+- Rewrite first-app tutorial around the nudle_rocksdb sample used on the landing
+- Polish landing responsiveness: mobile interaction-model cascade, hero chevron bridge, tighter breakpoints
+- Rebuild interaction-model section as a centered horizontal SVG tree
+- Rename rocksdb presets to drop _inmemory suffix; wrap nudle example specs with auto_flow_atomic
+- Polish landing hero card, floating nav, code sample, and mocks
+- Extract internal guides from public docs
+- Edit landing page copy and visuals
+- Restructure docs around Diátaxis: tutorials, how-to, reference
+- Polish landing marks and sections, extract mark primitives
+- Rename first-tree to first-app, swap in nudle_memory example, use Cards in whats-next
+- Restructure HeroViz: fused asymmetric card, fabric-clean right scene
+- Add getting-started docs, relocate nudle to catalogue and refs to fabrics
+- Unify landing CTAs, retarget github links, tune section rhythm
+- Restructure HeroViz: real-nested containers, silver-woven palette, gutter chips
+- Remove composables dep
+- Add HeroViz to hero, polish landing sections and nav
+- Cap-align hero wordmark to logo, shrink navbar logo
+- Restyle apps section as silver-woven rows, capitalize hero wordmark
+- Remove hero stack-layers viz; polish wordmark + logo
+- Add chapter labels above section cards, flatten card surface
+- Add home fabrics section, drop unused variants and picker pages
+- Point invisibles at invisibles-py from PyPI; use invisibles.netkit imports
+- Resolve virtuals-py from PyPI instead of local editable
+- Rework home hero: meta labels, audience cards, CTA row
+- Add docs package-lock so CI can install reproducibly
+- Static-export docs and deploy to GitHub Pages
+- Remove PR/push CI workflow to save private-repo Actions credits
+- Add cursor-pointer on kit primitives, wire kit source into nudle Tailwind scan
+- Sweep NudleRef store to set in top-level nudle examples
+- Rename nudle status Badge variant destructive to danger
+- Bump CI Node from 22 to 24
+- Trim ui-core and ui-kit package descriptions
+- Add npm CI + publish workflows for ui-core and ui-kit
+- Retune nudle refs onto kit primitives, rename store to set
+- Add Storybook playground with MDX docs pages
+- Add kit design system: tokens, fonts, 51 primitives
+- Reorg nu.nudle to nu.ui, split JS into core/kit/nudle packages
+- Restyle landing palette to smoother purple/blue duo
+- Restyle landing: flat section bgs, purple-only CTAs, IDE code block, vertical Nu section
+- Reorg landing internals
+- Update landing hero gradients
+- Tune landing harmony: uniform shell rhythm, v3 split ratios, calmer type scale
+- Restyle nustack landing: darker paper bg, quiet v3-style section cards with hue bloom, Inter across, CTA button pairs, 2-col app grid
+- Add NustackLogo (silver metric mark with dart-on-line dot) to nav pill and hero
+- Rework nustack landing: promote v7 hero, floating nav with search, opaque wordmark gradient
+- Add SVG marks + rework hero/apps/interaction sections on nustack landing
+- Refresh nudle examples: rename memory, simplify rocksdb, add live sine
+- Restructure home into nustack org landing; move Nu to /nu
+- Add apps guide: principles for building on Nu
+- Add Kh57ShapesRef + Kh57Ref item wrap
+- Rebuild home page middle sections as flat grid cells
+- Rebuild home page story + add POC landing iters
+- Rebuild home page hero: centered wordmark, story beats, model flow
+- Warn when a local nudle module shadows the ui wheel
+- Rewrite app examples: drop CLI args, tempdirs, and stale FIXMEs
+- Sort imports in storybook example
+- Fix pre-existing attribute typos in factory and itertools examples
+- Reorganize examples into thematic subdirs
+- Drop tempdir ceremony from virtuals fabric example
+- Rewrite nudle examples to bracket form
+- Move canonical bracket examples to top level
+- Restructure home page hero as 5-step quickstart
+- Remove nudle CLI and imperative serve entrypoint
+- Add unit tests for Fabric sync/async lifecycle
+- Add bracket-form Nu app examples
+- Add bracket-form fabric presets
+- Add NudleServer Fabric
+- Add sync/async duality to Fabric protocol
+- Add Raise control and TupleForm.of
+- Extend RayService with init= bracket
+- Add With sequencer, bind_as convention, Navigator storage_tags
+- Expose nu.invisibles, nu.ray, nu.virtuals.fabrics on dot-access
+- Rework docs landing to v3 (editorial polish + spec-drawing detail)
+- Rework docs landing to v2 (grid rhythm + before/after model)
+- Unify Service under Fabric; extend Provide with tags and predicate
+- Delete nu.distributed
+- Add nu.invisibles transport fabric
+- Add nu.virtuals.fabrics
+- Unify fabric/resource into a two-tier Fabric protocol
+- Add nu.ray v1 fabric
+- Restructure nu.context into attrs, services, fabric
+- Extract nu.factory as a top-level package
+- Rework docs landing to v1
+- Sweep nudle refs: privacy, Arg aliases, UNSET unification
+- Update shapes example
+- Add AnyForm to every Arg alias explicitly
+- Consolidate value_type_for, make AnyForm consumable everywhere
+- Enrich AnyForm with full dynamic-descent surface (task-119 Phase 4)
+- Narrow primitive-blob subscript to elem Form (task-119 Phase 3)
+- Add annotation-driven Shape slot typing + narrowing tests
+- Untrack .vscode/ and add editor ignores
+- Tighten kh57_stream example delay: 10ms -> 1ms
+- Fix jqueue child order, SetView facet probe, nudle wire type prefix
+- Add Nu website + docs (Fumadocs 16 scaffold, migrate legacy content)
+- Strip cosmetic reprs; keep basic default on Term
+- Collapse nudle interactions/ into one interactions.py
+- Restructure nudle refs into 5 kind-grouped modules
+- Add Refs guide
+- Close task-118: privatize Nu tree machinery
+- Add nudle kh57 live-sample example
+- Expose fabric submodules on virtuals/mem/nudle/std, add nu.m/nu.nd/nu.v aliases, fix React body drain on None
+- Add nudle widget interaction test sweep
+- Fix card chrome stores via mount-ref pattern; privatize nudle section_cls
+- Extend nudle harness: section-root, deep nesting, input read paths
+- Rename context ops module to interactions
+- Migrate nudle Ref state to payload, drop with_children override, add nudle harness
+- Refresh AUTHORING substrate example to private _-names
+- Unify collection Ref navigation through a single typed _wrap_item_ref hook
+- Fix virtuals DictRef/ListRef navigation to read value_type from payload
+- Restructure Ref metadata onto payload, remove with_children overrides and dead FlatRef
+- Privatize Ref substrate methods, add lift/lower boundary, retire inline
+- Restructure Refs: parent on-tree, structural slot, runtime path resolution
+- Add nu.virtuals.Kh57Ref + Kh57SampleQuery / Kh57RangeQuery
+- Fix ref substrate protocol and port mem inline_refs
+- Replace auto_atomic with auto_flow_atomic
+- Compile term once in Worker.aexecute
+- Extend inline_refs to bare virtuals Ref tree children
+- Preserve FlatRef substrate state on with_children rebuild
+- Inherit FlatRef from Ref for sort attribution
+- Preserve ref navigation state across with_children
+- Export SwitchQuery and SortByQuery from nu.core
+- Add SortByQuery: keyed sort stream atom
+- Add SwitchQuery: value-yielding switch atom
+- Add IfQuery: value-yielding conditional atom
+- Update README fabric framing and fix nudle example Flow bodies
+- Update nudle examples to nu.nudle fabric import path
+- Patch nu.nudle.serve to lazy-import sibling nudle wheel for static bundle
+- Wire nu.nudle fabric into nu pyproject + Makefile
+- Add sibling nudle web-bundle wheel scaffolding
+- Merge nudle history into nu — fold as fabric, split web bundle as sibling wheel
+- Add lmdb_storage preset
+- Port nudle to current Nu API
+- Add DictForm.of constructor for dicts from named fields
+- Add collection create() constructors, primitive-blob compound refs, factory exports
+- Restructure example imports to flat nu namespace
+- Add in-tree service dispatch: MethodFactory and method_* descriptors
+- Add Delay, the childless delay flow
+- Add Noop as the empty Flow in nu.flows
+- Reclassify reactive flows as Controls and export io wrappers
+- Rename fin natives with Py prefix, flip ref/collection tests to sync
+- Add nu.std.fin and restore items_extended stdlib refs
+- Consolidate reactive queries in nu.core.reactive
+- Restore examples/app/ e2e apps and port to v2 API
+- Delete nu v1 src
+- Restructure pyproject into a single package
+- Move nu-virtuals and nu-mem into nu.virtuals and nu.mem
+- Move nu-distributed into nu.distributed and port to v2
+- Port nu-inspect into nu.inspect package; add core LogCommand
+- Wire nu.core.io print/input through the stdio fabric
+- Add time and asyncio std modules; tag non-deterministic atoms
+- Add extending guide for stdlib, interactions, forms, fabrics
+- Add UNSET sentinel and type Runtime.ctx as Context
+- Fix nu.std.itertools async laziness (islice, compress, pairwise)
+- Add nu.std itertools and functools modules
+- Add nu.std random module
+- Add nu.std decimal, fractions, and cmath modules
+- Add nu.std pathlib and math modules
+- Add nu.std datetime and unify the stdlib interaction factory
+- Update ownership
+- Add nu.std uuid module
+- Add nu-mem and nu-virtuals examples; type shape Form commands
+- Port nu-virtuals to v2; restructure into interactions/
+- Port nu-mem tests to v2; add shapes deep-nav
+- Fix set-read ops on dict-view operands
+- Port nu-mem refs to the v2 substrate
+- Add Snapshot/Transaction bracket spans
+- Move storage fabrics to top-level fabrics/
+- Derive nu __all__ from imports instead of parallel list
+- Flatten public API: top-level flat exports + namespaced subpackages
+- Promote nu2 to core nu, archive v1 to .playground
+- Thread value type through kind chain so run() narrows to primitive
+- Type Term.attributes as Declared
+- Narrow form __getitem__ and dict view return types
+- Extend typed forms example; add typed-authoring tests
+- Add typed forms nu2 example
+- Fix mypy python version; refresh nu2 examples to current API
+- Add typed AttrRefs; fix slice composition and mapping return types
+- Add nu2/tree metaprogramming toolkit; split rewrite into engine/tree/domain layers
+- Add nu2 Retry, Timeout, Throttle, Debounce policy spans
+- Add model cross-link to spans authoring guide
+- Add nu2 TryCatch policy span with authoring guide
+- Add nu2 core Noop leaf query
+- Add nu2 composition operators (>> | &) on the Nu base
+- Add nu2 Strategy and Control flows with hybrid runtime placement
+- Add shapes v2 domain with Form overlay, flows, engine utilities
+- Suffix every interaction by kind; fix access/Exec attribution
+- Re-attribute forms interactions to Query/Command/Action by mutation+return
+- Mirror v1 context: address-as-child refs, ServiceRef, exists ops
+- Key effects by Ref class, strip name from base Ref
+- Rename forms operations to interactions
+- Add Forms layer to nu2
+- Wire core namespace to domain modules and remove legacy
+- Make core access writes Python member mutation, not fabric commands
+- Implement core cast, iteration, transform, and reduction atoms
+- Add nu2 Context fabric and core stream/fold atoms
+- Restructure core by Python domain and map native builtins
+- Add StreamAction kind
+- Remove ray platform version markers
+- Remove syncthing config
+- Add StreamTake lazy stream limiter
+- Rename own_effects to mutates and drop RESOLVE effect
+- Match WebSocket scheme to page protocol for HTTPS tunnels
+- Add InteractionFactory for declaring atoms from callables
+- Auto-wrap non-Term children as Literal
+- Update minimal.py example
+- Add unit tests across lang/ modules
+- Add per-dimension laws and Control param_slots attribute
+- Restructure lang/laws into per-dimension modules
+- Add Action sort and ScalarAction kind
+- Add lambda stream primitives FilterFn/MapFn/FlatMapFn/MapRange; exclude Mapping from auto-flatten
+- Rename NuRuntime to Runtime, reorg lang helpers and tests
+- Restructure nu2.lang layout
+- Add Arg type aliases, parametrize Term over Runtime and Value type
+- Refine imports in engine/ (abs, relative import polish pass)
+- Add engine/evaluation protocol surface tests
+- Restructure engine/evaluation as a Protocol; move concrete Runtime to lang
+- Add engine/validation unit tests
+- Edit engine/validation: split Law.check branches, add ValidationError
+- Move build_index into compile driver; add engine/compilation unit tests
+- Split engine/compilation into program/index/attribution/emit/compile
+- Add pytest foundation and unit tests for engine/structure
+- Rework engine/structure with dataclass Attribute hierarchy and submodule split
+- Edit storybook to showcase the gallery v2 component set
+- Migrate Write payloads to nu.Record so nested Nu expressions resolve
+- Fix Section mount detection for subclassed SectionRef variants
+- Wire new components into registries
+- Edit LineChart and TableRef: multi-series + axes + legend, server-driven sort + row clicks
+- Add layout components: TabsRef, AccordionRef, Modal, CardRef
+- Add display components: AlertRef, StatRef, DividerRef, CodeBlockRef
+- Add input components: RadioGroupRef, SwitchRef, NumberInputRef, DatePickerRef, TagInputRef
+- Add form components: Form, FieldRef, Fieldset
+- Add chart components: BarChart, AreaChart, PieChart, Sparkline, GaugeRef
+- Migrate examples to nudle run/dev convention
+- Add nudle run and nudle dev CLI
+- Add component storybook example
+- Remove IntRef
+- Refine TableRef with striped, dense, sliding-window cap
+- Refine ButtonRef with label, variant, disabled, icon
+- Refine InputRef with label, placeholder, type, max length
+- Refine LineChart with labels, color, sliding window
+- Refine NavRef with push/replace/back/forward
+- Refine TitleRef with default and suffix
+- Refine HeadingRef with level and align
+- Add Container layout section
+- Add Column layout section
+- Add Row layout section
+- Add JsonViewerRef
+- Add TextAreaRef
+- Add SliderRef
+- Add SelectRef
+- Add CheckboxRef
+- Add ProgressRef
+- Add LinkRef
+- Add ImageRef
+- Add MarkdownRef
+- Add TextRef
+- Add Section nesting primitive and recursive mount payload
+- Edit benchmark script to use updated Nu api
+- Add BadgeRef and mount-props extension for class-level defaults
+- Extract lang/entry into value/stream/term subpackage
+- Add ws reconnect with exponential backoff and bounded send queue
+- Switch ws wire format from JSON to msgpack
+- Add Index, Pages, structural Refs (TitleRef, NavRef); rename h1 TitleRef -> HeadingRef
+- Rename attribution to compilation, AttributedTerm to Program
+- Compile AttributedTerm to per-nid thunk closures
+- Restructure nu2/lang into structure/laws/evaluation phases
+- Rework nu2 engine: column-store AttributedTerm, per-phase package split
+- Add Nu brand class as Term subclass for user-facing annotations
+- Rename engine vocabulary to Term/AttributedTerm/attribute/evaluation
+- Move amerge_hybrid to NuRuntime; engine no longer references lang
+- Restructure nu2 into engine/lang/core layout
+- Add nu2 core eval and run entry surface
+- Add nu2 runtime: driver, budget, toolkit, sentinels
+- Add nu2 context: Context and Attributes
+- Move layered impl to nu2 for parallel rewrite
+- Fix dashboard crash on Nu sentinel values
+- Rename engine to attribute, symbols to lang; settle attribute vocabulary
+- Add symbols package: Nu on the attribute engine
+- Drain in-flight aexecute before worker shutdown
+- Add attribute engine
+- Add Record and SortBy queries
+- Add TableRef, flat-list LineChart, bundled-static wheel build
+- Remove outdated docs, add wishjar example
+- Restructure nudle into per-type modules + bidirectional read/notify
+- Add counter e2e example and build/example make targets
+- Add nudle browser skeleton: protocol, store, slices, renderers
+- Add nudle python skeleton: protocol, session, commands, refs, page, serve
+- Rename everylens to nudle, everybase to Nu
+- Rename nudle demo and refs to lens
+- Add ItemPrimitiveStoreCmd for blob writes on PrimitiveDict/List/SetRef
+- Plumb secondary_refresh_interval through rocksdb wrappers
+- Wrap runtime entry generators in closing/aclosing
+- Add JQueueRef to nu-mem (janus-backed bounded queue ref)
+- Edit item store error context and method invocation pickling
+- Add errors/jitter to Retry; add RetryOnConflict span in nu-virtuals
+- Add noop command; fix containment api
+- Edit Teleport span and distributed worker for new runtime API
+- Polish example; widen nu and nu_virtuals top-level exports
+- Upgrade nu-inspect to current Nu model; fix instance-level support in dispatch routing
+- Add dicts example mirroring arrays gradient
+- Move __getitem__ to SequenceForm/MappingForm ABCs
+- Promote Form .eq()/.ne() to __eq__/__ne__; add Nu.eq stub for tree equality
+- Add auto_flow_atomic + flow-aware wrap toolkit, doc wrapping rules
+- Fill forms.md; add meta.md; remove ref.md and stdlib.md placeholders
+- Update docs/span.md with full Span catalog
+- Delete unused SkipIf* helpers and asserts.py
+- Compress core Flow set: rename to *Do, drop redundant atoms, merge iteration_range
+- Bind current item in ForEachDo via item kwarg; add arrays example
+- Rename pv to virtuals; convert Atomic to factory combinator
+- Fill query.md with full core query catalog
+- Add docs/: catalog scaffolding for atoms and Forms
+- Restructure ext/ adapters: split nu-virtuals ops, rename nu-dict to nu-mem
+- Merge nu-reorg: layered restructure of core, forms, and shapes
+- Restructure shapes/ops into queries/commands/flows; rename collections to forms
+- Move primitives/collections/interface into forms/; rename *I to *Form
+- Redistribute interactions/ into queries/commands/flows/spans; remove interactions/
+- Move concrete Query/Flow/Span impls out of terms/ into queries/flows/spans/
+- Add Interaction base; reparent Query/Command/Flow/Span
+- Merge branch 'nu-core-rebuild'
+- Add hybrid scheduling, Solana archive example, iteration bench
+- Restructure interactions/ to model taxonomy; add Iter, ForEach; rich Race cancel; fix shape ops to return Cmd
+- Migrate downstream to new core; wipe legacy compat
+- Add Nu core rebuild: protocol, kinds, algebra, dispatch, runtime
+- Fix auto_atomic fabric scope; iterate ledger sync example
+- Add Invoke/Invocation python bridge; retire injection + auto-interface utils
+- Add max_parallel to execution entries; parallelize pumps via thread pool
+- Move literal wrapping into Nu.__init__; remove ensure_nu util
+- Rename NAryAtomic/NAryScalar families to ScalarCommand/ScalarQuery; drop ContextManager role mixing
+- Update examples
+- Add own_mode + func_mode on Refs, sync counterparts, a-prefix async convention
+- Add own_mode + func_mode tagging, enforce valid combos, dispatch downgrade
+- Flip sync/async naming: sync primary, async a-prefixed
+- Add NAryAtomic + arity bases; migrate Assert, AsyncSleep, TimeSleep
+- Implement base contracts: non-abstract run, Literal/Stream as Query, move FuncCall family to terms/injection
+- Rename ops/→interactions/, drop Op suffix, align inheritance to taxonomy
+- Restructure terms/: four Nu kinds, delete Op/ScopedOp, add sync path
+- Fix NAryOp/ScopedOp closing scopes before apply runs
+- Fix iteration ops closing scope before items consumed
+- Apply code style fixes
+- Add nudle demo
+- Merge nu-shape-lens, nu-tree-view, nu-debugger into nu-inspect
+- Add minimal_shapes example, drop lingering nu.eval imports
+- Move evaluator helpers from nu.eval to Nu methods
+- Merge branch 'evaluator-flip'
+- Broaden Print message arg from StrArg to Arg
+- Migrate ext/* to new evaluator protocol + small core fixes
+- Migrate Ops to new evaluator protocol (tiers 1-5)
+- Add Command/Query mixins; rewrite If/Print/AttrGetOp as showcase
+- Flip evaluator to multi-yield; collapse Seq/Parallel; polish effect DX
+- Run InvisiblesWorker.execute in a thread so parallel Teleports don't serialize
+- Remove ItemRef.store override so writes respect view __setitem__
+- Add writeback view prototype for primitive compound Refs
+- Use virtuals public storage imports and tighten Spec typing
+- Remove is_self_pure and is_subtree_pure from Nu
+- Add coverage-aware walk to auto_atomic
+- Add WRITE overrides to collection mutation Cmds
+- Revise README for clarity and conciseness
+- Restore value type registration, update bind arg order, fix scoped auto_atomic
+- Fix logger name update transformation
+- Add FlatRef to auto_atomic detection
+- Add auto_distribute deformation for nu-distributed
+- Add stdio fabric: StdioRef, StdioWrite/Read/Flush, BufferedStdio, effect tracking
+- Simplify auto_atomic to 2 rules, remove READ overrides, eliminate OnPrimitiveChangeOp
+- Remove self.ref from shapes Ops, simplify auto_atomic to 3 rules
+- Rewrite auto_atomic, add open() protocol, fix ScopedOp, fix reactives
+- Effect system annotations, FlatRef inherits Ref, auto_atomic WIP (wrapping logic unsolved)
+- Replace Value with Interface in nu-dict and nu-virtuals refs
+- Annotate fabric-touching Ops with effect overrides; fix context ops children
+- Add effect system core: Direction, TrackedEffect, tracked_effects, is_pure
+- Update downstream packages: remove Calc/Cmd from nu-virtuals, nu-distributed, nu-debugger
+- Rename Value to Literal across codebase
+- Remove Calculation/Command, add Interaction base, remove purity methods
+- Export all ops, wrapped ops, Shape, Slot to nu; add submodule access and __all__
+- Add reactive stats to ledger sync example; fix Retry on_fail suppressing raise
+- Compress ledger sync example: Nu-style logging, sync report, type-clean
+- Add Interface mixins to AttrRefs, remove get(), re-export Shape and Slot
+- Add composite AttrRefs: Dict, List, Set, FrozenSet, Tuple
+- Add | operator to Nu for horizontal sequential composition
+- Add init/inc/dec convenience ops to item refs
+- Slim ledger sync example: kill parsing, simplify RPC, raw-shaped Transaction
+- Add ledger sync example
+- Remove outdated examples; add 3 basic examples
+- Refactor nu-virtuals: stdlib imports, rename morphisms to ops, move spans to ops/control
+- Add platform-aware ray version constraint for macOS x86_64
+- Add nu.stdlib, remove ext type packages, fix pyproject coherence
+- Restructure shapes/ package: match core org, split Interface/TypedNu, rename Base->I, remove Protocols
+- Split Interface into Interface (abstract base) and TypedNu (Nu wrapper)
+- Rename RefBase->Ref suffix in shapes refs and ext consumers
+- Apply code-style guide: fix imports, add __all__ to all __init__.py
+- Remove unused shaped type classes (DictI, ListI, SetI, TupleI, FrozenSetI)
+- Remove Protocols from collections.abc, rename Base->I across core and shapes
+- Rename Base->I suffix, collapse Type/ReactiveType into single I classes
+- Restructure shapes/ to match core Nu package organization
+- Restructure transform/ into tree/ and ext/nu-debugger
+- Migrate Span subclasses to ScopedOp, update Context API usage
+- Remove Span, add ScopedOp lifecycle mixin to Op hierarchy
+- Remove outdated docs
+- Restructure package: interfaces/ and fn/ dissolved into primitives/, collections/, ops/wrapped/
+- Merge pull request #1 from nustackdev/nu-public-api-refineing
+- Move primitive ops to ops/primitive/, fix test imports to use nu.ops
+- Standardize imports: top-level cross-module, relative same-module
+- Simplify access ops: remove redundant isinstance checks and error wrapping
+- Add attr and access ops tests
+- Strip exception catches from all Ops, add conversion tests, 246 passing
+- Rename IsNaNOp/NotNaNOp to IsInvalidOp/NotInvalidOp, fix sentinel checks to bypass propagation
+- Add comparison, logical, and bitwise ops tests with hypothesis
+- Add arithmetic ops tests with hypothesis, remove ZeroDivisionError catch
+- Add Ref and Op convenience class tests, deduplicate ctx fixture
+- Add Context test suite: immutability, resolution, scope tags, predicates
+- Add test foundation: tree structure, terms, sentinel propagation, purity
+- Remove pre-rename test suite (everybase/, eb_virtuals/)
+- Update access and iteration ops
+- Add Find, FindIndex, GroupBy, Partition, ToDict collection ops
+- Dissolve Flow into Calculation/Command, move all ops to ops/
+- Restructure ops/ and fn/: dissolve builtins/, rename itertools/ to collection/, remove lambda ops
+- Fix linting errors throughout the src/
+- Redesign Context: type-first API, unified entry model, remove dunders
+- Make all Flow and AttrRef params accept Arg (value or Nu)
+- Move fn/ to top-level package, make ops/ imports explicit
+- Replace Ref params with ctx.attrs in iteration and reactive Flows
+- Remove copy() and key_at() from Mapping (not in Python ABC)
+- Add reversed/reverse to Sequence, move join to StrI, remove find_index
+- Add Sized and Container protocols, wire Collection = Sized + Iterable + Container
+- Move type-bound ops to interface sibling files, remove ops/collections
+- Extract flows from ops/ to top-level package
+- Add ledger sync examples, update README
+- Remove placeholder modules for tables and graphs
+- Replace Type+Value+Capability with Interface[T], rename PrimRef to AttrRef
+- Revamp terms/: Term->Nu, Morphism->Op, Operation->Calculation, remove shims
+- Restructure nu/ from implementation-oriented to product-oriented layout
+- Rename everybase to nu, eb-* to nu-*
+- Add primitive compound refs, use PrimitiveStoreCmd for all item refs
+- Add InvisiblesWorker for tree-by-value distributed execution
+- Add Facet.NONE default to skip hasattr RPC on proxied views
+- Register ViewPathSer as invisibles value type on import
+- Route ref resolution through Navigator, add Timed flow
+- Add buffered_iteration param to InvisiblesClientSpec
+- Add primitive collection storage and EnsureLayoutCmd
+- Add Stream flow with AdvanceCursorOp
+- Add rocksdb options on storage spec
+- Add errors param to TryCatch for selective exception catching
+- Add ref system to access Context services
+- Add Attributes to Context, Teleport carry, PrimRef reads from attrs
+- Redesign Context: service-type keyed, named predicate bindings, sharded storage
+- Add bg_serve to InvisiblesClient, fix reactive distributed example
+- Add reactive distributed example (not working yet - needs bg serve thread)
+- Fix distributed examples: Transaction wrapping and .eq() for comparisons
+- Add pickle support for ShapeRef, remove value type registration
+- Update examples: reorg + distributed/ polish
+- Restructure examples into core/, flow/, app/, ui/ subdirs
+- Restructure eb-distributed into resources/, launcher/, spans/, presets/
+- Add Ray cluster support, tests, tag routing, runtime_env
+- Add Ray distributed runtime, remove multiprocessing
+- Add distributed tree execution: Worker, Teleport, presets, integration tests
+- Merge distributed: eb-distributed adapters, eb-virtuals Navigator integration, e2e distributed everybase
+- Add ResourceFactory, refactor RPC adapters as proper composable Resources
+- Adapt eb-virtuals spans to use Navigator from context
+- Add hierarchical storage Resources, ContextResource, everybase e2e example
+- Add eb-distributed package and distributed e2e example
+- Fix auto_atomic purity check to use isinstance on PV ref types
+- Fix auto_atomic purity check to only consider PV writes, add stignore
+- Add evaluation guide to user-guide docs
+- Add coerce() to all eb-dict extended refs to match eb-virtuals parity
+- Register all view types with Python ABCs, handle unix timestamps in DatetimeRef, migrate .set() to .store() in iteration flows
+- Restructure fn/ as typed composition layer over morphisms, update cheatsheet
+- Unskip lazy slice test now that virtuals implements it
+- Add coerce() to extended type refs, make ScanPrimitivesUnsafeOp lazy
+- Return DictKeysValue/DictValuesValue/DictItemsValue from mapping refs
+- Add lazy/eager facets to eb-virtuals ViewRef, fix stale virtuals imports
+- Merge pull request #7 from everyabc/refactor/type-system
+- Iterate over Slot return types for coherent tree type flow
+- Use Arg[T] for all collection method params — consistent implicit coercion
+- Add missing Python dict/set builtins, fix morphism apply() parameter names
+- Remove load(), rename morphisms, add coerce hook and ref-load annotator
+- Ergonomics polish: rename methods for Pythonic consistency
+- Add dict view types — DictKeysType, DictValuesType, DictItemsType
+- Add lazy execution primitives — IteratorType[T] + IteratorValue[T]
+- Restructure morphisms/ from flat files into organized subdirectories
+- Collapse TypeBase into Object[T] — single universal type base
+- Restructure type system: add ObjectType, reorganize types/ and values/
+- Merge pull request #6 from everyabc/refactor/restructure-packages
+- Rename eb-pv to eb-virtuals, purge all PV references
+- Restructure: unify core into single everybase package, move extensions to ext/
+- Add indexed dict view, flat list, islice morphism
+- Add *values support to Log flow, matching Print's multi-arg interface
+- Make set_logger_name rename both Log and _StepSpan loggers
+- Add step-tracking spans, path-aware Log, and set_logger_name deformation
+- Add logging deformation for Seq; polish the one for Retry
+- Make spans to capture BaseExceptions
+- Add e2e getting started doc
+- Redesign Context as tagged value store, add primitive refs and retry hooks
+- Add compound type (dict-stored) pattern to defining-own-type guide
+- Update user guide: two-branch set() pattern, fix .store() → .set() references
+- Simplify ref set() methods: use conversion ops + Arg[T] signatures
+- Unify item/collection morphisms to shared parent[address] primitives, add result() to item capabilities
+- Add PV-ref guards to optimizers, fix auto_atomic span respect, add ShapesDictRef wrappers
+- Fix everydict imports
+- Rename everydict SequenceRef/MappingRef to ListRef/DictRef, make ValueBase.source public
+- Add inline ref deformations per substrate, fix ValueBase _source sync
+- Edit benchmarks runner to print results instead of writing to a file
+- Add everydict — dict substrate for everybase
+- Add fresh_memory_ctx helper to benchmark utils
+- Rename deformations to optimize_primitive_reads/writes, separate from value stripping
+- Add PV tree deformations for read/write optimization
+- Move PV-specific primitive morphisms from everyshape to everypv
+- Add ItemPrimitiveGetOp and ChildPrimitiveGetBase across all views
+- Update throughput demo with unsafe writes (150K writes/sec, 136K reads/sec)
+- Add unsafe primitive write morphisms and view bases
+- Align collection mutation returns with Python semantics
+- Fix diamond MRO bypass: keyword-only __init__ for cooperative super()
+- Add read throughput benchmark and throughput demo example
+- Add Transaction span, resolve purity at wrap time in auto_atomic
+- Add is_address_static to all Views, expand nested nav benchmarks
+- Pre-compute static paths and cache root shape on Refs
+- Remove benchmarking reports
+- Use fresh db per measurement in point benchmarks
+- Add auto_atomic vs Atomic comparison to scenario benchmarks
+- Document benchmark measurement dimensions in README
+- Add Mode A/B layer benchmarks, multi-N scaling, and pre-optimization baselines
+- Use auto_atomic instead of Atomic in scenario benchmarks
+- Clean up point benchmarks: renumber, remove mixed_flow/observer, pre-build terms
+- Separate construction from execution in layers benchmarks
+- Move layer and raw TKV benchmarks into benchmarks/layers/ suite
+- Restructure benchmarks into point/ and scenarios/ suites
+- Add per-layer cProfile profiler for data stack overhead analysis
+- Add layer-by-layer overhead benchmark (rdbpy → tkv → container → dictview → shape)
+- Add data layer benchmarks (8 scenarios)
+- Register parent ref as Node child in everyshape Ref
+- Guard from_iso() against non-string values in Date/Datetime/TimeType
+- Fix DatetimeRef/DateRef/TimeRef.set() when passed another PV ref
+- Add "building apps" user guide
+- Add cheatsheet and enhance principles in user guide
+- Update docs and examples: shape= to scope= across all reference
+- Fix auto_atomic; polish examples
+- Simplify examples: use storage presets, remove boilerplate
+- Redesign Context to be scope-agnostic, simplify PV spans and auto_atomic
+- Merge pull request #5 from everyabc/refactor/structural-relational
+- Remove unimplemented ifelse, coalesce, or_default and update Makefile
+- Add core READMEs, polish package docs, fix dependency sources
+- Restore deleted examples with updated imports
+- Update documentation for restructured project
+- Add end-to-end example demonstrating new structure
+- Update examples and tests for new structure
+- Generalize method.py into Type construction toolkit
+- Restructure project into core/ and pkgs/ layout
+- Dissolve eb-flow into everybase.abc and eb-shape
+- Remove eb-dict, eb-service, eb-rest, eb-notion, and eb-gql packages
+- Add iterable primitives, merge min/max ops, add user guides
+- Add EveryLense example
+- Add usage guide and update README with package usage pattern
+- Add shadcn/ui with dark-themed hello world
+- Scaffold frontend and backend apps with WebSocket hello world
+- Add style guide, devtool aesthetic, keyboard-first principle, shadcn + Tailwind in stack
+- Scaffold repo — gitignore, Makefile, README, web/ and api/ directories
+- Replace ESLint + Prettier with Biome
+- Update stack — add stores, CI, tooling, Python ≥ 3.10
+- Add engineering docs — project structure and stack
+- Add design docs — principles, vocabulary, constraints; rename architecture to design
+- Split architecture into flow and live docs, remove data-flow
+- Add architecture data flow doc — Term-driven loop, two stores, React fit
+- Rewrite vision, replace ux-model with Term-driven model doc
+- Add vision and ux-model docs
+- Add mental model doc
+- Fix React and ReactForever to use bind/unbind
+- Add eb-shape-lens package with lazy rendering
+- Update README with image
+- Enhance eb-tree-view: rich UI, keyboard nav, fix packaging
+- Implement eb-tree-view pkg for everybase tree viz
+- Enhance tree print tools
+- Remove ternary conditional terms that violate non-indexed children ordering rule
+- Replace runtime term construction with tree build time (in flows)
+- Register PV views with collections.abc types
+- Add ensure_created to all view write methods
+- Fix missing rdbpy library alert msg
+- Fix get_root_shape to walk parent chain before returning owner
+- Add prop descriptor for declarative property access on services
+- Add an example with multiple substrates (pv, dict, service)
+- Add eb-service Service/ServiceRef, caller morphisms, and tree display
+- Make method descriptor generic for IDE type propagation
+- Add eb_service method descriptor and Solana RPC example
+- Add substrate model doc
+- Rename all packages from pkg-every-* to eb-*
+- Move everybase to src/; rename _docs to docs, _examples to examples
+- Move utility packages to pkgs/ dir
+- Move substrates to substrates/ dir; add everyrest, everystream, every-gql
+- Add substrate taxonomy doc
+- Add sentinel propagation and kwargs in ServiceMethodCall
+- Add everyservice: service substrate for term algebra
+- Add initial user guide
+- Remove legacy examples; add reactive example
+- Refactor every_flow: migrate legacy flows to new API
+- Adjust tree modification functions (approx)
+- Fix refs for extended types in every pv/dict
+- Rename collections dir to refs
+- Update argument type hints in everybase Types
+- Add view protocols; replace hasattr with isinstance in morphisms
+- Restructure everyshape type/ref hierarchy; add set collection
+- Update examples
+- Implement io module in everyflow; update examples
+- Move metatree tools to separate dir ./meta in everybase
+- Use shallow copy in Node.with_children; remove all overrides
+- Simplify conditional_wrap: wrap each match individually, no grouping
+- Clarify semantic model: Term (what), Flow (when), Span (grouping)
+- Add tree meta-programming: conditional_wrap + auto_atomic
+- Merge everyabc and everybase
+- Add everyshape/types for concrete Python types; make ShapeRef a mapping
+- Use Arg types for all Term inputs in collection ref bases
+- Add tiered __getitem__ to collection ref bases in everyshape
+- Add get_root_shape() to Ref; fix fetch_parent + context setup
+- Remove unnecessary dict/list-itemrefs in every_pv; use unified itemref
+- Rename shape to owner_shape in derivative Refs; Add shape example
+- Break down every_pv and every_dict into collections/ directories
+- Move _wrap_* bridges from everyshape collections to consumer refs
+- Break down refs into collection bases and inherited refs in everyshape
+- Polish everybase <-> everyshape bases and hierarchies
+- Fix arity in everybase ops + rename type modules
+- Break down stdtypes into per-domain packages
+- Move shared Ref implementation to everyshape
+- Generalize Slot to everyshape; simplify naming
+- Polish datetime example further
+- Update examples
+- Flatten monorepo layout (#4)
+- Remove every-kv, add every-dict substrate, drop PV/Dict prefixes
+- Merge pull request #3 from "Polish core abstractions hierarchy; Restructure monorepo"
+- Absorb every-adapters into every_pv/adapters
+- Extract document model refs from every-pv into everyshape
+- Add abstractions hierarchy doc
+- Extract everyshape to core, absorb every_view into every_pv, add everytable stub
+- Restructure monorepo: abc/std/pkgs -> core/packages with hyphenated dirs
+- Merge pull request #2 from everyabc "Consolidate everybase; every_pv -> thin substrate over everybase"
+- Update docs
+- Flatten every_pv: delete traits/morphisms, move capabilities to everybase
+- Update vision docs
+- Rename old everybase names across packages (RefBase -> Type, Value)
+- Add extend and remove commands for mutable sequences, add abc-level op tests
+- Add mutation capabilities, location protocols, and merge capabilities per domain
+- Rename refs/ -> types/, py/ -> values.py across everybase
+- Add Value[T] to everyabc term hierarchy
+- Fix tests for async execute and private _source API
+- Consolidate py/ refs into single refs.py file, remove individual type files
+- Move util/combiners.py → combiners.py, util/conversion.py → utils.py, remove util/ dir
+- Restructure capabilities/ with paired Protocol + Base classes, add Pythonic collection hierarchy
+- Rename traits/ → capabilities/, split collection.py into focused files
+- Fix Term result T variance to covariant
+- Make Ref.resolve/fetch methods async
+- Use ABC-based type checks across morphisms; extract abc_sequence
+- Reorganize morphisms directory with category prefixes
+- Polish morphisms in everybase pkg
+- Polish everyabc contracts, make execution async, better ergonomics, add docs
+- Make main Shape, Slot abstract; implement PVShape for PV Slots
+- Implement basic Flows for new API; add flow extensions (progress, cancellation, ...); remove legacy flowimpl
+- Replace direct _children assignments in Term subclasses
+- Fix everyabc imports (refactor old every imports)
+- Upgrade PV package to use everyabc, add PV-related Spans, extend Context
+- Add term exports in everyabc init
+- Rename everyast to everyabc, add terms module, add tests
+- Remove every, everytree packages as the core ast building terms are now located at everyast
+- Implement executable contracts (exec, term, flow, span)
+- Implement core ast layer - everyast
+- Implement 4th poc towards unifying base concepts and introducing coherent paradigm
+- Merge pull request #1 (reorg: single monorepo for everybase)
+- Rename pkgs/flow to flow_legacy (to be refactored later)
+- Move flow related legacy code to pkgs/flow
+- Fix key type def in reactive flows
+- Add every_flow Flows (control, parallel, timing, error, etc)
+- Set up std/every_flow package for concrete Flow implementations
+- Add mixed substrate usage example
+- Remove every_series package
+- Join standard types references into a single package every_type
+- Upgrade everybase to use latest version of tkv, pv
+- Upgrade everybase to use latest version of tkv, pv
+- Clean up every_notion and every_kv project setup
+- Remove empty pkgs
+- Redesign a cleaner Ref system and inheritance hierarchy, add docs
+- Update project configs
+- Add pkgs/every_adapters package: Storage, codec, and observer adapters for everybase
+- Restructure every_pv package: reorganize modules and update morphism inheritance
+- Fix set view in every_view; configure pytest fixtures
+- Add __repr__ and __str__ methods for morphism classes
+- Revamp everybase package: restructure modules, add ref bases, python refs, organize morphisms
+- Enhance term contracts in abc/every; add tests
+- Move examples from archived everyshape pkg
+- Add docs from archived everyshape pkg (tmp)
+- Add every_pv and every_view packages to std/
+- Add subpackages as extrapaths in vscode
+- Relocate base components (types, bases classes, ops) to everybase pkg; fix imports; move tests; move every_pv to top lvl
+- Add everybase subpackage skeleton
+- Reorganize as UV workspace monorepo
+- Merge branch 'separate-term-kv'
+- Reorg
+- Remove not existing imports
+- Separate everyshape into 3 distinct packages
+- Implement execute method to Ref subclasses
+- Fix SubscriptionOptions imports
+- Fix confusing usage of nan type - rename nan to invalid
+- Compose types extension patterns doc
+- Break down term module into comp, ref, type submodules
+- Enhance Arg types to improve type consistency across Types
+- Refactor operand types to use 'object' instead of specific types across term ops
+- Improve operations bases and simplify implementations throughout types and ops
+- Implement comprehensive term.types test suite
+- Flatten types dir structure, clean up imports, add tests
+- Polish imports for term types/ops
+- Reorganize term computations, type bases and types; move refs to everybase
+- Flatten computations module; move ref-related implementations to everybase
+- Reorganize term.type module; move protocols to typing module
+- Revamp term.rvalue.value: rename Value to Type, merge LIteral and Computed, introduce arg types
+- Refactor import statements in mapping.py for consistency
+- Polish minor things (renames, etc)
+- Reorganize types module
+- Reorganize docs
+- Add Shape layer docs
+- Add Term layer docs
+- Rename key_segment -> key in metadata ops
+- Optimize Container layer
+- Fix infinite recursion in site.get_ancestors
+- Fix site's parent calculation
+- Optimize site/key location manipulations throughout the lib
+- Add loc.constant module with dataroot
+- Refactor type hints and error handling in tests.DictView and container methods
+- Add unit and functional tests for view layer
+- Upgrade container usage api in views module
+- Add view-related docs
+- Polish module structure in storage dir
+- Polish container system: enhance ergonomics, add site location subsystem, make ops idempotent and pure, add docs
+- Update container layer docs
+- Remove unnecessary tuple unpacking in StorageScanOptions in container_ops
+- Temporarily disable test_scan_reverse compliance test
+- Move compliance tests to /src
+- Add compliance tests for MemoryStorage implementation; enhance observer and storage protocol tests
+- Add compliance tests for ObserverProtocol, enhance storage scan functionality in tests, update storage compliance suite
+- Fix OrFilter matching in subscription registry; add custom filters handling
+- Apply new storage filtering mechanism throughout the package
+- Enhance storage interface ergonomics; update container layer to match new storage interface; introduce unified filtering mechanism
+- Add storage scan mechanics to docs
+- Add philosophy docs for storage layer
+- Added unit, functional, and compliance tests covering storage and container layers
+- Remove lazi_import/utils
+- Add unit tests for container layer
+- Add storage unit tests
+- Add location module tests
+- Add base unit tests for core types and exceptions
+- Move rocksdb bindings, tuple codec, adapters to separate packages (rdbpy, evkv, adapters -> everybase)
+- Add rocksdb benchmark scripts
+- Update comps names to increase readability; fix imports
+- Update computations module exports
+- Merge comps/commands dir into comps/ref
+- Wrap key and default parameters in RValue for mapping commands and queries
+- Merge term layer reorganization
+- refactor: finalize documentation and naming for term/comps reorganization
+- refactor: add foundation tier re-exports in comps/bases/
+- refactor: split values/bases.py and refs/bases.py into domain subdirectories
+- refactor: reorganize computations/ → comps/ with domain-based structure
+- Add MappingAccessible protocol and enhance mapping access in refs
+- Add item accessibility ops on mapping ref base
+- Refactor type parameter names in values for better readability
+- Refactor type parameter names in refs for better readability
+- Replace property methods with attributes in ref bases
+- Extend type parameter definitions of collection references for granular type safety
+- Add attribute operations: GetAttrOp, SetAttrOp, and DelAttrOp for instance attribute management
+- Set NotSet as a default value for DictGetOp to improve default value handling
+- Add fallback to unknown value in conversion
+- Extend method overloads for int/float values for enhanced type support
+- Add missing view capability protocols
+- Add SpecialValue in type annotations for ref related classes (to support chaining with NaN/Emptys without ide complaining)
+- Add TypedValue and conversion operations for type handling
+- Include SpecialValue in ValueTerm init
+- Move slots to everybase
+- Fix imports in computations
+- Polish primitive ref base names (-> collection item)
+- Polish typevars in collection protocols in refs
+- Polish naming and clean up refs module structure to hold only protocols and base implementations (atomic + hlvl)
+- Update docs
+- Fix rocksdb secondary storage tests
+- Split terms and shapes into separate top level modules
+- Add primitive refs
+- Fix type hinting issues in ref-related ops; combine computed primitives and colls; remove unnecessary value overrides
+- Fix type checking of operations operands
+- Extend operations set (add string, set, bytes ops), implement literals, adjust bases
+- Refactor values module to use proper bases to construct computed primitives and collections
+- Polish ref base naming
+- Add calculation and value layers in term descriptions; collect all computation impls in a central subdir
+- Fix typo in conversion module
+- Wrap collection values results
+- Fix type hints for ref bases
+- Enhance ref bases
+- Replace context protocol with actual Context implementation; get rid of context type var
+- Add reactive operations
+- Polish new value system typing and fix primitive values
+- Upgrade refs system in shape
+- Rename literals module
+- Integrate literals with the core term system
+- Rename rvalues to literals, fix imports
+- Reorganize rvalue, lvalue, ops dirs + views
+- Implement comprehensive LValue and RValue systems
+- Add search-related ops for seq collections
+- Implement more sequence based ops (map, filter, reduce)
+- Implement collection operations mixin for RValue expressions
+- Add storage modes
+- Implement RedisObserver
+- Enhance rocksdbstorage adapter with open-as-secondary capability
+- feat: Add ConditionalOp and TernaryOp for type-safe ternary operations
+- FIx observable views naming
+- feat: Enhance subscription capabilities for Containers and Views
+- Polish observer types
+- Rename layer 2 src dir from tree to container
+- Remove redundant subscription protocol
+- feat: Implement subscription system with flexible filtering capabilities
+- Update everyverse -> everybase
+- Loosen observer typing restrictions in storage
+- Implement logical combiners for better DX
+- feat: Add convenience binary and unary operations (isnan, isempty, etc)
+- Polish linux rocksdb and esrocks installation
+- Add Ref's origin Shape getter
+- Remove unnecessary methods from base Shape class
+- feat: Enhance protocol definitions in collections (add watchables)
+- feat: Introduce collection protocol hierarchy and base view implementation
+- Enhance type hinting in Shapes/Terms
+- Add context manager support to BaseObserver class
+- Refactor observer handling in TextStorage and ObserverProtocol; add notification mechanism for key changes
+- Add overloads for begin method in InMemoryStorage, RocksDBStorage, and TextStorage classes
+- Remove outdated context managers
+- Add owner_shape attribute to Ref and related classes for shape tracking
+- Fix Value segment type in loc.path
+- Decouple Shape system from concrete Context type (use ContextProtocol instead)
+- Add is_pure property to Term and Ref classes to indicate side effects
+- Add ChildWatchable and Watchable capabilities to the ABCs
+- Add watchable capabilities
+- Move the rest of esstd (views, shapes) to EveryVerse
+- Move storage adapters impl to the main pkg
+- Fix gh links in pyproject
+- Fix code style issues
+- Bump up project to v1.0.0, rebrand to EveryShape
+- Add vscode to git
+- Add examples
+- Fix type issue with tuple unpacking in paths
+- Polish text storage locking
+- Fix RocksDB adapter locking strategy
+- Enforce single writer semantics on text storage
+- Upgrade view init interface in tests
+- Enhance and polish view creaiont class methods
+- Introduce address normalization mixin for view.address conversion to container.key
+- Move view subscription methods to a distinct mixin
+- Fix imports sorting
+- Implement in-memory storage
+- Add comprehensive logging (#21)
+- Polish type hints in tests
+- Compartmentalize storage modules in rwstd
+- Update rwstd slot type hints
+- Remove annotations dependency from Shape metaclass
+- Implement property-based testing for rwtup
+- Implement rocksdb writebatch support, add tests (#19)
+- Implement toy text storage (#18)
+- Add storage test suite (#16)
+- Add functional testing fixture architecture
+- Restructure testing foundation
+- Add view mixins for custom view composition (#13)
+- Add metadata and subscription management to Container
+- Add SequenceShapeRef and MappingShapeRef for homogeneous shape collections
+- Extend type system and polish interface of standard views (#10)
+- Polish type hints of core terms module (redwood.shape)
+- Add mapping and sequence collection extensions
+- Polish type hints of shape extensions
+- Interface polish of Views and Shapes (#5)
+- Polish types and terms related to view module
+- Polish native extensions of shape layer
+- Implement missing operations (pos, floordiv, not_)
+- Implement unary ops and ergonomic interface for unary durdens
+- Implement binary operations and add corresponding durden methods
+- Restructure shape module
+- Introduce loc top level module to manage different location semantics across the package (keys, paths, refs)
+- Update docs
+- Impement shape extensions for nested shape declaration and evaluation; apply formatting
+- Impleemnt high-level navigation module for views
+- Polish docs, add layer 4 doc
+- Improve standard Views creation DX
+- Polish package exports
+- Iterate over separation boundaries of redwood core and std packages
+- Add abilit to specify default parent type during container creation
+- Implement create clsmethod for Views
+- Add convenience type safety methods
+- Compose views module docstring
+- Add built-in views (dict, list, set, etc)
+- Refactor view module
+- Implement tree.Container module, add container tests
+- Implement Container class for user-friendly tree access
+- Compose View (layer 3) design doc
+- Enhance navigation module: add create_path and to_meta functions
+- Rename BE to storage
+- Refactor path handling to use pathlib across test files
+- Polish sentinel usage across the project
+- Optimize scan operations in RocksDB adapter; Add NotSet sentinel; Polish storage scan interfaces
+- Optimize and polish tree module: optimized navigation, enhanced validation
+- Add unified storage context protocol validation; add metadata operations in tree module
+- Add length filtering to StorageScanOptions and implement in RocksDBScan
+- Edit ops-related modules names to end with _ops in rw.tree
+- Fix protocol inconsistencies in rocksdb storage adapter
+- Polish tree and storage modules
+- Add tree module init file; remove the old container module
+- Implement main container and validation modules for tree layer
+- Lay down upgraded tree layer foudnation (node, navigation, types, exceptions)
+- Restructure redwood: move views to the root, rename cotainer to tree, create utils dir
+- Consolidate rwstd: add context managers for storage transactions, simplify codecs
+- Implement rocksdb storage adapter according to updated interfaces
+- Polish backend system
+- Intorduce ScanProtocol - scan(options).items()/keys()/values(); IteratorProtocol and transaction.iterator() removed
+- Introduce SnapshotProtocol, WriteBatchProtocol, TransactionProtocol variations instead of singular Transaction
+- Break down storage-related protocols into distinct modules
+- Enhance storage protocols
+- Collect storage-related abstractions under be/storage
+- Polish storage docs
+- Consolidate architecture (overall arch + kv storage layer + tree layer)
+- Update readme
+- Remove unnecessary Tree methods
+- Refactor, simplify tree structure
+- Update examples
+- Implement a comprehensive exception system for redwood.be (backend)
+- Refactor codec adapters to use lazy loading for optional dependencies
+- Move adapters to rwstd, restructure redwood abc and be
+- Enhance container type marker system documentation and structure
+- Optimize container marker creation/extraction
+- Optimize tree container code
+- Refactor path handling: replace Path OOP with TupleKey utils for improved performance
+- Restructure modules
+- Refactor binary codec exceptions; clean up cython files/gitignore
+- Implement optimized binary key codec with lexicographic order preservation (in cython)
+- Add scan functionality to storage backends
+- Add list_values and list_items methods to storage protocols and implementations
+- Implement rocksdb storage adapter
+- Merge pull request #3 (rwrocks transaction support)
+- Fix Transaction and TransactionDB resource management
+- Fix rwrocks transactionDB init
+- Add transaction support to rwrocks
+- Polish rockdb build process for macos
+- Remove automatic triggers for push and pull request events in build workflow
+- Add rwrocks RocksDB bindings package
+- Update .gitignore
+- Remove the old dsl subpackage
+- Implement Shape and Slot system
+- Rename backends dir to backend
+- Merge rwstd and redwood.semantics PR (#2)
+- Polish logging
+- Introduce Redwood Standard Library with std views and extended tree
+- Unify package types into abc submodule, and backend protocols into backend
+- Update purity logic in Operation base class
+- Add initial implementations for commands, operations, and refs in semantics module
+- Properly document semantics.core contracts
+- Move structure-related modules into separate module
+- Lay down behavioral foundation of /semantics subpackage
+- Set up the layout of semantics core module
+- Set up the new semantics subpackage, implement Term definition
+- Add DSL extensions for Collection and Vector field types with dynamic path support
+- Enhance support for dynamic keys Path + refine Collections
+- Add Collection extension with CollectionField, CollectionPath, and CollectionItemPath classes
+- Merge pull request #1 from loomi-lab/feature/dsl
+- Remove the old query system
+- Update examples
+- Improve type safety across dsl
+- Add DomainTypeExpr and MethodCallValue classes; update imports and documentation
+- Implement CommandTerm operations: DeleteCommand and UpdateCommand; add ValueTerm and PathValue classes with operator overloading
+- Enhance path access and implement basic operations
+- Add initial implementations of schema and path terms
+- Add core DSL components: term hierarchy, metadata, exceptions, and special values
+- Remove dsl proto subpackage
+- Implement DSL Path and Schema System
+- Add NoOpCodec and update InMemoryObserver codec specification
+- Update protocol imports in storage classes
+- Update .gitignore to exclude database and state files; remove obsolete db.json
+- Polish tree subpackage
+- Apply ruff formatting and unsafe fixes
+- Polish tree backend module
+- Polish in-memory observer with subscription management
+- Polish storage protocol and adapters to match recent root unification
+- Fix docstrings (partially) to match google style
+- Unify main types and protocols
+- Add BinaryCodec and TextCodec to exports in codec.init
+- Refactor type hinting and structure in codecs
+- Remove adapter exceptions
+- Polish codec subpackage (typing, adapters, structure)
+- Refactor storage codec structure, implement a few adapters
+- Implement rwtup: codec for encoding/decoding redwood key tuples with lexicographic ordering
+- Merge branch 'chore/restructure-pkg'
+- chore: initial package restructuring
+- chore: remove VSCode settings file from tracking
+- Refactor project structure and update configurations
+- chore: Merge root subpackages into one src dir (src/redwood)
+- chore: Remove unrelated files to state system
+- Fork from Loomi → Redwood: Persistent, reactive Python trees
+- Bump up to v0.4.0
+- Add reactive expressions
+- Update .gitignore to include poetry.lock and clean up data/log file entries
+- Remove outdated example applications
+- Add project structure section in README.md
+- Update README.md
+- Enhance expression and query operations with dictionary value retrieval and improve array index handling
+- Polish DictCoordinator methods
+- Add variable resolution method and refine child removal logic in expressions
+- Minor adjustments
+- Bump up project to v0.3.1
+- Update StructuralPath to support string indices; enhance child context creation in flow and timing expressions
+- Add If expression for conditional execution based on truthy conditions
+- Refactor child removal methods in ContainerNode
+- Merge structural and data subtrees into a single tree
+- Enhance expression handling with cancellation support and add BlockingDequeue expression for improved queue management
+- Fix storage key generation in StructuralPath to use MD5 hash for long paths
+- Refactor context management in Expression classes to use derive_child_context for improved structural path handling
+- Add GracefulInterruption expression for handling system signals
+- Add cancellation support to expressions and enhance microflow integration
+- Enhance Context and Expression classes with structural path support
+- Add OnQueueChange expression for blocking queue change monitoring
+- Refactor Path class to use cached_property for efficiency and improve component handling
+- Implement local topology spec
+- Implement queue expressions, including Enqueue, Dequeue, Peek
+- Add QueueView std implementation, ensure consistent key ordering in storage adapters
+- Replace hardcoded view navigation with registry-based view system in state
+- Remove unused expression references from Context
+- Add App module protocols
+- Restructure loomi/loomistd; move higher level resources to loomistd (state, evaluator)
+- Refactor expression classes to receive App instance in constructors
+- Introduce new expressions
+- Move StorageError, StorageKeyError from loomistd to loomi state
+- Introduce AttachList and AttachDict resource attachment patterns
+- Edit loomi app type hints
+- Enhance path and query handling
+- Update project version to 0.3.0
+- Enhance Expression module with new path resolution utilities
+- Enahnce Expression class with unified value resolution (based on state path/query system)
+- Refactor exports in path and query modules
+- Add query integration and chaining operations to Path class
+- Add new operations: Modulo, Power, Abs, Any, Every, Bool, and Count to the query system
+- Add cross-integration points between state path, path resolver, query, query evaluator
+- Refactor query system: Remove legacy queries and introduce chainable Query class
+- Implement tree path module: declarative path construction and resolution
+- Refactor pathoperand resolution to properly resolve list_view indices
+- Refactor state query system: consolidate core interfaces, implement QueryBuilder, and enhance operand and operation structures
+- Fix type hints issues in state query system
+-  Implement query evaluation engine for loomi state
+- Refactor evaluator module: rename expressions to expression, update imports
+- Rename SpecBuilder method to improve clarity; update topology function references for consistency
+- Enhance loomi specifications: add AppSpec and SpecBuilder; implement state management utilities and topologies
+- Tune loomi public interface, restructure loomi project structure
+- Refactor state protocols; fix type definitions across loomi and loomistd modules
+- Move state tree implementation from loomistd to loomi; refactor type hints
+- Refactor evaluator expressions to unify error handling and logging; add Set and Print expressions for state operations
+- Assemble standard loomi packages under src/loomistd
+- Move expressions actual implementations to loomistd
+- Attach state as a dependency to evaluator
+- Enhance evaluator package with structured logging and improved error handling
+- Rename runtime to  evaluator and refactor related components
+- Clean up unnecessaries: pytyped and empty readmes
+- Fix loomistd, loomidistributed imports
+- Restructure loomi package source code
+- Update refresh interval in demo HFQ dashboard to 2 seconds
+- Optimzie hfq demo: update state service to use read-only lmdb storage
+- Improve the demo: add UIService for running Dash UI in a separate process automatically
+- Apply recent state optimizations to HFQApp demo
+- Add Msgpack codec implementation with encoding and decoding support
+- Move create_view_context_manager to View utils
+- Fix context duplication issues in tree context managers
+- Refactor tree backend protocols to remove base context protocols from Transaction and Snapshot classes
+- Refactor state's transaction handling and context management
+- Fix snapshot protocols to use correct typevar
+- Fix generic type variance in snapshot-related protocols
+- feat: Implement snapshot functionality for state
+- Improve FleetCoordinator thread safety and task distribution
+- Update flake8 and pyright configurations to exclude 'pkgs/loomiverse/**' from checks
+- [examples] Add trading simulation dashboard with richer data visualization
+- [examples] Update UI for auto-refresh and improve data retrieval logic
+- Add example HFQ application in loomiverse
+- Fix key iteration logic in LMDBStorage to skip keys while continuing iteration
+- Add shutdown_as_dependency methods for SyncResource and AsyncResource; enhance LifecycleManager shutdown logic
+- Fix method dispatch issue in FleetCoordinator
+- Refactor evaluator: move evaluation logic to expression class
+- Prepare the base for core evaluator v3, clean up outdated modules
+- Add FleetCoordinator implementation for distributed execution
+- Refactor RPyC server specifications to inherit from ResourceSpec
+- Refactor spec classes to use ResourceSpec
+- Add concurrent resource topology example
+- Remove worker-pool wip implementation from loomistd
+- Refactor connection info types to use frozendict and update related specs, fix dependency management for proxy objects
+- Add optional resource dependencies, fix typo in loomidistributed
+- Introduce multiprocessing-based launcher (loomidistributed)
+- Add loomidistributed launcher package with core components and exception handling
+- Remove TransportServerProtocol from proxy module and clean up related code
+- Refactor proxy system
+- Prepare project for loomicore v3 upgrade
+- Fix imports in loomistd to match updated loomi structure
+- Upgrade loomi llibrary and refactor Loomi core modules - App, Service buidling blocks and State, Evaluator, Logger interfaces
+- Move RemoteClientProtocol definition to loomicore
+- Implement AttachMany pattern with ListCoordinator
+- Make resource proxy implementation a top-level module
+- Implement attach pattern system with core descriptors and exceptions
+- Rename patterns to attach, enhance compositor to handle self-resolving descriptors
+- Optimize imports in resource classes for better performance
+- Polish and finalize integration of runtime and resource modules
+- Implement composition engine methods to discover and resolve attach descriptors
+- Remove generic type annotations in resource management classes
+- Introduce LifecycleManager for centralized resource lifecycle management
+- Refactor core resource implementation
+- Finalize loomicore restructuring
+- Finalize resource runtime module: the executing system that manages all live resource operations
+- Add BaseResourceDescriptor to composition engine as a base for declarative resource attachment
+- Add CompositionEngine to resolution service for enhanced resource composition
+- Enhance resolution service: add resource factory and update manager for improved resource handling
+- Implement central resolution system in loomicore (registry, dependencies, composition)
+- Remove outdated spec.py file from loomicore resource
+- Refactor spec module: consolidate imports and move utility functions to utils.py
+- Refactor spec definitions to use attrs for immutability and performance
+- Create coordinators subpackage and add remote coordinator
+- Fix loomicore imports in src/loomi
+- Remove loomi lib (as it is moved to loomicore)
+- Moove core resource source into src/loomicore
+- Fix issues in loomistd resource pool pkg, ensure it works e2e
+- Add temporary resource pool pkg
+- Make worker server start non-blocking
+- Implement resource pool initial version
+- Update command examples in remote.py to use 'loomix remote' instead of 'loomix rpyc-server'
+- Add remote command and UI command for Loomix CLI
+- Add remote resource benchmarking script
+- Polish loomistd remote resource call pkg
+- Move remote client protocol to loomi.interfaces
+- Remove model subpackage from interfaces, as state v3 has builtin custom views
+- Fix spec serialization/deserialization issue with privateattrs
+- Integrate remote resource capabilities into the main loomi resource module
+- Edit protocol config to allow all attrs in loomistd rpyc
+- Polish RPyC-based remote resource serving
+- Implement RPyC-based remote resource serving loomistd pkg
+- Fix remote resource initialization
+- Add capability to connect to remote loomi resources (via socks, tcp, etc) - Loomi Remote Resource
+- Fix typing and import issues in loomistd evaluator expressions
+- Update benchmarking scripts
+- Add rpyc and msgpack dependencies
+- Fix import issue in aexecutor pkg
+- Fix hello world example
+- Fix app and service composition descriptors
+- Adjust app and service components to use Resource as base
+- Adjust registry and dependency manager to work with Resource
+- Implement unified core Resource component as a base for apps and services
+- Add base expressions to loomistd evaluator
+- Adjust worker pool subpackage exports
+- Add workers initialization mechanism to loomistd wp
+- Lay down evaluator package skeleton
+- Implement python native multiprocessing pool backend for loomistd wp
+- Implement loomistd worker pool package base
+- Add benchmarks: lmdb & dict, ray & mp queue
+- Update examples
+- Integrate the new tree state with Loomi
+- Fix circular imports in loomistd.specs
+- Remove async tree storage package from loomistd
+- Remove async state package from loomistd
+- Refactor loomistd state pkg to use the upgraded version of tree storage under the hood
+- Rename hierarchical tree storage pkg from ntree to tree in loomistd
+- Remove old version of tree from loomistd
+- Annotate Views with generic Tree type for increased flexibility
+- Add proper transaction and subscription handlers to Tree
+- Enforce storing values with replace=False for View.set method
+- Add deep-merge/replace capability to View.store method
+- Polish main container structures and protocols
+- Polish list view
+- Polish container docstrings
+- Optimize tree storage performance (achieved 2-3x boost)
+- Add thread-safe caching mechanism to tree storage
+- Implement dict and list views for tree storage
+- Polish node types and interface
+- Make container info a mandatory field for container node
+- Check parent node mutability when creating a new node
+- Polish method typings in tree node modules
+- Implement child operations in tree node class
+- Use path components instead of strs in Container base
+- Implement comprehensive base for Container management
+- Make transaction existence mandatory in ContainerNode
+- Revamp tree node implementation, fortify thread-safety and consistency
+- Delete nstate experimental package
+- Move node implementations to the new package
+- Implement Tree class - main interface to access tree storage
+- Implement base view and dict view modules
+- Implement Empty sentinel for handling non-existent values
+- Add exceptions hierarchy for tree storage
+- Implement path module for tree path management
+- Add structured backend and transactions management for tree pkg
+- Lay down clean structure for tree storage as a separate pkg
+- Revamp transaction management mechanism
+- Remove flat view (behavior to be replaced by flat dict, list)
+- Implement TransactionalBase class for nested tx handling, integrate with state and nodes
+- Update dict view to match updated Node interface
+- Implement all basic state views
+- Update nodes responsibilities to inlcude only  storage operations and tree hierarchy
+- Update statepath to enfore root / at path beginning
+- Add utils module for transaction handling and empty values management
+- Implement dict_view prototype
+- Implement transaction management mechanism for State modules
+- Add primitve operations for state nodes
+- Implement state subpackage with state backend and state service modules
+- Add container and primitive nodes in the core subpackage
+- Implement node and path modules of the state tree
+- Lay down project structure for state v3
+- Add state cheatsheet doc and polish state interface
+- Apply coherent naming for nested services in loomistd
+- Polish loomistd aexecutor specs
+- Implement nested config override util method for Spec class
+- Polish loomistd specs, add top-level specs module for easy imports
+- Add comprehensive priority queue example
+- Add basic priority queue example
+- Add hello world example
+- Update docs with reasonable examples
+- Move rw benchmarking to separate benchmarking dir
+- Fix loomix ui viz adapter to work with both sync and async state
+- Update loomi main export types and fix examples
+- Add basic example
+- Polish async executor pkg to support both sync/async state adapters
+- Implement sync state loomistd pkg
+- Polish dependencies in async state loomistd pkg
+- Implement sync tree-storage loomistd pkg
+- Polish dependencies in async tree loomistd pkg
+- Polish sync/async observer pkgs in loomistd
+- Add async json-file-based async kv storage to akv loomistd pkg
+- Convert unnecessary async loomistd kv modules to synchronous
+- Polish loomistd directory structure for sync/async
+- [docs] Add learn/service page
+- [docs] Add learn/app page
+- [docs] Add learn/operations page
+- [docs] Add state interface doc
+- [docs] Iterate over docs intro and concepts pages
+- [docs] Update front page according to latest narrative
+- [docs] Update front page description
+- Update docs generation action to merge main changes before ref generation
+- Grant write permissions to docs generator action
+- Fix doc generation github action
+- Automate api ref generation for builds, remove generated mdx files from src
+- [docs] API ref generation polish, generation loomi ref, generate loomistd ref (#4)
+- Add Loomi API Reference
+- Remove docstring sections violating google format
+- Implement pydoc_nextra for API reference generation in mdx format
+- [docs] Polish the front page
+- [docs] Polish the front page
+- [docs] Add the front page
+- Add core concepts section in docs/overview
+- Lay out docs structure, write down basics
+- Switch docs tech stack to next, nextra with mdx format
+- Set up docs module with sphinx
+- Fix issue with closing a failed span in ops tracer
+- Fix Spec deduplication issue - replace Spec's model_dump with custom serializer (tmp)
+- Remove prints from reactivemap, minor edits
+- Add extension point for custom compound operations, refactor ReactiveMap
+- Add is_sync/async properties to state protocols, improve async type checks
+- Update examples
+- Set up LoomiX skeleton - higher level loomi framework
+- Add app execution tracing
+- Update execution engine node key generation
+- Add basic read/write benchmarking
+- Bump up version to 0.2.0
+- Update the readme
+- Update examples
+- Unify attach/use_service, remove app metacls, app init with spec, state and executor dep injection
+- Add missing specs for stdlib executor engine services
+- Add missing spec for stdlib state type
+- Add missing specs for stdlib observer types
+- Add missing specs for stdlib storage types
+- Add missing specs for stdlib codec types
+- Rename descriptors module to attributes
+- Implement public api layer for better DX purposes
+- Fix context keys coherence for subscribe and map ops
+- Implement higher-level, compound operation ReactiveMap
+- Switch from tree-like structure to DAGs for tasks
+- Add code style guides
+- Add missing executor and operation interfaces
+- Implement subscribe operation (reactive ops)
+- Implement map operation (collection ops)
+- Implement app operation for nested apps execution
+- Implement timing operations
+- Implement flow control operations
+- Break down engine execution methods into derived classes for maintainability purposes
+- Add app executor interfaces and implement updated execution engine pkg
+- Remove outdated stubs
+- Clean up typing of app state and loomistd data-related packages
+- Annotate app mixins with corresponding generics to preserve sync/async type info
+- Refactor overall project, flatten loomi package structure
+- Adjust typing of app tasks handler
+- Refactor loomi tasks handler, implement basic executor service in loomistd
+- Refactor loomi structure, move common py modules to _lib subpackage
+- Implement early prototypes of execution engine pkg
+- Fix import issues in async operations lib
+- Enhance tasks execution handler, implement new operations (map, watch, reactive, etc)
+- Fix duplicate service initialization on composite apps
+- Disable model-like data access interface on apps
+- Add app state management to tree-like state interface
+- Add a new app handler to enable app compositions
+- Update state pkg - add tree storage as backend, implement observable kv storage
+- Implement tree_storage package with tree-like data access interface
+- Rename storage to kv_storage, add support for listing keys with specified depth, fix asyncgenerator typing
+- Update observer pkg to support subscription filtering by topic hierarchy depth
+- Add support for bytes data encoding/decoding to json codec
+- Add poetry support (#2)
+- Add ability to pass, override service specs during App initialization (#1)
+- Edit flake config
+- Update README
+- Merge commit related to app.base documentation into main
+- Add documentation to `loomi/app/base` subpackage (#1)
+- Rename service _lock to _service_lock to avoid collision
+- Add local arg to state interface, update stubs
+- Introduce UseState descriptor for configuring app state mngmnt
+- Update examples readme
+- Update examples readme
+- Add project examples
+- Bump up project version to 0.1.2
+- Fix import issue in service dep manager
+- Add python stubs, apply minor typing adjustments
+- Update project name and reorganize source code
+- Add stub generator script
+- Fix typing coherence between core package and ecosystem
+- Adjust core protocols of ecosystem packages
+- FIx state list_keys typing from iterator to generator
+- Remove too restrictive final decorators
+- Add missing future imports
+- Polish service module - sync async interfaces, polish typing, etc
+- Polish app module - add sync interfaces, polish typing, etc
+- Implement service sync initialization interface
+- Add std state implementation
+- Add observer implementations
+- Add storage implementations
+- Add codec implementations
+- Add model as a higher interface for state management
+- Add app basic initialization handler
+- Implement synchronousstate interface for apps
+- Implement interface to attach services to apps in a declarative manner
+- Assemble app interface for async task execution
+- Add app base modules, switch to using protocols for service interface definition
+- Fix service composition
+- Restructure and polish service package e2e, fix typing, protocols and bases
+- Set up app subpackage structure, add state handler
+- Set up python package structure, implement service base layer
+- Set up the project skeleton
