@@ -38,6 +38,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -63,11 +65,31 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/nu@')
         uses: pypa/gh-action-pypi-publish@release/v1
 
+      - name: build release notes from CHANGELOG
+        if: startsWith(github.ref, 'refs/tags/nu@')
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/nu@}"
+          PREV=$(git tag -l 'nu@*' --sort=-v:refname | grep -v "^nu@${VERSION}$" | head -1)
+          {
+            echo "## Changelog"
+            echo
+            awk -v ver="$VERSION" '
+              $0 ~ "^## "ver"( |$)" {flag=1; next}
+              flag && /^## / {exit}
+              flag {print}
+            ' CHANGELOG.md
+            if [ -n "$PREV" ]; then
+              echo
+              echo "**Full Changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${PREV}...nu@${VERSION}"
+            fi
+          } > release_notes.md
+          cat release_notes.md
+
       - name: create github release
         if: startsWith(github.ref, 'refs/tags/nu@')
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
-          generate_release_notes: true
+          body_path: release_notes.md
           files: |
             dist/*
