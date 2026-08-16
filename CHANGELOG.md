@@ -2,14 +2,14 @@
 
 ## Packages shipped from this repo
 
-- **nu** — 0.1.13
+- **nu** — 0.1.14
 - **nudle** — 0.1.3
 - **ui-core** — 0.1.0
 - **ui-kit** — 0.1.1
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.1.14 — 2026-08-16
 
 - Add nu.llm: OpenAI-compat chat/completions fabric (ChatRef + presets)
 - Add nu.cc: Claude Code fabric (PromptRef + Session bracket)
