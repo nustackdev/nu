@@ -57,6 +57,18 @@ _DONE = object()
 _RT_CTX: contextvars.ContextVar[Context] = contextvars.ContextVar("nu_rt_ctx")
 
 
+def _carry_ctx() -> Callable[..., object]:
+    """Return a runner that calls a function inside a copy of the caller's context.
+
+    A worker thread starts with an empty contextvars context, so `_RT_CTX` is
+    unset there and `Runtime.ctx` raises `LookupError`. Taking the copy on the
+    calling side and submitting `copy.run` keeps the Context resolvable on the
+    worker. A fresh copy per branch keeps a `.set()` inside that branch local to
+    it, the same copy-on-write rule an asyncio.Task gets.
+    """
+    return contextvars.copy_context().run
+
+
 class Runtime:
     """Per-drive Runtime. Owns a Program, a per-task Context, and a Budget."""
 
@@ -118,7 +130,7 @@ class Runtime:
         if self.budget.max_parallel == 1 or self.budget.thread_pool is None:
             return self.eval_each(nids)
         pool = self.budget.thread_pool
-        futures = [pool.submit(self.eval, n) for n in nids]
+        futures = [pool.submit(_carry_ctx(), self.eval, n) for n in nids]
         return [f.result() for f in futures]
 
     def _drive_async(self, nids: list[int]) -> list:
@@ -147,7 +159,7 @@ class Runtime:
             async with sem:
                 if on_loop_col[n]:
                     return await self.aeval(n)
-                return await loop.run_in_executor(pool, self.eval, n)
+                return await loop.run_in_executor(pool, _carry_ctx(), self.eval, n)
 
         return [place(n) for n in nids]
 
@@ -261,7 +273,7 @@ class Runtime:
             finally:
                 q.put(_DONE)
 
-        futures = [pool.submit(drain, n) for n in nids]
+        futures = [pool.submit(_carry_ctx(), drain, n) for n in nids]
         remaining = len(futures)
         try:
             while remaining > 0:
@@ -306,7 +318,7 @@ class Runtime:
         if self.budget.thread_pool is None:
             msg = "in_thread requires max_parallel > 1"
             raise RuntimeError(msg)
-        return self.budget.thread_pool.submit(fn, *args, **kwargs)
+        return self.budget.thread_pool.submit(_carry_ctx(), fn, *args, **kwargs)
 
     async def a_in_thread(self, fn: Callable, *args: object, **kwargs: object) -> object:
         """Await a blocking call on the Budget's thread pool."""
@@ -314,12 +326,13 @@ class Runtime:
             msg = "a_in_thread requires max_parallel > 1"
             raise RuntimeError(msg)
         loop = asyncio.get_running_loop()
+        run = _carry_ctx()
         if kwargs:
             return await loop.run_in_executor(
                 self.budget.thread_pool,
-                lambda: fn(*args, **kwargs),
+                lambda: run(fn, *args, **kwargs),
             )
-        return await loop.run_in_executor(self.budget.thread_pool, fn, *args)
+        return await loop.run_in_executor(self.budget.thread_pool, run, fn, *args)
 
     # --- sentinel-propagating evaluation -----------------------------------
 
@@ -417,7 +430,7 @@ class Runtime:
                             await q.put(v)
                 else:
                     async with sem:
-                        await loop.run_in_executor(pool, _drain_sync, n, loop)
+                        await loop.run_in_executor(pool, _carry_ctx(), _drain_sync, n, loop)
             finally:
                 await q.put(_DONE)
 

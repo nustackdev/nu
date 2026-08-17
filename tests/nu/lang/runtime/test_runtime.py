@@ -512,6 +512,67 @@ def test_ctx_attrs_writes_are_visible_through_runtime() -> None:
     assert ctx.attrs["y"] == "hello"
 
 
+# --- context across the thread boundary -----------------------------------
+#
+# A pool worker starts with an empty contextvars context, so every hand-off to
+# a thread has to carry the caller's copy or `rt.ctx` raises LookupError there.
+# One case per dispatch site.
+
+
+def test_ctx_resolves_on_eval_parallel_workers() -> None:
+    program = _fake_program(thunks=[lambda rt: rt.ctx])
+    ctx = Context()
+    with Budget(max_parallel=2) as budget:
+        rt = Runtime(program, ctx, budget=budget)
+        assert rt.eval_parallel([0, 0]) == [ctx, ctx]
+
+
+async def test_ctx_resolves_on_async_placement_workers() -> None:
+    program = _fake_program(thunks=[lambda rt: rt.ctx], athunks=[None], on_loop=[False])
+    ctx = Context()
+    with Budget(max_parallel=2, async_mode=True) as budget:
+        rt = Runtime(program, ctx, budget=budget)
+        assert await rt.aeval_parallel([0, 0]) == [ctx, ctx]
+
+
+def test_ctx_resolves_on_merge_workers() -> None:
+    def gen(rt: Runtime) -> object:
+        return iter([rt.ctx])
+
+    program = _fake_program(thunks=[gen, gen])
+    ctx = Context()
+    with Budget(max_parallel=2) as budget:
+        rt = Runtime(program, ctx, budget=budget)
+        assert list(rt.merge([0, 1])) == [ctx, ctx]
+
+
+async def test_ctx_resolves_on_amerge_workers() -> None:
+    def gen(rt: Runtime) -> object:
+        return iter([rt.ctx])
+
+    program = _fake_program(thunks=[gen], athunks=[None], on_loop=[False])
+    ctx = Context()
+    with Budget(max_parallel=2, async_mode=True) as budget:
+        rt = Runtime(program, ctx, budget=budget)
+        assert [v async for v in rt.amerge([0])] == [ctx]
+
+
+def test_ctx_resolves_inside_in_thread() -> None:
+    program = compile(Literal(1))
+    ctx = Context()
+    with Budget(max_parallel=2) as budget:
+        rt = Runtime(program, ctx, budget=budget)
+        assert rt.in_thread(lambda: rt.ctx).result() is ctx
+
+
+async def test_ctx_resolves_inside_a_in_thread() -> None:
+    program = compile(Literal(1))
+    ctx = Context()
+    with Budget(max_parallel=2, async_mode=True) as budget:
+        rt = Runtime(program, ctx, budget=budget)
+        assert await rt.a_in_thread(lambda: rt.ctx) is ctx
+
+
 # --- budget lifecycle -----------------------------------------------------
 
 
