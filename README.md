@@ -169,10 +169,10 @@ Each fabric binds Refs to a real backend and unlocks a new capability.
 | Fabric | What |
 | --- | --- |
 | [`nu.mem`](https://nustack.dev/docs/reference/fabrics/mem) | In-memory state fabric. Perfect for cache, hot state, and in-process coordination. |
-| [`nu.kv`](https://nustack.dev/docs/reference/fabrics/virtuals) | Persistent state fabric. Refs over a KV backend (RocksDB, LMDB); transactions, snapshots, and change notifications, built in. |
+| [`nu.kv`](https://nustack.dev/docs/reference/fabrics/kv) | Persistent state fabric. Refs over a KV backend (RocksDB, LMDB); transactions, snapshots, and change notifications, built in. |
 | [`nu.ui`](https://nustack.dev/docs/reference/fabrics/ui) | Web UI fabric. Same fabric shape as the others, but the Refs are widgets — text, buttons, tables — rendered in the browser and live-updated as your state changes. |
-| [`nu.proxy`](https://nustack.dev/docs/reference/fabrics/proxy) | Network fabric. Puts other fabrics on the network — bind a fabric in one process, use it from another; same Refs, same interactions, over TCP or Unix socket. |
-| [`nu.cluster`](https://nustack.dev/docs/reference/fabrics/ray) | Cluster compute fabric. Teleport a Nu tree to any worker in your Ray cluster; it runs there and returns the result. |
+| [`nu.proxy`](https://nustack.dev/docs/reference/fabrics/proxy) | Proxy fabric. Puts other fabrics on the network — bind a fabric in one process, use it from another; same Refs, same interactions, over TCP or Unix socket. |
+| [`nu.cluster`](https://nustack.dev/docs/reference/fabrics/cluster) | Cluster compute fabric. Teleport a Nu tree to any worker in your Ray cluster; it runs there and returns the result. |
 
 # 📦 Apps built on Nu
 

@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 ## Unreleased
 
 - Refresh pyproject keywords
+- Fix stale fabric links and names in README
 
 ## 0.1.14 — 2026-08-16
 
