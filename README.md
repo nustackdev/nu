@@ -190,7 +190,12 @@ Nu is a reference implementation of the interaction model — a language-agnosti
 
 # 🛣️ Roadmap
 
-TODO.
+**`nu.agents` fabric — LLM authors Nu programs.**
+
+No tool-calling loop. The model's reply *is* a Nu tree, evaluated in the Context the agent runs in. The Refs bound in scope *are* the agent's surface — bind different Refs, get a different agent.
+
+- **Safe by construction.** Nu's laws validate the tree before any effect fires; `With` / `Provide` scoping bounds what the model can touch.
+- **Inspectable, replayable, diffable.** A Nu program is a data structure.
 
 # 👥 Community
 
