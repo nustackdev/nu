@@ -16,7 +16,23 @@ dependencies = [
     "rich>=10.7",
     "rich-click>=1.6",
 ]
-keywords = ["term", "programming", "tree", "topology", "shape", "table", "graph"]
+keywords = [
+    "nu",
+    "nustack",
+    "python",
+    "state-management",
+    "distributed-systems",
+    "ai-agents",
+    "agentic",
+    "ray",
+    "llm",
+    "database",
+    "key-value-store",
+    "rocksdb",
+    "ui",
+    "real-time",
+    "observability",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: Apache Software License",

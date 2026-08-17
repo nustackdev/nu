@@ -9,6 +9,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Refresh pyproject keywords
+
 ## 0.1.14 — 2026-08-16
 
 - Add nu.llm: OpenAI-compat chat/completions fabric (ChatRef + presets)
