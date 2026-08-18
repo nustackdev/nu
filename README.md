@@ -40,12 +40,13 @@
 
 <h3 align="center">
   <a href="#ℹ️-about"><b>About</b></a> &bull;
+  <a href="#-build-with-nu"><b>Build</b></a> &bull;
   <a href="#-quickstart"><b>Quickstart</b></a> &bull;
   <a href="#-fabrics"><b>Fabrics</b></a> &bull;
   <a href="#-apps-built-on-nu"><b>Apps</b></a> &bull;
   <a href="#-spec"><b>Spec</b></a> &bull;
   <a href="https://github.com/nustackdev/nu/tree/main/examples"><b>Examples</b></a> &bull;
-  <a href="https://nustack.dev/docs"><b>Documentation</b></a> &bull;
+  <a href="https://nustack.dev/docs"><b>Docs</b></a> &bull;
   <a href="#-community"><b>Community</b></a>
 </h3>
 
@@ -53,91 +54,137 @@
 
 # ℹ️ About
 
-A tiny program is a joy to write. Three lines, one substrate:
+The primitive Nu is built on, in three words.
 
-```python
-a = 2
-b = 5
-print(a + b)
-```
-
-Real apps don't stay here. `a` moves into a database. `b` comes from a form submission. The result renders in a browser. A background job reruns it when either input changes. Three lines become three hundred: an ORM, a request handler, a template, a websocket, a queue. Almost none of it is about `a + b` anymore — it's all interaction between substrates.
+A tiny script keeps its values in memory and calls functions on them. Real apps don't stay there. Values live in a database, arrive from a browser form, render into a dashboard, get recomputed by a background job. Almost none of the code is about the values anymore — it's all interaction between systems.
 
 **Nu makes interaction the primitive.**
 
-- **Ref** — a name for a value, wherever it lives. A KV slot, a UI widget, an LLM endpoint, a remote object.
-- **Interaction** — what you do with a Ref. Read, write, branch, iterate, compose.
-- **Fabric** — binds Refs to a real backend.
+- **Ref** — a name for a value, wherever it lives: a KV slot, a UI text block, an LLM endpoint, a remote object.
+- **Interaction** — what you do with a Ref: read, write, branch, iterate, compose.
+- **Fabric** — binds Refs to a real system. Compose as many as you need; they all speak the same primitive.
 
-Same program, `a` and `b` persisted in a KV store:
+> **Same primitive, different system.** One Ref for any resource, one Interaction for any op. Setting a browser text block is the same interaction as setting a KV slot.
+
+Nu is the reference implementation of the [interaction model](https://github.com/nustackdev/interaction-model) in Python.
+
+# 🧱 Build with Nu
+
+A few of Nu's fabrics — state, UIs, cluster, models. Same Python, same code shape.
+
+### Persistent state
+
+*Persistent state. Stores any Python type.*
+
+Reach any value by name; it survives restarts. Same code local or sharded across a cluster.
+
+- Serverless, scales to terabytes
+- Store any Python type
 
 ```python
-import nu
-
-
+...
 class DB(nu.Shape):
-    a = nu.kv.IntRef.slot()
-    b = nu.kv.IntRef.slot()
+    hits = nu.kv.IntRef.slot()
 
+# +1 to a persistent counter
+op = DB.hits.set(DB.hits + 1)
 
-# compute a + b and print it
-compute = DB.a.set(2) >> DB.b.set(5) >> nu.print(DB.a + DB.b)
-
-# assemble: rocksdb-backed
 app = nu.With(
-    nu.kv.rocksdb_navigator(".dbsum"),
-    body=nu.kv.auto_flow_atomic(compute),
+    nu.kv.rocksdb_navigator(".db"),
+    body=nu.kv.auto_flow_atomic(op),
 )
-
-nu.run(app)
+...
 ```
 
-Same program, result rendered in a live browser dashboard:
+Powered by [`virtuals`](https://github.com/nustackdev/virtuals) · [`rdbpy`](https://github.com/nustackdev/rdbpy) · [`RocksDB`](https://github.com/facebook/rocksdb) · [`LMDB`](https://www.symas.com/lmdb).
+
+### Live browser UIs
+
+*Reactive UIs from Python.* No JS, no build step, no websocket you had to write.
+
+A text block, a chart, a form — set them like variables, they render. Update the value, the browser updates itself.
+
+- 50+ components out of the box
+- Live updates for free
 
 ```python
-import asyncio
-import nu
-
-
-class DB(nu.Shape):
-    a = nu.kv.IntRef.slot()
-    b = nu.kv.IntRef.slot()
-
-
+...
 class Dashboard(nu.ui.Page):
-    out = nu.ui.TextRef.slot()
+    hello = nu.ui.TextRef.slot()
 
+# renders live in the browser
+op = Dashboard.hello.set("Hello, browser.")
 
-class App(nu.ui.Index):
-    pages = nu.ui.Pages({"/": Dashboard})
-
-
-# compute a + b and render into the dashboard text block
-compute = DB.a.set(2) >> DB.b.set(5) >> Dashboard.out.set(DB.a + DB.b)
-
-# assemble: rocksdb-backed, served over the browser
 app = nu.With(
-    nu.kv.rocksdb_navigator(".dbsum"),
-    nu.ui.server(nu.kv.auto_flow_atomic(compute)),
+    nu.ui.server(op),
 )
-
-asyncio.run(nu.arun(app))
+...
 ```
 
-> **Same primitive, different substrate.** One Ref for any resource, one Interaction for any op. Nu doesn't care what the backend is.
+Powered by [`React`](https://react.dev) · [`Zustand`](https://github.com/pmndrs/zustand).
 
-Persistence, reactivity, atomicity, observability, distribution — not features Nu has. What falls out of naming interactions instead of executing them:
+### Distributed execution
 
-- **Persist across restarts** — the KV slot is already durable.
-- **Re-render live on input changes** — wrap in a `React` interaction.
-- **Handle terabytes** — shard the KV Fabric; the Refs don't notice.
-- **Run distributed across a cluster** — bind through `nu.cluster`; the Refs don't notice.
+*Same code runs local or across the cluster.* No worker pool to run.
 
-Full walkthrough at [nustack.dev](https://nustack.dev).
+Teleport any Nu tree to any worker; it runs there and returns the result. Where it runs is a binding, not a rewrite.
+
+- Same code, local or remote
+- Distribute with a single line
+
+```python
+...
+class DB(nu.Shape):
+    hits = nu.kv.IntRef.slot()
+
+# any Nu op
+op = DB.hits.set(DB.hits + 1)
+
+# same op — teleport it to a worker
+remote = nu.cluster.Teleport(op, target="gpu-0")
+
+app = nu.With(
+    nu.cluster.RayCluster(),
+    body=remote,
+)
+...
+```
+
+Powered by [`Ray`](https://github.com/ray-project/ray).
+
+### LLM calls
+
+*One wire, N providers.* Ollama, OpenAI, OpenRouter, Groq, xAI — same call.
+
+LLM chat as a Ref. Swap the model string, keep the code. Local models and hosted APIs meet at the same interface.
+
+- Add intelligence to any Nu app
+- 7 providers out of the box
+
+```python
+...
+class Bot(nu.Service):
+    chat = nu.llm.ChatRef.method(temperature=0.7)
+
+# ask the model
+op = Bot.chat(prompt="one-line haiku about rust")
+
+app = nu.With(
+    nu.llm.ollama(Bot, host="localhost", model="qwen2.5:7b"),
+    body=op,
+)
+...
+```
+
+### And more
+
+Nu is batteries-included and covers the common cases. In-memory state, proxy, HTTP, Python objects, Claude Code, local parallelism — same model, same shape, same primitive as the four above.
+
+→ [Explore all fabrics](https://nustack.dev/fabrics)
 
 # 🏁 Quickstart
 
-Three steps: install, run a demo, explore Nu.
+Install, run a demo, start hacking.
 
 ### 01 · Install
 
@@ -157,22 +204,27 @@ Each one boots a live browser dashboard and picks up where it left off on restar
 | **movies** |   |
 | ![movies demo](https://github.com/user-attachments/assets/8c67838d-d327-4866-996f-65999e3a05be) A movie tracker: form, filterable table, detail pages. <br> `nu demo movies` |   |
 
-### 03 · Explore Nu
+### 03 · Start hacking
 
 - **[Read the docs](https://nustack.dev/docs)** — tutorials, how-tos, and the fabric reference.
 - **[Browse examples](https://github.com/nustackdev/nu/tree/main/examples)** — full source for every demo, plus more programs to steal from.
 
 # 🧵 Fabrics
 
-Each fabric binds Refs to a real backend and unlocks a new capability.
+Each fabric gives your Nu app a new capability. These are the ones Nu ships with today.
 
-| Fabric | What |
-| --- | --- |
-| [`nu.mem`](https://nustack.dev/docs/reference/fabrics/mem) | In-memory state fabric. Perfect for cache, hot state, and in-process coordination. |
-| [`nu.kv`](https://nustack.dev/docs/reference/fabrics/kv) | Persistent state fabric. Refs over a KV backend (RocksDB, LMDB); transactions, snapshots, and change notifications, built in. |
-| [`nu.ui`](https://nustack.dev/docs/reference/fabrics/ui) | Web UI fabric. Same fabric shape as the others, but the Refs are widgets — text, buttons, tables — rendered in the browser and live-updated as your state changes. |
-| [`nu.proxy`](https://nustack.dev/docs/reference/fabrics/proxy) | Proxy fabric. Puts other fabrics on the network — bind a fabric in one process, use it from another; same Refs, same interactions, over TCP or Unix socket. |
-| [`nu.cluster`](https://nustack.dev/docs/reference/fabrics/cluster) | Cluster compute fabric. Teleport a Nu tree to any worker in your Ray cluster; it runs there and returns the result. |
+| Fabric | What | Primary interaction |
+| --- | --- | --- |
+| [nu.kv](https://nustack.dev/docs/reference/fabrics/kv) | Persistent state. | `State.movies.append(m)` |
+| [nu.ui](https://nustack.dev/docs/reference/fabrics/ui) | Reactive web UI. | `Dashboard.count.set_value(n)` |
+| [nu.cluster](https://nustack.dev/docs/reference/fabrics/cluster) | Cluster compute. | `Teleport(Add(1,2), "gpu")` |
+| [nu.llm](https://nustack.dev/docs/reference/fabrics/llm) | OpenAI-compatible chat. | `Bot.chat(prompt="…")` |
+| [nu.mem](https://nustack.dev/docs/reference/fabrics/mem) | In-memory state. | `users.age.set(12)` |
+| [nu.proxy](https://nustack.dev/docs/reference/fabrics/proxy) | Fabrics over the network. | `Proxy(Nav, "10.0.0.1")` |
+| [nu.http](https://nustack.dev/docs/reference/fabrics/http) | Nu meets the web. | `Solana.get_slot()` |
+| [nu.service](https://nustack.dev/docs/reference/fabrics/service) | Python objects as Refs. | `Calc.add(a=2, b=3)` |
+| [nu.cc](https://nustack.dev/docs/reference/fabrics/cc) | Claude Code as a Ref. | `Agent.ask(prompt="…")` |
+| [nu.mp](https://nustack.dev/docs/reference/fabrics/mp) | Local parallel execution. | `Teleport(Add(1,2), "worker")` |
 
 # 📦 Apps built on Nu
 
