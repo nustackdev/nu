@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nustack-py"
-version = "0.1.14"
+version = "0.1.15"
 description = "The interaction primitive. Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code."
 readme = "README.md"
 license = "Apache-2.0"

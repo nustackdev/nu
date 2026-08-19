@@ -11,6 +11,9 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+## 0.1.15 — 2026-08-19
+
+- Add MappingForm.reversed_values() and reversed_items() with ReversedValues/ReversedItems interactions
 - Refresh pyproject keywords
 - Fix stale fabric links and names in README
 
