@@ -8,7 +8,7 @@ ops (``SetCmd`` / ``Delete``) and existence query
 
 from __future__ import annotations
 
-from .interactions import AttrExists, Delete, SetCmd
+from .interactions import AttrExists, Delete, Let, SetCmd
 from .refs import (
     AnyAttrRef,
     AttrRef,
@@ -37,6 +37,7 @@ __all__ = [
     "FloatAttrRef",
     "FrozenSetAttrRef",
     "IntAttrRef",
+    "Let",
     "ListAttrRef",
     "NoneAttrRef",
     "SetAttrRef",

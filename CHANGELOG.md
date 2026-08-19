@@ -11,6 +11,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add Let: scoped scratch-attr binding (Bracket) with sync + async paths
+
 ## 0.1.15 — 2026-08-19
 
 - Add MappingForm.reversed_values() and reversed_items() with ReversedValues/ReversedItems interactions
