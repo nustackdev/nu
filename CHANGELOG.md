@@ -2,14 +2,20 @@
 
 ## Packages shipped from this repo
 
-- **nu** — 0.1.16
-- **nudle** — 0.1.3
+- **nu** — 0.1.17
+- **nudle** — 0.1.4
 - **ui-core** — 0.1.0
-- **ui-kit** — 0.1.1
+- **ui-kit** — 0.1.2
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
+
+## 0.1.17 — 2026-08-20
+
+- LineChart / AreaChart: x_format supports datetime_us / datetime_ms / datetime_s
+- Enrich ValidationError render with Term class + ancestry chain
+- Tighten Arg-alias type hints across kv/mem refs
 
 ## 0.1.16 — 2026-08-19
 
