@@ -131,8 +131,39 @@ def validate(program: Program, *laws: Law) -> Program:
     """
     errors = [v for v in gate(program, *laws) if v.severity is Severity.ERROR]
     if errors:
-        raise ValidationError(errors)
+        raise ValidationError(errors, program=program)
     return program
+
+
+def _term_names(program: Program, path: Path) -> tuple[str, ...]:
+    """Class names of every Term along ``path``, root-first, including target."""
+    names: list[str] = []
+    cur: Path = ()
+    for step in (*path, None):  # sentinel to include the terminal path
+        nid = program.id_of.get(cur)
+        if nid is None:
+            break
+        names.append(type(program.terms[nid]).__name__)
+        if step is None:
+            break
+        cur = (*cur, step)
+    return tuple(names)
+
+
+def _render_violation(program: Program | None, v: Violation) -> str:
+    """One violation, two lines: ``[law] detail`` then ``at Term path=... chain=Root > ... > Term``."""
+    head = f"  [{v.law}] {v.detail}"
+    if program is None:
+        return f"{head}  at {v.path}"
+    try:
+        chain = _term_names(program, v.path)
+    except (KeyError, IndexError):
+        return f"{head}  at {v.path}"
+    if not chain:
+        return f"{head}  at {v.path}"
+    term = chain[-1]
+    ancestry = " > ".join(chain)
+    return f"{head}\n      at {term}  path={v.path}  chain={ancestry}"
 
 
 class ValidationError(ValueError):
@@ -140,11 +171,16 @@ class ValidationError(ValueError):
 
     Subclasses :class:`ValueError` so existing ``except ValueError`` sites
     keep working. The ``violations`` attribute is the full list of
-    error-level Violations as found by ``gate``; the formatted message
-    follows the ``[law] detail  at path`` shape, one violation per line.
+    error-level Violations as found by ``gate``.
+
+    Each violation renders on two lines: ``[law] detail`` then a second line
+    with the Term class of the failing node plus the root-to-node ancestry
+    chain (e.g. ``at IfDo  (Provide > Flow > ForeverDo > IfDo)``). Falls
+    back to the raw path tuple when the program is unavailable.
     """
 
-    def __init__(self, violations: list[Violation]) -> None:
+    def __init__(self, violations: list[Violation], *, program: Program | None = None) -> None:
         self.violations = violations
-        lines = "\n".join(f"  [{v.law}] {v.detail}  at {v.path}" for v in violations)
+        self.program = program
+        lines = "\n".join(_render_violation(program, v) for v in violations)
         super().__init__(f"invalid program:\n{lines}")
