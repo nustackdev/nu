@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from nu.lang.args import BoolArg, DictArg, FloatArg, IntArg, ListArg, StrArg
 
 
-XFormat = Literal["number", "time"]
+XFormat = Literal["number", "time", "datetime_us", "datetime_ms", "datetime_s"]
 
 
 class AreaChart(Ref):

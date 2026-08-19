@@ -16,6 +16,14 @@ import type { RefEntry, SliceFactory } from "../types";
 // A row is [x, y0, y1, ...] with one y per entry in `series`.
 type Row = (number | null)[];
 type AreaChartValue = { points: Row[] };
+type XFormat = "number" | "time" | "datetime_us" | "datetime_ms" | "datetime_s";
+const X_FORMATS: readonly XFormat[] = [
+	"number",
+	"time",
+	"datetime_us",
+	"datetime_ms",
+	"datetime_s",
+];
 
 const DEFAULTS = {
 	x_label: "",
@@ -24,7 +32,7 @@ const DEFAULTS = {
 	colors: [] as string[],
 	stacked: false,
 	max_points: 500,
-	x_format: "number" as "number" | "time",
+	x_format: "number" as XFormat,
 };
 
 function _num(v: unknown, fallback: number): number {
@@ -41,8 +49,10 @@ function _cap(n: unknown): number {
 	return v < 1 ? 1 : Math.floor(v);
 }
 
-function _fmt(v: unknown): "number" | "time" {
-	return v === "time" ? "time" : "number";
+function _fmt(v: unknown): XFormat {
+	return typeof v === "string" && (X_FORMATS as readonly string[]).includes(v)
+		? (v as XFormat)
+		: "number";
 }
 
 function _strList(v: unknown, fallback: string[]): string[] {
@@ -86,10 +96,25 @@ function _pad2(n: number): string {
 	return n < 10 ? `0${n}` : String(n);
 }
 
-function _timeTick(v: number): string {
-	const d = new Date(v);
+function _pad3(n: number): string {
+	return n < 10 ? `00${n}` : n < 100 ? `0${n}` : String(n);
+}
+
+function _fmtTick(v: number, fmt: XFormat): string | number {
+	if (fmt === "number") return v;
+	let ms: number;
+	if (fmt === "datetime_us") ms = v / 1000;
+	else if (fmt === "datetime_s") ms = v * 1000;
+	else ms = v;
+	const d = new Date(ms);
 	if (Number.isNaN(d.getTime())) return String(v);
-	return `${_pad2(d.getHours())}:${_pad2(d.getMinutes())}:${_pad2(d.getSeconds())}`;
+	const hh = _pad2(d.getHours());
+	const mm = _pad2(d.getMinutes());
+	const ss = _pad2(d.getSeconds());
+	if (fmt === "datetime_us" || fmt === "datetime_ms") {
+		return `${hh}:${mm}:${ss}.${_pad3(d.getMilliseconds())}`;
+	}
+	return `${hh}:${mm}:${ss}`;
 }
 
 const factory: SliceFactory = (path, ctx, props) => ({
@@ -146,11 +171,11 @@ function AreaChartView({ path }: { path: string }) {
 	const series = useStore((s) => (s.refs[path]?.series as string[]) ?? DEFAULTS.series);
 	const colors = useStore((s) => (s.refs[path]?.colors as string[]) ?? DEFAULTS.colors);
 	const stacked = useStore((s) => (s.refs[path]?.stacked as boolean) ?? false);
-	const x_format = useStore((s) => (s.refs[path]?.x_format as "number" | "time") ?? "number");
+	const x_format = useStore((s) => (s.refs[path]?.x_format as XFormat) ?? "number");
 	const points = Array.isArray(value?.points) ? (value?.points as Row[]) : [];
 	const data = points.map((r, i) => {
 		const raw = Array.isArray(r) ? _num(r[0], i) : i;
-		const x = x_format === "time" ? _timeTick(raw) : raw;
+		const x = _fmtTick(raw, x_format);
 		const row: Record<string, number | string | null> = { x };
 		for (let k = 0; k < series.length; k++) {
 			row[series[k]] = Array.isArray(r) ? _y(r[k + 1]) : null;

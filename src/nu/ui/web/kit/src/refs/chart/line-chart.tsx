@@ -17,13 +17,21 @@ import type { RefEntry, SliceFactory } from "../types";
 type Point = [number, number | null];
 type Series = { name: string; points: Point[]; color?: string };
 type LineChartValue = { points?: Point[]; series?: Series[] };
+type XFormat = "number" | "time" | "datetime_us" | "datetime_ms" | "datetime_s";
+const X_FORMATS: readonly XFormat[] = [
+	"number",
+	"time",
+	"datetime_us",
+	"datetime_ms",
+	"datetime_s",
+];
 
 const DEFAULTS = {
 	x_label: "",
 	y_label: "",
 	color: "",
 	max_points: 500,
-	x_format: "number" as "number" | "time",
+	x_format: "number" as XFormat,
 	show_legend: false,
 	show_tooltip: true,
 	palette: [] as string[],
@@ -43,8 +51,31 @@ function _cap(n: unknown): number {
 	return v < 1 ? 1 : Math.floor(v);
 }
 
-function _fmt(v: unknown): "number" | "time" {
-	return v === "time" ? "time" : "number";
+function _fmt(v: unknown): XFormat {
+	return typeof v === "string" && (X_FORMATS as readonly string[]).includes(v)
+		? (v as XFormat)
+		: "number";
+}
+
+function _pad3(n: number): string {
+	return n < 10 ? `00${n}` : n < 100 ? `0${n}` : String(n);
+}
+
+function _fmtTick(v: number, fmt: XFormat): string | number {
+	if (fmt === "number") return v;
+	let ms: number;
+	if (fmt === "datetime_us") ms = v / 1000;
+	else if (fmt === "datetime_s") ms = v * 1000;
+	else ms = v; // "time" and "datetime_ms" both treat v as ms
+	const d = new Date(ms);
+	if (Number.isNaN(d.getTime())) return String(v);
+	const hh = _pad2(d.getHours());
+	const mm = _pad2(d.getMinutes());
+	const ss = _pad2(d.getSeconds());
+	if (fmt === "datetime_us" || fmt === "datetime_ms") {
+		return `${hh}:${mm}:${ss}.${_pad3(d.getMilliseconds())}`;
+	}
+	return `${hh}:${mm}:${ss}`;
 }
 
 function _strList(v: unknown): string[] {
@@ -96,11 +127,6 @@ function _pad2(n: number): string {
 	return n < 10 ? `0${n}` : String(n);
 }
 
-function _timeTick(v: number): string {
-	const d = new Date(v);
-	if (Number.isNaN(d.getTime())) return String(v);
-	return `${_pad2(d.getHours())}:${_pad2(d.getMinutes())}:${_pad2(d.getSeconds())}`;
-}
 
 const factory: SliceFactory = (path, ctx, props) => ({
 	type: "LineChart",
@@ -180,7 +206,7 @@ const factory: SliceFactory = (path, ctx, props) => ({
 function LineChartView({ path }: { path: string }) {
 	const value = useStore((s) => s.refs[path]?.value as LineChartValue | undefined);
 	const color = useStore((s) => (s.refs[path]?.color as string) ?? DEFAULTS.color);
-	const x_format = useStore((s) => (s.refs[path]?.x_format as "number" | "time") ?? "number");
+	const x_format = useStore((s) => (s.refs[path]?.x_format as XFormat) ?? "number");
 	const show_legend = useStore((s) => (s.refs[path]?.show_legend as boolean) ?? false);
 	const show_tooltip = useStore((s) => (s.refs[path]?.show_tooltip as boolean) ?? true);
 	const palette = useStore((s) => (s.refs[path]?.palette as string[]) ?? DEFAULTS.palette);
@@ -201,7 +227,7 @@ function LineChartView({ path }: { path: string }) {
 			for (let k = 0; k < s.points.length; k++) {
 				const p = s.points[k];
 				const xNum = Array.isArray(p) ? _num(p[0], k) : k;
-				const row = byX.get(xNum) ?? { x: x_format === "time" ? _timeTick(xNum) : xNum };
+				const row = byX.get(xNum) ?? { x: _fmtTick(xNum, x_format) };
 				row[s.name] = Array.isArray(p) ? _y(p[1]) : null;
 				byX.set(xNum, row);
 			}
@@ -216,7 +242,7 @@ function LineChartView({ path }: { path: string }) {
 			const p = singlePoints[i];
 			const raw = Array.isArray(p) ? _num(p[0], i) : i;
 			data.push({
-				x: x_format === "time" ? _timeTick(raw) : raw,
+				x: _fmtTick(raw, x_format),
 				y: Array.isArray(p) ? _y(p[1]) : null,
 			});
 		}
