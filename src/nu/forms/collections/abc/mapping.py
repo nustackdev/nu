@@ -125,6 +125,18 @@ class MappingForm(
 
         return cast("CollectionResultT", self._wrap_keys_result(ReversedKeys(self)))
 
+    def reversed_values(self) -> CollectionResultT:
+        """Values in reverse insertion order: reversed(mapping.values()). Query."""
+        from .mapping_interactions import ReversedValues
+
+        return cast("CollectionResultT", self._wrap_values_result(ReversedValues(self)))
+
+    def reversed_items(self) -> CollectionResultT:
+        """(key, value) pairs in reverse insertion order: reversed(mapping.items()). Query."""
+        from .mapping_interactions import ReversedItems
+
+        return cast("CollectionResultT", self._wrap_items_result(ReversedItems(self)))
+
     def merge(self, other: Arg[Mapping[KeyT, ValueT]]) -> CollectionResultT:
         """Merge into a new mapping: mapping | other. Query yielding a new mapping."""
         from .mapping_interactions import Merge

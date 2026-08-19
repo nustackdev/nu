@@ -99,6 +99,27 @@ def test_dict_reads():
     assert val(Dict({"a": 1}).setdefault("b", 5)) == 5
 
 
+def test_dict_reversed_reads():
+    d = Dict({"a": 1, "b": 2, "c": 3})
+    assert list(val(d.reversed_keys())) == ["c", "b", "a"]
+    assert list(val(d.reversed_values())) == [3, 2, 1]
+    assert list(val(d.reversed_items())) == [("c", 3), ("b", 2), ("a", 1)]
+
+
+async def test_dict_reversed_reads_async():
+    d = Dict({"a": 1, "b": 2, "c": 3})
+
+    async def collect(term):
+        out = []
+        async for item in await aval(term):
+            out.append(item)
+        return out
+
+    assert await collect(d.reversed_keys()) == ["c", "b", "a"]
+    assert await collect(d.reversed_values()) == [3, 2, 1]
+    assert await collect(d.reversed_items()) == [("c", 3), ("b", 2), ("a", 1)]
+
+
 def test_set_reads():
     assert val(Set({1, 2}).union(Literal({3}))) == {1, 2, 3}
     assert val(Set({1, 2, 3}).intersection(Literal({2, 3, 4}))) == {2, 3}

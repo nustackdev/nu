@@ -1,7 +1,7 @@
 """Mapping interactions.
 
 Reads (Query): Keys, Values, Items, Get, ContainsKey,
-    Copy, ReversedKeys, Merge
+    Copy, ReversedKeys, ReversedValues, ReversedItems, Merge
 Mutate, yield nothing (Command): DeleteItem, Update (SetItem lives in nu.core.access)
 Mutate and yield a value (Action): DictPop, PopItem, SetDefault,
     MergeUpdate
@@ -36,7 +36,9 @@ __all__ = [
     "Merge",
     "MergeUpdate",
     "PopItem",
+    "ReversedItems",
     "ReversedKeys",
+    "ReversedValues",
     "SetDefault",
     "Update",
     "Values",
@@ -270,6 +272,94 @@ class ReversedKeys(ScalarQuery):
             async def agen() -> object:
                 for k in reversed(obj):
                     yield k
+
+            return agen()
+
+        return athunk
+
+
+class ReversedValues(ScalarQuery):
+    """Values in reverse insertion order: reversed(mapping.values()).
+
+    Scalar-shaped like :class:`Values` -- the thunk returns one iterator
+    handle. Downstream ``Iter`` opens the handle into a stream lazily,
+    so ``islice(m.reversed_values(), n)`` reads only ``n`` values regardless
+    of stream size.
+
+    Backend contract: prefers an explicit ``values_reverse()`` method on
+    the runtime mapping (fast path, one pass); falls back to
+    ``reversed(obj.values())`` when the mapping doesn't provide one --
+    that native path works for Python ``dict`` (3.8+) and any view whose
+    ``.values()`` returns a reversible sequence.
+    """
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        (operand,) = children
+
+        def thunk(rt: Runtime) -> object:
+            obj = operand(rt)
+            if obj is EMPTY or obj is INVALID:
+                return INVALID
+            fast = getattr(obj, "values_reverse", None)
+            return fast() if fast is not None else reversed(obj.values())
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        (operand,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            obj = await operand(rt)
+            if obj is EMPTY or obj is INVALID:
+                return INVALID
+            fast = getattr(obj, "values_reverse", None)
+            if fast is not None:
+                return fast()
+
+            async def agen() -> object:
+                for v in reversed(obj.values()):
+                    yield v
+
+            return agen()
+
+        return athunk
+
+
+class ReversedItems(ScalarQuery):
+    """``(key, value)`` pairs in reverse insertion order: reversed(mapping.items()).
+
+    Scalar-shaped like :class:`Items`. Same fast-path/fallback contract as
+    :class:`ReversedValues` -- backends may implement ``items_reverse()``
+    for a single-pass scan; otherwise the runtime uses
+    ``reversed(obj.items())`` (native on ``dict`` 3.8+).
+    """
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        (operand,) = children
+
+        def thunk(rt: Runtime) -> object:
+            obj = operand(rt)
+            if obj is EMPTY or obj is INVALID:
+                return INVALID
+            fast = getattr(obj, "items_reverse", None)
+            return fast() if fast is not None else reversed(obj.items())
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        (operand,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            obj = await operand(rt)
+            if obj is EMPTY or obj is INVALID:
+                return INVALID
+            fast = getattr(obj, "items_reverse", None)
+            if fast is not None:
+                return fast()
+
+            async def agen() -> object:
+                for kv in reversed(obj.items()):
+                    yield kv
 
             return agen()
 
