@@ -12,7 +12,7 @@ from .base import ViewRef
 
 if TYPE_CHECKING:
     from nu.domains.shape.dsl import Shape
-    from nu.lang import Nu
+    from nu.lang import IntArg, Nu, StrArg
     from virtuals.collections import MutableSetBase
 
 
@@ -42,7 +42,7 @@ class SetRef(ReactiveSetRef, ViewRef[set[T]], Generic[T]):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         item_type: type[T],
         view_type: type[MutableSetBase],

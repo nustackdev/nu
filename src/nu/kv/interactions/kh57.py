@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     import random
     from collections.abc import Callable
 
-    from nu.lang import Nu
+    from nu.lang import IntArg, Nu
     from nu.lang.runtime import Runtime
 
 
@@ -55,9 +55,9 @@ class Kh57Sample(ScalarQuery):
     def __init__(
         self,
         ref: Nu,
-        n: int | Nu,
-        begin: int | Nu | None = None,
-        end: int | Nu | None = None,
+        n: IntArg,
+        begin: IntArg | None = None,
+        end: IntArg | None = None,
         *,
         rng: random.Random | None = None,
     ) -> None:

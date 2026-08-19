@@ -20,7 +20,7 @@ from .dict import DictRef
 
 if TYPE_CHECKING:
     from nu.domains.shape.dsl import Shape
-    from nu.lang import Nu
+    from nu.lang import IntArg, StrArg
     from virtuals.views import Kh57ViewBase
 
     from .base import ViewRef
@@ -45,7 +45,7 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         value_type: type[V],
         value_value_type: type,
@@ -96,9 +96,9 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
 
     def sample(
         self,
-        n: int | Nu,
-        begin: int | Nu | None = None,
-        end: int | Nu | None = None,
+        n: IntArg,
+        begin: IntArg | None = None,
+        end: IntArg | None = None,
     ) -> Any:
         """Range reservoir sample - return up to ``n`` (key, value) pairs.
 
@@ -112,8 +112,8 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
 
     def range(
         self,
-        begin: int | Nu,
-        end: int | Nu,
+        begin: IntArg,
+        end: IntArg,
     ) -> Any:
         """List of ``(int_key, value)`` pairs in ``[begin, end)``, key-ordered."""
         from nu.kv.interactions.kh57 import Kh57Range

@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from nu.domains.shape import Shape
-    from nu.lang import Arg
+    from nu.lang import Arg, IntArg, StrArg
 
     from .base import RefBase
 
@@ -95,7 +95,7 @@ class DecimalRef(ItemRef, DecimalForm):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
@@ -130,7 +130,7 @@ class FractionRef(ItemRef, FractionForm):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
@@ -165,7 +165,7 @@ class ComplexRef(ItemRef, ComplexForm):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
@@ -198,7 +198,7 @@ class BasisPointRef(ItemRef, BasisPointForm):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
@@ -231,7 +231,7 @@ class PercentageRef(ItemRef, PercentageForm):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
@@ -269,7 +269,7 @@ class DateRef(ItemRef, DateForm):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
@@ -305,7 +305,7 @@ class DatetimeRef(ItemRef, DatetimeForm):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
@@ -345,7 +345,7 @@ class TimeRef(ItemRef, TimeForm):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
@@ -381,7 +381,7 @@ class TimedeltaRef(ItemRef, TimedeltaForm):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
@@ -419,7 +419,7 @@ class TimezoneRef(ItemRef, TimezoneForm):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
@@ -457,7 +457,7 @@ class PathRef(ItemRef, PathForm):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
@@ -492,7 +492,7 @@ class UUIDRef(ItemRef, UUIDForm):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,

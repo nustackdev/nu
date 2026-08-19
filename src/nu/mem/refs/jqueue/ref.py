@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.domains.shape import Shape
-    from nu.lang import Nu
+    from nu.lang import IntArg, Nu, StrArg
     from nu.lang.runtime import Runtime
 
 
@@ -42,7 +42,7 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,

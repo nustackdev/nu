@@ -24,7 +24,7 @@ from .items import ItemRef
 
 if TYPE_CHECKING:
     from nu.domains.shape import Shape
-    from nu.lang import Arg, Nu
+    from nu.lang import Arg, IntArg, StrArg
 
     from .base import PrimitiveRef
 
@@ -48,7 +48,7 @@ class PrimitiveListRef(ItemRef, List[T], Generic[T]):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
@@ -87,7 +87,7 @@ class PrimitiveDictRef(ItemRef, Dict[K, V], Generic[K, V]):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
@@ -126,7 +126,7 @@ class PrimitiveTupleRef(ItemRef, Tuple):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
@@ -165,7 +165,7 @@ class PrimitiveSetRef(ItemRef, Set[T], Generic[T]):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
@@ -204,7 +204,7 @@ class PrimitiveFrozenSetRef(ItemRef, FrozenSet[T], Generic[T]):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,

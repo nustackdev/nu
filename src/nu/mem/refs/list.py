@@ -14,7 +14,7 @@ from .items import ItemRef
 
 if TYPE_CHECKING:
     from nu.domains.shape.dsl import Shape
-    from nu.lang import Nu
+    from nu.lang import IntArg, Nu, StrArg
 
 
 __all__ = [
@@ -56,7 +56,7 @@ class ListRef(MutableSequenceRef["ItemRef"], RefBase[list[T]], Generic[T]):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         item_type: type[T],
         item_value_type: type,

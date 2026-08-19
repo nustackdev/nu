@@ -19,7 +19,7 @@ from .shape import ShapeRef
 
 if TYPE_CHECKING:
     from nu.domains.shape.dsl import Shape
-    from nu.lang import Nu
+    from nu.lang import IntArg, Nu, StrArg
 
 
 __all__ = [
@@ -71,7 +71,7 @@ class ShapesDictRef(MutableShapesMappingRef[T], RefBase[dict[K, dict]], Generic[
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         shape_type: type[T],
         key_type: type[K],

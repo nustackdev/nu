@@ -21,7 +21,7 @@ from .dictshape import ShapesDictRef
 
 if TYPE_CHECKING:
     from nu.domains.shape.dsl import Shape
-    from nu.lang import Nu
+    from nu.lang import IntArg, StrArg
     from virtuals.views import Kh57ViewBase
 
     from .base import ViewRef
@@ -46,7 +46,7 @@ class Kh57ShapesRef(ShapesDictRef[int, T], Generic[T]):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         shape_type: type[T],
         view_type: type[Kh57ViewBase] | None = None,
@@ -93,9 +93,9 @@ class Kh57ShapesRef(ShapesDictRef[int, T], Generic[T]):
 
     def sample(
         self,
-        n: int | Nu,
-        begin: int | Nu | None = None,
-        end: int | Nu | None = None,
+        n: IntArg,
+        begin: IntArg | None = None,
+        end: IntArg | None = None,
     ) -> Any:
         """Range reservoir sample - return up to ``n`` (key, shape) pairs.
 
@@ -109,8 +109,8 @@ class Kh57ShapesRef(ShapesDictRef[int, T], Generic[T]):
 
     def range(
         self,
-        begin: int | Nu,
-        end: int | Nu,
+        begin: IntArg,
+        end: IntArg,
     ) -> Any:
         """List of ``(int_key, shape_view)`` pairs in ``[begin, end)``, key-ordered."""
         from nu.kv.interactions.kh57 import Kh57Range

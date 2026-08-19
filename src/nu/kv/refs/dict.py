@@ -14,7 +14,7 @@ from .items import ItemRef
 
 if TYPE_CHECKING:
     from nu.domains.shape.dsl import Shape
-    from nu.lang import Nu
+    from nu.lang import IntArg, Nu, StrArg
     from virtuals.collections import MutableMappingBase
 
 
@@ -71,7 +71,7 @@ class DictRef(ReactiveMappingRef["ItemRef"], ViewRef[dict[K, V]], Generic[K, V])
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         value_type: type[V],
         key_type: type[K],

@@ -25,7 +25,7 @@ from .base import PrimitiveRef
 
 if TYPE_CHECKING:
     from nu.domains.shape.dsl import Shape
-    from nu.lang import Nu
+    from nu.lang import IntArg, StrArg
 
 
 __all__ = [
@@ -43,7 +43,7 @@ class ItemRef(ReactiveItemRef, PrimitiveRef):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         value_type: type,
         value_value_type: type,
@@ -71,7 +71,7 @@ class IntRef(ItemRef, Int):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
@@ -84,11 +84,11 @@ class IntRef(ItemRef, Int):
             owner_shape=owner_shape,
         )
 
-    def inc(self, step: int | Nu = 1) -> None_:
+    def inc(self, step: IntArg = 1) -> None_:
         """Increment in place."""
         return self.set(self + step)
 
-    def dec(self, step: int | Nu = 1) -> None_:
+    def dec(self, step: IntArg = 1) -> None_:
         """Decrement in place."""
         return self.set(self - step)
 
@@ -103,7 +103,7 @@ class StrRef(ItemRef, Str):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
@@ -127,7 +127,7 @@ class FloatRef(ItemRef, Float):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
@@ -151,7 +151,7 @@ class BoolRef(ItemRef, Bool):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,
@@ -175,7 +175,7 @@ class BytesRef(ItemRef, Bytes):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         parent_ref: PrimitiveRef | None = None,
         owner_shape: type[Shape] | None = None,

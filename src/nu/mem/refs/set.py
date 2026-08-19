@@ -12,7 +12,7 @@ from .base import RefBase
 
 if TYPE_CHECKING:
     from nu.domains.shape.dsl import Shape
-    from nu.lang import Nu
+    from nu.lang import IntArg, Nu, StrArg
 
 
 __all__ = [
@@ -41,7 +41,7 @@ class SetRef(MutableSetRef, RefBase[set[T]], Generic[T]):
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         item_type: type[T],
         parent_ref: RefBase | None = None,

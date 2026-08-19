@@ -17,7 +17,7 @@ from .shape import ShapeRef
 
 if TYPE_CHECKING:
     from nu.domains.shape.dsl import Shape
-    from nu.lang import Nu
+    from nu.lang import IntArg, Nu, StrArg
     from virtuals.collections import MutableSequenceBase
 
 
@@ -62,7 +62,7 @@ class ShapesListRef(ReactiveShapesSequenceRef[T], ViewRef[list[dict]], Generic[T
 
     def __init__(
         self,
-        address: str | int | Nu,
+        address: StrArg | IntArg,
         *,
         shape_type: type[T],
         view_type: type[MutableSequenceBase] | None = None,
