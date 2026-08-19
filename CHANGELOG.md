@@ -2,7 +2,7 @@
 
 ## Packages shipped from this repo
 
-- **nu** — 0.1.14
+- **nu** — 0.1.16
 - **nudle** — 0.1.3
 - **ui-core** — 0.1.0
 - **ui-kit** — 0.1.1
@@ -10,6 +10,8 @@
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
+
+## 0.1.16 — 2026-08-19
 
 - Add Let: scoped scratch-attr binding (Bracket) with sync + async paths
 
