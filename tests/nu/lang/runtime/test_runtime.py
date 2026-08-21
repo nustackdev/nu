@@ -1,9 +1,10 @@
-"""Unit tests for ``nu.lang.runtime.runtime``.
+"""Unit tests for ``nu.lang.runtime.runtime`` and ``nu.flows.parallel._scheduling``.
 
-Covers ``Runtime`` -- the concrete Runtime that drives compiled Programs.
-Dispatch (``eval`` / ``aeval``), sequential and parallel helpers, stream
-pumps, sentinel propagation, hybrid async pump, and the
-boundary helpers (``in_thread`` / ``a_in_thread``).
+Covers ``Runtime`` -- the concrete Runtime that drives compiled Programs --
+plus the free-function fan-in primitives that moved out of Runtime:
+``eval_parallel`` / ``aeval_parallel`` / ``aeval_race`` / ``aeval_any`` /
+``merge`` / ``amerge``. Together: dispatch, sequential helpers, stream
+pumps, sentinel propagation, hybrid async pump, and the boundary helpers.
 """
 
 from __future__ import annotations
@@ -14,6 +15,14 @@ from typing import TYPE_CHECKING
 import pytest
 
 from nu.core import Add, And, Literal, Mul, Sub
+from nu.flows.parallel._scheduling import (
+    aeval_any,
+    aeval_parallel,
+    aeval_race,
+    amerge,
+    eval_parallel,
+    merge,
+)
 from nu.lang import compile
 from nu.lang.attributes import Attr
 from nu.lang.runtime import Budget, Context, Runtime
@@ -196,14 +205,14 @@ async def test_aeval_each_returns_values_in_order() -> None:
 def test_eval_parallel_falls_through_to_sequential_at_max_parallel_one() -> None:
     program = _fake_program(thunks=[lambda rt: 10, lambda rt: 20])
     rt = Runtime(program, Context())
-    assert rt.eval_parallel([0, 1]) == [10, 20]
+    assert eval_parallel(rt, [0, 1]) == [10, 20]
 
 
 def test_eval_parallel_preserves_order_under_threads() -> None:
     program = _fake_program(thunks=[(lambda v: lambda rt: v)(i) for i in range(5)])
     with Budget(max_parallel=3) as budget:
         rt = Runtime(program, Context(), budget=budget)
-        assert rt.eval_parallel([0, 1, 2, 3, 4]) == [0, 1, 2, 3, 4]
+        assert eval_parallel(rt, [0, 1, 2, 3, 4]) == [0, 1, 2, 3, 4]
 
 
 async def test_aeval_parallel_returns_values_in_order() -> None:
@@ -217,7 +226,7 @@ async def test_aeval_parallel_returns_values_in_order() -> None:
     program = _fake_program(athunks=athunks, on_loop=[True, True, True, True])
     with Budget(max_parallel=2, async_mode=True) as budget:
         rt = Runtime(program, Context(), budget=budget)
-        assert await rt.aeval_parallel([0, 1, 2, 3]) == [0, 1, 2, 3]
+        assert await aeval_parallel(rt, [0, 1, 2, 3]) == [0, 1, 2, 3]
 
 
 async def test_aeval_parallel_hybrid_places_sync_child_on_thread() -> None:
@@ -233,7 +242,7 @@ async def test_aeval_parallel_hybrid_places_sync_child_on_thread() -> None:
     program = _fake_program(thunks=[None, s1], athunks=[a0, None], on_loop=[True, False])
     with Budget(max_parallel=2, async_mode=True) as budget:
         rt = Runtime(program, Context(), budget=budget)
-        assert await rt.aeval_parallel([0, 1]) == [100, 200]
+        assert await aeval_parallel(rt, [0, 1]) == [100, 200]
 
 
 async def test_aeval_race_returns_first_completed() -> None:
@@ -248,14 +257,14 @@ async def test_aeval_race_returns_first_completed() -> None:
 
     program = _fake_program(athunks=[slow, fast])
     rt = Runtime(program, Context())
-    assert await rt.aeval_race([0, 1]) == "fast"
+    assert await aeval_race(rt, [0, 1]) == "fast"
 
 
 async def test_aeval_race_rejects_empty() -> None:
     program = _fake_program()
     rt = Runtime(program, Context())
     with pytest.raises(ValueError, match="aeval_race needs"):
-        await rt.aeval_race([])
+        await aeval_race(rt, [])
 
 
 async def test_aeval_any_returns_first_success() -> None:
@@ -270,7 +279,7 @@ async def test_aeval_any_returns_first_success() -> None:
 
     program = _fake_program(athunks=[slow_ok, fast_ok])
     rt = Runtime(program, Context())
-    assert await rt.aeval_any([0, 1]) == "fast"
+    assert await aeval_any(rt, [0, 1]) == "fast"
 
 
 async def test_aeval_any_skips_a_failing_child() -> None:
@@ -285,7 +294,7 @@ async def test_aeval_any_skips_a_failing_child() -> None:
 
     program = _fake_program(athunks=[boom, ok])
     rt = Runtime(program, Context())
-    assert await rt.aeval_any([0, 1]) == "ok"
+    assert await aeval_any(rt, [0, 1]) == "ok"
 
 
 async def test_aeval_any_reraises_when_all_fail() -> None:
@@ -298,42 +307,14 @@ async def test_aeval_any_reraises_when_all_fail() -> None:
     program = _fake_program(athunks=[boom1, boom2])
     rt = Runtime(program, Context())
     with pytest.raises(ValueError, match=r"first|second"):
-        await rt.aeval_any([0, 1])
+        await aeval_any(rt, [0, 1])
 
 
 async def test_aeval_any_rejects_empty() -> None:
     program = _fake_program()
     rt = Runtime(program, Context())
     with pytest.raises(ValueError, match="aeval_any needs"):
-        await rt.aeval_any([])
-
-
-# --- sentinel-propagating parallel ----------------------------------------
-
-
-def test_eval_parallel_or_short_returns_invalid_on_sentinel() -> None:
-    program = _fake_program(thunks=[lambda rt: 1, lambda rt: EMPTY])
-    rt = Runtime(program, Context())
-    assert rt.eval_parallel_or_short([0, 1]) is INVALID
-
-
-def test_eval_parallel_or_short_returns_values_when_clean() -> None:
-    program = _fake_program(thunks=[lambda rt: 1, lambda rt: 2])
-    rt = Runtime(program, Context())
-    assert rt.eval_parallel_or_short([0, 1]) == [1, 2]
-
-
-async def test_aeval_parallel_or_short_returns_invalid_on_sentinel() -> None:
-    async def t0(rt: Runtime) -> object:
-        return 1
-
-    async def t1(rt: Runtime) -> object:
-        return INVALID
-
-    program = _fake_program(athunks=[t0, t1])
-    with Budget(async_mode=True) as budget:
-        rt = Runtime(program, Context(), budget=budget)
-        assert await rt.aeval_parallel_or_short([0, 1]) is INVALID
+        await aeval_any(rt, [])
 
 
 # --- streams: iter / collect / merge --------------------------------------
@@ -382,7 +363,7 @@ def test_merge_falls_through_at_max_parallel_one() -> None:
 
     program = _fake_program(thunks=[g0, g1])
     rt = Runtime(program, Context())
-    assert sorted(rt.merge([0, 1])) == [1, 2, 3, 4]
+    assert sorted(merge(rt, [0, 1])) == [1, 2, 3, 4]
 
 
 def test_merge_yields_all_under_threads() -> None:
@@ -395,7 +376,7 @@ def test_merge_yields_all_under_threads() -> None:
     program = _fake_program(thunks=[g0, g1])
     with Budget(max_parallel=2) as budget:
         rt = Runtime(program, Context(), budget=budget)
-        assert sorted(rt.merge([0, 1])) == [1, 2, 3, 4]
+        assert sorted(merge(rt, [0, 1])) == [1, 2, 3, 4]
 
 
 # --- boundary helpers -----------------------------------------------------
@@ -460,7 +441,7 @@ async def test_amerge_sequential_dispatches_per_on_loop() -> None:
         on_loop=[True, False],
     )
     rt = Runtime(program, Context())
-    got = [v async for v in rt.amerge([0, 1])]
+    got = [v async for v in amerge(rt, [0, 1])]
     assert sorted(got) == [1, 2, 3, 4]
 
 
@@ -485,7 +466,7 @@ async def test_amerge_parallel_yields_all() -> None:
     )
     with Budget(max_parallel=2, async_mode=True) as budget:
         rt = Runtime(program, Context(), budget=budget)
-        got = [v async for v in rt.amerge([0, 1])]
+        got = [v async for v in amerge(rt, [0, 1])]
         assert sorted(got) == [1, 2, 3, 4]
 
 
@@ -494,7 +475,7 @@ async def test_amerge_rejects_non_async_budget() -> None:
     with Budget(max_parallel=2, async_mode=False) as budget:
         rt = Runtime(program, Context(), budget=budget)
         with pytest.raises(RuntimeError, match="amerge requires"):
-            async for _ in rt.amerge([0]):  # pragma: no cover - generator body
+            async for _ in amerge(rt, [0]):  # pragma: no cover - generator body
                 pass
 
 
@@ -524,7 +505,7 @@ def test_ctx_resolves_on_eval_parallel_workers() -> None:
     ctx = Context()
     with Budget(max_parallel=2) as budget:
         rt = Runtime(program, ctx, budget=budget)
-        assert rt.eval_parallel([0, 0]) == [ctx, ctx]
+        assert eval_parallel(rt, [0, 0]) == [ctx, ctx]
 
 
 async def test_ctx_resolves_on_async_placement_workers() -> None:
@@ -532,7 +513,7 @@ async def test_ctx_resolves_on_async_placement_workers() -> None:
     ctx = Context()
     with Budget(max_parallel=2, async_mode=True) as budget:
         rt = Runtime(program, ctx, budget=budget)
-        assert await rt.aeval_parallel([0, 0]) == [ctx, ctx]
+        assert await aeval_parallel(rt, [0, 0]) == [ctx, ctx]
 
 
 def test_ctx_resolves_on_merge_workers() -> None:
@@ -543,7 +524,7 @@ def test_ctx_resolves_on_merge_workers() -> None:
     ctx = Context()
     with Budget(max_parallel=2) as budget:
         rt = Runtime(program, ctx, budget=budget)
-        assert list(rt.merge([0, 1])) == [ctx, ctx]
+        assert list(merge(rt, [0, 1])) == [ctx, ctx]
 
 
 async def test_ctx_resolves_on_amerge_workers() -> None:
@@ -554,7 +535,7 @@ async def test_ctx_resolves_on_amerge_workers() -> None:
     ctx = Context()
     with Budget(max_parallel=2, async_mode=True) as budget:
         rt = Runtime(program, ctx, budget=budget)
-        assert [v async for v in rt.amerge([0])] == [ctx]
+        assert [v async for v in amerge(rt, [0])] == [ctx]
 
 
 def test_ctx_resolves_inside_in_thread() -> None:

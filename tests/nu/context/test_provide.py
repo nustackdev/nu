@@ -119,9 +119,7 @@ def test_provide_list_binds_each_by_index():
         def __init__(self, i: int) -> None:
             self.i = i
 
-    bracket = ProvideList(
-        Store, [{"i": 0}, {"i": 1}, {"i": 2}], FabricRef(Store), base_tag=10
-    )
+    bracket = ProvideList(Store, [{"i": 0}, {"i": 1}, {"i": 2}], FabricRef(Store), base_tag=10)
     with bracket._open(Context()) as ctx:
         assert ctx.get(Store, 10).i == 0
         assert ctx.get(Store, 11).i == 1
@@ -133,9 +131,7 @@ def test_provide_list_extra_tags_share_across_fleet():
         def __init__(self, i: int) -> None:
             self.i = i
 
-    bracket = ProvideList(
-        Store, [{"i": 0}, {"i": 1}], FabricRef(Store), extra_tags=("worker",)
-    )
+    bracket = ProvideList(Store, [{"i": 0}, {"i": 1}], FabricRef(Store), extra_tags=("worker",))
     with bracket._open(Context()) as ctx:
         # index + shared extra tag both address the same binding.
         assert ctx.get(Store, 0, "worker").i == 0

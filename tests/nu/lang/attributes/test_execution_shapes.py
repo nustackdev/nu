@@ -13,7 +13,7 @@ from __future__ import annotations
 from _support.law_terms import FlowS, R
 
 from nu.engine.structure import Declared
-from nu.flows.strategy import AnyN, Parallel, Race, Sequential
+from nu.flows import AnyN, Parallel, Race, Sequential
 from nu.lang import ScalarQuery
 from nu.lang import compile as nu_compile
 from nu.lang.attributes import Attr

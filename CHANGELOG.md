@@ -11,6 +11,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add ParallelThreaded / ParallelAsync explicit-mode variants; support per-child mode override via (child, 'threaded'|'async') tuples on Parallel
+- Move Parallel-family scheduling primitives from nu.lang.runtime.runtime to nu.flows.parallel._scheduling
 - Lock in async attribute and Parallel/Race/Any scheduling with baseline tests
 - Lock in Span transparency with e2e tests
 - Remove inline_refs and FlatRef

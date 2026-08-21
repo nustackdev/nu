@@ -3,7 +3,9 @@
 Two families plus the reactive set:
 
 - **Strategy** - compose mutating atoms directly: ``Sequential`` (``>>``),
-  ``Parallel`` (``|``), ``Race`` (``&``), ``Gather``, ``AnyN``.
+  ``Parallel`` (``|``), ``Race`` (``&``), ``Gather``, ``AnyN``. ``Parallel``
+  also exposes forced-mode variants ``ParallelThreaded`` / ``ParallelAsync``
+  for explicit placement (Race / AnyN are async-only, no variants).
 - **Control** - compose bodies under Query parameters: ``IfDo``, ``WhileDo``,
   ``ForeverDo``, ``ForEachDo``, ``ForRangeDo``, ``Delay``, ``DelayedDo``,
   ``SwitchDo``.
@@ -22,9 +24,17 @@ from .control import (
     WhileDo,
 )
 from .noop import Noop
+from .parallel import (
+    AnyN,
+    Gather,
+    Parallel,
+    ParallelAsync,
+    ParallelThreaded,
+    Race,
+)
 from .raise_ import Raise, raise_
 from .react import React, ReactForever, ReactWhile
-from .strategy import AnyN, Gather, Parallel, Race, Sequential
+from .strategy import Sequential
 from .stream import Stream
 
 
@@ -39,6 +49,8 @@ __all__ = [
     "IfDo",
     "Noop",
     "Parallel",
+    "ParallelAsync",
+    "ParallelThreaded",
     "Race",
     "Raise",
     "React",

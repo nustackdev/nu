@@ -110,11 +110,15 @@ A Flow is `VOID` and owns no effects; its body slots carry the writes
 (`flow_body_is_mutator` law). Two sub-shapes:
 
 - **Strategy** composes mutators directly. Concurrency is the runtime's job:
-  hand the child nids (`rt.program.children[nid]`) to the runtime primitive -
+  hand the child nids (`rt.program.children[nid]`) to the fan-in primitive -
   `eval_parallel` / `aeval_parallel` (join), `aeval_race` (first done),
-  `aeval_any` (first success). Never build a thread pool or `gather` in an atom.
-  Per-child sync/async placement is resolved off `Attr.ON_LOOP` inside the
-  runtime. `Race` / `AnyN` are async-only (`_requires_async = Declared(value=True, name="requires_async")`);
+  `aeval_any` (first success). These now live as free functions on `rt` in
+  `nu.flows.parallel._scheduling`, not on `Runtime`. Never build a thread
+  pool or `gather` in an atom. Per-child placement is resolved off
+  `Attr.ON_LOOP` (smart), with per-child `(child, "threaded"|"async")`
+  overrides on `Parallel` and class-level forcing on
+  `ParallelThreaded` / `ParallelAsync`. `Race` / `AnyN` are async-only
+  (`_requires_async = Declared(value=True, name="requires_async")`);
   their sync thunks raise as a backstop.
 - **Control** runs bodies under Query params (a condition, an iterable). Declare
   `_param_slots = Declared(value=frozenset({...}), name="param_slots")`; the rest are body slots.

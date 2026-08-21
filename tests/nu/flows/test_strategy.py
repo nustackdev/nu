@@ -11,7 +11,7 @@ import pytest
 
 from nu.context import AttrRef, SetCmd
 from nu.core import Literal
-from nu.flows.strategy import AnyN, Gather, Parallel, Race, Sequential
+from nu.flows import AnyN, Gather, Parallel, Race, Sequential
 from nu.lang import Attr, Cardinality, Strategy, compile
 from nu.lang.attributes.execution import ExecOrder
 from nu.lang.helpers import arun, run
