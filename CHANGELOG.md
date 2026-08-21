@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 ## Unreleased
 
 - Remove algebra attribute axis
+- Remove inline_refs and FlatRef
 
 ## 0.1.17 — 2026-08-20
 

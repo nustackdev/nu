@@ -17,7 +17,7 @@ Usage::
     ctx = Context().bind(dict, data, User)
 """
 
-from nu.mem import refs, tree
+from nu.mem import refs
 from nu.mem.refs import (
     BasisPointRef,
     BoolRef,
@@ -45,7 +45,6 @@ from nu.mem.refs import (
     TimezoneRef,
     UUIDRef,
 )
-from nu.mem.tree import inline_refs
 
 
 __all__ = [
@@ -75,8 +74,6 @@ __all__ = [
     "TimedeltaRef",
     "TimezoneRef",
     "UUIDRef",
-    "inline_refs",
     # Submodules
     "refs",
-    "tree",
 ]

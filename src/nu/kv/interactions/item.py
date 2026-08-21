@@ -9,7 +9,7 @@ ItemPrimitiveSetCmd: store value via _primitive_write(), bypasses container chec
 
 All named explicitly Unsafe: optimization internals for tree deformers, not
 user-facing APIs. They require virtuals views with UnsafePrimitiveOpsBase in MRO.
-The leaf ref is held as ``children[0]`` (a virtuals Ref / FlatRef), so its
+The leaf ref is held as ``children[0]`` (a virtuals Ref), so its
 substrate methods take ``(rt, nid)``.
 """
 

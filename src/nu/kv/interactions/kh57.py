@@ -64,7 +64,7 @@ class Kh57Sample(ScalarQuery):
         super().__init__(ref, n, begin, end)
         # rng rides in _payload so Term._with_children (which shares payload
         # across a tree rewrite) carries it. Storing on __dict__ would lose
-        # it on the first inline_refs / auto_flow_atomic pass.
+        # it on the first auto_flow_atomic pass.
         self._payload["rng"] = rng
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

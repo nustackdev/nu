@@ -83,7 +83,7 @@ from nu.kv.refs import (
     UUIDRef,
     ViewRef,
 )
-from nu.kv.tree import auto_flow_atomic, inline_refs
+from nu.kv.tree import auto_flow_atomic
 
 
 __all__ = [  # noqa: RUF022
@@ -116,7 +116,6 @@ __all__ = [  # noqa: RUF022
     "CONFLICT_ERRORS",
     # Tree
     "auto_flow_atomic",
-    "inline_refs",
     # Paths
     "ValuePathSer",
     "ViewPathSer",

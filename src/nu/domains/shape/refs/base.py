@@ -151,7 +151,7 @@ class StructuredRef(Ref):
 
         Identity by default; substrates override when the storage representation
         differs from the domain type (e.g. ISO string -> datetime). Guaranteed on
-        EVERY read path, including the inlined FlatRef.
+        EVERY read path.
         """
         return raw
 

@@ -150,16 +150,6 @@ def test_ref_key_deep_write_then_read(ctx, data):
     assert run(Root.mids[Root.active].inners["i1"].label, ctx)[0] == "w"
 
 
-# --- inline_refs is retired: runtime resolution handles deep/dynamic chains -
-
-
-def test_inline_refs_is_identity(ctx):
-    import nu.mem as nu_mem
-
-    chain = Root.mids["m1"].inners["i1"].label
-    assert nu_mem.inline_refs(chain) is chain
-
-
 # --- primitive dict/list navigation writes (D5: mem now provides _wrap_item_ref)
 
 

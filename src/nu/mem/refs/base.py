@@ -13,7 +13,7 @@ fetched with ``rt.ctx.get(dict, scope)``.
 Read is the Ref's dual role (``compile`` returns the navigate-and-fetch thunk);
 ``write`` / ``erase`` resolve the address and mutate the parent container,
 auto-creating intermediate dicts. Dynamic parent keys (a computed segment above
-the leaf) resolve through the FlatRef / inline-refs pass.
+the leaf) resolve at runtime via ``_resolve_path(rt, nid)``.
 """
 
 from __future__ import annotations
