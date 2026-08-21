@@ -46,10 +46,6 @@ Declared attributes are passed by keyword. Raw values are wrapped in
 ``Declared``; pre-built ``Attribute`` instances (including computed
 ``Synthesized`` / ``Inherited``) pass through unchanged::
 
-    Add = InteractionFactory(
-        ScalarQuery, "Add", lambda *xs: sum(xs),
-        commutative=True, associative=True,
-    )
     Set = InteractionFactory(
         Command, "Set", lambda ref, value: ...,
         mutates=frozenset({0}),

@@ -36,18 +36,15 @@ def test_returns_a_subclass_of_the_base() -> None:
 
 
 def test_declared_attribute_is_wrapped() -> None:
-    Add = InteractionFactory(
-        ScalarQuery, "Add", lambda *xs: sum(xs), commutative=True, associative=True
-    )
-    assert "commutative" in Add._attributes
-    assert "associative" in Add._attributes
-    assert Add._attributes["commutative"].value is True
+    Touch = InteractionFactory(ScalarQuery, "Touch", lambda: 0, mutates=frozenset({0}))
+    assert "mutates" in Touch._attributes
+    assert Touch._attributes["mutates"].value == frozenset({0})
 
 
 def test_pre_wrapped_attribute_passes_through() -> None:
-    decl = Declared(value=True)
-    Cls = InteractionFactory(ScalarQuery, "Cls", lambda: 0, commutative=decl)
-    assert Cls._commutative is decl
+    decl = Declared(value=frozenset({0}))
+    Cls = InteractionFactory(ScalarQuery, "Cls", lambda: 0, mutates=decl)
+    assert Cls._mutates is decl
 
 
 def test_rejects_unsupported_base() -> None:
@@ -112,9 +109,8 @@ def test_keyword_args_run_on_async_path() -> None:
 
 
 def test_scalar_query_factory_builds_scalar_query() -> None:
-    Add = host(lambda a, b: a + b, name="Add", commutative=True)
+    Add = host(lambda a, b: a + b, name="Add")
     assert issubclass(Add, ScalarQuery)
-    assert Add._attributes["commutative"].value is True
     value, _ = run(Add(2, 3))
     assert value == 5
 

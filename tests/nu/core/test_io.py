@@ -69,11 +69,6 @@ def test_input_declares_a_write_through_its_fabric_ref() -> None:
     assert (StdioRef, Effect.WRITE) in effects
 
 
-def test_input_atom_is_non_deterministic() -> None:
-    program = compile(nu_input())
-    assert program.attr((0,), "deterministic") is False
-
-
 # --- functional: execution through a captured backend --------------------
 
 

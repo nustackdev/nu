@@ -55,15 +55,6 @@ def test_reduction_is_scalar_over_a_stream():
     assert program.attr((0,), Attr.CHILD_CARDINALITY) is Cardinality.STREAM
 
 
-# --- algebra -------------------------------------------------------------
-
-
-def test_declared_algebra_reaches_the_program():
-    program = compile(Add(Literal(1), Literal(2)))
-    assert program.attr(program.root, Attr.COMMUTATIVE) is True
-    assert program.attr(program.root, Attr.ASSOCIATIVE) is True
-
-
 # --- laws ----------------------------------------------------------------
 
 

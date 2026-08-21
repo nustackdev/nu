@@ -2,8 +2,7 @@
 
 Clock reads are non-deterministic, so assertions are property-based: types,
 non-negativity, monotonicity. ``sleep`` is checked for its effect (elapsed time)
-and its VOID yield. One structural test pins the ``deterministic=False`` tag on
-the clock/sleep atoms, and one pins ``sleep`` as sync-only.
+and its VOID yield. One structural test pins ``sleep`` as sync-only.
 """
 
 from __future__ import annotations
@@ -70,14 +69,6 @@ def test_sleep_yields_none_and_elapses() -> None:
 def test_sleep_runs_on_async_path() -> None:
     value, _ = asyncio.run(arun(sleep(0.01)))
     assert value is None
-
-
-def test_clock_and_sleep_atoms_are_non_deterministic() -> None:
-    # The tag a future fold/cache pass reads: pure AND deterministic => foldable.
-    # Clock reads and sleep must stay un-folded, so they declare deterministic=False.
-    for term in (time(), monotonic(), time_ns(), sleep(0.0)):
-        program = compile(term)
-        assert program.attr((0,), "deterministic") is False
 
 
 def test_sleep_is_sync_only() -> None:

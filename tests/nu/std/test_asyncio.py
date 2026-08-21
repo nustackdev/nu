@@ -1,8 +1,8 @@
 """Functional tests for ``nu.std.asyncio`` - the non-blocking sleep.
 
 ``asyncio.sleep`` is async-only, so it drives through ``arun``; a sync ``run`` is
-refused by the async law. Checks: the VOID yield, the elapsed suspension, the
-async-only tag, and the ``deterministic=False`` fold-guard.
+refused by the async law. Checks: the VOID yield, the elapsed suspension, and
+the async-only tag.
 """
 
 from __future__ import annotations
@@ -44,4 +44,3 @@ def test_sleep_is_async_only() -> None:
 def test_sleep_atom_tags() -> None:
     program = compile(sleep(0.0))
     assert program.attr((0,), "requires_async") is True
-    assert program.attr((0,), "deterministic") is False

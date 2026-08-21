@@ -4,9 +4,8 @@ Core can't build a ``uuid.UUID``, so the constructors are the only atoms this
 module adds. Everything else a UUID does (attribute reads, comparison) reuses
 core interactions, so it lives on the Form, not here.
 
-``Uuid4Query`` / ``Uuid1Query`` are non-deterministic (they read randomness /
-the clock), so they declare ``deterministic=False`` to stay un-folded. ``uuid3``
-/ ``uuid5`` are pure functions of their args, so they stay deterministic.
+``Uuid4Query`` / ``Uuid1Query`` read randomness / the clock. ``uuid3`` /
+``uuid5`` are pure functions of their args.
 """
 
 from __future__ import annotations
@@ -27,8 +26,8 @@ __all__ = [
 ]
 
 
-Uuid4Query = host(uuid4, name="Uuid4Query", deterministic=False)
-Uuid1Query = host(uuid1, name="Uuid1Query", deterministic=False)
+Uuid4Query = host(uuid4, name="Uuid4Query")
+Uuid1Query = host(uuid1, name="Uuid1Query")
 Uuid3Query = host(uuid3, name="Uuid3Query")
 Uuid5Query = host(uuid5, name="Uuid5Query")
 UuidFromStrQuery = host(lambda v: UUID(str(v)), name="UuidFromStrQuery")

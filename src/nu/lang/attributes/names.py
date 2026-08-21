@@ -52,10 +52,5 @@ class Attr(StrEnum):
     ON_LOOP = "on_loop"
     # exec order
     EXEC_ORDER = "exec_order"
-    # algebra
-    COMMUTATIVE = "commutative"
-    ASSOCIATIVE = "associative"
-    IDEMPOTENT = "idempotent"
-    DETERMINISTIC = "deterministic"
     # sort fold: a helper for the Flow law, beyond the settled concern vocab
     HAS_COMMAND = "has_command"

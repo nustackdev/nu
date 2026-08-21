@@ -34,16 +34,9 @@ def test_strategy_is_void():
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.VOID
 
 
-def test_sequential_is_associative_not_commutative():
-    program = compile(Sequential(_set("a", 1), _set("b", 2)))
-    assert program.attr(program.root, Attr.ASSOCIATIVE) is True
-    assert program.attr(program.root, Attr.COMMUTATIVE) is False
-
-
 def test_parallel_declares_parallel_exec_order():
     program = compile(Parallel(_set("a", 1), _set("b", 2)))
     assert program.attr(program.root, Attr.EXEC_ORDER) is ExecOrder.PARALLEL
-    assert program.attr(program.root, Attr.COMMUTATIVE) is True
 
 
 def test_anyn_requires_async():

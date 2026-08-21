@@ -55,10 +55,10 @@ def test_let_shadows_and_restores_outer_binding():
 def test_let_evaluates_value_once_even_when_body_reads_many_times():
     # A host counter that returns a fresh int on every call; if Let evaluated
     # value per-read, the two reads would see 0 and 1 and their sum would be
-    # 1, not 0. deterministic=False keeps the engine from folding the call.
+    # 1, not 0.
     counter = count()
 
-    @host(deterministic=False)
+    @host
     def next_seq() -> int:
         return next(counter)
 
@@ -71,7 +71,7 @@ def test_let_evaluates_value_once_even_when_body_reads_many_times():
 
 
 def test_let_pops_binding_when_body_raises():
-    @host(deterministic=False)
+    @host
     def blow_up() -> int:
         raise RuntimeError("boom")
 

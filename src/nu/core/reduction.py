@@ -22,16 +22,13 @@ Every atom is EVALUABLE: each ``Reduction`` defines ``compile`` (sync) and
 ``acompile`` (async) returning a thunk that drains its stream child to a scalar,
 with EMPTY / INVALID sentinel propagation.
 
-Sorts: all ScalarQuery / Reduction (Q-scalar over Q-stream). Sum, Min, Max,
-Any, All and Count are commutative and associative (stream order does not
-change the result); Min, Max, Any and All are idempotent too.
+Sorts: all ScalarQuery / Reduction (Q-scalar over Q-stream).
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.engine.structure import Declared
 from nu.lang import Reduction
 from nu.lang.sentinels import EMPTY, INVALID
 
@@ -58,9 +55,6 @@ __all__ = [
 
 class Sum(Reduction):
     """The sum of every item in its stream child (``sum``)."""
-
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
@@ -92,10 +86,6 @@ class Sum(Reduction):
 class Min(Reduction):
     """The smallest item in its stream child (``min``); EMPTY if empty."""
 
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
-    _idempotent = Declared(value=True, name="idempotent")
-
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
 
@@ -125,10 +115,6 @@ class Min(Reduction):
 
 class Max(Reduction):
     """The largest item in its stream child (``max``); EMPTY if empty."""
-
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
-    _idempotent = Declared(value=True, name="idempotent")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
@@ -160,10 +146,6 @@ class Max(Reduction):
 class AnyOf(Reduction):
     """True if any item in its stream child is truthy (``any``)."""
 
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
-    _idempotent = Declared(value=True, name="idempotent")
-
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
 
@@ -194,10 +176,6 @@ class AnyOf(Reduction):
 class AllOf(Reduction):
     """True if every item in its stream child is truthy (``all``)."""
 
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
-    _idempotent = Declared(value=True, name="idempotent")
-
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
 
@@ -227,9 +205,6 @@ class AllOf(Reduction):
 
 class Count(Reduction):
     """The number of items in its stream child (``len`` over a stream)."""
-
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children

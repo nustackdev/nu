@@ -26,7 +26,7 @@ from nu.core.arithmetic import (
     Sub,
 )
 from nu.core.literal import Literal
-from nu.lang import EMPTY, INVALID, Attr, compile
+from nu.lang import EMPTY, INVALID, compile
 from nu.lang.helpers import aeval, eval
 
 
@@ -109,24 +109,6 @@ def test_round_with_ndigits():
 def test_nested_arithmetic():
     program = Add(Mul(Literal(2), Literal(3)), Neg(Literal(1)))
     assert _eval(program) == 5
-
-
-# --- algebra -------------------------------------------------------------
-
-
-def test_add_and_mul_declare_their_algebra():
-    program = compile(Add(Literal(1), Literal(2)))
-    assert program.attr(program.root, Attr.COMMUTATIVE) is True
-    assert program.attr(program.root, Attr.ASSOCIATIVE) is True
-    program = compile(Mul(Literal(2), Literal(3)))
-    assert program.attr(program.root, Attr.COMMUTATIVE) is True
-    assert program.attr(program.root, Attr.ASSOCIATIVE) is True
-
-
-def test_sub_is_neither_commutative_nor_associative():
-    program = compile(Sub(Literal(1), Literal(2)))
-    assert program.attr(program.root, Attr.COMMUTATIVE) is not True
-    assert program.attr(program.root, Attr.ASSOCIATIVE) is not True
 
 
 # --- sentinels -----------------------------------------------------------

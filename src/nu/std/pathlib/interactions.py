@@ -8,8 +8,7 @@ method (a plain callable whose first argument is the receiver, so
 
 Everything is backed by ``PurePath`` - the pure (no filesystem I/O) half of
 ``pathlib``. ``cwd`` / ``home`` are the two exceptions: they read the process
-environment, so they bind the concrete ``Path`` classmethods and declare
-``deterministic=False`` to stay un-folded.
+environment, so they bind the concrete ``Path`` classmethods.
 """
 
 from __future__ import annotations
@@ -40,8 +39,8 @@ __all__ = [
 # --- constructors -----------------------------------------------------------
 
 PathOf = host(_PurePath, name="PathOf")
-PathCwd = host(_Path.cwd, name="PathCwd", deterministic=False)
-PathHome = host(_Path.home, name="PathHome", deterministic=False)
+PathCwd = host(_Path.cwd, name="PathCwd")
+PathHome = host(_Path.home, name="PathHome")
 
 # --- path-returning methods -------------------------------------------------
 

@@ -7,9 +7,8 @@ Builtins / operators to cover (Python -> Nu):
 - ``and`` -> ``And``, ``or`` -> ``Or``, ``not`` -> ``Not``
 - ``bool`` (truthiness) -> ``ToBool``
 
-Sorts: all ScalarQuery (Q). ``And`` / ``Or`` are commutative + associative +
-idempotent and variadic; ``Not`` and ``ToBool`` are unary. ``logical`` owns
-``ToBool``; ``cast`` does not define it.
+Sorts: all ScalarQuery (Q). ``And`` / ``Or`` are variadic; ``Not`` and
+``ToBool`` are unary. ``logical`` owns ``ToBool``; ``cast`` does not define it.
 
 And / Or semantics: Python's ``and`` / ``or`` short-circuit and return an
 operand (not a bool). Nu does not mirror that: these atoms coerce to ``bool``
@@ -27,7 +26,6 @@ from __future__ import annotations
 import builtins
 from typing import TYPE_CHECKING
 
-from nu.engine.structure import Declared
 from nu.lang import ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
 
@@ -42,10 +40,6 @@ __all__ = ["And", "Not", "Or", "ToBool", "bool"]
 
 class And(ScalarQuery):
     """The conjunction of its boolean children. Yields ``True`` if empty."""
-
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
-    _idempotent = Declared(value=True, name="idempotent")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -74,10 +68,6 @@ class And(ScalarQuery):
 
 class Or(ScalarQuery):
     """The disjunction of its boolean children. Yields ``False`` if empty."""
-
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
-    _idempotent = Declared(value=True, name="idempotent")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:

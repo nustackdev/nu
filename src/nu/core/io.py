@@ -242,12 +242,10 @@ class Input(ScalarAction):
     Python's ``input`` (no prompt - that would be a second, stdout write; deferred
     with the filesystem fabric). A ScalarAction: it mutates the stdin fabric
     (consuming input advances the read position) and yields the line, newline
-    stripped. Non-deterministic - two reads yield different lines - though as an
-    effectful Action it is never a fold candidate anyway.
+    stripped. Two reads yield different lines.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
-    deterministic = Declared(value=False)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = cast("StdioRef", self._children[0])

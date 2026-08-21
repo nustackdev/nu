@@ -1,8 +1,7 @@
 """Functional tests for the bitwise core atoms.
 
-Compile real bitwise programs and check both the algebra the language assigns
-(commutative / associative on AND / OR / XOR) and the pure-scalar execution
-slice (sync + async), including sentinel collapse.
+Compile real bitwise programs and check the pure-scalar execution slice (sync
++ async), including sentinel collapse.
 """
 
 from __future__ import annotations
@@ -30,23 +29,6 @@ def _eval(term: object) -> object:
 async def _aeval(term: object) -> object:
     value, _ = await aeval(compile(term))
     return value
-
-
-# --- algebra -------------------------------------------------------------
-
-
-def test_logical_bitops_declare_their_algebra():
-    for atom in (BitAnd, BitOr, BitXor):
-        program = compile(atom(Literal(1), Literal(2)))
-        assert program.attr(program.root, Attr.COMMUTATIVE) is True
-        assert program.attr(program.root, Attr.ASSOCIATIVE) is True
-
-
-def test_shifts_declare_no_algebra():
-    for atom in (LShift, RShift):
-        program = compile(atom(Literal(1), Literal(2)))
-        assert program.attr(program.root, Attr.COMMUTATIVE) is False
-        assert program.attr(program.root, Attr.ASSOCIATIVE) is False
 
 
 # --- effects -------------------------------------------------------------

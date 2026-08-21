@@ -5,8 +5,8 @@ free functions, not methods on the type. Each is a thin wrapper that builds its
 constructor interaction atom and returns a ``UUID`` form. The atoms live in
 ``interactions``; the value type lives in ``forms``.
 
-``uuid4`` / ``uuid1`` are non-deterministic (randomness / the clock), so their
-atoms declare ``deterministic=False`` and must not be constant-folded.
+``uuid4`` / ``uuid1`` read randomness / the clock. ``uuid3`` / ``uuid5`` are
+pure functions of their args.
 """
 
 from __future__ import annotations

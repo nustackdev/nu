@@ -12,10 +12,8 @@ the Form that matches the host return type:
 - ``sleep`` -> ``None_`` (an effect-only ScalarQuery; it yields ``None``, it
   just blocks)
 
-Every clock read is NON-DETERMINISTIC (it reads the clock), so its atom declares
-``deterministic=False`` and must not be constant-folded. ``sleep`` is sync-only
-and effect-only - see ``interactions``. The async sleep lives in
-``nu.std.asyncio``.
+Every clock read reads the process clock. ``sleep`` is sync-only and
+effect-only - see ``interactions``. The async sleep lives in ``nu.std.asyncio``.
 
 Deferred (effectful / stateful, need the effect model first): ``strftime`` /
 ``strptime`` (pure, could be added), ``clock_settime`` / ``tzset`` (mutate global

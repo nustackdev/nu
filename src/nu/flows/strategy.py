@@ -44,12 +44,9 @@ __all__ = ["AnyN", "Gather", "Parallel", "Race", "Sequential"]
 class Sequential(Strategy):
     """Runs its children in order - the ``>>`` composition.
 
-    Associative (``a >> (b >> c)`` regroups freely); not commutative in
-    general - order is the whole point. Calls the child thunks directly: the
-    sequential hot path needs no Budget, so it skips the Runtime dispatch hop.
+    Calls the child thunks directly: the sequential hot path needs no Budget,
+    so it skips the Runtime dispatch hop.
     """
-
-    _associative = Declared(value=True, name="associative")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
@@ -72,11 +69,9 @@ class Parallel(Strategy):
     Hands the child nids to the Runtime's parallel fan-in: ``eval_parallel``
     (Budget thread pool) on the sync path, ``aeval_parallel`` (semaphore-gated
     ``gather``) on the async path. Both join on every child and fall through to
-    sequential under ``max_parallel == 1``. Commutative and associative.
+    sequential under ``max_parallel == 1``.
     """
 
-    _associative = Declared(value=True, name="associative")
-    _commutative = Declared(value=True, name="commutative")
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -101,8 +96,6 @@ class Race(Strategy):
     raises, but sync ``run`` refuses the async-only subtree first.
     """
 
-    _associative = Declared(value=True, name="associative")
-    _commutative = Declared(value=True, name="commutative")
     _requires_async = Declared(value=True, name="requires_async")
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
 
@@ -129,8 +122,6 @@ class Gather(Strategy):
     primitives.
     """
 
-    _associative = Declared(value=True, name="associative")
-    _commutative = Declared(value=True, name="commutative")
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
 
     _compile = Parallel._compile

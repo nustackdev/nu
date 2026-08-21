@@ -2,8 +2,8 @@
 
 Reductions consume a stream child and the stream runtime is not wired yet, so
 these stay structural: compile a reduction over a stream source and assert the
-node is SCALAR over a STREAM child, its declared algebra reaches the program,
-and a clean reduction validates against the law set. No eval.
+node is SCALAR over a STREAM child, and a clean reduction validates against
+the law set. No eval.
 """
 
 from __future__ import annotations
@@ -25,7 +25,6 @@ from nu.core.reduction import (
 from nu.lang import LAWS, Attr, Cardinality, compile, gate, validate
 
 
-# AllOf nine atoms, with the algebra each declares.
 _FOLDS = [
     Sum,
     Min,
@@ -37,8 +36,6 @@ _FOLDS = [
     Last,
     Collect,
 ]
-_COMMUTATIVE = {Sum, Min, Max, AnyOf, AllOf, Count}
-_IDEMPOTENT = {Min, Max, AnyOf, AllOf}
 
 
 def _stream() -> Iter:
@@ -56,26 +53,6 @@ def test_reduction_is_scalar_over_a_stream(fold):
 def test_a_reduction_validates(fold):
     program = compile(fold(_stream()))
     assert validate(program, *LAWS) is program
-
-
-@pytest.mark.parametrize("fold", sorted(_COMMUTATIVE, key=lambda f: f.__name__))
-def test_commutative_associative_folds_reach_the_program(fold):
-    program = compile(fold(_stream()))
-    assert program.attr(program.root, Attr.COMMUTATIVE) is True
-    assert program.attr(program.root, Attr.ASSOCIATIVE) is True
-
-
-@pytest.mark.parametrize("fold", sorted(_IDEMPOTENT, key=lambda f: f.__name__))
-def test_idempotent_folds_reach_the_program(fold):
-    program = compile(fold(_stream()))
-    assert program.attr(program.root, Attr.IDEMPOTENT) is True
-
-
-def test_first_last_collect_are_not_commutative():
-    # Order-sensitive folds keep the declared default (not commutative).
-    for fold in (First, Last, Collect):
-        program = compile(fold(_stream()))
-        assert program.attr(program.root, Attr.COMMUTATIVE) is False
 
 
 def test_a_scalar_in_the_stream_slot_is_refused():

@@ -6,9 +6,9 @@ plain callable whose first argument is the receiver, so ``d.weekday()`` is
 not here - they reuse core ``GetAttr`` from the Form. Arithmetic and
 comparison reuse the core atoms.
 
-``DateToday`` / ``DatetimeNow`` read the clock, so they declare
-``deterministic=False`` to stay un-folded. The ``*FromTimestamp`` constructors
-take an explicit timestamp, so they are deterministic functions of their args.
+``DateToday`` / ``DatetimeNow`` read the clock. The ``*FromTimestamp``
+constructors take an explicit timestamp, so they are pure functions of their
+args.
 """
 
 from __future__ import annotations
@@ -68,7 +68,7 @@ __all__ = [
 # --- date -------------------------------------------------------------------
 
 DateOf = host(_date, name="DateOf")
-DateToday = host(_date.today, name="DateToday", deterministic=False)
+DateToday = host(_date.today, name="DateToday")
 DateFromIso = host(_date.fromisoformat, name="DateFromIso")
 DateFromOrdinal = host(_date.fromordinal, name="DateFromOrdinal")
 DateFromTimestamp = host(_date.fromtimestamp, name="DateFromTimestamp")
@@ -91,7 +91,7 @@ TimeReplace = host(_time.replace, name="TimeReplace")
 # --- datetime ---------------------------------------------------------------
 
 DatetimeOf = host(_datetime, name="DatetimeOf")
-DatetimeNow = host(_datetime.now, name="DatetimeNow", deterministic=False)
+DatetimeNow = host(_datetime.now, name="DatetimeNow")
 DatetimeFromIso = host(_datetime.fromisoformat, name="DatetimeFromIso")
 DatetimeFromTimestamp = host(_datetime.fromtimestamp, name="DatetimeFromTimestamp")
 DatetimeCombine = host(_datetime.combine, name="DatetimeCombine")

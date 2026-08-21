@@ -6,7 +6,7 @@
 - ``kinds``      - the kind taxonomy (``Ref`` / ``Interaction`` / ``ScalarQuery`` / ...).
 - ``args``       - argument type aliases (``IntArg``, ``StrArg``, ...) for kind signatures.
 - ``sentinels``  - ``EMPTY`` / ``INVALID`` and their guards.
-- ``attributes`` - the attribute concerns (sort, cardinality, effects, execution, algebra).
+- ``attributes`` - the attribute concerns (sort, cardinality, effects, execution).
 - ``laws``       - ``LAWS`` and the predicate library.
 - ``runtime``    - ``Runtime``, ``Context``, ``Budget``, lifecycle helpers.
 - ``helpers``    - top-level user-facing entries (``run``, ``eval``, ``astream``, ...).

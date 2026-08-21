@@ -7,9 +7,6 @@ snake-cased into CamelCase.
     @nu.host
     def creation_mint(tx) -> str: ...
 
-    @nu.host(deterministic=False)
-    def now() -> float: ...
-
     @nu.host(base=Command)
     def dispatch(x, y) -> None: ...
 

@@ -112,7 +112,7 @@ def test_annotate_steps_logs_failure_and_reraises(caplog: pytest.LogCaptureFixtu
     def boom() -> object:
         raise RuntimeError("kaboom")
 
-    boom_q = host(boom, name="BoomQ", deterministic=False)
+    boom_q = host(boom, name="BoomQ")
     prog = Sequential(Print(STDOUT, Literal("ok")), Print(STDOUT, boom_q()))
     caplog.set_level(pylogging.DEBUG, logger="nu.steps")
     try:
@@ -145,7 +145,7 @@ def _flaky(fail_times: int) -> type:
             raise ValueError(f"fail{state['n']}")
         return "ok"
 
-    return host(body, name="Flaky", deterministic=False)
+    return host(body, name="Flaky")
 
 
 def test_annotate_retries_logs_each_failed_attempt(caplog: pytest.LogCaptureFixture) -> None:

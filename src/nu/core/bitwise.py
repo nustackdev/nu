@@ -8,20 +8,18 @@ Operators to cover (Python -> Nu):
 - ``~`` -> ``BitNot`` (unary)
 - ``<<`` -> ``LShift``, ``>>`` -> ``RShift``
 
-Sorts: all ScalarQuery (Q). ``BitAnd`` / ``BitOr`` / ``BitXor`` are commutative
-+ associative and fold over their children (identity ``-1`` for AND, ``0`` for
-OR / XOR); the shifts are binary and ``BitNot`` is unary, neither commutative
-nor associative. Each atom defines ``compile`` (sync hot path) and ``acompile``
-(async hot path), both returning a thunk that captures the precompiled child
-thunks. Sentinel propagation is inlined: an EMPTY or INVALID operand collapses
-the result to INVALID.
+Sorts: all ScalarQuery (Q). ``BitAnd`` / ``BitOr`` / ``BitXor`` fold over
+their children (identity ``-1`` for AND, ``0`` for OR / XOR); the shifts are
+binary and ``BitNot`` is unary. Each atom defines ``compile`` (sync hot path)
+and ``acompile`` (async hot path), both returning a thunk that captures the
+precompiled child thunks. Sentinel propagation is inlined: an EMPTY or INVALID
+operand collapses the result to INVALID.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.engine.structure import Declared
 from nu.lang import ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
 
@@ -36,9 +34,6 @@ __all__ = ["BitAnd", "BitNot", "BitOr", "BitXor", "LShift", "RShift"]
 
 class BitAnd(ScalarQuery):
     """The bitwise AND of its scalar children."""
-
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -68,9 +63,6 @@ class BitAnd(ScalarQuery):
 class BitOr(ScalarQuery):
     """The bitwise OR of its scalar children."""
 
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
-
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             out: object = 0
@@ -98,9 +90,6 @@ class BitOr(ScalarQuery):
 
 class BitXor(ScalarQuery):
     """The bitwise XOR of its scalar children."""
-
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:

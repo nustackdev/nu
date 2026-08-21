@@ -11,7 +11,7 @@ import asyncio
 
 from nu.core.comparison import Eq, Ge, Gt, Is, Le, Lt, Ne
 from nu.core.literal import Literal
-from nu.lang import EMPTY, INVALID, Attr, compile
+from nu.lang import EMPTY, INVALID, compile
 from nu.lang.helpers import aeval, eval
 
 
@@ -47,15 +47,6 @@ def test_identity():
     obj = object()
     assert _eval(Is(Literal(obj), Literal(obj))) is True
     assert _eval(Is(Literal(object()), Literal(object()))) is False
-
-
-def test_commutativity_is_declared():
-    for kind in (Eq, Ne, Is):
-        program = compile(kind(Literal(1), Literal(2)))
-        assert program.attr(program.root, Attr.COMMUTATIVE) is True
-    for kind in (Lt, Gt, Le, Ge):
-        program = compile(kind(Literal(1), Literal(2)))
-        assert program.attr(program.root, Attr.COMMUTATIVE) is not True
 
 
 def test_aeval_mirrors_eval():

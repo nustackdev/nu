@@ -9,8 +9,7 @@ builds). Import it the way you would the stdlib::
     from nu.std.time import monotonic, sleep
     import nu.std.time as time     # then time.monotonic()
 
-Every clock read is NON-DETERMINISTIC (it reads the clock), so its atom declares
-``deterministic=False`` and must not be constant-folded. ``sleep`` is a sync-only,
+Every clock read reads the process clock. ``sleep`` is a sync-only,
 effect-only op that yields ``None`` (it blocks); the async sleep lives in
 ``nu.std.asyncio``.
 """

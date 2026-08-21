@@ -8,8 +8,8 @@ Operators to cover (Python -> Nu):
 - ``<`` -> ``Lt``, ``>`` -> ``Gt``, ``<=`` -> ``Le``, ``>=`` -> ``Ge``
 - ``is`` / ``is not`` -> ``Is`` (identity)
 
-Sorts: all ScalarQuery (Q). ``Eq`` / ``Ne`` / ``Is`` are commutative; the
-orderings are not. Membership (``in``) lives in ``access`` as ``Contains``.
+Sorts: all ScalarQuery (Q). Membership (``in``) lives in ``access`` as
+``Contains``.
 
 Each atom is binary and defines ``compile`` (sync hot path) and ``acompile``
 (async hot path). Both return a thunk ``(rt) -> value`` (sync) or
@@ -23,7 +23,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.engine.structure import Declared
 from nu.lang import ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
 
@@ -38,8 +37,6 @@ __all__ = ["Eq", "Ge", "Gt", "Is", "Le", "Lt", "Ne"]
 
 class Eq(ScalarQuery):
     """Whether its two children are equal (``==``)."""
-
-    _commutative = Declared(value=True, name="commutative")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
@@ -72,8 +69,6 @@ class Eq(ScalarQuery):
 
 class Ne(ScalarQuery):
     """Whether its two children are unequal (``!=``)."""
-
-    _commutative = Declared(value=True, name="commutative")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
@@ -234,8 +229,6 @@ class Ge(ScalarQuery):
 
 class Is(ScalarQuery):
     """Whether its two children are the same object (``is``)."""
-
-    _commutative = Declared(value=True, name="commutative")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children

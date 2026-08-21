@@ -16,12 +16,9 @@ duck-typing on private attributes. Each node is one of:
     Span       - a transparent wrapper                   (magenta; Bracket / Policy)
 
 The green dot on a non-Literal Query marks a **value producer**: a kind that
-yields a computed value and contributes no WRITE. It is not a purity or
-foldability claim - a Query may still READ through a Ref (impure), and even an
-effect-free Query (``uuid4``, ``now``) is not foldable unless it is also
-``deterministic``. Effect vs determinism are distinct: an effect is a READ or
-WRITE through a Ref, purity is empty composition effects, foldability is pure
-AND deterministic. This printer surfaces kind only; it makes no such claims.
+yields a computed value and contributes no WRITE. It is not a purity claim - a
+Query may still READ through a Ref. This printer surfaces kind only; it makes
+no such claims.
 
 Only the ANSI and plain string forms live here; there is no HTML explorer.
 ``render_nu`` renders the *tree*; rendering a Shape's backing storage is a

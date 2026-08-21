@@ -123,8 +123,8 @@ a stream child.
    writes and yields -> `ScalarAction` / `StreamAction`.
 4. Express the mechanics as a thunk: call a child thunk to get its value;
    iterate it to consume a stream.
-5. Declare attributes the kind needs (`mutates`, algebra flags). Keys / names
-   are children, not payload.
+5. Declare attributes the kind needs (`mutates`). Keys / names are children,
+   not payload.
 
 Do not add: callable-taking `*Fn` variants (function injection is deferred),
 and anything the taxonomy drops.

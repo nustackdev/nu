@@ -10,9 +10,7 @@ returns the Form that matches the host return type:
 - ``choice`` -> ``Any`` (one element of the population)
 - ``choices`` / ``sample`` -> ``List``
 
-Every function here is NON-DETERMINISTIC: it reads the global RNG, so its atom
-declares ``deterministic=False`` and must not be constant-folded (see
-``interactions``).
+Every function here reads the global RNG (see ``interactions``).
 
 Deferred (effectful / stateful, need the effect model first): ``seed``,
 ``shuffle`` (mutates the sequence in place), ``getstate`` / ``setstate``.

@@ -10,11 +10,11 @@ Builtins / operators to cover (Python -> Nu):
 - unary ``-`` -> ``Neg``, unary ``+`` -> ``Pos``, ``abs`` -> ``Abs``
 - ``divmod`` -> ``DivMod``, ``round`` -> ``Round``
 
-Sorts: all ScalarQuery (Q). ``Add`` and ``Mul`` are commutative + associative
-and fold a variadic child list; the rest are neither. ``Sub``, ``Div``,
-``FloorDiv``, ``Mod``, ``Pow`` and ``DivMod`` are binary. ``Neg``, ``Pos`` and
-``Abs`` are unary. ``Round`` takes one child (value) or two (value, ndigits).
-``DivMod`` yields the ``(quotient, remainder)`` pair as its single scalar.
+Sorts: all ScalarQuery (Q). ``Add`` and ``Mul`` fold a variadic child list.
+``Sub``, ``Div``, ``FloorDiv``, ``Mod``, ``Pow`` and ``DivMod`` are binary.
+``Neg``, ``Pos`` and ``Abs`` are unary. ``Round`` takes one child (value) or
+two (value, ndigits). ``DivMod`` yields the ``(quotient, remainder)`` pair as
+its single scalar.
 
 Each atom defines ``compile`` (sync hot path) and ``acompile`` (async hot
 path). Both return a thunk ``(rt) -> value`` (sync) or ``(rt) -> awaitable``
@@ -28,7 +28,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.engine.structure import Declared
 from nu.lang import ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
 
@@ -56,9 +55,6 @@ __all__ = [
 
 class Add(ScalarQuery):
     """The sum of its scalar children."""
-
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -89,9 +85,6 @@ class Add(ScalarQuery):
 
 class Mul(ScalarQuery):
     """The product of its scalar children."""
-
-    _commutative = Declared(value=True, name="commutative")
-    _associative = Declared(value=True, name="associative")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:

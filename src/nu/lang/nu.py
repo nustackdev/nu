@@ -13,7 +13,7 @@ Typical use::
 
 Custom atoms extend ``Nu`` (or one of its sort subclasses); ``Term`` is reserved
 for engine-level work. ``Nu`` itself is abstract: it declares no ``sort`` /
-``cardinality`` / effect / algebra attributes, so a plain ``Nu(...)`` cannot
+``cardinality`` / effect attributes, so a plain ``Nu(...)`` cannot
 pass schema resolution. The algebraic identity element of the tree is
 ``Span`` (and its sub-shapes ``Bracket`` / ``Policy``), which carries the
 TRANSPARENT cardinality and the rest of the forwarding machinery.
@@ -42,7 +42,7 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # PEP 695 has no variance markers
 
     A tagged ``Term`` carrying the language's ``Runtime`` binding and a
     yield type ``V_co``. Abstract: concrete sorts declare the structural,
-    effect, cardinality, async, and algebra attributes the engine requires.
+    effect, cardinality, and async attributes the engine requires.
     """
 
     def __init__(self, *children: object) -> None:
