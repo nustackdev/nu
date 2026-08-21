@@ -329,11 +329,17 @@ def _rows_filtered() -> nu.Nu:
     )
 
 
+# Seed once, on a store that has never been written. A restart then keeps what
+# the user logged instead of replacing the shelf with the samples again.
+# `selected` stays unconditional: it is a cursor into the detail page, not data.
 init = nu.kv.Transaction(
-    State.total.set(len(_SEED_MOVIES))
-    | State.watched.set(sum(1 for m in _SEED_MOVIES if m["watched"]))
-    | State.latest_title.set(_SEED_MOVIES[-1]["title"])
-    | State.movies.set(_SEED_MOVIES)
+    nu.IfDo(
+        State.total.missing(),
+        State.total.set(len(_SEED_MOVIES))
+        | State.watched.set(sum(1 for m in _SEED_MOVIES if m["watched"]))
+        | State.latest_title.set(_SEED_MOVIES[-1]["title"])
+        | State.movies.set(_SEED_MOVIES),
+    )
     | State.selected.set(0),
 )
 
