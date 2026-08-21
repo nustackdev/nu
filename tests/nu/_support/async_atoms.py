@@ -30,7 +30,13 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-__all__ = ["AsyncOnlyAction", "BoomAction", "RunsAnywhereAction", "SyncOnlyAction"]
+__all__ = [
+    "AsyncOnlyAction",
+    "BoomAction",
+    "RunsAnywhereAction",
+    "SleepAndRecordAction",
+    "SyncOnlyAction",
+]
 
 
 class RunsAnywhereAction(ScalarAction):
@@ -141,5 +147,39 @@ class SyncOnlyAction(ScalarAction):
         async def athunk(rt: Runtime) -> object:
             msg = "SyncOnlyAction was placed on the async/loop path"
             raise RuntimeError(msg)
+
+        return athunk
+
+
+class SleepAndRecordAction(ScalarAction):
+    """Async-only atom that sleeps N seconds, then records - for cancellation tests.
+
+    Sibling under a Parallel that raises should be cancelled during the sleep,
+    so its name never lands in ``ctx.attrs``.
+    """
+
+    _requires_async = Declared(value=True, name="requires_async")
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+
+    def __init__(self, name: str, delay: float = 0.5) -> None:
+        super().__init__()
+        self._payload["name"] = name
+        self._payload["delay"] = delay
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> object:
+            msg = "SleepAndRecordAction was placed on the sync path"
+            raise RuntimeError(msg)
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        name = self._payload["name"]
+        delay = self._payload["delay"]
+
+        async def athunk(rt: Runtime) -> object:
+            await asyncio.sleep(delay)
+            rt.ctx.attrs[name] = threading.current_thread().name
+            return name
 
         return athunk
