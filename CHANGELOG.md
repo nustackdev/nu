@@ -11,6 +11,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Remove algebra attribute axis
+
 ## 0.1.17 — 2026-08-20
 
 - LineChart / AreaChart: x_format supports datetime_us / datetime_ms / datetime_s
