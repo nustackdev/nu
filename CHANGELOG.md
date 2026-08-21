@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 ## Unreleased
 
 - Add ParallelThreaded / ParallelAsync explicit-mode variants; support per-child mode override via (child, 'threaded'|'async') tuples on Parallel
+- Carry the runtime Context into thread pool workers (#4)
+- Seed the movies demo once instead of on every boot (#5)
 - Move Parallel-family scheduling primitives from nu.lang.runtime.runtime to nu.flows.parallel._scheduling
 - Lock in async attribute and Parallel/Race/Any scheduling with baseline tests
 - Lock in Span transparency with e2e tests
