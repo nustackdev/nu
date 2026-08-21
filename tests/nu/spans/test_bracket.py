@@ -18,9 +18,12 @@ from contextlib import contextmanager
 
 import pytest
 from _support.async_atoms import BoomAction
+from _support.law_terms import Cmd, Q, R
+from _support.laws import assert_fails, assert_passes
 
 from nu.context import AttrRef, SetCmd
 from nu.core import Literal
+from nu.core.arithmetic import Add
 from nu.core.iteration import Iter
 from nu.lang import Attr, Bracket, Cardinality, Span, compile
 from nu.lang.helpers import arun, collect, run
@@ -38,6 +41,28 @@ def test_snapshot_and_transaction_are_bracket_spans() -> None:
     for cls in (Snapshot, Transaction):
         assert issubclass(cls, Bracket)
         assert issubclass(cls, Span)
+
+
+# --- the Gor scenario -----------------------------------------------------
+#
+# A scalar-value consumer must reject a Command wrapped in any Span shape,
+# and accept a yielder wrapped in the same shape. Sort transparency is not
+# a bypass: the parent still sees the body's sort through the wrapper.
+
+
+@pytest.mark.parametrize("span_cls", [Bracket, Snapshot, Transaction])
+def test_gor_scenario_add_rejects_command_through_span(span_cls: type) -> None:
+    """``Add(Span(Cmd(R())), 3)`` fires ``composition`` for every Span shape."""
+    assert_fails(Add(span_cls(Cmd(R())), Literal(3)), "composition")
+
+
+@pytest.mark.parametrize("span_cls", [Bracket, Snapshot, Transaction])
+def test_gor_scenario_add_accepts_yielder_through_span(span_cls: type) -> None:
+    """Positive control: a yielder wrapped in the same Span shape passes."""
+    assert_passes(Add(span_cls(Q(R())), Literal(3)))
+
+
+# --- other Span basics ----------------------------------------------------
 
 
 def test_bracket_is_transparent_and_forwards_body_cardinality() -> None:

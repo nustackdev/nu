@@ -7,7 +7,7 @@ synthesized ``COMPOSITION_EFFECTS`` fold.
 from __future__ import annotations
 
 import pytest
-from _support.law_terms import R2, Act, Cmd, FlowS, Q, R
+from _support.law_terms import R2, Act, Brk, Cmd, FlowS, Pol, Q, R
 
 from nu.engine.structure import Declared
 from nu.lang import Command
@@ -133,3 +133,26 @@ def test_composition_effects_at_root(
     term: object, expected: frozenset[tuple[type, Effect]]
 ) -> None:
     assert _composition_at_root(term) == expected
+
+
+# --- composition_effects through Span transparency ----------------------
+
+
+def test_composition_effects_write_propagates_through_span() -> None:
+    """A WRITE inside a Span body surfaces on the Span node."""
+    assert _composition_at_root(Brk(Cmd(R()))) == frozenset({(R, Effect.WRITE)})
+
+
+def test_composition_effects_read_propagates_through_span() -> None:
+    """A READ inside a Span body surfaces on the Span node."""
+    assert _composition_at_root(Brk(Q(R()))) == frozenset({(R, Effect.READ)})
+
+
+def test_composition_effects_at_span_node_equals_body() -> None:
+    """The Span node's effect set matches its direct child's (Span adds nothing)."""
+    program = nu_compile(Pol(FlowS(Cmd(R()), Cmd(R2()))))
+    span_id = program.id_of[()]
+    body_id = program.id_of[(0,)]
+    column = program.attrs[Attr.COMPOSITION_EFFECTS]
+    assert column[span_id] == column[body_id]
+    assert column[span_id] == frozenset({(R, Effect.WRITE), (R2, Effect.WRITE)})

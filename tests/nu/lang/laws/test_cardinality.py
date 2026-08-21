@@ -6,7 +6,7 @@ Mirrors ``src/nu/lang/laws/cardinality.py``. Exercises
 
 from __future__ import annotations
 
-from _support.law_terms import Q, R, Red, Stream, StreamAct
+from _support.law_terms import Brk, Q, R, Red, Stream, StreamAct
 from _support.laws import assert_fails, assert_passes
 
 
@@ -47,3 +47,14 @@ def test_reduction_takes_stream_fails_when_body_is_ref() -> None:
 
 def test_reduction_takes_stream_fails_when_body_missing() -> None:
     assert_fails(Red(), "reduction_takes_stream")
+
+
+def test_scalar_stream_refused_fails_when_query_holds_stream_through_span() -> None:
+    """Span transparency forwards CHILD_CARDINALITY: a Stream wrapped in a
+    Bracket still trips the scalar consumer's refusal at the parent."""
+    assert_fails(Q(Brk(Stream(R()))), "scalar_stream_refused")
+
+
+def test_scalar_stream_refused_passes_when_query_holds_scalar_through_span() -> None:
+    """Positive control: a scalar body through a Span satisfies the law."""
+    assert_passes(Q(Brk(Q(R()))))

@@ -7,7 +7,7 @@ attributes (``REQUIRES_ASYNC``, ``ASYNC_AFFINITY``, ``HAS_ASYNC_ONLY_ATOM``,
 
 from __future__ import annotations
 
-from _support.law_terms import Cmd, FlowS, Q, R
+from _support.law_terms import Brk, Cmd, FlowS, Pol, Q, R
 
 from nu.engine.structure import Declared
 from nu.lang import ScalarQuery, Strategy
@@ -121,6 +121,19 @@ def test_has_sync_only_atom_true_on_sync_only_atom() -> None:
 
 def test_has_sync_only_atom_propagates_up_through_query() -> None:
     assert _attr_at(Q(SyncOnly()), Attr.HAS_SYNC_ONLY_ATOM) is True
+
+
+# --- async folds through Span transparency ------------------------------
+
+
+def test_has_async_only_atom_propagates_through_span() -> None:
+    """An async-only atom under a Span surfaces on the Span node."""
+    assert _attr_at(Brk(AsyncOnly()), Attr.HAS_ASYNC_ONLY_ATOM) is True
+
+
+def test_has_sync_only_atom_propagates_through_span() -> None:
+    """A sync-only atom under a Span surfaces on the Span node."""
+    assert _attr_at(Pol(SyncOnly()), Attr.HAS_SYNC_ONLY_ATOM) is True
 
 
 # --- on_loop at the root ------------------------------------------------

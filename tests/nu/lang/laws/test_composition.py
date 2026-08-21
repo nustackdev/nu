@@ -72,6 +72,20 @@ def test_composition_passes_through_span() -> None:
     assert_passes(FlowS(Brk(Cmd(R()))))
 
 
+def test_composition_fails_when_query_holds_command_through_span() -> None:
+    """Value-slot direction: a Query rejects a Command wrapped in a Bracket.
+
+    The Gor scenario in test-primitive form. Sort transparency is not a
+    bypass: the value slot still needs a yielder past the Span wrapper.
+    """
+    assert_fails(Q(Brk(Cmd(R()))), "composition")
+
+
+def test_composition_passes_when_query_holds_query_through_span() -> None:
+    """Positive control for the Gor scenario: a yielder through a Span fits."""
+    assert_passes(Q(Brk(Q(R()))))
+
+
 def test_composition_passes_when_strategy_holds_stream_action() -> None:
     """A StreamAction is a mutator too: a Strategy body slot accepts it."""
     assert_passes(FlowS(StreamAct(R())))

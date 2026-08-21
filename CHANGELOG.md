@@ -11,8 +11,9 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
-- Remove algebra attribute axis
+- Lock in Span transparency with e2e tests
 - Remove inline_refs and FlatRef
+- Remove algebra attribute axis
 
 ## 0.1.17 — 2026-08-20
 
