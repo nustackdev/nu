@@ -65,7 +65,7 @@ FloatArg: TypeAlias = "float | Nu[float] | Any | Sentinel"
 StrArg: TypeAlias = "str | Nu[str] | Any | Sentinel"
 BoolArg: TypeAlias = "bool | Nu[bool] | Any | Sentinel"
 BytesArg: TypeAlias = "bytes | Nu[bytes] | Any | Sentinel"
-NoneArg: TypeAlias = "None | Nu[None] | Any | Sentinel"
+NoneArg: TypeAlias = "Nu[None] | Any | Sentinel | None"
 
 ListArg = TypeAliasType("ListArg", "list[_V] | Nu[list[_V]] | Any | Sentinel", type_params=(_V,))
 DictArg = TypeAliasType(
