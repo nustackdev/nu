@@ -34,3 +34,20 @@ __all__ = [
     "ParallelThreaded",
     "Race",
 ]
+
+
+# Register the parallel-family laws with ``nu.lang.laws.LAWS`` at import time.
+# LAWS is a mutable list on the lang side; every consumer reads it live. Kept
+# guarded so a re-import (e.g. reloading during tests) does not double-add.
+def _register_parallel_laws() -> None:
+    from nu.lang import laws as _lang_laws
+
+    from .laws import LAWS as PARALLEL_LAWS
+
+    if getattr(_lang_laws, "_parallel_laws_registered", False):
+        return
+    _lang_laws.LAWS.extend(PARALLEL_LAWS)
+    _lang_laws._parallel_laws_registered = True
+
+
+_register_parallel_laws()

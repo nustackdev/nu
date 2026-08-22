@@ -35,7 +35,7 @@ del _bootstrap
 
 # Subpackage namespaces for dot-access.
 # Early group: pure layers with no dependency on the flat root surface.
-from . import context, core, engine, factory, flows, forms, lang, spans, tree
+from . import context, core, engine, factory, flows, forms, lang, prog, spans, tree
 from .domains import shape
 
 # Flat re-exports: the program-authoring surface.
@@ -48,6 +48,10 @@ from .spans import *
 # Shape DSL only; fabric atoms (Load, SetCmd, ...) stay at nu.shape.*.
 from .domains.shape import Shape, Slot
 from .domains.service import Method, Service
+
+# Dynamic Nu-in-Nu evaluation (nu.prog fabric). Flat: ``nu.Eval`` beside the
+# other authoring atoms; ``EvalPromiseError`` stays at ``nu.prog.EvalPromiseError``.
+from .prog import Eval
 
 # Language essentials, curated to the building blocks of a Nu program:
 #   - the root kind (``Nu``, ``TypedNu``);
@@ -107,11 +111,13 @@ from .lang.helpers import (
     alast,
     arun,
     collect,
+    compile,
     eval,
     eval_in_loop,
     first,
     run,
     run_in_loop,
+    validate,
 )
 
 # Late subpackage namespaces: fabric adapters and higher layers that reach into

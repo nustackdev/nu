@@ -26,7 +26,7 @@ family, crossing Query / Command / Action as the builtins do:
 - ``sentinel`` - the EMPTY / INVALID predicates (IsEmpty, IsInvalid)
 - ``io`` - console effects through the stdio fabric (Print, Input).
         Logging lives at ``nu.std.logging`` -- a Python ``logging`` module wrap.
-- ``dynamic`` - dynamic evaluation (Eval, Exec, Compile, Globals)
+- ``dynamic`` - host-namespace escape hatches (Globals, Locals)
 
 Core is the pure Python builtins. The fabric interactions (writing through a
 Ref into the Context store, a database, stdio) live in their own fabric dirs -
@@ -97,7 +97,7 @@ from nu.core.cast_fns import (
 )
 from nu.core.comparison import Eq, Ge, Gt, Is, Le, Lt, Ne
 from nu.core.conditional import If, Switch
-from nu.core.dynamic import Compile, Eval, Exec, Globals, Locals
+from nu.core.dynamic import Globals, Locals
 from nu.core.io import Input, Print, input, print
 from nu.core.iteration import Enumerate, Iter, Next, Reversed, Zip
 from nu.core.literal import Literal
@@ -166,7 +166,6 @@ __all__ = [
     "Callable",
     "Chr",
     "Collect",
-    "Compile",
     "Contains",
     "Count",
     "DelAttr",
@@ -176,8 +175,6 @@ __all__ = [
     "DivMod",
     "Enumerate",
     "Eq",
-    "Eval",
-    "Exec",
     "Filter",
     "First",
     "Flatten",

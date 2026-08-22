@@ -17,7 +17,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Flow
+from nu.lang import Flow, Span
+from nu.lang.attributes import Sort
 
 from ..interactions.atomicity import Snapshot, Transaction
 from ..refs.base import PrimitiveRef, ViewRef
@@ -33,6 +34,19 @@ __all__ = ["auto_flow_atomic"]
 
 
 _VirtualsRef = (ViewRef, PrimitiveRef)
+
+
+def _declared_sort(node: object) -> Sort | None:
+    """Read the node's declared sort off its class (pre-compile access)."""
+    attrs = getattr(type(node), "_attributes", None)
+    if not attrs:
+        return None
+    sort_attr = attrs.get("sort")
+    return getattr(sort_attr, "value", None) if sort_attr is not None else None
+
+
+def _is_dynamic(node: object) -> bool:
+    return _declared_sort(node) is Sort.DYNAMIC
 
 
 def _write_positions(node: object) -> frozenset[int]:
@@ -77,7 +91,13 @@ def _iter_uncovered(
     Descends into Snapshot / Transaction bodies with the brace's scope
     added to ``enclosing``: refs the brace covers are pruned. The
     body is re-entered as a fresh top-level subtree.
+
+    Dynamic (Sort.DYNAMIC) subtrees are opaque: their effect surface is not
+    visible at compile time, so we don't descend through them. Any refs
+    inside the carrier are hidden from the wrap decision.
     """
+    if _is_dynamic(node):
+        return
     if isinstance(node, (Snapshot, Transaction)):
         inner = (*enclosing, node.scope)
         for c in node._children:
@@ -110,8 +130,27 @@ def _wrap_kwargs(pass_scope: Hashable | None) -> dict:
     return {"scope": pass_scope} if pass_scope is not None else {}
 
 
+def _effective_root_is_dyn(child: Nu) -> bool:
+    """True if ``child``'s effective root (through Spans) is dynamic.
+
+    The auto-flow pass runs on the raw Term tree, so it cannot reach into the
+    compiled ``_effective_sort`` (which needs a Program). We mirror that
+    walk here by hand: skip through Span bodies to reach the effective root,
+    then check its declared sort.
+    """
+    node = child
+    while isinstance(node, Span) and node._children:
+        node = node._children[0]
+    return _is_dynamic(node)
+
+
 def _wrap_flow_child(child: Nu, pass_scope: Hashable | None, enclosing: tuple) -> Nu:
     """Decide how a Flow's direct child gets wrapped."""
+    if _effective_root_is_dyn(child):
+        # A dynamic subtree's effect surface is opaque at compile time. Leave the
+        # branch alone; the runtime dispatcher owns any atomicity concerns.
+        return child
+
     if isinstance(child, Flow):
         # Flow child handles its own children via the recursive walk.
         return child
