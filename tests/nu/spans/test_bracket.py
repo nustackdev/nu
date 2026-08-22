@@ -25,8 +25,8 @@ from nu.context import AttrRef, SetCmd
 from nu.core import Literal
 from nu.core.arithmetic import Add
 from nu.core.iteration import Iter
-from nu.lang import Attr, Bracket, Cardinality, Span, compile
-from nu.lang.helpers import arun, collect, run
+from nu.lang import Attr, Bracket, Cardinality, Span
+from nu.lang.helpers import arun, collect, compile, run
 from nu.spans import Snapshot, Transaction
 
 

@@ -11,9 +11,9 @@ These laws read ``composition_effects``; nothing here recomputes attributes.
 from __future__ import annotations
 
 from nu.engine import Law, Predicate, Severity
-from nu.lang.attributes import Effect
+from nu.lang.attributes import Attr, Effect
 
-from .predicates import no_composition_effect
+from .predicates import attr_true, no_composition_effect
 
 
 __all__ = ["LAWS"]
@@ -32,7 +32,9 @@ LAWS: tuple[Law, ...] = (
     Law(
         "program_mutates",
         scope=is_root,
-        holds=~no_composition_effect(Effect.WRITE),
+        # Silent under Dyn: the compile-time effect fold cannot see through
+        # a Dyn subtree, so treat "may write" as satisfying the warning.
+        holds=~no_composition_effect(Effect.WRITE) | attr_true(Attr.HAS_DYNAMIC),
         message="the program performs no Context mutation",
         severity=Severity.WARNING,
     ),

@@ -11,8 +11,8 @@ from _support.law_terms import R2, Act, Brk, Cmd, FlowS, Pol, Q, R
 
 from nu.engine.structure import Declared
 from nu.lang import Command
-from nu.lang import compile as nu_compile
 from nu.lang.attributes import Attr, Effect
+from nu.lang.helpers import compile as nu_compile
 
 
 # --- Effect enum --------------------------------------------------------

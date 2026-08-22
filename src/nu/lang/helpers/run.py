@@ -12,7 +12,9 @@ from typing import TYPE_CHECKING, TypeVar, cast
 
 from nu.lang.runtime import into_loop
 
-from .drive import aeval, eval
+from .compilation import compile
+from .evaluation import aeval, eval
+from .validation import validate
 
 
 if TYPE_CHECKING:
@@ -44,10 +46,7 @@ def run(  # TypeVar matches the kind-chain V_co convention
         RuntimeError: the Program subtree contains an async-only atom; use
             ``arun`` instead.
     """
-    from nu.lang import LAWS, compile, validate
-
-    program = compile(term)
-    validate(program, *LAWS)
+    program = validate(compile(term))
     value, ctx = eval(program, ctx, max_parallel=max_parallel)
     # runtime thunks are object-typed; V is recovered from the typed entry point
     return cast("V", value), ctx
@@ -60,10 +59,7 @@ async def arun(  # TypeVar matches the kind-chain V_co convention
     max_parallel: int = 1,
 ) -> tuple[V, Context]:
     """Async sibling of ``run``: compile, validate, then ``aeval``."""
-    from nu.lang import LAWS, compile, validate
-
-    program = compile(term)
-    validate(program, *LAWS)
+    program = validate(compile(term))
     value, ctx = await aeval(program, ctx, max_parallel=max_parallel)
     # runtime thunks are object-typed; V is recovered from the typed entry point
     return cast("V", value), ctx

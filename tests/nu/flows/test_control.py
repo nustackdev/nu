@@ -20,8 +20,8 @@ from nu.flows.control import (
     SwitchDo,
     WhileDo,
 )
-from nu.lang import Attr, Cardinality, Context, Control, compile
-from nu.lang.helpers import arun, run
+from nu.lang import Attr, Cardinality, Context, Control
+from nu.lang.helpers import arun, compile, run
 
 
 def _set(name: str, value: object) -> SetCmd:

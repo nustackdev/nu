@@ -26,8 +26,9 @@ from nu.core.io import (
 )
 from nu.core.io import input as nu_input
 from nu.core.io import print as nu_print
-from nu.lang import Cardinality, Sort, compile
+from nu.lang import Cardinality, Sort
 from nu.lang.attributes import Attr, Effect
+from nu.lang.helpers import compile
 
 
 # --- sorts ---------------------------------------------------------------

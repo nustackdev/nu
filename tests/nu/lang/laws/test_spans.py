@@ -23,8 +23,8 @@ import nu.spans.policy as _spans_policy  # noqa: F401
 from nu.engine.compilation import UnknownAttributeError
 from nu.engine.structure import Declared
 from nu.lang import Bracket, Policy, Span
-from nu.lang import compile as nu_compile
 from nu.lang.attributes import Cardinality
+from nu.lang.helpers import compile as nu_compile
 
 
 # --- malformed shapes for negative cases -------------------------------

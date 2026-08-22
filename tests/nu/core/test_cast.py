@@ -27,8 +27,8 @@ from nu.core.cast import (
     ToTuple,
 )
 from nu.core.literal import Literal
-from nu.lang import EMPTY, INVALID, Attr, Cardinality, Sort, compile
-from nu.lang.helpers import aeval, eval
+from nu.lang import EMPTY, INVALID, Attr, Cardinality, Sort
+from nu.lang.helpers import aeval, compile, eval
 
 
 def _eval(term: object) -> object:

@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import Effect, Ref
+from nu.lang.attributes import Sort
 
 
 if TYPE_CHECKING:
@@ -56,8 +57,29 @@ def iter_effects(node: Nu) -> Iterator[tuple[Ref, Effect]]:
         yield from iter_effects(child)
 
 
+def _is_dynamic(node: Nu) -> bool:
+    attrs = getattr(type(node), "_attributes", None)
+    if not attrs:
+        return False
+    sort_attr = attrs.get("sort")
+    return getattr(sort_attr, "value", None) is Sort.DYNAMIC
+
+
+def _has_dyn(node: Nu) -> bool:
+    if _is_dynamic(node):
+        return True
+    return any(_has_dyn(c) for c in node._children)
+
+
 def is_pure(node: Nu) -> bool:
-    """An atom or composition with no tracked effects is pure."""
+    """An atom or composition with no tracked effects is pure.
+
+    A subtree carrying a dynamic (Sort.DYNAMIC) node is never pure: the
+    inner tree the carrier will produce is opaque at analysis time, so we
+    treat the whole subtree as potentially effectful.
+    """
+    if _has_dyn(node):
+        return False
     return next(iter_effects(node), None) is None
 
 

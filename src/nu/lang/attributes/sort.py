@@ -77,6 +77,7 @@ class Sort(StrEnum):
     SPAN = "span"
     BRACKET = "bracket"
     POLICY = "policy"
+    DYNAMIC = "dynamic"
 
 
 # The sort tree, as a child -> parent map. REF and INTERACTION are the roots.
@@ -96,6 +97,7 @@ _PARENT: dict[Sort, Sort] = {
     Sort.CONTROL: Sort.FLOW,
     Sort.BRACKET: Sort.SPAN,
     Sort.POLICY: Sort.SPAN,
+    Sort.DYNAMIC: Sort.INTERACTION,
 }
 
 
@@ -121,6 +123,7 @@ _MATRIX_SORTS: tuple[Sort, ...] = (
     Sort.CONTROL,
     Sort.BRACKET,
     Sort.POLICY,
+    Sort.DYNAMIC,
     Sort.REF,
 )
 
@@ -135,6 +138,13 @@ def matrix_sort(sort: Sort) -> Sort | None:
         if subsort(sort, candidate):
             return candidate
     return None
+
+
+# Dyn is the universal child: it slot-fits every existing matrix row. Every
+# parent accepts a Dyn subtree because its declared sort is opaque until the
+# carrier runs, so we let it through statically and let the promise + runtime
+# dispatch surface any mismatch.
+_UNIVERSAL = frozenset({Sort.DYNAMIC})
 
 
 # Child sorts that produce a value, and child sorts that do work. Action is the
@@ -172,16 +182,19 @@ _ANY = _VALUE | _WORK
 # that take a body (Control, Bracket, Policy) hold anything. Action's slots
 # need values (the payload, the address) like Command's do, in either cardinality.
 MATRIX: dict[Sort, frozenset[Sort]] = {
-    Sort.REF: _VALUE,
-    Sort.SCALAR_QUERY: _VALUE,
-    Sort.STREAM_QUERY: _VALUE,
-    Sort.SCALAR_COMMAND: _VALUE,
-    Sort.SCALAR_ACTION: _VALUE,
-    Sort.STREAM_ACTION: _VALUE,
-    Sort.STRATEGY: _WORK,
-    Sort.CONTROL: _ANY,
-    Sort.BRACKET: _ANY,
-    Sort.POLICY: _ANY,
+    Sort.REF: _VALUE | _UNIVERSAL,
+    Sort.SCALAR_QUERY: _VALUE | _UNIVERSAL,
+    Sort.STREAM_QUERY: _VALUE | _UNIVERSAL,
+    Sort.SCALAR_COMMAND: _VALUE | _UNIVERSAL,
+    Sort.SCALAR_ACTION: _VALUE | _UNIVERSAL,
+    Sort.STREAM_ACTION: _VALUE | _UNIVERSAL,
+    Sort.STRATEGY: _WORK | _UNIVERSAL,
+    Sort.CONTROL: _ANY | _UNIVERSAL,
+    Sort.BRACKET: _ANY | _UNIVERSAL,
+    Sort.POLICY: _ANY | _UNIVERSAL,
+    # A Dyn's sole child is its carrier, and the carrier must be value-yielding.
+    # The dyn_carrier_is_scalar law tightens this further to scalar cardinality.
+    Sort.DYNAMIC: _VALUE | _UNIVERSAL,
 }
 
 
@@ -198,10 +211,21 @@ def _any(own: bool, children: list[bool]) -> bool:
     return own or any(children)
 
 
+def _is_dynamic(program: Program, path: Path) -> bool:
+    """A node is itself a Dyn."""
+    return subsort(program.attr(path, Attr.SORT), Sort.DYNAMIC)
+
+
 ATTRIBUTES: tuple[Attribute, ...] = (
     Synthesized(
         name=Attr.HAS_COMMAND,
         base=_is_command,
+        combine=_any,
+        reads=(Attr.SORT,),
+    ),
+    Synthesized(
+        name=Attr.HAS_DYNAMIC,
+        base=_is_dynamic,
         combine=_any,
         reads=(Attr.SORT,),
     ),

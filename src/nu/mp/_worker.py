@@ -52,8 +52,8 @@ async def _run(
     init: _LifecycleBracket | None,
     ctx_builder: Callable[[], Context | Awaitable[Context]] | None,
 ) -> None:
-    from nu.lang import compile as compile_term
-    from nu.lang.helpers.drive import aeval
+    from nu.lang.helpers import compile as compile_term
+    from nu.lang.helpers.evaluation import aeval
     from nu.lang.runtime import Context
 
     stack = contextlib.AsyncExitStack()

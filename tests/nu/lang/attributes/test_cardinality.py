@@ -11,8 +11,8 @@ from __future__ import annotations
 import pytest
 from _support.law_terms import Brk, Cmd, FlowC, FlowS, Pol, Q, R, Red, Stream
 
-from nu.lang import compile as nu_compile
 from nu.lang.attributes import Attr, Cardinality
+from nu.lang.helpers import compile as nu_compile
 
 
 @pytest.mark.parametrize(

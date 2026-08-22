@@ -18,13 +18,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.lang.attributes import Attr
 from nu.lang.runtime import Budget, Context, Runtime, into_loop, safely_aclosing, safely_closing
-
-from ._guard import refuse_async_only
 
 
 if TYPE_CHECKING:
     from nu.engine import Program
+
+
+def _refuse_async_only(program: Program, entry: str, swap: str) -> None:
+    """Raise if a sync entry sees an async-only subtree."""
+    if program.attrs[Attr.HAS_ASYNC_ONLY_ATOM][0]:
+        msg = f"{entry}: program contains an async-only atom (e.g. Watch); use {swap}."
+        raise RuntimeError(msg)
 
 
 # --- value root -----------------------------------------------------------
@@ -51,7 +57,7 @@ def eval(
         RuntimeError: the program subtree contains an async-only atom; use
             ``aeval`` instead.
     """
-    refuse_async_only(program, "eval", "aeval")
+    _refuse_async_only(program, "eval", "aeval")
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=False) as budget:
         rt = Runtime(program, ctx, budget=budget)
@@ -98,7 +104,7 @@ def first(
 
     Raises ``RuntimeError`` if the stream is empty.
     """
-    refuse_async_only(program, "first", "afirst")
+    _refuse_async_only(program, "first", "afirst")
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=False) as budget:
         rt = Runtime(program, ctx, budget=budget)
@@ -116,7 +122,7 @@ def collect(
     max_parallel: int = 1,
 ) -> tuple[list, Context]:
     """Materialize a stream-rooted Program to a list; ``(values, ctx)``."""
-    refuse_async_only(program, "collect", "acollect")
+    _refuse_async_only(program, "collect", "acollect")
     ctx = ctx if ctx is not None else Context()
     with Budget(max_parallel, async_mode=False) as budget:
         rt = Runtime(program, ctx, budget=budget)

@@ -12,7 +12,8 @@ from __future__ import annotations
 import pytest
 
 from nu.core.iteration import Enumerate, Iter, Next, Reversed, Zip
-from nu.lang import LAWS, Attr, Cardinality, Effect, Ref, Sort, compile, gate, validate
+from nu.lang import LAWS, Attr, Cardinality, Effect, Ref, Sort, gate
+from nu.lang.helpers import compile, validate
 
 
 _SOURCES = (Iter, Enumerate, Zip, Reversed)
@@ -69,12 +70,12 @@ def test_a_source_only_reads_its_children():
 @pytest.mark.parametrize("source", _SOURCES)
 def test_a_source_validates(source):
     program = compile(source(Ref("xs")))
-    assert validate(program, *LAWS) is program
+    assert validate(program) is program
 
 
 def test_next_validates():
     program = compile(Next(Ref("it")))
-    assert validate(program, *LAWS) is program
+    assert validate(program) is program
 
 
 def test_an_action_yields_so_it_fits_a_query_slot():

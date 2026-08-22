@@ -18,8 +18,8 @@ from nu.forms import (
     Set,
     Str,
 )
-from nu.lang import EMPTY, compile
-from nu.lang.helpers import aeval, eval
+from nu.lang import EMPTY
+from nu.lang.helpers import aeval, compile, eval
 from nu.lang.runtime import Context
 
 

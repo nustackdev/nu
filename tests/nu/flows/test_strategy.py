@@ -12,9 +12,9 @@ import pytest
 from nu.context import AttrRef, SetCmd
 from nu.core import Literal
 from nu.flows import AnyN, Gather, Parallel, Race, Sequential
-from nu.lang import Attr, Cardinality, Strategy, compile
+from nu.lang import Attr, Cardinality, Strategy
 from nu.lang.attributes.execution import ExecOrder
-from nu.lang.helpers import arun, run
+from nu.lang.helpers import arun, compile, run
 
 
 def _set(name: str, value: object) -> SetCmd:

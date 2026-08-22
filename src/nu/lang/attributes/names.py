@@ -54,3 +54,5 @@ class Attr(StrEnum):
     EXEC_ORDER = "exec_order"
     # sort fold: a helper for the Flow law, beyond the settled concern vocab
     HAS_COMMAND = "has_command"
+    # dyn fold: subtree contains a Dyn node (dynamic evaluation of a runtime term)
+    HAS_DYNAMIC = "has_dynamic"

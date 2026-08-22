@@ -25,8 +25,8 @@ from nu.context import (
 )
 from nu.forms.collections import Dict, FrozenSet, List, Set, Tuple
 from nu.forms.primitives import Any, Bool, Bytes, Float, Int, None_, Str
-from nu.lang import INVALID, Attr, Context, Sort, compile
-from nu.lang.helpers import run
+from nu.lang import INVALID, Attr, Context, Sort
+from nu.lang.helpers import compile, run
 
 
 # --- isinstance checks ---------------------------------------------------

@@ -23,8 +23,8 @@ from nu.flows.parallel._scheduling import (
     eval_parallel,
     merge,
 )
-from nu.lang import compile
 from nu.lang.attributes import Attr
+from nu.lang.helpers import compile
 from nu.lang.runtime import Budget, Context, Runtime
 from nu.lang.sentinels import EMPTY, INVALID
 

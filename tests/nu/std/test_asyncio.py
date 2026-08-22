@@ -9,8 +9,7 @@ from __future__ import annotations
 
 import asyncio
 
-from nu.lang import compile
-from nu.lang.helpers import arun, run
+from nu.lang.helpers import arun, compile, run
 from nu.std.asyncio import sleep
 
 

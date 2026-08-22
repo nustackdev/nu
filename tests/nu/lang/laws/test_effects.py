@@ -10,8 +10,8 @@ from _support.law_terms import R2, Act, Cmd, FlowS, Q, R
 from _support.laws import assert_fails, assert_passes, violations
 
 from nu.engine import Severity, gate
-from nu.lang import compile as nu_compile
 from nu.lang.attributes import Attr, Effect
+from nu.lang.helpers import compile as nu_compile
 from nu.lang.laws import LAWS
 
 

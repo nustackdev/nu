@@ -26,9 +26,7 @@ from nu.engine import (
     Violation,
     gate,
     predicate,
-    validate,
 )
-from nu.engine import compile as _compile
 
 from .args import (
     Arg,
@@ -94,8 +92,7 @@ from .typeinfo import TypeInfo, value_type_for
 
 
 if TYPE_CHECKING:
-    from nu.engine.compilation import Program
-    from nu.engine.structure import Schema, Term
+    from nu.engine.structure import Schema
 
 __all__ = [
     "EMPTY",
@@ -152,14 +149,25 @@ __all__ = [
     "TypedNu",
     "Unset",
     "Violation",
+    "acollect",
+    "aeval",
+    "afirst",
+    "alast",
+    "arun",
     "build_schema",
+    "collect",
     "compile",
+    "eval",
+    "eval_in_loop",
+    "first",
     "gate",
     "is_empty",
     "is_invalid",
     "is_sentinel",
     "matrix_sort",
     "predicate",
+    "run",
+    "run_in_loop",
     "subsort",
     "validate",
     "value_type_for",
@@ -168,7 +176,21 @@ __all__ = [
 # The Nu schema, built and finalized once at import.
 SCHEMA: Schema = build_schema()
 
-
-def compile(term: Term) -> Program:
-    """Compile a Nu Term against the Nu schema; return a runnable Program."""
-    return _compile(term, SCHEMA)
+# Re-export the helper entries (compile/validate/run/eval/...) so callers can
+# reach them as ``from nu.lang import compile`` too. Loaded after SCHEMA is
+# built since helpers.compilation reads SCHEMA at import.
+from .helpers import (  # noqa: E402
+    acollect,
+    aeval,
+    afirst,
+    alast,
+    arun,
+    collect,
+    compile,
+    eval,
+    eval_in_loop,
+    first,
+    run,
+    run_in_loop,
+    validate,
+)

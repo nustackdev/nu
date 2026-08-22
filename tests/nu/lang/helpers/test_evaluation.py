@@ -1,4 +1,4 @@
-"""Unit tests for ``nu.lang.helpers.drive``.
+"""Unit tests for ``nu.lang.helpers.evaluation``.
 
 Covers the drive entries -- value-root (``eval`` / ``aeval`` /
 ``eval_in_loop``) and stream-root (``first`` / ``collect`` / ``afirst`` /
@@ -12,13 +12,14 @@ import pytest
 
 from nu.core import Add, Literal
 from nu.engine.structure import Declared
-from nu.lang import Context, StreamQuery, compile
+from nu.lang import Context, StreamQuery
 from nu.lang.helpers import (
     acollect,
     aeval,
     afirst,
     alast,
     collect,
+    compile,
     eval,
     eval_in_loop,
     first,

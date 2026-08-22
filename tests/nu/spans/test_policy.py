@@ -17,8 +17,8 @@ from _support.async_atoms import BoomAction
 from nu.context import AttrRef, SetCmd
 from nu.core import Literal
 from nu.core.iteration import Iter
-from nu.lang import Attr, Cardinality, Policy, Span, StreamQuery, compile
-from nu.lang.helpers import arun, collect, run
+from nu.lang import Attr, Cardinality, Policy, Span, StreamQuery
+from nu.lang.helpers import arun, collect, compile, run
 from nu.spans import TryCatch
 
 

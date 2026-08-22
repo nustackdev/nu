@@ -17,8 +17,9 @@ from nu.flows import (
     ParallelThreaded,
     Race,
 )
-from nu.lang import Attr, compile
+from nu.lang import Attr
 from nu.lang.attributes.execution import ExecOrder
+from nu.lang.helpers import compile
 
 
 def _set(name: str, value: object) -> SetCmd:

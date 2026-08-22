@@ -76,8 +76,8 @@ def compose_detail(program: Program, path: Path) -> str:
 # --- flow slot-role walk ------------------------------------------------
 
 
-_MUTATING_SORTS: frozenset[Sort] = frozenset({Sort.COMMAND, Sort.ACTION, Sort.FLOW})
-_YIELDING_SORTS: frozenset[Sort] = frozenset({Sort.REF, Sort.QUERY, Sort.ACTION})
+_MUTATING_SORTS: frozenset[Sort] = frozenset({Sort.COMMAND, Sort.ACTION, Sort.FLOW, Sort.DYNAMIC})
+_YIELDING_SORTS: frozenset[Sort] = frozenset({Sort.REF, Sort.QUERY, Sort.ACTION, Sort.DYNAMIC})
 
 
 def _effective_sort(program: Program, path: Path) -> Sort:

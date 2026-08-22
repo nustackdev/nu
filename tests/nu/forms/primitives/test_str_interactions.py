@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from nu.core.literal import Literal
 from nu.forms.primitives.str_interactions import Join
-from nu.lang import INVALID, compile
-from nu.lang.helpers import eval
+from nu.lang import INVALID
+from nu.lang.helpers import compile, eval
 
 
 def _eval(term: object) -> object:

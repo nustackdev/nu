@@ -87,8 +87,8 @@ class _RayServiceActor:
         won't cross the ray boundary; wrap it in a reducer or ``last()``
         before ``Teleport``.
         """
-        from nu.lang import compile as compile_term
-        from nu.lang.helpers.drive import aeval
+        from nu.lang.helpers import aeval
+        from nu.lang.helpers import compile as compile_term
 
         ctx = self._ctx
         if attrs:

@@ -15,7 +15,8 @@ from nu.domains.shape.refs.item import ItemRef
 from nu.flows import Race
 from nu.flows.react import React, ReactForever, ReactWhile
 from nu.kv import IntRef
-from nu.lang import LAWS, Control, compile, validate
+from nu.lang import Control
+from nu.lang.helpers import compile, validate
 
 
 # ---------------------------------------------------------------------------
@@ -95,7 +96,7 @@ class _Sensor(Shape):
 
 
 def _validate(term: object) -> None:
-    validate(compile(term), *LAWS)  # raises ValidationError on any failure
+    validate(compile(term))  # raises ValidationError on any failure
 
 
 def test_react_validates_with_mutating_body():

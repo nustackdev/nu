@@ -18,8 +18,7 @@ from _support.async_atoms import AsyncOnlyAction, RunsAnywhereAction, SyncOnlyAc
 
 from nu.engine.validation import ValidationError
 from nu.flows import ParallelAsync, ParallelThreaded
-from nu.lang import LAWS, compile, validate
-from nu.lang.helpers import arun, run
+from nu.lang.helpers import arun, compile, run, validate
 
 
 def _this_thread() -> str:
@@ -59,10 +58,10 @@ def test_parallel_async_sync_run_is_rejected_as_async_only() -> None:
 def test_parallel_threaded_rejects_async_only_child_at_compile_time() -> None:
     program = compile(ParallelThreaded(AsyncOnlyAction("a")))
     with pytest.raises(ValidationError, match="parallel_threaded_no_async_only_child"):
-        validate(program, *LAWS)
+        validate(program)
 
 
 def test_parallel_async_rejects_sync_only_child_at_compile_time() -> None:
     program = compile(ParallelAsync(SyncOnlyAction("a")))
     with pytest.raises(ValidationError, match="parallel_async_no_sync_only_child"):
-        validate(program, *LAWS)
+        validate(program)

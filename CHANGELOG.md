@@ -11,6 +11,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add DYNAMIC sort + HAS_DYNAMIC attribute vocabulary; restructure lang.helpers by engine stage (compilation/validation/evaluation/run)
 - Add ParallelThreaded / ParallelAsync explicit-mode variants; support per-child mode override via (child, 'threaded'|'async') tuples on Parallel
 - Carry the runtime Context into thread pool workers (#4)
 - Seed the movies demo once instead of on every boot (#5)

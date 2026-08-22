@@ -22,7 +22,8 @@ from nu.core.reduction import (
     Min,
     Sum,
 )
-from nu.lang import LAWS, Attr, Cardinality, compile, gate, validate
+from nu.lang import LAWS, Attr, Cardinality, gate
+from nu.lang.helpers import compile, validate
 
 
 _FOLDS = [
@@ -52,7 +53,7 @@ def test_reduction_is_scalar_over_a_stream(fold):
 @pytest.mark.parametrize("fold", _FOLDS)
 def test_a_reduction_validates(fold):
     program = compile(fold(_stream()))
-    assert validate(program, *LAWS) is program
+    assert validate(program) is program
 
 
 def test_a_scalar_in_the_stream_slot_is_refused():

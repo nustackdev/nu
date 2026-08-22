@@ -14,8 +14,8 @@ from nu.core.logical import And as And
 from nu.core.logical import Not as Not
 from nu.core.logical import Or as Or
 from nu.core.logical import ToBool as Bool
-from nu.lang import EMPTY, INVALID, compile
-from nu.lang.helpers import aeval, eval
+from nu.lang import EMPTY, INVALID
+from nu.lang.helpers import aeval, compile, eval
 
 
 def _eval(term: object) -> object:

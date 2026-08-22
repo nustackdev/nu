@@ -25,8 +25,8 @@ from nu.core.access import (
     Slice,
 )
 from nu.core.literal import Literal
-from nu.lang import EMPTY, INVALID, compile
-from nu.lang.helpers import aeval, eval
+from nu.lang import EMPTY, INVALID
+from nu.lang.helpers import aeval, compile, eval
 
 
 def _eval(term: object) -> object:

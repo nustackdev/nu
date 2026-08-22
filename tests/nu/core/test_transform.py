@@ -10,8 +10,8 @@ from __future__ import annotations
 from nu.context import AttrRef
 from nu.core import Collect, Filter, Iter, Literal, Lt, Map, Mul
 from nu.core.transform import Flatten, Sorted, Unique
-from nu.lang import LAWS, Attr, Cardinality, compile, validate
-from nu.lang.helpers import run
+from nu.lang import Attr, Cardinality
+from nu.lang.helpers import compile, run, validate
 
 
 # --- single-source lenses (Sorted / Flatten / Unique) --------------------
@@ -35,7 +35,7 @@ def test_unique_drops_repeats_first_seen_order():
 def test_a_single_source_lens_is_a_stream_and_validates():
     program = compile(Sorted(Literal([3, 1, 2])))
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.STREAM
-    assert validate(program, *LAWS) is program
+    assert validate(program) is program
 
 
 # --- Map -----------------------------------------------------------------
@@ -78,6 +78,6 @@ def test_a_lens_chain_stays_a_stream_and_evaluates():
         )
     )
     program = compile(tree)
-    assert validate(program, *LAWS) is program
+    assert validate(program) is program
     value, _ = run(tree)
     assert value == [10, 20]

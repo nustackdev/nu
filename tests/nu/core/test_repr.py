@@ -18,8 +18,8 @@ from nu.core.repr import Hex as Hex
 from nu.core.repr import Oct as Oct
 from nu.core.repr import Ord as Ord
 from nu.core.repr import Repr as Repr
-from nu.lang import EMPTY, INVALID, compile
-from nu.lang.helpers import aeval, eval
+from nu.lang import EMPTY, INVALID
+from nu.lang.helpers import aeval, compile, eval
 
 
 def _eval(term: object) -> object:

@@ -10,8 +10,7 @@ from __future__ import annotations
 import asyncio
 import time as _time
 
-from nu.lang import compile
-from nu.lang.helpers import arun, run
+from nu.lang.helpers import arun, compile, run
 from nu.std.time import (
     monotonic,
     monotonic_ns,

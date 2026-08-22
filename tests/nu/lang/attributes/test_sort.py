@@ -10,9 +10,9 @@ from __future__ import annotations
 import pytest
 from _support.law_terms import Cmd, FlowS, Q, R
 
-from nu.lang import compile as nu_compile
 from nu.lang.attributes import Attr, Sort
 from nu.lang.attributes.sort import MATRIX, matrix_sort, subsort
+from nu.lang.helpers import compile as nu_compile
 
 
 # --- subsort ------------------------------------------------------------

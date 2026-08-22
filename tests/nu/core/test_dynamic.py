@@ -19,8 +19,8 @@ from nu.core.dynamic import Exec as Exec
 from nu.core.dynamic import Globals as Globals
 from nu.core.dynamic import Locals as Locals
 from nu.core.literal import Literal
-from nu.lang import EMPTY, INVALID, Attr, Effect, Ref, compile
-from nu.lang.helpers import aeval, eval
+from nu.lang import EMPTY, INVALID, Attr, Effect, Ref
+from nu.lang.helpers import aeval, compile, eval
 
 
 def _eval(term: object) -> object:

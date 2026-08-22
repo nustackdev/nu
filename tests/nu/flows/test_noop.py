@@ -15,8 +15,8 @@ from nu.domains.shape import Shape
 from nu.engine.validation import ValidationError
 from nu.flows import DelayedDo, IfDo, Noop, Sequential
 from nu.kv import IntRef
-from nu.lang import LAWS, Attr, Cardinality, Flow, Sort, Strategy, compile, validate
-from nu.lang.helpers import arun, run
+from nu.lang import Attr, Cardinality, Flow, Sort, Strategy
+from nu.lang.helpers import arun, compile, run, validate
 from nu.spans import Retry
 
 
@@ -25,7 +25,7 @@ class _S(Shape):
 
 
 def _validate(term: object) -> None:
-    validate(compile(term), *LAWS)
+    validate(compile(term))
 
 
 def _rejects(term: object) -> None:

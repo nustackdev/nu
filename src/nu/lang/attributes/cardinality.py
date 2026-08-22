@@ -51,7 +51,23 @@ class Cardinality(StrEnum):
 
 
 def _own_cardinality(program: Program, path: Path) -> Cardinality:
-    """A node's cardinality as its sort declares it, before Span resolution."""
+    """A node's cardinality as its sort declares it, before Span resolution.
+
+    Dyn is special: its declared cardinality is SCALAR, but if the term carries
+    a promise with a cardinality field, that promise pins the value the parent
+    slot-fits against. Runtime dispatch then checks the inner tree against the
+    same promise.
+    """
+    from .sort import Sort
+
+    sort = program.attr(path, Attr.SORT)
+    if sort == Sort.DYNAMIC:
+        nid = program.id_of[path]
+        promise = program.terms[nid]._payload.get("dyn_promise") or {}
+        pinned = promise.get("cardinality")
+        if pinned is not None:
+            return pinned
+        return Cardinality.SCALAR
     return program.attr(path, Attr.CARDINALITY)
 
 

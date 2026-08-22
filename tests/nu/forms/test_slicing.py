@@ -7,8 +7,7 @@ GetItem(self, Slice(start, stop, step)) composition.
 from __future__ import annotations
 
 from nu.forms import Bytes, List, Str
-from nu.lang import compile
-from nu.lang.helpers import eval
+from nu.lang.helpers import compile, eval
 from nu.lang.runtime import Context
 
 

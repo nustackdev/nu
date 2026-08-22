@@ -14,8 +14,8 @@ from __future__ import annotations
 
 from nu.context import AttrExists, AttrRef, Delete, SetCmd
 from nu.core import Add, Literal
-from nu.lang import INVALID, Attr, Context, Effect, compile
-from nu.lang.helpers import arun, run
+from nu.lang import INVALID, Attr, Context, Effect
+from nu.lang.helpers import arun, compile, run
 
 
 # --- AttrRef read --------------------------------------------------------

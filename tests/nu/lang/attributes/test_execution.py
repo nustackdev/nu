@@ -11,8 +11,8 @@ from _support.law_terms import Brk, Cmd, FlowS, Pol, Q, R
 
 from nu.engine.structure import Declared
 from nu.lang import ScalarQuery, Strategy
-from nu.lang import compile as nu_compile
 from nu.lang.attributes import Attr, ExecOrder
+from nu.lang.helpers import compile as nu_compile
 
 
 # --- inline dimension-local shapes --------------------------------------

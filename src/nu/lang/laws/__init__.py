@@ -3,10 +3,12 @@
 - ``predicates`` - the generic scope/holds combinators (``of_sort``,
   ``attr_true``, ``cardinality_is``, ...).
 - one module per *dimension* of validity: ``composition``, ``effects``,
-  ``cardinality``, ``execution``, ``observability``, ``parallel``,
-  ``refs``, ``spans``.
+  ``cardinality``, ``execution``, ``observability``, ``dyn``, ``refs``,
+  ``spans``.
   Each owns its dimension-specific helpers and its ``LAWS`` tuple.
-- ``LAWS`` - the full set, concatenated from every dimension.
+- ``LAWS`` - the mutable full set, concatenated from every dimension.
+  Non-lang layers (e.g. ``nu.flows.parallel``) extend this list at import
+  time; callers should read it live (do not cache a copy).
 
 Feed ``LAWS`` to ``gate`` for a verdict or to ``validate`` for a rejection.
 """
@@ -19,7 +21,6 @@ from . import (
     effects,
     execution,
     observability,
-    parallel,
     refs,
     spans,
 )
@@ -28,13 +29,15 @@ from . import (
 __all__ = ["LAWS"]
 
 
-LAWS = (
+# LAWS is a mutable list, not a tuple, so subsystems that layer on Nu can
+# register additional laws at import time (see ``nu.flows.parallel``). Every
+# caller reads it live.
+LAWS: list = [
     *composition.LAWS,
     *effects.LAWS,
     *cardinality.LAWS,
     *execution.LAWS,
     *observability.LAWS,
-    *parallel.LAWS,
     *refs.LAWS,
     *spans.LAWS,
-)
+]

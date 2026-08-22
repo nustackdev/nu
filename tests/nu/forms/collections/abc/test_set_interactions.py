@@ -14,8 +14,8 @@ from nu.forms.collections.abc.set_interactions import (
     SymmetricDifference,
     Union,
 )
-from nu.lang import INVALID, compile
-from nu.lang.helpers import eval
+from nu.lang import INVALID
+from nu.lang.helpers import compile, eval
 
 
 def _eval(term: object) -> object:

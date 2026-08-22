@@ -12,8 +12,8 @@ import pytest
 from _support.policy_atoms import FlakyAction, FlakyStream, RecordAction
 
 from nu.core import Literal
-from nu.lang import Attr, Cardinality, Policy, Span, compile
-from nu.lang.helpers import acollect, arun, collect, run
+from nu.lang import Attr, Cardinality, Policy, Span
+from nu.lang.helpers import acollect, arun, collect, compile, run
 from nu.spans import Retry
 
 

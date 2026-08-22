@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.engine import Severity, gate
-from nu.lang import compile as nu_compile
+from nu.lang.helpers import compile as nu_compile
 from nu.lang.laws import LAWS
 
 
@@ -29,7 +29,12 @@ __all__ = ["assert_fails", "assert_passes", "violations"]
 
 
 def violations(term: Term) -> list[Violation]:
-    """Compile ``term`` against Nu's schema and gate it against every law."""
+    """Compile ``term`` against Nu's schema and gate it against every law.
+
+    ``LAWS`` is a mutable list on ``nu.lang.laws``: any layer that registered
+    additional laws at import time (e.g. ``nu.flows.parallel``) has already
+    appended to the same list object we hold a reference to.
+    """
     return gate(nu_compile(term), *LAWS)
 
 

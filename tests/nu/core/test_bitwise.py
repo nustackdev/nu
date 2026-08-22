@@ -17,8 +17,8 @@ from nu.core.bitwise import (
     RShift,
 )
 from nu.core.literal import Literal
-from nu.lang import EMPTY, INVALID, Attr, compile
-from nu.lang.helpers import aeval, eval
+from nu.lang import EMPTY, INVALID, Attr
+from nu.lang.helpers import aeval, compile, eval
 
 
 def _eval(term: object) -> object:

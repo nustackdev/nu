@@ -9,8 +9,8 @@ written through a Ref, so there is no fabric write op - mirrors v1.
 from __future__ import annotations
 
 from nu.context import AttrRef, FabricExists, FabricRef, SetCmd
-from nu.lang import Attr, Context, Effect, compile
-from nu.lang.helpers import run
+from nu.lang import Attr, Context, Effect
+from nu.lang.helpers import compile, run
 
 
 class Clock:

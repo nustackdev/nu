@@ -26,8 +26,8 @@ from nu.core import (
     Sub,
     Sum,
 )
-from nu.lang import EMPTY, INVALID, LAWS, Attr, Cardinality, Effect, Ref, compile, gate, validate
-from nu.lang.helpers import aeval, arun, eval, run
+from nu.lang import EMPTY, INVALID, LAWS, Attr, Cardinality, Effect, Ref, gate
+from nu.lang.helpers import aeval, arun, compile, eval, run, validate
 
 
 # --- effects -------------------------------------------------------------
@@ -60,7 +60,7 @@ def test_reduction_is_scalar_over_a_stream():
 
 def test_a_clean_program_validates():
     program = compile(SetCmd(Ref("total"), Add(Ref("total"), Literal(1))))
-    assert validate(program, *LAWS) is program
+    assert validate(program) is program
 
 
 def test_a_command_in_a_query_slot_is_refused():

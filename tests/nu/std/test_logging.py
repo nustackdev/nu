@@ -13,8 +13,9 @@ import logging as pylogging
 from typing import TYPE_CHECKING
 
 from nu import Context, arun, run
-from nu.lang import Cardinality, Sort, compile
+from nu.lang import Cardinality, Sort
 from nu.lang.attributes import Attr, Effect
+from nu.lang.helpers import compile
 from nu.std import logging
 from nu.std.logging import LOGGING, Log, LoggingRef
 
