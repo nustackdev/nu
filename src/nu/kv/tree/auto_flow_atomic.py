@@ -219,5 +219,12 @@ def auto_flow_atomic(tree: Nu, scope: Hashable | None = None) -> Nu:
 
     ``scope=None`` (default) treats every virtuals ref as in scope; the
     resulting wrapper tag is unscoped.
+
+    A bare top-level subtree (not a Flow) is also considered: if it carries
+    uncovered virtuals refs, it gets wrapped in ``Snapshot`` / ``Transaction``
+    too. This lets standalone reads/writes (``auto_flow_atomic(some_ref)``)
+    resolve their storage context without the caller wiring a bracket by
+    hand -- the same rule Flow children already follow.
     """
-    return _walk(tree, scope, ())
+    walked = _walk(tree, scope, ())
+    return _wrap_flow_child(walked, scope, ())
