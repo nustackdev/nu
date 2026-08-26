@@ -1,11 +1,7 @@
 // React components keyed by Ref type name.
 //
-// Split out of index.ts so App-shell code can pull renderers without also
-// pulling in the store / factory wiring. The registry lives in factories.ts.
+// Re-export of the live registry that lives in factories.ts. Kept as a
+// separate module so App-shell code can import `renderers` on its own
+// (the legacy import path) without pulling in the factory registry name.
 
-import type { ComponentType } from "react";
-import { entries } from "./factories";
-
-export const renderers: Record<string, ComponentType<{ path: string }>> = Object.fromEntries(
-	Object.entries(entries).map(([k, e]) => [k, e.component]),
-);
+export { renderers } from "./factories";

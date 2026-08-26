@@ -7,6 +7,5 @@
 // Adding a new Ref type = drop a new module under one of chart/, input/,
 // layout/, output/, structural/ and add one line to `entries` in factories.ts.
 
-export { factories, entries } from "./factories";
-export { renderers } from "./renderers";
+export { entries, factories, registerRefEntry, renderers } from "./factories";
 export type { RefEntry, RefSlice, SliceCtx, SliceFactory } from "./types";

@@ -38,12 +38,21 @@ _REFS_BASE = f"{_REFS_PKG}base"
 def _wire_type(ref_or_section_cls: type) -> str:
     """Canonical (registered) class name for a Ref or Section.
 
-    Walks the MRO to find the closest ancestor defined inside the
+    Out-of-tree Refs (e.g. those shipped by nuspace) may set a
+    ``_wire_type_override`` class attribute to name the browser-side
+    factory directly, bypassing the MRO walk below. That is the
+    escape hatch for packages that register their own factory but
+    have no ancestor under ``nu.ui.refs``.
+
+    Otherwise walks the MRO to find the closest ancestor defined inside the
     ``nu.ui.refs`` package (excluding the abstract ``base`` module). User
     subclasses defined outside the package inherit the wire type of their
     nearest packaged ancestor so the browser registry resolves them.
     """
     for base in ref_or_section_cls.__mro__:
+        override = base.__dict__.get("_wire_type_override")
+        if isinstance(override, str):
+            return override
         mod = getattr(base, "__module__", "")
         if not mod.startswith(_REFS_PKG):
             continue

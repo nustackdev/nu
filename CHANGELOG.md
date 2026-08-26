@@ -11,6 +11,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add ui ref _wire_type_override + TS factory/renderer registration for out-of-tree ui refs
 - Add nu.prog fabric with Eval interaction for dynamic Nu-in-Nu evaluation; remove Eval/Compile/Exec from core.dynamic
 - Add DYNAMIC sort + HAS_DYNAMIC attribute vocabulary; restructure lang.helpers by engine stage (compilation/validation/evaluation/run)
 - Add ParallelThreaded / ParallelAsync explicit-mode variants; support per-child mode override via (child, 'threaded'|'async') tuples on Parallel

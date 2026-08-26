@@ -46,6 +46,7 @@ import { TableRef } from "./output/table";
 import { TextRef } from "./output/text";
 import { NavRef } from "./structural/nav";
 import { TitleRef } from "./structural/title";
+import type { ComponentType } from "react";
 import type { RefEntry, SliceFactory } from "./types";
 
 // Single source of truth for the Ref registry. Ordered by kind for readability.
@@ -102,3 +103,18 @@ export const entries: Record<string, RefEntry> = {
 export const factories: Record<string, SliceFactory> = Object.fromEntries(
 	Object.entries(entries).map(([k, e]) => [k, e.factory]),
 );
+
+export const renderers: Record<string, ComponentType<{ path: string }>> = Object.fromEntries(
+	Object.entries(entries).map(([k, e]) => [k, e.component]),
+);
+
+// Escape hatch for out-of-tree Ref packages (e.g. nuspace). The kit registry
+// is closed by default: adding a new Ref usually means dropping a module under
+// one of the subfolders and appending to `entries` above. When the Ref lives
+// in a downstream package, call this at shell boot so the store's factory
+// dispatch and `FieldView`'s renderer dispatch both pick it up.
+export function registerRefEntry(name: string, entry: RefEntry): void {
+	entries[name] = entry;
+	factories[name] = entry.factory;
+	renderers[name] = entry.component;
+}
