@@ -72,6 +72,7 @@ from nu.kv.refs import (
     PrimitiveRef,
     PrimitiveSetRef,
     PrimitiveTupleRef,
+    ProgramRef,
     SetRef,
     ShapeRef,
     ShapesDictRef,
@@ -170,4 +171,6 @@ __all__ = [  # noqa: RUF022
     "PrimitiveListRef",
     "PrimitiveSetRef",
     "PrimitiveTupleRef",
+    # Refs: stored Nu programs (prog)
+    "ProgramRef",
 ]

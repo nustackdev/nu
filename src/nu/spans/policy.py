@@ -43,7 +43,34 @@ if TYPE_CHECKING:
     from nu.lang import Command, FloatArg, Flow, IntArg, Nu, Span, StrArg
     from nu.lang.runtime import Runtime
 
-__all__ = ["Debounce", "Retry", "Throttle", "Timeout", "TryCatch"]
+__all__ = ["CaughtError", "Debounce", "Retry", "Throttle", "Timeout", "TryCatch"]
+
+
+class CaughtError(str):
+    """The error a catch branch reads, a string that still carries its exception.
+
+    ``attrs[error_key]`` has always held the exception *string*, and still
+    does: this compares, formats and concatenates as ``str(exc)``, so
+    ``AttrRef("error")`` behaves exactly as before. What it adds is
+    ``.exception``, the live object, reachable from inside the tree with
+    ``GetAttr(AttrRef("error"), "exception")``.
+
+    The alternative was a second attrs entry, which would make the channel
+    two keys wide for one event and leave handlers guessing which to read.
+    A str subclass keeps one key and costs a handler nothing until it asks.
+
+    Deliberately unslotted: ``Vars`` is ``vars()``, so the field-walking path
+    into a structured error (``ConstructionError.diagnostic.lineno``, say)
+    needs a ``__dict__`` at every level.
+    """
+
+    exception: BaseException
+
+    def __new__(cls, exc: BaseException) -> CaughtError:
+        """Wrap ``exc``, taking ``str(exc)`` as the string value."""
+        self = super().__new__(cls, str(exc))
+        self.exception = exc
+        return self
 
 
 def _async_backstop(name: str) -> Callable:
@@ -62,14 +89,15 @@ def _async_backstop(name: str) -> Callable:
 def _run_catch(rt: Runtime, catch: Callable, error_key: Callable, exc: Exception) -> object:
     """Run the catch against a copy of the context carrying the error; return its value.
 
-    The error string lands at ``attrs[error_key]`` (the attrs fabric is the one
-    inter-Nu channel); the copy isolates the handler so its own writes do not
-    leak back to the live context.
+    A :class:`CaughtError` lands at ``attrs[error_key]`` (the attrs fabric is
+    the one inter-Nu channel): the exception string, with the exception itself
+    on ``.exception`` for a handler that needs its fields. The copy isolates
+    the handler so its own writes do not leak back to the live context.
     """
     saved = rt.ctx
     rt.ctx = saved._copy()
     try:
-        rt.ctx.attrs[error_key(rt)] = str(exc)
+        rt.ctx.attrs[error_key(rt)] = CaughtError(exc)
         return catch(rt)
     finally:
         rt.ctx = saved
@@ -80,7 +108,7 @@ async def _arun_catch(rt: Runtime, catch: Callable, error_key: Callable, exc: Ex
     saved = rt.ctx
     rt.ctx = saved._copy()
     try:
-        rt.ctx.attrs[await error_key(rt)] = str(exc)
+        rt.ctx.attrs[await error_key(rt)] = CaughtError(exc)
         return await catch(rt)
     finally:
         rt.ctx = saved

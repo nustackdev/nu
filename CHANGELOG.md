@@ -11,6 +11,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add Program form + ProgramRef (kv, mem); TryCatch binds CaughtError so a handler can read the exception
 - Add the program pipeline: LoadNu + PyBrace braces (in-process / venv), source-to-Nu construction, structured diagnostics
 - Add ui ref _wire_type_override + TS factory/renderer registration for out-of-tree ui refs
 - Add nu.prog fabric with Eval interaction for dynamic Nu-in-Nu evaluation; remove Eval/Compile/Exec from core.dynamic

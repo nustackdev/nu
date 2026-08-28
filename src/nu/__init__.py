@@ -50,9 +50,12 @@ from .domains.shape import Shape, Slot
 from .domains.service import Method, Service
 
 # The program pipeline (nu.prog fabric). Flat: ``nu.LoadNu`` beside ``nu.Eval``,
-# because ``Eval(LoadNu(src))`` is one authoring idiom. The brace resource and
-# the error types stay at ``nu.prog.*``, the same way ``nu.mp.MpWorker`` does.
-from .prog import Eval, LoadNu
+# because ``Eval(LoadNu(src))`` is one authoring idiom, and ``nu.Program``
+# beside them because it is the Form you write that pair with - it sits with
+# the other Forms on the flat surface, not with the machinery. The brace
+# resource and the error types stay at ``nu.prog.*``, the same way
+# ``nu.mp.MpWorker`` does.
+from .prog import Eval, LoadNu, Program
 
 # Language essentials, curated to the building blocks of a Nu program:
 #   - the root kind (``Nu``, ``TypedNu``);

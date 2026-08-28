@@ -17,6 +17,7 @@ from .dictshape import ShapesDictRef
 from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
 from .list import ListRef
 from .listshape import ShapesListRef
+from .prog import ProgramRef
 from .set import SetRef
 from .shape import ShapeRef
 from .std import (
@@ -51,6 +52,7 @@ __all__ = [
     "ListRef",
     "PathRef",
     "PercentageRef",
+    "ProgramRef",
     "RefBase",
     "SetRef",
     "ShapeRef",

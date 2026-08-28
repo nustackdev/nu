@@ -27,6 +27,7 @@ from .primitives import (
     PrimitiveSetRef,
     PrimitiveTupleRef,
 )
+from .prog import ProgramRef
 from .set import SetRef
 from .shape import ShapeRef
 from .std import (
@@ -70,6 +71,7 @@ __all__ = [
     "PrimitiveRef",
     "PrimitiveSetRef",
     "PrimitiveTupleRef",
+    "ProgramRef",
     "SetRef",
     "ShapeRef",
     "ShapesDictRef",

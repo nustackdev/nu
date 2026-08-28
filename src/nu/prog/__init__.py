@@ -8,6 +8,9 @@ The ``prog`` fabric hosts interactions whose subject is a Nu program itself:
 - ``Eval`` -- dynamic evaluation. A scalar carrier yields a Nu term at
   runtime; Eval compiles it against the current schema, validates it against
   an optional promise, and drives it inside the current Runtime.
+- ``Program`` -- the Form over source text. ``Program(src).run()`` is the
+  ergonomic surface over the pair below; mixed into a substrate ref it
+  becomes ``ProgramRef``, a slot whose stored string is a program.
 - ``PyBrace`` -- the environment source is *constructed* in, bound on ctx
   with ``Provide``. No Nu is ever run inside a brace and nothing but plain
   data crosses into one; exactly two things come back, a Nu term or a
@@ -28,6 +31,7 @@ from .constructors import BraceError, Constructor, InProcess, Venv
 from .diagnostics import ConstructionError, Diagnostic
 from .eval import Eval
 from .eval_promise import EvalPromiseError
+from .forms import Program
 from .load import LoadNu
 
 
@@ -40,6 +44,7 @@ __all__ = [
     "EvalPromiseError",
     "InProcess",
     "LoadNu",
+    "Program",
     "PyBrace",
     "Venv",
 ]

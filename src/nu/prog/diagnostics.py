@@ -22,6 +22,12 @@ Three fields, no taxonomy:
 There is deliberately no phase/kind enum. The message says what happened
 and the traceback says where; a classifier on top would be our guess at
 what a caller wants to branch on, and nothing branches on it yet.
+
+Frozen but not slotted. A catch branch inside a tree reads the caught
+exception with ``AttrRef("error")`` and walks into it with ``Vars``, which
+is ``vars()`` and so needs a ``__dict__``. Slots would save a pointer per
+record on a type that exists once per failure, and cost the field-level
+read path that is the whole point of carrying the record around.
 """
 
 from __future__ import annotations
@@ -32,7 +38,7 @@ from dataclasses import dataclass
 __all__ = ["ConstructionError", "Diagnostic"]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Diagnostic:
     """A single construction failure, flattened for transport."""
 
