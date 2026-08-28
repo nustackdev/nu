@@ -15,6 +15,7 @@ dependencies = [
     "click>=8.0",
     "rich>=10.7",
     "rich-click>=1.6",
+    "cloudpickle>=3.0",
 ]
 keywords = [
     "nu",

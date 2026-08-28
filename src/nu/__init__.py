@@ -49,9 +49,10 @@ from .spans import *
 from .domains.shape import Shape, Slot
 from .domains.service import Method, Service
 
-# Dynamic Nu-in-Nu evaluation (nu.prog fabric). Flat: ``nu.Eval`` beside the
-# other authoring atoms; ``EvalPromiseError`` stays at ``nu.prog.EvalPromiseError``.
-from .prog import Eval
+# The program pipeline (nu.prog fabric). Flat: ``nu.LoadNu`` beside ``nu.Eval``,
+# because ``Eval(LoadNu(src))`` is one authoring idiom. The brace resource and
+# the error types stay at ``nu.prog.*``, the same way ``nu.mp.MpWorker`` does.
+from .prog import Eval, LoadNu
 
 # Language essentials, curated to the building blocks of a Nu program:
 #   - the root kind (``Nu``, ``TypedNu``);
