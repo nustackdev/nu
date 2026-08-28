@@ -2,14 +2,14 @@
 
 ## Packages shipped from this repo
 
-- **nu** — 0.1.17
+- **nu** — 0.1.18
 - **nudle** — 0.1.4
 - **ui-core** — 0.1.0
 - **ui-kit** — 0.1.3
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.1.18 — 2026-08-28
 
 - Add Program form + ProgramRef (kv, mem); TryCatch binds CaughtError so a handler can read the exception
 - Add the program pipeline: LoadNu + PyBrace braces (in-process / venv), source-to-Nu construction, structured diagnostics
