@@ -11,6 +11,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Edit core arithmetic docstrings to the nu.info contract; export MatMul from arithmetic
 - Add nu.info: docstring/source readers, the docstring contract, interaction records
 
 ## 0.1.18 — 2026-08-28
