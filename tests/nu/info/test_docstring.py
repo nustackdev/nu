@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from nu.info.core.docstring import parse_args, parse_example, parse_notes, split_docstring
+from nu.info.core.docstring import (
+    parse_args,
+    parse_example,
+    parse_examples,
+    parse_notes,
+    split_docstring,
+)
 
 
 # --- blocks --------------------------------------------------------------
@@ -122,3 +128,35 @@ def test_a_plain_snippet_has_no_expected_value() -> None:
 
 def test_an_empty_example_is_falsey_data_not_an_error() -> None:
     assert not parse_example("   \n  ")
+
+
+# --- multiple examples ---------------------------------------------------
+
+
+def test_a_section_with_one_example_parses_to_one_entry() -> None:
+    examples = parse_examples(">>> nu.run(nu.Int(1))[0]\n1")
+    assert len(examples) == 1
+    assert examples[0].code == "nu.run(nu.Int(1))[0]"
+    assert examples[0].expected == "1"
+
+
+def test_blank_line_separated_examples_split_into_entries() -> None:
+    text = ">>> nu.run(nu.Int(1))[0]\n1\n\n>>> nu.run(nu.Int(2) + nu.Int(3))[0]\n5"
+    examples = parse_examples(text)
+    assert len(examples) == 2
+    assert examples[0].expected == "1"
+    assert examples[1].code == "nu.run(nu.Int(2) + nu.Int(3))[0]"
+    assert examples[1].expected == "5"
+
+
+def test_a_mixed_section_keeps_doctest_and_plain_chunks_apart() -> None:
+    text = ">>> nu.run(nu.Int(1))[0]\n1\n\nnu.Print(nu.Str('side effect'))"
+    examples = parse_examples(text)
+    assert len(examples) == 2
+    assert examples[0].doctest
+    assert not examples[1].doctest
+
+
+def test_an_empty_section_yields_an_empty_tuple() -> None:
+    assert parse_examples("") == ()
+    assert parse_examples("   \n  \n") == ()

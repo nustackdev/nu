@@ -45,19 +45,22 @@ absence is not flagged.
 
 5. Yields. What evaluating the subject produces, including how it behaves on
    EMPTY and INVALID when that is not the plain rule. On an atom the return
-   annotation is missing, so the docstring is where the yield type lives; on
-   a method the return annotation is authoritative and this section is
-   redundant.
+   annotation is missing, so this is the only place the yield type lives. On
+   a method the annotation carries the type; write Yields when there is
+   meaning beyond the type - sentinel behaviour, promotion, edge conditions.
+   If the whole content would repeat the annotation, skip it.
 
-6. Example. One worked example in doctest form, carrying the value it
-   produces:
+6. Example. One or more worked examples in doctest form, carrying the value
+   each produces:
 
        >>> nu.run(nu.Int(10) - nu.Int(3))[0]
        7
 
-   Doctest form is what makes an example unable to lie, so use it whenever
-   the subject can run without a live fabric. Something needing a context or
-   a fabric may use a plain snippet with no expected value instead.
+   Multiple examples in one section separate with a blank line and parse as
+   distinct records. Doctest form is what makes an example unable to lie, so
+   use it whenever the subject can run without a live fabric. Something
+   needing a context or a fabric may use a plain snippet with no expected
+   value instead.
 
 Written by hand: those six. Read off the code and never written: the name,
 the kind, the sort, the cardinality, the call form, the defaults, the

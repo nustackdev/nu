@@ -24,6 +24,7 @@ from dataclasses import dataclass
 __all__ = [
     "Example",
     "parse_example",
+    "parse_examples",
 ]
 
 _PROMPT = ">>> "
@@ -83,3 +84,38 @@ def parse_example(text: str) -> Example:
         doctest=True,
         raw=raw,
     )
+
+
+def parse_examples(text: str) -> tuple[Example, ...]:
+    """Split an Example section into one Example per blank-line-separated chunk.
+
+    An Example section can carry more than one worked example, one after the
+    other, separated by blank lines. Each chunk parses through
+    :func:`parse_example`, so both doctest and plain forms are recognised
+    per chunk. Chunks that are all whitespace or that parse empty are
+    dropped.
+
+    Args:
+        text: the section body, already dedented.
+
+    Returns:
+        The examples in order. Empty tuple when the section is empty.
+    """
+    raw = text.strip("\n")
+    if not raw.strip():
+        return ()
+    chunks: list[list[str]] = [[]]
+    for line in raw.splitlines():
+        if not line.strip():
+            if chunks[-1]:
+                chunks.append([])
+        else:
+            chunks[-1].append(line)
+    out: list[Example] = []
+    for chunk in chunks:
+        if not chunk:
+            continue
+        example = parse_example("\n".join(chunk))
+        if example:
+            out.append(example)
+    return tuple(out)

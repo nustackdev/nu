@@ -15,9 +15,8 @@ import inspect
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from nu.info.core.contract import Arg, Violation, check_summary
+from nu.info.core.contract import YIELDS, Arg, Violation, call_form, check_summary
 from nu.info.core.docstring import split_docstring
-from nu.info.core.source import read_signature
 from nu.info.record import Record, prose
 
 
@@ -41,13 +40,17 @@ class CallRecord(Record):
     ``spelling`` is the surface form: ``.set(value)`` for a method, ``a + b``
     for an operator, ``nu.str(x)`` for a free function.
 
-    ``args`` and ``yields`` are derived from the signature and the return
-    annotation. Both come from the code, not the docstring.
+    ``args`` merges the signature (names, defaults) with the docstring's Args
+    prose. ``returns`` is the return annotation as text; ``yields`` is the
+    docstring's Yields prose, which carries meaning the annotation cannot -
+    sentinel behaviour, promotion rules, edge conditions. Both belong; one
+    is the type, the other is the semantics.
     """
 
     spelling: str = ""
     args: tuple[Arg, ...] = ()
     yields: str = ""
+    returns: str = ""
     owner: str = ""
     binding: str = ""  # "method" | "classmethod" | "operator" | "function"
 
@@ -108,8 +111,9 @@ def parse_call(
     return CallRecord(
         **prose(target, name, path, blocks),
         spelling=spelling_for(name, binding, qualifier),
-        args=_args_from_signature(target),
-        yields=_return_annotation(target),
+        args=call_form(target, blocks),
+        yields=blocks.text_of(*YIELDS),
+        returns=_return_annotation(target),
         owner=owner,
         binding=binding,
     )
@@ -145,13 +149,6 @@ def _binding_kind(name: str, raw: object) -> str:
     if name.startswith("__") and name.endswith("__"):
         return "operator"
     return "method"
-
-
-def _args_from_signature(target: object) -> tuple[Arg, ...]:
-    signature = read_signature(target)
-    if signature is None or not signature.params:
-        return ()
-    return tuple(Arg(name=p.name, default=p.default) for p in signature.params)
 
 
 def _return_annotation(target: object) -> str:

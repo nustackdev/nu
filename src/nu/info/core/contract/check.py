@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from nu.info.core.contract.sections import ARGS, EXAMPLE
-from nu.info.core.docstring import parse_args, parse_example
+from nu.info.core.docstring import parse_args, parse_examples
 
 
 if TYPE_CHECKING:
@@ -86,21 +86,28 @@ def check_args(subject: str, blocks: Blocks, expected: int | None) -> list[Viola
 
 
 def check_example(subject: str, blocks: Blocks) -> list[Violation]:
-    """An Example section that is present must be parseable and honest.
+    """Every written example must be parseable and, when doctest, carry a value.
 
-    Absence is not a violation; a written example that cannot be run, or that
-    claims a value it does not produce, is.
+    Absence is not a violation. An Example section holding multiple worked
+    examples is checked per example; each one that lies about the format is
+    reported on its own.
     """
     text = blocks.text_of(*EXAMPLE)
     if not text.strip():
         return []
-    example = parse_example(text)
-    if not example:
+    examples = parse_examples(text)
+    if not examples:
         return [Violation(subject=subject, rule="example-empty")]
-    try:
-        ast.parse(example.code)
-    except SyntaxError as err:
-        return [Violation(subject=subject, rule="example-unparseable", detail=str(err.msg))]
-    if example.doctest and not example.expected:
-        return [Violation(subject=subject, rule="example-no-value")]
-    return []
+    violations: list[Violation] = []
+    for index, example in enumerate(examples, start=1):
+        label = subject if len(examples) == 1 else f"{subject}#{index}"
+        try:
+            ast.parse(example.code)
+        except SyntaxError as err:
+            violations.append(
+                Violation(subject=label, rule="example-unparseable", detail=str(err.msg))
+            )
+            continue
+        if example.doctest and not example.expected:
+            violations.append(Violation(subject=label, rule="example-no-value"))
+    return violations

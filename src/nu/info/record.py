@@ -1,13 +1,14 @@
 """What a consumer receives: one catalogue entry, per subject.
 
-A record is a subject's name plus the two sources flattened for its kind. Each
-kind defines its own, because they differ in what there is to say, and they
-share this base.
+A record is a subject's name plus the two sources flattened for its kind.
+Each kind defines its own, because they differ in what there is to say, and
+they share this base.
 
-The base carries what the contract guarantees for every kind: a summary, an
-optional description, notes and an example. It is not a guess about what kinds
-will have in common. Args and Yields are deliberately not here, because
-whether a subject takes arguments or yields anything depends on the kind.
+The base carries what the format guarantees for every kind: a summary, an
+optional description, notes and any examples. It is not a guess about what
+kinds will have in common. Args and Yields are deliberately not here,
+because whether a subject takes arguments or yields anything depends on the
+kind.
 
 Records are cheap. The prose is read at build time; the source text and the
 raw docstring are fetched per lookup, so building a catalogue never touches
@@ -20,7 +21,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from nu.info.core.contract import EXAMPLE, NOTES
-from nu.info.core.docstring import Example, parse_example, parse_notes, split_docstring
+from nu.info.core.docstring import Example, parse_examples, parse_notes, split_docstring
 from nu.info.core.source import read_source
 
 
@@ -44,8 +45,17 @@ class Record:
     summary: str = ""
     description: str = ""
     notes: tuple[str, ...] = ()
-    example: Example = field(default_factory=Example)
+    examples: tuple[Example, ...] = ()
     target: object = field(default=None, repr=False, compare=False)
+
+    @property
+    def example(self) -> Example:
+        """The first example, or an empty one when none was written.
+
+        Convenience for callers that only ever want one example. Multi-example
+        sections are still fully carried on :attr:`examples`.
+        """
+        return self.examples[0] if self.examples else Example()
 
     def blocks(self) -> Blocks:
         """The full docstring, split. Read per lookup, not at build."""
@@ -76,5 +86,5 @@ def prose(target: object, name: str, path: str, blocks: Blocks) -> dict[str, Any
         "summary": blocks.summary,
         "description": blocks.description,
         "notes": parse_notes(blocks.text_of(*NOTES)),
-        "example": parse_example(blocks.text_of(*EXAMPLE)),
+        "examples": parse_examples(blocks.text_of(*EXAMPLE)),
     }

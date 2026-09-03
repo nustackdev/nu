@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from nu.info.core.docstring.args import DocArg, parse_args
 from nu.info.core.docstring.blocks import Blocks, Section, split_docstring
-from nu.info.core.docstring.example import Example, parse_example
+from nu.info.core.docstring.example import Example, parse_example, parse_examples
 from nu.info.core.docstring.notes import parse_notes
 
 
@@ -30,6 +30,7 @@ __all__ = [
     "Section",
     "parse_args",
     "parse_example",
+    "parse_examples",
     "parse_notes",
     "split_docstring",
 ]
