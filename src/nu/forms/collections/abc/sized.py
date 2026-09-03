@@ -22,10 +22,23 @@ __all__ = [
 
 
 class SizedForm(Form):
-    """Base for values that have a length - like collections.abc.Sized."""
+    """Base for values that have a length, like collections.abc.Sized.
+
+    Example:
+        >>> nu.run(nu.List([1, 2, 3]).len())[0]
+        3
+    """
 
     def len(self) -> Int:
-        """Length of this collection."""
+        """Length of self.
+
+        Yields:
+            The element count as Int. INVALID when self is a sentinel.
+
+        Example:
+            >>> nu.run(nu.List([1, 2, 3]).len())[0]
+            3
+        """
         from nu.core import Len
         from nu.forms.primitives import Int
 

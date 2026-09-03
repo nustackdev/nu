@@ -25,18 +25,43 @@ T = TypeVar("T")
 
 
 class Iterator(Form, TypedNu[Iterator[T]], Generic[T]):
-    """Lazy iterator interface. Materializes via to_list/to_set/to_tuple."""
+    """Lazy stream over another form's elements.
+
+    Opened by Python's `iter()` on an IterableForm, which wraps the source in
+    a stream-shaped `Iter` term. A term of this shape produces its items one
+    at a time rather than as a single value, and pulling from it advances a
+    position that can run dry.
+
+    Notes:
+        - Stream-shaped, not scalar. `to_list`/`to_set`/`to_tuple` drain it
+          into a concrete collection; `next` pulls one item at a time.
+        - Once exhausted, stays exhausted; there's no rewinding.
+
+    Yields:
+        Its items in order, one per pull, until exhausted.
+    """
 
     def __iter__(self) -> Iterator[T]:
-        """Return self (Python's ``iter`` on an iterator). A pure read."""
+        """Self, unchanged.
+
+        Notes:
+            - Python's `iter()` on an iterator returns itself; a pure read,
+              no new term is built.
+        """
         return self
 
     def __next__(self) -> Any:
-        """Advance this iterator and yield the next item (Python's ``next``).
+        """The next item pulled from this iterator.
 
-        Stepping mutates the iterator's position and returns the item pulled,
-        so the underlying ``Next`` is a ScalarAction (mutate-and-yield), not a
-        Query. The element type is opaque, so the result is an ``Any``.
+        Notes:
+            - Stepping mutates the iterator's position, so the underlying
+              `Next` is an Action (mutate-and-yield), not a Query.
+            - The element type is opaque here, so the result is wrapped as
+              `Any`.
+
+        Yields:
+            The next item. Raises at evaluation time once the iterator is
+            exhausted, matching Python's `next`.
         """
         from nu.core import Next
         from nu.forms.primitives import Any
@@ -44,7 +69,14 @@ class Iterator(Form, TypedNu[Iterator[T]], Generic[T]):
         return Any(Next(self))
 
     def to_list(self) -> List[T]:
-        """Materialize iterator into a list."""
+        """Self drained into a List, in order.
+
+        Notes:
+            - Consumes the iterator fully; it's exhausted afterward.
+
+        Yields:
+            The List of items pulled.
+        """
         from nu.core import ToList
 
         from .list_ import List
@@ -52,7 +84,15 @@ class Iterator(Form, TypedNu[Iterator[T]], Generic[T]):
         return List(ToList(self))
 
     def to_set(self) -> Set[T]:
-        """Materialize iterator into a set."""
+        """Self drained into a Set.
+
+        Notes:
+            - Consumes the iterator fully; it's exhausted afterward.
+            - Duplicate items collapse; order is not preserved.
+
+        Yields:
+            The Set of items pulled.
+        """
         from nu.core import ToSet
 
         from .set_ import Set
@@ -60,7 +100,14 @@ class Iterator(Form, TypedNu[Iterator[T]], Generic[T]):
         return Set(ToSet(self))
 
     def to_tuple(self) -> Tuple:
-        """Materialize iterator into a tuple."""
+        """Self drained into a Tuple, in order.
+
+        Notes:
+            - Consumes the iterator fully; it's exhausted afterward.
+
+        Yields:
+            The Tuple of items pulled.
+        """
         from nu.core import ToTuple
 
         from .tuple_ import Tuple

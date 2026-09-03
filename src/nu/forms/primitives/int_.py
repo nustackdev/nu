@@ -664,8 +664,6 @@ class Int(Form, TypedNu[int]):
         Notes:
             - Object identity, not value equality. For scalar comparison use
               `==` instead.
-            - Named `is_` because `is` is a Python keyword and cannot be a
-              method name.
 
         Yields:
             True when self and other evaluate to the same Python object,
@@ -697,7 +695,6 @@ class Int(Form, TypedNu[int]):
                 (zero is False, everything else is True).
 
         Notes:
-            - Named `and_` because `and` is a Python keyword.
             - Both operands are always evaluated; there is no Python-style
               short-circuit at the tree level.
             - Bitwise AND is `bitand`, not this.
@@ -723,7 +720,6 @@ class Int(Form, TypedNu[int]):
             other: the value to OR with self. Coerced to Bool by truthiness.
 
         Notes:
-            - Named `or_` because `or` is a Python keyword.
             - Both operands are always evaluated; there is no Python-style
               short-circuit at the tree level.
             - Bitwise OR is `bitor`, not this.
@@ -746,7 +742,6 @@ class Int(Form, TypedNu[int]):
         """Logical NOT of self.
 
         Notes:
-            - Named `not_` because `not` is a Python keyword.
             - Zero yields True, every other value yields False.
             - Bitwise NOT is `bitnot`, not this.
 
@@ -770,8 +765,6 @@ class Int(Form, TypedNu[int]):
         Notes:
             - Zero becomes False, every other value becomes True, matching
               Python's truthiness rule.
-            - Named `bool_` because `bool` is a Python builtin and shadowing
-              it as a method name would be misleading.
 
         Yields:
             True when self is non-zero, False when self is zero. INVALID when

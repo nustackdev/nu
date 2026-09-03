@@ -1,4 +1,8 @@
-"""Sentinel interfaces - SentinelForm, EmptyForm, InvalidForm."""
+"""Sentinel interfaces - SentinelForm, EmptyForm, InvalidForm.
+
+Wraps EMPTY and INVALID so they can appear as typed Form nodes in a Nu tree,
+mainly so `is_empty()` / `is_invalid()` have something typed to call on.
+"""
 
 from __future__ import annotations
 
@@ -18,18 +22,36 @@ T = TypeVar("T", bound="Sentinel")
 
 
 class SentinelForm(Form, TypedNu[T], Generic[T]):
-    """Base for sentinel interfaces (Empty, Invalid)."""
+    """Base for the sentinel interfaces, EmptyForm and InvalidForm."""
 
 
 class EmptyForm(SentinelForm[Empty]):
-    """Empty interface - represents absence of a value."""
+    """Wraps EMPTY, the address-resolved-to-nothing sentinel.
+
+    Example:
+        >>> nu.run(nu.EmptyForm())[0]
+        <EMPTY>
+    """
 
     def __init__(self) -> None:
+        """Build the node wrapping EMPTY. Takes no arguments."""
         super().__init__(EMPTY)
 
 
 class InvalidForm(SentinelForm[Invalid]):
-    """Invalid interface - represents invalid/undefined interactions."""
+    """Wraps INVALID, the operation-not-applicable sentinel.
+
+    Notes:
+        - INVALID arises when an operation is applied to an EMPTY operand,
+          and Query chains collapse to INVALID as soon as any operand is a
+          sentinel. This Form does not produce that propagation itself, it
+          just gives INVALID a typed node.
+
+    Example:
+        >>> nu.run(nu.InvalidForm())[0]
+        <INVALID>
+    """
 
     def __init__(self) -> None:
+        """Build the node wrapping INVALID. Takes no arguments."""
         super().__init__(INVALID)
