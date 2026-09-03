@@ -9,6 +9,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Add nu.info: docstring/source readers, the docstring contract, interaction records
+
 ## 0.1.18 — 2026-08-28
 
 - Add Program form + ProgramRef (kv, mem); TryCatch binds CaughtError so a handler can read the exception
