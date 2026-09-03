@@ -1,4 +1,9 @@
-"""Tests for nu.info.core.contract - the shared rules, with no kind involved."""
+"""Tests for nu.info.core.contract - the shared laws, with no kind involved.
+
+Absence is not a violation. A section that is not written is empty data on
+the record; only a written section that lies about the code or about the
+format is checked here.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +12,6 @@ from nu.info.core.contract import (
     check_args,
     check_example,
     check_summary,
-    check_yields,
 )
 from nu.info.core.docstring import split_docstring
 
@@ -67,28 +71,31 @@ def test_no_source_at_all_is_absence_not_zero() -> None:
     assert call_form(object(), split_docstring("Summary.")) == ()
 
 
-# --- checks --------------------------------------------------------------
+# --- laws ---------------------------------------------------------------
 
 
-def test_summary_rules() -> None:
-    assert [p.rule for p in check_summary("x", _blocks(""))] == ["summary-missing"]
-    assert [p.rule for p in check_summary("x", _blocks("No full stop"))] == ["summary-unterminated"]
-    assert [p.rule for p in check_summary("x", _blocks("A" * 90 + "."))] == ["summary-too-long"]
+def test_summary_absence_is_not_a_violation() -> None:
+    assert check_summary("x", _blocks("")) == []
+
+
+def test_summary_rules_when_present() -> None:
+    assert [v.rule for v in check_summary("x", _blocks("No full stop"))] == ["summary-unterminated"]
+    assert [v.rule for v in check_summary("x", _blocks("A" * 90 + "."))] == ["summary-too-long"]
     assert check_summary("x", _blocks("Fine.")) == []
 
 
-def test_args_missing_unless_provably_nothing_is_taken() -> None:
-    assert [p.rule for p in check_args("x", _blocks("Summary."), None)] == ["args-missing"]
-    assert [p.rule for p in check_args("x", _blocks("Summary."), 2)] == ["args-missing"]
+def test_args_absence_is_not_a_violation() -> None:
+    assert check_args("x", _blocks("Summary."), None) == []
+    assert check_args("x", _blocks("Summary."), 2) == []
     assert check_args("x", _blocks("Summary."), 0) == []
 
 
-def test_args_are_checked_against_the_count_the_code_gives() -> None:
+def test_args_when_written_are_checked_against_the_code() -> None:
     blocks = _blocks("Summary.\n\nArgs:\n    left: one.\n    right: two.\n")
     assert check_args("x", blocks, 2) == []
-    (problem,) = check_args("x", blocks, 3)
-    assert problem.rule == "args-arity-mismatch"
-    assert problem.detail == "documents 2, code takes 3"
+    (v,) = check_args("x", blocks, 3)
+    assert v.rule == "args-arity-mismatch"
+    assert v.detail == "documents 2, code takes 3"
 
 
 def test_a_variadic_arg_skips_the_count_check() -> None:
@@ -96,20 +103,16 @@ def test_a_variadic_arg_skips_the_count_check() -> None:
     assert check_args("x", blocks, 2) == []
 
 
-def test_yields_is_required_when_asked_for() -> None:
-    assert [p.rule for p in check_yields("x", _blocks("Summary."))] == ["yields-missing"]
-    assert check_yields("x", _blocks("Summary.\n\nYields:\n    A value.\n")) == []
+def test_example_absence_is_not_a_violation() -> None:
+    assert check_example("x", _blocks("Summary.")) == []
 
 
-def test_example_rules() -> None:
-    assert [p.rule for p in check_example("x", _blocks("Summary."))] == ["example-missing"]
-    assert [p.rule for p in check_example("x", _blocks("Summary.\n\nExample:\n    f(1\n"))] == [
+def test_example_rules_when_present() -> None:
+    assert [v.rule for v in check_example("x", _blocks("Summary.\n\nExample:\n    f(1\n"))] == [
         "example-unparseable"
     ]
-    assert [p.rule for p in check_example("x", _blocks("Summary.\n\nExample:\n    f(1)\n"))] == [
-        "example-not-doctest"
-    ]
     assert [
-        p.rule for p in check_example("x", _blocks("Summary.\n\nExample:\n    >>> f(1)\n"))
+        v.rule for v in check_example("x", _blocks("Summary.\n\nExample:\n    >>> f(1)\n"))
     ] == ["example-no-value"]
+    assert check_example("x", _blocks("Summary.\n\nExample:\n    f(1)\n")) == []
     assert check_example("x", _blocks("Summary.\n\nExample:\n    >>> f(1)\n    2\n")) == []

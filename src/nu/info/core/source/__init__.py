@@ -15,11 +15,13 @@ from __future__ import annotations
 
 from nu.info.core.source.code import Source, read_location, read_source
 from nu.info.core.source.module import Member, public_members
+from nu.info.core.source.mro import Binding, walk_bindings
 from nu.info.core.source.signature import Param, Signature, read_signature
 from nu.info.core.source.unpack import unpacked_count
 
 
 __all__ = [
+    "Binding",
     "Member",
     "Param",
     "Signature",
@@ -29,4 +31,5 @@ __all__ = [
     "read_signature",
     "read_source",
     "unpacked_count",
+    "walk_bindings",
 ]
