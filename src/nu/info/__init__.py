@@ -95,6 +95,7 @@ from nu.info.interaction import (
     verify_interaction,
 )
 from nu.info.interaction import catalogue as catalogue_interactions
+from nu.info.interactions import Inspect, render
 from nu.info.record import Record
 from nu.info.ref import RefRecord, parse_ref, verify_ref
 from nu.info.ref import catalogue as catalogue_refs
@@ -105,6 +106,7 @@ __all__ = [
     "BuilderRecord",
     "CallRecord",
     "FormRecord",
+    "Inspect",
     "InteractionRecord",
     "Record",
     "RefRecord",
@@ -118,6 +120,7 @@ __all__ = [
     "parse_form",
     "parse_interaction",
     "parse_ref",
+    "render",
     "verify_builder",
     "verify_call",
     "verify_form",

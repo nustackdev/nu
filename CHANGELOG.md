@@ -11,6 +11,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add nu.info.Inspect atom: resolves a module or atom path and yields the info record as formatted docs; expose nu.info at the nu root
 - Fill nu.spans, nu.flows, and remaining nu.core submodule docstrings to the nu.info contract
 - Fill nu.forms.primitives and nu.forms.collections docstrings to the nu.info contract
 - Add nu.info form and ref kinds as BuilderRecord specialisations; per-kind catalogues; fill nu.forms.Float docstrings to the nu.info contract
