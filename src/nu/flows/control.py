@@ -48,10 +48,29 @@ __all__ = [
 
 
 class IfDo(Control):
-    """``IfDo(cond, then [, else_])`` - run ``then`` if ``cond`` is truthy, else ``else_``.
+    """``IfDo(cond, then, else_=None)`` - runs ``then`` or ``else_`` based on ``cond``.
 
-    Children: ``[cond, then]`` or ``[cond, then, else_]``. Slot 0 is the
-    condition parameter; the body slots hold mutating children.
+    Args:
+        cond: the condition to test.
+        then: the body to run when ``cond`` is truthy.
+        else_: the body to run when ``cond`` is falsy. Optional: leave it out
+            to run nothing on a falsy ``cond``.
+
+    Notes:
+        - ``cond`` is evaluated exactly once per run, unlike ``WhileDo`` which
+          re-checks it every turn.
+        - A falsy ``cond`` with no ``else_`` runs nothing at all.
+
+    Example:
+        >>> _, ctx = nu.run(
+        ...     nu.IfDo(
+        ...         nu.Literal(True),
+        ...         nu.SetCmd(nu.AttrRef("a"), nu.Literal(1)),
+        ...         nu.SetCmd(nu.AttrRef("a"), nu.Literal(2)),
+        ...     )
+        ... )
+        >>> ctx.attrs["a"]
+        1
     """
 
     _param_slots = Declared(value=frozenset({0}), name="param_slots")
@@ -86,10 +105,30 @@ class IfDo(Control):
 
 
 class WhileDo(Control):
-    """``WhileDo(cond, body)`` - run ``body`` while ``cond`` is truthy.
+    """``WhileDo(cond, body)`` - runs ``body`` on loop while ``cond`` stays truthy.
 
-    Children: ``[cond, body]``. Slot 0 is the condition parameter, re-evaluated
-    each turn; slot 1 is the body.
+    Args:
+        cond: the condition, checked before each turn.
+        body: the loop body.
+
+    Notes:
+        - ``cond`` is re-evaluated before every turn, including the first, so
+          a falsy ``cond`` at the start runs ``body`` zero times.
+        - No built-in turn cap: a ``cond`` that never turns falsy loops
+          forever.
+
+    Example:
+        >>> ctx = nu.Context()
+        >>> ctx.attrs["i"] = 0
+        >>> _, ctx = nu.run(
+        ...     nu.WhileDo(
+        ...         nu.Lt(nu.AttrRef("i"), nu.Literal(3)),
+        ...         nu.SetCmd(nu.AttrRef("i"), nu.Add(nu.AttrRef("i"), nu.Literal(1))),
+        ...     ),
+        ...     ctx,
+        ... )
+        >>> ctx.attrs["i"]
+        3
     """
 
     _param_slots = Declared(value=frozenset({0}), name="param_slots")
@@ -114,10 +153,17 @@ class WhileDo(Control):
 
 
 class ForeverDo(Control):
-    """``ForeverDo(body)`` - run ``body`` endlessly. No parameters.
+    """``ForeverDo(body)`` - runs ``body`` on loop forever.
 
-    Children: ``[body]``. Every slot is a body, so ``param_slots`` keeps the
-    empty default.
+    Args:
+        body: the loop body, re-run with no condition to stop it.
+
+    Notes:
+        - No parameter slot at all: the only child is a body, so
+          ``param_slots`` keeps the empty default.
+        - Used for standing ticks (a reactive loop, a periodic
+          ``Delay`` + action) that end only when the surrounding process is
+          stopped or errors, not from anything inside the atom itself.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -140,12 +186,35 @@ class ForeverDo(Control):
 
 
 class ForEachDo(Control):
-    """``ForEachDo(items, body, item="item")`` - run ``body`` for each element.
+    """``ForEachDo(items, body, item="item")`` - runs ``body`` once per element of ``items``.
 
-    Children: ``[items, body, item_name]``. Binds the current element under the
-    name ``item_name`` yields (the attrs side-channel) before each body run, so
-    the body reads it via ``AttrRef(<name>)``. Slots 0 (items) and 2 (the name)
-    are parameters; slot 1 is the body.
+    Args:
+        items: the iterable to walk.
+        body: the loop body, run once per element.
+        item: the name to bind the current element under. Optional, defaults
+            to ``"item"``.
+
+    Notes:
+        - The current element is bound into ``rt.ctx.attrs`` under ``item``
+          before each body run, the same attrs side-channel ``Map`` /
+          ``Filter`` use, not a tracked fabric write. ``body`` reads it back
+          via ``AttrRef(item)``.
+        - ``item`` is itself evaluated once, before the loop starts, so it can
+          be a computed Ref and not just a literal name.
+        - Rebinding overwrites whatever ``item`` held before, in ``attrs``.
+
+    Example:
+        >>> ctx = nu.Context()
+        >>> ctx.attrs["sum"] = 0
+        >>> _, ctx = nu.run(
+        ...     nu.ForEachDo(
+        ...         nu.Iter(nu.Literal([1, 2, 3])),
+        ...         nu.SetCmd(nu.AttrRef("sum"), nu.Add(nu.AttrRef("sum"), nu.AttrRef("item"))),
+        ...     ),
+        ...     ctx,
+        ... )
+        >>> ctx.attrs["sum"]
+        6
     """
 
     _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
@@ -177,12 +246,37 @@ class ForEachDo(Control):
 
 
 class ForRangeDo(Control):
-    """``ForRangeDo(start, stop, body, *, step=1, index="index")`` - counted loop.
+    """``ForRangeDo(start, stop, body, *, step=1, index="index")`` - runs ``body`` once per value of ``range(start, stop, step)``.
 
-    Children: ``[start, stop, step, body, index_name]``. Iterates
-    ``range(start, stop, step)``, binding each value under the name
-    ``index_name`` yields before each body run. Slots 0, 1, 2 and 4 are
-    parameters; slot 3 is the body.
+    Args:
+        start: the range's start.
+        stop: the range's exclusive end.
+        body: the loop body, run once per value.
+        index: the name to bind the current value under. Optional, defaults
+            to ``"index"``.
+        step: the range's step. Optional, defaults to 1.
+
+    Notes:
+        - ``start``, ``stop``, ``step`` and ``index`` are each evaluated once,
+          before the loop starts.
+        - The current value is bound into ``rt.ctx.attrs`` under ``index``
+          before each body run, read back via ``AttrRef(index)``. Same
+          side-channel ``ForEachDo`` uses.
+        - Follows Python's ``range`` rules: a ``step`` that never reaches
+          ``stop`` from ``start`` runs the body zero times rather than
+          looping forever.
+
+    Example:
+        >>> ctx = nu.Context()
+        >>> ctx.attrs["sum"] = 0
+        >>> _, ctx = nu.run(
+        ...     nu.ForRangeDo(
+        ...         0, 4, nu.SetCmd(nu.AttrRef("sum"), nu.Add(nu.AttrRef("sum"), nu.AttrRef("index")))
+        ...     ),
+        ...     ctx,
+        ... )
+        >>> ctx.attrs["sum"]
+        6
     """
 
     _param_slots = Declared(value=frozenset({0, 1, 2, 4}), name="param_slots")
@@ -222,12 +316,20 @@ class ForRangeDo(Control):
 
 
 class Delay(Control):
-    """``Delay(seconds)`` - sleep ``seconds``, then continue; no body.
+    """``Delay(seconds)`` - sleeps ``seconds``, then continues. No body.
 
-    A childless delay: slot 0 is the delay parameter, there is no body. Runs
-    anywhere - the sync path uses ``time.sleep``, the async path
-    ``asyncio.sleep`` - so it picks the right primitive per execution mode.
-    For "wait, then run something", use ``DelayedDo`` or ``Delay(s) >> body``.
+    Args:
+        seconds: how long to sleep.
+
+    Notes:
+        - Sync execution blocks on ``time.sleep``; async execution suspends
+          on ``asyncio.sleep``, so it never blocks an event loop.
+        - No body: for "wait, then run something" use ``DelayedDo``, or
+          chain ``Delay(seconds) >> body``.
+
+    Example:
+        >>> nu.run(nu.Delay(nu.Literal(0.0)))[0] is None
+        True
     """
 
     _param_slots = Declared(value=frozenset({0}), name="param_slots")
@@ -250,11 +352,22 @@ class Delay(Control):
 
 
 class DelayedDo(Control):
-    """``DelayedDo(delay, body)`` - sleep ``delay`` seconds, then run ``body``.
+    """``DelayedDo(delay, body)`` - sleeps ``delay`` seconds, then runs ``body``.
 
-    Children: ``[delay, body]``. Slot 0 is the delay parameter; slot 1 the
-    body. Sync path uses ``time.sleep``, async path ``asyncio.sleep``. This is
-    sugar for ``Delay(delay) >> body``; for a bare wait, use ``Delay``.
+    Args:
+        delay: how long to sleep before ``body`` runs.
+        body: the body to run once the sleep is over.
+
+    Notes:
+        - Sugar for ``Delay(delay) >> body``; for a bare wait with no body,
+          use ``Delay`` on its own.
+        - Sync execution blocks on ``time.sleep``; async execution suspends
+          on ``asyncio.sleep``.
+
+    Example:
+        >>> _, ctx = nu.run(nu.DelayedDo(nu.Literal(0.0), nu.SetCmd(nu.AttrRef("a"), nu.Literal(1))))
+        >>> ctx.attrs["a"]
+        1
     """
 
     _param_slots = Declared(value=frozenset({0}), name="param_slots")
@@ -279,13 +392,34 @@ class DelayedDo(Control):
 
 
 class SwitchDo(Control):
-    """``SwitchDo(selector, cases, default=None)`` - branch on a selector value.
+    """``SwitchDo(selector, cases, default=None)`` - runs the case body keyed by ``selector``'s value.
 
-    Children: ``[selector, *case_bodies, default?]``. Slot 0 is the selector
-    parameter; the rest are bodies. The match keys are intrinsic constants of
-    the switch, kept in ``payload`` (so they survive ``with_children``), paired
-    by position with the case bodies. The first key equal to the selector value
-    runs its body; failing any match, the optional default runs.
+    Args:
+        selector: the value to match against the case keys.
+        cases: a mapping from match key to case body, checked in order.
+        default: the body to run when no key matches. Optional: leave it out
+            to run nothing on a miss.
+
+    Notes:
+        - The case keys are intrinsic constants of the switch, not children:
+          they live in ``payload`` so they survive ``with_children``, and are
+          paired by position with the case bodies.
+        - Keys are checked in the order ``cases`` was given, first equal match
+          wins; a later duplicate key is unreachable.
+        - ``selector`` is evaluated once per run, before any key comparison.
+
+    Example:
+        >>> _, ctx = nu.run(
+        ...     nu.SwitchDo(
+        ...         nu.Literal("b"),
+        ...         {
+        ...             "a": nu.SetCmd(nu.AttrRef("x"), nu.Literal(1)),
+        ...             "b": nu.SetCmd(nu.AttrRef("x"), nu.Literal(2)),
+        ...         },
+        ...     )
+        ... )
+        >>> ctx.attrs["x"]
+        2
     """
 
     _param_slots = Declared(value=frozenset({0}), name="param_slots")

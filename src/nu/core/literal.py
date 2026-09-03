@@ -1,13 +1,15 @@
-"""Literal: the constant-yielding ScalarQuery.
+"""Literal: wraps a raw Python value as a Nu term.
 
 The trivial Query - an irreducible leaf that carries a value in its payload
 and yields it once, pure (no effects). Most non-Ref leaves in a Nu program are
-LiteralQuerys, so it gets its own module apart from the numeric ScalarQueries in
+Literals, so it gets its own module apart from the numeric ScalarQueries in
 ``arithmetic``.
 
-``compile`` (sync hot path) and ``acompile`` (async hot path) each return a
-thunk that closes over the payload value and returns it, ignoring the Runtime
-and any children.
+Sorts: ScalarQuery (Q). No children: the value lives entirely in the payload.
+
+Each atom defines ``compile`` (sync hot path) and ``acompile`` (async hot
+path). Both return a thunk that closes over the payload value and returns it,
+ignoring the Runtime.
 """
 
 from __future__ import annotations
@@ -26,7 +28,26 @@ __all__ = ["Literal"]
 
 
 class Literal(ScalarQuery):
-    """A ScalarQuery that yields a constant value carried in its payload."""
+    """A constant value wrapped as a term.
+
+    Args:
+        value: the Python value to carry. Held as-is in the payload, never
+            evaluated or copied.
+
+    Notes:
+        - Any tree builder that gets a raw Python value where a term is
+          expected wraps it in a Literal automatically.
+
+    Yields:
+        ``value``, unchanged, every time. Never EMPTY or INVALID on its own -
+        a Literal has no children to propagate a sentinel from.
+
+    Example:
+        >>> nu.run(nu.Literal(42))[0]
+        42
+        >>> nu.run(nu.Literal("hi"))[0]
+        'hi'
+    """
 
     def __init__(self, value: object) -> None:
         super().__init__()

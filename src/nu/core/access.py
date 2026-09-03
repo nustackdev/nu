@@ -56,7 +56,24 @@ __all__ = [
 
 
 class GetItem(ScalarQuery):
-    """Subscript access: ``x[k]`` for child 0 indexed by child 1."""
+    """Subscript access: ``x[k]``.
+
+    Args:
+        target: the object to index.
+        key: the index or key to look up.
+
+    Notes:
+        - A missing key or out-of-range index raises Python's own
+          ``KeyError`` / ``IndexError``, it is not folded into EMPTY.
+
+    Yields:
+        The member at that key. INVALID when either child is EMPTY or
+        INVALID.
+
+    Example:
+        >>> nu.run(nu.GetItem(nu.Literal([10, 20, 30]), nu.Literal(1)))[0]
+        20
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target, key = children
@@ -88,7 +105,18 @@ class GetItem(ScalarQuery):
 
 
 class Len(ScalarQuery):
-    """Length: ``len(x)`` of its one child."""
+    """Length: ``len(x)`` of its one child.
+
+    Args:
+        value: the object to measure.
+
+    Yields:
+        The length. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Len(nu.Literal("abcd")))[0]
+        4
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
@@ -114,7 +142,19 @@ class Len(ScalarQuery):
 
 
 class Contains(ScalarQuery):
-    """Containment: ``item in container`` for child 1 in child 0."""
+    """Containment: ``item in container``.
+
+    Args:
+        container: the object to search.
+        item: the value to look for.
+
+    Yields:
+        True or False. INVALID when either child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Contains(nu.Literal([1, 2, 3]), nu.Literal(9)))[0]
+        False
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         container, item = children
@@ -146,10 +186,19 @@ class Contains(ScalarQuery):
 
 
 class Slice(ScalarQuery):
-    """The ``slice(...)`` builtin: builds a slice object from its children.
+    """The ``slice(...)`` builtin: builds a slice object.
 
-    Children are ``start, stop, step`` (mirroring ``slice(start, stop, step)``).
-    Used to drive subscript access like ``x[a:b:c]`` as ``GetItem(x, Slice(...))``.
+    Args:
+        start: the start index, or None for the beginning.
+        stop: the stop index, or None for the end.
+        step: the step, or None for 1.
+
+    Yields:
+        A ``slice`` object. INVALID when any child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Slice(nu.Literal(1), nu.Literal(3), nu.Literal(None)))[0]
+        slice(1, 3, None)
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -190,9 +239,23 @@ class Slice(ScalarQuery):
 class GetAttr(ScalarQuery):
     """Attribute read: ``getattr(obj, name[, default])``.
 
-    Child 0 is the object, child 1 the attribute name. An optional child 2
-    supplies the default returned when the attribute is absent (matching the
-    three-arg ``getattr`` builtin).
+    Args:
+        obj: the object to read from.
+        name: the attribute name.
+        default: value to return when the attribute is absent. Optional:
+            leave the child out entirely to let a missing attribute raise.
+
+    Notes:
+        - Without a default child, a missing attribute raises Python's own
+          ``AttributeError``, it is not folded into EMPTY.
+
+    Yields:
+        The attribute value. INVALID when ``obj``, ``name``, or (if given)
+        ``default`` is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.GetAttr(nu.Literal(1j), nu.Literal("imag")))[0]
+        1.0
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -239,7 +302,19 @@ class GetAttr(ScalarQuery):
 
 
 class HasAttr(ScalarQuery):
-    """Attribute presence: ``hasattr(obj, name)`` for child 0 and child 1."""
+    """Attribute presence: ``hasattr(obj, name)``.
+
+    Args:
+        obj: the object to check.
+        name: the attribute name.
+
+    Yields:
+        True or False. INVALID when either child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.HasAttr(nu.Literal(1j), nu.Literal("imag")))[0]
+        True
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         obj_t, name_t = children
@@ -274,10 +349,21 @@ class HasAttr(ScalarQuery):
 
 
 class SetItem(Command):
-    """Subscript write: ``x[k] = v`` for child 0 keyed by child 1.
+    """Subscript write: ``x[k] = v``.
 
-    Slots: 0 container, 1 key, 2 value. Mutates the container in place; returns
-    nothing, matching Python's ``x[k] = v``.
+    Args:
+        target: the container to mutate. Slot 0, so it must hold a Ref.
+        key: the index or key to write to.
+        value: the value to store.
+
+    Notes:
+        - Mutates the container in place and yields nothing, matching
+          Python's ``x[k] = v``.
+        - A sentinel on any child bails out before mutating, the container
+          is left untouched.
+
+    Yields:
+        Nothing.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -318,9 +404,21 @@ class SetItem(Command):
 
 
 class DelItem(Command):
-    """Subscript delete: ``del x[k]`` for child 0 keyed by child 1.
+    """Subscript delete: ``del x[k]``.
 
-    Slots: 0 container, 1 key. Mutates the container in place; returns nothing.
+    Args:
+        target: the container to mutate. Slot 0, so it must hold a Ref.
+        key: the index or key to remove.
+
+    Notes:
+        - Mutates the container in place and yields nothing.
+        - A sentinel on either child bails out before mutating, the
+          container is left untouched.
+        - A missing key raises Python's own ``KeyError`` / ``IndexError``,
+          it does not bail silently.
+
+    Yields:
+        Nothing.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -357,8 +455,19 @@ class DelItem(Command):
 class SetAttr(Command):
     """Attribute write: ``setattr(obj, name, value)``.
 
-    Slots: 0 object, 1 name, 2 value. Mutates the object in place; returns
-    nothing, matching Python's ``setattr``.
+    Args:
+        obj: the object to mutate. Slot 0, so it must hold a Ref.
+        name: the attribute name.
+        value: the value to store.
+
+    Notes:
+        - Mutates the object in place and yields nothing, matching Python's
+          ``setattr``.
+        - A sentinel on any child bails out before mutating, the object is
+          left untouched.
+
+    Yields:
+        Nothing.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -401,7 +510,19 @@ class SetAttr(Command):
 class DelAttr(Command):
     """Attribute delete: ``delattr(obj, name)``.
 
-    Slots: 0 object, 1 name. Mutates the object in place; returns nothing.
+    Args:
+        obj: the object to mutate. Slot 0, so it must hold a Ref.
+        name: the attribute name to remove.
+
+    Notes:
+        - Mutates the object in place and yields nothing.
+        - A sentinel on either child bails out before mutating, the object
+          is left untouched.
+        - A missing attribute raises Python's own ``AttributeError``, it
+          does not bail silently.
+
+    Yields:
+        Nothing.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")

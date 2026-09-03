@@ -24,7 +24,26 @@ __all__ = ["Race"]
 
 
 class Race(Strategy):
-    """Runs its children concurrently; first to finish wins - the ``&`` composition."""
+    """Runs its children concurrently; first to finish wins - the ``&`` composition.
+
+    Args:
+        *children: the mutating children to race.
+
+    Notes:
+        - The losers are cancelled once the first child completes.
+        - Async-only: ``_compile`` raises ``RuntimeError``, and sync ``run``
+          refuses the subtree up front via ``requires_async``.
+
+    Yields:
+        Nothing (VOID). The writes are whichever child wins.
+
+    Example:
+        >>> import asyncio
+        >>> fast = nu.SetCmd(nu.AttrRef("winner"), "fast")
+        >>> slow = nu.DelayedDo(1, nu.SetCmd(nu.AttrRef("winner"), "slow"))
+        >>> asyncio.run(nu.arun(nu.Race(fast, slow)))[1].attrs
+        Attributes(winner='fast')
+    """
 
     _requires_async = Declared(value=True, name="requires_async")
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")

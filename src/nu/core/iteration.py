@@ -43,12 +43,23 @@ __all__ = ["Enumerate", "Iter", "Next", "Reversed", "Zip"]
 
 
 class Iter(StreamQuery):
-    """Lifts a scalar iterable child into a stream of its elements.
+    """Opens a scalar iterable child into a stream of its elements.
 
-    Children: ``[source]``. ``source`` is any ScalarQuery whose value is
-    iterable (list, tuple, range, generator, dict, set, ...). The inverse of
-    a Reduction: where a Reduction folds a stream to a scalar, ``Iter`` opens
-    a scalar iterable into a stream. A stream atom's thunk returns an iterator.
+    Args:
+        source: the iterable value to open - list, tuple, range, generator,
+            dict, set, or anything else Python can iterate.
+
+    Notes:
+        - The inverse of a Reduction: a Reduction folds a stream down to a
+          scalar, ``Iter`` opens a scalar back up into a stream.
+
+    Yields:
+        The elements of ``source``, in iteration order. Lazy: the thunk
+        returns an iterator, nothing is pulled until something drains it.
+
+    Example:
+        >>> nu.run(nu.Collect(nu.Iter([1, 2, 3])))[0]
+        [1, 2, 3]
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -71,9 +82,24 @@ class Iter(StreamQuery):
 class Enumerate(StreamQuery):
     """Pairs each item of a source child with its running index.
 
-    Children: ``[source]`` or ``[source, start]``. Yields ``(index, item)``
-    tuples, the index counting up from ``start`` (default 0), Python's
-    ``enumerate``.
+    Args:
+        source: the stream to enumerate.
+        start: the first index. Optional: leave the child out to start at 0.
+
+    Notes:
+        - An EMPTY or INVALID ``start`` collapses the whole result to an
+          empty stream rather than raising or falling back to 0.
+
+    Yields:
+        ``(index, item)`` tuples, one per item of ``source``, the index
+        counting up from ``start`` (Python's ``enumerate``).
+
+    Example:
+        >>> nu.run(nu.Collect(nu.Enumerate(nu.Iter(["a", "b"]))))[0]
+        [(0, 'a'), (1, 'b')]
+
+        >>> nu.run(nu.Collect(nu.Enumerate(nu.Iter(["a", "b"]), 1)))[0]
+        [(1, 'a'), (2, 'b')]
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -117,8 +143,20 @@ class Enumerate(StreamQuery):
 class Zip(StreamQuery):
     """Threads several source children together item by item.
 
-    Children: ``[*sources]``. Yields tuples of one item per source, stopping
-    with the shortest (Python's ``zip``).
+    Args:
+        *sources: the streams to zip, one item pulled from each per step.
+
+    Notes:
+        - Stops at the shortest source, same as Python's ``zip`` (not the
+          ``strict`` variant).
+        - No children at all yields an empty stream.
+
+    Yields:
+        Tuples of one item per source, in source order.
+
+    Example:
+        >>> nu.run(nu.Collect(nu.Zip(nu.Iter([1, 2, 3]), nu.Iter(["a", "b"]))))[0]
+        [(1, 'a'), (2, 'b')]
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -149,8 +187,20 @@ class Zip(StreamQuery):
 class Reversed(StreamQuery):
     """Yields the items of a source child in reverse order.
 
-    Children: ``[source]``. The stream-shaped twin of Python's ``reversed``;
-    it materializes the source to walk it backwards.
+    Args:
+        source: the stream to reverse.
+
+    Notes:
+        - Materializes the whole source before yielding anything, since
+          walking backwards needs the full sequence up front - not lazy,
+          despite still yielding a stream.
+
+    Yields:
+        The items of ``source``, last to first.
+
+    Example:
+        >>> nu.run(nu.Collect(nu.Reversed(nu.Iter([1, 2, 3]))))[0]
+        [3, 2, 1]
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -180,13 +230,20 @@ class Reversed(StreamQuery):
 
 
 class Next(ScalarAction):
-    """Advances an iterator child and yields the next item.
+    """Advances a ref-held iterator child and yields the item it pulls.
 
-    Children: ``[iterator]`` where slot 0 holds the Ref to an iterator in the
-    Context. Stepping mutates that iterator's position, so ``Next`` is an
-    Action, not a Query: it both writes (slot 0) and yields the item it
-    pulled. The dual-citizen twin of Python's ``next``; the first concrete
-    Action in core. Async twin ``anext`` follows with async sources.
+    Args:
+        iterator: the Ref to an iterator held in the Context.
+
+    Notes:
+        - Mutates slot 0 (the iterator's position) as well as yielding, so
+          ``Next`` is an Action, not a Query - the dual-citizen twin of
+          Python's ``next``, and the first concrete Action in core.
+        - Structural stub: no ``compile`` yet, waits on the iterator fabric.
+          Async twin ``anext`` follows once async sources land.
+
+    Yields:
+        The next item pulled from the iterator.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")

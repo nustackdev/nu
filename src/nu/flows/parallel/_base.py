@@ -22,10 +22,17 @@ _VALID_MODES = ("threaded", "async")
 class _ParallelBase(Nu):
     """Mixin for Parallel / Race / AnyN and their forced-mode variants.
 
-    Parses ``__init__`` items into children + a per-slot mode tuple stored
-    on ``self._payload["parallel_modes"]``. ``_FORCE_MODE`` is ``None`` on
-    the smart kinds; the Threaded/Async subclasses set it to
-    ``"threaded"`` / ``"async"``.
+    Args:
+        *items: each item is a ``Nu`` child, or a ``(child, "threaded" |
+            "async")`` tuple pinning that one child's placement.
+
+    Notes:
+        - Parses ``items`` into children plus a per-slot mode tuple stored on
+          ``self._payload["parallel_modes"]``, one entry per child (``None``
+          for an unpinned child).
+        - ``_FORCE_MODE`` is ``None`` on the smart kinds; the
+          Threaded/Async subclasses set it to ``"threaded"`` / ``"async"``
+          to pin every child at once, overriding per-child modes.
     """
 
     _FORCE_MODE: str | None = None

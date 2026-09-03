@@ -47,21 +47,34 @@ __all__ = ["CaughtError", "Debounce", "Retry", "Throttle", "Timeout", "TryCatch"
 
 
 class CaughtError(str):
-    """The error a catch branch reads, a string that still carries its exception.
+    """The error a catch branch reads: a string that still carries the exception.
 
-    ``attrs[error_key]`` has always held the exception *string*, and still
-    does: this compares, formats and concatenates as ``str(exc)``, so
-    ``AttrRef("error")`` behaves exactly as before. What it adds is
+    ``attrs[error_key]`` has always held the exception string, and still
+    does - this compares, formats and concatenates as ``str(exc)``, so
+    ``AttrRef("error")`` reads exactly as before. What it adds is
     ``.exception``, the live object, reachable from inside the tree with
     ``GetAttr(AttrRef("error"), "exception")``.
 
-    The alternative was a second attrs entry, which would make the channel
-    two keys wide for one event and leave handlers guessing which to read.
-    A str subclass keeps one key and costs a handler nothing until it asks.
+    Args:
+        exc: the caught exception, wrapped as ``str(exc)``.
 
-    Deliberately unslotted: ``Vars`` is ``vars()``, so the field-walking path
-    into a structured error (``ConstructionError.diagnostic.lineno``, say)
-    needs a ``__dict__`` at every level.
+    Notes:
+        - A second attrs entry was the alternative, but that makes the
+          channel two keys wide for one event and leaves a handler guessing
+          which to read. A str subclass keeps one key.
+        - Deliberately unslotted: ``Vars`` is ``vars()``, so walking into a
+          structured error's fields (``ConstructionError.diagnostic.lineno``,
+          say) needs a ``__dict__`` at every level.
+
+    Yields:
+        The string value on comparison/format/concat; ``.exception`` for the
+        live object.
+
+    Example:
+        >>> from nu.spans.policy import CaughtError
+        >>> c = CaughtError(ValueError("boom"))
+        >>> c, c.exception
+        ('boom', ValueError('boom'))
     """
 
     exception: BaseException
@@ -87,12 +100,9 @@ def _async_backstop(name: str) -> Callable:
 
 
 def _run_catch(rt: Runtime, catch: Callable, error_key: Callable, exc: Exception) -> object:
-    """Run the catch against a copy of the context carrying the error; return its value.
+    """Run catch against a ctx copy carrying a :class:`CaughtError` at ``error_key``; return its value.
 
-    A :class:`CaughtError` lands at ``attrs[error_key]`` (the attrs fabric is
-    the one inter-Nu channel): the exception string, with the exception itself
-    on ``.exception`` for a handler that needs its fields. The copy isolates
-    the handler so its own writes do not leak back to the live context.
+    The copy isolates catch so its writes don't leak back to the live context.
     """
     saved = rt.ctx
     rt.ctx = saved._copy()
@@ -159,16 +169,30 @@ async def _aguard(
 
 
 class TryCatch(Policy):
-    """``TryCatch(body, catch=None, finally_=None, errors=None, error_key="error")``.
+    """Runs ``catch`` when the body raises a matching error; ``finally_`` always runs after.
 
-    Children (fixed): ``[body, catch, finally_, error_key]``. The body is slot 0;
-    an absent ``catch`` / ``finally_`` is a ``Noop``; ``error_key`` is a
-    string-yielding Nu naming where the caught exception is written in the attrs
-    fabric (default the literal ``"error"``). ``errors`` is the pure-Python typed
-    filter (a tuple, or ``None`` for catch-all); unmatched exceptions propagate
-    unretried. ``catch`` runs in an isolated context copy (writes discarded, only
-    its value forwards); ``finally_`` runs on success or failure against the live
-    context. Yields whatever the body yields (transparent).
+    Children (fixed): ``[body, catch, finally_, error_key]``. An absent
+    ``catch`` / ``finally_`` is a ``Noop`` slot. ``catch`` runs against an
+    isolated context copy, so its writes stay local and only its value
+    forwards; ``finally_`` runs against the live context, on success or
+    failure alike.
+
+    Args:
+        body: the guarded Term.
+        catch: runs on a matching failure, in place of the body. Optional.
+        finally_: runs after, regardless of outcome. Optional.
+        errors: the exception type(s) to catch. ``None`` catches everything;
+            an unmatched exception propagates past this node untouched.
+        error_key: where the caught exception (a :class:`CaughtError`) lands
+            in the attrs fabric for ``catch`` to read.
+
+    Yields:
+        The body's value on success, or ``catch``'s value on a caught
+        failure. Transparent otherwise: forwards the branch's shape as-is.
+
+    Example:
+        >>> nu.run(nu.TryCatch(nu.Div(1, 0), catch=nu.Str("failed")))[0]
+        'failed'
     """
 
     def __init__(
@@ -312,23 +336,46 @@ async def _arun_hook(rt: Runtime, hook: Callable, sets: dict) -> None:
 
 
 class Retry(Policy):
-    """``Retry(body, *, max_attempts=3, delay=0.0, backoff=1.0, jitter=0.0, ...)``.
+    """Re-runs the body on a matching failure, up to ``max_attempts`` times.
 
-    Re-runs ``body`` on a matching failure. Children (fixed):
-    ``[body, max_attempts, delay, backoff, jitter, on_attempt_fail, on_success,
-    on_fail, error_key, attempt_key]``. The numeric knobs are returning children
-    (``IntArg`` / ``FloatArg``); the three hooks are non-returning, a ``Noop``
-    when absent; ``error_key`` / ``attempt_key`` name where the error string and
-    attempt number land in the attrs fabric. ``errors`` (pure-Python) scopes the
-    retry to a typed exception; outside it propagates unretried.
+    Sync runs a bare retry: ``max_attempts`` and ``errors`` only, no delay,
+    backoff, jitter or hooks. Async runs the full policy: ``delay`` grows by
+    ``backoff`` each attempt, ``jitter`` decorrelates the wait, and
+    ``on_attempt_fail`` / ``on_success`` / ``on_fail`` fire against an
+    isolated ctx copy carrying the attempt count and error. A stream body is
+    retried by atomic re-evaluation - drained fresh each attempt, emitted
+    only on success, bounded streams only - and the stream path skips the
+    per-attempt hooks.
 
-    Sync runs a basic retry (``max_attempts`` + ``errors``, no delay or hooks).
-    Async runs the full policy: ``delay`` grown by ``backoff`` each attempt,
-    ``jitter`` decorrelating the wait, and the hooks fired on each failed attempt
-    / on success / on final failure (each against an isolated ctx copy with the
-    attempt count and error set). A stream body is retried by atomic
-    re-evaluation - drained fresh per attempt, emitted only on success (bounded
-    streams only); the stream path does not run the per-attempt hooks.
+    Args:
+        body: the Term to re-run.
+        max_attempts: the ceiling on attempts, including the first.
+        delay: the wait before the first retry, in seconds (async only).
+        backoff: the multiplier applied to ``delay`` after each attempt
+            (async only).
+        jitter: the fraction of ``delay`` to randomize by, ``0`` to ``1``
+            (async only).
+        errors: the exception type(s) that trigger a retry. ``None``
+            matches any exception; an unmatched one propagates unretried.
+        on_attempt_fail: runs after a failed attempt that still has retries
+            left (async only). Optional.
+        on_success: runs once the body succeeds (async only). Optional.
+        on_fail: runs once attempts are exhausted, in place of re-raising
+            (async only). Optional.
+        error_key: where the failing attempt's error lands in the attrs
+            fabric for a hook to read.
+        attempt_key: where the attempt number lands in the attrs fabric for
+            a hook to read.
+
+    Yields:
+        The body's value on the attempt that succeeds. On exhaustion:
+        re-raises the last error, unless ``on_fail`` is set, in which case
+        it yields ``None`` after running the hook.
+
+    Example:
+        >>> import asyncio
+        >>> asyncio.run(nu.arun(nu.Retry(nu.Div(1, 1), max_attempts=1)))[0]
+        1.0
     """
 
     def __init__(
@@ -455,16 +502,29 @@ class Retry(Policy):
 
 
 class Timeout(Policy):
-    """``Timeout(timeout, body, on_timeout=None)`` - bound the body by a wall-clock limit.
+    """Bounds the body by a wall-clock limit; runs ``on_timeout`` if it's hit.
 
-    Async-only. Children (fixed): ``[body, timeout, on_timeout]``. ``timeout`` is
-    a returning child (seconds, ``FloatArg``); ``on_timeout`` is a non-returning
-    branch run on the live context if the limit is hit (a ``Noop`` when absent -
-    then the ``TimeoutError`` propagates). Forwards the body's value otherwise.
+    Async-only.
 
-    Note: ``wait_for`` cancels the awaited body coroutine; a sync-only body
-    offloaded to a thread cannot be interrupted - the limit stops the wait, not
-    the thread.
+    Args:
+        timeout: the wall-clock limit, in seconds.
+        body: the bounded Term.
+        on_timeout: runs against the live context if the limit is hit.
+            Optional: without it, the timeout raises ``TimeoutError``.
+
+    Notes:
+        - ``asyncio.wait_for`` cancels the awaited body coroutine; a
+          sync-only body offloaded to a thread can't be interrupted, so the
+          limit stops the wait, not the thread itself.
+
+    Yields:
+        The body's value. ``None`` if ``on_timeout`` ran; otherwise
+        ``TimeoutError`` propagates.
+
+    Example:
+        >>> import asyncio
+        >>> asyncio.run(nu.arun(nu.Timeout(0.01, nu.Div(1, 1))))[0]
+        1.0
     """
 
     _requires_async = Declared(value=True, name="requires_async")
@@ -495,13 +555,27 @@ class Timeout(Policy):
 
 
 class Throttle(Policy):
-    """``Throttle(interval, body)`` - drop body runs inside ``interval`` of the prior run.
+    """Drops a body run that falls inside ``interval`` of the prior run.
 
-    Async-only. Children (fixed): ``[body, interval]`` (seconds, ``FloatArg``).
-    The last-run timestamp is cross-invocation state, so it lives in the attrs
-    fabric keyed by this node (a Term is immutable and shared - no instance
-    state). A dropped call yields ``None``; otherwise forwards the body's value.
-    Meaningful only under repeated invocation (a loop / reactive).
+    Async-only. Meaningful only under repeated invocation (a loop or a
+    reactive context) - a single call always runs.
+
+    Args:
+        interval: the minimum gap between runs, in seconds.
+        body: the throttled Term.
+
+    Notes:
+        - The last-run timestamp is cross-invocation state, so it lives in
+          the attrs fabric keyed by this node (a Term is immutable and
+          shared, so there's no instance state to hold it).
+
+    Yields:
+        The body's value, or ``None`` when the run is dropped.
+
+    Example:
+        >>> import asyncio
+        >>> asyncio.run(nu.arun(nu.Throttle(60.0, nu.Div(1, 1))))[0]
+        1.0
     """
 
     _requires_async = Declared(value=True, name="requires_async")
@@ -528,13 +602,28 @@ class Throttle(Policy):
 
 
 class Debounce(Policy):
-    """``Debounce(delay, body)`` - delay the body, cancelling a pending run on re-entry.
+    """Delays the body; a re-entry cancels the pending run and starts over.
 
-    Async-only. Children (fixed): ``[body, delay]`` (seconds, ``FloatArg``). Each
-    invocation cancels the in-flight task and schedules a fresh one, so only the
-    last call in a burst fires. The pending task is cross-invocation state, so it
-    lives in the attrs fabric keyed by this node. Yields ``None`` immediately;
-    the body runs later, detached. Meaningful only under repeated invocation.
+    Async-only. Meaningful only under repeated invocation - each call
+    cancels the in-flight task and schedules a fresh one, so only the last
+    call in a burst fires.
+
+    Args:
+        delay: how long to wait before running the body, in seconds.
+        body: the debounced Term.
+
+    Notes:
+        - The pending task is cross-invocation state, so it lives in the
+          attrs fabric keyed by this node.
+        - The body runs later, detached from the call that scheduled it -
+          nothing observes its result through this node.
+
+    Yields:
+        ``None``, immediately. The body's own value is never seen here.
+
+    Example:
+        >>> import asyncio
+        >>> asyncio.run(nu.arun(nu.Debounce(0.0, nu.Div(1, 1))))[0]
     """
 
     _requires_async = Declared(value=True, name="requires_async")

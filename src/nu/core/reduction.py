@@ -54,7 +54,23 @@ __all__ = [
 
 
 class Sum(Reduction):
-    """The sum of every item in its stream child (``sum``)."""
+    """The sum of every item in its stream child (``sum``).
+
+    Args:
+        stream: the stream to fold.
+
+    Notes:
+        - Folds from 0, the additive identity, so an empty stream yields 0
+          rather than EMPTY.
+        - The fold stops at the first EMPTY or INVALID item it drains.
+
+    Yields:
+        The sum. INVALID if any item is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Sum(nu.Iter([1, 2, 3])))[0]
+        6
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
@@ -84,7 +100,25 @@ class Sum(Reduction):
 
 
 class Min(Reduction):
-    """The smallest item in its stream child (``min``); EMPTY if empty."""
+    """The smallest item in its stream child (``min``).
+
+    Args:
+        stream: the stream to fold.
+
+    Notes:
+        - Buffers every item before comparing, since finding a minimum
+          needs the whole set; nothing shortcuts.
+        - An empty stream yields EMPTY, not an error, unlike Python's
+          ``min`` which raises.
+
+    Yields:
+        The smallest item. EMPTY if the stream is empty, INVALID if any
+        item is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Min(nu.Iter([3, 1, 2])))[0]
+        1
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
@@ -114,7 +148,25 @@ class Min(Reduction):
 
 
 class Max(Reduction):
-    """The largest item in its stream child (``max``); EMPTY if empty."""
+    """The largest item in its stream child (``max``).
+
+    Args:
+        stream: the stream to fold.
+
+    Notes:
+        - Buffers every item before comparing, since finding a maximum
+          needs the whole set; nothing shortcuts.
+        - An empty stream yields EMPTY, not an error, unlike Python's
+          ``max`` which raises.
+
+    Yields:
+        The largest item. EMPTY if the stream is empty, INVALID if any
+        item is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Max(nu.Iter([3, 1, 2])))[0]
+        3
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
@@ -144,7 +196,23 @@ class Max(Reduction):
 
 
 class AnyOf(Reduction):
-    """True if any item in its stream child is truthy (``any``)."""
+    """True if any item in its stream child is truthy (``any``).
+
+    Args:
+        stream: the stream to fold.
+
+    Notes:
+        - Short-circuits on the first truthy item; the rest of the stream
+          is never drained.
+        - An empty stream yields False, Python's ``any`` rule for no items.
+
+    Yields:
+        True or False. INVALID if a sentinel is met before a truthy item.
+
+    Example:
+        >>> nu.run(nu.AnyOf(nu.Iter([0, 0, 1])))[0]
+        True
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
@@ -174,7 +242,23 @@ class AnyOf(Reduction):
 
 
 class AllOf(Reduction):
-    """True if every item in its stream child is truthy (``all``)."""
+    """True if every item in its stream child is truthy (``all``).
+
+    Args:
+        stream: the stream to fold.
+
+    Notes:
+        - Short-circuits on the first falsy item; the rest of the stream
+          is never drained.
+        - An empty stream yields True, Python's ``all`` rule for no items.
+
+    Yields:
+        True or False. INVALID if a sentinel is met before a falsy item.
+
+    Example:
+        >>> nu.run(nu.AllOf(nu.Iter([1, 1, 1])))[0]
+        True
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
@@ -204,7 +288,22 @@ class AllOf(Reduction):
 
 
 class Count(Reduction):
-    """The number of items in its stream child (``len`` over a stream)."""
+    """The number of items in its stream child (``len`` over a stream).
+
+    Args:
+        stream: the stream to fold.
+
+    Notes:
+        - Drains the whole stream to count it; there is no shortcut.
+
+    Yields:
+        The count. 0 for an empty stream. INVALID if any item is EMPTY
+        or INVALID.
+
+    Example:
+        >>> nu.run(nu.Count(nu.Iter([1, 2, 3])))[0]
+        3
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
@@ -234,7 +333,23 @@ class Count(Reduction):
 
 
 class First(Reduction):
-    """The first item of its stream child; EMPTY if the stream is empty."""
+    """The first item of its stream child.
+
+    Args:
+        stream: the stream to fold.
+
+    Notes:
+        - Pulls exactly one item and stops; the rest of the stream is
+          never touched.
+
+    Yields:
+        The first item. EMPTY if the stream is empty, INVALID if that
+        first item is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.First(nu.Iter([1, 2, 3])))[0]
+        1
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
@@ -262,7 +377,23 @@ class First(Reduction):
 
 
 class Last(Reduction):
-    """The last item of its stream child; EMPTY if the stream is empty."""
+    """The last item of its stream child.
+
+    Args:
+        stream: the stream to fold.
+
+    Notes:
+        - Drains the whole stream to find the last item; there is no
+          shortcut from the tail.
+
+    Yields:
+        The last item. EMPTY if the stream is empty, INVALID if any item
+        is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Last(nu.Iter([1, 2, 3])))[0]
+        3
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children
@@ -292,7 +423,23 @@ class Last(Reduction):
 
 
 class Collect(Reduction):
-    """Drain its stream child into one list value."""
+    """Drains its stream child into one list value.
+
+    Args:
+        stream: the stream to fold.
+
+    Notes:
+        - The one reduction with no single Python builtin behind it; it
+          names the structural "materialize the stream" fold.
+
+    Yields:
+        A list of every item, in order. Empty list for an empty stream.
+        INVALID if any item is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Collect(nu.Iter([1, 2, 3])))[0]
+        [1, 2, 3]
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (stream,) = children

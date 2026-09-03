@@ -5,9 +5,8 @@ This module owns the sequential Strategy. The parallel-family Strategies
 variants) live under ``nu.flows.parallel`` and are re-exported by
 ``nu.flows``.
 
-A Strategy owns no effects and yields nothing (VOID): the children carry
-the writes, and the ``flow_body_is_mutator`` law holds every slot to a
-mutating child (the matrix STRATEGY row admits only work sorts).
+A Strategy owns no effects itself; the children carry the writes, and the
+``flow_body_is_mutator`` law holds every slot to a mutating child.
 """
 
 from __future__ import annotations
@@ -28,8 +27,20 @@ __all__ = ["Sequential"]
 class Sequential(Strategy):
     """Runs its children in order - the ``>>`` composition.
 
-    Calls the child thunks directly: the sequential hot path needs no Budget,
-    so it skips the Runtime dispatch hop.
+    Args:
+        *children: the mutating children to run in order.
+
+    Notes:
+        - Calls the child thunks directly rather than going through
+          ``Runtime.eval`` / ``Runtime.aeval``, so the sequential hot path
+          needs no Budget and skips the dispatch hop per child.
+
+    Yields:
+        Nothing (VOID). The writes are the children's.
+
+    Example:
+        >>> nu.run(nu.Sequential(nu.SetCmd(nu.AttrRef("a"), 1), nu.SetCmd(nu.AttrRef("b"), 2)))[1].attrs
+        Attributes(a=1, b=2)
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

@@ -9,23 +9,21 @@ Builtins covered (Python -> Nu):
 - identity / value: ``id`` -> ``Id``, ``hash`` -> ``Hash``
 - namespace: ``dir`` -> ``Dir``, ``vars`` -> ``Vars``
 
-Sorts: all ScalarQuery (Q). ``Type`` / ``Callable`` / ``Id`` / ``Hash`` /
-``Dir`` / ``Vars`` are unary; ``IsInstance`` / ``IsSubclass`` are binary (value,
-class). ``Dir`` / ``Vars`` yield a collection but are scalar builders (one list /
-dict), not streams.
+Sorts: all ScalarQuery (Q). ``Type``, ``Callable``, ``Id``, ``Hash``, ``Dir``
+and ``Vars`` are unary. ``IsInstance`` and ``IsSubclass`` are binary (value,
+class). ``Dir`` and ``Vars`` yield a collection but are scalar builders (one
+list / dict), not streams.
 
-Each atom defines ``compile`` (sync hot path) and ``acompile`` (async hot path).
-Both return a thunk ``(rt) -> value`` (sync) or ``(rt) -> awaitable`` (async)
-that captures the precompiled child thunks, so recursion skips the
+Each atom defines ``compile`` (sync hot path) and ``acompile`` (async hot
+path). Both return a thunk ``(rt) -> value`` (sync) or ``(rt) -> awaitable``
+(async) that captures the precompiled child thunks, so recursion skips the
 ``Runtime.eval`` / ``Runtime.aeval`` dispatch hop per child. Sentinel
 propagation is inlined: an EMPTY or INVALID operand collapses the result to
 INVALID without inspecting.
 
 OOP descriptors (``super``, ``object``, ``property``, ``classmethod``,
-``staticmethod``, ``memoryview``) are NOT in this pass - they go to extensions
+``staticmethod``, ``memoryview``) are not in this pass. They go to extensions
 later, once the OOP descriptor surface is designed.
-
-These are built fresh against the builtins.
 """
 
 from __future__ import annotations
@@ -54,7 +52,18 @@ __all__ = [
 
 
 class Type(ScalarQuery):
-    """The type of its one child (``type``)."""
+    """The type of its one child (``type``).
+
+    Args:
+        value: the value to inspect.
+
+    Yields:
+        The value's type. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Type(5))[0]
+        <class 'int'>
+    """
 
     def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
@@ -80,7 +89,23 @@ class Type(ScalarQuery):
 
 
 class IsInstance(ScalarQuery):
-    """Whether the first child is an instance of the second (``isinstance``)."""
+    """Whether the first child is an instance of the second (``isinstance``).
+
+    Args:
+        value: the value to check.
+        klass: the type, or tuple of types, to check against.
+
+    Notes:
+        - The right child is evaluated only after the left yields a value, so
+          a sentinel on the left short-circuits without touching the right.
+
+    Yields:
+        True or False. INVALID when either child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.IsInstance(5, int))[0]
+        True
+    """
 
     def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         value, klass = children
@@ -112,7 +137,23 @@ class IsInstance(ScalarQuery):
 
 
 class IsSubclass(ScalarQuery):
-    """Whether the first child is a subclass of the second (``issubclass``)."""
+    """Whether the first child is a subclass of the second (``issubclass``).
+
+    Args:
+        cls: the class to check.
+        klass: the type, or tuple of types, to check against.
+
+    Notes:
+        - The right child is evaluated only after the left yields a value, so
+          a sentinel on the left short-circuits without touching the right.
+
+    Yields:
+        True or False. INVALID when either child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.IsSubclass(bool, int))[0]
+        True
+    """
 
     def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         cls, klass = children
@@ -144,7 +185,22 @@ class IsSubclass(ScalarQuery):
 
 
 class Callable(ScalarQuery):
-    """Whether its one child appears callable (``callable``)."""
+    """Whether its one child appears callable (``callable``).
+
+    Args:
+        value: the value to check.
+
+    Notes:
+        - A true result is not a guarantee: an object can define ``__call__``
+          and still fail when actually called, same as Python's ``callable``.
+
+    Yields:
+        True or False. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Callable(len))[0]
+        True
+    """
 
     def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
@@ -170,7 +226,23 @@ class Callable(ScalarQuery):
 
 
 class Id(ScalarQuery):
-    """The identity of its one child (``id``)."""
+    """The identity of its one child (``id``).
+
+    Args:
+        value: the value to inspect.
+
+    Notes:
+        - In CPython the identity is the object's memory address for its
+          lifetime, so it's only meaningful while the object stays alive.
+
+    Yields:
+        An integer unique to the object for its lifetime. INVALID when the
+        child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Id(5))[0] == id(5)
+        True
+    """
 
     def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
@@ -196,7 +268,22 @@ class Id(ScalarQuery):
 
 
 class Hash(ScalarQuery):
-    """The hash of its one child (``hash``)."""
+    """The hash of its one child (``hash``).
+
+    Args:
+        value: the value to inspect.
+
+    Notes:
+        - Only hashable values work. An unhashable child raises, same as
+          Python's ``hash``, since that's a real error and not a sentinel.
+
+    Yields:
+        An integer. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Hash("abc"))[0] == hash("abc")
+        True
+    """
 
     def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
@@ -222,7 +309,19 @@ class Hash(ScalarQuery):
 
 
 class Dir(ScalarQuery):
-    """The sorted attribute-name list of its one child (``dir``)."""
+    """The sorted attribute-name list of its one child (``dir``).
+
+    Args:
+        value: the value to inspect.
+
+    Yields:
+        A sorted list of attribute names. INVALID when the child is EMPTY or
+        INVALID.
+
+    Example:
+        >>> nu.run(nu.Dir(True))[0][:3]
+        ['__abs__', '__add__', '__and__']
+    """
 
     def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children
@@ -248,7 +347,26 @@ class Dir(ScalarQuery):
 
 
 class Vars(ScalarQuery):
-    """The ``__dict__`` of its one child (``vars``)."""
+    """The ``__dict__`` of its one child (``vars``).
+
+    Args:
+        value: the value to inspect.
+
+    Notes:
+        - Objects with no ``__dict__`` (most builtins, ``__slots__``-only
+          classes) raise, same as Python's ``vars``.
+
+    Yields:
+        A dict. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> class Point:
+        ...     def __init__(self, x, y):
+        ...         self.x = x
+        ...         self.y = y
+        >>> nu.run(nu.Vars(Point(1, 2)))[0]
+        {'x': 1, 'y': 2}
+    """
 
     def _compile(self, nid: int, children: tuple[PyCallable, ...]) -> PyCallable:
         (only,) = children

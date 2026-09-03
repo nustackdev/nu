@@ -70,10 +70,18 @@ __all__ = [
 class StdioBackend:
     """A Context fabric that overrides the real stdio streams.
 
-    Bind one on the Context (``ctx.bind(StdioBackend, StdioBackend(stdout=buf))``)
-    to capture or redirect a stream; any stream left ``None`` falls back to the
-    real ``sys`` stream. This is the seam that lets a test assert on printed
-    output or feed scripted input.
+    Args:
+        stdout: stream to use in place of the real stdout. Optional.
+        stderr: stream to use in place of the real stderr. Optional.
+        stdin: stream to use in place of the real stdin. Optional.
+
+    Notes:
+        - Any stream left out falls back to the real ``sys`` stream.
+        - This is the seam that lets a test assert on printed output or feed
+          scripted input, without touching the real console.
+
+    Example:
+        >>> ctx = Context().bind(StdioBackend, StdioBackend(stdout=buf))
     """
 
     def __init__(
@@ -112,11 +120,18 @@ def _stream_for(ctx: Context, name: str) -> IO:
 class StdioRef(Ref):
     """A Ref naming one standard stream. Fixed singletons: STDOUT / STDERR / STDIN.
 
-    Unlike a Context ``AttrRef`` there is no address child - the stream name is an
-    intrinsic constant carried in the payload. The read thunk self-yields the
-    stream handle; ``write`` appends text and ``readline`` consumes one line. Both
-    route through a bound ``StdioBackend`` when present, else the real ``sys``
-    stream.
+    Args:
+        name: the stream name (``"stdout"``, ``"stderr"`` or ``"stdin"``).
+
+    Notes:
+        - Unlike a Context ``AttrRef`` there is no address child: the stream
+          name is an intrinsic constant carried in the payload.
+        - The read thunk self-yields the stream handle; ``_write`` appends
+          text and ``readline`` consumes one line. Both route through a
+          bound ``StdioBackend`` when present, else the real ``sys`` stream.
+
+    Yields:
+        The resolved stream handle.
     """
 
     def __init__(self, name: str) -> None:
@@ -165,14 +180,30 @@ STDIN = StdioRef("stdin")
 class Print(Command):
     r"""Writes the values in slots 1.. to the stdout fabric Ref in slot 0.
 
-    Python's ``print`` -- signature-identical: ``print(*objects, sep=' ',
-    end='\n', flush=False)``. A Command: it mutates the stdout fabric and
-    yields nothing. Slot 0 is the IO Ref it writes through; every other slot
-    binds in read role. Values are stringified and joined with ``sep``, with
-    ``end`` appended. ``sep`` / ``end`` / ``flush`` are captured at
-    construction and ride in :attr:`_payload` -- static strings, not Nu
-    terms. ``file`` from Python's ``print`` maps to the ``StdioRef`` in slot
-    0 (default ``STDOUT``).
+    Args:
+        ref: the stdio Ref to write through (``file`` in Python's ``print``).
+        *values: the values to write, stringified and joined with ``sep``.
+        sep: separator between values.
+        end: text appended after the last value.
+        flush: flush the stream after writing.
+
+    Notes:
+        - Python's ``print`` -- signature-identical. A Command: mutates the
+          stdout fabric and yields nothing.
+        - Slot 0 is the IO Ref it writes through, declared in ``mutates``;
+          every other slot binds in read role.
+        - ``sep`` / ``end`` / ``flush`` are captured at construction and
+          ride in :attr:`_payload` as static Python values, never resolved
+          as Nu terms.
+        - If any value is EMPTY or INVALID, nothing is written at all: the
+          check runs before the write, not per already-collected value.
+
+    Yields:
+        Nothing (VOID).
+
+    Example:
+        >>> ctx = Context().bind(StdioBackend, StdioBackend(stdout=buf))
+        >>> run(Print(STDOUT, "hi"), ctx)
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -237,12 +268,27 @@ class Print(Command):
 
 
 class Input(ScalarAction):
-    """Reads one line from the stdin fabric Ref in slot 0 and yields it.
+    r"""Reads one line from the stdin fabric Ref in slot 0 and yields it.
 
-    Python's ``input`` (no prompt - that would be a second, stdout write; deferred
-    with the filesystem fabric). A ScalarAction: it mutates the stdin fabric
-    (consuming input advances the read position) and yields the line, newline
-    stripped. Two reads yield different lines.
+    Args:
+        ref: the stdio Ref to read through.
+
+    Notes:
+        - Python's ``input``, minus the prompt argument - a prompt would be
+          a second, stdout write, deferred to land with the filesystem
+          fabric.
+        - A ScalarAction: mutates the stdin fabric (consuming input advances
+          the read position) and yields a value in the same atom. Two reads
+          in the same program yield different lines.
+
+    Yields:
+        The line read, newline stripped.
+
+    Example:
+        >>> inbuf = io.StringIO("a line\n")
+        >>> ctx = Context().bind(StdioBackend, StdioBackend(stdin=inbuf))
+        >>> run(Input(STDIN), ctx)[0]
+        'a line'
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -276,21 +322,49 @@ def print(  # shadowing the builtin is intended
 ) -> Print:
     r"""Write ``values`` to a stdio stream. Mirrors ``builtins.print``.
 
-    ``print(*objects, sep=' ', end='\n', file=None, flush=False)`` -- the
-    same signature you know. ``file`` is a Nu ``StdioRef`` (default
-    :data:`STDOUT`) because the stdio fabric identifies streams by Ref, not
-    by raw Python IO objects; pass ``STDERR`` to write to stderr. Returns the
-    ``Print`` atom (a Command yields nothing, so it is not
-    Form-wrapped); drive it with ``run`` / ``arun`` or compose it in a Flow.
+    Args:
+        *values: the values to write.
+        sep: separator between values.
+        end: text appended after the last value.
+        file: the stream to write to. Optional: defaults to :data:`STDOUT`.
+        flush: flush the stream after writing.
+
+    Notes:
+        - Same signature as Python's ``print``, except ``file`` is a Nu
+          ``StdioRef`` rather than a raw Python IO object, since the stdio
+          fabric identifies streams by Ref. Pass :data:`STDERR` to write to
+          stderr.
+        - Injects the ``STDOUT`` Ref so a caller never imports or passes it.
+
+    Yields:
+        The ``Print`` atom itself, not a Form: a Command yields nothing, so
+        there is nothing to wrap. Drive it with ``run`` / ``arun`` or
+        compose it in a Flow.
+
+    Example:
+        >>> ctx = Context().bind(StdioBackend, StdioBackend(stdout=buf))
+        >>> run(nu.core.io.print("hi"), ctx)
     """
     return Print(file if file is not None else STDOUT, *values, sep=sep, end=end, flush=flush)
 
 
 def input() -> Str:  # shadowing the builtin is intended
-    """Read one line from stdin (newline stripped) and yield it as a ``Str``.
+    r"""Read one line from stdin (newline stripped) and yield it as a ``Str``.
 
-    Nu's ``input`` (no prompt argument yet). The ``Str`` carries the full
-    string interface, so the read line composes like any other string term.
+    Notes:
+        - Nu's ``input``, no prompt argument yet.
+        - Injects the ``STDIN`` Ref so a caller never imports or passes it.
+        - Returns a ``Str``, not a raw string, so the read line composes
+          like any other string term.
+
+    Yields:
+        A Nu ``Str`` wrapping the line read.
+
+    Example:
+        >>> inbuf = io.StringIO("a line\n")
+        >>> ctx = Context().bind(StdioBackend, StdioBackend(stdin=inbuf))
+        >>> run(nu.core.io.input(), ctx)[0]
+        'a line'
     """
     from nu.forms.primitives import Str
 

@@ -36,10 +36,27 @@ __all__ = ["If", "Switch"]
 
 
 class If(ScalarQuery):
-    """``If(cond, then, else_)`` - yield ``then`` if ``cond`` truthy, else ``else_``.
+    """The ``then`` branch if ``cond`` is truthy, else the ``else_`` branch.
 
-    Children: ``[cond, then, else_]``. Short-circuits: only the taken branch
-    is evaluated.
+    Args:
+        cond: the condition to test.
+        then: evaluated and yielded when ``cond`` is truthy.
+        else_: evaluated and yielded when ``cond`` is falsy.
+
+    Notes:
+        - Short-circuits: only the taken branch is evaluated, matching
+          Python's ``then if cond else else_``. This lets the untaken branch
+          hold work that would fail or be unsafe to run.
+
+    Yields:
+        The taken branch's value. INVALID when ``cond`` is EMPTY or INVALID,
+        or when the taken branch itself yields EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.If(True, "yes", "no"))[0]
+        'yes'
+        >>> nu.run(nu.If(False, "yes", "no"))[0]
+        'no'
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -72,16 +89,35 @@ class If(ScalarQuery):
 
 
 class Switch(ScalarQuery):
-    """``Switch(selector, cases, default=None)`` - yield the value for the matching key.
+    """The case value whose key matches the selector, or the default.
 
-    Children: ``[selector, *case_values, default?]``. The match keys are
-    intrinsic constants kept in ``payload`` (so they survive
-    ``with_children``), paired by position with the case values. The first
-    key equal to the selector value yields its case value; failing any
-    match, the optional default yields; failing that, ``INVALID``.
+    Args:
+        selector: the value to match against the case keys.
+        cases: a mapping from key to case value.
+        default: yielded when no key matches. Optional: leave it out to
+            get INVALID on no match instead.
 
-    Short-circuits: only the matching case value is evaluated. Sibling to
-    the mutating :class:`nu.flows.control.SwitchDo`.
+    Notes:
+        - The case keys are intrinsic constants, kept in the payload rather
+          than as children, so they survive ``with_children`` unchanged.
+        - Keys are matched by equality against the selector value, in the
+          mapping's iteration order; the first match wins.
+        - Short-circuits: only the matching case value (or the default) is
+          evaluated, not the others.
+        - Sibling to the mutating ``nu.flows.control.SwitchDo``, which runs
+          one of N bodies for effect instead of yielding a value.
+
+    Yields:
+        The matching case value, or the default when given and nothing
+        matches. INVALID when the selector is EMPTY or INVALID, when nothing
+        matches and there is no default, or when the yielded branch itself
+        is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Switch(2, {1: "one", 2: "two"}))[0]
+        'two'
+        >>> nu.run(nu.Switch(9, {1: "one", 2: "two"}, default="none"))[0]
+        'none'
     """
 
     def __init__(

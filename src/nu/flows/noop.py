@@ -30,7 +30,20 @@ __all__ = ["Noop"]
 
 
 class Noop(Strategy[None]):
-    """The empty Flow: composes nothing, the identity of flow composition."""
+    """The empty Flow: composes nothing, the identity of flow composition.
+
+    Notes:
+        - Slot-fits wherever work fits: a Strategy child, a Control body, a
+          Span body. Rejected in a value slot or a param slot, since a no-op
+          belongs where a mutator would go, never where a value is read.
+
+    Yields:
+        Nothing (VOID).
+
+    Example:
+        >>> nu.run(nu.Noop())[0] is None
+        True
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return lambda rt: None

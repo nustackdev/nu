@@ -1,13 +1,15 @@
 """Reactive control flows: React, ReactWhile, ReactForever.
 
-Subscribe to change events and run a body in response. All three are ``Control``
-flows: they drive a mutating body under query parameters (a change
-subscription, a condition) and **yield nothing**. The body carries the writes,
-exactly like ``WhileDo`` / ``ForeverDo``. A change notification is bridged into
-async via ``asyncio.Queue`` (one wake per notification, no collapsing).
+Subscribe to a change event and run a body in response. All three are
+``Control`` flows: they drive a mutating body under query parameters (a
+change subscription, a condition) and yield nothing, exactly like ``WhileDo``
+/ ``ForeverDo``. A change notification is bridged into async via
+``asyncio.Queue`` (one wake per notification, no collapsing), so all three
+require an async runtime and raise from their sync ``_compile`` path.
 
-``param_slots`` names the consumed queries (the change subscription at slot 0, a
-condition, an optional ``changed_key`` name); the remaining slot is the body.
+``param_slots`` names the consumed queries (the change subscription at slot
+0, a condition where present, an optional ``changed_key`` name); the
+remaining slot is the body.
 """
 
 from __future__ import annotations
@@ -29,12 +31,20 @@ __all__ = ["React", "ReactForever", "ReactWhile"]
 
 
 async def _adrain_body(rt: Runtime, body_thunk: Callable) -> None:
-    """Run a react body and drain any values it yields.
+    """Run a react body once and pull any values it yields through to completion.
 
-    A body may be a Command (returns None) or a stream (returns an iterable /
-    async-iterable). Both shapes are fine: Commands carry writes and yield
-    nothing, streams carry values that must be pulled through to fire their
-    side effects.
+    Args:
+        rt: the runtime to run the body under.
+        body_thunk: the compiled body thunk to await.
+
+    Notes:
+        - A body may be a Command (returns ``None``) or a stream (returns an
+          iterable / async-iterable). Commands carry their writes and stop
+          here; a stream's values must be drained to fire the side effects
+          riding along with them, since nothing else pulls on them.
+
+    Yields:
+        Nothing. Always returns ``None``.
     """
     result = await body_thunk(rt)
     if result is None:
@@ -44,13 +54,27 @@ async def _adrain_body(rt: Runtime, body_thunk: Callable) -> None:
 
 
 class React(Control):
-    """Wait for one change event, run body once; yields nothing.
+    """Wait for one change on the subscription, run the body once, then stop.
 
-    Children ``[change, body?, changed_key?]``: slot 0 is the change
-    subscription (param), the optional body slot carries the writes, and an
-    optional ``changed_key`` name (last slot, param) captures the changed key.
-    A ``changed_key`` requires a body (capturing the key with nothing to run is
-    meaningless), so the body always sits at slot 1 when present.
+    Binds to the change subscription, blocks until exactly one notification
+    arrives, unbinds, and closes the subscription. The body (when present)
+    runs once, after that single notification, before ``React`` returns.
+
+    Args:
+        change: the change subscription to wait on (a ``Subscription``-yielding
+            query, e.g. ``OnChange``).
+        body: what to run once the change fires. Optional: leave it out to
+            just wait for one change and do nothing.
+        changed_key: name to bind the changed key under (via the attrs
+            side-channel) before the body runs. Requires a body.
+
+    Notes:
+        - Requires a body when ``changed_key`` is given: capturing a key with
+          nothing to run it against is meaningless.
+        - Requires an async runtime; the sync path raises ``RuntimeError``.
+
+    Yields:
+        Nothing.
     """
 
     _mutates = Declared(value=frozenset(), name="mutates")
@@ -111,11 +135,27 @@ class React(Control):
 
 
 class ReactWhile(Control):
-    """Run body on each change event while condition is truthy; yields nothing.
+    """Run the body on each change while the condition stays truthy.
 
-    Children ``[change, condition, body, changed_key?]``: slots 0 (change
-    subscription), 1 (condition), and the optional ``changed_key`` at slot 3 are
-    consumed queries; slot 2 is the body that carries the writes.
+    Binds to the change subscription once, then on every notification checks
+    the condition first: false stops the loop and unbinds without running the
+    body for that notification; truthy runs the body and waits for the next
+    change. The condition is re-evaluated fresh on every notification, not
+    just once at the start.
+
+    Args:
+        change: the change subscription to wait on.
+        condition: checked after each notification, before that turn's body
+            runs. A falsy value ends the loop.
+        body: what to run on a turn where the condition holds.
+        changed_key: name to bind the changed key under before the body runs
+            on that turn.
+
+    Notes:
+        - Requires an async runtime; the sync path raises ``RuntimeError``.
+
+    Yields:
+        Nothing.
     """
 
     _mutates = Declared(value=frozenset(), name="mutates")
@@ -173,11 +213,22 @@ class ReactWhile(Control):
 
 
 class ReactForever(Control):
-    """Run body on every change event; runs forever, yields nothing.
+    """Run the body on every change, unconditionally, forever.
 
-    Children ``[change, body, changed_key?]``: slot 0 (change subscription) and
-    the optional ``changed_key`` at slot 2 are consumed queries; slot 1 is the
-    body that carries the writes.
+    Binds to the change subscription once and then runs the body once per
+    notification, with no condition to end the loop. Never returns on its
+    own; the caller ends it by cancelling the surrounding task.
+
+    Args:
+        change: the change subscription to wait on.
+        body: what to run on every notification.
+        changed_key: name to bind the changed key under before each body run.
+
+    Notes:
+        - Requires an async runtime; the sync path raises ``RuntimeError``.
+
+    Yields:
+        Nothing.
     """
 
     _mutates = Declared(value=frozenset(), name="mutates")

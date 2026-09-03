@@ -39,7 +39,26 @@ __all__ = ["And", "Not", "Or", "ToBool", "bool"]
 
 
 class And(ScalarQuery):
-    """The conjunction of its boolean children. Yields ``True`` if empty."""
+    """The conjunction of its boolean children, each coerced with ``bool``.
+
+    Args:
+        *children: the values to conjoin.
+
+    Notes:
+        - No short-circuit: every child is evaluated regardless of the
+          running result, unlike Python's ``and``. Only a sentinel breaks
+          the loop early.
+        - No children at all yields True.
+
+    Yields:
+        A plain bool. INVALID when any child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.And(True, True))[0]
+        True
+        >>> nu.run(nu.And(True, False))[0]
+        False
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -67,7 +86,26 @@ class And(ScalarQuery):
 
 
 class Or(ScalarQuery):
-    """The disjunction of its boolean children. Yields ``False`` if empty."""
+    """The disjunction of its boolean children, each coerced with ``bool``.
+
+    Args:
+        *children: the values to disjoin.
+
+    Notes:
+        - No short-circuit: every child is evaluated regardless of the
+          running result, unlike Python's ``or``. Only a sentinel breaks the
+          loop early.
+        - No children at all yields False.
+
+    Yields:
+        A plain bool. INVALID when any child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Or(False, True))[0]
+        True
+        >>> nu.run(nu.Or(False, False))[0]
+        False
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -95,7 +133,18 @@ class Or(ScalarQuery):
 
 
 class Not(ScalarQuery):
-    """The negation of its one boolean child."""
+    """The negation of its one child.
+
+    Args:
+        value: the value to negate.
+
+    Yields:
+        A plain bool. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.Not(True))[0]
+        False
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
@@ -121,7 +170,18 @@ class Not(ScalarQuery):
 
 
 class ToBool(ScalarQuery):
-    """The truthiness of its one child as a plain ``bool``."""
+    """The truthiness of its one child.
+
+    Args:
+        value: the value to coerce.
+
+    Yields:
+        A plain bool. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.core.logical.ToBool(0))[0]
+        False
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
@@ -150,7 +210,22 @@ class ToBool(ScalarQuery):
 
 
 def bool(x: object) -> object:  # shadowing the builtin is intended
-    """Coerce ``x`` to a Nu ``Bool`` term. ``Bool(ToBool(x))`` in one call."""
+    """Coerce ``x`` to a Nu ``Bool`` term.
+
+    Args:
+        x: the value to coerce.
+
+    Notes:
+        - ``Bool(ToBool(x))`` in one call: Form-wraps the raw ``ToBool``
+          atom so the result composes like any other Nu term.
+
+    Yields:
+        A Nu ``Bool``.
+
+    Example:
+        >>> nu.run(nu.core.logical.bool(1))[0]
+        True
+    """
     from nu.forms.primitives import Bool
 
     return Bool(ToBool(x))

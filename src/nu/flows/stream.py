@@ -2,11 +2,6 @@
 
 The ``cat file; tail -f`` of Nu. One declaration that handles batch
 catch-up, live follow, and the transition between them.
-
-Stream is ``StreamQuery``: it observes an ordered collection via a cursor and
-a reactive subscription, yielding body results. The cursor writes to
-``ctx.attrs[key]`` are untracked bookkeeping side-channels (same allowance as
-Map/Filter's loop-var), not fabric writes.
 """
 
 from __future__ import annotations
@@ -32,9 +27,35 @@ __all__ = ["Stream"]
 class Stream(StreamQuery):
     """Drain-then-follow over an ordered collection; cursor tracks position.
 
-    Children: [advance, change, body, key, log_key].
-    Iterates existing items (drain), then subscribes and follows new items
-    (react).
+    Args:
+        source: the ordered collection to stream over.
+        body: the Nu run per item, once ``key`` is bound to its position.
+        key: the ``ctx.attrs`` name the current item's cursor key is bound
+            under, for ``body`` to read.
+        log_key: the ``ctx.attrs`` name the underlying log cursor is bound
+            under.
+
+    Notes:
+        - Children are ``[advance, change, body, key, log_key]``: ``advance``
+          is an ``AdvanceCursor`` over ``source``, ``change`` an
+          ``OnChildrenChange`` subscription on ``source``.
+        - Drains existing items first (walks ``advance`` to exhaustion,
+          running ``body`` per item), then subscribes and follows new items
+          as they arrive, draining again on each change notification.
+        - The cursor writes to ``ctx.attrs[key]`` / ``ctx.attrs[log_key]``
+          are untracked bookkeeping side-channels, the same allowance
+          ``Map`` / ``Filter`` give their loop-var, not fabric writes.
+        - Async-only: ``_compile`` raises ``NotImplementedError``, since
+          following requires an event loop.
+
+    Yields:
+        The body's results, drained then followed, as an async stream.
+
+    Example:
+        A stream needs a real ordered-collection substrate to drive
+        ``advance`` / ``change``, so it can't run standalone here::
+
+            Stream(SequenceRef("items"), SequenceRef("body"))
     """
 
     def __init__(
@@ -83,7 +104,11 @@ async def _drain(
     key: str,
     log_key: str,
 ) -> object:
-    """Drain existing items from source via the advance cursor."""
+    """Walk ``advance`` to exhaustion, running ``body`` per item.
+
+    Yields:
+        Each item ``body`` produces, in cursor order.
+    """
     while True:
         result = await children[0](rt)
         if result is None:
@@ -101,7 +126,15 @@ async def _react(
     key: str,
     log_key: str,
 ) -> object:
-    """Follow new items via reactive subscription."""
+    """Subscribe to ``change`` and re-drain on every notification.
+
+    Notes:
+        - Unbinds and closes the subscription on exit, including on
+          cancellation, via ``finally``.
+
+    Yields:
+        Each item a subsequent drain produces, forever.
+    """
     loop = asyncio.get_running_loop()
     event = asyncio.Event()
 

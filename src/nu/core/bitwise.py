@@ -33,7 +33,26 @@ __all__ = ["BitAnd", "BitNot", "BitOr", "BitXor", "LShift", "RShift"]
 
 
 class BitAnd(ScalarQuery):
-    """The bitwise AND of its scalar children."""
+    """The bitwise AND of its scalar children.
+
+    Args:
+        *children: the integers to AND together, folded left to right.
+
+    Notes:
+        - Starts from -1 (all bits set), the AND identity, so no children at
+          all yields -1.
+        - Operands are Python ints, two's-complement under the hood, so a
+          negative operand ANDs its infinite leading 1s in.
+        - Children are evaluated in order and the fold stops at the first
+          sentinel it meets.
+
+    Yields:
+        The AND. INVALID when any child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.BitAnd(12, 10))[0]
+        8
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -61,7 +80,25 @@ class BitAnd(ScalarQuery):
 
 
 class BitOr(ScalarQuery):
-    """The bitwise OR of its scalar children."""
+    """The bitwise OR of its scalar children.
+
+    Args:
+        *children: the integers to OR together, folded left to right.
+
+    Notes:
+        - Starts from 0, the OR identity, so no children at all yields 0.
+        - Operands are Python ints, two's-complement under the hood, so a
+          negative operand carries its infinite leading 1s through.
+        - Children are evaluated in order and the fold stops at the first
+          sentinel it meets.
+
+    Yields:
+        The OR. INVALID when any child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.BitOr(12, 10))[0]
+        14
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -89,7 +126,25 @@ class BitOr(ScalarQuery):
 
 
 class BitXor(ScalarQuery):
-    """The bitwise XOR of its scalar children."""
+    """The bitwise XOR of its scalar children.
+
+    Args:
+        *children: the integers to XOR together, folded left to right.
+
+    Notes:
+        - Starts from 0, the XOR identity, so no children at all yields 0.
+        - Operands are Python ints, two's-complement under the hood, so a
+          negative operand flips its infinite leading 1s in the fold.
+        - Children are evaluated in order and the fold stops at the first
+          sentinel it meets.
+
+    Yields:
+        The XOR. INVALID when any child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.BitXor(12, 10))[0]
+        6
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -117,7 +172,23 @@ class BitXor(ScalarQuery):
 
 
 class BitNot(ScalarQuery):
-    """The bitwise NOT of its one child."""
+    """The bitwise NOT of its one child.
+
+    Args:
+        value: the integer to invert.
+
+    Notes:
+        - Python ints have no fixed width, so NOT is the identity ``~x ==
+          -x - 1``: flipping every bit of a two's-complement number just
+          negates it and subtracts one.
+
+    Yields:
+        The inverted value. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.BitNot(5))[0]
+        -6
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
@@ -143,7 +214,27 @@ class BitNot(ScalarQuery):
 
 
 class LShift(ScalarQuery):
-    """The first child shifted left by the second."""
+    """The first child shifted left by the second.
+
+    Args:
+        value: the integer to shift.
+        count: how many bits to shift by.
+
+    Notes:
+        - Equivalent to multiplying by ``2 ** count``; sign is preserved
+          since Python ints have no fixed width to overflow out of.
+        - A negative count raises. Only sentinels collapse to INVALID; a
+          real error stays a real error.
+        - The count child is evaluated only after the value yields, so a
+          sentinel on the value short-circuits without touching the count.
+
+    Yields:
+        The shifted value. INVALID when either child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.LShift(1, 4))[0]
+        16
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children
@@ -175,7 +266,27 @@ class LShift(ScalarQuery):
 
 
 class RShift(ScalarQuery):
-    """The first child shifted right by the second."""
+    """The first child shifted right by the second.
+
+    Args:
+        value: the integer to shift.
+        count: how many bits to shift by.
+
+    Notes:
+        - Arithmetic shift: floor division by ``2 ** count``, sign extended,
+          as Python's ``>>`` does. -16 shifted right by 2 is -4, not -3.
+        - A negative count raises. Only sentinels collapse to INVALID; a
+          real error stays a real error.
+        - The count child is evaluated only after the value yields, so a
+          sentinel on the value short-circuits without touching the count.
+
+    Yields:
+        The shifted value. INVALID when either child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.RShift(-16, 2))[0]
+        -4
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         left, right = children

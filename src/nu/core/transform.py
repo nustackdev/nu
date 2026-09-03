@@ -43,11 +43,32 @@ __all__ = ["Filter", "Flatten", "Map", "SortBy", "Sorted", "Unique"]
 
 
 class Map(StreamQuery):
-    """Applies a query child to every item of its stream child (lazy).
+    """Applies a query child to every item of a stream child (lazy).
 
-    Children: ``[source, transform, key]``. Each item of ``source`` is bound
-    under the name ``key`` yields, then ``transform`` is evaluated and its
-    value yielded. The transform reads the item with ``AttrRef(<name>)``.
+    Args:
+        source: the stream to map over.
+        transform: evaluated once per item; its value replaces the item.
+        key: name each item is bound under while transform runs. Defaults
+            to ``"item"``.
+
+    Notes:
+        - ``key`` is itself a child (a ``Literal`` or a Ref), not a raw
+          string, so it can be computed rather than fixed at write time.
+        - ``transform`` reads the item with ``AttrRef(<name>)``. The
+          binding writes ``ctx.attrs`` directly - the side-channel for loop
+          variables, not a tracked fabric write.
+        - Pulled lazily, one item at a time; nothing runs ahead of the pull.
+        - No sentinel check of its own: an EMPTY or INVALID item, or an
+          EMPTY or INVALID result from ``transform``, passes straight
+          through as a value rather than collapsing.
+
+    Yields:
+        A stream the same length as ``source`` (stream in, stream out),
+        each item ``transform``'s result.
+
+    Example:
+        >>> nu.run(nu.Collect(nu.Map(nu.Iter([1, 2, 3]), nu.Add(nu.AttrRef("item"), 1))))[0]
+        [2, 3, 4]
     """
 
     def __init__(self, source: Arg[Iterable], transform: Nu, key: StrArg = "item") -> None:
@@ -86,11 +107,30 @@ class Map(StreamQuery):
 
 
 class Filter(StreamQuery):
-    """Keeps the items of its stream child for which a predicate holds (lazy).
+    """Keeps the items of a stream child for which a predicate holds (lazy).
 
-    Children: ``[source, predicate, key]``. Each item is bound under the name
-    ``key`` yields, then ``predicate`` is evaluated; the item is yielded only
-    when truthy. A sentinel predicate drops the item.
+    Args:
+        source: the stream to filter.
+        predicate: evaluated once per item; the item passes when this is
+            truthy.
+        key: name each item is bound under while predicate runs. Defaults
+            to ``"item"``.
+
+    Notes:
+        - ``predicate`` reads the item with ``AttrRef(<name>)``, the same
+          side-channel binding as :class:`Map`.
+        - An EMPTY or INVALID ``predicate`` result drops the item rather
+          than propagating the sentinel; only a genuine falsy value does
+          that in Python's ``filter``.
+        - Pulled lazily, one item at a time.
+
+    Yields:
+        A stream no longer than ``source`` (stream in, stream out), holding
+        the items where ``predicate`` held.
+
+    Example:
+        >>> nu.run(nu.Collect(nu.Filter(nu.Iter([1, 2, 3, 4]), nu.Gt(nu.AttrRef("item"), 2))))[0]
+        [3, 4]
     """
 
     def __init__(self, source: Arg[Iterable], predicate: Nu, key: StrArg = "item") -> None:
@@ -137,10 +177,27 @@ class Filter(StreamQuery):
 
 
 class Sorted(StreamQuery):
-    """Its source child, ordered. Eager: drains the source, then yields.
+    """Its source child, ordered (eager).
 
-    Children: ``[source]``. The one barrier among these lenses - a pull on its
-    output blocks until the whole source is drained and sorted.
+    Args:
+        source: the stream to sort.
+
+    Notes:
+        - Drains the whole source before yielding anything - the one
+          barrier among these lenses. A pull on its output blocks until
+          the whole source is drained and sorted.
+        - Items must support ordering against each other.
+        - No sentinel check of its own: an EMPTY or INVALID item is
+          compared like any other value and raises if it can't be ordered
+          against the rest.
+
+    Yields:
+        A stream holding every item of ``source``, ascending (stream in,
+        stream out).
+
+    Example:
+        >>> nu.run(nu.Collect(nu.Sorted(nu.Iter([3, 1, 2]))))[0]
+        [1, 2, 3]
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -167,13 +224,28 @@ class Sorted(StreamQuery):
 
 
 class SortBy(StreamQuery):
-    """Its source child, ordered by a per-item key expression. Eager: drains, sorts, yields.
+    """Its source child, ordered by a per-item key expression (eager).
 
-    Children: ``[source, key, reverse, key_name]``. Each item of ``source``
-    is bound under the name ``key_name`` yields, then ``key`` is evaluated
-    to produce the sort key. ``reverse`` (a bool child) flips the order. The
-    key expression reads the item via ``AttrRef(<name>)`` - same
-    side-channel :class:`Map` / :class:`Filter` use.
+    Args:
+        source: the stream to sort.
+        key: evaluated once per item to produce its sort key.
+        reverse: descending order when truthy. Defaults to ``False``.
+        item: name each item is bound under while ``key`` runs. Defaults
+            to ``"item"``.
+
+    Notes:
+        - ``key`` reads the item with ``AttrRef(<name>)``, the same
+          side-channel binding as :class:`Map` / :class:`Filter`.
+        - Drains and sorts the whole source before yielding anything, the
+          same barrier as :class:`Sorted`.
+
+    Yields:
+        A stream holding every item of ``source``, ordered by ``key``
+        (stream in, stream out).
+
+    Example:
+        >>> nu.run(nu.Collect(nu.SortBy(nu.Iter(["bb", "a", "ccc"]), nu.Len(nu.AttrRef("item")))))[0]
+        ['a', 'bb', 'ccc']
     """
 
     def __init__(
@@ -226,7 +298,23 @@ class SortBy(StreamQuery):
 class Flatten(StreamQuery):
     """Concatenates a source of iterables one level into a flat stream (lazy).
 
-    Children: ``[source]`` where each item of ``source`` is itself iterable.
+    Args:
+        source: the stream of iterables to flatten. Each item must itself
+            be iterable.
+
+    Notes:
+        - Only one level deep - an item that yields more iterables stays
+          nested.
+        - No sentinel check of its own: an EMPTY or INVALID sub-item is
+          treated like any other value and raises since it isn't iterable.
+
+    Yields:
+        A stream of every item from every sub-iterable of ``source``, in
+        order (stream in, stream out).
+
+    Example:
+        >>> nu.run(nu.Collect(nu.Flatten(nu.Iter([[1, 2], [3], [4, 5]]))))[0]
+        [1, 2, 3, 4, 5]
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -256,9 +344,26 @@ class Flatten(StreamQuery):
 
 
 class Unique(StreamQuery):
-    """Yields each item of its source child once, first-seen order (lazy).
+    """Yields each item of a source child once, first-seen order (lazy).
 
-    Children: ``[source]``. Items must be hashable.
+    Args:
+        source: the stream to dedupe.
+
+    Notes:
+        - Items must be hashable.
+        - Keeps every distinct item seen so far to check membership, so
+          memory grows with the number of distinct items, not the length
+          of ``source``.
+        - No sentinel check of its own: an EMPTY or INVALID item is kept
+          like any other value and only passes through once.
+
+    Yields:
+        A stream holding each distinct item of ``source`` once, in
+        first-seen order (stream in, stream out).
+
+    Example:
+        >>> nu.run(nu.Collect(nu.Unique(nu.Iter([1, 2, 1, 3, 2]))))[0]
+        [1, 2, 3]
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

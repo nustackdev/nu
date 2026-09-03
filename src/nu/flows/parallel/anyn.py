@@ -24,7 +24,28 @@ __all__ = ["AnyN"]
 
 
 class AnyN(Strategy):
-    """Runs its children concurrently; succeeds as soon as any one does."""
+    """Runs its children concurrently; succeeds as soon as any one does.
+
+    Args:
+        *children: the mutating children to run.
+
+    Notes:
+        - A child that raises is set aside rather than failing the whole
+          node; the wait continues for the rest. If every child fails, the
+          last error is re-raised.
+        - Async-only: ``_compile`` raises ``RuntimeError``, and sync ``run``
+          refuses the subtree up front via ``requires_async``.
+
+    Yields:
+        Nothing (VOID). The writes are the first child to succeed.
+
+    Example:
+        >>> import asyncio
+        >>> fail = nu.raise_(ValueError, "nope")
+        >>> ok = nu.DelayedDo(0.05, nu.SetCmd(nu.AttrRef("winner"), "ok"))
+        >>> asyncio.run(nu.arun(nu.AnyN(fail, ok)))[1].attrs
+        Attributes(winner='ok')
+    """
 
     _requires_async = Declared(value=True, name="requires_async")
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")

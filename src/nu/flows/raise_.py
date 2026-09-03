@@ -44,7 +44,27 @@ __all__ = ["Raise", "raise_"]
 class Raise(Control):
     """Raise ``exc_cls(msg)`` at run time.
 
-    A leaf Control -- one param slot (the msg), no body slots.
+    Args:
+        msg: any Nu expression yielding a value (typically a str).
+
+    Notes:
+        - A leaf Control: one param slot (the msg), no body slots, so
+          ``flow_body_is_mutator`` is trivially satisfied.
+        - ``exc_cls`` is a plain Python class captured in the payload, not a
+          child - the exception type is a structural detail of the tree, not
+          run-time data.
+        - If ``msg`` resolves to EMPTY or INVALID the raise is skipped: "the
+          condition is not yet ready", not "raise something obscured".
+
+    Yields:
+        Never returns normally; raises ``exc_cls(msg)`` or skips.
+
+    Example:
+        >>> try:
+        ...     nu.run(nu.raise_(ValueError, "boom"))
+        ... except ValueError as e:
+        ...     print(e)
+        boom
     """
 
     _param_slots = Declared(value=frozenset({0}), name="param_slots")
@@ -79,10 +99,11 @@ class Raise(Control):
 
 
 def raise_(exc_cls: type[BaseException], msg: object) -> Raise:
-    """Raise ``exc_cls(msg)`` at run time. Wrap in ``IfDo`` to gate.
+    """Build a ``Raise`` node. Wrap in ``IfDo`` to gate.
 
-    ``msg`` is any Nu expression yielding a value (typically a str). Use with
-    a string literal, a ``Str(...)``, string concat, or a formatting host
-    callable.
+    Args:
+        exc_cls: the exception type to raise.
+        msg: any Nu expression yielding a value - a string literal, a
+            ``Str(...)``, string concat, or a formatting host callable.
     """
     return Raise(msg, exc_cls=exc_cls)

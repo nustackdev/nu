@@ -56,7 +56,29 @@ __all__ = [
 
 
 class ToInt(ScalarQuery):
-    """The operand cast to ``int``; with a second child, parsed in that base."""
+    """The operand cast to ``int``.
+
+    Args:
+        value: the value to convert.
+        base: optional. When given, ``value`` is parsed as a string in this
+            base instead of being converted directly.
+
+    Notes:
+        - Without ``base``, follows ``int()``: numeric strings, floats
+          (truncated toward zero) and bools all convert.
+        - With ``base``, follows ``int(str, base)``: ``value`` must be a
+          string, and a malformed literal for that base raises.
+
+    Yields:
+        The int. INVALID when either child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.ToInt("42"))[0]
+        42
+
+        >>> nu.run(nu.ToInt("2a", 16))[0]
+        42
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
@@ -110,7 +132,18 @@ class ToInt(ScalarQuery):
 
 
 class ToFloat(ScalarQuery):
-    """The operand cast to ``float``."""
+    """The operand cast to ``float``.
+
+    Args:
+        value: the value to convert.
+
+    Yields:
+        The float. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.ToFloat("3.14"))[0]
+        3.14
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
@@ -136,7 +169,23 @@ class ToFloat(ScalarQuery):
 
 
 class ToComplex(ScalarQuery):
-    """The operand cast to ``complex``; with a second child, the imaginary part."""
+    """The operand cast to ``complex``.
+
+    Args:
+        real: the value to convert, or the real part when ``imag`` is given.
+        imag: optional imaginary part.
+
+    Notes:
+        - Without ``imag``, follows single-argument ``complex()``: numbers
+          and complex-literal strings both convert.
+
+    Yields:
+        The complex number. INVALID when either child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.ToComplex(2, 3))[0]
+        (2+3j)
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
@@ -190,7 +239,18 @@ class ToComplex(ScalarQuery):
 
 
 class ToStr(ScalarQuery):
-    """The operand cast to ``str``."""
+    """The operand cast to ``str``.
+
+    Args:
+        value: the value to convert.
+
+    Yields:
+        The string. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.ToStr(42))[0]
+        '42'
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
@@ -216,7 +276,22 @@ class ToStr(ScalarQuery):
 
 
 class ToBytes(ScalarQuery):
-    """The operand cast to ``bytes``; with a second child, encoded in it."""
+    """The operand cast to ``bytes``.
+
+    Args:
+        value: the value to convert.
+        encoding: optional. When given, ``value`` must be a string and is
+            encoded with it. Without it, follows single-argument ``bytes()``:
+            an int yields that many zero bytes, an iterable of ints yields
+            those bytes.
+
+    Yields:
+        The bytes. INVALID when either child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.ToBytes("hi", "utf-8"))[0]
+        b'hi'
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
@@ -270,7 +345,22 @@ class ToBytes(ScalarQuery):
 
 
 class ToByteArray(ScalarQuery):
-    """The operand cast to ``bytearray``; with a second child, encoded in it."""
+    """The operand cast to ``bytearray``.
+
+    Args:
+        value: the value to convert.
+        encoding: optional. When given, ``value`` must be a string and is
+            encoded with it. Without it, follows single-argument
+            ``bytearray()``: an int yields that many zero bytes, an iterable
+            of ints yields those bytes.
+
+    Yields:
+        The bytearray. INVALID when either child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.ToByteArray("hi", "utf-8"))[0]
+        bytearray(b'hi')
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         if len(children) == 1:
@@ -332,7 +422,18 @@ class ToByteArray(ScalarQuery):
 
 
 class ToList(ScalarQuery):
-    """The iterable child collected into a ``list``."""
+    """The iterable child collected into a ``list``.
+
+    Args:
+        value: the iterable to collect.
+
+    Yields:
+        The list. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.ToList((1, 2, 3)))[0]
+        [1, 2, 3]
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
@@ -358,7 +459,18 @@ class ToList(ScalarQuery):
 
 
 class ToTuple(ScalarQuery):
-    """The iterable child collected into a ``tuple``."""
+    """The iterable child collected into a ``tuple``.
+
+    Args:
+        value: the iterable to collect.
+
+    Yields:
+        The tuple. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.ToTuple([1, 2, 3]))[0]
+        (1, 2, 3)
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
@@ -384,7 +496,22 @@ class ToTuple(ScalarQuery):
 
 
 class ToSet(ScalarQuery):
-    """The iterable child collected into a ``set``."""
+    """The iterable child collected into a ``set``.
+
+    Args:
+        value: the iterable to collect.
+
+    Notes:
+        - Duplicates collapse and order is not preserved, as for any
+          Python ``set``.
+
+    Yields:
+        The set. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.ToSet([1, 1, 2]))[0]
+        {1, 2}
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
@@ -410,7 +537,22 @@ class ToSet(ScalarQuery):
 
 
 class ToFrozenSet(ScalarQuery):
-    """The iterable child collected into a ``frozenset``."""
+    """The iterable child collected into a ``frozenset``.
+
+    Args:
+        value: the iterable to collect.
+
+    Notes:
+        - Duplicates collapse and order is not preserved, as for any
+          Python ``frozenset``.
+
+    Yields:
+        The frozenset. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.ToFrozenSet([1, 1, 2]))[0]
+        frozenset({1, 2})
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
@@ -436,7 +578,22 @@ class ToFrozenSet(ScalarQuery):
 
 
 class ToDict(ScalarQuery):
-    """The key/value pairs of the iterable child collected into a ``dict``."""
+    """The key/value pairs of the iterable child collected into a ``dict``.
+
+    Args:
+        value: an iterable of ``(key, value)`` pairs.
+
+    Notes:
+        - A repeated key keeps the last pair's value, as for any Python
+          ``dict``.
+
+    Yields:
+        The dict. INVALID when the child is EMPTY or INVALID.
+
+    Example:
+        >>> nu.run(nu.ToDict([("a", 1), ("b", 2)]))[0]
+        {'a': 1, 'b': 2}
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children
