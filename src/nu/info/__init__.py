@@ -84,29 +84,43 @@ nu.info emits structured records and formats nothing.
 from __future__ import annotations
 
 from nu.info.builder import BuilderRecord, parse_builder, verify_builder
+from nu.info.builder import catalogue as catalogue_builders
 from nu.info.call import CallRecord, parse_call, verify_call
 from nu.info.core.contract import Arg, Violation
+from nu.info.form import FormRecord, parse_form, verify_form
+from nu.info.form import catalogue as catalogue_forms
 from nu.info.interaction import (
     InteractionRecord,
-    catalogue,
     parse_interaction,
     verify_interaction,
 )
+from nu.info.interaction import catalogue as catalogue_interactions
 from nu.info.record import Record
+from nu.info.ref import RefRecord, parse_ref, verify_ref
+from nu.info.ref import catalogue as catalogue_refs
 
 
 __all__ = [
     "Arg",
     "BuilderRecord",
     "CallRecord",
+    "FormRecord",
     "InteractionRecord",
     "Record",
+    "RefRecord",
     "Violation",
-    "catalogue",
+    "catalogue_builders",
+    "catalogue_forms",
+    "catalogue_interactions",
+    "catalogue_refs",
     "parse_builder",
     "parse_call",
+    "parse_form",
     "parse_interaction",
+    "parse_ref",
     "verify_builder",
     "verify_call",
+    "verify_form",
     "verify_interaction",
+    "verify_ref",
 ]

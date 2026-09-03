@@ -11,7 +11,8 @@ import nu.core as core
 import nu.flows as flows
 from nu.core import Add, Filter, Map, Sub
 from nu.flows import IfDo
-from nu.info import catalogue, parse_interaction, verify_interaction
+from nu.info import catalogue_interactions as catalogue
+from nu.info import parse_interaction, verify_interaction
 from nu.info.interaction import unpacked_arity
 
 

@@ -11,6 +11,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add nu.info form and ref kinds as BuilderRecord specialisations; per-kind catalogues; fill nu.forms.Float docstrings to the nu.info contract
 - Fill nu.forms.Int docstrings to the full nu.info contract; wire call.py to read Args and Yields prose; add multi-example parsing; add CallRecord.returns for the annotation
 - Add nu.info builder and call kinds; flatten per-kind packages to modules; rename Problem to Violation and drop missing-section checks
 - Edit core arithmetic docstrings to the nu.info contract; export MatMul from arithmetic
