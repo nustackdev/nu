@@ -159,5 +159,9 @@ jobs:
         with:
           name: ${{ github.ref_name }}
           body_path: release_notes.md
+          # Explicit extensions, not `dist/**`: uv drops a .gitignore in its
+          # output dir and the broad glob uploaded it as `default.gitignore`.
           files: |
-            dist/**
+            dist/**/*.whl
+            dist/**/*.tar.gz
+            dist/**/*.attestation
