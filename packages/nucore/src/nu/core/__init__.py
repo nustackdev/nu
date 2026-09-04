@@ -1,4 +1,24 @@
-"""Nu core: the native standard terms.
+"""Nu core: every interaction a program is built from.
+
+``nu.core`` is the home of the atoms. Its own surface is the native standard
+terms - the builtins - and the three other atom families sit beside them as
+subpackages:
+
+- ``flows``    - control flow (``Sequential``, ``Parallel``, ``Race``, ``IfDo``,
+  ``WhileDo``, ``Stream``).
+- ``spans``    - transparent wrappers governing a region (``Retry``,
+  ``Timeout``, ``TryCatch``, ``Transaction``, ``Snapshot``).
+- ``reactive`` - the reactivity standard: the observer contract plus the
+  ``On*Change`` atoms fabrics bind against.
+
+Everything under here is an Interaction. Forms (``nu.forms``), the kind
+taxonomy (``nu.lang``) and the fabric refs (``nu.context``, and the fabrics in
+``nustd``) are separate concerns with their own homes. The whole surface
+re-exports flat from the root, so day to day you write ``nu.Add`` /
+``nu.Sequential`` / ``nu.Retry`` and never name this package.
+
+The native standard terms
+-------------------------
 
 Concrete atoms layered on ``nu.lang``'s sort taxonomy - the kinds a real Nu
 program is built from. The goal is a 1:1 map of Python's native builtin
@@ -28,15 +48,19 @@ family, crossing Query / Command / Action as the builtins do:
         Logging lives at ``nu.std.logging`` -- a Python ``logging`` module wrap.
 - ``dynamic`` - host-namespace escape hatches (Globals, Locals)
 
-Core is the pure Python builtins. The fabric interactions (writing through a
-Ref into the Context store, a database, stdio) live in their own fabric dirs -
-``nu.context`` owns ``SetCmd`` / ``Delete`` / ``AttrRef``, not core. The Forms
-layer (types, classes) and the Flows / Spans layer (Seq, Par, If, Retry,
-Transaction) are later passes with their own homes, not here.
+This surface is the pure Python builtins. The fabric interactions (writing
+through a Ref into the Context store, a database, stdio) live in their own
+fabric dirs - ``nu.context`` owns ``SetCmd`` / ``Delete`` / ``AttrRef``, not
+here - and the Forms layer (types, classes) has its own home at ``nu.forms``.
+Flows and Spans (Seq, Par, If, Retry, Transaction) are the subpackages above.
 """
 
 from __future__ import annotations
 
+# Subpackage dot-access: ``nu.core.flows.Race``, ``nu.core.spans.Retry``,
+# ``nu.core.reactive.OnChange``. Their atoms re-export flat from the nu root,
+# not from here -- this module's ``__all__`` stays the builtins.
+from nu.core import flows, reactive, spans  # noqa: F401
 from nu.core.access import (
     Contains,
     DelAttr,
@@ -100,8 +124,14 @@ from nu.core.conditional import If, Switch
 from nu.core.dynamic import Globals, Locals
 from nu.core.io import Input, Print, input, print
 from nu.core.iteration import Enumerate, Iter, Next, Reversed, Zip
-from nu.core.literal import Literal
 from nu.core.logical import And, Not, Or, ToBool, bool
+from nu.core.reactive.interactions import (
+    OnChange,
+    OnChildChange,
+    OnChildrenChange,
+    OnDescendantsChange,
+    OnPrimitiveChange,
+)
 from nu.core.reduction import (
     AllOf,
     AnyOf,
@@ -141,13 +171,6 @@ from nu.core.transform import (
     SortBy,
     Sorted,
     Unique,
-)
-from nu.reactive.interactions import (
-    OnChange,
-    OnChildChange,
-    OnChildrenChange,
-    OnDescendantsChange,
-    OnPrimitiveChange,
 )
 
 
@@ -201,7 +224,6 @@ __all__ = [
     "Last",
     "Le",
     "Len",
-    "Literal",
     "Locals",
     "Lt",
     "Map",

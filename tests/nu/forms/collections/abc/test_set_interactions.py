@@ -7,7 +7,6 @@ methods accept any iterable, not just sets).
 
 from __future__ import annotations
 
-from nu.core.literal import Literal
 from nu.forms.collections.abc.set_interactions import (
     Difference,
     Intersection,
@@ -16,6 +15,7 @@ from nu.forms.collections.abc.set_interactions import (
 )
 from nu.lang import INVALID
 from nu.lang.helpers import compile, eval
+from nu.lang.literal import Literal
 
 
 def _eval(term: object) -> object:

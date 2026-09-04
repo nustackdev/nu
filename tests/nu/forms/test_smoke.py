@@ -8,7 +8,6 @@ construction.
 
 from __future__ import annotations
 
-from nu.core import Literal
 from nu.forms import (
     Bool,
     Bytes,
@@ -18,7 +17,7 @@ from nu.forms import (
     Set,
     Str,
 )
-from nu.lang import EMPTY
+from nu.lang import EMPTY, Literal
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.runtime import Context
 

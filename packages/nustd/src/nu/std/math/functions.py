@@ -18,8 +18,8 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from nu.core import Literal
 from nu.forms import Bool, Float, Int
+from nu.lang import Literal
 
 
 if TYPE_CHECKING:

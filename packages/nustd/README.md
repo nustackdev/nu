@@ -3,7 +3,7 @@
 Batteries for [Nu](https://github.com/nustackdev/nu).
 
 `nucore` is the kernel: the language, the engine, the core atoms, flows,
-spans, forms, the tree rewrites, `nu.prog`, `nu.info`, `nu.inspect`. It has no
+spans, forms, the tree rewrites, `nu.prog`, `nu.inspect`. It has no
 fabric backends in it. The `nu` command lives in `nucli`.
 
 `nustd` is everything that talks to the outside world. It installs into the

@@ -22,8 +22,8 @@ import ray
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
+    from nu.core.spans.bracket import _LifecycleBracket
     from nu.lang.runtime import Context
-    from nu.spans.bracket import _LifecycleBracket
 
 
 @ray.remote

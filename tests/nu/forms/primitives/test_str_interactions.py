@@ -6,10 +6,10 @@ when the iterable contains non-strings (TypeError is surfaced as INVALID).
 
 from __future__ import annotations
 
-from nu.core.literal import Literal
 from nu.forms.primitives.str_interactions import Join
 from nu.lang import INVALID
 from nu.lang.helpers import compile, eval
+from nu.lang.literal import Literal
 
 
 def _eval(term: object) -> object:

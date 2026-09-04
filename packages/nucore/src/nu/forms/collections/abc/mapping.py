@@ -509,6 +509,6 @@ class ReactiveMappingForm(
         Example:
             d.on_change()
         """
-        from nu.reactive import OnChange
+        from nu.core.reactive import OnChange
 
         return OnChange(self)

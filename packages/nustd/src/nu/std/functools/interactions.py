@@ -14,10 +14,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.core import Literal
 from nu.core._stream import aiter_any, sync_iter
 from nu.engine import Term
-from nu.lang import Reduction
+from nu.lang import Literal, Reduction
 from nu.lang.sentinels import EMPTY, INVALID, UNSET
 
 

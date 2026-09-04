@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import asyncio
 
-from nu.core.literal import Literal
 from nu.core.reflection import (
     Callable as Callable,
 )
@@ -36,6 +35,7 @@ from nu.core.reflection import (
 )
 from nu.lang import EMPTY, INVALID
 from nu.lang.helpers import aeval, compile, eval
+from nu.lang.literal import Literal
 
 
 def _eval(term: object) -> object:

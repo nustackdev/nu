@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import pytest
 
-from nu.core import Add, Literal
+from nu.core import Add
 from nu.engine.structure import Declared
-from nu.lang import Context, StreamQuery
+from nu.lang import Context, Literal, StreamQuery
 from nu.lang.helpers import arun, run, run_in_loop
 
 

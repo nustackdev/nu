@@ -8,10 +8,9 @@ from __future__ import annotations
 
 import pytest
 
-from nu.core import Literal
 from nu.domains.shape.interactions import Erase, PrimitiveSet, SetCmd
 from nu.domains.shape.refs.item import ItemRef
-from nu.lang import Command
+from nu.lang import Command, Literal
 from nu.lang.sentinels import EMPTY, INVALID
 
 

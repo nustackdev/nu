@@ -10,7 +10,7 @@ Nu-tree provisioning for the virtuals concepts:
 - ``InMemoryPublisher`` / ``RedisPublisher`` - write-side change routers.
   Attached to Storage via ``publisher_type=``.
 - ``InMemoryObserver`` / ``RedisObserver`` - read-side change consumers.
-  Bound at process scope; ``nu.reactive`` queries look them up under
+  Bound at process scope; ``nu.core.reactive`` queries look them up under
   ``ObserverProtocol``.
 - ``InMemoryStorage`` / ``RocksDBStorage`` / ``LMDBStorage`` / ``TextStorage``
   - backing stores. Read ``Codec`` and their publisher from ctx.

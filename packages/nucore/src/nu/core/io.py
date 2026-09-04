@@ -165,9 +165,6 @@ class StdioRef(Ref):
         """Consume one line from this stream, newline stripped."""
         return self._resolve_stream(rt).readline().rstrip("\n")
 
-    def __repr__(self) -> str:
-        return f"StdioRef.{cast('str', self._payload['stream']).upper()}"
-
 
 STDOUT = StdioRef("stdout")
 STDERR = StdioRef("stderr")

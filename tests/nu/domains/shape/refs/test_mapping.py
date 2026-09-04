@@ -2,6 +2,13 @@
 
 from __future__ import annotations
 
+from nu.core.flows.control import IfDo
+from nu.core.reactive import (
+    OnChange,
+    OnChildChange,
+    OnChildrenChange,
+    OnDescendantsChange,
+)
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     Erase,
@@ -11,14 +18,7 @@ from nu.domains.shape.interactions import (
 )
 from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
 from nu.domains.shape.refs.mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
-from nu.flows.control import IfDo
 from nu.forms.primitives import Int
-from nu.reactive import (
-    OnChange,
-    OnChildChange,
-    OnChildrenChange,
-    OnDescendantsChange,
-)
 
 
 class MyShape(Shape):

@@ -7,8 +7,8 @@ Literal leaves, never compiled.
 
 from __future__ import annotations
 
-from nu.core import Literal
-from nu.flows import Sequential
+from nu.core.flows import Sequential
+from nu.lang import Literal
 from nu.tree import (
     apply,
     compose,

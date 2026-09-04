@@ -28,11 +28,11 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 from nu.core._stream import aiter_any, sync_iter
-from nu.flows.strategy import Sequential
+from nu.core.flows.strategy import Sequential
+from nu.core.spans import Retry
+from nu.core.spans import Snapshot as _CoreSnapshot
+from nu.core.spans import Transaction as _CoreTransaction
 from nu.lang import Attr, Cardinality
-from nu.spans import Retry
-from nu.spans import Snapshot as _CoreSnapshot
-from nu.spans import Transaction as _CoreTransaction
 from virtuals import Navigator
 from virtuals.tkv.storage import (
     SnapshotProtocol,

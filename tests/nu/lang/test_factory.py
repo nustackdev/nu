@@ -12,11 +12,11 @@ import asyncio
 
 import pytest
 
-from nu.core import Literal
 from nu.engine.structure import Declared
 from nu.factory import InteractionFactory, host
 from nu.lang import (
     Command,
+    Literal,
     Reduction,
     ScalarQuery,
     Span,

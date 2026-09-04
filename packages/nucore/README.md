@@ -4,10 +4,10 @@ The kernel of [Nu](https://nustack.dev) - the interaction primitive. Build apps
 in one primitive that spans your whole stack.
 
 This distribution is the language and the engine, nothing else: `nu.lang`,
-`nu.engine`, `nu.core`, `nu.flows`, `nu.spans`, `nu.forms`, `nu.tree`,
-`nu.factory`, `nu.context`, `nu.domains`, `nu.prog`, `nu.info`, `nu.inspect`,
-`nu.reactive`. No fabric backend ever lands here, and it depends on nothing but
-`typing-extensions` and `cloudpickle`.
+`nu.engine`, `nu.core` (with `nu.core.flows`, `nu.core.spans`,
+`nu.core.reactive`), `nu.forms`, `nu.tree`, `nu.factory`, `nu.context`,
+`nu.domains`, `nu.prog`, `nu.inspect`. No fabric backend ever lands here, and it
+depends on nothing but `typing-extensions` and `cloudpickle`.
 
 The rest of the stack merges into the same `nu.` namespace:
 

@@ -13,10 +13,10 @@ from _support.dyn_carriers import ConstCarrier
 from _support.law_terms import Brk, Cmd, FlowS, Q, R, Stream
 from _support.laws import assert_fails, assert_passes, violations
 
+from nu.core.flows import Parallel, ParallelAsync, ParallelThreaded
+from nu.core.flows.parallel import AnyN, Race
 from nu.engine.structure import Declared
 from nu.engine.validation import ValidationError
-from nu.flows import Parallel, ParallelAsync, ParallelThreaded
-from nu.flows.parallel import AnyN, Race
 from nu.lang import (
     Attr,
     Cardinality,

@@ -169,7 +169,7 @@ class Program(Form, TypedNu[str]):
             An ``Eval`` over the loaded term, wrapped in a ``TryCatch`` when
             ``on_error`` is given.
         """
-        from nu.spans import TryCatch
+        from nu.core.spans import TryCatch
 
         from .diagnostics import ConstructionError
         from .eval import Eval

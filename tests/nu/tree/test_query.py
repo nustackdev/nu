@@ -5,8 +5,8 @@ find, find_first, count, size, depth.
 
 from __future__ import annotations
 
-from nu.core import Literal
-from nu.flows import Sequential
+from nu.core.flows import Sequential
+from nu.lang import Literal
 from nu.tree import count, depth, find, find_first, size
 
 

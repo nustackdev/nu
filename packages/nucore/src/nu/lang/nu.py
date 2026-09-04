@@ -47,17 +47,41 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # PEP 695 has no variance markers
 
     def __init__(self, *children: object) -> None:
         # Auto-wrap any non-Nu child as Literal so `Add(1, 2)` reads the same as
-        # `Add(Literal(1), Literal(2))`. Lazy import keeps the lang layer free of
-        # a core dependency; skip it entirely when every child is already a Nu
-        # (the common case, and what lets a childless Ref - e.g. the stdio
-        # singletons - construct during `nu.core` import).
+        # `Add(Literal(1), Literal(2))`. The import is lazy because `Literal`
+        # subclasses `ScalarQuery`, which subclasses this class - a real cycle,
+        # not a layering choice. Skipped entirely when every child is already a
+        # Nu (the common case, and what lets a childless Ref - e.g. the stdio
+        # singletons - construct during import).
         if all(isinstance(c, Nu) for c in children):
             wrapped = cast("tuple[Nu, ...]", children)
         else:
-            from nu.core import Literal
+            from nu.lang.literal import Literal
 
             wrapped = tuple(c if isinstance(c, Nu) else Literal(c) for c in children)
         super().__init__(*wrapped)
+
+    # --- display --------------------------------------------------------
+    #
+    # Both forms come from ``nu.lang.render`` and nothing else: no Nu subclass
+    # defines its own ``__repr__`` / ``__str__``, so every atom renders the same
+    # way and a new one needs no display code. Lazy imports because ``render``
+    # imports the kind taxonomy, which imports this module.
+
+    def __str__(self) -> str:
+        """The tree as a plain box-tree, one node per line.
+
+        Plain, never ANSI: piping to a file must not carry escape codes. For
+        color at a REPL, call ``nu.render_str(term)`` directly.
+        """
+        from nu.lang.render import render_str
+
+        return render_str(self, as_="plain")
+
+    def __repr__(self) -> str:
+        """The one-line constructor form, ``Add(1, 2)``."""
+        from nu.lang.render import render_repr
+
+        return render_repr(self)
 
     # --- composition operators ------------------------------------------
     #
@@ -69,16 +93,16 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # PEP 695 has no variance markers
     # which the associativity attribute lets the engine flatten.
 
     def __rshift__(self, other: object) -> Nu:
-        from nu.flows import Sequential
+        from nu.core.flows import Sequential
 
         return Sequential(self, other)
 
     def __or__(self, other: object) -> Nu:
-        from nu.flows import Parallel
+        from nu.core.flows import Parallel
 
         return Parallel(self, other)
 
     def __and__(self, other: object) -> Nu:
-        from nu.flows import Race
+        from nu.core.flows import Race
 
         return Race(self, other)

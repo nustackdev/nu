@@ -30,8 +30,8 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
     from multiprocessing.connection import Connection
 
+    from nu.core.spans.bracket import _LifecycleBracket
     from nu.lang.runtime import Context
-    from nu.spans.bracket import _LifecycleBracket
 
 
 def _worker_main(

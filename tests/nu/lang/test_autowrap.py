@@ -8,7 +8,8 @@ ints, strings, ``None``, functions, even sentinels.
 
 from __future__ import annotations
 
-from nu.core import Add, Literal
+from nu.core import Add
+from nu.lang import Literal
 from nu.lang.helpers import run
 from nu.lang.sentinels import EMPTY, INVALID
 

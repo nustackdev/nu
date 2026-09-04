@@ -6,7 +6,7 @@ transport for inbound keys, match against a per-process
 process scope and know nothing about local writes.
 
 All observer fabrics bind their instance under ``ObserverProtocol`` via
-``_nu_bind_as`` so ``nu.reactive`` queries can find "the observer"
+``_nu_bind_as`` so ``nu.core.reactive`` queries can find "the observer"
 without knowing which backend is active.
 
 Observer backends:
@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.reactive import ObserverProtocol
+from nu.core.reactive import ObserverProtocol
 from virtuals._backends.observers.mem import InMemoryObserver as _InMemoryObserver
 
 from .transport import InMemoryTransport
@@ -37,7 +37,7 @@ __all__ = ["InMemoryObserver", "RedisObserver"]
 class InMemoryObserver(_InMemoryObserver):
     """In-process observer. Reads the shared ``InMemoryTransport`` from ctx.
 
-    Binds under ``ObserverProtocol`` so ``nu.reactive`` queries can
+    Binds under ``ObserverProtocol`` so ``nu.core.reactive`` queries can
     resolve "the observer" without knowing the backend.
     """
 
@@ -73,7 +73,7 @@ class RedisObserver:
     is real network IO we don't want blocking a sync runtime. Use
     ``nu.arun`` for any tree that includes this observer.
 
-    Binds under ``ObserverProtocol`` so ``nu.reactive`` queries can
+    Binds under ``ObserverProtocol`` so ``nu.core.reactive`` queries can
     resolve "the observer" without knowing the backend.
     """
 

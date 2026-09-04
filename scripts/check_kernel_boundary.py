@@ -8,7 +8,8 @@ at module scope breaks that, so this hook rejects it.
 Only real ``import`` statements are checked -- docstrings and comments are
 untouched (they are the documented surface and reference ``nu.kv`` etc. all
 over). A ``try:``-guarded or function-local import is allowed on purpose: that
-is the sanctioned escape hatch (see ``nu/inspect/annotate.py``).
+is the sanctioned escape hatch for a kernel module that wants a fabric when one
+happens to be installed.
 
 Usage:  python scripts/check_kernel_boundary.py [files...]
 With no arguments, walks the whole kernel tree.
@@ -21,7 +22,7 @@ import sys
 from pathlib import Path
 
 
-KERNEL = Path(__file__).resolve().parent.parent / "packages" / "nu" / "src"
+KERNEL = Path(__file__).resolve().parent.parent / "packages" / "nucore" / "src"
 
 BATTERIES = frozenset(
     {

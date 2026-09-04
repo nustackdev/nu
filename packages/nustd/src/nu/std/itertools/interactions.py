@@ -28,10 +28,9 @@ import itertools as _it
 import operator
 from typing import TYPE_CHECKING, cast
 
-from nu.core import Literal
 from nu.core._stream import aiter_any, sync_iter
 from nu.engine import Term
-from nu.lang import ScalarQuery, StreamQuery
+from nu.lang import Literal, ScalarQuery, StreamQuery
 from nu.lang.sentinels import EMPTY, INVALID, UNSET
 
 

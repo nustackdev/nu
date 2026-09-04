@@ -10,9 +10,9 @@ from __future__ import annotations
 import asyncio
 
 from nu.core.comparison import Eq, Ge, Gt, Is, Le, Lt, Ne
-from nu.core.literal import Literal
 from nu.lang import EMPTY, INVALID
 from nu.lang.helpers import aeval, compile, eval
+from nu.lang.literal import Literal
 
 
 def _eval(term: object) -> object:

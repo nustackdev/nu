@@ -82,7 +82,8 @@ def test_an_action_yields_so_it_fits_a_query_slot():
     # Next is a dual-citizen: it mutates AND yields, so unlike a void Command
     # it composes inside a Query. A Command in the same slot would be refused.
     from nu.context import SetCmd
-    from nu.core import Add, Literal
+    from nu.core import Add
+    from nu.lang import Literal
 
     assert gate(compile(Add(Next(Ref("it")), Literal(1))), *LAWS) == []
     verdict = gate(compile(Add(SetCmd(Ref("x"), Literal(1)), Literal(2))), *LAWS)
@@ -93,7 +94,8 @@ def test_an_action_yields_so_it_fits_a_query_slot():
 
 
 def test_iter_streams_a_scalar_iterable():
-    from nu.core import Collect, Literal
+    from nu.core import Collect
+    from nu.lang import Literal
     from nu.lang.helpers import run
 
     value, _ = run(Collect(Iter(Literal([1, 2, 3]))))
@@ -102,7 +104,8 @@ def test_iter_streams_a_scalar_iterable():
 
 def test_iter_lifts_a_range_value_into_a_stream():
     # range is a Python value (a type), not a Nu stream atom; Iter lifts it.
-    from nu.core import Collect, Literal
+    from nu.core import Collect
+    from nu.lang import Literal
     from nu.lang.helpers import run
 
     value, _ = run(Collect(Iter(Literal(range(0, 4)))))
@@ -110,7 +113,8 @@ def test_iter_lifts_a_range_value_into_a_stream():
 
 
 def test_enumerate_pairs_index_and_item():
-    from nu.core import Collect, Literal
+    from nu.core import Collect
+    from nu.lang import Literal
     from nu.lang.helpers import run
 
     value, _ = run(Collect(Enumerate(Iter(Literal(["a", "b", "c"])))))
@@ -118,7 +122,8 @@ def test_enumerate_pairs_index_and_item():
 
 
 def test_enumerate_honors_a_start():
-    from nu.core import Collect, Literal
+    from nu.core import Collect
+    from nu.lang import Literal
     from nu.lang.helpers import run
 
     value, _ = run(Collect(Enumerate(Iter(Literal(["a", "b"])), Literal(1))))
@@ -126,7 +131,8 @@ def test_enumerate_honors_a_start():
 
 
 def test_zip_threads_sources_to_shortest():
-    from nu.core import Collect, Literal
+    from nu.core import Collect
+    from nu.lang import Literal
     from nu.lang.helpers import run
 
     value, _ = run(Collect(Zip(Iter(Literal([1, 2, 3])), Iter(Literal(["a", "b"])))))
@@ -134,7 +140,8 @@ def test_zip_threads_sources_to_shortest():
 
 
 def test_reversed_walks_a_source_backwards():
-    from nu.core import Collect, Literal
+    from nu.core import Collect
+    from nu.lang import Literal
     from nu.lang.helpers import run
 
     value, _ = run(Collect(Reversed(Iter(Literal([1, 2, 3])))))

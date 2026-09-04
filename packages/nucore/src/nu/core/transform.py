@@ -27,10 +27,10 @@ from typing import TYPE_CHECKING
 
 from nu.engine import Term
 from nu.lang import StreamQuery
+from nu.lang.literal import Literal
 from nu.lang.sentinels import EMPTY, INVALID
 
 from ._stream import aiter_any, sync_iter
-from .literal import Literal
 
 
 if TYPE_CHECKING:

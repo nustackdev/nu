@@ -7,7 +7,7 @@
   ``spans``.
   Each owns its dimension-specific helpers and its ``LAWS`` tuple.
 - ``LAWS`` - the mutable full set, concatenated from every dimension.
-  Non-lang layers (e.g. ``nu.flows.parallel``) extend this list at import
+  Non-lang layers (e.g. ``nu.core.flows.parallel``) extend this list at import
   time; callers should read it live (do not cache a copy).
 
 Feed ``LAWS`` to ``gate`` for a verdict or to ``validate`` for a rejection.
@@ -30,7 +30,7 @@ __all__ = ["LAWS"]
 
 
 # LAWS is a mutable list, not a tuple, so subsystems that layer on Nu can
-# register additional laws at import time (see ``nu.flows.parallel``). Every
+# register additional laws at import time (see ``nu.core.flows.parallel``). Every
 # caller reads it live.
 LAWS: list = [
     *composition.LAWS,

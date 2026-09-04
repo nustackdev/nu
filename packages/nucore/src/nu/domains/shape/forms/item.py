@@ -25,14 +25,14 @@ from nu.lang import Form
 
 
 if TYPE_CHECKING:
+    from nu.core.flows.control import IfDo
+    from nu.core.reactive import OnPrimitiveChange
     from nu.domains.shape.interactions import (
         Erase,
         Exists,
         Missing,
         SetCmd,
     )
-    from nu.flows.control import IfDo
-    from nu.reactive import OnPrimitiveChange
 
 
 __all__ = [
@@ -75,7 +75,7 @@ class MutableItemForm(ItemForm):
 
     def init(self, value: object) -> IfDo:
         """Set ``value`` iff the leaf is currently missing."""
-        from nu.flows.control import IfDo
+        from nu.core.flows.control import IfDo
 
         return IfDo(self.missing(), self.set(value))
 
@@ -94,6 +94,6 @@ class ReactiveItemForm(MutableItemForm):
         ``parent.on_child_change(address)``: one uniform path across
         substrates, no per-substrate override needed.
         """
-        from nu.reactive import OnPrimitiveChange
+        from nu.core.reactive import OnPrimitiveChange
 
         return OnPrimitiveChange(self)

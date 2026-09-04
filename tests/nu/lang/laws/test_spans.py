@@ -15,11 +15,10 @@ from _support.laws import assert_fails, assert_passes
 # keep the linter quiet.
 import nu.context.attrs.interactions as _ctx_attrs  # noqa: F401
 import nu.context.fabric.lifecycle as _ctx_lifecycle  # noqa: F401
-import nu.inspect.annotate as _inspect_annotate  # noqa: F401
+import nu.core.spans.bracket as _spans_bracket  # noqa: F401
+import nu.core.spans.policy as _spans_policy  # noqa: F401
 import nu.kv.interactions.atomicity as _kv_atomicity  # noqa: F401
 import nu.mp.interactions as _mp_interactions  # noqa: F401
-import nu.spans.bracket as _spans_bracket  # noqa: F401
-import nu.spans.policy as _spans_policy  # noqa: F401
 from nu.engine.compilation import UnknownAttributeError
 from nu.engine.structure import Declared
 from nu.lang import Bracket, Policy, Span

@@ -14,13 +14,12 @@ from nu.core import (
     Collect,
     Filter,
     Iter,
-    Literal,
     Lt,
     Map,
     Mul,
     Sum,
 )
-from nu.lang import Context
+from nu.lang import Context, Literal
 from nu.lang.helpers import arun, run
 
 

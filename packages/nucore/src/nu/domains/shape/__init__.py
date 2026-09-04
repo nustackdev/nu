@@ -9,7 +9,7 @@ Public surface:
 
 Reactive queries (``OnChange`` / ``OnChildChange`` /
 ``OnChildrenChange`` / ``OnDescendantsChange`` /
-``OnPrimitiveChange``) live in ``nu.reactive`` -- one unified
+``OnPrimitiveChange``) live in ``nu.core.reactive`` -- one unified
 interface for every substrate, reached through the shape Form mixins.
 """
 

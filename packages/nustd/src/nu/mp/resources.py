@@ -29,8 +29,8 @@ if TYPE_CHECKING:
     from multiprocessing.connection import Connection
     from multiprocessing.context import BaseContext, Process
 
+    from nu.core.spans.bracket import _LifecycleBracket
     from nu.lang.runtime import Context
-    from nu.spans.bracket import _LifecycleBracket
 
 
 __all__ = ["MpWorker"]

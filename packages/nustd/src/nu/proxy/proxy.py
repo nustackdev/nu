@@ -25,7 +25,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING
 
-from nu.spans.bracket import _LifecycleBracket
+from nu.core.spans.bracket import _LifecycleBracket
 
 from .client import InvisiblesClient
 
@@ -130,8 +130,3 @@ class InvisiblesProxy(_LifecycleBracket):
             yield scoped
         finally:
             await client.acleanup()
-
-    def __repr__(self) -> str:
-        target = self._payload.get("target")
-        addr = self._payload.get("client_kwargs", {}).get("address")
-        return f"InvisiblesProxy({target.__name__ if target else '?'}, address={addr!r})"

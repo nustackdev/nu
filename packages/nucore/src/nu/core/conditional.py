@@ -2,7 +2,7 @@
 
 Maps Python's conditional expression (``x if cond else y``) and mapping-based
 dispatch onto Nu ScalarQueries. Pure compute; no Context effect of their own.
-Siblings to the mutating ``IfDo`` / ``SwitchDo`` in ``nu.flows.control`` - same
+Siblings to the mutating ``IfDo`` / ``SwitchDo`` in ``nu.core.flows.control`` - same
 name family, different sort: the ``Do`` variants run one of N bodies for
 effect and yield nothing; the ``Query`` variants yield one of N values and
 mutate nothing.
@@ -104,7 +104,7 @@ class Switch(ScalarQuery):
           mapping's iteration order; the first match wins.
         - Short-circuits: only the matching case value (or the default) is
           evaluated, not the others.
-        - Sibling to the mutating ``nu.flows.control.SwitchDo``, which runs
+        - Sibling to the mutating ``nu.core.flows.control.SwitchDo``, which runs
           one of N bodies for effect instead of yielding a value.
 
     Yields:

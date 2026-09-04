@@ -97,9 +97,6 @@ class LoggingRef(Ref):
         level, logger_name, msg, args, extra = record
         logging.getLogger(logger_name).log(level, msg, *args, extra=extra or None)
 
-    def __repr__(self) -> str:
-        return "LoggingRef.LOGGING"
-
 
 LOGGING = LoggingRef()
 

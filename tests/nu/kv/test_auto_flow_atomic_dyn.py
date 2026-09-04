@@ -11,8 +11,8 @@ from __future__ import annotations
 from _support.dyn_carriers import ConstCarrier
 from _support.law_terms import Q
 
+from nu.core.flows import Sequential as Seq
 from nu.domains.shape import Shape
-from nu.flows import Sequential as Seq
 from nu.kv import (
     IntRef,
     Snapshot,

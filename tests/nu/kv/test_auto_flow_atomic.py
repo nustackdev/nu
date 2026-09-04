@@ -16,8 +16,8 @@ Checks:
 
 from __future__ import annotations
 
+from nu.core.flows import Sequential as Seq
 from nu.domains.shape import Shape
-from nu.flows import Sequential as Seq
 from nu.kv import (
     IntRef,
     Snapshot,

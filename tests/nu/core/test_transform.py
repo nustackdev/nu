@@ -8,9 +8,9 @@ single-source lenses. Coverage runs real programs through ``run``.
 from __future__ import annotations
 
 from nu.context import AttrRef
-from nu.core import Collect, Filter, Iter, Literal, Lt, Map, Mul
+from nu.core import Collect, Filter, Iter, Lt, Map, Mul
 from nu.core.transform import Flatten, Sorted, Unique
-from nu.lang import Attr, Cardinality
+from nu.lang import Attr, Cardinality, Literal
 from nu.lang.helpers import compile, run, validate
 
 

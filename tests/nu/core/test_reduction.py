@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu.core import Iter, Literal
+from nu.core import Iter
 from nu.core.reduction import (
     AllOf,
     AnyOf,
@@ -22,7 +22,7 @@ from nu.core.reduction import (
     Min,
     Sum,
 )
-from nu.lang import LAWS, Attr, Cardinality, gate
+from nu.lang import LAWS, Attr, Cardinality, Literal, gate
 from nu.lang.helpers import compile, validate
 
 

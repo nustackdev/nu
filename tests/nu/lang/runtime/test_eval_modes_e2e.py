@@ -26,7 +26,7 @@ from _support.async_atoms import (
     SyncOnlyAction,
 )
 
-from nu.flows import Parallel, Sequential
+from nu.core.flows import Parallel, Sequential
 from nu.lang.helpers import arun, run
 
 

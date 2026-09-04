@@ -409,6 +409,6 @@ class ReactiveSequenceForm(
         Yields:
             An event stream firing whenever this slot changes.
         """
-        from nu.reactive import OnChange
+        from nu.core.reactive import OnChange
 
         return OnChange(self)

@@ -1,4 +1,4 @@
-"""Unit tests for ``nu.lang.runtime.runtime`` and ``nu.flows.parallel._scheduling``.
+"""Unit tests for ``nu.lang.runtime.runtime`` and ``nu.core.flows.parallel._scheduling``.
 
 Covers ``Runtime`` -- the concrete Runtime that drives compiled Programs --
 plus the free-function fan-in primitives that moved out of Runtime:
@@ -14,8 +14,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from nu.core import Add, And, Literal, Mul, Sub
-from nu.flows.parallel._scheduling import (
+from nu.core import Add, And, Mul, Sub
+from nu.core.flows.parallel._scheduling import (
     aeval_any,
     aeval_parallel,
     aeval_race,
@@ -23,6 +23,7 @@ from nu.flows.parallel._scheduling import (
     eval_parallel,
     merge,
 )
+from nu.lang import Literal
 from nu.lang.attributes import Attr
 from nu.lang.helpers import compile
 from nu.lang.runtime import Budget, Context, Runtime

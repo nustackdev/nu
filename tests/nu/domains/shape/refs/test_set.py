@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from nu.core.reactive import OnChange, OnChildrenChange
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     Erase,
@@ -14,7 +15,6 @@ from nu.domains.shape.interactions import (
 from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.refs.set_ import MutableSetRef, ReactiveSetRef, SetRef
 from nu.forms.primitives import Int
-from nu.reactive import OnChange, OnChildrenChange
 
 
 class MyShape(Shape):

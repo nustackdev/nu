@@ -19,8 +19,8 @@ import pytest
 
 from nu import host
 from nu.context import AttrRef, IntAttrRef, Let, SetCmd
-from nu.core import Add, Literal
-from nu.lang import Context
+from nu.core import Add
+from nu.lang import Context, Literal
 from nu.lang.helpers import arun, run
 
 

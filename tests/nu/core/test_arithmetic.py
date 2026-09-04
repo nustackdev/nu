@@ -25,9 +25,9 @@ from nu.core.arithmetic import (
     Round,
     Sub,
 )
-from nu.core.literal import Literal
 from nu.lang import EMPTY, INVALID
 from nu.lang.helpers import aeval, compile, eval
+from nu.lang.literal import Literal
 
 
 def _eval(term: object) -> object:

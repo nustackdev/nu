@@ -7,8 +7,8 @@ iter_effects, is_pure, reads, writes, fabrics. The fabric predicates
 from __future__ import annotations
 
 from nu.context import AttrRef, SetCmd
-from nu.core import Literal
-from nu.flows import Sequential
+from nu.core.flows import Sequential
+from nu.lang import Literal
 from nu.tree import fabrics, is_pure, reads, writes
 
 

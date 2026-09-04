@@ -51,7 +51,7 @@ from __future__ import annotations
 from contextlib import AsyncExitStack, ExitStack, asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING
 
-from nu.spans.bracket import _LifecycleBracket
+from nu.core.spans.bracket import _LifecycleBracket
 
 
 if TYPE_CHECKING:
@@ -257,17 +257,6 @@ class Provide(_LifecycleBracket):
         finally:
             await _ateardown(setup_done)
 
-    def __repr__(self) -> str:
-        cls = self._payload["cls"]
-        tags = self._payload["tags"]
-        pred = self._payload["predicate"]
-        parts = [cls.__name__]
-        if tags:
-            parts.append(f"tags={tags!r}")
-        if pred is not None:
-            parts.append(f"predicate={getattr(pred, '__name__', repr(pred))}")
-        return f"Provide({', '.join(parts)})"
-
 
 # =========================================================================
 # ProvideList - N instances by index
@@ -369,11 +358,6 @@ class ProvideList(_LifecycleBracket):
             yield ctx
         finally:
             await _ateardown(setup_done)
-
-    def __repr__(self) -> str:
-        cls = self._payload["cls"]
-        n = len(self._payload["specs"])
-        return f"ProvideList({cls.__name__}, n={n})"
 
 
 # =========================================================================
@@ -486,11 +470,6 @@ class ProvideDict(_LifecycleBracket):
             yield ctx
         finally:
             await _ateardown(setup_done)
-
-    def __repr__(self) -> str:
-        cls = self._payload["cls"]
-        keys = list(self._payload["specs"].keys())
-        return f"ProvideDict({cls.__name__}, keys={keys!r})"
 
 
 # =========================================================================

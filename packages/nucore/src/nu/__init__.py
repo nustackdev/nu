@@ -11,8 +11,9 @@ Two ways to import. Grab what you need flat from the root:
 Or reach a subpackage by dot-access:
 
     import nu
-    nu.forms.Int    nu.core.Add    nu.flows.Sequential
-    nu.spans.Retry      nu.shape.Shape      nu.tree.map_nodes
+    nu.forms.Int        nu.core.Add
+    nu.core.flows.Sequential     nu.core.spans.Retry
+    nu.shape.Shape      nu.tree.map_nodes
     nu.mem.IntRef       nu.kv.presets.memory_storage
     nu.ui.Page          nu.std.uuid.UUID
 """
@@ -46,15 +47,15 @@ del _bootstrap
 
 # Subpackage namespaces for dot-access.
 # Early group: pure layers with no dependency on the flat root surface.
-from . import context, core, engine, factory, flows, forms, info, lang, prog, spans, tree
+from . import context, core, engine, factory, forms, inspect, lang, prog, tree
 from .domains import shape
 
 # Flat re-exports: the program-authoring surface.
 from .context import *
 from .core import *
-from .flows import *
+from .core.flows import *
+from .core.spans import *
 from .forms import *
-from .spans import *
 
 # Shape DSL only; fabric atoms (Load, SetCmd, ...) stay at nu.shape.*.
 from .domains.shape import Shape, Slot
@@ -93,6 +94,7 @@ from .lang import (
     IntArg,
     Interaction,
     ListArg,
+    Literal,
     NoneArg,
     Nu,
     Policy,
@@ -117,6 +119,10 @@ from .factory import (
     InteractionFactory,
     host,
 )
+
+# Display (nu.lang.render). ``print(term)`` and ``repr(term)`` already route
+# here through the dunders; these are the flat handles (render_str takes as_=).
+from .lang.render import render_repr, render_str
 
 # Entry points.
 from .lang.helpers import (

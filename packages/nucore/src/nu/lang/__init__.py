@@ -74,6 +74,7 @@ from .kinds import (
     StreamQuery,
 )
 from .laws import LAWS
+from .literal import Literal
 from .nu import Nu
 from .runtime import Context, Runtime
 from .sentinels import (
@@ -125,6 +126,7 @@ __all__ = [
     "Invalid",
     "Law",
     "ListArg",
+    "Literal",
     "NoneArg",
     "Nu",
     "Policy",

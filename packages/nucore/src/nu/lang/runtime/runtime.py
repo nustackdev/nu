@@ -11,7 +11,7 @@ column: ``program.thunks[nid](rt)`` (sync) or ``program.athunks[nid](rt)``
 runs closure-to-closure with no method lookup.
 
 Parallel/Race/AnyN fan-in and stream merge live in
-``nu.flows.parallel._scheduling`` as free functions on ``rt`` - the
+``nu.core.flows.parallel._scheduling`` as free functions on ``rt`` - the
 Parallel-family compiles hand child nids straight there, no Runtime hop.
 
 Layout:
@@ -115,7 +115,7 @@ class Runtime:
         return [await self.aeval(n) for n in nids]
 
     # Parallel fan-in and stream merge live in
-    # ``nu.flows.parallel._scheduling`` - free functions on ``rt``.
+    # ``nu.core.flows.parallel._scheduling`` - free functions on ``rt``.
 
     # --- stream helpers -----------------------------------------------------
 

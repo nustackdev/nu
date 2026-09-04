@@ -6,12 +6,11 @@ All tests work on the Nu-layer tree with no substrate needed.
 
 from __future__ import annotations
 
-from nu.core import Literal
 from nu.domains.shape.interactions import Load
 from nu.domains.shape.refs.item import ItemRef
 from nu.domains.shape.refs.mapping import MappingRef
 from nu.engine.structure import Declared
-from nu.lang import Control
+from nu.lang import Control, Literal
 from nu.tree import (
     has_write_on_fabric,
     is_flow,

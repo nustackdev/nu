@@ -32,7 +32,7 @@ def violations(term: Term) -> list[Violation]:
     """Compile ``term`` against Nu's schema and gate it against every law.
 
     ``LAWS`` is a mutable list on ``nu.lang.laws``: any layer that registered
-    additional laws at import time (e.g. ``nu.flows.parallel``) has already
+    additional laws at import time (e.g. ``nu.core.flows.parallel``) has already
     appended to the same list object we hold a reference to.
     """
     return gate(nu_compile(term), *LAWS)

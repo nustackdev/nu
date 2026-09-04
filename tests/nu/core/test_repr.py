@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import asyncio
 
-from nu.core.literal import Literal
 from nu.core.repr import Ascii as Ascii
 from nu.core.repr import Bin as Bin
 from nu.core.repr import Chr as Chr
@@ -20,6 +19,7 @@ from nu.core.repr import Ord as Ord
 from nu.core.repr import Repr as Repr
 from nu.lang import EMPTY, INVALID
 from nu.lang.helpers import aeval, compile, eval
+from nu.lang.literal import Literal
 
 
 def _eval(term: object) -> object:

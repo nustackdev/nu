@@ -22,9 +22,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.core._stream import aiter_any, sync_iter
-from nu.core.literal import Literal
 from nu.engine.structure import Declared
 from nu.lang import Attr, Bracket, Cardinality, Command, ScalarQuery
+from nu.lang.literal import Literal
 from nu.lang.sentinels import EMPTY, INVALID
 
 
@@ -286,9 +286,6 @@ class Let(Bracket):
                 _restore(rt.ctx.attrs, name, had_prev, prev)
 
         return athunk
-
-    def __repr__(self) -> str:
-        return f"Let({self._children[2]!r}, {self._children[1]!r}, body={self._children[0]!r})"
 
 
 def _restore(attrs: object, name: str, had_prev: bool, prev: object) -> None:

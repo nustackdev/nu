@@ -13,8 +13,8 @@ write, and delete all resolve the address through the runtime.
 from __future__ import annotations
 
 from nu.context import AttrExists, AttrRef, Delete, SetCmd
-from nu.core import Add, Literal
-from nu.lang import INVALID, Attr, Context, Effect
+from nu.core import Add
+from nu.lang import INVALID, Attr, Context, Effect, Literal
 from nu.lang.helpers import arun, compile, run
 
 

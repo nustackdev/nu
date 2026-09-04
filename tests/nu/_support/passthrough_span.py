@@ -5,14 +5,14 @@ A bare :class:`nu.lang.Bracket` cannot drive - Span's base ``_aeval`` raises
 over a body: run the body, forward its value, no lifecycle work. This module
 provides that minimum.
 
-The core ships ``nu.spans.bracket._LifecycleBracket`` whose default ``_open``
+The core ships ``nu.core.spans.bracket._LifecycleBracket`` whose default ``_open``
 is a straight passthrough, so subclassing it gives a genuine passthrough
 Bracket for free.
 """
 
 from __future__ import annotations
 
-from nu.spans.bracket import _LifecycleBracket
+from nu.core.spans.bracket import _LifecycleBracket
 
 
 __all__ = ["PassBracket"]

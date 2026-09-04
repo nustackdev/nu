@@ -21,9 +21,9 @@ from typing import Any as PyAny
 from typing_extensions import assert_type
 
 import nu
-from nu.core import Literal
 from nu.forms import Any, Bool, Int, Str
 from nu.kv.refs import IntRef, PrimitiveListRef
+from nu.lang import Literal
 
 
 # --- Constructing an Any ------------------------------------------

@@ -24,10 +24,9 @@ from nu.context import (
     StrAttrRef,
     TupleAttrRef,
 )
-from nu.core import Literal
 from nu.forms.collections import List, Tuple
 from nu.forms.primitives import Any, Bool, Bytes, Float, Int, Str
-from nu.lang import Context
+from nu.lang import Context, Literal
 from nu.lang.helpers import run
 
 

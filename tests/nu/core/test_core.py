@@ -17,7 +17,6 @@ from nu.core import (
     Div,
     Eq,
     Iter,
-    Literal,
     Lt,
     Mul,
     Neg,
@@ -26,7 +25,7 @@ from nu.core import (
     Sub,
     Sum,
 )
-from nu.lang import EMPTY, INVALID, LAWS, Attr, Cardinality, Effect, Ref, gate
+from nu.lang import EMPTY, INVALID, LAWS, Attr, Cardinality, Effect, Literal, Ref, gate
 from nu.lang.helpers import aeval, arun, compile, eval, run, validate
 
 

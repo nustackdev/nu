@@ -193,4 +193,5 @@ def test_msg_skips_on_unbound_sentinel(caplog: pytest.LogCaptureFixture) -> None
 
 def test_logging_singleton_is_a_logging_ref() -> None:
     assert isinstance(LOGGING, LoggingRef)
-    assert repr(LOGGING) == "LoggingRef.LOGGING"
+    # repr comes from nu.lang.render; LoggingRef carries no payload.
+    assert repr(LOGGING) == "LoggingRef"

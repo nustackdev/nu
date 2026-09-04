@@ -13,8 +13,8 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-from nu.flows.strategy import Sequential
-from nu.spans.bracket import _LifecycleBracket
+from nu.core.flows.strategy import Sequential
+from nu.core.spans.bracket import _LifecycleBracket
 
 
 if TYPE_CHECKING:

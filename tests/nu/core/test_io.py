@@ -176,4 +176,5 @@ def test_print_no_flush_by_default() -> None:
 def test_stdout_and_stdin_are_distinct_singletons() -> None:
     assert STDOUT is not STDIN
     assert isinstance(STDOUT, StdioRef)
-    assert repr(STDOUT) == "StdioRef.STDOUT"
+    # repr comes from nu.lang.render, off the payload - no per-class __repr__.
+    assert repr(STDOUT) == "StdioRef(stream='stdout')"

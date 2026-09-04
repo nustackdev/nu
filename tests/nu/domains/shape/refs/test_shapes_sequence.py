@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from nu.core.reactive import OnChange, OnChildrenChange
 from nu.domains.shape.dsl import Shape, Slot
 from nu.domains.shape.interactions import (
     Erase,
@@ -16,7 +17,6 @@ from nu.domains.shape.refs.shapes_sequence import (
     ReactiveShapesSequenceRef,
     ShapesSequenceRef,
 )
-from nu.reactive import OnChange, OnChildrenChange
 
 
 class Row(Shape):

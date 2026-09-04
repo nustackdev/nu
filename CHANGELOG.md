@@ -11,6 +11,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Restructure nucore: nest flows/spans/reactive under nu.core, rename nu.info to nu.inspect, move Literal to nu.lang, and centralize term display in nu.lang.render
+
 ## 0.2.0 — 2026-09-04
 
 - Rename the kernel distribution nustack-py to nucore and drop its extras

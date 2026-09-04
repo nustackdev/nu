@@ -24,7 +24,7 @@ from _support.async_atoms import (
 )
 from _support.passthrough_span import PassBracket
 
-from nu.flows import AnyN, Parallel, Race
+from nu.core.flows import AnyN, Parallel, Race
 from nu.lang.helpers import arun
 
 
