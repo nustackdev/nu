@@ -32,7 +32,15 @@ PROMISE_FIELDS = frozenset({"sort", "cardinality", "has_async_only_atom", "has_s
 
 
 class EvalPromiseError(RuntimeError):
-    """Raised when an Eval's resolved inner tree contradicts its declared promise."""
+    """Raised when an Eval's resolved inner tree contradicts its declared promise.
+
+    Notes:
+        - Also raised when the carrier yields something that is not a Nu term
+          at all, which is the promise every Eval makes whether or not it
+          pins any field.
+        - Fires per axis, so the message names the field that disagreed and
+          both values, not just that something did.
+    """
 
 
 def check_promise(inner_program: Program, promise: dict[str, Any]) -> None:

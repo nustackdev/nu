@@ -1,14 +1,23 @@
-"""Dict substrate refs.
+"""Every ref the dict substrate offers.
 
 Base:
-    RefBase         dict substrate implementation (navigate nested dicts)
+    RefBase         path of keys through nested dicts; all the rest build on it
 
 Items:
-    ItemRef         generic typed value holder
-    IntRef, StrRef, FloatRef, BoolRef, BytesRef   typed item refs
+    ItemRef         untyped value holder, what a container descends into
+    IntRef, StrRef, FloatRef, BoolRef, BytesRef   typed leaves
+    DecimalRef, FractionRef, ComplexRef, BasisPointRef, PercentageRef,
+    DateRef, DatetimeRef, TimeRef, TimedeltaRef, TimezoneRef,
+    PathRef, UUIDRef                              stdlib leaves, each stored
+                                                  in a form a dict can hold
 
 Collections:
     ShapeRef, DictRef, ListRef, SetRef, ShapesListRef, ShapesDictRef
+
+Programs:
+    ProgramRef      Nu source text in a slot, with the Program verbs
+
+``JQueueRef`` lives in ``jqueue`` and is not re-exported here: it needs janus.
 """
 
 from .base import RefBase

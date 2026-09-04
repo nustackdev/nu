@@ -42,13 +42,61 @@ async def _one_async(value: object) -> AsyncIterator:
 
 
 class Teleport(Policy):
-    """Ship the body to an ``MpWorker`` for execution in that child process.
+    """Runs the body in an ``MpWorker`` child process instead of in the caller.
+
+    A policy over where, not what: the body is captured as a term and is
+    never evaluated locally. On each evaluation the tagged ``MpWorker`` is
+    read off the Context, the term goes down the pipe, and the child
+    compiles and evaluates it against its own Context before the value comes
+    back. Dropping a Teleport moves the work, it does not change it.
 
     Args:
-        body: The Nu to execute in the worker. Captured as a term.
-        target: Tag identifying the ``MpWorker`` on ctx.
-        carry: If True, copy the parent's ``ctx.attrs`` to the worker's
-            Context before executing there.
+        body: the Nu to run in the worker. Captured as a term, never run in
+            the caller's process.
+
+    Notes:
+        - ``target`` is the tag the ``MpWorker`` was bound under, passed
+          verbatim to ``ctx.get``: omit it for a bare ``Provide``, the index
+          for ``ProvideList``, the key for ``ProvideDict``. ``None`` is a
+          usable tag, distinct from omitting it.
+        - ``carry=True`` copies the caller's ``ctx.attrs`` into a shallow
+          copy of the worker's Context for that one execution, so loop
+          variables bound by ``Map`` or ``Filter`` reach the body. Without
+          it the body sees only what the worker's Context already holds.
+        - The body resolves its refs against the worker's Context, built in
+          the child by the ``MpWorker``'s ``init`` bracket or
+          ``ctx_builder``. Anything bound around the Teleport in the
+          caller's tree is not visible there.
+        - Everything crossing the pipe is pickled, so the body term and what
+          it captures must be pickleable.
+        - Both runtimes work. The pipe read blocks either way; the sync path
+          blocks the calling thread, the async path waits off-thread so
+          sibling work keeps running.
+        - A worker serves one request at a time behind a lock, so two
+          Teleports at the same target serialize even under ``Parallel``.
+          Parallelism comes from binding a fleet and targeting each worker.
+        - A stream-rooted body evaluates to an async generator, which cannot
+          be pickled back. Reduce it inside the body, with ``Collect`` or a
+          fold, before teleporting.
+        - An exception raised in the child is sent back and re-raised here.
+
+    Yields:
+        The value the body's root produced in the worker, None for an
+        effect-only body. When the body is a stream the collapsed remote
+        value is yielded as a one-item stream, and a None result yields an
+        empty one.
+
+    Example:
+        Provide(MpWorker, {"name": "solo"},
+            Teleport(Collect(heavy_stream)),
+        )
+
+        ProvideList(MpWorker, [{"name": "w-0"}, {"name": "w-1"}],
+            Parallel(
+                Teleport(shard_0, target=0),
+                Teleport(shard_1, target=1),
+            ),
+        )
     """
 
     def __init__(self, body: Nu, *, target: object = UNSET, carry: bool = False) -> None:

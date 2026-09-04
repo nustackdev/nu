@@ -28,7 +28,26 @@ E = TypeVar("E")
 
 
 class SetRef(ReactiveSetRef, ViewRef[set[T]], Generic[T]):
-    """Virtuals set reference: unordered unique-element container backed by a View."""
+    """A set slot in KV storage: unordered, unique elements, stored decomposed.
+
+    Notes:
+        - Ops run against the live View, so membership and size are answered
+          by storage rather than by reading the set out.
+        - Elements have no addresses of their own to descend into: a set has
+          no keys, so there is no element ref and no subscript.
+        - The set algebra (``union``, ``intersection``, ...) yields values;
+          the in-place variants (``update``, ``difference_update``, ...) are
+          the ones that write.
+        - Change observation covers the child, the children and the whole
+          subtree, each with its own hook.
+        - PrimitiveSetRef is the other choice: one opaque blob written whole.
+
+    Example:
+        class Portfolio(Shape):
+            members = SetRef.slot(str)
+        run(Portfolio.members.add("gor"), ctx)
+        run(Portfolio.members.contains("gor"), ctx)
+    """
 
     def _wrap_result(self, op: Nu) -> Set[T]:
         """Wrap a set-level op result as a Set."""

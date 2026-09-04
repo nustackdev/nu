@@ -39,7 +39,34 @@ __all__ = ["AttrExists", "Delete", "Let", "SetCmd"]
 
 
 class SetCmd(Command):
-    """Writes the value of slot 1 to the Ref in slot 0, through that Ref."""
+    """Writes a value into the slot its Ref names, through that Ref.
+
+    The Command never touches ``ctx.attrs`` itself. It hands the Ref its own
+    node id, the Ref resolves its address and performs the write, which is
+    what lets ``SetCmd`` drive any fabric Ref and not just ``AttrRef``.
+
+    Args:
+        ref: the Ref naming the slot to write. This is the mutation slot, so
+            effect synthesis binds it WRITE; every other slot is a read.
+        value: evaluated once, and its result is what lands in the slot.
+
+    Notes:
+        - An EMPTY or INVALID ``value`` writes nothing at all, so a slot that
+          was already bound keeps whatever it held.
+        - The write is open-ended: it lives on the context the run returns.
+          ``Let`` is the scoped dual, binding only for a body's duration.
+
+    Yields:
+        Nothing (VOID). The write is the point.
+
+    Example:
+        >>> nu.run(nu.SetCmd(nu.AttrRef("total"), 10))[1].attrs
+        Attributes(total=10)
+
+        >>> first = nu.SetCmd(nu.AttrRef("a"), 1)
+        >>> nu.run(nu.Sequential(first, nu.SetCmd(nu.AttrRef("a"), nu.AttrRef("no"))))[1].attrs
+        Attributes(a=1)
+    """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
@@ -69,7 +96,29 @@ class SetCmd(Command):
 
 
 class Delete(Command):
-    """Removes the Ref in slot 0 from its fabric, through that Ref."""
+    """Removes the slot its Ref names from the fabric, through that Ref.
+
+    Same shape as :class:`SetCmd`: the Ref is the declared mutation slot and
+    the erase is delegated to it, so this drives any fabric Ref rather than
+    only ``AttrRef``.
+
+    Args:
+        ref: the Ref naming the slot to remove. This is the mutation slot.
+
+    Notes:
+        - Removing a slot that is not bound is a no-op, not an error.
+        - Deleting is not the same as holding EMPTY: after a delete
+          ``.exists()`` yields False, whereas a slot ``Let`` bound to EMPTY
+          reads EMPTY and still exists.
+
+    Yields:
+        Nothing (VOID). The erase is the point.
+
+    Example:
+        >>> bind = nu.SetCmd(nu.AttrRef("a"), 1)
+        >>> nu.run(nu.Sequential(bind, nu.Delete(nu.AttrRef("a"))))[1].attrs
+        Attributes()
+    """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
@@ -91,7 +140,29 @@ class Delete(Command):
 
 
 class AttrExists(ScalarQuery):
-    """Yields whether the slot-0 ``AttrRef``'s address is bound in ``ctx.attrs``."""
+    """Whether the address of its ``AttrRef`` is bound in ``ctx.attrs``.
+
+    Args:
+        ref: the ``AttrRef`` whose address is resolved and looked up.
+
+    Notes:
+        - Normally written as ``AttrRef(...).exists()`` rather than built by
+          hand.
+        - Exists because the dual-role read cannot answer the question: an
+          unbound slot yields EMPTY, and so does a slot holding EMPTY.
+        - Only the address is resolved; the slot's value is never read.
+
+    Yields:
+        True or False, never a sentinel. An address that resolves to EMPTY or
+        INVALID is looked up as a key like any other, and is simply absent.
+
+    Example:
+        >>> nu.run(nu.AttrRef("x").exists())[0]
+        False
+
+        >>> nu.run(nu.Let("x", 1, nu.AttrRef("x").exists()))[0]
+        True
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
@@ -116,31 +187,49 @@ class AttrExists(ScalarQuery):
 
 
 class Let(Bracket):
-    """``Let(name, value, body)`` - bind ``name -> value`` for the body's duration.
+    """Binds a name to a value in ``ctx.attrs`` for the body's duration.
 
-    Evaluates ``value`` once, pushes ``ctx.attrs[name] = <that value>``, runs
-    ``body``, then restores the prior slot on exit (LIFO on nesting, also on
-    exception). ``body`` reads the binding through ``AttrRef(name)`` (or any
-    typed variant), so the same value is dereferenceable an arbitrary number
-    of times inside the body without recomputing ``value``.
+    Evaluates ``value`` once, pushes it into ``ctx.attrs`` under ``name``,
+    runs ``body``, then restores the prior slot on the way out - on a clean
+    exit and on an exception alike. The body reads the binding back through
+    ``AttrRef(name)`` (or any typed variant), so the one value can be
+    dereferenced any number of times without recomputing it.
 
-    Semantics vs ``SetCmd``: ``SetCmd`` writes an open-ended slot that persists
-    on the returned context; ``Let`` is scoped, so the binding never leaks
-    past ``body``. The two are duals - use ``SetCmd`` when the write is the
-    point, ``Let`` when the binding is a local for the body.
+    Args:
+        name: evaluated at run time and required to be a ``str``. A Python
+            ``str`` is wrapped in a ``Literal`` at construction, so the
+            common case is written with a plain name.
+        value: evaluated once, before the body runs.
+        body: runs with the binding in place. Required despite the default.
 
-    Nesting: inner ``Let(name, ...)`` shadows outer ``Let(name, ...)`` for the
-    duration of the inner body; the outer value is restored on the inner's pop.
+    Notes:
+        - Scoped where ``SetCmd`` is open-ended. ``SetCmd`` leaves a slot on
+          the context the run returns; a ``Let`` binding never leaks past its
+          body. Reach for ``SetCmd`` when the write is the point, ``Let``
+          when the binding is a local.
+        - Nesting shadows: an inner ``Let`` on the same name hides the outer
+          one, and the outer value comes back when the inner body ends.
+        - Unlike ``SetCmd``, an EMPTY or INVALID ``value`` is still bound, so
+          the slot exists and reads back as that sentinel.
+        - Over a stream body the binding spans the whole drain, and is popped
+          when the stream is exhausted.
+        - Children are ordered ``[body, value, name]``; the body sits in slot
+          0 to satisfy the Span transparency law.
 
-    Transparent like any Span: yields whatever ``body`` yields (scalar or
-    stream) in the body's cardinality. If ``body`` is a Command (writes),
-    ``Let`` writes; if it is a Query yielding a Str, ``Let`` yields Str.
+    Yields:
+        Whatever ``body`` yields, in the body's own cardinality. Transparent
+        like any Span: a Command body makes ``Let`` a writer, a stream body
+        makes it a stream.
 
-    Children (fixed): ``[body, value, name]``. Body is slot 0 for the Span
-    transparency law; ``value`` and ``name`` are any Nu expressions. ``name``
-    is evaluated at eval time and coerced to ``str`` - callers passing a
-    Python ``str`` get it auto-wrapped in ``Literal`` at construction, so the
-    common case reads ``Let("k", ..., body=...)`` unchanged.
+    Example:
+        >>> nu.run(nu.Let("n", 7, nu.Add(nu.AttrRef("n"), 1)))[0]
+        8
+
+        >>> nu.run(nu.Let("n", 2, nu.Let("n", 5, nu.Mul(nu.AttrRef("n"), 10))))[0]
+        50
+
+        >>> nu.run(nu.Let("n", 7, nu.AttrRef("n")))[1].attrs
+        Attributes()
     """
 
     def __init__(self, name: object, value: object, body: Nu | None = None) -> None:

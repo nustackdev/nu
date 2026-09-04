@@ -5,6 +5,7 @@ Surface:
     - PromptRef: MethodRef for a Claude Code prompt endpoint on a Service.
     - CCPrompt: the interaction produced when a PromptRef is called.
     - bind(service_cls, **options): Provide the CCFabric tagged by the Service class.
+    - Session: bracket that makes every prompt inside it continue one conversation.
 
 Both sync and async are supported; prefer `nu.arun` for real use so cc calls
 don't block the event loop (streaming, UI ticks, parallel prompts all need it).

@@ -47,7 +47,13 @@ _SHUTDOWN_EXCS: tuple[type[BaseException], ...] = (
 
 
 class QueueClosed(Exception):  # noqa: N818
-    """Raised by Get when shut down and empty, or by Put when shut down."""
+    """Raised when the queue is shut down: by Put always, by Get once drained.
+
+    Notes:
+        - One exception for both halves: janus raises a different shutdown
+          type per side and per mode, and all of them are normalised to this
+          so a consumer catches one thing.
+    """
 
 
 def _normalize_shutdown(exc: BaseException) -> QueueClosed:
@@ -55,9 +61,32 @@ def _normalize_shutdown(exc: BaseException) -> QueueClosed:
 
 
 class Put(Command):
-    """Put a value into a JQueueRef. Blocks when full for back-pressure.
+    """Enqueues a value, waiting for room when the queue is full.
 
-    Children: ``[queue, value]``.
+    Args:
+        queue: the node yielding the queue to write into.
+        value: what to enqueue.
+
+    Notes:
+        - Waiting is the point: a bounded queue turns a fast producer into a
+          slow one instead of letting the backlog grow.
+        - Routes itself by mode - the sync run blocks the calling thread, the
+          async run awaits on the event loop - so the same tree works from
+          either side.
+        - A shut-down queue raises QueueClosed rather than dropping the
+          value.
+
+    Yields:
+        Nothing.
+
+    Example:
+        >>> from nu.mem.refs.jqueue import JQueueRef
+        >>> class Buf(nu.Shape):
+        ...     queue = JQueueRef.slot(capacity=2, item_type=int)
+        >>> ctx = nu.Context().bind(dict, {}, Buf)
+        >>> _ = nu.run(Buf.queue.put(1), ctx)
+        >>> nu.run(Buf.queue.qsize(), ctx)[0]
+        1
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -93,11 +122,31 @@ class Put(Command):
 
 
 class Get(ScalarAction):
-    """Pop one value from a JQueueRef. Blocks when empty.
+    """Takes the oldest item, waiting for one when the queue is empty.
 
-    Children: ``[queue]``. Yields the popped item. A mutating producer: it
-    consumes from the underlying queue and yields, so it is a ScalarAction and
-    declares ``mutates`` on slot 0.
+    Args:
+        queue: the node yielding the queue to read from.
+
+    Notes:
+        - It both consumes and yields, which is why it is an action rather
+          than a query: evaluating it twice takes two items, so it is not
+          something to treat as a repeatable read.
+        - Routes itself by mode - the sync run blocks the calling thread, the
+          async run awaits on the event loop.
+        - Once the queue is shut down and drained it raises QueueClosed,
+          including for a consumer already waiting when the shutdown lands.
+
+    Yields:
+        The item taken from the queue.
+
+    Example:
+        >>> from nu.mem.refs.jqueue import JQueueRef
+        >>> class Buf(nu.Shape):
+        ...     queue = JQueueRef.slot(capacity=2, item_type=int)
+        >>> ctx = nu.Context().bind(dict, {}, Buf)
+        >>> _ = nu.run(Buf.queue.put(7), ctx)
+        >>> nu.run(Buf.queue.get(), ctx)[0]
+        7
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -131,9 +180,28 @@ class Get(ScalarAction):
 
 
 class QSize(ScalarQuery):
-    """Snapshot count of items in a JQueueRef.
+    """How many items are waiting in the queue at this instant.
 
-    Children: ``[queue]``. Yields an int.
+    Args:
+        queue: the node yielding the queue to count.
+
+    Notes:
+        - A snapshot, not a guarantee: another thread or task can add or take
+          an item before the value is used, so it says nothing about whether
+          the next ``get`` will wait.
+        - A pure read - it never touches the queue's contents - so the only
+          fabric effect in the tree is the ref that fetches the queue.
+
+    Yields:
+        The item count as an int.
+
+    Example:
+        >>> from nu.mem.refs.jqueue import JQueueRef
+        >>> class Buf(nu.Shape):
+        ...     queue = JQueueRef.slot(item_type=int)
+        >>> ctx = nu.Context().bind(dict, {}, Buf)
+        >>> nu.run(Buf.queue.qsize(), ctx)[0]
+        0
     """
 
     def __init__(self, queue: JQueue) -> None:
@@ -159,12 +227,32 @@ class QSize(ScalarQuery):
 
 
 class Close(Command):
-    """Shut down a JQueueRef.
+    """Shuts the queue down, both the sync and the async half at once.
 
-    Subsequent puts raise; pending and subsequent gets drain remaining
-    items, then raise QueueClosed.
+    Args:
+        queue: the node yielding the queue to shut down.
 
-    Children: ``[queue]``.
+    Notes:
+        - Items already queued are not thrown away: consumers drain what is
+          left and only then start raising QueueClosed.
+        - Any later ``put`` raises QueueClosed; there is no reopening.
+        - The slot still holds the same queue object afterwards, so a read
+          does not hand back a fresh one.
+
+    Yields:
+        Nothing.
+
+    Example:
+        >>> from nu.mem.refs.jqueue import JQueueRef, QueueClosed
+        >>> class Buf(nu.Shape):
+        ...     queue = JQueueRef.slot(item_type=int)
+        >>> ctx = nu.Context().bind(dict, {}, Buf)
+        >>> _ = nu.run(Buf.queue.close(), ctx)
+        >>> try:
+        ...     _ = nu.run(Buf.queue.put(1), ctx)
+        ... except QueueClosed:
+        ...     print("closed")
+        closed
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")

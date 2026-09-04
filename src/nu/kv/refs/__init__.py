@@ -1,15 +1,28 @@
-"""Virtuals substrate refs.
+"""The refs that address KV storage: one slot in a shape, one place on disk.
 
-Base:
-    ViewRef         refs to container views (dict, list, set, shape)
-    PrimitiveRef    refs to leaf values (int, str, etc.)
+Two substrates underneath, and everything else is a specialisation of one of
+them. ``ViewRef`` reads as a live container view, so collection ops run
+against storage; ``PrimitiveRef`` subscripts its parent, so a leaf reads as
+its value.
 
-Items:
-    ItemRef         generic typed leaf-value holder
-    IntRef, StrRef, FloatRef, BoolRef, BytesRef   typed item refs
+Which ref a slot is declared with decides how the value is laid out, and that
+is the one choice worth thinking about:
 
-Collections:
-    ShapeRef, DictRef, ListRef, SetRef, ShapesListRef, ShapesDictRef
+- Leaves: ``ItemRef`` untyped, ``IntRef`` / ``StrRef`` / ``FloatRef`` /
+  ``BoolRef`` / ``BytesRef`` typed, each with its Form's operators.
+- Std-library leaves: ``DecimalRef``, ``FractionRef``, ``ComplexRef``,
+  ``BasisPointRef``, ``PercentageRef``, ``DateRef``, ``DatetimeRef``,
+  ``TimeRef``, ``TimedeltaRef``, ``TimezoneRef``, ``PathRef``, ``UUIDRef``.
+  Each stores a form the substrate can hold and lifts it back on read.
+- Decomposed containers: ``ListRef``, ``DictRef``, ``SetRef``, ``ShapeRef``,
+  ``ShapesListRef``, ``ShapesDictRef``. Elements get their own addresses, so
+  they can be read, written and watched one at a time.
+- Whole-blob containers: ``PrimitiveListRef``, ``PrimitiveDictRef``,
+  ``PrimitiveTupleRef``, ``PrimitiveSetRef``, ``PrimitiveFrozenSetRef``. One
+  opaque value, heterogeneous contents, no per-element addresses.
+- Sampled maps: ``Kh57Ref`` and ``Kh57ShapesRef``, int-keyed and laid out so
+  a sample of a key range costs the same at any scale.
+- ``ProgramRef``: Nu source stored in a leaf, runnable from the slot.
 """
 
 from .base import Facet, PrimitiveRef, ViewRef

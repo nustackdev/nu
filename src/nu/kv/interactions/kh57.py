@@ -1,15 +1,17 @@
-"""Virtuals kh57 interactions: range reservoir sampling atoms.
+"""kh57 atoms: read a sub-range of an int-keyed series, sampled or whole.
 
-Kh57Sample: scalar query, yields a list of ``(int_key, value)`` samples
-from a Kh57View's sub-range via ``kh57.sample`` (range reservoir sampling).
+A ``Kh57Ref`` names a container whose keys are integers spread across levels,
+built so that a uniform sample of any sub-range costs about the same whether
+the range holds a thousand entries or a billion. These two atoms are the read
+side of that: one draws a bounded sample, the other materializes everything.
 
-Kh57Range: stream query, yields ``(int_key, value)`` pairs from a
-Kh57View's sub-range in original int-key order.
+Both take the container Ref at slot 0 and their bounds as ordinary children,
+so a bound can be another Ref read at run time rather than a number fixed when
+the tree was written. Both come back as a list of ``(int_key, value)`` pairs
+and both answer EMPTY when the container is not reachable.
 
-Both hold the container view Ref at ``children[0]``; parameters (n, begin,
-end) live at slots 1..3 and are auto-wrapped as Literal when passed as
-raw values. Both are deterministic: same view state + same seeded rng
-gives the same result.
+Neither is written directly in normal use. ``Kh57Ref.sample`` and
+``Kh57Ref.range`` build them, already wrapped in the ``Any`` form.
 """
 
 from __future__ import annotations
@@ -39,17 +41,46 @@ def _child_nid(rt: Runtime, nid: int, slot: int) -> int:
 
 
 class Kh57Sample(ScalarQuery):
-    """Range reservoir sample from a Kh57View.
+    """Draws a uniform sample of a kh57 series' sub-range, in bounded time.
 
-    Yields a list of ``(int_key, value)`` pairs from the sub-range
-    ``[begin, end)``. Deterministic given the view's salt + a seeded ``rng``.
-    Stable under appends outside the queried range.
+    Cost tracks ``n`` rather than the size of the range, so sampling a window
+    holding a billion entries is no dearer than one holding a thousand. That
+    is what makes it usable as the read behind a live chart over a series that
+    keeps growing.
 
-    Children:
-        0: kh57 view Ref
-        1: n, number of samples requested
-        2: begin, inclusive lower bound (None means unbounded)
-        3: end, exclusive upper bound (None means unbounded)
+    Args:
+        ref: the kh57 container Ref to sample.
+        n: the ceiling on how many pairs come back. A range holding fewer
+            than ``n`` entries yields all of them.
+        begin: inclusive lower bound on the int key. None leaves the range
+            open at the bottom.
+        end: exclusive upper bound on the int key. None leaves the range
+            open at the top.
+
+    Notes:
+        - ``n``, ``begin`` and ``end`` are children, so each may be a Ref
+          read at run time; a raw value is wrapped as a Literal.
+        - The keyword-only ``rng`` picks the random source; seed it to make
+          a run reproducible. It is not a child: it rides the atom's
+          payload, so a tree rewrite carries it, but it cannot be computed.
+        - The sample is stable under appends outside the queried range: rows
+          landing above ``end`` do not disturb what a fixed window returns.
+        - Bounds are evaluated after the container is opened, so a missing
+          container short-circuits before they run.
+
+    Yields:
+        A list of ``(int_key, value)`` pairs, unordered. EMPTY when the
+        container is not reachable.
+
+    Example:
+        class State(nu.Shape):
+            nums = nu.kv.Kh57Ref.slot(int)
+            cursor = nu.kv.IntRef.slot()
+
+        app = nu.With(
+            nu.kv.memory_navigator(),
+            body=nu.kv.Snapshot(Kh57Sample(State.nums, 200, 0, State.cursor)),
+        )
     """
 
     def __init__(
@@ -103,17 +134,42 @@ class Kh57Sample(ScalarQuery):
 
 
 class Kh57Range(ScalarQuery):
-    """Ordered materialization of a Kh57View sub-range.
+    """Reads a kh57 series' sub-range whole, in ascending key order.
 
-    Yields a list of ``(int_key, value)`` pairs with ``begin <= int_key < end``,
-    in ascending int-key order. Level-merged under the hood. Materialized to
-    a list to match ``.sample()``'s scalar shape; users who want to stream
-    can iterate the returned list.
+    The keys of a kh57 container are spread across levels, so a range is
+    assembled by merging one ordered walk per level. Cost tracks the size of
+    the range, unlike ``Kh57Sample``: this is the atom for a window you know
+    is small, and the wrong one for a window that grows without bound.
 
-    Children:
-        0: kh57 view Ref
-        1: begin, inclusive lower bound
-        2: end, exclusive upper bound
+    The merged walk is drained into a list before the value leaves the atom,
+    to match ``Kh57Sample``'s scalar shape. Anyone wanting to stream iterates
+    the list.
+
+    Args:
+        ref: the kh57 container Ref to read.
+        begin: inclusive lower bound on the int key. Must be non-negative.
+        end: exclusive upper bound on the int key. Must not exceed the key
+            space the container's level layout covers.
+
+    Notes:
+        - ``begin`` and ``end`` are children, so either may be a Ref read at
+          run time; a raw value is wrapped as a Literal.
+        - Unlike ``Kh57Sample`` the bounds are required, not optional: there
+          is no open-ended form.
+        - An empty or inverted range (``begin >= end``) yields an empty list
+          rather than an error. Out-of-space bounds do raise ``ValueError``.
+        - Bounds are evaluated after the container is opened, so a missing
+          container short-circuits before they run.
+
+    Yields:
+        A list of ``(int_key, value)`` pairs with ``begin <= int_key < end``,
+        ascending by key. EMPTY when the container is not reachable.
+
+    Example:
+        app = nu.With(
+            nu.kv.memory_navigator(),
+            body=nu.kv.Snapshot(Kh57Range(State.nums, 0, 100)),
+        )
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

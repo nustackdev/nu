@@ -1,7 +1,13 @@
-"""nu.mem: Nu Shapes fabric adapter for in-memory state.
+"""nu.mem: the shape fabric over plain nested Python dicts.
 
-Plain nested Python dicts as the data bag. No storage backend, no views,
-no reactivity. Just dicts.
+A Shape declares slots, each slot is a ref, and every ref is a path of keys
+into one dict you hand in. No storage backend, no views, no reactivity: reads
+walk the dict, writes mutate it in place, and the dict stays yours to print,
+copy or dump.
+
+A missing key on the way down reads EMPTY rather than raising, and a write
+creates whatever levels it needs, so a Shape can be laid over an empty dict
+and filled in as it goes.
 
 Usage::
 
@@ -15,6 +21,13 @@ Usage::
 
     data = {}
     ctx = Context().bind(dict, data, User)
+
+Typed leaves (``IntRef``, ``StrRef``, ``DatetimeRef``, ...) each carry their
+value Form, so the ref itself is an operand. Containers (``ListRef``,
+``DictRef``, ``SetRef``) hold a plain list, dict or set. ``ShapeRef``,
+``ShapesListRef`` and ``ShapesDictRef`` nest Shapes inside Shapes.
+``ProgramRef`` holds Nu source. ``JQueueRef``, in ``nu.mem.refs.jqueue``,
+holds a live janus queue and is imported by its own path.
 """
 
 from nu.mem import refs

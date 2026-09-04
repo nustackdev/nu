@@ -36,7 +36,29 @@ S = TypeVar("S", bound="Shape")
 
 
 class ShapesDictRef(ReactiveShapesMappingRef[T], ViewRef[dict[K, dict]], Generic[K, T]):
-    """Virtuals shapes dict reference: mapping of homogeneous shapes."""
+    """A mapping of one shape type in KV storage, keyed and descended into.
+
+    Subscripting lands on a shape ref for that key rather than on a value, so
+    a row's fields are reachable and writable one at a time:
+    ``mids["m1"].note.set(...)``.
+
+    Notes:
+        - Every row is stored decomposed, field by field, so writing one
+          field of one row does not read or rewrite the others.
+        - A key vivifies on write: writing a field under a key that is not
+          there yet creates the row and every level above it.
+        - Reading a field under a key that is not there yields EMPTY.
+        - The key may be an expression or a ref, including a ref from
+          another fabric, and is resolved when the path is walked.
+        - Keys default to str; the key type is fixed at declaration.
+
+    Example:
+        class Order(Shape):
+            symbol = StrRef.slot()
+        class Portfolio(Shape):
+            team = ShapesDictRef.slot(Order)
+        run(Portfolio.team["desk-1"].symbol.set("SOL"), ctx)
+    """
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
         """Navigate to the shape at ``address`` as a substrate-backed virtuals ShapeRef."""

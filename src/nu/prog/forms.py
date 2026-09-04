@@ -63,6 +63,33 @@ class Program(Form, TypedNu[str]):
     The child yields the source text: a literal when the program is written
     inline, a ref when it is stored. Both verbs thread the same construction
     arguments through to :class:`~nu.prog.load.LoadNu`.
+
+    Notes:
+        - The verbs compose rather than adding atoms. ``.load()`` is a
+          ``LoadNu``, ``.run()`` is an ``Eval`` over it, and
+          ``.run(on_error=...)`` is those two inside a ``TryCatch``. The tree
+          shows the real control flow, so attribute sweeps, effect
+          classification and promise checks all reach it with no special
+          case for programs.
+        - Mixed into a substrate ref it becomes a program-valued slot
+          (``nu.kv``'s ``ProgramRef`` and its ``nu.mem`` twin), where the
+          child is what reads the source out of storage. Nothing else about
+          the Form changes, which is why the verbs are not overridable per
+          substrate.
+        - No ``.of()`` constructor. ``Program(source)`` with a bare ``str``
+          is already the right node, because ``Nu`` auto-wraps a non-Term
+          child into a ``Literal``.
+        - Everything the value carries is a ``Str``: source text is what a
+          program is until something constructs it.
+
+    Example:
+        >>> src = '''
+        ... import nu
+        ... def out():
+        ...     return nu.Int(6) * nu.Int(7)
+        ... '''
+        >>> nu.run(nu.prog.Program(src).run())[0]
+        42
     """
 
     def load(
@@ -85,6 +112,11 @@ class Program(Form, TypedNu[str]):
             filename: name frames and diagnostics attribute the source to.
             brace: tag identifying the :class:`~nu.prog.brace.PyBrace` on
                 ctx. Omit for the untagged singleton, or for no brace.
+
+        Notes:
+            - Constructing runs the module body and calls the entry point,
+              so a snippet with import-time side effects has them here even
+              though nothing evaluates the term afterwards.
 
         Returns:
             A ``LoadNu`` over this source.
@@ -121,6 +153,17 @@ class Program(Form, TypedNu[str]):
                 exception off the attrs fabric with ``AttrRef("error")``.
                 Only construction failures are caught; whatever the program
                 itself raises propagates.
+
+        Notes:
+            - The result is one ``Eval``, so the program runs exactly once
+              however many places read the yield. Compose the same
+              ``.run()`` into two slots and it constructs and runs twice,
+              which for a program that appends to a list is a silently
+              wrong world; store the yield in a Ref and read that instead.
+            - ``on_error`` catches construction only. A program that
+              constructs and then raises while running propagates, so wrap
+              the whole thing in a second ``TryCatch`` when that failure
+              should also be an outcome rather than a crash.
 
         Returns:
             An ``Eval`` over the loaded term, wrapped in a ``TryCatch`` when

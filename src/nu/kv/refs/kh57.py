@@ -36,11 +36,28 @@ DV = TypeVar("DV")
 
 
 class Kh57Ref(DictRef[int, V], Generic[V]):
-    """Sparse int-keyed mapping with kh57-encoded layout for range sampling.
+    """A sparse int-keyed mapping in KV storage, laid out for range sampling.
 
-    Inherits all mapping semantics from :class:`DictRef`. Keys are always
-    non-negative 57-bit ints; the default view is :class:`Kh57View`. Adds
-    :meth:`sample` and :meth:`range` on top.
+    Same mapping surface as a dict slot, with the keys pinned to non-negative
+    57-bit ints and the physical layout encoded so that a sample or a scan
+    over a key range reads only that range. Built for the case where the map
+    holds billions of entries and the question is about a window of them.
+
+    Notes:
+        - Keys are ints; a key outside the non-negative 57-bit range is out
+          of contract.
+        - Iteration and ``keys`` come back in ascending key order, whatever
+          order the writes happened in.
+        - ``sample`` and ``range`` are what the layout buys; everything else
+          behaves as it does on a plain dict slot.
+        - Values are plain values here. Reach for Kh57ShapesRef when each
+          entry should be a shape with fields of its own.
+
+    Example:
+        class Ledger(Shape):
+            entries = Kh57Ref.slot(int)
+        run(Ledger.entries.set_item(42, 100), ctx)
+        run(Ledger.entries.sample(10, begin=0, end=1000), ctx)
     """
 
     def __init__(
@@ -100,11 +117,32 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
         begin: IntArg | None = None,
         end: IntArg | None = None,
     ) -> Any:
-        """Range reservoir sample - return up to ``n`` (key, value) pairs.
+        """Draw a uniform sample of up to ``n`` entries from a key range.
 
-        Yields a list of ``(int_key, value)`` tuples from the sub-range
-        ``[begin, end)``. Deterministic given a seeded backend salt;
-        stable under appends outside the queried range.
+        Args:
+            n: the ceiling on how many pairs come back. A range holding
+                fewer than ``n`` entries yields all of them.
+            begin: inclusive lower bound on the key. None leaves the range
+                open at the bottom.
+            end: exclusive upper bound on the key. None leaves the range
+                open at the top.
+
+        Notes:
+            - Cost tracks ``n``, not the size of the range, so a window
+              holding a billion entries samples as cheaply as a small one.
+            - Each argument is a child, so any of them may be an expression
+              or a ref read at run time.
+            - Draws from the unseeded module random source. Build the
+              Kh57Sample atom directly with its ``rng`` argument when a run
+              has to be reproducible.
+            - Stable under appends outside the queried range.
+
+        Yields:
+            A list of ``(int_key, value)`` pairs, unordered. EMPTY when the
+            container is not reachable.
+
+        Example:
+            run(Ledger.entries.sample(100, begin=0, end=10_000), ctx)
         """
         from nu.kv.interactions.kh57 import Kh57Sample
 
@@ -115,7 +153,28 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
         begin: IntArg,
         end: IntArg,
     ) -> Any:
-        """List of ``(int_key, value)`` pairs in ``[begin, end)``, key-ordered."""
+        """Read a key range whole, in ascending key order.
+
+        Args:
+            begin: inclusive lower bound on the key. Must be non-negative.
+            end: exclusive upper bound on the key. Must stay inside the key
+                space the container's layout covers.
+
+        Notes:
+            - Cost tracks the size of the range, so this is the wrong call
+              for a window that grows without bound; sample that instead.
+            - Both bounds are required, unlike on ``sample``, and both are
+              children, so either may be computed at run time.
+            - An empty or inverted range yields an empty list rather than an
+              error; bounds outside the key space raise ValueError.
+
+        Yields:
+            A list of ``(int_key, value)`` pairs, ascending by key. EMPTY
+            when the container is not reachable.
+
+        Example:
+            run(Ledger.entries.range(0, 100), ctx)
+        """
         from nu.kv.interactions.kh57 import Kh57Range
 
         return Any(Kh57Range(self, begin, end))

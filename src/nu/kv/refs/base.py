@@ -60,7 +60,11 @@ T = TypeVar("T")
 
 
 class Facet(Enum):
-    """View facet: none (default), lazy, or eager."""
+    """How a fetched View hands its contents back: unfaceted, lazy, or eager.
+
+    NONE returns the View as the Navigator opened it. A ViewRef with no facet
+    on its payload reads as LAZY, so LAZY is the effective default.
+    """
 
     NONE = "none"
     LAZY = "lazy"
@@ -153,11 +157,37 @@ class _VirtualsRefBase(StructuredRef, Generic[T]):
 
 
 class ViewRef(_VirtualsRefBase[T], Generic[T]):
-    """Virtuals ref to a container view (dict / list / set / shape).
+    """A ref to one container slot in KV storage, read as a live virtuals View.
 
-    ``compile`` navigates to and returns the faceted View itself, so the
-    collection ops (keys/values/items/get/append/add/...) run against the live
-    virtuals View. Supports lazy/eager facets (default: lazy).
+    Evaluating it navigates to its path and hands back the View itself, not a
+    copy, so every container op written on the ref (``keys``, ``append``,
+    ``add``, ``len``, ...) runs against storage rather than against a
+    materialized Python value.
+
+    The path is the parent chain: each level contributes an address that is a
+    child on the tree and is evaluated at run time, so a key may be a literal,
+    a computed expression, or a ref from another fabric. The Navigator and the
+    storage context are pulled from the Context under the ref's root shape,
+    with the resolved path passed along so a binding can route on it.
+
+    Notes:
+        - Read and write take different doors: reads open the path as-is,
+          while a write materializes every ancestor first, so writing deep
+          into never-touched storage creates the whole chain.
+        - A whole-container write stores through the parent with the ref's
+          own declared view class, so a slot declared as Kh57View keeps that
+          layout instead of collapsing onto the container layer's default.
+        - Erasing a slot that is not there is a no-op, not an error.
+        - Never yields EMPTY: an unwritten path opens as an empty View, which
+          reads as length zero.
+        - The storage context is a transaction when one is bound, otherwise a
+          snapshot; a snapshot is read-only, so writes need the transaction.
+
+    Example:
+        class Portfolio(Shape):
+            tags = ListRef.slot(str)
+        run(Portfolio.tags.append("core"), ctx)
+        run(Portfolio.tags.len(), ctx)
     """
 
     def __init__(
@@ -185,7 +215,13 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
 
     @property
     def lazy(self) -> ViewRef[T]:
-        """Return a lazy-faceted clone. No-op if already lazy."""
+        """The same ref read lazily: nested containers stay Views.
+
+        Notes:
+            - Already the default, so this is only worth writing to undo an
+              eager facet picked up earlier in a chain.
+            - Returns the ref unchanged when it is already lazy.
+        """
         return (
             self
             if self._payload.get("facet", Facet.LAZY) is Facet.LAZY
@@ -194,7 +230,16 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
 
     @property
     def eager(self) -> ViewRef[T]:
-        """Return an eager-faceted clone. Iteration extracts to Python objects."""
+        """The same ref read eagerly: reads extract to plain Python values.
+
+        Notes:
+            - Nested containers come back extracted rather than as child
+              Views, so the whole subtree is read out of storage.
+            - The facet rides the ref's payload, so it applies to the ops
+              written on it, not to the refs descended from it.
+            - Returns the ref unchanged when it is already eager, and leaves
+              the view alone when its type has no eager facet.
+        """
         return (
             self
             if self._payload.get("facet", Facet.LAZY) is Facet.EAGER
@@ -340,10 +385,31 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
 
 
 class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
-    """Virtuals ref to a primitive / leaf value.
+    """A ref to one leaf value in KV storage, read by subscripting its parent.
 
-    ``compile`` navigates to the parent View and subscripts to read the value;
-    ``write`` / ``erase`` mutate the parent View at this leaf's address.
+    Evaluating it opens the parent container and subscripts it at this leaf's
+    address, so what comes back is the stored value rather than a View. The
+    path is built the same way as for a container ref: every level's address
+    is a child on the tree, resolved at run time.
+
+    Notes:
+        - Yields EMPTY when the leaf is absent, when the parent has no such
+          key or index, and when storage holds its own empty marker there.
+          Reading a missing leaf is not an error.
+        - A write materializes every ancestor along the path first, so a leaf
+          can be written into storage that has nothing above it yet.
+        - Erasing a leaf that is not there is a no-op.
+        - A subclass that stores a value in some other form overrides the
+          lift-on-read and the write command; the leaf address itself is
+          unaffected by that.
+        - Carries the parent lookup that primitive change observation needs,
+          so a typed leaf ref gets ``on_change`` with no substrate work.
+
+    Example:
+        class Portfolio(Shape):
+            name = StrRef.slot()
+        run(Portfolio.name.set("core"), ctx)
+        run(Portfolio.name, ctx)
     """
 
     def __init__(

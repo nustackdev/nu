@@ -128,6 +128,15 @@ class InProcess:
     The snippet still runs with this process's ``sys.modules`` and this
     process's ``nu``, which is the whole reason to reach for :class:`Venv`
     instead when a program was authored against something else.
+
+    Notes:
+        - No isolation of any kind. The snippet's module body runs here, so
+          it can import, mutate globals and touch this process however it
+          likes; the exec namespace is fresh, nothing else is.
+        - Stateless across calls, so one instance is the same thing as one
+          per node and the unbound fallback brace is safely shared.
+        - Nothing to start and nothing to stop. ``close`` exists only so
+          both braces close the same way.
     """
 
     def construct(
@@ -187,6 +196,33 @@ class Venv:
         start_timeout: seconds to wait for the child's ready frame.
         cwd: working directory for the child. Defaults to inheriting ours.
         env: full environment for the child. Defaults to inheriting ours.
+
+    Notes:
+        - The interpreter path is resolved in ``__init__``, so a typo is an
+          error where it was written rather than at the far end of a
+          construct call.
+        - The child needs a compatible ``nustack-py`` installed. cloudpickle
+          sends anything importable by name, so the parent rebinds
+          ``nu.core.Str`` to its own install and the two have to agree on
+          what that name means. This is what a venv brace *is*, a second nu
+          environment, not a limitation to route around.
+        - A class the snippet mints at runtime travels by value instead,
+          bytecode and closure and all, because it lives in a module that is
+          not in ``sys.modules``. So the term that comes home is
+          self-sufficient: shared vocabulary resolves here, the program's own
+          inventions arrive whole, and the minted class is not identical to
+          any parent-side class of the same name.
+        - Terms are rebuilt by unpickling, so nothing about object identity
+          survives the trip. That is the one behavioural difference from
+          :class:`InProcess`.
+        - Construct calls are serialized on a lock: one child, one request
+          in flight, so concurrent callers queue.
+        - ``construct`` starts the child on first use if you did not, and
+          ``close`` is safe to call twice. A construct that blows up leaves
+          the child either reusable or reaped, never orphaned.
+        - A snippet that kills the interpreter outright cannot produce a
+          diagnostic, so that comes back as a ``BraceError`` about a dead
+          child rather than as the snippet's failure.
     """
 
     def __init__(

@@ -32,7 +32,37 @@ S = TypeVar("S", bound="Shape")
 
 
 class ShapeRef(MutableShapeRef, RefBase[dict[str, object]], Generic[T]):
-    """Dict shape reference: structured container backed by nested dict."""
+    """A nested Shape slot in the dict substrate, stored as an inner dict.
+
+    Attribute access descends: ``ref.field`` resolves the named slot on the
+    held Shape class and hands back that field's own ref, parented here, so
+    dot chains navigate arbitrarily deep before anything is read. The mapping
+    calls on the ref itself act on the inner dict as a whole.
+
+    Args:
+        address: this level's key, a literal or a Nu term yielding one.
+
+    Notes:
+        - The inner dict does not have to exist first: writing through a
+          field creates every level on the way down.
+        - Nothing enforces the Shape: keys the class never declared can sit
+          in the same dict and are read only through the mapping calls.
+
+    Yields:
+        The inner dict as stored. EMPTY when nothing was ever written under
+        it.
+
+    Example:
+        >>> class Order(nu.Shape):
+        ...     symbol = nu.mem.StrRef.slot()
+        >>> class Book(nu.Shape):
+        ...     best = nu.mem.ShapeRef.slot(Order)
+        >>> data = {}
+        >>> ctx = nu.Context().bind(dict, data, Book)
+        >>> _ = nu.run(Book.best.symbol.set("AAPL"), ctx)
+        >>> data
+        {'best': {'symbol': 'AAPL'}}
+    """
 
     def _wrap_result(self, op: Nu) -> Dict[str, object]:
         """Wrap a shape-level op result as a Dict."""
@@ -77,10 +107,19 @@ class ShapeRef(MutableShapeRef, RefBase[dict[str, object]], Generic[T]):
     def slot(cls, shape_type: type[S]) -> S:
         """Declare a slot holding a nested ``shape_type`` shape.
 
-        Statically returns ``S`` (the shape class) so that the annotation
-        ``field: Order = ShapeRef.slot(Order)`` type-checks and dot-nav
-        autocompletes over ``Order``'s slots. Runtime returns a ``Slot`` -
-        replaced with a ``ShapeRef`` by ``ShapeMeta``.
+        Args:
+            shape_type: the Shape class held at this slot.
+
+        Notes:
+            - Statically it returns the Shape class itself, so
+              ``best: Order = ShapeRef.slot(Order)`` type-checks and dot
+              navigation autocompletes over ``Order``'s slots.
+            - ``best: ShapeRef[Order]`` as an annotation declares the same
+              slot.
+
+        Example:
+            class Book(Shape):
+                best = ShapeRef.slot(Order)
         """
         return Slot(cls, shape_type=shape_type)  # type: ignore[return-value]
 

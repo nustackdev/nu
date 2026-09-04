@@ -24,9 +24,17 @@ __all__ = ["_ContextRef"]
 class _ContextRef(Ref):
     """A Context Ref whose address is its sole child, resolved through the runtime.
 
-    ``_address`` / ``_aaddress`` evaluate the address child given the Ref's own
-    node id, the same resolution the dual-role read uses. Exposed so write ops
-    can resolve the target through the Ref rather than reaching past it.
+    The shared base under ``AttrRef`` and ``FabricRef``. Both are Refs whose
+    one child *is* the address, which means the address is an ordinary Nu
+    expression and can be computed rather than fixed at write time. This base
+    spells that pattern once; a subclass decides what the address means (a
+    key in ``ctx.attrs``, a fabric type) and how a read is answered.
+
+    Notes:
+        - Address resolution is given the Ref's own node id, so it is the
+          same resolution the dual-role read performs. Write ops go through
+          it rather than reaching past the Ref, which is what keeps the write
+          mechanism with the fabric.
     """
 
     def _address(self, rt: Runtime, nid: int) -> object:

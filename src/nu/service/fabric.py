@@ -17,10 +17,18 @@ __all__ = ["ServiceFabric"]
 
 
 class ServiceFabric:
-    """Holds a single Python object whose attributes back a Service's methods.
+    """Holds a single Python object whose attributes back a Service's endpoints.
 
-    Any bound method / attribute on `target` may be exposed as an endpoint
-    on the Service; the fabric just does the getattr and calls it.
+    Bound on the context by ``nu.service.bind``, tagged with the Service class,
+    so the interactions can find it from the owning Service named in their Ref.
+
+    Notes:
+        - Any attribute on ``target`` can be an endpoint. The fabric does the
+          getattr and hands the result back; the interaction calls it.
+        - Nothing is opened or closed. Setup and cleanup exist only to satisfy
+          the ``Provide`` lifecycle and do nothing, so the object's lifetime is
+          the caller's.
+        - One target per fabric. Two targets means two Services, two binds.
     """
 
     def __init__(self, *, target: object) -> None:
@@ -43,5 +51,12 @@ class ServiceFabric:
         return None
 
     def resolve(self, name: str) -> object:
-        """Return `getattr(target, name)` — the bound method / attribute to dispatch."""
+        """Fetch the attribute an endpoint dispatches to off the target.
+
+        Notes:
+            - Nothing is cached, so an attribute replaced on the target between
+              calls takes effect on the next call.
+            - A missing attribute raises AttributeError at run. Endpoint names
+              are never checked when the Service class is declared.
+        """
         return getattr(self.target, name)

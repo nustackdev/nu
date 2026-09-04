@@ -98,6 +98,25 @@ def construct(
             parameter with no matching key and no default is an error.
         filename: name frames and diagnostics attribute the source to.
 
+    Notes:
+        - Total. Every way a snippet can fail is a Diagnostic return, in the
+          order they are reached: the source does not parse, the module body
+          raises, the entry point is missing, the entry point is not
+          callable, a declared parameter cannot be bound, the entry point
+          raises, the entry point returns a non-Nu. Failures in *our* code
+          still raise, because the caller may be a subprocess that has to
+          ship a snippet's failure home and cannot ship ours.
+        - Stops at the first failure. A snippet with two problems reports
+          the earlier one.
+        - The module runs under ``__name__ == "__nu_program__"``, which is
+          not in ``sys.modules``. That is what makes a class the snippet
+          mints unpicklable by name and therefore transportable by value.
+        - The source is seeded into ``linecache`` under ``filename`` before
+          compiling, so tracebacks render the snippet's actual lines instead
+          of a bare line number.
+        - The entry point is called with keyword arguments only, so a
+          positional-only parameter cannot be bound from scope.
+
     Returns:
         The Nu term the entry point returned, or a Diagnostic describing
         the first thing that went wrong.

@@ -45,11 +45,44 @@ __all__ = [
 class AttrRef(_ContextRef):
     """A Ref into the ``ctx.attrs`` store, keyed by its resolved address.
 
-    The address child resolves to a key. Reads yield the value at that key
-    (EMPTY when unbound) through the dual role; writes and erases resolve the
-    address and go through the Ref. The address can be anything that yields a
-    value - ``AttrRef("total")`` (a literal key) or ``AttrRef(AttrRef("k"))``
-    (a key read from another slot).
+    The sole child is the address, evaluated through the runtime like any
+    other child, so a key can be fixed at write time or computed at run time.
+    Reading is the dual role: the Ref self-yields whatever sits at that key.
+    Writing and erasing never happen at the call site - a Command hands the
+    Ref its own node id, the Ref resolves its address and touches the store,
+    so the write mechanism stays with the fabric.
+
+    Args:
+        address: evaluated to the key this Ref names. ``AttrRef("total")``
+            wraps a literal key; ``AttrRef(AttrRef("k"))`` takes the key out
+            of another slot.
+
+    Notes:
+        - An unbound slot and a slot holding EMPTY read the same, so reach
+          for ``.exists()`` when the difference matters.
+        - ``ctx.attrs`` is the short-lived axis of the Context fabric: loop
+          variables, counters, accumulators, markers. Anything longer-lived
+          is a typed binding, read through ``FabricRef``.
+        - ``Map`` and ``Filter`` bind their per-item loop variable into this
+          same store, which is why a body reads the item with an ``AttrRef``.
+        - The typed variants mix a Form in for its operator surface only.
+          Nothing checks that the value at the key really has that type; an
+          ``IntAttrRef`` over an unbound slot yields EMPTY, and arithmetic on
+          it collapses to INVALID like any other sentinel operand.
+
+    Yields:
+        The value at the resolved key. EMPTY when the key is unbound.
+
+    Example:
+        >>> nu.run(nu.AttrRef("missing"))[0]
+        <EMPTY>
+
+        >>> nu.run(nu.SetCmd(nu.AttrRef("total"), 10))[1].attrs
+        Attributes(total=10)
+
+        >>> key = nu.SetCmd(nu.AttrRef("k"), "total")
+        >>> nu.run(nu.Sequential(key, nu.SetCmd(nu.AttrRef(nu.AttrRef("k")), 5)))[1].attrs
+        Attributes(k='total', total=5)
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -89,7 +122,13 @@ class AttrRef(_ContextRef):
             del rt.ctx.attrs[address]
 
     def exists(self) -> AttrExists:
-        """A Query yielding whether this Ref's address is bound in ``ctx.attrs``."""
+        """A Query yielding whether this Ref's address is bound in ``ctx.attrs``.
+
+        Notes:
+            - The plain read cannot answer this: an unbound slot yields EMPTY
+              and so does a slot bound to EMPTY.
+            - Only the address is resolved; the slot's value is never read.
+        """
         from .interactions import AttrExists
 
         return AttrExists(self)

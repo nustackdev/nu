@@ -26,14 +26,32 @@ __all__ = ["MpWorkerRef"]
 
 
 class MpWorkerRef(FabricRef):
-    """The ``MpWorker`` bound at ``tag`` on ctx.
+    """The ``MpWorker`` bound at ``tag`` on the Context.
 
-    Examples::
+    Args:
+        tag: the address the worker was bound under. Omit for the untagged
+            singleton.
 
-        MpWorkerRef()                # -> ctx.get(MpWorker)
-        MpWorkerRef(0)               # -> ctx.get(MpWorker, 0)
-        MpWorkerRef("indexer-main")  # -> ctx.get(MpWorker, "indexer-main")
-        MpWorkerRef(("shard", 0))    # -> ctx.get(MpWorker, ("shard", 0))
+    Notes:
+        - The tag is forwarded verbatim as a single positional to
+          ``ctx.get``, so it mirrors whatever bound the worker: nothing for a
+          bare ``Provide``, the index for ``ProvideList``, the key for
+          ``ProvideDict``.
+        - ``None`` is a usable tag, distinct from omitting the tag.
+        - Reading is a lookup and nothing else. No process is spawned, and
+          the child of an already-provided worker is not contacted.
+        - The lookup runs against whichever Context is in force where the
+          ref sits, so inside a ``Teleport`` body it reads the worker
+          process's own Context rather than the parent's.
+
+    Yields:
+        The bound ``MpWorker``. EMPTY when nothing is bound at ``tag``.
+
+    Example:
+        MpWorkerRef()                # the untagged singleton
+        MpWorkerRef(0)               # a ProvideList index
+        MpWorkerRef("indexer-main")  # a ProvideDict key
+        MpWorkerRef(("shard", 0))    # a ProvideDict tuple key
     """
 
     fabric = MpWorker

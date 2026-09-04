@@ -40,7 +40,32 @@ __all__ = ["ConstructionError", "Diagnostic"]
 
 @dataclass(frozen=True)
 class Diagnostic:
-    """A single construction failure, flattened for transport."""
+    """A single construction failure, flattened for transport.
+
+    Args:
+        message: what went wrong, one line, already carrying the exception
+            type and its text where there was one.
+        lineno: line in *the source* it happened on. ``None`` when the
+            failure has no source position, which is the missing entry
+            point, the non-callable entry point, an unbindable parameter and
+            the wrong return type.
+        traceback: the frames, already rendered to text, because a live
+            traceback object does not cross a process boundary.
+
+    Notes:
+        - It says the snippet was wrong, never that the brace was. A missing
+          interpreter, a child that will not start and a child that died
+          mid-request all raise instead, because a caller can retry a
+          Diagnostic by fixing source and cannot fix a dead child that way.
+        - There is deliberately no phase or kind enum. The message says what
+          happened and the traceback says where; a classifier on top would
+          be a guess at what a caller wants to branch on.
+        - Frozen but not slotted, so a catch branch can walk into it with
+          ``Vars``, which is ``vars()`` and needs a ``__dict__``.
+        - ``str()`` renders it as ``"message (line N)"``, dropping the
+          position when there is none. That string is what a feedback loop
+          hands back to whoever wrote the source.
+    """
 
     message: str
     lineno: int | None = None
@@ -56,6 +81,17 @@ class ConstructionError(Exception):
 
     Carries the record on ``.diagnostic``. The exception is the ergonomic
     surface; the record is the transportable one.
+
+    Args:
+        diagnostic: the record. Its ``str()`` becomes the exception message,
+            so a bare ``print`` of the error already reads correctly.
+
+    Notes:
+        - ``LoadNu`` raises this rather than yielding the record, so nothing
+          downstream has to re-check every value for a Diagnostic.
+        - It is the error type ``Program.run(on_error=...)`` filters on, so
+          a catch branch that reads ``AttrRef("error")`` gets exactly
+          construction failures and not whatever the program itself raised.
     """
 
     def __init__(self, diagnostic: Diagnostic) -> None:

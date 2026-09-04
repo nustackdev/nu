@@ -30,7 +30,33 @@ E = TypeVar("E")
 
 
 class ListRef(ReactiveSequenceRef["ItemRef"], ViewRef[list[T]], Generic[T]):
-    """Virtuals sequence reference: ordered container backed by a virtuals View."""
+    """An ordered list slot in KV storage, decomposed into per-index children.
+
+    Every element lives at its own address under the slot, so the list can be
+    appended to, indexed and watched without reading the whole thing. The
+    element type is fixed at declaration, and indexing descends to a leaf ref
+    of that type rather than to a plain value.
+
+    Notes:
+        - Ops run against the live View, so ``len`` and ``contains`` are
+          answered by storage instead of by materializing the list.
+        - Indexing yields a leaf ref, which is what makes
+          ``ref[0].set(...)`` and ``ref[0].on_change()`` possible.
+        - Slices stay materialized: a slice is a value, not a ref.
+        - A position does not vivify: writing at an index the list does not
+          reach raises IndexError, so append before assigning. Reading an
+          out-of-range index yields EMPTY instead.
+        - Change observation covers the child, the children and the whole
+          subtree, each with its own hook.
+        - PrimitiveListRef is the other choice: one opaque blob, no
+          per-element addresses, but heterogeneous contents.
+
+    Example:
+        class Portfolio(Shape):
+            tags = ListRef.slot(str)
+        run(Portfolio.tags.append("core"), ctx)
+        run(Portfolio.tags[0], ctx)
+    """
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
         """Navigate to the element at ``address`` as a substrate-backed virtuals ItemRef."""

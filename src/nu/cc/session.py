@@ -28,7 +28,13 @@ __all__ = ["Session", "SessionHandle"]
 
 
 class SessionHandle:
-    """Mutable holder: starts empty, first prompt fills in the session id."""
+    """The mutable cell a Session binds, holding the id once a prompt has produced one.
+
+    Empty until the first prompt inside the bracket returns; from then on
+    every prompt in the bracket reads the id off it and resumes. Bound in
+    the Context under its own type, which is how the compiled prompt thunks
+    find it without the Session being their parent.
+    """
 
     __slots__ = ("session_id",)
 
@@ -43,9 +49,46 @@ def _wrap_body(children: tuple[Nu, ...]) -> Nu:
 
 
 class Session(_LifecycleBracket):
-    """Scopes a cc session across all PromptRef calls in the body.
+    """Makes every prompt in its body continue one Claude Code conversation.
 
-    Nested Sessions and sibling top-level Sessions each get a fresh handle.
+    Without it each prompt is a cold start that remembers nothing. The
+    bracket binds a fresh handle on entry; the first prompt underneath runs
+    without resuming and writes the id cc gave it onto the handle, and each
+    later prompt reads it back and resumes, so the agent keeps its context
+    across the whole body.
+
+    Args:
+        *body: the terms to run inside the session. Several are run in
+            order, as if wrapped in ``Sequential``.
+
+    Notes:
+        - Reach is by Context, not by ownership: any prompt evaluated
+          while the bracket is open joins the session, including ones
+          inside functions the body calls.
+        - A nested Session binds its own handle and shadows the outer one,
+          so its prompts form a separate conversation. Sibling Sessions
+          likewise never share.
+        - The handle is bound at the same point whether the run is sync or
+          async, so the bracket behaves the same under ``nu.run`` and
+          ``nu.arun``.
+        - Nothing is persisted. The id lives for as long as the bracket is
+          open; to pick a conversation back up later, keep the
+          ``session_id`` a prompt yielded and pass it as ``resume=``.
+
+    Yields:
+        Whatever the body yields; the bracket adds nothing of its own.
+
+    Example:
+        class Agent(nu.Service):
+            ask = nu.cc.PromptRef.method()
+        app = nu.With(
+            nu.cc.bind(Agent, model="claude-sonnet-4-5"),
+            body=nu.cc.Session(
+                nu.print(nu.dict(Agent.ask("pick a number between 1 and 10"))["text"]),
+                nu.print(nu.dict(Agent.ask("what number did you pick?"))["text"]),
+            ),
+        )
+        asyncio.run(nu.arun(app))
     """
 
     def __init__(self, *body: Nu) -> None:

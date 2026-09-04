@@ -64,6 +64,39 @@ class PyBrace:
         start_timeout: seconds to wait for a venv child's ready frame.
         cwd: working directory for a venv child. Defaults to inheriting ours.
         env: full environment for a venv child. Defaults to inheriting ours.
+
+    Notes:
+        - Provisioned with ``Provide``, so the bracket is the scope: a
+          ``Provide`` at the top of an app means the whole app builds its
+          programs there, and the same one deeper in the tree means that
+          section does and nothing outside it. Nothing distinguishes the two
+          but where the bracket sits.
+        - ``LoadNu`` finds it on ``rt.ctx`` by class plus tag, the same
+          single hashable tag ``MpWorkerRef`` and ``Teleport`` take. A
+          ``LoadNu`` under no bracket falls back to a shared in-process
+          brace rather than failing.
+        - It is itself a ``Constructor`` and forwards ``construct`` to
+          whatever it wraps, which is what lets ``LoadNu`` treat a bound
+          brace and the unbound fallback as one thing.
+        - A venv brace spawns its child and waits for the handshake in
+          ``setup``, so an interpreter with no usable ``nu`` fails at the
+          bracket rather than at the first ``LoadNu`` under it.
+        - The child is long-lived and shared by every ``LoadNu`` under the
+          bracket. A ``Venv`` serializes its construct calls with a lock, so
+          concurrent loads under one bracket queue rather than interleave.
+        - Both lifecycles are implemented, so either runtime can drive the
+          bracket; the async pair runs the blocking work off-thread the way
+          ``nu.mp.MpWorker`` does.
+        - ``cleanup`` is idempotent and a cleaned-up brace builds again on
+          next use, so the same instance survives being bracketed twice.
+        - A venv interpreter needs a compatible ``nustack-py`` installed.
+          Terms travel home by name for anything importable, so the two
+          installs have to agree on what those names mean.
+
+    Example:
+        Provide(PyBrace, {"python": "/path/to/.venv/bin/python"}, body)
+
+        Provide(PyBrace, {}, body)   # in-process, no child, no pickling
     """
 
     def __init__(

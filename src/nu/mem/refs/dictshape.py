@@ -36,7 +36,38 @@ S = TypeVar("S", bound="Shape")
 
 
 class ShapesDictRef(MutableShapesMappingRef[T], RefBase[dict[K, dict]], Generic[K, T]):
-    """Dict shapes dict reference: mapping of homogeneous shapes."""
+    """A keyed collection of one Shape's records, stored as a dict of dicts.
+
+    Subscripting descends: ``ref[k]`` is a ``ShapeRef`` at that key holding
+    the value Shape, so ``users["ada"].name`` is a path down to a leaf and
+    nothing is read until the whole chain runs. The mapping calls on the ref
+    itself act on the outer dict.
+
+    Args:
+        address: this level's key, a literal or a Nu term yielding one.
+
+    Notes:
+        - Values are plain dicts, so a record is added by writing a dict, not
+          a Shape instance.
+        - Writing through a key creates the outer dict and the record on the
+          way down; the whole-container calls (``keys``, ``update``, ...)
+          instead do nothing while the slot is absent.
+
+    Yields:
+        The stored dict of inner dicts. EMPTY when the slot was never
+        written.
+
+    Example:
+        >>> class User(nu.Shape):
+        ...     name = nu.mem.StrRef.slot()
+        >>> class Team(nu.Shape):
+        ...     users = nu.mem.ShapesDictRef.slot(User)
+        >>> data = {}
+        >>> ctx = nu.Context().bind(dict, data, Team)
+        >>> _ = nu.run(Team.users["ada"].name.set("Ada"), ctx)
+        >>> data
+        {'users': {'ada': {'name': 'Ada'}}}
+    """
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
         """Navigate to the shape at ``address`` as a substrate-backed mem ShapeRef."""
@@ -91,7 +122,20 @@ class ShapesDictRef(MutableShapesMappingRef[T], RefBase[dict[K, dict]], Generic[
 
     @classmethod
     def slot(cls, shape_type: type[S], key_type: type[DK] = str) -> ShapesDictRef[DK, S]:  # type: ignore[assignment]
-        """Declare a mapping slot whose values are ``shape_type`` shapes."""
+        """Declare a mapping slot whose values are ``shape_type`` shapes.
+
+        Args:
+            shape_type: the Shape class each value holds.
+            key_type: the Python type of the keys. Defaults to ``str``.
+
+        Notes:
+            - ``users: ShapesDictRef[str, User]`` as an annotation declares
+              the same slot.
+
+        Example:
+            class Team(Shape):
+                users = ShapesDictRef.slot(User)
+        """
         return Slot(
             cls,
             shape_type=shape_type,

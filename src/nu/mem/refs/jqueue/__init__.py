@@ -5,11 +5,14 @@ the event loop (e.g. fetchers) and the other in a thread (e.g.
 processors). ``put`` and ``get`` work in both modes; the underlying
 ``janus.Queue`` routes each call to the right half.
 
-Optional dep: ``nu-mem[jqueue]``.
+Needs janus, which rides the optional ``nustack-py[mem]`` extra.
+
+Not re-exported from ``nu.mem`` (the janus import is optional), so reach for
+it by its own path.
 
 Usage::
 
-    from nu.mem import JQueueRef
+    from nu.mem.refs.jqueue import JQueueRef
     from nu.domains.shape import Shape
 
     class Buf(Shape):

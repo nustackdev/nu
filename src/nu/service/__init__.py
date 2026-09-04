@@ -10,6 +10,13 @@ Surface:
     - bind(service_cls, target=...): Provide the ServiceFabric tagged by
       the Service class.
 
+Endpoints are declared with `<Ref>.method(name=..., **defaults)` in a
+`nu.Service` class body. That returns a Method declaration, which ServiceMeta
+replaces with a descriptor, so reading the field back off the Service class
+yields a Ref and calling it builds the interaction. `name=` picks the target
+attribute (defaulting to the field name); `**defaults` are call kwargs the
+call site can override.
+
 Example::
 
     class Calculator:

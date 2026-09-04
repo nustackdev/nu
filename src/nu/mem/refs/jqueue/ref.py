@@ -33,11 +33,39 @@ T = TypeVar("T")
 
 
 class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
-    """Leaf ref to a janus.Queue stored at a slot in nu-mem state.
+    """A slot holding a live janus queue, bridging the loop and the threads.
 
-    Vivifies the queue on first fetch, then returns the same instance.
-    The held item type is metadata only; janus.Queue does not enforce
-    element types at runtime.
+    Reading it hands back the queue object itself rather than any stored
+    data, which is what makes one side able to ``put`` from a thread while
+    the other ``get``s on the event loop. The queue is created the first time
+    the slot is read and kept there, so every later read in the same backing
+    dict is the same queue.
+
+    Args:
+        address: this level's key, a literal or a Nu term yielding one.
+
+    Notes:
+        - Capacity and item type come from the slot declaration; no capacity
+          means unbounded, and the item type is metadata that nothing checks
+          against what is actually put in.
+        - The queue lives in the backing dict like any other value, so it is
+          not JSON-shaped and does not survive being serialised.
+        - Vivification needs a real dict at the parent path; a non-dict there
+          raises TypeError rather than yielding a sentinel.
+        - Because reading vivifies, a plain read is enough to create the
+          queue before any producer starts.
+
+    Yields:
+        The live ``janus.Queue`` at this slot, created on first read.
+
+    Example:
+        >>> from nu.mem.refs.jqueue import JQueueRef
+        >>> class Buf(nu.Shape):
+        ...     queue = JQueueRef.slot(capacity=2, item_type=int)
+        >>> ctx = nu.Context().bind(dict, {}, Buf)
+        >>> _ = nu.run(Buf.queue.put(1), ctx)
+        >>> nu.run(Buf.queue.get(), ctx)[0]
+        1
     """
 
     def __init__(
@@ -108,5 +136,20 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
         capacity: int | None = None,
         item_type: type = object,
     ) -> Self:
-        """Declare a JQueueRef slot in a Shape with optional capacity/type."""
+        """Declare a queue slot in a Shape class body.
+
+        Args:
+            capacity: how many items may wait before ``put`` blocks.
+                Unbounded when absent.
+            item_type: the Python type the queue is meant to carry.
+
+        Notes:
+            - Both are recorded on the slot and applied when the queue is
+              first created; changing them afterwards has no effect on a
+              queue already vivified in a backing dict.
+
+        Example:
+            class Buf(Shape):
+                queue = JQueueRef.slot(capacity=16, item_type=int)
+        """
         return Slot(cls, capacity=capacity, item_type=item_type)  # type: ignore[return-value]

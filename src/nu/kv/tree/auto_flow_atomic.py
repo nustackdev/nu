@@ -1,16 +1,20 @@
-"""auto_flow_atomic: flow-based bottom-up wrapping for virtuals refs.
+"""The pass that decides, per branch, where a storage boundary belongs.
 
-Walks the tree bottom-up. At each Flow, wraps every non-Flow direct child
-by its tracked effects on virtuals refs whose ``root_shape`` matches
-``scope``:
+Writing atomicity by hand means answering the same question at every branch of
+a tree - does this touch storage, and does it write - and getting it wrong in
+either direction: a missing bracket leaves a read with no snapshot to resolve
+against, an over-broad one holds a transaction open across work that had no
+business being inside it.
 
-- any WRITE in scope   -> Transaction(child, scope=...)
-- only READ in scope   -> Snapshot(child, scope=...)
-- no matching effects  -> leave as-is
+The question is answerable from the tree itself. A Ref names the storage it
+reads, and a node declares which of its slots it mutates. So the pass reads
+both and places the boundary at the smallest branch that needs it, which is
+the direct child of a Flow rather than the Flow as a whole - sibling branches
+of a Sequential get their own brackets and commit independently.
 
-Flow children of a Flow are left as-is: the bottom-up walk has already
-wrapped their own direct children. Existing Snapshot / Transaction
-brackets are respected by the ``(scope_pass, scope_brace)`` matrix.
+The rest of the file is the bookkeeping that makes the walk honest: which refs
+an enclosing bracket already covers, which scope dominates which, and where
+the walk must stop because it cannot see through a node.
 """
 
 from __future__ import annotations
@@ -200,31 +204,49 @@ def _walk(node: Nu, pass_scope: Hashable | None, enclosing: tuple) -> Nu:
 
 
 def auto_flow_atomic(tree: Nu, scope: Hashable | None = None) -> Nu:
-    """Wrap virtuals-touching Flow branches with Snapshot / Transaction.
+    """Rewrites a tree so every branch touching storage sits in the right bracket.
 
-    Walks bottom-up. At each Flow, replaces every non-Flow direct child by:
+    Walks bottom-up and, at each Flow, replaces each direct child by a
+    ``Transaction`` around it if the branch writes storage, a ``Snapshot`` if
+    it only reads, and by itself if it does neither. A branch that already
+    sits inside a bracket covering it is left alone. What comes back is a new
+    tree; the one passed in is untouched.
 
-    - ``Transaction(child, scope=scope)`` if the subtree has an uncovered
-      WRITE through a virtuals ref matching ``scope``,
-    - ``Snapshot(child, scope=scope)`` if it has only READ effects in scope,
-    - the child unchanged otherwise.
+    A ref counts as a write only where it sits in a slot the enclosing node
+    declared as mutating. That is why the pass can tell ``ref.set(v)`` from
+    the same ref read as an argument, without knowing anything about either
+    node beyond its declaration.
 
-    Flow children are left alone; the recursive walk has already wrapped
-    their own direct children (per-branch, not the whole Flow).
+    Args:
+        tree: the tree to rewrite.
+        scope: the shape whose storage this pass is about, as a tag. None,
+            the default, treats every ref as in scope and tags the brackets
+            it adds as unscoped. Pass a shape to run one pass per storage in
+            a sharded program, each leaving the others' refs alone.
 
-    Existing brackets are respected by the ``(scope_pass, scope_brace)``
-    matrix: a brace that covers ``scope`` is left alone; a brace with a
-    different scope is descended into and its coverage subtracts from the
-    walker's care set.
+    Notes:
+        - A Flow directly under a Flow is left alone. Its own children were
+          already bracketed on the way up, and bracketing it again would
+          merge branches that were meant to commit separately.
+        - A bare subtree that is not a Flow is bracketed too, so
+          ``auto_flow_atomic(some_ref)`` resolves on its own without the
+          caller wiring a bracket by hand.
+        - An existing bracket whose scope covers this pass stops the descent
+          entirely. One with a different scope is descended into, and what it
+          covers is subtracted from what the pass still has to place.
+        - Dynamic subtrees are opaque: their effects are not visible until
+          run time, so the pass does not descend through them and does not
+          bracket them. Whatever they dispatch to owns its own atomicity.
+        - Safe to run over a tree with no storage in it at all: a branch
+          with no refs is returned unchanged, and a bracket around a body
+          that never reads opens no handle.
 
-    ``scope=None`` (default) treats every virtuals ref as in scope; the
-    resulting wrapper tag is unscoped.
-
-    A bare top-level subtree (not a Flow) is also considered: if it carries
-    uncovered virtuals refs, it gets wrapped in ``Snapshot`` / ``Transaction``
-    too. This lets standalone reads/writes (``auto_flow_atomic(some_ref)``)
-    resolve their storage context without the caller wiring a bracket by
-    hand -- the same rule Flow children already follow.
+    Example:
+        app = nu.With(
+            nu.kv.rocksdb_navigator(".dbcounter"),
+            nu.ui.server(nu.kv.auto_flow_atomic(ui)),
+            body=nu.kv.auto_flow_atomic(tick),
+        )
     """
     walked = _walk(tree, scope, ())
     return _wrap_flow_child(walked, scope, ())

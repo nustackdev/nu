@@ -41,7 +41,47 @@ __all__ = ["InvisiblesProxy"]
 
 
 class InvisiblesProxy(_LifecycleBracket):
-    """Provide an ``InvisiblesClient`` and bind its ``.root`` as ``target``."""
+    """Runs its body against a remote fabric as if the fabric were local.
+
+    Connects to an ``InvisiblesServer``, takes the root fabric it serves, and
+    binds that remote object on the context under the type the caller names.
+    Everything below reads the name and gets the proxy, so a tree written
+    against a local fabric runs unchanged against a remote one, and the
+    transport is a line at the top rather than a change to the body.
+
+    Args:
+        target: the fabric type the remote root is bound under. What the
+            body asks the context for.
+        body: what runs while the connection is open.
+
+    Notes:
+        - Async only. A sync run raises, because connecting is lifecycle work
+          the sync path refuses to do.
+        - Two things land on the context, both under ``tag``: the remote root
+          under ``target``, and the ``InvisiblesClient`` itself, so a body can
+          reach the connection when it needs to.
+        - A ``target`` carrying ``_nu_bind_as`` binds under that type instead,
+          the same redirection ``Provide`` honours.
+        - Connecting retries up to ``max_retries`` times with a growing pause
+          between attempts, and raises ConnectionError when they all fail.
+        - Calls on the bound root block the caller for the round trip even
+          under the async runtime: invisibles frames them synchronously.
+        - ``bg_serve`` runs a background serving thread, needed when the
+          remote side calls back into this process.
+        - The connection closes when the body finishes, so nothing survives
+          the bracket.
+
+    Yields:
+        The body's yield, unchanged. Transparent in cardinality too: a stream
+        body stays a stream, and the connection stays open across the drain.
+
+    Example:
+        app = nu.proxy.InvisiblesProxy(
+            Navigator,
+            address="10.0.0.1:19000",
+            body=driver_body,
+        )
+    """
 
     def __init__(
         self,

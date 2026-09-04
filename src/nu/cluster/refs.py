@@ -33,25 +33,54 @@ __all__ = ["RayClusterRef", "RayServiceRef"]
 
 
 class RayClusterRef(FabricRef):
-    """The bound ``RayCluster`` on ctx. Singleton."""
+    """The ``RayCluster`` bound on the Context.
+
+    Notes:
+        - Singleton. A cluster handle is bound untagged, so there is no
+          address to give.
+        - Reading is a lookup and nothing else. Connecting to ray, or
+          starting it, is the ``RayCluster`` resource's own setup when it is
+          provided.
+
+    Yields:
+        The bound ``RayCluster``. EMPTY when no cluster is bound.
+
+    Example:
+        Provide(RayCluster, {"address": "auto"},
+            RayClusterRef().exists(),
+        )
+    """
 
     fabric = RayCluster
 
 
 class RayServiceRef(FabricRef):
-    """A ``RayService`` bound at an arbitrary tag on ctx.
+    """The ``RayService`` bound at ``tag`` on the Context.
 
-    ``tag`` is passed verbatim as a single positional to ``ctx.get`` -
-    matches the shape ``Provide`` / ``ProvideList`` / ``ProvideDict`` used to
-    bind (int index for ``ProvideList``, dict key for ``ProvideDict``). Pass
-    no tag for the untagged singleton bound by a bare ``Provide``.
+    Args:
+        tag: the address the service was bound under. Omit for the untagged
+            singleton.
 
-    Examples::
+    Notes:
+        - The tag is forwarded verbatim as a single positional to
+          ``ctx.get``, so it mirrors whatever bound the service: nothing for
+          a bare ``Provide``, the index for ``ProvideList``, the key for
+          ``ProvideDict``.
+        - ``None`` is a usable tag, distinct from omitting the tag.
+        - Reading is a lookup and nothing else. No actor is spawned, and the
+          actor of an already-provided service is not contacted.
+        - The lookup runs against whichever Context is in force where the
+          ref sits, so inside a ``Teleport`` body it reads the actor's own
+          Context rather than the driver's.
 
-        RayServiceRef()                 # -> ctx.get(RayService)
-        RayServiceRef(0)                # -> ctx.get(RayService, 0)
-        RayServiceRef("ledger-main")    # -> ctx.get(RayService, "ledger-main")
-        RayServiceRef(("ledger", 0))    # -> ctx.get(RayService, ("ledger", 0))
+    Yields:
+        The bound ``RayService``. EMPTY when nothing is bound at ``tag``.
+
+    Example:
+        RayServiceRef()               # the untagged singleton
+        RayServiceRef(0)              # a ProvideList index
+        RayServiceRef("ledger-main")  # a ProvideDict key
+        RayServiceRef(("ledger", 0))  # a ProvideDict tuple key
     """
 
     fabric = RayService

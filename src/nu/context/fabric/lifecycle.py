@@ -150,18 +150,58 @@ def _bind(
 
 
 class Provide(_LifecycleBracket):
-    """Construct ONE resource of ``cls(**kwargs)``, bind on ctx.
+    """Constructs one fabric and binds it on the Context for the body's duration.
 
-    On entry:
-        - instance = cls(**kwargs)
-        - if instance has setup / asetup, call it (async run prefers asetup)
-        - ctx.bind(cls, instance, *tags [, predicate=predicate])
-    On exit:
-        - cleanup / acleanup (if defined)
+    This is how a stateful Nu program gets its state: nothing in the tree
+    reaches a fabric that was not provided around it. On entry the bracket
+    builds ``cls(**kwargs)``, runs its setup if it has one, and binds the
+    instance on the Context under the class plus any tags. The body runs
+    against that Context. On exit teardown fires, and it fires in reverse
+    order across nested brackets, so an outer fabric is still live while the
+    ones inside it are tearing down.
 
-    ``tag=`` is single-tag sugar; ``tags=`` is a multi-tag sequence; both fold
-    into the same tag tuple. ``predicate=`` is one guard callable forwarded
-    into Context's guarded registry.
+    Args:
+        cls: the fabric class to construct. Also the key it binds under,
+            unless ``bind_as`` or the class's own ``_nu_bind_as`` overrides
+            that.
+        kwargs: passed straight to the constructor. Plain Python values, not
+            Nu terms; this is a payload, not a child.
+        body: the tree that runs with the fabric bound.
+
+    Notes:
+        - ``tag=`` is sugar for a one-element ``tags=``; both fold into the
+          same tuple, and a tagged binding is read back by a Ref that carries
+          the same tag. Resolution falls back from more tags to fewer, so a
+          tagless read never reaches a tagged binding.
+        - ``predicate=`` is one guard callable handed to the Context's
+          guarded registry: the binding resolves only when
+          ``predicate(**data)`` returns True for the data passed to
+          ``ctx.get``. Useful for "the shard that covers this address"
+          without enumerating shard tags up front.
+        - ``bind_as=`` binds the instance under a different type than it was
+          constructed from, so an implementation can be provided where a
+          protocol or base class is what the tree asks for.
+        - Setup is optional. A class with neither ``setup`` nor ``asetup``
+          passes through untouched; one with only ``asetup`` raises under the
+          sync runner rather than binding half-built, and a class marked
+          ``_nu_async_only`` is refused before it is even constructed.
+        - Under ``nu.arun`` the bracket prefers ``asetup`` / ``acleanup`` and
+          falls back to the sync pair; under ``nu.run`` only the sync pair
+          runs.
+        - Teardown only reaches instances whose setup completed, so a setup
+          that raises does not leave a half-open fabric to be cleaned up.
+
+    Yields:
+        Whatever ``body`` yields, in the body's own cardinality. Transparent
+        like any Bracket. For a stream body the fabric stays bound for the
+        whole drain and tears down when the stream is exhausted.
+
+    Example:
+        >>> class Counter:
+        ...     def __init__(self, start=0):
+        ...         self.n = start
+        >>> nu.run(nu.Provide(Counter, {"start": 5}, nu.FabricRef(Counter).exists()))[0]
+        True
     """
 
     def __init__(
@@ -235,15 +275,39 @@ class Provide(_LifecycleBracket):
 
 
 class ProvideList(_LifecycleBracket):
-    """Construct N resources of ``cls``, bind each on ctx at ``base_tag + i``.
+    """Constructs a fleet of one class and binds each member under its index.
 
-    ``specs`` is a list of kwargs dicts, one per instance. Setup runs in
-    order; teardown in reverse. If any setup raises, already-setup instances
-    are torn down in reverse before propagating.
+    The list shape of :class:`Provide`: one instance per spec, bound at
+    ``base_tag + i`` so the fleet is addressed by position. Each instance is
+    constructed, set up and bound before the next one is built, so a later
+    member's setup sees the earlier ones already on the Context.
 
-    ``extra_tags=`` fold onto every element after its index tag (shared
-    across the fleet); ``predicate=`` fold onto every element as a shared
-    guard.
+    Args:
+        cls: the fabric class every member is constructed from.
+        specs: one kwargs mapping per instance, in the order they are built.
+        body: the tree that runs with the whole fleet bound.
+
+    Notes:
+        - Index tags count from ``base_tag=``, which lets two fleets of the
+          same class share one index space without colliding.
+        - ``extra_tags=`` fold onto every member after its index tag, so the
+          fleet can carry a shared label as well as a position.
+        - ``predicate=`` is one guard callable shared by every member.
+        - Teardown is reverse of setup and only reaches members whose setup
+          completed, so a spec that fails mid-fleet unwinds the ones already
+          built before the error propagates.
+
+    Yields:
+        Whatever ``body`` yields, in the body's own cardinality. Transparent
+        like any Bracket.
+
+    Example:
+        nu.ProvideList(
+            RayService,
+            [{"port": 8000}, {"port": 8001}],
+            body=feed,
+            extra_tags=("ledger",),
+        )
     """
 
     def __init__(
@@ -318,18 +382,41 @@ class ProvideList(_LifecycleBracket):
 
 
 class ProvideDict(_LifecycleBracket):
-    """Construct resources of ``cls`` keyed by a mapping, bind each by key.
+    """Constructs a fleet of one class and binds each member under its own key.
 
-    ``specs`` is a dict ``{key: kwargs}``. Setup runs in insertion order;
-    teardown in reverse. Same failure semantics as :class:`ProvideList`.
+    The mapping shape of :class:`Provide`: same as :class:`ProvideList` but
+    addressed by the caller's key rather than by position, which is what you
+    want when the members are named rather than numbered.
 
-    ``extra_tags=`` fold onto every element after its key tag; ``predicate=``
-    fold onto every element as a shared guard.
+    Args:
+        cls: the fabric class every member is constructed from.
+        specs: a mapping of key to kwargs. Each key becomes the tag its
+            instance binds under.
+        body: the tree that runs with the whole fleet bound.
 
-    ``parallel=True`` fires all ``asetup`` calls concurrently via
-    ``asyncio.gather``; each ``asetup`` sees the *initial* ctx (not prior
-    binds), so use only when the fleet's items don't cross-depend. Async
-    only; the sync ``_open`` ignores it. Teardown stays LIFO regardless.
+    Notes:
+        - Members are built in the mapping's insertion order, and teardown is
+          the reverse of that.
+        - ``extra_tags=`` fold onto every member after its key tag;
+          ``predicate=`` is one guard callable shared by every member.
+        - ``parallel=True`` fires every ``asetup`` concurrently instead of in
+          sequence. Each one then sees the Context as it was on entry rather
+          than one carrying the earlier members, so it is only safe when the
+          fleet does not cross-depend. It is an async-only knob; the sync
+          path ignores it. Teardown stays sequential and reversed either way.
+        - A spec that fails unwinds the members already set up before the
+          error propagates.
+
+    Yields:
+        Whatever ``body`` yields, in the body's own cardinality. Transparent
+        like any Bracket.
+
+    Example:
+        nu.ProvideDict(
+            RayService,
+            {"ledger": {"port": 8000}, "index": {"port": 8001}},
+            body=feed,
+        )
     """
 
     def __init__(
@@ -412,28 +499,40 @@ class ProvideDict(_LifecycleBracket):
 
 
 class With(_LifecycleBracket):
-    """Sequence N lifecycle brackets: enter in order, LIFO teardown.
+    """Enters several lifecycle brackets around one body, tearing down in reverse.
 
-    Same shape as Python's ``with A, B, C: body``: each bracket's ``_open``
-    is entered in order, ctx accumulates across them, ``body`` runs against
-    the final ctx, teardown fires in reverse on exit. If any bracket's setup
-    raises, already-entered brackets tear down in reverse before propagating.
+    Python's ``with A, B, C: body``, in the tree. Each bracket is opened in
+    order and the Context accumulates across them, so a later bracket's setup
+    sees everything the earlier ones bound. The body runs against the final
+    Context, and on exit teardown fires in reverse. What it buys is flatness:
+    stacking peers at one level instead of the
+    ``Provide(a, kw, Provide(b, kw, Provide(c, kw, body)))`` cascade.
 
-    Eliminates the outer ``Provide(a, kw, Provide(b, kw, Provide(c, kw, body)))``
-    nesting cascade when stacking many peers at one level::
+    Args:
+        *brackets: the lifecycle brackets to enter, in order.
+        body: the tree that runs with all of them open.
 
-        With(
-            Provide(RayCluster, {...}),
-            Provide(RayService, {...}, tag="A"),
-            Provide(RayService, {...}, tag="B"),
-            ProvideDict(RayService, {...}),
+    Notes:
+        - Each bracket is used as a spec, not as a subtree: ``With`` re-enters
+          its open/close and ignores whatever sits in that bracket's own body
+          slot, so passing a body to a nested bracket has no effect.
+        - Composes anything with the lifecycle shape - ``Provide``,
+          ``ProvideList``, ``ProvideDict``, ``InvisiblesProxy`` and the rest.
+        - A bracket whose setup raises unwinds the ones already entered
+          before the error propagates.
+
+    Yields:
+        Whatever ``body`` yields, in the body's own cardinality. Transparent
+        like any Bracket.
+
+    Example:
+        nu.With(
+            nu.Provide(RayCluster, {...}),
+            nu.Provide(RayService, {...}, tag="A"),
+            nu.Provide(RayService, {...}, tag="B"),
+            nu.ProvideDict(RayService, {...}),
             body=feed,
         )
-
-    Composes any ``_LifecycleBracket``: ``Provide``, ``ProvideList``,
-    ``ProvideDict``, ``InvisiblesProxy``, ... Each bracket is used as a SPEC
-    (its own ``body`` slot is ignored, ``With`` re-enters its ``_open`` /
-    ``_aopen`` to accumulate ctx).
     """
 
     def __init__(

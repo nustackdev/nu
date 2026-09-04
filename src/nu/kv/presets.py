@@ -1,27 +1,33 @@
-"""Storage topological presets.
+"""One call that stands up a whole storage stack, in either of two forms.
 
-Two forms, both live and independent:
+A working KV fabric is six things bound together: a Codec, a Transport, a
+Publisher, an Observer, a Storage and a Navigator. Writing that out by hand is
+six lines that are the same six lines every time, in an order that matters,
+with a ``publisher_type=`` on the Storage that has to agree with the Publisher
+above it. The presets here are those lines, already correct, named after the
+backend they stand up.
 
-- Imperative context managers (``memory_storage``, ``rocksdb_storage_redis``,
-  ``rocksdb_storage``, ``lmdb_storage``, ``text_storage``) yield a
-  ready ``StorageProtocol`` for hand-wired Contexts.
-- Bracket factories (``memory_navigator``, ``rocksdb_navigator_redis``,
-  ``rocksdb_navigator``, ``text_navigator``, ``inmem_observer``,
-  ``redis_observer``) return a single ``_LifecycleBracket`` that drops
-  into a ``nu.With(...)`` tree and binds the whole Codec + Transport +
-  Publisher + Observer + Storage + Navigator stack on ctx. Internally
-  they compose ``Provide`` peers under a ``With``, so ctx-bind order and
-  LIFO teardown come for free.
+The ``*_navigator`` and ``*_observer`` functions return a ``With`` bracket
+composed of ``Provide`` peers. It drops straight into a tree as the fabric a
+program runs against, and being an ordinary bracket it gets bind order and
+LIFO teardown for free::
 
-Every navigator preset binds the triple (Transport + Publisher + Observer)
-plus Storage (with matching ``publisher_type=``) plus Navigator. Redis presets
-bind Redis Publisher + Redis Observer alongside the InMemoryTransport (LMDB
-envs living in the same actor may still resolve their default in-mem
-publisher).
+    app = nu.With(nu.kv.rocksdb_navigator(".db"), body=program)
 
-Standalone observer presets (``inmem_observer``, ``redis_observer``) exist
-for read-only actors that consume notifications without owning a
-publishing storage.
+The ``*_storage`` functions are the other form: plain context managers handing
+back a live ``StorageProtocol``, for wiring a Context by hand rather than
+through the tree. The two forms are independent; neither is built on the other.
+
+Every navigator preset takes ``tags``, folded onto both the Storage and the
+Navigator binding. That is how a shard names itself: bind one preset per shard
+under its own tag, and a Ref carrying that scope routes to it.
+
+The ``_redis`` variants swap the in-process Publisher and Observer for Redis
+ones, which is what makes change notifications cross process boundaries. The
+plain variants keep everything in-process and need nothing running.
+
+``inmem_observer`` and ``redis_observer`` bind the listening half alone, for an
+actor that reacts to changes without owning a storage of its own.
 """
 
 from __future__ import annotations
@@ -252,13 +258,28 @@ def memory_navigator(
     *,
     tags: Sequence[object] = (),
 ) -> With:
-    """In-mem Codec + Transport + Publisher + Observer + Storage + Navigator as one bracket.
+    """Stands up a whole in-memory storage stack, gone when the process ends.
 
-    No persistence, no serialization -- Python objects go through NoOpCodec.
-    Useful for tests, examples, and ephemeral service handles.
+    Nothing is serialized and nothing is written: the codec is a no-op, so
+    Python objects are held as themselves. That makes it the fastest backend
+    and the only one where a stored value is identical, not merely equal, to
+    what went in. Reach for it in tests, examples, and anywhere the state is
+    meant to die with the process.
 
     Args:
-        tags: fold onto the Storage and Navigator bindings.
+        tags: shape tags folded onto the Storage and Navigator bindings, so
+            a sharded program can name this stack. Empty binds it as the
+            default that untagged Refs resolve to.
+
+    Notes:
+        - Binds the full stack: Codec, Transport, Publisher, Observer,
+          Storage and Navigator, in that order, tearing down LIFO.
+        - Change notification works, but only within the process.
+        - Values are not copied on the way in or out, so mutating a stored
+          object mutates what a later read returns.
+
+    Example:
+        app = nu.With(nu.kv.memory_navigator(), body=program)
     """
     from nu.context.fabric import Provide, With
     from nu.kv.fabrics import (
@@ -296,11 +317,41 @@ def rocksdb_navigator(
     disable_wal: bool = False,
     options: dict | None = None,
 ) -> With:
-    """RocksDB + in-mem Transport/Publisher/Observer + Navigator as one bracket.
+    """Stands up a persistent RocksDB stack with in-process change notification.
 
-    Binary codec, in-process publisher/observer, transactional persistence.
-    The 99% site for a per-shard rocksdb stack when you don't need
-    cross-process change notifications.
+    The default choice for anything that has to survive a restart. Values are
+    pickled through the binary codec, writes are transactional, and the whole
+    thing needs nothing running beside it. Change notifications reach only
+    listeners in this process; for cross-process, see
+    ``rocksdb_navigator_redis``.
+
+    Args:
+        path: the database directory. Created if it is not there.
+        tags: shape tags folded onto the Storage and Navigator bindings, so
+            a sharded program can name this stack.
+        read_only: open without taking the write lock, so several processes
+            can read the same database at once. Writes will fail.
+        secondary_path: open as a secondary instance, tailing the primary at
+            ``path`` and keeping its own state under this directory. Reads
+            are live-ish, writes are not possible.
+        secondary_refresh_interval: the shortest gap, in seconds, between
+            catch-ups with the primary. Catch-up runs lazily when a snapshot
+            opens and the last one is older than this. 0 catches up on every
+            snapshot; None never does, leaving freshness to the caller.
+        disable_wal: skip the write-ahead log. Faster, and a crash loses
+            whatever had not been flushed.
+        options: raw RocksDB options, merged over the defaults.
+
+    Notes:
+        - Binds the full stack: Codec, Transport, Publisher, Observer,
+          Storage and Navigator, in that order, tearing down LIFO.
+        - Only one process at a time may hold the database for writing.
+          Fan reads out with ``read_only`` or ``secondary_path``.
+        - Values go through pickle, so anything stored has to be picklable
+          and a class rename can strand old data.
+
+    Example:
+        app = nu.With(nu.kv.rocksdb_navigator(".dbcounter"), body=program)
     """
     from nu.context.fabric import Provide, With
     from nu.kv.fabrics import (
@@ -351,11 +402,47 @@ def rocksdb_navigator_redis(
     redis_url: str = "redis://localhost:6379",
     channel_prefix: str = "__every__",
 ) -> With:
-    """RocksDB + Redis Publisher/Observer + Navigator as one bracket.
+    """Stands up a persistent RocksDB stack whose changes reach other processes.
 
-    Same as ``rocksdb_navigator`` but with the Redis publisher/observer pair
-    for cross-process change notifications. Requires a reachable Redis at
-    ``redis_url`` at asetup time.
+    Same storage as ``rocksdb_navigator``; what differs is who hears about a
+    write. The in-process Publisher and Observer are replaced by Redis ones,
+    so a change made here wakes a reactive program running somewhere else.
+    That is the shape for a writer process plus a fleet of readers reacting
+    to it.
+
+    Args:
+        path: the database directory. Created if it is not there.
+        tags: shape tags folded onto the Storage and Navigator bindings, so
+            a sharded program can name this stack.
+        read_only: open without taking the write lock. Writes will fail.
+        secondary_path: open as a secondary instance, tailing the primary at
+            ``path`` and keeping its own state under this directory.
+        secondary_refresh_interval: the shortest gap, in seconds, between
+            catch-ups with the primary. Catch-up runs lazily when a snapshot
+            opens and the last one is older than this. 0 catches up on every
+            snapshot; None never does, leaving freshness to the caller.
+        disable_wal: skip the write-ahead log. Faster, and a crash loses
+            whatever had not been flushed.
+        options: raw RocksDB options, merged over the defaults.
+        redis_url: where the Redis carrying the notifications lives.
+        channel_prefix: namespaces the pub/sub channels, so two unrelated
+            deployments can share one Redis without hearing each other.
+
+    Notes:
+        - Binds Codec, Publisher, Observer, Storage and Navigator. No
+          Transport: the Redis pair does not need one.
+        - Redis has to be reachable when the bracket sets up, and a program
+          bound to it fails at setup rather than at the first write.
+        - Notifications only. The data still lives in RocksDB, so Redis
+          going down costs change delivery, not storage.
+        - Every writer and every listener must agree on ``channel_prefix``
+          or the notifications go nowhere visible.
+
+    Example:
+        app = nu.With(
+            nu.kv.rocksdb_navigator_redis(".db", redis_url="redis://cache:6379"),
+            body=program,
+        )
     """
     from nu.context.fabric import Provide, With
     from nu.kv.fabrics import (
@@ -406,7 +493,40 @@ def text_navigator(
     read_only: bool = False,
     log_operations: bool = False,
 ) -> With:
-    """Text (JSON) storage + in-mem Transport/Publisher/Observer + Navigator as one bracket."""
+    """Stands up a JSON-on-disk stack you can open in an editor and read.
+
+    The debugging backend. State lands in one human-readable ``state.json``,
+    so the whole tree a program built can be inspected with nothing but a text
+    editor, which is worth a great deal when a shape is not laying out the way
+    it was meant to.
+
+    It is a toy and says so: the entire state is held in memory and rewritten
+    to disk on every commit, commits are fully serialized, there is no conflict
+    detection so the last writer wins, and one process owns it at a time. Fine
+    for a few hundred keys while working something out; wrong for anything
+    real.
+
+    Args:
+        path: the directory holding ``state.json``, and the operation log
+            when it is on.
+        tags: shape tags folded onto the Storage and Navigator bindings, so
+            a sharded program can name this stack.
+        read_only: open without allowing writes.
+        log_operations: append every put, delete, commit and abort to
+            ``operations.jsonl`` beside the state, as a trace to read back.
+
+    Notes:
+        - Binds the full stack: Codec, Transport, Publisher, Observer,
+          Storage and Navigator, in that order, tearing down LIFO.
+        - Values go through JSON, so only JSON-able values round-trip, and
+          they come back as JSON's types rather than the ones written.
+        - No conflict detection means a Transaction here never raises the
+          conflict that ``RetryOnConflict`` is built for. It silently
+          overwrites instead.
+
+    Example:
+        app = nu.With(nu.kv.text_navigator(".dbtext"), body=program)
+    """
     from nu.context.fabric import Provide, With
     from nu.kv.fabrics import (
         Codec,
@@ -451,7 +571,37 @@ def lmdb_navigator(
     subdir: bool = True,
     sync: bool = True,
 ) -> With:
-    """LMDB + in-mem Transport/Publisher/Observer + Navigator as one bracket."""
+    """Stands up a persistent LMDB stack with in-process change notification.
+
+    LMDB is a memory-mapped B-tree: reads are cheap and lock-free, and many
+    readers can share an environment with a writer without blocking it. What
+    it asks in return is that you size the map up front, since ``map_size`` is
+    a ceiling the database cannot grow past at run time.
+
+    Args:
+        path: the environment. A directory when ``subdir`` is true, the env
+            file itself when it is not.
+        tags: shape tags folded onto the Storage and Navigator bindings, so
+            a sharded program can name this stack.
+        read_only: open the environment read-only.
+        map_size: the ceiling on the database, in bytes. Reserved as
+            address space rather than allocated, so a generous value costs
+            little. Defaults to 10 GiB.
+        max_readers: how many reader slots the environment holds. A reader
+            past the ceiling fails rather than waits.
+        subdir: whether ``path`` names a directory or the env file.
+        sync: fsync after each commit. Turning it off is faster and puts
+            recent commits at risk in a crash.
+
+    Notes:
+        - Binds the full stack: Codec, Transport, Publisher, Observer,
+          Storage and Navigator, in that order, tearing down LIFO.
+        - Values go through pickle, so anything stored has to be picklable.
+        - Exceeding ``map_size`` is a hard failure on write, not a resize.
+
+    Example:
+        app = nu.With(nu.kv.lmdb_navigator(".dblmdb"), body=program)
+    """
     from nu.context.fabric import Provide, With
     from nu.kv.fabrics import (
         Codec,
@@ -501,7 +651,40 @@ def lmdb_navigator_redis(
     redis_url: str = "redis://localhost:6379",
     channel_prefix: str = "nu",
 ) -> With:
-    """LMDB + Redis Publisher/Observer + Navigator as one bracket."""
+    """Stands up a persistent LMDB stack whose changes reach other processes.
+
+    Same storage as ``lmdb_navigator``; the in-process Publisher and Observer
+    are replaced by Redis ones, so a write here wakes a reactive program in
+    another process.
+
+    Args:
+        path: the environment. A directory when ``subdir`` is true, the env
+            file itself when it is not.
+        tags: shape tags folded onto the Storage and Navigator bindings, so
+            a sharded program can name this stack.
+        read_only: open the environment read-only.
+        map_size: the ceiling on the database, in bytes. Defaults to 10 GiB.
+        max_readers: how many reader slots the environment holds.
+        subdir: whether ``path`` names a directory or the env file.
+        sync: fsync after each commit.
+        redis_url: where the Redis carrying the notifications lives.
+        channel_prefix: namespaces the pub/sub channels, so two unrelated
+            deployments can share one Redis without hearing each other.
+
+    Notes:
+        - Binds Codec, Publisher, Observer, Storage and Navigator. No
+          Transport: the Redis pair does not need one.
+        - Redis has to be reachable when the bracket sets up.
+        - Defaults to the ``"nu"`` channel prefix, where the RocksDB Redis
+          preset defaults to ``"__every__"``. Two stacks meant to hear each
+          other must be given the same one explicitly.
+
+    Example:
+        app = nu.With(
+            nu.kv.lmdb_navigator_redis(".dblmdb", redis_url="redis://cache:6379"),
+            body=program,
+        )
+    """
     from nu.context.fabric import Provide, With
     from nu.kv.fabrics import (
         Codec,
@@ -551,11 +734,22 @@ def lmdb_navigator_redis(
 
 
 def inmem_observer() -> With:
-    """In-process Transport + Observer as one bracket.
+    """Binds the listening half of the in-process notification pair, alone.
 
-    Provides the transport + observer without a Publisher or Storage. Bind
-    at process scope in an actor that only consumes notifications from
-    same-process publishers (rare -- Redis is the usual cross-process case).
+    Transport and Observer with no Publisher and no Storage, for a program
+    that reacts to changes but owns none of them. Only useful when the
+    publisher it listens to lives in the same process, which is rare: two
+    programs sharing a process usually share a navigator preset instead, and
+    that already binds an Observer. The cross-process case is
+    ``redis_observer``.
+
+    Notes:
+        - Binds nothing that can read or write data. A Ref evaluated under
+          this bracket alone has no Navigator to resolve against.
+        - Bind it once at process scope, not per request.
+
+    Example:
+        app = nu.With(nu.kv.inmem_observer(), body=reactor)
     """
     from nu.context.fabric import Provide, With
     from nu.kv.fabrics import InMemoryObserver, InMemoryTransport
@@ -570,11 +764,30 @@ def redis_observer(
     redis_url: str = "redis://localhost:6379",
     channel_prefix: str = "nu",
 ) -> With:
-    """Redis Observer as one bracket.
+    """Binds a Redis subscriber alone, for a program that only reacts.
 
-    Read-only cross-process subscriber. Actors that don't write to any
-    storage but need to react to cluster-wide changes (e.g. reactive
-    counters, notification handlers) bind this at process scope.
+    The listening half of a Redis-published stack, with no Publisher and no
+    Storage of its own. This is what a reader process binds when the writes
+    happen elsewhere: a dashboard repainting on someone else's counter, a
+    handler firing on someone else's insert.
+
+    Args:
+        redis_url: where the Redis carrying the notifications lives.
+        channel_prefix: must match the publishing side's, or nothing
+            arrives. Note the RocksDB Redis preset defaults to
+            ``"__every__"`` rather than this one's ``"nu"``.
+
+    Notes:
+        - Binds nothing that can read or write data. Pair it with a storage
+          preset if the reactor also needs to read what changed.
+        - Redis has to be reachable when the bracket sets up.
+        - Bind it once at process scope, not per request.
+
+    Example:
+        app = nu.With(
+            nu.kv.redis_observer(redis_url="redis://cache:6379"),
+            body=reactor,
+        )
     """
     from nu.context.fabric import Provide, With
     from nu.kv.fabrics import RedisObserver

@@ -32,7 +32,37 @@ S = TypeVar("S", bound="Shape")
 
 
 class ShapesListRef(MutableShapesSequenceRef[T], RefBase[list[dict]], Generic[T]):
-    """Dict shapes list reference: sequence of homogeneous shapes."""
+    """A list of one Shape's records, stored as a plain list of inner dicts.
+
+    Subscripting descends: ``ref[i]`` is a ``ShapeRef`` at that index holding
+    the element Shape, so ``rows[0].symbol`` is a full path down to a leaf and
+    nothing is read until the whole chain runs.
+
+    Args:
+        address: this level's key, a literal or a Nu term yielding one.
+
+    Notes:
+        - Elements are plain dicts, so a record is appended by appending a
+          dict, not a Shape instance.
+        - In-place calls read the container first and do nothing when the
+          slot is absent, so ``set`` an empty list before the first
+          ``append``.
+        - An index past the end reads EMPTY rather than raising, like any
+          other broken path.
+
+    Yields:
+        The stored list of inner dicts. EMPTY when the slot was never
+        written.
+
+    Example:
+        >>> class Order(nu.Shape):
+        ...     symbol = nu.mem.StrRef.slot()
+        >>> class Book(nu.Shape):
+        ...     rows = nu.mem.ShapesListRef.slot(Order)
+        >>> ctx = nu.Context().bind(dict, {"rows": [{"symbol": "AAPL"}]}, Book)
+        >>> nu.run(Book.rows[0].symbol, ctx)[0]
+        'AAPL'
+    """
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
         """Navigate to the shape at ``address`` as a substrate-backed mem ShapeRef."""
@@ -61,7 +91,19 @@ class ShapesListRef(MutableShapesSequenceRef[T], RefBase[list[dict]], Generic[T]
 
     @classmethod
     def slot(cls, shape_type: type[S]) -> ShapesListRef[S]:
-        """Declare a slot holding a sequence of ``shape_type`` shapes."""
+        """Declare a slot holding a sequence of ``shape_type`` shapes.
+
+        Args:
+            shape_type: the Shape class each element holds.
+
+        Notes:
+            - ``rows: ShapesListRef[Order]`` as an annotation declares the
+              same slot.
+
+        Example:
+            class Book(Shape):
+                rows = ShapesListRef.slot(Order)
+        """
         return Slot(cls, shape_type=shape_type)  # type: ignore[return-value]
 
     @classmethod

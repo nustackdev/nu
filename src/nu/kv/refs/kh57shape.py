@@ -37,11 +37,29 @@ S = TypeVar("S", bound="Shape")
 
 
 class Kh57ShapesRef(ShapesDictRef[int, T], Generic[T]):
-    """Sparse int-keyed mapping of homogeneous shapes with kh57 sampling.
+    """A sparse int-keyed mapping of one shape type, laid out for range sampling.
 
-    Inherits shape-descent semantics from :class:`ShapesDictRef`. Keys are
-    always non-negative 57-bit ints; the default view is :class:`Kh57View`.
-    Adds :meth:`sample` and :meth:`range` on top.
+    The shape-keyed sibling of the kh57 map: keys are non-negative 57-bit
+    ints, values are rows with fields of their own, and subscripting descends
+    into a row rather than yielding a value. What a time series of structured
+    points is stored in.
+
+    Notes:
+        - Rows are stored decomposed, so ``series[ts].value`` reads one
+          field without pulling the rest of the row.
+        - A key vivifies on write, as on any shape mapping.
+        - Iteration and ``keys`` come back in ascending key order.
+        - ``sample`` and ``range`` yield the row's view per entry, not a
+          shape ref, so they are for reading a window rather than for
+          descending further.
+
+    Example:
+        class Point(Shape):
+            value = FloatRef.slot()
+        class Series(Shape):
+            points = Kh57ShapesRef.slot(Point)
+        run(Series.points[1_700_000].value.set(1.5), ctx)
+        run(Series.points.range(1_700_000, 1_700_100), ctx)
     """
 
     def __init__(
@@ -97,11 +115,32 @@ class Kh57ShapesRef(ShapesDictRef[int, T], Generic[T]):
         begin: IntArg | None = None,
         end: IntArg | None = None,
     ) -> Any:
-        """Range reservoir sample - return up to ``n`` (key, shape) pairs.
+        """Draw a uniform sample of up to ``n`` rows from a key range.
 
-        Yields a list of ``(int_key, shape_view)`` tuples from the sub-range
-        ``[begin, end)``. Deterministic given a seeded backend salt; stable
-        under appends outside the queried range.
+        Args:
+            n: the ceiling on how many pairs come back. A range holding
+                fewer than ``n`` rows yields all of them.
+            begin: inclusive lower bound on the key. None leaves the range
+                open at the bottom.
+            end: exclusive upper bound on the key. None leaves the range
+                open at the top.
+
+        Notes:
+            - Cost tracks ``n``, not the size of the range.
+            - Each argument is a child, so any of them may be an expression
+              or a ref read at run time.
+            - Draws from the unseeded module random source. Build the
+              Kh57Sample atom directly with its ``rng`` argument when a run
+              has to be reproducible.
+            - Stable under appends outside the queried range.
+
+        Yields:
+            A list of ``(int_key, row_view)`` pairs, unordered, each row a
+            view over its stored fields. EMPTY when the container is not
+            reachable.
+
+        Example:
+            run(Series.points.sample(100, begin=0, end=10_000), ctx)
         """
         from nu.kv.interactions.kh57 import Kh57Sample
 
@@ -112,7 +151,28 @@ class Kh57ShapesRef(ShapesDictRef[int, T], Generic[T]):
         begin: IntArg,
         end: IntArg,
     ) -> Any:
-        """List of ``(int_key, shape_view)`` pairs in ``[begin, end)``, key-ordered."""
+        """Read a key range of rows whole, in ascending key order.
+
+        Args:
+            begin: inclusive lower bound on the key. Must be non-negative.
+            end: exclusive upper bound on the key. Must stay inside the key
+                space the container's layout covers.
+
+        Notes:
+            - Cost tracks the size of the range, so sample instead when the
+              window grows without bound.
+            - Both bounds are required, unlike on ``sample``, and both are
+              children, so either may be computed at run time.
+            - An empty or inverted range yields an empty list rather than an
+              error; bounds outside the key space raise ValueError.
+
+        Yields:
+            A list of ``(int_key, row_view)`` pairs, ascending by key. EMPTY
+            when the container is not reachable.
+
+        Example:
+            run(Series.points.range(0, 100), ctx)
+        """
         from nu.kv.interactions.kh57 import Kh57Range
 
         return Any(Kh57Range(self, begin, end))

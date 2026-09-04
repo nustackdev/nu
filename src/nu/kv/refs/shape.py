@@ -34,7 +34,29 @@ S = TypeVar("S", bound="Shape")
 
 
 class ShapeRef(ReactiveShapeRef, ViewRef[dict[str, object]], Generic[T]):
-    """Virtuals shape reference: structured container backed by a virtuals View."""
+    """A nested shape slot in KV storage: a fixed set of named fields.
+
+    Descending by field name resolves the declared slot into that field's own
+    ref, with this one as its parent, so a whole hierarchy is written as
+    nested Shape classes and navigated with dots.
+
+    Notes:
+        - ``ref.field`` and ``ref["field"]`` are the same descent; the second
+          is what to write when the field name is computed.
+        - Fields carry their own types, so descent lands on a typed leaf ref
+          or on another container ref, not on a plain value.
+        - Nothing is created until a leaf underneath is written; the write
+          then materializes every level along the way.
+        - The mapping surface (``keys``, ``items``, ``len``) reads the
+          stored fields, so it only sees the fields actually written.
+
+    Example:
+        class Order(Shape):
+            symbol = StrRef.slot()
+        class Portfolio(Shape):
+            latest = ShapeRef.slot(Order)
+        run(Portfolio.latest.symbol.set("SOL"), ctx)
+    """
 
     def _wrap_result(self, op: Nu) -> Dict[str, object]:
         """Wrap a shape-level op result as a Dict."""

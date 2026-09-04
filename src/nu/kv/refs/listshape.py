@@ -33,7 +33,32 @@ S = TypeVar("S", bound="Shape")
 
 
 class ShapesListRef(ReactiveShapesSequenceRef[T], ViewRef[list[dict]], Generic[T]):
-    """Virtuals shapes list reference: sequence of homogeneous shapes."""
+    """An ordered list of one shape type in KV storage, indexed into by position.
+
+    Indexing lands on a shape ref at that position rather than on a value, so
+    a row's fields are reachable and writable one at a time:
+    ``rows[0].symbol.set(...)``.
+
+    Notes:
+        - Every row is stored decomposed, field by field, so writing one
+          field of one row does not read or rewrite the others.
+        - A position does not vivify: writing a field at an index the list
+          does not reach raises IndexError. Grow the list first, by
+          appending the row or setting the whole list.
+        - Reading a field at an out-of-range index is not an error; it
+          yields EMPTY.
+        - The index may be an expression or a ref, so the position can be
+          computed at run time.
+        - ListRef is the sibling for lists of plain values.
+
+    Example:
+        class Order(Shape):
+            symbol = StrRef.slot()
+        class Portfolio(Shape):
+            orders = ShapesListRef.slot(Order)
+        run(Portfolio.orders.append({"symbol": "SOL"}), ctx)
+        run(Portfolio.orders[0].symbol, ctx)
+    """
 
     def _wrap_item_ref(self, address: object) -> ShapeRef:
         """Navigate to the shape at ``address`` as a substrate-backed virtuals ShapeRef."""

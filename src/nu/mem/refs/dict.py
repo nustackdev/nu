@@ -31,7 +31,40 @@ DV = TypeVar("DV")
 
 
 class DictRef(MutableMappingRef["ItemRef"], RefBase[dict[K, V]], Generic[K, V]):
-    """Dict mapping reference: key-value container backed by nested dict."""
+    """A mapping slot in the dict substrate, holding one plain dict of values.
+
+    Subscripting descends rather than reads: ``ref[k]`` is an ``ItemRef`` at
+    that key inside the stored dict, a ref in its own right that can be set,
+    erased or read on its own. The mapping calls (``keys``, ``items``,
+    ``update``, ...) act on the dict as a whole.
+
+    Args:
+        address: this level's key, a literal or a Nu term yielding one.
+
+    Notes:
+        - The stored value is an ordinary dict and a read hands back that
+          live object, so a mutation through the ref is visible to anyone
+          else holding it.
+        - In-place calls read the container first and do nothing when the
+          slot is absent, so ``set`` an empty dict before the first
+          ``set_item``.
+        - The declared key and value types are metadata; nothing coerces or
+          rejects what is written.
+
+    Yields:
+        The stored dict. EMPTY when the slot was never written.
+
+    Example:
+        >>> class Port(nu.Shape):
+        ...     meta = nu.mem.DictRef.slot(int)
+        >>> data = {"meta": {"a": 1}}
+        >>> ctx = nu.Context().bind(dict, data, Port)
+        >>> _ = nu.run(Port.meta.set_item("b", 2), ctx)
+        >>> nu.run(Port.meta["b"], ctx)[0]
+        2
+        >>> nu.run(Port.meta.len(), ctx)[0]
+        2
+    """
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
         """Navigate to the value at ``address`` as a substrate-backed mem ItemRef."""
@@ -87,7 +120,22 @@ class DictRef(MutableMappingRef["ItemRef"], RefBase[dict[K, V]], Generic[K, V]):
 
     @classmethod
     def slot(cls, value_type: type[DV], key_type: type[DK] = str) -> DictRef[DK, DV]:  # type: ignore[assignment]
-        """Declare a mapping slot with ``value_type`` values and ``key_type`` keys."""
+        """Declare a mapping slot with ``value_type`` values and ``key_type`` keys.
+
+        Args:
+            value_type: the Python type of the values held.
+            key_type: the Python type of the keys. Defaults to ``str``.
+
+        Notes:
+            - The Nu Forms for both types are derived from them, so only the
+              Python types are written.
+            - ``meta: DictRef[str, int]`` as an annotation declares the same
+              slot.
+
+        Example:
+            class Port(Shape):
+                meta = DictRef.slot(int)
+        """
         return Slot(
             cls,
             value_type=value_type,

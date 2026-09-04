@@ -44,15 +44,28 @@ __all__ = ["ProgramRef"]
 
 
 class ProgramRef(ItemRef, Program):
-    """Virtuals reference to stored program source, with the Program verbs.
+    """A Nu program stored as source text in a KV leaf, with the Program verbs.
 
-    Bases are ordered substrate-first for a reason. ``ItemRef`` reaches the
-    virtuals ``PrimitiveRef``, which declares ``sort = Sort.REF`` and
-    compiles to a fabric read; ``Program`` reaches ``TypedNu``, which
-    declares a scalar query and compiles to a passthrough over child 0.
-    Flipped, ``TypedNu`` would win both: the ref would yield its *parent*
-    ref instead of the stored value, and the effect machinery would stop
-    seeing a fabric touch. Nothing raises. This order is load-bearing.
+    Reading it yields the source verbatim, the same as any str leaf. What the
+    Program surface adds is the ability to turn that stored text into a tree
+    and run it, so a program becomes a value a shape can hold, write and
+    replace at run time.
+
+    Notes:
+        - No codec: source text is both the stored form and the value form,
+          unlike the std refs that translate between the two.
+        - The base order is load-bearing. ``ItemRef`` first makes the class a
+          ref that reads storage; with ``Program`` first the passthrough
+          would win and the ref would yield its parent instead of the stored
+          value, silently, with no fabric touch recorded.
+        - Construction errors surface when the stored source is loaded or
+          run, not when it is written, so bad source stores fine.
+
+    Example:
+        class App(Shape):
+            job = ProgramRef.slot()
+        run(App.job.set(SOURCE), ctx)
+        run(App.job.run(), ctx)
     """
 
     def __init__(

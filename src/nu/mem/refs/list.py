@@ -29,7 +29,40 @@ E = TypeVar("E")
 
 
 class ListRef(MutableSequenceRef["ItemRef"], RefBase[list[T]], Generic[T]):
-    """Dict sequence reference: ordered container backed by nested list."""
+    """A sequence slot in the dict substrate, holding one plain list of values.
+
+    Subscripting with an int descends rather than reads: ``ref[i]`` is an
+    ``ItemRef`` at that index inside the stored list, settable and erasable on
+    its own. A slice instead routes to the sequence-level ``slice`` call and
+    yields a new list.
+
+    Args:
+        address: this level's key, a literal or a Nu term yielding one.
+
+    Notes:
+        - The stored value is an ordinary list and a read hands back that
+          live object, so a mutation through the ref is visible to anyone
+          else holding it.
+        - In-place calls read the container first and do nothing when the
+          slot is absent, so ``set`` an empty list before the first
+          ``append``.
+        - The declared element type is metadata; nothing coerces or rejects
+          what is written.
+
+    Yields:
+        The stored list. EMPTY when the slot was never written.
+
+    Example:
+        >>> class Port(nu.Shape):
+        ...     tags = nu.mem.ListRef.slot(str)
+        >>> data = {"tags": ["a"]}
+        >>> ctx = nu.Context().bind(dict, data, Port)
+        >>> _ = nu.run(Port.tags.append("b"), ctx)
+        >>> nu.run(Port.tags[1], ctx)[0]
+        'b'
+        >>> data
+        {'tags': ['a', 'b']}
+    """
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
         """Navigate to the element at ``address`` as a substrate-backed mem ItemRef."""
@@ -69,7 +102,19 @@ class ListRef(MutableSequenceRef["ItemRef"], RefBase[list[T]], Generic[T]):
 
     @classmethod
     def slot(cls, item_type: type[E]) -> ListRef[E]:
-        """Declare a list slot holding elements of ``item_type``."""
+        """Declare a list slot holding elements of ``item_type``.
+
+        Args:
+            item_type: the Python type of the elements held.
+
+        Notes:
+            - The Nu Form for the element type is derived from it.
+            - ``tags: ListRef[str]`` as an annotation declares the same slot.
+
+        Example:
+            class Port(Shape):
+                tags = ListRef.slot(str)
+        """
         return Slot(
             cls,
             item_type=item_type,

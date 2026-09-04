@@ -73,10 +73,35 @@ _SYNC_UNSUPPORTED = (
 
 
 class OnChange(ScalarQuery):
-    """Subscribe to any change on the slot-0 Ref's view.
+    """Opens a subscription to any change on a Ref's view.
 
-    Slot 0 must yield an observable view (a collection- or view-tier Ref).
-    Returns the ``Subscription`` handle from ``observer.subscribe(options)``.
+    Args:
+        ref: a collection- or view-tier Ref. Must yield an observable view,
+            i.e. one that answers ``on_change()``.
+
+    Notes:
+        - Async only. The sync path raises ``RuntimeError`` rather than
+          returning options without an observer behind them; use ``nu.arun``.
+        - ``view.on_change()`` returns opaque filter options, nothing
+          observer-bound. The atom resolves the process-scope
+          ``ObserverProtocol`` from ctx and hands the options to
+          ``subscribe`` unread - Nu never inspects a backend's filter dialect.
+        - Subscribing reads no value off the view, so nothing here recomputes
+          on change. The handle only delivers notifications to receivers bound
+          on it; ``React`` / ``ReactWhile`` / ``ReactForever`` are what bind
+          them and run a body.
+        - Fires on any mutation reaching that view, with no distinction of
+          which mutation it was.
+        - Each evaluation opens a fresh subscription; whoever binds a receiver
+          is responsible for closing it.
+
+    Yields:
+        The ``Subscription`` handle from ``observer.subscribe(options)``.
+        INVALID when the view resolves to EMPTY or INVALID (unbound address,
+        missing intermediate container) - no subscription is opened.
+
+    Example:
+        nu.arun(nu.ReactForever(users.on_change(), body))
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -104,11 +129,29 @@ class OnChange(ScalarQuery):
 
 
 class OnChildChange(ScalarQuery):
-    """Subscribe to changes on one specific child of the slot-0 Ref's view.
+    """Opens a subscription to changes on one named child of a Ref's view.
 
-    Children: ``[ref, address]``. Slot 0 must yield a view that supports
-    ``on_child_change(address)`` (a structured Ref's view); slot 1 resolves to
-    the child address.
+    Args:
+        ref: a structured Ref. Must yield a view that answers
+            ``on_child_change(address)``.
+        address: the child to watch, as a key or index the view understands.
+
+    Notes:
+        - Async only. The sync path raises ``RuntimeError``; use ``nu.arun``.
+        - ``address`` is evaluated only after the view resolves, so a sentinel
+          view short-circuits without touching it.
+        - Watches that one child slot, not the subtree under it.
+        - The atom resolves the process-scope ``ObserverProtocol`` from ctx and
+          passes the view's opaque options through to ``subscribe`` unread.
+        - Each evaluation opens a fresh subscription; the binder closes it.
+
+    Yields:
+        The ``Subscription`` handle from ``observer.subscribe(options)``.
+        INVALID when either the view or the address is EMPTY or INVALID - no
+        subscription is opened.
+
+    Example:
+        nu.arun(nu.React(users.on_child_change("alice"), body))
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -139,9 +182,26 @@ class OnChildChange(ScalarQuery):
 
 
 class OnChildrenChange(ScalarQuery):
-    """Subscribe to changes on all immediate children of the slot-0 Ref's view.
+    """Opens a subscription to changes on any immediate child of a Ref's view.
 
-    Slot 0 must yield a view that supports ``on_children_change()``.
+    Args:
+        ref: a structured Ref. Must yield a view that answers
+            ``on_children_change()``.
+
+    Notes:
+        - Async only. The sync path raises ``RuntimeError``; use ``nu.arun``.
+        - Covers the immediate children only. Anything deeper needs
+          ``OnDescendantsChange``.
+        - The atom resolves the process-scope ``ObserverProtocol`` from ctx and
+          passes the view's opaque options through to ``subscribe`` unread.
+        - Each evaluation opens a fresh subscription; the binder closes it.
+
+    Yields:
+        The ``Subscription`` handle from ``observer.subscribe(options)``.
+        INVALID when the view is EMPTY or INVALID - no subscription is opened.
+
+    Example:
+        nu.arun(nu.ReactForever(users.on_children_change(), body))
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -169,11 +229,33 @@ class OnChildrenChange(ScalarQuery):
 
 
 class OnDescendantsChange(ScalarQuery):
-    """Subscribe to descendants matching a pattern on the slot-0 Ref's view.
+    """Opens a subscription to descendants of a Ref's view matching a pattern.
 
-    Children: ``[ref, pattern_0, pattern_1, ...]``. At least one pattern child
-    is required. Slot 0 must yield a view that supports
-    ``on_descendants_change(p0, p1, ...)``.
+    Args:
+        ref: a structured Ref. Must yield a view that answers
+            ``on_descendants_change(p0, p1, ...)``.
+        *pattern: the path segments to match descendants against, in order.
+            Their meaning (wildcards and all) belongs to the backend.
+
+    Notes:
+        - Async only. The sync path raises ``RuntimeError``; use ``nu.arun``.
+        - At least one pattern segment is required, and the check happens at
+          evaluation, not at construction: an empty pattern raises
+          ``ValueError`` from the running thunk.
+        - Segments are evaluated in order, after the view, and any sentinel
+          among them collapses the whole subscription rather than being
+          dropped from the pattern.
+        - The atom resolves the process-scope ``ObserverProtocol`` from ctx and
+          passes the view's opaque options through to ``subscribe`` unread.
+        - Each evaluation opens a fresh subscription; the binder closes it.
+
+    Yields:
+        The ``Subscription`` handle from ``observer.subscribe(options)``.
+        INVALID when the view or any pattern segment is EMPTY or INVALID - no
+        subscription is opened.
+
+    Example:
+        nu.arun(nu.ReactForever(users.on_descendants_change("*", "email"), body))
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -210,18 +292,37 @@ class OnDescendantsChange(ScalarQuery):
 
 
 class OnPrimitiveChange(ScalarQuery):
-    """Subscribe to changes at a leaf Ref's address within its parent view.
+    """Opens a subscription to changes at a leaf Ref, through its parent view.
 
-    A leaf Ref yields a scalar value, not a view, so ``OnChange`` (which
-    calls ``view.on_change()``) does not apply. The subscription happens on the
-    *parent* view's child-change channel keyed by the leaf's own address.
+    A leaf Ref yields a scalar, not a view, so there is no ``on_change()`` to
+    call on it. This atom goes one level up instead: it asks the leaf for its
+    parent view and its own address, and subscribes on the parent's
+    child-change channel keyed by that address. Every substrate whose Refs
+    implement ``_afetch_parent`` and ``_aaddress`` - all structured refs -
+    gets leaf reactivity from this one path, with nothing to override per
+    substrate.
 
-    Children: ``[ref]``. At runtime the query calls ``ref._afetch_parent(rt,
-    ref_nid)`` to obtain the parent view and ``ref._aaddress(rt, ref_nid)`` to
-    resolve the address, then returns ``observer.subscribe(options)``.
+    Args:
+        ref: the leaf Ref to watch.
 
-    Every substrate whose Refs implement ``_afetch_parent`` (all structured
-    refs) picks this up for free -- no per-substrate override needed.
+    Notes:
+        - Async only. The sync path raises ``RuntimeError``; use ``nu.arun``.
+        - The leaf's own thunk is never driven. Path knowledge is read off the
+          Ref instance and its child nid, so subscribing does not read the
+          leaf's value and records no dependency on it.
+        - Notifications ride the parent's child-change channel, so the atom
+          sees whatever that channel reports for the address, including the
+          leaf appearing or being deleted.
+        - Each evaluation opens a fresh subscription; the binder closes it.
+
+    Yields:
+        The ``Subscription`` handle from ``observer.subscribe(options)``.
+        INVALID when the parent view or the address is EMPTY or INVALID, which
+        is what a leaf under a missing container gives - no subscription is
+        opened.
+
+    Example:
+        nu.arun(nu.React(user["email"].on_change(), body))
     """
 
     def __init__(self, ref: object) -> None:

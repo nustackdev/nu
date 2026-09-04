@@ -23,7 +23,28 @@ __all__ = ["FabricExists"]
 
 
 class FabricExists(ScalarQuery):
-    """Yields whether the slot-0 ``FabricRef``'s fabric type is bound."""
+    """Whether the fabric type of its ``FabricRef`` is bound on the Context.
+
+    Args:
+        ref: the ``FabricRef`` whose address is resolved and looked up.
+
+    Notes:
+        - Normally written as ``FabricRef(...).exists()`` rather than built by
+          hand.
+        - Exists because the dual-role read cannot answer the question: an
+          unbound type yields EMPTY, and so does a type bound to EMPTY.
+        - Answering goes through Context resolution, so a lazily bound
+          factory is materialized by the check itself.
+
+    Yields:
+        True or False, never a sentinel.
+
+    Example:
+        >>> class Counter:
+        ...     pass
+        >>> nu.run(nu.FabricRef(Counter).exists())[0]
+        False
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]

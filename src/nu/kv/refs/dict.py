@@ -32,7 +32,32 @@ DV = TypeVar("DV")
 
 
 class DictRef(ReactiveMappingRef["ItemRef"], ViewRef[dict[K, V]], Generic[K, V]):
-    """Virtuals mapping reference: key-value container backed by a virtuals View."""
+    """A mapping slot in KV storage, decomposed into a child per key.
+
+    Every value lives at its own address under the slot, so keys can be read,
+    written and watched one at a time without touching the rest. Key and
+    value types are fixed at declaration; keys default to str.
+
+    Notes:
+        - Ops run against the live View, so ``len``, ``contains`` and
+          ``keys`` are answered by storage rather than by materializing the
+          mapping.
+        - Subscripting yields a leaf ref of the declared value type, which
+          is what makes ``ref[k].set(...)`` and ``ref[k].on_change()``
+          possible.
+        - A key that has never been written reads as EMPTY; use ``get_item``
+          with a default when a fallback is wanted.
+        - The key may itself be an expression or a ref, so a lookup can be
+          computed at run time.
+        - PrimitiveDictRef is the other choice: one opaque blob, no per-key
+          addresses, but heterogeneous contents.
+
+    Example:
+        class Portfolio(Shape):
+            metadata = DictRef.slot(str)
+        run(Portfolio.metadata.set_item("owner", "gor"), ctx)
+        run(Portfolio.metadata["owner"], ctx)
+    """
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
         """Navigate to the value at ``address`` as a substrate-backed virtuals ItemRef."""

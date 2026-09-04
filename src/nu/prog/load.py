@@ -74,7 +74,18 @@ _FALLBACK = PyBrace()
 
 
 class LoadNu(ScalarQuery):
-    """Construct a Nu term from python source, in the brace bound on ctx.
+    """Constructs a Nu term from python source, in the brace bound on ctx.
+
+    The source is a whole module, not an expression, and the term comes from
+    calling its entry point. The entry point's own signature is the scope
+    contract: it declares by name what it needs, ``scope`` offers values by
+    name, and only the intersection is passed. So a snippet says what it
+    depends on rather than trusting an out-of-band convention about what
+    happens to be in scope.
+
+    Constructing is not running. ``LoadNu`` gives back the term and stops
+    there, which is what a tool that wants to inspect or type-check a stored
+    program needs; ``Eval(LoadNu(source))`` is the pair that also drives it.
 
     Args:
         source: python source for a whole module. Any ``Nu[str]``; a bare
@@ -87,9 +98,60 @@ class LoadNu(ScalarQuery):
         brace: tag identifying the :class:`~nu.prog.brace.PyBrace` on ctx.
             Omit for the untagged singleton, or for no brace at all.
 
+    Notes:
+        - Source, entry, filename and every scope value are children, so all
+          four are computable: reading the source out of kv at an address
+          the program itself worked out is the same node with a different
+          child. Only the mapping from slot to scope name lives in payload,
+          because it shapes the call rather than being a value the call
+          computes.
+        - The brace is resolved off ``rt.ctx`` at evaluation, by
+          ``PyBrace`` plus the ``brace`` tag. With nothing bound it falls
+          back to a shared in-process brace, so a bare ``LoadNu`` in a plain
+          tree needs no bracket.
+        - Only plain data crosses into a brace. A venv brace pickles the
+          scope to another interpreter, where a live object from this one
+          does not exist, so the snippet imports what it needs and takes
+          values.
+        - Scope keys the entry point does not declare are dropped rather
+          than passed. A declared parameter with no offer and no default is
+          a construction failure, not a ``TypeError``.
+        - Every way the snippet can fail is one failure: the source does not
+          parse, module-level code raises, the entry point is missing or is
+          not callable, it raises, or it returns something that is not a Nu.
+          All five come back as a ``Diagnostic`` and are raised as one
+          ``ConstructionError``.
+        - It never yields a Diagnostic, only raises. A downstream ``Eval``
+          would otherwise have to re-check every value passing through it
+          for one.
+        - The traceback in a diagnostic renders the snippet's actual source
+          lines, because the source is seeded into ``linecache`` under
+          ``filename`` before it is compiled.
+        - Portable across sync and async. Construction is blocking (a venv
+          brace sits on a pipe read for its whole duration), so the async
+          path runs it off-thread rather than making the atom async-only.
+
+    Yields:
+        The Nu term the entry point returned, unevaluated.
+
     Raises:
         ConstructionError: the source did not construct. The record is on
             ``.diagnostic``.
+
+    Example:
+        >>> src = '''
+        ... import nu
+        ... def out(n):
+        ...     return nu.Int(n) * nu.Int(10)
+        ... '''
+        >>> nu.run(nu.LoadNu(src, scope={"n": 4}))[0]
+        Int(Mul(Int(4), Int(10)))
+
+        >>> try:
+        ...     nu.run(nu.LoadNu("def out( "))
+        ... except nu.prog.ConstructionError as err:
+        ...     print(err.diagnostic)
+        source does not parse: '(' was never closed (line 1)
     """
 
     def __init__(
