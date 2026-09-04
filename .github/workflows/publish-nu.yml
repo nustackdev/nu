@@ -1,5 +1,6 @@
-# Publishes the `nu` wheel to PyPI on a tag push like `nu@0.1.0`.
-# Manual "Run workflow" dispatch builds but does NOT publish.
+# Publishes the three `nu` distributions to PyPI on a tag push like `nu@0.2.0`.
+# Manual "Run workflow" dispatch builds only, unless you tick `publish`; the
+# `package` input then selects one distribution or all three.
 #
 # `nu` tags own release semantics for the whole stack -- this workflow also
 # creates a GitHub Release attached to the tag. Sibling wheels (nudle) and
@@ -93,13 +94,18 @@ jobs:
           uv build --package nucli --out-dir dist/nucli
 
       # One publish step per project: trusted publishing mints a token scoped
-      # to a single PyPI project, so each upload must carry only that
-      # project's artifacts. Ordered nucore -> nustd -> nucli so every
-      # dependency is on the index before its dependent lands.
-      # A tag push publishes all three. Manual dispatch can publish one at a
-      # time, which is what bootstrapping needs: PyPI will not let you register
-      # several pending publishers against the same workflow file at once, so
-      # each project is registered and then published before the next one.
+      # to a single PyPI project, so each upload must carry only that project's
+      # artifacts. Ordered nucore -> nustd -> nucli so every dependency is on
+      # the index before its dependent lands.
+      #
+      # A tag push publishes all three. Manual dispatch can do one at a time,
+      # which is what bootstrapping needed: PyPI would not register several
+      # pending publishers against the same workflow file at once, so each
+      # project was registered and published before moving to the next.
+      #
+      # skip-existing keeps this idempotent. A rerun after a partial failure
+      # resumes instead of dying on the files that already uploaded, and a tag
+      # can be pushed after a manual publish to cut the GitHub Release.
       - name: publish nucore
         if: >-
           startsWith(github.ref, 'refs/tags/nu@') ||
@@ -107,6 +113,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/nucore
+          skip-existing: true
 
       - name: publish nustd
         if: >-
@@ -115,6 +122,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/nustd
+          skip-existing: true
 
       - name: publish nucli
         if: >-
@@ -123,6 +131,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/nucli
+          skip-existing: true
 
       - name: build release notes from CHANGELOG
         if: startsWith(github.ref, 'refs/tags/nu@')
