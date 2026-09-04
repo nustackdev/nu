@@ -2,7 +2,9 @@
 
 ## Packages shipped from this repo
 
-- **nu** — 0.1.18
+- **nucore** (kernel) — 0.1.18
+- **nustd** (fabrics) — 0.1.18
+- **nucli** (the `nu` command) — 0.1.18
 - **nudle** — 0.1.4
 - **ui-core** — 0.1.0
 - **ui-kit** — 0.1.3
@@ -11,6 +13,10 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Rename the kernel distribution nustack-py to nucore and drop its extras
+- Rewrite the brand kit on plain ANSI and move it to nu._config.branding; rich is now a nucli-only dependency
+- Extract the `nu` command into its own nucli distribution; kernel now depends only on typing-extensions + cloudpickle
+- Restructure the repo into a two-package monorepo: nucore (kernel) + nustd (fabrics), both importing as nu.*
 - Fill fabric and internals docstrings to the nu.info contract (mem, kv, llm, cc, http, proxy, mp, cluster, service, context, prog, reactive)
 - Add nu.info.Inspect atom: resolves a module or atom path and yields the info record as formatted docs; expose nu.info at the nu root
 - Fill nu.spans, nu.flows, and remaining nu.core submodule docstrings to the nu.info contract

@@ -7,7 +7,7 @@
 #   2. Add it as GitHub repo secret `NPM_TOKEN`.
 #
 # Release flow:
-#   1. Bump `src/nu/ui/web/core/package.json` version.
+#   1. Bump `packages/nustd/src/nu/ui/web/core/package.json` version.
 #   2. Commit and push to main.
 #   3. `git tag ui-core@X.Y.Z && git push origin ui-core@X.Y.Z`.
 name: Publish @nustackdev/ui-core
@@ -31,7 +31,7 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: src/nu/ui/web
+        working-directory: packages/nustd/src/nu/ui/web
     steps:
       - uses: actions/checkout@v4
 
@@ -39,7 +39,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: src/nu/ui/web/package-lock.json
+          cache-dependency-path: packages/nustd/src/nu/ui/web/package-lock.json
           registry-url: "https://registry.npmjs.org"
 
       - name: install

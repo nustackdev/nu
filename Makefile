@@ -1,4 +1,4 @@
-.PHONY: help install sync dev test lint format clean web-install web-dev web-build build-nu build-nudle build-all
+.PHONY: help install sync dev test lint format boundary clean web-install web-dev web-build build-nu build-nudle build-all
 
 # =============================================================================
 # Configuration
@@ -8,12 +8,12 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-CORE := src
+CORE := packages
 EXT_DIRS := ext/nu-virtuals ext/nu-dict ext/nu-datetime ext/nu-fin ext/nu-math ext/nu-path ext/nu-uuid ext/nu-shape-lens ext/nu-tree-view
 ALL_SRC := $(CORE) $(addsuffix /src,$(EXT_DIRS))
 
-UI_ROOT := src/nu/ui/web
-NUDLE_APP := src/nu/ui/web/nudle
+UI_ROOT := packages/nustd/src/nu/ui/web
+NUDLE_APP := packages/nustd/src/nu/ui/web/nudle
 
 # =============================================================================
 # Help
@@ -37,12 +37,13 @@ help:
 	@echo "$(GREEN)Code Quality:$(NC)"
 	@echo "  make lint            Check code with ruff"
 	@echo "  make format          Format code with ruff"
-	@echo "  make check           Run format-check + lint"
+	@echo "  make check           Run format-check + lint + boundary"
+	@echo "  make boundary        Check the kernel does not import nustd"
 	@echo ""
 	@echo "$(GREEN)Packages:$(NC)"
 	@echo "  make list            List workspace packages"
 	@echo "  make build PKG=x     Build specific package"
-	@echo "  make build-nu        Build the nu wheel"
+	@echo "  make build-nu        Build the three nu wheels (kernel, nustd, nucli)"
 	@echo "  make build-nudle     Build the nudle web-bundle wheel"
 	@echo "  make build-all       Build both wheels"
 	@echo ""
@@ -67,7 +68,7 @@ install:
 
 sync: install
 	@echo "$(BLUE)Syncing workspace...$(NC)"
-	uv sync --all-extras
+	uv sync --all-packages --all-extras
 	@echo "$(GREEN)Workspace synced$(NC)"
 
 dev: sync
@@ -128,7 +129,11 @@ format-check:
 	@echo "$(BLUE)Checking format...$(NC)"
 	uv run ruff format --check .
 
-check: format-check lint
+boundary:
+	@echo "$(BLUE)Checking kernel boundary...$(NC)"
+	uv run python scripts/check_kernel_boundary.py
+
+check: format-check lint boundary
 	@echo "$(GREEN)All checks passed$(NC)"
 
 # =============================================================================
@@ -137,8 +142,8 @@ check: format-check lint
 list:
 	@echo "$(BLUE)Workspace packages:$(NC)"
 	@echo ""
-	@echo "$(GREEN)Core (src/nu/):$(NC)"
-	@ls -d src/nu/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo "$(GREEN)Packages:$(NC)"
+	@ls -d packages/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
 	@echo ""
 	@echo "$(GREEN)Extensions (ext/):$(NC)"
 	@ls -d ext/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
@@ -169,8 +174,10 @@ web-build:
 	@echo "$(GREEN)Built: $(NUDLE_APP)/dist/$(NC)"
 
 build-nu:
-	@echo "$(BLUE)Building nu wheel...$(NC)"
-	uv build --wheel
+	@echo "$(BLUE)Building nu wheels (kernel + nustd + nucli)...$(NC)"
+	uv build --wheel --package nucore
+	uv build --wheel --package nustd
+	uv build --wheel --package nucli
 	@echo "$(GREEN)Built: dist/$(NC)"
 
 build-nudle: web-build

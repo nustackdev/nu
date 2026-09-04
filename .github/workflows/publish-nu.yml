@@ -5,16 +5,32 @@
 # creates a GitHub Release attached to the tag. Sibling wheels (nudle) and
 # npm packages (ui-core, ui-kit) have their own tags but do not cut releases.
 #
-# Setup once (PyPI trusted publisher / OIDC, no secrets):
+# Setup once (PyPI trusted publisher / OIDC, no secrets). Do this three times,
+# once per project -- a trusted publisher is registered per PyPI project:
 #   pypi.org -> account -> Publishing -> Add pending publisher
-#     PyPI project name: nustack-py
+#     PyPI project name: nucore   (and again for: nustd, nucli)
 #     Owner: nustackdev
 #     Repository name: nu
 #     Workflow name: publish-nu.yml
 #     Environment name: (leave blank)
 #
+# Three distributions ship from one tag, in lockstep:
+#   packages/nucore -> nucore  (kernel)
+#   packages/nustd  -> nustd   (fabrics)
+#   packages/nucli  -> nucli   (the `nu` command)
+# All three must carry the same version.
+#
+# Each distribution builds into its own `dist/<name>/` and gets its own
+# publish step. That is not cosmetic: the OIDC exchange mints a token scoped
+# to a single PyPI project, so one upload call carrying three project names
+# would 403 on the two that are out of scope. The steps run in dependency
+# order -- nucore -> nustd -> nucli -- so each package resolves the moment it
+# lands.
+#
 # Release flow:
-#   1. Bump `version` in `pyproject.toml`.
+#   1. Bump `version` in `packages/nucore/pyproject.toml`,
+#      `packages/nustd/pyproject.toml` AND `packages/nucli/pyproject.toml`
+#      (keep all three equal).
 #   2. Commit and push to main.
 #   3. `git tag nu@X.Y.Z && git push origin nu@X.Y.Z`.
 name: Publish nu to PyPI
@@ -45,25 +61,48 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: install build backend
-        run: python -m pip install --upgrade build
+      - name: install uv
+        uses: astral-sh/setup-uv@v5
 
-      - name: verify tag matches pyproject.toml version
+      - name: verify tag matches every package version
         if: startsWith(github.ref, 'refs/tags/nu@')
         run: |
           TAG_VERSION="${GITHUB_REF#refs/tags/nu@}"
-          PKG_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "tag nu@$TAG_VERSION does not match pyproject.toml version $PKG_VERSION"
-            exit 1
-          fi
+          for PKG in packages/nucore packages/nustd packages/nucli; do
+            PKG_VERSION=$(python -c "import tomllib,sys; print(tomllib.load(open(sys.argv[1],'rb'))['project']['version'])" "$PKG/pyproject.toml")
+            if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+              echo "tag nu@$TAG_VERSION does not match $PKG/pyproject.toml version $PKG_VERSION"
+              exit 1
+            fi
+          done
 
-      - name: build
-        run: python -m build
+      - name: build all distributions
+        run: |
+          uv build --package nucore --out-dir dist/nucore
+          uv build --package nustd --out-dir dist/nustd
+          uv build --package nucli --out-dir dist/nucli
 
-      - name: publish
+      # One publish step per project: trusted publishing mints a token scoped
+      # to a single PyPI project, so each upload must carry only that
+      # project's artifacts. Ordered nucore -> nustd -> nucli so every
+      # dependency is on the index before its dependent lands.
+      - name: publish nucore
         if: startsWith(github.ref, 'refs/tags/nu@')
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/nucore
+
+      - name: publish nustd
+        if: startsWith(github.ref, 'refs/tags/nu@')
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/nustd
+
+      - name: publish nucli
+        if: startsWith(github.ref, 'refs/tags/nu@')
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/nucli
 
       - name: build release notes from CHANGELOG
         if: startsWith(github.ref, 'refs/tags/nu@')
@@ -92,4 +131,4 @@ jobs:
           name: ${{ github.ref_name }}
           body_path: release_notes.md
           files: |
-            dist/*
+            dist/**

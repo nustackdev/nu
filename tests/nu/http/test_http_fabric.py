@@ -1,6 +1,6 @@
 """Functional tests for nu.http: HttpFabric + 5 verb interactions + bind.
 
-httpx is an optional dependency (`nustack-py[http]`), so the whole file is
+httpx is an optional dependency (`nustd[http]`), so the whole file is
 skipped when it is not importable. A single `httpx.MockTransport` is injected
 by monkey-patching `httpx.AsyncClient` inside `nu.http.fabric`, so the real
 HTTP stack (routing, request formatting, response parsing) runs end-to-end

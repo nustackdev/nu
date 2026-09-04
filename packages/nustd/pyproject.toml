@@ -1,0 +1,112 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nustd"
+version = "0.1.18"
+description = "Batteries for Nu: the fabrics (std, mem, kv, service, llm, cc, http, proxy, mp, cluster, ui) that ship alongside the nucore kernel."
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
+requires-python = ">=3.10"
+# Released in lockstep with the kernel. This wheel carries no `nu/__init__.py`
+# -- it drops its subpackages into the `nu.` namespace the kernel owns.
+dependencies = [
+    "nucore>=0.1.18",
+]
+keywords = [
+    "nu",
+    "nustack",
+    "python",
+    "state-management",
+    "distributed-systems",
+    "ai-agents",
+    "agentic",
+    "ray",
+    "llm",
+    "database",
+    "key-value-store",
+    "rocksdb",
+    "ui",
+    "real-time",
+    "observability",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+# One extra per fabric; name matches the `nu.<fabric>` import path.
+# `nu.std` and `nu.service` need nothing beyond the kernel, so they have no
+# extra. `mp` is stdlib multiprocessing -- the extra exists only so
+# `nustd[mp]` is not an error.
+[project.optional-dependencies]
+kv = [
+    "virtuals-py>=0.1.2",
+]
+mem = [
+    "janus>=2.0.0",
+]
+ui = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "msgpack>=1.1.2",
+    "watchfiles>=0.24.0",
+    "nudle>=0.1.1",
+]
+# `nu.cluster` runs on ray. (Was the `ray` extra on nucore <= 0.1.18.)
+cluster = [
+    "ray>=2.50; sys_platform != 'darwin' or platform_machine == 'arm64'",
+    "ray>=2.0,<2.50; sys_platform == 'darwin' and platform_machine != 'arm64'",
+]
+proxy = [
+    "invisibles-py",
+]
+http = [
+    "httpx>=0.27",
+]
+llm = [
+    "httpx>=0.27",
+]
+cc = [
+    "claude-agent-sdk>=0.1.0",
+]
+mp = []
+all = [
+    "nustd[kv]",
+    "nustd[mem]",
+    "nustd[ui]",
+    "nustd[cluster]",
+    "nustd[proxy]",
+    "nustd[http]",
+    "nustd[llm]",
+    "nustd[cc]",
+    "nustd[mp]",
+    "virtuals-py[rocksdb]>=0.1.2",
+]
+
+[project.urls]
+Repository = "https://github.com/nustackdev/nu"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nu"]
+# No `nu/__init__.py` here on purpose: the kernel wheel owns the package root
+# and the two installs merge into one `site-packages/nu/`.
+exclude = [
+    "src/nu/ui/web/**",
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "src/nu/ui/**/node_modules",
+    "src/nu/ui/**/dist",
+]
+
+[tool.uv.sources]
+nudle = { path = "./src/nu/ui/web/nudle", editable = true }

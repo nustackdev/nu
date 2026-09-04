@@ -1,0 +1,60 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nucli"
+version = "0.1.18"
+description = "The `nu` command line: doctor, demos, telemetry. Ships alongside the nucore kernel and the nustd fabrics."
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
+requires-python = ">=3.10"
+# Released in lockstep with the kernel. Carries no `nu/__init__.py` -- it drops
+# `nu._cli` into the `nu.` namespace the kernel owns. Depends on `nustd` rather
+# than the bare kernel because the packaged demos (`nu demo movies`) run on
+# `nu.ui` and `nu.kv` at runtime.
+dependencies = [
+    "nustd>=0.1.18",
+    "click>=8.0",
+    "rich>=10.7",
+    "rich-click>=1.6",
+]
+keywords = [
+    "nu",
+    "nustack",
+    "python",
+    "cli",
+    "state-management",
+    "distributed-systems",
+    "ai-agents",
+    "agentic",
+    "ray",
+    "llm",
+    "database",
+    "key-value-store",
+    "rocksdb",
+    "ui",
+    "real-time",
+    "observability",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Repository = "https://github.com/nustackdev/nu"
+
+[project.scripts]
+nu = "nu._cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nu"]
+# No `nu/__init__.py` here on purpose: the kernel wheel owns the package root
+# and the installs merge into one `site-packages/nu/`.

@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nucore"
+version = "0.1.18"
+description = "The interaction primitive. Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code."
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
+requires-python = ">=3.10"
+# The kernel: language, engine, core/flows/spans/forms, tree, prog, info,
+# inspect. No fabric backend ever lands here -- those live in the `nustd`
+# distribution and merge into the same `nu.` namespace. The `nu` command lives
+# in `nucli`.
+dependencies = [
+    "typing-extensions>=4.7.0",
+    "cloudpickle>=3.0",
+]
+keywords = [
+    "nu",
+    "nustack",
+    "python",
+    "state-management",
+    "distributed-systems",
+    "ai-agents",
+    "agentic",
+    "ray",
+    "llm",
+    "database",
+    "key-value-store",
+    "rocksdb",
+    "ui",
+    "real-time",
+    "observability",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+# No extras here on purpose. Fabric backends live on `nustd`'s extras and the
+# `nu` command lives in `nucli`; the kernel never reaches up into its own
+# dependents. Install everything with `pip install "nustd[all]" nucli`.
+
+[project.urls]
+Repository = "https://github.com/nustackdev/nu"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nu"]
