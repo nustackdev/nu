@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Exclude Forms and Refs from the interaction catalogue so nu.inspect's three catalogues partition
 - Restructure nucore: nest flows/spans/reactive under nu.core, rename nu.info to nu.inspect, move Literal to nu.lang, and centralize term display in nu.lang.render
 
 ## 0.2.0 — 2026-09-04

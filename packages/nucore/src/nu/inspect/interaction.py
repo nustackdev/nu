@@ -25,8 +25,8 @@ from nu.inspect.core.contract import (
 from nu.inspect.core.docstring import split_docstring
 from nu.inspect.core.source import public_members, read_signature, unpacked_count
 from nu.inspect.record import Record, prose
-from nu.lang import kinds
-from nu.lang.kinds import Interaction
+from nu.lang import Form, kinds
+from nu.lang.kinds import Interaction, Ref
 
 
 if TYPE_CHECKING:
@@ -90,12 +90,19 @@ def parse_interaction(atom: type, path: str = "") -> InteractionRecord:
 
 
 def catalogue(module: ModuleType) -> tuple[InteractionRecord, ...]:
-    """A record per interaction the module exports, in export order."""
+    """A record per interaction the module exports, in export order.
+
+    Forms and Refs are excluded. Both are Interaction subclasses by
+    inheritance, so a naive check reports every Form twice - once here and
+    once in the Form catalogue - and the three catalogues stop partitioning
+    the module. Same most-specific-wins dispatch ``Inspect`` uses on a single
+    class.
+    """
     name = module.__name__
     return tuple(
         parse_interaction(member.target, path=f"{name}.{member.name}")
         for member in public_members(module)
-        if isinstance(member.target, type) and issubclass(member.target, Interaction)
+        if isinstance(member.target, type) and _is_interaction(member.target)
     )
 
 
@@ -123,6 +130,12 @@ def _expected_arity(atom: type) -> int | None:
     if signature is not None and signature.params:
         return None if signature.variadic else len(signature.positional)
     return unpacked_arity(atom)
+
+
+def _is_interaction(cls: type) -> bool:
+    if not issubclass(cls, Interaction):
+        return False
+    return not issubclass(cls, Form) and not issubclass(cls, Ref)
 
 
 def _kind(atom: type) -> str:
