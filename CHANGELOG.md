@@ -2,16 +2,16 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.1.18
-- **nustd** (fabrics) — 0.1.18
-- **nucli** (the `nu` command) — 0.1.18
+- **nucore** (kernel) — 0.2.0
+- **nustd** (fabrics) — 0.2.0
+- **nucli** (the `nu` command) — 0.2.0
 - **nudle** — 0.1.4
 - **ui-core** — 0.1.0
 - **ui-kit** — 0.1.3
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.2.0 — 2026-09-04
 
 - Rename the kernel distribution nustack-py to nucore and drop its extras
 - Rewrite the brand kit on plain ANSI and move it to nu._config.branding; rich is now a nucli-only dependency

@@ -39,6 +39,16 @@ on:
   push:
     tags: ["nu@*"]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish to PyPI (otherwise build only)"
+        type: boolean
+        default: false
+      package:
+        description: "Which distribution to publish"
+        type: choice
+        default: all
+        options: [all, nucore, nustd, nucli]
 
 permissions:
   contents: write   # needed to create the GitHub Release on tag push
@@ -86,20 +96,30 @@ jobs:
       # to a single PyPI project, so each upload must carry only that
       # project's artifacts. Ordered nucore -> nustd -> nucli so every
       # dependency is on the index before its dependent lands.
+      # A tag push publishes all three. Manual dispatch can publish one at a
+      # time, which is what bootstrapping needs: PyPI will not let you register
+      # several pending publishers against the same workflow file at once, so
+      # each project is registered and then published before the next one.
       - name: publish nucore
-        if: startsWith(github.ref, 'refs/tags/nu@')
+        if: >-
+          startsWith(github.ref, 'refs/tags/nu@') ||
+          (inputs.publish && contains(fromJSON('["all","nucore"]'), inputs.package))
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/nucore
 
       - name: publish nustd
-        if: startsWith(github.ref, 'refs/tags/nu@')
+        if: >-
+          startsWith(github.ref, 'refs/tags/nu@') ||
+          (inputs.publish && contains(fromJSON('["all","nustd"]'), inputs.package))
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/nustd
 
       - name: publish nucli
-        if: startsWith(github.ref, 'refs/tags/nu@')
+        if: >-
+          startsWith(github.ref, 'refs/tags/nu@') ||
+          (inputs.publish && contains(fromJSON('["all","nucli"]'), inputs.package))
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/nucli

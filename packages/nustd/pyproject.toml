@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nustd"
-version = "0.1.18"
+version = "0.2.0"
 description = "Batteries for Nu: the fabrics (std, mem, kv, service, llm, cc, http, proxy, mp, cluster, ui) that ship alongside the nucore kernel."
 readme = "README.md"
 license = "Apache-2.0"
@@ -13,7 +13,7 @@ requires-python = ">=3.10"
 # Released in lockstep with the kernel. This wheel carries no `nu/__init__.py`
 # -- it drops its subpackages into the `nu.` namespace the kernel owns.
 dependencies = [
-    "nucore>=0.1.18",
+    "nucore>=0.2.0",
 ]
 keywords = [
     "nu",

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nucli"
-version = "0.1.18"
+version = "0.2.0"
 description = "The `nu` command line: doctor, demos, telemetry. Ships alongside the nucore kernel and the nustd fabrics."
 readme = "README.md"
 license = "Apache-2.0"
@@ -15,7 +15,7 @@ requires-python = ">=3.10"
 # than the bare kernel because the packaged demos (`nu demo movies`) run on
 # `nu.ui` and `nu.kv` at runtime.
 dependencies = [
-    "nustd>=0.1.18",
+    "nustd>=0.2.0",
     "click>=8.0",
     "rich>=10.7",
     "rich-click>=1.6",
