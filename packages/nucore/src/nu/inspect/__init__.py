@@ -67,6 +67,12 @@ the kind, the sort, the cardinality, the call form, the defaults, the
 module, and the source. If you find yourself typing something the code
 already says, it belongs to the parser, not to you.
 
+The rule cuts both ways, and Args is where it shows. An atom needs one
+because the variadic constructor puts its arity nowhere else; a Shape or a
+Service must not have one, because it is never called at all, and its slots
+and methods are already exact on the class. A kind's own module states which
+sections its subjects may write and which are violations.
+
 
 The layout
 ----------
@@ -77,6 +83,10 @@ The layout
   the two sources where a question needs both.
 - ``record`` is the base every catalogue entry shares.
 - ``interaction``, ``call`` and ``builder`` specialize the record per kind.
+- ``shape`` and ``service`` cover the two declarative kinds, which nu does
+  not export: they are written by whoever wrote the app, so ``parse_shape``
+  is their entry point rather than a module catalogue, and ``entry`` is the
+  one-lookup-at-a-time descent both of them share.
 
 nu.inspect emits structured records and formats nothing. Printing a Nu tree as
 a box-tree is the other direction and lives at ``nu.lang.render``.
@@ -88,6 +98,7 @@ from nu.inspect.builder import BuilderRecord, parse_builder, verify_builder
 from nu.inspect.builder import catalogue as catalogue_builders
 from nu.inspect.call import CallRecord, parse_call, verify_call
 from nu.inspect.core.contract import Arg, Violation
+from nu.inspect.entry import Entry, entries_of, parse_entry
 from nu.inspect.form import FormRecord, parse_form, verify_form
 from nu.inspect.form import catalogue as catalogue_forms
 from nu.inspect.interaction import (
@@ -100,31 +111,46 @@ from nu.inspect.interactions import Inspect, render
 from nu.inspect.record import Record
 from nu.inspect.ref import RefRecord, parse_ref, verify_ref
 from nu.inspect.ref import catalogue as catalogue_refs
+from nu.inspect.service import ServiceRecord, parse_service, verify_service
+from nu.inspect.service import catalogue as catalogue_services
+from nu.inspect.shape import ShapeRecord, parse_shape, verify_shape
+from nu.inspect.shape import catalogue as catalogue_shapes
 
 
 __all__ = [
     "Arg",
     "BuilderRecord",
     "CallRecord",
+    "Entry",
     "FormRecord",
     "Inspect",
     "InteractionRecord",
     "Record",
     "RefRecord",
+    "ServiceRecord",
+    "ShapeRecord",
     "Violation",
     "catalogue_builders",
     "catalogue_forms",
     "catalogue_interactions",
     "catalogue_refs",
+    "catalogue_services",
+    "catalogue_shapes",
+    "entries_of",
     "parse_builder",
     "parse_call",
+    "parse_entry",
     "parse_form",
     "parse_interaction",
     "parse_ref",
+    "parse_service",
+    "parse_shape",
     "render",
     "verify_builder",
     "verify_call",
     "verify_form",
     "verify_interaction",
     "verify_ref",
+    "verify_service",
+    "verify_shape",
 ]

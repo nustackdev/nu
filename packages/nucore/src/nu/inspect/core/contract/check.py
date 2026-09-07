@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 __all__ = [
     "SUMMARY_LIMIT",
     "Violation",
+    "check_absent",
     "check_args",
     "check_example",
     "check_summary",
@@ -83,6 +84,22 @@ def check_args(subject: str, blocks: Blocks, expected: int | None) -> list[Viola
             )
         ]
     return []
+
+
+def check_absent(subject: str, blocks: Blocks, *names: str, rule: str) -> list[Violation]:
+    """A section the subject cannot honestly have must not be written.
+
+    The mirror of the other laws. They ask whether a written fact matches the
+    code; this one asks whether the fact was writable at all. It is for the
+    kinds where the format's own rule - write only what cannot be read -
+    *removes* a section rather than requiring one: a declared class that is
+    never called takes no arguments and yields nothing, so an Args or Yields
+    on it is not clumsy wording but a claim about a call that does not exist.
+    """
+    section = blocks.section(*names)
+    if section is None:
+        return []
+    return [Violation(subject=subject, rule=rule, detail=section.name)]
 
 
 def check_example(subject: str, blocks: Blocks) -> list[Violation]:

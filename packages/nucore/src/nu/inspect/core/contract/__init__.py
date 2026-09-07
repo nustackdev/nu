@@ -16,6 +16,7 @@ from nu.inspect.core.contract.call import Arg, call_form
 from nu.inspect.core.contract.check import (
     SUMMARY_LIMIT,
     Violation,
+    check_absent,
     check_args,
     check_example,
     check_summary,
@@ -32,6 +33,7 @@ __all__ = [
     "Arg",
     "Violation",
     "call_form",
+    "check_absent",
     "check_args",
     "check_example",
     "check_summary",
