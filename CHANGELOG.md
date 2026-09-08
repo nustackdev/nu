@@ -2,17 +2,18 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.2.0
-- **nustd** (fabrics) — 0.2.0
-- **nucli** (the `nu` command) — 0.2.0
+- **nucore** (kernel) — 0.2.1
+- **nustd** (fabrics) — 0.2.1
+- **nucli** (the `nu` command) — 0.2.1
 - **nudle** — 0.1.4
 - **ui-core** — 0.1.0
 - **ui-kit** — 0.1.3
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.2.1 — 2026-09-08
 
+- Point nustd[all] at virtuals-py[all]>=0.1.8, which now means every kv backend rather than virtuals' dev tooling
 - Import rdbpy lazily in nu.kv: RocksDBStorage wraps the virtuals class instead of subclassing it, so nustd[kv] no longer needs the native bindings to import
 - Add the shape and service kinds to nu.inspect: flat entry records, one-lookup descent, and Inspect resolving a user Shape and its slots
 - Exclude Forms and Refs from the interaction catalogue so nu.inspect's three catalogues partition
