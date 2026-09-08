@@ -20,7 +20,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from virtuals.storages.mem import InMemoryStorage as _InMemoryStorage
-from virtuals.storages.rocksdb import RocksDBStorage as _RocksDBStorage
 from virtuals.storages.textdb import TextStorage as _TextStorage
 
 from .codec import Codec
@@ -77,12 +76,17 @@ class InMemoryStorage(_InMemoryStorage):
         self.cleanup()
 
 
-class RocksDBStorage(_RocksDBStorage):
-    """FabricLifecycle wrapper over ``virtuals.RocksDBStorage``.
+class RocksDBStorage:
+    """FabricLifecycle wrapper over ``virtuals.storages.rocksdb.RocksDBStorage``.
+
+    Lazy-loaded to avoid a hard ``rdbpy`` dep at import time (same shape as
+    ``LMDBStorage``). The backing storage is constructed inside ``asetup``
+    so importing ``nu.kv.fabrics`` never touches the ``rdbpy`` module.
+    Instance attribute access delegates to the backing storage once open.
 
     Config kwargs (``path``, ``read_only``, ``secondary_path``,
     ``secondary_refresh_interval``, ``disable_wal``, ``options``) go to the
-    parent constructor at ``asetup`` time. Deps (``Codec``, publisher) come
+    backing constructor at ``asetup`` time. Deps (``Codec``, publisher) come
     from ctx.
     """
 
@@ -104,13 +108,15 @@ class RocksDBStorage(_RocksDBStorage):
         self._secondary_refresh_interval = secondary_refresh_interval
         self._disable_wal = disable_wal
         self._options = options
+        self._backing = None
 
     def setup(self, ctx: Context) -> None:
-        """Read deps from ctx, run the parent constructor, open the store."""
+        """Import rdbpy lazily, construct the backing store, and open it."""
+        from virtuals.storages.rocksdb import RocksDBStorage as _RocksDBStorage
+
         codec = ctx.get(Codec)
         publisher = _resolve_publisher(ctx, self._publisher_type)
-        _RocksDBStorage.__init__(
-            self,
+        self._backing = _RocksDBStorage(
             path=Path(self._path),
             codec=codec,
             publisher=publisher,
@@ -121,11 +127,13 @@ class RocksDBStorage(_RocksDBStorage):
             disable_wal=self._disable_wal,
             options=self._options,
         )
-        self.open()
+        self._backing.open()
 
     def cleanup(self) -> None:
-        """Close the backing store."""
-        self.close()
+        """Close the backing store; drop the reference so re-open works."""
+        if self._backing is not None:
+            self._backing.close()
+            self._backing = None
 
     async def asetup(self, ctx: Context) -> None:
         """Async shim: setup is sync work."""
@@ -134,6 +142,15 @@ class RocksDBStorage(_RocksDBStorage):
     async def acleanup(self) -> None:
         """Async shim: cleanup is sync work."""
         self.cleanup()
+
+    def __getattr__(self, name: str) -> object:
+        # Delegate storage-protocol access to the backing instance.
+        if name.startswith("_"):
+            raise AttributeError(name)
+        if self._backing is None:
+            msg = f"RocksDBStorage used before setup: no backing store, cannot read {name!r}"
+            raise AttributeError(msg)
+        return getattr(self._backing, name)
 
 
 class LMDBStorage:
@@ -206,8 +223,8 @@ class LMDBStorage:
         if name.startswith("_"):
             raise AttributeError(name)
         if self._backing is None:
-            msg = "LMDBStorage used before asetup"
-            raise RuntimeError(msg)
+            msg = f"LMDBStorage used before setup: no backing store, cannot read {name!r}"
+            raise AttributeError(msg)
         return getattr(self._backing, name)
 
 

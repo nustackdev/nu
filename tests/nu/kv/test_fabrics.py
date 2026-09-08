@@ -18,6 +18,8 @@ need a live Redis.
 
 from __future__ import annotations
 
+import subprocess
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -195,6 +197,94 @@ async def test_rocksdb_storage_async_lifecycle(tmp_path: Path):
     with storage.transaction():
         pass
     await storage.acleanup()
+
+
+def test_rocksdb_storage_roundtrip(tmp_path: Path):
+    """A real store writes and reads back through the fabric path."""
+    ctx = _mem_ctx()
+    storage = RocksDBStorage(path=str(tmp_path / "db"))
+    storage.setup(ctx)
+    with storage.transaction() as tx:
+        tx.put(("k",), "v")
+    with storage.snapshot() as snap:
+        assert snap.get(("k",)) == "v"
+    storage.cleanup()
+    assert storage._backing is None
+
+
+def test_storage_attr_before_setup_is_attribute_error():
+    """Pre-setup access raises AttributeError so ``hasattr`` stays usable."""
+    for storage in (RocksDBStorage(path="/nope"), LMDBStorage(path="/nope")):
+        with pytest.raises(AttributeError, match="before setup"):
+            _ = storage.transaction
+        assert not hasattr(storage, "transaction")
+
+
+# --- rdbpy is not needed to import nu.kv ---------------------------------
+
+
+_NO_RDBPY_PRELUDE = """
+import sys
+
+class _Block:
+    def find_spec(self, name, path=None, target=None):
+        if name == "rdbpy" or name.startswith("rdbpy."):
+            raise ImportError("blocked for test: rdbpy")
+        return None
+
+sys.meta_path.insert(0, _Block())
+for mod in [m for m in sys.modules if m == "rdbpy" or m.startswith("rdbpy.")]:
+    del sys.modules[mod]
+"""
+
+_IMPORT_WITHOUT_RDBPY = (
+    _NO_RDBPY_PRELUDE
+    + """
+import nu.kv
+import nu.kv.fabrics
+assert "rdbpy" not in sys.modules, "importing nu.kv pulled in rdbpy"
+print("OK")
+"""
+)
+
+_SETUP_WITHOUT_RDBPY = (
+    _NO_RDBPY_PRELUDE
+    + """
+from nu.kv.fabrics import Codec, RocksDBStorage, binary_kwargs
+from nu.lang import Context
+
+ctx = Context().bind(Codec, Codec(**binary_kwargs()))
+storage = RocksDBStorage(path="/tmp/nu-kv-no-rdbpy", publisher_type=None)
+try:
+    storage.setup(ctx)
+except ImportError as e:
+    assert "rdbpy" in str(e), f"error does not name the bindings: {e}"
+    print("OK")
+else:
+    raise AssertionError("setup succeeded with rdbpy blocked")
+"""
+)
+
+
+def _run_isolated(script: str) -> str:
+    proc = subprocess.run(  # noqa: S603
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
+    return proc.stdout
+
+
+def test_import_nu_kv_without_rdbpy():
+    """``import nu.kv`` must not require the RocksDB bindings."""
+    assert "OK" in _run_isolated(_IMPORT_WITHOUT_RDBPY)
+
+
+def test_rocksdb_storage_setup_without_rdbpy_names_the_bindings():
+    """The dep is paid at setup, and the error says what is missing."""
+    assert "OK" in _run_isolated(_SETUP_WITHOUT_RDBPY)
 
 
 # --- LMDBStorage ---------------------------------------------------------

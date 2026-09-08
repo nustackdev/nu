@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Import rdbpy lazily in nu.kv: RocksDBStorage wraps the virtuals class instead of subclassing it, so nustd[kv] no longer needs the native bindings to import
 - Add the shape and service kinds to nu.inspect: flat entry records, one-lookup descent, and Inspect resolving a user Shape and its slots
 - Exclude Forms and Refs from the interaction catalogue so nu.inspect's three catalogues partition
 - Restructure nucore: nest flows/spans/reactive under nu.core, rename nu.info to nu.inspect, move Literal to nu.lang, and centralize term display in nu.lang.render
