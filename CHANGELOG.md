@@ -11,6 +11,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Compile nu.prog programs with dont_inherit so a program does not silently pick up nu.prog.source's own `from __future__ import annotations`
+
 ## 0.2.1 — 2026-09-08
 
 - Point nustd[all] at virtuals-py[all]>=0.1.8, which now means every kv backend rather than virtuals' dev tooling
