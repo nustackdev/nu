@@ -34,7 +34,6 @@ def test_signature_of_a_class_reads_init_and_drops_self() -> None:
     sig = read_signature(Target)
     assert sig is not None
     assert [p.name for p in sig.params] == ["first", "second"]
-    assert sig.render("Target") == "Target(first, second=None)"
 
 
 def test_signature_detects_classmethod_and_staticmethod() -> None:
@@ -47,6 +46,18 @@ def test_signature_detects_classmethod_and_staticmethod() -> None:
 
     assert read_signature(Target.made).is_classmethod
     assert read_signature(vars(Target)["free"]).is_staticmethod
+
+
+def test_an_unbound_method_keeps_self_until_the_caller_names_it_a_receiver() -> None:
+    class Target:
+        def inc(self, step: int = 1) -> None: ...
+
+        def free(value: int) -> None: ...  # noqa: N805 (deliberately not a receiver)
+
+    assert [p.name for p in read_signature(Target.inc).params] == ["self", "step"]
+    assert [p.name for p in read_signature(Target.inc, receiver=True).params] == ["step"]
+    # Only a leading self or cls goes: nothing else is taken for a receiver.
+    assert [p.name for p in read_signature(Target.free, receiver=True).params] == ["value"]
 
 
 def test_signature_of_an_unreadable_callable_is_none() -> None:

@@ -34,6 +34,28 @@ def test_atom_render_dispatches_to_interaction_for_a_bare_interaction() -> None:
     assert "examples" in text
 
 
+def test_a_std_module_of_free_functions_renders_its_calls() -> None:
+    text = render("nu.std.math")
+    assert text.startswith("MODULE  nu.std.math")
+    assert "(no Nu subjects exported)" not in text
+    assert "CALLS (" in text
+    assert "sqrt" in text
+
+
+def test_a_free_function_renders_as_a_call_not_as_an_empty_module() -> None:
+    text = render("nu.std.math.sqrt")
+    assert text.startswith("CALL  nu.std.math.sqrt")
+    assert "math.sqrt(x)" in text
+
+
+def test_the_module_docstring_is_parsed_once_and_opens_the_render() -> None:
+    import nu.core.arithmetic as arithmetic
+    from nu.inspect import parse_module
+
+    text = render("nu.core.arithmetic")
+    assert parse_module(arithmetic).summary in text
+
+
 def test_unknown_path_yields_empty_string() -> None:
     assert render("nu.does.not.exist.At.All") == ""
 

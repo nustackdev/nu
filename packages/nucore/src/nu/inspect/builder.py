@@ -19,6 +19,7 @@ from nu.inspect.core.contract import Violation, check_example, check_summary
 from nu.inspect.core.docstring import split_docstring
 from nu.inspect.core.source import public_members, walk_bindings
 from nu.inspect.record import Record, prose
+from nu.inspect.taxonomy import taxonomy
 from nu.lang import Form, Nu
 from nu.lang.kinds import Ref
 
@@ -44,16 +45,29 @@ DSL_SKIP = frozenset({"slot", "method"})
 
 @dataclass(frozen=True)
 class BuilderRecord(Record):
-    """One builder class: what it is, and every call it exposes."""
+    """One builder class: what it is, where it sits, and every call it exposes.
+
+    A Form and a Ref are terms as much as an atom is, so they answer the same
+    taxonomy questions an interaction does: ``IntRef`` is kind ``Ref``, sort
+    ``ref``, cardinality ``scalar``. The class declares all three and the
+    consumer should not have to read a private attribute to find out.
+    """
 
     methods: tuple[CallRecord, ...] = ()
+    kind: str = ""
+    sort: str = ""
+    cardinality: str = ""
+    abstract: bool = False
 
 
-def parse_builder(cls: type, path: str = "") -> BuilderRecord:
+def parse_builder(cls: type, path: str = "", *, aliases: tuple[str, ...] = ()) -> BuilderRecord:
     """One BuilderRecord for ``cls``."""
     blocks = split_docstring(cls.__doc__)
     return BuilderRecord(
-        **prose(cls, cls.__name__, path or f"{cls.__module__}.{cls.__name__}", blocks),
+        **prose(
+            cls, cls.__name__, path or f"{cls.__module__}.{cls.__name__}", blocks, aliases=aliases
+        ),
+        **taxonomy(cls),
         methods=resolve_methods(cls),
     )
 
@@ -86,9 +100,9 @@ def catalogue(module: ModuleType) -> tuple[BuilderRecord, ...]:
             continue
         path = f"{name}.{member.name}"
         if _is_ref(cls):
-            out.append(parse_ref(cls, path=path))
+            out.append(parse_ref(cls, path=path, aliases=member.aliases))
         elif _is_form(cls):
-            out.append(parse_form(cls, path=path))
+            out.append(parse_form(cls, path=path, aliases=member.aliases))
     return tuple(out)
 
 

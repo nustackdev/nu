@@ -5,10 +5,18 @@ Each kind defines its own, because they differ in what there is to say, and
 they share this base.
 
 The base carries what the format guarantees for every kind: a summary, an
-optional description, notes and any examples. It is not a guess about what
-kinds will have in common. Args and Yields are deliberately not here,
-because whether a subject takes arguments or yields anything depends on the
-kind.
+optional description, notes and any examples, plus the two facts about where
+the subject is that every kind has - the module it is defined in, and the
+other names it is exported under. It is not a guess about what kinds will
+have in common. Args and Yields are deliberately not here, because whether a
+subject takes arguments or yields anything depends on the kind, and neither
+is kind, sort nor cardinality, because a Shape is not a term and has none.
+
+``path`` and ``module`` are different questions and both are needed:
+``path`` is where a reader writes the subject (``nu.core.Add``), ``module``
+is where it is defined (``nu.core.arithmetic``). They differ for nearly
+every subject in the stack, because a package re-exports what its submodules
+define.
 
 Records are cheap. The prose is read at build time; the source text and the
 raw docstring are fetched per lookup, so building a catalogue never touches
@@ -46,6 +54,8 @@ class Record:
     description: str = ""
     notes: tuple[str, ...] = ()
     examples: tuple[Example, ...] = ()
+    module: str = ""
+    aliases: tuple[str, ...] = ()
     target: object = field(default=None, repr=False, compare=False)
 
     @property
@@ -66,7 +76,15 @@ class Record:
         return read_source(self.target)
 
 
-def prose(target: object, name: str, path: str, blocks: Blocks) -> dict[str, Any]:
+def prose(
+    target: object,
+    name: str,
+    path: str,
+    blocks: Blocks,
+    *,
+    aliases: tuple[str, ...] = (),
+    module: str = "",
+) -> dict[str, Any]:
     """The written half of a record, ready to splat into a kind's record.
 
     Args:
@@ -74,6 +92,10 @@ def prose(target: object, name: str, path: str, blocks: Blocks) -> dict[str, Any
         name: what it is called.
         path: where it is reached, e.g. ``nu.core.Add``.
         blocks: its docstring, split.
+        aliases: the other names the module exports it under, which only the
+            enumeration knows.
+        module: where it is defined. Read off ``target`` when not given, which
+            is right for everything except a module describing itself.
 
     Returns:
         Keyword arguments for :class:`Record`'s own fields, alongside whatever
@@ -83,6 +105,8 @@ def prose(target: object, name: str, path: str, blocks: Blocks) -> dict[str, Any
         "name": name,
         "path": path,
         "target": target,
+        "module": module or getattr(target, "__module__", ""),
+        "aliases": aliases,
         "summary": blocks.summary,
         "description": blocks.description,
         "notes": parse_notes(blocks.text_of(*NOTES)),

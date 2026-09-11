@@ -74,12 +74,12 @@ class ShapeRecord(Record):
     entries: tuple[Entry, ...] = ()
 
 
-def parse_shape(cls: type, path: str = "") -> ShapeRecord:
+def parse_shape(cls: type, path: str = "", *, aliases: tuple[str, ...] = ()) -> ShapeRecord:
     """One ShapeRecord for ``cls``. Slots are listed, not expanded."""
     blocks = split_docstring(cls.__doc__)
     where = path or f"{cls.__module__}.{cls.__name__}"
     return ShapeRecord(
-        **prose(cls, cls.__name__, where, blocks),
+        **prose(cls, cls.__name__, where, blocks, aliases=aliases),
         entries=entries_of(cls, where),
     )
 
@@ -94,7 +94,9 @@ def catalogue(module: ModuleType) -> tuple[ShapeRecord, ...]:
     """
     name = module.__name__
     return tuple(
-        parse_shape(member.target, path=f"{name}.{member.name}")  # type: ignore[arg-type]
+        parse_shape(  # type: ignore[arg-type]
+            member.target, path=f"{name}.{member.name}", aliases=member.aliases
+        )
         for member in public_members(module)
         if is_shape(member.target)
     )

@@ -236,6 +236,52 @@ class NumberInputRef(Ref):
         return Changed(self)
 
 
+class ProseRef(Ref):
+    """Editable rich text. Value is a markdown string; the browser edits wysiwyg.
+
+    Bidirectional, unlike `MarkdownRef` (display-only). The server writes the
+    source with `set`, reads it back through `Ref` like any input Ref, and
+    subscribes with `changed()`. The browser renders the markdown as a live
+    document and notifies back on a quiet moment or on blur.
+
+    Last actor wins. There is no merge, no OT, no CRDT: a `set` from the
+    server replaces the document outright, and a notify from the browser
+    replaces the server's copy. Two people typing into the same Ref at the
+    same time will clobber each other, by design.
+
+    `read_only=True` renders the same document but refuses edits, so a
+    program can reuse one renderer for both faces.
+    """
+
+    @classmethod
+    def slot(
+        cls,
+        *,
+        value: str = "",
+        placeholder: str = "",
+        read_only: bool = False,
+    ) -> Self:
+        return super().slot(value=value, placeholder=placeholder, read_only=read_only)
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> Any:
+            return await self._aread(rt, nid)
+
+        return athunk
+
+    def set(self, value: StrArg) -> Nu:
+        return Write(self, value)
+
+    def set_placeholder(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(placeholder=text))
+
+    def set_read_only(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(read_only=flag))
+
+    def changed(self) -> Changed:
+        return Changed(self)
+
+
 def _normalize_options(opts: object) -> list[dict[str, str]]:
     """Accept ["a", "b"] or [{"value": "a", "label": "A"}] and return the dict form."""
     if not isinstance(opts, list):

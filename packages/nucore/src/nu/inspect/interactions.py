@@ -16,11 +16,14 @@ from __future__ import annotations
 
 import importlib
 from dataclasses import dataclass
+from types import ModuleType
 from typing import TYPE_CHECKING
 
+from nu.inspect.call import parse_call
 from nu.inspect.entry import entry_names, is_service, is_shape, nested_shape, parse_entry
 from nu.inspect.form import parse_form
 from nu.inspect.interaction import parse_interaction
+from nu.inspect.module import parse_module
 from nu.inspect.ref import parse_ref
 from nu.inspect.service import parse_service
 from nu.inspect.shape import ShapeRecord, parse_shape
@@ -31,7 +34,6 @@ from nu.lang.sentinels import EMPTY, INVALID
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from types import ModuleType
 
     from nu.inspect.call import CallRecord
     from nu.inspect.entry import Entry
@@ -56,9 +58,10 @@ class Inspect(ScalarQuery):
     Notes:
         - Yields a string laid out for reading, not a structured record. The
           shape is stable but not part of the contract - treat it as docs.
-        - A module renders every Shape, Service, Form, Ref and Interaction it
-          holds, with a short header per subject.
-        - An atom renders the full record for that one subject.
+        - A module renders its own docstring, then every Shape, Service, Form,
+          Ref, Interaction and free function it holds, one line each.
+        - An atom renders the full record for that one subject, and so does a
+          free function such as ``nu.std.math.sqrt``.
         - A Shape or Service renders its prose and one line per entry, never
           the entries themselves: the reader descends by looking up the entry
           path it wants. Walking through a nested Shape slot works the same
@@ -105,9 +108,13 @@ def render(path: str) -> str:
         return ""
     if isinstance(target, _EntryPath):
         return _render_entry(target, path)
+    if isinstance(target, ModuleType):
+        return _render_module(target)
     if isinstance(target, type):
         return _render_class(target, path)
-    return _render_module(target)
+    if callable(target):
+        return _render_function(target, path)
+    return ""
 
 
 # --- resolution ----------------------------------------------------------
@@ -165,25 +172,32 @@ def _walk(target: object, names: list[str]) -> object | None:
 
 
 def _render_module(module: ModuleType) -> str:
+    from nu.inspect.call import catalogue as calls_of
     from nu.inspect.form import catalogue as forms_of
     from nu.inspect.interaction import catalogue as interactions_of
     from nu.inspect.ref import catalogue as refs_of
     from nu.inspect.service import catalogue as services_of
     from nu.inspect.shape import catalogue as shapes_of
 
+    record = parse_module(module)
     parts: list[str] = [f"MODULE  {module.__name__}", ""]
-    doc = (module.__doc__ or "").strip()
+    doc = "\n\n".join(part for part in (record.summary, record.description) if part)
     if doc:
         parts.extend([doc, ""])
+    body = _common_body(record) + _examples_lines(record.examples)
+    if body:
+        parts.extend([*body[1:], ""])
 
     # Shapes and Services first: in an app module they are the subject, and
-    # everything else in the file is written against them.
+    # everything else in the file is written against them. Calls last: they
+    # are the std surfaces, where they are the only thing in the module.
     sections = (
         ("SHAPES", shapes_of(module)),
         ("SERVICES", services_of(module)),
         ("FORMS", forms_of(module)),
         ("REFS", refs_of(module)),
         ("INTERACTIONS", interactions_of(module)),
+        ("CALLS", calls_of(module)),
     )
     if not any(records for _, records in sections):
         parts.append("(no Nu subjects exported)")
@@ -261,6 +275,40 @@ def _render_declaration(record: Record, *, kind: str) -> str:
     return "\n".join(parts).rstrip() + "\n"
 
 
+def _render_function(target: object, path: str) -> str:
+    """One free function, reached straight by path: a ``nu.std`` call.
+
+    The std surfaces are functions rather than classes, so a path into one
+    lands here and nowhere else. Without it a model asking about
+    ``nu.std.math.sqrt`` gets the empty module render.
+    """
+    head, _, name = path.rpartition(".")
+    record = parse_call(
+        target,
+        name=name,
+        path=path,
+        owner=getattr(target, "__module__", ""),
+        binding="function",
+        qualifier=head.rpartition(".")[2],
+    )
+    parts: list[str] = [
+        f"CALL  {record.path}",
+        "",
+        f"  {record.call}",
+        "",
+        f"  {record.summary or '-'}",
+    ]
+    if record.description:
+        parts.extend(["", record.description])
+    parts.extend(_common_body(record))
+    if record.returns:
+        parts.extend(["", "  returns", f"    {record.returns}"])
+    if record.yields:
+        parts.extend(["", "  yields", f"    {record.yields}"])
+    parts.extend(_examples_lines(record.examples))
+    return "\n".join(parts).rstrip() + "\n"
+
+
 def _render_entry(entry: _EntryPath, path: str) -> str:
     """One entry, rendered as whatever record already covers it."""
     record = parse_entry(entry.owner, entry.name, path=path)
@@ -303,7 +351,7 @@ def _common_body(record: Record) -> list[str]:
     if args:
         lines.extend(["", "  args"])
         for arg in args:
-            default = f" = {arg.default}" if arg.default else ""
+            default = f" = {arg.default}" if arg.has_default else ""
             lines.append(f"    {arg.name}{default}: {arg.text or '-'}")
     if record.notes:
         lines.extend(["", "  notes"])

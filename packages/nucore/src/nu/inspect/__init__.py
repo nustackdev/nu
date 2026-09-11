@@ -82,7 +82,11 @@ The layout
 - ``core.contract`` says what a written fact may not lie about, and merges
   the two sources where a question needs both.
 - ``record`` is the base every catalogue entry shares.
+- ``taxonomy`` derives kind, sort, cardinality and abstractness, once, for
+  every kind whose subject is a Nu term.
 - ``interaction``, ``call`` and ``builder`` specialize the record per kind.
+- ``module`` is the same six-part format read off a module's own docstring,
+  which is what a page or a prompt opens with.
 - ``shape`` and ``service`` cover the two declarative kinds, which nu does
   not export: they are written by whoever wrote the app, so ``parse_shape``
   is their entry point rather than a module catalogue, and ``entry`` is the
@@ -97,6 +101,7 @@ from __future__ import annotations
 from nu.inspect.builder import BuilderRecord, parse_builder, verify_builder
 from nu.inspect.builder import catalogue as catalogue_builders
 from nu.inspect.call import CallRecord, parse_call, verify_call
+from nu.inspect.call import catalogue as catalogue_calls
 from nu.inspect.core.contract import Arg, Violation
 from nu.inspect.entry import Entry, entries_of, parse_entry
 from nu.inspect.form import FormRecord, parse_form, verify_form
@@ -108,6 +113,7 @@ from nu.inspect.interaction import (
 )
 from nu.inspect.interaction import catalogue as catalogue_interactions
 from nu.inspect.interactions import Inspect, render
+from nu.inspect.module import ModuleRecord, parse_module
 from nu.inspect.record import Record
 from nu.inspect.ref import RefRecord, parse_ref, verify_ref
 from nu.inspect.ref import catalogue as catalogue_refs
@@ -125,12 +131,14 @@ __all__ = [
     "FormRecord",
     "Inspect",
     "InteractionRecord",
+    "ModuleRecord",
     "Record",
     "RefRecord",
     "ServiceRecord",
     "ShapeRecord",
     "Violation",
     "catalogue_builders",
+    "catalogue_calls",
     "catalogue_forms",
     "catalogue_interactions",
     "catalogue_refs",
@@ -142,6 +150,7 @@ __all__ = [
     "parse_entry",
     "parse_form",
     "parse_interaction",
+    "parse_module",
     "parse_ref",
     "parse_service",
     "parse_shape",

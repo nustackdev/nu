@@ -7,6 +7,8 @@ the record.
 
 from __future__ import annotations
 
+import types
+
 import nu.core as core
 import nu.core.flows as flows
 import nu.lang as lang
@@ -123,9 +125,37 @@ def test_args_come_from_a_declared_constructor_when_there_is_one() -> None:
     assert record.arity == 3
 
 
+def test_the_call_form_is_on_the_record_and_nobody_reassembles_it() -> None:
+    assert parse_interaction(Filter).call == "Filter(source, predicate, key='item')"
+    assert parse_interaction(Add).call == "Add(*children)"
+
+
+def test_a_taxonomy_base_says_so_and_an_atom_does_not() -> None:
+    abstract = {r.name for r in catalogue(lang) if r.abstract}
+    assert {"Query", "Span", "ScalarQuery", "Interaction"} <= abstract
+    assert not parse_interaction(Add).abstract
+
+
+def test_the_defining_module_is_a_field_and_not_the_export_path() -> None:
+    record = parse_interaction(Add, path="nu.core.Add")
+    assert record.path == "nu.core.Add"
+    assert record.module == "nu.core.arithmetic"
+
+
+def test_the_names_a_module_also_exports_a_subject_under_reach_the_record() -> None:
+    module = types.ModuleType("_aliased")
+    module.__all__ = ["Add", "Plus"]  # type: ignore[attr-defined]
+    module.Add = module.Plus = Add  # type: ignore[attr-defined]
+
+    (record,) = catalogue(module)
+    assert record.name == "Add"
+    assert record.aliases == ("Plus",)
+    assert parse_interaction(Add).aliases == ()
+
+
 def test_a_default_is_read_off_the_code_not_the_prose() -> None:
     (key,) = [arg for arg in parse_interaction(Map).args if arg.name == "key"]
-    assert key.default == "item"
+    assert key.default == "'item'"
 
 
 def test_a_variadic_atom_has_no_arity() -> None:

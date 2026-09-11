@@ -67,12 +67,12 @@ class ServiceRecord(Record):
     entries: tuple[Entry, ...] = ()
 
 
-def parse_service(cls: type, path: str = "") -> ServiceRecord:
+def parse_service(cls: type, path: str = "", *, aliases: tuple[str, ...] = ()) -> ServiceRecord:
     """One ServiceRecord for ``cls``. Methods are listed, not expanded."""
     blocks = split_docstring(cls.__doc__)
     where = path or f"{cls.__module__}.{cls.__name__}"
     return ServiceRecord(
-        **prose(cls, cls.__name__, where, blocks),
+        **prose(cls, cls.__name__, where, blocks, aliases=aliases),
         entries=entries_of(cls, where),
     )
 
@@ -85,7 +85,9 @@ def catalogue(module: ModuleType) -> tuple[ServiceRecord, ...]:
     """
     name = module.__name__
     return tuple(
-        parse_service(member.target, path=f"{name}.{member.name}")  # type: ignore[arg-type]
+        parse_service(  # type: ignore[arg-type]
+            member.target, path=f"{name}.{member.name}", aliases=member.aliases
+        )
         for member in public_members(module)
         if is_service(member.target)
     )

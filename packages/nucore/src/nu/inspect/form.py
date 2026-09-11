@@ -16,6 +16,7 @@ from nu.inspect.builder import BuilderRecord, resolve_methods, verify_builder
 from nu.inspect.core.docstring import split_docstring
 from nu.inspect.core.source import public_members
 from nu.inspect.record import prose
+from nu.inspect.taxonomy import taxonomy
 from nu.lang import Form
 from nu.lang.kinds import Ref
 
@@ -39,11 +40,14 @@ class FormRecord(BuilderRecord):
     """One Form class: the builder shape, tagged as a Form for dispatch."""
 
 
-def parse_form(cls: type, path: str = "") -> FormRecord:
+def parse_form(cls: type, path: str = "", *, aliases: tuple[str, ...] = ()) -> FormRecord:
     """One FormRecord for ``cls``."""
     blocks = split_docstring(cls.__doc__)
     return FormRecord(
-        **prose(cls, cls.__name__, path or f"{cls.__module__}.{cls.__name__}", blocks),
+        **prose(
+            cls, cls.__name__, path or f"{cls.__module__}.{cls.__name__}", blocks, aliases=aliases
+        ),
+        **taxonomy(cls),
         methods=resolve_methods(cls),
     )
 
@@ -52,7 +56,7 @@ def catalogue(module: ModuleType) -> tuple[FormRecord, ...]:
     """A FormRecord per Form subclass the module exports, in export order."""
     name = module.__name__
     return tuple(
-        parse_form(member.target, path=f"{name}.{member.name}")
+        parse_form(member.target, path=f"{name}.{member.name}", aliases=member.aliases)
         for member in public_members(module)
         if isinstance(member.target, type) and _is_form(member.target)
     )

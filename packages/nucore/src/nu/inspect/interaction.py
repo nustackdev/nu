@@ -21,11 +21,13 @@ from nu.inspect.core.contract import (
     check_args,
     check_example,
     check_summary,
+    render_args,
 )
 from nu.inspect.core.docstring import split_docstring
 from nu.inspect.core.source import public_members, read_signature, unpacked_count
 from nu.inspect.record import Record, prose
-from nu.lang import Form, kinds
+from nu.inspect.taxonomy import taxonomy
+from nu.lang import Form
 from nu.lang.kinds import Interaction, Ref
 
 
@@ -47,16 +49,19 @@ class InteractionRecord(Record):
     """One atom: the prose, plus what the code says it is.
 
     ``args`` is the call form, from the constructor when the atom declares one
-    and from the docstring when it inherits the variadic ``Nu.__init__``.
-    ``kind``, ``sort`` and ``cardinality`` are taxonomy facts read off
-    ``nu.lang.kinds``.
+    and from the docstring when it inherits the variadic ``Nu.__init__``;
+    ``call`` is the same arguments spelled the way a person writes them.
+    ``kind``, ``sort``, ``cardinality`` and ``abstract`` are taxonomy facts
+    read off ``nu.lang.kinds``.
     """
 
     args: tuple[Arg, ...] = ()
+    call: str = ""
     yields: str = ""
     kind: str = ""
     sort: str = ""
     cardinality: str = ""
+    abstract: bool = False
 
     @property
     def arity(self) -> int | None:
@@ -68,24 +73,27 @@ class InteractionRecord(Record):
     @property
     def required(self) -> int:
         """How many children carry no default."""
-        return sum(1 for arg in self.args if not arg.variadic and not arg.default)
+        return sum(1 for arg in self.args if not arg.variadic and not arg.has_default)
 
 
-_KIND_CLASSES = tuple(
-    getattr(kinds, name) for name in kinds.__all__ if isinstance(getattr(kinds, name), type)
-)
-
-
-def parse_interaction(atom: type, path: str = "") -> InteractionRecord:
+def parse_interaction(
+    atom: type, path: str = "", *, aliases: tuple[str, ...] = ()
+) -> InteractionRecord:
     """One InteractionRecord for ``atom``."""
     blocks = split_docstring(atom.__doc__)
+    args = call_form(atom, blocks)
     return InteractionRecord(
-        **prose(atom, atom.__name__, path or f"{atom.__module__}.{atom.__name__}", blocks),
-        args=call_form(atom, blocks),
+        **prose(
+            atom,
+            atom.__name__,
+            path or f"{atom.__module__}.{atom.__name__}",
+            blocks,
+            aliases=aliases,
+        ),
+        **taxonomy(atom),
+        args=args,
+        call=render_args(atom.__name__, args),
         yields=blocks.text_of(*YIELDS),
-        kind=_kind(atom),
-        sort=_declared(atom, "sort"),
-        cardinality=_declared(atom, "cardinality"),
     )
 
 
@@ -100,7 +108,7 @@ def catalogue(module: ModuleType) -> tuple[InteractionRecord, ...]:
     """
     name = module.__name__
     return tuple(
-        parse_interaction(member.target, path=f"{name}.{member.name}")
+        parse_interaction(member.target, path=f"{name}.{member.name}", aliases=member.aliases)
         for member in public_members(module)
         if isinstance(member.target, type) and _is_interaction(member.target)
     )
@@ -136,18 +144,3 @@ def _is_interaction(cls: type) -> bool:
     if not issubclass(cls, Interaction):
         return False
     return not issubclass(cls, Form) and not issubclass(cls, Ref)
-
-
-def _kind(atom: type) -> str:
-    for base in atom.__mro__:
-        if base in _KIND_CLASSES:
-            return base.__name__
-    return ""
-
-
-def _declared(atom: type, name: str) -> str:
-    attribute = getattr(atom, "_attributes", {}).get(name)
-    if attribute is None:
-        return ""
-    value = getattr(attribute, "value", None)
-    return getattr(value, "value", None) or str(value)

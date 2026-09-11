@@ -5,14 +5,14 @@ not Nu, not what an interaction is. Shared by every kind, which is what stops
 each one re-deriving the same rules.
 
 - ``sections`` names the sections, once.
-- ``call`` merges the two sources into the call form.
+- ``call`` merges the two sources into the call form, and renders it back.
 - ``check`` is one law per section, returning violations rather than raising.
   Absence of a section is not a violation; it is empty data on the record.
 """
 
 from __future__ import annotations
 
-from nu.inspect.core.contract.call import Arg, call_form
+from nu.inspect.core.contract.call import Arg, call_form, render_args
 from nu.inspect.core.contract.check import (
     SUMMARY_LIMIT,
     Violation,
@@ -37,4 +37,5 @@ __all__ = [
     "check_args",
     "check_example",
     "check_summary",
+    "render_args",
 ]

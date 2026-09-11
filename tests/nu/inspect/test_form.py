@@ -24,5 +24,15 @@ def test_other_primitive_forms_parse_too() -> None:
     assert parse_form(Bool).name == "Bool"
 
 
+def test_a_form_answers_the_same_taxonomy_questions_an_atom_does() -> None:
+    record = parse_form(Int)
+    assert (record.kind, record.sort, record.cardinality) == (
+        "ScalarQuery",
+        "scalar_query",
+        "scalar",
+    )
+    assert record.abstract is False
+
+
 def test_int_docstrings_are_clean_by_the_shared_laws() -> None:
     assert verify_form(Int) == []

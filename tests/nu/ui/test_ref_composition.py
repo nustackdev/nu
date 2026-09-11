@@ -159,6 +159,50 @@ def test_input_read_resolves_path_and_reads_session():
     assert result[0] == "browser-value"
 
 
+def test_prose_round_trips_markdown_both_ways():
+    """ProseRef is bidirectional: `set` ships the markdown source out as a bare
+    string, and reading the handle pulls the browser's edited source back."""
+    from nu.ui.refs import ProseRef
+
+    class Doc(Row):
+        body = ProseRef.slot(placeholder="Write something")
+
+    class DocPage(Page):
+        doc = Doc.slot()
+
+    class ReadSession(_RecordingSession):
+        async def aread(self, path: str) -> object:
+            return "# edited\n\nby the browser\n"
+
+    sess = ReadSession()
+    ctx = Context().bind(Session, sess)
+
+    asyncio.run(nu.arun(DocPage.doc.body.set("# seeded\n"), ctx))
+    assert sess.frames[0].ref == "DocPage.doc.body"
+    assert sess.frames[0].op == "write"
+    assert sess.frames[0].payload == "# seeded\n"
+
+    result = asyncio.run(nu.arun(DocPage.doc.body, ctx))
+    assert result[0] == "# edited\n\nby the browser\n"
+
+
+def test_prose_partial_write_carries_a_dict():
+    """The chrome setters use the map form, so a placeholder change does not
+    also blow away the document."""
+    from nu.ui.refs import ProseRef
+
+    class Doc2(Row):
+        body = ProseRef.slot()
+
+    class DocPage2(Page):
+        doc = Doc2.slot()
+
+    sess = _RecordingSession()
+    ctx = Context().bind(Session, sess)
+    asyncio.run(nu.arun(DocPage2.doc.body.set_read_only(True), ctx))
+    assert sess.frames[0].payload == {"read_only": True}
+
+
 # --- widget interaction sweep (auto-covers every leaf widget) ----------------
 
 

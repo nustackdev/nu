@@ -530,3 +530,38 @@ body {
 		scroll-behavior: auto !important;
 	}
 }
+
+/* ============================== prose editor ==============================
+ * The three rules a contenteditable needs that a class recipe cannot express.
+ * Everything else about a ProseRef's look comes from the `Prose` container it
+ * mounts inside, so the same styles apply whether you are reading the document
+ * or typing in it. No colors of its own: both values below are L2 roles, so
+ * they flip with the theme.
+ * ==========================================================================*/
+
+/* The empty-document hint. A decoration puts the text on the node as an
+ * attribute; this draws it without it ever being part of the document, so it
+ * can never be selected, copied or serialized. */
+.nu-prose-editor [data-nu-placeholder]::before {
+	content: attr(data-nu-placeholder);
+	color: var(--text-muted);
+	pointer-events: none;
+	float: left;
+	height: 0;
+}
+
+/* A trailing block node (a divider) leaves nowhere to click. ProseMirror's gap
+ * cursor is not wired, so give the caret a real target instead. */
+.nu-prose-editor > hr {
+	cursor: pointer;
+}
+.nu-prose-editor > hr.ProseMirror-selectednode {
+	border-color: var(--accent);
+}
+
+/* Undo the UA outline on the editable host. A focus ring drawn around a whole
+ * paragraph reads as chrome on a document; the caret is the marker. */
+.nu-prose-editor:focus,
+.nu-prose-editor:focus-visible {
+	outline: none;
+}

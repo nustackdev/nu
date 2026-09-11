@@ -7,6 +7,10 @@ them is the syntax and where it is bound; the described thing is the same.
 
 Signature and return annotation are authoritative for args and yields, so
 neither is written; the docstring's job is summary and notes.
+
+A call is reached two ways: off a class, by the MRO walk the builder kinds
+run, or off a module, by the catalogue here - which is what the ``nu.std``
+surfaces are made of.
 """
 
 from __future__ import annotations
@@ -15,17 +19,22 @@ import inspect
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from nu.inspect.core.contract import YIELDS, Arg, Violation, call_form, check_summary
+from nu.inspect.core.contract import YIELDS, Arg, Violation, call_form, check_summary, render_args
 from nu.inspect.core.docstring import split_docstring
+from nu.inspect.core.source import public_members
 from nu.inspect.record import Record, prose
 
 
 if TYPE_CHECKING:
+    from types import ModuleType
+
     from nu.inspect.core.source import Binding
 
 
 __all__ = [
     "CallRecord",
+    "call_for",
+    "catalogue",
     "parse_binding",
     "parse_call",
     "spelling_for",
@@ -37,17 +46,22 @@ __all__ = [
 class CallRecord(Record):
     """One callable subject: what to write, and what it takes and yields.
 
-    ``spelling`` is the surface form: ``.set(value)`` for a method, ``a + b``
-    for an operator, ``nu.str(x)`` for a free function.
+    ``spelling`` is the surface form with its arguments elided: ``.set(...)``
+    for a method, ``a + b`` for an operator, ``math.sqrt(...)`` for a free
+    function. ``call`` is the same form with the real argument list in it,
+    ``.inc(step=1)``, so a reader who needs the arity does not reassemble it.
 
-    ``args`` merges the signature (names, defaults) with the docstring's Args
-    prose. ``returns`` is the return annotation as text; ``yields`` is the
-    docstring's Yields prose, which carries meaning the annotation cannot -
-    sentinel behaviour, promotion rules, edge conditions. Both belong; one
-    is the type, the other is the semantics.
+    ``args`` merges the signature (names, defaults, annotations) with the
+    docstring's Args prose, with the receiver of a method dropped: ``self`` is
+    what you call the method on, not something you write. ``returns`` is the
+    return annotation as text; ``yields`` is the docstring's Yields prose,
+    which carries meaning the annotation cannot - sentinel behaviour,
+    promotion rules, edge conditions. Both belong; one is the type, the other
+    is the semantics.
     """
 
     spelling: str = ""
+    call: str = ""
     args: tuple[Arg, ...] = ()
     yields: str = ""
     returns: str = ""
@@ -97,6 +111,16 @@ def spelling_for(name: str, binding: str, qualifier: str = "") -> str:
     return f".{name}(...)"
 
 
+def call_for(name: str, binding: str, args: tuple[Arg, ...], qualifier: str = "") -> str:
+    """The surface form for ``name``, with its arguments written out."""
+    if binding == "operator":
+        return _SPELLINGS.get(name, name)
+    rendered = render_args(name, args)
+    if binding in ("classmethod", "function"):
+        return f"{qualifier}.{rendered}" if qualifier else rendered
+    return f".{rendered}"
+
+
 def parse_call(
     target: object,
     *,
@@ -105,13 +129,16 @@ def parse_call(
     owner: str,
     binding: str,
     qualifier: str = "",
+    aliases: tuple[str, ...] = (),
 ) -> CallRecord:
     """One CallRecord for ``target``, however it was reached."""
     blocks = split_docstring(getattr(target, "__doc__", ""))
+    args = call_form(target, blocks, receiver=binding in ("method", "operator"))
     return CallRecord(
-        **prose(target, name, path, blocks),
+        **prose(target, name, path, blocks, aliases=aliases),
         spelling=spelling_for(name, binding, qualifier),
-        args=call_form(target, blocks),
+        call=call_for(name, binding, args, qualifier),
+        args=args,
         yields=blocks.text_of(*YIELDS),
         returns=_return_annotation(target),
         owner=owner,
@@ -136,11 +163,44 @@ def parse_binding(binding: Binding, *, host: type) -> CallRecord:
     )
 
 
+def catalogue(module: ModuleType) -> tuple[CallRecord, ...]:
+    """A CallRecord per free function the module exports, in export order.
+
+    The other catalogues filter a module for a kind of class. This one is for
+    the surfaces that export no classes at all: ``nu.std.math`` is 34 plain
+    functions that build Nu terms, and without this every std submodule reads
+    as exporting nothing.
+
+    The qualifier is the module's last name part, because that is how the
+    function is written: ``from nu.std import math``, then ``math.sqrt(x)``.
+    """
+    name = module.__name__
+    qualifier = name.rsplit(".", 1)[-1]
+    return tuple(
+        parse_call(
+            member.target,
+            name=member.name,
+            path=f"{name}.{member.name}",
+            owner=getattr(member.target, "__module__", ""),
+            binding="function",
+            qualifier=qualifier,
+            aliases=member.aliases,
+        )
+        for member in public_members(module)
+        if _is_free_function(member.target)
+    )
+
+
 def verify_call(target: object, *, subject: str = "") -> list[Violation]:
     """Every way ``target``'s docstring lies about the format."""
     name = subject or getattr(target, "__name__", repr(target))
     blocks = split_docstring(getattr(target, "__doc__", ""))
     return check_summary(name, blocks)
+
+
+def _is_free_function(target: object) -> bool:
+    """Whether a module member is a function rather than one of the class kinds."""
+    return callable(target) and not isinstance(target, type)
 
 
 def _binding_kind(name: str, raw: object) -> str:

@@ -108,6 +108,13 @@ export { JsonView } from "./components/ui/json-view";
 export { Gauge, gaugeVariants } from "./components/ui/gauge";
 export { Stat, StatLabel, StatValue, StatDelta } from "./components/ui/stat";
 export { Prose } from "./components/ui/prose";
+export { ProseEditor } from "./refs/input/prose/editor";
+export type { ProseEditorProps } from "./refs/input/prose/editor";
+export { createProseSchema, proseSchema } from "./refs/input/prose/schema";
+export type { ProseClasses, ProseSchema } from "./refs/input/prose/schema";
+export { createMarkdown, markdown } from "./refs/input/prose/markdown";
+export type { Markdown, Parsed, SourceMap } from "./refs/input/prose/markdown";
+export { placeholder as prosePlaceholder, proseInputRules } from "./refs/input/prose/rules";
 export { Image } from "./components/ui/image";
 export {
 	Table,

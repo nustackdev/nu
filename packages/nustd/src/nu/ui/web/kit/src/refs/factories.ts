@@ -14,6 +14,7 @@ import { CheckboxRef } from "./input/checkbox";
 import { DatePickerRef } from "./input/date-picker";
 import { InputRef } from "./input/input";
 import { NumberInputRef } from "./input/number-input";
+import { ProseRef } from "./input/prose";
 import { RadioGroupRef } from "./input/radio-group";
 import { SelectRef } from "./input/select";
 import { SliderRef } from "./input/slider";
@@ -81,6 +82,7 @@ export const entries: Record<string, RefEntry> = {
 	NumberInputRef,
 	DatePickerRef,
 	TagInputRef,
+	ProseRef,
 	// Chart Refs (output sinks with chart-specific payloads).
 	LineChart,
 	AreaChart,
