@@ -72,7 +72,7 @@ class PyBrace:
           section does and nothing outside it. Nothing distinguishes the two
           but where the bracket sits.
         - ``LoadNu`` finds it on ``rt.ctx`` by class plus tag, the same
-          single hashable tag ``MpWorkerRef`` and ``Teleport`` take. A
+          single hashable tag ``Teleport`` takes. A
           ``LoadNu`` under no bracket falls back to a shared in-process
           brace rather than failing.
         - It is itself a ``Constructor`` and forwards ``construct`` to

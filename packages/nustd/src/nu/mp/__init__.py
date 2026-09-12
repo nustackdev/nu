@@ -9,8 +9,8 @@ tree into a child process, run it there, get the result back.
   / ``ProvideDict``. ``init`` (a lifecycle bracket, typically ``With(...)``)
   or ``ctx_builder`` (a callable) builds the worker's Context inside the
   child.
-- ``MpWorkerRef`` - fabric ref. Takes an arbitrary hashable tag
-  (``MpWorkerRef("indexer-main")``, ``MpWorkerRef(("shard", 0))``).
+- ``MpWorkerRef`` - fabric ref. Reads the ``MpWorker`` bound on the
+  Context.
 - ``Teleport`` - the interaction; ships the body term to a tagged
   ``MpWorker`` and waits for its result. Works on both sync and async
   runtimes (pipe I/O is blocking either way; async wraps it off-thread).

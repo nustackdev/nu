@@ -16,7 +16,7 @@ Where it is *built* is ctx's business. ``LoadNu`` resolves a
 back to an in-process brace, so a bare ``LoadNu`` in a plain tree works with
 no ceremony. Binding one is how a subtree opts into a different interpreter,
 and ``brace=`` picks among several bound braces by tag, the same single
-hashable tag ``MpWorkerRef`` / ``Teleport`` take.
+hashable tag ``Teleport`` takes.
 
 Children and payload
 --------------------
