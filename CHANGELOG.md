@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add nu.mp_pool: the worker pool as a fabric, with Launch/Dispatch/Teleport/Kill/Alive/Running/Workers over ids that are always children, never payload; Dispatch is a VOID Command carrying its body in payload, which no tree pass reaches; PoolRef is a plain FabricRef carrying the fluent form of every interaction
 - Collapse nu.mp.MpWorkerRef onto plain FabricRef: drop the payload-stored tag and its `_compile`/`_acompile` overrides
 - Render an argument default as its repr so a call form is valid Python: `Filter(source, predicate, key='item')`, not `key=item`
 - Extend nu.inspect for generated reference docs: drop the receiver from a method's args, put a rendered call form on the interaction and call records, carry annotation/keyword-only/has-default on Arg, hoist kind/sort/cardinality/abstract onto the builder kinds, add module and aliases to every record, and add the module kind plus catalogue_calls so nu.std renders

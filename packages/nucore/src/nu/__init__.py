@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING
 
 
 # `nu` is split across two distributions: `nucore` (this file, the kernel)
-# and `nustd` (the fabrics: std, mem, kv, service, llm, cc, http, proxy, mp,
+# and `nustd` (the fabrics: std, mem, kv, service, llm, cc, http, proxy, mp, mp_pool,
 # cluster, ui). Installed as wheels the two land in the same
 # `site-packages/nu/` and nothing special is needed; installed editable they
 # sit in two separate `src/` trees, so widen `__path__` to pick up both. Only
@@ -148,7 +148,7 @@ from .lang.helpers import (
 # ``TYPE_CHECKING`` block gives IDEs and type-checkers the real modules so
 # ``nu.mem.IntRef`` etc. resolve statically with full completion / go-to-def.
 if TYPE_CHECKING:
-    from . import cc, cluster, http, kv, llm, mem, mp, proxy, service, std, ui
+    from . import cc, cluster, http, kv, llm, mem, mp, mp_pool, proxy, service, std, ui
 
 # NOTE: several flat re-exports above shadow Python builtins at module scope
 # — coercion atoms (``set``/``frozenset``/``tuple``/``list``/``dict``/``int``/
@@ -172,6 +172,7 @@ _LAZY = {
     "llm": "llm",
     "mem": "mem",
     "mp": None,
+    "mp_pool": None,
     "proxy": "proxy",
     "service": None,
     "std": None,
