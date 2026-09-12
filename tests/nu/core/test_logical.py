@@ -1,21 +1,44 @@
 """Execution tests for the logical atoms in ``nu.core.logical``.
 
 Compile small programs over Literal leaves and check the value each logical
-atom yields, the bool-coercing (non-short-circuit) semantics of And / Or,
-and sentinel propagation to INVALID.
+atom yields, the bool-coercing short-circuit semantics of And / Or, and
+sentinel propagation to INVALID.
 """
 
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 
 from nu.core.logical import And as And
 from nu.core.logical import Not as Not
 from nu.core.logical import Or as Or
 from nu.core.logical import ToBool as Bool
-from nu.lang import EMPTY, INVALID
+from nu.lang import EMPTY, INVALID, ScalarQuery
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from nu.lang.runtime import Runtime
+
+
+class Boom(ScalarQuery):
+    """An atom that raises the moment it is evaluated."""
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> object:
+            raise AssertionError("short-circuited child was evaluated")
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> object:
+            raise AssertionError("short-circuited child was evaluated")
+
+        return athunk
 
 
 def _eval(term: object) -> object:
@@ -107,3 +130,48 @@ def test_a_sentinel_operand_collapses_to_invalid():
     assert _eval(Not(Literal(EMPTY))) is INVALID
     assert _eval(Bool(Literal(INVALID))) is INVALID
     assert asyncio.run(_aeval(And(Literal(EMPTY), Literal(True)))) is INVALID
+
+
+# --- short-circuit -------------------------------------------------------
+
+
+def test_and_does_not_evaluate_children_past_the_first_falsy_one():
+    assert _eval(And(Literal(False), Boom())) is False
+    assert _eval(And(Literal(True), Literal(0), Boom())) is False
+    assert asyncio.run(_aeval(And(Literal(False), Boom()))) is False
+
+
+def test_or_does_not_evaluate_children_past_the_first_truthy_one():
+    assert _eval(Or(Literal(True), Boom())) is True
+    assert _eval(Or(Literal(False), Literal(1), Boom())) is True
+    assert asyncio.run(_aeval(Or(Literal(True), Boom()))) is True
+
+
+def test_short_circuit_beats_sentinel_poisoning():
+    # The sentinel sits in a child that is never reached, so it never fires.
+    assert _eval(And(Literal(False), Literal(INVALID))) is False
+    assert _eval(And(Literal(False), Literal(EMPTY))) is False
+    assert _eval(Or(Literal(True), Literal(INVALID))) is True
+    assert _eval(Or(Literal(True), Literal(EMPTY))) is True
+    assert asyncio.run(_aeval(And(Literal(False), Literal(INVALID)))) is False
+    assert asyncio.run(_aeval(Or(Literal(True), Literal(INVALID)))) is True
+
+
+def test_a_sentinel_in_an_evaluated_child_still_collapses():
+    assert _eval(And(Literal(INVALID), Literal(False))) is INVALID
+    assert _eval(And(Literal(True), Literal(EMPTY), Literal(False))) is INVALID
+    assert _eval(Or(Literal(EMPTY), Literal(True))) is INVALID
+    assert _eval(Or(Literal(False), Literal(INVALID), Literal(True))) is INVALID
+
+
+def test_no_children_yields_the_identity():
+    assert _eval(And()) is True
+    assert _eval(Or()) is False
+    assert asyncio.run(_aeval(And())) is True
+    assert asyncio.run(_aeval(Or())) is False
+
+
+def test_and_guards_an_unsafe_child():
+    # The motivating case: the guard must keep the guarded work from running.
+    assert _eval(And(Literal(""), Boom())) is False
+    assert _eval(Or(Not(Literal("")), Boom())) is True

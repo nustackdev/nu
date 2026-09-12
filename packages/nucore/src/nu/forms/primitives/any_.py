@@ -607,8 +607,8 @@ class Any(Form, TypedNu[Any]):
                 truthiness (falsy is False, everything else is True).
 
         Notes:
-            - Both operands are always evaluated; there is no Python-style
-              short-circuit at the tree level.
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
             - Bitwise AND is `bitand`, not this; `&` is reserved for `Race`.
 
         Yields:
@@ -633,8 +633,8 @@ class Any(Form, TypedNu[Any]):
                 truthiness.
 
         Notes:
-            - Both operands are always evaluated; there is no Python-style
-              short-circuit at the tree level.
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
             - Bitwise OR is `bitor`, not this; `|` is reserved for
               `Parallel`.
 

@@ -695,8 +695,8 @@ class Int(Form, TypedNu[int]):
                 (zero is False, everything else is True).
 
         Notes:
-            - Both operands are always evaluated; there is no Python-style
-              short-circuit at the tree level.
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
             - Bitwise AND is `bitand`, not this.
 
         Yields:
@@ -720,8 +720,8 @@ class Int(Form, TypedNu[int]):
             other: the value to OR with self. Coerced to Bool by truthiness.
 
         Notes:
-            - Both operands are always evaluated; there is no Python-style
-              short-circuit at the tree level.
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
             - Bitwise OR is `bitor`, not this.
 
         Yields:

@@ -288,8 +288,8 @@ class Bytes(Form, TypedNu[bytes]):
                 truthiness (empty bytes is False, everything else is True).
 
         Notes:
-            - Both operands are always evaluated; there is no Python-style
-              short-circuit at the tree level.
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
 
         Yields:
             True when both operands are truthy, False otherwise. INVALID
@@ -313,8 +313,8 @@ class Bytes(Form, TypedNu[bytes]):
                 truthiness.
 
         Notes:
-            - Both operands are always evaluated; there is no Python-style
-              short-circuit at the tree level.
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
 
         Yields:
             True when either operand is truthy, False otherwise. INVALID

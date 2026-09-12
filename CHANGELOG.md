@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Make nu.And and nu.Or short-circuit, so they work as guards
 - Add nu.mp_pool: the worker pool as a fabric, with Launch/Dispatch/Teleport/Kill/Alive/Running/Workers over ids that are always children, never payload; Dispatch is a VOID Command carrying its body in payload, which no tree pass reaches; PoolRef is a plain FabricRef carrying the fluent form of every interaction
 - Collapse nu.mp.MpWorkerRef onto plain FabricRef: drop the payload-stored tag and its `_compile`/`_acompile` overrides
 - Render an argument default as its repr so a call form is valid Python: `Filter(source, predicate, key='item')`, not `key=item`

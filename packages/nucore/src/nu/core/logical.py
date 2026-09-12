@@ -11,14 +11,17 @@ Sorts: all ScalarQuery (Q). ``And`` / ``Or`` are variadic; ``Not`` and
 ``ToBool`` are unary. ``logical`` owns ``ToBool``; ``cast`` does not define it.
 
 And / Or semantics: Python's ``and`` / ``or`` short-circuit and return an
-operand (not a bool). Nu does not mirror that: these atoms coerce to ``bool``
-and fold every operand eagerly,
-so a Nu ``And`` / ``Or`` always yields a plain boolean and sentinel
-propagation gets the chance to fire on any branch. ``And`` yields ``True``
-over no operands, ``Or`` yields ``False``.
+operand (not a bool). Nu short-circuits the same way but always coerces to
+``bool``, so a Nu ``And`` / ``Or`` yields a plain boolean while leaving the
+operands past the deciding one unevaluated. That is what makes them usable
+as guards: ``And(not_empty(x), contains(x))`` never runs ``contains`` when
+``x`` is empty. ``And`` yields ``True`` over no operands, ``Or`` yields
+``False``.
 
-Sentinels: each operand is checked; an ``EMPTY`` or ``INVALID`` operand
-collapses the whole query to ``INVALID`` (per ``nu.lang.sentinels``).
+Sentinels: every operand that is actually evaluated is checked; an ``EMPTY``
+or ``INVALID`` operand collapses the whole query to ``INVALID`` (per
+``nu.lang.sentinels``). Short-circuit wins over sentinel poisoning - an
+operand that is never evaluated can never poison the result.
 """
 
 from __future__ import annotations
@@ -45,13 +48,17 @@ class And(ScalarQuery):
         *children: the values to conjoin.
 
     Notes:
-        - No short-circuit: every child is evaluated regardless of the
-          running result, unlike Python's ``and``. Only a sentinel breaks
-          the loop early.
+        - Short-circuits like Python's ``and``: the first falsy child
+          decides the result and the children after it are never
+          evaluated. This is what lets ``And`` guard - a guard that still
+          runs the thing it is guarding is not a guard.
+        - Short-circuit beats sentinel poisoning: a child that is never
+          evaluated never contributes its sentinel, so
+          ``And(False, <INVALID>)`` is ``False``, not INVALID.
         - No children at all yields True.
 
     Yields:
-        A plain bool. INVALID when any child is EMPTY or INVALID.
+        A plain bool. INVALID when an evaluated child is EMPTY or INVALID.
 
     Example:
         >>> nu.run(nu.And(True, True))[0]
@@ -62,25 +69,25 @@ class And(ScalarQuery):
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
-            out = True
             for ct in children:
                 v = ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out and builtins.bool(v)
-            return out
+                if not builtins.bool(v):
+                    return False
+            return True
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            out = True
             for ct in children:
                 v = await ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out and builtins.bool(v)
-            return out
+                if not builtins.bool(v):
+                    return False
+            return True
 
         return athunk
 
@@ -92,13 +99,17 @@ class Or(ScalarQuery):
         *children: the values to disjoin.
 
     Notes:
-        - No short-circuit: every child is evaluated regardless of the
-          running result, unlike Python's ``or``. Only a sentinel breaks the
-          loop early.
+        - Short-circuits like Python's ``or``: the first truthy child
+          decides the result and the children after it are never
+          evaluated. This is what lets ``Or`` guard - a guard that still
+          runs the thing it is guarding is not a guard.
+        - Short-circuit beats sentinel poisoning: a child that is never
+          evaluated never contributes its sentinel, so
+          ``Or(True, <INVALID>)`` is ``True``, not INVALID.
         - No children at all yields False.
 
     Yields:
-        A plain bool. INVALID when any child is EMPTY or INVALID.
+        A plain bool. INVALID when an evaluated child is EMPTY or INVALID.
 
     Example:
         >>> nu.run(nu.Or(False, True))[0]
@@ -109,25 +120,25 @@ class Or(ScalarQuery):
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
-            out = False
             for ct in children:
                 v = ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out or builtins.bool(v)
-            return out
+                if builtins.bool(v):
+                    return True
+            return False
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            out = False
             for ct in children:
                 v = await ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out or builtins.bool(v)
-            return out
+                if builtins.bool(v):
+                    return True
+            return False
 
         return athunk
 

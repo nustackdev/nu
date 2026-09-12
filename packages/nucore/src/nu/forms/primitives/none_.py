@@ -61,8 +61,8 @@ class None_(Form, TypedNu[None]):  # noqa: N801
                 truthiness; `None` is always falsy.
 
         Notes:
-            - Both operands are always evaluated; there is no Python-style
-              short-circuit at the tree level.
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
 
         Yields:
             False, since self is always falsy. INVALID when either operand
@@ -86,8 +86,8 @@ class None_(Form, TypedNu[None]):  # noqa: N801
                 truthiness; `None` is always falsy.
 
         Notes:
-            - Both operands are always evaluated; there is no Python-style
-              short-circuit at the tree level.
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
 
         Yields:
             True when other is truthy, False otherwise since self never is.

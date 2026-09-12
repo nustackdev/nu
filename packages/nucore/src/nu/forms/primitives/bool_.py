@@ -26,8 +26,8 @@ class Bool(Form, TypedNu[bool]):
         - Logical operators are the named forms `and_`, `or_`, `not_`. Python
           reserves `and`, `or`, `not` as keywords, so they cannot be method
           names.
-        - Both operands are always evaluated; there is no Python-style
-          short-circuit at the tree level.
+        - Short-circuits like Python: the right operand is only
+          evaluated when the left does not already decide the result.
         - Comparison operators yield Bool too, treating False as less than
           True.
 
@@ -47,8 +47,8 @@ class Bool(Form, TypedNu[bool]):
             other: the value to AND with self. Any Bool or plain bool.
 
         Notes:
-            - Both operands are always evaluated; there is no Python-style
-              short-circuit at the tree level.
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
 
         Yields:
             True when both operands are True, False otherwise. INVALID when
@@ -69,8 +69,8 @@ class Bool(Form, TypedNu[bool]):
             other: the value to OR with self. Any Bool or plain bool.
 
         Notes:
-            - Both operands are always evaluated; there is no Python-style
-              short-circuit at the tree level.
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
 
         Yields:
             True when either operand is True, False otherwise. INVALID when
