@@ -327,6 +327,20 @@ class Context:
         ctx._guarded = {k: list(v) for k, v in self._guarded.items()}
         return ctx
 
+    def branch(self) -> Context:
+        """Fork for one concurrent arm: own attrs key space, values shared.
+
+        What a fan-out needs (``ForEachPar``): each arm binds its own loop
+        variable without the siblings seeing it, while the fabric bindings and
+        the attr values themselves stay the same objects. Cheap and handle-safe,
+        unlike ``bind`` / ``lazy``, which deep-copy attrs for a real scope carry.
+        """
+        ctx = Context.__new__(Context)
+        ctx._attrs = self._attrs.copy_shallow()
+        ctx._entries = dict(self._entries)
+        ctx._guarded = {k: list(v) for k, v in self._guarded.items()}
+        return ctx
+
     # -- repr ----------------------------------------------------------------
 
     def __repr__(self) -> str:

@@ -12,6 +12,10 @@ Loop variables ride the attrs side-channel: ``ForEachDo`` / ``ForRangeDo`` bind
 the current element under a name (itself a child, so it can be a Literal or a
 computed Ref) before each body run, read back via ``AttrRef`` - the same
 designated channel ``Map`` / ``Filter`` use, not a tracked fabric write.
+``ForEachParAsync`` is ``ForEachDo``'s fan-out twin: same three args, same
+binding, but every element gets its own arm on the loop at once, each on its own
+Context branch so the arms cannot stomp each other's loop variable. It lives
+here, with the ForEach it mirrors, and borrows the scheduling from ``parallel``.
 
 Each atom emits a thunk via ``compile`` / ``acompile`` and stays immutable -
 construction config that must survive ``with_children`` lives in ``payload``
@@ -27,6 +31,7 @@ from typing import TYPE_CHECKING
 from nu.core._stream import aiter_any, sync_iter
 from nu.engine.structure import Declared
 from nu.lang import Control
+from nu.lang.attributes.execution import ExecOrder
 
 
 if TYPE_CHECKING:
@@ -39,6 +44,7 @@ __all__ = [
     "Delay",
     "DelayedDo",
     "ForEachDo",
+    "ForEachParAsync",
     "ForRangeDo",
     "ForeverDo",
     "IfDo",
@@ -241,6 +247,85 @@ class ForEachDo(Control):
             async for elem in aiter_any(await items_t(rt)):
                 rt.ctx.attrs[name] = elem
                 await body(rt)
+
+        return athunk
+
+
+class ForEachParAsync(Control):
+    """``ForEachParAsync(items, body, item="item")`` - runs ``body`` once per element of ``items``, every arm on the loop at once.
+
+    Args:
+        items: the iterable to fan out over, evaluated once before any arm
+            starts.
+        body: the arm, run once per element, concurrently with the others.
+        item: the name to bind that arm's element under. Optional, defaults
+            to ``"item"``.
+
+    Notes:
+        - Same three args and the same ``item`` binding as ``ForEachDo``,
+          which is why it sits here rather than in ``parallel/``; the
+          scheduling itself is ``parallel._scheduling.aeval_foreach_par``.
+        - Joins on all, like ``Parallel``, but over a runtime-sized list:
+          ``Parallel`` / ``Gather`` fan out to children fixed at
+          construction, this one to whatever ``items`` yields at run time.
+        - Async-only, and named for it the way ``ParallelAsync`` is: every
+          arm is an asyncio.Task on the loop, no threaded placement and no
+          sync path at all. Sync ``run`` refuses the subtree up front via
+          ``requires_async``.
+        - It does not take from the concurrency budget. A parked coroutine
+          costs no worker, and these arms are meant never to return, so there
+          is nothing to ration - ``max_parallel`` bounds threads, and this
+          atom uses none.
+        - Each arm runs against its own Context branch, so ``item`` is that
+          arm's element and nothing else. The branch shares attr values by
+          reference (``Attributes.copy_shallow``), so a live handle in attrs
+          crosses fine, but an arm's own writes stay in its arm.
+        - Arms that never return are the point: a standing ``ForeverDo`` per
+          element joins only when the surrounding Flow is cancelled. An empty
+          ``items`` completes immediately.
+        - Cancellation propagates: under ``Race``, cancelling this Flow
+          cancels every arm. First error wins like ``Parallel``, and the
+          remaining arms are cancelled on the way out, since a headless
+          never-returning arm would outlive the Flow that spawned it.
+
+    Example:
+        >>> import asyncio
+        >>> _, ctx = asyncio.run(
+        ...     nu.arun(
+        ...         nu.ForEachParAsync(
+        ...             nu.Iter(nu.Literal([1, 2, 3])),
+        ...             nu.SetCmd(nu.AttrRef("seen"), nu.AttrRef("item")),
+        ...         )
+        ...     )
+        ... )
+        >>> "seen" in ctx.attrs
+        False
+    """
+
+    _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
+    _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
+    _requires_async = Declared(value=True, name="requires_async")
+
+    def __init__(self, items: object, body: object, item: object = "item") -> None:
+        super().__init__(items, body, item)
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            msg = "ForEachParAsync requires an async runtime; use arun"
+            raise RuntimeError(msg)
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        from .parallel import _scheduling
+
+        items_t, _body, key_t = children
+
+        async def athunk(rt: Runtime) -> None:
+            name = await key_t(rt)
+            elems = [elem async for elem in aiter_any(await items_t(rt))]
+            body_nid = rt.program.children[nid][1]
+            await _scheduling.aeval_foreach_par(rt, body_nid, elems, name)
 
         return athunk
 

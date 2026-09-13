@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add nu.ForEachParAsync: fan a body out over a runtime-sized list, one loop task per element and no budget of its own, each arm on its own Context branch (Attributes.copy_shallow / Context.branch) so the arms never stomp each other's item; the sync-entry refusal now names the async-only atoms that forced it
 - Make nu.And and nu.Or short-circuit, so they work as guards
 - Add nu.mp_pool: the worker pool as a fabric, with Launch/Dispatch/Teleport/Kill/Alive/Running/Workers over ids that are always children, never payload; Dispatch is a VOID Command carrying its body in payload, which no tree pass reaches; PoolRef is a plain FabricRef carrying the fluent form of every interaction
 - Collapse nu.mp.MpWorkerRef onto plain FabricRef: drop the payload-stored tag and its `_compile`/`_acompile` overrides

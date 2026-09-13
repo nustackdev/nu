@@ -2,7 +2,8 @@
 
 Covers ``Context`` -- the tagged value store the Runtime drives against.
 Immutability across ``bind`` / ``lazy``, resolution by type then scope tags
-with subset fallback, and predicate-guarded ``get``.
+with subset fallback, predicate-guarded ``get``, and ``branch`` for a
+concurrent arm.
 """
 
 from __future__ import annotations
@@ -266,6 +267,41 @@ def test_attrs_carry_through_bind_with_deep_copy() -> None:
     assert ctx1.attrs["k"] == [1, 2]
     ctx1.attrs["k"].append(3)
     assert ctx0.attrs["k"] == [1, 2]
+
+
+# --- branch ---------------------------------------------------------------
+
+
+def test_branch_gives_its_own_attrs_key_space() -> None:
+    ctx = Context()
+    ctx.attrs["item"] = 1
+    arm = ctx.branch()
+    arm.attrs["item"] = 2
+    arm.attrs["mine"] = True
+    assert ctx.attrs["item"] == 1
+    assert "mine" not in ctx.attrs
+
+
+def test_branch_shares_attr_values_by_reference() -> None:
+    ctx = Context()
+    ctx.attrs["k"] = [1, 2]
+    arm = ctx.branch()
+    arm.attrs["k"].append(3)
+    assert ctx.attrs["k"] is arm.attrs["k"]
+    assert ctx.attrs["k"] == [1, 2, 3]
+
+
+def test_branch_keeps_the_bindings() -> None:
+    ctx = Context().bind(Storage, "v").bind(View, "w", Market)
+    arm = ctx.branch()
+    assert arm.get(Storage) == "v"
+    assert arm.get(View, Market) == "w"
+
+
+def test_branch_binding_does_not_leak_back() -> None:
+    arm = Context().branch().bind(Storage, "v")
+    assert Context().has(Storage) is False
+    assert arm.has(Storage) is True
 
 
 # --- repr -----------------------------------------------------------------

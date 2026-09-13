@@ -7,8 +7,9 @@ Two families plus the reactive set:
   also exposes forced-mode variants ``ParallelThreaded`` / ``ParallelAsync``
   for explicit placement (Race / AnyN are async-only, no variants).
 - **Control** - compose bodies under Query parameters: ``IfDo``, ``WhileDo``,
-  ``ForeverDo``, ``ForEachDo``, ``ForRangeDo``, ``Delay``, ``DelayedDo``,
-  ``SwitchDo``.
+  ``ForeverDo``, ``ForEachDo``, ``ForEachParAsync``, ``ForRangeDo``,
+  ``Delay``, ``DelayedDo``, ``SwitchDo``. ``ForEachParAsync`` is the fan-out
+  ForEach: one arm per element on the loop, all at once, joining on all.
 - **Reactive** - consume change subscriptions and execute bodies in response:
   ``React``, ``ReactWhile``, ``ReactForever``, ``Stream``.
 """
@@ -17,6 +18,7 @@ from .control import (
     Delay,
     DelayedDo,
     ForEachDo,
+    ForEachParAsync,
     ForeverDo,
     ForRangeDo,
     IfDo,
@@ -43,6 +45,7 @@ __all__ = [
     "Delay",
     "DelayedDo",
     "ForEachDo",
+    "ForEachParAsync",
     "ForRangeDo",
     "ForeverDo",
     "Gather",

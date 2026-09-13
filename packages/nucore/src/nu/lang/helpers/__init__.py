@@ -14,8 +14,8 @@ Engine stages, each in its own module:
 Each drive/run entry owns a fresh ``Budget`` for the call, sized by
 ``max_parallel``, and closes it on exit. The Runtime sees the Budget
 through construction; no global state. The sync entries refuse a Program
-whose subtree carries an async-only atom (e.g. Watch); the caller must
-use the async sibling. ``eval_in_loop`` / ``run_in_loop`` are deliberate
+whose subtree carries an async-only atom, naming the atoms that forced it
+(Watch, Race, ForEachParAsync, ...); the caller must use the async sibling. ``eval_in_loop`` / ``run_in_loop`` are deliberate
 bridges.
 """
 

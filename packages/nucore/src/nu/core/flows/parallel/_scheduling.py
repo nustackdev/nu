@@ -15,6 +15,11 @@ from three sources with this precedence:
 
 ``merge`` / ``amerge`` stay mode-agnostic - stream fan-in has no
 Threaded/Async variants at this layer.
+
+``aeval_foreach_par`` is the odd one out: one body nid fanned out over a
+runtime-sized list instead of a fixed set of children, each arm a loop task on
+its own Context branch, off the budget entirely. It backs ``ForEachParAsync``,
+which lives in ``nu.core.flows.control`` next to the ``ForEachDo`` it mirrors.
 """
 
 from __future__ import annotations
@@ -30,10 +35,11 @@ from nu.lang.runtime.utils.loop import safely_aclosing, safely_closing
 if TYPE_CHECKING:
     from collections.abc import AsyncIterable, Iterable
 
-    from nu.lang.runtime import Runtime
+    from nu.lang.runtime import Context, Runtime
 
 __all__ = [
     "aeval_any",
+    "aeval_foreach_par",
     "aeval_parallel",
     "aeval_race",
     "amerge",
@@ -210,6 +216,47 @@ async def aeval_any(
         if last_error is not None:
             raise last_error
         return None
+    finally:
+        await _settle(tasks)
+
+
+# --- fan-out over a runtime list (loop only) -------------------------------
+
+
+def _arm_ctx(ctx: Context, name: str, elem: object) -> Context:
+    """Branch ``ctx`` for one arm, with ``elem`` bound under ``name``.
+
+    The branch keeps its own attrs key space so sibling arms cannot stomp
+    each other's loop variable, and shares every value by reference so a live
+    handle sitting in attrs crosses the fan-out intact.
+    """
+    branch = ctx.branch()
+    branch.attrs[name] = elem
+    return branch
+
+
+async def aeval_foreach_par(rt: Runtime, nid: int, elems: Iterable, name: str) -> None:
+    """Fan the body at ``nid`` out over ``elems``, one loop task each, joining on all.
+
+    Every arm is an asyncio.Task holding its own Context branch with ``name``
+    bound to its element - the ``rt.ctx`` set has to happen inside a Task for
+    that to stay arm-local, which is why bare coroutines will not do. Placement
+    is always the loop and the Budget is never touched: a parked coroutine
+    costs no worker, so there is nothing here to ration. First error wins, as
+    with ``aeval_parallel``, and the remaining arms are cancelled on the way
+    out rather than left running headless.
+    """
+    elems = list(elems)
+    if not elems:
+        return
+
+    async def arm(arm_ctx: Context) -> None:
+        rt.ctx = arm_ctx
+        await rt.aeval(nid)
+
+    tasks = [asyncio.ensure_future(arm(_arm_ctx(rt.ctx, name, e))) for e in elems]
+    try:
+        await asyncio.gather(*tasks)
     finally:
         await _settle(tasks)
 

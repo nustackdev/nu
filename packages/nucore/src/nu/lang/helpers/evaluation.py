@@ -27,9 +27,21 @@ if TYPE_CHECKING:
 
 
 def _refuse_async_only(program: Program, entry: str, swap: str) -> None:
-    """Raise if a sync entry sees an async-only subtree."""
+    """Raise if a sync entry sees an async-only subtree.
+
+    The message names the atoms that forced it, so the caller knows which
+    child to move rather than hunting the tree for whatever needs a loop.
+    """
     if program.attrs[Attr.HAS_ASYNC_ONLY_ATOM][0]:
-        msg = f"{entry}: program contains an async-only atom (e.g. Watch); use {swap}."
+        culprits = sorted(
+            {
+                type(term).__name__
+                for nid, term in enumerate(program.terms)
+                if program.attr(program.path_of[nid], Attr.REQUIRES_ASYNC)
+            }
+        )
+        named = ", ".join(culprits) if culprits else "e.g. Watch"
+        msg = f"{entry}: program contains an async-only atom ({named}); use {swap}."
         raise RuntimeError(msg)
 
 

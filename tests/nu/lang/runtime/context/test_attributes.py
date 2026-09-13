@@ -1,10 +1,13 @@
 """Unit tests for ``nu.lang.runtime.context.attributes``.
 
 Covers ``Attributes`` -- the flat mutable key-value store attached to
-``Context``. Read/write surface, ``copy`` semantics across scope boundaries.
+``Context``. Read/write surface, ``copy`` semantics across scope boundaries,
+``copy_shallow`` semantics for a concurrent branch.
 """
 
 from __future__ import annotations
+
+import threading
 
 import pytest
 
@@ -126,6 +129,33 @@ def test_copy_of_empty_is_empty() -> None:
     other = attrs.copy()
     assert len(other) == 0
     assert other is not attrs
+
+
+# --- copy_shallow: branch semantics ---------------------------------------
+
+
+def test_copy_shallow_gives_its_own_key_space() -> None:
+    attrs = Attributes({"x": 1})
+    other = attrs.copy_shallow()
+    other["x"] = 2
+    other["y"] = 3
+    assert attrs["x"] == 1
+    assert "y" not in attrs
+
+
+def test_copy_shallow_shares_values_by_reference() -> None:
+    attrs = Attributes({"k": [1, 2]})
+    other = attrs.copy_shallow()
+    other["k"].append(3)
+    assert attrs["k"] is other["k"]
+    assert attrs["k"] == [1, 2, 3]
+
+
+def test_copy_shallow_carries_an_unpicklable_value() -> None:
+    # What ``copy`` cannot do: a lock (or a live task) has no deepcopy.
+    lock = threading.Lock()
+    attrs = Attributes({"lock": lock})
+    assert attrs.copy_shallow()["lock"] is lock
 
 
 # --- repr -----------------------------------------------------------------

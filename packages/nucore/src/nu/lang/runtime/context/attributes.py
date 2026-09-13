@@ -24,7 +24,8 @@ class Attributes:
         "error" in attrs        # -> True
         del attrs["error"]
 
-        copied = attrs.copy()   # independent deep copy
+        copied = attrs.copy()           # independent deep copy
+        arm = attrs.copy_shallow()      # own key space, values shared
     """
 
     __slots__ = ("_data",)
@@ -69,6 +70,17 @@ class Attributes:
     def copy(self) -> Attributes:
         """Deep copy for scope carry."""
         return Attributes(deepcopy(self._data))
+
+    def copy_shallow(self) -> Attributes:
+        """Shallow copy for a concurrent branch: own key space, values shared.
+
+        Rebinding a key on the copy leaves the original alone, which is what
+        a fan-out needs so sibling arms do not stomp each other's loop
+        variable. Values are shared by reference, so a live handle (a task, a
+        client, an open store) crosses the branch intact where ``copy`` would
+        choke on it and mutating one in place is seen by everyone.
+        """
+        return Attributes(dict(self._data))
 
     def __repr__(self) -> str:
         if not self._data:
