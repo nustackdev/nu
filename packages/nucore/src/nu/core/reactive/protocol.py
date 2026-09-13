@@ -12,7 +12,8 @@ Two protocols, both structural:
   resolve it via ``rt.ctx.get(ObserverProtocol)`` and call
   ``subscribe(options)``.
 - ``Subscription`` -- handle returned by ``subscribe``. The user binds
-  receiver callbacks and closes it when done.
+  receiver callbacks, unbinds them, and closes it when done. All three
+  are required: ``React`` unbinds before it closes.
 
 ``options`` stays ``Any``: each backend defines its own filter dialect
 and the corresponding view emits it (``view.on_change()`` etc.). Nu is a
@@ -36,10 +37,14 @@ __all__ = [
 
 @runtime_checkable
 class Subscription(Protocol):
-    """Handle returned by an observer. Bind receivers, close when done."""
+    """Handle returned by an observer. Bind and unbind receivers, close when done."""
 
     def bind(self, receiver: Callable[[Any], None]) -> None:
         """Bind a receiver callback to this subscription."""
+        ...
+
+    def unbind(self, receiver: Callable[[Any], None]) -> None:
+        """Stop firing ``receiver``. Required, not optional: ``React`` calls it."""
         ...
 
     def close(self) -> None:

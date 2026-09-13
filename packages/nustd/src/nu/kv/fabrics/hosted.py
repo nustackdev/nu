@@ -67,6 +67,18 @@ class HostedSubscription:
                 self._receivers.append(receiver)
                 self._bound = True
 
+    def unbind(self, receiver: Receiver) -> None:
+        """Stop firing ``receiver``. A no-op when it is not bound.
+
+        Compared by identity, the same way ``_fire`` drops a dead one, because
+        asking a remote handle whether it equals another is a round trip. Never
+        raises: ``React`` calls this from a ``finally``, and by then the
+        receiver may already be gone because its own process died and ``_fire``
+        evicted it. Closing is the caller's next move, not this one's.
+        """
+        with self._lock:
+            self._receivers = [r for r in self._receivers if r is not receiver]
+
     def close(self) -> None:
         """Close the real subscription and forget every receiver."""
         with self._lock:

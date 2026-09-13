@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add unbind to the Subscription protocol and to HostedSubscription, which React needs
 - Add nu.kv.served_observer and nu.kv.proxy_observer: a process's change feed over a socket
 - Add nu.ForEachParAsync: fan a body over a runtime-sized list, one loop task per element
 - Make nu.And and nu.Or short-circuit, so they work as guards

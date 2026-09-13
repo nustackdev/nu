@@ -16,7 +16,7 @@ import socket
 import time
 
 import pytest
-from _support.observer_workers import child_main
+from _support.observer_workers import child_main, unbind_child_main
 
 from nu.context.fabric import With
 from nu.core.reactive import ObserverProtocol
@@ -188,3 +188,75 @@ def test_local_subscribers_still_hear_everything(head):
         assert heard == [(*PREFIX, "counter"), (*PREFIX, "counter")]
     finally:
         sub.close()
+
+
+# --- unbind -----------------------------------------------------------------
+
+
+def test_unbind_drops_one_receiver_and_leaves_the_rest(head):
+    """``React`` unbinds before it closes, so the protocol has to mean it."""
+    kept = []
+    dropped = []
+
+    def on_kept(key):
+        kept.append(tuple(key))
+
+    def on_dropped(key):
+        dropped.append(tuple(key))
+
+    sub = head.hosted.subscribe(_options())
+    sub.bind(on_dropped)
+    sub.bind(on_kept)
+    try:
+        sub.unbind(on_dropped)
+        assert sub.receivers == (on_kept,)
+        head.write(1)
+        deadline = time.monotonic() + 5.0
+        while not kept and time.monotonic() < deadline:
+            time.sleep(0.02)
+        assert kept == [(*PREFIX, "counter")]
+        assert dropped == []
+    finally:
+        sub.close()
+
+
+def test_unbind_of_something_never_bound_is_a_no_op(head):
+    """It runs in a ``finally``, so raising there would bury the real error."""
+
+    def on_key(key):
+        pass
+
+    def stranger(key):
+        pass
+
+    sub = head.hosted.subscribe(_options())
+    sub.bind(on_key)
+    try:
+        sub.unbind(stranger)  # never bound
+        assert sub.receivers == (on_key,)
+        sub.unbind(on_key)
+        sub.unbind(on_key)  # already gone
+        assert sub.receivers == ()
+    finally:
+        sub.close()
+    sub.unbind(on_key)  # and closed is no different
+
+
+def test_a_child_that_unbinds_stops_hearing_writes(head):
+    """The cross-process case: the receiver is a handle the far side matches."""
+    mpctx = mp.get_context("spawn")
+    out = mpctx.Queue()
+    child = mpctx.Process(target=unbind_child_main, args=(head.address, out, PREFIX))
+    child.start()
+    try:
+        _drain(out, "ready")
+        sub = head.hosted._open[0]
+        assert len(sub.receivers) == 1
+
+        head.write(1)
+        # Both were bound, the dropped one first, so anything it still hears
+        # lands on the queue ahead of this.
+        assert out.get(timeout=20.0) == ("kept", (*PREFIX, "counter"))
+    finally:
+        child.kill()
+        child.join(timeout=10)
