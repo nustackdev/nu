@@ -46,4 +46,17 @@ except ImportError:
     pass
 
 
+# Same, for what a subscription is made of. Nu never reads ``options``, but it
+# has to arrive as itself: boxed by reference the host would get a netref back
+# into the subscriber and match nothing against it. Registering the Filter base
+# covers every filter, composites included.
+try:
+    from virtuals.tkv.filter import Filter
+    from virtuals.tkv.observer import SubscriptionOptions
+
+    register_value_type(Filter, SubscriptionOptions)
+except ImportError:
+    pass
+
+
 __all__ = ["InvisiblesClient", "InvisiblesProxy", "InvisiblesServer"]

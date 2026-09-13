@@ -28,6 +28,11 @@ plain variants keep everything in-process and need nothing running.
 
 ``inmem_observer`` and ``redis_observer`` bind the listening half alone, for an
 actor that reacts to changes without owning a storage of its own.
+
+``served_observer`` and ``proxy_observer`` are the other way to cross a process
+boundary, over a socket rather than Redis. The process holding the storage
+serves its observer; the process holding a proxied Navigator binds it and hears
+the writes it did not make.
 """
 
 from __future__ import annotations
@@ -40,6 +45,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
 
     from nu.context.fabric import With
+    from nu.lang import Nu
     from virtuals.tkv.storage import StorageProtocol
 
 
@@ -50,11 +56,13 @@ __all__ = [
     "lmdb_storage",
     "memory_navigator",
     "memory_storage",
+    "proxy_observer",
     "redis_observer",
     "rocksdb_navigator",
     "rocksdb_navigator_redis",
     "rocksdb_storage",
     "rocksdb_storage_redis",
+    "served_observer",
     "text_navigator",
     "text_storage",
 ]
@@ -797,4 +805,116 @@ def redis_observer(
             RedisObserver,
             {"redis_url": redis_url, "channel_prefix": channel_prefix},
         ),
+    )
+
+
+def served_observer(
+    address: str,
+    *,
+    target_tag: object = None,
+    transport: str = "tcp",
+    executor: str = "threaded",
+) -> With:
+    """Puts this process's change feed on a socket, for other processes to hear.
+
+    The other half of ``proxy_observer``, and the piece that lets a worker
+    holding nothing but a proxied Navigator react to a write it did not make.
+    A proxy carries calls, not notifications, so without this the only way to
+    tell a worker something changed is to kill it and start another one.
+
+    Bind it beside the served Navigator, in the process that owns the storage.
+
+    Args:
+        address: ``host:port`` to listen on.
+        target_tag: the tag the observer is bound under, if any. A tagless
+            lookup never reaches a tagged binding.
+        transport: ``"tcp"`` or ``"unix"``. Must match the subscriber's.
+        executor: how connections are served. ``"threaded"`` is the one that
+            fits, because every subscriber holds its connection open for as
+            long as it is listening.
+
+    Notes:
+        - Process scope. One of these serves every subscriber that ever
+          connects, so it belongs at the head, not in anything per request.
+        - Serves a ``HostedObserver`` rather than the backend itself, which
+          is what keeps a subscriber's death from leaving a receiver behind.
+        - The storage side is unchanged: this adds ears, it does not move
+          where writes happen.
+
+    Example:
+        app = nu.With(
+            nu.kv.rocksdb_navigator(".db"),
+            nu.kv.served_observer("127.0.0.1:19001"),
+            body=program,
+        )
+    """
+    from nu.context.fabric import Provide, With
+    from nu.kv.fabrics import HostedObserver
+    from nu.proxy import InvisiblesServer
+
+    return With(
+        Provide(HostedObserver, {"target_tag": target_tag}),
+        Provide(
+            InvisiblesServer,
+            {
+                "target": HostedObserver,
+                "address": address,
+                "transport": transport,
+                "executor": executor,
+            },
+        ),
+    )
+
+
+def proxy_observer(
+    address: str,
+    body: Nu | None = None,
+    *,
+    tag: object = None,
+    transport: str = "tcp",
+    timeout: float = 5.0,
+    max_retries: int = 3,
+) -> Nu:
+    """Binds another process's change feed, over the socket it serves it on.
+
+    What a worker puts beside its proxied Navigator so it hears the writes
+    every other process makes, instead of only its own. Subscribing and
+    binding travel out as ordinary calls; the callback goes the other way as a
+    reverse proxy, which is what ``bg_serve`` is for.
+
+    Args:
+        address: where the far side's ``served_observer`` is listening.
+        body: what runs while the connection is open.
+        tag: the tag to bind the observer under here, if the program shards.
+        transport: ``"tcp"`` or ``"unix"``. Must match the serving side's.
+        timeout: seconds a call waits on the far side.
+        max_retries: connect attempts before giving up, with a growing pause
+            between them.
+
+    Notes:
+        - Async only, like every ``InvisiblesProxy``. Use ``nu.arun``.
+        - Process scope. Bind it once at the head of a worker, not per
+          subscription.
+        - A subscription outlives nothing: when this process dies the far
+          side drops its receiver on the next key rather than keeping a
+          corpse around to fail on every write after.
+
+    Example:
+        init = nu.With(
+            nu.proxy.InvisiblesProxy(Navigator, address=nav_address),
+            nu.kv.proxy_observer(obs_address),
+        )
+    """
+    from nu.core.reactive import ObserverProtocol
+    from nu.proxy import InvisiblesProxy
+
+    return InvisiblesProxy(
+        ObserverProtocol,
+        body,
+        address=address,
+        tag=tag,
+        transport=transport,
+        timeout=timeout,
+        max_retries=max_retries,
+        bg_serve=True,
     )

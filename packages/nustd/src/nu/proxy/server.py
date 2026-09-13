@@ -14,6 +14,13 @@ Two orthogonal axes:
   thread), "async" (event loop for async methods), "threaded" (thread pool),
   "shared" (serialized across connections).
 
+A dispatcher is built per connection and dies with it, "shared" excepted
+because serializing across connections is the whole point of that one. That is
+not a tuning choice: invisibles shuts a connection's dispatcher down when that
+connection closes, so one instance handed to every client means the first
+client to disconnect takes the loop, or the pool, out from under all the
+others.
+
 Usage::
 
     Provide(Navigator, {"..."},
@@ -118,17 +125,24 @@ class InvisiblesServer:
             executor=executor_cls(),
         )
 
-        # One dispatcher per server, shared across all connections. Required
-        # for SharedDispatcher's cross-connection RLock to actually serialize;
-        # the other dispatchers are safe to share (stateless / pool / loop).
-        dispatcher = dispatcher_cls()
-        self._dispatcher = dispatcher
+        # "shared" is the one dispatcher that has to outlive a connection: its
+        # RLock only serializes if every client holds the same instance. The
+        # rest are per connection, because invisibles shuts a dispatcher down
+        # on connection close and a shared one would take every other client
+        # down with the first to leave.
+        shared = dispatcher_cls() if self.dispatcher == "shared" else None
+        self._dispatcher = shared
 
         def handle_connection(netkit_conn: SyncConnection) -> None:
+            dispatcher = shared if shared is not None else dispatcher_cls()
             protocol = Protocol(config, root, dispatcher=dispatcher)
             conn = InvisiblesConnection(netkit_conn, protocol)
-            while netkit_conn.is_connected():
-                conn._serve_one(timeout=1.0)
+            try:
+                while netkit_conn.is_connected():
+                    conn._serve_one(timeout=1.0)
+            finally:
+                if shared is None:
+                    dispatcher.shutdown()
 
         server.set_handler(handle_connection)
         self._server = server
@@ -147,7 +161,11 @@ class InvisiblesServer:
         self._thread.start()
 
     def cleanup(self) -> None:
-        """Stop the SyncServer; the daemon thread exits when it returns."""
+        """Stop the SyncServer; the daemon thread exits when it returns.
+
+        Only the shared dispatcher is torn down here. Every other one belongs
+        to a connection and died with it.
+        """
         if self._server is not None:
             self._server.stop(wait=False)
             self._server = None

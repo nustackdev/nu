@@ -12,6 +12,8 @@ Nu-tree provisioning for the virtuals concepts:
 - ``InMemoryObserver`` / ``RedisObserver`` - read-side change consumers.
   Bound at process scope; ``nu.core.reactive`` queries look them up under
   ``ObserverProtocol``.
+- ``HostedObserver`` - not a backend. Wraps whichever one is bound so that
+  subscribers in other processes can hang off it. See ``hosted``.
 - ``InMemoryStorage`` / ``RocksDBStorage`` / ``LMDBStorage`` / ``TextStorage``
   - backing stores. Read ``Codec`` and their publisher from ctx.
 - ``Navigator`` - top-level entry to storage. Reads Storage from ctx by
@@ -37,6 +39,7 @@ Typical stack::
 from __future__ import annotations
 
 from .codec import Codec, binary_kwargs, msgpack_kwargs, noop_kwargs, text_kwargs
+from .hosted import HostedObserver, HostedSubscription
 from .navigator import Navigator
 from .observer import InMemoryObserver, RedisObserver
 from .publisher import InMemoryPublisher, RedisPublisher
@@ -46,6 +49,8 @@ from .transport import InMemoryTransport
 
 __all__ = [
     "Codec",
+    "HostedObserver",
+    "HostedSubscription",
     "InMemoryObserver",
     "InMemoryPublisher",
     "InMemoryStorage",
