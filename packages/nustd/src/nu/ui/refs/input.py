@@ -1,7 +1,7 @@
 """Input Refs -- tab-owned; server reads via `read` + `notify` path.
 
 The browser owns the live value. Host reads via `Ref` (round-trip
-through session), subscribes to changes via `.changed()` / `.clicked()`.
+through session), subscribes to changes via `.on_change()` / `.on_click()`.
 """
 
 from __future__ import annotations
@@ -27,7 +27,9 @@ Variant = Literal["primary", "secondary", "ghost", "danger"]
 
 
 class ButtonRef(Ref):
-    """Click trigger; subscribe via `.clicked()`."""
+    """Click trigger; subscribe via `.on_click()`."""
+
+    _wire_type = "ButtonRef"
 
     @classmethod
     def slot(
@@ -40,7 +42,7 @@ class ButtonRef(Ref):
     ) -> Self:
         return super().slot(label=label, variant=variant, disabled=disabled, icon=icon)
 
-    def clicked(self) -> Changed:
+    def on_click(self) -> Changed:
         return Changed(self)
 
     def set_label(self, text: StrArg) -> Nu:
@@ -72,6 +74,8 @@ class ButtonRef(Ref):
 class CheckboxRef(Ref):
     """Boolean toggle whose checked state lives in the browser."""
 
+    _wire_type = "CheckboxRef"
+
     @classmethod
     def slot(cls, *, label: str = "", checked: bool = False) -> Self:
         return super().slot(label=label, checked=checked)
@@ -85,12 +89,14 @@ class CheckboxRef(Ref):
     def set(self, value: BoolArg) -> Nu:
         return Write(self, value)
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
 class DatePickerRef(Ref):
     """Date input whose ISO yyyy-mm-dd value lives in the browser."""
+
+    _wire_type = "DatePickerRef"
 
     @classmethod
     def slot(
@@ -119,7 +125,7 @@ class DatePickerRef(Ref):
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
@@ -132,6 +138,8 @@ class InputRef(Ref):
     Default face is display (Inter); code-shaped fields opt into
     JetBrains Mono via `mono=True`, which flips `font-mono` at render time.
     """
+
+    _wire_type = "InputRef"
 
     @classmethod
     def slot(
@@ -162,12 +170,14 @@ class InputRef(Ref):
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
 class NumberInputRef(Ref):
     """Numeric input whose value lives in the browser."""
+
+    _wire_type = "NumberInputRef"
 
     @classmethod
     def slot(
@@ -232,7 +242,7 @@ class NumberInputRef(Ref):
             payload["label"] = label
         return Write(self, Dict.of(**payload))
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
@@ -241,7 +251,7 @@ class ProseRef(Ref):
 
     Bidirectional, unlike `MarkdownRef` (display-only). The server writes the
     source with `set`, reads it back through `Ref` like any input Ref, and
-    subscribes with `changed()`. The browser renders the markdown as a live
+    subscribes with `on_change()`. The browser renders the markdown as a live
     document and notifies back on a quiet moment or on blur.
 
     Last actor wins. There is no merge, no OT, no CRDT: a `set` from the
@@ -252,6 +262,8 @@ class ProseRef(Ref):
     `read_only=True` renders the same document but refuses edits, so a
     program can reuse one renderer for both faces.
     """
+
+    _wire_type = "ProseRef"
 
     @classmethod
     def slot(
@@ -278,7 +290,7 @@ class ProseRef(Ref):
     def set_read_only(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(read_only=flag))
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
@@ -302,6 +314,8 @@ Orientation = Literal["vertical", "horizontal"]
 
 class RadioGroupRef(Ref):
     """Single-choice radio group whose value lives in the browser."""
+
+    _wire_type = "RadioGroupRef"
 
     @classmethod
     def slot(
@@ -333,7 +347,7 @@ class RadioGroupRef(Ref):
             payload = {"options": opts}
         return Write(self, Dict.of(**payload))
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
@@ -342,6 +356,8 @@ OptionInput = "list[str] | list[dict[str, str]]"
 
 class SelectRef(Ref):
     """Dropdown single-select whose value lives in the browser."""
+
+    _wire_type = "SelectRef"
 
     @classmethod
     def slot(
@@ -373,12 +389,14 @@ class SelectRef(Ref):
             payload = {"options": opts}
         return Write(self, Dict.of(**payload))
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
 class SliderRef(Ref):
     """Numeric slider whose value lives in the browser."""
+
+    _wire_type = "SliderRef"
 
     @classmethod
     def slot(
@@ -449,12 +467,14 @@ class SliderRef(Ref):
             payload["show_value"] = show_value
         return Write(self, Dict.of(**payload))
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
 class SwitchRef(Ref):
     """On/off switch whose checked state lives in the browser."""
+
+    _wire_type = "SwitchRef"
 
     @classmethod
     def slot(cls, *, label: str = "", default: bool = False) -> Self:
@@ -469,12 +489,14 @@ class SwitchRef(Ref):
     def set(self, value: BoolArg) -> Nu:
         return Write(self, value)
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
 class TagInputRef(Ref):
     """Multi-tag entry field whose committed list lives in the browser."""
+
+    _wire_type = "TagInputRef"
 
     @classmethod
     def slot(
@@ -503,7 +525,7 @@ class TagInputRef(Ref):
     def set(self, value: ListArg[str]) -> Nu:
         return Write(self, value)
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
@@ -514,6 +536,8 @@ class TextAreaRef(Ref):
     Default face is display (Inter); set `mono=True` at class level for
     code-shaped fields to flip `font-mono` at render.
     """
+
+    _wire_type = "TextAreaRef"
 
     @classmethod
     def slot(
@@ -544,7 +568,7 @@ class TextAreaRef(Ref):
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 

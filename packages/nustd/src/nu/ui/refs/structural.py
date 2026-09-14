@@ -32,16 +32,18 @@ class NavRef(Ref):
     (link clicks, back/forward) ships a `notify` whose payload is the new URI.
 
     API for host code:
-        nav.set(uri)              -- push a new URI onto history
-        nav.replace(uri)            -- replace the current entry (no back-stack growth)
-        nav.back()                  -- history.back()
-        nav.forward()               -- history.forward()
-        nav.changed()               -- subscribe to user navigation events
-        await nav.aread(...)        -- through session, fetch current URI
+        nav.set(uri)            -- push a new URI onto history
+        nav.replace(uri)        -- replace the current entry (no back-stack growth)
+        nav.back()              -- history.back()
+        nav.forward()           -- history.forward()
+        nav.on_change()         -- subscribe to user navigation events
+        await nav.aread(...)    -- through session, fetch current URI
 
     All four host writes compile to the `write` op. `set(uri)` ships a bare
     string; the other three ship a tagged dict the browser slice dispatches on.
     """
+
+    _wire_type = "NavRef"
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
@@ -62,7 +64,7 @@ class NavRef(Ref):
     def forward(self) -> Nu:
         return Write(self, Dict.of(action="forward"))
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
@@ -74,6 +76,8 @@ class TitleRef(Ref):
     rendered into the visible tree. Slot-level `default` and `suffix`
     seed the browser on mount.
     """
+
+    _wire_type = "TitleRef"
 
     @classmethod
     def slot(cls, *, default: str = "", suffix: str = "") -> Self:

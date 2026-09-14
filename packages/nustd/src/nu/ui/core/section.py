@@ -85,6 +85,11 @@ class Section(Shape):
     # bound Ref section-specific chrome methods (see ModalRef, CardRef).
     _ref_cls: ClassVar[type[SectionRef]] = SectionRef
 
+    # Browser component this Section renders as, same rule as `Ref._wire_type`:
+    # every shipped layout primitive declares its own, `class Toolbar(Row)`
+    # inherits "Row". Empty means "fall back to the class name".
+    _wire_type: ClassVar[str] = ""
+
     @classmethod
     def slot(cls, **props: object) -> Self:
         return Slot(cls._ref_cls, props=props, section_cls=cls)  # type: ignore[return-value]

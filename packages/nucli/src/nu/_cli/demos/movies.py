@@ -356,7 +356,7 @@ hydrate = nu.kv.Snapshot(
 
 
 on_add = nu.ReactForever(
-    App.movies.form.submit.clicked(),
+    App.movies.form.submit.on_click(),
     nu.kv.Transaction(
         State.movies.append(
             nu.Dict.of(
@@ -410,7 +410,7 @@ on_row_click = nu.ReactForever(
 
 
 on_delete = nu.ReactForever(
-    App.detail.actions.remove.clicked(),
+    App.detail.actions.remove.on_click(),
     nu.kv.Transaction(
         State.movies.del_at(State.selected) >> State.total.set(nu.Len(State.movies)),
     )
@@ -423,23 +423,23 @@ on_delete = nu.ReactForever(
 )
 
 
-on_back = nu.ReactForever(App.detail.actions.back.clicked(), App.nav.set("/"))
+on_back = nu.ReactForever(App.detail.actions.back.on_click(), App.nav.set("/"))
 
 
-on_about_open = nu.ReactForever(App.movies.topbar.about.clicked(), App.nav.set("/about"))
+on_about_open = nu.ReactForever(App.movies.topbar.about.on_click(), App.nav.set("/about"))
 
 
-on_about_back = nu.ReactForever(App.about.actions.back.clicked(), App.nav.set("/"))
+on_about_back = nu.ReactForever(App.about.actions.back.on_click(), App.nav.set("/"))
 
 
 on_filter_apply = nu.ReactForever(
-    App.movies.filters.body.apply.clicked(),
+    App.movies.filters.body.apply.on_click(),
     nu.kv.Snapshot(App.movies.shelf.body.table.set(_rows_filtered())),
 )
 
 
 on_filter_clear = nu.ReactForever(
-    App.movies.filters.body.clear.clicked(),
+    App.movies.filters.body.clear.on_click(),
     nu.kv.Snapshot(
         App.movies.filters.body.min_rating.input.set(1.0)
         | App.movies.filters.body.genre.input.set("")

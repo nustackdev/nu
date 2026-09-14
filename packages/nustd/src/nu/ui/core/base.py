@@ -1,9 +1,9 @@
 """Generic UI Ref -- host-independent base for the widget kit.
 
 A Ref is a Nu Ref whose storage is a client rendering surface (a browser
-tab, in nudle's case). The class name is the wire identifier the client
-uses to pick a renderer; the methods a Ref exposes (`store`, `append`,
-`changed`, ...) decide which interactions it accepts.
+tab, in nudle's case). `_wire_type` is the identifier the client uses to
+pick a renderer; the methods a Ref exposes (`set`, `append`, `on_change`,
+...) decide which interactions it accepts.
 
 Built on `StructuredRef` (parent chain, `_root_shape`). Address
 resolution walks the on-tree parent chain and returns the segments as a
@@ -16,7 +16,7 @@ it. Async-only: nu.ui is a browser fabric.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from typing_extensions import Self
 
@@ -35,35 +35,18 @@ if TYPE_CHECKING:
 __all__ = ["Ref"]
 
 
-_REFS_PKG = "nu.ui.refs."
-_REFS_BASE = f"{_REFS_PKG}base"
+def _wire_type_of(ref_or_section_cls: type) -> str:
+    """Browser component a Ref or Section class renders as.
 
-
-def _wire_type(ref_or_section_cls: type) -> str:
-    """Canonical (registered) class name for a Ref or Section.
-
-    Out-of-tree Refs (e.g. those shipped by nuspace) may set a
-    ``_wire_type_override`` class attribute to name the browser-side
-    factory directly, bypassing the MRO walk below. That is the
-    escape hatch for packages that register their own factory but
-    have no ancestor under ``nu.ui.refs``.
-
-    Otherwise walks the MRO to find the closest ancestor defined inside the
-    ``nu.ui.refs`` package (excluding the abstract ``base`` module). User
-    subclasses defined outside the package inherit the wire type of their
-    nearest packaged ancestor so the browser registry resolves them.
+    A plain attribute read, no search. Every Ref and Section the kit ships
+    declares its own ``_wire_type``, and a user subclass (``class MyForm(Row)``)
+    inherits it the ordinary Python way, so it reports ``Row`` and the browser
+    registry resolves it. Out-of-tree Refs that register their own component
+    declare the ClassVar too; that is the whole mechanism, there is no
+    separate escape hatch. Anything that declares nothing falls back to its
+    own class name.
     """
-    for base in ref_or_section_cls.__mro__:
-        override = base.__dict__.get("_wire_type_override")
-        if isinstance(override, str):
-            return override
-        mod = getattr(base, "__module__", "")
-        if not mod.startswith(_REFS_PKG):
-            continue
-        if mod == _REFS_BASE:
-            continue
-        return base.__name__
-    return ref_or_section_cls.__name__
+    return getattr(ref_or_section_cls, "_wire_type", "") or ref_or_section_cls.__name__
 
 
 def _level_type(term: object) -> str:
@@ -74,13 +57,24 @@ def _level_type(term: object) -> str:
     ref class itself.
     """
     section_cls = getattr(term, "_payload", {}).get("section_cls")
-    return _wire_type(section_cls if section_cls is not None else type(term))
+    return _wire_type_of(section_cls if section_cls is not None else type(term))
 
 
 class Ref(StructuredRef):
-    """Base for Refs backed by a client rendering surface. Async-only."""
+    """Base for Refs backed by a client rendering surface. Async-only.
+
+    A Ref with a single semantically primary value exposes `set()` for it
+    (`TextRef.set(text)`, `SliderRef.set(n)`); everything else it can drive
+    gets its own `set_*`. A container has no primary value, so it has no
+    `set()` at all -- see the `nu.ui.refs` package docstring.
+    """
 
     _requires_async = Declared(value=True, name="requires_async")
+
+    # Browser component this Ref renders as. Every Ref the kit ships declares
+    # its own; subclasses inherit it, which is how a user subclass renders as
+    # its nearest shipped ancestor. Empty means "fall back to the class name".
+    _wire_type: ClassVar[str] = ""
 
     def __init__(
         self,

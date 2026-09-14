@@ -27,10 +27,10 @@ from typing_extensions import Self
 
 from nu.domains.shape import Shape, Slot
 from nu.ui.core import Ref, Section, SectionRef
-from nu.ui.core.base import _wire_type
+from nu.ui.core.base import _wire_type_of
 
 
-# ``_wire_type`` lives in core now (the ref chain annotates itself with it);
+# ``_wire_type_of`` lives in core now (the ref chain annotates itself with it);
 # re-exported here because serve.py imports it for the shape-less fallback.
 __all__ = ["Chain", "Index", "Page", "PageRef"]
 
@@ -57,11 +57,11 @@ def _boot_chains(base: Chain, shape_cls: type[Shape]) -> list[Chain]:
             continue
         if issubclass(ref_cls, SectionRef):
             section_cls: type[Section] = slot.kwargs["section_cls"]
-            chain = (*base, (name, _wire_type(section_cls), dict(slot.props)))
+            chain = (*base, (name, _wire_type_of(section_cls), dict(slot.props)))
             out.append(chain)
             out.extend(_boot_chains(chain, section_cls))
             continue
-        out.append((*base, (name, _wire_type(ref_cls), dict(slot.props))))
+        out.append((*base, (name, _wire_type_of(ref_cls), dict(slot.props))))
     return out
 
 
@@ -76,6 +76,8 @@ class PageRef(SectionRef):
     other prop. The class exists so ``_page_slots`` can tell a page slot
     from a plain section slot.
     """
+
+    _wire_type: ClassVar[str] = "Page"
 
 
 class Page(Section):
@@ -95,7 +97,7 @@ class Page(Section):
 
     # Every Page subclass draws as the browser's "Page" node, whatever the
     # user calls it. The class name never reaches the wire.
-    _wire_type_override: ClassVar[str] = "Page"
+    _wire_type: ClassVar[str] = "Page"
 
     # Optional human label used by the built-in sidebar. When None, the
     # sidebar falls back to the route slug (leading '/' stripped, or "home"

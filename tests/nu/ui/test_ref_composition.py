@@ -344,9 +344,9 @@ def test_prose_partial_write_carries_a_dict():
 # --- widget interaction sweep (auto-covers every leaf widget) ----------------
 
 
-def _leaf_widgets(*, needs_changed: bool = False):
+def _leaf_widgets(*, needs_on_change: bool = False):
     """(ref_cls, module_name) for every Ref leaf widget with set()
-    (optionally: only those exposing changed())."""
+    (optionally: only those exposing on_change())."""
     import importlib
     import inspect
     from pathlib import Path
@@ -367,14 +367,14 @@ def _leaf_widgets(*, needs_changed: bool = False):
                 and cls.__module__ == mod.__name__
                 and not name.startswith("_")
                 and callable(getattr(cls, "set", None))
-                and (not needs_changed or callable(getattr(cls, "changed", None)))
+                and (not needs_on_change or callable(getattr(cls, "on_change", None)))
             ):
                 out.append((cls, fname[:-3]))
     return out
 
 
 _SET_WIDGETS = _leaf_widgets()
-_CHANGED_WIDGETS = _leaf_widgets(needs_changed=True)
+_CHANGED_WIDGETS = _leaf_widgets(needs_on_change=True)
 
 
 def _mount(widget_cls):
@@ -400,11 +400,11 @@ def test_widget_set_emits_write_frame(widget_cls, mod):
 
 
 @pytest.mark.parametrize("widget_cls,mod", _CHANGED_WIDGETS, ids=[m for _, m in _CHANGED_WIDGETS])
-def test_input_widget_changed_returns_subscription(widget_cls, mod):
+def test_input_widget_on_change_returns_subscription(widget_cls, mod):
     from nu.ui.core import Changed
 
     handle = _mount(widget_cls)
-    assert isinstance(handle.changed(), Changed)
+    assert isinstance(handle.on_change(), Changed)
 
 
 def test_widget_sweep_is_non_empty():
@@ -412,6 +412,63 @@ def test_widget_sweep_is_non_empty():
     # would vacuously pass — pin that we actually cover a fleet of widgets.
     assert len(_SET_WIDGETS) >= 25
     assert len(_CHANGED_WIDGETS) >= 8
+
+
+# --- wire types (declared, not sniffed) -------------------------------------
+
+
+def _shipped_ref_classes():
+    """Every Ref and Section class the kit defines under nu.ui.refs."""
+    import importlib
+    import inspect
+    from pathlib import Path
+
+    from nu.ui.core import Ref, Section
+
+    root = Path(importlib.import_module("nu.ui.refs").__file__).parent
+    out = []
+    for entry in sorted(root.iterdir()):
+        fname = entry.name
+        if not fname.endswith(".py") or fname.startswith("_"):
+            continue
+        mod = importlib.import_module("nu.ui.refs." + fname[:-3])
+        for name, cls in inspect.getmembers(mod, inspect.isclass):
+            if (
+                issubclass(cls, (Ref, Section))
+                and cls.__module__ == mod.__name__
+                and not name.startswith("_")
+            ):
+                out.append(cls)
+    return out
+
+
+_SHIPPED = _shipped_ref_classes()
+
+
+def test_shipped_ref_sweep_is_non_empty():
+    assert len(_SHIPPED) >= 40
+
+
+@pytest.mark.parametrize("cls", _SHIPPED, ids=[c.__name__ for c in _SHIPPED])
+def test_shipped_ref_declares_its_own_wire_type(cls):
+    # The wire type is inherited like any class attribute now, so a ref that
+    # forgets to declare one does not fail loudly — it silently renders as
+    # whatever its parent renders as. This sweep is what catches that.
+    assert "_wire_type" in cls.__dict__, f"{cls.__name__} declares no _wire_type"
+    assert cls.__dict__["_wire_type"], f"{cls.__name__} declares an empty _wire_type"
+
+
+def test_user_subclass_inherits_its_parents_wire_type():
+    from nu.ui.core.base import _wire_type_of
+
+    class MyForm(Row):
+        pass
+
+    class Label(TextRef):
+        pass
+
+    assert _wire_type_of(MyForm) == "Row"
+    assert _wire_type_of(Label) == "TextRef"
 
 
 # --- section-level chrome ops: tabs, card (mount-ref pattern) ----------------

@@ -32,6 +32,8 @@ class AlertRef(Ref):
     unmapped values.
     """
 
+    _wire_type = "AlertRef"
+
     @classmethod
     def slot(
         cls,
@@ -85,6 +87,8 @@ class BadgeRef(Ref):
     kit `outline` (transparent bg, muted border).
     """
 
+    _wire_type = "BadgeRef"
+
     @classmethod
     def slot(cls, *, label: str = "", variant: Variant = "neutral") -> Self:
         return super().slot(label=label, variant=variant)
@@ -108,6 +112,8 @@ class BadgeRef(Ref):
 
 class CodeBlockRef(Ref):
     """Display-only code block. One `write` carries a partial dict {code, language, show_copy}."""
+
+    _wire_type = "CodeBlockRef"
 
     @classmethod
     def slot(
@@ -144,6 +150,8 @@ Align = Literal["left", "center", "right"]
 class DividerRef(Ref):
     """Display-only divider ref. One `write` op carries every mutation."""
 
+    _wire_type = "DividerRef"
+
     @classmethod
     def slot(cls, *, label: str = "", align: Align = "center") -> Self:
         return super().slot(label=label, align=align)
@@ -174,6 +182,8 @@ class GaugeRef(Ref):
     Variant is the tone the arc reads with. `neutral` maps to the kit Gauge
     `accent` tone (brand purple); the other three map 1:1 to status tokens.
     """
+
+    _wire_type = "GaugeRef"
 
     @classmethod
     def slot(
@@ -214,6 +224,8 @@ Align = Literal["left", "center", "right"]
 class HeadingRef(Ref):
     """Display-only heading ref. One `write` op carries every mutation."""
 
+    _wire_type = "HeadingRef"
+
     @classmethod
     def slot(cls, *, label: str = "", level: int = 1, align: Align = "left") -> Self:
         return super().slot(label=label, level=level, align=align)
@@ -246,6 +258,8 @@ Fit = Literal["contain", "cover", "fill"]
 
 class ImageRef(Ref):
     """Display-only image ref. One `write` op carries every mutation."""
+
+    _wire_type = "ImageRef"
 
     @classmethod
     def slot(
@@ -315,6 +329,8 @@ Theme = Literal["light", "dark"]
 class JsonViewerRef(Ref):
     """Display-only json viewer ref. One `write` op carries every mutation via partial-merge."""
 
+    _wire_type = "JsonViewerRef"
+
     @classmethod
     def slot(
         cls,
@@ -382,6 +398,8 @@ Target = Literal["_self", "_blank"]
 class LinkRef(Ref):
     """Display-only link ref. One `write` op carries every mutation."""
 
+    _wire_type = "LinkRef"
+
     @classmethod
     def slot(
         cls,
@@ -429,6 +447,8 @@ class LinkRef(Ref):
 class MarkdownRef(Ref):
     """Display-only markdown ref. Source string rendered as commonmark."""
 
+    _wire_type = "MarkdownRef"
+
     @classmethod
     def slot(cls, *, value: str = "") -> Self:
         return super().slot(value=value)
@@ -439,6 +459,8 @@ class MarkdownRef(Ref):
 
 class ProgressRef(Ref):
     """Display-only progress ref. One `write` op carries every mutation."""
+
+    _wire_type = "ProgressRef"
 
     @classmethod
     def slot(
@@ -479,6 +501,8 @@ Trend = Literal["up", "down", "flat"]
 class StatRef(Ref):
     """Display-only stat ref. Server-owned, single `write` op carries partial updates."""
 
+    _wire_type = "StatRef"
+
     @classmethod
     def slot(
         cls,
@@ -502,6 +526,22 @@ class StatRef(Ref):
     def set_trend(self, name: Trend | StrArg) -> Nu:
         return Write(self, Dict.of(trend=name))
 
+    def set(
+        self,
+        value: StrArg,
+        label: StrArg = UNSET,
+        delta: StrArg = UNSET,
+        trend: Trend | StrArg = UNSET,
+    ) -> Nu:
+        payload: dict[str, object] = {"value": value}
+        if label is not UNSET:
+            payload["label"] = label
+        if delta is not UNSET:
+            payload["delta"] = delta
+        if trend is not UNSET:
+            payload["trend"] = trend
+        return Write(self, Dict.of(**payload))
+
 
 SortDirection = Literal["asc", "desc"]
 
@@ -512,6 +552,8 @@ class TableRef(Ref):
     Composes the kit Table primitive family. `dense=True` maps to the
     primitive's `compact` density; `striped=True` selects the `striped` variant.
     """
+
+    _wire_type = "TableRef"
 
     @classmethod
     def slot(
@@ -553,6 +595,8 @@ class TableRef(Ref):
 
 class TextRef(Ref):
     """Display-only string ref. Body copy."""
+
+    _wire_type = "TextRef"
 
     @classmethod
     def slot(cls, *, value: str = "") -> Self:

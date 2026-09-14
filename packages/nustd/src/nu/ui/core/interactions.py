@@ -2,7 +2,7 @@
 
 Each class's lowercased name becomes its op string in the protocol Frame
 (see protocol.py). Refs decide which interactions they expose by returning
-the corresponding class from their methods (e.g. ButtonRef.clicked ->
+the corresponding class from their methods (e.g. ButtonRef.on_click ->
 Changed, HeadingRef.set -> Write).
 
 - Write   -- server -> client, replace a Ref's value

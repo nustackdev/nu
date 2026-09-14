@@ -23,7 +23,7 @@ from nu.lang.helpers import arun
 from nu.tree.walk import preorder
 from nu.ui.core import Ref, Session
 
-from .page import Chain, Index, Page, _wire_type
+from .page import Chain, Index, Page, _wire_type_of
 from .session import NudleSession
 
 
@@ -170,7 +170,7 @@ def _resolve_boot(app: Nu) -> tuple[str, list[Chain], bool]:
         return (page_cls.__name__, page_cls._boot_chains(), False)
     if orphan_refs:
         chains: list[Chain] = [
-            ((addr, _wire_type(ref_cls), {}),) for addr, ref_cls in orphan_refs.items()
+            ((addr, _wire_type_of(ref_cls), {}),) for addr, ref_cls in orphan_refs.items()
         ]
         return ("nudle", chains, False)
     raise RuntimeError("no nudle.Index, Page, or UI Ref found in Nu tree")

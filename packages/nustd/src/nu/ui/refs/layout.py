@@ -66,6 +66,8 @@ def _normalize_open(ids: object) -> list[str]:
 class AccordionRef(SectionRef):
     """SectionRef backing an Accordion slot. Carries the section-list chrome."""
 
+    _wire_type = "Accordion"
+
     def set_sections(self, items: ListArg[dict[str, str]]) -> Nu:
         value = _normalize_sections(items) if isinstance(items, list) else items
         return Write(self, Dict.of(sections=value))
@@ -74,7 +76,7 @@ class AccordionRef(SectionRef):
         value = _normalize_open(ids) if isinstance(ids, list) else ids
         return Write(self, Dict.of(open=value))
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
@@ -82,6 +84,7 @@ class Accordion(Section):
     """Stack of collapsible sections. Tab owns open state, server owns the section list."""
 
     _ref_cls = AccordionRef
+    _wire_type = "Accordion"
 
     @classmethod
     def slot(
@@ -140,6 +143,8 @@ class _SetSectionStr(Command):
 class CardRef(SectionRef):
     """SectionRef backing a Card slot. Carries the card's header/footer chrome."""
 
+    _wire_type = "Card"
+
     def set_title(self, text: StrArg) -> Nu:
         return _SetSectionStr(self, "set_title", text)
 
@@ -154,6 +159,7 @@ class Card(Section):
     """Card-styled Section: title + subtitle + body slots + footer."""
 
     _ref_cls = CardRef
+    _wire_type = "Card"
 
     @classmethod
     def slot(cls, *, title: str = "", subtitle: str = "", footer: str = "") -> Self:
@@ -166,6 +172,8 @@ Justify = Literal["start", "center", "end", "between", "around"]
 
 class Column(Section):
     """Vertical flex layout. Pin chrome on the slot()."""
+
+    _wire_type = "Column"
 
     @classmethod
     def slot(
@@ -188,6 +196,8 @@ Gap = Literal["none", "sm", "md", "lg"]
 
 class Container(Section):
     """Styled card-like box. Pin chrome on slot()."""
+
+    _wire_type = "Container"
 
     @classmethod
     def slot(
@@ -213,6 +223,8 @@ class Container(Section):
 class FieldRef(SectionRef):
     """SectionRef backing a Field slot. Carries the label / help / error chrome."""
 
+    _wire_type = "Field"
+
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(label=text))
 
@@ -230,6 +242,7 @@ class Field(Section):
     """Label + child input + help / error text. Exactly one child slot."""
 
     _ref_cls = FieldRef
+    _wire_type = "Field"
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
@@ -258,6 +271,8 @@ FieldsetGap = Literal["sm", "md", "lg"]
 class FieldsetRef(SectionRef):
     """SectionRef backing a Fieldset slot. Carries the legend / gap / disabled chrome."""
 
+    _wire_type = "Fieldset"
+
     def set_legend(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(legend=text))
 
@@ -272,6 +287,7 @@ class Fieldset(Section):
     """Grouped fields with a legend. Display-only, server-owned."""
 
     _ref_cls = FieldsetRef
+    _wire_type = "Fieldset"
 
     @classmethod
     def slot(
@@ -286,6 +302,8 @@ class Fieldset(Section):
 
 class Form(Section):
     """Semantic form wrapper. Pin chrome on slot(); submit lives on a child ButtonRef."""
+
+    _wire_type = "Form"
 
     @classmethod
     def slot(
@@ -302,6 +320,8 @@ class Form(Section):
 class ModalRef(SectionRef):
     """SectionRef backing a Modal slot. Carries Modal-only interaction methods."""
 
+    _wire_type = "Modal"
+
     def set_open(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(open=flag))
 
@@ -316,7 +336,7 @@ class ModalRef(SectionRef):
             payload["title"] = title
         return Write(self, Dict.of(**payload))
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
@@ -324,6 +344,7 @@ class Modal(Section):
     """Dialog overlay. Pin chrome on slot(); declare body Refs as slots."""
 
     _ref_cls = ModalRef
+    _wire_type = "Modal"
 
     @classmethod
     def slot(
@@ -342,6 +363,8 @@ RowJustify = Literal["start", "center", "end", "between", "around", "evenly"]
 
 class Row(Section):
     """Horizontal flex layout. Pin chrome on slot()."""
+
+    _wire_type = "Row"
 
     @classmethod
     def slot(
@@ -432,13 +455,15 @@ class _SetActive(Command):
 class TabsRef(SectionRef):
     """SectionRef backing a Tabs slot. Carries the strip + active-tab chrome."""
 
+    _wire_type = "Tabs"
+
     def set_tabs(self, value: ListArg[dict[str, str]]) -> Nu:
         return _SetTabs(self, value)
 
     def set_active(self, value: StrArg) -> Nu:
         return _SetActive(self, value)
 
-    def changed(self) -> Changed:
+    def on_change(self) -> Changed:
         return Changed(self)
 
 
@@ -446,6 +471,7 @@ class Tabs(Section):
     """Tab strip plus active body. Subclass and declare one child slot per tab body."""
 
     _ref_cls = TabsRef
+    _wire_type = "Tabs"
 
     @classmethod
     def slot(

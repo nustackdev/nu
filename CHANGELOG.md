@@ -13,6 +13,9 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Let a ui ref declare its browser component instead of sniffing the package path
+- Rename the ui subscription methods to on_change and on_click, matching kv and nuspace
+- Give StatRef a set() for its value, so the primary-value convention holds everywhere
 - Delete the flat store, the old ref slices and the mount envelope
 - Boot nudle from a batch of writes instead of a mount envelope
 - Add a tree store so the browser builds ui nodes from writes

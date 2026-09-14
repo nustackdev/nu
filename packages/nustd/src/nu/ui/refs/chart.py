@@ -27,6 +27,8 @@ XFormat = Literal["number", "time", "datetime_us", "datetime_ms", "datetime_s"]
 class AreaChart(Ref):
     """Display-only area chart. `write` (partial) and `append` (one row)."""
 
+    _wire_type = "AreaChart"
+
     @classmethod
     def slot(
         cls,
@@ -116,6 +118,8 @@ Orientation = Literal["vertical", "horizontal"]
 class BarChart(Ref):
     """Display-only chart ref. `write` (partial) and `append` (one bar)."""
 
+    _wire_type = "BarChart"
+
     @classmethod
     def slot(
         cls,
@@ -188,6 +192,8 @@ class BarChart(Ref):
 
 class LineChart(Ref):
     """Display-only chart ref. `write` (partial) and `append` (one point or one series row)."""
+
+    _wire_type = "LineChart"
 
     @classmethod
     def slot(
@@ -308,6 +314,8 @@ DEFAULT_COLORS: list[str] = [
 class PieChart(Ref):
     """Display-only pie chart ref. `write` (partial) and `append` (one slice)."""
 
+    _wire_type = "PieChart"
+
     @classmethod
     def slot(
         cls,
@@ -382,6 +390,8 @@ class PieChart(Ref):
 
 class Sparkline(Ref):
     """Display-only inline trend line. `write` (partial) and `append` (one point)."""
+
+    _wire_type = "Sparkline"
 
     @classmethod
     def slot(
