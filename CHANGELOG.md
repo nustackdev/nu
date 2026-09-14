@@ -13,6 +13,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Delete the flat store, the old ref slices and the mount envelope
+- Boot nudle from a batch of writes instead of a mount envelope
 - Add a tree store so the browser builds ui nodes from writes
 - Ship each ui write's chain of types and props so the browser can build nodes
 - Resolve a nu.ui address from the Ref chain alone, nothing else decides mounting

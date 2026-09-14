@@ -147,6 +147,19 @@ describe("useChildren", () => {
 		expect(host.querySelector('[data-testid="box"]')?.getAttribute("data-children")).toBe("z,m,a");
 	});
 
+	it("keeps a numeric-looking segment in place", () => {
+		// The reason children is a Map: an object would render 0,1 first.
+		mount(<NodeView path={["box"]} />);
+		act(() => {
+			for (const seg of ["z", "0", "m", "1"]) {
+				tree.getState().write([["box", "Box"], [seg, "Leaf", { value: seg }]]);
+			}
+		});
+		expect(host.querySelector('[data-testid="box"]')?.getAttribute("data-children")).toBe(
+			"z,0,m,1",
+		);
+	});
+
 	it("does not re-render a parent when a node appears elsewhere", () => {
 		tree.getState().write([["box", "Box"], ["a", "Leaf", { value: "a" }]]);
 		tree.getState().write([["other", "Box"]]);

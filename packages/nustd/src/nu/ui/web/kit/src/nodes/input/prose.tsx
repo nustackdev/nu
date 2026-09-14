@@ -15,14 +15,14 @@
 // Last actor wins. No OT, no CRDT: two people in one node clobber each other,
 // and that is the contract, not a gap.
 //
-// The editor itself (schema, markdown, rules) still lives under
-// ../../refs/input/prose/ -- pure editor machinery, no store coupling, so the
-// tree port imports it where it is rather than duplicating it.
+// The editor itself (schema, markdown, rules) lives in ./prose/ -- pure
+// editor machinery, no store coupling, so it survived the tree port
+// untouched.
 
 import { OPS } from "@nustackdev/ui-core";
 import { useCallback } from "react";
 import { Prose } from "../../components/ui/prose";
-import { ProseEditor } from "../../refs/input/prose/editor";
+import { ProseEditor } from "./prose/editor";
 import {
 	type NodeEntry,
 	type NodeProps,

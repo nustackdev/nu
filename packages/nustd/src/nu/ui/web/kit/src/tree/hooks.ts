@@ -85,8 +85,8 @@ export function useChildren(path: Path): string[] {
 		useShallow((s) => {
 			const node = getNode(s.root, path);
 			if (!node) return NO_CHILDREN;
-			const names = Object.keys(node.children);
-			return names.length ? names : NO_CHILDREN;
+			if (!node.children.size) return NO_CHILDREN;
+			return [...node.children.keys()];
 		}),
 	);
 }

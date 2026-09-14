@@ -3,7 +3,7 @@
 See projects/nu/stack/nudle/protocol.md in the Go space for the spec.
 
 Frame can be built two ways:
-- `Frame("mount", payload=...)` for lifecycle ops (op is a string)
+- `Frame("init", ref=path, chain=...)` for lifecycle ops (op is a string)
 - `Frame(interaction_instance, ref=path, payload=v)` for interactions; the
   op name is the lowercased class name of the interaction. Interactions
   don't declare their own op; the wire name follows the class.
@@ -36,21 +36,25 @@ if TYPE_CHECKING:
 
 __all__ = [
     "OP_ERROR",
-    "OP_MOUNT",
+    "OP_INIT",
     "OP_NOTIFY",
     "OP_READ",
-    "OP_UNMOUNT",
+    "OP_REMOVE",
+    "OP_WRITE",
     "Frame",
     "decode",
     "encode",
 ]
 
 
-OP_MOUNT = "mount"
-OP_UNMOUNT = "unmount"
 OP_ERROR = "error"
 OP_NOTIFY = "notify"
 OP_READ = "read"
+OP_WRITE = "write"
+OP_REMOVE = "remove"
+# Chain, no payload: brings a node into being ahead of the first write to
+# it. A boot batch is a run of these.
+OP_INIT = "init"
 
 
 def _op_of(op_or_interaction: object) -> str:

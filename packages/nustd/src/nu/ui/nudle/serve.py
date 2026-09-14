@@ -23,7 +23,7 @@ from nu.lang.helpers import arun
 from nu.tree.walk import preorder
 from nu.ui.core import Ref, Session
 
-from .page import Index, Page, _wire_type
+from .page import Chain, Index, Page, _wire_type
 from .session import NudleSession
 
 
@@ -84,16 +84,16 @@ class _SPAStatic(StaticFiles):
         return response
 
 
-def _resolve_mount(app: Nu) -> tuple[str, list[dict[str, object]], list[dict[str, object]], bool]:
-    """Return ``(name, structural_fields, pages_payload, sidebar)`` for ``session.mount``.
+def _resolve_boot(app: Nu) -> tuple[str, list[Chain], bool]:
+    """Return ``(name, chains, sidebar)`` for ``session.boot``.
 
     Preorder-walks the tree and sorts every UI Ref by its root shape:
 
-    - rooted on an ``Index``: the Index owns the mount payload. One per app.
-    - rooted on a ``Page`` no Index declares: auto-mount it at "/", where
-      its bare chain addresses already point.
-    - rooted nowhere (``nu.ui.TextRef("count")`` and friends): synthesize a
-      single-page ``_AutoIndex`` / ``_AutoPage`` mount from their segments.
+    - rooted on an ``Index``: the Index owns the boot batch. One per app.
+    - rooted on a ``Page`` no Index declares: its slots go out rooted bare,
+      where its chain addresses already point. No page node, so no sidebar.
+    - rooted nowhere (``nu.ui.TextRef("count")`` and friends): one chain per
+      segment, straight onto the root.
 
     A Section and a declared Page both hold no mount point of their own,
     and the same one may sit under many parents, so a Ref taken off the
@@ -129,7 +129,7 @@ def _resolve_mount(app: Nu) -> tuple[str, list[dict[str, object]], list[dict[str
     # A Page declared on an Index is reached through that Index's slot, which
     # is where its leading segment comes from. A class handle skips the slot
     # and would write a segment short, so refuse it and name the way in. A
-    # Page no Index declares is auto-mounted at "/" -- its payload is emitted
+    # Page no Index declares boots rooted bare -- its chains are emitted
     # directly below, no synthesized Index class.
     auto_pages: list[type[Page]] = []
     for page_cls in seen_pages:
@@ -159,12 +159,7 @@ def _resolve_mount(app: Nu) -> tuple[str, list[dict[str, object]], list[dict[str
             names = ", ".join(i.__name__ for i in seen_indexes)
             raise RuntimeError(f"multiple Index shapes found ({names}); one per app")
         idx_cls = next(iter(seen_indexes))
-        return (
-            idx_cls.__name__,
-            idx_cls._structural_fields(),
-            idx_cls._pages_payload(),
-            idx_cls._sidebar_enabled(),
-        )
+        return (idx_cls.__name__, idx_cls._boot_chains(), idx_cls._sidebar_enabled())
     if auto_pages:
         if len(auto_pages) > 1:
             names = ", ".join(p.__name__ for p in auto_pages)
@@ -172,23 +167,12 @@ def _resolve_mount(app: Nu) -> tuple[str, list[dict[str, object]], list[dict[str
                 f"multiple unmounted Pages ({names}); wrap them in an Index",
             )
         (page_cls,) = auto_pages
-        pages_payload = [
-            {
-                "route": "/",
-                "name": page_cls.__name__,
-                "label": page_cls.nav_label or "home",
-                "fields": page_cls._mount_fields(),
-            },
-        ]
-        return ("_AutoIndex", [], pages_payload, False)
+        return (page_cls.__name__, page_cls._boot_chains(), False)
     if orphan_refs:
-        fields: list[dict[str, object]] = [
-            {"path": (addr,), "type": _wire_type(ref_cls)} for addr, ref_cls in orphan_refs.items()
+        chains: list[Chain] = [
+            ((addr, _wire_type(ref_cls), {}),) for addr, ref_cls in orphan_refs.items()
         ]
-        pages_payload = [
-            {"route": "/", "name": "_AutoPage", "label": "home", "fields": fields},
-        ]
-        return ("_AutoIndex", [], pages_payload, False)
+        return ("nudle", chains, False)
     raise RuntimeError("no nudle.Index, Page, or UI Ref found in Nu tree")
 
 
@@ -213,19 +197,14 @@ def build_fastapi_app(app: Nu, ctx: Context) -> FastAPI:
     (or its build/ directory is empty), the static mount is skipped and only
     `/ws` is exposed -- run vite separately for the frontend in that case.
     """
-    index_name, structural_fields, pages_payload, sidebar = _resolve_mount(app)
+    app_name, boot_chains, sidebar = _resolve_boot(app)
     fastapi_app = FastAPI(title="nudle")
 
     @fastapi_app.websocket("/ws")
     async def ws_endpoint(ws: WebSocket) -> None:
         await ws.accept()
         session = NudleSession(ws)
-        await session.mount(
-            index_name,
-            structural_fields,
-            pages_payload,
-            sidebar=sidebar,
-        )
+        await session.boot(app_name, boot_chains, sidebar=sidebar)
         per_conn_ctx = ctx.bind(Session, session)
         intake_task = asyncio.create_task(session.run_intake())
         eval_task = asyncio.create_task(arun(app, per_conn_ctx))

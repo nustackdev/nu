@@ -179,7 +179,7 @@ def test_same_slot_name_on_two_pages_does_not_collide():
 def test_page_class_handle_resolves_bare():
     """A Page is a Section with a route: no Index navigated to it, so there
     is no page segment to add. That is the single-page shorthand -- the
-    address matches what `Page._mount_fields` emits for an auto-mount."""
+    address matches what `Page._boot_chains` emits for an auto-mount."""
 
     class Solo(Page):
         panel = Panel.slot()
@@ -188,7 +188,7 @@ def test_page_class_handle_resolves_bare():
     ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(Solo.panel.label.set("x"), ctx))
     assert sess.frames[0].ref == ("panel", "label")
-    assert [f["path"] for f in Solo._mount_fields()] == [("panel",)]
+    assert [chain[-1][0] for chain in Solo._boot_chains()] == ["panel", "label"]
 
 
 def test_kv_slot_on_a_page_stays_a_kv_path():

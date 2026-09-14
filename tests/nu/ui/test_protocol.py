@@ -7,11 +7,11 @@ and joining would let two different paths land on the same browser slice.
 
 from __future__ import annotations
 
-from nu.ui.core.protocol import OP_MOUNT, Frame, decode, encode
+from nu.ui.core.protocol import OP_WRITE, Frame, decode, encode
 
 
 def test_frame_ref_defaults_to_the_empty_path():
-    frame = Frame(OP_MOUNT, payload={"name": "App"})
+    frame = Frame(OP_WRITE, payload={"name": "App"})
     assert frame.ref == ()
     assert frame.to_dict()["ref"] == []
 

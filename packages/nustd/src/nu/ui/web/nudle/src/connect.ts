@@ -1,12 +1,13 @@
 // WebSocket lifecycle for the nudle app.
 //
 // Owns: connect, message decode, backoff-with-jitter reconnect, outbound
-// send queue while disconnected, clean teardown. The store owns state and
-// dispatch; this module owns transport.
+// send queue while disconnected, clean teardown. The tree store owns state
+// and dispatch; this module owns transport and the connection status, which
+// is the one piece of state that is about the socket and not about the app.
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { decode, encode, type Frame } from "@nustackdev/ui-core";
-import { useStore } from "@nustackdev/ui-kit";
+import { tree } from "@nustackdev/ui-kit";
 
 // Exponential backoff with full jitter, base 250ms, cap 10s.
 const BACKOFF_BASE_MS = 250;
@@ -15,16 +16,16 @@ const BACKOFF_CAP_MS = 10_000;
 // Catches tab-owned notify frames that fire during a reconnect window.
 const SEND_QUEUE_MAX = 64;
 
+export type Status = "connecting" | "connected" | "disconnected" | "reconnecting";
+
 function wsUrl(): string {
 	const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
 	return `${proto}//${window.location.host}/ws`;
 }
 
-/** Hook that opens `/ws`, wires the store's send/dispatch, and tears down cleanly. */
-export function useNudleConnection(): void {
-	const setStatus = useStore((s) => s.setStatus);
-	const setSender = useStore((s) => s.setSender);
-	const dispatch = useStore((s) => s.dispatch);
+/** Opens `/ws`, wires the tree store's send/dispatch, returns the status. */
+export function useNudleConnection(): Status {
+	const [status, setStatus] = useState<Status>("connecting");
 
 	useEffect(() => {
 		let ws: WebSocket | null = null;
@@ -49,7 +50,7 @@ export function useNudleConnection(): void {
 			queue.push(f);
 			if (queue.length > SEND_QUEUE_MAX) queue.shift();
 		};
-		setSender(send);
+		tree.getState().setSender(send);
 
 		const scheduleReconnect = () => {
 			if (intentionalClose) return;
@@ -80,7 +81,7 @@ export function useNudleConnection(): void {
 				scheduleReconnect();
 			});
 			ws.addEventListener("message", (event) => {
-				dispatch(decode(event.data as ArrayBuffer));
+				tree.getState().dispatch(decode(event.data as ArrayBuffer));
 			});
 		};
 
@@ -89,7 +90,10 @@ export function useNudleConnection(): void {
 		return () => {
 			intentionalClose = true;
 			if (retryTimer !== null) clearTimeout(retryTimer);
+			tree.getState().setSender(null);
 			if (ws) ws.close(1000, "client teardown");
 		};
-	}, [setStatus, setSender, dispatch]);
+	}, []);
+
+	return status;
 }

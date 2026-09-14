@@ -15,27 +15,33 @@
 // from a worker, a test, or anywhere else with no DOM. The React bindings and
 // the component registry live in the kit.
 
-import { current, isDraft } from "immer";
-import type { Frame } from "./protocol";
+import { current, enableMapSet, isDraft } from "immer";
+import type { ChainLevel, Frame } from "./protocol";
 import { createStore, type StoreApi } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
+
+// `children` is a Map, and immer only drafts those once this is on.
+enableMapSet();
 
 /** A node's address: segments, root-first. A segment may contain any character. */
 export type Path = string[];
 
 export type Props = Record<string, unknown>;
 
+// A Map and not a plain object: render order is insertion order, and an
+// object hoists integer-like keys to the front, so a segment like "0" or an
+// index from a dynamic ref would silently jump the queue.
 export type Node = {
 	type: string | null;
 	props: Props;
-	children: Record<string, Node>;
+	children: Map<string, Node>;
 };
 
 /** Alias for consumers where the DOM's `Node` is also in scope. */
 export type TreeNode = Node;
 
 // One level of a write's chain: the segment, the type the level should have,
-// and the props its slot declared. The wire `ChainLevel`, widened: a frame
+// and the props its slot declared. This is the wire `ChainLevel`: a frame
 // that arrives with no chain gets one synthesized from its ref, and those
 // levels know neither type nor props.
 //
@@ -44,14 +50,18 @@ export type TreeNode = Node;
 // defaults, so merging them into a level that already exists would stomp on
 // whatever the program set at runtime. An existing level is compared by type
 // and otherwise left alone.
-export type ChainStep = [segment: string, type?: string | null, props?: Props];
+export type ChainStep = ChainLevel;
 
-// A frame as it arrives: the wire `Frame` with the chain widened to match.
-export type TreeFrame = Omit<Frame, "chain"> & { chain?: ChainStep[] };
+// A frame as it arrives. The chain is the wire type, so this is `Frame`; the
+// alias stays because the store talks about frames it may have synthesized.
+export type TreeFrame = Frame;
 
 /** The op vocabulary. There is no mount and no unmount. */
 export const OPS = {
 	write: "write",
+	// Chain only, no payload: brings a node into being ahead of the first
+	// write to it. What a boot batch is made of.
+	init: "init",
 	remove: "remove",
 	read: "read",
 	notify: "notify",
@@ -109,7 +119,7 @@ export type TreeStoreOptions = {
 };
 
 export function emptyNode(type: string | null = null): Node {
-	return { type, props: {}, children: {} };
+	return { type, props: {}, children: new Map() };
 }
 
 function isPlainProps(v: unknown): v is Props {
@@ -131,7 +141,7 @@ export function frameChain(frame: TreeFrame): ChainStep[] {
 export function getNode(root: Node, path: Path): Node | null {
 	let node: Node = root;
 	for (const segment of path) {
-		const next: Node | undefined = node.children[segment];
+		const next = node.children.get(segment);
 		if (!next) return null;
 		node = next;
 	}
@@ -146,8 +156,8 @@ function collectDispose(draftNode: Node, path: Path, out: DisposeCtx[]): void {
 }
 
 function walkDispose(node: Node, path: Path, out: DisposeCtx[]): void {
-	for (const segment in node.children) {
-		walkDispose(node.children[segment], [...path, segment], out);
+	for (const [segment, child] of node.children) {
+		walkDispose(child, [...path, segment], out);
 	}
 	if (node.type !== null) out.push({ path, node });
 }
@@ -197,7 +207,7 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 					for (const [segment, rawType, stepProps] of chain) {
 						here.push(segment);
 						const type = rawType ?? null;
-						let child: Node | undefined = node.children[segment];
+						let child: Node | undefined = node.children.get(segment);
 						// A level whose type changes is rebuilt, not patched:
 						// its old props and children go, and the branch disposes.
 						if (child && type !== null && child.type !== null && child.type !== type) {
@@ -207,7 +217,9 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 						if (!child) {
 							child = emptyNode(type);
 							if (stepProps) Object.assign(child.props, stepProps);
-							node.children[segment] = child;
+								// `set` on a key already there keeps its slot, so a
+								// rebuilt level does not jump to the end.
+								node.children.set(segment, child);
 						} else if (child.type === null && type !== null) {
 							// Autovivified earlier by something below it, so it
 							// never got its declared props. This write names its
@@ -237,10 +249,10 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 				const segment = path[path.length - 1];
 				set((draft) => {
 					const parent = getNode(draft.root as Node, parentPath);
-					const node = parent?.children[segment];
+					const node = parent?.children.get(segment);
 					if (!parent || !node) return;
 					collectDispose(node, path, pending);
-					delete parent.children[segment];
+					parent.children.delete(segment);
 				});
 				flushDispose();
 			},
@@ -273,6 +285,12 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 					return;
 				}
 				const chain = frameChain(frame);
+				if (frame.op === OPS.init) {
+					// Structure and nothing else. An init carries no payload, so
+					// it never touches a value the program already set.
+					api.write(chain);
+					return;
+				}
 				const handlerFor = (node: Node | null) => {
 					const behaviour = node?.type ? resolve(node.type) : undefined;
 					return behaviour?.handlers?.[frame.op];

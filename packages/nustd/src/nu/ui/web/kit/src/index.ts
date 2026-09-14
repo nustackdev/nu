@@ -3,8 +3,6 @@
 // The kit ships these surfaces:
 //   - tree        : the tree store bindings, registry and NodeView
 //   - nodes       : every node type the kit registers (import for the side effect)
-//   - refs        : factory + renderer registries for every Ref type (old store)
-//   - store       : flat zustand + immer store bound to the wire protocol (old)
 //   - components  : primitives (Badge, Card, Switch, ...) and shared shell bits
 //   - lib/utils   : the `cn()` helper
 //
@@ -12,11 +10,8 @@
 
 export * from "./tree";
 export { nodeEntries } from "./nodes";
-export * from "./refs";
-export { useStore } from "./store";
 export { cn } from "./lib/utils";
 export { ErrorBoundary } from "./components/ErrorBoundary";
-export { FieldView } from "./components/FieldView";
 export { Badge, badgeVariants } from "./components/ui/badge";
 export { Button, buttonVariants } from "./components/ui/button";
 export {
@@ -112,13 +107,13 @@ export { JsonView } from "./components/ui/json-view";
 export { Gauge, gaugeVariants } from "./components/ui/gauge";
 export { Stat, StatLabel, StatValue, StatDelta } from "./components/ui/stat";
 export { Prose } from "./components/ui/prose";
-export { ProseEditor } from "./refs/input/prose/editor";
-export type { ProseEditorProps } from "./refs/input/prose/editor";
-export { createProseSchema, proseSchema } from "./refs/input/prose/schema";
-export type { ProseClasses, ProseSchema } from "./refs/input/prose/schema";
-export { createMarkdown, markdown } from "./refs/input/prose/markdown";
-export type { Markdown, Parsed, SourceMap } from "./refs/input/prose/markdown";
-export { placeholder as prosePlaceholder, proseInputRules } from "./refs/input/prose/rules";
+export { ProseEditor } from "./nodes/input/prose/editor";
+export type { ProseEditorProps } from "./nodes/input/prose/editor";
+export { createProseSchema, proseSchema } from "./nodes/input/prose/schema";
+export type { ProseClasses, ProseSchema } from "./nodes/input/prose/schema";
+export { createMarkdown, markdown } from "./nodes/input/prose/markdown";
+export type { Markdown, Parsed, SourceMap } from "./nodes/input/prose/markdown";
+export { placeholder as prosePlaceholder, proseInputRules } from "./nodes/input/prose/rules";
 export { Image } from "./components/ui/image";
 export {
 	Table,

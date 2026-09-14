@@ -23,10 +23,11 @@ from .base import Ref
 from .interactions import Append, Changed, Write
 from .protocol import (
     OP_ERROR,
-    OP_MOUNT,
+    OP_INIT,
     OP_NOTIFY,
     OP_READ,
-    OP_UNMOUNT,
+    OP_REMOVE,
+    OP_WRITE,
     Frame,
     decode,
     encode,
@@ -37,10 +38,11 @@ from .session import Session, Subscription
 
 __all__ = [
     "OP_ERROR",
-    "OP_MOUNT",
+    "OP_INIT",
     "OP_NOTIFY",
     "OP_READ",
-    "OP_UNMOUNT",
+    "OP_REMOVE",
+    "OP_WRITE",
     "Append",
     "Changed",
     "Frame",

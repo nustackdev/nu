@@ -14,6 +14,11 @@ function step(segment: string, type: string | null = null, props?: Record<string
 	return props ? [segment, type, props] : [segment, type];
 }
 
+/** Child segments in order. The whole point of the Map, so read it directly. */
+function segments(node: { children: Map<string, unknown> } | null): string[] {
+	return node ? [...node.children.keys()] : [];
+}
+
 function frame(op: string, ref: string[], payload?: unknown, chain?: ChainStep[]): TreeFrame {
 	return { op, ref, payload, chain };
 }
@@ -26,11 +31,12 @@ describe("write", () => {
 		});
 
 		const root = store.getState().root;
-		expect(Object.keys(root.children)).toEqual(["page"]);
-		expect(root.children.page.type).toBe("Page");
-		expect(root.children.page.children.form.type).toBe("Form");
+		expect(segments(root)).toEqual(["page"]);
+		const page = root.children.get("page");
+		expect(page?.type).toBe("Page");
+		expect(page?.children.get("form")?.type).toBe("Form");
 		const inp = store.getState().getIn(["page", "form", "inp"]);
-		expect(inp).toEqual({ type: "InputRef", props: { value: "hi" }, children: {} });
+		expect(inp).toEqual({ type: "InputRef", props: { value: "hi" }, children: new Map() });
 	});
 
 	it("leaves a level untyped when the chain does not name a type", () => {
@@ -64,7 +70,7 @@ describe("write", () => {
 		store.getState().setProps(["sec"], { title: "Live" });
 		store.getState().write([step("sec", "Card", { title: "One" }), step("u", "TextRef")]);
 		expect(store.getState().getIn(["sec"])?.props).toEqual({ title: "Live" });
-		expect(Object.keys(store.getState().getIn(["sec"])?.children ?? {})).toEqual(["t", "u"]);
+		expect(segments(store.getState().getIn(["sec"]))).toEqual(["t", "u"]);
 	});
 
 	it("keeps a prop set at runtime when a deep write rides through", () => {
@@ -108,7 +114,7 @@ describe("write", () => {
 		expect(store.getState().getIn(["sec"])).toEqual({
 			type: "Modal",
 			props: { open: true },
-			children: {},
+			children: new Map(),
 		});
 	});
 
@@ -119,7 +125,7 @@ describe("write", () => {
 		expect(store.getState().getIn(["a"])).toEqual({
 			type: "InputRef",
 			props: { value: "y" },
-			children: {},
+			children: new Map(),
 		});
 	});
 
@@ -128,7 +134,25 @@ describe("write", () => {
 		store.getState().write([step("a.b", "Card"), step("c.d", "TextRef", { value: 1 })]);
 		expect(store.getState().getIn(["a.b", "c.d"])?.props).toEqual({ value: 1 });
 		expect(store.getState().getIn(["a", "b", "c", "d"])).toBeNull();
-		expect(Object.keys(store.getState().root.children)).toEqual(["a.b"]);
+		expect(segments(store.getState().root)).toEqual(["a.b"]);
+	});
+
+	it("keeps a numeric-looking segment where it was written", () => {
+		// A plain object hoists "0" and "1" to the front no matter when they
+		// went in. Render order is insertion order, so they must not move.
+		const store = createTreeStore();
+		for (const seg of ["z", "0", "a", "1"]) {
+			store.getState().write([step("box", "Column"), step(seg, "TextRef", { value: seg })]);
+		}
+		expect(segments(store.getState().getIn(["box"]))).toEqual(["z", "0", "a", "1"]);
+	});
+
+	it("keeps a rebuilt level in its original slot", () => {
+		const store = createTreeStore();
+		store.getState().write([step("a", "TextRef"), step("x", "TextRef")]);
+		store.getState().write([step("b", "TextRef")]);
+		store.getState().write([step("a", "Card")]);
+		expect(segments(store.getState().root)).toEqual(["a", "b"]);
 	});
 
 	it("writes into the root with an empty chain", () => {
@@ -207,7 +231,7 @@ describe("remove", () => {
 		const store = createTreeStore();
 		store.getState().write([step("a", "Card"), step("b", "TextRef")]);
 		store.getState().remove([]);
-		expect(store.getState().root).toEqual({ type: null, props: {}, children: {} });
+		expect(store.getState().root).toEqual({ type: null, props: {}, children: new Map() });
 	});
 });
 
@@ -222,7 +246,7 @@ describe("dispatch", () => {
 		expect(store.getState().getIn(["page", "inp"])).toEqual({
 			type: "InputRef",
 			props: { value: "hello" },
-			children: {},
+			children: new Map(),
 		});
 	});
 
@@ -247,7 +271,7 @@ describe("dispatch", () => {
 		expect(store.getState().getIn(["a", "b"])).toEqual({
 			type: null,
 			props: { value: "x" },
-			children: {},
+			children: new Map(),
 		});
 	});
 
@@ -258,7 +282,7 @@ describe("dispatch", () => {
 		expect(store.getState().getIn(["a"])).toEqual({
 			type: "InputRef",
 			props: { label: "L", value: "typed" },
-			children: {},
+			children: new Map(),
 		});
 	});
 
@@ -295,6 +319,15 @@ describe("dispatch", () => {
 		const store = createTreeStore({ resolve: (t) => behaviours[t] });
 		store.getState().dispatch(frame(OPS.write, ["i"], null, [step("i", "InputRef")]));
 		expect(store.getState().getIn(["i"])?.props).toEqual({ value: "" });
+	});
+
+	it("builds structure from an init and touches no value", () => {
+		const store = createTreeStore();
+		store.getState().write([step("a", "InputRef", { label: "L" })], { value: "typed" });
+		store.getState().dispatch(frame(OPS.init, ["a"], null, [step("a", "InputRef", { label: "L" })]));
+		store.getState().dispatch(frame(OPS.init, ["b"], null, [step("b", "TextRef", { value: "" })]));
+		expect(store.getState().getIn(["a"])?.props).toEqual({ label: "L", value: "typed" });
+		expect(store.getState().getIn(["b"])?.type).toBe("TextRef");
 	});
 
 	it("removes on a remove frame", () => {

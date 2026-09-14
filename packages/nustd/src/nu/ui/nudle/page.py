@@ -15,7 +15,7 @@ navigated through it, never because a class named itself.
   two pages can both declare a ``panel`` and land at different addresses.
 - Taken off the class (``HomePage.panel.label``) a Page resolves bare,
   exactly like a Section: no slot was navigated, so there is no segment to
-  add. That is the one-page shorthand -- serve.py auto-mounts a Page no
+  add. That is the one-page shorthand -- serve.py boots a Page no
   Index declares, and refuses class handles for pages an Index does.
 """
 
@@ -31,45 +31,37 @@ from nu.ui.core.base import _wire_type
 
 
 # ``_wire_type`` lives in core now (the ref chain annotates itself with it);
-# re-exported here because serve.py and the mount listing below import it.
-__all__ = ["Index", "Page", "PageRef"]
+# re-exported here because serve.py imports it for the shape-less fallback.
+__all__ = ["Chain", "Index", "Page", "PageRef"]
 
 
-def _build_fields(
-    base_path: tuple[str, ...],
-    shape_cls: type[Shape],
-) -> list[dict[str, object]]:
-    """Flatten a Shape's slots into mount field entries.
+Chain = tuple[tuple[str, str, dict[str, object]], ...]
 
-    Recurses into Section slots, emitting a nested `fields` list. Leaf
-    Refs emit `{path, type, props?}`. Layout entries emit
-    `{path, type, props?, fields}`. Paths are tuples built the same way
-    the Ref chain builds them, so a mounted field and the Ref that drives
-    it land on the same address.
+
+def _boot_chains(base: Chain, shape_cls: type[Shape]) -> list[Chain]:
+    """Every slot under ``shape_cls`` as a chain, root-first, in order.
+
+    One chain per declared slot, the same shape ``Ref._aresolve_chain``
+    builds at write time -- ``(segment, type, props)`` per level. Shipped
+    as ``init`` frames at boot so a slot is on screen before anything
+    writes to it, and dropped straight into the browser's tree by the same
+    autovivify walk a write takes.
+
+    Depth-first in declaration order, so the browser's per-node insertion
+    order is the order the class body reads.
     """
-    out: list[dict[str, object]] = []
+    out: list[Chain] = []
     for name, slot in shape_cls._slots.items():
-        path = (*base_path, name)
         ref_cls = slot.ref_cls
-
-        if issubclass(ref_cls, SectionRef):
-            section_cls: type[Section] = slot.kwargs["section_cls"]
-            entry: dict[str, object] = {
-                "path": path,
-                "type": _wire_type(section_cls),
-            }
-            if slot.props:
-                entry["props"] = slot.props
-            entry["fields"] = _build_fields(path, section_cls)
-            out.append(entry)
-            continue
-
         if not issubclass(ref_cls, Ref):
             continue
-        entry = {"path": path, "type": _wire_type(ref_cls)}
-        if slot.props:
-            entry["props"] = slot.props
-        out.append(entry)
+        if issubclass(ref_cls, SectionRef):
+            section_cls: type[Section] = slot.kwargs["section_cls"]
+            chain = (*base, (name, _wire_type(section_cls), dict(slot.props)))
+            out.append(chain)
+            out.extend(_boot_chains(chain, section_cls))
+            continue
+        out.append((*base, (name, _wire_type(ref_cls), dict(slot.props))))
     return out
 
 
@@ -78,26 +70,12 @@ class PageRef(SectionRef):
 
     A Page is a Section with a route, so navigating into it is plain
     ``SectionRef`` navigation (``App.home.panel.label``) and the page's
-    segment is the Index slot name like any other segment. The route rides
-    in the payload for the mount listing.
+    segment is the Index slot name like any other segment. Nothing else is
+    needed here: the route is a declared prop, so it rides the chain onto
+    the page node and the browser's router reads it off the tree like any
+    other prop. The class exists so ``_page_slots`` can tell a page slot
+    from a plain section slot.
     """
-
-    def __init__(
-        self,
-        address: object,
-        *,
-        section_cls: type[Page],
-        route: str,
-        parent_ref: Ref | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            section_cls=section_cls,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-        self._payload["route"] = route
 
 
 class Page(Section):
@@ -115,6 +93,10 @@ class Page(Section):
 
     _ref_cls: ClassVar[type[SectionRef]] = PageRef
 
+    # Every Page subclass draws as the browser's "Page" node, whatever the
+    # user calls it. The class name never reaches the wire.
+    _wire_type_override: ClassVar[str] = "Page"
+
     # Optional human label used by the built-in sidebar. When None, the
     # sidebar falls back to the route slug (leading '/' stripped, or "home"
     # for the root route).
@@ -122,18 +104,28 @@ class Page(Section):
 
     @classmethod
     def slot(cls, route: str, **props: object) -> Self:  # type: ignore[override]
-        """Declare this Page on an Index at ``route``."""
-        return Slot(cls._ref_cls, props=props, section_cls=cls, route=route)  # type: ignore[return-value]
+        """Declare this Page on an Index at ``route``.
+
+        ``route`` and ``label`` go in as declared props, which is how they
+        reach the browser: the chain carries them onto the page node and
+        the router and sidebar read them there.
+        """
+        declared: dict[str, object] = {
+            "route": route,
+            "label": cls.nav_label or route.lstrip("/") or "home",
+            **props,
+        }
+        return Slot(cls._ref_cls, props=declared, section_cls=cls)  # type: ignore[return-value]
 
     @classmethod
-    def _mount_fields(cls) -> list[dict[str, object]]:
-        """Flatten Page slots into mount field entries, rooted bare.
+    def _boot_chains(cls) -> list[Chain]:
+        """This Page's slots, rooted bare.
 
         Only the auto-mount path uses this: a Page no Index declares was
-        never navigated to, so its fields start at its own slot names --
-        the same addresses ``HomePage.panel.label`` resolves to.
+        never navigated to, so its slots start at their own names -- the
+        same addresses ``HomePage.panel.label`` resolves to.
         """
-        return _build_fields((), cls)
+        return _boot_chains((), cls)
 
 
 class Index(Shape):
@@ -171,39 +163,15 @@ class Index(Shape):
         return None
 
     @classmethod
-    def _structural_fields(cls) -> list[dict[str, object]]:
-        """Index-level slot list: structural Refs (title, nav, ...)."""
-        out: list[dict[str, object]] = []
-        for name, slot in cls._slots.items():
-            ref_cls = slot.ref_cls
-            if issubclass(ref_cls, PageRef) or not issubclass(ref_cls, Ref):
-                continue
-            entry: dict[str, object] = {"path": (name,), "type": _wire_type(ref_cls)}
-            if slot.props:
-                entry["props"] = slot.props
-            out.append(entry)
-        return out
+    def _boot_chains(cls) -> list[Chain]:
+        """Everything this Index declares, as chains, in declaration order.
 
-    @classmethod
-    def _pages_payload(cls) -> list[dict[str, object]]:
-        """Per-page mount info: route, slot name, label, fields list.
-
-        Fields are rooted at the page's slot name, which is the segment the
-        Ref chain puts there too.
+        Structural Refs and page subtrees come out of the same walk: a page
+        slot is a Section slot that happens to carry a route, so its chain
+        starts at the Index slot name, which is the segment the Ref chain
+        puts there too.
         """
-        out: list[dict[str, object]] = []
-        for name, slot in cls._page_slots():
-            page_cls: type[Page] = slot.kwargs["section_cls"]
-            route: str = slot.kwargs["route"]
-            out.append(
-                {
-                    "route": route,
-                    "name": name,
-                    "label": page_cls.nav_label or route.lstrip("/") or "home",
-                    "fields": _build_fields((name,), page_cls),
-                }
-            )
-        return out
+        return _boot_chains((), cls)
 
     @classmethod
     def _sidebar_enabled(cls) -> bool:

@@ -18,10 +18,11 @@ from typing import TYPE_CHECKING, Any
 
 from nu.ui.core.protocol import (
     OP_ERROR,
-    OP_MOUNT,
+    OP_INIT,
     OP_NOTIFY,
     OP_READ,
-    OP_UNMOUNT,
+    OP_REMOVE,
+    OP_WRITE,
     Frame,
     decode,
     encode,
@@ -30,6 +31,8 @@ from nu.ui.core.session import Session
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from fastapi import WebSocket
 
 
@@ -78,7 +81,7 @@ class Subscription:
 
 
 class NudleSession(Session):
-    """One ws connection, one mounted page."""
+    """One ws connection, one browser tree."""
 
     def __init__(self, ws: WebSocket) -> None:
         self._ws = ws
@@ -91,20 +94,28 @@ class NudleSession(Session):
     async def send(self, frame: Frame) -> None:
         await self._ws.send_bytes(encode(frame))
 
-    async def mount(
+    async def boot(
         self,
         name: str,
-        fields: list[dict[str, object]],
-        pages: list[dict[str, object]] | None = None,
+        chains: Sequence[tuple[tuple[str, str, dict[str, Any]], ...]],
         *,
         sidebar: bool = False,
     ) -> None:
-        payload: dict[str, object] = {"name": name, "fields": fields}
-        if pages is not None:
-            payload["pages"] = pages
-        if sidebar:
-            payload["sidebar"] = True
-        await self.send(Frame(OP_MOUNT, payload=payload))
+        """Seed the browser's tree: app chrome on the root, then every slot.
+
+        No envelope. The root write carries what the shell itself needs (the
+        app name, whether the built-in sidebar is on) and each chain goes
+        out as an `init`, which is the same walk a write takes minus the
+        payload. Order is declaration order, which is render order.
+
+        The clearing remove goes first because a reconnect gets a fresh
+        session with none of the old one's dynamic nodes, and those would
+        otherwise sit there forever.
+        """
+        await self.send(Frame(OP_REMOVE))
+        await self.send(Frame(OP_WRITE, payload={"name": name, "sidebar": sidebar}))
+        for chain in chains:
+            await self.send(Frame(OP_INIT, ref=[seg for seg, _, _ in chain], chain=chain))
 
     async def aread(self, path: tuple[str, ...]) -> Any:
         """Round-trip read: ship a read frame, await the client's reply."""
@@ -150,7 +161,7 @@ class NudleSession(Session):
             if fut is not None and not fut.done():
                 fut.set_result(frame.payload)
             return
-        if frame.op in (OP_MOUNT, OP_UNMOUNT, OP_ERROR):
+        if frame.op == OP_ERROR:
             # Client may emit error frames; ignore for v0.1.0.
             return
         # Unknown inbound op: ignored for v0.1.0.

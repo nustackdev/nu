@@ -1,17 +1,16 @@
-// Parity with the old registry, and the registration side effect.
+// The registry, and the registration side effect.
 //
-// The flat store's `entries` is the list the apps run on today. Until it goes
-// away, every type in it has to exist here too, or a page that renders fine
-// on the old store would come up with holes on the tree store.
+// This used to check parity against the flat store's `entries`. That list is
+// gone, so the count stands in for it: 43 types shipped, and a type that
+// quietly falls out of a barrel takes the count with it.
 
 import { describe, expect, it } from "vitest";
-import { entries } from "../refs";
 import { registry } from "../tree";
 import { nodeEntries } from ".";
 
 describe("node registry", () => {
-	it("covers every type the old registry has", () => {
-		expect(Object.keys(nodeEntries).sort()).toEqual(Object.keys(entries).sort());
+	it("ships every type", () => {
+		expect(Object.keys(nodeEntries)).toHaveLength(43);
 	});
 
 	it("gives every type a component", () => {

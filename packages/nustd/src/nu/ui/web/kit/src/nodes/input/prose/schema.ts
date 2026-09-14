@@ -16,9 +16,9 @@
 // document looks the same whether you are reading it or typing in it, and
 // `toDOM` hands out no classes at all.
 //
-// A downstream package that registers its own prose entry (see
-// `registerRefEntry`) can pass its own recipes instead, which is why this is
-// a factory and not a module singleton.
+// A downstream package that registers its own prose type (see `register`)
+// can pass its own recipes instead, which is why this is a factory and not
+// a module singleton.
 
 import {
 	type MarkSpec,

@@ -1,6 +1,6 @@
 {
 	"name": "@nustackdev/ui-kit",
-	"description": "Nu design kit: tokens, primitives, refs machinery, and browser store for the UI fabric.",
+	"description": "Nu design kit: tokens, primitives, node types, and the tree store bindings for the UI fabric.",
 	"version": "0.1.4",
 	"type": "module",
 	"main": "./src/index.ts",
@@ -18,15 +18,7 @@
 			"types": "./src/nodes/index.ts",
 			"import": "./src/nodes/index.ts"
 		},
-		"./styles": "./src/index.css",
-		"./refs": {
-			"types": "./src/refs/index.ts",
-			"import": "./src/refs/index.ts"
-		},
-		"./store": {
-			"types": "./src/store.ts",
-			"import": "./src/store.ts"
-		}
+		"./styles": "./src/index.css"
 	},
 	"files": [
 		"src"

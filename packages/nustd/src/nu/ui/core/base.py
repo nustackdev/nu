@@ -70,7 +70,7 @@ def _level_type(term: object) -> str:
     """Wire type the browser renders this level with.
 
     A SectionRef is substrate: what the browser draws is the Section class
-    it carries, same as the mount listing reports. Everything else is the
+    it carries, same as the boot batch reports. Everything else is the
     ref class itself.
     """
     section_cls = getattr(term, "_payload", {}).get("section_cls")
@@ -164,7 +164,7 @@ class Ref(StructuredRef):
         path = await self._aresolve_address(rt, nid)
         return self._lift(await session.aread(path))
 
-    # --- mount ---------------------------------------------------------------
+    # --- declaration ---------------------------------------------------------
 
     @classmethod
     def slot(cls, **props: object) -> Self:

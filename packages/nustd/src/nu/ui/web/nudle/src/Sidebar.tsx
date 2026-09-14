@@ -1,73 +1,75 @@
 // Built-in left rail for multi-page nudle apps.
 //
-// Reads the mounted `pages` list and the NavRef's current value from the
-// store. A click writes to the NavRef slice locally (pushState + zustand
-// mirror) and emits a notify frame so any server-side
-// `App.nav.changed()` subscribers observe the change.
+// The page list and every label come off the tree: each page node carries
+// its route and label as props. A click dispatches a local write to the
+// NavRef node, which is what drives pushState and mirrors the new uri, then
+// emits a notify so `App.nav.changed()` subscribers on the server see it.
+// Same two steps the old mount-payload version did, minus the payload.
 
 import type { ReactNode } from "react";
-import { NavLink, useStore } from "@nustackdev/ui-kit";
-import { OP_NOTIFY, type MountField, type MountPage, refKey } from "@nustackdev/ui-core";
-
-// Store key for the NavRef, which is what the slice lookup and an outbound
-// KeyedFrame both want.
-function findNavPath(fields: MountField[]): string | null {
-	for (const f of fields) {
-		if (f.type === "NavRef") return refKey(f.path);
-	}
-	return null;
-}
+import { NavLink, tree, useStringProp } from "@nustackdev/ui-kit";
+import { OPS } from "@nustackdev/ui-core";
+import { useNavSegment } from "./router";
 
 type Props = {
-	indexName: string;
-	pages: MountPage[];
-	structural: MountField[];
+	appName: string;
+	pages: string[];
+	active: string | null;
 	footer?: ReactNode;
 };
 
-export function Sidebar({ indexName, pages, structural, footer }: Props) {
-	const navPath = findNavPath(structural);
-	const currentUri = useStore((s) =>
-		navPath ? (s.refs[navPath]?.value as string | undefined) : undefined,
+function PageLink({
+	segment,
+	active,
+	onGo,
+}: {
+	segment: string;
+	active: boolean;
+	onGo: (route: string) => void;
+}) {
+	const route = useStringProp([segment], "route", `/${segment}`);
+	const label = useStringProp([segment], "label", segment);
+	return (
+		<NavLink
+			size="sm"
+			active={active}
+			onClick={(e) => {
+				e.preventDefault();
+				onGo(route);
+			}}
+			href={route}
+			className="justify-start w-full"
+		>
+			{label}
+		</NavLink>
 	);
+}
+
+export function Sidebar({ appName, pages, active, footer }: Props) {
+	const nav = useNavSegment();
 
 	const go = (route: string) => {
-		if (!navPath) return;
-		const slice = useStore.getState().refs[navPath];
-		slice?.write?.(route);
-		useStore.getState().send({ op: OP_NOTIFY, ref: navPath, payload: route });
+		if (!nav) return;
+		const ref = [nav];
+		// Straight into dispatch so NavRef's own write handler runs: it owns
+		// pushState, and the mirrored value is what picks the active page.
+		tree.getState().dispatch({ op: OPS.write, ref, payload: route });
+		tree.getState().send({ op: OPS.notify, ref, payload: route });
 	};
-
-	// Fallback active is the first page (mirrors router.ts).
-	const active = currentUri ?? pages[0]?.route;
 
 	return (
 		<aside className="w-52 shrink-0 border-r border-border-default bg-bg-sunken flex flex-col">
 			<div className="px-4 py-4 border-b border-border-default">
 				<span className="text-xs text-text-muted font-mono uppercase tracking-wider">
-					{indexName}
+					{appName}
 				</span>
 			</div>
 			<nav className="flex-1 overflow-y-auto p-2 flex flex-col gap-0.5">
-				{pages.map((p) => (
-					<NavLink
-						key={p.route}
-						size="sm"
-						active={p.route === active}
-						onClick={(e) => {
-							e.preventDefault();
-							go(p.route);
-						}}
-						href={p.route}
-						className="justify-start w-full"
-					>
-						{p.label}
-					</NavLink>
+				{pages.map((segment) => (
+					<PageLink key={segment} segment={segment} active={segment === active} onGo={go} />
 				))}
 			</nav>
-			{footer ? (
-				<div className="px-4 py-3 border-t border-border-default">{footer}</div>
-			) : null}
+			{footer ? <div className="px-4 py-3 border-t border-border-default">{footer}</div> : null}
 		</aside>
 	);
 }
