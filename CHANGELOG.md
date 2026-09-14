@@ -7,7 +7,7 @@
 - **nucli** (the `nu` command) — 0.3.0
 - **nudle** — 0.1.4
 - **ui-core** — 0.1.0
-- **ui-kit** — 0.1.3
+- **ui-kit** — 0.1.4
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
