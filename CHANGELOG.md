@@ -11,6 +11,11 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Resolve a nu.ui address from the Ref chain alone, nothing else decides mounting
+- Declare a nudle page as a slot on its Index, reached by navigation
+
 ## 0.3.0 — 2026-09-14
 
 - Add unbind to the Subscription protocol and to HostedSubscription, which React needs

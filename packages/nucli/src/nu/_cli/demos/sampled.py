@@ -63,13 +63,13 @@ class Dashboard(nu.ui.Page):
 class App(nu.ui.Index):
     """UI index with one page."""
 
-    pages = nu.ui.Pages({"/": Dashboard})
+    home = Dashboard.slot("/")
 
 
 # reactive wire: repaint the chart on every write to `nums`
 ui = nu.ReactForever(
     State.nums.on_change(),
-    Dashboard.chart.set_points(
+    App.home.chart.set_points(
         nu.Collect(nu.Sorted(nu.Iter(State.nums.sample(200, 0, State.cursor)))),
     ),
 )

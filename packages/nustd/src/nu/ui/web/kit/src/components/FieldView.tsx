@@ -5,12 +5,13 @@
 // keeps a single throwing renderer from blanking the whole page (see
 // ErrorBoundary for why).
 
-import type { MountField } from "@nustackdev/ui-core";
+import { type MountField, refKey } from "@nustackdev/ui-core";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { renderers } from "../refs";
 
 export function FieldView({ field }: { field: MountField }) {
 	const Comp = renderers[field.type];
+	const key = refKey(field.path);
 	if (!Comp) {
 		return (
 			<div className="text-sm text-destructive font-mono">
@@ -19,8 +20,8 @@ export function FieldView({ field }: { field: MountField }) {
 		);
 	}
 	return (
-		<ErrorBoundary label={`${field.path} (${field.type})`}>
-			<Comp path={field.path} />
+		<ErrorBoundary label={`${key} (${field.type})`}>
+			<Comp path={key} />
 		</ErrorBoundary>
 	);
 }

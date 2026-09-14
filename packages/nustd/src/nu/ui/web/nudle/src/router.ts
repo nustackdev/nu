@@ -5,7 +5,7 @@
 // we fall back to the first page. If the payload has no pages at all, the
 // Index's own fields are the active surface.
 
-import type { MountField, MountPayload } from "@nustackdev/ui-core";
+import { type MountField, type MountPayload, refKey } from "@nustackdev/ui-core";
 import type { RefSlice } from "@nustackdev/ui-kit";
 
 export function activeFields(
@@ -16,7 +16,9 @@ export function activeFields(
 	const pages = page.pages ?? [];
 	if (pages.length === 0) return page.fields;
 	const navField = page.fields.find((f) => f.type === "NavRef");
-	const currentUri = navField ? (refs[navField.path]?.value as string | undefined) : undefined;
+	const currentUri = navField
+		? (refs[refKey(navField.path)]?.value as string | undefined)
+		: undefined;
 	const match = currentUri ? (pages.find((p) => p.route === currentUri) ?? pages[0]) : pages[0];
 	return match.fields;
 }

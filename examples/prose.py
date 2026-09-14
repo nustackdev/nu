@@ -43,18 +43,18 @@ class Home(nu.ui.Page):
 
 class App(nu.ui.Index):
     title = nu.ui.TitleRef.slot(default="Prose")
-    pages = nu.ui.Pages({"/": Home})
+    home = Home.slot("/")
 
 
-# Every commit from the browser lands here. `nu.Str(Home.split.editor.body)` is the read
+# Every commit from the browser lands here. `nu.Str(App.home.split.editor.body)` is the read
 # back through the session: same Ref, other direction.
 on_edit = nu.ReactForever(
-    Home.split.editor.body.changed(),
-    Home.split.mirror.source.set(code=nu.Str(Home.split.editor.body))
-    | Home.split.mirror.chars.set_value(nu.str(nu.Len(nu.Str(Home.split.editor.body)))),
+    App.home.split.editor.body.changed(),
+    App.home.split.mirror.source.set(code=nu.Str(App.home.split.editor.body))
+    | App.home.split.mirror.chars.set_value(nu.str(nu.Len(nu.Str(App.home.split.editor.body)))),
 )
 
-ui = Home.split.mirror.chars.set_value(str(len(SEED))) >> on_edit
+ui = App.home.split.mirror.chars.set_value(str(len(SEED))) >> on_edit
 
 app = nu.With(
     nu.ui.server(ui),

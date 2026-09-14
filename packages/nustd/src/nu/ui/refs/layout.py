@@ -9,10 +9,11 @@ interactions those primitives expose.
 
 The chrome commands (`_SetSectionStr`, `_SetTabs`, `_SetActive`) target
 the abstract ``Session`` from core -- so this module is host-agnostic;
-any host that implements ``Session`` runs it. Address resolution for
-section-scoped chrome writes goes through ``_SectionMountRef``, which
-asks the section's own ``_wire_prefix()`` classmethod (stamped by the
-host, e.g. nudle's Page) for its wire path.
+any host that implements ``Session`` runs it. Chrome that writes to the
+section itself (a Card's title, a Tabs' active tab) lives on a SectionRef
+subclass, so it is driven off the bound Ref -- ``page.card.set_title(...)``
+-- and the address comes from that Ref's chain. There is no way to drive a
+section off its class: a class has no mount point.
 """
 
 from __future__ import annotations
@@ -21,7 +22,6 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from typing_extensions import Self
 
-from nu.domains.shape import Slot
 from nu.engine.structure import Declared
 from nu.forms import Dict
 from nu.lang import Command
@@ -36,30 +36,6 @@ if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import Arg, BoolArg, ListArg, StrArg
     from nu.lang.runtime import Runtime
-
-
-class _SectionMountRef(Ref):
-    """Ref that resolves to a Section's mount path directly (no segment walk).
-
-    Used by Section subclasses whose chrome interactions (title, tabs, ...)
-    target the section's OWN wire path rather than a child slot. Reads
-    ``_wire_prefix()`` classmethod stamped by the host onto the section
-    subclass at mount registration time.
-    """
-
-    def __init__(self, *, section_cls: type[Section]) -> None:
-        super().__init__(None, owner_shape=section_cls)
-        self._payload["section_cls"] = section_cls
-
-    async def _aresolve_address(self, rt: Runtime, nid: int) -> str:
-        section_cls = self._payload["section_cls"]
-        prefix = getattr(section_cls, "_wire_prefix", None)
-        if prefix is None:
-            raise RuntimeError(
-                f"Section {section_cls.__name__} has no mount point. "
-                "Declare it as a Slot on a Page before driving it.",
-            )
-        return ".".join(prefix())
 
 
 def _normalize_sections(items: object) -> list[dict[str, str]]:
@@ -87,8 +63,25 @@ def _normalize_open(ids: object) -> list[str]:
     return [str(x) for x in ids if x is not None]
 
 
+class AccordionRef(SectionRef):
+    """SectionRef backing an Accordion slot. Carries the section-list chrome."""
+
+    def set_sections(self, items: ListArg[dict[str, str]]) -> Nu:
+        value = _normalize_sections(items) if isinstance(items, list) else items
+        return Write(self, Dict.of(sections=value))
+
+    def set_open(self, ids: ListArg[str]) -> Nu:
+        value = _normalize_open(ids) if isinstance(ids, list) else ids
+        return Write(self, Dict.of(open=value))
+
+    def changed(self) -> Changed:
+        return Changed(self)
+
+
 class Accordion(Section):
     """Stack of collapsible sections. Tab owns open state, server owns the section list."""
+
+    _ref_cls = AccordionRef
 
     @classmethod
     def slot(
@@ -104,29 +97,11 @@ class Accordion(Section):
             multi=bool(multi),
         )
 
-    @classmethod
-    def _mount_ref(cls) -> _SectionMountRef:
-        return _SectionMountRef(section_cls=cls)
-
-    @classmethod
-    def set_sections(cls, items: ListArg[dict[str, str]]) -> Nu:
-        value = _normalize_sections(items) if isinstance(items, list) else items
-        return Write(cls._mount_ref(), Dict.of(sections=value))
-
-    @classmethod
-    def set_open(cls, ids: ListArg[str]) -> Nu:
-        value = _normalize_open(ids) if isinstance(ids, list) else ids
-        return Write(cls._mount_ref(), Dict.of(open=value))
-
-    @classmethod
-    def changed(cls) -> Changed:
-        return Changed(cls._mount_ref())
-
 
 class _SetSectionStr(Command):
     """Send a string-payload Frame to a Section by mount path.
 
-    Slot 0 holds a mount Ref (``_SectionMountRef``) so this is a well-formed
+    Slot 0 holds the section's own bound SectionRef so this is a well-formed
     ``mutates={0}`` Command; the wire op is supplied at construction (e.g.
     "set_title") so one class serves all three card chrome ops.
     """
@@ -162,28 +137,27 @@ class _SetSectionStr(Command):
         return athunk
 
 
+class CardRef(SectionRef):
+    """SectionRef backing a Card slot. Carries the card's header/footer chrome."""
+
+    def set_title(self, text: StrArg) -> Nu:
+        return _SetSectionStr(self, "set_title", text)
+
+    def set_subtitle(self, text: StrArg) -> Nu:
+        return _SetSectionStr(self, "set_subtitle", text)
+
+    def set_footer(self, text: StrArg) -> Nu:
+        return _SetSectionStr(self, "set_footer", text)
+
+
 class Card(Section):
     """Card-styled Section: title + subtitle + body slots + footer."""
+
+    _ref_cls = CardRef
 
     @classmethod
     def slot(cls, *, title: str = "", subtitle: str = "", footer: str = "") -> Self:
         return super().slot(title=title, subtitle=subtitle, footer=footer)
-
-    @classmethod
-    def _mount_ref(cls) -> _SectionMountRef:
-        return _SectionMountRef(section_cls=cls)
-
-    @classmethod
-    def set_title(cls, text: StrArg) -> Nu:
-        return _SetSectionStr(cls._mount_ref(), "set_title", text)
-
-    @classmethod
-    def set_subtitle(cls, text: StrArg) -> Nu:
-        return _SetSectionStr(cls._mount_ref(), "set_subtitle", text)
-
-    @classmethod
-    def set_footer(cls, text: StrArg) -> Nu:
-        return _SetSectionStr(cls._mount_ref(), "set_footer", text)
 
 
 Align = Literal["start", "center", "end", "stretch"]
@@ -236,8 +210,26 @@ class Container(Section):
         )
 
 
+class FieldRef(SectionRef):
+    """SectionRef backing a Field slot. Carries the label / help / error chrome."""
+
+    def set_label(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(label=text))
+
+    def set_help(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(help=text))
+
+    def set_error(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(error=text))
+
+    def set_required(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(required=flag))
+
+
 class Field(Section):
     """Label + child input + help / error text. Exactly one child slot."""
+
+    _ref_cls = FieldRef
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
@@ -259,32 +251,27 @@ class Field(Section):
     ) -> Self:
         return super().slot(label=label, help=help, error=error, required=required)
 
-    @classmethod
-    def _mount_ref(cls) -> _SectionMountRef:
-        return _SectionMountRef(section_cls=cls)
-
-    @classmethod
-    def set_label(cls, text: StrArg) -> Nu:
-        return Write(cls._mount_ref(), Dict.of(label=text))
-
-    @classmethod
-    def set_help(cls, text: StrArg) -> Nu:
-        return Write(cls._mount_ref(), Dict.of(help=text))
-
-    @classmethod
-    def set_error(cls, text: StrArg) -> Nu:
-        return Write(cls._mount_ref(), Dict.of(error=text))
-
-    @classmethod
-    def set_required(cls, flag: BoolArg) -> Nu:
-        return Write(cls._mount_ref(), Dict.of(required=flag))
-
 
 FieldsetGap = Literal["sm", "md", "lg"]
 
 
+class FieldsetRef(SectionRef):
+    """SectionRef backing a Fieldset slot. Carries the legend / gap / disabled chrome."""
+
+    def set_legend(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(legend=text))
+
+    def set_gap(self, value: FieldsetGap | StrArg) -> Nu:
+        return Write(self, Dict.of(gap=value))
+
+    def set_disabled(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(disabled=flag))
+
+
 class Fieldset(Section):
     """Grouped fields with a legend. Display-only, server-owned."""
+
+    _ref_cls = FieldsetRef
 
     @classmethod
     def slot(
@@ -295,22 +282,6 @@ class Fieldset(Section):
         disabled: bool = False,
     ) -> Self:
         return super().slot(legend=legend, gap=gap, disabled=disabled)
-
-    @classmethod
-    def _mount_ref(cls) -> _SectionMountRef:
-        return _SectionMountRef(section_cls=cls)
-
-    @classmethod
-    def set_legend(cls, text: StrArg) -> Nu:
-        return Write(cls._mount_ref(), Dict.of(legend=text))
-
-    @classmethod
-    def set_gap(cls, value: FieldsetGap | StrArg) -> Nu:
-        return Write(cls._mount_ref(), Dict.of(gap=value))
-
-    @classmethod
-    def set_disabled(cls, flag: BoolArg) -> Nu:
-        return Write(cls._mount_ref(), Dict.of(disabled=flag))
 
 
 class Form(Section):
@@ -352,6 +323,8 @@ class ModalRef(SectionRef):
 class Modal(Section):
     """Dialog overlay. Pin chrome on slot(); declare body Refs as slots."""
 
+    _ref_cls = ModalRef
+
     @classmethod
     def slot(
         cls,
@@ -360,11 +333,7 @@ class Modal(Section):
         title: str = "",
         dismissible: bool = True,
     ) -> Self:
-        return Slot(  # type: ignore[return-value]
-            ModalRef,
-            props={"open": open, "title": title, "dismissible": dismissible},
-            section_cls=cls,
-        )
+        return super().slot(open=open, title=title, dismissible=dismissible)
 
 
 RowAlign = Literal["start", "center", "end", "stretch", "baseline"]
@@ -460,8 +429,23 @@ class _SetActive(Command):
         return athunk
 
 
+class TabsRef(SectionRef):
+    """SectionRef backing a Tabs slot. Carries the strip + active-tab chrome."""
+
+    def set_tabs(self, value: ListArg[dict[str, str]]) -> Nu:
+        return _SetTabs(self, value)
+
+    def set_active(self, value: StrArg) -> Nu:
+        return _SetActive(self, value)
+
+    def changed(self) -> Changed:
+        return Changed(self)
+
+
 class Tabs(Section):
     """Tab strip plus active body. Subclass and declare one child slot per tab body."""
+
+    _ref_cls = TabsRef
 
     @classmethod
     def slot(
@@ -472,33 +456,22 @@ class Tabs(Section):
     ) -> Self:
         return super().slot(tabs=_normalize_tabs(tabs or []), active=active)
 
-    @classmethod
-    def _mount_ref(cls) -> _SectionMountRef:
-        return _SectionMountRef(section_cls=cls)
-
-    @classmethod
-    def set_tabs(cls, value: ListArg[dict[str, str]]) -> Nu:
-        return _SetTabs(cls._mount_ref(), value)
-
-    @classmethod
-    def set_active(cls, value: StrArg) -> Nu:
-        return _SetActive(cls._mount_ref(), value)
-
-    @classmethod
-    def changed(cls) -> Changed:
-        return Changed(cls._mount_ref())
-
 
 __all__ = [
     "Accordion",
+    "AccordionRef",
     "Card",
+    "CardRef",
     "Column",
     "Container",
     "Field",
+    "FieldRef",
     "Fieldset",
+    "FieldsetRef",
     "Form",
     "Modal",
     "ModalRef",
     "Row",
     "Tabs",
+    "TabsRef",
 ]

@@ -6,10 +6,12 @@ uses to pick a renderer; the methods a Ref exposes (`store`, `append`,
 `changed`, ...) decide which interactions it accepts.
 
 Built on `StructuredRef` (parent chain, `_root_shape`). Address
-resolution walks the on-tree parent chain and joins segments; hosts
-that need a prefix (Page name, section slot path, ...) declare a
-`_wire_prefix` classmethod on the root shape and this class picks it up.
-Async-only: nu.ui is a browser fabric.
+resolution walks the on-tree parent chain and returns the segments as a
+tuple, same as `nu.kv` does. Nothing outside the chain gets a say: a
+segment is in the address because something navigated through it, never
+because a class named itself. A nudle Page contributes its segment the
+same way a Section does, by being reached through the slot that declares
+it. Async-only: nu.ui is a browser fabric.
 """
 
 from __future__ import annotations
@@ -52,13 +54,13 @@ class Ref(StructuredRef):
 
     # --- wire-path resolution ------------------------------------------------
 
-    async def _aresolve_address(self, rt: Runtime, nid: int) -> str:
-        """Wire path for this Ref.
+    async def _aresolve_address(self, rt: Runtime, nid: int) -> tuple[str, ...]:
+        """Wire path for this Ref: the chain's segments, root-first.
 
         Walks the on-tree parent chain (``rt.program.children``: ``[0]`` =
-        structural parent, ``[1]`` = address) collecting segments, then asks
-        the root shape for a prefix via `_wire_prefix()` (hosts opt in). The
-        default -- no root prefix -- joins segments alone.
+        structural parent, ``[1]`` = address) and evaluates each level's
+        address child, so a computed segment resolves here like any other
+        child. Self plus parents is the whole address; nothing else feeds it.
         """
         segments: list[str] = []
         cur = nid
@@ -70,13 +72,7 @@ class Ref(StructuredRef):
                 break  # parent is the ANCHOR -> chain root
             cur = parent
         segments.reverse()
-
-        root = self._root_shape
-        if root is not None:
-            prefix = getattr(root, "_wire_prefix", None)
-            if prefix is not None:
-                return ".".join([*prefix(), *segments])
-        return ".".join(segments)
+        return tuple(segments)
 
     # --- execution (async-only) ----------------------------------------------
 
@@ -103,16 +99,6 @@ class Ref(StructuredRef):
         return self._lift(await session.aread(path))
 
     # --- mount ---------------------------------------------------------------
-
-    @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        """Class-level defaults shipped in the mount field entry.
-
-        Override on Refs whose slice should be seeded without an explicit
-        `write`. Empty by default; non-empty results are included under the
-        optional `props` key on the mount field entry.
-        """
-        return {}
 
     @classmethod
     def slot(cls, **props: object) -> Self:

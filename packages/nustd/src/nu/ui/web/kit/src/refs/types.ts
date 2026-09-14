@@ -4,7 +4,7 @@
 // React component. refs/index.ts collects them into name-keyed registries.
 
 import type { ComponentType } from "react";
-import type { Frame } from "@nustackdev/ui-core";
+import type { KeyedFrame } from "@nustackdev/ui-core";
 
 export type RefSlice = {
 	type: string;
@@ -24,9 +24,11 @@ export type RefSlice = {
 
 export type SliceCtx = {
 	set: (mutator: (refs: Record<string, RefSlice>) => void) => void;
-	send: (frame: Frame) => void;
+	send: (frame: KeyedFrame) => void;
 };
 
+// `path` here is the store key for the ref's path (see `refKey`), which is
+// also what a slice ships back on an outbound KeyedFrame.
 export type SliceFactory = (
 	path: string,
 	ctx: SliceCtx,

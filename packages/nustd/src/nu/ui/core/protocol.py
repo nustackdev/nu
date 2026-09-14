@@ -3,10 +3,14 @@
 See projects/nu/stack/nudle/protocol.md in the Go space for the spec.
 
 Frame can be built two ways:
-- `Frame("mount", ref="", payload=...)` for lifecycle ops (op is a string)
+- `Frame("mount", payload=...)` for lifecycle ops (op is a string)
 - `Frame(interaction_instance, ref=path, payload=v)` for interactions; the
   op name is the lowercased class name of the interaction. Interactions
   don't declare their own op; the wire name follows the class.
+
+`ref` is a path: the Ref chain's segments, root-first, shipped as an array.
+It stays a sequence end to end -- a segment may hold any character, dots
+included, so there is no separator that could take it apart again.
 
 Wire format is transport-agnostic -- ships bytes; hosts (nudle, others)
 choose the concrete channel (ws, sse, etc).
@@ -14,11 +18,15 @@ choose the concrete channel (ws, sse, etc).
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import msgpack
 
 from nu.lang.sentinels import is_sentinel
+
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 __all__ = [
@@ -55,17 +63,17 @@ class Frame:
         self,
         op: object,
         *,
-        ref: str = "",
+        ref: Sequence[str] = (),
         payload: Any = None,
         id: str | None = None,
     ) -> None:
         self.op = _op_of(op)
-        self.ref = ref
+        self.ref = tuple(ref)
         self.payload = payload
         self.id = id
 
     def to_dict(self) -> dict[str, Any]:
-        d: dict[str, Any] = {"op": self.op, "ref": self.ref, "payload": self.payload}
+        d: dict[str, Any] = {"op": self.op, "ref": list(self.ref), "payload": self.payload}
         if self.id is not None:
             d["id"] = self.id
         return d
@@ -96,7 +104,7 @@ def decode(raw: bytes) -> Frame:
     d = msgpack.unpackb(raw, raw=False)
     return Frame(
         d["op"],
-        ref=d.get("ref", ""),
+        ref=d.get("ref") or (),
         payload=d.get("payload"),
         id=d.get("id"),
     )

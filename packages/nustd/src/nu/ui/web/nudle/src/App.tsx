@@ -1,4 +1,5 @@
 import { Badge, FieldView, useStore } from "@nustackdev/ui-kit";
+import { refKey } from "@nustackdev/ui-core";
 import { useNudleConnection } from "./connect";
 import { activeFields } from "./router";
 import { Sidebar } from "./Sidebar";
@@ -26,7 +27,7 @@ function App() {
 
 	// Structural Refs (TitleRef, NavRef, ...) render null but must mount so
 	// their slices exist in the store. Keep them out of the body flow.
-	const structuralNulls = page?.fields.map((f) => <FieldView key={f.path} field={f} />);
+	const structuralNulls = page?.fields.map((f) => <FieldView key={refKey(f.path)} field={f} />);
 
 	if (showSidebar && page) {
 		return (
@@ -42,7 +43,7 @@ function App() {
 					<div className="mx-auto max-w-5xl p-6">
 						{fields ? (
 							<div className="flex flex-col gap-6">
-								{fields.map((f) => <FieldView key={f.path} field={f} />)}
+								{fields.map((f) => <FieldView key={refKey(f.path)} field={f} />)}
 							</div>
 						) : (
 							<p className="text-sm text-muted-foreground font-mono">waiting for mount...</p>
@@ -63,7 +64,7 @@ function App() {
 				{structuralNulls}
 				{fields ? (
 					<div className="flex flex-col gap-6">
-						{fields.map((f) => <FieldView key={f.path} field={f} />)}
+						{fields.map((f) => <FieldView key={refKey(f.path)} field={f} />)}
 					</div>
 				) : (
 					<p className="text-sm text-muted-foreground font-mono">waiting for mount...</p>

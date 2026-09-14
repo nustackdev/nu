@@ -4,16 +4,21 @@ A Section is a Shape (not a Ref) that groups other Refs and Sections as
 declared slots. Concrete layout primitives (Row, Column, Card, Tabs, ...)
 subclass Section and pin chrome defaults; user code subclasses those.
 
-Hosts stamp their own mount metadata onto a Section subclass at class
-creation time (e.g. nudle's Page stamps `_nudle_mount`). This module
-carries no host-specific markers.
+A Section carries no mount point. It is a blueprint: the same subclass can
+sit under as many parents as you like, and where it lands is decided by the
+Ref chain that reaches it.
 
 SectionRef is the substrate Ref that backs a Section slot. Attribute
 access on a bound SectionRef (e.g. `page.toolbar.text`) walks into the
-section's child slots.
+section's child slots. A Section whose own chrome is drivable (Card's
+title, Tabs' active tab, ...) points `_ref_cls` at a SectionRef subclass
+carrying those methods, so the write targets the bound Ref and resolves
+through the chain like everything else.
 """
 
 from __future__ import annotations
+
+from typing import ClassVar
 
 from typing_extensions import Self
 
@@ -72,15 +77,14 @@ class Section(Shape):
             text = TextRef.slot()
             btn = ButtonRef.slot()
 
-    Hosts may stamp their own metadata onto Section subclasses (e.g.
-    nudle's Page stamps mount-path info); this base carries none.
+    A Section subclass holds no mount point, so the same one can be
+    declared on several pages at once.
     """
 
-    @classmethod
-    def _mount_props(cls) -> dict[str, object]:
-        """Class-level layout chrome shipped in the mount field entry."""
-        return {}
+    # SectionRef subclass backing this section's slot. Override to hand the
+    # bound Ref section-specific chrome methods (see ModalRef, CardRef).
+    _ref_cls: ClassVar[type[SectionRef]] = SectionRef
 
     @classmethod
     def slot(cls, **props: object) -> Self:
-        return Slot(SectionRef, props=props, section_cls=cls)  # type: ignore[return-value]
+        return Slot(cls._ref_cls, props=props, section_cls=cls)  # type: ignore[return-value]

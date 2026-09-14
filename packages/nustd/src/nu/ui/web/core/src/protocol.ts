@@ -9,7 +9,32 @@ export const OP_ERROR = "error";
 export const OP_NOTIFY = "notify";
 export const OP_READ = "read";
 
+// A ref's address: the Ref chain's segments, root-first. Stays a list end
+// to end -- a segment may contain any character, dots included, so there is
+// no separator that could take it apart again.
+export type RefPath = string[];
+
+/** Store key for a path. Round-trips through `refPath`; never split by hand. */
+export function refKey(path: RefPath): string {
+	return JSON.stringify(path);
+}
+
+/** The path a store key was made from. */
+export function refPath(key: string): RefPath {
+	return JSON.parse(key) as RefPath;
+}
+
 export type Frame = {
+	op: string;
+	ref: RefPath;
+	payload: unknown;
+	id?: string;
+};
+
+// A Frame as the store speaks it: `ref` is the store key rather than the
+// path. Slices hold keys (that is what they index the store by), so they
+// build these; `send` turns one into a wire Frame on the way out.
+export type KeyedFrame = {
 	op: string;
 	ref: string;
 	payload: unknown;
@@ -17,7 +42,7 @@ export type Frame = {
 };
 
 export type MountField = {
-	path: string;
+	path: RefPath;
 	type: string;
 	// Optional class-level defaults for the Ref or Section. When present,
 	// the slice factory seeds its state from these values.
@@ -64,7 +89,7 @@ export function decode(raw: ArrayBuffer | Uint8Array): Frame {
 	const d = mpDecode(bytes) as Partial<Frame> & { op: string };
 	return {
 		op: d.op,
-		ref: d.ref ?? "",
+		ref: d.ref ?? [],
 		payload: d.payload,
 		id: d.id,
 	};

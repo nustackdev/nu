@@ -7,11 +7,13 @@
 
 import type { ReactNode } from "react";
 import { NavLink, useStore } from "@nustackdev/ui-kit";
-import { OP_NOTIFY, type MountField, type MountPage } from "@nustackdev/ui-core";
+import { OP_NOTIFY, type MountField, type MountPage, refKey } from "@nustackdev/ui-core";
 
+// Store key for the NavRef, which is what the slice lookup and an outbound
+// KeyedFrame both want.
 function findNavPath(fields: MountField[]): string | null {
 	for (const f of fields) {
-		if (f.type === "NavRef") return f.path;
+		if (f.type === "NavRef") return refKey(f.path);
 	}
 	return null;
 }

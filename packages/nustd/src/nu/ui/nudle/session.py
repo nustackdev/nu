@@ -47,7 +47,7 @@ class Subscription:
     when a ``notify`` frame lands for the subscribed path.
     """
 
-    def __init__(self, session: NudleSession, path: str) -> None:
+    def __init__(self, session: NudleSession, path: tuple[str, ...]) -> None:
         self._session = session
         self._path = path
         self._callbacks: set[Callback] = set()
@@ -82,7 +82,7 @@ class NudleSession(Session):
 
     def __init__(self, ws: WebSocket) -> None:
         self._ws = ws
-        self._subs: dict[str, set[Subscription]] = defaultdict(set)
+        self._subs: dict[tuple[str, ...], set[Subscription]] = defaultdict(set)
         self._pending: dict[str, asyncio.Future[Any]] = {}
         self._stopped = False
 
@@ -104,9 +104,9 @@ class NudleSession(Session):
             payload["pages"] = pages
         if sidebar:
             payload["sidebar"] = True
-        await self.send(Frame(OP_MOUNT, ref="", payload=payload))
+        await self.send(Frame(OP_MOUNT, payload=payload))
 
-    async def aread(self, path: str) -> Any:
+    async def aread(self, path: tuple[str, ...]) -> Any:
         """Round-trip read: ship a read frame, await the client's reply."""
         rid = uuid.uuid4().hex
         loop = asyncio.get_running_loop()
@@ -118,7 +118,7 @@ class NudleSession(Session):
         finally:
             self._pending.pop(rid, None)
 
-    def subscribe(self, path: str) -> Subscription:
+    def subscribe(self, path: tuple[str, ...]) -> Subscription:
         sub = Subscription(self, path)
         self._subs[path].add(sub)
         return sub

@@ -52,9 +52,9 @@ class Session(ABC):
         """Ship a Frame to the client."""
 
     @abstractmethod
-    async def aread(self, path: str) -> Any:
+    async def aread(self, path: tuple[str, ...]) -> Any:
         """Round-trip: ship a read frame, await the client's reply."""
 
     @abstractmethod
-    def subscribe(self, path: str) -> Subscription:
+    def subscribe(self, path: tuple[str, ...]) -> Subscription:
         """Register interest in change notifications for `path`."""

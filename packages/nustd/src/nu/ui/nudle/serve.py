@@ -87,18 +87,23 @@ class _SPAStatic(StaticFiles):
 def _resolve_mount(app: Nu) -> tuple[str, list[dict[str, object]], list[dict[str, object]], bool]:
     """Return ``(name, structural_fields, pages_payload, sidebar)`` for ``session.mount``.
 
-    Two paths, chosen by what the tree contains:
+    Preorder-walks the tree and sorts every UI Ref by its root shape:
 
-    - **Shape path**: at least one UI Ref roots on an ``Index`` or ``Page``.
-      Resolves back to the unique Index (synthesizing one for a Page not
-      registered anywhere) and returns its mount payload.
-    - **Orphan path**: every UI Ref has ``_root_shape=None`` (shape-less
-      refs like ``nu.ui.TextRef("count")``). Synthesizes a single-page
-      ``_AutoIndex`` / ``_AutoPage`` mount from those refs' addresses.
+    - rooted on an ``Index``: the Index owns the mount payload. One per app.
+    - rooted on a ``Page`` no Index declares: auto-mount it at "/", where
+      its bare chain addresses already point.
+    - rooted nowhere (``nu.ui.TextRef("count")`` and friends): synthesize a
+      single-page ``_AutoIndex`` / ``_AutoPage`` mount from their segments.
+
+    A Section and a declared Page both hold no mount point of their own,
+    and the same one may sit under many parents, so a Ref taken off the
+    class has no address until a chain reaches it. Those are refused here
+    rather than left to miss in the browser.
     """
     seen_indexes: set[type[Index]] = set()
     seen_pages: set[type[Page]] = set()
     orphan_refs: dict[str, type[Ref]] = {}
+    floating_sections: set[type] = set()
     for node in preorder(app):
         if not isinstance(node, Ref):
             continue
@@ -112,21 +117,32 @@ def _resolve_mount(app: Nu) -> tuple[str, list[dict[str, object]], list[dict[str
             seen_indexes.add(root)
         elif issubclass(root, Page):
             seen_pages.add(root)
-    # Resolve pages back to their Index. Skip pages already covered by an
-    # Index we've seen structurally -- otherwise a library default Index
-    # that also registers the page would falsely get added and conflict.
-    # A Page not registered in any Index is auto-mounted at "/" -- its
-    # payload is emitted directly below, no synthesized Index class.
+        else:
+            floating_sections.add(root)
+    if floating_sections:
+        names = ", ".join(sorted(s.__name__ for s in floating_sections))
+        raise RuntimeError(
+            f"UI Refs rooted on Section(s) ({names}); a Section has no mount "
+            "point of its own. Reach them through the Index slot that leads "
+            "to it, e.g. App.home.panel.label.",
+        )
+    # A Page declared on an Index is reached through that Index's slot, which
+    # is where its leading segment comes from. A class handle skips the slot
+    # and would write a segment short, so refuse it and name the way in. A
+    # Page no Index declares is auto-mounted at "/" -- its payload is emitted
+    # directly below, no synthesized Index class.
     auto_pages: list[type[Page]] = []
     for page_cls in seen_pages:
-        if any(page_cls in idx.pages.routes.values() for idx in seen_indexes):
-            continue
         for idx_cls in _all_index_subclasses():
-            if page_cls in idx_cls.pages.routes.values():
-                seen_indexes.add(idx_cls)
-                break
-        else:
-            auto_pages.append(page_cls)
+            slot_name = idx_cls._page_slot_name(page_cls)
+            if slot_name is not None:
+                raise RuntimeError(
+                    f"UI Refs taken off Page {page_cls.__name__}, which Index "
+                    f"{idx_cls.__name__} declares at slot '{slot_name}'. A page's "
+                    "segment comes from the slot it is reached through, so go via "
+                    f"{idx_cls.__name__}.{slot_name}.",
+                )
+        auto_pages.append(page_cls)
     if (seen_indexes or auto_pages) and orphan_refs:
         addrs = ", ".join(sorted(orphan_refs))
         raise RuntimeError(
@@ -167,7 +183,7 @@ def _resolve_mount(app: Nu) -> tuple[str, list[dict[str, object]], list[dict[str
         return ("_AutoIndex", [], pages_payload, False)
     if orphan_refs:
         fields: list[dict[str, object]] = [
-            {"path": addr, "type": _wire_type(ref_cls)} for addr, ref_cls in orphan_refs.items()
+            {"path": (addr,), "type": _wire_type(ref_cls)} for addr, ref_cls in orphan_refs.items()
         ]
         pages_payload = [
             {"route": "/", "name": "_AutoPage", "label": "home", "fields": fields},

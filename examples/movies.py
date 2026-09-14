@@ -175,7 +175,8 @@ class MovieDetail(nu.ui.Page):
 class App(nu.ui.Index):
     title: nu.ui.TitleRef
     nav: nu.ui.NavRef
-    pages = nu.ui.Pages({"/": Movies, "/detail": MovieDetail})
+    movies = Movies.slot("/")
+    detail = MovieDetail.slot("/detail")
 
 
 # ---- State ------------------------------------------------------------------
@@ -260,9 +261,9 @@ def _rows_form() -> nu.Nu:
 
 def _rows_filtered() -> nu.Nu:
     """Same shape as _rows_form, but honors the current FilterRow inputs."""
-    min_r = nu.Float(FilterRow.min_rating.input)
-    genre = nu.Str(FilterRow.genre.input)
-    watched_only = nu.Bool(FilterRow.watched_only.input)
+    min_r = nu.Float(App.movies.filters.body.min_rating.input)
+    genre = nu.Str(App.movies.filters.body.genre.input)
+    watched_only = nu.Bool(App.movies.filters.body.watched_only.input)
     predicate = nu.And(
         nu.Ge(nu.DictAttrRef("r")["rating"], min_r),
         nu.Or(nu.Eq(genre, ""), nu.Eq(nu.DictAttrRef("r")["genre"], genre)),
@@ -295,61 +296,61 @@ init = nu.kv.Transaction(
 
 
 hydrate = nu.kv.Snapshot(
-    Movies.stats.body.total.set_value(nu.str(State.total))
-    | Movies.stats.body.watched.set_value(nu.str(State.watched))
-    | Movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
-    | Movies.stats.body.latest.set(State.latest_title)
-    | Movies.shelf.body.table.set(_rows_form())
+    App.movies.stats.body.total.set_value(nu.str(State.total))
+    | App.movies.stats.body.watched.set_value(nu.str(State.watched))
+    | App.movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
+    | App.movies.stats.body.latest.set(State.latest_title)
+    | App.movies.shelf.body.table.set(_rows_form())
 )
 
 
 on_add = nu.ReactForever(
-    AddMovieForm.submit.clicked(),
+    App.movies.form.submit.clicked(),
     nu.kv.Transaction(
         State.movies.append(
             nu.Dict.of(
-                title=nu.Str(AddMovieForm.details.title.input),
-                year=nu.Int(AddMovieForm.details.year.input),
-                genre=nu.Str(AddMovieForm.details.genre.input),
-                rating=nu.Float(AddMovieForm.score.rating.input),
-                watched=nu.Bool(AddMovieForm.score.watched.input),
-                notes=nu.Str(AddMovieForm.score.notes.input),
+                title=nu.Str(App.movies.form.details.title.input),
+                year=nu.Int(App.movies.form.details.year.input),
+                genre=nu.Str(App.movies.form.details.genre.input),
+                rating=nu.Float(App.movies.form.score.rating.input),
+                watched=nu.Bool(App.movies.form.score.watched.input),
+                notes=nu.Str(App.movies.form.score.notes.input),
             ),
         )
         | State.total.set(State.total + 1)
         | State.watched.set(
-            State.watched + nu.If(nu.Bool(AddMovieForm.score.watched.input), 1, 0),
+            State.watched + nu.If(nu.Bool(App.movies.form.score.watched.input), 1, 0),
         )
-        | State.latest_title.set(nu.Str(AddMovieForm.details.title.input)),
+        | State.latest_title.set(nu.Str(App.movies.form.details.title.input)),
     )
     >> nu.kv.Snapshot(
-        Movies.shelf.body.table.set(_rows_form())
-        | Movies.stats.body.total.set_value(nu.str(State.total))
-        | Movies.stats.body.watched.set_value(nu.str(State.watched))
-        | Movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
-        | Movies.stats.body.latest.set(State.latest_title)
-        | Movies.form.feedback.set(
+        App.movies.shelf.body.table.set(_rows_form())
+        | App.movies.stats.body.total.set_value(nu.str(State.total))
+        | App.movies.stats.body.watched.set_value(nu.str(State.watched))
+        | App.movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
+        | App.movies.stats.body.latest.set(State.latest_title)
+        | App.movies.form.feedback.set(
             title="Logged",
-            body="Added " + nu.Str(AddMovieForm.details.title.input),
+            body="Added " + nu.Str(App.movies.form.details.title.input),
         )
     ),
 )
 
 
 on_row_click = nu.ReactForever(
-    Movies.shelf.body.table.row_clicked(),
+    App.movies.shelf.body.table.row_clicked(),
     nu.IfDo(
         nu.Contains(nu.DictAttrRef("row_click"), "row_index"),
         nu.kv.Transaction(State.selected.set(nu.DictAttrRef("row_click")["row_index"]))
         >> nu.kv.Snapshot(
-            MovieDetail.heading.set(State.movies[State.selected].title)
-            | MovieDetail.meta.meta.year.set_value(nu.str(State.movies[State.selected].year))
-            | MovieDetail.meta.meta.genre.set_value(State.movies[State.selected].genre)
-            | MovieDetail.meta.meta.rating.set_value(nu.str(State.movies[State.selected].rating))
-            | MovieDetail.meta.meta.watched.set(
+            App.detail.heading.set(State.movies[State.selected].title)
+            | App.detail.meta.meta.year.set_value(nu.str(State.movies[State.selected].year))
+            | App.detail.meta.meta.genre.set_value(State.movies[State.selected].genre)
+            | App.detail.meta.meta.rating.set_value(nu.str(State.movies[State.selected].rating))
+            | App.detail.meta.meta.watched.set(
                 label=nu.If(State.movies[State.selected].watched, "Watched", "Unseen"),
             )
-            | MovieDetail.notes.body.set(State.movies[State.selected].notes)
+            | App.detail.notes.body.set(State.movies[State.selected].notes)
         )
         >> App.nav.set("/detail"),
     ),
@@ -358,35 +359,35 @@ on_row_click = nu.ReactForever(
 
 
 on_delete = nu.ReactForever(
-    MovieDetail.actions.remove.clicked(),
+    App.detail.actions.remove.clicked(),
     nu.kv.Transaction(
         State.movies.del_at(State.selected) >> State.total.set(nu.Len(State.movies)),
     )
     >> nu.kv.Snapshot(
-        Movies.shelf.body.table.set(_rows_form())
-        | Movies.stats.body.total.set_value(nu.str(State.total))
-        | Movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
+        App.movies.shelf.body.table.set(_rows_form())
+        | App.movies.stats.body.total.set_value(nu.str(State.total))
+        | App.movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
     )
     >> App.nav.set("/"),
 )
 
 
-on_back = nu.ReactForever(MovieDetail.actions.back.clicked(), App.nav.set("/"))
+on_back = nu.ReactForever(App.detail.actions.back.clicked(), App.nav.set("/"))
 
 
 on_filter_apply = nu.ReactForever(
-    FilterRow.apply.clicked(),
-    nu.kv.Snapshot(Movies.shelf.body.table.set(_rows_filtered())),
+    App.movies.filters.body.apply.clicked(),
+    nu.kv.Snapshot(App.movies.shelf.body.table.set(_rows_filtered())),
 )
 
 
 on_filter_clear = nu.ReactForever(
-    FilterRow.clear.clicked(),
+    App.movies.filters.body.clear.clicked(),
     nu.kv.Snapshot(
-        FilterRow.min_rating.input.set(1.0)
-        | FilterRow.genre.input.set("")
-        | FilterRow.watched_only.input.set(False)
-        | Movies.shelf.body.table.set(_rows_form())
+        App.movies.filters.body.min_rating.input.set(1.0)
+        | App.movies.filters.body.genre.input.set("")
+        | App.movies.filters.body.watched_only.input.set(False)
+        | App.movies.shelf.body.table.set(_rows_form())
     ),
 )
 

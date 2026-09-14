@@ -7,7 +7,7 @@ Layout under ``src/nu/ui/``:
                  wire ``Frame`` + interactions (``Write`` / ``Append`` /
                  ``Changed``). Reusable by any host.
 - ``refs/``   -- widget kit (Row, Card, Table, Input, ...); depends only on core.
-- ``nudle/``  -- Page-based host: ``Page`` / ``Index`` / ``Pages`` +
+- ``nudle/``  -- Page-based host: ``Index`` / ``Page`` / ``PageRef`` +
                  ``NudleSession`` over ws + FastAPI serve fabric.
 - ``web/``    -- everything for the browser: npm workspace with ``core``,
                  ``kit``, and the ``nudle`` Vite SPA (also the pypi wheel
@@ -22,7 +22,7 @@ from . import core, nudle, refs
 from .core import Frame, Ref, Section, SectionRef, Session, Subscription
 from .core.interactions import Append, Changed, Write
 from .nudle.fabric import NudleServer, server
-from .nudle.page import Index, Page, Pages
+from .nudle.page import Index, Page, PageRef
 from .nudle.session import NudleSession
 from .refs import (
     Accordion,
@@ -107,7 +107,7 @@ __all__ = [
     "NudleSession",
     "NumberInputRef",
     "Page",
-    "Pages",
+    "PageRef",
     "PieChart",
     "ProgressRef",
     "ProseRef",

@@ -12,13 +12,13 @@ class Dashboard(nu.ui.Page):
 
 
 class App(nu.ui.Index):
-    pages = nu.ui.Pages({"/": Dashboard})
+    home = Dashboard.slot("/")
 
 
 # reactive wire: whenever `value` changes, mirror it into `count`
 ui = nu.ReactForever(
     Counter.value.on_change(),
-    Dashboard.count.set_value(nu.str(Counter.value)),
+    App.home.count.set_value(nu.str(Counter.value)),
 )
 
 # updater: tick `value` up once a second, forever

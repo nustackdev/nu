@@ -62,7 +62,7 @@ class Dashboard(nu.ui.Page):
 class App(nu.ui.Index):
     """UI index with one page."""
 
-    pages = nu.ui.Pages({"/": Dashboard})
+    home = Dashboard.slot("/")
 
 
 app = nu.With(
@@ -71,7 +71,7 @@ app = nu.With(
         nu.kv.auto_flow_atomic(
             nu.ReactForever(
                 Counter.value.on_change(),
-                Dashboard.count.set_value(nu.str(Counter.value)),
+                App.home.count.set_value(nu.str(Counter.value)),
             ),
         ),
     ),
