@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add a tree store so the browser builds ui nodes from writes
 - Ship each ui write's chain of types and props so the browser can build nodes
 - Resolve a nu.ui address from the Ref chain alone, nothing else decides mounting
 - Declare a nudle page as a slot on its Index, reached by navigation

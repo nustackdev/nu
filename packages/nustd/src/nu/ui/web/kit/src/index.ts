@@ -1,13 +1,17 @@
 // Public entry for @nustackdev/ui-kit.
 //
-// The kit ships four surfaces:
-//   - refs        : factory + renderer registries for every Ref type
-//   - store       : zustand + immer store bound to the wire protocol
+// The kit ships these surfaces:
+//   - tree        : the tree store bindings, registry and NodeView
+//   - nodes       : every node type the kit registers (import for the side effect)
+//   - refs        : factory + renderer registries for every Ref type (old store)
+//   - store       : flat zustand + immer store bound to the wire protocol (old)
 //   - components  : primitives (Badge, Card, Switch, ...) and shared shell bits
 //   - lib/utils   : the `cn()` helper
 //
 // Tailwind tokens live in ./index.css; consumers import that separately.
 
+export * from "./tree";
+export { nodeEntries } from "./nodes";
 export * from "./refs";
 export { useStore } from "./store";
 export { cn } from "./lib/utils";
