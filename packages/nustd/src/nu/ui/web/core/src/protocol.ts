@@ -24,11 +24,18 @@ export function refPath(key: string): RefPath {
 	return JSON.parse(key) as RefPath;
 }
 
+// One level of a ref chain: its segment, the type the browser renders it
+// with, and the props its slot declared (empty object when it declared none).
+export type ChainLevel = [segment: string, type: string, props: Record<string, unknown>];
+
 export type Frame = {
 	op: string;
 	ref: RefPath;
 	payload: unknown;
 	id?: string;
+	// The `ref` path annotated, root-first. Present on writes; absent on
+	// frames that carry no chain, so treat a missing one as empty.
+	chain?: ChainLevel[];
 };
 
 // A Frame as the store speaks it: `ref` is the store key rather than the
@@ -92,5 +99,6 @@ export function decode(raw: ArrayBuffer | Uint8Array): Frame {
 		ref: d.ref ?? [],
 		payload: d.payload,
 		id: d.id,
+		...(d.chain ? { chain: d.chain } : {}),
 	};
 }

@@ -35,6 +35,48 @@ if TYPE_CHECKING:
 __all__ = ["Ref"]
 
 
+_REFS_PKG = "nu.ui.refs."
+_REFS_BASE = f"{_REFS_PKG}base"
+
+
+def _wire_type(ref_or_section_cls: type) -> str:
+    """Canonical (registered) class name for a Ref or Section.
+
+    Out-of-tree Refs (e.g. those shipped by nuspace) may set a
+    ``_wire_type_override`` class attribute to name the browser-side
+    factory directly, bypassing the MRO walk below. That is the
+    escape hatch for packages that register their own factory but
+    have no ancestor under ``nu.ui.refs``.
+
+    Otherwise walks the MRO to find the closest ancestor defined inside the
+    ``nu.ui.refs`` package (excluding the abstract ``base`` module). User
+    subclasses defined outside the package inherit the wire type of their
+    nearest packaged ancestor so the browser registry resolves them.
+    """
+    for base in ref_or_section_cls.__mro__:
+        override = base.__dict__.get("_wire_type_override")
+        if isinstance(override, str):
+            return override
+        mod = getattr(base, "__module__", "")
+        if not mod.startswith(_REFS_PKG):
+            continue
+        if mod == _REFS_BASE:
+            continue
+        return base.__name__
+    return ref_or_section_cls.__name__
+
+
+def _level_type(term: object) -> str:
+    """Wire type the browser renders this level with.
+
+    A SectionRef is substrate: what the browser draws is the Section class
+    it carries, same as the mount listing reports. Everything else is the
+    ref class itself.
+    """
+    section_cls = getattr(term, "_payload", {}).get("section_cls")
+    return _wire_type(section_cls if section_cls is not None else type(term))
+
+
 class Ref(StructuredRef):
     """Base for Refs backed by a client rendering surface. Async-only."""
 
@@ -73,6 +115,30 @@ class Ref(StructuredRef):
             cur = parent
         segments.reverse()
         return tuple(segments)
+
+    async def _aresolve_chain(self, rt: Runtime, nid: int) -> tuple[tuple[str, str, dict], ...]:
+        """Same walk as ``_aresolve_address``, annotated per level.
+
+        Returns ``(segment, type, props)`` root-first, one entry per level.
+        The term at each level *is* the ref, so its wire type and the props
+        its slot declared come straight off it -- no second traversal. The
+        browser needs all three to create a component on first write instead
+        of being told about it up front.
+        """
+        levels: list[tuple[str, str, dict]] = []
+        cur = nid
+        while True:
+            kids = rt.program.children[cur]
+            term = rt.program.terms[cur]
+            segment = str(await rt.aeval(kids[1]))
+            props = dict(getattr(term, "_payload", {}).get("props") or {})
+            levels.append((segment, _level_type(term), props))
+            parent = kids[0]
+            if not isinstance(rt.program.terms[parent], StructuredRef):
+                break  # parent is the ANCHOR -> chain root
+            cur = parent
+        levels.reverse()
+        return tuple(levels)
 
     # --- execution (async-only) ----------------------------------------------
 

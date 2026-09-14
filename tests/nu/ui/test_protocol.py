@@ -29,3 +29,23 @@ def test_a_segment_may_contain_dots():
     one = decode(encode(Frame("write", ref=("ops.page.create",), payload=1)))
     two = decode(encode(Frame("write", ref=("ops", "page", "create"), payload=2)))
     assert one.ref != two.ref
+
+
+def test_a_frame_without_a_chain_is_what_it_always_was():
+    """The field is additive: no chain, no key, same bytes as before."""
+    frame = Frame("write", ref=("home", "label"), payload="hi")
+    assert frame.chain == ()
+    assert frame.to_dict() == {"op": "write", "ref": ["home", "label"], "payload": "hi"}
+    assert decode(encode(frame)).chain == ()
+
+
+def test_chain_round_trips_as_segment_type_props_triples():
+    """Root-first triples, dots and all -- the chain is a sequence for the
+    same reason the path is."""
+    chain = (
+        ("ops.page.create", "Card", {"title": "Ops"}),
+        ("label", "TextRef", {}),
+    )
+    back = decode(encode(Frame("write", ref=("ops.page.create", "label"), chain=chain)))
+    assert back.chain == chain
+    assert back.ref == ("ops.page.create", "label")

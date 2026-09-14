@@ -204,6 +204,52 @@ def test_kv_slot_on_a_page_stays_a_kv_path():
     assert ref._parent is None
 
 
+def test_write_carries_the_annotated_chain():
+    """The chain is the path plus what the browser needs to build it: one
+    (segment, type, props) triple per level, root-first, page included."""
+
+    class Fields(Row):
+        label = TextRef.slot(value="hi")
+
+    class ChainPage(Page):
+        fields = Fields.slot()
+
+    class ChainApp(Index):
+        page = ChainPage.slot("/")
+
+    sess = _RecordingSession()
+    ctx = Context().bind(Session, sess)
+    asyncio.run(nu.arun(ChainApp.page.fields.label.set("x"), ctx))
+    chain = sess.frames[0].chain
+    assert [(seg, typ) for seg, typ, _ in chain] == [
+        ("page", "ChainPage"),
+        ("fields", "Row"),
+        ("label", "TextRef"),
+    ]
+    assert chain[0][2] == {}  # page slot declared no props
+    assert chain[1][2]["gap"] == 4  # Row.slot() pins its chrome defaults
+    assert chain[2][2] == {"value": "hi"}
+    assert sess.frames[0].ref == tuple(seg for seg, _, _ in chain)
+
+
+def test_append_carries_the_annotated_chain():
+    from nu.ui.refs import TableRef
+
+    class TSec2(Row):
+        t = TableRef.slot()
+
+    class TPage2(Page):
+        sec = TSec2.slot()
+
+    class TApp2(Index):
+        table = TPage2.slot("/")
+
+    sess = _RecordingSession()
+    ctx = Context().bind(Session, sess)
+    asyncio.run(nu.arun(TApp2.table.sec.t.append(["a", "b"]), ctx))
+    assert [lvl[1] for lvl in sess.frames[0].chain] == ["TPage2", "Row", "TableRef"]
+
+
 def test_deep_nested_page_path():
     """Page -> section -> nested section -> widget resolves the full chain."""
     sess = _RecordingSession()

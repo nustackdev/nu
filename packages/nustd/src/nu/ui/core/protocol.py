@@ -12,6 +12,11 @@ Frame can be built two ways:
 It stays a sequence end to end -- a segment may hold any character, dots
 included, so there is no separator that could take it apart again.
 
+`chain` is that same path annotated: one `(segment, type, props)` triple per
+level, root-first, so the browser can create every node on the way down the
+first time it sees a write. Every write ships the whole chain even when the
+nodes already exist -- the sender is stateless and the browser heals itself.
+
 Wire format is transport-agnostic -- ships bytes; hosts (nudle, others)
 choose the concrete channel (ws, sse, etc).
 """
@@ -57,7 +62,7 @@ def _op_of(op_or_interaction: object) -> str:
 class Frame:
     """One wire envelope. Same shape both directions."""
 
-    __slots__ = ("id", "op", "payload", "ref")
+    __slots__ = ("chain", "id", "op", "payload", "ref")
 
     def __init__(
         self,
@@ -66,20 +71,29 @@ class Frame:
         ref: Sequence[str] = (),
         payload: Any = None,
         id: str | None = None,
+        chain: Sequence[tuple[str, str, dict[str, Any]]] = (),
     ) -> None:
         self.op = _op_of(op)
         self.ref = tuple(ref)
         self.payload = payload
         self.id = id
+        self.chain = tuple((seg, typ, props) for seg, typ, props in chain)
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {"op": self.op, "ref": list(self.ref), "payload": self.payload}
         if self.id is not None:
             d["id"] = self.id
+        # Omitted when empty so frames that carry no chain stay exactly what
+        # they were before the field existed.
+        if self.chain:
+            d["chain"] = [[seg, typ, props] for seg, typ, props in self.chain]
         return d
 
     def __repr__(self) -> str:
-        return f"Frame(op={self.op!r}, ref={self.ref!r}, payload={self.payload!r}, id={self.id!r})"
+        return (
+            f"Frame(op={self.op!r}, ref={self.ref!r}, payload={self.payload!r}, "
+            f"id={self.id!r}, chain={self.chain!r})"
+        )
 
 
 def _msgpack_default(obj: object) -> Any:
@@ -107,4 +121,5 @@ def decode(raw: bytes) -> Frame:
         ref=d.get("ref") or (),
         payload=d.get("payload"),
         id=d.get("id"),
+        chain=tuple((seg, typ, props or {}) for seg, typ, props in (d.get("chain") or ())),
     )

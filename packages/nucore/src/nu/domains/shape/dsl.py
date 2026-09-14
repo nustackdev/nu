@@ -7,7 +7,8 @@ SlotDescriptor exposes them as Refs on class access.
 A Shape slot annotation IS the ref class (parametric or bare). The
 metaclass reads the annotation, synthesizes a ``Slot`` when none is
 assigned, and stamps a recursive ``TypeInfo`` onto each created Ref's
-``_payload["type_info"]``.
+``_payload["type_info"]``. Slot props land on ``_payload["props"]``
+the same way, so a ref can see what its slot declared.
 
 Recognised annotation forms:
 
@@ -96,6 +97,11 @@ class Slot(Generic[_RefT]):
         ti = self._resolve_type_info()
         if ti is not None:
             ref._payload["type_info"] = ti
+        if self.props:
+            # Payload, not an attribute: ``Term._with_children`` carries it
+            # across a tree rewrite, so the props a slot declared survive
+            # re-rooting and stay reachable from the ref itself.
+            ref._payload["props"] = dict(self.props)
         return ref
 
     def _resolve_type_info(self) -> TypeInfo | None:

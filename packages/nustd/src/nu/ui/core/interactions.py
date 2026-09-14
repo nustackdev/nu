@@ -55,9 +55,12 @@ class Write(Command):
         async def athunk(rt: Runtime) -> None:
             session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
-            path = await ref._aresolve_address(rt, ref_nid)
+            # One walk: the chain carries the segments the plain path is made
+            # of, plus the type and props the browser needs to create the node.
+            chain = await ref._aresolve_chain(rt, ref_nid)
+            path = tuple(seg for seg, _, _ in chain)
             value = await value_thunk(rt)
-            await session.send(Frame(self, ref=path, payload=value))
+            await session.send(Frame(self, ref=path, payload=value, chain=chain))
 
         return athunk
 
@@ -85,10 +88,11 @@ class Append(Command):
         async def athunk(rt: Runtime) -> None:
             session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
-            path = await ref._aresolve_address(rt, ref_nid)
+            chain = await ref._aresolve_chain(rt, ref_nid)
+            path = tuple(seg for seg, _, _ in chain)
             values = [await t(rt) for t in value_thunks]
             payload = values[0] if len(values) == 1 else values
-            await session.send(Frame(self, ref=path, payload=payload))
+            await session.send(Frame(self, ref=path, payload=payload, chain=chain))
 
         return athunk
 
