@@ -578,6 +578,7 @@ __all__ = [
     "DatePickerRef",
     "InputRef",
     "NumberInputRef",
+    "ProseRef",
     "RadioGroupRef",
     "SelectRef",
     "SliderRef",

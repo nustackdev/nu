@@ -73,7 +73,7 @@ class AlertRef(Ref):
             payload["dismissible"] = dismissible
         return Write(self, Dict.of(**payload))
 
-    def dismissed(self) -> Changed:
+    def on_dismiss(self) -> Changed:
         return Changed(self)
 
 
@@ -589,7 +589,7 @@ class TableRef(Ref):
     def set_sort(self, column: StrArg, direction: SortDirection | StrArg) -> Nu:
         return Write(self, Dict.of(sort_column=column, sort_direction=direction))
 
-    def row_clicked(self) -> Changed:
+    def on_row_click(self) -> Changed:
         return Changed(self)
 
 

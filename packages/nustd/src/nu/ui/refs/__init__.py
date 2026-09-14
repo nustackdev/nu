@@ -32,10 +32,11 @@ its own component just declares its own.
 `set()`: a Ref with a single semantically primary value exposes `set()`
 for it -- `TextRef.set(text)`, `SliderRef.set(n)`, `StatRef.set(value)` --
 with the rest of what it can drive on `set_*` kwargs or `set_*` methods.
-A container has no primary value, so it gets no `set()` at all: Row,
-Column, Card, Fieldset, Tabs and the other layout Sections wrap their
-children, not a value. Modal is the one layout exception, because open
-vs closed genuinely is the thing it carries.
+Having a primary value is the whole test, and most layout Sections fail
+it: Row, Column, Card, Fieldset and Tabs wrap their children and carry
+nothing of their own, so they get no `set()`. Modal has one anyway, and
+is not an exception to the rule so much as the rule biting: open vs
+closed is the thing a modal carries.
 """
 
 from __future__ import annotations

@@ -3,7 +3,7 @@
 // The page list and every label come off the tree: each page node carries
 // its route and label as props. A click dispatches a local write to the
 // NavRef node, which is what drives pushState and mirrors the new uri, then
-// emits a notify so `App.nav.changed()` subscribers on the server see it.
+// emits a notify so `App.nav.on_change()` subscribers on the server see it.
 // Same two steps the old mount-payload version did, minus the payload.
 
 import type { ReactNode } from "react";

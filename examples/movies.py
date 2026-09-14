@@ -338,7 +338,7 @@ on_add = nu.ReactForever(
 
 
 on_row_click = nu.ReactForever(
-    App.movies.shelf.body.table.row_clicked(),
+    App.movies.shelf.body.table.on_row_click(),
     nu.IfDo(
         nu.Contains(nu.DictAttrRef("row_click"), "row_index"),
         nu.kv.Transaction(State.selected.set(nu.DictAttrRef("row_click")["row_index"]))
