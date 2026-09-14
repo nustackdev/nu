@@ -2,16 +2,16 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.2.1
-- **nustd** (fabrics) — 0.2.1
-- **nucli** (the `nu` command) — 0.2.1
+- **nucore** (kernel) — 0.3.0
+- **nustd** (fabrics) — 0.3.0
+- **nucli** (the `nu` command) — 0.3.0
 - **nudle** — 0.1.4
 - **ui-core** — 0.1.0
 - **ui-kit** — 0.1.3
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.3.0 — 2026-09-14
 
 - Add unbind to the Subscription protocol and to HostedSubscription, which React needs
 - Add nu.kv.served_observer and nu.kv.proxy_observer: a process's change feed over a socket
