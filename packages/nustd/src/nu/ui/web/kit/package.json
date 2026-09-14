@@ -1,7 +1,7 @@
 {
 	"name": "@nustackdev/ui-kit",
 	"description": "Nu design kit: tokens, primitives, node types, and the tree store bindings for the UI fabric.",
-	"version": "0.1.4",
+	"version": "0.2.0",
 	"type": "module",
 	"main": "./src/index.ts",
 	"types": "./src/index.ts",
@@ -32,7 +32,7 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@nustackdev/ui-core": "*",
+		"@nustackdev/ui-core": "^0.2.0",
 		"@uiw/react-json-view": "^2.0.0-alpha.43",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
