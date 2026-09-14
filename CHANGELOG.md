@@ -13,6 +13,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Give LoadNu a rewrite slot
+- Add nu.shape.reroot: splice a snippet's bare ref chains under the parent that owns them
 - Let a ui ref declare its browser component instead of sniffing the package path
 - Rename the ui subscription methods to on_change and on_click, matching kv and nuspace
 - Give StatRef a set() for its value, so the primary-value convention holds everywhere

@@ -6,6 +6,8 @@ Public surface:
 - ``SetCmd``, ``Erase``: slot-level write commands.
 - ``Load``, ``Exists``, ``Missing``, ``Extract``,
   ``AdvanceCursor``: slot-level read queries.
+- ``reroot`` / ``rerooter``: splice the bare ref chains in a term under a
+  new parent, so a snippet written without a mount point gets one.
 
 Reactive queries (``OnChange`` / ``OnChildChange`` /
 ``OnChildrenChange`` / ``OnDescendantsChange`` /
@@ -49,6 +51,7 @@ from .refs import (
     ShapesMappingRef,
     ShapesSequenceRef,
 )
+from .rewrite import reroot, rerooter
 
 
 __all__ = [
@@ -95,4 +98,7 @@ __all__ = [
     "ShapesSequenceRef",
     "Slot",
     "SlotDescriptor",
+    # Rewrites
+    "reroot",
+    "rerooter",
 ]

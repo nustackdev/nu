@@ -2,7 +2,8 @@
 
 Covers the term LoadNu yields, the ``Eval(LoadNu(...))`` pair under both
 runtimes, brace resolution (bound, tagged, and the unbound fallback),
-Nu-computed source and scope children, and the failure surface.
+Nu-computed source and scope children, the rewrite slot, and the failure
+surface.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ import textwrap
 import pytest
 
 import nu
-from nu.prog import ConstructionError, LoadNu, PyBrace
+from nu.prog import ConstructionError, LoadNu, PyBrace, RewriteEscapeError
 
 
 def src(text: str) -> str:
@@ -292,6 +293,62 @@ async def test_a_sync_only_loaded_tree_is_refused_on_the_loop() -> None:
     """)
     with pytest.raises(RuntimeError, match="placed on the event loop"):
         await nu.arun(nu.Timeout(5.0, nu.Eval(LoadNu(source))))
+
+
+# --- the rewrite slot ---------------------------------------------------
+
+# A snippet that loads another program. The term that inner load builds
+# comes out of a nested Runtime at run time, long after an outer rewrite ran.
+NESTED = src("""
+    import nu
+
+    def out():
+        return nu.Eval(nu.LoadNu("import nu\\ndef out():\\n    return nu.Str('inner')\\n"))
+""")
+
+
+def swapped(term: nu.Nu) -> nu.Nu:
+    return nu.Str("swapped")
+
+
+def test_the_rewrite_runs_on_the_constructed_term() -> None:
+    term, _ = nu.run(LoadNu(HELLO, rewrite=swapped))
+    assert nu.run(term)[0] == "swapped"
+
+
+def test_without_a_rewrite_the_term_comes_back_as_built() -> None:
+    term, _ = nu.run(LoadNu(HELLO))
+    assert nu.run(term)[0] == "hi"
+
+
+def test_the_rewrite_is_handed_the_term_the_snippet_built() -> None:
+    seen: list[nu.Nu] = []
+
+    def spy(term: nu.Nu) -> nu.Nu:
+        seen.append(term)
+        return term
+
+    nu.run(LoadNu(HELLO, rewrite=spy))
+    assert len(seen) == 1
+    assert nu.run(seen[0])[0] == "hi"
+
+
+def test_eval_drives_the_rewritten_term() -> None:
+    assert nu.run(nu.Eval(LoadNu(HELLO, rewrite=swapped)))[0] == "swapped"
+
+
+async def test_the_rewrite_runs_on_the_async_path() -> None:
+    term, _ = await nu.arun(LoadNu(HELLO, rewrite=swapped))
+    assert nu.run(term)[0] == "swapped"
+
+
+def test_a_nested_load_is_refused_when_a_rewrite_is_bound() -> None:
+    with pytest.raises(RewriteEscapeError, match="another LoadNu"):
+        nu.run(LoadNu(NESTED, rewrite=lambda term: term))
+
+
+def test_a_nested_load_is_fine_with_no_rewrite_to_escape() -> None:
+    assert nu.run(nu.Eval(LoadNu(NESTED)))[0] == "inner"
 
 
 # --- slow tier: the whole pipeline over a genuinely foreign venv --------

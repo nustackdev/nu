@@ -185,6 +185,19 @@ def test_brace_threads_through_load() -> None:
     assert nu.run(untagged)[0] == os.getpid()
 
 
+def _swapped(term: nu.Nu) -> nu.Nu:
+    return nu.Str("swapped")
+
+
+def test_rewrite_threads_through_run() -> None:
+    assert nu.run(Program(GREETING).run(rewrite=_swapped))[0] == "swapped"
+
+
+def test_rewrite_threads_through_load() -> None:
+    term, _ = nu.run(Program(GREETING).load(rewrite=_swapped))
+    assert nu.run(term)[0] == "swapped"
+
+
 # --- the subprocess path ------------------------------------------------
 
 

@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from nu.lang import Nu, StrArg
+    from nu.tree import Transform
 
 
 __all__ = ["Program"]
@@ -99,6 +100,7 @@ class Program(Form, TypedNu[str]):
         scope: Mapping[str, object] | None = None,
         filename: StrArg = DEFAULT_FILENAME,
         brace: object = UNSET,
+        rewrite: Transform | None = None,
     ) -> Nu:
         """Construct the term without running it.
 
@@ -112,6 +114,8 @@ class Program(Form, TypedNu[str]):
             filename: name frames and diagnostics attribute the source to.
             brace: tag identifying the :class:`~nu.prog.brace.PyBrace` on
                 ctx. Omit for the untagged singleton, or for no brace.
+            rewrite: a ``Nu -> Nu`` transform run on the constructed term,
+                which is where a host says where the snippet's refs land.
 
         Notes:
             - Constructing runs the module body and calls the entry point,
@@ -127,7 +131,9 @@ class Program(Form, TypedNu[str]):
         """
         from .load import LoadNu
 
-        return LoadNu(self, entry=entry, scope=scope, filename=filename, brace=brace)
+        return LoadNu(
+            self, entry=entry, scope=scope, filename=filename, brace=brace, rewrite=rewrite
+        )
 
     def run(
         self,
@@ -136,6 +142,7 @@ class Program(Form, TypedNu[str]):
         scope: Mapping[str, object] | None = None,
         filename: StrArg = DEFAULT_FILENAME,
         brace: object = UNSET,
+        rewrite: Transform | None = None,
         on_error: Nu | None = None,
     ) -> Nu:
         """Construct the term and drive it.
@@ -147,6 +154,8 @@ class Program(Form, TypedNu[str]):
             filename: name frames and diagnostics attribute the source to.
             brace: tag identifying the :class:`~nu.prog.brace.PyBrace` on
                 ctx.
+            rewrite: a ``Nu -> Nu`` transform run on the constructed term,
+                before anything evaluates it.
             on_error: branch to run when construction fails. Given one, the
                 whole thing is wrapped in a ``TryCatch`` filtered to
                 ``ConstructionError``, and the branch reads the caught
@@ -174,7 +183,9 @@ class Program(Form, TypedNu[str]):
         from .diagnostics import ConstructionError
         from .eval import Eval
 
-        running = Eval(self.load(entry=entry, scope=scope, filename=filename, brace=brace))
+        running = Eval(
+            self.load(entry=entry, scope=scope, filename=filename, brace=brace, rewrite=rewrite)
+        )
         if on_error is None:
             return running
         return TryCatch(running, catch=on_error, errors=ConstructionError)

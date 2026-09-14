@@ -4,7 +4,8 @@ The ``prog`` fabric hosts interactions whose subject is a Nu program itself:
 
 - ``LoadNu`` -- read python source, yield the Nu term it constructs. Source
   is the authoring format and the artifact of record; a Nu tree is what it
-  lowers to, one way.
+  lowers to, one way. Its ``rewrite`` slot is where a host says where the
+  term lands, so no term can be obtained having skipped the rewrite.
 - ``Eval`` -- dynamic evaluation. A scalar carrier yields a Nu term at
   runtime; Eval compiles it against the current schema, validates it against
   an optional promise, and drives it inside the current Runtime.
@@ -32,7 +33,7 @@ from .diagnostics import ConstructionError, Diagnostic
 from .eval import Eval
 from .eval_promise import EvalPromiseError
 from .forms import Program
-from .load import LoadNu
+from .load import LoadNu, RewriteEscapeError
 
 
 __all__ = [
@@ -46,6 +47,7 @@ __all__ = [
     "LoadNu",
     "Program",
     "PyBrace",
+    "RewriteEscapeError",
     "Venv",
 ]
 

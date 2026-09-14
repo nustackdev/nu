@@ -11,6 +11,14 @@ case, but the slot takes any ``Nu[str]``, so the real one - reading the
 source out of kv at an address the program computed - is the same node with
 a different child.
 
+Where the term *lands* is the loader's business. ``rewrite`` is a
+``Nu -> Nu`` transform applied to the constructed term before anyone can see
+it, which is where re-rooting a snippet's bare ref chains under the block that
+owns them goes (:func:`nu.shape.rerooter`). It sits on ``LoadNu`` rather than
+being a node someone composes in front of ``Eval`` for one reason: on the slot
+there is no way to obtain a term that skipped it, and composed in front there
+is, and forgetting it writes to the wrong paths silently.
+
 Where it is *built* is ctx's business. ``LoadNu`` resolves a
 :class:`~nu.prog.brace.PyBrace` off ``rt.ctx``; with none bound it falls
 back to an in-process brace, so a bare ``LoadNu`` in a plain tree works with
@@ -39,6 +47,13 @@ have to re-check for one on every value that passes through it. The record
 itself stays reachable on ``.diagnostic``, which is what a feedback loop
 handing the failure back to its author reads.
 
+A rewrite reaches the whole term it is handed, ``Eval`` carriers included,
+because a carrier is a plain child. The one thing it cannot reach is a term
+some *other* load builds at run time, inside a nested Runtime, after this
+rewrite already ran. Rather than let that term through un-rewritten and write
+to bare paths, a load carrying a rewrite refuses to yield a term with another
+``LoadNu`` in it (:class:`RewriteEscapeError`). Nothing nests loads today.
+
 Async classification: portable. The construction is blocking (a venv brace
 sits on a pipe read for its whole duration), so ``_acompile`` runs it
 off-thread rather than declaring the atom async-only.
@@ -50,6 +65,7 @@ from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
 from nu.lang.sentinels import UNSET
+from nu.tree.walk import preorder
 
 from .brace import PyBrace
 from .diagnostics import ConstructionError, Diagnostic
@@ -62,9 +78,20 @@ if TYPE_CHECKING:
     from nu.lang import StrArg
     from nu.lang.nu import Nu
     from nu.lang.runtime import Runtime
+    from nu.tree import Transform
 
 
-__all__ = ["LoadNu"]
+__all__ = ["LoadNu", "RewriteEscapeError"]
+
+
+class RewriteEscapeError(RuntimeError):
+    """A load's rewrite cannot reach a term another load builds at run time.
+
+    Raised when a ``LoadNu`` carrying a ``rewrite`` constructs a term that
+    holds another ``LoadNu``. The inner load runs later, in its own Runtime,
+    so whatever it builds is never handed to this rewrite. Bind the rewrite
+    on the inner load instead of nesting one inside the other.
+    """
 
 
 # The brace a LoadNu uses when nothing is bound. Stateless and reusable: an
@@ -97,6 +124,11 @@ class LoadNu(ScalarQuery):
         filename: name frames and diagnostics attribute the source to.
         brace: tag identifying the :class:`~nu.prog.brace.PyBrace` on ctx.
             Omit for the untagged singleton, or for no brace at all.
+        rewrite: a ``Nu -> Nu`` transform run on the constructed term
+            before it is yielded. The binding context for *where* the term
+            lands, the way ``scope`` is the binding context for what it
+            reads: :func:`nu.shape.rerooter` is the one that splices a
+            snippet's bare ref chains under the block that owns them.
 
     Notes:
         - Source, entry, filename and every scope value are children, so all
@@ -130,13 +162,21 @@ class LoadNu(ScalarQuery):
         - Portable across sync and async. Construction is blocking (a venv
           brace sits on a pipe read for its whole duration), so the async
           path runs it off-thread rather than making the atom async-only.
+        - The rewrite runs on this side of the brace, on the term that came
+          back, so it is a live python callable and never has to pickle.
+        - A rewrite is bound per load and there is no way around it, which
+          is the point of it being a slot. A load with a rewrite refuses to
+          yield a term holding another ``LoadNu``, because that inner load
+          builds its term later and would escape.
 
     Yields:
-        The Nu term the entry point returned, unevaluated.
+        The Nu term the entry point returned, rewritten and unevaluated.
 
     Raises:
         ConstructionError: the source did not construct. The record is on
             ``.diagnostic``.
+        RewriteEscapeError: a rewrite is bound and the term holds a nested
+            ``LoadNu``, whose own term the rewrite could never reach.
 
     Example:
         >>> src = '''
@@ -162,11 +202,13 @@ class LoadNu(ScalarQuery):
         scope: Mapping[str, object] | None = None,
         filename: StrArg = DEFAULT_FILENAME,
         brace: object = UNSET,
+        rewrite: Transform | None = None,
     ) -> None:
         names = tuple(scope) if scope else ()
         super().__init__(source, entry, filename, *(scope[n] for n in names))
         self._payload["scope_names"] = names
         self._payload["brace"] = brace
+        self._payload["rewrite"] = rewrite
 
     def _brace_of(self, rt: Runtime) -> PyBrace:
         """The bound brace, or the shared in-process one."""
@@ -177,10 +219,27 @@ class LoadNu(ScalarQuery):
         return _FALLBACK
 
     def _term(self, result: object) -> Nu:
-        """Unwrap a construct result, turning a Diagnostic into a raise."""
+        """Unwrap a construct result, turning a Diagnostic into a raise, then rewrite."""
         if isinstance(result, Diagnostic):
             raise ConstructionError(result)
-        return result  # type: ignore[return-value]
+        rewrite: Transform | None = self._payload["rewrite"]  # type: ignore[assignment]
+        if rewrite is None:
+            return result  # type: ignore[return-value]
+        return self._reachable(rewrite(result))  # type: ignore[arg-type]
+
+    def _reachable(self, term: Nu) -> Nu:
+        """Refuse a rewritten term holding a load whose own term would escape."""
+        for node in preorder(term):
+            if isinstance(node, LoadNu):
+                msg = (
+                    "LoadNu: a rewrite is bound here, but the constructed term "
+                    "holds another LoadNu. That load builds its term at run "
+                    "time, in its own Runtime, so this rewrite never sees it "
+                    "and it would resolve against bare paths. Bind the rewrite "
+                    "on the inner load instead."
+                )
+                raise RewriteEscapeError(msg)
+        return term
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, entry, filename = children[0], children[1], children[2]
