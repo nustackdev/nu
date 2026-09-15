@@ -20,6 +20,13 @@ Threaded/Async variants at this layer.
 runtime-sized list instead of a fixed set of children, each arm a loop task on
 its own Context branch, off the budget entirely. It backs ``ForEachParAsync``,
 which lives in ``nu.core.flows.control`` next to the ``ForEachDo`` it mirrors.
+
+``aeval_foreach_reactive`` is the same fan-out kept open: the element list is
+re-read rather than read once, so the arm set is a thing that is reconciled
+instead of a thing that is built. It backs ``ForEachParReactive`` and takes its two
+moving parts - how to read the elements, how to wait for the next change - as
+callables, because both are Nu-level wiring the flow owns and neither is
+scheduling.
 """
 
 from __future__ import annotations
@@ -33,13 +40,14 @@ from nu.lang.runtime.utils.loop import safely_aclosing, safely_closing
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterable, Iterable
+    from collections.abc import AsyncIterable, Awaitable, Callable, Iterable
 
     from nu.lang.runtime import Context, Runtime
 
 __all__ = [
     "aeval_any",
     "aeval_foreach_par",
+    "aeval_foreach_reactive",
     "aeval_parallel",
     "aeval_race",
     "amerge",
@@ -235,30 +243,123 @@ def _arm_ctx(ctx: Context, name: str, elem: object) -> Context:
     return branch
 
 
-async def aeval_foreach_par(rt: Runtime, nid: int, elems: Iterable, name: str) -> None:
-    """Fan the body at ``nid`` out over ``elems``, one loop task each, joining on all.
+def _spawn_arm(rt: Runtime, nid: int, elem: object, name: str) -> asyncio.Task:
+    """Start one arm of ``nid`` for ``elem``, on its own Context branch.
 
-    Every arm is an asyncio.Task holding its own Context branch with ``name``
-    bound to its element - the ``rt.ctx`` set has to happen inside a Task for
-    that to stay arm-local, which is why bare coroutines will not do. Placement
-    is always the loop and the Budget is never touched: a parked coroutine
-    costs no worker, so there is nothing here to ration. First error wins, as
-    with ``aeval_parallel``, and the remaining arms are cancelled on the way
-    out rather than left running headless.
+    The ``rt.ctx`` assignment has to happen inside the Task for the branch to
+    stay arm-local, which is why this hands back a started Task rather than a
+    coroutine for someone else to schedule.
     """
-    elems = list(elems)
-    if not elems:
-        return
 
     async def arm(arm_ctx: Context) -> None:
         rt.ctx = arm_ctx
         await rt.aeval(nid)
 
-    tasks = [asyncio.ensure_future(arm(_arm_ctx(rt.ctx, name, e))) for e in elems]
+    return asyncio.ensure_future(arm(_arm_ctx(rt.ctx, name, elem)))
+
+
+async def aeval_foreach_par(rt: Runtime, nid: int, elems: Iterable, name: str) -> None:
+    """Fan the body at ``nid`` out over ``elems``, one loop task each, joining on all.
+
+    Every arm is an asyncio.Task holding its own Context branch with ``name``
+    bound to its element. Placement is always the loop and the Budget is never
+    touched: a parked coroutine costs no worker, so there is nothing here to
+    ration. First error wins, as with ``aeval_parallel``, and the remaining
+    arms are cancelled on the way out rather than left running headless.
+
+    The task list is held until the join returns, so an arm that finishes early
+    stays in it as a done Task. That is the right call for a fan-out that joins
+    on all - the list is the join - and the wrong one for a supervisor, which
+    is why ``aeval_foreach_reactive`` keeps its own book instead of reusing this.
+    """
+    elems = list(elems)
+    if not elems:
+        return
+
+    tasks = [_spawn_arm(rt, nid, e, name) for e in elems]
     try:
         await asyncio.gather(*tasks)
     finally:
         await _settle(tasks)
+
+
+def _forget_arm(arms: dict, key: object, task: asyncio.Task) -> None:
+    """Drop a finished arm from the live set and take its outcome off it.
+
+    Both halves matter. An arm left in the dict holds its Task alive and holds
+    its key's slot against a later birth, and an arm that raised would warn at
+    collection time if nobody ever read the exception. Reading it is also where
+    the isolation happens: one arm's failure ends that arm and goes no further.
+    """
+    if arms.get(key) is task:
+        del arms[key]
+    if not task.cancelled():
+        task.exception()
+
+
+async def _reconcile_arms(
+    rt: Runtime,
+    nid: int,
+    name: str,
+    arms: dict,
+    elems: Iterable,
+) -> None:
+    """Make ``arms`` hold exactly one live arm per element of ``elems``.
+
+    An element with no arm gets one; an arm whose element is gone is cancelled
+    and awaited here rather than left to unwind on its own time, so the key is
+    genuinely free by the time this returns and a later birth can never overlap
+    the death it followed. Every other arm is untouched, which is the point.
+
+    Arms that already ended are swept first rather than waited on: a done
+    callback lands a tick late, and a key whose arm is over should be free to
+    be born again on this pass, not the one after it.
+    """
+    for key, task in [(k, t) for k, t in arms.items() if t.done()]:
+        _forget_arm(arms, key, task)
+    wanted = list(dict.fromkeys(elems))
+    live = set(wanted)
+    for key in [k for k in arms if k not in live]:
+        await _settle([arms.pop(key)])
+    for key in wanted:
+        if key in arms:
+            continue
+        task = _spawn_arm(rt, nid, key, name)
+        arms[key] = task
+        task.add_done_callback(lambda t, k=key: _forget_arm(arms, k, t))
+
+
+async def aeval_foreach_reactive(
+    rt: Runtime,
+    nid: int,
+    name: str,
+    elems_of: Callable[[], Awaitable[Iterable]],
+    changed: Callable[[], Awaitable[object]],
+) -> None:
+    """Keep one arm of ``nid`` alive per element, reconciling on every change.
+
+    Seeds from ``elems_of()``, then waits on ``changed()`` and reconciles
+    again, forever. Arms are keyed by element, so a reconcile touches only the
+    keys that moved: births and deaths, never the siblings. Elements must be
+    hashable, since the key is what the book is kept by.
+
+    It reconciles against the current element list rather than replaying the
+    change that woke it, so a burst collapses into one pass and a delete and
+    re-add that land between two passes are not seen at all. Nothing is missed
+    by that: what the pass makes true is the answer to ``elems_of()`` as of the
+    moment it ran.
+
+    Returns only by cancellation - every arm is cancelled and drained on the
+    way out. Errors do not propagate: an arm that raises ends alone, and its
+    element gets a fresh arm on the next reconcile.
+    """
+    arms: dict[object, asyncio.Task] = {}
+    try:
+        while True:
+            await _reconcile_arms(rt, nid, name, arms, await elems_of())
+            await changed()
+    finally:
+        await _settle(list(arms.values()))
 
 
 # --- parallel streams -----------------------------------------------------

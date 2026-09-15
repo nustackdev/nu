@@ -16,6 +16,9 @@ designated channel ``Map`` / ``Filter`` use, not a tracked fabric write.
 binding, but every element gets its own arm on the loop at once, each on its own
 Context branch so the arms cannot stomp each other's loop variable. It lives
 here, with the ForEach it mirrors, and borrows the scheduling from ``parallel``.
+``ForEachParReactive`` is that fan-out with the element list left open: it takes a
+change subscription too, re-reads the elements on every notification, and keeps
+one arm per element alive across the difference.
 
 Each atom emits a thunk via ``compile`` / ``acompile`` and stays immutable -
 construction config that must survive ``with_children`` lives in ``payload``
@@ -45,6 +48,7 @@ __all__ = [
     "DelayedDo",
     "ForEachDo",
     "ForEachParAsync",
+    "ForEachParReactive",
     "ForRangeDo",
     "ForeverDo",
     "IfDo",
@@ -326,6 +330,116 @@ class ForEachParAsync(Control):
             elems = [elem async for elem in aiter_any(await items_t(rt))]
             body_nid = rt.program.children[nid][1]
             await _scheduling.aeval_foreach_par(rt, body_nid, elems, name)
+
+        return athunk
+
+
+class ForEachParReactive(Control):
+    """``ForEachParReactive(items, change, body, item="item")`` - one arm per element, kept live against ``change``.
+
+    Args:
+        items: the elements to fan out over, re-evaluated on every
+            notification. Elements must be hashable: the arm book is kept by
+            element, and that is what makes a difference computable.
+        change: the change subscription that says the element set may have
+            moved. Bound once, before the first fan-out, and held for as long
+            as this runs.
+        body: the arm, run once per element, concurrently with the others.
+        item: the name to bind that arm's element under. Optional, defaults
+            to ``"item"``.
+
+    Notes:
+        - ``ForEachParAsync`` fused with ``ReactForever``: the fan-out is the
+          same, arms are the same, but the element list is read again on every
+          notification instead of once at construction time. What comes out of
+          the comparison is births and deaths, and nothing else: an element
+          with no arm gets one started, an arm whose element is gone is
+          cancelled, and every other arm keeps running untouched. That is the
+          whole reason to reach for this over a fan-out rebuilt from scratch,
+          which restarts the innocent along with the guilty.
+        - A death is a cancellation, delivered by this atom. An arm does not
+          have to notice its own element leaving and does not have to outlive
+          it; it is cancelled where it stands, and drained before the pass that
+          killed it returns.
+        - So a delete and a re-add of the same element are a death and then a
+          birth, in that order, never an overlap - but only when the two are
+          seen by two different passes. This reconciles against the current
+          answer to ``items``, it does not replay the change that woke it, so a
+          delete and a re-add that both land between two passes leave the arm
+          running and unaware.
+        - Arms are isolated. One that raises ends alone: the error is not
+          re-raised here and the siblings are not cancelled, which is the
+          opposite of ``ForEachParAsync``'s first-error-wins and is what
+          supervision means. Its element gets a fresh arm on the next
+          reconcile, so a body wanting its failures reported has to report
+          them itself.
+        - Never returns on its own, even with an empty ``items``: it is the
+          subscription that ends it, by the surrounding Flow being cancelled.
+          Every live arm is cancelled and drained on the way out.
+        - A ``body`` that writes into the collection ``change`` watches will
+          wake this atom again, the same feedback ``ReactForever`` has.
+        - Async-only, like ``ForEachParAsync`` and the whole reactive set: the
+          arms are loop tasks and the notification is bridged through an
+          ``asyncio.Queue``. Sync ``run`` refuses the subtree up front via
+          ``requires_async``.
+
+    Example:
+        Following a live collection needs a real substrate behind the
+        subscription, so it cannot run standalone here::
+
+            ForEachParReactive(users.keys(), users.on_children_change(), body)
+    """
+
+    _param_slots = Declared(value=frozenset({0, 1, 3}), name="param_slots")
+    _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
+    _requires_async = Declared(value=True, name="requires_async")
+
+    def __init__(
+        self,
+        items: object,
+        change: object,
+        body: object,
+        item: object = "item",
+    ) -> None:
+        super().__init__(items, change, body, item)
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            msg = "ForEachParReactive requires an async runtime; use arun"
+            raise RuntimeError(msg)
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        from .parallel import _scheduling
+
+        items_t, change_t, _body, key_t = children
+
+        async def athunk(rt: Runtime) -> None:
+            name = await key_t(rt)
+            loop = asyncio.get_running_loop()
+            # One wake per notification, no collapsing, exactly as the React
+            # family does it: a change that arrives mid-pass is still in here
+            # when the pass ends, so no birth is ever slept through.
+            queue: asyncio.Queue[object] = asyncio.Queue()
+
+            def on_change(k: object) -> None:
+                loop.call_soon_threadsafe(queue.put_nowait, k)
+
+            async def elems_of() -> list:
+                return [elem async for elem in aiter_any(await items_t(rt))]
+
+            async def changed() -> object:
+                return await queue.get()
+
+            body_nid = rt.program.children[nid][2]
+            sub = await change_t(rt)
+            sub.bind(on_change)
+            try:
+                await _scheduling.aeval_foreach_reactive(rt, body_nid, name, elems_of, changed)
+            finally:
+                sub.unbind(on_change)
+                sub.close()
 
         return athunk
 

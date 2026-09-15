@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Fan out over a live collection, adding and dropping arms without disturbing the rest
 - Let a ui ref drop its node and everything below it
 
 ## 0.5.0 — 2026-09-15
