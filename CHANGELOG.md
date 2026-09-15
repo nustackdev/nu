@@ -11,6 +11,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Let a ui ref drop its node and everything below it
+
 ## 0.5.0 — 2026-09-15
 
 - Run the type-narrowing suite for real: mypy is a dev dependency now

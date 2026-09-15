@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.domains.shape.dsl import Shape
+    from nu.lang import Nu
     from nu.lang.runtime import Runtime
 
 
@@ -157,6 +158,23 @@ class Ref(StructuredRef):
         session = rt.ctx.get(Session)
         path = await self._aresolve_address(rt, nid)
         return self._lift(await session.aread(path))
+
+    # --- interactions --------------------------------------------------------
+
+    def erase(self) -> Nu:
+        """Drop this Ref's node on the client, and everything under it.
+
+        On every Ref, not on a chosen few: what goes away is the address, and
+        any Ref has one. On a container it takes the whole subtree, which is
+        how something that redraws from scratch clears what its last run left.
+
+        Nothing has to be put back by hand -- the next write carries the chain,
+        so the node comes back with its declared type and props the moment
+        anything is written to it again.
+        """
+        from .interactions import Remove
+
+        return Remove(self)
 
     # --- declaration ---------------------------------------------------------
 

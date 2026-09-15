@@ -7,9 +7,10 @@ Changed, HeadingRef.set -> Write).
 
 - Write   -- server -> client, replace a Ref's value
 - Append  -- server -> client, append to a sequence-typed Ref
+- Remove  -- server -> client, drop a Ref's node and everything under it
 - Changed -- subscribe to client-side notifications on a Ref
 
-All three target the abstract ``Session`` from core.session -- the host
+All four target the abstract ``Session`` from core.session -- the host
 plugs in its concrete transport (nudle over ws; others in future).
 """
 
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
     from .session import Subscription
 
 
-__all__ = ["Append", "Changed", "Write"]
+__all__ = ["Append", "Changed", "Remove", "Write"]
 
 
 class Write(Command):
@@ -93,6 +94,36 @@ class Append(Command):
             values = [await t(rt) for t in value_thunks]
             payload = values[0] if len(values) == 1 else values
             await session.send(Frame(self, ref=path, payload=payload, chain=chain))
+
+        return athunk
+
+
+class Remove(Command):
+    """Send a `remove` frame on a Ref -- drop its node and its whole subtree.
+
+    The plain path and no chain: a remove is addressed at a node that is
+    already there, so there is nothing to bring into being on the way down.
+    A path the browser does not have is a no-op there, which is what the
+    first run of anything that wipes before it draws relies on.
+    """
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            raise RuntimeError("nustd.ui is async-only; use nu.arun")
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: Ref = self._children[0]
+
+        async def athunk(rt: Runtime) -> None:
+            session = rt.ctx.get(Session)
+            ref_nid = rt.program.children[nid][0]
+            path = await ref._aresolve_address(rt, ref_nid)
+            await session.send(Frame(self, ref=path))
 
         return athunk
 

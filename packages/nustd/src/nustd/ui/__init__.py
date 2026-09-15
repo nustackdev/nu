@@ -5,7 +5,7 @@ Layout under ``src/nu/ui/``:
 - ``core/``   -- host-independent UI fabric: ``Ref``, ``Section`` /
                  ``SectionRef``, abstract ``Session`` / ``Subscription``,
                  wire ``Frame`` + interactions (``Write`` / ``Append`` /
-                 ``Changed``). Reusable by any host.
+                 ``Remove`` / ``Changed``). Reusable by any host.
 - ``refs/``   -- widget kit (Row, Card, Table, Input, ...); depends only on core.
 - ``nudle/``  -- Page-based host: ``Index`` / ``Page`` / ``PageRef`` +
                  ``NudleSession`` over ws + FastAPI serve fabric.
@@ -20,7 +20,7 @@ nu_ui`` code keeps working.
 
 from . import core, nudle, refs
 from .core import Frame, Ref, Section, SectionRef, Session, Subscription
-from .core.interactions import Append, Changed, Write
+from .core.interactions import Append, Changed, Remove, Write
 from .nudle.fabric import NudleServer, server
 from .nudle.page import Index, Page, PageRef
 from .nudle.session import NudleSession
@@ -113,6 +113,7 @@ __all__ = [
     "ProseRef",
     "RadioGroupRef",
     "Ref",
+    "Remove",
     "Row",
     "Section",
     "SectionRef",

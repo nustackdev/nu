@@ -11,6 +11,7 @@ The reusable seam under nustd.ui:
   ``encode/decode``    -- wire protocol envelope
 - ``Write`` /
   ``Append`` /
+  ``Remove`` /
   ``Changed``          -- interactions that flow over a Session on a Ref
 
 Concrete hosts (``nustd.ui.nudle`` today, potentially others) build on this
@@ -20,7 +21,7 @@ and any host-specific Ref subclasses. The widget kit under
 """
 
 from .base import Ref
-from .interactions import Append, Changed, Write
+from .interactions import Append, Changed, Remove, Write
 from .protocol import (
     OP_ERROR,
     OP_INIT,
@@ -47,6 +48,7 @@ __all__ = [
     "Changed",
     "Frame",
     "Ref",
+    "Remove",
     "Section",
     "SectionRef",
     "Session",
