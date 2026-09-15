@@ -6,14 +6,15 @@ Requires the `cc` extra (`claude-agent-sdk`) and the `claude` CLI on PATH.
 """
 
 import nu
+import nustd
 
 
 class Agent(nu.Service):
-    ask = nu.cc.PromptRef.method()
+    ask = nustd.cc.PromptRef.method()
 
 
 app = nu.With(
-    nu.cc.bind(Agent, permission_mode="bypassPermissions", max_turns=1),
+    nustd.cc.bind(Agent, permission_mode="bypassPermissions", max_turns=1),
     body=nu.print(nu.Dict(Agent.ask(prompt="write a 3-line haiku about rocksdb"))["text"]),
 )
 

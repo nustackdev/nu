@@ -1,8 +1,9 @@
-"""Expose a plain Python Calculator as a Nu Service via nu.service."""
+"""Expose a plain Python Calculator as a Nu Service via nustd.service."""
 
 import asyncio
 
 import nu
+import nustd
 
 
 class Calculator:
@@ -28,15 +29,15 @@ class Calculator:
 
 
 class Calc(nu.Service):
-    add = nu.service.QueryRef.method()
-    mul = nu.service.QueryRef.method()
-    bump = nu.service.ActionRef.method()
-    reset = nu.service.CommandRef.method()
-    squares = nu.service.StreamQueryRef.method(name="range")
+    add = nustd.service.QueryRef.method()
+    mul = nustd.service.QueryRef.method()
+    bump = nustd.service.ActionRef.method()
+    reset = nustd.service.CommandRef.method()
+    squares = nustd.service.StreamQueryRef.method(name="range")
 
 
 app = nu.With(
-    nu.service.bind(Calc, target=Calculator()),
+    nustd.service.bind(Calc, target=Calculator()),
     body=nu.Sequential(
         nu.print(Calc.add(a=2, b=3)),
         nu.print(Calc.mul(a=6, b=7)),

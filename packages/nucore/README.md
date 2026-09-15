@@ -9,10 +9,10 @@ This distribution is the language and the engine, nothing else: `nu.lang`,
 `nu.domains`, `nu.prog`, `nu.inspect`. No fabric backend ever lands here, and it
 depends on nothing but `typing-extensions` and `cloudpickle`.
 
-The rest of the stack merges into the same `nu.` namespace:
+The rest of the stack sits beside it, one import name each:
 
-- [`nustd`](https://pypi.org/project/nustd/) - the fabrics (`nu.kv`, `nu.ui`,
-  `nu.mem`, `nu.llm`, `nu.http`, `nu.cluster`, ...)
+- [`nustd`](https://pypi.org/project/nustd/) - the fabrics (`nustd.kv`, `nustd.ui`,
+  `nustd.mem`, `nustd.llm`, `nustd.http`, `nustd.cluster`, ...)
 - [`nucli`](https://pypi.org/project/nucli/) - the `nu` command
 
 ```bash

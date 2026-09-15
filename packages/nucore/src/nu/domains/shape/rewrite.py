@@ -3,7 +3,7 @@
 A snippet author writes slots without knowing where they live::
 
     class Section(nu.Shape):
-        inp = nu.ui.InputRef.slot()
+        inp = nustd.ui.InputRef.slot()
 
     def out():
         return Section.inp.set("whatever")

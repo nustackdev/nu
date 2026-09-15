@@ -20,7 +20,7 @@ spawning the child and waiting for its handshake, so a bad interpreter fails
 at the bracket rather than at the first ``LoadNu``); ``cleanup`` closes it.
 Both lifecycles are implemented, sync and async, so either runtime can drive
 the bracket - the async pair runs the blocking work off-thread, the same way
-:class:`nu.mp.MpWorker` does.
+:class:`nustd.mp.MpWorker` does.
 
 A ``PyBrace`` is itself a :class:`~nu.prog.constructors.Constructor`: it
 forwards ``construct`` to whatever it wraps. That is what lets ``LoadNu``
@@ -86,7 +86,7 @@ class PyBrace:
           concurrent loads under one bracket queue rather than interleave.
         - Both lifecycles are implemented, so either runtime can drive the
           bracket; the async pair runs the blocking work off-thread the way
-          ``nu.mp.MpWorker`` does.
+          ``nustd.mp.MpWorker`` does.
         - ``cleanup`` is idempotent and a cleaned-up brace builds again on
           next use, so the same instance survives being bracketed twice.
         - A venv interpreter needs a compatible ``nucore`` installed.

@@ -14,25 +14,18 @@ Or reach a subpackage by dot-access:
     nu.forms.Int        nu.core.Add
     nu.core.flows.Sequential     nu.core.spans.Retry
     nu.shape.Shape      nu.tree.map_nodes
-    nu.mem.IntRef       nu.kv.presets.memory_storage
-    nu.ui.Page          nu.std.uuid.UUID
+
+The fabrics and the standard library live one import away, in `nustd`::
+
+    import nustd
+    nustd.mem.IntRef    nustd.kv.presets.memory_storage
+    nustd.ui.Page       nustd.uuid.UUID
 """
 
 from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError, version as _version
-from pkgutil import extend_path as _extend_path
-from typing import TYPE_CHECKING
 
-
-# `nu` is split across two distributions: `nucore` (this file, the kernel)
-# and `nustd` (the fabrics: std, mem, kv, service, llm, cc, http, proxy, mp, mp_pool,
-# cluster, ui). Installed as wheels the two land in the same
-# `site-packages/nu/` and nothing special is needed; installed editable they
-# sit in two separate `src/` trees, so widen `__path__` to pick up both. Only
-# this file exists as `nu/__init__.py` — the kernel owns the package root.
-__path__ = _extend_path(__path__, __name__)
-del _extend_path
 
 try:
     __version__ = _version("nucore")
@@ -66,7 +59,7 @@ from .domains.service import Method, Service
 # beside them because it is the Form you write that pair with - it sits with
 # the other Forms on the flat surface, not with the machinery. The brace
 # resource and the error types stay at ``nu.prog.*``, the same way
-# ``nu.mp.MpWorker`` does.
+# ``nustd.mp.MpWorker`` does.
 from .prog import Eval, LoadNu, Program
 
 # Language essentials, curated to the building blocks of a Nu program:
@@ -141,15 +134,6 @@ from .lang.helpers import (
     validate,
 )
 
-# Late subpackage namespaces: fabric adapters and higher layers that reach into
-# the flat root surface (e.g. ``from nu import Shape``). These are heavy and
-# transitively pull large trees (storage backends, UI runtime, RPC, ...), so
-# they load lazily on first attribute access via ``__getattr__`` below. The
-# ``TYPE_CHECKING`` block gives IDEs and type-checkers the real modules so
-# ``nu.mem.IntRef`` etc. resolve statically with full completion / go-to-def.
-if TYPE_CHECKING:
-    from . import cc, cluster, http, kv, llm, mem, mp, mp_pool, proxy, service, std, ui
-
 # NOTE: several flat re-exports above shadow Python builtins at module scope
 # — coercion atoms (``set``/``frozenset``/``tuple``/``list``/``dict``/``int``/
 # ``float``/``str``/``bool``), IO atoms (``print``/``input``), and language
@@ -158,66 +142,18 @@ if TYPE_CHECKING:
 # don't get their builtins silently swapped. Any set/dict-builder logic in
 # THIS file must use literals (``{...}``) — never the shadowed callables.
 #
-# Every name below ships in the `nustd` distribution, not in `nucore`.
-# The two wheels merge into one ``site-packages/nu/`` directory (only the
-# kernel carries ``nu/__init__.py``), so on a kernel-only install these
-# submodules are simply absent — hence the install hint in __getattr__.
-# The value is the extra that pulls the fabric's backend, or None when the
-# fabric is pure stdlib and plain ``nustd`` is enough.
-_LAZY = {
-    "cc": "cc",
-    "cluster": "cluster",
-    "http": "http",
-    "kv": "kv",
-    "llm": "llm",
-    "mem": "mem",
-    "mp": None,
-    "mp_pool": None,
-    "proxy": "proxy",
-    "service": None,
-    "std": None,
-    "ui": "ui",
-}
-
-
-def __getattr__(name):
-    import importlib
-    import importlib.util
-
-    if name not in _LAZY:
-        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    try:
-        mod = importlib.import_module(f".{name}", __name__)
-    except ImportError as exc:
-        # Distinguish "nustd is not installed" from "the fabric is there but
-        # its backend blew up" — the second must surface the real error.
-        if importlib.util.find_spec(f"{__name__}.{name}") is not None:
-            raise
-        extra = _LAZY[name]
-        target = f"nustd[{extra}]" if extra else "nustd"
-        msg = f"nu.{name} requires nustd: pip install {target}"
-        raise AttributeError(msg) from exc
-    globals()[name] = mod
-    return mod
-
-
-def __dir__():
-    return sorted({*globals(), *_LAZY})
-
-
 # __all__ = every name bound above (minus privates, the ``__future__`` shim,
-# the internal ``domains`` layer, and any name shadowing a Python builtin)
-# plus the lazy fabric + alias names, so ``from nu import *`` and IDE
-# discovery see them without forcing import. Builtin-shadowing names stay
-# reachable as ``nu.<name>`` — the module dict is unchanged, only ``__all__``
-# is filtered — so ``import *`` cannot silently rebind ``set``/``print``/etc.
-# in the caller's namespace.
+# the internal ``domains`` layer, and any name shadowing a Python builtin),
+# so ``from nu import *`` and IDE discovery see the flat surface. Builtin-
+# shadowing names stay reachable as ``nu.<name>`` — the module dict is
+# unchanged, only ``__all__`` is filtered — so ``import *`` cannot silently
+# rebind ``set``/``print``/etc. in the caller's namespace.
 import builtins as _builtins  # noqa: E402  (placed here to avoid the shadowed scope above)
 
-_HIDDEN = {"annotations", "TYPE_CHECKING", "domains"}
+_HIDDEN = {"annotations", "domains"}
 _SHADOWS_BUILTIN = {n for n in dir(_builtins) if not n.startswith("_")}
 _names = dir()
 __all__ = sorted(
-    ({*_names, *_LAZY} - _HIDDEN - _SHADOWS_BUILTIN) - {n for n in _names if n.startswith("_")}
+    ({*_names} - _HIDDEN - _SHADOWS_BUILTIN) - {n for n in _names if n.startswith("_")}
 )
 del _builtins, _names

@@ -61,7 +61,7 @@ class Inspect(ScalarQuery):
         - A module renders its own docstring, then every Shape, Service, Form,
           Ref, Interaction and free function it holds, one line each.
         - An atom renders the full record for that one subject, and so does a
-          free function such as ``nu.std.math.sqrt``.
+          free function such as ``nustd.math.sqrt``.
         - A Shape or Service renders its prose and one line per entry, never
           the entries themselves: the reader descends by looking up the entry
           path it wants. Walking through a nested Shape slot works the same
@@ -276,11 +276,11 @@ def _render_declaration(record: Record, *, kind: str) -> str:
 
 
 def _render_function(target: object, path: str) -> str:
-    """One free function, reached straight by path: a ``nu.std`` call.
+    """One free function, reached straight by path: a ``nustd`` call.
 
     The std surfaces are functions rather than classes, so a path into one
     lands here and nowhere else. Without it a model asking about
-    ``nu.std.math.sqrt`` gets the empty module render.
+    ``nustd.math.sqrt`` gets the empty module render.
     """
     head, _, name = path.rpartition(".")
     record = parse_call(

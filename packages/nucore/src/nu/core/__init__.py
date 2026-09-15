@@ -24,7 +24,7 @@ Concrete atoms layered on ``nu.lang``'s sort taxonomy - the kinds a real Nu
 program is built from. The goal is a 1:1 map of Python's native builtin
 functions (the ones that are not methods of a class) onto Nu interactions:
 ``abs`` -> ``Abs``, ``getattr`` -> ``GetAttr``, ``print`` -> ``Print``. Library
-functions (itertools, functools, ...) are not core; they land in ``nu.std`` in a
+functions (itertools, functools, ...) are not core; they land in ``nustd`` in a
 later pass. Class methods land in extensions later too.
 
 Files group atoms by **Python domain**, not by sort - one file per logical
@@ -45,7 +45,7 @@ family, crossing Query / Command / Action as the builtins do:
 - ``reflection`` - introspection (Type, IsInstance, Callable, Id, Hash)
 - ``sentinel`` - the EMPTY / INVALID predicates (IsEmpty, IsInvalid)
 - ``io`` - console effects through the stdio fabric (Print, Input).
-        Logging lives at ``nu.std.logging`` -- a Python ``logging`` module wrap.
+        Logging lives at ``nustd.logging`` -- a Python ``logging`` module wrap.
 - ``dynamic`` - host-namespace escape hatches (Globals, Locals)
 
 This surface is the pure Python builtins. The fabric interactions (writing
@@ -122,7 +122,7 @@ from nu.core.cast_fns import (
 from nu.core.comparison import Eq, Ge, Gt, Is, Le, Lt, Ne
 from nu.core.conditional import If, Switch
 from nu.core.dynamic import Globals, Locals
-from nu.core.io import Input, Print, input, print
+from nu.core.io import STDERR, STDIN, STDOUT, Input, Print, input, print
 from nu.core.iteration import Enumerate, Iter, Next, Reversed, Zip
 from nu.core.logical import And, Not, Or, ToBool, bool
 from nu.core.reactive.interactions import (
@@ -175,6 +175,9 @@ from nu.core.transform import (
 
 
 __all__ = [
+    "STDERR",
+    "STDIN",
+    "STDOUT",
     "Abs",
     "Add",
     "AllOf",

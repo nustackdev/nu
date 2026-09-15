@@ -55,7 +55,7 @@ class FabricRef(_ContextRef):
           back from more tags to fewer, never the other way, so an instance
           bound under ``Provide(..., tag="a")`` is not reachable here. A
           subclass that wants tags stores them itself and forwards them to
-          ``ctx.get`` (see ``nu.cluster.refs.RayServiceRef``).
+          ``ctx.get`` (see ``nustd.cluster.refs.RayServiceRef``).
         - A binding holding EMPTY and no binding at all read the same, so use
           ``.exists()`` when the difference matters.
         - The fabric axis is for the long-lived, typed things - storage

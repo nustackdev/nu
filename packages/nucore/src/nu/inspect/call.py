@@ -9,7 +9,7 @@ Signature and return annotation are authoritative for args and yields, so
 neither is written; the docstring's job is summary and notes.
 
 A call is reached two ways: off a class, by the MRO walk the builder kinds
-run, or off a module, by the catalogue here - which is what the ``nu.std``
+run, or off a module, by the catalogue here - which is what the ``nustd``
 surfaces are made of.
 """
 
@@ -167,12 +167,12 @@ def catalogue(module: ModuleType) -> tuple[CallRecord, ...]:
     """A CallRecord per free function the module exports, in export order.
 
     The other catalogues filter a module for a kind of class. This one is for
-    the surfaces that export no classes at all: ``nu.std.math`` is 34 plain
+    the surfaces that export no classes at all: ``nustd.math`` is 34 plain
     functions that build Nu terms, and without this every std submodule reads
     as exporting nothing.
 
     The qualifier is the module's last name part, because that is how the
-    function is written: ``from nu.std import math``, then ``math.sqrt(x)``.
+    function is written: ``from nustd import math``, then ``math.sqrt(x)``.
     """
     name = module.__name__
     qualifier = name.rsplit(".", 1)[-1]

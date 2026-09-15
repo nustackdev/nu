@@ -9,7 +9,7 @@ Two ways in, one type. Standalone, a literal is the child::
     Program(SOURCE).run()
 
 Stored, the child is the ref that reads the source out of a fabric. That is
-what :class:`~nu.kv.refs.prog.ProgramRef` and its mem twin are - the same
+what :class:`~nustd.kv.refs.prog.ProgramRef` and its mem twin are - the same
 Form mixed into a substrate ref, so ``Shape.program.run()`` reads the source
 from storage and runs what it constructs.
 
@@ -31,7 +31,7 @@ The cost is that the verbs are not overridable per substrate. Nothing wants
 that: where the source comes from is the child's business, and the child is
 what differs between substrates.
 
-Construction takes no ``.of()``. The ``nu.std`` Forms use classmethods
+Construction takes no ``.of()``. The ``nustd`` Forms use classmethods
 because their payloads need parsing atoms to build; ``Program`` does not.
 ``TypedNu.__init__`` wraps a single child and ``Nu`` auto-wraps a non-Term
 child into a ``Literal``, so ``Program(SOURCE)`` with a bare ``str`` is
@@ -73,7 +73,7 @@ class Program(Form, TypedNu[str]):
           classification and promise checks all reach it with no special
           case for programs.
         - Mixed into a substrate ref it becomes a program-valued slot
-          (``nu.kv``'s ``ProgramRef`` and its ``nu.mem`` twin), where the
+          (``nustd.kv``'s ``ProgramRef`` and its ``nustd.mem`` twin), where the
           child is what reads the source out of storage. Nothing else about
           the Form changes, which is why the verbs are not overridable per
           substrate.

@@ -1,17 +1,18 @@
 """Counter: rocksdb-backed counter ticking every second, live in the browser."""
 
 import nu
+import nustd
 
 
 class Counter(nu.Shape):
-    value = nu.kv.IntRef.slot()
+    value = nustd.kv.IntRef.slot()
 
 
-class Dashboard(nu.ui.Page):
-    count = nu.ui.StatRef.slot(label="Count")
+class Dashboard(nustd.ui.Page):
+    count = nustd.ui.StatRef.slot(label="Count")
 
 
-class App(nu.ui.Index):
+class App(nustd.ui.Index):
     home = Dashboard.slot("/")
 
 
@@ -26,9 +27,9 @@ tick = Counter.value.init(0) >> nu.ForeverDo(Counter.value.inc() >> nu.Delay(1.0
 
 # assemble: rocksdb-backed, served over the browser
 app = nu.With(
-    nu.kv.rocksdb_navigator(".dbcounter"),
-    nu.ui.server(nu.kv.auto_flow_atomic(ui)),
-    body=nu.kv.auto_flow_atomic(tick),
+    nustd.kv.rocksdb_navigator(".dbcounter"),
+    nustd.ui.server(nustd.kv.auto_flow_atomic(ui)),
+    body=nustd.kv.auto_flow_atomic(tick),
 )
 
 

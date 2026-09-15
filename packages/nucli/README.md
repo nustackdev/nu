@@ -11,10 +11,10 @@ nu demo movies     # run a packaged demo app
 nu telemetry       # see / change telemetry settings
 ```
 
-It ships `nu._cli` into the `nu.` namespace and depends on
+It imports as `nucli`, installs the `nu` command, and depends on
 [`nustd`](https://pypi.org/project/nustd/) (which pulls the
 [`nucore`](https://pypi.org/project/nucore/) kernel) because the
-packaged demos run on `nu.ui` and `nu.kv` at runtime.
+packaged demos run on `nustd.ui` and `nustd.kv` at runtime.
 
 You normally do not install this directly - `pip install "nustd[all]" nucli`
 brings it along. Released in lockstep with the kernel. Docs at

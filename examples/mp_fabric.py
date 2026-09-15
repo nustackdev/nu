@@ -1,8 +1,9 @@
-"""nu.mp as a Nu compute fabric."""
+"""nustd.mp as a Nu compute fabric."""
 
 import os
 
 import nu
+import nustd
 
 
 # =========================================================================
@@ -16,9 +17,9 @@ def demo_singleton() -> None:
     print("=" * 60)
 
     tree = nu.Provide(
-        nu.mp.MpWorker,
+        nustd.mp.MpWorker,
         {"name": "solo"},
-        nu.mp.Teleport(nu.Add(41, 1)),
+        nustd.mp.Teleport(nu.Add(41, 1)),
     )
     result, _ = nu.run(tree)
     print(f"  yield: {result}")
@@ -35,16 +36,16 @@ def demo_fleet_by_index() -> None:
     print("=" * 60)
 
     tree = nu.ProvideList(
-        nu.mp.MpWorker,
+        nustd.mp.MpWorker,
         [
             {"name": "worker-0"},
             {"name": "worker-1"},
             {"name": "worker-2"},
         ],
         nu.Add(
-            nu.mp.Teleport(nu.Add(1, 2), target=0),  # 3
-            nu.mp.Teleport(nu.Add(10, 20), target=1),  # 30
-            nu.mp.Teleport(nu.Add(100, 200), target=2),  # 300
+            nustd.mp.Teleport(nu.Add(1, 2), target=0),  # 3
+            nustd.mp.Teleport(nu.Add(10, 20), target=1),  # 30
+            nustd.mp.Teleport(nu.Add(100, 200), target=2),  # 300
         ),
     )
     result, _ = nu.run(tree)
@@ -62,16 +63,16 @@ def demo_keyed_fleet() -> None:
     print("=" * 60)
 
     tree = nu.ProvideDict(
-        nu.mp.MpWorker,
+        nustd.mp.MpWorker,
         {
             ("shard", 0): {"name": "shard-0"},
             ("shard", 1): {"name": "shard-1"},
             "indexer-main": {"name": "indexer-main"},
         },
         nu.Add(
-            nu.mp.Teleport(nu.Add(1, 2), target=("shard", 0)),  # 3
-            nu.mp.Teleport(nu.Add(3, 4), target=("shard", 1)),  # 7
-            nu.mp.Teleport(nu.Add(5, 6), target="indexer-main"),  # 11
+            nustd.mp.Teleport(nu.Add(1, 2), target=("shard", 0)),  # 3
+            nustd.mp.Teleport(nu.Add(3, 4), target=("shard", 1)),  # 7
+            nustd.mp.Teleport(nu.Add(5, 6), target="indexer-main"),  # 11
         ),
     )
     result, _ = nu.run(tree)

@@ -7,15 +7,15 @@ on the Service class. Mirrors Shape's Slot / Ref split:
     Shape:   Slot   (decl) -> <Type>Ref  (leaf)
     Service: Method (decl) -> MethodRef  (leaf)
 
-No Interactions here. Concrete dialects (nu.http, later others) subclass
+No Interactions here. Concrete dialects (nustd.http, later others) subclass
 MethodRef and expose their own `.method(...)` factory that packages the
 subclass + config as a `Method` declaration.
 
-Example (using nu.http)::
+Example (using nustd.http)::
 
     class GH(Service):
-        get_repo    = nu.http.GETRef.method("/repos/{owner}/{name}")
-        list_issues = nu.http.GETRef.method("/repos/{owner}/{name}/issues")
+        get_repo    = nustd.http.GETRef.method("/repos/{owner}/{name}")
+        list_issues = nustd.http.GETRef.method("/repos/{owner}/{name}/issues")
 
     GH.get_repo   # -> GETRef  (descriptor unwraps the Method declaration)
     GH.get_repo(owner="nu", name="core")  # -> HttpGet interaction

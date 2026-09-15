@@ -130,8 +130,8 @@ def construct(
         # dont_inherit: compile() otherwise picks up the __future__ flags of
         # *this* module, and this module uses `from __future__ import
         # annotations`. A program compiled under that gets PEP 563 lazy
-        # annotations, so `counter: nu.mem.IntRef` in a Shape body lands in
-        # __annotations__ as the string "nu.mem.IntRef", ShapeMeta cannot
+        # annotations, so `counter: nustd.mem.IntRef` in a Shape body lands in
+        # __annotations__ as the string "nustd.mem.IntRef", ShapeMeta cannot
         # resolve it, and the slot is silently never declared. User source
         # gets the interpreter's own defaults, not ours.
         code = compile(source, filename, "exec", dont_inherit=True)

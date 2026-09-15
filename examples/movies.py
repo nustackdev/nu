@@ -6,6 +6,7 @@ visible rows.
 """
 
 import nu
+import nustd
 
 
 _GENRES = [
@@ -22,16 +23,16 @@ _GENRES_WITH_ANY = [{"value": "", "label": "Any genre"}, *_GENRES]
 # ---- UI ---------------------------------------------------------------------
 
 
-class TitleField(nu.ui.Field):
-    input = nu.ui.InputRef.slot(placeholder="e.g. Arrival")
+class TitleField(nustd.ui.Field):
+    input = nustd.ui.InputRef.slot(placeholder="e.g. Arrival")
 
 
-class TextAreaField(nu.ui.Field):
-    input = nu.ui.TextAreaRef.slot(placeholder="Quick thoughts...", rows=2)
+class TextAreaField(nustd.ui.Field):
+    input = nustd.ui.TextAreaRef.slot(placeholder="Quick thoughts...", rows=2)
 
 
-class YearField(nu.ui.Field):
-    input = nu.ui.NumberInputRef.slot(
+class YearField(nustd.ui.Field):
+    input = nustd.ui.NumberInputRef.slot(
         min=1900.0,
         max=2100.0,
         step=1.0,
@@ -39,8 +40,8 @@ class YearField(nu.ui.Field):
     )
 
 
-class RatingField(nu.ui.Field):
-    input = nu.ui.NumberInputRef.slot(
+class RatingField(nustd.ui.Field):
+    input = nustd.ui.NumberInputRef.slot(
         min=1.0,
         max=10.0,
         step=0.5,
@@ -48,94 +49,94 @@ class RatingField(nu.ui.Field):
     )
 
 
-class GenreField(nu.ui.Field):
-    input = nu.ui.SelectRef.slot(options=_GENRES, selected="drama")
+class GenreField(nustd.ui.Field):
+    input = nustd.ui.SelectRef.slot(options=_GENRES, selected="drama")
 
 
-class SwitchField(nu.ui.Field):
-    input = nu.ui.SwitchRef.slot(default=True)
+class SwitchField(nustd.ui.Field):
+    input = nustd.ui.SwitchRef.slot(default=True)
 
 
-class DetailsFieldset(nu.ui.Fieldset):
+class DetailsFieldset(nustd.ui.Fieldset):
     title = TitleField.slot(label="Title", help="Movie title", required=True)
     year = YearField.slot(label="Year")
     genre = GenreField.slot(label="Genre")
 
 
-class ScoreFieldset(nu.ui.Fieldset):
+class ScoreFieldset(nustd.ui.Fieldset):
     rating = RatingField.slot(label="Rating", help="How much you liked it")
     watched = SwitchField.slot(label="Watched?", help="Off means still on the pile")
     notes = TextAreaField.slot(label="Notes")
 
 
-class AddMovieForm(nu.ui.Form):
+class AddMovieForm(nustd.ui.Form):
     details = DetailsFieldset.slot(legend="Movie", gap="md")
     score = ScoreFieldset.slot(legend="Your take", gap="md")
-    submit = nu.ui.ButtonRef.slot(label="Log it", variant="primary")
-    feedback = nu.ui.AlertRef.slot(variant="ok", dismissible=True)
+    submit = nustd.ui.ButtonRef.slot(label="Log it", variant="primary")
+    feedback = nustd.ui.AlertRef.slot(variant="ok", dismissible=True)
 
 
-class MinRatingField(nu.ui.Field):
-    input = nu.ui.NumberInputRef.slot(min=1.0, max=10.0, step=0.5, default=1.0)
+class MinRatingField(nustd.ui.Field):
+    input = nustd.ui.NumberInputRef.slot(min=1.0, max=10.0, step=0.5, default=1.0)
 
 
-class FilterGenreField(nu.ui.Field):
-    input = nu.ui.SelectRef.slot(options=_GENRES_WITH_ANY, selected="")
+class FilterGenreField(nustd.ui.Field):
+    input = nustd.ui.SelectRef.slot(options=_GENRES_WITH_ANY, selected="")
 
 
-class WatchedOnlyField(nu.ui.Field):
-    input = nu.ui.SwitchRef.slot(default=False)
+class WatchedOnlyField(nustd.ui.Field):
+    input = nustd.ui.SwitchRef.slot(default=False)
 
 
-class FilterRow(nu.ui.Row):
+class FilterRow(nustd.ui.Row):
     min_rating = MinRatingField.slot(label="Min rating")
     genre = FilterGenreField.slot(label="Genre")
     watched_only = WatchedOnlyField.slot(label="Already watched")
-    apply = nu.ui.ButtonRef.slot(label="Apply", variant="secondary")
-    clear = nu.ui.ButtonRef.slot(label="Clear", variant="ghost")
+    apply = nustd.ui.ButtonRef.slot(label="Apply", variant="secondary")
+    clear = nustd.ui.ButtonRef.slot(label="Clear", variant="ghost")
 
 
-class FilterCard(nu.ui.Card):
+class FilterCard(nustd.ui.Card):
     body = FilterRow.slot(gap=3, align="center", wrap=True)
 
 
-class StatsRow(nu.ui.Row):
-    total = nu.ui.StatRef.slot(label="Total")
-    watched = nu.ui.StatRef.slot(label="Watched")
-    unseen = nu.ui.StatRef.slot(label="Unseen")
-    latest = nu.ui.TextRef.slot()
-    health = nu.ui.BadgeRef.slot(label="Fresh", variant="ok")
+class StatsRow(nustd.ui.Row):
+    total = nustd.ui.StatRef.slot(label="Total")
+    watched = nustd.ui.StatRef.slot(label="Watched")
+    unseen = nustd.ui.StatRef.slot(label="Unseen")
+    latest = nustd.ui.TextRef.slot()
+    health = nustd.ui.BadgeRef.slot(label="Fresh", variant="ok")
 
 
-class StatsCard(nu.ui.Card):
+class StatsCard(nustd.ui.Card):
     body = StatsRow.slot(gap=6, align="center", wrap=True)
 
 
-class TableBody(nu.ui.Column):
-    table = nu.ui.TableRef.slot(
+class TableBody(nustd.ui.Column):
+    table = nustd.ui.TableRef.slot(
         columns=["title", "year", "genre", "rating", "watched", "notes"],
         striped=True,
         dense=True,
         clickable_rows=True,
         max_rows=200,
     )
-    empty = nu.ui.AlertRef.slot(
+    empty = nustd.ui.AlertRef.slot(
         variant="info",
         body="No movies match",
         dismissible=False,
     )
 
 
-class TableCard(nu.ui.Card):
+class TableCard(nustd.ui.Card):
     body = TableBody.slot(gap=3)
 
 
 # ---- Pages ------------------------------------------------------------------
 
 
-class Movies(nu.ui.Page):
-    heading = nu.ui.HeadingRef.slot(label="Your movies")
-    intro = nu.ui.TextRef.slot(
+class Movies(nustd.ui.Page):
+    heading = nustd.ui.HeadingRef.slot(label="Your movies")
+    intro = nustd.ui.TextRef.slot(
         value="Log what you watch. New entries land at the top of the table.",
     )
 
@@ -145,36 +146,36 @@ class Movies(nu.ui.Page):
     shelf = TableCard.slot(title="Movies")
 
 
-class DetailRow(nu.ui.Row):
-    year = nu.ui.StatRef.slot(label="Year")
-    genre = nu.ui.StatRef.slot(label="Genre")
-    rating = nu.ui.StatRef.slot(label="Rating")
-    watched = nu.ui.BadgeRef.slot(label="Watched", variant="ok")
+class DetailRow(nustd.ui.Row):
+    year = nustd.ui.StatRef.slot(label="Year")
+    genre = nustd.ui.StatRef.slot(label="Genre")
+    rating = nustd.ui.StatRef.slot(label="Rating")
+    watched = nustd.ui.BadgeRef.slot(label="Watched", variant="ok")
 
 
-class MetaCard(nu.ui.Card):
+class MetaCard(nustd.ui.Card):
     meta = DetailRow.slot(gap=6, align="center", wrap=True)
 
 
-class NotesCard(nu.ui.Card):
-    body = nu.ui.MarkdownRef.slot()
+class NotesCard(nustd.ui.Card):
+    body = nustd.ui.MarkdownRef.slot()
 
 
-class DetailActions(nu.ui.Row):
-    back = nu.ui.ButtonRef.slot(label="Back", variant="ghost")
-    remove = nu.ui.ButtonRef.slot(label="Delete", variant="danger")
+class DetailActions(nustd.ui.Row):
+    back = nustd.ui.ButtonRef.slot(label="Back", variant="ghost")
+    remove = nustd.ui.ButtonRef.slot(label="Delete", variant="danger")
 
 
-class MovieDetail(nu.ui.Page):
-    heading = nu.ui.HeadingRef.slot()
+class MovieDetail(nustd.ui.Page):
+    heading = nustd.ui.HeadingRef.slot()
     meta = MetaCard.slot(title="Details")
     notes = NotesCard.slot(title="Notes")
     actions = DetailActions.slot(gap=3, align="center")
 
 
-class App(nu.ui.Index):
-    title: nu.ui.TitleRef
-    nav: nu.ui.NavRef
+class App(nustd.ui.Index):
+    title: nustd.ui.TitleRef
+    nav: nustd.ui.NavRef
     movies = Movies.slot("/")
     detail = MovieDetail.slot("/detail")
 
@@ -183,20 +184,20 @@ class App(nu.ui.Index):
 
 
 class Movie(nu.Shape):
-    title = nu.kv.StrRef.slot()
-    year = nu.kv.IntRef.slot()
-    genre = nu.kv.StrRef.slot()
-    rating = nu.kv.FloatRef.slot()
-    watched = nu.kv.BoolRef.slot()
-    notes = nu.kv.StrRef.slot()
+    title = nustd.kv.StrRef.slot()
+    year = nustd.kv.IntRef.slot()
+    genre = nustd.kv.StrRef.slot()
+    rating = nustd.kv.FloatRef.slot()
+    watched = nustd.kv.BoolRef.slot()
+    notes = nustd.kv.StrRef.slot()
 
 
 class State(nu.Shape):
-    movies = nu.kv.ShapesListRef.slot(Movie)
-    total = nu.kv.IntRef.slot()
-    watched = nu.kv.IntRef.slot()
-    latest_title = nu.kv.StrRef.slot()
-    selected = nu.kv.IntRef.slot()  # index of the movie open in MovieDetail
+    movies = nustd.kv.ShapesListRef.slot(Movie)
+    total = nustd.kv.IntRef.slot()
+    watched = nustd.kv.IntRef.slot()
+    latest_title = nustd.kv.StrRef.slot()
+    selected = nustd.kv.IntRef.slot()  # index of the movie open in MovieDetail
 
 
 # ---- Seed ------------------------------------------------------------------
@@ -283,7 +284,7 @@ def _rows_filtered() -> nu.Nu:
 # Seed once, on a store that has never been written. A restart then keeps what
 # the user logged instead of replacing the shelf with the samples again.
 # `selected` stays unconditional: it is a cursor into the detail page, not data.
-init = nu.kv.Transaction(
+init = nustd.kv.Transaction(
     nu.IfDo(
         State.total.missing(),
         State.total.set(len(_SEED_MOVIES))
@@ -295,7 +296,7 @@ init = nu.kv.Transaction(
 )
 
 
-hydrate = nu.kv.Snapshot(
+hydrate = nustd.kv.Snapshot(
     App.movies.stats.body.total.set_value(nu.str(State.total))
     | App.movies.stats.body.watched.set_value(nu.str(State.watched))
     | App.movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
@@ -306,7 +307,7 @@ hydrate = nu.kv.Snapshot(
 
 on_add = nu.ReactForever(
     App.movies.form.submit.on_click(),
-    nu.kv.Transaction(
+    nustd.kv.Transaction(
         State.movies.append(
             nu.Dict.of(
                 title=nu.Str(App.movies.form.details.title.input),
@@ -323,7 +324,7 @@ on_add = nu.ReactForever(
         )
         | State.latest_title.set(nu.Str(App.movies.form.details.title.input)),
     )
-    >> nu.kv.Snapshot(
+    >> nustd.kv.Snapshot(
         App.movies.shelf.body.table.set(_rows_form())
         | App.movies.stats.body.total.set_value(nu.str(State.total))
         | App.movies.stats.body.watched.set_value(nu.str(State.watched))
@@ -341,8 +342,8 @@ on_row_click = nu.ReactForever(
     App.movies.shelf.body.table.on_row_click(),
     nu.IfDo(
         nu.Contains(nu.DictAttrRef("row_click"), "row_index"),
-        nu.kv.Transaction(State.selected.set(nu.DictAttrRef("row_click")["row_index"]))
-        >> nu.kv.Snapshot(
+        nustd.kv.Transaction(State.selected.set(nu.DictAttrRef("row_click")["row_index"]))
+        >> nustd.kv.Snapshot(
             App.detail.heading.set(State.movies[State.selected].title)
             | App.detail.meta.meta.year.set_value(nu.str(State.movies[State.selected].year))
             | App.detail.meta.meta.genre.set_value(State.movies[State.selected].genre)
@@ -360,10 +361,10 @@ on_row_click = nu.ReactForever(
 
 on_delete = nu.ReactForever(
     App.detail.actions.remove.on_click(),
-    nu.kv.Transaction(
+    nustd.kv.Transaction(
         State.movies.del_at(State.selected) >> State.total.set(nu.Len(State.movies)),
     )
-    >> nu.kv.Snapshot(
+    >> nustd.kv.Snapshot(
         App.movies.shelf.body.table.set(_rows_form())
         | App.movies.stats.body.total.set_value(nu.str(State.total))
         | App.movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
@@ -377,13 +378,13 @@ on_back = nu.ReactForever(App.detail.actions.back.on_click(), App.nav.set("/"))
 
 on_filter_apply = nu.ReactForever(
     App.movies.filters.body.apply.on_click(),
-    nu.kv.Snapshot(App.movies.shelf.body.table.set(_rows_filtered())),
+    nustd.kv.Snapshot(App.movies.shelf.body.table.set(_rows_filtered())),
 )
 
 
 on_filter_clear = nu.ReactForever(
     App.movies.filters.body.clear.on_click(),
-    nu.kv.Snapshot(
+    nustd.kv.Snapshot(
         App.movies.filters.body.min_rating.input.set(1.0)
         | App.movies.filters.body.genre.input.set("")
         | App.movies.filters.body.watched_only.input.set(False)
@@ -400,9 +401,9 @@ ui = (
 
 
 app = nu.With(
-    nu.kv.rocksdb_navigator(".dbmovies"),
-    nu.ui.server(nu.kv.auto_flow_atomic(ui)),
-    body=nu.kv.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
+    nustd.kv.rocksdb_navigator(".dbmovies"),
+    nustd.ui.server(nustd.kv.auto_flow_atomic(ui)),
+    body=nustd.kv.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
 )
 
 

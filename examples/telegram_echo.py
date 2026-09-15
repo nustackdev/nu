@@ -1,6 +1,6 @@
 """Telegram echo bot from stock Nu blocks.
 
-Uses only nu.http (Bot API sends + getUpdates long-poll) and nu.kv (offset
+Uses only nustd.http (Bot API sends + getUpdates long-poll) and nustd.kv (offset
 cursor). No new fabric, no new Ref types. The whole bot is one nu.With tree.
 
 Set TG_TOKEN in the environment (from @BotFather), then:
@@ -11,6 +11,7 @@ import asyncio
 import os
 
 import nu
+import nustd
 
 
 TOKEN = os.environ["TG_TOKEN"]
@@ -20,15 +21,15 @@ TOKEN = os.environ["TG_TOKEN"]
 
 
 class Bot(nu.Service):
-    get_updates = nu.http.POSTRef.method("/getUpdates")
-    send_message = nu.http.POSTRef.method("/sendMessage")
+    get_updates = nustd.http.POSTRef.method("/getUpdates")
+    send_message = nustd.http.POSTRef.method("/sendMessage")
 
 
 # ---- Poll cursor: last acked update_id, kv-backed -------------------------
 
 
 class Cursor(nu.Shape):
-    offset = nu.kv.IntRef.slot()
+    offset = nustd.kv.IntRef.slot()
 
 
 # ---- One poll tick: fetch batch, echo each message, bump offset -----------
@@ -47,10 +48,12 @@ tick = nu.ForEachDo(
 # ---- Assemble --------------------------------------------------------------
 
 app = nu.With(
-    nu.kv.memory_navigator(),
-    nu.http.bind(Bot, base_url=f"https://api.telegram.org/bot{TOKEN}"),
+    nustd.kv.memory_navigator(),
+    nustd.http.bind(Bot, base_url=f"https://api.telegram.org/bot{TOKEN}"),
     body=(
-        nu.kv.auto_flow_atomic(Cursor.offset.init(0) >> nu.ForeverDo(nu.kv.auto_flow_atomic(tick)))
+        nustd.kv.auto_flow_atomic(
+            Cursor.offset.init(0) >> nu.ForeverDo(nustd.kv.auto_flow_atomic(tick))
+        )
     ),
 )
 

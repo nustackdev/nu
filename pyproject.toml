@@ -1,11 +1,12 @@
 # Workspace root. Not a distribution itself -- it exists to hold the three
 # packages, the dev toolchain, and the shared lint / test config.
 #
-#   packages/nucore -> nucore      (the kernel; owns `nu/__init__.py`)
-#   packages/nustd  -> nustd       (the fabrics; no `nu/__init__.py`)
-#   packages/nucli  -> nucli       (the `nu` command; no `nu/__init__.py`)
+#   packages/nucore -> nucore      (the kernel)        import nu
+#   packages/nustd  -> nustd       (the fabrics)       import nustd
+#   packages/nucli  -> nucli       (the `nu` command)  import nucli
 #
-# All three install as `nu.*`; nothing about the import surface changed.
+# One distribution, one import name, one tree each. Nothing reaches into
+# anyone else's package directory.
 [tool.uv.workspace]
 members = ["packages/*"]
 
@@ -35,14 +36,16 @@ dev = [
     "pytest-asyncio>=1.3.0",
 ]
 
-# Tests stay at the repo root: one suite over both packages.
+# Tests stay at the repo root: one suite over all three packages.
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
 ]
-# Underscore prefix on `_support` keeps pytest from auto-collecting it as tests.
+# `tests/_lib` is the only directory on sys.path, and `_support` is the only
+# thing in it -- so no test directory can ever shadow a real package name.
+# The underscore also keeps pytest from collecting it as tests.
 pythonpath = [
-    "tests/nu",
+    "tests/_lib",
 ]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
@@ -137,6 +140,12 @@ convention = "google"
 "examples/**/*.py" = [
     "S101", "T20", "D", "ANN",
 ]
+# The demos the `nu` command ships are examples that happen to live in a
+# package. Same rules as examples/ -- they used to get them for free from the
+# private `nu._cli` path, and the package is `nucli` now.
+"**/src/nucli/demos/**/*.py" = [
+    "S101", "T20", "D", "ANN",
+]
 "benchmarks/**/*.py" = [
     "S101", "T20", "D", "ANN", "B007",
 ]
@@ -146,24 +155,24 @@ convention = "google"
 "**/refs/std.py" = [
     "N811", "N812",  # std Forms (UUID, date, ...) aliased as *Form to not shadow stdlib types
 ]
-"**/src/nu/ui/core/**/*.py" = [
+"**/src/nustd/ui/core/**/*.py" = [
     "D102", "D103",
     "ANN401",  # _acompile athunks legitimately return Any (host-lifted primitive)
 ]
-"**/src/nu/ui/refs/**/*.py" = [
+"**/src/nustd/ui/refs/**/*.py" = [
     "D102",    # widget setters are one-liners; docstring per method is ceremony
     "ANN401",
 ]
-"**/src/nu/ui/nudle/**/*.py" = [
+"**/src/nustd/ui/nudle/**/*.py" = [
     "D102", "D103", "D205", "ANN401", "S110",
 ]
-"**/src/nu/http/methods.py" = [
+"**/src/nustd/http/methods.py" = [
     "N802",  # GET/POST/PUT/PATCH/DELETE mirror HTTP verbs
 ]
 
 [tool.ruff.lint.isort]
 known-first-party = [
-    "nu",
+    "nu", "nustd", "nucli",
     "virtuals", "invisibles",
     ]
 force-single-line = false

@@ -15,7 +15,7 @@ Plus the structural folds Python reaches for without a single builtin name -
 or the whole drain of a stream.
 
 ``functools.reduce`` is stdlib, not a bare builtin, so a generic ``Reduce`` is
-core-adjacent (borderline). It is deferred to ``nu.std``, not declared here:
+core-adjacent (borderline). It is deferred to ``nustd``, not declared here:
 core stays the 1:1 map of native builtins.
 
 Every atom is EVALUABLE: each ``Reduction`` defines ``compile`` (sync) and

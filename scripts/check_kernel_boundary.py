@@ -2,11 +2,11 @@
 """Fail if the kernel (``packages/nucore``) imports a batteries fabric (``nustd``).
 
 ``nucore`` must install and run on its own. Anything under
-``packages/nucore/src/`` that does ``import nu.kv`` / ``from nu.std... import ...``
+``packages/nucore/src/`` that does ``import nustd.kv`` / ``from nustd... import ...``
 at module scope breaks that, so this hook rejects it.
 
 Only real ``import`` statements are checked -- docstrings and comments are
-untouched (they are the documented surface and reference ``nu.kv`` etc. all
+untouched (they are the documented surface and reference ``nustd.kv`` etc. all
 over). A ``try:``-guarded or function-local import is allowed on purpose: that
 is the sanctioned escape hatch for a kernel module that wants a fabric when one
 happens to be installed.
@@ -24,29 +24,10 @@ from pathlib import Path
 
 KERNEL = Path(__file__).resolve().parent.parent / "packages" / "nucore" / "src"
 
-BATTERIES = frozenset(
-    {
-        "std",
-        "mem",
-        "kv",
-        "service",
-        "llm",
-        "cc",
-        "http",
-        "proxy",
-        "mp",
-        "cluster",
-        "ui",
-    }
-)
 
-
-def _fabric(module: str) -> str | None:
-    """The batteries fabric a dotted module name names, if any."""
-    parts = module.split(".")
-    if len(parts) >= 2 and parts[0] == "nu" and parts[1] in BATTERIES:
-        return parts[1]
-    return None
+def _batteries(module: str) -> bool:
+    """Whether a dotted module name reaches into the batteries package."""
+    return module == "nustd" or module.startswith("nustd.")
 
 
 def _violations(path: Path) -> list[str]:
@@ -62,9 +43,8 @@ def _violations(path: Path) -> list[str]:
         elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
             names = [(node.lineno, node.module)]
         for lineno, module in names:
-            fabric = _fabric(module)
-            if fabric is not None:
-                out.append(f"{path}:{lineno}: kernel imports batteries fabric nu.{fabric}")
+            if _batteries(module):
+                out.append(f"{path}:{lineno}: kernel imports batteries module {module}")
     return out
 
 

@@ -11,6 +11,11 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Give the fabrics their own import: `nustd.kv`, `nustd.ui`, not `nu.kv`
+- Drop the std layer: the stdlib mirrors are `nustd.uuid`, `nustd.datetime`
+
 ## 0.4.0 — 2026-09-15
 
 - Give LoadNu a rewrite slot

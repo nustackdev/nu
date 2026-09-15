@@ -7,7 +7,7 @@ a Python function, return the result" boilerplate that most non-hot
 interactions are.
 
 ``nu.core`` atoms stay hand-written end-to-end (a clean thunk, no extra hop)
-for the hot path. The factory is for the rest - the ``nu.std`` library and
+for the hot path. The factory is for the rest - the ``nustd`` library and
 anything else that just bridges to a host callable.
 
 A method call needs no special support here: an *unbound* method is a plain

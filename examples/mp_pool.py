@@ -1,7 +1,7 @@
-"""nu.mp_pool: the pool of worker processes as one fabric.
+"""nustd.mp_pool: the pool of worker processes as one fabric.
 
-nu.mp is the fabric of ONE process, and its whole lifecycle is the bracket.
-nu.mp_pool is the fabric of the fleet: one Provide owns N workers, and the
+nustd.mp is the fabric of ONE process, and its whole lifecycle is the bracket.
+nustd.mp_pool is the fabric of the fleet: one Provide owns N workers, and the
 interactions address them by id. Every id is a child, never payload, so it
 can come from a Ref, an AttrRef or any query.
 
@@ -14,11 +14,10 @@ Run me: python examples/mp_pool.py
 """
 
 import nu
-from nu.core.io import STDOUT
-from nu.mp_pool import PoolRef, WorkerPool
+import nustd
 
 
-POOL = PoolRef()
+POOL = nustd.mp_pool.PoolRef()
 WORKER = nu.AttrRef("w")
 
 # Resident work: a tree that never terminates, so it must be dispatched
@@ -39,23 +38,27 @@ READ = nu.AttrRef("tick")
 
 def demo() -> None:
     tree = nu.Provide(
-        WorkerPool,
+        nustd.mp_pool.WorkerPool,
         {"name": "nu"},
         nu.Sequential(
             # Launch yields the new worker's id; bind it and address everything by it.
             nu.SetCmd(WORKER, POOL.launch()),
-            nu.Print(STDOUT, "worker id        :", WORKER),
+            nu.Print(nu.STDOUT, "worker id        :", WORKER),
             # Dispatch returns as soon as the child has the tree. It does not wait,
             # which is the whole reason resident work is possible at all.
             POOL.dispatch(TICKER, WORKER),
             # Meanwhile a teleport reads the same worker, and is answered while
             # the resident body is still running in it.
-            nu.DelayedDo(0.3, nu.Print(STDOUT, "ticks after 0.3s :", POOL.teleport(READ, WORKER))),
-            nu.DelayedDo(0.3, nu.Print(STDOUT, "ticks after 0.6s :", POOL.teleport(READ, WORKER))),
+            nu.DelayedDo(
+                0.3, nu.Print(nu.STDOUT, "ticks after 0.3s :", POOL.teleport(READ, WORKER))
+            ),
+            nu.DelayedDo(
+                0.3, nu.Print(nu.STDOUT, "ticks after 0.6s :", POOL.teleport(READ, WORKER))
+            ),
             # A real kill: terminate and reap. No cooperative stop sentinel,
             # because a worker busy with a resident body never reads its pipe.
             POOL.kill(WORKER),
-            nu.Print(STDOUT, "alive after kill :", POOL.alive(WORKER)),
+            nu.Print(nu.STDOUT, "alive after kill :", POOL.alive(WORKER)),
         ),
     )
     nu.run(tree)

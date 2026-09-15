@@ -84,14 +84,14 @@ Reach any value by name; it survives restarts. Same code local or sharded across
 ```python
 ...
 class DB(nu.Shape):
-    hits = nu.kv.IntRef.slot()
+    hits = nustd.kv.IntRef.slot()
 
 # +1 to a persistent counter
 op = DB.hits.set(DB.hits + 1)
 
 app = nu.With(
-    nu.kv.rocksdb_navigator(".db"),
-    body=nu.kv.auto_flow_atomic(op),
+    nustd.kv.rocksdb_navigator(".db"),
+    body=nustd.kv.auto_flow_atomic(op),
 )
 ...
 ```
@@ -109,14 +109,14 @@ A text block, a chart, a form — set them like variables, they render. Update t
 
 ```python
 ...
-class Dashboard(nu.ui.Page):
-    hello = nu.ui.TextRef.slot()
+class Dashboard(nustd.ui.Page):
+    hello = nustd.ui.TextRef.slot()
 
 # renders live in the browser
 op = Dashboard.hello.set("Hello, browser.")
 
 app = nu.With(
-    nu.ui.server(op),
+    nustd.ui.server(op),
 )
 ...
 ```
@@ -135,16 +135,16 @@ Teleport any Nu tree to any worker; it runs there and returns the result. Where 
 ```python
 ...
 class DB(nu.Shape):
-    hits = nu.kv.IntRef.slot()
+    hits = nustd.kv.IntRef.slot()
 
 # any Nu op
 op = DB.hits.set(DB.hits + 1)
 
 # same op — teleport it to a worker
-remote = nu.cluster.Teleport(op, target="gpu-0")
+remote = nustd.cluster.Teleport(op, target="gpu-0")
 
 app = nu.With(
-    nu.cluster.RayCluster(),
+    nustd.cluster.RayCluster(),
     body=remote,
 )
 ...
@@ -164,13 +164,13 @@ LLM chat as a Ref. Swap the model string, keep the code. Local models and hosted
 ```python
 ...
 class Bot(nu.Service):
-    chat = nu.llm.ChatRef.method(temperature=0.7)
+    chat = nustd.llm.ChatRef.method(temperature=0.7)
 
 # ask the model
 op = Bot.chat(prompt="one-line haiku about rust")
 
 app = nu.With(
-    nu.llm.ollama(Bot, host="localhost", model="qwen2.5:7b"),
+    nustd.llm.ollama(Bot, host="localhost", model="qwen2.5:7b"),
     body=op,
 )
 ...
@@ -191,7 +191,7 @@ Install, run a demo, start hacking.
 Python 3.10+ &middot; everything ships in the wheel.
 
 ```bash
-pip install "nustd[all]" nucli
+pip install nucore "nustd[all]" nucli
 ```
 
 ### 02 · Run a demo
@@ -215,16 +215,16 @@ Each fabric gives your Nu app a new capability. These are the ones Nu ships with
 
 | Fabric | What | Primary interaction |
 | --- | --- | --- |
-| [nu.kv](https://nustack.dev/docs/reference/fabrics/kv) | Persistent state. | `State.movies.append(m)` |
-| [nu.ui](https://nustack.dev/docs/reference/fabrics/ui) | Reactive web UI. | `Dashboard.count.set_value(n)` |
-| [nu.cluster](https://nustack.dev/docs/reference/fabrics/cluster) | Cluster compute. | `Teleport(Add(1,2), "gpu")` |
-| [nu.llm](https://nustack.dev/docs/reference/fabrics/llm) | OpenAI-compatible chat. | `Bot.chat(prompt="…")` |
-| [nu.mem](https://nustack.dev/docs/reference/fabrics/mem) | In-memory state. | `users.age.set(12)` |
-| [nu.proxy](https://nustack.dev/docs/reference/fabrics/proxy) | Fabrics over the network. | `Proxy(Nav, "10.0.0.1")` |
-| [nu.http](https://nustack.dev/docs/reference/fabrics/http) | Nu meets the web. | `Solana.get_slot()` |
-| [nu.service](https://nustack.dev/docs/reference/fabrics/service) | Python objects as Refs. | `Calc.add(a=2, b=3)` |
-| [nu.cc](https://nustack.dev/docs/reference/fabrics/cc) | Claude Code as a Ref. | `Agent.ask(prompt="…")` |
-| [nu.mp](https://nustack.dev/docs/reference/fabrics/mp) | Local parallel execution. | `Teleport(Add(1,2), "worker")` |
+| [nustd.kv](https://nustack.dev/docs/reference/fabrics/kv) | Persistent state. | `State.movies.append(m)` |
+| [nustd.ui](https://nustack.dev/docs/reference/fabrics/ui) | Reactive web UI. | `Dashboard.count.set_value(n)` |
+| [nustd.cluster](https://nustack.dev/docs/reference/fabrics/cluster) | Cluster compute. | `Teleport(Add(1,2), "gpu")` |
+| [nustd.llm](https://nustack.dev/docs/reference/fabrics/llm) | OpenAI-compatible chat. | `Bot.chat(prompt="…")` |
+| [nustd.mem](https://nustack.dev/docs/reference/fabrics/mem) | In-memory state. | `users.age.set(12)` |
+| [nustd.proxy](https://nustack.dev/docs/reference/fabrics/proxy) | Fabrics over the network. | `Proxy(Nav, "10.0.0.1")` |
+| [nustd.http](https://nustack.dev/docs/reference/fabrics/http) | Nu meets the web. | `Solana.get_slot()` |
+| [nustd.service](https://nustack.dev/docs/reference/fabrics/service) | Python objects as Refs. | `Calc.add(a=2, b=3)` |
+| [nustd.cc](https://nustack.dev/docs/reference/fabrics/cc) | Claude Code as a Ref. | `Agent.ask(prompt="…")` |
+| [nustd.mp](https://nustack.dev/docs/reference/fabrics/mp) | Local parallel execution. | `Teleport(Add(1,2), "worker")` |
 
 # 📦 Apps built on Nu
 

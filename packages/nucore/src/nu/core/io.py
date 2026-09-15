@@ -29,7 +29,7 @@ Tests (and any host embedding) can redirect the streams by binding a
 ``StdioBackend`` fabric on the Context; absent one, the atoms hit the real
 ``sys`` streams.
 
-For logging use ``nu.std.logging`` -- it wraps Python's ``logging`` module 1-1
+For logging use ``nustd.logging`` -- it wraps Python's ``logging`` module 1-1
 (same handlers, formatters, and configuration surface), so log records don't
 share the stdio fabric.
 """

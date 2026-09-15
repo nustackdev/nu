@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "nustd"
 version = "0.4.0"
-description = "Batteries for Nu: the fabrics (std, mem, kv, service, llm, cc, http, proxy, mp, mp_pool, cluster, ui) that ship alongside the nucore kernel."
+description = "Batteries for Nu: the fabrics (mem, kv, service, llm, cc, http, proxy, mp, mp_pool, cluster, ui) and the standard library, imported as nustd."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
@@ -43,7 +43,7 @@ classifiers = [
 ]
 
 # One extra per fabric; name matches the `nu.<fabric>` import path.
-# `nu.std` and `nu.service` need nothing beyond the kernel, so they have no
+# `nustd` and `nustd.service` need nothing beyond the kernel, so they have no
 # extra. `mp` is stdlib multiprocessing -- the extra exists only so
 # `nustd[mp]` is not an error.
 [project.optional-dependencies]
@@ -60,7 +60,7 @@ ui = [
     "watchfiles>=0.24.0",
     "nudle>=0.1.1",
 ]
-# `nu.cluster` runs on ray. (Was the `ray` extra on nucore <= 0.1.18.)
+# `nustd.cluster` runs on ray. (Was the `ray` extra on nucore <= 0.1.18.)
 cluster = [
     "ray>=2.50; sys_platform != 'darwin' or platform_machine == 'arm64'",
     "ray>=2.0,<2.50; sys_platform == 'darwin' and platform_machine != 'arm64'",
@@ -78,7 +78,7 @@ cc = [
     "claude-agent-sdk>=0.1.0",
 ]
 mp = []
-# `nu.mp_pool` is stdlib multiprocessing too; the extra exists for symmetry.
+# `nustd.mp_pool` is stdlib multiprocessing too; the extra exists for symmetry.
 mp_pool = []
 all = [
     "nustd[kv]",
@@ -100,18 +100,18 @@ all = [
 Repository = "https://github.com/nustackdev/nu"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/nu"]
-# No `nu/__init__.py` here on purpose: the kernel wheel owns the package root
-# and the two installs merge into one `site-packages/nu/`.
+packages = ["src/nustd"]
+# The web sources build into the separate `nudle` wheel; only the compiled
+# bundle ships, and it ships from there.
 exclude = [
-    "src/nu/ui/web/**",
+    "src/nustd/ui/web/**",
 ]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
-    "src/nu/ui/**/node_modules",
-    "src/nu/ui/**/dist",
+    "src/nustd/ui/**/node_modules",
+    "src/nustd/ui/**/dist",
 ]
 
 [tool.uv.sources]
-nudle = { path = "./src/nu/ui/web/nudle", editable = true }
+nudle = { path = "./src/nustd/ui/web/nudle", editable = true }

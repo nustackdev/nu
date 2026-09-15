@@ -1,18 +1,19 @@
 """Sampled: kh57-backed series grows forever; the chart repaints a live reservoir sample."""
 
 import nu
+import nustd
 
 
 class State(nu.Shape):
-    nums = nu.kv.Kh57Ref.slot(int)
-    cursor = nu.kv.IntRef.slot()
+    nums = nustd.kv.Kh57Ref.slot(int)
+    cursor = nustd.kv.IntRef.slot()
 
 
-class Dashboard(nu.ui.Page):
-    chart = nu.ui.LineChart.slot()
+class Dashboard(nustd.ui.Page):
+    chart = nustd.ui.LineChart.slot()
 
 
-class App(nu.ui.Index):
+class App(nustd.ui.Index):
     home = Dashboard.slot("/")
 
 
@@ -31,9 +32,9 @@ feed = State.cursor.init(0) >> nu.ForeverDo(
 
 # assemble: rocksdb-backed, served over the browser
 app = nu.With(
-    nu.kv.rocksdb_navigator(".dbsampled"),
-    nu.ui.server(nu.kv.auto_flow_atomic(ui)),
-    body=nu.kv.auto_flow_atomic(feed),
+    nustd.kv.rocksdb_navigator(".dbsampled"),
+    nustd.ui.server(nustd.kv.auto_flow_atomic(ui)),
+    body=nustd.kv.auto_flow_atomic(feed),
 )
 
 

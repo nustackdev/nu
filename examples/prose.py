@@ -10,6 +10,7 @@ Run: uv run python examples/prose.py   ->   http://localhost:8080
 """
 
 import nu
+import nustd
 
 
 SEED = """# Prose ref
@@ -23,26 +24,26 @@ Type in here. It is a real document, not a textarea: `# ` makes a heading,
 """
 
 
-class Editor(nu.ui.Card):
-    body = nu.ui.ProseRef.slot(value=SEED, placeholder="Write, or type # for a heading")
+class Editor(nustd.ui.Card):
+    body = nustd.ui.ProseRef.slot(value=SEED, placeholder="Write, or type # for a heading")
 
 
-class Mirror(nu.ui.Card):
-    chars = nu.ui.StatRef.slot(label="characters")
-    source = nu.ui.CodeBlockRef.slot(code=SEED, language="markdown")
+class Mirror(nustd.ui.Card):
+    chars = nustd.ui.StatRef.slot(label="characters")
+    source = nustd.ui.CodeBlockRef.slot(code=SEED, language="markdown")
 
 
-class Split(nu.ui.Row):
+class Split(nustd.ui.Row):
     editor = Editor.slot()
     mirror = Mirror.slot()
 
 
-class Home(nu.ui.Page):
+class Home(nustd.ui.Page):
     split = Split.slot()
 
 
-class App(nu.ui.Index):
-    title = nu.ui.TitleRef.slot(default="Prose")
+class App(nustd.ui.Index):
+    title = nustd.ui.TitleRef.slot(default="Prose")
     home = Home.slot("/")
 
 
@@ -57,7 +58,7 @@ on_edit = nu.ReactForever(
 ui = App.home.split.mirror.chars.set_value(str(len(SEED))) >> on_edit
 
 app = nu.With(
-    nu.ui.server(ui),
+    nustd.ui.server(ui),
     body=nu.ForeverDo(nu.Delay(3600)),
 )
 

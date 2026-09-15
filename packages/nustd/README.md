@@ -6,22 +6,26 @@ Batteries for [Nu](https://github.com/nustackdev/nu).
 spans, forms, the tree rewrites, `nu.prog`, `nu.inspect`. It has no
 fabric backends in it. The `nu` command lives in `nucli`.
 
-`nustd` is everything that talks to the outside world. It installs into the
-same `nu.` namespace, so nothing about how you import changes:
+`nustd` is everything that talks to the outside world. One import, then
+dot-access: `import nustd`, then `nustd.kv`, `nustd.ui`, `nustd.uuid`.
 
-| Fabric        | Extra                | What it is                            |
-| ------------- | -------------------- | ------------------------------------- |
-| `nu.std`      | -                    | Nu bindings for the Python stdlib      |
-| `nu.service`  | -                    | Service / method dispatch              |
-| `nu.mem`      | `nustd[mem]`         | In-process refs                        |
-| `nu.kv`       | `nustd[kv]`          | Key-value storage (virtuals, RocksDB)  |
-| `nu.ui`       | `nustd[ui]`          | The nudle web UI runtime               |
-| `nu.llm`      | `nustd[llm]`         | LLM calls                              |
-| `nu.cc`       | `nustd[cc]`          | Claude Agent SDK sessions              |
-| `nu.http`     | `nustd[http]`        | HTTP client atoms                      |
-| `nu.proxy`    | `nustd[proxy]`       | Remote objects over invisibles         |
-| `nu.mp`       | `nustd[mp]`          | Multiprocessing workers                |
-| `nu.cluster`  | `nustd[cluster]`     | Ray                                    |
+| Fabric          | Extra            | What it is                            |
+| --------------- | ---------------- | ------------------------------------- |
+| `nustd.service` | -                | Service / method dispatch             |
+| `nustd.mem`     | `nustd[mem]`     | In-process refs                       |
+| `nustd.kv`      | `nustd[kv]`      | Key-value storage (virtuals, RocksDB) |
+| `nustd.ui`      | `nustd[ui]`      | The nudle web UI runtime              |
+| `nustd.llm`     | `nustd[llm]`     | LLM calls                             |
+| `nustd.cc`      | `nustd[cc]`      | Claude Agent SDK sessions             |
+| `nustd.http`    | `nustd[http]`    | HTTP client atoms                     |
+| `nustd.proxy`   | `nustd[proxy]`   | Remote objects over invisibles        |
+| `nustd.mp`      | `nustd[mp]`      | Multiprocessing workers               |
+| `nustd.cluster` | `nustd[cluster]` | Ray                                   |
+
+The standard library sits at the same level, one module per Python stdlib
+module it mirrors: `nustd.uuid`, `nustd.datetime`, `nustd.decimal`,
+`nustd.math`, `nustd.pathlib`, `nustd.logging`, `nustd.fin` and the rest. No
+extra needed, they are pure Nu.
 
 ## Install
 
