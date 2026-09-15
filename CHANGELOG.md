@@ -2,16 +2,16 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.4.0
-- **nustd** (fabrics) — 0.4.0
-- **nucli** (the `nu` command) — 0.4.0
+- **nucore** (kernel) — 0.5.0
+- **nustd** (fabrics) — 0.5.0
+- **nucli** (the `nu` command) — 0.5.0
 - **nudle** — 0.1.4
 - **ui-core** — 0.2.0
 - **ui-kit** — 0.2.0
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.5.0 — 2026-09-15
 
 - Run the type-narrowing suite for real: mypy is a dev dependency now
 - Give the fabrics their own import: `nustd.kv`, `nustd.ui`, not `nu.kv`
