@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Run the type-narrowing suite for real: mypy is a dev dependency now
 - Give the fabrics their own import: `nustd.kv`, `nustd.ui`, not `nu.kv`
 - Drop the std layer: the stdlib mirrors are `nustd.uuid`, `nustd.datetime`
 

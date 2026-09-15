@@ -34,6 +34,9 @@ dev = [
     "pytest-benchmark>=4.0.0",
     "hypothesis>=6.0.0",
     "pytest-asyncio>=1.3.0",
+    # The narrowing suite is a mypy suite -- without this it skips itself and
+    # static-narrowing regressions land unnoticed.
+    "mypy>=1.0",
 ]
 
 # Tests stay at the repo root: one suite over all three packages.

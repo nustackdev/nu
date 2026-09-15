@@ -6,12 +6,14 @@ file in this directory contains no runtime behavior - they exist purely
 to exercise mypy's inference. Runtime pytest collects them and finds no
 tests; this runner is what actually verifies them.
 
-Skipped when mypy is not installed in the venv (so the suite stays green
-on machines without a type-checker).
+mypy is in the dev group, so this runs on a synced venv. The skip is a
+fallback for a stripped environment, not the normal path -- if you see it
+skip, the venv is incomplete.
 """
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -21,6 +23,17 @@ import pytest
 
 NARROWING_DIR = Path(__file__).parent
 MYPY_CONFIG = NARROWING_DIR / "mypy.ini"
+REPO = NARROWING_DIR.parent.parent
+# mypy does not follow `.pth`-based editable installs, so an editable dev venv
+# leaves it unable to resolve `nu` and `nustd`. With `ignore_missing_imports`
+# on, that does not fail loudly -- every expression degrades to `Any` and the
+# assert_type checks report failures that say nothing about narrowing. Point
+# mypy at the source trees so it checks what this suite is actually about.
+SRC_DIRS = [
+    REPO / "packages" / "nucore" / "src",
+    REPO / "packages" / "nustd" / "src",
+    REPO / "packages" / "nucli" / "src",
+]
 
 
 def _mypy_available() -> bool:
@@ -51,6 +64,7 @@ def test_narrowing_suite_passes_mypy() -> None:
         capture_output=True,
         text=True,
         check=False,
+        env={**os.environ, "MYPYPATH": os.pathsep.join(str(p) for p in SRC_DIRS)},
     )
     if result.returncode != 0:
         pytest.fail(
