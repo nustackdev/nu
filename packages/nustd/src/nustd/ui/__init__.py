@@ -1,6 +1,6 @@
 """nustd.ui -- component fabric.
 
-Layout under ``src/nu/ui/``:
+Layout under ``src/nustd/ui/``:
 
 - ``core/``   -- host-independent UI fabric: ``Ref``, ``Section`` /
                  ``SectionRef``, abstract ``Session`` / ``Subscription``,
@@ -17,9 +17,9 @@ Layout under ``src/nu/ui/``:
                  ``kit``, and the ``nudle`` Vite SPA (also the pypi wheel
                  that ships the compiled SPA).
 
-Public entry stays at ``nustd.ui``: this ``__init__`` re-exports the core
-fabric, widget kit, and nudle host names so existing ``import nustd.ui as
-nu_ui`` code keeps working.
+The public entry is ``nustd.ui`` itself: the core fabric, the widget kit and
+the nudle host names are re-exported flat, so one ``import nustd.ui`` reaches
+everything a UI program spells.
 """
 
 from . import core, nudle, refs, server
@@ -135,8 +135,7 @@ __all__ = [
     "TitleRef",
     "Write",
     "WsSession",
-    # Submodules and presets, in one ASCII sort -- which is why `serve` the
-    # preset sits next to `server` the package it assembles.
+    # Submodules and presets
     "core",
     "nudle",
     "refs",

@@ -9,17 +9,20 @@
    the fold that runs one arm of the program per row.
 
 Plus ``SessionFor``, the bracket that hands one arm the transport of the
-connection it belongs to.
-
-The split is the point. A fabric binds something and tears it down, nothing
-more; the program is a child of the tree, where the tree can see it; and the
-lifetime of an arm is the lifetime of a socket, in both directions -- a dying
-arm cannot reach a browser, and a closed browser cancels its arm.
+connection it belongs to. The lifetime of an arm is the lifetime of a socket,
+in both directions.
 """
 
 from __future__ import annotations
 
-from .driver import SessionFor, seed_sessions, session_driver, session_for, sessions_fold
+from .driver import (
+    SessionFor,
+    run_once,
+    seed_sessions,
+    session_driver,
+    session_for,
+    sessions_fold,
+)
 from .fabric import WebServer, web_server
 from .refs import (
     CONNECT_ATTR,
@@ -47,6 +50,7 @@ __all__ = [
     "Sessions",
     "WebServer",
     "WsSessions",
+    "run_once",
     "seed_sessions",
     "session_driver",
     "session_for",

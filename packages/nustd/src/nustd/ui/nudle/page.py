@@ -12,11 +12,10 @@ navigated through it, never because a class named itself.
 
 - Refs rooted on an ``Index`` resolve from the slot down: ``("title",)``
   for a structural Ref, ``("home", "panel", "label")`` for one inside a
-  page. The page's segment is the Index slot it was reached through, so
-  two pages can both declare a ``panel`` and land at different addresses.
-- Taken off the class (``HomePage.panel.label``) a Page resolves bare,
-  exactly like a Section: no slot was navigated, so there is no segment to
-  add. That is the one-page shorthand, and ``Page.boot()`` emits exactly
+  page. Two pages can both declare a ``panel`` and land at different
+  addresses.
+- Taken off the class (``HomePage.panel.label``) a Page resolves bare, like
+  any Section. That is the one-page shorthand, and ``Page.boot()`` emits
   those bare addresses.
 """
 
@@ -47,25 +46,19 @@ __all__ = ["Boot", "Chain", "Index", "Page", "PageRef"]
 class Boot(Command):
     """Seed one browser's tree: clear it, name it, then one ``init`` per slot.
 
-    Where boot lives now. The fabric never sees the program, so nothing walks
-    the tree hunting for an Index any more -- the shape is named at the head
-    of the arm and this runs with that connection's Session bound, once per
-    live connection and never for anybody else's.
+    Runs with one connection's Session bound, once per live connection and
+    never for anybody else's.
 
     Three frames, in order. The clearing ``remove`` goes first because a
     reconnect gets a fresh session with none of the old one's dynamic nodes,
-    and those would otherwise sit there forever. Then the root write, which
-    carries what the shell itself needs -- the app name, whether the built-in
-    sidebar is on; drop it and every app silently loses both. Then the slots,
-    in declaration order, which is render order.
+    which would otherwise sit there forever. Then the root write, carrying
+    what the shell itself needs -- the app name and whether the built-in
+    sidebar is on. Then the slots, in declaration order, which is render
+    order.
 
-    The mutation slot is declared and empty. What this writes is the browser's
-    tree, and the tree root is not something any Nu Ref names, so there is no
-    address to put in slot 0 -- which the effect system already allows for: a
-    mutation with no address is a local change, not an effect. It is also why
-    this cannot be spelled out of the existing interactions: ``Remove`` and
-    ``Write`` both take a Ref and resolve its address, and ``init`` has no
-    interaction at all.
+    ``_mutates`` is declared and empty: the browser's tree root is not
+    something any Nu Ref names, and a mutation with no address is a local
+    change rather than an effect.
 
     Args:
         shape_cls: the Index, or the lone Page, whose slots seed the tree.
@@ -86,8 +79,8 @@ class Boot(Command):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         # Name, chains and sidebar are pure class statics, so they resolve once
-        # per compile rather than per run. It also keeps the payload the class
-        # alone, which stays hashable across a tree rewrite.
+        # per compile rather than per run, and the payload stays the class
+        # alone, which is hashable across a tree rewrite.
         shape_cls = self._payload["shape_cls"]
         name = shape_cls.__name__
         chains = shape_cls._boot_chains()
@@ -95,7 +88,7 @@ class Boot(Command):
 
         async def athunk(rt: Runtime) -> None:
             session = rt.ctx.get(Session)
-            # Down this connection's socket and no other. The clearing remove
+            # Down this connection's socket and no other: the clearing remove
             # wipes the tab that is booting, never a sibling tab's tree.
             await session.send(Frame(OP_REMOVE))
             await session.send(Frame(OP_WRITE, payload={"name": name, "sidebar": sidebar}))
@@ -111,12 +104,8 @@ class PageRef(SectionRef):
     """Substrate Ref backing a Page slot on an Index.
 
     A Page is a Section with a route, so navigating into it is plain
-    ``SectionRef`` navigation (``App.home.panel.label``) and the page's
-    segment is the Index slot name like any other segment. Nothing else is
-    needed here: the route is a declared prop, so it rides the chain onto
-    the page node and the browser's router reads it off the tree like any
-    other prop. The class exists so ``_page_slots`` can tell a page slot
-    from a plain section slot.
+    ``SectionRef`` navigation (``App.home.panel.label``). The class exists so
+    ``_page_slots`` can tell a page slot from a plain section slot.
     """
 
     _wire_type: ClassVar[str] = "Page"
@@ -151,8 +140,8 @@ class Page(Section):
         """Declare this Page on an Index at ``route``.
 
         ``route`` and ``label`` go in as declared props, which is how they
-        reach the browser: the chain carries them onto the page node and
-        the router and sidebar read them there.
+        reach the browser's router and sidebar: the chain carries them onto
+        the page node.
         """
         declared: dict[str, object] = {
             "route": route,
@@ -175,9 +164,8 @@ class Page(Section):
     def _boot_chains(cls) -> list[Chain]:
         """This Page's slots, rooted bare.
 
-        Only the one-page shorthand uses this: a Page no Index declares was
-        never navigated to, so its slots start at their own names -- the
-        same addresses ``HomePage.panel.label`` resolves to.
+        The one-page shorthand: a Page no Index declares was never navigated
+        to, so its slots start at their own names.
         """
         return boot_chains((), cls)
 
@@ -231,15 +219,11 @@ class Index(Shape):
         """Everything this Index declares, as chains, in declaration order.
 
         Structural Refs and page subtrees come out of the same walk: a page
-        slot is a Section slot that happens to carry a route, so its chain
-        starts at the Index slot name, which is the segment the Ref chain
-        puts there too.
+        slot is a Section slot that happens to carry a route.
         """
         return boot_chains((), cls)
 
     @classmethod
     def _sidebar_enabled(cls) -> bool:
-        """Built-in left sidebar is on when there is more than one page and
-        the Index has not opted out via ``sidebar = False``.
-        """
+        """On when there is more than one page and the Index has not opted out."""
         return cls.sidebar and len(cls._page_slots()) > 1

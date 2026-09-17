@@ -1,18 +1,15 @@
 """Session -- the wire transport Refs resolve through, plus the ws one.
 
 A Session is the handle a Ref reaches the client through: send a Frame,
-round-trip a read, subscribe to change notifications. The ABC is the seam --
-widget code and interactions target the abstract shape, so the widget kit
-does not know or care which host it is running under.
+round-trip a read, subscribe to change notifications. The ABC is the seam, so
+the widget kit does not know which host it is running under.
 
-``WsSession`` is the one concrete implementation that matters today: a
-Session over a FastAPI websocket, shared by every ws host rather than copied
-per host. It owns the ws, the observer registry and the pending-read futures;
-interactions build Frames and call ``send``, and the session does no per-op
-work of its own.
+``WsSession`` is the concrete one, a Session over a FastAPI websocket, shared
+by every ws host. It owns the ws, the observer registry and the pending-read
+futures.
 
-Bound on Context by the host (`ctx.bind(Session, concrete)`). Widget
-code calls `rt.ctx.get(Session)`.
+The host binds it (``ctx.bind(Session, concrete)``); widget code reads it back
+with ``rt.ctx.get(Session)``.
 """
 
 from __future__ import annotations
@@ -38,11 +35,10 @@ Callback = Callable[[object], None]
 
 
 class Subscription(Protocol):
-    """Observer handle returned by `session.subscribe(path)`.
+    """Observer handle returned by ``session.subscribe(path)``.
 
-    Same shape as nu-kv' subscription handle. React / ReactForever
-    bind callbacks on it; the session fires them when a `notify` frame
-    lands from the browser for the subscribed path.
+    Same shape as nu-kv's subscription handle: the session fires the bound
+    callbacks when a ``notify`` frame lands for the subscribed path.
     """
 
     def bind(self, cb: Callable[[object], None]) -> None: ...
@@ -75,10 +71,9 @@ class Session(ABC):
 class WsSubscription:
     """Observer handle returned by ``session.subscribe(path)``.
 
-    Callbacks are held in a list and compared by identity throughout, never
-    in a set. A callback here is often a reverse proxy into a worker process,
-    and hashing one is a round trip over the wire -- which raises once that
-    worker is gone, so a set could not even drop the dead entry.
+    Callbacks are held in a list and compared by identity, never hashed: one
+    is often a reverse proxy into a worker process, and hashing it is a round
+    trip over the wire that raises once the worker is gone.
     """
 
     def __init__(self, session: WsSession, path: tuple[str, ...]) -> None:
@@ -113,10 +108,9 @@ class WsSubscription:
     def _fire(self, payload: object) -> None:
         """Hand the payload to every bound callback, dropping the dead ones.
 
-        A callback here is usually a reverse proxy into a pool worker, and a
-        page restarting kills the worker without giving it a chance to unbind.
-        So a raise means the far end is gone: drop that callback and carry on,
-        rather than letting one stale subscriber take the whole ws down.
+        A raise means the far end is gone -- usually a pool worker killed by a
+        page restart with no chance to unbind -- so drop that callback rather
+        than let one stale subscriber take the whole ws down.
         """
         dead: list[Callback] = []
         for cb in tuple(self._callbacks):

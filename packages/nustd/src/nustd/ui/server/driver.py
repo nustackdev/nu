@@ -1,18 +1,17 @@
 """The Nu side of a connection: relay it in, fold over it, hand it its session.
 
-Four terms, in the order they run:
+Five terms, in the order they run:
 
 - ``seed_sessions`` -- create the registry collection before anyone watches it.
 - ``session_driver`` -- turn the server's connect / disconnect moments into
   rows appearing and disappearing.
 - ``sessions_fold`` -- one live arm per row.
 - ``session_for`` -- inside an arm, bind that connection's transport.
+- ``run_once`` -- inside an arm, run the program at most once per connection.
 
-The driver is Nu rather than a couple of lines in the ws endpoint because the
-endpoint has no Nu runtime around it. Writing kv from there would mean either
-calling the navigator directly, going behind the tree's back, or spinning up a
-nested runtime, which is the thing this refactor exists to delete. So the
-endpoint announces and Nu writes.
+The ws endpoint has no Nu runtime around it, so it announces and Nu does the
+kv write. Each term spells out its own storage bracket rather than leaning on
+``auto_flow_atomic``.
 """
 
 from __future__ import annotations
@@ -22,6 +21,7 @@ from typing import TYPE_CHECKING
 
 import nu
 import nustd.kv
+from nu.core.io import STDOUT
 from nu.core.spans.bracket import _LifecycleBracket
 from nustd.ui.core.session import Session
 
@@ -38,6 +38,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "SessionFor",
+    "run_once",
     "seed_sessions",
     "session_driver",
     "session_for",
@@ -49,42 +50,35 @@ def seed_sessions(*, scope: type[nu.Shape] = Sessions) -> Nu:
     """Bring the registry collection into being. Runs before anything watches it.
 
     A subscription over a container that is not there resolves to INVALID and
-    then never fires again -- no error, just a fold that never sees its first
-    connection. So this lands ahead of the fold, not beside it.
+    never fires again, so this has to land ahead of the fold, not beside it.
 
     Args:
         scope: the registry shape, as the tag its storage resolves under.
-
-    Notes:
-        - ``nu.Dict.create()`` and never a plain ``{}``. A literal is captured
-          once when the Form is built and would be shared by every evaluation.
     """
-    return nustd.kv.auto_flow_atomic(WsSessions.init(nu.Dict.create()), scope=scope)
+    # `create()` and never a plain `{}`: a literal is captured once when the
+    # Form is built and would then be shared by every evaluation.
+    return nustd.kv.Transaction(WsSessions.init(nu.Dict.create()), scope=scope)
 
 
 def session_driver(*, scope: type[nu.Shape] = Sessions) -> Nu:
     """Relay the server's connect / disconnect moments into the registry.
 
     Two arms, forever. A connection writes its row; a disconnection deletes
-    it. That is the entire state: the key's presence is what the fold reads,
-    so there is no flag on either side to set. There could not be one --
-    writing into the collection being watched is the feedback loop the
-    reactive atoms warn about.
+    it. The key's presence is the whole of the state, so there is no flag on
+    either side to set.
 
     Args:
         scope: the registry shape, as the tag its storage resolves under.
-
-    Notes:
-        - ``changed_key`` parks the fired value on ``ctx.attrs`` before each
-          body run, which is how the sid reaches the write. Two names because
-          ``ParallelAsync`` shares one attrs space across its arms.
     """
     connected = nu.StrAttrRef(CONNECT_ATTR)
     gone = nu.StrAttrRef(DISCONNECT_ATTR)
+    # `changed_key` parks the fired sid on `ctx.attrs` before each body run,
+    # which is how it reaches the write. A `Transaction` per arm so the row
+    # lands whole -- otherwise the fold spawns an arm over a half-built one.
     return nu.ParallelAsync(
         nu.ReactForever(
             ServerRef().on_connect(),
-            nustd.kv.auto_flow_atomic(
+            nustd.kv.Transaction(
                 WsSessions[connected].sid.set(connected),
                 scope=scope,
             ),
@@ -92,7 +86,7 @@ def session_driver(*, scope: type[nu.Shape] = Sessions) -> Nu:
         ),
         nu.ReactForever(
             ServerRef().on_disconnect(),
-            nustd.kv.auto_flow_atomic(WsSessions.del_item(gone), scope=scope),
+            nustd.kv.Transaction(WsSessions.del_item(gone), scope=scope),
             changed_key=DISCONNECT_ATTR,
         ),
     )
@@ -105,25 +99,16 @@ def sessions_fold(arm: Nu, *, scope: type[nu.Shape] = Sessions) -> Nu:
         arm: the body one connection gets. Spawned when its row appears,
             cancelled and drained when the row goes.
         scope: the registry shape, as the tag its storage resolves under.
-
-    Notes:
-        - ``nu.list`` around the keys, not the lazy view. The fold is a Flow,
-          so the atomicity pass brackets each of its slots separately and the
-          items slot's snapshot closes the moment that thunk returns -- a lazy
-          view handed out of it dies on first read with a closed-context
-          error.
-        - ``on_children_change`` and not ``on_change``. The children filter is
-          length exact; the generic one is an unbounded prefix. With the
-          latter, writing anything inside one session's row would look like
-          the collection changing and restart that tab's whole app.
-        - Each sessions term is pre-wrapped at ``scope``. An untagged pass
-          over a tree holding these would claim them (an unscoped pass
-          dominates everything) and insert an untagged bracket, which the
-          tagged lookup then misses -- falling back to the app's store, which
-          has no sessions in it.
     """
-    ids = nustd.kv.auto_flow_atomic(nu.list(WsSessions.keys()), scope=scope)
-    changed = nustd.kv.auto_flow_atomic(WsSessions.on_children_change(), scope=scope)
+    # `nu.list` and not the lazy view: the fold is a Flow, so the items slot's
+    # snapshot closes the moment that thunk returns and a lazy view handed out
+    # of it dies on first read. `Snapshot` and not `Transaction` since both
+    # slots only read, tagged at `scope` so an untagged `auto_flow_atomic` pass
+    # over an enclosing tree leaves them alone.
+    ids = nustd.kv.Snapshot(nu.list(WsSessions.keys()), scope=scope)
+    # Children-change is length exact; the generic filter is an unbounded
+    # prefix, so a write inside one row would restart that tab's whole app.
+    changed = nustd.kv.Snapshot(WsSessions.on_children_change(), scope=scope)
     return nu.ForEachParReactive(ids, changed, arm, SID_ATTR)
 
 
@@ -132,17 +117,8 @@ class SessionFor(_LifecycleBracket):
 
     Reads the sid off the Context the fold branched for this arm, looks the
     live session up in the server's connection book, and binds it under the
-    abstract ``Session`` so every Ref underneath resolves through it.
-
-    Not a ``Provide``: what gets bound is an object the server already holds,
-    not one this bracket constructs. And the sid cannot be a child term --
-    a bracket's lifecycle runs with a Context, not a Runtime, so there is
-    nothing to evaluate a term against. It arrives through attrs instead,
-    which is the same slot a loop variable would have been read from.
-
-    Nothing is torn down. The server owns the session and the endpoint closes
-    it; hanging up on a browser because one arm of its page ended would be
-    exactly the inversion this refactor removes.
+    abstract ``Session`` so every Ref underneath resolves through it. Nothing
+    is torn down: the server owns the session and the endpoint closes it.
 
     Args:
         body: the tree that runs with the session bound.
@@ -162,10 +138,9 @@ class SessionFor(_LifecycleBracket):
             raise LookupError(msg)
         session = ctx.get(WebServer).session(sid)
         if session is None:
-            # Reachable, and transiently so: the browser can go away between
-            # the connect and the fold's next pass. The arm raises, the fold
-            # isolates it, the row delete lands on the following pass and the
-            # key goes. One wasted spawn, no leak.
+            # Transiently reachable: the browser can go away between the
+            # connect and the fold's next pass. The arm raises, the fold
+            # isolates it, the row delete lands next pass. One wasted spawn.
             msg = f"no live ws session for {sid!r}"
             raise LookupError(msg)
         yield ctx.bind(Session, session)
@@ -175,6 +150,48 @@ def session_for(sid_attr: str = SID_ATTR, body: Nu | None = None) -> SessionFor:
     """``SessionFor`` in call order: the attr first, then what runs under it.
 
     Example:
-        >>> session_for(SID_ATTR, App.boot() >> program)
+        >>> session_for(SID_ATTR, run_once(App.boot() >> program))
     """
     return SessionFor(body, sid_attr=sid_attr)
+
+
+def run_once(
+    body: Nu,
+    *,
+    scope: type[nu.Shape] = Sessions,
+    sid_attr: str = SID_ATTR,
+) -> Nu:
+    """Run ``body`` for this connection at most once, and mark the row done after.
+
+    The fold frees the key of every arm whose task has ended and respawns it,
+    so a program that returns would be booted again on the next connect or
+    disconnect. ``done`` on the row is what a respawned arm reads to become a
+    no-op. A failure is reported and marks done all the same, so a program
+    that raises leaves a stopped tab instead of a retry loop.
+
+    Args:
+        body: what one connection runs, its boot frames included.
+        scope: the registry shape, as the tag its storage resolves under.
+        sid_attr: the attr the fold parked this arm's session id under.
+
+    Example:
+        >>> session_for(SID_ATTR, run_once(App.boot() >> program))
+    """
+    sid = nu.StrAttrRef(sid_attr)
+    report = nu.Print(
+        STDOUT,
+        nu.Str("nustd.ui session arm failed:"),
+        nu.ToStr(nu.AttrRef("error")),
+    )
+    # Guarded on the row from inside the same transaction: a socket that shut
+    # while the program was ending has had its row deleted, and a plain write
+    # would vivify it back. A vivifying write is also the one kind the
+    # length-exact children filter sees, so the fold would spawn over it.
+    mark_done = nustd.kv.Transaction(
+        nu.IfDo(WsSessions.contains(sid), WsSessions[sid].done.set(True)),
+        scope=scope,
+    )
+    return nu.IfDo(
+        nustd.kv.Snapshot(WsSessions[sid].done.missing(), scope=scope),
+        nu.TryCatch(body, catch=report) >> mark_done,
+    )

@@ -18,10 +18,9 @@ The reusable seam under nustd.ui:
   ``Remove`` /
   ``Changed``          -- interactions that flow over a Session on a Ref
 
-Concrete hosts (``nustd.ui.nudle`` today, potentially others) build on this
-core: they bind a ``Session``, declare a page/routing model, and add any
-host-specific Ref subclasses. The widget kit under ``nustd.ui.refs`` targets
-this core, not any specific host.
+A host builds on this core: it binds a ``Session``, declares a page/routing
+model, and adds its own Ref subclasses. The widget kit under ``nustd.ui.refs``
+targets this core, not any specific host.
 """
 
 from .base import Ref

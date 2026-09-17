@@ -1,25 +1,16 @@
 """``WebServer`` -- the uvicorn lifecycle, and nothing else.
 
-A fabric does exactly one job: bind something to the Context, tear it down
-when the body is done. This one boots uvicorn behind a FastAPI app with a
-``/ws`` endpoint and a static mount, binds itself, and stops uvicorn on the
-way out.
-
-What it deliberately does not do is see the UI program. The old shape took
-the whole program as a constructor kwarg and ran a second Nu runtime per
-connection, nested inside the running tree and invisible to it -- the program
-was payload, so nothing walking the tree could find it. Now the program is a
-child of the tree, one arm per live connection, and this side only holds the
-sockets.
+Boots uvicorn behind a FastAPI app with a ``/ws`` endpoint and a static mount,
+binds itself to the Context, and stops uvicorn on the way out. It never sees
+the UI program: that is a child of the tree, one arm per live connection.
 
 The two halves it does own:
 
 - the connection book, ``sid -> WsSession``, which the session bracket reads
   to hand one arm its transport.
 - two channels, connect and disconnect, which announce those moments to
-  whoever is subscribed. The endpoint has no Nu runtime, so it cannot write
-  the session registry itself; it emits here and the Nu driver does the
-  write.
+  whoever is subscribed. The endpoint has no Nu runtime around it, so it
+  emits here and a Nu term does the kv write.
 """
 
 from __future__ import annotations
@@ -55,20 +46,9 @@ __all__ = ["WebServer", "web_server"]
 def _bundled_static(package: str) -> Path | None:
     """Resolve the compiled web bundle shipped by ``package``.
 
-    Which wheel ships the SPA is the host's business, not this fabric's:
-    nudle ships one, nuspace's ui wheel ships another, and the mount is the
-    same either way. The wheel packages its vite output under ``build/``, so
-    importing it is how the directory is found at runtime.
-
-    Returns None when the wheel is not installed -- the backend still boots
-    headless, with only ``/ws`` exposed, which is what a separate vite dev
-    server wants anyway.
-
-    If the import resolves to a plain ``.py`` file (a local script on
-    ``sys.path[0]`` shadowing the wheel) or to a package with no
-    ``build/index.html``, warn and return None. Silence here would drop the
-    mount and turn every HTTP GET into a 404 with nothing in the log saying
-    why.
+    The wheel packages its vite output under ``build/``, so importing the
+    package is how the directory is found at runtime. None when the wheel is
+    not installed -- the backend still boots headless with only ``/ws``.
     """
     try:
         mod = importlib.import_module(package)
@@ -93,9 +73,8 @@ def _bundled_static(package: str) -> Path | None:
 class _SPAStatic(StaticFiles):
     """StaticFiles that falls back to index.html on 404.
 
-    Lets the browser hit deep URLs (/feed, /portfolio/...) directly: any
-    path the bundle doesn't have a real file for returns index.html so
-    the SPA can render the right page from window.location.
+    Lets the browser hit deep URLs (/feed, /portfolio/...) directly: the SPA
+    renders the right page from window.location.
     """
 
     async def get_response(self, path: str, scope: object) -> object:
@@ -113,20 +92,14 @@ class _SPAStatic(StaticFiles):
 class _Channel:
     """A subscription over a moment the server can only announce once.
 
-    Satisfies the reactive contract Nu's atoms drive -- ``bind`` / ``unbind``
-    / ``close`` and nothing else. No atom inspects options or reaches for an
-    observer, so a plain fan-out object is a first-class change source here,
-    the same way a kv view's subscription is.
+    ``bind`` / ``unbind`` / ``close`` is the whole reactive contract Nu's
+    atoms drive, so a plain fan-out object is a first-class change source.
 
-    Holds a backlog of events emitted while nobody was bound. That is not a
-    nicety: uvicorn prints its banner and opens the browser before the driver
-    arm has had a chance to subscribe, so the very first connect lands on an
-    empty callback list. Dropped, it would be a session row that never gets
-    written and a tab that never renders.
-
-    Callbacks are compared by identity and a raising one is dropped, the same
-    discipline ``WsSubscription`` keeps and for the same reason: the far end
-    is usually a queue in a loop that may already be gone.
+    Events emitted while nobody is bound are held in a backlog: uvicorn opens
+    the browser before the driver arm has had a chance to subscribe, so the
+    very first connect would otherwise be dropped. Callbacks are compared by
+    identity and a raising one is dropped -- the far end is usually a queue in
+    a loop that may already be gone.
     """
 
     def __init__(self) -> None:
@@ -159,11 +132,9 @@ class _Channel:
     def close(self) -> None:
         """Detach every callback. The channel stays usable.
 
-        No ``_closed`` flag on purpose. ``ReactForever`` closes its
-        subscription in a ``finally``, so a permanently dead channel would
-        mean a driver that restarts never hears another connection. Closing
-        is just "nobody is listening" -- what arrives next goes to the
-        backlog for whoever binds after.
+        No ``_closed`` flag: ``ReactForever`` closes its subscription in a
+        ``finally``, and a permanently dead channel would mean a driver that
+        restarts never hears another connection.
         """
         self._callbacks = []
 
@@ -181,32 +152,15 @@ class _Channel:
 class WebServer:
     """Boot a ws server for the body's duration; bind it; stop it on the way out.
 
-    ``asetup`` builds the FastAPI app, boots uvicorn on a background task and
-    waits until it is serving. ``acleanup`` signals uvicorn to exit and awaits
-    the task with a bounded timeout, falling back to cancel.
-
-    There is no ``app`` kwarg, and that is the whole point. A fabric binds
-    something to context and tears it down; the UI program is a child of the
-    tree now, where anything that walks the tree can see it, where one
-    connection's failure cannot reach another connection's socket, and where
-    a closed socket cancels exactly the arm that was drawing it.
-
-    ``_nu_async_only = True``: uvicorn is booted on an ``asyncio.create_task``
-    and the readiness poll awaits its ``started`` flag. There is no sync
-    variant, so a ``Provide(WebServer, ...)`` refuses to enter a sync tree.
+    Owns the sockets and nothing else -- there is no ``app`` kwarg, the UI
+    program is a child of the tree.
 
     Args:
         static: the wheel that ships the compiled SPA, e.g. ``"nudle"``.
             None mounts nothing and exposes ``/ws`` alone.
-        host: uvicorn bind host.
-        port: uvicorn bind port.
         log_level: uvicorn log level. Defaults to ``"warning"`` -- we print
-            our own ready/stopped banner, so uvicorn's info chatter and
-            per-request access log are silenced by default.
-        open_browser: open the bound URL in the default browser once the
-            server signals ready.
-        ready_timeout: how long ``asetup`` waits for uvicorn to signal
-            ``started`` before giving up.
+            our own ready/stopped banner.
+        ready_timeout: how long ``asetup`` waits for uvicorn to come up.
         shutdown_timeout: how long ``acleanup`` waits for graceful exit
             before cancelling the task.
 
@@ -217,6 +171,8 @@ class WebServer:
         ... )
     """
 
+    # Uvicorn is booted on a task and readiness is awaited, so there is no
+    # sync variant: a `Provide(WebServer, ...)` refuses to enter a sync tree.
     _nu_async_only = True
 
     def __init__(
@@ -249,9 +205,6 @@ class WebServer:
 
     async def asetup(self, ctx: Context) -> None:
         """Build the FastAPI app, boot uvicorn, wait for ``started``.
-
-        ``ctx`` is the lifecycle protocol's argument, not this fabric's: the
-        server is built from its own kwargs and reads nothing off the tree.
 
         A boot failure surfaces here instead of hanging: if the serve task
         finishes before ``server.started`` flips, we re-raise its exception.
@@ -334,10 +287,7 @@ class WebServer:
         async def ws_endpoint(ws: WebSocket) -> None:
             # A session lives exactly as long as this coroutine: FastAPI closes
             # the socket the moment the handler returns. So accept, register,
-            # drain intake until the browser goes away, unregister -- and race
-            # nothing. A dying arm is isolated by the fold above it and never
-            # reaches this socket; a closed socket deletes the session row,
-            # and that deletion is what cancels the arm.
+            # drain intake until the browser goes away, unregister.
             await ws.accept()
             session = WsSession(ws)
             sid = uuid.uuid4().hex
@@ -405,6 +355,8 @@ def web_server(
 
     For hand-assembled trees. Most callers want ``nustd.ui.serve`` instead,
     which stacks this with the session registry, the driver and the fold.
+    Bodyless, so it belongs in a ``nu.With`` spec slot and nowhere else -- run
+    standalone it compiles that empty slot to a literal and yields None.
 
     Args:
         static: the wheel shipping the compiled SPA. None serves ``/ws``
@@ -414,16 +366,9 @@ def web_server(
         log_level: uvicorn log level. Default silences uvicorn's info chatter
             so only our own ready/stopped banner is printed.
         open_browser: open the bound URL in the default browser once ready.
-        ready_timeout: how long ``asetup`` waits for uvicorn to signal
-            ``started`` before giving up.
+        ready_timeout: how long ``asetup`` waits for uvicorn to come up.
         shutdown_timeout: how long ``acleanup`` waits for graceful exit
             before cancelling the task.
-
-    Notes:
-        - Bodyless, so it belongs in a ``nu.With`` spec slot and nowhere else.
-          ``With`` re-enters the bracket's ``_aopen`` and discards whatever
-          sits in its own body slot; run standalone it would compile that
-          empty slot to a literal and yield None.
 
     Example:
         >>> nu.With(

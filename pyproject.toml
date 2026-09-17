@@ -144,8 +144,7 @@ convention = "google"
     "S101", "T20", "D", "ANN",
 ]
 # The demos the `nu` command ships are examples that happen to live in a
-# package. Same rules as examples/ -- they used to get them for free from the
-# private `nu._cli` path, and the package is `nucli` now.
+# package, so they get the same rules as examples/.
 "**/src/nucli/demos/**/*.py" = [
     "S101", "T20", "D", "ANN",
 ]

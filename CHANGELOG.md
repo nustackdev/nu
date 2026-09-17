@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- A browser tab's program runs once and stays stopped when it ends
 - Browser UI runs one app arm per live tab, inside the tree
 
 ## 0.5.1 — 2026-09-17

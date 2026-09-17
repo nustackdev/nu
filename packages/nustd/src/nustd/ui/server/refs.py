@@ -2,18 +2,11 @@
 
 Three things the rest of the package addresses itself through:
 
-- ``Sessions`` -- one kv row per live browser connection. A row, not a flag:
-  the fold over it births an arm when a row appears and cancels that arm when
-  the row goes, so presence is the whole of the state.
+- ``Sessions`` -- one kv row per live browser connection.
 - the attr names the fold and the driver park their loop variables under.
 - ``ServerRef``, which reads the bound ``WebServer`` off the Context, plus
   the two queries that hand its connect / disconnect channels to a reactive
   atom.
-
-The channel queries are the seam between a socket and the tree. The FastAPI
-endpoint runs with no Nu runtime around it, so it cannot write kv; it emits
-onto a channel, and a Nu term subscribed through one of these performs the
-write. Only Nu writes to kv.
 """
 
 from __future__ import annotations
@@ -52,28 +45,27 @@ __all__ = [
 class SessionRow(nu.Shape):
     """One live browser connection, as one row the fold can count.
 
-    A row, not a flag -- the fold births an arm when the row appears and
-    cancels it when the row goes, so there is nothing here for anyone to
-    switch. ``sid`` is written only so the row has a leaf to materialize it;
-    a shape row cannot exist with nothing under it.
+    The fold births an arm when the row appears and cancels it when the row
+    goes, so presence is most of the state. ``sid`` is written only so the row
+    has a leaf to materialize it; ``done`` says the program for this
+    connection has ended and must not be started again.
     """
 
     sid = nustd.kv.StrRef.slot()
+    done = nustd.kv.BoolRef.slot()
 
 
 class Sessions(nu.Shape):
     """Root of the sessions store, and the tag its navigator binds under.
 
-    The shape class is the tag: a Ref carries its root shape as the scope it
-    resolves the Navigator under, so declaring the sessions shape apart from
-    the app's is the whole of the routing.
+    A Ref carries its root shape as the scope it resolves the Navigator
+    under, so declaring this apart from the app's shape is the whole of the
+    routing.
 
-    ``ShapesDictRef`` and not ``DictRef``, which is not cosmetic. As a
-    container, creating a row fires the children subscription once for that
-    key, a later write to a field inside the row fires nothing, and deleting
-    the key fires again. With a plain dict the row key *is* the leaf, so every
-    write into a row would look like the collection changing and restart that
-    tab's whole app.
+    ``ShapesDictRef`` so a row is a container: creating and deleting a key
+    fires the children subscription, a write to a field inside a row fires
+    nothing. A plain dict would make every such write look like the
+    collection changing and restart that tab's whole app.
     """
 
     live = nustd.kv.ShapesDictRef.slot(SessionRow)
@@ -83,9 +75,9 @@ class Sessions(nu.Shape):
 WsSessions = Sessions.live
 
 
-#: What the fold binds each session id under, inside the arm's own branch.
-#: ``ForEachParReactive`` branches ``ctx.attrs`` per arm, so this shadows a
-#: user attr of the same name only inside an arm, and never across arms.
+#: What the fold binds each session id under. ``ForEachParReactive`` branches
+#: ``ctx.attrs`` per arm, so a user attr of the same name is shadowed only
+#: inside an arm, never across arms.
 SID_ATTR = "sid"
 
 #: Where each driver arm parks the id its event carried. Two names, not one:
@@ -98,14 +90,9 @@ DISCONNECT_ATTR = "_ui_disconnect_sid"
 class _ServerChannel(ScalarQuery):
     """Yield one of the server's channels, for a reactive atom to drive.
 
-    Holds a ``ServerRef`` in a read slot, the same shape ``Changed`` has, and
-    resolves to the object that channel is. Nothing is subscribed here and no
-    frame goes out: the atom above binds its own receiver on what comes back.
-
-    A channel is not a kv view and has no observer behind it. It does not need
-    one -- the whole reactive contract is ``bind`` / ``unbind`` / ``close``,
-    and no atom ever inspects options or reaches for an observer, so the
-    server's own fan-out object is a first-class change source.
+    Holds a ``ServerRef`` in a read slot and resolves to the channel object.
+    Nothing is subscribed here and no frame goes out: the atom above binds its
+    own receiver on what comes back.
     """
 
     _requires_async = Declared(value=True, name="requires_async")

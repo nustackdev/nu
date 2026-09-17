@@ -5,11 +5,8 @@ same shape a write carries, minus the payload. Shipped at boot as ``init``
 frames so a slot is on screen before anything writes to it, and dropped into
 the browser's tree by the same autovivify walk a write takes.
 
-Host-independent on purpose. The two hosts that boot a shape tree do the
-identical walk over their own top-level kind (nudle's Index / Page, nuspace's
-Shell / Screen), and nothing in the walk knows which one it is looking at: a
-Section slot contributes its own level and then everything under it, which is
-how a nested surface lands one segment below its container.
+Host-independent: nothing in the walk knows whether it is looking at nudle's
+Index / Page or nuspace's Shell / Screen.
 """
 
 from __future__ import annotations
