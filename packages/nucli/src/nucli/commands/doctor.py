@@ -18,13 +18,13 @@ from nucli._meta import nu_version
 # that prove they resolve. The backends live in the `nustd` distribution; this
 # kernel-side command only probes for them, it never imports the fabric.
 #
-# An extra that depends on another needs both probed, or the row goes green on
-# an install that cannot import: `ui` pulls `kv`, because the registry of live
-# browser connections is a kv shape declared at module scope.
+# Everything an extra imports at module scope belongs here, or the row goes
+# green on an install that cannot import. `ui` reaches `nudle` lazily, from the
+# static mount, and it is probed anyway: without it the browser gets no bundle.
 _FABRICS: dict[str, tuple[str, ...]] = {
     "kv": ("virtuals",),
     "mem": ("janus",),
-    "ui": ("nudle", "virtuals"),
+    "ui": ("fastapi", "uvicorn", "msgpack", "watchfiles", "nudle"),
     "cluster": ("ray",),
     "proxy": ("invisibles",),
     "http": ("httpx",),

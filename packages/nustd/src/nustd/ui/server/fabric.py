@@ -1,4 +1,4 @@
-"""``WebServer`` -- the uvicorn lifecycle, and nothing else.
+"""``WebServer`` -- the uvicorn lifecycle and the registry of live connections.
 
 Boots uvicorn behind a FastAPI app with a ``/ws`` endpoint and a static mount,
 binds itself to the Context, and stops uvicorn on the way out. It never sees
@@ -6,11 +6,11 @@ the UI program: that is a child of the tree, one arm per live connection.
 
 The two halves it does own:
 
-- the connection book, ``sid -> WsSession``, which the session bracket reads
-  to hand one arm its transport.
-- two channels, connect and disconnect, which announce those moments to
-  whoever is subscribed. The endpoint has no Nu runtime around it, so it
-  emits here and a Nu term does the kv write.
+- the connection book, ``sid -> _Connection``, holding each live transport and
+  whether the program for it has ended. The whole registry is this dict: it is
+  process-local, it dies with the process, and the fold reads it directly.
+- one ordered channel announcing every move of that book, which is what wakes
+  the fold.
 """
 
 from __future__ import annotations
@@ -41,6 +41,21 @@ if TYPE_CHECKING:
 
 
 __all__ = ["WebServer", "web_server"]
+
+
+async def _adrain(task: asyncio.Task) -> None:
+    """Await a task we just cancelled, swallowing its outcome and nothing else.
+
+    A ``CancelledError`` is re-raised unless the task itself is the one that
+    was cancelled, so being cancelled while waiting here still ends us.
+    """
+    try:
+        await task
+    except asyncio.CancelledError:
+        if not task.cancelled():
+            raise
+    except Exception:  # uvicorn is on its way out either way
+        pass
 
 
 def _bundled_static(package: str) -> Path | None:
@@ -89,54 +104,53 @@ class _SPAStatic(StaticFiles):
         return response
 
 
-class _Channel:
-    """A subscription over a moment the server can only announce once.
+class _Connection:
+    """One live ws connection: its transport, and whether its program has ended.
+
+    Presence in the book is what the fold folds over; ``done`` is what a
+    respawned arm reads to become a no-op.
+    """
+
+    __slots__ = ("done", "session")
+
+    def __init__(self, session: WsSession) -> None:
+        self.session = session
+        self.done = False
+
+
+class _Subscription:
+    """One subscriber's handle on the connection channel.
 
     ``bind`` / ``unbind`` / ``close`` is the whole reactive contract Nu's
     atoms drive, so a plain fan-out object is a first-class change source.
-
-    Events emitted while nobody is bound are held in a backlog: uvicorn opens
-    the browser before the driver arm has had a chance to subscribe, so the
-    very first connect would otherwise be dropped. Callbacks are compared by
-    identity and a raising one is dropped -- the far end is usually a queue in
-    a loop that may already be gone.
+    Closing detaches this handle alone. Callbacks are compared by identity and
+    a raising one is dropped -- the far end is usually a queue in a loop that
+    may already be gone.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, channel: _Channel) -> None:
+        self._channel = channel
         self._callbacks: list[Callable[[object], None]] = []
-        self._backlog: list[object] = []
-
-    def emit(self, event: object) -> None:
-        """Announce one event, or hold it until somebody binds."""
-        if not self._callbacks:
-            self._backlog.append(event)
-            return
-        self._fire(event)
+        self._closed = False
 
     def bind(self, cb: Callable[[object], None]) -> None:
-        """Register ``cb``, then hand it everything emitted while nobody listened."""
+        """Register ``cb`` to fire on every event this channel carries."""
+        if self._closed:
+            return
         if not any(cb is bound for bound in self._callbacks):
             self._callbacks.append(cb)
-        if not self._backlog:
-            return
-        # Swapped out before firing: a callback that emits re-entrantly must
-        # not see a list being drained underneath it.
-        backlog, self._backlog = self._backlog, []
-        for event in backlog:
-            self._fire(event)
 
     def unbind(self, cb: Callable[[object], None]) -> None:
         """Drop a previously bound callback (idempotent, by identity)."""
         self._callbacks = [bound for bound in self._callbacks if bound is not cb]
 
     def close(self) -> None:
-        """Detach every callback. The channel stays usable.
-
-        No ``_closed`` flag: ``ReactForever`` closes its subscription in a
-        ``finally``, and a permanently dead channel would mean a driver that
-        restarts never hears another connection.
-        """
+        """Detach from the channel; further ``bind`` calls no-op."""
+        if self._closed:
+            return
+        self._closed = True
         self._callbacks = []
+        self._channel._drop(self)
 
     def _fire(self, event: object) -> None:
         dead: list[Callable[[object], None]] = []
@@ -147,6 +161,33 @@ class _Channel:
                 dead.append(cb)
         if dead:
             self._callbacks = [cb for cb in self._callbacks if not any(cb is gone for gone in dead)]
+
+
+class _Channel:
+    """Fan-out over the one moment the server announces: the book moved.
+
+    Opening and closing ride the same ordered channel, so the two events for
+    one sid reach every subscriber in the order they happened. Nothing is
+    buffered and nothing is replayed: a subscriber reconciles against the
+    book, which already holds whatever landed before it subscribed.
+    """
+
+    def __init__(self) -> None:
+        self._subs: list[_Subscription] = []
+
+    def subscribe(self) -> _Subscription:
+        """A fresh handle, independent of every other subscriber's."""
+        sub = _Subscription(self)
+        self._subs.append(sub)
+        return sub
+
+    def emit(self, event: object) -> None:
+        """Announce one sid to everyone currently subscribed."""
+        for sub in tuple(self._subs):
+            sub._fire(event)
+
+    def _drop(self, sub: _Subscription) -> None:
+        self._subs = [s for s in self._subs if s is not sub]
 
 
 class WebServer:
@@ -195,11 +236,8 @@ class WebServer:
         self._shutdown_timeout = shutdown_timeout
         self._server: uvicorn.Server | None = None
         self._task: asyncio.Task | None = None
-        self._sessions: dict[str, WsSession] = {}
-        # Created once and handed out by reference. The backlog only works if
-        # every caller of `on_connect()` gets the same object.
-        self._connects = _Channel()
-        self._disconnects = _Channel()
+        self._connections: dict[str, _Connection] = {}
+        self._channel = _Channel()
 
     # ---- lifecycle ----------------------------------------------------------
 
@@ -225,10 +263,7 @@ class WebServer:
                 # Try to shut down the half-booted server before propagating.
                 server.should_exit = True
                 task.cancel()
-                try:
-                    await task
-                except (asyncio.CancelledError, Exception):
-                    pass
+                await _adrain(task)
                 msg = f"WebServer failed to start within {self._ready_timeout}s"
                 raise TimeoutError(msg)
             await asyncio.sleep(0.05)
@@ -254,28 +289,37 @@ class WebServer:
                 await asyncio.wait_for(task, timeout=self._shutdown_timeout)
             except TimeoutError:
                 task.cancel()
-                try:
-                    await task
-                except (asyncio.CancelledError, Exception):
-                    pass
+                await _adrain(task)
         self._server = None
         self._task = None
-        self._sessions.clear()
+        self._connections.clear()
         self._print_stopped()
 
     # ---- the connection book ------------------------------------------------
 
     def session(self, sid: str) -> WsSession | None:
         """The live transport for ``sid``, or None once the browser is gone."""
-        return self._sessions.get(sid)
+        conn = self._connections.get(sid)
+        return None if conn is None else conn.session
 
-    def on_connect(self) -> _Channel:
-        """The channel firing one sid per accepted ws connection."""
-        return self._connects
+    def live_ids(self) -> list[str]:
+        """The sid of every connection currently open, in arrival order."""
+        return list(self._connections)
 
-    def on_disconnect(self) -> _Channel:
-        """The channel firing one sid per closed ws connection."""
-        return self._disconnects
+    def is_done(self, sid: str) -> bool:
+        """Whether the program for ``sid`` has already ended."""
+        conn = self._connections.get(sid)
+        return conn is not None and conn.done
+
+    def mark_done(self, sid: str) -> None:
+        """Record that the program for ``sid`` has ended. A closed sid is a miss."""
+        conn = self._connections.get(sid)
+        if conn is not None:
+            conn.done = True
+
+    def subscribe(self) -> _Subscription:
+        """A handle firing one sid every time a connection opens or closes."""
+        return self._channel.subscribe()
 
     # ---- the http surface ---------------------------------------------------
 
@@ -289,15 +333,15 @@ class WebServer:
             # the socket the moment the handler returns. So accept, register,
             # drain intake until the browser goes away, unregister.
             await ws.accept()
-            session = WsSession(ws)
+            conn = _Connection(WsSession(ws))
             sid = uuid.uuid4().hex
-            self._sessions[sid] = session
-            self._connects.emit(sid)
+            self._connections[sid] = conn
+            self._channel.emit(sid)
             try:
-                await session.run_intake()
+                await conn.session.run_intake()
             finally:
-                self._sessions.pop(sid, None)
-                self._disconnects.emit(sid)
+                self._connections.pop(sid, None)
+                self._channel.emit(sid)
 
         @fastapi_app.get("/api/telemetry-config")
         async def telemetry_config() -> dict[str, object]:
@@ -354,7 +398,7 @@ def web_server(
     """The bare server bracket: ``Provide(WebServer, {...})``, no body.
 
     For hand-assembled trees. Most callers want ``nustd.ui.serve`` instead,
-    which stacks this with the session registry, the driver and the fold.
+    which stacks this with the fold that runs one arm per connection.
     Bodyless, so it belongs in a ``nu.With`` spec slot and nowhere else -- run
     standalone it compiles that empty slot to a literal and yields None.
 

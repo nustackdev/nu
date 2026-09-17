@@ -1,9 +1,8 @@
-"""``serve`` -- the host's four layers stacked into one tree.
+"""``serve`` -- the host's two layers stacked into one tree.
 
-A store for the session registry, the ws server, a driver that turns sockets
-into rows, and a fold that runs one arm of the ui program per row. Each layer
-is public on its own for a hand-assembled tree; this is the arrangement that
-covers the normal case.
+The ws server, and a fold that runs one arm of the ui program per connection
+the server holds open. Each layer is public on its own for a hand-assembled
+tree; this is the arrangement that covers the normal case.
 """
 
 from __future__ import annotations
@@ -11,16 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import nu
-from nustd.ui.server import (
-    SID_ATTR,
-    run_once,
-    seed_sessions,
-    session_driver,
-    session_for,
-    sessions_fold,
-    sessions_store,
-    web_server,
-)
+from nustd.ui.server import SID_ATTR, run_once, session_for, sessions_fold, web_server
 
 
 if TYPE_CHECKING:
@@ -77,9 +67,6 @@ def serve(
         ... )
     """
     return nu.With(
-        # Order is for the banner only: the store opens first and the server
-        # last, so "running at http://..." is the last line before the body.
-        sessions_store(),
         web_server(
             static=static,
             host=host,
@@ -89,9 +76,5 @@ def serve(
             ready_timeout=ready_timeout,
             shutdown_timeout=shutdown_timeout,
         ),
-        body=seed_sessions()
-        >> nu.ParallelAsync(
-            session_driver(),
-            sessions_fold(session_for(SID_ATTR, run_once(index.boot() >> program))),
-        ),
+        body=sessions_fold(session_for(SID_ATTR, run_once(index.boot() >> program))),
     )

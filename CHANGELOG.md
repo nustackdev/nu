@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Serve a browser UI without a kv store anywhere in the tree
 - Shard a kv stack by tag and its reactivity shards with it
 - A browser tab's program runs once and stays stopped when it ends
 - Browser UI runs one app arm per live tab, inside the tree

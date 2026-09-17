@@ -10,9 +10,9 @@ Layout under ``src/nustd/ui/``:
 - ``nudle/``  -- Page-based host: ``Index`` / ``Page`` / ``PageRef``, the
                  ``Boot`` term, and the ``serve`` preset that assembles a
                  whole tree.
-- ``server/`` -- the ws host: uvicorn lifecycle, a registry holding one row
-                 per live connection, and the Nu driver that relays
-                 connections into the tree.
+- ``server/`` -- the ws host: uvicorn lifecycle, the book of live
+                 connections, and the fold that runs one arm of the program
+                 per connection.
 - ``web/``    -- everything for the browser: npm workspace with ``core``,
                  ``kit``, and the ``nudle`` Vite SPA (also the pypi wheel
                  that ships the compiled SPA).

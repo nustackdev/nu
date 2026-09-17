@@ -53,11 +53,7 @@ kv = [
 mem = [
     "janus>=2.0.0",
 ]
-# `ui` pulls `kv` because the registry of live browser connections is a kv
-# shape: `nustd.ui.server` declares it at module scope and `nustd.ui` imports
-# that eagerly, so a ui install without kv cannot even import, let alone serve.
 ui = [
-    "nustd[kv]",
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.30.0",
     "msgpack>=1.1.2",
