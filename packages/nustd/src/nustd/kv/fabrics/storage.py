@@ -12,6 +12,11 @@ DI convention: each storage looks up ``Codec`` under its type. The
 publisher is looked up by the class passed as ``publisher_type`` (default:
 ``InMemoryPublisher``). Pass ``publisher_type=None`` on a read-only
 storage that shouldn't publish notifications.
+
+``codec_tags`` and ``publisher_tags`` name the tags those two are bound
+under, so a sharded stack reaches its own codec and publisher rather than
+whichever one happens to be untagged. Empty reads the default untagged
+binding.
 """
 
 from __future__ import annotations
@@ -33,8 +38,12 @@ if TYPE_CHECKING:
 __all__ = ["InMemoryStorage", "LMDBStorage", "RocksDBStorage", "TextStorage"]
 
 
-def _resolve_publisher(ctx: Context, publisher_type: type | None) -> object | None:
-    """Look up the publisher instance in ctx by its fabric class.
+def _resolve_publisher(
+    ctx: Context,
+    publisher_type: type | None,
+    tags: tuple[object, ...] = (),
+) -> object | None:
+    """Look up the publisher instance in ctx by its fabric class and tags.
 
     ``publisher_type=None`` means "no publisher" (RO storage / silent
     writes). Anything else is looked up in ctx; missing bindings raise
@@ -42,7 +51,7 @@ def _resolve_publisher(ctx: Context, publisher_type: type | None) -> object | No
     """
     if publisher_type is None:
         return None
-    return ctx.get(publisher_type)
+    return ctx.get(publisher_type, *tags)
 
 
 class InMemoryStorage(_InMemoryStorage):
@@ -53,13 +62,21 @@ class InMemoryStorage(_InMemoryStorage):
     ``publisher_type=None`` for silent writes.
     """
 
-    def __init__(self, *, publisher_type: type | None = InMemoryPublisher) -> None:
+    def __init__(
+        self,
+        *,
+        publisher_type: type | None = InMemoryPublisher,
+        codec_tags: tuple[object, ...] = (),
+        publisher_tags: tuple[object, ...] = (),
+    ) -> None:
         self._publisher_type = publisher_type
+        self._codec_tags = tuple(codec_tags)
+        self._publisher_tags = tuple(publisher_tags)
 
     def setup(self, ctx: Context) -> None:
         """Read deps from ctx, run the parent constructor, open the store."""
-        codec = ctx.get(Codec)
-        publisher = _resolve_publisher(ctx, self._publisher_type)
+        codec = ctx.get(Codec, *self._codec_tags)
+        publisher = _resolve_publisher(ctx, self._publisher_type, self._publisher_tags)
         _InMemoryStorage.__init__(self, codec=codec, publisher=publisher)
         self.open()
 
@@ -95,6 +112,8 @@ class RocksDBStorage:
         *,
         path: str,
         publisher_type: type | None = InMemoryPublisher,
+        codec_tags: tuple[object, ...] = (),
+        publisher_tags: tuple[object, ...] = (),
         read_only: bool = False,
         secondary_path: str | None = None,
         secondary_refresh_interval: float | None = 0.01,
@@ -103,6 +122,8 @@ class RocksDBStorage:
     ) -> None:
         self._path = path
         self._publisher_type = publisher_type
+        self._codec_tags = tuple(codec_tags)
+        self._publisher_tags = tuple(publisher_tags)
         self._read_only = read_only
         self._secondary_path = secondary_path
         self._secondary_refresh_interval = secondary_refresh_interval
@@ -114,8 +135,8 @@ class RocksDBStorage:
         """Import rdbpy lazily, construct the backing store, and open it."""
         from virtuals.storages.rocksdb import RocksDBStorage as _RocksDBStorage
 
-        codec = ctx.get(Codec)
-        publisher = _resolve_publisher(ctx, self._publisher_type)
+        codec = ctx.get(Codec, *self._codec_tags)
+        publisher = _resolve_publisher(ctx, self._publisher_type, self._publisher_tags)
         self._backing = _RocksDBStorage(
             path=Path(self._path),
             codec=codec,
@@ -171,6 +192,8 @@ class LMDBStorage:
         *,
         path: str,
         publisher_type: type | None = InMemoryPublisher,
+        codec_tags: tuple[object, ...] = (),
+        publisher_tags: tuple[object, ...] = (),
         read_only: bool = False,
         map_size: int = 10 * 1024 * 1024 * 1024,
         max_readers: int = 126,
@@ -179,6 +202,8 @@ class LMDBStorage:
     ) -> None:
         self._path = path
         self._publisher_type = publisher_type
+        self._codec_tags = tuple(codec_tags)
+        self._publisher_tags = tuple(publisher_tags)
         self._read_only = read_only
         self._map_size = map_size
         self._max_readers = max_readers
@@ -190,8 +215,8 @@ class LMDBStorage:
         """Import lmdb lazily, construct the backing env, and open it."""
         from virtuals.storages.lmdb import LMDBStorage as _LMDBStorage
 
-        codec = ctx.get(Codec)
-        publisher = _resolve_publisher(ctx, self._publisher_type)
+        codec = ctx.get(Codec, *self._codec_tags)
+        publisher = _resolve_publisher(ctx, self._publisher_type, self._publisher_tags)
         self._backing = _LMDBStorage(
             path=Path(self._path),
             codec=codec,
@@ -239,18 +264,22 @@ class TextStorage(_TextStorage):
         *,
         path: str,
         publisher_type: type | None = InMemoryPublisher,
+        codec_tags: tuple[object, ...] = (),
+        publisher_tags: tuple[object, ...] = (),
         read_only: bool = False,
         log_operations: bool = False,
     ) -> None:
         self._path = path
         self._publisher_type = publisher_type
+        self._codec_tags = tuple(codec_tags)
+        self._publisher_tags = tuple(publisher_tags)
         self._read_only = read_only
         self._log_operations = log_operations
 
     def setup(self, ctx: Context) -> None:
         """Read deps from ctx, run the parent constructor, open the store."""
-        codec = ctx.get(Codec)
-        publisher = _resolve_publisher(ctx, self._publisher_type)
+        codec = ctx.get(Codec, *self._codec_tags)
+        publisher = _resolve_publisher(ctx, self._publisher_type, self._publisher_tags)
         _TextStorage.__init__(
             self,
             path=Path(self._path),

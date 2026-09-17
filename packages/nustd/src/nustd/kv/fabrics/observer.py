@@ -38,18 +38,19 @@ class InMemoryObserver(_InMemoryObserver):
     """In-process observer. Reads the shared ``InMemoryTransport`` from ctx.
 
     Binds under ``ObserverProtocol`` so ``nu.core.reactive`` queries can
-    resolve "the observer" without knowing the backend.
+    resolve "the observer" without knowing the backend. ``transport_tags``
+    names the tags its stack's transport is bound under.
     """
 
     _nu_bind_as = ObserverProtocol
 
-    def __init__(self) -> None:
+    def __init__(self, *, transport_tags: tuple[object, ...] = ()) -> None:
         # Defer parent init until setup - InMemoryTransport comes from ctx.
-        pass
+        self._transport_tags = tuple(transport_tags)
 
     def setup(self, ctx: Context) -> None:
         """Read the transport from ctx, init the parent, connect."""
-        transport = ctx.get(InMemoryTransport)
+        transport = ctx.get(InMemoryTransport, *self._transport_tags)
         _InMemoryObserver.__init__(self, transport=transport)
         self.connect()
 

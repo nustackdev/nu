@@ -27,8 +27,9 @@ lives here so callers reach for one namespace regardless of what they hold.
                                   navigation already does).
 
 View methods return an opaque ``options`` value -- a pure filter descriptor,
-no observer coupling. Each query resolves the process-scope
-``ObserverProtocol`` from ctx and calls ``observer.subscribe(options)``.
+no observer coupling. Each query resolves the ``ObserverProtocol`` from ctx
+under the root Shape of the Ref it was built from -- the same tag that Ref's
+Navigator and storage resolve under -- and calls ``observer.subscribe(options)``.
 
 Sentinel handling. If the underlying view resolves to ``EMPTY`` / ``INVALID``
 (the address is unbound, the intermediate container is missing), the
@@ -72,6 +73,19 @@ _SYNC_UNSUPPORTED = (
 )
 
 
+def _scope_of(child: object) -> type | None:
+    """The root Shape a Ref chain is rooted at; None for anything that is not one."""
+    return getattr(child, "_root_shape", None)
+
+
+def _resolve_observer(rt: Runtime, scope: type | None) -> ObserverProtocol:
+    """Resolve the Observer from ctx under ``scope``, the shape tag of the watched Ref."""
+    tags = (scope,) if scope is not None else ()
+    # Context falls back from a tagged lookup to the untagged binding, so a
+    # tagged shape still finds an observer that was bound plainly.
+    return rt.ctx.get(ObserverProtocol, *tags)
+
+
 class OnChange(ScalarQuery):
     """Opens a subscription to any change on a Ref's view.
 
@@ -83,9 +97,9 @@ class OnChange(ScalarQuery):
         - Async only. The sync path raises ``RuntimeError`` rather than
           returning options without an observer behind them; use ``nu.arun``.
         - ``view.on_change()`` returns opaque filter options, nothing
-          observer-bound. The atom resolves the process-scope
-          ``ObserverProtocol`` from ctx and hands the options to
-          ``subscribe`` unread - Nu never inspects a backend's filter dialect.
+          observer-bound. The atom resolves the ``ObserverProtocol`` from ctx
+          under the Ref's root shape and hands the options to ``subscribe``
+          unread - Nu never inspects a backend's filter dialect.
         - Subscribing reads no value off the view, so nothing here recomputes
           on change. The handle only delivers notifications to receivers bound
           on it; ``React`` / ``ReactWhile`` / ``ReactForever`` are what bind
@@ -116,13 +130,14 @@ class OnChange(ScalarQuery):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         del nid
         view_thunk = children[0]
+        scope = _scope_of(self._children[0])
 
         async def athunk(rt: Runtime) -> object:
             view = await view_thunk(rt)
             if view is EMPTY or view is INVALID:
                 return INVALID
             options = view.on_change()
-            observer = rt.ctx.get(ObserverProtocol)
+            observer = _resolve_observer(rt, scope)
             return observer.subscribe(options)
 
         return athunk
@@ -141,8 +156,9 @@ class OnChildChange(ScalarQuery):
         - ``address`` is evaluated only after the view resolves, so a sentinel
           view short-circuits without touching it.
         - Watches that one child slot, not the subtree under it.
-        - The atom resolves the process-scope ``ObserverProtocol`` from ctx and
-          passes the view's opaque options through to ``subscribe`` unread.
+        - The atom resolves the ``ObserverProtocol`` from ctx under the Ref's
+          root shape, then passes the view's opaque options through to
+          ``subscribe`` unread.
         - Each evaluation opens a fresh subscription; the binder closes it.
 
     Yields:
@@ -166,6 +182,7 @@ class OnChildChange(ScalarQuery):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         del nid
         view_thunk, address_thunk = children[0], children[1]
+        scope = _scope_of(self._children[0])
 
         async def athunk(rt: Runtime) -> object:
             view = await view_thunk(rt)
@@ -175,7 +192,7 @@ class OnChildChange(ScalarQuery):
             if address is EMPTY or address is INVALID:
                 return INVALID
             options = view.on_child_change(address)
-            observer = rt.ctx.get(ObserverProtocol)
+            observer = _resolve_observer(rt, scope)
             return observer.subscribe(options)
 
         return athunk
@@ -192,8 +209,9 @@ class OnChildrenChange(ScalarQuery):
         - Async only. The sync path raises ``RuntimeError``; use ``nu.arun``.
         - Covers the immediate children only. Anything deeper needs
           ``OnDescendantsChange``.
-        - The atom resolves the process-scope ``ObserverProtocol`` from ctx and
-          passes the view's opaque options through to ``subscribe`` unread.
+        - The atom resolves the ``ObserverProtocol`` from ctx under the Ref's
+          root shape, then passes the view's opaque options through to
+          ``subscribe`` unread.
         - Each evaluation opens a fresh subscription; the binder closes it.
 
     Yields:
@@ -216,13 +234,14 @@ class OnChildrenChange(ScalarQuery):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         del nid
         view_thunk = children[0]
+        scope = _scope_of(self._children[0])
 
         async def athunk(rt: Runtime) -> object:
             view = await view_thunk(rt)
             if view is EMPTY or view is INVALID:
                 return INVALID
             options = view.on_children_change()
-            observer = rt.ctx.get(ObserverProtocol)
+            observer = _resolve_observer(rt, scope)
             return observer.subscribe(options)
 
         return athunk
@@ -245,8 +264,9 @@ class OnDescendantsChange(ScalarQuery):
         - Segments are evaluated in order, after the view, and any sentinel
           among them collapses the whole subscription rather than being
           dropped from the pattern.
-        - The atom resolves the process-scope ``ObserverProtocol`` from ctx and
-          passes the view's opaque options through to ``subscribe`` unread.
+        - The atom resolves the ``ObserverProtocol`` from ctx under the Ref's
+          root shape, then passes the view's opaque options through to
+          ``subscribe`` unread.
         - Each evaluation opens a fresh subscription; the binder closes it.
 
     Yields:
@@ -271,6 +291,7 @@ class OnDescendantsChange(ScalarQuery):
         del nid
         view_thunk = children[0]
         pattern_thunks = children[1:]
+        scope = _scope_of(self._children[0])
 
         async def athunk(rt: Runtime) -> object:
             view = await view_thunk(rt)
@@ -285,7 +306,7 @@ class OnDescendantsChange(ScalarQuery):
                     return INVALID
                 pattern.append(p)
             options = view.on_descendants_change(pattern[0], *pattern[1:])
-            observer = rt.ctx.get(ObserverProtocol)
+            observer = _resolve_observer(rt, scope)
             return observer.subscribe(options)
 
         return athunk
@@ -342,6 +363,7 @@ class OnPrimitiveChange(ScalarQuery):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
+        scope = _scope_of(ref)
 
         async def athunk(rt: Runtime) -> object:
             ref_nid = rt.program.children[nid][0]
@@ -352,7 +374,7 @@ class OnPrimitiveChange(ScalarQuery):
             if address is EMPTY or address is INVALID:
                 return INVALID
             options = parent.on_child_change(address)
-            observer = rt.ctx.get(ObserverProtocol)
+            observer = _resolve_observer(rt, scope)
             return observer.subscribe(options)
 
         return athunk

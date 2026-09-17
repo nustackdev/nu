@@ -18,9 +18,10 @@ The ``*_storage`` functions are the other form: plain context managers handing
 back a live ``StorageProtocol``, for wiring a Context by hand rather than
 through the tree. The two forms are independent; neither is built on the other.
 
-Every navigator preset takes ``tags``, folded onto both the Storage and the
-Navigator binding. That is how a shard names itself: bind one preset per shard
-under its own tag, and a Ref carrying that scope routes to it.
+Every navigator preset takes ``tags``, folded onto every binding it makes:
+Codec, Transport, Publisher, Observer, Storage and Navigator alike. That is how
+a shard names itself: bind one preset per shard under its own tag, and a Ref
+carrying that scope routes to the whole stack, reactivity included.
 
 The ``_redis`` variants swap the in-process Publisher and Observer for Redis
 ones, which is what makes change notifications cross process boundaries. The
@@ -256,9 +257,10 @@ def rocksdb_storage_redis(
 # stack. Same order and LIFO teardown as a hand-written
 # ``With(Provide(Codec, ...), Provide(InMemoryTransport, ...), ...)``.
 #
-# ``tags=`` folds onto both the Storage and Navigator bindings so a shard
-# picks its storage via ``storage_tags=`` and binds the Navigator under the
-# same tag - matching the citadel per-shard pattern.
+# ``tags=`` folds onto all six bindings, and each fabric is handed the same
+# tags for its own ctx lookups (``storage_tags=``, ``codec_tags=``,
+# ``publisher_tags=``, ``transport_tags=``), so a shard is one self-contained
+# stack rather than a tagged storage sitting on shared untagged machinery.
 # =========================================================================
 
 
@@ -275,9 +277,9 @@ def memory_navigator(
     meant to die with the process.
 
     Args:
-        tags: shape tags folded onto the Storage and Navigator bindings, so
-            a sharded program can name this stack. Empty binds it as the
-            default that untagged Refs resolve to.
+        tags: shape tags folded onto every binding this makes, so a sharded
+            program can name this stack. Empty binds it as the default that
+            untagged Refs resolve to.
 
     Notes:
         - Binds the full stack: Codec, Transport, Publisher, Observer,
@@ -302,11 +304,15 @@ def memory_navigator(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, noop_kwargs()),
-        Provide(InMemoryTransport, {}),
-        Provide(InMemoryPublisher, {}),
-        Provide(InMemoryObserver, {}),
-        Provide(InMemoryStorage, {}, tags=tags),
+        Provide(Codec, noop_kwargs(), tags=tags),
+        Provide(InMemoryTransport, {}, tags=tags),
+        Provide(InMemoryPublisher, {"transport_tags": tags}, tags=tags),
+        Provide(InMemoryObserver, {"transport_tags": tags}, tags=tags),
+        Provide(
+            InMemoryStorage,
+            {"codec_tags": tags, "publisher_tags": tags},
+            tags=tags,
+        ),
         Provide(
             Navigator,
             {"storage_type": InMemoryStorage, "storage_tags": tags},
@@ -335,8 +341,8 @@ def rocksdb_navigator(
 
     Args:
         path: the database directory. Created if it is not there.
-        tags: shape tags folded onto the Storage and Navigator bindings, so
-            a sharded program can name this stack.
+        tags: shape tags folded onto every binding this makes, so a sharded
+            program can name this stack.
         read_only: open without taking the write lock, so several processes
             can read the same database at once. Writes will fail.
         secondary_path: open as a secondary instance, tailing the primary at
@@ -374,14 +380,16 @@ def rocksdb_navigator(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, binary_kwargs()),
-        Provide(InMemoryTransport, {}),
-        Provide(InMemoryPublisher, {}),
-        Provide(InMemoryObserver, {}),
+        Provide(Codec, binary_kwargs(), tags=tags),
+        Provide(InMemoryTransport, {}, tags=tags),
+        Provide(InMemoryPublisher, {"transport_tags": tags}, tags=tags),
+        Provide(InMemoryObserver, {"transport_tags": tags}, tags=tags),
         Provide(
             RocksDBStorage,
             {
                 "path": path,
+                "codec_tags": tags,
+                "publisher_tags": tags,
                 "read_only": read_only,
                 "secondary_path": secondary_path,
                 "secondary_refresh_interval": secondary_refresh_interval,
@@ -420,8 +428,8 @@ def rocksdb_navigator_redis(
 
     Args:
         path: the database directory. Created if it is not there.
-        tags: shape tags folded onto the Storage and Navigator bindings, so
-            a sharded program can name this stack.
+        tags: shape tags folded onto every binding this makes, so a sharded
+            program can name this stack.
         read_only: open without taking the write lock. Writes will fail.
         secondary_path: open as a secondary instance, tailing the primary at
             ``path`` and keeping its own state under this directory.
@@ -464,20 +472,24 @@ def rocksdb_navigator_redis(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, binary_kwargs()),
+        Provide(Codec, binary_kwargs(), tags=tags),
         Provide(
             RedisPublisher,
             {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            tags=tags,
         ),
         Provide(
             RedisObserver,
             {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            tags=tags,
         ),
         Provide(
             RocksDBStorage,
             {
                 "path": path,
                 "publisher_type": RedisPublisher,
+                "codec_tags": tags,
+                "publisher_tags": tags,
                 "read_only": read_only,
                 "secondary_path": secondary_path,
                 "secondary_refresh_interval": secondary_refresh_interval,
@@ -517,8 +529,8 @@ def text_navigator(
     Args:
         path: the directory holding ``state.json``, and the operation log
             when it is on.
-        tags: shape tags folded onto the Storage and Navigator bindings, so
-            a sharded program can name this stack.
+        tags: shape tags folded onto every binding this makes, so a sharded
+            program can name this stack.
         read_only: open without allowing writes.
         log_operations: append every put, delete, commit and abort to
             ``operations.jsonl`` beside the state, as a trace to read back.
@@ -548,14 +560,16 @@ def text_navigator(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, text_kwargs()),
-        Provide(InMemoryTransport, {}),
-        Provide(InMemoryPublisher, {}),
-        Provide(InMemoryObserver, {}),
+        Provide(Codec, text_kwargs(), tags=tags),
+        Provide(InMemoryTransport, {}, tags=tags),
+        Provide(InMemoryPublisher, {"transport_tags": tags}, tags=tags),
+        Provide(InMemoryObserver, {"transport_tags": tags}, tags=tags),
         Provide(
             TextStorage,
             {
                 "path": path,
+                "codec_tags": tags,
+                "publisher_tags": tags,
                 "read_only": read_only,
                 "log_operations": log_operations,
             },
@@ -589,8 +603,8 @@ def lmdb_navigator(
     Args:
         path: the environment. A directory when ``subdir`` is true, the env
             file itself when it is not.
-        tags: shape tags folded onto the Storage and Navigator bindings, so
-            a sharded program can name this stack.
+        tags: shape tags folded onto every binding this makes, so a sharded
+            program can name this stack.
         read_only: open the environment read-only.
         map_size: the ceiling on the database, in bytes. Reserved as
             address space rather than allocated, so a generous value costs
@@ -623,14 +637,16 @@ def lmdb_navigator(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, binary_kwargs()),
-        Provide(InMemoryTransport, {}),
-        Provide(InMemoryPublisher, {}),
-        Provide(InMemoryObserver, {}),
+        Provide(Codec, binary_kwargs(), tags=tags),
+        Provide(InMemoryTransport, {}, tags=tags),
+        Provide(InMemoryPublisher, {"transport_tags": tags}, tags=tags),
+        Provide(InMemoryObserver, {"transport_tags": tags}, tags=tags),
         Provide(
             LMDBStorage,
             {
                 "path": path,
+                "codec_tags": tags,
+                "publisher_tags": tags,
                 "read_only": read_only,
                 "map_size": map_size,
                 "max_readers": max_readers,
@@ -668,8 +684,8 @@ def lmdb_navigator_redis(
     Args:
         path: the environment. A directory when ``subdir`` is true, the env
             file itself when it is not.
-        tags: shape tags folded onto the Storage and Navigator bindings, so
-            a sharded program can name this stack.
+        tags: shape tags folded onto every binding this makes, so a sharded
+            program can name this stack.
         read_only: open the environment read-only.
         map_size: the ceiling on the database, in bytes. Defaults to 10 GiB.
         max_readers: how many reader slots the environment holds.
@@ -705,20 +721,24 @@ def lmdb_navigator_redis(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, binary_kwargs()),
+        Provide(Codec, binary_kwargs(), tags=tags),
         Provide(
             RedisPublisher,
             {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            tags=tags,
         ),
         Provide(
             RedisObserver,
             {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            tags=tags,
         ),
         Provide(
             LMDBStorage,
             {
                 "path": path,
                 "publisher_type": RedisPublisher,
+                "codec_tags": tags,
+                "publisher_tags": tags,
                 "read_only": read_only,
                 "map_size": map_size,
                 "max_readers": max_readers,
@@ -741,7 +761,7 @@ def lmdb_navigator_redis(
 # =========================================================================
 
 
-def inmem_observer() -> With:
+def inmem_observer(*, tags: Sequence[object] = ()) -> With:
     """Binds the listening half of the in-process notification pair, alone.
 
     Transport and Observer with no Publisher and no Storage, for a program
@@ -750,6 +770,10 @@ def inmem_observer() -> With:
     programs sharing a process usually share a navigator preset instead, and
     that already binds an Observer. The cross-process case is
     ``redis_observer``.
+
+    Args:
+        tags: shape tags folded onto both bindings, so a sharded program
+            reaches this observer under the same tag as its storage.
 
     Notes:
         - Binds nothing that can read or write data. A Ref evaluated under
@@ -762,15 +786,18 @@ def inmem_observer() -> With:
     from nu.context.fabric import Provide, With
     from nustd.kv.fabrics import InMemoryObserver, InMemoryTransport
 
+    tags = tuple(tags)
     return With(
-        Provide(InMemoryTransport, {}),
-        Provide(InMemoryObserver, {}),
+        Provide(InMemoryTransport, {}, tags=tags),
+        Provide(InMemoryObserver, {"transport_tags": tags}, tags=tags),
     )
 
 
 def redis_observer(
     redis_url: str = "redis://localhost:6379",
     channel_prefix: str = "nu",
+    *,
+    tags: Sequence[object] = (),
 ) -> With:
     """Binds a Redis subscriber alone, for a program that only reacts.
 
@@ -784,6 +811,8 @@ def redis_observer(
         channel_prefix: must match the publishing side's, or nothing
             arrives. Note the RocksDB Redis preset defaults to
             ``"__every__"`` rather than this one's ``"nu"``.
+        tags: shape tags folded onto the binding, so a sharded program
+            reaches this observer under the same tag as its storage.
 
     Notes:
         - Binds nothing that can read or write data. Pair it with a storage
@@ -804,6 +833,7 @@ def redis_observer(
         Provide(
             RedisObserver,
             {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            tags=tuple(tags),
         ),
     )
 

@@ -30,15 +30,19 @@ __all__ = ["InMemoryPublisher", "RedisPublisher"]
 
 
 class InMemoryPublisher(_InMemoryPublisher):
-    """In-process publisher. Reads the shared ``InMemoryTransport`` from ctx."""
+    """In-process publisher. Reads the shared ``InMemoryTransport`` from ctx.
 
-    def __init__(self) -> None:
+    ``transport_tags`` names the tags its stack's transport is bound under.
+    Empty reads the default untagged one.
+    """
+
+    def __init__(self, *, transport_tags: tuple[object, ...] = ()) -> None:
         # Defer parent init until setup - InMemoryTransport comes from ctx.
-        pass
+        self._transport_tags = tuple(transport_tags)
 
     def setup(self, ctx: Context) -> None:
         """Read the transport from ctx, init the parent, connect."""
-        transport = ctx.get(InMemoryTransport)
+        transport = ctx.get(InMemoryTransport, *self._transport_tags)
         _InMemoryPublisher.__init__(self, transport=transport)
         self.connect()
 
