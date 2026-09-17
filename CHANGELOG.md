@@ -2,16 +2,16 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.5.0
-- **nustd** (fabrics) — 0.5.0
-- **nucli** (the `nu` command) — 0.5.0
+- **nucore** (kernel) — 0.5.1
+- **nustd** (fabrics) — 0.5.1
+- **nucli** (the `nu` command) — 0.5.1
 - **nudle** — 0.1.4
 - **ui-core** — 0.2.0
 - **ui-kit** — 0.2.0
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.5.1 — 2026-09-17
 
 - Fan out over a live collection, adding and dropping arms without disturbing the rest
 - Let a ui ref drop its node and everything below it
