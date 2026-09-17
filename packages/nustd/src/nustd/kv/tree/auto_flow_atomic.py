@@ -244,8 +244,10 @@ def auto_flow_atomic(tree: Nu, scope: Hashable | None = None) -> Nu:
     Example:
         app = nu.With(
             nustd.kv.rocksdb_navigator(".dbcounter"),
-            nustd.ui.server(nustd.kv.auto_flow_atomic(ui)),
-            body=nustd.kv.auto_flow_atomic(tick),
+            body=nu.ParallelAsync(
+                nustd.ui.serve(App, nustd.kv.auto_flow_atomic(ui)),
+                nustd.kv.auto_flow_atomic(tick),
+            ),
         )
     """
     walked = _walk(tree, scope, ())

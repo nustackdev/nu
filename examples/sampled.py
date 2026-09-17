@@ -33,8 +33,10 @@ feed = State.cursor.init(0) >> nu.ForeverDo(
 # assemble: rocksdb-backed, served over the browser
 app = nu.With(
     nustd.kv.rocksdb_navigator(".dbsampled"),
-    nustd.ui.server(nustd.kv.auto_flow_atomic(ui)),
-    body=nustd.kv.auto_flow_atomic(feed),
+    body=nu.ParallelAsync(
+        nustd.ui.serve(App, nustd.kv.auto_flow_atomic(ui)),
+        nustd.kv.auto_flow_atomic(feed),
+    ),
 )
 
 

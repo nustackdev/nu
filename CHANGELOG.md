@@ -11,6 +11,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Browser UI runs one app arm per live tab, inside the tree
+
 ## 0.5.1 — 2026-09-17
 
 - Fan out over a live collection, adding and dropping arms without disturbing the rest

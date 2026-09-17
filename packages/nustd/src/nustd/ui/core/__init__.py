@@ -6,7 +6,11 @@ The reusable seam under nustd.ui:
 - ``Section`` /
   ``SectionRef``       -- shape-based container primitive + substrate ref
 - ``Session`` /
-  ``Subscription``     -- abstract wire transport (concrete impls in host modules)
+  ``Subscription``     -- abstract wire transport (the seam hosts target)
+- ``WsSession`` /
+  ``WsSubscription``   -- that transport over a websocket, shared by ws hosts
+- ``Chain`` /
+  ``boot_chains``      -- a Shape's slots as the init frames that seed a tree
 - ``Frame`` /
   ``encode/decode``    -- wire protocol envelope
 - ``Write`` /
@@ -15,12 +19,13 @@ The reusable seam under nustd.ui:
   ``Changed``          -- interactions that flow over a Session on a Ref
 
 Concrete hosts (``nustd.ui.nudle`` today, potentially others) build on this
-core: they provide a ``Session`` implementation, a page/routing model,
-and any host-specific Ref subclasses. The widget kit under
-``nustd.ui.refs`` targets this core, not any specific host.
+core: they bind a ``Session``, declare a page/routing model, and add any
+host-specific Ref subclasses. The widget kit under ``nustd.ui.refs`` targets
+this core, not any specific host.
 """
 
 from .base import Ref
+from .chains import Chain, boot_chains
 from .interactions import Append, Changed, Remove, Write
 from .protocol import (
     OP_ERROR,
@@ -34,7 +39,7 @@ from .protocol import (
     encode,
 )
 from .section import Section, SectionRef
-from .session import Session, Subscription
+from .session import Session, Subscription, WsSession, WsSubscription
 
 
 __all__ = [
@@ -45,6 +50,7 @@ __all__ = [
     "OP_REMOVE",
     "OP_WRITE",
     "Append",
+    "Chain",
     "Changed",
     "Frame",
     "Ref",
@@ -54,6 +60,9 @@ __all__ = [
     "Session",
     "Subscription",
     "Write",
+    "WsSession",
+    "WsSubscription",
+    "boot_chains",
     "decode",
     "encode",
 ]

@@ -67,6 +67,6 @@ def demo(name: str | None) -> None:
     try:
         runpy.run_path(str(found[name]), run_name="__main__")
     except KeyboardInterrupt:
-        # Ctrl+C during a demo: nudle already printed its stopped banner;
-        # don't let click surface its default "Aborted!" line on top of it.
+        # Ctrl+C during a demo: the ui server already printed its stopped
+        # banner; don't let click surface "Aborted!" on top of it.
         pass

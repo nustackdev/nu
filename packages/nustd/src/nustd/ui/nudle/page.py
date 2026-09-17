@@ -1,9 +1,10 @@
-"""Top-level Shape kinds for nudle.
+"""Top-level Shape kinds for nudle, and the term that boots one.
 
 - ``Index``: the browser entrypoint. One per app. Carries structural Refs
   (document title, navigation, ...) and one slot per Page.
 - ``Page``: a Section an Index mounts at a route. Display Refs and Section
   slots only.
+- ``Boot``: the init batch for either of them, as a Nu term.
 
 Wire-path rule: the address is the Ref chain, nothing else (see
 ``Ref._aresolve_address``). A segment is in a path because something
@@ -15,54 +16,95 @@ navigated through it, never because a class named itself.
   two pages can both declare a ``panel`` and land at different addresses.
 - Taken off the class (``HomePage.panel.label``) a Page resolves bare,
   exactly like a Section: no slot was navigated, so there is no segment to
-  add. That is the one-page shorthand -- serve.py boots a Page no
-  Index declares, and refuses class handles for pages an Index does.
+  add. That is the one-page shorthand, and ``Page.boot()`` emits exactly
+  those bare addresses.
 """
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import Self
 
 from nu.domains.shape import Shape, Slot
-from nustd.ui.core import Ref, Section, SectionRef
-from nustd.ui.core.base import _wire_type_of
+from nu.engine.structure import Declared
+from nu.lang import Command
+from nustd.ui.core import Section, SectionRef
+from nustd.ui.core.chains import Chain, boot_chains
+from nustd.ui.core.protocol import OP_INIT, OP_REMOVE, OP_WRITE, Frame
+from nustd.ui.core.session import Session
 
 
-# ``_wire_type_of`` lives in core now (the ref chain annotates itself with it);
-# re-exported here because serve.py imports it for the shape-less fallback.
-__all__ = ["Chain", "Index", "Page", "PageRef"]
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from nu.lang.runtime import Runtime
 
 
-Chain = tuple[tuple[str, str, dict[str, object]], ...]
+__all__ = ["Boot", "Chain", "Index", "Page", "PageRef"]
 
 
-def _boot_chains(base: Chain, shape_cls: type[Shape]) -> list[Chain]:
-    """Every slot under ``shape_cls`` as a chain, root-first, in order.
+class Boot(Command):
+    """Seed one browser's tree: clear it, name it, then one ``init`` per slot.
 
-    One chain per declared slot, the same shape ``Ref._aresolve_chain``
-    builds at write time -- ``(segment, type, props)`` per level. Shipped
-    as ``init`` frames at boot so a slot is on screen before anything
-    writes to it, and dropped straight into the browser's tree by the same
-    autovivify walk a write takes.
+    Where boot lives now. The fabric never sees the program, so nothing walks
+    the tree hunting for an Index any more -- the shape is named at the head
+    of the arm and this runs with that connection's Session bound, once per
+    live connection and never for anybody else's.
 
-    Depth-first in declaration order, so the browser's per-node insertion
-    order is the order the class body reads.
+    Three frames, in order. The clearing ``remove`` goes first because a
+    reconnect gets a fresh session with none of the old one's dynamic nodes,
+    and those would otherwise sit there forever. Then the root write, which
+    carries what the shell itself needs -- the app name, whether the built-in
+    sidebar is on; drop it and every app silently loses both. Then the slots,
+    in declaration order, which is render order.
+
+    The mutation slot is declared and empty. What this writes is the browser's
+    tree, and the tree root is not something any Nu Ref names, so there is no
+    address to put in slot 0 -- which the effect system already allows for: a
+    mutation with no address is a local change, not an effect. It is also why
+    this cannot be spelled out of the existing interactions: ``Remove`` and
+    ``Write`` both take a Ref and resolve its address, and ``init`` has no
+    interaction at all.
+
+    Args:
+        shape_cls: the Index, or the lone Page, whose slots seed the tree.
     """
-    out: list[Chain] = []
-    for name, slot in shape_cls._slots.items():
-        ref_cls = slot.ref_cls
-        if not issubclass(ref_cls, Ref):
-            continue
-        if issubclass(ref_cls, SectionRef):
-            section_cls: type[Section] = slot.kwargs["section_cls"]
-            chain = (*base, (name, _wire_type_of(section_cls), dict(slot.props)))
-            out.append(chain)
-            out.extend(_boot_chains(chain, section_cls))
-            continue
-        out.append((*base, (name, _wire_type_of(ref_cls), dict(slot.props))))
-    return out
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
+
+    def __init__(self, shape_cls: type[Shape]) -> None:
+        super().__init__()
+        self._payload["shape_cls"] = shape_cls
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            raise RuntimeError("nustd.ui is async-only; use nu.arun")
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        # Name, chains and sidebar are pure class statics, so they resolve once
+        # per compile rather than per run. It also keeps the payload the class
+        # alone, which stays hashable across a tree rewrite.
+        shape_cls = self._payload["shape_cls"]
+        name = shape_cls.__name__
+        chains = shape_cls._boot_chains()
+        sidebar = shape_cls._sidebar_enabled() if issubclass(shape_cls, Index) else False
+
+        async def athunk(rt: Runtime) -> None:
+            session = rt.ctx.get(Session)
+            # Down this connection's socket and no other. The clearing remove
+            # wipes the tab that is booting, never a sibling tab's tree.
+            await session.send(Frame(OP_REMOVE))
+            await session.send(Frame(OP_WRITE, payload={"name": name, "sidebar": sidebar}))
+            for chain in chains:
+                await session.send(
+                    Frame(OP_INIT, ref=[seg for seg, _, _ in chain], chain=chain),
+                )
+
+        return athunk
 
 
 class PageRef(SectionRef):
@@ -120,14 +162,24 @@ class Page(Section):
         return Slot(cls._ref_cls, props=declared, section_cls=cls)  # type: ignore[return-value]
 
     @classmethod
+    def boot(cls) -> Boot:
+        """The init batch for this Page, as a term to put at the head of an arm.
+
+        ``HomePage.boot() >> program`` is the whole idiom: the browser shows
+        "waiting for the tree..." until the inits land, so this runs before
+        anything writes.
+        """
+        return Boot(cls)
+
+    @classmethod
     def _boot_chains(cls) -> list[Chain]:
         """This Page's slots, rooted bare.
 
-        Only the auto-mount path uses this: a Page no Index declares was
+        Only the one-page shorthand uses this: a Page no Index declares was
         never navigated to, so its slots start at their own names -- the
         same addresses ``HomePage.panel.label`` resolves to.
         """
-        return _boot_chains((), cls)
+        return boot_chains((), cls)
 
 
 class Index(Shape):
@@ -148,6 +200,16 @@ class Index(Shape):
     # Opt-out for the built-in left sidebar. Off automatically when there
     # is only one page; setting False suppresses it even with multiple pages.
     sidebar: ClassVar[bool] = True
+
+    @classmethod
+    def boot(cls) -> Boot:
+        """The init batch for this Index, as a term to put at the head of an arm.
+
+        ``App.boot() >> program`` is the whole idiom: the browser shows
+        "waiting for the tree..." until the inits land, so this runs before
+        anything writes.
+        """
+        return Boot(cls)
 
     @classmethod
     def _page_slots(cls) -> list[tuple[str, Slot]]:
@@ -173,7 +235,7 @@ class Index(Shape):
         starts at the Index slot name, which is the segment the Ref chain
         puts there too.
         """
-        return _boot_chains((), cls)
+        return boot_chains((), cls)
 
     @classmethod
     def _sidebar_enabled(cls) -> bool:

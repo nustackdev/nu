@@ -7,7 +7,7 @@ testable here:
   pure structure;
 - ``with_children`` survival (metadata riding a tree rewrite) is pure structure;
 - wire-path resolution + frame emission run through ``nu.arun`` against a *fake*
-  ``NudleSession`` that just records the ``Frame`` it is handed — no websocket,
+  ``WsSession`` that just records the ``Frame`` it is handed — no websocket,
   no browser.
 
 Only the browser-side rendering is out of reach, and the Ref layer never touches
@@ -43,7 +43,7 @@ class HomeApp(Index):
 
 
 class _RecordingSession:
-    """Fake NudleSession: records frames instead of sending over a websocket."""
+    """Fake WsSession: records frames instead of sending over a websocket."""
 
     def __init__(self) -> None:
         self.frames: list = []
@@ -180,7 +180,7 @@ def test_same_slot_name_on_two_pages_does_not_collide():
 def test_page_class_handle_resolves_bare():
     """A Page is a Section with a route: no Index navigated to it, so there
     is no page segment to add. That is the single-page shorthand -- the
-    address matches what `Page._boot_chains` emits for an auto-mount."""
+    address matches what `Page.boot()` seeds the browser with."""
 
     class Solo(Page):
         panel = Panel.slot()

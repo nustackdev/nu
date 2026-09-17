@@ -66,21 +66,23 @@ class App(nustd.ui.Index):
     home = Dashboard.slot("/")
 
 
+# reactive wire: whenever `value` changes, mirror it into `count`
+ui = nu.ReactForever(
+    Counter.value.on_change(),
+    App.home.count.set_value(nu.str(Counter.value)),
+)
+
+# updater: tick `value` up once a second, forever
+tick = nu.IfDo(Counter.value.missing(), Counter.value.set(0)) >> nu.ForeverDo(
+    Counter.value.inc() >> nu.Delay(1.0),
+)
+
+# assemble: rocksdb-backed, one live arm of `ui` per open browser tab
 app = nu.With(
     nustd.kv.rocksdb_navigator(str(_DB)),
-    nustd.ui.server(
-        nustd.kv.auto_flow_atomic(
-            nu.ReactForever(
-                Counter.value.on_change(),
-                App.home.count.set_value(nu.str(Counter.value)),
-            ),
-        ),
-    ),
-    body=nustd.kv.auto_flow_atomic(
-        nu.IfDo(Counter.value.missing(), Counter.value.set(0))
-        >> nu.ForeverDo(
-            Counter.value.inc() >> nu.Delay(1.0),
-        )
+    body=nu.ParallelAsync(
+        nustd.ui.serve(App, nustd.kv.auto_flow_atomic(ui)),
+        nustd.kv.auto_flow_atomic(tick),
     ),
 )
 

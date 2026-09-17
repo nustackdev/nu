@@ -57,10 +57,9 @@ on_edit = nu.ReactForever(
 
 ui = App.home.split.mirror.chars.set_value(str(len(SEED))) >> on_edit
 
-app = nu.With(
-    nustd.ui.server(ui),
-    body=nu.ForeverDo(nu.Delay(3600)),
-)
+# No navigator anywhere in this tree: the round trip is browser-only, and the
+# sessions registry stands up its own in-memory store when it finds no kv stack.
+app = nustd.ui.serve(App, ui)
 
 
 if __name__ == "__main__":

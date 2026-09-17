@@ -468,8 +468,10 @@ ui = (
 
 app = nu.With(
     nustd.kv.rocksdb_navigator(str(_DB)),
-    nustd.ui.server(nustd.kv.auto_flow_atomic(ui)),
-    body=nustd.kv.auto_flow_atomic(init >> nu.ForeverDo(nu.Delay(3600))),
+    body=nu.ParallelAsync(
+        nustd.ui.serve(App, nustd.kv.auto_flow_atomic(ui)),
+        nustd.kv.auto_flow_atomic(init),
+    ),
 )
 
 

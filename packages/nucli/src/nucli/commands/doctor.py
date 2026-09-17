@@ -14,18 +14,22 @@ from nu._config.branding import BLUE, PURPLE
 from nucli._meta import nu_version
 
 
-# Fabric extras (as declared in packages/nustd/pyproject.toml) and the import
-# that proves they resolve. The backends live in the `nustd` distribution;
-# this kernel-side command only probes for them, it never imports the fabric.
-_FABRICS: dict[str, str] = {
-    "kv": "virtuals",
-    "mem": "janus",
-    "ui": "nudle",
-    "cluster": "ray",
-    "proxy": "invisibles",
-    "http": "httpx",
-    "llm": "httpx",
-    "cc": "claude_agent_sdk",
+# Fabric extras (as declared in packages/nustd/pyproject.toml) and the imports
+# that prove they resolve. The backends live in the `nustd` distribution; this
+# kernel-side command only probes for them, it never imports the fabric.
+#
+# An extra that depends on another needs both probed, or the row goes green on
+# an install that cannot import: `ui` pulls `kv`, because the registry of live
+# browser connections is a kv shape declared at module scope.
+_FABRICS: dict[str, tuple[str, ...]] = {
+    "kv": ("virtuals",),
+    "mem": ("janus",),
+    "ui": ("nudle", "virtuals"),
+    "cluster": ("ray",),
+    "proxy": ("invisibles",),
+    "http": ("httpx",),
+    "llm": ("httpx",),
+    "cc": ("claude_agent_sdk",),
 }
 
 
@@ -45,13 +49,15 @@ def doctor() -> None:
     table.add_column("fabric", style="bold")
     table.add_column("status")
     table.add_column("install", style="dim")
-    for name, probe in _FABRICS.items():
-        if importlib.util.find_spec(probe) is not None:
+    for name, probes in _FABRICS.items():
+        if all(importlib.util.find_spec(probe) is not None for probe in probes):
             table.add_row(name, Text("● ok", style="green"), "")
         else:
             table.add_row(
                 name,
                 Text("○ missing", style="yellow"),
-                f"pip install 'nustd[{name}]'",
+                # Text, not a bare str: rich reads `[ui]` in a plain string as
+                # a style tag and eats it, leaving "pip install 'nustd'".
+                Text(f"pip install 'nustd[{name}]'"),
             )
     console.print(table)

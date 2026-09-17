@@ -115,9 +115,7 @@ class Dashboard(nustd.ui.Page):
 # renders live in the browser
 op = Dashboard.hello.set("Hello, browser.")
 
-app = nu.With(
-    nustd.ui.server(op),
-)
+app = nustd.ui.serve(Dashboard, op)
 ...
 ```
 

@@ -28,9 +28,13 @@ tick = Counter.value.init(0) >> nu.ForeverDo(Counter.value.inc() >> nu.Delay(1.0
 # assemble: rocksdb-backed, served over the browser
 app = nu.With(
     nustd.kv.rocksdb_navigator(".dbcounter"),
-    nustd.ui.server(nustd.kv.auto_flow_atomic(ui)),
-    body=nustd.kv.auto_flow_atomic(tick),
+    body=nu.ParallelAsync(
+        nustd.ui.serve(App, nustd.kv.auto_flow_atomic(ui)),
+        nustd.kv.auto_flow_atomic(tick),
+    ),
 )
+
+print(app)
 
 
 if __name__ == "__main__":
