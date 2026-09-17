@@ -168,7 +168,7 @@ convention = "google"
 "**/src/nustd/ui/nudle/**/*.py" = [
     "D102", "D103", "D205", "ANN401", "S110",
 ]
-"**/src/nustd/ui/server/**/*.py" = [
+"**/src/nustd/ws_server/**/*.py" = [
     "D102", "D103", "D205", "ANN401", "S110",
 ]
 "**/src/nustd/http/methods.py" = [

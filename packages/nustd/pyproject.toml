@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "nustd"
 version = "0.5.1"
-description = "Batteries for Nu: the fabrics (mem, kv, service, llm, cc, http, proxy, mp, mp_pool, cluster, ui) and the standard library, imported as nustd."
+description = "Batteries for Nu: the fabrics (mem, kv, service, llm, cc, http, proxy, mp, mp_pool, cluster, ws_server, ui) and the standard library, imported as nustd."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
@@ -53,11 +53,16 @@ kv = [
 mem = [
     "janus>=2.0.0",
 ]
-ui = [
+# `nustd.ws_server` is the bare connection lifecycle: no wire format, no SPA.
+ws_server = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.30.0",
-    "msgpack>=1.1.2",
     "watchfiles>=0.24.0",
+]
+# `nustd.ui` stacks its own wire codec and the nudle SPA wheel on that.
+ui = [
+    "nustd[ws_server]",
+    "msgpack>=1.1.2",
     "nudle>=0.1.1",
 ]
 # `nustd.cluster` runs on ray. (Was the `ray` extra on nucore <= 0.1.18.)
@@ -83,6 +88,7 @@ mp_pool = []
 all = [
     "nustd[kv]",
     "nustd[mem]",
+    "nustd[ws_server]",
     "nustd[ui]",
     "nustd[cluster]",
     "nustd[proxy]",

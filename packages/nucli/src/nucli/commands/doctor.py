@@ -24,6 +24,7 @@ from nucli._meta import nu_version
 _FABRICS: dict[str, tuple[str, ...]] = {
     "kv": ("virtuals",),
     "mem": ("janus",),
+    "ws_server": ("fastapi", "uvicorn", "watchfiles"),
     "ui": ("fastapi", "uvicorn", "msgpack", "watchfiles", "nudle"),
     "cluster": ("ray",),
     "proxy": ("invisibles",),

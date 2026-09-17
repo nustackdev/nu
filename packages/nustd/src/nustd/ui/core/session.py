@@ -125,6 +125,10 @@ class WsSubscription:
 class WsSession(Session):
     """One ws connection, one browser tree."""
 
+    # What a host binds an instance under, so every Ref underneath asks for the
+    # abstract transport rather than this concrete one.
+    _nu_bind_as = Session
+
     def __init__(self, ws: WebSocket) -> None:
         self._ws = ws
         self._subs: dict[tuple[str, ...], set[WsSubscription]] = defaultdict(set)

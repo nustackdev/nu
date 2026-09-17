@@ -2,7 +2,8 @@
 
 Boots uvicorn behind a FastAPI app with a ``/ws`` endpoint and a static mount,
 binds itself to the Context, and stops uvicorn on the way out. It never sees
-the UI program: that is a child of the tree, one arm per live connection.
+the program a connection runs: that is a child of the tree, one arm per live
+connection, and the protocol on the wire is the session class's business.
 
 The two halves it does own:
 
@@ -22,7 +23,7 @@ import uuid
 import warnings
 import webbrowser
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import uvicorn
 from fastapi import FastAPI, WebSocket
@@ -30,8 +31,6 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from nu._config.branding import BLUE, PURPLE, color_enabled, paint, render_header
-from nu.context.fabric import Provide
-from nustd.ui.core.session import WsSession
 
 
 if TYPE_CHECKING:
@@ -40,7 +39,18 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Context
 
 
-__all__ = ["WebServer", "web_server"]
+__all__ = ["SessionProtocol", "WebServer"]
+
+
+class SessionProtocol(Protocol):
+    """All the server asks of a session: a read loop that ends with the socket.
+
+    The session owns the wire format, so ``run_intake`` returning is what the
+    server reads as "this connection is over". A class carrying ``_nu_bind_as``
+    is bound under that type inside an arm, otherwise under itself.
+    """
+
+    async def run_intake(self) -> None: ...
 
 
 async def _adrain(task: asyncio.Task) -> None:
@@ -73,7 +83,7 @@ def _bundled_static(package: str) -> Path | None:
     if not paths:
         warnings.warn(
             f"`import {package}` resolved to {mod.__file__!r} (a module, not the "
-            "ui wheel package). SPA mount skipped; only /ws is exposed. Rename "
+            "bundle package). SPA mount skipped; only /ws is exposed. Rename "
             f"the shadowing file or run from a directory that doesn't shadow "
             f"the `{package}` package.",
             stacklevel=2,
@@ -113,7 +123,7 @@ class _Connection:
 
     __slots__ = ("done", "session")
 
-    def __init__(self, session: WsSession) -> None:
+    def __init__(self, session: SessionProtocol) -> None:
         self.session = session
         self.done = False
 
@@ -193,21 +203,25 @@ class _Channel:
 class WebServer:
     """Boot a ws server for the body's duration; bind it; stop it on the way out.
 
-    Owns the sockets and nothing else -- there is no ``app`` kwarg, the UI
-    program is a child of the tree.
+    Owns the sockets and nothing else -- there is no ``app`` kwarg, the program
+    a connection runs is a child of the tree.
 
     Args:
-        static: the wheel that ships the compiled SPA, e.g. ``"nudle"``.
-            None mounts nothing and exposes ``/ws`` alone.
+        session_cls: built once per accepted socket, with the ``WebSocket`` as
+            its only argument. Its ``run_intake`` is what holds the connection
+            open, and its ``_nu_bind_as`` is what an arm binds it under.
+        static: the importable wheel that ships a compiled SPA under
+            ``build/``. None mounts nothing and exposes ``/ws`` alone.
         log_level: uvicorn log level. Defaults to ``"warning"`` -- we print
             our own ready/stopped banner.
+        banner: what the ready and stopped lines call this server.
         ready_timeout: how long ``asetup`` waits for uvicorn to come up.
         shutdown_timeout: how long ``acleanup`` waits for graceful exit
             before cancelling the task.
 
     Example:
         >>> nu.With(
-        ...     nustd.ui.web_server(static="nudle", port=8080),
+        ...     nustd.ws_server.listen(session_cls=EchoSession, port=8080),
         ...     body=program,
         ... )
     """
@@ -219,18 +233,22 @@ class WebServer:
     def __init__(
         self,
         *,
+        session_cls: Callable[[WebSocket], SessionProtocol],
         static: str | None = None,
         host: str = "127.0.0.1",
         port: int = 8080,
         log_level: str = "warning",
+        banner: str = "Nu ws server",
         open_browser: bool = True,
         ready_timeout: float = 10.0,
         shutdown_timeout: float = 5.0,
     ) -> None:
+        self._session_cls = session_cls
         self._static = static
         self._host = host
         self._port = port
         self._log_level = log_level
+        self._banner = banner
         self._open_browser = open_browser
         self._ready_timeout = ready_timeout
         self._shutdown_timeout = shutdown_timeout
@@ -297,8 +315,8 @@ class WebServer:
 
     # ---- the connection book ------------------------------------------------
 
-    def session(self, sid: str) -> WsSession | None:
-        """The live transport for ``sid``, or None once the browser is gone."""
+    def session(self, sid: str) -> SessionProtocol | None:
+        """The live transport for ``sid``, or None once the client is gone."""
         conn = self._connections.get(sid)
         return None if conn is None else conn.session
 
@@ -325,15 +343,15 @@ class WebServer:
 
     def _build_app(self) -> FastAPI:
         """The FastAPI app: ``/ws``, the telemetry config, and the SPA mount."""
-        fastapi_app = FastAPI(title="nustd.ui")
+        fastapi_app = FastAPI(title="nustd.ws_server")
 
         @fastapi_app.websocket("/ws")
         async def ws_endpoint(ws: WebSocket) -> None:
             # A session lives exactly as long as this coroutine: FastAPI closes
             # the socket the moment the handler returns. So accept, register,
-            # drain intake until the browser goes away, unregister.
+            # drain intake until the client goes away, unregister.
             await ws.accept()
-            conn = _Connection(WsSession(ws))
+            conn = _Connection(self._session_cls(ws))
             sid = uuid.uuid4().hex
             self._connections[sid] = conn
             self._channel.emit(sid)
@@ -370,7 +388,7 @@ class WebServer:
         color = color_enabled()
         ready = (
             paint("● ", fg=PURPLE, bold=True, enabled=color)
-            + paint("Nu UI server running at ", bold=True, enabled=color)
+            + paint(f"{self._banner} running at ", bold=True, enabled=color)
             + paint(self._url(), fg=BLUE, underline=True, enabled=color)
         )
         print(ready, file=sys.stdout)  # noqa: T201
@@ -379,56 +397,8 @@ class WebServer:
     def _print_stopped(self) -> None:
         color = color_enabled()
         print(file=sys.stdout)  # noqa: T201
-        print(paint("Nu UI server stopped", bold=True, enabled=color), file=sys.stdout, flush=True)  # noqa: T201
+        stopped = paint(f"{self._banner} stopped", bold=True, enabled=color)
+        print(stopped, file=sys.stdout, flush=True)  # noqa: T201
 
     def __repr__(self) -> str:
         return f"WebServer(host={self._host!r}, port={self._port!r})"
-
-
-def web_server(
-    *,
-    static: str | None = "nudle",
-    host: str = "127.0.0.1",
-    port: int = 8080,
-    log_level: str = "warning",
-    open_browser: bool = True,
-    ready_timeout: float = 10.0,
-    shutdown_timeout: float = 5.0,
-) -> Provide:
-    """The bare server bracket: ``Provide(WebServer, {...})``, no body.
-
-    For hand-assembled trees. Most callers want ``nustd.ui.serve`` instead,
-    which stacks this with the fold that runs one arm per connection.
-    Bodyless, so it belongs in a ``nu.With`` spec slot and nowhere else -- run
-    standalone it compiles that empty slot to a literal and yields None.
-
-    Args:
-        static: the wheel shipping the compiled SPA. None serves ``/ws``
-            alone, for a headless run or a separate vite dev server.
-        host: uvicorn bind host.
-        port: uvicorn bind port.
-        log_level: uvicorn log level. Default silences uvicorn's info chatter
-            so only our own ready/stopped banner is printed.
-        open_browser: open the bound URL in the default browser once ready.
-        ready_timeout: how long ``asetup`` waits for uvicorn to come up.
-        shutdown_timeout: how long ``acleanup`` waits for graceful exit
-            before cancelling the task.
-
-    Example:
-        >>> nu.With(
-        ...     nustd.ui.web_server(port=8080),
-        ...     body=program,
-        ... )
-    """
-    return Provide(
-        WebServer,
-        {
-            "static": static,
-            "host": host,
-            "port": port,
-            "log_level": log_level,
-            "open_browser": open_browser,
-            "ready_timeout": ready_timeout,
-            "shutdown_timeout": shutdown_timeout,
-        },
-    )

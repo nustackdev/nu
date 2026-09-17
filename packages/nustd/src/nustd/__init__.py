@@ -11,11 +11,11 @@ One import, then dot-access::
 
 Two kinds of thing live here, side by side.
 
-**Fabrics** (``kv``, ``mem``, ``ui``, ``service``, ``llm``, ``cc``, ``http``,
-``proxy``, ``mp``, ``mp_pool``, ``cluster``) back a Shape with somewhere real
-to live: a store, a browser, a process pool, a model. Each is heavy and pulls
-a large tree behind it (storage backends, the UI runtime, RPC, ray), so they
-load on first attribute access, not on ``import nustd``.
+**Fabrics** (``kv``, ``mem``, ``ui``, ``ws_server``, ``service``, ``llm``,
+``cc``, ``http``, ``proxy``, ``mp``, ``mp_pool``, ``cluster``) back a Shape
+with somewhere real to live: a store, a browser, a process pool, a model. Each
+is heavy and pulls a large tree behind it (storage backends, the UI runtime,
+RPC, ray), so they load on first attribute access, not on ``import nustd``.
 
 **The standard library** (``uuid``, ``datetime``, ``decimal``, ``math`` ...)
 mirrors Python's stdlib module by module. A value type is a **Form** - the
@@ -68,7 +68,7 @@ from . import (
 # ``nustd.kv.ShapeStore`` resolves statically with full completion and
 # go-to-definition despite never being bound at import time.
 if TYPE_CHECKING:
-    from . import cc, cluster, http, kv, llm, mem, mp, mp_pool, proxy, service, ui
+    from . import cc, cluster, http, kv, llm, mem, mp, mp_pool, proxy, service, ui, ws_server
 
 # Value is the extra that pulls the fabric's backend, or None when the fabric
 # needs nothing beyond a plain ``nustd`` install.
@@ -84,6 +84,7 @@ _LAZY = {
     "proxy": "proxy",
     "service": None,
     "ui": "ui",
+    "ws_server": "ws_server",
 }
 
 

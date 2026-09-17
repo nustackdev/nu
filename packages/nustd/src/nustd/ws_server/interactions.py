@@ -1,18 +1,17 @@
-"""``ServerRef`` and its atoms: the registry, reachable from inside the tree.
+"""Every term that reaches the connection book, and the bracket that opens one.
 
-``ServerRef`` reads the bound ``WebServer`` off the Context, and its four
-atoms are the whole surface the fold and its arms need -- the live session
-ids, a subscription on connections opening and closing, and the read and the
-write of one connection's ``done`` flag.
-
-Plus ``SID_ATTR``, the name the fold parks each arm's session id under.
+The four atoms take a ``ServerRef`` in slot 0 and read the ``WebServer`` it
+resolves to, yielding INVALID when no server bracket is open around this
+subtree. ``SessionFor`` is the bracket an arm runs inside, holding that
+connection's transport.
 """
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import FabricRef
+from nu.core.spans.bracket import _LifecycleBracket
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
@@ -21,17 +20,18 @@ from .fabric import WebServer
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import AsyncIterator, Callable
 
-    from nu.lang.runtime import Runtime
+    from nu.lang import Nu
+    from nu.lang.runtime import Context, Runtime
 
 
 __all__ = [
     "SID_ATTR",
     "LiveSessions",
     "MarkSessionDone",
-    "ServerRef",
     "SessionDone",
+    "SessionFor",
     "SessionsChanged",
 ]
 
@@ -42,15 +42,11 @@ __all__ = [
 SID_ATTR = "sid"
 
 
-_SYNC_UNSUPPORTED = "nustd.ui is async-only; use nu.arun"
+_SYNC_UNSUPPORTED = "nustd.ws_server is async-only; use nu.arun"
 
 
 class _ServerQuery(ScalarQuery):
-    """A read off the ``WebServer`` a ``ServerRef`` in slot 0 resolves to.
-
-    Subclasses answer from the server instance; every one of them yields
-    INVALID when no server bracket is open around this subtree.
-    """
+    """A read off the ``WebServer`` a ``ServerRef`` in slot 0 resolves to."""
 
     _requires_async = Declared(value=True, name="requires_async")
 
@@ -149,27 +145,37 @@ class MarkSessionDone(Command):
         return athunk
 
 
-class ServerRef(FabricRef):
-    """The ``WebServer`` bound on the Context, and the registry it holds.
+class SessionFor(_LifecycleBracket):
+    """Bind the ws transport of the connection this arm belongs to.
 
-    Reads as the server instance itself, EMPTY when no server bracket is open
-    around this subtree.
+    Reads the sid off the Context the fold branched for this arm, looks the
+    live session up in the server's connection book, and binds it under the
+    session class's ``_nu_bind_as`` -- the abstract type the protocol's terms
+    ask for -- falling back to the concrete class when there is none. Nothing
+    is torn down: the server owns the session and the endpoint closes it.
+
+    Args:
+        body: the tree that runs with the session bound.
+        sid_attr: the attr the fold parked this arm's session id under.
     """
 
-    fabric = WebServer
+    def __init__(self, body: Nu | None = None, *, sid_attr: str = SID_ATTR) -> None:
+        super().__init__(body)
+        self._payload["sid_attr"] = sid_attr
 
-    def sessions(self) -> LiveSessions:
-        """The ids of every live ws connection, as one list."""
-        return LiveSessions(self)
-
-    def changed(self) -> SessionsChanged:
-        """A change source firing a sid per connection opened and closed."""
-        return SessionsChanged(self)
-
-    def done(self, sid: object) -> SessionDone:
-        """Whether the program for ``sid`` has already ended."""
-        return SessionDone(self, sid)
-
-    def mark_done(self, sid: object) -> MarkSessionDone:
-        """Record that the program for ``sid`` has ended."""
-        return MarkSessionDone(self, sid)
+    @asynccontextmanager
+    async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
+        attr = self._payload["sid_attr"]
+        sid = ctx.attrs.get(attr)
+        if sid is None:
+            msg = f"SessionFor found no {attr!r} on the Context; it runs inside the fold"
+            raise LookupError(msg)
+        session = ctx.get(WebServer).session(sid)
+        if session is None:
+            # Transiently reachable: the browser can go away between the
+            # connect and the fold's next pass. The arm raises, the fold
+            # isolates it, and the next pass has no element to respawn.
+            msg = f"no live ws session for {sid!r}"
+            raise LookupError(msg)
+        cls = type(session)
+        yield ctx.bind(getattr(cls, "_nu_bind_as", None) or cls, session)

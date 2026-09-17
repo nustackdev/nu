@@ -1,8 +1,9 @@
 """``serve`` -- the host's two layers stacked into one tree.
 
-The ws server, and a fold that runs one arm of the ui program per connection
-the server holds open. Each layer is public on its own for a hand-assembled
-tree; this is the arrangement that covers the normal case.
+The ws server carrying the ui wire protocol, and a fold that runs one arm of
+the ui program per connection the server holds open. Each layer is public on
+its own for a hand-assembled tree; this is the arrangement that covers the
+normal case.
 """
 
 from __future__ import annotations
@@ -10,7 +11,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import nu
-from nustd.ui.server import SID_ATTR, run_once, session_for, sessions_fold, web_server
+from nustd.ui.core.session import WsSession
+from nustd.ws_server import SID_ATTR, listen, run_once, session_for, sessions_fold
 
 
 if TYPE_CHECKING:
@@ -67,14 +69,21 @@ def serve(
         ... )
     """
     return nu.With(
-        web_server(
+        listen(
+            session_cls=WsSession,
             static=static,
             host=host,
             port=port,
             log_level=log_level,
+            banner="Nu UI server",
             open_browser=open_browser,
             ready_timeout=ready_timeout,
             shutdown_timeout=shutdown_timeout,
         ),
-        body=sessions_fold(session_for(SID_ATTR, run_once(index.boot() >> program))),
+        body=sessions_fold(
+            session_for(
+                SID_ATTR,
+                run_once(index.boot() >> program),
+            ),
+        ),
     )
