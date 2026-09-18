@@ -174,6 +174,69 @@ class InputRef(Ref):
         return Changed(self)
 
 
+class MonacoRef(Ref):
+    """Editable source code. Value is the text; the browser edits it in a real editor.
+
+    Bidirectional, unlike `CodeBlockRef` (display-only). The server seeds the
+    text with `set`, reads it back through `Ref` like any input Ref, and
+    subscribes with `on_change()`. The browser commits on cmd+enter and on
+    blur, not on every keystroke, so a read between commits sees the last
+    committed text and not what is under the caret.
+
+    Last actor wins, same as `ProseRef`. A `set` from the server replaces the
+    buffer outright, a notify from the browser replaces the server's copy,
+    and there is no merge.
+
+    Args:
+        language: a Monaco language id (`python`, `sql`, `markdown`, `shell`,
+            `yaml`, `javascript`, `typescript`, `html`, `css`). Anything else
+            renders unhighlighted rather than failing.
+        min_height: pixels. The editor grows with its content between the
+            bounds, then scrolls.
+
+    The browser pays for a large editor chunk the first time one of these
+    mounts, so a code surface nobody edits wants `CodeBlockRef` instead.
+    """
+
+    _wire_type = "MonacoRef"
+
+    @classmethod
+    def slot(
+        cls,
+        *,
+        value: str = "",
+        language: str = "python",
+        read_only: bool = False,
+        min_height: int = 42,
+        max_height: int = 560,
+    ) -> Self:
+        return super().slot(
+            value=value,
+            language=language,
+            read_only=read_only,
+            min_height=min_height,
+            max_height=max_height,
+        )
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> Any:
+            return await self._aread(rt, nid)
+
+        return athunk
+
+    def set(self, value: StrArg) -> Nu:
+        return Write(self, value)
+
+    def set_language(self, name: StrArg) -> Nu:
+        return Write(self, Dict.of(language=name))
+
+    def set_read_only(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(read_only=flag))
+
+    def on_change(self) -> Changed:
+        return Changed(self)
+
+
 class NumberInputRef(Ref):
     """Numeric input whose value lives in the browser."""
 
@@ -577,6 +640,7 @@ __all__ = [
     "CheckboxRef",
     "DatePickerRef",
     "InputRef",
+    "MonacoRef",
     "NumberInputRef",
     "ProseRef",
     "RadioGroupRef",

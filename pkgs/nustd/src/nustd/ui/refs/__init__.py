@@ -11,8 +11,8 @@ Grouped by kind, one module per group.
   JsonViewerRef, TableRef.
 - input:      tab-owned Refs; host reads on demand + subscribes to
   `notify`. ButtonRef, InputRef, NumberInputRef, TextAreaRef,
-  ProseRef, CheckboxRef, SwitchRef, SliderRef, SelectRef,
-  RadioGroupRef, TagInputRef, DatePickerRef.
+  ProseRef, MonacoRef, CheckboxRef, SwitchRef, SliderRef,
+  SelectRef, RadioGroupRef, TagInputRef, DatePickerRef.
 - chart:      output sinks with chart-specific payload contracts.
   LineChart, BarChart, AreaChart, PieChart, Sparkline.
 - layout:     Shape-based container Sections that mount other Refs.
@@ -49,6 +49,7 @@ from .input import (
     CheckboxRef,
     DatePickerRef,
     InputRef,
+    MonacoRef,
     NumberInputRef,
     ProseRef,
     RadioGroupRef,
@@ -115,6 +116,7 @@ __all__ = [
     "LinkRef",
     "MarkdownRef",
     "Modal",
+    "MonacoRef",
     "NavRef",
     "NumberInputRef",
     "PieChart",

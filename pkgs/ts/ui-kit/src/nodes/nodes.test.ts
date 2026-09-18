@@ -1,7 +1,7 @@
 // The registry, and the registration side effect.
 //
 // This used to check parity against the flat store's `entries`. That list is
-// gone, so the count stands in for it: 43 types shipped, and a type that
+// gone, so the count stands in for it: 44 types shipped, and a type that
 // quietly falls out of a barrel takes the count with it.
 
 import { describe, expect, it } from "vitest";
@@ -10,7 +10,7 @@ import { nodeEntries } from ".";
 
 describe("node registry", () => {
 	it("ships every type", () => {
-		expect(Object.keys(nodeEntries)).toHaveLength(43);
+		expect(Object.keys(nodeEntries)).toHaveLength(44);
 	});
 
 	it("gives every type a component", () => {

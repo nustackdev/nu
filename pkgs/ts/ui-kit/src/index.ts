@@ -114,6 +114,10 @@ export type { ProseClasses, ProseSchema } from "./nodes/input/prose/schema";
 export { createMarkdown, markdown } from "./nodes/input/prose/markdown";
 export type { Markdown, Parsed, SourceMap } from "./nodes/input/prose/markdown";
 export { placeholder as prosePlaceholder, proseInputRules } from "./nodes/input/prose/rules";
+export { MonacoEditor } from "./nodes/input/monaco/editor";
+export type { MonacoEditorProps } from "./nodes/input/monaco/editor";
+export { KIT_THEME as MONACO_THEME, loadMonaco } from "./nodes/input/monaco/loader";
+export type { CodeEditor, MonacoApi, MonacoNS } from "./nodes/input/monaco/loader";
 export { Image } from "./components/ui/image";
 export {
 	Table,

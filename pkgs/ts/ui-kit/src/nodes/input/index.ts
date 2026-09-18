@@ -5,6 +5,7 @@ import { ButtonRef } from "./button";
 import { CheckboxRef } from "./checkbox";
 import { DatePickerRef } from "./date-picker";
 import { InputRef } from "./input";
+import { MonacoRef } from "./monaco";
 import { NumberInputRef } from "./number-input";
 import { ProseRef } from "./prose";
 import { RadioGroupRef } from "./radio-group";
@@ -27,4 +28,5 @@ export const inputEntries: Record<string, NodeEntry> = {
 	DatePickerRef,
 	TagInputRef,
 	ProseRef,
+	MonacoRef,
 };
