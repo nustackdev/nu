@@ -13,9 +13,10 @@ Layout under ``src/nustd/ui/``:
 
 The uvicorn lifecycle, the book of live connections and the per-connection
 fold live in ``nustd.ws_server``, which knows nothing about ui.
-- ``web/``    -- everything for the browser: npm workspace with ``core``,
-                 ``kit``, and the ``nudle`` Vite SPA (also the pypi wheel
-                 that ships the compiled SPA).
+
+The browser half is not in this package. It lives in the repo's npm workspace
+at ``pkgs/ts`` (``ui-core``, ``ui-kit``, and the ``nudle`` Vite app), and its
+compiled bundle ships as the separate ``nudle`` wheel.
 
 The public entry is ``nustd.ui`` itself: the core fabric, the widget kit and
 the nudle host names are re-exported flat, so one ``import nustd.ui`` reaches

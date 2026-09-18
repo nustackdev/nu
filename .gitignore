@@ -201,8 +201,11 @@ lib*.so.*
 # syncthing
 .stfolder
 
-# nudle UI (vite / node)
+# ts workspace (pkgs/ts): node deps and vite output are both built, never tracked
 node_modules/
-!packages/nustd/src/nu/ui/web/nudle/dist/
-packages/nustd/src/nu/ui/web/nudle/dist/*
-!packages/nustd/src/nu/ui/web/nudle/dist/.gitkeep
+
+# The nudle wheel's dev bridge. A symlink to pkgs/ts/nudle/dist, so an editable
+# install resolves `nudle.__path__[0] / "build"` without a wheel build. It is a
+# symlink, not a directory, so `build/` above does not catch it -- but say so
+# explicitly rather than leaning on that.
+!pkgs/nudle/src/nudle/build

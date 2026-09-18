@@ -26,7 +26,7 @@ repos:
     # Run formatter
     - id: ruff-format
 
-# Package boundary - the kernel (packages/nucore) may not import nustd fabrics
+# Package boundary - the kernel (src/nu) may not import nustd fabrics
 - repo: local
   hooks:
     - id: kernel-boundary
@@ -34,7 +34,7 @@ repos:
       entry: scripts/check_kernel_boundary.py
       language: script
       types: [python]
-      files: ^packages/nucore/src/
+      files: ^src/nu/
 
 # Configuration
 default_language_version:

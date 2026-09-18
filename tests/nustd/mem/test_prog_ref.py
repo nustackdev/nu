@@ -3,7 +3,7 @@
 A stored program is source text in a slot plus the ``Program`` verbs on the
 ref, so these drive the whole loop through a dict-backed context: write
 source into a slot, read it back, then run what it constructs. The Form's own
-surface is covered in ``tests/nucore/prog/test_forms``.
+surface is covered in ``tests/nu/prog/test_forms``.
 
 The MRO pin at the bottom is the one test here that guards a silent failure
 rather than a loud one.

@@ -24,10 +24,10 @@ Tag-based, one workflow per package.
 
 ```bash
 # 1. Bump the version in the target package.json
-$EDITOR packages/nustd/src/nu/ui/core/package.json   # or kit/package.json
+$EDITOR pkgs/ts/ui-core/package.json   # or pkgs/ts/ui-kit/package.json
 
 # 2. Commit the bump
-git add packages/nustd/src/nu/ui/core/package.json
+git add pkgs/ts/ui-core/package.json
 git commit -m "Bump ui-core to 0.2.0"
 git push
 

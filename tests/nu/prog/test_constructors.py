@@ -331,10 +331,10 @@ def build_foreign_venv(root):
         "install",
         "--python",
         str(root / "bin" / "python"),
-        # The kernel package, not the repo root: the root is a virtual uv
-        # workspace and has nothing to install. These snippets only touch
-        # kernel atoms (nu.Str / nu.Literal), so nustd is not needed.
-        str(REPO_ROOT / "packages" / "nucore"),
+        # The repo root is the kernel distribution (`src/nu` -> nucore). These
+        # snippets only touch kernel atoms (nu.Str / nu.Literal), so nustd is
+        # not needed.
+        str(REPO_ROOT),
         FOREIGN_DEP,
     ]
     subprocess.run([uv, "venv", "--python", "3.12", str(root)], check=True)  # noqa: S603

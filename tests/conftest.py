@@ -23,7 +23,7 @@ Concretely:
     |   `-- _support/          <- shared helpers (package)
     |       |-- __init__.py
     |       `-- terms.py       <- tiny canonical Term subclasses
-    |-- nucore/                <- mirrors packages/nucore/src/nu/
+    |-- nu/                    <- mirrors src/nu/
     |   |-- engine/
     |   |   |-- conftest.py    <- engine-scoped fixtures
     |   |   |-- structure/     <- unit tests for src/nu/engine/structure/
@@ -32,7 +32,7 @@ Concretely:
     |   |   `-- evaluation/
     |   |-- lang/
     |   `-- core/
-    |-- nustd/                 <- mirrors packages/nustd/src/nustd/
+    |-- nustd/                 <- mirrors pkgs/nustd/src/nustd/
     |   |-- kv/
     |   |-- ui/
     |   `-- test_uuid.py       <- the stdlib mirrors are one file each
@@ -50,8 +50,8 @@ Conventions:
   path, not by package import. Adding ``__init__.py`` causes import-mode
   conflicts as the tree grows; do not add them.
 - **One test file per source module.** Mirror the source path:
-  ``tests/nucore/engine/structure/test_attribute.py`` tests
-  ``packages/nucore/src/nu/engine/structure/attribute.py``.
+  ``tests/nu/engine/structure/test_attribute.py`` tests
+  ``src/nu/engine/structure/attribute.py``.
 - **Unit vs integration.** A unit test exercises one module's public API.
   A test that builds a real Nu schema, compiles a Term, and drives the
   Runtime is an integration test and belongs under ``integration/``.

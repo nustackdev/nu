@@ -4,7 +4,7 @@
 ``driver`` stacks the ws server, the session driver and the per-tab fold
 into one tree as ``serve``. The wire protocol and the shared ws session live
 in ``nustd.ui.core``, the connection lifecycle in ``nustd.ws_server``, and the
-Vite SPA + PyPI wheel that ships the compiled bundle under ``nu/ui/web/nudle/``.
+Vite SPA + PyPI wheel that ships the compiled bundle from ``pkgs/ts/nudle``.
 """
 
 from __future__ import annotations

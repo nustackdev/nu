@@ -1,10 +1,10 @@
 {
-	"name": "nu-ui-workspace",
+	"name": "nu-ts-workspace",
 	"private": true,
 	"description": "npm workspace root for @nustackdev/ui-core, @nustackdev/ui-kit, and the nudle app.",
 	"workspaces": [
-		"core",
-		"kit",
+		"ui-core",
+		"ui-kit",
 		"nudle"
 	],
 	"scripts": {

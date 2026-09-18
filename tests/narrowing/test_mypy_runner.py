@@ -30,9 +30,9 @@ REPO = NARROWING_DIR.parent.parent
 # assert_type checks report failures that say nothing about narrowing. Point
 # mypy at the source trees so it checks what this suite is actually about.
 SRC_DIRS = [
-    REPO / "packages" / "nucore" / "src",
-    REPO / "packages" / "nustd" / "src",
-    REPO / "packages" / "nucli" / "src",
+    REPO / "src",
+    REPO / "pkgs" / "nustd" / "src",
+    REPO / "pkgs" / "nucli" / "src",
 ]
 
 

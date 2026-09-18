@@ -16,9 +16,9 @@
 #     Environment name: (leave blank)
 #
 # Three distributions ship from one tag, in lockstep:
-#   packages/nucore -> nucore  (kernel)
-#   packages/nustd  -> nustd   (fabrics)
-#   packages/nucli  -> nucli   (the `nu` command)
+#   src/nu      -> nucore  (kernel)
+#   pkgs/nustd  -> nustd   (fabrics)
+#   pkgs/nucli  -> nucli   (the `nu` command)
 # All three must carry the same version.
 #
 # Each distribution builds into its own `dist/<name>/` and gets its own
@@ -29,8 +29,8 @@
 # lands.
 #
 # Release flow:
-#   1. Bump `version` in `packages/nucore/pyproject.toml`,
-#      `packages/nustd/pyproject.toml` AND `packages/nucli/pyproject.toml`
+#   1. Bump `version` in `./pyproject.toml`,
+#      `pkgs/nustd/pyproject.toml` AND `pkgs/nucli/pyproject.toml`
 #      (keep all three equal).
 #   2. Commit and push to main.
 #   3. `git tag nu@X.Y.Z && git push origin nu@X.Y.Z`.
@@ -79,7 +79,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/nu@')
         run: |
           TAG_VERSION="${GITHUB_REF#refs/tags/nu@}"
-          for PKG in packages/nucore packages/nustd packages/nucli; do
+          for PKG in . pkgs/nustd pkgs/nucli; do
             PKG_VERSION=$(python -c "import tomllib,sys; print(tomllib.load(open(sys.argv[1],'rb'))['project']['version'])" "$PKG/pyproject.toml")
             if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
               echo "tag nu@$TAG_VERSION does not match $PKG/pyproject.toml version $PKG_VERSION"

@@ -107,17 +107,3 @@ Repository = "https://github.com/nustackdev/nu"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nustd"]
-# The web sources build into the separate `nudle` wheel; only the compiled
-# bundle ships, and it ships from there.
-exclude = [
-    "src/nustd/ui/web/**",
-]
-
-[tool.hatch.build.targets.sdist]
-exclude = [
-    "src/nustd/ui/**/node_modules",
-    "src/nustd/ui/**/dist",
-]
-
-[tool.uv.sources]
-nudle = { path = "./src/nustd/ui/web/nudle", editable = true }

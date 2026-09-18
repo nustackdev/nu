@@ -1,28 +1,116 @@
-# Workspace root. Not a distribution itself -- it exists to hold the three
-# packages, the dev toolchain, and the shared lint / test config.
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# The repo root is the kernel. `src/nu` is this distribution and nothing else;
+# the rest of the stack sits in `pkgs/`, one directory per distribution:
 #
-#   packages/nucore -> nucore      (the kernel)        import nu
-#   packages/nustd  -> nustd       (the fabrics)       import nustd
-#   packages/nucli  -> nucli       (the `nu` command)  import nucli
+#   src/nu           -> nucore   (the kernel)        import nu
+#   pkgs/nustd       -> nustd    (the fabrics)       import nustd
+#   pkgs/nucli       -> nucli    (the `nu` command)  import nucli
+#   pkgs/nudle       -> nudle    (the compiled SPA)  import nudle
+#   pkgs/ts/ui-core  -> @nustackdev/ui-core
+#   pkgs/ts/ui-kit   -> @nustackdev/ui-kit
+#   pkgs/ts/nudle    -> the vite app; its dist/ is what the nudle wheel ships
 #
 # One distribution, one import name, one tree each. Nothing reaches into
-# anyone else's package directory.
+# anyone else's package directory, except the nudle wheel reaching for the
+# vite output that is its entire payload.
+[project]
+name = "nucore"
+version = "0.5.1"
+description = "The interaction primitive. Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services). No glue. 50x less code."
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
+requires-python = ">=3.10"
+# The kernel: language, engine, core/flows/spans/forms, tree, prog, info,
+# inspect. No fabric backend ever lands here -- those live in the `nustd`
+# distribution and merge into the same `nu.` namespace. The `nu` command lives
+# in `nucli`.
+dependencies = [
+    "typing-extensions>=4.7.0",
+    "cloudpickle>=3.0",
+]
+keywords = [
+    "nu",
+    "nustack",
+    "python",
+    "state-management",
+    "distributed-systems",
+    "ai-agents",
+    "agentic",
+    "ray",
+    "llm",
+    "database",
+    "key-value-store",
+    "rocksdb",
+    "ui",
+    "real-time",
+    "observability",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+# No extras here on purpose. Fabric backends live on `nustd`'s extras and the
+# `nu` command lives in `nucli`; the kernel never reaches up into its own
+# dependents. Install everything with `pip install "nustd[all]" nucli`.
+
+[project.urls]
+Repository = "https://github.com/nustackdev/nu"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nu"]
+
+# The project root is the repo root, so the sdist default (everything not
+# gitignored) would swallow `pkgs/`, `tests/` and `examples/` into the kernel
+# tarball. Name what belongs to this distribution and nothing else.
+[tool.hatch.build.targets.sdist]
+only-include = [
+    "src/nu",
+    "README.md",
+    "LICENSE.md",
+]
+
+# =============================================================================
+# Workspace
+# =============================================================================
+# Dev-time wiring only. `[tool.uv.workspace]` and `[tool.uv.sources]` never
+# reach published metadata, so every member stays a self-sufficient
+# distribution with its own pyproject, version and dependencies. What the
+# workspace buys: `uv sync` installs all four editable against each other
+# instead of pulling the kernel from PyPI, and `uv build --package <name>`
+# (what the Makefile and CI release on) works from the root.
+#
+# `pkgs/ts` is the npm workspace and holds no pyproject, so the members are
+# listed rather than globbed.
 [tool.uv.workspace]
-members = ["packages/*"]
+members = ["pkgs/nustd", "pkgs/nucli", "pkgs/nudle"]
 
 [tool.uv.sources]
+# The root project is a member too: without this entry `nustd`'s `nucore`
+# dependency resolves from PyPI instead of `src/nu`, and you end up testing
+# the published kernel while editing the local one.
 nucore = { workspace = true }
 nustd = { workspace = true }
 nucli = { workspace = true }
+nudle = { workspace = true }
 
 [tool.uv]
 default-groups = ["dev"]
 
 [dependency-groups]
 dev = [
-    # All three workspace members, editable, with every fabric backend -- so a
-    # bare `uv sync` gives you the full dev environment and the whole suite.
-    "nucore",
+    # The root project (nucore) installs itself; these are the rest of the
+    # workspace, editable, with every fabric backend -- so a bare `uv sync`
+    # gives you the full dev environment and the whole suite.
     "nustd[all]",
     "nucli",
     "ruff>=0.8.0",
@@ -39,7 +127,11 @@ dev = [
     "mypy>=1.0",
 ]
 
-# Tests stay at the repo root: one suite over all three packages.
+# =============================================================================
+# Shared tooling -- covers every package in the repo, not just the kernel
+# =============================================================================
+
+# Tests stay at the repo root: one suite over the whole stack.
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
@@ -67,9 +159,9 @@ markers = [
 
 [tool.coverage.run]
 source = [
-    "packages/nucore/src",
-    "packages/nustd/src",
-    "packages/nucli/src",
+    "src",
+    "pkgs/nustd/src",
+    "pkgs/nucli/src",
 ]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
@@ -99,11 +191,12 @@ directory = "reports/coverage"
 line-length = 100
 target-version = "py310"
 src = [
-    "packages/nucore/src",
-    "packages/nustd/src",
-    "packages/nucli/src",
+    "src",
+    "pkgs/nustd/src",
+    "pkgs/nucli/src",
+    "pkgs/nudle/src",
 ]
-extend-exclude = [".venv", "build", "dist", "*.egg-info"]
+extend-exclude = [".venv", "build", "dist", "*.egg-info", "node_modules"]
 
 [tool.ruff.lint]
 select = [
@@ -197,6 +290,7 @@ exclude = [
     "build/",
     "dist/",
     ".venv/",
+    "node_modules/",
 ]
 
 [tool.bandit]

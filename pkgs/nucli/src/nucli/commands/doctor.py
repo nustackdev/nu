@@ -14,7 +14,7 @@ from nu._config.branding import BLUE, PURPLE
 from nucli._meta import nu_version
 
 
-# Fabric extras (as declared in packages/nustd/pyproject.toml) and the imports
+# Fabric extras (as declared in pkgs/nustd/pyproject.toml) and the imports
 # that prove they resolve. The backends live in the `nustd` distribution; this
 # kernel-side command only probes for them, it never imports the fabric.
 #

@@ -3,7 +3,7 @@
 The engine's evaluation layer is a single Protocol. These tests pin the
 shape so a future accidental addition (a new method, an attribute slot,
 losing ``runtime_checkable``) breaks loudly. Concrete dispatch behavior
-lives in the language layer and is tested under ``tests/nucore/lang/``.
+lives in the language layer and is tested under ``tests/nu/lang/``.
 """
 
 from __future__ import annotations

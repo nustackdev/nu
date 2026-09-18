@@ -1,7 +1,7 @@
 """Minimal Nu-kind shapes for law tests.
 
 Canonical green-path Lego pieces shared across every dimension test in
-``tests/nucore/lang/laws/``. Each class is the smallest concrete subclass of a
+``tests/nu/lang/laws/``. Each class is the smallest concrete subclass of a
 Nu sort that carries the attributes laws read - no ``eval`` / ``compile``,
 no payload, no semantics. Tests compose them and assert on the laws that
 fire.

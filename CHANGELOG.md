@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Restructure the repo layout; package names, versions and imports are unchanged
 - Run a websocket server with any wire protocol, not just the browser ui
 - Serve a browser UI without a kv store anywhere in the tree
 - Shard a kv stack by tag and its reactivity shards with it

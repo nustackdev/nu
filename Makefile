@@ -1,4 +1,4 @@
-.PHONY: help install sync dev test lint format boundary clean web-install web-dev web-build build-nu build-nudle build-all
+.PHONY: help install sync dev test lint format boundary clean web-install web-dev web-build build-nu build-nudle build-all test-kernel list
 
 # =============================================================================
 # Configuration
@@ -8,12 +8,11 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-CORE := packages
-EXT_DIRS := ext/nu-virtuals ext/nu-dict ext/nu-datetime ext/nu-fin ext/nu-math ext/nu-path ext/nu-uuid ext/nu-shape-lens ext/nu-tree-view
-ALL_SRC := $(CORE) $(addsuffix /src,$(EXT_DIRS))
+# The kernel is the repo root; everything else is a directory under pkgs/.
+PY_PKGS := . pkgs/nustd pkgs/nucli pkgs/nudle
 
-UI_ROOT := packages/nustd/src/nustd/ui/web
-NUDLE_APP := packages/nustd/src/nustd/ui/web/nudle
+TS_ROOT := pkgs/ts
+NUDLE_APP := pkgs/ts/nudle
 
 # =============================================================================
 # Help
@@ -28,9 +27,8 @@ help:
 	@echo ""
 	@echo "$(GREEN)Development:$(NC)"
 	@echo "  make test            Run all tests"
-	@echo "  make test-pkg PKG=x  Run tests for specific package (e.g., PKG=ext/eb-virtuals)"
-	@echo "  make test-core       Run core tests"
-	@echo "  make test-ext        Run extension tests"
+	@echo "  make test-pkg PKG=x  Run tests for one suite (e.g., PKG=tests/nustd)"
+	@echo "  make test-kernel     Run kernel tests"
 	@echo "  make test-cov        Run tests with coverage"
 	@echo "  make test-fast       Run tests (fail fast, no slow)"
 	@echo ""
@@ -47,8 +45,8 @@ help:
 	@echo "  make build-nudle     Build the nudle web-bundle wheel"
 	@echo "  make build-all       Build both wheels"
 	@echo ""
-	@echo "$(GREEN)nudle web:$(NC)"
-	@echo "  make web-install     npm install across the ui workspace (core, kit, nudle)"
+	@echo "$(GREEN)ts workspace:$(NC)"
+	@echo "  make web-install     npm install across pkgs/ts (ui-core, ui-kit, nudle)"
 	@echo "  make web-dev         Run vite dev server (HMR, ws proxy to :8080)"
 	@echo "  make web-build       Build the vite bundle into $(NUDLE_APP)/dist"
 	@echo ""
@@ -85,23 +83,14 @@ test:
 
 test-pkg:
 ifndef PKG
-	$(error PKG not set. Usage: make test-pkg PKG=ext/eb-virtuals)
+	$(error PKG not set. Usage: make test-pkg PKG=tests/nustd)
 endif
 	@echo "$(BLUE)Testing $(PKG)...$(NC)"
-	uv run pytest $(PKG)/tests -v
+	uv run pytest $(PKG) -v
 
-test-core:
-	@echo "$(BLUE)Running core tests...$(NC)"
-	uv run pytest tests/ -q
-
-test-ext:
-	@echo "$(BLUE)Running extension tests...$(NC)"
-	@for dir in $(EXT_DIRS); do \
-		if [ -d "$$dir/tests" ]; then \
-			echo "$(YELLOW)  $$dir$(NC)"; \
-			uv run pytest $$dir/tests -q || exit 1; \
-		fi; \
-	done
+test-kernel:
+	@echo "$(BLUE)Running kernel tests...$(NC)"
+	uv run pytest tests/nu -q
 
 test-cov:
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
@@ -142,11 +131,12 @@ check: format-check lint boundary
 list:
 	@echo "$(BLUE)Workspace packages:$(NC)"
 	@echo ""
-	@echo "$(GREEN)Packages:$(NC)"
-	@ls -d packages/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo "$(GREEN)Python:$(NC)"
+	@echo "  . (nucore, src/nu)"
+	@ls -d pkgs/*/ 2>/dev/null | grep -v 'pkgs/ts/' | sed 's|/$$||' | sed 's|^|  |'
 	@echo ""
-	@echo "$(GREEN)Extensions (ext/):$(NC)"
-	@ls -d ext/*/ 2>/dev/null | sed 's|/$$||' | sed 's|^|  |' || echo "  (none)"
+	@echo "$(GREEN)TypeScript (pkgs/ts):$(NC)"
+	@ls -d pkgs/ts/*/ 2>/dev/null | grep -v node_modules | sed 's|/$$||' | sed 's|^|  |'
 
 build:
 ifndef PKG
@@ -160,8 +150,8 @@ endif
 # nudle web + nu wheel
 # =============================================================================
 web-install:
-	@echo "$(BLUE)Installing ui workspace deps (core, kit, nudle)...$(NC)"
-	cd $(UI_ROOT) && npm install
+	@echo "$(BLUE)Installing ts workspace deps (ui-core, ui-kit, nudle)...$(NC)"
+	cd $(TS_ROOT) && npm install
 	@echo "$(GREEN)Installed$(NC)"
 
 web-dev:
@@ -182,8 +172,8 @@ build-nu:
 
 build-nudle: web-build
 	@echo "$(BLUE)Building nudle web-bundle wheel...$(NC)"
-	cd $(NUDLE_APP) && uv build --wheel
-	@echo "$(GREEN)Built: $(NUDLE_APP)/dist/$(NC)"
+	uv build --wheel --package nudle
+	@echo "$(GREEN)Built: dist/$(NC)"
 
 build-all: build-nu build-nudle
 	@echo "$(GREEN)Both wheels built$(NC)"

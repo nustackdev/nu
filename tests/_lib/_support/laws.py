@@ -4,7 +4,7 @@
 reads against. They compile a Term through the real Nu schema, run every
 ``LAWS`` entry, and assert on the resulting violations.
 
-A test file in ``tests/nucore/lang/laws/`` does::
+A test file in ``tests/nu/lang/laws/`` does::
 
     from _support.laws import assert_fails, assert_passes
 

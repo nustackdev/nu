@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Fail if the kernel (``packages/nucore``) imports a batteries fabric (``nustd``).
+"""Fail if the kernel (``src/nu``) imports a batteries fabric (``nustd``).
 
-``nucore`` must install and run on its own. Anything under
-``packages/nucore/src/`` that does ``import nustd.kv`` / ``from nustd... import ...``
-at module scope breaks that, so this hook rejects it.
+``nucore`` must install and run on its own. Anything under ``src/`` that does
+``import nustd.kv`` / ``from nustd... import ...`` at module scope breaks that,
+so this hook rejects it.
 
 Only real ``import`` statements are checked -- docstrings and comments are
 untouched (they are the documented surface and reference ``nustd.kv`` etc. all
@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 
-KERNEL = Path(__file__).resolve().parent.parent / "packages" / "nucore" / "src"
+KERNEL = Path(__file__).resolve().parent.parent / "src"
 
 
 def _batteries(module: str) -> bool:

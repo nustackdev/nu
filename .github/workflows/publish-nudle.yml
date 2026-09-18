@@ -1,9 +1,10 @@
 # Publishes the `nudle` wheel to PyPI on a tag push like `nudle@0.1.0`.
 # Manual "Run workflow" dispatch builds but does NOT publish.
 #
-# The nudle wheel ships the compiled Vite SPA under `nudle/build/` (symlinked
-# to `dist/`). Build order: `npm run build` at the ui workspace root produces
-# `packages/nustd/src/nustd/ui/web/nudle/dist/`, then hatchling packages it into the wheel.
+# The wheel has no source of its own: its whole payload is the Vite SPA, which
+# lives in a different directory. Build order: `npm run build` in the ts
+# workspace produces `pkgs/ts/nudle/dist/`, then hatchling force-includes that
+# into `pkgs/nudle`'s wheel at `nudle/build/`.
 #
 # Setup once (PyPI trusted publisher / OIDC, no secrets):
 #   pypi.org -> account -> Publishing -> Add pending publisher
@@ -14,8 +15,8 @@
 #     Environment name: (leave blank)
 #
 # Release flow:
-#   1. Bump `version` in both `packages/nustd/src/nustd/ui/web/nudle/pyproject.toml` and
-#      `packages/nustd/src/nustd/ui/web/nudle/package.json`.
+#   1. Bump `version` in both `pkgs/nudle/pyproject.toml` (the wheel) and
+#      `pkgs/ts/nudle/package.json` (the app). Keep them equal.
 #   2. Commit and push to main.
 #   3. `git tag nudle@X.Y.Z && git push origin nudle@X.Y.Z`.
 name: Publish nudle to PyPI
@@ -44,18 +45,18 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: packages/nustd/src/nustd/ui/web/package-lock.json
+          cache-dependency-path: pkgs/ts/package-lock.json
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: install js deps
-        working-directory: packages/nustd/src/nustd/ui/web
+        working-directory: pkgs/ts
         run: npm ci
 
       - name: build spa
-        working-directory: packages/nustd/src/nustd/ui/web
+        working-directory: pkgs/ts
         run: npm run build --workspace nudle-web
 
       - name: install python build backend
@@ -63,7 +64,7 @@ jobs:
 
       - name: verify tag matches pyproject.toml version
         if: startsWith(github.ref, 'refs/tags/nudle@')
-        working-directory: packages/nustd/src/nustd/ui/web/nudle
+        working-directory: pkgs/nudle
         run: |
           TAG_VERSION="${GITHUB_REF#refs/tags/nudle@}"
           PKG_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
@@ -73,15 +74,14 @@ jobs:
           fi
 
       - name: build wheel
-        working-directory: packages/nustd/src/nustd/ui/web/nudle
-        # --wheel skips the sdist step; sdist would strip `dist/` (gitignored)
-        # and the wheel-from-sdist path would fail the force-include lookup.
-        # --outdir wheel-dist keeps the wheel out of `dist/` (the vite SPA
-        # output that we force-include INTO the wheel).
+        working-directory: pkgs/nudle
+        # --wheel skips the sdist step. sdist would strip the force-included
+        # `../ts/nudle/dist` (gitignored, and outside this project besides),
+        # and the wheel-from-sdist path would then fail the lookup.
         run: python -m build --wheel --outdir wheel-dist
 
       - name: publish
         if: startsWith(github.ref, 'refs/tags/nudle@')
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: packages/nustd/src/nustd/ui/web/nudle/wheel-dist
+          packages-dir: pkgs/nudle/wheel-dist
