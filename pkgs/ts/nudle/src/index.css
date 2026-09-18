@@ -6,6 +6,6 @@
  * `@nustackdev/ui-kit` symlink. Point it explicitly so utility classes used
  * inside kit primitives (bg-bg-canvas, text-text-primary, bg-accent, ...) end
  * up in the final bundle. */
-@source "../../kit/src/**/*.{ts,tsx}";
+@source "../../ui-kit/src/**/*.{ts,tsx}";
 
 @custom-variant dark (&:is(.dark *));
