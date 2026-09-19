@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from nu.domains.shape.dsl import Shape
     from nu.lang.runtime import Runtime
 
-__all__ = ["ANCHOR", "Anchor", "StructuredRef"]
+__all__ = ["ANCHOR", "Anchor", "StructuredRef", "root_shape"]
 
 
 class Anchor(Ref):
@@ -175,3 +175,21 @@ class StructuredRef(Ref):
     async def _alower(self, value: object) -> object:
         """Async sibling of :meth:`_lower`; reuses the sync form by default."""
         return self._lower(value)
+
+
+def root_shape(ref: StructuredRef) -> type[Shape] | None:
+    """The Shape class a Ref chain is rooted at.
+
+    A chain finds its fabric by this class: which Navigator answers it, which
+    transaction it writes through, which shard it lives on. So anything handed
+    a Ref as a *location* and then building its own reads underneath it has to
+    carry the class along, or the reads land on whatever is bound untagged.
+
+    A function rather than a property because a Ref's attribute surface belongs
+    to the value it names: every public name there is a name a Shape can no
+    longer use for a slot.
+
+    Returns:
+        None for a chain nothing owns -- a Ref built outside a Shape class.
+    """
+    return ref._root_shape

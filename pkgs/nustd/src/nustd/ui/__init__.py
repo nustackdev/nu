@@ -2,6 +2,8 @@
 
 Layout under ``src/nustd/ui/``:
 
+- ``lens/``   -- the Shape lens: ``LensRef``, the walk that turns a Shape and
+                 a cursor into columns, and ``browse`` to assemble the two.
 - ``core/``   -- host-independent UI fabric: ``Ref``, ``Section`` /
                  ``SectionRef``, abstract ``Session`` / ``Subscription``,
                  wire ``Frame`` + interactions (``Write`` / ``Append`` /
@@ -20,10 +22,12 @@ compiled bundle ships as the separate ``nudle`` wheel.
 
 The public entry is ``nustd.ui`` itself: the core fabric, the widget kit and
 the nudle host names are re-exported flat, so one ``import nustd.ui`` reaches
-everything a UI program spells.
+everything a UI program spells. The lens is the exception and stays whole
+behind ``nustd.ui.lens``, ``LensRef`` included: it is a subsystem rather than
+a widget, and a surface split between two names is worse than one more dot.
 """
 
-from . import core, nudle, refs
+from . import core, lens, nudle, refs
 from .core import Frame, Ref, Section, SectionRef, Session, Subscription, WsSession
 from .core.interactions import Append, Changed, Remove, Write
 from .nudle import serve
@@ -139,6 +143,7 @@ __all__ = [
     "WsSession",
     # Submodules and presets
     "core",
+    "lens",
     "nudle",
     "refs",
     "serve",

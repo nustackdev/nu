@@ -9,6 +9,7 @@ import { GaugeRef } from "./gauge";
 import { HeadingRef } from "./heading";
 import { ImageRef } from "./image";
 import { JsonViewerRef } from "./json-viewer";
+import { LensRef } from "./lens";
 import { LinkRef } from "./link";
 import { MarkdownRef } from "./markdown";
 import { ProgressRef } from "./progress";
@@ -31,4 +32,5 @@ export const outputEntries: Record<string, NodeEntry> = {
 	GaugeRef,
 	TableRef,
 	JsonViewerRef,
+	LensRef,
 };

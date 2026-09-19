@@ -21,6 +21,7 @@ Tiers per family:
 from __future__ import annotations
 
 from .base import StructuredRef as StructuredRef  # re-export for substrate authors
+from .base import root_shape
 from .item import ItemRef, MutableItemRef, ReactiveItemRef
 from .mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
 from .sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
@@ -63,4 +64,5 @@ __all__ = [
     "ShapeRef",
     "ShapesMappingRef",
     "ShapesSequenceRef",
+    "root_shape",
 ]

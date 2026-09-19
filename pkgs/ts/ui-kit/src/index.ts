@@ -11,6 +11,8 @@
 export * from "./tree";
 export { nodeEntries } from "./nodes";
 export { cn } from "./lib/utils";
+export { useKeyScope } from "./lib/keyboard";
+export type { KeyBindings, KeyScope } from "./lib/keyboard";
 export { ErrorBoundary } from "./components/ErrorBoundary";
 export { Badge, badgeVariants } from "./components/ui/badge";
 export { Button, buttonVariants } from "./components/ui/button";
@@ -114,6 +116,9 @@ export type { ProseClasses, ProseSchema } from "./nodes/input/prose/schema";
 export { createMarkdown, markdown } from "./nodes/input/prose/markdown";
 export type { Markdown, Parsed, SourceMap } from "./nodes/input/prose/markdown";
 export { placeholder as prosePlaceholder, proseInputRules } from "./nodes/input/prose/rules";
+export { LensColumns } from "./nodes/output/lens/columns";
+export type { LensColumnsProps } from "./nodes/output/lens/columns";
+export type { Column as LensColumn, Entry as LensEntry } from "./nodes/output/lens/types";
 export { MonacoEditor } from "./nodes/input/monaco/editor";
 export type { MonacoEditorProps } from "./nodes/input/monaco/editor";
 export { KIT_THEME as MONACO_THEME, loadMonaco } from "./nodes/input/monaco/loader";

@@ -8,6 +8,8 @@ Public surface:
   ``AdvanceCursor``: slot-level read queries.
 - ``reroot`` / ``rerooter``: splice the bare ref chains in a term under a
   new parent, so a snippet written without a mount point gets one.
+- ``root_shape``: which Shape a Ref chain is rooted at, for code handed a Ref
+  as a location and building its own reads under it.
 
 Reactive queries (``OnChange`` / ``OnChildChange`` /
 ``OnChildrenChange`` / ``OnDescendantsChange`` /
@@ -50,6 +52,7 @@ from .refs import (
     ShapeRef,
     ShapesMappingRef,
     ShapesSequenceRef,
+    root_shape,
 )
 from .rewrite import reroot, rerooter
 
@@ -101,4 +104,6 @@ __all__ = [
     # Rewrites
     "reroot",
     "rerooter",
+    # Chain metadata
+    "root_shape",
 ]
