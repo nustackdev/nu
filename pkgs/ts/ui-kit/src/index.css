@@ -195,6 +195,13 @@
  * Role tokens. VSCode-shaped: role names describe intent, hex is per theme.
  * ==========================================================================*/
 :root {
+	/* What the browser paints for itself: scrollbars, form controls, the
+	 * caret, the canvas behind an overscroll. Those are chrome, not tokens,
+	 * so no variable below reaches them and they stay light until this says
+	 * otherwise. Declared per theme beside the tokens rather than once at the
+	 * top, because it flips with them and is the same kind of fact. */
+	color-scheme: light;
+
 	/* backgrounds */
 	--bg-canvas:              var(--gray-50);
 	--bg-surface:             var(--gray-0);
@@ -274,6 +281,10 @@
  * over any elevated surface (Linear technique).
  * ==========================================================================*/
 .dark {
+	/* See :root. This is the half that was missing: a dark page with a white
+	 * scrollbar down the side of it. */
+	color-scheme: dark;
+
 	/* backgrounds */
 	--bg-canvas:              var(--gray-1000);
 	--bg-surface:             var(--gray-800);
