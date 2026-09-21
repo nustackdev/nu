@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Correct the readme's fabric call forms, which named args that do not exist
 - Point the readme's stdlib links at the paths those pages actually live on
 
 ## 0.5.2 — 2026-09-21

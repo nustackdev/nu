@@ -216,24 +216,24 @@ Twelve are **fabrics**. Bind one and every Ref inside the bracket reaches a real
 The rest re-surface Python's **standard library**. Call them anywhere, no binding. Same names, same call shape as the stdlib, except a call hands back a tree, not a value. So it composes into the rest of the program.
 
 ```bash
-pip install "nustd[all]"      # every backend
-pip install "nustd[kv,ui]"    # or one extra per fabric
+pip install nucore "nustd[all]"      # every backend
+pip install nucore "nustd[kv,ui]"    # or one extra per fabric
 ```
 
 | Module | What | Looks like |
 | --- | --- | --- |
 | [nustd.kv](https://nustack.dev/docs/reference/nustd/kv) | Persistent state. | `State.movies.append(m)` |
 | [nustd.ui](https://nustack.dev/docs/reference/nustd/ui) | Reactive web UI. | `Dashboard.count.set_value(n)` |
-| [nustd.cluster](https://nustack.dev/docs/reference/nustd/cluster) | Cluster compute. | `Teleport(Add(1,2), "gpu")` |
+| [nustd.cluster](https://nustack.dev/docs/reference/nustd/cluster) | Cluster compute. | `Teleport(op, target="gpu")` |
 | [nustd.llm](https://nustack.dev/docs/reference/nustd/llm) | OpenAI-compatible chat. | `Bot.chat(prompt="…")` |
 | [nustd.mem](https://nustack.dev/docs/reference/nustd/mem) | In-memory state. | `users.age.set(12)` |
-| [nustd.proxy](https://nustack.dev/docs/reference/nustd/proxy) | Fabrics over the network. | `Proxy(Nav, "10.0.0.1")` |
+| [nustd.proxy](https://nustack.dev/docs/reference/nustd/proxy) | Fabrics over the network. | `InvisiblesProxy(Nav, address=...)` |
 | [nustd.http](https://nustack.dev/docs/reference/nustd/http) | Nu meets the web. | `Solana.get_slot()` |
 | [nustd.service](https://nustack.dev/docs/reference/nustd/service) | Python objects as Refs. | `Calc.add(a=2, b=3)` |
 | [nustd.cc](https://nustack.dev/docs/reference/nustd/cc) | Claude Code as a Ref. | `Agent.ask(prompt="…")` |
-| [nustd.mp](https://nustack.dev/docs/reference/nustd/mp) | Local parallel execution. | `Teleport(Add(1,2), "worker")` |
+| [nustd.mp](https://nustack.dev/docs/reference/nustd/mp) | Local parallel execution. | `Teleport(op, target=0)` |
 | [nustd.mp_pool](https://nustack.dev/docs/reference/nustd/mp_pool) | A pool of workers, as a fabric. | `Teleport(body, worker=w)` |
-| [nustd.ws_server](https://nustack.dev/docs/reference/nustd/ws_server) | Websockets, any wire protocol. | `SessionFor(conn, arm)` |
+| [nustd.ws_server](https://nustack.dev/docs/reference/nustd/ws_server) | Serve websocket clients. | `SessionFor(body=arm)` |
 | [nustd.math](https://nustack.dev/docs/reference/nustd/math) | Math functions and constants. | `math.sqrt(2)` |
 | [nustd.cmath](https://nustack.dev/docs/reference/nustd/cmath) | `complex` and its companions. | `cmath.polar(z)` |
 | [nustd.random](https://nustack.dev/docs/reference/nustd/random) | The global RNG. | `random.randint(1, 6)` |
