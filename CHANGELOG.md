@@ -2,17 +2,18 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.5.1
-- **nustd** (fabrics) — 0.5.1
-- **nucli** (the `nu` command) — 0.5.1
-- **nudle** — 0.1.4
+- **nucore** (kernel) — 0.5.2
+- **nustd** (fabrics) — 0.5.2
+- **nucli** (the `nu` command) — 0.5.2
+- **nudle** — 0.1.5
 - **ui-core** — 0.2.0
-- **ui-kit** — 0.2.1
+- **ui-kit** — 0.2.2
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.5.2 — 2026-09-21
 
+- Ship a browser bundle that matches the wire, so the UI works from a clean install
 - Show the whole nustd surface and the apps built on Nu in the readme
 - Browse a live store in the browser, column by column, from wherever you point it
 - Edit code in the browser with a real editor instead of a plain textarea

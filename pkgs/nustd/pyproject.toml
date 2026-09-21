@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nustd"
-version = "0.5.1"
+version = "0.5.2"
 description = "Batteries for Nu: the fabrics (mem, kv, service, llm, cc, http, proxy, mp, mp_pool, cluster, ws_server, ui) and the standard library, imported as nustd."
 readme = "README.md"
 license = "Apache-2.0"
@@ -13,7 +13,7 @@ requires-python = ">=3.10"
 # Released in lockstep with the kernel. This wheel carries no `nu/__init__.py`
 # -- it drops its subpackages into the `nu.` namespace the kernel owns.
 dependencies = [
-    "nucore>=0.5.1",
+    "nucore>=0.5.2",
 ]
 keywords = [
     "nu",
@@ -63,7 +63,7 @@ ws_server = [
 ui = [
     "nustd[ws_server]",
     "msgpack>=1.1.2",
-    "nudle>=0.1.1",
+    "nudle>=0.1.5",
 ]
 # `nustd.cluster` runs on ray. (Was the `ray` extra on nucore <= 0.1.18.)
 cluster = [
