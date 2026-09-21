@@ -11,6 +11,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Point the readme's stdlib links at the paths those pages actually live on
+
 ## 0.5.2 — 2026-09-21
 
 - Ship a browser bundle that matches the wire, so the UI works from a clean install

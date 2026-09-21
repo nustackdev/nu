@@ -234,20 +234,20 @@ pip install "nustd[kv,ui]"    # or one extra per fabric
 | [nustd.mp](https://nustack.dev/docs/reference/nustd/mp) | Local parallel execution. | `Teleport(Add(1,2), "worker")` |
 | [nustd.mp_pool](https://nustack.dev/docs/reference/nustd/mp_pool) | A pool of workers, as a fabric. | `Teleport(body, worker=w)` |
 | [nustd.ws_server](https://nustack.dev/docs/reference/nustd/ws_server) | Websockets, any wire protocol. | `SessionFor(conn, arm)` |
-| [nustd.math](https://nustack.dev/docs/reference/nustd/std/math) | Math functions and constants. | `math.sqrt(2)` |
-| [nustd.cmath](https://nustack.dev/docs/reference/nustd/std/cmath) | `complex` and its companions. | `cmath.polar(z)` |
-| [nustd.random](https://nustack.dev/docs/reference/nustd/std/random) | The global RNG. | `random.randint(1, 6)` |
-| [nustd.time](https://nustack.dev/docs/reference/nustd/std/time) | The process clock. | `time.monotonic()` |
-| [nustd.datetime](https://nustack.dev/docs/reference/nustd/std/datetime) | Dates, times, deltas, timezones. | `datetime.date.today()` |
-| [nustd.itertools](https://nustack.dev/docs/reference/nustd/std/itertools) | Iterator building blocks. | `itertools.product(a, b)` |
-| [nustd.functools](https://nustack.dev/docs/reference/nustd/std/functools) | A fold over a stream. | `functools.reduce(Add, xs)` |
-| [nustd.asyncio](https://nustack.dev/docs/reference/nustd/std/asyncio) | The non-blocking sleep. | `asyncio.sleep(1)` |
-| [nustd.logging](https://nustack.dev/docs/reference/nustd/std/logging) | Loggers and level shortcuts. | `logging.getLogger(__name__)` |
-| [nustd.pathlib](https://nustack.dev/docs/reference/nustd/std/pathlib) | Lexical path operations. | `pathlib.Path.of("a", "b")` |
-| [nustd.uuid](https://nustack.dev/docs/reference/nustd/std/uuid) | UUIDs, all four versions. | `uuid.uuid4()` |
-| [nustd.decimal](https://nustack.dev/docs/reference/nustd/std/decimal) | Exact decimal arithmetic. | `Decimal.of("0.1")` |
-| [nustd.fractions](https://nustack.dev/docs/reference/nustd/std/fractions) | Exact rational arithmetic. | `Fraction.of(1, 3)` |
-| [nustd.fin](https://nustack.dev/docs/reference/nustd/std/fin) | Nu's own financial types. | `Percentage.of(75.5)` |
+| [nustd.math](https://nustack.dev/docs/reference/nustd/math) | Math functions and constants. | `math.sqrt(2)` |
+| [nustd.cmath](https://nustack.dev/docs/reference/nustd/cmath) | `complex` and its companions. | `cmath.polar(z)` |
+| [nustd.random](https://nustack.dev/docs/reference/nustd/random) | The global RNG. | `random.randint(1, 6)` |
+| [nustd.time](https://nustack.dev/docs/reference/nustd/time) | The process clock. | `time.monotonic()` |
+| [nustd.datetime](https://nustack.dev/docs/reference/nustd/datetime) | Dates, times, deltas, timezones. | `datetime.date.today()` |
+| [nustd.itertools](https://nustack.dev/docs/reference/nustd/itertools) | Iterator building blocks. | `itertools.product(a, b)` |
+| [nustd.functools](https://nustack.dev/docs/reference/nustd/functools) | A fold over a stream. | `functools.reduce(Add, xs)` |
+| [nustd.asyncio](https://nustack.dev/docs/reference/nustd/asyncio) | The non-blocking sleep. | `asyncio.sleep(1)` |
+| [nustd.logging](https://nustack.dev/docs/reference/nustd/logging) | Loggers and level shortcuts. | `logging.getLogger(__name__)` |
+| [nustd.pathlib](https://nustack.dev/docs/reference/nustd/pathlib) | Lexical path operations. | `pathlib.Path.of("a", "b")` |
+| [nustd.uuid](https://nustack.dev/docs/reference/nustd/uuid) | UUIDs, all four versions. | `uuid.uuid4()` |
+| [nustd.decimal](https://nustack.dev/docs/reference/nustd/decimal) | Exact decimal arithmetic. | `Decimal.of("0.1")` |
+| [nustd.fractions](https://nustack.dev/docs/reference/nustd/fractions) | Exact rational arithmetic. | `Fraction.of(1, 3)` |
+| [nustd.fin](https://nustack.dev/docs/reference/nustd/fin) | Nu's own financial types. | `Percentage.of(75.5)` |
 
 # 📦 Apps built on Nu
 
