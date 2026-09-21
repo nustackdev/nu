@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Show the whole nustd surface and the apps built on Nu in the readme
 - Browse a live store in the browser, column by column, from wherever you point it
 - Edit code in the browser with a real editor instead of a plain textarea
 - Restructure the repo layout; package names, versions and imports are unchanged

@@ -42,7 +42,7 @@
   <a href="#ℹ️-about"><b>About</b></a> &bull;
   <a href="#-build-with-nu"><b>Build</b></a> &bull;
   <a href="#-quickstart"><b>Quickstart</b></a> &bull;
-  <a href="#-fabrics"><b>Fabrics</b></a> &bull;
+  <a href="#-nu-std"><b>Nu STD</b></a> &bull;
   <a href="#-apps-built-on-nu"><b>Apps</b></a> &bull;
   <a href="#-spec"><b>Spec</b></a> &bull;
   <a href="https://github.com/nustackdev/nu/tree/main/examples"><b>Examples</b></a> &bull;
@@ -207,22 +207,47 @@ Each one boots a live browser dashboard and picks up where it left off on restar
 - **[Read the docs](https://nustack.dev/docs)** — tutorials, how-tos, and the fabric reference.
 - **[Browse examples](https://github.com/nustackdev/nu/tree/main/examples)** — full source for every demo, plus more programs to steal from.
 
-# 🧵 Fabrics
+# 🔋 Nu STD
 
-Each fabric gives your Nu app a new capability. These are the ones Nu ships with today.
+Batteries included. 26 modules ship on top of the kernel.
 
-| Fabric | What | Primary interaction |
+Twelve are **fabrics**. Bind one and every Ref inside the bracket reaches a real system.
+
+The rest re-surface Python's **standard library**. Call them anywhere, no binding. Same names, same call shape as the stdlib, except a call hands back a tree, not a value. So it composes into the rest of the program.
+
+```bash
+pip install "nustd[all]"      # every backend
+pip install "nustd[kv,ui]"    # or one extra per fabric
+```
+
+| Module | What | Looks like |
 | --- | --- | --- |
-| [nustd.kv](https://nustack.dev/docs/reference/fabrics/kv) | Persistent state. | `State.movies.append(m)` |
-| [nustd.ui](https://nustack.dev/docs/reference/fabrics/ui) | Reactive web UI. | `Dashboard.count.set_value(n)` |
-| [nustd.cluster](https://nustack.dev/docs/reference/fabrics/cluster) | Cluster compute. | `Teleport(Add(1,2), "gpu")` |
-| [nustd.llm](https://nustack.dev/docs/reference/fabrics/llm) | OpenAI-compatible chat. | `Bot.chat(prompt="…")` |
-| [nustd.mem](https://nustack.dev/docs/reference/fabrics/mem) | In-memory state. | `users.age.set(12)` |
-| [nustd.proxy](https://nustack.dev/docs/reference/fabrics/proxy) | Fabrics over the network. | `Proxy(Nav, "10.0.0.1")` |
-| [nustd.http](https://nustack.dev/docs/reference/fabrics/http) | Nu meets the web. | `Solana.get_slot()` |
-| [nustd.service](https://nustack.dev/docs/reference/fabrics/service) | Python objects as Refs. | `Calc.add(a=2, b=3)` |
-| [nustd.cc](https://nustack.dev/docs/reference/fabrics/cc) | Claude Code as a Ref. | `Agent.ask(prompt="…")` |
-| [nustd.mp](https://nustack.dev/docs/reference/fabrics/mp) | Local parallel execution. | `Teleport(Add(1,2), "worker")` |
+| [nustd.kv](https://nustack.dev/docs/reference/nustd/kv) | Persistent state. | `State.movies.append(m)` |
+| [nustd.ui](https://nustack.dev/docs/reference/nustd/ui) | Reactive web UI. | `Dashboard.count.set_value(n)` |
+| [nustd.cluster](https://nustack.dev/docs/reference/nustd/cluster) | Cluster compute. | `Teleport(Add(1,2), "gpu")` |
+| [nustd.llm](https://nustack.dev/docs/reference/nustd/llm) | OpenAI-compatible chat. | `Bot.chat(prompt="…")` |
+| [nustd.mem](https://nustack.dev/docs/reference/nustd/mem) | In-memory state. | `users.age.set(12)` |
+| [nustd.proxy](https://nustack.dev/docs/reference/nustd/proxy) | Fabrics over the network. | `Proxy(Nav, "10.0.0.1")` |
+| [nustd.http](https://nustack.dev/docs/reference/nustd/http) | Nu meets the web. | `Solana.get_slot()` |
+| [nustd.service](https://nustack.dev/docs/reference/nustd/service) | Python objects as Refs. | `Calc.add(a=2, b=3)` |
+| [nustd.cc](https://nustack.dev/docs/reference/nustd/cc) | Claude Code as a Ref. | `Agent.ask(prompt="…")` |
+| [nustd.mp](https://nustack.dev/docs/reference/nustd/mp) | Local parallel execution. | `Teleport(Add(1,2), "worker")` |
+| [nustd.mp_pool](https://nustack.dev/docs/reference/nustd/mp_pool) | A pool of workers, as a fabric. | `Teleport(body, worker=w)` |
+| [nustd.ws_server](https://nustack.dev/docs/reference/nustd/ws_server) | Websockets, any wire protocol. | `SessionFor(conn, arm)` |
+| [nustd.math](https://nustack.dev/docs/reference/nustd/std/math) | Math functions and constants. | `math.sqrt(2)` |
+| [nustd.cmath](https://nustack.dev/docs/reference/nustd/std/cmath) | `complex` and its companions. | `cmath.polar(z)` |
+| [nustd.random](https://nustack.dev/docs/reference/nustd/std/random) | The global RNG. | `random.randint(1, 6)` |
+| [nustd.time](https://nustack.dev/docs/reference/nustd/std/time) | The process clock. | `time.monotonic()` |
+| [nustd.datetime](https://nustack.dev/docs/reference/nustd/std/datetime) | Dates, times, deltas, timezones. | `datetime.date.today()` |
+| [nustd.itertools](https://nustack.dev/docs/reference/nustd/std/itertools) | Iterator building blocks. | `itertools.product(a, b)` |
+| [nustd.functools](https://nustack.dev/docs/reference/nustd/std/functools) | A fold over a stream. | `functools.reduce(Add, xs)` |
+| [nustd.asyncio](https://nustack.dev/docs/reference/nustd/std/asyncio) | The non-blocking sleep. | `asyncio.sleep(1)` |
+| [nustd.logging](https://nustack.dev/docs/reference/nustd/std/logging) | Loggers and level shortcuts. | `logging.getLogger(__name__)` |
+| [nustd.pathlib](https://nustack.dev/docs/reference/nustd/std/pathlib) | Lexical path operations. | `pathlib.Path.of("a", "b")` |
+| [nustd.uuid](https://nustack.dev/docs/reference/nustd/std/uuid) | UUIDs, all four versions. | `uuid.uuid4()` |
+| [nustd.decimal](https://nustack.dev/docs/reference/nustd/std/decimal) | Exact decimal arithmetic. | `Decimal.of("0.1")` |
+| [nustd.fractions](https://nustack.dev/docs/reference/nustd/std/fractions) | Exact rational arithmetic. | `Fraction.of(1, 3)` |
+| [nustd.fin](https://nustack.dev/docs/reference/nustd/std/fin) | Nu's own financial types. | `Percentage.of(75.5)` |
 
 # 📦 Apps built on Nu
 
@@ -231,21 +256,14 @@ End-user tools written as Nu programs.
 | Repo | What |
 | --- | --- |
 | [nustackdev/nulog](https://github.com/nustackdev/nulog) | Pure-Python, serverless logger and metrics store. Log and observe metrics from any Python code; entries persist to an embedded KV store and scale to billions, in-process. One line boots a live viewer. |
+| [nustackdev/nuagent](https://github.com/nustackdev/nuagent) | An AI agent that speaks Nu. The model answers with a program, not a tool call, so one turn reads, branches, loops and writes across real state. |
+| [nustackdev/nuspace](https://github.com/nustackdev/nuspace) | Nu runtime built on Nu, self-hosted. |
 
 # 📐 Spec
 
 Nu is a reference implementation of the interaction model — a language-agnostic specification of what an interaction is, how Refs name locations, and how Interactions compose into programs.
 
 [nustackdev/interaction-model](https://github.com/nustackdev/interaction-model)
-
-# 🛣️ Roadmap
-
-**`nu.agents` fabric — LLM authors Nu programs.**
-
-No tool-calling loop. The model's reply *is* a Nu tree, evaluated in the Context the agent runs in. The Refs bound in scope *are* the agent's surface — bind different Refs, get a different agent.
-
-- **Safe by construction.** Nu's laws validate the tree before any effect fires; `With` / `Provide` scoping bounds what the model can touch.
-- **Inspectable, replayable, diffable.** A Nu program is a data structure.
 
 # 👥 Community
 
