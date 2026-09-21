@@ -10,7 +10,7 @@ build-backend = "hatchling.build"
 # `nustd.ws_server` resolves it at runtime as `nudle.__path__[0] / "build"`.
 [project]
 name = "nudle"
-version = "0.1.4"
+version = "0.1.5"
 description = "nudle web bundle -- compiled UI assets for the nustd.ui fabric"
 readme = "README.md"
 license = "Apache-2.0"
