@@ -25,13 +25,26 @@ the nudle host names are re-exported flat, so one ``import nustd.ui`` reaches
 everything a UI program spells. The lens is the exception and stays whole
 behind ``nustd.ui.lens``, ``LensRef`` included: it is a subsystem rather than
 a widget, and a surface split between two names is worse than one more dot.
+
+**The host half loads on first use.** Building Refs and serving them are two
+different jobs and only one of them needs a web server: ``nudle`` reaches
+``nustd.ws_server``, which reaches uvicorn and fastapi, and that was most of
+what ``import nustd.ui`` cost. Plenty of processes only ever build Refs. The
+case that made this worth doing is a worker drawing on a connection it holds
+a proxy to: it pays the import on every launch and serves nothing, ever. So
+``nudle``, ``serve`` and the four page names come through ``__getattr__``
+below, and naming any of them loads the host with its server, which is what
+somebody naming them is asking for.
 """
 
-from . import core, lens, nudle, refs
+from __future__ import annotations
+
+import importlib
+from typing import TYPE_CHECKING
+
+from . import core, lens, refs
 from .core import Frame, Ref, Section, SectionRef, Session, Subscription, WsSession
 from .core.interactions import Append, Changed, Remove, Write
-from .nudle import serve
-from .nudle.page import Boot, Index, Page, PageRef
 from .refs import (
     Accordion,
     AccordionRef,
@@ -84,6 +97,49 @@ from .refs import (
     TextRef,
     TitleRef,
 )
+
+
+# The host half, handed to IDEs and type-checkers as the real thing, so
+# ``nustd.ui.Page`` resolves statically with completion and go-to-definition
+# despite never being bound at import time.
+if TYPE_CHECKING:
+    from . import nudle
+    from .nudle import serve
+    from .nudle.page import Boot, Index, Page, PageRef
+
+
+#: Every name the host half contributes, and the module each one is in.
+#: ``nudle`` maps to itself: the package is one of the names.
+_LAZY = {
+    "Boot": ".nudle.page",
+    "Index": ".nudle.page",
+    "Page": ".nudle.page",
+    "PageRef": ".nudle.page",
+    "nudle": ".nudle",
+    "serve": ".nudle",
+}
+
+
+def __getattr__(name: str) -> object:
+    """One host name, imported by the first access that asks for it.
+
+    Cached into the module's own globals on the way out, so the import and
+    this lookup are both paid once. Anything not the host's is the ordinary
+    ``AttributeError``, unchanged.
+    """
+    where = _LAZY.get(name)
+    if where is None:
+        msg = f"module {__name__!r} has no attribute {name!r}"
+        raise AttributeError(msg)
+    module = importlib.import_module(where, __name__)
+    value = module if name == "nudle" else getattr(module, name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    """Everything reachable here, whether or not it has been loaded yet."""
+    return sorted({*globals(), *_LAZY})
 
 
 __all__ = [

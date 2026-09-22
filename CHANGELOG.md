@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Build UI refs without loading a web server, so a process that only draws starts sooner
 - Reach every section widget from the top level instead of hunting for its module
 - Correct the readme's fabric call forms, which named args that do not exist
 - Point the readme's stdlib links at the paths those pages actually live on
