@@ -159,11 +159,22 @@ async def _settle(tasks: Iterable) -> None:
     for t in tasks:
         if not t.done():
             t.cancel()
-    for t in tasks:
-        try:
-            await t
-        except (asyncio.CancelledError, Exception):  # noqa: S110
-            pass
+    if not tasks:
+        return
+    try:
+        # ``wait`` raises nothing of the children's, only the caller's own
+        # cancellation. Awaiting each task and swallowing CancelledError
+        # would swallow that too, and a caller cancelled mid-settle (a
+        # reactive fold cancelling an arm) would carry on as if never asked.
+        await asyncio.wait(tasks)
+    except asyncio.CancelledError:
+        # Still drain: the children are cancelled and finish on their own.
+        await asyncio.wait(tasks)
+        raise
+    finally:
+        for t in tasks:
+            if t.done() and not t.cancelled():
+                t.exception()
 
 
 async def aeval_race(
