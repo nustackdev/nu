@@ -102,8 +102,8 @@ class OnChange(ScalarQuery):
           unread - Nu never inspects a backend's filter dialect.
         - Subscribing reads no value off the view, so nothing here recomputes
           on change. The handle only delivers notifications to receivers bound
-          on it; ``React`` / ``ReactWhile`` / ``ReactForever`` are what bind
-          them and run a body.
+          on it; ``React`` / ``ReactWhile`` / ``ReactForever`` /
+          ``ReactLatest`` are what bind them and run a body.
         - Fires on any mutation reaching that view, with no distinction of
           which mutation it was.
         - Each evaluation opens a fresh subscription; whoever binds a receiver

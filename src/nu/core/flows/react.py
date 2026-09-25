@@ -1,11 +1,13 @@
-"""Reactive control flows: React, ReactWhile, ReactForever.
+"""Reactive control flows: React, ReactWhile, ReactForever, ReactLatest.
 
-Subscribe to a change event and run a body in response. All three are
+Subscribe to a change event and run a body in response. All four are
 ``Control`` flows: they drive a mutating body under query parameters (a
 change subscription, a condition) and yield nothing, exactly like ``WhileDo``
 / ``ForeverDo``. A change notification is bridged into async via
-``asyncio.Queue`` (one wake per notification, no collapsing), so all three
-require an async runtime and raise from their sync ``_compile`` path.
+``asyncio.Queue``, so all four require an async runtime and raise from their
+sync ``_compile`` path. The first three take one wake per notification with
+no collapsing; ``ReactLatest`` collapses a backlog to its newest key, since
+it only ever runs the latest one.
 
 ``param_slots`` names the consumed queries (the change subscription at slot
 0, a condition where present, an optional ``changed_key`` name); the
@@ -27,7 +29,7 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-__all__ = ["React", "ReactForever", "ReactWhile"]
+__all__ = ["React", "ReactForever", "ReactLatest", "ReactWhile"]
 
 
 async def _adrain_body(rt: Runtime, body_thunk: Callable) -> None:
@@ -276,6 +278,151 @@ class ReactForever(Control):
                         rt.ctx.attrs[changed_key_name] = key
                     await _adrain_body(rt, children[1])
             finally:
+                sub.unbind(on_change)
+                sub.close()
+
+        return athunk
+
+
+class ReactLatest(Control):
+    """Run the body on every change, cancelling the run a newer change makes stale.
+
+    ``ReactForever`` with switch-latest semantics (Rx ``switchMap``). Binds to
+    the change subscription once and starts the body as its own task on every
+    notification. A run still going when the next notification lands is
+    cancelled and awaited until it has fully unwound, and only then does the
+    body start again with the newest key. Never returns on its own; the
+    caller ends it by cancelling the surrounding task.
+
+    Args:
+        change: the change subscription to wait on.
+        body: what to run on every notification. May never finish (a live
+            view, a server loop); the next change is what ends it.
+        changed_key: name to bind the changed key under before each body run.
+        initial: run the body once straight away, before any notification.
+            That run binds nothing under ``changed_key``, so the body sees
+            whatever the caller seeded there, or an unbound slot.
+
+    Notes:
+        - Notifications that pile up while a cancelled run is unwinding are
+          collapsed: only the newest key runs, the backlog is not replayed.
+        - Each run gets a fresh branch of the Context it started from: its
+          own attrs key space, values shared by reference. A restarted body
+          never sees attrs a cancelled run left behind, and attrs a run binds
+          do not reach the caller or its siblings.
+        - A body that finishes on its own is fine; the flow just waits for
+          the next change.
+        - An error raised by the body, or while a cancelled run unwinds, ends
+          the flow and propagates. The cancellation from a restart is not an
+          error.
+        - Cancelling the flow cancels and drains the running body before the
+          subscription is unbound and closed.
+        - Requires an async runtime; the sync path raises ``RuntimeError``.
+
+    Yields:
+        Nothing.
+
+    Example:
+        A live view restarted whenever a select moves, drawn once up front.
+        Needs a real substrate behind the subscription, so it cannot run
+        standalone::
+
+            ReactLatest(
+                Cell.source.on_change(),
+                nustd.ui.lens.browse(Cell.lens, Movies),
+                initial=True,
+            )
+    """
+
+    _mutates = Declared(value=frozenset(), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
+    _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
+
+    def __init__(
+        self,
+        change: object,
+        body: object,
+        *,
+        changed_key: object = None,
+        initial: bool = False,
+    ) -> None:
+        has_changed_key = changed_key is not None
+        if changed_key is not None:
+            super().__init__(change, body, changed_key)
+        else:
+            super().__init__(change, body)
+        self._payload["has_changed_key"] = has_changed_key
+        self._payload["initial"] = bool(initial)
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            msg = "ReactLatest requires an async runtime; use arun"
+            raise RuntimeError(msg)
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        from .parallel._scheduling import _settle
+
+        has_ck = self._payload["has_changed_key"]
+        initial = self._payload["initial"]
+        body = children[1]
+
+        async def athunk(rt: Runtime) -> None:
+            loop = asyncio.get_running_loop()
+            queue: asyncio.Queue[object] = asyncio.Queue()
+
+            def on_change(k: object) -> None:
+                loop.call_soon_threadsafe(queue.put_nowait, k)
+
+            changed_key_name = await children[2](rt) if has_ck else None
+            base = rt.ctx
+
+            def start(bind: bool, key: object = None) -> asyncio.Task:
+                # A fresh branch per run, set inside the task so it stays
+                # run-local, the same way a fan-out arm gets its Context.
+                run_ctx = base.branch()
+                if bind and changed_key_name is not None:
+                    run_ctx.attrs[changed_key_name] = key
+
+                async def run() -> None:
+                    rt.ctx = run_ctx
+                    await _adrain_body(rt, body)
+
+                return asyncio.ensure_future(run())
+
+            running: asyncio.Task | None = None
+            getter: asyncio.Task | None = None
+            sub = await children[0](rt)
+            sub.bind(on_change)
+            try:
+                if initial:
+                    running = start(bind=False)
+                while True:
+                    if getter is None:
+                        getter = asyncio.ensure_future(queue.get())
+                    waits = {getter} if running is None else {getter, running}
+                    done, _ = await asyncio.wait(waits, return_when=asyncio.FIRST_COMPLETED)
+                    # A run that ended on its own is checked first: its error
+                    # wins over a notification that landed on the same tick.
+                    if running is not None and running in done:
+                        finished, running = running, None
+                        finished.result()
+                    if getter not in done:
+                        continue
+                    key, getter = getter.result(), None
+                    if running is not None:
+                        stale, running = running, None
+                        await _settle([stale])
+                        if not stale.cancelled():
+                            stale.result()
+                    # Whatever arrived while the stale run unwound is already
+                    # queued; only the newest of it is worth a run.
+                    while not queue.empty():
+                        key = queue.get_nowait()
+                    running = start(bind=True, key=key)
+            finally:
+                await _settle([t for t in (running, getter) if t is not None])
                 sub.unbind(on_change)
                 sub.close()
 

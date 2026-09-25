@@ -14,7 +14,9 @@ Two families plus the reactive set:
   change subscription, one arm per element for as long as the element is
   there.
 - **Reactive** - consume change subscriptions and execute bodies in response:
-  ``React``, ``ReactWhile``, ``ReactForever``, ``Stream``.
+  ``React``, ``ReactWhile``, ``ReactForever``, ``ReactLatest``, ``Stream``.
+  ``ReactLatest`` is ``ReactForever`` that cancels a stale run instead of
+  queueing behind it.
 """
 
 from .control import (
@@ -39,7 +41,7 @@ from .parallel import (
     Race,
 )
 from .raise_ import Raise, raise_
-from .react import React, ReactForever, ReactWhile
+from .react import React, ReactForever, ReactLatest, ReactWhile
 from .strategy import Sequential
 from .stream import Stream
 
@@ -63,6 +65,7 @@ __all__ = [
     "Raise",
     "React",
     "ReactForever",
+    "ReactLatest",
     "ReactWhile",
     "Sequential",
     "Stream",
