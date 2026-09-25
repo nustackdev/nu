@@ -2,16 +2,16 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.5.2
-- **nustd** (fabrics) — 0.5.2
-- **nucli** (the `nu` command) — 0.5.2
-- **nudle** — 0.1.5
+- **nucore** (kernel) — 0.5.3
+- **nustd** (fabrics) — 0.5.3
+- **nucli** (the `nu` command) — 0.5.3
+- **nudle** — 0.1.6
 - **ui-core** — 0.2.0
-- **ui-kit** — 0.2.2
+- **ui-kit** — 0.2.3
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.5.3 — 2026-09-25
 
 - The kit ships finished styles, so apps no longer scan its source
 - Programs can show empty states, status dots, and dashed badges for missing values
