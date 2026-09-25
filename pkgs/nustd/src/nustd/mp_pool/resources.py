@@ -15,6 +15,8 @@ Parent-side shape, per worker:
 - a daemon reader thread draining that pipe and resolving waiters by token
 - a set of tokens that are dispatched but not finished, which is what
   ``running`` reads
+- an exit record: the process's exit code once it is gone, and the asyncio
+  futures of whoever is waiting on that, woken from the reader thread
 
 Worker ids are monotonic ints and are never reused, so a stale id is
 detectably dead rather than silently a different worker.
@@ -94,6 +96,13 @@ class _WorkerHandle:
         self._ready = threading.Event()
         self._ready_error: BaseException | None = None
         self._closed = False
+        self._terminating = False
+        # Exit record. ``_exited`` flips once, from whichever thread sees the
+        # process gone first; ``_exit_waiters`` are futures on some loop, each
+        # woken through that loop's ``call_soon_threadsafe``.
+        self._exited = threading.Event()
+        self.exitcode: int | None = None
+        self._exit_waiters: list[tuple[asyncio.AbstractEventLoop, asyncio.Future]] = []
         self._reader = threading.Thread(
             target=self._read_loop,
             name=f"nu-mp-pool-reader-{wid}",
@@ -114,6 +123,27 @@ class _WorkerHandle:
                 self._handle(frame)
         finally:
             self._abandon(WorkerGone(f"worker {self.wid} is gone"))
+            if not self._terminating:
+                # A kill in progress owns the reap and records the code itself.
+                self._mark_exited(self._reap_code())
+
+    def _reap_code(self) -> int | None:
+        """After EOF: wait for the process itself to end, then read its code.
+
+        EOF means the child closed its end of the pipe, which it does on the
+        way out, a moment before the process is actually gone. The sentinel
+        becomes readable only when it is, and waiting on it reaps nothing, so
+        ``terminate`` joining the same process concurrently is not disturbed.
+        A process ``terminate`` closed under us raises here and reads as
+        unknown.
+        """
+        from multiprocessing.connection import wait as _wait
+
+        try:
+            _wait([self.proc.sentinel])
+            return self.proc.exitcode
+        except Exception:
+            return None
 
     def _handle(self, frame: tuple) -> None:
         kind = frame[0]
@@ -153,6 +183,18 @@ class _WorkerHandle:
             self._ready_error = exc
             self._ready.set()
 
+    def _mark_exited(self, code: int | None) -> None:
+        """Record the exit once and wake every waiter. Safe from any thread."""
+        with self._state:
+            if self._exited.is_set():
+                return
+            self.exitcode = code
+            self._exited.set()
+            waiters, self._exit_waiters = self._exit_waiters, []
+        for loop, fut in waiters:
+            with contextlib.suppress(RuntimeError):  # that loop is closed already
+                loop.call_soon_threadsafe(_resolve, fut, code)
+
     # --- parent-side calls -----------------------------------------------
 
     def wait_ready(self, timeout: float | None) -> None:
@@ -179,6 +221,33 @@ class _WorkerHandle:
             raise WorkerGone(f"worker {self.wid} is gone") from exc
         return reply
 
+    def wait_exit(self, timeout: float | None = None) -> int | None:
+        """Block until the process is gone; its exit code, or None if unknown."""
+        if not self._exited.wait(timeout):
+            raise TimeoutError(f"worker {self.wid} did not exit in time")
+        return self.exitcode
+
+    async def await_exit(self) -> int | None:
+        """Wait for the process to be gone without holding a thread.
+
+        A future on the running loop is registered under the state lock, so
+        an exit that lands between the check and the registration is not
+        missed: either the flag is already set here, or ``_mark_exited`` sees
+        the future and resolves it. Cancelling the await drops the future.
+        """
+        loop = asyncio.get_running_loop()
+        fut: asyncio.Future = loop.create_future()
+        entry = (loop, fut)
+        with self._state:
+            if self._exited.is_set():
+                return self.exitcode
+            self._exit_waiters.append(entry)
+        try:
+            return await fut
+        finally:
+            with self._state, contextlib.suppress(ValueError):
+                self._exit_waiters.remove(entry)
+
     @property
     def running(self) -> bool:
         """Whether any dispatched body on this worker is still executing."""
@@ -189,7 +258,9 @@ class _WorkerHandle:
         """Kill the process for real, then reap it. Never waits on the child."""
         with self._state:
             self._closed = True
+            self._terminating = True
         proc = self.proc
+        code: int | None = None
         with contextlib.suppress(Exception):
             if proc.is_alive():
                 proc.terminate()
@@ -199,6 +270,7 @@ class _WorkerHandle:
                     proc.join(timeout=self.grace)
             else:
                 proc.join(timeout=self.grace)
+            code = proc.exitcode
         # The child's end is closed by now, so the reader sees EOF and exits.
         self._reader.join(timeout=self.grace)
         with contextlib.suppress(Exception):
@@ -206,6 +278,13 @@ class _WorkerHandle:
         with contextlib.suppress(Exception):
             proc.close()
         self._abandon(WorkerGone(f"worker {self.wid} was killed"))
+        self._mark_exited(code)
+
+
+def _resolve(fut: asyncio.Future, value: object) -> None:
+    """Set ``fut`` unless its waiter already went away. Runs on ``fut``'s loop."""
+    if not fut.done():
+        fut.set_result(value)
 
 
 class WorkerPool:
@@ -362,6 +441,17 @@ class WorkerPool:
             handle = self._workers.get(wid)  # type: ignore[arg-type]
         return handle is not None and handle.running
 
+    def wait(self, wid: object, timeout: float | None = None) -> int | None:
+        """Block until worker ``wid`` has exited; its exit code, or None.
+
+        An id that was killed or never launched is already gone as far as the
+        pool knows, so it answers None at once, the way ``alive`` answers
+        False. A kill landing while this waits wakes it with the real code.
+        """
+        with self._lock:
+            handle = self._workers.get(wid)  # type: ignore[arg-type]
+        return None if handle is None else handle.wait_exit(timeout)
+
     def workers(self) -> list[int]:
         """Every worker id the pool still tracks, in launch order."""
         with self._lock:
@@ -380,6 +470,15 @@ class WorkerPool:
     async def ateleport(self, wid: object, tree: object, attrs: dict | None = None) -> object:
         """Async ``teleport``: wait for the reply off-thread."""
         return await asyncio.to_thread(self.teleport, wid, tree, attrs)
+
+    async def await_exit(self, wid: object) -> int | None:
+        """Async ``wait``: the reader thread wakes it, no thread is held meanwhile.
+
+        Named apart from the sync one only because ``await`` is a keyword.
+        """
+        with self._lock:
+            handle = self._workers.get(wid)  # type: ignore[arg-type]
+        return None if handle is None else await handle.await_exit()
 
     async def akill(self, wid: object) -> None:
         """Async ``kill``, shielded so a cancellation still reaps the process."""

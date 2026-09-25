@@ -14,7 +14,10 @@ statements about the fabric's contents, not imperative escapes.
 - ``PoolRef`` - the fabric ref. Reading it is a lookup and nothing else. It
   also carries the fluent form of every interaction below.
 - ``Launch`` / ``Dispatch`` / ``Teleport`` / ``Kill`` / ``Alive`` /
-  ``Running`` / ``Workers`` - the interactions.
+  ``Running`` / ``Wait`` / ``Workers`` - the interactions. ``Wait`` awaits a
+  worker's exit and yields its exit code.
+- ``nustd.mp_pool.presets`` - policy built on top, never inside: ``spares``,
+  a shelf of idle workers kept up so a take skips the spawn.
 
 Everything is Nu. Every worker id and the ``init`` override is a **child**,
 never payload, so a target can come from a ``Ref``, an ``AttrRef`` or any
@@ -61,7 +64,8 @@ pickleable (top-level in a module, no closures).
 
 from __future__ import annotations
 
-from .interactions import Alive, Dispatch, Kill, Launch, Running, Teleport, Workers
+from . import presets
+from .interactions import Alive, Dispatch, Kill, Launch, Running, Teleport, Wait, Workers
 from .refs import PoolRef
 from .resources import UnknownWorker, WorkerGone, WorkerPool
 
@@ -75,7 +79,9 @@ __all__ = [
     "Running",
     "Teleport",
     "UnknownWorker",
+    "Wait",
     "WorkerGone",
     "WorkerPool",
     "Workers",
+    "presets",
 ]

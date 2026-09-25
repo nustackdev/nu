@@ -14,6 +14,7 @@ from nustd.mp_pool import (
     PoolRef,
     Running,
     Teleport,
+    Wait,
     WorkerPool,
     Workers,
 )
@@ -42,6 +43,7 @@ TREES = {
     "kill": _provided(Kill(worker=nu.AttrRef("w"))),
     "alive": _provided(nu.SetCmd(nu.AttrRef("a"), Alive(worker=nu.AttrRef("w")))),
     "running": _provided(nu.SetCmd(nu.AttrRef("r"), Running(worker=nu.AttrRef("w")))),
+    "wait": _provided(nu.SetCmd(nu.AttrRef("c"), Wait(worker=nu.AttrRef("w")))),
     "workers": _provided(nu.SetCmd(nu.AttrRef("ws"), nu.Collect(Workers()))),
     "explicit_pool_ref": _provided(
         nu.Let(
@@ -65,6 +67,7 @@ TREES = {
         nu.Sequential(
             nu.SetCmd(nu.AttrRef("a"), PoolRef().alive(nu.AttrRef("w"))),
             nu.SetCmd(nu.AttrRef("r"), PoolRef().running(nu.AttrRef("w"))),
+            nu.SetCmd(nu.AttrRef("c"), PoolRef().wait(nu.AttrRef("w"))),
             nu.SetCmd(nu.AttrRef("ws"), nu.Collect(PoolRef().workers())),
         ),
     ),
@@ -166,6 +169,7 @@ FLUENT = [
     (lambda p: p.kill(7), lambda p: Kill(p, 7)),
     (lambda p: p.alive(7), lambda p: Alive(p, 7)),
     (lambda p: p.running(7), lambda p: Running(p, 7)),
+    (lambda p: p.wait(7), lambda p: Wait(p, 7)),
     (lambda p: p.workers(), lambda p: Workers(p)),
 ]
 
@@ -200,6 +204,7 @@ def test_the_atoms_carry_no_caller_value_in_payload():
         Kill(worker=7),
         Alive(worker=7),
         Running(worker=7),
+        Wait(worker=7),
         Workers(),
     ]
     for atom in atoms:

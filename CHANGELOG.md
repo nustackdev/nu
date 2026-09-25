@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Wait for a worker to exit, and keep idle spare workers ready to take
 - Build UI refs without loading a web server, so a process that only draws starts sooner
 - Reach every section widget from the top level instead of hunting for its module
 - Correct the readme's fabric call forms, which named args that do not exist

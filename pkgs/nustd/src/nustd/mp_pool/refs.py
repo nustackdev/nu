@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from nu.core.spans.bracket import _LifecycleBracket
     from nu.lang import Nu
 
-    from .interactions import Alive, Dispatch, Kill, Launch, Running, Teleport, Workers
+    from .interactions import Alive, Dispatch, Kill, Launch, Running, Teleport, Wait, Workers
 
 
 __all__ = ["PoolRef"]
@@ -95,6 +95,12 @@ class PoolRef(FabricRef):
         from .interactions import Running
 
         return Running(self, worker)
+
+    def wait(self, worker: object = None) -> Wait:
+        """A ``Wait`` on this pool: until ``worker`` exits, yield its exit code."""
+        from .interactions import Wait
+
+        return Wait(self, worker)
 
     def workers(self) -> Workers:
         """A ``Workers`` stream over this pool: every id it still tracks."""

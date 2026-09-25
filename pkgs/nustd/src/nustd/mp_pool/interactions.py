@@ -1,7 +1,7 @@
 """The interactions of the ``nustd.mp_pool`` fabric.
 
-Seven atoms over one ``WorkerPool``: ``Launch``, ``Dispatch``, ``Teleport``,
-``Kill``, ``Alive``, ``Running``, ``Workers``. Because the fabric spans many
+Eight atoms over one ``WorkerPool``: ``Launch``, ``Dispatch``, ``Teleport``,
+``Kill``, ``Alive``, ``Running``, ``Wait``, ``Workers``. Because the fabric spans many
 processes, these are declarative statements about its contents rather than
 imperative escapes - the same way ``SetCmd`` is a statement about the attrs
 fabric.
@@ -27,6 +27,7 @@ Teleport    (body, pool, worker)       Policy        -
 Kill        (pool, worker)             Command       {0}
 Alive       (pool, worker)             ScalarQuery   -
 Running     (pool, worker)             ScalarQuery   -
+Wait        (pool, worker)             ScalarQuery   -
 Workers     (pool,)                    StreamQuery   -
 ==========  =========================  ============  ====================
 
@@ -90,6 +91,7 @@ __all__ = [
     "Launch",
     "Running",
     "Teleport",
+    "Wait",
     "Workers",
 ]
 
@@ -563,6 +565,57 @@ class Running(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             return _require_pool(await children[0](rt)).running(await children[1](rt))
+
+        return athunk
+
+
+class Wait(ScalarQuery):
+    """Waits until the worker at this id has exited, and yields its exit code.
+
+    The one read here that takes time: it completes when the process is gone,
+    whether it ended on its own, crashed, or was killed from another branch.
+    It observes the exit and causes nothing, so it stays a query.
+
+    Args:
+        pool: the node yielding the ``WorkerPool``. Defaults to the untagged
+            ``PoolRef``.
+        worker: the node yielding the worker id.
+
+    Notes:
+        - An id that was already killed, or never launched, is gone as far as
+          the pool knows and yields None at once, the same way ``Alive``
+          reads False for it rather than raising.
+        - On the async path nothing polls and no thread is held: the pool's
+          reader thread notices the pipe close and wakes the waiter on its
+          own loop. Cancelling the Wait just drops the waiter.
+        - The sync path blocks the calling thread until the exit.
+        - A worker killed while this waits yields the code the kill left
+          behind, negative for a signal (``-15`` for SIGTERM).
+
+    Yields:
+        The exit code, an int, or None when it is not known.
+
+    Example:
+        Race(Wait(worker=AttrRef("w")), stop_signal)
+    """
+
+    def __init__(self, pool: Nu | None = None, worker: object = None) -> None:
+        super().__init__(_pool_node(pool), worker)
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build the sync wait thunk."""
+
+        def thunk(rt: Runtime) -> object:
+            return _require_pool(children[0](rt)).wait(children[1](rt))
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        """Build the async wait thunk."""
+
+        async def athunk(rt: Runtime) -> object:
+            pool = _require_pool(await children[0](rt))
+            return await pool.await_exit(await children[1](rt))
 
         return athunk
 
