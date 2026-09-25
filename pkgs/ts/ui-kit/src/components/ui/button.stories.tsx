@@ -4,7 +4,7 @@ import { ArrowRight, Sparkles, Github } from "lucide-react";
 import { Button } from "./button";
 
 const VARIANTS = ["default", "secondary", "ghost", "outline", "destructive", "link"] as const;
-const SIZES = ["sm", "md", "lg"] as const;
+const SIZES = ["xs", "sm", "md", "lg"] as const;
 
 export const Default: StoryObj = {
 	render: () => (
@@ -54,6 +54,9 @@ export const Matrix: StoryObj = {
 					<div className="flex flex-wrap gap-3">
 						<Button>Default</Button>
 						<Button disabled>Disabled</Button>
+						<Button variant="ghost" ring="inset">
+							Inset ring
+						</Button>
 					</div>
 				</div>
 

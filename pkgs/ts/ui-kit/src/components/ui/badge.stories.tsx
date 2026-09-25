@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Check, Circle, TriangleAlert } from "lucide-react";
 import { Badge } from "./badge";
 
-const VARIANTS = ["default", "secondary", "outline", "danger", "warn", "ok", "info"] as const;
+const VARIANTS = ["default", "secondary", "outline", "danger", "warn", "ok", "info", "dashed"] as const;
 const SIZES = ["sm", "md", "lg"] as const;
 
 export const Default: StoryObj = {

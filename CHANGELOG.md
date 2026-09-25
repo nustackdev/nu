@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Programs can show empty states, status dots, and dashed badges for missing values
 - Add ReactLatest, a react flow that restarts its body on every new change
 - Tooltips wait a moment before showing, then chain quickly across neighbours
 - Cancelling a parallel arm no longer swallows the caller's own cancellation

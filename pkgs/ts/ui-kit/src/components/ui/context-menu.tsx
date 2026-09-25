@@ -4,8 +4,8 @@
 //   motion.md        §3 ContextMenu (`duration-base` fade+scale, no y-shift)
 //   a11y.md          §3 ContextMenu (Menu key / Shift+F10, then DropdownMenu keys)
 //
-// Item visual contract matches DropdownMenu exactly, so we reuse
-// menuItemClasses / menuItemDangerClasses from there. Content uses fade+scale
+// Item visual contract matches DropdownMenu exactly, so we reuse the item,
+// separator and shortcut recipes from there. Content uses fade+scale
 // motion (anchor is the cursor, y-shift would drift away from it).
 
 import { ContextMenu as ContextMenuPrimitive } from "radix-ui";
@@ -16,6 +16,8 @@ import { cn } from "../../lib/utils";
 import {
 	menuItemClasses,
 	menuItemDangerClasses,
+	menuSeparatorClasses,
+	menuShortcutClasses,
 } from "./dropdown-menu";
 
 const contextMenuContentClasses = [
@@ -183,7 +185,7 @@ function ContextMenuSeparator({
 	return (
 		<ContextMenuPrimitive.Separator
 			data-slot="context-menu-separator"
-			className={cn("-mx-1 my-1 h-px bg-border-subtle", className)}
+			className={cn(menuSeparatorClasses, className)}
 			{...props}
 		/>
 	);
@@ -237,10 +239,7 @@ function ContextMenuShortcut({
 	return (
 		<span
 			data-slot="context-menu-shortcut"
-			className={cn(
-				"ml-auto font-mono text-xs tracking-wide text-text-muted",
-				className,
-			)}
+			className={cn(menuShortcutClasses, className)}
 			{...props}
 		/>
 	);

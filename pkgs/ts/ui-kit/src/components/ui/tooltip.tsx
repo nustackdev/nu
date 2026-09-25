@@ -14,6 +14,13 @@ import type * as React from "react";
 
 import { cn } from "../../lib/utils";
 
+// Content box geometry, for OverflowTooltip to size a tooltip before it opens.
+// Kept in step with TooltipContent's classes: px-2 plus a 1px border a side,
+// max-w-xs, and the default side offset.
+export const TOOLTIP_CHROME_PX = 18;
+export const TOOLTIP_MAX_PX = 320;
+export const TOOLTIP_SIDE_OFFSET = 4;
+
 function TooltipProvider({
 	delayDuration = 800,
 	skipDelayDuration = 300,
@@ -43,7 +50,7 @@ function TooltipTrigger({
 
 function TooltipContent({
 	className,
-	sideOffset = 4,
+	sideOffset = TOOLTIP_SIDE_OFFSET,
 	children,
 	...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {

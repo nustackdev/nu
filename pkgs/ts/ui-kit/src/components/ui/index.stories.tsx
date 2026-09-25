@@ -10,6 +10,7 @@ import { Button } from "./button";
 import { Card, CardContent, CardDescription, CardTitle } from "./card";
 import { Checkbox } from "./checkbox";
 import { Code } from "./code";
+import { EmptyState } from "./empty-state";
 import { Heading } from "./heading";
 import { IconButton } from "./icon-button";
 import { Input } from "./input";
@@ -21,6 +22,7 @@ import { Skeleton } from "./skeleton";
 import { Slider } from "./slider";
 import { Spinner } from "./spinner";
 import { Stat, StatDelta, StatLabel, StatValue } from "./stat";
+import { StatusDot } from "./status-dot";
 import { StatusPill } from "./status-pill";
 import { Switch } from "./switch";
 import { Text } from "./text";
@@ -102,11 +104,22 @@ export const All: StoryObj = {
 					<Badge variant="ok">ok</Badge>
 					<Badge variant="warn">warn</Badge>
 					<Badge variant="danger">danger</Badge>
+					<Badge variant="dashed">empty</Badge>
 				</Row>
 				<Row label="StatusPill">
 					<StatusPill tone="ok">Running</StatusPill>
 					<StatusPill tone="warn">Degraded</StatusPill>
 					<StatusPill tone="danger">Down</StatusPill>
+				</Row>
+				<Row label="StatusDot">
+					<StatusDot tone="ok" label="Running" />
+					<StatusDot tone="warn" label="Degraded" />
+					<StatusDot tone="info" pulse label="Connecting" />
+				</Row>
+				<Row label="EmptyState">
+					<EmptyState size="sm" description="Create one to start">
+						No planes yet
+					</EmptyState>
 				</Row>
 				<Row label="Progress">
 					<div className="w-48">

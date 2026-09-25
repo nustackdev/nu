@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
-import { cn } from "../../lib/utils";
+import { cn, ringVariants } from "../../lib/utils";
 
 // Text field. Sizes 24 / 32 / 40 match Button row heights so form rows sit
 // flush (space-radius.md §4 Input). Pad-x = 10 at md, closer to the border
@@ -15,7 +15,7 @@ const inputVariants = cva(
 		"placeholder:text-text-muted",
 		"transition-[border-color,box-shadow] duration-fast ease-out",
 		"hover:border-border-strong",
-		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas focus-visible:border-border-strong",
+		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:border-border-strong",
 		"disabled:bg-bg-sunken disabled:opacity-50 disabled:pointer-events-none",
 		// `aria-invalid` variant so consumers can wire the invalid look
 		// through the a11y attribute directly, without the `invalid` prop.
@@ -33,17 +33,19 @@ const inputVariants = cva(
 				md: "h-8 px-2.5 py-1.5 text-lg",
 				lg: "h-10 px-3 py-2 text-lg",
 			},
+			ring: ringVariants,
 		},
 		defaultVariants: {
 			variant: "default",
 			size: "md",
+			ring: "offset",
 		},
 	},
 );
 
 // `size` on <input> collides with the DOM `size` attribute; we own the name.
 export interface InputProps
-	extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size">,
+	extends Omit<React.ComponentProps<"input">, "size">,
 		VariantProps<typeof inputVariants> {
 	invalid?: boolean;
 }
@@ -52,6 +54,7 @@ export function Input({
 	className,
 	variant,
 	size,
+	ring,
 	invalid,
 	type = "text",
 	...props
@@ -62,7 +65,7 @@ export function Input({
 			data-slot="input"
 			type={type}
 			aria-invalid={invalid || props["aria-invalid"]}
-			className={cn(inputVariants({ variant: resolvedVariant, size, className }))}
+			className={cn(inputVariants({ variant: resolvedVariant, size, ring, className }))}
 			{...props}
 		/>
 	);

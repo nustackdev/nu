@@ -3,7 +3,7 @@ import { Search, Star, Trash2 } from "lucide-react";
 import { IconButton } from "./icon-button";
 
 const VARIANTS = ["default", "secondary", "ghost", "outline", "destructive"] as const;
-const SIZES = ["sm", "md", "lg"] as const;
+const SIZES = ["xs", "sm", "md", "lg"] as const;
 
 export const Default: StoryObj = {
 	render: () => (

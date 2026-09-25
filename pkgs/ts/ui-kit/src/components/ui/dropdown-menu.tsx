@@ -12,7 +12,10 @@ import type * as React from "react";
 
 import { cn } from "../../lib/utils";
 
-// Shared item recipe: kept here so ContextMenu can borrow it verbatim.
+// Shared recipes. ContextMenu borrows them verbatim, and a hand-built menu that
+// keeps focus somewhere else (an inline slash menu over an editor) puts them on
+// its own elements to match. Rows light up on `data-highlighted`, so such a
+// menu sets that attribute on its active row.
 const menuItemClasses = [
 	"relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5",
 	"text-sm text-text-primary outline-hidden",
@@ -29,6 +32,12 @@ const menuItemDangerClasses = [
 	"[&_svg]:text-status-danger",
 	"data-[highlighted]:[&_svg]:text-status-danger",
 ].join(" ");
+
+// Divider between item groups, flush to the content's edges through its p-1.
+const menuSeparatorClasses = "-mx-1 my-1 h-px bg-border-subtle";
+
+// Trailing kbd chip. Mono face + muted color so it sits as metadata.
+const menuShortcutClasses = "ml-auto font-mono text-xs tracking-wide text-text-muted";
 
 const menuContentClasses = [
 	"z-50 min-w-[10rem] overflow-hidden p-1",
@@ -203,7 +212,7 @@ function DropdownMenuSeparator({
 	return (
 		<DropdownMenuPrimitive.Separator
 			data-slot="dropdown-menu-separator"
-			className={cn("-mx-1 my-1 h-px bg-border-subtle", className)}
+			className={cn(menuSeparatorClasses, className)}
 			{...props}
 		/>
 	);
@@ -250,7 +259,6 @@ function DropdownMenuSubContent({
 	);
 }
 
-// Trailing kbd chip. Uses mono face + muted color to sit as metadata.
 function DropdownMenuShortcut({
 	className,
 	...props
@@ -258,10 +266,7 @@ function DropdownMenuShortcut({
 	return (
 		<span
 			data-slot="dropdown-menu-shortcut"
-			className={cn(
-				"ml-auto font-mono text-xs tracking-wide text-text-muted",
-				className,
-			)}
+			className={cn(menuShortcutClasses, className)}
 			{...props}
 		/>
 	);
@@ -285,4 +290,6 @@ export {
 	menuItemClasses,
 	menuItemDangerClasses,
 	menuContentClasses,
+	menuSeparatorClasses,
+	menuShortcutClasses,
 };

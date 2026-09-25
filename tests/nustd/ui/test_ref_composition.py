@@ -533,3 +533,48 @@ def test_table_append_emits_frame():
     ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(TableApp.table.sec.t.append(["a", "b"]), ctx))
     assert sess.frames[0].ref == ("table", "sec", "t")
+
+
+# --- empty state and status dot: slot props and partial writes ---------------
+
+
+def _frames(term):
+    sess = _RecordingSession()
+    asyncio.run(nu.arun(term, Context().bind(Session, sess)))
+    return sess.frames
+
+
+def test_empty_state_seeds_chrome_and_merges_writes():
+    from nustd.ui.refs import EmptyStateRef
+
+    handle = _mount(EmptyStateRef)
+    [frame] = _frames(handle.set("No planes yet", description="Create one to start"))
+    assert frame.chain[-1][1:] == (
+        "EmptyStateRef",
+        {"label": "", "description": "", "size": "md"},
+    )
+    assert frame.payload == {"label": "No planes yet", "description": "Create one to start"}
+    assert _frames(handle.set_size("sm"))[0].payload == {"size": "sm"}
+
+
+def test_status_dot_set_carries_tone_first():
+    from nustd.ui.refs import StatusDotRef
+
+    handle = _mount(StatusDotRef)
+    [frame] = _frames(handle.set("ok", label="Connected", pulse=True))
+    assert frame.chain[-1][1:] == (
+        "StatusDotRef",
+        {"tone": "neutral", "label": "", "pulse": False},
+    )
+    assert frame.payload == {"tone": "ok", "label": "Connected", "pulse": True}
+    assert _frames(handle.set_pulse(False))[0].payload == {"pulse": False}
+
+
+def test_badge_dashed_rides_the_variant_slot():
+    from nustd.ui.refs import BadgeRef
+
+    badge = _mount(BadgeRef)
+    assert _frames(badge.set("empty", variant="dashed"))[0].payload == {
+        "label": "empty",
+        "variant": "dashed",
+    }

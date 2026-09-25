@@ -5,6 +5,7 @@ import { AlertRef } from "./alert";
 import { BadgeRef } from "./badge";
 import { CodeBlockRef } from "./code-block";
 import { DividerRef } from "./divider";
+import { EmptyStateRef } from "./empty-state";
 import { GaugeRef } from "./gauge";
 import { HeadingRef } from "./heading";
 import { ImageRef } from "./image";
@@ -14,6 +15,7 @@ import { LinkRef } from "./link";
 import { MarkdownRef } from "./markdown";
 import { ProgressRef } from "./progress";
 import { StatRef } from "./stat";
+import { StatusDotRef } from "./status-dot";
 import { TableRef } from "./table";
 import { TextRef } from "./text";
 
@@ -22,9 +24,11 @@ export const outputEntries: Record<string, NodeEntry> = {
 	TextRef,
 	MarkdownRef,
 	BadgeRef,
+	StatusDotRef,
 	AlertRef,
 	StatRef,
 	DividerRef,
+	EmptyStateRef,
 	CodeBlockRef,
 	ImageRef,
 	LinkRef,

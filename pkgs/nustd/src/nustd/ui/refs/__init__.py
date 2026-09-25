@@ -7,8 +7,8 @@ Grouped by kind, one module per group.
 - output:     server-owned Refs that render into the body as sinks
   (server pushes via write/append; browser never reads back).
   HeadingRef, TextRef, MarkdownRef, CodeBlockRef, ImageRef, LinkRef,
-  BadgeRef, AlertRef, DividerRef, StatRef, ProgressRef, GaugeRef,
-  JsonViewerRef, TableRef.
+  BadgeRef, StatusDotRef, AlertRef, DividerRef, EmptyStateRef, StatRef,
+  ProgressRef, GaugeRef, JsonViewerRef, TableRef.
 - input:      tab-owned Refs; host reads on demand + subscribes to
   `notify`. ButtonRef, InputRef, NumberInputRef, TextAreaRef,
   ProseRef, MonacoRef, CheckboxRef, SwitchRef, SliderRef,
@@ -82,6 +82,7 @@ from .output import (
     BadgeRef,
     CodeBlockRef,
     DividerRef,
+    EmptyStateRef,
     GaugeRef,
     HeadingRef,
     ImageRef,
@@ -90,6 +91,7 @@ from .output import (
     MarkdownRef,
     ProgressRef,
     StatRef,
+    StatusDotRef,
     TableRef,
     TextRef,
 )
@@ -112,6 +114,7 @@ __all__ = [
     "Container",
     "DatePickerRef",
     "DividerRef",
+    "EmptyStateRef",
     "Field",
     "FieldRef",
     "Fieldset",
@@ -142,6 +145,7 @@ __all__ = [
     "SliderRef",
     "Sparkline",
     "StatRef",
+    "StatusDotRef",
     "SwitchRef",
     "TableRef",
     "Tabs",

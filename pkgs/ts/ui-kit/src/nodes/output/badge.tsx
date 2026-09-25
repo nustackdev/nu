@@ -8,15 +8,20 @@
 import { Badge } from "../../components/ui/badge";
 import { type NodeEntry, type NodeProps, useStringProp } from "../../tree";
 
-// Ref variants stay `neutral | info | warn | ok | danger` on the wire.
-// Badge primitive's tone slot is `default | secondary | outline | danger |
-// warn | ok | info`; `neutral` reads as `outline` (transparent bg, muted border).
-const VARIANT_TO_TONE: Record<string, "default" | "outline" | "danger" | "warn" | "ok" | "info"> = {
+// Ref variants stay `neutral | info | warn | ok | danger | dashed` on the
+// wire. Badge primitive's tone slot is `default | secondary | outline |
+// danger | warn | ok | info | dashed`; `neutral` reads as `outline`
+// (transparent bg, muted border).
+const VARIANT_TO_TONE: Record<
+	string,
+	"default" | "outline" | "danger" | "warn" | "ok" | "info" | "dashed"
+> = {
 	info: "info",
 	warn: "warn",
 	ok: "ok",
 	danger: "danger",
 	neutral: "outline",
+	dashed: "dashed",
 };
 
 function BadgeView({ path }: NodeProps) {

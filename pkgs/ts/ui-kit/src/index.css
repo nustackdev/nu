@@ -527,6 +527,19 @@ body {
 	border-radius: inherit;
 }
 
+/* ============================== scrollbar-none ============================
+ * A strip that scrolls (trackpad, shift-wheel) with no scrollbar drawn, for a
+ * row of tabs or panes whose own edges already say there is more. Firefox
+ * reads the property, WebKit and Blink the pseudo-element.
+ * ==========================================================================*/
+@utility scrollbar-none {
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
 /* ============================== a11y: reduced motion ======================
  * 0.01ms (not 0) so transitionend still fires; Radix Presence needs it. See
  * motion.md §4.

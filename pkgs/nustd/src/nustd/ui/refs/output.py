@@ -77,32 +77,33 @@ class AlertRef(Ref):
         return Changed(self)
 
 
-Variant = Literal["info", "warn", "ok", "danger", "neutral"]
+BadgeVariant = Literal["info", "warn", "ok", "danger", "neutral", "dashed"]
 
 
 class BadgeRef(Ref):
     """Display-only badge ref. One `write` op carries every mutation.
 
     Variant maps to the Badge primitive's status tones; `neutral` becomes the
-    kit `outline` (transparent bg, muted border).
+    kit `outline` (transparent bg, muted border). `dashed` is the unfilled
+    chip for a value that is not there, like "empty" or "none".
     """
 
     _wire_type = "BadgeRef"
 
     @classmethod
-    def slot(cls, *, label: str = "", variant: Variant = "neutral") -> Self:
+    def slot(cls, *, label: str = "", variant: BadgeVariant = "neutral") -> Self:
         return super().slot(label=label, variant=variant)
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(label=text))
 
-    def set_variant(self, name: Variant | StrArg) -> Nu:
+    def set_variant(self, name: BadgeVariant | StrArg) -> Nu:
         return Write(self, Dict.of(variant=name))
 
     def set(
         self,
         label: StrArg,
-        variant: Variant | StrArg = UNSET,
+        variant: BadgeVariant | StrArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"label": label}
         if variant is not UNSET:
@@ -170,6 +171,42 @@ class DividerRef(Ref):
         payload: dict[str, object] = {"label": label}
         if align is not UNSET:
             payload["align"] = align
+        return Write(self, Dict.of(**payload))
+
+
+EmptySize = Literal["sm", "md"]
+
+
+class EmptyStateRef(Ref):
+    """What a region says while it has nothing to show.
+
+    `label` is the one line that says what is missing, `description` a smaller
+    line under it. `sm` fits a sidebar, `md` a page section.
+    """
+
+    _wire_type = "EmptyStateRef"
+
+    @classmethod
+    def slot(cls, *, label: str = "", description: str = "", size: EmptySize = "md") -> Self:
+        return super().slot(label=label, description=description, size=size)
+
+    def set_label(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(label=text))
+
+    def set_description(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(description=text))
+
+    def set_size(self, name: EmptySize | StrArg) -> Nu:
+        return Write(self, Dict.of(size=name))
+
+    def set(
+        self,
+        label: StrArg,
+        description: StrArg = UNSET,
+    ) -> Nu:
+        payload: dict[str, object] = {"label": label}
+        if description is not UNSET:
+            payload["description"] = description
         return Write(self, Dict.of(**payload))
 
 
@@ -543,6 +580,43 @@ class StatRef(Ref):
         return Write(self, Dict.of(**payload))
 
 
+Tone = Literal["neutral", "info", "ok", "warn", "danger"]
+
+
+class StatusDotRef(Ref):
+    """A tone dot for a live state (connected, running, failing).
+
+    A dot is color only, so give it a `label` unless text next to it already
+    says the state: the label is what a screen reader announces. `pulse`
+    animates it, for a state still in motion.
+    """
+
+    _wire_type = "StatusDotRef"
+
+    @classmethod
+    def slot(cls, *, tone: Tone = "neutral", label: str = "", pulse: bool = False) -> Self:
+        return super().slot(tone=tone, label=label, pulse=pulse)
+
+    def set_label(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(label=text))
+
+    def set_pulse(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(pulse=flag))
+
+    def set(
+        self,
+        tone: Tone | StrArg,
+        label: StrArg = UNSET,
+        pulse: BoolArg = UNSET,
+    ) -> Nu:
+        payload: dict[str, object] = {"tone": tone}
+        if label is not UNSET:
+            payload["label"] = label
+        if pulse is not UNSET:
+            payload["pulse"] = pulse
+        return Write(self, Dict.of(**payload))
+
+
 SortDirection = Literal["asc", "desc"]
 
 
@@ -611,6 +685,7 @@ __all__ = [
     "BadgeRef",
     "CodeBlockRef",
     "DividerRef",
+    "EmptyStateRef",
     "GaugeRef",
     "HeadingRef",
     "ImageRef",
@@ -619,6 +694,7 @@ __all__ = [
     "MarkdownRef",
     "ProgressRef",
     "StatRef",
+    "StatusDotRef",
     "TableRef",
     "TextRef",
 ]

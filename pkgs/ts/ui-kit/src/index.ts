@@ -4,13 +4,14 @@
 //   - tree        : the tree store bindings, registry and NodeView
 //   - nodes       : every node type the kit registers (import for the side effect)
 //   - components  : primitives (Badge, Card, Switch, ...) and shared shell bits
-//   - lib/utils   : the `cn()` helper
+//   - lib/utils   : the `cn()` helper and the shared focus-ring variant map
 //
-// Tailwind tokens live in ./index.css; consumers import that separately.
+// Tailwind tokens and utilities (`scrollbar-none`) live in ./index.css;
+// consumers import that separately.
 
 export * from "./tree";
 export { nodeEntries } from "./nodes";
-export { cn } from "./lib/utils";
+export { cn, ringVariants } from "./lib/utils";
 export { useKeyScope } from "./lib/keyboard";
 export type { KeyBindings, KeyScope } from "./lib/keyboard";
 export { ErrorBoundary } from "./components/ErrorBoundary";
@@ -151,6 +152,8 @@ export {
 	BreadcrumbEllipsis,
 } from "./components/ui/breadcrumb";
 export { StatusPill, statusPillVariants } from "./components/ui/status-pill";
+export { StatusDot, statusDotVariants } from "./components/ui/status-dot";
+export { EmptyState, emptyStateVariants } from "./components/ui/empty-state";
 export {
 	Dialog,
 	DialogTrigger,
@@ -188,6 +191,8 @@ export {
 	TooltipContent,
 	TooltipProvider,
 } from "./components/ui/tooltip";
+export { OverflowTooltip } from "./components/ui/overflow-tooltip";
+export type { OverflowTooltipProps } from "./components/ui/overflow-tooltip";
 export {
 	DropdownMenu,
 	DropdownMenuTrigger,
@@ -203,6 +208,11 @@ export {
 	DropdownMenuSubTrigger,
 	DropdownMenuSubContent,
 	DropdownMenuShortcut,
+	menuContentClasses,
+	menuItemClasses,
+	menuItemDangerClasses,
+	menuSeparatorClasses,
+	menuShortcutClasses,
 } from "./components/ui/dropdown-menu";
 export {
 	ContextMenu,

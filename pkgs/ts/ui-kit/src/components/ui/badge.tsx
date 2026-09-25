@@ -30,6 +30,9 @@ const badgeVariants = cva(
 				warn: "bg-status-warn-wash text-status-warn border-status-warn-line",
 				ok: "bg-status-ok-wash text-status-ok border-status-ok-line",
 				info: "bg-status-info-wash text-status-info border-status-info-line",
+				// A stand-in for a value that is not there (empty, none): no fill,
+				// a dashed border in the text's own color. Tint it with a text class.
+				dashed: "bg-transparent text-text-muted border-dashed border-current",
 			},
 			size: {
 				sm: "text-xs px-1.5 py-0.5 rounded-sm [&>svg]:size-3",

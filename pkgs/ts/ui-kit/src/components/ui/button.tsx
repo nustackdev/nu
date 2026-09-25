@@ -1,19 +1,20 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { Slot as SlotPrimitive } from "radix-ui";
 import type * as React from "react";
-import { cn } from "../../lib/utils";
+import { cn, ringVariants } from "../../lib/utils";
 
 // Base + variants per design/primitives.md §Button.
 // Motion tokens: transition-colors duration-fast ease-out (motion.md §3).
-// Focus ring: 2px ring-ring, 2px offset from bg-canvas (a11y.md §1).
-// Sizes: 24 / 32 / 40 row heights (space-radius.md §4 Button).
+// Focus ring: 2px ring-ring, 2px offset from bg-canvas or inset (`ring`, a11y.md §1).
+// Sizes: 24 / 32 / 40 row heights (space-radius.md §4 Button), plus a 20px
+// `xs` for controls tucked inside a dense row (a tree's fold chevron).
 const buttonVariants = cva(
 	[
 		"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium",
 		"cursor-pointer",
 		"transition-colors duration-fast ease-out",
 		"disabled:pointer-events-none disabled:opacity-50",
-		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
+		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
 		"[&_svg]:pointer-events-none [&_svg]:shrink-0",
 	].join(" "),
 	{
@@ -23,8 +24,10 @@ const buttonVariants = cva(
 					"bg-accent text-accent-fg border border-transparent hover:bg-accent-hover active:bg-accent-soft",
 				secondary:
 					"bg-bg-elevated text-text-primary border border-border-default hover:bg-bg-sunken hover:border-border-strong",
+				// Hover wash mixed from the text color, so it reads on any surface
+				// in both themes (bg-elevated is white on a white surface in light).
 				ghost:
-					"bg-transparent text-text-secondary border border-transparent hover:bg-bg-elevated hover:text-text-primary",
+					"bg-transparent text-text-secondary border border-transparent hover:bg-text-primary/8 hover:text-text-primary active:bg-text-primary/12",
 				outline:
 					"bg-transparent text-text-primary border border-border-default hover:bg-bg-elevated hover:border-border-strong",
 				destructive:
@@ -34,20 +37,23 @@ const buttonVariants = cva(
 				link: "bg-transparent text-accent border border-transparent underline-offset-4 hover:underline p-0 h-auto",
 			},
 			size: {
+				xs: "h-5 px-1.5 text-xs gap-1 [&_svg]:size-3.5",
 				sm: "h-6 px-2 py-1 text-sm [&_svg]:size-3.5",
 				md: "h-8 px-3 py-1.5 text-lg [&_svg]:size-4",
 				lg: "h-10 px-4 py-2 text-xl [&_svg]:size-4.5",
 			},
+			ring: ringVariants,
 		},
 		defaultVariants: {
 			variant: "default",
 			size: "md",
+			ring: "offset",
 		},
 	},
 );
 
 export interface ButtonProps
-	extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+	extends React.ComponentProps<"button">,
 		VariantProps<typeof buttonVariants> {
 	asChild?: boolean;
 }
@@ -57,6 +63,7 @@ export function Button({
 	className,
 	variant,
 	size,
+	ring,
 	asChild = false,
 	...props
 }: ButtonProps) {
@@ -64,7 +71,7 @@ export function Button({
 	return (
 		<Comp
 			data-slot="button"
-			className={cn(buttonVariants({ variant, size, className }))}
+			className={cn(buttonVariants({ variant, size, ring, className }))}
 			{...props}
 		/>
 	);

@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { Toggle as TogglePrimitive } from "radix-ui";
 import type * as React from "react";
-import { cn } from "../../lib/utils";
+import { cn, ringVariants } from "../../lib/utils";
 
 // Two-state on/off button. Radix's Toggle exposes `data-state="on|off"` so
 // the styling attaches through variant selectors (design/primitives.md
@@ -13,7 +13,7 @@ const toggleVariants = cva(
 		"cursor-pointer",
 		"transition-colors duration-fast ease-out",
 		"disabled:pointer-events-none disabled:opacity-50",
-		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
+		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
 		"[&_svg]:pointer-events-none [&_svg]:shrink-0",
 		"text-text-secondary hover:bg-bg-elevated hover:text-text-primary",
 		"data-[state=on]:bg-accent-wash data-[state=on]:text-text-primary",
@@ -30,10 +30,12 @@ const toggleVariants = cva(
 				md: "h-8 min-w-8 px-2 text-lg [&_svg]:size-4",
 				lg: "h-10 min-w-10 px-3 text-xl [&_svg]:size-4.5",
 			},
+			ring: ringVariants,
 		},
 		defaultVariants: {
 			variant: "default",
 			size: "md",
+			ring: "offset",
 		},
 	},
 );
@@ -46,12 +48,13 @@ export function Toggle({
 	className,
 	variant,
 	size,
+	ring,
 	...props
 }: ToggleProps) {
 	return (
 		<TogglePrimitive.Root
 			data-slot="toggle"
-			className={cn(toggleVariants({ variant, size, className }))}
+			className={cn(toggleVariants({ variant, size, ring, className }))}
 			{...props}
 		/>
 	);

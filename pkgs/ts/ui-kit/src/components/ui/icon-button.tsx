@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { Slot as SlotPrimitive } from "radix-ui";
 import type * as React from "react";
-import { cn } from "../../lib/utils";
+import { cn, ringVariants } from "../../lib/utils";
 
 // Square icon-only button. Shares Button's variant map but drops text sizing
 // and locks side = height. See design/primitives.md §IconButton.
@@ -13,7 +13,7 @@ const iconButtonVariants = cva(
 		"cursor-pointer",
 		"transition-colors duration-fast ease-out",
 		"disabled:pointer-events-none disabled:opacity-50",
-		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
+		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
 		"[&_svg]:pointer-events-none [&_svg]:shrink-0",
 	].join(" "),
 	{
@@ -23,8 +23,11 @@ const iconButtonVariants = cva(
 					"bg-accent text-accent-fg border border-transparent hover:bg-accent-hover active:bg-accent-soft",
 				secondary:
 					"bg-bg-elevated text-text-primary border border-border-default hover:bg-bg-sunken hover:border-border-strong",
+				// Hover wash mixed from the text color, so it reads on any surface
+				// in both themes (bg-elevated is white on a white surface in light).
+				// Rests muted: a lone glyph needs less weight than a text label.
 				ghost:
-					"bg-transparent text-text-secondary border border-transparent hover:bg-bg-elevated hover:text-text-primary",
+					"bg-transparent text-text-muted border border-transparent hover:bg-text-primary/8 hover:text-text-primary active:bg-text-primary/12",
 				outline:
 					"bg-transparent text-text-primary border border-border-default hover:bg-bg-elevated hover:border-border-strong",
 				destructive:
@@ -34,20 +37,23 @@ const iconButtonVariants = cva(
 				link: "bg-transparent text-accent border border-transparent hover:opacity-80",
 			},
 			size: {
+				xs: "size-5 rounded-sm [&_svg]:size-3.5",
 				sm: "size-6 [&_svg]:size-3.5",
 				md: "size-8 [&_svg]:size-4",
 				lg: "size-10 [&_svg]:size-4.5",
 			},
+			ring: ringVariants,
 		},
 		defaultVariants: {
 			variant: "default",
 			size: "md",
+			ring: "offset",
 		},
 	},
 );
 
 export interface IconButtonProps
-	extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+	extends React.ComponentProps<"button">,
 		VariantProps<typeof iconButtonVariants> {
 	asChild?: boolean;
 	"aria-label": string;
@@ -57,6 +63,7 @@ export function IconButton({
 	className,
 	variant,
 	size,
+	ring,
 	asChild = false,
 	...props
 }: IconButtonProps) {
@@ -64,7 +71,7 @@ export function IconButton({
 	return (
 		<Comp
 			data-slot="icon-button"
-			className={cn(iconButtonVariants({ variant, size, className }))}
+			className={cn(iconButtonVariants({ variant, size, ring, className }))}
 			{...props}
 		/>
 	);

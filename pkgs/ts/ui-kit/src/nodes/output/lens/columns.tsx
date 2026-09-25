@@ -31,6 +31,7 @@
 
 import { ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Badge } from "../../../components/ui/badge";
 import {
 	Breadcrumb,
 	BreadcrumbEllipsis,
@@ -113,23 +114,23 @@ const emptyClass = cn(
 	"text-center text-xs text-text-muted select-none",
 );
 
-const chipClass = cn(
-	"inline-flex items-center rounded-sm border border-dashed px-1",
-	"font-mono text-xs leading-none",
-);
-
 /* ============================== pieces =================================== */
+
+/** A sentinel (empty, none, error) as a dashed chip in its value tone. */
+function SentinelChip({ vtype }: { vtype: string }) {
+	return (
+		<Badge variant="dashed" size="sm" className={cn("font-mono font-normal", valueTone(vtype))}>
+			{SENTINEL_LABEL[vtype] ?? vtype}
+		</Badge>
+	);
+}
 
 /** A value cell, rendered by type. */
 function ValueCell({ entry }: { entry: Entry }) {
 	const vtype = entry.vtype ?? "";
 	const tone = valueTone(vtype);
 	if (SENTINEL.has(vtype)) {
-		return (
-			<span className={cn("shrink-0 text-xs", tone, chipClass)}>
-				{SENTINEL_LABEL[vtype] ?? vtype}
-			</span>
-		);
+		return <SentinelChip vtype={vtype} />;
 	}
 	if (!entry.preview) return null;
 	return (
@@ -210,7 +211,7 @@ function LeafBody({ entry }: { entry: Entry }) {
 	if (SENTINEL.has(vtype)) {
 		return (
 			<div className={emptyClass}>
-				<span className={cn(chipClass, valueTone(vtype))}>{SENTINEL_LABEL[vtype] ?? vtype}</span>
+				<SentinelChip vtype={vtype} />
 				<span>
 					{vtype === "empty"
 						? "this slot has never been written"
