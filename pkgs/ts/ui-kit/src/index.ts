@@ -6,8 +6,9 @@
 //   - components  : primitives (Badge, Card, Switch, ...) and shared shell bits
 //   - lib/utils   : the `cn()` helper and the shared focus-ring variant map
 //
-// Tailwind tokens and utilities (`scrollbar-none`) live in ./index.css;
-// consumers import that separately.
+// Tokens live in ./index.css, the Tailwind theme and `scrollbar-none` in
+// ./theme.css. Both compile into dist/styles.css, which consumers import
+// separately as `@nustackdev/ui-kit/styles`.
 
 export * from "./tree";
 export { nodeEntries } from "./nodes";

@@ -5,7 +5,9 @@
 	"version": "0.1.5",
 	"type": "module",
 	"scripts": {
+		"predev": "npm run build:css --prefix ../ui-kit",
 		"dev": "vite",
+		"prebuild": "npm run build:css --prefix ../ui-kit",
 		"build": "tsc -b && vite build",
 		"preview": "vite preview",
 		"typecheck": "tsc --noEmit",

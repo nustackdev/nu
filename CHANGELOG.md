@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- The kit ships finished styles, so apps no longer scan its source
 - Programs can show empty states, status dots, and dashed badges for missing values
 - Add ReactLatest, a react flow that restarts its body on every new change
 - Tooltips wait a moment before showing, then chain quickly across neighbours

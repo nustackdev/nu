@@ -9,9 +9,10 @@ packages.
 | `ui-kit`  | `@nustackdev/ui-kit` (npm)   | Design kit: tokens, primitives, node types, tree bindings.         |
 | `nudle`   | not published to npm         | The nudle SPA. Its vite output ships as the `nudle` wheel from `pkgs/nudle`. |
 
-Both npm packages ship source-only, no dist bundle, so consumers compile the
-TypeScript and Tailwind themselves. That is how `nuspace` picks them up
-straight from the registry.
+Both npm packages ship TypeScript source, so consumers compile it themselves.
+That is how `nuspace` picks them up straight from the registry. The kit's
+styles are the exception: they ship compiled as `dist/styles.css`, so a
+consumer imports them and never scans kit source.
 
 ## Working here
 

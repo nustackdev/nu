@@ -1,0 +1,20 @@
+/* Build entry for dist/styles.css (`npm run build:css`).
+ *
+ * Theme and utilities only, no preflight: the host's own `@import
+ * "tailwindcss"` brings the reset, and a second copy in the bundle would
+ * re-reset whatever base styles the host layered before it. The layer names
+ * are Tailwind's own, so kit and host utilities share one `utilities` layer
+ * and specificity still settles variants (hover:, data-[state]:) across both.
+ *
+ * Scans kit sources only, never stories or tests. */
+
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@import "tw-animate-css";
+@import "./index.css";
+
+@source "./";
+@source not "./stories";
+@source not "./**/*.stories.tsx";
+@source not "./**/*.test.{ts,tsx}";

@@ -41,6 +41,19 @@ jobs:
       - name: typecheck
         run: npm run typecheck --workspace @nustackdev/ui-kit
 
+      # The kit ships its compiled css in dist/. prepack rebuilds it on
+      # publish anyway; building here too fails the run early and lets the
+      # pack check below see exactly what goes out.
+      - name: build css
+        run: npm run build:css --workspace @nustackdev/ui-kit
+
+      - name: verify tarball ships the css and fonts
+        run: |
+          FILES=$(npm pack --dry-run --json --workspace @nustackdev/ui-kit | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s)[0].files.map(f=>f.path).join("\n")))')
+          for f in dist/styles.css fonts/Inter-Regular.woff2; do
+            echo "$FILES" | grep -qx "$f" || { echo "tarball is missing $f"; exit 1; }
+          done
+
       - name: storybook build (smoke)
         run: npm run storybook:build --workspace @nustackdev/ui-kit
 

@@ -48,12 +48,27 @@ Both publish workflows also expose `workflow_dispatch`. Go to Actions in GitHub,
 
 ## What ships
 
-Both packages ship **source-only** (no dist bundle). Consumers with TypeScript + Tailwind pick them up directly:
+Both packages ship their TypeScript as source. The kit's CSS ships compiled.
 
-- `@nustackdev/ui-core` — `src/**` including `protocol.ts`
-- `@nustackdev/ui-kit` — `src/**` including `index.css`, `components/ui/*`, `refs/*`, `store.ts`
+- `@nustackdev/ui-core`: `src/**` including `protocol.ts`
+- `@nustackdev/ui-kit`: `src/**` (TypeScript, plus the CSS the bundle is built from), `dist/styles.css`, `fonts/*.woff2`
 
-Fonts (Inter, JetBrains Mono WOFF2) ship inside the kit tarball because `index.css` `@font-face`-references them at relative paths.
+`dist/styles.css` is built by `npm run build:css` (Tailwind CLI on `src/styles.entry.css`), which `prepack` runs, so every `npm publish` and `npm pack` rebuilds it. It holds the tokens, both themes, the fonts, and every utility class kit components use, compiled, plus the kit's Tailwind theme (`src/theme.css`) appended raw. It is gitignored like every other `dist/`.
+
+Consumers import it once, ahead of Tailwind, and add no `@source` into the kit:
+
+```css
+@import "@nustackdev/ui-kit/styles";
+@import "tailwindcss";
+```
+
+- No preflight inside: the consumer's `@import "tailwindcss"` brings it.
+- The appended theme is what lets the consumer's own classes use kit names (`bg-bg-canvas`, `text-sm` on the kit scale, `dark:`). A browser ignores those at-rules.
+- Kit utilities sit in Tailwind's own `utilities` layer. Imported first, they land before the consumer's, so a consumer class wins a tie, and variants still win on specificity.
+
+Fonts sit in `fonts/`, a sibling of `src/` and `dist/`, so `../fonts/*.woff2` resolves from both the source CSS and the bundle.
+
+In the workspace, `nudle` runs `build:css` before its `dev` and `build`. A kit class edit reaches nudle on the next `npm run build:css` in `ui-kit` (or a dev restart). Storybook compiles kit source directly and needs neither.
 
 ## Version scheme
 

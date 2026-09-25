@@ -1,0 +1,5 @@
+/* Storybook plays the host: it brings Tailwind and scans kit sources itself,
+ * so stories pick up class edits live without a build:css. */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../src/index.css";

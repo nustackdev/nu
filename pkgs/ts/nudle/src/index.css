@@ -1,11 +1,6 @@
+/* The kit ships compiled: its own classes, tokens, fonts and dark selectors,
+ * plus its Tailwind theme so classes here resolve on the kit scale. It goes
+ * first so our utilities land after the kit's and win a tie. */
+@import "@nustackdev/ui-kit/styles";
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@nustackdev/ui-kit/styles";
-
-/* Tailwind v4 auto-scans nudle sources but not the kit workspace across the
- * `@nustackdev/ui-kit` symlink. Point it explicitly so utility classes used
- * inside kit primitives (bg-bg-canvas, text-text-primary, bg-accent, ...) end
- * up in the final bundle. */
-@source "../../ui-kit/src/**/*.{ts,tsx}";
-
-@custom-variant dark (&:is(.dark *));

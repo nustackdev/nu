@@ -1,7 +1,7 @@
 // Global Storybook preview. Boots kit tokens once, wraps every story in the
 // same canvas chrome the app uses, and wires the theme toggle onto <html>.
 
-import "../src/index.css";
+import "./preview.css";
 import type { Preview } from "@storybook/react-vite";
 import { withThemeByClassName } from "@storybook/addon-themes";
 import React from "react";
