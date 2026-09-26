@@ -14,8 +14,8 @@ Nu-tree provisioning for the virtuals concepts:
   ``ObserverProtocol``.
 - ``HostedObserver`` - not a backend. Wraps whichever one is bound so that
   subscribers in other processes can hang off it. See ``hosted``.
-- ``InMemoryStorage`` / ``RocksDBStorage`` / ``LMDBStorage`` / ``TextStorage``
-  - backing stores. Read ``Codec`` and their publisher from ctx.
+- ``InMemoryStorage`` / ``RocksDBStorage`` / ``LMDBStorage`` / ``SQLiteStorage`` /
+  ``TextStorage`` - backing stores. Read ``Codec`` and their publisher from ctx.
 - ``Navigator`` - top-level entry to storage. Reads Storage from ctx by
   ``storage_type`` (defaults to RocksDB).
 
@@ -43,7 +43,7 @@ from .hosted import HostedObserver, HostedSubscription
 from .navigator import Navigator
 from .observer import InMemoryObserver, RedisObserver
 from .publisher import InMemoryPublisher, RedisPublisher
-from .storage import InMemoryStorage, LMDBStorage, RocksDBStorage, TextStorage
+from .storage import InMemoryStorage, LMDBStorage, RocksDBStorage, SQLiteStorage, TextStorage
 from .transport import InMemoryTransport
 
 
@@ -60,6 +60,7 @@ __all__ = [
     "RedisObserver",
     "RedisPublisher",
     "RocksDBStorage",
+    "SQLiteStorage",
     "TextStorage",
     "binary_kwargs",
     "msgpack_kwargs",

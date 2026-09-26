@@ -48,7 +48,7 @@ classifiers = [
 # `nustd[mp]` is not an error.
 [project.optional-dependencies]
 kv = [
-    "virtuals-py>=0.1.2",
+    "virtuals-py>=0.1.9",
 ]
 mem = [
     "janus>=2.0.0",
@@ -99,7 +99,7 @@ all = [
     "nustd[mp_pool]",
     # Every kv backend: rocksdb, lmdb, redis. 0.1.8 is where virtuals' own
     # `all` started meaning the backends rather than its dev tooling.
-    "virtuals-py[all]>=0.1.8",
+    "virtuals-py[all]>=0.1.9",
 ]
 
 [project.urls]

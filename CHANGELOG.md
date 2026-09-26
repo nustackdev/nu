@@ -11,6 +11,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Add a SQLite kv stack that many processes can write directly, no proxy
+
 ## 0.5.3 — 2026-09-25
 
 - The kit ships finished styles, so apps no longer scan its source

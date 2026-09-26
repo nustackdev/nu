@@ -64,6 +64,9 @@ __all__ = [
     "rocksdb_storage",
     "rocksdb_storage_redis",
     "served_observer",
+    "sqlite_navigator",
+    "sqlite_navigator_redis",
+    "sqlite_storage",
     "text_navigator",
     "text_storage",
 ]
@@ -134,6 +137,47 @@ def lmdb_storage(
             max_readers=max_readers,
             subdir=subdir,
             sync=sync,
+        ) as storage,
+    ):
+        yield storage
+
+
+@contextmanager
+def sqlite_storage(
+    path: str,
+    read_only: bool = False,
+    synchronous: str = "NORMAL",
+    busy_timeout: float = 60.0,
+    mmap_size: int | None = None,
+) -> Generator[StorageProtocol, None, None]:
+    """Create SQLite storage with binary codec and in-memory publisher.
+
+    Args:
+        path: Path to the database file.
+        read_only: Open the file read-only (snapshots only).
+        synchronous: ``PRAGMA synchronous``. NORMAL skips the fsync per commit.
+        busy_timeout: Seconds a writer waits for the write lock.
+        mmap_size: Bytes of the file to read through a memory map.
+
+    Yields:
+        Configured SQLite storage instance.
+    """
+    from virtuals.codecs import BinaryCodec
+    from virtuals.publishers.mem import InMemoryPublisher
+    from virtuals.storages.sqlite import SQLiteStorage
+    from virtuals.tkv.transport import InMemoryTransport
+
+    transport = InMemoryTransport()
+    with (
+        InMemoryPublisher(transport=transport) as publisher,
+        SQLiteStorage(
+            path=path,
+            codec=BinaryCodec(),
+            publisher=publisher,
+            read_only=read_only,
+            synchronous=synchronous,
+            busy_timeout=busy_timeout,
+            mmap_size=mmap_size,
         ) as storage,
     ):
         yield storage
@@ -750,6 +794,194 @@ def lmdb_navigator_redis(
         Provide(
             Navigator,
             {"storage_type": LMDBStorage, "storage_tags": tags},
+            tags=tags,
+        ),
+    )
+
+
+def sqlite_navigator(
+    path: str,
+    *,
+    tags: Sequence[object] = (),
+    read_only: bool = False,
+    synchronous: str = "NORMAL",
+    busy_timeout: float = 60.0,
+    mmap_size: int | None = None,
+    cache_size: int | None = None,
+    pragmas: dict | None = None,
+) -> With:
+    """Stands up a persistent SQLite stack with in-process change notification.
+
+    One database file in WAL mode, needing nothing outside the standard
+    library. Many processes can open the same file and write it directly:
+    writers take turns on one file lock, readers never wait for a writer, and
+    a snapshot is a fixed view for as long as it stays open. The lock is an OS
+    file lock, so a process that dies mid-transaction releases it and leaves
+    nothing half-written behind.
+
+    Args:
+        path: the database file. Its ``-wal`` and ``-shm`` companions are
+            kept next to it.
+        tags: shape tags folded onto every binding this makes, so a sharded
+            program can name this stack.
+        read_only: open the file read-only. Snapshots only; the directory
+            still has to be writable, since WAL readers keep an index file
+            beside the database.
+        synchronous: how hard a commit presses on the disk. ``"NORMAL"``
+            never corrupts the file, even on power loss, and skips the fsync
+            per commit, at the price of the last few commits before a power
+            cut. ``"FULL"`` fsyncs every commit.
+        busy_timeout: seconds a writer waits for its turn before giving up
+            with a lock timeout, which ``RetryOnConflict`` retries. Defaults
+            to a minute, since writers are expected to queue.
+        mmap_size: bytes of the file to read through a memory map. Faster
+            reads for a file that fits; None leaves it off.
+        cache_size: SQLite's page cache per connection, in pages if positive
+            and KiB if negative. None keeps SQLite's default.
+        pragmas: any other ``PRAGMA`` to set on each connection, by name.
+
+    Notes:
+        - Binds the full stack: Codec, Transport, Publisher, Observer,
+          Storage and Navigator, in that order, tearing down LIFO.
+        - Values go through pickle, so anything stored has to be picklable.
+        - One writer at a time per file, across all processes. A second
+          Transaction opened while the same thread already holds one fails
+          at once instead of waiting on itself.
+        - Change notifications stay in this process. Use
+          ``sqlite_navigator_redis`` for writers in other processes to wake
+          a reactive program here.
+
+    Example:
+        app = nu.With(nustd.kv.sqlite_navigator(".db.sqlite"), body=program)
+    """
+    from nu.context.fabric import Provide, With
+    from nustd.kv.fabrics import (
+        Codec,
+        InMemoryObserver,
+        InMemoryPublisher,
+        InMemoryTransport,
+        Navigator,
+        SQLiteStorage,
+        binary_kwargs,
+    )
+
+    tags = tuple(tags)
+    return With(
+        Provide(Codec, binary_kwargs(), tags=tags),
+        Provide(InMemoryTransport, {}, tags=tags),
+        Provide(InMemoryPublisher, {"transport_tags": tags}, tags=tags),
+        Provide(InMemoryObserver, {"transport_tags": tags}, tags=tags),
+        Provide(
+            SQLiteStorage,
+            {
+                "path": path,
+                "codec_tags": tags,
+                "publisher_tags": tags,
+                "read_only": read_only,
+                "synchronous": synchronous,
+                "busy_timeout": busy_timeout,
+                "mmap_size": mmap_size,
+                "cache_size": cache_size,
+                "pragmas": pragmas,
+            },
+            tags=tags,
+        ),
+        Provide(
+            Navigator,
+            {"storage_type": SQLiteStorage, "storage_tags": tags},
+            tags=tags,
+        ),
+    )
+
+
+def sqlite_navigator_redis(
+    path: str,
+    *,
+    tags: Sequence[object] = (),
+    read_only: bool = False,
+    synchronous: str = "NORMAL",
+    busy_timeout: float = 60.0,
+    mmap_size: int | None = None,
+    cache_size: int | None = None,
+    pragmas: dict | None = None,
+    redis_url: str = "redis://localhost:6379",
+    channel_prefix: str = "nu",
+) -> With:
+    """Stands up a persistent SQLite stack whose changes reach other processes.
+
+    Same storage as ``sqlite_navigator``; the in-process Publisher and
+    Observer are replaced by Redis ones, so a write here wakes a reactive
+    program in another process.
+
+    Args:
+        path: the database file.
+        tags: shape tags folded onto every binding this makes, so a sharded
+            program can name this stack.
+        read_only: open the file read-only.
+        synchronous: ``"NORMAL"`` (no fsync per commit) or ``"FULL"``.
+        busy_timeout: seconds a writer waits for its turn.
+        mmap_size: bytes of the file to read through a memory map.
+        cache_size: SQLite's page cache per connection.
+        pragmas: any other ``PRAGMA`` to set on each connection, by name.
+        redis_url: where the Redis carrying the notifications lives.
+        channel_prefix: namespaces the pub/sub channels, so two unrelated
+            deployments can share one Redis without hearing each other.
+
+    Notes:
+        - Binds Codec, Publisher, Observer, Storage and Navigator. No
+          Transport: the Redis pair does not need one.
+        - Redis has to be reachable when the bracket sets up.
+        - Defaults to the ``"nu"`` channel prefix, like the LMDB Redis
+          preset.
+
+    Example:
+        app = nu.With(
+            nustd.kv.sqlite_navigator_redis(".db.sqlite", redis_url="redis://cache:6379"),
+            body=program,
+        )
+    """
+    from nu.context.fabric import Provide, With
+    from nustd.kv.fabrics import (
+        Codec,
+        Navigator,
+        RedisObserver,
+        RedisPublisher,
+        SQLiteStorage,
+        binary_kwargs,
+    )
+
+    tags = tuple(tags)
+    return With(
+        Provide(Codec, binary_kwargs(), tags=tags),
+        Provide(
+            RedisPublisher,
+            {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            tags=tags,
+        ),
+        Provide(
+            RedisObserver,
+            {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            tags=tags,
+        ),
+        Provide(
+            SQLiteStorage,
+            {
+                "path": path,
+                "publisher_type": RedisPublisher,
+                "codec_tags": tags,
+                "publisher_tags": tags,
+                "read_only": read_only,
+                "synchronous": synchronous,
+                "busy_timeout": busy_timeout,
+                "mmap_size": mmap_size,
+                "cache_size": cache_size,
+                "pragmas": pragmas,
+            },
+            tags=tags,
+        ),
+        Provide(
+            Navigator,
+            {"storage_type": SQLiteStorage, "storage_tags": tags},
             tags=tags,
         ),
     )

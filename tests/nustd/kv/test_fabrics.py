@@ -37,6 +37,7 @@ from nustd.kv.fabrics import (
     RedisObserver,
     RedisPublisher,
     RocksDBStorage,
+    SQLiteStorage,
     TextStorage,
     binary_kwargs,
     text_kwargs,
@@ -304,6 +305,27 @@ async def test_lmdb_storage_async_lifecycle(tmp_path: Path):
     pytest.importorskip("lmdb")
     ctx = _mem_ctx()
     storage = LMDBStorage(path=str(tmp_path / "db"))
+    await storage.asetup(ctx)
+    with storage.transaction():
+        pass
+    await storage.acleanup()
+
+
+# --- SQLiteStorage -------------------------------------------------------
+
+
+def test_sqlite_storage_sync_lifecycle(tmp_path: Path):
+    ctx = _mem_ctx()
+    storage = SQLiteStorage(path=str(tmp_path / "db.sqlite"))
+    storage.setup(ctx)
+    with storage.transaction():
+        pass
+    storage.cleanup()
+
+
+async def test_sqlite_storage_async_lifecycle(tmp_path: Path):
+    ctx = _mem_ctx()
+    storage = SQLiteStorage(path=str(tmp_path / "db.sqlite"))
     await storage.asetup(ctx)
     with storage.transaction():
         pass

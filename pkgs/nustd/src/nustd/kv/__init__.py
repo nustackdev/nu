@@ -46,6 +46,8 @@ from nustd.kv.presets import (
     rocksdb_storage,
     rocksdb_storage_redis,
     served_observer,
+    sqlite_navigator,
+    sqlite_navigator_redis,
     text_navigator,
     text_storage,
 )
@@ -137,6 +139,8 @@ __all__ = [  # noqa: RUF022
     "rocksdb_navigator_redis",
     "rocksdb_navigator",
     "served_observer",
+    "sqlite_navigator",
+    "sqlite_navigator_redis",
     "text_navigator",
     # Refs
     "Facet",

@@ -5,8 +5,8 @@
 ctx. ``acleanup`` runs the storage's ``close``.
 
 Backends: ``InMemoryStorage`` (ephemeral), ``RocksDBStorage`` (persistent,
-transactional), ``LMDBStorage`` (memory-mapped, MVCC), ``TextStorage``
-(human-readable JSON).
+transactional), ``LMDBStorage`` (memory-mapped, MVCC), ``SQLiteStorage``
+(one WAL-mode file, stdlib only), ``TextStorage`` (human-readable JSON).
 
 DI convention: each storage looks up ``Codec`` under its type. The
 publisher is looked up by the class passed as ``publisher_type`` (default:
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Context
 
 
-__all__ = ["InMemoryStorage", "LMDBStorage", "RocksDBStorage", "TextStorage"]
+__all__ = ["InMemoryStorage", "LMDBStorage", "RocksDBStorage", "SQLiteStorage", "TextStorage"]
 
 
 def _resolve_publisher(
@@ -249,6 +249,88 @@ class LMDBStorage:
             raise AttributeError(name)
         if self._backing is None:
             msg = f"LMDBStorage used before setup: no backing store, cannot read {name!r}"
+            raise AttributeError(msg)
+        return getattr(self._backing, name)
+
+
+class SQLiteStorage:
+    """FabricLifecycle wrapper over ``virtuals.storages.sqlite.SQLiteStorage``.
+
+    Same lazy shape as ``LMDBStorage``: the backing storage is constructed in
+    ``setup``, and instance attribute access delegates to it once open. SQLite
+    is in the standard library, so there is no optional dependency to defer;
+    the laziness keeps the wrappers uniform.
+
+    Config kwargs (``path``, ``read_only``, ``synchronous``, ``busy_timeout``,
+    ``mmap_size``, ``cache_size``, ``pragmas``) go to the backing constructor
+    at setup time. Deps (``Codec``, publisher) come from ctx.
+    """
+
+    def __init__(
+        self,
+        *,
+        path: str,
+        publisher_type: type | None = InMemoryPublisher,
+        codec_tags: tuple[object, ...] = (),
+        publisher_tags: tuple[object, ...] = (),
+        read_only: bool = False,
+        synchronous: str = "NORMAL",
+        busy_timeout: float = 60.0,
+        mmap_size: int | None = None,
+        cache_size: int | None = None,
+        pragmas: dict | None = None,
+    ) -> None:
+        self._path = path
+        self._publisher_type = publisher_type
+        self._codec_tags = tuple(codec_tags)
+        self._publisher_tags = tuple(publisher_tags)
+        self._read_only = read_only
+        self._synchronous = synchronous
+        self._busy_timeout = busy_timeout
+        self._mmap_size = mmap_size
+        self._cache_size = cache_size
+        self._pragmas = pragmas
+        self._backing = None
+
+    def setup(self, ctx: Context) -> None:
+        """Construct the backing store and open it."""
+        from virtuals.storages.sqlite import SQLiteStorage as _SQLiteStorage
+
+        codec = ctx.get(Codec, *self._codec_tags)
+        publisher = _resolve_publisher(ctx, self._publisher_type, self._publisher_tags)
+        self._backing = _SQLiteStorage(
+            path=Path(self._path),
+            codec=codec,
+            publisher=publisher,
+            read_only=self._read_only,
+            synchronous=self._synchronous,
+            busy_timeout=self._busy_timeout,
+            mmap_size=self._mmap_size,
+            cache_size=self._cache_size,
+            pragmas=self._pragmas,
+        )
+        self._backing.open()
+
+    def cleanup(self) -> None:
+        """Close the backing store; drop the reference so re-open works."""
+        if self._backing is not None:
+            self._backing.close()
+            self._backing = None
+
+    async def asetup(self, ctx: Context) -> None:
+        """Async shim: setup is sync work."""
+        self.setup(ctx)
+
+    async def acleanup(self) -> None:
+        """Async shim: cleanup is sync work."""
+        self.cleanup()
+
+    def __getattr__(self, name: str) -> object:
+        # Delegate storage-protocol access to the backing instance.
+        if name.startswith("_"):
+            raise AttributeError(name)
+        if self._backing is None:
+            msg = f"SQLiteStorage used before setup: no backing store, cannot read {name!r}"
             raise AttributeError(msg)
         return getattr(self._backing, name)
 
