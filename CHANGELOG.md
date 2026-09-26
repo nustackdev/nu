@@ -2,16 +2,16 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.5.4
-- **nustd** (fabrics) — 0.5.4
-- **nucli** (the `nu` command) — 0.5.4
+- **nucore** (kernel) — 0.5.5
+- **nustd** (fabrics) — 0.5.5
+- **nucli** (the `nu` command) — 0.5.5
 - **nudle** — 0.1.6
 - **ui-core** — 0.2.0
 - **ui-kit** — 0.2.3
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.5.5 — 2026-09-27
 
 - Start a private Valkey server so processes can share kv change notifications
 
