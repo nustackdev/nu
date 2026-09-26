@@ -2,16 +2,16 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.5.3
-- **nustd** (fabrics) — 0.5.3
-- **nucli** (the `nu` command) — 0.5.3
+- **nucore** (kernel) — 0.5.4
+- **nustd** (fabrics) — 0.5.4
+- **nucli** (the `nu` command) — 0.5.4
 - **nudle** — 0.1.6
 - **ui-core** — 0.2.0
 - **ui-kit** — 0.2.3
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.5.4 — 2026-09-26
 
 - Add a SQLite kv stack that many processes can write directly, no proxy
 
