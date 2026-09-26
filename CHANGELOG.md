@@ -11,6 +11,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Start a private Valkey server so processes can share kv change notifications
+
 ## 0.5.4 — 2026-09-26
 
 - Add a SQLite kv stack that many processes can write directly, no proxy

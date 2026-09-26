@@ -12,8 +12,9 @@ One import, then dot-access::
 Two kinds of thing live here, side by side.
 
 **Fabrics** (``kv``, ``mem``, ``ui``, ``ws_server``, ``service``, ``llm``,
-``cc``, ``http``, ``proxy``, ``mp``, ``mp_pool``, ``cluster``) back a Shape
-with somewhere real to live: a store, a browser, a process pool, a model. Each
+``cc``, ``http``, ``proxy``, ``mp``, ``mp_pool``, ``cluster``, ``valkey``) back
+a Shape with somewhere real to live: a store, a browser, a process pool, a
+model, a private notification server. Each
 is heavy and pulls a large tree behind it (storage backends, the UI runtime,
 RPC, ray), so they load on first attribute access, not on ``import nustd``.
 
@@ -68,7 +69,21 @@ from . import (
 # ``nustd.kv.ShapeStore`` resolves statically with full completion and
 # go-to-definition despite never being bound at import time.
 if TYPE_CHECKING:
-    from . import cc, cluster, http, kv, llm, mem, mp, mp_pool, proxy, service, ui, ws_server
+    from . import (
+        cc,
+        cluster,
+        http,
+        kv,
+        llm,
+        mem,
+        mp,
+        mp_pool,
+        proxy,
+        service,
+        ui,
+        valkey,
+        ws_server,
+    )
 
 # Value is the extra that pulls the fabric's backend, or None when the fabric
 # needs nothing beyond a plain ``nustd`` install.
@@ -84,6 +99,9 @@ _LAZY = {
     "proxy": "proxy",
     "service": None,
     "ui": "ui",
+    # Imports without its backend: a worker only building the URL needs no
+    # binary. Starting a server without the extra raises and names it.
+    "valkey": None,
     "ws_server": "ws_server",
 }
 

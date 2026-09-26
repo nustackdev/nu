@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "nustd"
 version = "0.5.4"
-description = "Batteries for Nu: the fabrics (mem, kv, service, llm, cc, http, proxy, mp, mp_pool, cluster, ws_server, ui) and the standard library, imported as nustd."
+description = "Batteries for Nu: the fabrics (mem, kv, service, llm, cc, http, proxy, mp, mp_pool, cluster, valkey, ws_server, ui) and the standard library, imported as nustd."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
@@ -85,6 +85,10 @@ cc = [
 mp = []
 # `nustd.mp_pool` is stdlib multiprocessing too; the extra exists for symmetry.
 mp_pool = []
+# `nustd.valkey` spawns the Valkey server binary this wheel bundles.
+valkey = [
+    "valkeylite>=9.1.2",
+]
 all = [
     "nustd[kv]",
     "nustd[mem]",
@@ -97,6 +101,7 @@ all = [
     "nustd[cc]",
     "nustd[mp]",
     "nustd[mp_pool]",
+    "nustd[valkey]",
     # Every kv backend: rocksdb, lmdb, redis. 0.1.8 is where virtuals' own
     # `all` started meaning the backends rather than its dev tooling.
     "virtuals-py[all]>=0.1.9",
