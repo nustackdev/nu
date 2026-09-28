@@ -12,6 +12,7 @@ own child). Frames::
     parent -> child
         ('exec', token, tree, attrs)      run it, reply with the value
         ('dispatch', token, tree, attrs)  ack, then run it detached
+        ('cancel', token)                 cancel that request's task
         ('stop',)                         drain and exit
 
     child -> parent
@@ -21,11 +22,18 @@ own child). Frames::
         ('ok', token, value)    an 'exec' finished
         ('err', token, exc)     an 'exec' or a dispatched body raised
         ('done', token)         a dispatched body finished cleanly
+        ('cancelled', token)    a request's task ended cancelled
 
 Every frame past ``ready`` carries its token, so the parent can keep several
 requests in flight on one worker and match replies to waiters. ``ack`` is
 always sent *before* the task is created, so the parent can never observe
 ``done`` ahead of the ``ack`` that opened the token.
+
+A cancel names a token the parent sent before it, so the task is always
+there to cancel, unless it already finished, and then the cancel is dropped.
+Cancelling runs the body's own cleanup where it stands; once the task is
+over the child says ``cancelled``, which closes the token like ``done``.
+Tasks cancelled because the worker is going away say nothing.
 """
 
 from __future__ import annotations
@@ -90,6 +98,14 @@ async def _run(conn: Connection, init: _LifecycleBracket | None) -> None:
         conn.send(("ready",))
 
         tasks: set[asyncio.Task] = set()
+        by_token: dict[int, asyncio.Task] = {}
+        closing = False
+
+        def over(token: int, task: asyncio.Task) -> None:
+            by_token.pop(token, None)
+            if task.cancelled() and not closing:
+                _spawn(tasks, _say(send, ("cancelled", token)))
+
         try:
             while True:
                 try:
@@ -98,13 +114,21 @@ async def _run(conn: Connection, init: _LifecycleBracket | None) -> None:
                     break
                 if frame[0] == "stop":
                     break
+                if frame[0] == "cancel":
+                    task = by_token.get(frame[1])
+                    if task is not None:
+                        task.cancel()
+                    continue
                 kind, token, tree, attrs = frame
                 reply = kind == "exec"
                 if not reply:
                     # ack first: the token must open before anything can close it
                     await send(("ack", token))
-                tasks.add(_spawn(tasks, _run_one(ctx, tree, attrs, token, send, reply=reply)))
+                task = _spawn(tasks, _run_one(ctx, tree, attrs, token, send, reply=reply))
+                by_token[token] = task
+                task.add_done_callback(lambda t, token=token: over(token, t))
         finally:
+            closing = True
             for task in tasks:
                 task.cancel()
             if tasks:
@@ -114,8 +138,15 @@ async def _run(conn: Connection, init: _LifecycleBracket | None) -> None:
 def _spawn(tasks: set[asyncio.Task], coro: Coroutine) -> asyncio.Task:
     """Create a task and keep a strong reference until it finishes."""
     task = asyncio.create_task(coro)
+    tasks.add(task)
     task.add_done_callback(tasks.discard)
     return task
+
+
+async def _say(send: Callable, frame: tuple) -> None:
+    """Send a frame nobody waits on; a parent already gone is not an error."""
+    with contextlib.suppress(Exception):
+        await send(frame)
 
 
 def _exec_context(ctx: Context, attrs: dict | None) -> Context:

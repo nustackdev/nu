@@ -271,3 +271,111 @@ def test_workers_tracks_launches_and_kills(pool):
     assert pool.workers() == [a, b]
     pool.kill(a)
     assert pool.workers() == [b]
+
+
+# --- cancel -----------------------------------------------------------------
+
+
+def _poll(check, timeout: float = 10.0) -> bool:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if check():
+            return True
+        time.sleep(0.01)
+    return False
+
+
+# A body that ticks until cancelled and marks ``cleaned`` on the way out. It
+# runs on the worker's own Context (no attrs), so both stay readable after.
+_TICK_THEN_CLEAN = nu.TryCatch(RESIDENT_TICKER, finally_=nu.SetCmd(nu.AttrRef("cleaned"), True))
+
+
+async def test_cancelling_ateleport_cancels_the_remote_body():
+    bracket = nu.Provide(WorkerPool, {"name": "nu-test-cancel-exec"})
+    async with bracket._aopen(nu.Context()) as ctx:
+        pool = ctx.get(WorkerPool)
+        w = await pool.alaunch()
+        await pool.ateleport(w, nu.Sequential(SEED_TICK, nu.SetCmd(nu.AttrRef("cleaned"), False)))
+
+        call = asyncio.create_task(pool.ateleport(w, _TICK_THEN_CLEAN))
+        await asyncio.sleep(0.2)
+        assert await pool.ateleport(w, read_tick) > 0
+        call.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await call
+
+        async def cleaned() -> bool:
+            deadline = time.monotonic() + 10
+            while time.monotonic() < deadline:
+                if await pool.ateleport(w, nu.AttrRef("cleaned")) is True:
+                    return True
+                await asyncio.sleep(0.01)
+            return False
+
+        # The remote finally ran, and the task is gone: the tick stops.
+        assert await cleaned()
+        first = await pool.ateleport(w, read_tick)
+        await asyncio.sleep(0.1)
+        assert await pool.ateleport(w, read_tick) == first
+        # Nothing is left on the books, and the worker still serves.
+        assert pool._workers[w]._pending == {}
+        assert await pool.ateleport(w, nu.Add(2, 2)) == 4
+
+
+async def test_cancelling_one_exec_leaves_its_siblings_alone():
+    bracket = nu.Provide(WorkerPool, {"name": "nu-test-cancel-one"})
+    async with bracket._aopen(nu.Context()) as ctx:
+        pool = ctx.get(WorkerPool)
+        w = await pool.alaunch()
+        slow = [
+            asyncio.create_task(
+                pool.ateleport(w, nu.DelayedDo(0.3, nu.SetCmd(nu.AttrRef(f"s{i}"), i)))
+            )
+            for i in range(3)
+        ]
+        doomed = asyncio.create_task(pool.ateleport(w, nu.DelayedDo(30, SEED_TICK)))
+        await asyncio.sleep(0.1)
+        doomed.cancel()
+        await asyncio.gather(*slow)
+        assert doomed.cancelled()
+        for i in range(3):
+            assert await pool.ateleport(w, nu.AttrRef(f"s{i}")) == i
+
+
+def test_cancel_ends_a_dispatched_body(pool):
+    w = pool.launch()
+    pool.teleport(w, nu.Sequential(SEED_TICK, nu.SetCmd(nu.AttrRef("cleaned"), False)))
+    token = pool.dispatch(w, _TICK_THEN_CLEAN)
+    assert pool.running(w) is True
+
+    pool.cancel(w, token)
+    # The child says cancelled, which closes the token like done.
+    assert _poll(lambda: pool.running(w) is False)
+    assert pool.teleport(w, nu.AttrRef("cleaned")) is True
+    first = pool.teleport(w, read_tick)
+    time.sleep(0.1)
+    assert pool.teleport(w, read_tick) == first
+
+
+def test_cancel_is_a_no_op_once_finished(pool):
+    w = pool.launch()
+    token = pool.dispatch(w, nu.Add(1, 1))
+    assert _poll(lambda: pool.running(w) is False)
+    pool.cancel(w, token)
+    pool.cancel(w, 12345)
+    pool.cancel(9999, token)
+    assert pool.teleport(w, nu.Add(1, 2)) == 3
+
+
+async def test_worker_death_raises_on_a_pending_ateleport():
+    bracket = nu.Provide(WorkerPool, {"name": "nu-test-death"})
+    async with bracket._aopen(nu.Context()) as ctx:
+        pool = ctx.get(WorkerPool)
+        w = await pool.alaunch()
+        call = asyncio.create_task(pool.ateleport(w, nu.DelayedDo(30, nu.Add(1, 1))))
+        await asyncio.sleep(0.2)
+        # Died by itself: not a pool kill, so the pool learns it from the pipe.
+        os.kill(_pid_of(pool, w), 9)
+        with pytest.raises(WorkerGone):
+            await asyncio.wait_for(call, timeout=10)
+        assert await pool.await_exit(w) == -9

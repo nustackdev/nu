@@ -15,6 +15,8 @@ Parent-side shape, per worker:
 - a daemon reader thread draining that pipe and resolving waiters by token
 - a set of tokens that are dispatched but not finished, which is what
   ``running`` reads
+- per request in flight, a flag for whether its frame is out yet, so a
+  cancel is never sent ahead of the request it cancels
 - an exit record: the process's exit code once it is gone, and the asyncio
   futures of whoever is waiting on that, woken from the reader thread
 
@@ -54,30 +56,52 @@ class UnknownWorker(KeyError):  # noqa: N818 - a state, not an error kind
 
 
 class _Reply:
-    """A one-shot slot a reader thread fills and a caller waits on."""
+    """A one-shot slot a reader thread fills and a caller waits on.
 
-    __slots__ = ("event", "kind", "value")
+    A sync caller blocks on ``event``. An async caller hands its loop in and
+    awaits ``future``, which ``set`` resolves through that loop, so no thread
+    is held while it waits and cancelling the await is a plain cancellation.
+    """
 
-    def __init__(self) -> None:
+    __slots__ = ("cancelled", "event", "future", "kind", "loop", "sent", "value")
+
+    def __init__(self, loop: asyncio.AbstractEventLoop | None = None) -> None:
         self.event = threading.Event()
         self.kind: str | None = None
         self.value: object = None
+        self.loop = loop
+        self.future: asyncio.Future | None = None if loop is None else loop.create_future()
+        # Both guarded by the handle's state lock. See ``_WorkerHandle.cancel``.
+        self.sent = False
+        self.cancelled = False
 
     def set(self, kind: str, value: object) -> None:
-        """Fill the slot and wake the waiter."""
+        """Fill the slot and wake the waiter. Safe from any thread."""
         self.kind = kind
         self.value = value
         self.event.set()
+        if self.future is not None:
+            with contextlib.suppress(RuntimeError):  # that loop is closed already
+                self.loop.call_soon_threadsafe(_resolve, self.future, None)  # type: ignore[union-attr]
 
-    def wait(self, timeout: float | None) -> object:
-        """Block for the reply; raise what came back, or time out."""
-        if not self.event.wait(timeout):
-            raise TimeoutError("worker did not reply in time")
+    def result(self) -> object:
+        """What came back: the value, or the error raised."""
         if self.kind == "err":
             raise self.value  # type: ignore[misc]
         if self.kind == "gone":
             raise WorkerGone(str(self.value))
         return self.value
+
+    def wait(self, timeout: float | None) -> object:
+        """Block for the reply; raise what came back, or time out."""
+        if not self.event.wait(timeout):
+            raise TimeoutError("worker did not reply in time")
+        return self.result()
+
+    async def await_(self) -> object:
+        """Wait for the reply on the loop it was made for; raise what came back."""
+        await self.future  # type: ignore[misc]
+        return self.result()
 
 
 class _WorkerHandle:
@@ -169,6 +193,8 @@ class _WorkerHandle:
             reply.set("ok", frame[2])
         elif kind == "err":
             reply.set("err", frame[2])
+        # 'cancelled' closes the token and wakes nobody: ``cancel`` took the
+        # waiter off the books before it sent the frame that led here.
 
     def _abandon(self, exc: BaseException) -> None:
         """Fail everything still waiting; used when the worker dies."""
@@ -204,14 +230,18 @@ class _WorkerHandle:
         if self._ready_error is not None:
             raise self._ready_error
 
-    def request(self, kind: str, tree: object, attrs: dict | None) -> _Reply:
-        """Register a waiter, send the frame, hand the slot back."""
+    def open(self, loop: asyncio.AbstractEventLoop | None = None) -> tuple[int, _Reply]:
+        """Register a waiter for a new request, without sending anything yet."""
         token = next(self._tokens)
-        reply = _Reply()
+        reply = _Reply(loop)
         with self._state:
             if self._closed:
                 raise WorkerGone(f"worker {self.wid} is gone")
             self._pending[token] = reply
+        return token, reply
+
+    def send(self, kind: str, token: int, reply: _Reply, tree: object, attrs: dict | None) -> None:
+        """Send an opened request's frame. A cancel that came in meanwhile follows it out."""
         try:
             with self._send_lock:
                 self.conn.send((kind, token, tree, attrs))
@@ -219,7 +249,41 @@ class _WorkerHandle:
             with self._state:
                 self._pending.pop(token, None)
             raise WorkerGone(f"worker {self.wid} is gone") from exc
-        return reply
+        with self._state:
+            reply.sent = True
+            cancelled = reply.cancelled
+        if cancelled:
+            self._send_cancel(token)
+
+    def request(self, kind: str, tree: object, attrs: dict | None) -> tuple[int, _Reply]:
+        """Register a waiter, send the frame, hand the token and the slot back."""
+        token, reply = self.open()
+        self.send(kind, token, reply, tree, attrs)
+        return token, reply
+
+    def cancel(self, token: int) -> None:
+        """Have the worker cancel request ``token``. A no-op once it has finished.
+
+        The waiter comes off the books first, so a reply racing the cancel
+        wakes nobody. A request whose frame is not out yet is only flagged:
+        its sender sends the cancel right after it, so the worker never sees
+        a cancel ahead of the request it names.
+        """
+        with self._state:
+            if self._closed:
+                return
+            reply = self._pending.pop(token, None)
+            if reply is not None:
+                reply.cancelled = True
+                if not reply.sent:
+                    return
+            elif token not in self._running:
+                return
+        self._send_cancel(token)
+
+    def _send_cancel(self, token: int) -> None:
+        with contextlib.suppress(OSError, ValueError), self._send_lock:
+            self.conn.send(("cancel", token))
 
     def wait_exit(self, timeout: float | None = None) -> int | None:
         """Block until the process is gone; its exit code, or None if unknown."""
@@ -406,20 +470,43 @@ class WorkerPool:
             raise
         return wid
 
-    def dispatch(self, wid: object, tree: object, attrs: dict | None = None) -> None:
+    def dispatch(self, wid: object, tree: object, attrs: dict | None = None) -> int:
         """Ship ``tree`` to worker ``wid`` and return once the child acked it.
 
         The body keeps running in the child afterwards. Nothing is ever
         awaited on its result, which is what makes this usable for resident,
-        never-terminating trees.
+        never-terminating trees. Returns the request's token, which
+        ``cancel`` takes.
         """
-        reply = self._handle(wid).request("dispatch", tree, attrs)
+        token, reply = self._handle(wid).request("dispatch", tree, attrs)
         reply.wait(self.ready_timeout)
+        return token
 
     def teleport(self, wid: object, tree: object, attrs: dict | None = None) -> object:
-        """Ship ``tree`` to worker ``wid`` and block for its value."""
-        reply = self._handle(wid).request("exec", tree, attrs)
-        return reply.wait(None)
+        """Ship ``tree`` to worker ``wid`` and block for its value.
+
+        Interrupted while it waits (a ``KeyboardInterrupt``), the body is
+        cancelled in the child too.
+        """
+        handle = self._handle(wid)
+        token, reply = handle.request("exec", tree, attrs)
+        try:
+            return reply.wait(None)
+        except BaseException:
+            handle.cancel(token)
+            raise
+
+    def cancel(self, wid: object, token: int) -> None:
+        """Cancel request ``token`` on worker ``wid``, the task running it in the child.
+
+        The child cancels the task, so the body unwinds through its own
+        cleanup. Fire and forget: nothing waits for that to finish. A no-op
+        on an unknown id or a token that already finished.
+        """
+        with self._lock:
+            handle = self._workers.get(wid)  # type: ignore[arg-type]
+        if handle is not None:
+            handle.cancel(token)
 
     def kill(self, wid: object) -> None:
         """Terminate worker ``wid`` now and reap it. A no-op on an unknown id."""
@@ -463,13 +550,31 @@ class WorkerPool:
         """Async ``launch``: spawn + wait for READY off-thread."""
         return await asyncio.to_thread(self.launch, init)
 
-    async def adispatch(self, wid: object, tree: object, attrs: dict | None = None) -> None:
-        """Async ``dispatch``: wait for the ack off-thread."""
-        await asyncio.to_thread(self.dispatch, wid, tree, attrs)
+    async def adispatch(self, wid: object, tree: object, attrs: dict | None = None) -> int:
+        """Async ``dispatch``: wait for the ack off-thread. Returns the token."""
+        return await asyncio.to_thread(self.dispatch, wid, tree, attrs)
 
     async def ateleport(self, wid: object, tree: object, attrs: dict | None = None) -> object:
-        """Async ``teleport``: wait for the reply off-thread."""
-        return await asyncio.to_thread(self.teleport, wid, tree, attrs)
+        """Async ``teleport``: the reader thread wakes it, no thread is held meanwhile.
+
+        Cancelling the await cancels the body in the child: its task is
+        cancelled there and unwinds through its own cleanup. The await does
+        not wait for that. A worker that dies meanwhile raises ``WorkerGone``.
+
+        The frame goes out off-thread, since a child that is not reading its
+        pipe can block a send. So does the cancel, on a thread of its own,
+        for the same reason and because the loop may be closing by then.
+        """
+        handle = self._handle(wid)
+        token, reply = handle.open(asyncio.get_running_loop())
+        try:
+            await asyncio.to_thread(handle.send, "exec", token, reply, tree, attrs)
+            return await reply.await_()
+        except asyncio.CancelledError:
+            threading.Thread(
+                target=handle.cancel, args=(token,), name=f"nu-mp-pool-cancel-{wid}", daemon=True
+            ).start()
+            raise
 
     async def await_exit(self, wid: object) -> int | None:
         """Async ``wait``: the reader thread wakes it, no thread is held meanwhile.

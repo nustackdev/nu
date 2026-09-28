@@ -427,6 +427,9 @@ class Teleport(Policy):
           carrying its type and message.
         - If the worker is killed while the call is in flight it raises
           ``WorkerGone`` rather than hanging.
+        - Cancelled while it waits (a losing ``Race`` branch, a cancelled
+          task), the body is cancelled in the worker too and unwinds through
+          its own cleanup there. The cancel is sent, not awaited.
 
     Yields:
         The value the body's root produced in the worker, None for an

@@ -11,6 +11,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Cancelling a wait on a pool worker now cancels that work in the worker
+
 ## 0.5.5 — 2026-09-27
 
 - Start a private Valkey server so processes can share kv change notifications
