@@ -51,7 +51,7 @@ class PoolRef(FabricRef):
 
     Example:
         Provide(WorkerPool, {"name": "nu"},
-            Let("w", PoolRef().launch(), PoolRef().kill(ObjectRef("w"))),
+            Frame(Local, PoolRef().kill(Local.worker), worker=PoolRef().launch()),
         )
     """
 

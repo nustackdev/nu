@@ -68,9 +68,9 @@ class Stream(StreamQuery):
         key: object = "stream_key",
         log_key: object = "stream_log_key",
     ) -> None:
-        from nu.context import AttrRef
+        from nu.context import Attr
 
-        cursor_ref = AttrRef(log_key)
+        cursor_ref = Attr(log_key)
         advance = AdvanceCursor(source, cursor_ref)
         change = OnChildrenChange(source)
         super().__init__(advance, change, body, key, log_key)

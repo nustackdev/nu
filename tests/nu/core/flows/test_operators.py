@@ -1,26 +1,33 @@
 """Tests for the composition operators on the Nu base: ``>>`` / ``|`` / ``&``.
 
 These are sugar for the Strategy flows. Every atom inherits them from ``Nu``, so
-the operators are exercised on plain ``.set()`` bodies. Coverage pins the
+the operators are exercised on plain mem ``.set()`` bodies. Coverage pins the
 type each operator builds, that chains nest left-to-right, and that a built tree
 runs the same as the explicit constructor.
 """
 
 from __future__ import annotations
 
-from _support.attrs import declared
 from _support.policy_atoms import RecordAction
 
 import nu
-from nu.context import ObjectRef
-from nu.context.attrs import Set
+import nustd.mem
 from nu.core.flows import Parallel, Race, Sequential
-from nu.lang import Literal
+from nu.domains.shape.interactions import SetCmd
+from nu.lang import Context, Literal
 from nu.lang.helpers import arun, run
 
 
-def _set(name: str, value: object) -> Set:
-    return ObjectRef(name).set(Literal(value))
+class S(nu.Shape):
+    """The mem slots the bodies below write."""
+
+    a = nustd.mem.ObjectRef.slot()
+    b = nustd.mem.ObjectRef.slot()
+    c = nustd.mem.ObjectRef.slot()
+
+
+def _set(name: str, value: object) -> SetCmd:
+    return getattr(S, name).set(Literal(value))
 
 
 # --- each operator builds its Strategy ------------------------------------
@@ -53,16 +60,16 @@ def test_rshift_chain_nests_left() -> None:
     assert isinstance(tree, Sequential)
     left, right = nu.tree.children(tree)
     assert isinstance(left, Sequential)
-    assert isinstance(right, Set)
+    assert isinstance(right, SetCmd)
 
 
 # --- built tree runs the same as the explicit constructor -----------------
 
 
 def test_rshift_runs_like_sequential() -> None:
-    _, ctx = run(_set("a", 1) >> _set("b", 2), declared("a", "b"))
-    assert ctx.attrs.get("a") == 1
-    assert ctx.attrs.get("b") == 2
+    data: dict = {}
+    run(_set("a", 1) >> _set("b", 2), Context().bind(dict, data, S))
+    assert data == {"a": 1, "b": 2}
 
 
 def test_or_runs_like_parallel() -> None:

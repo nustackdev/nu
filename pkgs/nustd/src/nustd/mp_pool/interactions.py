@@ -3,12 +3,12 @@
 Eight atoms over one ``WorkerPool``: ``Launch``, ``Dispatch``, ``Teleport``,
 ``Kill``, ``Alive``, ``Running``, ``Wait``, ``Workers``. Because the fabric spans many
 processes, these are declarative statements about its contents rather than
-imperative escapes - the same way ``ref.set()`` is a statement about the attrs
+imperative escapes - the same way ``ref.set()`` is a statement about a mem
 fabric.
 
 **No caller value is payload.** Every worker id, every pool address and the
-``init`` override are children, so any of them can come from a ``Ref``, an
-``ObjectRef`` or any query. ``nustd.mp.Teleport`` keeps its target in
+``init`` override are children, so any of them can come from a ``Ref``, a
+mem slot or any query. ``nustd.mp.Teleport`` keeps its target in
 ``self._payload``, which pins it at construction time; that is the mistake
 this fabric exists not to repeat.
 
@@ -185,7 +185,7 @@ class Launch(ScalarAction):
 
     Example:
         Provide(WorkerPool, {"name": "nu"},
-            Let("w", Launch(), Kill(worker=ObjectRef("w"))),
+            Frame(Local, Kill(worker=Local.worker), worker=Launch()),
         )
     """
 
@@ -226,8 +226,8 @@ class Kill(Command):
     Args:
         pool: the node yielding the ``WorkerPool``. Defaults to the untagged
             ``PoolRef``.
-        worker: the node yielding the worker id. Any Nu - a Literal, an
-            ``ObjectRef``, a query over a shape.
+        worker: the node yielding the worker id. Any Nu - a Literal, a
+            mem slot, a query over a shape.
 
     Notes:
         - Idempotent. An id that was already killed, or was never launched at
@@ -242,7 +242,7 @@ class Kill(Command):
         Nothing.
 
     Example:
-        Kill(worker=ObjectRef("w"))
+        Kill(worker=Local.worker)
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -298,7 +298,7 @@ class Dispatch(Command):
        The caller owns that. Apply whatever passes the body needs *to the
        body*, before constructing the ``Dispatch``::
 
-           Dispatch(body=some_pass(resident_tree), worker=ObjectRef("w"))
+           Dispatch(body=some_pass(resident_tree), worker=Local.worker)
 
        ``nustd.kv.auto_flow_atomic`` is one such pass, and a good illustration of
        the cost: wrapping the enclosing tree leaves kv writes inside a
@@ -312,7 +312,7 @@ class Dispatch(Command):
         body: the tree to run in the worker. Kept in ``_payload["body"]``,
             captured as a term, never evaluated in the caller.
         worker: the node yielding the worker id. Any Nu - the id is still a
-            child, so it can be a ``Literal``, an ``ObjectRef`` or a query.
+            child, so it can be a ``Literal``, a mem slot or a query.
 
     Notes:
         - It is a Command: it writes the pool through a Ref and yields
@@ -343,7 +343,7 @@ class Dispatch(Command):
         Nothing.
 
     Example:
-        Dispatch(body=resident_tree, worker=ObjectRef("w"))
+        Dispatch(body=resident_tree, worker=Local.worker)
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -437,7 +437,7 @@ class Teleport(Policy):
         value as a one-item stream.
 
     Example:
-        Teleport(body=Collect(heavy_stream), worker=ObjectRef("w"))
+        Teleport(body=Collect(heavy_stream), worker=Local.worker)
     """
 
     def __init__(
@@ -505,7 +505,7 @@ class Alive(ScalarQuery):
         True or False.
 
     Example:
-        Alive(worker=ObjectRef("w"))
+        Alive(worker=Local.worker)
     """
 
     def __init__(self, pool: Nu | None = None, worker: object = None) -> None:
@@ -549,7 +549,7 @@ class Running(ScalarQuery):
         True or False.
 
     Example:
-        Running(worker=ObjectRef("w"))
+        Running(worker=Local.worker)
     """
 
     def __init__(self, pool: Nu | None = None, worker: object = None) -> None:
@@ -599,7 +599,7 @@ class Wait(ScalarQuery):
         The exit code, an int, or None when it is not known.
 
     Example:
-        Race(Wait(worker=ObjectRef("w")), stop_signal)
+        Race(Wait(worker=Local.worker), stop_signal)
     """
 
     def __init__(self, pool: Nu | None = None, worker: object = None) -> None:

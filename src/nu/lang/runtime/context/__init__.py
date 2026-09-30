@@ -2,11 +2,11 @@
 
 Two stores, each owning its own scoping:
 
-- ``ctx.attrs`` - flat name store; Refs read and write here.
+- ``ctx.attrs`` - flat name store; interactions bind here, ``Attr`` reads.
 - ``ctx.fabrics`` - typed fabric bindings with scope tags and optional
   predicate guards; execution resources live here.
 
-Typed Refs (AttrRef, FabricRef and their Form-mixed variants) and their
+Typed Refs (Attr, FabricRef and their Form-mixed variants) and their
 ScalarQuery ops are deferred until the Form layer lands in nu.
 """
 

@@ -57,10 +57,12 @@ class Parallel(_ParallelBase, Strategy):
           does not mean supervised.
 
     Example:
-        >>> a, b = nu.IntRef("a"), nu.IntRef("b")
-        >>> arms = nu.Parallel(a.set(1), b.set(2))
-        >>> _ = nu.run(nu.Let(a, body=nu.Let(b, body=arms >> nu.print(a))))
-        1
+        >>> class Pair(nu.Shape):
+        ...     a = nustd.mem.IntRef.slot()
+        ...     b = nustd.mem.IntRef.slot()
+        >>> arms = nu.Parallel(Pair.a.set(1), Pair.b.set(2))
+        >>> _ = nu.run(nustd.mem.Frame(Pair, arms >> nu.print(Pair.a + Pair.b)))
+        3
     """
 
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
@@ -160,8 +162,10 @@ class Gather(Parallel):
           than ``Parallel``.
 
     Example:
-        >>> a, b = nu.IntRef("a"), nu.IntRef("b")
-        >>> arms = nu.Gather(a.set(1), b.set(2))
-        >>> _ = nu.run(nu.Let(a, body=nu.Let(b, body=arms >> nu.print(b))))
+        >>> class Pair(nu.Shape):
+        ...     a = nustd.mem.IntRef.slot()
+        ...     b = nustd.mem.IntRef.slot()
+        >>> arms = nu.Gather(Pair.a.set(1), Pair.b.set(2))
+        >>> _ = nu.run(nustd.mem.Frame(Pair, arms >> nu.print(Pair.b)))
         2
     """

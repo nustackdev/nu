@@ -22,7 +22,7 @@ pop runs with no await point inside it::
 
     Provide(WorkerPool, {"name": "nu"},
         With(spares(2),
-            body=Let("w", TakeSpare(), Dispatch(body=resident, worker=ObjectRef("w"))),
+            body=Frame(Local, Dispatch(body=resident, worker=Local.worker), worker=TakeSpare()),
         ),
     )
 
@@ -245,7 +245,7 @@ class TakeSpare(ScalarAction):
         The worker's id, an int.
 
     Example:
-        Let("w", TakeSpare(), Dispatch(body=resident, worker=ObjectRef("w")))
+        Frame(Local, Dispatch(body=resident, worker=Local.worker), worker=TakeSpare())
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")

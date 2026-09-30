@@ -54,7 +54,7 @@ class _Mem(nu.Shape):
 TERMS = [
     ("Object", lambda: nu.Object(12)),
     ("Int", lambda: nu.Int(12)),
-    ("IntRef", lambda: nu.IntRef("n")),
+    ("Attr", lambda: nu.Attr("n")),
     ("Bool", lambda: nu.Int(1) > 0),
     ("Float", lambda: nu.Float(1.5)),
     ("Str", lambda: nu.Str("a")),

@@ -15,12 +15,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from nu.context import ObjectRef
 from nu.core import Iter
 from nu.core.flows import ForeverDo, Race
 from nu.core.flows.control import ForEachParAsync
+from nu.domains.shape.interactions import SetCmd
 from nu.engine.structure import Declared
-from nu.lang import Attr, Context, Control, Literal, ScalarAction
+from nu.lang import Attr, Context, Control, Literal, Ref, ScalarAction
 from nu.lang.attributes.execution import ExecOrder
 from nu.lang.helpers import arun, compile, run
 
@@ -64,6 +64,11 @@ def _items(*values: object) -> Iter:
     return Iter(Literal(list(values)))
 
 
+def _write() -> SetCmd:
+    """A plain Command body, for the tests that only compile or refuse the tree."""
+    return SetCmd(Ref("a"), Literal(1))
+
+
 def _seed(**attrs: object) -> Context:
     return Context(attrs=attrs)
 
@@ -76,12 +81,12 @@ def test_foreach_par_async_is_a_control() -> None:
 
 
 def test_foreach_par_async_param_slots_mark_items_and_the_name() -> None:
-    program = compile(ForEachParAsync(_items(1), ObjectRef("a").set(Literal(1))))
+    program = compile(ForEachParAsync(_items(1), _write()))
     assert program.attr(program.root, Attr.PARAM_SLOTS) == frozenset({0, 2})
 
 
 def test_foreach_par_async_declares_parallel_exec_order() -> None:
-    program = compile(ForEachParAsync(_items(1), ObjectRef("a").set(Literal(1))))
+    program = compile(ForEachParAsync(_items(1), _write()))
     assert program.attr(program.root, Attr.EXEC_ORDER) is ExecOrder.PARALLEL
 
 
@@ -214,15 +219,15 @@ def test_sync_run_is_refused_and_the_message_names_the_atom() -> None:
     # The body here is runs-anywhere, so the atom is the only thing forcing
     # the loop and the refusal has to point at it by name.
     with pytest.raises(RuntimeError, match=r"async-only atom \(ForEachParAsync\); use aeval"):
-        run(ForEachParAsync(_items(1), ObjectRef("a").set(Literal(1))))
+        run(ForEachParAsync(_items(1), _write()))
 
 
 def test_the_sync_thunk_names_the_atom_and_points_at_arun() -> None:
-    program = compile(ForEachParAsync(_items(1), ObjectRef("a").set(Literal(1))))
+    program = compile(ForEachParAsync(_items(1), _write()))
     with pytest.raises(RuntimeError, match="ForEachParAsync requires an async runtime; use arun"):
         program.thunks[program.id_of[program.root]](None)
 
 
 def test_foreach_par_async_requires_async() -> None:
-    program = compile(ForEachParAsync(_items(1), ObjectRef("a").set(Literal(1))))
+    program = compile(ForEachParAsync(_items(1), _write()))
     assert program.attr(program.root, Attr.REQUIRES_ASYNC) is True

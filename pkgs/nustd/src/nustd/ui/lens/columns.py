@@ -38,8 +38,9 @@ mapping and shows exactly what a program wrote into it, keys no Shape ever
 named included -- the shape supplies the protocol, kv supplies the contents.
 The walk stops only at something no shape declares as a container at all.
 
-Nothing here opens a store, and nothing here imports a fabric. Building the
-term needs no Navigator; only running it touches one. So the storage boundary
+Nothing here opens a store, and the one fabric imported is ``nustd.mem``, for
+the frame a column keeps its single pass in. Building the term needs no
+Navigator; only running it touches one. So the storage boundary
 belongs to whoever runs the term: :func:`nustd.ui.lens.browse` places it for
 you, and a caller wiring the arm by hand writes the ``nustd.kv.Snapshot(...)``
 itself. An ``Eval`` is opaque to the static effect walk, so that bracket can
@@ -51,6 +52,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import nu
+import nustd.mem
 from nu.domains.shape import ItemRef, MappingRef, SequenceRef, ShapeRef
 from nu.lang import EMPTY, INVALID, Cardinality
 
@@ -87,7 +89,7 @@ def _loop(depth: int) -> tuple[str, nu.Nu]:
     the moment either awaited.
     """
     name = f"_lens_item{depth}"
-    return name, nu.ObjectRef(name)
+    return name, nu.Attr(name)
 
 
 # --- one row ----------------------------------------------------------------
@@ -243,28 +245,33 @@ def _shape_term(shape_cls: type[Shape], at: StructuredRef | None) -> nu.Nu:
     return _column("shape", nu.List.of(*entries), nu.Int(len(entries)))
 
 
+class _Column(nu.Shape):
+    """The frame a mapping or sequence column holds its one pass over the store in."""
+
+    held = nustd.mem.ObjectRef.slot()
+
+
 def _mapping_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
     """A mapping's keys, capped, with the total beside them.
 
-    Bound once with ``Let``: the cap and the total are two reads of one key
+    Held once in a frame: the cap and the total are two reads of one key
     list, and iterating a container twice to answer one column would be a
     second pass over the store for nothing.
     """
-    held = f"_lens_keys{depth}"
     item, elem = _loop(depth)
-    keys = nu.ObjectRef(held)
+    keys = _Column.held
     if _holds_shapes(ref):
         row: nu.Nu = _door(nu.ToStr(elem), "shape")
     else:
         row = LensCell(nu.ToStr(elem), ref[elem], nu.Str("leaf"), nu.Bool(True), nu.Bool(False))
-    return nu.Let(
-        held,
-        nu.list(ref.keys()),
-        body=_column(
+    return nustd.mem.Frame(
+        _Column,
+        _column(
             "mapping",
             nu.Collect(nu.Map(nu.GetItem(keys, nu.Slice(None, max_rows, None)), row, key=item)),
             nu.Len(keys),
         ),
+        held=nu.list(ref.keys()),
     )
 
 
@@ -274,9 +281,8 @@ def _sequence_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
     A sequence of Shapes keys its rows the same way and makes them doors: the
     position is the whole row, and what is behind it is a column of its own.
     """
-    held = f"_lens_items{depth}"
     item, elem = _loop(depth)
-    items = nu.ObjectRef(held)
+    items = _Column.held
     index = nu.ToStr(nu.GetItem(elem, nu.Int(0)))
     if _holds_shapes(ref):
         row: nu.Nu = _door(index, "shape")
@@ -288,10 +294,9 @@ def _sequence_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
             nu.Bool(False),
             nu.Bool(False),
         )
-    return nu.Let(
-        held,
-        nu.Collect(nu.Iter(ref)),
-        body=_column(
+    return nustd.mem.Frame(
+        _Column,
+        _column(
             "sequence",
             nu.Collect(
                 nu.Map(
@@ -302,6 +307,7 @@ def _sequence_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
             ),
             nu.Len(items),
         ),
+        held=nu.Collect(nu.Iter(ref)),
     )
 
 
@@ -433,5 +439,5 @@ def columns(
             LensColumns(shape, cursor, prefix=nu.Literal(prefix), max_rows=max_rows),
             promise={"cardinality": Cardinality.SCALAR},
         ),
-        catch=nu.List.of(LensFailed(nu.ToStr(nu.ObjectRef("error")))),
+        catch=nu.List.of(LensFailed(nu.ToStr(nu.Attr("error")))),
     )

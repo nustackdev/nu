@@ -29,8 +29,8 @@ def reduce(function: Nu, iterable: Arg[Iterable], initializer: object = UNSET) -
     """Fold ``iterable`` left-to-right with ``function`` (``functools.reduce``).
 
     ``function`` is a Nu query that reads the accumulator and the current item
-    via a typed attrs ref - ``IntRef("acc")`` and ``IntRef("item")`` - so a
-    sum is ``reduce(IntRef("acc") + IntRef("item"), xs)``. With
+    via ``Attr("acc")`` and ``Attr("item")``, so a sum is
+    ``reduce(Attr("acc") + Attr("item"), xs)``. With
     ``initializer`` the accumulator starts there; otherwise at the first item.
     """
     # A Reduction requires a stream source; Iter lifts the iterable to one.

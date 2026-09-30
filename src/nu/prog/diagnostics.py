@@ -24,7 +24,7 @@ and the traceback says where; a classifier on top would be our guess at
 what a caller wants to branch on, and nothing branches on it yet.
 
 Frozen but not slotted. A catch branch inside a tree reads the caught
-exception with ``ObjectRef("error")`` and walks into it with ``Vars``, which
+exception with ``Attr("error")`` and walks into it with ``Vars``, which
 is ``vars()`` and so needs a ``__dict__``. Slots would save a pointer per
 record on a type that exists once per failure, and cost the field-level
 read path that is the whole point of carrying the record around.
@@ -90,7 +90,7 @@ class ConstructionError(Exception):
         - ``LoadNu`` raises this rather than yielding the record, so nothing
           downstream has to re-check every value for a Diagnostic.
         - It is the error type ``Program.run(on_error=...)`` filters on, so
-          a catch branch that reads ``ObjectRef("error")`` gets exactly
+          a catch branch that reads ``Attr("error")`` gets exactly
           construction failures and not whatever the program itself raised.
     """
 

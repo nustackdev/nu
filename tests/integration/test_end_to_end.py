@@ -1,14 +1,16 @@
 """End-to-end: build a tree, compile, validate, and run it against a Context.
 
-The proof that the core + the Context fabric run together - a program that
-reads (ObjectRef), writes (``.set()`` through the ref), streams (Iter / Map / Filter),
-and folds (Sum / Collect), driven through the real ``run`` entry
-(compile -> validate -> drive) and checked for value and mutation.
+The proof that the core, the Context fabric and a mem fabric run together - a
+program that reads a binder's item (Attr), writes state (``.set()`` through a mem
+ref), streams (Iter / Map / Filter), and folds (Sum / Collect), driven through the
+real ``run`` entry (compile -> validate -> drive) and checked for value and
+mutation.
 """
 
 from __future__ import annotations
 
-from nu.context import ObjectRef
+import nustd.mem
+from nu.context import Attr
 from nu.core import (
     Add,
     Collect,
@@ -19,19 +21,24 @@ from nu.core import (
     Mul,
     Sum,
 )
+from nu.domains.shape import Shape
 from nu.lang import Context, Literal
 from nu.lang.helpers import arun, run
 
 
+class State(Shape):
+    total = nustd.mem.IntRef.slot()
+
+
 def test_read_compute_write():
-    # Read an attr, compute on it, write the result back through the ref.
-    ctx = Context(attrs={"total": 40})
-    _, ctx = run(ObjectRef("total").set(Add(ObjectRef("total"), Literal(2))), ctx)
-    assert ctx.attrs.get("total") == 42
+    # Read a slot, compute on it, write the result back through the ref.
+    data = {"total": 40}
+    run(State.total.set(Add(State.total, Literal(2))), Context().bind(dict, data, State))
+    assert data["total"] == 42
 
 
 def test_map_then_reduce():
-    tree = Sum(Map(Iter(Literal([1, 2, 3])), Mul(ObjectRef("item"), Literal(10))))
+    tree = Sum(Map(Iter(Literal([1, 2, 3])), Mul(Attr("item"), Literal(10))))
     value, _ = run(tree)
     assert value == 60
 
@@ -44,8 +51,8 @@ def test_iter_into_a_reduction():
 def test_filtered_mapped_stream_collected():
     tree = Collect(
         Filter(
-            Map(Iter(Literal([1, 2, 3, 4])), Mul(ObjectRef("item"), Literal(10))),
-            Lt(ObjectRef("item"), Literal(35)),
+            Map(Iter(Literal([1, 2, 3, 4])), Mul(Attr("item"), Literal(10))),
+            Lt(Attr("item"), Literal(35)),
         )
     )
     value, _ = run(tree)
@@ -56,11 +63,11 @@ def test_filtered_mapped_stream_collected():
 
 
 async def test_async_map_then_reduce():
-    value, _ = await arun(Sum(Map(Iter(Literal([1, 2, 3])), Mul(ObjectRef("item"), Literal(10)))))
+    value, _ = await arun(Sum(Map(Iter(Literal([1, 2, 3])), Mul(Attr("item"), Literal(10)))))
     assert value == 60
 
 
 async def test_async_write_through_ref():
-    ctx = Context(attrs={"n": 1})
-    _, ctx = await arun(ObjectRef("n").set(Add(ObjectRef("n"), Literal(9))), ctx)
-    assert ctx.attrs.get("n") == 10
+    data = {"total": 1}
+    await arun(State.total.set(Add(State.total, Literal(9))), Context().bind(dict, data, State))
+    assert data["total"] == 10

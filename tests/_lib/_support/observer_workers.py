@@ -100,7 +100,7 @@ def child_main(address: str, out: Any, prefix: tuple[str, ...]) -> None:
     tree = nu.With(
         nustd.kv.proxy_observer(address),
         nu.Provide(Reactor, {"out": out, "prefix": prefix}),
-        body=nu.DelayedDo(60.0, nu.ObjectRef("idle").set(1)),
+        body=nu.Delay(60.0),
     )
     asyncio.run(nu.arun(tree, nu.Context()))
 
@@ -110,6 +110,6 @@ def unbind_child_main(address: str, out: Any, prefix: tuple[str, ...]) -> None:
     tree = nu.With(
         nustd.kv.proxy_observer(address),
         nu.Provide(Rebinder, {"out": out, "prefix": prefix}),
-        body=nu.DelayedDo(60.0, nu.ObjectRef("idle").set(1)),
+        body=nu.Delay(60.0),
     )
     asyncio.run(nu.arun(tree, nu.Context()))

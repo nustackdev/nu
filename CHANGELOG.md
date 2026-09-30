@@ -13,6 +13,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Programs only read context names; local state lives in memory frames instead
+- Scoped bindings and typed context refs are gone; programs keep their locals in frames
 - Parallel branches keep their own context, so one arm never changes another's names
 - Context lookups move to their own store; throttle and debounce are removed for redesign
 - Context names can be declared together on one shape, typed and checked at definition

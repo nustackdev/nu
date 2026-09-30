@@ -4,31 +4,38 @@ async-only flows refuse the sync path.
 Complements the per-atom tests (``test_strategy.py`` / ``test_control.py``,
 which pin construction and basic effects) and the placement e2e
 (``test_eval_modes_e2e.py``). Here the focus is behaviour under sync vs async
-drive and error propagation, using real ``.set()`` bodies and the raising
+drive and error propagation, using real mem ``.set()`` bodies and the raising
 ``BoomAction`` support atom.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 from _support.async_atoms import BoomAction
-from _support.attrs import declared
 from _support.policy_atoms import RecordAction
 
-from nu.context import ObjectRef
+import nu
+import nustd.mem
 from nu.core.flows import AnyN, Parallel, Race, Sequential
-from nu.lang import Literal
+from nu.lang import Context, Literal
 from nu.lang.helpers import arun, run
 
 
-if TYPE_CHECKING:
-    from nu.context.attrs import Set
+class S(nu.Shape):
+    """The mem slots the bodies below write."""
+
+    a = nustd.mem.ObjectRef.slot()
+    b = nustd.mem.ObjectRef.slot()
 
 
-def _set(name: str, value: object) -> Set:
-    return ObjectRef(name).set(Literal(value))
+def _set(name: str, value: object) -> nu.Nu:
+    return getattr(S, name).set(Literal(value))
+
+
+def _mem() -> tuple[dict, Context]:
+    """An empty mem dict for ``S``, and a Context with it bound."""
+    data: dict = {}
+    return data, Context().bind(dict, data, S)
 
 
 # --- exception propagation: Sequential ------------------------------------
@@ -38,26 +45,21 @@ def test_sequential_propagates_a_body_failure_and_short_circuits() -> None:
     # Runs to the failing body, raises, and never reaches what follows.
     tree = Sequential(_set("a", 1), BoomAction("boom"), _set("b", 2))
     with pytest.raises(ValueError, match="boom"):
-        run(tree, declared("a", "b"))
+        run(tree, _mem()[1])
 
 
 def test_sequential_runs_bodies_before_the_failure() -> None:
-    ctx_holder = {}
+    data, ctx = _mem()
     tree = Sequential(_set("a", 1), BoomAction("boom"))
-    try:
-        run(tree, declared("a"))
-    except ValueError:
-        pass
-    # Re-run just the prefix to confirm the first body's effect is real.
-    _, ctx = run(_set("a", 1), declared("a"))
-    ctx_holder["a"] = ctx.attrs.get("a")
-    assert ctx_holder["a"] == 1
+    with pytest.raises(ValueError, match="boom"):
+        run(tree, ctx)
+    assert data == {"a": 1}
 
 
 async def test_sequential_async_propagates_a_body_failure() -> None:
     tree = Sequential(_set("a", 1), BoomAction("boom"))
     with pytest.raises(ValueError, match="boom"):
-        await arun(tree, declared("a"))
+        await arun(tree, _mem()[1])
 
 
 # --- exception propagation: Parallel --------------------------------------
@@ -66,13 +68,13 @@ async def test_sequential_async_propagates_a_body_failure() -> None:
 async def test_parallel_propagates_a_body_failure() -> None:
     tree = Parallel(BoomAction("boom"), _set("b", 2))
     with pytest.raises(ValueError, match="boom"):
-        await arun(tree, max_parallel=2)
+        await arun(tree, _mem()[1], max_parallel=2)
 
 
 def test_parallel_sync_propagates_a_body_failure() -> None:
     tree = Parallel(BoomAction("boom"), _set("b", 2))
     with pytest.raises(ValueError, match="boom"):
-        run(tree, max_parallel=2)
+        run(tree, _mem()[1], max_parallel=2)
 
 
 # --- async-only flows refuse the sync path --------------------------------

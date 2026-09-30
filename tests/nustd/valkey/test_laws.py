@@ -5,17 +5,25 @@ from __future__ import annotations
 import pytest
 
 import nu
+import nustd
 from nustd.valkey import Ping, Url, ValkeyRef, server, url_for
 
 
+class Scratch(nu.Shape):
+    """Where these trees put what they read."""
+
+    u = nustd.mem.ObjectRef.slot()
+    p = nustd.mem.ObjectRef.slot()
+
+
 TREES = {
-    "url": nu.With(server("/nonexistent/vk"), body=nu.ObjectRef("u").set(Url())),
-    "ping": nu.With(server("/nonexistent/vk"), body=nu.ObjectRef("p").set(Ping())),
+    "url": nu.With(server("/nonexistent/vk"), body=Scratch.u.set(Url())),
+    "ping": nu.With(server("/nonexistent/vk"), body=Scratch.p.set(Ping())),
     "fluent": nu.With(
         server("/nonexistent/vk"),
         body=nu.Sequential(
-            nu.ObjectRef("u").set(ValkeyRef().url()),
-            nu.ObjectRef("p").set(ValkeyRef().ping()),
+            Scratch.u.set(ValkeyRef().url()),
+            Scratch.p.set(ValkeyRef().ping()),
         ),
     ),
     "explicit_ref": nu.With(server("/nonexistent/vk"), body=Url(ValkeyRef())),

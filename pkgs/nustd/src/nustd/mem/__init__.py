@@ -29,9 +29,15 @@ ref for the value they declare: a leaf, or a ``ShapeRef`` when the value is a
 Shape. ``ShapeRef`` nests one Shape inside another.
 ``ProgramRef`` holds Nu source. ``JQueueRef``, in ``nustd.mem.refs.jqueue``,
 holds a live janus queue and is imported by its own path.
+
+``Frame`` is the stack frame of a Nu program: a fresh dict bound for one
+Shape around one body, for the values a body computes once and reads again,
+counts or accumulates. ``Throttle`` and ``Debounce`` keep their state in a mem
+ref the caller passes.
 """
 
-from nustd.mem import refs
+from nustd.mem import interactions, refs
+from nustd.mem.interactions import Debounce, Frame, Throttle
 from nustd.mem.refs import (
     BasisPointRef,
     BoolRef,
@@ -60,17 +66,19 @@ from nustd.mem.refs import (
 
 
 __all__ = [
-    # Refs
+    # Interactions and refs
     "BasisPointRef",
     "BoolRef",
     "BytesRef",
     "ComplexRef",
     "DateRef",
     "DatetimeRef",
+    "Debounce",
     "DecimalRef",
     "DictRef",
     "FloatRef",
     "FractionRef",
+    "Frame",
     "IntRef",
     "ListRef",
     "ObjectRef",
@@ -80,10 +88,12 @@ __all__ = [
     "SetRef",
     "ShapeRef",
     "StrRef",
+    "Throttle",
     "TimeRef",
     "TimedeltaRef",
     "TimezoneRef",
     "UUIDRef",
     # Submodules
+    "interactions",
     "refs",
 ]

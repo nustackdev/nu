@@ -19,11 +19,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 from _support.async_atoms import BoomAction
-from _support.attrs import declared
 from _support.law_terms import Cmd, Q, R
 from _support.laws import assert_fails, assert_passes
 
-from nu.context import FabricRef, ObjectRef
+import nu
+import nustd.mem
+from nu.context import FabricRef
 from nu.core.arithmetic import Add
 from nu.core.iteration import Iter
 from nu.core.spans import Snapshot, Transaction
@@ -32,11 +33,17 @@ from nu.lang.helpers import arun, collect, compile, run
 
 
 if TYPE_CHECKING:
-    from nu.context.attrs import Set
+    from nu.domains.shape.interactions import SetCmd
 
 
-def _set(name: str, value: object) -> Set:
-    return ObjectRef(name).set(Literal(value))
+class S(nu.Shape):
+    """The mem slot the pass-through body writes."""
+
+    a = nustd.mem.ObjectRef.slot()
+
+
+def _set(name: str, value: object) -> SetCmd:
+    return getattr(S, name).set(Literal(value))
 
 
 # --- basis ----------------------------------------------------------------
@@ -88,8 +95,9 @@ def test_snapshot_passes_through_scalar() -> None:
 
 
 def test_transaction_passes_through_void() -> None:
-    _, ctx = run(Transaction(_set("a", 1)), declared("a"))
-    assert ctx.attrs.get("a") == 1
+    data: dict = {}
+    run(Transaction(_set("a", 1)), nu.Context().bind(dict, data, S))
+    assert data == {"a": 1}
 
 
 def test_bracket_passes_through_stream() -> None:

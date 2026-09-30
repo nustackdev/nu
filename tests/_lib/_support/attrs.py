@@ -1,8 +1,8 @@
 """Attrs helper: a Context whose names are already declared.
 
-``.set()`` only reassigns a declared name. A test that reads its writes back off
-the Context a run returns declares them up front, the way an enclosing ``Let``
-would, and the names start out holding EMPTY.
+``attrs.set`` only reassigns a declared name. A test atom that writes attrs
+imperatively from its own compile declares the names up front, the way a
+binder would, and the names start out holding EMPTY.
 """
 
 from __future__ import annotations

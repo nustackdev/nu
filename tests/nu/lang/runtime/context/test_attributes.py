@@ -127,7 +127,7 @@ def test_set_reassigns_the_innermost_binding() -> None:
 
 def test_set_on_an_undeclared_name_raises_with_a_let_hint() -> None:
     attrs = Attributes()
-    with pytest.raises(NameError, match=r"not declared.*nu\.Let\('n'"):
+    with pytest.raises(NameError, match=r"'n'.*not declared.*attrs\.let"):
         attrs.set("n", 1)
     assert not attrs.exists("n")
 

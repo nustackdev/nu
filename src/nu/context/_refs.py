@@ -1,6 +1,6 @@
 """Shared base for Context-fabric Refs.
 
-Both ``AttrRef`` and ``FabricRef`` are Refs whose sole child *is* their
+Both ``Attr`` and ``FabricRef`` are Refs whose sole child *is* their
 address: it is resolved through the runtime like any other child, and the read
 is the dual role. This base spells that pattern once. The concrete subclasses
 plug in what the address means (attr key / fabric type) and how the fabric
@@ -24,7 +24,7 @@ __all__ = ["_ContextRef"]
 class _ContextRef(Ref):
     """A Context Ref whose address is its sole child, resolved through the runtime.
 
-    The shared base under ``AttrRef`` and ``FabricRef``. Both are Refs whose
+    The shared base under ``Attr`` and ``FabricRef``. Both are Refs whose
     one child *is* the address, which means the address is an ordinary Nu
     expression and can be computed rather than fixed at write time. This base
     spells that pattern once; a subclass decides what the address means (a

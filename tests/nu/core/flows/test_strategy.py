@@ -1,33 +1,39 @@
 """Tests for the Strategy flows: Sequential, Parallel, Race, Gather, AnyN.
 
 Strategy flows compose mutating atoms directly. Coverage builds real programs
-of ``.set()`` bodies and runs them through ``run`` / ``arun``, asserting the
-writes landed. A concurrent arm runs on its own branch, so its ``.set()`` stays
-in the arm: the concurrent strategies are observed through an external log
-instead. Class-hierarchy and declared-attribute checks pin the basis.
+of ``.set()`` bodies over a mem dict and runs them through ``run`` / ``arun``,
+asserting the writes landed. A concurrent arm runs on its own branch, but the
+dict bound around it is shared by reference, so arm writes land in it too. Class-hierarchy and declared-attribute checks pin the basis.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
-from _support.attrs import declared
 from _support.policy_atoms import RecordAction
 
-from nu.context import ObjectRef
+import nu
+import nustd.mem
 from nu.core.flows import AnyN, Gather, Parallel, Race, Sequential
-from nu.lang import EMPTY, Attr, Cardinality, Literal, Strategy
+from nu.lang import Attr, Cardinality, Context, Literal, Strategy
 from nu.lang.attributes.execution import ExecOrder
 from nu.lang.helpers import arun, compile, run
 
 
-if TYPE_CHECKING:
-    from nu.context.attrs import Set
+class S(nu.Shape):
+    """The mem slots the bodies below write."""
+
+    a = nustd.mem.ObjectRef.slot()
+    b = nustd.mem.ObjectRef.slot()
 
 
-def _set(name: str, value: object) -> Set:
-    return ObjectRef(name).set(Literal(value))
+def _set(name: str, value: object) -> nu.Nu:
+    return getattr(S, name).set(Literal(value))
+
+
+def _mem() -> tuple[dict, Context]:
+    """An empty mem dict for ``S``, and a Context with it bound."""
+    data: dict = {}
+    return data, Context().bind(dict, data, S)
 
 
 def _tags(log: list) -> list[str]:
@@ -62,15 +68,15 @@ def test_anyn_requires_async():
 
 
 def test_sequential_runs_all_children_in_order():
-    _, ctx = run(Sequential(_set("a", 1), _set("b", 2)), declared("a", "b"))
-    assert ctx.attrs.get("a") == 1
-    assert ctx.attrs.get("b") == 2
+    data, ctx = _mem()
+    run(Sequential(_set("a", 1), _set("b", 2)), ctx)
+    assert data == {"a": 1, "b": 2}
 
 
 async def test_sequential_async_runs_all_children():
-    _, ctx = await arun(Sequential(_set("a", 1), _set("b", 2)), declared("a", "b"))
-    assert ctx.attrs.get("a") == 1
-    assert ctx.attrs.get("b") == 2
+    data, ctx = _mem()
+    await arun(Sequential(_set("a", 1), _set("b", 2)), ctx)
+    assert data == {"a": 1, "b": 2}
 
 
 # --- Parallel / Gather ----------------------------------------------------
@@ -82,10 +88,10 @@ def test_parallel_runs_all_children():
     assert _tags(log) == ["a", "b", "c"]
 
 
-def test_parallel_arm_writes_stay_in_the_arm():
-    _, ctx = run(Parallel(_set("a", 1), _set("b", 2)), declared("a", "b"))
-    assert ctx.attrs.get("a") is EMPTY
-    assert ctx.attrs.get("b") is EMPTY
+def test_parallel_arms_share_the_mem_dict_bound_around_them():
+    data, ctx = _mem()
+    run(Parallel(_set("a", 1), _set("b", 2)), ctx)
+    assert data == {"a": 1, "b": 2}
 
 
 def test_parallel_runs_all_children_on_the_thread_pool():

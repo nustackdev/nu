@@ -8,13 +8,22 @@ written through a Ref, so there is no fabric write op - mirrors v1.
 
 from __future__ import annotations
 
-from nu.context import FabricExists, FabricRef, ObjectRef
+import nustd.mem
+from nu.context import FabricExists, FabricRef
+from nu.core import IsEmpty
+from nu.domains.shape import Shape
 from nu.lang import Attr, Context, Effect
 from nu.lang.helpers import compile, run
 
 
 class Clock:
     """A stand-in execution resource bound by type."""
+
+
+class Saved(Shape):
+    """Where a test parks what a FabricRef read."""
+
+    clock = nustd.mem.ObjectRef.slot()
 
 
 # --- FabricRef read (the dual role) --------------------------------------
@@ -24,16 +33,13 @@ class Clock:
 
 def test_fabricref_yields_a_bound_fabric():
     clock = Clock()
-    ctx = Context(attrs={"saved": None}).bind(Clock, clock)
-    _, ctx = run(ObjectRef("saved").set(FabricRef(Clock)), ctx)
-    assert ctx.attrs.get("saved") is clock
+    data: dict = {}
+    run(Saved.clock.set(FabricRef(Clock)), Context().bind(Clock, clock).bind(dict, data, Saved))
+    assert data["clock"] is clock
 
 
 def test_fabricref_on_an_unbound_type_is_empty():
-    # Unbound -> EMPTY; the set's sentinel guard then leaves the slot unwritten.
-    ctx = Context(attrs={"saved": None})
-    _, ctx = run(ObjectRef("saved").set(FabricRef(Clock)), ctx)
-    assert ctx.attrs.get("saved") is None
+    assert run(IsEmpty(FabricRef(Clock)))[0] is True
 
 
 # --- FabricExists ---------------------------------------------------

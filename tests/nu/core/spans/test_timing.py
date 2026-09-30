@@ -13,18 +13,25 @@ import pytest
 from _support.attrs import declared
 from _support.policy_atoms import SlowAction
 
-from nu.context import ObjectRef
+import nu
+import nustd.mem
 from nu.core.spans import Timeout
 from nu.lang import Literal, Policy, Span
 from nu.lang.helpers import arun, run
 
 
 if TYPE_CHECKING:
-    from nu.context.attrs import Set
+    from nu.domains.shape.interactions import SetCmd
 
 
-def _set(name: str, value: object) -> Set:
-    return ObjectRef(name).set(Literal(value))
+class S(nu.Shape):
+    """The mem slot the timeout handler writes."""
+
+    timed_out = nustd.mem.ObjectRef.slot()
+
+
+def _set(name: str, value: object) -> SetCmd:
+    return getattr(S, name).set(Literal(value))
 
 
 # --- basis ----------------------------------------------------------------
@@ -63,9 +70,10 @@ async def test_timeout_exceeded_without_handler_raises() -> None:
     reason="asyncio timeout/cancellation semantics changed in 3.11",
 )
 async def test_timeout_exceeded_runs_on_timeout_on_the_live_ctx() -> None:
-    value, ctx = await arun(
+    data: dict = {}
+    value, _ = await arun(
         Timeout(0.01, SlowAction(1.0), on_timeout=_set("timed_out", True)),
-        declared("slow", "timed_out"),
+        declared("slow").bind(dict, data, S),
     )
     assert value is None
-    assert ctx.attrs.get("timed_out") is True
+    assert data["timed_out"] is True

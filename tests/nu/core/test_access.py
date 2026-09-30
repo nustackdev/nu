@@ -4,7 +4,7 @@ Every atom is an evaluable ScalarQuery: reads (GetItem, Len, Contains, Slice,
 GetAttr, HasAttr) yield the member; writes (SetItem, DelItem, SetAttr, DelAttr)
 mutate the Python value in place and yield it back. All driven end to end -
 value, sentinel propagation, async mirror. The writes are local Python mutation
-off a value, not a fabric write (that is context.Set's job).
+off a value, not a fabric write (that is a Ref's ``set``).
 """
 
 from __future__ import annotations

@@ -2,8 +2,8 @@
 
 Two stores, each owning its own scoping:
 
-- ``ctx.attrs`` - flat name store. Refs read and write here; a name comes
-  into scope with ``attrs.let``.
+- ``ctx.attrs`` - flat name store. Interactions bind here with
+  ``attrs.let`` to hand a value to their body; ``Attr`` reads it.
 - ``ctx.fabrics`` - typed fabric bindings with scope tags and predicate
   guards. Execution resources live here; a binding comes into scope with
   ``fabrics.bind`` / ``fabrics.lazy``.

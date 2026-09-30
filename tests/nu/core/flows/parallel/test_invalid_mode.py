@@ -7,22 +7,17 @@ or run - so misuse surfaces where the tree is being built. Only ``Parallel``
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 import nu
-from nu.context import ObjectRef
 from nu.core.flows import Parallel
-from nu.lang import Literal
+from nu.domains.shape.interactions import SetCmd
+from nu.lang import Literal, Ref
 
 
-if TYPE_CHECKING:
-    from nu.context.attrs import Set
-
-
-def _set(name: str, value: object) -> Set:
-    return ObjectRef(name).set(Literal(value))
+def _set(name: str, value: object) -> SetCmd:
+    """A Command writing ``value`` through a bare Ref named ``name``."""
+    return SetCmd(Ref(name), Literal(value))
 
 
 def test_bad_mode_string_raises_value_error() -> None:

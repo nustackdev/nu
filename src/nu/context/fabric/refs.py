@@ -59,8 +59,8 @@ class FabricRef(_ContextRef):
         - A binding holding EMPTY and no binding at all read the same, so use
           ``.exists()`` when the difference matters.
         - The fabric axis is for the long-lived, typed things - storage
-          handles, cluster handles, clients. Short-lived scratch values live
-          on the attrs axis behind ``AttrRef``.
+          handles, cluster handles, clients. What an interaction hands its
+          body lives on the attrs axis, read with ``Attr``.
 
     Yields:
         The bound instance. EMPTY when the type is not bound.

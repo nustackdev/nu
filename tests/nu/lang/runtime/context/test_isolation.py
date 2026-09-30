@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 import nu
-from nu.context import FabricRef, ObjectRef, Provide
+from nu.context import Attr, FabricRef, Provide
 from nu.core.flows import AnyN, ForEachParAsync, Parallel, ParallelThreaded, Race, ReactLatest
 from nu.engine.structure import Declared
 from nu.lang import Context, ScalarAction
@@ -110,51 +110,49 @@ def _assert_parent_untouched(ctx: Context) -> None:
 
 
 # --- Nu-level regressions ---------------------------------------------------
+# Each arm opens a binder's scope on the same name; one arm leaving its scope
+# must never take the name away from its sibling or hand it to the parent.
 
-x = nu.IntRef("x")
-
-
-def test_parallel_arm_set_stays_in_the_arm_sync(capsys: pytest.CaptureFixture) -> None:
-    run(nu.Let(x, 0, nu.Parallel(x.set(1), nu.Delay(0.01)) >> nu.print(x)))
-    assert capsys.readouterr().out == "0\n"
+x = nu.Attr("x")
 
 
-@pytest.mark.parametrize("flow", [Parallel, Race, AnyN])
-async def test_arm_set_stays_in_the_arm_async(flow: type, capsys: pytest.CaptureFixture) -> None:
-    await arun(nu.Let(x, 0, flow(x.set(1), nu.Delay(0.01)) >> nu.print(x)))
-    assert capsys.readouterr().out == "0\n"
+def _binding(value: object, body: nu.Nu) -> nu.Nu:
+    """``body`` run with ``value`` bound under ``x`` by a real binder."""
+    return nu.ForEachDo(nu.Iter([value]), body, item="x")
 
 
-def test_parallel_sibling_let_outlives_the_other_arm_sync(capsys: pytest.CaptureFixture) -> None:
+def test_parallel_sibling_binding_outlives_the_other_arm_sync(
+    capsys: pytest.CaptureFixture,
+) -> None:
     run(
         nu.Parallel(
-            nu.Let(x, 1, nu.Delay(0.01)), nu.Let(x, 2, nu.Delay(0.05) >> nu.print(x.exists()))
+            _binding(1, nu.Delay(0.01)), _binding(2, nu.Delay(0.05) >> nu.print(x.exists()))
         )
     )
     assert capsys.readouterr().out == "True\n"
 
 
 @pytest.mark.parametrize("max_parallel", [1, 2])
-async def test_parallel_sibling_let_outlives_the_other_arm_async(
+async def test_parallel_sibling_binding_outlives_the_other_arm_async(
     max_parallel: int, capsys: pytest.CaptureFixture
 ) -> None:
-    tree = nu.Parallel(
-        nu.Let(x, 1, nu.Delay(0.01)), nu.Let(x, 2, nu.Delay(0.05) >> nu.print(x.exists()))
-    )
+    tree = nu.Parallel(_binding(1, nu.Delay(0.01)), _binding(2, nu.Delay(0.05) >> nu.print(x)))
     await arun(tree, max_parallel=max_parallel)
-    assert capsys.readouterr().out == "True\n"
+    assert capsys.readouterr().out == "2\n"
 
 
-async def test_anyn_sibling_let_outlives_a_failed_arm(capsys: pytest.CaptureFixture) -> None:
-    failing = nu.Let(x, 1, nu.Delay(0.01) >> nu.print(nu.Div(1, 0)))
-    await arun(AnyN(failing, nu.Let(x, 2, nu.Delay(0.05) >> nu.print(x.exists()))))
-    assert capsys.readouterr().out == "True\n"
+async def test_anyn_sibling_binding_outlives_a_failed_arm(capsys: pytest.CaptureFixture) -> None:
+    failing = _binding(1, nu.Delay(0.01) >> nu.print(nu.Div(1, 0)))
+    await arun(AnyN(failing, _binding(2, nu.Delay(0.05) >> nu.print(x))))
+    assert capsys.readouterr().out == "2\n"
 
 
-async def test_race_sibling_let_outlives_a_cancelled_arm(capsys: pytest.CaptureFixture) -> None:
-    # The Delay arm wins, the Let arm is cancelled mid-scope; the Let's
-    # unwinding must not reach the parent, which never declared x.
-    await arun(Race(nu.Delay(0.01), nu.Let(x, 2, nu.Delay(1.0))) >> nu.print(x.exists()))
+async def test_race_sibling_binding_outlives_a_cancelled_arm(
+    capsys: pytest.CaptureFixture,
+) -> None:
+    # The Delay arm wins, the binding arm is cancelled mid-scope; its
+    # unwinding must not reach the parent, which never bound x.
+    await arun(Race(nu.Delay(0.01), _binding(2, nu.Delay(1.0))) >> nu.print(x.exists()))
     assert capsys.readouterr().out == "False\n"
 
 
@@ -197,15 +195,15 @@ async def test_arms_are_isolated_on_the_loop(flow: type, max_parallel: int) -> N
 
 
 async def test_parallel_arms_are_isolated_under_a_parent_scope() -> None:
-    # The parent's own scopes (a Let and a Provide around the fan-out) reach
-    # the arms; nothing an arm opens reaches back.
+    # The parent's own scopes (a binder and a Provide around the fan-out)
+    # reach the arms; nothing an arm opens reaches back.
     seen: dict = {}
-    tree = nu.Let(
-        "q",
-        "scoped",
+    tree = nu.ForEachDo(
+        nu.Iter(["scoped"]),
         Provide(
             Handle, {}, Parallel(*_async_pair(seen)) >> _Fn(lambda rt: seen.update(after=_view(rt)))
         ),
+        item="q",
     )
     _, ctx = await arun(tree, _start_ctx())
     assert seen["b"]["attrs"] == {"x": 0, "p": "parent", "q": "scoped"}
@@ -398,7 +396,7 @@ async def test_react_latest_runs_are_isolated() -> None:
             await asyncio.Event().wait()
 
     ctx = Context(attrs={"x": 0, "p": "parent", "feed": feed}).bind(Parent, Parent())
-    term = ReactLatest(ObjectRef("feed"), _Fn(body), changed_key="k")
+    term = ReactLatest(Attr("feed"), _Fn(body), changed_key="k")
     task = asyncio.ensure_future(arun(term, ctx))
     await _until(lambda: feed.receivers)
     for key in ("a", "b"):

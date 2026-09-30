@@ -159,7 +159,7 @@ class Program(Form, TypedNu[str]):
             on_error: branch to run when construction fails. Given one, the
                 whole thing is wrapped in a ``TryCatch`` filtered to
                 ``ConstructionError``, and the branch reads the caught
-                exception off the attrs fabric with ``ObjectRef("error")``.
+                exception off the attrs fabric with ``Attr("error")``.
                 Only construction failures are caught; whatever the program
                 itself raises propagates.
 

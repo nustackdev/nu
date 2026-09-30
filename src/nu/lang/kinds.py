@@ -53,7 +53,7 @@ class Ref(Nu[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A name for a location in a Fabric: the abstract Ref kind.
 
     A Ref is the only atom that touches Context, but it touches it through a
-    Fabric, and each Fabric has its own concrete Ref (``AttrRef`` for the
+    Fabric, and each Fabric has its own concrete Ref (``Attr`` for the
     Context-attrs fabric, fabric / shape Refs for others). This base is bare:
     it declares only the sort and cardinality every Ref shares and nothing
     else - no name, no read, no write. A bare ``Ref`` is for structural

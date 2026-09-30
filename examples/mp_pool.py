@@ -3,7 +3,7 @@
 nustd.mp is the fabric of ONE process, and its whole lifecycle is the bracket.
 nustd.mp_pool is the fabric of the fleet: one Provide owns N workers, and the
 interactions address them by id. Every id is a child, never payload, so it
-can come from a Ref, an ObjectRef or any query.
+can come from a Ref, a mem slot or any query.
 
 The one thing that IS payload is a Dispatch body, because a Command cannot
 hold a Flow in a child slot. That means the body is not part of the tree:
@@ -18,13 +18,26 @@ import nustd
 
 
 POOL = nustd.mp_pool.PoolRef()
-WORKER = nu.ObjectRef("w")
+
+
+class Ticks(nu.Shape):
+    """What the resident work counts, in a dict every worker comes up holding."""
+
+    n = nustd.mem.IntRef.slot()
+
+
+class Local(nu.Shape):
+    """The demo's own frame: the worker it launched."""
+
+    worker = nustd.mem.IntRef.slot()
+
+
+WORKER = Local.worker
 
 # Resident work: a tree that never terminates, so it must be dispatched
 # rather than teleported -- nobody is ever going to wait for its value.
 # Top-level so it survives the pickle into a spawned child.
-READ = nu.IntRef("tick")
-TICKER = nu.Let(READ, 0, nu.ForeverDo(nu.DelayedDo(0.05, READ.set(READ + 1))))
+TICKER = Ticks.n.set(0) >> nu.ForeverDo(nu.DelayedDo(0.05, Ticks.n.set(Ticks.n + 1)))
 
 
 # =========================================================================
@@ -36,11 +49,12 @@ TICKER = nu.Let(READ, 0, nu.ForeverDo(nu.DelayedDo(0.05, READ.set(READ + 1))))
 def demo() -> None:
     tree = nu.Provide(
         nustd.mp_pool.WorkerPool,
-        {"name": "nu"},
-        # Launch yields the new worker's id; bind it and address everything by it.
-        nu.Let(
-            WORKER,
-            POOL.launch(),
+        # Every worker comes up holding one Ticks dict, so the resident body
+        # and the teleports that read it see the same one.
+        {"name": "nu", "init": nu.Provide(dict, {}, tag=Ticks)},
+        # Launch yields the new worker's id; the frame keeps it for the rest.
+        nustd.mem.Frame(
+            Local,
             nu.Sequential(
                 nu.Print(nu.STDOUT, "worker id        :", WORKER),
                 # Dispatch returns as soon as the child has the tree. It does not wait,
@@ -49,16 +63,17 @@ def demo() -> None:
                 # Meanwhile a teleport reads the same worker, and is answered while
                 # the resident body is still running in it.
                 nu.DelayedDo(
-                    0.3, nu.Print(nu.STDOUT, "ticks after 0.3s :", POOL.teleport(READ, WORKER))
+                    0.3, nu.Print(nu.STDOUT, "ticks after 0.3s :", POOL.teleport(Ticks.n, WORKER))
                 ),
                 nu.DelayedDo(
-                    0.3, nu.Print(nu.STDOUT, "ticks after 0.6s :", POOL.teleport(READ, WORKER))
+                    0.3, nu.Print(nu.STDOUT, "ticks after 0.6s :", POOL.teleport(Ticks.n, WORKER))
                 ),
                 # A real kill: terminate and reap. No cooperative stop sentinel,
                 # because a worker busy with a resident body never reads its pipe.
                 POOL.kill(WORKER),
                 nu.Print(nu.STDOUT, "alive after kill :", POOL.alive(WORKER)),
             ),
+            worker=POOL.launch(),
         ),
     )
     nu.run(tree)

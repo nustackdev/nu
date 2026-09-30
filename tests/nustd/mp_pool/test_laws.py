@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 import nu
+import nustd
 from nu.lang.attributes import Cardinality, Sort
 from nustd.mp_pool import (
     Alive,
@@ -20,7 +21,19 @@ from nustd.mp_pool import (
 )
 
 
-RESIDENT = nu.ForeverDo(nu.DelayedDo(0.01, nu.ObjectRef("n").set(1)))
+class Scratch(nu.Shape):
+    """Where these trees put what they read, and the worker they address."""
+
+    n = nustd.mem.ObjectRef.slot()
+    m = nustd.mem.ObjectRef.slot()
+    w = nustd.mem.ObjectRef.slot()
+    a = nustd.mem.ObjectRef.slot()
+    r = nustd.mem.ObjectRef.slot()
+    c = nustd.mem.ObjectRef.slot()
+    ws = nustd.mem.ObjectRef.slot()
+
+
+RESIDENT = nu.ForeverDo(nu.DelayedDo(0.01, Scratch.n.set(1)))
 
 
 def _provided(body: nu.Nu) -> nu.Nu:
@@ -28,61 +41,61 @@ def _provided(body: nu.Nu) -> nu.Nu:
 
 
 TREES = {
-    "launch": _provided(nu.ObjectRef("w").set(Launch())),
+    "launch": _provided(Scratch.w.set(Launch())),
     "launch_with_init": _provided(
-        nu.ObjectRef("w").set(Launch(init=nu.Provide(dict, {}))),
+        Scratch.w.set(Launch(init=nu.Provide(dict, {}))),
     ),
-    "dispatch": _provided(Dispatch(body=RESIDENT, worker=nu.ObjectRef("w"))),
+    "dispatch": _provided(Dispatch(body=RESIDENT, worker=Scratch.w)),
     "dispatch_command_body": _provided(
-        Dispatch(body=nu.ObjectRef("n").set(1), worker=nu.ObjectRef("w")),
+        Dispatch(body=Scratch.n.set(1), worker=Scratch.w),
     ),
-    "teleport_scalar": _provided(Teleport(body=nu.Add(1, 2), worker=nu.ObjectRef("w"))),
+    "teleport_scalar": _provided(Teleport(body=nu.Add(1, 2), worker=Scratch.w)),
     "teleport_command": _provided(
-        Teleport(body=nu.ObjectRef("n").set(1), worker=nu.ObjectRef("w")),
+        Teleport(body=Scratch.n.set(1), worker=Scratch.w),
     ),
-    "kill": _provided(Kill(worker=nu.ObjectRef("w"))),
-    "alive": _provided(nu.ObjectRef("a").set(Alive(worker=nu.ObjectRef("w")))),
-    "running": _provided(nu.ObjectRef("r").set(Running(worker=nu.ObjectRef("w")))),
-    "wait": _provided(nu.ObjectRef("c").set(Wait(worker=nu.ObjectRef("w")))),
-    "workers": _provided(nu.ObjectRef("ws").set(nu.Collect(Workers()))),
+    "kill": _provided(Kill(worker=Scratch.w)),
+    "alive": _provided(Scratch.a.set(Alive(worker=Scratch.w))),
+    "running": _provided(Scratch.r.set(Running(worker=Scratch.w))),
+    "wait": _provided(Scratch.c.set(Wait(worker=Scratch.w))),
+    "workers": _provided(Scratch.ws.set(nu.Collect(Workers()))),
     "explicit_pool_ref": _provided(
-        nu.Let(
-            "w",
-            Launch(PoolRef()),
-            Teleport(PoolRef(), body=nu.Add(1, 1), worker=nu.ObjectRef("w")),
+        nustd.mem.Frame(
+            Scratch,
+            Teleport(PoolRef(), body=nu.Add(1, 1), worker=Scratch.w),
+            w=Launch(PoolRef()),
         ),
     ),
     "fluent": _provided(
-        nu.Let(
-            "w",
-            PoolRef().launch(),
+        nustd.mem.Frame(
+            Scratch,
             nu.Sequential(
-                PoolRef().dispatch(RESIDENT, nu.ObjectRef("w")),
-                PoolRef().teleport(nu.ObjectRef("n").set(1), nu.ObjectRef("w")),
-                PoolRef().kill(nu.ObjectRef("w")),
+                PoolRef().dispatch(RESIDENT, Scratch.w),
+                PoolRef().teleport(Scratch.n.set(1), Scratch.w),
+                PoolRef().kill(Scratch.w),
             ),
+            w=PoolRef().launch(),
         ),
     ),
     "fluent_reads": _provided(
         nu.Sequential(
-            nu.ObjectRef("a").set(PoolRef().alive(nu.ObjectRef("w"))),
-            nu.ObjectRef("r").set(PoolRef().running(nu.ObjectRef("w"))),
-            nu.ObjectRef("c").set(PoolRef().wait(nu.ObjectRef("w"))),
-            nu.ObjectRef("ws").set(nu.Collect(PoolRef().workers())),
+            Scratch.a.set(PoolRef().alive(Scratch.w)),
+            Scratch.r.set(PoolRef().running(Scratch.w)),
+            Scratch.c.set(PoolRef().wait(Scratch.w)),
+            Scratch.ws.set(nu.Collect(PoolRef().workers())),
         ),
     ),
     "dispatch_forever_body": _provided(
-        Dispatch(body=nu.ForeverDo(nu.ObjectRef("n").set(1)), worker=nu.ObjectRef("w")),
+        Dispatch(body=nu.ForeverDo(Scratch.n.set(1)), worker=Scratch.w),
     ),
     "whole_lifecycle": _provided(
-        nu.Let(
-            "w",
-            Launch(),
+        nustd.mem.Frame(
+            Scratch,
             nu.Sequential(
-                Teleport(body=nu.ObjectRef("n").set(0), worker=nu.ObjectRef("w")),
-                Dispatch(body=RESIDENT, worker=nu.ObjectRef("w")),
-                Kill(worker=nu.ObjectRef("w")),
+                Teleport(body=Scratch.n.set(0), worker=Scratch.w),
+                Dispatch(body=RESIDENT, worker=Scratch.w),
+                Kill(worker=Scratch.w),
             ),
+            w=Launch(),
         ),
     ),
 }
@@ -95,14 +108,12 @@ def test_validate_passes(name):
 
 def test_dispatching_a_query_is_allowed():
     """A dispatched body's value is dropped by design, whatever it yields."""
-    assert (
-        nu.tree.payload(Dispatch(body=nu.Add(1, 2), worker=nu.ObjectRef("w")))["body"] is not None
-    )
+    assert nu.tree.payload(Dispatch(body=nu.Add(1, 2), worker=Scratch.w))["body"] is not None
 
 
 def test_dispatching_a_non_nu_body_is_refused():
     with pytest.raises(TypeError, match="needs a Nu body"):
-        Dispatch(body=42, worker=nu.ObjectRef("w"))
+        Dispatch(body=42, worker=Scratch.w)
 
 
 def test_kill_without_a_ref_in_its_mutation_slot_is_refused():
@@ -136,15 +147,15 @@ def test_dispatch_is_a_void_command():
 @pytest.mark.parametrize(
     "body",
     [
-        nu.ForeverDo(nu.ObjectRef("n").set(1)),
-        nu.ReactForever(nu.ObjectRef("n"), nu.ObjectRef("m").set(1)),
-        nu.Sequential(nu.ObjectRef("n").set(1)),
-        nu.ObjectRef("n").set(1),
+        nu.ForeverDo(Scratch.n.set(1)),
+        nu.ReactForever(Scratch.n, Scratch.m.set(1)),
+        nu.Sequential(Scratch.n.set(1)),
+        Scratch.n.set(1),
     ],
 )
 def test_a_flow_body_is_accepted_and_the_tree_still_validates(body):
     """The whole point of the payload: a Flow body a Command could not hold."""
-    node = Dispatch(body=body, worker=nu.ObjectRef("w"))
+    node = Dispatch(body=body, worker=Scratch.w)
     assert nu.tree.payload(node)["body"] is body
     nu.validate(nu.compile(_provided(node)))
 
@@ -222,9 +233,9 @@ def test_the_atoms_carry_no_caller_value_in_payload():
 
 def test_the_worker_id_is_still_a_child_of_dispatch():
     """Only the body moved to payload. The id has to stay computable."""
-    node = Dispatch(body=RESIDENT, worker=nu.ObjectRef("w"))
+    node = Dispatch(body=RESIDENT, worker=Scratch.w)
     assert isinstance(nu.tree.children(node)[0], PoolRef)
-    assert isinstance(nu.tree.children(node)[1], nu.ObjectRef)
+    assert isinstance(nu.tree.children(node)[1], nustd.mem.ObjectRef)
 
 
 def test_a_rewrite_carries_the_body_across_unchanged():
@@ -237,7 +248,7 @@ def test_a_rewrite_carries_the_body_across_unchanged():
 
 def test_no_walker_reaches_a_dispatched_body():
     """The documented consequence, asserted: the body is not in the tree."""
-    tree = _provided(Dispatch(body=RESIDENT, worker=nu.ObjectRef("w")))
+    tree = _provided(Dispatch(body=RESIDENT, worker=Scratch.w))
     program = nu.compile(tree)
     assert not any(t is RESIDENT for t in program.terms)
     assert not any(isinstance(t, nu.ForeverDo) for t in program.terms)

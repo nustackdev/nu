@@ -72,11 +72,11 @@ def run_once(body: Nu, *, sid_attr: str = SID_ATTR) -> Nu:
     Example:
         >>> session_for(SID_ATTR, run_once(program))
     """
-    sid = nu.StrRef(sid_attr)
+    sid = nu.Attr(sid_attr)
     report = nu.Print(
         STDOUT,
         nu.Str("ws session arm failed:"),
-        nu.ToStr(nu.ObjectRef("error")),
+        nu.ToStr(nu.Attr("error")),
     )
     return nu.IfDo(
         nu.Not(ServerRef().done(sid)),

@@ -1,13 +1,13 @@
 """Tests for the transform atoms (stream-to-stream lenses).
 
 Map and Filter bind each item under a name (a child, default "item") and
-evaluate a Nu child against it, read via ObjectRef. Sorted / Flatten / Unique are
+evaluate a Nu child against it, read via Attr. Sorted / Flatten / Unique are
 single-source lenses. Coverage runs real programs through ``run``.
 """
 
 from __future__ import annotations
 
-from nu.context import ObjectRef
+from nu.context import Attr as AttrRef
 from nu.core import Collect, Filter, Iter, Lt, Map, Mul
 from nu.core.transform import Flatten, Sorted, Unique
 from nu.lang import Attr, Cardinality, Literal
@@ -42,18 +42,18 @@ def test_a_single_source_lens_is_a_stream_and_validates():
 
 
 def test_map_is_a_stream():
-    program = compile(Map(Iter(Literal([1, 2, 3])), Mul(ObjectRef("item"), Literal(10))))
+    program = compile(Map(Iter(Literal([1, 2, 3])), Mul(AttrRef("item"), Literal(10))))
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.STREAM
 
 
 def test_map_applies_its_transform_per_item():
-    tree = Collect(Map(Iter(Literal([1, 2, 3])), Mul(ObjectRef("item"), Literal(10))))
+    tree = Collect(Map(Iter(Literal([1, 2, 3])), Mul(AttrRef("item"), Literal(10))))
     value, _ = run(tree)
     assert value == [10, 20, 30]
 
 
 def test_map_honors_a_custom_item_name():
-    tree = Collect(Map(Iter(Literal([1, 2])), Mul(ObjectRef("x"), Literal(2)), key="x"))
+    tree = Collect(Map(Iter(Literal([1, 2])), Mul(AttrRef("x"), Literal(2)), key="x"))
     value, _ = run(tree)
     assert value == [2, 4]
 
@@ -62,7 +62,7 @@ def test_map_honors_a_custom_item_name():
 
 
 def test_filter_keeps_matching_items():
-    tree = Collect(Filter(Iter(Literal([1, 2, 3, 4])), Lt(ObjectRef("item"), Literal(3))))
+    tree = Collect(Filter(Iter(Literal([1, 2, 3, 4])), Lt(AttrRef("item"), Literal(3))))
     value, _ = run(tree)
     assert value == [1, 2]
 
@@ -73,8 +73,8 @@ def test_filter_keeps_matching_items():
 def test_a_lens_chain_stays_a_stream_and_evaluates():
     tree = Collect(
         Filter(
-            Map(Iter(Literal([1, 2, 3])), Mul(ObjectRef("item"), Literal(10))),
-            Lt(ObjectRef("item"), Literal(25)),
+            Map(Iter(Literal([1, 2, 3])), Mul(AttrRef("item"), Literal(10))),
+            Lt(AttrRef("item"), Literal(25)),
         )
     )
     program = compile(tree)

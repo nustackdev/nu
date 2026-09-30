@@ -146,14 +146,14 @@ def test_a_mapping_stream_carries_the_declared_key_type(ctx):
 
 def test_stream_ops_keep_the_element_type_while_the_items_are_the_sources(ctx):
     run(Bag.tags.set(["x", "y"]), ctx)
-    kept = Bag.tags.iter().filter(nu.Gt(nu.ObjectRef("item"), "x"))
+    kept = Bag.tags.iter().filter(nu.Gt(nu.Attr("item"), "x"))
     assert type(kept.first()) is Str
     assert run(kept.first().upper(), ctx)[0] == "Y"
     drained = Bag.tags.iter().to_list()
     assert type(drained.first_elem()) is Str
     assert run(drained.first_elem().upper(), ctx)[0] == "X"
     assert nu.tree.payload(Bag.tags.iter().to_set())["type_info"].elem == TypeInfo(str)
-    assert type(Bag.tags.iter().map(nu.ObjectRef("item")).first()) is Object
+    assert type(Bag.tags.iter().map(nu.Attr("item")).first()) is Object
 
 
 def test_undeclared_results_are_object():

@@ -16,22 +16,37 @@ from typing import TYPE_CHECKING
 
 import pytest
 from _support.async_atoms import BoomAction
-from _support.attrs import declared
 
-from nu.context import ObjectRef
+import nu
+import nustd.mem
+from nu.context import Attr as AttrRef
 from nu.core.iteration import Iter
 from nu.core.spans import TryCatch
 from nu.core.transform import Map
-from nu.lang import Attr, Cardinality, Literal, Policy, Span, StreamQuery
+from nu.lang import Attr, Cardinality, Context, Literal, Policy, Span, StreamQuery
 from nu.lang.helpers import arun, collect, compile, run
 
 
 if TYPE_CHECKING:
-    from nu.context.attrs import Set
+    from nu.domains.shape.interactions import SetCmd
 
 
-def _set(name: str, value: object) -> Set:
-    return ObjectRef(name).set(Literal(value))
+class S(nu.Shape):
+    """The mem slots the bodies, catches and finallys below write."""
+
+    a = nustd.mem.ObjectRef.slot()
+    done = nustd.mem.ObjectRef.slot()
+    seen = nustd.mem.ObjectRef.slot()
+
+
+def _set(name: str, value: object) -> SetCmd:
+    return getattr(S, name).set(Literal(value))
+
+
+def _mem() -> tuple[dict, Context]:
+    """An empty mem dict for ``S``, and a Context with it bound."""
+    data: dict = {}
+    return data, Context().bind(dict, data, S)
 
 
 class _BoomStream(StreamQuery):
@@ -89,7 +104,7 @@ def test_scalar_failure_runs_the_catch_in_place() -> None:
 def test_catch_can_read_the_error_bound_for_it() -> None:
     # The catch runs with ``error`` bound; reading it yields the exception
     # string, which forwards as the result.
-    value, _ = run(TryCatch(BoomAction("boom"), ObjectRef("error")))
+    value, _ = run(TryCatch(BoomAction("boom"), AttrRef("error")))
     assert value == "boom"
 
 
@@ -100,22 +115,23 @@ def test_error_is_bound_only_while_the_catch_runs() -> None:
 
 
 def test_catch_writes_land_on_the_live_context() -> None:
-    # No isolated copy: a catch setting an outer declared name is seen after.
-    catch = ObjectRef("seen").set(ObjectRef("error"))
-    _, ctx = run(TryCatch(BoomAction("boom"), catch), declared("seen"))
-    assert ctx.attrs.get("seen") == "boom"
+    # No isolated copy: a catch writing a mem slot bound outside is seen after.
+    catch = S.seen.set(AttrRef("error"))
+    data, ctx = _mem()
+    run(TryCatch(BoomAction("boom"), catch), ctx)
+    assert data["seen"] == "boom"
 
 
 def test_stream_catch_reads_the_error_for_its_whole_drain() -> None:
     # The fallback stream reads ``error`` per item, lazily, while it drains.
-    tree = TryCatch(_BoomStream(1, "mid"), Map(Iter(Literal([1, 2])), ObjectRef("error")))
+    tree = TryCatch(_BoomStream(1, "mid"), Map(Iter(Literal([1, 2])), AttrRef("error")))
     items, _ = collect(compile(tree))
     assert items == [0, "mid", "mid"]
 
 
 def test_error_key_is_customizable() -> None:
     # The handler reads the error back at the key it was written under.
-    value, _ = run(TryCatch(BoomAction("boom"), ObjectRef("err2"), error_key="err2"))
+    value, _ = run(TryCatch(BoomAction("boom"), AttrRef("err2"), error_key="err2"))
     assert value == "boom"
 
 
@@ -141,33 +157,36 @@ def test_error_inside_the_filter_is_caught() -> None:
 
 
 def test_finally_runs_on_success_and_persists() -> None:
-    value, ctx = run(TryCatch(Literal(5), finally_=_set("done", True)), declared("done"))
+    data, ctx = _mem()
+    value, _ = run(TryCatch(Literal(5), finally_=_set("done", True)), ctx)
     assert value == 5
-    assert ctx.attrs.get("done") is True
+    assert data["done"] is True
 
 
 def test_finally_runs_after_a_caught_failure() -> None:
-    value, ctx = run(TryCatch(BoomAction("boom"), Literal(9), _set("done", True)), declared("done"))
+    data, ctx = _mem()
+    value, _ = run(TryCatch(BoomAction("boom"), Literal(9), _set("done", True)), ctx)
     assert value == 9
-    assert ctx.attrs.get("done") is True
+    assert data["done"] is True
 
 
 def test_finally_runs_even_when_the_failure_propagates() -> None:
-    ctx = declared("done")
+    data, ctx = _mem()
     tree = TryCatch(BoomAction("boom"), finally_=_set("done", True))
     with pytest.raises(ValueError, match="boom"):
         run(tree, ctx)
     # finally ran against the live ctx before the error propagated.
-    assert ctx.attrs.get("done") is True
+    assert data["done"] is True
 
 
 # --- void body ------------------------------------------------------------
 
 
 def test_void_success_forwards_nothing_and_the_body_effect_lands() -> None:
-    value, ctx = run(TryCatch(_set("a", 1)), declared("a"))
+    data, ctx = _mem()
+    value, _ = run(TryCatch(_set("a", 1)), ctx)
     assert value is None
-    assert ctx.attrs.get("a") == 1
+    assert data["a"] == 1
 
 
 # --- stream body ----------------------------------------------------------
@@ -187,9 +206,10 @@ def test_stream_failure_mid_drain_appends_the_catch_stream() -> None:
 
 def test_stream_finally_runs_after_the_stream_drains() -> None:
     tree = TryCatch(Iter(Literal([1, 2])), finally_=_set("done", True))
-    items, ctx = collect(compile(tree), declared("done"))
+    data, ctx = _mem()
+    items, _ = collect(compile(tree), ctx)
     assert items == [1, 2]
-    assert ctx.attrs.get("done") is True
+    assert data["done"] is True
 
 
 # --- async surface --------------------------------------------------------
@@ -201,12 +221,10 @@ async def test_async_scalar_failure_runs_the_catch() -> None:
 
 
 async def test_async_catch_reads_the_error_and_finally_persists() -> None:
-    value, ctx = await arun(
-        TryCatch(BoomAction("boom"), ObjectRef("error"), _set("done", True)),
-        declared("done"),
-    )
+    data, ctx = _mem()
+    value, _ = await arun(TryCatch(BoomAction("boom"), AttrRef("error"), _set("done", True)), ctx)
     assert value == "boom"
-    assert ctx.attrs.get("done") is True
+    assert data["done"] is True
 
 
 async def test_async_failure_without_a_catch_propagates() -> None:

@@ -16,7 +16,7 @@ Two atom shapes:
   (default ``"item"``, two names ``"acc"`` / ``"item"`` for ``accumulate``),
   exactly like ``Filter`` / ``Reduce``: bind each item under ``name`` with
   ``ctx.attrs.let`` for one evaluation of the Nu child, which reads the item
-  via ``ObjectRef("item")``.
+  via ``Attr("item")``.
 
 The per-item binding is scoped, not a tracked fabric write, so these atoms are
 pure - no ``mutates`` declared.
@@ -608,7 +608,7 @@ class TakeWhile(StreamQuery):
     Children: ``[source, predicate, key]``. Each item is bound under the name
     ``key`` yields, then ``predicate`` runs; the item is yielded while truthy
     and iteration stops at the first falsy result. A sentinel predicate stops.
-    The body reads the item with ``ObjectRef("item")``.
+    The body reads the item with ``Attr("item")``.
     """
 
     def __init__(self, source: Arg, predicate: Nu, key: StrArg = "item") -> None:
@@ -657,7 +657,7 @@ class DropWhile(StreamQuery):
 
     Children: ``[source, predicate, key]``. Skips items while ``predicate`` is
     truthy; once it is falsy, yields that item and every item after it with no
-    further predicate evaluation. The body reads the item via ``ObjectRef("item")``.
+    further predicate evaluation. The body reads the item via ``Attr("item")``.
     """
 
     def __init__(self, source: Arg, predicate: Nu, key: StrArg = "item") -> None:
@@ -711,7 +711,7 @@ class FilterFalse(StreamQuery):
     """``itertools.filterfalse(predicate, iterable)`` - keep items where the predicate is falsy.
 
     Children: ``[source, predicate, key]``. The complement of ``filter``. A
-    sentinel predicate skips the item. The body reads it via ``ObjectRef("item")``.
+    sentinel predicate skips the item. The body reads it via ``Attr("item")``.
     """
 
     def __init__(self, source: Arg, predicate: Nu, key: StrArg = "item") -> None:
@@ -764,7 +764,7 @@ class Accumulate(StreamQuery):
     item_key]``. The first item is yielded as-is; each later item binds the
     running value under ``acc_key`` and the item under ``item_key``, evaluates
     ``func``, and yields the new running value. Without ``func`` it sums via
-    ``operator.add``. The body reads them via ``ObjectRef("acc")`` / ``ObjectRef("item")``.
+    ``operator.add``. The body reads them via ``Attr("acc")`` / ``Attr("item")``.
     """
 
     def __init__(
@@ -850,7 +850,7 @@ class StarMap(StreamQuery):
     """``itertools.starmap(function, iterable)`` - apply ``function`` to unpacked items.
 
     Children: ``[source, function, key]``. Each item is a tuple bound under
-    ``key``; ``function`` reads its parts via ``TupleRef("item")[0]``,
+    ``key``; ``function`` reads its parts via ``Attr("item")[0]``,
     ``[1]``, ... The result is yielded. A sentinel result is skipped.
     """
 
@@ -899,7 +899,7 @@ class GroupBy(StreamQuery):
     """``itertools.groupby(iterable, key=None)`` - group consecutive items by key.
 
     Children: ``[source]`` (group by identity) or ``[source, key, name]``. The
-    key function reads the item via ``ObjectRef("item")``. Yields ``(key_value,
+    key function reads the item via ``Attr("item")``. Yields ``(key_value,
     tuple(group))`` for each run of consecutive items sharing a key.
     """
 

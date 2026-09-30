@@ -42,9 +42,8 @@ class AnyN(Strategy):
     Example:
         >>> import asyncio
         >>> fail = nu.raise_(ValueError, "nope")
-        >>> winner = nu.StrRef("winner")
-        >>> ok = nu.DelayedDo(0.05, winner.set("ok"))
-        >>> _ = asyncio.run(nu.arun(nu.Let(winner, body=nu.AnyN(fail, ok) >> nu.print(winner))))
+        >>> ok = nu.DelayedDo(0.05, nu.print("ok"))
+        >>> _ = asyncio.run(nu.arun(nu.AnyN(fail, ok)))
         ok
     """
 

@@ -18,8 +18,8 @@ and returns it. Iterable arguments are lifted into a stream child with
 or unwrapped when they're an ``Iterator`` wrapper. Higher-order
 members (``takewhile`` / ``dropwhile`` / ``filterfalse`` / ``accumulate`` /
 ``starmap`` / ``groupby``) take their predicate/function as a Nu term that
-reads the current item via an ``ObjectRef("item")`` (and the running value via
-``ObjectRef("acc")`` for ``accumulate``).
+reads the current item via an ``Attr("item")`` (and the running value via
+``Attr("acc")`` for ``accumulate``).
 """
 
 from __future__ import annotations
@@ -196,7 +196,7 @@ def combinations_with_replacement(iterable: Arg[Iterable], r: IntArg) -> Nu:
 def takewhile(predicate: Nu, iterable: Arg[Iterable]) -> Nu:
     """Yield while ``predicate`` holds, stop at the first falsy: ``itertools.takewhile()``.
 
-    ``predicate`` reads the current item via ``ObjectRef("item")``.
+    ``predicate`` reads the current item via ``Attr("item")``.
     """
     from .interactions import TakeWhile
 
@@ -206,7 +206,7 @@ def takewhile(predicate: Nu, iterable: Arg[Iterable]) -> Nu:
 def dropwhile(predicate: Nu, iterable: Arg[Iterable]) -> Nu:
     """Skip while ``predicate`` holds, then yield the rest: ``itertools.dropwhile()``.
 
-    ``predicate`` reads the current item via ``ObjectRef("item")``.
+    ``predicate`` reads the current item via ``Attr("item")``.
     """
     from .interactions import DropWhile
 
@@ -216,7 +216,7 @@ def dropwhile(predicate: Nu, iterable: Arg[Iterable]) -> Nu:
 def filterfalse(predicate: Nu, iterable: Arg[Iterable]) -> Nu:
     """Keep items where ``predicate`` is falsy: mirrors ``itertools.filterfalse()``.
 
-    ``predicate`` reads the current item via ``ObjectRef("item")``.
+    ``predicate`` reads the current item via ``Attr("item")``.
     """
     from .interactions import FilterFalse
 
@@ -227,8 +227,8 @@ def accumulate(iterable: Arg[Iterable], func: Nu | None = None) -> Nu:
     """Running accumulation: mirrors ``itertools.accumulate()``.
 
     Without ``func`` it is a running sum. With ``func`` (a Nu term) each step
-    reads the running value via ``ObjectRef("acc")`` and the item via
-    ``ObjectRef("item")``; the first item is yielded as-is.
+    reads the running value via ``Attr("acc")`` and the item via
+    ``Attr("item")``; the first item is yielded as-is.
     """
     from .interactions import Accumulate
 
@@ -241,7 +241,7 @@ def starmap(function: Nu, iterable: Arg[Iterable]) -> Nu:
     """Apply ``function`` to unpacked items: mirrors ``itertools.starmap()``.
 
     Each item is a tuple; ``function`` reads its parts via
-    ``TupleRef("item")[0]``, ``[1]``, ...
+    ``Attr("item")[0]``, ``[1]``, ...
     """
     from .interactions import StarMap
 
@@ -252,7 +252,7 @@ def groupby(iterable: Arg[Iterable], key: Nu | None = None) -> Nu:
     """Group consecutive items by ``key``: mirrors ``itertools.groupby()``.
 
     Yields ``(key_value, tuple(group))`` pairs. With ``key`` (a Nu term) the key
-    reads the item via ``ObjectRef("item")``; without it items group by identity.
+    reads the item via ``Attr("item")``; without it items group by identity.
     """
     from .interactions import GroupBy
 

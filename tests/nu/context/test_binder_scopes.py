@@ -1,6 +1,6 @@
 """Every binder scopes its names through the attrs store.
 
-A binder (``Let``, a loop variable, a caught error, a changed key, a stream
+A binder (a loop variable, a caught error, a changed key, a stream
 cursor key) binds with ``ctx.attrs.let``: the name shadows an outer binding of
 the same spelling while the binder's body runs, and the outer value is back,
 or the name is gone, once it ends. Each test checks both halves: the body saw
@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from nu.context import Let, ObjectRef
+from nu.context import Attr
 from nu.core import Add, Div, Filter, Iter, Map, SortBy
 from nu.core.flows import Noop
 from nu.core.flows.control import ForEachDo, ForEachParAsync, ForRangeDo
@@ -161,38 +161,33 @@ async def _cancel(task: asyncio.Task) -> None:
         await task
 
 
-# --- Let over a stream body -------------------------------------------------
+# --- a binder over a stream -------------------------------------------------
 
 
-def test_let_over_a_stream_releases_on_exhaustion() -> None:
-    values, ctx = collect(
-        compile(Let("x", 10, Map(_items(1, 2), Add(ObjectRef("x"), ObjectRef("item"))))),
-        _outer("x"),
-    )
+def test_a_stream_binder_releases_on_exhaustion() -> None:
+    values, ctx = collect(compile(Map(_items(1, 2), Add(Attr("x"), 10), key="x")), _outer("x"))
     assert values == [11, 12]
     assert ctx.attrs.get("x") == "outer"
 
 
-def test_let_over_a_stream_releases_on_early_close() -> None:
-    value, ctx = first(compile(Let("x", 10, Map(_items(1, 2), ObjectRef("x")))), _outer("x"))
-    assert value == 10
+def test_a_stream_binder_releases_on_early_close() -> None:
+    value, ctx = first(compile(Map(_items(1, 2), Attr("x"), key="x")), _outer("x"))
+    assert value == 1
     assert ctx.attrs.get("x") == "outer"
 
 
-async def test_let_over_a_stream_releases_on_early_close_async() -> None:
-    value, ctx = await afirst(compile(Let("x", 10, Map(_items(1, 2), ObjectRef("x")))), _outer("x"))
-    assert value == 10
+async def test_a_stream_binder_releases_on_early_close_async() -> None:
+    value, ctx = await afirst(compile(Map(_items(1, 2), Attr("x"), key="x")), _outer("x"))
+    assert value == 1
     assert ctx.attrs.get("x") == "outer"
 
 
-async def test_let_over_a_stream_releases_on_cancel() -> None:
+async def test_a_stream_binder_releases_on_cancel() -> None:
     arrived = asyncio.Event()
     ctx = _outer("x")
-    task = asyncio.ensure_future(
-        acollect(compile(Let("x", 10, Map(_items(1), Park(arrived)))), ctx)
-    )
+    task = asyncio.ensure_future(acollect(compile(Map(_items(1), Park(arrived), key="x")), ctx))
     await asyncio.wait_for(arrived.wait(), 2)
-    assert ctx.attrs.get("x") == 10
+    assert ctx.attrs.get("x") == 1
     await _cancel(task)
     assert ctx.attrs.get("x") == "outer"
 
@@ -203,9 +198,9 @@ async def test_let_over_a_stream_releases_on_cancel() -> None:
 @pytest.mark.parametrize(
     ("term", "expected"),
     [
-        (Map(_items(1, 2), ObjectRef("x"), key="x"), [1, 2]),
-        (Filter(_items(1, 2, 3), ObjectRef("x") > 1, key="x"), [2, 3]),
-        (SortBy(_items(2, 1), ObjectRef("x"), item="x"), [1, 2]),
+        (Map(_items(1, 2), Attr("x"), key="x"), [1, 2]),
+        (Filter(_items(1, 2, 3), Attr("x") > 1, key="x"), [2, 3]),
+        (SortBy(_items(2, 1), Attr("x"), item="x"), [1, 2]),
     ],
     ids=["Map", "Filter", "SortBy"],
 )
@@ -221,8 +216,8 @@ async def test_transform_item_is_scoped(term: object, expected: list) -> None:
 def test_map_item_does_not_reach_the_consumer() -> None:
     # The binding lasts for the transform only: a consumer walking the
     # stream reads the outer value between pulls.
-    inner = Map(_items(1, 2), ObjectRef("x"), key="x")
-    values, _ = collect(compile(Map(inner, ObjectRef("x"), key="y")), _outer("x"))
+    inner = Map(_items(1, 2), Attr("x"), key="x")
+    values, _ = collect(compile(Map(inner, Attr("x"), key="y")), _outer("x"))
     assert values == ["outer", "outer"]
 
 
@@ -280,7 +275,7 @@ async def test_foreach_par_async_binds_each_arm_and_leaves_the_caller_alone() ->
 
 
 def test_try_catch_error_is_scoped_to_the_catch() -> None:
-    term = List.of(TryCatch(Div(1, 0), catch=ObjectRef("error")), ObjectRef("error"))
+    term = List.of(TryCatch(Div(1, 0), catch=Attr("error")), Attr("error"))
     (caught, after), ctx = run(term, _outer("error"))
     assert caught == "division by zero"
     assert after == "outer"
@@ -304,9 +299,7 @@ async def test_retry_hook_bindings_are_scoped_to_the_hook() -> None:
 async def test_react_changed_key_is_scoped_to_the_body() -> None:
     feed, log = _Feed(), []
     ctx = _outer("k", feed=feed)
-    task = asyncio.ensure_future(
-        arun(React(ObjectRef("feed"), _seen("k", log), changed_key="k"), ctx)
-    )
+    task = asyncio.ensure_future(arun(React(Attr("feed"), _seen("k", log), changed_key="k"), ctx))
     await _until(lambda: feed.receivers)
     feed.fire("a")
     await task
@@ -322,7 +315,7 @@ async def test_react_while_condition_does_not_see_the_previous_key() -> None:
         return len(conds) < 3
 
     ctx = _outer("k", feed=feed)
-    term = ReactWhile(ObjectRef("feed"), Probe(cond), _seen("k", log), changed_key="k")
+    term = ReactWhile(Attr("feed"), Probe(cond), _seen("k", log), changed_key="k")
     task = asyncio.ensure_future(arun(term, ctx))
     await _until(lambda: feed.receivers)
     for key in ("a", "b", "c"):
@@ -337,7 +330,7 @@ async def test_react_forever_changed_key_is_scoped_to_each_run() -> None:
     feed, log = _Feed(), []
     ctx = _outer("k", feed=feed)
     task = asyncio.ensure_future(
-        arun(ReactForever(ObjectRef("feed"), _seen("k", log), changed_key="k"), ctx)
+        arun(ReactForever(Attr("feed"), _seen("k", log), changed_key="k"), ctx)
     )
     await _until(lambda: feed.receivers)
     feed.fire("a")
@@ -351,7 +344,7 @@ async def test_react_latest_changed_key_stays_on_the_run_branch() -> None:
     feed, log = _Feed(), []
     ctx = _outer("k", feed=feed)
     task = asyncio.ensure_future(
-        arun(ReactLatest(ObjectRef("feed"), _seen("k", log), changed_key="k"), ctx)
+        arun(ReactLatest(Attr("feed"), _seen("k", log), changed_key="k"), ctx)
     )
     await _until(lambda: feed.receivers)
     feed.fire("a")
@@ -386,18 +379,3 @@ async def test_stream_key_lives_while_the_item_drains_and_is_released_on_close()
     assert ctx.attrs.get("stream_key") == "a"  # alive while the item drains
     await agen.aclose()
     assert ctx.attrs.get("stream_key") == "outer"
-
-
-# --- nested stream scopes ---------------------------------------------------------
-
-
-def test_nested_lets_over_a_stream_release_on_early_close() -> None:
-    value, ctx = first(compile(Let("x", 1, Let("y", 2, Map(_items(1, 2), ObjectRef("y"))))))
-    assert value == 2
-    assert not dict(ctx.attrs.items())
-
-
-async def test_nested_lets_over_a_stream_release_on_early_close_async() -> None:
-    value, ctx = await afirst(compile(Let("x", 1, Let("y", 2, Map(_items(1, 2), ObjectRef("y"))))))
-    assert value == 2
-    assert not dict(ctx.attrs.items())

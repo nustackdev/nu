@@ -72,9 +72,8 @@ class IfDo(Control):
         - A falsy ``cond`` with no ``else_`` runs nothing at all.
 
     Example:
-        >>> a = nu.IntRef("a")
-        >>> _ = nu.run(nu.Let(a, body=nu.IfDo(nu.Literal(True), a.set(1), a.set(2)) >> nu.print(a)))
-        1
+        >>> _ = nu.run(nu.IfDo(nu.Literal(True), nu.print("yes"), nu.print("no")))
+        yes
     """
 
     _param_slots = Declared(value=frozenset({0}), name="param_slots")
@@ -122,8 +121,10 @@ class WhileDo(Control):
           forever.
 
     Example:
-        >>> i = nu.IntRef("i")
-        >>> _ = nu.run(nu.Let(i, 0, nu.WhileDo(i < 3, i.set(i + 1)) >> nu.print(i)))
+        >>> class Loop(nu.Shape):
+        ...     i = nustd.mem.IntRef.slot()
+        >>> count = nu.WhileDo(Loop.i < 3, Loop.i.set(Loop.i + 1))
+        >>> _ = nu.run(nustd.mem.Frame(Loop, count >> nu.print(Loop.i), i=0))
         3
     """
 
@@ -193,17 +194,16 @@ class ForEachDo(Control):
     Notes:
         - The current element is bound under ``item`` for one body run, the
           same scoped binding ``Map`` / ``Filter`` use. ``body`` reads it back
-          via ``ObjectRef(item)``.
+          via ``Attr(item)``.
         - ``item`` is itself evaluated once, before the loop starts, so it can
           be a computed Ref and not just a literal name.
         - The binding shadows an outer ``item`` and is released after each
           run, so the outer value is back once the loop ends.
 
     Example:
-        >>> total, item = nu.IntRef("sum"), nu.IntRef("item")
-        >>> loop = nu.ForEachDo(nu.Iter(nu.Literal([1, 2, 3])), total.set(total + item))
-        >>> _ = nu.run(nu.Let(total, 0, loop >> nu.print(total)))
-        6
+        >>> _ = nu.run(nu.ForEachDo(nu.Iter(nu.Literal([1, 2])), nu.print(nu.Attr("item"))))
+        1
+        2
     """
 
     _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
@@ -273,10 +273,9 @@ class ForEachParAsync(Control):
 
     Example:
         >>> import asyncio
-        >>> seen = nu.ObjectRef("seen")
-        >>> arms = nu.ForEachParAsync(nu.Iter(nu.Literal([1, 2, 3])), seen.set(nu.ObjectRef("item")))
-        >>> _ = asyncio.run(nu.arun(nu.Let(seen, body=arms >> nu.print(seen.is_empty()))))
-        True
+        >>> arms = nu.ForEachParAsync(nu.Iter(nu.Literal([7])), nu.print(nu.Attr("item")))
+        >>> _ = asyncio.run(nu.arun(arms))
+        7
     """
 
     _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
@@ -432,16 +431,16 @@ class ForRangeDo(Control):
         - ``start``, ``stop``, ``step`` and ``index`` are each evaluated once,
           before the loop starts.
         - The current value is bound under ``index`` for one body run, read
-          back via ``ObjectRef(index)``. Same scoped binding ``ForEachDo``
+          back via ``Attr(index)``. Same scoped binding ``ForEachDo``
           uses.
         - Follows Python's ``range`` rules: a ``step`` that never reaches
           ``stop`` from ``start`` runs the body zero times rather than
           looping forever.
 
     Example:
-        >>> total, index = nu.IntRef("sum"), nu.IntRef("index")
-        >>> _ = nu.run(nu.Let(total, 0, nu.ForRangeDo(0, 4, total.set(total + index)) >> nu.print(total)))
-        6
+        >>> _ = nu.run(nu.ForRangeDo(0, 2, nu.print(nu.Attr("index"))))
+        0
+        1
     """
 
     _param_slots = Declared(value=frozenset({0, 1, 2, 4}), name="param_slots")
@@ -530,9 +529,8 @@ class DelayedDo(Control):
           on ``asyncio.sleep``.
 
     Example:
-        >>> a = nu.IntRef("a")
-        >>> _ = nu.run(nu.Let(a, body=nu.DelayedDo(nu.Literal(0.0), a.set(1)) >> nu.print(a)))
-        1
+        >>> _ = nu.run(nu.DelayedDo(nu.Literal(0.0), nu.print("done")))
+        done
     """
 
     _param_slots = Declared(value=frozenset({0}), name="param_slots")
@@ -574,9 +572,7 @@ class SwitchDo(Control):
         - ``selector`` is evaluated once per run, before any key comparison.
 
     Example:
-        >>> x = nu.IntRef("x")
-        >>> switch = nu.SwitchDo(nu.Literal("b"), {"a": x.set(1), "b": x.set(2)})
-        >>> _ = nu.run(nu.Let(x, body=switch >> nu.print(x)))
+        >>> _ = nu.run(nu.SwitchDo(nu.Literal("b"), {"a": nu.print(1), "b": nu.print(2)}))
         2
     """
 

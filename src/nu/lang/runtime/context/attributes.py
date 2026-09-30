@@ -71,7 +71,7 @@ class Attributes:
             NameError: nothing declared ``name``.
         """
         if name not in self._data:
-            msg = f"cannot set attr {name!r}: it is not declared. Declare it with nu.Let({name!r}, ...) first."
+            msg = f"cannot set attr {name!r}: it is not declared. Bind it with attrs.let first."
             raise NameError(msg)
         self._data[name] = value  # type: ignore[index]
 

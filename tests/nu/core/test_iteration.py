@@ -81,12 +81,12 @@ def test_next_validates():
 def test_an_action_yields_so_it_fits_a_query_slot():
     # Next is a dual-citizen: it mutates AND yields, so unlike a void Command
     # it composes inside a Query. A Command in the same slot would be refused.
-    from nu.context.attrs import Set
     from nu.core import Add
+    from nu.domains.shape.interactions import SetCmd
     from nu.lang import Literal
 
     assert gate(compile(Add(Next(Ref("it")), Literal(1))), *LAWS) == []
-    verdict = gate(compile(Add(Set(Ref("x"), Literal(1)), Literal(2))), *LAWS)
+    verdict = gate(compile(Add(SetCmd(Ref("x"), Literal(1)), Literal(2))), *LAWS)
     assert any(v.law == "composition" for v in verdict)
 
 

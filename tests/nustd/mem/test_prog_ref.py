@@ -121,7 +121,7 @@ def test_on_error_catches_a_broken_stored_program(app_ctx: Context) -> None:
 
 def test_on_error_can_read_the_diagnostic_line(app_ctx: Context) -> None:
     run(App.job.set(BROKEN), app_ctx)
-    exc = nu.GetAttr(nu.ObjectRef("error"), "exception")
+    exc = nu.GetAttr(nu.Attr("error"), "exception")
     lineno = nu.GetAttr(nu.GetAttr(exc, "diagnostic"), "lineno")
     assert run(App.job.run(on_error=lineno), app_ctx)[0] == 4
 

@@ -13,7 +13,7 @@ Plus two transforms kept as core: ``Flatten`` (one-level concat) and
 ``Map`` and ``Filter`` bind each item into ``ctx.attrs`` under a name and
 evaluate a Nu child against it. The name is a **child** (a Query yielding
 the name), so it can be a ``Literal`` or a Ref computed elsewhere - never an
-opaque payload. The body reads the item with ``ObjectRef(<name>)``. The item is
+opaque payload. The body reads the item with ``Attr(<name>)``. The item is
 bound with ``ctx.attrs.let`` for the evaluation of that one item, so it shadows
 an outer name of the same spelling and never outlives the item.
 
@@ -54,7 +54,7 @@ class Map(StreamQuery):
     Notes:
         - ``key`` is itself a child (a ``Literal`` or a Ref), not a raw
           string, so it can be computed rather than fixed at write time.
-        - ``transform`` reads the item with ``ObjectRef(<name>)``. The
+        - ``transform`` reads the item with ``Attr(<name>)``. The
           binding lasts for that item's ``transform`` and is released before
           the result is yielded, so it never reaches the consumer.
         - Pulled lazily, one item at a time; nothing runs ahead of the pull.
@@ -67,7 +67,7 @@ class Map(StreamQuery):
         each item ``transform``'s result.
 
     Example:
-        >>> nu.run(nu.Collect(nu.Map(nu.Iter([1, 2, 3]), nu.Add(nu.ObjectRef("item"), 1))))[0]
+        >>> nu.run(nu.Collect(nu.Map(nu.Iter([1, 2, 3]), nu.Add(nu.Attr("item"), 1))))[0]
         [2, 3, 4]
     """
 
@@ -119,7 +119,7 @@ class Filter(StreamQuery):
             to ``"item"``.
 
     Notes:
-        - ``predicate`` reads the item with ``ObjectRef(<name>)``, the same
+        - ``predicate`` reads the item with ``Attr(<name>)``, the same
           scoped binding as :class:`Map`.
         - An EMPTY or INVALID ``predicate`` result drops the item rather
           than propagating the sentinel; only a genuine falsy value does
@@ -131,7 +131,7 @@ class Filter(StreamQuery):
         the items where ``predicate`` held.
 
     Example:
-        >>> nu.run(nu.Collect(nu.Filter(nu.Iter([1, 2, 3, 4]), nu.Gt(nu.ObjectRef("item"), 2))))[0]
+        >>> nu.run(nu.Collect(nu.Filter(nu.Iter([1, 2, 3, 4]), nu.Gt(nu.Attr("item"), 2))))[0]
         [3, 4]
     """
 
@@ -236,7 +236,7 @@ class SortBy(StreamQuery):
             to ``"item"``.
 
     Notes:
-        - ``key`` reads the item with ``ObjectRef(<name>)``, the same
+        - ``key`` reads the item with ``Attr(<name>)``, the same
           scoped binding as :class:`Map` / :class:`Filter`.
         - Drains and sorts the whole source before yielding anything, the
           same barrier as :class:`Sorted`.
@@ -246,7 +246,7 @@ class SortBy(StreamQuery):
         (stream in, stream out).
 
     Example:
-        >>> nu.run(nu.Collect(nu.SortBy(nu.Iter(["bb", "a", "ccc"]), nu.Len(nu.ObjectRef("item")))))[0]
+        >>> nu.run(nu.Collect(nu.SortBy(nu.Iter(["bb", "a", "ccc"]), nu.Len(nu.Attr("item")))))[0]
         ['a', 'bb', 'ccc']
     """
 

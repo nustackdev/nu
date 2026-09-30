@@ -203,8 +203,8 @@ def by_hand(lens, shape, prefix, key):
         lens.on_nav(),
         nustd.kv.Snapshot(
             lens.set_columns(
-                nu.ObjectRef(key),
-                nustd.ui.lens.columns(shape, nu.ObjectRef(key), prefix=prefix),
+                nu.Attr(key),
+                nustd.ui.lens.columns(shape, nu.Attr(key), prefix=prefix),
             )
         ),
         changed_key=key,
