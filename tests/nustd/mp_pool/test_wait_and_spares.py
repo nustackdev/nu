@@ -11,7 +11,6 @@ import time
 import pytest
 
 import nu
-import nustd
 from nustd.mp_pool import Alive, Kill, Launch, PoolRef, Wait, WorkerPool
 from nustd.mp_pool.presets import Spares, TakeSpare, spares
 
@@ -22,7 +21,7 @@ pytestmark = pytest.mark.slow
 class Local(nu.Shape):
     """The worker a tree launched, held for the rest of the tree."""
 
-    w = nustd.mem.IntRef.slot()
+    w = nu.mem.IntRef.slot()
 
 
 @pytest.fixture
@@ -97,7 +96,7 @@ async def test_wait_completes_when_another_branch_kills_the_worker(ctx, pool):
 
 async def test_wait_sees_a_worker_that_exits_on_its_own(ctx, pool):
     """No kill at all: the child leaves on a stop frame and Wait reads its code."""
-    tree = nustd.mem.Frame(Local, Wait(worker=Local.w), w=Launch())
+    tree = nu.mem.Frame(Local, Wait(worker=Local.w), w=Launch())
     task = asyncio.ensure_future(nu.arun(tree, ctx))
     assert await _until(lambda: pool.workers() and pool._workers[pool.workers()[0]]._ready.is_set())
     handle = pool._workers[pool.workers()[0]]
@@ -177,7 +176,7 @@ async def test_take_spare_in_a_tree_leaves_nothing_behind():
         {"name": "nu-test-spares"},
         nu.With(
             spares(1),
-            body=nustd.mem.Frame(Local, Alive(worker=Local.w), w=TakeSpare()),
+            body=nu.mem.Frame(Local, Alive(worker=Local.w), w=TakeSpare()),
         ),
         bind_as=WorkerPool,
     )

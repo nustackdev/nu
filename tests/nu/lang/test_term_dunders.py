@@ -28,7 +28,7 @@ def _terms() -> list[object]:
         nu.Int(1),
         nu.List.of(1, 2),
         nu.Str("ab"),
-        nu.Attr("x"),
+        nu.context.Attr("x"),
     ]
 
 
@@ -138,23 +138,23 @@ def test_iter_first_runs() -> None:
 
 
 def test_for_each_do_takes_an_iterator() -> None:
-    import nustd.mem
+    import nu.mem
 
     class Tally(nu.Shape):
-        sum = nustd.mem.IntRef.slot()
+        sum = nu.mem.IntRef.slot()
 
     data = {"sum": 0}
-    body = Tally.sum.set(Tally.sum + nu.Attr("item"))
+    body = Tally.sum.set(Tally.sum + nu.context.Attr("item"))
     nu.run(nu.ForEachDo(nu.List.of(1, 2, 3).iter(), body), nu.Context().bind(dict, data, Tally))
     assert data["sum"] == 6
 
 
 def test_iter_map_and_filter_stay_streams() -> None:
     xs = nu.List.of(1, 2, 3).iter()
-    mapped = xs.map(nu.Add(nu.Attr("item"), 1))
+    mapped = xs.map(nu.Add(nu.context.Attr("item"), 1))
     assert isinstance(mapped, nu.Iterator)
     assert nu.run(mapped.to_list())[0] == [2, 3, 4]
-    kept = mapped.filter(nu.Gt(nu.Attr("item"), 2))
+    kept = mapped.filter(nu.Gt(nu.context.Attr("item"), 2))
     assert nu.run(kept.to_list())[0] == [3, 4]
     assert nu.run(nu.Collect(kept))[0] == [3, 4]
 
@@ -179,7 +179,7 @@ def test_itertools_take_an_iterator() -> None:
     [
         nu.Add(1, 2),
         nu.Sequential(nu.Delay(0), nu.Delay(0)),
-        nu.FabricRef(int),
+        nu.context.FabricRef(int),
         nu.Literal(1),
     ],
     ids=lambda t: type(t).__name__,
@@ -195,7 +195,7 @@ def test_eq_on_a_bare_term_raises(term: object) -> None:
 
 @pytest.mark.parametrize(
     "term",
-    [nu.Int(1), nu.Object(1), nu.List.of(1), nu.Attr("n"), nu.None_()],
+    [nu.Int(1), nu.Object(1), nu.List.of(1), nu.context.Attr("n"), nu.None_()],
     ids=lambda t: type(t).__name__,
 )
 def test_eq_on_a_form_builds_a_comparison(term: object) -> None:
@@ -305,7 +305,7 @@ def test_eq_hint_points_list_membership_at_identity() -> None:
 
 
 def test_a_queue_has_no_value_equality() -> None:
-    from nustd.mem.refs.jqueue import JQueue, JQueueRef
+    from nustd.queue import JQueue, JQueueRef
 
     q = JQueue(nu.Literal(None))
     with pytest.raises(TypeError, match=r"queue has no value equality.*nu\.Int\(q\.qsize\(\)\)"):

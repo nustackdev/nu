@@ -5,15 +5,14 @@ from __future__ import annotations
 import pytest
 
 import nu
-import nustd
 from nustd.valkey import Ping, Url, ValkeyRef, server, url_for
 
 
 class Scratch(nu.Shape):
     """Where these trees put what they read."""
 
-    u = nustd.mem.ObjectRef.slot()
-    p = nustd.mem.ObjectRef.slot()
+    u = nu.mem.ObjectRef.slot()
+    p = nu.mem.ObjectRef.slot()
 
 
 TREES = {

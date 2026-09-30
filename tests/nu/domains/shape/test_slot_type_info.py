@@ -16,17 +16,17 @@ import pytest
 
 import nu
 from nu.lang import TypeInfo
-from nustd.kv.refs import (
-    Kh57Ref,
-    PrimitiveDictRef,
-    PrimitiveListRef,
-)
-from nustd.mem.refs import (
+from nu.mem.refs import (
     DictRef,
     IntRef,
     ListRef,
     ShapeRef,
     StrRef,
+)
+from nustd.kv.refs import (
+    Kh57Ref,
+    PrimitiveDictRef,
+    PrimitiveListRef,
 )
 
 

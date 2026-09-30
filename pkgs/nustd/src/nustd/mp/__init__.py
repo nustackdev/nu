@@ -32,8 +32,9 @@ Typical shape::
     )
 
 The default ``start_method`` is ``"spawn"`` - the child gets a clean
-interpreter, so any callable / bracket you pass in ``init`` or
-``ctx_builder`` must be pickleable (top-level in a module, no closures).
+interpreter. Everything handed to it (``init``, ``ctx_builder``, each body)
+goes through cloudpickle (``nu.lang.wire``), so closures and classes defined
+inside a function travel too.
 """
 
 from __future__ import annotations

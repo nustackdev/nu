@@ -8,12 +8,7 @@ container reads as a live View, so its collection ops run against storage.
 
 from __future__ import annotations
 
-from datetime import date, datetime, time, timedelta, timezone
-from decimal import Decimal
-from fractions import Fraction
-from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Generic, overload
-from uuid import UUID
 
 from typing_extensions import TypeVar
 
@@ -26,25 +21,10 @@ from nu.domains.shape import (
     Slot,
 )
 from nu.lang.typeinfo import TypeInfo
-from nustd.fin import PyBasisPoint, PyPercentage
 from virtuals.views import DictView, ListView, SetView
 
 from .base import ViewRef
 from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, ObjectRef, StrRef
-from .std import (
-    BasisPointRef,
-    ComplexRef,
-    DateRef,
-    DatetimeRef,
-    DecimalRef,
-    FractionRef,
-    PathRef,
-    PercentageRef,
-    TimedeltaRef,
-    TimeRef,
-    TimezoneRef,
-    UUIDRef,
-)
 
 
 if TYPE_CHECKING:
@@ -63,26 +43,16 @@ __all__ = [
 ]
 
 
-#: The kv leaf that holds a value of each Python type a container may declare.
+#: The kv leaf that holds a value of each core Python type a container may
+#: declare. A standard-library type is not here: its leaf lives with its
+#: library (``nustd.decimal.kv.DecimalRef``), and a container gets it by being
+#: declared with the leaf class rather than the Python type.
 LEAVES: dict[object, type[ItemRef]] = {
     bool: BoolRef,
     int: IntRef,
     float: FloatRef,
     str: StrRef,
     bytes: BytesRef,
-    Decimal: DecimalRef,
-    Fraction: FractionRef,
-    complex: ComplexRef,
-    PyBasisPoint: BasisPointRef,
-    PyPercentage: PercentageRef,
-    date: DateRef,
-    datetime: DatetimeRef,
-    time: TimeRef,
-    timedelta: TimedeltaRef,
-    timezone: TimezoneRef,
-    PurePath: PathRef,
-    Path: PathRef,
-    UUID: UUIDRef,
 }
 
 
@@ -101,9 +71,10 @@ class DictRef(ReactiveMappingRef, ViewRef[dict[K, V]], Generic[K, V]):
 
     Every value lives at its own address under the slot, so keys can be read,
     written and watched one at a time without touching the rest. The declared
-    value picks the child: a Python type lands on its kv leaf (``str`` on
+    value picks the child: a core Python type lands on its kv leaf (``str`` on
     ``StrRef``), a Shape on a ``ShapeRef`` for that shape, a kv leaf class on
-    itself, and anything else on ``ObjectRef``.
+    itself, and anything else, a standard-library type included, on
+    ``ObjectRef``.
 
     Notes:
         - Ops run against the live View, so ``len``, ``contains`` and

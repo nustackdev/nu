@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "nustd"
 version = "0.5.5"
-description = "Batteries for Nu: the fabrics (mem, kv, service, llm, cc, http, proxy, mp, mp_pool, cluster, valkey, ws_server, ui) and the standard library, imported as nustd."
+description = "Batteries for Nu: the fabrics (kv, queue, service, llm, cc, http, proxy, mp, mp_pool, cluster, valkey, ws_server, ui) and the standard library, imported as nustd."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
@@ -50,7 +50,7 @@ classifiers = [
 kv = [
     "virtuals-py>=0.1.9",
 ]
-mem = [
+queue = [
     "janus>=2.0.0",
 ]
 # `nustd.ws_server` is the bare connection lifecycle: no wire format, no SPA.
@@ -91,7 +91,7 @@ valkey = [
 ]
 all = [
     "nustd[kv]",
-    "nustd[mem]",
+    "nustd[queue]",
     "nustd[ws_server]",
     "nustd[ui]",
     "nustd[cluster]",

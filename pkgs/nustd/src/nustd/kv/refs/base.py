@@ -212,7 +212,7 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         """The child at ``address``: the kv ref for the value this container declared.
 
         A Shape gets a ``ShapeRef`` bound to it, a kv leaf class gets itself, a
-        Python type gets the kv leaf that holds it, and a value declared as
+        core Python type gets the kv leaf that holds it, and a value declared as
         anything else, or not at all, gets ``ObjectRef``. The child carries the
         declaration on, as a slot's ref does.
         """

@@ -58,10 +58,10 @@ class Parallel(_ParallelBase, Strategy):
 
     Example:
         >>> class Pair(nu.Shape):
-        ...     a = nustd.mem.IntRef.slot()
-        ...     b = nustd.mem.IntRef.slot()
+        ...     a = nu.IntRef.slot()
+        ...     b = nu.IntRef.slot()
         >>> arms = nu.Parallel(Pair.a.set(1), Pair.b.set(2))
-        >>> _ = nu.run(nustd.mem.Frame(Pair, arms >> nu.print(Pair.a + Pair.b)))
+        >>> _ = nu.run(nu.Frame(Pair, arms >> nu.print(Pair.a + Pair.b)))
         3
     """
 
@@ -163,9 +163,9 @@ class Gather(Parallel):
 
     Example:
         >>> class Pair(nu.Shape):
-        ...     a = nustd.mem.IntRef.slot()
-        ...     b = nustd.mem.IntRef.slot()
+        ...     a = nu.IntRef.slot()
+        ...     b = nu.IntRef.slot()
         >>> arms = nu.Gather(Pair.a.set(1), Pair.b.set(2))
-        >>> _ = nu.run(nustd.mem.Frame(Pair, arms >> nu.print(Pair.b)))
+        >>> _ = nu.run(nu.Frame(Pair, arms >> nu.print(Pair.b)))
         2
     """

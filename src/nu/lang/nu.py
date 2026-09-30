@@ -14,6 +14,13 @@ Typical use::
     def my_app() -> Nu:
         return Add(Literal(1), Literal(2))
 
+What you pass into a Nu constructor is a tree, even a literal: ``Add(1, 2)``
+holds two ``Literal`` nodes, not two ints. Build-time Python may shape the
+tree, looping over a Python list or calling a helper that assembles a
+subtree, but it never branches on or computes with the values going into it.
+Those decisions are nodes of the tree (``If``, ``Add``) and happen when it
+runs.
+
 Custom atoms extend ``Nu`` (or one of its sort subclasses); ``Term`` is reserved
 for engine-level work. ``Nu`` itself is abstract: it declares no ``sort`` /
 ``cardinality`` / effect attributes, so a plain ``Nu(...)`` cannot

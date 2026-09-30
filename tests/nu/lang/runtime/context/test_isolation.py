@@ -113,7 +113,7 @@ def _assert_parent_untouched(ctx: Context) -> None:
 # Each arm opens a binder's scope on the same name; one arm leaving its scope
 # must never take the name away from its sibling or hand it to the parent.
 
-x = nu.Attr("x")
+x = nu.context.Attr("x")
 
 
 def _binding(value: object, body: nu.Nu) -> nu.Nu:

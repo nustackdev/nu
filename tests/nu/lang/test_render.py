@@ -132,7 +132,7 @@ def test_no_nu_subclass_overrides_the_display_dunders() -> None:
         "nu.domains.service",
         "nu.prog",
         "nustd",
-        "nustd.mem",
+        "nu.mem",
         "nustd.kv",
         "nustd.proxy",
         "nustd.mp",

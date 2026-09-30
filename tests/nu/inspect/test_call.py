@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import nustd.math as math_module
 from nu.inspect import CallRecord, catalogue_calls, parse_call, parse_ref
-from nustd.mem.refs.items import IntRef
+from nu.mem.refs.items import IntRef
 
 
 def _method(name: str) -> CallRecord:
@@ -28,8 +28,8 @@ def test_a_classmethod_is_clean_the_same_way_a_method_is() -> None:
     record = parse_call(
         IntRef.slot,
         name="slot",
-        path="nustd.mem.IntRef.slot",
-        owner="nustd.mem.IntRef",
+        path="nu.mem.IntRef.slot",
+        owner="nu.mem.IntRef",
         binding="classmethod",
         qualifier="IntRef",
     )

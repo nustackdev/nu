@@ -8,7 +8,6 @@ that read and write a mem dict - and runs them through ``run`` / ``arun``. Class
 from __future__ import annotations
 
 import nu
-import nustd.mem
 from nu.context import Attr as AttrRef
 from nu.core import Add, Iter, Lt
 from nu.core.flows.control import (
@@ -28,11 +27,11 @@ from nu.lang.helpers import arun, compile, run
 class S(nu.Shape):
     """The mem slots the bodies below write."""
 
-    a = nustd.mem.ObjectRef.slot()
-    b = nustd.mem.ObjectRef.slot()
-    d = nustd.mem.ObjectRef.slot()
-    i = nustd.mem.ObjectRef.slot()
-    sum = nustd.mem.ObjectRef.slot()
+    a = nu.mem.ObjectRef.slot()
+    b = nu.mem.ObjectRef.slot()
+    d = nu.mem.ObjectRef.slot()
+    i = nu.mem.ObjectRef.slot()
+    sum = nu.mem.ObjectRef.slot()
 
 
 def _set(name: str, value: object) -> nu.Nu:

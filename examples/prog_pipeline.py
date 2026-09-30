@@ -12,7 +12,6 @@ the same Form on a storage slot, so a program stored in a fabric runs with
 import sys
 
 import nu
-import nustd
 
 
 # The stored program. It is a module, not an expression, and the reason
@@ -20,12 +19,11 @@ import nustd
 # The entry point takes `who` from the scope the caller offers.
 SOURCE = """
 import nu
-import nustd
 
 
 class Guest(nu.Shape):
-    name = nustd.mem.StrRef.slot()
-    greeting = nustd.mem.StrRef.slot()
+    name = nu.StrRef.slot()
+    greeting = nu.StrRef.slot()
 
 
 def out(who):
@@ -95,7 +93,7 @@ def demo_program_ref() -> None:
     print("=" * 60)
 
     class Jobs(nu.Shape):
-        greeter = nustd.mem.ProgramRef.slot()
+        greeter = nu.ProgramRef.slot()
 
     # The source is a stored value like any other string, and the slot
     # carries the verbs, so the store and the run are the same two moves.

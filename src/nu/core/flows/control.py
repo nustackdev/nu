@@ -122,9 +122,9 @@ class WhileDo(Control):
 
     Example:
         >>> class Loop(nu.Shape):
-        ...     i = nustd.mem.IntRef.slot()
+        ...     i = nu.IntRef.slot()
         >>> count = nu.WhileDo(Loop.i < 3, Loop.i.set(Loop.i + 1))
-        >>> _ = nu.run(nustd.mem.Frame(Loop, count >> nu.print(Loop.i), i=0))
+        >>> _ = nu.run(nu.Frame(Loop, count >> nu.print(Loop.i), i=0))
         3
     """
 

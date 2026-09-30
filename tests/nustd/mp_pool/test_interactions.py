@@ -18,7 +18,6 @@ import pytest
 from _support.pool_workers import RESIDENT
 
 import nu
-import nustd
 from nustd.mp_pool import Alive, Dispatch, Kill, Launch, Running, Teleport, WorkerPool, Workers
 
 
@@ -28,7 +27,7 @@ pytestmark = pytest.mark.slow
 class Local(nu.Shape):
     """The worker a tree launched, held for the rest of the tree."""
 
-    w = nustd.mem.IntRef.slot()
+    w = nu.mem.IntRef.slot()
 
 
 W = Local.w
@@ -73,7 +72,7 @@ def test_provide_launch_teleport_round_trip():
     tree = nu.Provide(
         WorkerPool,
         {"name": "nu-test-provide"},
-        nustd.mem.Frame(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
+        nu.mem.Frame(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
     )
     value, _ = nu.run(tree)
     assert value == 42
@@ -83,7 +82,7 @@ async def test_provide_launch_teleport_round_trip_async():
     tree = nu.Provide(
         WorkerPool,
         {"name": "nu-test-provide-a"},
-        nustd.mem.Frame(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
+        nu.mem.Frame(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
     )
     value, _ = await nu.arun(tree)
     assert value == 42
@@ -101,7 +100,7 @@ def test_provide_teardown_kills_the_worker_it_launched():
     tree = nu.Provide(
         _Spy,
         {"name": "nu-test-teardown-tree"},
-        nustd.mem.Frame(Local, Teleport(body=nu.Add(1, 1), worker=W), w=Launch()),
+        nu.mem.Frame(Local, Teleport(body=nu.Add(1, 1), worker=W), w=Launch()),
         bind_as=WorkerPool,
     )
     value, _ = nu.run(tree)
@@ -115,14 +114,14 @@ def test_provide_teardown_kills_the_worker_it_launched():
 
 def test_worker_id_flows_from_a_ref(ctx, pool):
     """The id reaches Teleport through a mem slot, i.e. it is a child, not payload."""
-    tree = nustd.mem.Frame(Local, Teleport(body=nu.Add(1, 2), worker=W), w=Launch())
+    tree = nu.mem.Frame(Local, Teleport(body=nu.Add(1, 2), worker=W), w=Launch())
     value, _ = nu.run(tree, ctx)
     assert value == 3
 
 
 def test_worker_id_flows_from_a_computed_query(ctx, pool):
     """And through a query over that ref, which a payload target could never do."""
-    tree = nustd.mem.Frame(
+    tree = nu.mem.Frame(
         Local,
         Teleport(body=nu.Add(1, 2), worker=nu.Add(W, 0)),
         w=Launch(),
@@ -132,7 +131,7 @@ def test_worker_id_flows_from_a_computed_query(ctx, pool):
 
 
 def test_worker_id_flows_from_a_ref_into_dispatch_and_kill(ctx, pool):
-    tree = nustd.mem.Frame(
+    tree = nu.mem.Frame(
         Local,
         Dispatch(body=RESIDENT, worker=W),
         w=Launch(),
@@ -143,7 +142,7 @@ def test_worker_id_flows_from_a_ref_into_dispatch_and_kill(ctx, pool):
     pid = pool._workers[wid].proc.pid
     assert pool.running(wid) is True
 
-    nu.run(nustd.mem.Frame(Local, Kill(worker=W), w=nu.Literal(wid)), ctx)
+    nu.run(nu.mem.Frame(Local, Kill(worker=W), w=nu.Literal(wid)), ctx)
     assert pool.workers() == []
     assert not _pid_alive(pid)
 
@@ -155,7 +154,7 @@ def test_pool_can_be_addressed_by_an_explicit_ref():
     tree = nu.Provide(
         WorkerPool,
         {"name": "nu-test-ref"},
-        nustd.mem.Frame(
+        nu.mem.Frame(
             Local,
             Teleport(PoolRef(), body=nu.Add(2, 2), worker=W),
             w=Launch(PoolRef()),
@@ -175,7 +174,7 @@ def test_the_fluent_form_runs_the_same_as_the_constructors():
     tree = nu.Provide(
         WorkerPool,
         {"name": "nu-test-fluent"},
-        nustd.mem.Frame(Local, pool.teleport(nu.Add(20, 22), W), w=pool.launch()),
+        nu.mem.Frame(Local, pool.teleport(nu.Add(20, 22), W), w=pool.launch()),
     )
     value, _ = nu.run(tree)
     assert value == 42
@@ -186,7 +185,7 @@ def test_the_fluent_form_drives_a_whole_lifecycle(ctx, pool):
 
     ref = PoolRef()
     nu.run(
-        nustd.mem.Frame(
+        nu.mem.Frame(
             Local,
             ref.dispatch(RESIDENT, W),
             w=ref.launch(),
@@ -207,7 +206,7 @@ def test_the_fluent_form_drives_a_whole_lifecycle(ctx, pool):
 
 
 def test_dispatch_in_a_tree_returns_promptly(ctx, pool):
-    tree = nustd.mem.Frame(
+    tree = nu.mem.Frame(
         Local,
         Dispatch(body=RESIDENT, worker=W),
         w=Launch(),
@@ -222,9 +221,9 @@ def test_dispatch_in_a_tree_returns_promptly(ctx, pool):
 
 def test_dispatch_carries_caller_attrs_when_asked(pool):
     ctx = nu.Context(attrs={"seed": 7}).bind(WorkerPool, pool)
-    tree = nustd.mem.Frame(
+    tree = nu.mem.Frame(
         Local,
-        Dispatch(body=nu.Attr("seed"), worker=W, carry=True),
+        Dispatch(body=nu.context.Attr("seed"), worker=W, carry=True),
         w=Launch(),
     )
     nu.run(tree, ctx)
@@ -238,7 +237,7 @@ def test_dispatch_carries_caller_attrs_when_asked(pool):
 
 
 def test_alive_and_running_as_tree_queries(ctx, pool):
-    alive, _ = nu.run(nustd.mem.Frame(Local, Alive(worker=W), w=Launch()), ctx)
+    alive, _ = nu.run(nu.mem.Frame(Local, Alive(worker=W), w=Launch()), ctx)
     assert alive is True
     wid = pool.workers()[0]
     running, _ = nu.run(Running(worker=nu.Literal(wid)), ctx)
@@ -268,3 +267,31 @@ async def test_workers_streams_the_ids_async(ctx, pool):
 def test_unbound_pool_raises_a_named_error():
     with pytest.raises(RuntimeError, match="no WorkerPool is bound"):
         nu.run(nu.Collect(Workers()))
+
+
+# --- what crosses the pipe ---------------------------------------------------
+
+
+def test_a_tree_over_a_local_shape_runs_on_a_worker(ctx):
+    class Tally(nu.Shape):
+        n = nu.mem.IntRef.slot()
+
+    body = nu.mem.Frame(Tally, nu.Add(Tally.n, 1), n=41)
+    tree = nu.mem.Frame(Local, Teleport(body=body, worker=W), w=Launch())
+    assert nu.run(tree, ctx)[0] == 42
+
+
+async def test_a_let_runs_on_a_worker(ctx):
+    body = nu.mem.let(41, lambda n: nu.Add(n, 1))
+    tree = nu.mem.Frame(Local, Teleport(body=body, worker=W), w=Launch())
+    assert (await nu.arun(tree, ctx))[0] == 42
+
+
+def test_an_init_holding_a_local_class_reaches_the_worker(ctx):
+    class Greeter:
+        pass
+
+    bound = nu.context.FabricRef(Greeter).exists()
+    launch = Launch(init=nu.Provide(Greeter, {}, nu.Noop()))
+    tree = nu.mem.Frame(Local, Teleport(body=bound, worker=W), w=launch)
+    assert nu.run(tree, ctx)[0] is True

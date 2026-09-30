@@ -6,7 +6,7 @@ error, a retry the attempt, a reaction the key that changed. Only interactions
 write it, imperatively in their compile through ``ctx.attrs.let`` / ``set``.
 The tree only reads, through ``Attr(name)``, and ``Attr(name).exists()`` asks
 whether a name is bound. State of any kind goes through a fabric instead:
-``nustd.mem`` for local state, kv for records.
+``nu.mem`` for local state, kv for records.
 
 What an interaction hands over is immutable. Concurrent tasks share bound
 values by reference, so a container the interaction builds itself is bound in
@@ -16,8 +16,8 @@ a value that comes from user data passes through as it is.
 
 from __future__ import annotations
 
-from .interactions import Exists
+from .interactions import AttrExists
 from .refs import Attr
 
 
-__all__ = ["Attr", "Exists"]
+__all__ = ["Attr", "AttrExists"]

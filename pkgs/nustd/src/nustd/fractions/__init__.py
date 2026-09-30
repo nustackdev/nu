@@ -8,11 +8,16 @@ arithmetic and comparison use the core atoms). Import it like the stdlib::
 
     from nustd.fractions import Fraction
     import nustd.fractions as fractions    # fractions.Fraction.of(1, 3), ...
+
+The leaves that hold these values in a Shape slot sit one submodule per
+fabric: ``nustd.fractions.mem`` for ``nu.mem``, loaded with this package, and
+``nustd.fractions.kv`` for ``nustd.kv``, imported by its own path.
 """
 
 from __future__ import annotations
 
+from nustd.fractions import mem
 from nustd.fractions.forms import Fraction
 
 
-__all__ = ["Fraction"]
+__all__ = ["Fraction", "mem"]

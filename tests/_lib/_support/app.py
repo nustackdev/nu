@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import nu
 import nustd.http
-import nustd.mem
 
 
 __all__ = ["GH", "Person", "Task"]
@@ -18,8 +17,8 @@ __all__ = ["GH", "Person", "Task"]
 class Person(nu.Shape):
     """Whoever a task is assigned to."""
 
-    name: nustd.mem.StrRef
-    email: nustd.mem.StrRef
+    name: nu.mem.StrRef
+    email: nu.mem.StrRef
 
 
 class Task(nu.Shape):
@@ -29,9 +28,9 @@ class Task(nu.Shape):
         - `done` is written only by the reconciler, never by the UI.
     """
 
-    title: nustd.mem.StrRef
-    priority: nustd.mem.IntRef
-    owner: Person = nustd.mem.ShapeRef.slot(Person)
+    title: nu.mem.StrRef
+    priority: nu.mem.IntRef
+    owner: Person = nu.mem.ShapeRef.slot(Person)
 
 
 class GH(nu.Service):

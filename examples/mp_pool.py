@@ -23,13 +23,13 @@ POOL = nustd.mp_pool.PoolRef()
 class Ticks(nu.Shape):
     """What the resident work counts, in a dict every worker comes up holding."""
 
-    n = nustd.mem.IntRef.slot()
+    n = nu.IntRef.slot()
 
 
 class Local(nu.Shape):
     """The demo's own frame: the worker it launched."""
 
-    worker = nustd.mem.IntRef.slot()
+    worker = nu.IntRef.slot()
 
 
 WORKER = Local.worker
@@ -53,7 +53,7 @@ def demo() -> None:
         # and the teleports that read it see the same one.
         {"name": "nu", "init": nu.Provide(dict, {}, tag=Ticks)},
         # Launch yields the new worker's id; the frame keeps it for the rest.
-        nustd.mem.Frame(
+        nu.Frame(
             Local,
             nu.Sequential(
                 nu.Print(nu.STDOUT, "worker id        :", WORKER),

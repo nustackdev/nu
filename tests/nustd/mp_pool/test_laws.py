@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 import nu
-import nustd
 from nu.lang.attributes import Cardinality, Sort
 from nustd.mp_pool import (
     Alive,
@@ -24,13 +23,13 @@ from nustd.mp_pool import (
 class Scratch(nu.Shape):
     """Where these trees put what they read, and the worker they address."""
 
-    n = nustd.mem.ObjectRef.slot()
-    m = nustd.mem.ObjectRef.slot()
-    w = nustd.mem.ObjectRef.slot()
-    a = nustd.mem.ObjectRef.slot()
-    r = nustd.mem.ObjectRef.slot()
-    c = nustd.mem.ObjectRef.slot()
-    ws = nustd.mem.ObjectRef.slot()
+    n = nu.mem.ObjectRef.slot()
+    m = nu.mem.ObjectRef.slot()
+    w = nu.mem.ObjectRef.slot()
+    a = nu.mem.ObjectRef.slot()
+    r = nu.mem.ObjectRef.slot()
+    c = nu.mem.ObjectRef.slot()
+    ws = nu.mem.ObjectRef.slot()
 
 
 RESIDENT = nu.ForeverDo(nu.DelayedDo(0.01, Scratch.n.set(1)))
@@ -59,14 +58,14 @@ TREES = {
     "wait": _provided(Scratch.c.set(Wait(worker=Scratch.w))),
     "workers": _provided(Scratch.ws.set(nu.Collect(Workers()))),
     "explicit_pool_ref": _provided(
-        nustd.mem.Frame(
+        nu.mem.Frame(
             Scratch,
             Teleport(PoolRef(), body=nu.Add(1, 1), worker=Scratch.w),
             w=Launch(PoolRef()),
         ),
     ),
     "fluent": _provided(
-        nustd.mem.Frame(
+        nu.mem.Frame(
             Scratch,
             nu.Sequential(
                 PoolRef().dispatch(RESIDENT, Scratch.w),
@@ -88,7 +87,7 @@ TREES = {
         Dispatch(body=nu.ForeverDo(Scratch.n.set(1)), worker=Scratch.w),
     ),
     "whole_lifecycle": _provided(
-        nustd.mem.Frame(
+        nu.mem.Frame(
             Scratch,
             nu.Sequential(
                 Teleport(body=Scratch.n.set(0), worker=Scratch.w),
@@ -235,7 +234,7 @@ def test_the_worker_id_is_still_a_child_of_dispatch():
     """Only the body moved to payload. The id has to stay computable."""
     node = Dispatch(body=RESIDENT, worker=Scratch.w)
     assert isinstance(nu.tree.children(node)[0], PoolRef)
-    assert isinstance(nu.tree.children(node)[1], nustd.mem.ObjectRef)
+    assert isinstance(nu.tree.children(node)[1], nu.mem.ObjectRef)
 
 
 def test_a_rewrite_carries_the_body_across_unchanged():

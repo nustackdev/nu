@@ -23,7 +23,7 @@ from nucli._meta import nu_version
 # static mount, and it is probed anyway: without it the browser gets no bundle.
 _FABRICS: dict[str, tuple[str, ...]] = {
     "kv": ("virtuals",),
-    "mem": ("janus",),
+    "queue": ("janus",),
     "ws_server": ("fastapi", "uvicorn", "watchfiles"),
     "ui": ("fastapi", "uvicorn", "msgpack", "watchfiles", "nudle"),
     "cluster": ("ray",),

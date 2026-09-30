@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import nu
-import nustd.mem
 from nu.inspect import (
     Entry,
     RefRecord,
@@ -14,7 +13,7 @@ from nu.inspect import (
     verify_shape,
 )
 from nu.inspect.entry import entry_names, is_shape, nested_shape
-from nustd.mem.refs import DictRef, IntRef, StrRef
+from nu.mem.refs import DictRef, IntRef, StrRef
 
 
 class Person(nu.Shape):
@@ -33,14 +32,14 @@ class Task(nu.Shape):
 
     title: StrRef
     priority: IntRef
-    owner: Person = nustd.mem.ShapeRef.slot(Person)
+    owner: Person = nu.mem.ShapeRef.slot(Person)
 
 
 class Legacy(nu.Shape):
     """A shape written with no annotations at all."""
 
     title = StrRef.slot()
-    owner = nustd.mem.ShapeRef.slot(Person)
+    owner = nu.mem.ShapeRef.slot(Person)
 
 
 class Board(nu.Shape):

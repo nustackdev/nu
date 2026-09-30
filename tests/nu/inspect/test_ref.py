@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from nu.inspect import BuilderRecord, RefRecord, parse_ref, verify_ref
-from nustd.mem.refs.items import IntRef, ItemRef, StrRef
+from nu.mem.refs.items import IntRef, ItemRef, StrRef
 
 
 def test_a_ref_is_a_builder_record_dispatch_tagged() -> None:
@@ -37,9 +37,9 @@ def test_a_ref_answers_the_same_taxonomy_questions_an_atom_does() -> None:
 
 
 def test_a_ref_knows_the_module_it_is_defined_in() -> None:
-    record = parse_ref(IntRef, path="nustd.mem.IntRef")
-    assert record.path == "nustd.mem.IntRef"
-    assert record.module == "nustd.mem.refs.items"
+    record = parse_ref(IntRef, path="nu.mem.IntRef")
+    assert record.path == "nu.mem.IntRef"
+    assert record.module == "nu.mem.refs.items"
 
 
 def test_ref_docstrings_are_clean_by_the_shared_laws() -> None:

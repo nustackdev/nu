@@ -209,9 +209,9 @@ Each one boots a live browser dashboard and picks up where it left off on restar
 
 # 🔋 Nu STD
 
-Batteries included. 26 modules ship on top of the kernel.
+Batteries included. 25 modules ship on top of the kernel. The kernel holds one fabric of its own, `nu.mem`: in-memory state over plain dicts, `users.age.set(12)`.
 
-Twelve are **fabrics**. Bind one and every Ref inside the bracket reaches a real system.
+Eleven are **fabrics**. Bind one and every Ref inside the bracket reaches a real system.
 
 The rest re-surface Python's **standard library**. Call them anywhere, no binding. Same names, same call shape as the stdlib, except a call hands back a tree, not a value. So it composes into the rest of the program.
 
@@ -226,7 +226,6 @@ pip install nucore "nustd[kv,ui]"    # or one extra per fabric
 | [nustd.ui](https://nustack.dev/docs/reference/nustd/ui) | Reactive web UI. | `Dashboard.count.set_value(n)` |
 | [nustd.cluster](https://nustack.dev/docs/reference/nustd/cluster) | Cluster compute. | `Teleport(op, target="gpu")` |
 | [nustd.llm](https://nustack.dev/docs/reference/nustd/llm) | OpenAI-compatible chat. | `Bot.chat(prompt="…")` |
-| [nustd.mem](https://nustack.dev/docs/reference/nustd/mem) | In-memory state. | `users.age.set(12)` |
 | [nustd.proxy](https://nustack.dev/docs/reference/nustd/proxy) | Fabrics over the network. | `InvisiblesProxy(Nav, address=...)` |
 | [nustd.http](https://nustack.dev/docs/reference/nustd/http) | Nu meets the web. | `Solana.get_slot()` |
 | [nustd.service](https://nustack.dev/docs/reference/nustd/service) | Python objects as Refs. | `Calc.add(a=2, b=3)` |

@@ -11,7 +11,6 @@ import pytest
 import nu
 import nustd
 import nustd.kv
-import nustd.mem
 from nu.domains.shape import dsl
 from nu.domains.shape.dsl import Shape, ShapeMeta, Slot, SlotDescriptor
 from nu.domains.shape.item import ItemRef
@@ -153,7 +152,7 @@ def test_a_slot_named_after_a_shape_ref_method_fails_at_class_creation(name: str
 
 def test_an_annotated_slot_is_checked_too() -> None:
     with pytest.raises(TypeError, match=r"slot 'len' clashes"):
-        ShapeMeta("Bad", (Shape,), {"__annotations__": {"len": nustd.mem.IntRef}})
+        ShapeMeta("Bad", (Shape,), {"__annotations__": {"len": nu.mem.IntRef}})
 
 
 def test_a_fabric_shape_ref_method_is_reserved_too() -> None:
@@ -172,11 +171,11 @@ def test_the_reserved_names_come_from_the_classes() -> None:
 
 class _Leafy(Shape):
     name = Slot(ItemRef)
-    title: nustd.mem.StrRef  # StrRef.title exists, but no ShapeRef has it
+    title: nu.mem.StrRef  # StrRef.title exists, but no ShapeRef has it
 
 
 class _Outer(Shape):
-    inner = nustd.mem.ShapeRef.slot(_Leafy)
+    inner = nu.mem.ShapeRef.slot(_Leafy)
 
 
 def test_names_only_a_leaf_ref_carries_stay_usable() -> None:

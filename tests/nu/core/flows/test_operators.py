@@ -11,7 +11,6 @@ from __future__ import annotations
 from _support.policy_atoms import RecordAction
 
 import nu
-import nustd.mem
 from nu.core.flows import Parallel, Race, Sequential
 from nu.domains.shape.interactions import SetCmd
 from nu.lang import Context, Literal
@@ -21,9 +20,9 @@ from nu.lang.helpers import arun, run
 class S(nu.Shape):
     """The mem slots the bodies below write."""
 
-    a = nustd.mem.ObjectRef.slot()
-    b = nustd.mem.ObjectRef.slot()
-    c = nustd.mem.ObjectRef.slot()
+    a = nu.mem.ObjectRef.slot()
+    b = nu.mem.ObjectRef.slot()
+    c = nu.mem.ObjectRef.slot()
 
 
 def _set(name: str, value: object) -> SetCmd:

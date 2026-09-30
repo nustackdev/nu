@@ -11,7 +11,8 @@ import operator
 
 import pytest
 
-from nu import Attr, run
+from nu import run
+from nu.context import Attr
 from nu.lang import Context
 from nu.lang.helpers import arun
 from nustd.functools import reduce

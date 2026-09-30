@@ -21,6 +21,8 @@ import multiprocessing as _mp
 import threading
 from typing import TYPE_CHECKING
 
+from nu.lang import wire
+
 from ._worker import _worker_main
 
 
@@ -50,8 +52,9 @@ class MpWorker:
 
     ``start_method`` is the ``multiprocessing`` start method (``"spawn"``,
     ``"fork"``, ``"forkserver"``). Default ``"spawn"`` - cross-platform, the
-    child gets a clean interpreter, so ``init`` / ``ctx_builder`` (and their
-    captured state) must be pickleable.
+    child gets a clean interpreter. ``init`` / ``ctx_builder`` travel through
+    ``nu.lang.wire`` (cloudpickle), so closures and locally defined classes
+    go along.
 
     ``name`` is forwarded to ``Process`` for readable ``ps`` output.
     """
@@ -79,7 +82,7 @@ class MpWorker:
         parent_conn, child_conn = ctx.Pipe(duplex=True)
         proc = ctx.Process(
             target=_worker_main,
-            args=(child_conn, self.init, self.ctx_builder),
+            args=(child_conn, wire.dumps((self.init, self.ctx_builder))),
             name=self.name or "nu-mp-worker",
             daemon=True,
         )
@@ -92,7 +95,7 @@ class MpWorker:
         proc, conn = self._spawn()
         self._proc = proc
         self._conn = conn
-        ack = conn.recv()
+        ack = wire.recv(conn)
         if ack != ("ready",):
             proc.terminate()
             proc.join(timeout=2)
@@ -102,7 +105,7 @@ class MpWorker:
         """Send stop, join the child."""
         if self._conn is not None:
             with contextlib.suppress(Exception):
-                self._conn.send(("stop",))
+                wire.send(self._conn, ("stop",))
         if self._proc is not None:
             self._proc.join(timeout=5)
             if self._proc.is_alive():
@@ -121,8 +124,8 @@ class MpWorker:
             raise RuntimeError("MpWorker is not started")
         conn = self._conn
         with self._lock:
-            conn.send(("exec", tree, attrs))
-            reply = conn.recv()
+            wire.send(conn, ("exec", tree, attrs))
+            reply = wire.recv(conn)
         kind = reply[0]
         if kind == "ok":
             return reply[1]

@@ -1,7 +1,7 @@
-"""Attrs interactions: ``Exists``.
+"""Attrs interactions: ``AttrExists``.
 
-The read itself is the ``Attr`` Ref's dual role. ``Exists`` complements it: an
-unbound read yields EMPTY, which a name bound to EMPTY would alias, so
+The read itself is the ``Attr`` Ref's dual role. ``AttrExists`` complements
+it: an unbound read yields EMPTY, which a name bound to EMPTY would alias, so
 existence needs an explicit query. It holds its Ref in a read slot; effect
 synthesis binds it to a read on the attrs fabric.
 """
@@ -19,10 +19,10 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
-__all__ = ["Exists"]
+__all__ = ["AttrExists"]
 
 
-class Exists(ScalarQuery):
+class AttrExists(ScalarQuery):
     """Whether the name its attrs ref names is bound in ``ctx.attrs``.
 
     Args:
@@ -30,7 +30,7 @@ class Exists(ScalarQuery):
 
     Notes:
         - Normally written as ``ref.exists()`` rather than built by hand.
-        - Exists because the dual-role read cannot answer the question: an
+        - Needed because the dual-role read cannot answer the question: an
           unbound name yields EMPTY, and so does a name bound to EMPTY.
         - Only the address is resolved; the value is never read.
 

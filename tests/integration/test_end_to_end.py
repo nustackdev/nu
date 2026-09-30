@@ -9,7 +9,7 @@ mutation.
 
 from __future__ import annotations
 
-import nustd.mem
+import nu.mem
 from nu.context import Attr
 from nu.core import (
     Add,
@@ -27,7 +27,7 @@ from nu.lang.helpers import arun, run
 
 
 class State(Shape):
-    total = nustd.mem.IntRef.slot()
+    total = nu.mem.IntRef.slot()
 
 
 def test_read_compute_write():

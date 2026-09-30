@@ -9,11 +9,16 @@ Import it like the stdlib::
 
     from nustd.pathlib import Path
     import nustd.pathlib as pathlib    # pathlib.Path.of("a", "b"), ...
+
+The leaves that hold these values in a Shape slot sit one submodule per
+fabric: ``nustd.pathlib.mem`` for ``nu.mem``, loaded with this package, and
+``nustd.pathlib.kv`` for ``nustd.kv``, imported by its own path.
 """
 
 from __future__ import annotations
 
+from nustd.pathlib import mem
 from nustd.pathlib.forms import Path
 
 
-__all__ = ["Path"]
+__all__ = ["Path", "mem"]

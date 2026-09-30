@@ -6,7 +6,7 @@ AI agents, and services). No glue. 50x less code.
 
 Two ways to import. Grab what you need flat from the root:
 
-    from nu import Int, Sequential, Retry, Attr, Nu, run
+    from nu import Int, Sequential, Retry, Nu, run
 
 Or reach a subpackage by dot-access:
 
@@ -14,12 +14,15 @@ Or reach a subpackage by dot-access:
     nu.forms.Int        nu.core.Add
     nu.core.flows.Sequential     nu.core.spans.Retry
     nu.shape.Shape      nu.tree.map_nodes
+    nu.mem.IntRef       nu.context.Attr
 
-The fabrics and the standard library live one import away, in `nustd`::
+The mem fabric (``nu.mem``) is core: local state over plain dicts, its refs
+and interactions flat at the root too. The other fabrics and the standard
+library live one import away, in `nustd`::
 
     import nustd
-    nustd.mem.IntRef    nustd.kv.presets.memory_storage
-    nustd.ui.Page       nustd.uuid.UUID
+    nustd.kv.presets.memory_storage    nustd.ui.Page
+    nustd.decimal.mem.DecimalRef       nustd.uuid.UUID
 """
 
 from __future__ import annotations
@@ -43,8 +46,22 @@ del _bootstrap
 from . import context, core, engine, factory, forms, inspect, lang, prog, tree
 from .domains import shape
 
+# The mem fabric builds on the shape domain and the forms, so it comes after.
+from . import mem
+
 # Flat re-exports: the program-authoring surface.
-from .context import *
+from .context import (
+    Attr,
+    AttrExists,
+    Fabric,
+    FabricExists,
+    FabricLifecycle,
+    FabricRef,
+    Provide,
+    ProvideDict,
+    ProvideList,
+    With,
+)
 from .core import *
 from .core.flows import *
 from .core.spans import *
@@ -52,6 +69,25 @@ from .forms import *
 
 # Shape DSL only; fabric atoms (Load, SetCmd, ...) stay at nu.shape.*.
 from .domains.shape import Shape, Slot
+
+# The mem fabric's refs and interactions: local state is part of every program.
+from .mem import (
+    BoolRef,
+    BytesRef,
+    Debounce,
+    DictRef,
+    FloatRef,
+    Frame,
+    IntRef,
+    ListRef,
+    ObjectRef,
+    ProgramRef,
+    SetRef,
+    ShapeRef,
+    StrRef,
+    Throttle,
+    let,
+)
 from .domains.service import Method, Service
 
 # The program pipeline (nu.prog fabric). Flat: ``nu.LoadNu`` beside ``nu.Eval``,

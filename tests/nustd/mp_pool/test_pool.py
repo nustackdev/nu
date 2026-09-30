@@ -77,8 +77,8 @@ def test_ids_are_monotonic_and_never_reused(pool):
 def test_launch_ships_the_init_bracket(pool):
     plain = pool.launch()
     marked = pool.launch(nu.Provide(Marker, {"label": "hi"}))
-    assert pool.teleport(plain, nu.FabricRef(Marker).exists()) is False
-    assert pool.teleport(marked, nu.FabricRef(Marker).exists()) is True
+    assert pool.teleport(plain, nu.context.FabricRef(Marker).exists()) is False
+    assert pool.teleport(marked, nu.context.FabricRef(Marker).exists()) is True
 
 
 def test_pool_default_init_applies_to_every_worker():
@@ -86,7 +86,7 @@ def test_pool_default_init_applies_to_every_worker():
     p.setup(None)
     try:
         w = p.launch()
-        assert p.teleport(w, nu.FabricRef(Marker).exists()) is True
+        assert p.teleport(w, nu.context.FabricRef(Marker).exists()) is True
     finally:
         p.cleanup()
 

@@ -73,7 +73,7 @@ class Program(Form, TypedNu[str]):
           classification and promise checks all reach it with no special
           case for programs.
         - Mixed into a substrate ref it becomes a program-valued slot
-          (``nustd.kv``'s ``ProgramRef`` and its ``nustd.mem`` twin), where the
+          (``nustd.kv``'s ``ProgramRef`` and its ``nu.mem`` twin), where the
           child is what reads the source out of storage. Nothing else about
           the Form changes, which is why the verbs are not overridable per
           substrate.

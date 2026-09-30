@@ -24,7 +24,7 @@ never payload, so a target can come from a ``Ref``, a mem slot or any
 query::
 
     class Local(Shape):
-        worker = nustd.mem.IntRef.slot()
+        worker = nu.IntRef.slot()
 
     w = Local.worker
     Provide(WorkerPool, {"init": With(Provide(Store, {...})), "name": "nu"},
@@ -60,8 +60,9 @@ Worker ids are monotonic ints and are never reused, so a stale id is
 detectably dead rather than silently a different worker.
 
 The default ``start_method`` is ``"spawn"`` - the child gets a clean
-interpreter, so the ``init`` bracket and any dispatched body must be
-pickleable (top-level in a module, no closures).
+interpreter. The ``init`` bracket and every body go through cloudpickle
+(``nu.lang.wire``), so closures and classes defined inside a function travel
+too.
 """
 
 from __future__ import annotations

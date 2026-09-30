@@ -16,8 +16,8 @@ from nu import run
 from nu.domains.shape import Shape
 from nu.forms import Dict, DictValues, Int, Iterator, List, Object, Str
 from nu.lang import TypeInfo
+from nustd.decimal.kv import DecimalRef
 from nustd.kv import (
-    DecimalRef,
     DictRef,
     IntRef,
     Kh57Ref,
@@ -65,7 +65,7 @@ class Spelled(Shape):
     [
         (lambda: Bag.names["a"], StrRef),
         (lambda: Bag.counts[1], IntRef),
-        (lambda: Bag.prices["a"], DecimalRef),
+        (lambda: Bag.prices["a"], ObjectRef),
         (lambda: Bag.marks["a"], DecimalRef),
         (lambda: Bag.rows["a"], ShapeRef),
         (lambda: Bag.points[5], ShapeRef),
@@ -89,9 +89,14 @@ def test_a_shape_child_is_bound_to_the_declared_shape(ctx):
 def test_a_typed_child_is_an_operand_of_its_value(ctx):
     run(Bag.names["a"].set("gor"), ctx)
     run(Bag.counts[1].set(41), ctx)
-    run(Bag.prices["a"].set(Decimal("1.50")), ctx)
+    run(Bag.marks["a"].set(Decimal("1.50")), ctx)
     assert run(Bag.names["a"].upper(), ctx)[0] == "GOR"
     assert run(Bag.counts[1] + 1, ctx)[0] == 42
+    assert run(Bag.marks["a"], ctx)[0] == Decimal("1.50")
+
+
+def test_a_std_type_declared_by_python_type_is_held_as_it_is(ctx):
+    run(Bag.prices["a"].set(Decimal("1.50")), ctx)
     assert run(Bag.prices["a"], ctx)[0] == Decimal("1.50")
 
 
@@ -150,14 +155,14 @@ def test_a_mapping_stream_carries_the_declared_key_type(ctx):
 
 def test_stream_ops_keep_the_element_type_while_the_items_are_the_sources(ctx):
     run(Bag.tags.set(["x", "y"]), ctx)
-    kept = Bag.tags.iter().filter(nu.Gt(nu.Attr("item"), "x"))
+    kept = Bag.tags.iter().filter(nu.Gt(nu.context.Attr("item"), "x"))
     assert type(kept.first()) is Str
     assert run(kept.first().upper(), ctx)[0] == "Y"
     drained = Bag.tags.iter().to_list()
     assert type(drained.first_elem()) is Str
     assert run(drained.first_elem().upper(), ctx)[0] == "X"
     assert nu.tree.payload(Bag.tags.iter().to_set())["type_info"].elem == TypeInfo(str)
-    assert type(Bag.tags.iter().map(nu.Attr("item")).first()) is Object
+    assert type(Bag.tags.iter().map(nu.context.Attr("item")).first()) is Object
 
 
 def test_undeclared_results_are_object():

@@ -17,7 +17,8 @@ a private fd and repoint fd 1 at stderr. From then on ``print``, a chatty
 import, and a C extension writing to fd 1 all land on stderr where they are
 visible to a human and harmless to the protocol.
 
-Wire format: 4-byte big-endian length prefix, then a cloudpickle payload.
+Wire format: 4-byte big-endian length prefix, then a ``nu.lang.wire``
+(cloudpickle) payload.
 Frames::
 
     ('construct', source, entry, scope, filename)   parent -> worker
@@ -38,8 +39,6 @@ import struct
 import sys
 from typing import TYPE_CHECKING, BinaryIO
 
-import cloudpickle
-
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -52,8 +51,10 @@ _HEADER = struct.Struct(">I")
 
 
 def _send(stream: BinaryIO, frame: object) -> None:
-    """Write one length-prefixed cloudpickle frame and flush it."""
-    payload = cloudpickle.dumps(frame)
+    """Write one length-prefixed wire frame and flush it."""
+    from nu.lang import wire
+
+    payload = wire.dumps(frame)
     stream.write(_HEADER.pack(len(payload)))
     stream.write(payload)
     stream.flush()
@@ -61,7 +62,7 @@ def _send(stream: BinaryIO, frame: object) -> None:
 
 def _recv(stream: BinaryIO) -> object | None:
     """Read one frame, or ``None`` at a clean end of stream."""
-    import pickle
+    from nu.lang import wire
 
     header = _read_exactly(stream, _HEADER.size)
     if header is None:
@@ -70,7 +71,7 @@ def _recv(stream: BinaryIO) -> object | None:
     body = _read_exactly(stream, size)
     if body is None:
         return None
-    return pickle.loads(body)  # noqa: S301 -- peer is our own parent process
+    return wire.loads(body)
 
 
 def _read_exactly(stream: BinaryIO, size: int) -> bytes | None:

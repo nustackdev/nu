@@ -33,6 +33,8 @@ import multiprocessing as _mp
 import threading
 from typing import TYPE_CHECKING
 
+from nu.lang import wire
+
 from ._worker import _pool_worker_main
 
 
@@ -141,7 +143,7 @@ class _WorkerHandle:
         try:
             while True:
                 try:
-                    frame = self.conn.recv()
+                    frame = wire.recv(self.conn)
                 except (EOFError, OSError, ValueError):
                     break
                 self._handle(frame)
@@ -244,7 +246,7 @@ class _WorkerHandle:
         """Send an opened request's frame. A cancel that came in meanwhile follows it out."""
         try:
             with self._send_lock:
-                self.conn.send((kind, token, tree, attrs))
+                wire.send(self.conn, (kind, token, tree, attrs))
         except (OSError, ValueError, BrokenPipeError) as exc:
             with self._state:
                 self._pending.pop(token, None)
@@ -283,7 +285,7 @@ class _WorkerHandle:
 
     def _send_cancel(self, token: int) -> None:
         with contextlib.suppress(OSError, ValueError), self._send_lock:
-            self.conn.send(("cancel", token))
+            wire.send(self.conn, ("cancel", token))
 
     def wait_exit(self, timeout: float | None = None) -> int | None:
         """Block until the process is gone; its exit code, or None if unknown."""
@@ -368,8 +370,9 @@ class WorkerPool:
             the child, entered there, and torn down LIFO when the worker
             dies. ``Launch`` can override it per worker.
         start_method: the ``multiprocessing`` start method. ``"spawn"`` by
-            default, so the child gets a clean interpreter and ``init`` must
-            be pickleable (top-level in a module, no closures).
+            default, so the child gets a clean interpreter. ``init`` travels
+            through ``nu.lang.wire`` (cloudpickle), so closures and locally
+            defined classes go along.
         name: process name prefix; the worker id is appended.
         ready_timeout: how long ``launch`` waits for the child to finish
             building its Context.
@@ -454,7 +457,7 @@ class WorkerPool:
         parent_conn, child_conn = mp_ctx.Pipe(duplex=True)
         proc = mp_ctx.Process(
             target=_pool_worker_main,
-            args=(child_conn, bracket),
+            args=(child_conn, wire.dumps(bracket)),
             name=f"{self.name}-{wid}",
             daemon=True,
         )

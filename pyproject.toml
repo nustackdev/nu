@@ -247,7 +247,10 @@ convention = "google"
 "**/ops/control/**/*.py" = [
     "ANN401",  # Any needed for polymorphic control op parameters
 ]
-"**/refs/std.py" = [
+"**/src/nustd/*/mem.py" = [
+    "N811", "N812",  # std Forms (UUID, date, ...) aliased as *Form to not shadow stdlib types
+]
+"**/src/nustd/*/kv.py" = [
     "N811", "N812",  # std Forms (UUID, date, ...) aliased as *Form to not shadow stdlib types
 ]
 "**/src/nustd/ui/core/**/*.py" = [

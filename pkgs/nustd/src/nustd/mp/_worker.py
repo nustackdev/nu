@@ -8,10 +8,10 @@ crunch one CPU-bound job anyway. Scale wider by binding a fleet
 
 Internally the worker uses ``asyncio.run`` because the ``init`` bracket
 lifecycle is async and Nu's runtime tree may be async; that is invisible
-to the parent, which just does blocking ``pipe.send`` / ``pipe.recv``.
+to the parent, which just does blocking sends and receives on the pipe.
 
-Wire format is stdlib ``pickle`` - both endpoints are trusted (parent and
-its own child). Frames::
+Every frame goes through ``nu.lang.wire`` (cloudpickle), and so do
+``init`` and ``ctx_builder``, handed over as one ``setup`` payload. Frames::
 
     ('exec', tree, attrs)   parent -> worker
     ('stop',)               parent -> worker (shutdown)
@@ -25,6 +25,8 @@ import asyncio
 import contextlib
 from typing import TYPE_CHECKING
 
+from nu.lang import wire
+
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Iterator
@@ -34,12 +36,12 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Context
 
 
-def _worker_main(
-    conn: Connection,
-    init: _LifecycleBracket | None,
-    ctx_builder: Callable[[], Context | Awaitable[Context]] | None,
-) -> None:
-    """Child-process entry: build Context, ack READY, run the request loop."""
+def _worker_main(conn: Connection, setup: bytes) -> None:
+    """Child-process entry: build Context, ack READY, run the request loop.
+
+    ``setup`` is the wire payload of ``(init, ctx_builder)``.
+    """
+    init, ctx_builder = wire.loads(setup)
     try:
         asyncio.run(_run(conn, init, ctx_builder))
     finally:
@@ -69,11 +71,11 @@ async def _run(
         else:
             ctx = Context()
 
-        conn.send(("ready",))
+        wire.send(conn, ("ready",))
 
         while True:
             try:
-                frame = await asyncio.to_thread(conn.recv)
+                frame = await asyncio.to_thread(wire.recv, conn)
             except (EOFError, OSError):
                 break
             if frame[0] == "stop":
@@ -83,10 +85,10 @@ async def _run(
                 program = compile_term(tree)
                 with _exec_context(ctx, attrs) as exec_ctx:
                     value, _ = await aeval(program, exec_ctx)
-                conn.send(("ok", value))
+                wire.send(conn, ("ok", value))
             except BaseException as exc:
                 with contextlib.suppress(Exception):
-                    conn.send(("err", exc))
+                    wire.send(conn, ("err", exc))
 
 
 @contextlib.contextmanager

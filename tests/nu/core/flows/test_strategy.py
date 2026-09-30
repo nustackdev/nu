@@ -12,7 +12,6 @@ import pytest
 from _support.policy_atoms import RecordAction
 
 import nu
-import nustd.mem
 from nu.core.flows import AnyN, Gather, Parallel, Race, Sequential
 from nu.lang import Attr, Cardinality, Context, Literal, Strategy
 from nu.lang.attributes.execution import ExecOrder
@@ -22,8 +21,8 @@ from nu.lang.helpers import arun, compile, run
 class S(nu.Shape):
     """The mem slots the bodies below write."""
 
-    a = nustd.mem.ObjectRef.slot()
-    b = nustd.mem.ObjectRef.slot()
+    a = nu.mem.ObjectRef.slot()
+    b = nu.mem.ObjectRef.slot()
 
 
 def _set(name: str, value: object) -> nu.Nu:

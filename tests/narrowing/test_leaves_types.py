@@ -12,6 +12,8 @@ from typing_extensions import assert_type
 
 import nu
 from nu.forms import Bool, Bytes, Float, Int, Str
+from nu.mem.refs import IntRef as MemIntRef
+from nu.mem.refs import StrRef as MemStrRef
 from nustd.kv.refs import (
     BoolRef,
     BytesRef,
@@ -19,8 +21,6 @@ from nustd.kv.refs import (
     IntRef,
     StrRef,
 )
-from nustd.mem.refs import IntRef as MemIntRef
-from nustd.mem.refs import StrRef as MemStrRef
 
 
 # --- Shapes -------------------------------------------------------------

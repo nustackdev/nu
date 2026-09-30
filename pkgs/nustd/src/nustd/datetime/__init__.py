@@ -8,11 +8,16 @@ and ``interactions`` (the constructor atoms; method calls use the shared
 
     from nustd.datetime import date, timedelta
     import nustd.datetime as datetime    # datetime.date.today(), ...
+
+The leaves that hold these values in a Shape slot sit one submodule per
+fabric: ``nustd.datetime.mem`` for ``nu.mem``, loaded with this package, and
+``nustd.datetime.kv`` for ``nustd.kv``, imported by its own path.
 """
 
 from __future__ import annotations
 
+from nustd.datetime import mem
 from nustd.datetime.forms import date, datetime, time, timedelta, timezone
 
 
-__all__ = ["date", "datetime", "time", "timedelta", "timezone"]
+__all__ = ["date", "datetime", "mem", "time", "timedelta", "timezone"]

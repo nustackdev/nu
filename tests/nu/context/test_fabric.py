@@ -8,7 +8,7 @@ written through a Ref, so there is no fabric write op - mirrors v1.
 
 from __future__ import annotations
 
-import nustd.mem
+import nu.mem
 from nu.context import FabricExists, FabricRef
 from nu.core import IsEmpty
 from nu.domains.shape import Shape
@@ -23,7 +23,7 @@ class Clock:
 class Saved(Shape):
     """Where a test parks what a FabricRef read."""
 
-    clock = nustd.mem.ObjectRef.slot()
+    clock = nu.mem.ObjectRef.slot()
 
 
 # --- FabricRef read (the dual role) --------------------------------------

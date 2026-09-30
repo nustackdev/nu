@@ -84,9 +84,9 @@ class _Kv(nu.Shape):
 
 
 class _Mem(nu.Shape):
-    xs = nustd.mem.ListRef.slot(int)
-    d = nustd.mem.DictRef.slot(int)
-    st = nustd.mem.SetRef.slot(int)
+    xs = nu.mem.ListRef.slot(int)
+    d = nu.mem.DictRef.slot(int)
+    st = nu.mem.SetRef.slot(int)
 
 
 @pytest.mark.parametrize(

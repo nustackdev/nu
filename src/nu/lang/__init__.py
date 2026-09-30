@@ -10,6 +10,7 @@
 - ``laws``       - ``LAWS`` and the predicate library.
 - ``runtime``    - ``Runtime``, ``Context``, ``Budget``, lifecycle helpers.
 - ``helpers``    - top-level user-facing entries (``run``, ``eval``, ``astream``, ...).
+- ``wire``       - how a tree crosses a process boundary: cloudpickle both ways.
 
 A Term is built from the kind taxonomy, ``compile``d against the schema,
 then ``gate``d or ``validate``d, then driven through an entry.

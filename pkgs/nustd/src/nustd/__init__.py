@@ -5,13 +5,13 @@ One import, then dot-access::
 
     import nustd
 
-    nustd.kv.presets.memory_storage    nustd.mem.IntRef
+    nustd.kv.presets.memory_storage    nustd.decimal.mem.DecimalRef
     nustd.ui.Page                      nustd.service.Method
     nustd.uuid.UUID                    nustd.datetime.Now
 
 Two kinds of thing live here, side by side.
 
-**Fabrics** (``kv``, ``mem``, ``ui``, ``ws_server``, ``service``, ``llm``,
+**Fabrics** (``kv``, ``queue``, ``ui``, ``ws_server``, ``service``, ``llm``,
 ``cc``, ``http``, ``proxy``, ``mp``, ``mp_pool``, ``cluster``, ``valkey``) back
 a Shape with somewhere real to live: a store, a browser, a process pool, a
 model, a private notification server. Each
@@ -75,10 +75,10 @@ if TYPE_CHECKING:
         http,
         kv,
         llm,
-        mem,
         mp,
         mp_pool,
         proxy,
+        queue,
         service,
         ui,
         valkey,
@@ -93,10 +93,10 @@ _LAZY = {
     "http": "http",
     "kv": "kv",
     "llm": "llm",
-    "mem": "mem",
     "mp": None,
     "mp_pool": None,
     "proxy": "proxy",
+    "queue": "queue",
     "service": None,
     "ui": "ui",
     # Imports without its backend: a worker only building the URL needs no

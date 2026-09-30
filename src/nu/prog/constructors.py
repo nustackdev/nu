@@ -62,7 +62,7 @@ import threading
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-import cloudpickle
+from nu.lang import wire
 
 from .diagnostics import Diagnostic
 from .source import DEFAULT_ENTRY, DEFAULT_FILENAME
@@ -443,8 +443,8 @@ def _resolve_interpreter(python: str | os.PathLike[str]) -> Path:
 
 
 def _send(stream: object, frame: object) -> None:
-    """Write one length-prefixed cloudpickle frame and flush it."""
-    payload = cloudpickle.dumps(frame)
+    """Write one length-prefixed wire frame and flush it."""
+    payload = wire.dumps(frame)
     stream.write(_HEADER.pack(len(payload)))  # type: ignore[attr-defined]
     stream.write(payload)  # type: ignore[attr-defined]
     stream.flush()  # type: ignore[attr-defined]
@@ -452,8 +452,6 @@ def _send(stream: object, frame: object) -> None:
 
 def _recv(stream: object) -> object | None:
     """Read one frame, or ``None`` when the child's stdout has closed."""
-    import pickle
-
     header = _read_exactly(stream, _HEADER.size)
     if header is None:
         return None
@@ -461,7 +459,7 @@ def _recv(stream: object) -> object | None:
     body = _read_exactly(stream, size)
     if body is None:
         return None
-    return pickle.loads(body)  # noqa: S301 -- peer is a child we spawned
+    return wire.loads(body)
 
 
 def _read_exactly(stream: object, size: int) -> bytes | None:

@@ -174,9 +174,8 @@ class Launch(ScalarAction):
           reads as dead rather than pointing at some later worker.
         - This both mutates the pool and yields, which is why it is an action
           rather than a query: evaluating it twice launches two processes.
-        - Under ``spawn`` (the default start method) the bracket is pickled
-          into the child, so it has to be pickleable - top-level in a module,
-          no closures.
+        - The bracket goes into the child through cloudpickle, so it may hold
+          closures and locally defined classes.
         - A child that fails to build its Context is killed and reaped before
           the error propagates, so a failed launch leaves nothing behind.
 
@@ -329,8 +328,8 @@ class Dispatch(Command):
         - ``carry=True`` binds the caller's ``ctx.attrs`` on a branch of the
           worker's Context for that one body, so loop variables bound by
           ``Map`` or ``Filter`` reach it.
-        - Everything crossing the pipe is pickled, so the body term and what
-          it captures must be pickleable.
+        - Everything crossing the pipe goes through cloudpickle, so the body
+          term may hold closures and locally defined classes.
         - Several bodies can be dispatched to one worker; they run as
           concurrent tasks in the child's loop. A body that blocks the loop
           rather than awaiting will starve its siblings, which is a property

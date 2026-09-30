@@ -18,7 +18,6 @@ import pytest
 from _support.async_atoms import BoomAction
 
 import nu
-import nustd.mem
 from nu.context import Attr as AttrRef
 from nu.core.iteration import Iter
 from nu.core.spans import TryCatch
@@ -34,9 +33,9 @@ if TYPE_CHECKING:
 class S(nu.Shape):
     """The mem slots the bodies, catches and finallys below write."""
 
-    a = nustd.mem.ObjectRef.slot()
-    done = nustd.mem.ObjectRef.slot()
-    seen = nustd.mem.ObjectRef.slot()
+    a = nu.mem.ObjectRef.slot()
+    done = nu.mem.ObjectRef.slot()
+    seen = nu.mem.ObjectRef.slot()
 
 
 def _set(name: str, value: object) -> SetCmd:

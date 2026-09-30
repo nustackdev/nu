@@ -15,10 +15,15 @@ Import it the way you would the stdlib::
 
     from nustd.cmath import complex, sqrt, phase, pi
     import nustd.cmath as cmath    # then cmath.sqrt(...), cmath.phase(...)
+
+The leaves that hold these values in a Shape slot sit one submodule per
+fabric: ``nustd.cmath.mem`` for ``nu.mem``, loaded with this package, and
+``nustd.cmath.kv`` for ``nustd.kv``, imported by its own path.
 """
 
 from __future__ import annotations
 
+from nustd.cmath import mem
 from nustd.cmath.forms import complex
 from nustd.cmath.functions import (
     acos,
@@ -68,6 +73,7 @@ __all__ = [
     "isnan",
     "log",
     "log10",
+    "mem",
     "nan",
     "nanj",
     "phase",

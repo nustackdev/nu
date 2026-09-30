@@ -14,7 +14,6 @@ from _support.attrs import declared
 from _support.policy_atoms import SlowAction
 
 import nu
-import nustd.mem
 from nu.core.spans import Timeout
 from nu.lang import Literal, Policy, Span
 from nu.lang.helpers import arun, run
@@ -27,7 +26,7 @@ if TYPE_CHECKING:
 class S(nu.Shape):
     """The mem slot the timeout handler writes."""
 
-    timed_out = nustd.mem.ObjectRef.slot()
+    timed_out = nu.mem.ObjectRef.slot()
 
 
 def _set(name: str, value: object) -> SetCmd:

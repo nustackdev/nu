@@ -4,7 +4,7 @@ Covers both verbs standalone, every construction argument threading through
 each of them, the ``on_error`` branch under both runtimes, and what a catch
 branch can read off the caught error. The substrate refs that mix this Form
 into a stored slot are tested next to their own substrates
-(``tests/nustd/kv/functional/test_prog_ref.py``, ``tests/nustd/mem/test_prog_ref.py``).
+(``tests/nustd/kv/functional/test_prog_ref.py``, ``tests/nu/mem/test_prog_ref.py``).
 """
 
 from __future__ import annotations
@@ -131,7 +131,7 @@ def test_entry_threads_through_load() -> None:
 
 def test_entry_can_be_computed() -> None:
     ctx = nu.Context(attrs={"entry": "build"})
-    tree = Program(ENTRY_SOURCE).run(entry=nu.Attr("entry"))
+    tree = Program(ENTRY_SOURCE).run(entry=nu.context.Attr("entry"))
     assert nu.run(tree, ctx)[0] == "built"
 
 
@@ -146,7 +146,7 @@ def test_scope_threads_through_load() -> None:
 
 def test_scope_values_can_be_computed() -> None:
     ctx = nu.Context(attrs={"who": "attrs"})
-    tree = Program(GREETING).run(scope={"who": nu.Attr("who")})
+    tree = Program(GREETING).run(scope={"who": nu.context.Attr("who")})
     assert nu.run(tree, ctx)[0] == "hello attrs"
 
 
@@ -273,7 +273,7 @@ def test_on_error_also_catches_a_venv_brace_failure() -> None:
 
 
 def test_the_catch_branch_can_read_the_error_as_a_string() -> None:
-    tree = Program(BROKEN).run(on_error=nu.str(nu.Attr("error")))
+    tree = Program(BROKEN).run(on_error=nu.str(nu.context.Attr("error")))
     value, _ = nu.run(tree)
     assert "ZeroDivisionError" in value
     assert "(line 4)" in value
@@ -283,14 +283,14 @@ def test_the_catch_branch_can_read_the_diagnostic_fields() -> None:
     # Two Vars hops: the exception's __dict__ carries ``diagnostic``, the
     # Diagnostic's carries ``lineno``. Both need a __dict__, which is why
     # neither type is slotted.
-    exc = nu.GetAttr(nu.Attr("error"), "exception")
+    exc = nu.GetAttr(nu.context.Attr("error"), "exception")
     diagnostic = nu.GetItem(nu.Vars(exc), "diagnostic")
     lineno = nu.GetItem(nu.Vars(diagnostic), "lineno")
     assert nu.run(Program(BROKEN).run(on_error=lineno))[0] == 4
 
 
 def test_the_catch_branch_can_branch_on_the_line_number() -> None:
-    exc = nu.GetAttr(nu.Attr("error"), "exception")
+    exc = nu.GetAttr(nu.context.Attr("error"), "exception")
     lineno = nu.GetAttr(nu.GetAttr(exc, "diagnostic"), "lineno")
     tree = Program(BROKEN).run(
         on_error=nu.If(nu.Eq(lineno, 4), nu.Literal("line four"), nu.Literal("elsewhere"))
@@ -299,7 +299,7 @@ def test_the_catch_branch_can_branch_on_the_line_number() -> None:
 
 
 async def test_the_catch_branch_reads_the_diagnostic_under_arun() -> None:
-    exc = nu.GetAttr(nu.Attr("error"), "exception")
+    exc = nu.GetAttr(nu.context.Attr("error"), "exception")
     lineno = nu.GetAttr(nu.GetAttr(exc, "diagnostic"), "lineno")
     value, _ = await nu.arun(Program(BROKEN).run(on_error=lineno))
     assert value == 4

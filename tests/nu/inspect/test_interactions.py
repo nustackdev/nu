@@ -22,8 +22,8 @@ def test_atom_render_dispatches_to_form_for_a_form_subclass() -> None:
 
 
 def test_atom_render_dispatches_to_ref_for_a_ref_subclass() -> None:
-    text = render("nustd.mem.refs.items.IntRef")
-    assert text.startswith("REF  nustd.mem.refs.items.IntRef")
+    text = render("nu.mem.refs.items.IntRef")
+    assert text.startswith("REF  nu.mem.refs.items.IntRef")
     assert ".inc(" in text
 
 

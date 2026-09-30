@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-    from .interactions import Exists
+    from .interactions import AttrExists
 
 
 __all__ = ["Attr"]
@@ -42,7 +42,7 @@ class Attr(_ContextRef, Object):
 
     Notes:
         - Read-only. Nothing in the tree binds or reassigns a name; state
-          goes through a fabric (``nustd.mem`` for local state).
+          goes through a fabric (``nu.mem`` for local state).
         - It carries the Object form, the surface every term has. Wrap the
           read in the form it needs: ``nu.Str(nu.Attr("item")).upper()``.
         - A name nothing bound and a name bound to EMPTY read the same, so
@@ -75,7 +75,7 @@ class Attr(_ContextRef, Object):
 
         return athunk
 
-    def exists(self) -> Exists:
+    def exists(self) -> AttrExists:
         """A Query yielding whether this Ref's name is bound in ``ctx.attrs``.
 
         Notes:
@@ -83,6 +83,6 @@ class Attr(_ContextRef, Object):
               and so does a name bound to EMPTY.
             - Only the address is resolved; the value is never read.
         """
-        from .interactions import Exists
+        from .interactions import AttrExists
 
-        return Exists(self)
+        return AttrExists(self)

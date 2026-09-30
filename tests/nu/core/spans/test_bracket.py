@@ -23,7 +23,6 @@ from _support.law_terms import Cmd, Q, R
 from _support.laws import assert_fails, assert_passes
 
 import nu
-import nustd.mem
 from nu.context import FabricRef
 from nu.core.arithmetic import Add
 from nu.core.iteration import Iter
@@ -39,7 +38,7 @@ if TYPE_CHECKING:
 class S(nu.Shape):
     """The mem slot the pass-through body writes."""
 
-    a = nustd.mem.ObjectRef.slot()
+    a = nu.mem.ObjectRef.slot()
 
 
 def _set(name: str, value: object) -> SetCmd:

@@ -13,8 +13,8 @@ from typing import ClassVar
 
 from nu import Shape, run
 from nu.lang import EMPTY
+from nu.mem import StrRef as MemStrRef
 from nustd.kv import DictRef, IntRef, ListRef, ShapeRef, StrRef
-from nustd.mem import StrRef as MemStrRef
 from virtuals.views import DictView
 
 

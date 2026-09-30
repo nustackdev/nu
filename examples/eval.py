@@ -1,12 +1,11 @@
 """Dynamic Nu tree evaluation: pick a Nu term, evaluate it in the same runtime."""
 
 import nu
-import nustd
 
 
 class State(nu.Shape):
-    program = nustd.mem.StrRef.slot()
-    result = nustd.mem.IntRef.slot()
+    program = nu.StrRef.slot()
+    result = nu.IntRef.slot()
 
 
 REGISTRY: dict[str, nu.Nu] = {

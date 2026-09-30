@@ -20,7 +20,7 @@ import operator
 
 import pytest
 
-from nu import Attr
+from nu.context import Attr
 from nu.core import Collect
 from nu.lang import Context
 from nu.lang.helpers import arun, run

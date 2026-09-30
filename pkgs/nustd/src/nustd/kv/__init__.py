@@ -52,22 +52,14 @@ from nustd.kv.presets import (
     text_storage,
 )
 from nustd.kv.refs import (
-    BasisPointRef,
     BoolRef,
     BytesRef,
-    ComplexRef,
-    DateRef,
-    DatetimeRef,
-    DecimalRef,
     DictRef,
     FloatRef,
-    FractionRef,
     IntRef,
     Kh57Ref,
     ListRef,
     ObjectRef,
-    PathRef,
-    PercentageRef,
     PrimitiveDictRef,
     PrimitiveFrozenSetRef,
     PrimitiveListRef,
@@ -77,10 +69,6 @@ from nustd.kv.refs import (
     SetRef,
     ShapeRef,
     StrRef,
-    TimedeltaRef,
-    TimeRef,
-    TimezoneRef,
-    UUIDRef,
 )
 from nustd.kv.tree import auto_flow_atomic
 
@@ -149,19 +137,6 @@ __all__ = [  # noqa: RUF022
     "ListRef",
     "SetRef",
     "ShapeRef",
-    # Refs: stdlib-typed (std)
-    "BasisPointRef",
-    "ComplexRef",
-    "DateRef",
-    "DatetimeRef",
-    "DecimalRef",
-    "FractionRef",
-    "PathRef",
-    "PercentageRef",
-    "TimeRef",
-    "TimedeltaRef",
-    "TimezoneRef",
-    "UUIDRef",
     # Refs: whole-blob compound (primitives)
     "PrimitiveDictRef",
     "PrimitiveFrozenSetRef",

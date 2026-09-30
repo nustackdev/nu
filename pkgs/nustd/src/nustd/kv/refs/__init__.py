@@ -8,6 +8,7 @@ container holds a whole collection as one leaf value.
 
 The substrate bases (``ItemRef``, ``PrimitiveRef``, ``ViewRef``, ``Facet``)
 are here for fabric and library authors; a subscript never hands one back.
+Leaves for standard-library values live with their library (``nustd.<lib>.kv``).
 """
 
 from .base import Facet, PrimitiveRef, ViewRef
@@ -22,41 +23,19 @@ from .primitives import (
     PrimitiveTupleRef,
 )
 from .prog import ProgramRef
-from .std import (
-    BasisPointRef,
-    ComplexRef,
-    DateRef,
-    DatetimeRef,
-    DecimalRef,
-    FractionRef,
-    PathRef,
-    PercentageRef,
-    TimedeltaRef,
-    TimeRef,
-    TimezoneRef,
-    UUIDRef,
-)
 
 
 __all__ = [
-    "BasisPointRef",
     "BoolRef",
     "BytesRef",
-    "ComplexRef",
-    "DateRef",
-    "DatetimeRef",
-    "DecimalRef",
     "DictRef",
     "Facet",
     "FloatRef",
-    "FractionRef",
     "IntRef",
     "ItemRef",
     "Kh57Ref",
     "ListRef",
     "ObjectRef",
-    "PathRef",
-    "PercentageRef",
     "PrimitiveDictRef",
     "PrimitiveFrozenSetRef",
     "PrimitiveListRef",
@@ -67,9 +46,5 @@ __all__ = [
     "SetRef",
     "ShapeRef",
     "StrRef",
-    "TimeRef",
-    "TimedeltaRef",
-    "TimezoneRef",
-    "UUIDRef",
     "ViewRef",
 ]

@@ -24,7 +24,7 @@ from nu.forms.collections.abc.set_interactions import (
     Union,
 )
 from nustd.decimal import Decimal
-from nustd.mem.refs.jqueue import JQueueRef
+from nustd.queue import JQueueRef
 
 
 class _Row(nu.Shape):
@@ -43,10 +43,10 @@ class _Kv(nu.Shape):
 
 
 class _Mem(nu.Shape):
-    n = nustd.mem.IntRef.slot()
-    xs = nustd.mem.ListRef.slot(int)
-    d = nustd.mem.DictRef.slot(int)
-    st = nustd.mem.SetRef.slot(int)
+    n = nu.mem.IntRef.slot()
+    xs = nu.mem.ListRef.slot(int)
+    d = nu.mem.DictRef.slot(int)
+    st = nu.mem.SetRef.slot(int)
     q = JQueueRef.slot(item_type=int)
 
 
@@ -54,7 +54,7 @@ class _Mem(nu.Shape):
 TERMS = [
     ("Object", lambda: nu.Object(12)),
     ("Int", lambda: nu.Int(12)),
-    ("Attr", lambda: nu.Attr("n")),
+    ("Attr", lambda: nu.context.Attr("n")),
     ("Bool", lambda: nu.Int(1) > 0),
     ("Float", lambda: nu.Float(1.5)),
     ("Str", lambda: nu.Str("a")),

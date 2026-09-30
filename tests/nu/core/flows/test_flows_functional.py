@@ -15,7 +15,6 @@ from _support.async_atoms import BoomAction
 from _support.policy_atoms import RecordAction
 
 import nu
-import nustd.mem
 from nu.core.flows import AnyN, Parallel, Race, Sequential
 from nu.lang import Context, Literal
 from nu.lang.helpers import arun, run
@@ -24,8 +23,8 @@ from nu.lang.helpers import arun, run
 class S(nu.Shape):
     """The mem slots the bodies below write."""
 
-    a = nustd.mem.ObjectRef.slot()
-    b = nustd.mem.ObjectRef.slot()
+    a = nu.mem.ObjectRef.slot()
+    b = nu.mem.ObjectRef.slot()
 
 
 def _set(name: str, value: object) -> nu.Nu:

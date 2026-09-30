@@ -38,8 +38,8 @@ mapping and shows exactly what a program wrote into it, keys no Shape ever
 named included -- the shape supplies the protocol, kv supplies the contents.
 The walk stops only at something no shape declares as a container at all.
 
-Nothing here opens a store, and the one fabric imported is ``nustd.mem``, for
-the frame a column keeps its single pass in. Building the term needs no
+Nothing here opens a store, and the one fabric used is the kernel's
+``nu.mem``, for the frame a column keeps its single pass in. Building the term needs no
 Navigator; only running it touches one. So the storage boundary
 belongs to whoever runs the term: :func:`nustd.ui.lens.browse` places it for
 you, and a caller wiring the arm by hand writes the ``nustd.kv.Snapshot(...)``
@@ -52,7 +52,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import nu
-import nustd.mem
 from nu.domains.shape import ItemRef, MappingRef, SequenceRef, ShapeRef
 from nu.lang import EMPTY, INVALID, Cardinality
 
@@ -248,7 +247,7 @@ def _shape_term(shape_cls: type[Shape], at: StructuredRef | None) -> nu.Nu:
 class _Column(nu.Shape):
     """The frame a mapping or sequence column holds its one pass over the store in."""
 
-    held = nustd.mem.ObjectRef.slot()
+    held = nu.ObjectRef.slot()
 
 
 def _mapping_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
@@ -264,7 +263,7 @@ def _mapping_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
         row: nu.Nu = _door(nu.ToStr(elem), "shape")
     else:
         row = LensCell(nu.ToStr(elem), ref[elem], nu.Str("leaf"), nu.Bool(True), nu.Bool(False))
-    return nustd.mem.Frame(
+    return nu.Frame(
         _Column,
         _column(
             "mapping",
@@ -294,7 +293,7 @@ def _sequence_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
             nu.Bool(False),
             nu.Bool(False),
         )
-    return nustd.mem.Frame(
+    return nu.Frame(
         _Column,
         _column(
             "sequence",

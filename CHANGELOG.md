@@ -13,6 +13,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Memory state is part of the core, and one-off values get their own frame
+- Memory refs moved from the standard library into the core, so imports change
 - Programs only read context names; local state lives in memory frames instead
 - Scoped bindings and typed context refs are gone; programs keep their locals in frames
 - Parallel branches keep their own context, so one arm never changes another's names

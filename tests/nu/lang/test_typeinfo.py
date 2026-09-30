@@ -25,16 +25,16 @@ from nu.forms import (
     Tuple,
 )
 from nu.lang import TypeInfo
-from nustd.kv.refs import (
-    PrimitiveDictRef,
-    PrimitiveListRef,
-)
-from nustd.mem.refs import (
+from nu.mem.refs import (
     DictRef,
     IntRef,
     ListRef,
     ShapeRef,
     StrRef,
+)
+from nustd.kv.refs import (
+    PrimitiveDictRef,
+    PrimitiveListRef,
 )
 
 

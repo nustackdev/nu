@@ -67,8 +67,8 @@ class Teleport(Policy):
           the child by the ``MpWorker``'s ``init`` bracket or
           ``ctx_builder``. Anything bound around the Teleport in the
           caller's tree is not visible there.
-        - Everything crossing the pipe is pickled, so the body term and what
-          it captures must be pickleable.
+        - Everything crossing the pipe goes through cloudpickle, so the body
+          term may hold closures and locally defined classes.
         - Both runtimes work. The pipe read blocks either way; the sync path
           blocks the calling thread, the async path waits off-thread so
           sibling work keeps running.

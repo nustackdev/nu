@@ -6,8 +6,8 @@ it does **not** serialize one request at a time: every request becomes its own
 asyncio task, so a resident body dispatched with ``Dispatch`` keeps running
 while the loop goes back to reading the pipe.
 
-Wire format is stdlib ``pickle`` - both endpoints are trusted (parent and its
-own child). Frames::
+Every frame goes through ``nu.lang.wire`` (cloudpickle), and so does the
+``init`` bracket handed over at spawn. Frames::
 
     parent -> child
         ('exec', token, tree, attrs)      run it, reply with the value
@@ -40,8 +40,9 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import pickle
 from typing import TYPE_CHECKING
+
+from nu.lang import wire
 
 
 if TYPE_CHECKING:
@@ -56,18 +57,21 @@ __all__ = ["_pool_worker_main"]
 
 
 def _portable(exc: BaseException) -> BaseException:
-    """Return ``exc`` if it survives a pickle round trip, else a flat stand-in."""
+    """Return ``exc`` if it survives a wire round trip, else a flat stand-in."""
     try:
-        pickle.loads(pickle.dumps(exc))  # noqa: S301  (our own object, trusted)
+        wire.loads(wire.dumps(exc))
     except Exception:
         return RuntimeError(f"{type(exc).__name__}: {exc}")
     return exc
 
 
-def _pool_worker_main(conn: Connection, init: _LifecycleBracket | None) -> None:
-    """Child-process entry: build the Context, ack READY, serve the pipe."""
+def _pool_worker_main(conn: Connection, init: bytes) -> None:
+    """Child-process entry: build the Context, ack READY, serve the pipe.
+
+    ``init`` is the wire payload of the bracket the worker comes up holding.
+    """
     try:
-        asyncio.run(_run(conn, init))
+        asyncio.run(_run(conn, wire.loads(init)))
     finally:
         with contextlib.suppress(Exception):
             conn.close()
@@ -81,7 +85,7 @@ async def _run(conn: Connection, init: _LifecycleBracket | None) -> None:
 
     async def send(frame: tuple) -> None:
         async with send_lock:
-            await asyncio.to_thread(conn.send, frame)
+            await asyncio.to_thread(wire.send, conn, frame)
 
     stack = contextlib.AsyncExitStack()
     async with stack:
@@ -91,10 +95,10 @@ async def _run(conn: Connection, init: _LifecycleBracket | None) -> None:
                 await stack.enter_async_context(init._aopen(ctx))
         except BaseException as exc:
             with contextlib.suppress(Exception):
-                conn.send(("failed", _portable(exc)))
+                wire.send(conn, ("failed", _portable(exc)))
             raise
 
-        conn.send(("ready",))
+        wire.send(conn, ("ready",))
 
         tasks: set[asyncio.Task] = set()
         by_token: dict[int, asyncio.Task] = {}
@@ -108,7 +112,7 @@ async def _run(conn: Connection, init: _LifecycleBracket | None) -> None:
         try:
             while True:
                 try:
-                    frame = await asyncio.to_thread(conn.recv)
+                    frame = await asyncio.to_thread(wire.recv, conn)
                 except (EOFError, OSError):
                     break
                 if frame[0] == "stop":
