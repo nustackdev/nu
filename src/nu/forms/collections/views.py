@@ -122,7 +122,7 @@ class DictValues(
 
     Notes:
         - Not set-like: values can repeat and aren't required to be
-          hashable, so there's no `union`/`intersection`/`|`/`&` here,
+          hashable, so there's no `union`/`intersection` here,
           unlike `DictKeys` and `DictItems`. Just Collection: iterable,
           sized (`len()`), and `contains`.
         - Lazy and live: it holds no values of its own, it re-reads the

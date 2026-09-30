@@ -61,8 +61,8 @@ class IterableForm(Form, Generic[ElementT, CollectionResultT, ElementResultT]):
               wraps it as an Iterator.
             - Named because Python's `iter()` / `for` would loop over the
               term at build time; the ``Nu`` base blocks them.
-            - The result is a lazy stream, consumed by a Flow or a stream
-              consumer, not handed straight to `nu.run`.
+            - The result is a lazy stream: loop it with `nu.ForEachDo`,
+              drain it with `.to_list()`, or take its first item with `.first()`.
 
         Yields:
             An Iterator streaming self's elements.

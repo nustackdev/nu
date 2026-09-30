@@ -25,8 +25,8 @@ class Bool(Form, TypedNu[bool]):
     Notes:
         - Logical operators are the named forms `and_`, `or_`, `not_`. Python
           reserves `and`, `or`, `not` as keywords, so they cannot be method
-          names. `&` and `|` keep their Python meaning on bools and build the
-          same logical And / Or. `>>` stays flow sequencing.
+          names. `&`, `|` and `>>` compose flows (Race, Parallel,
+          Sequential) on a Bool like on every term.
         - Short-circuits like Python: the right operand is only
           evaluated when the left does not already decide the result.
         - Comparison operators yield Bool too, treating False as less than
@@ -84,85 +84,6 @@ class Bool(Form, TypedNu[bool]):
         from nu.core import Or
 
         return Bool(Or(self, other))
-
-    def __and__(self, other: BoolArg) -> Bool:  # type: ignore[override]
-        """Logical AND: self & other, the same op as `and_`.
-
-        Args:
-            other: the value to AND with self. Any Bool or plain bool.
-
-        Notes:
-            - Python meaning, not flow: on a Bool `&` is `And`, not `Race`.
-
-        Yields:
-            True when both operands are True, False otherwise. INVALID when
-            either operand is a sentinel.
-
-        Example:
-            >>> nu.run((nu.Int(3) > 2) & (nu.Int(3) < 5))[0]
-            True
-        """
-        from nu.core import And
-
-        return Bool(And(self, other))
-
-    def __rand__(self, other: BoolArg) -> Bool:
-        """Logical AND: other & self, with self on the right.
-
-        Args:
-            other: the plain bool on the left of the `&`.
-
-        Yields:
-            True when both operands are True, False otherwise. INVALID when
-            either operand is a sentinel.
-
-        Example:
-            >>> nu.run(True & nu.Bool(False))[0]
-            False
-        """
-        from nu.core import And
-
-        return Bool(And(other, self))
-
-    def __or__(self, other: BoolArg) -> Bool:  # type: ignore[override]
-        """Logical OR: self | other, the same op as `or_`.
-
-        Args:
-            other: the value to OR with self. Any Bool or plain bool.
-
-        Notes:
-            - Python meaning, not flow: on a Bool `|` is `Or`, not
-              `Parallel`.
-
-        Yields:
-            True when either operand is True, False otherwise. INVALID when
-            either operand is a sentinel.
-
-        Example:
-            >>> nu.run((nu.Int(3) > 5) | (nu.Int(3) < 5))[0]
-            True
-        """
-        from nu.core import Or
-
-        return Bool(Or(self, other))
-
-    def __ror__(self, other: BoolArg) -> Bool:
-        """Logical OR: other | self, with self on the right.
-
-        Args:
-            other: the plain bool on the left of the `|`.
-
-        Yields:
-            True when either operand is True, False otherwise. INVALID when
-            either operand is a sentinel.
-
-        Example:
-            >>> nu.run(False | nu.Bool(True))[0]
-            True
-        """
-        from nu.core import Or
-
-        return Bool(Or(other, self))
 
     def not_(self) -> Bool:
         """Logical NOT of self.

@@ -54,7 +54,7 @@ from .attributes import (
     matrix_sort,
     subsort,
 )
-from .forms import Form, TypedNu
+from .forms import Form, TypedNu, TypedNuStream
 from .kinds import (
     Action,
     Bracket,
@@ -149,6 +149,7 @@ __all__ = [
     "TupleArg",
     "TypeInfo",
     "TypedNu",
+    "TypedNuStream",
     "Unset",
     "Violation",
     "acollect",

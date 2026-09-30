@@ -105,6 +105,7 @@ from .lang import (
     StreamQuery,
     TupleArg,
     TypedNu,
+    TypedNuStream,
 )
 
 # Atom builders (nu.factory subpackage): factories + @host.

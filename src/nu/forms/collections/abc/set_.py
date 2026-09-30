@@ -1,8 +1,11 @@
 """Set collection: bases + mutations.
 
 SetLikeForm = Collection + union/intersection/difference/symmetric_difference/issubset/issuperset/isdisjoint
-    + copy + __or__/__and__/__sub__/__xor__
-MutableSetForm = SetLike + add/remove/discard/pop/clear/update/*_update + __ior__/__iand__/__isub__/__ixor__
+    + copy
+MutableSetForm = SetLike + add/remove/discard/pop/clear/update/*_update
+
+Set algebra is named methods only. ``&``, ``|`` and ``>>`` compose flows on
+every term (a set form included), and ``-`` / ``^`` are not defined here.
 
 Follows Python's collections.abc.Set / MutableSet pattern.
 
@@ -47,7 +50,8 @@ class SetLikeForm(
     """Base for set values, like collections.abc.Set.
 
     Ops: union, intersection, difference, symmetric_difference, issubset,
-    issuperset, isdisjoint, copy, and operators | & - ^.
+    issuperset, isdisjoint, copy. Named methods only: `&`, `|` and `>>`
+    compose flows on a set like on every term, and `-` / `^` are not defined.
 
     Notes:
         - Subclasses (e.g. `Set`) must implement `_wrap_set_result` to wrap
@@ -228,79 +232,6 @@ class SetLikeForm(
 
         return cast("CollectionResultT", self._wrap_set_result(Copy(self)))
 
-    def __or__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Union: self | other.
-
-        Args:
-            other: the set to union with self.
-
-        Yields:
-            A new set with every element from self and other, same as
-            `union`. INVALID when self or other is a sentinel.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}) | {4, 5})[0]
-            {1, 2, 3, 4, 5}
-        """
-        from .set_interactions import SetOr
-
-        return cast("CollectionResultT", self._wrap_set_result(SetOr(self, other)))
-
-    def __and__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Intersection: self & other.
-
-        Args:
-            other: the set to intersect with self.
-
-        Yields:
-            A new set with only the elements found in both, same as
-            `intersection`. INVALID when self or other is a sentinel.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}) & {2, 3})[0]
-            {2, 3}
-        """
-        from .set_interactions import SetAnd
-
-        return cast("CollectionResultT", self._wrap_set_result(SetAnd(self, other)))
-
-    def __sub__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Difference: self - other.
-
-        Args:
-            other: the set to subtract from self.
-
-        Yields:
-            A new set with the elements of self minus other, same as
-            `difference`. INVALID when self or other is a sentinel.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}) - {2})[0]
-            {1, 3}
-        """
-        from .set_interactions import SetSub
-
-        return cast("CollectionResultT", self._wrap_set_result(SetSub(self, other)))
-
-    def __xor__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Symmetric difference: self ^ other.
-
-        Args:
-            other: the set to compare against self.
-
-        Yields:
-            A new set with the elements in self or other but not both,
-            same as `symmetric_difference`. INVALID when self or other is
-            a sentinel.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}) ^ {2, 4})[0]
-            {1, 3, 4}
-        """
-        from .set_interactions import SetXor
-
-        return cast("CollectionResultT", self._wrap_set_result(SetXor(self, other)))
-
 
 class MutableSetForm(
     SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
@@ -308,8 +239,8 @@ class MutableSetForm(
 ):
     """Base for mutable set values, like collections.abc.MutableSet.
 
-    Adds add/remove/discard/pop/clear/update/*_update and the in-place
-    operators |= &= -= ^= on top of SetLikeForm.
+    Adds add/remove/discard/pop/clear/update/*_update on top of
+    SetLikeForm. The in-place spellings are the `*_update` methods.
 
     Notes:
         - Every mutating method needs self bound to a Ref inside a shape;
@@ -486,75 +417,6 @@ class MutableSetForm(
         from .set_interactions import SymmetricDifferenceUpdate
 
         return SymmetricDifferenceUpdate(self, other)
-
-    def __ior__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """In-place union: self |= other.
-
-        Args:
-            other: the set to union into self.
-
-        Yields:
-            Self, after mutation. Same effect as `update`.
-
-        Example::
-
-            my_set |= {4, 5}
-        """
-        from .set_interactions import SetIOr
-
-        return cast("CollectionResultT", self._wrap_set_result(SetIOr(self, other)))
-
-    def __iand__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """In-place intersection: self &= other.
-
-        Args:
-            other: the set to intersect self with.
-
-        Yields:
-            Self, after mutation. Same effect as `intersection_update`.
-
-        Example::
-
-            my_set &= {2, 3}
-        """
-        from .set_interactions import SetIAnd
-
-        return cast("CollectionResultT", self._wrap_set_result(SetIAnd(self, other)))
-
-    def __isub__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """In-place difference: self -= other.
-
-        Args:
-            other: the set of elements to remove from self.
-
-        Yields:
-            Self, after mutation. Same effect as `difference_update`.
-
-        Example::
-
-            my_set -= {2}
-        """
-        from .set_interactions import SetISub
-
-        return cast("CollectionResultT", self._wrap_set_result(SetISub(self, other)))
-
-    def __ixor__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """In-place symmetric difference: self ^= other.
-
-        Args:
-            other: the set to compare self against.
-
-        Yields:
-            Self, after mutation. Same effect as
-            `symmetric_difference_update`.
-
-        Example::
-
-            my_set ^= {2, 4}
-        """
-        from .set_interactions import SetIXor
-
-        return cast("CollectionResultT", self._wrap_set_result(SetIXor(self, other)))
 
 
 class ReactiveSetForm(

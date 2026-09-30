@@ -275,7 +275,7 @@ class MappingForm(
         return cast("CollectionResultT", self._wrap_items_result(ReversedItems(self)))
 
     def merge(self, other: Arg[Mapping[KeyT, ValueT]]) -> CollectionResultT:
-        """Self and other merged into a new mapping: mapping | other.
+        """Self and other merged into a new mapping, like Python's dict `|`.
 
         Args:
             other: the mapping to merge in. Its keys win over self's on
@@ -443,7 +443,7 @@ class MutableMappingForm(
         return cast("ValueResultT", self._wrap_value_result(SetDefault(self, key, default)))
 
     def merge_update(self, other: Arg[Mapping[KeyT, ValueT]]) -> CollectionResultT:
-        """Merge other into self in place, and yield self: mapping |= other.
+        """Merge other into self in place, and yield self, like Python's dict `|=`.
 
         Args:
             other: the mapping to merge in. Its values win over self's on

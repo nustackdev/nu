@@ -26,9 +26,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-import nu
 from nu.core import Iter
-from nu.forms import Iterator, Object
+from nu.forms import Object
 from nu.lang import StreamQuery
 
 
@@ -66,16 +65,14 @@ __all__ = [
 def _stream(iterable: Arg[Iterable]) -> Nu:
     """Lift an iterable argument into a STREAM child.
 
-    A ``StreamQuery`` atom (another itertools result, ``Iter``, ``Map``,
-    ...) is already stream-shaped, so it's reused directly - wrapping it in
-    another ``Iter`` would feed a stream to a scalar consumer. An
-    ``Iterator`` wrapper is unwrapped to its stream child. Any other
-    iterable (a list, range, ``List``, raw value) is opened with ``Iter``.
+    A ``StreamQuery`` (another itertools result, ``Iter``, ``Map``, an
+    ``Iterator`` form, ...) is already stream-shaped, so it's reused
+    directly - wrapping it in another ``Iter`` would feed a stream to a
+    scalar consumer. Any other iterable (a list, range, ``List``, raw
+    value) is opened with ``Iter``.
     """
     if isinstance(iterable, StreamQuery):
         return cast("Nu", iterable)
-    if isinstance(iterable, Iterator):
-        return cast("Nu", nu.tree.children(iterable)[0])
     return Iter(iterable)
 
 

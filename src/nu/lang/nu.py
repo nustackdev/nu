@@ -99,10 +99,12 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # PEP 695 has no variance markers
     # left-to-right (``a >> b >> c`` is ``Sequential(Sequential(a, b), c)``),
     # which the associativity attribute lets the engine flatten.
     #
-    # A Form whose Python type gives one of these operators a meaning
-    # overrides it with that meaning (Int ``& | >>`` are bitwise, Bool
-    # ``& |`` are logical, Set ``& |`` are set algebra, Dict ``|`` merges).
-    # Everywhere else they stay flow composition.
+    # One meaning on every term: no Form overrides these, reflected versions
+    # included, so ``nu.Int(1) & 2`` builds a Race like any other term and the
+    # validator decides whether it makes sense. Value versions are named
+    # methods (``.and_()``, ``.bitand()``, ``.union()``, ``.merge()``), and so
+    # are the other bitwise and set operators (``<< ^ ~``, set ``- ^``), which
+    # no Form defines at all. Arithmetic and comparisons stay operators.
 
     def __rshift__(self, other: object) -> Nu:
         from nu.core.flows import Sequential
@@ -118,6 +120,24 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # PEP 695 has no variance markers
         from nu.core.flows import Race
 
         return Race(self, other)
+
+    # Reflected: a plain Python value on the left (``2 >> t``) declines, so the
+    # term still builds the flow, with the operands in written order.
+
+    def __rrshift__(self, other: object) -> Nu:
+        from nu.core.flows import Sequential
+
+        return Sequential(other, self)
+
+    def __ror__(self, other: object) -> Nu:
+        from nu.core.flows import Parallel
+
+        return Parallel(other, self)
+
+    def __rand__(self, other: object) -> Nu:
+        from nu.core.flows import Race
+
+        return Race(other, self)
 
     # --- equality -------------------------------------------------------
     #
@@ -197,7 +217,9 @@ def _eq_hint(term: Nu, op: str) -> str:
     return (
         f"`t {op} x` on a bare term ({name}) can't build a comparison: wrap it in a "
         f"form to compare values, nu.Object(t) {op} x. Compare trees with "
-        f"nu.tree.equal(a, b), identity with `is`"
+        f"nu.tree.equal(a, b), identity with `is`. To find a term in a Python "
+        f"list (`t in [...]`, list.index), compare with `is`, or key a set or "
+        f"dict by the term (terms hash by identity)"
     )
 
 
@@ -228,11 +250,16 @@ def _contains_hint(term: Nu) -> str:
 def _iter_hint(term: Nu) -> str:
     """The TypeError message for ``for x in term`` / ``next(term)``."""
     name = type(term).__name__
+    if callable(getattr(type(term), "first", None)):
+        stream = "it.first() for its first item"
+    elif callable(getattr(type(term), "iter", None)):
+        stream = "t.iter() for a stream"
+    else:
+        stream = "nu.Iter(t) for a stream"
     return (
         f"a Nu term can't be looped over while building a program ({name}). "
-        f"To loop in the program: nu.ForEachDo / nu.Map / nu.Filter, t.iter() "
-        f"for a stream, it.next() to pull one item. To walk the term itself: "
-        f"nu.tree.preorder(t) / nu.tree.children(t)"
+        f"To loop in the program: nu.ForEachDo / nu.Map / nu.Filter, {stream}. "
+        f"To walk the term itself: nu.tree.preorder(t) / nu.tree.children(t)"
     )
 
 

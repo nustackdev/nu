@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Operators only compose flows; bit, set and merge operations become named methods
 - Terms never quietly turn into Python values; operators follow each value's Python meaning
 - The any-value form is now called Object, so code using the old name needs renaming
 - Cancelling a wait on a pool worker now cancels that work in the worker

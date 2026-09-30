@@ -40,6 +40,7 @@ from typing import Literal as TLiteral
 
 from nu.lang.kinds import Action, Command, Flow, Query, Ref, Span
 from nu.lang.literal import Literal
+from nu.tree import children, payload
 
 
 if TYPE_CHECKING:
@@ -113,7 +114,7 @@ def _category_color(node: Nu) -> str:
         return BRIGHT_RED
     if _is_literal(node):
         # Trivial leaf literal vs computed (children present).
-        return CYAN if not node._children else DIM_CYAN
+        return CYAN if not children(node) else DIM_CYAN
     if _is_query(node):
         return GREEN
     return ""
@@ -133,17 +134,17 @@ def _ref_label(node: Ref) -> str:
     if owner is not None:
         return f"{cls}[{getattr(owner, '__name__', owner)}]"
 
-    payload = getattr(node, "_payload", None) or {}
-    if payload:
-        hint = ", ".join(f"{k}={v!r}" for k, v in payload.items())
+    data = payload(node) or {}
+    if data:
+        hint = ", ".join(f"{k}={v!r}" for k, v in data.items())
         return f"{cls}({hint})"
     return cls
 
 
 def _literal_label(node: Literal) -> str:
     cls = type(node).__name__
-    if not node._children:
-        return f"{cls}({node._payload.get('value')!r})"
+    if not children(node):
+        return f"{cls}({payload(node).get('value')!r})"
     return cls
 
 
@@ -201,9 +202,9 @@ def _render(
         else:
             lines.append(f"{prefix}{_dim(connector, color=color)} {node_label}")
 
-        children = node._children
-        last_idx = len(children) - 1
-        for i, child in enumerate(children):
+        kids = children(node)
+        last_idx = len(kids) - 1
+        for i, child in enumerate(kids):
             is_last = i == last_idx
             if is_root:
                 child_prefix = ""
@@ -270,7 +271,7 @@ def render_repr(nu: Nu) -> str:
         'Add(1, 2)'
     """
     if isinstance(nu, Literal):
-        return repr(nu._payload.get("value"))
+        return repr(payload(nu).get("value"))
 
     name = type(nu).__name__
 
@@ -279,8 +280,8 @@ def render_repr(nu: Nu) -> str:
     if owner is not None:
         name = f"{name}[{getattr(owner, '__name__', owner)}]"
 
-    if nu._children:
-        inner = ", ".join(render_repr(cast("Nu", child)) for child in nu._children)
+    if children(nu):
+        inner = ", ".join(render_repr(cast("Nu", child)) for child in children(nu))
         return f"{name}({inner})"
 
     # A childless term keeps everything it is in its payload (the stdio
@@ -288,7 +289,7 @@ def render_repr(nu: Nu) -> str:
     # those render as a bare class name that says nothing. Terms with children
     # show only the children: their payload is settings, and repeating it turns
     # every traceback into a wall of defaults.
-    payload = getattr(nu, "_payload", None) or {}
-    if payload:
-        return f"{name}({', '.join(f'{k}={v!r}' for k, v in payload.items())})"
+    data = payload(nu) or {}
+    if data:
+        return f"{name}({', '.join(f'{k}={v!r}' for k, v in data.items())})"
     return name

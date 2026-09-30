@@ -50,9 +50,8 @@ class Dict(
           `Dict.create` expression builds a fresh dict, so comparing two
           separately-built dicts with `is_` is False even when their
           contents match, unlike Python's small-string interning for Str.
-        - `|` and `|=` keep their Python meaning: merge (`merge`) and
-          merge in place (`merge_update`), not flow composition. `&` and
-          `>>` stay flow, as Python's dict defines neither.
+        - Merging is named: `merge` and `merge_update`. `&`, `|` and `>>`
+          compose flows on a Dict like on every term.
 
     Example:
         >>> nu.run(nu.Dict.of(a=1, b=2))[0]
@@ -237,67 +236,6 @@ class Dict(
         from ..primitives import Object
 
         return Object(operand)
-
-    # =========================================================================
-    # MERGE (Python's dict `|` and `|=`)
-    # =========================================================================
-
-    def __or__(self, other: DictArg[K, V]) -> Dict[K, V]:  # type: ignore[override]
-        """Merge: self | other, the same op as `merge`.
-
-        Args:
-            other: the mapping to merge in. Its keys win over self's on
-                overlap.
-
-        Notes:
-            - Python meaning, not flow: on a Dict `|` is `Merge`, not
-              `Parallel`.
-
-        Yields:
-            A new dict holding self's entries overridden by other's.
-            INVALID when self or other is a sentinel.
-
-        Example:
-            >>> nu.run(nu.Dict({"a": 1}) | {"b": 2})[0]
-            {'a': 1, 'b': 2}
-        """
-        return self.merge(other)
-
-    def __ror__(self, other: DictArg[K, V]) -> Dict[K, V]:
-        """Merge: other | self, with self on the right.
-
-        Args:
-            other: the plain dict on the left of the `|`. Self's keys win
-                over its keys on overlap.
-
-        Yields:
-            A new dict holding other's entries overridden by self's.
-            INVALID when self or other is a sentinel.
-
-        Example:
-            >>> nu.run({"a": 1} | nu.Dict({"a": 2}))[0]
-            {'a': 2}
-        """
-        from .abc.mapping_interactions import Merge
-
-        return Dict(Merge(other, self))
-
-    def __ior__(self, other: DictArg[K, V]) -> Dict[K, V]:  # type: ignore[override]
-        """Merge in place: self |= other, the same op as `merge_update`.
-
-        Args:
-            other: the mapping to merge in. Its values win over self's on
-                shared keys.
-
-        Yields:
-            Self, updated with other's entries. INVALID when self or
-            other is a sentinel.
-
-        Example::
-
-            d |= {"b": 2}
-        """
-        return self.merge_update(other)
 
     # =========================================================================
     # COMPARISON

@@ -17,7 +17,7 @@ import pytest
 
 import nu
 import nustd
-from nu.lang import Form
+from nu.lang import EMPTY, Form
 
 
 def _terms() -> list[object]:
@@ -75,13 +75,26 @@ def test_hints_name_the_method_the_term_has() -> None:
 # --- iteration -------------------------------------------------------------------
 
 
-_ITER_HINT = r"can't be looped over.*t\.iter\(\).*nu\.tree\.preorder"
+_ITER_HINT = r"can't be looped over.*nu\.ForEachDo.*nu\.tree\.preorder"
 
 
 @pytest.mark.parametrize("term", _terms(), ids=lambda t: type(t).__name__)
 def test_iter_raises_with_a_hint(term: object) -> None:
     with pytest.raises(TypeError, match=_ITER_HINT):
         iter(term)  # type: ignore[call-overload]
+
+
+def test_iter_hint_names_the_spelling_the_term_has() -> None:
+    with pytest.raises(TypeError, match=r"t\.iter\(\) for a stream"):
+        iter(nu.List.of(1, 2))  # type: ignore[call-overload]
+    with pytest.raises(TypeError, match=r"t\.iter\(\) for a stream"):
+        iter(nu.Object([1]))  # type: ignore[call-overload]
+    with pytest.raises(TypeError, match=r"nu\.Iter\(t\) for a stream"):
+        iter(nu.Add(1, 2))  # type: ignore[call-overload]
+    with pytest.raises(TypeError, match=r"nu\.Iter\(t\) for a stream"):
+        iter(nu.Int(1))  # type: ignore[call-overload]
+    with pytest.raises(TypeError, match=r"it\.first\(\) for its first item"):
+        iter(nu.List.of(1).iter())  # type: ignore[call-overload]
 
 
 def test_python_loops_over_a_term_raise_at_once_instead_of_looping() -> None:
@@ -97,30 +110,62 @@ def test_python_loops_over_a_term_raise_at_once_instead_of_looping() -> None:
 
 
 def test_next_raises_with_a_hint() -> None:
-    with pytest.raises(TypeError, match=_ITER_HINT):
+    with pytest.raises(TypeError, match=r"can't be looped over.*it\.first\(\)"):
         next(nu.List.of(1, 2).iter())  # type: ignore[call-overload]
 
 
 def test_iteration_has_explicit_spellings() -> None:
     it = nu.List.of(1, 2).iter()
     assert isinstance(it, nu.Iterator)
+    assert isinstance(it, nu.StreamQuery)
     assert isinstance(nu.tree.children(it)[0], nu.Iter)
     assert isinstance(nu.Object([1]).iter(), nu.Iterator)
-    assert isinstance(nu.tree.children(it.next())[0], nu.Next)
-    assert nu.run(nu.Collect(nu.tree.children(it)[0]))[0] == [1, 2]
 
 
-def test_every_hint_points_at_something_that_runs() -> None:
-    assert nu.run(nu.Str("abc").len())[0] == 3
-    assert nu.run(nu.Str("abc").contains("b"))[0] is True
-    assert nu.run(nu.Bytes(b"abc").len())[0] == 3
-    assert nu.run(nu.Bytes(b"abc").contains(b"c"))[0] is True
-    assert nu.run(nu.Object([1, 2]).len())[0] == 2
-    assert nu.run(nu.Object([1, 2]).contains(2))[0] is True
-    assert nu.run(nu.List.of(1, 2).len())[0] == 2
-    assert nu.run(nu.Len(nu.Add("a", "b")))[0] == 2
-    assert nu.run(nu.Contains(nu.Add("a", "b"), "b"))[0] is True
-    assert nu.tree.size(nu.Add(1, 2)) == 3
+# --- the iteration spellings run end to end ---------------------------------------
+
+
+def test_iter_to_list_runs() -> None:
+    assert nu.run(nu.List.of(1, 2).iter().to_list())[0] == [1, 2]
+    assert nu.run(nu.List.of(1, 1, 2).iter().to_set())[0] == {1, 2}
+    assert nu.run(nu.List.of(1, 2).iter().to_tuple())[0] == (1, 2)
+    assert nu.run(nu.Object([3, 4]).iter().to_list())[0] == [3, 4]
+    assert nu.run(nu.Dict({"a": 1}).keys().iter().to_list())[0] == ["a"]
+
+
+def test_iter_first_runs() -> None:
+    assert nu.run(nu.List.of(1, 2).iter().first())[0] == 1
+    assert nu.run(nu.List.of().iter().first())[0] is EMPTY
+
+
+def test_for_each_do_takes_an_iterator() -> None:
+    ctx = nu.Context()
+    ctx.attrs["sum"] = 0
+    body = nu.SetCmd(nu.AttrRef("sum"), nu.Add(nu.AttrRef("sum"), nu.AttrRef("item")))
+    _, ctx = nu.run(nu.ForEachDo(nu.List.of(1, 2, 3).iter(), body), ctx)
+    assert ctx.attrs["sum"] == 6
+
+
+def test_iter_map_and_filter_stay_streams() -> None:
+    xs = nu.List.of(1, 2, 3).iter()
+    mapped = xs.map(nu.Add(nu.AttrRef("item"), 1))
+    assert isinstance(mapped, nu.Iterator)
+    assert nu.run(mapped.to_list())[0] == [2, 3, 4]
+    kept = mapped.filter(nu.Gt(nu.AttrRef("item"), 2))
+    assert nu.run(kept.to_list())[0] == [3, 4]
+    assert nu.run(nu.Collect(kept))[0] == [3, 4]
+
+
+async def test_iteration_runs_async() -> None:
+    assert (await nu.arun(nu.List.of(1, 2).iter().to_list()))[0] == [1, 2]
+    assert (await nu.arun(nu.List.of(5, 6).iter().first()))[0] == 5
+
+
+def test_itertools_take_an_iterator() -> None:
+    import nustd.itertools as it
+
+    pairs = it.pairwise(nu.List.of(1, 2, 3).iter())
+    assert nu.run(nu.Collect(pairs))[0] == [(1, 2), (2, 3)]
 
 
 # --- equality ----------------------------------------------------------------
@@ -132,7 +177,7 @@ def test_every_hint_points_at_something_that_runs() -> None:
     ids=lambda t: type(t).__name__,
 )
 def test_eq_on_a_bare_term_raises(term: object) -> None:
-    with pytest.raises(TypeError, match=r"bare term.*nu\.Object\(t\) == x.*nu\.tree\.equal"):
+    with pytest.raises(TypeError, match=r"bare term.*nu\.Object\(t\) == x.*nu\.tree\.equal.*`is`"):
         term == 1  # noqa: B015
     with pytest.raises(TypeError, match=r"nu\.Object\(t\) != x"):
         term != 1  # noqa: B015
@@ -241,3 +286,32 @@ def test_a_form_eq_returns_a_term_never_a_python_bool() -> None:
         result = term == term
         assert isinstance(result, nu.Nu)
         assert not isinstance(result, bool)
+
+
+def test_eq_hint_points_list_membership_at_identity() -> None:
+    a, b = nu.Add(1, 2), nu.Add(1, 2)
+    assert a in [a]  # Python checks `is` first, so identity membership works
+    with pytest.raises(TypeError, match=r"Python list.*compare with `is`.*set or dict"):
+        b in [a]  # noqa: B015
+    assert {a: 1}[a] == 1
+
+
+def test_a_queue_has_no_value_equality() -> None:
+    from nustd.mem.refs.jqueue import JQueue, JQueueRef
+
+    q = JQueue(nu.Literal(None))
+    with pytest.raises(TypeError, match=r"queue has no value equality.*nu\.Int\(q\.qsize\(\)\)"):
+        q == 1  # noqa: B015
+    with pytest.raises(TypeError, match="queue has no value equality"):
+        q != 1  # noqa: B015
+    assert JQueueRef.__eq__ is JQueue.__eq__
+
+
+def test_object_attribute_docstring_lists_every_reserved_name() -> None:
+    import re
+
+    doc = nu.Object.__getattr__.__doc__ or ""
+    listed = set(re.findall(r"`([a-z_]+)`", doc.split("Only names Object does not define")[1]))
+    own = {n for n in dir(nu.Object) if not n.startswith("_")}
+    assert own <= listed, f"undocumented: {sorted(own - listed)}"
+    assert nu.run(nu.Object(nu.GetAttr(nu.Object({"a": 1}), "keys")))[0] is not None

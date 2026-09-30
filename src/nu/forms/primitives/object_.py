@@ -5,11 +5,13 @@ typed values live here. Every operation on an ``Object`` is absorbing -
 arithmetic, bitwise, subscript, and attribute access all yield another
 ``Object``; comparison and logical ops yield ``Bool``.
 
-``Object`` carries the full operator surface, bitwise ``&`` and ``|``
-included: the runtime type is unknown, so every operator keeps its Python
-meaning (``&`` is ``BitAnd``, ``|`` is ``BitOr``, ``>>`` is ``RShift``) and
-Python decides at evaluation time what it does. To compose an ``Object``
-term as a flow step, call ``nu.Sequential`` / ``nu.Parallel`` / ``nu.Race``.
+``Object`` carries the arithmetic and comparison operators; the runtime type
+is unknown, so Python decides at evaluation time what each does. ``&``, ``|``
+and ``>>`` compose flows (Race, Parallel, Sequential) on an ``Object`` like on
+every term. The value versions are named methods that pass through to the
+value: ``bitand`` / ``bitor`` / ``bitxor`` / ``bitnot`` / ``lshift`` /
+``rshift``, ``and_`` / ``or_`` / ``not_``, ``union`` / ``intersection`` /
+``difference`` / ``symmetric_difference``, ``merge`` / ``merge_update``.
 
 Protocol dunders (``__len__``, ``__contains__``, ``__bool__``, ``__iter__``) must return
 Python-native values and cannot be part of a Nu tree; the ``Nu`` base blocks
@@ -61,9 +63,9 @@ class Object(Form, TypedNu[Any]):
           Object value slot into any narrow Arg position (IntArg, StrArg,
           ...), so `intref + objval` resolves through Int's `__add__`
           and lands as Int instead of falling through to Object's `__radd__`.
-        - `&`, `|` and `>>` keep their Python meaning here (`BitAnd`,
-          `BitOr`, `RShift`), not flow composition. Sequence an Object
-          term with `nu.Sequential(...)` instead.
+        - `&`, `|` and `>>` compose flows (Race, Parallel, Sequential)
+          like on every term. Bit, set and merge operations are named
+          methods (`bitand`, `union`, `merge`, ...).
         - There's no `__call__`. A callable value in a Nu tree goes
           through an interaction (built via `host` or hand-written),
           not raw Python call dispatch.
@@ -595,7 +597,7 @@ class Object(Form, TypedNu[Any]):
         return Bool(Is(self, other))
 
     # =========================================================================
-    # LOGICAL (named methods; ``&`` / ``|`` are bitwise on Object)
+    # LOGICAL (named methods; ``&`` / ``|`` compose flows on every term)
     # =========================================================================
 
     def and_(self, other: object) -> Bool:
@@ -608,7 +610,7 @@ class Object(Form, TypedNu[Any]):
         Notes:
             - Short-circuits like Python: the right operand is only
               evaluated when the left does not already decide the result.
-            - Bitwise AND is `&` / `bitand`, not this.
+            - Bitwise AND is `bitand`, not this.
 
         Yields:
             True when both operands are truthy, False otherwise. INVALID
@@ -634,7 +636,7 @@ class Object(Form, TypedNu[Any]):
         Notes:
             - Short-circuits like Python: the right operand is only
               evaluated when the left does not already decide the result.
-            - Bitwise OR is `|` / `bitor`, not this.
+            - Bitwise OR is `bitor`, not this.
 
         Yields:
             True when either operand is truthy, False otherwise. INVALID
@@ -693,20 +695,24 @@ class Object(Form, TypedNu[Any]):
         return Bool(ToBool(self))
 
     # =========================================================================
-    # BITWISE
+    # BITWISE, SET AND MAPPING (named methods, passed through to the value)
+    #
+    # ``& | >>`` compose flows on every term, Object included, and ``^ ~ <<``
+    # are not defined on forms. The runtime type is unknown, so each method
+    # applies Python's own operation to whatever the value turns out to be.
     # =========================================================================
 
     def bitand(self, other: object) -> Object:
-        """Bitwise AND: self & other.
+        """Python's `&` on the values: bits for ints, intersection for sets.
 
         Args:
-            other: the value to AND with self, bit by bit.
+            other: the value to AND with self.
 
         Notes:
-            - Same op as `self & other`, as a named call.
+            - A named method because `&` composes flows (Race) on every term.
 
         Yields:
-            The bitwise AND. INVALID when either operand is a sentinel.
+            The AND. INVALID when either operand is a sentinel.
 
         Example:
             >>> nu.run(nu.Object(0b1100).bitand(0b1010))[0]
@@ -717,16 +723,17 @@ class Object(Form, TypedNu[Any]):
         return Object(BitAnd(self, other))
 
     def bitor(self, other: object) -> Object:
-        """Bitwise OR: self | other.
+        """Python's `|` on the values: bits for ints, union for sets, merge for dicts.
 
         Args:
-            other: the value to OR with self, bit by bit.
+            other: the value to OR with self.
 
         Notes:
-            - Same op as `self | other`, as a named call.
+            - A named method because `|` composes flows (Parallel) on every
+              term.
 
         Yields:
-            The bitwise OR. INVALID when either operand is a sentinel.
+            The OR. INVALID when either operand is a sentinel.
 
         Example:
             >>> nu.run(nu.Object(0b1100).bitor(0b1010))[0]
@@ -736,11 +743,25 @@ class Object(Form, TypedNu[Any]):
 
         return Object(BitOr(self, other))
 
-    def bitnot(self) -> Object:
-        """Bitwise NOT: ~self.
+    def bitxor(self, other: object) -> Object:
+        """Python's `^` on the values: bits for ints, symmetric difference for sets.
 
-        Notes:
-            - Same op as `~self`, as a named call.
+        Args:
+            other: the value to XOR with self.
+
+        Yields:
+            The XOR. INVALID when either operand is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Object(0b1100).bitxor(0b1010))[0]
+            6
+        """
+        from nu.core import BitXor
+
+        return Object(BitXor(self, other))
+
+    def bitnot(self) -> Object:
+        """Python's `~` on the value.
 
         Yields:
             The bitwise complement. INVALID when self is a sentinel.
@@ -753,149 +774,8 @@ class Object(Form, TypedNu[Any]):
 
         return Object(BitNot(self))
 
-    def __and__(self, other: object) -> Object:
-        """Bitwise AND: self & other.
-
-        Args:
-            other: the value to AND with self. Python decides at
-                evaluation time what `&` means for the runtime types (bits
-                for ints, intersection for sets, logical for bools).
-
-        Notes:
-            - Python meaning, not flow: on an Object `&` is `BitAnd`, not
-              `Race`. Race Object terms with `nu.Race(...)`.
-
-        Yields:
-            The AND. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(nu.Object(0b1100) & 0b1010)[0]
-            8
-        """
-        from nu.core import BitAnd
-
-        return Object(BitAnd(self, other))
-
-    def __rand__(self, other: object) -> Object:
-        """Bitwise AND: other & self, with self on the right.
-
-        Args:
-            other: the value on the left of the `&`.
-
-        Notes:
-            - Reached only when the left operand's own `__and__` declines.
-
-        Yields:
-            The AND. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(0b1100 & nu.Object(0b1010))[0]
-            8
-        """
-        from nu.core import BitAnd
-
-        return Object(BitAnd(other, self))
-
-    def __or__(self, other: object) -> Object:
-        """Bitwise OR: self | other.
-
-        Args:
-            other: the value to OR with self. Python decides at evaluation
-                time what `|` means for the runtime types (bits for ints,
-                union for sets, merge for dicts).
-
-        Notes:
-            - Python meaning, not flow: on an Object `|` is `BitOr`, not
-              `Parallel`. Run Object terms side by side with
-              `nu.Parallel(...)`.
-
-        Yields:
-            The OR. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(nu.Object(0b1100) | 0b1010)[0]
-            14
-        """
-        from nu.core import BitOr
-
-        return Object(BitOr(self, other))
-
-    def __ror__(self, other: object) -> Object:
-        """Bitwise OR: other | self, with self on the right.
-
-        Args:
-            other: the value on the left of the `|`.
-
-        Notes:
-            - Reached only when the left operand's own `__or__` declines.
-
-        Yields:
-            The OR. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(0b1100 | nu.Object(0b1010))[0]
-            14
-        """
-        from nu.core import BitOr
-
-        return Object(BitOr(other, self))
-
-    def __invert__(self) -> Object:
-        """Bitwise NOT: ~self.
-
-        Notes:
-            - Same op as `bitnot()`, reached through Python's `~` operator.
-
-        Yields:
-            The bitwise complement. INVALID when self is a sentinel.
-
-        Example:
-            >>> nu.run(~nu.Object(5))[0]
-            -6
-        """
-        from nu.core import BitNot
-
-        return Object(BitNot(self))
-
-    def __xor__(self, other: object) -> Object:
-        """Bitwise XOR: self ^ other.
-
-        Args:
-            other: the value to XOR with self, bit by bit.
-
-        Yields:
-            The bitwise XOR. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(nu.Object(0b1100) ^ nu.Object(0b1010))[0]
-            6
-        """
-        from nu.core import BitXor
-
-        return Object(BitXor(self, other))
-
-    def __rxor__(self, other: object) -> Object:
-        """Bitwise XOR: other ^ self, with self on the right.
-
-        Args:
-            other: the value on the left of the `^`.
-
-        Notes:
-            - Reached only when the left operand's own `__xor__` declines.
-
-        Yields:
-            The bitwise XOR. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(0b1100 ^ nu.Object(0b1010))[0]
-            6
-        """
-        from nu.core import BitXor
-
-        return Object(BitXor(other, self))
-
-    def __lshift__(self, other: object) -> Object:
-        """Left shift: self shifted left by other bits.
+    def lshift(self, other: object) -> Object:
+        """Self shifted left by other bits: Python's `<<` on the values.
 
         Args:
             other: the shift amount. Must be non-negative at evaluation
@@ -906,79 +786,148 @@ class Object(Form, TypedNu[Any]):
             Raises at evaluation time when the shift amount is negative.
 
         Example:
-            >>> nu.run(nu.Object(1) << nu.Object(4))[0]
+            >>> nu.run(nu.Object(1).lshift(4))[0]
             16
         """
         from nu.core import LShift
 
         return Object(LShift(self, other))
 
-    def __rlshift__(self, other: object) -> Object:
-        """Left shift: other shifted left by self bits.
-
-        Args:
-            other: the value on the left of the `<<`, the value being
-                shifted.
-
-        Notes:
-            - Reached only when the left operand's own `__lshift__`
-              declines.
-
-        Yields:
-            The shifted value. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(1 << nu.Object(4))[0]
-            16
-        """
-        from nu.core import LShift
-
-        return Object(LShift(other, self))
-
-    def __rshift__(self, other: object) -> Object:
-        """Right shift: self shifted right by other bits.
+    def rshift(self, other: object) -> Object:
+        """Self shifted right by other bits: Python's `>>` on the values.
 
         Args:
             other: the shift amount. Must be non-negative at evaluation
                 time.
 
         Notes:
-            - Python meaning, not flow: on an Object `>>` is `RShift`, not
-              `Sequential`. Sequence Object terms with `nu.Sequential(...)`.
+            - A named method because `>>` composes flows (Sequential) on
+              every term.
 
         Yields:
             The shifted value. INVALID when either operand is a sentinel.
             Raises at evaluation time when the shift amount is negative.
 
         Example:
-            >>> nu.run(nu.Object(16) >> nu.Object(2))[0]
+            >>> nu.run(nu.Object(16).rshift(2))[0]
             4
         """
         from nu.core import RShift
 
         return Object(RShift(self, other))
 
-    def __rrshift__(self, other: object) -> Object:
-        """Right shift: other shifted right by self bits.
+    def union(self, other: object) -> Object:
+        """Set union of self and other.
 
         Args:
-            other: the value on the left of the `>>`, the value being
-                shifted.
-
-        Notes:
-            - Reached only when the left operand's own `__rshift__`
-              declines.
+            other: the iterable to union with self.
 
         Yields:
-            The shifted value. INVALID when either operand is a sentinel.
+            A new set with every element of self and other. INVALID when
+            self is not set-like or either operand is a sentinel.
 
         Example:
-            >>> nu.run(16 >> nu.Object(2))[0]
-            4
+            >>> sorted(nu.run(nu.Object({1, 2}).union({2, 3}))[0])
+            [1, 2, 3]
         """
-        from nu.core import RShift
+        from ..collections.abc.set_interactions import Union
 
-        return Object(RShift(other, self))
+        return Object(Union(self, other))
+
+    def intersection(self, other: object) -> Object:
+        """Set intersection of self and other.
+
+        Args:
+            other: the iterable to intersect with self.
+
+        Yields:
+            A new set with only the elements found in both. INVALID when
+            self is not set-like or either operand is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Object({1, 2, 3}).intersection({2, 4}))[0]
+            {2}
+        """
+        from ..collections.abc.set_interactions import Intersection
+
+        return Object(Intersection(self, other))
+
+    def difference(self, other: object) -> Object:
+        """Elements of self that are not in other.
+
+        Args:
+            other: the iterable of elements to leave out.
+
+        Yields:
+            A new set. INVALID when self is not set-like or either operand
+            is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Object({1, 2, 3}).difference({2}))[0]
+            {1, 3}
+        """
+        from ..collections.abc.set_interactions import Difference
+
+        return Object(Difference(self, other))
+
+    def symmetric_difference(self, other: object) -> Object:
+        """Elements in exactly one of self and other.
+
+        Args:
+            other: the iterable to compare self against.
+
+        Yields:
+            A new set. INVALID when self is not set-like or either operand
+            is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Object({1, 2}).symmetric_difference({2, 3}))[0]
+            {1, 3}
+        """
+        from ..collections.abc.set_interactions import SymmetricDifference
+
+        return Object(SymmetricDifference(self, other))
+
+    def merge(self, other: object) -> Object:
+        """Self and other merged into a new mapping: Python's dict `|`.
+
+        Args:
+            other: the mapping to merge in. Its keys win over self's on
+                overlap.
+
+        Yields:
+            A new mapping. INVALID when either operand is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Object({"a": 1}).merge({"b": 2}))[0]
+            {'a': 1, 'b': 2}
+        """
+        from ..collections.abc.mapping_interactions import Merge
+
+        return Object(Merge(self, other))
+
+    def merge_update(self, other: object) -> Object:
+        """Merge other into self in place, and yield self: Python's dict `|=`.
+
+        Args:
+            other: the mapping to merge in. Its values win over self's on
+                shared keys.
+
+        Notes:
+            - Mutates slot 0 in place and yields the mutated mapping, an
+              Action like `Dict.merge_update`.
+
+        Yields:
+            Self, updated with other's entries. INVALID when either operand
+            is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Object({"a": 1}).merge_update({"b": 2}))[0]
+            {'a': 1, 'b': 2}
+        """
+        from ..collections.abc.mapping_interactions import MergeUpdate
+
+        return Object(MergeUpdate(self, other))
 
     # =========================================================================
     # DYNAMIC DESCENT (subscript + attribute)
@@ -1066,6 +1015,15 @@ class Object(Form, TypedNu[Any]):
               if genuinely missing. That keeps engine-private state
               (`_payload`, `_children`, `_source`, ...) from being
               accidentally captured as a tree node.
+            - Only names Object does not define descend. These are Object's
+              own methods and reach the method, never the value's attribute:
+              `and_`, `bitand`, `bitnot`, `bitor`, `bitxor`, `bool_`,
+              `contains`, `difference`, `has_attr`, `intersection`, `is_`,
+              `is_empty`, `is_invalid`, `is_sentinel`, `iter`, `len`,
+              `lshift`, `merge`, `merge_update`, `not_`, `not_empty`,
+              `not_invalid`, `or_`, `rshift`, `symmetric_difference`,
+              `union`. To read a value attribute with one of those names,
+              build the read directly: `nu.Object(nu.GetAttr(o, "len"))`.
 
         Yields:
             The attribute's value. INVALID when self is a sentinel. Raises
@@ -1145,10 +1103,9 @@ class Object(Form, TypedNu[Any]):
         Notes:
             - Named because Python's `iter()` / `for` would loop over the
               term at build time; the ``Nu`` base blocks them.
-            - The returned Iterator is a stream, not a scalar: it needs to
-              be consumed through a stream-shaped context (materialized
-              with `to_list()` / `to_set()` / `to_tuple()`, or driven
-              inside a flow), not evaluated directly with `nu.run`.
+            - The returned Iterator is a stream, not a scalar: loop it with
+              `nu.ForEachDo`, drain it with `to_list()` / `to_set()` /
+              `to_tuple()`, or pull one item with `next()`.
 
         Yields:
             An Iterator over self's elements. INVALID when self is a

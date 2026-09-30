@@ -34,10 +34,11 @@ class Int(Form, TypedNu[int]):
         - Comparison operators yield Bool. Chained comparisons like
           `a > b > c` do not build a single term; write them as
           `And(a > b, b > c)`.
-        - Logical operators are the named forms `and_`, `or_`, `not_`. The
-          symbols `&`, `|`, `^`, `~`, `<<`, `>>` keep their Python meaning:
-          bitwise and shifts, staying Int. So `>>` on an Int is a shift,
-          never flow sequencing; sequence Int terms with `nu.Sequential`.
+        - Logical operators are the named forms `and_`, `or_`, `not_`, and
+          bit operations are named too: `bitand`, `bitor`, `bitxor`,
+          `bitnot`, `lshift`, `rshift`. `&`, `|` and `>>` compose flows
+          (Race, Parallel, Sequential) on an Int like on every term, and
+          `^`, `~`, `<<` are not defined.
 
     Example:
         >>> nu.run(nu.Int(6) * nu.Int(7))[0]
@@ -697,7 +698,7 @@ class Int(Form, TypedNu[int]):
         Notes:
             - Short-circuits like Python: the right operand is only
               evaluated when the left does not already decide the result.
-            - Bitwise AND is `&` / `bitand`, not this.
+            - Bitwise AND is `bitand`, not this.
 
         Yields:
             True when both operands are truthy, False otherwise. INVALID when
@@ -722,7 +723,7 @@ class Int(Form, TypedNu[int]):
         Notes:
             - Short-circuits like Python: the right operand is only
               evaluated when the left does not already decide the result.
-            - Bitwise OR is `|` / `bitor`, not this.
+            - Bitwise OR is `bitor`, not this.
 
         Yields:
             True when either operand is truthy, False otherwise. INVALID when
@@ -743,7 +744,7 @@ class Int(Form, TypedNu[int]):
 
         Notes:
             - Zero yields True, every other value yields False.
-            - Bitwise NOT is `~` / `bitnot`, not this.
+            - Bitwise NOT is `bitnot`, not this.
 
         Yields:
             True when self is zero, False otherwise. INVALID when self is a
@@ -781,17 +782,18 @@ class Int(Form, TypedNu[int]):
         return Bool(ToBool(self))
 
     # =========================================================================
-    # BITWISE
+    # BITWISE (named methods; ``& | >>`` compose flows on every term, and
+    # ``^ ~ <<`` are not defined on forms)
     # =========================================================================
 
     def bitand(self, other: IntArg) -> Int:
-        """Bitwise AND: self & other.
+        """Bitwise AND of self and other.
 
         Args:
             other: the integer to AND with self, bit by bit.
 
         Notes:
-            - Same op as `self & other`, as a named call.
+            - A named method because `&` composes flows (Race) on every term.
 
         Yields:
             The bitwise AND. INVALID when either operand is a sentinel.
@@ -805,13 +807,14 @@ class Int(Form, TypedNu[int]):
         return Int(BitAnd(self, other))
 
     def bitor(self, other: IntArg) -> Int:
-        """Bitwise OR: self | other.
+        """Bitwise OR of self and other.
 
         Args:
             other: the integer to OR with self, bit by bit.
 
         Notes:
-            - Same op as `self | other`, as a named call.
+            - A named method because `|` composes flows (Parallel) on every
+              term.
 
         Yields:
             The bitwise OR. INVALID when either operand is a sentinel.
@@ -824,90 +827,8 @@ class Int(Form, TypedNu[int]):
 
         return Int(BitOr(self, other))
 
-    def __and__(self, other: IntArg) -> Int:  # type: ignore[override]
-        """Bitwise AND: self & other.
-
-        Args:
-            other: the integer to AND with self, bit by bit.
-
-        Notes:
-            - Python meaning, not flow: on an Int `&` is `BitAnd`, not
-              `Race`.
-
-        Yields:
-            The bitwise AND. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(nu.Int(0b1100) & 0b1010)[0]
-            8
-        """
-        from nu.core import BitAnd
-
-        return Int(BitAnd(self, other))
-
-    def __rand__(self, other: IntArg) -> Int:
-        """Bitwise AND: other & self, with self on the right.
-
-        Args:
-            other: the integer on the left of the `&`.
-
-        Notes:
-            - Reached only when the left operand is a plain Python int.
-
-        Yields:
-            The bitwise AND. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(0b1100 & nu.Int(0b1010))[0]
-            8
-        """
-        from nu.core import BitAnd
-
-        return Int(BitAnd(other, self))
-
-    def __or__(self, other: IntArg) -> Int:  # type: ignore[override]
-        """Bitwise OR: self | other.
-
-        Args:
-            other: the integer to OR with self, bit by bit.
-
-        Notes:
-            - Python meaning, not flow: on an Int `|` is `BitOr`, not
-              `Parallel`.
-
-        Yields:
-            The bitwise OR. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(nu.Int(0b1100) | 0b1010)[0]
-            14
-        """
-        from nu.core import BitOr
-
-        return Int(BitOr(self, other))
-
-    def __ror__(self, other: IntArg) -> Int:
-        """Bitwise OR: other | self, with self on the right.
-
-        Args:
-            other: the integer on the left of the `|`.
-
-        Notes:
-            - Reached only when the left operand is a plain Python int.
-
-        Yields:
-            The bitwise OR. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(0b1100 | nu.Int(0b1010))[0]
-            14
-        """
-        from nu.core import BitOr
-
-        return Int(BitOr(other, self))
-
-    def __xor__(self, other: IntArg) -> Int:
-        """Bitwise XOR: self ^ other.
+    def bitxor(self, other: IntArg) -> Int:
+        """Bitwise XOR of self and other.
 
         Args:
             other: the integer to XOR with self, bit by bit.
@@ -916,38 +837,17 @@ class Int(Form, TypedNu[int]):
             The bitwise XOR. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Int(0b1100) ^ nu.Int(0b1010))[0]
+            >>> nu.run(nu.Int(0b1100).bitxor(0b1010))[0]
             6
         """
         from nu.core import BitXor
 
         return Int(BitXor(self, other))
 
-    def __rxor__(self, other: IntArg) -> Int:
-        """Bitwise XOR: other ^ self, with self on the right.
-
-        Args:
-            other: the integer on the left of the `^`.
-
-        Notes:
-            - Reached only when the left operand is a plain Python int.
-
-        Yields:
-            The bitwise XOR. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(0b1100 ^ nu.Int(0b1010))[0]
-            6
-        """
-        from nu.core import BitXor
-
-        return Int(BitXor(other, self))
-
     def bitnot(self) -> Int:
-        """Bitwise NOT: ~self.
+        """Bitwise NOT of self.
 
         Notes:
-            - Same op as `~self`, as a named call.
             - Two's complement, so `bitnot(x)` equals `-x - 1`.
 
         Yields:
@@ -961,25 +861,8 @@ class Int(Form, TypedNu[int]):
 
         return Int(BitNot(self))
 
-    def __invert__(self) -> Int:
-        """Bitwise NOT: ~self.
-
-        Notes:
-            - Two's complement, so `~x` equals `-x - 1`.
-
-        Yields:
-            The bitwise complement. INVALID when self is a sentinel.
-
-        Example:
-            >>> nu.run(~nu.Int(5))[0]
-            -6
-        """
-        from nu.core import BitNot
-
-        return Int(BitNot(self))
-
-    def __lshift__(self, other: IntArg) -> Int:
-        """Left shift: self shifted left by other bits.
+    def lshift(self, other: IntArg) -> Int:
+        """Self shifted left by other bits.
 
         Args:
             other: the shift amount in bits. Must be non-negative at
@@ -994,45 +877,23 @@ class Int(Form, TypedNu[int]):
             Raises at evaluation time when the shift amount is negative.
 
         Example:
-            >>> nu.run(nu.Int(1) << nu.Int(4))[0]
+            >>> nu.run(nu.Int(1).lshift(4))[0]
             16
         """
         from nu.core import LShift
 
         return Int(LShift(self, other))
 
-    def __rlshift__(self, other: IntArg) -> Int:
-        """Left shift: other shifted left by self bits.
-
-        Args:
-            other: the value on the left of the `<<`, the value being
-                shifted.
-
-        Notes:
-            - Fills the low bits with zeros.
-            - Reached only when the left operand is a plain Python int.
-
-        Yields:
-            The shifted value. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(1 << nu.Int(4))[0]
-            16
-        """
-        from nu.core import LShift
-
-        return Int(LShift(other, self))
-
-    def __rshift__(self, other: IntArg) -> Int:
-        """Right shift: self shifted right by other bits.
+    def rshift(self, other: IntArg) -> Int:
+        """Self shifted right by other bits.
 
         Args:
             other: the shift amount in bits. Must be non-negative at
                 evaluation time.
 
         Notes:
-            - Python meaning, not flow: on an Int `>>` is `RShift`, not
-              `Sequential`.
+            - A named method because `>>` composes flows (Sequential) on
+              every term.
             - Arithmetic shift, so the sign bit is preserved: shifting a
               negative number stays negative.
             - Equivalent to `self // 2**other` for non-negative shifts.
@@ -1042,31 +903,9 @@ class Int(Form, TypedNu[int]):
             Raises at evaluation time when the shift amount is negative.
 
         Example:
-            >>> nu.run(nu.Int(16) >> nu.Int(2))[0]
+            >>> nu.run(nu.Int(16).rshift(2))[0]
             4
         """
         from nu.core import RShift
 
         return Int(RShift(self, other))
-
-    def __rrshift__(self, other: IntArg) -> Int:
-        """Right shift: other shifted right by self bits.
-
-        Args:
-            other: the value on the left of the `>>`, the value being
-                shifted.
-
-        Notes:
-            - Arithmetic shift, sign-preserving.
-            - Reached only when the left operand is a plain Python int.
-
-        Yields:
-            The shifted value. INVALID when either operand is a sentinel.
-
-        Example:
-            >>> nu.run(16 >> nu.Int(2))[0]
-            4
-        """
-        from nu.core import RShift
-
-        return Int(RShift(other, self))

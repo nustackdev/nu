@@ -85,6 +85,44 @@ def test_aeval_mirrors_eval():
     assert asyncio.run(_aeval(LShift(Literal(1), Literal(4)))) == 16
 
 
+# --- the fold keeps the operands' own meaning ----------------------------
+
+
+def test_a_single_child_passes_through_unchanged():
+    # The fold starts from the first child, not an int identity, so a lone
+    # operand of any type comes back as itself.
+    assert _eval(BitAnd(Literal({1, 2}))) == {1, 2}
+    assert _eval(BitOr(Literal({"a": 1}))) == {"a": 1}
+    assert _eval(BitXor(Literal(True))) is True
+
+
+def test_no_children_yield_the_int_identity():
+    assert _eval(BitAnd()) == -1
+    assert _eval(BitOr()) == 0
+    assert _eval(BitXor()) == 0
+
+
+def test_bitxor_over_sets_is_symmetric_difference():
+    assert _eval(BitXor(Literal({1, 2}), Literal({2, 3}))) == {1, 3}
+    assert _eval(BitXor(Literal({1}), Literal({2}), Literal({1, 3}))) == {2, 3}
+
+
+def test_bitor_over_dicts_merges():
+    assert _eval(BitOr(Literal({"a": 1}), Literal({"a": 2, "b": 3}))) == {"a": 2, "b": 3}
+
+
+def test_bitand_over_bools_stays_bool():
+    assert _eval(BitAnd(Literal(True), Literal(False))) is False
+
+
+def test_async_fold_keeps_non_int_operands():
+    assert asyncio.run(_aeval(BitAnd(Literal({1, 2}), Literal({2, 3})))) == {2}
+    assert asyncio.run(_aeval(BitOr(Literal({"a": 1}), Literal({"b": 2})))) == {"a": 1, "b": 2}
+    assert asyncio.run(_aeval(BitXor(Literal({1, 2}), Literal({2, 3})))) == {1, 3}
+    assert asyncio.run(_aeval(BitOr(Literal({1})))) == {1}
+    assert asyncio.run(_aeval(BitXor())) == 0
+
+
 # --- sentinels -----------------------------------------------------------
 
 

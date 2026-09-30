@@ -81,12 +81,6 @@ _SPELLINGS: dict[str, str] = {
     "__neg__": "-a",
     "__pos__": "+a",
     "__abs__": "abs(a)",
-    "__invert__": "~a",
-    "__lshift__": "a << b",
-    "__rshift__": "a >> b",
-    "__and__": "a & b",
-    "__or__": "a | b",
-    "__xor__": "a ^ b",
     "__gt__": "a > b",
     "__lt__": "a < b",
     "__ge__": "a >= b",
@@ -95,9 +89,6 @@ _SPELLINGS: dict[str, str] = {
     "__ne__": "a != b",
     "__getitem__": "a[key]",
     "__setitem__": "a[key] = value",
-    "__contains__": "value in a",
-    "__len__": "len(a)",
-    "__iter__": "a.iter()",
     "__call__": "a(...)",
 }
 

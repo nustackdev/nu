@@ -6,7 +6,7 @@ against the wrapped Nu (typically a JQueueRef).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, NoReturn, TypeVar
 
 import janus
 
@@ -21,6 +21,12 @@ __all__ = ["JQueue"]
 
 
 T = TypeVar("T")
+
+_EQ_HINT = (
+    "a queue has no value equality (Python compares queues by identity): "
+    "compare what comes out of it, nu.Object(q.get()) == x or nu.Int(q.qsize()) == n. "
+    "Test the term itself with `is`"
+)
 
 
 class JQueue(Form, TypedNu[janus.Queue[T]], Generic[T]):
@@ -37,6 +43,8 @@ class JQueue(Form, TypedNu[janus.Queue[T]], Generic[T]):
     Notes:
         - The calls do not touch the queue: they build a tree, and nothing
           happens until it runs.
+        - No `==` / `!=`: a queue has no value to compare, so both raise.
+          Compare what comes out of it: `nu.Int(q.qsize()) == 0`.
 
     Yields:
         Whatever the wrapped child yields, unchanged; the surface adds calls,
@@ -51,6 +59,12 @@ class JQueue(Form, TypedNu[janus.Queue[T]], Generic[T]):
         >>> nu.run(Buf.queue.qsize(), ctx)[0]
         1
     """
+
+    def __eq__(self, other: object) -> NoReturn:
+        raise TypeError(_EQ_HINT)
+
+    def __ne__(self, other: object) -> NoReturn:
+        raise TypeError(_EQ_HINT)
 
     def put(self, value: object) -> Put:
         """Enqueue ``value``, waiting for room when the queue is full.

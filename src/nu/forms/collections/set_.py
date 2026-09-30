@@ -38,9 +38,10 @@ class Set(
           on insertion order surviving a round trip.
         - `>`, `<`, `>=`, `<=` are subset/superset relations, not size
           comparisons: `a > b` means a is a proper superset of b, not that
-          a has more elements. `union`, `intersection`, `difference`,
-          `symmetric_difference` and the operators `|`, `&`, `-`, `^` live
-          on the shared set base, not on this class.
+          a has more elements. `union`, `intersection`, `difference` and
+          `symmetric_difference` live on the shared set base, not on this
+          class. Set algebra is named only: `&`, `|` and `>>` compose flows
+          on a set like on every term, and `-` / `^` are not defined.
         - Mutating ops (`add`, `remove`, `discard`, `pop`, `clear`,
           `update`, ...) live on the shared mutable-set base too.
 
@@ -281,9 +282,9 @@ class FrozenSet(
     Notes:
         - Iteration order is arbitrary, matching Python's `frozenset`.
         - `>`, `<`, `>=`, `<=` are subset/superset relations, not size
-          comparisons. `union`, `intersection`, `difference`,
-          `symmetric_difference` and the operators `|`, `&`, `-`, `^` live
-          on the shared set base, not on this class.
+          comparisons. `union`, `intersection`, `difference` and
+          `symmetric_difference` live on the shared set base, not on this
+          class. Set algebra is named only: `&`, `|` and `>>` compose flows.
         - No `add`/`remove`/`update`/... unlike `Set`: a FrozenSet can't be
           mutated in place.
 

@@ -101,12 +101,12 @@ def test_primitive_dict_ref_stamps_key_and_elem() -> None:
 class DecomposedListHolder(nu.Shape):
     """Legacy: annotation is a python container, assignment is explicit."""
 
-    items: list[int] = ListRef.slot(int)
+    nums: list[int] = ListRef.slot(int)
 
 
 def test_decomposed_list_ref_derives_slot_kwargs_from_annotation() -> None:
-    """`items: ListRef[int]` would auto-synth. Here we still use legacy."""
-    slot = DecomposedListHolder._slots["items"]
+    """`nums: ListRef[int]` would auto-synth. Here we still use legacy."""
+    slot = DecomposedListHolder._slots["nums"]
     assert slot.ref_cls is ListRef
     assert slot.kwargs["item_type"] is int
 

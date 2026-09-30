@@ -4,7 +4,6 @@ Reads (Query):
     Union, Intersection, Difference, SymmetricDifference
     IsSubset, IsSuperset, IsDisjoint
     Copy
-    SetOr, SetAnd, SetSub, SetXor
 
 Mutations that return nothing (Command):
     AddCmd, Remove, Discard
@@ -13,7 +12,6 @@ Mutations that return nothing (Command):
 
 Mutations that return a value (Action):
     SetPop (set.pop returns an arbitrary element)
-    SetIOr, SetIAnd, SetISub, SetIXor (in-place operators return self)
 """
 
 from __future__ import annotations
@@ -48,18 +46,10 @@ __all__ = [
     "IsSubset",
     "IsSuperset",
     "Remove",
-    "SetAnd",
     "SetCreate",
-    "SetIAnd",
-    "SetIOr",
-    "SetISub",
-    "SetIXor",
     "SetOf",
-    "SetOr",
     "SetPop",
-    "SetSub",
     "SetUpdate",
-    "SetXor",
     "SymmetricDifference",
     "SymmetricDifferenceUpdate",
     "Union",
@@ -377,150 +367,6 @@ class Copy(ScalarQuery):
         return athunk
 
 
-class SetOr(ScalarQuery):
-    """Set union operator: left | right. Returns a new set."""
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        a_t, b_t = children
-
-        def thunk(rt: Runtime) -> object:
-            a = a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
-            b = b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
-            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
-                return INVALID
-            return a | b
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        a_t, b_t = children
-
-        async def athunk(rt: Runtime) -> object:
-            a = await a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
-            b = await b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
-            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
-                return INVALID
-            return a | b
-
-        return athunk
-
-
-class SetAnd(ScalarQuery):
-    """Set intersection operator: left & right. Returns a new set."""
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        a_t, b_t = children
-
-        def thunk(rt: Runtime) -> object:
-            a = a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
-            b = b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
-            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
-                return INVALID
-            return a & b
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        a_t, b_t = children
-
-        async def athunk(rt: Runtime) -> object:
-            a = await a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
-            b = await b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
-            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
-                return INVALID
-            return a & b
-
-        return athunk
-
-
-class SetSub(ScalarQuery):
-    """Set difference operator: left - right. Returns a new set."""
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        a_t, b_t = children
-
-        def thunk(rt: Runtime) -> object:
-            a = a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
-            b = b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
-            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
-                return INVALID
-            return a - b
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        a_t, b_t = children
-
-        async def athunk(rt: Runtime) -> object:
-            a = await a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
-            b = await b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
-            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
-                return INVALID
-            return a - b
-
-        return athunk
-
-
-class SetXor(ScalarQuery):
-    """Set symmetric difference operator: left ^ right. Returns a new set."""
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        a_t, b_t = children
-
-        def thunk(rt: Runtime) -> object:
-            a = a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
-            b = b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
-            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
-                return INVALID
-            return a ^ b
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        a_t, b_t = children
-
-        async def athunk(rt: Runtime) -> object:
-            a = await a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
-            b = await b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
-            if not isinstance(a, ABCSet) or not isinstance(b, ABCSet):
-                return INVALID
-            return a ^ b
-
-        return athunk
-
-
 # =============================================================================
 # SET MUTATIONS: return nothing (Command)
 # =============================================================================
@@ -818,149 +664,5 @@ class SetPop(ScalarAction):
                 return obj.pop()
             except KeyError:
                 return INVALID
-
-        return athunk
-
-
-class SetIOr(ScalarAction):
-    """In-place union: left |= right. Mutates the set; returns the set."""
-
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, other_t = children
-
-        def thunk(rt: Runtime) -> object:
-            target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
-            other = other_t(rt)
-            if other is EMPTY or other is INVALID:
-                return INVALID
-            target |= other
-            return target
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, other_t = children
-
-        async def athunk(rt: Runtime) -> object:
-            target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
-            other = await other_t(rt)
-            if other is EMPTY or other is INVALID:
-                return INVALID
-            target |= other
-            return target
-
-        return athunk
-
-
-class SetIAnd(ScalarAction):
-    """In-place intersection: left &= right. Mutates the set; returns the set."""
-
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, other_t = children
-
-        def thunk(rt: Runtime) -> object:
-            target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
-            other = other_t(rt)
-            if other is EMPTY or other is INVALID:
-                return INVALID
-            target &= other
-            return target
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, other_t = children
-
-        async def athunk(rt: Runtime) -> object:
-            target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
-            other = await other_t(rt)
-            if other is EMPTY or other is INVALID:
-                return INVALID
-            target &= other
-            return target
-
-        return athunk
-
-
-class SetISub(ScalarAction):
-    """In-place difference: left -= right. Mutates the set; returns the set."""
-
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, other_t = children
-
-        def thunk(rt: Runtime) -> object:
-            target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
-            other = other_t(rt)
-            if other is EMPTY or other is INVALID:
-                return INVALID
-            target -= other
-            return target
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, other_t = children
-
-        async def athunk(rt: Runtime) -> object:
-            target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
-            other = await other_t(rt)
-            if other is EMPTY or other is INVALID:
-                return INVALID
-            target -= other
-            return target
-
-        return athunk
-
-
-class SetIXor(ScalarAction):
-    """In-place symmetric difference: left ^= right. Mutates the set; returns the set."""
-
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, other_t = children
-
-        def thunk(rt: Runtime) -> object:
-            target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
-            other = other_t(rt)
-            if other is EMPTY or other is INVALID:
-                return INVALID
-            target ^= other
-            return target
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, other_t = children
-
-        async def athunk(rt: Runtime) -> object:
-            target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
-            other = await other_t(rt)
-            if other is EMPTY or other is INVALID:
-                return INVALID
-            target ^= other
-            return target
 
         return athunk

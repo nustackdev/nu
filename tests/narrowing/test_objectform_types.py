@@ -2,14 +2,14 @@
 """Task-119 typing tests: ``Object`` behavior.
 
 ``Object`` is the honest terminal - genuinely-unknown or dynamically-typed
-values. It is absorbing under arithmetic + bitwise + subscript + attribute
+values. It is absorbing under arithmetic + named bitwise + subscript + attribute
 descent (every op stays ``Object``); comparison and logical ops yield
 ``Bool``. Protocol dunders (``len()``, ``contains()``, ``iter()``,
 ``bool_()``, ``has_attr()``) are exposed as named methods returning the
 matching Form.
 
-``&`` / ``|`` / ``>>`` keep their Python meaning on ``Object`` (bitwise and
-shift), not flow. Deliberately absent: ``__call__`` (Nu runs through
+``&`` / ``|`` / ``>>`` compose flows on ``Object`` like on every term; bit,
+set and merge operations are named methods. Deliberately absent: ``__call__`` (Nu runs through
 interactions, not raw Python calls). Mutation dunders (``__setitem__`` /
 ``__delitem__``) are Ref-gated at build time.
 """
@@ -130,28 +130,23 @@ assert_type(+anyval, Object)
 assert_type(abs(anyval), Object)
 
 
-# --- Absorbing bitwise surface ----------------------------------------
+# --- Bitwise, set and merge: named methods ---------------------------
 
 
-assert_type(anyval << 1, Object)
-assert_type(1 << anyval, Object)  # __rlshift__
-assert_type(anyval >> 1, Object)
-assert_type(1 >> anyval, Object)  # __rrshift__
-assert_type(anyval ^ 1, Object)
-assert_type(1 ^ anyval, Object)  # __rxor__
-assert_type(~anyval, Object)  # __invert__
-assert_type(anyval & 1, Object)
-assert_type(1 & anyval, Object)  # __rand__
-assert_type(anyval | 1, Object)
-assert_type(1 | anyval, Object)  # __ror__
-
-# Named bitwise, same ops as & / |.
 assert_type(anyval.bitand(1), Object)
 assert_type(anyval.bitor(1), Object)
+assert_type(anyval.bitxor(1), Object)
 assert_type(anyval.bitnot(), Object)
+assert_type(anyval.lshift(1), Object)
+assert_type(anyval.rshift(1), Object)
+assert_type(anyval.union({1}), Object)
+assert_type(anyval.intersection({1}), Object)
+assert_type(anyval.difference({1}), Object)
+assert_type(anyval.symmetric_difference({1}), Object)
+assert_type(anyval.merge({"a": 1}), Object)
 
 
-# --- Logical (named methods; & / | are bitwise on Object) -----------
+# --- Logical (named methods; & / | compose flows on Object) --------
 
 
 assert_type(anyval.and_(1), Bool)

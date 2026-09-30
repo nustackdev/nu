@@ -194,9 +194,55 @@ class ShapeMeta(ABCMeta):
             if isinstance(value, Slot) and value._owner_cls is None:
                 value._owner_cls = cls
 
+        inherited = {n for base in bases for n in getattr(base, "_slots", {})}
+        _check_slot_names(name, {n: s for n, s in slots.items() if n not in inherited})
+
         for field_name, slot in slots.items():
             setattr(cls, field_name, SlotDescriptor(field_name, slot))
         return cls
+
+
+def _public_names(cls: type) -> set[str]:
+    """Every public attribute ``cls`` carries, methods and properties alike."""
+    return {n for n in dir(cls) if not n.startswith("_")}
+
+
+def _shape_ref_classes() -> list[type]:
+    """Every ShapeRef class defined so far: the nu blueprint and each fabric's."""
+    from nu.domains.shape.refs.shape import ShapeRef
+
+    found: list[type] = []
+    todo: list[type] = [ShapeRef]
+    while todo:
+        ref_cls = todo.pop()
+        if ref_cls not in found:
+            found.append(ref_cls)
+            todo.extend(ref_cls.__subclasses__())
+    return found
+
+
+def _check_slot_names(shape: str, slots: dict[str, Slot]) -> None:
+    """Refuse a slot named after a method or attribute of a ref.
+
+    A slot is reached as an attribute of the shape ref above it
+    (``User.profile.email``), and that lookup goes through the ref's own
+    attributes first: a slot named ``len`` or ``iter`` would silently reach the
+    ref method instead. The reserved names are read off every ShapeRef class
+    defined so far, the nu blueprint and each fabric's (the class a nested
+    shape slot produces), so they follow the surface as it grows.
+    """
+    shape_refs = _shape_ref_classes()
+    for field_name in slots:
+        for ref_cls in shape_refs:
+            if field_name in _public_names(ref_cls):
+                msg = (
+                    f"Shape {shape}: slot {field_name!r} clashes with "
+                    f"{ref_cls.__qualname__}.{field_name}. A slot is reached as an "
+                    f"attribute of its ref, so `ref.{field_name}` would reach the "
+                    f"ref's own {field_name!r}, not the slot. Rename the slot "
+                    f"(e.g. {field_name + '_'!r})"
+                )
+                raise TypeError(msg)
 
 
 def _synthesize_slot(ann: object, cls: type, field_name: str) -> Slot | None:

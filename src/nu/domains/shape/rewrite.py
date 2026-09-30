@@ -49,6 +49,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.tree import children
+
 from .refs.base import StructuredRef
 
 
@@ -104,7 +106,7 @@ def reroot(
     """
 
     def splice(node: StructuredRef) -> Nu:
-        kids = node._children
+        kids = children(node)
         head = kids[0]
         if isinstance(head, StructuredRef):
             parent: Nu = walk(head)
@@ -127,10 +129,11 @@ def reroot(
     def walk(node: Nu) -> Nu:
         if isinstance(node, StructuredRef):
             return splice(node)
-        if not node._children:
+        old = children(node)
+        if not old:
             return node
-        kids = tuple(walk(c) for c in node._children)
-        if all(new is old for new, old in zip(kids, node._children, strict=True)):
+        kids = tuple(walk(c) for c in old)
+        if all(new is was for new, was in zip(kids, old, strict=True)):
             return node
         return node._with_children(*kids)
 

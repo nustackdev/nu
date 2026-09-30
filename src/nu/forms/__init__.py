@@ -9,7 +9,7 @@ Concrete primitive Forms live in ``primitives/``, concrete collection Forms in
 ``collections/`` (with abstract contracts in ``collections/abc/``).
 """
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, TypedNu, TypedNuStream
 
 from .collections import (
     Dict,
@@ -58,4 +58,5 @@ __all__ = [
     "Str",
     "Tuple",
     "TypedNu",
+    "TypedNuStream",
 ]

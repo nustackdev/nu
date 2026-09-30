@@ -51,7 +51,7 @@ def test_int_comparison_logical_bitwise():
     assert val(Int(5) >= 5) is True
     assert val(Int(4).bitand(6)) == 4
     assert val(Int(4).bitor(1)) == 5
-    assert val(Int(1) << 4) == 16
+    assert val(Int(1).lshift(4)) == 16
     assert val(Int(5).and_(0)) is False
 
 

@@ -12,10 +12,15 @@ so they participate as Nu tree nodes::
 
     Int(Add(a, b)) + 1  ->  Add(Int(Add(a, b)), Literal(1))
 
+``TypedNuStream[T]`` is its stream-shaped twin: a transparent ``StreamQuery``
+passthrough over one stream child, so a stream form (``Iterator``) sits
+wherever the validator expects a stream.
+
 Hierarchy::
 
     Form                                    mixin (sentinel checks)
     TypedNu[T]                              ScalarQuery passthrough
+    TypedNuStream[T]                        StreamQuery passthrough
     Int(Form, TypedNu[int])            primitive leaf
     Dict(MutableMappingForm, TypedNu[dict])   collection leaf
 
@@ -28,7 +33,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
-from .kinds import ScalarQuery
+from .kinds import ScalarQuery, StreamQuery
 
 
 if TYPE_CHECKING:
@@ -41,6 +46,7 @@ if TYPE_CHECKING:
 __all__ = [
     "Form",
     "TypedNu",
+    "TypedNuStream",
 ]
 
 
@@ -111,6 +117,35 @@ class TypedNu(ScalarQuery[T_co], Generic[T_co]):  # PEP 695 has no variance mark
     def _source(self) -> Any:  # noqa: ANN401
         """The wrapped child Term, or None when there is no child."""
         return self._children[0] if self._children else None
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        (only,) = children
+
+        def thunk(rt: Runtime) -> object:
+            return only(rt)
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        (only,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            return await only(rt)
+
+        return athunk
+
+
+class TypedNuStream(StreamQuery[T_co], Generic[T_co]):  # PEP 695 has no variance markers
+    """Transparent StreamQuery passthrough carrying a python type tag ``T``.
+
+    The stream twin of ``TypedNu``: wraps a single stream child and yields
+    its items unchanged, so a stream form is stream-sorted and every stream
+    consumer (``Collect``, ``Map``, ``ForEachDo``, ...) accepts it. The type
+    tag is for the fluent surface only; it has no runtime effect.
+    """
+
+    def __init__(self, *children: object) -> None:
+        super().__init__(*children)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children

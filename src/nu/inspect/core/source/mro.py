@@ -13,6 +13,7 @@ business rather than reappearing on every Form and Ref.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import NoReturn
 
 
 __all__ = [
@@ -65,6 +66,9 @@ def walk_bindings(
         for name, raw in owner.__dict__.items():
             if name in seen or name in skip:
                 continue
+            if _raises(raw):
+                seen.add(name)  # the nearest definition raises: not usable here
+                continue
             if not _wanted(name, raw, include_dunders):
                 continue
             seen.add(name)
@@ -85,6 +89,10 @@ def _below(mro: tuple[type, ...], stop: type) -> tuple[type, ...]:
 
 # Dunders that build a Nu term when invoked on a Form/Ref subclass.
 # r-variants map to the same operator so we describe each operator once.
+# ``& | >>`` are flow composition on the ``Nu`` base and no Form overrides
+# them; ``<< ^ ~`` are not defined on forms; ``in`` / ``len()`` / iteration
+# are blocked on every term, spelled ``.contains()`` / ``.len()`` /
+# ``.iter()``, which the walk picks up as plain methods.
 _OPERATOR_DUNDERS = frozenset(
     {
         "__add__",
@@ -98,12 +106,6 @@ _OPERATOR_DUNDERS = frozenset(
         "__pos__",
         "__abs__",
         "__matmul__",
-        "__invert__",
-        "__lshift__",
-        "__rshift__",
-        "__and__",
-        "__or__",
-        "__xor__",
         "__gt__",
         "__lt__",
         "__ge__",
@@ -112,9 +114,6 @@ _OPERATOR_DUNDERS = frozenset(
         "__ne__",
         "__getitem__",
         "__setitem__",
-        "__contains__",
-        "__len__",
-        "__iter__",
         "__call__",
     }
 )
@@ -134,3 +133,15 @@ def _wanted(name: str, raw: object, include_dunders: bool) -> bool:
     if isinstance(raw, property):
         return False
     return callable(raw)
+
+
+def _raises(raw: object) -> bool:
+    """Whether an operator dunder only raises (annotated ``NoReturn``).
+
+    A form with no value equality (``Iterator``, ``DictValues``, a queue)
+    overrides ``__eq__`` / ``__ne__`` to raise with a hint; those are not
+    usable operators, so they are not described.
+    """
+    annotations = getattr(raw, "__annotations__", None) or {}
+    ret = annotations.get("return")
+    return ret == "NoReturn" or ret is NoReturn
